@@ -22,10 +22,10 @@ package blue.orchestra.blueSynthBuilder;
 import blue.automation.Parameter;
 import blue.automation.ParameterListener;
 import blue.automation.ParameterTimeManagerFactory;
-import static blue.orchestra.blueSynthBuilder.ClampedValueListener.BoundaryType.TRUNCATE;
 import blue.utility.NumberUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
+import java.math.BigDecimal;
 import javafx.beans.property.DoubleProperty;
 
 /**
@@ -46,7 +46,7 @@ public class BSBValue extends AutomatableBSBObject implements ParameterListener 
     private ClampedValue defaultValue;
 
     public BSBValue() {
-        defaultValue = new ClampedValue(0.0, 1.0, 0.0, -1.0);
+        defaultValue = new ClampedValue(0.0, 1.0, 0.0, new BigDecimal(-1.0));
         defaultValue.addListener(cvl);
     }
 
@@ -130,7 +130,8 @@ public class BSBValue extends AutomatableBSBObject implements ParameterListener 
             }
         }
 
-        value.setDefaultValueProperty(new ClampedValue(minVal, maxVal, val, -1.0));
+        value.setDefaultValueProperty(
+                new ClampedValue(minVal, maxVal, val, new BigDecimal(-1.0)));
 
         return value;
     }
@@ -232,7 +233,7 @@ public class BSBValue extends AutomatableBSBObject implements ParameterListener 
         param.setMax(getMaximum(), true);
         param.setMin(getMinimum(), true);
         param.setName(getObjectName());
-        param.setResolution(-1);
+        param.setResolution(new BigDecimal(-1));
         param.addParameterListener(this);
         param.setValue(getDefaultValue());
 

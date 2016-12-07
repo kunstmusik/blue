@@ -26,12 +26,14 @@ import blue.utility.NumberUtilities;
 import blue.utility.XMLUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
+import java.math.BigDecimal;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.IntegerProperty;
+import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.value.ChangeListener;
@@ -141,9 +143,9 @@ public class BSBVSliderBank extends AutomatableBSBObject implements
                     }
                     break;
                 case RESOLUTION:
-                    v = getResolution();
+                    BigDecimal bdv = getResolution();
                     for (Parameter param : getParameters()) {
-                        param.setResolution(v);
+                        param.setResolution(bdv);
                     }
                     break;
                 default:
@@ -153,7 +155,7 @@ public class BSBVSliderBank extends AutomatableBSBObject implements
     };
 
     public BSBVSliderBank() {
-        value = new ClampedValue(0.0, 1.0, 0.0, 0.1);
+        value = new ClampedValue(0.0, 1.0, 0.0, new BigDecimal("0.1"));
         value.addListener(cvl);
         sliders.addListener(listChangeListener);
         sliders.add(new BSBVSlider());
@@ -195,15 +197,15 @@ public class BSBVSliderBank extends AutomatableBSBObject implements
         return value.maxProperty();
     }
 
-    public final void setResolution(double val) {
+    public final void setResolution(BigDecimal val) {
         value.setResolution(val);
     }
 
-    public final double getResolution() {
+    public final BigDecimal getResolution() {
         return value.getResolution();
     }
 
-    public final DoubleProperty resolutionProperty() {
+    public final ObjectProperty<BigDecimal> resolutionProperty() {
         return value.resolutionProperty();
     }
 
@@ -355,7 +357,7 @@ public class BSBVSliderBank extends AutomatableBSBObject implements
         BSBVSliderBank sliderBank = new BSBVSliderBank();
         double minVal = 0;
         double maxVal = 1.0;
-        double resolution = 0.1;
+        BigDecimal resolution = new BigDecimal("0.1");
 
         initBasicFromXML(data, sliderBank);
 
@@ -374,7 +376,11 @@ public class BSBVSliderBank extends AutomatableBSBObject implements
                     maxVal = Double.parseDouble(node.getTextString());
                     break;
                 case "resolution":
-                    resolution = Double.parseDouble(node.getTextString());
+                    resolution = new BigDecimal(Double.parseDouble(
+                            node.getTextString()));
+                    break;
+                case "bdresolution":
+                    resolution = new BigDecimal(node.getTextString());
                     break;
                 case "sliderHeight":
                     sliderBank.setSliderHeight(Integer
@@ -412,7 +418,7 @@ public class BSBVSliderBank extends AutomatableBSBObject implements
 
         retVal.addElement(XMLUtilities.writeDouble("minimum", getMinimum()));
         retVal.addElement(XMLUtilities.writeDouble("maximum", getMaximum()));
-        retVal.addElement(XMLUtilities.writeDouble("resolution", getResolution()));
+        retVal.addElement("bdresolution").setText(getResolution().toString());
         retVal.addElement(XMLUtilities.writeInt("sliderHeight", getSliderHeight()));
         retVal.addElement(XMLUtilities.writeInt("gap", getGap()));
 

@@ -25,6 +25,7 @@ import blue.components.lines.LinePoint;
 import blue.components.lines.LineUtils;
 import electric.xml.Element;
 import electric.xml.Elements;
+import java.math.BigDecimal;
 import java.rmi.dgc.VMID;
 import java.util.Vector;
 import javafx.beans.property.BooleanProperty;
@@ -49,7 +50,7 @@ public class Parameter implements TableModelListener {
     private double value = 0.0f;
     private String name = "";
     private String label = "";
-    private double resolution = -1.0f;
+    private BigDecimal resolution = new BigDecimal(-1);
     private BooleanProperty automationEnabled = new SimpleBooleanProperty(false);
 
     private boolean updatingLine = false;
@@ -181,11 +182,11 @@ public class Parameter implements TableModelListener {
         fireParameterChanged();
     }
 
-    public double getResolution() {
+    public BigDecimal getResolution() {
         return resolution;
     }
 
-    public void setResolution(double resolution) {
+    public void setResolution(BigDecimal resolution) {
         // if(this.resolution == resolution) {
         // return;
         // }
@@ -269,7 +270,7 @@ public class Parameter implements TableModelListener {
 
             retValue = line.getValue(time);
 
-            if (resolution > 0 &&
+            if (resolution.doubleValue() > 0 &&
                     time < line.getLinePoint(line.size() - 1).getX()) {
                 retValue = getResolutionAdjustedValue(retValue);
             }
@@ -290,12 +291,8 @@ public class Parameter implements TableModelListener {
         }
 
         double valTarget = val - min;
-        double temp = 0.0f;
-
-        while (temp <= valTarget) {
-            temp += resolution;
-        }
-        temp -= resolution;
+        BigDecimal v = new BigDecimal(valTarget);
+        double temp = v.subtract(v.remainder(resolution)).doubleValue();
 
         return temp + min;
     }
@@ -323,7 +320,7 @@ public class Parameter implements TableModelListener {
         retVal.setAttribute("label", label);
         retVal.setAttribute("min", Double.toString(min));
         retVal.setAttribute("max", Double.toString(max));
-        retVal.setAttribute("resolution", Double.toString(resolution));
+        retVal.setAttribute("bdresolution", resolution.toString());
         retVal.setAttribute("automationEnabled", Boolean
                 .toString(isAutomationEnabled()));
         retVal.setAttribute("value", Double.toString(value));
@@ -361,9 +358,16 @@ public class Parameter implements TableModelListener {
             retVal.max = Double.parseDouble(val);
         }
 
+        // Blue 2.7.0 - updated to use big decimal, this remains
+        // to parse older double values from projects
         val = data.getAttributeValue("resolution");
         if (val != null && val.length() > 0) {
-            retVal.resolution = Double.parseDouble(val);
+            retVal.resolution = new BigDecimal(Double.parseDouble(val));
+        }
+
+        val = data.getAttributeValue("bdresolution");
+        if (val != null && val.length() > 0) {
+            retVal.resolution = new BigDecimal(val);
         }
 
         val = data.getAttributeValue("automationEnabled");
@@ -419,7 +423,7 @@ public class Parameter implements TableModelListener {
                  .append(label, other.label)
                  .append(resolution, other.resolution)
                  .append(line, other.line)
-                 .append(automationEnabled, other.automationEnabled)
+                 .append(automationEnabled.get(), other.automationEnabled.get())
                  .append(updatingLine, other.updatingLine)
                  .append(value, other.value)
                  .isEquals();

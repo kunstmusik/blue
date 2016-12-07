@@ -54,6 +54,7 @@ public class BSBHSliderView extends BorderPane {
         StringConverter<Number> converter = new StringConverter<Number>() {
             @Override
             public String toString(Number object) {
+                System.out.println(object.doubleValue() + ":" + NumberUtilities.formatDouble(object.doubleValue()));
                 return (object == null) ? ""
                         : NumberUtilities.formatDouble(object.doubleValue());
             }

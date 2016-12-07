@@ -30,8 +30,7 @@ import electric.xml.Element;
 import electric.xml.Elements;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.io.IOException;
-import java.io.ObjectInputStream;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -92,7 +91,7 @@ public class Channel implements Comparable<Channel>, ParameterListener {
         levelParameter.setMin(-96.0f, false);
         levelParameter.setMax(12.0f, false);
         levelParameter.setValue(0.0f);
-        levelParameter.setResolution(-1.0f);
+        levelParameter.setResolution(new BigDecimal(-1.0f));
 
         levelParameter.addParameterListener(this);
     }

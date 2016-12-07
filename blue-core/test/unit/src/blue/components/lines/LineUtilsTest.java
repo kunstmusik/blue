@@ -19,6 +19,7 @@
  */
 package blue.components.lines;
 
+import java.math.BigDecimal;
 import junit.framework.TestCase;
 
 public class LineUtilsTest extends TestCase {
@@ -32,27 +33,30 @@ public class LineUtilsTest extends TestCase {
     }
 
     public final void testSnapToResolution() {
+        BigDecimal bd1 = new BigDecimal(1);
         // condition beyond maximum
-        assertEquals(6.0f, LineUtils.snapToResolution(7.0f, .2f, 6.0f, 1.0f),
+        assertEquals(6.0, LineUtils.snapToResolution(7.0f, .2f, 6.0f, bd1),
                 0.0001);
 
         // condition below minimum
-        assertEquals(.2f, LineUtils.snapToResolution(-5.0f, .2f, 6.0f, 1.0f),
+        assertEquals(.2, LineUtils.snapToResolution(-5.0f, .2f, 6.0f, bd1),
                 0.0001);
 
         // condition with resolution
-        assertEquals(5.2, LineUtils.snapToResolution(5.4f, .2f, 6.0f, 1.0f),
+        assertEquals(5.2, LineUtils.snapToResolution(5.4, .2f, 6.0f, bd1),
                 0.0001);
 
         // condition without resolution
-        assertEquals(5.3, LineUtils.snapToResolution(5.3f, .2f, 6.0f, -1.0f),
+        assertEquals(5.3, LineUtils.snapToResolution(5.3, .2f, 6.0f, new BigDecimal(-1)),
                 0.0001);
 
-		assertEquals(1.0f, LineUtils.snapToResolution(1.0f, -20.0f, 20.0f, .2f), 0.0001f);
+		assertEquals(1.0, LineUtils.snapToResolution(1.0, -20.0, 20.0, 
+                new BigDecimal(".2")), 0.0001);
 
-		assertEquals(1.2f, LineUtils.snapToResolution(1.20f, -20.0f, 20.0f, .1f), 0.0001f);
+		assertEquals(1.2, LineUtils.snapToResolution(1.20, -20.0, 20.0, new BigDecimal(".1")), 0.0001);
 		
-		assertEquals(1.4f, LineUtils.snapToResolution(1.40f, -20.0f, 20.0f, .2f), 0.0001f);
+		assertEquals(1.4, LineUtils.snapToResolution(1.40, -20.0f, 20.0f, 
+                new BigDecimal(".2")), 0.0001);
     }
 
 }

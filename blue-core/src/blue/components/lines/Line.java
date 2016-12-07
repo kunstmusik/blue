@@ -25,6 +25,7 @@ import electric.xml.Element;
 import electric.xml.Elements;
 import java.awt.Color;
 import java.io.*;
+import java.math.BigDecimal;
 import java.rmi.dgc.VMID;
 import java.util.*;
 import javafx.collections.FXCollections;
@@ -59,7 +60,7 @@ public class Line implements TableModel, ChangeListener, Iterable<LinePoint> {
 
     double min = 0.0f;
 
-    double resolution = -1.0f;
+    BigDecimal resolution = new BigDecimal(-1);
 
     Color color = null;
 
@@ -156,7 +157,11 @@ public class Line implements TableModel, ChangeListener, Iterable<LinePoint> {
         line.min = Double.parseDouble(data.getAttributeValue("min"));
 
         if (data.getAttributeValue("resolution") != null) {
-            line.resolution = Double.parseDouble(data
+            line.resolution = new BigDecimal(Double.parseDouble(data
+                    .getAttributeValue("resolution")));
+        }
+        if (data.getAttributeValue("bdresolution") != null) {
+            line.resolution = new BigDecimal(data
                     .getAttributeValue("resolution"));
         }
 
@@ -214,7 +219,7 @@ public class Line implements TableModel, ChangeListener, Iterable<LinePoint> {
         retVal.setAttribute("version", "2");
         retVal.setAttribute("max", Double.toString(max));
         retVal.setAttribute("min", Double.toString(min));
-        retVal.setAttribute("resolution", Double.toString(resolution));
+        retVal.setAttribute("bdresolution", resolution.toString());
         retVal.setAttribute("color", Integer.toString(color.getRGB()));
         retVal.setAttribute("rightBound", Boolean.toString(rightBound));
         retVal.setAttribute("endPointsLinked", Boolean.toString(endPointsLinked));
@@ -703,11 +708,11 @@ public class Line implements TableModel, ChangeListener, Iterable<LinePoint> {
         return rightBound;
     }  
     
-    public double getResolution() {
+    public BigDecimal getResolution() {
         return resolution;
     }
 
-    public void setResolution(double resolution) {
+    public void setResolution(BigDecimal resolution) {
         this.resolution = resolution;
         for (Iterator iter = points.iterator(); iter.hasNext();) {
             LinePoint point = (LinePoint) iter.next();

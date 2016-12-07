@@ -25,6 +25,7 @@ import blue.automation.ParameterTimeManagerFactory;
 import blue.utility.XMLUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
+import java.math.BigDecimal;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleStringProperty;
@@ -235,7 +236,7 @@ public class BSBCheckBox extends AutomatableBSBObject implements ParameterListen
         param.setMax(1.0f, true);
         param.setMin(0.0f, true);
         param.setName(getObjectName());
-        param.setResolution(1.0f);
+        param.setResolution(new BigDecimal(1));
         param.addParameterListener(this);
 
         parameters.addParameter(param);

@@ -31,7 +31,6 @@ import blue.ui.core.score.ScoreMode;
 import blue.ui.utilities.FileChooserManager;
 import blue.ui.utilities.UiUtilities;
 import blue.utility.NumberUtilities;
-import blue.utility.ObjectUtilities;
 import blue.utility.ScoreUtilities;
 import java.awt.Color;
 import java.awt.Component;
@@ -49,6 +48,8 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -389,7 +390,7 @@ public class ParameterLinePanel extends JComponent implements
             return;
         }
 
-        if (p.getResolution() <= 0) {
+        if (p.getResolution().doubleValue() <= 0) {
 
             int[] xValues = new int[line.size()];
             int[] yValues = new int[line.size()];
@@ -427,7 +428,7 @@ public class ParameterLinePanel extends JComponent implements
 
             double min = p.getMin();
             double max = p.getMax();
-            double resolution = p.getResolution();
+            BigDecimal resolution = p.getResolution();
 
             for (int i = 0; i < line.size(); i++) {
 
@@ -445,10 +446,12 @@ public class ParameterLinePanel extends JComponent implements
                     double startVal = previous.getY();
 
                     int startX = doubleToScreenX(previous.getX());
-                    int startY = doubleToScreenY(startVal, min, max, -1.0f);
+                    int startY = doubleToScreenY(startVal, min, max, 
+                            new BigDecimal(-1));
 
                     int endX = doubleToScreenX(point.getX());
-                    int endY = doubleToScreenY(point.getY(), min, max, -1.0f);
+                    int endY = doubleToScreenY(point.getY(), min, max, 
+                            new BigDecimal(-1));
 
                     if (startVal == point.getY()) {
                         g.drawLine(startX, startY, endX, startY);
@@ -467,7 +470,7 @@ public class ParameterLinePanel extends JComponent implements
                     int lastY = startY;
                     int lastX = startX;
 
-                    double resAdjust = resolution * .99f;
+                    double resAdjust = resolution.doubleValue() * .99;
 
                     for (int j = startX; j <= endX; j++) {
                         double timeVal = screenToDoubleX(j);
@@ -702,7 +705,7 @@ public class ParameterLinePanel extends JComponent implements
             return;
         }
 
-        if (p.getResolution() <= 0) {
+        if (p.getResolution().doubleValue() <= 0) {
 
             int[] xValues = new int[tempLine.size()];
             int[] yValues = new int[tempLine.size()];
@@ -740,7 +743,7 @@ public class ParameterLinePanel extends JComponent implements
 
             double min = p.getMin();
             double max = p.getMax();
-            double resolution = p.getResolution();
+            BigDecimal resolution = p.getResolution();
 
             for (int i = 0; i < tempLine.size(); i++) {
 
@@ -754,10 +757,12 @@ public class ParameterLinePanel extends JComponent implements
                     double startVal = previous.getY();
 
                     int startX = doubleToScreenX(previous.getX());
-                    int startY = doubleToScreenY(startVal, min, max, -1.0f);
+                    int startY = doubleToScreenY(startVal, min, max, 
+                            new BigDecimal(-1));
 
                     int endX = doubleToScreenX(point.getX());
-                    int endY = doubleToScreenY(point.getY(), min, max, -1.0f);
+                    int endY = doubleToScreenY(point.getY(), min, max, 
+                            new BigDecimal(-1));
 
                     if (startVal == point.getY()) {
                         g.setColor(currentColor);
@@ -778,7 +783,7 @@ public class ParameterLinePanel extends JComponent implements
                     int lastY = startY;
                     int lastX = startX;
 
-                    double resAdjust = resolution * .99f;
+                    double resAdjust = resolution.doubleValue() * .99;
 
                     for (int j = startX; j <= endX; j++) {
                         double timeVal = screenToDoubleX(j);
@@ -845,31 +850,23 @@ public class ParameterLinePanel extends JComponent implements
     }
 
     private int doubleToScreenY(double yVal, double min, double max) {
-        return doubleToScreenY(yVal, min, max, -1.0f);
+        return doubleToScreenY(yVal, min, max, new BigDecimal(-1));
     }
 
     private int doubleToScreenY(double yVal, double min, double max,
-            double resolution) {
+            BigDecimal resolution) {
         int height = this.getHeight() - 10;
 
         double range = max - min;
 
         double adjustedY = yVal - min;
 
-        if (resolution > 0.0f) {
+        if (resolution.doubleValue() > 0.0f) {
 
-            double tempY = 0.0f;
-
-            while (tempY <= adjustedY) {
-                tempY += resolution;
-            }
-
-            tempY -= resolution;
-
-            // adjustedY = (double) (adjustedY - Math.IEEEremainder(adjustedY,
-            // resolution));
+            BigDecimal v = new BigDecimal(adjustedY).setScale(
+                    resolution.scale(), RoundingMode.HALF_UP);
+            double tempY = v.subtract(v.remainder(resolution)).doubleValue();
             adjustedY = (tempY > range) ? range : tempY;
-
         }
 
         double percent = adjustedY / range;
@@ -887,15 +884,18 @@ public class ParameterLinePanel extends JComponent implements
         return (double) val / timeState.getPixelSecond();
     }
 
-    private double screenToDoubleY(int val, double min, double max, double resolution) {
+    private double screenToDoubleY(int val, double min, double max, 
+            BigDecimal resolution) {
         double height = this.getHeight() - 10;
         double percent = 1 - ((val - 5) / height);
         double range = max - min;
 
         double value = percent * range;
 
-        if (resolution > 0.0f) {
-            value = (double) (value - Math.IEEEremainder(value, resolution));
+        if (resolution.doubleValue() > 0.0f) {
+            BigDecimal v = new BigDecimal(value).setScale(resolution.scale(),
+                    RoundingMode.HALF_UP);
+            value = v.subtract(v.remainder(resolution)).doubleValue();
         }
 
         if (value > range) {
@@ -1503,7 +1503,8 @@ public class ParameterLinePanel extends JComponent implements
             for (LinePointOrigin lpo : lpos) {
                 LinePoint lp = lpo.linePoint;
                 Parameter param = lpo.param;
-                double newY = screenToDoubleY(lpo.originY + yDiff, param.getMin(), param.getMax(), -1.0f);
+                double newY = screenToDoubleY(lpo.originY + yDiff, 
+                        param.getMin(), param.getMax(), new BigDecimal(-1));
                 lp.setLocation(lp.getX(), newY);
             }
         }
@@ -1727,7 +1728,7 @@ public class ParameterLinePanel extends JComponent implements
                 editPointsAction.setEnabled(this.line != null);
 
                 boolean bpfEnabled = (this.line != null)
-                        && (currentParameter.getResolution() <= 0);
+                        && (currentParameter.getResolution().doubleValue() <= 0);
 
                 importBPF.setEnabled(bpfEnabled);
                 exportBPF.setEnabled(bpfEnabled);

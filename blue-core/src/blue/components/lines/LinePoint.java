@@ -27,7 +27,6 @@ import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import org.apache.commons.lang3.builder.EqualsBuilder;
 
 /**
  * @author Steven Yi
@@ -140,6 +139,12 @@ public class LinePoint implements Comparable<LinePoint> {
 
     @Override
     public boolean equals(Object obj) {
-        return EqualsBuilder.reflectionEquals(this, obj);
+        if(!(obj instanceof LinePoint)) {
+            return false;
+        }
+        LinePoint b = (LinePoint)obj;
+
+        return this.getX() == b.getX() &&
+                this.getY() == b.getY();
     }
 }

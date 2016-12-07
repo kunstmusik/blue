@@ -20,11 +20,13 @@
 package blue.orchestra.blueSynthBuilder;
 
 import blue.components.lines.LineUtils;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.DoublePropertyBase;
-import javafx.beans.property.SimpleDoubleProperty;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleObjectProperty;
 import javax.swing.JOptionPane;
 
 /**
@@ -43,19 +45,19 @@ public class ClampedValue {
     private DoubleProperty value;
     private DoubleProperty min;
     private DoubleProperty max;
-    private DoubleProperty resolution;
+    private ObjectProperty<BigDecimal> resolution;
 
     List<ClampedValueListener> listeners = null;
 
     public ClampedValue() {
-        this(0.0, 1.0, 0.5, -1.0);
+        this(0.0, 1.0, 0.5, new BigDecimal(-1.0));
     }
 
     public ClampedValue(ClampedValue cv) {
         this(cv.getMin(), cv.getMax(), cv.getValue(), cv.getResolution());
     }
 
-    public ClampedValue(double minVal, double maxVal, double val, double res) {
+    public ClampedValue(double minVal, double maxVal, double val, BigDecimal res) {
         min = new DoublePropertyBase(minVal) {
             @Override
             protected void invalidated() {
@@ -113,18 +115,18 @@ public class ClampedValue {
                 return "value";
             }
         };
-        resolution = new SimpleDoubleProperty(res);
+        resolution = new SimpleObjectProperty<>(res);
     }
 
     protected void adjustValue() {
         double v = getValue();
         double min = getMin();
         double max = getMax();
-        double resolution = getResolution();
+        BigDecimal resolution = getResolution();
 
         double newV = Math.max(min, Math.min(max, v));
 
-        if (resolution > 0.0) {
+        if (resolution.doubleValue() > 0.0) {
             newV = LineUtils.snapToResolution(newV, min, max, resolution);
         }
 
@@ -142,11 +144,11 @@ public class ClampedValue {
     public void setNormalizedValue(double value) {
         double min = getMin();
         double max = getMax();
-        double resolution = getResolution();
+        BigDecimal resolution = getResolution();
         double range = getMax() - min;
         double newVal = (range * value) + min;
 
-        if (resolution > 0.0) {
+        if (resolution.doubleValue() > 0.0) {
             newVal = LineUtils.snapToResolution(newVal, min, max, resolution);
         }
         setValue(newVal);
@@ -168,7 +170,7 @@ public class ClampedValue {
     public final void setValue(double val) {
         double v = Math.max(getMin(), Math.min(getMax(), val));
 
-        if (getResolution() > 0.0) {
+        if (getResolution().doubleValue() > 0.0) {
             v = LineUtils.snapToResolution(v, getMin(), getMax(), getResolution());
         }
         value.set(val);
@@ -269,18 +271,18 @@ public class ClampedValue {
         return max;
     }
 
-    public final void setResolution(double value) {
+    public final void setResolution(BigDecimal value) {
         resolution.set(value);
         adjustValue();
         notifyListeners(ClampedValueListener.PropertyType.RESOLUTION,
                 ClampedValueListener.BoundaryType.NONE);
     }
 
-    public final double getResolution() {
+    public final BigDecimal getResolution() {
         return resolution.get();
     }
 
-    public final DoubleProperty resolutionProperty() {
+    public final ObjectProperty<BigDecimal> resolutionProperty() {
         return resolution;
     }
 

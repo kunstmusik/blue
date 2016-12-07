@@ -22,11 +22,11 @@ package blue.orchestra.blueSynthBuilder;
 import blue.automation.Parameter;
 import blue.automation.ParameterListener;
 import blue.automation.ParameterTimeManagerFactory;
-import static blue.orchestra.blueSynthBuilder.ClampedValueListener.BoundaryType.TRUNCATE;
 import blue.utility.NumberUtilities;
 import blue.utility.XMLUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
+import java.math.BigDecimal;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -59,9 +59,9 @@ public class BSBXYController extends AutomatableBSBObject implements
     };
 
     public BSBXYController() {
-        xValue = new ClampedValue(0.0, 1.0, 0.5, -1.0);
+        xValue = new ClampedValue(0.0, 1.0, 0.5, new BigDecimal(-1.0));
         xValue.addListener(xcvl);
-        yValue = new ClampedValue(0.0, 1.0, 0.5, -1.0);
+        yValue = new ClampedValue(0.0, 1.0, 0.5, new BigDecimal(-1.0));
         yValue.addListener(ycvl);
     }
 
@@ -288,8 +288,10 @@ public class BSBXYController extends AutomatableBSBObject implements
             yval = (yrange * yval) + ymin;
         }
 
-        xyController.setXValueProperty(new ClampedValue(xmin, xmax, xval, -1.0));
-        xyController.setYValueProperty(new ClampedValue(ymin, ymax, yval, -1.0));
+        xyController.setXValueProperty(
+                new ClampedValue(xmin, xmax, xval, new BigDecimal(-1.0)));
+        xyController.setYValueProperty(
+                new ClampedValue(ymin, ymax, yval, new BigDecimal(-1.0)));
 
         return xyController;
     }
@@ -439,7 +441,7 @@ public class BSBXYController extends AutomatableBSBObject implements
         param.setMax(xValue.getMax(), true);
         param.setMin(xValue.getMin(), true);
         param.setName(getObjectName() + "X");
-        param.setResolution(-1);
+        param.setResolution(new BigDecimal(-1));
         param.addParameterListener(this);
         param.setValue(xValue.getValue());
 
@@ -450,7 +452,7 @@ public class BSBXYController extends AutomatableBSBObject implements
         param.setMax(yValue.getMax(), true);
         param.setMin(yValue.getMin(), true);
         param.setName(getObjectName() + "Y");
-        param.setResolution(-1);
+        param.setResolution(new BigDecimal(-1));
         param.addParameterListener(this);
         param.setValue(yValue.getValue());
 

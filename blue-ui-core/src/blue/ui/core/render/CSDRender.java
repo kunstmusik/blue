@@ -698,7 +698,7 @@ public class CSDRender extends CSDRenderService {
         StrBuilder buffer = new StrBuilder();
         String compilationVarName = param.getCompilationVarName();
 
-        if (param.getResolution() > 0.0f) {
+        if (param.getResolution().doubleValue() > 0.0f) {
             buffer.append(compilationVarName);
             buffer.append(" init p4\nturnoff");
         } else {
@@ -722,8 +722,8 @@ public class CSDRender extends CSDRenderService {
         if (line.size() < 2) {
             return;
         }
-
-        double resolution = param.getResolution();
+        // TODO - re-evaluate this strategy for generating values
+        double resolution = param.getResolution().doubleValue();
 
         if (resolution > 0.0f) {
             for (int i = 1; i < line.size(); i++) {
@@ -967,7 +967,7 @@ public class CSDRender extends CSDRenderService {
 
                 initialVal = param.getLine().getValue(startTime);
 
-                double resolution = param.getResolution();
+                double resolution = param.getResolution().doubleValue();
 
                 if (resolution > 0.0f) {
                     initialVal = param.getResolutionAdjustedValue(initialVal);
@@ -1041,10 +1041,9 @@ public class CSDRender extends CSDRenderService {
             //param.setCompilationVarName(varName);
             double initialVal = param.getFixedValue();
 
-            double resolution = param.getResolution();
+            double resolution = param.getResolution().doubleValue();
 
             if (resolution > 0.0f) {
-
                 initialVal = param.getResolutionAdjustedValue(initialVal);
             }
 

@@ -27,6 +27,7 @@ import electric.xml.Element;
 import electric.xml.Elements;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Iterator;
 import javax.swing.event.TableModelListener;
@@ -453,7 +454,7 @@ public class Table extends AbstractTableModel {
                 newVal = LineUtils.truncate(point.getValue(), this.min, this.max);
             } else {
                 newVal = LineUtils.rescale(point.getValue(), oldVal, this.max,
-                        this.min, this.max, -1);
+                        this.min, this.max, new BigDecimal(-1));
             }
 
             point.setLocation(point.getTime(), newVal);
@@ -486,7 +487,7 @@ public class Table extends AbstractTableModel {
                 newVal = LineUtils.truncate(point.getValue(), this.min, this.max);
             } else {
                 newVal = LineUtils.rescale(point.getValue(), this.min, oldVal,
-                        this.min, this.max, -1.0f);
+                        this.min, this.max, new BigDecimal(-1.0f));
             }
 
             point.setLocation(point.getTime(), newVal);

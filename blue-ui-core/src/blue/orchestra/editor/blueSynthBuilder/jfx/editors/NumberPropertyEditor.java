@@ -18,6 +18,7 @@
  */
 package blue.orchestra.editor.blueSynthBuilder.jfx.editors;
 
+import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.function.Predicate;
 import javafx.beans.value.ChangeListener;
@@ -69,6 +70,7 @@ public class NumberPropertyEditor extends TextField {
         if (validator == null || validator.test(newValue)) {
             try {
                 item.setValue(getValueAsNumber());
+                setText(item.getValue().toString());
             } catch (Exception e) {
                 e.printStackTrace();;
                 setText(item.getValue().toString());
@@ -92,6 +94,8 @@ public class NumberPropertyEditor extends TextField {
             return new Long(getText());
         } else if(type == BigInteger.class) {
             return new BigInteger(getText());  
+        } else if(type == BigDecimal.class) {
+            return new BigDecimal(getText());  
         } else if(type == float.class || type == Float.class) {
             return new Float(getText());  
         } else if(type == double.class || type == Double.class) {

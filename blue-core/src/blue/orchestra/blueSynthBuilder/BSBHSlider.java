@@ -26,9 +26,12 @@ import blue.utility.NumberUtilities;
 import blue.utility.XMLUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.IntegerProperty;
+import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 
@@ -56,7 +59,7 @@ public class BSBHSlider extends AutomatableBSBObject implements
     private BooleanProperty valueDisplayEnabled = new SimpleBooleanProperty(true);
 
     public BSBHSlider() {
-        value = new ClampedValue(0.0, 1.0, 0.0, 0.1);
+        value = new ClampedValue(0.0, 1.0, 0.0, new BigDecimal("0.1"));
         value.addListener(cvl);
     }
 
@@ -93,15 +96,15 @@ public class BSBHSlider extends AutomatableBSBObject implements
         return value.maxProperty();
     }
 
-    public final void setResolution(double val) {
+    public final void setResolution(BigDecimal val) {
         value.setResolution(val);
     }
 
-    public final double getResolution() {
+    public final BigDecimal getResolution() {
         return value.getResolution();
     }
 
-    public final DoubleProperty resolutionProperty() {
+    public final ObjectProperty<BigDecimal> resolutionProperty() {
         return value.resolutionProperty();
     }
 
@@ -166,7 +169,7 @@ public class BSBHSlider extends AutomatableBSBObject implements
         double minVal = 0.0;
         double maxVal = 1.0;
         double val = 0.0;
-        double res = 0.1;
+        BigDecimal res = new BigDecimal("0.1");
 
         initBasicFromXML(data, slider);
         String verString = data.getAttributeValue("version");
@@ -186,7 +189,10 @@ public class BSBHSlider extends AutomatableBSBObject implements
                     maxVal = Double.parseDouble(nodeText);
                     break;
                 case "resolution":
-                    res = Double.parseDouble(nodeText);
+                    res = new BigDecimal(Double.parseDouble(nodeText));
+                    break;
+                case "bdresolution":
+                    res = new BigDecimal(nodeText);
                     break;
                 case "value":
                     val = Double.parseDouble(nodeText);
@@ -220,7 +226,7 @@ public class BSBHSlider extends AutomatableBSBObject implements
 
         retVal.addElement("minimum").setText(Double.toString(getMinimum()));
         retVal.addElement("maximum").setText(Double.toString(getMaximum()));
-        retVal.addElement("resolution").setText(Double.toString(getResolution()));
+        retVal.addElement("bdresolution").setText(getResolution().toString());
         retVal.addElement("value").setText(Double.toString(getValue()));
         retVal.addElement("sliderWidth").setText(Integer.toString(getSliderWidth()));
 
@@ -506,10 +512,11 @@ public class BSBHSlider extends AutomatableBSBObject implements
             double range = getMaximum() - getMinimum();
             double newValue;
 
-            if (getResolution() > 0.0f) {
-                long longRange = (long) (range / getResolution()) + 1;
-                newValue = ((Math.random() * longRange) * getResolution());
-                newValue = newValue + getMinimum();
+            if (getResolution().doubleValue() > 0.0f) {
+                BigDecimal newV = new BigDecimal(range * Math.random())
+                        .setScale(getResolution().scale(), RoundingMode.HALF_UP);
+                newV = newV.subtract(newV.remainder(getResolution()));
+                newValue = newV.doubleValue() + getMinimum();
             } else {
                 newValue = (Math.random() * range) + getMinimum();
             }

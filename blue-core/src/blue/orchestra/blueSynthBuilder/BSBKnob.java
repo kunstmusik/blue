@@ -26,6 +26,7 @@ import blue.utility.NumberUtilities;
 import blue.utility.XMLUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
+import java.math.BigDecimal;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -53,7 +54,7 @@ public class BSBKnob extends AutomatableBSBObject implements ParameterListener,
     private BooleanProperty valueDisplayEnabled = new SimpleBooleanProperty(true);
 
     public BSBKnob() {
-        knobValue = new ClampedValue(0.0, 1.0, 0.0, -1.0);
+        knobValue = new ClampedValue(0.0, 1.0, 0.0, new BigDecimal(-1.0));
         knobValue.addListener(cvl);
     }
 
@@ -187,7 +188,7 @@ public class BSBKnob extends AutomatableBSBObject implements ParameterListener,
             value = (value * range) + minVal;
         }
 
-        knob.setKnobValueProperty(new ClampedValue(minVal, maxVal, value, -1.0));
+        knob.setKnobValueProperty(new ClampedValue(minVal, maxVal, value, new BigDecimal(-1.0)));
 
         return knob;
     }
@@ -306,7 +307,7 @@ public class BSBKnob extends AutomatableBSBObject implements ParameterListener,
         param.setMax(getMaximum(), true);
         param.setMin(getMinimum(), true);
         param.setName(getObjectName());
-        param.setResolution(-1);
+        param.setResolution(new BigDecimal(-1));
         param.addParameterListener(this);
         param.setValue(getValue());
 

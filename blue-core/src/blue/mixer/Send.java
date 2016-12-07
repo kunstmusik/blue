@@ -28,6 +28,7 @@ import electric.xml.Element;
 import electric.xml.Elements;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Vector;
@@ -62,7 +63,7 @@ public class Send implements Automatable, ParameterListener {
             levelParameter.setMin(0.0f, false);
             levelParameter.setMax(1.0f, false);
             levelParameter.setValue(1.0f);
-            levelParameter.setResolution(-1.0f);
+            levelParameter.setResolution(new BigDecimal(-1.0f));
 
             levelParameter.addParameterListener(this);
 
@@ -200,7 +201,7 @@ public class Send implements Automatable, ParameterListener {
             send.levelParameter.setMin(0.0f, false);
             send.levelParameter.setMax(1.0f, false);
             send.levelParameter.setValue(1.0f);
-            send.levelParameter.setResolution(-1.0f);
+            send.levelParameter.setResolution(new BigDecimal(-1.0f));
 
             send.levelParameter.addParameterListener(send);
 

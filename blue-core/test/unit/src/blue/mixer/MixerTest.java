@@ -20,7 +20,6 @@
 package blue.mixer;
 
 import blue.automation.Parameter;
-import blue.utility.ObjectUtilities;
 import electric.xml.Element;
 import junit.framework.TestCase;
 import org.apache.commons.lang3.builder.ToStringBuilder;
@@ -30,6 +29,7 @@ public class MixerTest extends TestCase {
     public void testSaveParam() {
         Parameter p = new Parameter();
         Parameter clone = new Parameter(p);
+        System.out.println(p +":"+clone);
         assertEquals(p, clone);
     }
     
