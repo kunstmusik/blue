@@ -189,7 +189,9 @@ public class BSBHSlider extends AutomatableBSBObject implements
                     maxVal = Double.parseDouble(nodeText);
                     break;
                 case "resolution":
-                    res = new BigDecimal(Double.parseDouble(nodeText));
+                    res = new BigDecimal(Double.parseDouble(nodeText))
+                            .setScale(5, RoundingMode.HALF_UP)
+                            .stripTrailingZeros();
                     break;
                 case "bdresolution":
                     res = new BigDecimal(nodeText);

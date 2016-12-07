@@ -27,6 +27,7 @@ import blue.utility.XMLUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.IntegerProperty;
@@ -194,7 +195,9 @@ public class BSBVSlider extends AutomatableBSBObject implements
                     maxVal = parseNum(nodeText, version);
                     break;
                 case "resolution":
-                    res = new BigDecimal(Double.parseDouble(nodeText));
+                    res = new BigDecimal(Double.parseDouble(nodeText))
+                            .setScale(5, RoundingMode.HALF_UP)
+                            .stripTrailingZeros();
                     break;
                 case "bdresolution":
                     res = new BigDecimal(nodeText);

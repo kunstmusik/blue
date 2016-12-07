@@ -27,6 +27,7 @@ import blue.utility.XMLUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
@@ -376,7 +377,9 @@ public class BSBHSliderBank extends AutomatableBSBObject implements
                     break;
                 case "resolution":
                     resolution = new BigDecimal(Double.parseDouble(
-                            node.getTextString()));
+                            node.getTextString()))
+                            .setScale(5, RoundingMode.HALF_UP)
+                            .stripTrailingZeros();
                     break;
                 case "bdresolution":
                     resolution = new BigDecimal(node.getTextString());

@@ -26,6 +26,7 @@ import electric.xml.Elements;
 import java.awt.Color;
 import java.io.*;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.rmi.dgc.VMID;
 import java.util.*;
 import javafx.collections.FXCollections;
@@ -158,11 +159,13 @@ public class Line implements TableModel, ChangeListener, Iterable<LinePoint> {
 
         if (data.getAttributeValue("resolution") != null) {
             line.resolution = new BigDecimal(Double.parseDouble(data
-                    .getAttributeValue("resolution")));
+                    .getAttributeValue("resolution")))
+                    .setScale(5, RoundingMode.HALF_UP)
+                    .stripTrailingZeros();
         }
         if (data.getAttributeValue("bdresolution") != null) {
             line.resolution = new BigDecimal(data
-                    .getAttributeValue("resolution"));
+                    .getAttributeValue("bdresolution"));
         }
 
         String colorStr = data.getAttributeValue("color");

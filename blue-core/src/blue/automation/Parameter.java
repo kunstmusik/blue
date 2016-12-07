@@ -17,7 +17,6 @@
  * the Free Software Foundation Inc., 59 Temple Place - Suite 330,
  * Boston, MA  02111-1307 USA
  */
-
 package blue.automation;
 
 import blue.components.lines.Line;
@@ -26,6 +25,8 @@ import blue.components.lines.LineUtils;
 import electric.xml.Element;
 import electric.xml.Elements;
 import java.math.BigDecimal;
+import java.math.MathContext;
+import java.math.RoundingMode;
 import java.rmi.dgc.VMID;
 import java.util.Vector;
 import javafx.beans.property.BooleanProperty;
@@ -40,7 +41,7 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
  * should holds boundary information (min and max) as well as allows for
  * listeners to follow changes to parameter information. A default value is also
  * necessary.
- * 
+ *
  * @author steven
  */
 public class Parameter implements TableModelListener {
@@ -60,10 +61,12 @@ public class Parameter implements TableModelListener {
 
     /* Used only at compilation time; not transient as it should be copied. 
     *  FIXME: this should be rewrittten. 
-    */
+     */
     private String compilationVarName = null;
 
-    /** Creates a new instance of Parameter */
+    /**
+     * Creates a new instance of Parameter
+     */
     public Parameter() {
         line = new Line(false);
         line.addTableModelListener(this);
@@ -86,7 +89,6 @@ public class Parameter implements TableModelListener {
     }
 
     /* Change Listener Code */
-
     public void addParameterListener(ParameterListener listener) {
         if (listeners == null) {
             listeners = new Vector<>();
@@ -105,7 +107,7 @@ public class Parameter implements TableModelListener {
             return;
         }
 
-        for(ParameterListener cl :listeners) {
+        for (ParameterListener cl : listeners) {
             cl.parameterChanged(this);
         }
     }
@@ -114,7 +116,7 @@ public class Parameter implements TableModelListener {
         if (listeners == null) {
             return;
         }
-        for(ParameterListener cl :listeners) {
+        for (ParameterListener cl : listeners) {
             cl.lineDataChanged(this);
         }
     }
@@ -124,7 +126,6 @@ public class Parameter implements TableModelListener {
     }
 
     /* GETTER/SETTER CODE */
-
     public double getMin() {
         return min;
     }
@@ -139,14 +140,14 @@ public class Parameter implements TableModelListener {
 
         updatingLine = true;
         line.setMin(min, truncate);
-        
+
         if (truncate) {
             value = LineUtils.truncate(value, this.min, this.max);
         } else {
             value = LineUtils.rescale(value, oldMin, this.max,
                     this.min, this.max, this.resolution);
         }
-        
+
         updatingLine = false;
 
         fireParameterChanged();
@@ -158,7 +159,7 @@ public class Parameter implements TableModelListener {
 
         updatingLine = true;
         line.setMax(max, truncate);
-        
+
         if (truncate) {
             value = LineUtils.truncate(value, this.min, this.max);
         } else {
@@ -166,7 +167,6 @@ public class Parameter implements TableModelListener {
                     this.min, this.max, this.resolution);
         }
 
-        
         updatingLine = false;
 
         fireParameterChanged();
@@ -209,7 +209,6 @@ public class Parameter implements TableModelListener {
     }
 
     /* Listening to Line Value Changes to fire events to update UI */
-
     @Override
     public void tableChanged(TableModelEvent e) {
         if (!updatingLine) {
@@ -248,44 +247,44 @@ public class Parameter implements TableModelListener {
 
             updatingLine = false;
         } else {
-            
-            this.value = value; 
-            
+
+            this.value = value;
+
             if (line.size() == 1) {
                 updatingLine = true;
-    
+
                 LinePoint lp = line.getLinePoint(0);
                 lp.setLocation(lp.getX(), value);
-    
+
                 updatingLine = false;
             }
         }
 
     }
-    
+
     public double getValue(double time) {
         double retValue;
-        
+
         if (isAutomationEnabled()) {
 
             retValue = line.getValue(time);
 
-            if (resolution.doubleValue() > 0 &&
-                    time < line.getLinePoint(line.size() - 1).getX()) {
+            if (resolution.doubleValue() > 0
+                    && time < line.getLinePoint(line.size() - 1).getX()) {
                 retValue = getResolutionAdjustedValue(retValue);
             }
-        } else {         
+        } else {
             retValue = this.value; // line.getLinePoint(0).getY();
         }
 
         return retValue;
     }
-    
+
     public double getFixedValue() {
         return this.value;
     }
 
-     public double getResolutionAdjustedValue(double val) {
+    public double getResolutionAdjustedValue(double val) {
         if (val == max) {
             return max;
         }
@@ -309,9 +308,7 @@ public class Parameter implements TableModelListener {
         return automationEnabled;
     }
 
-    
     /* SERIALIZATION CODE */
-
     public Element saveAsXML() {
         Element retVal = new Element("parameter");
 
@@ -362,7 +359,10 @@ public class Parameter implements TableModelListener {
         // to parse older double values from projects
         val = data.getAttributeValue("resolution");
         if (val != null && val.length() > 0) {
-            retVal.resolution = new BigDecimal(Double.parseDouble(val));
+            double res = Double.parseDouble(val);
+            retVal.resolution = new BigDecimal(res)
+                    .setScale(5, RoundingMode.HALF_UP)
+                    .stripTrailingZeros();
         }
 
         val = data.getAttributeValue("bdresolution");
@@ -395,11 +395,10 @@ public class Parameter implements TableModelListener {
         if (retVal.line.getResolution() != retVal.getResolution()) {
             retVal.line.setResolution(retVal.getResolution());
         }
-        
+
         /*
          * Seeting Value property from first line point, introduced in 0.124.0
          */
-        
         val = data.getAttributeValue("value");
         if (val != null && val.length() > 0) {
             retVal.value = Double.parseDouble(val);
@@ -410,23 +409,23 @@ public class Parameter implements TableModelListener {
 
     @Override
     public boolean equals(Object obj) {
-        if(!(obj instanceof Parameter)) {
+        if (!(obj instanceof Parameter)) {
             return false;
         }
-        
-        Parameter other = (Parameter)obj;
-        
+
+        Parameter other = (Parameter) obj;
+
         return new EqualsBuilder()
-                 .append(uniqueId, other.uniqueId)
-                 .append(min, other.min)
-                 .append(max, other.max)
-                 .append(label, other.label)
-                 .append(resolution, other.resolution)
-                 .append(line, other.line)
-                 .append(automationEnabled.get(), other.automationEnabled.get())
-                 .append(updatingLine, other.updatingLine)
-                 .append(value, other.value)
-                 .isEquals();
+                .append(uniqueId, other.uniqueId)
+                .append(min, other.min)
+                .append(max, other.max)
+                .append(label, other.label)
+                .append(resolution, other.resolution)
+                .append(line, other.line)
+                .append(automationEnabled.get(), other.automationEnabled.get())
+                .append(updatingLine, other.updatingLine)
+                .append(value, other.value)
+                .isEquals();
 
     }
 

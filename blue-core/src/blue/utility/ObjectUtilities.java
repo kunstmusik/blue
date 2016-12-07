@@ -94,7 +94,11 @@ public class ObjectUtilities {
 
         Method m = classToLoad.getMethod("loadFromXML",
                 new Class[] { Element.class });
+        try{
         retVal = m.invoke(null, new Object[] { elem });
+        } catch(Exception e) {
+           throw new Exception("Error with class: " + classToLoad, e); 
+        }
 
         return retVal;
     }
