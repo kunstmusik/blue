@@ -125,15 +125,20 @@ public class PatternLayerPanel extends javax.swing.JPanel
 
 
             String originalFile = (String) fObj.getAttribute("originalFile");
-            String displayName = (String)FileUtil.getConfigFile(originalFile).
-                    getAttribute("displayName");
-            
-            JMenuItem temp = new JMenuItem();
-            temp.setText(displayName);
-            temp.putClientProperty("sObjClass", sObj.getClass());
-            temp.setActionCommand(displayName);
-            temp.addActionListener(al);
-            changeSObjMenu.add(temp);
+            FileObject configFile = FileUtil.getConfigFile(originalFile);
+            if(configFile == null) {
+                System.err.println("[PatternLayerPanel] Error: Unable to open file: " +
+                        originalFile); 
+            } else {
+                String displayName = (String)configFile.getAttribute("displayName");
+                
+                JMenuItem temp = new JMenuItem();
+                temp.setText(displayName);
+                temp.putClientProperty("sObjClass", sObj.getClass());
+                temp.setActionCommand(displayName);
+                temp.addActionListener(al);
+                changeSObjMenu.add(temp);
+            }
         }
 
         setBorder(border);

@@ -51,9 +51,9 @@
                             <attr name="position" intvalue="600"/>
                         </file>
 
-                        <file name="blue-soundObject-RhinoObject.shadow">
+                        <file name="blue-soundObject-JavaScriptObject.shadow">
                             <attr name="originalFile" 
-                                  stringvalue="blue/score/soundObjects/blue-soundObject-RhinoObject.instance"/>
+                                  stringvalue="blue/score/soundObjects/blue-soundObject-JavaScriptObject.instance"/>
                             <attr name="position" intvalue="700"/>
                         </file>
 
