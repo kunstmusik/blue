@@ -106,7 +106,7 @@ public class BSBEditPane extends Pane {
 
         getChildren().addAll(gridCanvas, interfaceItemsPane);
 
-        selection = new BSBEditSelection();
+        selection = new BSBEditSelection(interfaceItemsPane.getChildren());
 
         popupMenu = new ContextMenu();
         EventHandler<ActionEvent> al = e -> {

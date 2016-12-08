@@ -20,13 +20,19 @@
 package blue.orchestra.editor.blueSynthBuilder.jfx;
 
 import blue.orchestra.blueSynthBuilder.BSBObject;
+import blue.utility.GUI;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
+import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
 import javafx.scene.Scene;
 import javafx.scene.control.ContextMenu;
+import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
+import javafx.scene.control.Separator;
+import javafx.scene.control.SeparatorMenuItem;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Region;
 import javafx.scene.paint.Color;
@@ -164,32 +170,43 @@ public class BSBObjectViewHolder extends Pane {
                 selection.remove();
             });
 
-//            String[] alignOptions = { "Left", "Horizontal Center", "Right", "Top",
-//            "Vertical Center", "Bottom" };
-//
-//            Menu align = new Menu("Align");
-//            Menu distribute = new Menu("Distribute");
-//
-//            EventHandler<ActionEvent> alignListener = ae -> {
-//                MenuItem source = (MenuItem) ae.getSource();
-//                int index = (Integer) source.getUserData();
-//                GUI.align(jComponents, index);
-//            };
-//
-//            for(int i = 0; i < alignOptions.length; i++) {
-//                String s = alignOptions[i];
-//
-//                MenuItem a = new MenuItem(s);
-//                a.setUserData(i);
-//                a.setOnAction();
-//
-//                MenuItem d = new MenuItem(s);
-//
-//                align.getItems().add(a);
-//                align.getItems().add(d);
-//            }
+            final Menu align = new Menu("Align");
+            final Menu distribute = new Menu("Distribute");
+
+            EventHandler<ActionEvent> alignListener = ae -> {
+                MenuItem source = (MenuItem) ae.getSource();
+                Alignment alignment = (Alignment) source.getUserData();
+                BSBEditSelection selection = (BSBEditSelection) MENU.getUserData();
+                AlignmentUtils.align(selection.getSelectedNodes(), alignment);
+            };
+            EventHandler<ActionEvent> distributeListener = ae -> {
+                MenuItem source = (MenuItem) ae.getSource();
+                Alignment alignment = (Alignment) source.getUserData();
+                BSBEditSelection selection = (BSBEditSelection) MENU.getUserData();
+                AlignmentUtils.distribute(selection.getSelectedNodes(), alignment);
+            };
+
+            for(Alignment alignment : Alignment.values()) {
+                MenuItem a = new MenuItem(alignment.toString());
+                a.setUserData(alignment);
+                a.setOnAction(alignListener);
+
+                MenuItem d = new MenuItem(alignment.toString());
+                d.setUserData(alignment);
+                d.setOnAction(distributeListener);
+
+                align.getItems().add(a);
+                distribute.getItems().add(d);
+            }
             MENU.getItems().addAll(cut, copy, remove);
+            MENU.getItems().addAll(new SeparatorMenuItem(), align, distribute);
             MENU.setOnHidden(e -> MENU.setUserData(null));
+
+            MENU.setOnShowing(e -> {
+                BSBEditSelection selection = (BSBEditSelection) MENU.getUserData();
+                align.setDisable(selection.selection.size() < 2);
+                distribute.setDisable(selection.selection.size() < 2);
+            });
         }
         return MENU;
     }

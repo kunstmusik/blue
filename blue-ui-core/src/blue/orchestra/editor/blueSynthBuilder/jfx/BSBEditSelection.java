@@ -21,10 +21,15 @@ package blue.orchestra.editor.blueSynthBuilder.jfx;
 import blue.orchestra.blueSynthBuilder.BSBGraphicInterface;
 import blue.orchestra.blueSynthBuilder.BSBObject;
 import blue.orchestra.blueSynthBuilder.GridSettings;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.collections.ObservableSet;
+import javafx.scene.Node;
+import javafx.scene.layout.Pane;
 
 /**
  *
@@ -42,10 +47,12 @@ public class BSBEditSelection {
     private ObservableSet<BSBObject> copyBuffer = FXCollections.observableSet();
     private boolean processingMove = false;
     GridSettings gridSettings = null;
+    private final ObservableList<Node> nodeList;
 
-    public BSBEditSelection() {
+    public BSBEditSelection(ObservableList<Node> children) {
         selection = FXCollections.observableSet();
         startPositions = new HashMap<>();
+        nodeList = children;
     }
 
     public ObservableSet<BSBObject> copyBufferProperty() {
@@ -54,7 +61,7 @@ public class BSBEditSelection {
 
     public void setBSBGraphicInterface(BSBGraphicInterface bsbInterface) {
         this.bsbInterface = bsbInterface;
-        this.gridSettings = (bsbInterface != null) ? bsbInterface.getGridSettings(): null;
+        this.gridSettings = (bsbInterface != null) ? bsbInterface.getGridSettings() : null;
         selection.clear();
     }
 
@@ -70,7 +77,7 @@ public class BSBEditSelection {
             minY = Math.min(minY, y);
         }
 
-        if(gridSettings != null && gridSettings.isSnapEnabled()) {
+        if (gridSettings != null && gridSettings.isSnapEnabled()) {
             gridOffsetX = sourceDragObject.getX() % gridSettings.getWidth();
             gridOffsetY = sourceDragObject.getY() % gridSettings.getHeight();
         } else {
@@ -81,14 +88,14 @@ public class BSBEditSelection {
     }
 
     public void move(double xDiff, double yDiff) {
-        if(!processingMove) {
+        if (!processingMove) {
             return;
         }
 
-        if(gridSettings != null && gridSettings.isSnapEnabled()) {
+        if (gridSettings != null && gridSettings.isSnapEnabled()) {
             int w = gridSettings.getWidth();
             int h = gridSettings.getHeight();
-                    
+
             xDiff = (Math.round(xDiff / w) * w) - gridOffsetX;
             yDiff = (Math.round(yDiff / h) * h) - gridOffsetY;
         }
@@ -134,25 +141,25 @@ public class BSBEditSelection {
     }
 
     void nudgeHorizontal(int val) {
-        if(selection.size() == 0 ||
-                selection.stream()
+        if (selection.size() == 0
+                || selection.stream()
                         .mapToInt(BSBObject::getX)
                         .summaryStatistics().getMin() + val <= 0) {
             return;
         }
-        for(BSBObject obj :selection) {
+        for (BSBObject obj : selection) {
             obj.setX(obj.getX() + val);
         }
     }
 
     void nudgeVertical(int val) {
-        if(selection.size() == 0 ||
-                selection.stream()
+        if (selection.size() == 0
+                || selection.stream()
                         .mapToInt(BSBObject::getX)
                         .summaryStatistics().getMin() + val <= 0) {
             return;
         }
-        for(BSBObject obj :selection) {
+        for (BSBObject obj : selection) {
             obj.setY(obj.getY() + val);
         }
     }
@@ -166,5 +173,16 @@ public class BSBEditSelection {
             this.x = x;
             this.y = y;
         }
+    }
+
+    public List<Pane> getSelectedNodes() {
+        ArrayList<Pane> retVal = new ArrayList<>();
+        for (Node n : nodeList) {
+            Pane p = (Pane) n;
+            if (selection.contains(p.getUserData())) {
+                retVal.add(p);
+            };
+        }
+        return retVal;
     }
 }
