@@ -92,9 +92,9 @@ public final class AudioClip implements ScoreObject, Comparable<AudioClip> {
         this();
         setName(ac.getName());
         setStart(ac.getStart());
-        setDuration(ac.getDuration());
         setBackgroundColor(ac.getBackgroundColor());
         setAudioFile(ac.getAudioFile());
+        setDuration(ac.getDuration());
         setFileStartTime(ac.getFileStartTime());
         setFadeIn(ac.getFadeIn());
         setFadeInType(ac.getFadeInType());
