@@ -45,7 +45,7 @@ public class BlueSynthBuilderEditorKit extends NbEditorKit {
     public Document createDefaultDocument() {
         
         Document doc = new BlueSynthBuilderEditorDocument(getContentType());
-        doc.putProperty(Language.class, CsoundOrcTokenId.language());
+        doc.putProperty(Language.class, BSBTokenId.language());
         return doc;
         
     }

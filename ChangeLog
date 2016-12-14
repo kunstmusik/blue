@@ -45,6 +45,8 @@ UPDATED
 
 FIX
 
+* BlueSynthBuilder/ObjectBuilder/Effects - Fixed code completion for BSBWidgets 
+
 * Mixer - using "Edit Effect" to edit the definition of an effect within the 
   mixer would cause an exception after closing the editor
 
