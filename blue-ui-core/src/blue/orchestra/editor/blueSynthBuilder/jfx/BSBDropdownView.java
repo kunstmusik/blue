@@ -21,8 +21,11 @@ package blue.orchestra.editor.blueSynthBuilder.jfx;
 
 import blue.orchestra.blueSynthBuilder.BSBDropdown;
 import blue.orchestra.blueSynthBuilder.BSBDropdownItem;
+import java.util.concurrent.CountDownLatch;
+import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.scene.control.ChoiceBox;
+import org.openide.util.Exceptions;
 
 /**
  *
@@ -50,25 +53,39 @@ public class BSBDropdownView extends ChoiceBox<BSBDropdownItem> {
 //        };
 //        cell.setStyle("-fx-padding:4 1 4 1");
 //        setCellFactory(lv -> cell);
-
         this.dropdown = dropdown;
 //        setPrefWidth(USE_COMPUTED_SIZE);
 
         ChangeListener<? super Number> cl = (obs, old, newVal) -> {
-            if(mutating) return;
+            if (!mutating) {
+                mutating = true;
 
-            mutating = true;
-            getSelectionModel().select(newVal.intValue());
-            mutating = false;
+                if (!Platform.isFxApplicationThread()) {
+                    CountDownLatch latch = new CountDownLatch(1);
+                    Platform.runLater(() -> {
+                        getSelectionModel().select(newVal.intValue());
+                        latch.countDown();
+                    });
+                    try {
+                        latch.await();
+                    } catch (InterruptedException ex) {
+                        Exceptions.printStackTrace(ex);
+                    }
+                } else {
+                    getSelectionModel().select(newVal.intValue());
+                }
+
+                mutating = false;
+            }
         };
 
-        getSelectionModel().selectedIndexProperty().addListener((obs, o, newVal) ->
-        {
-            if(mutating) return;
-
-            mutating = true;
-            dropdown.setSelectedIndex(newVal.intValue());
-            mutating = false;
+        getSelectionModel().selectedIndexProperty().addListener((obs, o, newVal)
+                -> {
+            if (!mutating) {
+                mutating = true;
+                dropdown.setSelectedIndex(newVal.intValue());
+                mutating = false;
+            }
         });
 
         sceneProperty().addListener((obs, old, newVal) -> {

@@ -32,6 +32,7 @@ import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleIntegerProperty;
+import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 
 /**
@@ -44,13 +45,24 @@ public class BSBDropdown extends AutomatableBSBObject implements
     private IntegerProperty selectedIndex = new SimpleIntegerProperty(0);
     private BooleanProperty randomizable = new SimpleBooleanProperty(true);
 
+    private ListChangeListener<BSBDropdownItem> lcl = (c) -> {
+        if (parameters != null) {
+            Parameter param = parameters.getParameter(getObjectName());
+            if (param != null) {
+                param.setMax(Math.max(0, dropdownItems.size() - 1), true);
+            }
+        }
+    };
+
     public BSBDropdown() {
         dropdownItems = new BSBDropdownItemList();
+        dropdownItems.addListener(lcl);
     }
 
     public BSBDropdown(BSBDropdown dropdown) {
         super(dropdown);
         dropdownItems = new BSBDropdownItemList(dropdown.dropdownItems);
+        dropdownItems.addListener(lcl);
 
         setSelectedIndex(dropdown.getSelectedIndex());
         setRandomizable(dropdown.isRandomizable());
@@ -170,20 +182,7 @@ public class BSBDropdown extends AutomatableBSBObject implements
             tempIndex = 0;
         }
 
-        int oldValue = getSelectedIndex();
         this.selectedIndex.set(tempIndex);
-
-        if (parameters != null) {
-            Parameter param = parameters.getParameter(this.getObjectName());
-            if (param != null) {
-                param.setValue(selectedIndex);
-            }
-        }
-
-        if (propListeners != null) {
-            propListeners.firePropertyChange("value", new Integer(oldValue),
-                    new Integer(selectedIndex));
-        }
     }
 
     public final IntegerProperty selectedIndexProperty() {
@@ -258,10 +257,10 @@ public class BSBDropdown extends AutomatableBSBObject implements
                 int oldIndex = getSelectedIndex();
                 setSelectedIndex(randomIndex);
 
-                if (propListeners != null) {
-                    propListeners.firePropertyChange("selectedIndex", oldIndex,
-                            randomIndex);
-                }
+//                if (propListeners != null) {
+//                    propListeners.firePropertyChange("selectedIndex", oldIndex,
+//                            randomIndex);
+//                }
             }
         }
     }
@@ -292,6 +291,7 @@ public class BSBDropdown extends AutomatableBSBObject implements
         Parameter parameter = parameters.getParameter(this.getObjectName());
 
         if (parameter != null) {
+            parameter.setMax(dropdownItems.size() - 1, true);
             parameter.addParameterListener(this);
 
             if (!parameter.isAutomationEnabled()) {
@@ -329,15 +329,15 @@ public class BSBDropdown extends AutomatableBSBObject implements
     public void parameterChanged(Parameter param) {
     }
 
-    private void updateSelectedIndex(int index) {
-        int oldValue = getSelectedIndex();
-        setSelectedIndex(index);
-
-        if (propListeners != null) {
-            propListeners.firePropertyChange("updateValue",
-                    new Integer(oldValue), new Integer(index));
-        }
-    }
+//    private void updateSelectedIndex(int index) {
+//        int oldValue = getSelectedIndex();
+//        setSelectedIndex(index);
+//
+//        if (propListeners != null) {
+//            propListeners.firePropertyChange("updateValue",
+//                    new Integer(oldValue), new Integer(index));
+//        }
+//    }
 
     @Override
     public void lineDataChanged(Parameter param) {
@@ -347,7 +347,8 @@ public class BSBDropdown extends AutomatableBSBObject implements
             double time = ParameterTimeManagerFactory.getInstance().getTime();
             int val = (int)Math.round(parameter.getLine().getValue(time));
 
-            updateSelectedIndex(val);
+//            updateSelectedIndex(val);
+            setSelectedIndex(val);
         }
     }
 
