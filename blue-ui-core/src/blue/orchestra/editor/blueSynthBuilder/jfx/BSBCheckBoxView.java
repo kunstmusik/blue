@@ -20,7 +20,11 @@
 package blue.orchestra.editor.blueSynthBuilder.jfx;
 
 import blue.orchestra.blueSynthBuilder.BSBCheckBox;
+import java.util.concurrent.CountDownLatch;
+import javafx.application.Platform;
+import javafx.beans.value.ChangeListener;
 import javafx.scene.control.CheckBox;
+import org.openide.util.Exceptions;
 
 /**
  *
@@ -33,6 +37,40 @@ public class BSBCheckBoxView extends CheckBox {
     public BSBCheckBoxView(BSBCheckBox checkBox) {
         setUserData(checkBox);
         this.checkBox = checkBox;
+
+        final boolean[] editing = new boolean[1];
+        editing[0] = false;
+
+        ChangeListener<Boolean> cboxToViewListener = (obs, old, newVal) ->{
+            if(!editing[0]) {
+                editing[0] = true;
+                if(!Platform.isFxApplicationThread()) {
+                    CountDownLatch latch = new CountDownLatch(1);
+                    Platform.runLater(() -> {
+                        setSelected(newVal);
+                        latch.countDown();
+                    });
+                    try {
+                        latch.await();
+                    } catch (InterruptedException ex) {
+                        Exceptions.printStackTrace(ex);
+                    }
+                } else {
+                    setSelected(newVal);
+                }
+                editing[0] = false;
+            }
+            
+        };
+
+
+        ChangeListener<Number> viewToCboxListener = (obs, old, newVal) ->{
+            if (!editing[0]) {
+                editing[0] = true;
+                checkBox.setSelected(isSelected());
+                editing[0] = false;
+            }
+        };
 
         sceneProperty().addListener((obs, old, newVal) -> {
             if (newVal == null) {

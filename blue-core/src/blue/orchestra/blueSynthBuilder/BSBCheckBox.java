@@ -123,17 +123,6 @@ public class BSBCheckBox extends AutomatableBSBObject implements ParameterListen
     public final void setSelected(boolean value) {
         boolean oldValue = isSelected();
         selected.set(value);
-
-        if (parameters != null) {
-            Parameter param = parameters.getParameter(this.getObjectName());
-            if (param != null) {
-                param.setValue(isSelected() ? 1 : 0);
-            }
-        }
-
-        if (propListeners != null) {
-            propListeners.firePropertyChange("selected", oldValue, value);
-        }
     }
 
     public final boolean isSelected() {
