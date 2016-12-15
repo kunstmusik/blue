@@ -1246,7 +1246,7 @@ public class ParameterLinePanel extends JComponent implements
 
             marquee.setVisible(false);
 
-//            if (currentParameter == null) {
+            if (currentParameter == null) {
 //                if (UiUtilities.isRightMouseButton(e)) {
 //                    if (popup == null) {
 //                        popup = new EditPointsPopup();
@@ -1254,8 +1254,8 @@ public class ParameterLinePanel extends JComponent implements
 //                    popup.setLine(null);
 //                    popup.show((Component) e.getSource(), e.getX(), e.getY());
 //                }
-//                return;
-//            }
+                return;
+            }
 
             Line currentLine = currentParameter.getLine();
 
