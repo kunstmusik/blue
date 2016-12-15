@@ -22,12 +22,15 @@ package blue.orchestra.editor.blueSynthBuilder.jfx;
 import blue.jfx.controls.ValuePanel;
 import blue.orchestra.blueSynthBuilder.BSBHSlider;
 import blue.utility.NumberUtilities;
+import java.util.concurrent.CountDownLatch;
+import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.value.ChangeListener;
 import javafx.geometry.Orientation;
 import javafx.scene.control.Slider;
 import javafx.scene.layout.BorderPane;
 import javafx.util.StringConverter;
+import org.openide.util.Exceptions;
 
 /**
  *
@@ -54,7 +57,6 @@ public class BSBHSliderView extends BorderPane {
         StringConverter<Number> converter = new StringConverter<Number>() {
             @Override
             public String toString(Number object) {
-                System.out.println(object.doubleValue() + ":" + NumberUtilities.formatDouble(object.doubleValue()));
                 return (object == null) ? ""
                         : NumberUtilities.formatDouble(object.doubleValue());
             }
@@ -77,22 +79,56 @@ public class BSBHSliderView extends BorderPane {
                 setRight(null);
             }
         };
+
+
+        final boolean[] val = new boolean[1];
+        val[0] = false;
+
+        final ChangeListener<Number> sliderToViewListener = (obs, old, newVal) -> {
+            if (!val[0]) {
+                val[0] = true;
+                if (!Platform.isFxApplicationThread()) {
+                    CountDownLatch latch = new CountDownLatch(1);
+                    Platform.runLater(() -> {
+                        slider.setValue(bsbHSlider.getValue());
+                        latch.countDown();
+                    });
+                    try {
+                        latch.await();
+                    } catch (InterruptedException ex) {
+                        Exceptions.printStackTrace(ex);
+                    }
+                } else {
+                    slider.setValue(bsbHSlider.getValue());
+                }
+                val[0] = false;
+            }
+        };
+        final ChangeListener<Number> viewToSliderListener = (obs, old, newVal) -> {
+            if (!val[0]) {
+                val[0] = true;
+                bsbHSlider.setValue(slider.getValue());
+                val[0] = false;
+            }
+        };
         
         sceneProperty().addListener((obs, old, newVal) -> {
             if (newVal == null) {
                 slider.maxProperty().unbind();
                 slider.minProperty().unbind();
-                slider.valueProperty().unbindBidirectional(bsbHSlider.valueProperty());
                 slider.prefWidthProperty().unbind();
+                slider.valueProperty().removeListener(viewToSliderListener);
+                bsbHSlider.valueProperty().removeListener(sliderToViewListener);
                 bsbHSlider.valueDisplayEnabledProperty().removeListener(vdeListener);
                 Bindings.unbindBidirectional(valuePanel.valueProperty(),
                         bsbHSlider.valueProperty());
             } else {
                 slider.maxProperty().bind(bsbHSlider.maximumProperty());
                 slider.minProperty().bind(bsbHSlider.minimumProperty());
-                slider.valueProperty().bindBidirectional(bsbHSlider.valueProperty());
                 slider.prefWidthProperty().bind(bsbHSlider.sliderWidthProperty());
                 bsbHSlider.valueDisplayEnabledProperty().addListener(vdeListener);
+                slider.valueProperty().addListener(viewToSliderListener);
+                bsbHSlider.valueProperty().addListener(sliderToViewListener);
                 Bindings.bindBidirectional(valuePanel.valueProperty(),
                         bsbHSlider.valueProperty(), converter);
 

@@ -22,12 +22,15 @@ package blue.orchestra.editor.blueSynthBuilder.jfx;
 import blue.jfx.controls.ValuePanel;
 import blue.orchestra.blueSynthBuilder.BSBVSlider;
 import blue.utility.NumberUtilities;
+import java.util.concurrent.CountDownLatch;
+import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.value.ChangeListener;
 import javafx.geometry.Orientation;
 import javafx.scene.control.Slider;
 import javafx.scene.layout.BorderPane;
 import javafx.util.StringConverter;
+import org.openide.util.Exceptions;
 
 /**
  *
@@ -77,12 +80,44 @@ public class BSBVSliderView extends BorderPane {
 
         };
 
+        final boolean[] val = new boolean[1];
+        val[0] = false;
+
+        final ChangeListener<Number> sliderToViewListener = (obs, old, newVal) -> {
+            if (!val[0]) {
+                val[0] = true;
+                if (!Platform.isFxApplicationThread()) {
+                    CountDownLatch latch = new CountDownLatch(1);
+                    Platform.runLater(() -> {
+                        slider.setValue(bsbVSlider.getValue());
+                        latch.countDown();
+                    });
+                    try {
+                        latch.await();
+                    } catch (InterruptedException ex) {
+                        Exceptions.printStackTrace(ex);
+                    }
+                } else {
+                    slider.setValue(bsbVSlider.getValue());
+                }
+                val[0] = false;
+            }
+        };
+        final ChangeListener<Number> viewToSliderListener = (obs, old, newVal) -> {
+            if (!val[0]) {
+                val[0] = true;
+                bsbVSlider.setValue(slider.getValue());
+                val[0] = false;
+            }
+        };
+
         sceneProperty().addListener((obs, old, newVal) -> {
             if (newVal == null) {
                 slider.maxProperty().unbind();
                 slider.minProperty().unbind();
-                slider.valueProperty().unbindBidirectional(bsbVSlider.valueProperty());
                 slider.prefWidthProperty().unbind();
+                slider.valueProperty().removeListener(viewToSliderListener);
+                bsbVSlider.valueProperty().removeListener(sliderToViewListener);
                 bsbVSlider.valueDisplayEnabledProperty().removeListener(vdeListener);
 
                 Bindings.unbindBidirectional(valuePanel.valueProperty(),
@@ -90,10 +125,10 @@ public class BSBVSliderView extends BorderPane {
             } else {
                 slider.maxProperty().bind(bsbVSlider.maximumProperty());
                 slider.minProperty().bind(bsbVSlider.minimumProperty());
-                slider.valueProperty().bindBidirectional(bsbVSlider.valueProperty());
                 slider.prefHeightProperty().bind(bsbVSlider.sliderHeightProperty());
                 bsbVSlider.valueDisplayEnabledProperty().addListener(vdeListener);
-
+                slider.valueProperty().addListener(viewToSliderListener);
+                bsbVSlider.valueProperty().addListener(sliderToViewListener);
                 Bindings.bindBidirectional(valuePanel.valueProperty(),
                         bsbVSlider.valueProperty(), converter);
 

@@ -246,108 +246,6 @@ public class BSBVSlider extends AutomatableBSBObject implements
         return retVal;
     }
 
-//    /**
-//     * @return Returns the maximum.
-//     */
-//    public double getMaximum() {
-//        return maximum;
-//    }
-//
-//    /**
-//     * @param maximum The maximum to set.
-//     */
-//    public void setMaximum(double maximum, boolean truncate) {
-//        if (maximum <= getMinimum()) {
-//            return;
-//        }
-//        double oldMax = this.maximum;
-//
-//        this.maximum = maximum;
-//
-//        if (truncate) {
-//            setValue(LineUtils.truncate(getValue(), minimum, maximum));
-//        } else {
-//            setValue(LineUtils.rescale(getValue(), minimum, oldMax, minimum,
-//                    maximum, getResolution()));
-//        }
-//
-//        if (parameters != null) {
-//            Parameter param = parameters.getParameter(this.getObjectName());
-//            if (param != null) {
-//                param.setMax(this.maximum, truncate);
-//            }
-//        }
-//
-//        fireBSBObjectChanged();
-//    }
-//
-//    /**
-//     * @return Returns the minimum.
-//     */
-//    public double getMinimum() {
-//        return minimum;
-//    }
-//
-//    /**
-//     * @param minimum The minimum to set.
-//     */
-//    public void setMinimum(double minimum, boolean truncate) {
-//        if (minimum >= maximum) {
-//            return;
-//        }
-//
-//        double oldMin = this.minimum;
-//        this.minimum = minimum;
-//
-//        if (truncate) {
-//            setValue(LineUtils.truncate(getValue(), minimum, maximum));
-//        } else {
-//            setValue(LineUtils.rescale(getValue(), oldMin, maximum, minimum,
-//                    maximum, getResolution()));
-//        }
-//
-//        if (parameters != null) {
-//            Parameter param = parameters.getParameter(this.getObjectName());
-//            if (param != null) {
-//                param.setMin(this.minimum, truncate);
-//            }
-//        }
-//
-//        fireBSBObjectChanged();
-//    }
-//
-//    /**
-//     * @return
-//     */
-//    public double getValue() {
-//        return this.value;
-//    }
-//
-//    /**
-//     * @param value The value to set.
-//     */
-//    public void setValue(double value) {
-//        double oldValue = this.value;
-//        this.value = value;
-//
-//        if (getResolution() > 0) {
-//            this.value = LineUtils.snapToResolution(this.value, minimum,
-//                    maximum, resolution);
-//        }
-//
-//        if (parameters != null) {
-//            Parameter param = parameters.getParameter(this.getObjectName());
-//            if (param != null) {
-//                param.setValue(this.value);
-//            }
-//        }
-//
-//        if (propListeners != null) {
-//            propListeners.firePropertyChange("value", new Double(oldValue),
-//                    new Double(this.value));
-//        }
-//    }
-
     /*
      * (non-Javadoc)
      * 
@@ -368,41 +266,6 @@ public class BSBVSlider extends AutomatableBSBObject implements
         compilationUnit.addReplacementValue(getObjectName(), NumberUtilities
                 .formatDouble(getValue()));
     }
-
-//    /**
-//     * @return Returns the resolution.
-//     */
-//    public double getResolution() {
-//        return resolution;
-//    }
-//
-//    /**
-//     * @param resolution The resolution to set.
-//     */
-//    public void setResolution(double resolution) {
-//        this.resolution = resolution;
-//
-//        if (parameters != null) {
-//            Parameter param = parameters.getParameter(this.getObjectName());
-//            if (param != null) {
-//                param.setResolution(this.resolution);
-//            }
-//        }
-//    }
-//
-//    /**
-//     * @return Returns the sliderHeight.
-//     */
-//    public int getSliderHeight() {
-//        return sliderHeight;
-//    }
-//
-//    /**
-//     * @param sliderHeight The sliderHeight to set.
-//     */
-//    public void setSliderHeight(int sliderHeight) {
-//        this.sliderHeight = sliderHeight;
-//    }
 
     /*
      * (non-Javadoc)
@@ -470,15 +333,6 @@ public class BSBVSlider extends AutomatableBSBObject implements
         parameters.addParameter(param);
     }
 
-//    public void updateValue(double value) {
-//        double oldValue = this.value;
-//        this.value = value;
-//
-//        if (propListeners != null) {
-//            propListeners.firePropertyChange("updateValue",
-//                    new Double(oldValue), new Double(this.value));
-//        }
-//    }
     @Override
     public void lineDataChanged(Parameter param) {
         Parameter parameter = parameters.getParameter(this.getObjectName());
@@ -486,7 +340,6 @@ public class BSBVSlider extends AutomatableBSBObject implements
         if (parameter != null) {
             double time = ParameterTimeManagerFactory.getInstance().getTime();
             double val = parameter.getLine().getValue(time);
-//            updateValue(val);
             setValue(val);
         }
     }
@@ -510,10 +363,6 @@ public class BSBVSlider extends AutomatableBSBObject implements
     }
 
     /* RANDOMIZABLE METHODS */
-//    @Override
-//    public boolean isRandomizable() {
-//        return randomizable;
-//    }
     @Override
     public void randomize() {
         if (isRandomizable()) {
