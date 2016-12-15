@@ -19,8 +19,10 @@
  */
 package blue.orchestra.editor.blueSynthBuilder.jfx;
 
+import blue.jfx.BlueFX;
 import blue.orchestra.blueSynthBuilder.BSBXYController;
-import javafx.beans.binding.Bindings;
+import blue.orchestra.blueSynthBuilder.ClampedValue;
+import javafx.beans.value.ChangeListener;
 import javafx.scene.control.Label;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Pane;
@@ -67,11 +69,6 @@ public class BSBXYControllerView extends BorderPane {
         rect.setFill(Color.color(0, 1.0, 0));
 
         pane.getChildren().addAll(xLine, yLine, rect);
-
-        sceneProperty().addListener((obs, old, newVal) -> {
-
-        });
-
         pane.setOnMousePressed(me -> {
             bsbXYController.xValueProperty().setNormalizedValue(
                     me.getX() / pane.getWidth()
@@ -91,62 +88,70 @@ public class BSBXYControllerView extends BorderPane {
             }
         });
 
+        ChangeListener<Number> labelListener = (obs, old, newVal) -> {
+            Runnable r = () -> {
+                label.setText(String.format("x: %.4g y: %.4g",
+                        bsbXYController.getXValue(),
+                        bsbXYController.getYValue()));
+            };
+            BlueFX.runOnFXThread(r);
+        };
+
+        ChangeListener<Number> yListener = (obs, old, newVal) -> {
+            Runnable r = () -> {
+                double percent = bsbXYController.yValueProperty().getNormalizedValue();
+                yLine.setY(Math.floor(pane.getPrefHeight() * (1 - percent)));
+                rect.setY((int) ((1.0 - percent) * pane.getPrefHeight()) - 1.0);
+            };
+            BlueFX.runOnFXThread(r);
+        };
+
+        ChangeListener<Number> xListener = (obs, old, newVal) -> {
+            Runnable r = () -> {
+                double percent = bsbXYController.xValueProperty().getNormalizedValue();
+                xLine.setX(pane.getPrefWidth() * percent);
+                rect.setX((int) (percent * pane.getPrefWidth()) - 1.0);
+            };
+            BlueFX.runOnFXThread(r);
+        };
+
         sceneProperty().addListener((obs, old, newVal) -> {
             if (newVal == null) {
                 pane.prefWidthProperty().unbind();
                 pane.prefHeightProperty().unbind();
-                label.textProperty().unbind();
                 label.prefWidthProperty().unbind();
                 yLine.widthProperty().unbind();
-                yLine.yProperty().unbind();
                 xLine.heightProperty().unbind();
-                xLine.xProperty().unbind();
-                rect.yProperty().unbind();
-                rect.xProperty().unbind();
+
+                unbindClampedValue(bsbXYController.xValueProperty(), labelListener);
+                unbindClampedValue(bsbXYController.xValueProperty(), xListener);
+                unbindClampedValue(bsbXYController.yValueProperty(), labelListener);
+                unbindClampedValue(bsbXYController.yValueProperty(), yListener);
             } else {
                 pane.prefWidthProperty().bind(bsbXYController.widthProperty());
                 pane.prefHeightProperty().bind(bsbXYController.heightProperty());
-                label.textProperty().bind(
-                        Bindings.format("x: %.4g y: %.4g",
-                                bsbXYController.xValueProperty().valueProperty(),
-                                bsbXYController.yValueProperty().valueProperty(),
-                                bsbXYController.xValueProperty().maxProperty(),
-                                bsbXYController.xValueProperty().minProperty(),
-                                bsbXYController.yValueProperty().maxProperty(),
-                                bsbXYController.yValueProperty().minProperty()));
                 label.prefWidthProperty().bind(pane.prefWidthProperty());
                 yLine.widthProperty().bind(pane.widthProperty());
-                yLine.yProperty().bind(Bindings.createDoubleBinding(() -> {
-                    double percent = bsbXYController.yValueProperty().getNormalizedValue();
-                    return Math.floor(pane.getPrefHeight() * (1 - percent));
-                },
-                        bsbXYController.yValueProperty().valueProperty(),
-                        bsbXYController.yValueProperty().minProperty(),
-                        bsbXYController.yValueProperty().maxProperty()
-                ));
                 xLine.heightProperty().bind(pane.heightProperty());
-                xLine.xProperty().bind(Bindings.createDoubleBinding(() -> {
-                    double percent = bsbXYController.xValueProperty().getNormalizedValue();
-                    return Math.floor(pane.getPrefWidth() * percent);
-                },
-                        bsbXYController.xValueProperty().valueProperty(),
-                        bsbXYController.xValueProperty().minProperty(),
-                        bsbXYController.xValueProperty().maxProperty()
-                ));
-                rect.xProperty().bind(Bindings.createDoubleBinding(()
-                        -> (int) (bsbXYController.xValueProperty().getNormalizedValue()
-                        * pane.getPrefWidth()) - 1.0,
-                        bsbXYController.xValueProperty().valueProperty(),
-                        bsbXYController.xValueProperty().maxProperty(),
-                        bsbXYController.xValueProperty().minProperty()));
 
-                rect.yProperty().bind(Bindings.createDoubleBinding(()
-                        -> (int) ((1.0 - bsbXYController.yValueProperty().getNormalizedValue())
-                        * pane.getPrefHeight()) - 1.0,
-                        bsbXYController.yValueProperty().valueProperty(),
-                        bsbXYController.yValueProperty().maxProperty(),
-                        bsbXYController.yValueProperty().minProperty()));
+
+                bindClampedValue(bsbXYController.xValueProperty(), labelListener);
+                bindClampedValue(bsbXYController.xValueProperty(), xListener);
+                bindClampedValue(bsbXYController.yValueProperty(), labelListener);
+                bindClampedValue(bsbXYController.yValueProperty(), yListener);
             }
         });
+    }
+
+    private void bindClampedValue(ClampedValue v, ChangeListener<? super Number> listener) {
+        v.valueProperty().addListener(listener);
+        v.minProperty().addListener(listener);
+        v.maxProperty().addListener(listener);
+    }
+
+    private void unbindClampedValue(ClampedValue v, ChangeListener<? super Number> listener) {
+        v.valueProperty().removeListener(listener);
+        v.minProperty().removeListener(listener);
+        v.maxProperty().removeListener(listener);
     }
 }
