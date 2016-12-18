@@ -1,6 +1,6 @@
 /*
  * blue - object composition environment for csound
- * Copyright (c) 2000-2004 Steven Yi (stevenyi@gmail.com)
+ * Copyright (c) 2000-2016 Steven Yi (stevenyi@gmail.com)
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published
@@ -510,22 +510,6 @@ public class Line implements TableModel, ChangeListener, Iterable<LinePoint> {
         return yVal;
     }
 
-    // private double convertYValue(double y) {
-    // double range = getMax() - getMin();
-    // double yVal = (y - getMin()) / range;
-    //
-    // if(yVal < getMin()) {
-    // yVal = getMin();
-    // }
-    //
-    // if(yVal > getMax()) {
-    // yVal = getMax();
-    // }
-    //
-    //
-    // return yVal;
-    // }
-
     @Override
     public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
         Double val = (Double) aValue;
@@ -642,9 +626,7 @@ public class Line implements TableModel, ChangeListener, Iterable<LinePoint> {
      * Automations. If beyond last point will return value of last point,
      * otherwise calculates the value on the line between the points.
      * 
-     * May want to reconsider moving this out to the client class.
-     * 
-     * Current assumes straight lines between points.
+     * Will adjust value if resolution is used and accounts for line direction.
      */
 
     public double getValue(double time) {
@@ -698,6 +680,16 @@ public class Line implements TableModel, ChangeListener, Iterable<LinePoint> {
         double x = (time - a.getX());
 
         double y = (m * x) + a.getY();
+
+        if(resolution.doubleValue() > 0.0) {
+            if (b.getY() < a.getY()) {
+                y += resolution.doubleValue() * 0.99;
+            }
+            BigDecimal v = new BigDecimal(y).setScale(resolution.scale(),
+                    RoundingMode.FLOOR);
+            v = v.subtract(v.remainder(resolution));
+            y = v.doubleValue();
+        }
 
         return y;
     }

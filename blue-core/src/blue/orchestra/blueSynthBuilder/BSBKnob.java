@@ -314,17 +314,6 @@ public class BSBKnob extends AutomatableBSBObject implements ParameterListener,
         parameters.addParameter(param);
     }
 
-    private void updateValue(double value) {
-//        double oldValue = this.value;
-//        this.value = value;
-//
-//        if (propListeners != null) {
-//            propListeners.firePropertyChange("updateValue",
-//                    new Double(oldValue), new Double(this.value));
-//        }
-        setValue(value);
-    }
-
     @Override
     public void lineDataChanged(Parameter param) {
         Parameter parameter = parameters.getParameter(this.getObjectName());
@@ -333,7 +322,7 @@ public class BSBKnob extends AutomatableBSBObject implements ParameterListener,
             double time = ParameterTimeManagerFactory.getInstance().getTime();
             double val = parameter.getLine().getValue(time);
 
-            updateValue(val);
+            setValue(val);
         }
     }
 

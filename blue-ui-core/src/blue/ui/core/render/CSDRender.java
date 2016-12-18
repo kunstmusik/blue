@@ -964,15 +964,7 @@ public class CSDRender extends CSDRenderService {
             double initialVal;
 
             if (param.isAutomationEnabled()) {
-
                 initialVal = param.getLine().getValue(startTime);
-
-                double resolution = param.getResolution().doubleValue();
-
-                if (resolution > 0.0f) {
-                    initialVal = param.getResolutionAdjustedValue(initialVal);
-                }
-
             } else {
                 initialVal = param.getFixedValue();
             }
@@ -1040,12 +1032,6 @@ public class CSDRender extends CSDRenderService {
 
             //param.setCompilationVarName(varName);
             double initialVal = param.getFixedValue();
-
-            double resolution = param.getResolution().doubleValue();
-
-            if (resolution > 0.0f) {
-                initialVal = param.getResolutionAdjustedValue(initialVal);
-            }
 
             // init statements
             initStatements.append(varName);

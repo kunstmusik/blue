@@ -266,13 +266,7 @@ public class Parameter implements TableModelListener {
         double retValue;
 
         if (isAutomationEnabled()) {
-
             retValue = line.getValue(time);
-
-            if (resolution.doubleValue() > 0
-                    && time < line.getLinePoint(line.size() - 1).getX()) {
-                retValue = getResolutionAdjustedValue(retValue);
-            }
         } else {
             retValue = this.value; // line.getLinePoint(0).getY();
         }
@@ -282,18 +276,6 @@ public class Parameter implements TableModelListener {
 
     public double getFixedValue() {
         return this.value;
-    }
-
-    public double getResolutionAdjustedValue(double val) {
-        if (val == max) {
-            return max;
-        }
-
-        double valTarget = val - min;
-        BigDecimal v = new BigDecimal(valTarget);
-        double temp = v.subtract(v.remainder(resolution)).doubleValue();
-
-        return temp + min;
     }
 
     public final void setAutomationEnabled(boolean value) {

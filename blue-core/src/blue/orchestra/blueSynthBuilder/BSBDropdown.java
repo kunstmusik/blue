@@ -24,6 +24,7 @@ package blue.orchestra.blueSynthBuilder;
 import blue.automation.Parameter;
 import blue.automation.ParameterListener;
 import blue.automation.ParameterTimeManagerFactory;
+import blue.components.lines.LineUtils;
 import blue.utility.XMLUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
@@ -345,10 +346,9 @@ public class BSBDropdown extends AutomatableBSBObject implements
 
         if (parameter != null) {
             double time = ParameterTimeManagerFactory.getInstance().getTime();
-            int val = (int)Math.round(parameter.getLine().getValue(time));
+            double val = parameter.getLine().getValue(time);
 
-//            updateSelectedIndex(val);
-            setSelectedIndex(val);
+            setSelectedIndex((int)Math.round(val));
         }
     }
 

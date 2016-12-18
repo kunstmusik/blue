@@ -50,6 +50,9 @@ FIX
 * Mixer - using "Edit Effect" to edit the definition of an effect within the 
   mixer would cause an exception after closing the editor
 
+* Reworked visual rendering and setting of BSB widget values when resolution
+  property used
+
 INTERNAL
 
 * Replaced use of Cloneable and Serializable with copy constructors and new 
