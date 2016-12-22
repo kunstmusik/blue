@@ -73,13 +73,12 @@ public class BSBHSliderView extends BorderPane {
         };
 
         final ChangeListener<Boolean> vdeListener = (obs, old, newVal) -> {
-            if(newVal) {
+            if (newVal) {
                 setRight(valuePanel);
             } else {
                 setRight(null);
             }
         };
-
 
         final boolean[] val = new boolean[1];
         val[0] = false;
@@ -90,8 +89,11 @@ public class BSBHSliderView extends BorderPane {
                 if (!Platform.isFxApplicationThread()) {
                     CountDownLatch latch = new CountDownLatch(1);
                     Platform.runLater(() -> {
-                        slider.setValue(bsbHSlider.getValue());
-                        latch.countDown();
+                        try {
+                            slider.setValue(bsbHSlider.getValue());
+                        } finally {
+                            latch.countDown();
+                        }
                     });
                     try {
                         latch.await();
@@ -111,7 +113,7 @@ public class BSBHSliderView extends BorderPane {
                 val[0] = false;
             }
         };
-        
+
         sceneProperty().addListener((obs, old, newVal) -> {
             if (newVal == null) {
                 slider.maxProperty().unbind();
@@ -127,12 +129,13 @@ public class BSBHSliderView extends BorderPane {
                 slider.minProperty().bind(bsbHSlider.minimumProperty());
                 slider.prefWidthProperty().bind(bsbHSlider.sliderWidthProperty());
                 bsbHSlider.valueDisplayEnabledProperty().addListener(vdeListener);
+                slider.setValue(bsbHSlider.getValue());
                 slider.valueProperty().addListener(viewToSliderListener);
                 bsbHSlider.valueProperty().addListener(sliderToViewListener);
                 Bindings.bindBidirectional(valuePanel.valueProperty(),
                         bsbHSlider.valueProperty(), converter);
 
-                if(bsbHSlider.isValueDisplayEnabled()) {
+                if (bsbHSlider.isValueDisplayEnabled()) {
                     setRight(valuePanel);
                 } else {
                     setRight(null);

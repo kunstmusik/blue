@@ -53,9 +53,9 @@ public class BSBVSliderView extends BorderPane {
         valuePanel.setPrefWidth(50.0);
 
         setCenter(slider);
-        
+
         final ChangeListener<Boolean> vdeListener = (obs, old, newVal) -> {
-            if(newVal) {
+            if (newVal) {
                 setBottom(valuePanel);
             } else {
                 setBottom(null);
@@ -89,8 +89,11 @@ public class BSBVSliderView extends BorderPane {
                 if (!Platform.isFxApplicationThread()) {
                     CountDownLatch latch = new CountDownLatch(1);
                     Platform.runLater(() -> {
-                        slider.setValue(bsbVSlider.getValue());
-                        latch.countDown();
+                        try {
+                            slider.setValue(bsbVSlider.getValue());
+                        } finally {
+                            latch.countDown();
+                        }
                     });
                     try {
                         latch.await();
@@ -127,12 +130,13 @@ public class BSBVSliderView extends BorderPane {
                 slider.minProperty().bind(bsbVSlider.minimumProperty());
                 slider.prefHeightProperty().bind(bsbVSlider.sliderHeightProperty());
                 bsbVSlider.valueDisplayEnabledProperty().addListener(vdeListener);
+                slider.setValue(bsbVSlider.getValue());
                 slider.valueProperty().addListener(viewToSliderListener);
                 bsbVSlider.valueProperty().addListener(sliderToViewListener);
                 Bindings.bindBidirectional(valuePanel.valueProperty(),
                         bsbVSlider.valueProperty(), converter);
 
-                if(bsbVSlider.isValueDisplayEnabled()) {
+                if (bsbVSlider.isValueDisplayEnabled()) {
                     setBottom(valuePanel);
                 } else {
                     setBottom(null);

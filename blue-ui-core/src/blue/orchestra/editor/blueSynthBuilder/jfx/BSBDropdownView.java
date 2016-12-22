@@ -63,8 +63,11 @@ public class BSBDropdownView extends ChoiceBox<BSBDropdownItem> {
                 if (!Platform.isFxApplicationThread()) {
                     CountDownLatch latch = new CountDownLatch(1);
                     Platform.runLater(() -> {
-                        getSelectionModel().select(newVal.intValue());
-                        latch.countDown();
+                        try {
+                            getSelectionModel().select(newVal.intValue());
+                        } finally {
+                            latch.countDown();
+                        }
                     });
                     try {
                         latch.await();

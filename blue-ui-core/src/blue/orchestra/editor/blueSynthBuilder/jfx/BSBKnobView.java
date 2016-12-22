@@ -100,8 +100,11 @@ public class BSBKnobView extends BorderPane {
                 if (!Platform.isFxApplicationThread()) {
                     CountDownLatch latch = new CountDownLatch(1);
                     Platform.runLater(() -> {
-                        knobView.setValue(knob.getValue());
-                        latch.countDown();
+                        try {
+                            knobView.setValue(knob.getValue());
+                        } finally {
+                            latch.countDown();
+                        }
                     });
                     try {
                         latch.await();

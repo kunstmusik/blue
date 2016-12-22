@@ -37,16 +37,18 @@ import javafx.scene.text.Font;
 public class BSBXYControllerView extends BorderPane {
 
     private final BSBXYController bsbXYController;
+    private final Pane pane = new Pane();
+    Rectangle yLine = new Rectangle();
+    Rectangle xLine = new Rectangle();
+    Rectangle rect = new Rectangle(3, 3);
+    Label label = new Label();
 
     public BSBXYControllerView(BSBXYController bsbXYController) {
         setUserData(bsbXYController);
 
         this.bsbXYController = bsbXYController;
 
-        Pane pane = new Pane();
         pane.setStyle("-fx-background-color: black");
-
-        Label label = new Label();
 
         label.setFont(new Font(10));
         label.setTextFill(Color.WHITE);
@@ -54,18 +56,15 @@ public class BSBXYControllerView extends BorderPane {
         setCenter(pane);
         setBottom(label);
 
-        Rectangle yLine = new Rectangle();
         yLine.setX(0);
         yLine.setHeight(1.0);
         yLine.setFill(Color.WHITE);
 
-        Rectangle xLine = new Rectangle();
         xLine.setY(0);
         xLine.setWidth(1.0);
 
         xLine.setFill(Color.WHITE);
 
-        Rectangle rect = new Rectangle(3, 3);
         rect.setFill(Color.color(0, 1.0, 0));
 
         pane.getChildren().addAll(xLine, yLine, rect);
@@ -89,29 +88,17 @@ public class BSBXYControllerView extends BorderPane {
         });
 
         ChangeListener<Number> labelListener = (obs, old, newVal) -> {
-            Runnable r = () -> {
-                label.setText(String.format("x: %.4g y: %.4g",
-                        bsbXYController.getXValue(),
-                        bsbXYController.getYValue()));
-            };
+            Runnable r = () -> updateLabel();
             BlueFX.runOnFXThread(r);
         };
 
         ChangeListener<Number> yListener = (obs, old, newVal) -> {
-            Runnable r = () -> {
-                double percent = bsbXYController.yValueProperty().getNormalizedValue();
-                yLine.setY(Math.floor(pane.getPrefHeight() * (1 - percent)));
-                rect.setY((int) ((1.0 - percent) * pane.getPrefHeight()) - 1.0);
-            };
+            Runnable r = () -> updateUIforY();
             BlueFX.runOnFXThread(r);
         };
 
         ChangeListener<Number> xListener = (obs, old, newVal) -> {
-            Runnable r = () -> {
-                double percent = bsbXYController.xValueProperty().getNormalizedValue();
-                xLine.setX(pane.getPrefWidth() * percent);
-                rect.setX((int) (percent * pane.getPrefWidth()) - 1.0);
-            };
+            Runnable r = () -> updateUIforX();
             BlueFX.runOnFXThread(r);
         };
 
@@ -128,12 +115,16 @@ public class BSBXYControllerView extends BorderPane {
                 unbindClampedValue(bsbXYController.yValueProperty(), labelListener);
                 unbindClampedValue(bsbXYController.yValueProperty(), yListener);
             } else {
+
                 pane.prefWidthProperty().bind(bsbXYController.widthProperty());
                 pane.prefHeightProperty().bind(bsbXYController.heightProperty());
                 label.prefWidthProperty().bind(pane.prefWidthProperty());
                 yLine.widthProperty().bind(pane.widthProperty());
                 xLine.heightProperty().bind(pane.heightProperty());
 
+                updateLabel();
+                updateUIforX();
+                updateUIforY();
 
                 bindClampedValue(bsbXYController.xValueProperty(), labelListener);
                 bindClampedValue(bsbXYController.xValueProperty(), xListener);
@@ -153,5 +144,23 @@ public class BSBXYControllerView extends BorderPane {
         v.valueProperty().removeListener(listener);
         v.minProperty().removeListener(listener);
         v.maxProperty().removeListener(listener);
+    }
+
+    private void updateUIforX() {
+        double percent = bsbXYController.xValueProperty().getNormalizedValue();
+        xLine.setX(pane.getPrefWidth() * percent);
+        rect.setX((int) (percent * pane.getPrefWidth()) - 1.0);
+    }
+
+    private void updateUIforY() {
+        double percent = bsbXYController.yValueProperty().getNormalizedValue();
+        yLine.setY(Math.floor(pane.getPrefHeight() * (1 - percent)));
+        rect.setY((int) ((1.0 - percent) * pane.getPrefHeight()) - 1.0);
+    }
+
+    private void updateLabel() {
+        label.setText(String.format("x: %.4g y: %.4g",
+                bsbXYController.getXValue(),
+                bsbXYController.getYValue()));
     }
 }

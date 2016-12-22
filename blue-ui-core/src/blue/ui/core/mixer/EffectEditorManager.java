@@ -93,8 +93,6 @@ public class EffectEditorManager {
                     Scene scene = new Scene(editPanel);
                     BlueFX.style(scene);
                     panel.setScene(scene);
-
-                    System.out.println(editPanel.getChildren().get(1).getBoundsInParent());
                 } finally {
                     latch.countDown();
                 }

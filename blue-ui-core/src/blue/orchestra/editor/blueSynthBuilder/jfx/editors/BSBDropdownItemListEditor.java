@@ -43,10 +43,12 @@ public class BSBDropdownItemListEditor extends BorderPane {
             CountDownLatch latch = new CountDownLatch(1);
             EventQueue.invokeLater(new Runnable() {
                 public void run() {
-                    DropdownItemEditorDialog dlg = new DropdownItemEditorDialog();
-                    dlg.show(newList);
-                    latch.countDown();
-                    
+                    try {
+                        DropdownItemEditorDialog dlg = new DropdownItemEditorDialog();
+                        dlg.show(newList);
+                    } finally {
+                        latch.countDown();
+                    }
                 }
             });
 
@@ -78,14 +80,13 @@ public class BSBDropdownItemListEditor extends BorderPane {
 //            } catch (IOException ex) {
 //                Exceptions.printStackTrace(ex);
 //            }
-
     }
 
     public void setBSBDropdownItemList(BSBDropdownItemList list) {
         this.list = list;
     }
 
-    public BSBDropdownItemList getBSBDropdownItemList(){
+    public BSBDropdownItemList getBSBDropdownItemList() {
         return list;
     }
 }

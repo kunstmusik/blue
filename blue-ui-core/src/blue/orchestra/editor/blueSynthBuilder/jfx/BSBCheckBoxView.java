@@ -41,14 +41,17 @@ public class BSBCheckBoxView extends CheckBox {
         final boolean[] editing = new boolean[1];
         editing[0] = false;
 
-        ChangeListener<Boolean> cboxToViewListener = (obs, old, newVal) ->{
-            if(!editing[0]) {
+        ChangeListener<Boolean> cboxToViewListener = (obs, old, newVal) -> {
+            if (!editing[0]) {
                 editing[0] = true;
-                if(!Platform.isFxApplicationThread()) {
+                if (!Platform.isFxApplicationThread()) {
                     CountDownLatch latch = new CountDownLatch(1);
                     Platform.runLater(() -> {
-                        setSelected(newVal);
-                        latch.countDown();
+                        try {
+                            setSelected(newVal);
+                        } finally {
+                            latch.countDown();
+                        }
                     });
                     try {
                         latch.await();
@@ -60,11 +63,10 @@ public class BSBCheckBoxView extends CheckBox {
                 }
                 editing[0] = false;
             }
-            
+
         };
 
-
-        ChangeListener<Number> viewToCboxListener = (obs, old, newVal) ->{
+        ChangeListener<Number> viewToCboxListener = (obs, old, newVal) -> {
             if (!editing[0]) {
                 editing[0] = true;
                 checkBox.setSelected(isSelected());

@@ -45,11 +45,14 @@ public class LineListEditor extends BorderPane {
             boolean[] retVal = new boolean[1];
             EventQueue.invokeLater(new Runnable() {
                 public void run() {
-                    LineListEditorDialog dlg = new LineListEditorDialog();
-                    dlg.setModal(true);
-                    dlg.setLineList(newList);
-                    retVal[0] = dlg.ask();
-                    latch.countDown();
+                    try {
+                        LineListEditorDialog dlg = new LineListEditorDialog();
+                        dlg.setModal(true);
+                        dlg.setLineList(newList);
+                        retVal[0] = dlg.ask();
+                    } finally {
+                        latch.countDown();
+                    }
                 }
             });
 
@@ -59,7 +62,7 @@ public class LineListEditor extends BorderPane {
                 Exceptions.printStackTrace(ex);
             }
 
-            if(retVal[0]){
+            if (retVal[0]) {
                 list.clear();
                 list.addAll(newList);
             }
@@ -84,14 +87,13 @@ public class LineListEditor extends BorderPane {
 //            } catch (IOException ex) {
 //                Exceptions.printStackTrace(ex);
 //            }
-
     }
 
     public void setLineList(LineList list) {
         this.list = list;
     }
 
-    public LineList getLineList(){
+    public LineList getLineList() {
         return list;
     }
 }
