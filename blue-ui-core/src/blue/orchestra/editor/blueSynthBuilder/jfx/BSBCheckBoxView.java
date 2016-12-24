@@ -66,7 +66,7 @@ public class BSBCheckBoxView extends CheckBox {
 
         };
 
-        ChangeListener<Number> viewToCboxListener = (obs, old, newVal) -> {
+        ChangeListener<Boolean> viewToCboxListener = (obs, old, newVal) -> {
             if (!editing[0]) {
                 editing[0] = true;
                 checkBox.setSelected(isSelected());
@@ -76,10 +76,15 @@ public class BSBCheckBoxView extends CheckBox {
 
         sceneProperty().addListener((obs, old, newVal) -> {
             if (newVal == null) {
-                this.selectedProperty().unbindBidirectional(checkBox.selectedProperty());
+//                this.selectedProperty().unbindBidirectional(checkBox.selectedProperty());
+                checkBox.selectedProperty().removeListener(cboxToViewListener);
+                this.selectedProperty().removeListener(viewToCboxListener);
                 this.textProperty().unbind();
             } else {
-                this.selectedProperty().bindBidirectional(checkBox.selectedProperty());
+                setSelected(checkBox.isSelected());
+//                this.selectedProperty().bindBidirectional(checkBox.selectedProperty());
+                checkBox.selectedProperty().addListener(cboxToViewListener);
+                this.selectedProperty().addListener(viewToCboxListener);
                 this.textProperty().bind(checkBox.labelProperty());
             }
         });
