@@ -71,6 +71,10 @@ public class BSBXYController extends AutomatableBSBObject implements
         xValue.addListener(xcvl);
         yValue = new ClampedValue(xy.yValueProperty());
         yValue.addListener(ycvl);
+
+        setWidth(xy.getWidth());
+        setHeight(xy.getHeight());
+        setRandomizable(xy.isRandomizable());
     }
 
     // OVERRIDE to handle parameter name changes and multiple parameters
