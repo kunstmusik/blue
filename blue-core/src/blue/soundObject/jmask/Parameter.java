@@ -50,10 +50,18 @@ public class Parameter {
 
     public Parameter(Parameter param) {
         visible = param.visible;
-        generator = param.generator.deepCopy();
-        mask = new Mask(param.mask); 
-        quantizer = new Quantizer(param.quantizer);
-        accumulator = new Accumulator(param.accumulator);
+        if(param.generator != null) {
+            generator = param.generator.deepCopy();
+        }
+        if(param.mask != null) {
+            mask = new Mask(param.mask); 
+        }
+        if(param.quantizer != null) {
+            quantizer = new Quantizer(param.quantizer);
+        }
+        if(param.accumulator != null) {
+            accumulator = new Accumulator(param.accumulator);
+        }
         name = param.name;
     }
 
