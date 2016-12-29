@@ -30,6 +30,7 @@ import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
+import javafx.beans.value.ChangeListener;
 
 /**
  * @author steven
@@ -40,10 +41,21 @@ public class BSBCheckBox extends AutomatableBSBObject implements ParameterListen
     private BooleanProperty selected;
     private BooleanProperty randomizable;
 
+    private ChangeListener<Boolean> listener = (obs, old, newVal) -> {
+        if (parameters != null) {
+            Parameter p = parameters.getParameter(getObjectName());
+            if (p != null && !p.isAutomationEnabled()) {
+                p.setValue(newVal ? 1 : 0);
+            }
+        }
+    };
+
     public BSBCheckBox() {
         label = new SimpleStringProperty("label");
         selected = new SimpleBooleanProperty(false);
         randomizable = new SimpleBooleanProperty(true);
+
+        selected.addListener(listener);
     }
 
     public BSBCheckBox(BSBCheckBox checkBox) {
@@ -52,6 +64,8 @@ public class BSBCheckBox extends AutomatableBSBObject implements ParameterListen
         label = new SimpleStringProperty(checkBox.getLabel());
         selected = new SimpleBooleanProperty(checkBox.isSelected());
         randomizable = new SimpleBooleanProperty(checkBox.isRandomizable());
+
+        selected.addListener(listener);
     }
 
     public static BSBObject loadFromXML(Element data) {
@@ -121,7 +135,6 @@ public class BSBCheckBox extends AutomatableBSBObject implements ParameterListen
     }
 
     public final void setSelected(boolean value) {
-        boolean oldValue = isSelected();
         selected.set(value);
     }
 

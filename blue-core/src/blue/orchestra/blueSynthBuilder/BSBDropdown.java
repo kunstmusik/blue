@@ -24,7 +24,6 @@ package blue.orchestra.blueSynthBuilder;
 import blue.automation.Parameter;
 import blue.automation.ParameterListener;
 import blue.automation.ParameterTimeManagerFactory;
-import blue.components.lines.LineUtils;
 import blue.utility.XMLUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
@@ -33,6 +32,7 @@ import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleIntegerProperty;
+import javafx.beans.value.ChangeListener;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 
@@ -55,9 +55,20 @@ public class BSBDropdown extends AutomatableBSBObject implements
         }
     };
 
+    private ChangeListener<Number> indexListener = (obs, old, newVal) -> {
+        if (parameters != null) {
+            Parameter p = parameters.getParameter(getObjectName());
+            if (p != null && !p.isAutomationEnabled()) {
+                p.setValue(newVal.intValue());
+            }
+        }
+    };
+
     public BSBDropdown() {
         dropdownItems = new BSBDropdownItemList();
         dropdownItems.addListener(lcl);
+
+        selectedIndex.addListener(indexListener);
     }
 
     public BSBDropdown(BSBDropdown dropdown) {
@@ -67,6 +78,8 @@ public class BSBDropdown extends AutomatableBSBObject implements
 
         setSelectedIndex(dropdown.getSelectedIndex());
         setRandomizable(dropdown.isRandomizable());
+
+        selectedIndex.addListener(indexListener);
     }
 
     public static BSBObject loadFromXML(Element data) {

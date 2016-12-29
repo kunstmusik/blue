@@ -32,11 +32,8 @@ import org.openide.util.Exceptions;
  */
 public class BSBCheckBoxView extends CheckBox {
 
-    private final BSBCheckBox checkBox;
-
     public BSBCheckBoxView(BSBCheckBox checkBox) {
         setUserData(checkBox);
-        this.checkBox = checkBox;
 
         final boolean[] editing = new boolean[1];
         editing[0] = false;
@@ -69,7 +66,7 @@ public class BSBCheckBoxView extends CheckBox {
         ChangeListener<Boolean> viewToCboxListener = (obs, old, newVal) -> {
             if (!editing[0]) {
                 editing[0] = true;
-                checkBox.setSelected(isSelected());
+                checkBox.setSelected(newVal);
                 editing[0] = false;
             }
         };
