@@ -67,6 +67,10 @@ public class NumberPropertyEditor extends TextField {
 
     private void updateTextFromTextField() {
         String newValue = this.getText();
+        String old = item.getValue().toString();
+        if(old.equals(newValue)) {
+            return;
+        }
         if (validator == null || validator.test(newValue)) {
             try {
                 item.setValue(getValueAsNumber());
