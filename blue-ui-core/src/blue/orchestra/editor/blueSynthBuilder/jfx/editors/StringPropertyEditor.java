@@ -65,6 +65,9 @@ public class StringPropertyEditor extends TextField {
 
     private void updateTextFromTextField() {
         String newValue = this.getText();
+        if(newValue.equals(item.getValue())) {
+            return;
+        }
         if (validator == null || validator.test(newValue)) {
             item.setValue(newValue);
         }
