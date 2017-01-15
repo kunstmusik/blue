@@ -4,6 +4,7 @@
  */
 package blue.scripting;
 
+import javax.script.ScriptException;
 import org.junit.*;
 import static org.junit.Assert.assertEquals;
 
@@ -12,7 +13,7 @@ import static org.junit.Assert.assertEquals;
  * @author stevenyi
  */
 public class JavaScriptProxyTest {
-    
+
     public JavaScriptProxyTest() {
     }
 
@@ -23,11 +24,11 @@ public class JavaScriptProxyTest {
     @AfterClass
     public static void tearDownClass() throws Exception {
     }
-    
+
     @Before
     public void setUp() {
     }
-    
+
     @After
     public void tearDown() {
     }
@@ -36,7 +37,7 @@ public class JavaScriptProxyTest {
      * Test of processJavascriptScore method, of class JavaScriptProxy.
      */
     @Test
-    public void testProcessJavascriptScore() {
+    public void testProcessJavascriptScore() throws ScriptException {
         String script = "function f(num) {\n";
         script += "  returnText = '';\n";
         script += "for(var i = 0; i < num; i++) {\n";
@@ -47,16 +48,16 @@ public class JavaScriptProxyTest {
         script += "score = f(4);";
         script += "score += f(5);";
 
-String testScore = "i1 0 1 2 3 4 5"
-        + "\ni1 1 1 2 3 4 5"
-        + "\ni1 2 1 2 3 4 5"
-        + "\ni1 3 1 2 3 4 5"
-        + "\ni1 0 1 2 3 4 5"
-        + "\ni1 1 1 2 3 4 5"
-        + "\ni1 2 1 2 3 4 5"
-        + "\ni1 3 1 2 3 4 5"
-        + "\ni1 4 1 2 3 4 5\n";
-        
+        String testScore = "i1 0 1 2 3 4 5"
+                + "\ni1 1 1 2 3 4 5"
+                + "\ni1 2 1 2 3 4 5"
+                + "\ni1 3 1 2 3 4 5"
+                + "\ni1 0 1 2 3 4 5"
+                + "\ni1 1 1 2 3 4 5"
+                + "\ni1 2 1 2 3 4 5"
+                + "\ni1 3 1 2 3 4 5"
+                + "\ni1 4 1 2 3 4 5\n";
+
         assertEquals(testScore, JavaScriptProxy.processJavascriptScore(script, 0.0f,
                 "unit test 1"));
 

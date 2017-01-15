@@ -17,7 +17,6 @@
  * the Free Software Foundation Inc., 59 Temple Place - Suite 330,
  * Boston, MA  02111-1307 USA
  */
-
 package blue.soundObject;
 
 import blue.score.ScoreObjectEvent;
@@ -32,14 +31,13 @@ import java.util.Map;
 /**
  * Title: blue Description: an object composition environment for csound
  * Copyright: Copyright (c) 2001 Company: steven yi music
- * 
+ *
  * @author steven yi
  * @version 1.0
  */
-
-@SoundObjectPlugin(displayName = "JavaScriptObject", live=true, position = 120)
-public class JavaScriptObject extends AbstractSoundObject 
-    implements OnLoadProcessable {
+@SoundObjectPlugin(displayName = "JavaScriptObject", live = true, position = 120)
+public class JavaScriptObject extends AbstractSoundObject
+        implements OnLoadProcessable {
 
     private String javaScriptCode;
 
@@ -95,30 +93,22 @@ public class JavaScriptObject extends AbstractSoundObject
         // object " + this.name + " at time " + this.startTime);
         String soundObjectId = "[ " + this.name + " : " + this.startTime
                 + " ] ";
-        String tempScore = blue.scripting.JavaScriptProxy.processJavascriptScore(
-                javaScriptCode, subjectiveDuration, soundObjectId);
-
-        NoteList nl;
-
         try {
-            nl = ScoreUtilities.getNotes(tempScore);
-        } catch (NoteParseException e) {
-            throw new SoundObjectException(this, e);
-        }
+            String tempScore = blue.scripting.JavaScriptProxy.processJavascriptScore(
+                    javaScriptCode, subjectiveDuration, soundObjectId);
 
-        try {
+            NoteList nl = ScoreUtilities.getNotes(tempScore);
             ScoreUtilities.applyNoteProcessorChain(nl, this.npc);
-        } catch (NoteProcessorException e) {
+            ScoreUtilities.applyTimeBehavior(nl, this.getTimeBehavior(), this
+                    .getSubjectiveDuration(), this.getRepeatPoint());
+            ScoreUtilities.setScoreStart(nl, startTime);
+            return nl;
+        } catch (Exception e) {
             throw new SoundObjectException(this, e);
         }
 
         // double totalDur = ScoreUtilities.getTotalDuration(notes);
         // ScoreUtilities.scaleScore(notes, (subjectiveDuration/totalDur));
-
-        ScoreUtilities.applyTimeBehavior(nl, this.getTimeBehavior(), this
-                .getSubjectiveDuration(), this.getRepeatPoint());
-        ScoreUtilities.setScoreStart(nl, startTime);
-        return nl;
     }
 
     /*
@@ -168,7 +158,7 @@ public class JavaScriptObject extends AbstractSoundObject
         SoundObjectUtilities.initBasicFromXML(data, sObj);
 
         sObj.setText(data.getTextString("javaScriptCode"));
-        
+
         String olpString = data.getAttributeValue("onLoadProcessable");
 
         if (olpString != null) {
@@ -196,11 +186,11 @@ public class JavaScriptObject extends AbstractSoundObject
     }
 
     @Override
-    public NoteList generateForCSD(CompileData compileData, double startTime, 
+    public NoteList generateForCSD(CompileData compileData, double startTime,
             double endTime) throws SoundObjectException {
-        
+
         return generateNotes(startTime, endTime);
-        
+
     }
 
     @Override

@@ -1,22 +1,27 @@
 package blue.scripting;
 
 /**
- * <p>Title: blue</p>
- * <p>Description: an object composition environment for csound</p>
- * <p>Copyright: Copyright (c) 2001-2002</p>
- * <p>Company: steven yi music</p>
+ * <p>
+ * Title: blue</p>
+ * <p>
+ * Description: an object composition environment for csound</p>
+ * <p>
+ * Copyright: Copyright (c) 2001-2002</p>
+ * <p>
+ * Company: steven yi music</p>
+ *
  * @author unascribed
  * @version 1.0
  */
-
 import blue.BlueSystem;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
 
 public class JavaScriptProxy {
-    private static ScriptEngine engine = null;    
-    
+
+    private static ScriptEngine engine = null;
+
     static {
 
     }
@@ -28,7 +33,7 @@ public class JavaScriptProxy {
     }
 
     public static final String processJavascriptScore(String script,
-            double subjectiveDuration, String soundObjectId) {
+            double subjectiveDuration, String soundObjectId) throws ScriptException {
         if (engine == null) {
             reinitialize();
         }
@@ -38,16 +43,12 @@ public class JavaScriptProxy {
                 + ";\n";
         init += "score = '';";
 
-        try {
-            engine.eval(init);
-            engine.eval(script);
+        engine.eval(init);
+        engine.eval(script);
 
-            Object obj = engine.get("score");
-            if (obj != null) {
-                returnScore = obj.toString();
-            }
-        } catch (ScriptException e) {
-            System.out.println(e.getLocalizedMessage());
+        Object obj = engine.get("score");
+        if (obj != null) {
+            returnScore = obj.toString();
         }
 
         return returnScore;

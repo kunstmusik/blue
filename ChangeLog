@@ -39,6 +39,9 @@ UPDATED
 * Renamed RhinoObject and RhinoInstrument to JavaScriptObject and
   JavaScriptInstrument to better reflect their purpose
 
+* JavaScriptObject: for errors/exceptions, now shows error in dialog when 
+  rendering project
+
 * BSB widgets and Automation parameters that used resolution argument (i.e., 
   sliders) now use BigDecimal for more precise value generation and faster 
   calculation when automated
