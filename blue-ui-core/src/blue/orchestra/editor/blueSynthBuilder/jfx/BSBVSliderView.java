@@ -22,6 +22,7 @@ package blue.orchestra.editor.blueSynthBuilder.jfx;
 import blue.jfx.controls.ValuePanel;
 import blue.orchestra.blueSynthBuilder.BSBVSlider;
 import blue.utility.NumberUtilities;
+import java.math.BigDecimal;
 import java.util.concurrent.CountDownLatch;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
@@ -40,9 +41,11 @@ public class BSBVSliderView extends BorderPane {
 
     Slider slider;
     ValuePanel valuePanel;
+    BSBVSlider bsbVSlider;
 
     public BSBVSliderView(BSBVSlider bsbVSlider) {
         setUserData(bsbVSlider);
+        this.bsbVSlider = bsbVSlider;
 
         slider = new Slider();
         slider.setOrientation(Orientation.VERTICAL);
@@ -114,6 +117,11 @@ public class BSBVSliderView extends BorderPane {
             }
         };
 
+        final ChangeListener<Number> tickListener = (obs, old, newVal) -> {
+            updateTickCount();
+        };
+
+
         sceneProperty().addListener((obs, old, newVal) -> {
             if (newVal == null) {
                 slider.maxProperty().unbind();
@@ -125,6 +133,9 @@ public class BSBVSliderView extends BorderPane {
 
                 Bindings.unbindBidirectional(valuePanel.valueProperty(),
                         bsbVSlider.valueProperty());
+                bsbVSlider.maximumProperty().removeListener(tickListener);
+                bsbVSlider.minimumProperty().removeListener(tickListener);
+                bsbVSlider.resolutionProperty().removeListener(tickListener);
             } else {
                 slider.maxProperty().bind(bsbVSlider.maximumProperty());
                 slider.minProperty().bind(bsbVSlider.minimumProperty());
@@ -141,8 +152,28 @@ public class BSBVSliderView extends BorderPane {
                 } else {
                     setBottom(null);
                 }
+
+                slider.setMinorTickCount(0);
+                updateTickCount();
+
+                bsbVSlider.maximumProperty().addListener(tickListener);
+                bsbVSlider.minimumProperty().addListener(tickListener);
+                bsbVSlider.resolutionProperty().addListener(tickListener);
             }
         });
     }
 
+    protected void updateTickCount() {
+        BigDecimal bd = bsbVSlider.getResolution();
+        if (bd.doubleValue() <= 0) {
+            slider.setSnapToTicks(false);
+            return;
+        }
+
+        slider.setSnapToTicks(true);
+        BigDecimal range = new BigDecimal(
+                bsbVSlider.getMaximum() - bsbVSlider.getMinimum());
+
+        slider.setMajorTickUnit(bsbVSlider.getResolution().doubleValue());
+    }
 }
