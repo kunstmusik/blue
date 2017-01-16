@@ -68,7 +68,7 @@ public class BSBFileSelector extends BSBObject implements StringChannelProvider 
             fireStringChannelChange(oldVal, newVal);
         });
 
-        stringChannel = new StringChannel();
+        stringChannel = new StringChannel(fs.getStringChannel());
         addPropertyChangeListener(stringChannel);
     }
 
