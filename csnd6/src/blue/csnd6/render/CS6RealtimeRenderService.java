@@ -544,6 +544,8 @@ public class CS6RealtimeRenderService implements RealtimeRenderService, PlayMode
                 bindings.get(i).cleanup();
             }
 
+            bindings.clear();
+
             csound.Stop();
             csound.Cleanup();
             csound.SetMessageCallback(null);
