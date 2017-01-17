@@ -56,6 +56,10 @@ FIX
 * Reworked visual rendering and setting of BSB widget values when resolution
   property used
 
+* BlueLive - fixed problem where BlueLive would send n copies of each note where
+  n = number of times BlueLive was started/stopped (problem due to not clearing
+  bindings between runs) 
+
 INTERNAL
 
 * Replaced use of Cloneable and Serializable with copy constructors and new 
