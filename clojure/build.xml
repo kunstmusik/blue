@@ -40,4 +40,19 @@
     
     <description>Builds, tests, and runs the project org.clojure.</description>
     <import file="nbproject/build-impl.xml"/>
+
+    <target name="release" depends="projectized-common.files-init">
+        <mkdir dir="${cluster}"/>
+        <copy todir="${cluster}">
+            <fileset dir="${release.dir}">
+                <patternset includes="${release.files}">
+                </patternset>
+                <modified/>
+            </fileset>
+        </copy>
+    </target>
+
+    <target name="clean" depends="projectized-common.clean">
+        <delete file="cache.properties"/>
+    </target>
 </project>
