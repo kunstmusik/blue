@@ -23,6 +23,7 @@ import blue.plaf.netbeans.BlueLFCustoms;
 import java.awt.Color;
 import java.awt.EventQueue;
 import java.awt.event.KeyEvent;
+import java.lang.reflect.InvocationTargetException;
 import java.util.logging.Logger;
 import javax.swing.BorderFactory;
 import javax.swing.KeyStroke;
@@ -48,8 +49,16 @@ public class Installer extends ModuleInstall {
 
     @Override
     public void validate() throws IllegalStateException {
-        UIManager.put("Nb.BlueLFCustoms", customs);
-        UIManager.put("nb.dark.theme", true);
+        try {
+            EventQueue.invokeAndWait(() -> {
+                UIManager.put("Nb.BlueLFCustoms", customs);
+                UIManager.put("nb.dark.theme", true);
+            });
+        } catch (InterruptedException ex) {
+            Exceptions.printStackTrace(ex);
+        } catch (InvocationTargetException ex) {
+            Exceptions.printStackTrace(ex);
+        }
     }
 
     @Override
