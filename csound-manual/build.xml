@@ -14,7 +14,7 @@
         <mkdir dir="release/csoundManual"/>
         <copy todir="release/csoundManual">
             <fileset dir="${CS_MANUAL_DIR}/html">
-                <modified/>
+                <modified update="true"/>
             </fileset>
         </copy>
     </target>

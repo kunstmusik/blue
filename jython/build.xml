@@ -12,7 +12,7 @@
             <fileset dir="${release.dir}">
                 <patternset includes="${release.files}">
                 </patternset>
-                <modified/>
+                <modified update="true"/>
             </fileset>
         </copy>
     </target>
