@@ -36,7 +36,7 @@ public class ProbabilityEditorFactory {
 
     public static JComponent getView(ProbabilityGenerator pGen) {
         if (pGen instanceof Beta) {
-            new BetaEditor((Beta)pGen);
+            return new BetaEditor((Beta)pGen);
         } else if (pGen instanceof Cauchy) {
             return new CauchyEditor((Cauchy)pGen);
         } else if (pGen instanceof Exponential) {

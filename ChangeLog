@@ -60,6 +60,8 @@ FIX
   n = number of times BlueLive was started/stopped (problem due to not clearing
   bindings between runs) 
 
+* JMask - Probability: Beta editor was not showing when Beta generator selected
+
 INTERNAL
 
 * Replaced use of Cloneable and Serializable with copy constructors and new 

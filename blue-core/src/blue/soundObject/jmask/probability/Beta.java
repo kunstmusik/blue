@@ -51,7 +51,7 @@ public class Beta implements ProbabilityGenerator {
         a = beta.a;
         b = beta.b;
         aTable = new Table(beta.aTable);
-        aTable = new Table(beta.bTable);
+        bTable = new Table(beta.bTable);
         aTableEnabled = beta.aTableEnabled;
         bTableEnabled = beta.bTableEnabled;
     }
