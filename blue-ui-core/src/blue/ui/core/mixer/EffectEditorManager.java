@@ -57,11 +57,12 @@ public class EffectEditorManager {
 
     public void removeEffect(Effect effect) {
         if (map.containsKey(effect)) {
-            Object val = map.get(effect);
+            WeakReference<JDialog> ref = map.get(effect);
 
-            if (val != null) {
-                ((JDialog) val).setVisible(false);
-                ((JDialog) val).dispose();
+            JDialog dialog = ref.get();
+            if (dialog != null) {
+                dialog.setVisible(false);
+                dialog.dispose();
             }
 
             map.remove(effect);
