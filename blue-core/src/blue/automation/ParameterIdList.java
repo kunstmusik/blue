@@ -274,7 +274,7 @@ public class ParameterIdList implements Iterable<String> {
         fireListSelectionEvent(selectedIndex);
     }
 
-    void setSelectedParameter(String paramId) {
+    public void setSelectedParameter(String paramId) {
         if (paramId == null) {
             return;
         }
