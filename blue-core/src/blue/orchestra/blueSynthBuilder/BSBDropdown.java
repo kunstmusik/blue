@@ -35,6 +35,7 @@ import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
+import javafx.scene.text.Font;
 
 /**
  * @author Steven Yi
@@ -45,6 +46,18 @@ public class BSBDropdown extends AutomatableBSBObject implements
     private BSBDropdownItemList dropdownItems;
     private IntegerProperty selectedIndex = new SimpleIntegerProperty(0);
     private BooleanProperty randomizable = new SimpleBooleanProperty(true);
+
+    IntegerProperty fontSize = new SimpleIntegerProperty(12) {
+        @Override
+        protected void invalidated() {
+            if(get() < 8) {
+                set(8);
+            } else if (get() > 36) {
+                set(36);
+            }
+        }
+        
+    };
 
     private ListChangeListener<BSBDropdownItem> lcl = (c) -> {
         if (parameters != null) {
@@ -86,6 +99,16 @@ public class BSBDropdown extends AutomatableBSBObject implements
         BSBDropdown dropDown = new BSBDropdown();
         initBasicFromXML(data, dropDown);
 
+        int version = 1;
+
+        String versionStr = data.getAttributeValue("version");
+
+        if (versionStr != null) {
+            version = Integer.parseInt(versionStr);
+        }
+        
+        
+        
         Elements nodes = data.getElements();
         int selectedIndex = 0;
 
@@ -103,9 +126,29 @@ public class BSBDropdown extends AutomatableBSBObject implements
                 case "randomizable":
                     dropDown.setRandomizable(XMLUtilities.readBoolean(node));
                     break;
+                case "fontSize":
+                    dropDown.setFontSize(XMLUtilities.readInt(node));
+                    break;
             }
         }
         dropDown.setSelectedIndex(selectedIndex);
+        
+        if(version < 2) {
+            int fontSize = 12;
+            
+            for(BSBDropdownItem dropdownItem : dropDown.dropdownItems) {
+                String str = dropdownItem.getName();
+                Font f = SwingHTMLFontParser.parseFont(str);
+                if(f.getSize() != 12.0) {
+                    fontSize = (int)f.getSize();
+                }
+                dropdownItem.setName(SwingHTMLFontParser.stripHTML(str));
+            }
+            
+            if(fontSize != 12) {
+                dropDown.setFontSize(fontSize);
+            }
+        }
 
         return dropDown;
     }
@@ -113,9 +156,12 @@ public class BSBDropdown extends AutomatableBSBObject implements
     @Override
     public Element saveAsXML() {
         Element retVal = getBasicXML(this);
-
+        retVal.setAttribute("version", "2");
+        
         retVal.addElement("selectedIndex").setText(
                 Integer.toString(this.getSelectedIndex()));
+        retVal.addElement("fontSize").setText(
+                Integer.toString(getFontSize()));
         retVal.addElement(XMLUtilities.writeBoolean("randomizable",
                 isRandomizable()));
 
@@ -124,7 +170,6 @@ public class BSBDropdown extends AutomatableBSBObject implements
         for (BSBDropdownItem item : dropdownItems) {
             items.addElement(item.saveAsXML());
         }
-
 
         return retVal;
     }
@@ -164,11 +209,11 @@ public class BSBDropdown extends AutomatableBSBObject implements
 
     }
 
-    public BSBDropdownItemList getBSBDropdownItemList(){
+    public BSBDropdownItemList getBSBDropdownItemList() {
         return dropdownItems;
     }
 
-    public void setBSBDropdownItemList(BSBDropdownItemList list){
+    public void setBSBDropdownItemList(BSBDropdownItemList list) {
         this.dropdownItems = list;
     }
 
@@ -192,7 +237,7 @@ public class BSBDropdown extends AutomatableBSBObject implements
             tempIndex = dropdownItems.size() - 1;
         }
 
-        if(tempIndex < 0) {
+        if (tempIndex < 0) {
             tempIndex = 0;
         }
 
@@ -215,6 +260,18 @@ public class BSBDropdown extends AutomatableBSBObject implements
 
     public final BooleanProperty randomizableProperty() {
         return randomizable;
+    }
+
+    public final void setFontSize(int size) {
+        fontSize.set(size);
+    }
+
+    public final int getFontSize() {
+        return fontSize.get();
+    }
+
+    public final IntegerProperty fontSizeProperty() {
+        return fontSize;
     }
 
     /*
@@ -352,7 +409,6 @@ public class BSBDropdown extends AutomatableBSBObject implements
 //                    new Integer(oldValue), new Integer(index));
 //        }
 //    }
-
     @Override
     public void lineDataChanged(Parameter param) {
         Parameter parameter = parameters.getParameter(this.getObjectName());
@@ -361,7 +417,7 @@ public class BSBDropdown extends AutomatableBSBObject implements
             double time = ParameterTimeManagerFactory.getInstance().getTime();
             double val = parameter.getLine().getValue(time);
 
-            setSelectedIndex((int)Math.round(val));
+            setSelectedIndex((int) Math.round(val));
         }
     }
 

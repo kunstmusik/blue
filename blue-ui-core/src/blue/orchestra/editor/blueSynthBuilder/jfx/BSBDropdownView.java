@@ -91,15 +91,26 @@ public class BSBDropdownView extends ChoiceBox<BSBDropdownItem> {
             }
         });
 
+        ChangeListener<? super Number> fontListener = (obs, old, newVal) -> {
+            updateFont(dropdown.getFontSize());
+        };
+
         sceneProperty().addListener((obs, old, newVal) -> {
             if (newVal == null) {
                 dropdown.selectedIndexProperty().removeListener(cl);
+                dropdown.fontSizeProperty().removeListener(fontListener);
             } else {
                 getSelectionModel().select(dropdown.getSelectedIndex());
                 dropdown.selectedIndexProperty().addListener(cl);
+                dropdown.fontSizeProperty().addListener(fontListener);
             }
         });
 
+        updateFont(dropdown.getFontSize());
     }
 
+    protected void updateFont(int fontSize) {
+        setStyle(String.format("-fx-font-size: %dpx;", fontSize));
+
+    }
 }

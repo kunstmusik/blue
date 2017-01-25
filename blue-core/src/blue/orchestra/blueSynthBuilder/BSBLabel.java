@@ -19,24 +19,19 @@
  */
 package blue.orchestra.blueSynthBuilder;
 
+import static blue.orchestra.blueSynthBuilder.SwingHTMLFontParser.parseFont;
+import static blue.orchestra.blueSynthBuilder.SwingHTMLFontParser.stripHTML;
 import electric.xml.Element;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.scene.text.Font;
-import javafx.scene.text.FontWeight;
 
 /**
  * @author steven
  */
 public class BSBLabel extends BSBObject {
-
-    static final Pattern SIZE_REGEX = Pattern.compile("size=\"([^\"]*)\"",
-            Pattern.CASE_INSENSITIVE);
-    static final int SIZE_MAP[] = {8, 10, 12, 14, 18, 24, 36};
 
     StringProperty label = new SimpleStringProperty("label");
     ObjectProperty<Font> font = new SimpleObjectProperty<>(new Font(12));
@@ -74,39 +69,6 @@ public class BSBLabel extends BSBObject {
         return font;
     }
 
-    protected static Font parseFont(String text) {
-        Matcher m = SIZE_REGEX.matcher(text);
-        int retVal = 2;
-        if (m.find()) {
-            try {
-                String t = m.group(1);
-                int v = Integer.parseInt(m.group(1));
-
-                if (t.charAt(0) == '+'
-                        || t.charAt(0) == '-') {
-                    retVal += v + 1;
-                } else {
-                    retVal = v - 1;
-                }
-            } catch (NumberFormatException nfe) {
-                nfe.printStackTrace();
-                retVal = 0;
-            }
-        }
-        retVal = Math.min(Math.max(0, retVal), 6);
-
-        FontWeight weight = FontWeight.NORMAL;
-        if (text.indexOf("<b>") >= 0 || retVal > 2) {
-            weight = FontWeight.BOLD;
-        }
-        Font f = Font.font("System Regular", weight, SIZE_MAP[retVal]);
-        return f;
-    }
-
-    protected static String stripHTML(String text) {
-        return text.replaceAll("\\<[^>]*?>", "");
-    }
-
     public static BSBObject loadFromXML(Element data) {
         BSBLabel label = new BSBLabel();
         initBasicFromXML(data, label);
@@ -120,7 +82,7 @@ public class BSBLabel extends BSBObject {
         }
 
         String labelText = data.getTextString("label");
-        if(labelText == null) {
+        if (labelText == null) {
             labelText = "";
         }
 

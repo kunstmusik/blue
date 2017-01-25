@@ -38,20 +38,22 @@ public class BSBDropdownBeanInfo extends SimpleBeanInfo {
     // Property identifiers//GEN-FIRST:Properties
     private static final int PROPERTY_automationAllowed = 0;
     private static final int PROPERTY_BSBDropdownItemList = 1;
-    private static final int PROPERTY_objectName = 2;
-    private static final int PROPERTY_randomizable = 3;
-    private static final int PROPERTY_selectedIndex = 4;
-    private static final int PROPERTY_x = 5;
-    private static final int PROPERTY_y = 6;
+    private static final int PROPERTY_fontSize = 2;
+    private static final int PROPERTY_objectName = 3;
+    private static final int PROPERTY_randomizable = 4;
+    private static final int PROPERTY_selectedIndex = 5;
+    private static final int PROPERTY_x = 6;
+    private static final int PROPERTY_y = 7;
 
     // Property array 
     /*lazy PropertyDescriptor*/
     private static PropertyDescriptor[] getPdescriptor(){
-        PropertyDescriptor[] properties = new PropertyDescriptor[7];
+        PropertyDescriptor[] properties = new PropertyDescriptor[8];
     
         try {
             properties[PROPERTY_automationAllowed] = new PropertyDescriptor ( "automationAllowed", blue.orchestra.blueSynthBuilder.BSBDropdown.class, "isAutomationAllowed", "setAutomationAllowed" ); // NOI18N
             properties[PROPERTY_BSBDropdownItemList] = new PropertyDescriptor ( "BSBDropdownItemList", blue.orchestra.blueSynthBuilder.BSBDropdown.class, "getBSBDropdownItemList", "setBSBDropdownItemList" ); // NOI18N
+            properties[PROPERTY_fontSize] = new PropertyDescriptor ( "fontSize", blue.orchestra.blueSynthBuilder.BSBDropdown.class, "getFontSize", "setFontSize" ); // NOI18N
             properties[PROPERTY_objectName] = new PropertyDescriptor ( "objectName", blue.orchestra.blueSynthBuilder.BSBDropdown.class, "getObjectName", "setObjectName" ); // NOI18N
             properties[PROPERTY_randomizable] = new PropertyDescriptor ( "randomizable", blue.orchestra.blueSynthBuilder.BSBDropdown.class, "isRandomizable", "setRandomizable" ); // NOI18N
             properties[PROPERTY_selectedIndex] = new PropertyDescriptor ( "selectedIndex", blue.orchestra.blueSynthBuilder.BSBDropdown.class, "getSelectedIndex", "setSelectedIndex" ); // NOI18N
