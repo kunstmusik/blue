@@ -28,6 +28,16 @@ NEW
 
 * JavaScriptObject now supports "Process on Load" option
 
+* Issue #343 - User-defined Opcodes: 
+  * Export: User can now select single UDO from project UDO list and choose 
+    export to either Blue UDO file (an XML representation of the UDO with 
+    .blueUDO extension) or Csound UDO file (standard Csound UDO code in a file 
+    with .udo extension)
+
+  * Import: Removed older network-based Import system and added file-based UDO
+    import from either Blue UDO (.blueUDO) files or Csound files (.udo, .csd, 
+    .orc).  For Csound files, Blue will import all found UDOs within the file.
+
 UPDATED
 
 * Mixer:

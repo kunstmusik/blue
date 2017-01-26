@@ -132,7 +132,7 @@ public class ArrangementEditPanel extends JComponent
         JPanel topPanel = new JPanel(new BorderLayout());
         topPanel.setBorder(BorderFactory.createCompoundBorder(BorderFactory
                 .createBevelBorder(BevelBorder.RAISED), new EmptyBorder(3, 3,
-                        3, 3)));
+                3, 3)));
 
         JLabel label = new JLabel("Orchestra");
 
@@ -638,104 +638,98 @@ public class ArrangementEditPanel extends JComponent
             Action importItem = new AbstractAction(BlueSystem
                     .getString("common.import")) {
 
-                        @Override
-                        public void actionPerformed(ActionEvent e) {
+                @Override
+                public void actionPerformed(ActionEvent e) {
 
-                            List<File> retVal = FileChooserManager.getDefault().showOpenDialog(
-                                    IMPORT_DIALOG,
-                                    SwingUtilities.getRoot(SwingUtilities
-                                            .getRoot(ArrangementEditPanel.this)));
+                    List<File> retVal = FileChooserManager.getDefault().showOpenDialog(
+                            IMPORT_DIALOG,
+                            SwingUtilities.getRoot(SwingUtilities
+                                    .getRoot(ArrangementEditPanel.this)));
 
-                            if (!retVal.isEmpty()) {
+                    if (!retVal.isEmpty()) {
 
-                                File f = retVal.get(0);
-                                Document doc;
+                        File f = retVal.get(0);
+                        Document doc;
 
-                                try {
-                                    doc = new Document(f);
-                                    Element root = doc.getRoot();
-                                    if (root.getName().equals("instrument")) {
-                                        Instrument tempInstr = (Instrument) ObjectUtilities
+                        try {
+                            doc = new Document(f);
+                            Element root = doc.getRoot();
+                            if (root.getName().equals("instrument")) {
+                                Instrument tempInstr = (Instrument) ObjectUtilities
                                         .loadFromXML(root);
-                                        addInstrument(tempInstr);
-                                    } else {
-                                        JOptionPane
+                                addInstrument(tempInstr);
+                            } else {
+                                JOptionPane
                                         .showMessageDialog(
                                                 SwingUtilities
-                                                .getRoot(
-                                                        ArrangementEditPanel.this),
+                                                        .getRoot(
+                                                                ArrangementEditPanel.this),
                                                 "Error: File did not contain instrument",
                                                 "Error",
                                                 JOptionPane.ERROR_MESSAGE);
-                                    }
-
-                                } catch (Exception ex) {
-                                    ex.printStackTrace();
-                                    JOptionPane
-                                    .showMessageDialog(
-                                            SwingUtilities
-                                            .getRoot(ArrangementEditPanel.this),
-                                            "Error: Could not read instrument from file",
-                                            "Error", JOptionPane.ERROR_MESSAGE);
-                                }
-
                             }
 
+                        } catch (Exception ex) {
+                            ex.printStackTrace();
+                            JOptionPane
+                                    .showMessageDialog(
+                                            SwingUtilities
+                                                    .getRoot(ArrangementEditPanel.this),
+                                            "Error: Could not read instrument from file",
+                                            "Error", JOptionPane.ERROR_MESSAGE);
                         }
 
-                    };
+                    }
+
+                }
+
+            };
 
             exportItem = new AbstractAction(BlueSystem
                     .getString("common.export")) {
 
-                        @Override
-                        public void actionPerformed(ActionEvent e) {
-                            int selectedRow = arrangementTable.getSelectedRow();
-                            if (selectedRow < 0) {
-                                return;
-                            }
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    int selectedRow = arrangementTable.getSelectedRow();
+                    if (selectedRow < 0) {
+                        return;
+                    }
 
-                            Instrument instr = arrangement.getInstrument(
-                                    selectedRow);
+                    Instrument instr = arrangement.getInstrument(
+                            selectedRow);
 
-                            File retVal = FileChooserManager.getDefault().showSaveDialog(
-                                    EXPORT_DIALOG, SwingUtilities
+                    File retVal = FileChooserManager.getDefault().showSaveDialog(
+                            EXPORT_DIALOG, SwingUtilities
                                     .getRoot(ArrangementEditPanel.this));
 
-                            if (retVal != null) {
+                    if (retVal != null) {
 
-                                File f = retVal;
+                        File f = retVal;
 
-                                if (f.exists()) {
-                                    int overWrite = JOptionPane
+                        if (f.exists()) {
+                            int overWrite = JOptionPane
                                     .showConfirmDialog(
                                             SwingUtilities
-                                            .getRoot(ArrangementEditPanel.this),
+                                                    .getRoot(ArrangementEditPanel.this),
                                             "Please confirm you would like to overwrite this file.");
 
-                                    if (overWrite != JOptionPane.OK_OPTION) {
-                                        return;
-                                    }
-                                }
-
-                                Element node = instr.saveAsXML();
-
-                                PrintWriter out;
-
-                                try {
-                                    out = new PrintWriter(new FileWriter(f));
-                                    out.print(node.toString());
-
-                                    out.flush();
-                                    out.close();
-                                } catch (IOException ex) {
-                                    ex.printStackTrace();
-                                }
-
+                            if (overWrite != JOptionPane.OK_OPTION) {
+                                return;
                             }
                         }
 
-                    };
+                        Element node = instr.saveAsXML();
+
+                        try (PrintWriter out = new PrintWriter(new FileWriter(f))) {
+                            out.print(node.toString());
+                        } catch (IOException ex) {
+                            ex.printStackTrace();
+                        }
+
+                    }
+                }
+
+            };
 
             this.add(removeInstrumentMenuItem);
             this.addSeparator();
@@ -774,8 +768,8 @@ public class ArrangementEditPanel extends JComponent
                     }
 
                     Object bufferedObj = CopyBuffer.getBufferedObject(CopyBuffer.INSTRUMENT);
-                    boolean bufferFull = bufferedObj != null && 
-                            (bufferedObj instanceof Instrument);
+                    boolean bufferFull = bufferedObj != null
+                            && (bufferedObj instanceof Instrument);
                     pasteMenuItem.setEnabled(bufferFull);
                 }
 
@@ -805,10 +799,9 @@ public class ArrangementEditPanel extends JComponent
             this.setLabel("Add Instrument");
 
             ActionListener al = (ActionEvent e) -> {
-                LazyPlugin<Instrument> plugin = (LazyPlugin<Instrument>)
-                        ((JMenuItem) e.getSource()).getClientProperty(
-                                "plugin");
-                
+                LazyPlugin<Instrument> plugin = (LazyPlugin<Instrument>) ((JMenuItem) e.getSource()).getClientProperty(
+                        "plugin");
+
                 fireAddInstrument(plugin.getInstance());
             };
 
