@@ -26,7 +26,10 @@ import blue.utility.NumberUtilities;
 import java.util.concurrent.CountDownLatch;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
+import javafx.beans.binding.IntegerBinding;
 import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
+import javafx.scene.Scene;
 import javafx.scene.layout.BorderPane;
 import javafx.util.StringConverter;
 import org.openide.util.Exceptions;
@@ -125,7 +128,9 @@ public class BSBKnobView extends BorderPane {
             }
         };
 
-        sceneProperty().addListener((obs, old, newVal) -> {
+        IntegerBinding knobViewHeight = knob.knobWidthProperty().subtract(4);
+
+        sceneProperty().addListener((ObservableValue<? extends Scene> obs, Scene old, Scene newVal) -> {
             if (newVal == null) {
                 knobView.minProperty().unbind();
                 knobView.maxProperty().unbind();
@@ -141,7 +146,7 @@ public class BSBKnobView extends BorderPane {
                 knobView.minProperty().bind(knob.knobValueProperty().minProperty());
                 knobView.maxProperty().bind(knob.knobValueProperty().maxProperty());
                 knobView.prefWidthProperty().bind(knob.knobWidthProperty());
-                knobView.prefHeightProperty().bind(knob.knobWidthProperty());
+                knobView.prefHeightProperty().bind(knobViewHeight);
                 knobView.setValue(knob.getValue());
                 valuePanel.prefWidthProperty().bind(knobView.prefWidthProperty());
                 knob.valueDisplayEnabledProperty().addListener(vdeListener);

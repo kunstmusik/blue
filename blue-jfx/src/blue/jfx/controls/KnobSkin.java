@@ -197,23 +197,23 @@ public class KnobSkin extends SkinBase<Knob> {
 
     @Override
     protected void layoutChildren(double contentX, double contentY, double contentWidth, double contentHeight) {
-        double side = Math.min(contentWidth, contentHeight);
-        double xAdjust, yAdjust;
-        if (contentWidth < contentHeight) {
-            xAdjust = 0;
-            yAdjust = snapPosition((contentHeight - contentWidth) / 2.0);
-        } else {
-            xAdjust = snapPosition((contentWidth - contentHeight) / 2.0);
-            yAdjust = 0;
-        }
+//        double side = Math.min(contentWidth, contentHeight);
+//        double xAdjust, yAdjust;
+//        if (contentWidth < contentHeight) {
+//            xAdjust = 0;
+//            yAdjust = snapPosition((contentHeight - contentWidth) / 2.0);
+//        } else {
+//            xAdjust = snapPosition((contentWidth - contentHeight) / 2.0);
+//            yAdjust = 0;
+//        }
 
         if (invalid) {
-            initComponents(side);
+            initComponents(contentWidth);
             invalid = false;
         }
 
         for (Node child : getChildren()) {
-            layoutInArea(child, contentX + xAdjust, contentY + yAdjust, contentWidth, contentHeight,
+            layoutInArea(child, contentX, contentY, contentWidth, contentHeight,
                     0, HPos.LEFT, VPos.TOP);
         }
     }
