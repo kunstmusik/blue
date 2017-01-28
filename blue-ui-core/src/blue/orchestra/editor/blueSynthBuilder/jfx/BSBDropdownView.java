@@ -23,8 +23,11 @@ import blue.orchestra.blueSynthBuilder.BSBDropdown;
 import blue.orchestra.blueSynthBuilder.BSBDropdownItem;
 import java.util.concurrent.CountDownLatch;
 import javafx.application.Platform;
+import javafx.beans.InvalidationListener;
 import javafx.beans.value.ChangeListener;
 import javafx.scene.control.ChoiceBox;
+import javafx.scene.text.Font;
+import javafx.scene.text.Text;
 import org.openide.util.Exceptions;
 
 /**
@@ -40,7 +43,7 @@ public class BSBDropdownView extends ChoiceBox<BSBDropdownItem> {
         super(dropdown.dropdownItemsProperty());
         setUserData(dropdown);
 
-//        getStylesheets().add(getClass().getResource("bsbDropdown.css").toExternalForm());
+        getStylesheets().add(getClass().getResource("bsbDropdown.css").toExternalForm());
 //        ListCell<BSBDropdownItem> cell = new ListCell<BSBDropdownItem>() {
 //             public void updateItem(BSBDropdownItem item, boolean empty) {
 //                    super.updateItem(item, empty);
@@ -95,22 +98,46 @@ public class BSBDropdownView extends ChoiceBox<BSBDropdownItem> {
             updateFont(dropdown.getFontSize());
         };
 
+        InvalidationListener listListener = o -> {
+            updateWidth();
+        };
+
         sceneProperty().addListener((obs, old, newVal) -> {
             if (newVal == null) {
                 dropdown.selectedIndexProperty().removeListener(cl);
                 dropdown.fontSizeProperty().removeListener(fontListener);
+                dropdown.getBSBDropdownItemList().removeListener(listListener);
             } else {
                 getSelectionModel().select(dropdown.getSelectedIndex());
                 dropdown.selectedIndexProperty().addListener(cl);
                 dropdown.fontSizeProperty().addListener(fontListener);
+                dropdown.getBSBDropdownItemList().addListener(listListener);
             }
         });
 
         updateFont(dropdown.getFontSize());
+        updateWidth();
     }
 
     protected void updateFont(int fontSize) {
         setStyle(String.format("-fx-font-size: %dpx;", fontSize));
 
+    }
+
+    protected void updateWidth() {
+        Font f = Font.font("System Regular", dropdown.getFontSize());
+        Text t = new Text();
+        t.setFont(f);
+        double w = 0;
+
+        for (BSBDropdownItem item : dropdown.getBSBDropdownItemList()) {
+            t.setText(item.getName());
+            w = Math.max(w, t.getLayoutBounds().getWidth());
+        }
+
+        w += 24;
+
+        setPrefWidth(w);
+        setWidth(w);
     }
 }
