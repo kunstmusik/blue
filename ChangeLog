@@ -56,7 +56,9 @@ UPDATED
   sliders) now use BigDecimal for more precise value generation and faster 
   calculation when automated
 
-* Issue #349 - Revisited score text parsing to speed up (about 2x improvement)
+* Issue #349 - Revisited score text parsing to speed up; affects parsing of 
+  things like GenericScore text, output from Externals (e.g., CMask scripts,
+  AthenaCL code)
 
 FIX
 
