@@ -477,7 +477,7 @@ public class OpcodeListEditPanel extends JComponent {
                 IMPORT_BLUE_UDO_DIALOG,
                 SwingUtilities.getRoot(OpcodeListEditPanel.this));
 
-        if (retVal != null) {
+        if (retVal != null && retVal.size() == 1) {
 
             File f = retVal.get(0);
 
@@ -500,7 +500,7 @@ public class OpcodeListEditPanel extends JComponent {
                 IMPORT_CSOUND_UDO_DIALOG,
                 SwingUtilities.getRoot(OpcodeListEditPanel.this));
 
-        if (retVal != null) {
+        if (retVal != null && retVal.size() == 1) {
 
             File f = retVal.get(0);
 
