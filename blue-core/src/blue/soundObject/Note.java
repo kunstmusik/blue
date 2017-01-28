@@ -106,10 +106,6 @@ public class Note implements Comparable<Note> {
 
         int start = 0;
 
-        // the following code might be better off using
-        // regular expressions, but should wait until
-        // Java 1.4 is available on all platforms
-
         Matcher m = p.matcher(input);
         while(m.find()){
             String str = m.group();
@@ -122,46 +118,6 @@ public class Note implements Comparable<Note> {
                 buffer.add(str);
             }
         }
-        
-        // PARSES PFIELDS FROM STRING
-//        while (i < size) {
-//            if (input.charAt(i) == '\"') {
-//                start = i++;
-//
-//                while (i < size && input.charAt(i) != '\"') {
-//                    i++;
-//                }
-//
-//                buffer.add(input.substring(start, ++i));
-//                // i++;
-//            } else if (input.charAt(i) == '[') {
-//                start = ++i;
-//                while (i < size && input.charAt(i) != ']') {
-//                    i++;
-//                }
-//
-//                double val = ScoreExpressionParser.eval(input
-//                        .substring(start, i));
-//
-//                i++;
-//
-//                buffer.add(Double.toString(val));
-//            } else if (Character.isWhitespace(input.charAt(i))) {
-//                while (i < size
-//                        && Character.isWhitespace(input.charAt(i))) {
-//                    i++; // eat up empty spaces or tabs
-//                }
-//            } else {
-//                start = i;
-//                while (i < size
-//                        && !(Character.isWhitespace(input.charAt(i)))) {
-//                    i++;
-//                }
-//                buffer.add(input.substring(start, i));
-//            }
-//        }
-
-        
 
         if(previousNote != null) {
             boolean performCarry = buffer.get(0).equals(previousNote.getPField(1));
