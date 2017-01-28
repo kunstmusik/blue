@@ -8,9 +8,17 @@
     
     <property name="CS_MANUAL_DIR" 
               value="../../../csound/manual"/>
+
+    <target name="dir.check">
+      <condition property="dir.exists">
+        <available file="${CS_MANUAL_DIR}" type="dir"/>
+      </condition>
+    </target>
     
     <target name="copy-csound-manual"
-            description="Copies HTML Csound Manual into project">
+      description="Copies HTML Csound Manual into project"
+      depends="dir.check"
+      if="dir.exists">
         <mkdir dir="release/csoundManual"/>
         <copy todir="release/csoundManual">
             <fileset dir="${CS_MANUAL_DIR}/html">
