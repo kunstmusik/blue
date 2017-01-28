@@ -24,6 +24,9 @@ import blue.BlueSystem;
 import blue.utility.NumberUtilities;
 import blue.utility.ScoreExpressionParser;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.apache.commons.lang3.text.StrBuilder;
 
 /**
@@ -35,6 +38,8 @@ import org.apache.commons.lang3.text.StrBuilder;
  */
 
 public class Note implements Comparable<Note> {
+    private static final Pattern p = Pattern.compile("\"[^\"]*\"|\\[[^\\]]*\\]|\\S*", 
+            Pattern.COMMENTS);
 
     private String[] fields;
 
@@ -85,6 +90,7 @@ public class Note implements Comparable<Note> {
         } catch (Exception e) {
             String errorMessage = BlueSystem.getString("note.invalidNoteText")
                     + " " + input;
+            e.printStackTrace();
             throw new NoteParseException(errorMessage, input);
         }
     }
@@ -95,7 +101,7 @@ public class Note implements Comparable<Note> {
         // return null
 
         int i = 0;
-        ArrayList buffer = new ArrayList();
+        List<String> buffer = new ArrayList<>(); 
         int size = input.length();
 
         int start = 0;
@@ -104,43 +110,56 @@ public class Note implements Comparable<Note> {
         // regular expressions, but should wait until
         // Java 1.4 is available on all platforms
 
-        // PARSES PFIELDS FROM STRING
-        while (i < size) {
-            if (input.charAt(i) == '\"') {
-                start = i++;
+        Matcher m = p.matcher(input);
+        while(m.find()){
+            String str = m.group();
+            if(!str.isEmpty()) {
+                if(str.charAt(0) == '[') {
+                    str = Double.toString(
+                            ScoreExpressionParser.eval(str.substring(1, str.length() - 1)));
 
-                while (i < size && input.charAt(i) != '\"') {
-                    i++;
                 }
-
-                buffer.add(input.substring(start, ++i));
-                // i++;
-            } else if (input.charAt(i) == '[') {
-                start = ++i;
-                while (i < size && input.charAt(i) != ']') {
-                    i++;
-                }
-
-                double val = ScoreExpressionParser.eval(input
-                        .substring(start, i));
-
-                i++;
-
-                buffer.add(Double.toString(val));
-            } else if (Character.isWhitespace(input.charAt(i))) {
-                while (i < size
-                        && Character.isWhitespace(input.charAt(i))) {
-                    i++; // eat up empty spaces or tabs
-                }
-            } else {
-                start = i;
-                while (i < size
-                        && !(Character.isWhitespace(input.charAt(i)))) {
-                    i++;
-                }
-                buffer.add(input.substring(start, i));
+                buffer.add(str);
             }
         }
+        
+        // PARSES PFIELDS FROM STRING
+//        while (i < size) {
+//            if (input.charAt(i) == '\"') {
+//                start = i++;
+//
+//                while (i < size && input.charAt(i) != '\"') {
+//                    i++;
+//                }
+//
+//                buffer.add(input.substring(start, ++i));
+//                // i++;
+//            } else if (input.charAt(i) == '[') {
+//                start = ++i;
+//                while (i < size && input.charAt(i) != ']') {
+//                    i++;
+//                }
+//
+//                double val = ScoreExpressionParser.eval(input
+//                        .substring(start, i));
+//
+//                i++;
+//
+//                buffer.add(Double.toString(val));
+//            } else if (Character.isWhitespace(input.charAt(i))) {
+//                while (i < size
+//                        && Character.isWhitespace(input.charAt(i))) {
+//                    i++; // eat up empty spaces or tabs
+//                }
+//            } else {
+//                start = i;
+//                while (i < size
+//                        && !(Character.isWhitespace(input.charAt(i)))) {
+//                    i++;
+//                }
+//                buffer.add(input.substring(start, i));
+//            }
+//        }
 
         
 

@@ -40,6 +40,9 @@ import java.util.regex.Pattern;
  */
 public class TextUtilities {
 
+    private static final Pattern MULTI_LINE_PATTERN = 
+            Pattern.compile("/\\*.*\\*/", Pattern.MULTILINE | Pattern.DOTALL);
+
     /**
      * Replace the first occurrence of <code>oldSubstring</code> in
      * <code>string</code>, if there is one, with <code>newSubstring</code>.
@@ -316,9 +319,7 @@ public class TextUtilities {
     }
 
     public static String stripMultiLineComments(String in) {
-        Pattern p = Pattern.compile("/\\*.*\\*/", Pattern.MULTILINE
-                | Pattern.DOTALL);
-        Matcher m = p.matcher(in);
+        Matcher m = MULTI_LINE_PATTERN.matcher(in);
         String retVal = m.replaceAll("\n");
 
         return retVal;

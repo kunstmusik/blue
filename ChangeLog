@@ -56,6 +56,8 @@ UPDATED
   sliders) now use BigDecimal for more precise value generation and faster 
   calculation when automated
 
+* Issue #349 - Revisited score text parsing to speed up (about 2x improvement)
+
 FIX
 
 * BlueSynthBuilder/ObjectBuilder/Effects - Fixed code completion for BSBWidgets 
