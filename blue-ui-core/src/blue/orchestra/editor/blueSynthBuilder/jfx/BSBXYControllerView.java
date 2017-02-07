@@ -54,7 +54,6 @@ public class BSBXYControllerView extends BorderPane {
         label.setTextFill(Color.WHITE);
 
         setCenter(pane);
-        setBottom(label);
 
         yLine.setX(0);
         yLine.setHeight(1.0);
@@ -102,6 +101,11 @@ public class BSBXYControllerView extends BorderPane {
             BlueFX.runOnFXThread(r);
         };
 
+        ChangeListener<Boolean> displayVisibleListener = (obs, old, newVal) -> {
+            Runnable r = () -> updateLabelVisible(newVal);
+            BlueFX.runOnFXThread(r);
+        };
+
         sceneProperty().addListener((obs, old, newVal) -> {
             if (newVal == null) {
                 pane.prefWidthProperty().unbind();
@@ -109,11 +113,15 @@ public class BSBXYControllerView extends BorderPane {
                 label.prefWidthProperty().unbind();
                 yLine.widthProperty().unbind();
                 xLine.heightProperty().unbind();
+                label.visibleProperty().unbind();
 
                 unbindClampedValue(bsbXYController.xValueProperty(), labelListener);
                 unbindClampedValue(bsbXYController.xValueProperty(), xListener);
                 unbindClampedValue(bsbXYController.yValueProperty(), labelListener);
                 unbindClampedValue(bsbXYController.yValueProperty(), yListener);
+
+                bsbXYController.valueDisplayEnabledProperty().removeListener(
+                        displayVisibleListener);
             } else {
 
                 pane.prefWidthProperty().bind(bsbXYController.widthProperty());
@@ -125,11 +133,15 @@ public class BSBXYControllerView extends BorderPane {
                 updateLabel();
                 updateUIforX();
                 updateUIforY();
+                updateLabelVisible(bsbXYController.isValueDisplayEnabled());
 
                 bindClampedValue(bsbXYController.xValueProperty(), labelListener);
                 bindClampedValue(bsbXYController.xValueProperty(), xListener);
                 bindClampedValue(bsbXYController.yValueProperty(), labelListener);
                 bindClampedValue(bsbXYController.yValueProperty(), yListener);
+
+                bsbXYController.valueDisplayEnabledProperty().addListener(
+                        displayVisibleListener);
             }
         });
     }
@@ -162,5 +174,13 @@ public class BSBXYControllerView extends BorderPane {
         label.setText(String.format("x: %.4g y: %.4g",
                 bsbXYController.getXValue(),
                 bsbXYController.getYValue()));
+    }
+
+    private void updateLabelVisible(boolean visible) {
+        if (visible) {
+            setBottom(label);
+        } else {
+            setBottom(null);
+        }
     }
 }

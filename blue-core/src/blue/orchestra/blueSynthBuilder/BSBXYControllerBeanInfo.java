@@ -40,22 +40,24 @@ public class BSBXYControllerBeanInfo extends SimpleBeanInfo {
     private static final int PROPERTY_height = 1;
     private static final int PROPERTY_objectName = 2;
     private static final int PROPERTY_randomizable = 3;
-    private static final int PROPERTY_width = 4;
-    private static final int PROPERTY_XMax = 5;
-    private static final int PROPERTY_XMin = 6;
-    private static final int PROPERTY_YMax = 7;
-    private static final int PROPERTY_YMin = 8;
+    private static final int PROPERTY_valueDisplayEnabled = 4;
+    private static final int PROPERTY_width = 5;
+    private static final int PROPERTY_XMax = 6;
+    private static final int PROPERTY_XMin = 7;
+    private static final int PROPERTY_YMax = 8;
+    private static final int PROPERTY_YMin = 9;
 
     // Property array 
     /*lazy PropertyDescriptor*/
     private static PropertyDescriptor[] getPdescriptor(){
-        PropertyDescriptor[] properties = new PropertyDescriptor[9];
+        PropertyDescriptor[] properties = new PropertyDescriptor[10];
     
         try {
             properties[PROPERTY_automationAllowed] = new PropertyDescriptor ( "automationAllowed", blue.orchestra.blueSynthBuilder.BSBXYController.class, "isAutomationAllowed", "setAutomationAllowed" ); // NOI18N
             properties[PROPERTY_height] = new PropertyDescriptor ( "height", blue.orchestra.blueSynthBuilder.BSBXYController.class, "getHeight", "setHeight" ); // NOI18N
             properties[PROPERTY_objectName] = new PropertyDescriptor ( "objectName", blue.orchestra.blueSynthBuilder.BSBXYController.class, "getObjectName", "setObjectName" ); // NOI18N
             properties[PROPERTY_randomizable] = new PropertyDescriptor ( "randomizable", blue.orchestra.blueSynthBuilder.BSBXYController.class, "isRandomizable", "setRandomizable" ); // NOI18N
+            properties[PROPERTY_valueDisplayEnabled] = new PropertyDescriptor ( "valueDisplayEnabled", blue.orchestra.blueSynthBuilder.BSBXYController.class, "isValueDisplayEnabled", "setValueDisplayEnabled" ); // NOI18N
             properties[PROPERTY_width] = new PropertyDescriptor ( "width", blue.orchestra.blueSynthBuilder.BSBXYController.class, "getWidth", "setWidth" ); // NOI18N
             properties[PROPERTY_XMax] = new PropertyDescriptor ( "XMax", blue.orchestra.blueSynthBuilder.BSBXYController.class, "getXMax", "setXMax" ); // NOI18N
             properties[PROPERTY_XMin] = new PropertyDescriptor ( "XMin", blue.orchestra.blueSynthBuilder.BSBXYController.class, "getXMin", "setXMin" ); // NOI18N

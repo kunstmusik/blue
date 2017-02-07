@@ -60,6 +60,8 @@ UPDATED
   things like GenericScore text, output from Externals (e.g., CMask scripts,
   AthenaCL code)
 
+* Issue #350 - Added value display enabled property to BSBXYController
+
 FIX
 
 * BlueSynthBuilder/ObjectBuilder/Effects - Fixed code completion for BSBWidgets 
