@@ -22,7 +22,6 @@ package blue.orchestra;
 import blue.Tables;
 import blue.automation.Automatable;
 import blue.automation.ParameterList;
-import blue.mixer.Channel;
 import blue.orchestra.blueSynthBuilder.*;
 import blue.plugin.InstrumentPlugin;
 import blue.udo.OpcodeList;
@@ -43,7 +42,7 @@ public class BlueSynthBuilder extends AbstractInstrument implements
 
     BSBGraphicInterface graphicInterface;
 
-    BSBParameterList parameterList;
+    ParameterList parameterList;
 
     PresetGroup presetGroup;
 
@@ -70,8 +69,8 @@ public class BlueSynthBuilder extends AbstractInstrument implements
     private BlueSynthBuilder(boolean init) {
         if (init) {
             graphicInterface = new BSBGraphicInterface();
-            parameterList = new BSBParameterList();
-            parameterList.setBSBGraphicInterface(graphicInterface);
+            parameterList = new ParameterList();
+            graphicInterface.getRootGroup().setParameterList(parameterList);
 
             presetGroup = new PresetGroup();
 
@@ -87,8 +86,8 @@ public class BlueSynthBuilder extends AbstractInstrument implements
     public BlueSynthBuilder(BlueSynthBuilder bsb) {
         super(bsb); 
         graphicInterface = new BSBGraphicInterface(bsb.graphicInterface);
-        parameterList = new BSBParameterList(bsb.parameterList);
-        parameterList.setBSBGraphicInterface(graphicInterface);
+        parameterList = new ParameterList(bsb.parameterList);
+        graphicInterface.getRootGroup().setParameterList(parameterList);
 
         presetGroup = new PresetGroup(bsb.presetGroup);
 
@@ -198,8 +197,8 @@ public class BlueSynthBuilder extends AbstractInstrument implements
                     bsb.setPresetGroup(PresetGroup.loadFromXML(node));
                     break;
                 case "bsbParameterList":
-                    bsb.parameterList = (BSBParameterList) BSBParameterList
-                            .loadFromXML(node);
+                case "ParameterList":
+                    bsb.parameterList = ParameterList.loadFromXML(node);
                     break;
                 case "opcodeList":
                     bsb.opcodeList = OpcodeList.loadFromXML(node);
@@ -217,14 +216,14 @@ public class BlueSynthBuilder extends AbstractInstrument implements
         }
 
         if (bsb.parameterList == null) {
-            bsb.parameterList = new BSBParameterList();
+            bsb.parameterList = new ParameterList();
         }
 
         if (bsb.opcodeList == null) {
             bsb.opcodeList = new OpcodeList();
         }
 
-        bsb.parameterList.setBSBGraphicInterface(bsb.graphicInterface);
+        bsb.graphicInterface.getRootGroup().setParameterList(bsb.parameterList);
 
         return bsb;
     }
@@ -347,15 +346,9 @@ public class BlueSynthBuilder extends AbstractInstrument implements
      * In 0.114.0, modified to also reset any subchannel dropdowns to MASTER
      */
     public void clearParameters() {
-        for (BSBObject bsbObj : graphicInterface) {
-            if (bsbObj instanceof BSBSubChannelDropdown) {
-                ((BSBSubChannelDropdown) bsbObj)
-                        .setChannelOutput(Channel.MASTER);
-            }
-        }
-
-        parameterList = new BSBParameterList();
-        parameterList.setBSBGraphicInterface(graphicInterface);
+        graphicInterface.getRootGroup().resetSubChannels();
+        parameterList = new ParameterList();
+        graphicInterface.getRootGroup().setParameterList(parameterList);
     }
 
     public boolean isEditEnabled() {
@@ -377,16 +370,7 @@ public class BlueSynthBuilder extends AbstractInstrument implements
     @Override
     public ArrayList<StringChannel> getStringChannels() {
         ArrayList<StringChannel> stringChannels = new ArrayList<>();
-
-        for (BSBObject bsbObj : graphicInterface) {
-            if (bsbObj instanceof StringChannelProvider) {
-                StringChannelProvider provider = (StringChannelProvider) bsbObj;
-                if (provider.isStringChannelEnabled()) {
-                    stringChannels.add(provider.getStringChannel());
-                }
-            }
-        }
-
+        graphicInterface.getRootGroup().getStringChannels(stringChannels);
         return stringChannels;
     }
 

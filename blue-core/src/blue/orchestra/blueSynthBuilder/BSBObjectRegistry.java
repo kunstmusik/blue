@@ -26,6 +26,7 @@ public class BSBObjectRegistry {
 
     public static BSBObjectEntry[] getBSBObjects() {
         return new BSBObjectEntry[]{
+            new BSBObjectEntry("Group", BSBGroup.class),
             new BSBObjectEntry("Knob", BSBKnob.class),
             new BSBObjectEntry("Horizontal Slider", BSBHSlider.class),
             new BSBObjectEntry("Horizontal Slider Bank",
@@ -42,7 +43,8 @@ public class BSBObjectRegistry {
             new BSBObjectEntry("XY Controller", BSBXYController.class),
             new BSBObjectEntry("Line Object", BSBLineObject.class),
             new BSBObjectEntry("Text Field", BSBTextField.class),
-            new BSBObjectEntry("Value", BSBValue.class)};
+            new BSBObjectEntry("Value", BSBValue.class),
+        };
     }
 
 }

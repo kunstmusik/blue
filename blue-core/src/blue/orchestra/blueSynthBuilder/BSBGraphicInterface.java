@@ -21,15 +21,12 @@ package blue.orchestra.blueSynthBuilder;
 
 import blue.orchestra.blueSynthBuilder.GridSettings.GridStyle;
 import blue.utility.ObjectUtilities;
-import com.sun.javafx.collections.ObservableSetWrapper;
 import electric.xml.Element;
 import electric.xml.Elements;
-import java.util.Arrays;
 import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Set;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
+import javafx.collections.FXCollections;
 import javafx.collections.ObservableSet;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 
@@ -40,27 +37,9 @@ import org.apache.commons.lang3.builder.EqualsBuilder;
  * @author steven
  *
  */
-public class BSBGraphicInterface implements Iterable<BSBObject>, UniqueNameCollection {
+public class BSBGraphicInterface {
 
-    private Set<BSBObject> backingSet = new HashSet<BSBObject>() {
-        @Override
-        public boolean add(BSBObject bsbObj) {
-            String objName = bsbObj.getObjectName();
-
-            // guarantee unique names for objects
-            if (objName != null && objName.length() != 0) {
-                if (!nameManager.isUniquelyNamed(bsbObj)) {
-                    nameManager.setUniqueName(bsbObj);
-                }
-            }
-
-            bsbObj.setUniqueNameManager(nameManager);
-            return super.add(bsbObj); 
-        }
-    };
-
-    private ObservableSet<BSBObject> interfaceItems = 
-            new ObservableSetWrapper<>(backingSet);
+    BSBGroup rootGroup;
 
     UniqueNameManager nameManager = new UniqueNameManager();
 
@@ -68,48 +47,30 @@ public class BSBGraphicInterface implements Iterable<BSBObject>, UniqueNameColle
 
     private GridSettings gridSettings;
 
+    private ObservableSet<BSBObject> allSet
+            = FXCollections.observableSet(new HashSet<>());
+
     public BSBGraphicInterface() {
         gridSettings = new GridSettings();
         nameManager.setDefaultPrefix("bsbObj");
-        nameManager.setUniqueNameCollection(this);
+        setRootGroup(new BSBGroup());
+        rootGroup.setAllSet(allSet);
+
+        nameManager.setUniqueNameCollection(rootGroup);
     }
 
     public BSBGraphicInterface(BSBGraphicInterface bsbInterface) {
         gridSettings = new GridSettings(bsbInterface.getGridSettings());
         nameManager.setDefaultPrefix("bsbObj");
-        nameManager.setUniqueNameCollection(this);
+        setRootGroup(new BSBGroup(bsbInterface.rootGroup));
+        rootGroup.setAllSet(allSet);
 
+        nameManager.setUniqueNameCollection(rootGroup);
         setEditEnabled(bsbInterface.isEditEnabled());
-
-        for (BSBObject bsbObj : bsbInterface.interfaceItems) {
-            interfaceItems.add(bsbObj.deepCopy());
-        }
-    }
-
-    public ObservableSet<BSBObject> interfaceItemsProperty() {
-        return interfaceItems;
-    }
-
-    public void addBSBObject(BSBObject bsbObj) {
-        if (bsbObj == null) {
-            return;
-        }
-        interfaceItems.add(bsbObj);
-    }
-
-    @Override
-    public Iterator<BSBObject> iterator() {
-        return interfaceItems.iterator();
-    }
-
-    public int size() {
-        return interfaceItems.size();
     }
 
     public void setupForCompilation(BSBCompilationUnit compilationUnit) {
-        for (BSBObject bsbObj : interfaceItems) {
-            bsbObj.setupForCompilation(compilationUnit);
-        }
+        rootGroup.setupForCompilation(compilationUnit);
     }
 
     public static BSBGraphicInterface loadFromXML(Element data)
@@ -132,8 +93,13 @@ public class BSBGraphicInterface implements Iterable<BSBObject>, UniqueNameColle
 
             switch (name) {
                 case "bsbObject":
-                    Object obj = ObjectUtilities.loadFromXML(node);
-                    graphicInterface.addBSBObject((BSBObject) obj);
+                    BSBObject obj = (BSBObject) ObjectUtilities.loadFromXML(node);
+                    if (obj instanceof BSBGroup) {
+                        graphicInterface.setRootGroup((BSBGroup) obj);
+                    } else {
+                        // legacy reading of BSBObjects stored here pre-2.7.0
+                        graphicInterface.getRootGroup().addBSBObject(obj);
+                    }
                     break;
                 case "gridSettings":
                     gridSettings = GridSettings.loadFromXML(node);
@@ -162,28 +128,9 @@ public class BSBGraphicInterface implements Iterable<BSBObject>, UniqueNameColle
         retVal.setAttribute("editEnabled", Boolean.toString(isEditEnabled()));
 
         retVal.addElement(gridSettings.saveAsXML());
-
-        for (BSBObject bsbObj : interfaceItems) {
-            retVal.addElement(bsbObj.saveAsXML());
-        }
+        retVal.addElement(rootGroup.saveAsXML());
 
         return retVal;
-    }
-
-
-    @Override
-    public Set<String> getNames() {
-        Set<String> names = new HashSet<>();
-
-        for (BSBObject bsbObj : interfaceItems) {
-            String[] replacementKeys = bsbObj.getReplacementKeys();
-
-            if (replacementKeys != null) {
-                names.addAll(Arrays.asList(replacementKeys));
-            }
-        }
-
-        return names;
     }
 
     @Override
@@ -211,14 +158,21 @@ public class BSBGraphicInterface implements Iterable<BSBObject>, UniqueNameColle
         this.gridSettings = gridSettings;
     }
 
-    public void randomize() {
-        for (BSBObject bsbObj : interfaceItems) {
-            if (bsbObj instanceof Randomizable) {
-                Randomizable randomizable = (Randomizable) bsbObj;
-                if (randomizable.isRandomizable()) {
-                    randomizable.randomize();
-                }
-            }
+    public BSBGroup getRootGroup() {
+        return rootGroup;
+    }
+
+    private void setRootGroup(BSBGroup group) {
+        if(this.rootGroup != null) {
+            this.rootGroup.setAllSet(null);
+            this.allSet.clear();
         }
+        this.rootGroup = group;
+        group.setUniqueNameManager(nameManager);
+        group.setAllSet(allSet);
+    }
+
+    public ObservableSet<BSBObject> getAllSet() {
+        return allSet;
     }
 }

@@ -22,6 +22,7 @@ package blue.orchestra.editor.blueSynthBuilder.jfx;
 import blue.orchestra.blueSynthBuilder.BSBCheckBox;
 import blue.orchestra.blueSynthBuilder.BSBDropdown;
 import blue.orchestra.blueSynthBuilder.BSBFileSelector;
+import blue.orchestra.blueSynthBuilder.BSBGroup;
 import blue.orchestra.blueSynthBuilder.BSBHSlider;
 import blue.orchestra.blueSynthBuilder.BSBHSliderBank;
 import blue.orchestra.blueSynthBuilder.BSBKnob;
@@ -43,7 +44,10 @@ import javafx.scene.layout.Region;
 public class BSBObjectEditorFactory {
 
     public static Region getView(BSBObject bsbObject) {
-        if (bsbObject instanceof BSBCheckBox) {
+
+        if (bsbObject instanceof BSBGroup) {
+            return new BSBGroupView((BSBGroup) bsbObject);
+        } if (bsbObject instanceof BSBCheckBox) {
             return new BSBCheckBoxView((BSBCheckBox) bsbObject);
         } else if (bsbObject instanceof BSBDropdown) {
             return new BSBDropdownView((BSBDropdown) bsbObject);

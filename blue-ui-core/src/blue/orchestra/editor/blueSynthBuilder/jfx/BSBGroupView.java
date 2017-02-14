@@ -1,0 +1,173 @@
+/*
+ * blue - object composition environment for csound
+ * Copyright (C) 2017 stevenyi
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ */
+package blue.orchestra.editor.blueSynthBuilder.jfx;
+
+import blue.orchestra.blueSynthBuilder.BSBGroup;
+import blue.orchestra.blueSynthBuilder.BSBObject;
+import blue.orchestra.editor.blueSynthBuilder.EditModeOnly;
+import javafx.beans.property.BooleanProperty;
+import javafx.collections.ObservableList;
+import javafx.collections.SetChangeListener;
+import javafx.scene.Node;
+import javafx.scene.control.Label;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.Pane;
+import javafx.scene.layout.Region;
+import org.openide.util.Exceptions;
+
+/**
+ *
+ * @author stevenyi
+ */
+public class BSBGroupView extends BorderPane {
+
+    private Label label = new Label();
+    private Pane editorPane = new Pane();
+    private BooleanProperty editEnabledProperty = null;
+    private BSBEditSelection selection;
+    private ObservableList<BSBGroup> groupsList;
+    private BSBGroup bsbGroup;
+
+    SetChangeListener<BSBObject> scl = sce -> {
+        if (sce.wasAdded()) {
+            addBSBObject(sce.getElementAdded());
+        } else {
+            removeBSBObject(sce.getElementRemoved());
+        }
+    };
+
+    public BSBGroupView(BSBGroup bsbGroup) {
+        setUserData(bsbGroup);
+        this.bsbGroup = bsbGroup;
+
+        label.setStyle("-fx-fill: primary3; "
+                + "-fx-font-smooth-type: lcd; "
+                + "-fx-background-color: -fx-control-inner-background;"
+                + "-fx-padding: 2 8 2 8;"
+                + "-fx-background-radius: 4 4 0 0;");
+
+        editorPane.setStyle("-fx-border-color: -fx-control-inner-background;"
+                + "-fx-border-width: 1px;"
+                + "-fx-background-color: rgba(0,0,0,0.2);");
+
+        setTop(label);
+        setCenter(editorPane);
+        editorPane.setMinSize(20.0, 20.0);
+        label.prefWidthProperty().bind(editorPane.prefWidthProperty());
+
+//        label.setStyle("-fx-background: aliceblue;");
+
+
+        sceneProperty().addListener((obs, old, newVal) -> {
+            if (newVal == null) {
+                label.textProperty().unbind();
+                bsbGroup.interfaceItemsProperty().removeListener(scl);
+            } else {
+                label.textProperty().bind(bsbGroup.groupNameProperty());
+                bsbGroup.interfaceItemsProperty().addListener(scl);
+            }
+        });
+    }
+
+//    @Override
+//    protected double computePrefHeight(double width) {
+//        double minHeight = label.prefHeight(width);
+//
+//        double h = 20;
+//        for(Node r : getChildren()) {
+//            System.out.println( r.getLayoutBounds().getHeight());
+//            r.get
+//            h = Math.max(r.getTranslateY() + r.getLayoutBounds().getHeight(), h);
+//        }
+//
+//        return minHeight + h;
+//    }
+//
+//    @Override
+//    protected double computePrefWidth(double height) {
+//        double minWidth = label.prefWidth(height);
+//
+//        double w = 20;
+//        for(Node r : getChildren()) {
+//            System.out.println(r.getLayoutBounds());
+//            w = Math.max(r.getTranslateX() + r.getLayoutBounds().getWidth(), w);
+//        }
+//        return Math.max(minWidth, w);
+//    }
+
+    
+
+    public void initialize(BooleanProperty editEnabledProperty, BSBEditSelection selection,
+            ObservableList<BSBGroup> groupsList) {
+        this.editEnabledProperty = editEnabledProperty;
+        this.selection = selection;
+        this.groupsList = groupsList;
+
+        for (BSBObject bsbObj : bsbGroup) {
+            addBSBObject(bsbObj);
+        }
+    }
+
+    protected void addBSBObject(BSBObject bsbObj) {
+        try {
+            Region objectView = BSBObjectEditorFactory.getView(bsbObj);
+            // FIXME
+//            BooleanProperty editEnabledProperty = allowEditing ? bsbInterface.editEnabledProperty() : null;
+            BSBObjectViewHolder viewHolder = new BSBObjectViewHolder(editEnabledProperty,
+                    selection, groupsList, objectView);
+            if (objectView instanceof EditModeOnly) {
+                if (editEnabledProperty != null) {
+                    viewHolder.visibleProperty().bind(editEnabledProperty);
+                } else {
+                    viewHolder.setVisible(false);
+                }
+            }
+            if (bsbObj instanceof BSBGroup) {
+                BSBGroupView bsbGroupView = (BSBGroupView) objectView;
+                bsbGroupView.initialize(editEnabledProperty, selection, groupsList);
+            }
+            editorPane.getChildren().add(viewHolder);
+        } catch (Exception e) {
+            Exceptions.printStackTrace(e);
+        }
+    }
+
+    protected void removeBSBObject(BSBObject bsbObj) {
+        Node found = null;
+        for (Node n : editorPane.getChildren()) {
+            if (n.getUserData() == bsbObj) {
+                found = n;
+                break;
+            }
+        }
+
+        if (found != null) {
+            editorPane.getChildren().remove(found);
+            found.visibleProperty().unbind();
+        }
+    }
+
+    public ObservableList<Node> getBSBChildNodes() {
+        return editorPane.getChildren();
+    }
+
+    public Pane getEditorPane(){
+        return editorPane;
+    }
+}

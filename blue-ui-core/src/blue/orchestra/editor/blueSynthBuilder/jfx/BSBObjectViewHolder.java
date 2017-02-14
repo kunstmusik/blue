@@ -19,19 +19,19 @@
  */
 package blue.orchestra.editor.blueSynthBuilder.jfx;
 
+import blue.orchestra.blueSynthBuilder.BSBGroup;
 import blue.orchestra.blueSynthBuilder.BSBObject;
-import blue.utility.GUI;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
+import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.scene.Scene;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
-import javafx.scene.control.Separator;
 import javafx.scene.control.SeparatorMenuItem;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Region;
@@ -49,16 +49,23 @@ public class BSBObjectViewHolder extends Pane {
 
     private static ContextMenu MENU = null;
 
+    Region bsbObjectView;
+
     public BSBObjectViewHolder(BooleanProperty editEnabledProperty,
             BSBEditSelection selection,
+            ObservableList<BSBGroup> groupsList,
             Region bsbObjView) {
 
         final BSBObject bsbObj = (BSBObject) bsbObjView.getUserData();
+        this.bsbObjectView = bsbObjView;
         setUserData(bsbObj);
         Pane mousePane = new Pane();
         setFocusTraversable(true);
 
         mousePane.setOnMousePressed(me -> {
+            if (!groupsList.get(groupsList.size() - 1).contains(bsbObj)) {
+                return;
+            }
             me.consume();
             getParent().requestFocus();
             if (me.isSecondaryButtonDown()) {
@@ -68,6 +75,10 @@ public class BSBObjectViewHolder extends Pane {
                 return;
             }
 
+            if (me.getClickCount() >= 2 && (bsbObj instanceof BSBGroup)) {
+                groupsList.add((BSBGroup) bsbObj);
+                return;
+            }
             if (selection.selection.contains(bsbObj)) {
                 if (me.isShiftDown()) {
                     selection.selection.remove(bsbObj);
@@ -87,10 +98,18 @@ public class BSBObjectViewHolder extends Pane {
         });
 
         mousePane.setOnMouseDragged(me -> {
+            if (!groupsList.get(groupsList.size() - 1).contains(bsbObj)) {
+                return;
+            }
             selection.move(me.getSceneX() - startX, me.getSceneY() - startY);
         });
 
-        mousePane.setOnMouseReleased(me -> selection.endMove());
+        mousePane.setOnMouseReleased(me -> {
+            if (!groupsList.get(groupsList.size() - 1).contains(bsbObj)) {
+                return;
+            }
+            selection.endMove();
+        });
 
         Rectangle rect = new Rectangle();
         rect.setStroke(Color.rgb(0, 255, 0));
@@ -132,7 +151,7 @@ public class BSBObjectViewHolder extends Pane {
                     mousePane.prefHeightProperty().bind(
                             bsbObjView.heightProperty());
 
-                    if(editEnabledProperty != null) {
+                    if (editEnabledProperty != null) {
                         mousePane.mouseTransparentProperty().bind(
                                 editEnabledProperty.not());
                     } else {
@@ -186,7 +205,7 @@ public class BSBObjectViewHolder extends Pane {
                 AlignmentUtils.distribute(selection.getSelectedNodes(), alignment);
             };
 
-            for(Alignment alignment : Alignment.values()) {
+            for (Alignment alignment : Alignment.values()) {
                 MenuItem a = new MenuItem(alignment.toString());
                 a.setUserData(alignment);
                 a.setOnAction(alignListener);
@@ -211,4 +230,7 @@ public class BSBObjectViewHolder extends Pane {
         return MENU;
     }
 
+    public Region getBSBObjectView() {
+        return bsbObjectView;
+    }
 }

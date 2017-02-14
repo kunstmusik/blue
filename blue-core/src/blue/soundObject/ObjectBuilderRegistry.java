@@ -28,6 +28,7 @@ public class ObjectBuilderRegistry {
 
     public static BSBObjectEntry[] getBSBObjects() {
         return new BSBObjectEntry[]{
+            new BSBObjectEntry("Group", BSBGroup.class),
             new BSBObjectEntry("Knob", BSBKnob.class),
             new BSBObjectEntry("Horizontal Slider", BSBHSlider.class),
             new BSBObjectEntry("Horizontal Slider Bank",

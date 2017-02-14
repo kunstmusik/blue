@@ -25,6 +25,7 @@ import java.rmi.dgc.VMID;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 
 /**
  * @author steven
@@ -54,9 +55,7 @@ public class Preset implements Comparable<Preset> {
     public static Preset createPreset(BSBGraphicInterface bsbInterface) {
         Preset preset = new Preset();
 
-        for (Iterator iter = bsbInterface.iterator(); iter.hasNext();) {
-            BSBObject bsbObj = (BSBObject) iter.next();
-
+        for (BSBObject bsbObj : bsbInterface.getAllSet()) {
             String objectName = bsbObj.getObjectName();
 
             if (objectName == null || objectName.length() == 0) {
@@ -78,8 +77,7 @@ public class Preset implements Comparable<Preset> {
 
         valuesMap.clear();
 
-        for (Iterator iter = bsbInterface.iterator(); iter.hasNext();) {
-            BSBObject bsbObj = (BSBObject) iter.next();
+        for (BSBObject bsbObj : bsbInterface.getAllSet()) {
 
             String objectName = bsbObj.getObjectName();
 
@@ -149,7 +147,7 @@ public class Preset implements Comparable<Preset> {
     }
 
     public String getSetting(String objectName) {
-        return (String) valuesMap.get(objectName);
+        return valuesMap.get(objectName);
     }
 
     /**
@@ -160,8 +158,7 @@ public class Preset implements Comparable<Preset> {
     }
 
     /**
-     * @param name
-     *            The preset name to set.
+     * @param name The preset name to set.
      */
     public void setPresetName(String name) {
         this.presetName = name;
@@ -186,27 +183,28 @@ public class Preset implements Comparable<Preset> {
      * @param graphicInterface
      */
     public void setInterfaceValues(BSBGraphicInterface graphicInterface) {
-        for (BSBObject bsbObj : graphicInterface) {
+        for (BSBObject bsbObj : graphicInterface.getAllSet()) {
             String objName = bsbObj.getObjectName();
             String setting = getSetting(objName);
 
             if (setting != null) {
                 bsbObj.setPresetValue(setting);
-            }
+}
         }
     }
 
     public void synchronizeWithInterface(BSBGraphicInterface graphicInterface) {
         HashMap nameMap = new HashMap();
 
-        for (BSBObject bsbObj : graphicInterface) {
+        for (BSBObject bsbObj : graphicInterface.getAllSet()) {
             String objName = bsbObj.getObjectName();
             nameMap.put(objName, objName);
         }
 
         // clear out any existing values that do not have a widget in interface
-        for (Iterator iter = this.valuesMap.keySet().iterator(); iter.hasNext();) {
-            String key = (String) iter.next();
+        for (Iterator<Map.Entry<String, String>> iter = this.valuesMap.entrySet().iterator(); iter.hasNext();) {
+            Map.Entry<String,String> entry = iter.next();
+            String key = entry.getKey();
 
             if (!nameMap.containsKey(key)) {
                 System.out.println("Removing preset with objectName: " + key);
@@ -215,7 +213,7 @@ public class Preset implements Comparable<Preset> {
         }
 
         // add values that are in interface but not in preset
-        for (BSBObject bsbObj : graphicInterface) {
+        for (BSBObject bsbObj : graphicInterface.getAllSet()) {
             String objName = bsbObj.getObjectName();
 
             if (objName == null || objName.length() == 0) {

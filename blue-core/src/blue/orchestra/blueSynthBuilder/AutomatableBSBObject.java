@@ -20,6 +20,7 @@
 package blue.orchestra.blueSynthBuilder;
 
 import blue.automation.Parameter;
+import blue.automation.ParameterList;
 import static blue.orchestra.blueSynthBuilder.ClampedValueListener.BoundaryType.TRUNCATE;
 import blue.utility.XMLUtilities;
 import electric.xml.Element;
@@ -44,7 +45,7 @@ public abstract class AutomatableBSBObject extends BSBObject {
 
     boolean automationAllowed = true;
 
-    transient BSBParameterList parameters = null;
+    transient ParameterList parameters = null;
 
     public AutomatableBSBObject() {
         super();
@@ -55,7 +56,7 @@ public abstract class AutomatableBSBObject extends BSBObject {
         automationAllowed = bsbObj.isAutomationAllowed();
     }
 
-    public void setBSBParameterList(BSBParameterList parameters) {
+    public void setParameterList(ParameterList parameters) {
         this.parameters = parameters;
         initializeParameters();
     }

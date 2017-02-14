@@ -18,7 +18,7 @@
  */
 package blue.orchestra.editor.blueSynthBuilder.jfx;
 
-import blue.orchestra.blueSynthBuilder.BSBGraphicInterface;
+import blue.orchestra.blueSynthBuilder.BSBGroup;
 import blue.orchestra.blueSynthBuilder.BSBObject;
 import blue.orchestra.blueSynthBuilder.GridSettings;
 import java.util.ArrayList;
@@ -43,11 +43,11 @@ public class BSBEditSelection {
     private double minY = 0.0;
     private int gridOffsetX = 0;
     private int gridOffsetY = 0;
-    private BSBGraphicInterface bsbInterface = null;
     private ObservableSet<BSBObject> copyBuffer = FXCollections.observableSet();
     private boolean processingMove = false;
     GridSettings gridSettings = null;
     private final ObservableList<Node> nodeList;
+    private ObservableList<BSBGroup> groupList;
 
     public BSBEditSelection(ObservableList<Node> children) {
         selection = FXCollections.observableSet();
@@ -59,9 +59,10 @@ public class BSBEditSelection {
         return copyBuffer;
     }
 
-    public void setBSBGraphicInterface(BSBGraphicInterface bsbInterface) {
-        this.bsbInterface = bsbInterface;
-        this.gridSettings = (bsbInterface != null) ? bsbInterface.getGridSettings() : null;
+    public void initialize(ObservableList<BSBGroup> groupList, 
+            GridSettings gridSettings) {
+        this.groupList = groupList;
+        this.gridSettings = gridSettings;
         selection.clear();
     }
 
@@ -120,22 +121,23 @@ public class BSBEditSelection {
     }
 
     void cut() {
-        if (bsbInterface != null) {
+        if (groupList != null) {
             copy();
             remove();
         }
     }
 
     void copy() {
-        if (bsbInterface != null) {
+        if (groupList != null) {
             copyBuffer.clear();
             copyBuffer.addAll(selection);
         }
     }
 
     void remove() {
-        if (bsbInterface != null) {
-            bsbInterface.interfaceItemsProperty().removeAll(selection);
+        if (groupList != null) {
+            groupList.get(groupList.size() - 1).
+                    interfaceItemsProperty().removeAll(selection);
             selection.clear();
         }
     }

@@ -24,7 +24,6 @@ import blue.automation.Automatable;
 import blue.automation.ParameterList;
 import blue.orchestra.blueSynthBuilder.BSBCompilationUnit;
 import blue.orchestra.blueSynthBuilder.BSBGraphicInterface;
-import blue.orchestra.blueSynthBuilder.BSBParameterList;
 import blue.orchestra.blueSynthBuilder.StringChannel;
 import blue.udo.OpcodeList;
 import blue.udo.UserDefinedOpcode;
@@ -52,7 +51,7 @@ public class Effect implements Automatable {
     private OpcodeList opcodeList;
     private boolean enabled = true;
     private transient Vector listeners = null;
-    private BSBParameterList parameterList = null;
+    private ParameterList parameterList = null;
 
     public Effect() {
         this(true);
@@ -61,8 +60,8 @@ public class Effect implements Automatable {
     private Effect(boolean init) {
         if (init) {
             graphicInterface = new BSBGraphicInterface();
-            parameterList = new BSBParameterList();
-            parameterList.setBSBGraphicInterface(graphicInterface);
+            parameterList = new ParameterList();
+            graphicInterface.getRootGroup().setParameterList(parameterList);
             opcodeList = new OpcodeList();
         }
     }
@@ -75,8 +74,8 @@ public class Effect implements Automatable {
         comments = effect.comments;
         enabled = effect.enabled;
         graphicInterface = new BSBGraphicInterface(effect.graphicInterface);
-        parameterList = new BSBParameterList(effect.parameterList);
-        parameterList.setBSBGraphicInterface(graphicInterface);
+        parameterList = new ParameterList(effect.parameterList);
+        graphicInterface.getRootGroup().setParameterList(parameterList);
         opcodeList = new OpcodeList(effect.opcodeList);
     }
 
@@ -147,7 +146,7 @@ public class Effect implements Automatable {
                             .loadFromXML(node));
                     break;
                 case "bsbParameterList":
-                    effect.parameterList = (BSBParameterList) BSBParameterList
+                    effect.parameterList = (ParameterList) ParameterList
                             .loadFromXML(node);
                     break;
             }
@@ -162,10 +161,11 @@ public class Effect implements Automatable {
         }
 
         if (effect.parameterList == null) {
-            effect.parameterList = new BSBParameterList();
+            effect.parameterList = new ParameterList();
         }
 
-        effect.parameterList.setBSBGraphicInterface(effect.graphicInterface);
+        effect.graphicInterface.getRootGroup().setParameterList(
+                effect.parameterList);
 
         return effect;
     }
@@ -358,8 +358,8 @@ public class Effect implements Automatable {
      * stay valid.
      */
     public void clearParameters() {
-        parameterList = new BSBParameterList();
-        parameterList.setBSBGraphicInterface(graphicInterface);
+        parameterList = new ParameterList();
+        graphicInterface.getRootGroup().setParameterList(parameterList);
     }
 
     @Override

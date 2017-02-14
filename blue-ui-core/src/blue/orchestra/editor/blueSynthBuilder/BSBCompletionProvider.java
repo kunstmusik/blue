@@ -21,7 +21,6 @@ package blue.orchestra.editor.blueSynthBuilder;
 
 import blue.orchestra.blueSynthBuilder.BSBGraphicInterface;
 import blue.orchestra.blueSynthBuilder.BSBObject;
-import java.util.Iterator;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
 import javax.swing.text.Element;
@@ -83,9 +82,8 @@ public class BSBCompletionProvider implements CompletionProvider {
                     if (index >= 0) {
 
                         filter = filter.substring(index + 1);
-                        Iterator<BSBObject> bsbObjects = bsbInterface.iterator();
-                        while (bsbObjects.hasNext()) {
-                            BSBObject bsbObj = bsbObjects.next();
+
+                        for (BSBObject bsbObj : bsbInterface.getAllSet()) {
 
                             String[] keys = bsbObj.getReplacementKeys();
 

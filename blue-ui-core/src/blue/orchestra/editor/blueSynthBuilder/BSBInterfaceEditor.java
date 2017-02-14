@@ -29,14 +29,15 @@ import javax.swing.KeyStroke;
 import blue.BlueSystem;
 import blue.jfx.BlueFX;
 import blue.orchestra.blueSynthBuilder.BSBGraphicInterface;
+import blue.orchestra.blueSynthBuilder.BSBGroup;
 import blue.orchestra.blueSynthBuilder.BSBObject;
 import blue.orchestra.blueSynthBuilder.BSBObjectEntry;
-import blue.orchestra.blueSynthBuilder.Preset;
 import blue.orchestra.blueSynthBuilder.PresetGroup;
 import blue.orchestra.editor.blueSynthBuilder.jfx.BSBEditPane;
 import blue.orchestra.editor.blueSynthBuilder.jfx.editors.BSBPropertyEditorFactory;
 import blue.orchestra.editor.blueSynthBuilder.jfx.PresetPane;
 import java.util.concurrent.CountDownLatch;
+import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.collections.ObservableSet;
 import javafx.collections.SetChangeListener;
@@ -49,7 +50,10 @@ import javafx.scene.control.ScrollPane;
 import javafx.scene.control.SplitPane;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
+import javafx.scene.control.TreeItem;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.VBox;
+import org.controlsfx.control.BreadCrumbBar;
 import org.controlsfx.control.PropertySheet;
 import org.controlsfx.property.BeanPropertyUtils;
 import org.openide.util.Exceptions;
@@ -129,10 +133,46 @@ public class BSBInterfaceEditor extends JComponent {
                         new Insets(5, 5, 5, 0));
                 presetPane.getChildren().add(editEnabledCheckBox);
 
+                BreadCrumbBar<BSBGroupItem> breadCrumbBar = new BreadCrumbBar<>();
+                breadCrumbBar.setAutoNavigationEnabled(false);
+
+                bsbEditPane.getGroupsList().addListener(
+                        (ListChangeListener.Change<? extends BSBGroup> c) -> {
+                    ObservableList<BSBGroup> groupsList
+                            = bsbEditPane.getGroupsList();
+                    if (groupsList.size() > 0) {
+                        TreeItem<BSBGroupItem> current = new TreeItem<>(
+                                new BSBGroupItem(groupsList.get(0), "Root"));
+                        for (int i = 1; i < groupsList.size(); i++) {
+                            BSBGroup bsbGroup = groupsList.get(i);
+                            TreeItem<BSBGroupItem> next
+                                    = new TreeItem<>(
+                                            new BSBGroupItem(
+                                                    bsbGroup,
+                                                    bsbGroup.getGroupName()));
+                            current.getChildren().add(next);
+                            current = next;
+                        }
+                        breadCrumbBar.setSelectedCrumb(current);
+                    }
+                });
+
+                breadCrumbBar.setOnCrumbAction(item -> {
+                    BSBGroupItem groupItem = item.getSelectedCrumb().getValue();
+                    ObservableList<BSBGroup> groups = bsbEditPane.getGroupsList();
+                    int index = groups.indexOf(groupItem.bsbGroup) + 1;
+                    if(index < groups.size()) {
+                        groups.remove(index, groups.size());
+                    }
+                });
+
+                VBox topBox = new VBox();
+                topBox.getChildren().addAll(presetPane, breadCrumbBar);
+
                 SplitPane editAreaPane = new SplitPane(scrollPane);
 
                 BorderPane mainPane = new BorderPane();
-                mainPane.setTop(presetPane);
+                mainPane.setTop(topBox);
                 mainPane.setCenter(editAreaPane);
 
                 final Scene scene = new Scene(mainPane);
@@ -146,9 +186,17 @@ public class BSBInterfaceEditor extends JComponent {
                             items.add(rightPane);
                             editAreaPane.setDividerPosition(0, dividerPosition);
                         }
-                    } else if (items.contains(rightPane)) {
-                        dividerPosition = editAreaPane.getDividerPositions()[0];
-                        items.remove(rightPane);
+                        if (!topBox.getChildren().contains(breadCrumbBar)) {
+                            topBox.getChildren().add(breadCrumbBar);
+                        }
+                    } else {
+                        if (items.contains(rightPane)) {
+                            dividerPosition = editAreaPane.getDividerPositions()[0];
+                            items.remove(rightPane);
+                        }
+                        if (topBox.getChildren().contains(breadCrumbBar)) {
+                            topBox.getChildren().remove(breadCrumbBar);
+                        }
                     }
                 });
                 bsbEditPane.requestFocus();
@@ -224,7 +272,6 @@ public class BSBInterfaceEditor extends JComponent {
             editEnabledCheckBox.setDisable(gInterface == null);
         });
 
-
     }
 
     private void updateBsbObjPropSheet() {
@@ -238,4 +285,19 @@ public class BSBInterfaceEditor extends JComponent {
         }
     }
 
+}
+
+class BSBGroupItem {
+
+    public final BSBGroup bsbGroup;
+    public final String displayName;
+
+    public BSBGroupItem(BSBGroup bsbGroup, String displayName) {
+        this.bsbGroup = bsbGroup;
+        this.displayName = displayName;
+    }
+
+    public String toString() {
+        return displayName;
+    }
 }

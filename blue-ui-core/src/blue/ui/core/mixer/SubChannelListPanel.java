@@ -331,7 +331,7 @@ public class SubChannelListPanel extends JComponent implements Scrollable,
 
                 BSBGraphicInterface bsbInterface = bsb.getGraphicInterface();
 
-                for (BSBObject bsbObj : bsbInterface) {
+                for (BSBObject bsbObj : bsbInterface.getAllSet()) {
                     if (bsbObj instanceof BSBSubChannelDropdown) {
                         BSBSubChannelDropdown bsbSubDrop = (BSBSubChannelDropdown) bsbObj;
                         if (bsbSubDrop.getChannelOutput().equals(oldName)) {
@@ -371,7 +371,7 @@ public class SubChannelListPanel extends JComponent implements Scrollable,
 
                 BSBGraphicInterface bsbInterface = bsb.getGraphicInterface();
 
-                for (BSBObject bsbObj : bsbInterface) {
+                for (BSBObject bsbObj : bsbInterface.getAllSet()) {
                     if (bsbObj instanceof BSBSubChannelDropdown) {
                         BSBSubChannelDropdown bsbSubDrop = (BSBSubChannelDropdown) bsbObj;
                         if (bsbSubDrop.getChannelOutput()
