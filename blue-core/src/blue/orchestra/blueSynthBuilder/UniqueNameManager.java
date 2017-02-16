@@ -21,6 +21,7 @@
 package blue.orchestra.blueSynthBuilder;
 
 import java.text.MessageFormat;
+import java.util.HashSet;
 import java.util.Set;
 
 
@@ -41,12 +42,17 @@ public class UniqueNameManager  {
         this.collection = collection;
     }
 
+    public UniqueNameCollection getUniqueNameCollection() {
+        return collection;
+    }
+
     public void setDefaultPrefix(String prefix) {
         this.defaultPrefix = prefix;
     }
 
     public boolean isUniquelyNamed(BSBObject bsbObj) {
-        return isUniquelyNamed(bsbObj, collection.getNames());
+        return isUniquelyNamed(bsbObj, 
+                collection == null ? new HashSet<>() : collection.getNames());
     }
 
     private boolean isUniquelyNamed(BSBObject bsbObj, Set<String> names) {

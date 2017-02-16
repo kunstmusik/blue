@@ -26,7 +26,6 @@ import blue.orchestra.blueSynthBuilder.BSBObjectEntry;
 import blue.orchestra.blueSynthBuilder.GridSettings;
 import blue.orchestra.editor.blueSynthBuilder.EditModeOnly;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Optional;
 import java.util.Set;
 import javafx.beans.InvalidationListener;
@@ -34,12 +33,12 @@ import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.collections.FXCollections;
+import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.collections.SetChangeListener;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Bounds;
-import javafx.geometry.Point2D;
 import javafx.scene.Node;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
@@ -57,10 +56,10 @@ import org.openide.util.Exceptions;
  *
  * @author stevenyi
  */
-public class BSBEditPane extends Pane {
+public class BSBEditPane extends Pane implements ListChangeListener<BSBGroup> {
 
     private static final Color GRID_COLOR
-            = Color.rgb(38, 51, 76).brighter();
+            = Color.rgb(38, 51, 76, 0.5).brighter();
 
     private BSBGraphicInterface bsbInterface;
     private BSBEditSelection selection;
@@ -90,6 +89,7 @@ public class BSBEditPane extends Pane {
     final boolean allowEditing;
 
     ObservableList<BSBGroup> groupsList = FXCollections.observableArrayList();
+    BSBGroup currentBSBGroup = null;
 
     public BSBEditPane(BSBObjectEntry[] bsbObjectEntries) {
         this(bsbObjectEntries, true);
@@ -117,43 +117,7 @@ public class BSBEditPane extends Pane {
 
         selection = new BSBEditSelection(interfaceItemsPane.getChildren());
 
-        popupMenu = new ContextMenu();
-        EventHandler<ActionEvent> al = e -> {
-            MenuItem m = (MenuItem) e.getSource();
-            Class<? extends BSBObject> clazz = (Class<? extends BSBObject>) m.getUserData();
-            try {
-                BSBObject bsbObj = clazz.newInstance();
-                bsbObj.setX(addX);
-                bsbObj.setY(addY);
-                groupsList.get(groupsList.size() - 1).addBSBObject(bsbObj);
-            } catch (InstantiationException | IllegalAccessException ex) {
-                Exceptions.printStackTrace(ex);
-            }
-        };
-
-        for (BSBObjectEntry entry : bsbObjectEntries) {
-            MenuItem m = new MenuItem("Add " + entry.label);
-            m.setUserData(entry.bsbObjectClass);
-            m.setOnAction(al);
-            popupMenu.getItems().add(m);
-        }
-
-        MenuItem paste = new MenuItem("Paste");
-        paste.setOnAction(ae -> paste(addX, addY));
-        paste.disableProperty().bind(
-                Bindings.createBooleanBinding(
-                        () -> selection.copyBufferProperty().size() == 0,
-                        selection.copyBufferProperty()));
-        popupMenu.getItems().addAll(new SeparatorMenuItem(), paste);
-
-        nonEditPopupMenu = new ContextMenu();
-        MenuItem randomize = new MenuItem("Randomize");
-        randomize.setOnAction(ae -> {
-            if (bsbInterface != null) {
-                bsbInterface.getRootGroup().randomize();
-            }
-        });
-        nonEditPopupMenu.getItems().add(randomize);
+        setupPopupMenus(bsbObjectEntries);
 
         marquee = new Rectangle();
         marquee.setFill(null);
@@ -167,21 +131,6 @@ public class BSBEditPane extends Pane {
                     if (me.isSecondaryButtonDown()) {
                         addX = (int) me.getX();
                         addY = (int) me.getY();
-
-                        Iterator<BSBGroup> iter = getGroupsList().iterator();
-                        // advance past root
-                        iter.next();
-
-                        if (iter.hasNext()) {
-                            Point2D localPoint = getPointForBSBGroup(
-                                    new Point2D(me.getX(), me.getY()), iter,
-                                    interfaceItemsPane.getChildrenUnmodifiable());
-
-                            if (localPoint != null) {
-                                addX = (int) localPoint.getX();
-                                addY = (int) localPoint.getY();
-                            }
-                        }
                         popupMenu.show(BSBEditPane.this, me.getScreenX(), me.getScreenY());
                     } else if (me.isPrimaryButtonDown()) {
                         if (!me.isShiftDown()) {
@@ -230,7 +179,47 @@ public class BSBEditPane extends Pane {
         };
 
         installKeyEventHandler();
+        groupsList.addListener(this);
+    }
 
+    private void setupPopupMenus(BSBObjectEntry[] bsbObjectEntries) {
+        popupMenu = new ContextMenu();
+        EventHandler<ActionEvent> al = e -> {
+            MenuItem m = (MenuItem) e.getSource();
+            Class<? extends BSBObject> clazz = (Class<? extends BSBObject>) m.getUserData();
+            try {
+                BSBObject bsbObj = clazz.newInstance();
+                bsbObj.setX(addX);
+                bsbObj.setY(addY);
+                currentBSBGroup.addBSBObject(bsbObj);
+            } catch (InstantiationException | IllegalAccessException ex) {
+                Exceptions.printStackTrace(ex);
+            }
+        };
+        
+        for (BSBObjectEntry entry : bsbObjectEntries) {
+            MenuItem m = new MenuItem("Add " + entry.label);
+            m.setUserData(entry.bsbObjectClass);
+            m.setOnAction(al);
+            popupMenu.getItems().add(m);
+        }
+        
+        MenuItem paste = new MenuItem("Paste");
+        paste.setOnAction(ae -> paste(addX, addY));
+        paste.disableProperty().bind(
+                Bindings.createBooleanBinding(
+                        () -> selection.copyBufferProperty().size() == 0,
+                        selection.copyBufferProperty()));
+        popupMenu.getItems().addAll(new SeparatorMenuItem(), paste);
+        
+        nonEditPopupMenu = new ContextMenu();
+        MenuItem randomize = new MenuItem("Randomize");
+        randomize.setOnAction(ae -> {
+            if (bsbInterface != null) {
+                bsbInterface.getRootGroup().randomize();
+            }
+        });
+        nonEditPopupMenu.getItems().add(randomize);
     }
 
     public BSBEditSelection getSelection() {
@@ -256,36 +245,33 @@ public class BSBEditPane extends Pane {
     public void editBSBGraphicInterface(BSBGraphicInterface bsbInterface) {
 
         if (this.bsbInterface != null) {
-            this.bsbInterface.getRootGroup().interfaceItemsProperty().
-                    removeListener(scl);
             GridSettings gridSettings = this.bsbInterface.getGridSettings();
             gridSettings.widthProperty().removeListener(gridListener);
             gridSettings.heightProperty().removeListener(gridListener);
             gridSettings.gridStyleProperty().removeListener(gridListener);
         }
 
-        interfaceItemsPane.getChildren().clear();
         gridCanvas.visibleProperty().unbind();
 
         this.bsbInterface = bsbInterface;
         selection.initialize(groupsList, bsbInterface.getGridSettings());
 
         if (bsbInterface != null) {
-            for (BSBObject bsbObj : bsbInterface.getRootGroup()) {
-                addBSBObject(bsbObj);
-            }
-            bsbInterface.getRootGroup().interfaceItemsProperty().addListener(scl);
-            if (allowEditing) {
-                gridCanvas.visibleProperty().bind(bsbInterface.editEnabledProperty());
-            } else {
-                gridCanvas.setVisible(false);
-            }
+
             GridSettings gridSettings = bsbInterface.getGridSettings();
             gridSettings.widthProperty().addListener(gridListener);
             gridSettings.heightProperty().addListener(gridListener);
             gridSettings.gridStyleProperty().addListener(gridListener);
 
+            if (allowEditing) {
+                gridCanvas.visibleProperty().bind(bsbInterface.editEnabledProperty());
+            } else {
+                gridCanvas.setVisible(false);
+            }
+
             groupsList.setAll(bsbInterface.getRootGroup());
+        } else {
+            groupsList.clear();
         }
 
     }
@@ -303,7 +289,7 @@ public class BSBEditPane extends Pane {
                     viewHolder.setVisible(false);
                 }
             }
-            if(bsbObj instanceof BSBGroup) {
+            if (bsbObj instanceof BSBGroup) {
                 BSBGroupView bsbGroupView = (BSBGroupView) objectView;
                 bsbGroupView.initialize(editEnabledProperty, selection, groupsList);
             }
@@ -349,7 +335,7 @@ public class BSBEditPane extends Pane {
             copy.setX(x + copy.getX() - minX);
             copy.setY(y + copy.getY() - minY);
 
-            groupsList.get(groupsList.size() - 1).addBSBObject(copy);
+            currentBSBGroup.addBSBObject(copy);
         }
     }
 
@@ -385,30 +371,15 @@ public class BSBEditPane extends Pane {
 
         selecting.clear();
 
-        BSBGroup group = groupsList.get(groupsList.size() - 1);
-
-        ObservableList<Node> bsbItems = interfaceItemsPane.getChildren();
-
-        if(groupsList.size() > 1) {
-            Iterator<BSBGroup> iter = groupsList.iterator();
-            iter.next();
-            bsbItems = getChildrenForBSBGroupList(iter, bsbItems);
-        }
-
-        for (Node n : bsbItems) {
+        for (Node n : interfaceItemsPane.getChildren()) {
             Bounds b = n.getBoundsInParent();
-            Node temp = n;
-            while(temp.getParent() != marquee.getParent()) {
-                b = temp.getParent().localToParent(b);
-                temp = temp.getParent();
-            }
-            
+
             if (n != marquee && marquee.intersects(b)) {
                 Object obj = n.getUserData();
                 if (obj instanceof BSBObject) {
                     BSBObject bsbObj = (BSBObject) obj;
 
-                    if (group.contains(bsbObj)) {
+                    if (currentBSBGroup.contains(bsbObj)) {
                         selecting.add((BSBObject) obj);
                     }
                 }
@@ -544,62 +515,23 @@ public class BSBEditPane extends Pane {
         setOnKeyPressed(handler);
     }
 
-    protected static Point2D getPointForBSBGroup(Point2D point,
-            Iterator<BSBGroup> groupIterator, ObservableList<Node> children) {
-
-        if (!groupIterator.hasNext()) {
-            return null;
+    @Override
+    public void onChanged(Change<? extends BSBGroup> c) {
+        if (this.currentBSBGroup != null) {
+            this.currentBSBGroup.interfaceItemsProperty().
+                    removeListener(scl);
         }
 
-        BSBGroup group = groupIterator.next();
+        interfaceItemsPane.getChildren().clear();
 
-        for (Node node : children) {
-            if (node instanceof BSBObjectViewHolder) {
-                BSBObjectViewHolder holder = (BSBObjectViewHolder) node;
-                Region r = holder.getBSBObjectView();
-
-                if (r.getUserData() == group) {
-                    Point2D local = holder.parentToLocal(point);
-                    BSBGroupView groupView = ((BSBGroupView)r);
-                    local = groupView.getEditorPane().parentToLocal(local);
-                    if (r.contains(local)) {
-                        if (groupIterator.hasNext()) {
-                            return getPointForBSBGroup(local, groupIterator,
-                                    groupView.getBSBChildNodes());
-                        } else {
-                            return local;
-                        }
-                    }
-                }
+        if (groupsList.size() > 0) {
+            this.currentBSBGroup = groupsList.get(groupsList.size() - 1);
+            for (BSBObject bsbObj : currentBSBGroup.interfaceItemsProperty()) {
+                addBSBObject(bsbObj);
             }
+            currentBSBGroup.interfaceItemsProperty().addListener(scl);
+        } else {
+            this.currentBSBGroup = null;
         }
-        return null;
-    }
-
-    protected static ObservableList<Node> getChildrenForBSBGroupList(
-            Iterator<BSBGroup> groupIterator, ObservableList<Node> currentChildren) {
-        
-        if (!groupIterator.hasNext()) {
-            return null;
-        }
-
-        BSBGroup group = groupIterator.next();
-
-        for (Node node : currentChildren) {
-            if (node instanceof BSBObjectViewHolder) {
-                BSBObjectViewHolder holder = (BSBObjectViewHolder) node;
-                Region r = holder.getBSBObjectView();
-
-                if (r.getUserData() == group) {
-                    if (groupIterator.hasNext()) {
-                        return getChildrenForBSBGroupList(groupIterator,
-                                ((BSBGroupView)r).getBSBChildNodes());
-                    } else {
-                        return ((BSBGroupView)r).getBSBChildNodes();
-                    }
-                }
-            }
-        }
-        return null;
     }
 }

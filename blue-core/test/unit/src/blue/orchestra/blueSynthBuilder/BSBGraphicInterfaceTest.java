@@ -52,7 +52,9 @@ public class BSBGraphicInterfaceTest extends TestCase {
             bsbGroup.addBSBObject(bsbObj);
             bsbObj.setObjectName("test");
 
-            if (i == 0 || bsbObj instanceof BSBHSliderBank
+            // Tests that all objects after first do *not* allow setting of 
+            // object name since "test" should already be used
+            if (i < 2 || bsbObj instanceof BSBHSliderBank
                     || bsbObj instanceof BSBXYController) {
                 if (!bsbObj.getObjectName().equals("test")) {
                     System.err.println(bsbObj);

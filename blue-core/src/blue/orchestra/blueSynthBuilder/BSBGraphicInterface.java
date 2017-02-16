@@ -169,6 +169,7 @@ public class BSBGraphicInterface {
         }
         this.rootGroup = group;
         group.setUniqueNameManager(nameManager);
+        nameManager.setUniqueNameCollection(rootGroup);
         group.setAllSet(allSet);
     }
 

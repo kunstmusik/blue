@@ -56,7 +56,25 @@ public class BSBGroup extends BSBObject implements Iterable<BSBObject>, UniqueNa
                 }
             }
 
+            if (bsbObj instanceof BSBGroup) {
+                if (unm != null) {
+                    UniqueNameManager tempUNM = new UniqueNameManager();
+                    Set<String> additionalNames = new HashSet<>();
+                    tempUNM.setUniqueNameCollection(() -> {
+                        Set<String> temp = new HashSet<>();
+                        temp.addAll(additionalNames);
+                        if (unm.getUniqueNameCollection() != null) {
+                            temp.addAll(unm.getUniqueNameCollection().getNames());
+                        }
+                        return temp;
+                    });
+                    ((BSBGroup) bsbObj).makeNamesUnique(tempUNM, additionalNames);
+                }
+                ((BSBGroup) bsbObj).setParameterList(parameterList);
+            }
+
             bsbObj.setUniqueNameManager(unm);
+
             return super.add(bsbObj);
         }
     };
@@ -65,35 +83,40 @@ public class BSBGroup extends BSBObject implements Iterable<BSBObject>, UniqueNa
             = FXCollections.observableSet(backingSet);
 
     SetChangeListener<BSBObject> itemsListener = (change) -> {
-            BSBObject bsbObj;
-            if (allSet != null) {
-                if (change.wasAdded()) {
-                    bsbObj = change.getElementAdded();
-                    allSet.add(bsbObj);
+        BSBObject bsbObj;
+        if (allSet != null) {
+            if (change.wasAdded()) {
+                bsbObj = change.getElementAdded();
+                allSet.add(bsbObj);
 
-                    if(bsbObj instanceof BSBGroup) {
-                        ((BSBGroup) bsbObj).setAllSet(allSet);
-                        ((BSBGroup) bsbObj).setParameterList(parameterList);
-                    }  
-                    if(bsbObj instanceof AutomatableBSBObject) {
-                        ((AutomatableBSBObject)bsbObj).setParameterList(
-                                parameterList);
-                    }
-                } else if (change.wasRemoved()) {
-                    bsbObj = change.getElementRemoved();
-                    allSet.remove(bsbObj);
-                    if(bsbObj instanceof BSBGroup) {
-                        ((BSBGroup) bsbObj).setAllSet(null);
-                    }
+                if (bsbObj instanceof BSBGroup) {
+                    ((BSBGroup) bsbObj).setAllSet(allSet);
+                    ((BSBGroup) bsbObj).setParameterList(parameterList);
+                }
+                if (bsbObj instanceof AutomatableBSBObject) {
+                    ((AutomatableBSBObject) bsbObj).setParameterList(
+                            parameterList);
+                }
+                bsbObj.setUniqueNameManager(unm);
+            } else if (change.wasRemoved()) {
+                bsbObj = change.getElementRemoved();
+                allSet.remove(bsbObj);
+                if (bsbObj instanceof BSBGroup) {
+                    ((BSBGroup) bsbObj).setAllSet(null);
+                    ((BSBGroup) bsbObj).removeParameters();
+                } else if (bsbObj instanceof AutomatableBSBObject) {
+                    ((AutomatableBSBObject) bsbObj).setAutomationAllowed(false);
                 }
             }
-        };
+        }
+    };
 
     public BSBGroup() {
         interfaceItems.addListener(itemsListener);
     }
 
     public BSBGroup(BSBGroup group) {
+        super(group);
         for (BSBObject bsbObj : group.interfaceItems) {
             interfaceItems.add(bsbObj.deepCopy());
         }
@@ -103,7 +126,6 @@ public class BSBGroup extends BSBObject implements Iterable<BSBObject>, UniqueNa
         // FIXME - double check that not sharing UNM is correct (UNM 
 //        unm = group.unm;
 
-        
     }
 
     public ObservableSet<BSBObject> interfaceItemsProperty() {
@@ -111,10 +133,9 @@ public class BSBGroup extends BSBObject implements Iterable<BSBObject>, UniqueNa
     }
 
     public void addBSBObject(BSBObject bsbObj) {
-        if (bsbObj == null) {
-            return;
+        if (bsbObj != null) {
+            interfaceItems.add(bsbObj);
         }
-        interfaceItems.add(bsbObj);
     }
 
     @Override
@@ -138,10 +159,14 @@ public class BSBGroup extends BSBObject implements Iterable<BSBObject>, UniqueNa
         Set<String> names = new HashSet<>();
 
         for (BSBObject bsbObj : interfaceItems) {
-            String[] replacementKeys = bsbObj.getReplacementKeys();
+            if (bsbObj instanceof BSBGroup) {
+                names.addAll(((BSBGroup) bsbObj).getNames());
+            } else {
+                String[] replacementKeys = bsbObj.getReplacementKeys();
 
-            if (replacementKeys != null) {
-                names.addAll(Arrays.asList(replacementKeys));
+                if (replacementKeys != null) {
+                    names.addAll(Arrays.asList(replacementKeys));
+                }
             }
         }
 
@@ -220,8 +245,10 @@ public class BSBGroup extends BSBObject implements Iterable<BSBObject>, UniqueNa
     public void setUniqueNameManager(UniqueNameManager unm) {
         this.unm = unm;
 
-        for (BSBObject bsbObj : interfaceItems) {
-            bsbObj.setUniqueNameManager(unm);
+        if (unm != null) {
+            for (BSBObject bsbObj : interfaceItems) {
+                bsbObj.setUniqueNameManager(unm);
+            }
         }
     }
 
@@ -277,16 +304,15 @@ public class BSBGroup extends BSBObject implements Iterable<BSBObject>, UniqueNa
 //        }
 //        return retVal;
 //    }
-
     public void setAllSet(ObservableSet<BSBObject> allSet) {
-        if(allSet == null && this.allSet != null) {
+        if (allSet == null && this.allSet != null) {
             this.allSet.remove(this);
             this.allSet.removeAll(this.interfaceItems);
         }
 
         this.allSet = allSet;
 
-        if(allSet != null) {
+        if (allSet != null) {
             allSet.add(this);
             allSet.addAll(interfaceItems);
         }
@@ -296,6 +322,17 @@ public class BSBGroup extends BSBObject implements Iterable<BSBObject>, UniqueNa
                 ((BSBGroup) bsbObj).setAllSet(allSet);
             }
         }
+    }
+
+    protected void removeParameters() {
+        for (BSBObject bsbObj : interfaceItemsProperty()) {
+            if (bsbObj instanceof BSBGroup) {
+                ((BSBGroup) bsbObj).removeParameters();
+            } else if (bsbObj instanceof AutomatableBSBObject) {
+                ((AutomatableBSBObject) bsbObj).setAutomationAllowed(false);
+            }
+        }
+
     }
 
     public final void setGroupName(String value) {
@@ -310,10 +347,36 @@ public class BSBGroup extends BSBObject implements Iterable<BSBObject>, UniqueNa
         return groupName;
     }
 
-
-    /** Shallow check if this group is the parent of the given bsbObj */
+    /**
+     * Shallow check if this group is the parent of the given bsbObj
+     */
     public boolean contains(BSBObject bsbObj) {
-       return interfaceItems.contains(bsbObj);
+        return interfaceItems.contains(bsbObj);
+    }
+
+    private void makeNamesUnique(UniqueNameManager unm,
+            Set<String> additionalNames) {
+        if (unm == null) {
+            return;
+        }
+
+        for (BSBObject bsbObj : interfaceItems) {
+            // guarantee unique names for objects
+            if (bsbObj instanceof BSBGroup) {
+                ((BSBGroup) bsbObj).makeNamesUnique(unm, additionalNames);
+            } else {
+                String objName = bsbObj.getObjectName();
+
+                if (objName != null && objName.length() != 0 && unm != null) {
+                    if (!unm.isUniquelyNamed(bsbObj)) {
+                        unm.setUniqueName(bsbObj);
+                        additionalNames.addAll(
+                                Arrays.asList(bsbObj.getReplacementKeys()));
+                    }
+                }
+            }
+
+        }
     }
 
 }

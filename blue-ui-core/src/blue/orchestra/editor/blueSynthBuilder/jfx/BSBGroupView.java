@@ -24,6 +24,7 @@ import blue.orchestra.editor.blueSynthBuilder.EditModeOnly;
 import javafx.beans.property.BooleanProperty;
 import javafx.collections.ObservableList;
 import javafx.collections.SetChangeListener;
+import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.layout.BorderPane;
@@ -61,15 +62,17 @@ public class BSBGroupView extends BorderPane {
                 + "-fx-background-color: -fx-control-inner-background;"
                 + "-fx-padding: 2 8 2 8;"
                 + "-fx-background-radius: 4 4 0 0;");
+        label.setAlignment(Pos.CENTER);
 
         editorPane.setStyle("-fx-border-color: -fx-control-inner-background;"
                 + "-fx-border-width: 1px;"
+                + "-fx-padding: 0 9 9 0;"
                 + "-fx-background-color: rgba(0,0,0,0.2);");
 
         setTop(label);
         setCenter(editorPane);
         editorPane.setMinSize(20.0, 20.0);
-        label.prefWidthProperty().bind(editorPane.prefWidthProperty());
+        label.setMaxWidth(Double.MAX_VALUE);
 
 //        label.setStyle("-fx-background: aliceblue;");
 
@@ -84,34 +87,6 @@ public class BSBGroupView extends BorderPane {
             }
         });
     }
-
-//    @Override
-//    protected double computePrefHeight(double width) {
-//        double minHeight = label.prefHeight(width);
-//
-//        double h = 20;
-//        for(Node r : getChildren()) {
-//            System.out.println( r.getLayoutBounds().getHeight());
-//            r.get
-//            h = Math.max(r.getTranslateY() + r.getLayoutBounds().getHeight(), h);
-//        }
-//
-//        return minHeight + h;
-//    }
-//
-//    @Override
-//    protected double computePrefWidth(double height) {
-//        double minWidth = label.prefWidth(height);
-//
-//        double w = 20;
-//        for(Node r : getChildren()) {
-//            System.out.println(r.getLayoutBounds());
-//            w = Math.max(r.getTranslateX() + r.getLayoutBounds().getWidth(), w);
-//        }
-//        return Math.max(minWidth, w);
-//    }
-
-    
 
     public void initialize(BooleanProperty editEnabledProperty, BSBEditSelection selection,
             ObservableList<BSBGroup> groupsList) {
@@ -163,11 +138,4 @@ public class BSBGroupView extends BorderPane {
         }
     }
 
-    public ObservableList<Node> getBSBChildNodes() {
-        return editorPane.getChildren();
-    }
-
-    public Pane getEditorPane(){
-        return editorPane;
-    }
 }
