@@ -32,6 +32,7 @@ import javafx.beans.InvalidationListener;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.value.ChangeListener;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
@@ -90,6 +91,26 @@ public class BSBEditPane extends Pane implements ListChangeListener<BSBGroup> {
 
     ObservableList<BSBGroup> groupsList = FXCollections.observableArrayList();
     BSBGroup currentBSBGroup = null;
+    
+    ChangeListener<Boolean> editEnabledListener = (obs, old, newVal) -> {
+        if (newVal) {
+            if (groupsList.size() > 1) {
+                interfaceItemsPane.getChildren().clear();
+                for (BSBObject bsbObj : 
+                        currentBSBGroup.interfaceItemsProperty()) {
+                    addBSBObject(bsbObj);
+                }
+            }
+        } else {
+            if (groupsList.size() > 1) {
+                interfaceItemsPane.getChildren().clear();
+                for (BSBObject bsbObj : 
+                        groupsList.get(0).interfaceItemsProperty()) {
+                    addBSBObject(bsbObj);
+                }
+            }
+        }
+    };
 
     public BSBEditPane(BSBObjectEntry[] bsbObjectEntries) {
         this(bsbObjectEntries, true);
@@ -196,14 +217,14 @@ public class BSBEditPane extends Pane implements ListChangeListener<BSBGroup> {
                 Exceptions.printStackTrace(ex);
             }
         };
-        
+
         for (BSBObjectEntry entry : bsbObjectEntries) {
             MenuItem m = new MenuItem("Add " + entry.label);
             m.setUserData(entry.bsbObjectClass);
             m.setOnAction(al);
             popupMenu.getItems().add(m);
         }
-        
+
         MenuItem paste = new MenuItem("Paste");
         paste.setOnAction(ae -> paste(addX, addY));
         paste.disableProperty().bind(
@@ -211,7 +232,7 @@ public class BSBEditPane extends Pane implements ListChangeListener<BSBGroup> {
                         () -> selection.copyBufferProperty().size() == 0,
                         selection.copyBufferProperty()));
         popupMenu.getItems().addAll(new SeparatorMenuItem(), paste);
-        
+
         nonEditPopupMenu = new ContextMenu();
         MenuItem randomize = new MenuItem("Randomize");
         randomize.setOnAction(ae -> {
@@ -242,6 +263,7 @@ public class BSBEditPane extends Pane implements ListChangeListener<BSBGroup> {
         return marqueeSelecting;
     }
 
+
     public void editBSBGraphicInterface(BSBGraphicInterface bsbInterface) {
 
         if (this.bsbInterface != null) {
@@ -249,6 +271,9 @@ public class BSBEditPane extends Pane implements ListChangeListener<BSBGroup> {
             gridSettings.widthProperty().removeListener(gridListener);
             gridSettings.heightProperty().removeListener(gridListener);
             gridSettings.gridStyleProperty().removeListener(gridListener);
+
+            this.bsbInterface.editEnabledProperty().removeListener(
+                    editEnabledListener);
         }
 
         gridCanvas.visibleProperty().unbind();
@@ -265,6 +290,8 @@ public class BSBEditPane extends Pane implements ListChangeListener<BSBGroup> {
 
             if (allowEditing) {
                 gridCanvas.visibleProperty().bind(bsbInterface.editEnabledProperty());
+                bsbInterface.editEnabledProperty().addListener(
+                        editEnabledListener);
             } else {
                 gridCanvas.setVisible(false);
             }
