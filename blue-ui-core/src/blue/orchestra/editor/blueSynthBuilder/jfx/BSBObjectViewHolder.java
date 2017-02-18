@@ -21,6 +21,8 @@ package blue.orchestra.editor.blueSynthBuilder.jfx;
 
 import blue.orchestra.blueSynthBuilder.BSBGroup;
 import blue.orchestra.blueSynthBuilder.BSBObject;
+import java.util.List;
+import java.util.stream.Collectors;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.value.ChangeListener;
@@ -70,7 +72,7 @@ public class BSBObjectViewHolder extends Pane {
             getParent().requestFocus();
             if (me.isSecondaryButtonDown()) {
                 ContextMenu menu = getContextMenu();
-                menu.setUserData(selection);
+                menu.setUserData(new MenuData(selection, groupsList));
                 menu.show(BSBObjectViewHolder.this, me.getScreenX(), me.getScreenY());
                 return;
             }
@@ -174,19 +176,54 @@ public class BSBObjectViewHolder extends Pane {
 
             MenuItem cut = new MenuItem("Cut");
             cut.setOnAction(e -> {
-                BSBEditSelection selection = (BSBEditSelection) MENU.getUserData();
+                MenuData data = (MenuData)MENU.getUserData();
+                BSBEditSelection selection = data.selection;
                 selection.cut();
             });
             MenuItem copy = new MenuItem("Copy");
             copy.setOnAction(e -> {
-                BSBEditSelection selection = (BSBEditSelection) MENU.getUserData();
+                MenuData data = (MenuData)MENU.getUserData();
+                BSBEditSelection selection = data.selection;
                 selection.copy();
             });
 
             MenuItem remove = new MenuItem("Remove");
             remove.setOnAction(e -> {
-                BSBEditSelection selection = (BSBEditSelection) MENU.getUserData();
+                MenuData data = (MenuData)MENU.getUserData();
+                BSBEditSelection selection = data.selection;
                 selection.remove();
+            });
+
+            MenuItem makeGroup = new MenuItem("Make Group");
+            makeGroup.setOnAction(e -> {
+                MenuData data = (MenuData)MENU.getUserData();
+                BSBEditSelection selection = data.selection;
+                List<BSBGroup> groupsList = data.groupsList;
+                
+                List<BSBObject> bsbObjs = selection.selection.stream()
+                        .map(b -> b.deepCopy())
+                        .collect(Collectors.toList());
+                int x = Integer.MAX_VALUE;                
+                int y = Integer.MAX_VALUE;                
+
+                for(BSBObject bsbObj : bsbObjs) {
+                    x = Math.min(x, bsbObj.getX());
+                    y = Math.min(y, bsbObj.getY());
+                }
+
+                for(BSBObject bsbObj : bsbObjs) {
+                    bsbObj.setX(bsbObj.getX() - x + 10);
+                    bsbObj.setY(bsbObj.getY() - y + 10);
+                }
+
+                selection.remove();
+
+                BSBGroup group = new BSBGroup();
+                group.interfaceItemsProperty().addAll(bsbObjs);
+                group.setX(x);
+                group.setY(y);
+
+                groupsList.get(groupsList.size() - 1).addBSBObject(group);
             });
 
             final Menu align = new Menu("Align");
@@ -195,13 +232,15 @@ public class BSBObjectViewHolder extends Pane {
             EventHandler<ActionEvent> alignListener = ae -> {
                 MenuItem source = (MenuItem) ae.getSource();
                 Alignment alignment = (Alignment) source.getUserData();
-                BSBEditSelection selection = (BSBEditSelection) MENU.getUserData();
+                MenuData data = (MenuData)MENU.getUserData();
+                BSBEditSelection selection = data.selection;
                 AlignmentUtils.align(selection.getSelectedNodes(), alignment);
             };
             EventHandler<ActionEvent> distributeListener = ae -> {
                 MenuItem source = (MenuItem) ae.getSource();
                 Alignment alignment = (Alignment) source.getUserData();
-                BSBEditSelection selection = (BSBEditSelection) MENU.getUserData();
+                MenuData data = (MenuData)MENU.getUserData();
+                BSBEditSelection selection = data.selection;
                 AlignmentUtils.distribute(selection.getSelectedNodes(), alignment);
             };
 
@@ -218,11 +257,13 @@ public class BSBObjectViewHolder extends Pane {
                 distribute.getItems().add(d);
             }
             MENU.getItems().addAll(cut, copy, remove);
+            MENU.getItems().addAll(new SeparatorMenuItem(), makeGroup);
             MENU.getItems().addAll(new SeparatorMenuItem(), align, distribute);
             MENU.setOnHidden(e -> MENU.setUserData(null));
 
             MENU.setOnShowing(e -> {
-                BSBEditSelection selection = (BSBEditSelection) MENU.getUserData();
+                MenuData data = (MenuData)MENU.getUserData();
+                BSBEditSelection selection = data.selection;
                 align.setDisable(selection.selection.size() < 2);
                 distribute.setDisable(selection.selection.size() < 2);
             });
@@ -232,5 +273,16 @@ public class BSBObjectViewHolder extends Pane {
 
     public Region getBSBObjectView() {
         return bsbObjectView;
+    }
+
+    class MenuData {
+        public final BSBEditSelection selection;
+        public final List<BSBGroup> groupsList;
+
+        public MenuData(BSBEditSelection selection, 
+                List<BSBGroup> groupsList) {
+            this.selection = selection;
+            this.groupsList = groupsList;
+        }
     }
 }

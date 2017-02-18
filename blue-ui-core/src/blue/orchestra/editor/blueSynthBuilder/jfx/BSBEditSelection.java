@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.ObservableSet;
@@ -59,7 +60,7 @@ public class BSBEditSelection {
         return copyBuffer;
     }
 
-    public void initialize(ObservableList<BSBGroup> groupList, 
+    public void initialize(ObservableList<BSBGroup> groupList,
             GridSettings gridSettings) {
         this.groupList = groupList;
         this.gridSettings = gridSettings;
@@ -130,7 +131,10 @@ public class BSBEditSelection {
     void copy() {
         if (groupList != null) {
             copyBuffer.clear();
-            copyBuffer.addAll(selection);
+            copyBuffer.addAll(
+                    selection.stream().
+                            map(b -> b.deepCopy())
+                            .collect(Collectors.toList()));
         }
     }
 
