@@ -22,6 +22,8 @@ NEW
     JavaFX UI toolkit
   * Issue #344 - Ability to hide/show value display added to Knob, Sliders, and 
     SliderBanks
+  * Issue #312 - Added Group widget that allows grouping of widgets into a
+	panel that has a titled border around it for better organization of UI
 
 * RhinoInstrument and RhinoObject were renamed as JavaScriptInstrument and
   JavaScriptObject

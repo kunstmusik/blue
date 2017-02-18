@@ -360,6 +360,26 @@ instruments:</para>
 
 </section>
 
+
+<section>
+<title>Groups</title>
+
+<para>Widgets may be organized into Groups that provide titled border around the
+set of widgets.  Double-clicking on a group will allow editing of the group's 
+set of widgets. The Breadcrumb bar that appears when edit mode is enabled allows
+for navigating back up the hierarchy of groups to the root group for the interface.
+</para>
+
+<para>Users may either start by creating an empty group, double-clicking, then 
+  editing the interface for the group. Optionally, they may select a number of existing
+  widgets, right-click on one of the selected widgets, then choose "Make Group" to
+  embed the selected widgets within a group.
+</para>
+
+
+</section>
+
+
 <section>
 <title>Presets</title>
 
