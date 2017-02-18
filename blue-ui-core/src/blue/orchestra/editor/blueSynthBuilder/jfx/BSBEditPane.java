@@ -354,7 +354,7 @@ public class BSBEditPane extends Pane implements ListChangeListener<BSBGroup> {
 
         for (BSBObject bsbObj : selection.copyBufferProperty()) {
             minX = Math.min(minX, bsbObj.getX());
-            minY = Math.min(minX, bsbObj.getY());
+            minY = Math.min(minY, bsbObj.getY());
         }
 
         for (BSBObject bsbObj : selection.copyBufferProperty()) {
