@@ -177,6 +177,11 @@ public class BSBGroup extends BSBObject implements Iterable<BSBObject>, UniqueNa
         BSBGroup bsbGroup = new BSBGroup();
         initBasicFromXML(data, bsbGroup);
 
+        String groupName = data.getAttributeValue("groupName");
+        if(groupName != null) {
+            bsbGroup.setGroupName(groupName);
+        }
+
         Elements elems = data.getElements();
 
         while (elems.hasMoreElements()) {
@@ -197,6 +202,8 @@ public class BSBGroup extends BSBObject implements Iterable<BSBObject>, UniqueNa
     @Override
     public Element saveAsXML() {
         Element retVal = super.getBasicXML(this);
+
+        retVal.setAttribute("groupName", getGroupName());
 
 //        retVal.setAttribute("editEnabled", Boolean.toString(isEditEnabled()));
         for (BSBObject bsbObj : interfaceItems) {
