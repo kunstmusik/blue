@@ -80,6 +80,9 @@ FIX
 
 * JMask - Probability: Beta editor was not showing when Beta generator selected
 
+* Issue #352 - MIDI import was not updated correctly newer ScoreLayer system,
+  also, velocity was not processed correctly yielding only zeros
+
 INTERNAL
 
 * Replaced use of Cloneable and Serializable with copy constructors and new 

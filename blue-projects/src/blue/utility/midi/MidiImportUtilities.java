@@ -161,6 +161,7 @@ public class MidiImportUtilities {
 
                 double time = (me.getTick() / ticksLength) * divType;
 
+
                 switch (shortMsg.getCommand()) {
                     case ShortMessage.NOTE_ON:
 
@@ -178,7 +179,7 @@ public class MidiImportUtilities {
 
                             String note = MidiUtilities.processNoteTemplate(
                                     template, instrId, start, duration,
-                                    noteNum, velocity);
+                                    noteNum, n.velocity);
 
                             nl.add(Note.createNote(note));
 
@@ -197,7 +198,7 @@ public class MidiImportUtilities {
 
                         String note = MidiUtilities.processNoteTemplate(
                                 template, instrId, start, duration, noteNum,
-                                velocity);
+                                n.velocity);
 
                         nl.add(Note.createNote(note));
 

@@ -79,6 +79,7 @@ public final class ImportMidiAction implements ActionListener {
                         "message.error"), JOptionPane.ERROR_MESSAGE);
                 return;
             }
+            tempData.getScore().clear();
             tempData.getScore().add(pObj);
         } catch (NoteParseException e) {
             JOptionPane.showMessageDialog(mainWindow, BlueSystem.getString(
