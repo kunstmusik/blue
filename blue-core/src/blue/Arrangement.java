@@ -64,11 +64,13 @@ public class Arrangement implements TableModel {
     public Arrangement() {
     }
 
-    /** Copy Constructor */
-    public Arrangement(Arrangement arr){
-        for(InstrumentAssignment ia :arr.getArrangement()) {
+    /**
+     * Copy Constructor
+     */
+    public Arrangement(Arrangement arr) {
+        for (InstrumentAssignment ia : arr.getArrangement()) {
             arrangement.add(new InstrumentAssignment(ia));
-        }        
+        }
     }
 
     public int addInstrument(Instrument instrument) {
@@ -377,7 +379,7 @@ public class Arrangement implements TableModel {
                 if ((assignmentId = data.getInstrSourceId(instr)) == null) {
                     assignmentId = ia.arrangementId;
                 }
-                
+
                 String transformed = replaceInstrumentId(assignmentId, globalSco);
 
                 retVal.append(transformed);
@@ -561,29 +563,25 @@ public class Arrangement implements TableModel {
         return transformed;
     }
 
+    private Channel getChannelForArrangementId(Mixer mixer, String arrangementId) {
+        if (mixer != null) {
+            for (Channel channel : mixer.getAllSourceChannels()) {
+                if (channel.getName().equals(arrangementId)) {
+                    return channel;
+                }
+            }
+
+        }
+        return null;
+    }
+
     // TODO - Make this more efficient (made this way in case blueMixerOut is in
     // comments
     private String convertBlueMixerOut(CompileData data, Mixer mixer, String arrangementId,
             String input, int nchnls) {
 
-        Channel c = null;
-
         if (!input.contains("blueMixerOut") && !input.contains("blueMixerIn")) {
             return input;
-        }
-
-        if (mixer != null) {
-            for (Channel channel : mixer.getAllSourceChannels()) {
-                if (channel.getName().equals(arrangementId)) {
-                    c = channel;
-                    break;
-                }
-            }
-
-            if (c == null) {
-                throw new RuntimeException(
-                        "Unable to find channel for instrument: " + arrangementId);
-            }
         }
 
         StrBuilder buffer = new StrBuilder();
@@ -615,12 +613,19 @@ public class Arrangement implements TableModel {
                 String argText = noCommentLine.substring(0, mixerInIndex).trim();
 
                 String[] args = argText.split(",");
+                Channel c = getChannelForArrangementId(mixer, arrangementId);
 
                 for (int i = 0; i < nchnls && i < args.length; i++) {
                     String arg = args[i];
 
-                    String var = Mixer.getChannelVar(
-                            data.getChannelIdAssignments().get(c), i);
+                    String var;
+
+                    if (c == null) {
+                        var = Mixer.getSubChannelVar(Channel.MASTER, i);
+                    } else {
+                        var = Mixer.getChannelVar(
+                                data.getChannelIdAssignments().get(c), i);
+                    }
 
                     buffer.append(arg).append(" = ");
                     buffer.append(var).append("\n");
@@ -648,9 +653,20 @@ public class Arrangement implements TableModel {
 
                         buffer.append("\n");
                     } else {
-                        String subChannelName = args[0].trim();
-                        subChannelName = subChannelName.substring(1,
-                                subChannelName.length() - 1);
+                        String subChanBase = args[0].trim();
+                        final String subChannelName = subChanBase.substring(1,
+                                subChanBase.length() - 1);
+
+                        Optional<Channel> found = mixer.getSubChannels().stream()
+                                .filter(chn -> subChannelName.equals(chn.getName()))
+                                .findFirst();
+
+                        if (!found.isPresent()) {
+                            throw new RuntimeException(
+                                    "Unable to find subchannel with name: "
+                                    + subChannelName);
+                        }
+
                         mixer.addSubChannelDependency(subChannelName);
 
                         for (int i = 1; i < nchnls + 1 && i < args.length; i++) {
@@ -659,13 +675,13 @@ public class Arrangement implements TableModel {
                             String var = Mixer.getSubChannelVar(subChannelName,
                                     i - 1);
 
-			    buffer.append(var);
+                            buffer.append(var);
 
                             if (!blueMixerInFound) {
-				buffer.append(" += ");
+                                buffer.append(" += ");
                             } else {
-				buffer.append(" = ");
-			    }
+                                buffer.append(" = ");
+                            }
 
                             buffer.append(arg).append("\n");
 
@@ -676,21 +692,28 @@ public class Arrangement implements TableModel {
                     buffer.append(line.replaceAll("blueMixerOut", "outc"));
                     buffer.append("\n");
                 } else {
+
+                    Channel c = getChannelForArrangementId(mixer, arrangementId);
                     for (int i = 0; i < nchnls && i < args.length; i++) {
                         String arg = args[i];
-
-                        String var = Mixer.getChannelVar(
-                                data.getChannelIdAssignments().get(c), i);
+                        String var;
+                        
+                        if (c == null) {
+                            var = Mixer.getSubChannelVar(Channel.MASTER, i);
+                        } else {
+                            var = Mixer.getChannelVar(
+                                    data.getChannelIdAssignments().get(c), i);
+                        }
 
                         buffer.append(var);
 
-			if (!blueMixerInFound) {
-			    buffer.append(" += ");
-			} else {
-			    buffer.append(" = ");
-			}
+                        if (!blueMixerInFound) {
+                            buffer.append(" += ");
+                        } else {
+                            buffer.append(" = ");
+                        }
 
-			buffer.append(arg).append("\n");
+                        buffer.append(arg).append("\n");
 
                     }
                 }
@@ -747,7 +770,7 @@ public class Arrangement implements TableModel {
         }
 
         return arr;
-    } 
+    }
 
     public Element saveAsXML() {
         Element retVal = new Element("arrangement");

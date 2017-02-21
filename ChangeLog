@@ -83,6 +83,9 @@ FIX
 * Issue #352 - MIDI import was not updated correctly newer ScoreLayer system,
   also, velocity was not processed correctly yielding only zeros
 
+# Issue #337 - Fixed Mixer generation when no instruments found in Orchestra; 
+  condition appears when using only Sound SoundObjects in project
+
 INTERNAL
 
 * Replaced use of Cloneable and Serializable with copy constructors and new 
