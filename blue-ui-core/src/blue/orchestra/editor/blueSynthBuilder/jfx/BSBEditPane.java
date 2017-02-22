@@ -481,7 +481,7 @@ public class BSBEditPane extends Pane implements ListChangeListener<BSBGroup> {
                         || !allowEditing) {
                     return;
                 }
-                if (event.isControlDown()) {
+                if (event.isControlDown() || event.isMetaDown()) {
                     switch (event.getCode()) {
                         case C:
                             selection.copy();
