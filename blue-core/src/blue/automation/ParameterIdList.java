@@ -79,8 +79,10 @@ public class ParameterIdList implements Iterable<String> {
 
         fireAddDataEvent(lde);
 
-        if (size() == 1) {
+        if(selectedIndex < 0 && size() > 0) {
             setSelectedIndex(0);
+        } else if (selectedIndex >= size()) {
+            setSelectedIndex(size() - 1);
         } else if (current != null) {
             setSelectedIndex(parameters.indexOf(current));
         }

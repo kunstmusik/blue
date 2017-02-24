@@ -197,7 +197,7 @@ public class BlueSynthBuilder extends AbstractInstrument implements
                     bsb.setPresetGroup(PresetGroup.loadFromXML(node));
                     break;
                 case "bsbParameterList":
-                case "ParameterList":
+                case "parameterList":
                     bsb.parameterList = ParameterList.loadFromXML(node);
                     break;
                 case "opcodeList":
