@@ -358,7 +358,7 @@ public final class FreezeUnfreezeAction extends AbstractAction
 
             for (SoundObject sObj : sObjects) {
                 if (sObj instanceof PolyObject) {
-                    retVal += freezeReferenceCount(pObj,
+                    retVal += freezeReferenceCount((PolyObject)sObj,
                             waveFileName);
                 } else if (sObj instanceof FrozenSoundObject) {
                     FrozenSoundObject fso = (FrozenSoundObject) sObj;
