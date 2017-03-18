@@ -83,8 +83,11 @@ FIX
 * Issue #352 - MIDI import was not updated correctly newer ScoreLayer system,
   also, velocity was not processed correctly yielding only zeros
 
-# Issue #337 - Fixed Mixer generation when no instruments found in Orchestra; 
+* Issue #337 - Fixed Mixer generation when no instruments found in Orchestra; 
   condition appears when using only Sound SoundObjects in project
+
+* Unfreezing Frozen SoundObjects caused stack overflow due to typo in code, 
+  resulting in effect of disappearing SoundObject 
 
 INTERNAL
 
