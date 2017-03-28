@@ -31,6 +31,7 @@
 
     <target name="release" depends="projectized-common.files-init">
         <mkdir dir="${cluster}"/>
+        <mkdir dir="${release.dir}"/>
         <copy todir="${cluster}">
             <fileset dir="${release.dir}">
                 <patternset includes="${release.files}">
