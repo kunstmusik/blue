@@ -22,6 +22,7 @@ package blue.soundObject;
 import blue.noteProcessor.NoteProcessorChain;
 import electric.xml.Element;
 import java.awt.Color;
+import java.util.List;
 
 /**
  * @author steven
@@ -97,5 +98,22 @@ public class SoundObjectUtilities {
             sObj.setNoteProcessorChain(NoteProcessorChain.loadFromXML(data
                     .getElement("noteProcessorChain")));
         }
+    }
+
+    public static boolean isOrContainsInstance(SoundObject sObj) {
+        if(sObj instanceof Instance) {
+            return true;
+        }
+
+        if(sObj instanceof PolyObject) {
+            PolyObject pObj = (PolyObject)sObj;
+            for(SoundObject soundObject : pObj.getSoundObjects(true)) {
+                if(isOrContainsInstance(soundObject)) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 }

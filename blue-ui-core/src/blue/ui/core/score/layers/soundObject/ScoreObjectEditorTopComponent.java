@@ -189,7 +189,7 @@ final public class ScoreObjectEditorTopComponent extends TopComponent
         Collection<? extends ScoreObject> scoreObjects = result.allInstances();
         if (scoreObjects.size() == 1) {
             editScoreObject(scoreObjects.iterator().next());
-            //FIXME - setEditingLibraryObject(...)
+            //FIXME - figure out how to discern if editing is from BlueLive...
         } else {
             editScoreObject(null);
         }
@@ -227,6 +227,8 @@ final public class ScoreObjectEditorTopComponent extends TopComponent
         if (sObj instanceof Instance) {
             sObjToEdit = ((Instance) sObj).getSoundObject();
             this.setEditingLibraryObject(SelectionEvent.SELECTION_LIBRARY);
+        } else {
+            this.setEditingLibraryObject(null);
         }
 
         ScoreObjectEditor editor = editors.get(sObjToEdit.getClass());

@@ -14,5 +14,6 @@ public final class SaveLibrariesAction implements ActionListener {
     public void actionPerformed(ActionEvent e) {
         BlueSystem.saveUDOLibrary();
         BlueSystem.saveUserInstrumentLibrary();
+        BlueSystem.saveSoundObjectLibrary();
     }
 }

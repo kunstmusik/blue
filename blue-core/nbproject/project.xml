@@ -78,17 +78,14 @@
                 </test-type>
             </test-dependencies>
             <public-packages>
-                <package>Silence</package>
                 <package>blue</package>
                 <package>blue.actions</package>
                 <package>blue.automation</package>
                 <package>blue.blueLive</package>
                 <package>blue.components.lines</package>
-                <package>blue.csoundDownload</package>
                 <package>blue.data</package>
                 <package>blue.event</package>
-                <package>blue.ftable</package>
-                <package>blue.ftable.genRoutine</package>
+                <package>blue.library</package>
                 <package>blue.midi</package>
                 <package>blue.mixer</package>
                 <package>blue.noteProcessor</package>

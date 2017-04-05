@@ -55,7 +55,7 @@ import org.openide.windows.TopComponent;
         //iconBase="SET/PATH/TO/ICON/HERE", 
         persistenceType = TopComponent.PERSISTENCE_ALWAYS
 )
-@TopComponent.Registration(mode = "editor", openAtStartup = false)
+@TopComponent.Registration(mode = "properties", openAtStartup = false)
 @ActionID(category = "Window", id = "blue.ui.core.score.layers.soundObject.SoundObjectLibraryTopComponent")
 @ActionReferences({
     @ActionReference(path = "Menu/Window", position = 300),
@@ -114,6 +114,7 @@ public final class SoundObjectLibraryTopComponent extends TopComponent
         });
 
         reinitialize();
+        splitPane.setRightComponent(new UserSoundObjectLibrary());
     }
 
     public void reinitialize() {
@@ -185,12 +186,16 @@ public final class SoundObjectLibraryTopComponent extends TopComponent
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        splitPane = new javax.swing.JSplitPane();
+        jPanel2 = new javax.swing.JPanel();
         jPanel1 = new javax.swing.JPanel();
         copyButton = new javax.swing.JButton();
         copyInstanceButton = new javax.swing.JButton();
         removeButton = new javax.swing.JButton();
         jScrollPane1 = new javax.swing.JScrollPane();
         sObjLibTable = new javax.swing.JTable();
+
+        splitPane.setOrientation(javax.swing.JSplitPane.VERTICAL_SPLIT);
 
         org.openide.awt.Mnemonics.setLocalizedText(copyButton, org.openide.util.NbBundle.getMessage(SoundObjectLibraryTopComponent.class, "SoundObjectLibraryTopComponent.copyButton.text")); // NOI18N
         copyButton.addActionListener(new java.awt.event.ActionListener() {
@@ -229,19 +234,38 @@ public final class SoundObjectLibraryTopComponent extends TopComponent
         ));
         jScrollPane1.setViewportView(sObjLibTable);
 
+        javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
+        jPanel2.setLayout(jPanel2Layout);
+        jPanel2Layout.setHorizontalGroup(
+            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel2Layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE))
+                .addContainerGap())
+        );
+        jPanel2Layout.setVerticalGroup(
+            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel2Layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 27, Short.MAX_VALUE)
+                .addContainerGap())
+        );
+
+        splitPane.setLeftComponent(jPanel2);
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, 318, Short.MAX_VALUE)
-            .addComponent(jScrollPane1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 318, Short.MAX_VALUE)
+            .addComponent(splitPane, javax.swing.GroupLayout.Alignment.TRAILING)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 288, Short.MAX_VALUE))
+            .addComponent(splitPane, javax.swing.GroupLayout.Alignment.TRAILING)
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -297,9 +321,11 @@ public final class SoundObjectLibraryTopComponent extends TopComponent
     private javax.swing.JButton copyButton;
     private javax.swing.JButton copyInstanceButton;
     private javax.swing.JPanel jPanel1;
+    private javax.swing.JPanel jPanel2;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JButton removeButton;
     private javax.swing.JTable sObjLibTable;
+    private javax.swing.JSplitPane splitPane;
     // End of variables declaration//GEN-END:variables
 
     public static synchronized SoundObjectLibraryTopComponent getDefault() {

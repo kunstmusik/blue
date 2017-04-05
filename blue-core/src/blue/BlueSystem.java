@@ -7,10 +7,12 @@ package blue;
  * @author steven yi
  * @version 1.0
  */
-
+import blue.library.Library;
+import blue.soundObject.SoundObject;
 import blue.udo.UDOLibrary;
 import blue.utility.EnvironmentVars;
 import blue.utility.FileUtilities;
+import blue.utility.ObjectUtilities;
 import electric.xml.Document;
 import electric.xml.ParseException;
 import java.awt.Image;
@@ -19,7 +21,9 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.HashMap;
 import java.util.Locale;
+import java.util.Map;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 import javax.swing.JMenuItem;
@@ -40,12 +44,13 @@ public class BlueSystem {
 
     private static UDOLibrary udoLibrary = null;
 
+    private static Library<SoundObject> soundObjectLibrary = null;
+
     private static BlueData blueData = null;
 
     private static int menuShortcutKey = -1;
 
 //    private static BlueMainFrame blueMainFrame = null;
-
     static {
         init();
     }
@@ -58,7 +63,7 @@ public class BlueSystem {
         System.out.println("\nprogram root directory: " + programRootDir);
 
         setUserConfigurationDirectory();
-        
+
         setLocale();
 
         System.out.println("\n> loading classes from registry");
@@ -69,12 +74,10 @@ public class BlueSystem {
 //                    + File.separator + "registry.xml");
 
 //            initializePlugins(doc);
-
 //        } catch (Exception e) {
 //            System.err.println("[ERROR] - in loading from registry");
 //        }
         // isInitialized = true;
-
     }
 
     public static void setLocale() {
@@ -89,7 +92,6 @@ public class BlueSystem {
             System.exit(1);
         }
     }
-
 
     /**
      * Initialize Program Root Directory
@@ -114,7 +116,6 @@ public class BlueSystem {
             // break;
             // }
             // }
-
             programRootDir = System.getProperty("user.dir");
         }
     }
@@ -141,9 +142,9 @@ public class BlueSystem {
         }
     }
 
-
-    /** ************************************************************** */
-
+    /**
+     * **************************************************************
+     */
     public static String getShortClassName(String fullClassName) {
         int i = fullClassName.lastIndexOf('.');
         return fullClassName.substring(i + 1);
@@ -152,7 +153,7 @@ public class BlueSystem {
     public static String getProgramRootDir() {
         return programRootDir;
     }
-    
+
     public static String getUserScriptDir() {
         return getUserConfigurationDirectory() + File.separator + "script";
     }
@@ -229,7 +230,7 @@ public class BlueSystem {
     }
 
     public static File getCodeRepository() {
-        
+
         File repository = new File(blue.BlueSystem
                 .getUserConfigurationDirectory()
                 + File.separator + "codeRepository.xml");
@@ -240,7 +241,7 @@ public class BlueSystem {
             try {
                 Document doc = new Document(BlueSystem.class.getResourceAsStream("codeRepository.xml"));
                 doc.write(repository);
-            } catch (    ParseException | IOException ex) {
+            } catch (ParseException | IOException ex) {
                 ExceptionHandler.printStackTrace(ex);
             }
         }
@@ -287,8 +288,8 @@ public class BlueSystem {
                             .showMessageDialog(
                                     null,
                                     "There was an error loading "
-                                            + f.getAbsolutePath()
-                                            + "\nPlease fix this file or remove it and restart blue.",
+                                    + f.getAbsolutePath()
+                                    + "\nPlease fix this file or remove it and restart blue.",
                                     "Error", JOptionPane.ERROR_MESSAGE);
                     System.exit(0);
                 }
@@ -309,7 +310,6 @@ public class BlueSystem {
 
         PrintWriter out = null;
 
-        
         try {
             out = new PrintWriter(new FileWriter(tmpFileName));
         } catch (IOException e) {
@@ -377,8 +377,8 @@ public class BlueSystem {
                             .showMessageDialog(
                                     null,
                                     "There was an error loading "
-                                            + f.getAbsolutePath()
-                                            + "\nPlease fix this file or remove it and restart blue.",
+                                    + f.getAbsolutePath()
+                                    + "\nPlease fix this file or remove it and restart blue.",
                                     "Error", JOptionPane.ERROR_MESSAGE);
                     System.exit(0);
                 }
@@ -392,10 +392,10 @@ public class BlueSystem {
     }
 
     public static void saveUDOLibrary() {
-        if(udoLibrary == null) {
+        if (udoLibrary == null) {
             return;
         }
-        
+
         String userInstrFileName = BlueSystem.getUserConfigurationDirectory()
                 + File.separator + "udoLibrary.xml";
 
@@ -440,8 +440,110 @@ public class BlueSystem {
         f.renameTo(new File(userInstrFileName));
     }
 
-    /** ************************************************************** */
+    public static Library<SoundObject> getSoundObjectLibrary() {
+        if (soundObjectLibrary == null) {
+            String userInstrFileName = BlueSystem
+                    .getUserConfigurationDirectory()
+                    + File.separator + "soundObjectLibrary.xml";
 
+            File f = new File(userInstrFileName);
+
+            if (f.exists()) {
+
+                boolean error = false;
+
+                try {
+                    Document doc = new Document(f);
+                    Map<String, Object> objRefMap = new HashMap<>();
+                    soundObjectLibrary = Library.loadLibrary(
+                            doc.getRoot(), elem -> {
+                        try {
+                            return (SoundObject) ObjectUtilities.loadFromXML(elem, objRefMap);
+                        } catch (Exception ex) {
+                            throw new RuntimeException(ex);
+                        }
+                    });
+
+                } catch (ParseException e1) {
+                    e1.printStackTrace();
+                    error = true;
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    error = true;
+                }
+
+                if (error) {
+                    JOptionPane
+                            .showMessageDialog(
+                                    null,
+                                    "There was an error loading "
+                                    + f.getAbsolutePath()
+                                    + "\nPlease fix this file or remove it and restart blue.",
+                                    "Error", JOptionPane.ERROR_MESSAGE);
+                    System.exit(0);
+                }
+
+            } else {
+                soundObjectLibrary = Library.createLibrary("SoundObjects");
+            }
+        }
+
+        return soundObjectLibrary;
+    }
+
+    public static void saveSoundObjectLibrary() {
+        if (soundObjectLibrary == null) {
+            return;
+        }
+
+        String userSObjFileName = BlueSystem.getUserConfigurationDirectory()
+                + File.separator + "soundObjectLibrary.xml";
+
+        String tmpFileName = userSObjFileName + ".tmp";
+
+        PrintWriter out = null;
+
+        try {
+            out = new PrintWriter(new FileWriter(tmpFileName));
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+
+        if (out != null) {
+
+            Map<Object, String> dummyRefMap = new HashMap<>(); 
+            String lib = soundObjectLibrary.saveAsXML(sObj -> sObj.getValue().saveAsXML(dummyRefMap)).toString();
+
+            out.print(lib);
+
+            out.flush();
+            out.close();
+
+            System.out.println("Saved SoundObject Library: " + userSObjFileName);
+        } else {
+            System.err.println("Unable to Save SoundObject Library: "
+                    + userSObjFileName);
+            return;
+        }
+
+        File f = new File(userSObjFileName);
+
+        if (f.exists()) {
+            File backup = new File(userSObjFileName + "~");
+            if (backup.exists()) {
+                backup.delete();
+            }
+            f.renameTo(backup);
+        }
+
+        f = new File(tmpFileName);
+        f.renameTo(new File(userSObjFileName));
+    }
+
+    /**
+     * **************************************************************
+     */
     public static void main(String args[]) {
         System.out.println(BlueSystem.getConfDir());
     }
@@ -460,7 +562,7 @@ public class BlueSystem {
     /**
      * Gets path of file, returns truncated name if file is relative to project
      * root directory, or simply returns filename if not
-     * 
+     *
      * @param path
      * @return
      */
@@ -485,19 +587,19 @@ public class BlueSystem {
         return path;
     }
 
-
     /**
      * Gets full path of file, checking if file is relative to current project
-     * directory  
+     * directory
+     *
      * @param path
      * @return
      */
     public static String getFullPath(String path) {
         File f = new File(path);
-        if(f.isFile() && f.exists()) {
+        if (f.isFile() && f.exists()) {
             return path;
         }
-        
+
         File projectDir = BlueSystem.getCurrentProjectDirectory();
         if (projectDir == null) {
             return path;
@@ -513,23 +615,22 @@ public class BlueSystem {
 
         f = new File(projectPath + File.separator + path);
 
-        if(f.isFile() && f.exists()) {
+        if (f.isFile() && f.exists()) {
             return f.getAbsolutePath();
         }
 
         return path;
     }
 
-
     /**
      * Tries to find file in project directory, then as absolute file name, or
      * returns null if not exists as either
-     * 
+     *
      * @param path
      * @return
      */
     public static File findFile(final String path) {
-        if(path == null) {
+        if (path == null) {
             return null;
         }
 
@@ -566,7 +667,6 @@ public class BlueSystem {
 
                 // System.out.println("Looking for file: " + sfDir
                 // + File.separator + path);
-
                 if (f.exists() && f.isFile()) {
                     return f;
                 }
@@ -587,7 +687,6 @@ public class BlueSystem {
 //    public static void setBlueMainFrame(BlueMainFrame blueMainFrame) {
 //        BlueSystem.blueMainFrame = blueMainFrame;
 //    }
-
     public static synchronized int getMenuShortcutKey() {
         if (menuShortcutKey == -1) {
             menuShortcutKey = Toolkit.getDefaultToolkit()

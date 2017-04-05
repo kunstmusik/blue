@@ -257,6 +257,7 @@ public class Installer extends ModuleInstall {
     public void saveLibraries() {
         BlueSystem.saveUserInstrumentLibrary();
         BlueSystem.saveUDOLibrary();
+        BlueSystem.saveSoundObjectLibrary();
     }
 
 }
