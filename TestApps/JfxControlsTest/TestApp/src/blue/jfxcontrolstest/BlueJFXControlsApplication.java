@@ -24,6 +24,8 @@ import javafx.scene.control.TabPane;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
+import javafx.scene.control.TreeItem;
+import javafx.scene.control.TreeView;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
@@ -56,6 +58,7 @@ public class BlueJFXControlsApplication extends Application {
         setupTextFieldsTest(root);
         setupButtonsTest(root);
         setTablesTest(root);
+        setTreeViewTest(root);
 
         ComboBox cb = new ComboBox(FXCollections.observableArrayList("Test 1", "Test 2", "Test 3"));
         root.getTabs().add(new Tab("ComboBox", cb));
@@ -156,6 +159,12 @@ public class BlueJFXControlsApplication extends Application {
         root.getTabs().add(new Tab("Tables", new SplitPane(jfxTable, swingNode)));
     }
 
+    private void setTreeViewTest(TabPane root) {
+        TreeView<String> tv = new TreeView<>();    
+        tv.setRoot(new TreeItem<>("TEST"));
+        root.getTabs().add(new Tab("TreeView", tv));
+    }
+    
     /**
      * @param args the command line arguments
      */
