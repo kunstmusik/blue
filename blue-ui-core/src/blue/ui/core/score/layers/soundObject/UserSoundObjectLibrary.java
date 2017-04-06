@@ -44,8 +44,12 @@ import javafx.scene.control.TextField;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
 import javafx.scene.control.cell.TextFieldTreeCell;
+import javafx.scene.input.ClipboardContent;
+import javafx.scene.input.DataFormat;
+import javafx.scene.input.Dragboard;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
+import javafx.scene.input.TransferMode;
 import javax.swing.BorderFactory;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
@@ -89,7 +93,16 @@ public class UserSoundObjectLibrary extends JComponent {
                 treeView.setEditable(true);
                 treeView.getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
                 treeView.setCellFactory(tv -> {
-                    return new LibraryItemCell();
+                    LibraryItemCell cell = new LibraryItemCell();
+
+                    // Drag and Drop is broken within JFXPanel... 
+                    // at least on Windows...
+//                    cell.setOnDragDetected(evt -> {
+//                        cell.startDragAndDrop(TransferMode.COPY_OR_MOVE);
+//                        evt.consume();
+//                    });
+
+                    return cell;
                 });
 
                 treeView.getSelectionModel().selectedItemProperty().addListener(
