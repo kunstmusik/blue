@@ -114,7 +114,7 @@ public final class SoundObjectLibraryTopComponent extends TopComponent
         });
 
         reinitialize();
-        splitPane.setRightComponent(new UserSoundObjectLibrary());
+        splitPane.setRightComponent(new UserSoundObjectLibrary(content));
     }
 
     public void reinitialize() {

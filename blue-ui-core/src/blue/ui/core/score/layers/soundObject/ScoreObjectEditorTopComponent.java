@@ -38,6 +38,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
 import org.netbeans.api.settings.ConvertAsProperties;
 import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
@@ -68,7 +69,8 @@ import org.openide.windows.TopComponent;
         position = 100)
 @ActionID(category = "Window", id = "blue.ui.core.score.layers.soundObject.ScoreObjectEditorTopComponent")
 @ActionReferences({
-    @ActionReference(path = "Menu/Window", position = 100),
+    @ActionReference(path = "Menu/Window", position = 100)
+    ,
     @ActionReference(path = "Shortcuts",
             name = "DS-E")
 })
@@ -118,15 +120,14 @@ final public class ScoreObjectEditorTopComponent extends TopComponent
         this.add(editPanel, BorderLayout.CENTER);
         editPanel.add(emptyPanel, "none");
 
-
         List<LazyPlugin<ScoreObjectEditor>> plugins = LazyPluginFactory.
-                loadPlugins("blue/score/objectEditors", 
-                        ScoreObjectEditor.class, 
+                loadPlugins("blue/score/objectEditors",
+                        ScoreObjectEditor.class,
                         new ClassAssociationProcessor("scoreObjectType"));
-        
+
         for (LazyPlugin<ScoreObjectEditor> plugin : plugins) {
-                sObjEditorMap.put(
-                        (Class)plugin.getMetaData("association"), plugin);
+            sObjEditorMap.put(
+                    (Class) plugin.getMetaData("association"), plugin);
         }
 
         setEditingLibraryObject(null);
@@ -188,10 +189,14 @@ final public class ScoreObjectEditorTopComponent extends TopComponent
 
         Collection<? extends ScoreObject> scoreObjects = result.allInstances();
         if (scoreObjects.size() == 1) {
-            editScoreObject(scoreObjects.iterator().next());
+            SwingUtilities.invokeLater(() -> {
+                editScoreObject(scoreObjects.iterator().next());
+            });
             //FIXME - figure out how to discern if editing is from BlueLive...
         } else {
-            editScoreObject(null);
+            SwingUtilities.invokeLater(() -> {
+                editScoreObject(null);
+            });
         }
     }
 

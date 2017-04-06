@@ -22,13 +22,13 @@ import blue.BlueSystem;
 import blue.jfx.BlueFX;
 import blue.library.Library;
 import blue.library.LibraryItem;
-import blue.soundObject.GenericScore;
 import blue.soundObject.SoundObject;
 import blue.soundObject.SoundObjectUtilities;
 import blue.ui.core.score.ScoreController;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import javafx.collections.ObservableList;
@@ -51,6 +51,7 @@ import javax.swing.JLabel;
 import javax.swing.border.BevelBorder;
 import javax.swing.border.EmptyBorder;
 import org.openide.util.Exceptions;
+import org.openide.util.lookup.InstanceContent;
 
 /**
  *
@@ -59,10 +60,12 @@ import org.openide.util.Exceptions;
 public class UserSoundObjectLibrary extends JComponent {
 
     Library<SoundObject> soundObjectLibrary;
+    InstanceContent instanceContent;
 
-    public UserSoundObjectLibrary() {
+    public UserSoundObjectLibrary(InstanceContent instanceContent) {
         setLayout(new BorderLayout());
         soundObjectLibrary = BlueSystem.getSoundObjectLibrary();
+        this.instanceContent = instanceContent;
 
         JLabel label = new JLabel("User SoundObject Library");
         this.add(label, BorderLayout.NORTH);
@@ -87,6 +90,21 @@ public class UserSoundObjectLibrary extends JComponent {
                 treeView.setCellFactory(tv -> {
                     return new LibraryItemCell();
                 });
+
+                treeView.getSelectionModel().selectedItemProperty().addListener(
+                        (obs, old, newVal) -> {
+
+                            if (newVal == null) {
+                                return;
+                            }
+                            if (newVal.getValue().getValue() != null) {
+                                instanceContent.set(
+                                        Collections.singleton(newVal.getValue().getValue()), 
+                                        null);
+                            } else {
+                                instanceContent.set(Collections.emptyList(), null);
+                            }
+                        });
 
                 final Scene scene = new Scene(treeView);
                 BlueFX.style(scene);
