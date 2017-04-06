@@ -44,6 +44,7 @@ final class ProjectDefaultsPanel extends javax.swing.JPanel {
         };
 
         defaultAuthorText.getDocument().addDocumentListener(changeListener);
+        
     }
 
     /** This method is called from within the constructor to
@@ -58,10 +59,12 @@ final class ProjectDefaultsPanel extends javax.swing.JPanel {
         jLabel2 = new javax.swing.JLabel();
         defaultAuthorText = new javax.swing.JTextField();
         mixerEnabledCheckBox = new javax.swing.JCheckBox();
+        jLabel3 = new javax.swing.JLabel();
+        layerHeightDefaultComboBox = new javax.swing.JComboBox<>();
 
         org.openide.awt.Mnemonics.setLocalizedText(jLabel1, org.openide.util.NbBundle.getMessage(ProjectDefaultsPanel.class, "ProjectDefaultsPanel.jLabel1.text_1")); // NOI18N
 
-        jLabel2.setHorizontalAlignment(javax.swing.SwingConstants.TRAILING);
+        jLabel2.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
         org.openide.awt.Mnemonics.setLocalizedText(jLabel2, org.openide.util.NbBundle.getMessage(ProjectDefaultsPanel.class, "ProjectDefaultsPanel.jLabel2.text_1")); // NOI18N
 
         defaultAuthorText.setText(org.openide.util.NbBundle.getMessage(ProjectDefaultsPanel.class, "ProjectDefaultsPanel.defaultAuthorText.text_1")); // NOI18N
@@ -73,24 +76,33 @@ final class ProjectDefaultsPanel extends javax.swing.JPanel {
             }
         });
 
+        jLabel3.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
+        org.openide.awt.Mnemonics.setLocalizedText(jLabel3, org.openide.util.NbBundle.getMessage(ProjectDefaultsPanel.class, "ProjectDefaultsPanel.jLabel3.text")); // NOI18N
+
+        layerHeightDefaultComboBox.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "1", "2", "3", "4", "5", "6", "7", "8", "9" }));
+        layerHeightDefaultComboBox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                layerHeightDefaultComboBoxActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(jLabel1)
-                    .addComponent(jLabel2))
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jLabel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jLabel2, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jLabel3, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 108, Short.MAX_VALUE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(mixerEnabledCheckBox, javax.swing.GroupLayout.DEFAULT_SIZE, 156, Short.MAX_VALUE)
-                    .addComponent(defaultAuthorText, javax.swing.GroupLayout.DEFAULT_SIZE, 156, Short.MAX_VALUE))
+                    .addComponent(mixerEnabledCheckBox, javax.swing.GroupLayout.DEFAULT_SIZE, 139, Short.MAX_VALUE)
+                    .addComponent(defaultAuthorText)
+                    .addComponent(layerHeightDefaultComboBox, 0, 139, Short.MAX_VALUE))
                 .addContainerGap())
         );
-
-        layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {jLabel1, jLabel2});
-
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
@@ -102,13 +114,21 @@ final class ProjectDefaultsPanel extends javax.swing.JPanel {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(jLabel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(mixerEnabledCheckBox, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addContainerGap(32, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel3)
+                    .addComponent(layerHeightDefaultComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
     private void mixerEnabledCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mixerEnabledCheckBoxActionPerformed
         controller.changed();
 }//GEN-LAST:event_mixerEnabledCheckBoxActionPerformed
+
+    private void layerHeightDefaultComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_layerHeightDefaultComboBoxActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_layerHeightDefaultComboBoxActionPerformed
 
     void load() {
         loading = true;
@@ -117,7 +137,7 @@ final class ProjectDefaultsPanel extends javax.swing.JPanel {
 
         defaultAuthorText.setText(settings.defaultAuthor);
         mixerEnabledCheckBox.setSelected(settings.mixerEnabled);
-
+        layerHeightDefaultComboBox.setSelectedIndex(settings.layerHeightDefault);
         loading = false;
     }
 
@@ -126,6 +146,7 @@ final class ProjectDefaultsPanel extends javax.swing.JPanel {
 
         settings.defaultAuthor = defaultAuthorText.getText();
         settings.mixerEnabled = mixerEnabledCheckBox.isSelected();
+        settings.layerHeightDefault = layerHeightDefaultComboBox.getSelectedIndex();
 
         settings.save();
     }
@@ -139,6 +160,8 @@ final class ProjectDefaultsPanel extends javax.swing.JPanel {
     private javax.swing.JTextField defaultAuthorText;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
+    private javax.swing.JLabel jLabel3;
+    private javax.swing.JComboBox<String> layerHeightDefaultComboBox;
     private javax.swing.JCheckBox mixerEnabledCheckBox;
     // End of variables declaration//GEN-END:variables
 }

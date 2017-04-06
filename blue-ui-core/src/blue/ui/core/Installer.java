@@ -32,6 +32,8 @@ import blue.projects.BlueProjectManager;
 import blue.score.layers.LayerGroupProvider;
 import blue.score.layers.LayerGroupProviderManager;
 import blue.scripting.PythonProxy;
+import blue.settings.ProjectDefaultsSettings;
+import blue.soundObject.PolyObjectLayerGroupProvider;
 import blue.ui.core.blueLive.BlueLiveToolBar;
 import blue.ui.core.midi.MidiInputEngine;
 import blue.ui.core.render.RealtimeRenderManager;
@@ -75,6 +77,9 @@ public class Installer extends ModuleInstall {
         Locale.setDefault(Locale.Category.FORMAT, Locale.ENGLISH);
         System.setProperty("jffi.unsafe.disabled", "true");
 
+        PolyObjectLayerGroupProvider.setDefaultHeightIndexProvider(() -> {
+            return ProjectDefaultsSettings.getInstance().layerHeightDefault;
+        });
 //        System.setProperty("netbeans.winsys.no_toolbars", "true");
 //
 //        SwingUtilities.invokeLater(new Runnable() {
