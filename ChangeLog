@@ -45,9 +45,11 @@ NEW
     import from either Blue UDO (.blueUDO) files or Csound files (.udo, .csd, 
     .orc).  For Csound files, Blue will import all found UDOs within the file.
 
+* Issue #354 - Added "Refresh Folder" popup menu option to refresh Blue File
+  Manager folder node
+
 * Issue #355 - Added default layer heights to Program Options->Project Defaults;
   added default layer height as property for AudioLayerGroups
-
 
 UPDATED
 
