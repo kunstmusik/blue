@@ -48,7 +48,7 @@ import org.openide.util.Utilities;
         id = "blue.ui.core.score.actions.AddToSoundObjectLibraryAction")
 @ActionRegistration(
         displayName = "#CTL_AddToSoundObjectLibraryAction")
-@Messages("CTL_AddToSoundObjectLibraryAction=Add to SoundObject &Library")
+@Messages("CTL_AddToSoundObjectLibraryAction=Add to Project SoundObject &Library")
 @ActionReference(path = "blue/score/actions", position = 20, separatorAfter = 25)
 public final class AddToSoundObjectLibraryAction extends AbstractAction
         implements ContextAwareAction {
