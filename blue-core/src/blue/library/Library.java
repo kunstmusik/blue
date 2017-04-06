@@ -46,7 +46,7 @@ public class Library<T extends SoundObject> {
 
     public static <T extends SoundObject> Library<T> createLibrary(String rootName) {
         Library<T> lib = new Library<>();
-        lib.root = new TreeItem<>(new LibraryItem<T>(rootName));
+        lib.root = new LibraryTreeItem<>(new LibraryItem<T>(rootName));
         return lib;
     }
 
@@ -62,14 +62,14 @@ public class Library<T extends SoundObject> {
             Function<Element, T> loader) {
         TreeItem<LibraryItem<T>> item;
         if (FOLDER_NAMES.contains(elem.getName())) {
-            item = new TreeItem<>(new LibraryItem<>(elem.getAttributeValue("categoryName")));
+            item = new LibraryTreeItem<>(new LibraryItem<>(elem.getAttributeValue("categoryName")));
 
             Elements children = elem.getElements();
             while (children.hasMoreElements()) {
                 item.getChildren().add(loadLibraryItem(children.next(), loader));
             }
         } else {
-            item = new TreeItem<>(new LibraryItem<>(loader.apply(elem)));
+            item = new LibraryTreeItem<>(new LibraryItem<>(loader.apply(elem)));
         }
 
         return item;

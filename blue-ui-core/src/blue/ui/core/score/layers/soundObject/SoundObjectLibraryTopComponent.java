@@ -58,7 +58,8 @@ import org.openide.windows.TopComponent;
 @TopComponent.Registration(mode = "properties", openAtStartup = false)
 @ActionID(category = "Window", id = "blue.ui.core.score.layers.soundObject.SoundObjectLibraryTopComponent")
 @ActionReferences({
-    @ActionReference(path = "Menu/Window", position = 300),
+    @ActionReference(path = "Menu/Window", position = 300)
+    ,
     @ActionReference(path = "Shortcuts", name = "F4")
 })
 @TopComponent.OpenActionRegistration(
@@ -79,6 +80,9 @@ public final class SoundObjectLibraryTopComponent extends TopComponent
 
     private SoundObjectLibrary sObjLib = new SoundObjectLibrary();
 
+    final ScoreController.ScoreObjectBuffer scoreObjectBuffer
+            = ScoreController.getInstance().getScoreObjectBuffer();
+
     private SoundObjectLibraryTopComponent() {
         initComponents();
 
@@ -89,7 +93,7 @@ public final class SoundObjectLibraryTopComponent extends TopComponent
         setToolTipText(NbBundle.getMessage(SoundObjectLibraryTopComponent.class,
                 "HINT_SoundObjectLibraryTopComponent"));
 //        setIcon(Utilities.loadImage(ICON_PATH, true));
-        
+
         sObjLibTable.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
@@ -273,8 +277,13 @@ public final class SoundObjectLibraryTopComponent extends TopComponent
         int index = sObjLibTable.getSelectedRow();
         if (index != -1) {
             SoundObject sObj = sObjLib.getSoundObject(index);
+            SoundObject tempSObj = sObj.deepCopy();
             ScoreController.getInstance().setSelectedScoreObjects(
-                    Collections.singleton(sObj.deepCopy()));
+                    Collections.singleton(tempSObj));
+
+            scoreObjectBuffer.clear();
+            scoreObjectBuffer.scoreObjects.add(tempSObj);
+            scoreObjectBuffer.layerIndexes.add(0);
         }
 }//GEN-LAST:event_copyButtonActionPerformed
 
@@ -287,6 +296,10 @@ public final class SoundObjectLibraryTopComponent extends TopComponent
             tempSObj.setSubjectiveDuration(tempSObj.getObjectiveDuration());
             ScoreController.getInstance().setSelectedScoreObjects(
                     Collections.singleton(tempSObj));
+
+            scoreObjectBuffer.clear();
+            scoreObjectBuffer.scoreObjects.add(tempSObj);
+            scoreObjectBuffer.layerIndexes.add(0);
         }
     }//GEN-LAST:event_copyInstanceButtonActionPerformed
 

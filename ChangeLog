@@ -30,6 +30,11 @@ NEW
 
 * JavaScriptObject now supports "Process on Load" option
 
+* Issue #342 - Program-wide User SoundObject Library
+  * Implemented new Program-wide User SoundObject Library. Library is available
+    as part of the SoundObjectLibrary window. User can use popup menu to copy
+    and paste SoundObjects into folders and add/remove folders.
+
 * Issue #343 - User-defined Opcodes: 
   * Export: User can now select single UDO from project UDO list and choose 
     export to either Blue UDO file (an XML representation of the UDO with 

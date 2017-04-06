@@ -22,6 +22,7 @@ import blue.BlueSystem;
 import blue.jfx.BlueFX;
 import blue.library.Library;
 import blue.library.LibraryItem;
+import blue.library.LibraryTreeItem;
 import blue.soundObject.SoundObject;
 import blue.soundObject.SoundObjectUtilities;
 import blue.ui.core.score.ScoreController;
@@ -141,7 +142,7 @@ public class UserSoundObjectLibrary extends JComponent {
         MenuItem addFolder = new MenuItem("Add Folder");
         addFolder.setOnAction(evt -> {
             TreeItem<LibraryItem<SoundObject>> item = selectedItems.get(0);
-            item.getChildren().add(new TreeItem(new LibraryItem<>("New Folder")));
+            item.getChildren().add(new LibraryTreeItem(new LibraryItem<>("New Folder")));
         });
         MenuItem deleteFolder = new MenuItem("Delete Folder");
         deleteFolder.setOnAction(evt -> {
@@ -154,7 +155,7 @@ public class UserSoundObjectLibrary extends JComponent {
             TreeItem<LibraryItem<SoundObject>> item = selectedItems.get(0);
             SoundObject sObj = (SoundObject) scoreObjectBuffer.scoreObjects.get(0).deepCopy();
             if (!SoundObjectUtilities.isOrContainsInstance(sObj)) {
-                item.getChildren().add(new TreeItem(new LibraryItem<>(sObj)));
+                item.getChildren().add(new LibraryTreeItem(new LibraryItem<>(sObj)));
             }
         });
 
