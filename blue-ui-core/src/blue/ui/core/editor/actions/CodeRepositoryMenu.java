@@ -47,7 +47,7 @@ import org.openide.util.actions.Presenter;
         id = "blue.ui.core.editor.actions.CodeRepositoryMenu",
 category = "Edit")
 @ActionRegistration(
-        displayName = "#codeRepositoryMenu", lazy = true)
+        displayName = "#codeRepositoryMenu")
 @ActionReferences({
     @ActionReference(
         path = "Editors/Popup", position = 1000)
