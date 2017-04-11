@@ -36,6 +36,7 @@ import blue.soundObject.SoundObjectException;
 import blue.utility.ObjectUtilities;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 import org.openide.awt.StatusDisplayer;
 import org.openide.windows.WindowManager;
 
@@ -345,9 +346,11 @@ public final class RealtimeRenderManager {
             retVal = new ArrayList<>();
             retVal.add(pObj);
         } else {
-            PolyObject[] pObjs = (PolyObject[]) allSObj.stream().
-                    filter(a -> a instanceof PolyObject).toArray();
-            for(PolyObject tempPObj : pObjs) {
+            List<SoundObject> pObjs = allSObj.stream().
+                    filter(a -> a instanceof PolyObject).
+                    collect(Collectors.toList());
+            for(SoundObject obj : pObjs) {
+                PolyObject tempPObj = (PolyObject)obj;
                 retVal = getPolyObjectPath(tempPObj, soundObject);
                 if(retVal != null) {
                     retVal.add(0, pObj);
