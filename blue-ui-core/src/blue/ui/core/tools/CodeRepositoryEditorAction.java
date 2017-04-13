@@ -26,19 +26,12 @@ import org.openide.windows.WindowManager;
 
 public final class CodeRepositoryEditorAction implements ActionListener {
 
-    CodeRepositoryDialog c;
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        if (c == null) {
-            c = new CodeRepositoryDialog(WindowManager.getDefault().getMainWindow());
-        }
-
-        if (c.isShowing()) {
-            c.requestFocus();
-        } else {
-            c.setVisible(true);
-        }
+        CodeRepositoryDialog c = new CodeRepositoryDialog(WindowManager.getDefault().getMainWindow());
+        
+        c.setVisible(true);
 
     }
 }

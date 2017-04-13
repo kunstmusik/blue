@@ -103,6 +103,9 @@ FIX
 * "Custom" popup menu option that shows code repository options did not function
   correctly 
 
+* Fixed Code Repository Dialog to ensure it is in sync with repository changes.
+  Also fixed drag/drop when editing repository within dialog.
+
 INTERNAL
 
 * Replaced use of Cloneable and Serializable with copy constructors and new 
