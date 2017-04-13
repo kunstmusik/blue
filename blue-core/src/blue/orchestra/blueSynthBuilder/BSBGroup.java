@@ -28,11 +28,14 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableSet;
 import javafx.collections.SetChangeListener;
+import javafx.scene.paint.Color;
 
 /**
  *
@@ -43,6 +46,8 @@ public class BSBGroup extends BSBObject implements Iterable<BSBObject>, UniqueNa
     private transient ParameterList parameterList;
     private transient ObservableSet<BSBObject> allSet;
     private StringProperty groupName = new SimpleStringProperty("Group");
+    private ObjectProperty<Color> backgroundColor = 
+            new SimpleObjectProperty<>(new Color(0,0,0,.2));
 
     private Set<BSBObject> backingSet = new HashSet<BSBObject>() {
         @Override
@@ -123,6 +128,7 @@ public class BSBGroup extends BSBObject implements Iterable<BSBObject>, UniqueNa
 
         interfaceItems.addListener(itemsListener);
         setGroupName(group.getGroupName());
+        setBackgroundColor(group.getBackgroundColor());
         // FIXME - double check that not sharing UNM is correct (UNM 
 //        unm = group.unm;
 
@@ -130,6 +136,18 @@ public class BSBGroup extends BSBObject implements Iterable<BSBObject>, UniqueNa
 
     public ObservableSet<BSBObject> interfaceItemsProperty() {
         return interfaceItems;
+    }
+
+    public Color getBackgroundColor(){
+        return backgroundColor.get();
+    }
+
+    public void setBackgroundColor(Color c){
+        backgroundColor.set(c);
+    }
+
+    public ObjectProperty<Color> backgroundColorProperty(){
+        return backgroundColor;
     }
 
     public void addBSBObject(BSBObject bsbObj) {
@@ -177,6 +195,8 @@ public class BSBGroup extends BSBObject implements Iterable<BSBObject>, UniqueNa
         BSBGroup bsbGroup = new BSBGroup();
         initBasicFromXML(data, bsbGroup);
 
+        // left in to work with 2.7.0 dev releases that used attributes for
+        // groupName
         String groupName = data.getAttributeValue("groupName");
         if(groupName != null) {
             bsbGroup.setGroupName(groupName);
@@ -189,6 +209,12 @@ public class BSBGroup extends BSBObject implements Iterable<BSBObject>, UniqueNa
             String name = node.getName();
 
             switch (name) {
+                case "groupName":
+                    bsbGroup.setGroupName(node.getTextString());
+                    break;
+                case "backgroundColor":
+                    bsbGroup.setBackgroundColor(Color.valueOf(node.getTextString()));
+                    break;
                 case "bsbObject":
                     Object obj = ObjectUtilities.loadFromXML(node);
                     //FIXME
@@ -203,7 +229,9 @@ public class BSBGroup extends BSBObject implements Iterable<BSBObject>, UniqueNa
     public Element saveAsXML() {
         Element retVal = super.getBasicXML(this);
 
-        retVal.setAttribute("groupName", getGroupName());
+        retVal.addElement("groupName").setText(getGroupName());
+        retVal.addElement("backgroundColor").setText(getBackgroundColor().toString());
+        
 
 //        retVal.setAttribute("editEnabled", Boolean.toString(isEditEnabled()));
         for (BSBObject bsbObj : interfaceItems) {

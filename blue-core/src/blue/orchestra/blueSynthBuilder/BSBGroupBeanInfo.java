@@ -36,16 +36,18 @@ public class BSBGroupBeanInfo extends SimpleBeanInfo {
 
 
     // Property identifiers//GEN-FIRST:Properties
-    private static final int PROPERTY_groupName = 0;
-    private static final int PROPERTY_x = 1;
-    private static final int PROPERTY_y = 2;
+    private static final int PROPERTY_backgroundColor = 0;
+    private static final int PROPERTY_groupName = 1;
+    private static final int PROPERTY_x = 2;
+    private static final int PROPERTY_y = 3;
 
     // Property array 
     /*lazy PropertyDescriptor*/
     private static PropertyDescriptor[] getPdescriptor(){
-        PropertyDescriptor[] properties = new PropertyDescriptor[3];
+        PropertyDescriptor[] properties = new PropertyDescriptor[4];
     
         try {
+            properties[PROPERTY_backgroundColor] = new PropertyDescriptor ( "backgroundColor", blue.orchestra.blueSynthBuilder.BSBGroup.class, "getBackgroundColor", "setBackgroundColor" ); // NOI18N
             properties[PROPERTY_groupName] = new PropertyDescriptor ( "groupName", blue.orchestra.blueSynthBuilder.BSBGroup.class, "getGroupName", "setGroupName" ); // NOI18N
             properties[PROPERTY_x] = new PropertyDescriptor ( "x", blue.orchestra.blueSynthBuilder.BSBGroup.class, "getX", "setX" ); // NOI18N
             properties[PROPERTY_y] = new PropertyDescriptor ( "y", blue.orchestra.blueSynthBuilder.BSBGroup.class, "getY", "setY" ); // NOI18N

@@ -22,12 +22,19 @@ import blue.orchestra.blueSynthBuilder.BSBGroup;
 import blue.orchestra.blueSynthBuilder.BSBObject;
 import blue.orchestra.editor.blueSynthBuilder.EditModeOnly;
 import javafx.beans.property.BooleanProperty;
+import javafx.beans.value.ChangeListener;
 import javafx.collections.ObservableList;
 import javafx.collections.SetChangeListener;
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
+import javafx.scene.layout.Background;
+import javafx.scene.layout.BackgroundFill;
+import javafx.scene.layout.Border;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.BorderStroke;
+import javafx.scene.layout.CornerRadii;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Region;
 import org.openide.util.Exceptions;
@@ -66,26 +73,38 @@ public class BSBGroupView extends BorderPane {
 
         editorPane.setStyle("-fx-border-color: -fx-control-inner-background;"
                 + "-fx-border-width: 1px;"
-                + "-fx-padding: 0 9 9 0;"
-                + "-fx-background-color: rgba(0,0,0,0.2);");
+                + "-fx-padding: 0 9 9 0;");
 
         setTop(label);
         setCenter(editorPane);
         editorPane.setMinSize(20.0, 20.0);
         label.setMaxWidth(Double.MAX_VALUE);
+        updateBackgroundColor();
 
 //        label.setStyle("-fx-background: aliceblue;");
-
+        ChangeListener bgColorListener = (obs, old, newVal) -> {
+            updateBackgroundColor();
+        };
 
         sceneProperty().addListener((obs, old, newVal) -> {
             if (newVal == null) {
                 label.textProperty().unbind();
                 bsbGroup.interfaceItemsProperty().removeListener(scl);
+                bsbGroup.backgroundColorProperty().removeListener(bgColorListener);
             } else {
                 label.textProperty().bind(bsbGroup.groupNameProperty());
                 bsbGroup.interfaceItemsProperty().addListener(scl);
+                bsbGroup.backgroundColorProperty().addListener(bgColorListener);
             }
         });
+
+    }
+
+    private void updateBackgroundColor() {
+        editorPane.setBackground(
+                new Background(
+                        new BackgroundFill(bsbGroup.getBackgroundColor(), CornerRadii.EMPTY, Insets.EMPTY)));
+
     }
 
     public void initialize(BooleanProperty editEnabledProperty, BSBEditSelection selection,
