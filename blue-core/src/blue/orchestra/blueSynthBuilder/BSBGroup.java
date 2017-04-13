@@ -48,6 +48,10 @@ public class BSBGroup extends BSBObject implements Iterable<BSBObject>, UniqueNa
     private StringProperty groupName = new SimpleStringProperty("Group");
     private ObjectProperty<Color> backgroundColor = 
             new SimpleObjectProperty<>(new Color(0,0,0,.2));
+    private ObjectProperty<Color> borderColor = 
+            new SimpleObjectProperty<>(Color.BLACK);
+    private ObjectProperty<Color> labelTextColor = 
+            new SimpleObjectProperty<>(Color.rgb(204,204,255));
 
     private Set<BSBObject> backingSet = new HashSet<BSBObject>() {
         @Override
@@ -129,6 +133,8 @@ public class BSBGroup extends BSBObject implements Iterable<BSBObject>, UniqueNa
         interfaceItems.addListener(itemsListener);
         setGroupName(group.getGroupName());
         setBackgroundColor(group.getBackgroundColor());
+        setBorderColor(group.getBorderColor());
+        setLabelTextColor(group.getLabelTextColor());
         // FIXME - double check that not sharing UNM is correct (UNM 
 //        unm = group.unm;
 
@@ -148,6 +154,30 @@ public class BSBGroup extends BSBObject implements Iterable<BSBObject>, UniqueNa
 
     public ObjectProperty<Color> backgroundColorProperty(){
         return backgroundColor;
+    }
+
+    public Color getBorderColor(){
+        return borderColor.get();
+    }
+
+    public void setBorderColor(Color c){
+        borderColor.set(c);
+    }
+
+    public ObjectProperty<Color> borderColorProperty(){
+        return borderColor;
+    }
+
+    public Color getLabelTextColor(){
+        return labelTextColor.get();
+    }
+
+    public void setLabelTextColor(Color c){
+        labelTextColor.set(c);
+    }
+
+    public ObjectProperty<Color> labelTextColorProperty(){
+        return labelTextColor;
     }
 
     public void addBSBObject(BSBObject bsbObj) {
@@ -215,6 +245,12 @@ public class BSBGroup extends BSBObject implements Iterable<BSBObject>, UniqueNa
                 case "backgroundColor":
                     bsbGroup.setBackgroundColor(Color.valueOf(node.getTextString()));
                     break;
+                case "borderColor":
+                    bsbGroup.setBorderColor(Color.valueOf(node.getTextString()));
+                    break;
+                case "labelTextColor":
+                    bsbGroup.setLabelTextColor(Color.valueOf(node.getTextString()));
+                    break;
                 case "bsbObject":
                     Object obj = ObjectUtilities.loadFromXML(node);
                     //FIXME
@@ -231,6 +267,8 @@ public class BSBGroup extends BSBObject implements Iterable<BSBObject>, UniqueNa
 
         retVal.addElement("groupName").setText(getGroupName());
         retVal.addElement("backgroundColor").setText(getBackgroundColor().toString());
+        retVal.addElement("borderColor").setText(getBorderColor().toString());
+        retVal.addElement("labelTextColor").setText(getLabelTextColor().toString());
         
 
 //        retVal.setAttribute("editEnabled", Boolean.toString(isEditEnabled()));

@@ -34,9 +34,12 @@ import javafx.scene.layout.BackgroundFill;
 import javafx.scene.layout.Border;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.BorderStroke;
+import javafx.scene.layout.BorderStrokeStyle;
+import javafx.scene.layout.BorderWidths;
 import javafx.scene.layout.CornerRadii;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Region;
+import javafx.scene.paint.Paint;
 import org.openide.util.Exceptions;
 
 /**
@@ -64,26 +67,25 @@ public class BSBGroupView extends BorderPane {
         setUserData(bsbGroup);
         this.bsbGroup = bsbGroup;
 
-        label.setStyle("-fx-fill: primary3; "
-                + "-fx-font-smooth-type: lcd; "
-                + "-fx-background-color: -fx-control-inner-background;"
-                + "-fx-padding: 2 8 2 8;"
-                + "-fx-background-radius: 4 4 0 0;");
+        label.setStyle("-fx-font-smooth-type: lcd;");
         label.setAlignment(Pos.CENTER);
+        label.setPadding(new Insets(2,8,2,8));
 
-        editorPane.setStyle("-fx-border-color: -fx-control-inner-background;"
-                + "-fx-border-width: 1px;"
-                + "-fx-padding: 0 9 9 0;");
+        editorPane.setPadding(new Insets(0,9,9,0));
 
         setTop(label);
         setCenter(editorPane);
         editorPane.setMinSize(20.0, 20.0);
         label.setMaxWidth(Double.MAX_VALUE);
         updateBackgroundColor();
+        updateBorderColor();
 
-//        label.setStyle("-fx-background: aliceblue;");
         ChangeListener bgColorListener = (obs, old, newVal) -> {
             updateBackgroundColor();
+        };
+
+        ChangeListener borderColorListener = (obs, old, newVal) -> {
+            updateBorderColor();
         };
 
         sceneProperty().addListener((obs, old, newVal) -> {
@@ -91,10 +93,14 @@ public class BSBGroupView extends BorderPane {
                 label.textProperty().unbind();
                 bsbGroup.interfaceItemsProperty().removeListener(scl);
                 bsbGroup.backgroundColorProperty().removeListener(bgColorListener);
+                bsbGroup.borderColorProperty().removeListener(borderColorListener);
+                label.textFillProperty().unbind();
             } else {
                 label.textProperty().bind(bsbGroup.groupNameProperty());
                 bsbGroup.interfaceItemsProperty().addListener(scl);
                 bsbGroup.backgroundColorProperty().addListener(bgColorListener);
+                bsbGroup.borderColorProperty().addListener(borderColorListener);
+                label.textFillProperty().bind(bsbGroup.labelTextColorProperty());
             }
         });
 
@@ -105,6 +111,13 @@ public class BSBGroupView extends BorderPane {
                 new Background(
                         new BackgroundFill(bsbGroup.getBackgroundColor(), CornerRadii.EMPTY, Insets.EMPTY)));
 
+    }
+
+    private void updateBorderColor() {
+        label.setBackground(
+                new Background(
+                        new BackgroundFill(bsbGroup.getBorderColor(), new CornerRadii(4,4,0,0, false), Insets.EMPTY)));
+        editorPane.setBorder(new Border(new BorderStroke(bsbGroup.getBorderColor(), BorderStrokeStyle.SOLID, CornerRadii.EMPTY, new BorderWidths(1))));
     }
 
     public void initialize(BooleanProperty editEnabledProperty, BSBEditSelection selection,
