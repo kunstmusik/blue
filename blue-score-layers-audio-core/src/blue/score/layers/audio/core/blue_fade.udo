@@ -236,8 +236,8 @@ initDone = 1
 
 ;; Caching symmetric curve points and coefs here because
 ;; Csound complains about perf-statements in instr0...
-i_symmetric_fade_dec[] = get_symmetric_curve_points()
-i_symmetric_fade_inc[] = reverse_curve(i_symmetric_fade_dec)
+i_symmetric_fade_dec[] get_symmetric_curve_points
+i_symmetric_fade_inc[] reverse_curve i_symmetric_fade_dec
 
 if (istate == 1) then
   kfadeStep init itime 
