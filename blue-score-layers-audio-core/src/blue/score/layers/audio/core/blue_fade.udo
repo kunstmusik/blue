@@ -9,7 +9,7 @@ opcode reverse_curve, i[], i[]
   idur = ipoints[ilen - 2] 
   indx = 0
 
-  while (indx < ilen) do
+  until (indx >= ilen) do
     iInIndex = ilen - indx - 2
     irev[indx] = idur - ipoints[iInIndex]
     irev[indx + 1] = ipoints[iInIndex + 1]
@@ -30,7 +30,7 @@ opcode get_symmetric_curve_points, i[], 0
   ipoints[3] = 0.6
 
   indx = 2
-  while (indx < 9) do
+  until (indx >= 9) do
     icoef = 0.3 * pow(0.5, indx)
     ix = (0.7 + (0.3 * (indx / 9)))
     indx2 = indx * 2
@@ -62,7 +62,7 @@ opcode calc_cubic_coefficients, i[],i[]
   indx = 0
   icoefindx = 0
 
-  while (indx != inumpoints) do
+  until (indx >= inumpoints) do
     
     if (indx == 0) then
       ilp0 = (ipoints[2] - ipoints[0]) / (ipoints[3] - ipoints[1])
@@ -296,7 +296,7 @@ afterInit:
 
 kcount = 0
 
-while (kcount < ksmps) do
+until (kcount >= ksmps) do
   if (kstate == 0) then
     ;; pass
     kcount += 1
