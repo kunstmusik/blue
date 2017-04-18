@@ -22,8 +22,8 @@
   </condition>
 
   <condition property="confReplacementString"
-               value="-J-Xms256m -J-Xmx768m -J-Dapple.laf.useScreenMenuBar=true"
-               else="-J-Xms256m -J-Xmx768m -J-Dswing.java2d.dpiaware=false -J-Dprism.allowhidpi=false">
+               value="-J-Xms256m -J-Xmx768m -J-Dapple.laf.useScreenMenuBar=true -J-da:com.sun.javafx.tk.quantum.EmbeddedSceneDnD -J-da:javafx.embed.swing.SwingDnD "
+               else="-J-Xms256m -J-Xmx768m -J-Dswing.java2d.dpiaware=false -J-Dprism.allowhidpi=false -J-da:com.sun.javafx.tk.quantum.EmbeddedSceneDnD -J-da:javafx.embed.swing.SwingDnD  ">
     <os family="mac"/>
   </condition>
 

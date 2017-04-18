@@ -44,8 +44,12 @@ import javafx.scene.control.TextField;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
 import javafx.scene.control.cell.TextFieldTreeCell;
+import javafx.scene.input.ClipboardContent;
+import javafx.scene.input.DataFormat;
+import javafx.scene.input.Dragboard;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
+import javafx.scene.input.TransferMode;
 import javax.swing.BorderFactory;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
@@ -62,6 +66,8 @@ public class UserSoundObjectLibrary extends JComponent {
 
     Library<SoundObject> soundObjectLibrary;
     InstanceContent instanceContent;
+
+    DataFormat sObjDataFormat = DataFormat.PLAIN_TEXT;
 
     public UserSoundObjectLibrary(InstanceContent instanceContent) {
         setLayout(new BorderLayout());
@@ -89,16 +95,7 @@ public class UserSoundObjectLibrary extends JComponent {
                 treeView.setEditable(true);
                 treeView.getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
                 treeView.setCellFactory(tv -> {
-                    LibraryItemCell cell = new LibraryItemCell();
-
-                    // Drag and Drop is broken within JFXPanel... 
-                    // at least on Windows...
-//                    cell.setOnDragDetected(evt -> {
-//                        cell.startDragAndDrop(TransferMode.COPY_OR_MOVE);
-//                        evt.consume();
-//                    });
-
-                    return cell;
+                    return new LibraryItemCell();
                 });
 
                 treeView.getSelectionModel().selectedItemProperty().addListener(
@@ -109,7 +106,7 @@ public class UserSoundObjectLibrary extends JComponent {
                             }
                             if (newVal.getValue().getValue() != null) {
                                 instanceContent.set(
-                                        Collections.singleton(newVal.getValue().getValue()), 
+                                        Collections.singleton(newVal.getValue().getValue()),
                                         null);
                             } else {
                                 instanceContent.set(Collections.emptyList(), null);
@@ -252,6 +249,69 @@ public class UserSoundObjectLibrary extends JComponent {
 
         private TextField textField;
 
+        public LibraryItemCell() {
+
+            // Drag and Drop is broken within JFXPanel... 
+            // at least on Windows...
+            // requires disabling assertions: 
+            // -da:com.sun.javafx.tk.quantum.EmbeddedSceneDnD 
+            // -da:javafx.embed.swing.SwingDnD 
+            // see: https://bugs.openjdk.java.net/browse/JDK-8178299
+            setOnDragDetected(evt -> {
+                if (getTreeView().getRow(getTreeItem()) != 0) {
+                    Dragboard db = startDragAndDrop(TransferMode.MOVE);
+                    ClipboardContent clipboard = new ClipboardContent();
+                    clipboard.putString("" + getTreeView().getRow(getTreeItem()));
+                    db.setContent(clipboard);
+                }
+                evt.consume();
+            });
+            setOnDragDropped(evt -> {
+                if (evt.getDragboard().getString() != null) {
+                    String item = evt.getDragboard().getString();
+
+                    try {
+                        int row = Integer.parseInt(item);
+                        TreeItem<LibraryItem<SoundObject>> treeItem = getTreeView().getTreeItem(row);
+                        treeItem.getParent().getChildren().remove(treeItem);
+                        getTreeItem().getChildren().add(treeItem);
+                        evt.setDropCompleted(true);
+                    } catch (Exception e) {
+
+                        evt.setDropCompleted(false);
+                    }
+                } else {
+                    evt.setDropCompleted(false);
+                }
+                evt.consume();
+            });
+            setOnDragOver(evt -> {
+                String val = evt.getDragboard().getString();
+                if (getTreeItem().getValue().getValue() == null
+                        && val != null) {
+
+                    int row = Integer.parseInt(val);
+                    TreeItem<LibraryItem<SoundObject>> treeItem = getTreeView().getTreeItem(row);
+
+                    if (!isInParentPath(treeItem, getTreeItem())&&
+                            getTreeItem() != treeItem.getParent()) {
+                        evt.acceptTransferModes(TransferMode.MOVE);
+                    }
+                }
+                evt.consume();
+            });
+        }
+
+        private boolean isInParentPath(TreeItem<LibraryItem<SoundObject>> source, TreeItem<LibraryItem<SoundObject>> target) {
+            if(target == source) {
+                return true;
+            } else if (target == null) {
+                return false;
+            } else {
+                return isInParentPath(source, target.getParent());
+            }
+        }
+
         @Override
         public void startEdit() {
             super.startEdit();
@@ -319,6 +379,7 @@ public class UserSoundObjectLibrary extends JComponent {
         private String getString() {
             return getItem() == null ? "" : getItem().toString();
         }
+
     }
 
 }
