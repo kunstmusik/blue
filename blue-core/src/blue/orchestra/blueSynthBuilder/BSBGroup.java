@@ -51,7 +51,7 @@ public class BSBGroup extends BSBObject implements Iterable<BSBObject>, UniqueNa
     private ObjectProperty<Color> borderColor = 
             new SimpleObjectProperty<>(Color.BLACK);
     private ObjectProperty<Color> labelTextColor = 
-            new SimpleObjectProperty<>(Color.rgb(204,204,255));
+            new SimpleObjectProperty<>(Color.WHITE);
 
     private Set<BSBObject> backingSet = new HashSet<BSBObject>() {
         @Override
