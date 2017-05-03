@@ -21,6 +21,7 @@ package blue.orchestra.blueSynthBuilder;
 import blue.automation.ParameterList;
 import blue.mixer.Channel;
 import blue.utility.ObjectUtilities;
+import blue.utility.XMLUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
 import java.util.ArrayList;
@@ -28,7 +29,9 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
+import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
@@ -52,6 +55,7 @@ public class BSBGroup extends BSBObject implements Iterable<BSBObject>, UniqueNa
             new SimpleObjectProperty<>(Color.BLACK);
     private ObjectProperty<Color> labelTextColor = 
             new SimpleObjectProperty<>(Color.WHITE);
+    private BooleanProperty titleEnabled = new SimpleBooleanProperty(true);
 
     private Set<BSBObject> backingSet = new HashSet<BSBObject>() {
         @Override
@@ -180,6 +184,19 @@ public class BSBGroup extends BSBObject implements Iterable<BSBObject>, UniqueNa
         return labelTextColor;
     }
 
+    public final boolean isTitleEnabled(){
+        return titleEnabled.get();
+    }
+
+    public final void setTitleEnabled(boolean enabled){
+        titleEnabled.set(enabled);
+    }
+
+    public final BooleanProperty titleEnabledProperty(){
+        return titleEnabled;
+    }
+     
+
     public void addBSBObject(BSBObject bsbObj) {
         if (bsbObj != null) {
             interfaceItems.add(bsbObj);
@@ -256,6 +273,9 @@ public class BSBGroup extends BSBObject implements Iterable<BSBObject>, UniqueNa
                     //FIXME
                     bsbGroup.addBSBObject((BSBObject) obj);
                     break;
+                case "titleEnabled":
+                    bsbGroup.setTitleEnabled(XMLUtilities.readBoolean(node));
+                    break;
             }
         }
         return bsbGroup;
@@ -269,6 +289,8 @@ public class BSBGroup extends BSBObject implements Iterable<BSBObject>, UniqueNa
         retVal.addElement("backgroundColor").setText(getBackgroundColor().toString());
         retVal.addElement("borderColor").setText(getBorderColor().toString());
         retVal.addElement("labelTextColor").setText(getLabelTextColor().toString());
+        retVal.addElement(XMLUtilities.writeBoolean("titleEnabled",
+                isTitleEnabled()));
         
 
 //        retVal.setAttribute("editEnabled", Boolean.toString(isEditEnabled()));

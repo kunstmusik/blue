@@ -68,9 +68,9 @@ public class BSBGroupView extends BorderPane {
 
         label.setStyle("-fx-font-smooth-type: lcd;");
         label.setAlignment(Pos.CENTER);
-        label.setPadding(new Insets(2,8,2,8));
+        label.setPadding(new Insets(2, 8, 2, 8));
 
-        editorPane.setPadding(new Insets(0,9,9,0));
+        editorPane.setPadding(new Insets(0, 9, 9, 0));
 
         setTop(label);
         setCenter(editorPane);
@@ -87,6 +87,14 @@ public class BSBGroupView extends BorderPane {
             updateBorderColor();
         };
 
+        ChangeListener<Boolean> titleEnabledLIstener = (obs, old, newVal) -> {
+            if (newVal) {
+                setTop(label);
+            } else {
+                setTop(null);
+            }
+        };
+
         sceneProperty().addListener((obs, old, newVal) -> {
             if (newVal == null) {
                 label.textProperty().unbind();
@@ -94,12 +102,20 @@ public class BSBGroupView extends BorderPane {
                 bsbGroup.backgroundColorProperty().removeListener(bgColorListener);
                 bsbGroup.borderColorProperty().removeListener(borderColorListener);
                 label.textFillProperty().unbind();
+                bsbGroup.titleEnabledProperty().removeListener(titleEnabledLIstener);
             } else {
                 label.textProperty().bind(bsbGroup.groupNameProperty());
                 bsbGroup.interfaceItemsProperty().addListener(scl);
                 bsbGroup.backgroundColorProperty().addListener(bgColorListener);
                 bsbGroup.borderColorProperty().addListener(borderColorListener);
                 label.textFillProperty().bind(bsbGroup.labelTextColorProperty());
+
+                if (bsbGroup.isTitleEnabled()) {
+                    setTop(label);
+                } else {
+                    setTop(null);
+                }
+                bsbGroup.titleEnabledProperty().addListener(titleEnabledLIstener);
             }
         });
 
@@ -115,7 +131,7 @@ public class BSBGroupView extends BorderPane {
     private void updateBorderColor() {
         label.setBackground(
                 new Background(
-                        new BackgroundFill(bsbGroup.getBorderColor(), new CornerRadii(4,4,0,0, false), Insets.EMPTY)));
+                        new BackgroundFill(bsbGroup.getBorderColor(), new CornerRadii(4, 4, 0, 0, false), Insets.EMPTY)));
         editorPane.setBorder(new Border(new BorderStroke(bsbGroup.getBorderColor(), BorderStrokeStyle.SOLID, CornerRadii.EMPTY, new BorderWidths(1))));
     }
 

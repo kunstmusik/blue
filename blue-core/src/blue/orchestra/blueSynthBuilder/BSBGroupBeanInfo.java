@@ -40,19 +40,21 @@ public class BSBGroupBeanInfo extends SimpleBeanInfo {
     private static final int PROPERTY_borderColor = 1;
     private static final int PROPERTY_groupName = 2;
     private static final int PROPERTY_labelTextColor = 3;
-    private static final int PROPERTY_x = 4;
-    private static final int PROPERTY_y = 5;
+    private static final int PROPERTY_titleEnabled = 4;
+    private static final int PROPERTY_x = 5;
+    private static final int PROPERTY_y = 6;
 
     // Property array 
     /*lazy PropertyDescriptor*/
     private static PropertyDescriptor[] getPdescriptor(){
-        PropertyDescriptor[] properties = new PropertyDescriptor[6];
+        PropertyDescriptor[] properties = new PropertyDescriptor[7];
     
         try {
             properties[PROPERTY_backgroundColor] = new PropertyDescriptor ( "backgroundColor", blue.orchestra.blueSynthBuilder.BSBGroup.class, "getBackgroundColor", "setBackgroundColor" ); // NOI18N
             properties[PROPERTY_borderColor] = new PropertyDescriptor ( "borderColor", blue.orchestra.blueSynthBuilder.BSBGroup.class, "getBorderColor", "setBorderColor" ); // NOI18N
             properties[PROPERTY_groupName] = new PropertyDescriptor ( "groupName", blue.orchestra.blueSynthBuilder.BSBGroup.class, "getGroupName", "setGroupName" ); // NOI18N
             properties[PROPERTY_labelTextColor] = new PropertyDescriptor ( "labelTextColor", blue.orchestra.blueSynthBuilder.BSBGroup.class, "getLabelTextColor", "setLabelTextColor" ); // NOI18N
+            properties[PROPERTY_titleEnabled] = new PropertyDescriptor ( "titleEnabled", blue.orchestra.blueSynthBuilder.BSBGroup.class, "isTitleEnabled", "setTitleEnabled" ); // NOI18N
             properties[PROPERTY_x] = new PropertyDescriptor ( "x", blue.orchestra.blueSynthBuilder.BSBGroup.class, "getX", "setX" ); // NOI18N
             properties[PROPERTY_y] = new PropertyDescriptor ( "y", blue.orchestra.blueSynthBuilder.BSBGroup.class, "getY", "setY" ); // NOI18N
         }
