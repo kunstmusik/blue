@@ -51,6 +51,9 @@ NEW
 * Issue #355 - Added default layer heights to Program Options->Project Defaults;
   added default layer height as property for AudioLayerGroups
 
+* Issue #357 - Added maintenance of dialog size/location when Generating CSD to
+  Screen
+
 UPDATED
 
 * Mixer:
