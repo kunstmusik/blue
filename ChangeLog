@@ -109,6 +109,9 @@ FIX
 * Fixed Code Repository Dialog to ensure it is in sync with repository changes.
   Also fixed drag/drop when editing repository within dialog.
 
+* Issue #345 - Parsing output from nGen revealed issue with parsing score 
+  statements that were not i- or comments (notes would repeat)
+
 INTERNAL
 
 * Replaced use of Cloneable and Serializable with copy constructors and new 

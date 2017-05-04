@@ -47,7 +47,6 @@ public class ScoreUtilities {
     public static NoteList getNotes(String in) throws NoteParseException {
         NoteList notes = new NoteList();
         Note previousNote = null;
-        Note tempNote = null;
         int start = -1, end = -1, lineNumber = 1, len, lastIndex;
         ParseState state = ParseState.STARTING;
 
@@ -153,6 +152,7 @@ public class ScoreUtilities {
                         String noteText = TextUtilities.stripMultiLineComments(
                                 in.substring(start, end + 1));
 
+                        Note tempNote = null;
                         try {
                             if (noteText.charAt(0) == 'i') {
                                 tempNote = Note.createNote(noteText,
