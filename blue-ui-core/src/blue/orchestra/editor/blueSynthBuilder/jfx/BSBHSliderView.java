@@ -19,6 +19,7 @@
  */
 package blue.orchestra.editor.blueSynthBuilder.jfx;
 
+import blue.jfx.BlueFX;
 import blue.jfx.controls.ValuePanel;
 import blue.orchestra.blueSynthBuilder.BSBHSlider;
 import blue.utility.NumberUtilities;
@@ -38,7 +39,7 @@ import org.openide.util.Exceptions;
  *
  * @author stevenyi
  */
-public class BSBHSliderView extends BorderPane {
+public class BSBHSliderView extends BorderPane implements ResizeableView {
 
     Slider slider;
     ValuePanel valuePanel;
@@ -175,4 +176,53 @@ public class BSBHSliderView extends BorderPane {
 
         slider.setMajorTickUnit(bsbHSlider.getResolution().doubleValue());
     }
+
+    public boolean canResizeWidgetWidth() {
+        return true;
+    }
+
+    public boolean canResizeWidgetHeight() {
+        return false;
+    }
+
+    public int getWidgetMinimumWidth() {
+        int base = bsbHSlider.isValueDisplayEnabled() ? 50 : 0;
+        return 45 + base;
+    }
+
+    public int getWidgetMinimumHeight() {
+        return -1; 
+    }
+
+    public int getWidgetWidth() {
+        int base = bsbHSlider.isValueDisplayEnabled() ? 50 : 0;
+        return base + bsbHSlider.getSliderWidth();
+    }
+
+    public void setWidgetWidth(int width) {
+        int base = bsbHSlider.isValueDisplayEnabled() ? 50 : 0;
+        bsbHSlider.setSliderWidth(Math.max(45, width - base));
+    }
+
+    public int getWidgetHeight() {
+        return -1;
+    }
+
+    public void setWidgetHeight(int height){
+    } 
+
+    public void setWidgetX(int x) {
+        bsbHSlider.setX(x);
+    }
+
+    public int getWidgetX() {
+        return bsbHSlider.getX();
+    }
+
+    public void setWidgetY(int y){
+    }
+
+    public int getWidgetY() {
+        return -1;
+    } 
 }

@@ -37,7 +37,7 @@ import org.openide.util.Exceptions;
  *
  * @author stevenyi
  */
-public class BSBVSliderView extends BorderPane {
+public class BSBVSliderView extends BorderPane implements ResizeableView {
 
     Slider slider;
     ValuePanel valuePanel;
@@ -176,4 +176,54 @@ public class BSBVSliderView extends BorderPane {
 
         slider.setMajorTickUnit(bsbVSlider.getResolution().doubleValue());
     }
+
+
+    public boolean canResizeWidgetWidth() {
+        return false;
+    }
+
+    public boolean canResizeWidgetHeight() {
+        return true;
+    }
+
+    public int getWidgetMinimumWidth() {
+        return -1;
+    }
+
+    public int getWidgetMinimumHeight() {
+        int base = bsbVSlider.isValueDisplayEnabled() ? 30 : 0;
+        return 45 + base;
+    }
+
+    public int getWidgetWidth() {
+        return -1;
+    }
+
+    public void setWidgetWidth(int width) {
+    }
+
+    public int getWidgetHeight() {
+        int base = bsbVSlider.isValueDisplayEnabled() ? 30 : 0;
+        return base + bsbVSlider.getSliderHeight();
+    }
+
+    public void setWidgetHeight(int height){
+        int base = bsbVSlider.isValueDisplayEnabled() ? 30 : 0;
+        bsbVSlider.setSliderHeight(Math.max(45, height - base));
+    } 
+
+    public void setWidgetX(int x) {
+    }
+
+    public int getWidgetX() {
+        return -1;
+    }
+
+    public void setWidgetY(int y){
+        bsbVSlider.setY(y);
+    }
+
+    public int getWidgetY() {
+        return bsbVSlider.getY();
+    } 
 }

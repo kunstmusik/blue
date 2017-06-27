@@ -41,7 +41,7 @@ import javafx.scene.layout.BorderPane;
  *
  * @author stevenyi
  */
-public class BSBFileSelectorView extends BorderPane {
+public class BSBFileSelectorView extends BorderPane implements ResizeableView {
 
     private static final int FILE_BUTTON_WIDTH = 30;
     private static int OBJECT_HEIGHT = 30;
@@ -118,8 +118,8 @@ public class BSBFileSelectorView extends BorderPane {
             @Override
             public void handle(DragEvent event) {
                 Dragboard dragboard = event.getDragboard();
-                if (dragboard.hasFiles() || dragboard.hasString() || 
-                        dragboard.hasUrl()) {
+                if (dragboard.hasFiles() || dragboard.hasString()
+                        || dragboard.hasUrl()) {
                     event.acceptTransferModes(TransferMode.LINK);
                 }
                 event.consume();
@@ -188,7 +188,7 @@ public class BSBFileSelectorView extends BorderPane {
                         event.consume();
                         return;
                     }
-                } else if(dragboard.hasUrl()) {
+                } else if (dragboard.hasUrl()) {
                     String val = dragboard.getUrl();
                     System.out.println("URL: " + val);
                     File f = new File(val);
@@ -225,5 +225,51 @@ public class BSBFileSelectorView extends BorderPane {
                 fileNameField.prefWidthProperty().bind(fileSelector.textFieldWidthProperty());
             }
         });
+    }
+
+    public boolean canResizeWidgetWidth() {
+        return true;
+    }
+
+    public boolean canResizeWidgetHeight() {
+        return false;
+    }
+
+    public int getWidgetMinimumWidth() {
+        return 10 + FILE_BUTTON_WIDTH;
+    }
+
+    public int getWidgetMinimumHeight() {
+        return -1;
+    }
+
+    public int getWidgetWidth() {
+        return fileSelector.getTextFieldWidth();
+    }
+
+    public void setWidgetWidth(int width) {
+        fileSelector.setTextFieldWidth(Math.max(10, width));
+    }
+
+    public int getWidgetHeight() {
+        return -1;
+    }
+
+    public void setWidgetHeight(int height) {
+    }
+
+    public void setWidgetX(int x) {
+        fileSelector.setX(x);
+    }
+
+    public int getWidgetX() {
+        return fileSelector.getX();
+    }
+
+    public void setWidgetY(int y) {
+    }
+
+    public int getWidgetY() {
+        return -1;
     }
 }

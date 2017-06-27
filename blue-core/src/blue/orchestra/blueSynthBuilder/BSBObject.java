@@ -229,4 +229,6 @@ public abstract class BSBObject implements DeepCopyable<BSBObject> {
     public void setUniqueNameManager(UniqueNameManager unm) {
         this.unm = unm;
     }
+    
+
 }

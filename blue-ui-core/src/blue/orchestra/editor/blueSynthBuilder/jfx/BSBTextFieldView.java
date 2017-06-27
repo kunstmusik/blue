@@ -26,9 +26,11 @@ import javafx.scene.control.TextField;
  *
  * @author stevenyi
  */
-public class BSBTextFieldView extends TextField {
+public class BSBTextFieldView extends TextField implements ResizeableView {
+    BSBTextField tf;
 
     public BSBTextFieldView(BSBTextField tf) {
+        this.tf = tf;
         setUserData(tf);
 
         sceneProperty().addListener((obs, old, newVal) -> {
@@ -41,4 +43,52 @@ public class BSBTextFieldView extends TextField {
             }
         });
     }
+
+    public boolean canResizeWidgetWidth() {
+        return true;
+    }
+
+    public boolean canResizeWidgetHeight() {
+        return false;
+    }
+
+    public int getWidgetMinimumWidth() {
+        return 5;
+    }
+
+    public int getWidgetMinimumHeight() {
+        return -1; 
+    }
+
+    public int getWidgetWidth() {
+        return tf.getTextFieldWidth();
+    }
+
+    public void setWidgetWidth(int width) {
+        tf.setTextFieldWidth(Math.max(5, width));
+    }
+
+    public int getWidgetHeight() {
+        return -1;
+    }
+
+    public void setWidgetHeight(int height){
+    } 
+
+    public void setWidgetX(int x) {
+        tf.setX(x);
+    }
+
+    public int getWidgetX() {
+        return tf.getX();
+    }
+
+    public void setWidgetY(int y){
+        tf.setY(y);
+    }
+
+    public int getWidgetY() {
+        return tf.getY();
+    }
+
 }

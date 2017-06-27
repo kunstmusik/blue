@@ -34,12 +34,16 @@ import javafx.scene.layout.Priority;
  *
  * @author stevenyi
  */
-public class BSBLineObjectView extends BorderPane {
+public class BSBLineObjectView extends BorderPane implements ResizeableView {
+
+    BSBLineObject lines;
+    LineSelector selector;
 
     public BSBLineObjectView(BSBLineObject lines) {
+        this.lines = lines;
         setUserData(lines);
 
-        LineSelector selector = new LineSelector(lines);
+        selector = new LineSelector(lines);
 
         LineView lineView = new LineView(lines.getLines());
 
@@ -160,5 +164,59 @@ public class BSBLineObjectView extends BorderPane {
         public ObjectProperty<Line> selectedLineProperty() {
             return selectedLine;
         }
+    }
+
+    public boolean canResizeWidgetWidth() {
+        return true;
+    }
+
+    public boolean canResizeWidgetHeight() {
+        return true;
+    }
+
+    public int getWidgetMinimumWidth() {
+        return 40;
+    }
+
+    public int getWidgetMinimumHeight() {
+//        int base = lines.isValueDisplayEnabled() ? (int) label.getHeight() : 0;
+//        return base + 20;
+        return 40 + (int)selector.getHeight();
+    }
+
+    public int getWidgetWidth() {
+        return lines.getCanvasWidth();
+    }
+
+    public void setWidgetWidth(int width) {
+        lines.setCanvasWidth(Math.max(40, width));
+    }
+
+    public int getWidgetHeight() {
+//        int base = bsbXYController.isValueDisplayEnabled() ? (int) label.getHeight() : 0;
+//        return bsbXYController.getHeight() + base;
+        return lines.getCanvasHeight() + (int)selector.getHeight();
+    }
+
+    public void setWidgetHeight(int height) {
+//        int base = bsbXYController.isValueDisplayEnabled() ? (int) label.getHeight() : 0;
+//        bsbXYController.setHeight(height - base);
+        lines.setCanvasHeight(height - (int)selector.getHeight());
+    }
+
+    public void setWidgetX(int x) {
+        lines.setX(x);
+    }
+
+    public int getWidgetX() {
+        return lines.getX();
+    }
+
+    public void setWidgetY(int y) {
+        lines.setY(y);
+    }
+
+    public int getWidgetY() {
+        return lines.getY();
     }
 }

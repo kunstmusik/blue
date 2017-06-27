@@ -38,7 +38,7 @@ import org.openide.util.Exceptions;
  * @author steven
  *
  */
-public class BSBKnobView extends BorderPane {
+public class BSBKnobView extends BorderPane implements ResizeableView {
 
     private static final int VALUE_HEIGHT = 14;
     BSBKnob knob;
@@ -162,5 +162,56 @@ public class BSBKnobView extends BorderPane {
                 }
             }
         });
+    }
+
+    public boolean canResizeWidgetWidth() {
+        return true;
+    }
+
+    public boolean canResizeWidgetHeight() {
+        return true;
+    }
+
+    public int getWidgetMinimumWidth() {
+        return 20;
+    }
+
+    public int getWidgetMinimumHeight() {
+        return knob.isValueDisplayEnabled() ? (int)valuePanel.getHeight() + 20 : 20; 
+    }
+
+    public int getWidgetWidth() {
+        return knob.getKnobWidth();
+    }
+
+    public void setWidgetWidth(int width) {
+        knob.setKnobWidth(Math.max(20, width));
+    }
+
+    public int getWidgetHeight() {
+        return (int) getHeight();
+    }
+
+    public void setWidgetHeight(int height){
+        knob.setKnobWidth(Math.max(20, 
+                (knob.isValueDisplayEnabled() ? 
+                        height - (int)valuePanel.getHeight() : 
+                        height)));
+    } 
+
+    public void setWidgetX(int x) {
+        knob.setX(x);
+    }
+
+    public int getWidgetX() {
+        return knob.getX();
+    }
+
+    public void setWidgetY(int y){
+        knob.setY(y);
+    }
+
+    public int getWidgetY() {
+        return knob.getY();
     }
 }

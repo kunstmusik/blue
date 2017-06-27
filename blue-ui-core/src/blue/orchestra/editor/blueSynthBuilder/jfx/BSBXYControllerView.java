@@ -34,7 +34,7 @@ import javafx.scene.text.Font;
  *
  * @author stevenyi
  */
-public class BSBXYControllerView extends BorderPane {
+public class BSBXYControllerView extends BorderPane implements ResizeableView {
 
     private final BSBXYController bsbXYController;
     private final Pane pane = new Pane();
@@ -122,6 +122,11 @@ public class BSBXYControllerView extends BorderPane {
 
                 bsbXYController.valueDisplayEnabledProperty().removeListener(
                         displayVisibleListener);
+
+                bsbXYController.heightProperty().removeListener(yListener);
+                bsbXYController.heightProperty().removeListener(labelListener);
+                bsbXYController.widthProperty().removeListener(xListener);
+                bsbXYController.widthProperty().removeListener(labelListener);
             } else {
 
                 pane.prefWidthProperty().bind(bsbXYController.widthProperty());
@@ -139,6 +144,11 @@ public class BSBXYControllerView extends BorderPane {
                 bindClampedValue(bsbXYController.xValueProperty(), xListener);
                 bindClampedValue(bsbXYController.yValueProperty(), labelListener);
                 bindClampedValue(bsbXYController.yValueProperty(), yListener);
+
+                bsbXYController.heightProperty().addListener(yListener);
+                bsbXYController.heightProperty().addListener(labelListener);
+                bsbXYController.widthProperty().addListener(xListener);
+                bsbXYController.widthProperty().addListener(labelListener);
 
                 bsbXYController.valueDisplayEnabledProperty().addListener(
                         displayVisibleListener);
@@ -182,5 +192,56 @@ public class BSBXYControllerView extends BorderPane {
         } else {
             setBottom(null);
         }
+    }
+
+    public boolean canResizeWidgetWidth() {
+        return true;
+    }
+
+    public boolean canResizeWidgetHeight() {
+        return true;
+    }
+
+    public int getWidgetMinimumWidth() {
+        return 20;
+    }
+
+    public int getWidgetMinimumHeight() {
+        int base = bsbXYController.isValueDisplayEnabled() ? (int) label.getHeight() : 0;
+        return base + 20;
+    }
+
+    public int getWidgetWidth() {
+        return bsbXYController.getWidth();
+    }
+
+    public void setWidgetWidth(int width) {
+        bsbXYController.setWidth(Math.max(20, width));
+    }
+
+    public int getWidgetHeight() {
+        int base = bsbXYController.isValueDisplayEnabled() ? (int) label.getHeight() : 0;
+        return bsbXYController.getHeight() + base;
+    }
+
+    public void setWidgetHeight(int height) {
+        int base = bsbXYController.isValueDisplayEnabled() ? (int) label.getHeight() : 0;
+        bsbXYController.setHeight(height - base);
+    }
+
+    public void setWidgetX(int x) {
+        bsbXYController.setX(x);
+    }
+
+    public int getWidgetX() {
+        return bsbXYController.getX();
+    }
+
+    public void setWidgetY(int y) {
+        bsbXYController.setY(y);
+    }
+
+    public int getWidgetY() {
+        return bsbXYController.getY();
     }
 }

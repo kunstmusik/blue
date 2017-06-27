@@ -31,9 +31,12 @@ import javafx.scene.layout.HBox;
  *
  * @author stevenyi
  */
-public class BSBVSliderBankView extends HBox {
+public class BSBVSliderBankView extends HBox implements ResizeableView {
+
+    BSBVSliderBank bsbVSliderBank;
 
     public BSBVSliderBankView(BSBVSliderBank sliderBank) {
+        this.bsbVSliderBank = sliderBank;
         setUserData(sliderBank);
 
         List<Node> views = sliderBank.getSliders().stream()
@@ -72,4 +75,53 @@ public class BSBVSliderBankView extends HBox {
             }
         });
     }
+
+    public boolean canResizeWidgetWidth() {
+        return false;
+    }
+
+    public boolean canResizeWidgetHeight() {
+        return true;
+    }
+
+    public int getWidgetMinimumWidth() {
+        return -1;
+    }
+
+    public int getWidgetMinimumHeight() {
+        int base = bsbVSliderBank.isValueDisplayEnabled() ? 30 : 0;
+        return 45 + base;
+    }
+
+    public int getWidgetWidth() {
+        return -1;
+    }
+
+    public void setWidgetWidth(int width) {
+    }
+
+    public int getWidgetHeight() {
+        int base = bsbVSliderBank.isValueDisplayEnabled() ? 30 : 0;
+        return base + bsbVSliderBank.getSliderHeight();
+    }
+
+    public void setWidgetHeight(int height){
+        int base = bsbVSliderBank.isValueDisplayEnabled() ? 30 : 0;
+        bsbVSliderBank.setSliderHeight(Math.max(45, height - base));
+    } 
+
+    public void setWidgetX(int x) {
+    }
+
+    public int getWidgetX() {
+        return -1;
+    }
+
+    public void setWidgetY(int y){
+        bsbVSliderBank.setY(y);
+    }
+
+    public int getWidgetY() {
+        return bsbVSliderBank.getY();
+    } 
 }

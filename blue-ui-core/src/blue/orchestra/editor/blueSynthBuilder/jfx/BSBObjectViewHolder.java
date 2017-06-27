@@ -30,11 +30,15 @@ import javafx.beans.value.ObservableValue;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
+import javafx.geometry.BoundingBox;
+import javafx.geometry.Point2D;
+import javafx.scene.Cursor;
 import javafx.scene.Scene;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.SeparatorMenuItem;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Region;
 import javafx.scene.paint.Color;
@@ -46,8 +50,14 @@ import javafx.scene.shape.Rectangle;
  */
 public class BSBObjectViewHolder extends Pane {
 
+    // TODO - the code for dragging uses sceneX, should use parentX
     double startX = 0.0;
     double startY = 0.0;
+
+    // used for resize
+    Point2D mouseOrigin;
+    BoundingBox originBounds;
+    ResizeableView rView = null;
 
     private static ContextMenu MENU = null;
 
@@ -125,6 +135,8 @@ public class BSBObjectViewHolder extends Pane {
 
         this.getChildren().addAll(bsbObjView, mousePane, rect);
 
+        setupResizeHandles(rect);
+
 //        SetChangeListener<BSBObject> scl = e -> {
 //            rect.setVisible(e.getSet().contains(bsbObj));
 //        };
@@ -170,48 +182,182 @@ public class BSBObjectViewHolder extends Pane {
 //        border
     }
 
+    private void setupResizeHandles(Rectangle rect) {
+
+        if (!(bsbObjectView instanceof ResizeableView)) {
+            return;
+        }
+
+        rView = (ResizeableView) bsbObjectView;
+
+        if (rView.canResizeWidgetWidth()) {
+            Rectangle resizeLeftHandle = new Rectangle(5, 5);
+            resizeLeftHandle.setManaged(false);
+            resizeLeftHandle.setFill(Color.rgb(0, 255, 0));
+            resizeLeftHandle.setLayoutX(-2);
+            resizeLeftHandle.yProperty().bind(rect.heightProperty().divide(2).subtract(2));
+            resizeLeftHandle.visibleProperty().bind(rect.visibleProperty());
+            resizeLeftHandle.setCursor(Cursor.W_RESIZE);
+            resizeLeftHandle.setOnMousePressed(evt -> recordMouseOrigin(evt));
+            resizeLeftHandle.setOnMouseDragged(evt -> resizeLeft(evt));
+
+            Rectangle resizeRightHandle = new Rectangle(5, 5);
+            resizeRightHandle.setManaged(false);
+            resizeRightHandle.setFill(Color.rgb(0, 255, 0));
+            resizeRightHandle.xProperty().bind(rect.widthProperty().subtract(2));
+            resizeRightHandle.yProperty().bind(rect.heightProperty().divide(2).subtract(2));
+            resizeRightHandle.visibleProperty().bind(rect.visibleProperty());
+            resizeRightHandle.setCursor(Cursor.E_RESIZE);
+            resizeRightHandle.setOnMousePressed(evt -> recordMouseOrigin(evt));
+            resizeRightHandle.setOnMouseDragged(evt -> resizeRight(evt));
+
+            getChildren().addAll(resizeLeftHandle, resizeRightHandle);
+        }
+
+        if (rView.canResizeWidgetHeight()) {
+            Rectangle resizeTopHandle = new Rectangle(5, 5);
+            resizeTopHandle.setManaged(false);
+            resizeTopHandle.setFill(Color.rgb(0, 255, 0));
+            resizeTopHandle.setLayoutY(-2);
+            resizeTopHandle.xProperty().bind(rect.widthProperty().divide(2).subtract(2));
+            resizeTopHandle.visibleProperty().bind(rect.visibleProperty());
+            resizeTopHandle.setCursor(Cursor.N_RESIZE);
+            resizeTopHandle.setOnMousePressed(evt -> recordMouseOrigin(evt));
+            resizeTopHandle.setOnMouseDragged(evt -> resizeUp(evt));
+
+            Rectangle resizeBottomHandle = new Rectangle(5, 5);
+            resizeBottomHandle.setManaged(false);
+            resizeBottomHandle.setFill(Color.rgb(0, 255, 0));
+            resizeBottomHandle.yProperty().bind(rect.heightProperty().subtract(2));
+            resizeBottomHandle.xProperty().bind(rect.widthProperty().divide(2).subtract(2));
+            resizeBottomHandle.visibleProperty().bind(rect.visibleProperty());
+            resizeBottomHandle.setCursor(Cursor.S_RESIZE);
+            resizeBottomHandle.setOnMousePressed(evt -> recordMouseOrigin(evt));
+            resizeBottomHandle.setOnMouseDragged(evt -> resizeDown(evt));
+
+            getChildren().addAll(resizeTopHandle, resizeBottomHandle);
+        }
+
+    }
+
+    protected void recordMouseOrigin(MouseEvent evt) {
+        final BSBObject bsbObj = (BSBObject) getUserData();
+        Rectangle r = (Rectangle) evt.getSource();
+        mouseOrigin = r.localToParent(evt.getX(), evt.getY());
+        mouseOrigin = localToParent(mouseOrigin);
+        originBounds = new BoundingBox(bsbObj.getX(), bsbObj.getY(),
+                rView.getWidgetWidth(), rView.getWidgetHeight());
+        evt.consume();
+    }
+
+    protected void resizeRight(MouseEvent evt) {
+        Rectangle r = (Rectangle) evt.getSource();
+        Point2D curPoint = r.localToParent(evt.getX(), evt.getY());
+        curPoint = localToParent(curPoint);
+
+        int diff = (int) (curPoint.getX() - mouseOrigin.getX());
+        int newWidth = (int) originBounds.getWidth() + diff;
+
+        if (newWidth >= rView.getWidgetMinimumWidth()) {
+            rView.setWidgetWidth(newWidth);
+        }
+
+        evt.consume();
+    }
+
+    protected void resizeLeft(MouseEvent evt) {
+        Rectangle r = (Rectangle) evt.getSource();
+        Point2D curPoint = r.localToParent(evt.getX(), evt.getY());
+        curPoint = localToParent(curPoint);
+
+        int diff = (int) (curPoint.getX() - mouseOrigin.getX());
+        diff = Math.max((int)-originBounds.getMinX(), diff);
+        int newWidth = (int) originBounds.getWidth() - diff;
+        int newX = (int) originBounds.getMinX() + diff;
+
+        if (newWidth >= rView.getWidgetMinimumWidth() &&
+                newX <= (originBounds.getMaxX()- rView.getWidgetMinimumWidth())) {
+            rView.setWidgetWidth(newWidth);
+            rView.setWidgetX(newX);
+        }
+
+        evt.consume();
+    }
+
+    protected void resizeUp(MouseEvent evt) {
+        Rectangle r = (Rectangle) evt.getSource();
+        Point2D curPoint = r.localToParent(evt.getX(), evt.getY());
+        curPoint = localToParent(curPoint);
+
+        int diff = (int) (curPoint.getY() - mouseOrigin.getY());
+        diff = Math.max((int)-originBounds.getMinY(), diff);
+        int newHeight = (int) originBounds.getHeight() - diff;
+
+        if (newHeight >= rView.getWidgetMinimumHeight()) {
+            rView.setWidgetY((int) originBounds.getMinY() + diff);
+            rView.setWidgetHeight(newHeight);
+        }
+
+        evt.consume();
+    }
+
+    protected void resizeDown(MouseEvent evt) {
+        Rectangle r = (Rectangle) evt.getSource();
+        Point2D curPoint = r.localToParent(evt.getX(), evt.getY());
+        curPoint = localToParent(curPoint);
+
+        int diff = (int) (curPoint.getY() - mouseOrigin.getY());
+        int newHeight = (int) originBounds.getHeight() + diff;
+
+        if (newHeight >= rView.getWidgetMinimumHeight()) {
+            rView.setWidgetHeight(newHeight);
+        }
+
+        evt.consume();
+    }
+
     private static ContextMenu getContextMenu() {
         if (MENU == null) {
             MENU = new ContextMenu();
 
             MenuItem cut = new MenuItem("Cut");
             cut.setOnAction(e -> {
-                MenuData data = (MenuData)MENU.getUserData();
+                MenuData data = (MenuData) MENU.getUserData();
                 BSBEditSelection selection = data.selection;
                 selection.cut();
             });
             MenuItem copy = new MenuItem("Copy");
             copy.setOnAction(e -> {
-                MenuData data = (MenuData)MENU.getUserData();
+                MenuData data = (MenuData) MENU.getUserData();
                 BSBEditSelection selection = data.selection;
                 selection.copy();
             });
 
             MenuItem remove = new MenuItem("Remove");
             remove.setOnAction(e -> {
-                MenuData data = (MenuData)MENU.getUserData();
+                MenuData data = (MenuData) MENU.getUserData();
                 BSBEditSelection selection = data.selection;
                 selection.remove();
             });
 
             MenuItem makeGroup = new MenuItem("Make Group");
             makeGroup.setOnAction(e -> {
-                MenuData data = (MenuData)MENU.getUserData();
+                MenuData data = (MenuData) MENU.getUserData();
                 BSBEditSelection selection = data.selection;
                 List<BSBGroup> groupsList = data.groupsList;
-                
+
                 List<BSBObject> bsbObjs = selection.selection.stream()
                         .map(b -> b.deepCopy())
                         .collect(Collectors.toList());
-                int x = Integer.MAX_VALUE;                
-                int y = Integer.MAX_VALUE;                
+                int x = Integer.MAX_VALUE;
+                int y = Integer.MAX_VALUE;
 
-                for(BSBObject bsbObj : bsbObjs) {
+                for (BSBObject bsbObj : bsbObjs) {
                     x = Math.min(x, bsbObj.getX());
                     y = Math.min(y, bsbObj.getY());
                 }
 
-                for(BSBObject bsbObj : bsbObjs) {
+                for (BSBObject bsbObj : bsbObjs) {
                     bsbObj.setX(bsbObj.getX() - x + 10);
                     bsbObj.setY(bsbObj.getY() - y + 10);
                 }
@@ -232,14 +378,14 @@ public class BSBObjectViewHolder extends Pane {
             EventHandler<ActionEvent> alignListener = ae -> {
                 MenuItem source = (MenuItem) ae.getSource();
                 Alignment alignment = (Alignment) source.getUserData();
-                MenuData data = (MenuData)MENU.getUserData();
+                MenuData data = (MenuData) MENU.getUserData();
                 BSBEditSelection selection = data.selection;
                 AlignmentUtils.align(selection.getSelectedNodes(), alignment);
             };
             EventHandler<ActionEvent> distributeListener = ae -> {
                 MenuItem source = (MenuItem) ae.getSource();
                 Alignment alignment = (Alignment) source.getUserData();
-                MenuData data = (MenuData)MENU.getUserData();
+                MenuData data = (MenuData) MENU.getUserData();
                 BSBEditSelection selection = data.selection;
                 AlignmentUtils.distribute(selection.getSelectedNodes(), alignment);
             };
@@ -262,7 +408,7 @@ public class BSBObjectViewHolder extends Pane {
             MENU.setOnHidden(e -> MENU.setUserData(null));
 
             MENU.setOnShowing(e -> {
-                MenuData data = (MenuData)MENU.getUserData();
+                MenuData data = (MenuData) MENU.getUserData();
                 BSBEditSelection selection = data.selection;
                 align.setDisable(selection.selection.size() < 2);
                 distribute.setDisable(selection.selection.size() < 2);
@@ -276,10 +422,11 @@ public class BSBObjectViewHolder extends Pane {
     }
 
     class MenuData {
+
         public final BSBEditSelection selection;
         public final List<BSBGroup> groupsList;
 
-        public MenuData(BSBEditSelection selection, 
+        public MenuData(BSBEditSelection selection,
                 List<BSBGroup> groupsList) {
             this.selection = selection;
             this.groupsList = groupsList;
