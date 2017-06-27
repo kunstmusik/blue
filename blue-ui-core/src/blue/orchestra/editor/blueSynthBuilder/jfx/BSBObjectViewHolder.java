@@ -24,6 +24,7 @@ import blue.orchestra.blueSynthBuilder.BSBObject;
 import java.util.List;
 import java.util.stream.Collectors;
 import javafx.beans.binding.Bindings;
+import javafx.beans.binding.BooleanBinding;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
@@ -135,12 +136,10 @@ public class BSBObjectViewHolder extends Pane {
 
         this.getChildren().addAll(bsbObjView, mousePane, rect);
 
-        setupResizeHandles(rect);
-
-//        SetChangeListener<BSBObject> scl = e -> {
-//            rect.setVisible(e.getSet().contains(bsbObj));
-//        };
         if (editEnabledProperty != null) {
+
+            setupResizeHandles(rect, selection);
+
             rect.visibleProperty().bind(
                     Bindings.createBooleanBinding(
                             () -> editEnabledProperty.get()
@@ -182,11 +181,18 @@ public class BSBObjectViewHolder extends Pane {
 //        border
     }
 
-    private void setupResizeHandles(Rectangle rect) {
+    private void setupResizeHandles(Rectangle rect, BSBEditSelection selection) {
 
         if (!(bsbObjectView instanceof ResizeableView)) {
             return;
         }
+
+        BooleanBinding visibleBinding = Bindings.createBooleanBinding(
+                () -> rect.isVisible()
+                        && selection.selection.size() == 1,
+                rect.visibleProperty(),
+                selection.selection
+        );
 
         rView = (ResizeableView) bsbObjectView;
 
@@ -196,7 +202,7 @@ public class BSBObjectViewHolder extends Pane {
             resizeLeftHandle.setFill(Color.rgb(0, 255, 0));
             resizeLeftHandle.setLayoutX(-2);
             resizeLeftHandle.yProperty().bind(rect.heightProperty().divide(2).subtract(2));
-            resizeLeftHandle.visibleProperty().bind(rect.visibleProperty());
+            resizeLeftHandle.visibleProperty().bind(visibleBinding);
             resizeLeftHandle.setCursor(Cursor.W_RESIZE);
             resizeLeftHandle.setOnMousePressed(evt -> recordMouseOrigin(evt));
             resizeLeftHandle.setOnMouseDragged(evt -> resizeLeft(evt));
@@ -206,7 +212,7 @@ public class BSBObjectViewHolder extends Pane {
             resizeRightHandle.setFill(Color.rgb(0, 255, 0));
             resizeRightHandle.xProperty().bind(rect.widthProperty().subtract(2));
             resizeRightHandle.yProperty().bind(rect.heightProperty().divide(2).subtract(2));
-            resizeRightHandle.visibleProperty().bind(rect.visibleProperty());
+            resizeRightHandle.visibleProperty().bind(visibleBinding);
             resizeRightHandle.setCursor(Cursor.E_RESIZE);
             resizeRightHandle.setOnMousePressed(evt -> recordMouseOrigin(evt));
             resizeRightHandle.setOnMouseDragged(evt -> resizeRight(evt));
@@ -220,7 +226,7 @@ public class BSBObjectViewHolder extends Pane {
             resizeTopHandle.setFill(Color.rgb(0, 255, 0));
             resizeTopHandle.setLayoutY(-2);
             resizeTopHandle.xProperty().bind(rect.widthProperty().divide(2).subtract(2));
-            resizeTopHandle.visibleProperty().bind(rect.visibleProperty());
+            resizeTopHandle.visibleProperty().bind(visibleBinding);
             resizeTopHandle.setCursor(Cursor.N_RESIZE);
             resizeTopHandle.setOnMousePressed(evt -> recordMouseOrigin(evt));
             resizeTopHandle.setOnMouseDragged(evt -> resizeUp(evt));
@@ -230,7 +236,7 @@ public class BSBObjectViewHolder extends Pane {
             resizeBottomHandle.setFill(Color.rgb(0, 255, 0));
             resizeBottomHandle.yProperty().bind(rect.heightProperty().subtract(2));
             resizeBottomHandle.xProperty().bind(rect.widthProperty().divide(2).subtract(2));
-            resizeBottomHandle.visibleProperty().bind(rect.visibleProperty());
+            resizeBottomHandle.visibleProperty().bind(visibleBinding);
             resizeBottomHandle.setCursor(Cursor.S_RESIZE);
             resizeBottomHandle.setOnMousePressed(evt -> recordMouseOrigin(evt));
             resizeBottomHandle.setOnMouseDragged(evt -> resizeDown(evt));
