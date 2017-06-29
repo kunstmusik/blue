@@ -30,8 +30,10 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
@@ -56,6 +58,9 @@ public class BSBGroup extends BSBObject implements Iterable<BSBObject>, UniqueNa
     private ObjectProperty<Color> labelTextColor = 
             new SimpleObjectProperty<>(Color.WHITE);
     private BooleanProperty titleEnabled = new SimpleBooleanProperty(true);
+
+    private final IntegerProperty width = new SimpleIntegerProperty(20);
+    private final IntegerProperty height = new SimpleIntegerProperty(20);
 
     private Set<BSBObject> backingSet = new HashSet<BSBObject>() {
         @Override
@@ -276,6 +281,12 @@ public class BSBGroup extends BSBObject implements Iterable<BSBObject>, UniqueNa
                 case "titleEnabled":
                     bsbGroup.setTitleEnabled(XMLUtilities.readBoolean(node));
                     break;
+                case "width":
+                    bsbGroup.setWidth(Integer.parseInt(node.getTextString()));
+                    break;
+                case "height":
+                    bsbGroup.setHeight(Integer.parseInt(node.getTextString()));
+                    break;
             }
         }
         return bsbGroup;
@@ -291,7 +302,8 @@ public class BSBGroup extends BSBObject implements Iterable<BSBObject>, UniqueNa
         retVal.addElement("labelTextColor").setText(getLabelTextColor().toString());
         retVal.addElement(XMLUtilities.writeBoolean("titleEnabled",
                 isTitleEnabled()));
-        
+        retVal.addElement("width").setText(Integer.toString(getWidth()));
+        retVal.addElement("height").setText(Integer.toString(getHeight()));
 
 //        retVal.setAttribute("editEnabled", Boolean.toString(isEditEnabled()));
         for (BSBObject bsbObj : interfaceItems) {
@@ -440,6 +452,30 @@ public class BSBGroup extends BSBObject implements Iterable<BSBObject>, UniqueNa
 
     public final StringProperty groupNameProperty() {
         return groupName;
+    }
+
+    public final void setWidth(int value) {
+        width.set(value);
+    }
+
+    public final int getWidth() {
+        return width.get();
+    }
+
+    public final IntegerProperty widthProperty() {
+        return width;
+    }
+
+    public final void setHeight(int value) {
+        height.set(value);
+    }
+
+    public final int getHeight() {
+        return height.get();
+    }
+
+    public final IntegerProperty heightProperty() {
+        return height;
     }
 
     /**

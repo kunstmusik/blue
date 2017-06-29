@@ -21,13 +21,16 @@ package blue.orchestra.editor.blueSynthBuilder.jfx;
 import blue.orchestra.blueSynthBuilder.BSBGroup;
 import blue.orchestra.blueSynthBuilder.BSBObject;
 import blue.orchestra.editor.blueSynthBuilder.EditModeOnly;
+import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.collections.ObservableList;
 import javafx.collections.SetChangeListener;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
+import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.BackgroundFill;
@@ -45,10 +48,12 @@ import org.openide.util.Exceptions;
  *
  * @author stevenyi
  */
-public class BSBGroupView extends BorderPane {
+public class BSBGroupView extends BorderPane implements ResizeableView {
 
     private Label label = new Label();
     private Pane editorPane = new Pane();
+    private Pane containerPane = new Pane();
+    private Pane resizePane = new Pane();
     private BooleanProperty editEnabledProperty = null;
     private BSBEditSelection selection;
     private ObservableList<BSBGroup> groupsList;
@@ -72,8 +77,10 @@ public class BSBGroupView extends BorderPane {
 
         editorPane.setPadding(new Insets(0, 9, 9, 0));
 
+        containerPane.getChildren().addAll(resizePane, editorPane);
+
         setTop(label);
-        setCenter(editorPane);
+        setCenter(containerPane);
         editorPane.setMinSize(20.0, 20.0);
         label.setMaxWidth(Double.MAX_VALUE);
         updateBackgroundColor();
@@ -95,7 +102,7 @@ public class BSBGroupView extends BorderPane {
             }
         };
 
-        sceneProperty().addListener((obs, old, newVal) -> {
+        sceneProperty().addListener((ObservableValue<? extends Scene> obs, Scene old, Scene newVal) -> {
             if (newVal == null) {
                 label.textProperty().unbind();
                 bsbGroup.interfaceItemsProperty().removeListener(scl);
@@ -103,6 +110,8 @@ public class BSBGroupView extends BorderPane {
                 bsbGroup.borderColorProperty().removeListener(borderColorListener);
                 label.textFillProperty().unbind();
                 bsbGroup.titleEnabledProperty().removeListener(titleEnabledLIstener);
+                resizePane.prefWidthProperty().unbind();
+                resizePane.prefHeightProperty().unbind();
             } else {
                 label.textProperty().bind(bsbGroup.groupNameProperty());
                 bsbGroup.interfaceItemsProperty().addListener(scl);
@@ -116,13 +125,23 @@ public class BSBGroupView extends BorderPane {
                     setTop(null);
                 }
                 bsbGroup.titleEnabledProperty().addListener(titleEnabledLIstener);
+
+                resizePane.prefWidthProperty().bind(
+                        Bindings.createDoubleBinding(() -> {
+                            return Math.max(bsbGroup.getWidth(), editorPane.prefWidth(USE_PREF_SIZE));
+                        }, bsbGroup.widthProperty(), editorPane.boundsInParentProperty()));
+                resizePane.prefHeightProperty().bind(
+                        Bindings.createDoubleBinding(() -> {
+                           return Math.max(bsbGroup.getHeight(), editorPane.prefHeight(USE_PREF_SIZE)); 
+                        }, bsbGroup.heightProperty(), editorPane.boundsInParentProperty()));
             }
         });
+    
 
     }
 
     private void updateBackgroundColor() {
-        editorPane.setBackground(
+        resizePane.setBackground(
                 new Background(
                         new BackgroundFill(bsbGroup.getBackgroundColor(), CornerRadii.EMPTY, Insets.EMPTY)));
 
@@ -132,7 +151,7 @@ public class BSBGroupView extends BorderPane {
         label.setBackground(
                 new Background(
                         new BackgroundFill(bsbGroup.getBorderColor(), new CornerRadii(4, 4, 0, 0, false), Insets.EMPTY)));
-        editorPane.setBorder(new Border(new BorderStroke(bsbGroup.getBorderColor(), BorderStrokeStyle.SOLID, CornerRadii.EMPTY, new BorderWidths(1))));
+        resizePane.setBorder(new Border(new BorderStroke(bsbGroup.getBorderColor(), BorderStrokeStyle.SOLID, CornerRadii.EMPTY, new BorderWidths(1))));
     }
 
     public void initialize(BooleanProperty editEnabledProperty, BSBEditSelection selection,
@@ -185,4 +204,58 @@ public class BSBGroupView extends BorderPane {
         }
     }
 
+    public boolean canResizeWidgetWidth() {
+        return true;
+    }
+
+    public boolean canResizeWidgetHeight() {
+        return true;
+    }
+
+    public int getWidgetMinimumWidth() {
+        double base = editorPane.prefWidth(editorPane.getPrefHeight());
+        if(getTop() == label) {
+            base = Math.max(label.minWidth(label.getPrefHeight()), base);
+        }
+        return Math.max(20, (int)base);
+    }
+
+    public int getWidgetMinimumHeight() {
+        double base = (getTop() == label) ?  label.minHeight(label.getPrefWidth()) : 0;
+        return Math.max(20, 
+                (int)(base + editorPane.prefHeight(editorPane.getPrefWidth())));
+    }
+
+    public int getWidgetWidth() {
+        return (int)getWidth();
+    }
+
+    public void setWidgetWidth(int width) {
+        bsbGroup.setWidth(width);
+    }
+
+    public int getWidgetHeight() {
+        return (int)getHeight();
+    }
+
+    public void setWidgetHeight(int height) {
+       double base = (getTop() == label) ?  label.prefHeight(label.getPrefWidth()) : 0;
+       bsbGroup.setHeight(height - (int)base); 
+    }
+
+    public void setWidgetX(int x) {
+        bsbGroup.setX(x);
+    }
+
+    public int getWidgetX() {
+        return bsbGroup.getX();
+    }
+
+    public void setWidgetY(int y) {
+        bsbGroup.setY(y);
+    }
+
+    public int getWidgetY() {
+        return bsbGroup.getY();
+    }
 }
