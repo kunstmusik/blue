@@ -191,4 +191,8 @@ public class BSBEditSelection {
         }
         return retVal;
     }
+
+    public GridSettings getGridSettings(){
+        return gridSettings;
+    }
 }

@@ -21,6 +21,7 @@ package blue.orchestra.editor.blueSynthBuilder.jfx;
 
 import blue.orchestra.blueSynthBuilder.BSBGroup;
 import blue.orchestra.blueSynthBuilder.BSBObject;
+import blue.orchestra.blueSynthBuilder.GridSettings;
 import java.util.List;
 import java.util.stream.Collectors;
 import javafx.beans.binding.Bindings;
@@ -63,6 +64,7 @@ public class BSBObjectViewHolder extends Pane {
     private static ContextMenu MENU = null;
 
     Region bsbObjectView;
+    BSBEditSelection selection;
 
     public BSBObjectViewHolder(BooleanProperty editEnabledProperty,
             BSBEditSelection selection,
@@ -74,6 +76,8 @@ public class BSBObjectViewHolder extends Pane {
         setUserData(bsbObj);
         Pane mousePane = new Pane();
         setFocusTraversable(true);
+
+        this.selection = selection;
 
         mousePane.setOnMousePressed(me -> {
             if (!groupsList.get(groupsList.size() - 1).contains(bsbObj)) {
@@ -189,7 +193,7 @@ public class BSBObjectViewHolder extends Pane {
 
         BooleanBinding visibleBinding = Bindings.createBooleanBinding(
                 () -> rect.isVisible()
-                        && selection.selection.size() == 1,
+                && selection.selection.size() == 1,
                 rect.visibleProperty(),
                 selection.selection
         );
@@ -261,10 +265,21 @@ public class BSBObjectViewHolder extends Pane {
         Point2D curPoint = r.localToParent(evt.getX(), evt.getY());
         curPoint = localToParent(curPoint);
 
+        GridSettings grid = selection.getGridSettings();
+
         int diff = (int) (curPoint.getX() - mouseOrigin.getX());
         int newWidth = (int) originBounds.getWidth() + diff;
 
-        if (newWidth >= rView.getWidgetMinimumWidth()) {
+        if (grid.isSnapEnabled()) {
+            double left = getLayoutX();
+            double right = left + newWidth;
+            int w = grid.getWidth();
+            newWidth = (int) ((Math.round(right / w) * w) - left);
+        }
+
+        newWidth = Math.max(newWidth, rView.getWidgetMinimumWidth());
+
+        if (newWidth != rView.getWidgetWidth()) {
             rView.setWidgetWidth(newWidth);
         }
 
@@ -276,13 +291,26 @@ public class BSBObjectViewHolder extends Pane {
         Point2D curPoint = r.localToParent(evt.getX(), evt.getY());
         curPoint = localToParent(curPoint);
 
+        GridSettings grid = selection.getGridSettings();
+
         int diff = (int) (curPoint.getX() - mouseOrigin.getX());
-        diff = Math.max((int)-originBounds.getMinX(), diff);
+        diff = Math.max((int) -originBounds.getMinX(), diff);
         int newWidth = (int) originBounds.getWidth() - diff;
         int newX = (int) originBounds.getMinX() + diff;
 
-        if (newWidth >= rView.getWidgetMinimumWidth() &&
-                newX <= (originBounds.getMaxX()- rView.getWidgetMinimumWidth())) {
+        if (grid.isSnapEnabled()) {
+            double right = originBounds.getMaxX();
+            double left = right - newWidth;
+            int w = grid.getWidth();
+            left = ((Math.round(left / w) * w));
+            newWidth = (int)(right - left);
+            newX = (int)left;
+        }
+
+        newWidth = Math.max(newWidth, rView.getWidgetMinimumWidth());
+        newX = Math.min(newX, (int)(originBounds.getMaxX() - rView.getWidgetMinimumWidth()));
+
+        if (newWidth != rView.getWidgetWidth()) {
             rView.setWidgetWidth(newWidth);
             rView.setWidgetX(newX);
         }
@@ -295,12 +323,27 @@ public class BSBObjectViewHolder extends Pane {
         Point2D curPoint = r.localToParent(evt.getX(), evt.getY());
         curPoint = localToParent(curPoint);
 
-        int diff = (int) (curPoint.getY() - mouseOrigin.getY());
-        diff = Math.max((int)-originBounds.getMinY(), diff);
-        int newHeight = (int) originBounds.getHeight() - diff;
+        GridSettings grid = selection.getGridSettings();
 
-        if (newHeight >= rView.getWidgetMinimumHeight()) {
-            rView.setWidgetY((int) originBounds.getMinY() + diff);
+        int diff = (int) (curPoint.getY() - mouseOrigin.getY());
+        diff = Math.max((int) -originBounds.getMinY(), diff);
+        int newHeight = (int) originBounds.getHeight() - diff;
+        int newY = (int) originBounds.getMinY() + diff;
+
+        if (grid.isSnapEnabled()) {
+            double bottom = originBounds.getMaxY();
+            double top = bottom - newHeight;
+            int h = grid.getHeight();
+            top = ((Math.round(top / h) * h));
+            newHeight = (int)(bottom - top);
+            newY = (int)top;
+        }
+
+        newHeight = Math.max(newHeight, rView.getWidgetMinimumHeight());
+        newY = Math.min(newY, (int)(originBounds.getMaxY() - rView.getWidgetMinimumHeight()));
+
+        if (newHeight != rView.getWidgetHeight()) {
+            rView.setWidgetY(newY);
             rView.setWidgetHeight(newHeight);
         }
 
@@ -312,10 +355,22 @@ public class BSBObjectViewHolder extends Pane {
         Point2D curPoint = r.localToParent(evt.getX(), evt.getY());
         curPoint = localToParent(curPoint);
 
+        GridSettings grid = selection.getGridSettings();
+
         int diff = (int) (curPoint.getY() - mouseOrigin.getY());
         int newHeight = (int) originBounds.getHeight() + diff;
 
-        if (newHeight >= rView.getWidgetMinimumHeight()) {
+
+        if (grid.isSnapEnabled()) {
+            double top = getLayoutY();
+            double bottom = top + newHeight;
+            int h = grid.getHeight();
+            newHeight = (int) ((Math.round(bottom / h) * h) - top);
+        }
+
+        newHeight = Math.max(newHeight, rView.getWidgetMinimumHeight());
+
+        if (newHeight != rView.getWidgetHeight()) {
             rView.setWidgetHeight(newHeight);
         }
 

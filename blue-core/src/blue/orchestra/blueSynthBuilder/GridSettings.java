@@ -22,7 +22,6 @@ package blue.orchestra.blueSynthBuilder;
 import blue.utility.XMLUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
-import java.beans.PropertyChangeListener;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.ObjectProperty;
@@ -48,7 +47,7 @@ public class GridSettings {
     public GridSettings() {
     }
 
-    public GridSettings(GridSettings settings){
+    public GridSettings(GridSettings settings) {
         setWidth(settings.getWidth());
         setHeight(settings.getHeight());
         setGridStyle(settings.getGridStyle());

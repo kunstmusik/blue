@@ -24,6 +24,8 @@ NEW
     SliderBanks
   * Issue #312 - Added Group widget that allows grouping of widgets into a
 	panel that has a titled border around it for better organization of UI
+  * Issue #360 - Visual resizing of widgets implemented with UI Editor using
+    resize handles
 
 * RhinoInstrument and RhinoObject were renamed as JavaScriptInstrument and
   JavaScriptObject
