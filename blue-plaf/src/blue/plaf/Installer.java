@@ -27,6 +27,7 @@ import java.util.prefs.Preferences;
 import javax.swing.BorderFactory;
 import javax.swing.KeyStroke;
 import javax.swing.LookAndFeel;
+import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.plaf.InputMapUIResource;
@@ -245,6 +246,11 @@ public class Installer extends ModuleInstall {
 //            MacFullScreenUtil.setWindowCanFullScreen(
 //                    WindowManager.getDefault().getMainWindow());
 //        });
+
+        SwingUtilities.invokeLater(()
+                -> SwingUtilities.updateComponentTreeUI(
+                        WindowManager.getDefault().getMainWindow()));
+
     }
 
     /**
