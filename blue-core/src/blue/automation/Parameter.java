@@ -25,7 +25,6 @@ import blue.components.lines.LineUtils;
 import electric.xml.Element;
 import electric.xml.Elements;
 import java.math.BigDecimal;
-import java.math.MathContext;
 import java.math.RoundingMode;
 import java.rmi.dgc.VMID;
 import java.util.Vector;
