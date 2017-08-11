@@ -71,7 +71,8 @@ public class LineView extends Canvas {
         repaint();
 
         boundsInParentProperty().addListener((obs, old, newVal) -> repaint());
-        selectedLine.addListener((obs, old, newVal) -> repaint());
+        selectedLine.addListener((obs, old, newVal) -> 
+                BlueFX.runOnFXThread(() -> repaint()));
 
         if (lineList.size() > 0) {
             setSelectedLine(lineList.get(0));

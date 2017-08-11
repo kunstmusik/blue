@@ -17,7 +17,6 @@
  * Software Foundation Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307
  * USA
  */
-
 package blue.soundObject;
 
 import blue.*;
@@ -28,20 +27,19 @@ import electric.xml.Element;
 import electric.xml.Elements;
 import java.util.Map;
 
-
 /**
  * Title: blue Description: an object composition environment for csound
  * Copyright: Copyright (c) 2001 Company: steven yi music
- * 
+ *
  * @author steven yi
  * @created November 11, 2001
  * @version 1.0
  */
-@SoundObjectPlugin(displayName = "Sound", live=false, position = 130)
+@SoundObjectPlugin(displayName = "Sound", live = false, position = 130)
 public class Sound extends AbstractSoundObject {
 
     BlueSynthBuilder bsbObj;
-    
+
     public Sound() {
         setName("Sound");
         bsbObj = new BlueSynthBuilder();
@@ -69,7 +67,7 @@ public class Sound extends AbstractSoundObject {
     public BlueSynthBuilder getBlueSynthBuilder() {
         return this.bsbObj;
     }
-    
+
     public void setBlueSynthBuilder(BlueSynthBuilder bsbObj) {
         this.bsbObj = bsbObj;
     }
@@ -135,8 +133,7 @@ public class Sound extends AbstractSoundObject {
                     sObj.bsbObj.setInstrumentText(node.getTextString());
                     break;
                 case "instrument":
-                    sObj.bsbObj = (BlueSynthBuilder) 
-                            BlueSynthBuilder.loadFromXML(node);
+                    sObj.bsbObj = (BlueSynthBuilder) BlueSynthBuilder.loadFromXML(node);
             }
 
         }
@@ -157,18 +154,26 @@ public class Sound extends AbstractSoundObject {
     }
 
     @Override
-    public NoteList generateForCSD(CompileData compileData, double startTime, 
+    public NoteList generateForCSD(CompileData compileData, double startTime,
             double endTime) throws SoundObjectException {
-        
+
         bsbObj.getParameterList().clearCompilationVarNames();
         int instrNum = compileData.addInstrument(bsbObj);
-        
+
         return generateNotes(instrNum, startTime, endTime);
 
     }
 
     @Override
     public Sound deepCopy() {
-        return new Sound(this);
+        Sound sound = new Sound();
+        sound.subjectiveDuration = this.subjectiveDuration;
+        sound.startTime = this.startTime;
+        sound.name = this.name;
+        sound.backgroundColor = this.backgroundColor;
+
+        sound.bsbObj = this.bsbObj.deepCopy();
+
+        return sound;
     }
 }

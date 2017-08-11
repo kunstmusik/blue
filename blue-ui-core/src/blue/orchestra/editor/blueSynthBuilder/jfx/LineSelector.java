@@ -20,9 +20,10 @@ package blue.orchestra.editor.blueSynthBuilder.jfx;
 
 import blue.components.lines.Line;
 import blue.components.lines.LineList;
-import blue.orchestra.blueSynthBuilder.BSBLineObject;
+import blue.jfx.BlueFX;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
+import javafx.collections.ListChangeListener;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
@@ -33,7 +34,7 @@ import javafx.scene.layout.Priority;
  * @author stevenyi
  */
 public class LineSelector extends HBox {
-    
+
     ObjectProperty<Line> selectedLine = new SimpleObjectProperty<>();
     public Button leftButton;
     public Button rightButton;
@@ -59,6 +60,26 @@ public class LineSelector extends HBox {
         if (lineList.size() > 0) {
             setSelectedLine(lineList.get(0));
         }
+
+        ListChangeListener lcl = e -> {
+            BlueFX.runOnFXThread(() -> {
+                if (getSelectedLine() == null || !lineList.contains(getSelectedLine())) {
+                    if (lineList.size() > 0) {
+                        setSelectedLine(lineList.get(0));
+                    } else {
+                        setSelectedLine(null);
+                    }
+                }
+            });
+        };
+
+        sceneProperty().addListener((obs, old, newVal) -> {
+            if (newVal == null) {
+                lineList.removeListener(lcl);
+            } else {
+                lineList.addListener(lcl);
+            }
+        });
     }
 
     private void nextLine() {
@@ -96,5 +117,5 @@ public class LineSelector extends HBox {
     public ObjectProperty<Line> selectedLineProperty() {
         return selectedLine;
     }
-    
+
 }
