@@ -380,7 +380,7 @@ public class BSBDropdown extends AutomatableBSBObject implements
         param.setResolution(new BigDecimal(1));
         param.addParameterListener(this);
 
-        parameters.addParameter(param);
+        parameters.add(param);
     }
 
     @Override

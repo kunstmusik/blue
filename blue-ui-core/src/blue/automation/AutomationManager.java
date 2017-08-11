@@ -40,7 +40,6 @@ import blue.ui.utilities.MenuScroller;
 import blue.util.ObservableListEvent;
 import blue.util.ObservableListListener;
 import java.awt.Color;
-import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
@@ -48,6 +47,7 @@ import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import javafx.collections.ListChangeListener;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
@@ -66,7 +66,7 @@ import org.openide.NotifyDescriptor;
  *
  * @author steven
  */
-public class AutomationManager implements ParameterListListener,
+public class AutomationManager implements
         AutomatableCollectionListener, ObservableListListener<Channel>, LayerGroupListener {
 
     /**
@@ -80,19 +80,20 @@ public class AutomationManager implements ParameterListListener,
     private static AutomationManager instance = null;
     PropertyChangeListener renderTimeListener;
     ObservableListListener<ChannelList> channelListListener;
+    ListChangeListener<Parameter> parameterListListener;
 
     private AutomationManager() {
         parameterActionListener = (ActionEvent ae) -> {
             if (data == null || selectedParamIdList == null) {
                 return;
             }
-            
+
             JMenuItem menuItem = (JMenuItem) ae.getSource();
-            
+
             Parameter param = (Parameter) menuItem.getClientProperty("param");
-            
+
             parameterSelected(selectedParamIdList, param);
-            
+
             selectedParamIdList = null;
         };
 
@@ -106,23 +107,32 @@ public class AutomationManager implements ParameterListListener,
 
         channelListListener = e -> {
             List<ChannelList> items = e.getAffectedItems();
-            switch(e.getType()) {
+            switch (e.getType()) {
                 case ObservableListEvent.DATA_ADDED:
-                    for(ChannelList cList : items) {
-                       cList.addListener(AutomationManager.this);
-                       for(Channel c : cList) {
-                           addListenerToChannel(c);
-                       }
+                    for (ChannelList cList : items) {
+                        cList.addListener(AutomationManager.this);
+                        for (Channel c : cList) {
+                            addListenerToChannel(c);
+                        }
                     }
                     break;
                 case ObservableListEvent.DATA_REMOVED:
-                    for(ChannelList cList : items) {
-                       cList.removeListener(AutomationManager.this);
-                       for(Channel c : cList) {
-                           removeListenerFromChannel(c);
-                       }
+                    for (ChannelList cList : items) {
+                        cList.removeListener(AutomationManager.this);
+                        for (Channel c : cList) {
+                            removeListenerFromChannel(c);
+                        }
                     }
                     break;
+            }
+        };
+
+        parameterListListener = e -> {
+            for (Parameter param : e.getAddedSubList()) {
+                parameterAdded(param);
+            }
+            for (Parameter param : e.getRemoved()) {
+                parameterRemoved(param);
             }
         };
     }
@@ -198,7 +208,7 @@ public class AutomationManager implements ParameterListListener,
                     ParameterList parameters = temp.getParameterList();
 
                     // parameterMap.put(temp, parameters);
-                    parameters.removeParameterListListener(this);
+                    parameters.removeListener(parameterListListener);
                 }
             }
 
@@ -252,9 +262,9 @@ public class AutomationManager implements ParameterListListener,
                 Automatable temp = (Automatable) instr;
                 ParameterList parameters = temp.getParameterList();
 
-                allParameters.addAll(parameters.getParameters());
+                allParameters.addAll(parameters);
 
-                parameters.addParameterListListener(this);
+                parameters.addListener(parameterListListener);
             }
         }
 
@@ -302,16 +312,16 @@ public class AutomationManager implements ParameterListListener,
         pre.addAutomatableCollectionListener(this);
         for (int i = 0; i < pre.size(); i++) {
             ParameterList parameterList = ((Automatable) pre.getElementAt(i)).getParameterList();
-            parameterList.addParameterListListener(this);
-            allParameters.addAll(parameterList.getParameters());
+            parameterList.addListener(parameterListListener);
+            allParameters.addAll(parameterList);
         }
 
         EffectsChain post = channel.getPostEffects();
         post.addAutomatableCollectionListener(this);
         for (int i = 0; i < post.size(); i++) {
             ParameterList parameterList = ((Automatable) post.getElementAt(i)).getParameterList();
-            parameterList.addParameterListListener(this);
-            allParameters.addAll(parameterList.getParameters());
+            parameterList.addListener(parameterListListener);
+            allParameters.addAll(parameterList);
         }
 
         allParameters.add(channel.getLevelParameter());
@@ -321,15 +331,15 @@ public class AutomationManager implements ParameterListListener,
         EffectsChain pre = channel.getPreEffects();
         pre.removeAutomatableCollectionListener(this);
         for (int i = 0; i < pre.size(); i++) {
-            ((Automatable) pre.getElementAt(i)).getParameterList().removeParameterListListener(
-                    this);
+            ((Automatable) pre.getElementAt(i)).getParameterList().removeListener(
+                    parameterListListener);
         }
 
         EffectsChain post = channel.getPostEffects();
         post.removeAutomatableCollectionListener(this);
         for (int i = 0; i < post.size(); i++) {
-            ((Automatable) post.getElementAt(i)).getParameterList().removeParameterListListener(
-                    this);
+            ((Automatable) post.getElementAt(i)).getParameterList().removeListener(
+                    parameterListListener);
         }
     }
 
@@ -341,7 +351,7 @@ public class AutomationManager implements ParameterListListener,
 
         // Build Instrument Menu
         JMenu instrRoot = new JMenu("Instrument");
-	MenuScroller.setScrollerFor(instrRoot);
+        MenuScroller.setScrollerFor(instrRoot);
 
         Arrangement arrangement = data.getArrangement();
 
@@ -356,14 +366,12 @@ public class AutomationManager implements ParameterListListener,
                     continue;
                 }
 
-                        
                 final JMenu instrMenu = new JMenu();
-		MenuScroller.setScrollerFor(instrMenu);
+                MenuScroller.setScrollerFor(instrMenu);
 
                 instrMenu.setText(ia.arrangementId + ") " + ia.instr.getName());
 
-                for (int j = 0; j < params.size(); j++) {
-                    Parameter param = params.getParameter(j);
+                for (Parameter param : params.sorted()) {
                     JMenuItem paramItem = new JMenuItem();
                     paramItem.setText(param.getName());
                     paramItem.addActionListener(parameterActionListener);
@@ -393,7 +401,7 @@ public class AutomationManager implements ParameterListListener,
 
         if (mixer.isEnabled()) {
             JMenu mixerRoot = new JMenu("Mixer");
-	    MenuScroller.setScrollerFor(mixerRoot);
+            MenuScroller.setScrollerFor(mixerRoot);
             // add channels
             ChannelList channels = mixer.getChannels();
 
@@ -436,14 +444,14 @@ public class AutomationManager implements ParameterListListener,
             Object retVal = DialogDisplayer.getDefault().notify(
                     new NotifyDescriptor.Confirmation(
                             "Please Confirm Clearing All Parameter Data for this SoundLayer"));
-            
+
             if (retVal == NotifyDescriptor.YES_OPTION) {
-                
+
                 ParameterIdList idList = selectedParamIdList;
-                
+
                 for (String paramId : idList.getParameters()) {
                     Parameter param = getParameter(paramId);
-                    
+
                     param.setAutomationEnabled(false);
                     idList.removeParameterId(paramId);
                 }
@@ -471,7 +479,7 @@ public class AutomationManager implements ParameterListListener,
         if (preEffects.size() > 0) {
             JMenu preMenu = new JMenu("Pre-Effects");
             retVal.add(preMenu);
-	    MenuScroller.setScrollerFor(preMenu);
+            MenuScroller.setScrollerFor(preMenu);
 
             for (int i = 0; i < preEffects.size(); i++) {
                 Automatable automatable = (Automatable) preEffects.getElementAt(
@@ -481,7 +489,7 @@ public class AutomationManager implements ParameterListListener,
 
                 if (params.size() > 0) {
                     JMenu effectMenu = new JMenu();
-		    MenuScroller.setScrollerFor(effectMenu);
+                    MenuScroller.setScrollerFor(effectMenu);
 
                     if (automatable instanceof Effect) {
                         effectMenu.setText(((Effect) automatable).getName());
@@ -494,8 +502,7 @@ public class AutomationManager implements ParameterListListener,
 
                     preMenu.add(effectMenu);
 
-                    for (int j = 0; j < params.size(); j++) {
-                        Parameter param = params.getParameter(j);
+                    for (Parameter param : params.sorted()) {
                         JMenuItem paramItem = new JMenuItem();
                         paramItem.setText(param.getName());
                         paramItem.addActionListener(parameterActionListener);
@@ -539,7 +546,7 @@ public class AutomationManager implements ParameterListListener,
 
         if (postEffects.size() > 0) {
             JMenu postMenu = new JMenu("Post-Effects");
-	    MenuScroller.setScrollerFor(postMenu);
+            MenuScroller.setScrollerFor(postMenu);
             retVal.add(postMenu);
 
             for (int i = 0; i < postEffects.size(); i++) {
@@ -550,7 +557,7 @@ public class AutomationManager implements ParameterListListener,
 
                 if (params.size() > 0) {
                     JMenu effectMenu = new JMenu();
-		    MenuScroller.setScrollerFor(effectMenu);
+                    MenuScroller.setScrollerFor(effectMenu);
 
                     if (automatable instanceof Effect) {
                         effectMenu.setText(((Effect) automatable).getName());
@@ -563,8 +570,7 @@ public class AutomationManager implements ParameterListListener,
 
                     postMenu.add(effectMenu);
 
-                    for (int j = 0; j < params.size(); j++) {
-                        Parameter param = params.getParameter(j);
+                    for (Parameter param : params.sorted()) {
                         JMenuItem paramItem = new JMenuItem();
                         paramItem.setText(param.getName());
                         paramItem.addActionListener(parameterActionListener);
@@ -589,13 +595,10 @@ public class AutomationManager implements ParameterListListener,
         return retVal;
     }
 
-    @Override
     public void parameterAdded(Parameter param) {
         allParameters.add(param);
-        // dirty = true;
     }
 
-    @Override
     public void parameterRemoved(Parameter param) {
         allParameters.remove(param);
 
@@ -627,23 +630,23 @@ public class AutomationManager implements ParameterListListener,
     @Override
     public void automatableAdded(Automatable automatable) {
         ParameterList params = automatable.getParameterList();
-        params.addParameterListListener(this);
+        params.addListener(parameterListListener);
 
-        allParameters.addAll(params.getParameters());
+        allParameters.addAll(params);
         // dirty = true;
     }
 
     @Override
     public void automatableRemoved(Automatable automatable) {
         ParameterList params = automatable.getParameterList();
-        params.removeParameterListListener(this);
+        params.removeListener(parameterListListener);
 
         ArrayList<String> removedParamIds = new ArrayList<>();
 
-        allParameters.removeAll(params.getParameters());
+        allParameters.removeAll(params);
 
         for (int i = 0; i < params.size(); i++) {
-            Parameter param = params.getParameter(i);
+            Parameter param = params.get(i);
             removedParamIds.add(param.getUniqueId());
         }
 
@@ -696,11 +699,11 @@ public class AutomationManager implements ParameterListListener,
 
         for (int i = 0; i < pre.size(); i++) {
             ParameterList parameterList = ((Automatable) pre.getElementAt(i)).getParameterList();
-            parameterList.removeParameterListListener(this);
-            allParameters.removeAll(parameterList.getParameters());
+            parameterList.removeListener(parameterListListener);
+            allParameters.removeAll(parameterList);
 
             for (int j = 0; j < parameterList.size(); j++) {
-                Parameter parameter = parameterList.getParameter(j);
+                Parameter parameter = parameterList.get(j);
                 if (parameter.isAutomationEnabled()) {
                     removedParamIds.add(parameter.getUniqueId());
                 }
@@ -711,11 +714,11 @@ public class AutomationManager implements ParameterListListener,
         post.removeAutomatableCollectionListener(this);
         for (int i = 0; i < post.size(); i++) {
             ParameterList parameterList = ((Automatable) post.getElementAt(i)).getParameterList();
-            parameterList.removeParameterListListener(this);
-            allParameters.removeAll(parameterList.getParameters());
+            parameterList.removeListener(parameterListListener);
+            allParameters.removeAll(parameterList);
 
             for (int j = 0; j < parameterList.size(); j++) {
-                Parameter parameter = parameterList.getParameter(j);
+                Parameter parameter = parameterList.get(j);
                 if (parameter.isAutomationEnabled()) {
                     removedParamIds.add(parameter.getUniqueId());
                 }

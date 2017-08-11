@@ -237,7 +237,7 @@ public class BSBValue extends AutomatableBSBObject implements ParameterListener 
         param.addParameterListener(this);
         param.setValue(getDefaultValue());
 
-        parameters.addParameter(param);
+        parameters.add(param);
     }
 
     @Override

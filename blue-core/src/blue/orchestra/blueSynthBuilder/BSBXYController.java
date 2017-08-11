@@ -468,7 +468,7 @@ public class BSBXYController extends AutomatableBSBObject implements
         param.addParameterListener(this);
         param.setValue(xValue.getValue());
 
-        parameters.addParameter(param);
+        parameters.add(param);
 
         param = new Parameter();
         param.setValue(yValue.getValue());
@@ -479,7 +479,7 @@ public class BSBXYController extends AutomatableBSBObject implements
         param.addParameterListener(this);
         param.setValue(yValue.getValue());
 
-        parameters.addParameter(param);
+        parameters.add(param);
     }
 
     @Override

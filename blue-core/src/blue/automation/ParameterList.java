@@ -22,11 +22,14 @@ package blue.automation;
 import electric.xml.Element;
 import electric.xml.Elements;
 import java.util.*;
-import org.apache.commons.lang3.builder.EqualsBuilder;
+import javafx.beans.property.SimpleListProperty;
+import javafx.collections.FXCollections;
+import javafx.collections.transformation.SortedList;
 import org.apache.commons.lang3.text.StrBuilder;
 
-public class ParameterList implements Iterable<Parameter> {
-    private static final Comparator<Parameter> comparator = new Comparator<Parameter>() {
+public class ParameterList extends SimpleListProperty<Parameter> {
+
+    private static final Comparator<Parameter> COMPARATOR = new Comparator<Parameter>() {
         @Override
         public int compare(Parameter o1, Parameter o2) {
             Parameter para1 = o1;
@@ -37,28 +40,24 @@ public class ParameterList implements Iterable<Parameter> {
         }
     };
 
-    ArrayList<Parameter> parameters = new ArrayList<>();
-
-    transient Vector<ParameterListListener> paramListListeners = null;
-
-    transient Vector tableListeners = null;
-
     public ParameterList() {
+        super(FXCollections.observableArrayList());
     }
 
     public ParameterList(ParameterList pl) {
-        for(Parameter param : pl.parameters) {
-            parameters.add(new Parameter(param)); 
-        } 
+        super(FXCollections.observableArrayList());
+        for (Parameter param : pl) {
+            add(new Parameter(param));
+        }
     }
 
-    
-    public Parameter getParameter(int index) {
-        return parameters.get(index);
+    @Override
+    public SortedList<Parameter> sorted() {
+        return super.sorted(COMPARATOR); 
     }
 
     public Parameter getParameter(String objectName) {
-        for (Parameter param : parameters) {
+        for (Parameter param : this) {
             if (param.getName().equals(objectName)) {
                 return param;
             }
@@ -66,55 +65,27 @@ public class ParameterList implements Iterable<Parameter> {
         return null;
     }
 
-    public ArrayList<Parameter> getParameters() {
-        return parameters;
-    }
-
-    public void addParameter(Parameter param) {
-        parameters.add(param);
-
-        Collections.<Parameter>sort(parameters, comparator);
-
-        fireParameterAdded(param);
-    }
-
     public void removeParameter(String parameterName) {
-        for (int i = 0; i < size(); i++) {
-            Parameter param = getParameter(i);
-            
+
+        for (Parameter param : this) {
             if (param.getName().equals(parameterName)) {
-                parameters.remove(i);
-                fireParameterRemoved(param);
-                return;
+                remove(param);
+                break;
             }
         }
     }
 
-    public void removeParameter(int index) {
-        Parameter param = parameters.get(index);
-
-        parameters.remove(index);
-        fireParameterRemoved(param);
-    }
-
-    public int size() {
-        return parameters.size();
-    }
-    
     public void clearCompilationVarNames() {
-        for (int i = 0; i < size(); i++) {
-            Parameter param = getParameter(i);
+        for (Parameter param : this) {
             param.setCompilationVarName(null);
         }
     }
 
     /* SERIALIZATION CODE */
-
     public Element saveAsXML() {
         Element retVal = new Element("parameterList");
 
-        for (int i = 0; i < size(); i++) {
-            Parameter param = getParameter(i);
+        for (Parameter param : this) {
             retVal.addElement(param.saveAsXML());
         }
 
@@ -132,7 +103,7 @@ public class ParameterList implements Iterable<Parameter> {
             String nodeName = node.getName();
 
             if (nodeName.equals("parameter")) {
-                retVal.addParameter(Parameter.loadFromXML(node));
+                retVal.add(Parameter.loadFromXML(node));
             }
 
         }
@@ -140,66 +111,19 @@ public class ParameterList implements Iterable<Parameter> {
         return retVal;
     }
 
-    /* PARAMETER LIST LISTENER CODE */
-
-    public void addParameterListListener(ParameterListListener l) {
-        if (paramListListeners == null) {
-            paramListListeners = new Vector<>();
-        }
-        paramListListeners.add(l);
-    }
-
-    public void removeParameterListListener(ParameterListListener l) {
-        if (paramListListeners != null) {
-            paramListListeners.remove(l);
-        }
-    }
-
-    private void fireParameterAdded(Parameter param) {
-        if (paramListListeners != null) {
-            Iterator<ParameterListListener> iter = new Vector<>(paramListListeners).iterator();
-            while (iter.hasNext()) {
-                ParameterListListener listener = iter.next();
-                listener.parameterAdded(param);
-            }
-        }
-    }
-
-    private void fireParameterRemoved(Parameter param) {
-        if (paramListListeners != null) {
-			
-
-            Iterator<ParameterListListener> iter = new Vector<>(paramListListeners).iterator();
-            while (iter.hasNext()) {
-                ParameterListListener listener = iter.next();
-                listener.parameterRemoved(param);
-            }
-        }
-    }
-
     @Override
     public boolean equals(Object obj) {
-        return EqualsBuilder.reflectionEquals(this, obj);
+        return super.equals(obj);
     }
 
     @Override
     public String toString() {
         StrBuilder buffer = new StrBuilder();
 
-        for (Iterator iter = parameters.iterator(); iter.hasNext();) {
-            Parameter param = (Parameter) iter.next();
+        for (Parameter param : this) {
             buffer.append(param.toString()).append("\n");
-
         }
         return buffer.toString();
     }
 
-    public int indexOf(Parameter currentParameter) {
-        return parameters.indexOf(currentParameter);
-    }
-
-    @Override
-    public Iterator<Parameter> iterator() {
-        return parameters.iterator();
-    }
 }

@@ -45,7 +45,7 @@ public class ParameterHelper {
                 if (instr instanceof Automatable) {
                     Automatable auto = (Automatable) instr;
                     ParameterList list = auto.getParameterList();
-                    params.addAll(list.getParameters());
+                    params.addAll(list);
                 }
 
             }
@@ -111,14 +111,14 @@ public class ParameterHelper {
         for (int i = 0; i < pre.size(); i++) {
             ParameterList list = ((Automatable) pre.getElementAt(i))
                     .getParameterList();
-            params.addAll(list.getParameters());
+            params.addAll(list);
         }
 
         EffectsChain post = channel.getPostEffects();
         for (int i = 0; i < post.size(); i++) {
             ParameterList list = ((Automatable) post.getElementAt(i))
                     .getParameterList();
-            params.addAll(list.getParameters());
+            params.addAll(list);
         }
 
         Parameter levelParameter = channel.getLevelParameter();

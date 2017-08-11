@@ -497,7 +497,7 @@ public class BSBHSliderBank extends AutomatableBSBObject implements
 
                         param.addParameterListener(this);
 
-                        parameters.addParameter(param);
+                        parameters.add(param);
                     }
 
                 }
@@ -717,7 +717,7 @@ public class BSBHSliderBank extends AutomatableBSBObject implements
 
             param.addParameterListener(this);
 
-            parameters.addParameter(param);
+            parameters.add(param);
         }
 
     }

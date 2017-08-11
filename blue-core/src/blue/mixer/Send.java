@@ -67,7 +67,7 @@ public class Send implements Automatable, ParameterListener {
 
             levelParameter.addParameterListener(this);
 
-            params.addParameter(levelParameter);
+            params.add(levelParameter);
         }
     }
 
@@ -78,7 +78,7 @@ public class Send implements Automatable, ParameterListener {
 
         levelParameter = new Parameter(send.levelParameter);
         levelParameter.addParameterListener(this);
-        params.addParameter(levelParameter);
+        params.add(levelParameter);
     }
 
     public String getSendChannel() {
@@ -190,7 +190,7 @@ public class Send implements Automatable, ParameterListener {
                 case "parameter":
                     send.levelParameter = Parameter.loadFromXML(node);
                     send.levelParameter.addParameterListener(send);
-                    send.params.addParameter(send.levelParameter);
+                    send.params.add(send.levelParameter);
                     break;
             }
         }
@@ -205,7 +205,7 @@ public class Send implements Automatable, ParameterListener {
 
             send.levelParameter.addParameterListener(send);
 
-            send.params.addParameter(send.levelParameter);
+            send.params.add(send.levelParameter);
         }
 
         return send;

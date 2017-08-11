@@ -191,8 +191,7 @@ public class ParameterLinePanel extends JComponent implements
             this.parameterIdList.removeListSelectionListener(this);
 
             if (this.paramList != null) {
-                for (int i = 0; i < this.paramList.size(); i++) {
-                    Parameter param = paramList.getParameter(i);
+                for (Parameter param : this.paramList) {
                     param.getLine().removeTableModelListener(lineListener);
                 }
             }
@@ -209,7 +208,7 @@ public class ParameterLinePanel extends JComponent implements
             Parameter param = automationManager.getParameter(paramId);
 
             if (param != null) {
-                paramList.addParameter(param);
+                paramList.add(param);
                 param.getLine().addTableModelListener(lineListener);
             }
         }
@@ -276,9 +275,7 @@ public class ParameterLinePanel extends JComponent implements
 //        boolean multiLineMode = (modeManager.getMode() == ModeManager.MODE_MULTI_LINE);
         boolean multiLineMode = !editing;
 
-        for (int i = 0; i < paramList.size(); i++) {
-            Parameter param = paramList.getParameter(i);
-
+        for (Parameter param : paramList) {
             Line line = param.getLine();
 
             if (multiLineMode) {
@@ -830,7 +827,7 @@ public class ParameterLinePanel extends JComponent implements
         if (timeState == null) {
             return -1;
         }
-        return (int)Math.round(val * timeState.getPixelSecond());
+        return (int) Math.round(val * timeState.getPixelSecond());
     }
 
     private int doubleToScreenY(double yVal, double min, double max) {
@@ -839,7 +836,7 @@ public class ParameterLinePanel extends JComponent implements
         double adjustedY = yVal - min;
         double percent = adjustedY / range;
 
-        int y = (int)Math.round(height * (1.0f - percent)) + 5;
+        int y = (int) Math.round(height * (1.0f - percent)) + 5;
 
         return y;
     }
@@ -852,7 +849,7 @@ public class ParameterLinePanel extends JComponent implements
         return (double) val / timeState.getPixelSecond();
     }
 
-    private double screenToDoubleY(int val, double min, double max, 
+    private double screenToDoubleY(int val, double min, double max,
             BigDecimal resolution) {
         double height = this.getHeight() - 10;
         double percent = 1 - ((val - 5) / height);
@@ -995,8 +992,7 @@ public class ParameterLinePanel extends JComponent implements
         }
 
         if (paramList != null) {
-            for (int i = 0; i < paramList.size(); i++) {
-                Parameter param = paramList.getParameter(i);
+            for (Parameter param : paramList) {
                 param.getLine().removeTableModelListener(this);
             }
         }
@@ -1018,7 +1014,7 @@ public class ParameterLinePanel extends JComponent implements
             String paramId = parameterIdList.getParameterId(e.getIndex0());
             Parameter param = AutomationManager.getInstance().getParameter(
                     paramId);
-            paramList.addParameter(param);
+            paramList.add(param);
             param.getLine().addTableModelListener(this);
             repaint();
             // if (paramList.size() == 1) {
@@ -1032,10 +1028,10 @@ public class ParameterLinePanel extends JComponent implements
         if (e.getSource() == parameterIdList) {
 
             for (int i = 0; i < paramList.size(); i++) {
-                Parameter param = paramList.getParameter(i);
+                Parameter param = paramList.get(i);
 
                 if (!parameterIdList.contains(param.getUniqueId())) {
-                    paramList.removeParameter(i);
+                    paramList.remove(i);
                     param.getLine().removeTableModelListener(this);
                     repaint();
                     return;
@@ -1148,8 +1144,7 @@ public class ParameterLinePanel extends JComponent implements
 
                     marquee.setVisible(false);
                     return;
-                } else 
-                    if (marquee.intersects(ParameterLinePanel.this)) {
+                } else if (marquee.intersects(ParameterLinePanel.this)) {
 
                     int x = e.getX();
 
@@ -1471,7 +1466,7 @@ public class ParameterLinePanel extends JComponent implements
             for (LinePointOrigin lpo : lpos) {
                 LinePoint lp = lpo.linePoint;
                 Parameter param = lpo.param;
-                double newY = screenToDoubleY(lpo.originY + yDiff, 
+                double newY = screenToDoubleY(lpo.originY + yDiff,
                         param.getMin(), param.getMax(), new BigDecimal(-1));
                 lp.setLocation(lp.getX(), newY);
             }
@@ -1508,7 +1503,7 @@ public class ParameterLinePanel extends JComponent implements
         if (this.paramList != null
                 && (marquee.intersects(this) || selectionList.size() > 0)) {
             for (int i = 0; i < this.paramList.size(); i++) {
-                Parameter param = paramList.getParameter(i);
+                Parameter param = paramList.get(i);
                 processLineForSelectionDrag(param.getLine());
             }
         }
@@ -1542,7 +1537,7 @@ public class ParameterLinePanel extends JComponent implements
     public void commitScoreScale() {
         if (this.paramList != null) {
             for (int i = 0; i < this.paramList.size(); i++) {
-                Parameter param = paramList.getParameter(i);
+                Parameter param = paramList.get(i);
                 processLineForSelectionScale(param.getLine());
             }
 
@@ -1602,7 +1597,7 @@ public class ParameterLinePanel extends JComponent implements
                     if (line != null && line.size() > 0) {
                         File retVal = FileChooserManager.getDefault().showSaveDialog(
                                 FILE_BPF_EXPORT, SwingUtilities
-                                .getRoot(ParameterLinePanel.this));
+                                        .getRoot(ParameterLinePanel.this));
 
                         if (retVal != null) {
                             File f = retVal;
@@ -1638,7 +1633,7 @@ public class ParameterLinePanel extends JComponent implements
                     if (line != null && line.size() > 0) {
                         File retVal = FileChooserManager.getDefault().showSaveDialog(
                                 FILE_BPF_IMPORT, SwingUtilities
-                                .getRoot(ParameterLinePanel.this));
+                                        .getRoot(ParameterLinePanel.this));
 
                         if (retVal != null) {
                             File f = retVal;
@@ -1672,7 +1667,7 @@ public class ParameterLinePanel extends JComponent implements
             }
 
             for (int i = 0; i < paramList.size(); i++) {
-                Parameter param = paramList.getParameter(i);
+                Parameter param = paramList.get(i);
 
                 JMenuItem item = new JMenuItem();
                 item.setText(param.getName());

@@ -17,7 +17,6 @@
  * the Free Software Foundation Inc., 59 Temple Place - Suite 330,
  * Boston, MA  02111-1307 USA
  */
-
 package blue.ui.core.orchestra.editor;
 
 import blue.BlueSystem;
@@ -50,11 +49,11 @@ public class BlueSynthBuilderEditor extends InstrumentEditor {
     private BSBCodeEditor codeEditor = new BSBCodeEditor();
 
     private EmbeddedOpcodeListPanel udoPanel = new EmbeddedOpcodeListPanel();
-        
+
     JLabel label = new JLabel("[ Blue Synth Builder ]");
+    JTabbedPane tabs = new JTabbedPane();
 
     public BlueSynthBuilderEditor() {
-        JTabbedPane tabs = new JTabbedPane();
         tabs.add(BlueSystem.getString("instrument.interface"), interfaceEditor);
         tabs.add(BlueSystem.getString("instrument.code"), codeEditor);
         tabs.add(BlueSystem.getString("instrument.udo"), udoPanel);
@@ -64,7 +63,11 @@ public class BlueSynthBuilderEditor extends InstrumentEditor {
         this.add(tabs, BorderLayout.CENTER);
 
     }
-    
+
+    public JTabbedPane getTabs() {
+        return tabs;
+    }
+
     public void setLabelText(String labelText) {
         this.label.setText(labelText);
     }
@@ -86,8 +89,8 @@ public class BlueSynthBuilderEditor extends InstrumentEditor {
         PresetGroup presetGroup = bsb.getPresetGroup();
         BSBGraphicInterface graphicInterface = bsb.getGraphicInterface();
 
-        Platform.runLater(() ->
-            interfaceEditor.editInterface(graphicInterface, presetGroup)
+        Platform.runLater(()
+                -> interfaceEditor.editInterface(graphicInterface, presetGroup)
         );
         this.codeEditor.editBlueSynthBuilder(bsb);
 
@@ -107,5 +110,4 @@ public class BlueSynthBuilderEditor extends InstrumentEditor {
 //
 //        GUI.showComponentAsStandalone(bsbEditor, "BlueSynthEditor Test", true);
 //    }
-
 }

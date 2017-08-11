@@ -324,7 +324,7 @@ public class BSBHSlider extends AutomatableBSBObject implements
         param.addParameterListener(this);
         param.setValue(getValue());
 
-        parameters.addParameter(param);
+        parameters.add(param);
     }
 
     @Override

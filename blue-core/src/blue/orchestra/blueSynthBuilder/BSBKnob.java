@@ -311,7 +311,7 @@ public class BSBKnob extends AutomatableBSBObject implements ParameterListener,
         param.addParameterListener(this);
         param.setValue(getValue());
 
-        parameters.addParameter(param);
+        parameters.add(param);
     }
 
     @Override
