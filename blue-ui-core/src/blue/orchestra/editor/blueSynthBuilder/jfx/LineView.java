@@ -28,6 +28,7 @@ import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleObjectProperty;
+import javafx.collections.ListChangeListener;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.ButtonType;
@@ -71,8 +72,8 @@ public class LineView extends Canvas {
         repaint();
 
         boundsInParentProperty().addListener((obs, old, newVal) -> repaint());
-        selectedLine.addListener((obs, old, newVal) -> 
-                BlueFX.runOnFXThread(() -> repaint()));
+        selectedLine.addListener((obs, old, newVal)
+                -> BlueFX.runOnFXThread(() -> repaint()));
 
         if (lineList.size() > 0) {
             setSelectedLine(lineList.get(0));
@@ -91,6 +92,19 @@ public class LineView extends Canvas {
         setOnMouseReleased(e -> mouseReleased(e));
         setOnMouseMoved(e -> mouseMoved(e));
 
+        ListChangeListener lcl = e -> {
+            BlueFX.runOnFXThread(() -> {
+                repaint();
+            });
+        };
+
+        sceneProperty().addListener((obs, old, newVal) -> {
+            if (newVal == null) {
+                lineList.removeListener(lcl);
+            } else {
+                lineList.addListener(lcl);
+            }
+        });
     }
 
     public final void setSelectedLine(Line line) {

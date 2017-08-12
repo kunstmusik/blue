@@ -27,6 +27,7 @@ import blue.automation.LineColors;
 import blue.automation.Parameter;
 import blue.components.lines.Line;
 import blue.components.lines.LineList;
+import blue.components.lines.LinePoint;
 import blue.gui.ExceptionDialog;
 import blue.gui.InfoDialog;
 import blue.jfx.BlueFX;
@@ -39,6 +40,7 @@ import blue.soundObject.Sound;
 import blue.soundObject.SoundObject;
 import blue.ui.core.orchestra.editor.BlueSynthBuilderEditor;
 import java.awt.BorderLayout;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import javafx.embed.swing.JFXPanel;
 import javafx.scene.Scene;
@@ -119,14 +121,21 @@ public class SoundEditor extends ScoreObjectEditor {
                                         m.setOnAction(e -> {
                                             param.setAutomationEnabled(!param.isAutomationEnabled());
                                             if (param.isAutomationEnabled()) {
-                                                param.getLine().setVarName(param.getName());
-                                                lineList.add(param.getLine());
+                                                Line line = param.getLine();
+                                                line.setVarName(param.getName());
+                                                List<LinePoint> points = line.getObservableList();
+                                                if (points.size() < 2) {
+                                                    LinePoint lp = new LinePoint();
+                                                    lp.setLocation(1.0, points.get(0).getY());
+                                                    points.add(lp);
+                                                }
+                                                lineList.add(line);
                                             } else {
                                                 lineList.remove(param.getLine());
                                             }
 
                                             int colorCount = 0;
-                                            for(Line line : lineList) {
+                                            for (Line line : lineList) {
                                                 line.setColor(LineColors.getColor(colorCount++));
                                             }
                                         });
@@ -179,15 +188,23 @@ public class SoundEditor extends ScoreObjectEditor {
         this.sObj = (Sound) sObj;
         editor.editInstrument(this.sObj.getBlueSynthBuilder());
 
-        lineList.clear();
-        int colorCount = 0;
-        for (Parameter p : this.sObj.getBlueSynthBuilder().getParameterList().sorted()) {
-            if (p.isAutomationEnabled()) {
-                p.getLine().setVarName(p.getName());
-                p.getLine().setColor(LineColors.getColor(colorCount++));
-                lineList.add(p.getLine());
+        BlueFX.runOnFXThread(() -> {
+            lineList.clear();
+            int colorCount = 0;
+            for (Parameter p : this.sObj.getBlueSynthBuilder().getParameterList().sorted()) {
+                if (p.isAutomationEnabled()) {
+                    p.getLine().setVarName(p.getName());
+                    p.getLine().setColor(LineColors.getColor(colorCount++));
+                    List<LinePoint> points = p.getLine().getObservableList();
+                    if (points.size() < 2) {
+                        LinePoint lp = new LinePoint();
+                        lp.setLocation(1.0, points.get(0).getY());
+                        points.add(lp);
+                    }
+                    lineList.add(p.getLine());
+                }
             }
-        }
+        });
     }
 
     public final void testSoundObject() {

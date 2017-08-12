@@ -75,7 +75,7 @@ public class Line implements TableModel, ChangeListener, Iterable<LinePoint> {
     
     private boolean endPointsLinked = false;
 
-    ArrayList<LinePoint> points = new ArrayList<>();
+    ObservableList<LinePoint> points;
 
     transient Vector<TableModelListener> listeners = null;
 
@@ -90,6 +90,7 @@ public class Line implements TableModel, ChangeListener, Iterable<LinePoint> {
     }
 
     private Line(boolean rightBound, boolean init) {
+        points = FXCollections.observableArrayList();
         if (init) {
             LinePoint point1 = new LinePoint();
             point1.setLocation(0.0f, 0.5f);
@@ -124,7 +125,7 @@ public class Line implements TableModel, ChangeListener, Iterable<LinePoint> {
         uniqueID = line.uniqueID;
         endPointsLinked = line.endPointsLinked;
 
-        points.ensureCapacity(line.points.size());
+        points = FXCollections.observableArrayList();
 
         for(LinePoint lp :line.points) {
             LinePoint newLp = new LinePoint(lp);
@@ -793,7 +794,8 @@ public class Line implements TableModel, ChangeListener, Iterable<LinePoint> {
 
         // Collections.sort(temp);
 
-        this.points = temp;
+        this.points.clear();
+        this.points.addAll(temp);
 
         fireTableDataChanged();
 
@@ -814,6 +816,6 @@ public class Line implements TableModel, ChangeListener, Iterable<LinePoint> {
     }
 
     public ObservableList<LinePoint> getObservableList() {
-        return FXCollections.observableArrayList(points);
+        return points;
     }
 }
