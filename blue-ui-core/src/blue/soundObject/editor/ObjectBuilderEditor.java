@@ -23,6 +23,7 @@ import blue.BlueSystem;
 import blue.CompileData;
 import blue.gui.ExceptionDialog;
 import blue.gui.InfoDialog;
+import blue.jfx.BlueFX;
 import blue.orchestra.blueSynthBuilder.BSBGraphicInterface;
 import blue.orchestra.blueSynthBuilder.PresetGroup;
 import blue.orchestra.editor.blueSynthBuilder.BSBInterfaceEditor;
@@ -37,6 +38,10 @@ import blue.utility.GUI;
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
+import java.util.concurrent.CountDownLatch;
+import javafx.embed.swing.JFXPanel;
+import javafx.scene.Scene;
+import javafx.scene.control.TextArea;
 import javax.swing.AbstractAction;
 import javax.swing.ActionMap;
 import javax.swing.InputMap;
@@ -46,6 +51,7 @@ import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
 import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
+import org.openide.util.Exceptions;
 
 @ScoreObjectEditorPlugin(scoreObjectType = ObjectBuilder.class)
 public class ObjectBuilderEditor extends ScoreObjectEditor {
@@ -56,6 +62,8 @@ public class ObjectBuilderEditor extends ScoreObjectEditor {
             ObjectBuilderRegistry.getBSBObjects(), false);
 
     private final ObjectBuilderCodeEditor codeEditor = new ObjectBuilderCodeEditor();
+
+    private TextArea commentTextArea;
 
     public ObjectBuilderEditor() {
         JTabbedPane tabs = new JTabbedPane();
@@ -77,6 +85,30 @@ public class ObjectBuilderEditor extends ScoreObjectEditor {
         this.setLayout(new BorderLayout());
         this.add(topPanel, BorderLayout.NORTH);
         this.add(tabs, BorderLayout.CENTER);
+
+        JFXPanel jfxCommentPanel = new JFXPanel();
+        CountDownLatch latch = new CountDownLatch(1);
+
+        BlueFX.runOnFXThread(() -> {
+            try {
+                commentTextArea = new TextArea();
+                commentTextArea.setWrapText(true);
+
+                final Scene scene2 = new Scene(commentTextArea);
+                BlueFX.style(scene2);
+                jfxCommentPanel.setScene(scene2);
+            } finally {
+                latch.countDown();
+            }
+        });
+
+        try {
+            latch.await();
+        } catch (InterruptedException ex) {
+            Exceptions.printStackTrace(ex);
+        }
+
+        tabs.addTab("Comments", jfxCommentPanel);
 
         initActions();
     }
@@ -109,6 +141,12 @@ public class ObjectBuilderEditor extends ScoreObjectEditor {
             return;
         }
 
+        if (this.objectBuilder != null) {
+            final ObjectBuilder temp = this.objectBuilder;
+            BlueFX.runOnFXThread(()
+                    -> temp.commentProperty().unbind());
+        }
+
         this.objectBuilder = (ObjectBuilder) sObj;
 
         PresetGroup presetGroup = objectBuilder.getPresetGroup();
@@ -117,6 +155,10 @@ public class ObjectBuilderEditor extends ScoreObjectEditor {
         this.interfaceEditor.editInterface(graphicInterface, presetGroup);
         this.codeEditor.editObjectBuilder(objectBuilder);
 
+        BlueFX.runOnFXThread(() -> {
+            commentTextArea.setText(this.objectBuilder.getComment());
+            this.objectBuilder.commentProperty().bind(commentTextArea.textProperty());
+        });
     }
 
     public final void testSoundObject() {
@@ -127,7 +169,7 @@ public class ObjectBuilderEditor extends ScoreObjectEditor {
         NoteList notes = null;
 
         try {
-            notes = this.objectBuilder.generateForCSD(CompileData.createEmptyCompileData(), 
+            notes = this.objectBuilder.generateForCSD(CompileData.createEmptyCompileData(),
                     0.0f, -1.0f);
         } catch (SoundObjectException e) {
             ExceptionDialog.showExceptionDialog(SwingUtilities.getRoot(this), e);
@@ -137,7 +179,7 @@ public class ObjectBuilderEditor extends ScoreObjectEditor {
         if (notes != null) {
             InfoDialog.showInformationDialog(SwingUtilities.getRoot(this),
                     notes.toString(), BlueSystem
-                            .getString("soundObject.generatedScore"));
+                    .getString("soundObject.generatedScore"));
         }
 
     }

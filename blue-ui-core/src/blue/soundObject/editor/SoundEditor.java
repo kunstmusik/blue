@@ -46,6 +46,7 @@ import javafx.embed.swing.JFXPanel;
 import javafx.scene.Scene;
 import javafx.scene.control.MenuButton;
 import javafx.scene.control.MenuItem;
+import javafx.scene.control.TextArea;
 import javafx.scene.layout.BorderPane;
 import javax.swing.JButton;
 import javax.swing.JLabel;
@@ -76,6 +77,7 @@ public class SoundEditor extends ScoreObjectEditor {
 
     LineView lineView;
     LineSelector lineSelector;
+    private TextArea commentTextArea;
 
     public SoundEditor() {
         try {
@@ -93,6 +95,7 @@ public class SoundEditor extends ScoreObjectEditor {
 
         JFXPanel jfxPanel = new JFXPanel();
         CountDownLatch latch = new CountDownLatch(1);
+        JFXPanel jfxCommentPanel = new JFXPanel();
 
         BlueFX.runOnFXThread(() -> {
 
@@ -153,6 +156,13 @@ public class SoundEditor extends ScoreObjectEditor {
                 final Scene scene = new Scene(mainPane);
                 BlueFX.style(scene);
                 jfxPanel.setScene(scene);
+
+                commentTextArea = new TextArea();
+                commentTextArea.setWrapText(true);
+
+                final Scene scene2 = new Scene(commentTextArea);
+                BlueFX.style(scene2);
+                jfxCommentPanel.setScene(scene2);
             } finally {
                 latch.countDown();
             }
@@ -165,6 +175,7 @@ public class SoundEditor extends ScoreObjectEditor {
         }
 
         editor.getTabs().insertTab("Automation", null, jfxPanel, "", 1);
+        editor.getTabs().addTab("Comments", jfxCommentPanel);
 
     }
 
@@ -183,6 +194,12 @@ public class SoundEditor extends ScoreObjectEditor {
             editor.editInstrument(null);
 
             return;
+        }
+
+        if (this.sObj != null) {
+            final Sound temp = this.sObj;
+            BlueFX.runOnFXThread(()
+                    -> temp.commentProperty().unbind());
         }
 
         this.sObj = (Sound) sObj;
@@ -204,6 +221,8 @@ public class SoundEditor extends ScoreObjectEditor {
                     lineList.add(p.getLine());
                 }
             }
+            commentTextArea.setText(this.sObj.getComment());
+            this.sObj.commentProperty().bind(commentTextArea.textProperty());
         });
     }
 

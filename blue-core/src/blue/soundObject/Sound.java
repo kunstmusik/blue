@@ -26,6 +26,8 @@ import blue.plugin.SoundObjectPlugin;
 import electric.xml.Element;
 import electric.xml.Elements;
 import java.util.Map;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
 
 /**
  * Title: blue Description: an object composition environment for csound
@@ -39,14 +41,17 @@ import java.util.Map;
 public class Sound extends AbstractSoundObject {
 
     BlueSynthBuilder bsbObj;
+    StringProperty comment;
 
     public Sound() {
         setName("Sound");
+        comment = new SimpleStringProperty("");
         bsbObj = new BlueSynthBuilder();
     }
 
     public Sound(Sound sound) {
         super(sound);
+        comment = new SimpleStringProperty(sound.getComment());
         bsbObj = new BlueSynthBuilder(sound.bsbObj);
     }
 
@@ -70,6 +75,18 @@ public class Sound extends AbstractSoundObject {
 
     public void setBlueSynthBuilder(BlueSynthBuilder bsbObj) {
         this.bsbObj = bsbObj;
+    }
+
+    public final void setComment(String value) {
+        comment.set(value);
+    }
+
+    public final String getComment() {
+        return comment.get();
+    }
+
+    public final StringProperty commentProperty() {
+        return comment;
     }
 
     public NoteList generateNotes(int instrumentNumber, double renderStart, double renderEnd) throws SoundObjectException {
@@ -134,6 +151,10 @@ public class Sound extends AbstractSoundObject {
                     break;
                 case "instrument":
                     sObj.bsbObj = (BlueSynthBuilder) BlueSynthBuilder.loadFromXML(node);
+                    break;
+                case "comment":
+                    sObj.setComment(node.getTextString());
+                    break;
             }
 
         }
@@ -150,6 +171,7 @@ public class Sound extends AbstractSoundObject {
     public Element saveAsXML(Map<Object, String> objRefMap) {
         Element retVal = SoundObjectUtilities.getBasicXML(this);
         retVal.addElement(bsbObj.saveAsXML());
+        retVal.addElement("comment").setText(getComment());
         return retVal;
     }
 
@@ -171,6 +193,7 @@ public class Sound extends AbstractSoundObject {
         sound.startTime = this.startTime;
         sound.name = this.name;
         sound.backgroundColor = this.backgroundColor;
+        sound.setComment(this.getComment());
 
         sound.bsbObj = this.bsbObj.deepCopy();
 

@@ -37,6 +37,8 @@ import electric.xml.Elements;
 import java.io.File;
 import java.io.IOException;
 import java.util.Map;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.python.core.PyException;
 
@@ -53,6 +55,7 @@ public class ObjectBuilder extends AbstractSoundObject {
     private NoteProcessorChain npc = new NoteProcessorChain();
     private int timeBehavior;
     double repeatPoint = -1.0f;
+    StringProperty comment;
 
     public ObjectBuilder() {
         setName("ObjectBuilder");
@@ -61,6 +64,7 @@ public class ObjectBuilder extends AbstractSoundObject {
         code = "";
         commandLine = "";
         timeBehavior = SoundObject.TIME_BEHAVIOR_SCALE;
+        comment = new SimpleStringProperty("");
     }
 
     public ObjectBuilder(ObjectBuilder objBuilder) {
@@ -75,6 +79,7 @@ public class ObjectBuilder extends AbstractSoundObject {
         repeatPoint = objBuilder.repeatPoint;
         syntaxType = objBuilder.syntaxType;
         npc = new NoteProcessorChain(objBuilder.npc);
+        comment = new SimpleStringProperty(objBuilder.getComment());
     }
 
     // GENERATION METHODS
@@ -254,6 +259,18 @@ public class ObjectBuilder extends AbstractSoundObject {
         fireScoreObjectEvent(event);
     }
 
+    public final void setComment(String value) {
+        comment.set(value);
+    }
+
+    public final String getComment() {
+        return comment.get();
+    }
+
+    public final StringProperty commentProperty() {
+        return comment;
+    }
+
     /*
      * (non-Javadoc)
      * 
@@ -294,6 +311,9 @@ public class ObjectBuilder extends AbstractSoundObject {
                 case "syntaxType":
                     bsb.setSyntaxType(node.getTextString());
                     break;
+                case "comment":
+                    bsb.setComment(node.getTextString());
+                    break;
             }
 
         }
@@ -320,6 +340,7 @@ public class ObjectBuilder extends AbstractSoundObject {
         retVal.addElement(graphicInterface.saveAsXML());
         retVal.addElement(presetGroup.saveAsXML());
         retVal.addElement("syntaxType").setText(this.getSyntaxType());
+        retVal.addElement("comment").setText(getComment());
 
         return retVal;
     }
