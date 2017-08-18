@@ -128,11 +128,13 @@ public class AutomationManager implements
         };
 
         parameterListListener = e -> {
-            for (Parameter param : e.getAddedSubList()) {
-                parameterAdded(param);
-            }
-            for (Parameter param : e.getRemoved()) {
-                parameterRemoved(param);
+            while (e.next()) {
+                for (Parameter param : e.getAddedSubList()) {
+                    parameterAdded(param);
+                }
+                for (Parameter param : e.getRemoved()) {
+                    parameterRemoved(param);
+                }
             }
         };
     }
