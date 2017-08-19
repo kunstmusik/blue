@@ -303,12 +303,12 @@ public class BSBObjectViewHolder extends Pane {
             double left = right - newWidth;
             int w = grid.getWidth();
             left = ((Math.round(left / w) * w));
-            newWidth = (int)(right - left);
-            newX = (int)left;
+            newWidth = (int) (right - left);
+            newX = (int) left;
         }
 
         newWidth = Math.max(newWidth, rView.getWidgetMinimumWidth());
-        newX = Math.min(newX, (int)(originBounds.getMaxX() - rView.getWidgetMinimumWidth()));
+        newX = Math.min(newX, (int) (originBounds.getMaxX() - rView.getWidgetMinimumWidth()));
 
         if (newWidth != rView.getWidgetWidth()) {
             rView.setWidgetWidth(newWidth);
@@ -335,12 +335,12 @@ public class BSBObjectViewHolder extends Pane {
             double top = bottom - newHeight;
             int h = grid.getHeight();
             top = ((Math.round(top / h) * h));
-            newHeight = (int)(bottom - top);
-            newY = (int)top;
+            newHeight = (int) (bottom - top);
+            newY = (int) top;
         }
 
         newHeight = Math.max(newHeight, rView.getWidgetMinimumHeight());
-        newY = Math.min(newY, (int)(originBounds.getMaxY() - rView.getWidgetMinimumHeight()));
+        newY = Math.min(newY, (int) (originBounds.getMaxY() - rView.getWidgetMinimumHeight()));
 
         if (newHeight != rView.getWidgetHeight()) {
             rView.setWidgetY(newY);
@@ -359,7 +359,6 @@ public class BSBObjectViewHolder extends Pane {
 
         int diff = (int) (curPoint.getY() - mouseOrigin.getY());
         int newHeight = (int) originBounds.getHeight() + diff;
-
 
         if (grid.isSnapEnabled()) {
             double top = getLayoutY();
@@ -433,6 +432,28 @@ public class BSBObjectViewHolder extends Pane {
                 groupsList.get(groupsList.size() - 1).addBSBObject(group);
             });
 
+            MenuItem breakGroup = new MenuItem("Break Group");
+            breakGroup.setOnAction((ActionEvent e) -> {
+                MenuData data = (MenuData) MENU.getUserData();
+                BSBEditSelection selection = data.selection;
+                List<BSBGroup> groupsList = data.groupsList;
+
+                BSBGroup group = (BSBGroup) selection.selection.toArray()[0];
+
+                int x = group.getX();
+                int y = group.getY();
+
+                selection.remove();
+
+                BSBGroup rootGroup = groupsList.get(groupsList.size() - 1);
+                for(BSBObject bsbObj : group) {
+                    BSBObject temp = bsbObj.deepCopy();
+                    temp.setX(temp.getX() + x);
+                    temp.setY(temp.getY() + y);
+                    rootGroup.addBSBObject(temp);
+                };
+            });
+
             final Menu align = new Menu("Align");
             final Menu distribute = new Menu("Distribute");
 
@@ -464,7 +485,7 @@ public class BSBObjectViewHolder extends Pane {
                 distribute.getItems().add(d);
             }
             MENU.getItems().addAll(cut, copy, remove);
-            MENU.getItems().addAll(new SeparatorMenuItem(), makeGroup);
+            MENU.getItems().addAll(new SeparatorMenuItem(), makeGroup, breakGroup);
             MENU.getItems().addAll(new SeparatorMenuItem(), align, distribute);
             MENU.setOnHidden(e -> MENU.setUserData(null));
 
@@ -473,6 +494,8 @@ public class BSBObjectViewHolder extends Pane {
                 BSBEditSelection selection = data.selection;
                 align.setDisable(selection.selection.size() < 2);
                 distribute.setDisable(selection.selection.size() < 2);
+                breakGroup.setDisable(selection.selection.size() != 1
+                        || selection.selection.stream().noneMatch((x) -> x instanceof BSBGroup));
             });
         }
         return MENU;
