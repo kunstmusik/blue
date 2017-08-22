@@ -55,27 +55,27 @@ import org.apache.commons.lang3.text.StrBuilder;
  * @author Steven
  */
 public class Line implements TableModel, ChangeListener, Iterable<LinePoint> {
-    String varName = "";
+    protected String varName = "";
 
-    double max = 1.0f;
+    protected double max = 1.0f;
 
-    double min = 0.0f;
+    protected double min = 0.0f;
 
-    BigDecimal resolution = new BigDecimal(-1);
+    protected BigDecimal resolution = new BigDecimal(-1);
 
-    Color color = null;
+    protected Color color = null;
 
-    boolean isZak = false;
+    protected boolean isZak = false;
 
-    boolean rightBound = false;
+    protected boolean rightBound = false;
 
     protected int channel = 1;
 
     protected String uniqueID = "";
     
-    private boolean endPointsLinked = false;
+    protected boolean endPointsLinked = false;
 
-    ObservableList<LinePoint> points;
+    protected ObservableList<LinePoint> points;
 
     transient Vector<TableModelListener> listeners = null;
 

@@ -19,7 +19,11 @@
  */
 package blue.soundObject;
 
+import blue.components.lines.SoundObjectParameterLine;
 import blue.*;
+import blue.automation.Parameter;
+import blue.automation.ParameterList;
+import blue.components.lines.Line;
 import blue.noteProcessor.NoteProcessorChain;
 import blue.orchestra.BlueSynthBuilder;
 import blue.plugin.SoundObjectPlugin;
@@ -28,6 +32,7 @@ import electric.xml.Elements;
 import java.util.Map;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
+import javafx.collections.ListChangeListener;
 
 /**
  * Title: blue Description: an object composition environment for csound
@@ -43,16 +48,33 @@ public class Sound extends AbstractSoundObject {
     BlueSynthBuilder bsbObj;
     StringProperty comment;
 
+    ListChangeListener<? super Parameter> paramListListener = e -> {
+        while (e.next()) {
+            for (Parameter param : e.getAddedSubList()) {
+                adjustLineType(param);
+            }
+        }
+    };
+
     public Sound() {
         setName("Sound");
         comment = new SimpleStringProperty("");
-        bsbObj = new BlueSynthBuilder();
+        setBlueSynthBuilder(new BlueSynthBuilder());
     }
 
     public Sound(Sound sound) {
         super(sound);
         comment = new SimpleStringProperty(sound.getComment());
-        bsbObj = new BlueSynthBuilder(sound.bsbObj);
+        setBlueSynthBuilder(new BlueSynthBuilder(sound.bsbObj));
+    }
+
+    protected void adjustLineType(Parameter param) {
+        final Line line = param.getLine();
+        if (!(line instanceof SoundObjectParameterLine)) {
+            final SoundObjectParameterLine soundObjectParameterLine
+                    = new SoundObjectParameterLine(Sound.this, line);
+            param.setLine(soundObjectParameterLine);
+        }
     }
 
     @Override
@@ -74,6 +96,17 @@ public class Sound extends AbstractSoundObject {
     }
 
     public void setBlueSynthBuilder(BlueSynthBuilder bsbObj) {
+        if (this.bsbObj != null) {
+            ParameterList paramList = bsbObj.getParameterList();
+            paramList.removeListener(paramListListener);
+        }
+
+        ParameterList paramList = bsbObj.getParameterList();
+        for(Parameter param : paramList) {
+            adjustLineType(param);
+        }
+        paramList.addListener(paramListListener);
+
         this.bsbObj = bsbObj;
     }
 
@@ -150,7 +183,7 @@ public class Sound extends AbstractSoundObject {
                     sObj.bsbObj.setInstrumentText(node.getTextString());
                     break;
                 case "instrument":
-                    sObj.bsbObj = (BlueSynthBuilder) BlueSynthBuilder.loadFromXML(node);
+                    sObj.setBlueSynthBuilder((BlueSynthBuilder) BlueSynthBuilder.loadFromXML(node));
                     break;
                 case "comment":
                     sObj.setComment(node.getTextString());
@@ -195,8 +228,9 @@ public class Sound extends AbstractSoundObject {
         sound.backgroundColor = this.backgroundColor;
         sound.setComment(this.getComment());
 
-        sound.bsbObj = this.bsbObj.deepCopy();
+        sound.setBlueSynthBuilder(this.bsbObj.deepCopy());
 
         return sound;
     }
+
 }

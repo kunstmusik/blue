@@ -22,6 +22,8 @@ package blue.ui.core.score.layers.soundObject.actions;
 import blue.BlueData;
 import blue.CopyBuffer;
 import blue.SoundLayer;
+import blue.automation.Parameter;
+import blue.components.lines.LinePoint;
 import blue.orchestra.BlueSynthBuilder;
 import blue.projects.BlueProjectManager;
 import blue.score.ScoreObject;
@@ -31,7 +33,6 @@ import blue.soundObject.Sound;
 import blue.ui.core.score.ScorePath;
 import blue.ui.core.score.undo.AddScoreObjectEdit;
 import blue.undo.BlueUndoManager;
-import blue.utility.ObjectUtilities;
 import blue.utility.ScoreUtilities;
 import java.awt.Point;
 import java.awt.event.ActionEvent;
@@ -97,7 +98,16 @@ public final class PasteBSBAsSoundAction extends AbstractAction implements Conte
 
         Sound sound = new Sound();
         sound.setStartTime(start);
-        sound.setBlueSynthBuilder(new BlueSynthBuilder((BlueSynthBuilder)obj));
+
+        BlueSynthBuilder bsbCopy = ((BlueSynthBuilder)obj).deepCopy();
+        // clear out any existing automations
+        for(Parameter param :bsbCopy.getParameterList()) {
+            param.setAutomationEnabled(false);
+            param.getLine().clear();
+            param.getLine().addLinePoint(new LinePoint(0.0, param.getValue(0.0)));
+            param.getLine().addLinePoint(new LinePoint(1.0, param.getValue(0.0)));
+        }
+        sound.setBlueSynthBuilder(bsbCopy);
         
         Layer layer = scorePath.getGlobalLayerForY(p.y);
         

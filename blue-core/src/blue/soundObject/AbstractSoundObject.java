@@ -2,7 +2,6 @@ package blue.soundObject;
 
 import blue.score.ScoreObjectEvent;
 import blue.score.ScoreObjectListener;
-import blue.utility.ObjectUtilities;
 import java.awt.Color;
 import java.util.Vector;
 

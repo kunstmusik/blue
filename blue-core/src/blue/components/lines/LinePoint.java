@@ -41,6 +41,12 @@ public class LinePoint implements Comparable<LinePoint> {
 
 
     public LinePoint(){}
+
+    public LinePoint(double x, double y) {
+        setX(x);
+        setY(y);
+    }
+
     public LinePoint(LinePoint lp){
         setX(lp.getX());
         setY(lp.getY());

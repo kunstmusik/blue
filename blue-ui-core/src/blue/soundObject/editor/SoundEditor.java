@@ -32,12 +32,12 @@ import blue.gui.ExceptionDialog;
 import blue.gui.InfoDialog;
 import blue.jfx.BlueFX;
 import blue.orchestra.editor.blueSynthBuilder.jfx.LineSelector;
-import blue.orchestra.editor.blueSynthBuilder.jfx.LineView;
 import blue.plugin.ScoreObjectEditorPlugin;
 import blue.score.ScoreObject;
 import blue.soundObject.NoteList;
 import blue.soundObject.Sound;
 import blue.soundObject.SoundObject;
+import blue.soundObject.editor.sound.ParameterLineView;
 import blue.ui.core.orchestra.editor.BlueSynthBuilderEditor;
 import java.awt.BorderLayout;
 import java.util.List;
@@ -75,7 +75,7 @@ public class SoundEditor extends ScoreObjectEditor {
 
     BlueSynthBuilderEditor editor = new BlueSynthBuilderEditor();
 
-    LineView lineView;
+    ParameterLineView lineView;
     LineSelector lineSelector;
     private TextArea commentTextArea;
 
@@ -104,7 +104,7 @@ public class SoundEditor extends ScoreObjectEditor {
                 MenuButton btn = new MenuButton("Automations");
 
                 BorderPane mainPane = new BorderPane();
-                lineView = new LineView(lineList);
+                lineView = new ParameterLineView(lineList);
                 lineSelector = new LineSelector(lineList);
 
                 lineView.widthProperty().bind(mainPane.widthProperty());

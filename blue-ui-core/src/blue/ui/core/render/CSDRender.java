@@ -20,6 +20,7 @@ import blue.automation.Automatable;
 import blue.automation.Parameter;
 import blue.components.lines.Line;
 import blue.components.lines.LinePoint;
+import blue.components.lines.SoundObjectParameterLine;
 import blue.mixer.Channel;
 import blue.mixer.ChannelList;
 import blue.mixer.Mixer;
@@ -725,6 +726,16 @@ public class CSDRender extends CSDRenderService {
         // TODO - re-evaluate this strategy for generating values
         double resolution = param.getResolution().doubleValue();
 
+        double startAdj = 0;
+        double durationAdj = 1.0;
+        boolean adjustPoints = (line instanceof SoundObjectParameterLine); 
+
+        if(adjustPoints) {
+            SoundObjectParameterLine paramLine = (SoundObjectParameterLine)line;
+            startAdj = paramLine.getSourceStart();
+            durationAdj = paramLine.getSourceDuration();
+        }
+
         if (resolution > 0.0f) {
             for (int i = 1; i < line.size(); i++) {
                 LinePoint p1 = line.getLinePoint(i - 1);
@@ -732,6 +743,11 @@ public class CSDRender extends CSDRenderService {
 
                 double startTime = p1.getX();
                 double endTime = p2.getX();
+
+                if(adjustPoints) {
+                    startTime = (startTime * durationAdj) + startAdj;
+                    endTime = (endTime * durationAdj) + startAdj;
+                }
 
                 if (renderEnd > 0 && startTime >= renderEnd) {
                     return;
@@ -824,6 +840,11 @@ public class CSDRender extends CSDRenderService {
 
                 double startTime = p1.getX();
                 double endTime = p2.getX();
+
+                if(adjustPoints) {
+                    startTime = (startTime * durationAdj) + startAdj;
+                    endTime = (endTime * durationAdj) + startAdj;
+                }
 
                 if (renderEnd > 0 && startTime >= renderEnd) {
                     return;
