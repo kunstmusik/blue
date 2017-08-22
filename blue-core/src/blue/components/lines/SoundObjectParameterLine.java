@@ -49,12 +49,13 @@ public class SoundObjectParameterLine extends Line {
 
     @Override
     public double getValue(double time) {
-        if (time < source.getStartTime()) {
+        double start = source.getStartTime();
+        if (time < start) {
             return points.get(0).getY();
-        } else if (time > source.getSubjectiveDuration()) {
+        } else if (time > start + source.getSubjectiveDuration()) {
             return points.get(points.size() - 1).getY();
         }
-        double t = (time - source.getStartTime()) / source.getSubjectiveDuration();
+        double t = (time - start) / source.getSubjectiveDuration();
         return super.getValue(t);
     }
    
