@@ -350,7 +350,7 @@ public class ObjectBuilder extends AbstractSoundObject {
     }
 
     public void setCode(String code) {
-        this.code = code;
+        this.code = (code == null) ? "" : code;
     }
 
     public String getCommandLine() {
