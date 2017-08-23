@@ -226,42 +226,6 @@ public final class RealtimeRenderManager {
         PolyObject base = tempPObj;
         SoundLayer sLayer = tempPObj.newLayerAt(-1);
 
-//        if(path.size() > 1) {
-//            for(PolyObject pObj : path) {
-//                PolyObject tpo = new PolyObject(true);
-//                SoundLayer tsl = tpo.newLayerAt(-1);
-//                tpo.setTimeState(pObj.getTimeState().clone());
-//                tpo.setTimeBehavior(pObj.getTimeBehavior());
-//                tpo.setStartTime(pObj.getStartTime());
-//                tpo.setSubjectiveDuration(pObj.getSubjectiveDuration());
-//                base.get(0).add(tpo);
-//                base = tpo;
-//            }
-//
-//            if(base.getTimeBehavior() == SoundObject.TIME_BEHAVIOR_SCALE ||
-//                    base.getTimeBehavior() == SoundObject.TIME_BEHAVIOR_REPEAT) {
-//                List<SoundObject> objs = base.getSoundObjects(false);
-//                SoundObject last = null;
-//                for(SoundObject temp : objs) {
-//                    if(last == null) {
-//                        last = temp;
-//                    } else {
-//                        double end = last.getStartTime() + last.getSubjectiveDuration(); 
-//                        double end1 = temp.getStartTime() + temp.getSubjectiveDuration();
-//                        if(end1 > end) {
-//                            last = temp;
-//                        }
-//                    }  
-//                }
-//                GenericScore dummy = new GenericScore();
-//                dummy.setStartTime(last.getStartTime());
-//                dummy.setSubjectiveDuration(last.getSubjectiveDuration());
-//                dummy.setText("");
-//                base.get(0).add(dummy);
-//            }
-//        } 
-
-
         double minTime = Double.MAX_VALUE;
         double maxTime = Double.MIN_VALUE;
 
