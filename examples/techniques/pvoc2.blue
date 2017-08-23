@@ -1,0 +1,646 @@
+<blueData version='2.7.0_dev'>
+  <projectProperties>
+    <title>PVOC example</title>
+    <author>Steven Yi</author>
+    <notes>[DESCRIPTION]
+A quick piece using a pvx analysis-resynthesis of the &quot;Hello, I&apos;m Dr. Richard Boulanger&quot; AIFF sample. The instrument
+was made to not be driving by pfields but rather by automation data on the timeline.
+
+************************************************************************************************************
+ 
+[DEPENDENCIES]
+
+hellorcb.pvx	- &quot;Hello, I&apos;m Dr. Richard Boulanger&quot; pvx analysis file
+		
+</notes>
+    <sampleRate>48000</sampleRate>
+    <ksmps>64</ksmps>
+    <channels>2</channels>
+    <useZeroDbFS>false</useZeroDbFS>
+    <zeroDbFS>1</zeroDbFS>
+    <diskSampleRate>44100</diskSampleRate>
+    <diskKsmps>1</diskKsmps>
+    <diskChannels>2</diskChannels>
+    <diskUseZeroDbFS>false</diskUseZeroDbFS>
+    <diskZeroDbFS>1</diskZeroDbFS>
+    <useAudioOut>true</useAudioOut>
+    <useAudioIn>false</useAudioIn>
+    <useMidiIn>false</useMidiIn>
+    <useMidiOut>false</useMidiOut>
+    <noteAmpsEnabled>true</noteAmpsEnabled>
+    <outOfRangeEnabled>true</outOfRangeEnabled>
+    <warningsEnabled>true</warningsEnabled>
+    <benchmarkEnabled>true</benchmarkEnabled>
+    <advancedSettings></advancedSettings>
+    <completeOverride>false</completeOverride>
+    <fileName></fileName>
+    <askOnRender>false</askOnRender>
+    <diskNoteAmpsEnabled>true</diskNoteAmpsEnabled>
+    <diskOutOfRangeEnabled>true</diskOutOfRangeEnabled>
+    <diskWarningsEnabled>true</diskWarningsEnabled>
+    <diskBenchmarkEnabled>true</diskBenchmarkEnabled>
+    <diskAdvancedSettings></diskAdvancedSettings>
+    <diskCompleteOverride>false</diskCompleteOverride>
+    <diskAlwaysRenderEntireProject>false</diskAlwaysRenderEntireProject>
+  </projectProperties>
+  <arrangement/>
+  <mixer>
+    <enabled>true</enabled>
+    <extraRenderTime>0.0</extraRenderTime>
+    <channelList listName='Orchestra' list='channels'/>
+    <channelList listName='SubChannels' list='subChannels'/>
+    <channel>
+      <name>Master</name>
+      <outChannel>Master</outChannel>
+      <level>-2.2</level>
+      <muted>false</muted>
+      <solo>false</solo>
+      <effectsChain bin='pre'/>
+      <effectsChain bin='post'/>
+      <parameter uniqueId='917408352' name='Volume' label='dB' min='-96.0' max='12.0' bdresolution='-1' automationEnabled='false' value='-2.2'>
+        <line name='' version='2' max='12.0' min='-96.0' bdresolution='-1' color='-8355712' rightBound='false' endPointsLinked='false'>
+          <linePoint x='0.0' y='-2.2'/>
+        </line>
+      </parameter>
+    </channel>
+  </mixer>
+  <tables></tables>
+  <soundObjectLibrary/>
+  <globalOrcSco>
+    <globalOrc></globalOrc>
+    <globalSco></globalSco>
+  </globalOrcSco>
+  <opcodeList/>
+  <liveData>
+    <commandLine>csound -Wdo devaudio -L stdin</commandLine>
+    <commandLineEnabled>false</commandLineEnabled>
+    <commandLineOverride>false</commandLineOverride>
+    <liveObjectBins columns='1' rows='8'>
+      <bin>
+        <null/>
+        <null/>
+        <null/>
+        <null/>
+        <null/>
+        <null/>
+        <null/>
+        <null/>
+      </bin>
+    </liveObjectBins>
+    <liveObjectSetList/>
+    <repeat>4</repeat>
+    <tempo>60</tempo>
+    <repeatEnabled>false</repeatEnabled>
+  </liveData>
+  <score>
+    <tempo>
+      <enabled>false</enabled>
+      <visible>false</visible>
+      <line name='' version='2' max='240.0' min='30.0' bdresolution='-1' color='-8355712' rightBound='false' endPointsLinked='false'>
+        <linePoint x='0.0' y='60.0'/>
+      </line>
+    </tempo>
+    <timeState>
+      <pixelSecond>22</pixelSecond>
+      <snapEnabled>false</snapEnabled>
+      <snapValue>1.0</snapValue>
+      <timeDisplay>0</timeDisplay>
+      <timeUnit>5</timeUnit>
+    </timeState>
+    <noteProcessorChain/>
+    <soundObject type='blue.soundObject.PolyObject'>
+      <subjectiveDuration>2.0</subjectiveDuration>
+      <startTime>0.0</startTime>
+      <name>root</name>
+      <backgroundColor>-10066279</backgroundColor>
+      <timeBehavior>2</timeBehavior>
+      <noteProcessorChain/>
+      <defaultHeightIndex>0</defaultHeightIndex>
+      <timeState>
+        <pixelSecond>64</pixelSecond>
+        <snapEnabled>false</snapEnabled>
+        <snapValue>1.0</snapValue>
+        <timeDisplay>0</timeDisplay>
+        <timeUnit>5</timeUnit>
+      </timeState>
+      <soundLayer name='' muted='false' solo='false' heightIndex='1'>
+        <noteProcessorChain/>
+        <soundObject type='blue.soundObject.Sound'>
+          <subjectiveDuration>18.227272727272727</subjectiveDuration>
+          <startTime>4.0</startTime>
+          <name>PVOC Player</name>
+          <backgroundColor>-12566464</backgroundColor>
+          <instrument type='blue.orchestra.BlueSynthBuilder' editEnabled='true'>
+            <name>PVOC Player</name>
+            <comment></comment>
+            <globalOrc/>
+            <globalSco/>
+            <instrumentText>ktime	= &lt;timePointer&gt;
+kpan	= &lt;panning&gt;
+
+aout     pvoc           ktime,1, &quot;&lt;pvocFile&gt;&quot;
+
+aleft, aright pan_gm2 aout, kpan
+
+blueMixerOut aleft, aright</instrumentText>
+            <alwaysOnInstrumentText></alwaysOnInstrumentText>
+            <graphicInterface editEnabled='false'>
+              <gridSettings>
+                <width>10</width>
+                <height>10</height>
+                <gridStyle>NONE</gridStyle>
+                <snapGridEnabled>false</snapGridEnabled>
+              </gridSettings>
+              <bsbObject type='blue.orchestra.blueSynthBuilder.BSBGroup'>
+                <objectName></objectName>
+                <x>0</x>
+                <y>0</y>
+                <groupName>Group</groupName>
+                <backgroundColor>0x00000033</backgroundColor>
+                <borderColor>0x000000ff</borderColor>
+                <labelTextColor>0xffffffff</labelTextColor>
+                <titleEnabled>true</titleEnabled>
+                <width>20</width>
+                <height>20</height>
+                <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel' version='2'>
+                  <objectName></objectName>
+                  <x>11</x>
+                  <y>47</y>
+                  <label>Time Pointer</label>
+                  <font>
+                    <name>System Regular</name>
+                    <size>12.0</size>
+                  </font>
+                </bsbObject>
+                <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+                  <objectName>panning</objectName>
+                  <x>105</x>
+                  <y>76</y>
+                  <automationAllowed>true</automationAllowed>
+                  <minimum>-1.0</minimum>
+                  <maximum>1.0</maximum>
+                  <value>0.9</value>
+                  <knobWidth>60</knobWidth>
+                  <randomizable>true</randomizable>
+                  <valueDisplayEnabled>true</valueDisplayEnabled>
+                </bsbObject>
+                <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel' version='2'>
+                  <objectName></objectName>
+                  <x>11</x>
+                  <y>12</y>
+                  <label>File</label>
+                  <font>
+                    <name>System Regular</name>
+                    <size>12.0</size>
+                  </font>
+                </bsbObject>
+                <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel' version='2'>
+                  <objectName></objectName>
+                  <x>112</x>
+                  <y>46</y>
+                  <label>Space</label>
+                  <font>
+                    <name>System Regular</name>
+                    <size>12.0</size>
+                  </font>
+                </bsbObject>
+                <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+                  <objectName>timePointer</objectName>
+                  <x>18</x>
+                  <y>72</y>
+                  <automationAllowed>true</automationAllowed>
+                  <minimum>0.0</minimum>
+                  <maximum>2.3</maximum>
+                  <value>0.0</value>
+                  <knobWidth>60</knobWidth>
+                  <randomizable>true</randomizable>
+                  <valueDisplayEnabled>true</valueDisplayEnabled>
+                </bsbObject>
+                <bsbObject type='blue.orchestra.blueSynthBuilder.BSBFileSelector'>
+                  <objectName>pvocFile</objectName>
+                  <x>43</x>
+                  <y>5</y>
+                  <fileName>hellorcb.pvx</fileName>
+                  <textFieldWidth>300</textFieldWidth>
+                  <stringChannelEnabled>false</stringChannelEnabled>
+                </bsbObject>
+              </bsbObject>
+            </graphicInterface>
+            <parameterList>
+              <parameter uniqueId='917408358' name='timePointer' label='' min='0.0' max='2.3' bdresolution='-1' automationEnabled='true' value='0.0'>
+                <line name='timePointer' version='2' max='2.3' min='0.0' bdresolution='-1' color='-16776961' rightBound='true' endPointsLinked='false'>
+                  <linePoint x='0.0' y='0.0'/>
+                  <linePoint x='0.13267326732673268' y='1.014561027837259'/>
+                  <linePoint x='0.2902970297029703' y='0.1245833333333334'/>
+                  <linePoint x='0.48277227722772276' y='1.4184154175588863'/>
+                  <linePoint x='0.5667326732673267' y='1.0441113490364025'/>
+                  <linePoint x='0.6336633663366337' y='0.12312633832976436'/>
+                  <linePoint x='0.659009900990099' y='2.2458244111349037'/>
+                  <linePoint x='0.834059405940594' y='0.43832976445396143'/>
+                  <linePoint x='0.8772277227722772' y='1.9406249999999998'/>
+                  <linePoint x='1.0' y='0.0'/>
+                </line>
+              </parameter>
+              <parameter uniqueId='189239441' name='panning' label='' min='-1.0' max='1.0' bdresolution='-1' automationEnabled='true' value='0.9'>
+                <line name='panning' version='2' max='1.0' min='-1.0' bdresolution='-1' color='-14623488' rightBound='true' endPointsLinked='false'>
+                  <linePoint x='0.0' y='0.9'/>
+                  <linePoint x='0.25663366336633664' y='-0.8999999999999999'/>
+                  <linePoint x='0.3603960396039604' y='1.0'/>
+                  <linePoint x='0.403960396039604' y='-0.10000000000000009'/>
+                  <linePoint x='0.518019801980198' y='0.9666666666666666'/>
+                  <linePoint x='0.5417821782178218' y='-1.0'/>
+                  <linePoint x='0.5778217821782178' y='1.0'/>
+                  <linePoint x='0.6182178217821782' y='-1.0'/>
+                  <linePoint x='0.6186138613861386' y='1.0'/>
+                  <linePoint x='0.8114851485148515' y='-1.0'/>
+                  <linePoint x='1.0' y='0.9'/>
+                </line>
+              </parameter>
+            </parameterList>
+            <presetGroup name='Presets'/>
+            <opcodeList>
+              <udo>
+                <opcodeName>pan_gm2</opcodeName>
+                <outTypes>aa</outTypes>
+                <inTypes>ak</inTypes>
+                <codeBody>ain, kspace xin
+
+klast init -2
+kleft init 0
+kright init 0
+
+;from MIDI GM-2 Default Pan Curve (RP-036)
+;Left Channel Gain [dB] = 20*log (cos (Pi/2* max(0,CC#10 – 1)/126)
+;Right Channel Gain [dB] = 20*log (sin (Pi /2* max(0,CC#10 – 1)/126)
+
+if (kspace != klast) then
+ kpercent = (kspace + 1) / 2
+ kleft = ampdb(20 * log(cos($M_PI_2 * kpercent)))
+ kright = (kpercent == 0) ? 0 : ampdb(20 * log(sin($M_PI_2 * kpercent)))
+endif
+
+aleft = ain * kleft
+aright = ain * kright
+
+xout aleft, aright</codeBody>
+                <comments></comments>
+              </udo>
+            </opcodeList>
+          </instrument>
+          <comment/>
+        </soundObject>
+      </soundLayer>
+      <soundLayer name='' muted='false' solo='false' heightIndex='1'>
+        <noteProcessorChain/>
+        <soundObject type='blue.soundObject.Sound'>
+          <subjectiveDuration>18.227272727272727</subjectiveDuration>
+          <startTime>1.0909090909090908</startTime>
+          <name>PVOC Player</name>
+          <backgroundColor>-12566464</backgroundColor>
+          <instrument type='blue.orchestra.BlueSynthBuilder' editEnabled='true'>
+            <name>PVOC Player</name>
+            <comment></comment>
+            <globalOrc/>
+            <globalSco/>
+            <instrumentText>ktime	= &lt;timePointer&gt;
+kpan	= &lt;panning&gt;
+
+aout     pvoc           ktime,1, &quot;&lt;pvocFile&gt;&quot;
+
+aleft, aright pan_gm2 aout, kpan
+
+blueMixerOut aleft, aright</instrumentText>
+            <alwaysOnInstrumentText></alwaysOnInstrumentText>
+            <graphicInterface editEnabled='false'>
+              <gridSettings>
+                <width>10</width>
+                <height>10</height>
+                <gridStyle>NONE</gridStyle>
+                <snapGridEnabled>false</snapGridEnabled>
+              </gridSettings>
+              <bsbObject type='blue.orchestra.blueSynthBuilder.BSBGroup'>
+                <objectName></objectName>
+                <x>0</x>
+                <y>0</y>
+                <groupName>Group</groupName>
+                <backgroundColor>0x00000033</backgroundColor>
+                <borderColor>0x000000ff</borderColor>
+                <labelTextColor>0xffffffff</labelTextColor>
+                <titleEnabled>true</titleEnabled>
+                <width>20</width>
+                <height>20</height>
+                <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel' version='2'>
+                  <objectName></objectName>
+                  <x>112</x>
+                  <y>46</y>
+                  <label>Space</label>
+                  <font>
+                    <name>System Regular</name>
+                    <size>12.0</size>
+                  </font>
+                </bsbObject>
+                <bsbObject type='blue.orchestra.blueSynthBuilder.BSBFileSelector'>
+                  <objectName>pvocFile</objectName>
+                  <x>43</x>
+                  <y>5</y>
+                  <fileName>hellorcb.pvx</fileName>
+                  <textFieldWidth>300</textFieldWidth>
+                  <stringChannelEnabled>false</stringChannelEnabled>
+                </bsbObject>
+                <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel' version='2'>
+                  <objectName></objectName>
+                  <x>11</x>
+                  <y>47</y>
+                  <label>Time Pointer</label>
+                  <font>
+                    <name>System Regular</name>
+                    <size>12.0</size>
+                  </font>
+                </bsbObject>
+                <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+                  <objectName>timePointer</objectName>
+                  <x>18</x>
+                  <y>72</y>
+                  <automationAllowed>true</automationAllowed>
+                  <minimum>0.0</minimum>
+                  <maximum>2.3</maximum>
+                  <value>0.0</value>
+                  <knobWidth>60</knobWidth>
+                  <randomizable>true</randomizable>
+                  <valueDisplayEnabled>true</valueDisplayEnabled>
+                </bsbObject>
+                <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+                  <objectName>panning</objectName>
+                  <x>103</x>
+                  <y>71</y>
+                  <automationAllowed>true</automationAllowed>
+                  <minimum>-1.0</minimum>
+                  <maximum>1.0</maximum>
+                  <value>-0.5</value>
+                  <knobWidth>60</knobWidth>
+                  <randomizable>true</randomizable>
+                  <valueDisplayEnabled>true</valueDisplayEnabled>
+                </bsbObject>
+                <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel' version='2'>
+                  <objectName></objectName>
+                  <x>11</x>
+                  <y>12</y>
+                  <label>File</label>
+                  <font>
+                    <name>System Regular</name>
+                    <size>12.0</size>
+                  </font>
+                </bsbObject>
+              </bsbObject>
+            </graphicInterface>
+            <parameterList>
+              <parameter uniqueId='917408358' name='timePointer' label='' min='0.0' max='2.3' bdresolution='-1' automationEnabled='true' value='0.0'>
+                <line name='timePointer' version='2' max='2.3' min='0.0' bdresolution='-1' color='-14623488' rightBound='true' endPointsLinked='false'>
+                  <linePoint x='0.0' y='0.0'/>
+                  <linePoint x='0.04792079207920792' y='2.157173447537473'/>
+                  <linePoint x='0.13267326732673268' y='1.014561027837259'/>
+                  <linePoint x='0.27762376237623765' y='2.3'/>
+                  <linePoint x='0.2859405940594059' y='0.11820128479657399'/>
+                  <linePoint x='0.3413861386138614' y='2.029122055674518'/>
+                  <linePoint x='0.49425742574257425' y='0.35460385438972175'/>
+                  <linePoint x='0.5667326732673267' y='1.0441113490364025'/>
+                  <linePoint x='0.6' y='2.1867237687366163'/>
+                  <linePoint x='0.6336633663366337' y='0.12312633832976436'/>
+                  <linePoint x='0.659009900990099' y='2.2458244111349037'/>
+                  <linePoint x='0.834059405940594' y='0.43832976445396143'/>
+                  <linePoint x='0.939009900990099' y='2.3'/>
+                  <linePoint x='1.0' y='0.0'/>
+                </line>
+              </parameter>
+              <parameter uniqueId='190909607' name='panning' label='' min='-1.0' max='1.0' bdresolution='-1' automationEnabled='false' value='-0.5'>
+                <line name='' version='2' max='1.0' min='-1.0' bdresolution='-1' color='-8355712' rightBound='true' endPointsLinked='false'>
+                  <linePoint x='0.0' y='-0.5'/>
+                </line>
+              </parameter>
+            </parameterList>
+            <presetGroup name='Presets'/>
+            <opcodeList>
+              <udo>
+                <opcodeName>pan_gm2</opcodeName>
+                <outTypes>aa</outTypes>
+                <inTypes>ak</inTypes>
+                <codeBody>ain, kspace xin
+
+klast init -2
+kleft init 0
+kright init 0
+
+;from MIDI GM-2 Default Pan Curve (RP-036)
+;Left Channel Gain [dB] = 20*log (cos (Pi/2* max(0,CC#10 – 1)/126)
+;Right Channel Gain [dB] = 20*log (sin (Pi /2* max(0,CC#10 – 1)/126)
+
+if (kspace != klast) then
+ kpercent = (kspace + 1) / 2
+ kleft = ampdb(20 * log(cos($M_PI_2 * kpercent)))
+ kright = (kpercent == 0) ? 0 : ampdb(20 * log(sin($M_PI_2 * kpercent)))
+endif
+
+aleft = ain * kleft
+aright = ain * kright
+
+xout aleft, aright</codeBody>
+                <comments></comments>
+              </udo>
+            </opcodeList>
+          </instrument>
+          <comment/>
+        </soundObject>
+      </soundLayer>
+      <soundLayer name='' muted='false' solo='false' heightIndex='1'>
+        <noteProcessorChain/>
+        <soundObject type='blue.soundObject.Sound'>
+          <subjectiveDuration>17.272727272727273</subjectiveDuration>
+          <startTime>4.454545454545453</startTime>
+          <name>PVOC Player</name>
+          <backgroundColor>-12566464</backgroundColor>
+          <instrument type='blue.orchestra.BlueSynthBuilder' editEnabled='true'>
+            <name>PVOC Player</name>
+            <comment></comment>
+            <globalOrc/>
+            <globalSco/>
+            <instrumentText>ktime	= &lt;timePointer&gt;
+kpan	= &lt;panning&gt;
+
+aout     pvoc           ktime,1, &quot;&lt;pvocFile&gt;&quot;
+
+aleft, aright pan_gm2 aout, kpan
+
+blueMixerOut aleft, aright</instrumentText>
+            <alwaysOnInstrumentText></alwaysOnInstrumentText>
+            <graphicInterface editEnabled='false'>
+              <gridSettings>
+                <width>10</width>
+                <height>10</height>
+                <gridStyle>NONE</gridStyle>
+                <snapGridEnabled>false</snapGridEnabled>
+              </gridSettings>
+              <bsbObject type='blue.orchestra.blueSynthBuilder.BSBGroup'>
+                <objectName></objectName>
+                <x>0</x>
+                <y>0</y>
+                <groupName>Group</groupName>
+                <backgroundColor>0x00000033</backgroundColor>
+                <borderColor>0x000000ff</borderColor>
+                <labelTextColor>0xffffffff</labelTextColor>
+                <titleEnabled>true</titleEnabled>
+                <width>20</width>
+                <height>20</height>
+                <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel' version='2'>
+                  <objectName></objectName>
+                  <x>11</x>
+                  <y>12</y>
+                  <label>File</label>
+                  <font>
+                    <name>System Regular</name>
+                    <size>12.0</size>
+                  </font>
+                </bsbObject>
+                <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel' version='2'>
+                  <objectName></objectName>
+                  <x>112</x>
+                  <y>46</y>
+                  <label>Space</label>
+                  <font>
+                    <name>System Regular</name>
+                    <size>12.0</size>
+                  </font>
+                </bsbObject>
+                <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+                  <objectName>timePointer</objectName>
+                  <x>18</x>
+                  <y>72</y>
+                  <automationAllowed>true</automationAllowed>
+                  <minimum>0.0</minimum>
+                  <maximum>2.3</maximum>
+                  <value>0.0</value>
+                  <knobWidth>60</knobWidth>
+                  <randomizable>true</randomizable>
+                  <valueDisplayEnabled>true</valueDisplayEnabled>
+                </bsbObject>
+                <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+                  <objectName>panning</objectName>
+                  <x>103</x>
+                  <y>71</y>
+                  <automationAllowed>true</automationAllowed>
+                  <minimum>-1.0</minimum>
+                  <maximum>1.0</maximum>
+                  <value>0.6799999999999999</value>
+                  <knobWidth>60</knobWidth>
+                  <randomizable>true</randomizable>
+                  <valueDisplayEnabled>true</valueDisplayEnabled>
+                </bsbObject>
+                <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel' version='2'>
+                  <objectName></objectName>
+                  <x>11</x>
+                  <y>47</y>
+                  <label>Time Pointer</label>
+                  <font>
+                    <name>System Regular</name>
+                    <size>12.0</size>
+                  </font>
+                </bsbObject>
+                <bsbObject type='blue.orchestra.blueSynthBuilder.BSBFileSelector'>
+                  <objectName>pvocFile</objectName>
+                  <x>43</x>
+                  <y>5</y>
+                  <fileName>hellorcb.pvx</fileName>
+                  <textFieldWidth>300</textFieldWidth>
+                  <stringChannelEnabled>false</stringChannelEnabled>
+                </bsbObject>
+              </bsbObject>
+            </graphicInterface>
+            <parameterList>
+              <parameter uniqueId='917408358' name='timePointer' label='' min='0.0' max='2.3' bdresolution='-1' automationEnabled='true' value='0.0'>
+                <line name='timePointer' version='2' max='2.3' min='0.0' bdresolution='-1' color='-14623488' rightBound='true' endPointsLinked='false'>
+                  <linePoint x='0.0' y='0.0'/>
+                  <linePoint x='0.27960396039603963' y='0.7345549738219893'/>
+                  <linePoint x='0.5667326732673267' y='1.0441113490364025'/>
+                  <linePoint x='0.6233663366336634' y='1.0476439790575915'/>
+                  <linePoint x='0.8388118811881188' y='1.7581151832460733'/>
+                  <linePoint x='1.0' y='0.0'/>
+                </line>
+              </parameter>
+              <parameter uniqueId='190909607' name='panning' label='' min='-1.0' max='1.0' bdresolution='-1' automationEnabled='false' value='0.6799999999999999'>
+                <line name='' version='2' max='1.0' min='-1.0' bdresolution='-1' color='-8355712' rightBound='true' endPointsLinked='false'>
+                  <linePoint x='0.0' y='0.6799999999999999'/>
+                </line>
+              </parameter>
+            </parameterList>
+            <presetGroup name='Presets'/>
+            <opcodeList>
+              <udo>
+                <opcodeName>pan_gm2</opcodeName>
+                <outTypes>aa</outTypes>
+                <inTypes>ak</inTypes>
+                <codeBody>ain, kspace xin
+
+klast init -2
+kleft init 0
+kright init 0
+
+;from MIDI GM-2 Default Pan Curve (RP-036)
+;Left Channel Gain [dB] = 20*log (cos (Pi/2* max(0,CC#10 – 1)/126)
+;Right Channel Gain [dB] = 20*log (sin (Pi /2* max(0,CC#10 – 1)/126)
+
+if (kspace != klast) then
+ kpercent = (kspace + 1) / 2
+ kleft = ampdb(20 * log(cos($M_PI_2 * kpercent)))
+ kright = (kpercent == 0) ? 0 : ampdb(20 * log(sin($M_PI_2 * kpercent)))
+endif
+
+aleft = ain * kleft
+aright = ain * kright
+
+xout aleft, aright</codeBody>
+                <comments></comments>
+              </udo>
+            </opcodeList>
+          </instrument>
+          <comment/>
+        </soundObject>
+      </soundLayer>
+    </soundObject>
+  </score>
+  <scratchPadData>
+    <isWordWrapEnabled>true</isWordWrapEnabled>
+    <scratchText/>
+  </scratchPadData>
+  <noteProcessorChainMap/>
+  <renderStartTime>0.0</renderStartTime>
+  <renderEndTime>-1.0</renderEndTime>
+  <markersList/>
+  <loopRendering>false</loopRendering>
+  <midiInputProcessor>
+    <keyMapping>PCH</keyMapping>
+    <velMapping>MIDI</velMapping>
+    <pitchConstant/>
+    <ampConstant/>
+    <scale>
+      <scaleName>12TET</scaleName>
+      <baseFrequency>261.625565</baseFrequency>
+      <octave>2.0</octave>
+      <ratios>
+        <ratio>1.0</ratio>
+        <ratio>1.0594630943592953</ratio>
+        <ratio>1.122462048309373</ratio>
+        <ratio>1.1892071150027212</ratio>
+        <ratio>1.2599210498948734</ratio>
+        <ratio>1.3348398541700346</ratio>
+        <ratio>1.4142135623730954</ratio>
+        <ratio>1.498307076876682</ratio>
+        <ratio>1.5874010519682</ratio>
+        <ratio>1.6817928305074297</ratio>
+        <ratio>1.7817974362806794</ratio>
+        <ratio>1.887748625363388</ratio>
+      </ratios>
+    </scale>
+  </midiInputProcessor>
+  <pluginData>
+    <blueDataObject bdoType='blue.clojure.project.ClojureProjectData'/>
+  </pluginData>
+</blueData>

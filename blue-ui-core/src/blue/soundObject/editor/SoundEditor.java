@@ -110,10 +110,12 @@ public class SoundEditor extends ScoreObjectEditor {
                 lineView.widthProperty().bind(mainPane.widthProperty());
                 lineView.heightProperty().bind(mainPane.heightProperty().subtract(lineSelector.heightProperty()));
 
+                lineSelector.getChildren().add(0, btn);
+                lineSelector.setSpacing(5.0);
                 lineView.selectedLineProperty().bind(lineSelector.selectedLineProperty());
 
                 mainPane.setCenter(lineView);
-                mainPane.setTop(new BorderPane(lineSelector, null, null, null, btn));
+                mainPane.setTop(lineSelector);
 
                 btn.showingProperty().addListener((obs, old, newVal) -> {
                     if (newVal) {

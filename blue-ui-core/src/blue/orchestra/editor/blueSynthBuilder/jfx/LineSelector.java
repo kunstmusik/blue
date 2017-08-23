@@ -47,10 +47,13 @@ public class LineSelector extends HBox {
         leftButton.getStyleClass().add("left-arrow");
         leftButton.setOnAction((e) -> previousLine());
         leftButton.setOnAction((e) -> previousLine());
+        leftButton.setMaxHeight(Double.MAX_VALUE);
         rightButton = new Button();
         rightButton.getStyleClass().add("right-arrow");
         rightButton.setOnAction((e) -> nextLine());
+        rightButton.setMaxHeight(Double.MAX_VALUE);
         label.setMaxWidth(Double.MAX_VALUE);
+        label.setMaxHeight(Double.MAX_VALUE);
         HBox.setHgrow(label, Priority.ALWAYS);
         getChildren().addAll(label, leftButton, rightButton);
         selectedLine.addListener((obs, old, newVal) -> {

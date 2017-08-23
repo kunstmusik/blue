@@ -13,7 +13,7 @@ information.
 [CHANGE LOG]
 
 > Notes for 2.7.x <
-[release 2016.xx.xx]
+[release 2017.xx.xx]
 
 NEW
 
@@ -31,6 +31,11 @@ NEW
   JavaScriptObject
 
 * JavaScriptObject now supports "Process on Load" option
+
+* Issue #348 - Implemented Automation tab for Sound soundObject (allows 
+  automating any widget within SoundObject interface; automation is edited 
+  within Sound's editor window and scales to the duration of the Sound); also
+  added Comments fields for Sound and ObjectBuilder objects
 
 * Issue #342 - Program-wide User SoundObject Library
   * Implemented new Program-wide User SoundObject Library. Library is available
@@ -55,6 +60,9 @@ NEW
 
 * Issue #357 - Added maintenance of dialog size/location when Generating CSD to
   Screen
+
+* examples/techniques/pvoc2.blue added that shows similar concept as pvoc.blue 
+  but uses Sound soundObject and its new automation tab
 
 UPDATED
 
