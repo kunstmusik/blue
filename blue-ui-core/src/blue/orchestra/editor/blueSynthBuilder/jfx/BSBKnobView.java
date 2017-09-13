@@ -148,6 +148,8 @@ public class BSBKnobView extends BorderPane implements ResizeableView {
                 knobView.prefWidthProperty().bind(knob.knobWidthProperty());
                 knobView.prefHeightProperty().bind(knobViewHeight);
                 knobView.setValue(knob.getValue());
+                knobView.minWidthProperty().bind(knobView.prefWidthProperty());
+                knobView.minHeightProperty().bind(knobView.prefHeightProperty());
                 valuePanel.prefWidthProperty().bind(knobView.prefWidthProperty());
                 knob.valueDisplayEnabledProperty().addListener(vdeListener);
                 knob.knobValueProperty().valueProperty().addListener(knobToViewListener);
