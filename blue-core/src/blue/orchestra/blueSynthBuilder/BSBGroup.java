@@ -144,6 +144,7 @@ public class BSBGroup extends BSBObject implements Iterable<BSBObject>, UniqueNa
         setBackgroundColor(group.getBackgroundColor());
         setBorderColor(group.getBorderColor());
         setLabelTextColor(group.getLabelTextColor());
+        setTitleEnabled(group.isTitleEnabled());
         // FIXME - double check that not sharing UNM is correct (UNM 
 //        unm = group.unm;
 
