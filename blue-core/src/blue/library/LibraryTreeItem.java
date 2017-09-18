@@ -36,4 +36,9 @@ public class LibraryTreeItem<T extends LibraryItem<? extends SoundObject>> exten
         return getValue().getValue() != null; 
     }
 
+    public String toString(){
+        return isLeaf() ? 
+                getValue().getValue().getName() :
+                getValue().displayName;
+    }
 }

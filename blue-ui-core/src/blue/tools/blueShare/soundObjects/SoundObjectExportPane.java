@@ -1,15 +1,20 @@
-package blue.tools.blueShare.effects;
+package blue.tools.blueShare.soundObjects;
 
 import blue.BlueSystem;
-import blue.mixer.Effect;
+import blue.library.LibraryItem;
+import blue.soundObject.ObjectBuilder;
+import blue.soundObject.Sound;
+import blue.soundObject.SoundObject;
 import blue.tools.blueShare.BlueShareRemoteCaller;
+import blue.tools.blueShare.LibraryTreeModel;
 import blue.tools.blueShare.NamePasswordPanel;
-import blue.ui.core.mixer.EffectsLibrary;
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
+import java.util.HashMap;
+import javafx.scene.control.TreeItem;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JComponent;
@@ -43,10 +48,9 @@ import org.apache.xmlrpc.XmlRpcException;
  * @author unascribed
  * @version 1.0
  */
+public class SoundObjectExportPane extends JComponent {
 
-public class EffectExportPane extends JComponent {
-
-    private static final String SELECT_EFFECT_TEXT = "Select an Effect to export";
+    private static final String SELECT_INSTR_TEXT = "Select a SoundObject to export";
 
     NamePasswordPanel namePasswordPanel = new NamePasswordPanel();
 
@@ -60,11 +64,11 @@ public class EffectExportPane extends JComponent {
 
     JButton submitButton = new JButton();
 
-    JPanel instrumentListPanel = new JPanel();
+    JPanel soundObjectListPanel = new JPanel();
 
-    JTree effectLibraryTree = new JTree();
+    JTree soundObjectLibraryTree = new JTree();
 
-    JScrollPane instrumentListScrollPane = new JScrollPane();
+    JScrollPane soundObjectListScrollPane = new JScrollPane();
 
     JLabel iLabel = new JLabel();
 
@@ -78,9 +82,10 @@ public class EffectExportPane extends JComponent {
 
     JTree categoryTree = new JTree();
 
-    public EffectExportPane() {
+    public SoundObjectExportPane() {
 
-        effectLibraryTree.setModel(EffectsLibrary.getInstance());
+        soundObjectLibraryTree.setModel(
+                new LibraryTreeModel(BlueSystem.getSoundObjectLibrary()));
 
         try {
             jbInit();
@@ -88,8 +93,9 @@ public class EffectExportPane extends JComponent {
             e.printStackTrace();
         }
 
-        descriptionText.setText(SELECT_EFFECT_TEXT);
+        descriptionText.setText(SELECT_INSTR_TEXT);
         descriptionText.setEnabled(false);
+
     }
 
     private void jbInit() throws Exception {
@@ -97,7 +103,7 @@ public class EffectExportPane extends JComponent {
         this.setLayout(new BorderLayout());
         this.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
-        instrumentListPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5,
+        soundObjectListPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5,
                 5));
         categoryPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
@@ -110,23 +116,21 @@ public class EffectExportPane extends JComponent {
         this.add(jPanel2, BorderLayout.SOUTH);
 
         descriptionText.setText(BlueSystem
-                .getString("blueShare.effect.enterDescription"));
+                .getString("blueShare.enterDescription"));
         descriptionText.setLineWrap(true);
         descriptionScrollPane.setBorder(new TitledBorder(null, BlueSystem
-                .getString("blueShare.effect.effectDescription")));
+                .getString("blueShare.instrDescription")));
 
         submitButton.setText(BlueSystem.getString("common.submit"));
 
-        instrumentListPanel.setLayout(new BorderLayout());
-        iLabel.setText(BlueSystem
-                .getString("blueShare.effect.effectsFromEffectsLibrary"));
+        soundObjectListPanel.setLayout(new BorderLayout());
+        iLabel.setText("SoundObjects from Library");
 
-        // instrumentLibraryTree.setSelectionModel(TreeSelectionModel.SINGLE_TREE_SELECTION);
-
-        topSplitPane.add(instrumentListPanel, JSplitPane.LEFT);
-        instrumentListPanel.add(instrumentListScrollPane, BorderLayout.CENTER);
-        instrumentListPanel.add(iLabel, BorderLayout.NORTH);
-        instrumentListScrollPane.getViewport().add(effectLibraryTree, null);
+        // soundObjectLibraryTree.setSelectionModel(TreeSelectionModel.SINGLE_TREE_SELECTION);
+        topSplitPane.add(soundObjectListPanel, JSplitPane.LEFT);
+        soundObjectListPanel.add(soundObjectListScrollPane, BorderLayout.CENTER);
+        soundObjectListPanel.add(iLabel, BorderLayout.NORTH);
+        soundObjectListScrollPane.getViewport().add(soundObjectLibraryTree, null);
         descriptionScrollPane.getViewport().add(descriptionText, null);
         jPanel2.add(submitButton, null);
         topSplitPane.setDividerLocation(300);
@@ -144,39 +148,48 @@ public class EffectExportPane extends JComponent {
         mainSplitPane.setDividerLocation(200);
 
         submitButton.addActionListener((ActionEvent e) -> {
-            submitEffect();
+            submitSoundObject();
         });
 
-        effectLibraryTree.addMouseListener(new MouseAdapter() {
+        soundObjectLibraryTree.addMouseListener(new MouseAdapter() {
 
             @Override
             public void mouseClicked(MouseEvent e) {
 
-                TreePath path = effectLibraryTree.getSelectionPath();
+                TreePath path = soundObjectLibraryTree.getSelectionPath();
                 if (path == null) {
-                    descriptionText.setText(SELECT_EFFECT_TEXT);
+                    descriptionText.setText(SELECT_INSTR_TEXT);
                     descriptionText.setEnabled(false);
                     return;
                 }
 
                 Object userObj = path.getLastPathComponent();
+                TreeItem<LibraryItem<SoundObject>> node = 
+                    (TreeItem<LibraryItem<SoundObject>>) userObj;
 
-                if (!(userObj instanceof Effect)) {
-                    descriptionText.setText(SELECT_EFFECT_TEXT);
+                if (!node.isLeaf()) {
+                    descriptionText.setText(SELECT_INSTR_TEXT);
                     descriptionText.setEnabled(false);
                     return;
                 }
 
-                Effect effect = (Effect) userObj;
+                SoundObject instr = node.getValue().getValue();
 
-                descriptionText.setText(effect.getComments());
+                if (instr instanceof Sound) {
+                    descriptionText.setText(((Sound) instr).getComment());
+                } else if (instr instanceof ObjectBuilder) {
+                    descriptionText.setText(((ObjectBuilder) instr).getComment());
+                } else {
+                    descriptionText.setText("");
+                }
+
                 descriptionText.setEnabled(true);
             }
 
         });
     }
 
-    public void setCategories(BlueShareEffectCategory[] categories) {
+    public void setCategories(BlueShareSoundObjectCategory[] categories) {
         DefaultMutableTreeNode root = new DefaultMutableTreeNode(BlueSystem
                 .getString("common.categories"));
         addSubCategories(root, categories);
@@ -185,7 +198,7 @@ public class EffectExportPane extends JComponent {
     }
 
     private void addSubCategories(DefaultMutableTreeNode parent,
-            BlueShareEffectCategory[] categories) {
+            BlueShareSoundObjectCategory[] categories) {
         DefaultMutableTreeNode temp;
 
         for (int i = 0; i < categories.length; i++) {
@@ -195,56 +208,59 @@ public class EffectExportPane extends JComponent {
         }
     }
 
-    private void submitEffect() {
+    private void submitSoundObject() {
         try {
-            TreePath path = effectLibraryTree.getSelectionPath();
+            TreePath path = soundObjectLibraryTree.getSelectionPath();
             if (path == null) {
                 return;
             }
 
             Object userObj = path.getLastPathComponent();
 
-            if (!(userObj instanceof Effect)) {
+            TreeItem<LibraryItem<SoundObject>> node = 
+                    (TreeItem<LibraryItem<SoundObject>>) userObj;
+
+            if (!node.isLeaf()) {
                 return;
             }
 
-            Effect effect = (Effect) userObj;
+            SoundObject soundObject = node.getValue().getValue();
 
             DefaultMutableTreeNode tempNode = (DefaultMutableTreeNode) categoryTree
                     .getSelectionPath().getLastPathComponent();
-            BlueShareEffectCategory category = (BlueShareEffectCategory) tempNode
+            BlueShareSoundObjectCategory category = (BlueShareSoundObjectCategory) tempNode
                     .getUserObject();
 
             String username = namePasswordPanel.getUsername();
             String password = namePasswordPanel.getPassword();
 
             int categoryId = category.getCategoryId();
-            String name = effect.getName();
+            String name = soundObject.getName();
+            String soundObjectType = soundObject.getClass().getName();
             String description = descriptionText.getText();
 
-            String effectText = effect.saveAsXML().toString();
+            String soundObjectText = soundObject.saveAsXML(new HashMap<>()).toString();
 
-            System.out.println(effect.saveAsXML().getTextString());
+            System.out.println(soundObject.saveAsXML(new HashMap<>()).getTextString());
 
-            BlueShareRemoteCaller.submitEffect(username, password, categoryId,
-                    name, description, effectText);
+            BlueShareRemoteCaller.submitSoundObject(username, password,
+                    categoryId, name, soundObjectType, description,
+                    soundObjectText);
         } catch (IOException | XmlRpcException e) {
-            JOptionPane.showMessageDialog(null, BlueSystem
-                    .getString("blueShare.effect.errorSubmittingEffect")
+            JOptionPane.showMessageDialog(null, "Error submitting SoundObject"
                     + "\n\n" + e.getLocalizedMessage(), BlueSystem
                     .getString("common.error"), JOptionPane.ERROR_MESSAGE);
             e.printStackTrace();
             return;
         }
-        JOptionPane.showMessageDialog(null, BlueSystem
-                .getString("blueShare.effect.successfullyReceived"), BlueSystem
+        JOptionPane.showMessageDialog(null, "SoundObject was successfully received.", BlueSystem
                 .getString("common.success"), JOptionPane.PLAIN_MESSAGE);
     }
 
     public static void main(String[] args) {
-        EffectExportPane instrumentExportPane1 = new EffectExportPane();
-        blue.utility.GUI.showComponentAsStandalone(instrumentExportPane1,
-                "Instrument Export Pane Test", true);
+        SoundObjectExportPane soundObjectExportPane1 = new SoundObjectExportPane();
+        blue.utility.GUI.showComponentAsStandalone(soundObjectExportPane1,
+                "SoundObject Export Pane Test", true);
     }
 
 }
