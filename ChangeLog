@@ -64,6 +64,8 @@ NEW
 * examples/techniques/pvoc2.blue added that shows similar concept as pvoc.blue 
   but uses Sound soundObject and its new automation tab
 
+* Issue #358 - SoundObjects can now be shared on BlueShare
+
 UPDATED
 
 * Mixer:
@@ -121,6 +123,9 @@ FIX
 
 * Issue #345 - Parsing output from nGen revealed issue with parsing score 
   statements that were not i- or comments (notes would repeat)
+
+* Automation menu for selecting which parameter to automated did not always size 
+  width correctly
 
 INTERNAL
 
