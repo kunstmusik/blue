@@ -21,6 +21,9 @@ package blue.tools.blueShare;
 import blue.library.Library;
 import blue.library.LibraryItem;
 import blue.soundObject.SoundObject;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import javafx.scene.control.TreeItem;
 import javax.swing.event.TreeModelEvent;
 import javax.swing.event.TreeModelListener;
@@ -34,10 +37,20 @@ import javax.swing.tree.TreePath;
 public class LibraryTreeModel implements TreeModel {
 
     Library<? extends SoundObject> library;
+    List<TreeModelListener> listeners = 
+            Collections.synchronizedList(new ArrayList<>());
 
 
     public LibraryTreeModel(Library<? extends SoundObject> library) {
         this.library = library;
+
+        library.getRoot().addEventHandler(TreeItem.childrenModificationEvent(), 
+                evt -> {
+                    for(TreeModelListener listener : listeners) {
+                        listener.treeStructureChanged(new TreeModelEvent(this, new TreePath(library.getRoot())));
+                    }
+//                    System.out.println(evt.getEventType() + " : " + evt.); 
+                });
     }
 
     @Override
@@ -92,10 +105,12 @@ public class LibraryTreeModel implements TreeModel {
 
     @Override
     public void addTreeModelListener(TreeModelListener l) {
+        listeners.add(l);
     }
 
     @Override
     public void removeTreeModelListener(TreeModelListener l) {
+        listeners.remove(l);
     }
     
 }
