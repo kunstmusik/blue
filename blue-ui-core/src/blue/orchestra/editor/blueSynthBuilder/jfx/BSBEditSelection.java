@@ -161,7 +161,7 @@ public class BSBEditSelection {
     void nudgeVertical(int val) {
         if (selection.size() == 0
                 || selection.stream()
-                        .mapToInt(BSBObject::getX)
+                        .mapToInt(BSBObject::getY)
                         .summaryStatistics().getMin() + val <= 0) {
             return;
         }
