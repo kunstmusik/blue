@@ -23,6 +23,7 @@ import blue.components.lines.Line;
 import blue.components.lines.LineList;
 import blue.components.lines.LinePoint;
 import blue.jfx.BlueFX;
+import blue.utility.NumberUtilities;
 import java.util.Optional;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ObjectProperty;
@@ -165,8 +166,8 @@ public class LineView extends Canvas {
         gc.beginPath();
         for (int i = 0; i < line.size(); i++) {
             LinePoint lp = line.getLinePoint(i);
-            double x = lp.getX() * w;
-            double y = yToScreen(lp.getY(), min, max);
+            double x = Math.floor(lp.getX() * w);
+            double y = Math.floor(yToScreen(lp.getY(), min, max));
 
             if (i == 0) {
                 gc.moveTo(x, y);
@@ -185,9 +186,9 @@ public class LineView extends Canvas {
 
         for (int i = 0; i < line.size(); i++) {
             LinePoint lp = line.getLinePoint(i);
-            double x = lp.getX() * w;
-            double y = yToScreen(lp.getY(), min, max);
-            gc.fillRect(x - 2.5, y - 2.5, 5, 5);
+            double x = Math.floor(lp.getX() * w);
+            double y = Math.floor(yToScreen(lp.getY(), min, max));
+            gc.fillRect(x - 2, y - 2, 5, 5);
         }
     }
 
@@ -197,14 +198,52 @@ public class LineView extends Canvas {
             double min = getSelectedLine().getMin();
             double max = getSelectedLine().getMax();
 
-            double x = selectedPoint.getX() * getWidth();
-            double y = yToScreen(selectedPoint.getY(), min, max);
+            double x = Math.floor(selectedPoint.getX() * getWidth());
+            double y = Math.floor(yToScreen(selectedPoint.getY(), min, max));
 
             gc.setFill(Color.RED);
-            gc.fillRect(x - 2.5, y - 2.5, 5, 5);
+            gc.fillRect(x - 2, y - 2, 5, 5);
 
-//                drawPointInformation(g2d, x, y);
+            drawPointInformation(gc, x, y);
         }
+    }
+
+    /**
+     * @param g
+     * @param x
+     * @param y
+
+     */
+
+    private void drawPointInformation(GraphicsContext g2d, double x, double y) {
+
+        g2d.setFill(Color.WHITE);
+
+        double range = getSelectedLine().getMax() - getSelectedLine().getMin();
+
+        double yVal = selectedPoint.getY();
+        double xVal = selectedPoint.getX();
+
+
+        String xText = "x: " + NumberUtilities.formatDouble(xVal);
+        String yText = "y: " + NumberUtilities.formatDouble(yVal);
+
+        int width = 95;
+        int height = 28;
+
+        double xLoc = x + 5;
+        double yLoc = y + 5;
+
+        if (x + width > this.getWidth()) {
+            xLoc = x - width - 5;
+        }
+
+        if (y + height > this.getHeight()) {
+            yLoc = y - 14 - 5;
+        }
+
+        g2d.fillText(xText, xLoc, yLoc);
+        g2d.fillText(yText, xLoc, yLoc + 14);
     }
 
     private void mousePressed(MouseEvent me) {
@@ -327,8 +366,8 @@ public class LineView extends Canvas {
             double tempX = point.getX() * getWidth();
             double tempY = yToScreen(point.getY(), min, max);
 
-            if (tempX >= x - 2 && tempX <= x + 2 && tempY >= y - 2
-                    && tempY <= y + 2) {
+            if (tempX >= x - 3 && tempX <= x + 3 && tempY >= y - 3
+                    && tempY <= y + 3) {
                 return point;
             }
 

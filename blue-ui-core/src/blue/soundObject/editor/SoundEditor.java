@@ -34,20 +34,29 @@ import blue.jfx.BlueFX;
 import blue.orchestra.editor.blueSynthBuilder.jfx.LineSelector;
 import blue.plugin.ScoreObjectEditorPlugin;
 import blue.score.ScoreObject;
+import blue.score.ScoreObjectEvent;
+import blue.score.ScoreObjectListener;
 import blue.soundObject.NoteList;
 import blue.soundObject.Sound;
 import blue.soundObject.SoundObject;
 import blue.soundObject.editor.sound.ParameterLineView;
+import blue.soundObject.editor.sound.TimeBar;
 import blue.ui.core.orchestra.editor.BlueSynthBuilderEditor;
 import java.awt.BorderLayout;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import javafx.embed.swing.JFXPanel;
+import javafx.geometry.Insets;
 import javafx.scene.Scene;
 import javafx.scene.control.MenuButton;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.TextArea;
+import javafx.scene.layout.Background;
+import javafx.scene.layout.BackgroundFill;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.CornerRadii;
+import javafx.scene.layout.Pane;
+import javafx.scene.paint.Color;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -78,8 +87,18 @@ public class SoundEditor extends ScoreObjectEditor {
     ParameterLineView lineView;
     LineSelector lineSelector;
     private TextArea commentTextArea;
+    ScoreObjectListener sObjListener;
 
     public SoundEditor() {
+
+        sObjListener = evt -> {
+            if(evt.getPropertyChanged() == ScoreObjectEvent.START_TIME ) {
+                lineView.setStartTime(evt.getScoreObject().getStartTime());
+            } else if (evt.getPropertyChanged() == ScoreObjectEvent.DURATION) {
+                lineView.setDuration(evt.getScoreObject().getSubjectiveDuration());
+            }
+        };
+        
         try {
             jbInit();
         } catch (Exception e) {
@@ -113,8 +132,25 @@ public class SoundEditor extends ScoreObjectEditor {
                 lineSelector.getChildren().add(0, btn);
                 lineSelector.setSpacing(5.0);
                 lineView.selectedLineProperty().bind(lineSelector.selectedLineProperty());
+                
+                TimeBar tb = new TimeBar();
+                tb.startTimeProperty().bind(lineView.startTimeProperty());
+                tb.durationProperty().bind(lineView.durationProperty());
+                
+                Pane p = new Pane(lineView, tb);
+                p.setBackground(new Background(
+                        new BackgroundFill(
+                                Color.BLACK, CornerRadii.EMPTY, Insets.EMPTY)));
+                lineView.widthProperty().bind(p.widthProperty().subtract(20));
+                lineView.heightProperty().bind(p.heightProperty().subtract(40));
+                lineView.setLayoutX(10);
+                lineView.setLayoutY(30);
+                tb.widthProperty().bind(lineView.widthProperty());
+                tb.setHeight(20);
+                tb.setLayoutX(10);
+                tb.setLayoutY(10);
 
-                mainPane.setCenter(lineView);
+                mainPane.setCenter(p);
                 mainPane.setTop(lineSelector);
 
                 btn.showingProperty().addListener((obs, old, newVal) -> {
@@ -200,8 +236,10 @@ public class SoundEditor extends ScoreObjectEditor {
 
         if (this.sObj != null) {
             final Sound temp = this.sObj;
-            BlueFX.runOnFXThread(()
-                    -> temp.commentProperty().unbind());
+            BlueFX.runOnFXThread(() -> {
+                temp.commentProperty().unbind();
+                temp.removeScoreObjectListener(sObjListener);
+            });
         }
 
         this.sObj = (Sound) sObj;
@@ -223,8 +261,11 @@ public class SoundEditor extends ScoreObjectEditor {
                     lineList.add(p.getLine());
                 }
             }
+            lineView.setStartTime(this.sObj.getStartTime());
+            lineView.setDuration(this.sObj.getSubjectiveDuration());
             commentTextArea.setText(this.sObj.getComment());
             this.sObj.commentProperty().bind(commentTextArea.textProperty());
+            this.sObj.addScoreObjectListener(sObjListener);
         });
     }
 

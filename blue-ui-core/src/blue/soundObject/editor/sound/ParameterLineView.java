@@ -23,12 +23,18 @@ import blue.components.lines.Line;
 import blue.components.lines.LineList;
 import blue.components.lines.LinePoint;
 import blue.jfx.BlueFX;
+import blue.utility.NumberUtilities;
 import java.util.Optional;
 import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleObjectProperty;
+import javafx.beans.value.ObservableValue;
 import javafx.collections.ListChangeListener;
+import javafx.collections.ObservableList;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.ButtonType;
@@ -44,6 +50,7 @@ import javafx.scene.effect.Glow;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.paint.Color;
 import javafx.stage.Modality;
+import javafx.util.Callback;
 import javafx.util.converter.DoubleStringConverter;
 import javax.swing.event.TableModelListener;
 import org.controlsfx.tools.Utils;
@@ -56,6 +63,8 @@ public class ParameterLineView extends Canvas {
 
     private final LineList lineList;
     ObjectProperty<Line> selectedLine = new SimpleObjectProperty<>();
+    DoubleProperty startTime = new SimpleDoubleProperty(0.0);
+    DoubleProperty duration = new SimpleDoubleProperty(1.0);
     LinePoint selectedPoint = null;
     double leftBoundaryX = -1, rightBoundaryX = -1;
     double pressX = 0.0, pressY = 0.0;
@@ -119,18 +128,6 @@ public class ParameterLineView extends Canvas {
         return selectedLine;
     }
 
-    public final void setLocked(boolean value) {
-        locked.set(value);
-    }
-
-    public final boolean isLocked() {
-        return locked.get();
-    }
-
-    public final BooleanProperty lockedProperty() {
-        return locked;
-    }
-
     public void repaint() {
         GraphicsContext gc = getGraphicsContext2D();
         double w = getWidth();
@@ -139,6 +136,9 @@ public class ParameterLineView extends Canvas {
         gc.fillRect(0, 0, w, h);
 
         gc.setLineWidth(0.0);
+
+        gc.setStroke(Color.WHITE);
+        gc.strokeRect(0, 0, w, h);
 
         for (Line line : lineList) {
             boolean current = (line == getSelectedLine());
@@ -157,6 +157,42 @@ public class ParameterLineView extends Canvas {
         drawSelectedPoint(gc);
     }
 
+    public final void setStartTime(double value) {
+        startTime.set(value);
+    }
+
+    public final double getStartTime() {
+        return startTime.get();
+    }
+
+    public final DoubleProperty startTimeProperty() {
+        return startTime;
+    }
+
+    public final void setDuration(double value) {
+        duration.set(value);
+    }
+
+    public final double getDuration() {
+        return duration.get();
+    }
+
+    public final DoubleProperty durationProperty() {
+        return duration;
+    }
+
+    public final void setLocked(boolean value) {
+        locked.set(value);
+    }
+
+    public final boolean isLocked() {
+        return locked.get();
+    }
+
+    public final BooleanProperty lockedProperty() {
+        return locked;
+    }
+
     private void drawLine(Line line, GraphicsContext gc, double w, double h) {
         // TODO - replace with Affine transform
         double min = line.getMin();
@@ -165,8 +201,8 @@ public class ParameterLineView extends Canvas {
         gc.beginPath();
         for (int i = 0; i < line.size(); i++) {
             LinePoint lp = line.getLinePoint(i);
-            double x = lp.getX() * w;
-            double y = yToScreen(lp.getY(), min, max);
+            double x = Math.floor(lp.getX() * w);
+            double y = Math.floor(yToScreen(lp.getY(), min, max));
 
             if (i == 0) {
                 gc.moveTo(x, y);
@@ -185,9 +221,9 @@ public class ParameterLineView extends Canvas {
 
         for (int i = 0; i < line.size(); i++) {
             LinePoint lp = line.getLinePoint(i);
-            double x = lp.getX() * w;
-            double y = yToScreen(lp.getY(), min, max);
-            gc.fillRect(x - 2.5, y - 2.5, 5, 5);
+            double x = Math.floor(lp.getX() * w);
+            double y = Math.floor(yToScreen(lp.getY(), min, max));
+            gc.fillRect(x - 2, y - 2, 5, 5);
         }
     }
 
@@ -197,14 +233,50 @@ public class ParameterLineView extends Canvas {
             double min = getSelectedLine().getMin();
             double max = getSelectedLine().getMax();
 
-            double x = selectedPoint.getX() * getWidth();
-            double y = yToScreen(selectedPoint.getY(), min, max);
+            double x = Math.floor(selectedPoint.getX() * getWidth());
+            double y = Math.floor(yToScreen(selectedPoint.getY(), min, max));
 
             gc.setFill(Color.RED);
-            gc.fillRect(x - 2.5, y - 2.5, 5, 5);
+            gc.fillRect(x - 2, y - 2, 5, 5);
 
-//                drawPointInformation(g2d, x, y);
+            drawPointInformation(gc, x, y);
         }
+    }
+
+    /**
+     * @param g
+     * @param x
+     * @param y
+     *
+     */
+    private void drawPointInformation(GraphicsContext g2d, double x, double y) {
+
+        g2d.setFill(Color.WHITE);
+
+        double range = getSelectedLine().getMax() - getSelectedLine().getMin();
+
+        double yVal = selectedPoint.getY();
+        double xVal = getStartTime() + (selectedPoint.getX() * getDuration());
+
+        String xText = "x: " + NumberUtilities.formatDouble(xVal);
+        String yText = "y: " + NumberUtilities.formatDouble(yVal);
+
+        int width = 95;
+        int height = 28;
+
+        double xLoc = x + 5;
+        double yLoc = y + 5;
+
+        if (x + width > this.getWidth()) {
+            xLoc = x - width - 5;
+        }
+
+        if (y + height > this.getHeight()) {
+            yLoc = y - 14 - 5;
+        }
+
+        g2d.fillText(xText, xLoc, yLoc);
+        g2d.fillText(yText, xLoc, yLoc + 14);
     }
 
     private void mousePressed(MouseEvent me) {
@@ -413,18 +485,32 @@ public class ParameterLineView extends Canvas {
         table.setItems(getSelectedLine().getObservableList());
 
         table.setEditable(true);
-        xCol.setCellValueFactory(new PropertyValueFactory<LinePoint, Double>("x"));
+        xCol.setCellValueFactory(
+                new Callback<TableColumn.CellDataFeatures<LinePoint, Double>, 
+                        ObservableValue<Double>> ()
+        {
+            @Override
+            public ObservableValue<Double> call(TableColumn.CellDataFeatures<LinePoint, Double> param) {
+                return new ReadOnlyObjectWrapper<>(param.getValue().getX() * getDuration() + getStartTime());
+            }
+
+        });
         xCol.setCellFactory(TextFieldTableCell.forTableColumn(new DoubleStringConverter()));
         xCol.setOnEditCommit(te -> {
             LinePoint lp = te.getRowValue();
+            ObservableList<LinePoint> lpList = getSelectedLine().getObservableList();
             if (getSelectedLine().getLinePoint(0) == lp
                     || getSelectedLine().getLinePoint(getSelectedLine().size() - 1) == lp) {
                 return;
             }
-            lp.setX(Utils.clamp(0.0, te.getNewValue(), 1.0));
+            
+            int index = lpList.indexOf(lp);
+            double v = (te.getNewValue() - getStartTime()) / getDuration();
+            lp.setX(Utils.clamp(lpList.get(index - 1).getX(), v, lpList.get(index + 1).getX()));
         });
         xCol.setEditable(true);
-        yCol.setCellValueFactory(new PropertyValueFactory<LinePoint, Double>("y"));
+        
+        yCol.setCellValueFactory(new PropertyValueFactory<>("y"));
         yCol.setCellFactory(TextFieldTableCell.forTableColumn(new DoubleStringConverter()));
         yCol.setOnEditCommit(te -> {
             te.getRowValue().setY(

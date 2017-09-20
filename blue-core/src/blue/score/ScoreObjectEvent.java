@@ -19,8 +19,6 @@
  */
 package blue.score;
 
-import blue.score.ScoreObject;
-
 public class ScoreObjectEvent {
 
     public static final int NAME = 0;
