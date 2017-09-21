@@ -142,8 +142,6 @@ public class Installer extends ModuleInstall {
 
         logger.info("Finished blue PLAF installation");
 
-        MacFullScreenUtil.setWindowCanFullScreen(
-                WindowManager.getDefault().getMainWindow());
     }
 
     @Override
@@ -247,9 +245,13 @@ public class Installer extends ModuleInstall {
 //                    WindowManager.getDefault().getMainWindow());
 //        });
 
-        SwingUtilities.invokeLater(()
-                -> SwingUtilities.updateComponentTreeUI(
-                        WindowManager.getDefault().getMainWindow()));
+        WindowManager.getDefault().invokeWhenUIReady(
+                () -> {
+                    MacFullScreenUtil.setWindowCanFullScreen(
+                            WindowManager.getDefault().getMainWindow());
+//                    SwingUtilities.updateComponentTreeUI(
+//                            WindowManager.getDefault().getMainWindow());
+                });
 
     }
 
