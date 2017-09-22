@@ -19,12 +19,18 @@
  */
 package blue.noteProcessor;
 
-import java.io.Serializable;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 
-public class Code implements Serializable {
+public class Code {
 
     private String code = "";
+
+    public Code() {
+    }
+
+    public Code(Code code) {
+        this.code = code.code;
+    }
 
     public String getCode() {
         return code;

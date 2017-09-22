@@ -17,14 +17,14 @@ import javax.swing.undo.CannotUndoException;
 public class AlignEdit extends AbstractUndoableEdit {
     private ScoreObject[] soundObjects;
 
-    private float[] initalStartTimes;
+    private double[] initalStartTimes;
 
-    private float[] endingStartTimes;
+    private double[] endingStartTimes;
 
     private String presentationName;
 
-    public AlignEdit(ScoreObject[] soundObjects, float[] initialStartTimes,
-            float[] endingStartTimes) {
+    public AlignEdit(ScoreObject[] soundObjects, double[] initialStartTimes,
+            double[] endingStartTimes) {
         this.soundObjects = soundObjects;
         this.initalStartTimes = initialStartTimes;
         this.endingStartTimes = endingStartTimes;

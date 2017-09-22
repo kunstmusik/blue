@@ -26,6 +26,7 @@ public class BSBGraphicInterfaceTest extends TestCase {
     // TODO - should probably split this into multiple tests...
     public void testUniqueNames() {
         BSBGraphicInterface bsbInterface = new BSBGraphicInterface();
+        BSBGroup bsbGroup = bsbInterface.getRootGroup();
 
         BSBObjectEntry[] bsbObjects = BSBObjectRegistry.getBSBObjects();
 
@@ -48,10 +49,12 @@ public class BSBGraphicInterfaceTest extends TestCase {
                 continue;
             }
 
-            bsbInterface.addBSBObject(bsbObj);
+            bsbGroup.addBSBObject(bsbObj);
             bsbObj.setObjectName("test");
 
-            if (i == 0 || bsbObj instanceof BSBHSliderBank
+            // Tests that all objects after first do *not* allow setting of 
+            // object name since "test" should already be used
+            if (i < 2 || bsbObj instanceof BSBHSliderBank
                     || bsbObj instanceof BSBXYController) {
                 if (!bsbObj.getObjectName().equals("test")) {
                     System.err.println(bsbObj);
@@ -65,25 +68,25 @@ public class BSBGraphicInterfaceTest extends TestCase {
         BSBKnob knob = new BSBKnob();
         knob.setObjectName("testNameX");
 
-        bsbInterface.addBSBObject(knob);
+        bsbGroup.addBSBObject(knob);
 
         BSBXYController xyController = new BSBXYController();
-        bsbInterface.addBSBObject(xyController);
+        bsbGroup.addBSBObject(xyController);
         xyController.setObjectName("testName");
 
         assertEquals("", xyController.getObjectName());
 
-        assertEquals(5, bsbInterface.getNames().size());
+        assertEquals(5, bsbGroup.getNames().size());
 
         // testing clash of name when setting new number of sliders in
         // slider bank
         BSBHSlider hslider = new BSBHSlider();
         hslider.setObjectName("hslider_3");
 
-        bsbInterface.addBSBObject(hslider);
+        bsbGroup.addBSBObject(hslider);
 
         BSBHSliderBank hsliderBank = new BSBHSliderBank();
-        bsbInterface.addBSBObject(hsliderBank);
+        bsbGroup.addBSBObject(hsliderBank);
         hsliderBank.setObjectName("hslider");
 
         assertEquals("hslider", hsliderBank.getObjectName());
@@ -113,10 +116,10 @@ public class BSBGraphicInterfaceTest extends TestCase {
         BSBVSlider vslider = new BSBVSlider();
         vslider.setObjectName("vslider_3");
 
-        bsbInterface.addBSBObject(vslider);
+        bsbGroup.addBSBObject(vslider);
 
         BSBVSliderBank vsliderBank = new BSBVSliderBank();
-        bsbInterface.addBSBObject(vsliderBank);
+        bsbGroup.addBSBObject(vsliderBank);
         vsliderBank.setObjectName("vslider");
 
         assertEquals("vslider", vsliderBank.getObjectName());

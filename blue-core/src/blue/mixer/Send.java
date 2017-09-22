@@ -28,9 +28,7 @@ import electric.xml.Element;
 import electric.xml.Elements;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.Serializable;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Vector;
@@ -39,10 +37,10 @@ import java.util.Vector;
  * @author Steven Yi
  */
 
-public class Send implements Serializable, Automatable, ParameterListener {
+public class Send implements Automatable, ParameterListener {
     private String sendChannel = Channel.MASTER;
 
-    private float level = 1.0f;
+    private double level = 1.0f;
 
     private boolean enabled = true;
 
@@ -52,7 +50,7 @@ public class Send implements Serializable, Automatable, ParameterListener {
 
     private transient Vector<PropertyChangeListener> listeners = null;
 
-    private boolean updatingLine = false;
+    private transient boolean updatingLine = false;
 
     public Send() {
         this(true);
@@ -65,12 +63,22 @@ public class Send implements Serializable, Automatable, ParameterListener {
             levelParameter.setMin(0.0f, false);
             levelParameter.setMax(1.0f, false);
             levelParameter.setValue(1.0f);
-            levelParameter.setResolution(-1.0f);
+            levelParameter.setResolution(new BigDecimal(-1.0f));
 
             levelParameter.addParameterListener(this);
 
-            params.addParameter(levelParameter);
+            params.add(levelParameter);
         }
+    }
+
+    public Send(Send send) {
+        sendChannel = send.sendChannel;
+        level = send.level;
+        enabled = send.enabled;
+
+        levelParameter = new Parameter(send.levelParameter);
+        levelParameter.addParameterListener(this);
+        params.add(levelParameter);
     }
 
     public String getSendChannel() {
@@ -91,7 +99,7 @@ public class Send implements Serializable, Automatable, ParameterListener {
         firePropertyChangeEvent(pce);
     }
 
-    public float getLevel() {
+    public double getLevel() {
         return level;
     }
 
@@ -99,9 +107,9 @@ public class Send implements Serializable, Automatable, ParameterListener {
         return levelParameter;
     }
 
-    public void setLevel(float level) {
+    public void setLevel(double level) {
         if (levelParameter.isAutomationEnabled()) {
-            float time = ParameterTimeManagerFactory.getInstance().getTime();
+            double time = ParameterTimeManagerFactory.getInstance().getTime();
 
             if (time < 0) {
                 return;
@@ -132,11 +140,11 @@ public class Send implements Serializable, Automatable, ParameterListener {
             updatingLine = false;
         }
 
-        float oldVal = this.level;
+        double oldVal = this.level;
         this.level = level;
 
         PropertyChangeEvent pce = new PropertyChangeEvent(this, "level",
-                new Float(oldVal), new Float(level));
+                new Double(oldVal), new Double(level));
 
         firePropertyChangeEvent(pce);
     }
@@ -153,7 +161,7 @@ public class Send implements Serializable, Automatable, ParameterListener {
         Element retVal = new Element("send");
 
         retVal.addElement("sendChannel").setText(sendChannel);
-        retVal.addElement("level").setText(Float.toString(level));
+        retVal.addElement("level").setText(Double.toString(level));
         retVal.addElement("enabled").setText(Boolean.toString(enabled));
         retVal.addElement(levelParameter.saveAsXML());
 
@@ -173,7 +181,7 @@ public class Send implements Serializable, Automatable, ParameterListener {
                     send.sendChannel = node.getTextString();
                     break;
                 case "level":
-                    send.level = Float.parseFloat(node.getTextString());
+                    send.level = Double.parseDouble(node.getTextString());
                     break;
                 case "enabled":
                     send.enabled = Boolean.valueOf(node.getTextString())
@@ -182,7 +190,7 @@ public class Send implements Serializable, Automatable, ParameterListener {
                 case "parameter":
                     send.levelParameter = Parameter.loadFromXML(node);
                     send.levelParameter.addParameterListener(send);
-                    send.params.addParameter(send.levelParameter);
+                    send.params.add(send.levelParameter);
                     break;
             }
         }
@@ -193,11 +201,11 @@ public class Send implements Serializable, Automatable, ParameterListener {
             send.levelParameter.setMin(0.0f, false);
             send.levelParameter.setMax(1.0f, false);
             send.levelParameter.setValue(1.0f);
-            send.levelParameter.setResolution(-1.0f);
+            send.levelParameter.setResolution(new BigDecimal(-1.0f));
 
             send.levelParameter.addParameterListener(send);
 
-            send.params.addParameter(send.levelParameter);
+            send.params.add(send.levelParameter);
         }
 
         return send;
@@ -248,14 +256,14 @@ public class Send implements Serializable, Automatable, ParameterListener {
     @Override
     public void lineDataChanged(Parameter param) {
         if (!updatingLine) {
-            float time = ParameterTimeManagerFactory.getInstance().getTime();
-            float level = levelParameter.getLine().getValue(time);
+            double time = ParameterTimeManagerFactory.getInstance().getTime();
+            double level = levelParameter.getLine().getValue(time);
 
-            float oldVal = this.level;
+            double oldVal = this.level;
             this.level = level;
 
             PropertyChangeEvent pce = new PropertyChangeEvent(this, "level",
-                    new Float(oldVal), new Float(level));
+                    new Double(oldVal), new Double(level));
 
             firePropertyChangeEvent(pce);
         }
@@ -265,17 +273,6 @@ public class Send implements Serializable, Automatable, ParameterListener {
     public void parameterChanged(Parameter param) {
         // TODO Auto-generated method stub
 
-    }
-
-    /*
-     * This gets called as part of Serialization by Java and will do default
-     * serialization plus reconnect the Send to its parameter
-     */
-    private void readObject(ObjectInputStream stream) throws IOException,
-            ClassNotFoundException {
-        stream.defaultReadObject();
-
-        levelParameter.addParameterListener(this);
     }
 
     @Override

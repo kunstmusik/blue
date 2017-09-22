@@ -40,13 +40,13 @@ public final class GenerateCsdToScreenAction implements ActionListener {
         BlueData data = BlueProjectManager.getInstance().getCurrentBlueData();
         
         try {
-            float startTime = data.getRenderStartTime();
-            float endTime = data.getRenderEndTime();
+            double startTime = data.getRenderStartTime();
+            double endTime = data.getRenderEndTime();
 
             /*
-             * try { tempStart = Float.parseFloat(playStartText.getText()); }
+             * try { tempStart = Double.parseDouble(playStartText.getText()); }
              * catch(NumberFormatException nfe) { tempStart = 0.0f;
-             * playStartText.setText(Float.toString(tempStart));
+             * playStartText.setText(Double.toString(tempStart));
              * JOptionPane.showMessageDialog(null, BlueSystem
              * .getString("message.generateScore.startingFromZero")); }
              */

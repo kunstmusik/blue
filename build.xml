@@ -22,8 +22,8 @@
   </condition>
 
   <condition property="confReplacementString"
-               value="-J-Xms256m -J-Xmx768m -J-Dapple.laf.useScreenMenuBar=true"
-               else="-J-Xms256m -J-Xmx768m -J-Dswing.java2d.dpiaware=false -J-Dprism.allowhidpi=false">
+               value="-J-Xms256m -J-Xmx768m -J-Dapple.laf.useScreenMenuBar=true -J-da:com.sun.javafx.tk.quantum.EmbeddedSceneDnD -J-da:javafx.embed.swing.SwingDnD "
+               else="-J-Xms256m -J-Xmx768m -J-Dswing.java2d.dpiaware=false -J-Dprism.allowhidpi=false -J-da:com.sun.javafx.tk.quantum.EmbeddedSceneDnD -J-da:javafx.embed.swing.SwingDnD  ">
     <os family="mac"/>
   </condition>
 
@@ -152,12 +152,20 @@
 
     
   <target name="blue-manual-init">
-    <delete dir="${blue.manual.dir}" />
     <mkdir dir="${blue.manual.dir}" />
     <mkdir dir="${blue.manual.dir}/html" />
   </target>
 
-  <target name="blue-manual-html" depends="blue-manual-init" description="Create manual from Docbook">
+
+  <target name="-check-manual-html">
+    <uptodate property="blueHtmlManual.notRequired"
+      targetFile="${blue.manual.dir}/html/index.html">
+      <srcfiles dir="manual/docbook" includes="**/*.xml"/>
+    </uptodate>
+  </target>
+
+  <target name="blue-manual-html" depends="blue-manual-init,-check-manual-html" description="Create manual from Docbook"
+    unless="blueHtmlManual.notRequired">
     <copy file="manual/docbook/index.xml.in" tofile="manual/docbook/index.xml" overwrite="true"/>
 
     <replace file="manual/docbook/index.xml" token="[[version]]" value="${blueVersion}" />
@@ -187,7 +195,15 @@
   </target>
 
 
-  <target name="blue-manual-pdf" depends="blue-manual-init" description="Create PDF manual from Docbook">
+  <target name="-check-manual-pdf">
+    <uptodate property="bluePdfManual.notRequired"
+      targetFile="${blue.manual.dir}/blue_manual.pdf">
+      <srcfiles dir="manual/docbook" includes="**/*.xml"/>
+    </uptodate>
+  </target>
+
+  <target name="blue-manual-pdf" depends="blue-manual-init,-check-manual-pdf" 
+    description="Create PDF manual from Docbook" unless="bluePdfManual.notRequired">
     <copy file="manual/docbook/index.xml.in" tofile="manual/docbook/index.xml" />
 
     <replace file="manual/docbook/index.xml" token="[[version]]" value="${blueVersion}" />

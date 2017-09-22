@@ -23,25 +23,35 @@ import electric.xml.Element;
 import electric.xml.Elements;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
-import java.io.Serializable;
 import java.util.Map;
 
 /**
  *
  * @author stevenyi
  */
-public class LiveObjectBins implements Serializable {
+public class LiveObjectBins {
 
     private LiveObject[][] liveObjectBins;
-   
+
     transient PropertyChangeSupport listeners = new PropertyChangeSupport(this);
-    
+
     public LiveObjectBins() {
         this(new LiveObject[1][8]);
     }
 
     public LiveObjectBins(LiveObject[][] liveObjectBins) {
         this.liveObjectBins = liveObjectBins;
+    }
+
+    public LiveObjectBins(LiveObjectBins bins) {
+        liveObjectBins = bins.liveObjectBins.clone();
+        for (int i = 0; i < liveObjectBins.length; i++) {
+            for (int j = 0; j < liveObjectBins[i].length; j++) {
+                if (bins.liveObjectBins[i][j] != null) {
+                    liveObjectBins[i][j] = new LiveObject(bins.liveObjectBins[i][j]);
+                }
+            }
+        }
     }
 
     public static LiveObjectBins loadFromXML(Element data, Map<String, Object> objRefMap) throws Exception {
@@ -113,9 +123,9 @@ public class LiveObjectBins implements Serializable {
 
     public void setLiveObject(int column, int row, LiveObject liveObject) {
         LiveObject oldObject = liveObjectBins[column][row];
-        
+
         liveObjectBins[column][row] = liveObject;
-        
+
         listeners.firePropertyChange("liveObject", oldObject, liveObject);
     }
 
@@ -141,17 +151,17 @@ public class LiveObjectBins implements Serializable {
 
         int oldCount = liveObjectBins[0].length;
         liveObjectBins = newBins;
-        
+
         listeners.firePropertyChange("rowCount", oldCount, newBins[0].length);
     }
-    
+
     public void removeRow(int index) {
-        if(index < 0 || index >= liveObjectBins[0].length || liveObjectBins[0].length <= 1) {
+        if (index < 0 || index >= liveObjectBins[0].length || liveObjectBins[0].length <= 1) {
             return;
         }
-        
+
         LiveObject[][] newBins = new LiveObject[liveObjectBins.length][liveObjectBins[0].length - 1];
-        
+
         for (int i = 0; i < liveObjectBins.length; i++) {
             int writeCounter = 0;
 
@@ -162,10 +172,10 @@ public class LiveObjectBins implements Serializable {
                 }
             }
         }
-        
+
         int oldCount = liveObjectBins[0].length;
         liveObjectBins = newBins;
-        
+
         listeners.firePropertyChange("rowCount", oldCount, newBins[0].length);
     }
 
@@ -196,20 +206,20 @@ public class LiveObjectBins implements Serializable {
 
         listeners.firePropertyChange("columnCount", oldCount, newBins.length);
     }
-    
+
     public void removeColumn(int index) {
-        if(index < 0 || index >= liveObjectBins.length || liveObjectBins.length <= 1) {
+        if (index < 0 || index >= liveObjectBins.length || liveObjectBins.length <= 1) {
             return;
         }
-        
+
         LiveObject[][] newBins = new LiveObject[liveObjectBins.length - 1][liveObjectBins[0].length];
-        
+
         int writeCounter = 0;
         boolean inserted = false;
 
         for (int i = 0; i < liveObjectBins.length; i++) {
             if (i != index) {
-                
+
                 System.arraycopy(liveObjectBins[i], 0, newBins[writeCounter], 0, liveObjectBins[0].length);
                 writeCounter++;
             }
@@ -220,7 +230,6 @@ public class LiveObjectBins implements Serializable {
 
         listeners.firePropertyChange("columnCount", oldCount, newBins.length);
     }
-    
 
     public int getColumnCount() {
         return liveObjectBins.length;
@@ -233,99 +242,98 @@ public class LiveObjectBins implements Serializable {
     public LiveObject getLiveObject(int column, int row) {
         return liveObjectBins[column][row];
     }
-    
+
     public int getColumnForObject(LiveObject liveObject) {
-        if(liveObject == null) {
+        if (liveObject == null) {
             return -1;
         }
-        
-        for(int i = 0; i < liveObjectBins.length; i++) {
-            for(int j = 0; j < liveObjectBins[i].length; j++) {
-                if(liveObjectBins[i][j] == liveObject) {
+
+        for (int i = 0; i < liveObjectBins.length; i++) {
+            for (int j = 0; j < liveObjectBins[i].length; j++) {
+                if (liveObjectBins[i][j] == liveObject) {
                     return i;
                 }
             }
         }
         return - 1;
     }
-    
+
     public int getRowForObject(LiveObject liveObject) {
-        if(liveObject == null) {
+        if (liveObject == null) {
             return -1;
         }
-        
-        for(int i = 0; i < liveObjectBins.length; i++) {
-            for(int j = 0; j < liveObjectBins[i].length; j++) {
-                if(liveObjectBins[i][j] == liveObject) {
+
+        for (int i = 0; i < liveObjectBins.length; i++) {
+            for (int j = 0; j < liveObjectBins[i].length; j++) {
+                if (liveObjectBins[i][j] == liveObject) {
                     return j;
                 }
             }
         }
         return -1;
     }
-    
+
     /* CHANGE LISTENER */
-    
     public void addPropertyChangeListener(PropertyChangeListener cl) {
         listeners.addPropertyChangeListener(cl);
     }
-    
+
     public void removePropertyChangeListener(PropertyChangeListener cl) {
         listeners.removePropertyChangeListener(cl);
     }
 
     public LiveObjectSet getEnabledLiveObjectSet() {
-        
+
         LiveObjectSet retVal = new LiveObjectSet();
-        
-        for(int i = 0; i < liveObjectBins.length; i++) {
-            for(int j = 0; j < liveObjectBins[0].length; j++) {
+
+        for (int i = 0; i < liveObjectBins.length; i++) {
+            for (int j = 0; j < liveObjectBins[0].length; j++) {
                 LiveObject lObj = liveObjectBins[i][j];
-                
-                if(lObj != null && lObj.isEnabled()) {
+
+                if (lObj != null && lObj.isEnabled()) {
                     retVal.add(lObj);
                 }
             }
         }
-    
+
         return retVal;
     }
-    
+
     public void setEnabledFromLiveObjectSet(LiveObjectSet liveObjectSet) {
-        
-        for(int i = 0; i < liveObjectBins.length; i++) {
-            for(int j = 0; j < liveObjectBins[0].length; j++) {
+
+        for (int i = 0; i < liveObjectBins.length; i++) {
+            for (int j = 0; j < liveObjectBins[0].length; j++) {
                 LiveObject lObj = liveObjectBins[i][j];
-                
-                if(lObj != null && liveObjectSet.contains(lObj)) {
+
+                if (lObj != null && liveObjectSet.contains(lObj)) {
                     lObj.setEnabled(true);
                 } else {
                     lObj.setEnabled(false);
                 }
             }
         }
-        
+
         listeners.firePropertyChange("enabledStateChanged", false, false);
 
     }
 
     public LiveObject getLiveObjectByUniqueId(String uniqueId) {
-        
-        if(uniqueId == null) {
+
+        if (uniqueId == null) {
             return null;
         }
-        
-        for(int i = 0; i < liveObjectBins.length; i++) {
-            for(int j = 0; j < liveObjectBins[0].length; j++) {
+
+        for (int i = 0; i < liveObjectBins.length; i++) {
+            for (int j = 0; j < liveObjectBins[0].length; j++) {
                 LiveObject lObj = liveObjectBins[i][j];
-                
-                if(lObj != null && uniqueId.equals(lObj.getUniqueId())) {
+
+                if (lObj != null && uniqueId.equals(lObj.getUniqueId())) {
                     return lObj;
                 }
             }
         }
-        
+
         return null;
     }
-    
+
 }

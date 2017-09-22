@@ -1,11 +1,9 @@
 package blue;
 
-import blue.utility.ObjectUtilities;
 import blue.utility.ValuesUtility;
 import blue.utility.XMLUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
-import java.io.Serializable;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
 /**
@@ -15,20 +13,11 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
  * @author steven yi
  * @version 1.0
  */
-
-public final class ProjectProperties implements Serializable, Cloneable {
-    /*
-     * private String title; private String author; private String notes;
-     * private String CsOptions; private String sampleRate, controlRate,
-     * channels; private String commandLine;
-     */
+public final class ProjectProperties {
 
     public String title = "";
-
     public String author = "";
-
     public String notes = "";
-
 
     public String sampleRate = "44100";
     public String ksmps = "1";
@@ -41,11 +30,6 @@ public final class ProjectProperties implements Serializable, Cloneable {
     public String diskChannels = "2";
     public boolean diskUseZeroDbFS = false; // set false by default for legacy projects
     public String diskZeroDbFS = "1";
-
-    public String CsOptions = null; // for legacy data
-    public String controlRate = null; // to be removed
-    public String commandLine = null; // to be removed
-    public String diskCommandLine = null; // to be removed
 
     /* REALTIME SETTINGS */
     public boolean useAudioOut = true;
@@ -84,15 +68,51 @@ public final class ProjectProperties implements Serializable, Cloneable {
     public String diskAdvancedSettings = "";
 
     public boolean diskCompleteOverride = false;
-    
+
     public boolean diskAlwaysRenderEntireProject = false;
-    
+
     public ProjectProperties() {
-        /*
-         * title = ""; author = ""; notes = ""; sampleRate = "44100";
-         * controlRate = "22050"; channels = "2"; CsOptions = ""; commandLine =
-         * "csound";
-         */
+    }
+
+    public ProjectProperties(ProjectProperties props) {
+        title = props.title;
+        author = props.author;
+        notes = props.notes;
+
+        sampleRate = props.sampleRate;
+        ksmps = props.ksmps;
+        channels = props.channels;
+        useZeroDbFS = props.useZeroDbFS; // set false by default for legacy projects
+        zeroDbFS = props.zeroDbFS;
+
+        diskSampleRate = props.diskSampleRate;
+        diskKsmps = props.diskKsmps;
+        diskChannels = props.diskChannels;
+        diskUseZeroDbFS = props.diskUseZeroDbFS; // set false by default for legacy projects
+        diskZeroDbFS = props.diskZeroDbFS;
+
+        /* REALTIME SETTINGS */
+        useAudioOut = props.useAudioOut;
+        useAudioIn = props.useAudioIn;
+        useMidiIn = props.useMidiIn;
+        useMidiOut = props.useMidiOut;
+        noteAmpsEnabled = props.noteAmpsEnabled;
+        outOfRangeEnabled = props.outOfRangeEnabled;
+        warningsEnabled = props.warningsEnabled;
+        benchmarkEnabled = props.benchmarkEnabled;
+        advancedSettings = props.advancedSettings;
+        completeOverride = props.completeOverride;
+
+        /* DISK SETTINGS */
+        fileName = props.fileName;
+        askOnRender = props.askOnRender;
+        diskNoteAmpsEnabled = props.diskNoteAmpsEnabled;
+        diskOutOfRangeEnabled = props.diskOutOfRangeEnabled;
+        diskWarningsEnabled = props.diskWarningsEnabled;
+        diskBenchmarkEnabled = props.diskBenchmarkEnabled;
+        diskAdvancedSettings = props.diskAdvancedSettings;
+        diskCompleteOverride = props.diskCompleteOverride;
+        diskAlwaysRenderEntireProject = props.diskAlwaysRenderEntireProject;
     }
 
     public String getKsmps() {
@@ -242,7 +262,6 @@ public final class ProjectProperties implements Serializable, Cloneable {
         }
 
         // Upgrade Migration for older values
-
         if (kr != null && kr.length() > 0 && retVal.ksmps != null
                 && retVal.ksmps.length() == 0) {
             try {
@@ -290,7 +309,7 @@ public final class ProjectProperties implements Serializable, Cloneable {
         retVal.addElement("diskChannels").setText(diskChannels);
         retVal.addElement(XMLUtilities.writeBoolean("diskUseZeroDbFS", diskUseZeroDbFS));
         retVal.addElement("diskZeroDbFS").setText(diskZeroDbFS);
-        
+
         retVal
                 .addElement(XMLUtilities.writeBoolean("useAudioOut",
                         useAudioOut));
@@ -324,46 +343,10 @@ public final class ProjectProperties implements Serializable, Cloneable {
         retVal.addElement("diskAdvancedSettings").setText(diskAdvancedSettings);
         retVal.addElement(XMLUtilities.writeBoolean("diskCompleteOverride",
                 diskCompleteOverride));
-        retVal.addElement(XMLUtilities.writeBoolean("diskAlwaysRenderEntireProject", 
+        retVal.addElement(XMLUtilities.writeBoolean("diskAlwaysRenderEntireProject",
                 diskAlwaysRenderEntireProject));
-        
+
         return retVal;
     }
 
-    /* For upgrading from older projects
-     */
-
-    public void upgradeData() {
-        if(commandLine != null && advancedSettings.length() == 0) {
-            advancedSettings = commandLine;
-            completeOverride = true;
-            commandLine = null;
-        }
-
-        if(controlRate != null) {
-            try {
-                int val = Integer.parseInt(sampleRate) / Integer.parseInt(controlRate);
-                ksmps = Integer.toString(val);
-            } catch(Exception e) {
-                // ignore
-            }
-            controlRate = null;
-        }
-
-        if(CsOptions != null) {
-            advancedSettings = CsOptions;
-            CsOptions = null;
-        }
-
-        if(diskCommandLine != null && diskAdvancedSettings.length() == 0) {
-            diskAdvancedSettings = diskCommandLine;
-            diskCompleteOverride = true;
-            diskCommandLine = null;
-        }
-    }
-
-    @Override
-    public ProjectProperties clone() {
-        return (ProjectProperties) ObjectUtilities.clone(this);
-    }
 }

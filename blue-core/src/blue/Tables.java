@@ -14,7 +14,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.StringTokenizer;
 
-public class Tables implements java.io.Serializable, Cloneable {
+public class Tables {
     private String tables = "";
 
     // used when compiling tables from instruments that are used across
@@ -26,19 +26,16 @@ public class Tables implements java.io.Serializable, Cloneable {
     public Tables() {
     }
 
+    public Tables(Tables t) {
+        this.tables = t.tables;
+    }
+
     public String getTables() {
         return tables;
     }
 
     public void setTables(String tables) {
         this.tables = tables;
-    }
-
-    @Override
-    public Object clone() {
-        Tables temp = new Tables();
-        temp.setTables(this.getTables());
-        return temp;
     }
 
     /**

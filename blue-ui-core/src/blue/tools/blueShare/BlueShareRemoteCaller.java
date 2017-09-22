@@ -18,22 +18,22 @@ package blue.tools.blueShare;
  * @version 1.0
  */
 
-import Silence.XMLSerializer;
 import blue.mixer.Effect;
 import blue.orchestra.Instrument;
+import blue.soundObject.SoundObject;
 import blue.tools.blueShare.effects.BlueShareEffectCategory;
 import blue.tools.blueShare.effects.EffectOption;
 import blue.tools.blueShare.instruments.BlueShareInstrumentCategory;
 import blue.tools.blueShare.instruments.InstrumentOption;
+import blue.tools.blueShare.soundObjects.BlueShareSoundObjectCategory;
+import blue.tools.blueShare.soundObjects.SoundObjectOption;
 import blue.utility.ObjectUtilities;
 import electric.xml.Document;
 import electric.xml.Element;
 import electric.xml.Elements;
 import electric.xml.ParseException;
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.StringReader;
-import java.lang.reflect.InvocationTargetException;
+import java.util.HashMap;
 import java.util.Vector;
 import org.apache.xmlrpc.XmlRpcClient;
 import org.apache.xmlrpc.XmlRpcException;
@@ -220,17 +220,19 @@ public class BlueShareRemoteCaller {
         } catch (Exception e) {
         }
 
-        if (instrument == null) {
-            try {
-                XMLSerializer xmlSer = new XMLSerializer();
-                BufferedReader reader = new BufferedReader(new StringReader(
-                        result));
-                instrument = (Instrument) xmlSer.read(reader);
-                return instrument;
-            } catch (IOException | ClassNotFoundException | IllegalAccessException | InstantiationException | InvocationTargetException e) {
-                e.printStackTrace();
-            }
-        }
+        // FIXME - analyze what instruments may be in BlueShare that would require
+        // this and handle
+//        if (instrument == null) {
+//            try {
+//                XMLSerializer xmlSer = new XMLSerializer();
+//                BufferedReader reader = new BufferedReader(new StringReader(
+//                        result));
+//                instrument = (Instrument) xmlSer.read(reader);
+//                return instrument;
+//            } catch (IOException | ClassNotFoundException | IllegalAccessException | InstantiationException | InvocationTargetException e) {
+//                e.printStackTrace();
+//            }
+//        }
 
         return instrument;
 
@@ -484,6 +486,235 @@ public class BlueShareRemoteCaller {
         return true;
     }
 
+
+    /* SOUNDOBJECT METHODS */
+
+        public static BlueShareSoundObjectCategory[] getSoundObjectCategoryTree()
+            throws IOException, XmlRpcException, ParseException {
+        Vector v = new Vector();
+        String result;
+        Document doc;
+
+        result = (String) xrpc
+                .execute("blueShare.getSoundObjectCategoryTree", v);
+        doc = new Document(result);
+
+        Element root = doc.getRoot();
+        return getSoundObjectSubCategories(root);
+    }
+
+    private static BlueShareSoundObjectCategory[] getSoundObjectSubCategories(Element parent) {
+        Elements categories = parent.getElements();
+
+        BlueShareSoundObjectCategory[] iCategories = new BlueShareSoundObjectCategory[categories
+                .size()];
+        int i = 0;
+        int catId;
+        String name;
+        Element temp;
+        BlueShareSoundObjectCategory[] tempCategories;
+
+        while (categories.hasMoreElements()) {
+            temp = categories.next();
+            catId = Integer.parseInt(temp.getAttribute("soundObjectCategoryId")
+                    .getValue());
+            name = temp.getAttribute("name").getValue();
+            // description = temp.getElement("description").getTextString();
+            tempCategories = getSoundObjectSubCategories(temp);
+
+            iCategories[i] = new BlueShareSoundObjectCategory(catId, name, null,
+                    tempCategories);
+            i++;
+        }
+        return iCategories;
+    }
+
+    public static SoundObjectOption[] getLatestTenSoundObjects()
+            throws XmlRpcException, IOException, ParseException {
+
+        String result = (String) xrpc.execute("blueShare.getLatestTenSoundObjects",
+                new Vector());
+
+        Document doc = new Document(result);
+        Element root = doc.getRoot();
+        Elements soundObjects = root.getElements("soundObject");
+
+        SoundObjectOption[] iOptions = new SoundObjectOption[soundObjects.size()];
+        int i = 0;
+        int soundObjectId;
+        String screenName, name, type, description, category;
+        Element temp;
+
+        while (soundObjects.hasMoreElements()) {
+            temp = soundObjects.next();
+            soundObjectId = Integer.parseInt(temp.getAttribute("soundObjectId")
+                    .getValue());
+            screenName = temp.getElement("screenName").getTextString();
+            name = temp.getElement("name").getTextString();
+            type = temp.getElement("type").getTextString();
+            description = temp.getElement("description").getTextString();
+            category = temp.getElement("category").getTextString();
+
+            iOptions[i] = new SoundObjectOption(soundObjectId,
+                    checkNullString(screenName), checkNullString(name),
+                    checkNullString(type), checkNullString(description),
+                    checkNullString(category));
+            i++;
+        }
+        return iOptions;
+
+    }
+
+    public static SoundObjectOption[] getSoundObjectOptions(
+            BlueShareSoundObjectCategory iCategory) throws IOException,
+            XmlRpcException, ParseException {
+        Vector v = new Vector();
+        String result;
+        Document doc;
+
+        v.add(new Integer(iCategory.getCategoryId()));
+
+        result = (String) xrpc.execute("blueShare.getSoundObjectList", v);
+        doc = new Document(result);
+
+        Element root = doc.getRoot();
+        Elements soundObjects = root.getElements("soundObject");
+
+        SoundObjectOption[] iOptions = new SoundObjectOption[soundObjects.size()];
+        int i = 0;
+        int soundObjectId;
+        String screenName, name, type, description, category;
+        Element temp;
+
+        while (soundObjects.hasMoreElements()) {
+            temp = soundObjects.next();
+            soundObjectId = Integer.parseInt(temp.getAttribute("soundObjectId")
+                    .getValue());
+            screenName = temp.getElement("screenName").getTextString();
+            name = temp.getElement("name").getTextString();
+            type = temp.getElement("type").getTextString();
+            description = temp.getElement("description").getTextString();
+            category = temp.getElement("category").getTextString();
+
+            iOptions[i] = new SoundObjectOption(soundObjectId,
+                    checkNullString(screenName), checkNullString(name),
+                    checkNullString(type), checkNullString(description),
+                    checkNullString(category));
+            i++;
+        }
+        return iOptions;
+    }
+
+    public static SoundObjectOption[] getSoundObjectOptionsForUser(
+            String username, String password) throws IOException,
+            XmlRpcException, ParseException {
+        Vector v = new Vector();
+        String result;
+        Document doc;
+
+        v.add(username);
+        v.add(password);
+
+        result = (String) xrpc.execute("blueShare.getSoundObjectListForUser", v);
+        doc = new Document(result);
+
+        Element root = doc.getRoot();
+        Elements soundObjects = root.getElements("soundObject");
+
+        SoundObjectOption[] iOptions = new SoundObjectOption[soundObjects.size()];
+        int i = 0;
+        int soundObjectId;
+        String screenName, name, type, description, category;
+        Element temp;
+
+        while (soundObjects.hasMoreElements()) {
+            temp = soundObjects.next();
+            soundObjectId = Integer.parseInt(temp.getAttribute("soundObjectId")
+                    .getValue());
+            screenName = temp.getElement("screenName").getTextString();
+            name = temp.getElement("name").getTextString();
+            type = temp.getElement("type").getTextString();
+            description = temp.getElement("description").getTextString();
+            category = temp.getElement("category").getTextString();
+
+            iOptions[i] = new SoundObjectOption(soundObjectId,
+                    checkNullString(screenName), checkNullString(name),
+                    checkNullString(type), checkNullString(description),
+                    checkNullString(category));
+            i++;
+        }
+        return iOptions;
+    }
+
+    public static SoundObject getSoundObject(SoundObjectOption iOption)
+            throws IOException, XmlRpcException, ParseException {
+        Vector v = new Vector();
+        String result;
+
+        v.add(new Integer(iOption.getSoundObjectId()));
+
+        result = (String) xrpc.execute("blueShare.getSoundObject", v);
+
+        SoundObject soundObject = null;
+
+        try {
+            Document d = new Document(result);
+            soundObject = (SoundObject) ObjectUtilities.loadFromXML(d.getRoot(),
+                    new HashMap<>());
+        } catch (Exception e) {
+        }
+
+        // FIXME - analyze what instruments may be in BlueShare that would require
+        // this and handle
+//        if (instrument == null) {
+//            try {
+//                XMLSerializer xmlSer = new XMLSerializer();
+//                BufferedReader reader = new BufferedReader(new StringReader(
+//                        result));
+//                instrument = (Instrument) xmlSer.read(reader);
+//                return instrument;
+//            } catch (IOException | ClassNotFoundException | IllegalAccessException | InstantiationException | InvocationTargetException e) {
+//                e.printStackTrace();
+//            }
+//        }
+
+        return soundObject;
+    }
+
+    public static boolean submitSoundObject(String username, String password,
+            int categoryId, String name, String soundObjectType,
+            String description, String soundObjectText) throws IOException,
+            XmlRpcException {
+
+        Vector v = new Vector();
+
+        v.add(username);
+        v.add(password);
+        v.add(new Integer(categoryId));
+        v.add(name);
+        v.add(soundObjectType);
+        v.add(description);
+        v.add(soundObjectText);
+
+        String result;
+
+        result = (String) xrpc.execute("blueShare.submitSoundObject", v);
+
+        return true;
+    }
+
+    public static boolean removeSoundObject(String username, String password,
+            int soundObjectId) throws XmlRpcException, IOException {
+
+        Vector v = new Vector();
+        v.add(username);
+        v.add(password);
+        v.add(new Integer(soundObjectId));
+
+        return (Boolean) xrpc.execute("blueShare.removeSoundObject", v);
+    }
+
+    
     /* UTILITY METHODS */
 
     private static String checkNullString(String stringToCheck) {

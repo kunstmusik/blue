@@ -156,8 +156,8 @@ public class Grapher extends JComponent {
                     }
 
                     if (selectedPoint != null) {
-                        selectedPoint.time = screenToFloatX(x);
-                        selectedPoint.value = screenToFloatY(y);
+                        selectedPoint.time = screenToDoubleX(x);
+                        selectedPoint.value = screenToDoubleY(y);
                         repaint();
                     }
                 } else if (selectedGraph != null) {
@@ -211,8 +211,8 @@ public class Grapher extends JComponent {
      */
     protected CGraphPoint insertGraphPoint(int x, int y) {
         CGraphPoint point = new CGraphPoint();
-        point.time = screenToFloatX(x);
-        point.value = screenToFloatY(y);
+        point.time = screenToDoubleX(x);
+        point.value = screenToDoubleY(y);
 
         ArrayList points = currentGraph.getPoints();
         int index = 1;
@@ -249,8 +249,8 @@ public class Grapher extends JComponent {
             if (points.get(i) == selectedPoint) {
                 CGraphPoint p1 = (CGraphPoint) points.get(i - 1);
                 CGraphPoint p2 = (CGraphPoint) points.get(i + 1);
-                leftBoundaryX = floatToScreenX(p1.time);
-                rightBoundaryX = floatToScreenX(p2.time);
+                leftBoundaryX = doubleToScreenX(p1.time);
+                rightBoundaryX = doubleToScreenX(p2.time);
                 return;
             }
         }
@@ -263,8 +263,8 @@ public class Grapher extends JComponent {
                 .hasNext();) {
             CGraphPoint point = (CGraphPoint) iter.next();
 
-            int tempX = floatToScreenX(point.time);
-            int tempY = floatToScreenY(point.value);
+            int tempX = doubleToScreenX(point.time);
+            int tempY = doubleToScreenY(point.value);
 
             if (tempX >= x - 2 && tempX <= x + 2 && tempY >= y - 2
                     && tempY <= y + 2) {
@@ -281,7 +281,7 @@ public class Grapher extends JComponent {
                 .hasNext();) {
             CGraphPoint point = (CGraphPoint) iter.next();
 
-            int tempX = floatToScreenX(point.time);
+            int tempX = doubleToScreenX(point.time);
 
             if (tempX >= x - 2 && tempX <= x + 2) {
                 return point;
@@ -326,7 +326,7 @@ public class Grapher extends JComponent {
         repaint();
     }
 
-    public void setDuration(float duration) {
+    public void setDuration(double duration) {
         // TODO -rescale all graph points to new time
         // -set new duration
     }
@@ -406,8 +406,8 @@ public class Grapher extends JComponent {
         }
 
         if (selectedPoint != null) {
-            int x = floatToScreenX(selectedPoint.time);
-            int y = floatToScreenY(selectedPoint.value);
+            int x = doubleToScreenX(selectedPoint.time);
+            int y = doubleToScreenY(selectedPoint.value);
 
             g2d.setColor(Color.red);
             paintPoint(g2d, x, y);
@@ -426,8 +426,8 @@ public class Grapher extends JComponent {
     private void drawPointInformation(Graphics2D g2d, int x, int y) {
         g2d.setColor(Color.white);
 
-        float range = currentGraph.getMax() - currentGraph.getMin();
-        float yVal = (selectedPoint.value * range) + currentGraph.getMin();
+        double range = currentGraph.getMax() - currentGraph.getMin();
+        double yVal = (selectedPoint.value * range) + currentGraph.getMin();
 
         String xText = "x: " + selectedPoint.time;
         String yText = "y: " + yVal;
@@ -469,10 +469,10 @@ public class Grapher extends JComponent {
      */
     private final void drawGraph(Graphics g, CGraph tempGraph,
             boolean drawPoints) {
-        // float max = tempGraph.getMax();
-        // float min = tempGraph.getMin();
+        // double max = tempGraph.getMax();
+        // double min = tempGraph.getMin();
 
-        // float diff = max - min;
+        // double diff = max - min;
 
         // int width = this.getWidth() - 10;
         // int height = this.getHeight() - 10;
@@ -483,8 +483,8 @@ public class Grapher extends JComponent {
         for (Iterator iter = tempGraph.getPoints().iterator(); iter.hasNext();) {
             CGraphPoint point = (CGraphPoint) iter.next();
 
-            int x = floatToScreenX(point.time);
-            int y = floatToScreenY(point.value);
+            int x = doubleToScreenX(point.time);
+            int y = doubleToScreenY(point.value);
 
             if (drawPoints) {
                 paintPoint(g, x, y);
@@ -503,25 +503,25 @@ public class Grapher extends JComponent {
         g.fillRect(x - 2, y - 2, 5, 5);
     }
 
-    private final int floatToScreenX(float val) {
+    private final int doubleToScreenX(double val) {
         int width = this.getWidth() - 10;
-        return Math.round(val * width) + 5;
+        return (int)Math.round(val * width) + 5;
     }
 
-    private final int floatToScreenY(float val) {
+    private final int doubleToScreenY(double val) {
         int height = this.getHeight() - 10;
-        int y = Math.round(height * (1.0f - val)) + 5;
+        int y = (int)Math.round(height * (1.0f - val)) + 5;
 
         return y;
     }
 
-    private final float screenToFloatX(int val) {
-        float width = this.getWidth() - 10;
+    private final double screenToDoubleX(int val) {
+        double width = this.getWidth() - 10;
         return (val - 5) / width;
     }
 
-    private final float screenToFloatY(int val) {
-        float height = this.getHeight() - 10;
+    private final double screenToDoubleY(int val) {
+        double height = this.getHeight() - 10;
         return 1 - ((val - 5) / height);
     }
 
@@ -541,7 +541,7 @@ public class Grapher extends JComponent {
             return;
         }
 
-        this.copyBufferGraph = currentGraph.copy();
+        this.copyBufferGraph = new CGraph(currentGraph);
     }
 
     public void pasteGraph() {
@@ -601,14 +601,14 @@ public class Grapher extends JComponent {
                 .hasNext();) {
             CGraphPoint point = (CGraphPoint) iter.next();
 
-            int val = floatToScreenY(point.value);
+            int val = doubleToScreenY(point.value);
             val -= 1;
 
             if (val < 5) {
                 val = 5;
             }
 
-            point.value = screenToFloatY(val);
+            point.value = screenToDoubleY(val);
 
         }
 
@@ -624,14 +624,14 @@ public class Grapher extends JComponent {
                 .hasNext();) {
             CGraphPoint point = (CGraphPoint) iter.next();
 
-            int val = floatToScreenY(point.value);
+            int val = doubleToScreenY(point.value);
             val += 1;
 
             if (val > this.getHeight() - 5) {
                 val = this.getHeight() - 5;
             }
 
-            point.value = screenToFloatY(val);
+            point.value = screenToDoubleY(val);
 
         }
 
@@ -647,9 +647,9 @@ public class Grapher extends JComponent {
 
         for (int i = 0; i < NOISE_POINTS; i++) {
             CGraphPoint point = new CGraphPoint();
-            float percent = (float) i / (NOISE_POINTS - 1);
+            double percent = (double) i / (NOISE_POINTS - 1);
             point.time = percent;
-            point.value = (float) Math.sin(percent * 2 * Math.PI);
+            point.value = (double) Math.sin(percent * 2 * Math.PI);
             point.value = (point.value * .5f) + .5f;
 
             points.add(point);
@@ -679,8 +679,8 @@ public class Grapher extends JComponent {
 
         for (int i = 0; i < NOISE_POINTS; i++) {
             CGraphPoint point = new CGraphPoint();
-            point.time = (float) Math.random();
-            point.value = (float) Math.random();
+            point.time = (double) Math.random();
+            point.value = (double) Math.random();
 
             points.add(point);
         }

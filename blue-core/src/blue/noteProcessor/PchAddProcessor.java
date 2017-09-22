@@ -26,14 +26,17 @@ import electric.xml.Element;
  */
 
 @NoteProcessorPlugin(displayName="PchAddProcessor", position = 20)
-public class PchAddProcessor implements NoteProcessor, java.io.Serializable {
+public class PchAddProcessor implements NoteProcessor {
 
     int value = 0;
 
-    // float floatVal = 0.0f;
     int pfield = 4;
 
     public PchAddProcessor() {
+    }
+    public PchAddProcessor(PchAddProcessor pap) {
+        value = pap.value;
+        pfield = pap.pfield;
     }
 
     @Override
@@ -70,10 +73,10 @@ public class PchAddProcessor implements NoteProcessor, java.io.Serializable {
 
             try {
                 val = temp.getPField(pfield).trim();
-                Float.parseFloat(val);
+                Double.parseDouble(val);
             } catch (NumberFormatException ex) {
                 throw new NoteProcessorException(this, BlueSystem
-                        .getString("noteProcessorException.pfieldNotFloat"),
+                        .getString("noteProcessorException.pfieldNotDouble"),
                         pfield);
             } catch (Exception ex) {
                 throw new NoteProcessorException(this, BlueSystem
@@ -81,14 +84,14 @@ public class PchAddProcessor implements NoteProcessor, java.io.Serializable {
                         pfield);
             }
 
-            float baseTen = blue.utility.ScoreUtilities.getBaseTen(val);
+            double baseTen = blue.utility.ScoreUtilities.getBaseTen(val);
 
             baseTen += value;
 
             int octave = (int) (baseTen / 12);
-            float strPch = (baseTen % 12) / 100;
+            double strPch = (baseTen % 12) / 100;
 
-            temp.setPField(Float.toString(octave + strPch), pfield);
+            temp.setPField(Double.toString(octave + strPch), pfield);
         }
     }
 
@@ -142,6 +145,11 @@ public class PchAddProcessor implements NoteProcessor, java.io.Serializable {
         retVal.addElement("value").setText(this.getVal());
 
         return retVal;
+    }
+
+    @Override
+    public PchAddProcessor deepCopy() {
+        return new PchAddProcessor(this);
     }
 
 }

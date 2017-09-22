@@ -65,12 +65,12 @@ public final class ReverseAction extends AbstractAction
             return;
         }
 
-        float start = Float.MAX_VALUE;
-        float end = Float.MIN_VALUE;
+        double start = Double.MAX_VALUE;
+        double end = Double.MIN_VALUE;
 
         for (ScoreObject scoreObject : scoreObjects) {
-            float tempStart = scoreObject.getStartTime();
-            float tempEnd = tempStart + scoreObject.getSubjectiveDuration();
+            double tempStart = scoreObject.getStartTime();
+            double tempEnd = tempStart + scoreObject.getSubjectiveDuration();
 
             if (tempStart < start) {
                 start = tempStart;
@@ -84,15 +84,15 @@ public final class ReverseAction extends AbstractAction
         int len = scoreObjects.size();
         ScoreObject[] objects = scoreObjects.<ScoreObject>toArray(
                 new ScoreObject[scoreObjects.size()]);
-        float[] startTimes = new float[len];
-        float[] endTimes = new float[len];
+        double[] startTimes = new double[len];
+        double[] endTimes = new double[len];
         
         for (int i = 0; i < len; i++) {
             ScoreObject scoreObj = objects[i];
-            float tempStart = scoreObj.getStartTime();
-            float tempEnd = tempStart + scoreObj.getSubjectiveDuration();
+            double tempStart = scoreObj.getStartTime();
+            double tempEnd = tempStart + scoreObj.getSubjectiveDuration();
 
-            float newStart = start + (end - tempEnd);
+            double newStart = start + (end - tempEnd);
 
             scoreObj.setStartTime(newStart);
 

@@ -19,7 +19,6 @@
  */
 package blue.soundObject.jmask.probability;
 
-//import blue.soundObject.editor.jmask.probability.WeibullEditor;
 import blue.soundObject.jmask.Table;
 import blue.utility.XMLUtilities;
 import electric.xml.Element;
@@ -35,13 +34,16 @@ public class Weibull implements ProbabilityGenerator {
 
     private boolean tTableEnabled = false;
 
-    private Table sTable = new Table();
+    private Table sTable; 
 
-    private Table tTable = new Table();
+    private Table tTable;
 
     public Weibull() {
         s = 0.5;
         t = 2.0;
+
+        sTable = new Table();
+        tTable = new Table();
 
         tTable.setMax(4.0, false);
         tTable.setMin(0.001, false);
@@ -50,6 +52,15 @@ public class Weibull implements ProbabilityGenerator {
         sTable.getPoint(1).setValue(0.5);
         tTable.getPoint(0).setValue(2.0);
         tTable.getPoint(1).setValue(2.0);
+    }
+
+    public Weibull(Weibull wb) {
+        s = wb.s;
+        t = wb.t;
+        sTableEnabled = wb.sTableEnabled;
+        tTableEnabled = wb.tTableEnabled;
+        sTable = new Table(wb.sTable);
+        tTable = new Table(wb.tTable);
     }
 
     public static ProbabilityGenerator loadFromXML(Element data) {
@@ -111,11 +122,6 @@ public class Weibull implements ProbabilityGenerator {
 
         return retVal;
     }
-
-//    public JComponent getEditor() {
-//        return new WeibullEditor(this);
-//
-//    }
 
     @Override
     public String getName() {
@@ -197,5 +203,10 @@ public class Weibull implements ProbabilityGenerator {
 
     public void setTTable(Table tTable) {
         this.tTable = tTable;
+    }
+
+    @Override
+    public Weibull deepCopy() {
+        return new Weibull(this);
     }
 }

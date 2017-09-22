@@ -50,12 +50,12 @@ public class MoveScoreObjectsListener extends BlueMouseAdapter {
     private Point startPoint;
 
     //Collection<? extends ScoreObject> selectedScoreObjects = null;
-    //Map<ScoreObject, Float> startTimes = new HashMap<>();
+    //Map<ScoreObject, Double> startTimes = new HashMap<>();
     boolean initialDrag = true;
 
     private ScoreObject[] selectedScoreObjects = null;
-    private float[] startTimes = null;
-    private float minDiffTime = Float.MIN_VALUE;
+    private double[] startTimes = null;
+    private double minDiffTime = Double.MIN_VALUE;
     private int[] startLayerIndices = null;
     private int[] currentLayerIndices = null;
 
@@ -112,11 +112,11 @@ public class MoveScoreObjectsListener extends BlueMouseAdapter {
 
         startPoint = e.getPoint();
         selectedScoreObjects = temp.toArray(new ScoreObject[0]);
-        startTimes = new float[selectedScoreObjects.length];
+        startTimes = new double[selectedScoreObjects.length];
         startLayerIndices = new int[selectedScoreObjects.length];
         currentLayerIndices = new int[selectedScoreObjects.length];
 
-        minDiffTime = Float.MAX_VALUE;
+        minDiffTime = Double.MAX_VALUE;
 
         startLayer = scorePath.getGlobalLayerIndexForY(e.getY());
         lastLayerAdjust = 0;
@@ -158,7 +158,7 @@ public class MoveScoreObjectsListener extends BlueMouseAdapter {
             if ((e.getModifiers() & OS_CTRL_KEY) == OS_CTRL_KEY) {
                 for (int i = 0; i < selectedScoreObjects.length; i++) {
                     ScoreObject original = selectedScoreObjects[i];
-                    ScoreObject clone = original.clone();
+                    ScoreObject clone = original.deepCopy();
                     ScoreObjectLayer layer = (ScoreObjectLayer) allLayers.get(
                             startLayerIndices[i]);
                     layer.add(clone);
@@ -169,7 +169,7 @@ public class MoveScoreObjectsListener extends BlueMouseAdapter {
             }
         }
 
-        float diffTime = e.getX() - startPoint.x;
+        double diffTime = e.getX() - startPoint.x;
         TimeState timeState = scoreTC.getTimeState();
         diffTime = diffTime / timeState.getPixelSecond();
 
@@ -179,8 +179,8 @@ public class MoveScoreObjectsListener extends BlueMouseAdapter {
 
         if (timeState.isSnapEnabled()) {
 
-            float tempStart = -minDiffTime + diffTime;
-            float snappedStart = ScoreUtilities.getSnapValueMove(tempStart,
+            double tempStart = -minDiffTime + diffTime;
+            double snappedStart = ScoreUtilities.getSnapValueMove(tempStart,
                     timeState.getSnapValue());
 
             diffTime = snappedStart + minDiffTime;
@@ -227,7 +227,7 @@ public class MoveScoreObjectsListener extends BlueMouseAdapter {
             List<Layer> allLayers = ScoreController.getInstance().getScorePath().getAllLayers();
 
             int len = startTimes.length;
-            float[] endTimes = new float[len];
+            double[] endTimes = new double[len];
             ScoreObjectLayer[] startLayers = new ScoreObjectLayer[len];
             ScoreObjectLayer[] endLayers = new ScoreObjectLayer[len];
 

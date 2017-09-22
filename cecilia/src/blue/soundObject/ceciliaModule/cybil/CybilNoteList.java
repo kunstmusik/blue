@@ -66,7 +66,7 @@ class CybilNoteList {
             // System.err.println("Num Pfields: " + numPfields);
         }
 
-        retVal = (Note) defaultNote.clone();
+        retVal = new Note(defaultNote);
         return retVal;
 
     }

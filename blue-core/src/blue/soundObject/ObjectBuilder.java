@@ -37,57 +37,53 @@ import electric.xml.Elements;
 import java.io.File;
 import java.io.IOException;
 import java.util.Map;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.python.core.PyException;
 
-@SoundObjectPlugin(displayName = "ObjectBuilder", live=true, position = 70)
+@SoundObjectPlugin(displayName = "ObjectBuilder", live = true, position = 70)
 public class ObjectBuilder extends AbstractSoundObject {
-//    private static BarRenderer renderer = new LetterRenderer("O");
 
     BSBGraphicInterface graphicInterface;
-
     PresetGroup presetGroup;
-
     String code;
-
     String commandLine;
-
     private boolean editEnabled = true;
-
     boolean isExternal = false;
-
     private String syntaxType = "Python";
-
-    // String instrumentText;
-    // String globalOrc;
-    // String globalSco;
-
     private NoteProcessorChain npc = new NoteProcessorChain();
-
     private int timeBehavior;
-
-    float repeatPoint = -1.0f;
+    double repeatPoint = -1.0f;
+    StringProperty comment;
 
     public ObjectBuilder() {
         setName("ObjectBuilder");
-
         graphicInterface = new BSBGraphicInterface();
         presetGroup = new PresetGroup();
-
         code = "";
         commandLine = "";
-        // instrumentText = "";
-        // globalOrc = "";
-        // globalSco = "";
-
         timeBehavior = SoundObject.TIME_BEHAVIOR_SCALE;
+        comment = new SimpleStringProperty("");
     }
 
+    public ObjectBuilder(ObjectBuilder objBuilder) {
+        super(objBuilder);
+        graphicInterface = new BSBGraphicInterface(objBuilder.graphicInterface);
+        presetGroup = new PresetGroup(objBuilder.presetGroup);
+        code = objBuilder.code;
+        commandLine = objBuilder.commandLine;
+        timeBehavior = objBuilder.timeBehavior;
+        editEnabled = objBuilder.editEnabled;
+        isExternal = objBuilder.isExternal;
+        repeatPoint = objBuilder.repeatPoint;
+        syntaxType = objBuilder.syntaxType;
+        npc = new NoteProcessorChain(objBuilder.npc);
+        comment = new SimpleStringProperty(objBuilder.getComment());
+    }
 
     // GENERATION METHODS
-
-
-    public NoteList generateNotes(BSBCompilationUnit bsbCompilationUnit, float renderStart, float renderEnd) throws SoundObjectException {
+    public NoteList generateNotes(BSBCompilationUnit bsbCompilationUnit, double renderStart, double renderEnd) throws SoundObjectException {
         String codeToRun = bsbCompilationUnit.replaceBSBValues(code);
 
         String tempScore = null;
@@ -116,7 +112,6 @@ public class ObjectBuilder extends AbstractSoundObject {
                 // program
                 // outputs to screen
                 // and grab from stdin
-
                 if (!this.getCommandLine().contains("$outfile")) {
                     String commandLine = this.getPreparedCommandLine(temp
                             .getName());
@@ -221,16 +216,14 @@ public class ObjectBuilder extends AbstractSoundObject {
     }
 
     // END GENERATION METHODS
-
     @Override
-    public float getObjectiveDuration() {
+    public double getObjectiveDuration() {
         return getSubjectiveDuration();
     }
 
 //    public BarRenderer getRenderer() {
 //        return renderer;
 //    }
-
     @Override
     public NoteProcessorChain getNoteProcessorChain() {
         return npc;
@@ -252,18 +245,30 @@ public class ObjectBuilder extends AbstractSoundObject {
     }
 
     @Override
-    public float getRepeatPoint() {
+    public double getRepeatPoint() {
         return this.repeatPoint;
     }
 
     @Override
-    public void setRepeatPoint(float repeatPoint) {
+    public void setRepeatPoint(double repeatPoint) {
         this.repeatPoint = repeatPoint;
 
         ScoreObjectEvent event = new ScoreObjectEvent(this,
                 ScoreObjectEvent.REPEAT_POINT);
 
         fireScoreObjectEvent(event);
+    }
+
+    public final void setComment(String value) {
+        comment.set(value);
+    }
+
+    public final String getComment() {
+        return comment.get();
+    }
+
+    public final StringProperty commentProperty() {
+        return comment;
     }
 
     /*
@@ -306,6 +311,9 @@ public class ObjectBuilder extends AbstractSoundObject {
                 case "syntaxType":
                     bsb.setSyntaxType(node.getTextString());
                     break;
+                case "comment":
+                    bsb.setComment(node.getTextString());
+                    break;
             }
 
         }
@@ -332,6 +340,7 @@ public class ObjectBuilder extends AbstractSoundObject {
         retVal.addElement(graphicInterface.saveAsXML());
         retVal.addElement(presetGroup.saveAsXML());
         retVal.addElement("syntaxType").setText(this.getSyntaxType());
+        retVal.addElement("comment").setText(getComment());
 
         return retVal;
     }
@@ -341,7 +350,7 @@ public class ObjectBuilder extends AbstractSoundObject {
     }
 
     public void setCode(String code) {
-        this.code = code;
+        this.code = (code == null) ? "" : code;
     }
 
     public String getCommandLine() {
@@ -398,13 +407,18 @@ public class ObjectBuilder extends AbstractSoundObject {
     }
 
     @Override
-    public NoteList generateForCSD(CompileData compileData, float startTime, 
-            float endTime) throws SoundObjectException {
+    public NoteList generateForCSD(CompileData compileData, double startTime,
+            double endTime) throws SoundObjectException {
         BSBCompilationUnit bsbCompilationUnit = new BSBCompilationUnit();
         graphicInterface.setupForCompilation(bsbCompilationUnit);
-        
-        NoteList nl = generateNotes(bsbCompilationUnit, startTime, endTime);  
+
+        NoteList nl = generateNotes(bsbCompilationUnit, startTime, endTime);
         return nl;
-        
+
+    }
+
+    @Override
+    public ObjectBuilder deepCopy() {
+        return new ObjectBuilder(this);
     }
 }

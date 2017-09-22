@@ -42,9 +42,9 @@ class MultiLineMoveMouseListener extends BlueMouseAdapter {
     private Rectangle scrollRect = new Rectangle(0, 0, 1, 1);
 
     int startX = -1;
-    float minTranslation = 0.0f;
+    double minTranslation = 0.0f;
     private ScoreObject[] selectedScoreObjects = null;
-    private float[] startTimes = null;
+    private double[] startTimes = null;
 
     TimeState timeState = null;
 
@@ -76,7 +76,7 @@ class MultiLineMoveMouseListener extends BlueMouseAdapter {
                 = ScoreController.getInstance().getSelectedScoreObjects();
 
         selectedScoreObjects = selectedObjects.toArray(new ScoreObject[0]);
-        startTimes = new float[selectedScoreObjects.length];
+        startTimes = new double[selectedScoreObjects.length];
         for (int i = 0; i < selectedScoreObjects.length; i++) {
             ScoreObject sObj = selectedScoreObjects[i];
             startTimes[i] = sObj.getStartTime();
@@ -101,11 +101,11 @@ class MultiLineMoveMouseListener extends BlueMouseAdapter {
             int x = e.getX();
             int diffX = x - startX;
 
-            float translation = diffX / (float) timeState.getPixelSecond();
+            double translation = diffX / (double) timeState.getPixelSecond();
             
 
             if (timeState.isSnapEnabled() && !e.isControlDown()) {
-                float newTime = ScoreUtilities.getSnapValueMove(
+                double newTime = ScoreUtilities.getSnapValueMove(
                         -minTranslation + translation, timeState.getSnapValue());
 
                 translation = newTime + minTranslation;

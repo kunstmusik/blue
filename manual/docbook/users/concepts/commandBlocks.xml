@@ -5,7 +5,7 @@
     <title>Introduction</title>
 
     <para>
-      Command Blocks are Csound ORC code with special directions to blue on how
+      Command Blocks are Csound ORC code with special directions to Blue on how
       to processes them. The are available to use only within the Global
       Orchestra areas of Instruments (not to be confused with the global
       orchestra area in the globals manager tab) and were created to help users
@@ -18,7 +18,7 @@
       <para>
         This feature has largely been made unnecessary due to new Csound 
         programming practices that have developed since this was initially 
-        introduced.  This feature is left in blue though to support legacy 
+        introduced.  This feature is left in Blue though to support legacy 
         projects.
       </para>
     </note>
@@ -31,7 +31,7 @@
 
     <para>
       To use a command block, you will need to wrap the section of orc code that
-      you want blue to process with the command in the following manner:
+      you want Blue to process with the command in the following manner:
 
 <screen>
 ;[command to use]{ 
@@ -83,7 +83,7 @@ gaLeft init 0 gaRight init 0
       <para>
 
         Pre blocks are useful if you need the enclosed ORC code to be generated
-        before any other global orc code. When blue goes to process the project
+        before any other global orc code. When Blue goes to process the project
         to generate a CSD file, it normally starts of the existing global
         orchestra code from the globals manager, then appends all global orc
         from instruments and soundObjects to it, one after the other. By using a

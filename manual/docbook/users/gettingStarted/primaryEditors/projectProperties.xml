@@ -106,7 +106,7 @@
           section will be enabled. When this setting is enabled, the commandline
           should set the call to the Csound executable to use and the flags to use
           but with the name of the CSD left out as it will automatically be
-          appended to by blue.  An example of a commandline to use here with
+          appended to by Blue.  An example of a commandline to use here with
           "Complete Override" is:
 
           <screen>
@@ -173,12 +173,12 @@
       <listitem>
         <para>
           Name to use for the rendered sound file.  If a value is not given,
-          blue will ask on each render what to name the file and where to render
+          Blue will ask on each render what to name the file and where to render
           it to.
         </para>
 
         <para>
-          If the "Ask on Render" is enabled, blue will always ask on each render
+          If the "Ask on Render" is enabled, Blue will always ask on each render
           what to name the file and where to render it to. This is useful to
           enable if temporarily rendering parts of a project or if the project
           is only meant to be used to render small sound samples.
@@ -214,7 +214,7 @@
           section will be enabled. When this setting is enabled, the commandline
           should set the call to the Csound executable to use and the flags to use
           but with the name of the CSD left out as it will automatically be
-          appended to by blue.  An example of a commandline to use here with
+          appended to by Blue.  An example of a commandline to use here with
           "Complete Override" is:
 
           <screen>

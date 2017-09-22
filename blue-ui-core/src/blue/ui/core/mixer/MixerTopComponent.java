@@ -167,7 +167,7 @@ public final class MixerTopComponent extends TopComponent
         String val = extraRenderText.getText();
 
         try {
-            float value = Float.parseFloat(val);
+            double value = Double.parseDouble(val);
 
             if (value < 0.0f) {
                 value = 0.0f;
@@ -175,7 +175,7 @@ public final class MixerTopComponent extends TopComponent
 
             mixer.setExtraRenderTime(value);
         } catch (NumberFormatException nfe) {
-            extraRenderText.setText(Float.toString(
+            extraRenderText.setText(Double.toString(
                     mixer.getExtraRenderTime()));
         }
     }
@@ -191,7 +191,7 @@ public final class MixerTopComponent extends TopComponent
         enabled.setSelected(mixer.isEnabled());
         extraRenderText.setEnabled(mixer.isEnabled());
 
-        extraRenderText.setText(Float.toString(mixer.getExtraRenderTime()));
+        extraRenderText.setText(Double.toString(mixer.getExtraRenderTime()));
 
         channelsPanel.setChannelList(mixer.getChannels(),
                 mixer.getSubChannels());

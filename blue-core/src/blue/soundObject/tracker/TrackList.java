@@ -17,17 +17,13 @@
  * the Free Software Foundation Inc., 59 Temple Place - Suite 330,
  * Boston, MA  02111-1307 USA
  */
-
 package blue.soundObject.tracker;
 
 import blue.soundObject.NoteList;
 import blue.soundObject.NoteParseException;
-import blue.utility.ObjectUtilities;
 import blue.utility.XMLUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
-import java.io.IOException;
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Vector;
@@ -37,25 +33,29 @@ import javax.swing.table.TableModel;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
-public class TrackList implements Serializable, TableModel {
+public class TrackList implements TableModel {
 
-    private final ArrayList tracks = new ArrayList();
+    private final ArrayList<Track> tracks = new ArrayList<>();
 
     private transient Vector listeners;
 
     private int steps = 64;
 
-    private transient TableModelListener columnChangeListener;
-
-    public TrackList() {
-        columnChangeListener = new TableModelListener() {
-            @Override
-            public void tableChanged(TableModelEvent e) {
+    private transient TableModelListener columnChangeListener
+            = e -> {
                 TableModelEvent tme = new TableModelEvent(TrackList.this,
                         TableModelEvent.HEADER_ROW);
                 fireTableModelEvent(tme);
-            }
-        };
+            };
+
+    public TrackList() {
+    }
+
+    public TrackList(TrackList tl) {
+        steps = tl.steps;
+        for (Track track : tl.tracks) {
+            addTrack(new Track(track));
+        }
     }
 
     public void addTrack(Track track) {
@@ -85,7 +85,7 @@ public class TrackList implements Serializable, TableModel {
     }
 
     public void removeTrack(int index) {
-        removeTrack((Track) tracks.get(index));
+        removeTrack(tracks.get(index));
     }
 
     public void removeTrack(Track track) {
@@ -107,7 +107,7 @@ public class TrackList implements Serializable, TableModel {
         }
 
         Track t = getTrack(index);
-        Track temp = (Track) ObjectUtilities.clone(t);
+        Track temp = new Track(t);
 
         addTrack(index, temp);
     }
@@ -122,14 +122,13 @@ public class TrackList implements Serializable, TableModel {
     }
 
     public Track getTrack(int index) {
-        return (Track) tracks.get(index);
+        return tracks.get(index);
     }
 
     public String getNextTrackName() {
         int maxVal = 0;
 
-        for (Iterator it = tracks.iterator(); it.hasNext();) {
-            Track track = (Track) it.next();
+        for (Track track : tracks) {
             String name = track.getName();
 
             if (name.startsWith("track")) {
@@ -148,12 +147,7 @@ public class TrackList implements Serializable, TableModel {
     }
 
     public boolean contains(Track track) {
-        for (Iterator it = tracks.iterator(); it.hasNext();) {
-            if (track == it.next()) {
-                return true;
-            }
-        }
-        return false;
+        return tracks.contains(track);
     }
 
     public int size() {
@@ -176,11 +170,8 @@ public class TrackList implements Serializable, TableModel {
     public NoteList generateNotes() throws NoteParseException {
         NoteList retVal = new NoteList();
 
-        for (Iterator iter = tracks.iterator(); iter.hasNext();) {
-            Track tr = (Track) iter.next();
-
+        for (Track tr : tracks) {
             retVal.merge(tr.generateNotes());
-
         }
 
         return retVal;
@@ -193,8 +184,7 @@ public class TrackList implements Serializable, TableModel {
     public void setSteps(int steps) {
         this.steps = steps;
 
-        for (Iterator iter = tracks.iterator(); iter.hasNext();) {
-            Track tr = (Track) iter.next();
+        for (Track tr : tracks) {
             tr.resizeSteps(steps);
         }
     }
@@ -204,8 +194,7 @@ public class TrackList implements Serializable, TableModel {
 
         Track retVal = null;
 
-        for (Iterator iter = tracks.iterator(); iter.hasNext();) {
-            Track track = (Track) iter.next();
+        for (Track track : tracks) {
             if (counter >= track.getNumColumns()) {
                 counter -= track.getNumColumns();
             } else {
@@ -222,17 +211,14 @@ public class TrackList implements Serializable, TableModel {
 
         Column retVal = null;
 
-        for (Iterator iter = tracks.iterator(); iter.hasNext();) {
-            Track track = (Track) iter.next();
+        for (Track track : tracks) {
             if (counter >= track.getNumColumns()) {
                 counter -= track.getNumColumns();
+            } else if (counter == 0) {
+                break;
             } else {
-                if (counter == 0) {
-                    break;
-                } else {
-                    retVal = track.getColumn(counter);
-                    break;
-                }
+                retVal = track.getColumn(counter);
+                break;
             }
         }
 
@@ -240,7 +226,6 @@ public class TrackList implements Serializable, TableModel {
     }
 
     // TABLE MODEL METHODS
-
     @Override
     public void addTableModelListener(TableModelListener l) {
         if (listeners == null) {
@@ -284,8 +269,7 @@ public class TrackList implements Serializable, TableModel {
 
         String retVal = null;
 
-        for (Iterator iter = tracks.iterator(); iter.hasNext();) {
-            Track track = (Track) iter.next();
+        for (Track track : tracks) {
             if (counter >= track.getNumColumns()) {
                 counter -= track.getNumColumns();
             } else {
@@ -302,20 +286,16 @@ public class TrackList implements Serializable, TableModel {
     public boolean isCellEditable(int rowIndex, int columnIndex) {
         int counter = columnIndex;
 
-        
-        for (Iterator iter = tracks.iterator(); iter.hasNext();) {
-            Track track = (Track) iter.next();
+        for (Track track : tracks) {
             if (counter >= track.getNumColumns()) {
                 counter -= track.getNumColumns();
+            } else if (counter == 0) {
+                return false;
             } else {
-                if (counter == 0) {
+                if (track.getTrackerNote(rowIndex).isOff()) {
                     return false;
-                } else {
-                    if(track.getTrackerNote(rowIndex).isOff()) {
-                        return false;
-                    }
-                    return true;
                 }
+                return true;
             }
         }
         return true;
@@ -334,8 +314,7 @@ public class TrackList implements Serializable, TableModel {
 
         String newVal = (String) aValue;
 
-        for (Iterator iter = tracks.iterator(); iter.hasNext();) {
-            Track track = (Track) iter.next();
+        for (Track track : tracks) {
             if (counter >= track.getNumColumns()) {
                 counter -= track.getNumColumns();
             } else {
@@ -384,8 +363,7 @@ public class TrackList implements Serializable, TableModel {
         int counter = column;
         int index = 0;
 
-        for (Iterator iter = tracks.iterator(); iter.hasNext();) {
-            Track track = (Track) iter.next();
+        for (Track track : tracks) {
             if (counter >= track.getNumColumns()) {
                 counter -= track.getNumColumns();
                 index++;
@@ -411,8 +389,7 @@ public class TrackList implements Serializable, TableModel {
 
         retVal.addElement(XMLUtilities.writeInt("steps", steps));
 
-        for (Iterator iter = tracks.iterator(); iter.hasNext();) {
-            Track tr = (Track) iter.next();
+        for (Track tr : tracks) {
             retVal.addElement(tr.saveAsXML());
         }
 
@@ -442,31 +419,5 @@ public class TrackList implements Serializable, TableModel {
 
     public int getIndexOfTrack(Track t) {
         return tracks.indexOf(t);
-    }
-
-    /* HANDLE SERIALIZATION */
-
-    private void writeObject(java.io.ObjectOutputStream out) throws IOException {
-        out.defaultWriteObject();
-    }
-
-    private void readObject(java.io.ObjectInputStream in) throws IOException,
-            ClassNotFoundException {
-
-        in.defaultReadObject();
-
-        columnChangeListener = new TableModelListener() {
-            @Override
-            public void tableChanged(TableModelEvent e) {
-                TableModelEvent tme = new TableModelEvent(TrackList.this,
-                        TableModelEvent.HEADER_ROW);
-                fireTableModelEvent(tme);
-            }
-        };
-
-        for (Iterator it = tracks.iterator(); it.hasNext();) {
-            Track t = (Track) it.next();
-            t.addTableModelListener(columnChangeListener);
-        }
     }
 }

@@ -33,10 +33,12 @@ import org.openide.util.lookup.InstanceContent;
  */
 public class AudioLayerGroupUIProvider implements LayerGroupUIProvider {
 
+    AudioLayerGroupPropertiesPanel propsPanel = null;
+
     @Override
     public JComponent getLayerGroupPanel(LayerGroup<?> layerGroup,
             TimeState timeState, BlueData data, InstanceContent ic) {
-        
+
         if (layerGroup instanceof AudioLayerGroup) {
             return new AudioLayersPanel((AudioLayerGroup) layerGroup,
                     timeState, ic);
@@ -44,18 +46,25 @@ public class AudioLayerGroupUIProvider implements LayerGroupUIProvider {
         return null;
     }
 
-        @Override
+    @Override
     public JComponent getLayerGroupHeaderPanel(LayerGroup<?> layerGroup,
             TimeState timeState, BlueData data, InstanceContent ic) {
         if (layerGroup instanceof AudioLayerGroup) {
             return new AudioHeaderListPanel((AudioLayerGroup) layerGroup,
-            data.getMixer());
+                    data.getMixer());
         }
         return null;
     }
 
     @Override
-    public JComponent getLayerGroupPropertiesPanel(LayerGroup<?> layerGroup) {
-        return null;
+    public JComponent getLayerGroupPropertiesPanel(LayerGroup layerGroup) {
+        if (!(layerGroup instanceof AudioLayerGroup)) {
+            return null;
+        }
+        if (propsPanel == null) {
+            propsPanel = new AudioLayerGroupPropertiesPanel();
+        }
+        propsPanel.setAudioLayerGroup((AudioLayerGroup) layerGroup);
+        return propsPanel;
     }
 }

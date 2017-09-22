@@ -31,7 +31,6 @@ import blue.ui.core.score.ScoreMode;
 import blue.ui.utilities.FileChooserManager;
 import blue.ui.utilities.UiUtilities;
 import blue.utility.NumberUtilities;
-import blue.utility.ObjectUtilities;
 import blue.utility.ScoreUtilities;
 import java.awt.Color;
 import java.awt.Component;
@@ -49,6 +48,8 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -101,19 +102,19 @@ public class ParameterLinePanel extends JComponent implements
     // MouseWheelListener wheelListener;
     AlphaMarquee marquee;
 
-    ArrayList<float[]> selectionList = new ArrayList<>();
+    ArrayList<double[]> selectionList = new ArrayList<>();
 
-    float mouseDownInitialTime = -1.0f;
+    double mouseDownInitialTime = -1.0f;
 
-    float transTime = 0;
+    double transTime = 0;
 
-    private float selectionStartTime = -1;
+    private double selectionStartTime = -1;
 
-    private float selectionEndTime = -1;
+    private double selectionEndTime = -1;
 
-    private float newSelectionStartTime = -1;
+    private double newSelectionStartTime = -1;
 
-    private float newSelectionEndTime = -1;
+    private double newSelectionEndTime = -1;
 
     public ParameterLinePanel(AlphaMarquee marquee) {
         this.marquee = marquee;
@@ -190,8 +191,7 @@ public class ParameterLinePanel extends JComponent implements
             this.parameterIdList.removeListSelectionListener(this);
 
             if (this.paramList != null) {
-                for (int i = 0; i < this.paramList.size(); i++) {
-                    Parameter param = paramList.getParameter(i);
+                for (Parameter param : this.paramList) {
                     param.getLine().removeTableModelListener(lineListener);
                 }
             }
@@ -208,7 +208,7 @@ public class ParameterLinePanel extends JComponent implements
             Parameter param = automationManager.getParameter(paramId);
 
             if (param != null) {
-                paramList.addParameter(param);
+                paramList.add(param);
                 param.getLine().addTableModelListener(lineListener);
             }
         }
@@ -275,9 +275,7 @@ public class ParameterLinePanel extends JComponent implements
 //        boolean multiLineMode = (modeManager.getMode() == ModeManager.MODE_MULTI_LINE);
         boolean multiLineMode = !editing;
 
-        for (int i = 0; i < paramList.size(); i++) {
-            Parameter param = paramList.getParameter(i);
-
+        for (Parameter param : paramList) {
             Line line = param.getLine();
 
             if (multiLineMode) {
@@ -308,11 +306,11 @@ public class ParameterLinePanel extends JComponent implements
 
         if (editing && selectedPoint != null) {
 
-            float min = currentParameter.getMin();
-            float max = currentParameter.getMax();
+            double min = currentParameter.getMin();
+            double max = currentParameter.getMax();
 
-            int x = floatToScreenX(selectedPoint.getX());
-            int y = floatToScreenY(selectedPoint.getY(), min, max);
+            int x = doubleToScreenX(selectedPoint.getX());
+            int y = doubleToScreenY(selectedPoint.getY(), min, max);
 
             g2d.setColor(Color.red);
             paintPoint(g2d, x, y);
@@ -333,11 +331,11 @@ public class ParameterLinePanel extends JComponent implements
         g2d.setColor(Color.white);
 
         // Line currentLine = currentParameter.getLine();
-        float yVal = selectedPoint.getY();
-        float xVal = selectedPoint.getX();
+        double yVal = selectedPoint.getY();
+        double xVal = selectedPoint.getX();
 
-        String xText = "x: " + NumberUtilities.formatFloat(xVal);
-        String yText = "y: " + NumberUtilities.formatFloat(yVal);
+        String xText = "x: " + NumberUtilities.formatDouble(xVal);
+        String yText = "y: " + NumberUtilities.formatDouble(yVal);
 
         String label = currentParameter.getLabel();
 
@@ -375,11 +373,11 @@ public class ParameterLinePanel extends JComponent implements
         if (line.size() == 1) {
             LinePoint lp = line.getLinePoint(0);
 
-            float min = line.getMin();
-            float max = line.getMax();
+            double min = line.getMin();
+            double max = line.getMax();
 
-            int x = floatToScreenX(lp.getX());
-            int y = floatToScreenY(lp.getY(), min, max);
+            int x = doubleToScreenX(lp.getX());
+            int y = doubleToScreenY(lp.getY(), min, max);
 
             g.drawLine(0, y, getWidth(), y);
 
@@ -389,19 +387,19 @@ public class ParameterLinePanel extends JComponent implements
             return;
         }
 
-        if (p.getResolution() <= 0) {
+        if (p.getResolution().doubleValue() <= 0) {
 
             int[] xValues = new int[line.size()];
             int[] yValues = new int[line.size()];
 
-            float min = line.getMin();
-            float max = line.getMax();
+            double min = line.getMin();
+            double max = line.getMax();
 
             for (int i = 0; i < line.size(); i++) {
                 LinePoint point = line.getLinePoint(i);
 
-                xValues[i] = floatToScreenX(point.getX());
-                yValues[i] = floatToScreenY(point.getY(), min, max);
+                xValues[i] = doubleToScreenX(point.getX());
+                yValues[i] = doubleToScreenY(point.getY(), min, max);
 
             }
 
@@ -425,16 +423,16 @@ public class ParameterLinePanel extends JComponent implements
 
             int x, y;
 
-            float min = p.getMin();
-            float max = p.getMax();
-            float resolution = p.getResolution();
+            double min = p.getMin();
+            double max = p.getMax();
+            BigDecimal resolution = p.getResolution();
 
             for (int i = 0; i < line.size(); i++) {
 
                 LinePoint point = line.getLinePoint(i);
 
-                x = floatToScreenX(point.getX());
-                y = floatToScreenY(point.getY(), min, max);
+                x = doubleToScreenX(point.getX());
+                y = doubleToScreenY(point.getY(), min, max);
 
                 if (drawPoints) {
                     paintPoint(g, x, y);
@@ -442,13 +440,13 @@ public class ParameterLinePanel extends JComponent implements
 
                 if (previous != null) {
 
-                    float startVal = previous.getY();
+                    double startVal = previous.getY();
 
-                    int startX = floatToScreenX(previous.getX());
-                    int startY = floatToScreenY(startVal, min, max, -1.0f);
+                    int startX = doubleToScreenX(previous.getX());
+                    int startY = doubleToScreenY(startVal, min, max);
 
-                    int endX = floatToScreenX(point.getX());
-                    int endY = floatToScreenY(point.getY(), min, max, -1.0f);
+                    int endX = doubleToScreenX(point.getX());
+                    int endY = doubleToScreenY(point.getY(), min, max);
 
                     if (startVal == point.getY()) {
                         g.drawLine(startX, startY, endX, startY);
@@ -467,17 +465,11 @@ public class ParameterLinePanel extends JComponent implements
                     int lastY = startY;
                     int lastX = startX;
 
-                    float resAdjust = resolution * .99f;
-
                     for (int j = startX; j <= endX; j++) {
-                        float timeVal = screenToFloatX(j);
-                        float val = line.getValue(timeVal);
+                        double timeVal = screenToDoubleX(j);
+                        double val = line.getValue(timeVal);
 
-                        if (endY > startY) {
-                            val += resAdjust;
-                        }
-
-                        int newY = floatToScreenY(val, min, max, resolution);
+                        int newY = doubleToScreenY(val, min, max);
 
                         if (endY > startY) {
                             if (newY < startY) {
@@ -506,8 +498,8 @@ public class ParameterLinePanel extends JComponent implements
             }
 
             if (previous.getX() < this.getWidth()) {
-                int lastX = floatToScreenX(previous.getX());
-                int lastY = floatToScreenY(previous.getY(), min, max);
+                int lastX = doubleToScreenX(previous.getX());
+                int lastY = doubleToScreenY(previous.getY(), min, max);
 
                 g.drawLine(lastX, lastY, getWidth(), lastY);
             }
@@ -516,8 +508,8 @@ public class ParameterLinePanel extends JComponent implements
 
     }
 
-    void paintSelectionPoint(Graphics g, int x, int y, float time,
-            float selectionStart, float selectionEnd) {
+    void paintSelectionPoint(Graphics g, int x, int y, double time,
+            double selectionStart, double selectionEnd) {
         if (time >= selectionStart && time <= selectionEnd) {
             Color c = g.getColor();
             g.setColor(c.darker().darker());
@@ -537,15 +529,15 @@ public class ParameterLinePanel extends JComponent implements
      * @return
      */
     private Line getSelectionSortedLine(Line line) {
-        Line retVal = (Line) ObjectUtilities.clone(line);
+        Line retVal = new Line(line);
         processLineForSelectionDrag(retVal);
 
         return retVal;
     }
 
-    private boolean isPointInSelectionRegion(float pointTime, float timeMod) {
-        float min, max;
-        float[] points;
+    private boolean isPointInSelectionRegion(double pointTime, double timeMod) {
+        double min, max;
+        double[] points;
 
         for (int i = 0; i < selectionList.size(); i++) {
             points = selectionList.get(i);
@@ -570,7 +562,7 @@ public class ParameterLinePanel extends JComponent implements
                 continue;
             }
 
-            float pointTime = lp.getX();
+            double pointTime = lp.getX();
 
             if (isPointInSelectionRegion(pointTime, 0)) {
                 points.add(lp);
@@ -600,7 +592,7 @@ public class ParameterLinePanel extends JComponent implements
      * @return
      */
     private Line getSelectionScalingSortedLine(Line line) {
-        Line retVal = (Line) ObjectUtilities.clone(line);
+        Line retVal = new Line(line);
         processLineForSelectionScale(retVal);
 
         return retVal;
@@ -621,7 +613,7 @@ public class ParameterLinePanel extends JComponent implements
                 continue;
             }
 
-            float pointTime = lp.getX();
+            double pointTime = lp.getX();
 
             if (pointTime >= selectionStartTime && pointTime <= selectionEndTime) {
                 points.add(lp);
@@ -631,15 +623,15 @@ public class ParameterLinePanel extends JComponent implements
             }
         }
 
-        float oldStart = selectionStartTime;
-        float newStart = newSelectionStartTime;
-        float oldRange = selectionEndTime - selectionStartTime;
-        float newRange = newSelectionEndTime - newSelectionStartTime;
+        double oldStart = selectionStartTime;
+        double newStart = newSelectionStartTime;
+        double oldRange = selectionEndTime - selectionStartTime;
+        double newRange = newSelectionEndTime - newSelectionStartTime;
 
         for (Iterator<LinePoint> iterator = points.iterator(); iterator.hasNext();) {
             LinePoint lp = iterator.next();
 
-            float newX = (lp.getX() - oldStart);
+            double newX = (lp.getX() - oldStart);
             newX = (newX / oldRange) * newRange;
             newX += newStart;
 
@@ -671,10 +663,10 @@ public class ParameterLinePanel extends JComponent implements
             return;
         }
 
-        float pixelSecond = (float) timeState.getPixelSecond();
+        double pixelSecond = (double) timeState.getPixelSecond();
 
-        float selectionStart;
-        float selectionEnd;
+        double selectionStart;
+        double selectionEnd;
 
         if (newSelectionStartTime >= 0) {
             selectionStart = newSelectionStartTime;
@@ -687,11 +679,11 @@ public class ParameterLinePanel extends JComponent implements
         if (tempLine.size() == 1) {
             LinePoint lp = tempLine.getLinePoint(0);
 
-            float min = tempLine.getMin();
-            float max = tempLine.getMax();
+            double min = tempLine.getMin();
+            double max = tempLine.getMax();
 
-            int x = floatToScreenX(lp.getX());
-            int y = floatToScreenY(lp.getY(), min, max);
+            int x = doubleToScreenX(lp.getX());
+            int y = doubleToScreenY(lp.getY(), min, max);
 
             g.setColor(currentColor);
             g.drawLine(0, y, getWidth(), y);
@@ -702,21 +694,21 @@ public class ParameterLinePanel extends JComponent implements
             return;
         }
 
-        if (p.getResolution() <= 0) {
+        if (p.getResolution().doubleValue() <= 0) {
 
             int[] xValues = new int[tempLine.size()];
             int[] yValues = new int[tempLine.size()];
-            float[] pointX = new float[tempLine.size()];
+            double[] pointX = new double[tempLine.size()];
 
-            float min = tempLine.getMin();
-            float max = tempLine.getMax();
+            double min = tempLine.getMin();
+            double max = tempLine.getMax();
 
             for (int i = 0; i < tempLine.size(); i++) {
                 LinePoint point = tempLine.getLinePoint(i);
 
                 pointX[i] = point.getX();
-                xValues[i] = floatToScreenX(pointX[i]);
-                yValues[i] = floatToScreenY(point.getY(), min, max);
+                xValues[i] = doubleToScreenX(pointX[i]);
+                yValues[i] = doubleToScreenY(point.getY(), min, max);
 
             }
 
@@ -738,26 +730,26 @@ public class ParameterLinePanel extends JComponent implements
 
             int x, y;
 
-            float min = p.getMin();
-            float max = p.getMax();
-            float resolution = p.getResolution();
+            double min = p.getMin();
+            double max = p.getMax();
+            BigDecimal resolution = p.getResolution();
 
             for (int i = 0; i < tempLine.size(); i++) {
 
                 LinePoint point = tempLine.getLinePoint(i);
 
-                x = floatToScreenX(point.getX());
-                y = floatToScreenY(point.getY(), min, max);
+                x = doubleToScreenX(point.getX());
+                y = doubleToScreenY(point.getY(), min, max);
 
                 if (previous != null) {
 
-                    float startVal = previous.getY();
+                    double startVal = previous.getY();
 
-                    int startX = floatToScreenX(previous.getX());
-                    int startY = floatToScreenY(startVal, min, max, -1.0f);
+                    int startX = doubleToScreenX(previous.getX());
+                    int startY = doubleToScreenY(startVal, min, max);
 
-                    int endX = floatToScreenX(point.getX());
-                    int endY = floatToScreenY(point.getY(), min, max, -1.0f);
+                    int endX = doubleToScreenX(point.getX());
+                    int endY = doubleToScreenY(point.getY(), min, max);
 
                     if (startVal == point.getY()) {
                         g.setColor(currentColor);
@@ -778,17 +770,11 @@ public class ParameterLinePanel extends JComponent implements
                     int lastY = startY;
                     int lastX = startX;
 
-                    float resAdjust = resolution * .99f;
-
                     for (int j = startX; j <= endX; j++) {
-                        float timeVal = screenToFloatX(j);
-                        float val = tempLine.getValue(timeVal);
+                        double timeVal = screenToDoubleX(j);
+                        double val = tempLine.getValue(timeVal);
 
-                        if (endY > startY) {
-                            val += resAdjust;
-                        }
-
-                        int newY = floatToScreenY(val, min, max, resolution);
+                        int newY = doubleToScreenY(val, min, max);
 
                         if (endY > startY) {
                             if (newY < startY) {
@@ -822,8 +808,8 @@ public class ParameterLinePanel extends JComponent implements
             }
 
             if (previous.getX() < this.getWidth()) {
-                int lastX = floatToScreenX(previous.getX());
-                int lastY = floatToScreenY(previous.getY(), min, max);
+                int lastX = doubleToScreenX(previous.getX());
+                int lastY = doubleToScreenY(previous.getY(), min, max);
 
                 g.setColor(currentColor);
                 g.drawLine(lastX, lastY, getWidth(), lastY);
@@ -837,65 +823,44 @@ public class ParameterLinePanel extends JComponent implements
         g.fillRect(x - 2, y - 2, 5, 5);
     }
 
-    private int floatToScreenX(float val) {
+    private int doubleToScreenX(double val) {
         if (timeState == null) {
             return -1;
         }
-        return Math.round(val * timeState.getPixelSecond());
+        return (int) Math.round(val * timeState.getPixelSecond());
     }
 
-    private int floatToScreenY(float yVal, float min, float max) {
-        return floatToScreenY(yVal, min, max, -1.0f);
-    }
-
-    private int floatToScreenY(float yVal, float min, float max,
-            float resolution) {
+    private int doubleToScreenY(double yVal, double min, double max) {
         int height = this.getHeight() - 10;
+        double range = max - min;
+        double adjustedY = yVal - min;
+        double percent = adjustedY / range;
 
-        float range = max - min;
-
-        float adjustedY = yVal - min;
-
-        if (resolution > 0.0f) {
-
-            float tempY = 0.0f;
-
-            while (tempY <= adjustedY) {
-                tempY += resolution;
-            }
-
-            tempY -= resolution;
-
-            // adjustedY = (float) (adjustedY - Math.IEEEremainder(adjustedY,
-            // resolution));
-            adjustedY = (tempY > range) ? range : tempY;
-
-        }
-
-        float percent = adjustedY / range;
-
-        int y = Math.round(height * (1.0f - percent)) + 5;
+        int y = (int) Math.round(height * (1.0f - percent)) + 5;
 
         return y;
     }
 
-    private float screenToFloatX(int val) {
+    private double screenToDoubleX(int val) {
         if (timeState == null) {
             return -1;
         }
 
-        return (float) val / timeState.getPixelSecond();
+        return (double) val / timeState.getPixelSecond();
     }
 
-    private float screenToFloatY(int val, float min, float max, float resolution) {
-        float height = this.getHeight() - 10;
-        float percent = 1 - ((val - 5) / height);
-        float range = max - min;
+    private double screenToDoubleY(int val, double min, double max,
+            BigDecimal resolution) {
+        double height = this.getHeight() - 10;
+        double percent = 1 - ((val - 5) / height);
+        double range = max - min;
 
-        float value = percent * range;
+        double value = percent * range;
 
-        if (resolution > 0.0f) {
-            value = (float) (value - Math.IEEEremainder(value, resolution));
+        if (resolution.doubleValue() > 0.0f) {
+            BigDecimal v = new BigDecimal(value).setScale(resolution.scale(),
+                    RoundingMode.HALF_UP);
+            value = v.subtract(v.remainder(resolution)).doubleValue();
         }
 
         if (value > range) {
@@ -921,7 +886,7 @@ public class ParameterLinePanel extends JComponent implements
                 .getLinePoint(currentLine.size() - 1)) {
             LinePoint p1 = currentLine.getLinePoint(currentLine.size() - 2);
 
-            leftBoundaryX = floatToScreenX(p1.getX());
+            leftBoundaryX = doubleToScreenX(p1.getX());
             rightBoundaryX = this.getWidth();
             return;
         }
@@ -930,8 +895,8 @@ public class ParameterLinePanel extends JComponent implements
             if (currentLine.getLinePoint(i) == selectedPoint) {
                 LinePoint p1 = currentLine.getLinePoint(i - 1);
                 LinePoint p2 = currentLine.getLinePoint(i + 1);
-                leftBoundaryX = floatToScreenX(p1.getX());
-                rightBoundaryX = floatToScreenX(p2.getX());
+                leftBoundaryX = doubleToScreenX(p1.getX());
+                rightBoundaryX = doubleToScreenX(p2.getX());
                 return;
             }
         }
@@ -948,10 +913,10 @@ public class ParameterLinePanel extends JComponent implements
     protected LinePoint insertGraphPoint(int x, int y) {
         LinePoint point = new LinePoint();
 
-        float min = currentParameter.getMin();
-        float max = currentParameter.getMax();
+        double min = currentParameter.getMin();
+        double max = currentParameter.getMax();
 
-        point.setLocation(screenToFloatX(x), screenToFloatY(y, min, max,
+        point.setLocation(screenToDoubleX(x), screenToDoubleY(y, min, max,
                 currentParameter.getResolution()));
 
         int index = 1;
@@ -983,14 +948,14 @@ public class ParameterLinePanel extends JComponent implements
     public LinePoint findGraphPoint(int x, int y) {
         Line currentLine = currentParameter.getLine();
 
-        float min = currentParameter.getMin();
-        float max = currentParameter.getMax();
+        double min = currentParameter.getMin();
+        double max = currentParameter.getMax();
 
         for (int i = 0; i < currentLine.size(); i++) {
             LinePoint point = currentLine.getLinePoint(i);
 
-            int tempX = floatToScreenX(point.getX());
-            int tempY = floatToScreenY(point.getY(), min, max);
+            int tempX = doubleToScreenX(point.getX());
+            int tempY = doubleToScreenY(point.getY(), min, max);
 
             if (tempX >= x - 2 && tempX <= x + 2 && tempY >= y - 2
                     && tempY <= y + 2) {
@@ -1008,7 +973,7 @@ public class ParameterLinePanel extends JComponent implements
         for (int i = 0; i < currentLine.size(); i++) {
             LinePoint point = currentLine.getLinePoint(i);
 
-            int tempX = floatToScreenX(point.getX());
+            int tempX = doubleToScreenX(point.getX());
 
             if (tempX >= x - 2 && tempX <= x + 2) {
                 return point;
@@ -1027,8 +992,7 @@ public class ParameterLinePanel extends JComponent implements
         }
 
         if (paramList != null) {
-            for (int i = 0; i < paramList.size(); i++) {
-                Parameter param = paramList.getParameter(i);
+            for (Parameter param : paramList) {
                 param.getLine().removeTableModelListener(this);
             }
         }
@@ -1050,7 +1014,7 @@ public class ParameterLinePanel extends JComponent implements
             String paramId = parameterIdList.getParameterId(e.getIndex0());
             Parameter param = AutomationManager.getInstance().getParameter(
                     paramId);
-            paramList.addParameter(param);
+            paramList.add(param);
             param.getLine().addTableModelListener(this);
             repaint();
             // if (paramList.size() == 1) {
@@ -1064,10 +1028,10 @@ public class ParameterLinePanel extends JComponent implements
         if (e.getSource() == parameterIdList) {
 
             for (int i = 0; i < paramList.size(); i++) {
-                Parameter param = paramList.getParameter(i);
+                Parameter param = paramList.get(i);
 
                 if (!parameterIdList.contains(param.getUniqueId())) {
-                    paramList.removeParameter(i);
+                    paramList.remove(i);
                     param.getLine().removeTableModelListener(this);
                     repaint();
                     return;
@@ -1128,7 +1092,7 @@ public class ParameterLinePanel extends JComponent implements
         private final LinePoint linePoint;
 
         public LinePointOrigin(Parameter p, LinePoint lp) {
-            this.originY = floatToScreenY(lp.getY(), p.getMin(), p.getMax());
+            this.originY = doubleToScreenY(lp.getY(), p.getMin(), p.getMax());
             this.param = p;
             this.linePoint = lp;
         }
@@ -1180,8 +1144,7 @@ public class ParameterLinePanel extends JComponent implements
 
                     marquee.setVisible(false);
                     return;
-                } else 
-                    if (marquee.intersects(ParameterLinePanel.this)) {
+                } else if (marquee.intersects(ParameterLinePanel.this)) {
 
                     int x = e.getX();
 
@@ -1189,20 +1152,20 @@ public class ParameterLinePanel extends JComponent implements
                             && x <= marquee.getX() + marquee.getWidth()) {
 
                         if (SwingUtilities.isLeftMouseButton(e)) {
-                            float pixelSecond = (float) timeState.getPixelSecond();
+                            double pixelSecond = (double) timeState.getPixelSecond();
 
                             mouseDownInitialTime = e.getX() / pixelSecond;
                             transTime = 0.0f;
 
-                            float marqueeLeft = marquee.getX() / pixelSecond;
-                            float marqueeRight = (marquee.getX() + marquee.getWidth()) / pixelSecond;
+                            double marqueeLeft = marquee.getX() / pixelSecond;
+                            double marqueeRight = (marquee.getX() + marquee.getWidth()) / pixelSecond;
 
                             if (selectionList.size() == 0) {
-                                float[] points = new float[]{
+                                double[] points = new double[]{
                                     marqueeLeft, marqueeRight};
                                 selectionList.add(points);
                             } else {
-                                float[] points = selectionList.get(0);
+                                double[] points = selectionList.get(0);
                                 points[0] = marqueeLeft;
                                 points[1] = marqueeRight;
                             }
@@ -1246,7 +1209,7 @@ public class ParameterLinePanel extends JComponent implements
 
             marquee.setVisible(false);
 
-//            if (currentParameter == null) {
+            if (currentParameter == null) {
 //                if (UiUtilities.isRightMouseButton(e)) {
 //                    if (popup == null) {
 //                        popup = new EditPointsPopup();
@@ -1254,8 +1217,8 @@ public class ParameterLinePanel extends JComponent implements
 //                    popup.setLine(null);
 //                    popup.show((Component) e.getSource(), e.getX(), e.getY());
 //                }
-//                return;
-//            }
+                return;
+            }
 
             Line currentLine = currentParameter.getLine();
 
@@ -1273,9 +1236,9 @@ public class ParameterLinePanel extends JComponent implements
             } else if (SwingUtilities.isLeftMouseButton(e)) {
 
                 int start = e.getX();
-                float pixelSecond = (float) timeState.getPixelSecond();
+                double pixelSecond = (double) timeState.getPixelSecond();
 
-                float startTime = start / pixelSecond;
+                double startTime = start / pixelSecond;
 
                 if (timeState.isSnapEnabled() && !e.isControlDown()) {
                     startTime = ScoreUtilities.getSnapValueStart(startTime, timeState.getSnapValue());
@@ -1342,15 +1305,15 @@ public class ParameterLinePanel extends JComponent implements
 
         }
 
-        private float getInitialStartTime() {
+        private double getInitialStartTime() {
             if (selectionList.size() == 0) {
                 return 0;
             }
 
-            float retVal = Float.MAX_VALUE;
+            double retVal = Double.MAX_VALUE;
 
             for (int i = 0; i < selectionList.size(); i++) {
-                float[] points = selectionList.get(i);
+                double[] points = selectionList.get(i);
                 if (points[0] < retVal) {
                     retVal = points[0];
                 }
@@ -1371,8 +1334,8 @@ public class ParameterLinePanel extends JComponent implements
 
             if (marquee.isVisible()) {
                 int x = e.getX();
-                float pixelSecond = (float) timeState.getPixelSecond();
-                float mouseDragTime = x / pixelSecond;
+                double pixelSecond = (double) timeState.getPixelSecond();
+                double mouseDragTime = x / pixelSecond;
 
                 if (horizontalShift) {
                     int yDiff = e.getY() - initialY;
@@ -1384,7 +1347,7 @@ public class ParameterLinePanel extends JComponent implements
                     if (SwingUtilities.isLeftMouseButton(e)) {
                         transTime = mouseDragTime - mouseDownInitialTime;
 
-                        float newTime = getInitialStartTime() + transTime;
+                        double newTime = getInitialStartTime() + transTime;
 
                         if (timeState.isSnapEnabled() && !e.isControlDown()) {
                             newTime = ScoreUtilities.getSnapValueStart(newTime,
@@ -1406,7 +1369,7 @@ public class ParameterLinePanel extends JComponent implements
                         x = 0;
                     }
 
-                    float endTime = x / pixelSecond;
+                    double endTime = x / pixelSecond;
 
                     if (timeState.isSnapEnabled() && !e.isControlDown()) {
                         endTime = ScoreUtilities.getSnapValueMove(endTime,
@@ -1453,20 +1416,20 @@ public class ParameterLinePanel extends JComponent implements
                     y = bottomY;
                 }
 
-                float pixelSecond = (float) timeState.getPixelSecond();
-                float dragTime = x / pixelSecond;
+                double pixelSecond = (double) timeState.getPixelSecond();
+                double dragTime = x / pixelSecond;
 
                 if (timeState.isSnapEnabled() && !e.isControlDown()) {
                     dragTime = ScoreUtilities.getSnapValueMove(dragTime,
                             timeState.getSnapValue());
                 }
 
-                float min = currentParameter.getMin();
-                float max = currentParameter.getMax();
+                double min = currentParameter.getMin();
+                double max = currentParameter.getMax();
 
                 if (selectedPoint != null) {
                     selectedPoint.setLocation(dragTime,
-                            screenToFloatY(y, min, max, currentParameter
+                            screenToDoubleY(y, min, max, currentParameter
                                     .getResolution()));
                 }
             }
@@ -1503,7 +1466,8 @@ public class ParameterLinePanel extends JComponent implements
             for (LinePointOrigin lpo : lpos) {
                 LinePoint lp = lpo.linePoint;
                 Parameter param = lpo.param;
-                float newY = screenToFloatY(lpo.originY + yDiff, param.getMin(), param.getMax(), -1.0f);
+                double newY = screenToDoubleY(lpo.originY + yDiff,
+                        param.getMin(), param.getMax(), new BigDecimal(-1));
                 lp.setLocation(lp.getX(), newY);
             }
         }
@@ -1511,15 +1475,15 @@ public class ParameterLinePanel extends JComponent implements
     }
 
     /* MULTILINE MODE */
-//    public void addSelectionDragRegion(float startTime, float endTime) {
-//        selectionList.add(new float[] {startTime, endTime});
+//    public void addSelectionDragRegion(double startTime, double endTime) {
+//        selectionList.add(new double[] {startTime, endTime});
 //    }
-    public void setSelectionDragRegion(float startTime, float endTime) {
+    public void setSelectionDragRegion(double startTime, double endTime) {
         if (selectionList.size() == 0) {
-            selectionList.add(new float[2]);
+            selectionList.add(new double[2]);
         }
 
-        float[] points = selectionList.get(0);
+        double[] points = selectionList.get(0);
         points[0] = startTime;
         points[1] = endTime;
         repaint();
@@ -1530,7 +1494,7 @@ public class ParameterLinePanel extends JComponent implements
         repaint();
     }
 
-    public void setMultiLineMouseTranslation(float transTime) {
+    public void setMultiLineMouseTranslation(double transTime) {
         this.transTime = transTime;
         repaint();
     }
@@ -1539,7 +1503,7 @@ public class ParameterLinePanel extends JComponent implements
         if (this.paramList != null
                 && (marquee.intersects(this) || selectionList.size() > 0)) {
             for (int i = 0; i < this.paramList.size(); i++) {
-                Parameter param = paramList.getParameter(i);
+                Parameter param = paramList.get(i);
                 processLineForSelectionDrag(param.getLine());
             }
         }
@@ -1548,7 +1512,7 @@ public class ParameterLinePanel extends JComponent implements
     }
 
     /* SCORE MODE*/
-    public void initiateScoreScale(float startTime, float endTime) {
+    public void initiateScoreScale(double startTime, double endTime) {
         this.selectionStartTime = startTime;
         this.newSelectionStartTime = startTime;
         this.selectionEndTime = endTime;
@@ -1560,12 +1524,12 @@ public class ParameterLinePanel extends JComponent implements
      *
      * @param newSelectionStartX
      */
-    public void setScoreScaleStart(float newSelectionStartTime) {
+    public void setScoreScaleStart(double newSelectionStartTime) {
         this.newSelectionStartTime = newSelectionStartTime;
         repaint();
     }
 
-    public void setScoreScaleEnd(float newSelectionEndTime) {
+    public void setScoreScaleEnd(double newSelectionEndTime) {
         this.newSelectionEndTime = newSelectionEndTime;
         repaint();
     }
@@ -1573,7 +1537,7 @@ public class ParameterLinePanel extends JComponent implements
     public void commitScoreScale() {
         if (this.paramList != null) {
             for (int i = 0; i < this.paramList.size(); i++) {
-                Parameter param = paramList.getParameter(i);
+                Parameter param = paramList.get(i);
                 processLineForSelectionScale(param.getLine());
             }
 
@@ -1633,7 +1597,7 @@ public class ParameterLinePanel extends JComponent implements
                     if (line != null && line.size() > 0) {
                         File retVal = FileChooserManager.getDefault().showSaveDialog(
                                 FILE_BPF_EXPORT, SwingUtilities
-                                .getRoot(ParameterLinePanel.this));
+                                        .getRoot(ParameterLinePanel.this));
 
                         if (retVal != null) {
                             File f = retVal;
@@ -1669,7 +1633,7 @@ public class ParameterLinePanel extends JComponent implements
                     if (line != null && line.size() > 0) {
                         File retVal = FileChooserManager.getDefault().showSaveDialog(
                                 FILE_BPF_IMPORT, SwingUtilities
-                                .getRoot(ParameterLinePanel.this));
+                                        .getRoot(ParameterLinePanel.this));
 
                         if (retVal != null) {
                             File f = retVal;
@@ -1703,7 +1667,7 @@ public class ParameterLinePanel extends JComponent implements
             }
 
             for (int i = 0; i < paramList.size(); i++) {
-                Parameter param = paramList.getParameter(i);
+                Parameter param = paramList.get(i);
 
                 JMenuItem item = new JMenuItem();
                 item.setText(param.getName());
@@ -1727,7 +1691,7 @@ public class ParameterLinePanel extends JComponent implements
                 editPointsAction.setEnabled(this.line != null);
 
                 boolean bpfEnabled = (this.line != null)
-                        && (currentParameter.getResolution() <= 0);
+                        && (currentParameter.getResolution().doubleValue() <= 0);
 
                 importBPF.setEnabled(bpfEnabled);
                 exportBPF.setEnabled(bpfEnabled);

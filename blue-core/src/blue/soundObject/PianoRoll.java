@@ -13,7 +13,6 @@ import electric.xml.Element;
 import electric.xml.Elements;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Map;
@@ -21,9 +20,8 @@ import java.util.Map;
 /**
  * @author steven yi
  */
-
-@SoundObjectPlugin(displayName = "PianoRoll", live=true, position = 90)
-public class PianoRoll extends AbstractSoundObject implements Serializable, GenericViewable {
+@SoundObjectPlugin(displayName = "PianoRoll", live = true, position = 90)
+public class PianoRoll extends AbstractSoundObject implements GenericViewable {
 
     public static final int DISPLAY_TIME = 0;
 
@@ -35,11 +33,9 @@ public class PianoRoll extends AbstractSoundObject implements Serializable, Gene
 
     public static final int GENERATE_MIDI = 2;
 
-//    private static BarRenderer renderer = new GenericRenderer();
-
     private int timeBehavior;
 
-    float repeatPoint = -1.0f;
+    double repeatPoint = -1.0f;
 
     private NoteProcessorChain npc = new NoteProcessorChain();
 
@@ -59,7 +55,7 @@ public class PianoRoll extends AbstractSoundObject implements Serializable, Gene
 
     private boolean snapEnabled = false;
 
-    private float snapValue = 1.0f;
+    private double snapValue = 1.0f;
 
     private int timeDisplay = DISPLAY_TIME;
 
@@ -80,6 +76,31 @@ public class PianoRoll extends AbstractSoundObject implements Serializable, Gene
         noteHeight = 15;
     }
 
+    public PianoRoll(PianoRoll pr) {
+        super(pr);
+
+        timeBehavior = pr.timeBehavior;
+        repeatPoint = pr.repeatPoint;
+        npc = new NoteProcessorChain(pr.npc);
+        scale = new Scale(pr.scale);
+        notes = new ArrayList<>(pr.notes.size());
+
+        for (PianoNote pn : pr.notes) {
+            notes.add(new PianoNote(pn));
+        }
+
+        noteTemplate = pr.noteTemplate;
+        instrumentId = pr.instrumentId;
+        pixelSecond = pr.pixelSecond;
+        noteHeight = pr.noteHeight;
+        snapEnabled = pr.snapEnabled;
+        snapValue = pr.snapValue;
+        timeDisplay = pr.timeDisplay;
+        pchGenerationMethod = pr.pchGenerationMethod;
+        timeUnit = pr.timeUnit;
+        transposition = pr.transposition;
+    }
+
     @Override
     public NoteProcessorChain getNoteProcessorChain() {
         return npc;
@@ -92,16 +113,16 @@ public class PianoRoll extends AbstractSoundObject implements Serializable, Gene
 
     // TODO - Implement using notes
     @Override
-    public float getObjectiveDuration() {
+    public double getObjectiveDuration() {
         return this.getSubjectiveDuration();
     }
 
-    public NoteList generateNotes(float renderStart, float renderEnd) throws SoundObjectException {
+    public NoteList generateNotes(double renderStart, double renderEnd) throws SoundObjectException {
         NoteList nl = new NoteList();
 
         String instrId = instrumentId;
 
-        if(instrId != null) {
+        if (instrId != null) {
             instrId = instrId.trim();
         }
 
@@ -144,8 +165,8 @@ public class PianoRoll extends AbstractSoundObject implements Serializable, Gene
             }
 
             if (this.pchGenerationMethod == GENERATE_FREQUENCY) {
-                float f = scale.getFrequency(octave, scaleDegree);
-                freq = Float.toString(f);
+                double f = scale.getFrequency(octave, scaleDegree);
+                freq = Double.toString(f);
             } else if (this.pchGenerationMethod == GENERATE_PCH) {
                 freq = octave + "." + scaleDegree;
             } else if (this.pchGenerationMethod == GENERATE_MIDI) {
@@ -158,9 +179,9 @@ public class PianoRoll extends AbstractSoundObject implements Serializable, Gene
                     .replaceAll(template, "<INSTR_ID>", instrId);
             template = TextUtilities.replaceAll(template, "<INSTR_NAME>",
                     instrumentId);
-            template = TextUtilities.replaceAll(template, "<START>", Float
+            template = TextUtilities.replaceAll(template, "<START>", Double
                     .toString(n.getStart()));
-            template = TextUtilities.replaceAll(template, "<DUR>", Float
+            template = TextUtilities.replaceAll(template, "<DUR>", Double
                     .toString(n.getDuration()));
             template = TextUtilities.replaceAll(template, "<FREQ>", freq);
 
@@ -200,12 +221,12 @@ public class PianoRoll extends AbstractSoundObject implements Serializable, Gene
     }
 
     @Override
-    public float getRepeatPoint() {
+    public double getRepeatPoint() {
         return this.repeatPoint;
     }
 
     @Override
-    public void setRepeatPoint(float repeatPoint) {
+    public void setRepeatPoint(double repeatPoint) {
         this.repeatPoint = repeatPoint;
 
         ScoreObjectEvent event = new ScoreObjectEvent(this,
@@ -247,7 +268,7 @@ public class PianoRoll extends AbstractSoundObject implements Serializable, Gene
                             .booleanValue());
                     break;
                 case "snapValue":
-                    p.setSnapValue(Float.parseFloat(e.getTextString()));
+                    p.setSnapValue(Double.parseDouble(e.getTextString()));
                     break;
                 case "timeDisplay":
                     p.setTimeDisplay(Integer.parseInt(e.getTextString()));
@@ -286,7 +307,7 @@ public class PianoRoll extends AbstractSoundObject implements Serializable, Gene
         retVal.addElement("snapEnabled").setText(
                 Boolean.toString(this.isSnapEnabled()));
         retVal.addElement("snapValue").setText(
-                Float.toString(this.getSnapValue()));
+                Double.toString(this.getSnapValue()));
         retVal.addElement("timeDisplay").setText(
                 Integer.toString(this.getTimeDisplay()));
         retVal.addElement("timeUnit").setText(
@@ -314,8 +335,7 @@ public class PianoRoll extends AbstractSoundObject implements Serializable, Gene
     }
 
     /**
-     * @param notes
-     *            The notes to set.
+     * @param notes The notes to set.
      */
     public void setNotes(ArrayList<PianoNote> notes) {
         this.notes = notes;
@@ -329,8 +349,7 @@ public class PianoRoll extends AbstractSoundObject implements Serializable, Gene
     }
 
     /**
-     * @param noteTemplate
-     *            The noteTemplate to set.
+     * @param noteTemplate The noteTemplate to set.
      */
     public void setNoteTemplate(String noteTemplate) {
         this.noteTemplate = noteTemplate;
@@ -344,8 +363,7 @@ public class PianoRoll extends AbstractSoundObject implements Serializable, Gene
     }
 
     /**
-     * @param scale
-     *            The scale to set.
+     * @param scale The scale to set.
      */
     public void setScale(Scale scale) {
         PropertyChangeEvent pce = new PropertyChangeEvent(this, "scale",
@@ -357,7 +375,6 @@ public class PianoRoll extends AbstractSoundObject implements Serializable, Gene
     }
 
     /* PROPERTY CHANGE EVENTS */
-
     public void addPropertyChangeListener(PropertyChangeListener listener) {
         checkListenersExists();
         this.listeners.add(listener);
@@ -392,8 +409,7 @@ public class PianoRoll extends AbstractSoundObject implements Serializable, Gene
     }
 
     /**
-     * @param pixelSecond
-     *            The pixelSecond to set.
+     * @param pixelSecond The pixelSecond to set.
      */
     public void setPixelSecond(int pixelSecond) {
         PropertyChangeEvent pce = new PropertyChangeEvent(this, "pixelSecond",
@@ -413,8 +429,7 @@ public class PianoRoll extends AbstractSoundObject implements Serializable, Gene
     }
 
     /**
-     * @param pixelSecond
-     *            The pixelSecond to set.
+     * @param pixelSecond The pixelSecond to set.
      */
     public void setNoteHeight(int noteHeight) {
         PropertyChangeEvent pce = new PropertyChangeEvent(this, "noteHeight",
@@ -442,13 +457,13 @@ public class PianoRoll extends AbstractSoundObject implements Serializable, Gene
         firePropertyChange(pce);
     }
 
-    public float getSnapValue() {
+    public double getSnapValue() {
         return this.snapValue;
     }
 
-    public void setSnapValue(float snapValue) {
+    public void setSnapValue(double snapValue) {
         PropertyChangeEvent pce = new PropertyChangeEvent(this, "snapValue",
-                new Float(this.snapValue), new Float(snapValue));
+                new Double(this.snapValue), new Double(snapValue));
 
         this.snapValue = snapValue;
 
@@ -489,8 +504,7 @@ public class PianoRoll extends AbstractSoundObject implements Serializable, Gene
     }
 
     /**
-     * @param instrumentId
-     *            The instrumentId to set.
+     * @param instrumentId The instrumentId to set.
      */
     public void setInstrumentId(String instrumentId) {
         this.instrumentId = instrumentId;
@@ -519,10 +533,15 @@ public class PianoRoll extends AbstractSoundObject implements Serializable, Gene
     }
 
     @Override
-    public NoteList generateForCSD(CompileData compileData, float startTime, 
-            float endTime) throws SoundObjectException {
-        
+    public NoteList generateForCSD(CompileData compileData, double startTime,
+            double endTime) throws SoundObjectException {
+
         return generateNotes(startTime, endTime);
-        
+
+    }
+
+    @Override
+    public PianoRoll deepCopy() {
+        return new PianoRoll(this);
     }
 }

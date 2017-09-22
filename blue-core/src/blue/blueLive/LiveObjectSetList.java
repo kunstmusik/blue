@@ -13,12 +13,21 @@ import java.util.ArrayList;
  * @author stevenyi
  */
 public class LiveObjectSetList extends ArrayList<LiveObjectSet> {
-    
-    
+
+    public LiveObjectSetList() {
+    }
+
+    public LiveObjectSetList(LiveObjectSetList losl) {
+        super(losl.size());
+        for (LiveObjectSet lObjSet : losl) {
+            add(new LiveObjectSet(lObjSet));
+        }
+    }
+
     public static LiveObjectSetList loadFromXML(Element data, LiveObjectBins liveObjectBins) {
 
         LiveObjectSetList retVal = new LiveObjectSetList();
-        
+
         Elements nodes = data.getElements();
 
         while (nodes.hasMoreElements()) {
@@ -32,17 +41,17 @@ public class LiveObjectSetList extends ArrayList<LiveObjectSet> {
         }
 
         return retVal;
-        
+
     }
-    
+
     public Element saveAsXML() {
         Element retVal = new Element("liveObjectSetList");
-        
-        for(LiveObjectSet set: this) {
+
+        for (LiveObjectSet set : this) {
             retVal.addElement(set.saveAsXML());
         }
-        
+
         return retVal;
     }
-    
+
 }

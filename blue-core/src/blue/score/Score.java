@@ -34,7 +34,6 @@ import blue.util.ObservableArrayList;
 import blue.utility.ScoreUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -46,11 +45,11 @@ import java.util.Objects;
  *
  * @author stevenyi
  */
-public class Score extends ObservableArrayList<LayerGroup<? extends Layer>> implements Serializable {
+public class Score extends ObservableArrayList<LayerGroup<? extends Layer>> {
 
     Tempo tempo = null;
     TimeState timeState = null;
-    private NoteProcessorChain npc = new NoteProcessorChain();
+    private NoteProcessorChain npc; 
 
     public static final int SPACER = 36;
 
@@ -64,7 +63,18 @@ public class Score extends ObservableArrayList<LayerGroup<? extends Layer>> impl
             add(pObj);
             timeState = new TimeState();
         }
+        npc = new NoteProcessorChain();
         tempo = new Tempo();
+    }
+
+    public Score(Score score) {
+        timeState = new TimeState(score.timeState);
+        npc = new NoteProcessorChain(score.npc);
+        tempo = new Tempo(score.tempo);
+
+        for(LayerGroup<? extends Layer> lg :score) {
+            add(lg.deepCopyLG());    
+        }
     }
 
 
@@ -152,7 +162,7 @@ public class Score extends ObservableArrayList<LayerGroup<? extends Layer>> impl
         }
     }
 
-    public NoteList generateForCSD(CompileData compileData, float startTime, float endTime) throws ScoreGenerationException {
+    public NoteList generateForCSD(CompileData compileData, double startTime, double endTime) throws ScoreGenerationException {
         NoteList noteList = new NoteList();
 
         boolean soloFound = false;

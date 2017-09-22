@@ -5,17 +5,25 @@
     <title>Introduction</title>
 
     <para>
-      The SoundObject Library is a place where one can store soundObjects from
-      the timeline. The library can simply be a place to store a soundObject
-      idea that the user may want to user later, but more importantly it allows
-      for Instances of the soundObject to be made. Instances of soundObjects
-      point to and soundObject in the library and when the instance is
-      generating its score, it will actually call the soundObject in the library
-      to generate its score and then apply it's own properties and
-      noteProcessors to the generated score. Updating a soundObject in the
-      library will then update all instances of that soundObject. This feature
-      is useful to represent the idea of a motive, with instances of the motive
-      allowing to have transformations by use of noteProcessors.
+      The SoundObject Library is a place to store SoundObjects either
+      project-wide or program-wide. The project-wide library can be used to store a
+      SoundObject that you may want to user later but it also enables Instance
+      SoundObjects to be made. Instances of SoundObjects point to the
+      SoundObject in the library and when the instance generates its score, it
+      will call the SoundObject in the library to first generate score and then
+      apply its own properties and NoteProcessors to the generated score.
+      Updating a SoundObject in the library will then update all instances of
+      that SoundObject. This feature is useful to represent the idea of a
+      motive, with instances of the motive allowing to have transformations by
+      use of NoteProcessors.
+    </para>
+
+    <para>
+      The program-wide library (called "User SoundObject Library" in the interface)
+      allows one to build up a catalog of reusable SoundObjects. SoundObjects such
+      as Sound and ObjectBuilder allow users to build highly configurable sound
+      and score generators that have a high degree of reusability.  The program-wide
+      library is also where SoundObjects are exported from and imported to with BlueShare.
     </para>
 
   </section>
@@ -24,24 +32,24 @@
     <title>Usage</title>
 
     <para>
-      The general pattern of usage for the SoundObject Library entails:
+      The general pattern of usage for the project-wide SoundObject Library entails:
 
       <orderedlist>
 
         <listitem>
           <para>
             Add SoundObject to the Library. This is done by selecting a
-            soundObject, right-clicking the soundObject to open up the popup
+            SoundObject, right-clicking the SoundObject to open up the popup
             menu and selecting "Add to SoundObject Library". 
           </para>
         </listitem>
         
         <listitem>
           <para>
-            After doing this, your soundObject will have been added to the
-            library and the soundObject on the timeline will have been replaced
-            with an Instance soundObject which will be pointing to the
-            soundObject now in the library.
+            After doing this, your SoundObject will have been added to the
+            library and the SoundObject on the timeline will have been replaced
+            with an Instance SoundObject which will be pointing to the
+            SoundObject now in the library.
           </para>
         </listitem>
         
@@ -51,8 +59,8 @@
             making copies of the instance object on the timeline and pasting in
             more instances.  These instances can be placed anywhere, have 
             different durations and time behaviors, as well as have their own
-            individual noteProcessors.  This allows expressing ideas such as
-            "This is an instance of the primary motive (soundObject in the 
+            individual NoteProcessors.  This allows expressing ideas such as
+            "This is an instance of the primary motive (SoundObject in the 
             library) but transposed up a major 3rd, retrograded, and inverted", 
             or an idea like "I've got drum pattern A in the library and I have
             instances of it here and here and ...".
@@ -60,8 +68,8 @@
             <note>
               <title>Note</title>
               <para>
-                When copying and pasting Instance soundObjects, they are all
-                pointing to the soundObject in the library.
+                When copying and pasting Instance SoundObjects, they are all
+                pointing to the SoundObject in the library.
               </para>
             </note>
             
@@ -70,7 +78,7 @@
         
         <listitem>
           <para>
-            You can also then make instances of soundObjects in the library by
+            You can also then make instances of SoundObjects in the library by
             opening up the SoundObject Library dialog (available from the 
             Window menu or by using the F4 shortcut key).  There you have 
             the following options:
@@ -82,7 +90,7 @@
                 <listitem>
                   <para>
                     This makes a copy of the selected SoundObject and puts it in
-                    the buffer. This is a copy of the original soundObject and
+                    the buffer. This is a copy of the original SoundObject and
                     not an Instance. After copying to the buffer, you can paste
                     as normal on the timeline.
                   </para>
@@ -95,7 +103,7 @@
                   <para>
                     This makes a Instance of the selected SoundObject and puts
                     it in the buffer. This Instance will point to the original
-                    soundObject. After copying to the buffer, you can paste as
+                    SoundObject. After copying to the buffer, you can paste as
                     normal on the timeline.
                   </para>
 
@@ -117,8 +125,8 @@
         </listitem>
         
         <listitem>
-          <para>You can also then edit the soundObject in the library from 
-            within the SoundObject Library dialog by selecting the soundObject
+          <para>You can also then edit the SoundObject in the library from 
+            within the SoundObject Library dialog by selecting the SoundObject
             in the list.  The editor for the SoundObject will appear below.  
           
             <note>
@@ -133,6 +141,38 @@
           
         </listitem>
 
+      </orderedlist>
+
+    </para>
+
+    <para>
+      The general pattern of usage for the program-wide SoundObject Library entails:
+
+      <orderedlist>
+
+        <listitem>
+          <para>
+            Add SoundObject to the Library. This is done by selecting a
+            SoundObject on the timeline, right-clicking the SoundObject to open up the popup
+            menu and selecting "Copy". 
+          </para>
+        </listitem>
+        
+        <listitem>
+          <para>
+            After copying an object, open up the SoundObject library window and go to the
+            User SoundObject Library. Right-click a folder node in the library tree and 
+            choose "Paste" to add a copy of the object to the library. 
+          </para>
+        </listitem>
+
+        <listitem>
+          <para>
+            You can use the context popup menu to create new folders, or double-click a 
+            node to rename the node.
+          </para>
+        </listitem>
+        
       </orderedlist>
 
     </para>

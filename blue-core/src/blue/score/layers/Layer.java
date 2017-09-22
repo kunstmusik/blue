@@ -19,14 +19,14 @@
  */
 package blue.score.layers;
 
+import blue.DeepCopyable;
 import blue.score.ScoreObject;
-import java.io.Serializable;
 
 /**
  *
  * @author stevenyi
  */
-public interface Layer extends Serializable {
+public interface Layer extends DeepCopyable<Layer> {
     public static final int LAYER_HEIGHT = 22;
     
     public String getName();

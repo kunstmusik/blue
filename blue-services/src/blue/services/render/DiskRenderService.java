@@ -32,7 +32,7 @@ public interface DiskRenderService {
 
     public void execWait(String[] args,
             File currentWorkingDirectory,
-            float startTime,
+            double startTime,
             TempoMapper mapper,
             ArrayList<Parameter> parameters);
 

@@ -27,7 +27,7 @@ import electric.xml.Element;
 import electric.xml.Elements;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
-import java.io.Serializable;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Iterator;
 import javax.swing.event.TableModelListener;
@@ -35,7 +35,7 @@ import javax.swing.table.AbstractTableModel;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
-public class Table extends AbstractTableModel implements Serializable {
+public class Table extends AbstractTableModel {
 
     public static final int OFF = 0;
 
@@ -70,6 +70,17 @@ public class Table extends AbstractTableModel implements Serializable {
 
             points.add(tablePoint1);
             points.add(tablePoint2);
+        }
+    }
+
+    public Table(Table table) {
+        min = table.min;
+        max = table.max;
+        interpolationType = table.interpolationType;
+        interpolation = table.interpolation;
+
+        for (TablePoint tp : table.points) {
+            points.add(new TablePoint(tp));
         }
     }
 
@@ -122,7 +133,7 @@ public class Table extends AbstractTableModel implements Serializable {
         double r = (time - a.getTime()) / (b.getTime() - a.getTime());
 
         double retVal = 0.0;
-        
+
         switch (this.getInterpolationType()) {
             case OFF:
                 retVal = a.getValue();
@@ -137,24 +148,24 @@ public class Table extends AbstractTableModel implements Serializable {
 
         return retVal;
     }
-    
+
     double getphs(double xt) {			//Phasenzeiger an der Stelle xt
-	double erg,f,xtr,phsum;
-	
-	phsum = 0.0;
+        double erg, f, xtr, phsum;
+
+        phsum = 0.0;
         xtr = Utilities.round(xt, 10);
-        
+
         int pointsSize = points.size();
-        
+
         double[] x = new double[pointsSize];
         double[] y = new double[pointsSize];
-        
-        for(int i = 0; i < pointsSize; i++) {
+
+        for (int i = 0; i < pointsSize; i++) {
             TablePoint tp = (TablePoint) points.get(i);
             x[i] = tp.getTime();
             y[i] = tp.getValue();
         }
-        
+
         if (pointsSize == 0) {
             erg = 0.0;
         } else if (pointsSize == 1) {
@@ -164,7 +175,7 @@ public class Table extends AbstractTableModel implements Serializable {
         } //else if(xtr > x[N-1]) 	erg = x[y[N-1];
         else {
             int i = 0;
-            while((i < pointsSize) && (x[i] < xtr)) {
+            while ((i < pointsSize) && (x[i] < xtr)) {
                 i++;
             }			//Suche nach 1. x-Tabelleneintrag gr..ergleich xt
             if (interpolationType != OFF) {
@@ -179,7 +190,7 @@ public class Table extends AbstractTableModel implements Serializable {
                     //f = (xtr - x[i-1]) / (x[i] - x[i-1]);	//Prozent des Zeitintervalls an der Stelle xt
                     //erg = interpol(iplval,f,y[i-1], y[i]);	//Interpolation des Wertes an Stelle xt
                     phsum += integrate(xtr - x[i - 1], x[i] - x[i - 1], y[i - 1], y[i]);
-                //cout << f << "  " << erg << endl;
+                    //cout << f << "  " << erg << endl;
                 }
                 erg = phsum;
             } else {
@@ -427,14 +438,14 @@ public class Table extends AbstractTableModel implements Serializable {
     }
 
     public void setMin(double min, boolean truncate) {
-        if(this.min == min) {
+        if (this.min == min) {
             return;
         }
-        
+
         double oldVal = this.min;
         this.min = min;
-        
-         for (Iterator iter = points.iterator(); iter.hasNext();) {
+
+        for (Iterator iter = points.iterator(); iter.hasNext();) {
             TablePoint point = (TablePoint) iter.next();
 
             double newVal;
@@ -443,12 +454,12 @@ public class Table extends AbstractTableModel implements Serializable {
                 newVal = LineUtils.truncate(point.getValue(), this.min, this.max);
             } else {
                 newVal = LineUtils.rescale(point.getValue(), oldVal, this.max,
-                        this.min, this.max, -1);
+                        this.min, this.max, new BigDecimal(-1));
             }
 
             point.setLocation(point.getTime(), newVal);
         }
-        
+
         if (propChangeSupport != null) {
             propChangeSupport.firePropertyChange("min",
                     new Double(oldVal), new Double(this.min));
@@ -460,13 +471,13 @@ public class Table extends AbstractTableModel implements Serializable {
     }
 
     public void setMax(double max, boolean truncate) {
-        if(this.max == max) {
+        if (this.max == max) {
             return;
         }
-        
+
         double oldVal = this.max;
         this.max = max;
-        
+
         for (Iterator iter = points.iterator(); iter.hasNext();) {
             TablePoint point = (TablePoint) iter.next();
 
@@ -476,17 +487,17 @@ public class Table extends AbstractTableModel implements Serializable {
                 newVal = LineUtils.truncate(point.getValue(), this.min, this.max);
             } else {
                 newVal = LineUtils.rescale(point.getValue(), this.min, oldVal,
-                        this.min, this.max, -1.0f);
+                        this.min, this.max, new BigDecimal(-1.0f));
             }
 
             point.setLocation(point.getTime(), newVal);
-        }        
-        
+        }
+
         if (propChangeSupport != null) {
             propChangeSupport.firePropertyChange("max",
                     new Double(oldVal), new Double(this.max));
         }
-        
+
     }
 
     public TablePoint getTablePoint(int index) {
@@ -518,8 +529,8 @@ public class Table extends AbstractTableModel implements Serializable {
             propChangeSupport = new PropertyChangeSupport(this);
         }
 
-        for(PropertyChangeListener listener : propChangeSupport.getPropertyChangeListeners()) {
-            if(pcl == listener) {
+        for (PropertyChangeListener listener : propChangeSupport.getPropertyChangeListeners()) {
+            if (pcl == listener) {
                 return;
             }
         }
@@ -534,8 +545,8 @@ public class Table extends AbstractTableModel implements Serializable {
 
     @Override
     public void addTableModelListener(TableModelListener tml) {
-        for(TableModelListener listener : this.getTableModelListeners()) {
-            if(tml == listener) {
+        for (TableModelListener listener : this.getTableModelListeners()) {
+            if (tml == listener) {
                 return;
             }
         }

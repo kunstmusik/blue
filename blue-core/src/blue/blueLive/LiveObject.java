@@ -25,7 +25,6 @@ import blue.utility.ObjectUtilities;
 import blue.utility.XMLUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
-import java.io.Serializable;
 import java.rmi.dgc.VMID;
 import java.util.Map;
 
@@ -33,7 +32,7 @@ import java.util.Map;
  * 
  * @author steven
  */
-public class LiveObject implements Serializable {
+public class LiveObject {
 
     private SoundObject sObj = null;
 
@@ -53,6 +52,18 @@ public class LiveObject implements Serializable {
     public LiveObject(SoundObject sObj) {
         this();
         this.sObj = sObj;
+    }
+
+    public LiveObject(LiveObject liveObj) {
+        // FIXME - double check that this is correct
+        uniqueId = liveObj.uniqueId; 
+        midiTrigger = liveObj.midiTrigger;
+        keyTrigger = liveObj.keyTrigger;
+        enabled = liveObj.enabled;
+
+        if(liveObj.sObj != null){
+            sObj = liveObj.sObj.deepCopy();
+        }
     }
 
     public SoundObject getSoundObject() {

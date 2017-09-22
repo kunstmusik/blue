@@ -125,15 +125,20 @@ public class PatternLayerPanel extends javax.swing.JPanel
 
 
             String originalFile = (String) fObj.getAttribute("originalFile");
-            String displayName = (String)FileUtil.getConfigFile(originalFile).
-                    getAttribute("displayName");
-            
-            JMenuItem temp = new JMenuItem();
-            temp.setText(displayName);
-            temp.putClientProperty("sObjClass", sObj.getClass());
-            temp.setActionCommand(displayName);
-            temp.addActionListener(al);
-            changeSObjMenu.add(temp);
+            FileObject configFile = FileUtil.getConfigFile(originalFile);
+            if(configFile == null) {
+                System.err.println("[PatternLayerPanel] Error: Unable to open file: " +
+                        originalFile); 
+            } else {
+                String displayName = (String)configFile.getAttribute("displayName");
+                
+                JMenuItem temp = new JMenuItem();
+                temp.setText(displayName);
+                temp.putClientProperty("sObjClass", sObj.getClass());
+                temp.setActionCommand(displayName);
+                temp.addActionListener(al);
+                changeSObjMenu.add(temp);
+            }
         }
 
         setBorder(border);
@@ -355,7 +360,7 @@ public class PatternLayerPanel extends javax.swing.JPanel
                return; 
             }
             SoundObject sObj = (SoundObject) scoreObj;
-            SoundObject copy = sObj.clone();
+            SoundObject copy = sObj.deepCopy();
             copy.setStartTime(0.0f);
             copy.setSubjectiveDuration(4);
             copy.setTimeBehavior(SoundObject.TIME_BEHAVIOR_NONE);
@@ -365,7 +370,7 @@ public class PatternLayerPanel extends javax.swing.JPanel
     }//GEN-LAST:event_setSObjFromBufferMenuItemActionPerformed
 
     private void copySObjToBufferMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_copySObjToBufferMenuItemActionPerformed
-        ScoreObject copy = patternLayer.getSoundObject().clone();
+        ScoreObject copy = patternLayer.getSoundObject().deepCopy();
         ScoreController.getInstance().setSelectedScoreObjects(Collections.singleton(copy));
     }//GEN-LAST:event_copySObjToBufferMenuItemActionPerformed
 

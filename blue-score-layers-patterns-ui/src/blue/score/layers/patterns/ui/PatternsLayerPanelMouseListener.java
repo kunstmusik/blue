@@ -75,7 +75,7 @@ public class PatternsLayerPanelMouseListener extends MouseAdapter {
         lastIndex = patternIndex;
         
         selectedData = layer.getPatternData();
-        clone = selectedData.clone();
+        clone = new PatternData(selectedData);
         
         setSquareOn = !(layer.getPatternData().isPatternSet(patternIndex));
         selectedData.setPattern(patternIndex, setSquareOn);

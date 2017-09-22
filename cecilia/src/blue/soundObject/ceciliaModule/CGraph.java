@@ -17,18 +17,15 @@
  * Software Foundation Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307
  * USA
  */
-
 package blue.soundObject.ceciliaModule;
 
-import blue.utility.ObjectUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.StringTokenizer;
 
-public class CGraph extends CeciliaObject implements Serializable {
+public class CGraph extends CeciliaObject {
 
     public static int REL_LINEAR = 0;
 
@@ -36,9 +33,9 @@ public class CGraph extends CeciliaObject implements Serializable {
 
     public static int REL_RAW = 2;
 
-    float min = 0.0f;
+    double min = 0.0f;
 
-    float max = 100.0f;
+    double max = 100.0f;
 
     String unit = "x";
 
@@ -48,9 +45,26 @@ public class CGraph extends CeciliaObject implements Serializable {
 
     int size = -1; // power of 2 size, default to user preference
 
-    ArrayList points = new ArrayList();
+    ArrayList<CGraphPoint> points = new ArrayList<>();
 
     String color = "";
+
+    public CGraph() {
+    }
+
+    public CGraph(CGraph cgraph) {
+        min = cgraph.min;
+        max = cgraph.max;
+        unit = cgraph.unit;
+        rel = cgraph.rel;
+        gen = cgraph.gen;
+        size = cgraph.size;
+        color = cgraph.color;
+        for (CGraphPoint pt : cgraph.points) {
+            points.add(new CGraphPoint(pt));
+        }
+    }
+
 
     /*
      * (non-Javadoc)
@@ -73,7 +87,7 @@ public class CGraph extends CeciliaObject implements Serializable {
         this.setObjectName(tokens[1]);
 
         boolean setInitValue = false;
-        float initValue = Float.NaN;
+        double initValue = Double.NaN;
 
         for (int i = 2; i < tokens.length; i += 2) {
             switch (tokens[i]) {
@@ -81,10 +95,10 @@ public class CGraph extends CeciliaObject implements Serializable {
                     this.setLabel(tokens[i + 1]);
                     break;
                 case "-min":
-                    this.setMin(Float.parseFloat(tokens[i + 1]));
+                    this.setMin(Double.parseDouble(tokens[i + 1]));
                     break;
                 case "-max":
-                    this.setMax(Float.parseFloat(tokens[i + 1]));
+                    this.setMax(Double.parseDouble(tokens[i + 1]));
                     break;
                 case "-rel":
                     switch (tokens[i + 1]) {
@@ -111,7 +125,7 @@ public class CGraph extends CeciliaObject implements Serializable {
                     this.setSize(Integer.parseInt(tokens[i + 1]));
                     break;
                 case "-init":
-                    initValue = Float.parseFloat(tokens[i + 1]);
+                    initValue = Double.parseDouble(tokens[i + 1]);
                     setInitValue = true;
                     break;
                 case "-func":
@@ -129,9 +143,9 @@ public class CGraph extends CeciliaObject implements Serializable {
             point1.time = 0.0f;
             point2.time = 1.0f;
 
-            float range = this.getMax() - this.getMin();
+            double range = this.getMax() - this.getMin();
 
-            if (Float.isNaN(initValue)) {
+            if (Double.isNaN(initValue)) {
                 point1.value = 0.0f;
                 point2.value = 0.0f;
             } else {
@@ -146,8 +160,8 @@ public class CGraph extends CeciliaObject implements Serializable {
 
     private void parseFuncString(String funcString) {
         StringTokenizer st = new StringTokenizer(funcString);
-        float time = 0;
-        float val = 0;
+        double time = 0;
+        double val = 0;
 
         int type = 0;
 
@@ -155,10 +169,10 @@ public class CGraph extends CeciliaObject implements Serializable {
 
         while (st.hasMoreTokens()) {
             if (type == 0) {
-                time = Float.parseFloat(st.nextToken());
+                time = Double.parseDouble(st.nextToken());
                 type = 1;
             } else {
-                val = Float.parseFloat(st.nextToken());
+                val = Double.parseDouble(st.nextToken());
 
                 CGraphPoint point = new CGraphPoint();
                 point.time = time;
@@ -174,14 +188,14 @@ public class CGraph extends CeciliaObject implements Serializable {
     /**
      * @return
      */
-    public float getMax() {
+    public double getMax() {
         return max;
     }
 
     /**
      * @return
      */
-    public float getMin() {
+    public double getMin() {
         return min;
     }
 
@@ -209,14 +223,14 @@ public class CGraph extends CeciliaObject implements Serializable {
     /**
      * @param f
      */
-    public void setMax(float f) {
+    public void setMax(double f) {
         max = f;
     }
 
     /**
      * @param f
      */
-    public void setMin(float f) {
+    public void setMin(double f) {
         min = f;
     }
 
@@ -258,15 +272,14 @@ public class CGraph extends CeciliaObject implements Serializable {
     /**
      * @return Returns the points.
      */
-    public ArrayList getPoints() {
+    public ArrayList<CGraphPoint> getPoints() {
         return points;
     }
 
     /**
-     * @param points
-     *            The points to set.
+     * @param points The points to set.
      */
-    public void setPoints(ArrayList points) {
+    public void setPoints(ArrayList<CGraphPoint> points) {
         this.points = points;
     }
 
@@ -278,8 +291,7 @@ public class CGraph extends CeciliaObject implements Serializable {
     }
 
     /**
-     * @param color
-     *            The color to set.
+     * @param color The color to set.
      */
     public void setColor(String color) {
         this.color = color;
@@ -290,8 +302,8 @@ public class CGraph extends CeciliaObject implements Serializable {
 
         CeciliaObject.initBasicFromXML(data, cgraph);
 
-        cgraph.setMin(Float.parseFloat(data.getTextString("min")));
-        cgraph.setMax(Float.parseFloat(data.getTextString("max")));
+        cgraph.setMin(Double.parseDouble(data.getTextString("min")));
+        cgraph.setMax(Double.parseDouble(data.getTextString("max")));
         cgraph.setUnit(data.getTextString("unit"));
         cgraph.setRel(Integer.parseInt(data.getTextString("rel")));
         cgraph.setGen(Integer.parseInt(data.getTextString("gen")));
@@ -320,8 +332,8 @@ public class CGraph extends CeciliaObject implements Serializable {
     public Element saveAsXML() {
         Element retVal = CeciliaObject.getBasicXML(this);
 
-        retVal.addElement("min").setText(Float.toString(this.getMin()));
-        retVal.addElement("max").setText(Float.toString(this.getMax()));
+        retVal.addElement("min").setText(Double.toString(this.getMin()));
+        retVal.addElement("max").setText(Double.toString(this.getMax()));
         retVal.addElement("unit").setText(this.getUnit());
         retVal.addElement("rel").setText(Integer.toString(this.getRel()));
         retVal.addElement("gen").setText(Integer.toString(this.getGen()));
@@ -337,15 +349,13 @@ public class CGraph extends CeciliaObject implements Serializable {
         return retVal;
     }
 
-    public CGraph copy() {
-        return (CGraph) ObjectUtilities.clone(this);
-    }
-
     public void replaceValues(CGraph cgraph) {
         System.out.println("Cgraph :" + this + " : " + cgraph);
 
-        ArrayList pointsCopy = (ArrayList) ObjectUtilities.clone(cgraph
-                .getPoints());
+        ArrayList<CGraphPoint> pointsCopy = new ArrayList<>();
+        for (CGraphPoint pt : cgraph.getPoints()) {
+            pointsCopy.add(new CGraphPoint(pt));
+        }
         this.setPoints(pointsCopy);
     }
 }

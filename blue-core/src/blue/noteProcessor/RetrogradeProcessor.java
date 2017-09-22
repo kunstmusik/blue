@@ -25,7 +25,7 @@ import electric.xml.Element;
  */
 
 @NoteProcessorPlugin(displayName="RetrogradeProcessor", position = 80)
-public class RetrogradeProcessor implements NoteProcessor, java.io.Serializable {
+public class RetrogradeProcessor implements NoteProcessor {
 
     public RetrogradeProcessor() {
     }
@@ -41,7 +41,7 @@ public class RetrogradeProcessor implements NoteProcessor, java.io.Serializable 
         Note temp;
         int size = in.size();
         temp = in.get(in.size() - 1);
-        float totalTime = temp.getStartTime() + temp.getSubjectiveDuration();
+        double totalTime = temp.getStartTime() + temp.getSubjectiveDuration();
 
         for (int i = 0; i < size; i++) {
             temp = in.get(i);
@@ -89,5 +89,10 @@ public class RetrogradeProcessor implements NoteProcessor, java.io.Serializable 
         retVal.setAttribute("type", this.getClass().getName());
 
         return retVal;
+    }
+
+    @Override
+    public NoteProcessor deepCopy() {
+        return new RetrogradeProcessor();
     }
 }

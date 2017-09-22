@@ -7,7 +7,7 @@
     Allows for using of the Python programming language to generate score 
     data, using the Jython interpreter to interpret Python scripts. You may add 
     your own python classes to the library for use with "import" statements by 
-    adding them to your BLUE_HOME/pythonLib folder. Included with blue is 
+    adding them to your BLUE_HOME/pythonLib folder. Included with Blue is 
     Maurizio Umberto Puxeddu's pmask, as well as Steven Yi's Orchestral 
     Composition library, found in Blue's application directory under 
     blue/pythonLib.
@@ -68,12 +68,12 @@ i1	1.5	0.5	8.03	80
   </simplesect>
 
   <simplesect>
-    <title>Variables from blue</title>
+    <title>Variables from Blue</title>
 
-    <para>The following variables are avaialable from blue:</para>
+    <para>The following variables are avaialable from Blue:</para>
 
     <variablelist>
-      <title>Variables from blue</title>
+      <title>Variables from Blue</title>
 
       <varlistentry>
         <term>blueDuration</term>
@@ -131,7 +131,7 @@ i1	1.5	0.5	8.03	80
       won't be an issue, but if you're starting work in the middle of a project, 
       you will need to evaluate that utility PythonObject at least once. You can 
       either do a run from the start at least once, use the "Test" button to 
-      have that evaluated, or use "Process at Start" and have blue ensure it is 
+      have that evaluated, or use "Process at Start" and have Blue ensure it is 
       loaded into the python interpreter when you load your projects.
     </para>
   </simplesect>

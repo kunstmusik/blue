@@ -12,8 +12,8 @@ CMask concepts as they are represented 1:1 in JMask.
     </para>
     <para>JMask builds on top of CMask's concepts and feature set by providing
 the user a graphical way to edit parameter values, tables, masks, etc.  Also, by 
-using JMask, the user's projects are guaranteed to run on all blue 
-installations, while using CMask from blue requires anyone opening and using
+using JMask, the user's projects are guaranteed to run on all Blue 
+installations, while using CMask from Blue requires anyone opening and using
 the project to have CMask installed on their system.
     </para>
     <para>The following documentation for JMask will assume the user is familiar

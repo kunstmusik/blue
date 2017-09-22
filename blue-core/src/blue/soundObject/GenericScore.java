@@ -35,27 +35,32 @@ import blue.noteProcessor.NoteProcessorException;
 import blue.plugin.SoundObjectPlugin;
 import blue.utility.ScoreUtilities;
 import electric.xml.Element;
-import java.io.Serializable;
 import java.util.Map;
 
 @SoundObjectPlugin(displayName = "GenericScore", live=true, position = 40)
-public class GenericScore extends AbstractSoundObject implements Serializable,
-        Cloneable, GenericViewable {
+public class GenericScore extends AbstractSoundObject implements 
+        GenericViewable {
 
     private NoteProcessorChain npc = new NoteProcessorChain();
 
     private int timeBehavior;
 
-    float repeatPoint = -1.0f;
+    double repeatPoint = -1.0f;
 
     private String score;
 
     public GenericScore() {
         setName("GenericScore");
-
         score = "i1 0 2 3 4 5";
-
         timeBehavior = SoundObject.TIME_BEHAVIOR_SCALE;
+    }
+
+    public GenericScore(GenericScore score) {
+        super(score);
+        timeBehavior = score.timeBehavior;
+        this.score = score.score;
+        npc = new NoteProcessorChain(score.npc);
+        repeatPoint = score.repeatPoint;
     }
 
     // public accessor methods
@@ -69,7 +74,7 @@ public class GenericScore extends AbstractSoundObject implements Serializable,
     }
 
     @Override
-    public float getObjectiveDuration() {
+    public double getObjectiveDuration() {
         NoteList notes = null;
 
         try {
@@ -90,7 +95,7 @@ public class GenericScore extends AbstractSoundObject implements Serializable,
         return npc;
     }
 
-    public final NoteList generateNotes(float renderStart, float renderEnd) throws SoundObjectException {
+    public final NoteList generateNotes(double renderStart, double renderEnd) throws SoundObjectException {
         NoteList nl;
         try {
             nl = ScoreUtilities.getNotes(score);
@@ -144,12 +149,12 @@ public class GenericScore extends AbstractSoundObject implements Serializable,
     }
 
     @Override
-    public float getRepeatPoint() {
+    public double getRepeatPoint() {
         return this.repeatPoint;
     }
 
     @Override
-    public void setRepeatPoint(float repeatPoint) {
+    public void setRepeatPoint(double repeatPoint) {
         this.repeatPoint = repeatPoint;
 
         ScoreObjectEvent event = new ScoreObjectEvent(this,
@@ -196,12 +201,17 @@ public class GenericScore extends AbstractSoundObject implements Serializable,
     }
 
     @Override
-    public NoteList generateForCSD(CompileData compileData, float startTime, 
-            float endTime) throws SoundObjectException {
+    public NoteList generateForCSD(CompileData compileData, double startTime, 
+            double endTime) throws SoundObjectException {
         
         NoteList nl = generateNotes(startTime, endTime);
         return nl;
         
+    }
+
+    @Override
+    public GenericScore deepCopy() {
+        return new GenericScore(this);
     }
 
 } 

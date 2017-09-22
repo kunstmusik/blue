@@ -1,42 +1,70 @@
+/*
+ * blue - object composition environment for csound Copyright (c) 2001-2017
+ * Steven Yi (stevenyi@gmail.com)
+ *
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License as published by the Free
+ * Software Foundation; either version 2 of the License or (at your option) any
+ * later version.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+ * details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; see the file COPYING.LIB. If not, write to the Free
+ * Software Foundation Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307
+ * USA
+ */
 package blue.soundObject.editor;
 
 import blue.Arrangement;
 import blue.BlueSystem;
 import blue.CompileData;
 import blue.Tables;
+import blue.automation.LineColors;
+import blue.automation.Parameter;
+import blue.components.lines.Line;
+import blue.components.lines.LineList;
+import blue.components.lines.LinePoint;
 import blue.gui.ExceptionDialog;
 import blue.gui.InfoDialog;
-import blue.orchestra.blueSynthBuilder.BSBObjectRegistry;
-import blue.orchestra.editor.blueSynthBuilder.BSBInterfaceEditor;
+import blue.jfx.BlueFX;
+import blue.orchestra.editor.blueSynthBuilder.jfx.LineSelector;
 import blue.plugin.ScoreObjectEditorPlugin;
 import blue.score.ScoreObject;
+import blue.score.ScoreObjectEvent;
+import blue.score.ScoreObjectListener;
 import blue.soundObject.NoteList;
 import blue.soundObject.Sound;
 import blue.soundObject.SoundObject;
+import blue.soundObject.editor.sound.ParameterLineView;
+import blue.soundObject.editor.sound.TimeBar;
 import blue.ui.core.orchestra.editor.BlueSynthBuilderEditor;
-import blue.ui.nbutilities.MimeTypeEditorComponent;
-import blue.ui.utilities.SimpleDocumentListener;
 import java.awt.BorderLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.KeyEvent;
-import javax.swing.AbstractAction;
-import javax.swing.ActionMap;
-import javax.swing.BorderFactory;
-import javax.swing.InputMap;
+import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import javafx.embed.swing.JFXPanel;
+import javafx.geometry.Insets;
+import javafx.scene.Scene;
+import javafx.scene.control.MenuButton;
+import javafx.scene.control.MenuItem;
+import javafx.scene.control.TextArea;
+import javafx.scene.layout.Background;
+import javafx.scene.layout.BackgroundFill;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.CornerRadii;
+import javafx.scene.layout.Pane;
+import javafx.scene.paint.Color;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.JTabbedPane;
-import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
-import javax.swing.event.DocumentEvent;
-import javax.swing.undo.UndoManager;
-import org.openide.awt.UndoRedo;
+import org.openide.util.Exceptions;
 
 /**
- * Title: blue Description: an object composition environment for csound
- * Copyright: Copyright (c) 2001 Company: steven yi music
+ * Editor for Sound SoundObject.
  *
  * @author steven yi
  * @version 1.0
@@ -46,23 +74,31 @@ public class SoundEditor extends ScoreObjectEditor {
 
     Sound sObj;
 
-    MimeTypeEditorComponent scoreEditPane = new MimeTypeEditorComponent("text/x-csound-orc");
-
     JLabel editorLabel = new JLabel();
 
     JPanel topPanel = new JPanel();
 
     JButton testButton = new JButton();
 
-    UndoManager undo = new UndoRedo.Manager();
+    LineList lineList = new LineList();
 
-//    private final BSBInterfaceEditor interfaceEditor = new BSBInterfaceEditor(
-//            BSBObjectRegistry.getBSBObjects(), false);
-    
-            BlueSynthBuilderEditor editor = new BlueSynthBuilderEditor();
+    BlueSynthBuilderEditor editor = new BlueSynthBuilderEditor();
 
+    ParameterLineView lineView;
+    LineSelector lineSelector;
+    private TextArea commentTextArea;
+    ScoreObjectListener sObjListener;
 
     public SoundEditor() {
+
+        sObjListener = evt -> {
+            if(evt.getPropertyChanged() == ScoreObjectEvent.START_TIME ) {
+                lineView.setStartTime(evt.getScoreObject().getStartTime());
+            } else if (evt.getPropertyChanged() == ScoreObjectEvent.DURATION) {
+                lineView.setDuration(evt.getScoreObject().getSubjectiveDuration());
+            }
+        };
+        
         try {
             jbInit();
         } catch (Exception e) {
@@ -71,78 +107,121 @@ public class SoundEditor extends ScoreObjectEditor {
     }
 
     private void jbInit() throws Exception {
-        
+
         this.setLayout(new BorderLayout());
         this.add(editor);
         editor.setLabelText("[ Sound ]");
-//        this.setLayout(new BorderLayout());
-//        this.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-//        
-//        JTabbedPane tabs = new JTabbedPane();
-//        tabs.add(BlueSystem.getString("instrument.interface"), interfaceEditor);
-//        tabs.add(BlueSystem.getString("instrument.code"), scoreEditPane);
-//
-//        scoreEditPane.getDocument().addDocumentListener(new SimpleDocumentListener() {
-//
-//            @Override
-//            public void documentChanged(DocumentEvent e) {
-//                if (sObj != null) {
-//                    sObj.setText(scoreEditPane.getText());
-//                }
-//            }
-//        });
-//
-//        initActions();
-//
-//        editorLabel.setText("[ Sound ]");
-//
-//        testButton.setText(BlueSystem.getString("common.test"));
-//        testButton.addActionListener(new ActionListener() {
-//
-//            @Override
-//            public void actionPerformed(ActionEvent e) {
-//                testSoundObject();
-//            }
-//        });
-//
-//        topPanel.setLayout(new BorderLayout());
-//        topPanel.add(editorLabel, BorderLayout.CENTER);
-//        topPanel.add(testButton, BorderLayout.EAST);
-//
-//        this.add(tabs, BorderLayout.CENTER);
-//        this.add(topPanel, BorderLayout.NORTH);
-//
-//        scoreEditPane.getDocument().addUndoableEditListener(undo);
-//        scoreEditPane.setUndoManager(undo);
-//
-//        undo.setLimit(1000);
-    }
 
-//    private void initActions() {
-//        InputMap inputMap = scoreEditPane.getInputMap();
-//        ActionMap actions = scoreEditPane.getActionMap();
-//
-//        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_T, BlueSystem
-//                .getMenuShortcutKey()), "testSoundObject");
-//
-//        actions.put("testSoundObject", new AbstractAction() {
-//
-//            @Override
-//            public void actionPerformed(ActionEvent e) {
-//                testSoundObject();
-//            }
-//
-//        });
-//
-//    }
+        JFXPanel jfxPanel = new JFXPanel();
+        CountDownLatch latch = new CountDownLatch(1);
+        JFXPanel jfxCommentPanel = new JFXPanel();
+
+        BlueFX.runOnFXThread(() -> {
+
+            try {
+
+                MenuButton btn = new MenuButton("Automations");
+
+                BorderPane mainPane = new BorderPane();
+                lineView = new ParameterLineView(lineList);
+                lineSelector = new LineSelector(lineList);
+
+                lineView.widthProperty().bind(mainPane.widthProperty());
+                lineView.heightProperty().bind(mainPane.heightProperty().subtract(lineSelector.heightProperty()));
+
+                lineSelector.getChildren().add(0, btn);
+                lineSelector.setSpacing(5.0);
+                lineView.selectedLineProperty().bind(lineSelector.selectedLineProperty());
+                
+                TimeBar tb = new TimeBar();
+                tb.startTimeProperty().bind(lineView.startTimeProperty());
+                tb.durationProperty().bind(lineView.durationProperty());
+                
+                Pane p = new Pane(lineView, tb);
+                p.setBackground(new Background(
+                        new BackgroundFill(
+                                Color.BLACK, CornerRadii.EMPTY, Insets.EMPTY)));
+                lineView.widthProperty().bind(p.widthProperty().subtract(20));
+                lineView.heightProperty().bind(p.heightProperty().subtract(40));
+                lineView.setLayoutX(10);
+                lineView.setLayoutY(30);
+                tb.widthProperty().bind(lineView.widthProperty());
+                tb.setHeight(20);
+                tb.setLayoutX(10);
+                tb.setLayoutY(10);
+
+                mainPane.setCenter(p);
+                mainPane.setTop(lineSelector);
+
+                btn.showingProperty().addListener((obs, old, newVal) -> {
+                    if (newVal) {
+                        if (sObj != null) {
+                            sObj.getBlueSynthBuilder().getParameterList().sorted()
+                                    .forEach((param) -> {
+                                        MenuItem m = new MenuItem(param.getName());
+                                        m.setOnAction(e -> {
+                                            param.setAutomationEnabled(!param.isAutomationEnabled());
+                                            if (param.isAutomationEnabled()) {
+                                                Line line = param.getLine();
+                                                line.setVarName(param.getName());
+                                                List<LinePoint> points = line.getObservableList();
+                                                if (points.size() < 2) {
+                                                    LinePoint lp = new LinePoint();
+                                                    lp.setLocation(1.0, points.get(0).getY());
+                                                    points.add(lp);
+                                                }
+                                                lineList.add(line);
+                                            } else {
+                                                lineList.remove(param.getLine());
+                                            }
+
+                                            int colorCount = 0;
+                                            for (Line line : lineList) {
+                                                line.setColor(LineColors.getColor(colorCount++));
+                                            }
+                                        });
+                                        if (param.isAutomationEnabled()) {
+                                            m.setStyle("-fx-text-fill: green;");
+                                        }
+                                        btn.getItems().add(m);
+                                    });
+                        }
+                    } else {
+                        btn.getItems().clear();
+                    }
+                });
+
+                final Scene scene = new Scene(mainPane);
+                BlueFX.style(scene);
+                jfxPanel.setScene(scene);
+
+                commentTextArea = new TextArea();
+                commentTextArea.setWrapText(true);
+
+                final Scene scene2 = new Scene(commentTextArea);
+                BlueFX.style(scene2);
+                jfxCommentPanel.setScene(scene2);
+            } finally {
+                latch.countDown();
+            }
+        });
+
+        try {
+            latch.await();
+        } catch (InterruptedException ex) {
+            Exceptions.printStackTrace(ex);
+        }
+
+        editor.getTabs().insertTab("Automation", null, jfxPanel, "", 1);
+        editor.getTabs().addTab("Comments", jfxCommentPanel);
+
+    }
 
     @Override
     public final void editScoreObject(ScoreObject sObj) {
         if (sObj == null) {
             this.sObj = null;
             editorLabel.setText("no editor available");
-            scoreEditPane.setText("null soundObject");
-            scoreEditPane.getJEditorPane().setEnabled(false);
             editor.editInstrument(null);
             return;
         }
@@ -150,22 +229,44 @@ public class SoundEditor extends ScoreObjectEditor {
         if (!(sObj instanceof Sound)) {
             this.sObj = null;
             editorLabel.setText("no editor available");
-            scoreEditPane
-                    .setText("[ERROR] GenericEditor::editSoundObject - not instance of GenericEditable");
-            scoreEditPane.getJEditorPane().setEnabled(false);
             editor.editInstrument(null);
 
             return;
         }
 
+        if (this.sObj != null) {
+            final Sound temp = this.sObj;
+            BlueFX.runOnFXThread(() -> {
+                temp.commentProperty().unbind();
+                temp.removeScoreObjectListener(sObjListener);
+            });
+        }
+
         this.sObj = (Sound) sObj;
-//        scoreEditPane.setText(this.sObj.getText());
-        scoreEditPane.getJEditorPane().setEnabled(true);
-        scoreEditPane.getJEditorPane().setCaretPosition(0);
         editor.editInstrument(this.sObj.getBlueSynthBuilder());
 
-
-        undo.discardAllEdits();
+        BlueFX.runOnFXThread(() -> {
+            lineList.clear();
+            int colorCount = 0;
+            for (Parameter p : this.sObj.getBlueSynthBuilder().getParameterList().sorted()) {
+                if (p.isAutomationEnabled()) {
+                    p.getLine().setVarName(p.getName());
+                    p.getLine().setColor(LineColors.getColor(colorCount++));
+                    List<LinePoint> points = p.getLine().getObservableList();
+                    if (points.size() < 2) {
+                        LinePoint lp = new LinePoint();
+                        lp.setLocation(1.0, points.get(0).getY());
+                        points.add(lp);
+                    }
+                    lineList.add(p.getLine());
+                }
+            }
+            lineView.setStartTime(this.sObj.getStartTime());
+            lineView.setDuration(this.sObj.getSubjectiveDuration());
+            commentTextArea.setText(this.sObj.getComment());
+            this.sObj.commentProperty().bind(commentTextArea.textProperty());
+            this.sObj.addScoreObjectListener(sObjListener);
+        });
     }
 
     public final void testSoundObject() {

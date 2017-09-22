@@ -241,7 +241,7 @@ public class PianoRollCanvas extends JLayeredPane implements Scrollable,
     public void copy() {
         NOTE_COPY_BUFFER.clear();
         for(PianoNoteView pnv : noteBuffer) {
-           NOTE_COPY_BUFFER.add(pnv.getPianoNote().clone());
+           NOTE_COPY_BUFFER.add(new PianoNote(pnv.getPianoNote()));
         }
     }
 
@@ -353,9 +353,9 @@ public class PianoRollCanvas extends JLayeredPane implements Scrollable,
             }
 
              
-            float snapValue = p.getSnapValue();
+            double snapValue = p.getSnapValue();
             int pixelSecond = p.getPixelSecond();
-            float time;
+            double time;
             
             for(int i = 0; x < w; i++) {
                  x = (int)((i * snapValue) * pixelSecond);
@@ -399,7 +399,7 @@ public class PianoRollCanvas extends JLayeredPane implements Scrollable,
      * @param x
      * @param y
      */
-    public PianoNoteView addNote(float startTime, int y) {
+    public PianoNoteView addNote(double startTime, int y) {
         PianoNote note = new PianoNote();
         note.setNoteTemplate(p.getNoteTemplate());
         note.setStart(startTime);

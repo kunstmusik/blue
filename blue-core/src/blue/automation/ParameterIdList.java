@@ -21,7 +21,6 @@ package blue.automation;
 
 import electric.xml.Element;
 import electric.xml.Elements;
-import java.io.Serializable;
 import java.util.*;
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
@@ -30,7 +29,7 @@ import javax.swing.event.ListSelectionListener;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
-public class ParameterIdList implements Serializable, Iterable<String> {
+public class ParameterIdList implements Iterable<String> {
     private static final Comparator comparator = new Comparator() {
         @Override
         public int compare(Object o1, Object o2) {
@@ -41,13 +40,22 @@ public class ParameterIdList implements Serializable, Iterable<String> {
         }
     };
 
-    private ArrayList<String> parameters = new ArrayList<>();
+    private ArrayList<String> parameters; 
 
     private int selectedIndex = -1;
 
     transient Vector listListeners = null;
 
     transient Vector listSelectionListeners = null;
+
+    public ParameterIdList(){
+        parameters = new ArrayList<>();
+    }
+
+    public ParameterIdList(ParameterIdList pil) {
+        parameters = new ArrayList<>(pil.parameters);
+        selectedIndex = pil.selectedIndex;
+    }
 
     public String getParameterId(int index) {
         return parameters.get(index);
@@ -71,8 +79,10 @@ public class ParameterIdList implements Serializable, Iterable<String> {
 
         fireAddDataEvent(lde);
 
-        if (size() == 1) {
+        if(selectedIndex < 0 && size() > 0) {
             setSelectedIndex(0);
+        } else if (selectedIndex >= size()) {
+            setSelectedIndex(size() - 1);
         } else if (current != null) {
             setSelectedIndex(parameters.indexOf(current));
         }
@@ -266,7 +276,7 @@ public class ParameterIdList implements Serializable, Iterable<String> {
         fireListSelectionEvent(selectedIndex);
     }
 
-    void setSelectedParameter(String paramId) {
+    public void setSelectedParameter(String paramId) {
         if (paramId == null) {
             return;
         }

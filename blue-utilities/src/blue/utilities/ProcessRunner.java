@@ -34,7 +34,7 @@ import java.util.ArrayList;
  * modified by steven yi, 2001-2002
  */
 
-public final class ProcessRunner implements java.io.Serializable {
+public final class ProcessRunner  {
     // private TimeBar timeBar;
 
     public ProcessRunner() {

@@ -24,7 +24,6 @@ import blue.orchestra.Instrument;
 import blue.orchestra.InstrumentCategory;
 import blue.utility.ListUtil;
 import electric.xml.Element;
-import java.io.Serializable;
 import java.util.*;
 import javax.swing.event.TreeModelEvent;
 import javax.swing.event.TreeModelListener;
@@ -38,7 +37,7 @@ import javax.swing.tree.TreePath;
  * 
  */
 
-public class InstrumentLibrary implements Serializable, TreeModel {
+public class InstrumentLibrary implements TreeModel {
 
     InstrumentCategory rootInstrumentCategory = new InstrumentCategory();
 

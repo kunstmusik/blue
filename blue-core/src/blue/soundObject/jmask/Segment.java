@@ -21,17 +21,21 @@
  */
 package blue.soundObject.jmask;
 
-//import blue.soundObject.editor.jmask.SegmentEditor;
 import electric.xml.Element;
 import electric.xml.Elements;
-import java.io.Serializable;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
-public class Segment implements Generator, Serializable, Quantizable,
-        Accumulatable {
+public class Segment implements Generator, Quantizable, Accumulatable {
 
     Table table = new Table();
+
+    public Segment() {
+    }
+
+    public Segment(Segment seg) {
+        table = new Table(seg.table);
+    }
 
     public static Generator loadFromXML(Element data) {
         Segment retVal = new Segment();
@@ -59,16 +63,9 @@ public class Segment implements Generator, Serializable, Quantizable,
         return retVal;
     }
 
-//    public JComponent getEditor() {
-//        SegmentEditor segmentEditor = new SegmentEditor();
-//        segmentEditor.setSegment(this);
-//
-//        return segmentEditor;
-//    }
-
     @Override
     public void initialize(double duration) {
-        for(int i = 0; i < table.getRowCount(); i++) {
+        for (int i = 0; i < table.getRowCount(); i++) {
             TablePoint tp = table.getTablePoint(i);
             tp.setTime(tp.getTime() * duration);
         }
@@ -91,5 +88,10 @@ public class Segment implements Generator, Serializable, Quantizable,
     @Override
     public String toString() {
         return ToStringBuilder.reflectionToString(this);
+    }
+
+    @Override
+    public Segment deepCopy() {
+        return new Segment(this);
     }
 }

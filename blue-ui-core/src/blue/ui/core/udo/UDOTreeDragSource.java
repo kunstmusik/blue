@@ -71,8 +71,12 @@ public class UDOTreeDragSource implements DragSourceListener,
                 || path.getLastPathComponent() instanceof UDOCategory) {
             oldNode = path.getLastPathComponent();
 
-            // USE CLONE OF OBJ AS TRANSFERRABLE ISN'T MAKING CLONE (WHY?)
-            Object cloneNode = ObjectUtilities.clone(oldNode);
+            Object cloneNode;
+            if(oldNode instanceof UserDefinedOpcode) {
+                cloneNode = new UserDefinedOpcode((UserDefinedOpcode) oldNode);
+            } else {
+                cloneNode = new UDOCategory((UDOCategory) oldNode);
+            }
 
             transferable = new TransferableUDO(cloneNode);
             source.startDrag(dge, null, transferable, this);

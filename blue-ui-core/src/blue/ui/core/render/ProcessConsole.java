@@ -53,7 +53,7 @@ import org.openide.windows.InputOutput;
  *
  * modified by steven yi, 2001-2002
  */
-public final class ProcessConsole implements java.io.Serializable, DiskRenderService {
+public final class ProcessConsole implements DiskRenderService {
     // private TimeBar timeBar;
 
     private RenderTimeManager renderTimeManager = null;
@@ -140,8 +140,8 @@ public final class ProcessConsole implements java.io.Serializable, DiskRenderSer
             String commandLine = StringUtils.join(job.getArgs(), " ");
             BlueData data = job.getData();
 
-            float startTime = data.getRenderStartTime();
-            float endTime = data.getRenderEndTime();
+            double startTime = data.getRenderStartTime();
+            double endTime = data.getRenderEndTime();
 
             if (data.getProjectProperties().diskAlwaysRenderEntireProject) {
                 startTime = 0.0f;
@@ -435,7 +435,7 @@ public final class ProcessConsole implements java.io.Serializable, DiskRenderSer
 
     // TODO - finish implementing!
     @Override
-    public void execWait(String[] args, File currentWorkingDirectory, float startTime, TempoMapper mapper, ArrayList<Parameter> parameters) {
+    public void execWait(String[] args, File currentWorkingDirectory, double startTime, TempoMapper mapper, ArrayList<Parameter> parameters) {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
@@ -480,7 +480,7 @@ public final class ProcessConsole implements java.io.Serializable, DiskRenderSer
 
         @Override
         public void run() {
-            float time;
+            double time;
 
             try {
                 String line = null;
@@ -493,7 +493,7 @@ public final class ProcessConsole implements java.io.Serializable, DiskRenderSer
                     }
 
                     if (line.startsWith("blueTimePointer")) {
-                        time = Float.parseFloat(line.substring(line
+                        time = Double.parseDouble(line.substring(line
                                 .indexOf("=") + 1));
 
                         if (renderTimeManager != null) {

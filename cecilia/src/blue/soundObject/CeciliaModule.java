@@ -22,16 +22,13 @@ package blue.soundObject;
 
 import blue.*;
 import blue.noteProcessor.NoteProcessorChain;
-import blue.plugin.SoundObjectPlugin;
 import blue.soundObject.ceciliaModule.CeciliaModuleCompilationUnit;
 import blue.soundObject.ceciliaModule.CeciliaObject;
 import blue.soundObject.ceciliaModule.ModuleDefinition;
 import blue.utility.ObjectUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
-import java.io.Serializable;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 
 /**
@@ -39,7 +36,7 @@ import java.util.Map;
  * 
  */
 //@SoundObjectPlugin(displayName = "CeciliaModule", live=false, position = 200)
-public class CeciliaModule extends AbstractSoundObject implements Serializable, GenericViewable {
+public class CeciliaModule extends AbstractSoundObject implements GenericViewable {
 
     public static final int ORCHESTRA_MONO = 0;
 
@@ -55,19 +52,27 @@ public class CeciliaModule extends AbstractSoundObject implements Serializable, 
 
     private ModuleDefinition moduleDefinition;
 
-    private HashMap stateData;
+    private HashMap<String, CeciliaObject> stateData;
 
     public CeciliaModule() {
         setName("CeciliaModule");
 
-        stateData = new HashMap();
+        stateData = new HashMap<>();
         moduleDefinition = new ModuleDefinition();
         orchestraVersion = ORCHESTRA_STEREO;
         genSize = "8192";
     }
 
+    public CeciliaModule(CeciliaModule cm) {
+        super(cm);
+        orchestraVersion = cm.orchestraVersion;
+        moduleDefinition = new ModuleDefinition(cm.moduleDefinition);
+        orchestraVersion = cm.orchestraVersion;
+        genSize = cm.genSize;
+    }
+
     @Override
-    public float getObjectiveDuration() {
+    public double getObjectiveDuration() {
         return getSubjectiveDuration();
     }
 
@@ -86,12 +91,12 @@ public class CeciliaModule extends AbstractSoundObject implements Serializable, 
     }
 
     @Override
-    public float getRepeatPoint() {
+    public double getRepeatPoint() {
         return -1.0f;
     }
 
     @Override
-    public void setRepeatPoint(float repeatPoint) {
+    public void setRepeatPoint(double repeatPoint) {
     }
 
     @Override
@@ -206,22 +211,19 @@ public class CeciliaModule extends AbstractSoundObject implements Serializable, 
 
         retVal.addElement(moduleDefinition.saveAsXML());
 
-        for (Iterator iter = stateData.keySet().iterator(); iter.hasNext();) {
-            String key = (String) iter.next();
-
+        for (String key : stateData.keySet()) {
             CeciliaObject cObj = (CeciliaObject) stateData.get(key);
             Element elem = cObj.saveAsXML();
             elem.setAttribute("nameKey", key);
 
             retVal.addElement(elem);
-
         }
 
         return retVal;
     }
 
     @Override
-    public NoteList generateForCSD(CompileData compileData, float startTime, float endTime) {
+    public NoteList generateForCSD(CompileData compileData, double startTime, double endTime) {
         CeciliaModuleCompilationUnit compileUnit = new CeciliaModuleCompilationUnit(this);
         //FIXME - reimplement this when working on CecilaModule again
 //        compileUnit.generateGlobals(globalOrcSco);
@@ -237,6 +239,11 @@ public class CeciliaModule extends AbstractSoundObject implements Serializable, 
 
 //        return nl;
         return null;
+    }
+
+    @Override
+    public CeciliaModule deepCopy() {
+        return new CeciliaModule(this);
     }
     
 }

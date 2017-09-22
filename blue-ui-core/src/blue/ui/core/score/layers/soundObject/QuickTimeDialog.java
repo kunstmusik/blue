@@ -92,12 +92,12 @@ public class QuickTimeDialog extends JDialog {
     private void handleWindowDeactivated() {
         if (scoreObj != null) {
             try {
-                float initialStart = scoreObj.getStartTime();
-                float initialSubjectiveDuration = scoreObj
+                double initialStart = scoreObj.getStartTime();
+                double initialSubjectiveDuration = scoreObj
                         .getSubjectiveDuration();
 
-                float newStart = Float.parseFloat(startText.getText());
-                float newSubjectiveDuration = Float.parseFloat(durText
+                double newStart = Double.parseDouble(startText.getText());
+                double newSubjectiveDuration = Double.parseDouble(durText
                         .getText());
 
                 BlueUndoManager.setUndoManager("score");
@@ -129,10 +129,10 @@ public class QuickTimeDialog extends JDialog {
                                 null,
                                 BlueSystem
                                 .getString(
-                                        "scoreGUI.quickTimeDialog.notFloat.message"),
+                                        "scoreGUI.quickTimeDialog.notDouble.message"),
                                 BlueSystem
                                 .getString(
-                                        "scoreGUI.quickTimeDialog.notFloat.title"),
+                                        "scoreGUI.quickTimeDialog.notDouble.title"),
                                 JOptionPane.ERROR_MESSAGE);
                 this.show();
                 startText.requestFocus();
@@ -148,8 +148,8 @@ public class QuickTimeDialog extends JDialog {
         // SwingUtilities.convertPointToScreen(p, stCanvas);
         // this.setLocation(p.x, p.y - this.getHeight());
 
-        startText.setText(Float.toString(scoreObj.getStartTime()));
-        durText.setText(Float.toString(scoreObj.getSubjectiveDuration()));
+        startText.setText(Double.toString(scoreObj.getStartTime()));
+        durText.setText(Double.toString(scoreObj.getSubjectiveDuration()));
 
         super.show();
         startText.requestFocus();

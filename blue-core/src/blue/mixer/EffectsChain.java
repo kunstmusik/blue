@@ -17,7 +17,6 @@
  * the Free Software Foundation Inc., 59 Temple Place - Suite 330,
  * Boston, MA  02111-1307 USA
  */
-
 package blue.mixer;
 
 import blue.automation.Automatable;
@@ -27,7 +26,6 @@ import electric.xml.Element;
 import electric.xml.Elements;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -38,13 +36,26 @@ import javax.swing.event.ListDataListener;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
-public class EffectsChain implements Serializable, ListModel,
-        PropertyChangeListener {
+public class EffectsChain implements ListModel, PropertyChangeListener {
+
     private ArrayList effects = new ArrayList();
 
     private transient List<ListDataListener> listeners = null;
 
     private transient List<AutomatableCollectionListener> automatableCollectionListeners = null;
+
+    public EffectsChain() {
+    }
+
+    public EffectsChain(EffectsChain chain) {
+        for(Object item : chain.effects) {
+            if(item instanceof Effect) {
+                addEffect(new Effect((Effect)item));
+            } else if (item instanceof Send){
+                addSend(new Send((Send)item));
+            } 
+        }
+    }
 
     public Element saveAsXML() {
         Element retVal = new Element("effectsChain");
@@ -168,18 +179,17 @@ public class EffectsChain implements Serializable, ListModel,
             Object obj = this.getElementAt(i);
 
             if (obj instanceof Send) {
-                temp.add((Send)obj);
+                temp.add((Send) obj);
             }
         }
 
         Send[] sends = new Send[temp.size()];
-		sends = temp.toArray(sends);
+        sends = temp.toArray(sends);
 
         return sends;
     }
 
     /* List Model Methods */
-
     @Override
     public int getSize() {
         return effects.size();
@@ -259,7 +269,7 @@ public class EffectsChain implements Serializable, ListModel,
     private void fireAutomatableAdded(Automatable automatable) {
         if (automatableCollectionListeners != null) {
 
-            for(AutomatableCollectionListener listener : automatableCollectionListeners) {
+            for (AutomatableCollectionListener listener : automatableCollectionListeners) {
                 listener.automatableAdded(automatable);
             }
         }
@@ -267,7 +277,7 @@ public class EffectsChain implements Serializable, ListModel,
 
     private void fireAutomatableRemoved(Automatable automatable) {
         if (automatableCollectionListeners != null) {
-            for(AutomatableCollectionListener listener : automatableCollectionListeners) {
+            for (AutomatableCollectionListener listener : automatableCollectionListeners) {
                 listener.automatableRemoved(automatable);
             }
         }

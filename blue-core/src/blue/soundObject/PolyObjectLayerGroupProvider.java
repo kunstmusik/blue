@@ -23,12 +23,19 @@ import blue.score.layers.LayerGroup;
 import blue.score.layers.LayerGroupProvider;
 import electric.xml.Element;
 import java.util.Map;
+import java.util.function.Supplier;
 
 /**
  *
  * @author stevenyi
  */
 public class PolyObjectLayerGroupProvider implements LayerGroupProvider {
+
+    private static Supplier<Integer> defaultHeightIndexProvider = null;
+
+    public static void setDefaultHeightIndexProvider(Supplier<Integer> supplier) {
+        defaultHeightIndexProvider = supplier;
+    }
 
     @Override
     public String getLayerGroupName() {
@@ -40,6 +47,10 @@ public class PolyObjectLayerGroupProvider implements LayerGroupProvider {
         PolyObject pObj = new PolyObject(true);
         pObj.newLayerAt(0);
         pObj.setName("SoundObject Layer Group");
+
+        if (defaultHeightIndexProvider != null) {
+            pObj.setDefaultHeightIndex(defaultHeightIndexProvider.get());
+        }
         return pObj;
     }
 
@@ -47,7 +58,7 @@ public class PolyObjectLayerGroupProvider implements LayerGroupProvider {
     public LayerGroup loadFromXML(Element element, Map<String, Object> objRefMap) {
         if ("soundObject".equals(element.getName())) {
             String type = element.getAttributeValue("type");
-            if(type != null && type.equals("blue.soundObject.PolyObject")) {
+            if (type != null && type.equals("blue.soundObject.PolyObject")) {
                 try {
                     return PolyObject.loadFromXML(element, objRefMap);
                 } catch (Exception ex) {
@@ -57,5 +68,5 @@ public class PolyObjectLayerGroupProvider implements LayerGroupProvider {
         }
         return null;
     }
-    
+
 }

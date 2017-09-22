@@ -67,9 +67,9 @@ public final class TimeBar extends JPanel implements
 
     private Rectangle scrollRect = new Rectangle(0, 0, 1, 1);
 
-    private float renderStart = 0.0f;
+    private double renderStart = 0.0f;
 
-    private float timePointer = 0.0f;
+    private double timePointer = 0.0f;
     
     private boolean rootTimeline = true;
 
@@ -99,7 +99,7 @@ public final class TimeBar extends JPanel implements
                 }
 
                 
-                float time = (float) start / timeState.getPixelSecond();
+                double time = (double) start / timeState.getPixelSecond();
                 
                 if (timeState.isSnapEnabled() && !e.isShiftDown()) {
                     time = Math.round(time / timeState.getSnapValue()) * timeState.getSnapValue();
@@ -142,7 +142,7 @@ public final class TimeBar extends JPanel implements
                     start = 0;
                 }
                 
-                float time = (float) start / timeState.getPixelSecond();
+                double time = (double) start / timeState.getPixelSecond();
 
                 if (timeState.isSnapEnabled() && !e.isShiftDown()) {
                     time = Math.round(time / timeState.getSnapValue()) * timeState.getSnapValue();
@@ -183,7 +183,7 @@ public final class TimeBar extends JPanel implements
             int x = (int) (data.getRenderStartTime() * timeState.getPixelSecond());
             g.drawLine(x, 0, x, this.getHeight());
 
-            float renderLoopTime = data.getRenderEndTime();
+            double renderLoopTime = data.getRenderEndTime();
 
             if (renderLoopTime >= 0.0f) {
                 g.setColor(Color.YELLOW);
@@ -192,7 +192,7 @@ public final class TimeBar extends JPanel implements
             }
 
             if (renderTimeManager.isCurrentProjectRendering()) {
-                float latency = PlaybackSettings.getInstance().getPlaybackLatencyCorrection();
+                double latency = PlaybackSettings.getInstance().getPlaybackLatencyCorrection();
 
                 if (timePointer > latency && renderStart >= 0.0f) {
                     g.setColor(Color.ORANGE);
@@ -423,12 +423,12 @@ public final class TimeBar extends JPanel implements
             }
         } else if (evt.getSource() == renderTimeManager) {
             if (prop.equals(RenderTimeManager.RENDER_START)) {
-                this.renderStart = ((Float) evt.getNewValue()).floatValue();
+                this.renderStart = ((Double) evt.getNewValue()).doubleValue();
                 this.timePointer = -1.0f;
                 repaint();
             } 
 //            else if (prop.equals(RenderTimeManager.TIME_POINTER)) {
-//                this.timePointer = ((Float) evt.getNewValue()).floatValue();
+//                this.timePointer = ((Double) evt.getNewValue()).doubleValue();
 //                repaint();
 //            }
         }
@@ -461,7 +461,7 @@ public final class TimeBar extends JPanel implements
     }
 
     @Override
-    public void renderTimeUpdated(float timePointer) {
+    public void renderTimeUpdated(double timePointer) {
         this.timePointer = timePointer;
         repaint();
     }
@@ -534,7 +534,7 @@ public final class TimeBar extends JPanel implements
 
                         PlayMarker.this.setVisible(true);
 
-                        float newTime = (float) newX / timeState.getPixelSecond();
+                        double newTime = (double) newX / timeState.getPixelSecond();
 
                         playMarker.setLocation(newX, 0);
                         playMarker.marker.setTime(newTime);
@@ -572,7 +572,7 @@ public final class TimeBar extends JPanel implements
         public void propertyChange(PropertyChangeEvent evt) {
             if (evt.getSource() == marker) {
                 if (evt.getPropertyName().equals("time")) {
-                    float time = ((Float) evt.getNewValue()).floatValue();
+                    double time = ((Double) evt.getNewValue()).doubleValue();
                     int x = (int) (timeState.getPixelSecond() * time);
 
                     this.setLocation(x, 0);

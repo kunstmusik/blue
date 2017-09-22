@@ -46,12 +46,12 @@ public class ResizeScoreObjectsListener extends BlueMouseAdapter {
     private static final int EDGE = 5;
     
     private Point startPoint;
-    float[] startTimes = null;
-    float[] endTimes = null;
+    double[] startTimes = null;
+    double[] endTimes = null;
     ResizeMode resizeMode = ResizeMode.RESIZE_LEFT;
     private ScoreObject[] selectedScoreObjects;
-    private float minDiffTime;
-    private float maxDiffTime;
+    private double minDiffTime;
+    private double maxDiffTime;
     
     @Override
     public void mousePressed(MouseEvent e) {
@@ -87,11 +87,11 @@ public class ResizeScoreObjectsListener extends BlueMouseAdapter {
         
         startPoint = e.getPoint();
         selectedScoreObjects = temp.toArray(new ScoreObject[0]);
-        startTimes = new float[selectedScoreObjects.length];
-        endTimes = new float[selectedScoreObjects.length];
+        startTimes = new double[selectedScoreObjects.length];
+        endTimes = new double[selectedScoreObjects.length];
         
-        minDiffTime = Float.MAX_VALUE;
-        maxDiffTime = Float.MIN_VALUE;
+        minDiffTime = Double.MAX_VALUE;
+        maxDiffTime = Double.MIN_VALUE;
         
         for (int i = 0; i < selectedScoreObjects.length; i++) {
             final ScoreObject sObj = selectedScoreObjects[i];
@@ -133,23 +133,23 @@ public class ResizeScoreObjectsListener extends BlueMouseAdapter {
         
         TimeState timeState = scoreTC.getTimeState();
         int xVal = e.getX();
-        float newEnd;
+        double newEnd;
         
         if (timeState.isSnapEnabled()) {
-            final float snapValue = timeState.getSnapValue();
+            final double snapValue = timeState.getSnapValue();
             
-            float endTime = ScoreUtilities.getSnapValueMove(
-                    xVal / (float) timeState.getPixelSecond(), snapValue);
+            double endTime = ScoreUtilities.getSnapValueMove(
+                    xVal / (double) timeState.getPixelSecond(), snapValue);
             
-            float minTime = ScoreUtilities.getSnapValueMove(
+            double minTime = ScoreUtilities.getSnapValueMove(
                     startTimes[0] + snapValue / 2, snapValue);
             
             newEnd = (endTime < minTime) ? minTime : endTime;
             
         } else {
             
-            float endTime = (float) xVal / timeState.getPixelSecond();
-            float minTime = startTimes[0] + ((float) EDGE / timeState.getPixelSecond());
+            double endTime = (double) xVal / timeState.getPixelSecond();
+            double minTime = startTimes[0] + ((double) EDGE / timeState.getPixelSecond());
            
             newEnd = (endTime < minTime) ? minTime : endTime;
         }
@@ -169,15 +169,15 @@ public class ResizeScoreObjectsListener extends BlueMouseAdapter {
         
         TimeState timeState = scoreTC.getTimeState();
         int xVal = e.getX();
-        float newStart;
+        double newStart;
         
         if (timeState.isSnapEnabled()) {
-            float snapValue = timeState.getSnapValue();
-            float endTime = ScoreUtilities.getSnapValueMove(
+            double snapValue = timeState.getSnapValue();
+            double endTime = ScoreUtilities.getSnapValueMove(
                         endTimes[0] - (snapValue * .5001f), snapValue);
             
             newStart = ScoreUtilities.getSnapValueMove(
-                    xVal / (float) timeState.getPixelSecond(),
+                    xVal / (double) timeState.getPixelSecond(),
                     snapValue);
 
             newStart = (newStart < 0.0f) ? 0.0f : newStart;
@@ -187,13 +187,13 @@ public class ResizeScoreObjectsListener extends BlueMouseAdapter {
             }
         } else {
             
-            float maxTime = endTimes[0] - ((float) EDGE / timeState.getPixelSecond());            
+            double maxTime = endTimes[0] - ((double) EDGE / timeState.getPixelSecond());            
             
             if (xVal < 0) {
                 xVal = 0;
             }
             
-            newStart = (float) xVal / timeState.getPixelSecond();
+            newStart = (double) xVal / timeState.getPixelSecond();
             
             if (newStart > maxTime) {
                 newStart = maxTime;

@@ -17,13 +17,11 @@
  * the Free Software Foundation Inc., 59 Temple Place - Suite 330,
  * Boston, MA  02111-1307 USA
  */
-
 package blue.orchestra;
 
 import blue.Tables;
 import blue.automation.Automatable;
 import blue.automation.ParameterList;
-import blue.mixer.Channel;
 import blue.orchestra.blueSynthBuilder.*;
 import blue.plugin.InstrumentPlugin;
 import blue.udo.OpcodeList;
@@ -31,24 +29,20 @@ import blue.utility.TextUtilities;
 import blue.utility.UDOUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 
 /**
  * @author Steven Yi
- * 
+ *
  */
-
 @InstrumentPlugin(displayName = "BlueSynthBuilder", position = 50)
 public class BlueSynthBuilder extends AbstractInstrument implements
-        Serializable, Automatable {
+        Automatable {
 
     BSBGraphicInterface graphicInterface;
 
-    BSBParameterList parameterList;
+    ParameterList parameterList;
 
     PresetGroup presetGroup;
 
@@ -75,9 +69,8 @@ public class BlueSynthBuilder extends AbstractInstrument implements
     private BlueSynthBuilder(boolean init) {
         if (init) {
             graphicInterface = new BSBGraphicInterface();
-            parameterList = new BSBParameterList();
-
-            parameterList.setBSBGraphicInterface(graphicInterface);
+            parameterList = new ParameterList();
+            graphicInterface.getRootGroup().setParameterList(parameterList);
 
             presetGroup = new PresetGroup();
 
@@ -88,6 +81,22 @@ public class BlueSynthBuilder extends AbstractInstrument implements
         alwaysOnInstrumentText = "";
         globalOrc = "";
         globalSco = "";
+    }
+
+    public BlueSynthBuilder(BlueSynthBuilder bsb) {
+        super(bsb); 
+        graphicInterface = new BSBGraphicInterface(bsb.graphicInterface);
+        parameterList = new ParameterList(bsb.parameterList);
+        graphicInterface.getRootGroup().setParameterList(parameterList);
+
+        presetGroup = new PresetGroup(bsb.presetGroup);
+
+        opcodeList = new OpcodeList(bsb.opcodeList);
+
+        instrumentText = bsb.instrumentText;
+        alwaysOnInstrumentText = bsb.alwaysOnInstrumentText;
+        globalOrc = bsb.globalOrc;
+        globalSco = bsb.globalSco;
     }
 
     @Override
@@ -141,7 +150,6 @@ public class BlueSynthBuilder extends AbstractInstrument implements
         String retVal = bsbCompilationUnit.replaceBSBValues(getGlobalSco());
 
         // doPostCompilation();
-
         return retVal;
     }
 
@@ -155,7 +163,6 @@ public class BlueSynthBuilder extends AbstractInstrument implements
     // }
 
     /* XML SERIALIZATION */
-
     public static Instrument loadFromXML(Element data) throws Exception {
         BlueSynthBuilder bsb = new BlueSynthBuilder(false);
         InstrumentUtilities.initBasicFromXML(data, bsb);
@@ -190,8 +197,8 @@ public class BlueSynthBuilder extends AbstractInstrument implements
                     bsb.setPresetGroup(PresetGroup.loadFromXML(node));
                     break;
                 case "bsbParameterList":
-                    bsb.parameterList = (BSBParameterList) BSBParameterList
-                            .loadFromXML(node);
+                case "parameterList":
+                    bsb.parameterList = ParameterList.loadFromXML(node);
                     break;
                 case "opcodeList":
                     bsb.opcodeList = OpcodeList.loadFromXML(node);
@@ -209,14 +216,14 @@ public class BlueSynthBuilder extends AbstractInstrument implements
         }
 
         if (bsb.parameterList == null) {
-            bsb.parameterList = new BSBParameterList();
+            bsb.parameterList = new ParameterList();
         }
 
         if (bsb.opcodeList == null) {
             bsb.opcodeList = new OpcodeList();
         }
 
-        bsb.parameterList.setBSBGraphicInterface(bsb.graphicInterface);
+        bsb.graphicInterface.getRootGroup().setParameterList(bsb.parameterList);
 
         return bsb;
     }
@@ -247,7 +254,6 @@ public class BlueSynthBuilder extends AbstractInstrument implements
     }
 
     /* ACCESSOR METHODS */
-
     /**
      * @return Returns the graphicInterface.
      */
@@ -256,8 +262,7 @@ public class BlueSynthBuilder extends AbstractInstrument implements
     }
 
     /**
-     * @param graphicInterface
-     *            The graphicInterface to set.
+     * @param graphicInterface The graphicInterface to set.
      */
     public void setGraphicInterface(BSBGraphicInterface graphicInterface) {
         this.graphicInterface = graphicInterface;
@@ -271,8 +276,7 @@ public class BlueSynthBuilder extends AbstractInstrument implements
     }
 
     /**
-     * @param instrumentText
-     *            The instrumentText to set.
+     * @param instrumentText The instrumentText to set.
      */
     public void setInstrumentText(String instrumentText) {
         this.instrumentText = (instrumentText == null) ? "" : instrumentText;
@@ -300,8 +304,7 @@ public class BlueSynthBuilder extends AbstractInstrument implements
     }
 
     /**
-     * @param globalOrc
-     *            The globalOrc to set.
+     * @param globalOrc The globalOrc to set.
      */
     public void setGlobalOrc(String globalOrc) {
         this.globalOrc = globalOrc;
@@ -315,8 +318,7 @@ public class BlueSynthBuilder extends AbstractInstrument implements
     }
 
     /**
-     * @param globalSco
-     *            The globalSco to set.
+     * @param globalSco The globalSco to set.
      */
     public void setGlobalSco(String globalSco) {
         this.globalSco = globalSco;
@@ -340,33 +342,13 @@ public class BlueSynthBuilder extends AbstractInstrument implements
      * by the user. Not implemented to do automatically on serialization as
      * BlueData is copied via serialization before rendering and all data must
      * stay valid.
-     * 
+     *
      * In 0.114.0, modified to also reset any subchannel dropdowns to MASTER
      */
     public void clearParameters() {
-        for (int i = 0; i < graphicInterface.size(); i++) {
-            BSBObject bsbObj = graphicInterface.getBSBObject(i);
-
-            if (bsbObj instanceof BSBSubChannelDropdown) {
-                ((BSBSubChannelDropdown) bsbObj)
-                        .setChannelOutput(Channel.MASTER);
-            }
-        }
-
-        parameterList = new BSBParameterList();
-        parameterList.setBSBGraphicInterface(graphicInterface);
-    }
-
-    /*
-     * This gets called as part of Serialization by Java and will do default
-     * serialization plus reconnect the BSBGraphicInterface to the
-     * BSBParameterList
-     */
-    private void readObject(ObjectInputStream stream) throws IOException,
-            ClassNotFoundException {
-        stream.defaultReadObject();
-
-        parameterList.setBSBGraphicInterface(graphicInterface);
+        graphicInterface.getRootGroup().resetSubChannels();
+        parameterList = new ParameterList();
+        graphicInterface.getRootGroup().setParameterList(parameterList);
     }
 
     public boolean isEditEnabled() {
@@ -388,18 +370,12 @@ public class BlueSynthBuilder extends AbstractInstrument implements
     @Override
     public ArrayList<StringChannel> getStringChannels() {
         ArrayList<StringChannel> stringChannels = new ArrayList<>();
-        
-        for(int i = 0; i < graphicInterface.size(); i++) {
-            BSBObject bsbObj = graphicInterface.getBSBObject(i);
-            
-            if(bsbObj instanceof StringChannelProvider) {
-                StringChannelProvider provider = (StringChannelProvider)bsbObj;
-                if(provider.isStringChannelEnabled()) {
-                    stringChannels.add(provider.getStringChannel());
-                }
-            }
-        }
-        
+        graphicInterface.getRootGroup().getStringChannels(stringChannels);
         return stringChannels;
+    }
+
+    @Override
+    public BlueSynthBuilder deepCopy() {
+        return new BlueSynthBuilder(this); 
     }
 }

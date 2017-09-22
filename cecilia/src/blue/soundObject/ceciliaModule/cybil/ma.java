@@ -26,19 +26,19 @@ import blue.soundObject.NoteList;
 class ma extends CybilAlgorithm {
 
     @Override
-    public float[] getValue(CybilNoteList cybilNoteList) {
+    public double[] getValue(CybilNoteList cybilNoteList) {
         String ranType = (String) args.get(0);
         boolean isInteger = ranType.equals("i");
 
-        float startMin = getFloatValue(args.get(1));
-        float startMax = getFloatValue(args.get(2));
-        float endMin = getFloatValue(args.get(3));
-        float endMax = getFloatValue(args.get(4));
+        double startMin = getDoubleValue(args.get(1));
+        double startMax = getDoubleValue(args.get(2));
+        double endMin = getDoubleValue(args.get(3));
+        double endMax = getDoubleValue(args.get(4));
 
-        float minDiff = endMin - startMin;
-        float maxDiff = endMax - startMax;
+        double minDiff = endMin - startMin;
+        double maxDiff = endMax - startMax;
 
-        float timeValue = getTimeValue(args.get(5));
+        double timeValue = getTimeValue(args.get(5));
         boolean isTime = isTime(args.get(5));
 
         NoteList notes = cybilNoteList.notes;
@@ -52,21 +52,21 @@ class ma extends CybilAlgorithm {
         } else {
             if (isTime) {
                 Note currentNote = notes.get(cybilNoteList.index);
-                float startTime = currentNote.getStartTime();
-                float endTime = startTime + timeValue;
+                double startTime = currentNote.getStartTime();
+                double endTime = startTime + timeValue;
 
                 int count = getCount(notes, cybilNoteList.index, endTime);
 
                 for (int i = 0; i < count; i++) {
 
-                    float x = (currentNote.getStartTime() - startTime)
+                    double x = (currentNote.getStartTime() - startTime)
                             / timeValue;
 
-                    float min = (minDiff * x) + startMin;
-                    float max = (maxDiff * x) + startMax;
-                    float diff = max - min;
+                    double min = (minDiff * x) + startMin;
+                    double max = (maxDiff * x) + startMax;
+                    double diff = max - min;
 
-                    double val = (float) (Math.random() * diff) + min;
+                    double val = (double) (Math.random() * diff) + min;
 
                     String strVal = isInteger ? Integer.toString((int) val)
                             : Double.toString(val);
@@ -84,11 +84,11 @@ class ma extends CybilAlgorithm {
 
             } else {
                 for (int i = 0; i < timeValue; i++) {
-                    float x = i / timeValue;
+                    double x = i / timeValue;
 
-                    float min = (minDiff * x) + startMin;
-                    float max = (maxDiff * x) + startMax;
-                    float diff = max - min;
+                    double min = (minDiff * x) + startMin;
+                    double max = (maxDiff * x) + startMax;
+                    double diff = max - min;
 
                     double val = (Math.random() * diff) + min;
 

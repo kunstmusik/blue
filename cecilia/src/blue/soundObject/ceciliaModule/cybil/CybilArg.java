@@ -27,7 +27,7 @@ abstract class CybilArg {
 
     public ArrayList args = new ArrayList();
 
-    public abstract float[] getValue(CybilNoteList cybilNoteList);
+    public abstract double[] getValue(CybilNoteList cybilNoteList);
 
     @Override
     public String toString() {
@@ -56,21 +56,21 @@ abstract class CybilArg {
         return buffer.toString();
     }
 
-    protected static float getFloatValue(Object obj) {
+    protected static double getDoubleValue(Object obj) {
         if (obj instanceof CybilArg) {
             return ((CybilArg) obj).getValue(null)[0];
         }
-        return Float.parseFloat((String) obj);
+        return Double.parseDouble((String) obj);
     }
 
-    protected static float getTimeValue(Object obj) {
+    protected static double getTimeValue(Object obj) {
         String time = (String) obj;
 
         if (!time.contains("s")) {
-            return Float.parseFloat(time);
+            return Double.parseDouble(time);
         }
 
-        return Float.parseFloat(time.substring(0, time.length() - 1));
+        return Double.parseDouble(time.substring(0, time.length() - 1));
     }
 
     protected static boolean isTime(Object obj) {

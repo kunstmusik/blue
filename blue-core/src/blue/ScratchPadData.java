@@ -5,16 +5,19 @@
 package blue;
 
 import electric.xml.Element;
-import java.io.Serializable;
 
-public class ScratchPadData implements Serializable {
+public class ScratchPadData {
 
     private String scratchText = "";
 
     private boolean isWordWrapEnabled = true;
 
     public ScratchPadData() {
+    }
 
+    public ScratchPadData(ScratchPadData spd) {
+        scratchText = spd.scratchText;
+        isWordWrapEnabled = spd.isWordWrapEnabled;
     }
 
     /**

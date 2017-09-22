@@ -22,21 +22,17 @@ package blue.score.layers.audio.core;
 import blue.score.ScoreObject;
 import blue.score.ScoreObjectEvent;
 import blue.score.ScoreObjectListener;
-import blue.utility.ObjectUtilities;
 import blue.utility.XMLUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
 import java.awt.Color;
-import java.io.Externalizable;
 import java.io.File;
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.List;
-import javafx.beans.property.FloatProperty;
+import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.SimpleFloatProperty;
+import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
@@ -50,23 +46,23 @@ import org.openide.util.Exceptions;
  *
  * @author stevenyi
  */
-public class AudioClip implements ScoreObject, Externalizable, Comparable<AudioClip> {
+public final class AudioClip implements ScoreObject, Comparable<AudioClip> {
 
     private StringProperty name = new SimpleStringProperty();
-    private FloatProperty start = new SimpleFloatProperty();
-    private FloatProperty duration = new SimpleFloatProperty();
+    private DoubleProperty start = new SimpleDoubleProperty();
+    private DoubleProperty duration = new SimpleDoubleProperty();
     private ObjectProperty<Color> color = new SimpleObjectProperty<>(
             Color.DARK_GRAY);
 
     private ObjectProperty<File> audioFile = new SimpleObjectProperty<>();
     int numChannels = 0;
-    float audioDuration = 0.0f;
+    double audioDuration = 0.0f;
 
-    private FloatProperty fileStartTime = new SimpleFloatProperty(0.0f);
-    private FloatProperty fadeIn = new SimpleFloatProperty(0.0f);
+    private DoubleProperty fileStartTime = new SimpleDoubleProperty(0.0f);
+    private DoubleProperty fadeIn = new SimpleDoubleProperty(0.0f);
     private ObjectProperty<FadeType> fadeInType = new SimpleObjectProperty<>(
             FadeType.LINEAR);
-    private FloatProperty fadeOut = new SimpleFloatProperty(0.0f);
+    private DoubleProperty fadeOut = new SimpleDoubleProperty(0.0f);
     private ObjectProperty<FadeType> fadeOutType = new SimpleObjectProperty<>(
             FadeType.LINEAR);
 
@@ -90,6 +86,20 @@ public class AudioClip implements ScoreObject, Externalizable, Comparable<AudioC
             fireScoreObjectEvent(new ScoreObjectEvent(this,
                     ScoreObjectEvent.COLOR));
         });
+    }
+
+    public AudioClip(AudioClip ac) {
+        this();
+        setName(ac.getName());
+        setStart(ac.getStart());
+        setBackgroundColor(ac.getBackgroundColor());
+        setAudioFile(ac.getAudioFile());
+        setDuration(ac.getDuration());
+        setFileStartTime(ac.getFileStartTime());
+        setFadeIn(ac.getFadeIn());
+        setFadeInType(ac.getFadeInType());
+        setFadeOut(ac.getFadeOut());
+        setFadeOutType(ac.getFadeOutType());
     }
 
     protected void readAudioFileProperties() {
@@ -122,63 +132,63 @@ public class AudioClip implements ScoreObject, Externalizable, Comparable<AudioC
         return name;
     }
 
-    public void setStart(float value) {
+    public void setStart(double value) {
         start.set(value);
     }
 
-    public float getStart() {
+    public double getStart() {
         return start.get();
     }
 
-    public FloatProperty startProperty() {
+    public DoubleProperty startProperty() {
         return start;
     }
 
-    public void setDuration(float value) {
+    public void setDuration(double value) {
         duration.set(value);
     }
 
-    public float getDuration() {
+    public double getDuration() {
         return duration.get();
     }
 
-    public FloatProperty durationProperty() {
+    public DoubleProperty durationProperty() {
         return duration;
     }
 
-    public void setFileStartTime(float value) {
+    public void setFileStartTime(double value) {
         fileStartTime.set(value);
     }
 
-    public float getFileStartTime() {
+    public double getFileStartTime() {
         return fileStartTime.get();
     }
 
-    public FloatProperty fileStartTimeProperty() {
+    public DoubleProperty fileStartTimeProperty() {
         return fileStartTime;
     }
 
-    public void setFadeIn(float value) {
+    public void setFadeIn(double value) {
         fadeIn.set(value);
     }
 
-    public float getFadeIn() {
+    public double getFadeIn() {
         return fadeIn.get();
     }
 
-    public FloatProperty fadeInProperty() {
+    public DoubleProperty fadeInProperty() {
         return fadeIn;
     }
 
-    public void setFadeOut(float value) {
+    public void setFadeOut(double value) {
         fadeOut.set(value);
     }
 
-    public float getFadeOut() {
+    public double getFadeOut() {
         return fadeOut.get();
     }
 
-    public FloatProperty fadeOutProperty() {
+    public DoubleProperty fadeOutProperty() {
         return fadeOut;
     }
 
@@ -197,62 +207,62 @@ public class AudioClip implements ScoreObject, Externalizable, Comparable<AudioC
         return this.audioFile;
     }
 
-    public float getAudioDuration() {
+    public double getAudioDuration() {
         return audioDuration;
     }
 
-    public void setAudioDuration(float originalDuration) {
+    public void setAudioDuration(double originalDuration) {
         setDuration(originalDuration);
     }
 
     @Override
-    public float getStartTime() {
+    public double getStartTime() {
         return getStart();
     }
 
     @Override
-    public void setStartTime(float start) {
+    public void setStartTime(double start) {
         setStart(start);
     }
 
     @Override
-    public float getSubjectiveDuration() {
+    public double getSubjectiveDuration() {
         return getDuration();
     }
 
     @Override
-    public void setSubjectiveDuration(float duration) {
-        float dur = Math.min(duration,
+    public void setSubjectiveDuration(double duration) {
+        double dur = Math.min(duration,
                 getAudioDuration() - getFileStartTime());
 
         setDuration(dur);
     }
 
     @Override
-    public float getMaxResizeRightDiff() {
+    public double getMaxResizeRightDiff() {
         return audioDuration - (getFileStartTime() + getDuration());
     }
 
     @Override
-    public float getMaxResizeLeftDiff() {
+    public double getMaxResizeLeftDiff() {
         return (getStart() < getFileStartTime()) ? -getStart() : -getFileStartTime();
     }
 
     @Override
-    public void resizeLeft(float newStartTime) {
+    public void resizeLeft(double newStartTime) {
 
         if (newStartTime >= getStart() + getDuration()) {
             return;
         }
 
-        float diff = newStartTime - getStart();
-        float maxFileStartDiff = -getFileStartTime();
+        double diff = newStartTime - getStart();
+        double maxFileStartDiff = -getFileStartTime();
 
         if (diff < maxFileStartDiff) {
             diff = maxFileStartDiff;
         }
 
-        float maxDurDiff = getAudioDuration() - getDuration();
+        double maxDurDiff = getAudioDuration() - getDuration();
         if (-diff > maxDurDiff) {
             diff = -maxDurDiff;
         }
@@ -263,13 +273,13 @@ public class AudioClip implements ScoreObject, Externalizable, Comparable<AudioC
     }
 
     @Override
-    public void resizeRight(float newEndTime) {
+    public void resizeRight(double newEndTime) {
 
         if (newEndTime <= getStart()) {
             return;
         }
 
-        float newDur = newEndTime - getStart();
+        double newDur = newEndTime - getStart();
 
         newDur = (newDur > getAudioDuration()) ? getAudioDuration() : newDur;
 
@@ -278,7 +288,7 @@ public class AudioClip implements ScoreObject, Externalizable, Comparable<AudioC
 
     @Override
     public int compareTo(AudioClip o) {
-        float diff = o.getStart() - this.getStart();
+        double diff = o.getStart() - this.getStart();
         if (diff != 0) {
             return (int) diff;
         }
@@ -340,14 +350,14 @@ public class AudioClip implements ScoreObject, Externalizable, Comparable<AudioC
         root.addElement("name").setText(getName());
         root.addElement("audioFile").setText(getAudioFile().getAbsolutePath());
         root.addElement(XMLUtilities.writeInt("numChannels", getNumChannels()));
-        root.addElement(XMLUtilities.writeFloat("audioDuration",
+        root.addElement(XMLUtilities.writeDouble("audioDuration",
                 getAudioDuration()));
-        root.addElement(XMLUtilities.writeFloat("fileStart", getFileStartTime()));
-        root.addElement(XMLUtilities.writeFloat("start", getStart()));
-        root.addElement(XMLUtilities.writeFloat("duration", getDuration()));
-        root.addElement(XMLUtilities.writeFloat("fadeIn", getFadeIn()));
+        root.addElement(XMLUtilities.writeDouble("fileStart", getFileStartTime()));
+        root.addElement(XMLUtilities.writeDouble("start", getStart()));
+        root.addElement(XMLUtilities.writeDouble("duration", getDuration()));
+        root.addElement(XMLUtilities.writeDouble("fadeIn", getFadeIn()));
         root.addElement("fadeInType").setText(getFadeInType().toString());
-        root.addElement(XMLUtilities.writeFloat("fadeOut", getFadeOut()));
+        root.addElement(XMLUtilities.writeDouble("fadeOut", getFadeOut()));
         root.addElement("fadeOutType").setText(getFadeOutType().toString());
 
         String colorStr = Integer.toString(getBackgroundColor().getRGB());
@@ -376,16 +386,16 @@ public class AudioClip implements ScoreObject, Externalizable, Comparable<AudioC
                     clip.numChannels = XMLUtilities.readInt(node);
                     break;
                 case "audioDuration":
-                    clip.setAudioDuration(XMLUtilities.readFloat(node));
+                    clip.setAudioDuration(XMLUtilities.readDouble(node));
                     break;
                 case "fileStart":
-                    clip.setFileStartTime(XMLUtilities.readFloat(node));
+                    clip.setFileStartTime(XMLUtilities.readDouble(node));
                     break;
                 case "start":
-                    clip.setStart(XMLUtilities.readFloat(node));
+                    clip.setStart(XMLUtilities.readDouble(node));
                     break;
                 case "duration":
-                    clip.setDuration(XMLUtilities.readFloat(node));
+                    clip.setDuration(XMLUtilities.readDouble(node));
                     break;
                 case "backgroundColor":
                     String colorStr = data.getTextString("backgroundColor");
@@ -393,13 +403,13 @@ public class AudioClip implements ScoreObject, Externalizable, Comparable<AudioC
                             new Color(Integer.parseInt(colorStr)));
                     break;
                 case "fadeIn":
-                    clip.setFadeIn(XMLUtilities.readFloat(node));
+                    clip.setFadeIn(XMLUtilities.readDouble(node));
                     break;
                 case "fadeInType":
                     clip.setFadeInType(FadeType.fromString(nodeText));
                     break;
                 case "fadeOut":
-                    clip.setFadeOut(XMLUtilities.readFloat(node));
+                    clip.setFadeOut(XMLUtilities.readDouble(node));
                     break;
                 case "fadeOutType":
                     clip.setFadeOutType(FadeType.fromString(nodeText));
@@ -408,11 +418,6 @@ public class AudioClip implements ScoreObject, Externalizable, Comparable<AudioC
         }
 
         return clip;
-    }
-
-    @Override
-    public ScoreObject clone() {
-        return (ScoreObject) ObjectUtilities.clone(this);
     }
 
     @Override
@@ -439,31 +444,8 @@ public class AudioClip implements ScoreObject, Externalizable, Comparable<AudioC
     }
 
     @Override
-    public void writeExternal(ObjectOutput out) throws IOException {
-        out.writeUTF(getName());
-        out.writeObject(getAudioFile());
-        out.writeFloat(getStart());
-        out.writeFloat(getSubjectiveDuration());
-        out.writeObject(getBackgroundColor());
-        out.writeFloat(getFileStartTime());
-        out.writeFloat(getFadeIn());
-        out.writeObject(getFadeInType());
-        out.writeFloat(getFadeOut());
-        out.writeObject(getFadeOutType());
-    }
-
-    @Override
-    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-        setName(in.readUTF());
-        setAudioFile((File) in.readObject());
-        setStart(in.readFloat());
-        setSubjectiveDuration(in.readFloat());
-        setBackgroundColor((Color) in.readObject());
-        setFileStartTime(in.readFloat());
-        setFadeIn(in.readFloat());
-        setFadeInType((FadeType) in.readObject());
-        setFadeOut(in.readFloat());
-        setFadeOutType((FadeType) in.readObject());
+    public AudioClip deepCopy() {
+        return new AudioClip(this);
     }
 
 }

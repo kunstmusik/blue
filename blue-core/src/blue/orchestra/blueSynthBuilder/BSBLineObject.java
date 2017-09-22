@@ -27,34 +27,44 @@ import blue.utility.XMLUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
 import java.util.Iterator;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.DoubleProperty;
+import javafx.beans.property.IntegerProperty;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.SimpleDoubleProperty;
+import javafx.beans.property.SimpleIntegerProperty;
+import javafx.beans.property.SimpleObjectProperty;
 import org.apache.commons.lang3.text.StrBuilder;
 
 public class BSBLineObject extends BSBObject {
 
-    private static String SEPARATOR_NONE = "None";
+    IntegerProperty canvasWidth = new SimpleIntegerProperty(200);
+    IntegerProperty canvasHeight = new SimpleIntegerProperty(160);
+    DoubleProperty xMax = new SimpleDoubleProperty(1.0);
+    BooleanProperty relativeXValues = new SimpleBooleanProperty(true);
+    BooleanProperty leadingZero = new SimpleBooleanProperty(true);
+    ObjectProperty<SeparatorType> separatorType
+            = new SimpleObjectProperty<>(SeparatorType.NONE);
+    BooleanProperty locked = new SimpleBooleanProperty(false);
 
-    private static String SEPARATOR_COMMA = "Comma";
+    private LineList lines;
 
-    private static String SEPARATOR_SINGLE_QUOTE = "Single Quote";
+    public BSBLineObject() {
+        lines = new LineList();
+    }
 
-    public static String[] SEPARATOR_TYPES = new String[] { SEPARATOR_NONE,
-            SEPARATOR_COMMA, SEPARATOR_SINGLE_QUOTE };
-
-    int canvasWidth = 200;
-
-    int canvasHeight = 160;
-
-    float xMax = 1.0f;
-
-    private LineList lines = new LineList();
-
-    boolean relativeXValues = true;
-
-    boolean leadingZero = true;
-
-    String separatorType = SEPARATOR_TYPES[0];
-
-    boolean locked = false;
+    public BSBLineObject(BSBLineObject lineObj) {
+        super(lineObj);
+        setCanvasWidth(lineObj.getCanvasWidth());
+        setCanvasHeight(lineObj.getCanvasHeight());
+        setXMax(lineObj.getXMax());
+        setRelativeXValues(lineObj.isRelativeXValues());
+        setLeadingZero(lineObj.isLeadingZero());
+        setSeparatorType(lineObj.getSeparatorType());
+        setLocked(lineObj.isLocked());
+        lines = new LineList(lineObj.lines);
+    }
 
     public static BSBObject loadFromXML(Element data) {
         BSBLineObject lineObj = new BSBLineObject();
@@ -73,16 +83,17 @@ public class BSBLineObject extends BSBObject {
                     lineObj.setCanvasHeight(XMLUtilities.readInt(node));
                     break;
                 case "xMax":
-                    lineObj.setXMax(XMLUtilities.readFloat(node));
+                    lineObj.setXMax(XMLUtilities.readDouble(node));
                     break;
                 case "commaSeparated":
                     boolean val = XMLUtilities.readBoolean(node);
                     if (val) {
-                        lineObj.setSeparatorType(SEPARATOR_TYPES[1]);
+                        lineObj.setSeparatorType(SeparatorType.COMMA);
                     }
                     break;
                 case "separatorType":
-                    lineObj.setSeparatorType(node.getTextString());
+                    lineObj.setSeparatorType(
+                            SeparatorType.fromString(node.getTextString()));
                     break;
                 case "relativeXValues":
                     lineObj.setRelativeXValues(XMLUtilities.readBoolean(node));
@@ -106,16 +117,16 @@ public class BSBLineObject extends BSBObject {
     public Element saveAsXML() {
         Element retVal = getBasicXML(this);
 
-        retVal.addElement(XMLUtilities.writeInt("canvasWidth", canvasWidth));
-        retVal.addElement(XMLUtilities.writeInt("canvasHeight", canvasHeight));
-        retVal.addElement(XMLUtilities.writeFloat("xMax", xMax));
+        retVal.addElement(XMLUtilities.writeInt("canvasWidth", getCanvasWidth()));
+        retVal.addElement(XMLUtilities.writeInt("canvasHeight", getCanvasHeight()));
+        retVal.addElement(XMLUtilities.writeDouble("xMax", getXMax()));
         retVal.addElement(XMLUtilities.writeBoolean("relativeXValues",
-                relativeXValues));
-        retVal.addElement("separatorType").setText(separatorType);
+                isRelativeXValues()));
+        retVal.addElement("separatorType").setText(getSeparatorType().name());
         retVal
                 .addElement(XMLUtilities.writeBoolean("leadingZero",
-                        leadingZero));
-        retVal.addElement(XMLUtilities.writeBoolean("locked", locked));
+                        isLeadingZero()));
+        retVal.addElement(XMLUtilities.writeBoolean("locked", isLocked()));
         retVal.addElement(lines.saveAsXML());
 
         return retVal;
@@ -124,7 +135,6 @@ public class BSBLineObject extends BSBObject {
 //    public BSBObjectView getBSBObjectView() {
 //        return new BSBLineObjectView(this);
 //    }
-
     @Override
     public String[] getReplacementKeys() {
         String[] vals = new String[lines.size()];
@@ -153,30 +163,24 @@ public class BSBLineObject extends BSBObject {
     private String getLineString(Line line) {
         StrBuilder buffer = new StrBuilder();
 
-        float[] xVals = new float[line.size()];
-        float[] yVals = new float[line.size()];
+        double[] xVals = new double[line.size()];
+        double[] yVals = new double[line.size()];
 
         for (int i = 0; i < line.size(); i++) {
             LinePoint p = line.getLinePoint(i);
 
-            xVals[i] = p.getX() * xMax;
+            xVals[i] = p.getX() * getXMax();
             yVals[i] = p.getY();
 
         }
 
-        if (relativeXValues) {
+        if (isRelativeXValues()) {
             for (int i = xVals.length - 1; i > 0; i--) {
                 xVals[i] = xVals[i] - xVals[i - 1];
             }
         }
 
-        String spacer = " ";
-
-        if (separatorType.equals(SEPARATOR_COMMA)) {
-            spacer = ", ";
-        } else if (separatorType.equals(SEPARATOR_SINGLE_QUOTE)) {
-            spacer = "' ";
-        }
+        String spacer = getSeparatorType().getSeparatorString();
 
         if (isLeadingZero()) {
             buffer.append("0.0").append(spacer);
@@ -185,8 +189,8 @@ public class BSBLineObject extends BSBObject {
         buffer.append(yVals[0]);
 
         for (int i = 1; i < xVals.length; i++) {
-            buffer.append(spacer).append(NumberUtilities.formatFloat(xVals[i]));
-            buffer.append(spacer).append(NumberUtilities.formatFloat(yVals[i]));
+            buffer.append(spacer).append(NumberUtilities.formatDouble(xVals[i]));
+            buffer.append(spacer).append(NumberUtilities.formatDouble(yVals[i]));
         }
 
         return buffer.toString();
@@ -216,7 +220,6 @@ public class BSBLineObject extends BSBObject {
         }
 
         // System.out.println(buffer.toString());
-
         return buffer.toString();
     }
 
@@ -236,7 +239,6 @@ public class BSBLineObject extends BSBObject {
             String lineStr = parts[i];
 
             // System.out.println(lineStr);
-
             String[] vals = lineStr.split(":");
 
             String name = vals[0];
@@ -246,15 +248,15 @@ public class BSBLineObject extends BSBObject {
             if (line != null) {
                 line.clear();
 
-                float min = line.getMin();
-                float max = line.getMax();
-                float range = max - min;
+                double min = line.getMin();
+                double max = line.getMax();
+                double range = max - min;
 
                 for (int j = 1; j < vals.length; j += 2) {
                     LinePoint p = new LinePoint();
 
-                    float x = (Float.parseFloat(vals[j]));
-                    float y = (Float.parseFloat(vals[j + 1]));
+                    double x = (Double.parseDouble(vals[j]));
+                    double y = (Double.parseDouble(vals[j + 1]));
 
                     if (version == 1) {
                         y = (y * range) + min;
@@ -290,80 +292,125 @@ public class BSBLineObject extends BSBObject {
         return lines;
     }
 
-    public int getCanvasHeight() {
-        return canvasHeight;
+    public final void setCanvasWidth(int value) {
+        canvasWidth.set(value);
     }
 
-    public void setCanvasHeight(int canvasHeight) {
-        int oldHeight = this.canvasHeight;
-
-        this.canvasHeight = canvasHeight;
-
-        if (propListeners != null) {
-            propListeners.firePropertyChange("canvasHeight", oldHeight,
-                    canvasHeight);
-        }
+    public final int getCanvasWidth() {
+        return canvasWidth.get();
     }
 
-    public int getCanvasWidth() {
+    public final IntegerProperty canvasWidthProperty() {
         return canvasWidth;
     }
 
-    public void setCanvasWidth(int canvasWidth) {
-        int oldWidth = this.canvasWidth;
-
-        this.canvasWidth = canvasWidth;
-
-        if (propListeners != null) {
-            propListeners.firePropertyChange("canvasWidth", oldWidth,
-                    canvasWidth);
-        }
+    public final void setCanvasHeight(int value) {
+        canvasHeight.set(value);
     }
 
-    public float getXMax() {
+    public final int getCanvasHeight() {
+        return canvasHeight.get();
+    }
+
+    public final IntegerProperty canvasHeightProperty() {
+        return canvasHeight;
+    }
+
+    public final void setXMax(double value) {
+        xMax.set(value);
+    }
+
+    public final double getXMax() {
+        return xMax.get();
+    }
+
+    public final DoubleProperty xMaxProperty() {
         return xMax;
     }
 
-    public void setXMax(float max) {
-        float oldMax = xMax;
-        xMax = max;
-
-        if (propListeners != null) {
-            propListeners.firePropertyChange("yMax", new Float(oldMax),
-                    new Float(xMax));
-        }
+    public final void setRelativeXValues(boolean value) {
+        relativeXValues.set(value);
     }
 
-    public boolean isRelativeXValues() {
+    public final boolean isRelativeXValues() {
+        return relativeXValues.get();
+    }
+
+    public final BooleanProperty relativeXValuesProperty() {
         return relativeXValues;
     }
 
-    public void setRelativeXValues(boolean relativeXValues) {
-        this.relativeXValues = relativeXValues;
+    public final void setLeadingZero(boolean val) {
+        leadingZero.set(val);
     }
 
-    public boolean isLeadingZero() {
+    public final boolean isLeadingZero() {
+        return leadingZero.get();
+    }
+
+    public final BooleanProperty leadingZeroProperty() {
         return leadingZero;
     }
 
-    public void setLeadingZero(boolean leadingZero) {
-        this.leadingZero = leadingZero;
+    public final void setLocked(boolean value) {
+        locked.set(value);
     }
 
-    public boolean isLocked() {
+    public final boolean isLocked() {
+        return locked.get();
+    }
+
+    public final BooleanProperty lockedProperty() {
         return locked;
     }
 
-    public void setLocked(boolean locked) {
-        this.locked = locked;
+    public final SeparatorType getSeparatorType() {
+        return separatorType.get();
     }
 
-    public String getSeparatorType() {
+    public final void setSeparatorType(SeparatorType sType) {
+        separatorType.set(sType);
+    }
+
+    public final ObjectProperty<SeparatorType> separatorTypeProperty() {
         return separatorType;
     }
 
-    public void setSeparatorType(String separatorType) {
-        this.separatorType = separatorType;
+    @Override
+    public BSBObject deepCopy() {
+        return new BSBLineObject(this);
     }
 
+    public enum SeparatorType {
+        NONE("None", " "), COMMA("Comma", ", "), SINGLE_QUOTE("Single Quote", "' ");
+
+        private final String value;
+        private final String separatorString;
+
+        private SeparatorType(String value, String separatorString) {
+            this.value = value;
+            this.separatorString = separatorString;
+        }
+
+        public static SeparatorType fromString(String string) {
+            switch (string) {
+                case "None":
+                    return NONE;
+                case "Comma":
+                    return COMMA;
+                case "Single Quote":
+                    return SINGLE_QUOTE;
+            }
+            return SeparatorType.valueOf(string);
+        }
+
+        public String getSeparatorString() {
+            return separatorString;
+        }
+
+        @Override
+        public String toString() {
+            return value;
+        }
+    };
 }

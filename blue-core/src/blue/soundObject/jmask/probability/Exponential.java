@@ -37,12 +37,20 @@ public class Exponential implements ProbabilityGenerator {
 
     private double lambda = 0.5;
     
-    private Table lambdaTable = new Table();
+    private Table lambdaTable;
     
     private boolean lambdaTableEnabled = false;
     
     public Exponential() {
+        lambdaTable = new Table();
         lambdaTable.setMin(.0001, false);
+    }
+
+    public Exponential(Exponential expon) {
+        direction = expon.direction;
+        lambda = expon.lambda;
+        lambdaTable = new Table(expon.lambdaTable);
+        lambdaTableEnabled = expon.lambdaTableEnabled;
     }
 
     public static ProbabilityGenerator loadFromXML(Element data) {
@@ -85,10 +93,6 @@ public class Exponential implements ProbabilityGenerator {
 
         return retVal;
     }
-
-//    public JComponent getEditor() {
-//        return new ExponentialEditor(this);
-//    }
 
     @Override
     public String getName() {
@@ -165,6 +169,11 @@ public class Exponential implements ProbabilityGenerator {
 
     public void setLambdaTableEnabled(boolean lambdaTableEnabled) {
         this.lambdaTableEnabled = lambdaTableEnabled;
+    }
+
+    @Override
+    public Exponential deepCopy() {
+        return new Exponential(this);
     }
 
 }

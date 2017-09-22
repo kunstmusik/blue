@@ -19,7 +19,7 @@
   </screenshot>
 
   <para>The Python Console allows you to interactively write and execute python
-    code using the Jython interpreter built in to blue. Because blue does not 
+    code using the Jython interpreter built in to Blue. Because Blue does not 
     clear the environment of the interpreter between runs, the console can be
     useful to interactively inspect objects. Some ways you might use the console: 
   </para>

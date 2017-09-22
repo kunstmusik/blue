@@ -22,13 +22,12 @@ package blue.orchestra.blueSynthBuilder;
 
 import electric.xml.Element;
 import electric.xml.Elements;
-import java.io.Serializable;
 import java.rmi.dgc.VMID;
 
 /**
  * @author Steven Yi
  */
-public class BSBDropdownItem implements Serializable {
+public class BSBDropdownItem  {
 
     String name = "name";
 
@@ -38,6 +37,12 @@ public class BSBDropdownItem implements Serializable {
 
     public BSBDropdownItem() {
         this.uniqueId = Integer.toString(new VMID().hashCode());
+    }
+
+    public BSBDropdownItem(BSBDropdownItem item) {
+       this();
+       name = item.name;
+       value = item.value;
     }
 
     public static BSBDropdownItem loadFromXML(Element data) {

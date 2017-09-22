@@ -23,13 +23,20 @@ import blue.plugin.NoteProcessorPlugin;
 import blue.scripting.PythonProxy;
 import blue.soundObject.NoteList;
 import electric.xml.Element;
-import java.io.Serializable;
 import org.python.core.PyException;
 
-@NoteProcessorPlugin(displayName="PythonProcessor", position = 170)
-public class PythonProcessor implements NoteProcessor, Serializable {
+@NoteProcessorPlugin(displayName = "PythonProcessor", position = 170)
+public class PythonProcessor implements NoteProcessor {
 
-    private Code code = new Code();
+    private Code code;
+
+    public PythonProcessor() {
+        code = new Code();
+    }
+
+    public PythonProcessor(PythonProcessor pp) {
+        code = new Code(pp.code);
+    }
 
     @Override
     public void processNotes(NoteList in) throws NoteProcessorException {
@@ -75,5 +82,10 @@ public class PythonProcessor implements NoteProcessor, Serializable {
         retVal.addElement("code").setText(this.getCode().getCode());
 
         return retVal;
+    }
+
+    @Override
+    public PythonProcessor deepCopy() {
+        return new PythonProcessor(this);
     }
 }

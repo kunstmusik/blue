@@ -31,7 +31,6 @@ import java.beans.PropertyChangeSupport;
 import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
 import org.jdesktop.core.animation.timing.TimingSource;
-import org.jdesktop.core.animation.timing.TimingSource.TickListener;
 import org.jdesktop.swing.animation.timing.sources.SwingTimerTimingSource;
 import org.openide.util.lookup.ServiceProvider;
 
@@ -46,10 +45,10 @@ public class RenderTimeManagerImpl implements RenderTimeManager {
     private static RenderTimeManagerImpl renderManager;
     private PropertyChangeSupport listeners = new PropertyChangeSupport(this);
     private ArrayList<RenderTimeManagerListener> renderListeners = new ArrayList<>();
-    protected float renderStart = -1.0f;
-    private float timePointer = 0.0f;
+    protected double renderStart = -1.0f;
+    private double timePointer = 0.0f;
     private int timeAdjustCounter = 0;
-    private float timeAdjust = Float.NEGATIVE_INFINITY;
+    private double timeAdjust = Double.NEGATIVE_INFINITY;
     private TempoMapper tempoMapper;
     private PolyObject polyObject;
     TimingSource ts = null;
@@ -58,7 +57,7 @@ public class RenderTimeManagerImpl implements RenderTimeManager {
 
 
     @Override
-    public void initiateRender(float renderStart) {
+    public void initiateRender(double renderStart) {
         this.setRenderStart(renderStart);
 
         for (RenderTimeManagerListener listener : renderListeners) {
@@ -75,13 +74,13 @@ public class RenderTimeManagerImpl implements RenderTimeManager {
         ts = new SwingTimerTimingSource((int) (1000.0f / fps), TimeUnit.MILLISECONDS);
         final long initialTime = System.nanoTime();
         ts.addTickListener((TimingSource source, long nanoTime) -> {
-            if (timeAdjust != Float.NEGATIVE_INFINITY) {
-                float elapsedTime = (nanoTime - initialTime) / 1000000000.0f;
-                float adjustedTime = elapsedTime - timeAdjust;
+            if (timeAdjust != Double.NEGATIVE_INFINITY) {
+                double elapsedTime = (nanoTime - initialTime) / 1000000000.0f;
+                double adjustedTime = elapsedTime - timeAdjust;
                 setTimePointer(elapsedTime);
                 
                 if (tempoMapper != null) {
-                    float renderStartSeconds = tempoMapper.beatsToSeconds(getRenderStartTime());
+                    double renderStartSeconds = tempoMapper.beatsToSeconds(getRenderStartTime());
                     adjustedTime = tempoMapper.secondsToBeats(adjustedTime + renderStartSeconds);
                     adjustedTime -= getRenderStartTime();
                 }
@@ -97,9 +96,9 @@ public class RenderTimeManagerImpl implements RenderTimeManager {
     }
 
     @Override
-    public void updateTimePointer(float timePointer) {
+    public void updateTimePointer(double timePointer) {
         if (timeAdjustCounter == 0) {
-            float timeP = (this.timePointer >= 0) ? this.timePointer : 0.0f; 
+            double timeP = (this.timePointer >= 0) ? this.timePointer : 0.0f; 
             timeAdjust = timeP - timePointer;
         }
         timeAdjustCounter++;
@@ -113,7 +112,7 @@ public class RenderTimeManagerImpl implements RenderTimeManager {
     public void endRender() {
         this.setRenderStart(-1.0f);
         this.setTimePointer(-1.0f);
-        timeAdjust = Float.NEGATIVE_INFINITY;
+        timeAdjust = Double.NEGATIVE_INFINITY;
         this.polyObject = null;
         for (RenderTimeManagerListener listener : renderListeners) {
             listener.renderEnded();
@@ -127,32 +126,32 @@ public class RenderTimeManagerImpl implements RenderTimeManager {
         currentRenderingProject = null;
     }
 
-    private void setRenderStart(float renderStart) {
-        float oldVal = this.renderStart;
+    private void setRenderStart(double renderStart) {
+        double oldVal = this.renderStart;
         this.renderStart = renderStart;
 
-        listeners.firePropertyChange(RENDER_START, new Float(oldVal),
-                new Float(renderStart));
+        listeners.firePropertyChange(RENDER_START, new Double(oldVal),
+                new Double(renderStart));
     }
 
-    private void setTimePointer(float timePointer) {
-        float oldTime = this.timePointer;
+    private void setTimePointer(double timePointer) {
+        double oldTime = this.timePointer;
 
-        float newVal = timePointer;
+        double newVal = timePointer;
 
         this.timePointer = newVal;
 
-//        listeners.firePropertyChange(TIME_POINTER, new Float(oldTime),
-//                new Float(this.timePointer));
+//        listeners.firePropertyChange(TIME_POINTER, new Double(oldTime),
+//                new Double(this.timePointer));
     }
 
     @Override
-    public float getRenderStartTime() {
+    public double getRenderStartTime() {
         return renderStart;
     }
 
     @Override
-    public float getRenderTime() {
+    public double getRenderTime() {
         return timePointer - timeAdjust;
     }
 

@@ -24,7 +24,6 @@ import electric.xml.Element;
 import electric.xml.Elements;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
@@ -35,8 +34,7 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 /**
  * @author Steven Yi
  */
-public class ChannelList extends ObservableArrayList<Channel>
-        implements Serializable {
+public class ChannelList extends ObservableArrayList<Channel> {
 
     /**
      * UniqueId of object that is associated with ChannelList (i.e.
@@ -53,6 +51,16 @@ public class ChannelList extends ObservableArrayList<Channel>
      * Creates a new instance of ChannelList
      */
     public ChannelList() {
+    }
+
+    public ChannelList(ChannelList chanList) {
+        association = chanList.association;
+        listName = chanList.listName;
+        listNameEditSupported = chanList.listNameEditSupported;
+
+        for (Channel chan : chanList) {
+            add(new Channel(chan));
+        }
     }
 
     public String getListName() {

@@ -15,7 +15,6 @@ import blue.orchestra.GenericInstrument;
 import blue.utility.NumberUtilities;
 import blue.utility.ScoreUtilities;
 import electric.xml.Element;
-import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -26,8 +25,7 @@ import java.util.Map;
  *
  * @author mbechard
  */
-public abstract class AbstractLineObject extends AbstractSoundObject implements
-        Serializable {
+public abstract class AbstractLineObject extends AbstractSoundObject {
 
     private static String LINE_OBJECT_CACHE = "abstractLineObject.lineObjectCache";
 
@@ -35,7 +33,11 @@ public abstract class AbstractLineObject extends AbstractSoundObject implements
 
     /** Creates a new instance of AbstractLineObject */
     public AbstractLineObject() {
-        // overrider ctor here to set object's name
+    }
+
+    public AbstractLineObject(AbstractLineObject alo) {
+        super(alo);
+        lines = new LineList(alo.lines);
     }
 
     /* METHODS SPECIFIC TO LINE OBJECT */
@@ -50,12 +52,12 @@ public abstract class AbstractLineObject extends AbstractSoundObject implements
 
     /* RENDER TO CSD FUNCTIONS */
 
-    public NoteList generateNotes(Integer[] instrLineArray, float renderStart, float renderEnd)
+    public NoteList generateNotes(Integer[] instrLineArray, double renderStart, double renderEnd)
             throws SoundObjectException {
 
         NoteList notes = new NoteList();
 
-        float newDur = subjectiveDuration;
+        double newDur = subjectiveDuration;
 
         if (renderEnd > 0 && renderEnd < subjectiveDuration) {
             newDur = renderEnd;
@@ -97,8 +99,8 @@ public abstract class AbstractLineObject extends AbstractSoundObject implements
     }
     
     protected String createTable(Line line) {
-        // float range = line.getMax() - line.getMin();
-        // float min = line.getMin();
+        // double range = line.getMax() - line.getMin();
+        // double min = line.getMin();
 
         StringBuilder buffer = new StringBuilder();
 
@@ -108,16 +110,16 @@ public abstract class AbstractLineObject extends AbstractSoundObject implements
         buffer.append(genSize);
         buffer.append(" -7 ");
 
-        float lastTime = 0.0f;
+        double lastTime = 0.0f;
         boolean firstPoint = true;
 
         for (int i = 0; i < line.size(); i++) {
             LinePoint point = line.getLinePoint(i);
 
-            float newTime = point.getX() * genSize;
-            float dur = Math.max(newTime - lastTime, 0);
+            double newTime = point.getX() * genSize;
+            double dur = Math.max(newTime - lastTime, 0);
 
-            float yVal = point.getY();
+            double yVal = point.getY();
 
             // System.out.println(yVal);
 
@@ -125,11 +127,11 @@ public abstract class AbstractLineObject extends AbstractSoundObject implements
                 firstPoint = false;
             } else {
                 buffer.append(" ");
-                buffer.append(NumberUtilities.formatFloat(dur));
+                buffer.append(NumberUtilities.formatDouble(dur));
             }
 
             buffer.append(" ");
-            buffer.append(NumberUtilities.formatFloat(yVal));
+            buffer.append(NumberUtilities.formatDouble(yVal));
 
             lastTime = newTime;
         }
@@ -221,7 +223,7 @@ public abstract class AbstractLineObject extends AbstractSoundObject implements
     /* GENERIC SOUND OBJECT METHODS */
 
     @Override
-    public float getObjectiveDuration() {
+    public double getObjectiveDuration() {
         return getSubjectiveDuration();
     }
 
@@ -244,12 +246,12 @@ public abstract class AbstractLineObject extends AbstractSoundObject implements
     }
 
     @Override
-    public float getRepeatPoint() {
+    public double getRepeatPoint() {
         return -1.0f;
     }
 
     @Override
-    public void setRepeatPoint(float repeatPoint) {
+    public void setRepeatPoint(double repeatPoint) {
     }
 
     /* SERIALIZATION */
@@ -266,7 +268,7 @@ public abstract class AbstractLineObject extends AbstractSoundObject implements
     }
 
     @Override
-    public NoteList generateForCSD(CompileData compileData, float startTime, float endTime) {
+    public NoteList generateForCSD(CompileData compileData, double startTime, double endTime) {
         
         Integer[] instrLineArray = new Integer[lines.size() * 2];
         HashMap ftableNumMap = new HashMap();

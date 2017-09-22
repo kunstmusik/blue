@@ -22,6 +22,7 @@ package blue.score.layers.audio.core;
 
 import blue.score.layers.LayerGroup;
 import blue.score.layers.LayerGroupProvider;
+import blue.settings.ProjectDefaultsSettings;
 import java.util.Map;
 
 /**
@@ -38,6 +39,7 @@ public class AudioLayerGroupProvider implements LayerGroupProvider {
     @Override
     public LayerGroup<?> createLayerGroup() {
         AudioLayerGroup layerGroup = new AudioLayerGroup();
+        layerGroup.setDefaultHeightIndex(ProjectDefaultsSettings.getInstance().layerHeightDefault);
         layerGroup.newLayerAt(0);
         return layerGroup;
     }

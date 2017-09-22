@@ -20,6 +20,7 @@
 
 package blue.orchestra;
 
+import blue.DeepCopyable;
 import blue.Tables;
 import blue.udo.OpcodeList;
 import electric.xml.Element;
@@ -42,7 +43,7 @@ import electric.xml.Element;
  * 
  */
 
-public interface Instrument {
+public interface Instrument extends DeepCopyable<Instrument> {
 
     /**
      * Returns the name of the instrument.
@@ -63,47 +64,6 @@ public interface Instrument {
      * Sets the comments for the instrument.
      */
     public void setComment(String comment);
-
-    // /**
-    // * Returns the test score for the instrument.
-    // */
-    // public String getTestScore();
-    //
-    // /**
-    // * Sets the test score for the instrument.
-    // */
-    // public void setTestScore(String testScore);
-
-    /**
-     * @deprecated
-     * @return
-     */
-    public int getInstrumentNumber();
-
-    /**
-     * @deprecated
-     * @return
-     */
-    public void setInstrumentNumber(int instrumentNumber);
-
-    /**
-     * Returns a clone of the instrument.
-     */
-    public Object clone();
-
-    /**
-     * Sets if the instrument is enabled for generation.
-     * 
-     * @deprecated
-     */
-    public void setEnabled(boolean enabled);
-
-    /**
-     * Checks if the instruments is enabled.
-     * 
-     * @deprecated
-     */
-    public boolean isEnabled();
 
     /**
      * During CSD Generation, allows instrument add any UDO's required.

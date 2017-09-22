@@ -21,30 +21,42 @@
 package blue.components.lines;
 
 import electric.xml.Element;
-import java.io.Serializable;
 import java.util.Iterator;
 import java.util.Vector;
+import javafx.beans.property.DoubleProperty;
+import javafx.beans.property.SimpleDoubleProperty;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import org.apache.commons.lang3.builder.EqualsBuilder;
 
 /**
  * @author Steven Yi
  */
-public class LinePoint implements Serializable, Comparable<LinePoint> {
-    private float y;
+public class LinePoint implements Comparable<LinePoint> {
 
-    private float x;
+    private DoubleProperty x = new SimpleDoubleProperty(0.0);
+    private DoubleProperty y = new SimpleDoubleProperty(0.0);
 
     private transient Vector listeners = null;
+    private transient ChangeEvent changeEvent = new ChangeEvent(this);
 
-    private transient ChangeEvent changeEvent = null;
+
+    public LinePoint(){}
+
+    public LinePoint(double x, double y) {
+        setX(x);
+        setY(y);
+    }
+
+    public LinePoint(LinePoint lp){
+        setX(lp.getX());
+        setY(lp.getY());
+    }
 
     public static LinePoint loadFromXML(Element data) {
         LinePoint lp = new LinePoint();
 
-        float x = Float.parseFloat(data.getAttributeValue("x"));
-        float y = Float.parseFloat(data.getAttributeValue("y"));
+        double x = Double.parseDouble(data.getAttributeValue("x"));
+        double y = Double.parseDouble(data.getAttributeValue("y"));
 
         lp.setLocation(x, y);
 
@@ -54,8 +66,8 @@ public class LinePoint implements Serializable, Comparable<LinePoint> {
     public Element saveAsXML() {
         Element retVal = new Element("linePoint");
 
-        retVal.setAttribute("x", Float.toString(getX()));
-        retVal.setAttribute("y", Float.toString(getY()));
+        retVal.setAttribute("x", Double.toString(getX()));
+        retVal.setAttribute("y", Double.toString(getY()));
 
         return retVal;
     }
@@ -64,7 +76,7 @@ public class LinePoint implements Serializable, Comparable<LinePoint> {
     public int compareTo(LinePoint b) {
         LinePoint a = this;
 
-        float val = a.getX() - b.getX();
+        double val = a.getX() - b.getX();
 
         if (val > 0.0f) {
             return 1;
@@ -75,24 +87,37 @@ public class LinePoint implements Serializable, Comparable<LinePoint> {
         }
     }
 
-    public void setLocation(float x, float y) {
-        this.x = x;
-        this.y = y;
-
-        if (changeEvent == null) {
-            changeEvent = new ChangeEvent(this);
-        }
-
-        fireChangeEvent(changeEvent);
+    public void setLocation(double x, double y) {
+        setX(x);
+        setY(y);
     }
 
-    public float getX() {
+    public final void setX(double value) {
+        fireChangeEvent(changeEvent);
+        x.set(value);
+    }
+
+    public final double getX() {
+        return x.get();
+    }
+
+    public final DoubleProperty xProperty() {
         return x;
     }
 
-    public float getY() {
+    public final void setY(double value) {
+        y.set(value);
+        fireChangeEvent(changeEvent);
+    }
+
+    public final double getY() {
+        return y.get();
+    }
+
+    public final DoubleProperty yProperty() {
         return y;
     }
+
 
     /* EVENT CODE */
 
@@ -120,6 +145,12 @@ public class LinePoint implements Serializable, Comparable<LinePoint> {
 
     @Override
     public boolean equals(Object obj) {
-        return EqualsBuilder.reflectionEquals(this, obj);
+        if(!(obj instanceof LinePoint)) {
+            return false;
+        }
+        LinePoint b = (LinePoint)obj;
+
+        return this.getX() == b.getX() &&
+                this.getY() == b.getY();
     }
 }

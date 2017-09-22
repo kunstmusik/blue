@@ -3,13 +3,15 @@
          
 <para>Accepts NoteProcessors: no</para>
          
-<para>Inline instruments. When experimenting with sounds, or if you're going to
-make a soundEffect and not a whole composition, it might be tedious to go and
-make an instrument and then have to edit score information. This object is here
-so that you can add instruments directly to the timeline. What is generated is a
-minimal i-statement that corresponds to the sound soundObject's bar on a
-timeline. This abstracts a concept of working with the sound itself instead of
-through the level of time of a note.</para>
+<para>
+  The Sound SoundObject allows one to develop solitary sounds by using Csound Orchestra code and graphical user interfaces. It uses the same GUI and coding system as found in <link linkend="blueSynthBuilder">BlueSynthBuilder</link>.</para>
+
+<para>
+  Sound SoundObjects will generate an instrument as well as i-statement with the duration of the SoundObject.  Sound SoundObjects can route signals to mixer sub-channels and master out by using the blueMixerOut pseudo-opcode, same as in BlueSynthBuilder. Multiple copies of the same Sound can be placed in the Score timeline.</para>
+
+<para>
+  The Sound SoundObject also has a special Automation panel that allows automating the controls. The automation is always scaled to the duration of the SoundObject and effectively encapsulates the automation changes with the object. Users can automate any widget that is allowed by BlueSynthBuilder.</para>
+
 
 </section>
     

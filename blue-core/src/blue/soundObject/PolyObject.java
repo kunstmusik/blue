@@ -29,6 +29,7 @@ import blue.score.ScoreObject;
 import blue.score.TimeState;
 import blue.score.layers.AutomatableLayerGroup;
 import blue.score.layers.Layer;
+import blue.score.layers.LayerGroup;
 import blue.score.layers.LayerGroupDataEvent;
 import blue.score.layers.LayerGroupListener;
 import blue.score.layers.ScoreObjectLayerGroup;
@@ -37,7 +38,6 @@ import blue.utility.XMLUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
 import java.awt.Color;
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -55,20 +55,19 @@ import java.util.Vector;
 @SoundObjectPlugin(displayName = "PolyObject", live=false, position = 100)
 public class PolyObject extends ArrayList<SoundLayer> implements SoundObject, 
         ScoreObjectLayerGroup<SoundLayer>,
-        AutomatableLayerGroup,
-        Serializable, Cloneable, GenericViewable {
+        AutomatableLayerGroup, GenericViewable {
 
     private transient Vector<LayerGroupListener> layerGroupListeners = null;
     public static final int DISPLAY_TIME = 0;
     public static final int DISPLAY_NUMBER = 1;
-    protected float subjectiveDuration = 2.0f;
-    protected float startTime = 0.0f;
+    protected double subjectiveDuration = 2.0f;
+    protected double startTime = 0.0f;
     protected String name = "";
     protected Color backgroundColor = Color.DARK_GRAY;
     transient Vector<ScoreObjectListener> soundObjectListeners = null;
     private NoteProcessorChain npc = new NoteProcessorChain();
     private int timeBehavior;
-    float repeatPoint = -1.0f;
+    double repeatPoint = -1.0f;
     private int defaultHeightIndex = 0;
     private TimeState timeState = new TimeState();
 
@@ -82,6 +81,24 @@ public class PolyObject extends ArrayList<SoundLayer> implements SoundObject,
         setName("SoundObject Layer Group");
         timeBehavior = SoundObject.TIME_BEHAVIOR_NONE;
         this.setBackgroundColor(new Color(102, 102, 153));
+    }
+
+    public PolyObject(PolyObject pObj) {
+        super(pObj.size());
+        name = pObj.name;
+        startTime = pObj.startTime;
+        subjectiveDuration = pObj.subjectiveDuration;
+        timeBehavior = pObj.timeBehavior;
+        repeatPoint = pObj.repeatPoint;
+        npc = new NoteProcessorChain(pObj.npc);
+        timeState = new TimeState(pObj.timeState);
+        defaultHeightIndex = pObj.defaultHeightIndex;
+        backgroundColor = pObj.backgroundColor;
+
+        for (SoundLayer sLayer : pObj) {
+            add(sLayer.deepCopy());
+        }
+
     }
 
     /**
@@ -131,8 +148,8 @@ public class PolyObject extends ArrayList<SoundLayer> implements SoundObject,
     // public accessor methods
     //FIXME
     @Override
-    public float getObjectiveDuration() {
-        float totalDuration;
+    public double getObjectiveDuration() {
+        double totalDuration;
         try {
             totalDuration = ScoreUtilities.getTotalDuration(this.
                     generateForCSD(
@@ -177,7 +194,7 @@ public class PolyObject extends ArrayList<SoundLayer> implements SoundObject,
             return;
         }
 
-        float min = sObjects.get(0).getStartTime();
+        double min = sObjects.get(0).getStartTime();
         SoundObject temp;
 
         for (int i = 1; i < size; i++) {
@@ -203,9 +220,9 @@ public class PolyObject extends ArrayList<SoundLayer> implements SoundObject,
      *
      * @return The maxTime value
      */
-    public final float getMaxTime() {
-        float max = 0.0f;
-        float temp;
+    public final double getMaxTime() {
+        double max = 0.0f;
+        double temp;
 
         for (SoundLayer tempSLayer : this) {
             temp = tempSLayer.getMaxTime();
@@ -216,7 +233,7 @@ public class PolyObject extends ArrayList<SoundLayer> implements SoundObject,
         return max;
     }
 
-//    protected float getAdjustedRenderStart(float renderStart) {
+//    protected double getAdjustedRenderStart(double renderStart) {
 //        if (this.isRoot) {
 //            return renderStart;
 //        }
@@ -225,18 +242,18 @@ public class PolyObject extends ArrayList<SoundLayer> implements SoundObject,
 //            return 0.0f;
 //        }
 //
-//        float adjustedStart = renderStart - this.getStartTime();
+//        double adjustedStart = renderStart - this.getStartTime();
 //
-//        float internalDur = ScoreUtilities.getMaxTimeWithEmptyCheck(
+//        double internalDur = ScoreUtilities.getMaxTimeWithEmptyCheck(
 //                getSoundObjects(
 //                false));
 //
-//        float multiplier = getSubjectiveDuration() / internalDur;
+//        double multiplier = getSubjectiveDuration() / internalDur;
 //
 //        return adjustedStart * multiplier;
 //    }
 //
-//    protected float getAdjustedRenderEnd(float renderEnd) {
+//    protected double getAdjustedRenderEnd(double renderEnd) {
 //        if (this.isRoot || renderEnd < 0.0f) {
 //            return renderEnd;
 //        }
@@ -249,13 +266,13 @@ public class PolyObject extends ArrayList<SoundLayer> implements SoundObject,
 //            return -1.0f;
 //        }
 //
-//        float adjustedEnd = renderEnd - this.getStartTime();
+//        double adjustedEnd = renderEnd - this.getStartTime();
 //
-//        float internalDur = ScoreUtilities.getMaxTimeWithEmptyCheck(
+//        double internalDur = ScoreUtilities.getMaxTimeWithEmptyCheck(
 //                getSoundObjects(
 //                false));
 //
-//        float multiplier = getSubjectiveDuration() / internalDur;
+//        double multiplier = getSubjectiveDuration() / internalDur;
 //
 //        return adjustedEnd * multiplier;
 //
@@ -273,8 +290,8 @@ public class PolyObject extends ArrayList<SoundLayer> implements SoundObject,
     }
 
     @Override
-    public NoteList generateForCSD(CompileData compileData, float startTime,
-            float endTime) throws SoundObjectException {
+    public NoteList generateForCSD(CompileData compileData, double startTime,
+            double endTime) throws SoundObjectException {
 
         boolean soloFound = false;
         for (SoundLayer soundLayer : this) {
@@ -288,7 +305,7 @@ public class PolyObject extends ArrayList<SoundLayer> implements SoundObject,
     }
 
     @Override
-    public NoteList generateForCSD(CompileData compileData, float startTime, float endTime, boolean processWithSolo) throws SoundObjectException {
+    public NoteList generateForCSD(CompileData compileData, double startTime, double endTime, boolean processWithSolo) throws SoundObjectException {
 
         NoteList noteList = new NoteList();
 
@@ -325,7 +342,7 @@ public class PolyObject extends ArrayList<SoundLayer> implements SoundObject,
 
     }
 
-    private NoteList processNotes(CompileData compileData, NoteList nl, float start, float endTime) throws SoundObjectException {
+    private NoteList processNotes(CompileData compileData, NoteList nl, double start, double endTime) throws SoundObjectException {
 
         NoteList retVal = null;
 
@@ -359,7 +376,7 @@ public class PolyObject extends ArrayList<SoundLayer> implements SoundObject,
         }
 
         if (endTime > start) {
-            // float dur = endTime - start;
+            // double dur = endTime - start;
 
             NoteList buffer = new NoteList();
             Note tempNote;
@@ -377,25 +394,6 @@ public class PolyObject extends ArrayList<SoundLayer> implements SoundObject,
         return retVal;
     }
 
-    @Override
-    public PolyObject clone() {
-        PolyObject pObj = new PolyObject();
-
-        pObj.setName(this.getName());
-        pObj.setStartTime(this.getStartTime());
-        pObj.setSubjectiveDuration(this.getSubjectiveDuration());
-        pObj.setTimeBehavior(this.getTimeBehavior());
-        pObj.setRepeatPoint(this.getRepeatPoint());
-        pObj.setNoteProcessorChain((NoteProcessorChain) this.
-                getNoteProcessorChain().clone());
-        pObj.setTimeState((TimeState) timeState.clone());
-
-        for (SoundLayer sLayer : this) {
-            pObj.add((SoundLayer) sLayer.clone());
-        }
-
-        return pObj;
-    }
 
     @Override
     public int getTimeBehavior() {
@@ -408,12 +406,12 @@ public class PolyObject extends ArrayList<SoundLayer> implements SoundObject,
     }
 
     @Override
-    public float getRepeatPoint() {
+    public double getRepeatPoint() {
         return this.repeatPoint;
     }
 
     @Override
-    public void setRepeatPoint(float repeatPoint) {
+    public void setRepeatPoint(double repeatPoint) {
         this.repeatPoint = repeatPoint;
 
         ScoreObjectEvent event = new ScoreObjectEvent(this,
@@ -776,7 +774,7 @@ public class PolyObject extends ArrayList<SoundLayer> implements SoundObject,
     }
 
     @Override
-    public void setStartTime(float startTime) {
+    public void setStartTime(double startTime) {
         this.startTime = startTime;
 
         ScoreObjectEvent event = new ScoreObjectEvent(this,
@@ -786,12 +784,12 @@ public class PolyObject extends ArrayList<SoundLayer> implements SoundObject,
     }
 
     @Override
-    public float getStartTime() {
+    public double getStartTime() {
         return startTime;
     }
 
     @Override
-    public void setSubjectiveDuration(float subjectiveDuration) {
+    public void setSubjectiveDuration(double subjectiveDuration) {
         this.subjectiveDuration = subjectiveDuration;
 
         ScoreObjectEvent event = new ScoreObjectEvent(this,
@@ -801,29 +799,29 @@ public class PolyObject extends ArrayList<SoundLayer> implements SoundObject,
     }
 
     @Override
-    public float getSubjectiveDuration() {
+    public double getSubjectiveDuration() {
         return subjectiveDuration;
     }
 
     @Override
-    public float getMaxResizeRightDiff() {
-        return Float.MAX_VALUE;
+    public double getMaxResizeRightDiff() {
+        return Double.MAX_VALUE;
     }
 
     @Override
-    public float getMaxResizeLeftDiff() {
+    public double getMaxResizeLeftDiff() {
         return -getStartTime();
     }
     
     @Override
-    public void resizeLeft(float newStartTime) {
-        float diff = startTime - newStartTime;
+    public void resizeLeft(double newStartTime) {
+        double diff = startTime - newStartTime;
         setStartTime(newStartTime);
         setSubjectiveDuration(subjectiveDuration + diff);
     }
 
     @Override
-    public void resizeRight(float newEndTime) {
+    public void resizeRight(double newEndTime) {
         setSubjectiveDuration(newEndTime - startTime);
     }
 
@@ -876,5 +874,15 @@ public class PolyObject extends ArrayList<SoundLayer> implements SoundObject,
             }
         }
         return -1;
+    }
+
+    @Override
+    public PolyObject deepCopy() {
+        return new PolyObject(this);
+    }
+
+    @Override
+    public PolyObject deepCopyLG() {
+        return new PolyObject(this);
     }
 }

@@ -17,7 +17,6 @@
  * the Free Software Foundation Inc., 59 Temple Place - Suite 330,
  * Boston, MA  02111-1307 USA
  */
-
 package blue.automation;
 
 import blue.components.lines.Line;
@@ -25,12 +24,12 @@ import blue.components.lines.LinePoint;
 import blue.components.lines.LineUtils;
 import electric.xml.Element;
 import electric.xml.Elements;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.Serializable;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.rmi.dgc.VMID;
-import java.util.Iterator;
 import java.util.Vector;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import org.apache.commons.lang3.builder.EqualsBuilder;
@@ -41,37 +40,32 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
  * should holds boundary information (min and max) as well as allows for
  * listeners to follow changes to parameter information. A default value is also
  * necessary.
- * 
+ *
  * @author steven
  */
-public class Parameter implements TableModelListener, Serializable {
+public class Parameter implements TableModelListener {
 
-    private float min = 0.0f;
-
-    private float max = 1.0f;
-    
-    private float value = 0.0f;
-
+    private double min = 0.0f;
+    private double max = 1.0f;
+    private double value = 0.0f;
     private String name = "";
-
     private String label = "";
-
-    private float resolution = -1.0f;
-
-    private Line line;
-
-    transient Vector listeners;
-
-    private boolean automationEnabled = false;
+    private BigDecimal resolution = new BigDecimal(-1);
+    private BooleanProperty automationEnabled = new SimpleBooleanProperty(false);
 
     private boolean updatingLine = false;
-
     private String uniqueId;
+    private Line line;
+    transient Vector<ParameterListener> listeners;
 
-    /* Used only at compilation time */
+    /* Used only at compilation time; not transient as it should be copied. 
+    *  FIXME: this should be rewrittten. 
+     */
     private String compilationVarName = null;
 
-    /** Creates a new instance of Parameter */
+    /**
+     * Creates a new instance of Parameter
+     */
     public Parameter() {
         line = new Line(false);
         line.addTableModelListener(this);
@@ -79,11 +73,24 @@ public class Parameter implements TableModelListener, Serializable {
         uniqueId = Integer.toString(new VMID().hashCode());
     }
 
-    /* Change Listener Code */
+    public Parameter(Parameter param) {
+        min = param.min;
+        max = param.max;
+        value = param.value;
+        name = param.name;
+        label = param.label;
+        resolution = param.resolution;
+        line = new Line(param.line);
+        line.addTableModelListener(this);
+        setAutomationEnabled(param.isAutomationEnabled());
+        uniqueId = param.uniqueId;
+        compilationVarName = param.compilationVarName;
+    }
 
+    /* Change Listener Code */
     public void addParameterListener(ParameterListener listener) {
         if (listeners == null) {
-            listeners = new Vector();
+            listeners = new Vector<>();
         }
         listeners.add(listener);
     }
@@ -99,9 +106,7 @@ public class Parameter implements TableModelListener, Serializable {
             return;
         }
 
-        Iterator iter = new Vector(listeners).iterator();
-        while (iter.hasNext()) {
-            ParameterListener cl = (ParameterListener) iter.next();
+        for (ParameterListener cl : listeners) {
             cl.parameterChanged(this);
         }
     }
@@ -110,10 +115,7 @@ public class Parameter implements TableModelListener, Serializable {
         if (listeners == null) {
             return;
         }
-
-        Iterator iter = new Vector(listeners).iterator();
-        while (iter.hasNext()) {
-            ParameterListener cl = (ParameterListener) iter.next();
+        for (ParameterListener cl : listeners) {
             cl.lineDataChanged(this);
         }
     }
@@ -123,41 +125,40 @@ public class Parameter implements TableModelListener, Serializable {
     }
 
     /* GETTER/SETTER CODE */
-
-    public float getMin() {
+    public double getMin() {
         return min;
     }
 
-    public float getMax() {
+    public double getMax() {
         return max;
     }
 
-    public void setMin(float min, boolean truncate) {
-        float oldMin = this.min;
+    public void setMin(double min, boolean truncate) {
+        double oldMin = this.min;
         this.min = min;
 
         updatingLine = true;
         line.setMin(min, truncate);
-        
+
         if (truncate) {
             value = LineUtils.truncate(value, this.min, this.max);
         } else {
             value = LineUtils.rescale(value, oldMin, this.max,
                     this.min, this.max, this.resolution);
         }
-        
+
         updatingLine = false;
 
         fireParameterChanged();
     }
 
-    public void setMax(float max, boolean truncate) {
-        float oldMax = this.max;
+    public void setMax(double max, boolean truncate) {
+        double oldMax = this.max;
         this.max = max;
 
         updatingLine = true;
         line.setMax(max, truncate);
-        
+
         if (truncate) {
             value = LineUtils.truncate(value, this.min, this.max);
         } else {
@@ -165,7 +166,6 @@ public class Parameter implements TableModelListener, Serializable {
                     this.min, this.max, this.resolution);
         }
 
-        
         updatingLine = false;
 
         fireParameterChanged();
@@ -181,11 +181,11 @@ public class Parameter implements TableModelListener, Serializable {
         fireParameterChanged();
     }
 
-    public float getResolution() {
+    public BigDecimal getResolution() {
         return resolution;
     }
 
-    public void setResolution(float resolution) {
+    public void setResolution(BigDecimal resolution) {
         // if(this.resolution == resolution) {
         // return;
         // }
@@ -208,7 +208,6 @@ public class Parameter implements TableModelListener, Serializable {
     }
 
     /* Listening to Line Value Changes to fire events to update UI */
-
     @Override
     public void tableChanged(TableModelEvent e) {
         if (!updatingLine) {
@@ -216,11 +215,11 @@ public class Parameter implements TableModelListener, Serializable {
         }
     }
 
-    public void setValue(float value) {
+    public void setValue(double value) {
 
         if (isAutomationEnabled()) {
 
-            float time = ParameterTimeManagerFactory.getInstance().getTime();
+            double time = ParameterTimeManagerFactory.getInstance().getTime();
 
             if (time < 0) {
                 return;
@@ -247,81 +246,62 @@ public class Parameter implements TableModelListener, Serializable {
 
             updatingLine = false;
         } else {
-            
-            this.value = value; 
-            
+
+            this.value = value;
+
             if (line.size() == 1) {
                 updatingLine = true;
-    
+
                 LinePoint lp = line.getLinePoint(0);
                 lp.setLocation(lp.getX(), value);
-    
+
                 updatingLine = false;
             }
         }
 
     }
-    
-    public float getValue(float time) {
-        float retValue;
-        
+
+    public double getValue(double time) {
+        double retValue;
+
         if (isAutomationEnabled()) {
-
             retValue = line.getValue(time);
-
-            if (resolution > 0 &&
-                    time < line.getLinePoint(line.size() - 1).getX()) {
-                retValue = getResolutionAdjustedValue(retValue);
-            }
-        } else {         
+        } else {
             retValue = this.value; // line.getLinePoint(0).getY();
         }
 
         return retValue;
     }
-    
-    public float getFixedValue() {
+
+    public double getFixedValue() {
         return this.value;
     }
 
-     public float getResolutionAdjustedValue(float val) {
-        if (val == max) {
-            return max;
-        }
-
-        float valTarget = val - min;
-        float temp = 0.0f;
-
-        while (temp <= valTarget) {
-            temp += resolution;
-        }
-        temp -= resolution;
-
-        return temp + min;
+    public final void setAutomationEnabled(boolean value) {
+        automationEnabled.set(value);
     }
-    
-    public boolean isAutomationEnabled() {
+
+    public final boolean isAutomationEnabled() {
+        return automationEnabled.get();
+    }
+
+    public final BooleanProperty automationEnabledProperty() {
         return automationEnabled;
     }
 
-    public void setAutomationEnabled(boolean automationEnabled) {
-        this.automationEnabled = automationEnabled;
-    }
-
     /* SERIALIZATION CODE */
-
     public Element saveAsXML() {
         Element retVal = new Element("parameter");
 
         retVal.setAttribute("uniqueId", uniqueId);
         retVal.setAttribute("name", name);
         retVal.setAttribute("label", label);
-        retVal.setAttribute("min", Float.toString(min));
-        retVal.setAttribute("max", Float.toString(max));
-        retVal.setAttribute("resolution", Float.toString(resolution));
+        retVal.setAttribute("min", Double.toString(min));
+        retVal.setAttribute("max", Double.toString(max));
+        retVal.setAttribute("bdresolution", resolution.toString());
         retVal.setAttribute("automationEnabled", Boolean
-                .toString(automationEnabled));
-        retVal.setAttribute("value", Float.toString(value));
+                .toString(isAutomationEnabled()));
+        retVal.setAttribute("value", Double.toString(value));
 
         retVal.addElement(line.saveAsXML());
 
@@ -348,22 +328,32 @@ public class Parameter implements TableModelListener, Serializable {
 
         val = data.getAttributeValue("min");
         if (val != null && val.length() > 0) {
-            retVal.min = Float.parseFloat(val);
+            retVal.min = Double.parseDouble(val);
         }
 
         val = data.getAttributeValue("max");
         if (val != null && val.length() > 0) {
-            retVal.max = Float.parseFloat(val);
+            retVal.max = Double.parseDouble(val);
         }
 
+        // Blue 2.7.0 - updated to use big decimal, this remains
+        // to parse older double values from projects
         val = data.getAttributeValue("resolution");
         if (val != null && val.length() > 0) {
-            retVal.resolution = Float.parseFloat(val);
+            double res = Double.parseDouble(val);
+            retVal.resolution = new BigDecimal(res)
+                    .setScale(5, RoundingMode.HALF_UP)
+                    .stripTrailingZeros();
+        }
+
+        val = data.getAttributeValue("bdresolution");
+        if (val != null && val.length() > 0) {
+            retVal.resolution = new BigDecimal(val);
         }
 
         val = data.getAttributeValue("automationEnabled");
         if (val != null && val.length() > 0) {
-            retVal.automationEnabled = Boolean.valueOf(val).booleanValue();
+            retVal.setAutomationEnabled(Boolean.valueOf(val).booleanValue());
         }
 
         Elements nodes = data.getElements();
@@ -386,14 +376,13 @@ public class Parameter implements TableModelListener, Serializable {
         if (retVal.line.getResolution() != retVal.getResolution()) {
             retVal.line.setResolution(retVal.getResolution());
         }
-        
+
         /*
          * Seeting Value property from first line point, introduced in 0.124.0
          */
-        
         val = data.getAttributeValue("value");
         if (val != null && val.length() > 0) {
-            retVal.value = Float.parseFloat(val);
+            retVal.value = Double.parseDouble(val);
         }
 
         return retVal;
@@ -401,23 +390,23 @@ public class Parameter implements TableModelListener, Serializable {
 
     @Override
     public boolean equals(Object obj) {
-        if(!(obj instanceof Parameter)) {
+        if (!(obj instanceof Parameter)) {
             return false;
         }
-        
-        Parameter other = (Parameter)obj;
-        
+
+        Parameter other = (Parameter) obj;
+
         return new EqualsBuilder()
-                 .append(uniqueId, other.uniqueId)
-                 .append(min, other.min)
-                 .append(max, other.max)
-                 .append(label, other.label)
-                 .append(resolution, other.resolution)
-                 .append(line, other.line)
-                 .append(automationEnabled, other.automationEnabled)
-                 .append(updatingLine, other.updatingLine)
-                 .append(value, other.value)
-                 .isEquals();
+                .append(uniqueId, other.uniqueId)
+                .append(min, other.min)
+                .append(max, other.max)
+                .append(label, other.label)
+                .append(resolution, other.resolution)
+                .append(line, other.line)
+                .append(automationEnabled.get(), other.automationEnabled.get())
+                .append(updatingLine, other.updatingLine)
+                .append(value, other.value)
+                .isEquals();
 
     }
 
@@ -432,17 +421,6 @@ public class Parameter implements TableModelListener, Serializable {
 
     public void setLabel(String label) {
         this.label = label;
-    }
-
-    /*
-     * This gets called as part of Serialization by Java and will do default
-     * serialization plus reconnect the parameter as a listener to the Line
-     */
-    private void readObject(ObjectInputStream stream) throws IOException,
-            ClassNotFoundException {
-        stream.defaultReadObject();
-
-        line.addTableModelListener(this);
     }
 
     public String getCompilationVarName() {

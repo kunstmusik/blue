@@ -45,7 +45,6 @@ import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseWheelEvent;
-import java.awt.event.MouseWheelListener;
 import java.awt.geom.AffineTransform;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -84,7 +83,7 @@ public class AudioLayersPanel extends JLayeredPane implements LayerGroupListener
     AutomationLayerPanel automationPanel = new AutomationLayerPanel(
             new AlphaMarquee());
     
-    BiConsumer<AudioClip, Float> splitHandler = (ac, time) -> {
+    BiConsumer<AudioClip, Double> splitHandler = (ac, time) -> {
         int layerNum = layerGroup.getLayerNumForScoreObject(ac);
         AudioLayer layer = layerGroup.get(layerNum);
         
@@ -324,7 +323,7 @@ public class AudioLayersPanel extends JLayeredPane implements LayerGroupListener
                 return;
             }
             
-            float snapValue = timeState.getSnapValue();
+            double snapValue = timeState.getSnapValue();
             int pixelSecond = timeState.getPixelSecond();
             
             for (int i = 0; x < getWidth(); i++) {

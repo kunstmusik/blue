@@ -23,7 +23,7 @@ import org.apache.commons.lang3.builder.EqualsBuilder;
  * @version 1.0
  */
 
-public class AlgorithmCommonData implements java.io.Serializable {
+public class AlgorithmCommonData {
     public int keyTranspose = 12;
 
     public int algorithm = 1;
@@ -35,6 +35,16 @@ public class AlgorithmCommonData implements java.io.Serializable {
     public AlgorithmCommonData() {
         for (int i = 0; i < operators.length; i++) {
             operators[i] = true;
+        }
+    }
+
+    public AlgorithmCommonData(AlgorithmCommonData acd) {
+        keyTranspose = acd.keyTranspose;
+        algorithm = acd.algorithm;
+        feedback = acd.feedback;
+
+        for (int i = 0; i < operators.length; i++) {
+            operators[i] = acd.operators[i];
         }
     }
 

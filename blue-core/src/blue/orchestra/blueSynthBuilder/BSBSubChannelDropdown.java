@@ -22,14 +22,33 @@ package blue.orchestra.blueSynthBuilder;
 import blue.mixer.Channel;
 import electric.xml.Element;
 import electric.xml.Elements;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
 
 public class BSBSubChannelDropdown extends BSBObject {
 
-    String channelOutput = Channel.MASTER;
+    private StringProperty channelOutput = 
+            new SimpleStringProperty(Channel.MASTER);
 
-//    public BSBObjectView getBSBObjectView() {
-//        return new BSBSubChannelDropdownView(this);
-//    }
+    public BSBSubChannelDropdown() {
+    }
+
+    public BSBSubChannelDropdown(BSBSubChannelDropdown scd) {
+        super(scd);
+        setChannelOutput(scd.getChannelOutput());
+    }
+
+    public final void setChannelOutput(String value) {
+        channelOutput.set(value);
+    }
+
+    public final String getChannelOutput() {
+        return channelOutput.get();
+    }
+
+    public final StringProperty channelOutputProperty() {
+        return channelOutput;
+    }
 
     public static BSBObject loadFromXML(Element data) {
         BSBSubChannelDropdown dropDown = new BSBSubChannelDropdown();
@@ -42,7 +61,7 @@ public class BSBSubChannelDropdown extends BSBObject {
             String name = elem.getName();
 
             if (name.equals("channelOutput")) {
-                dropDown.channelOutput = elem.getTextString();
+                dropDown.setChannelOutput(elem.getTextString());
             }
         }
 
@@ -53,42 +72,27 @@ public class BSBSubChannelDropdown extends BSBObject {
     public Element saveAsXML() {
         Element retVal = getBasicXML(this);
 
-        retVal.addElement("channelOutput").setText(channelOutput);
+        retVal.addElement("channelOutput").setText(getChannelOutput());
 
         return retVal;
     }
 
     @Override
     public String getPresetValue() {
-        // return channelOutput;
         return null;
     }
 
     @Override
     public void setPresetValue(String val) {
-        // BlueSystem.getCurrentBlueData().getMixer().getSubChannels();
     }
 
     @Override
     public void setupForCompilation(BSBCompilationUnit compilationUnit) {
-        compilationUnit.addReplacementValue(objectName, channelOutput);
+        compilationUnit.addReplacementValue(getObjectName(), getChannelOutput());
     }
 
-    public String getChannelOutput() {
-        return channelOutput;
-    }
-
-    public void setChannelOutput(String channelOutput) {
-        if (this.channelOutput.equals(channelOutput)) {
-            return;
-        }
-
-        String oldChannel = this.channelOutput;
-        this.channelOutput = channelOutput;
-
-        if (propListeners != null) {
-            propListeners.firePropertyChange("channelOutput", oldChannel,
-                    this.channelOutput);
-        }
+    @Override
+    public BSBObject deepCopy() {
+        return new BSBSubChannelDropdown(this);
     }
 }

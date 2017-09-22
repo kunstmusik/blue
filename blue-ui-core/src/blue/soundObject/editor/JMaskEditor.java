@@ -34,12 +34,9 @@ import blue.ui.components.IconFactory;
 import blue.utility.GUI;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
-import java.awt.Graphics2D;
-import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
-import java.awt.geom.Rectangle2D;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.BorderFactory;
@@ -58,7 +55,6 @@ import javax.swing.SwingUtilities;
 import javax.swing.border.BevelBorder;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import skt.swing.SwingUtil;
 
 @ScoreObjectEditorPlugin(scoreObjectType = JMask.class)
@@ -174,7 +170,7 @@ public class JMaskEditor extends ScoreObjectEditor implements ActionListener {
         NoteList notes = null;
 
         try {
-            notes = ((JMask) jmask.clone()).generateNotes(0.0f, -1.0f);
+            notes = new JMask(jmask).generateNotes(0.0f, -1.0f);
         } catch (SoundObjectException e) {
             ExceptionDialog.showExceptionDialog(SwingUtilities.getRoot(this), e);
         }

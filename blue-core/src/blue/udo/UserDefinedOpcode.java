@@ -22,12 +22,11 @@ package blue.udo;
 
 import electric.xml.Element;
 import electric.xml.Elements;
-import java.io.Serializable;
 
 /**
  * @author Steven Yi
  */
-public class UserDefinedOpcode implements Serializable {
+public class UserDefinedOpcode {
 
     public String opcodeName = "newOpcode";
 
@@ -41,33 +40,16 @@ public class UserDefinedOpcode implements Serializable {
 
     public String comments = "";
 
-    // public ArrayList getArgs() {
-    // String args = inArgs + "," + outArgs;
-    //
-    // ArrayList values = new ArrayList();
-    //
-    // int startIndex = 0;
-    //
-    // for(int i = 0; i < args.length(); i++) {
-    // if(args.charAt(i) == ',') {
-    // String val = args.substring(startIndex, i).trim();
-    //
-    // if(val.length() > 0) {
-    // values.add(val);
-    // }
-    //
-    // startIndex = i + 1 ;
-    // }
-    // }
-    //
-    // String val = args.substring(startIndex).trim();
-    //
-    // if(val.length() > 0) {
-    // values.add(val);
-    // }
-    //
-    // return values;
-    // }
+    public UserDefinedOpcode() {}
+
+    public UserDefinedOpcode(UserDefinedOpcode udo) {
+        opcodeName = udo.opcodeName;
+        outTypes = udo.outTypes;
+        inTypes = udo.inTypes;
+        codeBody = udo.codeBody;
+        comments = udo.comments;
+    }
+
 
     public static UserDefinedOpcode loadFromXML(Element data) {
         UserDefinedOpcode retVal = new UserDefinedOpcode();

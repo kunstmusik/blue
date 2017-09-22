@@ -104,6 +104,8 @@ public class BlueProjectManager {
         for(LayerGroup<?> layerGroup : blueData.getScore()) {
             if(layerGroup instanceof PolyObject) {
                 PolyObject pObj = (PolyObject)layerGroup;
+                pObj.setDefaultHeightIndex(
+                        ProjectDefaultsSettings.getInstance().layerHeightDefault);
                 
                 if(pObj.size() == 0) {
                     pObj.newLayerAt(-1);

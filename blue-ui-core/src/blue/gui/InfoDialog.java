@@ -27,7 +27,11 @@ import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.lang.reflect.InvocationTargetException;
+import java.util.prefs.BackingStoreException;
+import java.util.prefs.Preferences;
 import javax.swing.AbstractAction;
 import javax.swing.JDialog;
 import javax.swing.JPanel;
@@ -37,6 +41,7 @@ import javax.swing.JTabbedPane;
 import javax.swing.JTextArea;
 import javax.swing.SwingUtilities;
 import org.openide.util.Exceptions;
+import org.openide.util.NbPreferences;
 import org.openide.windows.WindowManager;
 
 /**
@@ -84,9 +89,39 @@ public class InfoDialog {
         dlg.setModal(true);
         dlg.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
         dlg.setTitle(title);
-        dlg.setSize(new Dimension(760, 400));
 
-        GUI.centerOnScreen(dlg);
+        final Preferences prefs = NbPreferences.forModule(
+                InfoDialog.class);
+
+        int w = prefs.getInt("infoDialogWidth", 760);
+        int h = prefs.getInt("infoDialogHeight", 400);
+
+        dlg.setSize(new Dimension(w, h));
+        dlg.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                final Preferences prefs = NbPreferences.forModule(
+                        InfoDialog.class);
+
+                prefs.putInt("infoDialogWidth", dlg.getWidth());
+                prefs.putInt("infoDialogHeight", dlg.getHeight());
+                prefs.putInt("infoDialogX", dlg.getX());
+                prefs.putInt("infoDialogY", dlg.getY());
+                try {
+                    prefs.sync();
+                } catch (BackingStoreException ex) {
+                    Exceptions.printStackTrace(ex);
+                }
+            }
+        });
+
+        int x = prefs.getInt("infoDialogX", -1);
+        int y = prefs.getInt("infoDialogY", -1);
+        if (x > 0 && y > 0) {
+            dlg.setLocation(x, y);
+        } else {
+            GUI.centerOnScreen(dlg);
+        }
         dlg.setVisible(true);
         infoText.setText("");
     }
@@ -100,9 +135,38 @@ public class InfoDialog {
             tabs = new JTabbedPane();
             dialog.getContentPane().add(tabs);
 
-            dialog.setSize(640, 480);
+            final Preferences prefs = NbPreferences.forModule(
+                    InfoDialog.class);
 
-            GUI.centerOnScreen(dialog);
+            int w = prefs.getInt("infoDialogTabsWidth", 640);
+            int h = prefs.getInt("infoDialogTabsHeight", 480);
+
+            dialog.setSize(new Dimension(w, h));
+            dialog.addWindowListener(new WindowAdapter() {
+                @Override
+                public void windowClosing(WindowEvent e) {
+                    final Preferences prefs = NbPreferences.forModule(
+                            InfoDialog.class);
+
+                    prefs.putInt("infoDialogTabsWidth", dialog.getWidth());
+                    prefs.putInt("infoDialogTabsHeight", dialog.getHeight());
+                    prefs.putInt("infoDialogTabsX", dialog.getX());
+                    prefs.putInt("infoDialogTabsY", dialog.getY());
+                    try {
+                        prefs.sync();
+                    } catch (BackingStoreException ex) {
+                        Exceptions.printStackTrace(ex);
+                    }
+                }
+            });
+
+            int x = prefs.getInt("infoDialogTabsX", -1);
+            int y = prefs.getInt("infoDialogTabsY", -1);
+            if (x > 0 && y > 0) {
+                dialog.setLocation(x, y);
+            } else {
+                GUI.centerOnScreen(dialog);
+            }
 
             popup = new JPopupMenu();
 

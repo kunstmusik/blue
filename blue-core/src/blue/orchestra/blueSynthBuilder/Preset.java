@@ -21,20 +21,20 @@ package blue.orchestra.blueSynthBuilder;
 
 import electric.xml.Element;
 import electric.xml.Elements;
-import java.io.Serializable;
 import java.rmi.dgc.VMID;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 
 /**
  * @author steven
  */
-public class Preset implements Serializable, Comparable<Preset> {
+public class Preset implements Comparable<Preset> {
 
     private String presetName = "";
 
-    private HashMap valuesMap = new HashMap();
+    private HashMap<String, String> valuesMap = new HashMap<>();
 
     private String uniqueId;
 
@@ -42,12 +42,20 @@ public class Preset implements Serializable, Comparable<Preset> {
         this.uniqueId = Integer.toString(new VMID().hashCode());
     }
 
+    public Preset(Preset preset) {
+        presetName = preset.presetName;
+
+        //FIXME - check if this is the correct thing to do; interacts with
+        // PresetGroup's currentUniqueId...
+        this.uniqueId = preset.uniqueId;
+
+        valuesMap = new HashMap<>(preset.valuesMap);
+    }
+
     public static Preset createPreset(BSBGraphicInterface bsbInterface) {
         Preset preset = new Preset();
 
-        for (Iterator iter = bsbInterface.iterator(); iter.hasNext();) {
-            BSBObject bsbObj = (BSBObject) iter.next();
-
+        for (BSBObject bsbObj : bsbInterface.getAllSet()) {
             String objectName = bsbObj.getObjectName();
 
             if (objectName == null || objectName.length() == 0) {
@@ -69,8 +77,7 @@ public class Preset implements Serializable, Comparable<Preset> {
 
         valuesMap.clear();
 
-        for (Iterator iter = bsbInterface.iterator(); iter.hasNext();) {
-            BSBObject bsbObj = (BSBObject) iter.next();
+        for (BSBObject bsbObj : bsbInterface.getAllSet()) {
 
             String objectName = bsbObj.getObjectName();
 
@@ -119,14 +126,12 @@ public class Preset implements Serializable, Comparable<Preset> {
         retVal.setAttribute("name", presetName);
         retVal.setAttribute("uniqueId", uniqueId);
 
-        Object[] keys = valuesMap.keySet().toArray();
+        String[] keys = valuesMap.keySet().toArray(new String[0]);
 
         Arrays.sort(keys);
 
-        for (int i = 0; i < keys.length; i++) {
-            String key = (String) keys[i];
-            String val = (String) valuesMap.get(key);
-
+        for (String key : keys) {
+            String val = valuesMap.get(key);
             retVal.addElement("setting").setAttribute("name", key).setText(val);
         }
 
@@ -142,7 +147,7 @@ public class Preset implements Serializable, Comparable<Preset> {
     }
 
     public String getSetting(String objectName) {
-        return (String) valuesMap.get(objectName);
+        return valuesMap.get(objectName);
     }
 
     /**
@@ -153,8 +158,7 @@ public class Preset implements Serializable, Comparable<Preset> {
     }
 
     /**
-     * @param name
-     *            The preset name to set.
+     * @param name The preset name to set.
      */
     public void setPresetName(String name) {
         this.presetName = name;
@@ -179,32 +183,28 @@ public class Preset implements Serializable, Comparable<Preset> {
      * @param graphicInterface
      */
     public void setInterfaceValues(BSBGraphicInterface graphicInterface) {
-        for (Iterator iter = graphicInterface.iterator(); iter.hasNext();) {
-            BSBObject bsbObj = (BSBObject) iter.next();
+        for (BSBObject bsbObj : graphicInterface.getAllSet()) {
             String objName = bsbObj.getObjectName();
-
             String setting = getSetting(objName);
 
             if (setting != null) {
                 bsbObj.setPresetValue(setting);
-            }
-
+}
         }
     }
 
     public void synchronizeWithInterface(BSBGraphicInterface graphicInterface) {
         HashMap nameMap = new HashMap();
 
-        for (Iterator iter = graphicInterface.iterator(); iter.hasNext();) {
-            BSBObject bsbObj = (BSBObject) iter.next();
+        for (BSBObject bsbObj : graphicInterface.getAllSet()) {
             String objName = bsbObj.getObjectName();
-
             nameMap.put(objName, objName);
         }
 
         // clear out any existing values that do not have a widget in interface
-        for (Iterator iter = this.valuesMap.keySet().iterator(); iter.hasNext();) {
-            String key = (String) iter.next();
+        for (Iterator<Map.Entry<String, String>> iter = this.valuesMap.entrySet().iterator(); iter.hasNext();) {
+            Map.Entry<String,String> entry = iter.next();
+            String key = entry.getKey();
 
             if (!nameMap.containsKey(key)) {
                 System.out.println("Removing preset with objectName: " + key);
@@ -213,8 +213,7 @@ public class Preset implements Serializable, Comparable<Preset> {
         }
 
         // add values that are in interface but not in preset
-        for (Iterator iter = graphicInterface.iterator(); iter.hasNext();) {
-            BSBObject bsbObj = (BSBObject) iter.next();
+        for (BSBObject bsbObj : graphicInterface.getAllSet()) {
             String objName = bsbObj.getObjectName();
 
             if (objName == null || objName.length() == 0) {

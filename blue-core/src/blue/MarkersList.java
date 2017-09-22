@@ -23,7 +23,6 @@ import electric.xml.Element;
 import electric.xml.Elements;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
@@ -32,16 +31,24 @@ import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.TableModel;
 
-public class MarkersList implements Serializable, TableModel,
-        PropertyChangeListener {
+public class MarkersList implements TableModel, PropertyChangeListener {
 
-    ArrayList markers = new ArrayList();
+    ArrayList<Marker> markers = new ArrayList<>();
 
     private transient Vector listeners = null;
 
     private transient Vector listListeners = null;
 
-    public void addMarker(float time) {
+    public MarkersList() {
+    }
+
+    public MarkersList(MarkersList markersList) {
+        for (Marker marker : markersList.markers) {
+            markers.add(new Marker(marker));
+        }
+    }
+
+    public void addMarker(double time) {
         String name = "Marker" + (markers.size() + 1);
 
         Marker m = new Marker();
@@ -129,7 +136,7 @@ public class MarkersList implements Serializable, TableModel,
     public Class getColumnClass(int columnIndex) {
         switch (columnIndex) {
             case 0:
-                return Float.class;
+                return Double.class;
             case 1:
                 return String.class;
         }
@@ -151,7 +158,7 @@ public class MarkersList implements Serializable, TableModel,
 
         switch (columnIndex) {
             case 0:
-                return new Float(m.getTime());
+                return new Double(m.getTime());
             case 1:
                 return m.getName();
         }
@@ -169,8 +176,8 @@ public class MarkersList implements Serializable, TableModel,
 
         switch (columnIndex) {
             case 0:
-                Float f = (Float) aValue;
-                m.setTime(f.floatValue());
+                Double f = (Double) aValue;
+                m.setTime(f.doubleValue());
 
                 break;
             case 1:

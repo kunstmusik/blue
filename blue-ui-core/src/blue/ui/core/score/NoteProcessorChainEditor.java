@@ -228,7 +228,7 @@ public class NoteProcessorChainEditor extends JComponent {
             return;
         }
 
-        NoteProcessor clone = (NoteProcessor) ObjectUtilities.clone(buffer);
+        NoteProcessor clone = buffer.deepCopy();
         npcModel.addNoteProcessor(clone);
     }
 
@@ -361,7 +361,7 @@ public class NoteProcessorChainEditor extends JComponent {
                 return;
             }
 
-            npc = (NoteProcessorChain) npc.clone();
+            npc = new NoteProcessorChain(npc);
 
             for (Iterator iter = npc.iterator(); iter.hasNext();) {
                 NoteProcessor np = (NoteProcessor) iter.next();

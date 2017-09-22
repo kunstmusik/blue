@@ -20,8 +20,8 @@
 
 package blue.orchestra.blueSynthBuilder;
 
-import java.io.Serializable;
 import java.text.MessageFormat;
+import java.util.HashSet;
 import java.util.Set;
 
 
@@ -31,7 +31,7 @@ import java.util.Set;
  * 
  * @author Steven
  */
-public class UniqueNameManager implements Serializable {
+public class UniqueNameManager  {
     private static MessageFormat NAME_FMT = new MessageFormat("{0}{1}");
 
     private UniqueNameCollection collection = null;
@@ -42,12 +42,17 @@ public class UniqueNameManager implements Serializable {
         this.collection = collection;
     }
 
+    public UniqueNameCollection getUniqueNameCollection() {
+        return collection;
+    }
+
     public void setDefaultPrefix(String prefix) {
         this.defaultPrefix = prefix;
     }
 
     public boolean isUniquelyNamed(BSBObject bsbObj) {
-        return isUniquelyNamed(bsbObj, collection.getNames());
+        return isUniquelyNamed(bsbObj, 
+                collection == null ? new HashSet<>() : collection.getNames());
     }
 
     private boolean isUniquelyNamed(BSBObject bsbObj, Set<String> names) {
@@ -76,7 +81,7 @@ public class UniqueNameManager implements Serializable {
 
         Set<String> names = collection.getNames();
 
-        BSBObject clone = (BSBObject) bsbObj.clone();
+        BSBObject clone = bsbObj.deepCopy();
 
         clone.setObjectName(NAME_FMT.format(vals));
 

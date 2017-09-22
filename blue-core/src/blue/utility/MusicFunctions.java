@@ -25,13 +25,13 @@ package blue.utility;
  * @author steven
  */
 public class MusicFunctions {
-    private static final float LOG10D20 = 0.11512925f;
+    private static final double LOG10D20 = 0.11512925;
 
-    public static double dbamp(float val) {
+    public static double dbamp(double val) {
         return Math.log(Math.abs(val)) / LOG10D20;
     }
 
-    public static double ampdb(float val) {
+    public static double ampdb(double val) {
         return Math.exp(val * LOG10D20);
     }
 

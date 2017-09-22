@@ -81,6 +81,7 @@
             </module-dependencies>
             <public-packages>
                 <package>blue.plaf</package>
+                <package>blue.plaf.netbeans</package>
             </public-packages>
         </data>
     </configuration>

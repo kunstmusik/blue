@@ -29,7 +29,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
-import java.util.Iterator;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JPanel;
@@ -39,7 +38,6 @@ import javax.swing.JSpinner;
 import javax.swing.JTextField;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
@@ -258,12 +256,12 @@ public class PianoRollPropertiesEditor extends JScrollPane {
     }
 
     protected void updateBaseFrequency() {
-        float newValue;
+        double newValue;
 
         try {
-            newValue = Float.parseFloat(baseFrequencyText.getText());
+            newValue = Double.parseDouble(baseFrequencyText.getText());
         } catch (NumberFormatException nfe) {
-            baseFrequencyText.setText(Float.toString(p.getScale()
+            baseFrequencyText.setText(Double.toString(p.getScale()
                     .getBaseFrequency()));
             return;
         }
@@ -282,7 +280,7 @@ public class PianoRollPropertiesEditor extends JScrollPane {
 
         noteTemplateText.setText(p.getNoteTemplate());
         instrumentIDText.setText(p.getInstrumentId());
-        baseFrequencyText.setText(Float.toString(p.getScale()
+        baseFrequencyText.setText(Double.toString(p.getScale()
                 .getBaseFrequency()));
         scalePanel.setScale(p.getScale());
 

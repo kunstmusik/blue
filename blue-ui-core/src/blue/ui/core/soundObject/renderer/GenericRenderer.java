@@ -102,13 +102,13 @@ public class GenericRenderer implements BarRenderer {
 
         // paint repeat
 
-        float repeatPoint = sObj.getRepeatPoint();
+        double repeatPoint = sObj.getRepeatPoint();
 
         if (sObj.getTimeBehavior() == SoundObject.TIME_BEHAVIOR_REPEAT
                 && repeatPoint > 0.0f) {
 
-            float lineTime = repeatPoint;
-            float dur = sObj.getSubjectiveDuration();
+            double lineTime = repeatPoint;
+            double dur = sObj.getSubjectiveDuration();
 
             int x[] = new int[3];
             int y[] = new int[3];

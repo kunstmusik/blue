@@ -24,7 +24,6 @@ import blue.noteProcessor.NoteProcessorChain;
 import blue.score.ScoreGenerationException;
 import blue.soundObject.NoteList;
 import electric.xml.Element;
-import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
 
@@ -32,7 +31,8 @@ import java.util.Map;
  *
  * @author stevenyi
  */
-public interface LayerGroup<T extends Layer> extends Serializable, List<T> {
+public interface LayerGroup<T extends Layer> extends List<T>, 
+        DeepCopyableLG<LayerGroup<T>> {
     
     public String getName();
     
@@ -62,7 +62,7 @@ public interface LayerGroup<T extends Layer> extends Serializable, List<T> {
      * 
      * @param compileData 
      */
-    public NoteList generateForCSD(CompileData compileData, float startTime, float endTime, boolean processWithSolo) throws ScoreGenerationException;
+    public NoteList generateForCSD(CompileData compileData, double startTime, double endTime, boolean processWithSolo) throws ScoreGenerationException;
     
     /**
      * Returns an XML Representation of this object.

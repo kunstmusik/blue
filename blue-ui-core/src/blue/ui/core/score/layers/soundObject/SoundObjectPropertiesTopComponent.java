@@ -155,7 +155,7 @@ public final class SoundObjectPropertiesTopComponent extends TopComponent implem
 
                         useRepeatPoint.setEnabled(true);
 
-                        float repeatPoint = soundObj.getRepeatPoint();
+                        double repeatPoint = soundObj.getRepeatPoint();
 
                         if (repeatPoint <= 0.0f) {
                             useRepeatPoint.setSelected(false);
@@ -163,7 +163,7 @@ public final class SoundObjectPropertiesTopComponent extends TopComponent implem
                         } else {
                             useRepeatPoint.setSelected(true);
                             repeatePointText.setEnabled(true);
-                            repeatePointText.setText(Float.toString(repeatPoint));
+                            repeatePointText.setText(Double.toString(repeatPoint));
                         }
 
                     } else {
@@ -182,14 +182,14 @@ public final class SoundObjectPropertiesTopComponent extends TopComponent implem
 
     private void updateProperties() {
         if (sObj != null) {
-            startTimeText.setText(Float.toString(sObj.getStartTime()));
+            startTimeText.setText(Double.toString(sObj.getStartTime()));
             nameText.setText(sObj.getName());
-            subjectiveDurationText.setText(Float.toString(sObj
+            subjectiveDurationText.setText(Double.toString(sObj
                     .getSubjectiveDuration()));
 
             if (sObj instanceof SoundObject) {
-                float repeatPoint = ((SoundObject) sObj).getRepeatPoint();
-                repeatePointText.setText(Float.toString(repeatPoint));
+                double repeatPoint = ((SoundObject) sObj).getRepeatPoint();
+                repeatePointText.setText(Double.toString(repeatPoint));
             }
 
             updateEndTime();
@@ -197,7 +197,7 @@ public final class SoundObjectPropertiesTopComponent extends TopComponent implem
     }
 
     private void updateEndTime() {
-        endTimeText.setText(Float.toString(this.sObj.getStartTime()
+        endTimeText.setText(Double.toString(this.sObj.getStartTime()
                 + this.sObj.getSubjectiveDuration()));
     }
 
@@ -210,13 +210,13 @@ public final class SoundObjectPropertiesTopComponent extends TopComponent implem
     }
 
     protected void updateStartTime() {
-        float initialStart = sObj.getStartTime();
-        float newValue;
+        double initialStart = sObj.getStartTime();
+        double newValue;
 
         try {
-            newValue = Float.parseFloat(startTimeText.getText());
+            newValue = Double.parseDouble(startTimeText.getText());
         } catch (NumberFormatException nfe) {
-            startTimeText.setText(Float.toString(initialStart));
+            startTimeText.setText(Double.toString(initialStart));
             return;
         }
 
@@ -234,13 +234,13 @@ public final class SoundObjectPropertiesTopComponent extends TopComponent implem
     }
 
     protected void updateSubjectiveDuration() {
-        float initialDuration = sObj.getSubjectiveDuration();
-        float newValue;
+        double initialDuration = sObj.getSubjectiveDuration();
+        double newValue;
 
         try {
-            newValue = Float.parseFloat(subjectiveDurationText.getText());
+            newValue = Double.parseDouble(subjectiveDurationText.getText());
         } catch (NumberFormatException nfe) {
-            subjectiveDurationText.setText(Float.toString(initialDuration));
+            subjectiveDurationText.setText(Double.toString(initialDuration));
             return;
         }
 
@@ -294,14 +294,14 @@ public final class SoundObjectPropertiesTopComponent extends TopComponent implem
         repeatePointText.setEnabled(useRepeatPoint.isSelected());
 
         if (!isUpdating) {
-            float dur = -1.0f;
+            double dur = -1.0f;
 
             if (useRepeatPoint.isSelected()) {
                 dur = sObj.getSubjectiveDuration();
             }
 
             soundObj.setRepeatPoint(dur);
-            repeatePointText.setText(Float.toString(dur));
+            repeatePointText.setText(Double.toString(dur));
         }
 
     }
@@ -312,22 +312,22 @@ public final class SoundObjectPropertiesTopComponent extends TopComponent implem
         }
 
         SoundObject soundObj = (SoundObject) sObj;
-        float initialRepeatPoint = soundObj.getRepeatPoint();
-        float newValue;
+        double initialRepeatPoint = soundObj.getRepeatPoint();
+        double newValue;
 
         try {
-            newValue = Float.parseFloat(repeatePointText.getText());
+            newValue = Double.parseDouble(repeatePointText.getText());
         } catch (NumberFormatException nfe) {
-            repeatePointText.setText(Float.toString(initialRepeatPoint));
+            repeatePointText.setText(Double.toString(initialRepeatPoint));
             return;
         }
 
         if (newValue <= 0.0f) {
-            repeatePointText.setText(Float.toString(initialRepeatPoint));
+            repeatePointText.setText(Double.toString(initialRepeatPoint));
             return;
         } else {
             soundObj.setRepeatPoint(newValue);
-            repeatePointText.setText(Float.toString(newValue));
+            repeatePointText.setText(Double.toString(newValue));
         }
 
     }
@@ -430,11 +430,11 @@ public final class SoundObjectPropertiesTopComponent extends TopComponent implem
                 }
                 break;
             case ScoreObjectEvent.START_TIME:
-                startTimeText.setText(Float.toString(sObj.getStartTime()));
+                startTimeText.setText(Double.toString(sObj.getStartTime()));
                 updateEndTime();
                 break;
             case ScoreObjectEvent.DURATION:
-                subjectiveDurationText.setText(Float.toString(sObj
+                subjectiveDurationText.setText(Double.toString(sObj
                         .getSubjectiveDuration()));
                 updateEndTime();
                 break;

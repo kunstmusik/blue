@@ -20,9 +20,14 @@
 package blue.soundObject.jmask.probability;
 
 import electric.xml.Element;
-import javax.swing.JComponent;
 
 public class Triangle implements ProbabilityGenerator {
+
+    public Triangle() {
+    }
+
+    public Triangle(Triangle triangle) {
+    }
 
     public static ProbabilityGenerator loadFromXML(Element data) {
         Triangle retVal = new Triangle();
@@ -36,10 +41,6 @@ public class Triangle implements ProbabilityGenerator {
         retVal.setAttribute("type", getClass().getName());
 
         return retVal;
-    }
-
-    public JComponent getEditor() {
-        return null;
     }
 
     @Override
@@ -56,6 +57,11 @@ public class Triangle implements ProbabilityGenerator {
         double retVal = (0.5 * (x1 + x2));
 
         return retVal;
+    }
+
+    @Override
+    public ProbabilityGenerator deepCopy() {
+        return new Triangle(this);
     }
 
 }

@@ -135,10 +135,10 @@ public class CeciliaModuleCompilationUnit {
 
                 CGraphPoint point = (CGraphPoint) graph.getPoints().get(0);
 
-                float max = graph.getMax();
-                float min = graph.getMax();
-                float range = max - min;
-                float val = (point.value * range) + min;
+                double max = graph.getMax();
+                double min = graph.getMax();
+                double range = max - min;
+                double val = (point.value * range) + min;
 
                 initText += val + "\n";
 
@@ -153,9 +153,9 @@ public class CeciliaModuleCompilationUnit {
                 ceciliaVariables.put(cfileIn.getObjectName(), cfileIn
                         .getFileName());
                 if (cfileIn.isAudioFile()) {
-                    float val = cfileIn.getOffset() / 10.0f;
+                    double val = cfileIn.getOffset() / 10.0f;
 
-                    ceciliaVariables.put("off" + cfileIn.getObjectName(), Float
+                    ceciliaVariables.put("off" + cfileIn.getObjectName(), Double
                             .toString(val));
                 }
 
@@ -163,7 +163,7 @@ public class CeciliaModuleCompilationUnit {
 
         }
 
-        String totalTime = Float.toString(cm.getSubjectiveDuration());
+        String totalTime = Double.toString(cm.getSubjectiveDuration());
 
         ceciliaVariables.put("total_time", totalTime);
         ceciliaVariables.put("duree_totale", totalTime);
@@ -181,24 +181,24 @@ public class CeciliaModuleCompilationUnit {
     private String createMagicInstrumentTable(CGraph graph, int genSize) {
         ArrayList points = graph.getPoints();
 
-        float range = graph.getMax() - graph.getMin();
-        float min = graph.getMin();
+        double range = graph.getMax() - graph.getMin();
+        double min = graph.getMin();
 
         StringBuffer tableString = new StringBuffer();
         boolean firstPoint = true;
 
-        float runningTime = 0.0f;
+        double runningTime = 0.0f;
 
         for (Iterator iter = points.iterator(); iter.hasNext();) {
             CGraphPoint point = (CGraphPoint) iter.next();
 
             if (firstPoint) {
-                float value = (point.value * range) + min;
+                double value = (point.value * range) + min;
                 tableString.append(value);
                 firstPoint = false;
             } else {
-                float time = (point.time * genSize);
-                float value = (point.value * range) + min;
+                double time = (point.time * genSize);
+                double value = (point.value * range) + min;
 
                 tableString.append(" ").append(time - runningTime).append(" ")
                         .append(value);
@@ -397,13 +397,13 @@ public class CeciliaModuleCompilationUnit {
                 String val = null;
                 switch (prop) {
                     case "sr":
-                        val = Float.toString(cfilein.getSampleRate());
+                        val = Double.toString(cfilein.getSampleRate());
                         break;
                     case "frames":
                         val = Integer.toString(cfilein.getFrames());
                         break;
                     case "dur":
-                        val = Float.toString(cfilein.getDuration());
+                        val = Double.toString(cfilein.getDuration());
                         break;
                     case "chn":
                         val = Integer.toString(cfilein.getChannels());
@@ -495,7 +495,7 @@ public class CeciliaModuleCompilationUnit {
 
         if (scoreText.startsWith("#min")) {
             String noteLine = "i1 0 "
-                    + Float.toString(cm.getSubjectiveDuration());
+                    + Double.toString(cm.getSubjectiveDuration());
 
             notes.add(Note.createNote(noteLine));
         } else if (scoreText.startsWith("#cyb")) {
@@ -607,7 +607,7 @@ public class CeciliaModuleCompilationUnit {
 
                             while (idTokenizer.hasMoreElements()) {
                                 String id = idTokenizer.nextToken();
-                                instruments.put(id, instr.clone());
+                                instruments.put(id, instr.deepCopy());
                             }
 
                         } else {

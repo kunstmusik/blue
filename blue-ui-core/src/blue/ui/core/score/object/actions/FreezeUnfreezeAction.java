@@ -188,15 +188,15 @@ public final class FreezeUnfreezeAction extends AbstractAction
             }
 
             BlueData data = BlueProjectManager.getInstance().getCurrentProject().getData();
-            BlueData tempData = (BlueData) ObjectUtilities.clone(data);
+            BlueData tempData = new BlueData(data);
 
             PolyObject tempPObj = new PolyObject(true);
             SoundLayer sLayer = tempPObj.newLayerAt(-1);
 
-            SoundObject tempSObj = (SoundObject) sObj.clone();
+            SoundObject tempSObj = sObj.deepCopy();
             tempData.setRenderStartTime(tempSObj.getStartTime());
 
-            float renderEndTime = tempSObj.getStartTime() + tempSObj.getSubjectiveDuration();
+            double renderEndTime = tempSObj.getStartTime() + tempSObj.getSubjectiveDuration();
             Mixer m = data.getMixer();
 
             if (m.isEnabled()) {
@@ -238,7 +238,7 @@ public final class FreezeUnfreezeAction extends AbstractAction
             String command = csoundExec + " " + flags + " ";
 
             try {
-                // float tempStart;
+                // double tempStart;
 
                 File temp = FileUtilities.createTempTextFile("tempCsd", ".csd",
                         projectDir, tempCSD);
@@ -258,7 +258,7 @@ public final class FreezeUnfreezeAction extends AbstractAction
                 fso.setFrozenWaveFileName(tempFileName);
                 fso.setName("F: " + sObj.getName());
 
-                float soundFileDuration = SoundFileUtilities.getDurationInSeconds(
+                double soundFileDuration = SoundFileUtilities.getDurationInSeconds(
                         fullTempFileName);
 
                 fso.setSubjectiveDuration(soundFileDuration);
@@ -358,7 +358,7 @@ public final class FreezeUnfreezeAction extends AbstractAction
 
             for (SoundObject sObj : sObjects) {
                 if (sObj instanceof PolyObject) {
-                    retVal += freezeReferenceCount(pObj,
+                    retVal += freezeReferenceCount((PolyObject)sObj,
                             waveFileName);
                 } else if (sObj instanceof FrozenSoundObject) {
                     FrozenSoundObject fso = (FrozenSoundObject) sObj;

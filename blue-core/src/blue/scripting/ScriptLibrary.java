@@ -42,7 +42,7 @@ import javax.swing.tree.TreePath;
  * 
  * @author steven
  */
-public class ScriptLibrary implements Serializable, TreeModel {
+public class ScriptLibrary implements TreeModel {
 
     private static ScriptLibrary library = null;
 

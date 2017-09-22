@@ -25,21 +25,26 @@ import electric.xml.Element;
 import electric.xml.Elements;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.io.Serializable;
-import java.util.Iterator;
 import java.util.Vector;
 
-public class Tempo implements Serializable {
+public class Tempo {
 
     private boolean enabled = false;
     private boolean visible = false;
-    private Line line = new Line(false);
-    private transient Vector listeners = null;
+    private Line line; 
+    private transient Vector<PropertyChangeListener> listeners = null;
 
     public Tempo() {
+        line = new Line(false);
         line.setMax(240.0f, true);
         line.setMin(30.0f, true);
         line.getLinePoint(0).setLocation(0.0f, 60.0f);
+    }
+
+    public Tempo(Tempo tempo) {
+        line = new Line(tempo.line); 
+        enabled = tempo.enabled;
+        visible = tempo.visible;
     }
     
     
@@ -50,7 +55,7 @@ public class Tempo implements Serializable {
     public void setEnabled(boolean enabled) {
         if(this.enabled != enabled) {
             PropertyChangeEvent pce = new PropertyChangeEvent(this, "enabled", 
-                    Boolean.valueOf(this.enabled), Boolean.valueOf(enabled));
+                    this.enabled, enabled);
         
             this.enabled = enabled;
             
@@ -88,17 +93,14 @@ public class Tempo implements Serializable {
             return;
         }
 
-        for (Iterator iter = listeners.iterator(); iter.hasNext();) {
-            PropertyChangeListener listener = (PropertyChangeListener) iter
-                    .next();
-
+        for (PropertyChangeListener listener : listeners) {
             listener.propertyChange(pce);
         }
     }
 
     public void addPropertyChangeListener(PropertyChangeListener pcl) {
         if (listeners == null) {
-            listeners = new Vector();
+            listeners = new Vector<>();
         }
 
         listeners.add(pcl);

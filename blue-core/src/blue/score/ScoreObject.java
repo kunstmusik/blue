@@ -19,6 +19,7 @@
  */
 package blue.score;
 
+import blue.DeepCopyable;
 import java.awt.Color;
 
 /**
@@ -27,7 +28,7 @@ import java.awt.Color;
  * 
  * @author stevenyi
  */
-public interface ScoreObject {
+public interface ScoreObject extends DeepCopyable<ScoreObject> {
 
     /**
      * Sets the name of the ScoreObject.
@@ -43,13 +44,13 @@ public interface ScoreObject {
      * Gets the start time of the ScoreObject.
      */
     //FIXME -  change this to use double
-    public float getStartTime();
+    public double getStartTime();
 
     /**
      * Sets the start time of the ScoreObject.
      */
     //FIXME -  change this to use double
-    public void setStartTime(float startTime);
+    public void setStartTime(double startTime);
     
     /**
      * Gets the subjective duration of the ScoreObject.
@@ -58,7 +59,7 @@ public interface ScoreObject {
      * ScoreObject is assigned to last, regardless of its contents.
      */
     //FIXME -  change this to use double
-    public float getSubjectiveDuration();
+    public double getSubjectiveDuration();
 
     /**
      * Sets the subjective duration of the ScoreObject.
@@ -66,18 +67,17 @@ public interface ScoreObject {
      * The subjective duration of the ScoreObject is the amount of time a
      * ScoreObject is assigned to last, regardless of its contents.
      */
-    //FIXME -  change this to use double
-    public void setSubjectiveDuration(float duration);
+    public void setSubjectiveDuration(double duration);
 
 //    boolean isLayerTransferrable();
     // maybe use interface of Resizable?
 //    boolean isLeftResizable()
     // boolean isRightResizble()
 
-    public float getMaxResizeRightDiff();
-    public float getMaxResizeLeftDiff();
-    public void resizeLeft(float newStartTime);
-    public void resizeRight(float newEndTime);
+    public double getMaxResizeRightDiff();
+    public double getMaxResizeLeftDiff();
+    public void resizeLeft(double newStartTime);
+    public void resizeRight(double newEndTime);
 
     /**
      * Adds a ScoreObjectListener to this ScoreObject
@@ -106,7 +106,5 @@ public interface ScoreObject {
      * @param color
      */
     public void setBackgroundColor(Color color);
-           
-    public ScoreObject clone();
 
 }

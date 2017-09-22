@@ -24,11 +24,10 @@ package blue.soundObject.jmask;
 import blue.utility.XMLUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
-import java.io.Serializable;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
-public class Mask implements Serializable {
+public class Mask {
 
     private double high = 1.0;
 
@@ -45,8 +44,22 @@ public class Mask implements Serializable {
     private Table lowTable = new Table();
 
     private boolean enabled = false;
-    
+
     private transient double duration = 1.0;
+
+    public Mask() {
+    }
+
+    public Mask(Mask mask) {
+        high = mask.high;
+        low = mask.low;
+        mapValue = mask.mapValue;
+        highTableEnabled = mask.highTableEnabled;
+        lowTableEnabled = mask.lowTableEnabled;
+        highTable = new Table(mask.highTable);
+        lowTable = new Table(mask.lowTable);
+        enabled = mask.enabled;
+    }
 
     public static Mask loadFromXML(Element data) {
         Mask retVal = new Mask();
@@ -129,7 +142,7 @@ public class Mask implements Serializable {
 
     public double getValue(double time, double val) {
 
-        if(!enabled) {
+        if (!enabled) {
             return val;
         }
 
@@ -145,7 +158,6 @@ public class Mask implements Serializable {
 //    public JComponent getEditor() {
 //        return new MaskEditor(this);
 //    }
-
     @Override
     public boolean equals(Object obj) {
         return EqualsBuilder.reflectionEquals(this, obj);
@@ -219,7 +231,7 @@ public class Mask implements Serializable {
     public void setLowTable(Table lowTable) {
         this.lowTable = lowTable;
     }
-    
+
     public void setDuration(double duration) {
         this.duration = duration;
     }

@@ -24,7 +24,7 @@ public class MidiUtilities {
     private static final String NOTE_TEMPLATE = "i<INSTR_ID> <START> <DUR> <KEY> <VELOCITY>";
 
     public static String processNoteTemplate(final String noteTemplate,
-            final String instrId, final float start, final float duration,
+            final String instrId, final double start, final double duration,
             final int key, final int velocity) {
         String note = noteTemplate;
 
@@ -36,19 +36,19 @@ public class MidiUtilities {
                 : Integer.toString(scaleDegree);
 
         String midiPch = ((key / 12) + 3) + "." + scaleDegreeStr;
-        String midiOct = Float.toString((key / 12.0f) + 3);
+        String midiOct = Double.toString((key / 12.0f) + 3);
         String midiCps = Double.toString(cpsmid(key));
 
         // Velocity Values
         String midiVel = Integer.toString(velocity);
-        float velf = (float) velocity;
-        String midiVelAmp = Float.toString((velf * velf / 16239.0f) * 32768.0f);
+        double velf = (double) velocity;
+        String midiVelAmp = Double.toString((velf * velf / 16239.0f) * 32768.0f);
 
         // do replacement
         note = TextUtilities.replaceAll(note, "<INSTR_ID>", instrId);
-        note = TextUtilities.replaceAll(note, "<START>", Float.toString(start));
+        note = TextUtilities.replaceAll(note, "<START>", Double.toString(start));
         note = TextUtilities
-                .replaceAll(note, "<DUR>", Float.toString(duration));
+                .replaceAll(note, "<DUR>", Double.toString(duration));
         note = TextUtilities.replaceAll(note, "<KEY>", midiKey);
         note = TextUtilities.replaceAll(note, "<KEY_PCH>", midiPch);
         note = TextUtilities.replaceAll(note, "<KEY_OCT>", midiOct);
@@ -67,7 +67,7 @@ public class MidiUtilities {
     private static class MNote {
         public int velocity = -1;
 
-        public float start = -1.0f;
+        public double start = -1.0f;
 
         public void clear() {
             velocity = -1;

@@ -27,11 +27,11 @@ class sq extends CybilAlgorithm {
 
     // TODO - Need to implement
     @Override
-    public float[] getValue(CybilNoteList cybilNoteList) {
+    public double[] getValue(CybilNoteList cybilNoteList) {
 
         String time = (String) args.get(args.size() - 1);
 
-        float timeValue = getTimeValue(time);
+        double timeValue = getTimeValue(time);
         boolean isTime = isTime(time);
 
         if (!isTime) {
@@ -48,8 +48,8 @@ class sq extends CybilAlgorithm {
                     notes.add(cybilNoteList.createDefaultNote());
                 }
 
-                float startTime = cybilNoteList.p2time;
-                float timeLimit = startTime + timeValue;
+                double startTime = cybilNoteList.p2time;
+                double timeLimit = startTime + timeValue;
 
                 while (true) {
                     Object obj = args.get(index);
@@ -58,7 +58,7 @@ class sq extends CybilAlgorithm {
                         ((CybilAlgorithm) obj).getValue(cybilNoteList);
                     } else {
 
-                        float val = getFloatValue(obj);
+                        double val = getDoubleValue(obj);
 
                         if (cybilNoteList.p2time + val > timeLimit) {
                             break;
@@ -66,7 +66,7 @@ class sq extends CybilAlgorithm {
 
                         cybilNoteList.p2time += val;
 
-                        String strVal = Float.toString(cybilNoteList.p2time);
+                        String strVal = Double.toString(cybilNoteList.p2time);
 
                         Note currentNote = cybilNoteList.createDefaultNote();
                         notes.add(currentNote);
@@ -109,10 +109,10 @@ class sq extends CybilAlgorithm {
                         ((CybilAlgorithm) obj).getValue(cybilNoteList);
                     } else {
 
-                        float val = getFloatValue(obj);
+                        double val = getDoubleValue(obj);
                         cybilNoteList.p2time += val;
 
-                        String strVal = Float.toString(cybilNoteList.p2time);
+                        String strVal = Double.toString(cybilNoteList.p2time);
 
                         Note currentNote = cybilNoteList.createDefaultNote();
                         notes.add(currentNote);
@@ -136,8 +136,8 @@ class sq extends CybilAlgorithm {
 
             if (isTime) {
                 Note currentNote = notes.get(cybilNoteList.index);
-                float startTime = currentNote.getStartTime();
-                float endTime = startTime + timeValue;
+                double startTime = currentNote.getStartTime();
+                double endTime = startTime + timeValue;
 
                 int count = getCount(notes, cybilNoteList.index, endTime);
 
@@ -148,9 +148,9 @@ class sq extends CybilAlgorithm {
                         ((CybilAlgorithm) obj).getValue(cybilNoteList);
                     } else {
 
-                        float val = getFloatValue(obj);
+                        double val = getDoubleValue(obj);
 
-                        String strVal = Float.toString(val);
+                        String strVal = Double.toString(val);
 
                         currentNote = notes.get(cybilNoteList.index);
                         currentNote.setPField(strVal, cybilNoteList.pfield);
@@ -175,11 +175,11 @@ class sq extends CybilAlgorithm {
                         ((CybilAlgorithm) obj).getValue(cybilNoteList);
                     } else {
 
-                        float val = getFloatValue(obj);
+                        double val = getDoubleValue(obj);
 
                         Note currentNote = notes.get(cybilNoteList.index);
 
-                        String strVal = Float.toString(val);
+                        String strVal = Double.toString(val);
                         currentNote.setPField(strVal, cybilNoteList.pfield);
 
                         cybilNoteList.index++;

@@ -114,8 +114,8 @@ public class CompileData {
                 }
                 ParameterList paramList = auto.getParameterList();
                 if(paramList != null) {
-                    originalParameters.addAll(paramList.getParameters());
-                    for(Parameter param : paramList.getParameters()) {
+                    originalParameters.addAll(paramList);
+                    for(Parameter param : paramList) {
                         param.setCompilationVarName(pnm.getUniqueParamName());
                     }
                 }

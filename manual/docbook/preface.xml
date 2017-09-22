@@ -2,7 +2,7 @@
   <title>Preface</title>
 
   <para>
-    blue is my tool for composing with Csound. I originally created it for its
+    Blue is my tool for composing with Csound. I originally created it for its
     ability to organize SoundObjects in time as well as to organize and automate
     the more mundane tasks that I've found in working with Csound. It's here to
     make working with Csound a more enjoyable and focused experience.
@@ -13,15 +13,15 @@
     experience intuitive and the program faster to work with, as well as finding
     interesting new things to create to further the capacity for musical
     expression. The program's architecture is designed to be as open as possible
-    in both things the user can do within blue itself as well as the ability to
-    expand blue through the creation of plugins, and by taking advantage of both
+    in both things the user can do within Blue itself as well as the ability to
+    expand Blue through the creation of plugins, and by taking advantage of both
     one can find many ways to create and shape musical ideas.
   </para>
 
   <para>
-    Beyond my own ideas on where to go with blue, user feedback has also greatly
+    Beyond my own ideas on where to go with Blue, user feedback has also greatly
     shaped the direction and richness of the program. Please feel free to email
-    me anytime with feedback, or join the blue mailing list and discuss your
+    me anytime with feedback, or join the Blue mailing list and discuss your
     ideas and thoughts there.
   </para>
 
@@ -34,7 +34,7 @@
   </para>
 
   <para>
-    Thanks and I hope you enjoy composing with blue!
+    Thanks and I hope you enjoy composing with Blue!
   </para>
 
   <para>

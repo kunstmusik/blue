@@ -21,5 +21,5 @@ package blue.automation;
 
 public interface ParameterTimeManager {
    
-    public float getTime();
+    public double getTime();
 }

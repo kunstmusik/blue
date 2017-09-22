@@ -22,6 +22,7 @@ package blue.ui.core.mixer;
 import blue.orchestra.blueSynthBuilder.BSBCheckBox;
 import blue.orchestra.blueSynthBuilder.BSBDropdown;
 import blue.orchestra.blueSynthBuilder.BSBFileSelector;
+import blue.orchestra.blueSynthBuilder.BSBGroup;
 import blue.orchestra.blueSynthBuilder.BSBHSlider;
 import blue.orchestra.blueSynthBuilder.BSBHSliderBank;
 import blue.orchestra.blueSynthBuilder.BSBKnob;
@@ -41,6 +42,7 @@ public class EffectsObjectRegistry {
 
     public static BSBObjectEntry[] getBSBObjects() {
         return new BSBObjectEntry[]{
+            new BSBObjectEntry("Group", BSBGroup.class),
             new BSBObjectEntry("Knob", BSBKnob.class),
             new BSBObjectEntry("Horizontal Slider", BSBHSlider.class),
             new BSBObjectEntry("Horizontal Slider Bank",

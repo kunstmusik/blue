@@ -1,6 +1,6 @@
 /*
  * blue - object composition environment for csound
- * Copyright (c) 2000-2004 Steven Yi (stevenyi@gmail.com)
+ * Copyright (c) 2000-2016 Steven Yi (stevenyi@gmail.com)
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published
@@ -19,25 +19,82 @@
  */
 package blue.orchestra.blueSynthBuilder;
 
-//import blue.orchestra.editor.blueSynthBuilder.BSBLabelView;
-//import blue.orchestra.editor.blueSynthBuilder.BSBObjectView;
+import static blue.orchestra.blueSynthBuilder.SwingHTMLFontParser.parseFont;
+import static blue.orchestra.blueSynthBuilder.SwingHTMLFontParser.stripHTML;
 import electric.xml.Element;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleObjectProperty;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
+import javafx.scene.text.Font;
 
 /**
  * @author steven
- * 
- * To change the template for this generated type comment go to Window -
- * Preferences - Java - Code Generation - Code and Comments
  */
 public class BSBLabel extends BSBObject {
 
-    String label = "label";
+    StringProperty label = new SimpleStringProperty("label");
+    ObjectProperty<Font> font = new SimpleObjectProperty<>(new Font(12));
+
+    public BSBLabel() {
+    }
+
+    public BSBLabel(BSBLabel label) {
+        super(label);
+        setLabel(label.getLabel());
+        setFont(label.getFont());
+    }
+
+    public final void setLabel(String value) {
+        label.set(value);
+    }
+
+    public final String getLabel() {
+        return label.get();
+    }
+
+    public final StringProperty labelProperty() {
+        return label;
+    }
+
+    public final void setFont(Font f) {
+        font.set(f);
+    }
+
+    public final Font getFont() {
+        return font.get();
+    }
+
+    public final ObjectProperty<Font> fontProperty() {
+        return font;
+    }
 
     public static BSBObject loadFromXML(Element data) {
         BSBLabel label = new BSBLabel();
         initBasicFromXML(data, label);
 
-        label.setLabel(data.getTextString("label"));
+        int version = 1;
+
+        String versionStr = data.getAttributeValue("version");
+
+        if (versionStr != null) {
+            version = Integer.parseInt(versionStr);
+        }
+
+        String labelText = data.getTextString("label");
+        if (labelText == null) {
+            labelText = "";
+        }
+
+        if (version < 2) {
+            label.setFont(parseFont(labelText));
+            labelText = stripHTML(labelText);
+            labelText = labelText.replace("&nbsp;", " ");
+        } else {
+            label.setFont(BSBFontUtil.loadFromXML(data.getElement("font")));
+        }
+
+        label.setLabel(labelText);
 
         return label;
     }
@@ -50,22 +107,12 @@ public class BSBLabel extends BSBObject {
     @Override
     public Element saveAsXML() {
         Element retVal = getBasicXML(this);
+        retVal.setAttribute("version", "2");
 
-        retVal.addElement("label").setText(label);
+        retVal.addElement("label").setText(getLabel());
+        retVal.addElement(BSBFontUtil.saveAsXML(getFont()));
 
         return retVal;
-    }
-
-//    public BSBObjectView getBSBObjectView() {
-//        return new BSBLabelView(this);
-//    }
-
-    public String getLabel() {
-        return label;
-    }
-
-    public void setLabel(String label) {
-        this.label = label;
     }
 
     @Override
@@ -80,7 +127,6 @@ public class BSBLabel extends BSBObject {
      */
     @Override
     public String getPresetValue() {
-        // TODO Auto-generated method stub
         return null;
     }
 
@@ -91,7 +137,10 @@ public class BSBLabel extends BSBObject {
      */
     @Override
     public void setPresetValue(String val) {
-        // TODO Auto-generated method stub
+    }
 
+    @Override
+    public BSBObject deepCopy() {
+        return new BSBLabel(this);
     }
 }

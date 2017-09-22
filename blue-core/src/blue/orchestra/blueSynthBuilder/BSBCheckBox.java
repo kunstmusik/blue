@@ -19,25 +19,54 @@
  */
 package blue.orchestra.blueSynthBuilder;
 
-//import blue.orchestra.editor.blueSynthBuilder.BSBCheckBoxView;
-//import blue.orchestra.editor.blueSynthBuilder.BSBObjectView;
 import blue.automation.Parameter;
 import blue.automation.ParameterListener;
 import blue.automation.ParameterTimeManagerFactory;
 import blue.utility.XMLUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
+import java.math.BigDecimal;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
+import javafx.beans.value.ChangeListener;
 
 /**
  * @author steven
  */
 public class BSBCheckBox extends AutomatableBSBObject implements ParameterListener, Randomizable {
 
-    String label = "label";
+    private StringProperty label;
+    private BooleanProperty selected;
+    private BooleanProperty randomizable;
 
-    boolean selected = false;
+    private ChangeListener<Boolean> listener = (obs, old, newVal) -> {
+        if (parameters != null) {
+            Parameter p = parameters.getParameter(getObjectName());
+            if (p != null && !p.isAutomationEnabled()) {
+                p.setValue(newVal ? 1 : 0);
+            }
+        }
+    };
 
-    private boolean randomizable = true;
+    public BSBCheckBox() {
+        label = new SimpleStringProperty("label");
+        selected = new SimpleBooleanProperty(false);
+        randomizable = new SimpleBooleanProperty(true);
+
+        selected.addListener(listener);
+    }
+
+    public BSBCheckBox(BSBCheckBox checkBox) {
+        super(checkBox);
+
+        label = new SimpleStringProperty(checkBox.getLabel());
+        selected = new SimpleBooleanProperty(checkBox.isSelected());
+        randomizable = new SimpleBooleanProperty(checkBox.isRandomizable());
+
+        selected.addListener(listener);
+    }
 
     public static BSBObject loadFromXML(Element data) {
         BSBCheckBox checkBox = new BSBCheckBox();
@@ -56,7 +85,7 @@ public class BSBCheckBox extends AutomatableBSBObject implements ParameterListen
                     checkBox.setSelected(node.getTextString().equals("true"));
                     break;
                 case "randomizable":
-                    checkBox.randomizable = XMLUtilities.readBoolean(node);
+                    checkBox.setRandomizable(XMLUtilities.readBoolean(node));
                     break;
             }
         }
@@ -68,10 +97,10 @@ public class BSBCheckBox extends AutomatableBSBObject implements ParameterListen
     public Element saveAsXML() {
         Element retVal = getBasicXML(this);
 
-        retVal.addElement("label").setText(label);
-        retVal.addElement("selected").setText(Boolean.toString(selected));
+        retVal.addElement("label").setText(getLabel());
+        retVal.addElement("selected").setText(Boolean.toString(isSelected()));
         retVal.addElement(XMLUtilities.writeBoolean("randomizable",
-                randomizable));
+                isRandomizable()));
 
         return retVal;
     }
@@ -81,7 +110,7 @@ public class BSBCheckBox extends AutomatableBSBObject implements ParameterListen
         if (parameters != null) {
             Parameter param = parameters.getParameter(this.getObjectName());
             if (param != null && param.getCompilationVarName() != null) {
-                compilationUnit.addReplacementValue(objectName, param
+                compilationUnit.addReplacementValue(getObjectName(), param
                         .getCompilationVarName());
                 return;
             }
@@ -89,36 +118,44 @@ public class BSBCheckBox extends AutomatableBSBObject implements ParameterListen
 
         String replaceVal = this.isSelected() ? "1" : "0";
 
-        compilationUnit.addReplacementValue(objectName, replaceVal);
+        compilationUnit.addReplacementValue(getObjectName(), replaceVal);
 
     }
 
-    public String getLabel() {
-        return this.label;
+    public final void setLabel(String value) {
+        label.set(value);
     }
 
-    public void setLabel(String label) {
-        this.label = label;
+    public final String getLabel() {
+        return label.get();
     }
 
-    public void setSelected(boolean selected) {
-        boolean oldValue = this.isSelected();
-        this.selected = selected;
-
-        if (parameters != null) {
-            Parameter param = parameters.getParameter(this.getObjectName());
-            if (param != null) {
-                param.setValue(selected ? 1 : 0);
-            }
-        }
-        
-        if (propListeners != null) {
-            propListeners.firePropertyChange("selected", oldValue, this.selected);
-        }
+    public final StringProperty labelProperty() {
+        return label;
     }
 
-    public boolean isSelected() {
+    public final void setSelected(boolean value) {
+        selected.set(value);
+    }
+
+    public final boolean isSelected() {
+        return selected.get();
+    }
+
+    public final BooleanProperty selectedProperty() {
         return selected;
+    }
+
+    public final void setRandomizable(boolean value) {
+        randomizable.set(value);
+    }
+    @Override
+    public final boolean isRandomizable() {
+        return randomizable.get();
+    }
+
+    public final BooleanProperty randomizableProperty() {
+        return randomizable;
     }
 
     /*
@@ -141,16 +178,10 @@ public class BSBCheckBox extends AutomatableBSBObject implements ParameterListen
         setSelected(Boolean.valueOf(val).booleanValue());
     }
 
-    /* RANDOMIZABLE METHODS */
-
-    @Override
-    public boolean isRandomizable() {
-        return randomizable;
-    }
-
+//    /* RANDOMIZABLE METHODS */
     @Override
     public void randomize() {
-        if (randomizable) {
+        if (isRandomizable()) {
 
             boolean randomSelected = (Math.random() < .5);
 
@@ -166,14 +197,8 @@ public class BSBCheckBox extends AutomatableBSBObject implements ParameterListen
         }
     }
 
-    @Override
-    public void setRandomizable(boolean randomizable) {
-        this.randomizable = randomizable;
-        fireBSBObjectChanged();
-    }
 
     /* Automatable */
-
     @Override
     protected void initializeParameters() {
         if (parameters == null) {
@@ -181,22 +206,22 @@ public class BSBCheckBox extends AutomatableBSBObject implements ParameterListen
         }
 
         if (!automationAllowed) {
-            if (objectName != null && objectName.length() != 0) {
-                Parameter param = parameters.getParameter(objectName);
+            if (getObjectName() != null && getObjectName().length() != 0) {
+                Parameter param = parameters.getParameter(getObjectName());
                 if (param != null && param.isAutomationEnabled()) {
                     automationAllowed = true;
                 } else {
-                    parameters.removeParameter(objectName);
+                    parameters.removeParameter(getObjectName());
                     return;
                 }
             }
         }
 
-        if (this.objectName == null || this.objectName.trim().length() == 0) {
+        if (this.getObjectName() == null || this.getObjectName().trim().length() == 0) {
             return;
         }
 
-        Parameter parameter = parameters.getParameter(this.objectName);
+        Parameter parameter = parameters.getParameter(this.getObjectName());
 
         if (parameter != null) {
             parameter.addParameterListener(this);
@@ -213,10 +238,10 @@ public class BSBCheckBox extends AutomatableBSBObject implements ParameterListen
         param.setMax(1.0f, true);
         param.setMin(0.0f, true);
         param.setName(getObjectName());
-        param.setResolution(1.0f);
+        param.setResolution(new BigDecimal(1));
         param.addParameterListener(this);
 
-        parameters.addParameter(param);
+        parameters.add(param);
     }
 
     @Override
@@ -226,41 +251,45 @@ public class BSBCheckBox extends AutomatableBSBObject implements ParameterListen
         if (parameters != null) {
             if (allowAutomation) {
                 initializeParameters();
-            } else if (objectName != null && objectName.length() != 0) {
-                parameters.removeParameter(objectName);
+            } else if (getObjectName() != null && getObjectName().length() != 0) {
+                parameters.removeParameter(getObjectName());
             }
         }
     }
 
     /* ParameterListener */
-   
     protected void updateSelected(boolean value) {
         boolean oldValue = this.isSelected();
-        this.selected = value;
+        setSelected(value);
 
         if (propListeners != null) {
             propListeners.firePropertyChange("selected", oldValue, this.selected);
         }
     }
-    
+
     @Override
     public void parameterChanged(Parameter param) {
     }
 
     @Override
     public void lineDataChanged(Parameter param) {
-        Parameter parameter = parameters.getParameter(this.objectName);
+        Parameter parameter = parameters.getParameter(this.getObjectName());
 
         if (parameter != null) {
-            float time = ParameterTimeManagerFactory.getInstance().getTime();
-            int val = Math.round(parameter.getLine().getValue(time));
+            double time = ParameterTimeManagerFactory.getInstance().getTime();
+            long val = Math.round(parameter.getLine().getValue(time));
 
             boolean newSelected = (val > 0);
 
-            if(newSelected != isSelected()) {
+            if (newSelected != isSelected()) {
                 updateSelected(newSelected);
             }
         }
+    }
+
+    @Override
+    public BSBCheckBox deepCopy() {
+        return new BSBCheckBox(this);
     }
 
 }

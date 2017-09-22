@@ -17,12 +17,10 @@
  * the Free Software Foundation Inc., 59 Temple Place - Suite 330,
  * Boston, MA  02111-1307 USA
  */
-
 package blue.udo;
 
 import electric.xml.Element;
 import electric.xml.Elements;
-import java.io.Serializable;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -34,7 +32,7 @@ import javax.swing.table.TableModel;
 /**
  * @author Steven Yi
  */
-public class OpcodeList extends ArrayList<UserDefinedOpcode> implements TableModel, Serializable {
+public class OpcodeList extends ArrayList<UserDefinedOpcode> implements TableModel {
 
     private static final MessageFormat fmt = new MessageFormat("uniqueUDO{0}");
 
@@ -42,13 +40,27 @@ public class OpcodeList extends ArrayList<UserDefinedOpcode> implements TableMod
 
     private transient Vector<TableModelListener> listeners;
 
+    public OpcodeList() {
+    }
+
+    /**
+     * Copy Constructor
+     *
+     * @param opList
+     */
+    public OpcodeList(OpcodeList opList) {
+        for (UserDefinedOpcode udo : opList) {
+            this.add(new UserDefinedOpcode(udo));
+        }
+    }
+
     public void addOpcodes(UserDefinedOpcode[] udos) {
-        for(UserDefinedOpcode udo : udos) {
+        for (UserDefinedOpcode udo : udos) {
             this.add(udo);
         }
         fireTableDataChanged();
     }
-    
+
     public void addOpcode(UserDefinedOpcode udo) {
         this.add(udo);
         fireTableDataChanged();
@@ -75,9 +87,9 @@ public class OpcodeList extends ArrayList<UserDefinedOpcode> implements TableMod
         this.remove(index);
         fireTableDataChanged();
     }
-    
+
     public void removeOpcodes(int[] indexes) {
-        for(int i = indexes.length - 1; i >= 0; i--) {
+        for (int i = indexes.length - 1; i >= 0; i--) {
             this.remove(indexes[i]);
         }
         fireTableDataChanged();
@@ -119,7 +131,6 @@ public class OpcodeList extends ArrayList<UserDefinedOpcode> implements TableMod
     }
 
     /* Table Model Methods */
-
     @Override
     public int getColumnCount() {
         return 1;
@@ -170,14 +181,13 @@ public class OpcodeList extends ArrayList<UserDefinedOpcode> implements TableMod
             // return "Enabled";
             case 0:
                 return "Opcode Name";
-                // case 2:
-                // return "In Args";
+            // case 2:
+            // return "In Args";
         }
         return "";
     }
 
     /* TABLE MODEL METHODS */
-
     @Override
     public void addTableModelListener(TableModelListener l) {
         if (listeners == null) {
@@ -209,7 +219,6 @@ public class OpcodeList extends ArrayList<UserDefinedOpcode> implements TableMod
     }
 
     /* SAVE/LOAD METHODS */
-
     public static OpcodeList loadFromXML(Element data) {
         OpcodeList retVal = new OpcodeList();
 
@@ -261,7 +270,7 @@ public class OpcodeList extends ArrayList<UserDefinedOpcode> implements TableMod
     }
 
     public String getUniqueName() {
-        Object[] obj = new Object[] { new Integer(counter++) };
+        Object[] obj = new Object[]{new Integer(counter++)};
 
         String uniqueName = fmt.format(obj);
 

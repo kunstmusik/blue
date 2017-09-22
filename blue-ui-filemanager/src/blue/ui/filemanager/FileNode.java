@@ -41,11 +41,16 @@ public class FileNode extends AbstractNode {
     private final File file;
     private boolean useFullName;
     private final FileManagerRoots roots;
+    private FileChildFactory childFactory = null;
 
     public FileNode(File f, boolean useFullName, FileManagerRoots roots) {
-        super(f.isDirectory()
-                ? Children.create(new FileChildFactory(f, roots), true)
-                : Children.LEAF, Lookups.singleton(f));
+        super(Children.LEAF, Lookups.singleton(f));
+
+        if (f.isDirectory()) {
+            childFactory = new FileChildFactory(f, roots);
+            setChildren(Children.create(childFactory, true));
+        }
+        
         this.file = f;
         this.useFullName = useFullName;
         this.roots = roots;
@@ -56,14 +61,14 @@ public class FileNode extends AbstractNode {
     public Action[] getActions(boolean context) {
         List<? extends Action> list = null;
 
-        if(roots.customRootsContains(file)) {
-            list = Utilities.actionsForPath( "blue/fileManager/roots/actions");
-        } else if(!roots.staticRootsContains(file)) {
-            list = Utilities.actionsForPath( "blue/fileManager/folder/actions");
+        if (roots.customRootsContains(file)) {
+            list = Utilities.actionsForPath("blue/fileManager/roots/actions");
+        } else if (!roots.staticRootsContains(file)) {
+            list = Utilities.actionsForPath("blue/fileManager/folder/actions");
         } else {
             return null;
         }
-        
+
         return list.toArray(new Action[0]);
     }
 
@@ -75,6 +80,13 @@ public class FileNode extends AbstractNode {
         return roots;
     }
 
+    public void refresh() {
+        if(childFactory != null) {
+            childFactory.refreshChildren();
+        }
+    }
+
+
     static class FileChildFactory extends ChildFactory<File> {
 
         private final File file;
@@ -85,15 +97,19 @@ public class FileNode extends AbstractNode {
             this.roots = roots;
         }
 
+        public void refreshChildren(){
+            super.refresh(true);
+        }
+
         @Override
         protected boolean createKeys(List<File> toPopulate) {
             List<File> files = Arrays.asList(file.listFiles(new FileFilter() {
-                
+
                 @Override
                 public boolean accept(File pathname) {
                     return !pathname.getName().startsWith(".");
                 }
-                
+
             }));
             Collections.sort(files);
             toPopulate.addAll(files);

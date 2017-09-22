@@ -21,6 +21,7 @@ package blue.tools.blueShare;
 import blue.BlueSystem;
 import blue.tools.blueShare.effects.BlueShareEffectCategory;
 import blue.tools.blueShare.instruments.BlueShareInstrumentCategory;
+import blue.tools.blueShare.soundObjects.BlueShareSoundObjectCategory;
 import blue.utility.GUI;
 import electric.xml.Document;
 import electric.xml.Element;
@@ -50,6 +51,7 @@ public class BlueShare {
 //        }
 
         String server = "http://blue.kunstmusik.com/blue_share/api";
+        //String server = "http://localhost:3000/blue_share/api";
 
         try {
             BlueShareRemoteCaller.setServer(server);
@@ -63,10 +65,12 @@ public class BlueShare {
 
         BlueShareInstrumentCategory[] categories;
         BlueShareEffectCategory[] effectCategories;
+        BlueShareSoundObjectCategory[] sobjCategories;
 
         try {
             categories = BlueShareRemoteCaller.getInstrumentCategoryTree();
             effectCategories = BlueShareRemoteCaller.getEffectCategoryTree();
+            sobjCategories = BlueShareRemoteCaller.getSoundObjectCategoryTree();
         } catch (ParseException pe) {
             String error = BlueSystem
                     .getString("blueShare.selectServer.couldNotReadResponse");
@@ -94,6 +98,7 @@ public class BlueShare {
 
         dialog.setInstrumentCategories(categories);
         dialog.setEffectCategories(effectCategories);
+        dialog.setSoundObjectCategories(sobjCategories);
 
         dialog.setVisible(true);
     }

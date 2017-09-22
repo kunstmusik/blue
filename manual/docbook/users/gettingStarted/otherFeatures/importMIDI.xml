@@ -2,13 +2,13 @@
   <title>Importing MIDI Files</title>
 
   <para>
-    blue is able to import MIDI files and set up a blue project file from the
+    Blue is able to import MIDI files and set up a Blue project file from the
     note information in the MIDI file, using the settings given by the user. To
     import a MIDI file, choose the "Import MIDI File" option from the File menu.
     Next, using the file dialog to locate the MIDI file to import. After
-    selecting the desired file, blue will show the following MIDI Import
+    selecting the desired file, Blue will show the following MIDI Import
     Settings dialog for you to configure how you would like to import the MIDI
-    note information. (Note: blue will only show information for tracks where
+    note information. (Note: Blue will only show information for tracks where
     note data was found.)
   </para>
 
@@ -152,7 +152,7 @@
   </variablelist>
 
   <para>
-    After finishing configuring settings for the imported MIDI data, blue will
+    After finishing configuring settings for the imported MIDI data, Blue will
     generate the notes with one SoundLayer per MIDI track, and on each
     SoundLayer it will contain one GenericScore SoundObject containing the
     converted MIDI score.
@@ -166,7 +166,7 @@
       results are unpredictable. Also, only MIDI files where time is PPQ is
       supported at the moment (non-SMPTE). Users wanting support for either of
       these cases or have other ideas they would like implemented are requested
-      to make feature requests on the blue mailing list or to use the help menu
+      to make feature requests on the Blue mailing list or to use the help menu
       "Request a Feature" option.
     </para>
   </note>

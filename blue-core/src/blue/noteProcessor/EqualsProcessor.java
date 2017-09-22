@@ -16,13 +16,18 @@ import electric.xml.Element;
  */
 
 @NoteProcessorPlugin(displayName="EqualsProcessor", position = 110)
-public class EqualsProcessor implements NoteProcessor, java.io.Serializable {
+public class EqualsProcessor implements NoteProcessor {
 
     String value = "2.0";
 
     int pfield = 4;
 
     public EqualsProcessor() {
+    }
+
+    public EqualsProcessor(EqualsProcessor eqp) {
+        value = eqp.value;
+        pfield = eqp.pfield;
     }
 
     @Override
@@ -63,13 +68,13 @@ public class EqualsProcessor implements NoteProcessor, java.io.Serializable {
                     // set the subjectiveDuration to the value
                     // as that is what is used in the Note class
                     // for generating the note's p3
-                    temp.setSubjectiveDuration(Float.parseFloat(this.value));
+                    temp.setSubjectiveDuration(Double.parseDouble(this.value));
                 } else {
                     temp.setPField(this.value, this.pfield);
                 }
             } catch (NumberFormatException ex) {
                 throw new NoteProcessorException(this, BlueSystem
-                        .getString("noteProcessorException.pfieldNotFloat"),
+                        .getString("noteProcessorException.pfieldNotDouble"),
                         pfield);
             } catch (Exception ex) {
                 throw new NoteProcessorException(this, BlueSystem
@@ -128,5 +133,10 @@ public class EqualsProcessor implements NoteProcessor, java.io.Serializable {
         retVal.addElement("value").setText(this.getVal());
 
         return retVal;
+    }
+
+    @Override
+    public EqualsProcessor deepCopy() {
+        return new EqualsProcessor(this);
     }
 }

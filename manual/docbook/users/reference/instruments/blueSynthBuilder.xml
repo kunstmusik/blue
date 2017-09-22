@@ -46,7 +46,7 @@ exploration.</para></simplesect>
 
 <simplesect>
 <title>Hybrid Design</title>
-<para>Using systems like MacCsound's widgets or blue's BlueSynthBuilder, one is
+<para>Using systems like MacCsound's widgets or Blue's BlueSynthBuilder, one is
 able to use graphical elements where they excel, in showing configuration of an
 instrument and for manipulation of values, while using textual elements where 
 they excel, in the design of instruments and expressing the connections between 
@@ -55,7 +55,7 @@ modules.</para>
 <para>I have found that this sort of hybrid design offers the best of both worlds
 and when I am spending time building and using new instruments, I can quickly
 design an instrument and also explore the parameters of an instrument's design
-by using blueSynthBuilder.</para>
+by using BlueSynthBuilder.</para>
 
 </simplesect>
 
@@ -224,7 +224,7 @@ instrument itself.  While one can always add always-on effects to a
 mixer channel, having the capability to add these features to an 
 instrument can be useful as part of the instrument's design.</para>  
 
-    <para>To use this, one writes code in teh Always-On code tab.  The code from this tab will be used to generate an instrument that will be run after the primary instrument code, and will have a single instace of the generated instrument running for the duration of the instrument.  The signal from the main instrument code should be written out using the blueMixerOut pseudo-opcode.  If the always-on code is disabled, the audio will go from the instrument to the mixer.  If the always-on code is enabled, the signal generated from the main instrument code will be intercepted and read by the always-on instrument.  To facilitate this feature, there is blue pseudo-opcode called blueMixerIn:</para>
+    <para>To use this, one writes code in teh Always-On code tab.  The code from this tab will be used to generate an instrument that will be run after the primary instrument code, and will have a single instace of the generated instrument running for the duration of the instrument.  The signal from the main instrument code should be written out using the blueMixerOut pseudo-opcode.  If the always-on code is disabled, the audio will go from the instrument to the mixer.  If the always-on code is enabled, the signal generated from the main instrument code will be intercepted and read by the always-on instrument.  To facilitate this feature, there is Blue pseudo-opcode called blueMixerIn:</para>
 
       <programlisting>
 asig1 [, asig2...] blueMixerIn        
@@ -299,7 +299,7 @@ instruments:</para>
             <entry>SubChannel Dropdown List</entry>
             <entry>objectName</entry>
             <entry>
-              Value from Dropdown List that is a named subchannel from the blue
+              Value from Dropdown List that is a named subchannel from the Blue
               Mixer
             </entry>
         </row>
@@ -360,6 +360,26 @@ instruments:</para>
 
 </section>
 
+
+<section>
+<title>Groups</title>
+
+<para>Widgets may be organized into Groups that provide titled border around the
+set of widgets.  Double-clicking on a group will allow editing of the group's 
+set of widgets. The Breadcrumb bar that appears when edit mode is enabled allows
+for navigating back up the hierarchy of groups to the root group for the interface.
+</para>
+
+<para>Users may either start by creating an empty group, double-clicking, then 
+  editing the interface for the group. Optionally, they may select a number of existing
+  widgets, right-click on one of the selected widgets, then choose "Make Group" to
+  embed the selected widgets within a group.
+</para>
+
+
+</section>
+
+
 <section>
 <title>Presets</title>
 
@@ -384,7 +404,7 @@ will be still in tact.</para>
 <title>Automation</title>
 
 <para>
-blue supports automation of BSB Widget values for those which support 
+Blue supports automation of BSB Widget values for those which support 
 automation.  For these widgets, automation must be enabled before they allowed
 to be automated.  When making them automatable, the place in Csound instrument
 code where the widget value will be added to the generated Csound code must be

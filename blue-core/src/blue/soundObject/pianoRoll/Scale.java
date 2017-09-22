@@ -25,7 +25,6 @@ import electric.xml.Elements;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.Serializable;
 import java.util.ArrayList;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
@@ -34,17 +33,24 @@ import org.apache.commons.lang3.builder.HashCodeBuilder;
  * @author steven
  */
 
-public class Scale implements Serializable {
+public class Scale {
 
     private String scaleName = "";
 
-    private float[] ratios;
+    private double[] ratios;
 
-    private float baseFrequency = 261.625565f; // MIDDLE C
+    private double baseFrequency = 261.625565; // MIDDLE C
 
-    private float octave = 2.0f;
+    private double octave = 2.0;
 
     private Scale() {
+    }
+
+    public Scale(Scale scale){
+        scaleName = scale.scaleName;
+        ratios = scale.ratios.clone();
+        baseFrequency = scale.baseFrequency;
+        octave = scale.octave;
     }
 
     public static Scale loadScale(File scalaFile) {
@@ -90,7 +96,7 @@ public class Scale implements Serializable {
             } else if (lineCount == 1) {
                 // Pitch count
                 pitchCount = Integer.parseInt(line);
-                scale.ratios = new float[pitchCount];
+                scale.ratios = new double[pitchCount];
                 scale.ratios[0] = 1.0f;
                 index++;
             } else {
@@ -115,31 +121,31 @@ public class Scale implements Serializable {
         Scale retrVal = new Scale();
 
         retrVal.scaleName = "12TET";
-        retrVal.ratios = new float[12];
+        retrVal.ratios = new double[12];
 
         double ratio = Math.pow(2.0, 1.0 / 12.0);
 
         for (int i = 0; i < retrVal.ratios.length; i++) {
-            retrVal.ratios[i] = (float) Math.pow(ratio, i);
+            retrVal.ratios[i] = Math.pow(ratio, i);
         }
 
         return retrVal;
     }
 
-    private static float getMultiplier(String lineInput) {
-        float multiplier = 0.0f;
+    private static double getMultiplier(String lineInput) {
+        double multiplier = 0.0f;
 
         String line = removeComments(lineInput);
 
         if (line.indexOf('/') > -1) {
 
             String[] vals = line.split("/");
-            multiplier = Float.parseFloat(vals[0]) / Float.parseFloat(vals[1]);
+            multiplier = Double.parseDouble(vals[0]) / Double.parseDouble(vals[1]);
         } else if (line.indexOf('.') > -1) {
-            float cents = Float.parseFloat(line);
-            multiplier = (float) Math.pow(2, cents / 1200);
+            double cents = Double.parseDouble(line);
+            multiplier = Math.pow(2, cents / 1200);
         } else { // assume ratio
-            multiplier = Float.parseFloat(line);
+            multiplier = Double.parseDouble(line);
         }
 
         return multiplier;
@@ -163,7 +169,7 @@ public class Scale implements Serializable {
         return ratios.length;
     }
 
-    public float getFrequency(int octave, int scaleDegree) {
+    public double getFrequency(int octave, int scaleDegree) {
 
         int oct = octave;
 
@@ -174,11 +180,11 @@ public class Scale implements Serializable {
             pitchIndex = pitchIndex % ratios.length;
         }
 
-        float multiplier = oct - 8;
+        double multiplier = oct - 8;
 
-        multiplier = (float) Math.pow(this.octave, multiplier);
+        multiplier = Math.pow(this.octave, multiplier);
 
-        float newBase = multiplier * baseFrequency;
+        double newBase = multiplier * baseFrequency;
 
         return newBase * ratios[pitchIndex];
     }
@@ -198,18 +204,18 @@ public class Scale implements Serializable {
                     scale.scaleName = node.getTextString();
                     break;
                 case "baseFrequency":
-                    scale.baseFrequency = Float.parseFloat(node.getTextString());
+                    scale.baseFrequency = Double.parseDouble(node.getTextString());
                     break;
                 case "octave":
-                    scale.octave = Float.parseFloat(node.getTextString());
+                    scale.octave = Double.parseDouble(node.getTextString());
                     break;
                 case "ratios":
                     Elements ratioNodes = node.getElements();
-                    scale.ratios = new float[ratioNodes.size()];
+                    scale.ratios = new double[ratioNodes.size()];
                     int i = 0;
                     while (ratioNodes.hasMoreElements()) {
                         Element ratioNode = ratioNodes.next();
-                        scale.ratios[i] = Float.parseFloat(ratioNode
+                        scale.ratios[i] = Double.parseDouble(ratioNode
                                 .getTextString());
                         i++;
                     }
@@ -226,13 +232,13 @@ public class Scale implements Serializable {
 
         retVal.addElement("scaleName").setText(scaleName);
         retVal.addElement("baseFrequency").setText(
-                Float.toString(baseFrequency));
-        retVal.addElement("octave").setText(Float.toString(octave));
+                Double.toString(baseFrequency));
+        retVal.addElement("octave").setText(Double.toString(octave));
 
         Element ratiosNode = retVal.addElement("ratios");
 
         for (int i = 0; i < ratios.length; i++) {
-            Element node = new Element("ratio").setText(Float
+            Element node = new Element("ratio").setText(Double
                     .toString(ratios[i]));
             ratiosNode.addElement(node);
         }
@@ -258,7 +264,7 @@ public class Scale implements Serializable {
     /**
      * @return Returns the baseFrequency.
      */
-    public float getBaseFrequency() {
+    public double getBaseFrequency() {
         return baseFrequency;
     }
 
@@ -266,7 +272,7 @@ public class Scale implements Serializable {
      * @param baseFrequency
      *            The baseFrequency to set.
      */
-    public void setBaseFrequency(float baseFrequency) {
+    public void setBaseFrequency(double baseFrequency) {
         this.baseFrequency = baseFrequency;
     }
 

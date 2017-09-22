@@ -42,13 +42,13 @@ public class NoteBuffer extends ArrayList<PianoNoteView> implements SelectionLis
 
     int startWidth;
     
-    float[] initialStartTimes = null;
+    double[] initialStartTimes = null;
 
     public void startMove() {
         startX = new int[this.size()];
         startLayer = new int[this.size()];
 
-        initialStartTimes = new float[this.size()];
+        initialStartTimes = new double[this.size()];
 
         Collections.sort(this);
         
@@ -71,7 +71,7 @@ public class NoteBuffer extends ArrayList<PianoNoteView> implements SelectionLis
         leftBoundary = -leftBoundary;
     }
 
-    public void moveByTime(float diffTime, int layerDiff) {
+    public void moveByTime(double diffTime, int layerDiff) {
 
         int noteHeight = pianoRoll.getNoteHeight();
 
@@ -162,13 +162,13 @@ public class NoteBuffer extends ArrayList<PianoNoteView> implements SelectionLis
         }
 
         PianoNoteView temp = this.get(0);
-        initialStartTimes = new float[1];
+        initialStartTimes = new double[1];
         initialStartTimes[0] = temp.getPianoNote().getStart();
 
         startWidth = temp.getWidth();
     }
 
-    public void setDuration(float duration) {
+    public void setDuration(double duration) {
          if (this.size() != 1) {
             System.out.println("Error: Size of NoteBuffer != 1");
             return;

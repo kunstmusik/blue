@@ -4,7 +4,6 @@ import blue.*;
 import blue.noteProcessor.NoteProcessorChain;
 import blue.soundObject.notation.NotationStaff;
 import electric.xml.Element;
-import java.io.Serializable;
 import java.util.Map;
 
 /**
@@ -20,36 +19,38 @@ import java.util.Map;
  * <p>
  * Company: steven yi music
  * </p>
- * 
+ *
  * @author unascribed
  * @version 1.0
  */
-
-public class NotationObject extends AbstractSoundObject implements
-        Serializable, Cloneable, GenericViewable {
+public class NotationObject extends AbstractSoundObject implements 
+        GenericViewable {
 //    private static BarRenderer renderer = new GenericRenderer();
 
     private NoteProcessorChain npc = new NoteProcessorChain();
 
     private int timeBehavior;
 
-    private NotationStaff staff = new NotationStaff();
+    private NotationStaff staff; 
 
     public NotationObject() {
         name = "Notation Object";
         subjectiveDuration = 2.0f;
         startTime = 0.0f;
         timeBehavior = SoundObject.TIME_BEHAVIOR_SCALE;
+        staff = new NotationStaff();
     }
 
-//    public SoundObjectEditor getEditor() {
-//        return new NotationEditor();
-//    }
+    public NotationObject(NotationObject nObj) {
+        super(nObj);
+        npc = new NoteProcessorChain(nObj.npc);
+        timeBehavior = nObj.timeBehavior;
+        staff = new NotationStaff(nObj.staff); 
+    }
 
     /*
      * public void generateInstruments(Orchestra orch) { }
      */
-
     public void generateGlobals(GlobalOrcSco globalOrcSco) {
     }
 
@@ -60,14 +61,13 @@ public class NotationObject extends AbstractSoundObject implements
     }
 
     @Override
-    public float getObjectiveDuration() {
+    public double getObjectiveDuration() {
         return this.getSubjectiveDuration();
     }
 
 //    public BarRenderer getRenderer() {
 //        return renderer;
 //    }
-
     @Override
     public NoteProcessorChain getNoteProcessorChain() {
         return npc;
@@ -78,8 +78,10 @@ public class NotationObject extends AbstractSoundObject implements
         this.npc = chain;
     }
 
-    public NoteList generateNotes(float renderStart, float renderEnd) {
-        /** @todo: Implement this blue.soundObject.SoundObject method */
+    public NoteList generateNotes(double renderStart, double renderEnd) {
+        /**
+         * @todo: Implement this blue.soundObject.SoundObject method
+         */
         // get notes from notationNoteList, ignore rests
         // apply note chain
         throw new java.lang.UnsupportedOperationException(
@@ -113,12 +115,12 @@ public class NotationObject extends AbstractSoundObject implements
     }
 
     @Override
-    public float getRepeatPoint() {
+    public double getRepeatPoint() {
         return -1.0f;
     }
 
     @Override
-    public void setRepeatPoint(float repeatPoint) {
+    public void setRepeatPoint(double repeatPoint) {
     }
 
     /*
@@ -143,8 +145,13 @@ public class NotationObject extends AbstractSoundObject implements
     }
 
     @Override
-    public NoteList generateForCSD(CompileData compileData, float startTime, float endTime) {
+    public NoteList generateForCSD(CompileData compileData, double startTime, double endTime) {
         throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public SoundObject deepCopy() {
+        return new NotationObject(this);
     }
 
 }

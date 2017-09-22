@@ -25,7 +25,6 @@ import blue.components.lines.Line;
 import blue.plugin.SoundObjectPlugin;
 import electric.xml.Element;
 import electric.xml.Elements;
-import java.io.Serializable;
 import java.util.Map;
 
 /**
@@ -33,9 +32,13 @@ import java.util.Map;
  */
 
 @SoundObjectPlugin(displayName = "LineObject", live=false, position = 60)
-public class LineObject extends AbstractLineObject implements Serializable {
+public class LineObject extends AbstractLineObject {
     public LineObject() {
         this.setName("LineObject");
+    }
+
+    public LineObject(LineObject lObj) {
+        super(lObj);
     }
 
     @Override
@@ -76,5 +79,10 @@ public class LineObject extends AbstractLineObject implements Serializable {
         }
 
         return lObj;
+    }
+
+    @Override
+    public LineObject deepCopy() {
+        return new LineObject(this);
     }
 }

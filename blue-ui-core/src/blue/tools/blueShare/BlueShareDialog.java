@@ -11,6 +11,10 @@ import blue.tools.blueShare.instruments.BlueShareInstrumentCategory;
 import blue.tools.blueShare.instruments.InstrumentExportPane;
 import blue.tools.blueShare.instruments.InstrumentImportPane;
 import blue.tools.blueShare.instruments.InstrumentManagementPane;
+import blue.tools.blueShare.soundObjects.BlueShareSoundObjectCategory;
+import blue.tools.blueShare.soundObjects.SoundObjectExportPane;
+import blue.tools.blueShare.soundObjects.SoundObjectImportPane;
+import blue.tools.blueShare.soundObjects.SoundObjectManagementPane;
 import blue.utility.GUI;
 import electric.xml.Element;
 import java.awt.BorderLayout;
@@ -48,6 +52,10 @@ public class BlueShareDialog extends JDialog implements WindowSettingsSavable {
 
     EffectExportPane eExportPane = new EffectExportPane();
 
+    SoundObjectImportPane sPane = new SoundObjectImportPane();
+
+    SoundObjectExportPane sExportPane = new SoundObjectExportPane();
+
     public BlueShareDialog(Frame parent, boolean modal) {
         super(parent, modal);
 
@@ -56,10 +64,12 @@ public class BlueShareDialog extends JDialog implements WindowSettingsSavable {
 
         JTabbedPane instrumentTabs = getInstrumentPane();
         JTabbedPane effectTabs = getEffectsPane();
+        JTabbedPane soundObjectTabs = getSoundObjectsPane();
 
         JTabbedPane tabs = new JTabbedPane();
         tabs.add("Instruments", instrumentTabs);
         tabs.add("Effects", effectTabs);
+        tabs.add("SoundObjects", soundObjectTabs);
 
         this.getContentPane().add(tabs);
 
@@ -86,6 +96,11 @@ public class BlueShareDialog extends JDialog implements WindowSettingsSavable {
     public void setEffectCategories(BlueShareEffectCategory[] effectCategories) {
         ePane.setCategories(effectCategories);
         eExportPane.setCategories(effectCategories);
+    }
+
+    public void setSoundObjectCategories(BlueShareSoundObjectCategory[] sobjCategories) {
+        sPane.setCategories(sobjCategories);
+        sExportPane.setCategories(sobjCategories);
     }
 
     /**
@@ -115,6 +130,17 @@ public class BlueShareDialog extends JDialog implements WindowSettingsSavable {
         tabs.add(BlueSystem.getString("common.import"), ePane);
         tabs.add(BlueSystem.getString("common.export"), eExportPane);
         tabs.add(BlueSystem.getString("common.manage"), eManagePane);
+        return tabs;
+    }
+
+    private JTabbedPane getSoundObjectsPane() {
+
+        SoundObjectManagementPane sManagePane = new SoundObjectManagementPane();
+
+        JTabbedPane tabs = new JTabbedPane();
+        tabs.add(BlueSystem.getString("common.import"), sPane);
+        tabs.add(BlueSystem.getString("common.export"), sExportPane);
+        tabs.add(BlueSystem.getString("common.manage"), sManagePane);
         return tabs;
     }
 

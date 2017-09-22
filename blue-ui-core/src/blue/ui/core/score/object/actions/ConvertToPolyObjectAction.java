@@ -89,11 +89,11 @@ public final class ConvertToPolyObjectAction extends AbstractAction
         int layerMin = Integer.MAX_VALUE;
         int layerMax = Integer.MIN_VALUE;
 
-        float start = Float.POSITIVE_INFINITY;
+        double start = Double.POSITIVE_INFINITY;
 
         for (SoundObject sObj : soundObjects) {
             sObjList.add(sObj);
-            float sObjStart = sObj.getStartTime();
+            double sObjStart = sObj.getStartTime();
 
             if (sObj.getStartTime() < start) {
                 start = sObj.getStartTime();
@@ -189,15 +189,15 @@ public final class ConvertToPolyObjectAction extends AbstractAction
 //
 //        TreeMap<Integer, ArrayList<SoundObject>> sObjMap = new TreeMap<>();
 //
-//        float start = Float.POSITIVE_INFINITY;
-//        float end = Float.NEGATIVE_INFINITY;
+//        double start = Double.POSITIVE_INFINITY;
+//        double end = Double.NEGATIVE_INFINITY;
 //        
 //        for (SoundObject sObj : selected) {
 //
 //            int layerNum = pObj.getLayerNumForScoreObject(sObj);
 //            Integer key = new Integer(layerNum);
-//            float sObjStart = sObj.getStartTime();
-//            float sObjEnd = sObjStart + sObj.getSubjectiveDuration();
+//            double sObjStart = sObj.getStartTime();
+//            double sObjEnd = sObjStart + sObj.getSubjectiveDuration();
 //
 //            if (!sObjMap.containsKey(key)) {
 //                sObjMap.put(key, new ArrayList<SoundObject>());

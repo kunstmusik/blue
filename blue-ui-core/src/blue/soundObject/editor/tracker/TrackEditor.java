@@ -274,12 +274,12 @@ public class TrackEditor extends javax.swing.JPanel {
             return;
         }
 
-        float newValue;
+        double newValue;
 
         try {
-            newValue = Float.parseFloat(baseFreqText.getText());
+            newValue = Double.parseDouble(baseFreqText.getText());
         } catch (NumberFormatException nfe) {
-            baseFreqText.setText(Float.toString(selectedColumn.getScale()
+            baseFreqText.setText(Double.toString(selectedColumn.getScale()
                     .getBaseFrequency()));
             return;
         }
@@ -401,7 +401,7 @@ public class TrackEditor extends javax.swing.JPanel {
         outputFreqCheckBox.setEnabled(colType == Column.TYPE_BLUE_PCH);
 
         scaleNameTextField.setText(column.getScale().getScaleName());
-        baseFreqText.setText(Float.toString(column.getScale()
+        baseFreqText.setText(Double.toString(column.getScale()
                 .getBaseFrequency()));
         outputFreqCheckBox.setSelected(column.isOutputFrequency());
 

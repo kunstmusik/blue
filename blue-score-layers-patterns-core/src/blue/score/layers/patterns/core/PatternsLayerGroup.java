@@ -39,13 +39,28 @@ import java.util.Vector;
  *
  * @author stevenyi
  */
-public class PatternsLayerGroup extends ArrayList<PatternLayer> 
+public class PatternsLayerGroup extends ArrayList<PatternLayer>
         implements LayerGroup<PatternLayer> {
 
     private transient Vector<LayerGroupListener> layerGroupListeners = null;
     private int patternBeatsLength = 4;
     private String name = "Patterns Layer Group";
-    private NoteProcessorChain npc = new NoteProcessorChain();
+    private NoteProcessorChain npc;
+
+    public PatternsLayerGroup() {
+        npc = new NoteProcessorChain();
+    }
+
+    public PatternsLayerGroup(PatternsLayerGroup plg) {
+        super(plg.size());
+        patternBeatsLength = plg.patternBeatsLength;
+        name = plg.name;
+        npc = new NoteProcessorChain(plg.npc);
+
+        for (PatternLayer pl : plg) {
+            add(pl.deepCopy());
+        }
+    }
 
     @Override
     public String getName() {
@@ -85,7 +100,7 @@ public class PatternsLayerGroup extends ArrayList<PatternLayer>
     }
 
     @Override
-    public NoteList generateForCSD(CompileData compileData, float startTime, float endTime, boolean processWithSolo) throws ScoreGenerationException {
+    public NoteList generateForCSD(CompileData compileData, double startTime, double endTime, boolean processWithSolo) throws ScoreGenerationException {
 
         NoteList noteList = new NoteList();
 
@@ -117,13 +132,11 @@ public class PatternsLayerGroup extends ArrayList<PatternLayer>
         return noteList;
     }
 
-    private NoteList processNotes(CompileData compileData, NoteList nl, float start, float endTime) throws NoteProcessorException {
+    private NoteList processNotes(CompileData compileData, NoteList nl, double start, double endTime) throws NoteProcessorException {
 
         NoteList retVal = null;
 
-        
         ScoreUtilities.applyNoteProcessorChain(nl, this.npc);
-        
 
         if (start == 0.0f) {
             retVal = nl;
@@ -144,7 +157,7 @@ public class PatternsLayerGroup extends ArrayList<PatternLayer>
         }
 
         if (endTime > start) {
-            // float dur = endTime - start;
+            // double dur = endTime - start;
 
             NoteList buffer = new NoteList();
             Note tempNote;
@@ -332,5 +345,10 @@ public class PatternsLayerGroup extends ArrayList<PatternLayer>
             }
         }
         return max;
+    }
+
+    @Override
+    public PatternsLayerGroup deepCopyLG() {
+        return new PatternsLayerGroup(this);
     }
 }

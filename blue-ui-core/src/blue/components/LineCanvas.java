@@ -145,11 +145,11 @@ public class LineCanvas extends JComponent implements TableModelListener {
         }
 
         if (selectedPoint != null) {
-            float min = currentLine.getMin();
-            float max = currentLine.getMax();
+            double min = currentLine.getMin();
+            double max = currentLine.getMax();
 
-            int x = floatToScreenX(selectedPoint.getX());
-            int y = floatToScreenY(selectedPoint.getY(), min, max);
+            int x = doubleToScreenX(selectedPoint.getX());
+            int y = doubleToScreenY(selectedPoint.getY(), min, max);
 
             g2d.setColor(Color.red);
             paintPoint(g2d, x, y);
@@ -168,12 +168,12 @@ public class LineCanvas extends JComponent implements TableModelListener {
     private void drawPointInformation(Graphics2D g2d, int x, int y) {
         g2d.setColor(Color.white);
 
-        float range = currentLine.getMax() - currentLine.getMin();
-        float yVal = selectedPoint.getY();
-        float xVal = selectedPoint.getX();
+        double range = currentLine.getMax() - currentLine.getMin();
+        double yVal = selectedPoint.getY();
+        double xVal = selectedPoint.getX();
 
-        String xText = "x: " + NumberUtilities.formatFloat(xVal);
-        String yText = "y: " + NumberUtilities.formatFloat(yVal);
+        String xText = "x: " + NumberUtilities.formatDouble(xVal);
+        String yText = "y: " + NumberUtilities.formatDouble(yVal);
 
         // Rectangle2D xRect = g2d.getFontMetrics().getStringBounds(xText, g2d);
         // Rectangle2D yRect = g2d.getFontMetrics().getStringBounds(yText, g2d);
@@ -207,8 +207,8 @@ public class LineCanvas extends JComponent implements TableModelListener {
     }
 
     private final void drawLine(Graphics g, Line line, boolean drawPoints) {
-        float min = line.getMin();
-        float max = line.getMax();
+        double min = line.getMin();
+        double max = line.getMax();
 
         int[] xValues = new int[line.size()];
         int[] yValues = new int[line.size()];
@@ -216,8 +216,8 @@ public class LineCanvas extends JComponent implements TableModelListener {
         for (int i = 0; i < line.size(); i++) {
             LinePoint point = line.getLinePoint(i);
 
-            xValues[i] = floatToScreenX(point.getX());
-            yValues[i] = floatToScreenY(point.getY(), min, max);
+            xValues[i] = doubleToScreenX(point.getX());
+            yValues[i] = doubleToScreenY(point.getY(), min, max);
         }
 
         g.drawPolyline(xValues, yValues, xValues.length);
@@ -233,32 +233,32 @@ public class LineCanvas extends JComponent implements TableModelListener {
         g.fillRect(x - 2, y - 2, 5, 5);
     }
 
-    private int floatToScreenX(float val) {
+    private int doubleToScreenX(double val) {
         int width = this.getWidth() - 10;
-        return Math.round(val * width) + 5;
+        return (int)Math.round(val * width) + 5;
     }
 
-    private int floatToScreenY(float yVal, float min, float max) {
+    private int doubleToScreenY(double yVal, double min, double max) {
         int height = this.getHeight() - 10;
 
-        float range = max - min;
+        double range = max - min;
 
-        float percent = (yVal - min) / range;
+        double percent = (yVal - min) / range;
 
-        int y = Math.round(height * (1.0f - percent)) + 5;
+        int y = (int)Math.round(height * (1.0f - percent)) + 5;
 
         return y;
     }
 
-    private float screenToFloatX(int val) {
-        float width = this.getWidth() - 10;
+    private double screenToDoubleX(int val) {
+        double width = this.getWidth() - 10;
         return (val - 5) / width;
     }
 
-    private float screenToFloatY(int val, float min, float max) {
-        float height = this.getHeight() - 10;
-        float percent = 1 - ((val - 5) / height);
-        float range = max - min;
+    private double screenToDoubleY(int val, double min, double max) {
+        double height = this.getHeight() - 10;
+        double percent = 1 - ((val - 5) / height);
+        double range = max - min;
 
         return (percent * range) + min;
     }
@@ -283,8 +283,8 @@ public class LineCanvas extends JComponent implements TableModelListener {
             if (currentLine.getLinePoint(i) == selectedPoint) {
                 LinePoint p1 = currentLine.getLinePoint(i - 1);
                 LinePoint p2 = currentLine.getLinePoint(i + 1);
-                leftBoundaryX = floatToScreenX(p1.getX());
-                rightBoundaryX = floatToScreenX(p2.getX());
+                leftBoundaryX = doubleToScreenX(p1.getX());
+                rightBoundaryX = doubleToScreenX(p2.getX());
                 return;
             }
         }
@@ -303,11 +303,11 @@ public class LineCanvas extends JComponent implements TableModelListener {
             return null;
         }
         
-        float min = currentLine.getMin();
-        float max = currentLine.getMax();
+        double min = currentLine.getMin();
+        double max = currentLine.getMax();
 
         LinePoint point = new LinePoint();
-        point.setLocation(screenToFloatX(x), screenToFloatY(y, min, max));
+        point.setLocation(screenToDoubleX(x), screenToDoubleY(y, min, max));
 
         int index = 1;
 
@@ -327,14 +327,14 @@ public class LineCanvas extends JComponent implements TableModelListener {
     }
 
     public LinePoint findGraphPoint(int x, int y) {
-        float min = currentLine.getMin();
-        float max = currentLine.getMax();
+        double min = currentLine.getMin();
+        double max = currentLine.getMax();
 
         for (int i = 0; i < currentLine.size(); i++) {
             LinePoint point = currentLine.getLinePoint(i);
 
-            int tempX = floatToScreenX(point.getX());
-            int tempY = floatToScreenY(point.getY(), min, max);
+            int tempX = doubleToScreenX(point.getX());
+            int tempY = doubleToScreenY(point.getY(), min, max);
 
             if (tempX >= x - 2 && tempX <= x + 2 && tempY >= y - 2
                     && tempY <= y + 2) {
@@ -350,7 +350,7 @@ public class LineCanvas extends JComponent implements TableModelListener {
         for (int i = 0; i < currentLine.size(); i++) {
             LinePoint point = currentLine.getLinePoint(i);
 
-            int tempX = floatToScreenX(point.getX());
+            int tempX = doubleToScreenX(point.getX());
 
             if (tempX >= x - 2 && tempX <= x + 2) {
                 return point;
@@ -478,21 +478,21 @@ public class LineCanvas extends JComponent implements TableModelListener {
                 }
 
                
-                float min = currentLine.getMin();
-                float max = currentLine.getMax();
+                double min = currentLine.getMin();
+                double max = currentLine.getMax();
 
-                float floatYValue = screenToFloatY(y, min, max);
+                double doubleYValue = screenToDoubleY(y, min, max);
                 
-                selectedPoint.setLocation(screenToFloatX(x),
-                        floatYValue);
+                selectedPoint.setLocation(screenToDoubleX(x),
+                        doubleYValue);
                 
                 if(currentLine.isEndPointsLinked()) {
                     LinePoint first = currentLine.getLinePoint(0);
                     LinePoint last = currentLine.getLinePoint(currentLine.getRowCount() - 1);
                     if(selectedPoint == first) {
-                        last.setLocation(last.getX(), floatYValue);
+                        last.setLocation(last.getX(), doubleYValue);
                     } else if (selectedPoint == last) {
-                        first.setLocation(first.getX(), floatYValue);
+                        first.setLocation(first.getX(), doubleYValue);
                     }
                 }
                 

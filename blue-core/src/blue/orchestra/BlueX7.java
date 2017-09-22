@@ -13,7 +13,6 @@ import electric.xml.Elements;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.Serializable;
 import java.util.Properties;
 import org.apache.commons.lang3.text.StrBuilder;
 
@@ -30,13 +29,12 @@ import org.apache.commons.lang3.text.StrBuilder;
  * <p>
  * Company: steven yi music
  * </p>
- * 
+ *
  * @author unascribed
  * @version 1.0
  */
-
 @InstrumentPlugin(displayName = "BlueX7", position = 40)
-public class BlueX7 extends AbstractInstrument implements Serializable {
+public class BlueX7 extends AbstractInstrument {
 
     private static final String BLUEX7_HAS_BEEN_COMPILED = "blueX7.hasStaticTablesBeenCompiled";
 
@@ -62,19 +60,21 @@ public class BlueX7 extends AbstractInstrument implements Serializable {
 
     private static transient int feedbackScaleTable = 0;
 
-    Properties props = new Properties();
+    public transient int[] operatorTableNums = null;
 
-    public AlgorithmCommonData algorithmCommon = new AlgorithmCommonData();
+    public AlgorithmCommonData algorithmCommon;
 
-    public LFOData lfo = new LFOData();
+    public LFOData lfo;
 
     public Operator[] operators = new Operator[6];
 
     public EnvelopePoint[] peg = new EnvelopePoint[4];
 
-    public transient int[] operatorTableNums = null;
+    private String csoundPostCode;
 
     public BlueX7() {
+        algorithmCommon = new AlgorithmCommonData();
+        lfo = new LFOData();
 
         for (int i = 0; i < operators.length; i++) {
             operators[i] = new Operator();
@@ -88,24 +88,34 @@ public class BlueX7 extends AbstractInstrument implements Serializable {
 
         setDefaults();
 
-        props.put("postCode", "blueMixerOut aout, aout");
+        csoundPostCode = "blueMixerOut aout, aout";
     }
 
-    public void setProperty(String key, String val) {
-        props.setProperty(key, val);
+    public BlueX7(BlueX7 bx7) {
+
+        algorithmCommon = new AlgorithmCommonData(bx7.algorithmCommon);
+
+        lfo = new LFOData(bx7.lfo);
+
+        operators = new Operator[6];
+        for(int i = 0; i < operators.length; i++) {
+            operators[i] = new Operator(bx7.operators[i]);
+        }
+
+        peg = new EnvelopePoint[4];
+        for(int i = 0; i < peg.length; i++) {
+            peg[i] = new EnvelopePoint(bx7.peg[i]);
+        }
+
+        csoundPostCode = bx7.csoundPostCode;
     }
 
-    public String getProperty(String key) {
-        if (props == null) {
-            props = new Properties();
-            return "";
-        }
+    public String getCsoundPostCode() {
+        return csoundPostCode;
+    }
 
-        String prop = props.getProperty(key);
-        if (prop == null) {
-            return "";
-        }
-        return prop;
+    public void setCsoundPostCode(String csoundPostCode) {
+        this.csoundPostCode = csoundPostCode;
     }
 
     public boolean hasFTable() {
@@ -299,8 +309,8 @@ public class BlueX7 extends AbstractInstrument implements Serializable {
 
         try {
             try (BufferedReader br = new BufferedReader(new InputStreamReader(
-                         this.getClass().getClassLoader().getResourceAsStream(
-                                 "blue/resources/blueX7/dx7" + algNum + ".orc")))) {
+                    this.getClass().getClassLoader().getResourceAsStream(
+                            "blue/resources/blueX7/dx7" + algNum + ".orc")))) {
                 String line;
                 while ((line = br.readLine()) != null) {
                     buffer.append(line).append("\n");
@@ -332,7 +342,6 @@ public class BlueX7 extends AbstractInstrument implements Serializable {
                 "(p4 < 15 ? octpch(p4) : p4)");
 
         /* Static FTable Swap */
-
         instrText = TextUtilities.replace(instrText, "p16", Integer
                 .toString(outputAmpTable));
         // instrText = TextUtilities.replace(instrText, "p17",
@@ -355,7 +364,6 @@ public class BlueX7 extends AbstractInstrument implements Serializable {
                 .toString(feedbackScaleTable));
 
         /* Swapping other values */
-
         instrText = TextUtilities.replace(instrText, "p25", Integer
                 .toString(this.algorithmCommon.feedback));
 
@@ -368,11 +376,10 @@ public class BlueX7 extends AbstractInstrument implements Serializable {
         instrText = instrText.substring(0, pos) + "aout = "
                 + instrText.substring(pos + 7);
 
-        instrText += "\n" + this.getProperty("postCode");
+        instrText += "\n" + this.csoundPostCode;
 
         // egRateRisePercentageTable = tables.getOpenFTableNumber(); unused
         // egRateDecayPercentageTable = tables.getOpenFTableNumber(); unused
-
         return instrText;
     }
 
@@ -428,7 +435,7 @@ public class BlueX7 extends AbstractInstrument implements Serializable {
         }
 
         try {
-            instr.setProperty("postCode", data.getTextString("csoundPostCode"));
+            instr.csoundPostCode = data.getTextString("csoundPostCode");
         } catch (Exception e) {
 
         }
@@ -456,7 +463,7 @@ public class BlueX7 extends AbstractInstrument implements Serializable {
             retVal.addElement(peg[i].saveAsXML());
         }
 
-        retVal.addElement("csoundPostCode").setText(getProperty("postCode"));
+        retVal.addElement("csoundPostCode").setText(csoundPostCode);
 
         return retVal;
     }
@@ -611,5 +618,10 @@ public class BlueX7 extends AbstractInstrument implements Serializable {
         this.operators[5].envelopePoints[2].y = 50;
         this.operators[5].envelopePoints[3].x = 60;
         this.operators[5].envelopePoints[3].y = 50;
+    }
+
+    @Override
+    public BlueX7 deepCopy() {
+        return new BlueX7(this);
     }
 }

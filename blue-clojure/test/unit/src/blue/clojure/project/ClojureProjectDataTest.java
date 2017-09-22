@@ -80,7 +80,7 @@ public class ClojureProjectDataTest {
         ClojureLibraryEntry entry = new ClojureLibraryEntry();
         entry.setDependencyCoordinates("com.kunstmusik/score");
         entry.setVersion("0.3.0");
-        instance.libraryList.add(entry);
+        instance.libraryList().add(entry);
 
         String expResult = "(use '[cemerick.pomegranate :only (add-dependencies)])\n"
                 + "(add-dependencies :coordinates '[[com.kunstmusik/score \"0.3.0\" :exclusions [org.clojure/clojure]]\n"
@@ -91,7 +91,7 @@ public class ClojureProjectDataTest {
         entry = new ClojureLibraryEntry();
         entry.setDependencyCoordinates("com.kunstmusik/pink");
         entry.setVersion("0.3.0");
-        instance.libraryList.add(entry);
+        instance.libraryList().add(entry);
 
         expResult = "(use '[cemerick.pomegranate :only (add-dependencies)])\n"
                 + "(add-dependencies :coordinates '[[com.kunstmusik/score \"0.3.0\" :exclusions [org.clojure/clojure]]\n"

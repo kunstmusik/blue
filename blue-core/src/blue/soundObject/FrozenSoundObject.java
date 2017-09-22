@@ -25,23 +25,17 @@ import blue.noteProcessor.NoteProcessorChain;
 import blue.orchestra.GenericInstrument;
 import blue.utility.ObjectUtilities;
 import electric.xml.Element;
-import java.io.Serializable;
 import java.util.Map;
 
 /**
  * @author steven
  *
  */
-public class FrozenSoundObject extends AbstractSoundObject implements
-        Serializable, Cloneable {
+public class FrozenSoundObject extends AbstractSoundObject {
 
     private static final String FSO_INSTR_NAME = "Frozen SoundObject Player Instrument";
 
     private static final String FSO_HAS_BEEN_COMPILED = "frozenSoundObject.hasBeenCompiled";
-
-//    private static BarRenderer renderer = new FrozenSoundObjectRenderer();
-//
-//    private static SoundObjectEditor editor = new FrozenSoundObjectEditor();
 
     private SoundObject frozenSoundObject;
 
@@ -54,18 +48,16 @@ public class FrozenSoundObject extends AbstractSoundObject implements
     public FrozenSoundObject() {
     }
 
-//    public SoundObjectEditor getEditor() {
-//        return editor;
-//    }
-
-    @Override
-    public float getObjectiveDuration() {
-        return this.subjectiveDuration;
+    public FrozenSoundObject(FrozenSoundObject fso) {
+        frozenSoundObject = fso.frozenSoundObject.deepCopy();
+        frozenWaveFileName = fso.frozenWaveFileName;
+        numChannels = fso.numChannels;
     }
 
-//    public BarRenderer getRenderer() {
-//        return renderer;
-//    }
+    @Override
+    public double getObjectiveDuration() {
+        return this.subjectiveDuration;
+    }
 
     @Override
     public NoteProcessorChain getNoteProcessorChain() {
@@ -87,12 +79,12 @@ public class FrozenSoundObject extends AbstractSoundObject implements
     }
 
     @Override
-    public float getRepeatPoint() {
+    public double getRepeatPoint() {
         return -1.0f;
     }
 
     @Override
-    public void setRepeatPoint(float repeatPoint) {
+    public void setRepeatPoint(double repeatPoint) {
     }
 
     public SoundObject getFrozenSoundObject() {
@@ -111,14 +103,14 @@ public class FrozenSoundObject extends AbstractSoundObject implements
         this.frozenWaveFileName = frozenWaveFileName;
     }
 
-    public NoteList generateNotes(float renderStart, float renderEnd) throws SoundObjectException {
+    public NoteList generateNotes(double renderStart, double renderEnd) throws SoundObjectException {
         NoteList n = new NoteList();
 
         if (instrumentNumber == 0) {
             return n;
         }
 
-        float newDur = subjectiveDuration;
+        double newDur = subjectiveDuration;
 
         if(renderEnd > 0 && renderEnd < subjectiveDuration) {
             newDur = renderEnd;
@@ -173,7 +165,7 @@ public class FrozenSoundObject extends AbstractSoundObject implements
             GenericInstrument temp = new GenericInstrument();
             temp.setName(FSO_INSTR_NAME);
             temp.setText(instrumentText);
-            temp.setEnabled(true);
+
             int iNum = compileData.addInstrument(temp);
             instrumentNumber = iNum;
         }
@@ -272,13 +264,18 @@ public class FrozenSoundObject extends AbstractSoundObject implements
     }
 
     @Override
-    public NoteList generateForCSD(CompileData compileData, float startTime, 
-            float endTime) throws SoundObjectException {
+    public NoteList generateForCSD(CompileData compileData, double startTime, 
+            double endTime) throws SoundObjectException {
         
         generateInstruments(compileData);
         NoteList nl = generateNotes(startTime, endTime);
         
         return nl;
+    }
+
+    @Override
+    public FrozenSoundObject deepCopy() {
+        return new FrozenSoundObject(this);
     }
 
 }

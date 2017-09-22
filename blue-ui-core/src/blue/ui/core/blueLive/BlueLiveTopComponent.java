@@ -37,12 +37,9 @@ import blue.ui.nbutilities.lazyplugin.LazyPlugin;
 import blue.ui.nbutilities.lazyplugin.LazyPluginFactory;
 import blue.ui.utilities.SimpleDocumentListener;
 import blue.ui.utilities.UiUtilities;
-import blue.utility.ObjectUtilities;
 import blue.utility.ScoreUtilities;
 import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -52,7 +49,6 @@ import javax.sound.midi.Receiver;
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
 import javax.swing.text.BadLocationException;
@@ -118,7 +114,6 @@ public final class BlueLiveTopComponent extends TopComponent
     BlueLiveToolBar blueLiveToolBar;
     int mouseColumn = -1;
     int mouseRow = -1;
-    PerformanceThread performanceThread = null;
 
     Map<Class<? extends SoundObject>, String> liveSoundObjectTemplates;
 
@@ -374,7 +369,7 @@ public final class BlueLiveTopComponent extends TopComponent
 
                 if (lObj != null) {
 
-                    ScoreObject copy = lObj.getSoundObject().clone();
+                    ScoreObject copy = lObj.getSoundObject().deepCopy();
                     final ScoreController.ScoreObjectBuffer scoreObjectBuffer
                             = ScoreController.getInstance().getScoreObjectBuffer();
 
@@ -412,7 +407,7 @@ public final class BlueLiveTopComponent extends TopComponent
                     return;
                 }
 
-                SoundObject copy = sObj.clone();
+                SoundObject copy = sObj.deepCopy();
                 copy.setStartTime(0.0f);
 
                 addSoundObject(column, row, copy);
@@ -922,11 +917,11 @@ public final class BlueLiveTopComponent extends TopComponent
                 return;
         }
 
-        float start = ((Double) startSpinner.getValue()).floatValue();
+        double start = ((Double) startSpinner.getValue()).doubleValue();
         String template = noteTemplateText.getText();
         String instrId = instrIdText.getText();
-        float quarterNote = ((Double) quarterNoteSpinner.getValue()).floatValue();
-        float dur = quarterNote * (float) time;
+        double quarterNote = ((Double) quarterNoteSpinner.getValue()).doubleValue();
+        double dur = quarterNote * (double) time;
 
         outputTextArea.setText(
                 outputTextArea.getText() + scoPadReceiver.getNotes(
@@ -950,7 +945,7 @@ public final class BlueLiveTopComponent extends TopComponent
         LiveObjectSet liveObjects = data.getLiveData().getLiveObjectBins().getEnabledLiveObjectSet();
 
         if (liveObjects.size() > 0) {
-
+            System.out.println("LiveObjectsSize: " +liveObjects.size());
             NoteList nl = new NoteList();
             try {
 
@@ -1165,61 +1160,6 @@ public final class BlueLiveTopComponent extends TopComponent
         liveObjectsTable.setColumnSelectionInterval(column, column);
     }
 
-    class PerformanceThread extends Thread {
-
-        int beatCounter = 0;
-        boolean keepRunning = true;
-        int currentRepeatTempo;
-        int currentRepeat;
-        long waitTime;
-
-        @Override
-        public void run() {
-            while (keepRunning) {
-
-//                if (!blueLiveToolBar.isRunning()) {
-//                    keepRunning = false;
-//                    performanceThread = null;
-//                    repeatButton.setSelected(false);
-//                    break;
-//                }
-                if (beatCounter == 0) {
-
-                    currentRepeatTempo = ((Integer) tempoSpinner.getValue()).intValue();
-                    currentRepeat = ((Integer) repeatSpinner.getValue()).intValue();
-                    waitTime = (long) (1000 * (60.0f / currentRepeatTempo));
-
-                    if (blueLiveToolBar.isRunning()) {
-                        new Thread() {
-
-                            @Override
-                            public void run() {
-                                triggerButtonActionPerformed(null);
-                            }
-                        }.start();
-                    }
-                }
-
-                beatCounter++;
-
-                if (beatCounter >= currentRepeat) {
-                    beatCounter = 0;
-                }
-
-                try {
-                    Thread.sleep(waitTime);
-                } catch (InterruptedException ex) {
-                    keepRunning = false;
-                    repeatButton.setSelected(false);
-                }
-            }
-        }
-
-        public void turnOff() {
-            keepRunning = false;
-        }
-    }
-
     class AddMenu extends JMenu implements ActionListener {
 
         HashMap<String, Class> sObjNameClassMap = new HashMap<>();
@@ -1339,7 +1279,7 @@ public final class BlueLiveTopComponent extends TopComponent
                 
                 if (lObj != null) {
                     
-                    SoundObject copy = lObj.getSoundObject().clone();
+                    SoundObject copy = lObj.getSoundObject().deepCopy();
                     
                     ScoreController.ScoreObjectBuffer scoreObjectBuffer
                             = ScoreController.getInstance().getScoreObjectBuffer();
@@ -1358,7 +1298,7 @@ public final class BlueLiveTopComponent extends TopComponent
                 
                 if (lObj != null) {
                     
-                    SoundObject copy = lObj.getSoundObject().clone();
+                    SoundObject copy = lObj.getSoundObject().deepCopy();
                     
                     ScoreController.ScoreObjectBuffer scoreObjectBuffer
                             = ScoreController.getInstance().getScoreObjectBuffer();
@@ -1386,8 +1326,7 @@ public final class BlueLiveTopComponent extends TopComponent
                     return;
                 }
                 
-                SoundObject copy = (SoundObject) ObjectUtilities.clone(
-                        sObj);
+                SoundObject copy = sObj.deepCopy();
                 copy.setStartTime(0.0f);
                 addSoundObject(mouseColumn, mouseRow, copy);
             });

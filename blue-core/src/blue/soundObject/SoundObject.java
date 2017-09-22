@@ -115,11 +115,11 @@ public interface SoundObject extends ScoreObject {
      *            render. If the render end is after this soundObjects end time,
      *            render end will be passed in as negative value.
      */
-//    public NoteList generateNotes(float renderStart, float renderEnd)
+//    public NoteList generateNotes(double renderStart, double renderEnd)
 //            throws SoundObjectException;
 
-    public NoteList generateForCSD(CompileData compileData, float startTime, 
-            float endTime) throws SoundObjectException;
+    public NoteList generateForCSD(CompileData compileData, double startTime, 
+            double endTime) throws SoundObjectException;
     
 
     /**
@@ -142,7 +142,7 @@ public interface SoundObject extends ScoreObject {
      * generation is dependent on the subjective duration of the soundObject.
      * For these SoundObjects you can return null here.
      */
-    public float getObjectiveDuration();
+    public double getObjectiveDuration();
 
     /**
      * Returns a blue.soundObject.renderer.BarRenderer which renders the
@@ -164,12 +164,12 @@ public interface SoundObject extends ScoreObject {
      * Gets the point at which, in the score, a repeat of this score should
      * occur if the time behavior for this sound object is repeatable.
      */
-    public float getRepeatPoint();
+    public double getRepeatPoint();
 
     /**
      * See getRepeatPoint
      */
-    public void setRepeatPoint(float repeatPoint);
+    public void setRepeatPoint(double repeatPoint);
 
     /**
      * Returns and XML Element representation of this SoundObject
@@ -183,8 +183,7 @@ public interface SoundObject extends ScoreObject {
      */
     public void setNoteProcessorChain(NoteProcessorChain chain);
 
-
     @Override
-    public SoundObject clone();
+    public SoundObject deepCopy();
     
 }

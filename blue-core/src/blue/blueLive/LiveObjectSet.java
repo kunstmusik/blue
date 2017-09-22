@@ -17,9 +17,8 @@
  * the Free Software Foundation Inc., 59 Temple Place - Suite 330,
  * Boston, MA  02111-1307 USA
  */
-
 /**
- * Class to hold sets of LiveObjects (really is an instance of ArrayList, but 
+ * Class to hold sets of LiveObjects (really is an instance of ArrayList, but
  * called Set here as that is what it is called by users)
  */
 package blue.blueLive;
@@ -33,8 +32,18 @@ import java.util.ArrayList;
  * @author stevenyi
  */
 public class LiveObjectSet extends ArrayList<LiveObject> {
-    
+
     public String name = "";
+
+    public LiveObjectSet() {
+    }
+
+    public LiveObjectSet(LiveObjectSet lObjSet) {
+        name = lObjSet.name;
+        for (LiveObject lObj : lObjSet) {
+            add(new LiveObject(lObj));
+        }
+    }
 
     public String getName() {
         return name;
@@ -43,28 +52,28 @@ public class LiveObjectSet extends ArrayList<LiveObject> {
     public void setName(String name) {
         this.name = name;
     }
-    
-    public Element saveAsXML() {
-         Element retVal = new Element("liveObjectSet");
-         retVal.setAttribute("name", name);
-         
-         for(LiveObject liveObj : this) {
-             retVal.addElement("liveObjectRef").setText(liveObj.getUniqueId());
-         }
 
-         return retVal;
+    public Element saveAsXML() {
+        Element retVal = new Element("liveObjectSet");
+        retVal.setAttribute("name", name);
+
+        for (LiveObject liveObj : this) {
+            retVal.addElement("liveObjectRef").setText(liveObj.getUniqueId());
+        }
+
+        return retVal;
     }
-    
+
     public static LiveObjectSet loadFromXML(Element data, LiveObjectBins bins) {
         LiveObjectSet retVal = new LiveObjectSet();
-        
+
         String val = data.getAttributeValue("name");
         if (val != null && val.length() > 0) {
             retVal.name = val;
         }
-        
+
         Elements nodes = data.getElements();
-        
+
         while (nodes.hasMoreElements()) {
 
             Element node = nodes.next();
@@ -73,15 +82,15 @@ public class LiveObjectSet extends ArrayList<LiveObject> {
             if (nodeName.equals("liveObjectRef")) {
                 String uniqueId = node.getTextString();
                 LiveObject lObj = bins.getLiveObjectByUniqueId(uniqueId);
-                
-                if(lObj != null) {
+
+                if (lObj != null) {
                     retVal.add(lObj);
                 }
             }
-            
+
         }
-        
+
         return retVal;
     }
-    
+
 }

@@ -22,6 +22,7 @@ package blue.soundObject;
 import blue.noteProcessor.NoteProcessorChain;
 import electric.xml.Element;
 import java.awt.Color;
+import java.util.List;
 
 /**
  * @author steven
@@ -35,9 +36,9 @@ public class SoundObjectUtilities {
         retVal.setAttribute("type", sObj.getClass().getName());
 
         retVal.addElement("subjectiveDuration").setText(
-                Float.toString(sObj.getSubjectiveDuration()));
+                Double.toString(sObj.getSubjectiveDuration()));
         retVal.addElement("startTime").setText(
-                Float.toString(sObj.getStartTime()));
+                Double.toString(sObj.getStartTime()));
         retVal.addElement("name").setText(sObj.getName());
 
         String colorStr = Integer.toString(sObj.getBackgroundColor().getRGB());
@@ -51,7 +52,7 @@ public class SoundObjectUtilities {
 
         if (sObj.getTimeBehavior() == SoundObject.TIME_BEHAVIOR_REPEAT) {
             retVal.addElement("repeatPoint").setText(
-                    Float.toString(sObj.getRepeatPoint()));
+                    Double.toString(sObj.getRepeatPoint()));
         }
 
         if (sObj.getNoteProcessorChain() != null) {
@@ -63,9 +64,9 @@ public class SoundObjectUtilities {
 
     public static void initBasicFromXML(Element data, SoundObject sObj)
             throws Exception {
-        sObj.setSubjectiveDuration(Float.parseFloat(data
+        sObj.setSubjectiveDuration(Double.parseDouble(data
                 .getTextString("subjectiveDuration")));
-        sObj.setStartTime(Float.parseFloat(data.getTextString("startTime")));
+        sObj.setStartTime(Double.parseDouble(data.getTextString("startTime")));
         
         String name = data.getTextString("name");
         
@@ -89,7 +90,7 @@ public class SoundObjectUtilities {
 
         if (sObj.getTimeBehavior() == SoundObject.TIME_BEHAVIOR_REPEAT
                 && data.getElement("repeatPoint") != null) {
-            sObj.setRepeatPoint(Float.parseFloat(data
+            sObj.setRepeatPoint(Double.parseDouble(data
                     .getTextString("repeatPoint")));
         }
 
@@ -97,5 +98,22 @@ public class SoundObjectUtilities {
             sObj.setNoteProcessorChain(NoteProcessorChain.loadFromXML(data
                     .getElement("noteProcessorChain")));
         }
+    }
+
+    public static boolean isOrContainsInstance(SoundObject sObj) {
+        if(sObj instanceof Instance) {
+            return true;
+        }
+
+        if(sObj instanceof PolyObject) {
+            PolyObject pObj = (PolyObject)sObj;
+            for(SoundObject soundObject : pObj.getSoundObjects(true)) {
+                if(isOrContainsInstance(soundObject)) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 }

@@ -21,12 +21,9 @@ package blue.orchestra.editor.blueSynthBuilder;
 
 import blue.orchestra.blueSynthBuilder.Preset;
 import blue.orchestra.blueSynthBuilder.PresetGroup;
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Vector;
 import javax.swing.event.TreeModelEvent;
 import javax.swing.event.TreeModelListener;
 import javax.swing.tree.TreeModel;
@@ -36,7 +33,7 @@ import javax.swing.tree.TreePath;
  * @author Steven
  * 
  */
-public class PresetsTreeModel implements Serializable, TreeModel {
+public class PresetsTreeModel implements TreeModel {
 
     PresetGroup rootGroup;
 

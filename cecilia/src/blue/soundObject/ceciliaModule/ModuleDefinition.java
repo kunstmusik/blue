@@ -21,13 +21,12 @@
 package blue.soundObject.ceciliaModule;
 
 import electric.xml.Element;
-import java.io.Serializable;
 
 /**
  * @author steven
  * 
  */
-public class ModuleDefinition implements Serializable {
+public class ModuleDefinition {
     public String info = "";
 
     public String tk_interface = "";
@@ -39,6 +38,18 @@ public class ModuleDefinition implements Serializable {
     public String quad = "";
 
     public String score = "";
+
+    public ModuleDefinition(){
+    }
+
+    public ModuleDefinition(ModuleDefinition md){
+        info = md.info;
+        tk_interface = md.tk_interface;
+        mono = md.mono;
+        stereo = md.stereo;
+        quad = md.quad;
+        score = md.score;
+    }
 
     public static ModuleDefinition loadFromXML(Element data) {
         ModuleDefinition moduleDefinition = new ModuleDefinition();

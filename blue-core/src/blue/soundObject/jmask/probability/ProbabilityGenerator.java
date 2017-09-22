@@ -19,14 +19,12 @@
  */
 package blue.soundObject.jmask.probability;
 
+import blue.DeepCopyable;
 import electric.xml.Element;
-import java.io.Serializable;
 
-public interface ProbabilityGenerator extends Serializable {
+public interface ProbabilityGenerator extends DeepCopyable<ProbabilityGenerator> {
 
     public String getName();
-
-//    public JComponent getEditor();
 
     public double getValue(double time, java.util.Random rnd);
 

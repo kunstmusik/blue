@@ -37,10 +37,10 @@ public class ScoreUtilitiesTest extends TestCase {
         testScore.append("i1 0 2 3 4 5 ;garbage\n");
         testScore.append("i1 + 2 3 4 5\n");
 
-        for(int i = 0; i < 200000; i++) {
+        for (int i = 0; i < 200000; i++) {
             testScore.append("i1 + 2 3 4 5 6 7 8 [ 1.34 + 34 ] \n");
         }
-        
+
         NoteList nl = null;
 
         // System.out.println(testScore.toString());
@@ -83,7 +83,7 @@ public class ScoreUtilitiesTest extends TestCase {
         String testScore = "i1 0 2 3 4 5 ; comment";
 
         String testScore2 = "i1 0 2 3 4 5 /* comment \n test test */i";
-        
+
         NoteList nl = null;
 
         try {
@@ -95,7 +95,7 @@ public class ScoreUtilitiesTest extends TestCase {
         assertNotNull(nl);
         assertEquals(1, nl.size());
         assertEquals(6, nl.get(0).getPCount());
-        assertEquals("5", nl.get(0).getPField(6)); 
+        assertEquals("5", nl.get(0).getPField(6));
 
         try {
             nl = ScoreUtilities.getNotes(testScore2);
@@ -106,16 +106,15 @@ public class ScoreUtilitiesTest extends TestCase {
         assertNotNull(nl);
         assertEquals(1, nl.size());
         assertEquals(6, nl.get(0).getPCount());
-        assertEquals("5", nl.get(0).getPField(6)); 
+        assertEquals("5", nl.get(0).getPField(6));
     }
 
     public void testScoreCarry() {
 
+        String testScore = "i1 0 2 3 4 5\n"
+                + "i1.1 0 .\n"
+                + "i1 0 .";
 
-        String testScore = "i1 0 2 3 4 5\n" +
-            "i1.1 0 .\n" +
-            "i1 0 .";
-        
         NoteList nl = null;
 
         try {
@@ -129,5 +128,34 @@ public class ScoreUtilitiesTest extends TestCase {
         assertEquals(6, nl.get(1).getPCount());
         assertEquals(6, nl.get(2).getPCount());
 
+    }
+
+    public void testNGenScore() {
+        String testScore = ";I-block #1 (i1):\n"
+                + "i1    0.000  0.010     0.000   100.000\n"
+                + "i1    0.010  0.010     0.111   100.000\n"
+                + "i1    0.020  0.010     0.222   100.000\n"
+                + "i1    0.030  0.010     0.333   100.000\n"
+                + "i1    0.040  0.010     0.444   100.000\n"
+                + "i1    0.050  0.010     0.556   100.000\n"
+                + "i1    0.060  0.010     0.667   100.000\n"
+                + "i1    0.070  0.010     0.778   100.000\n"
+                + "i1    0.080  0.010     0.889   100.000\n"
+                + "i1    0.090  0.010     1.000   100.000\n"
+                + "\n"
+                + "e\n";
+
+
+        NoteList nl = null;
+
+        try {
+            nl = ScoreUtilities.getNotes(testScore);
+        } catch (NoteParseException ex) {
+            ex.printStackTrace();
+        }
+
+        assertNotNull(nl);
+        assertEquals(10, nl.size());
+        assertEquals(5, nl.get(0).getPCount());
     }
 }

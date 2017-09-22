@@ -20,7 +20,6 @@
 package blue.mixer;
 
 import blue.automation.Parameter;
-import blue.utility.ObjectUtilities;
 import electric.xml.Element;
 import junit.framework.TestCase;
 import org.apache.commons.lang3.builder.ToStringBuilder;
@@ -29,7 +28,8 @@ public class MixerTest extends TestCase {
     
     public void testSaveParam() {
         Parameter p = new Parameter();
-        Parameter clone = (Parameter) ObjectUtilities.clone(p);
+        Parameter clone = new Parameter(p);
+        System.out.println(p +":"+clone);
         assertEquals(p, clone);
     }
     
@@ -49,7 +49,7 @@ public class MixerTest extends TestCase {
             mixer.getSubChannels().add(channel);
         }
 
-        Mixer clone = (Mixer) ObjectUtilities.clone(mixer);
+        Mixer clone = new Mixer(mixer);
 
         boolean isEqual = mixer.equals(clone);
 
@@ -69,7 +69,7 @@ public class MixerTest extends TestCase {
 
         Element elem1 = mixer.saveAsXML();
 
-        Element elem2 = (clone).saveAsXML();
+        Element elem2 = clone.saveAsXML();
 
         assertEquals(elem1.getTextString(), elem2.getTextString());
 

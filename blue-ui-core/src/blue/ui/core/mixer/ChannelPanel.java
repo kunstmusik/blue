@@ -445,11 +445,18 @@ public class ChannelPanel extends javax.swing.JPanel implements
 
     private void postListMouseClicked(java.awt.event.MouseEvent evt) {// GEN-FIRST:event_postListMouseClicked
         if (UiUtilities.isRightMouseButton(evt)) {
+
+            int index = postList.locationToIndex(evt.getPoint());
+            if(postList.getSelectedIndex() != index) {
+                postList.setSelectedIndex(index);
+            }
+
             EffectsPopup popup = EffectsPopup.getInstance();
             popup.setEffectsChain(this.channel.getPostEffects(), postList
                     .getSelectedIndex());
             popup.setComboBoxModel(outputList.getModel());
             popup.setMaster(isMaster());
+            popup.setListSelectionModel(postList.getSelectionModel());
 
             popup.show(postList, evt.getX(), evt.getY());
         } else if (SwingUtilities.isLeftMouseButton(evt)
@@ -489,11 +496,18 @@ public class ChannelPanel extends javax.swing.JPanel implements
     private void preListMouseClicked(java.awt.event.MouseEvent evt) {// GEN-FIRST:event_preListMouseClicked
 
         if (UiUtilities.isRightMouseButton(evt)) {
+
+            int index = preList.locationToIndex(evt.getPoint());
+            if(preList.getSelectedIndex() != index) {
+                preList.setSelectedIndex(index);
+            }
+
             EffectsPopup popup = EffectsPopup.getInstance();
             popup.setEffectsChain(this.channel.getPreEffects(), preList
                     .getSelectedIndex());
             popup.setComboBoxModel(outputList.getModel());
             popup.setMaster(isMaster());
+            popup.setListSelectionModel(preList.getSelectionModel());
 
             popup.show(preList, evt.getX(), evt.getY());
         } else if (SwingUtilities.isLeftMouseButton(evt)

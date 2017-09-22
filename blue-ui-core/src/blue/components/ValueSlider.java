@@ -34,7 +34,7 @@ import javax.swing.event.ChangeListener;
 
 public class ValueSlider extends JSlider {
 
-    private float min, max;
+    private double min, max;
 
     private int resolution;
 
@@ -94,39 +94,39 @@ public class ValueSlider extends JSlider {
      * @param value
      *            the value
      */
-    public void set(float min, float max, float value) {
+    public void set(double min, double max, double value) {
         this.min = min;
         this.max = max;
         setValue(value);
     }
 
     /**
-     * Set the slider minimum as a float.
+     * Set the slider minimum as a double.
      * 
      * @param min
      *            the min value
      */
-    public void setMinimum(float min) {
+    public void setMinimum(double min) {
         this.min = min;
     }
 
     /**
-     * Set the slider maximum as a float.
+     * Set the slider maximum as a double.
      * 
      * @param max
      *            the max value
      */
-    public void setMaximum(float max) {
+    public void setMaximum(double max) {
         this.max = max;
     }
 
     /**
-     * Set the slider value as a float.
+     * Set the slider value as a double.
      * 
      * @param value
      *            the value
      */
-    public void setValue(float value) {
+    public void setValue(double value) {
         if (value < min) {
             value = min;
         }
@@ -134,17 +134,17 @@ public class ValueSlider extends JSlider {
             value = max;
         }
 
-        int ival = floatToInt(min, max, value, resolution);
+        int ival = doubleToInt(min, max, value, resolution);
         super.setValue(ival);
     }
 
     /**
-     * Get the slider value as a float.
+     * Get the slider value as a double.
      * 
      * @return the value
      */
-    public float getFloat() {
-        float value = intToFloat(resolution, getValue(), min, max);
+    public double getFloat() {
+        double value = intToFloat(resolution, getValue(), min, max);
         return value;
     }
 
@@ -160,21 +160,21 @@ public class ValueSlider extends JSlider {
     }
 
     /**
-     * Convenience method to convert float to int.
+     * Convenience method to convert double to int.
      */
-    private int floatToInt(float min, float max, float val, int resolution) {
+    private int doubleToInt(double min, double max, double val, int resolution) {
 
-        float distance = max - min;
+        double distance = max - min;
         int ival = (int) (((val - min) / distance) * resolution);
         return ival;
     }
 
     /**
-     * Convenience method to convert int to float.
+     * Convenience method to convert int to double.
      */
-    private float intToFloat(int resolution, int ival, float min, float max) {
-        float distance = max - min;
-        float val = (ival * distance / resolution) + min;
+    private double intToFloat(int resolution, int ival, double min, double max) {
+        double distance = max - min;
+        double val = (ival * distance / resolution) + min;
 
         return val;
     }

@@ -22,8 +22,6 @@ package blue.ui.core.mixer;
 
 import blue.BlueSystem;
 import blue.mixer.*;
-import blue.ui.core.mixer.EffectCategory;
-import blue.ui.core.mixer.EffectsLibrary;
 import blue.utility.ListUtil;
 import electric.xml.Document;
 import electric.xml.Element;
@@ -32,7 +30,6 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
@@ -52,7 +49,7 @@ import javax.swing.tree.TreePath;
  * 
  */
 
-public class EffectsLibrary implements Serializable, TreeModel {
+public class EffectsLibrary implements TreeModel {
     private static EffectsLibrary library = null;
 
     EffectCategory rootEffectCategory = new EffectCategory();

@@ -11,7 +11,7 @@
   </screenshot>
 
   <para>
-    The Mixer system in blue allows for graphically editing levels for
+    The Mixer system in Blue allows for graphically editing levels for
     instruments, applying pre- and post-fader effects, and routing and mixing of
     signals through subchannels.
   </para>
@@ -88,7 +88,7 @@
     </para>
 
     <para>
-      However, since blue does not bind music information on a SoundLayer to an
+      However, since Blue does not bind music information on a SoundLayer to an
       instrument (you can have heterogenous note data generated in any
       soundObject for any number of instruments, a flexibility which allows for
       soundObjects to be more representative of musical ideas), and nor does it
@@ -97,7 +97,7 @@
     </para>
 
     <para>
-      In blue's Mixer system, Mixer channels are automatically bound to
+      In Blue's Mixer system, Mixer channels are automatically bound to
       instruments by their instrument ID. Binding to ID and not per-instrument
       in the Orchestra allows for the case where users have set multiple
       instruments to the same instrument ID but only having one which is
@@ -140,7 +140,7 @@
       For the instruments in the orchestra to be able to route out to the Mixer,
       a special pseudo-opcode must be used for the output of the instrument,
       entitled "blueMixerOut". You use blueMixerOut in the same way as the outc
-      opcode. If the Mixer is not enabled in the Dialog, when blue goes to
+      opcode. If the Mixer is not enabled in the Dialog, when Blue goes to
       process the instrument, blueMixerOut will be replaced with outc, thus
       making the audio of that instrument directly route out to dac or disk,
       depending on how Csound is set to render. If the Mixer is enabled,
@@ -173,7 +173,7 @@
     <title>Effects</title>
 
     <para>
-      Effects in blue are implemented as User-Defined Opcodes, and understanding
+      Effects in Blue are implemented as User-Defined Opcodes, and understanding
       of how User-Defined Opcodes work in Csound is recommended before creating
       Effects. Understanding how UDO's work however is not necessary if one
       simply wants to use Effects.
@@ -187,7 +187,7 @@
         <listitem>
           <para>
             Populate your Effects Library by either creating effects or
-            importing them from blueShare.
+            importing them from BlueShare.
           </para>
         </listitem>
 
@@ -260,7 +260,7 @@
         double-clicking the node in the tree. Selecting an effect by clicking it
         once will populate the editor on the right. The picture above shows the
         User Interface editor for the Effect. Like other BlueSynthBuilder-based
-        editors in blue, clicking Edit Enabled will allow you to move between to
+        editors in Blue, clicking Edit Enabled will allow you to move between to
         edit modes, one in which you can add, remove, and move around widgets,
         and another where you can interact with the widgets (useful for setting
         an initial value for the Effect.)
@@ -294,7 +294,7 @@
       <note>
         <title>Note</title>
         <para>
-          blue currently expects Effects to have nchnls number of channels in
+          Blue currently expects Effects to have nchnls number of channels in
           and out where nchnls is the number set by the project.
         </para>
       </note>
@@ -356,8 +356,8 @@
     <title>Code Generation Optimization</title>
 
     <para>
-      blue's mixer system optimizes when generated code for Csound to use. When
-      compiling down to ORC code, blue checks all signal paths to see if any
+      Blue's mixer system optimizes when generated code for Csound to use. When
+      compiling down to ORC code, Blue checks all signal paths to see if any
       path will result in unused audio and if so, will optimize out any code
       that is along that path. The rules for optimization are as follows:
     </para>

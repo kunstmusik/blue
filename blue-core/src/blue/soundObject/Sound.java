@@ -17,49 +17,68 @@
  * Software Foundation Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307
  * USA
  */
-
 package blue.soundObject;
 
+import blue.components.lines.SoundObjectParameterLine;
 import blue.*;
+import blue.automation.Parameter;
+import blue.automation.ParameterList;
+import blue.components.lines.Line;
 import blue.noteProcessor.NoteProcessorChain;
 import blue.orchestra.BlueSynthBuilder;
 import blue.plugin.SoundObjectPlugin;
 import electric.xml.Element;
 import electric.xml.Elements;
-import java.io.Serializable;
 import java.util.Map;
-
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
+import javafx.collections.ListChangeListener;
 
 /**
  * Title: blue Description: an object composition environment for csound
  * Copyright: Copyright (c) 2001 Company: steven yi music
- * 
+ *
  * @author steven yi
  * @created November 11, 2001
  * @version 1.0
  */
-@SoundObjectPlugin(displayName = "Sound", live=false, position = 130)
-public class Sound extends AbstractSoundObject implements Serializable,
-        Cloneable {
+@SoundObjectPlugin(displayName = "Sound", live = false, position = 130)
+public class Sound extends AbstractSoundObject {
 
-//    BSBGraphicInterface graphicInterface;
-//
-//    PresetGroup presetGroup;
-    
     BlueSynthBuilder bsbObj;
-    
-    String instrument;
+    StringProperty comment;
+
+    ListChangeListener<? super Parameter> paramListListener = e -> {
+        while (e.next()) {
+            for (Parameter param : e.getAddedSubList()) {
+                adjustLineType(param);
+            }
+        }
+    };
 
     public Sound() {
         setName("Sound");
-//        instrument = BlueSystem.getString("sound.defaultCode");
-//        graphicInterface = new BSBGraphicInterface();
-//        presetGroup = new PresetGroup();
-        bsbObj = new BlueSynthBuilder();
+        comment = new SimpleStringProperty("");
+        setBlueSynthBuilder(new BlueSynthBuilder());
+    }
+
+    public Sound(Sound sound) {
+        super(sound);
+        comment = new SimpleStringProperty(sound.getComment());
+        setBlueSynthBuilder(new BlueSynthBuilder(sound.bsbObj));
+    }
+
+    protected void adjustLineType(Parameter param) {
+        final Line line = param.getLine();
+        if (!(line instanceof SoundObjectParameterLine)) {
+            final SoundObjectParameterLine soundObjectParameterLine
+                    = new SoundObjectParameterLine(Sound.this, line);
+            param.setLine(soundObjectParameterLine);
+        }
     }
 
     @Override
-    public float getObjectiveDuration() {
+    public double getObjectiveDuration() {
         return subjectiveDuration;
     }
 
@@ -75,36 +94,35 @@ public class Sound extends AbstractSoundObject implements Serializable,
     public BlueSynthBuilder getBlueSynthBuilder() {
         return this.bsbObj;
     }
-    
+
     public void setBlueSynthBuilder(BlueSynthBuilder bsbObj) {
+        if (this.bsbObj != null) {
+            ParameterList paramList = bsbObj.getParameterList();
+            paramList.removeListener(paramListListener);
+        }
+
+        ParameterList paramList = bsbObj.getParameterList();
+        for(Parameter param : paramList) {
+            adjustLineType(param);
+        }
+        paramList.addListener(paramListListener);
+
         this.bsbObj = bsbObj;
     }
-    
-//    public String getText() {
-//        return instrument;
-//    }
-//
-//    public void setText(String text) {
-//        this.instrument = text;
-//    }
-    
-//    public BSBGraphicInterface getGraphicInterface() {
-//        return graphicInterface;
-//    }
-//
-//    public void setGraphicInterface(BSBGraphicInterface graphicInterface) {
-//        this.graphicInterface = graphicInterface;
-//    }
-//
-//    public PresetGroup getPresetGroup() {
-//        return presetGroup;
-//    }
-//
-//    public void setPresetGroup(PresetGroup presetGroup) {
-//        this.presetGroup = presetGroup;
-//    }
 
-    public NoteList generateNotes(int instrumentNumber, float renderStart, float renderEnd) throws SoundObjectException {
+    public final void setComment(String value) {
+        comment.set(value);
+    }
+
+    public final String getComment() {
+        return comment.get();
+    }
+
+    public final StringProperty commentProperty() {
+        return comment;
+    }
+
+    public NoteList generateNotes(int instrumentNumber, double renderStart, double renderEnd) throws SoundObjectException {
         NoteList n = new NoteList();
 
         String noteText = "i" + instrumentNumber + "\t" + startTime + "\t"
@@ -135,12 +153,12 @@ public class Sound extends AbstractSoundObject implements Serializable,
     }
 
     @Override
-    public float getRepeatPoint() {
+    public double getRepeatPoint() {
         return -1.0f;
     }
 
     @Override
-    public void setRepeatPoint(float repeatPoint) {
+    public void setRepeatPoint(double repeatPoint) {
     }
 
     /*
@@ -165,20 +183,14 @@ public class Sound extends AbstractSoundObject implements Serializable,
                     sObj.bsbObj.setInstrumentText(node.getTextString());
                     break;
                 case "instrument":
-                    sObj.bsbObj = (BlueSynthBuilder) 
-                            BlueSynthBuilder.loadFromXML(node);
-//                case "graphicInterface":
-//                    sObj.setGraphicInterface(BSBGraphicInterface.loadFromXML(node));
-//                    break;
-//                case "presetGroup":
-//                    sObj.setPresetGroup(PresetGroup.loadFromXML(node));
-//                    break;
+                    sObj.setBlueSynthBuilder((BlueSynthBuilder) BlueSynthBuilder.loadFromXML(node));
+                    break;
+                case "comment":
+                    sObj.setComment(node.getTextString());
+                    break;
             }
 
         }
- 
-//       
-//        sObj.setText(data.getTextString("instrumentText"));
 
         return sObj;
     }
@@ -191,24 +203,34 @@ public class Sound extends AbstractSoundObject implements Serializable,
     @Override
     public Element saveAsXML(Map<Object, String> objRefMap) {
         Element retVal = SoundObjectUtilities.getBasicXML(this);
-
         retVal.addElement(bsbObj.saveAsXML());
-//        retVal.addElement("instrumentText").setText(this.getText());
-//        retVal.addElement(graphicInterface.saveAsXML());
-//        retVal.addElement(presetGroup.saveAsXML());
-        
+        retVal.addElement("comment").setText(getComment());
         return retVal;
     }
 
     @Override
-    public NoteList generateForCSD(CompileData compileData, float startTime, 
-            float endTime) throws SoundObjectException {
-        
-//        Instrument instr = generateInstrument();
+    public NoteList generateForCSD(CompileData compileData, double startTime,
+            double endTime) throws SoundObjectException {
+
         bsbObj.getParameterList().clearCompilationVarNames();
         int instrNum = compileData.addInstrument(bsbObj);
-        
+
         return generateNotes(instrNum, startTime, endTime);
 
     }
+
+    @Override
+    public Sound deepCopy() {
+        Sound sound = new Sound();
+        sound.subjectiveDuration = this.subjectiveDuration;
+        sound.startTime = this.startTime;
+        sound.name = this.name;
+        sound.backgroundColor = this.backgroundColor;
+        sound.setComment(this.getComment());
+
+        sound.setBlueSynthBuilder(this.bsbObj.deepCopy());
+
+        return sound;
+    }
+
 }

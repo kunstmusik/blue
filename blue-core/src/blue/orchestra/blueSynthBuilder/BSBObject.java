@@ -20,30 +20,46 @@
 
 package blue.orchestra.blueSynthBuilder;
 
-import blue.utility.ObjectUtilities;
+import blue.DeepCopyable;
 import electric.xml.Element;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
-import java.io.Serializable;
 import java.util.Iterator;
 import java.util.Vector;
+import javafx.beans.property.IntegerProperty;
+import javafx.beans.property.SimpleIntegerProperty;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 
 /**
  * @author Steven Yi
  * 
  */
-public abstract class BSBObject implements Serializable, Cloneable {
+public abstract class BSBObject implements DeepCopyable<BSBObject> {
 
     /**
      * Object name should be non-null and unique within BSBGraphicsInterface
      * collection
      */
-    String objectName = "";
+    private StringProperty objectName;
 
     // String label = "";
 
-    int x = 0, y = 0;
+    private IntegerProperty x;
+    private IntegerProperty y;
+
+    public BSBObject() {
+        x = new SimpleIntegerProperty(0);
+        y = new SimpleIntegerProperty(0);
+        objectName = new SimpleStringProperty("");
+    }
+
+    public BSBObject(BSBObject bsbObj) {
+        x = new SimpleIntegerProperty(bsbObj.getX());
+        y = new SimpleIntegerProperty(bsbObj.getY());
+        objectName = new SimpleStringProperty(bsbObj.getObjectName());
+    }
 
     transient Vector listeners = null;
 
@@ -51,41 +67,12 @@ public abstract class BSBObject implements Serializable, Cloneable {
 
     transient UniqueNameManager unm = null;
 
-    /**
-     * @return Returns the x.
-     */
-    public int getX() {
-        return x;
-    }
-
-    /**
-     * @param x
-     *            The x to set.
-     */
-    public void setX(int x) {
-        this.x = x;
-    }
-
-    /**
-     * @return Returns the y.
-     */
-    public int getY() {
-        return y;
-    }
-
-    /**
-     * @param y
-     *            The y to set.
-     */
-    public void setY(int y) {
-        this.y = y;
-    }
 
     /**
      * @return Returns the objectName.
      */
     public String getObjectName() {
-        return objectName;
+        return objectName.get();
     }
 
     /**
@@ -93,7 +80,7 @@ public abstract class BSBObject implements Serializable, Cloneable {
      *            The objectName to set.
      */
     public void setObjectName(String objectName) {
-        String oldName = this.objectName;
+        String oldName = this.objectName.get();
 
         if (oldName == objectName || oldName.equals(objectName)) {
             return;
@@ -106,12 +93,35 @@ public abstract class BSBObject implements Serializable, Cloneable {
             }
         }
 
-        this.objectName = objectName;
+        this.objectName.set(objectName);
+    }
 
-        if (propListeners != null) {
-            propListeners.firePropertyChange("objectName", oldName,
-                    this.objectName);
-        }
+    public StringProperty objectNameProperty() {
+        return objectName;
+    }
+
+    public final void setX(int value) {
+        x.set(value);
+    }
+
+    public final int getX() {
+        return x.get();
+    }
+
+    public final IntegerProperty xProperty() {
+        return x;
+    }
+
+    public final void setY(int value) {
+        y.set(value);
+    }
+
+    public final int getY() {
+        return y.get();
+    }
+
+    public final IntegerProperty yProperty() {
+        return y;
     }
 
     /**
@@ -149,7 +159,7 @@ public abstract class BSBObject implements Serializable, Cloneable {
 
         name = (name == null) ? "" : name;
 
-        bsbObj.setObjectName(name);
+        bsbObj.objectName.set(name);
         bsbObj.setX(Integer.parseInt(data.getTextString("x")));
         bsbObj.setY(Integer.parseInt(data.getTextString("y")));
     }
@@ -170,11 +180,6 @@ public abstract class BSBObject implements Serializable, Cloneable {
     public abstract String getPresetValue();
 
     public abstract void setPresetValue(String val);
-
-    @Override
-    public Object clone() {
-        return ObjectUtilities.clone(this);
-    }
 
     @Override
     public boolean equals(Object obj) {
@@ -224,4 +229,6 @@ public abstract class BSBObject implements Serializable, Cloneable {
     public void setUniqueNameManager(UniqueNameManager unm) {
         this.unm = unm;
     }
+    
+
 }

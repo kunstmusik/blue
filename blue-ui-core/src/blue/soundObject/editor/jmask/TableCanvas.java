@@ -134,8 +134,8 @@ public class TableCanvas extends JComponent {
         double yVal = selectedPoint.getValue();
         double xVal = selectedPoint.getTime();
 
-        String xText = "x: " + NumberUtilities.formatFloat((float)(xVal * duration));
-        String yText = "y: " + NumberUtilities.formatFloat((float)yVal);
+        String xText = "x: " + NumberUtilities.formatDouble(xVal * duration);
+        String yText = "y: " + NumberUtilities.formatDouble(yVal);
 
         // Rectangle2D xRect = g2d.getFontMetrics().getStringBounds(xText, g2d);
         // Rectangle2D yRect = g2d.getFontMetrics().getStringBounds(yText, g2d);

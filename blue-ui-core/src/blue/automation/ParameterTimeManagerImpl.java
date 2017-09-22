@@ -27,7 +27,7 @@ import blue.ui.core.render.RealtimeRenderManager;
 public class ParameterTimeManagerImpl implements ParameterTimeManager {
 
     @Override
-    public float getTime() {
+    public double getTime() {
         if (RealtimeRenderManager.getInstance().isAuditioning()) {
             return -1.0f;
         }
@@ -44,7 +44,7 @@ public class ParameterTimeManagerImpl implements ParameterTimeManager {
             return -1.0f;
         }
 
-        float val = data.getRenderStartTime();
+        double val = data.getRenderStartTime();
 
         return val;
 

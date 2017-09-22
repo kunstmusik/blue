@@ -17,7 +17,6 @@
  * the Free Software Foundation Inc., 59 Temple Place - Suite 330,
  * Boston, MA  02111-1307 USA
  */
-
 package blue.noteProcessor;
 
 import blue.BlueSystem;
@@ -26,18 +25,25 @@ import blue.soundObject.Note;
 import blue.soundObject.NoteList;
 import blue.soundObject.NoteParseException;
 import electric.xml.Element;
-import java.io.Serializable;
 
 /**
  * @author steven
- * 
+ *
  */
-@NoteProcessorPlugin(displayName="LineAddProcessor", position = 140)
-public class LineAddProcessor implements NoteProcessor, Serializable {
+@NoteProcessorPlugin(displayName = "LineAddProcessor", position = 140)
+public class LineAddProcessor implements NoteProcessor {
 
     private String lineAddString = "0 0";
 
     private int pfield = 4;
+
+    public LineAddProcessor() {
+    }
+
+    public LineAddProcessor(LineAddProcessor lap) {
+        lineAddString = lap.lineAddString;
+        pfield = lap.pfield;
+    }
 
     /*
      * (non-Javadoc)
@@ -47,8 +53,8 @@ public class LineAddProcessor implements NoteProcessor, Serializable {
     @Override
     public void processNotes(NoteList in) throws NoteProcessorException {
         Note temp;
-        float addVal = 0f;
-        float oldVal = 0f;
+        double addVal = 0f;
+        double oldVal = 0f;
         ValueTimeMapper tm = ValueTimeMapper
                 .createValueTimeMapper(this.lineAddString);
 
@@ -61,11 +67,11 @@ public class LineAddProcessor implements NoteProcessor, Serializable {
         for (int i = 0; i < in.size(); i++) {
             temp = in.get(i);
             try {
-                oldVal = Float.parseFloat(temp.getPField(this.pfield));
+                oldVal = Double.parseDouble(temp.getPField(this.pfield));
                 addVal = tm.getValueForBeat(temp.getStartTime());
             } catch (NumberFormatException ex) {
                 throw new NoteProcessorException(this, BlueSystem
-                        .getString("noteProcessorException.pfieldNotFloat"),
+                        .getString("noteProcessorException.pfieldNotDouble"),
                         pfield);
             } catch (Exception ex) {
                 throw new NoteProcessorException(this, BlueSystem
@@ -73,12 +79,12 @@ public class LineAddProcessor implements NoteProcessor, Serializable {
                         pfield);
             }
 
-            if (Float.isNaN(addVal)) {
+            if (Double.isNaN(addVal)) {
                 throw new NoteProcessorException(this, BlueSystem
                         .getString("noteProcessorException.noteBeatErr"),
                         pfield);
             }
-            temp.setPField(Float.toString(oldVal + addVal), this.pfield);
+            temp.setPField(Double.toString(oldVal + addVal), this.pfield);
 
         }
     }
@@ -152,6 +158,11 @@ public class LineAddProcessor implements NoteProcessor, Serializable {
         retVal.addElement("lineAddString").setText(this.getLineAddString());
 
         return retVal;
+    }
+
+    @Override
+    public LineAddProcessor deepCopy() {
+        return new LineAddProcessor(this);
     }
 
 }

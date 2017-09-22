@@ -17,11 +17,16 @@ import electric.xml.Element;
  */
 
 @NoteProcessorPlugin(displayName="TimeWarpProcessor", position = 130)
-public class TimeWarpProcessor implements NoteProcessor, java.io.Serializable {
+public class TimeWarpProcessor implements NoteProcessor {
 
-    private String timeWarpString = "0 60";
+    private String timeWarpString; 
 
     public TimeWarpProcessor() {
+        timeWarpString = "0 60";
+    }
+
+    public TimeWarpProcessor(TimeWarpProcessor twp) {
+        timeWarpString = twp.timeWarpString;
     }
 
     /*
@@ -39,7 +44,7 @@ public class TimeWarpProcessor implements NoteProcessor, java.io.Serializable {
                     .getString("noteProcessorException.tempoStringErr"));
         }
 
-        float newStart, newEnd;
+        double newStart, newEnd;
 
         for (int i = 0; i < in.size(); i++) {
             temp = in.get(i);
@@ -129,6 +134,11 @@ public class TimeWarpProcessor implements NoteProcessor, java.io.Serializable {
         retVal.addElement("timeWarpString").setText(this.getTimeWarpString());
 
         return retVal;
+    }
+
+    @Override
+    public TimeWarpProcessor deepCopy() {
+        return new TimeWarpProcessor(this);
     }
 
 }

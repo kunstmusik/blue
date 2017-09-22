@@ -21,16 +21,22 @@ package blue.ui.core.udo;
 
 import blue.BlueSystem;
 import blue.gui.DragManager;
+import blue.settings.GeneralSettings;
 import blue.udo.OpcodeList;
 import blue.udo.UDOCategory;
 import blue.udo.UserDefinedOpcode;
+import blue.ui.utilities.FileChooserManager;
 import blue.ui.utilities.UiUtilities;
-import blue.utility.ObjectUtilities;
+import blue.utility.CSDUtility;
+import blue.utility.TextUtilities;
+import blue.utility.UDOUtilities;
+import electric.xml.Document;
+import electric.xml.Element;
+import electric.xml.ParseException;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.Insets;
 import java.awt.Point;
-import java.awt.Window;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.dnd.DnDConstants;
@@ -45,16 +51,22 @@ import java.awt.dnd.DropTargetAdapter;
 import java.awt.dnd.DropTargetDragEvent;
 import java.awt.dnd.DropTargetDropEvent;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.List;
+import javafx.stage.FileChooser;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
+import javax.swing.JMenu;
 import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
@@ -66,21 +78,28 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
+import org.openide.util.Exceptions;
 
 /**
  * @author steven
  */
 public class OpcodeListEditPanel extends JComponent {
+
+    private static final String EXPORT_BLUE_UDO_DIALOG = "blue.udo.export";
+    private static final String EXPORT_CSOUND_UDO_DIALOG = "csound.udo.export";
+    private static final String IMPORT_BLUE_UDO_DIALOG = "blue.udo.import";
+    private static final String IMPORT_CSOUND_UDO_DIALOG = "csound.udo.import";
+
     UDORepositoryBrowser browser = null;
 
+    JPopupMenu importPopup = new JPopupMenu();
     UDOPopup popup = new UDOPopup();
 
     JTable table;
 
     JLabel label;
-    
-    OpcodeList opcodeList = null;
 
+    OpcodeList opcodeList = null;
 
     public OpcodeListEditPanel() {
 
@@ -107,12 +126,22 @@ public class OpcodeListEditPanel extends JComponent {
             addUDO();
         });
 
+        JMenuItem importBlueUDO = new JMenuItem("Import Blue UDO");
+        importBlueUDO.addActionListener(ae -> importBlueUdo());
+
+        JMenuItem importCsoundUDO = new JMenuItem("Import Csound UDO");
+        importCsoundUDO.addActionListener(ae -> importCsoundUdo());
+
+        importPopup.add(importBlueUDO);
+        importPopup.add(importCsoundUDO);
+
         JButton importButton = new JButton("I");
         importButton.setMargin(new Insets(1, 6, 1, 7));
         importButton
-                .setToolTipText("Import User-Defined Opcode from Repository");
+                .setToolTipText("Import User-Defined Opcode");
         importButton.addActionListener((ActionEvent e) -> {
-            importUDO();
+            importPopup.show(importButton, importButton.getX(),
+                    importButton.getHeight());
         });
 
         JButton removeButton = new JButton("-");
@@ -129,7 +158,7 @@ public class OpcodeListEditPanel extends JComponent {
             int[] rows = table.getSelectedRows();
             if (rows.length > 0 && rows[0] > 0) {
                 opcodeList.pushUpUDO(rows);
-                
+
                 table.setRowSelectionInterval(rows[0] - 1,
                         rows[rows.length - 1] - 1);
             }
@@ -143,7 +172,7 @@ public class OpcodeListEditPanel extends JComponent {
             if (rows.length > 0
                     && rows[rows.length - 1] < (opcodeList.size() - 1)) {
                 opcodeList.pushDownUDO(rows);
-                
+
                 table.setRowSelectionInterval(rows[0] + 1,
                         rows[rows.length - 1] + 1);
             }
@@ -179,6 +208,26 @@ public class OpcodeListEditPanel extends JComponent {
 
         new OpcodeListDragSource(table, DnDConstants.ACTION_COPY);
         new OpcodeListDropTarget(table);
+
+        File defaultFile = new File(GeneralSettings.getInstance()
+                .getDefaultDirectory()
+                + File.separator + "default.blueUDO");
+
+        File defaultCsoundUdoFile = new File(GeneralSettings.getInstance()
+                .getDefaultDirectory()
+                + File.separator + "default.udo");
+
+        final FileChooserManager fcm = FileChooserManager.getDefault();
+
+        fcm.addFilter(IMPORT_BLUE_UDO_DIALOG,
+                new FileChooser.ExtensionFilter("Blue UDO File", "*.blueUDO"));
+        fcm.setDialogTitle(IMPORT_BLUE_UDO_DIALOG, "Import Blue User-Defined Opcode");
+        fcm.setSelectedFile(IMPORT_BLUE_UDO_DIALOG, defaultFile);
+
+        fcm.addFilter(IMPORT_CSOUND_UDO_DIALOG,
+                new FileChooser.ExtensionFilter("Csound File",  "*.udo", "*.orc", "*.csd"));
+        fcm.setDialogTitle(IMPORT_CSOUND_UDO_DIALOG, "Import Csound User-Defined Opcodes");
+        fcm.setSelectedFile(IMPORT_CSOUND_UDO_DIALOG, defaultCsoundUdoFile);
     }
 
     public void setTopBarVisible(boolean visible) {
@@ -190,29 +239,28 @@ public class OpcodeListEditPanel extends JComponent {
     }
 
     /**
-     * 
+     *
      */
-    protected void importUDO() {
-        if (opcodeList == null) {
-            return;
-        }
-
-        if (browser == null) {
-            browser = new UDORepositoryBrowser((Window) SwingUtilities
-                    .getRoot(this));
-        }
-
-        browser.setOpcodeList(opcodeList);
-        browser.setVisible(true);
-        browser.refreshCategoriesList();
-    }
-
+//    protected void importUDO() {
+//        if (opcodeList == null) {
+//            return;
+//        }
+//
+//        if (browser == null) {
+//            browser = new UDORepositoryBrowser((Window) SwingUtilities
+//                    .getRoot(this));
+//        }
+//
+//        browser.setOpcodeList(opcodeList);
+//        browser.setVisible(true);
+//        browser.refreshCategoriesList();
+//    }
     public void addListSelectionListener(ListSelectionListener listener) {
         table.getSelectionModel().addListSelectionListener(listener);
     }
 
     /**
-     * 
+     *
      */
     protected void removeUDO() {
         if (opcodeList == null) {
@@ -220,14 +268,14 @@ public class OpcodeListEditPanel extends JComponent {
         }
 
         int[] indexes = table.getSelectedRows();
-        
+
         if (indexes.length > 0) {
             opcodeList.removeOpcodes(indexes);
         }
     }
 
     /**
-     * 
+     *
      */
     protected void addUDO() {
         if (opcodeList != null) {
@@ -271,13 +319,13 @@ public class OpcodeListEditPanel extends JComponent {
      */
     public UserDefinedOpcode[] getSelectedUDOs() {
         int[] indexes = table.getSelectedRows();
-        
+
         if (indexes.length == 0) {
             return null;
         }
 
         UserDefinedOpcode[] udos = new UserDefinedOpcode[indexes.length];
-        for(int i = 0; i < indexes.length; i++) {
+        for (int i = 0; i < indexes.length; i++) {
             udos[i] = opcodeList.getOpcode(indexes[i]);
         }
         return udos;
@@ -294,13 +342,13 @@ public class OpcodeListEditPanel extends JComponent {
     protected void copyUDO() {
         UserDefinedOpcode[] udos = getSelectedUDOs();
         if (udos != null) {
-            
+
             UserDefinedOpcode[] copies = new UserDefinedOpcode[udos.length];
-            
-            for(int i = 0; i < udos.length; i++) {
-                copies[i] = (UserDefinedOpcode)ObjectUtilities.clone(udos[i]);
+
+            for (int i = 0; i < udos.length; i++) {
+                copies[i] = new UserDefinedOpcode(udos[i]);
             }
-            
+
             UDOBuffer.getInstance().setBufferedObject(
                     copies);
         }
@@ -314,41 +362,163 @@ public class OpcodeListEditPanel extends JComponent {
             return;
         }
         handlePaste(obj);
-        
+
     }
 
     private void handlePaste(Object obj) {
-        if(obj instanceof UserDefinedOpcode) {
-            
-            opcodeList.addOpcode((UserDefinedOpcode)ObjectUtilities.clone(obj));
-            
-        } else if(obj instanceof UserDefinedOpcode[]) {
-            
-            UserDefinedOpcode[] udos = (UserDefinedOpcode[])obj;
+        if (obj instanceof UserDefinedOpcode) {
+
+            opcodeList.addOpcode(new UserDefinedOpcode((UserDefinedOpcode) obj));
+
+        } else if (obj instanceof UserDefinedOpcode[]) {
+
+            UserDefinedOpcode[] udos = (UserDefinedOpcode[]) obj;
 
             UserDefinedOpcode[] copies = new UserDefinedOpcode[udos.length];
 
-            for(int i = 0; i < udos.length; i++) {
-                copies[i] = (UserDefinedOpcode)ObjectUtilities.clone(udos[i]);
+            for (int i = 0; i < udos.length; i++) {
+                copies[i] = new UserDefinedOpcode(udos[i]);
             }
 
             opcodeList.addOpcodes(copies);
         } else if (obj instanceof UDOCategory) {
-            UDOCategory cat = (UDOCategory)obj;
-            
+            UDOCategory cat = (UDOCategory) obj;
+
             ArrayList<UserDefinedOpcode> udos = cat.getAllUserDefinedOpcodes();
-            
+
             UserDefinedOpcode[] copies = new UserDefinedOpcode[udos.size()];
 
-            for(int i = 0; i < udos.size(); i++) {
-                copies[i] = (UserDefinedOpcode)ObjectUtilities.clone(udos.get(i));
+            for (int i = 0; i < udos.size(); i++) {
+                copies[i] = new UserDefinedOpcode(udos.get(i));
             }
-            
+
             opcodeList.addOpcodes(copies);
         }
     }
 
+    protected void exportCsoundUdo() {
+        UserDefinedOpcode[] selected = getSelectedUDOs();
+
+        if (selected == null || selected.length != 1) {
+            return;
+        }
+
+        File retVal = FileChooserManager.getDefault().showSaveDialog(
+                EXPORT_CSOUND_UDO_DIALOG,
+                SwingUtilities.getRoot(OpcodeListEditPanel.this));
+
+        if (retVal != null) {
+
+            File f = retVal;
+
+            if (f.exists()) {
+                int overWrite = JOptionPane
+                        .showConfirmDialog(
+                                SwingUtilities
+                                        .getRoot(OpcodeListEditPanel.this),
+                                "Please confirm you would like to overwrite this file.");
+
+                if (overWrite != JOptionPane.OK_OPTION) {
+                    return;
+                }
+            }
+
+            String udoText = selected[0].generateCode();
+
+            try (PrintWriter out = new PrintWriter(new FileWriter(f))) {
+                out.print(udoText);
+            } catch (IOException ex) {
+                ex.printStackTrace();
+            }
+
+        }
+    }
+
+    protected void exportBlueUdo() {
+        UserDefinedOpcode[] selected = getSelectedUDOs();
+
+        if (selected == null || selected.length != 1) {
+            return;
+        }
+
+        File retVal = FileChooserManager.getDefault().showSaveDialog(
+                EXPORT_BLUE_UDO_DIALOG,
+                SwingUtilities.getRoot(OpcodeListEditPanel.this));
+
+        if (retVal != null) {
+
+            File f = retVal;
+
+            if (f.exists()) {
+                int overWrite = JOptionPane
+                        .showConfirmDialog(
+                                SwingUtilities
+                                        .getRoot(OpcodeListEditPanel.this),
+                                "Please confirm you would like to overwrite this file.");
+
+                if (overWrite != JOptionPane.OK_OPTION) {
+                    return;
+                }
+            }
+
+            Element node = selected[0].saveAsXML();
+
+            try (PrintWriter out = new PrintWriter(new FileWriter(f))) {
+                out.print(node.toString());
+            } catch (IOException ex) {
+                ex.printStackTrace();
+            }
+        }
+    }
+
+    protected void importBlueUdo() {
+
+        List<File> retVal = FileChooserManager.getDefault().showOpenDialog(
+                IMPORT_BLUE_UDO_DIALOG,
+                SwingUtilities.getRoot(OpcodeListEditPanel.this));
+
+        if (retVal != null && retVal.size() == 1) {
+
+            File f = retVal.get(0);
+
+            if (f.exists()) {
+                try {
+                    String text = TextUtilities.getTextFromFile(f);
+                    Document d = new Document(f);
+                    UserDefinedOpcode udo = UserDefinedOpcode.loadFromXML(d.getRoot());
+                    opcodeList.add(udo);
+                } catch (Exception ex) {
+                    Exceptions.printStackTrace(ex);
+                }
+            }
+
+        }
+    }
+
+    protected void importCsoundUdo() {
+        List<File> retVal = FileChooserManager.getDefault().showOpenDialog(
+                IMPORT_CSOUND_UDO_DIALOG,
+                SwingUtilities.getRoot(OpcodeListEditPanel.this));
+
+        if (retVal != null && retVal.size() == 1) {
+
+            File f = retVal.get(0);
+
+            if (f.exists()) {
+                try {
+                    String text = TextUtilities.getTextFromFile(f);
+                    OpcodeList opList = UDOUtilities.parseUDOText(text);
+                    opcodeList.addAll(opList);
+                } catch (Exception ex) {
+                    Exceptions.printStackTrace(ex);
+                }
+            }
+
+        }
+    }
+
     class UDOPopup extends JPopupMenu {
+
         public UDOPopup() {
             JMenuItem cut = new JMenuItem();
             cut.setText(BlueSystem.getString("common.cut"));
@@ -368,9 +538,28 @@ public class OpcodeListEditPanel extends JComponent {
                 pasteUDO();
             });
 
+            final JMenu export = new JMenu("Export");
+
+            final JMenuItem exportBlueUdo = new JMenuItem();
+            exportBlueUdo.setText("Blue UDO");
+            exportBlueUdo.addActionListener((ActionEvent ae) -> {
+                exportBlueUdo();
+            });
+
+            final JMenuItem exportCsoundUdo = new JMenuItem();
+            exportCsoundUdo.setText("Csound UDO");
+            exportCsoundUdo.addActionListener((ActionEvent ae) -> {
+                exportCsoundUdo();
+            });
+
+            export.add(exportBlueUdo);
+            export.add(exportCsoundUdo);
+
             this.add(cut);
             this.add(copy);
             this.add(paste);
+            this.addSeparator();
+            this.add(export);
 
             this.addPopupMenuListener(new PopupMenuListener() {
 
@@ -380,9 +569,12 @@ public class OpcodeListEditPanel extends JComponent {
                     Object obj = buffer.getBufferedObject();
 
                     paste.setEnabled(obj != null
-                            && (obj instanceof UserDefinedOpcode[] || 
-                            obj instanceof UserDefinedOpcode ||
-                            obj instanceof UDOCategory));
+                            && (obj instanceof UserDefinedOpcode[]
+                            || obj instanceof UserDefinedOpcode
+                            || obj instanceof UDOCategory));
+
+                    UserDefinedOpcode[] selected = getSelectedUDOs();
+                    export.setEnabled(selected != null && selected.length == 1);
                 }
 
                 @Override
@@ -394,6 +586,26 @@ public class OpcodeListEditPanel extends JComponent {
                 }
 
             });
+
+            File defaultFile = new File(GeneralSettings.getInstance()
+                    .getDefaultDirectory()
+                    + File.separator + "default.blueUDO");
+
+            File defaultCsoundUdoFile = new File(GeneralSettings.getInstance()
+                    .getDefaultDirectory()
+                    + File.separator + "default.udo");
+
+            final FileChooserManager fcm = FileChooserManager.getDefault();
+
+            fcm.addFilter(EXPORT_BLUE_UDO_DIALOG,
+                    new FileChooser.ExtensionFilter("Blue UDO File", "*.blueUDO"));
+            fcm.setDialogTitle(EXPORT_BLUE_UDO_DIALOG, "Export Blue User-Defined Opcode");
+            fcm.setSelectedFile(EXPORT_BLUE_UDO_DIALOG, defaultFile);
+
+            fcm.addFilter(EXPORT_CSOUND_UDO_DIALOG,
+                    new FileChooser.ExtensionFilter("Csound UDO File", "*.udo"));
+            fcm.setDialogTitle(EXPORT_CSOUND_UDO_DIALOG, "Export Csound User-Defined Opcode");
+            fcm.setSelectedFile(EXPORT_CSOUND_UDO_DIALOG, defaultCsoundUdoFile);
         }
 
     }
@@ -410,7 +622,6 @@ public class OpcodeListEditPanel extends JComponent {
         TransferableUDO transferable;
 
         // Object oldNode;
-
         public OpcodeListDragSource(JTable table, int actions) {
             this.table = table;
             source = new DragSource();
@@ -429,8 +640,7 @@ public class OpcodeListEditPanel extends JComponent {
 
             UserDefinedOpcode udo = opcodeList.getOpcode(index);
 
-            // USE CLONE OF OBJ AS TRANSFERRABLE ISN'T MAKING CLONE (WHY?)
-            Object cloneNode = ObjectUtilities.clone(udo);
+            Object cloneNode = new UserDefinedOpcode(udo);
 
             transferable = new TransferableUDO(cloneNode);
             source.startDrag(dge, null, transferable, this);
@@ -446,6 +656,7 @@ public class OpcodeListEditPanel extends JComponent {
     }
 
     class OpcodeListDropTarget extends DropTargetAdapter {
+
         DropTarget target;
 
         JTable targetTable;
@@ -458,15 +669,15 @@ public class OpcodeListEditPanel extends JComponent {
         @Override
         public void dragEnter(DropTargetDragEvent dtde) {
 
-            if (!dtde.isDataFlavorSupported(TransferableUDO.UDO_FLAVOR) &&
-                    !dtde.isDataFlavorSupported(TransferableUDO.UDO_CAT_FLAVOR)) {
+            if (!dtde.isDataFlavorSupported(TransferableUDO.UDO_FLAVOR)
+                    && !dtde.isDataFlavorSupported(TransferableUDO.UDO_CAT_FLAVOR)) {
                 dtde.rejectDrag();
                 return;
             }
 
             if (DragManager.getDragSource() != targetTable) {
                 dtde.acceptDrag(DnDConstants.ACTION_COPY);
-                
+
             } else {
                 dtde.rejectDrag();
             }
@@ -482,8 +693,8 @@ public class OpcodeListEditPanel extends JComponent {
         public void drop(DropTargetDropEvent dtde) {
             Point pt = dtde.getLocation();
 
-            if (!(dtde.isDataFlavorSupported(TransferableUDO.UDO_FLAVOR) || 
-                    dtde.isDataFlavorSupported(TransferableUDO.UDO_CAT_FLAVOR))
+            if (!(dtde.isDataFlavorSupported(TransferableUDO.UDO_FLAVOR)
+                    || dtde.isDataFlavorSupported(TransferableUDO.UDO_CAT_FLAVOR))
                     || ((dtde.getSourceActions() & DnDConstants.ACTION_COPY) != DnDConstants.ACTION_COPY)) {
                 dtde.rejectDrop();
                 return;

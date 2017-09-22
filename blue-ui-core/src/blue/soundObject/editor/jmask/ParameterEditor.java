@@ -191,7 +191,7 @@ public class ParameterEditor extends javax.swing.JPanel implements PropertyChang
             return;
         }
 
-        for (ParameterEditListener listener : listeners) {
+        for (ParameterEditListener listener : new ArrayList<>(listeners)) {
             listener.parameterEdit(editType, parameterNum, generator);
         }
     }

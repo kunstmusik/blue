@@ -24,11 +24,9 @@ package blue.soundObject.jmask;
 import blue.utility.XMLUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
-import java.io.Serializable;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.Vector;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
@@ -36,8 +34,7 @@ import javax.swing.table.TableModel;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
-public class ItemList implements Generator, Serializable, TableModel,
-        Accumulatable {
+public class ItemList implements Generator, TableModel, Accumulatable {
 
     public static final int CYCLE = 0;
 
@@ -51,13 +48,22 @@ public class ItemList implements Generator, Serializable, TableModel,
 
     private int listType = CYCLE;
 
-    private ArrayList listItems = new ArrayList();
+    private ArrayList<Double> listItems; 
 
     private transient int index = 0;
 
     private transient int direction = 0;
 
     private transient Vector<WeakReference<TableModelListener>> listeners = null;
+
+    public ItemList() {
+        listItems = new ArrayList<>();
+    }
+
+    public ItemList(ItemList il) {
+        listType = il.listType;
+        listItems = new ArrayList<>(il.listItems);
+    }
 
     public static Generator loadFromXML(Element data) {
         ItemList retVal = new ItemList();
@@ -107,9 +113,7 @@ public class ItemList implements Generator, Serializable, TableModel,
 
         Element items = new Element("listItems");
 
-        for (Iterator it = listItems.iterator(); it.hasNext();) {
-            Double item = (Double) it.next();
-
+        for (Double item : listItems) {
             items.addElement("item").setText(item.toString());
         }
 
@@ -132,12 +136,12 @@ public class ItemList implements Generator, Serializable, TableModel,
         double retVal = 0.0;
 
         if (listItems.size() <= 1) {
-            retVal = ((Double) listItems.get(index)).doubleValue();
+            retVal = listItems.get(index);
         } else {
 
             switch (this.getListType()) {
                 case CYCLE:
-                    retVal = ((Double) listItems.get(index)).doubleValue();
+                    retVal = listItems.get(index);
                     index++;
 
                     if (index >= listItems.size()) {
@@ -146,7 +150,7 @@ public class ItemList implements Generator, Serializable, TableModel,
 
                     break;
                 case SWING:
-                    retVal = ((Double) listItems.get(index)).doubleValue();
+                    retVal = listItems.get(index);
 
                     if (direction == 0) {
                         index++;
@@ -167,14 +171,14 @@ public class ItemList implements Generator, Serializable, TableModel,
                     break;
                 case RANDOM:
                     index = (int) (rnd.nextDouble() * listItems.size());
-                    retVal = ((Double) listItems.get(index)).doubleValue();
+                    retVal = listItems.get(index);
 
                     break;
                 case HEAP:
                     if (index == 0) {
                         Collections.shuffle(listItems);
                     }
-                    retVal = ((Double) listItems.get(index)).doubleValue();
+                    retVal = listItems.get(index);
                     index++;
 
                     if (index >= listItems.size()) {
@@ -215,14 +219,14 @@ public class ItemList implements Generator, Serializable, TableModel,
             listeners = new Vector<>();
         }
 
-        for(WeakReference<TableModelListener> ref : listeners) {
-            if(ref.get() == l) {
+        for (WeakReference<TableModelListener> ref : listeners) {
+            if (ref.get() == l) {
                 return;
             }
         }
 
         listeners.add(new WeakReference<>(l));
-        
+
     }
 
     @Override
@@ -261,15 +265,15 @@ public class ItemList implements Generator, Serializable, TableModel,
 
             WeakReference<TableModelListener> found = null;
 
-            for(WeakReference<TableModelListener> ref : listeners) {
-                if(ref.get() == l) {
+            for (WeakReference<TableModelListener> ref : listeners) {
+                if (ref.get() == l) {
                     found = ref;
                     ref.clear();
                     break;
                 }
             }
 
-            if(found != null) {
+            if (found != null) {
                 listeners.remove(found);
             }
         }
@@ -279,7 +283,7 @@ public class ItemList implements Generator, Serializable, TableModel,
     public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
         if (aValue instanceof Double) {
             listItems.remove(rowIndex);
-            listItems.add(rowIndex, aValue);
+            listItems.add(rowIndex, (Double) aValue);
         }
 
         TableModelEvent tme = new TableModelEvent(this, rowIndex);
@@ -290,8 +294,8 @@ public class ItemList implements Generator, Serializable, TableModel,
     private void fireTableUpdated(TableModelEvent tme) {
         if (listeners != null) {
 
-            for(WeakReference<TableModelListener> ref : listeners) {
-                if(ref.get() != null) {
+            for (WeakReference<TableModelListener> ref : listeners) {
+                if (ref.get() != null) {
                     ref.get().tableChanged(tme);
                 }
             }
@@ -299,7 +303,7 @@ public class ItemList implements Generator, Serializable, TableModel,
     }
 
     public void pushDown(int selectedIndex) {
-        Object obj = listItems.remove(selectedIndex + 1);
+        Double obj = listItems.remove(selectedIndex + 1);
         listItems.add(selectedIndex, obj);
 
         TableModelEvent tme = new TableModelEvent(this, selectedIndex,
@@ -309,7 +313,7 @@ public class ItemList implements Generator, Serializable, TableModel,
     }
 
     public void pushUp(int selectedIndex) {
-        Object obj = listItems.remove(selectedIndex);
+        Double obj = listItems.remove(selectedIndex);
         listItems.add(selectedIndex - 1, obj);
 
         TableModelEvent tme = new TableModelEvent(this, selectedIndex - 1,
@@ -334,5 +338,10 @@ public class ItemList implements Generator, Serializable, TableModel,
     @Override
     public String toString() {
         return ToStringBuilder.reflectionToString(this);
+    }
+
+    @Override
+    public ItemList deepCopy() {
+        return new ItemList(this);
     }
 }

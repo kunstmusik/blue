@@ -29,19 +29,19 @@ public class TempoMinMaxDialog extends javax.swing.JDialog {
         return returnStatus;
     }
     
-    public void setValues(float min, float max) {
-        minTextField.setText(Float.toString(min));
-        maxTextField.setText(Float.toString(max));
+    public void setValues(double min, double max) {
+        minTextField.setText(Double.toString(min));
+        maxTextField.setText(Double.toString(max));
         
         truncateRadioButton.setSelected(true);
     }
     
-    public float getMin() {
-        return Float.parseFloat(minTextField.getText());
+    public double getMin() {
+        return Double.parseDouble(minTextField.getText());
     }
     
-    public float getMax() {
-        return Float.parseFloat(maxTextField.getText());
+    public double getMax() {
+        return Double.parseDouble(maxTextField.getText());
     }
     
     public boolean isTruncate() {
@@ -49,11 +49,11 @@ public class TempoMinMaxDialog extends javax.swing.JDialog {
     }
     
     public boolean validateForm() {
-        float min, max;
+        double min, max;
         String error = null;
         
         try {
-            max =  Float.parseFloat(maxTextField.getText().trim());
+            max =  Double.parseDouble(maxTextField.getText().trim());
         } catch (NumberFormatException nfe) {
             showError("Max value was not a number.");
             return false;
@@ -65,7 +65,7 @@ public class TempoMinMaxDialog extends javax.swing.JDialog {
         }
         
         try {
-            min = Float.parseFloat(minTextField.getText().trim());
+            min = Double.parseDouble(minTextField.getText().trim());
         } catch (NumberFormatException nfe) {
             showError("Min value was not a number");
             return false;

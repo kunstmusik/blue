@@ -21,7 +21,6 @@ package blue.orchestra.blueSynthBuilder;
 
 import electric.xml.Element;
 import electric.xml.Elements;
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Iterator;
 import org.apache.commons.lang3.builder.EqualsBuilder;
@@ -29,7 +28,7 @@ import org.apache.commons.lang3.builder.EqualsBuilder;
 /**
  * @author steven
  */
-public class PresetGroup implements Serializable, Comparable<PresetGroup> {
+public class PresetGroup implements Comparable<PresetGroup> {
 
     private String presetGroupName = "Presets";
 
@@ -40,6 +39,23 @@ public class PresetGroup implements Serializable, Comparable<PresetGroup> {
     private String currentPresetUniqueId = null;
 
     private boolean currentPresetModified = false;
+
+    public PresetGroup() {
+    }
+
+    public PresetGroup(PresetGroup presetGroup) {
+        presetGroupName = presetGroup.presetGroupName;
+        currentPresetUniqueId = presetGroup.currentPresetUniqueId;
+        currentPresetModified = presetGroup.currentPresetModified;
+
+        for (PresetGroup group : presetGroup.subGroups) {
+            subGroups.add(new PresetGroup(group));
+        }
+
+        for (Preset preset : presetGroup.presets) {
+            presets.add(new Preset(preset));
+        }
+    }
 
     public String getPresetGroupName() {
         return presetGroupName;
@@ -99,12 +115,12 @@ public class PresetGroup implements Serializable, Comparable<PresetGroup> {
         group.setPresetGroupName(data.getAttributeValue("name"));
 
         String val = data.getAttributeValue("currentPresetUniqueId");
-        if(val != null && val.length() > 0) {
+        if (val != null && val.length() > 0) {
             group.setCurrentPresetUniqueId(val);
         }
 
         val = data.getAttributeValue("currentPresetModified");
-        if(val != null && val.length() > 0) {
+        if (val != null && val.length() > 0) {
             group.setCurrentPresetModified(Boolean.valueOf(val).booleanValue());
         }
 
@@ -131,7 +147,7 @@ public class PresetGroup implements Serializable, Comparable<PresetGroup> {
         Element retVal = new Element("presetGroup");
         retVal.setAttribute("name", getPresetGroupName());
 
-        if(currentPresetUniqueId != null) {
+        if (currentPresetUniqueId != null) {
             retVal.setAttribute("currentPresetUniqueId", currentPresetUniqueId);
             retVal.setAttribute("currentPresetModified", Boolean.toString(currentPresetModified));
         }
@@ -219,19 +235,19 @@ public class PresetGroup implements Serializable, Comparable<PresetGroup> {
 
     public Preset findPresetByUniqueId(String uniqueId) {
 
-        if(uniqueId == null) {
+        if (uniqueId == null) {
             return null;
         }
 
-        for(PresetGroup presetGroup : subGroups) {
+        for (PresetGroup presetGroup : subGroups) {
             Preset preset = presetGroup.findPresetByUniqueId(uniqueId);
-            if(preset != null) {
+            if (preset != null) {
                 return preset;
             }
         }
 
-        for(Preset preset : presets) {
-            if(uniqueId.equals(preset.getUniqueId())) {
+        for (Preset preset : presets) {
+            if (uniqueId.equals(preset.getUniqueId())) {
                 return preset;
             }
         }
@@ -239,19 +255,19 @@ public class PresetGroup implements Serializable, Comparable<PresetGroup> {
     }
 
     public String getPresetFullPathName(String uniqueId) {
-        if(uniqueId == null) {
+        if (uniqueId == null) {
             return null;
         }
 
-        for(PresetGroup presetGroup : subGroups) {
+        for (PresetGroup presetGroup : subGroups) {
             Preset preset = presetGroup.findPresetByUniqueId(uniqueId);
-            if(preset != null) {
+            if (preset != null) {
                 return presetGroup.getPresetGroupName() + " :: " + preset.getPresetName();
             }
         }
 
-        for(Preset preset : presets) {
-            if(uniqueId.equals(preset.getUniqueId())) {
+        for (Preset preset : presets) {
+            if (uniqueId.equals(preset.getUniqueId())) {
                 return preset.getPresetName();
             }
         }

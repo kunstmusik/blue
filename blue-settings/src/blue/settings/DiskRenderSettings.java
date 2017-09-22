@@ -20,7 +20,6 @@
 package blue.settings;
 
 import blue.services.render.DiskRenderServiceFactory;
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.prefs.BackingStoreException;
@@ -33,7 +32,7 @@ import org.openide.util.NbPreferences;
  *
  * @author steven
  */
-public class DiskRenderSettings implements Serializable {
+public class DiskRenderSettings {
 
     public static final String[] FILE_FORMATS = new String[]{"WAV", "AIFF",
         "AU", "RAW", "IRCAM", "W64", "WAVEX", "SD2", "FLAC"};

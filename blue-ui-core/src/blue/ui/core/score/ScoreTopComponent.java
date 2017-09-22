@@ -123,8 +123,8 @@ public final class ScoreTopComponent extends TopComponent
     TimePointer renderStartPointer = new TimePointer(Color.GREEN);
     TimePointer renderLoopPointer = new TimePointer(Color.YELLOW);
     TimePointer renderTimePointer = new TimePointer(Color.ORANGE);
-    float renderStart = -1.0f;
-    float timePointer = -1.0f;
+    double renderStart = -1.0f;
+    double timePointer = -1.0f;
     JToggleButton snapButton = new JToggleButton();
     JCheckBox checkBox = new JCheckBox();
     TimelinePropertiesPanel timeProperties = new TimelinePropertiesPanel();
@@ -658,7 +658,7 @@ public final class ScoreTopComponent extends TopComponent
             return;
         }
 
-        float latency = PlaybackSettings.getInstance().getPlaybackLatencyCorrection();
+        double latency = PlaybackSettings.getInstance().getPlaybackLatencyCorrection();
 
         if (renderStart < 0.0f || timePointer < latency) {
             renderTimePointer.setLocation(-1, 0);
@@ -677,7 +677,7 @@ public final class ScoreTopComponent extends TopComponent
     }
 
     @Override
-    public void renderTimeUpdated(float timePointer) {
+    public void renderTimeUpdated(double timePointer) {
         this.timePointer = timePointer;
         updateRenderTimePointer();;
     }
@@ -688,11 +688,11 @@ public final class ScoreTopComponent extends TopComponent
             //FIXME - check if root score object
 //            if (this.pObj.isRoot()) {
             if (evt.getPropertyName().equals(RenderTimeManager.RENDER_START)) {
-                this.renderStart = ((Float) evt.getNewValue()).floatValue();
+                this.renderStart = ((Double) evt.getNewValue()).doubleValue();
                 this.timePointer = -1.0f;
                 updateRenderTimePointer();
             } /* else if (prop.equals(RenderTimeManager.TIME_POINTER)) {
-             this.timePointer = ((Float) evt.getNewValue()).floatValue();
+             this.timePointer = ((Double) evt.getNewValue()).doubleValue();
              updateRenderTimePointer();
              } */
 //            } else {
@@ -702,7 +702,7 @@ public final class ScoreTopComponent extends TopComponent
 
         } else if (evt.getSource() == currentTimeState) {
             if (evt.getPropertyName().equals("pixelSecond")) {
-                float val = data.getRenderStartTime();
+                double val = data.getRenderStartTime();
 
                 int newX = (int) (val * currentTimeState.getPixelSecond());
                 updateRenderStartPointerX(newX, true);
@@ -725,7 +725,7 @@ public final class ScoreTopComponent extends TopComponent
                     return;
                 }
 
-                float val = ((Float) evt.getNewValue()).floatValue();
+                double val = ((Double) evt.getNewValue()).doubleValue();
 
                 //FIXME
                 TimeState timeState = data.getScore().getTimeState();

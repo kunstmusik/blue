@@ -24,17 +24,18 @@ import blue.noteProcessor.NoteProcessorChain;
 import blue.score.ScoreGenerationException;
 import blue.score.ScoreObject;
 import blue.score.layers.Layer;
+import blue.score.layers.LayerGroup;
 import blue.score.layers.LayerGroupDataEvent;
 import blue.score.layers.LayerGroupListener;
 import blue.score.layers.ScoreObjectLayerGroup;
 import blue.soundObject.*;
+import blue.utility.XMLUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.rmi.dgc.VMID;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Vector;
@@ -51,9 +52,20 @@ public class AudioLayerGroup extends ArrayList<AudioLayer> implements ScoreObjec
     private String name = "Audio Layer Group";
 
     private String uniqueId;
+    private int defaultHeightIndex = 0;
 
     public AudioLayerGroup() {
         this.uniqueId = new VMID().toString();
+    }
+
+    public AudioLayerGroup(AudioLayerGroup alg) {
+        this.uniqueId = alg.uniqueId;
+        name = alg.name;
+        defaultHeightIndex = alg.defaultHeightIndex;
+        
+        for(AudioLayer al : alg) {
+            add(al.deepCopy());
+        }
     }
 
     @Override
@@ -72,6 +84,14 @@ public class AudioLayerGroup extends ArrayList<AudioLayer> implements ScoreObjec
         }
     }
 
+    public int getDefaultHeightIndex() {
+        return defaultHeightIndex;
+    }
+
+    public void setDefaultHeightIndex(int defaultHeightIndex) {
+        this.defaultHeightIndex = defaultHeightIndex;
+    }
+
     @Override
     public boolean hasSoloLayers() {
         for (AudioLayer layer : this) {
@@ -83,7 +103,7 @@ public class AudioLayerGroup extends ArrayList<AudioLayer> implements ScoreObjec
     }
 
     @Override
-    public NoteList generateForCSD(CompileData compileData, float startTime, float endTime, boolean processWithSolo) throws ScoreGenerationException {
+    public NoteList generateForCSD(CompileData compileData, double startTime, double endTime, boolean processWithSolo) throws ScoreGenerationException {
 
         NoteList noteList = new NoteList();
 
@@ -119,11 +139,18 @@ public class AudioLayerGroup extends ArrayList<AudioLayer> implements ScoreObjec
             Element node = nodes.next();
             String nodeName = node.getName();
 
-            if ("audioLayers".equals(nodeName)) {
-                Elements aLayerNodes = node.getElements();
-                while (aLayerNodes.hasMoreElements()) {
-                    layerGroup.add(
-                            AudioLayer.loadFromXML(aLayerNodes.next()));
+            switch(nodeName) {
+                case "audioLayers":
+                    Elements aLayerNodes = node.getElements();
+                    while (aLayerNodes.hasMoreElements()) {
+                        layerGroup.add(
+                                AudioLayer.loadFromXML(aLayerNodes.next()));
+                    }
+                    break;
+                case "defaultHeightIndex": {
+                    int index = Integer.parseInt(node.getTextString());
+                    layerGroup.setDefaultHeightIndex(index);
+                    break;
                 }
             }
         }
@@ -137,6 +164,7 @@ public class AudioLayerGroup extends ArrayList<AudioLayer> implements ScoreObjec
         root.setAttribute("name", name);
         root.setAttribute("uniqueId", uniqueId);
 
+        root.addElement(XMLUtilities.writeInt("defaultHeightIndex", defaultHeightIndex));
         Element audioLayersNode = root.addElement("audioLayers");
 
         for (AudioLayer layer : this) {
@@ -150,6 +178,7 @@ public class AudioLayerGroup extends ArrayList<AudioLayer> implements ScoreObjec
     public AudioLayer newLayerAt(int index) {
 
         AudioLayer audioLayer = new AudioLayer();
+        audioLayer.setHeightIndex(defaultHeightIndex);
 
         int insertIndex = index;
         if (index < 0 || index >= this.size()) {
@@ -259,9 +288,9 @@ public class AudioLayerGroup extends ArrayList<AudioLayer> implements ScoreObjec
         return runningHeight * Layer.LAYER_HEIGHT;
     }
 
-    public final float getMaxTime() {
-        float max = 0.0f;
-        float temp;
+    public final double getMaxTime() {
+        double max = 0.0f;
+        double temp;
 
         for (AudioLayer tempLayer : this) {
             temp = tempLayer.getMaxTime();
@@ -325,5 +354,10 @@ public class AudioLayerGroup extends ArrayList<AudioLayer> implements ScoreObjec
             return;
         }
         propListeners.remove(pcl);
+    }
+
+    @Override
+    public AudioLayerGroup deepCopyLG() {
+        return new AudioLayerGroup(this);
     }
 }

@@ -6,7 +6,6 @@ import blue.soundObject.Note;
 import blue.soundObject.NoteList;
 import blue.soundObject.NoteParseException;
 import electric.xml.Element;
-import java.io.Serializable;
 
 /**
  * Title: blue Description: an object composition environment for csound
@@ -16,12 +15,17 @@ import java.io.Serializable;
  * @version 1.0
  */
 @NoteProcessorPlugin(displayName="AddProcessor", position = 10)
-public class AddProcessor implements NoteProcessor, Serializable {
-    float value = 0.0f;
+public class AddProcessor implements NoteProcessor {
+    double value = 0.0;
 
     int pfield = 4;
 
     public AddProcessor() {
+    }
+
+    public AddProcessor(AddProcessor addProc) {
+        value = addProc.value;
+        pfield = addProc.pfield;
     }
 
     @Override
@@ -39,31 +43,31 @@ public class AddProcessor implements NoteProcessor, Serializable {
     }
 
     public String getVal() {
-        return Float.toString(value);
+        return Double.toString(value);
     }
 
     public void setVal(String value) {
-        this.value = Float.parseFloat(value);
+        this.value = Double.parseDouble(value);
     }
 
     @Override
     public final void processNotes(NoteList in) throws NoteProcessorException {
         Note temp;
-        float fieldVal = 0f;
+        double fieldVal = 0.0;
         for (int i = 0; i < in.size(); i++) {
             temp = in.get(i);
             try {
-                fieldVal = Float.parseFloat(temp.getPField(pfield));
+                fieldVal = Double.parseDouble(temp.getPField(pfield));
             } catch (NumberFormatException ex) {
                 throw new NoteProcessorException(this, BlueSystem
-                        .getString("noteProcessorException.pfieldNotFloat"),
+                        .getString("noteProcessorException.pfieldNotDouble"),
                         pfield);
             } catch (Exception ex) {
                 throw new NoteProcessorException(this, BlueSystem
                         .getString("noteProcessorException.missingPfield"),
                         pfield);
             }
-            temp.setPField(Float.toString(fieldVal + value), pfield);
+            temp.setPField(Double.toString(fieldVal + value), pfield);
         }
     }
 
@@ -116,5 +120,10 @@ public class AddProcessor implements NoteProcessor, Serializable {
         retVal.addElement("value").setText(this.getVal());
 
         return retVal;
+    }
+
+    @Override
+    public AddProcessor deepCopy() {
+        return new AddProcessor(this);
     }
 }

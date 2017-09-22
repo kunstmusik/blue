@@ -25,20 +25,18 @@ import blue.SoundLayer;
 import blue.event.PlayModeListener;
 import blue.gui.ExceptionDialog;
 import blue.mixer.Mixer;
-import blue.score.layers.Layer;
 import blue.score.layers.LayerGroup;
 import blue.services.render.CsoundBinding;
 import blue.services.render.RealtimeRenderService;
 import blue.services.render.RealtimeRenderServiceFactory;
 import blue.settings.RealtimeRenderSettings;
-import blue.soundObject.GenericScore;
 import blue.soundObject.PolyObject;
 import blue.soundObject.SoundObject;
 import blue.soundObject.SoundObjectException;
 import blue.utility.ObjectUtilities;
-import blue.utility.ScoreUtilities;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 import org.openide.awt.StatusDisplayer;
 import org.openide.windows.WindowManager;
 
@@ -206,7 +204,7 @@ public final class RealtimeRenderManager {
             stopRendering();
         }
 
-        BlueData tempData = (BlueData) ObjectUtilities.clone(data);
+        BlueData tempData = new BlueData(data);
 
         List<PolyObject> path = null;
         for(LayerGroup slg : data.getScore()) {
@@ -228,49 +226,13 @@ public final class RealtimeRenderManager {
         PolyObject base = tempPObj;
         SoundLayer sLayer = tempPObj.newLayerAt(-1);
 
-//        if(path.size() > 1) {
-//            for(PolyObject pObj : path) {
-//                PolyObject tpo = new PolyObject(true);
-//                SoundLayer tsl = tpo.newLayerAt(-1);
-//                tpo.setTimeState(pObj.getTimeState().clone());
-//                tpo.setTimeBehavior(pObj.getTimeBehavior());
-//                tpo.setStartTime(pObj.getStartTime());
-//                tpo.setSubjectiveDuration(pObj.getSubjectiveDuration());
-//                base.get(0).add(tpo);
-//                base = tpo;
-//            }
-//
-//            if(base.getTimeBehavior() == SoundObject.TIME_BEHAVIOR_SCALE ||
-//                    base.getTimeBehavior() == SoundObject.TIME_BEHAVIOR_REPEAT) {
-//                List<SoundObject> objs = base.getSoundObjects(false);
-//                SoundObject last = null;
-//                for(SoundObject temp : objs) {
-//                    if(last == null) {
-//                        last = temp;
-//                    } else {
-//                        float end = last.getStartTime() + last.getSubjectiveDuration(); 
-//                        float end1 = temp.getStartTime() + temp.getSubjectiveDuration();
-//                        if(end1 > end) {
-//                            last = temp;
-//                        }
-//                    }  
-//                }
-//                GenericScore dummy = new GenericScore();
-//                dummy.setStartTime(last.getStartTime());
-//                dummy.setSubjectiveDuration(last.getSubjectiveDuration());
-//                dummy.setText("");
-//                base.get(0).add(dummy);
-//            }
-//        } 
-
-
-        float minTime = Float.MAX_VALUE;
-        float maxTime = Float.MIN_VALUE;
+        double minTime = Double.MAX_VALUE;
+        double maxTime = Double.MIN_VALUE;
 
         for (int i = 0; i < soundObjects.length; i++) {
             SoundObject sObj = soundObjects[i];
-            float startTime = sObj.getStartTime();
-            float endTime = startTime + sObj.getSubjectiveDuration();
+            double startTime = sObj.getStartTime();
+            double endTime = startTime + sObj.getSubjectiveDuration();
 
             if (startTime < minTime) {
                 minTime = startTime;
@@ -280,7 +242,7 @@ public final class RealtimeRenderManager {
                 maxTime = endTime;
             }
 
-            base.get(0).add((SoundObject) sObj.clone());
+            base.get(0).add(sObj.deepCopy());
         }
 
         tempData.getScore().add(tempPObj);
@@ -348,9 +310,11 @@ public final class RealtimeRenderManager {
             retVal = new ArrayList<>();
             retVal.add(pObj);
         } else {
-            PolyObject[] pObjs = (PolyObject[]) allSObj.stream().
-                    filter(a -> a instanceof PolyObject).toArray();
-            for(PolyObject tempPObj : pObjs) {
+            List<SoundObject> pObjs = allSObj.stream().
+                    filter(a -> a instanceof PolyObject).
+                    collect(Collectors.toList());
+            for(SoundObject obj : pObjs) {
+                PolyObject tempPObj = (PolyObject)obj;
                 retVal = getPolyObjectPath(tempPObj, soundObject);
                 if(retVal != null) {
                     retVal.add(0, pObj);

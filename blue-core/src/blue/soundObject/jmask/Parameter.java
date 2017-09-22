@@ -26,12 +26,11 @@ import electric.xml.Element;
 import electric.xml.Elements;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
-import java.io.Serializable;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
-public class Parameter implements Serializable {
-    
+public class Parameter {
+
     private boolean visible = true;
 
     private Generator generator = null;
@@ -41,10 +40,30 @@ public class Parameter implements Serializable {
     private Quantizer quantizer = null;
 
     private Accumulator accumulator = null;
-    
+
     private transient PropertyChangeSupport propSupport = null;
 
     private String name = "";
+
+    public Parameter() {
+    }
+
+    public Parameter(Parameter param) {
+        visible = param.visible;
+        if(param.generator != null) {
+            generator = param.generator.deepCopy();
+        }
+        if(param.mask != null) {
+            mask = new Mask(param.mask); 
+        }
+        if(param.quantizer != null) {
+            quantizer = new Quantizer(param.quantizer);
+        }
+        if(param.accumulator != null) {
+            accumulator = new Accumulator(param.accumulator);
+        }
+        name = param.name;
+    }
 
     public static Parameter create(Generator generator) {
         Parameter param = new Parameter();
@@ -122,21 +141,21 @@ public class Parameter implements Serializable {
     public void setName(String fieldName) {
         this.name = fieldName;
     }
-    
+
     public static Parameter loadFromXML(Element data) throws Exception {
         Parameter parameter = new Parameter();
 
-        if(data.getAttributeValue("visible") != null) {
+        if (data.getAttributeValue("visible") != null) {
             boolean visible = Boolean.valueOf(
                     data.getAttributeValue("visible")).booleanValue();
             parameter.setVisible(visible);
         }
 
-        if(data.getAttributeValue("name") != null) {
+        if (data.getAttributeValue("name") != null) {
             parameter.setName(data.getAttributeValue("name"));
-            
+
         }
-        
+
         Elements nodes = data.getElements();
 
         while (nodes.hasMoreElements()) {
@@ -196,7 +215,7 @@ public class Parameter implements Serializable {
 
     public void initialize(double duration) {
         generator.initialize(duration);
-        
+
         if (mask != null) {
             mask.setDuration(duration);
         }
@@ -215,33 +234,34 @@ public class Parameter implements Serializable {
     }
 
     public void setVisible(boolean visible) {
-        if(this.visible == visible) {
+        if (this.visible == visible) {
             return;
         }
-        
+
         this.visible = visible;
-        
-        if(propSupport != null) {
+
+        if (propSupport != null) {
             propSupport.firePropertyChange("visible", !visible, visible);
         }
     }
-    
+
     public void addPropertyChangeListener(PropertyChangeListener pcl) {
-        if(propSupport == null) {
+        if (propSupport == null) {
             propSupport = new PropertyChangeSupport(this);
         }
 
-        for(PropertyChangeListener listener : propSupport.getPropertyChangeListeners()) {
-            if(listener == pcl) {
+        for (PropertyChangeListener listener : propSupport.getPropertyChangeListeners()) {
+            if (listener == pcl) {
                 return;
             }
         }
         propSupport.addPropertyChangeListener(pcl);
     }
-    
+
     public void removePropertyChangeListener(PropertyChangeListener pcl) {
-        if(propSupport != null) {
+        if (propSupport != null) {
             propSupport.removePropertyChangeListener(pcl);
         }
     }
+
 }

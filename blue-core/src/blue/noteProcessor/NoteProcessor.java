@@ -9,11 +9,11 @@ package blue.noteProcessor;
  * @version 1.0
  */
 
+import blue.DeepCopyable;
 import blue.soundObject.NoteList;
 import electric.xml.Element;
 
-public interface NoteProcessor {
+public interface NoteProcessor extends DeepCopyable<NoteProcessor> {
     public void processNotes(NoteList in) throws NoteProcessorException;
-
     public Element saveAsXML();
 }

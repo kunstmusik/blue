@@ -21,10 +21,21 @@ package blue.components.lines;
 
 import electric.xml.Element;
 import electric.xml.Elements;
-import java.io.Serializable;
-import java.util.ArrayList;
+import javafx.beans.property.SimpleListProperty;
+import javafx.collections.FXCollections;
 
-public class LineList extends ArrayList<Line> implements Serializable {
+public class LineList extends SimpleListProperty<Line> {
+
+    public LineList() {
+        super(FXCollections.observableArrayList());
+    }
+
+    public LineList(LineList ll) {
+        super(FXCollections.observableArrayList());
+        for (Line line : ll) {
+            add(new Line(line));
+        }
+    }
 
     public static LineList loadFromXML(Element data) {
         LineList retVal = new LineList();

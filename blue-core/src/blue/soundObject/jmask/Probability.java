@@ -26,20 +26,31 @@ import blue.utility.ObjectUtilities;
 import blue.utility.XMLUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
-import java.io.Serializable;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
-public class Probability implements Generator, Serializable, Maskable,
+public class Probability implements Generator, Maskable,
         Quantizable, Accumulatable {
 
-    ProbabilityGenerator[] generators = { new Uniform(), new Linear(),
-            new Triangle(), new Exponential(), new Gaussian(), new Cauchy(),
-            new Beta(), new Weibull() };
-
+    ProbabilityGenerator[] generators;
     private int selectedIndex = 0;
-    
+
     private transient double duration = 0;
+
+    public Probability() {
+        generators = new ProbabilityGenerator[]{
+            new Uniform(), new Linear(), new Triangle(), new Exponential(), 
+            new Gaussian(), new Cauchy(), new Beta(), new Weibull()
+        };
+    }
+
+    public Probability(Probability prob) {
+        selectedIndex = prob.selectedIndex;
+        generators = new ProbabilityGenerator[prob.generators.length];
+        for(int i = 0; i <generators.length; i++) {
+            generators[i] = prob.generators[i].deepCopy();
+        }
+    }
 
     public static Generator loadFromXML(Element data) throws Exception {
         Probability retVal = new Probability();
@@ -71,11 +82,11 @@ public class Probability implements Generator, Serializable, Maskable,
         Element retVal = new Element("generator");
         retVal.setAttribute("type", getClass().getName());
 
-        retVal
-                .addElement(XMLUtilities.writeInt("selectedIndex",getSelectedIndex()));
+        retVal.addElement(
+                XMLUtilities.writeInt("selectedIndex", getSelectedIndex()));
 
-        for (int i = 0; i < generators.length; i++) {
-            retVal.addElement(generators[i].saveAsXML());
+        for (ProbabilityGenerator generator : generators) {
+            retVal.addElement(generator.saveAsXML());
         }
 
         return retVal;
@@ -84,7 +95,6 @@ public class Probability implements Generator, Serializable, Maskable,
 //    public JComponent getEditor() {
 //        return new ProbabilityEditor(this);
 //    }
-
     @Override
     public void initialize(double duration) {
         this.duration = duration;
@@ -128,5 +138,10 @@ public class Probability implements Generator, Serializable, Maskable,
 
     public ProbabilityGenerator getSelectedProbabilityGenerator() {
         return generators[selectedIndex];
+    }
+
+    @Override
+    public Probability deepCopy() {
+        return new Probability(this);
     }
 }

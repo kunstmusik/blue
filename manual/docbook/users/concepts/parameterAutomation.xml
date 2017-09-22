@@ -9,7 +9,7 @@
       time. The parameters that can be automated are those in BlueSynthBuilder
       Instruments, Mixer Effects, Mixer Sends, and Mixer Volumes. The following
       sections will describe how to use Parameter Automation and technical
-      details in how this all works within the context of blue and Csound.
+      details in how this all works within the context of Blue and Csound.
     </para>
 
   </section>
@@ -181,11 +181,11 @@
     <title>Technical Details</title>
 
     <para>
-      blue's parameter automation system is implemented in Csound code in a few
+      Blue's parameter automation system is implemented in Csound code in a few
       different areas. For instruments and effects, when an Automatable
       Parameter is not set for automation, it will replace its replacement key
       in its ORC code with a constant value from the UI item. If the parameter
-      is set to allow automation, then the replacement key is replaced with a blue
+      is set to allow automation, then the replacement key is replaced with a Blue
       generated global k-rate signal name. Therefore, when coding instruments
       and effects, the user should be careful to make sure that if they want the
       parameter to be automatable that the replacement key is placed in the code
@@ -197,11 +197,11 @@
     </para>
 
     <para>
-      After setting up the Instrument and Effects, blue will then handle
+      After setting up the Instrument and Effects, Blue will then handle
       compiling the automations into a way that works with Csound. Currently,
-      blue will first calculate init statements from where the render start time
+      Blue will first calculate init statements from where the render start time
       is and add that to the CSD to make sure that the global krate signals will
-      be initiated by the time any instrument could use them. Then, blue creates
+      be initiated by the time any instrument could use them. Then, Blue creates
       instruments for each parameter that will be automated. The instruments are
       driven by score and either an instrument for continuous data or resolution
       dependent data will be created. Score is then generated for the parameter

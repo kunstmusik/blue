@@ -27,22 +27,33 @@ import electric.xml.Elements;
 public class Beta implements ProbabilityGenerator {
 
     private double a = 0.1;// a -> Breite bei Null
-    
+
     private double b = 0.1; // b -> Breite bei Eins
 
-    private Table aTable = new Table();
+    private Table aTable;
 
-    private Table bTable = new Table();
+    private Table bTable;
 
     private boolean aTableEnabled = false;
 
     private boolean bTableEnabled = false;
 
     public Beta() {
+        aTable = new Table();
+        bTable = new Table();
         aTable.getPoint(0).setValue(0.1);
         aTable.getPoint(1).setValue(0.1);
         bTable.getPoint(0).setValue(0.1);
         bTable.getPoint(1).setValue(0.1);
+    }
+
+    public Beta(Beta beta) {
+        a = beta.a;
+        b = beta.b;
+        aTable = new Table(beta.aTable);
+        bTable = new Table(beta.bTable);
+        aTableEnabled = beta.aTableEnabled;
+        bTableEnabled = beta.bTableEnabled;
     }
 
     public static ProbabilityGenerator loadFromXML(Element data) {
@@ -115,7 +126,7 @@ public class Beta implements ProbabilityGenerator {
         double x1, x2, yps1, yps2, sum;
 
         double localA, localB;
-        
+
         if (aTableEnabled) {
             localA = aTable.getValue(time);
         } else {
@@ -127,7 +138,7 @@ public class Beta implements ProbabilityGenerator {
         } else {
             localB = b;
         }
-        
+
         do {
             x1 = rnd.nextDouble();
             x2 = rnd.nextDouble();
@@ -188,5 +199,10 @@ public class Beta implements ProbabilityGenerator {
 
     public void setBTableEnabled(boolean bTableEnabled) {
         this.bTableEnabled = bTableEnabled;
+    }
+
+    @Override
+    public Beta deepCopy() {
+        return new Beta(this);
     }
 }

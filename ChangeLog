@@ -1,6 +1,6 @@
 blue
 version @VERSION@ - @RELEASE_DATE@
-copyright (c) 2001-2016 Steven Yi - all rights reserved
+copyright (c) 2001-2017 Steven Yi - all rights reserved
 
 email: stevenyi@gmail.com
 web: http://blue.kunstmusik.com
@@ -11,6 +11,128 @@ certain conditions.  Please see the accompanying license.txt file for more
 information.
 
 [CHANGE LOG]
+
+> Notes for 2.7.0 <
+[release 2017.09.22]
+
+NEW
+
+* BlueSynthBuilder:
+  * GUI editor (shared by ObjectBuilder and Sound SoundObject) rewritten using
+    JavaFX UI toolkit
+  * Issue #344 - Ability to hide/show value display added to Knob, Sliders, and 
+    SliderBanks
+  * Issue #312 - Added Group widget that allows grouping of widgets into a
+	panel that has a titled border around it for better organization of UI
+  * Issue #360 - Visual resizing of widgets implemented with UI Editor using
+    resize handles
+
+* RhinoInstrument and RhinoObject were renamed as JavaScriptInstrument and
+  JavaScriptObject
+
+* JavaScriptObject now supports "Process on Load" option
+
+* Issue #348 - Implemented Automation tab for Sound soundObject (allows 
+  automating any widget within SoundObject interface; automation is edited 
+  within Sound's editor window and scales to the duration of the Sound); also
+  added Comments fields for Sound and ObjectBuilder objects
+
+* Issue #342 - Program-wide User SoundObject Library
+  * Implemented new Program-wide User SoundObject Library. Library is available
+    as part of the SoundObjectLibrary window. User can use popup menu to copy
+    and paste SoundObjects into folders and add/remove folders.
+
+* Issue #343 - User-defined Opcodes: 
+  * Export: User can now select single UDO from project UDO list and choose 
+    export to either Blue UDO file (an XML representation of the UDO with 
+    .blueUDO extension) or Csound UDO file (standard Csound UDO code in a file 
+    with .udo extension)
+
+  * Import: Removed older network-based Import system and added file-based UDO
+    import from either Blue UDO (.blueUDO) files or Csound files (.udo, .csd, 
+    .orc).  For Csound files, Blue will import all found UDOs within the file.
+
+* Issue #354 - Added "Refresh Folder" popup menu option to refresh Blue File
+  Manager folder node
+
+* Issue #355 - Added default layer heights to Program Options->Project Defaults;
+  added default layer height as property for AudioLayerGroups
+
+* Issue #357 - Added maintenance of dialog size/location when Generating CSD to
+  Screen
+
+* examples/techniques/pvoc2.blue added that shows similar concept as pvoc.blue 
+  but uses Sound soundObject and its new automation tab
+
+* Issue #358 - SoundObjects can now be shared on BlueShare
+
+UPDATED
+
+* Mixer:
+  * Issue #256 - Pushing up or down effects should keep the same effect selected
+
+  * Issue #257 - Select effect when right-clicking pre or post effects so that 
+    popup menu reflects operation on where clicked 
+
+* Renamed RhinoObject and RhinoInstrument to JavaScriptObject and
+  JavaScriptInstrument to better reflect their purpose
+
+* JavaScriptObject: for errors/exceptions, now shows error in dialog when 
+  rendering project
+
+* BSB widgets and Automation parameters that used resolution argument (i.e., 
+  sliders) now use BigDecimal for more precise value generation and faster 
+  calculation when automated
+
+* Issue #349 - Revisited score text parsing to speed up; affects parsing of 
+  things like GenericScore text, output from Externals (e.g., CMask scripts,
+  AthenaCL code)
+
+* Issue #350 - Added value display enabled property to BSBXYController
+
+FIX
+
+* BlueSynthBuilder/ObjectBuilder/Effects - Fixed code completion for BSBWidgets 
+
+* Mixer - using "Edit Effect" to edit the definition of an effect within the 
+  mixer would cause an exception after closing the editor
+
+* Reworked visual rendering and setting of BSB widget values when resolution
+  property used
+
+* BlueLive - fixed problem where BlueLive would send n copies of each note where
+  n = number of times BlueLive was started/stopped (problem due to not clearing
+  bindings between runs) 
+
+* JMask - Probability: Beta editor was not showing when Beta generator selected
+
+* Issue #352 - MIDI import was not updated correctly newer ScoreLayer system,
+  also, velocity was not processed correctly yielding only zeros
+
+* Issue #337 - Fixed Mixer generation when no instruments found in Orchestra; 
+  condition appears when using only Sound SoundObjects in project
+
+* Unfreezing Frozen SoundObjects caused stack overflow due to typo in code, 
+  resulting in effect of disappearing SoundObject 
+
+* "Custom" popup menu option that shows code repository options did not function
+  correctly 
+
+* Fixed Code Repository Dialog to ensure it is in sync with repository changes.
+  Also fixed drag/drop when editing repository within dialog.
+
+* Issue #345 - Parsing output from nGen revealed issue with parsing score 
+  statements that were not i- or comments (notes would repeat)
+
+* Automation menu for selecting which parameter to automated did not always size 
+  width correctly
+
+INTERNAL
+
+* Replaced use of Cloneable and Serializable with copy constructors and new 
+  DeepCopyable interface for all project data models
+
+* Replaced all uses of float with double
 
 
 > Notes for 2.6.1 <

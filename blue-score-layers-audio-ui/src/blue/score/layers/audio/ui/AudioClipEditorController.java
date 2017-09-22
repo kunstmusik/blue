@@ -21,7 +21,7 @@ package blue.score.layers.audio.ui;
 
 import blue.jfx.BlueFX;
 import blue.jfx.binding.ChoiceBinder;
-import blue.jfx.binding.FloatBinder;
+import blue.jfx.binding.DoubleBinder;
 import blue.score.layers.audio.core.AudioClip;
 import blue.score.layers.audio.core.FadeType;
 import java.net.URL;
@@ -59,11 +59,11 @@ public class AudioClipEditorController implements Initializable {
 
     private AudioClip audioClip;
 
-    FloatBinder<AudioClip> startTimeBinder;
-    FloatBinder<AudioClip> durationBinder;
-    FloatBinder<AudioClip> fileStartBinder;
-    FloatBinder<AudioClip> fadeInBinder;
-    FloatBinder<AudioClip> fadeOutBinder;
+    DoubleBinder<AudioClip> startTimeBinder;
+    DoubleBinder<AudioClip> durationBinder;
+    DoubleBinder<AudioClip> fileStartBinder;
+    DoubleBinder<AudioClip> fadeInBinder;
+    DoubleBinder<AudioClip> fadeOutBinder;
     ChoiceBinder<FadeType> fadeInTypeBinder;
     ChoiceBinder<FadeType> fadeOutTypeBinder;
 
@@ -72,41 +72,41 @@ public class AudioClipEditorController implements Initializable {
      */
     @Override
     public void initialize(URL url, ResourceBundle rb) {
-        startTimeBinder = new FloatBinder<>(startTimeText,
-                (AudioClip ac, Float val) -> {
-                    if (val < 0.0f) {
+        startTimeBinder = new DoubleBinder<>(startTimeText,
+                (AudioClip ac, Double val) -> {
+                    if (val < 0.0) {
                         return null;
                     }
                     return val;
                 }
         );
-        durationBinder = new FloatBinder<>(durationText,
-                (AudioClip ac, Float val) -> {
-                    if (val <= 0.0f || val > ac.getAudioDuration()) {
+        durationBinder = new DoubleBinder<>(durationText,
+                (AudioClip ac, Double val) -> {
+                    if (val <= 0.0 || val > ac.getAudioDuration()) {
                         return null;
                     }
                     return val;
                 }
         );
-        fileStartBinder = new FloatBinder<>(fileStartText,
-                (AudioClip ac, Float val) -> {
-                    if (val < 0.0f || val >= ac.getAudioDuration()) {
+        fileStartBinder = new DoubleBinder<>(fileStartText,
+                (AudioClip ac, Double val) -> {
+                    if (val < 0.0 || val >= ac.getAudioDuration()) {
                         return null;
                     }
                     return val;
                 }
         );
-        fadeInBinder = new FloatBinder<>(fadeInText,
-                (AudioClip ac, Float val) -> {
-                    if (val < 0.0f || val >= ac.getDuration() - ac.getFadeOut()) {
+        fadeInBinder = new DoubleBinder<>(fadeInText,
+                (AudioClip ac, Double val) -> {
+                    if (val < 0.0 || val >= ac.getDuration() - ac.getFadeOut()) {
                         return null;
                     }
                     return val;
                 }
         );
-        fadeOutBinder = new FloatBinder<>(fadeOutText,
-                (AudioClip ac, Float val) -> {
-                    if (val < 0.0f || val >= ac.getDuration() - ac.getFadeIn()) {
+        fadeOutBinder = new DoubleBinder<>(fadeOutText,
+                (AudioClip ac, Double val) -> {
+                    if (val < 0.0 || val >= ac.getDuration() - ac.getFadeIn()) {
                         return null;
                     }
                     return val;
@@ -124,18 +124,18 @@ public class AudioClipEditorController implements Initializable {
     public void setAudioClip(AudioClip audioClip) {
 
         BlueFX.runOnFXThread(() -> {
-            audioDurationText.setText(Float.toString(
+            audioDurationText.setText(Double.toString(
                     audioClip.getAudioDuration()));
             audioFileText.setText(audioClip.getAudioFile().getAbsolutePath());
 
-            startTimeBinder.setFloatProperty(audioClip,
+            startTimeBinder.setDoubleProperty(audioClip,
                     audioClip.startProperty());
-            durationBinder.setFloatProperty(audioClip,
+            durationBinder.setDoubleProperty(audioClip,
                     audioClip.durationProperty());
-            fileStartBinder.setFloatProperty(audioClip,
+            fileStartBinder.setDoubleProperty(audioClip,
                     audioClip.fileStartTimeProperty());
-            fadeInBinder.setFloatProperty(audioClip, audioClip.fadeInProperty());
-            fadeOutBinder.setFloatProperty(audioClip,
+            fadeInBinder.setDoubleProperty(audioClip, audioClip.fadeInProperty());
+            fadeOutBinder.setDoubleProperty(audioClip,
                     audioClip.fadeOutProperty());
 
             fadeInTypeBinder.setObjectProperty(audioClip.fadeInTypeProperty());

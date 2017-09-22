@@ -107,19 +107,19 @@ public final class SoundObjectView extends JComponent implements Comparable<Soun
     /**
      * ***************************
      */
-    public void setStartTime(float yo) {
+    public void setStartTime(double yo) {
         sObj.setStartTime(yo);
     }
 
-    public float getStartTime() {
+    public double getStartTime() {
         return sObj.getStartTime();
     }
 
-    public float getSubjectiveDuration() {
+    public double getSubjectiveDuration() {
         return sObj.getSubjectiveDuration();
     }
 
-    public void setSubjectiveTime(float yo) {
+    public void setSubjectiveTime(double yo) {
         sObj.setSubjectiveDuration(yo);
     }
 

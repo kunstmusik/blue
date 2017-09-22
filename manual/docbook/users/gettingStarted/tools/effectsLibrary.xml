@@ -2,7 +2,7 @@
   <title>Effects Library</title>
   
   <para>
-    The Effects Library organizes Effects used with blue's mixer.  You can 
+    The Effects Library organizes Effects used with Blue's mixer.  You can 
     create and edit Effects, as well as organize Effects into Groups. The 
     layout of the tree that contains the effects will be used when building the
     popup menu in the Mixer for selecting effects.
@@ -12,6 +12,6 @@
     <title>Note</title>
     
     <para>This information will be further expanded and moved into a new section
-      with the manual reorganization, planned for after blue 2.3.0.</para>
+      with the manual reorganization, planned for after Blue 2.3.0.</para>
   </note>
 </section>

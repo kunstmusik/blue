@@ -21,7 +21,6 @@ package blue.orchestra.editor.blueSynthBuilder;
 
 import blue.BlueSystem;
 import blue.components.EditEnabledCheckBox;
-import blue.event.EditModeListener;
 import blue.orchestra.BlueSynthBuilder;
 import blue.ui.nbutilities.MimeTypeEditorComponent;
 import blue.ui.utilities.SimpleDocumentListener;

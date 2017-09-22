@@ -19,24 +19,62 @@
  */
 package blue.orchestra.blueSynthBuilder;
 
-//import blue.orchestra.editor.blueSynthBuilder.BSBObjectView;
-//import blue.orchestra.editor.blueSynthBuilder.BSBTextFieldView;
 import electric.xml.Element;
 import electric.xml.Elements;
+import javafx.beans.property.IntegerProperty;
+import javafx.beans.property.SimpleIntegerProperty;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
 
 public class BSBTextField extends BSBObject {
 
-    private String value = "";
+    private StringProperty value = new SimpleStringProperty("");
 
-    private int textFieldWidth = 100;
+    private IntegerProperty textFieldWidth = new SimpleIntegerProperty(100) {
+        @Override
+        protected void invalidated() {
+            if (get() < 5) {
+                set(5);
+            }
+        }
+    };
 
-//    public BSBObjectView getBSBObjectView() {
-//        return new BSBTextFieldView(this);
-//    }
+    public BSBTextField() {
+    }
+
+    public BSBTextField(BSBTextField tf) {
+        super(tf);
+        setValue(tf.getValue());
+        setTextFieldWidth(tf.getTextFieldWidth());
+    }
+
+    public final void setValue(String val) {
+        value.set(val);
+    }
+
+    public final String getValue() {
+        return value.get();
+    }
+
+    public final StringProperty valueProperty() {
+        return value;
+    }
+
+    public final void setTextFieldWidth(int value) {
+        textFieldWidth.set(value);
+    }
+
+    public final int getTextFieldWidth() {
+        return textFieldWidth.get();
+    }
+
+    public final IntegerProperty textFieldWidthProperty() {
+        return textFieldWidth;
+    }
 
     @Override
     public String getPresetValue() {
-        return value;
+        return getValue();
     }
 
     public static BSBObject loadFromXML(Element data) {
@@ -49,13 +87,14 @@ public class BSBTextField extends BSBObject {
             Element node = nodes.next();
             switch (node.getName()) {
                 case "value":
-                    bsbText.value = node.getTextString();
-                    if (bsbText.value == null) {
-                        bsbText.value = "";
+                    bsbText.setValue(node.getTextString());
+                    if (bsbText.getValue() == null) {
+                        bsbText.setValue("");
                     }
                     break;
                 case "textFieldWidth":
-                    bsbText.textFieldWidth = Integer.parseInt(node.getTextString());
+                    bsbText.setTextFieldWidth(
+                            Integer.parseInt(node.getTextString()));
                     break;
             }
         }
@@ -67,37 +106,26 @@ public class BSBTextField extends BSBObject {
     public Element saveAsXML() {
         Element retVal = getBasicXML(this);
 
-        retVal.addElement("value").setText(value);
+        retVal.addElement("value").setText(getValue());
         retVal.addElement("textFieldWidth").setText(
-                Integer.toString(textFieldWidth));
+                Integer.toString(getTextFieldWidth()));
 
         return retVal;
     }
 
     @Override
     public void setPresetValue(String val) {
-        value = val;
+        setValue(val);
     }
 
     @Override
     public void setupForCompilation(BSBCompilationUnit compilationUnit) {
-        compilationUnit.addReplacementValue(objectName, value);
+        compilationUnit.addReplacementValue(getObjectName(), getValue());
     }
 
-    public String getValue() {
-        return value;
-    }
-
-    public void setValue(String value) {
-        this.value = value;
-    }
-
-    public int getTextFieldWidth() {
-        return textFieldWidth;
-    }
-
-    public void setTextFieldWidth(int textFieldWidth) {
-        this.textFieldWidth = textFieldWidth;
+    @Override
+    public BSBObject deepCopy() {
+        return new BSBTextField(this);
     }
 
 }

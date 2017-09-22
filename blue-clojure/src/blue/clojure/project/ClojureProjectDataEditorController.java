@@ -94,7 +94,7 @@ public class ClojureProjectDataEditorController implements Initializable {
     @FXML
     public void addEntry() {
         if(data == null) return;
-        data.libraryList.add(new ClojureLibraryEntry());
+        data.libraryList().add(new ClojureLibraryEntry());
     }
 
     @FXML

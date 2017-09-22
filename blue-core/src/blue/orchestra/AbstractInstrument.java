@@ -20,23 +20,21 @@
 
 package blue.orchestra;
 
-import blue.utility.ObjectUtilities;
-import java.io.Serializable;
-
 /**
  * @author Steven Yi
  */
-public abstract class AbstractInstrument implements Instrument, Serializable {
+public abstract class AbstractInstrument implements Instrument {
 
     String name = "untitled";
 
     String comment = "";
 
-    // String testScore = "";
-
-    boolean enabled = true;
-
-    int instrumentNumber = 0;
+    public AbstractInstrument() {}
+    
+    public AbstractInstrument(AbstractInstrument absInstr) {
+        name = absInstr.name;
+        comment = absInstr.comment;
+    }
 
     @Override
     public String getName() {
@@ -56,39 +54,6 @@ public abstract class AbstractInstrument implements Instrument, Serializable {
     @Override
     public void setComment(String comment) {
         this.comment = (comment == null) ? "" : comment;
-    }
-
-    // public String getTestScore() {
-    // return this.testScore;
-    // }
-    //
-    // public void setTestScore(String testScore) {
-    // this.testScore = testScore;
-    // }
-
-    @Override
-    public int getInstrumentNumber() {
-        return this.instrumentNumber;
-    }
-
-    @Override
-    public void setInstrumentNumber(int instrumentNumber) {
-        this.instrumentNumber = instrumentNumber;
-    }
-
-    @Override
-    public void setEnabled(boolean enabled) {
-        this.enabled = enabled;
-    }
-
-    @Override
-    public boolean isEnabled() {
-        return enabled;
-    }
-
-    @Override
-    public Object clone() {
-        return ObjectUtilities.clone(this);
     }
 
     @Override

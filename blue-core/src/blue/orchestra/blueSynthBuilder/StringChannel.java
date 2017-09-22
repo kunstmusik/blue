@@ -21,22 +21,30 @@ package blue.orchestra.blueSynthBuilder;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.io.Serializable;
 
 /**
  *
  * @author stevenyi
  */
-public class StringChannel implements Serializable, PropertyChangeListener {
+public class StringChannel implements PropertyChangeListener {
 
     public boolean dirty = true;
     String value = "";
     String channelName = null;
 
+    public StringChannel() {
+    }
+
+    public StringChannel(StringChannel chan) {
+        this.dirty = chan.dirty;
+        this.value = chan.value;
+        this.channelName = chan.channelName;
+    }
+
     public boolean isDirty() {
         return dirty;
     }
-    
+
     public void setDirty(boolean value) {
         dirty = value;
     }
@@ -48,8 +56,7 @@ public class StringChannel implements Serializable, PropertyChangeListener {
     public void setChannelName(String channelName) {
         this.channelName = channelName;
     }
-    
-    
+
     public synchronized void setValue(String value) {
         if (value != null && !this.value.equals(value)) {
             this.value = value;
@@ -64,8 +71,8 @@ public class StringChannel implements Serializable, PropertyChangeListener {
 
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
-        if(evt.getPropertyName().equals("stringChannelValue")) {
-            setValue((String)evt.getNewValue());
+        if (evt.getPropertyName().equals("stringChannelValue")) {
+            setValue((String) evt.getNewValue());
         }
     }
 
@@ -89,6 +96,5 @@ public class StringChannel implements Serializable, PropertyChangeListener {
         }
         return true;
     }
-    
-    
+
 }

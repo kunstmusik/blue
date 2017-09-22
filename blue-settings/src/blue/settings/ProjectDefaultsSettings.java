@@ -33,8 +33,10 @@ public class ProjectDefaultsSettings {
     private static final String PREFIX = "projectDefaults.";
     private static final String DEFAULT_AUTHOR = "defaultAuthor";
     private static final String MIXER_ENABLED = "mixerEnabled";
+    private static final String LAYER_HEIGHT_DEFAULT = "layerHeightDefault";
     public String defaultAuthor;
     public boolean mixerEnabled;
+    public int layerHeightDefault;
     private static ProjectDefaultsSettings instance = null;
 
     private ProjectDefaultsSettings() {
@@ -50,6 +52,7 @@ public class ProjectDefaultsSettings {
             instance.defaultAuthor = prefs.get(PREFIX + DEFAULT_AUTHOR, "");
             instance.mixerEnabled = prefs.getBoolean(PREFIX + MIXER_ENABLED,
                     true);
+            instance.layerHeightDefault = prefs.getInt(PREFIX + LAYER_HEIGHT_DEFAULT, 0);
         }
         return instance;
     }
@@ -60,6 +63,7 @@ public class ProjectDefaultsSettings {
 
         prefs.put(PREFIX + DEFAULT_AUTHOR, defaultAuthor);
         prefs.putBoolean(PREFIX + MIXER_ENABLED, mixerEnabled);
+        prefs.putInt(PREFIX + LAYER_HEIGHT_DEFAULT, layerHeightDefault);
         try {
             prefs.sync();
         } catch (BackingStoreException ex) {

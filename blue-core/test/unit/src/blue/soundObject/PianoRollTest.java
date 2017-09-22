@@ -35,7 +35,7 @@ public class PianoRollTest {
     @Test
     public void testSerialization() {
         PianoRoll instance = new PianoRoll();
-        PianoRoll p2 = (PianoRoll) instance.clone();
+        PianoRoll p2 = instance.deepCopy();
         
         assertTrue(EqualsBuilder.reflectionEquals(instance, p2, (String[])null));
     }

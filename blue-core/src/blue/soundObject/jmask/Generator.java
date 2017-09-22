@@ -22,9 +22,10 @@
 package blue.soundObject.jmask;
 
 
+import blue.DeepCopyable;
 import electric.xml.Element;
 
-public interface Generator {
+public interface Generator extends DeepCopyable<Generator> {
 
     public Element saveAsXML();
 

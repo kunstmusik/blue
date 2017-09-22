@@ -39,7 +39,6 @@ import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.List;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
@@ -50,7 +49,6 @@ import javax.swing.JSplitPane;
 import javax.swing.JTable;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
 import org.openide.util.Exceptions;
 
@@ -238,13 +236,11 @@ public class PolyObjectEditor extends ScoreObjectEditor {
             return;
         }
 
-        Tables tables = (Tables) data.getTableSet().clone();
-        Arrangement arrangement = (Arrangement) data.getArrangement().clone();
-        PolyObject tempPObj = (PolyObject) this.pObj.clone();
-        OpcodeList opcodeList = (OpcodeList) data.getOpcodeList().clone();
-
-        GlobalOrcSco globalOrcSco = (GlobalOrcSco) data.getGlobalOrcSco()
-                .clone();
+        Tables tables = new Tables(data.getTableSet());
+        Arrangement arrangement = new Arrangement(data.getArrangement());
+        PolyObject tempPObj = new PolyObject(this.pObj);
+        OpcodeList opcodeList = new OpcodeList(data.getOpcodeList());
+        GlobalOrcSco globalOrcSco = new GlobalOrcSco(data.getGlobalOrcSco());
 
         // adding all compile-time instruments from soundObjects to arrangement
         arrangement.generateFTables(tables);

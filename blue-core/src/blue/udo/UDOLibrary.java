@@ -22,7 +22,6 @@ package blue.udo;
 
 import blue.utility.ListUtil;
 import electric.xml.Element;
-import java.io.Serializable;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.Vector;
@@ -38,7 +37,7 @@ import javax.swing.tree.TreePath;
  * 
  */
 
-public class UDOLibrary implements Serializable, TreeModel {
+public class UDOLibrary implements TreeModel {
 
     UDOCategory rootUDOCategory = new UDOCategory();
 

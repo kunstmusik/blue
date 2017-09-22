@@ -22,53 +22,51 @@ package blue.clojure.project;
 import blue.BlueDataObject;
 import electric.xml.Element;
 import electric.xml.Elements;
-import java.io.Externalizable;
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import javafx.beans.InvalidationListener;
-import javafx.beans.Observable;
 import javafx.beans.property.SimpleStringProperty;
 
 /**
  *
  * @author stevenyi
  */
-public class ClojureLibraryEntry implements BlueDataObject, Externalizable {
-    private SimpleStringProperty dependencyCoordinates;
-    private SimpleStringProperty version;
+public class ClojureLibraryEntry implements BlueDataObject {
+
+    private SimpleStringProperty dependencyCoordinates
+            = new SimpleStringProperty(this, "coordinates", "org/library-name");
+    ;
+    private SimpleStringProperty version = new SimpleStringProperty(this, "version", "1.0.0");
 
     public ClojureLibraryEntry() {
-       dependencyCoordinates = new SimpleStringProperty(this, "coordinates", 
-       "org/library-name");
-       version = new SimpleStringProperty(this, "version", "1.0.0");
+    }
+
+    public ClojureLibraryEntry(ClojureLibraryEntry cle) {
+        setDependencyCoordinates(cle.getDependencyCoordinates());
+        setVersion(cle.getVersion());
     }
 
     public String getDependencyCoordinates() {
         return dependencyCoordinates.get();
-    } 
+    }
 
     public void setDependencyCoordinates(String coordinates) {
-       dependencyCoordinates.set(coordinates);
+        dependencyCoordinates.set(coordinates);
     }
 
     public SimpleStringProperty dependencyCoordinates() {
         return dependencyCoordinates;
     }
 
-
     public String getVersion() {
         return version.get();
-    } 
+    }
 
     public void setVersion(String versionString) {
-       version.set(versionString);
+        version.set(versionString);
     }
 
     public SimpleStringProperty version() {
         return version;
     }
-    
+
     public static ClojureLibraryEntry loadFromXML(Element data) {
         ClojureLibraryEntry lib = new ClojureLibraryEntry();
 
@@ -90,7 +88,7 @@ public class ClojureLibraryEntry implements BlueDataObject, Externalizable {
 
         return lib;
     }
-    
+
     @Override
     public Element saveAsXML() {
         Element elem = new Element("clojureLibraryEntry");
@@ -101,14 +99,7 @@ public class ClojureLibraryEntry implements BlueDataObject, Externalizable {
     }
 
     @Override
-    public void writeExternal(ObjectOutput out) throws IOException {
-        out.writeUTF(getDependencyCoordinates());
-        out.writeUTF(getVersion());
-    }
-
-    @Override
-    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-        setDependencyCoordinates(in.readUTF());
-        setVersion(in.readUTF());
+    public ClojureLibraryEntry deepCopy() {
+        return new ClojureLibraryEntry(this);
     }
 }

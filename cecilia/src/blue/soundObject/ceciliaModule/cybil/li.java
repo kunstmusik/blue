@@ -26,14 +26,14 @@ import blue.soundObject.NoteList;
 class li extends CybilAlgorithm {
 
     @Override
-    public float[] getValue(CybilNoteList cybilNoteList) {
+    public double[] getValue(CybilNoteList cybilNoteList) {
 
-        float start = getFloatValue(args.get(0));
-        float end = getFloatValue(args.get(1));
+        double start = getDoubleValue(args.get(0));
+        double end = getDoubleValue(args.get(1));
 
-        float diff = end - start;
+        double diff = end - start;
 
-        float timeValue = getTimeValue(args.get(2));
+        double timeValue = getTimeValue(args.get(2));
         boolean isTime = isTime(args.get(2));
 
         NoteList notes = cybilNoteList.notes;
@@ -44,10 +44,10 @@ class li extends CybilAlgorithm {
 
             } else {
                 for (int i = 0; i < timeValue; i++) {
-                    float x = i / (timeValue - 1);
+                    double x = i / (timeValue - 1);
 
-                    float val = (x * diff) + start;
-                    String strVal = Float.toString(val);
+                    double val = (x * diff) + start;
+                    String strVal = Double.toString(val);
 
                     Note currentNote = cybilNoteList.createDefaultNote();
                     notes.add(currentNote);
@@ -64,10 +64,10 @@ class li extends CybilAlgorithm {
 
             } else {
                 for (int i = 0; i < timeValue; i++) {
-                    float x = i / (timeValue - 1);
+                    double x = i / (timeValue - 1);
 
-                    float val = (x * diff) + start;
-                    String strVal = Float.toString(val);
+                    double val = (x * diff) + start;
+                    String strVal = Double.toString(val);
 
                     Note currentNote = notes.get(cybilNoteList.index);
                     currentNote.setPField(strVal, cybilNoteList.pfield);

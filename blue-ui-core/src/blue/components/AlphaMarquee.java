@@ -36,8 +36,8 @@ public class AlphaMarquee extends JComponent implements SelectionMarquee {
 
     Point origin;
     
-    public float startTime;
-    public float endTime;
+    public double startTime;
+    public double endTime;
 
     public void setStart(Point p) {
         origin = p;

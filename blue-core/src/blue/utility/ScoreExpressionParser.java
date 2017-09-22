@@ -29,11 +29,11 @@ import java.util.logging.Logger;
 public class ScoreExpressionParser {
 
     // TODO - should throw exception, also does not yet support @ and @@ syntax
-    public static float eval(String input) {
+    public static double eval(String input) {
 
         try {
             Calculable calc = new ExpressionBuilder(input).build();
-            return (float)calc.calculate();
+            return calc.calculate();
         } catch (UnknownFunctionException | UnparsableExpressionException ex) {
             Logger.getLogger(ScoreExpressionParser.class.getName()).log(Level.SEVERE,
                     null, ex);

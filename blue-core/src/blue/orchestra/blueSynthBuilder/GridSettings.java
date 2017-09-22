@@ -22,90 +22,84 @@ package blue.orchestra.blueSynthBuilder;
 import blue.utility.XMLUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
-import java.beans.PropertyChangeListener;
-import java.beans.PropertyChangeSupport;
-import java.io.Serializable;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.IntegerProperty;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.SimpleIntegerProperty;
+import javafx.beans.property.SimpleObjectProperty;
 
 /**
  *
  * @author stevenyi
  */
-public class GridSettings implements Serializable {
+public class GridSettings {
 
     public static enum GridStyle {
         NONE, DOT, LINE
     }
-    
-    private int width = 15;
-    private int height = 15;
-    private GridStyle gridStyle = GridStyle.DOT;
-    private boolean snapEnabled = true; 
 
-    private transient PropertyChangeSupport propSupport;
+    private IntegerProperty width = new SimpleIntegerProperty(10);
+    private IntegerProperty height = new SimpleIntegerProperty(10);
+    private ObjectProperty<GridStyle> gridStyle = new SimpleObjectProperty(GridStyle.DOT);
+    private BooleanProperty snapEnabled = new SimpleBooleanProperty(true);
 
-    public int getWidth() {
+    public GridSettings() {
+    }
+
+    public GridSettings(GridSettings settings) {
+        setWidth(settings.getWidth());
+        setHeight(settings.getHeight());
+        setGridStyle(settings.getGridStyle());
+        setSnapEnabled(settings.isSnapEnabled());
+    }
+
+    public final void setWidth(int value) {
+        width.set(value);
+    }
+
+    public final int getWidth() {
+        return width.get();
+    }
+
+    public final IntegerProperty widthProperty() {
         return width;
     }
 
-    public void setWidth(int width) {
-        int oldWidth = this.width;
-        this.width = width;
-
-        if (propSupport != null && width != oldWidth) {
-            propSupport.firePropertyChange("width", oldWidth, width);
-        }
+    public final void setHeight(int value) {
+        height.set(value);
     }
 
-    public int getHeight() {
+    public final int getHeight() {
+        return height.get();
+    }
+
+    public final IntegerProperty heightProperty() {
         return height;
     }
 
-    public void setHeight(int height) {
-        int oldHeight = this.height;
-        this.height = height;
-        if (propSupport != null && height != oldHeight) {
-            propSupport.firePropertyChange("height", oldHeight, height);
-        }
+    public final void setSnapEnabled(boolean value) {
+        snapEnabled.set(value);
     }
 
-    public GridStyle getGridStyle() {
-        return gridStyle;
+    public final boolean isSnapEnabled() {
+        return snapEnabled.get();
     }
 
-    public void setGridStyle(GridStyle gridStyle) {
-        GridStyle oldVal = this.gridStyle;
-        this.gridStyle = gridStyle;
-
-        if (propSupport != null && !oldVal.equals(gridStyle)) {
-            propSupport.firePropertyChange("gridStyle", oldVal, gridStyle);
-        }
-    }
-
-    
-
-    public boolean isSnapEnabled() {
+    public final BooleanProperty snapEnabledProperty() {
         return snapEnabled;
     }
 
-    public void setSnapEnabled(boolean snapEnabled) {
-        boolean oldVal = this.snapEnabled;
-        this.snapEnabled = snapEnabled;
-        if (propSupport != null && oldVal != snapEnabled) {
-            propSupport.firePropertyChange("snapEnabled", oldVal, snapEnabled);
-        }
+    public final void setGridStyle(GridStyle gridStyle) {
+        this.gridStyle.set(gridStyle);
     }
 
-    public void addPropertyChangeListener(PropertyChangeListener pcl) {
-        if (propSupport == null) {
-            propSupport = new PropertyChangeSupport(this);
-        }
-        propSupport.addPropertyChangeListener(pcl);
+    public final GridStyle getGridStyle() {
+        return gridStyle.get();
     }
 
-    public void removePropertyChangeListener(PropertyChangeListener pcl) {
-        if (propSupport != null) {
-            propSupport.removePropertyChangeListener(pcl);
-        }
+    public final ObjectProperty<GridStyle> gridStyleProperty() {
+        return gridStyle;
     }
 
     public static GridSettings loadFromXML(Element data)
@@ -120,16 +114,16 @@ public class GridSettings implements Serializable {
 
             switch (name) {
                 case "width":
-                    gridSettings.width = XMLUtilities.readInt(node);
+                    gridSettings.setWidth(XMLUtilities.readInt(node));
                     break;
                 case "height":
-                    gridSettings.height = XMLUtilities.readInt(node);
+                    gridSettings.setHeight(XMLUtilities.readInt(node));
                     break;
                 case "gridStyle":
-                    gridSettings.gridStyle = GridStyle.valueOf(node.getTextString());
+                    gridSettings.setGridStyle(GridStyle.valueOf(node.getTextString()));
                     break;
                 case "snapGridEnabled":
-                    gridSettings.snapEnabled = XMLUtilities.readBoolean(node);
+                    gridSettings.setSnapEnabled(XMLUtilities.readBoolean(node));
                     break;
             }
         }
@@ -143,11 +137,11 @@ public class GridSettings implements Serializable {
     public Element saveAsXML() {
         Element retVal = new Element("gridSettings");
 
-        retVal.addElement(XMLUtilities.writeInt("width", width));
-        retVal.addElement(XMLUtilities.writeInt("height", height));
-        retVal.addElement(new Element("gridStyle").setText(gridStyle.toString()));
+        retVal.addElement(XMLUtilities.writeInt("width", getWidth()));
+        retVal.addElement(XMLUtilities.writeInt("height", getHeight()));
+        retVal.addElement(new Element("gridStyle").setText(getGridStyle().toString()));
         retVal.addElement(XMLUtilities.writeBoolean("snapGridEnabled",
-                snapEnabled));
+                isSnapEnabled()));
 
         return retVal;
     }

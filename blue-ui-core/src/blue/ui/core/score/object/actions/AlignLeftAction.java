@@ -61,10 +61,10 @@ public final class AlignLeftAction extends AbstractAction implements ContextAwar
         }
 
 
-        float initialStartTimes[] = new float[selected.size()];
-        float endingStartTimes[] = new float[selected.size()];
+        double initialStartTimes[] = new double[selected.size()];
+        double endingStartTimes[] = new double[selected.size()];
 
-        float farLeft = Float.MAX_VALUE;
+        double farLeft = Double.MAX_VALUE;
         int i = 0;
 
         for (ScoreObject scoreObj : selected) {

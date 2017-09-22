@@ -92,8 +92,8 @@ public class GroupMovementSelectionList<T> extends SelectionList<T> implements
             int w = gridSettings.getWidth();
             int h = gridSettings.getHeight();
                     
-            offsetX = (Math.round((float)offsetX / w) * w) - gridOffsetX;
-            offsetY = (Math.round((float)offsetY / h) * h) - gridOffsetY;
+            offsetX = (int)(Math.round((double)offsetX / w) * w) - gridOffsetX;
+            offsetY = (int)(Math.round((double)offsetY / h) * h) - gridOffsetY;
         }
         
         int xVal = (offsetX < minOffsetX) ? minOffsetX : offsetX;

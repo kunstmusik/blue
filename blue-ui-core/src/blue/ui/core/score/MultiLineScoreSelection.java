@@ -35,10 +35,10 @@ public class MultiLineScoreSelection {
         CLEAR
     }
     
-    float startTime = -1.0f;
-    float endTime = -1.0f;
+    double startTime = -1.0f;
+    double endTime = -1.0f;
     Collection<Layer> selectedLayers = new HashSet<>();
-    float translationTime = 0.0f;
+    double translationTime = 0.0f;
     
     private List<MultiLineScoreSelectionListener> listeners = new ArrayList<>();
     
@@ -51,12 +51,12 @@ public class MultiLineScoreSelection {
         return INSTANCE;
     }
     
-    public void startSelection(float startTime, float endTime) {
+    public void startSelection(double startTime, double endTime) {
         this.startTime = startTime;
         this.endTime = endTime;
     }
     
-    public void updateSelection(float startTime, float endTime, Collection<Layer> selectedLayers) {
+    public void updateSelection(double startTime, double endTime, Collection<Layer> selectedLayers) {
         this.startTime = startTime;
         this.endTime = endTime;
         this.selectedLayers = selectedLayers;
@@ -68,7 +68,7 @@ public class MultiLineScoreSelection {
         fireUpdate(UpdateType.TRANSLATION_START);
     }
     
-    public void updateTranslation(float translationTime) {
+    public void updateTranslation(double translationTime) {
         this.translationTime = translationTime;
         fireUpdate(UpdateType.TRANSLATION);
     }
@@ -90,11 +90,11 @@ public class MultiLineScoreSelection {
     
     // GETTERS
 
-    public float getStartTime() {
+    public double getStartTime() {
         return startTime;
     }
 
-    public float getEndTime() {
+    public double getEndTime() {
         return endTime;
     }
 
@@ -102,7 +102,7 @@ public class MultiLineScoreSelection {
         return selectedLayers;
     }
 
-    public float getTranslationTime() {
+    public double getTranslationTime() {
         return translationTime;
     }
     

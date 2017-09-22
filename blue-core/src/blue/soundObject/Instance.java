@@ -4,11 +4,8 @@ import blue.score.ScoreObjectEvent;
 import blue.*;
 import blue.noteProcessor.NoteProcessorChain;
 import blue.noteProcessor.NoteProcessorException;
-import blue.score.ScoreObject;
-import blue.utility.ObjectUtilities;
 import blue.utility.ScoreUtilities;
 import electric.xml.Element;
-import java.io.Serializable;
 import java.util.Map;
 
 /**
@@ -19,7 +16,7 @@ import java.util.Map;
  * @version 1.0
  */
 
-public class Instance extends AbstractSoundObject implements Serializable {
+public class Instance extends AbstractSoundObject {
 
 //    private static BarRenderer renderer = new LetterRenderer("I");
 
@@ -29,11 +26,12 @@ public class Instance extends AbstractSoundObject implements Serializable {
 
     private int timeBehavior;
 
-    float repeatPoint = -1.0f;
+    double repeatPoint = -1.0f;
 
     /*
      * cache library id when loading up the SoundObjectLibrary, to be resolved
      * in second pass
+     * FIXME: THIS NEEDS TO BE REPLACED!
      */
     int soundObjectLibraryId = -1;
 
@@ -46,6 +44,19 @@ public class Instance extends AbstractSoundObject implements Serializable {
 
     public Instance() {
         this.name = "Instance: ";
+    }
+
+    /** Copy Constructor
+     * NOTE: intentionally keeps same SoundObject reference in copy as original 
+     * @param instance 
+     */
+    public Instance(Instance instance) {
+        super(instance);
+        sObj = instance.sObj;
+        npc = new NoteProcessorChain(instance.npc);
+        backgroundColor = instance.getBackgroundColor();
+        timeBehavior = instance.getTimeBehavior();
+        repeatPoint = instance.repeatPoint;
     }
 
 
@@ -66,7 +77,7 @@ public class Instance extends AbstractSoundObject implements Serializable {
     }
 
     @Override
-    public float getObjectiveDuration() {
+    public double getObjectiveDuration() {
         return sObj.getSubjectiveDuration();
     }
 
@@ -80,28 +91,6 @@ public class Instance extends AbstractSoundObject implements Serializable {
         return npc;
     }
 
-    /*
-     * public Object clone() { Instance inst = new Instance(); inst.sObj =
-     * this.sObj; inst.setName(this.getName()); return inst; }
-     */
-
-    @Override
-    public SoundObject clone() {
-        SoundObject librarySObj = this.getSoundObject();
-
-        this.setSoundObject(null);
-        Instance retVal = (Instance) ObjectUtilities.clone(this);
-
-        this.setSoundObject(librarySObj);
-        retVal.setSoundObject(librarySObj);
-
-        return retVal;
-    }
-
-//    public BarRenderer getRenderer() {
-//        return renderer;
-//    }
-
     @Override
     public int getTimeBehavior() {
         return this.timeBehavior;
@@ -113,12 +102,12 @@ public class Instance extends AbstractSoundObject implements Serializable {
     }
 
     @Override
-    public float getRepeatPoint() {
+    public double getRepeatPoint() {
         return this.repeatPoint;
     }
 
     @Override
-    public void setRepeatPoint(float repeatPoint) {
+    public void setRepeatPoint(double repeatPoint) {
         this.repeatPoint = repeatPoint;
 
         ScoreObjectEvent event = new ScoreObjectEvent(this,
@@ -189,11 +178,16 @@ public class Instance extends AbstractSoundObject implements Serializable {
     }
 
     @Override
-    public NoteList generateForCSD(CompileData compileData, float startTime, float endTime)
+    public NoteList generateForCSD(CompileData compileData, double startTime, double endTime)
     throws SoundObjectException {
         NoteList nl = sObj.generateForCSD(compileData, startTime, endTime);
         processNotes(nl);
         
         return nl;
+    }
+
+    @Override
+    public Instance deepCopy() {
+        return new Instance(this); 
     }
 }

@@ -17,22 +17,20 @@
  * Software Foundation Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307
  * USA
  */
-
 package blue.udo;
 
 import blue.utility.ListUtil;
 import electric.xml.Element;
 import electric.xml.Elements;
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Iterator;
 
 /**
  * @author Steven Yi
- * 
+ *
  * UDOCategory holds UserDefinedOpcodes and other UDOCategories
  */
-public class UDOCategory implements Serializable {
+public class UDOCategory {
 
     private String categoryName = "New UDO Category";
 
@@ -41,6 +39,20 @@ public class UDOCategory implements Serializable {
     private ArrayList<UserDefinedOpcode> udos = new ArrayList<>();
 
     private boolean isRoot = false;
+
+    public UDOCategory() {
+    }
+
+    public UDOCategory(UDOCategory cat) {
+        categoryName = cat.categoryName;
+        isRoot = cat.isRoot;
+        for (UDOCategory udoCat : cat.subCategories) {
+            subCategories.add(new UDOCategory(udoCat));
+        }
+        for (UserDefinedOpcode udo : cat.udos) {
+            udos.add(new UserDefinedOpcode(udo));
+        }
+    }
 
     @Override
     public String toString() {
@@ -99,7 +111,6 @@ public class UDOCategory implements Serializable {
     }
 
     // ACCESSOR METHODS
-
     /**
      * @return Returns the categoryName.
      */
@@ -108,8 +119,7 @@ public class UDOCategory implements Serializable {
     }
 
     /**
-     * @param categoryName
-     *            The categoryName to set.
+     * @param categoryName The categoryName to set.
      */
     public void setCategoryName(String categoryName) {
         this.categoryName = categoryName;
@@ -121,23 +131,24 @@ public class UDOCategory implements Serializable {
     public ArrayList<UserDefinedOpcode> getUserDefinedOpcodes() {
         return udos;
     }
-    
-    /** @return all UDO's in this and all sub-categories */
+
+    /**
+     * @return all UDO's in this and all sub-categories
+     */
     public ArrayList<UserDefinedOpcode> getAllUserDefinedOpcodes() {
         ArrayList<UserDefinedOpcode> retVal = new ArrayList<>();
-        
-        for(UDOCategory cat : subCategories) {
+
+        for (UDOCategory cat : subCategories) {
             retVal.addAll(cat.getAllUserDefinedOpcodes());
         }
-        
+
         retVal.addAll(udos);
-        
+
         return retVal;
     }
 
     /**
-     * @param instruments
-     *            The instruments to set.
+     * @param instruments The instruments to set.
      */
     public void setUserDefinedOpcodes(ArrayList instruments) {
         this.udos = instruments;
@@ -151,8 +162,7 @@ public class UDOCategory implements Serializable {
     }
 
     /**
-     * @param subCategories
-     *            The subCategories to set.
+     * @param subCategories The subCategories to set.
      */
     public void setSubCategories(ArrayList subCategories) {
         this.subCategories = subCategories;
@@ -166,8 +176,7 @@ public class UDOCategory implements Serializable {
     }
 
     /**
-     * @param isRoot
-     *            The isRoot to set.
+     * @param isRoot The isRoot to set.
      */
     public void setRoot(boolean isRoot) {
         this.isRoot = isRoot;

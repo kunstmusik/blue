@@ -17,7 +17,6 @@
  * the Free Software Foundation Inc., 59 Temple Place - Suite 330,
  * Boston, MA  02111-1307 USA
  */
-
 package blue.orchestra.blueSynthBuilder;
 
 import blue.automation.Parameter;
@@ -27,40 +26,239 @@ import blue.utility.NumberUtilities;
 import blue.utility.XMLUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
-import java.io.IOException;
-import java.io.ObjectInputStream;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.text.MessageFormat;
 import java.util.ArrayList;
-import java.util.Iterator;
+import java.util.List;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.DoubleProperty;
+import javafx.beans.property.IntegerProperty;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.SimpleIntegerProperty;
+import javafx.beans.value.ChangeListener;
+import javafx.collections.FXCollections;
+import javafx.collections.ListChangeListener;
+import javafx.collections.ObservableList;
 
 /**
  * @author Steven Yi
- * 
+ *
  */
 public class BSBHSliderBank extends AutomatableBSBObject implements
-        PropertyChangeListener, ParameterListener, Randomizable {
+        ParameterListener, Randomizable {
 
     private static MessageFormat KEY_FMT = new MessageFormat("{0}_{1}");
 
-    public static final float defaultMinimum = 0.0f;
+    private ClampedValue value;
 
-    public static final float defaultMaximum = 1.0f;
+    private IntegerProperty sliderWidth = new SimpleIntegerProperty(150);
+    private IntegerProperty gap = new SimpleIntegerProperty(5);
+    private BooleanProperty randomizable = new SimpleBooleanProperty(true);
+    private BooleanProperty valueDisplayEnabled = new SimpleBooleanProperty(true);
 
-    float minimum = defaultMinimum;
+    private final ObservableList<BSBHSlider> sliders
+            = FXCollections.observableArrayList();
 
-    float maximum = defaultMaximum;
+    final ChangeListener<? super Number> cl = (obs, old, newVal) -> {
+        if (parameters != null) {
 
-    float resolution = 0.1f;
+            int index = sliders.indexOf(obs);
+            if (index < 0) {
+                return;
+            }
 
-    private final ArrayList<BSBHSlider> sliders = new ArrayList<>();
+            Object[] vals = new Object[2];
+            vals[0] = getObjectName();
 
-    int sliderWidth = 150;
+            vals[1] = new Integer(index);
+            String key = KEY_FMT.format(vals);
 
-    private int gap = 5;
+            Parameter param = parameters.getParameter(key);
+            if (param != null) {
+                param.setValue(newVal.doubleValue());
+            }
+        }
+    };
 
-    private boolean randomizable = true;
+    private final ListChangeListener<BSBHSlider> listChangeListener
+            = new ListChangeListener<BSBHSlider>() {
+        @Override
+        public void onChanged(ListChangeListener.Change<? extends BSBHSlider> c) {
+            while (c.next()) {
+                if (c.wasPermutated()) {
+
+                } else if (c.wasUpdated()) {
+
+                } else {
+                    for (BSBHSlider remItem : c.getRemoved()) {
+                        remItem.maximumProperty().unbind();
+                        remItem.minimumProperty().unbind();
+                        remItem.sliderWidthProperty().unbind();
+                        remItem.randomizableProperty().unbind();
+                        remItem.resolutionProperty().unbind();
+                        remItem.valueDisplayEnabledProperty().unbind();
+                        remItem.valueProperty().removeListener(cl);
+                    }
+                    for (BSBHSlider addItem : c.getAddedSubList()) {
+                        addItem.maximumProperty().bind(maximumProperty());
+                        addItem.minimumProperty().bind(minimumProperty());
+                        addItem.sliderWidthProperty().bind(sliderWidthProperty());
+                        addItem.randomizableProperty().bind(randomizableProperty());
+                        addItem.resolutionProperty().bind(resolutionProperty());
+                        addItem.valueDisplayEnabledProperty().bind(
+                                valueDisplayEnabledProperty());
+                        addItem.valueProperty().addListener(cl);
+                    }
+                }
+            }
+        }
+    };
+
+    ClampedValueListener cvl = (pType, bType) -> {
+        double v;
+        if (null != pType) {
+            switch (pType) {
+                case MIN:
+                    v = getMinimum();
+                    for (Parameter param : getParameters()) {
+                        param.setMin(v,
+                                bType == ClampedValueListener.BoundaryType.TRUNCATE);
+                    }
+                    break;
+                case MAX:
+                    v = getMaximum();
+                    for (Parameter param : getParameters()) {
+                        param.setMax(v,
+                                bType == ClampedValueListener.BoundaryType.TRUNCATE);
+                    }
+                    break;
+                case VALUE:
+                    v = getMaximum();
+                    for (Parameter param : getParameters()) {
+                        if (!param.isAutomationEnabled()) {
+                            param.setMax(v,
+                                    bType == ClampedValueListener.BoundaryType.TRUNCATE);
+                        }
+                    }
+                    break;
+                case RESOLUTION:
+                    BigDecimal bdv = getResolution();
+                    for (Parameter param : getParameters()) {
+                        param.setResolution(bdv);
+                    }
+                    break;
+                default:
+                    break;
+            }
+        }
+    };
+
+    public BSBHSliderBank() {
+        value = new ClampedValue(0.0, 1.0, 0.0, new BigDecimal("0.1"));
+        value.addListener(cvl);
+        sliders.addListener(listChangeListener);
+        sliders.add(new BSBHSlider());
+    }
+
+    public BSBHSliderBank(BSBHSliderBank bank) {
+        super(bank);
+        value = new ClampedValue(bank.value);
+        value.addListener(cvl);
+        sliders.addListener(listChangeListener);
+        setValueDisplayEnabled(bank.isValueDisplayEnabled());
+
+        for (BSBHSlider slider : bank.sliders) {
+            sliders.add(new BSBHSlider(slider));
+        }
+    }
+
+    public final void setMinimum(double val) {
+        value.setMin(val);
+    }
+
+    public final double getMinimum() {
+        return value.getMin();
+    }
+
+    public final DoubleProperty minimumProperty() {
+        return value.minProperty();
+    }
+
+    public final void setMaximum(double val) {
+        value.setMax(val);
+    }
+
+    public final double getMaximum() {
+        return value.getMax();
+    }
+
+    public final DoubleProperty maximumProperty() {
+        return value.maxProperty();
+    }
+
+    public final void setResolution(BigDecimal val) {
+        value.setResolution(val);
+    }
+
+    public final BigDecimal getResolution() {
+        return value.getResolution();
+    }
+
+    public final ObjectProperty<BigDecimal> resolutionProperty() {
+        return value.resolutionProperty();
+    }
+
+    public final void setSliderWidth(int value) {
+        sliderWidth.set(value);
+    }
+
+    public final int getSliderWidth() {
+        return sliderWidth.get();
+    }
+
+    public final IntegerProperty sliderWidthProperty() {
+        return sliderWidth;
+    }
+
+    public final void setGap(int value) {
+        gap.set(value);
+    }
+
+    public final int getGap() {
+        return gap.get();
+    }
+
+    public final IntegerProperty gapProperty() {
+        return gap;
+    }
+
+    @Override
+    public final void setRandomizable(boolean value) {
+        randomizable.set(value);
+    }
+
+    @Override
+    public final boolean isRandomizable() {
+        return randomizable.get();
+    }
+
+    public final BooleanProperty randomizableProperty() {
+        return randomizable;
+    }
+
+    public final boolean isValueDisplayEnabled() {
+        return valueDisplayEnabled.get();
+    }
+
+    public final void setValueDisplayEnabled(boolean enabled) {
+        valueDisplayEnabled.set(enabled);
+    }
+
+    public final BooleanProperty valueDisplayEnabledProperty() {
+        return valueDisplayEnabled;
+    }
 
     // OVERRIDE to handle Parameter name changes and multiple parameters
     @Override
@@ -137,32 +335,30 @@ public class BSBHSliderBank extends AutomatableBSBObject implements
 
         }
 
-        this.objectName = objectName;
-
-        if (propListeners != null) {
-            propListeners.firePropertyChange("objectName", oldName,
-                    this.objectName);
-        }
+        this.objectNameProperty().set(objectName);
 
         if (doInitialize) {
             initializeParameters();
         }
     }
 
-    public BSBHSliderBank() {
-        BSBHSlider hSlider = new BSBHSlider();
-        sliders.add(hSlider);
-        hSlider.addPropertyChangeListener(this);
+    public ObservableList<BSBHSlider> getSliders() {
+        return sliders;
     }
 
-    public ArrayList<BSBHSlider> getSliders() {
-        return sliders;
+    private final void setValueProperty(ClampedValue value) {
+        if (this.value != null) {
+            this.value.removeListener(cvl);
+        }
+        this.value = value;
+        value.addListener(cvl);
     }
 
     public static BSBObject loadFromXML(Element data) {
         BSBHSliderBank sliderBank = new BSBHSliderBank();
-        float minVal = 0;
-        float maxVal = 0;
+        double minVal = 0;
+        double maxVal = 1.0;
+        BigDecimal resolution = new BigDecimal("0.1");
         initBasicFromXML(data, sliderBank);
 
         Elements nodes = data.getElements();
@@ -174,14 +370,19 @@ public class BSBHSliderBank extends AutomatableBSBObject implements
             String nodeName = node.getName();
             switch (nodeName) {
                 case "minimum":
-                    minVal = Float.parseFloat(node.getTextString());
+                    minVal = Double.parseDouble(node.getTextString());
                     break;
                 case "maximum":
-                    maxVal = Float.parseFloat(node.getTextString());
+                    maxVal = Double.parseDouble(node.getTextString());
                     break;
                 case "resolution":
-                    sliderBank
-                            .setResolution(Float.parseFloat(node.getTextString()));
+                    resolution = new BigDecimal(Double.parseDouble(
+                            node.getTextString()))
+                            .setScale(5, RoundingMode.HALF_UP)
+                            .stripTrailingZeros();
+                    break;
+                case "bdresolution":
+                    resolution = new BigDecimal(node.getTextString());
                     break;
                 case "sliderWidth":
                     sliderBank.setSliderWidth(Integer
@@ -191,24 +392,19 @@ public class BSBHSliderBank extends AutomatableBSBObject implements
                     sliderBank.setGap(Integer.parseInt(node.getTextString()));
                     break;
                 case "randomizable":
-                    sliderBank.randomizable = XMLUtilities.readBoolean(node);
+                    sliderBank.setRandomizable(XMLUtilities.readBoolean(node));
+                    break;
+                case "valueDisplayEnabled":
+                    sliderBank.setValueDisplayEnabled(XMLUtilities.readBoolean(node));
                     break;
                 case "bsbObject":
                     BSBHSlider hSlider = (BSBHSlider) BSBHSlider.loadFromXML(node);
-                    hSlider.addPropertyChangeListener(sliderBank);
                     sliderBank.getSliders().add(hSlider);
                     break;
             }
         }
 
-        // set min and max values
-        if (minVal > BSBHSliderBank.defaultMaximum) {
-            sliderBank.maximum = maxVal;
-            sliderBank.minimum = minVal;
-        } else {
-            sliderBank.minimum = minVal;
-            sliderBank.maximum = maxVal;
-        }
+        sliderBank.setValueProperty(new ClampedValue(minVal, maxVal, 0.0, resolution));
 
         return sliderBank;
     }
@@ -222,101 +418,22 @@ public class BSBHSliderBank extends AutomatableBSBObject implements
     public Element saveAsXML() {
         Element retVal = getBasicXML(this);
 
-        retVal.addElement(XMLUtilities.writeFloat("minimum", minimum));
-        retVal.addElement(XMLUtilities.writeFloat("maximum", maximum));
-        retVal.addElement(XMLUtilities.writeFloat("resolution", resolution));
-        retVal.addElement(XMLUtilities.writeInt("sliderWidth", sliderWidth));
-        retVal.addElement(XMLUtilities.writeInt("gap", gap));
+        retVal.addElement(XMLUtilities.writeDouble("minimum", getMinimum()));
+        retVal.addElement(XMLUtilities.writeDouble("maximum", getMaximum()));
+        retVal.addElement("bdresolution").setText(getResolution().toString());
+        retVal.addElement(XMLUtilities.writeInt("sliderWidth", getSliderWidth()));
+        retVal.addElement(XMLUtilities.writeInt("gap", getGap()));
 
         retVal.addElement(XMLUtilities.writeBoolean("randomizable",
-                randomizable));
+                isRandomizable()));
+        retVal.addElement(XMLUtilities.writeBoolean("valueDisplayEnabled",
+                isValueDisplayEnabled()));
 
-        for (BSBHSlider hSlider : sliders) { 
+        for (BSBHSlider hSlider : sliders) {
             retVal.addElement(hSlider.saveAsXML());
         }
 
         return retVal;
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see blue.orchestra.blueSynthBuilder.BSBObject#getBSBObjectView()
-     */
-//    public BSBObjectView getBSBObjectView() {
-//        return new BSBHSliderBankView(this);
-//    }
-
-    /**
-     * @return Returns the maximum.
-     */
-    public float getMaximum() {
-        return maximum;
-    }
-
-    /**
-     * @param maximum
-     *            The maximum to set.
-     */
-    public void setMaximum(float maximum, boolean truncate) {
-        if (maximum <= minimum) {
-            return;
-        }
-
-        this.maximum = maximum;
-
-        if (parameters != null) {
-            Object[] vals = new Object[2];
-            vals[0] = getObjectName();
-
-            for (int i = 0; i < sliders.size(); i++) {
-                vals[1] = new Integer(i);
-                String key = KEY_FMT.format(vals);
-
-                Parameter param = parameters.getParameter(key);
-                if (param != null) {
-                    param.setMax(this.maximum, truncate);
-                }
-            }
-        }
-
-        fireBSBObjectChanged();
-    }
-
-    /**
-     * @return Returns the minimum.
-     */
-    public float getMinimum() {
-        return minimum;
-    }
-
-    /**
-     * @param minimum
-     *            The minimum to set.
-     */
-    public void setMinimum(float minimum, boolean truncate) {
-        if (minimum >= maximum) {
-            return;
-        }
-
-        this.minimum = minimum;
-
-        if (parameters != null) {
-            Object[] vals = new Object[2];
-            vals[0] = getObjectName();
-
-            for (int i = 0; i < sliders.size(); i++) {
-                vals[1] = new Integer(i);
-                String key = KEY_FMT.format(vals);
-
-                Parameter param = parameters.getParameter(key);
-                if (param != null) {
-                    param.setMin(this.minimum, truncate);
-                }
-            }
-        }
-
-        fireBSBObjectChanged();
     }
 
     public int getNumberOfSliders() {
@@ -354,12 +471,11 @@ public class BSBHSliderBank extends AutomatableBSBObject implements
                         .get(sliders.size() - 1);
 
                 for (int i = 0; i < diff; i++) {
-                    BSBHSlider copy = (BSBHSlider) lastSlider.clone();
+                    BSBHSlider copy = new BSBHSlider(lastSlider);
                     sliders.add(copy);
-                    copy.addPropertyChangeListener(this);
 
-                    if (parameters != null && this.objectName != null
-                            && this.objectName.trim().length() > 0) {
+                    if (parameters != null && getObjectName() != null
+                            && getObjectName().trim().length() > 0) {
 
                         vals[1] = new Integer(sliders.size() - 1);
                         String key = KEY_FMT.format(vals);
@@ -381,7 +497,7 @@ public class BSBHSliderBank extends AutomatableBSBObject implements
 
                         param.addParameterListener(this);
 
-                        parameters.addParameter(param);
+                        parameters.add(param);
                     }
 
                 }
@@ -391,10 +507,9 @@ public class BSBHSliderBank extends AutomatableBSBObject implements
                             .get(sliders.size() - 1);
 
                     sliders.remove(slider);
-                    slider.removePropertyChangeListener(this);
 
-                    if (parameters != null && this.objectName != null
-                            && this.objectName.trim().length() > 0) {
+                    if (parameters != null && getObjectName() != null
+                            && getObjectName().trim().length() > 0) {
 
                         vals[1] = new Integer(sliders.size());
                         String key = KEY_FMT.format(vals);
@@ -417,7 +532,7 @@ public class BSBHSliderBank extends AutomatableBSBObject implements
     @Override
     public void setupForCompilation(BSBCompilationUnit compilationUnit) {
         Object[] vals = new Object[2];
-        vals[0] = objectName;
+        vals[0] = getObjectName();
 
         for (int i = 0; i < sliders.size(); i++) {
             BSBHSlider slider = sliders.get(i);
@@ -436,53 +551,8 @@ public class BSBHSliderBank extends AutomatableBSBObject implements
             }
 
             compilationUnit.addReplacementValue(key, NumberUtilities
-                    .formatFloat(slider.getValue()));
+                    .formatDouble(slider.getValue()));
         }
-    }
-
-    /**
-     * @return Returns the resolution.
-     */
-    public float getResolution() {
-        return resolution;
-    }
-
-    /**
-     * @param resolution
-     *            The resolution to set.
-     */
-    public void setResolution(float resolution) {
-        this.resolution = resolution;
-
-        if (parameters != null) {
-            Object[] vals = new Object[2];
-            vals[0] = getObjectName();
-
-            for (int i = 0; i < sliders.size(); i++) {
-                vals[1] = new Integer(i);
-                String key = KEY_FMT.format(vals);
-
-                Parameter param = parameters.getParameter(key);
-                if (param != null) {
-                    param.setResolution(this.resolution);
-                }
-            }
-        }
-    }
-
-    /**
-     * @return Returns the sliderWidth.
-     */
-    public int getSliderWidth() {
-        return sliderWidth;
-    }
-
-    /**
-     * @param sliderWidth
-     *            The sliderWidth to set.
-     */
-    public void setSliderWidth(int sliderWidth) {
-        this.sliderWidth = sliderWidth;
     }
 
     /*
@@ -506,7 +576,7 @@ public class BSBHSliderBank extends AutomatableBSBObject implements
 
             BSBHSlider slider = (BSBHSlider) sliders.get(i);
 
-            buffer.append(Float.toString(slider.getValue()));
+            buffer.append(Double.toString(slider.getValue()));
         }
 
         return buffer.toString();
@@ -525,18 +595,9 @@ public class BSBHSliderBank extends AutomatableBSBObject implements
 
         for (int i = 0; i < size; i++) {
             BSBHSlider slider = sliders.get(i);
-            slider.setValue(Float.parseFloat(vals[i]));
+            slider.setValue(Double.parseDouble(vals[i]));
         }
 
-    }
-
-    public void setGap(int gap) {
-        this.gap = gap;
-        fireBSBObjectChanged();
-    }
-
-    public int getGap() {
-        return gap;
     }
 
     @Override
@@ -550,7 +611,7 @@ public class BSBHSliderBank extends AutomatableBSBObject implements
         String[] retVal = new String[sliders.size()];
 
         Object[] vals = new Object[2];
-        vals[0] = objectName;
+        vals[0] = getObjectName();
 
         for (int i = 0; i < sliders.size(); i++) {
             vals[1] = new Integer(i);
@@ -563,49 +624,14 @@ public class BSBHSliderBank extends AutomatableBSBObject implements
     }
 
     @Override
-    public void propertyChange(PropertyChangeEvent pce) {
-        if (pce.getPropertyName().equals("value") && parameters != null) {
-
-            int index = sliders.indexOf(pce.getSource());
-            if (index < 0) {
-                return;
-            }
-
-            Object[] vals = new Object[2];
-            vals[0] = objectName;
-
-            vals[1] = new Integer(index);
-            String key = KEY_FMT.format(vals);
-
-            Parameter param = parameters.getParameter(key);
-            if (param != null) {
-                param.setValue(((Float) pce.getNewValue()).floatValue());
-            }
-
-        }
-    }
-
-    /*
-     * This gets called as part of Serialization by Java and will do default
-     * serialization plus reconnect this SliderBank as a listener to its Sliders
-     */
-    private void readObject(ObjectInputStream stream) throws IOException,
-            ClassNotFoundException {
-        stream.defaultReadObject();
-
-        for (BSBHSlider slider : sliders) {
-            slider.addPropertyChangeListener(this);
-        }
-    }
-
-    @Override
     public void initializeParameters() {
         if (parameters == null) {
             return;
         }
-        
-        if(!automationAllowed) {
-            
+
+        if (!automationAllowed) {
+
+            String objectName = getObjectName();
             if (parameters != null) {
                 if (objectName != null && objectName.length() != 0) {
                     Object[] vals = new Object[2];
@@ -613,27 +639,27 @@ public class BSBHSliderBank extends AutomatableBSBObject implements
 
                     vals[1] = new Integer(0);
                     Parameter param = parameters.getParameter(KEY_FMT.format(vals));
-                            
-                    if(param != null && param.isAutomationEnabled()) {
+
+                    if (param != null && param.isAutomationEnabled()) {
                         automationAllowed = true;
-                    } else {   
+                    } else {
                         for (int i = 0; i < sliders.size(); i++) {
                             vals[1] = new Integer(i);
 
                             String oldKey = KEY_FMT.format(vals);
 
                             parameters.removeParameter(oldKey);
-                            
+
                         }
-                        
+
                         return;
                     }
                 }
 
-            }            
+            }
         }
 
-        if (this.objectName == null || this.objectName.trim().length() == 0) {
+        if (getObjectName() == null || getObjectName().trim().length() == 0) {
             return;
         }
 
@@ -652,12 +678,12 @@ public class BSBHSliderBank extends AutomatableBSBObject implements
                 missingParameters = true;
                 break;
             }
-            
-            if(!param.isAutomationEnabled()) {
+
+            if (!param.isAutomationEnabled()) {
                 BSBHSlider slider = (BSBHSlider) sliders.get(i);
                 param.setValue(slider.getValue());
             }
-            
+
             param.addParameterListener(this);
         }
 
@@ -691,23 +717,23 @@ public class BSBHSliderBank extends AutomatableBSBObject implements
 
             param.addParameterListener(this);
 
-            parameters.addParameter(param);
+            parameters.add(param);
         }
 
     }
 
     @Override
     public void lineDataChanged(Parameter param) {
-        float time = ParameterTimeManagerFactory.getInstance().getTime();
+        double time = ParameterTimeManagerFactory.getInstance().getTime();
 
         String paramName = param.getName();
         String strIndex = paramName.substring(paramName.lastIndexOf('_') + 1);
         int sliderIndex = Integer.parseInt(strIndex);
 
-        float val = param.getLine().getValue(time);
+        double val = param.getLine().getValue(time);
         BSBHSlider slider = sliders.get(sliderIndex);
 
-        slider.updateValue(val);
+        slider.setValue(val);
 
     }
 
@@ -719,6 +745,7 @@ public class BSBHSliderBank extends AutomatableBSBObject implements
     @Override
     public void setAutomationAllowed(boolean allowAutomation) {
         this.automationAllowed = allowAutomation;
+        String objectName = getObjectName();
 
         if (parameters != null) {
             if (allowAutomation) {
@@ -741,29 +768,38 @@ public class BSBHSliderBank extends AutomatableBSBObject implements
     }
 
     /* RANDOMIZABLE METHODS */
-
-    @Override
-    public boolean isRandomizable() {
-        return randomizable;
-    }
-
     @Override
     public void randomize() {
-        if (randomizable) {
-            for (BSBHSlider slider : sliders) { 
-                slider.randomize();
-            }
+        if (isRandomizable()) {
+            sliders.stream().forEach(BSBHSlider::randomize);
         }
     }
 
     @Override
-    public void setRandomizable(boolean randomizable) {
-        this.randomizable = randomizable;
+    public BSBObject deepCopy() {
+        return new BSBHSliderBank(this);
+    }
 
-        for (BSBHSlider slider : sliders) {
-            slider.setRandomizable(randomizable);
+    private List<Parameter> getParameters() {
+        List<Parameter> params = new ArrayList<>();
+
+        if (parameters != null) {
+
+            Object[] vals = new Object[2];
+            vals[0] = getObjectName();
+
+            for (int i = 0; i < sliders.size(); i++) {
+                vals[1] = new Integer(i);
+                String key = KEY_FMT.format(vals);
+
+                Parameter param = parameters.getParameter(key);
+
+                if (param != null) {
+                    params.add(param);
+                }
+            }
+
         }
-
-        fireBSBObjectChanged();
+        return params;
     }
 }

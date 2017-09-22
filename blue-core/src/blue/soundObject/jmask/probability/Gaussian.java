@@ -41,11 +41,21 @@ public class Gaussian implements ProbabilityGenerator {
     public Gaussian() {
         sigma = 0.1;
         mu = 0.5;
-
+        sigmaTable = new Table();
+        muTable = new Table();
         sigmaTable.getPoint(0).setValue(0.1);
         sigmaTable.getPoint(1).setValue(0.1);
         muTable.getPoint(0).setValue(0.5);
         muTable.getPoint(1).setValue(0.5);
+    }
+
+    public Gaussian(Gaussian gauss) {
+        sigma = gauss.sigma;
+        mu = gauss.mu;
+        sigmaTableEnabled = gauss.sigmaTableEnabled;
+        muTableEnabled = gauss.muTableEnabled;
+        sigmaTable = new Table(gauss.sigmaTable);
+        muTable = new Table(gauss.muTable);
     }
 
     public static ProbabilityGenerator loadFromXML(Element data) {
@@ -61,7 +71,7 @@ public class Gaussian implements ProbabilityGenerator {
                     retVal.sigma = XMLUtilities.readDouble(node);
                     break;
                 case "mu":
-                    retVal.mu  = XMLUtilities.readDouble(node);
+                    retVal.mu = XMLUtilities.readDouble(node);
                     break;
                 case "sigmaTableEnabled":
                     retVal.sigmaTableEnabled = XMLUtilities.readBoolean(node);
@@ -108,10 +118,6 @@ public class Gaussian implements ProbabilityGenerator {
         return retVal;
     }
 
-//    public JComponent getEditor() {
-//        return new GaussianEditor(this);
-//    }
-
     @Override
     public String getName() {
         return "Gaussian";
@@ -123,7 +129,7 @@ public class Gaussian implements ProbabilityGenerator {
         // mu = Mittelwert
         // mu+-sigma -> 68.26% aller x
         double e, sum;
-        
+
         double localSigma, localMu;
 
         if (sigmaTableEnabled) {
@@ -195,5 +201,10 @@ public class Gaussian implements ProbabilityGenerator {
 
     public void setMuTable(Table muTable) {
         this.muTable = muTable;
+    }
+
+    @Override
+    public Gaussian deepCopy() {
+        return new Gaussian(this);
     }
 }

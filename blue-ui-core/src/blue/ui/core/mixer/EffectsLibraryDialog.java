@@ -3,15 +3,12 @@
  *
  * Created on February 28, 2006, 8:12 PM
  */
-
 package blue.ui.core.mixer;
 
 import blue.BlueSystem;
 import blue.WindowSettingManager;
 import blue.WindowSettingsSavable;
 import blue.mixer.*;
-import blue.ui.core.mixer.EffectCategory;
-import blue.ui.core.mixer.EffectsLibrary;
 import blue.ui.utilities.UiUtilities;
 import blue.utility.GUI;
 import blue.utility.ObjectUtilities;
@@ -36,7 +33,7 @@ import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 
 /**
- * 
+ *
  * @author steven
  */
 public class EffectsLibraryDialog extends javax.swing.JDialog implements
@@ -50,7 +47,9 @@ public class EffectsLibraryDialog extends javax.swing.JDialog implements
 
     EffectEditor effectEditor = new EffectEditor();
 
-    /** Creates new form EffectLibraryDialog */
+    /**
+     * Creates new form EffectLibraryDialog
+     */
     public EffectsLibraryDialog(java.awt.Frame parent, boolean modal) {
         super(parent, modal);
         initComponents();
@@ -221,8 +220,7 @@ public class EffectsLibraryDialog extends javax.swing.JDialog implements
     }// GEN-LAST:event_formWindowClosing
 
     /**
-     * @param args
-     *            the command line arguments
+     * @param args the command line arguments
      */
     public static void main(String args[]) {
         GUI.setBlueLookAndFeel();
@@ -310,7 +308,7 @@ public class EffectsLibraryDialog extends javax.swing.JDialog implements
                         return;
                     }
 
-                    bufferedObject = ObjectUtilities.clone(cat);
+                    bufferedObject = new EffectCategory(cat);
 
                     EffectsLibrary.getInstance().removeEffectCategory(cat);
                 }
@@ -325,7 +323,7 @@ public class EffectsLibraryDialog extends javax.swing.JDialog implements
                         return;
                     }
 
-                    bufferedObject = ObjectUtilities.clone(cat);
+                    bufferedObject = new EffectCategory(cat);
 
                     EffectsLibrary.getInstance().removeEffectCategory(cat);
                 }
@@ -343,16 +341,15 @@ public class EffectsLibraryDialog extends javax.swing.JDialog implements
 
                     if (bufferedObject != null) {
 
-                        Object clone = ObjectUtilities.clone(bufferedObject);
-
-                        if (clone instanceof EffectCategory) {
-                            EffectCategory category = (EffectCategory) clone;
+                        if (bufferedObject instanceof EffectCategory) {
+                            EffectCategory category = new EffectCategory(
+                                    (EffectCategory) bufferedObject);
 
                             EffectsLibrary.getInstance().addCategory(cat,
                                     category);
 
-                        } else if (clone instanceof Effect) {
-                            Effect effect = (Effect) clone;
+                        } else if (bufferedObject instanceof Effect) {
+                            Effect effect = new Effect((Effect) bufferedObject);
 
                             EffectsLibrary.getInstance().addEffect(cat, effect);
 
@@ -438,7 +435,7 @@ public class EffectsLibraryDialog extends javax.swing.JDialog implements
                         return;
                     }
 
-                    bufferedObject = ObjectUtilities.clone(effect);
+                    bufferedObject = new Effect(effect);
 
                     EffectsLibrary.getInstance().removeEffect(effect);
                 }
@@ -453,7 +450,7 @@ public class EffectsLibraryDialog extends javax.swing.JDialog implements
                         return;
                     }
 
-                    bufferedObject = ObjectUtilities.clone(effect);
+                    bufferedObject = new Effect(effect);
                 }
             };
 

@@ -16,14 +16,16 @@ import electric.xml.Element;
  */
 
 @NoteProcessorPlugin(displayName="PchInversionProcessor", position = 100)
-public class PchInversionProcessor implements NoteProcessor,
-        java.io.Serializable {
+public class PchInversionProcessor implements NoteProcessor {
 
-    float value = 8.00f;
-
+    double value = 8.00f;
     int pfield = 4;
 
     public PchInversionProcessor() {
+    }
+    public PchInversionProcessor(PchInversionProcessor pip) {
+        value = pip.value;
+        pfield = pip.pfield;
     }
 
     @Override
@@ -41,11 +43,11 @@ public class PchInversionProcessor implements NoteProcessor,
     }
 
     public String getVal() {
-        return Float.toString(value);
+        return Double.toString(value);
     }
 
     public void setVal(String value) {
-        this.value = Float.parseFloat(value);
+        this.value = Double.parseDouble(value);
     }
 
     @Override
@@ -57,10 +59,10 @@ public class PchInversionProcessor implements NoteProcessor,
 
             try {
                 val = temp.getPField(pfield).trim();
-                Float.parseFloat(val);
+                Double.parseDouble(val);
             } catch (NumberFormatException ex) {
                 throw new NoteProcessorException(this, BlueSystem
-                        .getString("noteProcessorException.pfieldNotFloat"),
+                        .getString("noteProcessorException.pfieldNotDouble"),
                         pfield);
             } catch (Exception ex) {
                 throw new NoteProcessorException(this, BlueSystem
@@ -68,18 +70,18 @@ public class PchInversionProcessor implements NoteProcessor,
                         pfield);
             }
 
-            float baseTen = blue.utility.ScoreUtilities.getBaseTen(val);
-            float baseTenAxis = blue.utility.ScoreUtilities.getBaseTen(this
+            double baseTen = blue.utility.ScoreUtilities.getBaseTen(val);
+            double baseTenAxis = blue.utility.ScoreUtilities.getBaseTen(this
                     .getVal());
 
-            float addVal = -1 * (baseTen - baseTenAxis);
+            double addVal = -1 * (baseTen - baseTenAxis);
 
             baseTen = baseTenAxis + addVal;
 
             int octave = (int) (baseTen / 12);
-            float strPch = (baseTen % 12) / 100;
+            double strPch = (baseTen % 12) / 100;
 
-            temp.setPField(Float.toString(octave + strPch), pfield);
+            temp.setPField(Double.toString(octave + strPch), pfield);
         }
     }
 
@@ -132,5 +134,10 @@ public class PchInversionProcessor implements NoteProcessor,
         retVal.addElement("value").setText(this.getVal());
 
         return retVal;
+    }
+
+    @Override
+    public PchInversionProcessor deepCopy() {
+        return new PchInversionProcessor(this);
     }
 }

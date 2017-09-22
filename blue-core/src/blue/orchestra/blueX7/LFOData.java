@@ -17,12 +17,12 @@ import org.apache.commons.lang3.builder.EqualsBuilder;
  * <p>
  * Company: steven yi music
  * </p>
- * 
+ *
  * @author unascribed
  * @version 1.0
  */
+public class LFOData {
 
-public class LFOData implements java.io.Serializable {
     public int speed = 0;
 
     public int delay = 0;
@@ -35,10 +35,21 @@ public class LFOData implements java.io.Serializable {
 
     public int sync = 0;
 
+    public LFOData() {
+    }
+
+    public LFOData(LFOData lfo) {
+        speed = lfo.speed;
+        delay = lfo.delay;
+        PMD = lfo.PMD;
+        AMD = lfo.AMD;
+        wave = lfo.wave;
+        sync = lfo.sync;
+    }
+
     /**
      * @return
      */
-
     public static LFOData loadFromXML(Element data) {
         LFOData lfo = new LFOData();
 

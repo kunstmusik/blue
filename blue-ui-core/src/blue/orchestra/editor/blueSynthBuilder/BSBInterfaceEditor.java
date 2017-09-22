@@ -20,140 +20,199 @@
 package blue.orchestra.editor.blueSynthBuilder;
 
 import java.awt.BorderLayout;
-import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import javax.swing.AbstractAction;
-import javax.swing.BorderFactory;
 import javax.swing.JComponent;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
 import javax.swing.KeyStroke;
 
 import blue.BlueSystem;
-import blue.components.EditEnabledCheckBox;
-import blue.event.EditModeListener;
+import blue.jfx.BlueFX;
 import blue.orchestra.blueSynthBuilder.BSBGraphicInterface;
+import blue.orchestra.blueSynthBuilder.BSBGroup;
+import blue.orchestra.blueSynthBuilder.BSBObject;
 import blue.orchestra.blueSynthBuilder.BSBObjectEntry;
-import blue.orchestra.blueSynthBuilder.GridSettings;
-import blue.orchestra.blueSynthBuilder.Preset;
 import blue.orchestra.blueSynthBuilder.PresetGroup;
-import com.l2fprod.common.propertysheet.Property;
-import com.l2fprod.common.propertysheet.PropertyEditorRegistry;
-import com.l2fprod.common.propertysheet.PropertySheet;
-import com.l2fprod.common.propertysheet.PropertySheetPanel;
-import java.beans.IntrospectionException;
-import java.beans.Introspector;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
-import java.beans.PropertyEditor;
-import javax.swing.JTabbedPane;
+import blue.orchestra.editor.blueSynthBuilder.jfx.BSBEditPane;
+import blue.orchestra.editor.blueSynthBuilder.jfx.editors.BSBPropertyEditorFactory;
+import blue.orchestra.editor.blueSynthBuilder.jfx.PresetPane;
+import java.util.concurrent.CountDownLatch;
+import javafx.collections.ListChangeListener;
+import javafx.collections.ObservableList;
+import javafx.collections.ObservableSet;
+import javafx.collections.SetChangeListener;
+import javafx.embed.swing.JFXPanel;
+import javafx.geometry.Insets;
+import javafx.scene.Node;
+import javafx.scene.Scene;
+import javafx.scene.control.CheckBox;
+import javafx.scene.control.ScrollPane;
+import javafx.scene.control.SplitPane;
+import javafx.scene.control.Tab;
+import javafx.scene.control.TabPane;
+import javafx.scene.control.TreeItem;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.VBox;
+import org.controlsfx.control.BreadCrumbBar;
+import org.controlsfx.control.PropertySheet;
+import org.controlsfx.property.BeanPropertyUtils;
 import org.openide.util.Exceptions;
 
 /**
  * @author Steven
  */
-public class BSBInterfaceEditor extends JComponent implements PresetListener,
-        PropertyChangeListener {
+public class BSBInterfaceEditor extends JComponent {
 
-    private final BSBEditPanel bsbEditPanel;
-
-    private final BSBObjectPropertySheet bsbPropSheet;
-
-    PropertySheetPanel gridPropertySheet = new PropertySheetPanel();
-
-    PresetsPanel presets = new PresetsPanel();
-
-    EditEnabledCheckBox editBox = new EditEnabledCheckBox();
-
-    AlignmentPanel alignPanel = new AlignmentPanel();
-
-    JPanel rightBar = new JPanel(new BorderLayout());
+    private BSBEditPane bsbEditPane = null;
+    private TabPane rightPane;
+    private PresetPane presetPane;
+    private CheckBox editEnabledCheckBox;
+    private PropertySheet bsbObjPropSheet;
+    private PropertySheet gridPropSheet;
 
     private BSBGraphicInterface gInterface;
 
-    boolean isUpdating = false;
+    private double dividerPosition = 0.8;
 
+    // TODO - move JFX code into FXML/Controller
     public BSBInterfaceEditor(BSBObjectEntry[] bsbObjectEntries,
             boolean showAutomatable) {
 
-        bsbPropSheet = new BSBObjectPropertySheet(showAutomatable);
+        JFXPanel jfxPanel = new JFXPanel();
 
-        bsbEditPanel = new BSBEditPanel(bsbObjectEntries);
+        CountDownLatch latch = new CountDownLatch(1);
 
-        presets.addPresetListener(this);
+        BlueFX.runOnFXThread(() -> {
 
-        editBox.addEditModeListener(bsbEditPanel);
-        editBox.addEditModeListener(isEditing ->
-                rightBar.setVisible(isEditing));
+            try {
+                bsbObjPropSheet = new PropertySheet();
+                bsbObjPropSheet.setSearchBoxVisible(false);
+                bsbObjPropSheet.setModeSwitcherVisible(false);
+                bsbObjPropSheet.setPropertyEditorFactory(new BSBPropertyEditorFactory());
 
-        editBox.addEditModeListener((boolean isEditing) -> {
-            if (!isUpdating && gInterface != null) {
-                gInterface.setEditEnabled(isEditing);
-            }
-        });
+                gridPropSheet = new PropertySheet();
+                gridPropSheet.setSearchBoxVisible(false);
+                gridPropSheet.setModeSwitcherVisible(false);
 
-        JPanel topBar = new JPanel(new BorderLayout());
-        topBar.add(presets, BorderLayout.CENTER);
-        topBar.add(editBox, BorderLayout.EAST);
+                Tab bsbObjPropTab = new Tab("BSBObject Properties", bsbObjPropSheet);
+                bsbObjPropTab.setClosable(false);
+                Tab gridTab = new Tab("Grid", gridPropSheet);
+                gridTab.setClosable(false);
 
-        JScrollPane editScrollPane = new JScrollPane(bsbEditPanel);
-        editScrollPane.setAutoscrolls(true);
+                rightPane = new TabPane(bsbObjPropTab, gridTab);
+                rightPane.setPrefWidth(250);
 
-        JTabbedPane tabs = new JTabbedPane();
-        tabs.add(BlueSystem
-                .getString("instrument.bsb.objectProperties"), bsbPropSheet);
-        tabs.add("Grid", gridPropertySheet);
+                bsbEditPane = new BSBEditPane(bsbObjectEntries);
+                ScrollPane scrollPane = new ScrollPane(bsbEditPane);
 
-        gridPropertySheet.setMode(PropertySheet.VIEW_AS_FLAT_LIST);
-        gridPropertySheet.setToolBarVisible(false);
-        gridPropertySheet.setDescriptionVisible(false);
-        gridPropertySheet.getTable().setEditorFactory(
-                new PropertyEditorRegistryEx());
-        PropertyEditorRegistry registry = (PropertyEditorRegistry) gridPropertySheet.getTable().getEditorFactory();
-        registry.registerEditor(Enum.class, new EnumComboBoxPropertyEditor());
-        gridPropertySheet.setPreferredSize(new Dimension(250, 30));
+                bsbEditPane.getSelection().selection.addListener(
+                        (SetChangeListener<? super BSBObject>) se -> {
+                            if (!bsbEditPane.isMarqueeSelecting()) {
+                                updateBsbObjPropSheet();
+                            }
+                        });
 
-        gridPropertySheet.addPropertySheetChangeListener((PropertyChangeEvent evt) -> {
-            if (gInterface != null) {
-                Property prop = (Property) evt.getSource();
-                prop.writeToObject(gInterface.getGridSettings());
+                bsbEditPane.marqueeSelectingProperty().addListener((obs, old, newVal) -> {
+                    if (!newVal) {
+                        updateBsbObjPropSheet();
+                    }
+                });
+
+                // ensure edit pane is at least size of viewport so that mouse
+                // actions will work even on empty interface
+                scrollPane.viewportBoundsProperty().addListener((obs, old, newVal) -> {
+                    bsbEditPane.setMinWidth(newVal.getWidth());
+                    bsbEditPane.setMinHeight(newVal.getHeight());
+                });
+                scrollPane.getStyleClass().add("edge-to-edge");
+
+                presetPane = new PresetPane();
+                editEnabledCheckBox = new CheckBox("Edit Enabled");
+
+                presetPane.setMargin(editEnabledCheckBox,
+                        new Insets(5, 5, 5, 0));
+                presetPane.getChildren().add(editEnabledCheckBox);
+
+                BreadCrumbBar<BSBGroupItem> breadCrumbBar = new BreadCrumbBar<>();
+                breadCrumbBar.setAutoNavigationEnabled(false);
+
+                bsbEditPane.getGroupsList().addListener(
+                        (ListChangeListener.Change<? extends BSBGroup> c) -> {
+                    ObservableList<BSBGroup> groupsList
+                            = bsbEditPane.getGroupsList();
+                    if (groupsList.size() > 0) {
+                        TreeItem<BSBGroupItem> current = new TreeItem<>(
+                                new BSBGroupItem(groupsList.get(0), "Root"));
+                        for (int i = 1; i < groupsList.size(); i++) {
+                            BSBGroup bsbGroup = groupsList.get(i);
+                            TreeItem<BSBGroupItem> next
+                                    = new TreeItem<>(
+                                            new BSBGroupItem(
+                                                    bsbGroup,
+                                                    bsbGroup.getGroupName()));
+                            current.getChildren().add(next);
+                            current = next;
+                        }
+                        breadCrumbBar.setSelectedCrumb(current);
+                    }
+                });
+
+                breadCrumbBar.setOnCrumbAction(item -> {
+                    BSBGroupItem groupItem = item.getSelectedCrumb().getValue();
+                    ObservableList<BSBGroup> groups = bsbEditPane.getGroupsList();
+                    int index = groups.indexOf(groupItem.bsbGroup) + 1;
+                    if(index < groups.size()) {
+                        groups.remove(index, groups.size());
+                    }
+                });
+
+                VBox topBox = new VBox();
+                topBox.getChildren().addAll(presetPane, breadCrumbBar);
+
+                SplitPane editAreaPane = new SplitPane(scrollPane);
+
+                BorderPane mainPane = new BorderPane();
+                mainPane.setTop(topBox);
+                mainPane.setCenter(editAreaPane);
+
+                final Scene scene = new Scene(mainPane);
+                BlueFX.style(scene);
+                jfxPanel.setScene(scene);
+
+                editEnabledCheckBox.selectedProperty().addListener((obs, old, newVal) -> {
+                    ObservableList<Node> items = editAreaPane.getItems();
+                    if (newVal) {
+                        if (!items.contains(rightPane)) {
+                            items.add(rightPane);
+                            editAreaPane.setDividerPosition(0, dividerPosition);
+                        }
+                        if (!topBox.getChildren().contains(breadCrumbBar)) {
+                            topBox.getChildren().add(breadCrumbBar);
+                        }
+                    } else {
+                        if (items.contains(rightPane)) {
+                            dividerPosition = editAreaPane.getDividerPositions()[0];
+                            items.remove(rightPane);
+                        }
+                        if (topBox.getChildren().contains(breadCrumbBar)) {
+                            topBox.getChildren().remove(breadCrumbBar);
+                        }
+                    }
+                });
+                bsbEditPane.requestFocus();
+            } finally {
+                latch.countDown();
             }
         });
 
         try {
-            gridPropertySheet.setBeanInfo(Introspector.getBeanInfo(
-                    GridSettings.class, Object.class));
-        } catch (IntrospectionException ex) {
+            latch.await();
+        } catch (InterruptedException ex) {
             Exceptions.printStackTrace(ex);
         }
 
-//        rightBar.add(new JLabel(BlueSystem
-//                .getString("instrument.bsb.objectProperties")),
-//                BorderLayout.NORTH);
-//        rightBar.add(bsbPropSheet, BorderLayout.CENTER);
-        rightBar.add(tabs, BorderLayout.CENTER);
-        rightBar.add(alignPanel, BorderLayout.SOUTH);
-
-        rightBar.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-
         this.setLayout(new BorderLayout());
-        this.add(topBar, BorderLayout.NORTH);
-
-        // JSplitPane split = new JSplitPane();
-        // split.add(editScrollPane, JSplitPane.LEFT);
-        // split.add(rightBar, JSplitPane.RIGHT);
-        // this.add(split, BorderLayout.CENTER);
-        this.add(editScrollPane, BorderLayout.CENTER);
-        this.add(rightBar, BorderLayout.EAST);
-
-        bsbPropSheet.setPreferredSize(new Dimension(250, 30));
-        bsbEditPanel.addSelectionListener(bsbPropSheet);
-
-        alignPanel.setJComponentList(bsbEditPanel.getSelectionList());
-
-        rightBar.setVisible(false);
-
+        this.add(jfxPanel, BorderLayout.CENTER);
         initActions();
     }
 
@@ -168,93 +227,77 @@ public class BSBInterfaceEditor extends JComponent implements PresetListener,
 
             @Override
             public void actionPerformed(ActionEvent e) {
-                editBox.doClick();
+                BlueFX.runOnFXThread(() -> {
+                    if (gInterface != null) {
+                        gInterface.setEditEnabled(!gInterface.isEditEnabled());
+                    }
+                });
             }
         });
     }
 
     public void editInterface(BSBGraphicInterface gInterface, PresetGroup pGroup) {
 
-        if (this.gInterface == gInterface) {
-            return;
-        }
-
-        isUpdating = true;
-
-        this.gInterface = gInterface;
-
-        editBox.setEnabled(gInterface != null);
-
-        if (gInterface != null) {
-            if (editBox.isSelected() != gInterface.isEditEnabled()) {
-                editBox.doClick();
-            }
-            gridPropertySheet.readFromObject(gInterface.getGridSettings());
-        } else {
-            gridPropertySheet.readFromObject(null);
-        }
-
-        bsbPropSheet.clear();
-
-        this.bsbEditPanel.editBSBGraphicInterface(gInterface);
-
-        presets.setVisible(pGroup != null);
-
-        if (pGroup != null) {
-            this.presets.editPresetGroup(gInterface, pGroup);
-        }
-
-        isUpdating = false;
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see blue.orchestra.editor.blueSynthBuilder.PresetListener#presetSelected(blue.orchestra.blueSynthBuilder.Preset)
-     */
-    @Override
-    public void presetSelected(Preset preset) {
-        if (gInterface != null) {
-            preset.setInterfaceValues(gInterface);
-            this.bsbEditPanel.editBSBGraphicInterface(gInterface);
-        }
-    }
-
-    @Override
-    public void propertyChange(PropertyChangeEvent evt) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    /**
-     * The Class PropertyEditorRegistryEx.
-     * 
-     * Code used from: 
-     * http://cgu-emp.googlecode.com/svn/trunk/EMP/src/edu/cgu/emp/swing/analysis/ObjectInspectorJPanel.java
-     */
-    private static class PropertyEditorRegistryEx extends PropertyEditorRegistry {
-
-        // We will try to get the "nearest" super class.        
-        /* (non-Javadoc)
-         * @see com.l2fprod.common.propertysheet.PropertyEditorRegistry#getEditor(java.lang.Class)
-         */
-        @Override
-        @SuppressWarnings("rawtypes")
-        public synchronized PropertyEditor getEditor(Class type) {
-            PropertyEditor editor = super.getEditor(type);
-
-            Class c = type;
-
-            while (editor == null) {
-                c = c.getSuperclass();
-
-                if (c == null) {
-                    return editor;
-                }
-
-                editor = super.getEditor(c);
+        BlueFX.runOnFXThread(() -> {
+            if (this.gInterface == gInterface) {
+                return;
             }
 
-            return editor;
+            if (this.gInterface != null) {
+                editEnabledCheckBox.selectedProperty().unbindBidirectional(
+                        this.gInterface.editEnabledProperty());
+                rightPane.visibleProperty().unbind();
+            }
+
+            this.gInterface = gInterface;
+
+            gridPropSheet.getItems().clear();
+            bsbObjPropSheet.getItems().clear();
+
+            if (gInterface != null) {
+                editEnabledCheckBox.selectedProperty().bindBidirectional(
+                        this.gInterface.editEnabledProperty());
+
+                rightPane.visibleProperty().bind(this.gInterface.editEnabledProperty());
+
+                gridPropSheet.getItems().addAll(
+                        BeanPropertyUtils.getProperties(this.gInterface.getGridSettings()));
+            }
+
+            bsbEditPane.editBSBGraphicInterface(gInterface);
+
+            presetPane.setBSBInterface(gInterface);
+            presetPane.setPresetGroup(pGroup);
+
+            editEnabledCheckBox.setDisable(gInterface == null);
+        });
+
+    }
+
+    private void updateBsbObjPropSheet() {
+        ObservableSet<? extends BSBObject> set
+                = bsbEditPane.getSelection().selection;
+
+        bsbObjPropSheet.getItems().clear();
+        if (set.size() == 1) {
+            bsbObjPropSheet.getItems().addAll(
+                    BeanPropertyUtils.getProperties(set.iterator().next()));
         }
+    }
+
+}
+
+class BSBGroupItem {
+
+    public final BSBGroup bsbGroup;
+    public final String displayName;
+
+    public BSBGroupItem(BSBGroup bsbGroup, String displayName) {
+        this.bsbGroup = bsbGroup;
+        this.displayName = displayName;
+    }
+
+    public String toString() {
+        return displayName;
     }
 }

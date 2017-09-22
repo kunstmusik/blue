@@ -23,13 +23,11 @@ import blue.orchestra.blueSynthBuilder.GridSettings.GridStyle;
 import blue.utility.ObjectUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Set;
-import java.util.Vector;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableSet;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 
 /**
@@ -39,68 +37,40 @@ import org.apache.commons.lang3.builder.EqualsBuilder;
  * @author steven
  *
  */
-public class BSBGraphicInterface implements Iterable<BSBObject>, Serializable, UniqueNameCollection {
+public class BSBGraphicInterface {
 
-    ArrayList<BSBObject> interfaceItems = new ArrayList<>();
+    BSBGroup rootGroup;
 
     UniqueNameManager nameManager = new UniqueNameManager();
 
-    transient Vector<BSBGraphicInterfaceListener> listeners = null;
+    private BooleanProperty editEnabled = new SimpleBooleanProperty(true);
 
-    private boolean editEnabled = true;
+    private GridSettings gridSettings;
 
-    private GridSettings gridSettings = new GridSettings();
+    private ObservableSet<BSBObject> allSet
+            = FXCollections.observableSet(new HashSet<>());
 
     public BSBGraphicInterface() {
-        nameManager.setUniqueNameCollection(this);
+        gridSettings = new GridSettings();
         nameManager.setDefaultPrefix("bsbObj");
+        setRootGroup(new BSBGroup());
+        rootGroup.setAllSet(allSet);
+
+        nameManager.setUniqueNameCollection(rootGroup);
     }
 
-    public BSBObject getBSBObject(int index) {
-        return (BSBObject) interfaceItems.get(index);
-    }
+    public BSBGraphicInterface(BSBGraphicInterface bsbInterface) {
+        gridSettings = new GridSettings(bsbInterface.getGridSettings());
+        nameManager.setDefaultPrefix("bsbObj");
+        setRootGroup(new BSBGroup(bsbInterface.rootGroup));
+        rootGroup.setAllSet(allSet);
 
-    public void addBSBObject(BSBObject bsbObj) {
-        if (bsbObj == null) {
-            return;
-        }
-
-        String objName = bsbObj.getObjectName();
-
-        // guarantee unique names for objects
-        if (objName != null && objName.length() != 0) {
-            if (!nameManager.isUniquelyNamed(bsbObj)) {
-                nameManager.setUniqueName(bsbObj);
-            }
-        }
-
-        interfaceItems.add(bsbObj);
-        fireBSBObjectAdded(bsbObj);
-        bsbObj.setUniqueNameManager(nameManager);
-    }
-
-    public void remove(BSBObject bsbObj) {
-        if (interfaceItems.contains(bsbObj)) {
-            interfaceItems.remove(bsbObj);
-            fireBSBObjectRemoved(bsbObj);
-            bsbObj.setUniqueNameManager(null);
-        }
-    }
-
-    @Override
-    public Iterator<BSBObject> iterator() {
-        return interfaceItems.iterator();
-    }
-
-    public int size() {
-        return interfaceItems.size();
+        nameManager.setUniqueNameCollection(rootGroup);
+        setEditEnabled(bsbInterface.isEditEnabled());
     }
 
     public void setupForCompilation(BSBCompilationUnit compilationUnit) {
-        for (Iterator<BSBObject> iter = interfaceItems.iterator(); iter.hasNext();) {
-            BSBObject bsbObj = iter.next();
-            bsbObj.setupForCompilation(compilationUnit);
-        }
+        rootGroup.setupForCompilation(compilationUnit);
     }
 
     public static BSBGraphicInterface loadFromXML(Element data)
@@ -116,15 +86,20 @@ public class BSBGraphicInterface implements Iterable<BSBObject>, Serializable, U
         }
 
         GridSettings gridSettings = null;
-        
+
         while (giNodes.hasMoreElements()) {
             Element node = giNodes.next();
             String name = node.getName();
 
             switch (name) {
                 case "bsbObject":
-                    Object obj = ObjectUtilities.loadFromXML(node);
-                    graphicInterface.addBSBObject((BSBObject) obj);
+                    BSBObject obj = (BSBObject) ObjectUtilities.loadFromXML(node);
+                    if (obj instanceof BSBGroup) {
+                        graphicInterface.setRootGroup((BSBGroup) obj);
+                    } else {
+                        // legacy reading of BSBObjects stored here pre-2.7.0
+                        graphicInterface.getRootGroup().addBSBObject(obj);
+                    }
                     break;
                 case "gridSettings":
                     gridSettings = GridSettings.loadFromXML(node);
@@ -132,7 +107,7 @@ public class BSBGraphicInterface implements Iterable<BSBObject>, Serializable, U
             }
         }
 
-        if(gridSettings == null) {
+        if (gridSettings == null) {
             // preserve behavior of older projects (before 2.5.8)
             graphicInterface.getGridSettings().setGridStyle(
                     GridStyle.NONE);
@@ -150,74 +125,12 @@ public class BSBGraphicInterface implements Iterable<BSBObject>, Serializable, U
     public Element saveAsXML() {
         Element retVal = new Element("graphicInterface");
 
-        retVal.setAttribute("editEnabled", Boolean.toString(editEnabled));
+        retVal.setAttribute("editEnabled", Boolean.toString(isEditEnabled()));
 
         retVal.addElement(gridSettings.saveAsXML());
-        
-        for (Iterator<BSBObject> iter = interfaceItems.iterator(); iter.hasNext();) {
-            BSBObject bsbObj = iter.next();
-            retVal.addElement(bsbObj.saveAsXML());
-        }
+        retVal.addElement(rootGroup.saveAsXML());
 
         return retVal;
-    }
-
-    public void addBSBGraphicInterfaceListener(
-            BSBGraphicInterfaceListener listener) {
-        if (listeners == null) {
-            listeners = new Vector<>();
-        }
-
-        listeners.add(listener);
-    }
-
-    public void removeBSBGraphicInterfaceListener(
-            BSBGraphicInterfaceListener listener) {
-        if (listeners != null) {
-            listeners.remove(listener);
-        }
-    }
-
-    public void fireBSBObjectAdded(BSBObject bsbObj) {
-        if (listeners != null) {
-            Iterator<BSBGraphicInterfaceListener> iter =
-                    new Vector<>(listeners).iterator();
-
-            while (iter.hasNext()) {
-                BSBGraphicInterfaceListener listener = iter
-                        .next();
-                listener.bsbObjectAdded(bsbObj);
-            }
-        }
-    }
-
-    public void fireBSBObjectRemoved(BSBObject bsbObj) {
-        if (listeners != null) {
-            Iterator<BSBGraphicInterfaceListener> iter =
-                    new Vector<>(listeners).iterator();
-
-            while (iter.hasNext()) {
-                BSBGraphicInterfaceListener listener = (BSBGraphicInterfaceListener) iter
-                        .next();
-                listener.bsbObjectRemoved(bsbObj);
-            }
-        }
-    }
-
-    @Override
-    public Set<String> getNames() {
-        Set<String> names = new HashSet<>();
-
-        for (int i = 0; i < size(); i++) {
-            BSBObject bsbObj = getBSBObject(i);
-            String[] replacementKeys = bsbObj.getReplacementKeys();
-
-            if (replacementKeys != null) {
-                names.addAll(Arrays.asList(replacementKeys));
-            }
-        }
-
-        return names;
     }
 
     @Override
@@ -225,12 +138,16 @@ public class BSBGraphicInterface implements Iterable<BSBObject>, Serializable, U
         return EqualsBuilder.reflectionEquals(this, obj);
     }
 
-    public boolean isEditEnabled() {
-        return editEnabled;
+    public final void setEditEnabled(boolean value) {
+        editEnabled.set(value);
     }
 
-    public void setEditEnabled(boolean editEnabled) {
-        this.editEnabled = editEnabled;
+    public final boolean isEditEnabled() {
+        return editEnabled.get();
+    }
+
+    public final BooleanProperty editEnabledProperty() {
+        return editEnabled;
     }
 
     public GridSettings getGridSettings() {
@@ -241,15 +158,22 @@ public class BSBGraphicInterface implements Iterable<BSBObject>, Serializable, U
         this.gridSettings = gridSettings;
     }
 
-    public void randomize() {
-        for (int i = 0; i < size(); i++) {
-            BSBObject bsbObj = getBSBObject(i);
-            if (bsbObj instanceof Randomizable) {
-                Randomizable randomizable = (Randomizable) bsbObj;
-                if (randomizable.isRandomizable()) {
-                    randomizable.randomize();
-                }
-            }
+    public BSBGroup getRootGroup() {
+        return rootGroup;
+    }
+
+    private void setRootGroup(BSBGroup group) {
+        if(this.rootGroup != null) {
+            this.rootGroup.setAllSet(null);
+            this.allSet.clear();
         }
+        this.rootGroup = group;
+        group.setUniqueNameManager(nameManager);
+        nameManager.setUniqueNameCollection(rootGroup);
+        group.setAllSet(allSet);
+    }
+
+    public ObservableSet<BSBObject> getAllSet() {
+        return allSet;
     }
 }

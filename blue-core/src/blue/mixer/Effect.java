@@ -24,7 +24,6 @@ import blue.automation.Automatable;
 import blue.automation.ParameterList;
 import blue.orchestra.blueSynthBuilder.BSBCompilationUnit;
 import blue.orchestra.blueSynthBuilder.BSBGraphicInterface;
-import blue.orchestra.blueSynthBuilder.BSBParameterList;
 import blue.orchestra.blueSynthBuilder.StringChannel;
 import blue.udo.OpcodeList;
 import blue.udo.UserDefinedOpcode;
@@ -35,36 +34,24 @@ import electric.xml.Element;
 import electric.xml.Elements;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Vector;
 import org.apache.commons.lang3.text.StrBuilder;
 
-public class Effect implements Serializable, Automatable {
+public class Effect implements Automatable {
 
     private int numIns = 2;
-
     private int numOuts = 2;
-
     private BSBGraphicInterface graphicInterface;
-
     private String code = "";
-
     private String name = "New Effect";
-
     private String comments = "";
-
     private OpcodeList opcodeList;
-
     private boolean enabled = true;
-
     private transient Vector listeners = null;
-
-    private BSBParameterList parameterList = null;
+    private ParameterList parameterList = null;
 
     public Effect() {
         this(true);
@@ -73,10 +60,23 @@ public class Effect implements Serializable, Automatable {
     private Effect(boolean init) {
         if (init) {
             graphicInterface = new BSBGraphicInterface();
-            parameterList = new BSBParameterList();
-            parameterList.setBSBGraphicInterface(graphicInterface);
+            parameterList = new ParameterList();
+            graphicInterface.getRootGroup().setParameterList(parameterList);
             opcodeList = new OpcodeList();
         }
+    }
+
+    public Effect(Effect effect) {
+        numIns = effect.numIns;
+        numOuts = effect.numOuts;
+        code = effect.code;
+        name = effect.name;
+        comments = effect.comments;
+        enabled = effect.enabled;
+        graphicInterface = new BSBGraphicInterface(effect.graphicInterface);
+        parameterList = new ParameterList(effect.parameterList);
+        graphicInterface.getRootGroup().setParameterList(parameterList);
+        opcodeList = new OpcodeList(effect.opcodeList);
     }
 
     public UserDefinedOpcode generateUDO(OpcodeList udoList) {
@@ -146,7 +146,8 @@ public class Effect implements Serializable, Automatable {
                             .loadFromXML(node));
                     break;
                 case "bsbParameterList":
-                    effect.parameterList = (BSBParameterList) BSBParameterList
+                case "parameterList":
+                    effect.parameterList = (ParameterList) ParameterList
                             .loadFromXML(node);
                     break;
             }
@@ -161,10 +162,11 @@ public class Effect implements Serializable, Automatable {
         }
 
         if (effect.parameterList == null) {
-            effect.parameterList = new BSBParameterList();
+            effect.parameterList = new ParameterList();
         }
 
-        effect.parameterList.setBSBGraphicInterface(effect.graphicInterface);
+        effect.graphicInterface.getRootGroup().setParameterList(
+                effect.parameterList);
 
         return effect;
     }
@@ -357,20 +359,8 @@ public class Effect implements Serializable, Automatable {
      * stay valid.
      */
     public void clearParameters() {
-        parameterList = new BSBParameterList();
-        parameterList.setBSBGraphicInterface(graphicInterface);
-    }
-
-    /*
-     * This gets called as part of Serialization by Java and will do default
-     * serialization plus reconnect the BSBGraphicInterface to the
-     * BSBParameterList
-     */
-    private void readObject(ObjectInputStream stream) throws IOException,
-            ClassNotFoundException {
-        stream.defaultReadObject();
-
-        parameterList.setBSBGraphicInterface(graphicInterface);
+        parameterList = new ParameterList();
+        graphicInterface.getRootGroup().setParameterList(parameterList);
     }
 
     @Override

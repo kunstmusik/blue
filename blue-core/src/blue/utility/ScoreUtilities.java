@@ -47,7 +47,6 @@ public class ScoreUtilities {
     public static NoteList getNotes(String in) throws NoteParseException {
         NoteList notes = new NoteList();
         Note previousNote = null;
-        Note tempNote = null;
         int start = -1, end = -1, lineNumber = 1, len, lastIndex;
         ParseState state = ParseState.STARTING;
 
@@ -153,6 +152,7 @@ public class ScoreUtilities {
                         String noteText = TextUtilities.stripMultiLineComments(
                                 in.substring(start, end + 1));
 
+                        Note tempNote = null;
                         try {
                             if (noteText.charAt(0) == 'i') {
                                 tempNote = Note.createNote(noteText,
@@ -244,7 +244,7 @@ public class ScoreUtilities {
             Note note = notes.get(i);
 
             if (note.getPField(2).equals("+")) {
-                note.setPField(Float.toString(previousNote.getStartTime()
+                note.setPField(Double.toString(previousNote.getStartTime()
                         + previousNote.getSubjectiveDuration()), 2);
             }
 
@@ -277,24 +277,24 @@ public class ScoreUtilities {
                     Note endNote = nl.get(tailNoteIndex);
 
                     // y = mx + b, linear ramp over time
-                    float b = Float.parseFloat(startNote.getPField(j + 1));
+                    double b = Double.parseDouble(startNote.getPField(j + 1));
 
-                    float rise = Float.parseFloat(endNote.getPField(j + 1))
-                            - Float.parseFloat(startNote.getPField(j + 1));
-                    float run = endNote.getStartTime()
+                    double rise = Double.parseDouble(endNote.getPField(j + 1))
+                            - Double.parseDouble(startNote.getPField(j + 1));
+                    double run = endNote.getStartTime()
                             - startNote.getStartTime();
 
-                    float m = rise / run;
+                    double m = rise / run;
 
                     for (int k = headNoteIndex + 1; k < tailNoteIndex; k++) {
                         Note tempNote = nl.get(k);
 
-                        float x = tempNote.getStartTime()
+                        double x = tempNote.getStartTime()
                                 - startNote.getStartTime();
 
-                        float newVal = (m * x) + b;
+                        double newVal = (m * x) + b;
 
-                        tempNote.setPField(Float.toString(newVal), j + 1);
+                        tempNote.setPField(Double.toString(newVal), j + 1);
                     }
 
                     /*
@@ -326,7 +326,7 @@ public class ScoreUtilities {
         }
 
         try {
-            Float.parseFloat(pField);
+            Double.parseDouble(pField);
         } catch (NumberFormatException nfe) {
             return PFIELD_NOT_FLOAT;
         }
@@ -355,7 +355,7 @@ public class ScoreUtilities {
         }
 
         try {
-            Float.parseFloat(pField);
+            Double.parseDouble(pField);
         } catch (NumberFormatException nfe) {
             return PFIELD_NOT_FLOAT;
         }
@@ -364,10 +364,10 @@ public class ScoreUtilities {
     }
 
     // END RAMP EXPANDING CODE
-    public static float getTotalDuration(NoteList notes) {
+    public static double getTotalDuration(NoteList notes) {
         int size = notes.size();
-        float tempValue;
-        float max = 0.0f;
+        double tempValue;
+        double max = 0.0f;
         Note tempNote;
 
         for (int i = 0; i < size; i++) {
@@ -389,7 +389,7 @@ public class ScoreUtilities {
      * @param pObj
      * @return
      */
-    public static float getProcessingStartTime(PolyObject pObj) {
+    public static double getProcessingStartTime(PolyObject pObj) {
         List<SoundObject> sObjects = pObj.getSoundObjects(false);
         Collections.sort(sObjects, new Comparator<SoundObject>() {
             @Override
@@ -398,7 +398,7 @@ public class ScoreUtilities {
             }
         });
 
-        float time = Float.MAX_VALUE;
+        double time = Double.MAX_VALUE;
 
         SoundObject sObj;
         String className;
@@ -425,14 +425,14 @@ public class ScoreUtilities {
 
         }
 
-        if (time == Float.MAX_VALUE) {
+        if (time == Double.MAX_VALUE) {
             time = 0.0f;
         }
 
         return time;
     }
 
-    public static void scaleScore(NoteList notes, float multiplier) {
+    public static void scaleScore(NoteList notes, double multiplier) {
         Note tempNote;
 
         for (int i = 0; i < notes.size(); i++) {
@@ -443,7 +443,7 @@ public class ScoreUtilities {
         }
     }
 
-    public static void setScoreStart(NoteList notes, float start) {
+    public static void setScoreStart(NoteList notes, double start) {
         for (int i = 0; i < notes.size(); i++) {
             notes.get(i).setStartTime(
                     notes.get(i).getStartTime() + start);
@@ -457,7 +457,7 @@ public class ScoreUtilities {
      */
     public static void normalizeNoteList(NoteList notes) {
         notes.sort();
-        float minStart = notes.get(0).getStartTime();
+        double minStart = notes.get(0).getStartTime();
 
         Note temp;
 
@@ -470,7 +470,7 @@ public class ScoreUtilities {
     public static void applyNoteProcessorChain(NoteList notes,
             NoteProcessorChain npc) throws NoteProcessorException {
         for (int i = 0; i < npc.size(); i++) {
-            NoteProcessor np = npc.getNoteProcessor(i);
+            NoteProcessor np = npc.get(i);
             // try {
             np.processNotes(notes);
             // } catch (NoteProcessorException ex) {
@@ -486,7 +486,7 @@ public class ScoreUtilities {
     }
 
     public static void applyTimeBehavior(NoteList notes, int timeBehavior,
-            float subjectiveDuration, float repeatPoint) {
+            double subjectiveDuration, double repeatPoint) {
 
         applyTimeBehavior(notes, timeBehavior, subjectiveDuration, repeatPoint,
                 -1.0f);
@@ -494,38 +494,38 @@ public class ScoreUtilities {
     }
 
     public static void applyTimeBehavior(NoteList notes, int timeBehavior,
-            float subjectiveDuration, float repeatPoint, float durationForScale) {
+            double subjectiveDuration, double repeatPoint, double durationForScale) {
 
         if (notes.size() == 0) {
             return;
         }
 
         if (timeBehavior == SoundObject.TIME_BEHAVIOR_SCALE) {
-            float dur = durationForScale;
+            double dur = durationForScale;
 
             if (durationForScale < 0.0f) {
                 dur = getTotalDuration(notes);
             }
 
-            float multiplier = subjectiveDuration / dur;
+            double multiplier = subjectiveDuration / dur;
             scaleScore(notes, multiplier);
         } else if (timeBehavior == SoundObject.TIME_BEHAVIOR_REPEAT) {
-            NoteList originalNotes = (NoteList) notes.clone();
+            NoteList originalNotes = new NoteList(notes);
             originalNotes.sort();
 
-            float objDur = durationForScale;
+            double objDur = durationForScale;
 
             if (durationForScale < 0.0f) {
                 objDur = getTotalDuration(originalNotes);
             }
 
-            float repeatDur = objDur;
+            double repeatDur = objDur;
 
             if (objDur > 0 && repeatPoint > 0.0f) {
                 repeatDur = repeatPoint;
             }
 
-            float startVal = 0.0f;
+            double startVal = 0.0f;
 
             NoteList tempNL = null;
 
@@ -536,19 +536,19 @@ public class ScoreUtilities {
             notes.clear();
 
             while (startVal + repeatDur < subjectiveDuration) {
-                tempNL = (NoteList) originalNotes.clone();
+                tempNL = new NoteList(originalNotes);
                 ScoreUtilities.setScoreStart(tempNL, startVal);
                 notes.merge(tempNL);
                 startVal += repeatDur;
             }
 
-            tempNL = (NoteList) originalNotes.clone();
+            tempNL = new NoteList(originalNotes);
             Note tempNote = null;
 
-            float remainingDur = subjectiveDuration - startVal;
+            double remainingDur = subjectiveDuration - startVal;
 
             for (int i = 0; i < tempNL.size(); i++) {
-                tempNote = (Note) tempNL.get(i).clone();
+                tempNote = new Note(tempNL.get(i));
                 if (tempNote.getStartTime() + tempNote.getSubjectiveDuration() <= remainingDur) {
                     tempNote.setStartTime(tempNote.getStartTime() + startVal);
                     notes.add(tempNote);
@@ -567,11 +567,11 @@ public class ScoreUtilities {
     /**
      * **************************************************************
      */
-    public static float getMaxTime(SoundObject[] sObjects) {
-        float max = 0.0f;
+    public static double getMaxTime(SoundObject[] sObjects) {
+        double max = 0.0f;
 
         for (int i = 0; i < sObjects.length; i++) {
-            float val = sObjects[i].getStartTime()
+            double val = sObjects[i].getStartTime()
                     + sObjects[i].getSubjectiveDuration();
             if (val > max) {
                 max = val;
@@ -580,15 +580,15 @@ public class ScoreUtilities {
         return max;
     }
 
-    public static float getMaxTime(List<SoundObject> sObjects) {
-        float max = 0.0f;
+    public static double getMaxTime(List<SoundObject> sObjects) {
+        double max = 0.0f;
 
         SoundObject sObj;
         int size = sObjects.size();
 
         for (int i = 0; i < size; i++) {
             sObj = sObjects.get(i);
-            float val = sObj.getStartTime() + sObj.getSubjectiveDuration();
+            double val = sObj.getStartTime() + sObj.getSubjectiveDuration();
             if (val > max) {
                 max = val;
             }
@@ -596,8 +596,8 @@ public class ScoreUtilities {
         return max;
     }
 
-    public static float getMaxTimeWithEmptyCheck(List<SoundObject> sObjects) {
-        float max = 0.0f;
+    public static double getMaxTimeWithEmptyCheck(List<SoundObject> sObjects) {
+        double max = 0.0f;
 
         SoundObject sObj;
         int size = sObjects.size();
@@ -614,7 +614,7 @@ public class ScoreUtilities {
                 }
             }
 
-            float val = sObj.getStartTime() + sObj.getSubjectiveDuration();
+            double val = sObj.getStartTime() + sObj.getSubjectiveDuration();
             if (val > max) {
                 max = val;
             }
@@ -623,11 +623,11 @@ public class ScoreUtilities {
         return max;
     }
 
-    public static float getMinTime(SoundObject[] sObjects) {
-        float min = getMaxTime(sObjects);
+    public static double getMinTime(SoundObject[] sObjects) {
+        double min = getMaxTime(sObjects);
 
         for (int i = 0; i < sObjects.length; i++) {
-            float val = sObjects[i].getStartTime();
+            double val = sObjects[i].getStartTime();
             if (val < min) {
                 min = val;
             }
@@ -636,15 +636,15 @@ public class ScoreUtilities {
 
     }
 
-    public static float getMinTime(ArrayList sObjects) {
-        float min = getMaxTime(sObjects);
+    public static double getMinTime(ArrayList sObjects) {
+        double min = getMaxTime(sObjects);
 
         SoundObject sObj;
         int size = sObjects.size();
 
         for (int i = 0; i < size; i++) {
             sObj = (SoundObject) (sObjects.get(i));
-            float val = sObj.getStartTime();
+            double val = sObj.getStartTime();
             if (val < min) {
                 min = val;
             }
@@ -661,9 +661,9 @@ public class ScoreUtilities {
         return returnText.toString();
     }
 
-    public static float getBaseTen(String pch) {
+    public static double getBaseTen(String pch) {
         int octave;
-        float pitch;
+        double pitch;
 
         int index = pch.indexOf('.');
 
@@ -672,10 +672,10 @@ public class ScoreUtilities {
             pitch = 0.0f;
         } else if (index == 0 || index == pch.length() - 1) {
             octave = Integer.parseInt("0" + pch.substring(0, index));
-            pitch = Float.parseFloat("0" + pch.substring(index));
+            pitch = Double.parseDouble("0" + pch.substring(index));
         } else {
             octave = Integer.parseInt(pch.substring(0, index));
-            pitch = Float.parseFloat(pch.substring(index));
+            pitch = Double.parseDouble(pch.substring(index));
         }
 
         pitch = pitch * 100;
@@ -684,11 +684,11 @@ public class ScoreUtilities {
 
     }
 
-    public static float getSnapValueStart(float time, float snapValue) {
+    public static double getSnapValueStart(double time, double snapValue) {
         return (int) (time / snapValue) * snapValue;
     }
 
-    public static float getSnapValueMove(float time, float snapValue) {
+    public static double getSnapValueMove(double time, double snapValue) {
         return Math.round(time / snapValue) * snapValue;
     }
 

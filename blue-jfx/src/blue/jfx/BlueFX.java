@@ -21,6 +21,7 @@ package blue.jfx;
 
 import javafx.application.Platform;
 import javafx.scene.Scene;
+import javafx.scene.layout.Region;
 
 /**
  *
@@ -29,9 +30,16 @@ import javafx.scene.Scene;
 public class BlueFX {
 
     public static void style(Scene scene) {
-        scene.getStylesheets().add(
-                BlueFX.class.getResource("bluefx.css").toExternalForm());
+        scene.getStylesheets().add(getBlueFxCss());
     }
+
+    public static void style(Region region) {
+        region.getStylesheets().add(getBlueFxCss());
+    }
+
+    public static String getBlueFxCss(){
+        return BlueFX.class.getResource("bluefx.css").toExternalForm();
+    } 
 
     public static void runOnFXThread(Runnable r) {
         if(Platform.isFxApplicationThread()) {

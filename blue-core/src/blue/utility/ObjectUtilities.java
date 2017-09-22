@@ -25,11 +25,23 @@ import electric.xml.Element;
 import java.io.*;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.HashMap;
 import java.util.Map;
 
 public class ObjectUtilities {
+    private static final Map<String,String> classMap;
 
-    public static Object clone(Object obj) {
+    static {
+        classMap = new HashMap<>();
+
+        // Blue 2.7.0 - modified class name from "Rhino" to "JavaScript"
+        classMap.put("blue.orchestra.RhinoInstrument",
+                "blue.orchestra.JavaScriptInstrument");
+        classMap.put("blue.soundObject.RhinoObject",
+                "blue.soundObject.JavaScriptObject");
+    }
+
+    public static Object serializeClone(Object obj) {
         try {
             ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
             ObjectOutputStream objectOutputStream = new ObjectOutputStream(
@@ -72,13 +84,21 @@ public class ObjectUtilities {
 
     public static Object loadFromXML(Element elem) throws Exception {
         String npClass = elem.getAttributeValue("type");
+
+        if(classMap.containsKey(npClass)) {
+            npClass = classMap.get(npClass);
+        }
         Class classToLoad = BlueSystem.getClassLoader().loadClass(npClass);
 
         Object retVal = null;
 
         Method m = classToLoad.getMethod("loadFromXML",
                 new Class[] { Element.class });
+        try{
         retVal = m.invoke(null, new Object[] { elem });
+        } catch(Exception e) {
+           throw new Exception("Error with class: " + classToLoad, e); 
+        }
 
         return retVal;
     }
@@ -86,6 +106,9 @@ public class ObjectUtilities {
     public static Object loadFromXML(Element elem,
             Map<String, Object> objRefMap) throws Exception {
         String npClass = elem.getAttributeValue("type");
+        if(classMap.containsKey(npClass)) {
+            npClass = classMap.get(npClass);
+        }
         Class classToLoad = Thread.currentThread().getContextClassLoader().loadClass(npClass);
 
         Object retVal = null;

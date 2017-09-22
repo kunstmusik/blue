@@ -24,11 +24,10 @@ package blue.soundObject.jmask;
 import blue.utility.XMLUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
-import java.io.Serializable;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
-public class Accumulator implements Serializable {
+public class Accumulator {
 
     public static final int ON = 0;
 
@@ -40,9 +39,9 @@ public class Accumulator implements Serializable {
 
     public static final String[] MODES = {"On", "Limit", "Mirror", "Wrap"};
 
-    Table highTable = new Table();
+    Table highTable;
 
-    Table lowTable = new Table();
+    Table lowTable;
 
     private boolean highTableEnabled = false;
 
@@ -61,8 +60,25 @@ public class Accumulator implements Serializable {
     double runningValue = 0.0; // used only during compilaition time
 
     boolean firstTime = true; // used only during compilaition time
-    
+
     private transient double duration = 1.0;
+
+    public Accumulator() {
+        highTable = new Table();
+        lowTable = new Table();
+    }
+
+    public Accumulator(Accumulator acc) {
+        highTable = new Table(acc.highTable);
+        lowTable = new Table(acc.lowTable);
+        highTableEnabled = acc.highTableEnabled;
+        lowTableEnabled = acc.lowTableEnabled;
+        mode = acc.mode;
+        low = acc.low;
+        high = acc.high;
+        initialValue = acc.initialValue;
+        enabled = acc.enabled;
+    }
 
     public static Accumulator loadFromXML(Element data) {
         Accumulator retVal = new Accumulator();
@@ -76,7 +92,7 @@ public class Accumulator implements Serializable {
                 case "table":
                     Table t = Table.loadFromXML(node);
                     String tabInstance = node.getAttributeValue("tableId");
-                    if(tabInstance == null) {
+                    if (tabInstance == null) {
                         continue;
                     } else if (tabInstance.equals("highTable")) {
                         retVal.highTable = t;
@@ -136,10 +152,6 @@ public class Accumulator implements Serializable {
         retVal.addElement(XMLUtilities.writeBoolean("enabled", enabled));
         return retVal;
     }
-    
-//    public JComponent getEditor() {
-//        return new AccumulatorEditor(this);
-//    }
 
     public double getValue(double time, double val) {
 
@@ -259,7 +271,7 @@ public class Accumulator implements Serializable {
     public void setLowTableEnabled(boolean lowTableEnabled) {
         this.lowTableEnabled = lowTableEnabled;
     }
-    
+
     public void setDuration(double duration) {
         this.duration = duration;
     }

@@ -94,7 +94,7 @@ public class APIRunner implements RealtimeRenderService, PlayModeListener {
     }
 
     public void play(BlueData blueData, CsdRenderResult result,
-            String[] args, File currentWorkingDirectory, float renderStart) {
+            String[] args, File currentWorkingDirectory, double renderStart) {
 
         if (runnerThread != null) {
             runnerThread.setKeepRunning(false);
@@ -216,8 +216,8 @@ public class APIRunner implements RealtimeRenderService, PlayModeListener {
             //FIXME
             //timeManager.setRootPolyObject(data.getPolyObject());
 
-            float startTime = data.getRenderStartTime();
-            float endTime = data.getRenderEndTime();
+            double startTime = data.getRenderStartTime();
+            double endTime = data.getRenderEndTime();
 
             CsdRenderResult result = CSDRenderService.getDefault().generateCSD(
                     data, startTime, endTime, true, true);
@@ -405,9 +405,9 @@ public class APIRunner implements RealtimeRenderService, PlayModeListener {
         private ArrayList parameters;
         private ArrayList<StringChannel> stringChannels;
         private TempoMapper mapper;
-        private float startTime;
+        private double startTime;
         private BlueData blueData;
-        private float[] valuesCache;
+        private double[] valuesCache;
         private CsoundMYFLTArray[] channelPtrCache;
         public boolean isRunning = true;
         CountDownLatch latch = new CountDownLatch(1);
@@ -418,7 +418,7 @@ public class APIRunner implements RealtimeRenderService, PlayModeListener {
                 ArrayList parameters,
                 ArrayList<StringChannel> stringChannels,
                 TempoMapper mapper,
-                float startTime) {
+                double startTime) {
             this.blueData = blueData;
             this.csound = csound;
             this.playModeListener = playModeListener;
@@ -460,9 +460,9 @@ public class APIRunner implements RealtimeRenderService, PlayModeListener {
 
             Parameter param;
 
-            float scoreTime = (float) csound.GetScoreTime();
-            float currentTime = 0.0f;
-            float renderStartSeconds = 0.0f;
+            double scoreTime = (double) csound.GetScoreTime();
+            double currentTime = 0.0f;
+            double renderStartSeconds = 0.0f;
 
             if (renderUpdatesTime) {
                 if (mapper != null) {
@@ -484,7 +484,7 @@ public class APIRunner implements RealtimeRenderService, PlayModeListener {
             do {
                 counter++;
 
-                scoreTime = (float) csound.GetScoreTime();
+                scoreTime = (double) csound.GetScoreTime();
 
 
                 if (renderUpdatesTime && counter > updateRate) {
@@ -507,7 +507,7 @@ public class APIRunner implements RealtimeRenderService, PlayModeListener {
                     currentTime = blueData.getRenderStartTime();
                 }
 
-                float value;
+                double value;
 
                 for (int i = 0; i < parameters.size(); i++) {
                     param = (Parameter) parameters.get(i);
@@ -551,11 +551,11 @@ public class APIRunner implements RealtimeRenderService, PlayModeListener {
 
         }
 
-        private void createValuesCache(float currentTime) {
+        private void createValuesCache(double currentTime) {
             Parameter param;
             final int size = parameters.size();
 
-            valuesCache = new float[size];
+            valuesCache = new double[size];
             channelPtrCache = new CsoundMYFLTArray[size];
 
             for (int i = 0; i < size; i++) {

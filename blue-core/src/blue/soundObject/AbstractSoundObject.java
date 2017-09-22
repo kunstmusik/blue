@@ -2,9 +2,7 @@ package blue.soundObject;
 
 import blue.score.ScoreObjectEvent;
 import blue.score.ScoreObjectListener;
-import blue.utility.ObjectUtilities;
 import java.awt.Color;
-import java.io.Serializable;
 import java.util.Vector;
 
 /**
@@ -15,10 +13,10 @@ import java.util.Vector;
  * @version 1.0
  */
 
-public abstract class AbstractSoundObject implements SoundObject, Serializable {
-    protected float subjectiveDuration = 2.0f;
+public abstract class AbstractSoundObject implements SoundObject {
+    protected double subjectiveDuration = 2.0f;
 
-    protected float startTime = 0.0f;
+    protected double startTime = 0.0f;
 
     protected String name = "";
 
@@ -27,6 +25,13 @@ public abstract class AbstractSoundObject implements SoundObject, Serializable {
     transient Vector<ScoreObjectListener> soundObjectListeners = null;
 
     public AbstractSoundObject() {
+    }
+
+    public AbstractSoundObject(AbstractSoundObject aso) {
+        subjectiveDuration = aso.subjectiveDuration;
+        startTime = aso.startTime;
+        name = aso.name;
+        backgroundColor = aso.backgroundColor;
     }
 
     @Override
@@ -45,7 +50,7 @@ public abstract class AbstractSoundObject implements SoundObject, Serializable {
     }
 
     @Override
-    public void setStartTime(float startTime) {
+    public void setStartTime(double startTime) {
         this.startTime = startTime;
 
         ScoreObjectEvent event = new ScoreObjectEvent(this,
@@ -55,12 +60,12 @@ public abstract class AbstractSoundObject implements SoundObject, Serializable {
     }
 
     @Override
-    public float getStartTime() {
+    public double getStartTime() {
         return startTime;
     }
 
     @Override
-    public void setSubjectiveDuration(float subjectiveDuration) {
+    public void setSubjectiveDuration(double subjectiveDuration) {
         this.subjectiveDuration = subjectiveDuration;
 
         ScoreObjectEvent event = new ScoreObjectEvent(this,
@@ -70,36 +75,30 @@ public abstract class AbstractSoundObject implements SoundObject, Serializable {
     }
 
     @Override
-    public float getSubjectiveDuration() {
+    public double getSubjectiveDuration() {
         return subjectiveDuration;
     }
 
     @Override
-    public float getMaxResizeRightDiff() {
-        return Float.MAX_VALUE;
+    public double getMaxResizeRightDiff() {
+        return Double.MAX_VALUE;
     }
 
     @Override
-    public float getMaxResizeLeftDiff() {
+    public double getMaxResizeLeftDiff() {
         return -getStartTime();
     }
     
     @Override
-    public void resizeLeft(float newStartTime) {
-        float diff = startTime - newStartTime;
+    public void resizeLeft(double newStartTime) {
+        double diff = startTime - newStartTime;
         setStartTime(newStartTime);
         setSubjectiveDuration(subjectiveDuration + diff);
     }
 
     @Override
-    public void resizeRight(float newEndTime) {
+    public void resizeRight(double newEndTime) {
         setSubjectiveDuration(newEndTime - startTime);
-    }
-
-    
-    @Override
-    public SoundObject clone() {
-        return (SoundObject)ObjectUtilities.clone(this);
     }
 
     @Override

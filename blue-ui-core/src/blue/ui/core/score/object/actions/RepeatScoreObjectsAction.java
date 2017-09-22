@@ -84,11 +84,11 @@ public final class RepeatScoreObjectsAction implements ActionListener {
             AddScoreObjectEdit top = null;
 
             for (ScoreObject sObj : scoreObjects) {
-                float start = sObj.getStartTime();
+                double start = sObj.getStartTime();
                 ScoreObjectLayer layer = (ScoreObjectLayer) path.getLayerForScoreObject(
                         sObj);
                 for (int j = 0; j < count; j++) {
-                    ScoreObject temp = sObj.clone();
+                    ScoreObject temp = sObj.deepCopy();
 
                     start += sObj.getSubjectiveDuration();
 

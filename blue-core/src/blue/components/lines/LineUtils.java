@@ -19,7 +19,8 @@
  */
 package blue.components.lines;
 
-import blue.utility.MathUtils;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 
 public class LineUtils {
     /**
@@ -32,26 +33,8 @@ public class LineUtils {
      * @param newMax
      * @return
      */
-    public static float rescale(float oldVal, float oldMin, float oldMax,
-            float newMin, float newMax, float resolution) {
-
-        float oldRange = oldMax - oldMin;
-
-        float percent = (oldVal - oldMin) / oldRange;
-
-        float newRange = newMax - newMin;
-
-        float newVal = (percent * newRange) + newMin;
-
-        if (resolution > 0) {
-            newVal = snapToResolution(newVal, newMin, newMax, resolution);
-        }
-
-        return newVal;
-    }
-
     public static double rescale(double oldVal, double oldMin, double oldMax,
-            double newMin, double newMax, double resolution) {
+            double newMin, double newMax, BigDecimal resolution) {
 
         double oldRange = oldMax - oldMin;
 
@@ -61,12 +44,12 @@ public class LineUtils {
 
         double newVal = (percent * newRange) + newMin;
 
-        if (resolution > 0) {
+        if (resolution.doubleValue() > 0) {
             newVal = snapToResolution(newVal, newMin, newMax, resolution);
         }
 
         return newVal;
-    }    
+    }
     
     /**
      * Return value within new boundaries
@@ -76,34 +59,10 @@ public class LineUtils {
      * @param newMax
      * @return
      */
-    public static float truncate(float oldVal, float newMin, float newMax) {
-        float retVal = oldVal;
-
-        if (retVal < newMin) {
-            retVal = newMin;
-        }
-
-        if (retVal > newMax) {
-            retVal = newMax;
-        }
-
-        return retVal;
-    }
-
     public static double truncate(double oldVal, double newMin, double newMax) {
-        double retVal = oldVal;
-
-        if (retVal < newMin) {
-            retVal = newMin;
-        }
-
-        if (retVal > newMax) {
-            retVal = newMax;
-        }
-
-        return retVal;
+        return Math.max(newMin, Math.min(newMax, oldVal));
     }
-    
+
     /**
      * Snaps points to resolution, snapping to closest value on grid
      * 
@@ -113,47 +72,8 @@ public class LineUtils {
      * @param resolution
      * @return
      */
-    public static float snapToResolution(float value, float min, float max,
-            float resolution) {
-
-        if (value >= max) {
-            return max;
-        }
-
-        if (value <= min) {
-            return min;
-        }
-
-        if (resolution <= 0.0f) {
-            return value;
-        }
-
-        float retVal = value - min;
-
-        if (resolution > 0.0f) {
-
-            // TODO - check if IEEERemainder is what is desired here
-            float newVal = (float) (retVal - MathUtils.remainder(retVal,
-                    resolution));
-
-            float nextVal = newVal + resolution;
-            float adjustedMax = max - min;
-            if (nextVal > adjustedMax) {
-                nextVal = adjustedMax;
-            }
-
-            if ((newVal - retVal) < (nextVal - newVal)) {
-                retVal = newVal;
-            } else {
-                retVal = nextVal;
-            }
-        }
-
-        return retVal + min;
-    }
-    
     public static double snapToResolution(double value, double min, double max,
-            double resolution) {
+            BigDecimal resolution) {
 
         if (value >= max) {
             return max;
@@ -163,31 +83,40 @@ public class LineUtils {
             return min;
         }
 
-        if (resolution <= 0.0f) {
+        if (resolution.doubleValue() <= 0.0f) {
             return value;
         }
 
         double retVal = value - min;
 
-        if (resolution > 0.0f) {
-
-            // TODO - check if IEEERemainder is what is desired here
-            double newVal = (double) (retVal - MathUtils.remainder(retVal,
-                    resolution));
-
-            double nextVal = newVal + resolution;
-            double adjustedMax = max - min;
-            if (nextVal > adjustedMax) {
-                nextVal = adjustedMax;
-            }
-
-            if ((newVal - retVal) < (nextVal - newVal)) {
-                retVal = newVal;
-            } else {
-                retVal = nextVal;
-            }
+        if (resolution.doubleValue() > 0.0f) {
+            BigDecimal v = new BigDecimal(retVal).setScale(resolution.scale(),
+                    RoundingMode.HALF_UP);
+//            System.out.println("v: " + v +":"+v.remainder(resolution) +":" + resolution);
+//            System.out.println("v2: " + v.subtract(v.remainder(resolution)));
+            v = v.subtract(v.remainder(resolution));
+//            System.out.println("v3: " + v);
+            retVal = v.doubleValue();
+//            // TODO - check if IEEERemainder is what is desired here
+//            double newVal =  (retVal - MathUtils.remainder(retVal,
+//                    resolution));
+//
+//            System.out.println(retVal +":"+MathUtils.remainder(retVal, resolution));
+//            double nextVal = newVal + resolution;
+//            double adjustedMax = max - min;
+//            if (nextVal > adjustedMax) {
+//                nextVal = adjustedMax;
+//            }
+//
+//            System.out.println(newVal +":"+retVal +":"+nextVal);
+//            if ((newVal - retVal) < (nextVal - newVal)) {
+//                retVal = newVal;
+//            } else {
+//                retVal = nextVal;
+//            }
         }
 
         return retVal + min;
     }
+   
 }

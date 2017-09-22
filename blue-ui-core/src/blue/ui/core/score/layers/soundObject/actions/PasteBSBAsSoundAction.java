@@ -22,17 +22,17 @@ package blue.ui.core.score.layers.soundObject.actions;
 import blue.BlueData;
 import blue.CopyBuffer;
 import blue.SoundLayer;
+import blue.automation.Parameter;
+import blue.components.lines.LinePoint;
 import blue.orchestra.BlueSynthBuilder;
 import blue.projects.BlueProjectManager;
 import blue.score.ScoreObject;
 import blue.score.TimeState;
 import blue.score.layers.Layer;
-import blue.score.layers.ScoreObjectLayer;
 import blue.soundObject.Sound;
 import blue.ui.core.score.ScorePath;
 import blue.ui.core.score.undo.AddScoreObjectEdit;
 import blue.undo.BlueUndoManager;
-import blue.utility.ObjectUtilities;
 import blue.utility.ScoreUtilities;
 import java.awt.Point;
 import java.awt.event.ActionEvent;
@@ -87,7 +87,7 @@ public final class PasteBSBAsSoundAction extends AbstractAction implements Conte
     
     @Override
     public void actionPerformed(ActionEvent e) {
-        float start = (float) p.x / timeState.getPixelSecond();
+        double start = (double) p.x / timeState.getPixelSecond();
         
         if (timeState.isSnapEnabled()) {
             start = ScoreUtilities.getSnapValueStart(start,
@@ -98,7 +98,16 @@ public final class PasteBSBAsSoundAction extends AbstractAction implements Conte
 
         Sound sound = new Sound();
         sound.setStartTime(start);
-        sound.setBlueSynthBuilder((BlueSynthBuilder) ObjectUtilities.clone(obj));
+
+        BlueSynthBuilder bsbCopy = ((BlueSynthBuilder)obj).deepCopy();
+        // clear out any existing automations
+        for(Parameter param :bsbCopy.getParameterList()) {
+            param.setAutomationEnabled(false);
+            param.getLine().clear();
+            param.getLine().addLinePoint(new LinePoint(0.0, param.getValue(0.0)));
+            param.getLine().addLinePoint(new LinePoint(1.0, param.getValue(0.0)));
+        }
+        sound.setBlueSynthBuilder(bsbCopy);
         
         Layer layer = scorePath.getGlobalLayerForY(p.y);
         

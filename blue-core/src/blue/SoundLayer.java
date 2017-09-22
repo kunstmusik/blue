@@ -58,8 +58,8 @@ public final class SoundLayer extends ArrayList<SoundObject>
             SoundObject a = (SoundObject) arg0;
             SoundObject b = (SoundObject) arg1;
 
-            float aStart = a.getStartTime();
-            float bStart = b.getStartTime();
+            double aStart = a.getStartTime();
+            double bStart = b.getStartTime();
 
             if (aStart > bStart) {
                 return 1;
@@ -73,23 +73,33 @@ public final class SoundLayer extends ArrayList<SoundObject>
 
     };
 
-    private ParameterIdList automationParameters = new ParameterIdList();
+    private ParameterIdList automationParameters; 
 
-    private String name;
+    private String name = "";
 
-    private boolean muted;
+    private boolean muted = false;
 
-    private boolean solo;
+    private boolean solo = false;
 
-    private NoteProcessorChain npc = new NoteProcessorChain();
+    private NoteProcessorChain npc; 
 
     private int heightIndex = 0;
 
-    // constructor
     public SoundLayer() {
-        muted = false;
-        solo = false;
-        name = "";
+        automationParameters = new ParameterIdList(); 
+        npc = new NoteProcessorChain();
+    }
+
+    public SoundLayer(SoundLayer sLayer) {
+        name = sLayer.name;
+        muted = sLayer.muted;
+        solo = sLayer.solo;
+        npc = new NoteProcessorChain(sLayer.npc);
+        heightIndex = sLayer.heightIndex;
+        automationParameters = new ParameterIdList(sLayer.automationParameters); 
+        for (SoundObject sObj : sLayer) {
+            this.add(sObj.deepCopy());
+        }
     }
 
     public boolean isMuted() {
@@ -149,7 +159,7 @@ public final class SoundLayer extends ArrayList<SoundObject>
      * called by PolyObject::getMaxTime()
      */
 
-    public float getMaxTime() {
+    public double getMaxTime() {
         return ScoreUtilities.getMaxTime(this);
     }
 
@@ -213,28 +223,6 @@ public final class SoundLayer extends ArrayList<SoundObject>
         }
 
         return retVal;
-    }
-
-    @Override
-    public Object clone() {
-        SoundLayer sLayer = new SoundLayer();
-
-        sLayer.setMuted(this.isMuted());
-        sLayer.setSolo(this.isSolo());
-        sLayer.setName(this.getName());
-        sLayer.setNoteProcessorChain((NoteProcessorChain) this.npc.clone());
-
-        for (SoundObject sObj : this) {
-            sLayer.add((SoundObject) sObj.clone());
-        }
-
-        for (Iterator iter = this.automationParameters.iterator(); iter
-                .hasNext();) {
-            String parameterId = (String) iter.next();
-            sLayer.automationParameters.addParameterId(parameterId);
-        }
-
-        return sLayer;
     }
 
     public NoteProcessorChain getNoteProcessorChain() {
@@ -365,8 +353,8 @@ public final class SoundLayer extends ArrayList<SoundObject>
      * SoundLayer if possible, if not possible, will adjust to render everything
      * and filter on top layer.
      */
-    public NoteList generateForCSD(CompileData compileData, float startTime, 
-            float endTime) throws SoundLayerException {
+    public NoteList generateForCSD(CompileData compileData, double startTime, 
+            double endTime) throws SoundLayerException {
         
         NoteList notes = new NoteList();
         
@@ -375,14 +363,14 @@ public final class SoundLayer extends ArrayList<SoundObject>
         for (SoundObject sObj : this) {
             try {
             
-                float sObjStart = sObj.getStartTime();
-                float sObjDur = sObj.getSubjectiveDuration();
-                float sObjEnd = sObjStart + sObjDur;
+                double sObjStart = sObj.getStartTime();
+                double sObjDur = sObj.getSubjectiveDuration();
+                double sObjEnd = sObjStart + sObjDur;
 
                 if (sObjEnd > startTime) {
                     if (endTime <= startTime) {
 
-                        float adjustedStart = startTime - sObjStart;
+                        double adjustedStart = startTime - sObjStart;
                         if (adjustedStart < 0.0f) {
                             adjustedStart = 0.0f;
                         }
@@ -390,8 +378,8 @@ public final class SoundLayer extends ArrayList<SoundObject>
                         notes.merge((sObj).generateForCSD(compileData, adjustedStart, -1.0f));
                     } else if (sObjStart < endTime) {
 
-                        float adjustedStart = startTime - sObjStart;
-                        float adjustedEnd = endTime - sObjStart;
+                        double adjustedStart = startTime - sObjStart;
+                        double adjustedEnd = endTime - sObjStart;
 
                         if (adjustedStart < 0.0f) {
                             adjustedStart = 0.0f;
@@ -454,6 +442,11 @@ public final class SoundLayer extends ArrayList<SoundObject>
     @Override
     public void clearScoreObjects() {
         this.clear();
+    }
+
+    @Override
+    public SoundLayer deepCopy() {
+        return new SoundLayer(this);
     }
     
     

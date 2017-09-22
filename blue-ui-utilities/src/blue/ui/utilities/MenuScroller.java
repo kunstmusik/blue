@@ -12,6 +12,7 @@ import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
 import javax.swing.MenuSelectionManager;
+import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -475,9 +476,17 @@ public class MenuScroller {
                 menu.add(menuItems[i]);
             }
 
-            JComponent parent = (JComponent) upItem.getParent();
-            parent.revalidate();
-            parent.repaint();
+            int preferredWidth = 0;
+            for (Component item : menuItems) {
+                preferredWidth = Math.max(preferredWidth, item.getPreferredSize().width);
+            }
+            menu.setPreferredSize(new Dimension(preferredWidth, menu.getPreferredSize().height));
+
+            menu.revalidate();
+            menu.repaint();
+//            JComponent parent = (JComponent) upItem.getParent();
+//            parent.revalidate();
+//            parent.repaint();
         }
     }
 
@@ -508,7 +517,11 @@ public class MenuScroller {
                 firstIndex = Math.max(firstIndex, keepVisibleIndex - scrollCount + 1);
             }
             if (menuItems.length > topFixedCount + scrollCount + bottomFixedCount) {
-                refreshMenu();
+                if (!SwingUtilities.isEventDispatchThread()) {
+                    SwingUtilities.invokeLater(() -> refreshMenu());
+                } else {
+                    refreshMenu();
+                }
             }
         }
 
@@ -528,7 +541,11 @@ public class MenuScroller {
             super(interval, new ActionListener() {
                 public void actionPerformed(ActionEvent ae) {
                     firstIndex += increment;
-                    refreshMenu();
+                    if (!SwingUtilities.isEventDispatchThread()) {
+                        SwingUtilities.invokeLater(() -> refreshMenu());
+                    } else {
+                        refreshMenu();
+                    }
                 }
             });
         }

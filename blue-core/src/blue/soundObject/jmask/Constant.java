@@ -23,12 +23,19 @@ package blue.soundObject.jmask;
 
 import electric.xml.Element;
 import electric.xml.Elements;
-import java.io.Serializable;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
-public class Constant implements Generator, Serializable, Accumulatable {
+public class Constant implements Generator, Accumulatable {
+
     double value = 1.0d;
+
+    public Constant() {
+    }
+
+    public Constant(Constant constant) {
+        value = constant.value;
+    }
 
     public static Generator loadFromXML(Element data) {
         Constant constant = new Constant();
@@ -78,7 +85,6 @@ public class Constant implements Generator, Serializable, Accumulatable {
 //    public JComponent getEditor() {
 //        return new ConstantEditor(this);
 //    }
-
     @Override
     public boolean equals(Object obj) {
         return EqualsBuilder.reflectionEquals(this, obj);
@@ -87,5 +93,10 @@ public class Constant implements Generator, Serializable, Accumulatable {
     @Override
     public String toString() {
         return ToStringBuilder.reflectionToString(this);
+    }
+
+    @Override
+    public Constant deepCopy() {
+        return new Constant(this);
     }
 }

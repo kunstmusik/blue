@@ -1,6 +1,6 @@
 /*
  * blue - object composition environment for csound
- * Copyright (c) 2000-2004 Steven Yi (stevenyi@gmail.com)
+ * Copyright (c) 2000-2016 Steven Yi (stevenyi@gmail.com)
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published
@@ -25,8 +25,12 @@ import electric.xml.Element;
 import electric.xml.Elements;
 import java.awt.Color;
 import java.io.*;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.rmi.dgc.VMID;
 import java.util.*;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.TableModelEvent;
@@ -50,28 +54,28 @@ import org.apache.commons.lang3.text.StrBuilder;
  * 
  * @author Steven
  */
-public class Line implements TableModel, Serializable, ChangeListener, Iterable<LinePoint> {
-    String varName = "";
+public class Line implements TableModel, ChangeListener, Iterable<LinePoint> {
+    protected String varName = "";
 
-    float max = 1.0f;
+    protected double max = 1.0f;
 
-    float min = 0.0f;
+    protected double min = 0.0f;
 
-    float resolution = -1.0f;
+    protected BigDecimal resolution = new BigDecimal(-1);
 
-    Color color = null;
+    protected Color color = null;
 
-    boolean isZak = false;
+    protected boolean isZak = false;
 
-    boolean rightBound = false;
+    protected boolean rightBound = false;
 
     protected int channel = 1;
 
     protected String uniqueID = "";
     
-    private boolean endPointsLinked = false;
+    protected boolean endPointsLinked = false;
 
-    ArrayList<LinePoint> points = new ArrayList<>();
+    protected ObservableList<LinePoint> points;
 
     transient Vector<TableModelListener> listeners = null;
 
@@ -86,6 +90,7 @@ public class Line implements TableModel, Serializable, ChangeListener, Iterable<
     }
 
     private Line(boolean rightBound, boolean init) {
+        points = FXCollections.observableArrayList();
         if (init) {
             LinePoint point1 = new LinePoint();
             point1.setLocation(0.0f, 0.5f);
@@ -104,6 +109,29 @@ public class Line implements TableModel, Serializable, ChangeListener, Iterable<
         this.color = new Color(128, 128, 128);
 
         uniqueID = Integer.toString(new VMID().hashCode());
+    }
+
+    public Line(Line line) {
+        varName = line.varName;    
+        max = line.max;
+        min = line.min;
+        resolution = line.resolution;
+
+        color = line.color;
+        isZak = line.isZak;
+        rightBound = line.rightBound;
+        channel = line.channel;
+        // FIXME - verify uniqueID copy is correct...
+        uniqueID = line.uniqueID;
+        endPointsLinked = line.endPointsLinked;
+
+        points = FXCollections.observableArrayList();
+
+        for(LinePoint lp :line.points) {
+            LinePoint newLp = new LinePoint(lp);
+            points.add(newLp);
+            newLp.addChangeListener(this);
+        }
     }
 
     public static Line loadFromXML(Element data) {
@@ -127,12 +155,18 @@ public class Line implements TableModel, Serializable, ChangeListener, Iterable<
             version = Integer.parseInt(versionStr);
         }
 
-        line.max = Float.parseFloat(data.getAttributeValue("max"));
-        line.min = Float.parseFloat(data.getAttributeValue("min"));
+        line.max = Double.parseDouble(data.getAttributeValue("max"));
+        line.min = Double.parseDouble(data.getAttributeValue("min"));
 
         if (data.getAttributeValue("resolution") != null) {
-            line.resolution = Float.parseFloat(data
-                    .getAttributeValue("resolution"));
+            line.resolution = new BigDecimal(Double.parseDouble(data
+                    .getAttributeValue("resolution")))
+                    .setScale(5, RoundingMode.HALF_UP)
+                    .stripTrailingZeros();
+        }
+        if (data.getAttributeValue("bdresolution") != null) {
+            line.resolution = new BigDecimal(data
+                    .getAttributeValue("bdresolution"));
         }
 
         String colorStr = data.getAttributeValue("color");
@@ -187,9 +221,9 @@ public class Line implements TableModel, Serializable, ChangeListener, Iterable<
             retVal.setAttribute("name", this.varName);
         }
         retVal.setAttribute("version", "2");
-        retVal.setAttribute("max", Float.toString(max));
-        retVal.setAttribute("min", Float.toString(min));
-        retVal.setAttribute("resolution", Float.toString(resolution));
+        retVal.setAttribute("max", Double.toString(max));
+        retVal.setAttribute("min", Double.toString(min));
+        retVal.setAttribute("bdresolution", resolution.toString());
         retVal.setAttribute("color", Integer.toString(color.getRGB()));
         retVal.setAttribute("rightBound", Boolean.toString(rightBound));
         retVal.setAttribute("endPointsLinked", Boolean.toString(endPointsLinked));
@@ -247,7 +281,7 @@ public class Line implements TableModel, Serializable, ChangeListener, Iterable<
     /**
      * @return Returns the max.
      */
-    public float getMax() {
+    public double getMax() {
         return max;
     }
 
@@ -255,13 +289,13 @@ public class Line implements TableModel, Serializable, ChangeListener, Iterable<
      * @param max
      *            The max to set.
      */
-    public void setMax(float max, boolean truncate) {
-        float oldMax = this.max;
+    public void setMax(double max, boolean truncate) {
+        double oldMax = this.max;
         this.max = max;
 
         for (LinePoint point : points) {
             
-            float newVal;
+            double newVal;
 
             if (truncate) {
                 newVal = LineUtils.truncate(point.getY(), this.min, this.max);
@@ -279,7 +313,7 @@ public class Line implements TableModel, Serializable, ChangeListener, Iterable<
     /**
      * @return Returns the min.
      */
-    public float getMin() {
+    public double getMin() {
         return min;
     }
 
@@ -287,13 +321,13 @@ public class Line implements TableModel, Serializable, ChangeListener, Iterable<
      * @param min
      *            The min to set.
      */
-    public void setMin(float min, boolean truncate) {
-        float oldMin = this.min;
+    public void setMin(double min, boolean truncate) {
+        double oldMin = this.min;
         this.min = min;
 
         for (LinePoint point : points) {
 
-            float newVal;
+            double newVal;
 
             if (truncate) {
                 newVal = LineUtils.truncate(point.getY(), this.min, this.max);
@@ -308,7 +342,7 @@ public class Line implements TableModel, Serializable, ChangeListener, Iterable<
         fireTableDataChanged();
     }
 
-    public void setMinMax(float newMin, float newMax, boolean truncate) {
+    public void setMinMax(double newMin, double newMax, boolean truncate) {
         
         if(this.min == newMin && this.max == newMax) {
             return;
@@ -316,7 +350,7 @@ public class Line implements TableModel, Serializable, ChangeListener, Iterable<
         
         for (LinePoint point : points) {
             
-            float newVal;
+            double newVal;
 
             if (truncate) {
                 newVal = LineUtils.truncate(point.getY(), newMin, newMax);
@@ -343,6 +377,16 @@ public class Line implements TableModel, Serializable, ChangeListener, Iterable<
         return color;
     }
 
+    public javafx.scene.paint.Color getColorFX(){
+        int r = color.getRed();
+        int g = color.getGreen();
+        int b = color.getBlue();
+        int a = color.getAlpha();
+
+        return javafx.scene.paint.Color.rgb(
+                r, g, b, a / 255.0);
+    }
+
     public void setColor(Color color) {
         this.color = color;
 
@@ -351,8 +395,8 @@ public class Line implements TableModel, Serializable, ChangeListener, Iterable<
         fireTableDataChanged();
     }
 
-    // public float getYValue(LinePoint p) {
-    // float range = max - min;
+    // public double getYValue(LinePoint p) {
+    // double range = max - min;
     //
     // return ((p.getY() * range) + min);
     // }
@@ -442,7 +486,7 @@ public class Line implements TableModel, Serializable, ChangeListener, Iterable<
 
     @Override
     public Class getColumnClass(int columnIndex) {
-        return Float.class;
+        return Double.class;
     }
 
     @Override
@@ -450,43 +494,27 @@ public class Line implements TableModel, Serializable, ChangeListener, Iterable<
         LinePoint p = points.get(rowIndex);
 
         if (columnIndex == 0) {
-            return new Float(p.getX());
+            return new Double(p.getX());
         }
 
-        return new Float(p.getY());
+        return new Double(p.getY());
     }
 
     /*
      * Only to be used for migration from pre-0.110.0 files, converts 0-1.0
      * range values to absolute values
      */
-    private static float migrateYValue(float y, float max, float min) {
-        float range = max - min;
-        float yVal = (y * range) + min;
+    private static double migrateYValue(double y, double max, double min) {
+        double range = max - min;
+        double yVal = (y * range) + min;
 
         return yVal;
     }
 
-    // private float convertYValue(float y) {
-    // float range = getMax() - getMin();
-    // float yVal = (y - getMin()) / range;
-    //
-    // if(yVal < getMin()) {
-    // yVal = getMin();
-    // }
-    //
-    // if(yVal > getMax()) {
-    // yVal = getMax();
-    // }
-    //
-    //
-    // return yVal;
-    // }
-
     @Override
     public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
-        Float val = (Float) aValue;
-        float newValue = val.floatValue();
+        Double val = (Double) aValue;
+        double newValue = val.doubleValue();
 
         LinePoint point = getLinePoint(rowIndex);
 
@@ -514,14 +542,14 @@ public class Line implements TableModel, Serializable, ChangeListener, Iterable<
                 newValue = next.getX();
             }
 
-            float y = point.getY();
+            double y = point.getY();
             point.setLocation(newValue, y);
         } else {
             if (newValue < getMin() || newValue > getMax()) {
                 return;
             }
 
-            float x = point.getX();
+            double x = point.getX();
             point.setLocation(x, newValue);
         }
 
@@ -594,31 +622,15 @@ public class Line implements TableModel, Serializable, ChangeListener, Iterable<
         }
     }
 
-    /*
-     * This gets called as part of Serialization by Java and will do default
-     * serialization plus reconnect this Line as a listener to its LinePoints
-     */
-    private void readObject(ObjectInputStream stream) throws IOException,
-            ClassNotFoundException {
-        stream.defaultReadObject();
-
-        for (Iterator iter = points.iterator(); iter.hasNext();) {
-            LinePoint lp = (LinePoint) iter.next();
-            lp.addChangeListener(this);
-        }
-    }
-
     /**
      * Returns value for time given, developed for use in non-bound right
      * Automations. If beyond last point will return value of last point,
      * otherwise calculates the value on the line between the points.
      * 
-     * May want to reconsider moving this out to the client class.
-     * 
-     * Current assumes straight lines between points.
+     * Will adjust value if resolution is used and accounts for line direction.
      */
 
-    public float getValue(float time) {
+    public double getValue(double time) {
 
         int size = size();
         if (size == 0) {
@@ -665,10 +677,20 @@ public class Line implements TableModel, Serializable, ChangeListener, Iterable<
             return b.getY();
         }
 
-        float m = (b.getY() - a.getY()) / (b.getX() - a.getX());
-        float x = (time - a.getX());
+        double m = (b.getY() - a.getY()) / (b.getX() - a.getX());
+        double x = (time - a.getX());
 
-        float y = (m * x) + a.getY();
+        double y = (m * x) + a.getY();
+
+        if(resolution.doubleValue() > 0.0) {
+            if (b.getY() < a.getY()) {
+                y += resolution.doubleValue() * 0.99;
+            }
+            BigDecimal v = new BigDecimal(y).setScale(resolution.scale(),
+                    RoundingMode.FLOOR);
+            v = v.subtract(v.remainder(resolution));
+            y = v.doubleValue();
+        }
 
         return y;
     }
@@ -682,16 +704,16 @@ public class Line implements TableModel, Serializable, ChangeListener, Iterable<
         return rightBound;
     }  
     
-    public float getResolution() {
+    public BigDecimal getResolution() {
         return resolution;
     }
 
-    public void setResolution(float resolution) {
+    public void setResolution(BigDecimal resolution) {
         this.resolution = resolution;
         for (Iterator iter = points.iterator(); iter.hasNext();) {
             LinePoint point = (LinePoint) iter.next();
 
-            float newVal = LineUtils.snapToResolution(point.getY(), this.min,
+            double newVal = LineUtils.snapToResolution(point.getY(), this.min,
                     this.max, this.resolution);
 
             point.setLocation(point.getX(), newVal);
@@ -764,15 +786,16 @@ public class Line implements TableModel, Serializable, ChangeListener, Iterable<
             }
 
             LinePoint lp = new LinePoint();
-            lp.setLocation(Float.parseFloat(parts[0]), Float
-                    .parseFloat(parts[1]));
+            lp.setLocation(Double.parseDouble(parts[0]), Double
+                    .parseDouble(parts[1]));
 
             temp.add(lp);
         }
 
         // Collections.sort(temp);
 
-        this.points = temp;
+        this.points.clear();
+        this.points.addAll(temp);
 
         fireTableDataChanged();
 
@@ -790,5 +813,9 @@ public class Line implements TableModel, Serializable, ChangeListener, Iterable<
         }
         
         return linePoint == points.get(0);
+    }
+
+    public ObservableList<LinePoint> getObservableList() {
+        return points;
     }
 }

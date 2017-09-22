@@ -31,22 +31,21 @@ import electric.xml.Element;
 import electric.xml.Elements;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.io.Serializable;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Vector;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 
 @SoundObjectPlugin(displayName = "TrackerObject", live=true, position = 140)
-public class TrackerObject extends AbstractSoundObject implements Serializable {
+public class TrackerObject extends AbstractSoundObject {
 
     private TrackList tracks = new TrackList();
 
-    private float duration = 4.0f;
+    private double duration = 4.0f;
 
     private int timeBehavior = SoundObject.TIME_BEHAVIOR_SCALE;
 
-    float repeatPoint = -1.0f;
+    double repeatPoint = -1.0f;
 
     private NoteProcessorChain npc = new NoteProcessorChain();
 
@@ -56,7 +55,16 @@ public class TrackerObject extends AbstractSoundObject implements Serializable {
         this.setName("Tracker");
     }
 
-    public NoteList generateNotes(float renderStart, float renderEnd) throws SoundObjectException {
+    public TrackerObject(TrackerObject to) {
+        super(to);
+        tracks = new TrackList(to.tracks);
+        duration = to.duration;
+        timeBehavior = to.timeBehavior;
+        repeatPoint = to.repeatPoint;
+        npc = new NoteProcessorChain(to.npc);
+    }
+
+    public NoteList generateNotes(double renderStart, double renderEnd) throws SoundObjectException {
         NoteList nl;
 
         try {
@@ -79,7 +87,7 @@ public class TrackerObject extends AbstractSoundObject implements Serializable {
     }
 
     @Override
-    public float getObjectiveDuration() {
+    public double getObjectiveDuration() {
         return duration;
     }
 
@@ -99,12 +107,12 @@ public class TrackerObject extends AbstractSoundObject implements Serializable {
     }
 
     @Override
-    public float getRepeatPoint() {
+    public double getRepeatPoint() {
         return repeatPoint;
     }
 
     @Override
-    public void setRepeatPoint(float repeatPoint) {
+    public void setRepeatPoint(double repeatPoint) {
         this.repeatPoint = repeatPoint;
     }
 
@@ -112,7 +120,7 @@ public class TrackerObject extends AbstractSoundObject implements Serializable {
     public Element saveAsXML(Map<Object, String> objRefMap) {
         Element retVal = SoundObjectUtilities.getBasicXML(this);
 
-        retVal.addElement(XMLUtilities.writeFloat("duration", getDuration()));
+        retVal.addElement(XMLUtilities.writeDouble("duration", getDuration()));
         retVal.addElement(tracks.saveAsXML());
 
         return retVal;
@@ -136,7 +144,7 @@ public class TrackerObject extends AbstractSoundObject implements Serializable {
             String nodeName = node.getName();
             switch (nodeName) {
                 case "duration":
-                    retVal.setDuration(XMLUtilities.readFloat(node));
+                    retVal.setDuration(XMLUtilities.readDouble(node));
                     break;
                 case "trackList":
                     retVal.setTracks(TrackList.loadFromXML(node));
@@ -152,11 +160,11 @@ public class TrackerObject extends AbstractSoundObject implements Serializable {
         this.npc = chain;
     }
 
-    public float getDuration() {
+    public double getDuration() {
         return duration;
     }
 
-    public void setDuration(float duration) {
+    public void setDuration(double duration) {
         this.duration = duration;
     }
 
@@ -217,9 +225,14 @@ public class TrackerObject extends AbstractSoundObject implements Serializable {
     }
 
     @Override
-    public NoteList generateForCSD(CompileData compileData, float startTime, float endTime) 
+    public NoteList generateForCSD(CompileData compileData, double startTime, double endTime) 
             throws SoundObjectException {
         return generateNotes(startTime, endTime);
+    }
+
+    @Override
+    public TrackerObject deepCopy() {
+        return new TrackerObject(this);
     }
 
 }

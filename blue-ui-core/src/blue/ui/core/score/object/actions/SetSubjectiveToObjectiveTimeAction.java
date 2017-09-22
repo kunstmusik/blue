@@ -79,8 +79,8 @@ public final class SetSubjectiveToObjectiveTimeAction extends AbstractAction
                             JOptionPane.ERROR_MESSAGE);
                     return;
                 }
-                float oldTime = soundObject.getSubjectiveDuration();
-                float newTime = soundObject.getObjectiveDuration();
+                double oldTime = soundObject.getSubjectiveDuration();
+                double newTime = soundObject.getObjectiveDuration();
 
                 if (oldTime != newTime) {
                     soundObject.setSubjectiveDuration(
