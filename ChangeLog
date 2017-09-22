@@ -1,6 +1,6 @@
 blue
 version @VERSION@ - @RELEASE_DATE@
-copyright (c) 2001-2016 Steven Yi - all rights reserved
+copyright (c) 2001-2017 Steven Yi - all rights reserved
 
 email: stevenyi@gmail.com
 web: http://blue.kunstmusik.com
@@ -12,8 +12,8 @@ information.
 
 [CHANGE LOG]
 
-> Notes for 2.7.x <
-[release 2017.xx.xx]
+> Notes for 2.7.0 <
+[release 2017.09.22]
 
 NEW
 
