@@ -3263,6 +3263,32 @@
         <signature>(a 	!=	 b 	?	 v1 	:	 v2)</signature>
       </opcode>
     </opcodeGroup>
+    <opcodeGroup name="Compilation">
+      <opcode>
+        <name>compilecsd</name>
+        <signature>ires 	compilecsd	 Sfilename</signature>
+      </opcode>
+      <opcode>
+        <name>compileorc</name>
+        <signature>ires 	compileorc	 Sfilename</signature>
+      </opcode>
+      <opcode>
+        <name>compilestr</name>
+        <signature>ires 	compilestr	 Sorch</signature>
+      </opcode>
+      <opcode>
+        <name>evalstr</name>
+        <signature>ires 	evalstr	 Scode </signature>
+      </opcode>
+      <opcode>
+        <name>evalstr</name>
+        <signature>kres 	evalstr	 Scode, ktrig </signature>
+      </opcode>
+      <opcode>
+        <name>return</name>
+        <signature>return	 ival </signature>
+      </opcode>
+    </opcodeGroup>
     <opcodeGroup name="Duration Control">
       <opcode>
         <name>ihold</name>
@@ -3900,32 +3926,6 @@
       <opcode>
         <name>times</name>
         <signature>kres 	times</signature>
-      </opcode>
-    </opcodeGroup>
-    <opcodeGroup name="Compilation">
-      <opcode>
-        <name>compilecsd</name>
-        <signature>ires 	compilecsd	 Sfilename</signature>
-      </opcode>
-      <opcode>
-        <name>compileorc</name>
-        <signature>ires 	compileorc	 Sfilename</signature>
-      </opcode>
-      <opcode>
-        <name>compilestr</name>
-        <signature>ires 	compilestr	 Sorch</signature>
-      </opcode>
-      <opcode>
-        <name>evalstr</name>
-        <signature>ires 	evalstr	 Scode </signature>
-      </opcode>
-      <opcode>
-        <name>evalstr</name>
-        <signature>kres 	evalstr	 Scode, ktrig </signature>
-      </opcode>
-      <opcode>
-        <name>return</name>
-        <signature>return	 ival </signature>
       </opcode>
     </opcodeGroup>
   </opcodeGroup>
@@ -6889,6 +6889,24 @@
       <signature>OSCsend	 kwhen, ihost, iport, idestination, itype [, xdata1, xdata2, ...]</signature>
     </opcode>
   </opcodeGroup>
+  <opcodeGroup name="Faust Opcodes">
+    <opcode>
+      <name>ihandle,a1[,a2,...] faustaudio</name>
+      <signature>ihandle,a1[,a2,...] faustaudio	 ifac[,ain1,...] </signature>
+    </opcode>
+    <opcode>
+      <name>ihandle faustcompile</name>
+      <signature>ihandle faustcompile	 Scode, Sargs </signature>
+    </opcode>
+    <opcode>
+      <name>faustctl</name>
+      <signature>faustctl	 idsp,Scontrol,kval </signature>
+    </opcode>
+    <opcode>
+      <name>ihandle,a1[,a2,...] faustgen</name>
+      <signature>ihandle,a1[,a2,...] faustgen	 SCode[,ain1,...] </signature>
+    </opcode>
+  </opcodeGroup>
   <opcodeGroup name="Network">
     <opcode>
       <name>remoteport</name>
@@ -6974,6 +6992,48 @@
     <opcode>
       <name>MixerSetLevel_i</name>
       <signature>MixerSetLevel_i	 isend, ibuss, igain</signature>
+    </opcode>
+  </opcodeGroup>
+  <opcodeGroup name="Ableton Link Opcodes">
+    <opcode>
+      <name>link_beat_force</name>
+      <signature>link_beat_force	  i_peer, k_beat [, k_at_time_seconds  [, k_quantum ]] </signature>
+    </opcode>
+    <opcode>
+      <name>link_beat_get</name>
+      <signature>k_beat_number, k_phase, k_current_time_seconds 	link_beat_get	 i_peer [, k_quantum]</signature>
+    </opcode>
+    <opcode>
+      <name>link_beat_request</name>
+      <signature>link_beat_request	  i_peer, k_beat [, k_at_time_seconds  [, k_quantum ]] </signature>
+    </opcode>
+    <opcode>
+      <name>link_create</name>
+      <signature>i_peer 	link_create	 [i_bpm]</signature>
+    </opcode>
+    <opcode>
+      <name>ableton_link_enable</name>
+      <signature> 	ableton_link_enable	 i_peer [, k_enable]</signature>
+    </opcode>
+    <opcode>
+      <name>link_is_enabled</name>
+      <signature>k_is_enabled 	link_is_enabled	 i_peer</signature>
+    </opcode>
+    <opcode>
+      <name>link_metro</name>
+      <signature>k_trigger, k_beat, k_phase, k_current_time_seconds 	link_metro	 i_peer [, k_quantum]</signature>
+    </opcode>
+    <opcode>
+      <name>link_peers</name>
+      <signature>k_count 	link_peers	 i_peer</signature>
+    </opcode>
+    <opcode>
+      <name>link_tempo_get</name>
+      <signature>k_bpm 	link_tempo_get	 i_peer</signature>
+    </opcode>
+    <opcode>
+      <name>link_tempo_set</name>
+      <signature>link_tempo_set	 i_peer, k_bpm [, k_at_time_seconds]</signature>
     </opcode>
   </opcodeGroup>
   <opcodeGroup name="Python Opcodes">
@@ -7348,6 +7408,60 @@
       <signature>iwidth, iheight 	imagesize	 iimagenum</signature>
     </opcode>
   </opcodeGroup>
+  <opcodeGroup name="Array Opcodes">
+    <opcode>
+      <name>copya2ftab</name>
+      <signature>copya2ftab	 kftbl, tab</signature>
+    </opcode>
+    <opcode>
+      <name>copyf2array</name>
+      <signature>copyf2array	 tab, kftbl</signature>
+    </opcode>
+    <opcode>
+      <name>maxarray</name>
+      <signature>kmax [,kindx] 	maxarray	 karray</signature>
+    </opcode>
+    <opcode>
+      <name>minarray</name>
+      <signature>kmin [,kindx] 	minarray	 karray</signature>
+    </opcode>
+    <opcode>
+      <name>scalearray</name>
+      <signature>scalearray	 tarray, kmin, kmax[, kleft, kright]</signature>
+    </opcode>
+    <opcode>
+      <name>sumarray</name>
+      <signature>ksum 	sumarray	 karray</signature>
+    </opcode>
+  </opcodeGroup>
+  <opcodeGroup name="Array Operations">
+    <opcodeGroup name=" Fast Fourier Transform">
+    </opcodeGroup>
+    <opcodeGroup name=" complex numbers">
+    </opcodeGroup>
+    <opcodeGroup name=" dot product ">
+      <opcode>
+        <name>dot</name>
+        <signature>kres/ires	dot	 karr1[]/iarr1[], karr2[]/iarr2[]   (k- or i-arrays )</signature>
+      </opcode>
+    </opcodeGroup>
+    <opcodeGroup name=" product ">
+      <opcode>
+        <name>product</name>
+        <signature>kres/ires	product	 karr[]/iarr[]  (k- or i-arrays )</signature>
+      </opcode>
+    </opcodeGroup>
+    <opcodeGroup name=" sorting">
+      <opcode>
+        <name>sorta</name>
+        <signature>k/i[]	sorta	 k/i[]  (k- or i-arrays )</signature>
+      </opcode>
+      <opcode>
+        <name>sortd</name>
+        <signature>k/i[]	sortd	 k/i[]  (k- or i-arrays )</signature>
+      </opcode>
+    </opcodeGroup>
+  </opcodeGroup>
   <opcodeGroup name="Miscellaneous">
     <opcode>
       <name>directory</name>
@@ -7394,48 +7508,6 @@ inum_parm, kupdate</signature>
   <opcodeGroup name="Testing">
   </opcodeGroup>
   <opcodeGroup name="Utilities">
-  </opcodeGroup>
-  <opcodeGroup name="Ableton Link Opcodes">
-    <opcode>
-      <name>link_beat_force</name>
-      <signature>link_beat_force	  i_peer, k_beat [, k_at_time_seconds  [, k_quantum ]] </signature>
-    </opcode>
-    <opcode>
-      <name>link_beat_get</name>
-      <signature>k_beat_number, k_phase, k_current_time_seconds 	link_beat_get	 i_peer [, k_quantum]</signature>
-    </opcode>
-    <opcode>
-      <name>link_beat_request</name>
-      <signature>link_beat_request	  i_peer, k_beat [, k_at_time_seconds  [, k_quantum ]] </signature>
-    </opcode>
-    <opcode>
-      <name>link_create</name>
-      <signature>i_peer 	link_create	 [i_bpm]</signature>
-    </opcode>
-    <opcode>
-      <name>ableton_link_enable</name>
-      <signature> 	ableton_link_enable	 i_peer [, k_enable]</signature>
-    </opcode>
-    <opcode>
-      <name>link_is_enabled</name>
-      <signature>k_is_enabled 	link_is_enabled	 i_peer</signature>
-    </opcode>
-    <opcode>
-      <name>link_metro</name>
-      <signature>k_trigger, k_beat, k_phase, k_current_time_seconds 	link_metro	 i_peer [, k_quantum]</signature>
-    </opcode>
-    <opcode>
-      <name>link_peers</name>
-      <signature>k_count 	link_peers	 i_peer</signature>
-    </opcode>
-    <opcode>
-      <name>link_tempo_get</name>
-      <signature>k_bpm 	link_tempo_get	 i_peer</signature>
-    </opcode>
-    <opcode>
-      <name>link_tempo_set</name>
-      <signature>link_tempo_set	 i_peer, k_bpm [, k_at_time_seconds]</signature>
-    </opcode>
   </opcodeGroup>
   <opcodeGroup name="Array operations">
     <opcodeGroup name=" complex numbers">
@@ -7549,78 +7621,10 @@ inum_parm, kupdate</signature>
       </opcode>
     </opcodeGroup>
   </opcodeGroup>
-  <opcodeGroup name="Array Opcodes">
-    <opcode>
-      <name>copya2ftab</name>
-      <signature>copya2ftab	 kftbl, tab</signature>
-    </opcode>
-    <opcode>
-      <name>copyf2array</name>
-      <signature>copyf2array	 tab, kftbl</signature>
-    </opcode>
-    <opcode>
-      <name>maxarray</name>
-      <signature>kmax [,kindx] 	maxarray	 karray</signature>
-    </opcode>
-    <opcode>
-      <name>minarray</name>
-      <signature>kmin [,kindx] 	minarray	 karray</signature>
-    </opcode>
-    <opcode>
-      <name>scalearray</name>
-      <signature>scalearray	 tarray, kmin, kmax[, kleft, kright]</signature>
-    </opcode>
-    <opcode>
-      <name>sumarray</name>
-      <signature>ksum 	sumarray	 karray</signature>
-    </opcode>
-  </opcodeGroup>
-  <opcodeGroup name="Array Operations">
-    <opcodeGroup name=" dot product ">
-      <opcode>
-        <name>dot</name>
-        <signature>kres/ires	dot	 karr1[]/iarr1[], karr2[]/iarr2[]   (k- or i-arrays )</signature>
-      </opcode>
-    </opcodeGroup>
-    <opcodeGroup name=" product ">
-      <opcode>
-        <name>product</name>
-        <signature>kres/ires	product	 karr[]/iarr[]  (k- or i-arrays )</signature>
-      </opcode>
-    </opcodeGroup>
-    <opcodeGroup name=" sorting">
-      <opcode>
-        <name>sorta</name>
-        <signature>k/i[]	sorta	 k/i[]  (k- or i-arrays )</signature>
-      </opcode>
-      <opcode>
-        <name>sortd</name>
-        <signature>k/i[]	sortd	 k/i[]  (k- or i-arrays )</signature>
-      </opcode>
-    </opcodeGroup>
-  </opcodeGroup>
   <opcodeGroup name="">
     <opcode>
       <name>ephasor</name>
       <signature>aexp,aph 	ephasor	 kfreq, kR</signature>
-    </opcode>
-  </opcodeGroup>
-  <opcodeGroup name="Faust Opcodes">
-    <opcode>
-      <name>ihandle,a1[,a2,...] faustaudio</name>
-      <signature>ihandle,a1[,a2,...] faustaudio	 ifac[,ain1,...] </signature>
-    </opcode>
-    <opcode>
-      <name>ihandle faustcompile</name>
-      <signature>ihandle faustcompile	 Scode, Sargs </signature>
-    </opcode>
-    <opcode>
-      <name>faustctl</name>
-      <signature>faustctl	 idsp,Scontrol,kval </signature>
-    </opcode>
-    <opcode>
-      <name>ihandle,a1[,a2,...] faustgen</name>
-      <signature>ihandle,a1[,a2,...] faustgen	 SCode[,ain1,...] </signature>
     </opcode>
   </opcodeGroup>
   <opcodeGroup name="Array opcodes">
