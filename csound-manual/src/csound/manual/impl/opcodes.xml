@@ -761,10 +761,6 @@
         <signature>kindex 	sc_phasor	 xtrig, xrate, kstart, kend [, kresetPos] </signature>
       </opcode>
       <opcode>
-        <name>s>(end - start) * freq / sr</synopsis</name>
-        <signature>(end - start) * freq / sr</signature>
-      </opcode>
-      <opcode>
         <name>syncphasor</name>
         <signature>aphase, asyncout 	syncphasor	 xcps, asyncin, [, iphs]</signature>
       </opcode>
