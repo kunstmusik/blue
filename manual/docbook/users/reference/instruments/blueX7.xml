@@ -1,5 +1,5 @@
 <section id="blueX7">
-<title>blueX7</title>
+<title>BlueX7</title>
 
 <note>
   <title>Note</title>
@@ -9,7 +9,7 @@
 <para>A 6 Operator Phase Modulation instrument using Russell Pinkston's DX7
 Emulation Patches.</para>
 
-<para> The blueX7 editor contains two tabs, the 'patch' tab, where the sound
+<para> The BlueX7 editor contains two tabs, the 'patch' tab, where the sound
 creation parameters are tweaked and a second tab called 'csound' which can
 contain further post-processing algorithms or special routing of the
 instrument's output.</para>
@@ -73,7 +73,7 @@ Envelope Generator
 
 </itemizedlist>
 
-<para> An important feature of the blueX7 is that it can import DX7 banks. A
+<para> An important feature of the BlueX7 is that it can import DX7 banks. A
 large collection can be found in the bigdx7.zip file within the dx72csound.zip
 file from: <ulink url="http://www.parnasse.com/dx72csnd.shtml" />. (to steven:
 reading this page it seems part of the model is unfinished, which may answer
@@ -89,14 +89,14 @@ blueMixerOut aout, aout
 
 <para> This routes the output of the instrument directly to the stereo output of
 csound. You can include further code to process the 'aout' signal produced by
-the blueX7, or to route it as needed. For example, if you are outputing in mono, you could code such as:</para>
+the BlueX7, or to route it as needed. For example, if you are outputing in mono, you could code such as:</para>
 
 <screen>
 out aout
 </screen>
 
-<para> To call the blueX7 instrument in the orchestra, create a GenericScore
-object in the timeline, and call the the blueX7 instrument. blueX7 requires 2
+<para> To call the BlueX7 instrument in the orchestra, create a GenericScore
+object in the timeline, and call the the BlueX7 instrument. BlueX7 requires 2
 additional p-fields. P-field 4 is the pitch class of the note in format
 octave.semitone (e.g. C4 is 4.00, C#1 is 1.01 and F6 is 6.05). P-field 5
 contains the midi velocity for the note with values from 0 to 127. For example:</para>

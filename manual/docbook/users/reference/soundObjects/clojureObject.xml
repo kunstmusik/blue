@@ -125,12 +125,12 @@ i1	3.75	0.25	8.04	-12
   </simplesect>
 
   <simplesect>
-    <title>Variables from blue</title>
+    <title>Variables from Blue</title>
 
-    <para>The following variables are avaialable from blue:</para>
+    <para>The following variables are available from Blue:</para>
 
     <variablelist>
-      <title>Variables from blue</title>
+      <title>Variables from Blue</title>
 
       <varlistentry>
         <term>blueDuration</term>
@@ -170,7 +170,7 @@ i1	3.75	0.25	8.04	-12
       won't be an issue, but if you're starting work in the middle of a project, 
       you will need to evaluate that utility ClojureObject at least once. You can 
       either do a run from the start at least once, use the "Test" button to 
-      have that evaluated, or use "Process at Start" and have blue ensure it is 
+      have that evaluated, or use "Process at Start" and have Blue ensure it is 
       loaded into the Clojure interpreter when you load your projects.
     </para>
   </simplesect>

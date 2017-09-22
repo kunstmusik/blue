@@ -3,7 +3,7 @@
 
   <para>
     Users are able to create scripts in Python that can interact with the
-    current blue project. Some examples of ideas for scripts are:
+    current Blue project. Some examples of ideas for scripts are:
   </para>
 
   <itemizedlist>
@@ -35,8 +35,8 @@
   </itemizedlist>
 
   <para>
-    Because the user has complete access to the blue object model as well as
-    blue application classes, the user has a great deal of freedom to make very
+    Because the user has complete access to the Blue object model as well as
+    Blue application classes, the user has a great deal of freedom to make very
     customized scripts to aid in their work.
   </para>
 
@@ -111,7 +111,7 @@
       <varlistentry>
         <term>blueProjectDir</term>
         <listitem>
-          <para>directory of the current blue project</para>
+          <para>directory of the current Blue project</para>
         </listitem>
       </varlistentry>
 
@@ -120,7 +120,7 @@
   <bridgehead>ScriptingUtils</bridgehead>
 
   <para>
-    Included with blue is a python file named ScriptingUtils.py that contains
+    Included with Blue is a python file named ScriptingUtils.py that contains
     useful utility functions.   </para>
 
   <variablelist>

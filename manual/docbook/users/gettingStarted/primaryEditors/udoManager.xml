@@ -77,7 +77,7 @@
 			line that normally starts a UDO definition (i.e. "opcode
 			myOpcode, a, ak"), as those should be in the text fields for
 			Opcode Name, In Types, and Out Types, and you will not need
-			an "endop", as blue will add that itself.
+			an "endop", as Blue will add that itself.
 		</para>
 
 	</simplesect>

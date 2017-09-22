@@ -21,7 +21,7 @@
     <title>Overview</title>
     
     <para>
-      The Score is the tool in blue for working with musical material in time.
+      The Score is the tool in Blue for working with musical material in time.
       It is a canvas upon which to create and organize musical ideas. The Score
       features a modular timeline, where each 
       <link linkend="layerGroups">Layer Group</link> within the Score is a
@@ -92,7 +92,7 @@
       
       <para>
         SoundObject Layer Groups are one of the primary Layer Group types. They
-        support the SoundObject system in blue for scoring them in time on the
+        support the SoundObject system in Blue for scoring them in time on the
         timeline. They also are the canvas on which 
         <link linkend="parameterAutomation">automations</link> are drawn.
       </para>
@@ -101,7 +101,7 @@
         SoundObject Layer Groups are divided into SoundLayers. Each SoundLayer
         can contain SoundObjects of any type as well as have automations 
         assigned to the layer.  Unlike MIDI-based studio software, where layers
-        are bound to a single instrument or channel in a mixer, blue's 
+        are bound to a single instrument or channel in a mixer, Blue's 
         SoundLayers are free to hold SoundObjects that generate any data for any
         instrument. This design choice allows freedoms for you to design your
         project as you wish, though at the expense of being able to implement 
@@ -109,7 +109,7 @@
       </para>
       
       <para>To use the SoundObject system, first create a SoundObject Layer 
-        Group using the Score Manager Dialog. (By default, new projects in blue
+        Group using the Score Manager Dialog. (By default, new projects in Blue
         start with a single SoundObject Layer Group.) Next, add as many layers
         as you would like to the LayerGroup.  You can then edit the names of the
         layers using the ScoreManager Dialog, or back in the main Score area by
@@ -214,7 +214,7 @@
       that is set to a duration of four beats, and use a time behavior of
       "None".  This means that the score will generate "as-is". In the layer's
       popup menu options, you can replace the SoundObject that is being used for 
-      the layer with one from the SoundObject buffer (i.e. copied from blueLive
+      the layer with one from the SoundObject buffer (i.e. copied from BlueLive
       or from a SoundObject Layer).  Also, you can switch to a different type
       of SoundObject using the menu. </para>
       
@@ -369,19 +369,19 @@
        
         <itemizedlist>
           <listitem>
-            blueLive toggle button to turn on/off blueLive
+            BlueLive toggle button to turn on/off BlueLive
           </listitem>
           <listitem>
-            Recompile button that will stop the current blueLive run, 
-            recompile the project, and start blueLive again
+            Recompile button that will stop the current BlueLive run, 
+            recompile the project, and start BlueLive again
           </listitem>
           <listitem>
             All Notes Off Button to turn off any hanging notes in a 
-              blueLive run
+              BlueLive run
           </listitem>
           <listitem>
-            MIDI Input toggle button enabled/disables blue MIDI input into
-              blueLive
+            MIDI Input toggle button enabled/disables Blue MIDI input into
+              BlueLive
           </listitem>
         </itemizedlist>
       </listitem>
@@ -465,7 +465,7 @@
     </para>
     
     <para>
-      Like other line editor objects in blue, left-clicking on an area where
+      Like other line editor objects in Blue, left-clicking on an area where
       there is no point will insert a new point, while hovering over an existing
       point and pressing down, then dragging will allow moving of that point. 
       Right-clicking a point will delete a point.
@@ -501,15 +501,15 @@
     <para>
       Use of the tempo editor is completely optional and users familiar with 
       Csound's t-statement for controlling global tempo may opt to disable using
-      blue's tempo editor and to use a t-statement in the global orc section of
-      the globals tab. Also, older blue projects that existed from before
-      blue's tempo editor was developed can count on their projects loading 
-      and running correctly even if opened with versions of blue that do have 
-      a tempo editor, due to blue's default to disable the blue tempo editor.
+      Blue's tempo editor and to use a t-statement in the global orc section of
+      the globals tab. Also, older Blue projects that existed from before
+      Blue's tempo editor was developed can count on their projects loading 
+      and running correctly even if opened with versions of Blue that do have 
+      a tempo editor, due to Blue's default to disable the Blue tempo editor.
       Regardless of which tempo system is chosen by the user, one should be
       careful not to use both at the same time as this will cause two 
       t-statements to exist in the generated CSD (the hand-entered one and the
-      one generated by blue), causing unexpected performance results.
+      one generated by Blue), causing unexpected performance results.
     </para>
     
     

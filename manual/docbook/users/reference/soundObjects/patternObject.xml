@@ -140,7 +140,7 @@ square.  The user can also click and drag to add or remove mutliple triggers.
   <listitem>
     <para>When the PatternObject is used with a Scale time behavior, you may not
     get the results you think you will get if the pattern is not filled in in 
-    the last subdivision of the beat.  When blue goes to generate a score for a
+    the last subdivision of the beat.  When Blue goes to generate a score for a
     soundObject, with a scale time behavior, the score is first generated, then 
     scaled to the duration of the soundObject.  So, if you're pattern has empty
     subdivisions and you're expecting there to be a space at the end of your 
@@ -157,7 +157,7 @@ i 10000 0 .25
     
     Where 10000 is not an instrument in use in your project. Then you can put in
     a trigger for this pattern in the last subdivision.  What will happen is 
-    that blue will process the score with this note's time and thus will 
+    that Blue will process the score with this note's time and thus will 
     generate with this out to the CSD, but Csound will ignore the note.
     
     </para>

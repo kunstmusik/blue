@@ -2,7 +2,7 @@
   <title>Importing ORC/SCO and CSD Files</title>
 
   <para>
-    blue is able to import ORC/SCO and CSD files and set up a blue project file,
+    Blue is able to import ORC/SCO and CSD files and set up a Blue project file,
     with instruments parsed out and put into the orchestra manager, project
     settings set, etc. Currently, there are three options to choose from when
     importing a CSD file, all relating to how you would like to import the notes
@@ -47,7 +47,7 @@
 
       <listitem>
         <para>
-          From the CsScore, blue will only import f-, i-, and s- statements.
+          From the CsScore, Blue will only import f-, i-, and s- statements.
           Other score statements are not currently supported at this time.
         </para>
       </listitem>

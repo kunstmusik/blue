@@ -5,9 +5,9 @@
     <title>Introduction</title>
 
     <para>
-      blue offers a number of ways to render a project, each method useful
+      Blue offers a number of ways to render a project, each method useful
       for different purposes you may have. The following section
-      explains the ways which blue is able to render a .blue project file as
+      explains the ways which Blue is able to render a .blue project file as
       well as possible use-case scenarios to guide you on how that feature
       may be useful.
     </para>
@@ -35,9 +35,9 @@
       <title>Generate CSD to Screen</title>
 
       <para>
-        blue's general method of communicating with Csound is by generating a
+        Blue's general method of communicating with Csound is by generating a
         CSD file and calling Csound to run it.  For debugging purposes, it is 
-        often useful to see if what you think you are doing inside blue is 
+        often useful to see if what you think you are doing inside Blue is 
         matching the generated CSD file.  You can generate the CSD to screen
         by using the "Project-&gt;Generate CSD to Screen" menu option, or by
         using the ctrl-shift-g shortcut.
@@ -77,7 +77,7 @@
       <para>
         The Render to Disk and play option will use the project's Disk Render
         Options from its project properties to generate a soundfile on disk and
-        after finishing, play the generated file using blue's soundfile player,
+        after finishing, play the generated file using Blue's soundfile player,
         located in the SoundFile manager tab. This feature is useful if you're
         working on a piece that has processing demands beyond what your computer
         is capable of in realtime, so you can have it render to disk first and

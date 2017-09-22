@@ -24,7 +24,7 @@
       in times with two different colors.
     </para>
     
-    <para>Note: As currently implemented, when blue goes to freeze soundObjects 
+    <para>Note: As currently implemented, when Blue goes to freeze soundObjects 
       it may appear to be frozen, but messages will continue to appear in the console 
       showing that csound is rendering the frozen soundObjects. Future versions will 
       be more polished.
@@ -41,19 +41,19 @@
       </listitem>
       <listitem>
         <para>Using the same project settings (all of the instruments, tables,global orc/sco, 
-          etc.) but not scoreTimeline generated sco, blue generates the sco for the 
+          etc.) but not scoreTimeline generated sco, Blue generates the sco for the 
           selected soundObject and produce a temporary .csd file 
 
         </para>
       </listitem>
       <listitem>
-        <para>blue runs csound with "csound -Wdo freezex.wav tempfile.csd" where the x 
+        <para>Blue runs csound with "csound -Wdo freezex.wav tempfile.csd" where the x 
           in freezex.wav is an integer, counting up. This wav file is generated in the 
           same directory that the projectFile is located.
         </para>
       </listitem>
       <listitem>
-        <para>blue replaces the soundObject in the timeline with a FrozenSoundObject. 
+        <para>Blue replaces the soundObject in the timeline with a FrozenSoundObject. 
           The FrozenSoundObject keeps a copy of the original soundObject (for unfreezing), 
           as well as shows the name of the frozen wav file, the original soundObject's 
           duration, and the frozen wav file's duration (not necessarily the same, as 

@@ -20,7 +20,7 @@
 			vertical Tracks of n number of steps where n is configurable
 			by the user (defaults to 64 steps). Notes are entered into
 			each Track with Tracks being configurable as to what
-			parameters (columns) to use. Unique to the blue Tracker
+			parameters (columns) to use. Unique to the Blue Tracker
 			SoundObject is the support for microtonal scales using Scala
 			scale files as well as support for Csound's Tied-Notes
 			feature.
@@ -173,10 +173,10 @@
 							</varlistentry>
 
 							<varlistentry>
-								<term>blue PCH</term>
+								<term>Blue PCH</term>
 								<listitem>
 									<para>
-										The blue PCH format is like the
+										The Blue PCH format is like the
 										Csound PCH format except that
 										the pitch part is always a whole
 										number integer and is the scale
@@ -184,12 +184,12 @@
 										valid value in Csound PCH such
 										as 8.01 is not valid in Blue PCH
 										as 01 is not an integer (the
-										equivalent in blue PCH would be
+										equivalent in Blue PCH would be
 										8.1).
 									</para>
 
 									<para>
-										Using blue PCH allows for using
+										Using Blue PCH allows for using
 										Scala scale files to do
 										microtonal tracking. To choose a
 										Scala scale, use the "..."
@@ -206,21 +206,21 @@
 										frequencies" is enabled, meaning
 										when the tracker goes to
 										generate notes, it will take the
-										blue PCH values that are entered
+										Blue PCH values that are entered
 										and convert them to a frequency
 										value in hertz. If you deselect
 										this option, the tracker will
-										pass the blue PCH value out.
+										pass the Blue PCH value out.
 										This option should generally be
 										left enabled unless the user is
 										planning to do further operation
 										on the pch values via
 										NoteProcessors that work with
-										blue PCH.
+										Blue PCH.
 									</para>
 
 									<para>
-										Using blue PCH, data will be
+										Using Blue PCH, data will be
 										verified on entry and
 										increment/decrement value
 										options will work in the same
@@ -293,7 +293,7 @@
 			click anywhere on a track where you would like to add a
 			note. Now, begin typing to enter in a value for that note,
 			then press enter when you are finished. Depending on the
-			type of column you have configured, blue will verify that
+			type of column you have configured, Blue will verify that
 			the data entered is allowable and if so it will save that
 			data to the note. If the value is not allowable, the cell
 			will become hilighted in red and will require you to either
@@ -347,7 +347,7 @@
 			top tool bar or use the keyboard shortcut ctrl-k. By
 			enabling Keyboard Note mode, the keys on the keyboard will
 			be mapped to note values much like a piano keyboard. When
-			the selected cell is of type PCH, blue PCH, or MIDI,
+			the selected cell is of type PCH, Blue PCH, or MIDI,
 			pressing those keys will enter in a value related the
 			keyboard mapping (see Shortcuts section).
 		</para>
@@ -457,7 +457,7 @@
 					<row>
 						<entry>Shortcut</entry>
 						<entry>PCh Value</entry>
-						<entry>blue PCH Value</entry>
+						<entry>Blue PCH Value</entry>
 						<entry>MIDI Value</entry>
 					</row>
 				</thead>

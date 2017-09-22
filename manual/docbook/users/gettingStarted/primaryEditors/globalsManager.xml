@@ -31,7 +31,7 @@ variables, macros, or GUI instrument definitions may go here.</para>
   affected and will start at time 2.0.
 </para>
 
-<para>There are also certain variables made available from blue (blue variables)
+<para>There are also certain variables made available from Blue (Blue variables)
 that are useful for specific purposes. One of them is &lt;TOTAL_DUR&gt;. An
 example of its use is:</para>
          
@@ -40,19 +40,19 @@ example of its use is:</para>
 <para>The note given above is for a global effect(a global reverb unit). This
 note will always start at time zero regardless of when the score starts, and 
   will always last as long as the duration of the generated score from
-the timeline plus 10 seconds. Because blue variables are a text swap, the above
+the timeline plus 10 seconds. Because Blue variables are a text swap, the above
 use of the bracket notation that Csound uses was necessary. For a score with a
 20 second duration, the above note would have been generated as:</para> 
          
 <programlisting>i20 0 [20 + 10] .95 1 1000</programlisting>
 
-<para>Because of the blue variable used, the note will correclty play regardless
-  of when the score starts. If the the blue variable was note used and was put 
+<para>Because of the Blue variable used, the note will correclty play regardless
+  of when the score starts. If the the Blue variable was note used and was put 
   as a note in the Score timeline, the reverb may not run.</para>
 
 <note>
   <title>Note</title>
-  <para>When blue variables were created, blue did not have a Mixer system 
+  <para>When Blue variables were created, Blue did not have a Mixer system 
     implemented.  The above system continues to function, the practice of using
     the Mixer is highly recommended. This feature is left in for legacy 
     projects.

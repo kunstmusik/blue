@@ -74,7 +74,7 @@
         </row>
         <row>
           <entry>alt-F4</entry>
-          <entry>close blue</entry>
+          <entry>close Blue</entry>
         </row>
       </tbody>
     </tgroup>
@@ -98,7 +98,7 @@
           <entry>shift-F9</entry>
           <entry>
             Render to Disk and Play using project's disk render options and
-            playing with blue's builtin sound file player
+            playing with Blue's builtin sound file player
           </entry>
         </row>
         <row>

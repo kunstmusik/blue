@@ -4,14 +4,14 @@
 <para>Parameters: code</para>
          
 <para>Allows user to write python code to process NoteList.  The code is run
-using Jython, the Java implementation of Python that is included with blue.  
+using Jython, the Java implementation of Python that is included with Blue.  
 Users using the PythonProcessor should be aware of Jython's implementation 
 details: most classes and modules from CPython are included, users can not 
 import modules with native libraries, and users can use any Java class that 
 exists in the classpath.  
 </para>
 
-<para>When blue generates notes from a SoundObject, the SoundObject first 
+<para>When Blue generates notes from a SoundObject, the SoundObject first 
 generates its Notes as a NoteList, then NoteProcessors are called one at a time
 to process that NoteList in place.  For the PythonProcessor, before any of the 
 user-written code is run, the generated NoteList is first added and defined 
@@ -26,7 +26,7 @@ the same way as one would in Java.
 first imports the random module, then for every note in the noteList it creates
 a random space variable between the values of -1 and 1, then assigns that to 
 pfield 7 of the note.  (This example code is used in the 
-blue/examples/noteProcessors/pythonProcessor.blue and can be run within blue
+blue/examples/noteProcessors/pythonProcessor.blue and can be run within Blue
 to hear the example).  
 </para>
 

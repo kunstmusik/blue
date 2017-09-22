@@ -187,16 +187,16 @@
               </varlistentry>
 
               <varlistentry>
-                <term>blue PCH</term>
+                <term>Blue PCH</term>
                 <listitem>
                   <para>
-                    Value of note expressed in blue PCH, a format similar to Csound PCH but
+                    Value of note expressed in Blue PCH, a format similar to Csound PCH but
                     differs in that it does not allow fractional values.  Values are generated
                     as "octave.scaleDegree" i.e. "8.22" would be octave 8 and scale degree 22
                     in a scale that has 23 or more notes, or would wrap around as it does in
                     Csound PCH.  If the scale had 12 scale degrees, the "8.22" would be
-                    interpreted as "9.10".  blue PCH is allowed as an option to be used with
-                    blue PCH note processors and then to be used with the Tuning NoteProcessor.
+                    interpreted as "9.10".  Blue PCH is allowed as an option to be used with
+                    Blue PCH note processors and then to be used with the Tuning NoteProcessor.
                   </para>
                 </listitem>
               </varlistentry>

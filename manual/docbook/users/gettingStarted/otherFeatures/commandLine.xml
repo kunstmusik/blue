@@ -1,10 +1,10 @@
 <section id="commandLine">
-<title>Command Line Options for blue</title>
+<title>Command Line Options for Blue</title>
 
-<para>To view the options that blue has from the commandline, type
+<para>To view the options that Blue has from the commandline, type
 "blue --help".  After that, you should see information printed to the console.
-Some of these flags are used by the Netbeans Platform that blue is built upon.
-The following are ones blue uses itself:</para>
+Some of these flags are used by the Netbeans Platform that Blue is built upon.
+The following are ones Blue uses itself:</para>
 
 <screen>
   -c, --compile &lt;arg&gt;       

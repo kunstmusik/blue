@@ -143,8 +143,8 @@
 <book lang="en">
 
 <bookinfo>
-    <title>blue</title>
-    <subtitle>a music composition environment for csound</subtitle>
+    <title>Blue</title>
+    <subtitle>a music composition environment for Csound</subtitle>
     <authorgroup>
         <author>
             <firstname>Steven</firstname>
@@ -154,7 +154,7 @@
     </authorgroup>
 
     <copyright>
-        <year>2000-2012</year>
+        <year>2000-2017</year>
         <holder>Steven Yi</holder>
     </copyright>
 
@@ -164,14 +164,14 @@
 
     <abstract>
         <para>
-        <application>blue</application> is a music composition environment for
-        use with Csound.  It is written in Java.  The homepage for blue is available at <ulink url="http://blue.kunstmusik.com">http://blue.kunstmusik.com</ulink>.
+        <application>Blue</application> is a music composition environment for
+        use with Csound.  It is written in Java.  The homepage for Blue is available at <ulink url="http://blue.kunstmusik.com">http://blue.kunstmusik.com</ulink>.
         </para>
     </abstract>
 
     <keywordset>
-        <keyword>blue</keyword>
-        <keyword>csound</keyword>
+        <keyword>Blue</keyword>
+        <keyword>Csound</keyword>
     </keywordset>
 </bookinfo>
 

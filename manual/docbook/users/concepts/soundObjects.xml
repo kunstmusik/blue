@@ -5,9 +5,9 @@
     <title>Introduction</title>
 
     <para>
-      The concept of SoundObjects is the foundation of blue's design in organizing
+      The concept of SoundObjects is the foundation of Blue's design in organizing
       musical ideas.  This section will discuss what is a SoundObject, how this idea
-      is implemented in blue, and strategies on how to use the concept of SoundObjects
+      is implemented in Blue, and strategies on how to use the concept of SoundObjects
       in organizing your own musical work.
     </para>
 
@@ -17,7 +17,7 @@
     <title>What is a SoundObject?</title>
 
     <para>
-      SoundObjects in blue represent a 
+      SoundObjects in Blue represent a 
       <emphasis> perceived
         sound idea, whether it be a single atomic sound event or aggregate of other
         sound objects
@@ -30,7 +30,7 @@
     <para>
       Just as there are many ways to think about music, each with their own model
       for describing sound and vocabulary for explaining music, there are a number 
-      of different SoundObjects in blue.  Each SoundObject in blue is useful for different
+      of different SoundObjects in Blue.  Each SoundObject in Blue is useful for different
       purposes, with some being more appropriate for expressing certain musical ideas
       than others.  For example, using a scripting object like the PythonObject or 
       JavaScriptObject would service a user who is trying to express a musical idea that
@@ -42,7 +42,7 @@
 	
     <para>
       Since there are many ways to express musical ideas, to fully allow the range
-      of expression that Csound offers, blue's SoundObjects are capable of
+      of expression that Csound offers, Blue's SoundObjects are capable of
       generating different things that Csound will use.  Although most often 
       they are used mostly for generating Csound SCO text, SoundObjects may also 
       generate ftables, instruments, user-defined opcodes, and everything else 
