@@ -51,12 +51,14 @@ public class LineBoundaryDialog {
             Alert alert = 
             new Alert(Alert.AlertType.NONE,
                     "Choose method for handling line points:", new ButtonType(
-                            RESCALE), new ButtonType(TRUNCATE)
+                            RESCALE), new ButtonType(TRUNCATE), ButtonType.CANCEL
             );
             alert.setTitle("Line Boundaries Changed");
             BlueFX.style(alert.getDialogPane());
             Optional<ButtonType> bType = alert.showAndWait();
-            retVal = bType.isPresent() ? bType.get().getText() : null;
+            if(bType.isPresent() && !bType.get().getButtonData().isCancelButton()) {
+               retVal = bType.get().getText();
+            }
         } else {
             int ret = JOptionPane.showOptionDialog(null,
                     "Choose method for handling line points:",

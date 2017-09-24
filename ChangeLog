@@ -12,6 +12,16 @@ information.
 
 [CHANGE LOG]
 
+> Notes for 2.7.1 <
+[release 2017.09.24]
+
+FIX
+
+* BlueSynthBuilder - UI Editor would hang on OSX when setting Min/Max values on
+  widgets due to JavaFX/Swing UI threads interactions; replaced Swing code to 
+  with JFX code in affected areas
+
+
 > Notes for 2.7.0 <
 [release 2017.09.22]
 
