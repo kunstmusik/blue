@@ -38,15 +38,20 @@ public class NumberPropertyEditor extends TextField {
 
     public NumberPropertyEditor(PropertySheet.Item item) {
         this.item = item;
-        this.setOnAction(e -> updateTextFromTextField());
-        this.focusedProperty().addListener((obs, o, n) -> {
+        ChangeListener<Boolean> focusListener = (obs, o, n) -> {
             if (o && !n) {
                 editing = false;
                 updateTextFromTextField();
             } else {
                 editing = true;
             }
+        };
+        this.setOnAction(e -> {
+            focusedProperty().removeListener(focusListener);
+            updateTextFromTextField();
+            focusedProperty().addListener(focusListener);
         });
+        this.focusedProperty().addListener(focusListener);
 
         ChangeListener<Object> listener = (obs, old, newVal) -> {
             if (!editing) {
@@ -65,10 +70,10 @@ public class NumberPropertyEditor extends TextField {
         });
     }
 
-    private void updateTextFromTextField() {
+    private synchronized void updateTextFromTextField() {
         String newValue = this.getText();
         String old = item.getValue().toString();
-        if(old.equals(newValue)) {
+        if (old.equals(newValue)) {
             return;
         }
         if (validator == null || validator.test(newValue)) {
@@ -88,22 +93,22 @@ public class NumberPropertyEditor extends TextField {
 
     public Number getValueAsNumber() {
         Class<?> type = item.getType();
-        if (type == byte.class || type == Byte.class){
-            return new Byte(getText()); 
-        }else if(type == short.class || type == Short.class){
+        if (type == byte.class || type == Byte.class) {
+            return new Byte(getText());
+        } else if (type == short.class || type == Short.class) {
             return new Short(getText());
-        } else if(type == int.class || type == Integer.class){
+        } else if (type == int.class || type == Integer.class) {
             return new Integer(getText());
-        } else if(type == long.class || type == Long.class){
+        } else if (type == long.class || type == Long.class) {
             return new Long(getText());
-        } else if(type == BigInteger.class) {
-            return new BigInteger(getText());  
-        } else if(type == BigDecimal.class) {
-            return new BigDecimal(getText());  
-        } else if(type == float.class || type == Float.class) {
-            return new Float(getText());  
-        } else if(type == double.class || type == Double.class) {
-            return new Double(getText());  
+        } else if (type == BigInteger.class) {
+            return new BigInteger(getText());
+        } else if (type == BigDecimal.class) {
+            return new BigDecimal(getText());
+        } else if (type == float.class || type == Float.class) {
+            return new Float(getText());
+        } else if (type == double.class || type == Double.class) {
+            return new Double(getText());
         }
 
         return null;
