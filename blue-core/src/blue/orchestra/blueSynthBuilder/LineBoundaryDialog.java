@@ -19,13 +19,22 @@
  */
 package blue.orchestra.blueSynthBuilder;
 
+import blue.jfx.BlueFX;
+import java.util.Optional;
+import java.util.concurrent.CountDownLatch;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javafx.application.Platform;
+import javafx.scene.control.Alert;
+import javafx.scene.control.ButtonType;
 import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
 
 /**
  * Copied from blue-ui-core to deal with having scaling options called when
  * setting values using getter/setters and PropertySheet. This is definitely not
  * ideal to have UI stuff like this in the blue-core package and requires a
- * better solution. Using it for now... 
+ * better solution. Using it for now...
  *
  * @author stevenyi
  */
@@ -36,19 +45,35 @@ public class LineBoundaryDialog {
     public static final String TRUNCATE = "Truncate";
 
     public static String getLinePointMethod() {
-        int retVal = JOptionPane.showOptionDialog(null,
-                "Choose method for handling line points:",
-                "Line Boundaries Changed", JOptionPane.OK_CANCEL_OPTION,
-                JOptionPane.PLAIN_MESSAGE, null, new Object[]{RESCALE,
-                    TRUNCATE}, RESCALE);
+        String retVal = null;
 
-        switch (retVal) {
-            case 0:
-                return RESCALE;
-            case 1:
-                return TRUNCATE;
+        if (Platform.isFxApplicationThread()) {
+            Alert alert = 
+            new Alert(Alert.AlertType.NONE,
+                    "Choose method for handling line points:", new ButtonType(
+                            RESCALE), new ButtonType(TRUNCATE)
+            );
+            alert.setTitle("Line Boundaries Changed");
+            BlueFX.style(alert.getDialogPane());
+            Optional<ButtonType> bType = alert.showAndWait();
+            retVal = bType.isPresent() ? bType.get().getText() : null;
+        } else {
+            int ret = JOptionPane.showOptionDialog(null,
+                    "Choose method for handling line points:",
+                    "Line Boundaries Changed", JOptionPane.OK_CANCEL_OPTION,
+                    JOptionPane.PLAIN_MESSAGE, null, new Object[]{RESCALE,
+                        TRUNCATE}, RESCALE);
+
+            switch (ret) {
+                case 0:
+                    retVal = RESCALE;
+                    break;
+                case 1:
+                    retVal = TRUNCATE;
+                    break;
+            }
         }
 
-        return null;
+        return retVal;
     }
 }
