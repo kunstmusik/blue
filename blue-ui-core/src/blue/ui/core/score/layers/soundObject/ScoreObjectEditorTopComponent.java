@@ -19,11 +19,14 @@
  */
 package blue.ui.core.score.layers.soundObject;
 
+import blue.BlueData;
 import blue.event.SelectionEvent;
 import blue.projects.BlueProjectManager;
 import blue.score.ScoreObject;
 import blue.soundObject.Instance;
+import blue.soundObject.PolyObject;
 import blue.soundObject.editor.ScoreObjectEditor;
+import blue.ui.core.score.ScoreController;
 import blue.ui.core.score.layers.SoundObjectProvider;
 import blue.ui.nbutilities.lazyplugin.ClassAssociationProcessor;
 import blue.ui.nbutilities.lazyplugin.LazyPlugin;
@@ -190,7 +193,17 @@ final public class ScoreObjectEditorTopComponent extends TopComponent
         Collection<? extends ScoreObject> scoreObjects = result.allInstances();
         if (scoreObjects.size() == 1) {
             SwingUtilities.invokeLater(() -> {
-                editScoreObject(scoreObjects.iterator().next());
+                BlueData data = BlueProjectManager.getInstance()
+                        .getCurrentBlueData();
+                ScoreObject sObj = scoreObjects.iterator().next();
+                if (sObj instanceof PolyObject
+                        && data.getSoundObjectLibrary().contains(sObj)) {
+                    PolyObject pObj = (PolyObject) sObj;
+                    ScoreController.getInstance().editLayerGroup(pObj);
+                    editScoreObject(null);
+                } else {
+                    editScoreObject(sObj);
+                }
             });
             //FIXME - figure out how to discern if editing is from BlueLive...
         } else {
@@ -228,9 +241,13 @@ final public class ScoreObjectEditorTopComponent extends TopComponent
         }
 
         ScoreObject sObjToEdit = sObj;
+                BlueData data = BlueProjectManager.getInstance()
+                        .getCurrentBlueData();
 
         if (sObj instanceof Instance) {
             sObjToEdit = ((Instance) sObj).getSoundObject();
+            this.setEditingLibraryObject(SelectionEvent.SELECTION_LIBRARY);
+        } else if (data.getSoundObjectLibrary().contains(sObjToEdit)){
             this.setEditingLibraryObject(SelectionEvent.SELECTION_LIBRARY);
         } else {
             this.setEditingLibraryObject(null);

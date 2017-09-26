@@ -12,6 +12,15 @@ information.
 
 [CHANGE LOG]
 
+> Notes for 2.7.2 <
+[release 2017.xx.xx]
+
+FIX
+
+* Issue #368 - When double-clicking PolyObject in project SoundObject Library,
+  Score editor now shows timeline of PolyObject and updates navigation bar
+
+
 > Notes for 2.7.1 <
 [release 2017.09.24]
 
