@@ -15,6 +15,17 @@ information.
 > Notes for 2.7.2 <
 [release 2017.xx.xx]
 
+NEW
+
+* BlueSynthBuilder:
+
+  * Knob - added Label, Label Font, and Label Enabled property. Label text is
+  centered above knob in UI. Default is label to be shown, but older projects
+  will load without label shown for backwards compatibility.
+
+* Issue #372 - Added note to documentation about Debian/Ubuntu Linux install
+  instructions for JavaFX
+
 FIX
 
 * Issue #368 - When double-clicking PolyObject in project SoundObject Library,

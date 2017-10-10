@@ -29,8 +29,13 @@ import electric.xml.Elements;
 import java.math.BigDecimal;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.IntegerProperty;
+import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleIntegerProperty;
+import javafx.beans.property.SimpleObjectProperty;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
+import javafx.scene.text.Font;
 
 /**
  * @author Steven Yi
@@ -53,6 +58,10 @@ public class BSBKnob extends AutomatableBSBObject implements ParameterListener,
     private BooleanProperty randomizable = new SimpleBooleanProperty(true);
     private BooleanProperty valueDisplayEnabled = new SimpleBooleanProperty(true);
 
+    private StringProperty label = new SimpleStringProperty("label");
+    private BooleanProperty labelEnabled = new SimpleBooleanProperty(true);
+    private ObjectProperty<Font> labelFont = new SimpleObjectProperty<>(new Font(12));
+
     public BSBKnob() {
         knobValue = new ClampedValue(0.0, 1.0, 0.0, new BigDecimal(-1.0));
         knobValue.addListener(cvl);
@@ -65,31 +74,11 @@ public class BSBKnob extends AutomatableBSBObject implements ParameterListener,
         setKnobWidth(knob.getKnobWidth());
         setRandomizable(knob.isRandomizable());
         setValueDisplayEnabled(knob.isValueDisplayEnabled());
+        setLabel(knob.getLabel());
+        setLabelEnabled(knob.isLabelEnabled());
+        setLabelFont(knob.getLabelFont());
     }
 
-    public final void setKnobWidth(int value) {
-        knobWidth.set(value);
-    }
-
-    public final int getKnobWidth() {
-        return knobWidth.get();
-    }
-
-    public final IntegerProperty knobWidthProperty() {
-        return knobWidth;
-    }
-
-    public final void setRandomizable(boolean value) {
-        randomizable.set(value);
-    }
-
-    public final boolean isRandomizable() {
-        return randomizable.get();
-    }
-
-    public final BooleanProperty randomizableProperty() {
-        return randomizable;
-    }
 
     public final ClampedValue knobValueProperty() {
         return knobValue;
@@ -127,24 +116,16 @@ public class BSBKnob extends AutomatableBSBObject implements ParameterListener,
         return knobValue.getMax();
     }
 
-    public final boolean isValueDisplayEnabled(){
-        return valueDisplayEnabled.get();
-    }
-
-    public final void setValueDisplayEnabled(boolean enabled){
-        valueDisplayEnabled.set(enabled);
-    }
-
-    public final BooleanProperty valueDisplayEnabledProperty(){
-        return valueDisplayEnabled;
-    }
-
     public static BSBObject loadFromXML(Element data) {
         BSBKnob knob = new BSBKnob();
         double minVal = 0;
         double maxVal = 0;
         double value = 0;
         initBasicFromXML(data, knob);
+
+        // set false by default when loading for backwards compatibility with
+        // Blue versions < 2.7.2
+        knob.setLabelEnabled(false);
 
         int version = 1;
 
@@ -177,6 +158,15 @@ public class BSBKnob extends AutomatableBSBObject implements ParameterListener,
                     break;
                 case "valueDisplayEnabled":
                     knob.setValueDisplayEnabled(XMLUtilities.readBoolean(node));
+                    break;
+                case "label":
+                    knob.setLabel(node.getTextString());
+                    break;
+                case "labelEnabled":
+                    knob.setLabelEnabled(XMLUtilities.readBoolean(node));
+                    break;
+                case "font":
+                    knob.setLabelFont(BSBFontUtil.loadFromXML(node));
                     break;
             }
 
@@ -213,6 +203,13 @@ public class BSBKnob extends AutomatableBSBObject implements ParameterListener,
                 isRandomizable()));
         retVal.addElement(XMLUtilities.writeBoolean("valueDisplayEnabled",
                 isValueDisplayEnabled()));
+
+
+        retVal.addElement("label").setText(getLabel());
+        retVal.addElement(XMLUtilities.writeBoolean("labelEnabled",
+                isLabelEnabled()));
+        retVal.addElement(BSBFontUtil.saveAsXML(getLabelFont()));
+
         return retVal;
     }
 
@@ -234,6 +231,78 @@ public class BSBKnob extends AutomatableBSBObject implements ParameterListener,
 
         compilationUnit.addReplacementValue(getObjectName(), Double.toString(
                 knobValue.getValue()));
+    }
+
+    public final void setKnobWidth(int value) {
+        knobWidth.set(value);
+    }
+
+    public final int getKnobWidth() {
+        return knobWidth.get();
+    }
+
+    public final IntegerProperty knobWidthProperty() {
+        return knobWidth;
+    }
+
+    public final void setRandomizable(boolean value) {
+        randomizable.set(value);
+    }
+
+    public final boolean isRandomizable() {
+        return randomizable.get();
+    }
+
+    public final BooleanProperty randomizableProperty() {
+        return randomizable;
+    }
+
+    public final void setValueDisplayEnabled(boolean value) {
+        valueDisplayEnabled.set(value);
+    }
+
+    public final boolean isValueDisplayEnabled() {
+        return valueDisplayEnabled.get();
+    }
+
+    public final BooleanProperty valueDisplayEnabledProperty() {
+        return valueDisplayEnabled;
+    }
+
+    public final void setLabel(String value) {
+        label.set(value);
+    }
+
+    public final String getLabel() {
+        return label.get();
+    }
+
+    public final StringProperty labelProperty() {
+        return label;
+    }
+
+    public final void setLabelEnabled(boolean value) {
+        labelEnabled.set(value);
+    }
+
+    public final boolean isLabelEnabled() {
+        return labelEnabled.get();
+    }
+
+    public final BooleanProperty labelEnabledProperty() {
+        return labelEnabled;
+    }
+
+    public final void setLabelFont(Font f) {
+        labelFont.set(f);
+    }
+
+    public final Font getLabelFont() {
+        return labelFont.get();
+    }
+
+    public final ObjectProperty<Font> labelFontProperty() {
+        return labelFont;
     }
 
     /*

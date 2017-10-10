@@ -38,23 +38,29 @@ public class BSBKnobBeanInfo extends SimpleBeanInfo {
     // Property identifiers//GEN-FIRST:Properties
     private static final int PROPERTY_automationAllowed = 0;
     private static final int PROPERTY_knobWidth = 1;
-    private static final int PROPERTY_maximum = 2;
-    private static final int PROPERTY_minimum = 3;
-    private static final int PROPERTY_objectName = 4;
-    private static final int PROPERTY_randomizable = 5;
-    private static final int PROPERTY_value = 6;
-    private static final int PROPERTY_valueDisplayEnabled = 7;
-    private static final int PROPERTY_x = 8;
-    private static final int PROPERTY_y = 9;
+    private static final int PROPERTY_label = 2;
+    private static final int PROPERTY_labelEnabled = 3;
+    private static final int PROPERTY_labelFont = 4;
+    private static final int PROPERTY_maximum = 5;
+    private static final int PROPERTY_minimum = 6;
+    private static final int PROPERTY_objectName = 7;
+    private static final int PROPERTY_randomizable = 8;
+    private static final int PROPERTY_value = 9;
+    private static final int PROPERTY_valueDisplayEnabled = 10;
+    private static final int PROPERTY_x = 11;
+    private static final int PROPERTY_y = 12;
 
     // Property array 
     /*lazy PropertyDescriptor*/
     private static PropertyDescriptor[] getPdescriptor(){
-        PropertyDescriptor[] properties = new PropertyDescriptor[10];
+        PropertyDescriptor[] properties = new PropertyDescriptor[13];
     
         try {
             properties[PROPERTY_automationAllowed] = new PropertyDescriptor ( "automationAllowed", blue.orchestra.blueSynthBuilder.BSBKnob.class, "isAutomationAllowed", "setAutomationAllowed" ); // NOI18N
             properties[PROPERTY_knobWidth] = new PropertyDescriptor ( "knobWidth", blue.orchestra.blueSynthBuilder.BSBKnob.class, "getKnobWidth", "setKnobWidth" ); // NOI18N
+            properties[PROPERTY_label] = new PropertyDescriptor ( "label", blue.orchestra.blueSynthBuilder.BSBKnob.class, "getLabel", "setLabel" ); // NOI18N
+            properties[PROPERTY_labelEnabled] = new PropertyDescriptor ( "labelEnabled", blue.orchestra.blueSynthBuilder.BSBKnob.class, "isLabelEnabled", "setLabelEnabled" ); // NOI18N
+            properties[PROPERTY_labelFont] = new PropertyDescriptor ( "labelFont", blue.orchestra.blueSynthBuilder.BSBKnob.class, "getLabelFont", "setLabelFont" ); // NOI18N
             properties[PROPERTY_maximum] = new PropertyDescriptor ( "maximum", blue.orchestra.blueSynthBuilder.BSBKnob.class, "getMaximum", "setMaximum" ); // NOI18N
             properties[PROPERTY_minimum] = new PropertyDescriptor ( "minimum", blue.orchestra.blueSynthBuilder.BSBKnob.class, "getMinimum", "setMinimum" ); // NOI18N
             properties[PROPERTY_objectName] = new PropertyDescriptor ( "objectName", blue.orchestra.blueSynthBuilder.BSBKnob.class, "getObjectName", "setObjectName" ); // NOI18N
