@@ -31,6 +31,13 @@ FIX
 * Issue #368 - When double-clicking PolyObject in project SoundObject Library,
   Score editor now shows timeline of PolyObject and updates navigation bar
 
+* Mixer: Right-clicking on subchannels to remove made easier by allowing 
+  clicking on labels
+
+INTERNAL
+
+* Support for Csound 5 API removed
+
 
 > Notes for 2.7.1 <
 [release 2017.09.24]
