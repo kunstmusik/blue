@@ -27,7 +27,6 @@ import java.util.prefs.Preferences;
 import javax.swing.BorderFactory;
 import javax.swing.KeyStroke;
 import javax.swing.LookAndFeel;
-import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.plaf.InputMapUIResource;
@@ -99,6 +98,7 @@ public class Installer extends ModuleInstall {
             }
             ClassLoader cl = Lookup.getDefault().lookup(
                     ClassLoader.class);
+            UIManager.installLookAndFeel("Blue", BlueLookAndFeel.class.getName());
             UIManager.put("ClassLoader", cl);
             UIManager.put("Nb.BlueLFCustoms", customs);
             UIManager.put("swing.boldMetal", false);
