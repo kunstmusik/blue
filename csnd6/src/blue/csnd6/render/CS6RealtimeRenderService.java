@@ -31,6 +31,7 @@ import csnd6.Csound;
 import csnd6.CsoundArgVList;
 import csnd6.CsoundMYFLTArray;
 import csnd6.controlChannelType;
+import csnd6.csnd6;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.io.File;
@@ -71,6 +72,8 @@ public class CS6RealtimeRenderService implements RealtimeRenderService, PlayMode
     private Csound csound;
 
     public CS6RealtimeRenderService() {
+        csnd6.csoundInitialize(csnd6.CSOUNDINIT_NO_ATEXIT | 
+                csnd6.CSOUNDINIT_NO_SIGNAL_HANDLER);
     }
 
     @Override
