@@ -45,13 +45,12 @@ import org.openide.windows.WindowManager;
 public class Installer extends ModuleInstall {
 
     Logger logger = Logger.getLogger("blue.plaf.Installer");
-    private static BlueLFCustoms customs = new BlueLFCustoms();
 
     @Override
     public void validate() throws IllegalStateException {
         Preferences prefs = NbPreferences.root().node("laf");
         prefs.put("laf", BlueLookAndFeel.class.getName());
-        UIManager.put("Nb.BlueLFCustoms", customs);
+        UIManager.put("Nb.BlueLFCustoms", new BlueLFCustoms());
         UIManager.put("nb.dark.theme", true);
         boolean isMac = System.getProperty("os.name").toLowerCase().startsWith(
                 "mac");
@@ -100,7 +99,7 @@ public class Installer extends ModuleInstall {
                     ClassLoader.class);
             UIManager.installLookAndFeel("Blue", BlueLookAndFeel.class.getName());
             UIManager.put("ClassLoader", cl);
-            UIManager.put("Nb.BlueLFCustoms", customs);
+//            UIManager.put("Nb.BlueLFCustoms", customs);
             UIManager.put("swing.boldMetal", false);
             MetalLookAndFeel.setCurrentTheme(new BlueTheme());
             LookAndFeel plaf = new blue.plaf.BlueLookAndFeel();
