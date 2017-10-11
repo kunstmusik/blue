@@ -274,19 +274,9 @@ public class ChannelPanel extends javax.swing.JPanel implements
         levelValueField = new javax.swing.JTextField();
 
         setBorder(javax.swing.BorderFactory.createBevelBorder(javax.swing.border.BevelBorder.RAISED));
-        addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mousePressed(java.awt.event.MouseEvent evt) {
-                formMousePressed(evt);
-            }
-        });
 
         jLabel1.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         jLabel1.setText("Level");
-        jLabel1.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mousePressed(java.awt.event.MouseEvent evt) {
-                jLabel1MousePressed(evt);
-            }
-        });
 
         levelSlider.setMaximum(240);
         levelSlider.setMinimum(-960);
@@ -304,27 +294,12 @@ public class ChannelPanel extends javax.swing.JPanel implements
 
         preLabel.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         preLabel.setText("Pre");
-        preLabel.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mousePressed(java.awt.event.MouseEvent evt) {
-                preLabelMousePressed(evt);
-            }
-        });
 
         postLabel.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         postLabel.setText("Post");
-        postLabel.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mousePressed(java.awt.event.MouseEvent evt) {
-                postLabelMousePressed(evt);
-            }
-        });
 
         outputLabel.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         outputLabel.setText("Output");
-        outputLabel.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mousePressed(java.awt.event.MouseEvent evt) {
-                outputLabelMousePressed(evt);
-            }
-        });
 
         outputList.setFont(new java.awt.Font("Dialog", 0, 10)); // NOI18N
         outputList.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
@@ -418,26 +393,6 @@ public class ChannelPanel extends javax.swing.JPanel implements
                 .addComponent(outputList, javax.swing.GroupLayout.PREFERRED_SIZE, 28, javax.swing.GroupLayout.PREFERRED_SIZE))
         );
     }// </editor-fold>//GEN-END:initComponents
-
-    private void postLabelMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_postLabelMousePressed
-        postLabel.requestFocus();
-}//GEN-LAST:event_postLabelMousePressed
-
-    private void jLabel1MousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jLabel1MousePressed
-        jLabel1.requestFocus();
-}//GEN-LAST:event_jLabel1MousePressed
-
-    private void preLabelMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_preLabelMousePressed
-        preLabel.requestFocus();
-}//GEN-LAST:event_preLabelMousePressed
-
-    private void outputLabelMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_outputLabelMousePressed
-        outputLabel.requestFocus();
-    }//GEN-LAST:event_outputLabelMousePressed
-
-    private void formMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_formMousePressed
-        requestFocus();
-    }//GEN-LAST:event_formMousePressed
 
     private void preListFocusLost(java.awt.event.FocusEvent evt) {// GEN-FIRST:event_preListFocusLost
         preList.setSelectedIndex(-1);
