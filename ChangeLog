@@ -23,6 +23,9 @@ NEW
   centered above knob in UI. Default is label to be shown, but older projects
   will load without label shown for backwards compatibility.
 
+  * Ctrl-v keyboard shortcut will now paste copies of the last copied widgets 
+  at an offset from the originals. 
+
 * Issue #372 - Added note to documentation about Debian/Ubuntu Linux install
   instructions for JavaFX
 

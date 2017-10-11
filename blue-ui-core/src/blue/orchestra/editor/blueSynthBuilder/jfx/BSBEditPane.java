@@ -357,12 +357,15 @@ public class BSBEditPane extends Pane implements ListChangeListener<BSBGroup> {
             minY = Math.min(minY, bsbObj.getY());
         }
 
+        selection.selection.clear();
+
         for (BSBObject bsbObj : selection.copyBufferProperty()) {
             BSBObject copy = bsbObj.deepCopy();
             copy.setX(x + copy.getX() - minX);
             copy.setY(y + copy.getY() - minY);
 
             currentBSBGroup.addBSBObject(copy);
+            selection.selection.add(copy);
         }
     }
 
@@ -471,6 +474,40 @@ public class BSBEditPane extends Pane implements ListChangeListener<BSBGroup> {
         return Optional.of(bsbInterface.getGridSettings().getHeight());
     }
 
+    private void pasteShortcut() {
+        int minX = Integer.MAX_VALUE;
+        int minY = Integer.MAX_VALUE;
+
+        for (BSBObject bsbObj : selection.copyBufferProperty()) {
+            minX = Math.min(minX, bsbObj.getX());
+            minY = Math.min(minY, bsbObj.getY());
+        }
+    
+        int x = minX; 
+        int y = minY;
+
+        GridSettings gridSettings = bsbInterface.getGridSettings();
+
+        if (gridSettings.isSnapEnabled()) {
+            x += gridSettings.getWidth();
+            y += gridSettings.getHeight();
+        } else {
+            x += 10;
+            y += 10;
+        }
+
+        selection.selection.clear();
+
+        for (BSBObject bsbObj : selection.copyBufferProperty()) {
+            BSBObject copy = bsbObj.deepCopy();
+            copy.setX(x + copy.getX() - minX);
+            copy.setY(y + copy.getY() - minY);
+
+            currentBSBGroup.addBSBObject(copy);
+            selection.selection.add(copy);
+        }
+    }
+
     private void installKeyEventHandler() {
         EventHandler<KeyEvent> handler = new EventHandler<KeyEvent>() {
             @Override
@@ -485,6 +522,10 @@ public class BSBEditPane extends Pane implements ListChangeListener<BSBGroup> {
                     switch (event.getCode()) {
                         case C:
                             selection.copy();
+                            event.consume();
+                            break;
+                        case V:
+                            pasteShortcut();
                             event.consume();
                             break;
                         case X:
