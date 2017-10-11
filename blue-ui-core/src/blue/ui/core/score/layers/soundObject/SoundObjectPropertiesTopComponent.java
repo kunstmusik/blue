@@ -33,7 +33,6 @@ import blue.ui.utilities.SimpleDocumentListener;
 import blue.undo.BlueUndoManager;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
-import java.io.Serializable;
 import java.util.Collection;
 import javax.swing.event.DocumentEvent;
 import org.netbeans.api.settings.ConvertAsProperties;
@@ -740,13 +739,6 @@ public final class SoundObjectPropertiesTopComponent extends TopComponent implem
     private javax.swing.JCheckBox useRepeatPoint;
     // End of variables declaration//GEN-END:variables
 
-    public static synchronized SoundObjectPropertiesTopComponent getDefault() {
-        if (instance == null) {
-            instance = new SoundObjectPropertiesTopComponent();
-        }
-        return instance;
-    }
-
     @Override
     public void componentOpened() {
         result = Utilities.actionsGlobalContext().lookupResult(ScoreObject.class);
@@ -777,14 +769,6 @@ public final class SoundObjectPropertiesTopComponent extends TopComponent implem
         String version = p.getProperty("version");
     }
 
-    /**
-     * replaces this in object stream
-     */
-    @Override
-    public Object writeReplace() {
-        return new ResolvableHelper();
-    }
-
     @Override
     public void resultChanged(LookupEvent ev) {
 
@@ -800,12 +784,4 @@ public final class SoundObjectPropertiesTopComponent extends TopComponent implem
         }
     }
 
-    final static class ResolvableHelper implements Serializable {
-
-        private static final long serialVersionUID = 1L;
-
-        public Object readResolve() {
-            return SoundObjectPropertiesTopComponent.getDefault();
-        }
-    }
 }

@@ -5,15 +5,11 @@
 package blue.ui.core.orchestra;
 
 import blue.event.SelectionEvent;
-import blue.event.SelectionListener;
 import blue.orchestra.Instrument;
 import blue.projects.BlueProject;
 import blue.projects.BlueProjectManager;
 import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
-import java.io.Serializable;
 import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import org.netbeans.api.settings.ConvertAsProperties;
 import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
@@ -172,13 +168,6 @@ public final class OrchestraTopComponent extends TopComponent {
     private javax.swing.JSplitPane jSplitPane2;
     // End of variables declaration//GEN-END:variables
 
-    public static synchronized OrchestraTopComponent getDefault() {
-        if (instance == null) {
-            instance = new OrchestraTopComponent();
-        }
-        return instance;
-    }
-
     @Override
     public void componentOpened() {
         // TODO add custom code on component opening
@@ -195,22 +184,5 @@ public final class OrchestraTopComponent extends TopComponent {
 
     void readProperties(java.util.Properties p) {
         String version = p.getProperty("version");
-    }
-
-    /**
-     * replaces this in object stream
-     */
-    @Override
-    public Object writeReplace() {
-        return new ResolvableHelper();
-    }
-
-    final static class ResolvableHelper implements Serializable {
-
-        private static final long serialVersionUID = 1L;
-
-        public Object readResolve() {
-            return OrchestraTopComponent.getDefault();
-        }
     }
 }

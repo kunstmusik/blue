@@ -28,7 +28,6 @@ import blue.ui.utilities.UiUtilities;
 import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import javax.swing.AbstractAction;
 import javax.swing.JPopupMenu;
 import org.netbeans.api.settings.ConvertAsProperties;
@@ -154,19 +153,6 @@ public final class MarkersTopComponent extends TopComponent {
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JTable markersTable;
     // End of variables declaration//GEN-END:variables
-    /**
-     * Gets default instance. Do not use directly: reserved for *.settings files only,
-     * i.e. deserialization routines; otherwise you could get a non-deserialized instance.
-     * To obtain the singleton instance, use {@link #findInstance}.
-     */
-    public static synchronized MarkersTopComponent getDefault() {
-        if (instance == null) {
-            instance = new MarkersTopComponent();
-        }
-        return instance;
-    }
-
-
 
     @Override
     public void componentOpened() {
@@ -185,18 +171,12 @@ public final class MarkersTopComponent extends TopComponent {
         // TODO store your settings
     }
 
-    Object readProperties(java.util.Properties p) {
-        MarkersTopComponent singleton = MarkersTopComponent.getDefault();
-        singleton.readPropertiesImpl(p);
-        return singleton;
-    }
-
-    private void readPropertiesImpl(java.util.Properties p) {
+    void readProperties(java.util.Properties p) {
         String version = p.getProperty("version");
         // TODO read your settings according to their version
     }
 
-     class MarkersPopup extends JPopupMenu {
+    class MarkersPopup extends JPopupMenu {
 
         public MarkersPopup() {
             this.add(new SetStartTimeAction());

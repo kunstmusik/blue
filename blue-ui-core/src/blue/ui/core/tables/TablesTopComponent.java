@@ -11,8 +11,6 @@ import blue.ui.nbutilities.MimeTypeEditorComponent;
 import blue.ui.utilities.SimpleDocumentListener;
 import java.awt.BorderLayout;
 import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
-import java.io.Serializable;
 import javax.swing.event.DocumentEvent;
 import javax.swing.undo.UndoManager;
 import org.netbeans.api.settings.ConvertAsProperties;
@@ -121,12 +119,6 @@ public final class TablesTopComponent extends TopComponent {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     // End of variables declaration//GEN-END:variables
-    public static synchronized TablesTopComponent getDefault() {
-        if (instance == null) {
-            instance = new TablesTopComponent();
-        }
-        return instance;
-    }
 
     @Override
     public void componentOpened() {
@@ -146,20 +138,4 @@ public final class TablesTopComponent extends TopComponent {
         String version = p.getProperty("version");
     }
 
-    /**
-     * replaces this in object stream
-     */
-    @Override
-    public Object writeReplace() {
-        return new ResolvableHelper();
-    }
-
-    final static class ResolvableHelper implements Serializable {
-
-        private static final long serialVersionUID = 1L;
-
-        public Object readResolve() {
-            return TablesTopComponent.getDefault();
-        }
-    }
 }

@@ -1091,13 +1091,6 @@ public final class BlueLiveTopComponent extends TopComponent
     private javax.swing.JButton triggerButton;
     // End of variables declaration//GEN-END:variables
 
-    public static synchronized BlueLiveTopComponent getDefault() {
-        if (instance == null) {
-            instance = new BlueLiveTopComponent();
-        }
-        return instance;
-    }
-
     @Override
     public void componentOpened() {
         // TODO add custom code on component opening

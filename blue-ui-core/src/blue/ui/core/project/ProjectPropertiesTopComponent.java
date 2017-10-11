@@ -158,19 +158,6 @@ public final class ProjectPropertiesTopComponent extends TopComponent {
     private javax.swing.JTabbedPane tabs;
     // End of variables declaration//GEN-END:variables
 
-    /**
-     * Gets default instance. Do not use directly: reserved for *.settings files
-     * only, i.e. deserialization routines; otherwise you could get a
-     * non-deserialized instance. To obtain the singleton instance, use
-     * {@link #findInstance}.
-     */
-    public static synchronized ProjectPropertiesTopComponent getDefault() {
-        if (instance == null) {
-            instance = new ProjectPropertiesTopComponent();
-        }
-        return instance;
-    }
-
     @Override
     public void componentOpened() {
         // TODO add custom code on component opening
@@ -188,14 +175,7 @@ public final class ProjectPropertiesTopComponent extends TopComponent {
         // TODO store your settings
     }
 
-    Object readProperties(java.util.Properties p) {
-        ProjectPropertiesTopComponent singleton = ProjectPropertiesTopComponent.
-                getDefault();
-        singleton.readPropertiesImpl(p);
-        return singleton;
-    }
-
-    private void readPropertiesImpl(java.util.Properties p) {
+    void readProperties(java.util.Properties p) {
         String version = p.getProperty("version");
         // TODO read your settings according to their version
     }

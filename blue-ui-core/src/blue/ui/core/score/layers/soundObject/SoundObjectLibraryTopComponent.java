@@ -338,13 +338,6 @@ public final class SoundObjectLibraryTopComponent extends TopComponent
     private javax.swing.JSplitPane splitPane;
     // End of variables declaration//GEN-END:variables
 
-    public static synchronized SoundObjectLibraryTopComponent getDefault() {
-        if (instance == null) {
-            instance = new SoundObjectLibraryTopComponent();
-        }
-        return instance;
-    }
-
     @Override
     public void componentOpened() {
         // TODO add custom code on component opening

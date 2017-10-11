@@ -31,7 +31,6 @@ import blue.projects.BlueProjectManager;
 import blue.util.ObservableListEvent;
 import blue.util.ObservableListListener;
 import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import javax.swing.SwingUtilities;
 import org.netbeans.api.settings.ConvertAsProperties;
 import org.openide.awt.ActionID;
@@ -422,19 +421,6 @@ public final class MixerTopComponent extends TopComponent
     private blue.ui.core.mixer.ChannelPanel masterPanel;
     private blue.ui.core.mixer.SubChannelListPanel subChannelsPanel;
     // End of variables declaration//GEN-END:variables
-
-    /**
-     * Gets default instance. Do not use directly: reserved for *.settings files
-     * only, i.e. deserialization routines; otherwise you could get a
-     * non-deserialized instance. To obtain the singleton instance, use
-     * {@link #findInstance}.
-     */
-    public static synchronized MixerTopComponent getDefault() {
-        if (instance == null) {
-            instance = new MixerTopComponent();
-        }
-        return instance;
-    }
 
     @Override
     public void componentOpened() {
