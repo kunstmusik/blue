@@ -241,6 +241,7 @@ public class SubChannelListPanel extends JComponent implements Scrollable,
         String removedChannel = channel.getName();
 
         reconcileSubChannelRemoveInBlueArrangement(removedChannel);
+        revalidate();
     }
 
     // SCROLLABLE METHODS
