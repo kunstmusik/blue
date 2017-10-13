@@ -42,28 +42,16 @@ public class BSBCompletionItem implements CompletionItem {
     }
 
     protected void replaceWordBeforeCaret(String replacementText, JTextComponent jtc) {
-        int index1 = jtc.getCaretPosition();
-        int index2 = index1;
-
-        index1 = index1 > 0 ? index1 - 1 : index1;
+        int index1 = Math.max(0, jtc.getCaretPosition() - 1);
 
         String text = jtc.getText();
-        int len = text.length();
         
-        char c;
-        
-        while (index1 >= 0 && !(Character.isWhitespace(c = text.charAt(index1)) || c == '(')) {
+        while (index1 > 0 && text.charAt(index1) != '<') {
             index1--;
         }
         
-        index1 += 1;
-
-        while (index2 < len && !(Character.isWhitespace(c = text.charAt(index2)) || c == ')')) {
-            index2++;
-        }
-        
         try {
-            jtc.getDocument().remove(index1, index2 - index1);
+            jtc.getDocument().remove(index1, jtc.getCaretPosition() - index1);
             jtc.getDocument().insertString(index1, replacementText, null);
         } catch (BadLocationException e) {
             // Should not ever occur...

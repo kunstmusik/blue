@@ -47,6 +47,10 @@ FIX
 * Mixer: Right-clicking on subchannels to remove made easier by allowing 
   clicking on labels
 
+* Code Editor: fixed errors and exceptions when choosing an auto-completion for
+  opcode or BSBWidget name 
+
+
 INTERNAL
 
 * Support for Csound 5 API removed
