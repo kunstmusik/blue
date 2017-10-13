@@ -17,27 +17,24 @@
  * the Free Software Foundation Inc., 59 Temple Place - Suite 330,
  * Boston, MA  02111-1307 USA
  */
-
 package blue.soundObject.editor.objectBuilder;
 
 import blue.BlueSystem;
 import blue.components.EditEnabledCheckBox;
-import blue.event.EditModeListener;
 import blue.orchestra.editor.blueSynthBuilder.BSBCompletionProvider;
 import blue.soundObject.ObjectBuilder;
+import blue.soundObject.ObjectBuilder.LanguageType;
 import blue.ui.nbutilities.MimeTypeEditorComponent;
 import blue.ui.utilities.SimpleDocumentListener;
 import blue.utility.GUI;
 import java.awt.BorderLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
 import javax.swing.BoxLayout;
-import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
-import javax.swing.SwingConstants;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.undo.UndoManager;
@@ -47,54 +44,68 @@ public class ObjectBuilderCodeEditor extends JComponent {
 
     //FIXME - maybe need to recreate for each syntax type?
     MimeTypeEditorComponent codePane = new MimeTypeEditorComponent("text/x-object-builder");
-    
+
     BSBCompletionProvider completionProvider = new BSBCompletionProvider();
 
-    ObjectBuilder objBuilder = new ObjectBuilder();
+    ObjectBuilder objBuilder = null;
 
     EditEnabledCheckBox editBox = new EditEnabledCheckBox();
 
-    JCheckBox isExternalBox = new JCheckBox("External:");
+    JComboBox<LanguageType> languageTypeCombo = new JComboBox<>(
+            LanguageType.values()
+    );
 
     JTextField commandLineText = new JTextField();
 
     UndoManager undo = new UndoRedo.Manager();
 
-    private boolean isUpdating = false;
-
     public ObjectBuilderCodeEditor() {
-        isExternalBox.setHorizontalTextPosition(SwingConstants.LEFT);
-        isExternalBox.setFocusable(false);
-        isExternalBox.addActionListener((ActionEvent e) -> {
-            boolean selected = isExternalBox.isSelected();
-            
-            commandLineText.setEnabled(selected);
-            
-            if (objBuilder != null) {
-                objBuilder.setExternal(selected);
-                
-                isUpdating = true;
-                
-//                    setCodeSyntaxType(objBuilder);
+        languageTypeCombo.addItemListener((e) -> {
+            if (e.getStateChange() == ItemEvent.SELECTED) {
+                LanguageType langType = (LanguageType) e.getItem();
+                commandLineText.setEnabled(e.getItem() == LanguageType.EXTERNAL);
+                if (objBuilder != null) {
+                    objBuilder.setLanguageType(langType);
+                }
 
-isUpdating = false;
+//                codePane.setMimeType(langType.getMimeType());
+//                codePane.getJEditorPane().putClientProperty("bsb-completion-provider",
+//                        completionProvider);
             }
         });
+        commandLineText.setEnabled(false);
+//        isExternalBox.setHorizontalTextPosition(SwingConstants.LEFT);
+//        isExternalBox.setFocusable(false);
+//        isExternalBox.addActionListener((ActionEvent e) -> {
+//            boolean selected = isExternalBox.isSelected();
+//            
+//            commandLineText.setEnabled(selected);
+//            
+//            if (objBuilder != null) {
+//                objBuilder.setExternal(selected);
+//                
+//                isUpdating = true;
+//                
+////                    setCodeSyntaxType(objBuilder);
+//
+//isUpdating = false;
+//            }
+//        });
 
         commandLineText.getDocument().addDocumentListener(
                 new SimpleDocumentListener() {
-                    @Override
-                    public void documentChanged(DocumentEvent e) {
-                        if (objBuilder != null) {
-                            objBuilder
-                                    .setCommandLine(commandLineText.getText());
-                        }
-                    }
-                });
+            @Override
+            public void documentChanged(DocumentEvent e) {
+                if (objBuilder != null) {
+                    objBuilder
+                            .setCommandLine(commandLineText.getText());
+                }
+            }
+        });
 
         editBox.addEditModeListener((boolean isEditing) -> {
             codePane.getJEditorPane().setEnabled(isEditing);
-            
+
             if (objBuilder != null) {
                 objBuilder.setEditEnabled(isEditing);
             }
@@ -114,16 +125,15 @@ isUpdating = false;
 //            }
 //
 //        });
-
         codePane.getDocument().addDocumentListener(
                 new SimpleDocumentListener() {
-                    @Override
-                    public void documentChanged(DocumentEvent e) {
-                        if (objBuilder != null) {
-                            objBuilder.setCode(codePane.getText());
-                        }
-                    }
-                });
+            @Override
+            public void documentChanged(DocumentEvent e) {
+                if (objBuilder != null) {
+                    objBuilder.setCode(codePane.getText());
+                }
+            }
+        });
 
         JPanel topBar = new JPanel();
         topBar.setBorder(new EmptyBorder(3, 3, 3, 3));
@@ -135,20 +145,20 @@ isUpdating = false;
                 .getString("programOptions.commandLine"));
         commandLabel.setBorder(new EmptyBorder(0, 3, 0, 0));
 
-        isExternalBox.setBorder(new EmptyBorder(0, 3, 0, 3));
-
+//        isExternalBox.setBorder(new EmptyBorder(0, 3, 0, 3));
+//        .setB
         topBar.add(commandLabel);
         topBar.add(commandLineText);
-        topBar.add(isExternalBox);
+        topBar.add(languageTypeCombo);
         topBar.add(editBox);
 
         this.setLayout(new BorderLayout());
         this.add(topBar, BorderLayout.NORTH);
         this.add(codePane, BorderLayout.CENTER);
-        
+
         codePane.getDocument().addUndoableEditListener(undo);
         codePane.setUndoManager(undo);
-        codePane.getJEditorPane().putClientProperty("bsb-completion-provider", 
+        codePane.getJEditorPane().putClientProperty("bsb-completion-provider",
                 completionProvider);
         codePane.getJEditorPane().setEnabled(false);
 
@@ -161,10 +171,7 @@ isUpdating = false;
     public void editObjectBuilder(ObjectBuilder objBuilder) {
         this.objBuilder = null;
 
-        isUpdating = true;
-
 //        setCodeSyntaxType(objBuilder);
-
         codePane.setText(objBuilder.getCode());
         codePane.getJEditorPane().setCaretPosition(0);
 
@@ -176,30 +183,18 @@ isUpdating = false;
             editBox.setSelected(false);
         }
 
-        isExternalBox.setSelected(objBuilder.isExternal());
-        commandLineText.setEnabled(objBuilder.isExternal());
+        languageTypeCombo.setSelectedItem(objBuilder.getLanguageType());
+//        isExternalBox.setSelected(objBuilder.isExternal());
+//        commandLineText.setEnabled(objBuilder.isExternal());
         commandLineText.setText(objBuilder.getCommandLine());
 
         this.objBuilder = objBuilder;
-        
+
         completionProvider.setBSBGraphicInterface(objBuilder.getGraphicInterface());
 
         undo.discardAllEdits();
 
-        isUpdating = false;
     }
-
-//    private void setCodeSyntaxType(ObjectBuilder objBuilder) {
-//        if (objBuilder.isExternal()) {
-//            codePane.setSyntaxType(objBuilder.getSyntaxType());
-//        } else {
-//            codePane.setSyntaxType("Python");
-//        }
-//
-//        codePane.setSyntaxSettable(objBuilder.isExternal());
-//
-//        codePane.repaint();
-//    }
 
     public static void main(String[] args) {
         GUI.setBlueLookAndFeel();

@@ -19,7 +19,6 @@
  */
 package blue.soundObject;
 
-import blue.score.ScoreObjectEvent;
 import blue.*;
 import blue.noteProcessor.NoteProcessorChain;
 import blue.noteProcessor.NoteProcessorException;
@@ -27,18 +26,22 @@ import blue.orchestra.blueSynthBuilder.BSBCompilationUnit;
 import blue.orchestra.blueSynthBuilder.BSBGraphicInterface;
 import blue.orchestra.blueSynthBuilder.PresetGroup;
 import blue.plugin.SoundObjectPlugin;
+import blue.score.ScoreObjectEvent;
 import blue.scripting.PythonProxy;
-import blue.utilities.ProcessRunner;
-import blue.utility.FileUtilities;
+import blue.scripting.ScoreScriptEngine;
+import blue.scripting.ScoreScriptEngineManager;
 import blue.utility.ScoreUtilities;
 import blue.utility.XMLUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
 import java.io.File;
-import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
+import javax.script.ScriptException;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.python.core.PyException;
 
@@ -50,12 +53,12 @@ public class ObjectBuilder extends AbstractSoundObject {
     String code;
     String commandLine;
     private boolean editEnabled = true;
-    boolean isExternal = false;
-    private String syntaxType = "Python";
     private NoteProcessorChain npc = new NoteProcessorChain();
     private int timeBehavior;
     double repeatPoint = -1.0f;
     StringProperty comment;
+
+    ObjectProperty<LanguageType> languageType;
 
     public ObjectBuilder() {
         setName("ObjectBuilder");
@@ -65,6 +68,8 @@ public class ObjectBuilder extends AbstractSoundObject {
         commandLine = "";
         timeBehavior = SoundObject.TIME_BEHAVIOR_SCALE;
         comment = new SimpleStringProperty("");
+        languageType = new SimpleObjectProperty<>(LanguageType.PYTHON);
+
     }
 
     public ObjectBuilder(ObjectBuilder objBuilder) {
@@ -75,11 +80,10 @@ public class ObjectBuilder extends AbstractSoundObject {
         commandLine = objBuilder.commandLine;
         timeBehavior = objBuilder.timeBehavior;
         editEnabled = objBuilder.editEnabled;
-        isExternal = objBuilder.isExternal;
         repeatPoint = objBuilder.repeatPoint;
-        syntaxType = objBuilder.syntaxType;
         npc = new NoteProcessorChain(objBuilder.npc);
         comment = new SimpleStringProperty(objBuilder.getComment());
+        languageType = new SimpleObjectProperty<>(objBuilder.getLanguageType());
     }
 
     // GENERATION METHODS
@@ -89,77 +93,26 @@ public class ObjectBuilder extends AbstractSoundObject {
         String tempScore = null;
         NoteList nl;
 
-        ProcessRunner processRunner = new ProcessRunner();
+        Map<String, Object> initVals = new HashMap<>();
 
-        if (isExternal) {
-            File currentWorkingDirectory = null;
+        File currentDirFile = BlueSystem.getCurrentProjectDirectory();
 
-            try {
-                // output text from soundObject to a temp file for processing by
-                // external program
-                File temp = FileUtilities.createTempTextFile("blueTempText",
-                        ".txt", BlueSystem.getCurrentProjectDirectory(),
-                        codeToRun);
+        initVals.put("score", "");
+        initVals.put("blueDuration", getSubjectiveDuration());
+        initVals.put("commandline", this.commandLine);
+        initVals.put("blueProjectDir", currentDirFile);
 
-                StringBuilder buffer = new StringBuilder();
+        ScoreScriptEngine engine
+                = ScoreScriptEngineManager.getInstance().getEngine(
+                        getLanguageType().toString());
 
-                currentWorkingDirectory = temp.getParentFile();
-
-                // check if $outfile is used; if so, run the external program
-                // set to
-                // output to $outfile,
-                // then grab text from generated file, of not found, assume
-                // program
-                // outputs to screen
-                // and grab from stdin
-                if (!this.getCommandLine().contains("$outfile")) {
-                    String commandLine = this.getPreparedCommandLine(temp
-                            .getName());
-
-                    System.out.println("Calling command: " + commandLine);
-                    System.out.println("Using directory: "
-                            + currentWorkingDirectory.getAbsolutePath());
-
-                    processRunner.execWaitAndCollect(commandLine,
-                            currentWorkingDirectory);
-
-                    buffer.append(processRunner.getCollectedOutput());
-
-                } else {
-                    File outFile = File.createTempFile("blueTempOutFile",
-                            ".sco", BlueSystem.getCurrentProjectDirectory());
-                    outFile.deleteOnExit();
-
-                    String commandLine = this.getPreparedCommandLine(temp
-                            .getName(), outFile.getName());
-
-                    System.out.println("Calling command: " + commandLine);
-                    System.out.println("Using directory: "
-                            + currentWorkingDirectory.getAbsolutePath());
-
-                    processRunner.execWaitAndCollect(commandLine,
-                            currentWorkingDirectory);
-
-                    buffer.append(blue.utility.TextUtilities
-                            .getTextFromFile(outFile));
-
-                }
-
-                tempScore = buffer.toString();
-
-            } catch (IOException ioe) {
-                throw new SoundObjectException(this, getIOExceptionMessage(),
-                        ioe);
-            } catch (Exception ex) {
+        try {
+            tempScore = engine.evalCode(codeToRun, initVals);
+        } catch (ScriptException ex) {
+            if (getLanguageType() == LanguageType.EXTERNAL) {
+                throw new SoundObjectException(this, getIOExceptionMessage(), ex);
+            } else {
                 throw new SoundObjectException(this, ex);
-            }
-        } else {
-            try {
-                tempScore = PythonProxy.processPythonScore(codeToRun,
-                        subjectiveDuration);
-            } catch (PyException pyEx) {
-                String msg = "ObjectBuilder: Jython Error:\n" + pyEx.toString();
-                throw new SoundObjectException(this, msg);
             }
         }
 
@@ -196,23 +149,6 @@ public class ObjectBuilder extends AbstractSoundObject {
 
         return errorMessage;
 
-    }
-
-    public String getPreparedCommandLine(String inFileName, String outFileName) {
-        String temp = getPreparedCommandLine(inFileName);
-        return blue.utility.TextUtilities
-                .replace(temp, "$outfile", outFileName);
-    }
-
-    public String getPreparedCommandLine(String inFileName) {
-        String temp = this.commandLine;
-
-        if (!this.commandLine.contains("$infile")) {
-            return this.commandLine + " " + inFileName;
-        } else {
-            return blue.utility.TextUtilities.replace(temp, "$infile",
-                    inFileName);
-        }
     }
 
     // END GENERATION METHODS
@@ -271,6 +207,18 @@ public class ObjectBuilder extends AbstractSoundObject {
         return comment;
     }
 
+    public final void setLanguageType(LanguageType value) {
+        languageType.set(value);
+    }
+
+    public final LanguageType getLanguageType() {
+        return languageType.get();
+    }
+
+    public final ObjectProperty<LanguageType> languageTypeProperty() {
+        return languageType;
+    }
+
     /*
      * (non-Javadoc)
      * 
@@ -300,7 +248,13 @@ public class ObjectBuilder extends AbstractSoundObject {
                     bsb.setCommandLine(node.getTextString());
                     break;
                 case "isExternal":
-                    bsb.setExternal(XMLUtilities.readBoolean(node));
+                    // For Blue version < 2.7.2
+                    if (XMLUtilities.readBoolean(node)) {
+                        bsb.setLanguageType(LanguageType.EXTERNAL);
+                    } else {
+                        bsb.setLanguageType(LanguageType.PYTHON);
+                    }
+                    ;
                     break;
                 case "graphicInterface":
                     bsb.setGraphicInterface(BSBGraphicInterface.loadFromXML(node));
@@ -308,11 +262,11 @@ public class ObjectBuilder extends AbstractSoundObject {
                 case "presetGroup":
                     bsb.setPresetGroup(PresetGroup.loadFromXML(node));
                     break;
-                case "syntaxType":
-                    bsb.setSyntaxType(node.getTextString());
-                    break;
                 case "comment":
                     bsb.setComment(node.getTextString());
+                    break;
+                case "languageType":
+                    bsb.setLanguageType(LanguageType.valueOf(node.getTextString()));
                     break;
             }
 
@@ -335,12 +289,12 @@ public class ObjectBuilder extends AbstractSoundObject {
 
         retVal.addElement("code").setText(this.getCode());
         retVal.addElement("commandLine").setText(this.getCommandLine());
-        retVal.addElement(XMLUtilities.writeBoolean("isExternal", isExternal));
 
         retVal.addElement(graphicInterface.saveAsXML());
         retVal.addElement(presetGroup.saveAsXML());
-        retVal.addElement("syntaxType").setText(this.getSyntaxType());
         retVal.addElement("comment").setText(getComment());
+
+        retVal.addElement("languageType").setText(getLanguageType().name());
 
         return retVal;
     }
@@ -361,14 +315,6 @@ public class ObjectBuilder extends AbstractSoundObject {
         this.commandLine = commandLine;
     }
 
-    public boolean isExternal() {
-        return isExternal;
-    }
-
-    public void setExternal(boolean isExternal) {
-        this.isExternal = isExternal;
-    }
-
     public BSBGraphicInterface getGraphicInterface() {
         return graphicInterface;
     }
@@ -383,14 +329,6 @@ public class ObjectBuilder extends AbstractSoundObject {
 
     public void setPresetGroup(PresetGroup presetGroup) {
         this.presetGroup = presetGroup;
-    }
-
-    public String getSyntaxType() {
-        return syntaxType;
-    }
-
-    public void setSyntaxType(String syntaxType) {
-        this.syntaxType = syntaxType;
     }
 
     @Override
@@ -421,4 +359,29 @@ public class ObjectBuilder extends AbstractSoundObject {
     public ObjectBuilder deepCopy() {
         return new ObjectBuilder(this);
     }
+
+    // ENUM FOR LANGUAGES
+    public static enum LanguageType {
+        PYTHON("Python", "text/x-python"), 
+        JAVASCRIPT("JavaScript", "text/javascript"), 
+        CLOJURE("Clojure", "text/x-clojure"), 
+        EXTERNAL("External", "text/plain");
+
+        private String desc;
+        private String mimeType;
+
+        LanguageType(String desc, String mimeType) {
+            this.desc = desc;
+            this.mimeType = mimeType;
+        }
+
+        public String toString() {
+            return this.desc;
+        }
+
+        public String getMimeType() {
+            return mimeType;
+        }
+    }
+
 }
