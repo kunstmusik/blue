@@ -10,6 +10,6 @@ install:
   - '[ "${TRAVIS_OS_NAME}" = "osx" ] && brew install ant || true'
 
 script:
-  - ant -p nbproject/platform.xml 
+  - ant -f nbproject/platform.xml 
   - ant test
   - ant build-mac
