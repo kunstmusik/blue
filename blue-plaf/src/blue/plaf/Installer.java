@@ -34,7 +34,6 @@ import javax.swing.plaf.metal.MetalLookAndFeel;
 import org.netbeans.swing.tabcontrol.plaf.*;
 import org.openide.modules.ModuleInstall;
 import org.openide.util.Exceptions;
-import org.openide.util.Lookup;
 import org.openide.util.NbPreferences;
 import org.openide.windows.WindowManager;
 
