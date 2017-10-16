@@ -10,4 +10,4 @@ install:
   - '[ "${TRAVIS_OS_NAME}" = "osx" ] && brew install ant || true'
 
 script:
-  - ant -Dnbplatform.default.harness.dir=$TRAVIS_BUILD_DIR/netbeans/harness -Dnbplatform.default.netbeans.dest.dir=$TRAVIS_BUILD_DIR/netbean test build-mac
+  - ant -Dnbplatform.default.harness.dir=$PWD/netbeans/harness -Dnbplatform.default.netbeans.dest.dir=$PWD/netbean test build-mac
