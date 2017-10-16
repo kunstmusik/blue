@@ -181,19 +181,6 @@ public final class ScratchPadTopComponent extends TopComponent {
     private javax.swing.JCheckBox wordWrapEnabledCheckBox;
     // End of variables declaration//GEN-END:variables
 
-    /**
-     * Gets default instance. Do not use directly: reserved for *.settings files only,
-     * i.e. deserialization routines; otherwise you could get a non-deserialized instance.
-     * To obtain the singleton instance, use {@link #findInstance}.
-     */
-    public static synchronized ScratchPadTopComponent getDefault() {
-        if (instance == null) {
-            instance = new ScratchPadTopComponent();
-        }
-        return instance;
-    }
-
-
     @Override
     public void componentOpened() {
         // TODO add custom code on component opening

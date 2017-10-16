@@ -5,13 +5,12 @@ import blue.*;
 import blue.noteProcessor.NoteProcessorChain;
 import blue.noteProcessor.NoteProcessorException;
 import blue.plugin.SoundObjectPlugin;
-import blue.utilities.ProcessRunner;
-import blue.utility.FileUtilities;
+import blue.scripting.ScoreScriptEngine;
+import blue.scripting.ScoreScriptEngineManager;
 import blue.utility.ScoreUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
-import java.io.File;
-import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -95,64 +94,17 @@ public class External extends AbstractSoundObject {
 
         NoteList nl = new NoteList();
 
-        File currentWorkingDirectory = null;
+        ScoreScriptEngine engine
+                = ScoreScriptEngineManager.getInstance().getEngine("External");
+        Map<String, Object> initVals = new HashMap<>();
+        initVals.put("commandline", this.commandLine);
 
         try {
-            // output text from soundObject to a temp file for processing by
-            // external program
-            File temp = FileUtilities.createTempTextFile("blueTempText",
-                    ".txt", BlueSystem.getCurrentProjectDirectory(), this
-                            .getText());
-
-            StringBuilder buffer = new StringBuilder();
-
-            currentWorkingDirectory = temp.getParentFile();
-
-            // check if $outfile is used; if so, run the external program set to
-            // output to $outfile,
-            // then grab text from generated file, of not found, assume program
-            // outputs to screen
-            // and grab from stdin
-
-            ProcessRunner processRunner = new ProcessRunner();
-
-            if (!this.getCommandLine().contains("$outfile")) {
-                String commandLine = this
-                        .getPreparedCommandLine(temp.getName());
-
-                System.out.println("Calling command: " + commandLine);
-                System.out.println("Using directory: "
-                        + currentWorkingDirectory.getAbsolutePath());
-
-                processRunner.execWaitAndCollect(commandLine,
-                        currentWorkingDirectory);
-
-                buffer.append(processRunner.getCollectedOutput());
-
-            } else {
-                File outFile = File.createTempFile("blueTempOutFile", ".sco",
-                        BlueSystem.getCurrentProjectDirectory());
-                outFile.deleteOnExit();
-
-                String commandLine = this.getPreparedCommandLine(
-                        temp.getName(), outFile.getName());
-
-                System.out.println("Calling command: " + commandLine);
-                System.out.println("Using directory: "
-                        + currentWorkingDirectory.getAbsolutePath());
-
-                processRunner.execWait(commandLine, currentWorkingDirectory);
-
-                buffer.append(blue.utility.TextUtilities
-                        .getTextFromFile(outFile));
-            }
-
-            nl = blue.utility.ScoreUtilities.getNotes(buffer.toString());
-
-        } catch (IOException ioe) {
-            throw new SoundObjectException(this, getIOExceptionMessage(), ioe);
+            String temp = engine.evalCode(this.text, initVals);
+            
+            nl = blue.utility.ScoreUtilities.getNotes(temp);
         } catch (Exception ex) {
-            throw new SoundObjectException(this, ex);
+            throw new SoundObjectException(this, getIOExceptionMessage(), ex);
         }
 
         try {
@@ -203,40 +155,6 @@ public class External extends AbstractSoundObject {
     public void setCommandLine(String commandLine) {
         this.commandLine = commandLine;
     }
-
-    public String getPreparedCommandLine(String inFileName, String outFileName) {
-        String temp = getPreparedCommandLine(inFileName);
-        return blue.utility.TextUtilities
-                .replace(temp, "$outfile", outFileName);
-    }
-
-    public String getPreparedCommandLine(String inFileName) {
-        String temp = this.commandLine;
-
-        if (!this.commandLine.contains("$infile")) {
-            return this.commandLine + " " + inFileName;
-        } else {
-            return blue.utility.TextUtilities.replace(temp, "$infile",
-                    inFileName);
-        }
-    }
-
-    /*
-     * public String getPreparedCommandLine(String inFileName) {
-     * 
-     * StringBuffer buffer = new StringBuffer(); StringTokenizer st = new
-     * StringTokenizer(this.commandLine); String token; boolean inFileFound =
-     * false;
-     * 
-     * 
-     * 
-     * while(st.hasMoreTokens()) { token = st.nextToken();
-     * if(token.equals("$infile")) { inFileFound = true; token = inFileName; }
-     * buffer.append(token + " "); } if(!inFileFound) {
-     * buffer.append(inFileName); }
-     * 
-     * return buffer.toString(); }
-     */
 
     @Override
     public int getTimeBehavior() {

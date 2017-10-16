@@ -20,6 +20,7 @@ import blue.settings.PlaybackSettings;
 import blue.utility.FileUtilities;
 import csnd6.Csound;
 import csnd6.CsoundArgVList;
+import csnd6.csnd6;
 import java.awt.Color;
 import java.io.IOException;
 import org.apache.commons.lang3.text.StrBuilder;
@@ -39,6 +40,8 @@ public class CS6DiskRendererService implements DiskRenderService {
     BlueCallbackWrapper blueCallbackWrapper; 
 
     public CS6DiskRendererService() {
+        csnd6.csoundInitialize(csnd6.CSOUNDINIT_NO_ATEXIT | 
+                csnd6.CSOUNDINIT_NO_SIGNAL_HANDLER);
     }
 
     @Override

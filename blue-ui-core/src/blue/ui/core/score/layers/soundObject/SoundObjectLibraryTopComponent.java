@@ -119,6 +119,7 @@ public final class SoundObjectLibraryTopComponent extends TopComponent
 
         reinitialize();
         splitPane.setRightComponent(new UserSoundObjectLibrary(content));
+        splitPane.setDividerLocation(200);
     }
 
     public void reinitialize() {
@@ -134,15 +135,11 @@ public final class SoundObjectLibraryTopComponent extends TopComponent
      * @param sObj
      */
     protected void fireSoundObjectSelected(SoundObject sObj) {
-
         content.set(Collections.singleton(sObj), null);
-
     }
 
     protected void fireSoundObjectRemoved(SoundObject sObj) {
-
         content.set(Collections.emptyList(), null);
-
     }
 
     public void setSoundObjectLibrary(SoundObjectLibrary sObjLib) {
@@ -340,13 +337,6 @@ public final class SoundObjectLibraryTopComponent extends TopComponent
     private javax.swing.JTable sObjLibTable;
     private javax.swing.JSplitPane splitPane;
     // End of variables declaration//GEN-END:variables
-
-    public static synchronized SoundObjectLibraryTopComponent getDefault() {
-        if (instance == null) {
-            instance = new SoundObjectLibraryTopComponent();
-        }
-        return instance;
-    }
 
     @Override
     public void componentOpened() {

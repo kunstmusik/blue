@@ -44,19 +44,19 @@ public class CsoundOrcCompletionItem implements CompletionItem {
     }
 
     protected void replaceWordBeforeCaret(String replacementText, JTextComponent jtc) {
-        int index1 = jtc.getCaretPosition();
+        int index1 = Math.max(jtc.getCaretPosition() - 1, 0);
         int index2 = index1;
-
-        index1 = index1 > 0 ? index1 - 1 : index1;
 
         String text = jtc.getText();
         int len = text.length();
 
-        while (index1 >= 0 && !Character.isWhitespace(text.charAt(index1))) {
+        while (index1 > 0) { 
+            if(!Character.isLetter(text.charAt(index1))){
+                index1++;
+                break;
+            }
             index1--;
         }
-
-        index1 += 1;
 
         while (index2 < len && !Character.isWhitespace(text.charAt(index2))) {
             index2++;

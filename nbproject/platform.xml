@@ -1,5 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project name="platform" default="download" basedir="..">
+
+  <property 
+    name="bootstrap.url"
+    value="http://deadlock.netbeans.org/hudson/job/nbms-and-javadoc/lastStableBuild/artifact/nbbuild/netbeans/harness/tasks.jar"/>
+  
+  <property 
+    name="autoupdate.catalog.url"
+    value="http://updates.netbeans.org/netbeans/updates/8.2/uc/final/distribution/catalog.xml.gz"/>
+
     <condition property="download.required">
         <and>
             <not>

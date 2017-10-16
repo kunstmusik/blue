@@ -1,7 +1,6 @@
 /*
  * blue - object composition environment for csound
- * Copyright (C) 2013
- * Steven Yi <stevenyi@gmail.com>
+ * Copyright (C) 2017 stevenyi
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -17,43 +16,29 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package blue.csnd5.render;
+package blue.scripting;
 
-import blue.services.render.DiskRenderService;
-import blue.services.render.RealtimeRenderService;
-import blue.services.render.RealtimeRenderServiceFactory;
+import java.util.Map;
+import javax.script.ScriptException;
 import org.openide.util.lookup.ServiceProvider;
 
 /**
  *
  * @author stevenyi
  */
-
-@ServiceProvider (service = RealtimeRenderServiceFactory.class, position = 200)
-public class CS5RealtimeRenderServiceFactory implements RealtimeRenderServiceFactory {
-
-    @Override
-    public Class getRenderServiceClass() {
-        return APIRunner.class;
-    }
+@ServiceProvider(service = ScoreScriptEngine.class)
+public class PythonScoreEngine implements ScoreScriptEngine {
 
     @Override
-    public RealtimeRenderService createInstance() {
-        return new APIRunner();
-    }
-
-    @Override 
-    public String toString() {
-        return "Csound 5 API";
+    public String getEngineName() {
+        return "Python";
     }
 
     @Override
-    public boolean isAvailable() {
-        return APIUtilities.isCsoundAPIAvailable();
+    public String evalCode(String code, Map<String, Object> initValues) 
+            throws ScriptException {
+        return PythonProxy.processPythonScore(code,
+                (Double) initValues.get("blueDuration"));
     }
 
-    @Override
-    public DiskRenderService createDiskRenderService() {
-        return new APIDiskRenderer();
-    }
 }

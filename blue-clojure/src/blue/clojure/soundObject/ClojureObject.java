@@ -103,10 +103,6 @@ public class ClojureObject extends AbstractSoundObject implements
         
         File currentDirFile = BlueSystem.getCurrentProjectDirectory();
 
-        String currentDir = (currentDirFile == null) ? "" : currentDirFile
-                .getAbsolutePath()
-                + File.separator;
-        
         HashMap<String, Object> initObjects = new HashMap<>();
         initObjects.put("score", "");
         initObjects.put("blueDuration", getSubjectiveDuration());

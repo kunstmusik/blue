@@ -268,11 +268,7 @@ public class BlueShareRemoteCaller {
         v.add(password);
         v.add(new Integer(instrumentId));
 
-        String result;
-
-        result = (String) xrpc.execute("blueShare.removeInstrument", v);
-
-        return true;
+        return (Boolean)xrpc.execute("blueShare.removeInstrument", v);
     }
 
     /* EFFECT METHODS */
@@ -479,11 +475,7 @@ public class BlueShareRemoteCaller {
         v.add(password);
         v.add(new Integer(effectId));
 
-        String result;
-
-        result = (String) xrpc.execute("blueShare.removeEffect", v);
-
-        return true;
+        return (Boolean) xrpc.execute("blueShare.removeEffect", v);
     }
 
 
@@ -718,7 +710,7 @@ public class BlueShareRemoteCaller {
     /* UTILITY METHODS */
 
     private static String checkNullString(String stringToCheck) {
-        if (stringToCheck == null) {
+        if (stringToCheck == null) {;
             return "";
         }
         return stringToCheck;

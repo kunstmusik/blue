@@ -27,6 +27,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.script.ScriptException;
 
@@ -93,7 +94,7 @@ public class BlueClojureEngine implements PropertyChangeListener {
     }
 
     public String processScript(String code,
-            HashMap<String, ? extends Object> values,
+            Map<String, ? extends Object> values,
             String returnVariableName) throws ScriptException {
 
         if (engines.get(currentProject) == null) {

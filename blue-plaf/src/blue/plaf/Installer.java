@@ -27,7 +27,6 @@ import java.util.prefs.Preferences;
 import javax.swing.BorderFactory;
 import javax.swing.KeyStroke;
 import javax.swing.LookAndFeel;
-import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.plaf.InputMapUIResource;
@@ -35,7 +34,6 @@ import javax.swing.plaf.metal.MetalLookAndFeel;
 import org.netbeans.swing.tabcontrol.plaf.*;
 import org.openide.modules.ModuleInstall;
 import org.openide.util.Exceptions;
-import org.openide.util.Lookup;
 import org.openide.util.NbPreferences;
 import org.openide.windows.WindowManager;
 
@@ -46,16 +44,25 @@ import org.openide.windows.WindowManager;
 public class Installer extends ModuleInstall {
 
     Logger logger = Logger.getLogger("blue.plaf.Installer");
-    private static BlueLFCustoms customs = new BlueLFCustoms();
+    private Object customs = new BlueLFCustoms();
 
     @Override
     public void validate() throws IllegalStateException {
+//        ClassLoader cl = Lookup.getDefault().lookup(
+//                ClassLoader.class);
+//        UIManager.put("ClassLoader", cl);
+
         Preferences prefs = NbPreferences.root().node("laf");
         prefs.put("laf", BlueLookAndFeel.class.getName());
+
         UIManager.put("Nb.BlueLFCustoms", customs);
         UIManager.put("nb.dark.theme", true);
         boolean isMac = System.getProperty("os.name").toLowerCase().startsWith(
                 "mac");
+
+//        UIManager.put("EditorTabDisplayerUI", "org.netbeans.swing.tabcontrol.plaf.AquaEditorTabDisplayerUI");
+//        UIManager.put("ViewTabDisplayerUI", "org.netbeans.swing.tabcontrol.plaf.AquaViewTabDisplayerUI");
+//        UIManager.put("SlidingButtonUI", "org.netbeans.swing.tabcontrol.plaf.AquaSlidingButtonUI");
 
         Object[] macEntries = null;
         if (isMac) {
@@ -97,9 +104,7 @@ public class Installer extends ModuleInstall {
             } else {
                 UIManager.put("customFontSize", in.intValue());
             }
-            ClassLoader cl = Lookup.getDefault().lookup(
-                    ClassLoader.class);
-            UIManager.put("ClassLoader", cl);
+            UIManager.installLookAndFeel("Blue", BlueLookAndFeel.class.getName());
             UIManager.put("Nb.BlueLFCustoms", customs);
             UIManager.put("swing.boldMetal", false);
             MetalLookAndFeel.setCurrentTheme(new BlueTheme());
@@ -108,6 +113,10 @@ public class Installer extends ModuleInstall {
         } catch (Exception e) {
             e.printStackTrace();
         }
+
+        UIManager.put("EditorTabDisplayerUI", "org.netbeans.swing.tabcontrol.plaf.AquaEditorTabDisplayerUI");
+        UIManager.put("ViewTabDisplayerUI", "org.netbeans.swing.tabcontrol.plaf.AquaViewTabDisplayerUI");
+        UIManager.put("SlidingButtonUI", "org.netbeans.swing.tabcontrol.plaf.AquaSlidingButtonUI");
 
         UIManager.put(DefaultTabbedContainerUI.KEY_EDITOR_CONTENT_BORDER,
                 BorderFactory.createEmptyBorder());

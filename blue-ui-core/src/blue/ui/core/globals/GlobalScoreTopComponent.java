@@ -11,8 +11,6 @@ import blue.ui.nbutilities.MimeTypeEditorComponent;
 import blue.ui.utilities.SimpleDocumentListener;
 import java.awt.BorderLayout;
 import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
-import java.io.Serializable;
 import javax.swing.event.DocumentEvent;
 import javax.swing.undo.UndoManager;
 import org.netbeans.api.settings.ConvertAsProperties;
@@ -125,19 +123,6 @@ public final class GlobalScoreTopComponent extends TopComponent {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     // End of variables declaration//GEN-END:variables
 
-    /**
-     * Gets default instance. Do not use directly: reserved for *.settings files
-     * only, i.e. deserialization routines; otherwise you could get a
-     * non-deserialized instance. To obtain the singleton instance, use
-     * {@link #findInstance}.
-     */
-    public static synchronized GlobalScoreTopComponent getDefault() {
-        if (instance == null) {
-            instance = new GlobalScoreTopComponent();
-        }
-        return instance;
-    }
-
     @Override
     public void componentOpened() {
         // TODO add custom code on component opening
@@ -159,20 +144,4 @@ public final class GlobalScoreTopComponent extends TopComponent {
         String version = p.getProperty("version");
     }
 
-    /**
-     * replaces this in object stream
-     */
-    @Override
-    public Object writeReplace() {
-        return new ResolvableHelper();
-    }
-
-    final static class ResolvableHelper implements Serializable {
-
-        private static final long serialVersionUID = 1L;
-
-        public Object readResolve() {
-            return GlobalScoreTopComponent.getDefault();
-        }
-    }
 }

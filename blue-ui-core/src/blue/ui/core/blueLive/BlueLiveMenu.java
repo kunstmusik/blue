@@ -47,7 +47,7 @@ import org.openide.util.actions.Presenter;
  */
 public final class BlueLiveMenu extends AbstractAction implements Presenter.Menu {
 
-    JMenu menu = new JMenu("Blue Live");
+    JMenu menu = null; 
     JMenuItem items[] = null;
 
     @Override
@@ -67,7 +67,8 @@ public final class BlueLiveMenu extends AbstractAction implements Presenter.Menu
 
     @Override
     public JMenuItem getMenuPresenter() {
-        if (items == null) {
+        if(menu == null) {
+            menu = new JMenu("Blue Live");
             items = new JMenuItem[4];
             items[0] = new JCheckBoxMenuItem("Start/Stop Blue Live");
             items[1] = new JMenuItem("Recompile");

@@ -579,13 +579,6 @@ public final class ScoreTopComponent extends TopComponent
     private javax.swing.JSplitPane topSplitPane;
     // End of variables declaration//GEN-END:variables
 
-    public static synchronized ScoreTopComponent getDefault() {
-        if (instance == null) {
-            instance = new ScoreTopComponent();
-        }
-        return instance;
-    }
-
     @Override
     public void componentOpened() {
         // TODO add custom code on component opening
@@ -594,14 +587,6 @@ public final class ScoreTopComponent extends TopComponent
     @Override
     public void componentClosed() {
         // TODO add custom code on component closing
-    }
-
-    /**
-     * replaces this in object stream
-     */
-    @Override
-    public Object writeReplace() {
-        return new ResolvableHelper();
     }
 
     void writeProperties(java.util.Properties p) {
@@ -942,15 +927,6 @@ public final class ScoreTopComponent extends TopComponent
                 layerHeaderPanel.repaint();
             }
 
-        }
-    }
-
-    final static class ResolvableHelper implements Serializable {
-
-        private static final long serialVersionUID = 1L;
-
-        public Object readResolve() {
-            return ScoreTopComponent.getDefault();
         }
     }
 

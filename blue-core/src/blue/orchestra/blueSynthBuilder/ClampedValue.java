@@ -20,19 +20,15 @@
 package blue.orchestra.blueSynthBuilder;
 
 import blue.components.lines.LineUtils;
-import blue.jfx.BlueFX;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
-import javafx.application.Platform;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.DoublePropertyBase;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
-import javafx.scene.control.Alert;
-import javafx.scene.control.Alert.AlertType;
-import javafx.scene.control.ButtonType;
 import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
 
 /**
  * Provides double value property that is clamped to reside between min and max
@@ -195,13 +191,18 @@ public class ClampedValue {
     public final void setMin(double value) {
 
         if (value >= getMax()) {
-            if (Platform.isFxApplicationThread()) {
-                Alert a = new Alert(AlertType.NONE,
-                        "Error: Min value can not be set greater or equals to Max value.",
-                        ButtonType.OK);
-                a.setTitle("Error");
-                BlueFX.style(a.getDialogPane());
-                a.showAndWait();
+            if (!SwingUtilities.isEventDispatchThread()) {
+//                Alert a = new Alert(AlertType.NONE,
+//                        "Error: Min value can not be set greater or equals to Max value.",
+//                        ButtonType.OK);
+//                a.setTitle("Error");
+//                BlueFX.style(a.getDialogPane());
+//                a.showAndWait();
+                SwingUtilities.invokeLater(() -> {
+                    JOptionPane.showMessageDialog(null, "Error: Min value "
+                            + "can not be set greater or equals to Max value.",
+                            "Error", JOptionPane.ERROR_MESSAGE);
+                });
             } else {
                 JOptionPane.showMessageDialog(null, "Error: Min value "
                         + "can not be set greater or equals to Max value.",
@@ -210,29 +211,14 @@ public class ClampedValue {
             return;
         }
 
-        String retVal = LineBoundaryDialog.getLinePointMethod();
-        ClampedValueListener.BoundaryType bType;
-
-        if (retVal == null) {
-            return;
-        }
-
-        switch (retVal) {
-            case LineBoundaryDialog.TRUNCATE:
-                setValue(LineUtils.truncate(getValue(), value, getMax()));
-                bType = ClampedValueListener.BoundaryType.TRUNCATE;
-                break;
-            case LineBoundaryDialog.RESCALE:
-                setValue(LineUtils.rescale(getValue(), getMin(), getMax(),
-                        value, getMax(), getResolution()));
-                bType = ClampedValueListener.BoundaryType.SCALE;
-                break;
-            default:
-                return;
-        }
+        double oldMin = getMin();
+        double oldValue = getValue();
 
         min.set(value);
-        notifyListeners(ClampedValueListener.PropertyType.MIN, bType);
+        setValue(LineUtils.rescale(oldValue, oldMin, getMax(),
+                value, getMax(), getResolution()));
+
+        notifyListeners(ClampedValueListener.PropertyType.MIN, ClampedValueListener.BoundaryType.SCALE);
     }
 
     public final double getMin() {
@@ -247,14 +233,19 @@ public class ClampedValue {
 
         if (value <= getMin()) {
 
-            if (Platform.isFxApplicationThread()) {
-                Alert a = new Alert(AlertType.NONE,
-                        "Error: Max value can not be set less than or "
-                        + "equal to Min value.",
-                        ButtonType.OK);
-                a.setTitle("Error");
-                BlueFX.style(a.getDialogPane());
-                a.showAndWait();
+            if (!SwingUtilities.isEventDispatchThread()) {
+//                Alert a = new Alert(AlertType.NONE,
+//                        "Error: Max value can not be set less than or "
+//                        + "equal to Min value.",
+//                        ButtonType.OK);
+//                a.setTitle("Error");
+//                BlueFX.style(a.getDialogPane());
+//                a.showAndWait();
+                SwingUtilities.invokeLater(() -> {
+                    JOptionPane.showMessageDialog(null, "Error: Max value "
+                            + "can not be set less than or " + "equal to Min value.",
+                            "Error", JOptionPane.ERROR_MESSAGE);
+                });
             } else {
                 JOptionPane.showMessageDialog(null, "Error: Max value "
                         + "can not be set less than or " + "equal to Min value.",
@@ -263,28 +254,14 @@ public class ClampedValue {
             return;
         }
 
-        String retVal = LineBoundaryDialog.getLinePointMethod();
-        ClampedValueListener.BoundaryType bType;
+        double oldMax = getMax();
+        double oldValue = getValue();
 
-        if (retVal == null) {
-            return;
-        }
-
-        switch (retVal) {
-            case LineBoundaryDialog.TRUNCATE:
-                setValue(LineUtils.truncate(getValue(), getMin(), value));
-                bType = ClampedValueListener.BoundaryType.TRUNCATE;
-                break;
-            case LineBoundaryDialog.RESCALE:
-                setValue(LineUtils.rescale(getValue(), getMin(), getMax(),
-                        getMin(), value, getResolution()));
-                bType = ClampedValueListener.BoundaryType.SCALE;
-                break;
-            default:
-                return;
-        }
         max.set(value);
-        notifyListeners(ClampedValueListener.PropertyType.MAX, bType);
+        setValue(LineUtils.rescale(oldValue, getMin(), oldMax,
+                getMin(), value, getResolution()));
+
+        notifyListeners(ClampedValueListener.PropertyType.MAX, ClampedValueListener.BoundaryType.SCALE);
     }
 
     public final double getMax() {

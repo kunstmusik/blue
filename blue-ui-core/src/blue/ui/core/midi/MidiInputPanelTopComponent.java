@@ -8,7 +8,6 @@ import blue.BlueData;
 import blue.projects.BlueProject;
 import blue.projects.BlueProjectManager;
 import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import org.netbeans.api.settings.ConvertAsProperties;
 import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
@@ -99,14 +98,6 @@ public final class MidiInputPanelTopComponent extends TopComponent {
     private javax.swing.JTabbedPane jTabbedPane1;
     private blue.ui.core.midi.MidiInputProcessorPanel midiInputProcessorPanel1;
     // End of variables declaration//GEN-END:variables
-
-    public static synchronized MidiInputPanelTopComponent getDefault() {
-        if (instance == null) {
-            instance = new MidiInputPanelTopComponent();
-        }
-        return instance;
-    }
-
 
     @Override
     public void componentOpened() {

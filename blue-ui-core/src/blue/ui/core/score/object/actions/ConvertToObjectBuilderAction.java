@@ -23,6 +23,7 @@ import blue.SoundLayer;
 import blue.score.ScoreObject;
 import blue.soundObject.External;
 import blue.soundObject.ObjectBuilder;
+import blue.soundObject.ObjectBuilder.LanguageType;
 import blue.soundObject.PythonObject;
 import blue.soundObject.SoundObject;
 import blue.ui.core.score.ScoreController;
@@ -105,7 +106,7 @@ public final class ConvertToObjectBuilderAction extends AbstractAction
             objBuilder.setSubjectiveDuration(tempExt.getSubjectiveDuration());
             objBuilder.setCode(tempExt.getText());
             objBuilder.setCommandLine(tempExt.getCommandLine());
-            objBuilder.setExternal(true);
+            objBuilder.setLanguageType(LanguageType.EXTERNAL);
             objBuilder.setBackgroundColor(tempExt.getBackgroundColor());
         } else {
             return;

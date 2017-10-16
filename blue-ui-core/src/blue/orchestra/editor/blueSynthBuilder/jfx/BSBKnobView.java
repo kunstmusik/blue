@@ -29,7 +29,9 @@ import javafx.beans.binding.Bindings;
 import javafx.beans.binding.IntegerBinding;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
+import javafx.geometry.Pos;
 import javafx.scene.Scene;
+import javafx.scene.control.Label;
 import javafx.scene.layout.BorderPane;
 import javafx.util.StringConverter;
 import org.openide.util.Exceptions;
@@ -46,6 +48,7 @@ public class BSBKnobView extends BorderPane implements ResizeableView {
     Knob knobView;
 
     ValuePanel valuePanel;
+    Label label;
 
     /**
      * @param knob
@@ -54,6 +57,12 @@ public class BSBKnobView extends BorderPane implements ResizeableView {
         setUserData(knob);
 
         this.knob = knob;
+
+        label = new Label();
+        label.setStyle("-fx-fill: white; "
+                + "-fx-font-smooth-type: lcd");
+        label.setAlignment(Pos.CENTER);
+        label.setMaxWidth(Double.POSITIVE_INFINITY);
 
         knobView = new Knob();
         valuePanel = new ValuePanel();
@@ -69,6 +78,7 @@ public class BSBKnobView extends BorderPane implements ResizeableView {
         this.setCenter(knobView);
 
         valuePanel.setPrefHeight(VALUE_HEIGHT);
+        BorderPane.setAlignment(valuePanel, Pos.CENTER);
 
         StringConverter<Number> converter = new StringConverter<Number>() {
             @Override
@@ -91,6 +101,13 @@ public class BSBKnobView extends BorderPane implements ResizeableView {
                 setBottom(valuePanel);
             } else {
                 setBottom(null);
+            }
+        };
+        final ChangeListener<Boolean> labelEnabledListener = (obs, old, newVal) -> {
+            if (newVal) {
+                setTop(label);
+            } else {
+                setTop(null);
             }
         };
 
@@ -139,9 +156,13 @@ public class BSBKnobView extends BorderPane implements ResizeableView {
                 knobView.prefWidthProperty().unbind();
                 knobView.prefHeightProperty().unbind();
                 valuePanel.prefWidthProperty().unbind();
+                valuePanel.maxWidthProperty().unbind();
                 knob.valueDisplayEnabledProperty().removeListener(vdeListener);
+                knob.labelEnabledProperty().removeListener(labelEnabledListener);
                 Bindings.unbindBidirectional(valuePanel.valueProperty(),
                         knob.knobValueProperty().valueProperty());
+                label.textProperty().unbind();
+                label.fontProperty().unbind();
             } else {
                 knobView.minProperty().bind(knob.knobValueProperty().minProperty());
                 knobView.maxProperty().bind(knob.knobValueProperty().maxProperty());
@@ -150,17 +171,29 @@ public class BSBKnobView extends BorderPane implements ResizeableView {
                 knobView.setValue(knob.getValue());
                 knobView.minWidthProperty().bind(knobView.prefWidthProperty());
                 knobView.minHeightProperty().bind(knobView.prefHeightProperty());
+                knobView.maxWidthProperty().bind(knob.knobWidthProperty());
+                knobView.maxHeightProperty().bind(knobViewHeight);
                 valuePanel.prefWidthProperty().bind(knobView.prefWidthProperty());
+                valuePanel.maxWidthProperty().bind(knob.knobWidthProperty());
                 knob.valueDisplayEnabledProperty().addListener(vdeListener);
+                knob.labelEnabledProperty().addListener(labelEnabledListener);
                 knob.knobValueProperty().valueProperty().addListener(knobToViewListener);
                 knobView.valueProperty().addListener(viewToKnobListener);
                 Bindings.bindBidirectional(valuePanel.valueProperty(),
                         knob.knobValueProperty().valueProperty(), converter);
 
+                label.textProperty().bind(knob.labelProperty());
+                label.fontProperty().bind(knob.labelFontProperty());
+
                 if (knob.isValueDisplayEnabled()) {
                     setBottom(valuePanel);
                 } else {
                     setBottom(null);
+                }
+                if (knob.isLabelEnabled()) {
+                    setTop(label);
+                } else {
+                    setTop(null);
                 }
             }
         });
@@ -179,7 +212,14 @@ public class BSBKnobView extends BorderPane implements ResizeableView {
     }
 
     public int getWidgetMinimumHeight() {
-        return knob.isValueDisplayEnabled() ? (int)valuePanel.getHeight() + 20 : 20; 
+        int h = 20;
+        if(knob.isValueDisplayEnabled()) {
+            h += (int)valuePanel.getHeight();
+        }
+        if(knob.isLabelEnabled()) {
+            h += (int)label.getHeight();
+        }
+        return h; 
     }
 
     public int getWidgetWidth() {
@@ -195,10 +235,15 @@ public class BSBKnobView extends BorderPane implements ResizeableView {
     }
 
     public void setWidgetHeight(int height){
-        knob.setKnobWidth(Math.max(20, 
-                (knob.isValueDisplayEnabled() ? 
-                        height - (int)valuePanel.getHeight() : 
-                        height)));
+        int h = height;
+        if(knob.isValueDisplayEnabled()) {
+            h -= (int)valuePanel.getHeight();
+        }
+        if(knob.isLabelEnabled()) {
+            h -= (int)label.getHeight();
+        }
+
+        knob.setKnobWidth(Math.max(20, h));
     } 
 
     public void setWidgetX(int x) {

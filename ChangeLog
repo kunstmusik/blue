@@ -12,6 +12,53 @@ information.
 
 [CHANGE LOG]
 
+> Notes for 2.7.2 <
+[release 2017.10.16]
+
+NEW
+
+* BlueSynthBuilder:
+
+  * Knob - added Label, Label Font, and Label Enabled property. Label text is
+  centered above knob in UI. Default is label to be shown, but older projects
+  will load without label shown for backwards compatibility.
+
+  * Ctrl-v keyboard shortcut will now paste copies of the last copied widgets 
+  at an offset from the originals. 
+
+* Issue #372 - Added note to documentation about Debian/Ubuntu Linux install
+  instructions for JavaFX
+
+* ObjectBuilder - Added JavaScript and Clojure language options; modified editor
+  to use Combo Box to choose language(replaces "External" checkbox)
+
+UPDATED
+
+* BlueSynthBuilder: Program now always rescales values when updating min/max 
+  properties for UI elements (e.g., Knob, Slider). (Removes need for popup 
+  dialog for every time user modifies min/max.)
+
+
+FIX
+
+* Issue #368 - When double-clicking PolyObject in project SoundObject Library,
+  Score editor now shows timeline of PolyObject and updates navigation bar
+
+* Mixer: Right-clicking on subchannels to remove made easier by allowing 
+  clicking on labels
+
+* Code Editor: fixed errors and exceptions when choosing an auto-completion for
+  opcode or BSBWidget name 
+
+* Orchestra Manager - right-click popup menu for Project did not work unless one 
+  instrument was added (would not allow right-clicking to paste instrument)
+
+
+INTERNAL
+
+* Support for Csound 5 API removed
+
+
 > Notes for 2.7.1 <
 [release 2017.09.24]
 

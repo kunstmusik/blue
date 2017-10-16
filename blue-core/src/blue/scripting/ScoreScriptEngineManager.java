@@ -16,23 +16,38 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package blue.csnd6.render;
+package blue.scripting;
 
-import csnd6.csnd6;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.ServiceLoader;
 
 /**
  *
  * @author stevenyi
  */
+public class ScoreScriptEngineManager {
 
-public class Csound6APIWarmupTask implements Runnable {
+    private static ScoreScriptEngineManager INSTANCE = null;
 
-    @Override
-    public void run() {
-        if(API6Utilities.isCsoundAPIAvailable()) {
-            csnd6.csoundInitialize(csnd6.CSOUNDINIT_NO_ATEXIT | 
-                    csnd6.CSOUNDINIT_NO_SIGNAL_HANDLER);
-        }        
+    private Map<String, ScoreScriptEngine> engines;
+
+    public static synchronized ScoreScriptEngineManager getInstance() {
+        if (INSTANCE == null) {
+            INSTANCE = new ScoreScriptEngineManager();
+        }
+        return INSTANCE;
     }
-    
+
+    private ScoreScriptEngineManager() {
+        engines = new HashMap<>();
+        ServiceLoader<ScoreScriptEngine> loader = ServiceLoader.load(ScoreScriptEngine.class);
+        for(ScoreScriptEngine eng : loader) {
+            engines.put(eng.getEngineName(), eng);
+        }
+    }
+
+    public ScoreScriptEngine getEngine(String name) {
+        return engines.get(name);
+    }
 }

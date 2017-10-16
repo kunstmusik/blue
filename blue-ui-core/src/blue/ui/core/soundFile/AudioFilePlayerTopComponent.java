@@ -143,16 +143,4 @@ public final class AudioFilePlayerTopComponent extends TopComponent {
         // TODO read your settings according to their version
     }
 
-    /**
-     * Gets default instance. Do not use directly: reserved for *.settings files
-     * only, i.e. deserialization routines; otherwise you could get a
-     * non-deserialized instance. To obtain the singleton instance, use
-     * {@link #findInstance}.
-     */
-    public static synchronized AudioFilePlayerTopComponent getDefault() {
-        if (instance == null) {
-            instance = new AudioFilePlayerTopComponent();
-        }
-        return instance;
-    }
 }

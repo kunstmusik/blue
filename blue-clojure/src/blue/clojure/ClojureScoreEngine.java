@@ -1,7 +1,6 @@
 /*
  * blue - object composition environment for csound
- * Copyright (C) 2013
- * Steven Yi <stevenyi@gmail.com>
+ * Copyright (C) 2017 stevenyi
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -17,16 +16,28 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package csnd5;
+package blue.clojure;
 
-import blue.csnd5.render.APIUtilities;
-import org.openide.modules.ModuleInstall;
+import blue.scripting.ScoreScriptEngine;
+import java.util.Map;
+import javax.script.ScriptException;
+import org.openide.util.lookup.ServiceProvider;
 
-public class Installer extends ModuleInstall {
+/**
+ *
+ * @author stevenyi
+ */
+@ServiceProvider(service = ScoreScriptEngine.class)
+public class ClojureScoreEngine implements ScoreScriptEngine{
 
     @Override
-    public void restored() {
-        System.setProperty("CSND5_LOADED", 
-                Boolean.toString(APIUtilities.isCsoundAPIAvailable())); 
+    public String getEngineName() {
+        return "Clojure";
     }
+
+    @Override
+    public String evalCode(String code, Map<String, Object> initValues) throws ScriptException {
+        return BlueClojureEngine.getInstance().processScript(code, initValues, "score");
+    }
+    
 }

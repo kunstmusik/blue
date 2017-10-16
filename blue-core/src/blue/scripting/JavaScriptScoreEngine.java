@@ -1,7 +1,6 @@
 /*
  * blue - object composition environment for csound
- * Copyright (C) 2013
- * Steven Yi <stevenyi@gmail.com>
+ * Copyright (C) 2017 stevenyi
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -17,31 +16,28 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package blue.csnd5.render;
+package blue.scripting;
 
-import blue.services.render.DiskRenderService;
-import blue.services.render.DiskRenderServiceFactory;
+import java.util.Map;
+import javax.script.ScriptException;
 import org.openide.util.lookup.ServiceProvider;
 
 /**
  *
  * @author stevenyi
  */
-@ServiceProvider (service = DiskRenderServiceFactory.class, position = 200)
-public class CS5DiskRenderServiceFactory implements DiskRenderServiceFactory {
+@ServiceProvider(service = ScoreScriptEngine.class)
+public class JavaScriptScoreEngine implements ScoreScriptEngine {
 
     @Override
-    public DiskRenderService createInstance() {
-        return new APIDiskRenderer();
+    public String getEngineName() {
+        return "JavaScript";
     }
 
     @Override
-    public boolean isAvailable() {
-        return APIUtilities.isCsoundAPIAvailable();
+    public String evalCode(String code, Map<String, Object> initValues) throws ScriptException {
+        return JavaScriptProxy.processJavascriptScore(code,
+                (Double) initValues.get("blueDuration"), null);
     }
-    
-    @Override 
-    public String toString() {
-        return "Csound 5 API";
-    }
+
 }

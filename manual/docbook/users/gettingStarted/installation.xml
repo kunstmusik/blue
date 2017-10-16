@@ -44,6 +44,24 @@
       package.  (Installing the Oracle JDK will include JavaFX automatically.)
     </para>
 
+    <simplesect id="javaDebianInstall">
+      <title>Debian/Ubuntu Notes</title>
+
+      <para>
+        If you are using Debian, Ubuntu, or a Linux distribution based upon one
+        of those, be sure that you have JavaFX installed with Java.  (If you hava Java
+        installed but not JavaFX, you will find that Blue will open but an error happens 
+        during startup and a blank screen shows.)  If you
+        have OpenJDK Java installed, you can try running the command "sudo apt
+        install openjfx" to install JavaFX and then try running Blue.</para>
+
+      <para>
+        If that does not work, you should try installing Oracle Java.  This can be done
+        by using apt together with a PPA. Complete instructions are given 
+        <ulink url="http://www.webupd8.org/2012/09/install-oracle-java-8-in-ubuntu-via-ppa.html">here</ulink>.
+      </para>
+    </simplesect>
+
   </section>
 
   <section id="installingBlue">
