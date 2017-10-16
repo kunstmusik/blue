@@ -50,6 +50,9 @@ FIX
 * Code Editor: fixed errors and exceptions when choosing an auto-completion for
   opcode or BSBWidget name 
 
+* Orchestra Manager - right-click popup menu for Project did not work unless one 
+  instrument was added (would not allow right-clicking to paste instrument)
+
 
 INTERNAL
 

@@ -186,12 +186,6 @@ public class ArrangementEditPanel extends JComponent
                     return;
                 }
 
-                int rowIndex = arrangementTable.getSelectedRow();
-
-                if (rowIndex < 0) {
-                    return;
-                }
-
                 if (UiUtilities.isRightMouseButton(e)) {
                     convertPopup.show(arrangementTable, e.getX(), e.getY());
                 }
