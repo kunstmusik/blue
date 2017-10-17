@@ -10,4 +10,5 @@ install:
   - '[ "${TRAVIS_OS_NAME}" = "osx" ] && brew install ant || true'
 
 script:
+  - mvn dependency:get -Dartifact=junit:junit:4.8.2 -DrepoUrl=http://repo1.maven.org/maven2/
   - ant -Dnbplatform.default.harness.dir=$PWD/netbeans/harness -Dnbplatform.default.netbeans.dest.dir=$PWD/netbeans test build-mac
