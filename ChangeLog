@@ -12,6 +12,14 @@ information.
 
 [CHANGE LOG]
 
+> Notes for 2.7.3 <
+[release 2017.xx.xx]
+
+UPDATED
+
+* CSD Import: import CSDs that do not have CsInstruments or CsScore sections
+
+
 > Notes for 2.7.2 <
 [release 2017.10.16]
 
