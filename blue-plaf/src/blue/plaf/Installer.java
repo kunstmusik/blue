@@ -44,14 +44,10 @@ import org.openide.windows.WindowManager;
 public class Installer extends ModuleInstall {
 
     Logger logger = Logger.getLogger("blue.plaf.Installer");
-    private Object customs = new BlueLFCustoms();
+    private BlueLFCustoms customs = new BlueLFCustoms();
 
     @Override
     public void validate() throws IllegalStateException {
-//        ClassLoader cl = Lookup.getDefault().lookup(
-//                ClassLoader.class);
-//        UIManager.put("ClassLoader", cl);
-
         Preferences prefs = NbPreferences.root().node("laf");
         prefs.put("laf", BlueLookAndFeel.class.getName());
 
@@ -59,10 +55,6 @@ public class Installer extends ModuleInstall {
         UIManager.put("nb.dark.theme", true);
         boolean isMac = System.getProperty("os.name").toLowerCase().startsWith(
                 "mac");
-
-//        UIManager.put("EditorTabDisplayerUI", "org.netbeans.swing.tabcontrol.plaf.AquaEditorTabDisplayerUI");
-//        UIManager.put("ViewTabDisplayerUI", "org.netbeans.swing.tabcontrol.plaf.AquaViewTabDisplayerUI");
-//        UIManager.put("SlidingButtonUI", "org.netbeans.swing.tabcontrol.plaf.AquaSlidingButtonUI");
 
         Object[] macEntries = null;
         if (isMac) {
@@ -114,9 +106,13 @@ public class Installer extends ModuleInstall {
             e.printStackTrace();
         }
 
-        UIManager.put("EditorTabDisplayerUI", "org.netbeans.swing.tabcontrol.plaf.AquaEditorTabDisplayerUI");
-        UIManager.put("ViewTabDisplayerUI", "org.netbeans.swing.tabcontrol.plaf.AquaViewTabDisplayerUI");
-        UIManager.put("SlidingButtonUI", "org.netbeans.swing.tabcontrol.plaf.AquaSlidingButtonUI");
+        // Doing this work here since there appears to be some kind of race 
+        // condition and sometimes BlueLFCustoms isn't found when app starts...
+        // Doing this work here ensures the keys/values are registered and tab
+        // colors are correct 
+        UIManager.getDefaults().putDefaults(customs.createGuaranteedKeysAndValues());
+        UIManager.getDefaults().putDefaults(customs.createApplicationSpecificKeysAndValues());
+        UIManager.getDefaults().putDefaults(customs.createLookAndFeelCustomizationKeysAndValues());
 
         UIManager.put(DefaultTabbedContainerUI.KEY_EDITOR_CONTENT_BORDER,
                 BorderFactory.createEmptyBorder());
@@ -258,6 +254,7 @@ public class Installer extends ModuleInstall {
                 () -> {
                     MacFullScreenUtil.setWindowCanFullScreen(
                             WindowManager.getDefault().getMainWindow());
+//                    WindowManager.getDefault().updateUI();
 //                    SwingUtilities.updateComponentTreeUI(
 //                            WindowManager.getDefault().getMainWindow());
                 });
