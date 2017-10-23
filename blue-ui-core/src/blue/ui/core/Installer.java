@@ -159,9 +159,11 @@ public class Installer extends ModuleInstall {
                     MidiInputEngine.getInstance());
         });
 
-        OSCManager oscManager = OSCManager.getInstance();
-        OSCActions.installActions(oscManager);
-        oscManager.start();
+        new Thread(() -> {
+            OSCManager oscManager = OSCManager.getInstance();
+            OSCActions.installActions(oscManager);
+            oscManager.start();
+        }).start();
 
         Lookup lkp = Lookups.forPath("blue/score/layers");
         result = lkp.lookupResult(LayerGroupProvider.class);
@@ -183,8 +185,7 @@ public class Installer extends ModuleInstall {
         //                return comp;
         //            }
         //        }
-
-        Platform.setImplicitExit(false); 
+        Platform.setImplicitExit(false);
         // Initialize JavaFX by using this call
         new JFXPanel();
 //        Platform.runLater(()
