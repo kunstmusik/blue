@@ -49,6 +49,7 @@ public class FrozenSoundObject extends AbstractSoundObject {
     }
 
     public FrozenSoundObject(FrozenSoundObject fso) {
+        super(fso);
         frozenSoundObject = fso.frozenSoundObject.deepCopy();
         frozenWaveFileName = fso.frozenWaveFileName;
         numChannels = fso.numChannels;

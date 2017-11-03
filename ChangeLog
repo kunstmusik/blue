@@ -19,6 +19,11 @@ UPDATED
 
 * CSD Import: import CSDs that do not have CsInstruments or CsScore sections
 
+FIX
+
+* Auditioning Frozen SoundObjects incorrectly calculated start/end times when
+  considering object for rendering, resulting in object not playing 
+
 
 > Notes for 2.7.2 <
 [release 2017.10.16]
