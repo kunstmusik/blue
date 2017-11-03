@@ -205,6 +205,7 @@ public final class RealtimeRenderManager {
         }
 
         BlueData tempData = new BlueData(data);
+        tempData.setLoopRendering(false);
 
         List<PolyObject> path = null;
         for(LayerGroup slg : data.getScore()) {
