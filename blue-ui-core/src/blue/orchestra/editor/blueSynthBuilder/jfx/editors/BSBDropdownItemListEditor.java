@@ -20,11 +20,12 @@ package blue.orchestra.editor.blueSynthBuilder.jfx.editors;
 
 import blue.orchestra.blueSynthBuilder.BSBDropdownItemList;
 import blue.orchestra.editor.blueSynthBuilder.DropdownItemEditorDialog;
-import java.awt.EventQueue;
 import java.util.concurrent.CountDownLatch;
 import javafx.scene.control.Button;
 import javafx.scene.layout.BorderPane;
+import javax.swing.SwingUtilities;
 import org.openide.util.Exceptions;
+import org.openide.windows.WindowManager;
 
 /**
  *
@@ -40,25 +41,15 @@ public class BSBDropdownItemListEditor extends BorderPane {
 
         b.setOnAction(e -> {
             BSBDropdownItemList newList = new BSBDropdownItemList(list);
-            CountDownLatch latch = new CountDownLatch(1);
-            EventQueue.invokeLater(new Runnable() {
-                public void run() {
-                    try {
-                        DropdownItemEditorDialog dlg = new DropdownItemEditorDialog();
-                        dlg.show(newList);
-                    } finally {
-                        latch.countDown();
-                    }
-                }
-            });
+            SwingUtilities.invokeLater(() -> {
+                DropdownItemEditorDialog dlg
+                        = new DropdownItemEditorDialog(
+                                WindowManager.getDefault().getMainWindow());
 
-            try {
-                latch.await();
-            } catch (InterruptedException ex) {
-                Exceptions.printStackTrace(ex);
-            }
-            list.clear();
-            list.addAll(newList);
+                dlg.show(newList);
+         
+                list.setAll(newList);
+            });
         });
 
 //            FXMLLoader loader = new FXMLLoader(

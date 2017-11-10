@@ -24,6 +24,7 @@ FIX
 * Auditioning Frozen SoundObjects incorrectly calculated start/end times when
   considering object for rendering, resulting in object not playing 
 
+* BlueSynthBuilder: On OSX, opening dropdown item editor was causing app freeze
 
 > Notes for 2.7.2 <
 [release 2017.10.16]

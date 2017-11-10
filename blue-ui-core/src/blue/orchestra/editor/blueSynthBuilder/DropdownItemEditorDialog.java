@@ -27,6 +27,7 @@ import blue.orchestra.blueSynthBuilder.BSBDropdownItem;
 import electric.xml.Element;
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
+import java.awt.Frame;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.WindowAdapter;
@@ -51,7 +52,8 @@ public class DropdownItemEditorDialog extends JDialog implements
 
     JTable table;
 
-    public DropdownItemEditorDialog() {
+    public DropdownItemEditorDialog(Frame owner) {
+        super(owner);
         this.setModal(true);
 
         this.getContentPane().setLayout(new BorderLayout());
