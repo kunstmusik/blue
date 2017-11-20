@@ -31,6 +31,8 @@ FIX
   * Improved Interface loading times to prevent hanging when switching items 
     quickly
 
+* UDO - After importing UDOs, table of UDOs did not get refreshed with new ones 
+
 
 > Notes for 2.7.2 <
 [release 2017.10.16]

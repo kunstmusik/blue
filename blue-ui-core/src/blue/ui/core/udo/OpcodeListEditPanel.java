@@ -486,7 +486,7 @@ public class OpcodeListEditPanel extends JComponent {
                     String text = TextUtilities.getTextFromFile(f);
                     Document d = new Document(f);
                     UserDefinedOpcode udo = UserDefinedOpcode.loadFromXML(d.getRoot());
-                    opcodeList.add(udo);
+                    opcodeList.addOpcode(udo);
                 } catch (Exception ex) {
                     Exceptions.printStackTrace(ex);
                 }
