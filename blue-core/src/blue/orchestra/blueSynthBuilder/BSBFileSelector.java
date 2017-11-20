@@ -83,7 +83,7 @@ public class BSBFileSelector extends BSBObject implements StringChannelProvider 
     }
 
     public final String getFileName() {
-        return fileName.get();
+        return fileName.getValueSafe();
     }
 
     public final StringProperty fileNameProperty() {
