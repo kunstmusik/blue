@@ -20,6 +20,8 @@
 package blue.score.layers.audio.ui;
 
 import blue.automation.AutomationManager;
+import blue.automation.Parameter;
+import blue.automation.ParameterIdList;
 import blue.mixer.Channel;
 import blue.score.layers.audio.core.AudioLayer;
 import blue.ui.components.IconFactory;
@@ -34,13 +36,15 @@ import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
 import javax.swing.border.BevelBorder;
 import javax.swing.border.Border;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 
 /**
  *
  * @author stevenyi
  */
 public class AudioHeaderLayerPanel extends javax.swing.JPanel
-        implements PropertyChangeListener {
+        implements ListSelectionListener, PropertyChangeListener {
 
     private static AudioLayerPanelMenu OTHER_MENU = null;
     private final AudioLayer audioLayer;
@@ -49,6 +53,10 @@ public class AudioHeaderLayerPanel extends javax.swing.JPanel
     private static final Border selectionBorder = BorderFactory.createBevelBorder(
             BevelBorder.RAISED, Color.GREEN, Color.GREEN.darker());
     private final Channel channel;
+
+    private final ParameterIdList paramIdList;
+
+    boolean updating = false;
 
     /**
      * Creates new form AudioHeaderLayerPanel
@@ -69,6 +77,10 @@ public class AudioHeaderLayerPanel extends javax.swing.JPanel
                 "BlueToggleButton.selectColorOverride", Color.ORANGE.darker());
         soloToggleButton.putClientProperty(
                 "BlueToggleButton.selectColorOverride", Color.GREEN.darker());
+
+        paramIdList = audioLayer.getAutomationParameters();
+
+        updateParameterPanel();
     }
 
     /**
@@ -79,6 +91,7 @@ public class AudioHeaderLayerPanel extends javax.swing.JPanel
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
+        java.awt.GridBagConstraints gridBagConstraints;
 
         jPanel2 = new javax.swing.JPanel();
         jPanel1 = new javax.swing.JPanel();
@@ -88,8 +101,17 @@ public class AudioHeaderLayerPanel extends javax.swing.JPanel
         soloToggleButton = new javax.swing.JToggleButton();
         automationButton = new javax.swing.JButton();
         otherMenuButton = new javax.swing.JButton();
+        paramSelectPanel = new javax.swing.JPanel();
+        paramColorSelect = new blue.components.ColorSelectionPanel();
+        paramNameLabel = new javax.swing.JLabel();
+        paramPreviousButton = new javax.swing.JButton();
+        paramNextButton = new javax.swing.JButton();
 
-        setLayout(new java.awt.BorderLayout());
+        addComponentListener(new java.awt.event.ComponentAdapter() {
+            public void componentResized(java.awt.event.ComponentEvent evt) {
+                formComponentResized(evt);
+            }
+        });
 
         jPanel2.setLayout(new javax.swing.BoxLayout(jPanel2, javax.swing.BoxLayout.LINE_AXIS));
 
@@ -180,7 +202,74 @@ public class AudioHeaderLayerPanel extends javax.swing.JPanel
         });
         jPanel2.add(otherMenuButton);
 
-        add(jPanel2, java.awt.BorderLayout.NORTH);
+        paramSelectPanel.setFocusable(false);
+        paramSelectPanel.setPreferredSize(new java.awt.Dimension(100, 19));
+        paramSelectPanel.setLayout(new javax.swing.BoxLayout(paramSelectPanel, javax.swing.BoxLayout.LINE_AXIS));
+
+        paramColorSelect.setBorder(javax.swing.BorderFactory.createEmptyBorder(3, 3, 3, 3));
+        paramColorSelect.setToolTipText(org.openide.util.NbBundle.getMessage(AudioHeaderLayerPanel.class, "AudioHeaderLayerPanel.paramColorSelect.toolTipText")); // NOI18N
+        paramColorSelect.setMaximumSize(new java.awt.Dimension(15, 15));
+        paramColorSelect.setPreferredSize(new java.awt.Dimension(15, 15));
+        paramColorSelect.addPropertyChangeListener(new java.beans.PropertyChangeListener() {
+            public void propertyChange(java.beans.PropertyChangeEvent evt) {
+                paramColorSelectPropertyChange(evt);
+            }
+        });
+        paramSelectPanel.add(paramColorSelect);
+
+        paramNameLabel.setFont(new java.awt.Font("Dialog", 0, 10)); // NOI18N
+        paramNameLabel.setText(org.openide.util.NbBundle.getMessage(AudioHeaderLayerPanel.class, "AudioHeaderLayerPanel.paramNameLabel.text")); // NOI18N
+        paramNameLabel.setBorder(javax.swing.BorderFactory.createEmptyBorder(0, 3, 0, 0));
+        paramNameLabel.setFocusable(false);
+        paramNameLabel.setMaximumSize(new java.awt.Dimension(32768, 15));
+        paramNameLabel.setPreferredSize(new java.awt.Dimension(100, 15));
+        paramSelectPanel.add(paramNameLabel);
+
+        paramPreviousButton.setFont(new java.awt.Font("Dialog", 1, 10)); // NOI18N
+        paramPreviousButton.setIcon(IconFactory.getLeftArrowIcon());
+        paramPreviousButton.setToolTipText(org.openide.util.NbBundle.getMessage(AudioHeaderLayerPanel.class, "AudioHeaderLayerPanel.paramPreviousButton.toolTipText")); // NOI18N
+        paramPreviousButton.setFocusPainted(false);
+        paramPreviousButton.setFocusable(false);
+        paramPreviousButton.setMargin(new java.awt.Insets(0, 0, 0, 0));
+        paramPreviousButton.setMaximumSize(new java.awt.Dimension(15, 15));
+        paramPreviousButton.setPreferredSize(new java.awt.Dimension(18, 17));
+        paramPreviousButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                paramPreviousButtonActionPerformed(evt);
+            }
+        });
+        paramSelectPanel.add(paramPreviousButton);
+
+        paramNextButton.setFont(new java.awt.Font("Dialog", 1, 10)); // NOI18N
+        paramNextButton.setIcon(IconFactory.getRightArrowIcon());
+        paramNextButton.setToolTipText(org.openide.util.NbBundle.getMessage(AudioHeaderLayerPanel.class, "AudioHeaderLayerPanel.paramNextButton.toolTipText")); // NOI18N
+        paramNextButton.setFocusPainted(false);
+        paramNextButton.setFocusable(false);
+        paramNextButton.setMargin(new java.awt.Insets(0, 0, 0, 0));
+        paramNextButton.setMaximumSize(new java.awt.Dimension(15, 15));
+        paramNextButton.setPreferredSize(new java.awt.Dimension(17, 17));
+        paramNextButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                paramNextButtonActionPerformed(evt);
+            }
+        });
+        paramSelectPanel.add(paramNextButton);
+
+        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
+        this.setLayout(layout);
+        layout.setHorizontalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(paramSelectPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 240, Short.MAX_VALUE)
+            .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+        );
+        layout.setVerticalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(layout.createSequentialGroup()
+                .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(0, 0, 0)
+                .addComponent(paramSelectPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(21, 21, 21))
+        );
     }// </editor-fold>//GEN-END:initComponents
 
     private void nameTextActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_nameTextActionPerformed
@@ -234,6 +323,62 @@ public class AudioHeaderLayerPanel extends javax.swing.JPanel
         menu.show(automationButton, 0, automationButton.getHeight());
     }//GEN-LAST:event_automationButtonActionPerformed
 
+    private void paramColorSelectPropertyChange(java.beans.PropertyChangeEvent evt) {//GEN-FIRST:event_paramColorSelectPropertyChange
+        if (audioLayer == null || paramIdList == null || updating) {
+            return;
+        }
+
+        int index = paramIdList.getSelectedIndex();
+
+        if (index < 0) {
+            return;
+        }
+
+        String id = paramIdList.getParameterId(index);
+
+        Parameter param = AutomationManager.getInstance().getParameter(id);
+        
+        if(param != null) {
+            param.getLine().setColor(paramColorSelect.getColor());
+        }
+    }//GEN-LAST:event_paramColorSelectPropertyChange
+
+    private void paramPreviousButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_paramPreviousButtonActionPerformed
+        if (audioLayer == null || paramIdList == null || paramIdList.size() < 2) {
+            return;
+        }
+
+        int index = paramIdList.getSelectedIndex() - 1;
+        if (index < 0) {
+            index = paramIdList.size() - 1;
+        }
+        paramIdList.setSelectedIndex(index);
+    }//GEN-LAST:event_paramPreviousButtonActionPerformed
+
+    private void paramNextButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_paramNextButtonActionPerformed
+        if (audioLayer == null || paramIdList == null || paramIdList.size() < 2) {
+            return;
+        }
+
+        int index = paramIdList.getSelectedIndex() + 1;
+        if (index >= paramIdList.size()) {
+            index = 0;
+        }
+        paramIdList.setSelectedIndex(index);
+    }//GEN-LAST:event_paramNextButtonActionPerformed
+
+    private void formComponentResized(java.awt.event.ComponentEvent evt) {//GEN-FIRST:event_formComponentResized
+        if(audioLayer == null) {
+            return;
+        }
+        
+        if (audioLayer.getAutomationParameters().size() > 0) {
+            paramSelectPanel.setVisible(getHeight() > 22);
+        } else {
+            paramSelectPanel.setVisible(false);
+        }
+    }//GEN-LAST:event_formComponentResized
+
     public void editName() {
         if (audioLayer == null) {
             return;
@@ -251,27 +396,108 @@ public class AudioHeaderLayerPanel extends javax.swing.JPanel
     private javax.swing.JLabel nameLabel;
     private javax.swing.JTextField nameText;
     private javax.swing.JButton otherMenuButton;
+    private blue.components.ColorSelectionPanel paramColorSelect;
+    private javax.swing.JLabel paramNameLabel;
+    private javax.swing.JButton paramNextButton;
+    private javax.swing.JButton paramPreviousButton;
+    private javax.swing.JPanel paramSelectPanel;
     private javax.swing.JToggleButton soloToggleButton;
     // End of variables declaration//GEN-END:variables
 
     @Override
     public void removeNotify() {
-        super.removeNotify();
+        if (this.paramIdList != null) {
+            paramIdList.removeListSelectionListener(this);
+        }
         if (this.audioLayer != null) {
             this.audioLayer.removePropertyChangeListener(this);
         }
+
+        super.removeNotify();
+
     }
 
     @Override
     public void addNotify() {
-        super.addNotify();
+        if (this.paramIdList != null) {
+            paramIdList.addListSelectionListener(this);
+        }
+
         if (this.audioLayer != null) {
             this.audioLayer.addPropertyChangeListener(this);
         }
+
+        super.addNotify();
+
     }
 
     public void setSelected(boolean val) {
         setBorder(val ? selectionBorder : border);
+    }
+
+
+    private void updateParameterPanel() {
+        int index = paramIdList.getSelectedIndex();
+        
+        if (paramIdList.size() <= 0 || index < 0) {
+
+            updating = true;
+            paramColorSelect.setEnabled(false);
+            paramColorSelect.setColor(Color.BLACK);
+            updating = false;
+
+            paramNameLabel.setText("No Parameters Available");
+            paramNameLabel.setEnabled(false);
+            paramNextButton.setEnabled(false);
+            paramPreviousButton.setEnabled(false);
+
+            paramSelectPanel.setVisible(false);
+
+            return;
+        }
+        
+        String id = paramIdList.getParameterId(index);
+        Parameter param = AutomationManager.getInstance().getParameter(id);
+        
+        if(param == null) {
+            updating = true;
+            paramColorSelect.setEnabled(false);
+            paramColorSelect.setColor(Color.BLACK);
+            updating = false;
+
+            paramNameLabel.setText("No Parameters Available");
+            paramNameLabel.setEnabled(false);
+            paramNextButton.setEnabled(false);
+            paramPreviousButton.setEnabled(false);
+
+            paramSelectPanel.setVisible(false);
+
+            return;            
+        }
+
+        if (getHeight() > 22) {
+            paramSelectPanel.setVisible(true);
+        }
+
+        updating = true;
+
+        paramColorSelect.setEnabled(true);
+        paramColorSelect.setColor(param.getLine().getColor());
+
+        paramNameLabel.setText(param.getName());
+        paramNameLabel.setEnabled(true);
+
+        int size = paramIdList.size();
+
+        paramNextButton.setEnabled(true);
+        paramPreviousButton.setEnabled(true);
+
+        updating = false;
+    }
+
+    @Override
+    public void valueChanged(ListSelectionEvent e) {
+        updateParameterPanel();
     }
 
     @Override

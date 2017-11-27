@@ -220,15 +220,15 @@ public class LayersPanel extends JComponent implements LayerGroupListener {
     /* SELECTION */
 
     private void updateSelection() {
-        int start = selection.getStartIndex();
-        int end = selection.getEndIndex();
+//        int start = selection.getStartIndex();
+//        int end = selection.getEndIndex();
 
-        Component[] comps = getComponents();
+//        Component[] comps = getComponents();
 
-        for (int i = 0; i < comps.length; i++) {
-            SoundLayerPanel panel = (SoundLayerPanel) comps[i];
-            panel.setSelected(i >= start && i <= end);
-        }
+//        for (int i = 0; i < comps.length; i++) {
+//            SoundLayerPanel panel = (SoundLayerPanel) comps[i];
+//            panel.setSelected(i >= start && i <= end);
+//        }
     }
 
     public SelectionModel getSelectionModel() {

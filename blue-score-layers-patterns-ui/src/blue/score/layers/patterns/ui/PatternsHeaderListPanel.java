@@ -195,15 +195,15 @@ public class PatternsHeaderListPanel extends JPanel implements
     }
     
     private void updateSelection() {
-        int start = selection.getStartIndex();
-        int end = selection.getEndIndex();
-
-        Component[] comps = getComponents();
-
-        for (int i = 0; i < comps.length; i++) {
-            PatternLayerPanel panel = (PatternLayerPanel) comps[i];
-            panel.setSelected(i >= start && i <= end);
-        }
+//        int start = selection.getStartIndex();
+//        int end = selection.getEndIndex();
+//
+//        Component[] comps = getComponents();
+//
+//        for (int i = 0; i < comps.length; i++) {
+//            PatternLayerPanel panel = (PatternLayerPanel) comps[i];
+//            panel.setSelected(i >= start && i <= end);
+//        }
     }
     
     public void checkSize() {
