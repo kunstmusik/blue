@@ -35,6 +35,7 @@ import java.util.regex.Pattern;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.TableModel;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.text.StrBuilder;
 
 /**
@@ -178,13 +179,18 @@ public class Arrangement implements TableModel {
     }
 
     public void addInstrumentWithId(Instrument instr, String instrId) {
+        addInstrumentWithId(instr, instrId, true);
+    }
+    public void addInstrumentWithId(Instrument instr, String instrId, boolean sort) {
         InstrumentAssignment ia = new InstrumentAssignment();
         ia.arrangementId = instrId;
         ia.instr = instr;
 
         arrangement.add(ia);
 
-        Collections.<InstrumentAssignment>sort(arrangement);
+        if(sort) {
+            Collections.<InstrumentAssignment>sort(arrangement);
+        }
 
         if (instr instanceof Automatable) {
             fireAutomatableAdded((Automatable) instr);

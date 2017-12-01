@@ -33,7 +33,6 @@ import blue.settings.RealtimeRenderSettings;
 import blue.soundObject.PolyObject;
 import blue.soundObject.SoundObject;
 import blue.soundObject.SoundObjectException;
-import blue.utility.ObjectUtilities;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -295,6 +294,12 @@ public final class RealtimeRenderManager {
     public void passToStdin(String score) {
         if (isBlueLiveRendering()) {
             currentBlueLiveRenderService.passToStdin(score);
+        }
+    }
+
+    public void evalOrc(String orchestra) {
+        if (isBlueLiveRendering()){
+            currentBlueLiveRenderService.evalOrc(orchestra);
         }
     }
 

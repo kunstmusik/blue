@@ -30,14 +30,17 @@ import blue.projects.BlueProjectManager;
 import blue.score.ScoreObject;
 import blue.soundObject.NoteList;
 import blue.soundObject.SoundObject;
+import blue.ui.core.render.RealtimeRenderManager;
 import blue.ui.core.score.ScoreController;
 import blue.ui.core.score.layers.SoundObjectProvider;
+import blue.ui.nbutilities.MimeTypeEditorComponent;
 import blue.ui.nbutilities.lazyplugin.AttributeFilter;
 import blue.ui.nbutilities.lazyplugin.LazyPlugin;
 import blue.ui.nbutilities.lazyplugin.LazyPluginFactory;
 import blue.ui.utilities.SimpleDocumentListener;
 import blue.ui.utilities.UiUtilities;
 import blue.utility.ScoreUtilities;
+import java.awt.BorderLayout;
 import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
 import java.util.Collections;
@@ -79,7 +82,8 @@ import skt.swing.SwingUtil;
         position = 800)
 @ActionID(category = "Window", id = "blue.ui.core.blueLive.BlueLiveTopComponent")
 @ActionReferences({
-    @ActionReference(path = "Menu/Window", position = 1700, separatorAfter = 1750),
+    @ActionReference(path = "Menu/Window", position = 1700, separatorAfter = 1750)
+    ,
     @ActionReference(path = "Shortcuts", name = "D-8")
 })
 @TopComponent.OpenActionRegistration(
@@ -111,9 +115,11 @@ public final class BlueLiveTopComponent extends TopComponent
     MidiInputManager midiManager;
     ScoPadReceiver scoPadReceiver = new ScoPadReceiver();
     JPopupMenu noteTemplatePopup;
-    BlueLiveToolBar blueLiveToolBar;
     int mouseColumn = -1;
     int mouseRow = -1;
+
+    MimeTypeEditorComponent liveCodeEditor
+            = new MimeTypeEditorComponent("text/x-csound-orc");
 
     Map<Class<? extends SoundObject>, String> liveSoundObjectTemplates;
 
@@ -142,8 +148,6 @@ public final class BlueLiveTopComponent extends TopComponent
         setToolTipText(NbBundle.getMessage(BlueLiveTopComponent.class,
                 "HINT_BlueLiveTopComponent"));
 //        setIcon(ImageUtilities.loadImage(ICON_PATH, true));
-
-        blueLiveToolBar = BlueLiveToolBar.getInstance();
 
         setupNoteTemplatePopup();
 
@@ -419,6 +423,26 @@ public final class BlueLiveTopComponent extends TopComponent
 
         SwingUtil.installActions(liveObjectsTable,
                 new Action[]{singleTrigger, multiTrigger, copyObj, pasteObj});
+
+        liveCodeEditor.getDocument().addDocumentListener(new SimpleDocumentListener() {
+            @Override
+            public void documentChanged(DocumentEvent e) {
+                if (data != null) {
+                    data.getLiveData().setLiveCodeText(liveCodeEditor.getText());
+                }
+            }
+        });
+        liveCodeEditor.getJEditorPane().getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_E, BlueSystem.getMenuShortcutKey()), "eval-live-orc");
+        liveCodeEditor.getJEditorPane().getActionMap().put("eval-live-orc",
+                new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                
+                String orc = liveCodeEditor.getJEditorPane().getSelectedText();
+                RealtimeRenderManager.getInstance().evalOrc(orc);
+            }
+        });
+        liveCodePanel.add(liveCodeEditor, BorderLayout.CENTER);
     }
 
     private void reinitialize() {
@@ -448,7 +472,7 @@ public final class BlueLiveTopComponent extends TopComponent
             this.completeOverride.setSelected(liveData.isCommandLineOverride());
 
             this.repeatButton.setSelected(liveData.isRepeatEnabled());
-            
+
             commandLineText.setEnabled(liveData.isCommandLineEnabled());
 
 //            liveObjectsTable.getColumnModel().getColumn(2).setMaxWidth(100);
@@ -458,6 +482,8 @@ public final class BlueLiveTopComponent extends TopComponent
             // liveSpace.setLiveObjects(data.getLiveData().getLiveSoundObjects());
             repeatSpinner.setValue(liveData.getRepeat());
             tempoSpinner.setValue(liveData.getTempo());
+
+            liveCodeEditor.setText(liveData.getLiveCodeText());
 
             this.data = currentData;
 
@@ -490,7 +516,7 @@ public final class BlueLiveTopComponent extends TopComponent
 
         String scoreText = nl.toString();
         if (scoreText != null && scoreText.length() > 0) {
-            blueLiveToolBar.sendEvents(scoreText);
+            RealtimeRenderManager.getInstance().passToStdin(scoreText);
         }
     }
 
@@ -521,6 +547,7 @@ public final class BlueLiveTopComponent extends TopComponent
         buttonDown = new javax.swing.JButton();
         buttonAdd = new javax.swing.JButton();
         buttonRemove = new javax.swing.JButton();
+        liveCodePanel = new javax.swing.JPanel();
         scoPadPanel = new javax.swing.JPanel();
         jLabel4 = new javax.swing.JLabel();
         startSpinner = new javax.swing.JSpinner();
@@ -694,11 +721,14 @@ public final class BlueLiveTopComponent extends TopComponent
                     .addComponent(jLabel7)
                     .addComponent(jLabel6, javax.swing.GroupLayout.PREFERRED_SIZE, 29, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jSplitPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 560, Short.MAX_VALUE)
+                .addComponent(jSplitPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 442, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
         jTabbedPane1.addTab(org.openide.util.NbBundle.getMessage(BlueLiveTopComponent.class, "BlueLiveTopComponent.liveSpacePanel.TabConstraints.tabTitle"), liveSpacePanel); // NOI18N
+
+        liveCodePanel.setLayout(new java.awt.BorderLayout());
+        jTabbedPane1.addTab(org.openide.util.NbBundle.getMessage(BlueLiveTopComponent.class, "BlueLiveTopComponent.liveCodePanel.TabConstraints.tabTitle"), liveCodePanel); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(jLabel4, org.openide.util.NbBundle.getMessage(BlueLiveTopComponent.class, "BlueLiveTopComponent.jLabel4.text")); // NOI18N
 
@@ -809,7 +839,7 @@ public final class BlueLiveTopComponent extends TopComponent
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(completeOverride)
-                    .addComponent(commandLineText, javax.swing.GroupLayout.DEFAULT_SIZE, 432, Short.MAX_VALUE))
+                    .addComponent(commandLineText, javax.swing.GroupLayout.DEFAULT_SIZE, 440, Short.MAX_VALUE))
                 .addContainerGap())
         );
         jPanel1Layout.setVerticalGroup(
@@ -821,7 +851,7 @@ public final class BlueLiveTopComponent extends TopComponent
                     .addComponent(commandLineText, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(completeOverride)
-                .addContainerGap(427, Short.MAX_VALUE))
+                .addContainerGap(431, Short.MAX_VALUE))
         );
 
         jTabbedPane1.addTab(org.openide.util.NbBundle.getMessage(BlueLiveTopComponent.class, "BlueLiveTopComponent.jPanel1.TabConstraints.tabTitle"), jPanel1); // NOI18N
@@ -839,7 +869,7 @@ public final class BlueLiveTopComponent extends TopComponent
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jTabbedPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 535, Short.MAX_VALUE)
+                .addComponent(jTabbedPane1)
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -925,7 +955,7 @@ public final class BlueLiveTopComponent extends TopComponent
 
         outputTextArea.setText(
                 outputTextArea.getText() + scoPadReceiver.getNotes(
-                        template, instrId, start, dur));
+                template, instrId, start, dur));
 
         startSpinner.setValue(new Double(start + dur));
     }//GEN-LAST:event_outputTextAreaKeyPressed
@@ -945,7 +975,7 @@ public final class BlueLiveTopComponent extends TopComponent
         LiveObjectSet liveObjects = data.getLiveData().getLiveObjectBins().getEnabledLiveObjectSet();
 
         if (liveObjects.size() > 0) {
-            System.out.println("LiveObjectsSize: " +liveObjects.size());
+            System.out.println("LiveObjectsSize: " + liveObjects.size());
             NoteList nl = new NoteList();
             try {
 
@@ -969,7 +999,7 @@ public final class BlueLiveTopComponent extends TopComponent
             String scoreText = nl.toString();
 
             if (scoreText != null && scoreText.length() > 0) {
-                blueLiveToolBar.sendEvents(scoreText);
+                RealtimeRenderManager.getInstance().passToStdin(scoreText);
             }
 
         }
@@ -991,8 +1021,7 @@ public final class BlueLiveTopComponent extends TopComponent
 //            performanceThread.turnOff();
 //            performanceThread = null;
 //        }
-
-        if(data != null) {
+        if (data != null) {
             data.getLiveData().setRepeatEnabled(repeatButton.isSelected());
         }
     }//GEN-LAST:event_repeatButtonActionPerformed
@@ -1077,6 +1106,7 @@ public final class BlueLiveTopComponent extends TopComponent
     private javax.swing.JScrollPane jScrollPane3;
     private javax.swing.JSplitPane jSplitPane1;
     private javax.swing.JTabbedPane jTabbedPane1;
+    private javax.swing.JPanel liveCodePanel;
     private javax.swing.JTable liveObjectSetListTable;
     private javax.swing.JTable liveObjectsTable;
     private javax.swing.JPanel liveSpacePanel;
@@ -1122,17 +1152,17 @@ public final class BlueLiveTopComponent extends TopComponent
             if (noteTemplateText.isEnabled()) {
                 int loc = noteTemplateText.getCaret().getDot();
                 int mark = noteTemplateText.getCaret().getMark();
-                
+
                 int start = loc < mark ? loc : mark;
                 int len = Math.abs(loc - mark);
-                
+
                 Document doc = noteTemplateText.getDocument();
-                
+
                 try {
                     if (len > 0) {
                         doc.remove(start, len);
                     }
-                    
+
                     doc.insertString(start, e.getActionCommand(), null);
                 } catch (BadLocationException ex) {
                     ex.printStackTrace();
@@ -1260,7 +1290,7 @@ public final class BlueLiveTopComponent extends TopComponent
             removeInstrumentMenuItem.addActionListener((ActionEvent e) -> {
                 LiveObject lObj = (LiveObject) liveObjectsTable.getValueAt(
                         mouseRow, mouseColumn);
-                
+
                 if (lObj != null) {
                     model.setValueAt(null, mouseRow, mouseColumn);
                     content.set(Collections.emptyList(), null);
@@ -1269,18 +1299,18 @@ public final class BlueLiveTopComponent extends TopComponent
             cutMenuItem.addActionListener((ActionEvent e) -> {
                 LiveObject lObj = (LiveObject) liveObjectsTable.getValueAt(
                         mouseRow, mouseColumn);
-                
+
                 if (lObj != null) {
-                    
+
                     SoundObject copy = lObj.getSoundObject().deepCopy();
-                    
+
                     ScoreController.ScoreObjectBuffer scoreObjectBuffer
                             = ScoreController.getInstance().getScoreObjectBuffer();
-                    
+
                     scoreObjectBuffer.clear();
                     scoreObjectBuffer.scoreObjects.add(copy);
                     scoreObjectBuffer.layerIndexes.add(0);
-                    
+
                     model.setValueAt(null, mouseRow, mouseColumn);
                     content.set(Collections.emptyList(), null);
                 }
@@ -1288,14 +1318,14 @@ public final class BlueLiveTopComponent extends TopComponent
             copyMenuItem.addActionListener((ActionEvent e) -> {
                 LiveObject lObj = (LiveObject) liveObjectsTable.getValueAt(
                         mouseRow, mouseColumn);
-                
+
                 if (lObj != null) {
-                    
+
                     SoundObject copy = lObj.getSoundObject().deepCopy();
-                    
+
                     ScoreController.ScoreObjectBuffer scoreObjectBuffer
                             = ScoreController.getInstance().getScoreObjectBuffer();
-                    
+
                     scoreObjectBuffer.clear();
                     scoreObjectBuffer.scoreObjects.add(copy);
                     scoreObjectBuffer.layerIndexes.add(0);
@@ -1304,7 +1334,7 @@ public final class BlueLiveTopComponent extends TopComponent
             pasteMenuItem.addActionListener((ActionEvent e) -> {
                 ScoreController.ScoreObjectBuffer scoreObjectBuffer
                         = ScoreController.getInstance().getScoreObjectBuffer();
-                
+
                 if (scoreObjectBuffer.scoreObjects.size() != 1) {
                     return;
                 }
@@ -1312,13 +1342,13 @@ public final class BlueLiveTopComponent extends TopComponent
                 if (!(scoreObj instanceof SoundObject)) {
                     return;
                 }
-                
+
                 SoundObject sObj = (SoundObject) scoreObj;
-                
+
                 if (!liveSoundObjectTemplates.containsKey(sObj.getClass())) {
                     return;
                 }
-                
+
                 SoundObject copy = sObj.deepCopy();
                 copy.setStartTime(0.0f);
                 addSoundObject(mouseColumn, mouseRow, copy);

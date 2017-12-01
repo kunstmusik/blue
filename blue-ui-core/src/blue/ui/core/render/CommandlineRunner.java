@@ -180,6 +180,8 @@ public class CommandlineRunner implements PlayModeListener, RealtimeRenderServic
             command += " -Lstdin ";
         }
 
+        command += " --omacro:BLUE_LIVE=1 --smacro:BLUE_LIVE=1 ";
+
         if (osName.contains("Windows")) {
             command += " \"" + temp.getAbsolutePath() + "\"";
         } else {
@@ -245,6 +247,11 @@ public class CommandlineRunner implements PlayModeListener, RealtimeRenderServic
     @Override
     public void removeBinding(CsoundBinding binding) {
         // no-op, commandline runner does not support bindings
+    }
+
+    @Override
+    public void evalOrc(String orchestra) {
+        // TODO - implement using UDP
     }
 
     class RunProxy implements Runnable {

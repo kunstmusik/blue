@@ -56,6 +56,13 @@ NEW
 * ObjectBuilder - Added JavaScript and Clojure language options; modified editor
   to use Combo Box to choose language(replaces "External" checkbox)
 
+* BlueLive 
+  
+  * added new "Live Code" tab for live coding (ctrl-e evaluates selected code)
+
+  * added definition of BLUE_LIVE orchestra and score macros that user can check
+    with #ifdef to conditionally use code when rendering with Blue Live 
+
 UPDATED
 
 * BlueSynthBuilder: Program now always rescales values when updating min/max 

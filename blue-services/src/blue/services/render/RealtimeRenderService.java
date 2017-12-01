@@ -34,4 +34,7 @@ public interface RealtimeRenderService {
     void addBinding(CsoundBinding binding);
 
     void removeBinding(CsoundBinding binding);
+
+    public void evalOrc(String orchestra);
+
 }

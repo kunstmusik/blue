@@ -40,6 +40,7 @@ public class LiveData {
     private boolean commandLineEnabled = false;
     private boolean commandLineOverride = false;
     private boolean repeatEnabled = false;
+    private String liveCodeText = ""; 
 
     public LiveData() {
         liveObjectBins = new LiveObjectBins();
@@ -47,7 +48,7 @@ public class LiveData {
     }
 
     public LiveData(LiveData liveData) {
-        commandLine = liveData.commandLine;
+        setCommandLine(liveData.commandLine);
         tempo = liveData.tempo;
         repeat = liveData.repeat;
         commandLineEnabled = liveData.commandLineEnabled;
@@ -55,6 +56,7 @@ public class LiveData {
         repeatEnabled = liveData.repeatEnabled;
         liveObjectBins = new LiveObjectBins(liveData.liveObjectBins);
         liveObjectSets = new LiveObjectSetList(liveData.liveObjectSets);
+        liveCodeText = liveData.liveCodeText;
     }
 
     public String getCommandLine() {
@@ -62,7 +64,7 @@ public class LiveData {
     }
 
     public void setCommandLine(String string) {
-        commandLine = string;
+        commandLine = (string == null) ? "" : string;
     }
 
     public LiveObjectBins getLiveObjectBins() {
@@ -87,6 +89,14 @@ public class LiveData {
 
     public void setTempo(int tempo) {
         this.tempo = tempo;
+    }
+
+    public String getLiveCodeText() {
+        return liveCodeText;
+    }
+
+    public void setLiveCodeText(String liveCodeText) {
+        this.liveCodeText = (liveCodeText == null) ? "" : liveCodeText;
     }
 
     public static LiveData loadFromXML(Element data,
@@ -143,6 +153,9 @@ public class LiveData {
                 case "repeatEnabled":
                     liveData.setRepeatEnabled(XMLUtilities.readBoolean(node));
                     break;
+                case "liveCodeText":
+                    liveData.setLiveCodeText(node.getTextString());
+                    break;
             }
 
         }
@@ -189,6 +202,7 @@ public class LiveData {
         retVal.addElement(XMLUtilities.writeInt("tempo", tempo));
         retVal.addElement(XMLUtilities.writeBoolean("repeatEnabled",
                 repeatEnabled));
+        retVal.addElement("liveCodeText").setText(liveCodeText);
 
         return retVal;
     }

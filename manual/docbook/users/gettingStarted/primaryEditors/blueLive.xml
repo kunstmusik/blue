@@ -188,6 +188,28 @@
   </section>
 
   <section>
+    <title>Live Code</title>
+
+    <para>
+      The live coding tab holds Csound Orchestra code for live coding. Once
+      BlueLive is enabled, you can select code within the Live Code tab and use
+      the "ctrl-e" (cmd-e on OSX) shortcut to evaluate the code in the running
+      Csound instance.  
+    </para>
+
+    <note>
+      <title>Note</title>
+      <para>When rendering for BlueLive, Blue will define a BLUE_LIVE orchestra
+        and score macro.  This allows you to write conditional code (e.g., in
+        the Global Orchestra or Global Score tabs for your project) that will
+        run only when BLUE_LIVE is defined. (This can be checked using
+        #ifdef's.)</para>
+    </note>
+  </section>
+
+
+
+  <section>
     <title>SCO Pad</title>
 
     <note>
