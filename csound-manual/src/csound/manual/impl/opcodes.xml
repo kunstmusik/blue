@@ -156,6 +156,10 @@
         <signature>ares 	mpulse	 kamp, kintvl [, ioffset]</signature>
       </opcode>
       <opcode>
+        <name>squinewave</name>
+        <signature>aout [, asyncout] 	squinewave	 acps, aClip, aSkew [, asyncin] [, iMinSweep] [, iphase]</signature>
+      </opcode>
+      <opcode>
         <name>vco</name>
         <signature>ares 	vco	 xamp, xcps, iwave, kpw [, ifn] [, imaxd] [, ileak] [, inyx] \
       [, iphs] [, iskip]</signature>
@@ -1982,6 +1986,10 @@
         <signature>Sval 	chnget	 Sname</signature>
       </opcode>
       <opcode>
+        <name>chngetks</name>
+        <signature>Sval 	chngetks	 Sname</signature>
+      </opcode>
+      <opcode>
         <name>chnmix</name>
         <signature>chnmix	 aval, Sname</signature>
       </opcode>
@@ -2004,6 +2012,10 @@
       <opcode>
         <name>chnset</name>
         <signature>chnset	 Sval, Sname</signature>
+      </opcode>
+      <opcode>
+        <name>chnsetks</name>
+        <signature>chnsetks	 Sval, Sname</signature>
       </opcode>
       <opcode>
         <name>setksmps</name>
@@ -4839,6 +4851,10 @@
       <opcode>
         <name>#</name>
         <signature>a 	#	 b  (bitwise NON EQUIVALENCE)</signature>
+      </opcode>
+      <opcode>
+        <name>!</name>
+        <signature>!	 a  (logical NOT; not audio-rate)</signature>
       </opcode>
       <opcode>
         <name>>||</name>
