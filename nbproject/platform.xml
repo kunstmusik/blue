@@ -1,9 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project name="platform" default="download" basedir="..">
 
+  <!--<property -->
+  <!--  name="bootstrap.url"-->
+  <!--  value="http://deadlock.netbeans.org/hudson/job/nbms-and-javadoc/lastStableBuild/artifact/nbbuild/netbeans/harness/tasks.jar"/>-->
   <property 
     name="bootstrap.url"
-    value="http://deadlock.netbeans.org/hudson/job/nbms-and-javadoc/lastStableBuild/artifact/nbbuild/netbeans/harness/tasks.jar"/>
+    value="http://kunstmusik.com/tasks.jar"/>
   
   <property 
     name="autoupdate.catalog.url"
