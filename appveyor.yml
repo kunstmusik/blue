@@ -8,12 +8,14 @@ platform: x64
 init:
   - cmd: choco install ant -y -f -i
   - mvn dependency:get -Dartifact=junit:junit:4.8.2 -DrepoUrl=http://repo1.maven.org/maven2/
+  - appveyor DownloadFile http://www.rw-designer.com/rsrc/ReplaceVistaIcon.exe 
+
 
 cache:
   - C:\Users\appveyor\.m2
 
 build_script:
-  - ant -Dnbplatform.default.harness.dir=%cd%\netbeans\harness -Dnbplatform.default.netbeans.dest.dir=%cd%\netbeans -DfopCommand=fop test build-zip
+  - ant -Dnbplatform.default.harness.dir=%cd%\netbeans\harness -Dnbplatform.default.netbeans.dest.dir=%cd%\netbeans -DfopCommand=fop -Dreplacevistaicon.exe=%cd%\ReplaceVistaIcon.exe test build-zip
  
 
 # Tests
