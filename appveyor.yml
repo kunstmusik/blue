@@ -13,7 +13,7 @@ cache:
   - C:\Users\appveyor\.m2
 
 build_script:
-  - ant -Dnbplatform.default.harness.dir=$PWD/netbeans/harness -Dnbplatform.default.netbeans.dest.dir=$PWD/netbeans -DfopCommand=fop test build-zip
+  - ant -Dnbplatform.default.harness.dir=%cd%\netbeans\harness -Dnbplatform.default.netbeans.dest.dir=%cd%\netbeans -DfopCommand=fop test build-zip
  
 
 # Tests
