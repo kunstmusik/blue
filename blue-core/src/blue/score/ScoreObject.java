@@ -107,4 +107,5 @@ public interface ScoreObject extends DeepCopyable<ScoreObject> {
      */
     public void setBackgroundColor(Color color);
 
+    public int getCloneSourceHashCode();
 }

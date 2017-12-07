@@ -30,6 +30,10 @@ public interface ScoreObjectLayer<T extends ScoreObject> extends Layer, List<T> 
     public static final int HEIGHT_MAX_INDEX = 9;
     public int getHeightIndex();
     public void setHeightIndex(int heightLayerIndex);
+    public void setMuted(boolean muted);
+    public boolean isMuted();
+    public void setSolo(boolean muted);
+    public boolean isSolo();
     @Override
     public ScoreObjectLayer<T> deepCopy();
 }

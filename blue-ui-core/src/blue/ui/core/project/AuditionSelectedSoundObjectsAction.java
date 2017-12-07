@@ -7,6 +7,7 @@ package blue.ui.core.project;
 import blue.BlueData;
 import blue.projects.BlueProject;
 import blue.projects.BlueProjectManager;
+import blue.score.ScoreObject;
 import blue.soundObject.SoundObject;
 import blue.ui.core.render.RealtimeRenderManager;
 import java.awt.event.ActionEvent;
@@ -25,15 +26,17 @@ import org.openide.util.NbBundle.Messages;
         displayName = "#CTL_AuditionScoreObjectsAction")
 @Messages("CTL_AuditionScoreObjectsAction=Audition ScoreObjects")
 @ActionReferences({
-    @ActionReference(path = "blue/score/actions", position = 10, separatorAfter = 15),
-    @ActionReference(path = "Menu/Project", position = 150),
+    @ActionReference(path = "blue/score/actions", position = 10, separatorAfter = 15)
+    ,
+    @ActionReference(path = "Menu/Project", position = 150)
+    ,
     @ActionReference(path = "Shortcuts", name = "DS-A")
 })
 public final class AuditionSelectedSoundObjectsAction implements ActionListener {
 
-    private final List<SoundObject> context;
+    private final List<ScoreObject> context;
 
-    public AuditionSelectedSoundObjectsAction(List<SoundObject> context) {
+    public AuditionSelectedSoundObjectsAction(List<ScoreObject> context) {
         this.context = context;
     }
 
@@ -52,7 +55,7 @@ public final class AuditionSelectedSoundObjectsAction implements ActionListener 
         }
 
         RealtimeRenderManager.getInstance().auditionSoundObjects(data,
-                context.toArray(new SoundObject[0]));
+                context);
 
     }
 }

@@ -19,6 +19,8 @@ UPDATED
 
 * CSD Import: import CSDs that do not have CsInstruments or CsScore sections
 
+* Issue #375 - Made Auditioning work with AudioClips on AudioLayers
+
 FIX
 
 * Auditioning Frozen SoundObjects incorrectly calculated start/end times when
