@@ -3629,6 +3629,22 @@
         <signature> ivar1, ... 	passign	 [istart]</signature>
       </opcode>
       <opcode>
+        <name>+=</name>
+        <signature>ares 	+=	 xarg</signature>
+      </opcode>
+      <opcode>
+        <name>+=</name>
+        <signature>ires 	+=	 iarg</signature>
+      </opcode>
+      <opcode>
+        <name>+=</name>
+        <signature>kres 	+=	 karg</signature>
+      </opcode>
+      <opcode>
+        <name>+=</name>
+        <signature>table [ kval] 	+=	 karg</signature>
+      </opcode>
+      <opcode>
         <name>pset</name>
         <signature>pset	 icon1 [, icon2] [...]</signature>
       </opcode>
@@ -3777,8 +3793,8 @@
         <signature>setctrl	 inum, ival, itype</signature>
       </opcode>
       <opcode>
-        <name>setscorepos ipos</name>
-        <signature> 	setscorepos ipos</signature>
+        <name>setscorepos</name>
+        <signature> 	setscorepos	ipos</signature>
       </opcode>
       <opcode>
         <name>splitrig</name>
@@ -4601,6 +4617,10 @@
         <signature>ihandle 	FLbox	 &quot;label&quot;, itype, ifont, isize, iwidth, iheight, ix, iy [, image]</signature>
       </opcode>
       <opcode>
+        <name>FLbox</name>
+        <signature>ihandle 	FLbox	 istr, itype, ifont, isize, iwidth, iheight, ix, iy [, image]</signature>
+      </opcode>
+      <opcode>
         <name>FLbutBank</name>
         <signature>kout, ihandle 	FLbutBank	 itype, inumx, inumy, iwidth, iheight, ix, iy, \
       iopcode [, kp1] [, kp2] [, kp3] [, kp4] [, kp5] [....] [, kpN]</signature>
@@ -4787,6 +4807,10 @@
       <opcode>
         <name>FLsetText</name>
         <signature>FLsetText	 &quot;itext&quot;, ihandle</signature>
+      </opcode>
+      <opcode>
+        <name>FLsetText</name>
+        <signature>FLsetText	 istr, ihandle</signature>
       </opcode>
       <opcode>
         <name>FLsetTextColor</name>
@@ -6373,7 +6397,7 @@
       </opcode>
       <opcode>
         <name>mp3scal</name>
-        <signature>asig, asig2, ktime 	mp3scal	 Sfile,ktimescal,kpitch, kamp [,iskip,ifftsize, idecim, ilock]
+        <signature>asig, asig2, ktime 	mp3scal	 Sfile, ktimescal, kpitch, kamp[, iskip, ifftsize, idecim, ilock]
       </signature>
       </opcode>
       <opcode>
@@ -6898,7 +6922,7 @@
     </opcode>
     <opcode>
       <name>OSCsend</name>
-      <signature>OSCsend	 kwhen, ihost, iport, idestination, itype [, xdata1, xdata2, ...]</signature>
+      <signature>OSCsend	 kwhen, ihost, iport, idestination[, itype , xdata1, xdata2, ...]</signature>
     </opcode>
   </opcodeGroup>
   <opcodeGroup name="Faust Opcodes">
