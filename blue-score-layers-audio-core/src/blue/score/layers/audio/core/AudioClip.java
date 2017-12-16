@@ -67,6 +67,7 @@ public final class AudioClip implements ScoreObject, Comparable<AudioClip> {
             FadeType.LINEAR);
 
     transient List<ScoreObjectListener> scoreObjListeners = null;
+    transient int cloneSourceHashCode = 0;
 //    transient List<PropertyChangeListener> propListeners = null;
 
     public AudioClip() {
@@ -100,6 +101,7 @@ public final class AudioClip implements ScoreObject, Comparable<AudioClip> {
         setFadeInType(ac.getFadeInType());
         setFadeOut(ac.getFadeOut());
         setFadeOutType(ac.getFadeOutType());
+        this.cloneSourceHashCode = ac.hashCode();
     }
 
     protected void readAudioFileProperties() {
@@ -446,6 +448,11 @@ public final class AudioClip implements ScoreObject, Comparable<AudioClip> {
     @Override
     public AudioClip deepCopy() {
         return new AudioClip(this);
+    }
+
+    @Override
+    public int getCloneSourceHashCode() {
+        return cloneSourceHashCode;
     }
 
 }

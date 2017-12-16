@@ -21,11 +21,15 @@ package blue.ui.core.render;
 
 import blue.BlueData;
 import blue.BlueSystem;
-import blue.SoundLayer;
 import blue.event.PlayModeListener;
 import blue.gui.ExceptionDialog;
 import blue.mixer.Mixer;
+import blue.score.Score;
+import blue.score.ScoreObject;
+import blue.score.layers.Layer;
 import blue.score.layers.LayerGroup;
+import blue.score.layers.ScoreObjectLayer;
+import blue.score.layers.ScoreObjectLayerGroup;
 import blue.services.render.CsoundBinding;
 import blue.services.render.RealtimeRenderService;
 import blue.services.render.RealtimeRenderServiceFactory;
@@ -33,9 +37,11 @@ import blue.settings.RealtimeRenderSettings;
 import blue.soundObject.PolyObject;
 import blue.soundObject.SoundObject;
 import blue.soundObject.SoundObjectException;
-import blue.utility.ObjectUtilities;
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 import org.openide.awt.StatusDisplayer;
 import org.openide.windows.WindowManager;
@@ -194,9 +200,47 @@ public final class RealtimeRenderManager {
         }
     }
 
-    public void auditionSoundObjects(BlueData data, SoundObject[] soundObjects) {
+    protected void filterScore(Score score, List<ScoreObject> scoreObjects) {
+        Iterator<LayerGroup<? extends Layer>> iter = score.iterator();
 
-        if (soundObjects == null || soundObjects.length == 0) {
+        Set<Integer> cloneSources = scoreObjects.stream()
+                .mapToInt(Object::hashCode)
+                .boxed()
+                .collect(Collectors.toSet());
+
+        while(iter.hasNext()) {
+            LayerGroup<? extends Layer> lg = iter.next();
+            if(lg instanceof ScoreObjectLayerGroup) {
+               ScoreObjectLayerGroup<? extends ScoreObjectLayer> slg =  
+                       (ScoreObjectLayerGroup<? extends ScoreObjectLayer>) lg; 
+               
+                Iterator<? extends ScoreObjectLayer<? extends ScoreObject>> layerIter 
+                        = slg.iterator();
+
+                while(layerIter.hasNext()) {
+                   ScoreObjectLayer<? extends ScoreObject> layer = layerIter.next();
+
+                   layer.removeIf(s -> !cloneSources.contains(s.getCloneSourceHashCode()));
+
+                   if(layer.isEmpty()) {
+                       layerIter.remove();
+                   } else {
+                       layer.setSolo(false);
+                       layer.setMuted(false);
+                   }
+                }
+                if(slg.isEmpty()) {
+                    iter.remove();
+                }                
+            } else {
+                iter.remove();
+            }
+        }
+    }
+
+    public void auditionSoundObjects(BlueData data, List<ScoreObject> scoreObjects) {
+
+        if (scoreObjects == null || scoreObjects.isEmpty()) {
             return;
         }
 
@@ -205,32 +249,19 @@ public final class RealtimeRenderManager {
         }
 
         BlueData tempData = new BlueData(data);
+        tempData.setLoopRendering(false);
 
         List<PolyObject> path = null;
-        for(LayerGroup slg : data.getScore()) {
-            if(slg instanceof PolyObject) {
-                path = getPolyObjectPath((PolyObject)slg, soundObjects[0]);
-                if(path != null) {
-                    break;
-                }
-            }
-        }
+        filterScore(tempData.getScore(), scoreObjects);
 
-        if(path == null) {
-            throw new RuntimeException("Error: unable to find root PolyObject...");
+        if(data.getScore().isEmpty()) {
+            throw new RuntimeException("Error: unable to find root LayerGroups for objects...");
         } 
-
-        PolyObject tempPObj = new PolyObject(true);
-        tempData.getScore().getAllLayers().stream().forEach(e -> e.clearScoreObjects());
-        
-        PolyObject base = tempPObj;
-        SoundLayer sLayer = tempPObj.newLayerAt(-1);
 
         double minTime = Double.MAX_VALUE;
         double maxTime = Double.MIN_VALUE;
 
-        for (int i = 0; i < soundObjects.length; i++) {
-            SoundObject sObj = soundObjects[i];
+        for (ScoreObject sObj : scoreObjects) {
             double startTime = sObj.getStartTime();
             double endTime = startTime + sObj.getSubjectiveDuration();
 
@@ -242,10 +273,7 @@ public final class RealtimeRenderManager {
                 maxTime = endTime;
             }
 
-            base.get(0).add(sObj.deepCopy());
         }
-
-        tempData.getScore().add(tempPObj);
 
         Mixer m = tempData.getMixer();
 
@@ -294,6 +322,12 @@ public final class RealtimeRenderManager {
     public void passToStdin(String score) {
         if (isBlueLiveRendering()) {
             currentBlueLiveRenderService.passToStdin(score);
+        }
+    }
+
+    public void evalOrc(String orchestra) {
+        if (isBlueLiveRendering()){
+            currentBlueLiveRenderService.evalOrc(orchestra);
         }
     }
 

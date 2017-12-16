@@ -72,8 +72,8 @@ public class CS6RealtimeRenderService implements RealtimeRenderService, PlayMode
     private Csound csound;
 
     public CS6RealtimeRenderService() {
-        csnd6.csoundInitialize(csnd6.CSOUNDINIT_NO_ATEXIT | 
-                csnd6.CSOUNDINIT_NO_SIGNAL_HANDLER);
+        csnd6.csoundInitialize(csnd6.CSOUNDINIT_NO_ATEXIT
+                | csnd6.CSOUNDINIT_NO_SIGNAL_HANDLER);
     }
 
     @Override
@@ -262,6 +262,8 @@ public class CS6RealtimeRenderService implements RealtimeRenderService, PlayMode
                     data.getProjectProperties());
         }
 
+        command += " --omacro:BLUE_LIVE=1  --smacro:BLUE_LIVE=1 ";
+
         String[] args = command.split("\\s+");
         String[] args2 = new String[args.length + 1];
         System.arraycopy(args, 0, args2, 0, args.length);
@@ -292,23 +294,26 @@ public class CS6RealtimeRenderService implements RealtimeRenderService, PlayMode
 
     @Override
     public void passToStdin(String text) {
-        NoteList nl = null;
-
-        try {
-            nl = ScoreUtilities.getNotes(text);
-        } catch (NoteParseException e) {
-            e.printStackTrace();
-            nl = null;
+        if (runnerThread != null && runnerThread.csound != null) {
+            runnerThread.evalScore(text);
         }
-
-        if (nl == null) {
-            return;
-        }
-
-        for (Iterator iter = nl.iterator(); iter.hasNext();) {
-            Note note = (Note) iter.next();
-            runnerThread.passToStdin(note.toString());
-        }
+//        NoteList nl = null;
+//
+//        try {
+//            nl = ScoreUtilities.getNotes(text);
+//        } catch (NoteParseException e) {
+//            e.printStackTrace();
+//            nl = null;
+//        }
+//
+//        if (nl == null) {
+//            return;
+//        }
+//
+//        for (Iterator iter = nl.iterator(); iter.hasNext();) {
+//            Note note = (Note) iter.next();
+//            runnerThread.passToStdin(note.toString());
+//        }
     }
 
     @Override
@@ -372,7 +377,7 @@ public class CS6RealtimeRenderService implements RealtimeRenderService, PlayMode
 
     @Override
     public void addBinding(CsoundBinding binding) {
-        if(isRunning()) {
+        if (isRunning()) {
             binding.setup(csound.GetSr(), csound.GetKsmps());
         }
         bindings.add(binding);
@@ -381,8 +386,15 @@ public class CS6RealtimeRenderService implements RealtimeRenderService, PlayMode
     @Override
     public void removeBinding(CsoundBinding binding) {
         bindings.remove(binding);
-        if(isRunning()) {
+        if (isRunning()) {
             binding.cleanup();
+        }
+    }
+
+    @Override
+    public void evalOrc(String orchestra) {
+        if (runnerThread != null && runnerThread.csound != null) {
+            runnerThread.evalOrc(orchestra);
         }
     }
 
@@ -401,6 +413,7 @@ public class CS6RealtimeRenderService implements RealtimeRenderService, PlayMode
         public boolean isRunning = true;
         CountDownLatch latch = new CountDownLatch(1);
         private final List<CsoundBinding> bindings;
+        MessageBuffer buffer = new MessageBuffer();
 
         public APIRunnerThread(BlueData blueData,
                 Csound csound,
@@ -420,8 +433,12 @@ public class CS6RealtimeRenderService implements RealtimeRenderService, PlayMode
             this.bindings = bindings;
         }
 
-        public void passToStdin(String note) {
-            this.csound.InputMessage(note);
+        public void evalScore(String sco) {
+            buffer.postMessage(0, sco);
+        }
+
+        public void evalOrc(String orc) {
+            buffer.postMessage(1, orc);
         }
 
         public void setKeepRunning(boolean val) {
@@ -477,7 +494,31 @@ public class CS6RealtimeRenderService implements RealtimeRenderService, PlayMode
                 bindings.get(i).setup(csound.GetSr(), csound.GetKsmps());
             }
 
+            currentTime = (blueData == null) ? 0.0f : blueData.getRenderStartTime();
+
+            final int capacity = buffer.getCapacity();
+
             while (keepRunning) {
+
+                // process messages
+                int start = buffer.getReadStart();
+                int end = buffer.getReadEnd();
+                int last = (end < start) ?  end + capacity : end;
+
+                for(int i = buffer.getReadStart(); i < last; i++) {
+                    Message m = buffer.getMessage(i % capacity);
+                    switch(m.messageType) {
+                        case 0:
+                            csound.ReadScore(m.payload);
+                            break;
+                        case 1:
+                            csound.CompileOrc(m.payload);
+                            break;
+                    }
+
+                }
+                buffer.setReadStart(end);
+                
                 counter++;
 
                 scoreTime = (double) csound.GetScoreTime();
@@ -487,19 +528,15 @@ public class CS6RealtimeRenderService implements RealtimeRenderService, PlayMode
                     counter = 0;
                 }
 
-                currentTime = 0.0f;
-
-                if (renderUpdatesTime) {
-                    if (mapper != null) {
-                        currentTime = mapper.secondsToBeats(
-                                scoreTime + renderStartSeconds);
-                    } else {
-                        currentTime = startTime + scoreTime;
+                if(blueData == null) {
+                    if (renderUpdatesTime) {
+                        if (mapper != null) {
+                            currentTime = mapper.secondsToBeats(
+                                    scoreTime + renderStartSeconds);
+                        } else {
+                            currentTime = startTime + scoreTime;
+                        }
                     }
-                }
-
-                if (blueData != null) {
-                    currentTime = blueData.getRenderStartTime();
                 }
 
                 double value;
@@ -529,19 +566,16 @@ public class CS6RealtimeRenderService implements RealtimeRenderService, PlayMode
                     }
                 }
 
-
                 for (int i = 0; i < bindings.size(); i++) {
                     bindings.get(i).updateValueToCsound();
                 }
 
                 keepRunning = csound.PerformKsmps() == 0 && keepRunning;
 
-
                 for (int i = 0; i < bindings.size(); i++) {
                     bindings.get(i).updateValueFromCsound();
                 }
-            } ;
-
+            };
 
             for (int i = 0; i < bindings.size(); i++) {
                 bindings.get(i).cleanup();

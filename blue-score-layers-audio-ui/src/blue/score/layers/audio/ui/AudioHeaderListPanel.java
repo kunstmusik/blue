@@ -138,7 +138,7 @@ public class AudioHeaderListPanel extends JPanel implements
 //                                    SelectionEvent.SELECTION_CLEAR));
                         } else {
                             selection.setAnchor(index);
-                            ((AudioHeaderLayerPanel) c).setSelected(true);
+//                            ((AudioHeaderLayerPanel) c).setSelected(true);
                         }
                         
                     } else if (me.getClickCount() == 2) {
@@ -182,15 +182,15 @@ public class AudioHeaderListPanel extends JPanel implements
     }
     
     private void updateSelection() {
-        int start = selection.getStartIndex();
-        int end = selection.getEndIndex();
-        
-        Component[] comps = getComponents();
-        
-        for (int i = 0; i < comps.length; i++) {
-            AudioHeaderLayerPanel panel = (AudioHeaderLayerPanel) comps[i];
-            panel.setSelected(i >= start && i <= end);
-        }
+//        int start = selection.getStartIndex();
+//        int end = selection.getEndIndex();
+//        
+//        Component[] comps = getComponents();
+//        
+//        for (int i = 0; i < comps.length; i++) {
+//            AudioHeaderLayerPanel panel = (AudioHeaderLayerPanel) comps[i];
+//            panel.setSelected(i >= start && i <= end);
+//        }
     }
     
     public void checkSize() {

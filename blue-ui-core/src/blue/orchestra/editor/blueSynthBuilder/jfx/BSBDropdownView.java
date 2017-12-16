@@ -25,7 +25,7 @@ import java.util.concurrent.CountDownLatch;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.value.ChangeListener;
-import javafx.scene.control.ChoiceBox;
+import javafx.scene.control.ComboBox;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import org.openide.util.Exceptions;
@@ -34,7 +34,7 @@ import org.openide.util.Exceptions;
  *
  * @author stevenyi
  */
-public class BSBDropdownView extends ChoiceBox<BSBDropdownItem> {
+public class BSBDropdownView extends ComboBox<BSBDropdownItem> {
 
     private final BSBDropdown dropdown;
     boolean mutating = false;

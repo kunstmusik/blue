@@ -1,7 +1,6 @@
 /*
  * blue - object composition environment for csound
- * Copyright (C) 2013
- * Steven Yi <stevenyi@gmail.com>
+ * Copyright (C) 2017 stevenyi
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -17,23 +16,19 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package blue.score.layers;
-
-import blue.score.ScoreObject;
-import java.util.List;
+package blue.csnd6.render;
 
 /**
  *
  * @author stevenyi
  */
-public interface ScoreObjectLayer<T extends ScoreObject> extends Layer, List<T> {
-    public static final int HEIGHT_MAX_INDEX = 9;
-    public int getHeightIndex();
-    public void setHeightIndex(int heightLayerIndex);
-    public void setMuted(boolean muted);
-    public boolean isMuted();
-    public void setSolo(boolean muted);
-    public boolean isSolo();
-    @Override
-    public ScoreObjectLayer<T> deepCopy();
+public class Message {
+
+    int messageType = 0;
+    String payload = "";
+
+    public void setMessage(int messageType, String payload) {
+        this.messageType = messageType;
+        this.payload = (payload == null) ? "" : payload;
+    }
 }

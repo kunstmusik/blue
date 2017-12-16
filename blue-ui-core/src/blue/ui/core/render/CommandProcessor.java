@@ -17,11 +17,11 @@
  * the Free Software Foundation Inc., 59 Temple Place - Suite 330,
  * Boston, MA  02111-1307 USA
  */
-
 package blue.ui.core.render;
 
 import java.util.ArrayList;
-import java.util.Iterator;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.StringTokenizer;
 
 public class CommandProcessor {
@@ -34,16 +34,16 @@ public class CommandProcessor {
 
     public static String processCommandBlocks(String string) {
         StringTokenizer st = new StringTokenizer(string, "\n");
-        StringBuffer buffer = new StringBuffer();
+        StringBuilder buffer = new StringBuilder();
 
-        StringBuffer preBuffer = new StringBuffer();
+        StringBuilder preBuffer = new StringBuilder();
 
-        ArrayList onceList = new ArrayList();
+        Set<String> onceList = new HashSet<>();
 
         int mode = COMMAND_SEARCH;
 
         String command = "";
-        StringBuffer commandArgument = new StringBuffer();
+        StringBuilder commandArgument = new StringBuilder();
 
         while (st.hasMoreTokens()) {
             String line = st.nextToken();
@@ -55,8 +55,7 @@ public class CommandProcessor {
                         command = trimLine.substring(2, trimLine.indexOf("]{"));
 
                         mode = COMMAND_ARG_FIND;
-                        commandArgument = new StringBuffer();
-
+                        commandArgument = new StringBuilder();
                     } else {
                         buffer.append(line).append("\n");
                     }
@@ -67,17 +66,17 @@ public class CommandProcessor {
                         mode = COMMAND_SEARCH;
 
                         String commandString = commandArgument.toString();
-                switch (command) {
-                    case "pre":
-                        preBuffer.append(commandString).append("\n");
-                        break;
-                    case "once":
-                        if (!containsString(onceList, commandString)) {
-                            onceList.add(commandString);
-                            buffer.append(commandString).append("\n");
+                        switch (command) {
+                            case "pre":
+                                preBuffer.append(commandString).append("\n");
+                                break;
+                            case "once":
+                                if (!onceList.contains(commandString)) {
+                                    onceList.add(commandString);
+                                    buffer.append(commandString).append("\n");
+                                }
+                                break;
                         }
-                        break;
-                }
 
                     } else {
                         commandArgument.append(line).append("\n");
@@ -91,17 +90,6 @@ public class CommandProcessor {
         preBuffer.append(buffer);
 
         return preBuffer.toString();
-    }
-
-    private static boolean containsString(ArrayList list, String string) {
-        for (Iterator iter = list.iterator(); iter.hasNext();) {
-            String element = (String) iter.next();
-            if (element.equals(string)) {
-                return true;
-            }
-
-        }
-        return false;
     }
 
     private static final int STRIP_READ = 0;
@@ -118,11 +106,10 @@ public class CommandProcessor {
      * @param instrumentNumbers
      * @return
      */
-
     private static String stripInstrumentConditionals(String string,
             ArrayList instrumentNumbers) {
         StringTokenizer st = new StringTokenizer(string, "\n");
-        StringBuffer buffer = new StringBuffer();
+        StringBuilder buffer = new StringBuilder();
 
         int mode = STRIP_READ;
 

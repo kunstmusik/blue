@@ -21,6 +21,13 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
     Author     : stevenyi
 */
 
+.combo-box > .list-cell {
+  -fx-padding: 0.333333em 0.25em 0.333333em 0.416667em; /* 4 5 4 5 */
+}
+.combo-box-base > .arrow-button {
+    -fx-padding: 0.5em 0.5em 0.5em 0.0em; /* 6 6 6 0 */
+}
+
 .choice-box > .label {
   -fx-padding: 0.333333em 0.416667em 0.333333em 0.416667em; /* 4 5 4 5 */
 }

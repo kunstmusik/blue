@@ -70,6 +70,7 @@ public class PolyObject extends ArrayList<SoundLayer> implements SoundObject,
     double repeatPoint = -1.0f;
     private int defaultHeightIndex = 0;
     private TimeState timeState = new TimeState();
+    transient int cloneSourceHashCode = 0;
 
     public PolyObject() {
         setName("polyObject");
@@ -99,6 +100,7 @@ public class PolyObject extends ArrayList<SoundLayer> implements SoundObject,
             add(sLayer.deepCopy());
         }
 
+        this.cloneSourceHashCode = pObj.hashCode();
     }
 
     /**
@@ -885,4 +887,10 @@ public class PolyObject extends ArrayList<SoundLayer> implements SoundObject,
     public PolyObject deepCopyLG() {
         return new PolyObject(this);
     }
+
+    @Override
+    public int getCloneSourceHashCode() {
+        return cloneSourceHashCode;
+    }
+
 }

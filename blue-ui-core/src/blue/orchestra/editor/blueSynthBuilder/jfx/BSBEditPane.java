@@ -25,9 +25,12 @@ import blue.orchestra.blueSynthBuilder.BSBObject;
 import blue.orchestra.blueSynthBuilder.BSBObjectEntry;
 import blue.orchestra.blueSynthBuilder.GridSettings;
 import blue.orchestra.editor.blueSynthBuilder.EditModeOnly;
+import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 import javafx.beans.InvalidationListener;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
@@ -91,23 +94,15 @@ public class BSBEditPane extends Pane implements ListChangeListener<BSBGroup> {
 
     ObservableList<BSBGroup> groupsList = FXCollections.observableArrayList();
     BSBGroup currentBSBGroup = null;
-    
+
     ChangeListener<Boolean> editEnabledListener = (obs, old, newVal) -> {
         if (newVal) {
             if (groupsList.size() > 1) {
-                interfaceItemsPane.getChildren().clear();
-                for (BSBObject bsbObj : 
-                        currentBSBGroup.interfaceItemsProperty()) {
-                    addBSBObject(bsbObj);
-                }
+                setBSBObjects(currentBSBGroup.interfaceItemsProperty());
             }
         } else {
             if (groupsList.size() > 1) {
-                interfaceItemsPane.getChildren().clear();
-                for (BSBObject bsbObj : 
-                        groupsList.get(0).interfaceItemsProperty()) {
-                    addBSBObject(bsbObj);
-                }
+                setBSBObjects(groupsList.get(0).interfaceItemsProperty());
             }
         }
     };
@@ -263,7 +258,6 @@ public class BSBEditPane extends Pane implements ListChangeListener<BSBGroup> {
         return marqueeSelecting;
     }
 
-
     public void editBSBGraphicInterface(BSBGraphicInterface bsbInterface) {
 
         if (this.bsbInterface != null) {
@@ -305,26 +299,37 @@ public class BSBEditPane extends Pane implements ListChangeListener<BSBGroup> {
 
     protected void addBSBObject(BSBObject bsbObj) {
         try {
-            Region objectView = BSBObjectEditorFactory.getView(bsbObj);
-            BooleanProperty editEnabledProperty = allowEditing ? bsbInterface.editEnabledProperty() : null;
-            BSBObjectViewHolder viewHolder = new BSBObjectViewHolder(editEnabledProperty,
-                    selection, groupsList, objectView);
-            if (objectView instanceof EditModeOnly) {
-                if (allowEditing) {
-                    viewHolder.visibleProperty().bind(bsbInterface.editEnabledProperty());
-                } else {
-                    viewHolder.setVisible(false);
-                }
-            }
-            if (bsbObj instanceof BSBGroup) {
-                BSBGroupView bsbGroupView = (BSBGroupView) objectView;
-                bsbGroupView.initialize(editEnabledProperty, selection, groupsList);
-            }
-
+            BSBObjectViewHolder viewHolder = getEditorForBSBObject(bsbObj);
             interfaceItemsPane.getChildren().add(viewHolder);
         } catch (Exception e) {
             Exceptions.printStackTrace(e);
         }
+    }
+
+    protected void setBSBObjects(Collection<BSBObject> bsbObjects) {
+        List<BSBObjectViewHolder> items = bsbObjects.stream()
+                .map(bsbObj -> getEditorForBSBObject(bsbObj))
+                .collect(Collectors.toList());
+        interfaceItemsPane.getChildren().setAll(items);
+    }
+
+    private BSBObjectViewHolder getEditorForBSBObject(BSBObject bsbObj) {
+        Region objectView = BSBObjectEditorFactory.getView(bsbObj);
+        BooleanProperty editEnabledProperty = allowEditing ? bsbInterface.editEnabledProperty() : null;
+        BSBObjectViewHolder viewHolder = new BSBObjectViewHolder(editEnabledProperty,
+                selection, groupsList, objectView);
+        if (objectView instanceof EditModeOnly) {
+            if (allowEditing) {
+                viewHolder.visibleProperty().bind(bsbInterface.editEnabledProperty());
+            } else {
+                viewHolder.setVisible(false);
+            }
+        }
+        if (bsbObj instanceof BSBGroup) {
+            BSBGroupView bsbGroupView = (BSBGroupView) objectView;
+            bsbGroupView.initialize(editEnabledProperty, selection, groupsList);
+        }
+        return viewHolder;
     }
 
     protected void removeBSBObject(BSBObject bsbObj) {
@@ -482,8 +487,8 @@ public class BSBEditPane extends Pane implements ListChangeListener<BSBGroup> {
             minX = Math.min(minX, bsbObj.getX());
             minY = Math.min(minY, bsbObj.getY());
         }
-    
-        int x = minX; 
+
+        int x = minX;
         int y = minY;
 
         GridSettings gridSettings = bsbInterface.getGridSettings();
@@ -594,9 +599,7 @@ public class BSBEditPane extends Pane implements ListChangeListener<BSBGroup> {
 
         if (groupsList.size() > 0) {
             this.currentBSBGroup = groupsList.get(groupsList.size() - 1);
-            for (BSBObject bsbObj : currentBSBGroup.interfaceItemsProperty()) {
-                addBSBObject(bsbObj);
-            }
+            setBSBObjects(currentBSBGroup.interfaceItemsProperty());
             currentBSBGroup.interfaceItemsProperty().addListener(scl);
         } else {
             this.currentBSBGroup = null;

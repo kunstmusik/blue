@@ -12,6 +12,42 @@ information.
 
 [CHANGE LOG]
 
+> Notes for 2.7.3 <
+[release 2017.12.15]
+
+NEW
+
+* BlueLive 
+  
+  * added new "Live Code" tab for live coding (ctrl-e evaluates selected code)
+
+  * added definition of BLUE_LIVE orchestra and score macros that user can check
+    with #ifdef to conditionally use code when rendering with Blue Live 
+
+
+UPDATED
+
+* CSD Import: import CSDs that do not have CsInstruments or CsScore sections
+
+* Issue #375 - Made Auditioning work with AudioClips on AudioLayers
+
+FIX
+
+* Auditioning Frozen SoundObjects incorrectly calculated start/end times when
+  considering object for rendering, resulting in object not playing 
+
+* BlueSynthBuilder: 
+
+  * On OSX, opening dropdown item editor was causing app freeze
+
+  * Improved Interface loading times to prevent hanging when switching items 
+    quickly
+
+* UDO - After importing UDOs, table of UDOs did not get refreshed with new ones 
+
+* Issue #376 - Fixed Automation Line switcher not showing for AudioLayers
+
+
 > Notes for 2.7.2 <
 [release 2017.10.16]
 

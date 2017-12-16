@@ -1,14 +1,12 @@
 package blue.utility;
 
 /**
- * Title:        blue
- * Description:  an object composition environment for csound
- * Copyright:    Copyright (c) 2001
- * Company:      steven yi music
+ * Title: blue Description: an object composition environment for csound
+ * Copyright: Copyright (c) 2001 Company: steven yi music
+ *
  * @author steven yi
  * @version 1.0
  */
-
 import blue.Arrangement;
 import blue.BlueData;
 import blue.BlueSystem;
@@ -24,6 +22,7 @@ import java.util.*;
 import java.util.Map.Entry;
 
 public class CSDUtility {
+
     public static final int IMPORT_GLOBAL = 0;
 
     public static final int IMPORT_SINGLE_SOUNDOBJECT = 1;
@@ -70,17 +69,23 @@ public class CSDUtility {
 
         // String csOptions = TextUtilities.getTextBetweenTags("CsOptions",
         // CSD);
-
         // if (csOptions != null && csOptions.trim().length() > 0) {
         // data.getProjectProperties().CsOptions = csOptions.trim();
         // }
-
-        
         String orc = TextUtilities.getTextBetweenTags("CsInstruments", CSD);
         String sco = TextUtilities.getTextBetweenTags("CsScore", CSD);
 
-        parseCsOrc(data, orc);
-        parseCsScore(data, sco, importMode);
+        if (orc != null) {
+            parseCsOrc(data, orc);
+        }
+        if (sco != null) {
+            parseCsScore(data, sco, importMode);
+        }
+
+        if(data.getScore().get(0).isEmpty()) {
+            PolyObject pObj = (PolyObject)data.getScore().get(0);
+            pObj.add(new SoundLayer());
+        }
 
         return data;
     }
@@ -91,23 +96,23 @@ public class CSDUtility {
 
         String[] lines = scoreText.split("\n");
         String line;
-       
-        for(int i = 0; i < lines.length; i++) {
+
+        for (int i = 0; i < lines.length; i++) {
             line = lines[i].trim();
 
             if (line.startsWith("f")) {
                 tables.append(lines[i]).append("\n");
 
-                if(i < lines.length - 1) {
+                if (i < lines.length - 1) {
                     do {
                         String nextLine = lines[i + 1].trim();
 
-                        if(nextLine.length() == 0) {
+                        if (nextLine.length() == 0) {
                             break;
                         }
 
                         char c = nextLine.charAt(0);
-                        if(Character.isDigit(c) || c == '\"' || c == '.') {
+                        if (Character.isDigit(c) || c == '\"' || c == '.') {
                             tables.append(lines[i + 1]).append("\n");
                             i++;
                         } else {
@@ -118,17 +123,17 @@ public class CSDUtility {
 
             } else if (line.startsWith("i")) {
                 iStatements.append(line).append("\n");
-                
-                if(i < lines.length - 1) {
+
+                if (i < lines.length - 1) {
                     do {
                         String nextLine = lines[i + 1].trim();
 
-                        if(nextLine.length() == 0) {
+                        if (nextLine.length() == 0) {
                             break;
                         }
 
                         char c = nextLine.charAt(0);
-                        if(Character.isDigit(c) || c == '\"' || c == '.') {
+                        if (Character.isDigit(c) || c == '\"' || c == '.') {
                             iStatements.append(lines[i + 1]).append("\n");
                             i++;
                         } else {
@@ -136,7 +141,7 @@ public class CSDUtility {
                         }
                     } while (i < lines.length - 1);
                 }
-            } else if(line.startsWith("s")) {
+            } else if (line.startsWith("s")) {
                 iStatements.append(line).append("\n");
             }
 
@@ -227,8 +232,8 @@ public class CSDUtility {
 
         genScore.setStartTime(section.sectionStartTime);
 
-        PolyObject pObj = (PolyObject)data.getScore().get(0);
-        
+        PolyObject pObj = (PolyObject) data.getScore().get(0);
+
         SoundLayer sLayer = pObj.newLayerAt(-1);
         sLayer.add(genScore);
 
@@ -289,7 +294,7 @@ public class CSDUtility {
                 continue;
             }
 
-            PolyObject pObj = (PolyObject)data.getScore().get(0);
+            PolyObject pObj = (PolyObject) data.getScore().get(0);
             sLayer = pObj.newLayerAt(-1);
 
             String score = buffer.toString();
@@ -458,7 +463,6 @@ public class CSDUtility {
         }
 
         /* HANDLE RESERVED GLOBAL VARIABLES */
-
         if (kr != null && ksmps == null) {
             try {
                 double krDouble = Double.parseDouble(kr);
@@ -503,7 +507,9 @@ public class CSDUtility {
         }
     }
 }
+
 class ScoreSection {
+
     String scoreText = "";
 
     double sectionStartTime = 0.0f;

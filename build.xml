@@ -11,6 +11,8 @@
   <property name="linux.java.lib.path" 
               value="-J-Djava.library.path=/usr/lib/jni:/usr/local/lib:/usr/lib"/>
 
+  <property name="replacevistaicon.exe" value="C:\bin\ReplaceVistaIcon.exe"/>
+
   <condition property="isWindows">
     <os family="windows" />
   </condition>
@@ -136,11 +138,11 @@
   <!-- Windows-only target that replaces the icon for the launcher exe with our own icon. -->
   <target name="replaceWindowsLauncherIcon" if="isWindows" description="Replace the icon for the Windows launcher exe">
     <echo message="Replacing icon of Windows launcher executable."/>
-    <exec executable="C:\bin\ReplaceVistaIcon.exe" resolveexecutable="true">
+    <exec executable="${replacevistaicon.exe}" resolveexecutable="true">
       <arg value="${build.launcher.dir}\bin\${app.name}.exe"/>
       <arg value="imageSrc\${app.name}.ico"/>
     </exec>
-    <exec executable="C:\bin\ReplaceVistaIcon.exe" resolveexecutable="true">
+    <exec executable="${replacevistaicon.exe}" resolveexecutable="true">
       <arg value="${build.launcher.dir}\bin\${app.name}64.exe"/>
       <arg value="imageSrc\${app.name}.ico"/>
     </exec>

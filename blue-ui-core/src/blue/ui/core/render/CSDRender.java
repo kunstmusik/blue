@@ -64,7 +64,7 @@ public class CSDRender extends CSDRenderService {
             BlueData data, boolean usingAPI) {
 
         ProjectPluginManager.getInstance().preRender(data);
-        
+
         StringChannelNameManager scnm = new StringChannelNameManager();
 
         ArrayList<StringChannel> stringChannels = getStringChannels(
@@ -127,8 +127,15 @@ public class CSDRender extends CSDRenderService {
         NoteList generatedNotes = null;
 
         for (Instrument instrument : alwaysOnInstruments) {
-            int instrId = arrangement.addInstrumentAtEnd(instrument);
-            globalSco += "i" + instrId + " 0 " + totalDur + "\n";
+            String sourceId = compileData.getInstrSourceId(instrument);
+            if (StringUtils.isNumeric(sourceId)) {
+                int instrId = arrangement.addInstrumentAtEnd(instrument);
+                globalSco += "i" + instrId + " 0 " + totalDur + "\n";
+            } else {
+                String instrId = sourceId + "_alwaysOn";
+                arrangement.addInstrumentWithId(instrument, instrId, false);
+                globalSco += "i \"" + instrId + "\" 0 " + totalDur + "\n";
+            }
         }
 
         if (usingAPI) {
@@ -143,15 +150,18 @@ public class CSDRender extends CSDRenderService {
 
         if (generateMixer) {
 
+            final String mixerId = "BlueMixer";
+
             clearUnusedMixerChannels(mixer, arrangement);
 
             globalOrcSco.appendGlobalOrc(mixer.getInitStatements(compileData,
                     nchnls));
-            int instrId = arrangement.addInstrumentAtEnd(
+            arrangement.addInstrumentWithId(
                     mixer.getMixerInstrument(compileData,
-                            udos, nchnls));
+                            udos, nchnls), 
+                    mixerId, false);
 
-            globalSco += "i" + instrId + " 0 " + totalDur;
+            globalSco += "i \"BlueMixer\" 0 " + totalDur;
 
         }
 
@@ -220,7 +230,7 @@ public class CSDRender extends CSDRenderService {
         arrangement.clearUnusedInstrAssignments();
         boolean hasInstruments = arrangement.size() > 0;
 
-        CompileData compileData = new CompileData(arrangement, tables, 
+        CompileData compileData = new CompileData(arrangement, tables,
                 stringChannels, originalParameters, scnm, pnm);
 
         Mixer mixer = null;
@@ -230,7 +240,7 @@ public class CSDRender extends CSDRenderService {
             mixer = new Mixer(data.getMixer());
             assignChannelIds(compileData, mixer);
         }
-        
+
         NoteList generatedNotes;
         try {
             generatedNotes = data.getScore().generateForCSD(compileData,
@@ -238,13 +248,10 @@ public class CSDRender extends CSDRenderService {
         } catch (ScoreGenerationException ex) {
             throw new RuntimeException(ex);
         }
-        
+
         compileData.setHandleParametersAndChannels(false);
 
 //        assignParameterNames(originalParameters);
-
-
-
         // get parameters
         //ArrayList parameters;
 //        if (usingAPI) {
@@ -338,10 +345,19 @@ public class CSDRender extends CSDRenderService {
         }
 
         for (Instrument instrument : alwaysOnInstruments) {
-            int instrId = arrangement.addInstrumentAtEnd(instrument);
 
+            String sourceId = compileData.getInstrSourceId(instrument);
+            String noteStr;
+            if (StringUtils.isNumeric(sourceId)) {
+                int instrId = arrangement.addInstrumentAtEnd(instrument);
+                noteStr = "i" + instrId + " 0 " + totalDur;
+            } else {
+                String instrId = sourceId + "_alwaysOn";
+                arrangement.addInstrumentWithId(instrument, instrId, false);
+                noteStr = "i \"" + instrId + "\" 0 " + totalDur;
+            }
             try {
-                Note n = Note.createNote("i" + instrId + " 0 " + globalDur);
+                Note n = Note.createNote(noteStr);
                 generatedNotes.add(n);
             } catch (NoteParseException ex) {
                 ex.printStackTrace();
@@ -350,6 +366,7 @@ public class CSDRender extends CSDRenderService {
         }
 
         if (mixerEnabled) {
+            final String mixerId = "BlueMixer";
 
             //globalDur += mixer.getExtraRenderTime();
             clearUnusedMixerChannels(mixer, arrangement);
@@ -357,11 +374,13 @@ public class CSDRender extends CSDRenderService {
             globalOrcSco.appendGlobalOrc(mixer.getInitStatements(
                     compileData, nchnls) + "\n");
 
-            int instrId = arrangement.addInstrumentAtEnd(
-                    mixer.getMixerInstrument(compileData, udos, nchnls));
+            arrangement.addInstrumentWithId(
+                    mixer.getMixerInstrument(compileData,
+                            udos, nchnls), 
+                    mixerId, false);
 
             try {
-                Note n = Note.createNote("i" + instrId + " 0 " + globalDur);
+                Note n = Note.createNote("i \"BlueMixer\" 0 " + globalDur);
                 generatedNotes.add(n);
             } catch (NoteParseException ex) {
                 ex.printStackTrace();
@@ -388,10 +407,10 @@ public class CSDRender extends CSDRenderService {
         }
 
         String tempGlobalOrc = compileData.getGlobalOrc();
-        if(tempGlobalOrc != null && tempGlobalOrc.length() > 0) {
+        if (tempGlobalOrc != null && tempGlobalOrc.length() > 0) {
             globalOrcSco.appendGlobalOrc(tempGlobalOrc);
         }
-        
+
         StrBuilder csd = new StrBuilder();
         appendProjectInfo(data, csd);
 
@@ -411,7 +430,7 @@ public class CSDRender extends CSDRenderService {
     }
 
     private ArrayList<StringChannel> getStringChannels(Arrangement arrangement,
-                    StringChannelNameManager scnm) {
+            StringChannelNameManager scnm) {
         ArrayList<StringChannel> params = new ArrayList<>();
 
         for (int i = 0; i < arrangement.size(); i++) {
@@ -728,10 +747,10 @@ public class CSDRender extends CSDRenderService {
 
         double startAdj = 0;
         double durationAdj = 1.0;
-        boolean adjustPoints = (line instanceof SoundObjectParameterLine); 
+        boolean adjustPoints = (line instanceof SoundObjectParameterLine);
 
-        if(adjustPoints) {
-            SoundObjectParameterLine paramLine = (SoundObjectParameterLine)line;
+        if (adjustPoints) {
+            SoundObjectParameterLine paramLine = (SoundObjectParameterLine) line;
             startAdj = paramLine.getSourceStart();
             durationAdj = paramLine.getSourceDuration();
         }
@@ -744,7 +763,7 @@ public class CSDRender extends CSDRenderService {
                 double startTime = p1.getX();
                 double endTime = p2.getX();
 
-                if(adjustPoints) {
+                if (adjustPoints) {
                     startTime = (startTime * durationAdj) + startAdj;
                     endTime = (endTime * durationAdj) + startAdj;
                 }
@@ -777,7 +796,7 @@ public class CSDRender extends CSDRenderService {
 
                 double currentVal = startVal;
 
-                int numSteps = (int)Math.abs(Math.round(
+                int numSteps = (int) Math.abs(Math.round(
                         (endVal - startVal) / resolution));
 
                 double step = dur / numSteps;
@@ -841,7 +860,7 @@ public class CSDRender extends CSDRenderService {
                 double startTime = p1.getX();
                 double endTime = p2.getX();
 
-                if(adjustPoints) {
+                if (adjustPoints) {
                     startTime = (startTime * durationAdj) + startAdj;
                     endTime = (endTime * durationAdj) + startAdj;
                 }

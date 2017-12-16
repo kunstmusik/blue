@@ -24,6 +24,8 @@ public abstract class AbstractSoundObject implements SoundObject {
 
     transient Vector<ScoreObjectListener> soundObjectListeners = null;
 
+    transient int cloneSourceHashCode = 0;
+
     public AbstractSoundObject() {
     }
 
@@ -32,6 +34,7 @@ public abstract class AbstractSoundObject implements SoundObject {
         startTime = aso.startTime;
         name = aso.name;
         backgroundColor = aso.backgroundColor;
+        cloneSourceHashCode = aso.hashCode();
     }
 
     @Override
@@ -140,5 +143,11 @@ public abstract class AbstractSoundObject implements SoundObject {
                 ScoreObjectEvent.COLOR);
 
         fireScoreObjectEvent(event);
+    }
+
+    
+    @Override
+    public int getCloneSourceHashCode() {
+        return cloneSourceHashCode;
     }
 }

@@ -23,6 +23,7 @@ import electric.xml.Element;
 import electric.xml.Elements;
 import java.text.MessageFormat;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.Vector;
 import javax.swing.event.TableModelEvent;
@@ -60,6 +61,19 @@ public class OpcodeList extends ArrayList<UserDefinedOpcode> implements TableMod
         }
         fireTableDataChanged();
     }
+
+    @Override
+    public boolean addAll(Collection<? extends UserDefinedOpcode> c) {
+        boolean retVal =  super.addAll(c);
+
+        if(retVal){
+            fireTableDataChanged();
+        }
+
+        return retVal;
+    }
+
+    
 
     public void addOpcode(UserDefinedOpcode udo) {
         this.add(udo);

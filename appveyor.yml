@@ -1,0 +1,56 @@
+image: Visual Studio 2017
+
+#environment:
+#  APPVEYOR_SAVE_CACHE_ON_ERROR: "true"
+
+platform: x64
+
+install:
+  - cmd: choco install ant -y -f -i
+  - cmd: choco install apache-fop -y -f -i
+  - mvn dependency:get -Dartifact=junit:junit:4.8.2 -DrepoUrl=http://repo1.maven.org/maven2/
+  - appveyor DownloadFile http://www.rw-designer.com/rsrc/ReplaceVistaIcon.exe 
+  - mkdir C:\xsltproc
+  - cd C:\xsltproc
+  - ps: Invoke-WebRequest ftp://ftp.zlatkovic.com/libxml/iconv-1.9.2.win32.zip -OutFile iconv.zip
+  - 7z e iconv.zip iconv.dll -r
+  - ps: Invoke-WebRequest ftp://ftp.zlatkovic.com/libxml/libxml2-2.7.8.win32.zip -OutFile libxml2.zip
+  - 7z e libxml2.zip libxml2.dll -r
+  - ps: Invoke-WebRequest ftp://ftp.zlatkovic.com/libxml/libxslt-1.1.26.win32.zip -OutFile libxslt.zip
+  - 7z e libxslt.zip libexslt.dll libxslt.dll xsltproc.exe -r
+  - ps: Invoke-WebRequest ftp://ftp.zlatkovic.com/libxml/zlib-1.2.5.win32.zip -OutFile zlib.zip
+  - 7z e zlib.zip zlib1.dll -r
+  - rm *.zip
+  - set PATH=%PATH%;%CD%
+  - cd %APPVEYOR_BUILD_FOLDER%
+
+
+cache:
+  - C:\Users\appveyor\.m2
+
+build_script:
+  - ant -Dnbplatform.default.harness.dir=%cd%\netbeans\harness -Dnbplatform.default.netbeans.dest.dir=%cd%\netbeans -DfopCommand=fop -Dreplacevistaicon.exe=%cd%\ReplaceVistaIcon.exe -DxsltCmd=c:\xsltproc\xsltproc.exe test build-zip
+ 
+
+# Tests
+
+#test_script:
+#  - ant test 
+
+artifacts:
+  - path: dist\blue*.zip
+    name: Blue Zip 
+    type: zip
+
+#cache:
+# - C:\Tools\vcpkg\ -> C:\projects\csound\msvc\downloadDependencies.ps1
+# - C:\projects\csound\msvc\cache
+
+#notifications:
+#  - provider: Email
+#    to:
+#      - CSOUND-DEV@listserv.heanet.ie
+#    subject: 'Build {{status}}'     # optional
+#    on_build_success: false
+#    on_build_failure: true
+#    on_build_status_changed: false
