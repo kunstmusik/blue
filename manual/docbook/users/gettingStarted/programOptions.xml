@@ -31,26 +31,6 @@
       <title>General Options</title>
 
       <varlistentry>
-        <term>Csound Documentation Root</term>
-        <listitem>
-          <para>
-            This is the url of the root of your Csound Documentation. blue uses
-            this for opening up Csound Documentation as well as when opening up
-            help for an opcode. The Csound Documentation Root can be local (i.e.
-            "file:///home/user/blue/manual/" or 
-            "file://c:/Programs and Files/blue/manual/")
-            or online (i.e. "http://www.csounds.com/manual/html/").
-          </para>
-
-          <para>
-            You can get the Csound html documentation from
-            <ulink url="http://www.csounds.com/manual" />
-            .
-          </para>
-        </listitem>
-      </varlistentry>
-
-      <varlistentry>
         <term>Work Directory</term>
         <listitem>
           <para>
