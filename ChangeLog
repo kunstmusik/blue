@@ -12,6 +12,19 @@ information.
 
 [CHANGE LOG]
 
+> Notes for 2.7.4 <
+[release 2017.xx.xx]
+
+FIX
+
+* Fixed install-desktop-starter.sh: 
+	* Generated .desktop file now uses "AudioVideo;Audio" category and script
+	* Script now uses desktop-file-install program to install the .desktop file
+	  instead of copying blue.desktop to ~/Desktop location (which did not work
+		on non-English systems)
+
+NEW
+
 > Notes for 2.7.3 <
 [release 2017.12.15]
 
