@@ -128,11 +128,11 @@ public class BSBHSlider extends AutomatableBSBObject implements
         this.value.addListener(cvl);
     }
 
-    public final void setSliderWidth(Integer value) {
+    public final void setSliderWidth(int value) {
         sliderWidth.set(value);
     }
 
-    public final Integer getSliderWidth() {
+    public final int getSliderWidth() {
         return sliderWidth.get();
     }
 

@@ -364,6 +364,7 @@ public class BSBHSliderBank extends AutomatableBSBObject implements
         Elements nodes = data.getElements();
 
         sliderBank.getSliders().clear();
+        List<BSBHSlider> childSliders = new ArrayList<>();
 
         while (nodes.hasMoreElements()) {
             Element node = nodes.next();
@@ -399,12 +400,13 @@ public class BSBHSliderBank extends AutomatableBSBObject implements
                     break;
                 case "bsbObject":
                     BSBHSlider hSlider = (BSBHSlider) BSBHSlider.loadFromXML(node);
-                    sliderBank.getSliders().add(hSlider);
+                    childSliders.add(hSlider);
                     break;
             }
         }
 
         sliderBank.setValueProperty(new ClampedValue(minVal, maxVal, 0.0, resolution));
+        sliderBank.getSliders().addAll(childSliders);
 
         return sliderBank;
     }
