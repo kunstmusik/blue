@@ -20,6 +20,11 @@ FIX
 * BlueSynthBuilder 
   * Horizontal and Vertical Slider Banks did not properly reconnect properties 
     from child sliders and slider bank when loading Blue projects from disk 
+  * BSBDropdown
+    * Issue #383 - Fix problems due to empty string being reloaded from file as
+      null (compilation, editing item)
+    * Fix JavaFX thread exception thrown when item editor dialog was closed 
+      using [x] close button that is part of the window frame
 
 * Fixed install-desktop-starter.sh: 
   * Generated .desktop file now uses "AudioVideo;Audio" category and script

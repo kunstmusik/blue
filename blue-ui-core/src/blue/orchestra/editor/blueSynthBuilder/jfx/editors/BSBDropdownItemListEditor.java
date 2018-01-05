@@ -18,6 +18,7 @@
  */
 package blue.orchestra.editor.blueSynthBuilder.jfx.editors;
 
+import blue.jfx.BlueFX;
 import blue.orchestra.blueSynthBuilder.BSBDropdownItemList;
 import blue.orchestra.editor.blueSynthBuilder.DropdownItemEditorDialog;
 import java.util.concurrent.CountDownLatch;
@@ -40,7 +41,7 @@ public class BSBDropdownItemListEditor extends BorderPane {
         setRight(b);
 
         b.setOnAction(e -> {
-            BSBDropdownItemList newList = new BSBDropdownItemList(list);
+            final BSBDropdownItemList newList = new BSBDropdownItemList(list);
             SwingUtilities.invokeLater(() -> {
                 DropdownItemEditorDialog dlg
                         = new DropdownItemEditorDialog(
@@ -48,7 +49,9 @@ public class BSBDropdownItemListEditor extends BorderPane {
 
                 dlg.show(newList);
          
-                list.setAll(newList);
+                BlueFX.runOnFXThread(() -> {
+                    list.setAll(newList);
+                });
             });
         });
 

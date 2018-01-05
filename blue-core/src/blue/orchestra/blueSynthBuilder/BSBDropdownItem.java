@@ -41,8 +41,8 @@ public class BSBDropdownItem  {
 
     public BSBDropdownItem(BSBDropdownItem item) {
        this();
-       name = item.name;
-       value = item.value;
+       setName(item.getName());
+       setValue(item.getValue());
     }
 
     public static BSBDropdownItem loadFromXML(Element data) {
@@ -105,7 +105,7 @@ public class BSBDropdownItem  {
      * @return Returns the value.
      */
     public String getValue() {
-        return value;
+        return value == null ? "" : value;
     }
 
     /**
@@ -113,7 +113,7 @@ public class BSBDropdownItem  {
      *            The value to set.
      */
     public void setValue(String value) {
-        this.value = value;
+        this.value = value == null ? "" : value;
     }
 
     @Override
