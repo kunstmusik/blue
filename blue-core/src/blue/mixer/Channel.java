@@ -102,7 +102,7 @@ public class Channel implements Comparable<Channel>, ParameterListener {
         postEffects = new EffectsChain(channel.postEffects);
 
         outChannel = channel.outChannel;
-        name = channel.name;
+        setName(channel.name);
         muted = channel.muted;
         solo = channel.solo;
         level = channel.level;
@@ -309,15 +309,15 @@ public class Channel implements Comparable<Channel>, ParameterListener {
     }
 
     public String getName() {
-        return name;
+        return (name == null) ? "" : name;
     }
 
     public void setName(String name) {
-        String oldVal = this.name;
+        String oldVal = getName();
 
-        this.name = name;
+        this.name = (name == null) ? "" : name;
 
-        firePropertyChange(NAME, oldVal, name);
+        firePropertyChange(NAME, oldVal, this.name);
     }
 
     public void addPropertyChangeListener(PropertyChangeListener pcl) {
