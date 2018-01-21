@@ -34,6 +34,8 @@ FIX
 
 * Issue #386 - NullPointerException thrown from SubChannelDropdownList 
 
+* Fix ctrl/cmd-wheel-scroll shortcut for adjust layer heights
+
 NEW
 
 > Notes for 2.7.3 <

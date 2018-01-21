@@ -48,9 +48,9 @@ public class LayerHeightWheelListener implements MouseWheelListener {
         
         if ((e.getModifiers() & shortcutKey) == shortcutKey) {
 
-            int value = e.getWheelRotation();
+            double rotation = e.getPreciseWheelRotation();
 
-            value = (value > 0) ? 1 : -1;
+            int value = (rotation > 0.0) ? 1 : -1;
             Point p = SwingUtilities.convertPoint(e.getComponent(), e.getPoint(), source);
             
             Layer layer = ScoreController.getInstance().getScorePath().getGlobalLayerForY(
