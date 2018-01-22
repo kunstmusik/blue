@@ -36,6 +36,8 @@ FIX
 
 * Fix ctrl/cmd-wheel-scroll shortcut for adjust layer heights
 
+* Fix "All File" filter to show files that do not have extensions
+
 NEW
 
 > Notes for 2.7.3 <
