@@ -73,10 +73,6 @@ class MixerNode {
      *
      * <ol>
      *
-     * <li>if channel does not generate signal to channel output (if no
-     * automation for level fader and fader == -96.0f), only generate code up to
-     * last send in preFader effects chain</li>
-     *
      * <li> when processing Sends, checks down the graph to see if send signal
      * will make it to the Master output or not, checking both down graph of
      * output channels as well as sends for each channel. If not, does not
@@ -469,11 +465,12 @@ class MixerNode {
     }
 
     private static boolean hasOutSignal(Channel channel) {
-        Parameter levelParam = channel.getLevelParameter();
-        double level = channel.getLevel();
+//        Parameter levelParam = channel.getLevelParameter();
+//        double level = channel.getLevel();
 
-        boolean hasOutSignal = (levelParam.isAutomationEnabled() || (level > -96.0f));
-        return hasOutSignal;
+//        boolean hasOutSignal = (levelParam.isAutomationEnabled() || (level > -96.0f));
+//        return hasOutSignal;
+        return true;
     }
 
     /**

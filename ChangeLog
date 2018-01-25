@@ -38,6 +38,9 @@ FIX
 
 * Fix "All File" filter to show files that do not have extensions
 
+* Issue #390 - Removed optimization in mixer code generation that removed signal
+  paths that were considered dead when channel had -96 dB and no automations 
+
 NEW
 
 > Notes for 2.7.3 <
