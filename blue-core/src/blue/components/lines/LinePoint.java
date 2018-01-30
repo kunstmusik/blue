@@ -93,8 +93,8 @@ public class LinePoint implements Comparable<LinePoint> {
     }
 
     public final void setX(double value) {
-        fireChangeEvent(changeEvent);
         x.set(value);
+        fireChangeEvent(changeEvent);
     }
 
     public final double getX() {

@@ -572,9 +572,7 @@ public class ParameterLinePanel extends JComponent implements
             }
         }
 
-        for (Iterator<LinePoint> iterator = points.iterator(); iterator.hasNext();) {
-            LinePoint lp = iterator.next();
-
+        for (LinePoint lp : points) {
             lp.setLocation(lp.getX() + transTime, lp.getY());
             line.addLinePoint(lp);
         }
