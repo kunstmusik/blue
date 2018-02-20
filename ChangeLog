@@ -20,6 +20,8 @@ FIX
 * BlueSynthBuilder 
   * Horizontal and Vertical Slider Banks did not properly reconnect properties 
     from child sliders and slider bank when loading Blue projects from disk 
+	* SliderBanks did not properly listen to individual slider value changes to 
+	  update automation parameters and channel values
   * BSBDropdown
     * Issue #383 - Fix problems due to empty string being reloaded from file as
       null (compilation, editing item)
