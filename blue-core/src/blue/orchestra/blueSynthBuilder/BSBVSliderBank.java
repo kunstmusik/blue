@@ -31,6 +31,7 @@ import java.math.RoundingMode;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.IntegerProperty;
@@ -64,8 +65,15 @@ public class BSBVSliderBank extends AutomatableBSBObject implements
     final ChangeListener<? super Number> cl = (obs, old, newVal) -> {
         if (parameters != null) {
 
-            int index = sliders.indexOf(obs);
-            if (index < 0) {
+            sliders.stream().filter(x -> x.valueProperty() == obs).findFirst().get();
+
+            Optional<BSBVSlider> slider
+                    = sliders.stream()
+                            .filter(x -> x.valueProperty() == obs)
+                            .findFirst();
+
+            int index = sliders.indexOf(slider.get());
+            if (!slider.isPresent() || index < 0) {
                 return;
             }
 
@@ -137,7 +145,7 @@ public class BSBVSliderBank extends AutomatableBSBObject implements
                 case VALUE:
                     v = getMaximum();
                     for (Parameter param : getParameters()) {
-                        if(!param.isAutomationEnabled()) {
+                        if (!param.isAutomationEnabled()) {
                             param.setMax(v,
                                     bType == ClampedValueListener.BoundaryType.TRUNCATE);
                         }
@@ -248,15 +256,15 @@ public class BSBVSliderBank extends AutomatableBSBObject implements
         return randomizable;
     }
 
-    public final boolean isValueDisplayEnabled(){
+    public final boolean isValueDisplayEnabled() {
         return valueDisplayEnabled.get();
     }
 
-    public final void setValueDisplayEnabled(boolean enabled){
+    public final void setValueDisplayEnabled(boolean enabled) {
         valueDisplayEnabled.set(enabled);
     }
 
-    public final BooleanProperty valueDisplayEnabledProperty(){
+    public final BooleanProperty valueDisplayEnabledProperty() {
         return valueDisplayEnabled;
     }
 
@@ -465,7 +473,6 @@ public class BSBVSliderBank extends AutomatableBSBObject implements
 
             Object[] vals = new Object[2];
             vals[0] = objectName;
-
 
             if (diff > 0) {
                 if (!willBeUnique(numSliders)) {

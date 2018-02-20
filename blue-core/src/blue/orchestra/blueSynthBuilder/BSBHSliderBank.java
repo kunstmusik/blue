@@ -31,6 +31,7 @@ import java.math.RoundingMode;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.IntegerProperty;
@@ -64,8 +65,13 @@ public class BSBHSliderBank extends AutomatableBSBObject implements
     final ChangeListener<? super Number> cl = (obs, old, newVal) -> {
         if (parameters != null) {
 
-            int index = sliders.indexOf(obs);
-            if (index < 0) {
+            Optional<BSBHSlider> slider
+                    = sliders.stream()
+                            .filter(x -> x.valueProperty() == obs)
+                            .findFirst();
+
+            int index = sliders.indexOf(slider.get());
+            if (!slider.isPresent() || index < 0) {
                 return;
             }
 
