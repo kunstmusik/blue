@@ -19,9 +19,13 @@
  */
 package blue.components.lines;
 
+import java.util.ArrayList;
+import java.util.List;
+import javafx.collections.ObservableList;
 import junit.framework.TestCase;
 
 public class LineTest extends TestCase {
+
     public void testLine() {
         Line line = new Line(false);
 
@@ -29,7 +33,6 @@ public class LineTest extends TestCase {
         //
         //
         // line.addLinePoint(lp);
-
     }
 
     public void testMinMax() {
@@ -51,5 +54,58 @@ public class LineTest extends TestCase {
         line.setMin(0.25f, true);
 
         assertEquals(0.25f, line.getLinePoint(0).getY(), 0.001f);
+    }
+
+    public void testGetValueLeftRight() {
+        Line line = new Line(false);
+        Line copy;
+
+        ObservableList<LinePoint> points = line.points;
+
+        points.add(new LinePoint(1.0, 0.0));
+        points.add(new LinePoint(1.0, 1.0));
+
+        assertEquals(0.0, line.getValue(1.0, true), 0.0001);
+        assertEquals(1.0, line.getValue(1.0, false), 0.0001);
+    }
+
+    public void testStripOuterPoints() {
+        List<LinePoint> points = new ArrayList<>();
+
+        points.add(new LinePoint(1.0, 0.0));
+        points.add(new LinePoint(1.0, 1.0));
+        points.add(new LinePoint(2.0, 1.0));
+        points.add(new LinePoint(2.0, 0.0));
+
+        Line.stripOuterPoints(points, 1.0, 2.0);
+        assertEquals(2, points.size());
+        assertEquals(1.0, points.get(0).getY(), 0.0001);
+        assertEquals(1.0, points.get(1).getY(), 0.0001);
+    }
+
+    public void testProcessLineForSelectionDragNoChange() {
+        Line line = new Line(false);
+        Line copy;
+
+        ObservableList<LinePoint> points = line.points;
+
+        assertEquals(1, line.points.size());
+
+        assertEquals(0.5, points.get(0).getY(), 0.0001);
+        assertEquals(0.0, points.get(0).getX(), 0.0001);
+
+        // testing selection drag to right by 0.5 but all values are same
+        // so don't create new points
+        copy = new Line(line);
+
+        copy.processLineForSelectionDrag(0.5, 1.5, 0.5);
+        assertEquals(1, copy.points.size());
+
+        // add additional points
+        line.addLinePoint(new LinePoint(1.0, 1.0));
+        line.addLinePoint(new LinePoint(2.0, 0.0));
+
+        assertEquals(3, line.points.size());
+
     }
 }

@@ -530,56 +530,89 @@ public class ParameterLinePanel extends JComponent implements
      */
     private Line getSelectionSortedLine(Line line) {
         Line retVal = new Line(line);
-        processLineForSelectionDrag(retVal);
+        double[] selPoints = selectionList.get(0);
+
+        double selectionStartTime = selPoints[0];
+        double selectionEndTime = selPoints[1];
+        retVal.processLineForSelectionDrag(selectionStartTime, selectionEndTime, 
+                transTime);
 
         return retVal;
     }
 
-    private boolean isPointInSelectionRegion(double pointTime, double timeMod) {
-        double min, max;
-        double[] points;
-
-        for (int i = 0; i < selectionList.size(); i++) {
-            points = selectionList.get(i);
-            min = points[0] + timeMod;
-            max = points[1] + timeMod;
-
-            if (pointTime >= min && pointTime <= max) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private void processLineForSelectionDrag(Line line) {
-        ArrayList<LinePoint> points = new ArrayList<>();
-
-        for (Iterator<LinePoint> iter = line.iterator(); iter.hasNext();) {
-
-            LinePoint lp = iter.next();
-
-            if (line.isFirstLinePoint(lp)) {
-                continue;
-            }
-
-            double pointTime = lp.getX();
-
-            if (isPointInSelectionRegion(pointTime, 0)) {
-                points.add(lp);
-                iter.remove();
-            } else if (isPointInSelectionRegion(pointTime, transTime)) {
-                iter.remove();
-            }
-        }
-
-        for (LinePoint lp : points) {
-            lp.setLocation(lp.getX() + transTime, lp.getY());
-            line.addLinePoint(lp);
-        }
-
-        line.sort();
-    }
-
+//    private boolean isPointInSelectionRegion(double pointTime, double timeMod) {
+//        double min, max;
+//        double[] points;
+//
+//        for (int i = 0; i < selectionList.size(); i++) {
+//            points = selectionList.get(i);
+//            min = points[0] + timeMod;
+//            max = points[1] + timeMod;
+//
+//            if (pointTime >= min && pointTime <= max) {
+//                return true;
+//            }
+//        }
+//        return false;
+//    }
+    /**
+     * Pre-Selection Selection Post-Selection
+     *
+     * TODO - fix for scaling
+     *
+     * @param line
+     */
+//    private void processLineForSelectionDrag(Line line) {
+//
+//        ArrayList<LinePoint> points = new ArrayList<>();
+//        double[] selPoints = selectionList.get(0);
+//
+//        double selectionStartTime = selPoints[0];
+//        double selectionEndTime = selPoints[1];
+//
+//        double preSelectionEnd = selectionStartTime;
+//        double postSelectionBeginning = selectionEndTime;
+//        
+//        if(transTime < 0) {
+//            preSelectionEnd = selectionStartTime + transTime;            
+//        } else {
+//            postSelectionBeginning = selectionEndTime + transTime;
+//        } 
+//
+//        double preSelectY = line.getValue(preSelectionEnd);
+//        double postSelectY = line.getValue(postSelectionBeginning);
+//
+//        points.add(new LinePoint(selectionStartTime, line.getValue(selectionStartTime)));
+//        points.add(new LinePoint(selectionEndTime, line.getValue(selectionEndTime)));
+//
+//        for (Iterator<LinePoint> iter = line.iterator(); iter.hasNext();) {
+//
+//            LinePoint lp = iter.next();
+//
+//            if (line.isFirstLinePoint(lp)) {
+//                continue;
+//            }
+//
+//            double pointTime = lp.getX();
+//
+//            if (isPointInSelectionRegion(pointTime, 0)) {
+//                points.add(lp);
+//                iter.remove();
+//            } else if (isPointInSelectionRegion(pointTime, transTime)) {
+//                iter.remove();
+//            }
+//        }
+//
+//        line.addLinePoint(new LinePoint(preSelectionEnd, preSelectY));
+//        line.addLinePoint(new LinePoint(postSelectionBeginning, postSelectY));
+//
+//        for (LinePoint lp : points) {
+//            lp.setLocation(lp.getX() + transTime, lp.getY());
+//            line.addLinePoint(lp);
+//        }
+//
+//        line.sort();
+//    }
     /**
      * Returns a line that has the points sorted and those masked removed when
      * handling SelectionScaling; not sure this will be good for long term as it
@@ -1293,7 +1326,13 @@ public class ParameterLinePanel extends JComponent implements
                     && marquee.intersects(ParameterLinePanel.this)
                     && selectionList.size() > 0
                     && SwingUtilities.isLeftMouseButton(e)) {
-                processLineForSelectionDrag(currentParameter.getLine());
+
+                double[] selPoints = selectionList.get(0);
+
+                double selectionStartTime = selPoints[0];
+                double selectionEndTime = selPoints[1];
+                currentParameter.getLine().processLineForSelectionDrag(
+                        selectionStartTime, selectionEndTime, transTime);
             }
 
             clearSelectionDragRegions();
@@ -1500,9 +1539,16 @@ public class ParameterLinePanel extends JComponent implements
     public void commitMultiLineDrag() {
         if (this.paramList != null
                 && (marquee.intersects(this) || selectionList.size() > 0)) {
+            double[] selPoints = selectionList.get(0);
+
+            double selectionStartTime = selPoints[0];
+            double selectionEndTime = selPoints[1];
+
             for (int i = 0; i < this.paramList.size(); i++) {
                 Parameter param = paramList.get(i);
-                processLineForSelectionDrag(param.getLine());
+
+                param.getLine().processLineForSelectionDrag(
+                        selectionStartTime, selectionEndTime, transTime);
             }
         }
 //        clearSelectionDragRegions();

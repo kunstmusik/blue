@@ -923,7 +923,7 @@ public class Line implements TableModel, ChangeListener, Iterable<LinePoint> {
             }
         }
 
-        stripOuterPoints(points);
+        stripOuterPoints(points, selectionStartTime, selectionEndTime);
 
         for (LinePoint lp : points) {
             lp.setLocation(lp.getX() + transTime, lp.getY());
@@ -936,31 +936,32 @@ public class Line implements TableModel, ChangeListener, Iterable<LinePoint> {
 
             /* Maximum, 5 possible points added when moving left/right and 
               intersecting with origin area
-            */
+             */
             if (transTime > 0) {
                 // Moved right
                 if (originStartInnerValue != getValue(transStartTime, false)) {
                     insertLinePoint(new LinePoint(transStartTime, originStartInnerValue));
                 }
 
-                if(originStartInnerValue != originStartOuterValue) {
-                    insertLinePointLeft(new LinePoint(transStartTime, originStartOuterValue));
+                if (originStartOuterValue != getValue(transStartTime, true)) {
+                    insertLinePoint(new LinePoint(transStartTime, originStartOuterValue));
                 }
+
 
                 if (originStartOuterValue != getValue(selectionStartTime, true)) {
                     insertLinePointLeft(new LinePoint(selectionStartTime, originStartOuterValue));
                 }
 
 
-                double newTransEnd = getValue(transEndTime, true);
+                double newTransEnd = getValue(transEndTime, false);
+                if (transEndOuterVal != newTransEnd) {
+                    insertLinePoint(new LinePoint(transEndTime, transEndOuterVal));
+                }
+
+                newTransEnd = getValue(transEndTime, true);
 
                 if (originEndInnerValue != newTransEnd) {
                     insertLinePointLeft(new LinePoint(transEndTime, originEndInnerValue));
-                }
-
-                newTransEnd = getValue(transEndTime, false);
-                if (transEndOuterVal != newTransEnd) {
-                    insertLinePoint(new LinePoint(transEndTime, transEndOuterVal));
                 }
 
             } else {
@@ -977,15 +978,16 @@ public class Line implements TableModel, ChangeListener, Iterable<LinePoint> {
                     insertLinePointLeft(new LinePoint(transStartTime, transStartOuterVal));
                 }
 
-                double newTransEnd = getValue(transEndTime, false);
-
-                if (originEndInnerValue != newTransEnd) {
-                    insertLinePointLeft(new LinePoint(transEndTime, originEndInnerValue));
-                }
 
                 if (originEndOuterValue != getValue(selectionEndTime, false)) {
                     insertLinePoint(new LinePoint(selectionEndTime, originEndInnerValue));
                     insertLinePoint(new LinePoint(selectionEndTime, originEndOuterValue));
+                }
+
+                double newTransEnd = getValue(transEndTime, false);
+
+                if (originEndInnerValue != newTransEnd) {
+                    insertLinePointLeft(new LinePoint(transEndTime, originEndInnerValue));
                 }
             }
 
@@ -1018,10 +1020,12 @@ public class Line implements TableModel, ChangeListener, Iterable<LinePoint> {
             }
 
             if (originEndOuterValue != getValue(selectionEndTime, false)) {
-                if (originStartOuterValue != originEndOuterValue) {
-                    insertLinePointLeft(new LinePoint(selectionEndTime, originStartOuterValue));
-                }
                 insertLinePoint(new LinePoint(selectionEndTime, originEndOuterValue));
+            }
+
+
+            if (originStartOuterValue != originEndOuterValue) {
+                insertLinePointLeft(new LinePoint(selectionEndTime, originStartOuterValue));
             }
 
         }
@@ -1051,7 +1055,7 @@ public class Line implements TableModel, ChangeListener, Iterable<LinePoint> {
         return false;
     }
 
-    protected static void stripOuterPoints(List<LinePoint> points) {
+    protected static void stripOuterPoints(List<LinePoint> points, double selectionStartTime, double selectionEndTime) {
         if (points.size() < 2) {
             return;
         }
@@ -1059,7 +1063,7 @@ public class Line implements TableModel, ChangeListener, Iterable<LinePoint> {
         LinePoint p0 = points.get(0);
         LinePoint p1 = points.get(1);
 
-        if (p0.getX() == p1.getX()) {
+        if (p0.getX() == selectionStartTime && p0.getX() == p1.getX()) {
             points.remove(0);
         }
 
@@ -1070,7 +1074,7 @@ public class Line implements TableModel, ChangeListener, Iterable<LinePoint> {
         p0 = points.get(points.size() - 1);
         p1 = points.get(points.size() - 2);
 
-        if (p0.getX() == p1.getX()) {
+        if (p0.getX() == selectionEndTime && p0.getX() == p1.getX()) {
             points.remove(points.size() - 1);
         }
     }
