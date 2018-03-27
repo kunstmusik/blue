@@ -17,7 +17,6 @@
  * the Free Software Foundation Inc., 59 Temple Place - Suite 330,
  * Boston, MA  02111-1307 USA
  */
-
 package blue.components.lines;
 
 import blue.utility.TextUtilities;
@@ -45,16 +44,17 @@ import org.apache.commons.lang3.text.StrBuilder;
  * points are closed on both ends with a minimum of two points required for use
  * at x values 0.0 and 1.0. For non-rightbound lines such as Automations, x
  * values are set to any positive value or 0.
- * 
+ *
  * Previous to 0.110.0, y values were always held internally to be in 0.0-1.0
  * range, and when their values were retrieved for compilation, they were scaled
  * by the min and max values set on the line.
- * 
+ *
  * After 0.110.0, y values are set to the their full values between min and max.
- * 
+ *
  * @author Steven
  */
 public class Line implements TableModel, ChangeListener, Iterable<LinePoint> {
+
     protected String varName = "";
 
     protected double max = 1.0f;
@@ -72,19 +72,23 @@ public class Line implements TableModel, ChangeListener, Iterable<LinePoint> {
     protected int channel = 1;
 
     protected String uniqueID = "";
-    
+
     protected boolean endPointsLinked = false;
 
     protected ObservableList<LinePoint> points;
 
     transient Vector<TableModelListener> listeners = null;
 
-    /** Defaults to right bound and with default points */
+    /**
+     * Defaults to right bound and with default points
+     */
     public Line() {
         this(true);
     }
 
-    /** For use to make lines not right bound */
+    /**
+     * For use to make lines not right bound
+     */
     public Line(boolean rightBound) {
         this(rightBound, true);
     }
@@ -112,7 +116,7 @@ public class Line implements TableModel, ChangeListener, Iterable<LinePoint> {
     }
 
     public Line(Line line) {
-        varName = line.varName;    
+        varName = line.varName;
         max = line.max;
         min = line.min;
         resolution = line.resolution;
@@ -127,7 +131,7 @@ public class Line implements TableModel, ChangeListener, Iterable<LinePoint> {
 
         points = FXCollections.observableArrayList();
 
-        for(LinePoint lp :line.points) {
+        for (LinePoint lp : line.points) {
             LinePoint newLp = new LinePoint(lp);
             points.add(newLp);
             newLp.addChangeListener(this);
@@ -192,7 +196,7 @@ public class Line implements TableModel, ChangeListener, Iterable<LinePoint> {
         if (endLinked != null && endLinked.length() > 0) {
             line.endPointsLinked = Boolean.valueOf(endLinked).booleanValue();
         }
-        
+
         Elements nodes = data.getElements();
 
         while (nodes.hasMoreElements()) {
@@ -286,15 +290,14 @@ public class Line implements TableModel, ChangeListener, Iterable<LinePoint> {
     }
 
     /**
-     * @param max
-     *            The max to set.
+     * @param max The max to set.
      */
     public void setMax(double max, boolean truncate) {
         double oldMax = this.max;
         this.max = max;
 
         for (LinePoint point : points) {
-            
+
             double newVal;
 
             if (truncate) {
@@ -318,8 +321,7 @@ public class Line implements TableModel, ChangeListener, Iterable<LinePoint> {
     }
 
     /**
-     * @param min
-     *            The min to set.
+     * @param min The min to set.
      */
     public void setMin(double min, boolean truncate) {
         double oldMin = this.min;
@@ -343,13 +345,13 @@ public class Line implements TableModel, ChangeListener, Iterable<LinePoint> {
     }
 
     public void setMinMax(double newMin, double newMax, boolean truncate) {
-        
-        if(this.min == newMin && this.max == newMax) {
+
+        if (this.min == newMin && this.max == newMax) {
             return;
         }
-        
+
         for (LinePoint point : points) {
-            
+
             double newVal;
 
             if (truncate) {
@@ -361,23 +363,23 @@ public class Line implements TableModel, ChangeListener, Iterable<LinePoint> {
 
             point.setLocation(point.getX(), newVal);
         }
-        
+
         this.min = newMin;
         this.max = newMax;
-        
+
         fireTableDataChanged();
     }
-   
+
     @Override
     public Iterator<LinePoint> iterator() {
         return points.iterator();
     }
-    
+
     public Color getColor() {
         return color;
     }
 
-    public javafx.scene.paint.Color getColorFX(){
+    public javafx.scene.paint.Color getColorFX() {
         int r = color.getRed();
         int g = color.getGreen();
         int b = color.getBlue();
@@ -400,9 +402,7 @@ public class Line implements TableModel, ChangeListener, Iterable<LinePoint> {
     //
     // return ((p.getY() * range) + min);
     // }
-
     // METHODS FOR LIST OPERATIONS
-
     public LinePoint getLinePoint(int index) {
         return points.get(index);
     }
@@ -428,6 +428,18 @@ public class Line implements TableModel, ChangeListener, Iterable<LinePoint> {
             LinePoint temp = points.get(i);
 
             if (temp.getX() > lp.getX()) {
+                addLinePoint(i, lp);
+                return;
+            }
+        }
+        addLinePoint(lp);
+    }
+
+    public void insertLinePointLeft(LinePoint lp) {
+        for (int i = 0; i < points.size(); i++) {
+            LinePoint temp = points.get(i);
+
+            if (temp.getX() >= lp.getX()) {
                 addLinePoint(i, lp);
                 return;
             }
@@ -462,7 +474,6 @@ public class Line implements TableModel, ChangeListener, Iterable<LinePoint> {
     }
 
     // TABLE MODEL METHODS
-
     @Override
     public int getColumnCount() {
         return 2;
@@ -567,7 +578,7 @@ public class Line implements TableModel, ChangeListener, Iterable<LinePoint> {
             listeners = new Vector<>();
         }
 
-        if(!listeners.contains(l)) {
+        if (!listeners.contains(l)) {
             listeners.add(l);
         }
     }
@@ -623,16 +634,52 @@ public class Line implements TableModel, ChangeListener, Iterable<LinePoint> {
     }
 
     /**
+     * Return value at time, taking into account direction (left or right) to
+     * calculate value from.
+     *
+     * @param time
+     * @param fromLeft
+     * @return
+     */
+    public double getValue(double time, boolean fromLeft) {
+        // Only matters if multiple points share the same time value, i.e., 
+        // there is a discontinuity.  If not, delegate to regular getValue().
+
+        if (fromLeft) {
+            for (int i = 0; i < size(); i++) {
+                LinePoint p = points.get(i);
+                final double x = p.getX();
+                if (x == time) {
+                    return p.getY();
+                } else if (x > time) {
+                    break;
+                }
+            }
+        } else {
+            for (int i = size() - 1; i <= 0; i--) {
+                LinePoint p = points.get(i);
+                final double x = p.getX();
+                if (x == time) {
+                    return p.getY();
+                } else if (x < time) {
+                    break;
+                }
+            }
+        }
+
+        return getValue(time);
+    }
+
+    /**
      * Returns value for time given, developed for use in non-bound right
      * Automations. If beyond last point will return value of last point,
      * otherwise calculates the value on the line between the points.
-     * 
+     *
      * Will adjust value if resolution is used and accounts for line direction.
      */
-
     public double getValue(double time) {
 
-        int size = size();
+        final int size = size();
         if (size == 0) {
             return 0.0f;
         }
@@ -682,7 +729,7 @@ public class Line implements TableModel, ChangeListener, Iterable<LinePoint> {
 
         double y = (m * x) + a.getY();
 
-        if(resolution.doubleValue() > 0.0) {
+        if (resolution.doubleValue() > 0.0) {
             if (b.getY() < a.getY()) {
                 y += resolution.doubleValue() * 0.99;
             }
@@ -702,8 +749,8 @@ public class Line implements TableModel, ChangeListener, Iterable<LinePoint> {
 
     public boolean isRightBound() {
         return rightBound;
-    }  
-    
+    }
+
     public BigDecimal getResolution() {
         return resolution;
     }
@@ -726,11 +773,11 @@ public class Line implements TableModel, ChangeListener, Iterable<LinePoint> {
 
     public void setEndPointsLinked(boolean endPointsLinked) {
         this.endPointsLinked = endPointsLinked;
-    }    
-    
+    }
+
     /**
      * Export line data values as BPF format
-     * 
+     *
      * @return
      */
     public String exportBPF() {
@@ -793,7 +840,6 @@ public class Line implements TableModel, ChangeListener, Iterable<LinePoint> {
         }
 
         // Collections.sort(temp);
-
         this.points.clear();
         this.points.addAll(temp);
 
@@ -802,20 +848,230 @@ public class Line implements TableModel, ChangeListener, Iterable<LinePoint> {
         return true;
     }
 
-    
     public void sort() {
         Collections.sort(points);
     }
-    
+
     public boolean isFirstLinePoint(LinePoint linePoint) {
-        if(points == null || points.size() == 0) {
+        if (points == null || points.size() == 0) {
             return false;
         }
-        
+
         return linePoint == points.get(0);
     }
 
     public ObservableList<LinePoint> getObservableList() {
         return points;
+    }
+
+    /**
+     * Pre-Selection Selection Post-Selection
+     *
+     * Decisions: * Do we need a new origin start point? * Do we need a new
+     * origin end point? * Do we need a new target start point? * Do we need a
+     * new target end point? * Do we need selection begin/end points?
+     *
+     * TODO - fix for scaling
+     *
+     */
+    public void processLineForSelectionDrag(final double selectionStartTime,
+            final double selectionEndTime, final double transTime) {
+
+        // if not translate, don't add any new points or do any processing
+        if (transTime == 0) {
+            return;
+        }
+
+        final boolean leftWards = transTime < 0;
+        final double originStartOuterValue = getValue(selectionStartTime, true);
+        final double originStartInnerValue = getValue(selectionStartTime, false);
+        final double originEndOuterValue = getValue(selectionEndTime, false);
+        final double originEndInnerValue = getValue(selectionEndTime, true);
+        final double transStartTime = selectionStartTime + transTime;
+        final double transEndTime = selectionEndTime + transTime;
+        final double transStartOuterVal = getValue(transStartTime, true);
+        final double transEndOuterVal = getValue(transEndTime, false);
+
+        boolean intersects = Math.abs(transTime)
+                <= (selectionEndTime - selectionStartTime);
+
+//        LinePoint targetStartP =
+        ArrayList<LinePoint> points = new ArrayList<>();
+
+        for (Iterator<LinePoint> iter = iterator(); iter.hasNext();) {
+
+            LinePoint lp = iter.next();
+
+            // TODO - check this
+            if (isFirstLinePoint(lp)) {
+                continue;
+            }
+
+            double pointTime = lp.getX();
+
+            // remove points if in original selection time or in new selection time
+            // old selection time will be added to points list
+            // new selection time will be overwritten with values from points list
+            // so remove whatever happens to be there
+            if (isPointInSelectionRegion(selectionStartTime, selectionEndTime,
+                    pointTime, 0)) {
+                points.add(lp);
+                iter.remove();
+            } else if (isPointInSelectionRegion(selectionStartTime, selectionEndTime,
+                    pointTime, transTime)) {
+                iter.remove();
+            }
+        }
+
+        stripOuterPoints(points);
+
+        for (LinePoint lp : points) {
+            lp.setLocation(lp.getX() + transTime, lp.getY());
+            addLinePoint(lp);
+        }
+
+        this.sort();
+
+        if (intersects) {
+
+            /* Maximum, 5 possible points added when moving left/right and 
+              intersecting with origin area
+            */
+            if (transTime > 0) {
+                // Moved right
+                if (originStartInnerValue != getValue(transStartTime, false)) {
+                    insertLinePoint(new LinePoint(transStartTime, originStartInnerValue));
+                }
+
+                if(originStartInnerValue != originStartOuterValue) {
+                    insertLinePointLeft(new LinePoint(transStartTime, originStartOuterValue));
+                }
+
+                if (originStartOuterValue != getValue(selectionStartTime, true)) {
+                    insertLinePointLeft(new LinePoint(selectionStartTime, originStartOuterValue));
+                }
+
+
+                double newTransEnd = getValue(transEndTime, true);
+
+                if (originEndInnerValue != newTransEnd) {
+                    insertLinePointLeft(new LinePoint(transEndTime, originEndInnerValue));
+                }
+
+                newTransEnd = getValue(transEndTime, false);
+                if (transEndOuterVal != newTransEnd) {
+                    insertLinePoint(new LinePoint(transEndTime, transEndOuterVal));
+                }
+
+            } else {
+                //moved left
+                // deal with origin selection area            
+                // deal with selection target area new boundaries
+
+                if (originStartInnerValue != transStartOuterVal) {
+                    insertLinePointLeft(new LinePoint(transStartTime, originStartInnerValue));
+                }
+
+                double newTransStart = getValue(transStartTime, true);
+                if (transStartOuterVal != newTransStart) {
+                    insertLinePointLeft(new LinePoint(transStartTime, transStartOuterVal));
+                }
+
+                double newTransEnd = getValue(transEndTime, false);
+
+                if (originEndInnerValue != newTransEnd) {
+                    insertLinePointLeft(new LinePoint(transEndTime, originEndInnerValue));
+                }
+
+                if (originEndOuterValue != getValue(selectionEndTime, false)) {
+                    insertLinePoint(new LinePoint(selectionEndTime, originEndInnerValue));
+                    insertLinePoint(new LinePoint(selectionEndTime, originEndOuterValue));
+                }
+            }
+
+        } else {
+
+            // deal with selection target area new boundaries
+            double newTransStart = getValue(transStartTime, true);
+            if (transStartOuterVal != newTransStart) {
+                insertLinePointLeft(new LinePoint(transStartTime, transStartOuterVal));
+            }
+
+            if (originStartInnerValue != transStartOuterVal) {
+                insertLinePoint(new LinePoint(transStartTime, originStartInnerValue));
+            }
+
+            double newTransEnd = getValue(transEndTime, false);
+
+            if (originEndInnerValue != newTransEnd) {
+                insertLinePoint(new LinePoint(transEndTime, originEndInnerValue));
+            }
+
+            newTransEnd = getValue(transEndTime, false);
+            if (transEndOuterVal != newTransEnd) {
+                insertLinePoint(new LinePoint(transEndTime, transEndOuterVal));
+            }
+
+            // deal with origin selection area            
+            if (originStartOuterValue != getValue(selectionStartTime, true)) {
+                insertLinePointLeft(new LinePoint(selectionStartTime, originStartOuterValue));
+            }
+
+            if (originEndOuterValue != getValue(selectionEndTime, false)) {
+                if (originStartOuterValue != originEndOuterValue) {
+                    insertLinePointLeft(new LinePoint(selectionEndTime, originStartOuterValue));
+                }
+                insertLinePoint(new LinePoint(selectionEndTime, originEndOuterValue));
+            }
+
+        }
+
+//        points.add(new LinePoint(selectionEndTime, getValue(selectionEndTime)));
+//        addLinePoint(new LinePoint(preSelectionEnd, preSelectY));
+//        addLinePoint(new LinePoint(postSelectionBeginning, postSelectY));
+        this.sort();
+    }
+
+//    protected void removePoints(double startRange, double endRange) {
+//        points.removeIf(lp
+//                -> lp.getX() >= startRange && lp.getX() <= endRange);
+//    }
+    private boolean isPointInSelectionRegion(
+            double selectionStartTime,
+            double selectionEndTime,
+            double pointTime,
+            double timeMod) {
+
+        double min = selectionStartTime + timeMod;
+        double max = selectionEndTime + timeMod;
+
+        if (pointTime >= min && pointTime <= max) {
+            return true;
+        }
+        return false;
+    }
+
+    protected static void stripOuterPoints(List<LinePoint> points) {
+        if (points.size() < 2) {
+            return;
+        }
+
+        LinePoint p0 = points.get(0);
+        LinePoint p1 = points.get(1);
+
+        if (p0.getX() == p1.getX()) {
+            points.remove(0);
+        }
+
+        if (points.size() < 2) {
+            return;
+        }
+
+        p0 = points.get(points.size() - 1);
+        p1 = points.get(points.size() - 2);
+
+        if (p0.getX() == p1.getX()) {
+            points.remove(points.size() - 1);
+        }
     }
 }
