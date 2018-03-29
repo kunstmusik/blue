@@ -952,15 +952,11 @@ public class Line implements TableModel, ChangeListener, Iterable<LinePoint> {
                     insertLinePointLeft(new LinePoint(selectionStartTime, originStartOuterValue));
                 }
 
-
-                double newTransEnd = getValue(transEndTime, false);
-                if (transEndOuterVal != newTransEnd) {
+                if (transEndOuterVal != getValue(transEndTime, false)) {
                     insertLinePoint(new LinePoint(transEndTime, transEndOuterVal));
                 }
 
-                newTransEnd = getValue(transEndTime, true);
-
-                if (originEndInnerValue != newTransEnd) {
+                if (originEndInnerValue != getValue(transEndTime, true)) {
                     insertLinePointLeft(new LinePoint(transEndTime, originEndInnerValue));
                 }
 
@@ -969,13 +965,12 @@ public class Line implements TableModel, ChangeListener, Iterable<LinePoint> {
                 // deal with origin selection area            
                 // deal with selection target area new boundaries
 
-                if (originStartInnerValue != transStartOuterVal) {
-                    insertLinePointLeft(new LinePoint(transStartTime, originStartInnerValue));
+                if (transStartOuterVal != getValue(transStartTime, true)) {
+                    insertLinePointLeft(new LinePoint(transStartTime, transStartOuterVal));
                 }
 
-                double newTransStart = getValue(transStartTime, true);
-                if (transStartOuterVal != newTransStart) {
-                    insertLinePointLeft(new LinePoint(transStartTime, transStartOuterVal));
+                if (originStartInnerValue != transStartOuterVal) {
+                    insertLinePoint(new LinePoint(transStartTime, originStartInnerValue));
                 }
 
 
@@ -994,8 +989,7 @@ public class Line implements TableModel, ChangeListener, Iterable<LinePoint> {
         } else {
 
             // deal with selection target area new boundaries
-            double newTransStart = getValue(transStartTime, true);
-            if (transStartOuterVal != newTransStart) {
+            if (transStartOuterVal != getValue(transStartTime, true)) {
                 insertLinePointLeft(new LinePoint(transStartTime, transStartOuterVal));
             }
 
@@ -1003,26 +997,22 @@ public class Line implements TableModel, ChangeListener, Iterable<LinePoint> {
                 insertLinePoint(new LinePoint(transStartTime, originStartInnerValue));
             }
 
-            double newTransEnd = getValue(transEndTime, false);
-
-            if (originEndInnerValue != newTransEnd) {
+            if (originEndInnerValue != getValue(transEndTime, false)) {
                 insertLinePoint(new LinePoint(transEndTime, originEndInnerValue));
             }
 
-            newTransEnd = getValue(transEndTime, false);
-            if (transEndOuterVal != newTransEnd) {
+            if (transEndOuterVal != getValue(transEndTime, false)) {
                 insertLinePoint(new LinePoint(transEndTime, transEndOuterVal));
             }
 
             // deal with origin selection area            
-            if (originStartOuterValue != getValue(selectionStartTime, true)) {
-                insertLinePointLeft(new LinePoint(selectionStartTime, originStartOuterValue));
-            }
-
             if (originEndOuterValue != getValue(selectionEndTime, false)) {
                 insertLinePoint(new LinePoint(selectionEndTime, originEndOuterValue));
             }
 
+            if (originStartOuterValue != getValue(selectionStartTime, true)) {
+                insertLinePointLeft(new LinePoint(selectionStartTime, originStartOuterValue));
+            }
 
             if (originStartOuterValue != originEndOuterValue) {
                 insertLinePointLeft(new LinePoint(selectionEndTime, originStartOuterValue));
