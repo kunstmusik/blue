@@ -83,6 +83,8 @@ public class ParameterLinePanel extends JComponent implements
 
     private static final String FILE_BPF_EXPORT = "paramaterLinePanel.bpf_export";
 
+    private static final Stroke STROKE1 = new BasicStroke(1);
+
     private static final Stroke STROKE2 = new BasicStroke(2);
 
     private EditPointsPopup popup = null;
@@ -318,7 +320,10 @@ public class ParameterLinePanel extends JComponent implements
             int y = doubleToScreenY(selectedPoint.getY(), min, max);
 
             g2d.setColor(Color.red);
-            paintPoint(g2d, x, y);
+            g2d.fillOval(x - 3, y - 3, 7, 7);
+            g2d.setStroke(STROKE1);
+            g2d.drawOval(x - 3, y - 3, 7, 7);
+            g2d.setStroke(STROKE2);
 
             if (currentParameter != null) {
                 drawPointInformation(g2d, x, y);
@@ -516,12 +521,11 @@ public class ParameterLinePanel extends JComponent implements
     void paintSelectionPoint(Graphics g, int x, int y, double time,
             double selectionStart, double selectionEnd) {
         if (time >= selectionStart && time <= selectionEnd) {
-            Color c = g.getColor();
-            g.setColor(c.darker().darker());
-            g.fillRect(x - 3, y - 3, 7, 7);
-            g.setColor(c);
+            Graphics2D g2d = (Graphics2D) g;
+            g.fillOval(x - 3, y - 3, 7, 7);
+        } else {
+            paintPoint(g, x, y);
         }
-        paintPoint(g, x, y);
     }
 
     /**
@@ -539,7 +543,7 @@ public class ParameterLinePanel extends JComponent implements
 
         double selectionStartTime = selPoints[0];
         double selectionEndTime = selPoints[1];
-        retVal.processLineForSelectionDrag(selectionStartTime, selectionEndTime, 
+        retVal.processLineForSelectionDrag(selectionStartTime, selectionEndTime,
                 transTime);
 
         return retVal;
@@ -686,7 +690,7 @@ public class ParameterLinePanel extends JComponent implements
             tempLine = getSelectionSortedLine(tempLine);
         } else if (newSelectionStartTime >= 0) {
             tempLine = getSelectionScalingSortedLine(tempLine);
-        } else {
+        } else if (ModeManager.getInstance().getMode() == ScoreMode.SCORE){
             drawLine(g, p, false);
             return;
         }
@@ -711,6 +715,7 @@ public class ParameterLinePanel extends JComponent implements
             selectionStart = marquee.startTime;
             selectionEnd = marquee.endTime;
         }
+
 
         if (tempLine.size() == 1) {
             LinePoint lp = tempLine.getLinePoint(0);
@@ -856,7 +861,18 @@ public class ParameterLinePanel extends JComponent implements
     }
 
     private final void paintPoint(Graphics g, int x, int y) {
-        g.fillRect(x - 2, y - 2, 5, 5);
+        Graphics2D g2d = (Graphics2D) g;
+
+        Color c = g.getColor();
+        Stroke s = g2d.getStroke();
+
+        g2d.setStroke(STROKE1);
+        g.setColor(Color.BLACK);
+        g.fillOval(x - 3, y - 3, 7, 7);
+        g.setColor(c);
+        g.drawOval(x - 3, y - 3, 7, 7);
+
+        g2d.setStroke(s);
     }
 
     private int doubleToScreenX(double val) {
@@ -1402,9 +1418,12 @@ public class ParameterLinePanel extends JComponent implements
                             newTime = 0;
                         }
 
-                        marquee.startTime = newTime;
-                        marquee.endTime = newTime;
                         marquee.setLocation((int) (newTime * pixelSecond), marquee.getY());
+
+                        double marqueeLeft = marquee.getX() / pixelSecond;
+                        double marqueeRight = (marquee.getX() + marquee.getWidth()) / pixelSecond;
+                        marquee.startTime = newTime;
+                        marquee.endTime = marqueeRight;
                     }
                 } else {
                     if (x < 0) {
@@ -1419,8 +1438,12 @@ public class ParameterLinePanel extends JComponent implements
                     }
 
                     Point p = new Point((int) (endTime * pixelSecond), getY() + getHeight());
-                    marquee.endTime = endTime;
                     marquee.setDragPoint(p);
+
+                    double marqueeLeft = marquee.getX() / pixelSecond;
+                    double marqueeRight = (marquee.getX() + marquee.getWidth()) / pixelSecond;
+                    marquee.startTime = marqueeLeft;
+                    marquee.endTime = marqueeRight;
                 }
             } else if (selectedPoint != null) {
 
