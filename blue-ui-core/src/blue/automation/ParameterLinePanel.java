@@ -43,9 +43,8 @@ import java.awt.RenderingHints;
 import java.awt.Stroke;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
-import java.awt.event.MouseMotionListener;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -549,79 +548,6 @@ public class ParameterLinePanel extends JComponent implements
         return retVal;
     }
 
-//    private boolean isPointInSelectionRegion(double pointTime, double timeMod) {
-//        double min, max;
-//        double[] points;
-//
-//        for (int i = 0; i < selectionList.size(); i++) {
-//            points = selectionList.get(i);
-//            min = points[0] + timeMod;
-//            max = points[1] + timeMod;
-//
-//            if (pointTime >= min && pointTime <= max) {
-//                return true;
-//            }
-//        }
-//        return false;
-//    }
-    /**
-     * Pre-Selection Selection Post-Selection
-     *
-     * TODO - fix for scaling
-     *
-     * @param line
-     */
-//    private void processLineForSelectionDrag(Line line) {
-//
-//        ArrayList<LinePoint> points = new ArrayList<>();
-//        double[] selPoints = selectionList.get(0);
-//
-//        double selectionStartTime = selPoints[0];
-//        double selectionEndTime = selPoints[1];
-//
-//        double preSelectionEnd = selectionStartTime;
-//        double postSelectionBeginning = selectionEndTime;
-//        
-//        if(transTime < 0) {
-//            preSelectionEnd = selectionStartTime + transTime;            
-//        } else {
-//            postSelectionBeginning = selectionEndTime + transTime;
-//        } 
-//
-//        double preSelectY = line.getValue(preSelectionEnd);
-//        double postSelectY = line.getValue(postSelectionBeginning);
-//
-//        points.add(new LinePoint(selectionStartTime, line.getValue(selectionStartTime)));
-//        points.add(new LinePoint(selectionEndTime, line.getValue(selectionEndTime)));
-//
-//        for (Iterator<LinePoint> iter = line.iterator(); iter.hasNext();) {
-//
-//            LinePoint lp = iter.next();
-//
-//            if (line.isFirstLinePoint(lp)) {
-//                continue;
-//            }
-//
-//            double pointTime = lp.getX();
-//
-//            if (isPointInSelectionRegion(pointTime, 0)) {
-//                points.add(lp);
-//                iter.remove();
-//            } else if (isPointInSelectionRegion(pointTime, transTime)) {
-//                iter.remove();
-//            }
-//        }
-//
-//        line.addLinePoint(new LinePoint(preSelectionEnd, preSelectY));
-//        line.addLinePoint(new LinePoint(postSelectionBeginning, postSelectY));
-//
-//        for (LinePoint lp : points) {
-//            lp.setLocation(lp.getX() + transTime, lp.getY());
-//            line.addLinePoint(lp);
-//        }
-//
-//        line.sort();
-//    }
     /**
      * Returns a line that has the points sorted and those masked removed when
      * handling SelectionScaling; not sure this will be good for long term as it
@@ -690,7 +616,7 @@ public class ParameterLinePanel extends JComponent implements
             tempLine = getSelectionSortedLine(tempLine);
         } else if (newSelectionStartTime >= 0) {
             tempLine = getSelectionScalingSortedLine(tempLine);
-        } else if (ModeManager.getInstance().getMode() == ScoreMode.SCORE){
+        } else if (ModeManager.getInstance().getMode() == ScoreMode.SCORE) {
             drawLine(g, p, false);
             return;
         }
@@ -715,7 +641,6 @@ public class ParameterLinePanel extends JComponent implements
             selectionStart = marquee.startTime;
             selectionEnd = marquee.endTime;
         }
-
 
         if (tempLine.size() == 1) {
             LinePoint lp = tempLine.getLinePoint(0);
@@ -1142,39 +1067,32 @@ public class ParameterLinePanel extends JComponent implements
         private final int originY;
         private final Parameter param;
         private final LinePoint linePoint;
+        private final boolean synthesized;
 
         public LinePointOrigin(Parameter p, LinePoint lp) {
+            this(p, lp, false);
+        }
+
+        public LinePointOrigin(Parameter p, LinePoint lp, boolean synthesized) {
             this.originY = doubleToScreenY(lp.getY(), p.getMin(), p.getMax());
             this.param = p;
             this.linePoint = lp;
+            this.synthesized = synthesized;
         }
     }
 
-    class LineCanvasMouseListener implements MouseListener, MouseMotionListener {
+    class LineCanvasMouseListener extends MouseAdapter {
 
         ParameterLinePanel lineCanvas;
         DragDirection direction = DragDirection.NOT_SET;
         Point pressPoint = null;
-        boolean horizontalShift = false;
+        boolean verticalShift = false;
         private int initialY;
-        List<LinePointOrigin> linePointOrigins = new ArrayList<>();
-        int maxHorizontalUp = 0;
-        int maxHorizontalDown = 0;
+
+        LineVerticalShifter vShifter = new LineVerticalShifter();
 
         public LineCanvasMouseListener(ParameterLinePanel lineCanvas) {
             this.lineCanvas = lineCanvas;
-        }
-
-        @Override
-        public void mouseClicked(MouseEvent e) {
-        }
-
-        @Override
-        public void mouseEntered(MouseEvent e) {
-        }
-
-        @Override
-        public void mouseExited(MouseEvent e) {
         }
 
         @Override
@@ -1222,32 +1140,13 @@ public class ParameterLinePanel extends JComponent implements
                                 points[1] = marqueeRight;
                             }
 
-                            horizontalShift = e.isControlDown();
+                            verticalShift = e.isControlDown();
 
                             int topY = 5;
                             int bottomY = getHeight() - 5;
 
-                            if (horizontalShift) {
-                                linePointOrigins.clear();
-                                int max = Integer.MAX_VALUE;
-                                int min = Integer.MAX_VALUE;
-//                                for (Parameter p : paramList) {
-        
-                                    // these are flipped from graphics coordinates
-                                    for (LinePoint lp : currentParameter.getLine()) {
-                                        if (lp.getX() >= marqueeLeft
-                                                && lp.getX() <= marqueeRight) {
-                                            LinePointOrigin lpo = new LinePointOrigin(
-                                                    currentParameter, lp);
-                                            linePointOrigins.add(lpo);
-                                            max = Math.min(Math.abs(topY - lpo.originY), max);
-                                            min = Math.min(bottomY - lpo.originY, min);
-                                        }
-//                                    }
-                                }
-
-                                maxHorizontalUp = -max;
-                                maxHorizontalDown = min;
+                            if (verticalShift) {
+                                vShifter.setup(currentParameter, marqueeLeft, marqueeRight);
                             }
 
                             initialY = e.getY();
@@ -1318,23 +1217,12 @@ public class ParameterLinePanel extends JComponent implements
 
         }
 
-//        private int setStartForSnap(int start) {
-//            int snapPixels = (int) (pObj.getSnapValue() * pObj.getPixelSecond());
-//            int fraction = start % snapPixels;
-//
-//            start = start - fraction;
-//
-//            if (fraction > snapPixels / 2) {
-//                start += snapPixels;
-//            }
-//            return start;
-//        }
         @Override
-        public void mouseReleased(MouseEvent e
-        ) {
+        public void mouseReleased(MouseEvent e) {
             direction = DragDirection.NOT_SET;
-            boolean didHorizontalShift = horizontalShift;
-            horizontalShift = false;
+            vShifter.cleanup();
+            boolean didVerticalShift = verticalShift;
+            verticalShift = false;
 
             if (ModeManager.getInstance().getMode() != ScoreMode.SINGLE_LINE) {
                 return;
@@ -1344,7 +1232,7 @@ public class ParameterLinePanel extends JComponent implements
                 return;
             }
 
-            if (selectedPoint == null && !didHorizontalShift
+            if (selectedPoint == null && !didVerticalShift
                     && marquee.isVisible()
                     && marquee.intersects(ParameterLinePanel.this)
                     && selectionList.size() > 0
@@ -1397,11 +1285,15 @@ public class ParameterLinePanel extends JComponent implements
                 double pixelSecond = (double) timeState.getPixelSecond();
                 double mouseDragTime = x / pixelSecond;
 
-                if (horizontalShift) {
-                    int yDiff = e.getY() - initialY;
-                    yDiff = Math.max(yDiff, maxHorizontalUp);
-                    yDiff = Math.min(yDiff, maxHorizontalDown);
-                    processHorizontalShift(yDiff, linePointOrigins);
+                if (verticalShift) {
+
+                    double height = getHeight() - 10;
+                    double range = currentParameter.getMax() - currentParameter.getMin();
+                    double percent = (initialY - e.getY()) / height;
+
+                    double amount = percent * range;
+
+                    vShifter.processVShift(amount);
 
                 } else if (mouseDownInitialTime > 0) {
                     if (SwingUtilities.isLeftMouseButton(e)) {
@@ -1529,7 +1421,7 @@ public class ParameterLinePanel extends JComponent implements
             }
         }
 
-        private void processHorizontalShift(int yDiff, List<LinePointOrigin> lpos) {
+        private void processVerticalShift(int yDiff, List<LinePointOrigin> lpos) {
             for (LinePointOrigin lpo : lpos) {
                 LinePoint lp = lpo.linePoint;
                 Parameter param = lpo.param;

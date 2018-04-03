@@ -23,6 +23,10 @@ UPDATED
 * Issue #397: Using control to shift points within selection in Single-Line mode
   should only shift points for currently selected line
 
+* Automation: Single-line mode: Ctrl-drag to move selected points up/down was
+  rewritten to add points at boundaries if necessary, also updated to only 
+  operate on the currently selected line
+
 FIX
 
 * BlueSynthBuilder 
