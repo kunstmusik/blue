@@ -20,6 +20,9 @@ UPDATED
 * Issue #398: Updated Line Editors within program to use thicker lines and 
   circles for points
 
+* Issue #397: Using control to shift points within selection in Single-Line mode
+  should only shift points for currently selected line
+
 FIX
 
 * BlueSynthBuilder 

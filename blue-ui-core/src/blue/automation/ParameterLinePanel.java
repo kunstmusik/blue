@@ -1231,17 +1231,19 @@ public class ParameterLinePanel extends JComponent implements
                                 linePointOrigins.clear();
                                 int max = Integer.MAX_VALUE;
                                 int min = Integer.MAX_VALUE;
-                                for (Parameter p : paramList) {
+//                                for (Parameter p : paramList) {
+        
                                     // these are flipped from graphics coordinates
-                                    for (LinePoint lp : p.getLine()) {
+                                    for (LinePoint lp : currentParameter.getLine()) {
                                         if (lp.getX() >= marqueeLeft
                                                 && lp.getX() <= marqueeRight) {
-                                            LinePointOrigin lpo = new LinePointOrigin(p, lp);
+                                            LinePointOrigin lpo = new LinePointOrigin(
+                                                    currentParameter, lp);
                                             linePointOrigins.add(lpo);
                                             max = Math.min(Math.abs(topY - lpo.originY), max);
                                             min = Math.min(bottomY - lpo.originY, min);
                                         }
-                                    }
+//                                    }
                                 }
 
                                 maxHorizontalUp = -max;
