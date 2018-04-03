@@ -15,6 +15,11 @@ information.
 > Notes for 2.7.4 <
 [release 2017.xx.xx]
 
+UPDATED
+
+* Issue #398: Updated Line Editors within program to use thicker lines and 
+  circles for points
+
 FIX
 
 * BlueSynthBuilder 
@@ -43,7 +48,6 @@ FIX
 * Issue #390 - Removed optimization in mixer code generation that removed signal
   paths that were considered dead when channel had -96 dB and no automations 
 
-NEW
 
 > Notes for 2.7.3 <
 [release 2017.12.15]

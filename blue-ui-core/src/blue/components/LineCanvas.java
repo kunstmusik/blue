@@ -25,12 +25,14 @@ import blue.components.lines.LineList;
 import blue.components.lines.LinePoint;
 import blue.ui.utilities.UiUtilities;
 import blue.utility.NumberUtilities;
+import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.RenderingHints;
+import java.awt.Stroke;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
@@ -46,6 +48,10 @@ import javax.swing.event.TableModelListener;
  * @author steven
  */
 public class LineCanvas extends JComponent implements TableModelListener {
+
+    private static final Stroke STROKE1 = new BasicStroke(1);
+
+    private static final Stroke STROKE2 = new BasicStroke(2);
 
     private static EditPointsPopup popup = null;
 
@@ -111,6 +117,7 @@ public class LineCanvas extends JComponent implements TableModelListener {
         super.paintComponent(g);
 
         Graphics2D g2d = (Graphics2D) g;
+        g2d.setStroke(STROKE2);
 
         RenderingHints hints = new RenderingHints(
                 RenderingHints.KEY_ANTIALIASING,
@@ -230,7 +237,16 @@ public class LineCanvas extends JComponent implements TableModelListener {
     }
 
     private final void paintPoint(Graphics g, int x, int y) {
-        g.fillRect(x - 2, y - 2, 5, 5);
+        Graphics2D g2d = (Graphics2D) g;
+
+        Color c = g.getColor();
+        Stroke s = g2d.getStroke();
+
+        g2d.setStroke(STROKE1);
+        g.setColor(Color.BLACK);
+        g.fillOval(x - 3, y - 3, 7, 7);
+        g.setColor(c);
+        g.drawOval(x - 3, y - 3, 7, 7);
     }
 
     private int doubleToScreenX(double val) {

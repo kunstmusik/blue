@@ -44,6 +44,7 @@ import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.scene.effect.Glow;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.paint.Color;
+import javafx.scene.paint.Paint;
 import javafx.stage.Modality;
 import javafx.util.converter.DoubleStringConverter;
 import javax.swing.event.TableModelListener;
@@ -139,7 +140,7 @@ public class LineView extends Canvas {
         gc.setFill(Color.BLACK);
         gc.fillRect(0, 0, w, h);
 
-        gc.setLineWidth(0.0);
+        gc.setLineWidth(1.0);
 
         for (Line line : lineList) {
             boolean current = (line == getSelectedLine());
@@ -184,11 +185,15 @@ public class LineView extends Canvas {
         double min = line.getMin();
         double max = line.getMax();
 
+        gc.setFill(Color.BLACK);
+
         for (int i = 0; i < line.size(); i++) {
             LinePoint lp = line.getLinePoint(i);
             double x = Math.floor(lp.getX() * w);
             double y = Math.floor(yToScreen(lp.getY(), min, max));
-            gc.fillRect(x - 2, y - 2, 5, 5);
+        
+            gc.fillOval(x - 3, y - 3, 7, 7);
+            gc.strokeOval(x - 3, y - 3, 7, 7);
         }
     }
 
@@ -201,8 +206,10 @@ public class LineView extends Canvas {
             double x = Math.floor(selectedPoint.getX() * getWidth());
             double y = Math.floor(yToScreen(selectedPoint.getY(), min, max));
 
-            gc.setFill(Color.RED);
-            gc.fillRect(x - 2, y - 2, 5, 5);
+            gc.setFill(Color.BLACK);
+            gc.fillOval(x - 3, y - 3, 7, 7);
+            gc.setStroke(Color.RED);
+            gc.strokeOval(x - 3, y - 3, 7, 7);
 
             drawPointInformation(gc, x, y);
         }
