@@ -988,24 +988,31 @@ public class Line implements TableModel, ChangeListener, Iterable<LinePoint> {
 
         } else {
 
-            // deal with selection target area new boundaries
-            if (transStartOuterVal != getValue(transStartTime, true)) {
-                insertLinePointLeft(new LinePoint(transStartTime, transStartOuterVal));
-            }
-
-            if (originStartInnerValue != transStartOuterVal) {
+            if (originStartInnerValue != getValue(transStartTime, false)) {
                 insertLinePoint(new LinePoint(transStartTime, originStartInnerValue));
             }
 
-            if (originEndInnerValue != getValue(transEndTime, false)) {
-                insertLinePoint(new LinePoint(transEndTime, originEndInnerValue));
+            if (originEndInnerValue != getValue(transEndTime, true)) {
+                insertLinePointLeft(new LinePoint(transEndTime, originEndInnerValue));
+            }
+
+
+            // deal with selection target area new boundaries
+            if (transStartOuterVal != getValue(transStartTime, true)) {
+                insertLinePointLeft(new LinePoint(transStartTime, transStartOuterVal));
             }
 
             if (transEndOuterVal != getValue(transEndTime, false)) {
                 insertLinePoint(new LinePoint(transEndTime, transEndOuterVal));
             }
 
+
             // deal with origin selection area            
+
+            if (originStartOuterValue != getValue(selectionEndTime, false)) {
+                insertLinePointLeft(new LinePoint(selectionEndTime, originStartOuterValue));
+            }
+
             if (originEndOuterValue != getValue(selectionEndTime, false)) {
                 insertLinePoint(new LinePoint(selectionEndTime, originEndOuterValue));
             }
@@ -1014,9 +1021,6 @@ public class Line implements TableModel, ChangeListener, Iterable<LinePoint> {
                 insertLinePointLeft(new LinePoint(selectionStartTime, originStartOuterValue));
             }
 
-            if (originStartOuterValue != originEndOuterValue) {
-                insertLinePointLeft(new LinePoint(selectionEndTime, originStartOuterValue));
-            }
 
         }
 
