@@ -1421,16 +1421,6 @@ public class ParameterLinePanel extends JComponent implements
             }
         }
 
-        private void processVerticalShift(int yDiff, List<LinePointOrigin> lpos) {
-            for (LinePointOrigin lpo : lpos) {
-                LinePoint lp = lpo.linePoint;
-                Parameter param = lpo.param;
-                double newY = screenToDoubleY(lpo.originY + yDiff,
-                        param.getMin(), param.getMax(), new BigDecimal(-1));
-                lp.setLocation(lp.getX(), newY);
-            }
-        }
-
     }
 
     /* MULTILINE MODE */

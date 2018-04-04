@@ -132,7 +132,6 @@ public class LineVerticalShifter {
         maxShift = param.getMax() - max;
         minShift = param.getMin() - min;
 
-        System.out.println(maxShift + " : " + minShift);
     }
 
     public void processVShift(double amount) {
