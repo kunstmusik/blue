@@ -141,49 +141,6 @@ public class ParameterLinePanel extends JComponent implements
         fcm.setDialogTitle(FILE_BPF_IMPORT, "Import BPF File");
         fcm.setDialogTitle(FILE_BPF_EXPORT, "Export BPF File");
 
-        // wheelListener = new MouseWheelListener() {
-        // public void mouseWheelMoved(MouseWheelEvent e) {
-        // ModeManager modeManager = ModeManager.getInstance();
-        // if (modeManager.getMode() != ModeManager.MODE_SINGLE_LINE) {
-        // return;
-        // }
-        //
-        // if (paramList.size() == 0) {
-        // return;
-        // }
-        //
-        // if (e.getWheelRotation() > 0) {
-        // if (currentParameter == null) {
-        // setSelectedParameter(paramList.getParameter(0));
-        // } else {
-        // int index = paramList.indexOf(currentParameter);
-        //
-        // if (index == paramList.size() - 1) {
-        // index = 0;
-        // } else {
-        // index++;
-        // }
-        //
-        // setSelectedParameter(paramList.getParameter(index));
-        // }
-        // repaint();
-        // } else {
-        // if (currentParameter == null) {
-        // setSelectedParameter(paramList.getParameter(0));
-        // } else {
-        // int index = paramList.indexOf(currentParameter);
-        //
-        // if (index == 0) {
-        // index = paramList.size() - 1;
-        // } else {
-        // index--;
-        // }
-        //
-        // setSelectedParameter(paramList.getParameter(index));
-        // }
-        // }
-        // }
-        // };
     }
 
     public void setTimeState(TimeState timeState) {
@@ -1101,6 +1058,8 @@ public class ParameterLinePanel extends JComponent implements
                 return;
             }
 
+            e.consume();
+
             pressPoint = e.getPoint();
 
             if (marquee.isVisible()) {
@@ -1225,6 +1184,8 @@ public class ParameterLinePanel extends JComponent implements
                 return;
             }
 
+            e.consume();
+
             if (currentParameter == null) {
                 return;
             }
@@ -1272,6 +1233,8 @@ public class ParameterLinePanel extends JComponent implements
             if (ModeManager.getInstance().getMode() != ScoreMode.SINGLE_LINE) {
                 return;
             }
+
+            e.consume();
 
             if (currentParameter == null) {
                 return;

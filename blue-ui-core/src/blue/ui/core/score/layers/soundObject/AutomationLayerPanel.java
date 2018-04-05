@@ -55,7 +55,7 @@ public class AutomationLayerPanel extends JComponent implements
     MultiLineScoreSelection selection = MultiLineScoreSelection.getInstance();
 
     final ScorePath path;
-    
+
     public AutomationLayerPanel(AlphaMarquee marquee) {
         this.setLayout(layout);
         this.marquee = marquee;
@@ -111,6 +111,15 @@ public class AutomationLayerPanel extends JComponent implements
         if (evt.getSource() == this.layerGroup) {
             if (evt.getPropertyName().equals("heightIndex")) {
                 revalidate();
+            }
+        } else if (evt.getPropertyName().equals("pixelSecond")) {
+            int pixelSecond = timeState.getPixelSecond();
+
+            if (marquee.isVisible()) {
+                int newX = (int) (marquee.startTime * pixelSecond);
+                marquee.setLocation(newX, marquee.getY());
+                int newW = (int) (marquee.endTime * pixelSecond) - newX;
+                marquee.setSize(newW, marquee.getHeight());
             }
         }
     }
@@ -266,7 +275,7 @@ public class AutomationLayerPanel extends JComponent implements
 
     public void layersAdded(LayerGroupDataEvent e) {
         int index = e.getStartIndex();
-        AutomatableLayer sLayer = (AutomatableLayer)layerGroup.get(index);
+        AutomatableLayer sLayer = (AutomatableLayer) layerGroup.get(index);
 
         ParameterLinePanel paramPanel = new ParameterLinePanel(this.marquee);
         paramPanel.setTimeState(timeState);

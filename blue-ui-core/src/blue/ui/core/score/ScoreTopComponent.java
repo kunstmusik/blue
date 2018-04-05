@@ -687,16 +687,23 @@ public final class ScoreTopComponent extends TopComponent
 
         } else if (evt.getSource() == currentTimeState) {
             if (evt.getPropertyName().equals("pixelSecond")) {
+                int pixelSecond = currentTimeState.getPixelSecond();
                 double val = data.getRenderStartTime();
 
-                int newX = (int) (val * currentTimeState.getPixelSecond());
+                int newX = (int) (val * pixelSecond);
                 updateRenderStartPointerX(newX, true);
 
                 val = data.getRenderEndTime();
-                newX = (int) (val * currentTimeState.getPixelSecond());
+                newX = (int) (val * pixelSecond);
 
                 updateRenderLoopPointerX(newX);
 
+                if(marquee.isVisible()) {
+                    newX = (int)(marquee.startTime * pixelSecond);
+                    marquee.setLocation(newX, marquee.getY());
+                    int newW = (int)(marquee.endTime * pixelSecond) - newX;
+                    marquee.setSize(newW, marquee.getHeight());
+                }
             }
         } else if (evt.getSource() == data) {
             boolean isRenderStartTime = evt.getPropertyName().equals(

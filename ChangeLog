@@ -55,6 +55,8 @@ FIX
 * Issue #390 - Removed optimization in mixer code generation that removed signal
   paths that were considered dead when channel had -96 dB and no automations 
 
+* Fix resizing of marquee when zooming (single-line and multi-line score modes)
+
 
 > Notes for 2.7.3 <
 [release 2017.12.15]
