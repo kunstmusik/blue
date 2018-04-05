@@ -109,7 +109,7 @@ public class ParameterLinePanel extends JComponent implements
 
     ArrayList<double[]> selectionList = new ArrayList<>();
 
-    double mouseDownInitialTime = -1.0f;
+    int mouseDownInitialX = -1;
 
     double transTime = 0;
 
@@ -1109,7 +1109,7 @@ public class ParameterLinePanel extends JComponent implements
                         && !marquee.contains(
                                 SwingUtilities.convertPoint(e.getComponent(), pressPoint, marquee))) {
                     transTime = 0.0f;
-                    mouseDownInitialTime = -1.0f;
+                    mouseDownInitialX = -1;
                     clearSelectionDragRegions();
 
                     marquee.setVisible(false);
@@ -1124,7 +1124,7 @@ public class ParameterLinePanel extends JComponent implements
                         if (SwingUtilities.isLeftMouseButton(e)) {
                             double pixelSecond = (double) timeState.getPixelSecond();
 
-                            mouseDownInitialTime = e.getX() / pixelSecond;
+                            mouseDownInitialX = e.getX();
                             transTime = 0.0f;
 
                             double marqueeLeft = marquee.getX() / pixelSecond;
@@ -1142,9 +1142,6 @@ public class ParameterLinePanel extends JComponent implements
 
                             verticalShift = e.isControlDown();
 
-                            int topY = 5;
-                            int bottomY = getHeight() - 5;
-
                             if (verticalShift) {
                                 vShifter.setup(currentParameter, marqueeLeft, marqueeRight);
                             }
@@ -1157,7 +1154,7 @@ public class ParameterLinePanel extends JComponent implements
             }
 
             transTime = 0.0f;
-            mouseDownInitialTime = -1.0f;
+            mouseDownInitialX = -1;
             clearSelectionDragRegions();
 
             marquee.setVisible(false);
@@ -1283,7 +1280,6 @@ public class ParameterLinePanel extends JComponent implements
             if (marquee.isVisible()) {
                 int x = e.getX();
                 double pixelSecond = (double) timeState.getPixelSecond();
-                double mouseDragTime = x / pixelSecond;
 
                 if (verticalShift) {
 
@@ -1293,16 +1289,18 @@ public class ParameterLinePanel extends JComponent implements
 
                     double amount = percent * range;
 
+                    
                     vShifter.processVShift(amount);
 
-                } else if (mouseDownInitialTime > 0) {
+                } else if (mouseDownInitialX > 0) {
                     if (SwingUtilities.isLeftMouseButton(e)) {
-                        transTime = mouseDragTime - mouseDownInitialTime;
+
+                        transTime = (x - mouseDownInitialX) / pixelSecond;
 
                         double newTime = getInitialStartTime() + transTime;
 
                         if (timeState.isSnapEnabled() && !e.isControlDown()) {
-                            newTime = ScoreUtilities.getSnapValueStart(newTime,
+                            newTime = ScoreUtilities.getSnapValueMove(newTime,
                                     timeState.getSnapValue());
                             transTime = newTime - getInitialStartTime();
                         }

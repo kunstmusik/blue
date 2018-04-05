@@ -894,7 +894,7 @@ public class Line implements TableModel, ChangeListener, Iterable<LinePoint> {
     protected void insertOrAdjust(double time, double value, boolean fromLeft) {
         LinePoint left = getLinePoint(time, true);
         LinePoint right = (left == null) ? null : getLinePoint(time, false);
-
+        
         if (left != null && left != right) {
             if (fromLeft) {
                 left.setY(value);
