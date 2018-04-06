@@ -53,7 +53,6 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.List;
 import javafx.stage.FileChooser.ExtensionFilter;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
@@ -104,7 +103,6 @@ public class ParameterLinePanel extends JComponent implements
 
     LineCanvasMouseListener mouseListener = new LineCanvasMouseListener(this);
 
-    // MouseWheelListener wheelListener;
     AlphaMarquee marquee;
 
     ArrayList<double[]> selectionList = new ArrayList<>();
@@ -991,15 +989,9 @@ public class ParameterLinePanel extends JComponent implements
         if (mode == ScoreMode.SINGLE_LINE) {
             addMouseListener(mouseListener);
             addMouseMotionListener(mouseListener);
-            // addMouseWheelListener(wheelListener);
-
-            // if (currentParameter == null && paramList.size() > 0) {
-            // setSelectedParameter(paramList.getParameter(0));
-            // }
         } else {
             removeMouseListener(mouseListener);
             removeMouseMotionListener(mouseListener);
-            // removeMouseWheelListener(wheelListener);
         }
         repaint();
     }
@@ -1017,25 +1009,6 @@ public class ParameterLinePanel extends JComponent implements
 
         Parameter param = AutomationManager.getInstance().getParameter(paramId);
         setSelectedParameter(param);
-    }
-
-    class LinePointOrigin {
-
-        private final int originY;
-        private final Parameter param;
-        private final LinePoint linePoint;
-        private final boolean synthesized;
-
-        public LinePointOrigin(Parameter p, LinePoint lp) {
-            this(p, lp, false);
-        }
-
-        public LinePointOrigin(Parameter p, LinePoint lp, boolean synthesized) {
-            this.originY = doubleToScreenY(lp.getY(), p.getMin(), p.getMax());
-            this.param = p;
-            this.linePoint = lp;
-            this.synthesized = synthesized;
-        }
     }
 
     class LineCanvasMouseListener extends MouseAdapter {
