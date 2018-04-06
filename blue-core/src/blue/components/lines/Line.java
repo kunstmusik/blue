@@ -894,7 +894,7 @@ public class Line implements TableModel, ChangeListener, Iterable<LinePoint> {
     protected void insertOrAdjust(double time, double value, boolean fromLeft) {
         LinePoint left = getLinePoint(time, true);
         LinePoint right = (left == null) ? null : getLinePoint(time, false);
-        
+
         if (left != null && left != right) {
             if (fromLeft) {
                 left.setY(value);
@@ -1019,7 +1019,7 @@ public class Line implements TableModel, ChangeListener, Iterable<LinePoint> {
                     insertOrAdjust(transStartTime, originStartInnerValue, false);
                 }
 
-                if(originEndInnerValue != getValue(selectionEndTime, true)) {
+                if (originEndInnerValue != getValue(selectionEndTime, true)) {
                     insertOrAdjust(selectionEndTime, originEndInnerValue, true);
                 }
 
@@ -1034,48 +1034,77 @@ public class Line implements TableModel, ChangeListener, Iterable<LinePoint> {
 
         } else {
 
-            if (originStartInnerValue != getValue(transStartTime, false)) {
-                insertOrAdjust(transStartTime, originStartInnerValue, false);
-            }
+            if (transTime > 0) {
 
-            if (originEndInnerValue != getValue(transEndTime, true)) {
-                insertOrAdjust(transEndTime, originEndInnerValue, true);
-            }
+                // deal with origin selection area            
+                if (originEndOuterValue != getValue(selectionEndTime, false)) {
+                    insertOrAdjust(selectionEndTime, originEndOuterValue, false);
+                }
 
-            // deal with selection target area new boundaries
-            if (transStartOuterVal != getValue(transStartTime, true)) {
-                insertOrAdjust(transStartTime, transStartOuterVal, true);
-            }
+                if (originStartOuterValue != getValue(selectionEndTime, true)) {
+                    insertOrAdjust(selectionEndTime, originStartOuterValue, true);
+                }
 
-            if (transEndOuterVal != getValue(transEndTime, false)) {
-                insertOrAdjust(transEndTime, transEndOuterVal, false);
-            }
+                if (originStartOuterValue != getValue(selectionStartTime, true)) {
+                    insertOrAdjust(selectionStartTime, originStartOuterValue, true);
+                }
 
-            // deal with origin selection area            
-            if (originStartOuterValue != getValue(selectionEndTime, false)) {
-                insertOrAdjust(selectionEndTime, originStartOuterValue, false);
-            }
+                // deal with selection target area new boundaries
+                if (transStartOuterVal != getValue(transStartTime, true)) {
+                    insertOrAdjust(transStartTime, transStartOuterVal, true);
+                }
 
-            if (originEndOuterValue != getValue(selectionEndTime, false)) {
-                insertOrAdjust(selectionEndTime, originEndOuterValue, false);
-            }
+                if (transEndOuterVal != getValue(transEndTime, false)) {
+                    insertOrAdjust(transEndTime, transEndOuterVal, false);
+                }
 
-            if (originStartOuterValue != getValue(selectionStartTime, true)) {
-                insertOrAdjust(selectionStartTime, originStartOuterValue, true);
+                // target
+                if (originStartInnerValue != getValue(transStartTime, false)) {
+                    insertOrAdjust(transStartTime, originStartInnerValue, false);
+                }
+
+                if (originEndInnerValue != getValue(transEndTime, true)) {
+                    insertOrAdjust(transEndTime, originEndInnerValue, true);
+                }
+
+            } else {
+                // deal with selection target area new boundaries
+                if (transStartOuterVal != getValue(transStartTime, true)) {
+                    insertOrAdjust(transStartTime, transStartOuterVal, true);
+                }
+
+                if (transEndOuterVal != getValue(transEndTime, false)) {
+                    insertOrAdjust(transEndTime, transEndOuterVal, false);
+                }
+
+                if (originStartInnerValue != getValue(transStartTime, false)) {
+                    insertOrAdjust(transStartTime, originStartInnerValue, false);
+                }
+
+                if (originEndInnerValue != getValue(transEndTime, true)) {
+                    insertOrAdjust(transEndTime, originEndInnerValue, true);
+                }
+
+
+                // deal with origin selection area            
+                if (originStartOuterValue != getValue(selectionEndTime, true)) {
+                    insertOrAdjust(selectionEndTime, originStartOuterValue, true);
+                }
+
+                if (originEndOuterValue != getValue(selectionEndTime, false)) {
+                    insertOrAdjust(selectionEndTime, originEndOuterValue, false);
+                }
+
+                if (originStartOuterValue != getValue(selectionStartTime, true)) {
+                    insertOrAdjust(selectionStartTime, originStartOuterValue, true);
+                }
             }
 
         }
 
-//        points.add(new LinePoint(selectionEndTime, getValue(selectionEndTime)));
-//        addLinePoint(new LinePoint(preSelectionEnd, preSelectY));
-//        addLinePoint(new LinePoint(postSelectionBeginning, postSelectY));
         this.sort();
     }
 
-//    protected void removePoints(double startRange, double endRange) {
-//        points.removeIf(lp
-//                -> lp.getX() >= startRange && lp.getX() <= endRange);
-//    }
     private boolean isPointInSelectionRegion(
             double selectionStartTime,
             double selectionEndTime,
