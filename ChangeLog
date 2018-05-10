@@ -27,6 +27,9 @@ UPDATED
   rewritten to add points at boundaries if necessary, also updated to only 
   operate on the currently selected line
 
+* Issue #406: JMask: throw error when user attempts to use Constant p2 field 
+  with value < 0.0 (prevents infinite loop)
+
 FIX
 
 * BlueSynthBuilder 
