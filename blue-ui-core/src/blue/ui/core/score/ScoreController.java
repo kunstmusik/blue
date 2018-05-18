@@ -19,8 +19,13 @@
  */
 package blue.ui.core.score;
 
+import blue.automation.AutomationManager;
+import blue.automation.Parameter;
+import blue.automation.ParameterIdList;
+import blue.components.lines.Line;
 import blue.score.Score;
 import blue.score.ScoreObject;
+import blue.score.layers.AutomatableLayer;
 import blue.score.layers.Layer;
 import blue.score.layers.LayerGroup;
 import blue.score.layers.ScoreObjectLayer;
@@ -204,8 +209,8 @@ public class ScoreController {
             return;
         }
 
-        Collection<? extends ScoreObject> scoreObjects = 
-                ScoreController.getInstance().getSelectedScoreObjects();
+        Collection<? extends ScoreObject> scoreObjects
+                = ScoreController.getInstance().getSelectedScoreObjects();
         Score score = lookup.lookup(Score.class);
 
         if (score == null) {
@@ -256,6 +261,30 @@ public class ScoreController {
 
         copyScoreObjects();
         deleteScoreObjects();
+    }
+
+    /* Multi Line Data Handling*/
+
+    public void deleteMultiLineData() {
+        final MultiLineScoreSelection selection
+                = MultiLineScoreSelection.getInstance();
+        final double start = selection.getStartTime();
+        final double end = selection.getEndTime();
+
+        AutomationManager manager = AutomationManager.getInstance();
+
+        for (Layer layer : selection.getSelectedLayers()) {
+            if (layer instanceof AutomatableLayer) {
+                AutomatableLayer al = (AutomatableLayer) layer;
+                ParameterIdList params = al.getAutomationParameters();
+
+                for (String paramId : params) {
+                    Parameter param = manager.getParameter(paramId);
+                    Line line = param.getLine();
+                    line.delete(start, end);
+                }
+            }
+        }
     }
 
     public ScoreObjectBuffer getScoreObjectBuffer() {

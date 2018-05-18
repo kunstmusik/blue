@@ -1085,7 +1085,6 @@ public class Line implements TableModel, ChangeListener, Iterable<LinePoint> {
                     insertOrAdjust(transEndTime, originEndInnerValue, true);
                 }
 
-
                 // deal with origin selection area            
                 if (originStartOuterValue != getValue(selectionEndTime, true)) {
                     insertOrAdjust(selectionEndTime, originStartOuterValue, true);
@@ -1103,6 +1102,36 @@ public class Line implements TableModel, ChangeListener, Iterable<LinePoint> {
         }
 
         this.sort();
+    }
+
+    public void delete(double startTime, double endTime) {
+        if (startTime < 0.0 || endTime < startTime) {
+            return;
+        }
+
+        final double originStart = getValue(startTime, true);
+        final double originEnd = getValue(endTime, false);
+
+        for (Iterator<LinePoint> iter = iterator(); iter.hasNext();) {
+
+            LinePoint lp = iter.next();
+
+            double pointTime = lp.getX();
+
+            if (isPointInSelectionRegion(startTime, endTime, pointTime, 0)) {
+                iter.remove();
+            }
+        }
+
+        if (originStart != getValue(startTime, false)) {
+            insertOrAdjust(startTime, originStart, false);
+            if (originStart != originEnd) {
+                insertOrAdjust(startTime, originEnd, false);
+            }
+        }
+        if (originEnd != getValue(endTime, true)) {
+            insertOrAdjust(endTime, originEnd, true);
+        }
     }
 
     private boolean isPointInSelectionRegion(
