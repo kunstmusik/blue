@@ -1134,6 +1134,47 @@ public class Line implements TableModel, ChangeListener, Iterable<LinePoint> {
         }
     }
 
+
+    public List<LinePoint> copy(double startTime, double endTime) {
+        if (startTime < 0.0 || endTime < startTime) {
+            return null;
+        }
+
+        final double originStart = getValue(startTime, false);
+        final double originEnd = getValue(endTime, true);
+
+        List<LinePoint> retVal = new ArrayList<>();
+
+        for (Iterator<LinePoint> iter = iterator(); iter.hasNext();) {
+
+            LinePoint lp = iter.next();
+
+            double pointTime = lp.getX();
+
+            if (isPointInSelectionRegion(startTime, endTime, pointTime, 0)) {
+                retVal.add(new LinePoint(lp)); 
+            }
+        }
+
+        stripOuterPoints(retVal, startTime, endTime);
+
+        LinePoint startPoint = new LinePoint(startTime, originStart);
+        LinePoint endPoint = new LinePoint(endTime, originEnd); 
+        if(retVal.size() > 0) {
+            if(!startPoint.equals(retVal.get(0))) {
+                retVal.add(0, startPoint);
+            }
+            if(!endPoint.equals(retVal.get(retVal.size() - 1))) {
+                retVal.add(endPoint);
+            }
+        } else {
+            retVal.add(startPoint);
+            retVal.add(endPoint);
+        }
+
+        return retVal;
+    }
+
     private boolean isPointInSelectionRegion(
             double selectionStartTime,
             double selectionEndTime,

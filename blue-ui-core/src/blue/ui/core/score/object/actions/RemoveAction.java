@@ -56,8 +56,7 @@ public final class RemoveAction implements ActionListener {
                 // deleteSingleLine();
                 break;
             case MULTI_LINE:
-                scoreController.deleteScoreObjects();
-                scoreController.deleteMultiLineData();
+                scoreController.deleteMultiLine();
                 break;
         }
     }

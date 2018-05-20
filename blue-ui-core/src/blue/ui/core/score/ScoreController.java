@@ -23,6 +23,7 @@ import blue.automation.AutomationManager;
 import blue.automation.Parameter;
 import blue.automation.ParameterIdList;
 import blue.components.lines.Line;
+import blue.components.lines.LinePoint;
 import blue.score.Score;
 import blue.score.ScoreObject;
 import blue.score.layers.AutomatableLayer;
@@ -33,7 +34,9 @@ import blue.ui.core.score.undo.RemoveScoreObjectEdit;
 import blue.undo.BlueUndoManager;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.WeakHashMap;
 import javax.swing.JScrollPane;
 import org.openide.util.Lookup;
@@ -56,6 +59,7 @@ public class ScoreController {
 
     private Lookup lookup;
     private final ScoreObjectBuffer buffer = new ScoreObjectBuffer();
+    private final MultiLineBuffer multiLineBuffer = new MultiLineBuffer();
     private InstanceContent content;
     private Score score = null;
     WeakHashMap<Score, ScorePath> scorePaths = new WeakHashMap<>();
@@ -264,8 +268,66 @@ public class ScoreController {
     }
 
     /* Multi Line Data Handling*/
+    public void copyMultiLine() {
+        if (lookup == null || content == null) {
+            return;
+        }
 
-    public void deleteMultiLineData() {
+        Collection<? extends ScoreObject> scoreObjects = lookup.lookupAll(
+                ScoreObject.class);
+
+        final MultiLineScoreSelection selection
+                = MultiLineScoreSelection.getInstance();
+        final double start = selection.getStartTime();
+        final double end = selection.getEndTime();
+
+        AutomationManager manager = AutomationManager.getInstance();
+
+        multiLineBuffer.clear();
+        multiLineBuffer.sourceScore = getScore();
+        multiLineBuffer.selectionStart = start;
+
+        List<Layer> layers = getScorePath().getAllLayers();
+        double minScoreTime = Double.MAX_VALUE;
+
+        // COPY SCORE OBJECTS
+        for (ScoreObject scoreObject : scoreObjects) {
+            Layer foundLayer = null;
+            for (Layer layer : layers) {
+                if (layer.contains(scoreObject)) {
+                    foundLayer = layer;
+                    break;
+                }
+            }
+
+            if (foundLayer == null) {
+                throw new RuntimeException(
+                        "Error: Trying to copy a ScoreObject without a layer: Internal Error");
+            }
+
+            // deep copy to lock in scoreObject properties 
+            multiLineBuffer.scoreObjects.put(scoreObject.deepCopy(),
+                    (ScoreObjectLayer) foundLayer);
+            minScoreTime = Math.min(minScoreTime, scoreObject.getStartTime());
+        }
+
+        // COPY AUTOMATION DATA 
+        for (Layer layer : selection.getSelectedLayers()) {
+            if (layer instanceof AutomatableLayer) {
+                AutomatableLayer al = (AutomatableLayer) layer;
+                ParameterIdList params = al.getAutomationParameters();
+
+                for (String paramId : params) {
+                    Parameter param = manager.getParameter(paramId);
+                    Line line = param.getLine();
+                    List<LinePoint> autoData = line.copy(start, end);
+                    multiLineBuffer.automationData.put(autoData, line);
+                }
+            }
+        }
+    }
+
+    public void deleteMultiLine() {
         final MultiLineScoreSelection selection
                 = MultiLineScoreSelection.getInstance();
         final double start = selection.getStartTime();
@@ -285,6 +347,12 @@ public class ScoreController {
                 }
             }
         }
+        deleteScoreObjects();
+    }
+
+    public void cutMultiLine() {
+        copyMultiLine();
+        deleteMultiLine();
     }
 
     public ScoreObjectBuffer getScoreObjectBuffer() {
@@ -341,6 +409,30 @@ public class ScoreController {
         public void clear() {
             scoreObjects.clear();
             layerIndexes.clear();
+        }
+    }
+
+    public static class MultiLineBuffer {
+        // use maps here as Blue only allows pasting back into the source layers
+        // and lines for multiline copy/paste
+        public final Map<ScoreObject, ScoreObjectLayer> scoreObjects = new HashMap<>();
+        public final Map<List<LinePoint>, Line> automationData = new HashMap<>();
+
+        public Score sourceScore = null;
+
+        // This is the start time for the marquee selection 
+        public double selectionStart = -1.0;
+        // This is the different in time between selectionStart and first
+        // scoreObject time. This is here to prevent trying to paste data and 
+        // have scoreObjects with time < 0.0 
+        double scorePasteMin = -1.0;
+
+        public void clear() {
+            scoreObjects.clear();
+            automationData.clear();
+            sourceScore = null;
+            selectionStart = -1.0;
+            scorePasteMin = -1.0;
         }
 
     }
