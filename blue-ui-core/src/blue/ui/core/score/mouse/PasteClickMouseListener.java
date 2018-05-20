@@ -21,9 +21,12 @@ package blue.ui.core.score.mouse;
 
 import blue.plugin.ScoreMouseListenerPlugin;
 import blue.BlueSystem;
+import blue.score.TimeState;
 import blue.ui.core.score.ModeManager;
+import blue.ui.core.score.ScoreController;
 import blue.ui.core.score.ScoreMode;
 import blue.ui.core.score.layers.soundObject.actions.PasteSoundObjectAction;
+import blue.utility.ScoreUtilities;
 import java.awt.Point;
 import java.awt.event.MouseEvent;
 import javax.swing.Action;
@@ -33,7 +36,7 @@ import javax.swing.Action;
  * @author stevenyi
  */
 @ScoreMouseListenerPlugin(displayName = "PasteClickMouseListener",
-        position=20)
+        position = 20)
 public class PasteClickMouseListener extends BlueMouseAdapter {
 
     private static final int OS_CTRL_KEY = BlueSystem.getMenuShortcutKey();
@@ -41,32 +44,52 @@ public class PasteClickMouseListener extends BlueMouseAdapter {
 
     @Override
     public void mousePressed(MouseEvent e) {
-        if (ModeManager.getInstance().getMode() != ScoreMode.SCORE
-                || currentScoreObjectView != null
-                || (e.getModifiers() & OS_CTRL_KEY) != OS_CTRL_KEY
-        
-            ) {
+        if ((e.getModifiers() & OS_CTRL_KEY) != OS_CTRL_KEY) {
             return;
         }
-        
-        e.consume();
 
-        Point p = e.getPoint();
+        final ScoreController scoreController = ScoreController.getInstance();
+        final Point p = e.getPoint();
+        final TimeState timeState = scoreTC.getTimeState();
+
         content.add(p);
-        content.add(scoreTC.getTimeState());
+        content.add(timeState);
 
-        Action a = pasteActionFactory.createContextAwareInstance(
-                scoreTC.getLookup());
-        if (a.isEnabled()) {
-            a.actionPerformed(null);
+        try {
+            switch (ModeManager.getInstance().getMode()) {
+                case SCORE:
+                    if (currentScoreObjectView == null) {
+                        Action a = pasteActionFactory.createContextAwareInstance(
+                                scoreTC.getLookup());
+                        if (a.isEnabled()) {
+                            a.actionPerformed(null);
+                        }
+
+                        e.consume();
+                    }
+                    break;
+                case SINGLE_LINE:
+                    // deleteSingleLine();
+                    break;
+                case MULTI_LINE:
+                    double start = (double) p.x / timeState.getPixelSecond();
+
+                    if (timeState.isSnapEnabled()) {
+                        start = ScoreUtilities.getSnapValueStart(start,
+                                timeState.getSnapValue());
+                    }
+                    scoreController.pasteMultiLine(start);
+                    break;
+            }
+        } finally {
+            content.remove(p);
+            content.remove(timeState);
         }
 
-        content.remove(p);
-        content.remove(scoreTC.getTimeState());
     }
 
     @Override
     public boolean acceptsMode(ScoreMode mode) {
-        return mode == ScoreMode.SCORE;
+        return mode == ScoreMode.SCORE || mode == ScoreMode.MULTI_LINE;
     }
 }

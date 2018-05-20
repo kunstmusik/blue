@@ -38,6 +38,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.WeakHashMap;
+import java.util.stream.Collectors;
 import javax.swing.JScrollPane;
 import org.openide.util.Lookup;
 import org.openide.util.lookup.InstanceContent;
@@ -288,7 +289,7 @@ public class ScoreController {
         multiLineBuffer.selectionStart = start;
 
         List<Layer> layers = getScorePath().getAllLayers();
-        double minScoreTime = Double.MAX_VALUE;
+        double minScoreTime = start;
 
         // COPY SCORE OBJECTS
         for (ScoreObject scoreObject : scoreObjects) {
@@ -310,6 +311,8 @@ public class ScoreController {
                     (ScoreObjectLayer) foundLayer);
             minScoreTime = Math.min(minScoreTime, scoreObject.getStartTime());
         }
+
+        multiLineBuffer.scorePasteMin = minScoreTime;
 
         // COPY AUTOMATION DATA 
         for (Layer layer : selection.getSelectedLayers()) {
@@ -353,6 +356,36 @@ public class ScoreController {
     public void cutMultiLine() {
         copyMultiLine();
         deleteMultiLine();
+    }
+
+    public void pasteMultiLine(double start) {
+        if (start < (multiLineBuffer.selectionStart - multiLineBuffer.scorePasteMin)
+                || getScore() != multiLineBuffer.sourceScore
+                || multiLineBuffer.selectionStart < 0.0) {
+            throw new RuntimeException("Error: Unable to paste: paste time < "
+                    + "min score time");
+        }
+
+        double adjust = start - multiLineBuffer.selectionStart;
+
+        for (Map.Entry<ScoreObject, ScoreObjectLayer> entry
+                : multiLineBuffer.scoreObjects.entrySet()) {
+            ScoreObject sObj = entry.getKey().deepCopy();
+            sObj.setStartTime(sObj.getStartTime() + adjust);
+            entry.getValue().add(sObj);
+        }
+
+        for (Map.Entry<List<LinePoint>, Line> entry
+                : multiLineBuffer.automationData.entrySet()) {
+            List<LinePoint> points
+                    = entry.getKey().stream().map(lp -> {
+                        LinePoint p = new LinePoint(lp);
+                        p.setX(p.getX() + adjust);
+                        return p;
+                    }).collect(Collectors.toList());
+            Line line = entry.getValue();
+            line.paste(points);
+        }
     }
 
     public ScoreObjectBuffer getScoreObjectBuffer() {
@@ -413,6 +446,7 @@ public class ScoreController {
     }
 
     public static class MultiLineBuffer {
+
         // use maps here as Blue only allows pasting back into the source layers
         // and lines for multiline copy/paste
         public final Map<ScoreObject, ScoreObjectLayer> scoreObjects = new HashMap<>();

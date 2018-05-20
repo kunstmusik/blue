@@ -1102,6 +1102,7 @@ public class Line implements TableModel, ChangeListener, Iterable<LinePoint> {
         }
 
         this.sort();
+        fireTableDataChanged();
     }
 
     public void delete(double startTime, double endTime) {
@@ -1132,8 +1133,9 @@ public class Line implements TableModel, ChangeListener, Iterable<LinePoint> {
         if (originEnd != getValue(endTime, true)) {
             insertOrAdjust(endTime, originEnd, true);
         }
-    }
 
+        fireTableDataChanged();
+    }
 
     public List<LinePoint> copy(double startTime, double endTime) {
         if (startTime < 0.0 || endTime < startTime) {
@@ -1152,19 +1154,19 @@ public class Line implements TableModel, ChangeListener, Iterable<LinePoint> {
             double pointTime = lp.getX();
 
             if (isPointInSelectionRegion(startTime, endTime, pointTime, 0)) {
-                retVal.add(new LinePoint(lp)); 
+                retVal.add(new LinePoint(lp));
             }
         }
 
         stripOuterPoints(retVal, startTime, endTime);
 
         LinePoint startPoint = new LinePoint(startTime, originStart);
-        LinePoint endPoint = new LinePoint(endTime, originEnd); 
-        if(retVal.size() > 0) {
-            if(!startPoint.equals(retVal.get(0))) {
+        LinePoint endPoint = new LinePoint(endTime, originEnd);
+        if (retVal.size() > 0) {
+            if (!startPoint.equals(retVal.get(0))) {
                 retVal.add(0, startPoint);
             }
-            if(!endPoint.equals(retVal.get(retVal.size() - 1))) {
+            if (!endPoint.equals(retVal.get(retVal.size() - 1))) {
                 retVal.add(endPoint);
             }
         } else {
@@ -1173,6 +1175,41 @@ public class Line implements TableModel, ChangeListener, Iterable<LinePoint> {
         }
 
         return retVal;
+    }
+
+    public void paste(List<LinePoint> points) {
+        if (points == null || points.isEmpty()) {
+            return;
+        }
+
+        double start = Double.POSITIVE_INFINITY;
+        double end = Double.NEGATIVE_INFINITY;
+        for (LinePoint p : points) {
+            start = Math.min(start, p.getX());
+            end = Math.max(end, p.getX());
+        }
+
+        final double originStart = getValue(start, false);
+        final double originEnd = getValue(end, true);
+
+        delete(start, end);
+
+        LinePoint p;
+        for (int i = 0; i < points.size() - 1; i++) {
+            p = points.get(i);
+            insertOrAdjust(p.getX(), p.getY(), false);
+        }
+        p = points.get(points.size() - 1);
+        insertOrAdjust(p.getX(), p.getY(), true);
+
+        // restoring outer points if necessary
+        if (originStart != getValue(start, true)) {
+            insertOrAdjust(start, originStart, true);
+        }
+        if (originEnd != getValue(end, false)) {
+            insertOrAdjust(end, originEnd, false);
+        }
+        fireTableDataChanged();
     }
 
     private boolean isPointInSelectionRegion(
