@@ -60,6 +60,7 @@ public class ScoreController {
 
     private Lookup lookup;
     private final ScoreObjectBuffer buffer = new ScoreObjectBuffer();
+    private final SingleLineBuffer singleLineBuffer = new SingleLineBuffer();
     private final MultiLineBuffer multiLineBuffer = new MultiLineBuffer();
     private InstanceContent content;
     private Score score = null;
@@ -268,6 +269,49 @@ public class ScoreController {
         deleteScoreObjects();
     }
 
+    /* Single Line Handling */
+    public void copySingleLine() {
+        SingleLineScoreSelection selection
+                = SingleLineScoreSelection.getInstance();
+        if (selection.sourceLine != null) {
+            singleLineBuffer.clear();
+            singleLineBuffer.sourceLine = selection.sourceLine;
+            singleLineBuffer.startTime = selection.startTime;
+            singleLineBuffer.points.addAll(selection.sourceLine.copy(
+                    selection.startTime, selection.endTime));
+        }
+    }
+
+    public void deleteSingleLine() {
+        SingleLineScoreSelection selection
+                = SingleLineScoreSelection.getInstance();
+        if (selection.sourceLine != null) {
+            selection.sourceLine.delete(selection.startTime, selection.endTime);
+            selection.clear();
+        }
+
+    }
+
+    public void cutSingleLine() {
+        copySingleLine();
+        deleteSingleLine();
+    }
+
+    public void pasteSingleLine(double start) {
+        if(singleLineBuffer.sourceLine == null || 
+                singleLineBuffer.startTime < 0.0) {
+            return;
+        }
+        double adjust = start - singleLineBuffer.startTime;
+        List<LinePoint> points
+                = singleLineBuffer.points.stream().map(lp -> {
+                    LinePoint p = new LinePoint(lp);
+                    p.setX(p.getX() + adjust);
+                    return p;
+                }).collect(Collectors.toList());
+        singleLineBuffer.sourceLine.paste(points);
+    }
+
     /* Multi Line Data Handling*/
     public void copyMultiLine() {
         if (lookup == null || content == null) {
@@ -442,6 +486,19 @@ public class ScoreController {
         public void clear() {
             scoreObjects.clear();
             layerIndexes.clear();
+        }
+    }
+
+    public static class SingleLineBuffer {
+
+        public Line sourceLine = null;
+        public final List<LinePoint> points = new ArrayList<>();
+        public double startTime = -1.0;
+
+        public void clear() {
+            sourceLine = null;
+            startTime = -1.0;
+            points.clear();
         }
     }
 

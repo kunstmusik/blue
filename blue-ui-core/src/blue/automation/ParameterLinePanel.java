@@ -19,15 +19,18 @@
  */
 package blue.automation;
 
+import blue.BlueSystem;
 import blue.components.DragDirection;
-import blue.components.AlphaMarquee;
+import blue.components.SoloMarquee;
 import blue.components.lines.Line;
 import blue.components.lines.LineEditorDialog;
 import blue.components.lines.LinePoint;
 import blue.score.TimeState;
 import blue.ui.core.score.ModeListener;
 import blue.ui.core.score.ModeManager;
+import blue.ui.core.score.ScoreController;
 import blue.ui.core.score.ScoreMode;
+import blue.ui.core.score.SingleLineScoreSelection;
 import blue.ui.utilities.FileChooserManager;
 import blue.ui.utilities.UiUtilities;
 import blue.utility.NumberUtilities;
@@ -103,7 +106,7 @@ public class ParameterLinePanel extends JComponent implements
 
     LineCanvasMouseListener mouseListener = new LineCanvasMouseListener(this);
 
-    AlphaMarquee marquee;
+    SoloMarquee marquee;
 
     ArrayList<double[]> selectionList = new ArrayList<>();
 
@@ -119,7 +122,7 @@ public class ParameterLinePanel extends JComponent implements
 
     private double newSelectionEndTime = -1;
 
-    public ParameterLinePanel(AlphaMarquee marquee) {
+    public ParameterLinePanel(SoloMarquee marquee) {
         this.marquee = marquee;
 
         ModeManager.getInstance().addModeListener(this);
@@ -1035,6 +1038,19 @@ public class ParameterLinePanel extends JComponent implements
 
             pressPoint = e.getPoint();
 
+            final int OS_CTRL_KEY = BlueSystem.getMenuShortcutKey();
+            if ((e.getModifiers() & OS_CTRL_KEY) == OS_CTRL_KEY) {
+
+                double start = (double) pressPoint.x / timeState.getPixelSecond();
+
+                if (timeState.isSnapEnabled()) {
+                    start = ScoreUtilities.getSnapValueStart(start,
+                            timeState.getSnapValue());
+                }
+                ScoreController.getInstance().pasteSingleLine(start);
+                return;
+            }
+
             if (marquee.isVisible()) {
 
                 if (SwingUtilities.isLeftMouseButton(e)
@@ -1132,6 +1148,13 @@ public class ParameterLinePanel extends JComponent implements
                     marquee.startTime = startTime;
                     marquee.endTime = startTime;
                     marquee.setVisible(true);
+
+                    SingleLineScoreSelection selection
+                            = SingleLineScoreSelection.getInstance();
+                    selection.sourceLine = currentLine;
+                    selection.startTime = startTime;
+                    selection.endTime = startTime;
+
                 } else {
                     selectedPoint = insertGraphPoint(start, e.getY());
                     setBoundaryXValues();
@@ -1225,7 +1248,6 @@ public class ParameterLinePanel extends JComponent implements
 
                     double amount = percent * range;
 
-                    
                     vShifter.processVShift(amount);
 
                 } else if (mouseDownInitialX > 0) {
@@ -1252,6 +1274,12 @@ public class ParameterLinePanel extends JComponent implements
                         double marqueeRight = (marquee.getX() + marquee.getWidth()) / pixelSecond;
                         marquee.startTime = newTime;
                         marquee.endTime = marqueeRight;
+
+                        SingleLineScoreSelection selection
+                                = SingleLineScoreSelection.getInstance();
+                        selection.sourceLine = currentParameter.getLine();
+                        selection.startTime = newTime;
+                        selection.endTime = marqueeRight;
                     }
                 } else {
                     if (x < 0) {
@@ -1272,6 +1300,12 @@ public class ParameterLinePanel extends JComponent implements
                     double marqueeRight = (marquee.getX() + marquee.getWidth()) / pixelSecond;
                     marquee.startTime = marqueeLeft;
                     marquee.endTime = marqueeRight;
+
+                    SingleLineScoreSelection selection
+                            = SingleLineScoreSelection.getInstance();
+                    selection.sourceLine = currentParameter.getLine();
+                    selection.startTime = marqueeLeft;
+                    selection.endTime = marqueeRight;
                 }
             } else if (selectedPoint != null) {
 

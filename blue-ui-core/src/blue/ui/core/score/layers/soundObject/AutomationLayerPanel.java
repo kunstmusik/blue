@@ -20,7 +20,7 @@
 package blue.ui.core.score.layers.soundObject;
 
 import blue.automation.ParameterLinePanel;
-import blue.components.AlphaMarquee;
+import blue.components.SoloMarquee;
 import blue.score.TimeState;
 import blue.score.layers.AutomatableLayer;
 import blue.score.layers.Layer;
@@ -48,7 +48,7 @@ public class AutomationLayerPanel extends JComponent implements
 
     private TimeState timeState = null;
 
-    private AlphaMarquee marquee;
+    private SoloMarquee marquee;
 
     private int scaleLayerNum = -1;
 
@@ -56,7 +56,7 @@ public class AutomationLayerPanel extends JComponent implements
 
     final ScorePath path;
 
-    public AutomationLayerPanel(AlphaMarquee marquee) {
+    public AutomationLayerPanel(SoloMarquee marquee) {
         this.setLayout(layout);
         this.marquee = marquee;
         path = ScoreController.getInstance().getScorePath();

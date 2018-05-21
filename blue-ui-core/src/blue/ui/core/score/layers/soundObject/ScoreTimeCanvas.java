@@ -22,7 +22,7 @@ package blue.ui.core.score.layers.soundObject;
 import blue.BlueData;
 import blue.SoundLayer;
 import blue.SoundLayerListener;
-import blue.components.AlphaMarquee;
+import blue.components.SoloMarquee;
 import blue.projects.BlueProjectManager;
 import blue.score.TimeState;
 import blue.score.layers.LayerGroupDataEvent;
@@ -76,7 +76,7 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
     int time;
     PolyObject pObj;
     TimeState timeState = null;
-    AlphaMarquee marquee = new AlphaMarquee();
+    SoloMarquee marquee = new SoloMarquee();
     Point start = new Point(0, 0);
     Point end;
     AutomationLayerPanel automationPanel = new AutomationLayerPanel(marquee);

@@ -56,6 +56,14 @@ public class PasteClickMouseListener extends BlueMouseAdapter {
         content.add(timeState);
 
         try {
+
+            double start = (double) p.x / timeState.getPixelSecond();
+
+            if (timeState.isSnapEnabled()) {
+                start = ScoreUtilities.getSnapValueStart(start,
+                        timeState.getSnapValue());
+            }
+
             switch (ModeManager.getInstance().getMode()) {
                 case SCORE:
                     if (currentScoreObjectView == null) {
@@ -69,15 +77,9 @@ public class PasteClickMouseListener extends BlueMouseAdapter {
                     }
                     break;
                 case SINGLE_LINE:
-                    // deleteSingleLine();
+                    scoreController.pasteSingleLine(start);
                     break;
                 case MULTI_LINE:
-                    double start = (double) p.x / timeState.getPixelSecond();
-
-                    if (timeState.isSnapEnabled()) {
-                        start = ScoreUtilities.getSnapValueStart(start,
-                                timeState.getSnapValue());
-                    }
                     scoreController.pasteMultiLine(start);
                     break;
             }
@@ -90,6 +92,6 @@ public class PasteClickMouseListener extends BlueMouseAdapter {
 
     @Override
     public boolean acceptsMode(ScoreMode mode) {
-        return mode == ScoreMode.SCORE || mode == ScoreMode.MULTI_LINE;
+        return true;
     }
 }

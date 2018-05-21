@@ -19,7 +19,7 @@
  */
 package blue.score.layers.audio.ui;
 
-import blue.components.AlphaMarquee;
+import blue.components.SoloMarquee;
 import blue.score.TimeState;
 import blue.score.layers.Layer;
 import blue.score.layers.LayerGroupDataEvent;
@@ -81,7 +81,7 @@ public class AudioLayersPanel extends JLayeredPane implements LayerGroupListener
     Map<AudioClip, AudioClipPanel> clipPanelMap = new HashMap<>();
     private final InstanceContent content;
     AutomationLayerPanel automationPanel = new AutomationLayerPanel(
-            new AlphaMarquee());
+            new SoloMarquee());
     
     BiConsumer<AudioClip, Double> splitHandler = (ac, time) -> {
         int layerNum = layerGroup.getLayerNumForScoreObject(ac);

@@ -25,6 +25,7 @@ import blue.ui.core.score.ScoreController;
 import static blue.ui.core.score.ScoreMode.MULTI_LINE;
 import static blue.ui.core.score.ScoreMode.SCORE;
 import static blue.ui.core.score.ScoreMode.SINGLE_LINE;
+import blue.ui.core.score.SingleLineScoreSelection;
 import java.awt.event.ActionEvent;
 import javax.swing.AbstractAction;
 import org.openide.awt.ActionID;
@@ -61,7 +62,7 @@ public final class CopyAction extends AbstractAction {
                 ScoreController.getInstance().copyScoreObjects();
                 break;
             case SINGLE_LINE:
-                // deleteSingleLine();
+                ScoreController.getInstance().copySingleLine();
                 break;
             case MULTI_LINE:
                 scoreController.copyMultiLine();
@@ -75,7 +76,7 @@ public final class CopyAction extends AbstractAction {
             case SCORE:
                 return ScoreController.getInstance().getSelectedScoreObjects().size() > 0;
             case SINGLE_LINE:
-                return false;
+                return SingleLineScoreSelection.getInstance().sourceLine != null;
             case MULTI_LINE:
                 MultiLineScoreSelection selection = MultiLineScoreSelection.getInstance();
                 return selection.getSelectedLayers().size() > 0;
