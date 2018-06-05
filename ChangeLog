@@ -60,6 +60,8 @@ FIX
 
 * Fix resizing of marquee when zooming (single-line and multi-line score modes)
 
+* AudioLayers: Fixed generation of notes on Windows to use / instead of \
+
 
 > Notes for 2.7.3 <
 [release 2017.12.15]
