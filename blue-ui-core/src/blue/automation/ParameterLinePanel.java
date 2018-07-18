@@ -1038,18 +1038,6 @@ public class ParameterLinePanel extends JComponent implements
 
             pressPoint = e.getPoint();
 
-            final int OS_CTRL_KEY = BlueSystem.getMenuShortcutKey();
-            if ((e.getModifiers() & OS_CTRL_KEY) == OS_CTRL_KEY) {
-
-                double start = (double) pressPoint.x / timeState.getPixelSecond();
-
-                if (timeState.isSnapEnabled()) {
-                    start = ScoreUtilities.getSnapValueStart(start,
-                            timeState.getSnapValue());
-                }
-                ScoreController.getInstance().pasteSingleLine(start);
-                return;
-            }
 
             if (marquee.isVisible()) {
 
@@ -1142,7 +1130,13 @@ public class ParameterLinePanel extends JComponent implements
                     startTime = ScoreUtilities.getSnapValueStart(startTime, timeState.getSnapValue());
                 }
 
-                if (e.isShiftDown()) {
+                final int OS_CTRL_KEY = BlueSystem.getMenuShortcutKey();
+
+                if ((e.getModifiers() & OS_CTRL_KEY) == OS_CTRL_KEY) {
+                    ScoreController.getInstance().pasteSingleLine(startTime);
+                    return;
+
+                } else if (e.isShiftDown()) {
                     Point p = new Point(start, getY());
                     marquee.setStart(p);
                     marquee.startTime = startTime;
