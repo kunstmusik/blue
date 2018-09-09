@@ -146,15 +146,6 @@ class MultiLineMoveMouseListener extends BlueMouseAdapter {
         return ModeManager.getInstance().getMode() == ScoreMode.MULTI_LINE;
     }
 
-    private void checkScroll(MouseEvent e) {
-        Point temp = SwingUtilities.convertPoint(e.getComponent(), e.getPoint(),
-                scoreTC.getScorePanel());
-
-        scrollRect.setLocation(temp);
-
-        scoreTC.getScorePanel().scrollRectToVisible(scrollRect);
-    }
-
     @Override
     public boolean acceptsMode(ScoreMode mode) {
         return mode == ScoreMode.MULTI_LINE;

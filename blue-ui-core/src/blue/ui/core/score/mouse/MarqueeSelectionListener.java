@@ -25,7 +25,6 @@ import blue.ui.core.score.ScoreMode;
 import blue.ui.core.score.layers.LayerGroupPanel;
 import java.awt.Component;
 import java.awt.Point;
-import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
 import javax.swing.JComponent;
 import javax.swing.SwingUtilities;
@@ -39,8 +38,6 @@ import javax.swing.SwingUtilities;
 public class MarqueeSelectionListener extends BlueMouseAdapter {
 
     boolean addMode = false;
-    
-    Rectangle scrollRect = new Rectangle(0,0,1,1);
 
     @Override
     public void mousePressed(MouseEvent e) {
@@ -90,15 +87,6 @@ public class MarqueeSelectionListener extends BlueMouseAdapter {
             }
         }
         e.consume();
-    }
-
-    private void checkScroll(MouseEvent e) {
-        Point temp = SwingUtilities.convertPoint(e.getComponent(), e.getPoint(),
-                scoreTC.getScorePanel());
-
-        scrollRect.setLocation(temp);
-
-        scoreTC.getScorePanel().scrollRectToVisible(scrollRect);
     }
 
     @Override

@@ -216,6 +216,8 @@ public class MoveScoreObjectsListener extends BlueMouseAdapter {
 
             }
         }
+
+        checkScroll(e);
     }
 
     @Override

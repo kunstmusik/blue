@@ -13,7 +13,7 @@ information.
 [CHANGE LOG]
 
 > Notes for 2.7.4 <
-[release 2017.xx.xx]
+[release 2018.xx.xx]
 
 UPDATED
 
@@ -61,6 +61,8 @@ FIX
 * Fix resizing of marquee when zooming (single-line and multi-line score modes)
 
 * AudioLayers: Fixed generation of notes on Windows to use / instead of \
+
+* Issue #406: Fixed movement of timeline when dragging selected objects
 
 
 > Notes for 2.7.3 <

@@ -23,7 +23,11 @@ import blue.ui.core.score.ScoreMode;
 import blue.ui.core.score.ScoreObjectView;
 import blue.ui.core.score.ScoreTopComponent;
 import blue.ui.core.score.layers.LayerGroupPanel;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import javax.swing.SwingUtilities;
 import org.openide.util.lookup.InstanceContent;
 
 /**
@@ -44,6 +48,17 @@ public abstract class BlueMouseAdapter extends MouseAdapter {
     public static ScoreObjectView currentScoreObjectView = null;
     public static ScoreTopComponent scoreTC = null;
     public static InstanceContent content;
+
+    private Rectangle scrollRect = new Rectangle(0,0,1,1);
     
     public abstract boolean acceptsMode(ScoreMode mode);
+
+    protected void checkScroll(MouseEvent e) {
+        Point temp = SwingUtilities.convertPoint(e.getComponent(), e.getPoint(),
+                scoreTC.getScorePanel());
+
+        scrollRect.setLocation(temp);
+
+        scoreTC.getScorePanel().scrollRectToVisible(scrollRect);
+    }
 }

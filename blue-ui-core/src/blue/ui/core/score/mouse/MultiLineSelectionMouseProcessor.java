@@ -226,15 +226,6 @@ class MultiLineSelectionMouseProcessor extends BlueMouseAdapter {
         return ModeManager.getInstance().getMode() == ScoreMode.MULTI_LINE;
     }
 
-    private void checkScroll(MouseEvent e) {
-        Point temp = SwingUtilities.convertPoint(e.getComponent(), e.getPoint(),
-                scoreTC.getScorePanel());
-
-        scrollRect.setLocation(temp);
-
-        scoreTC.getScorePanel().scrollRectToVisible(scrollRect);
-    }
-
     protected int[] getTopBottomForLayer(Layer targetLayer, List<LayerGroup<? extends Layer>> allLayers) {
         int runningY = 0;
 
