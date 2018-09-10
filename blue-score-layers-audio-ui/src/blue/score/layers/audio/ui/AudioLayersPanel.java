@@ -43,6 +43,7 @@ import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
+import java.awt.event.ComponentListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseWheelEvent;
 import java.awt.geom.AffineTransform;
@@ -82,6 +83,7 @@ public class AudioLayersPanel extends JLayeredPane implements LayerGroupListener
     private final InstanceContent content;
     AutomationLayerPanel automationPanel = new AutomationLayerPanel(
             new SoloMarquee());
+    private ComponentListener sObjViewListener;
     
     BiConsumer<AudioClip, Double> splitHandler = (ac, time) -> {
         int layerNum = layerGroup.getLayerNumForScoreObject(ac);
@@ -119,6 +121,27 @@ public class AudioLayersPanel extends JLayeredPane implements LayerGroupListener
         heightListener = (PropertyChangeEvent evt) -> {
             checkSize();
             updateAudioClipYandHeight();
+        };
+        
+        sObjViewListener = new ComponentListener() {
+            @Override
+            public void componentResized(ComponentEvent ce) {
+                checkSize();
+            }
+
+            @Override
+            public void componentMoved(ComponentEvent ce) {
+                checkSize();
+            }
+
+            @Override
+            public void componentShown(ComponentEvent ce) {
+            }
+
+            @Override
+            public void componentHidden(ComponentEvent ce) {
+            }
+            
         };
 
         int y = 0;
@@ -370,6 +393,7 @@ public class AudioLayersPanel extends JLayeredPane implements LayerGroupListener
 
     private void addClipPanel(AudioClip clip, TimeState timeState, int y, int height) {
         AudioClipPanel panel = new AudioClipPanel(clip, timeState, splitHandler);
+        panel.addComponentListener(sObjViewListener);
         panel.setBounds(panel.getX(), y, panel.getWidth(), height);
         add(panel, DEFAULT_LAYER);
         clipPanelMap.put(clip, panel);
@@ -377,6 +401,7 @@ public class AudioLayersPanel extends JLayeredPane implements LayerGroupListener
 
     private void removeClipPanel(AudioClip clip) {
         AudioClipPanel panel = clipPanelMap.get(clip);
+        panel.removeComponentListener(sObjViewListener);
         remove(panel);
         clipPanelMap.remove(clip);
 

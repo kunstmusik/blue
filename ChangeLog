@@ -64,6 +64,9 @@ FIX
 
 * Issue #406: Fixed movement of timeline when dragging selected objects
 
+* Fix resizing of timeline on movement or resizing of Score Objects, whether by
+  mouse or by ScoreObject Properties window
+
 
 > Notes for 2.7.3 <
 [release 2017.12.15]

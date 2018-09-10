@@ -47,6 +47,7 @@ import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
+import java.awt.event.ComponentListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
@@ -85,6 +86,7 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
     private final BlueData data;
     private final InstanceContent content;
     private final ScoreTimelineDropTargetListener dropTargetListener;
+    private final ComponentListener sObjViewListener;
 
     public ScoreTimeCanvas(BlueData blueData, InstanceContent ic) {
         this.content = ic;
@@ -93,6 +95,27 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
 
         heightListener = (PropertyChangeEvent evt) -> {
             reset();
+        };
+        
+        sObjViewListener = new ComponentListener() {
+            @Override
+            public void componentResized(ComponentEvent ce) {
+                checkSize();
+            }
+
+            @Override
+            public void componentMoved(ComponentEvent ce) {
+                checkSize();
+            }
+
+            @Override
+            public void componentShown(ComponentEvent ce) {
+            }
+
+            @Override
+            public void componentHidden(ComponentEvent ce) {
+            }
+            
         };
 
         sObjPanel.setLayout(null);
@@ -334,6 +357,7 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
 
     private void addSoundObjectView(int soundLayerIndex, SoundObject sObj) {
         SoundObjectView temp = new SoundObjectView(sObj, timeState);
+        temp.addComponentListener(sObjViewListener);
         sObjPanel.add(temp, 0);
         temp.setLocation(
                 (int) (sObj.getStartTime() * timeState.getPixelSecond()),
@@ -351,7 +375,7 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
     private void removeSoundObjectView(SoundObject sObj) {
 
         SoundObjectView sObjView = this.soundObjectToViewMap.remove(sObj);
-
+        sObjView.removeComponentListener(sObjViewListener);
         sObjView.cleanup();
         sObjPanel.remove(sObjView);
 
