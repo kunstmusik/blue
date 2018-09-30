@@ -1124,22 +1124,13 @@ public class Line implements TableModel, ChangeListener, Iterable<LinePoint> {
             }
         }
 
-        if (startTime > points.get(points.size() - 1).getX()) {
+        if (originStart != getValue(startTime, true)) {
+            insertOrAdjust(startTime, originStart, true);
+        }
+        if (originEnd != getValue(endTime, false)) {
+            insertOrAdjust(endTime, originEnd, false);
             if (originStart != originEnd) {
-                insertOrAdjust(startTime, originEnd, false);
-            }
-            if (originStart != getValue(startTime, true)) {
-                insertOrAdjust(startTime, originStart, true);
-            }
-        } else {
-            if (originStart != getValue(startTime, true)) {
-                insertOrAdjust(startTime, originStart, true);
-                if (originStart != originEnd) {
-                    insertOrAdjust(startTime, originEnd, false);
-                }
-            }
-            if (originEnd != getValue(endTime, false)) {
-                insertOrAdjust(endTime, originEnd, false);
+                insertOrAdjust(endTime, originStart, true);
             }
         }
 
