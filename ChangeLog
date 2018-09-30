@@ -67,6 +67,9 @@ FIX
 * Fix resizing of timeline on movement or resizing of Score Objects, whether by
   mouse or by ScoreObject Properties window
 
+* Issue #401: Fix setting of default/last directory/file path for open/save
+  file dialogs
+
 
 > Notes for 2.7.3 <
 [release 2017.12.15]
