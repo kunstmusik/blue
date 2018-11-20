@@ -11,7 +11,7 @@
   <property name="linux.java.lib.path" 
               value="-J-Djava.library.path=/usr/lib/jni:/usr/local/lib:/usr/lib"/>
 
-  <property name="replacevistaicon.exe" value="C:\bin\ReplaceVistaIcon.exe"/>
+  <property name="replacevistaicon.exe" value=".\utilities\ReplaceVistaIcon.exe"/>
 
   <condition property="isWindows">
     <os family="windows" />
