@@ -6,7 +6,7 @@
   <!--  value="http://deadlock.netbeans.org/hudson/job/nbms-and-javadoc/lastStableBuild/artifact/nbbuild/netbeans/harness/tasks.jar"/>-->
   <property 
     name="bootstrap.url"
-    value="http://kunstmusik.com/tasks.jar"/>
+    value="https://kunstmusik.com/tasks.jar"/>
   
   <property 
     name="autoupdate.catalog.url"
