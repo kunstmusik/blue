@@ -70,6 +70,9 @@ FIX
 * Issue #401: Fix setting of default/last directory/file path for open/save
   file dialogs
 
+* Issue #395: Fix initial showing of popup menu when number of items triggers 
+  scroller buttons to show
+
 
 > Notes for 2.7.3 <
 [release 2017.12.15]

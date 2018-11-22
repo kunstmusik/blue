@@ -304,6 +304,10 @@ public class MenuScroller {
 
         this.menu = menu;
         menu.addPopupMenuListener(menuListener);
+
+        SwingUtilities.invokeLater(() -> {
+                menuListener.popupMenuWillBecomeVisible(null);
+        });
     }
 
     /**
