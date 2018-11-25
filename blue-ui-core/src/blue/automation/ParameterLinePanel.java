@@ -989,12 +989,11 @@ public class ParameterLinePanel extends JComponent implements
 
     @Override
     public void modeChanged(ScoreMode mode) {
+        removeMouseListener(mouseListener);
+        removeMouseMotionListener(mouseListener);
         if (mode == ScoreMode.SINGLE_LINE) {
             addMouseListener(mouseListener);
             addMouseMotionListener(mouseListener);
-        } else {
-            removeMouseListener(mouseListener);
-            removeMouseMotionListener(mouseListener);
         }
         repaint();
     }

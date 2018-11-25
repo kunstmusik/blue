@@ -20,10 +20,9 @@
 package blue.ui.core.score;
 
 import blue.score.layers.Layer;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.List;
+import java.util.Set;
 
 /**
  * @author stevenyi
@@ -40,7 +39,7 @@ public class MultiLineScoreSelection {
     Collection<Layer> selectedLayers = new HashSet<>();
     double translationTime = 0.0f;
     
-    private List<MultiLineScoreSelectionListener> listeners = new ArrayList<>();
+    private Set<MultiLineScoreSelectionListener> listeners = new HashSet<>();
     
     private static MultiLineScoreSelection INSTANCE = null;
     

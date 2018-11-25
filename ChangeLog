@@ -73,6 +73,10 @@ FIX
 * Issue #395: Fix initial showing of popup menu when number of items triggers 
   scroller buttons to show
 
+* Issue #411: Fixed issue with having Single-Line mode selected and changing 
+  projects causing bad state where score mouse handling no longer functioned 
+  correctly
+
 
 > Notes for 2.7.3 <
 [release 2017.12.15]
