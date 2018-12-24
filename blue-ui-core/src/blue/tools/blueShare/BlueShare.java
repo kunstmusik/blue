@@ -50,7 +50,7 @@ public class BlueShare {
 //            return;
 //        }
 
-        String server = "http://blue.kunstmusik.com/blue_share/api";
+        String server = "https://blue.kunstmusik.com/blue_share/api";
         //String server = "http://localhost:3000/blue_share/api";
 
         try {
