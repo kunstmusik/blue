@@ -30,6 +30,9 @@ UPDATED
 * Issue #406: JMask: throw error when user attempts to use Constant p2 field 
   with value < 0.0 (prevents infinite loop)
 
+* Issue #417: Use Csound ORC highlighting for "Generate CSD to Screen" and 
+  "Generate Realtime CSD to Screen"
+
 FIX
 
 * BlueSynthBuilder 

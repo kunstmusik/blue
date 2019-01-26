@@ -113,8 +113,10 @@
               tofile="${build.launcher.dir}/etc/${app.name}.conf"
               overwrite="true">
       <filterchain>
-        <replacestring from="$${branding.token}" to="${branding.token}"/>
-        <replacestring from="-J-Xms24m -J-Xmx64m" to="${confReplacementString}"/>
+        <!--Using this for NB 9.0 build, but needs a better solution...-->
+        <replacestring from="$${branding.token}" to="${branding.token} ${confReplacementString}"/>
+        <!--<replacestring from="$${branding.token}" to="${branding.token}"/>-->
+        <!--<replacestring from="-J-Xms24m -J-Xmx64m" to="${confReplacementString}"/>-->
       </filterchain>
     </copy>
     <antcall target="addLinuxJavaLibraryPath"/>

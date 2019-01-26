@@ -59,71 +59,73 @@ public class InfoDialog {
     private static JTabbedPane tabs = null;
 
     private static JPopupMenu popup = null;
-
-    private static MimeTypeEditorComponent infoText = null;
-
+    
     public static synchronized final void showInformationDialog(Component parent,
             String information, String title) {
+        
+        showInformationDialog(parent, information, title, "text/plain");
+    }
 
-        if (infoText == null) {
-            try {
-                if (SwingUtilities.isEventDispatchThread()) {
-                    infoText = new MimeTypeEditorComponent("text/plain");
-                } else {
-                    SwingUtilities.invokeAndWait(()
-                            -> infoText = new MimeTypeEditorComponent(
-                                    "text/plain"));
-                }
-            } catch (InterruptedException ex) {
-                Exceptions.printStackTrace(ex);
-            } catch (InvocationTargetException ex) {
-                Exceptions.printStackTrace(ex);
-            }
-        }
+    public static synchronized final void showInformationDialog(Component parent,
+            String information, String title, String mimeType) {
 
-        infoText.setText(information);
-        infoText.getJEditorPane().getCaret().setDot(0);
+        MimeTypeEditorComponent infoText;
 
-        final JDialog dlg = new JDialog(SwingUtilities.getWindowAncestor(parent));
-        dlg.getContentPane().add(infoText);
-        dlg.setModal(true);
-        dlg.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
-        dlg.setTitle(title);
+        try {
+            if (SwingUtilities.isEventDispatchThread()) {
+                infoText = new MimeTypeEditorComponent(mimeType);
+                infoText.setText(information);
+                infoText.getJEditorPane().getCaret().setDot(0);
 
-        final Preferences prefs = NbPreferences.forModule(
-                InfoDialog.class);
+                final JDialog dlg = new JDialog(SwingUtilities.getWindowAncestor(parent));
+                dlg.getContentPane().add(infoText);
+                dlg.setModal(true);
+                dlg.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+                dlg.setTitle(title);
 
-        int w = prefs.getInt("infoDialogWidth", 760);
-        int h = prefs.getInt("infoDialogHeight", 400);
-
-        dlg.setSize(new Dimension(w, h));
-        dlg.addWindowListener(new WindowAdapter() {
-            @Override
-            public void windowClosing(WindowEvent e) {
                 final Preferences prefs = NbPreferences.forModule(
                         InfoDialog.class);
 
-                prefs.putInt("infoDialogWidth", dlg.getWidth());
-                prefs.putInt("infoDialogHeight", dlg.getHeight());
-                prefs.putInt("infoDialogX", dlg.getX());
-                prefs.putInt("infoDialogY", dlg.getY());
-                try {
-                    prefs.sync();
-                } catch (BackingStoreException ex) {
-                    Exceptions.printStackTrace(ex);
-                }
-            }
-        });
+                int w = prefs.getInt("infoDialogWidth", 760);
+                int h = prefs.getInt("infoDialogHeight", 400);
 
-        int x = prefs.getInt("infoDialogX", -1);
-        int y = prefs.getInt("infoDialogY", -1);
-        if (x > 0 && y > 0) {
-            dlg.setLocation(x, y);
-        } else {
-            GUI.centerOnScreen(dlg);
+                dlg.setSize(new Dimension(w, h));
+                dlg.addWindowListener(new WindowAdapter() {
+                    @Override
+                    public void windowClosing(WindowEvent e) {
+                        final Preferences prefs = NbPreferences.forModule(
+                                InfoDialog.class);
+
+                        prefs.putInt("infoDialogWidth", dlg.getWidth());
+                        prefs.putInt("infoDialogHeight", dlg.getHeight());
+                        prefs.putInt("infoDialogX", dlg.getX());
+                        prefs.putInt("infoDialogY", dlg.getY());
+                        try {
+                            prefs.sync();
+                        } catch (BackingStoreException ex) {
+                            Exceptions.printStackTrace(ex);
+                        }
+                    }
+                });
+
+                int x = prefs.getInt("infoDialogX", -1);
+                int y = prefs.getInt("infoDialogY", -1);
+                if (x > 0 && y > 0) {
+                    dlg.setLocation(x, y);
+                } else {
+                    GUI.centerOnScreen(dlg);
+                }
+                dlg.setVisible(true);
+                infoText.setText("");
+            } else {
+                SwingUtilities.invokeAndWait(()
+                        -> showInformationDialog(parent, information, title));
+            }
+        } catch (InterruptedException ex) {
+            Exceptions.printStackTrace(ex);
+        } catch (InvocationTargetException ex) {
+            Exceptions.printStackTrace(ex);
         }
-        dlg.setVisible(true);
-        infoText.setText("");
     }
 
     public static final void showInformationDialogTabs(String information,

@@ -80,7 +80,8 @@ public final class GenerateRealtimeCsdToScreenAction implements ActionListener {
 
             InfoDialog.showInformationDialog(
                     WindowManager.getDefault().getMainWindow(), csd,
-                    BlueSystem.getString("message.generateScore.csdTest"));
+                    BlueSystem.getString("message.generateScore.csdTest"),
+                    "text/x-csound-orc");
         } catch (Exception ex) {
             ExceptionDialog.showExceptionDialog(
                     WindowManager.getDefault().getMainWindow(),
