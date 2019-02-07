@@ -28,6 +28,9 @@ import blue.score.layers.audio.core.AudioClip;
 import blue.score.layers.audio.core.AudioLayer;
 import blue.score.layers.audio.core.AudioLayerGroup;
 import blue.score.layers.audio.core.AudioLayerListener;
+import blue.ui.core.score.ModeListener;
+import blue.ui.core.score.ModeManager;
+import blue.ui.core.score.ScoreMode;
 import blue.ui.core.score.ScoreObjectView;
 import blue.ui.core.score.layers.LayerGroupPanel;
 import blue.ui.core.score.layers.SelectionMarquee;
@@ -66,7 +69,8 @@ import org.openide.util.lookup.InstanceContent;
  * @author stevenyi
  */
 public class AudioLayersPanel extends JLayeredPane implements LayerGroupListener,
-        PropertyChangeListener, LayerGroupPanel<AudioLayerGroup>, AudioLayerListener {
+        PropertyChangeListener, LayerGroupPanel<AudioLayerGroup>, AudioLayerListener,
+        ModeListener {
 
     private static Font renderFont = new Font("Dialog", Font.BOLD, 12);
     private static final Color PATTERN_COLOR = new Color(198, 226, 255);
@@ -81,14 +85,14 @@ public class AudioLayersPanel extends JLayeredPane implements LayerGroupListener
     double destPts[] = new double[4];
     Map<AudioClip, AudioClipPanel> clipPanelMap = new HashMap<>();
     private final InstanceContent content;
-    AutomationLayerPanel automationPanel = new AutomationLayerPanel(
-            new SoloMarquee());
+    SoloMarquee marquee = new SoloMarquee();
+    AutomationLayerPanel automationPanel = new AutomationLayerPanel(marquee);
     private ComponentListener sObjViewListener;
-    
+
     BiConsumer<AudioClip, Double> splitHandler = (ac, time) -> {
         int layerNum = layerGroup.getLayerNumForScoreObject(ac);
         AudioLayer layer = layerGroup.get(layerNum);
-        
+
         AudioLayerGroupUtils.splitAudioClip(layer, ac, time);
     };
 
@@ -122,7 +126,7 @@ public class AudioLayersPanel extends JLayeredPane implements LayerGroupListener
             checkSize();
             updateAudioClipYandHeight();
         };
-        
+
         sObjViewListener = new ComponentListener() {
             @Override
             public void componentResized(ComponentEvent ce) {
@@ -141,7 +145,7 @@ public class AudioLayersPanel extends JLayeredPane implements LayerGroupListener
             @Override
             public void componentHidden(ComponentEvent ce) {
             }
-            
+
         };
 
         int y = 0;
@@ -153,6 +157,9 @@ public class AudioLayersPanel extends JLayeredPane implements LayerGroupListener
             }
             y += height;
         }
+        
+        ModeManager.getInstance().addModeListener(this);
+
 
         // This is here as the existing mouselisteners prevent bubbling up of
         // events (i.e. from ToolTipManager)
@@ -171,6 +178,9 @@ public class AudioLayersPanel extends JLayeredPane implements LayerGroupListener
                 automationPanel.setSize(getSize());
             }
         });
+        
+        this.add(marquee, JLayeredPane.DRAG_LAYER);
+
     }
 
     public AudioLayerGroup getAudioLayerGroup() {
@@ -179,6 +189,12 @@ public class AudioLayersPanel extends JLayeredPane implements LayerGroupListener
 
     public TimeState getTimeState() {
         return timeState;
+    }
+    
+    
+    @Override
+    public void modeChanged(ScoreMode mode) {
+        marquee.setVisible(false);
     }
 
     @Override
@@ -327,7 +343,6 @@ public class AudioLayersPanel extends JLayeredPane implements LayerGroupListener
         g.setColor(Color.BLACK);
         g.fillRect(0, 0, width, height);
 
-
         int y = 0;
         g.setColor(Color.DARK_GRAY);
         g.drawLine(0, 0, width, 0);
@@ -345,10 +360,10 @@ public class AudioLayersPanel extends JLayeredPane implements LayerGroupListener
             if (snapPixels <= 0) {
                 return;
             }
-            
+
             double snapValue = timeState.getSnapValue();
             int pixelSecond = timeState.getPixelSecond();
-            
+
             for (int i = 0; x < getWidth(); i++) {
                 x = (int) ((i * snapValue) * pixelSecond);
                 g.drawLine(x, 0, x, height);

@@ -82,6 +82,8 @@ FIX
 
 * Issue #419: Fixed URL to use HTTPS to match server changes for BlueShare
 
+* Issue #423: Fixed automation for Single Line mode with Audio Layers
+
 
 > Notes for 2.7.3 <
 [release 2017.12.15]
