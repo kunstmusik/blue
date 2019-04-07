@@ -33,6 +33,9 @@ UPDATED
 * Issue #417: Use Csound ORC highlighting for "Generate CSD to Screen" and 
   "Generate Realtime CSD to Screen"
 
+* Issue #431: implemented shortcut 1, 2, and 3 to switch between Score, 
+  Single Line, and Multi-Line modes on the Score timeline
+
 FIX
 
 * BlueSynthBuilder 

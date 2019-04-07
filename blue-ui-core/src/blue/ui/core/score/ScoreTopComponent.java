@@ -200,6 +200,26 @@ public final class ScoreTopComponent extends TopComponent
             inputMap.put(ks, a.getValue(Action.NAME));
             actionMap.put(a.getValue(Action.NAME), a);
         }
+
+        inputMap.put(KeyStroke.getKeyStroke('1'), "switch-mode-score");
+        inputMap.put(KeyStroke.getKeyStroke('2'), "switch-mode-single-line");
+        inputMap.put(KeyStroke.getKeyStroke('3'), "switch-mode-multi-line");
+
+        actionMap.put("switch-mode-score", new AbstractAction() {
+            public void actionPerformed(ActionEvent ae) {
+                ModeManager.getInstance().setMode(ScoreMode.SCORE);
+            }
+        });
+        actionMap.put("switch-mode-single-line", new AbstractAction() {
+            public void actionPerformed(ActionEvent ae) {
+                ModeManager.getInstance().setMode(ScoreMode.SINGLE_LINE);
+            }
+        });
+        actionMap.put("switch-mode-multi-line", new AbstractAction() {
+            public void actionPerformed(ActionEvent ae) {
+                ModeManager.getInstance().setMode(ScoreMode.MULTI_LINE);
+            }
+        });
     }
 
     protected void checkSize() {
@@ -254,10 +274,10 @@ public final class ScoreTopComponent extends TopComponent
         this.data = currentData;
         AutomationManager.getInstance().setData(this.data);
 
-        for(ScoreObject scoreObj : getLookup().lookupAll(ScoreObject.class)) {
+        for (ScoreObject scoreObj : getLookup().lookupAll(ScoreObject.class)) {
             content.remove(scoreObj);
         }
-        
+
         if (data != null) {
 
             Tempo tempo = data.getScore().getTempo();
@@ -377,9 +397,9 @@ public final class ScoreTopComponent extends TopComponent
         JButton manageButton = new JButton("Manage");
         manageButton.addActionListener((ActionEvent e) -> {
             ScorePath path = ScoreController.getInstance().getScorePath();
-            
+
             JDialog dialog;
-            
+
             if (path.getLastLayerGroup() == null) {
                 ScoreManagerDialog dlg = new ScoreManagerDialog(
                         WindowManager.getDefault().getMainWindow(), true);
@@ -393,7 +413,7 @@ public final class ScoreTopComponent extends TopComponent
                 dlg.setSize(300, 500);
                 dialog = dlg;
             }
-            
+
             GUI.centerOnScreen(dialog);
             dialog.setVisible(true);
         });
@@ -527,7 +547,7 @@ public final class ScoreTopComponent extends TopComponent
         layerPanel.addMouseWheelListener(layerHeightWheelListener);
 
         ModeManager.getInstance().setMode(ScoreMode.SCORE);
-        
+
         ModeManager.getInstance().addModeListener((ScoreMode mode) -> {
             getMarquee().setVisible(false);
         });
@@ -675,7 +695,8 @@ public final class ScoreTopComponent extends TopComponent
                 this.renderStart = ((Double) evt.getNewValue()).doubleValue();
                 this.timePointer = -1.0f;
                 updateRenderTimePointer();
-            } /* else if (prop.equals(RenderTimeManager.TIME_POINTER)) {
+            }
+            /* else if (prop.equals(RenderTimeManager.TIME_POINTER)) {
              this.timePointer = ((Double) evt.getNewValue()).doubleValue();
              updateRenderTimePointer();
              } */
@@ -697,10 +718,10 @@ public final class ScoreTopComponent extends TopComponent
 
                 updateRenderLoopPointerX(newX);
 
-                if(marquee.isVisible()) {
-                    newX = (int)(marquee.startTime * pixelSecond);
+                if (marquee.isVisible()) {
+                    newX = (int) (marquee.startTime * pixelSecond);
                     marquee.setLocation(newX, marquee.getY());
-                    int newW = (int)(marquee.endTime * pixelSecond) - newX;
+                    int newW = (int) (marquee.endTime * pixelSecond) - newX;
                     marquee.setSize(newW, marquee.getHeight());
                 }
             }
@@ -964,15 +985,15 @@ public final class ScoreTopComponent extends TopComponent
     public TimeState getTimeState() {
         return this.currentTimeState;
     }
-    
+
     public List<LayerGroupPanel> getLayerGroupPanels() {
         List<LayerGroupPanel> lgPanels = new ArrayList<>();
-        
-        for(int i = 0; i < layerPanel.getComponentCount(); i++) {
+
+        for (int i = 0; i < layerPanel.getComponentCount(); i++) {
             Component c = layerPanel.getComponent(i);
-            
-            if(c instanceof LayerGroupPanel) {
-                lgPanels.add((LayerGroupPanel<LayerGroup>)c);
+
+            if (c instanceof LayerGroupPanel) {
+                lgPanels.add((LayerGroupPanel<LayerGroup>) c);
             }
         }
         return lgPanels;
