@@ -115,6 +115,8 @@
       <filterchain>
         <!--Using this for NB 9.0 build, but needs a better solution...-->
         <replacestring from="$${branding.token}" to="${branding.token} ${confReplacementString}"/>
+        <!-- fix for NB 10 and 11 which has typo in harness app.conf -->
+        <replacestring from="default_cachedir=&quot;&quot;" to="default_cachedir=&quot;"/>
         <!--<replacestring from="$${branding.token}" to="${branding.token}"/>-->
         <!--<replacestring from="-J-Xms24m -J-Xmx64m" to="${confReplacementString}"/>-->
       </filterchain>
