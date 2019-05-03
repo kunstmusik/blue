@@ -187,6 +187,23 @@ public class Mixer {
         return allChannels;
     }
     
+    public List<Channel> getAllChannels() {
+        List<Channel> allChannels = new ArrayList<>();
+
+        for (ChannelList list : channelListGroups) {
+            allChannels.addAll(list);
+        }
+        allChannels.addAll(channels);
+        
+        allChannels.addAll(subChannels);
+        allChannels.add(master);
+
+        return allChannels;
+    }
+    
+    
+    
+    
     public Channel findChannelById(String id) {
         if (id == null) return null;
         
