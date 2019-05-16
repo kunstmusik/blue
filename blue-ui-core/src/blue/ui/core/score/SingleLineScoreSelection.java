@@ -19,6 +19,8 @@
 package blue.ui.core.score;
 
 import blue.components.lines.Line;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  *
@@ -26,9 +28,12 @@ import blue.components.lines.Line;
  */
 public class SingleLineScoreSelection {
 
-    public Line sourceLine = null;
-    public double startTime = -1.0;
-    public double endTime = -1.0;
+    private Line sourceLine = null;
+    private double startTime = -1.0;
+    private double endTime = -1.0;
+    
+    Set<SingleLineScoreSelectionListener> listeners = 
+            new HashSet<SingleLineScoreSelectionListener>();
     
     private static final SingleLineScoreSelection INSTANCE;
 
@@ -42,9 +47,46 @@ public class SingleLineScoreSelection {
         return INSTANCE;
     }
 
+    public Line getSourceLine() {
+        return sourceLine;
+    }
+
+    public double getStartTime() {
+        return startTime;
+    }
+
+    public double getEndTime() {
+        return endTime;
+    }
+    
+    public void updateSelection(Line sourceLine, double startTime, double endTime) {
+        this.sourceLine = sourceLine;
+        this.startTime = startTime;
+        this.endTime = endTime;
+        notifyListeners();
+    }
+
+    
     public void clear() {
-        sourceLine = null;
-        startTime = -1.0;
-        endTime = -1.0;
+        updateSelection(null, -1.0, -1.0);
     } 
+    
+    
+    public void addListener(SingleLineScoreSelectionListener listener) {
+        listeners.add(listener);
+    }
+    
+    public void removeListener(SingleLineScoreSelectionListener listener) {
+        listeners.remove(listener);
+    }
+    
+    protected void notifyListeners() {
+        for(SingleLineScoreSelectionListener listener : listeners) {
+            listener.singleLineScoreSelectionPerformed(this);
+        }
+    }
+    
+    public static interface SingleLineScoreSelectionListener {
+        public void singleLineScoreSelectionPerformed(SingleLineScoreSelection selection);
+    }
 }

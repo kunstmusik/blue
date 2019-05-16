@@ -602,6 +602,7 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
     public void removeNotify() {
         this.data.removePropertyChangeListener(this);
         ModeManager.getInstance().removeModeListener(this);
+        super.removeNotify();
     }
 
     @Override

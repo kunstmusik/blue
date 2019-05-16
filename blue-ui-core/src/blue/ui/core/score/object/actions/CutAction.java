@@ -75,7 +75,7 @@ public final class CutAction extends AbstractAction {
             case SCORE:
                 return ScoreController.getInstance().getSelectedScoreObjects().size() > 0;
             case SINGLE_LINE:
-                return SingleLineScoreSelection.getInstance().sourceLine != null;
+                return SingleLineScoreSelection.getInstance().getSourceLine() != null;
             case MULTI_LINE:
                 MultiLineScoreSelection selection = MultiLineScoreSelection.getInstance();
                 return selection.getSelectedLayers().size() > 0;

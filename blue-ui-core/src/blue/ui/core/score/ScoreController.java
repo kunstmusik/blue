@@ -273,20 +273,20 @@ public class ScoreController {
     public void copySingleLine() {
         SingleLineScoreSelection selection
                 = SingleLineScoreSelection.getInstance();
-        if (selection.sourceLine != null) {
+        if (selection.getSourceLine() != null) {
             singleLineBuffer.clear();
-            singleLineBuffer.sourceLine = selection.sourceLine;
-            singleLineBuffer.startTime = selection.startTime;
-            singleLineBuffer.points.addAll(selection.sourceLine.copy(
-                    selection.startTime, selection.endTime));
+            singleLineBuffer.sourceLine = selection.getSourceLine();
+            singleLineBuffer.startTime = selection.getStartTime();
+            singleLineBuffer.points.addAll(selection.getSourceLine().copy(
+                    selection.getStartTime(), selection.getEndTime()));
         }
     }
 
     public void deleteSingleLine() {
         SingleLineScoreSelection selection
                 = SingleLineScoreSelection.getInstance();
-        if (selection.sourceLine != null) {
-            selection.sourceLine.delete(selection.startTime, selection.endTime);
+        if (selection.getSourceLine() != null) {
+            selection.getSourceLine().delete(selection.getStartTime(), selection.getEndTime());
             selection.clear();
         }
 
@@ -310,6 +310,10 @@ public class ScoreController {
                     return p;
                 }).collect(Collectors.toList());
         singleLineBuffer.sourceLine.paste(points);
+        
+        SingleLineScoreSelection selection
+                = SingleLineScoreSelection.getInstance();
+        selection.updateSelection(singleLineBuffer.sourceLine, points.get(0).getX(), points.get(points.size() - 1).getX());
     }
 
     /* Multi Line Data Handling*/

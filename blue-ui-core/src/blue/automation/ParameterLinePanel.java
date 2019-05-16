@@ -125,8 +125,6 @@ public class ParameterLinePanel extends JComponent implements
     public ParameterLinePanel(SoloMarquee marquee) {
         this.marquee = marquee;
 
-        ModeManager.getInstance().addModeListener(this);
-
         lineListener = (TableModelEvent e) -> {
             repaint();
         };
@@ -919,8 +917,15 @@ public class ParameterLinePanel extends JComponent implements
         return null;
     }
 
-    public void cleanup() {
+    @Override
+    public void addNotify() {
+        super.addNotify(); 
 
+        ModeManager.getInstance().addModeListener(this);
+    }
+
+    @Override
+    public void removeNotify() {
         if (parameterIdList != null) {
             parameterIdList.removeListDataListener(this);
             parameterIdList.removeListSelectionListener(this);
@@ -936,6 +941,7 @@ public class ParameterLinePanel extends JComponent implements
         paramList = null;
 
         ModeManager.getInstance().removeModeListener(this);
+        super.removeNotify();
     }
 
     @Override
@@ -1036,7 +1042,6 @@ public class ParameterLinePanel extends JComponent implements
             e.consume();
 
             pressPoint = e.getPoint();
-
 
             if (marquee.isVisible()) {
 
@@ -1144,9 +1149,7 @@ public class ParameterLinePanel extends JComponent implements
 
                     SingleLineScoreSelection selection
                             = SingleLineScoreSelection.getInstance();
-                    selection.sourceLine = currentLine;
-                    selection.startTime = startTime;
-                    selection.endTime = startTime;
+                    selection.updateSelection(currentLine, startTime, startTime);
 
                 } else {
                     selectedPoint = insertGraphPoint(start, e.getY());
@@ -1270,9 +1273,7 @@ public class ParameterLinePanel extends JComponent implements
 
                         SingleLineScoreSelection selection
                                 = SingleLineScoreSelection.getInstance();
-                        selection.sourceLine = currentParameter.getLine();
-                        selection.startTime = newTime;
-                        selection.endTime = marqueeRight;
+                        selection.updateSelection(currentParameter.getLine(), newTime, marqueeRight);
                     }
                 } else {
                     if (x < 0) {
@@ -1296,9 +1297,7 @@ public class ParameterLinePanel extends JComponent implements
 
                     SingleLineScoreSelection selection
                             = SingleLineScoreSelection.getInstance();
-                    selection.sourceLine = currentParameter.getLine();
-                    selection.startTime = marqueeLeft;
-                    selection.endTime = marqueeRight;
+                    selection.updateSelection(currentParameter.getLine(), marqueeLeft, marqueeRight);
                 }
             } else if (selectedPoint != null) {
 

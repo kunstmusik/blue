@@ -71,10 +71,6 @@ public class AutomationLayerPanel extends JComponent implements
         Component[] components = this.getComponents();
         this.removeAll();
 
-        for (int i = 0; i < components.length; i++) {
-            ((ParameterLinePanel) components[i]).cleanup();
-        }
-
         layout.setPolyObject(layerGroup);
 
         this.layerGroup = layerGroup;
@@ -290,12 +286,10 @@ public class AutomationLayerPanel extends JComponent implements
     public void layersRemoved(LayerGroupDataEvent e) {
         int start = e.getStartIndex();
         int end = e.getEndIndex();
-
+        
         for (int i = end; i >= start; i--) {
-            Component c = getComponent(i);
             remove(i);
-            ((ParameterLinePanel) c).cleanup();
-        }
+         }
 
         revalidate(); // is this necessary?
     }

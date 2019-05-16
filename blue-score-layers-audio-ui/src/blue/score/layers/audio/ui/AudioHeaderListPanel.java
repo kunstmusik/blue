@@ -220,6 +220,7 @@ public class AudioHeaderListPanel extends JPanel implements
         if (this.layerGroup != null) {
             this.layerGroup.removeLayerGroupListener(this);
         }
+        super.removeNotify();
     }
 
     /* LAYER GROUP LISTENER */
