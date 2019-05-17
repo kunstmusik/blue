@@ -87,6 +87,9 @@ FIX
 
 * Issue #423: Fixed automation for Single Line mode with Audio Layers
 
+* Score: Fix dragging of line points in single-line mode when snap is enabled to
+  prevent snapping beyond previous and next points
+
 
 > Notes for 2.7.3 <
 [release 2017.12.15]

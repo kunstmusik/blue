@@ -96,7 +96,7 @@ public class ParameterLinePanel extends JComponent implements
 
     LinePoint selectedPoint = null;
 
-    int leftBoundaryX = -1, rightBoundaryX = -1;
+    double leftBoundaryTime = -1.0, rightBoundaryTime = -1.0;
 
     TableModelListener lineListener = null;
 
@@ -811,20 +811,20 @@ public class ParameterLinePanel extends JComponent implements
         return value + min;
     }
 
-    public void setBoundaryXValues() {
+    private void setBoundaryXValues() {
 
         Line currentLine = currentParameter.getLine();
 
         if (selectedPoint == currentLine.getLinePoint(0)) {
-            leftBoundaryX = 0;
-            rightBoundaryX = 0;
+            leftBoundaryTime = 0;
+            rightBoundaryTime = 0;
             return;
         } else if (selectedPoint == currentLine
                 .getLinePoint(currentLine.size() - 1)) {
             LinePoint p1 = currentLine.getLinePoint(currentLine.size() - 2);
 
-            leftBoundaryX = doubleToScreenX(p1.getX());
-            rightBoundaryX = this.getWidth();
+            leftBoundaryTime = p1.getX();
+            rightBoundaryTime = screenToDoubleX(this.getWidth());
             return;
         }
 
@@ -832,8 +832,8 @@ public class ParameterLinePanel extends JComponent implements
             if (currentLine.getLinePoint(i) == selectedPoint) {
                 LinePoint p1 = currentLine.getLinePoint(i - 1);
                 LinePoint p2 = currentLine.getLinePoint(i + 1);
-                leftBoundaryX = doubleToScreenX(p1.getX());
-                rightBoundaryX = doubleToScreenX(p2.getX());
+                leftBoundaryTime = p1.getX();
+                rightBoundaryTime = p2.getX();
                 return;
             }
         }
@@ -1051,6 +1051,7 @@ public class ParameterLinePanel extends JComponent implements
             }
 
             e.consume();
+            requestFocus();
 
             pressPoint = e.getPoint();
 
@@ -1328,12 +1329,6 @@ public class ParameterLinePanel extends JComponent implements
                 int topY = 5;
                 int bottomY = getHeight() - 5;
 
-                if (x < leftBoundaryX) {
-                    x = leftBoundaryX;
-                } else if (x > rightBoundaryX) {
-                    x = rightBoundaryX;
-                }
-
                 if (y < topY) {
                     y = topY;
                 } else if (y > bottomY) {
@@ -1347,6 +1342,9 @@ public class ParameterLinePanel extends JComponent implements
                     dragTime = ScoreUtilities.getSnapValueMove(dragTime,
                             timeState.getSnapValue());
                 }
+                
+                dragTime = Math.max(leftBoundaryTime, 
+                        Math.min(rightBoundaryTime, dragTime));
 
                 double min = currentParameter.getMin();
                 double max = currentParameter.getMax();
