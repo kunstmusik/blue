@@ -21,7 +21,6 @@ package blue.automation;
 
 import blue.BlueSystem;
 import blue.components.DragDirection;
-import blue.components.SoloMarquee;
 import blue.components.lines.Line;
 import blue.components.lines.LineEditorDialog;
 import blue.components.lines.LinePoint;
@@ -30,6 +29,7 @@ import blue.ui.core.score.ModeListener;
 import blue.ui.core.score.ModeManager;
 import blue.ui.core.score.ScoreController;
 import blue.ui.core.score.ScoreMode;
+import blue.ui.core.score.ScoreTopComponent;
 import blue.ui.core.score.SingleLineScoreSelection;
 import blue.ui.utilities.FileChooserManager;
 import blue.ui.utilities.UiUtilities;
@@ -56,6 +56,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import javafx.stage.FileChooser.ExtensionFilter;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
@@ -72,6 +73,7 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import org.openide.util.Exceptions;
+import org.openide.windows.WindowManager;
 
 /**
  * @author steven
@@ -79,6 +81,8 @@ import org.openide.util.Exceptions;
 public class ParameterLinePanel extends JComponent implements
         TableModelListener, ListDataListener, ListSelectionListener,
         ModeListener {
+    
+    private static final List<ParameterLinePanel> ALL_PANELS = new ArrayList<>();
 
     private static final String FILE_BPF_IMPORT = "paramaterLinePanel.bpf_import";
 
@@ -106,11 +110,11 @@ public class ParameterLinePanel extends JComponent implements
 
     LineCanvasMouseListener mouseListener = new LineCanvasMouseListener(this);
 
-    SoloMarquee marquee;
-
     ArrayList<double[]> selectionList = new ArrayList<>();
 
     int mouseDownInitialX = -1;
+    
+    double initialStartTime = -1.0;
 
     double transTime = 0;
 
@@ -122,9 +126,9 @@ public class ParameterLinePanel extends JComponent implements
 
     private double newSelectionEndTime = -1;
 
-    public ParameterLinePanel(SoloMarquee marquee) {
-        this.marquee = marquee;
+    SingleLineScoreSelection selection = SingleLineScoreSelection.getInstance();
 
+    public ParameterLinePanel() {
         lineListener = (TableModelEvent e) -> {
             repaint();
         };
@@ -258,7 +262,7 @@ public class ParameterLinePanel extends JComponent implements
         if (currentColor != null) {
             g2d.setColor(currentColor);
 
-            if (editing && marquee.isVisible() && marquee.intersects(this)) {
+            if (editing && paramList.containsLine(selection.getSourceLine())) {
                 drawSelectionLine(g2d, currentParameter);
             } else {
                 drawLine(g2d, currentParameter, true);
@@ -594,8 +598,8 @@ public class ParameterLinePanel extends JComponent implements
             selectionStart = newSelectionStartTime;
             selectionEnd = newSelectionEndTime;
         } else {
-            selectionStart = marquee.startTime;
-            selectionEnd = marquee.endTime;
+            selectionStart = selection.getStartTime();
+            selectionEnd = selection.getEndTime();
         }
 
         if (tempLine.size() == 1) {
@@ -919,9 +923,11 @@ public class ParameterLinePanel extends JComponent implements
 
     @Override
     public void addNotify() {
-        super.addNotify(); 
+        super.addNotify();
 
         ModeManager.getInstance().addModeListener(this);
+        
+        ALL_PANELS.add(this);
     }
 
     @Override
@@ -941,6 +947,7 @@ public class ParameterLinePanel extends JComponent implements
         paramList = null;
 
         ModeManager.getInstance().removeModeListener(this);
+        ALL_PANELS.remove(this);
         super.removeNotify();
     }
 
@@ -1033,6 +1040,10 @@ public class ParameterLinePanel extends JComponent implements
             this.lineCanvas = lineCanvas;
         }
 
+        private boolean timeContains(double time, double start, double end) {
+            return time >= start && time <= end;
+        }
+
         @Override
         public void mousePressed(MouseEvent e) {
             if (ModeManager.getInstance().getMode() != ScoreMode.SINGLE_LINE) {
@@ -1043,61 +1054,61 @@ public class ParameterLinePanel extends JComponent implements
 
             pressPoint = e.getPoint();
 
-            if (marquee.isVisible()) {
+            final int x = e.getX();
+            final double pixelSecond = (double) timeState.getPixelSecond();
+            final double mouseTime = x / pixelSecond;
+
+            if (paramList.containsLine(selection.getSourceLine())) {
 
                 if (SwingUtilities.isLeftMouseButton(e)
-                        && !marquee.contains(
-                                SwingUtilities.convertPoint(e.getComponent(), pressPoint, marquee))) {
+                        && !timeContains(mouseTime, selection.getStartTime(), selection.getEndTime())) {
                     transTime = 0.0f;
                     mouseDownInitialX = -1;
                     clearSelectionDragRegions();
-
-                    marquee.setVisible(false);
+                    selection.updateSelection(null, -1.0, -1.0);
                     return;
-                } else if (marquee.intersects(ParameterLinePanel.this)) {
+                } else {
 
-                    int x = e.getX();
+                    if (SwingUtilities.isLeftMouseButton(e)) {
 
-                    if (x >= marquee.getX()
-                            && x <= marquee.getX() + marquee.getWidth()) {
+                        mouseDownInitialX = e.getX();
+                        transTime = 0.0f;
 
-                        if (SwingUtilities.isLeftMouseButton(e)) {
-                            double pixelSecond = (double) timeState.getPixelSecond();
+                        double marqueeLeft = selection.getStartTime();
+                        double marqueeRight = selection.getEndTime();
+                        
+                        initialStartTime = marqueeLeft;
 
-                            mouseDownInitialX = e.getX();
-                            transTime = 0.0f;
-
-                            double marqueeLeft = marquee.getX() / pixelSecond;
-                            double marqueeRight = (marquee.getX() + marquee.getWidth()) / pixelSecond;
-
-                            if (selectionList.size() == 0) {
-                                double[] points = new double[]{
-                                    marqueeLeft, marqueeRight};
-                                selectionList.add(points);
-                            } else {
-                                double[] points = selectionList.get(0);
-                                points[0] = marqueeLeft;
-                                points[1] = marqueeRight;
-                            }
-
-                            verticalShift = e.isControlDown();
-
-                            if (verticalShift) {
-                                vShifter.setup(currentParameter, marqueeLeft, marqueeRight);
-                            }
-
-                            initialY = e.getY();
+                        if (selectionList.size() == 0) {
+                            double[] points = new double[]{
+                                marqueeLeft, marqueeRight};
+                            selectionList.add(points);
+                        } else {
+                            double[] points = selectionList.get(0);
+                            points[0] = marqueeLeft;
+                            points[1] = marqueeRight;
                         }
-                        return;
+
+                        verticalShift = e.isControlDown();
+
+                        if (verticalShift) {
+                            vShifter.setup(currentParameter, marqueeLeft, marqueeRight);
+                        }
+
+                        initialY = e.getY();
                     }
+                    return;
+
                 }
             }
 
             transTime = 0.0f;
             mouseDownInitialX = -1;
             clearSelectionDragRegions();
+            
+            selection.updateSelection(null, -1.0, -1.0);
 
-            marquee.setVisible(false);
+//            marquee.setVisible(false);;
 
             if (currentParameter == null) {
 //                if (UiUtilities.isRightMouseButton(e)) {
@@ -1126,11 +1137,10 @@ public class ParameterLinePanel extends JComponent implements
             } else if (SwingUtilities.isLeftMouseButton(e)) {
 
                 int start = e.getX();
-                double pixelSecond = (double) timeState.getPixelSecond();
 
                 double startTime = start / pixelSecond;
 
-                if (timeState.isSnapEnabled() && !e.isControlDown()) {
+                if (timeState.isSnapEnabled() && !(e.isControlDown() && e.isShiftDown())) {
                     startTime = ScoreUtilities.getSnapValueStart(startTime, timeState.getSnapValue());
                 }
 
@@ -1141,12 +1151,11 @@ public class ParameterLinePanel extends JComponent implements
                     return;
 
                 } else if (e.isShiftDown()) {
-                    Point p = new Point(start, getY());
-                    marquee.setStart(p);
-                    marquee.startTime = startTime;
-                    marquee.endTime = startTime;
-                    marquee.setVisible(true);
-
+                    initialStartTime = startTime;
+                    ScoreTopComponent scoreTC = (ScoreTopComponent) WindowManager.getDefault().findTopComponent("ScoreTopComponent");
+                    Rectangle rect = new Rectangle(start, 0, 1, getHeight());
+                    rect = SwingUtilities.convertRectangle(ParameterLinePanel.this, rect, scoreTC.getScorePanel());
+                    scoreTC.getMarquee().setBounds(rect);
                     SingleLineScoreSelection selection
                             = SingleLineScoreSelection.getInstance();
                     selection.updateSelection(currentLine, startTime, startTime);
@@ -1183,8 +1192,7 @@ public class ParameterLinePanel extends JComponent implements
             }
 
             if (selectedPoint == null && !didVerticalShift
-                    && marquee.isVisible()
-                    && marquee.intersects(ParameterLinePanel.this)
+                    && paramList.containsLine(selection.getSourceLine())
                     && selectionList.size() > 0
                     && SwingUtilities.isLeftMouseButton(e)) {
 
@@ -1232,7 +1240,8 @@ public class ParameterLinePanel extends JComponent implements
                 return;
             }
 
-            if (marquee.isVisible()) {
+            // check if selection currently is for line that is contained in this panel
+            if (paramList.containsLine(selection.getSourceLine())) {
                 int x = e.getX();
                 double pixelSecond = (double) timeState.getPixelSecond();
 
@@ -1246,12 +1255,12 @@ public class ParameterLinePanel extends JComponent implements
 
                     vShifter.processVShift(amount);
 
-                } else if (mouseDownInitialX > 0) {
+                } else if (mouseDownInitialX > 0) { // MOVING OF SELECTION
                     if (SwingUtilities.isLeftMouseButton(e)) {
 
-                        transTime = (x - mouseDownInitialX) / pixelSecond;
+                        transTime = (x - mouseDownInitialX)/ pixelSecond;
 
-                        double newTime = getInitialStartTime() + transTime;
+                        double newTime = initialStartTime + transTime;
 
                         if (timeState.isSnapEnabled() && !e.isControlDown()) {
                             newTime = ScoreUtilities.getSnapValueMove(newTime,
@@ -1263,42 +1272,38 @@ public class ParameterLinePanel extends JComponent implements
                             transTime -= newTime;
                             newTime = 0;
                         }
-
-                        marquee.setLocation((int) (newTime * pixelSecond), marquee.getY());
-
-                        double marqueeLeft = marquee.getX() / pixelSecond;
-                        double marqueeRight = (marquee.getX() + marquee.getWidth()) / pixelSecond;
-                        marquee.startTime = newTime;
-                        marquee.endTime = marqueeRight;
+                        
+                        double endTime = newTime + (selection.getEndTime() - selection.getStartTime());
 
                         SingleLineScoreSelection selection
                                 = SingleLineScoreSelection.getInstance();
-                        selection.updateSelection(currentParameter.getLine(), newTime, marqueeRight);
+                        selection.updateSelection(currentParameter.getLine(), newTime, endTime);
                     }
                 } else {
                     if (x < 0) {
                         x = 0;
                     }
 
+                    double startTime = initialStartTime;
                     double endTime = x / pixelSecond;
-
+                    
                     if (timeState.isSnapEnabled() && !e.isControlDown()) {
                         endTime = ScoreUtilities.getSnapValueMove(endTime,
                                 timeState.getSnapValue());
                     }
-
-                    Point p = new Point((int) (endTime * pixelSecond), getY() + getHeight());
-                    marquee.setDragPoint(p);
-
-                    double marqueeLeft = marquee.getX() / pixelSecond;
-                    double marqueeRight = (marquee.getX() + marquee.getWidth()) / pixelSecond;
-                    marquee.startTime = marqueeLeft;
-                    marquee.endTime = marqueeRight;
-
+                    
+                    if(endTime < startTime) {
+                        double temp = startTime;
+                        startTime = endTime;
+                        endTime = temp;
+                    }
+                    
                     SingleLineScoreSelection selection
                             = SingleLineScoreSelection.getInstance();
-                    selection.updateSelection(currentParameter.getLine(), marqueeLeft, marqueeRight);
+                    selection.updateSelection(currentParameter.getLine(), startTime, endTime);
                 }
+
+                // check if there is a selected point, which means we're dragging a point
             } else if (selectedPoint != null) {
 
                 int x = e.getX();
@@ -1410,7 +1415,7 @@ public class ParameterLinePanel extends JComponent implements
 
     public void commitMultiLineDrag() {
         if (this.paramList != null
-                && (marquee.intersects(this) || selectionList.size() > 0)) {
+                && selectionList.size() > 0) {
             double[] selPoints = selectionList.get(0);
 
             double selectionStartTime = selPoints[0];
@@ -1618,4 +1623,12 @@ public class ParameterLinePanel extends JComponent implements
 
     }
 
+    public static int[] getYHeight(Line line) {
+        for(ParameterLinePanel panel : ALL_PANELS) {
+            if(panel.paramList.containsLine(line)) {
+                return new int[]{ panel.getY(), panel.getHeight()};
+            }
+        }
+        return null;
+    }
 }

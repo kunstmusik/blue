@@ -21,7 +21,9 @@ package blue.ui.core.score;
 
 import blue.BlueData;
 import blue.automation.AutomationManager;
+import blue.automation.ParameterLinePanel;
 import blue.components.AlphaMarquee;
+import blue.components.lines.Line;
 import blue.gui.MyScrollPaneLayout;
 import blue.gui.ScrollerButton;
 import blue.projects.BlueProject;
@@ -53,6 +55,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.*;
@@ -133,7 +136,8 @@ public final class ScoreTopComponent extends TopComponent
     volatile boolean checkingSize = false;
     AlphaMarquee marquee = new AlphaMarquee();
     ScoreMouseWheelListener mouseWheelListener;
-    LayerHeightWheelListener layerHeightWheelListener;;
+    LayerHeightWheelListener layerHeightWheelListener;
+    ;
     ScoreMouseListener listener = new ScoreMouseListener(this, content);
     TimeState currentTimeState = null;
     RenderTimeManager renderTimeManager
@@ -208,18 +212,58 @@ public final class ScoreTopComponent extends TopComponent
         actionMap.put("switch-mode-score", new AbstractAction() {
             public void actionPerformed(ActionEvent ae) {
                 ModeManager.getInstance().setMode(ScoreMode.SCORE);
+                SingleLineScoreSelection.getInstance().updateSelection(null, -1.0, -1.0);
             }
         });
         actionMap.put("switch-mode-single-line", new AbstractAction() {
             public void actionPerformed(ActionEvent ae) {
                 ModeManager.getInstance().setMode(ScoreMode.SINGLE_LINE);
+                SingleLineScoreSelection.getInstance().updateSelection(null, -1.0, -1.0);
             }
         });
         actionMap.put("switch-mode-multi-line", new AbstractAction() {
             public void actionPerformed(ActionEvent ae) {
                 ModeManager.getInstance().setMode(ScoreMode.MULTI_LINE);
+                SingleLineScoreSelection.getInstance().updateSelection(null, -1.0, -1.0);
             }
         });
+
+        SingleLineScoreSelection.getInstance().addListener(new SingleLineScoreSelection.SingleLineScoreSelectionListener() {
+            WeakReference<Line> lastLine = null;
+            int[] lastYHeight = null;
+
+            @Override
+            public void singleLineScoreSelectionPerformed(SingleLineScoreSelection selection) {
+                if (selection.getSourceLine() != null) {
+                    int[] yHeight;
+
+                    if (lastLine != null && lastLine.get() == selection.getSourceLine()) {
+                        yHeight = lastYHeight;
+                    } else {
+                        yHeight = ParameterLinePanel.getYHeight(selection.getSourceLine());
+                        lastYHeight = yHeight;
+                        lastLine = new WeakReference<>(selection.getSourceLine());
+                    }
+
+                    if (yHeight == null) {
+                        marquee.setVisible(false);
+                        return;
+                    }
+
+                    
+                    marquee.setVisible(true);
+                    double pixelSecond = data.getScore().getTimeState().getPixelSecond();
+                    int x = (int) (selection.getStartTime() * pixelSecond);
+                    int width = (int) Math.ceil((selection.getEndTime() - selection.getStartTime()) * pixelSecond);
+                    marquee.setBounds(x, yHeight[0], width, yHeight[1]);
+                } else {
+                    marquee.setVisible(false);
+                    lastYHeight = null;
+                    lastLine = null;
+                }
+            }
+        }
+        );
     }
 
     protected void checkSize() {
@@ -274,7 +318,8 @@ public final class ScoreTopComponent extends TopComponent
         this.data = currentData;
         AutomationManager.getInstance().setData(this.data);
 
-        for (ScoreObject scoreObj : getLookup().lookupAll(ScoreObject.class)) {
+        for (ScoreObject scoreObj : getLookup().lookupAll(ScoreObject.class
+        )) {
             content.remove(scoreObj);
         }
 

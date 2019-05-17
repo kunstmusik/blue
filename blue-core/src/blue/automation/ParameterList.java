@@ -19,6 +19,7 @@
  */
 package blue.automation;
 
+import blue.components.lines.Line;
 import electric.xml.Element;
 import electric.xml.Elements;
 import java.util.*;
@@ -126,4 +127,17 @@ public class ParameterList extends SimpleListProperty<Parameter> {
         return buffer.toString();
     }
 
+    public boolean containsLine(Line line) {
+        if(line == null) { 
+            return false; 
+        }
+        
+        for(Parameter param : this) {
+            if(param.getLine() == line) {
+                return true;
+            }
+        }
+        
+        return false;
+    }
 }
