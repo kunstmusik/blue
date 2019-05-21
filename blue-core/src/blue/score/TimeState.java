@@ -181,8 +181,7 @@ public class TimeState {
                     timeState.pixelSecond = Integer.parseInt(nodeText);
                     break;
                 case "snapEnabled":
-                    timeState.snapEnabled = Boolean.valueOf(nodeText).
-                            booleanValue();
+                    timeState.snapEnabled = Boolean.parseBoolean(nodeText);
                     break;
                 case "snapValue":
                     timeState.snapValue = Double.parseDouble(nodeText);
