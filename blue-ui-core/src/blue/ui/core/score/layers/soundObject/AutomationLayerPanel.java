@@ -20,7 +20,6 @@
 package blue.ui.core.score.layers.soundObject;
 
 import blue.automation.ParameterLinePanel;
-import blue.components.SoloMarquee;
 import blue.score.TimeState;
 import blue.score.layers.AutomatableLayer;
 import blue.score.layers.Layer;
@@ -48,17 +47,14 @@ public class AutomationLayerPanel extends JComponent implements
 
     private TimeState timeState = null;
 
-    private SoloMarquee marquee;
-
     private int scaleLayerNum = -1;
 
     MultiLineScoreSelection selection = MultiLineScoreSelection.getInstance();
 
     final ScorePath path;
 
-    public AutomationLayerPanel(SoloMarquee marquee) {
+    public AutomationLayerPanel() {
         this.setLayout(layout);
-        this.marquee = marquee;
         path = ScoreController.getInstance().getScorePath();
     }
 
@@ -109,14 +105,16 @@ public class AutomationLayerPanel extends JComponent implements
                 revalidate();
             }
         } else if (evt.getPropertyName().equals("pixelSecond")) {
-            int pixelSecond = timeState.getPixelSecond();
 
-            if (marquee.isVisible()) {
-                int newX = (int) (marquee.startTime * pixelSecond);
-                marquee.setLocation(newX, marquee.getY());
-                int newW = (int) (marquee.endTime * pixelSecond) - newX;
-                marquee.setSize(newW, marquee.getHeight());
-            }
+            // FIXME: Need to adjust marquee for pixelSecond changes, maybe should do it once in ScoreTopComponent...
+//            int pixelSecond = timeState.getPixelSecond();
+//
+//            if (marquee.isVisible()) {
+//                int newX = (int) (marquee.startTime * pixelSecond);
+//                marquee.setLocation(newX, marquee.getY());
+//                int newW = (int) (marquee.endTime * pixelSecond) - newX;
+//                marquee.setSize(newW, marquee.getHeight());
+//            }
         }
     }
 
@@ -286,10 +284,10 @@ public class AutomationLayerPanel extends JComponent implements
     public void layersRemoved(LayerGroupDataEvent e) {
         int start = e.getStartIndex();
         int end = e.getEndIndex();
-        
+
         for (int i = end; i >= start; i--) {
             remove(i);
-         }
+        }
 
         revalidate(); // is this necessary?
     }

@@ -19,7 +19,6 @@
  */
 package blue.score.layers.audio.ui;
 
-import blue.components.SoloMarquee;
 import blue.score.TimeState;
 import blue.score.layers.Layer;
 import blue.score.layers.LayerGroupDataEvent;
@@ -28,9 +27,6 @@ import blue.score.layers.audio.core.AudioClip;
 import blue.score.layers.audio.core.AudioLayer;
 import blue.score.layers.audio.core.AudioLayerGroup;
 import blue.score.layers.audio.core.AudioLayerListener;
-import blue.ui.core.score.ModeListener;
-import blue.ui.core.score.ModeManager;
-import blue.ui.core.score.ScoreMode;
 import blue.ui.core.score.ScoreObjectView;
 import blue.ui.core.score.layers.LayerGroupPanel;
 import blue.ui.core.score.layers.SelectionMarquee;
@@ -69,8 +65,7 @@ import org.openide.util.lookup.InstanceContent;
  * @author stevenyi
  */
 public class AudioLayersPanel extends JLayeredPane implements LayerGroupListener,
-        PropertyChangeListener, LayerGroupPanel<AudioLayerGroup>, AudioLayerListener,
-        ModeListener {
+        PropertyChangeListener, LayerGroupPanel<AudioLayerGroup>, AudioLayerListener {
 
     private static Font renderFont = new Font("Dialog", Font.BOLD, 12);
     private static final Color PATTERN_COLOR = new Color(198, 226, 255);
@@ -85,8 +80,7 @@ public class AudioLayersPanel extends JLayeredPane implements LayerGroupListener
     double destPts[] = new double[4];
     Map<AudioClip, AudioClipPanel> clipPanelMap = new HashMap<>();
     private final InstanceContent content;
-    SoloMarquee marquee = new SoloMarquee();
-    AutomationLayerPanel automationPanel = new AutomationLayerPanel(marquee);
+    AutomationLayerPanel automationPanel = new AutomationLayerPanel();
     private ComponentListener sObjViewListener;
 
     BiConsumer<AudioClip, Double> splitHandler = (ac, time) -> {
@@ -157,9 +151,6 @@ public class AudioLayersPanel extends JLayeredPane implements LayerGroupListener
             }
             y += height;
         }
-        
-        ModeManager.getInstance().addModeListener(this);
-
 
         // This is here as the existing mouselisteners prevent bubbling up of
         // events (i.e. from ToolTipManager)
@@ -178,8 +169,6 @@ public class AudioLayersPanel extends JLayeredPane implements LayerGroupListener
                 automationPanel.setSize(getSize());
             }
         });
-        
-        this.add(marquee, JLayeredPane.DRAG_LAYER);
 
     }
 
@@ -189,12 +178,6 @@ public class AudioLayersPanel extends JLayeredPane implements LayerGroupListener
 
     public TimeState getTimeState() {
         return timeState;
-    }
-    
-    
-    @Override
-    public void modeChanged(ScoreMode mode) {
-        marquee.setVisible(false);
     }
 
     @Override

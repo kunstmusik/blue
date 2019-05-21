@@ -22,7 +22,6 @@ package blue.ui.core.score.layers.soundObject;
 import blue.BlueData;
 import blue.SoundLayer;
 import blue.SoundLayerListener;
-import blue.components.SoloMarquee;
 import blue.projects.BlueProjectManager;
 import blue.score.TimeState;
 import blue.score.layers.LayerGroupDataEvent;
@@ -32,7 +31,6 @@ import blue.soundObject.SoundObject;
 import blue.ui.core.score.ModeListener;
 import blue.ui.core.score.ModeManager;
 import blue.ui.core.score.ScoreController;
-import blue.ui.core.score.ScoreMode;
 import blue.ui.core.score.ScoreObjectView;
 import blue.ui.core.score.layers.LayerGroupPanel;
 import blue.ui.core.score.layers.SelectionMarquee;
@@ -68,7 +66,7 @@ import org.openide.util.lookup.InstanceContent;
  */
 public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
         implements PropertyChangeListener, LayerGroupListener, SoundLayerListener,
-        LayerGroupPanel<PolyObject>, ModeListener {
+        LayerGroupPanel<PolyObject> {
 
     private static final MessageFormat toolTipFormat = new MessageFormat(
             "<html><b>Name:</b> {0}<br>" + "<b>Type:</b> {1}<br>" + "<b>Start Time:</b> {2}<br>" + "<b>Duration:</b> {3}<br>" + "<b>End Time:</b> {4}</html>");
@@ -77,10 +75,9 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
     int time;
     PolyObject pObj;
     TimeState timeState = null;
-    SoloMarquee marquee = new SoloMarquee();
     Point start = new Point(0, 0);
     Point end;
-    AutomationLayerPanel automationPanel = new AutomationLayerPanel(marquee);
+    AutomationLayerPanel automationPanel = new AutomationLayerPanel();
     JPanel sObjPanel = new JPanel();
     private final PropertyChangeListener heightListener;
     private final BlueData data;
@@ -96,7 +93,7 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
         heightListener = (PropertyChangeEvent evt) -> {
             reset();
         };
-        
+
         sObjViewListener = new ComponentListener() {
             @Override
             public void componentResized(ComponentEvent ce) {
@@ -115,20 +112,17 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
             @Override
             public void componentHidden(ComponentEvent ce) {
             }
-            
+
         };
 
         sObjPanel.setLayout(null);
 
         time = 3;
 
-        ModeManager.getInstance().addModeListener(this);
-
         sObjPanel.setOpaque(false);
 
         this.add(automationPanel, MODAL_LAYER);
         this.add(sObjPanel, DEFAULT_LAYER);
-        this.add(marquee, JLayeredPane.DRAG_LAYER);
 
         this.addComponentListener(new ComponentAdapter() {
             @Override
@@ -200,13 +194,13 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
             Component[] components = sObjPanel.getComponents();
             for (int i = 0; i < components.length; i++) {
                 Component c = components[i];
-                
+
                 if (c instanceof SoundObjectView) {
                     SoundObjectView sObjView = (SoundObjectView) c;
-                    
+
                     int index = getPolyObject().getSoundLayerIndex(
                             sObjView.getSoundObject());
-                    
+
                     if (index < 0) {
                         sObjView.cleanup();
                         sObjPanel.remove(c);
@@ -216,7 +210,7 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
                         int newY = getPolyObject().getYForLayerNum(index);
                         int newHeight = getPolyObject().getSoundLayerHeight(
                                 index);
-                        
+
                         sObjView.updateView(newY, newHeight);
                     }
                 }
@@ -251,7 +245,6 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
         sObjPanel.removeAll();
 
         this.soundObjectToViewMap.clear();
-        marquee.setVisible(false);
 
         if (this.getPolyObject() != null) {
             this.timeState.removePropertyChangeListener(this);
@@ -279,7 +272,6 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
         this.automationPanel.setLayerGroup(pObj, timeState);
 
 //        content.set(Collections.emptyList(), null);
-
         // TODO - REFACTOR THIS OUT TO POLY OBJECT CONTROLLER
         SoundLayer tempLayer;
         List<SoundObject> sObjects;
@@ -591,17 +583,11 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
 
         reset();
     }
-
-    @Override
-    public void modeChanged(ScoreMode mode) {
-        marquee.setVisible(false);
-    }
-
+    
     /* Cleanup code on Remove */
     @Override
     public void removeNotify() {
         this.data.removePropertyChangeListener(this);
-        ModeManager.getInstance().removeModeListener(this);
         super.removeNotify();
     }
 
@@ -623,8 +609,8 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
     @Override
     public ScoreObjectView getScoreObjectViewAtPoint(Point p) {
         Component c = sObjPanel.getComponentAt(p);
-        if(c instanceof ScoreObjectView) {
-            return (ScoreObjectView)c;
+        if (c instanceof ScoreObjectView) {
+            return (ScoreObjectView) c;
         }
         return null;
     }
