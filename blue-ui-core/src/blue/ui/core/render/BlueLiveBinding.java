@@ -30,6 +30,8 @@ import blue.soundObject.NoteList;
 import blue.soundObject.SoundObject;
 import blue.ui.core.blueLive.BlueLiveToolBar;
 import blue.utility.ScoreUtilities;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import org.openide.util.Exceptions;
 
 /**
@@ -46,10 +48,16 @@ public class BlueLiveBinding implements CsoundBinding {
 
     CompileData compileData = CompileData.createEmptyCompileData();
     private final BlueData blueData;
+    
+    ExecutorService executor;
+    Runnable trigger;
 
     public BlueLiveBinding(BlueData data) {
         this.blueData = data;
         this.data = data.getLiveData();
+        trigger = () -> {
+            triggerLiveData();
+        };
     }
 
     @Override
@@ -58,6 +66,7 @@ public class BlueLiveBinding implements CsoundBinding {
         this.sr = sr;
         this.ksmps = ksmps;
         counter = 0;
+        this.executor = Executors.newFixedThreadPool(1);
     }
 
     @Override
@@ -68,7 +77,7 @@ public class BlueLiveBinding implements CsoundBinding {
 
             if ((counter + ksmps) >= samplesToWait) {
                 counter -= samplesToWait;
-                triggerLiveData();
+                executor.execute(trigger);
             }
             counter += ksmps;
         } else {
@@ -83,7 +92,8 @@ public class BlueLiveBinding implements CsoundBinding {
 
     @Override
     public void cleanup() {
-//        this.csound = null;
+        executor.shutdown();
+        executor = null;
     }
 
     protected void triggerLiveData() {
@@ -94,8 +104,8 @@ public class BlueLiveBinding implements CsoundBinding {
             NoteList nl = new NoteList();
             try {
 
-                for (LiveObject liveObj : liveObjects) {
-
+                for (int i = 0, size = liveObjects.size(); i < size; i++) {
+                    LiveObject liveObj = liveObjects.get(i);
                     SoundObject sObj = liveObj.getSoundObject();
 
                     if (sObj.getTimeBehavior() != SoundObject.TIME_BEHAVIOR_NOT_SUPPORTED) {
