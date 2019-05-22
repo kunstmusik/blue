@@ -90,6 +90,9 @@ FIX
 * Score: Fix dragging of line points in single-line mode when snap is enabled to
   prevent snapping beyond previous and next points
 
+* Mixer: Sends were not changing values at runtime nor generating correct signal
+  multiplier amounts
+
 
 > Notes for 2.7.3 <
 [release 2017.12.15]

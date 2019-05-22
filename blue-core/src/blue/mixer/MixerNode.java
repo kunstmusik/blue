@@ -407,24 +407,24 @@ class MixerNode {
 
                         Parameter levelParam = send.getLevelParameter();
 
-                        if (levelParam.isAutomationEnabled()) {
+                        //if (levelParam.isAutomationEnabled()) {
                             String compilationVarName = levelParam
                                     .getCompilationVarName();
 
                             buffer.append("(").append(parts[j].trim()).append(
                                     " * ");
                             buffer.append(compilationVarName).append(")\n");
-                        } else if (send.getLevel() == 1.0f) {
-                            buffer.append(parts[j].trim()).append("\n");
-                        } else {
-
-                            String levelStr = NumberUtilities.formatDouble(send
-                                    .getLevel());
-
-                            buffer.append("(").append(parts[j].trim()).append(
-                                    " * ");
-                            buffer.append(levelStr).append(")\n");
-                        }
+//                        } else if (send.getLevel() == 1.0f) {
+//                            buffer.append(parts[j].trim()).append("\n");
+//                        } else {
+//
+//                            String levelStr = NumberUtilities.formatDouble(send
+//                                    .getLevel());
+//
+//                            buffer.append("(").append(parts[j].trim()).append(
+//                                    " * ");
+//                            buffer.append(levelStr).append(")\n");
+//                        }
                     }
                 }
             }
