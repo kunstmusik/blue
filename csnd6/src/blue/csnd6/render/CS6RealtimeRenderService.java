@@ -20,12 +20,8 @@ import blue.services.render.RenderTimeManager;
 import blue.settings.GeneralSettings;
 import blue.settings.PlaybackSettings;
 import blue.settings.ProjectPropertiesUtil;
-import blue.soundObject.Note;
-import blue.soundObject.NoteList;
-import blue.soundObject.NoteParseException;
 import blue.soundObject.SoundObjectException;
 import blue.utility.FileUtilities;
-import blue.utility.ScoreUtilities;
 import blue.utility.TextUtilities;
 import csnd6.Csound;
 import csnd6.CsoundArgVList;
@@ -469,7 +465,7 @@ public class CS6RealtimeRenderService implements RealtimeRenderService, PlayMode
 
             Parameter param;
 
-            double scoreTime = (double) csound.GetScoreTime();
+            double scoreTime = csound.GetScoreTime();
             double currentTime = 0.0f;
             double renderStartSeconds = 0.0f;
 
@@ -521,7 +517,7 @@ public class CS6RealtimeRenderService implements RealtimeRenderService, PlayMode
                 
                 counter++;
 
-                scoreTime = (double) csound.GetScoreTime();
+                scoreTime = csound.GetScoreTime();
 
                 if (renderUpdatesTime && counter > updateRate) {
                     manager.updateTimePointer(scoreTime);
@@ -541,7 +537,7 @@ public class CS6RealtimeRenderService implements RealtimeRenderService, PlayMode
 
                 double value;
 
-                for (int i = 0; i < parameters.size(); i++) {
+                for (int i = 0, size = parameters.size(); i < size; i++) {
                     param = (Parameter) parameters.get(i);
 //                    String varName = param.getCompilationVarName();
 
@@ -557,7 +553,8 @@ public class CS6RealtimeRenderService implements RealtimeRenderService, PlayMode
                     }
                 }
 
-                for (StringChannel strChannel : stringChannels) {
+                for (int i = 0, size = stringChannels.size(); i < size; i++) {
+                    StringChannel strChannel = stringChannels.get(i);
                     if (strChannel.isDirty()) {
 //                        System.out.println(
 //                                "Setting Channel: " + strChannel.getChannelName() + " : " + strChannel.getValue());
@@ -566,13 +563,13 @@ public class CS6RealtimeRenderService implements RealtimeRenderService, PlayMode
                     }
                 }
 
-                for (int i = 0; i < bindings.size(); i++) {
+                for (int i = 0, size = bindings.size(); i < size; i++) {
                     bindings.get(i).updateValueToCsound();
                 }
 
                 keepRunning = csound.PerformKsmps() == 0 && keepRunning;
 
-                for (int i = 0; i < bindings.size(); i++) {
+                for (int i = 0, size = bindings.size(); i < size; i++) {
                     bindings.get(i).updateValueFromCsound();
                 }
             };
