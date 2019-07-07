@@ -22,10 +22,8 @@ package blue.ui.core.score.mouse;
 import blue.ui.core.score.layers.soundObject.*;
 import blue.components.AlphaMarquee;
 import blue.plugin.ScoreMouseListenerPlugin;
-import static blue.score.Score.SPACER;
 import blue.score.TimeState;
 import blue.score.layers.Layer;
-import blue.score.layers.LayerGroup;
 import blue.score.layers.ScoreObjectLayer;
 import blue.ui.core.render.RealtimeRenderManager;
 import blue.ui.core.score.ModeManager;
@@ -35,9 +33,9 @@ import blue.ui.core.score.ScoreMode;
 import blue.ui.core.score.ScorePath;
 import blue.ui.core.score.layers.LayerGroupPanel;
 import static blue.ui.core.score.mouse.BlueMouseAdapter.scoreTC;
-import blue.ui.utilities.UiUtilities;
 import blue.utility.ScoreUtilities;
 import java.awt.Component;
+import java.awt.KeyboardFocusManager;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
@@ -59,7 +57,16 @@ class MultiLineSelectionMouseProcessor extends BlueMouseAdapter {
     TimeState timeState = null;
 
     MultiLineScoreSelection selection = MultiLineScoreSelection.getInstance();
+    
+    boolean isShiftDown = false;
 
+    public MultiLineSelectionMouseProcessor() {
+        KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(key -> {
+            isShiftDown = key.isShiftDown();
+            return false;
+        });
+    }
+    
     @Override
     public void mousePressed(MouseEvent e) {
 
@@ -191,7 +198,10 @@ class MultiLineSelectionMouseProcessor extends BlueMouseAdapter {
 
         e.consume();
 
-        if (timeState != null) {
+        // FIXME: Not sure this is the best place to check for isShiftDown as 
+        // it short circuits calling to marqueeSelectionPerformed, which might
+        // be of use in later non-ScoreObject layers.
+        if (timeState != null && isShiftDown) {
             ScoreController.getInstance().setSelectedScoreObjects(null);
 
             if (SwingUtilities.isLeftMouseButton(e)) {

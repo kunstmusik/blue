@@ -116,6 +116,9 @@ UPDATED
 
 * Issue #375 - Made Auditioning work with AudioClips on AudioLayers
 
+* Multiline Mode: Selection will default to only line data. Hold shift when 
+  releasing mouse button during selection to include ScoreObjects for movment.
+
 FIX
 
 * Auditioning Frozen SoundObjects incorrectly calculated start/end times when
