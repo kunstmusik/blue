@@ -21,6 +21,7 @@ package blue.ui.core.score.mouse;
 
 import blue.plugin.ScoreMouseListenerPlugin;
 import blue.BlueSystem;
+import blue.components.AlphaMarquee;
 import blue.score.TimeState;
 import blue.ui.core.score.ModeManager;
 import blue.ui.core.score.ScoreController;
@@ -30,6 +31,7 @@ import blue.utility.ScoreUtilities;
 import java.awt.Point;
 import java.awt.event.MouseEvent;
 import javax.swing.Action;
+import javax.swing.SwingUtilities;
 
 /**
  *
@@ -48,9 +50,14 @@ public class PasteClickMouseListener extends BlueMouseAdapter {
             return;
         }
 
+        e.consume();
+
         final ScoreController scoreController = ScoreController.getInstance();
         final Point p = e.getPoint();
         final TimeState timeState = scoreTC.getTimeState();
+        final AlphaMarquee marquee = scoreTC.getMarquee();
+        Point cp = SwingUtilities.convertPoint(scoreTC.getScorePanel(),
+                e.getPoint(), marquee);
 
         content.add(p);
         content.add(timeState);
@@ -72,14 +79,15 @@ public class PasteClickMouseListener extends BlueMouseAdapter {
                         if (a.isEnabled()) {
                             a.actionPerformed(null);
                         }
-
-                        e.consume();
                     }
                     break;
                 case SINGLE_LINE:
                     scoreController.pasteSingleLine(start);
                     break;
                 case MULTI_LINE:
+                    if (marquee.isVisible() && marquee.contains(cp)) {
+                        return;
+                    }
                     scoreController.pasteMultiLine(start);
                     break;
             }
