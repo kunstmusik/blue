@@ -83,6 +83,9 @@ FIX
   projects causing bad state where score mouse handling no longer functioned 
   correctly
 
+* Issue #412: Update marquee and selected ScoreObjects around newly pasted data
+  in each Score Mode
+
 * Issue #419: Fixed URL to use HTTPS to match server changes for BlueShare
 
 * Issue #423: Fixed automation for Single Line mode with Audio Layers
