@@ -94,9 +94,7 @@ class MultiLineSelectionMouseProcessor extends BlueMouseAdapter {
         startLayer = lastLayer = layer;
         allLayers = scorePath.getAllLayers();
 
-        if (UiUtilities.isRightMouseButton(e)) {
-//            showPopup(comp, e);
-        } else if (SwingUtilities.isLeftMouseButton(e)) {
+        if (SwingUtilities.isLeftMouseButton(e)) {
             startX = Math.max(e.getX(), 0);
             timeState = scoreTC.getTimeState();
 
