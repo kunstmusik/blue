@@ -35,8 +35,10 @@ import blue.undo.BlueUndoManager;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.WeakHashMap;
 import java.util.stream.Collectors;
 import javax.swing.JScrollPane;
@@ -298,8 +300,8 @@ public class ScoreController {
     }
 
     public void pasteSingleLine(double start) {
-        if(singleLineBuffer.sourceLine == null || 
-                singleLineBuffer.startTime < 0.0) {
+        if (singleLineBuffer.sourceLine == null
+                || singleLineBuffer.startTime < 0.0) {
             return;
         }
         double adjust = start - singleLineBuffer.startTime;
@@ -310,7 +312,7 @@ public class ScoreController {
                     return p;
                 }).collect(Collectors.toList());
         singleLineBuffer.sourceLine.paste(points);
-        
+
         SingleLineScoreSelection selection
                 = SingleLineScoreSelection.getInstance();
         selection.updateSelection(singleLineBuffer.sourceLine, points.get(0).getX(), points.get(points.size() - 1).getX());
@@ -376,6 +378,8 @@ public class ScoreController {
                 }
             }
         }
+        
+        multiLineBuffer.selectedLayers.addAll(selection.getSelectedLayers());
     }
 
     public void deleteMultiLine() {
@@ -399,6 +403,7 @@ public class ScoreController {
             }
         }
         deleteScoreObjects();
+        selection.reset();
     }
 
     public void cutMultiLine() {
@@ -415,13 +420,19 @@ public class ScoreController {
         }
 
         double adjust = start - multiLineBuffer.selectionStart;
+        
+        ScoreController controller = ScoreController.getInstance();
+        
+        Set<ScoreObject> selected = new HashSet<>();
 
         for (Map.Entry<ScoreObject, ScoreObjectLayer> entry
                 : multiLineBuffer.scoreObjects.entrySet()) {
             ScoreObject sObj = entry.getKey().deepCopy();
             sObj.setStartTime(sObj.getStartTime() + adjust);
             entry.getValue().add(sObj);
+            selected.add(sObj);
         }
+        controller.setSelectedScoreObjects(selected);
 
         for (Map.Entry<List<LinePoint>, Line> entry
                 : multiLineBuffer.automationData.entrySet()) {
@@ -434,6 +445,10 @@ public class ScoreController {
             Line line = entry.getValue();
             line.paste(points);
         }
+
+        MultiLineScoreSelection selection = MultiLineScoreSelection.getInstance();
+        final double dur = selection.endTime - selection.startTime;
+        selection.updateSelection(start, start + dur, multiLineBuffer.selectedLayers);
     }
 
     public ScoreObjectBuffer getScoreObjectBuffer() {
@@ -512,6 +527,7 @@ public class ScoreController {
         // and lines for multiline copy/paste
         public final Map<ScoreObject, ScoreObjectLayer> scoreObjects = new HashMap<>();
         public final Map<List<LinePoint>, Line> automationData = new HashMap<>();
+        public final Set<Layer> selectedLayers = new HashSet<>();
 
         public Score sourceScore = null;
 
@@ -525,6 +541,7 @@ public class ScoreController {
         public void clear() {
             scoreObjects.clear();
             automationData.clear();
+            selectedLayers.clear();
             sourceScore = null;
             selectionStart = -1.0;
             scorePasteMin = -1.0;

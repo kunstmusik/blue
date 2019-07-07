@@ -57,6 +57,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -250,7 +251,6 @@ public final class ScoreTopComponent extends TopComponent
                         return;
                     }
 
-                    
                     marquee.setVisible(true);
                     double pixelSecond = data.getScore().getTimeState().getPixelSecond();
                     int x = (int) (selection.getStartTime() * pixelSecond);
@@ -264,6 +264,35 @@ public final class ScoreTopComponent extends TopComponent
             }
         }
         );
+
+        final MultiLineScoreSelection multiSelection
+                = MultiLineScoreSelection.getInstance();
+        multiSelection.addListener((updateType) -> {
+            final Collection<? extends Layer> selectedLayers = multiSelection.getSelectedLayers();
+            if(selectedLayers == null || selectedLayers.size() == 0) {
+                marquee.setBounds(-1,-1, 0, 0);
+                marquee.setVisible(false);
+            } else {
+                double pixelSecond = data.getScore().getTimeState().getPixelSecond();
+                double translate = multiSelection.getTranslationTime();
+                double newStart = multiSelection.getStartTime() + translate;
+                double newEnd = multiSelection.getEndTime() + translate;
+                int x = (int) (newStart * pixelSecond);
+                int width = (int) Math.ceil((newEnd - newStart) * pixelSecond);
+                
+                int min = Integer.MAX_VALUE, max = Integer.MIN_VALUE;
+                Score score  = BlueProjectManager.getInstance().getCurrentBlueData().getScore();
+                for(Layer layer : selectedLayers) {
+                    int[] minMax = ScorePath.getTopBottomForLayer(layer, score);
+                    min = Math.min(min, minMax[0]);
+                    max = Math.max(max, minMax[1]);
+                }
+                
+                marquee.setVisible(true);
+                marquee.setBounds(x, min, width, max - min);
+            }  
+            
+        });
     }
 
     protected void checkSize() {

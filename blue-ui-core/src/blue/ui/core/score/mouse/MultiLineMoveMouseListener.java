@@ -115,9 +115,6 @@ class MultiLineMoveMouseListener extends BlueMouseAdapter {
             
             selection.updateTranslation(translation);
 
-            int marqueeX = (int) ((marquee.startTime + translation) * timeState.getPixelSecond());
-            marquee.setLocation(marqueeX, marquee.getY());
-
             for (int i = 0; i < selectedScoreObjects.length; i++) {
                 ScoreObject sObj = selectedScoreObjects[i];
                 sObj.setStartTime(startTimes[i] + translation);

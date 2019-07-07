@@ -164,7 +164,7 @@ public class AutomationLayerPanel extends JComponent implements
     }
 
     public void setMultiLineDragStart(double startTime, double endTime,
-            Collection<Layer> selectedLayers) {
+            Collection<? extends Layer> selectedLayers) {
         for (int i = 0; i < getComponentCount(); i++) {
             ParameterLinePanel paramLinePanel = (ParameterLinePanel) getComponent(
                     i);
