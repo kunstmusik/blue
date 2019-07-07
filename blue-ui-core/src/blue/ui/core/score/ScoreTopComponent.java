@@ -623,7 +623,9 @@ public final class ScoreTopComponent extends TopComponent
         ModeManager.getInstance().setMode(ScoreMode.SCORE);
 
         ModeManager.getInstance().addModeListener((ScoreMode mode) -> {
-            getMarquee().setVisible(false);
+            SingleLineScoreSelection.getInstance().clear();
+            MultiLineScoreSelection.getInstance().reset();
+            ScoreController.getInstance().setSelectedScoreObjects(null);
         });
     }
 
