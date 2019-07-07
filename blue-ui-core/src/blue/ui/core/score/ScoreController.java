@@ -378,13 +378,19 @@ public class ScoreController {
                 }
             }
         }
-        
+
         multiLineBuffer.selectedLayers.addAll(selection.getSelectedLayers());
     }
 
     public void deleteMultiLine() {
+
         final MultiLineScoreSelection selection
                 = MultiLineScoreSelection.getInstance();
+
+        if (selection.getSelectedLayers() == null) {
+            return;
+        }
+
         final double start = selection.getStartTime();
         final double end = selection.getEndTime();
 
@@ -420,9 +426,9 @@ public class ScoreController {
         }
 
         double adjust = start - multiLineBuffer.selectionStart;
-        
+
         ScoreController controller = ScoreController.getInstance();
-        
+
         Set<ScoreObject> selected = new HashSet<>();
 
         for (Map.Entry<ScoreObject, ScoreObjectLayer> entry
