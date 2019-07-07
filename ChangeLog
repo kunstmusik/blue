@@ -1,9 +1,9 @@
 blue
 version @VERSION@ - @RELEASE_DATE@
-copyright (c) 2001-2017 Steven Yi - all rights reserved
+copyright (c) 2001-2019 Steven Yi - all rights reserved
 
 email: stevenyi@gmail.com
-web: http://blue.kunstmusik.com
+web: https://blue.kunstmusik.com
 
 This program comes with ABSOLUTELY NO WARRANTY is licensed under the GNU Public
 License. This is a free program and you are welcome to redistribute it under
@@ -39,6 +39,7 @@ UPDATED
 * Multiline Mode: Selection will default to only line data. Hold shift when 
   releasing mouse button during selection to include ScoreObjects for movment.
 
+* Updated to Netbeans 11 Rich Client Platform
 
 FIX
 
