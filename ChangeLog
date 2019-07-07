@@ -36,6 +36,10 @@ UPDATED
 * Issue #431: implemented shortcut 1, 2, and 3 to switch between Score, 
   Single Line, and Multi-Line modes on the Score timeline
 
+* Multiline Mode: Selection will default to only line data. Hold shift when 
+  releasing mouse button during selection to include ScoreObjects for movment.
+
+
 FIX
 
 * BlueSynthBuilder 
@@ -115,9 +119,6 @@ UPDATED
 * CSD Import: import CSDs that do not have CsInstruments or CsScore sections
 
 * Issue #375 - Made Auditioning work with AudioClips on AudioLayers
-
-* Multiline Mode: Selection will default to only line data. Hold shift when 
-  releasing mouse button during selection to include ScoreObjects for movment.
 
 FIX
 
