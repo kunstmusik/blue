@@ -225,7 +225,7 @@ public class Send implements Automatable, ParameterListener {
     // PARAMETER LISTENING
     @Override
     public void lineDataChanged(Parameter param) {
-        if (!updatingLine) {
+        if (!updatingLine && param.isAutomationEnabled()) {
             double time = ParameterTimeManagerFactory.getInstance().getTime();
             double level = levelParameter.getLine().getValue(time);
 

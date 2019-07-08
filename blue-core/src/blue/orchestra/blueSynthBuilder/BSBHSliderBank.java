@@ -732,17 +732,18 @@ public class BSBHSliderBank extends AutomatableBSBObject implements
 
     @Override
     public void lineDataChanged(Parameter param) {
-        double time = ParameterTimeManagerFactory.getInstance().getTime();
+        if (param.isAutomationEnabled()) {
+            double time = ParameterTimeManagerFactory.getInstance().getTime();
 
-        String paramName = param.getName();
-        String strIndex = paramName.substring(paramName.lastIndexOf('_') + 1);
-        int sliderIndex = Integer.parseInt(strIndex);
+            String paramName = param.getName();
+            String strIndex = paramName.substring(paramName.lastIndexOf('_') + 1);
+            int sliderIndex = Integer.parseInt(strIndex);
 
-        double val = param.getLine().getValue(time);
-        BSBHSlider slider = sliders.get(sliderIndex);
+            double val = param.getLine().getValue(time);
+            BSBHSlider slider = sliders.get(sliderIndex);
 
-        slider.setValue(val);
-
+            slider.setValue(val);
+        }
     }
 
     @Override

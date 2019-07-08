@@ -101,6 +101,10 @@ FIX
 * Mixer: Sends were not changing values at runtime nor generating correct signal
   multiplier amounts
 
+* Issue #439: When pasting a BSB instrument as a Sound SoundObject, fixed 
+  transfer of comments to Sound as well as inadvertent resetting of widget 
+  values 
+
 
 > Notes for 2.7.3 <
 [release 2017.12.15]

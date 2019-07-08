@@ -108,6 +108,7 @@ public final class PasteBSBAsSoundAction extends AbstractAction implements Conte
             param.getLine().addLinePoint(new LinePoint(1.0, param.getValue(0.0)));
         }
         sound.setBlueSynthBuilder(bsbCopy);
+        sound.setComment(bsbCopy.getComment());
         
         Layer layer = scorePath.getGlobalLayerForY(p.y);
         

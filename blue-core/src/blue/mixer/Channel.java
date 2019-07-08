@@ -387,7 +387,7 @@ public class Channel implements Comparable<Channel>, ParameterListener {
 
     @Override
     public void lineDataChanged(Parameter param) {
-        if (!updatingLine) {
+        if (!updatingLine && param.isAutomationEnabled()) {
             double time = ParameterTimeManagerFactory.getInstance().getTime();
             double level = levelParameter.getLine().getValue(time);
 
