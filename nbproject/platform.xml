@@ -10,7 +10,7 @@
   
   <property 
     name="autoupdate.catalog.url"
-    value="http://updates.netbeans.org/netbeans/updates/8.2/uc/final/distribution/catalog.xml.gz"/>
+    value="http://apache.mirrors.ionfish.org/incubator/netbeans/incubating-netbeans/incubating-11.0/nbms/updates.xml.gz"/>
 
     <condition property="download.required">
         <and>
