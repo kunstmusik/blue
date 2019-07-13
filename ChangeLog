@@ -105,6 +105,9 @@ FIX
   transfer of comments to Sound as well as inadvertent resetting of widget 
   values 
 
+* Issue #443: Fix location of popup for UDO manager when selected item is 
+  scrolled off screen
+
 
 > Notes for 2.7.3 <
 [release 2017.12.15]
