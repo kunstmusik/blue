@@ -108,6 +108,9 @@ FIX
 * Issue #443: Fix location of popup for UDO manager when selected item is 
   scrolled off screen
 
+* Issue #416: Fixed incorrect insertion/sorting of Channel Strips into Mixer 
+  panel when new instrument was added to the Orchestra arrangement.
+
 
 > Notes for 2.7.3 <
 [release 2017.12.15]

@@ -445,9 +445,6 @@ public class ArrangementEditPanel extends JComponent
         for (int i = 0; i < idList.size(); i++) {
             channels.checkOrCreate(idList.get(i));
         }
-
-        channels.sort();
-//        channelsPanel.sort();
     }
 
     static class ArrangementDragSource extends DragSourceAdapter implements

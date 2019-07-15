@@ -149,11 +149,17 @@ public class ChannelList extends ObservableArrayList<Channel> {
         }
         Channel channel = new Channel();
         channel.setName(channelName);
-        add(channel);
-    }
-
-    public void sort() {
-        Collections.<Channel>sort(this);
+        
+        int index = size(); 
+        for(int i = 0; i < size(); i++) {
+         
+            if(channel.compareTo(get(i)) < 0) {
+                index = i;
+                break;
+            }
+        }
+        
+        add(index, channel);
     }
 
     public int indexByName(Object anItem) {
