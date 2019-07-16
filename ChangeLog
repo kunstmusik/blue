@@ -109,7 +109,9 @@ FIX
   scrolled off screen
 
 * Issue #416: Fixed incorrect insertion/sorting of Channel Strips into Mixer 
-  panel when new instrument was added to the Orchestra arrangement.
+  panel when new instrument was added to the Orchestra arrangement. Also fixed
+  incorrect listener updates when enabling/disabling automation parameters for a 
+  layer or when automation source is removed (i.e., effect removed from mixer).
 
 
 > Notes for 2.7.3 <
