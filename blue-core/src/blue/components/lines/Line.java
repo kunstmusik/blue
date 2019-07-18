@@ -1102,6 +1102,7 @@ public class Line implements TableModel, ChangeListener, Iterable<LinePoint> {
         }
 
         this.sort();
+        stripTimeDeadPoints();
         fireTableDataChanged();
     }
 
@@ -1133,7 +1134,7 @@ public class Line implements TableModel, ChangeListener, Iterable<LinePoint> {
                 insertOrAdjust(endTime, originStart, true);
             }
         }
-
+        stripTimeDeadPoints();
         fireTableDataChanged();
     }
 
@@ -1209,6 +1210,7 @@ public class Line implements TableModel, ChangeListener, Iterable<LinePoint> {
         if (originEnd != getValue(end, false)) {
             insertOrAdjust(end, originEnd, false);
         }
+        stripTimeDeadPoints();
         fireTableDataChanged();
     }
 
@@ -1252,6 +1254,33 @@ public class Line implements TableModel, ChangeListener, Iterable<LinePoint> {
                 } else {
                     found = true;
                 }
+            }
+        }
+    }
+    
+    public void stripTimeDeadPoints() {
+        double time = -1.0;
+        boolean secondPointFound = false;
+        boolean zeroPointFound = false;
+                
+        for(int i = points.size() - 1; i >= 0; i--) {
+            LinePoint lp = points.get(i);
+            
+            if(lp.getX() == 0.0) {
+                if(!zeroPointFound) {
+                    zeroPointFound = true;
+                } else {
+                    points.remove(i);
+                }
+            } else if(lp.getX() == time) {
+                if(!secondPointFound) {
+                    secondPointFound = true;
+                } else {
+                    points.remove(i + 1);
+                }
+            } else {
+                time = lp.getX();
+                secondPointFound = false;
             }
         }
     }

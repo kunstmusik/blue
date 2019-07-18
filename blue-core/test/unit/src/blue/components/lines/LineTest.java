@@ -108,4 +108,29 @@ public class LineTest extends TestCase {
         assertEquals(3, line.points.size());
 
     }
+    
+    public void testStripTimeDeadPoints() {
+        Line line = new Line(false);
+        line.points.add(new LinePoint(0.25, 4.0));
+        line.points.add(new LinePoint(0.25, 5.0));
+        line.stripTimeDeadPoints();
+        
+        assertEquals(3, line.size());
+        assertEquals(4.0, line.points.get(1).getY(), 0.001);
+        assertEquals(5.0, line.points.get(2).getY(), 0.001);
+        
+        line.points.add(new LinePoint(0.25, 6.0));
+        line.stripTimeDeadPoints();
+        
+        assertEquals(3, line.size());
+        assertEquals(4.0, line.points.get(1).getY(), 0.001);
+        assertEquals(6.0, line.points.get(2).getY(), 0.001);
+        
+        line.points.add(0, new LinePoint(0.0, 10.0));
+        line.points.add(2, new LinePoint(0.0, 20.0));
+        line.stripTimeDeadPoints();
+        assertEquals(3, line.size());
+        assertEquals(20.0, line.points.get(0).getY(), 0.001);
+        
+    }
 }

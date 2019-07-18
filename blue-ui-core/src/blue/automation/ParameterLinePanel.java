@@ -1208,6 +1208,8 @@ public class ParameterLinePanel extends JComponent implements
             clearSelectionDragRegions();
             transTime = 0.0f;
 
+            currentParameter.getLine().stripTimeDeadPoints();
+            
             repaint();
 
         }

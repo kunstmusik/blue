@@ -41,6 +41,10 @@ UPDATED
 
 * Updated to Netbeans 11 Rich Client Platform
 
+* Issue #441: For automation lines, clean up dead time points (those with same 
+  time values as points surrounding them) for different line operations (e.g.,
+  dragging points, pasting, dragging)
+
 FIX
 
 * BlueSynthBuilder 
