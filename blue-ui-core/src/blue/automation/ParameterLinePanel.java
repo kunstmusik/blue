@@ -1033,6 +1033,7 @@ public class ParameterLinePanel extends JComponent implements
         Point pressPoint = null;
         boolean verticalShift = false;
         private int initialY;
+        boolean justPasted = false;
 
         LineVerticalShifter vShifter = new LineVerticalShifter();
 
@@ -1109,16 +1110,7 @@ public class ParameterLinePanel extends JComponent implements
             
             selection.updateSelection(null, -1.0, -1.0);
 
-//            marquee.setVisible(false);;
-
             if (currentParameter == null) {
-//                if (UiUtilities.isRightMouseButton(e)) {
-//                    if (popup == null) {
-//                        popup = new EditPointsPopup();
-//                    }
-//                    popup.setLine(null);
-//                    popup.show((Component) e.getSource(), e.getX(), e.getY());
-//                }
                 return;
             }
 
@@ -1149,6 +1141,7 @@ public class ParameterLinePanel extends JComponent implements
 
                 if ((e.getModifiers() & OS_CTRL_KEY) == OS_CTRL_KEY) {
                     ScoreController.getInstance().pasteSingleLine(startTime);
+                    justPasted = true;
                     return;
 
                 } else if (e.isShiftDown()) {
@@ -1181,6 +1174,7 @@ public class ParameterLinePanel extends JComponent implements
             vShifter.cleanup();
             boolean didVerticalShift = verticalShift;
             verticalShift = false;
+            justPasted = false;
 
             if (ModeManager.getInstance().getMode() != ScoreMode.SINGLE_LINE) {
                 return;
@@ -1239,7 +1233,7 @@ public class ParameterLinePanel extends JComponent implements
 
             e.consume();
 
-            if (currentParameter == null) {
+            if (currentParameter == null || justPasted) {
                 return;
             }
 
