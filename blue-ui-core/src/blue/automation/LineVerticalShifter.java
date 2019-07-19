@@ -48,12 +48,9 @@ public class LineVerticalShifter {
 
     private Parameter param = null;
     private Line line = null;
-    private double start = -1.0;
-    private double end = -1.0;
 
     private final List<LinePointOrigin> linePointOrigins = new ArrayList<>();
-    private final List<LinePoint> syntheticPoints = new ArrayList<>();
-
+    
     private double maxShift = Double.NEGATIVE_INFINITY;
     private double minShift = Double.POSITIVE_INFINITY;
 
@@ -67,8 +64,6 @@ public class LineVerticalShifter {
         }
         this.param = param;
         this.line = param.getLine();
-        this.start = start;
-        this.end = end;
 
         List<LinePoint> pts = line.getObservableList().stream()
                 .filter(lp -> lp.getX() >= start && lp.getX() <= end)
@@ -87,17 +82,18 @@ public class LineVerticalShifter {
             LinePoint inner = new LinePoint(start, line.getValue(start, false));
 
             linePointOrigins.add(new LinePointOrigin(param, inner));
+            line.insertLinePointLeft(outer);
+            line.insertLinePoint(inner);
 
-            syntheticPoints.add(outer);
-            syntheticPoints.add(inner);
         } else if (startPts.size() == 1) {
             LinePoint outer = new LinePoint(start, line.getValue(start, true));
-            syntheticPoints.add(outer);
+            line.insertLinePointLeft(outer);
         } else {
             for (int i = 0; i < startPts.size() - 1; i++) {
                 pts.remove(0);
             }
         }
+
 
         if (endPts.isEmpty()) {
             LinePoint outer = new LinePoint(end, line.getValue(end, false));
@@ -105,11 +101,12 @@ public class LineVerticalShifter {
 
             linePointOrigins.add(new LinePointOrigin(param, inner));
 
-            syntheticPoints.add(inner);
-            syntheticPoints.add(outer);
-        } else if (startPts.size() == 1) {
+            line.insertLinePointLeft(inner);
+            line.insertLinePoint(outer);
+            
+        } else if (endPts.size() == 1) {
             LinePoint outer = new LinePoint(end, line.getValue(end, false));
-            syntheticPoints.add(outer);
+            line.insertLinePoint(outer);
         } else {
             for (int i = endPts.size() - 2; i >= 0; i--) {
                 pts.remove(pts.size() - 1);
@@ -119,7 +116,6 @@ public class LineVerticalShifter {
         for (LinePoint lp : pts) {
             linePointOrigins.add(new LinePointOrigin(param, lp));
         }
-
 
         double max = Double.NEGATIVE_INFINITY;
         double min = Double.POSITIVE_INFINITY;
@@ -155,26 +151,13 @@ public class LineVerticalShifter {
 
             lp.setLocation(lp.getX(), newY);
         }
-
-        if (!syntheticPoints.isEmpty()) {
-            if (shift == 0.0) {
-                line.getObservableList().removeAll(syntheticPoints);
-            } else if (!line.getObservableList().contains(syntheticPoints.get(0))) {
-                for(LinePoint lp: syntheticPoints) {
-                    line.insertLinePoint(lp);
-                }
-            }
-        }
     }
 
     public void cleanup() {
         this.line = null;
-        start = -1.0;
-        end = -1.0;
         maxShift = Double.NEGATIVE_INFINITY;
         minShift = Double.POSITIVE_INFINITY;
         linePointOrigins.clear();
-        syntheticPoints.clear();
     }
 
     /**

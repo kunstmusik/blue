@@ -117,6 +117,10 @@ FIX
   incorrect listener updates when enabling/disabling automation parameters for a 
   layer or when automation source is removed (i.e., effect removed from mixer).
 
+* Issue #445: Fixed issue where vertical dragging of points in Single-Line mode
+  was selecting/inserting the wrong points when points existed at selection 
+  boundaries
+
 
 > Notes for 2.7.3 <
 [release 2017.12.15]

@@ -1257,29 +1257,34 @@ public class Line implements TableModel, ChangeListener, Iterable<LinePoint> {
             }
         }
     }
-    
+
     public void stripTimeDeadPoints() {
         double time = -1.0;
+        double lastVal = Double.NaN;
         boolean secondPointFound = false;
         boolean zeroPointFound = false;
-                
-        for(int i = points.size() - 1; i >= 0; i--) {
+
+        for (int i = points.size() - 1; i >= 0; i--) {
             LinePoint lp = points.get(i);
-            
-            if(lp.getX() == 0.0) {
-                if(!zeroPointFound) {
+
+            if (lp.getX() == 0.0) {
+                if (!zeroPointFound) {
                     zeroPointFound = true;
                 } else {
                     points.remove(i);
                 }
-            } else if(lp.getX() == time) {
-                if(!secondPointFound) {
+            } else if (lp.getX() == time) {
+                if (lp.getY() == lastVal) {
+                    points.remove(i);
+                } else if (!secondPointFound) {
                     secondPointFound = true;
                 } else {
                     points.remove(i + 1);
                 }
+                lastVal = lp.getY();
             } else {
                 time = lp.getX();
+                lastVal = lp.getY();
                 secondPointFound = false;
             }
         }
