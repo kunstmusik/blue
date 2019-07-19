@@ -171,7 +171,11 @@
       </opcode>
       <opcode>
         <name>squinewave</name>
-        <signature>aout [, asyncout] 	squinewave	 acps, aClip, aSkew [, asyncin] [, iMinSweep] [, iphase]</signature>
+        <signature>aout [, asyncout] 	squinewave	 acps, aClip, aSkew, asyncin [, iMinSweep] [, iphase]</signature>
+      </opcode>
+      <opcode>
+        <name>squinewave</name>
+        <signature>aout [, asyncout] 	squinewave	 acps, aClip, aSkew [, ksyncin] [, iMinSweep] [, iphase]</signature>
       </opcode>
       <opcode>
         <name>vco</name>
@@ -4121,38 +4125,6 @@
     </opcode>
   </opcodeGroup>
   <opcodeGroup name="Lua Opcodes">
-    <opcode>
-      <name>lua_exec</name>
-      <signature>lua_exec	 Sluacode</signature>
-    </opcode>
-    <opcode>
-      <name>lua_iopcall</name>
-      <signature>lua_iopcall	 Sname, ...</signature>
-    </opcode>
-    <opcode>
-      <name>lua_ikopcall</name>
-      <signature>lua_ikopcall	 Sname, ...</signature>
-    </opcode>
-    <opcode>
-      <name>lua_iaopcall</name>
-      <signature>lua_iaopcall	 Sname, ...</signature>
-    </opcode>
-    <opcode>
-      <name>lua_iopcall_off</name>
-      <signature>lua_iopcall_off	 Sname, ...</signature>
-    </opcode>
-    <opcode>
-      <name>lua_ikopcall_off</name>
-      <signature>lua_ikopcall_off	 Sname, ...</signature>
-    </opcode>
-    <opcode>
-      <name>lua_iaopcall_off</name>
-      <signature>lua_iaopcall_off	 Sname, ...</signature>
-    </opcode>
-    <opcode>
-      <name>lua_opdef</name>
-      <signature>lua_opdef	 Sname, Sluacode</signature>
-    </opcode>
   </opcodeGroup>
   <opcodeGroup name="Serial I/O">
     <opcode>
@@ -5761,6 +5733,14 @@
       <opcode>
         <name>ampmidi</name>
         <signature>iamp 	ampmidi	 iscal [, ifn]</signature>
+      </opcode>
+      <opcode>
+        <name>ampmidicurve</name>
+        <signature>igain 	ampmidicurve	 ivelocity, idynamicrange, iexponent</signature>
+      </opcode>
+      <opcode>
+        <name>ampmidicurve</name>
+        <signature>kgain 	ampmidicurve	 kvelocity, kdynamicrange, kexponent</signature>
       </opcode>
       <opcode>
         <name>ampmidid</name>
