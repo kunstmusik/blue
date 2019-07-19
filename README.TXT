@@ -1,9 +1,9 @@
 Blue
 Version @VERSION@ - @RELEASE_DATE@
-Copyright (c) 2001-2018 Steven Yi - All Rights Reserved
+Copyright (c) 2001-2019 Steven Yi - All Rights Reserved
 
 Email: stevenyi@gmail.com
-Web: http://blue.kunstmusik.com
+Web: https://blue.kunstmusik.com
 
 This program comes with ABSOLUTELY NO WARRANTY and is licensed under the GNU
 Public License.  This is a free program and you are welcome to redistrbute it
