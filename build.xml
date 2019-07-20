@@ -16,7 +16,7 @@
   <condition property="isWindows">
     <os family="windows" />
   </condition>
-    
+
   <condition property="isNotMac">
     <not>
       <os family="mac" />
@@ -121,6 +121,11 @@
         <!--<replacestring from="-J-Xms24m -J-Xmx64m" to="${confReplacementString}"/>-->
       </filterchain>
     </copy>
+    <echo file="${build.launcher.dir}/etc/${app.name}.conf" append="true">
+<![CDATA[
+default_mac_userdir="${DEFAULT_USERDIR_ROOT}/dev"
+]]>
+    </echo>
     <antcall target="addLinuxJavaLibraryPath"/>
         
   </target>
