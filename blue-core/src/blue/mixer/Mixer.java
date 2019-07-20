@@ -187,6 +187,23 @@ public class Mixer {
         return allChannels;
     }
     
+    public List<Channel> getAllChannels() {
+        List<Channel> allChannels = new ArrayList<>();
+
+        for (ChannelList list : channelListGroups) {
+            allChannels.addAll(list);
+        }
+        allChannels.addAll(channels);
+        
+        allChannels.addAll(subChannels);
+        allChannels.add(master);
+
+        return allChannels;
+    }
+    
+    
+    
+    
     public Channel findChannelById(String id) {
         if (id == null) return null;
         
@@ -337,40 +354,6 @@ public class Mixer {
         instr.setText(buffer.toString());
 
         return instr;
-    }
-
-    public Send[] getAllSends() {
-        Send[] allSends = new Send[0];
-
-        for (int i = 0; i < this.getSubChannels().size(); i++) {
-            Channel c = this.getSubChannels().get(i);
-
-            Send[] sends = c.getSends();
-
-            if (sends.length == 0) {
-                continue;
-            }
-
-            Send[] temp = new Send[allSends.length + sends.length];
-            System.arraycopy(allSends, 0, temp, 0, allSends.length);
-            System.arraycopy(sends, 0, temp, allSends.length, sends.length);
-            allSends = temp;
-        }
-
-        for (Channel c : this.getAllSourceChannels()) {
-            Send[] sends = c.getSends();
-
-            if (sends.length == 0) {
-                continue;
-            }
-
-            Send[] temp = new Send[allSends.length + sends.length];
-            System.arraycopy(allSends, 0, temp, 0, allSends.length);
-            System.arraycopy(sends, 0, temp, allSends.length, sends.length);
-            allSends = temp;
-        }
-
-        return allSends;
     }
 
     public boolean isSubChannel(Channel channel) {

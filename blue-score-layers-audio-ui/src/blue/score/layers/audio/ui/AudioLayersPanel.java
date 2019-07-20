@@ -19,7 +19,6 @@
  */
 package blue.score.layers.audio.ui;
 
-import blue.components.AlphaMarquee;
 import blue.score.TimeState;
 import blue.score.layers.Layer;
 import blue.score.layers.LayerGroupDataEvent;
@@ -43,6 +42,7 @@ import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
+import java.awt.event.ComponentListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseWheelEvent;
 import java.awt.geom.AffineTransform;
@@ -80,13 +80,13 @@ public class AudioLayersPanel extends JLayeredPane implements LayerGroupListener
     double destPts[] = new double[4];
     Map<AudioClip, AudioClipPanel> clipPanelMap = new HashMap<>();
     private final InstanceContent content;
-    AutomationLayerPanel automationPanel = new AutomationLayerPanel(
-            new AlphaMarquee());
-    
+    AutomationLayerPanel automationPanel = new AutomationLayerPanel();
+    private ComponentListener sObjViewListener;
+
     BiConsumer<AudioClip, Double> splitHandler = (ac, time) -> {
         int layerNum = layerGroup.getLayerNumForScoreObject(ac);
         AudioLayer layer = layerGroup.get(layerNum);
-        
+
         AudioLayerGroupUtils.splitAudioClip(layer, ac, time);
     };
 
@@ -121,6 +121,27 @@ public class AudioLayersPanel extends JLayeredPane implements LayerGroupListener
             updateAudioClipYandHeight();
         };
 
+        sObjViewListener = new ComponentListener() {
+            @Override
+            public void componentResized(ComponentEvent ce) {
+                checkSize();
+            }
+
+            @Override
+            public void componentMoved(ComponentEvent ce) {
+                checkSize();
+            }
+
+            @Override
+            public void componentShown(ComponentEvent ce) {
+            }
+
+            @Override
+            public void componentHidden(ComponentEvent ce) {
+            }
+
+        };
+
         int y = 0;
         for (AudioLayer layer : layerGroup) {
             int height = layer.getAudioLayerHeight();
@@ -148,6 +169,7 @@ public class AudioLayersPanel extends JLayeredPane implements LayerGroupListener
                 automationPanel.setSize(getSize());
             }
         });
+
     }
 
     public AudioLayerGroup getAudioLayerGroup() {
@@ -304,7 +326,6 @@ public class AudioLayersPanel extends JLayeredPane implements LayerGroupListener
         g.setColor(Color.BLACK);
         g.fillRect(0, 0, width, height);
 
-
         int y = 0;
         g.setColor(Color.DARK_GRAY);
         g.drawLine(0, 0, width, 0);
@@ -322,10 +343,10 @@ public class AudioLayersPanel extends JLayeredPane implements LayerGroupListener
             if (snapPixels <= 0) {
                 return;
             }
-            
+
             double snapValue = timeState.getSnapValue();
             int pixelSecond = timeState.getPixelSecond();
-            
+
             for (int i = 0; x < getWidth(); i++) {
                 x = (int) ((i * snapValue) * pixelSecond);
                 g.drawLine(x, 0, x, height);
@@ -370,6 +391,7 @@ public class AudioLayersPanel extends JLayeredPane implements LayerGroupListener
 
     private void addClipPanel(AudioClip clip, TimeState timeState, int y, int height) {
         AudioClipPanel panel = new AudioClipPanel(clip, timeState, splitHandler);
+        panel.addComponentListener(sObjViewListener);
         panel.setBounds(panel.getX(), y, panel.getWidth(), height);
         add(panel, DEFAULT_LAYER);
         clipPanelMap.put(clip, panel);
@@ -377,6 +399,7 @@ public class AudioLayersPanel extends JLayeredPane implements LayerGroupListener
 
     private void removeClipPanel(AudioClip clip) {
         AudioClipPanel panel = clipPanelMap.get(clip);
+        panel.removeComponentListener(sObjViewListener);
         remove(panel);
         clipPanelMap.remove(clip);
 

@@ -85,8 +85,8 @@ public class RenderTimeManagerImpl implements RenderTimeManager {
                     adjustedTime -= getRenderStartTime();
                 }
                 
-                for (RenderTimeManagerListener listener : renderListeners) {
-                    listener.renderTimeUpdated(adjustedTime);
+                for (int i = 0, size = renderListeners.size(); i < size; i++) {
+                    renderListeners.get(i).renderTimeUpdated(adjustedTime);
                 }
             }
         });

@@ -115,9 +115,6 @@ class MultiLineMoveMouseListener extends BlueMouseAdapter {
             
             selection.updateTranslation(translation);
 
-            int marqueeX = (int) ((marquee.startTime + translation) * timeState.getPixelSecond());
-            marquee.setLocation(marqueeX, marquee.getY());
-
             for (int i = 0; i < selectedScoreObjects.length; i++) {
                 ScoreObject sObj = selectedScoreObjects[i];
                 sObj.setStartTime(startTimes[i] + translation);
@@ -144,15 +141,6 @@ class MultiLineMoveMouseListener extends BlueMouseAdapter {
 
     private boolean isMultiLineMode() {
         return ModeManager.getInstance().getMode() == ScoreMode.MULTI_LINE;
-    }
-
-    private void checkScroll(MouseEvent e) {
-        Point temp = SwingUtilities.convertPoint(e.getComponent(), e.getPoint(),
-                scoreTC.getScorePanel());
-
-        scrollRect.setLocation(temp);
-
-        scoreTC.getScorePanel().scrollRectToVisible(scrollRect);
     }
 
     @Override

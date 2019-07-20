@@ -30,6 +30,7 @@ import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
 public class ParameterIdList implements Iterable<String> {
+
     private static final Comparator comparator = new Comparator() {
         @Override
         public int compare(Object o1, Object o2) {
@@ -40,7 +41,7 @@ public class ParameterIdList implements Iterable<String> {
         }
     };
 
-    private ArrayList<String> parameters; 
+    private ArrayList<String> parameters;
 
     private int selectedIndex = -1;
 
@@ -48,7 +49,7 @@ public class ParameterIdList implements Iterable<String> {
 
     transient Vector listSelectionListeners = null;
 
-    public ParameterIdList(){
+    public ParameterIdList() {
         parameters = new ArrayList<>();
     }
 
@@ -79,7 +80,7 @@ public class ParameterIdList implements Iterable<String> {
 
         fireAddDataEvent(lde);
 
-        if(selectedIndex < 0 && size() > 0) {
+        if (selectedIndex < 0 && size() > 0) {
             setSelectedIndex(0);
         } else if (selectedIndex >= size()) {
             setSelectedIndex(size() - 1);
@@ -93,25 +94,32 @@ public class ParameterIdList implements Iterable<String> {
             int index = parameters.indexOf(parameterId);
             parameters.remove(parameterId);
 
+            if (size() == 0) {
+                setSelectedIndex(-1);
+            } else if (selectedIndex >= size()) {
+                setSelectedIndex(size() - 1);
+            } else if (index < selectedIndex) {
+                setSelectedIndex(selectedIndex - 1);
+            }
+
             ListDataEvent lde = new ListDataEvent(this,
                     ListDataEvent.INTERVAL_REMOVED, index, index);
 
             fireRemoveDataEvent(lde);
 
-            if (size() == 0) {
-                setSelectedIndex(-1);
-            } else if (index == selectedIndex) {
-                if (selectedIndex >= size()) {
-                    setSelectedIndex(size() - 1);
-                }
-            } else if (index < selectedIndex) {
-                setSelectedIndex(selectedIndex - 1);
-            }
         }
     }
 
     public void removeParameterId(int index) {
         parameters.remove(index);
+
+        if (size() == 0) {
+            setSelectedIndex(-1);
+        } else if (selectedIndex >= size()) {
+            setSelectedIndex(size() - 1);
+        } else if (index < selectedIndex) {
+            setSelectedIndex(selectedIndex - 1);
+        }
 
         ListDataEvent lde = new ListDataEvent(this,
                 ListDataEvent.INTERVAL_REMOVED, index, index);
@@ -132,7 +140,6 @@ public class ParameterIdList implements Iterable<String> {
     }
 
     /* SERIALIZATION CODE */
-
     public Element saveAsXML() {
         Element retVal = new Element("parameterIdList");
         retVal.setAttribute("selectedIndex", Integer.toString(selectedIndex));
@@ -175,7 +182,6 @@ public class ParameterIdList implements Iterable<String> {
     }
 
     /* LIST DATA LISTENER CODE */
-
     public void addListDataListener(ListDataListener l) {
         if (listListeners == null) {
             listListeners = new Vector();
@@ -217,13 +223,12 @@ public class ParameterIdList implements Iterable<String> {
     }
 
     /* LIST SELECTION LISTENER CODE */
-
     public void addListSelectionListener(ListSelectionListener listener) {
         if (listSelectionListeners == null) {
             listSelectionListeners = new Vector();
         }
 
-        if(listSelectionListeners.contains(listener)) {
+        if (listSelectionListeners.contains(listener)) {
             return;
         }
 
@@ -252,7 +257,6 @@ public class ParameterIdList implements Iterable<String> {
     }
 
     /* OTHER METHODS */
-
     @Override
     public boolean equals(Object obj) {
         return EqualsBuilder.reflectionEquals(this, obj);
@@ -268,7 +272,7 @@ public class ParameterIdList implements Iterable<String> {
     }
 
     public int getSelectedIndex() {
-        return selectedIndex;
+        return (size() == 0 || selectedIndex >= size()) ? -1 : selectedIndex;
     }
 
     public void setSelectedIndex(int selectedIndex) {

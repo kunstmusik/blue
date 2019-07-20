@@ -373,11 +373,13 @@ public class AudioLayer extends ArrayList<AudioClip>
                             ? adjustedEndTime - newStart
                             : (newEnd - newStart);
 
+            String path = clip.getAudioFile().getAbsolutePath().replace('\\', '/');
+
             n.setPField(Integer.toString(instrId), 1);
             n.setStartTime(newStart);
             n.setSubjectiveDuration(newDuration);
             n.setPField(
-                    "\"" + clip.getAudioFile().getAbsolutePath() + "\"",
+                    "\"" + path + "\"",
                     4);
             n.setPField(Double.toString(clipFileStart), 5);
             

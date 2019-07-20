@@ -413,7 +413,7 @@ public class BSBDropdown extends AutomatableBSBObject implements
     public void lineDataChanged(Parameter param) {
         Parameter parameter = parameters.getParameter(this.getObjectName());
 
-        if (parameter != null) {
+        if (parameter != null && param.isAutomationEnabled()) {
             double time = ParameterTimeManagerFactory.getInstance().getTime();
             double val = parameter.getLine().getValue(time);
 

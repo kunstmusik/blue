@@ -20,7 +20,6 @@
 package blue.ui.core.score.layers.soundObject;
 
 import blue.automation.ParameterLinePanel;
-import blue.components.AlphaMarquee;
 import blue.score.TimeState;
 import blue.score.layers.AutomatableLayer;
 import blue.score.layers.Layer;
@@ -48,17 +47,14 @@ public class AutomationLayerPanel extends JComponent implements
 
     private TimeState timeState = null;
 
-    private AlphaMarquee marquee;
-
     private int scaleLayerNum = -1;
 
     MultiLineScoreSelection selection = MultiLineScoreSelection.getInstance();
 
     final ScorePath path;
-    
-    public AutomationLayerPanel(AlphaMarquee marquee) {
+
+    public AutomationLayerPanel() {
         this.setLayout(layout);
-        this.marquee = marquee;
         path = ScoreController.getInstance().getScorePath();
     }
 
@@ -70,10 +66,6 @@ public class AutomationLayerPanel extends JComponent implements
 
         Component[] components = this.getComponents();
         this.removeAll();
-
-        for (int i = 0; i < components.length; i++) {
-            ((ParameterLinePanel) components[i]).cleanup();
-        }
 
         layout.setPolyObject(layerGroup);
 
@@ -96,7 +88,7 @@ public class AutomationLayerPanel extends JComponent implements
         for (int i = 0; i < layerGroup.size(); i++) {
             AutomatableLayer sLayer = (AutomatableLayer) layerGroup.get(i);
 
-            ParameterLinePanel paramPanel = new ParameterLinePanel(this.marquee);
+            ParameterLinePanel paramPanel = new ParameterLinePanel();
             paramPanel.setTimeState(timeState);
             paramPanel.setParameterIdList(sLayer.getAutomationParameters());
 
@@ -112,6 +104,17 @@ public class AutomationLayerPanel extends JComponent implements
             if (evt.getPropertyName().equals("heightIndex")) {
                 revalidate();
             }
+        } else if (evt.getPropertyName().equals("pixelSecond")) {
+
+            // FIXME: Need to adjust marquee for pixelSecond changes, maybe should do it once in ScoreTopComponent...
+//            int pixelSecond = timeState.getPixelSecond();
+//
+//            if (marquee.isVisible()) {
+//                int newX = (int) (marquee.startTime * pixelSecond);
+//                marquee.setLocation(newX, marquee.getY());
+//                int newW = (int) (marquee.endTime * pixelSecond) - newX;
+//                marquee.setSize(newW, marquee.getHeight());
+//            }
         }
     }
 
@@ -161,7 +164,7 @@ public class AutomationLayerPanel extends JComponent implements
     }
 
     public void setMultiLineDragStart(double startTime, double endTime,
-            Collection<Layer> selectedLayers) {
+            Collection<? extends Layer> selectedLayers) {
         for (int i = 0; i < getComponentCount(); i++) {
             ParameterLinePanel paramLinePanel = (ParameterLinePanel) getComponent(
                     i);
@@ -266,9 +269,9 @@ public class AutomationLayerPanel extends JComponent implements
 
     public void layersAdded(LayerGroupDataEvent e) {
         int index = e.getStartIndex();
-        AutomatableLayer sLayer = (AutomatableLayer)layerGroup.get(index);
+        AutomatableLayer sLayer = (AutomatableLayer) layerGroup.get(index);
 
-        ParameterLinePanel paramPanel = new ParameterLinePanel(this.marquee);
+        ParameterLinePanel paramPanel = new ParameterLinePanel();
         paramPanel.setTimeState(timeState);
         paramPanel.setParameterIdList(sLayer.getAutomationParameters());
 
@@ -283,9 +286,7 @@ public class AutomationLayerPanel extends JComponent implements
         int end = e.getEndIndex();
 
         for (int i = end; i >= start; i--) {
-            Component c = getComponent(i);
             remove(i);
-            ((ParameterLinePanel) c).cleanup();
         }
 
         revalidate(); // is this necessary?

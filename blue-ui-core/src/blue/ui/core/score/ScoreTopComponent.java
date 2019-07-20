@@ -21,7 +21,9 @@ package blue.ui.core.score;
 
 import blue.BlueData;
 import blue.automation.AutomationManager;
+import blue.automation.ParameterLinePanel;
 import blue.components.AlphaMarquee;
+import blue.components.lines.Line;
 import blue.gui.MyScrollPaneLayout;
 import blue.gui.ScrollerButton;
 import blue.projects.BlueProject;
@@ -53,8 +55,9 @@ import java.awt.*;
 import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.io.Serializable;
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -134,7 +137,8 @@ public final class ScoreTopComponent extends TopComponent
     volatile boolean checkingSize = false;
     AlphaMarquee marquee = new AlphaMarquee();
     ScoreMouseWheelListener mouseWheelListener;
-    LayerHeightWheelListener layerHeightWheelListener;;
+    LayerHeightWheelListener layerHeightWheelListener;
+    ;
     ScoreMouseListener listener = new ScoreMouseListener(this, content);
     TimeState currentTimeState = null;
     RenderTimeManager renderTimeManager
@@ -201,6 +205,94 @@ public final class ScoreTopComponent extends TopComponent
             inputMap.put(ks, a.getValue(Action.NAME));
             actionMap.put(a.getValue(Action.NAME), a);
         }
+
+        inputMap.put(KeyStroke.getKeyStroke('1'), "switch-mode-score");
+        inputMap.put(KeyStroke.getKeyStroke('2'), "switch-mode-single-line");
+        inputMap.put(KeyStroke.getKeyStroke('3'), "switch-mode-multi-line");
+
+        actionMap.put("switch-mode-score", new AbstractAction() {
+            public void actionPerformed(ActionEvent ae) {
+                ModeManager.getInstance().setMode(ScoreMode.SCORE);
+                SingleLineScoreSelection.getInstance().updateSelection(null, -1.0, -1.0);
+            }
+        });
+        actionMap.put("switch-mode-single-line", new AbstractAction() {
+            public void actionPerformed(ActionEvent ae) {
+                ModeManager.getInstance().setMode(ScoreMode.SINGLE_LINE);
+                SingleLineScoreSelection.getInstance().updateSelection(null, -1.0, -1.0);
+            }
+        });
+        actionMap.put("switch-mode-multi-line", new AbstractAction() {
+            public void actionPerformed(ActionEvent ae) {
+                ModeManager.getInstance().setMode(ScoreMode.MULTI_LINE);
+                SingleLineScoreSelection.getInstance().updateSelection(null, -1.0, -1.0);
+            }
+        });
+
+        SingleLineScoreSelection.getInstance().addListener(new SingleLineScoreSelection.SingleLineScoreSelectionListener() {
+            WeakReference<Line> lastLine = null;
+            int[] lastYHeight = null;
+
+            @Override
+            public void singleLineScoreSelectionPerformed(SingleLineScoreSelection selection) {
+                if (selection.getSourceLine() != null) {
+                    int[] yHeight;
+
+                    if (lastLine != null && lastLine.get() == selection.getSourceLine()) {
+                        yHeight = lastYHeight;
+                    } else {
+                        yHeight = ParameterLinePanel.getYHeight(selection.getSourceLine());
+                        lastYHeight = yHeight;
+                        lastLine = new WeakReference<>(selection.getSourceLine());
+                    }
+
+                    if (yHeight == null) {
+                        marquee.setVisible(false);
+                        return;
+                    }
+
+                    marquee.setVisible(true);
+                    double pixelSecond = data.getScore().getTimeState().getPixelSecond();
+                    int x = (int) (selection.getStartTime() * pixelSecond);
+                    int width = (int) Math.ceil((selection.getEndTime() - selection.getStartTime()) * pixelSecond);
+                    marquee.setBounds(x, yHeight[0], width, yHeight[1]);
+                } else {
+                    marquee.setVisible(false);
+                    lastYHeight = null;
+                    lastLine = null;
+                }
+            }
+        }
+        );
+
+        final MultiLineScoreSelection multiSelection
+                = MultiLineScoreSelection.getInstance();
+        multiSelection.addListener((updateType) -> {
+            final Collection<? extends Layer> selectedLayers = multiSelection.getSelectedLayers();
+            if(selectedLayers == null || selectedLayers.size() == 0) {
+                marquee.setBounds(-1,-1, 0, 0);
+                marquee.setVisible(false);
+            } else {
+                double pixelSecond = data.getScore().getTimeState().getPixelSecond();
+                double translate = multiSelection.getTranslationTime();
+                double newStart = multiSelection.getStartTime() + translate;
+                double newEnd = multiSelection.getEndTime() + translate;
+                int x = (int) (newStart * pixelSecond);
+                int width = (int) Math.ceil((newEnd - newStart) * pixelSecond);
+                
+                int min = Integer.MAX_VALUE, max = Integer.MIN_VALUE;
+                Score score  = BlueProjectManager.getInstance().getCurrentBlueData().getScore();
+                for(Layer layer : selectedLayers) {
+                    int[] minMax = ScorePath.getTopBottomForLayer(layer, score);
+                    min = Math.min(min, minMax[0]);
+                    max = Math.max(max, minMax[1]);
+                }
+                
+                marquee.setVisible(true);
+                marquee.setBounds(x, min, width, max - min);
+            }  
+            
+        });
     }
 
     protected void checkSize() {
@@ -255,10 +347,11 @@ public final class ScoreTopComponent extends TopComponent
         this.data = currentData;
         AutomationManager.getInstance().setData(this.data);
 
-        for(ScoreObject scoreObj : getLookup().lookupAll(ScoreObject.class)) {
+        for (ScoreObject scoreObj : getLookup().lookupAll(ScoreObject.class
+        )) {
             content.remove(scoreObj);
         }
-        
+
         if (data != null) {
 
             Tempo tempo = data.getScore().getTempo();
@@ -378,9 +471,9 @@ public final class ScoreTopComponent extends TopComponent
         JButton manageButton = new JButton("Manage");
         manageButton.addActionListener((ActionEvent e) -> {
             ScorePath path = ScoreController.getInstance().getScorePath();
-            
+
             JDialog dialog;
-            
+
             if (path.getLastLayerGroup() == null) {
                 ScoreManagerDialog dlg = new ScoreManagerDialog(
                         WindowManager.getDefault().getMainWindow(), true);
@@ -394,7 +487,7 @@ public final class ScoreTopComponent extends TopComponent
                 dlg.setSize(300, 500);
                 dialog = dlg;
             }
-            
+
             GUI.centerOnScreen(dialog);
             dialog.setVisible(true);
         });
@@ -528,9 +621,11 @@ public final class ScoreTopComponent extends TopComponent
         layerPanel.addMouseWheelListener(layerHeightWheelListener);
 
         ModeManager.getInstance().setMode(ScoreMode.SCORE);
-        
+
         ModeManager.getInstance().addModeListener((ScoreMode mode) -> {
-            getMarquee().setVisible(false);
+            SingleLineScoreSelection.getInstance().clear();
+            MultiLineScoreSelection.getInstance().reset();
+            ScoreController.getInstance().setSelectedScoreObjects(null);
         });
     }
 
@@ -676,7 +771,8 @@ public final class ScoreTopComponent extends TopComponent
                 this.renderStart = ((Double) evt.getNewValue()).doubleValue();
                 this.timePointer = -1.0f;
                 updateRenderTimePointer();
-            } /* else if (prop.equals(RenderTimeManager.TIME_POINTER)) {
+            }
+            /* else if (prop.equals(RenderTimeManager.TIME_POINTER)) {
              this.timePointer = ((Double) evt.getNewValue()).doubleValue();
              updateRenderTimePointer();
              } */
@@ -687,16 +783,23 @@ public final class ScoreTopComponent extends TopComponent
 
         } else if (evt.getSource() == currentTimeState) {
             if (evt.getPropertyName().equals("pixelSecond")) {
+                int pixelSecond = currentTimeState.getPixelSecond();
                 double val = data.getRenderStartTime();
 
-                int newX = (int) (val * currentTimeState.getPixelSecond());
+                int newX = (int) (val * pixelSecond);
                 updateRenderStartPointerX(newX, true);
 
                 val = data.getRenderEndTime();
-                newX = (int) (val * currentTimeState.getPixelSecond());
+                newX = (int) (val * pixelSecond);
 
                 updateRenderLoopPointerX(newX);
 
+                if (marquee.isVisible()) {
+                    newX = (int) (marquee.startTime * pixelSecond);
+                    marquee.setLocation(newX, marquee.getY());
+                    int newW = (int) (marquee.endTime * pixelSecond) - newX;
+                    marquee.setSize(newW, marquee.getHeight());
+                }
             }
         } else if (evt.getSource() == data) {
             boolean isRenderStartTime = evt.getPropertyName().equals(
@@ -958,15 +1061,15 @@ public final class ScoreTopComponent extends TopComponent
     public TimeState getTimeState() {
         return this.currentTimeState;
     }
-    
+
     public List<LayerGroupPanel> getLayerGroupPanels() {
         List<LayerGroupPanel> lgPanels = new ArrayList<>();
-        
-        for(int i = 0; i < layerPanel.getComponentCount(); i++) {
+
+        for (int i = 0; i < layerPanel.getComponentCount(); i++) {
             Component c = layerPanel.getComponent(i);
-            
-            if(c instanceof LayerGroupPanel) {
-                lgPanels.add((LayerGroupPanel<LayerGroup>)c);
+
+            if (c instanceof LayerGroupPanel) {
+                lgPanels.add((LayerGroupPanel<LayerGroup>) c);
             }
         }
         return lgPanels;

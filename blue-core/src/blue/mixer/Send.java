@@ -108,38 +108,8 @@ public class Send implements Automatable, ParameterListener {
     }
 
     public void setLevel(double level) {
-        if (levelParameter.isAutomationEnabled()) {
-            double time = ParameterTimeManagerFactory.getInstance().getTime();
-
-            if (time < 0) {
-                return;
-            }
-
-            updatingLine = true;
-            LinePoint found = null;
-
-            Line line = levelParameter.getLine();
-
-            for (int i = 0; i < line.size(); i++) {
-                LinePoint point = line.getLinePoint(i);
-                if (point.getX() == time) {
-                    found = point;
-                    break;
-                }
-
-            }
-
-            if (found != null) {
-                found.setLocation(found.getX(), level);
-            } else {
-                LinePoint lp = new LinePoint();
-                lp.setLocation(time, level);
-                line.insertLinePoint(lp);
-            }
-
-            updatingLine = false;
-        }
-
+        levelParameter.setValue(level);
+        
         double oldVal = this.level;
         this.level = level;
 
@@ -255,7 +225,7 @@ public class Send implements Automatable, ParameterListener {
     // PARAMETER LISTENING
     @Override
     public void lineDataChanged(Parameter param) {
-        if (!updatingLine) {
+        if (!updatingLine && param.isAutomationEnabled()) {
             double time = ParameterTimeManagerFactory.getInstance().getTime();
             double level = levelParameter.getLine().getValue(time);
 

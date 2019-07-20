@@ -48,7 +48,7 @@ import org.openide.awt.UndoRedo;
 public class EffectEditor extends javax.swing.JPanel implements
         PropertyChangeListener {
 
-    //FIXME - check if this class needs to add removeNotify to remove listeners
+    //FIXME - check if this class needs to add   to remove listeners
     BSBInterfaceEditor interfaceEditor = new BSBInterfaceEditor(
             EffectsObjectRegistry.getBSBObjects(), true);
     BSBCompletionProvider completionProvider = new BSBCompletionProvider();

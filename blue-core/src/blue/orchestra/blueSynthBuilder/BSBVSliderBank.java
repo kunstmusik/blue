@@ -31,6 +31,7 @@ import java.math.RoundingMode;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.IntegerProperty;
@@ -64,8 +65,15 @@ public class BSBVSliderBank extends AutomatableBSBObject implements
     final ChangeListener<? super Number> cl = (obs, old, newVal) -> {
         if (parameters != null) {
 
-            int index = sliders.indexOf(obs);
-            if (index < 0) {
+            sliders.stream().filter(x -> x.valueProperty() == obs).findFirst().get();
+
+            Optional<BSBVSlider> slider
+                    = sliders.stream()
+                            .filter(x -> x.valueProperty() == obs)
+                            .findFirst();
+
+            int index = sliders.indexOf(slider.get());
+            if (!slider.isPresent() || index < 0) {
                 return;
             }
 
@@ -137,7 +145,7 @@ public class BSBVSliderBank extends AutomatableBSBObject implements
                 case VALUE:
                     v = getMaximum();
                     for (Parameter param : getParameters()) {
-                        if(!param.isAutomationEnabled()) {
+                        if (!param.isAutomationEnabled()) {
                             param.setMax(v,
                                     bType == ClampedValueListener.BoundaryType.TRUNCATE);
                         }
@@ -248,15 +256,15 @@ public class BSBVSliderBank extends AutomatableBSBObject implements
         return randomizable;
     }
 
-    public final boolean isValueDisplayEnabled(){
+    public final boolean isValueDisplayEnabled() {
         return valueDisplayEnabled.get();
     }
 
-    public final void setValueDisplayEnabled(boolean enabled){
+    public final void setValueDisplayEnabled(boolean enabled) {
         valueDisplayEnabled.set(enabled);
     }
 
-    public final BooleanProperty valueDisplayEnabledProperty(){
+    public final BooleanProperty valueDisplayEnabledProperty() {
         return valueDisplayEnabled;
     }
 
@@ -365,6 +373,7 @@ public class BSBVSliderBank extends AutomatableBSBObject implements
         Elements nodes = data.getElements();
 
         sliderBank.getSliders().clear();
+        List<BSBVSlider> childSliders = new ArrayList<>();
 
         while (nodes.hasMoreElements()) {
             Element node = nodes.next();
@@ -400,12 +409,13 @@ public class BSBVSliderBank extends AutomatableBSBObject implements
                     break;
                 case "bsbObject":
                     BSBVSlider hSlider = (BSBVSlider) BSBVSlider.loadFromXML(node);
-                    sliderBank.getSliders().add(hSlider);
+                    childSliders.add(hSlider);
                     break;
             }
         }
 
         sliderBank.setValueProperty(new ClampedValue(minVal, maxVal, 0.0, resolution));
+        sliderBank.getSliders().addAll(childSliders);
 
         return sliderBank;
     }
@@ -463,7 +473,6 @@ public class BSBVSliderBank extends AutomatableBSBObject implements
 
             Object[] vals = new Object[2];
             vals[0] = objectName;
-
 
             if (diff > 0) {
                 if (!willBeUnique(numSliders)) {
@@ -727,17 +736,18 @@ public class BSBVSliderBank extends AutomatableBSBObject implements
 
     @Override
     public void lineDataChanged(Parameter param) {
-        double time = ParameterTimeManagerFactory.getInstance().getTime();
+        if (param.isAutomationEnabled()) {
+            double time = ParameterTimeManagerFactory.getInstance().getTime();
 
-        String paramName = param.getName();
-        String strIndex = paramName.substring(paramName.lastIndexOf('_') + 1);
-        int sliderIndex = Integer.parseInt(strIndex);
+            String paramName = param.getName();
+            String strIndex = paramName.substring(paramName.lastIndexOf('_') + 1);
+            int sliderIndex = Integer.parseInt(strIndex);
 
-        double val = param.getLine().getValue(time);
-        BSBVSlider slider = sliders.get(sliderIndex);
+            double val = param.getLine().getValue(time);
+            BSBVSlider slider = sliders.get(sliderIndex);
 
-        slider.setValue(val);
-
+            slider.setValue(val);
+        }
     }
 
     @Override

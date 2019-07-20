@@ -6,11 +6,11 @@
   <!--  value="http://deadlock.netbeans.org/hudson/job/nbms-and-javadoc/lastStableBuild/artifact/nbbuild/netbeans/harness/tasks.jar"/>-->
   <property 
     name="bootstrap.url"
-    value="http://kunstmusik.com/tasks.jar"/>
+    value="http://kunstmusik.com/.well-known/tasks.jar"/>
   
   <property 
     name="autoupdate.catalog.url"
-    value="http://updates.netbeans.org/netbeans/updates/8.2/uc/final/distribution/catalog.xml.gz"/>
+    value="http://apache.mirrors.ionfish.org/incubator/netbeans/incubating-netbeans/incubating-11.0/nbms/updates.xml.gz"/>
 
     <condition property="download.required">
         <and>

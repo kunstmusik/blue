@@ -23,7 +23,6 @@
       processing), the frozen soundObject's bar will graphically show the difference
       in times with two different colors.
     </para>
-    
     <para>Note: As currently implemented, when Blue goes to freeze soundObjects 
       it may appear to be frozen, but messages will continue to appear in the console 
       showing that csound is rendering the frozen soundObjects. Future versions will 
@@ -143,6 +142,11 @@
         <para>Frozen files are referenced relatively to the project file, so
           you are free to move your project directory around or rename it and the frozen
           files will work fine.
+        </para>
+      </listitem>   
+
+      <listitem>
+        <para>Freezing SoundObjects uses the same settings as found in the project's Disk Render settings (e.g., sr, ksmps, 0dbfs). 
         </para>
       </listitem>   
 

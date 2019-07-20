@@ -75,10 +75,11 @@ public class ScoreMouseListener extends MouseAdapter {
     public void mousePressed(MouseEvent e) {
         RealtimeRenderManager.getInstance().stopAuditioning();
 
+        scoreTC.getScorePanel().requestFocus();
+        
         if (e.isConsumed()) {
             return;
         }
-        scoreTC.getScorePanel().requestFocus();
 
         LayerGroupPanel lGroupPanel = scoreTC.getLayerGroupPanelAtPoint(e);
         ScoreObjectView scoreObjView = null;

@@ -42,6 +42,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.JOptionPane;
@@ -154,9 +155,13 @@ public final class PasteSoundObjectAction extends AbstractAction implements Cont
         // FIXME - Need a generic way to handle shadow objects; perhaps need to
         // deal with this in the model...
         List<Instance> instanceSoundObjects = new ArrayList<>();
-
-        for (int i = 0; i < buffer.scoreObjects.size(); i++) {
-            ScoreObject sObj = buffer.scoreObjects.get(i).deepCopy();
+        
+        List<ScoreObject> copies = buffer.scoreObjects.stream()
+                .map(s -> s.deepCopy())
+                .collect(Collectors.toList());
+        
+        for (int i = 0; i < copies.size(); i++) {
+            ScoreObject sObj = copies.get(i);
 
             int newLayerIndex = buffer.layerIndexes.get(i) + layerTranslation;
 
@@ -186,6 +191,8 @@ public final class PasteSoundObjectAction extends AbstractAction implements Cont
 
         BlueUndoManager.setUndoManager("score");
         BlueUndoManager.addEdit(undoEdit);
+        
+        ScoreController.getInstance().setSelectedScoreObjects(copies);
     }
 
     @Override

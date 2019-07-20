@@ -29,7 +29,7 @@ import org.openide.awt.ActionRegistration;
 import org.openide.util.NbBundle.Messages;
 
 @ActionID(
-        category = "Blu",
+        category = "Blue",
         id = "blue.ui.core.score.object.actions.RedoAction"
 )
 @ActionRegistration(

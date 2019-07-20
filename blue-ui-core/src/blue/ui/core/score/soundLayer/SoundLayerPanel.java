@@ -42,6 +42,8 @@ import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
 import javax.swing.border.BevelBorder;
 import javax.swing.border.Border;
+import javax.swing.event.ListDataEvent;
+import javax.swing.event.ListDataListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
@@ -50,7 +52,7 @@ import javax.swing.event.ListSelectionListener;
  * @author steven
  */
 public class SoundLayerPanel extends javax.swing.JPanel implements
-        ListSelectionListener, PropertyChangeListener {
+        ListSelectionListener, ListDataListener, PropertyChangeListener {
 
     private static Border NORMAL_BORDER = BorderFactory
             .createBevelBorder(BevelBorder.RAISED);
@@ -88,8 +90,6 @@ public class SoundLayerPanel extends javax.swing.JPanel implements
         
         this.sLayer = soundLayer;
 
-        sLayer.addPropertyChangeListener(this);
-
         muteToggleButton.setSelected(sLayer.isMuted());
         soloToggleButton.setSelected(sLayer.isSolo());
         nameLabel.setText(sLayer.getName());
@@ -98,10 +98,6 @@ public class SoundLayerPanel extends javax.swing.JPanel implements
         noteProcessorButton.setBackground(size == 0 ? null : Color.GREEN);
 
         paramIdList = sLayer.getAutomationParameters();
-
-        if (paramIdList != null) {
-            paramIdList.addListSelectionListener(this);
-        }
 
         NoteProcessorChain npc = sLayer.getNoteProcessorChain();
 
@@ -132,6 +128,7 @@ public class SoundLayerPanel extends javax.swing.JPanel implements
     public void removeNotify() {
         if (this.paramIdList != null) {
             paramIdList.removeListSelectionListener(this);
+            paramIdList.removeListDataListener(this);
         }
 
         if (this.sLayer != null) {
@@ -144,6 +141,7 @@ public class SoundLayerPanel extends javax.swing.JPanel implements
     public void addNotify() {
         if (this.paramIdList != null) {
             paramIdList.addListSelectionListener(this);
+            paramIdList.addListDataListener(this);
         }
 
         if (this.sLayer != null) {
@@ -390,7 +388,7 @@ public class SoundLayerPanel extends javax.swing.JPanel implements
 
     private void paramColorSelectPropertyChange(
             java.beans.PropertyChangeEvent evt) {// GEN-FIRST:event_paramColorSelectPropertyChange
-        if (sLayer == null || paramIdList == null || updating) {
+        if (sLayer == null || paramIdList == null || updating || !"colorSelectionValue".equals(evt.getPropertyName())) {
             return;
         }
 
@@ -577,6 +575,23 @@ public class SoundLayerPanel extends javax.swing.JPanel implements
     public void valueChanged(ListSelectionEvent e) {
         updateParameterPanel();
     }
+    
+    // ListDataListener
+    
+    @Override
+    public void intervalAdded(ListDataEvent e) {
+        updateParameterPanel();
+    }
+    
+    @Override
+    public void intervalRemoved(ListDataEvent e) {
+        updateParameterPanel();
+    }
+    
+    @Override
+    public void contentsChanged(ListDataEvent lde) {
+        updateParameterPanel();
+    }
 
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
@@ -593,6 +608,7 @@ public class SoundLayerPanel extends javax.swing.JPanel implements
             }
         }
     }
+    
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton automationButton;

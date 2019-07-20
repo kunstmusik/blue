@@ -33,6 +33,8 @@ import blue.ui.core.soundFile.AudioFilePlayerTopComponent;
 import blue.ui.utilities.FileChooserManager;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.function.Consumer;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
@@ -157,8 +159,11 @@ public class RenderToDiskUtility {
             DiskRenderSettings settings = DiskRenderSettings.getInstance();
 
             String command = settings.getCommandLine() + " " + getMessageLevelFlag(
-                    props) + " " + props.diskAdvancedSettings + " -o \"" + fileName + "\"";
-            args = command.split("\\s+");
+                    props) + " " + props.diskAdvancedSettings + " -o"; // \"" + fileName + "\"";
+            ArrayList<String> commandList = new ArrayList<>();
+            commandList.addAll(Arrays.asList(command.split("\\s+")));
+            commandList.add(fileName);
+            args = commandList.toArray(new String[0]);
         }
         return new DiskRenderCommand(args, fileOutput);
     }

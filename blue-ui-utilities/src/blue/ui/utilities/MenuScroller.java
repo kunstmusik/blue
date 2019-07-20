@@ -304,6 +304,11 @@ public class MenuScroller {
 
         this.menu = menu;
         menu.addPopupMenuListener(menuListener);
+
+        SwingUtilities.invokeLater(() -> {
+            menuListener.popupMenuWillBecomeVisible(null);
+            menuListener.popupMenuWillBecomeInvisible(null);
+        });
     }
 
     /**
@@ -482,11 +487,11 @@ public class MenuScroller {
             }
             menu.setPreferredSize(new Dimension(preferredWidth, menu.getPreferredSize().height));
 
-            menu.revalidate();
-            menu.repaint();
-//            JComponent parent = (JComponent) upItem.getParent();
-//            parent.revalidate();
-//            parent.repaint();
+//            menu.revalidate();
+//            menu.repaint();
+            JComponent parent = (JComponent) upItem.getParent();
+            parent.revalidate();
+            parent.repaint();
         }
     }
 

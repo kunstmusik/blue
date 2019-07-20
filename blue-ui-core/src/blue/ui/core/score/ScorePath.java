@@ -20,6 +20,7 @@
 package blue.ui.core.score;
 
 import blue.score.Score;
+import static blue.score.Score.SPACER;
 import blue.score.ScoreObject;
 import blue.score.layers.Layer;
 import blue.score.layers.LayerGroup;
@@ -241,5 +242,21 @@ public class ScorePath {
         }
         
         return -1;
+    }
+    
+    public static int[] getTopBottomForLayer(Layer targetLayer, List<LayerGroup<? extends Layer>> allLayers) {
+        int runningY = 0;
+
+        for (LayerGroup<? extends Layer> layerGroup : allLayers) {
+            for (Layer layer : layerGroup) {
+                if (layer == targetLayer) {
+                    return new int[]{runningY, runningY + layer.getLayerHeight()};
+                }
+                runningY += layer.getLayerHeight();
+            }
+            runningY += SPACER;
+        }
+
+        return null;
     }
 }

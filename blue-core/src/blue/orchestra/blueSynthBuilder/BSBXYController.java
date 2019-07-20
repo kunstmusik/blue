@@ -484,18 +484,19 @@ public class BSBXYController extends AutomatableBSBObject implements
 
     @Override
     public void lineDataChanged(Parameter param) {
+        if (param.isAutomationEnabled()) {
+            double time = ParameterTimeManagerFactory.getInstance().getTime();
+            double val = param.getLine().getValue(time);
 
-        double time = ParameterTimeManagerFactory.getInstance().getTime();
-        double val = param.getLine().getValue(time);
+            String paramName = param.getName();
 
-        String paramName = param.getName();
-
-        if (paramName.endsWith("X")) {
+            if (paramName.endsWith("X")) {
 //            updateXValue(val);
-            xValue.setValue(val);
-        } else if (paramName.endsWith("Y")) {
+                xValue.setValue(val);
+            } else if (paramName.endsWith("Y")) {
 //            updateYValue(val);
-            yValue.setValue(val);
+                yValue.setValue(val);
+            }
         }
     }
 

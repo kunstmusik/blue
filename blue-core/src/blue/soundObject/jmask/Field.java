@@ -115,6 +115,16 @@ public class Field implements ListModel {
     }
 
     public NoteList generateNotes(final double duration, java.util.Random rnd) {
+    
+        Parameter param2 = getParameter(1);
+        if(param2.getGenerator() instanceof Constant) {
+            Constant c = (Constant) param2.getGenerator();
+            if(c.getValue() <= 0.0) {
+                throw new RuntimeException("Error: JMask p2 Constant field must use "
+                        + "value > 0.0.");
+            }
+        }
+        
         NoteList nl = new NoteList();
 
         double xt = 0.0;

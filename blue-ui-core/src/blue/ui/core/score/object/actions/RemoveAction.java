@@ -19,6 +19,7 @@
  */
 package blue.ui.core.score.object.actions;
 
+import blue.ui.core.score.ModeManager;
 import blue.ui.core.score.ScoreController;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -35,14 +36,29 @@ import org.openide.util.NbBundle.Messages;
         displayName = "#CTL_RemoveAction")
 @Messages("CTL_RemoveAction=&Remove ScoreObjects")
 @ActionReferences({
-@ActionReference(path = "blue/score/actions", position = 300, separatorAfter = 305),
-@ActionReference(path = "blue/score/shortcuts", name = "DELETE"),
+    @ActionReference(path = "blue/score/actions", position = 300, separatorAfter = 305)
+    ,
+@ActionReference(path = "blue/score/shortcuts", name = "DELETE")
+    ,
 @ActionReference(path = "blue/score/shortcuts", name = "BACK_SPACE")
 })
 public final class RemoveAction implements ActionListener {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        ScoreController.getInstance().deleteScoreObjects();
+        final ScoreController scoreController = ScoreController.getInstance();
+
+        switch (ModeManager.getInstance().getMode()) {
+            case SCORE:
+                scoreController.deleteScoreObjects();
+                break;
+            case SINGLE_LINE:
+                scoreController.deleteSingleLine();
+                break;
+            case MULTI_LINE:
+                scoreController.deleteMultiLine();
+                break;
+        }
     }
+
 }

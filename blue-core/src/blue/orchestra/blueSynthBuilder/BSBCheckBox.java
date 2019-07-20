@@ -275,7 +275,7 @@ public class BSBCheckBox extends AutomatableBSBObject implements ParameterListen
     public void lineDataChanged(Parameter param) {
         Parameter parameter = parameters.getParameter(this.getObjectName());
 
-        if (parameter != null) {
+        if (parameter != null && param.isAutomationEnabled()) {
             double time = ParameterTimeManagerFactory.getInstance().getTime();
             long val = Math.round(parameter.getLine().getValue(time));
 

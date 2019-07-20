@@ -9,7 +9,6 @@ install:
   - cmd: choco install ant -y -f -i
   - cmd: choco install apache-fop -y -f -i
   - mvn dependency:get -Dartifact=junit:junit:4.8.2 -DrepoUrl=http://repo1.maven.org/maven2/
-  - appveyor DownloadFile http://www.rw-designer.com/rsrc/ReplaceVistaIcon.exe 
   - mkdir C:\xsltproc
   - cd C:\xsltproc
   - ps: Invoke-WebRequest ftp://ftp.zlatkovic.com/libxml/iconv-1.9.2.win32.zip -OutFile iconv.zip
@@ -29,7 +28,7 @@ cache:
   - C:\Users\appveyor\.m2
 
 build_script:
-  - ant -Dnbplatform.default.harness.dir=%cd%\netbeans\harness -Dnbplatform.default.netbeans.dest.dir=%cd%\netbeans -DfopCommand=fop -Dreplacevistaicon.exe=%cd%\ReplaceVistaIcon.exe -DxsltCmd=c:\xsltproc\xsltproc.exe test build-zip
+  - ant -Dnbplatform.default.harness.dir=%cd%\netbeans\harness -Dnbplatform.default.netbeans.dest.dir=%cd%\netbeans -DfopCommand=fop -DxsltCmd=c:\xsltproc\xsltproc.exe test build-zip
  
 
 # Tests

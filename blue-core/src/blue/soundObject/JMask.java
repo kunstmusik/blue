@@ -70,11 +70,12 @@ public class JMask extends AbstractSoundObject {
 
         Random rnd = seedUsed ? new Random(seed) : new Random();
 
-        NoteList nl = temp.generateNotes(this.getSubjectiveDuration(), rnd);
+        NoteList nl;
 
         try {
+            nl = temp.generateNotes(this.getSubjectiveDuration(), rnd);
             ScoreUtilities.applyNoteProcessorChain(nl, this.npc);
-        } catch (NoteProcessorException e) {
+        } catch (Exception e) {
             throw new SoundObjectException(this, e);
         }
 

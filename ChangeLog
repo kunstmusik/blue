@@ -1,9 +1,9 @@
 blue
 version @VERSION@ - @RELEASE_DATE@
-copyright (c) 2001-2017 Steven Yi - all rights reserved
+copyright (c) 2001-2019 Steven Yi - all rights reserved
 
 email: stevenyi@gmail.com
-web: http://blue.kunstmusik.com
+web: https://blue.kunstmusik.com
 
 This program comes with ABSOLUTELY NO WARRANTY is licensed under the GNU Public
 License. This is a free program and you are welcome to redistribute it under
@@ -11,6 +11,116 @@ certain conditions.  Please see the accompanying license.txt file for more
 information.
 
 [CHANGE LOG]
+
+> Notes for 2.7.4 <
+[release 2019.07.19]
+
+UPDATED
+
+* Issue #398: Updated Line Editors within program to use thicker lines and 
+  circles for points
+
+* Issue #397: Using control to shift points within selection in Single-Line mode
+  should only shift points for currently selected line
+
+* Automation: Single-line mode: Ctrl-drag to move selected points up/down was
+  rewritten to add points at boundaries if necessary, also updated to only 
+  operate on the currently selected line
+
+* Issue #406: JMask: throw error when user attempts to use Constant p2 field 
+  with value < 0.0 (prevents infinite loop)
+
+* Issue #417: Use Csound ORC highlighting for "Generate CSD to Screen" and 
+  "Generate Realtime CSD to Screen"
+
+* Issue #431: implemented shortcut 1, 2, and 3 to switch between Score, 
+  Single Line, and Multi-Line modes on the Score timeline
+
+* Multiline Mode: Selection will default to only line data. Hold shift when 
+  releasing mouse button during selection to include ScoreObjects for movment.
+
+* Updated to Netbeans 11 Rich Client Platform
+
+* Issue #441: For automation lines, clean up dead time points (those with same 
+  time values as points surrounding them) for different line operations (e.g.,
+  dragging points, pasting, dragging)
+
+FIX
+
+* BlueSynthBuilder 
+  * Horizontal and Vertical Slider Banks did not properly reconnect properties 
+    from child sliders and slider bank when loading Blue projects from disk 
+	* SliderBanks did not properly listen to individual slider value changes to 
+	  update automation parameters and channel values
+  * BSBDropdown
+    * Issue #383 - Fix problems due to empty string being reloaded from file as
+      null (compilation, editing item)
+    * Fix JavaFX thread exception thrown when item editor dialog was closed 
+      using [x] close button that is part of the window frame
+
+* Fixed install-desktop-starter.sh: 
+  * Generated .desktop file now uses "AudioVideo;Audio" category and script
+  * Script now uses desktop-file-install program to install the .desktop file
+    instead of copying blue.desktop to ~/Desktop location (which did not work
+    on non-English systems)
+
+* Issue #386 - NullPointerException thrown from SubChannelDropdownList 
+
+* Fix ctrl/cmd-wheel-scroll shortcut for adjust layer heights
+
+* Fix "All File" filter to show files that do not have extensions
+
+* Issue #390 - Removed optimization in mixer code generation that removed signal
+  paths that were considered dead when channel had -96 dB and no automations 
+
+* Fix resizing of marquee when zooming (single-line and multi-line score modes)
+
+* AudioLayers: Fixed generation of notes on Windows to use / instead of \
+
+* Issue #406: Fixed movement of timeline when dragging selected objects
+
+* Fix resizing of timeline on movement or resizing of Score Objects, whether by
+  mouse or by ScoreObject Properties window
+
+* Issue #401: Fix setting of default/last directory/file path for open/save
+  file dialogs
+
+* Issue #395: Fix initial showing of popup menu when number of items triggers 
+  scroller buttons to show
+
+* Issue #411: Fixed issue with having Single-Line mode selected and changing 
+  projects causing bad state where score mouse handling no longer functioned 
+  correctly
+
+* Issue #412: Update marquee and selected ScoreObjects around newly pasted data
+  in each Score Mode
+
+* Issue #419: Fixed URL to use HTTPS to match server changes for BlueShare
+
+* Issue #423: Fixed automation for Single Line mode with Audio Layers
+
+* Score: Fix dragging of line points in single-line mode when snap is enabled to
+  prevent snapping beyond previous and next points
+
+* Mixer: Sends were not changing values at runtime nor generating correct signal
+  multiplier amounts
+
+* Issue #439: When pasting a BSB instrument as a Sound SoundObject, fixed 
+  transfer of comments to Sound as well as inadvertent resetting of widget 
+  values 
+
+* Issue #443: Fix location of popup for UDO manager when selected item is 
+  scrolled off screen
+
+* Issue #416: Fixed incorrect insertion/sorting of Channel Strips into Mixer 
+  panel when new instrument was added to the Orchestra arrangement. Also fixed
+  incorrect listener updates when enabling/disabling automation parameters for a 
+  layer or when automation source is removed (i.e., effect removed from mixer).
+
+* Issue #445: Fixed issue where vertical dragging of points in Single-Line mode
+  was selecting/inserting the wrong points when points existed at selection 
+  boundaries
+
 
 > Notes for 2.7.3 <
 [release 2017.12.15]

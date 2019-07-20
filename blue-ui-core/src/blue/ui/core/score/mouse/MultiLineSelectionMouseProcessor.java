@@ -22,10 +22,8 @@ package blue.ui.core.score.mouse;
 import blue.ui.core.score.layers.soundObject.*;
 import blue.components.AlphaMarquee;
 import blue.plugin.ScoreMouseListenerPlugin;
-import static blue.score.Score.SPACER;
 import blue.score.TimeState;
 import blue.score.layers.Layer;
-import blue.score.layers.LayerGroup;
 import blue.score.layers.ScoreObjectLayer;
 import blue.ui.core.render.RealtimeRenderManager;
 import blue.ui.core.score.ModeManager;
@@ -35,9 +33,9 @@ import blue.ui.core.score.ScoreMode;
 import blue.ui.core.score.ScorePath;
 import blue.ui.core.score.layers.LayerGroupPanel;
 import static blue.ui.core.score.mouse.BlueMouseAdapter.scoreTC;
-import blue.ui.utilities.UiUtilities;
 import blue.utility.ScoreUtilities;
 import java.awt.Component;
+import java.awt.KeyboardFocusManager;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
@@ -59,7 +57,16 @@ class MultiLineSelectionMouseProcessor extends BlueMouseAdapter {
     TimeState timeState = null;
 
     MultiLineScoreSelection selection = MultiLineScoreSelection.getInstance();
+    
+    boolean isShiftDown = false;
 
+    public MultiLineSelectionMouseProcessor() {
+        KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(key -> {
+            isShiftDown = key.isShiftDown();
+            return false;
+        });
+    }
+    
     @Override
     public void mousePressed(MouseEvent e) {
 
@@ -78,7 +85,8 @@ class MultiLineSelectionMouseProcessor extends BlueMouseAdapter {
         e.consume();
         RealtimeRenderManager.getInstance().stopAuditioning();
 
-        timeState = scoreTC.getTimeState();
+        ScoreController.getInstance().setSelectedScoreObjects(null);
+        selection.reset();
 
         SoundObjectView sObjView;
 
@@ -87,17 +95,15 @@ class MultiLineSelectionMouseProcessor extends BlueMouseAdapter {
         Layer layer = scorePath.getGlobalLayerForY(e.getY());
 
         if (layer == null || !(layer instanceof ScoreObjectLayer)) {
-            marquee.setVisible(false);
             return;
         }
 
         startLayer = lastLayer = layer;
         allLayers = scorePath.getAllLayers();
 
-        if (UiUtilities.isRightMouseButton(e)) {
-//            showPopup(comp, e);
-        } else if (SwingUtilities.isLeftMouseButton(e)) {
+        if (SwingUtilities.isLeftMouseButton(e)) {
             startX = Math.max(e.getX(), 0);
+            timeState = scoreTC.getTimeState();
 
             double startTime = startX / (double) timeState.getPixelSecond();
             if (timeState.isSnapEnabled()) {
@@ -106,16 +112,9 @@ class MultiLineSelectionMouseProcessor extends BlueMouseAdapter {
                 startX = (int) (startTime * timeState.getPixelSecond());
             }
 
-            startTopBottom = getTopBottomForLayer(layer,
+            startTopBottom = ScorePath.getTopBottomForLayer(layer,
                     scorePath.getScore());
 
-            scoreTC.getMarquee().setStart(new Point(startX, startTopBottom[0]));
-            scoreTC.getMarquee().setVisible(true);
-
-            ScoreController.getInstance().setSelectedScoreObjects(null);
-
-            selection.reset();
-            selection.startSelection(startTime, startTime);
         }
     }
 
@@ -151,10 +150,10 @@ class MultiLineSelectionMouseProcessor extends BlueMouseAdapter {
 //            if (!(layer instanceof ScoreObjectLayer)) {
 //                return;
 //            }
-            int[] topBottom = getTopBottomForLayer(lastLayer,
+            int[] topBottom = ScorePath.getTopBottomForLayer(lastLayer,
                     scorePath.getScore());
 
-            int leftX, rightX, topY, bottomY;
+            int leftX, rightX;
             int startLayerIndex, endLayerIndex;
 
             if (x < startX) {
@@ -164,24 +163,16 @@ class MultiLineSelectionMouseProcessor extends BlueMouseAdapter {
                 leftX = startX;
                 rightX = x;
             }
-            
+
             if (topBottom[0] < startTopBottom[0]) {
-                topY = topBottom[0];
-                bottomY = startTopBottom[1];
                 startLayerIndex = allLayers.indexOf(lastLayer);
                 endLayerIndex = allLayers.indexOf(startLayer);
             } else {
-                topY = startTopBottom[0];
-                bottomY = topBottom[1];
                 startLayerIndex = allLayers.indexOf(startLayer);
                 endLayerIndex = allLayers.indexOf(lastLayer);
             }
-            
-            leftX = Math.max(leftX, 0);
-            topY = Math.max(topY, 0);
 
-            marquee.setStart(new Point(leftX, topY));
-            marquee.setDragPoint(new Point(rightX, bottomY));
+            leftX = Math.max(leftX, 0);
 
             double start = leftX / (double) timeState.getPixelSecond();
             double end = rightX / (double) timeState.getPixelSecond();
@@ -207,48 +198,28 @@ class MultiLineSelectionMouseProcessor extends BlueMouseAdapter {
 
         e.consume();
 
-        ScoreController.getInstance().setSelectedScoreObjects(null);
+        // FIXME: Not sure this is the best place to check for isShiftDown as 
+        // it short circuits calling to marqueeSelectionPerformed, which might
+        // be of use in later non-ScoreObject layers.
+        if (timeState != null && isShiftDown) {
+            ScoreController.getInstance().setSelectedScoreObjects(null);
 
-        if (SwingUtilities.isLeftMouseButton(e)) {
-            Component[] comps = scoreTC.getLayerPanel().getComponents();
+            if (SwingUtilities.isLeftMouseButton(e)) {
+                Component[] comps = scoreTC.getLayerPanel().getComponents();
 
-            for (Component c : comps) {
-                if (c instanceof LayerGroupPanel) {
-                    ((LayerGroupPanel) c).marqueeSelectionPerformed(
-                            scoreTC.getMarquee());
+                for (Component c : comps) {
+                    if (c instanceof LayerGroupPanel) {
+                        ((LayerGroupPanel) c).marqueeSelectionPerformed(
+                                scoreTC.getMarquee());
+                    }
                 }
             }
+            timeState = null;
         }
-        timeState = null;
     }
 
     private boolean isMultiLineMode() {
         return ModeManager.getInstance().getMode() == ScoreMode.MULTI_LINE;
-    }
-
-    private void checkScroll(MouseEvent e) {
-        Point temp = SwingUtilities.convertPoint(e.getComponent(), e.getPoint(),
-                scoreTC.getScorePanel());
-
-        scrollRect.setLocation(temp);
-
-        scoreTC.getScorePanel().scrollRectToVisible(scrollRect);
-    }
-
-    protected int[] getTopBottomForLayer(Layer targetLayer, List<LayerGroup<? extends Layer>> allLayers) {
-        int runningY = 0;
-
-        for (LayerGroup<? extends Layer> layerGroup : allLayers) {
-            for (Layer layer : layerGroup) {
-                if (layer == targetLayer) {
-                    return new int[]{runningY, runningY + layer.getLayerHeight()};
-                }
-                runningY += layer.getLayerHeight();
-            }
-            runningY += SPACER;
-        }
-
-        return null;
     }
 
     @Override

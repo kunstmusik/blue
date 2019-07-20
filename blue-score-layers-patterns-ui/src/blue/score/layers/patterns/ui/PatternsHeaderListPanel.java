@@ -234,6 +234,7 @@ public class PatternsHeaderListPanel extends JPanel implements
             this.layerGroup.addLayerGroupListener(this);
         }
         result.removeLookupListener(this);
+        super.removeNotify();
     }
     
      /* LAYER GROUP LISTENER */

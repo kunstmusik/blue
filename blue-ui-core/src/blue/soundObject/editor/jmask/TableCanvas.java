@@ -23,11 +23,13 @@ import blue.soundObject.jmask.Table;
 import blue.soundObject.jmask.TablePoint;
 import blue.ui.utilities.UiUtilities;
 import blue.utility.NumberUtilities;
+import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
+import java.awt.Stroke;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
@@ -43,28 +45,32 @@ import javax.swing.event.TableModelListener;
  */
 public class TableCanvas extends JComponent {
 
+    private static final Stroke STROKE1 = new BasicStroke(1);
+
+    private static final Stroke STROKE2 = new BasicStroke(2);
+
     private static EditPointsPopup popup = null;
     Table table = null;
     TablePoint selectedPoint = null;
     int leftBoundaryX = -1, rightBoundaryX = -1;
     boolean locked = false;
     TableModelListener lineListener = null;
-    
+
     double duration = 1.0;
 
-    public TableCanvas() {        
+    public TableCanvas() {
         lineListener = (TableModelEvent e) -> {
             repaint();
         };
-        
+
         new TableCanvasMouseListener(this);
     }
 
-    public void setTable(Table table) {        
+    public void setTable(Table table) {
         if (this.table != null) {
             this.table.removeTableModelListener(lineListener);
         }
-        
+
         this.table = table;
 
         if (this.table != null) {
@@ -77,14 +83,14 @@ public class TableCanvas extends JComponent {
     public void setDuration(double duration) {
         this.duration = duration;
     }
-            
-    
+
     @Override
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
 
         Graphics2D g2d = (Graphics2D) g;
-        
+        g2d.setStroke(STROKE2);
+
         RenderingHints hints = new RenderingHints(
                 RenderingHints.KEY_ANTIALIASING,
                 RenderingHints.VALUE_ANTIALIAS_ON);
@@ -139,12 +145,9 @@ public class TableCanvas extends JComponent {
 
         // Rectangle2D xRect = g2d.getFontMetrics().getStringBounds(xText, g2d);
         // Rectangle2D yRect = g2d.getFontMetrics().getStringBounds(yText, g2d);
-
         // double wx = xRect.getWidth();
         // double wy = yRect.getWidth();
-
         // double w = wx > wy ? wx : wy;
-
         // int width = (int)Math.round(w);
         int width = 95;
         // int height = (int)(Math.round(xRect.getHeight() +
@@ -152,7 +155,6 @@ public class TableCanvas extends JComponent {
         int height = 28;
 
         // System.out.println("width: " + width + " height: " + height);
-
         int xLoc = x + 5;
         int yLoc = y + 5;
 
@@ -170,7 +172,7 @@ public class TableCanvas extends JComponent {
 
     @SuppressWarnings("fallthrough")
     private final void drawTable(Graphics g, Table table, boolean drawPoints) {
-        
+
         double min = table.getMin();
         double max = table.getMax();
 
@@ -183,20 +185,20 @@ public class TableCanvas extends JComponent {
             xValues[i] = doubleToScreenX(point.getTime());
             yValues[i] = doubleToScreenY(point.getValue(), min, max);
         }
-        
-        switch(table.getInterpolationType()) {
+
+        switch (table.getInterpolationType()) {
             case Table.OFF:
-                for(int i = 0; i < xValues.length - 1; i++) {
-                    g.drawLine(xValues[i], yValues[i], xValues[i + 1], yValues[i]);   
+                for (int i = 0; i < xValues.length - 1; i++) {
+                    g.drawLine(xValues[i], yValues[i], xValues[i + 1], yValues[i]);
                     g.drawLine(xValues[i + 1], yValues[i], xValues[i + 1], yValues[i + 1]);
                 }
                 break;
             case Table.ON:
-                if(table.getInterpolation() == 0.0) {
+                if (table.getInterpolation() == 0.0) {
                     g.drawPolyline(xValues, yValues, xValues.length);
                     break;
                 }
-                //else let fall through
+            //else let fall through
             default:
                 int tableLen = this.getWidth() - 10;
                 int tempTable[] = new int[tableLen];
@@ -204,21 +206,18 @@ public class TableCanvas extends JComponent {
                 int tableHeight = this.getHeight() - 10;
 
                 double range = max - min;
-                
-                for(int i = 0; i < tableLen; i++) {
+
+                for (int i = 0; i < tableLen; i++) {
                     xvals[i] = i + 5;
-                    double time = i / (double)tableLen;
+                    double time = i / (double) tableLen;
                     double val = table.getValue(time);
                     double percent = (val - min) / range;
-                    int y = (int)(tableHeight - (percent * tableHeight));
+                    int y = (int) (tableHeight - (percent * tableHeight));
                     tempTable[i] = y + 5;
                 }
 
                 g.drawPolyline(xvals, tempTable, tableLen);
         }
-
-            
-        
 
         if (drawPoints) {
             for (int i = 0; i < xValues.length; i++) {
@@ -228,7 +227,16 @@ public class TableCanvas extends JComponent {
     }
 
     private final void paintPoint(Graphics g, int x, int y) {
-        g.fillRect(x - 2, y - 2, 5, 5);
+        Graphics2D g2d = (Graphics2D) g;
+
+        Color c = g.getColor();
+        Stroke s = g2d.getStroke();
+
+        g2d.setStroke(STROKE1);
+        g.setColor(Color.BLACK);
+        g.fillOval(x - 3, y - 3, 7, 7);
+        g.setColor(c);
+        g.drawOval(x - 3, y - 3, 7, 7);
     }
 
     private int doubleToScreenX(double val) {
@@ -290,7 +298,7 @@ public class TableCanvas extends JComponent {
 
     /**
      * Use by the MouseListener to add points
-     * 
+     *
      * @param i
      * @param j
      * @return
@@ -399,11 +407,11 @@ public class TableCanvas extends JComponent {
                 }
             } else {
                 if (SwingUtilities.isLeftMouseButton(e)) {
-                    
-                        selectedPoint = insertGraphPoint(e.getX(), e.getY());
-                        setBoundaryXValues();
+
+                    selectedPoint = insertGraphPoint(e.getX(), e.getY());
+                    setBoundaryXValues();
                     // repaint();
-                   
+
                 } else if (UiUtilities.isRightMouseButton(e)) {
 //                    if (popup == null) {
 //                        popup = new EditPointsPopup();
@@ -449,7 +457,6 @@ public class TableCanvas extends JComponent {
                     y = bottomY;
                 }
 
-
                 double min = table.getMin();
                 double max = table.getMax();
 
@@ -467,10 +474,9 @@ public class TableCanvas extends JComponent {
 //                        first.setLocation(first.getX(), floatYValue);
 //                    }
 //                }
-
                 repaint();
 
-            } 
+            }
         }
 
         @Override
@@ -503,7 +509,7 @@ public class TableCanvas extends JComponent {
     /**
      * Sets if the line is locked so it points can be added or removed; existing
      * points are still editable
-     * 
+     *
      * @return
      */
     public void setLocked(boolean locked) {

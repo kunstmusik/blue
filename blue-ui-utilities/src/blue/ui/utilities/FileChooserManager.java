@@ -22,7 +22,7 @@ public class FileChooserManager {
             = new HashMap<>();
 
 //    private FileChooser fileChooser;
-    private ExtensionFilter allFilter = new ExtensionFilter("All Files", "*.*");
+    private ExtensionFilter allFilter = new ExtensionFilter("All Files", "*.*", "*");
 
     private static FileChooserManager instance = null;
 
@@ -99,31 +99,42 @@ public class FileChooserManager {
             if (temp.directoriesOnly) {
                 DirectoryChooser chooser = new DirectoryChooser();
                 chooser.setTitle(temp.dialogTitle);
+
+                if(temp.currentDirectory != null) {
+                    chooser.setInitialDirectory(temp.currentDirectory);
+                }    
+
                 File f = chooser.showDialog(s);
                 if (f != null) {
                     retVal.add(f);
+                    temp.currentDirectory = f;
                 }
             } else {
                 FileChooser f = new FileChooser();
                 f.setTitle(temp.dialogTitle);
                 f.getExtensionFilters().addAll(temp.filters);
                 f.getExtensionFilters().add(allFilter);
-                if (temp.selectedFile != null) {
-                    f.setInitialFileName(temp.selectedFile.getName());
-                }
+
                 if (temp.currentDirectory != null) {
                     f.setInitialDirectory(temp.currentDirectory);
+                } else if(temp.selectedFile != null){
+                    f.setInitialDirectory(temp.selectedFile.getParentFile());
+                }
+                if (temp.selectedFile != null) {
+                    f.setInitialFileName(temp.selectedFile.getName());
                 }
 
                 if (temp.isMultiSelect) {
                     temp.selectedFile = null;
                     List<File> found = f.showOpenMultipleDialog(s);
                     if (found != null) {
+                        temp.currentDirectory = found.get(0).getParentFile();
                         retVal.addAll(found);
                     }
                 } else {
                     File ret = f.showOpenDialog(s);
                     if (ret != null) {
+                        temp.currentDirectory = ret.getParentFile();
                         retVal.add(ret);
                     }
                 }
@@ -180,15 +191,19 @@ public class FileChooserManager {
             f.setTitle(temp.dialogTitle);
             f.getExtensionFilters().addAll(temp.filters);
 
-            if (temp.selectedFile != null) {
-                f.setInitialFileName(temp.selectedFile.getName());
-            }
             if (temp.currentDirectory != null) {
                 f.setInitialDirectory(temp.currentDirectory);
+            } else if(temp.selectedFile != null) {
+                f.setInitialDirectory(temp.selectedFile.getParentFile());
+            }
+            if (temp.selectedFile != null) {
+                f.setInitialFileName(temp.selectedFile.getName());
             }
 
             File ret = f.showSaveDialog(s);
             if (ret != null) {
+                temp.currentDirectory = null;
+                temp.selectedFile = ret;
                 retVal.set(ret);
             }
 
@@ -214,6 +229,7 @@ public class FileChooserManager {
             DialogInfoSet temp = new DialogInfoSet();
 
             temp.selectedFile = new File(System.getProperty("user.home"));
+            temp.currentDirectory = new File(System.getProperty("user.home"));
 
             dialogInfoSets.put(fileChooserId, temp);
 

@@ -23,6 +23,7 @@ import java.util.Iterator;
 import java.util.Vector;
 
 public class ModeManager {
+
     private static ModeManager instance = null;
 
     private ScoreMode mode = ScoreMode.SCORE;
@@ -72,7 +73,9 @@ public class ModeManager {
         if (listeners == null) {
             listeners = new Vector();
         }
-        listeners.add(listener);
+        if (!listeners.contains(listener)) {
+            listeners.add(listener);
+        }
     }
 
     public void removeModeListener(ModeListener listener) {

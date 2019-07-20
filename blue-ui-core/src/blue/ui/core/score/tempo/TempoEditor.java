@@ -14,6 +14,7 @@ import blue.ui.core.score.ModeManager;
 import blue.ui.utilities.UiUtilities;
 import blue.utility.GUI;
 import blue.utility.NumberUtilities;
+import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
@@ -23,6 +24,7 @@ import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.RenderingHints;
+import java.awt.Stroke;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
@@ -43,26 +45,29 @@ import javax.swing.event.TableModelListener;
  */
 public class TempoEditor extends JComponent implements PropertyChangeListener {
 
+    private static final Stroke STROKE1 = new BasicStroke(1);
+
+    private static final Stroke STROKE2 = new BasicStroke(2);
+
     EditPointsPopup popup;
     TempoMinMaxDialog tempoMinMaxDialog;
-    
+
     TableModelListener lineListener;
     Tempo tempo = null;
     private TimeState timeState;
-    
+
     LinePoint selectedPoint = null;
 
     int leftBoundaryX = -1, rightBoundaryX = -1;
-
 
     public TempoEditor() {
         lineListener = (TableModelEvent e) -> {
             repaint();
         };
 
-        TempoEditorMouseListener tempoEditorMouseListener = 
-                new TempoEditorMouseListener(this);
-        
+        TempoEditorMouseListener tempoEditorMouseListener
+                = new TempoEditorMouseListener(this);
+
         this.addMouseListener(tempoEditorMouseListener);
         this.addMouseMotionListener(tempoEditorMouseListener);
     }
@@ -78,7 +83,7 @@ public class TempoEditor extends JComponent implements PropertyChangeListener {
         this.tempo.addPropertyChangeListener(this);
         this.setTempoVisible(tempo.isVisible());
     }
-    
+
     public void setTimeState(TimeState timeState) {
         this.timeState = timeState;
         //FIXME - setVisible should be called by container class and in context
@@ -104,6 +109,7 @@ public class TempoEditor extends JComponent implements PropertyChangeListener {
         }
 
         Graphics2D g2d = (Graphics2D) g;
+        g2d.setStroke(STROKE2);
 
         RenderingHints hints = new RenderingHints(
                 RenderingHints.KEY_ANTIALIASING,
@@ -116,9 +122,9 @@ public class TempoEditor extends JComponent implements PropertyChangeListener {
 
         Line tempoLine = this.tempo.getLine();
         boolean enabled = this.tempo.isEnabled();
-        
-        if(enabled) {
-            if(tempo.isVisible()) {
+
+        if (enabled) {
+            if (tempo.isVisible()) {
                 g2d.setColor(Color.GREEN);
             } else {
                 g2d.setColor(Color.GREEN.darker().darker());
@@ -143,9 +149,9 @@ public class TempoEditor extends JComponent implements PropertyChangeListener {
             paintPoint(g2d, x, y);
 
             drawPointInformation(g2d, x, y);
-            
+
         }
-        
+
         g2d.setColor(Color.WHITE);
         g2d.drawLine(0, getHeight() - 1, getWidth(), getHeight() - 1);
     }
@@ -159,7 +165,6 @@ public class TempoEditor extends JComponent implements PropertyChangeListener {
         g2d.setColor(Color.white);
 
         // Line currentLine = currentParameter.getLine();
-
         double yVal = selectedPoint.getY();
         double xVal = selectedPoint.getX();
 
@@ -215,15 +220,16 @@ public class TempoEditor extends JComponent implements PropertyChangeListener {
         double min = line.getMin();
         double max = line.getMax();
 
+        int[] xValues = new int[line.size()];
+        int[] yValues = new int[line.size()];
+
         for (int i = 0; i < line.size(); i++) {
             LinePoint point = line.getLinePoint(i);
 
             x = doubleToScreenX(point.getX());
             y = doubleToScreenY(point.getY(), min, max);
-
-            if (drawPoints) {
-                paintPoint(g, x, y);
-            }
+            xValues[i] = x;
+            yValues[i] = y;
 
             if (prevX != -1) {
 
@@ -241,17 +247,34 @@ public class TempoEditor extends JComponent implements PropertyChangeListener {
             g.drawLine(prevX, prevY, getWidth(), prevY);
         }
 
+        if (drawPoints) {
+            for (int i = 0; i < xValues.length; i++) {
+                paintPoint(g, xValues[i], yValues[i]);
+            }
+        }
+
     }
 
     private final void paintPoint(Graphics g, int x, int y) {
-        g.fillRect(x - 2, y - 2, 5, 5);
+        Graphics2D g2d = (Graphics2D) g;
+
+        Color c = g.getColor();
+        Stroke s = g2d.getStroke();
+
+        g2d.setStroke(STROKE1);
+        g.setColor(Color.BLACK);
+        g.fillOval(x - 3, y - 3, 7, 7);
+        g.setColor(c);
+        g.drawOval(x - 3, y - 3, 7, 7);
+
+        g2d.setStroke(s);
     }
 
     private int doubleToScreenX(double val) {
         if (timeState == null) {
             return -1;
         }
-        return (int)Math.round(val * timeState.getPixelSecond());
+        return (int) Math.round(val * timeState.getPixelSecond());
     }
 
     private int doubleToScreenY(double yVal, double min, double max) {
@@ -284,7 +307,7 @@ public class TempoEditor extends JComponent implements PropertyChangeListener {
 
         double percent = adjustedY / range;
 
-        int y = (int)Math.round(height * (1.0f - percent)) + 5;
+        int y = (int) Math.round(height * (1.0f - percent)) + 5;
 
         return y;
     }
@@ -350,7 +373,7 @@ public class TempoEditor extends JComponent implements PropertyChangeListener {
 
     /**
      * Use by the MouseListener to add points
-     * 
+     *
      * @param x
      * @param y
      * @return
@@ -359,7 +382,7 @@ public class TempoEditor extends JComponent implements PropertyChangeListener {
         LinePoint point = new LinePoint();
 
         Line currentLine = tempo.getLine();
-        
+
         double min = currentLine.getMin();
         double max = currentLine.getMax();
 
@@ -428,8 +451,7 @@ public class TempoEditor extends JComponent implements PropertyChangeListener {
 
         return null;
     }
-    
-    
+
     public class TempoEditorMouseListener implements MouseListener, MouseMotionListener {
 
         TempoEditor tempoEditor;
@@ -505,7 +527,7 @@ public class TempoEditor extends JComponent implements PropertyChangeListener {
             if (tempo == null || !tempo.isEnabled() || !tempo.isVisible()) {
                 return;
             }
-            
+
             repaint();
 
         }
@@ -521,19 +543,19 @@ public class TempoEditor extends JComponent implements PropertyChangeListener {
                 int x = e.getX();
                 int y = e.getY();
 
-                if(direction == DragDirection.NOT_SET) {
-                    int magx = Math.abs(x - (int)pressPoint.getX());
-                    int magy = Math.abs(y - (int)pressPoint.getY());
+                if (direction == DragDirection.NOT_SET) {
+                    int magx = Math.abs(x - (int) pressPoint.getX());
+                    int magy = Math.abs(y - (int) pressPoint.getY());
 
-                    direction = (magx > magy) ? DragDirection.LEFT_RIGHT :
-                            DragDirection.UP_DOWN;
+                    direction = (magx > magy) ? DragDirection.LEFT_RIGHT
+                            : DragDirection.UP_DOWN;
                 }
 
-                if(e.isControlDown()) {
-                    if(direction == DragDirection.LEFT_RIGHT) {
-                        y = (int)pressPoint.getY();
+                if (e.isControlDown()) {
+                    if (direction == DragDirection.LEFT_RIGHT) {
+                        y = (int) pressPoint.getY();
                     } else {
-                        x = (int)pressPoint.getX(); 
+                        x = (int) pressPoint.getX();
                     }
                 }
 
@@ -605,13 +627,13 @@ public class TempoEditor extends JComponent implements PropertyChangeListener {
                 repaint();
                 break;
             case "visible":
-                this.setTempoVisible(((Boolean)evt.getNewValue()).booleanValue()); 
+                this.setTempoVisible(((Boolean) evt.getNewValue()).booleanValue());
                 break;
         }
     }
-    
+
     class EditPointsPopup extends JPopupMenu {
-        
+
         Action editPointsAction;
         Action editBoundariesAction;
 
@@ -621,7 +643,7 @@ public class TempoEditor extends JComponent implements PropertyChangeListener {
 
                 @Override
                 public void actionPerformed(ActionEvent e) {
-                    if(tempo != null) {
+                    if (tempo != null) {
                         Component root = SwingUtilities.getRoot(getInvoker());
 
                         LineEditorDialog dialog = LineEditorDialog
@@ -633,25 +655,25 @@ public class TempoEditor extends JComponent implements PropertyChangeListener {
                 }
 
             };
-      
+
             editBoundariesAction = new AbstractAction("Edit Min/Max") {
                 @Override
                 public void actionPerformed(ActionEvent e) {
-                    if(tempo != null) {
-                        if(tempoMinMaxDialog == null) {
+                    if (tempo != null) {
+                        if (tempoMinMaxDialog == null) {
                             Component root = SwingUtilities.getRoot(getInvoker());
-                            tempoMinMaxDialog = new TempoMinMaxDialog((Frame)root, true);
+                            tempoMinMaxDialog = new TempoMinMaxDialog((Frame) root, true);
                             GUI.centerOnScreen(tempoMinMaxDialog);
                         }
                         Line line = tempo.getLine();
                         tempoMinMaxDialog.setValues(line.getMin(), line.getMax());
                         tempoMinMaxDialog.setVisible(true);
-                        
-                        if(tempoMinMaxDialog.getReturnStatus() == TempoMinMaxDialog.RET_OK) {
+
+                        if (tempoMinMaxDialog.getReturnStatus() == TempoMinMaxDialog.RET_OK) {
                             double min = tempoMinMaxDialog.getMin();
                             double max = tempoMinMaxDialog.getMax();
                             boolean truncate = tempoMinMaxDialog.isTruncate();
-                            
+
                             line.setMinMax(min, max, truncate);
                         }
                     }
@@ -662,9 +684,6 @@ public class TempoEditor extends JComponent implements PropertyChangeListener {
             this.add(editBoundariesAction);
         }
 
-      
-
     }
 
 }
- 

@@ -19,12 +19,15 @@
  */
 package blue.ui.core.mixer;
 
+import blue.BlueData;
 import blue.jfx.BlueFX;
 import blue.mixer.*;
 import blue.orchestra.blueSynthBuilder.BSBObjectRegistry;
 import blue.orchestra.editor.blueSynthBuilder.jfx.BSBEditPane;
+import blue.projects.BlueProjectManager;
 import java.awt.Frame;
 import java.lang.ref.WeakReference;
+import java.util.List;
 import java.util.Map;
 import java.util.WeakHashMap;
 import java.util.concurrent.CountDownLatch;
@@ -106,7 +109,8 @@ public class EffectEditorManager {
             }
 
             dialog.getContentPane().add(panel);
-            dialog.setTitle(effect.getName());
+            
+            dialog.setTitle(getChannelNameForEffect(effect) + effect.getName());
 
             dialog.getRootPane().putClientProperty("SeparateWindow", Boolean.TRUE);
 
@@ -123,6 +127,22 @@ public class EffectEditorManager {
             dialog.setVisible(true);
         }
 
+    }
+    
+    private String getChannelNameForEffect(Effect effect) {
+        BlueData data = BlueProjectManager.getInstance().getCurrentProject().getData();
+        
+        Mixer mixer = data.getMixer();
+        
+        List<Channel> channels = mixer.getAllChannels();
+        
+        for(Channel channel: channels) {
+            if(channel.getPreEffects().contains(effect) || 
+                    channel.getPostEffects().contains(effect)) {
+                return String.format("[%s] - ", channel.getName());
+            }
+        }
+        return "";
     }
 
     public void updateEffectInterface(Effect effect) {

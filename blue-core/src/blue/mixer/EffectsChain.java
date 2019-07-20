@@ -188,6 +188,10 @@ public class EffectsChain implements ListModel, PropertyChangeListener {
 
         return sends;
     }
+    
+    public boolean contains(Effect effect) {
+        return effects.contains(effect);
+    }
 
     /* List Model Methods */
     @Override

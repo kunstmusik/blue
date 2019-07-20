@@ -1,9 +1,10 @@
 #/bin/bash
 DIR=`dirname "$(readlink -f "$0")"`
 
-mkdir -p ~/Desktop
-cp ${DIR}/blue.desktop.in ~/Desktop/blue.desktop
-sed -i "s#DESKTOPDIR#${DIR}#g" ~/Desktop/blue.desktop
+cp ${DIR}/blue.desktop.in ${DIR}/blue.desktop
+sed -i "s#DESKTOPDIR#${DIR}#g" ${DIR}/blue.desktop
 
-echo "Created blue.desktop entry in ~/Desktop"
+sudo desktop-file-install --delete-original ${DIR}/blue.desktop 
+
+echo "Installed blue.desktop entry"
 

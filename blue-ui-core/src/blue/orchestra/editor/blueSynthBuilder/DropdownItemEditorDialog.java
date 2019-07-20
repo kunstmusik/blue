@@ -271,7 +271,9 @@ final class DropdownItemsTableModel extends AbstractTableModel {
 
     @Override
     public Class getColumnClass(int c) {
-        return getValueAt(0, c).getClass();
+        Object val = getValueAt(0, c);
+        
+        return (val == null) ? null : val.getClass();
     }
 
     @Override
