@@ -53,7 +53,6 @@ import javax.swing.UIManager;
 import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 import org.netbeans.swing.plaf.LFCustoms;
-import org.netbeans.swing.plaf.util.UIUtils;
 
 
 /** Default system-provided customizer for blue LF
