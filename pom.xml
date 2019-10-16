@@ -58,7 +58,7 @@
     <modules>
         <module>branding</module>
         <!--<module>application</module>-->
-        <!--<module>blue-utilities</module>-->
+        <module>blue-utilities</module>
         <!--<module>blue-ui-utilities</module>-->
         <!--<module>blue-ui-components</module>-->
         <!--<module>blue-plaf</module>-->
