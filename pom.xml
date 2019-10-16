@@ -56,7 +56,7 @@
     </build>
 
     <modules>
-        <!--<module>branding</module>-->
+        <module>branding</module>
         <!--<module>application</module>-->
         <!--<module>blue-utilities</module>-->
         <!--<module>blue-ui-utilities</module>-->
