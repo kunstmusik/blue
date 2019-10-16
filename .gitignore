@@ -35,3 +35,4 @@ jython/release/*.pyc
 nb_jr_remoting.cfg
 */cache.properties
 /netbeans
+*/target/
