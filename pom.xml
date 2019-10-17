@@ -69,7 +69,7 @@
         <module>blue-midi</module>
         <!--<module>csound-manual</module>-->
         <module>blue-core</module>
-        <!--<module>blue-services</module>-->
+        <module>blue-services</module>
         <!--<module>blue-projects</module>-->
         <!--<module>blue-settings</module>-->
         <!--<module>blue-ui-core</module>-->
