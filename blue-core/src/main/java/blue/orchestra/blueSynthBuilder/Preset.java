@@ -132,7 +132,9 @@ public class Preset implements Comparable<Preset> {
 
         for (String key : keys) {
             String val = valuesMap.get(key);
-            retVal.addElement("setting").setAttribute("name", key).setText(val);
+            Element elem = retVal.addElement("setting");
+            elem.setAttribute("name", key);
+            elem.setText(val);
         }
 
         return retVal;

@@ -270,9 +270,9 @@ public class BlueData implements BlueDataObject {
 
         Mixer m = null;
 
-        Attribute versionAttribute = data.getAttribute("version");
+        String versionAttribute = data.getAttribute("version");
         if (versionAttribute != null) {
-            blueData.setVersion(versionAttribute.getValue());
+            blueData.setVersion(versionAttribute);
         }
 
         BlueDataObjectManager bdoManager = Lookup.getDefault().

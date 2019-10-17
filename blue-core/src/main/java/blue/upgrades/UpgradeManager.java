@@ -52,10 +52,10 @@ public class UpgradeManager {
 
     public void performUpgrades(Element element) {
         
-        Attribute versionAttribute = element.getAttribute("version");
+        String versionAttribute = element.getAttribute("version");
         String versionString = "0.0.0";
         if (versionAttribute != null) {
-            versionString = versionAttribute.getValue();
+            versionString = versionAttribute;
         }
         
         ProjectVersion version = ProjectVersion.parseVersion(versionString);
