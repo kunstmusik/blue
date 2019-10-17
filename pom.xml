@@ -72,7 +72,7 @@
         <module>blue-services</module>
         <module>blue-projects</module>
         <module>blue-settings</module>
-        <!--<module>blue-ui-core</module>-->
+        <module>blue-ui-core</module>
         <module>blue-osc</module>
         <module>blue-ui-editor</module>
         <!--<module>blue-score-layers-audio-core</module>-->

@@ -26,7 +26,6 @@ import electric.xml.Document;
 import electric.xml.Element;
 import electric.xml.Elements;
 import electric.xml.ParseException;
-import electric.xml.XMLDecl;
 import java.io.File;
 import java.io.FileOutputStream;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -67,7 +66,7 @@ public class CodeRepositoryManager {
                 }
                 break;
             case "customGroup":
-                tempElem.title = node.getAttribute("name").getValue();
+                tempElem.title = node.getAttribute("name");
                 tempElem.isGroup = true;
                 returnNode.setAllowsChildren(true);
                 if (getLeafNodes) {
@@ -92,7 +91,7 @@ public class CodeRepositoryManager {
         Element root = getElement(node);
 
         Document doc = new Document();
-        doc.addChild(new XMLDecl("1.0", "UTF-8"));
+        //doc.addChild(new XMLDecl("1.0", "UTF-8"));
         doc.setRoot(root);
 
         try {

@@ -73,9 +73,8 @@ public class BlueShareRemoteCaller {
 
         while (categories.hasMoreElements()) {
             temp = categories.next();
-            catId = Integer.parseInt(temp.getAttribute("instrumentCategoryId")
-                    .getValue());
-            name = temp.getAttribute("name").getValue();
+            catId = Integer.parseInt(temp.getAttribute("instrumentCategoryId"));
+            name = temp.getAttribute("name");
             // description = temp.getElement("description").getTextString();
             tempCategories = getSubCategories(temp);
 
@@ -104,8 +103,7 @@ public class BlueShareRemoteCaller {
 
         while (instruments.hasMoreElements()) {
             temp = instruments.next();
-            instrumentId = Integer.parseInt(temp.getAttribute("instrumentId")
-                    .getValue());
+            instrumentId = Integer.parseInt(temp.getAttribute("instrumentId"));
             screenName = temp.getElement("screenName").getTextString();
             name = temp.getElement("name").getTextString();
             type = temp.getElement("type").getTextString();
@@ -145,8 +143,7 @@ public class BlueShareRemoteCaller {
 
         while (instruments.hasMoreElements()) {
             temp = instruments.next();
-            instrumentId = Integer.parseInt(temp.getAttribute("instrumentId")
-                    .getValue());
+            instrumentId = Integer.parseInt(temp.getAttribute("instrumentId"));
             screenName = temp.getElement("screenName").getTextString();
             name = temp.getElement("name").getTextString();
             type = temp.getElement("type").getTextString();
@@ -186,8 +183,7 @@ public class BlueShareRemoteCaller {
 
         while (instruments.hasMoreElements()) {
             temp = instruments.next();
-            instrumentId = Integer.parseInt(temp.getAttribute("instrumentId")
-                    .getValue());
+            instrumentId = Integer.parseInt(temp.getAttribute("instrumentId"));
             screenName = temp.getElement("screenName").getTextString();
             name = temp.getElement("name").getTextString();
             type = temp.getElement("type").getTextString();
@@ -300,9 +296,8 @@ public class BlueShareRemoteCaller {
 
         while (categories.hasMoreElements()) {
             temp = categories.next();
-            catId = Integer.parseInt(temp.getAttribute("effectCategoryId")
-                    .getValue());
-            name = temp.getAttribute("name").getValue();
+            catId = Integer.parseInt(temp.getAttribute("effectCategoryId"));
+            name = temp.getAttribute("name");
             // description = temp.getElement("description").getTextString();
             tempCategories = getEffectSubCategories(temp);
 
@@ -331,8 +326,7 @@ public class BlueShareRemoteCaller {
 
         while (instruments.hasMoreElements()) {
             temp = instruments.next();
-            effectId = Integer.parseInt(temp.getAttribute("effectId")
-                    .getValue());
+            effectId = Integer.parseInt(temp.getAttribute("effectId"));
             screenName = temp.getElement("screenName").getTextString();
             name = temp.getElement("name").getTextString();
 
@@ -371,8 +365,7 @@ public class BlueShareRemoteCaller {
 
         while (instruments.hasMoreElements()) {
             temp = instruments.next();
-            instrumentId = Integer.parseInt(temp.getAttribute("effectId")
-                    .getValue());
+            instrumentId = Integer.parseInt(temp.getAttribute("effectId"));
             screenName = temp.getElement("screenName").getTextString();
             name = temp.getElement("name").getTextString();
 
@@ -411,8 +404,7 @@ public class BlueShareRemoteCaller {
 
         while (instruments.hasMoreElements()) {
             temp = instruments.next();
-            effectId = Integer.parseInt(temp.getAttribute("effectId")
-                    .getValue());
+            effectId = Integer.parseInt(temp.getAttribute("effectId"));
             screenName = temp.getElement("screenName").getTextString();
             name = temp.getElement("name").getTextString();
             description = temp.getElement("description").getTextString();
@@ -508,9 +500,8 @@ public class BlueShareRemoteCaller {
 
         while (categories.hasMoreElements()) {
             temp = categories.next();
-            catId = Integer.parseInt(temp.getAttribute("soundObjectCategoryId")
-                    .getValue());
-            name = temp.getAttribute("name").getValue();
+            catId = Integer.parseInt(temp.getAttribute("soundObjectCategoryId"));
+            name = temp.getAttribute("name");
             // description = temp.getElement("description").getTextString();
             tempCategories = getSoundObjectSubCategories(temp);
 
@@ -539,8 +530,7 @@ public class BlueShareRemoteCaller {
 
         while (soundObjects.hasMoreElements()) {
             temp = soundObjects.next();
-            soundObjectId = Integer.parseInt(temp.getAttribute("soundObjectId")
-                    .getValue());
+            soundObjectId = Integer.parseInt(temp.getAttribute("soundObjectId"));
             screenName = temp.getElement("screenName").getTextString();
             name = temp.getElement("name").getTextString();
             type = temp.getElement("type").getTextString();
@@ -580,8 +570,7 @@ public class BlueShareRemoteCaller {
 
         while (soundObjects.hasMoreElements()) {
             temp = soundObjects.next();
-            soundObjectId = Integer.parseInt(temp.getAttribute("soundObjectId")
-                    .getValue());
+            soundObjectId = Integer.parseInt(temp.getAttribute("soundObjectId"));
             screenName = temp.getElement("screenName").getTextString();
             name = temp.getElement("name").getTextString();
             type = temp.getElement("type").getTextString();
@@ -621,8 +610,7 @@ public class BlueShareRemoteCaller {
 
         while (soundObjects.hasMoreElements()) {
             temp = soundObjects.next();
-            soundObjectId = Integer.parseInt(temp.getAttribute("soundObjectId")
-                    .getValue());
+            soundObjectId = Integer.parseInt(temp.getAttribute("soundObjectId"));
             screenName = temp.getElement("screenName").getTextString();
             name = temp.getElement("name").getTextString();
             type = temp.getElement("type").getTextString();
