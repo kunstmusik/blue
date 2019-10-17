@@ -78,7 +78,7 @@
         <module>blue-score-layers-audio-core</module>
         <module>blue-score-layers-audio-ui</module>
         <module>blue-score-layers-patterns-core</module>
-        <!--<module>blue-clojure</module>-->
+        <module>blue-clojure</module>
         <module>blue-score-layers-patterns-ui</module>
         <module>csnd6</module>
         <module>blue-application</module>
