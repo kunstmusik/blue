@@ -61,8 +61,8 @@
         <module>blue-utilities</module>
         <module>blue-ui-utilities</module>
         <module>blue-ui-components</module>
-        <!--<module>blue-plaf</module>-->
-        <!--<module>blue-plugin</module>-->
+        <module>blue-plaf</module>
+        <module>blue-plugin</module>
         <!--<module>blue-ui-nbutilities</module>-->
         <!--<module>blue-ui-filemanager</module>-->
         <module>blue-jfx</module>
