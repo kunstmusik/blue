@@ -82,7 +82,7 @@
         <!--<module>blue-score-layers-patterns-ui</module>-->
         <module>csnd6</module>
         <module>blue-application</module>
-        <!--<module>cecilia</module>-->
+        <module>cecilia</module>
     </modules>
 
     <properties>
