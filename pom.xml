@@ -74,7 +74,7 @@
         <module>blue-settings</module>
         <!--<module>blue-ui-core</module>-->
         <module>blue-osc</module>
-        <!--<module>blue-ui-editor</module>-->
+        <module>blue-ui-editor</module>
         <!--<module>blue-score-layers-audio-core</module>-->
         <!--<module>blue-score-layers-audio-ui</module>-->
         <!--<module>blue-score-layers-patterns-core</module>-->
