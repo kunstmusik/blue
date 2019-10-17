@@ -67,7 +67,7 @@
         <module>blue-ui-filemanager</module>
         <module>blue-jfx</module>
         <module>blue-midi</module>
-        <!--<module>csound-manual</module>-->
+        <module>csound-manual</module>
         <module>blue-core</module>
         <module>blue-services</module>
         <module>blue-projects</module>
