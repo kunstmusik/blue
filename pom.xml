@@ -63,7 +63,7 @@
         <module>blue-ui-components</module>
         <module>blue-plaf</module>
         <module>blue-plugin</module>
-        <!--<module>blue-ui-nbutilities</module>-->
+        <module>blue-ui-nbutilities</module>
         <!--<module>blue-ui-filemanager</module>-->
         <module>blue-jfx</module>
         <module>blue-midi</module>
