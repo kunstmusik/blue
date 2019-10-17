@@ -81,7 +81,7 @@
         <!--<module>blue-clojure</module>-->
         <!--<module>blue-score-layers-patterns-ui</module>-->
         <module>csnd6</module>
-        <!--<module>blue-application</module>-->
+        <module>blue-application</module>
         <!--<module>cecilia</module>-->
     </modules>
 
