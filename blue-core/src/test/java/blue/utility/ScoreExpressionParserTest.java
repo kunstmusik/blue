@@ -19,8 +19,6 @@
  */
 package blue.utility;
 
-import blue.scripting.PythonProxy;
-import java.io.File;
 import junit.framework.TestCase;
 
 public class ScoreExpressionParserTest extends TestCase {
@@ -28,9 +26,7 @@ public class ScoreExpressionParserTest extends TestCase {
     /*
      * Test method for 'blue.utility.ScoreExpressionParser.eval(String)'
      */
-    public void testEval() {
-        PythonProxy.setLibDir(new File("/Users/stevenyi/work/nbprojects/blue/build/cluster/pythonLib"));
-             
+    public void testEval() {             
         assertEquals(2.0f, ScoreExpressionParser.eval("1 + 1"), .0001);
         assertEquals(2.0f, ScoreExpressionParser.eval("1+1+2-2"), .0001);
         assertEquals(2.0f, ScoreExpressionParser.eval("1+ 1+2 -2"), .0001);

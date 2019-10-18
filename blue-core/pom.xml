@@ -6,7 +6,7 @@
         <artifactId>blue-parent</artifactId>
         <version>1.0-SNAPSHOT</version>
     </parent>
-    <artifactId>blue</artifactId>
+    <artifactId>blue-core</artifactId>
     <packaging>nbm</packaging>
     <build>
         <plugins>
@@ -61,11 +61,6 @@
             <version>7.0</version>
         </dependency>
         <dependency>
-            <groupId>jython</groupId>
-            <artifactId>jython</artifactId>
-            <version>2.1</version>
-        </dependency>
-        <dependency>
             <groupId>org.netbeans.api</groupId>
             <artifactId>org-openide-util-lookup</artifactId>
             <version>RELEASE111</version>
@@ -86,6 +81,13 @@
             <artifactId>blue-jfx</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>org.python</groupId>
+            <artifactId>jython</artifactId>
+            <version>2.5.3</version>
+        </dependency>
+        
+        
         <!-- adding test dependencies-->
         
         <dependency>

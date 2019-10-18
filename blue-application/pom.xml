@@ -42,7 +42,7 @@
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
-            <artifactId>blue</artifactId>
+            <artifactId>blue-core</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
@@ -53,11 +53,6 @@
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>csnd6</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>csound-manual</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>

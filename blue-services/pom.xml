@@ -44,7 +44,7 @@
          </dependency>
          <dependency>
             <groupId>com.kunstmusik</groupId>
-            <artifactId>blue</artifactId>
+            <artifactId>blue-core</artifactId>
             <version>1.0-SNAPSHOT</version>
         </dependency>
         <dependency>

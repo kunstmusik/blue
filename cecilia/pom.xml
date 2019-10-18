@@ -61,7 +61,7 @@
         </dependency>
          <dependency>
             <groupId>${project.groupId}</groupId>
-            <artifactId>blue</artifactId>
+            <artifactId>blue-core</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
