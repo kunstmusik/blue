@@ -27,8 +27,6 @@
                 <artifactId>maven-jar-plugin</artifactId>
                 <configuration>
                     <useDefaultManifestFile>true</useDefaultManifestFile>
-                    <publicPackage>blue</publicPackage>
-                    <publicPackage>blue.*</publicPackage>
                 </configuration>
             </plugin>
         </plugins>
@@ -63,7 +61,7 @@
         <dependency>
             <groupId>org.netbeans.api</groupId>
             <artifactId>org-openide-util-lookup</artifactId>
-            <version>RELEASE111</version>
+            <version>${netbeans.version}</version>
         </dependency>
         <dependency>
             <groupId>org.apache.commons</groupId>
