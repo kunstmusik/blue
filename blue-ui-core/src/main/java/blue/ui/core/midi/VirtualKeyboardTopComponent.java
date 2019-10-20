@@ -19,21 +19,12 @@
  */
 package blue.ui.core.midi;
 
-import java.awt.BorderLayout;
 import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
-import java.io.IOException;
-import javafx.application.Platform;
-import javafx.embed.swing.JFXPanel;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Scene;
 import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import org.netbeans.api.settings.ConvertAsProperties;
 import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
-import org.openide.util.Exceptions;
-import org.openide.util.NbBundle;
+import org.openide.util.NbBundle.Messages;
 import org.openide.windows.TopComponent;
 
 /**
@@ -49,12 +40,18 @@ persistenceType = TopComponent.PERSISTENCE_ALWAYS)
 @ActionReference(path = "Menu/Window" , position = 705 )
 @TopComponent.OpenActionRegistration(displayName = "#CTL_VirtualKeyboardAction",
 preferredID = "VirtualKeyboardTopComponent")
+@Messages({
+    "CTL_VirtualKeyboardAction=Virtual Keyboard",
+"CTL_VirtualKeyboardTopComponent=Virtual Keyboard Window",
+"HINT_VirtualKeyboardTopComponent=This is a VirtualKeyboard window",
+
+})
 public final class VirtualKeyboardTopComponent extends TopComponent {
 
     public VirtualKeyboardTopComponent() {
         initComponents();
-        setName(NbBundle.getMessage(VirtualKeyboardTopComponent.class, "CTL_VirtualKeyboardTopComponent"));
-        setToolTipText(NbBundle.getMessage(VirtualKeyboardTopComponent.class, "HINT_VirtualKeyboardTopComponent"));
+        setName(Bundle.CTL_VirtualKeyboardTopComponent());
+        setToolTipText(Bundle.HINT_VirtualKeyboardTopComponent());
 
 //        JFXPanel panel = new JFXPanel();
 //        this.setLayout(new BorderLayout());
