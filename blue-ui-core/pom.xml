@@ -152,18 +152,7 @@
             <version>3.1</version>
             <type>jar</type>
         </dependency>
-
-        <dependency>
-            <groupId>org.jdesktop</groupId>
-            <artifactId>appframework</artifactId>
-            <version>1.0.3</version>
-        </dependency>
-        <dependency>
-            <groupId>com.kenai.nbpwr</groupId>
-            <artifactId>org-jdesktop-swingx</artifactId>
-            <version>1.6-201002261215</version>
-            <type>nbm</type>
-        </dependency>
+        
         <dependency>
             <groupId>org.netbeans.api</groupId>
             <artifactId>org-netbeans-api-progress</artifactId>
