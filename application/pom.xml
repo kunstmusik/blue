@@ -1146,7 +1146,6 @@
             <groupId>${project.groupId}</groupId>
             <artifactId>blue-branding</artifactId>
             <version>${project.version}</version>
-            <type>nbm-file</type>
         </dependency>
         <!-- NbModuleSuite functional in RELEASE70 or later: -->
         <dependency>
@@ -1167,170 +1166,121 @@
             <groupId>${project.groupId}</groupId>
             <artifactId>blue-jfx</artifactId>
             <version>${project.version}</version>
-            <type>nbm-file</type>
-
         </dependency> 
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>blue-core</artifactId>
             <version>${project.version}</version>
-            <type>nbm-file</type>
-
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>blue-plugin</artifactId>
             <version>${project.version}</version>
-            <type>nbm-file</type>
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>blue-plaf</artifactId>
             <version>${project.version}</version>
-            <type>nbm-file</type>
-
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>blue-utilities</artifactId>
             <version>${project.version}</version>            
-            <type>nbm-file</type>
-
-
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>blue-midi</artifactId>
             <version>${project.version}</version>
-            <type>nbm-file</type>
-
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>blue-osc</artifactId>
             <version>${project.version}</version>
-            <type>nbm-file</type>
-
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>blue-clojure</artifactId>
             <version>${project.version}</version>
-            <type>nbm-file</type>
-
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>blue-projects</artifactId>
             <version>${project.version}</version>            
-            <type>nbm-file</type>
-
-
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>blue-score-layers-audio-core</artifactId>
             <version>${project.version}</version>
-            <type>nbm-file</type>
-
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>blue-score-layers-audio-ui</artifactId>
             <version>${project.version}</version>
-            <type>nbm-file</type>
-
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>blue-score-layers-patterns-core</artifactId>
             <version>${project.version}</version>
-            <type>nbm-file</type>
-
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>blue-score-layers-patterns-ui</artifactId>
             <version>${project.version}</version>
-            <type>nbm-file</type>
-
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>blue-services</artifactId>
             <version>${project.version}</version>
-            <type>nbm-file</type>
-
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>blue-settings</artifactId>
             <version>${project.version}</version>
-            <type>nbm-file</type>
-
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>blue-ui-components</artifactId>
             <version>${project.version}</version>
-            <type>nbm-file</type>
-
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>blue-ui-core</artifactId>
             <version>${project.version}</version>
-            <type>nbm-file</type>
-
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>blue-ui-editor</artifactId>
             <version>${project.version}</version>
-            <type>nbm-file</type>
-
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>blue-ui-filemanager</artifactId>
             <version>${project.version}</version>
-            <type>nbm-file</type>
-
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>blue-ui-nbutilities</artifactId>
             <version>${project.version}</version>
-            <type>nbm-file</type>
-
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>blue-ui-utilities</artifactId>
             <version>${project.version}</version>
-            <type>nbm-file</type>
-
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>cecilia</artifactId>
             <version>${project.version}</version>
-            <type>nbm-file</type>
-
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>csnd6</artifactId>
             <version>${project.version}</version>
-            <type>nbm-file</type>
-
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>csound-manual</artifactId>
             <version>${project.version}</version>
-            <type>nbm-file</type>
-
         </dependency>
         
     </dependencies>

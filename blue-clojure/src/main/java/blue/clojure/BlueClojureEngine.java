@@ -45,8 +45,13 @@ public class BlueClojureEngine implements PropertyChangeListener {
 
         static {
             INSTANCE = new BlueClojureEngine();
+            try {
             BlueProjectManager.getInstance().addPropertyChangeListener(INSTANCE);
             INSTANCE.currentProject = BlueProjectManager.getInstance().getCurrentProject();
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
     }
 

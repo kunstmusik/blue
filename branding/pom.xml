@@ -37,14 +37,17 @@
                     </publicPackages>
                 </configuration>
             </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-jar-plugin</artifactId>
-                <configuration>
-                    <!-- to have the jar plugin pickup the nbm generated manifest -->
-                    <useDefaultManifestFile>true</useDefaultManifestFile>
-                </configuration>
-            </plugin>
+          <plugin>
+              <groupId>org.apache.maven.plugins</groupId>
+              <artifactId>maven-jar-plugin</artifactId>
+              <configuration>
+                  <archive>
+                      <manifestFile>
+                          ${project.build.outputDirectory}/META-INF/MANIFEST.MF
+                      </manifestFile>
+                  </archive>
+              </configuration>
+          </plugin>
       </plugins>
   </build>
 </project>
