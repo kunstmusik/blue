@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<metadata>
+  <groupId>blue.third.party</groupId>
+  <artifactId>com-csound-csnd6</artifactId>
+  <versioning>
+    <release>6.0.0</release>
+    <versions>
+      <version>6.0.0</version>
+    </versions>
+    <lastUpdated>20191023184038</lastUpdated>
+  </versioning>
+</metadata>

@@ -8,6 +8,23 @@
     </parent>
     <artifactId>csnd6</artifactId>
     <packaging>nbm</packaging>
+
+
+    <repositories>
+        <!-- 3rd party libraries installed via mvn deploy-file. e.g.:
+
+        mvn deploy:deploy-file -Durl=file:///$PWD/repo/ -Dfile=release/modules/ext/csnd6.jar -DgroupId=blue.third.party -DartifactId=csnd6 -Dversion=6.0.0 -Dpackaging=jar
+
+        -->
+          <repository>
+            <id>project.local</id>
+            <name>project</name>
+            <url>
+              file://${project.basedir}/repo
+            </url>
+          </repository>
+      </repositories>
+
     <build>
         <plugins>
             <plugin>
@@ -101,16 +118,13 @@
             <groupId>org.netbeans.api</groupId>
             <artifactId>org-openide-io</artifactId>
             <version>${netbeans.version}</version>
-            <type>jar</type>
         </dependency>
         
         <!-- Local dependency-->
         <dependency>
-            <groupId>com.kunstmusik</groupId>
-            <artifactId>csnd6</artifactId>
-            <version>1.0</version>
-            <scope>system</scope>
-            <systemPath>${basedir}/release/modules/ext/csnd6.jar</systemPath>
+            <groupId>blue.third.party</groupId>
+            <artifactId>com-csound-csnd6</artifactId>
+            <version>6.0.0</version>
         </dependency>
         
     </dependencies>
