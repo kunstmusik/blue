@@ -42,48 +42,51 @@ public class LazyPluginFactory {
         return loadPlugins(folder, z, processor, null);
     }
 
-
     public static <T> List<LazyPlugin<T>> loadPlugins(String folder, Class<T> z, Filter filter) {
         return loadPlugins(folder, z, null, filter);
     }
-    
+
     public static <T> List<LazyPlugin<T>> loadPlugins(String folder, Class<T> pluginClass,
             MetaDataProcessor processor, Filter f) {
         List<LazyPlugin<T>> plugins = new ArrayList<>();
+        final FileObject configFile = FileUtil.getConfigFile(
+                folder);
 
-        FileObject files[] = FileUtil.getConfigFile(
-                folder).getChildren();
+        if (configFile != null) {
+            FileObject files[] = configFile.getChildren();
 
-        List<FileObject> orderedFiles = FileUtil.getOrder(
+            List<FileObject> orderedFiles = FileUtil.getOrder(
                     Arrays.asList(files), true);
 
-        for (FileObject fObj : orderedFiles) {
+            for (FileObject fObj : orderedFiles) {
 
-            if(fObj.isFolder()) {
-                continue;
+                if (fObj.isFolder()) {
+                    continue;
+                }
+
+                if (f != null && !f.accept(fObj)) {
+                    continue;
+                }
+
+                LazyPlugin<T> plugin = new LazyPlugin<>(fObj, pluginClass);
+
+                if (processor != null) {
+                    processor.process(fObj, plugin);
+                }
+
+                plugins.add(plugin);
             }
-
-            if(f != null && !f.accept(fObj)) {
-                continue;
-            }
-            
-            LazyPlugin<T> plugin = new LazyPlugin<>(fObj, pluginClass);
-
-            if (processor != null) {
-                processor.process(fObj, plugin);
-            }
-
-            plugins.add(plugin);
         }
-
         return plugins;
     }
 
     public static interface Filter {
+
         public boolean accept(FileObject fObj);
     }
-    
+
     public static interface MetaDataProcessor {
+
         public void process(FileObject fObj, LazyPlugin plugin);
     }
 }
