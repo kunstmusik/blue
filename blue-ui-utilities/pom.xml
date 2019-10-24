@@ -45,7 +45,7 @@
         <dependency>
             <groupId>org.netbeans.api</groupId>
             <artifactId>org-netbeans-libs-junit4</artifactId>
-            <version>RELEASE111</version>
+            <version>${netbeans.version}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
