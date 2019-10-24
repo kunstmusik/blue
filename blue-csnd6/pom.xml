@@ -6,14 +6,14 @@
         <artifactId>blue-parent</artifactId>
         <version>1.0-SNAPSHOT</version>
     </parent>
-    <artifactId>csnd6</artifactId>
+    <artifactId>blue-csnd6</artifactId>
     <packaging>nbm</packaging>
 
 
     <repositories>
         <!-- 3rd party libraries installed via mvn deploy-file. e.g.:
 
-        mvn deploy:deploy-file -Durl=file:///$PWD/repo/ -Dfile=release/modules/ext/csnd6.jar -DgroupId=blue.third.party -DartifactId=csnd6 -Dversion=6.0.0 -Dpackaging=jar
+        mvn deploy:deploy-file -Durl=file:///$PWD/repo/ -Dfile=csnd6.jar -DgroupId=blue.third.party -DartifactId=com-csound-csnd6 -Dversion=6.0.0 -Dpackaging=jar
 
         -->
           <repository>
@@ -30,17 +30,11 @@
             <plugin>
                 <groupId>org.apache.netbeans.utilities</groupId>
                 <artifactId>nbm-maven-plugin</artifactId>
-                <configuration>
+<!--                <configuration>
                     <publicPackages>
                         <publicPackage>csnd6</publicPackage>
                     </publicPackages>
-                    <archive>
-                        <manifest>
-                            <addClasspath>true</addClasspath>
-                            <classpathPrefix>release/modules/ext</classpathPrefix>
-                        </manifest>
-                    </archive>
-                </configuration>
+                </configuration>-->
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -131,4 +125,5 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
+    <name>blue-csnd6</name>
 </project>

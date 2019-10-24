@@ -13,14 +13,6 @@
             <plugin>
                 <groupId>org.apache.netbeans.utilities</groupId>
                 <artifactId>nbm-maven-plugin</artifactId>
-                <configuration>
-                    <archive>
-                        <manifest>
-                            <addClasspath>true</addClasspath>
-                            <classpathPrefix>release/modules/ext</classpathPrefix>
-                        </manifest>
-                    </archive>
-                </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -72,10 +64,9 @@
             <version>0.3.11</version>
         </dependency>
         <dependency>
-            <groupId>exml</groupId>
-            <artifactId>exml</artifactId>
-            <version>7.0</version>
-            <type>jar</type>
+            <groupId>com.kunstmusik</groupId>
+            <artifactId>blue-ext-exml</artifactId>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>org.netbeans.api</groupId>

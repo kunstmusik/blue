@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package csnd6;
+package blue.csnd6;
 
 import blue.csnd6.render.API6Utilities;
 import org.openide.modules.ModuleInstall;

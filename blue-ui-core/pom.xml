@@ -138,10 +138,9 @@
             <version>0.3.11</version>
         </dependency>
         <dependency>
-            <groupId>exml</groupId>
-            <artifactId>exml</artifactId>
-            <version>7.0</version>
-            <type>jar</type>
+            <groupId>com.kunstmusik</groupId>
+            <artifactId>blue-ext-exml</artifactId>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>org.python</groupId>

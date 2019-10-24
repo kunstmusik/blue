@@ -44,6 +44,7 @@
 
     <modules>
         <module>branding</module>
+        <module>blue-ext-exml</module>
         <module>blue-utilities</module>
         <module>blue-ui-utilities</module>
         <module>blue-ui-components</module>
@@ -66,10 +67,10 @@
         <module>blue-score-layers-patterns-core</module>
         <module>blue-score-layers-patterns-ui</module>        
         <module>blue-clojure</module>
-        <module>csnd6</module>
         <module>blue-application</module>
         <module>cecilia</module>
-        <module>application</module>        
+        <module>application</module>
+        <module>blue-csnd6</module>
     </modules>
 
     <properties>

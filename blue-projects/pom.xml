@@ -105,9 +105,9 @@
             <version>${netbeans.version}</version>
         </dependency>
         <dependency>
-            <groupId>exml</groupId>
-            <artifactId>exml</artifactId>
-            <version>7.0</version>
+            <groupId>com.kunstmusik</groupId>
+            <artifactId>blue-ext-exml</artifactId>
+            <version>${project.version}</version>
         </dependency>
     </dependencies>
     <properties>

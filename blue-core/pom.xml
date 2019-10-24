@@ -55,11 +55,10 @@
             <artifactId>exp4j</artifactId>
             <version>0.3.11</version>
         </dependency>
-        <!-- https://mvnrepository.com/artifact/exml/exml -->
         <dependency>
-            <groupId>exml</groupId>
-            <artifactId>exml</artifactId>
-            <version>7.0</version>
+            <groupId>com.kunstmusik</groupId>
+            <artifactId>blue-ext-exml</artifactId>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>org.netbeans.api</groupId>
@@ -75,11 +74,6 @@
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>blue-utilities</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>blue-jfx</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>

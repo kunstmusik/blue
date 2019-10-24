@@ -1147,6 +1147,11 @@
             <artifactId>blue-branding</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>blue-application</artifactId>
+            <version>${project.version}</version>
+        </dependency>
         <!-- NbModuleSuite functional in RELEASE70 or later: -->
         <dependency>
             <groupId>org.netbeans.api</groupId>
@@ -1274,7 +1279,7 @@
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
-            <artifactId>csnd6</artifactId>
+            <artifactId>blue-csnd6</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
@@ -1319,7 +1324,7 @@
                                 <id>extra</id>
                                 <goals>
                                     <goal>autoupdate</goal>
-                                    <goal>webstart-app</goal>
+                                    <!--<goal>webstart-app</goal>-->
                                     <goal>build-installers</goal>
                                 </goals>
                             </execution>

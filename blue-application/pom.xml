@@ -55,7 +55,7 @@
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
-            <artifactId>csnd6</artifactId>
+            <artifactId>blue-csnd6</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>

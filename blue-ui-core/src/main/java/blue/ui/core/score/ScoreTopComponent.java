@@ -152,10 +152,8 @@ public final class ScoreTopComponent extends TopComponent
 
         associateLookup(new AbstractLookup(content));
 
-        setName(NbBundle.getMessage(ScoreTopComponent.class,
-                "CTL_ScoreTopComponent"));
-        setToolTipText(NbBundle.getMessage(ScoreTopComponent.class,
-                "HINT_ScoreTopComponent"));
+        setName(Bundle.CTL_ScoreTopComponent());
+        setToolTipText(Bundle.HINT_ScoreTopComponent());
 
         init();
 
