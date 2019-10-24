@@ -8,7 +8,7 @@ platform: x64
 install:
   - cmd: choco install ant -y -f -i
   - cmd: choco install apache-fop -y -f -i
-  - mvn dependency:get -Dartifact=junit:junit:4.8.2 -DrepoUrl=http://repo1.maven.org/maven2/
+  #- mvn dependency:get -Dartifact=junit:junit:4.8.2 -DrepoUrl=http://repo1.maven.org/maven2/
   - mkdir C:\xsltproc
   - cd C:\xsltproc
   - ps: Invoke-WebRequest ftp://ftp.zlatkovic.com/libxml/iconv-1.9.2.win32.zip -OutFile iconv.zip
@@ -28,8 +28,10 @@ cache:
   - C:\Users\appveyor\.m2
 
 build_script:
-  - ant -Dnbplatform.default.harness.dir=%cd%\netbeans\harness -Dnbplatform.default.netbeans.dest.dir=%cd%\netbeans -DfopCommand=fop -DxsltCmd=c:\xsltproc\xsltproc.exe test build-zip
- 
+  #- ant -Dnbplatform.default.harness.dir=%cd%\netbeans\harness -Dnbplatform.default.netbeans.dest.dir=%cd%\netbeans -DfopCommand=fop -DxsltCmd=c:\xsltproc\xsltproc.exe test build-zip
+  - mvn install
+  - cd application
+  - mvn nbm:standalone-zip
 
 # Tests
 
@@ -37,7 +39,7 @@ build_script:
 #  - ant test 
 
 artifacts:
-  - path: dist\blue*.zip
+  - path: application\target\blue*.zip
     name: Blue Zip 
     type: zip
 
