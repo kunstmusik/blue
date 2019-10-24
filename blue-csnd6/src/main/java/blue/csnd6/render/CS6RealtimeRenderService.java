@@ -68,8 +68,8 @@ public class CS6RealtimeRenderService implements RealtimeRenderService, PlayMode
     private Csound csound;
 
     public CS6RealtimeRenderService() {
-        csnd6.csoundInitialize(csnd6.CSOUNDINIT_NO_ATEXIT
-                | csnd6.CSOUNDINIT_NO_SIGNAL_HANDLER);
+//        csnd6.csoundInitialize(csnd6.CSOUNDINIT_NO_ATEXIT
+//                | csnd6.CSOUNDINIT_NO_SIGNAL_HANDLER);
     }
 
     @Override

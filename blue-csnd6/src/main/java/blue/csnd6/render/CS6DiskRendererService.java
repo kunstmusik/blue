@@ -40,8 +40,7 @@ public class CS6DiskRendererService implements DiskRenderService {
     BlueCallbackWrapper blueCallbackWrapper; 
 
     public CS6DiskRendererService() {
-        csnd6.csoundInitialize(csnd6.CSOUNDINIT_NO_ATEXIT | 
-                csnd6.CSOUNDINIT_NO_SIGNAL_HANDLER);
+       
     }
 
     @Override
