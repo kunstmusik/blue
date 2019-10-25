@@ -61,25 +61,25 @@
             <version>${project.version}</version>
         </dependency>
         <dependency>
+            <groupId>com.kunstmusik</groupId>
+            <artifactId>blue-ext-jython</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.kunstmusik</groupId>
+            <artifactId>blue-ext-commons-lang3</artifactId>
+            <version>${project.version}</version>
+        </dependency>        
+
+        <dependency>
             <groupId>org.netbeans.api</groupId>
             <artifactId>org-openide-util-lookup</artifactId>
             <version>${netbeans.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-lang3</artifactId>
-            <version>3.1</version>
-            <type>jar</type>
-        </dependency>
-        <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>blue-utilities</artifactId>
             <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.python</groupId>
-            <artifactId>jython</artifactId>
-            <version>2.5.3</version>
         </dependency>
         
         

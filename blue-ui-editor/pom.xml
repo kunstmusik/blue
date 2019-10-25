@@ -50,10 +50,10 @@
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.netbeans.external</groupId>
-            <artifactId>org-apache-commons-lang</artifactId>
-            <version>${netbeans.version}</version>
-        </dependency>
+            <groupId>com.kunstmusik</groupId>
+            <artifactId>blue-ext-commons-lang3</artifactId>
+            <version>${project.version}</version>
+        </dependency>    
         <dependency>
             <groupId>org.netbeans.api</groupId>
             <artifactId>org-netbeans-api-templates</artifactId>
@@ -150,12 +150,6 @@
             <groupId>org.antlr</groupId>
             <artifactId>antlr-runtime</artifactId>
             <version>3.4</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-lang3</artifactId>
-            <version>3.1</version>
-            <type>jar</type>
         </dependency>
     </dependencies>
     <properties>

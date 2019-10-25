@@ -32,11 +32,11 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
                 <configuration>
-                  <archive>
-                    <manifestFile>
-                      ${project.build.outputDirectory}/META-INF/MANIFEST.MF
-                    </manifestFile>
-                  </archive>
+                    <archive>
+                        <manifestFile>
+                            ${project.build.outputDirectory}/META-INF/MANIFEST.MF
+                        </manifestFile>
+                    </archive>
                 </configuration>
             </plugin>
         </plugins>
@@ -143,16 +143,15 @@
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.python</groupId>
-            <artifactId>jython</artifactId>
-            <version>2.5.3</version>
+            <groupId>com.kunstmusik</groupId>
+            <artifactId>blue-ext-jython</artifactId>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-lang3</artifactId>
-            <version>3.1</version>
-            <type>jar</type>
-        </dependency>
+            <groupId>com.kunstmusik</groupId>
+            <artifactId>blue-ext-commons-lang3</artifactId>
+            <version>${project.version}</version>
+        </dependency>    
         
         <dependency>
             <groupId>org.netbeans.api</groupId>

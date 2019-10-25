@@ -1,5 +1,0 @@
-Manifest-Version: 1.0
-OpenIDE-Module: jython
-OpenIDE-Module-Localizing-Bundle: jython/Bundle.properties
-OpenIDE-Module-Specification-Version: 1.0
-
