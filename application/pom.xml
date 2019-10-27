@@ -8,10 +8,10 @@
         <version>2.8.0-SNAPSHOT</version>
     </parent>
 
-    <artifactId>blue-app</artifactId>
+    <artifactId>blue</artifactId>
     <packaging>nbm-application</packaging>
 
-    <name>blue-app</name>
+    <name>blue</name>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -1295,6 +1295,9 @@
             <plugin>
                 <groupId>org.apache.netbeans.utilities</groupId>
                 <artifactId>nbm-maven-plugin</artifactId>
+                <configuration>
+                  <binDirectory>src/binaries</binDirectory>
+                </configuration>
             </plugin>
             <!-- Permits NbModuleSuite to be run in integration-test phase: -->
             <plugin>
@@ -1325,7 +1328,7 @@
                                 <goals>
                                     <goal>autoupdate</goal>
                                     <!--<goal>webstart-app</goal>-->
-                                    <goal>build-installers</goal>
+                                    <!--<goal>build-installers</goal>-->
                                 </goals>
                             </execution>
                         </executions>

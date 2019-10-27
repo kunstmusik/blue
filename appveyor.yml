@@ -30,8 +30,6 @@ cache:
 build_script:
   #- ant -Dnbplatform.default.harness.dir=%cd%\netbeans\harness -Dnbplatform.default.netbeans.dest.dir=%cd%\netbeans -DfopCommand=fop -DxsltCmd=c:\xsltproc\xsltproc.exe test build-zip
   - mvn install
-  - cd application
-  - mvn nbm:standalone-zip
 
 # Tests
 
