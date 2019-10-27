@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.kunstmusik</groupId>
@@ -49,11 +50,11 @@
                         <target>1.8</target>
                     </configuration>
                 </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-jar-plugin</artifactId>
-                <version>2.4</version>
-            </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-jar-plugin</artifactId>
+                    <version>2.4</version>
+                </plugin>
             </plugins>
         </pluginManagement>
     </build>
@@ -83,7 +84,7 @@
         <module>blue-score-layers-audio-core</module>
         <module>blue-score-layers-audio-ui</module>
         <module>blue-score-layers-patterns-core</module>
-        <module>blue-score-layers-patterns-ui</module>        
+        <module>blue-score-layers-patterns-ui</module>
         <module>blue-clojure</module>
         <module>blue-application</module>
         <module>cecilia</module>
