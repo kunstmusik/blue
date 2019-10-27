@@ -37,6 +37,9 @@ nb_jr_remoting.cfg
 /netbeans
 */target/
 
+# Maven versions backup files
+*.versionsBackup
+
 # Ignore IDEA project files
 *.iml
 .idea
