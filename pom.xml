@@ -22,6 +22,22 @@
                         <cluster>${brandingToken}</cluster>
                         <useOSGiDependencies>false</useOSGiDependencies>
                     </configuration>
+                    <executions>
+                        <execution>
+                            <id>default-cluster-app</id>
+                            <goals>
+                                <goal>cluster-app</goal>
+                            </goals>
+                            <phase>none</phase>
+                        </execution>
+                        <execution>
+                            <id>default-standalone-zip</id>
+                            <goals>
+                                <goal>standalone-zip</goal>
+                            </goals>
+                            <phase>none</phase>
+                        </execution>
+                    </executions>
                 </plugin>
                 <plugin>
                     <!-- NetBeans 6.9+ requires JDK 6, starting NetBeans 7.4 source 1.7 is required -->

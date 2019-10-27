@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>com.kunstmusik</groupId>
@@ -18,6 +19,12 @@
                         <publicPackage>csound.manual</publicPackage>
                         <publicPackage>csound.manual.*</publicPackage>
                     </publicPackages>
+                    <nbmResources>
+                        <nbmResource>
+                            <directory>src/main/csoundManual</directory>
+                            <targetPath>csoundManual</targetPath>
+                        </nbmResource>
+                    </nbmResources>
                 </configuration>
             </plugin>
             <plugin>
@@ -31,8 +38,38 @@
                     </archive>
                 </configuration>
             </plugin>
+
         </plugins>
     </build>
+
+    <profiles>
+        <profile>
+            <id>generate-manual</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <artifactId>maven-antrun-plugin</artifactId>
+                        <version>1.8</version>
+                        <executions>
+                            <execution>
+                                <id>import-csound-manual</id>
+                                <phase>generate-resources</phase>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                                <configuration>
+                                    <target>
+                                        <ant antfile="build.xml" target="copy-csound-manual"/>
+                                        <ant antfile="build.xml" target="generate-opcodes-xml"/>
+                                    </target>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
     <dependencies>
         <dependency>
             <groupId>org.netbeans.api</groupId>

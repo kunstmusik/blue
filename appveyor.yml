@@ -20,6 +20,9 @@ install:
   - ps: Invoke-WebRequest ftp://ftp.zlatkovic.com/libxml/zlib-1.2.5.win32.zip -OutFile zlib.zip
   - 7z e zlib.zip zlib1.dll -r
   - rm *.zip
+  - cd C:\
+  - ps: Invoke-WebRequest https://github.com/csound/csound/releases/download/6.13.0/Csound6.13.0_manual_html.zip -OutFile manual.zip
+  - 7z x manual.zip 
   - set PATH=%PATH%;%CD%
   - cd %APPVEYOR_BUILD_FOLDER%
 
@@ -29,7 +32,7 @@ cache:
 
 build_script:
   #- ant -Dnbplatform.default.harness.dir=%cd%\netbeans\harness -Dnbplatform.default.netbeans.dest.dir=%cd%\netbeans -DfopCommand=fop -DxsltCmd=c:\xsltproc\xsltproc.exe test build-zip
-  - mvn install
+  - mvn -P generate-manual -DCS_MANUAL_DIR=file://c:/ install
 
 # Tests
 

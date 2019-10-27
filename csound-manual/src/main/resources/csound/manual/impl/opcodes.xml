@@ -391,6 +391,26 @@
         <signature>iys[] 	bpf	 ixs[], ix1, iy1, ix2, ..., ixn, iyn</signature>
       </opcode>
       <opcode>
+        <name>bpf</name>
+        <signature>ky 	bpf	 kx, kxs[], kys[]</signature>
+      </opcode>
+      <opcode>
+        <name>bpf</name>
+        <signature>iy 	bpf	 ix, ixs[], iys[]</signature>
+      </opcode>
+      <opcode>
+        <name>bpf</name>
+        <signature>ay 	bpf	 ax, kx1, ky1, kx2, ..., kxn, kyn</signature>
+      </opcode>
+      <opcode>
+        <name>bpf</name>
+        <signature>ay 	bpf	 ax, kxs[], kys[]</signature>
+      </opcode>
+      <opcode>
+        <name>bpf</name>
+        <signature>ky, kw 	bpf	 kx, kxs[], kys[], kws[]</signature>
+      </opcode>
+      <opcode>
         <name>bpfcos</name>
         <signature>ky 	bpfcos	 kx, kx1, ky1, kx2, ..., kxn, kyn</signature>
       </opcode>
@@ -1232,11 +1252,12 @@
       </opcode>
       <opcode>
         <name>fluidControl</name>
-        <signature>fluidControl	 ienginenum, kstatus, kchannel, kdata1, kdata2</signature>
+        <signature>fluidControl	 ienginenum, kstatus, kchannel, \
+    kdata1, kdata2 [,imsgs]</signature>
       </opcode>
       <opcode>
         <name>fluidEngine</name>
-        <signature>ienginenum 	fluidEngine	 [iReverbEnabled] [, iChorusEnabled] [,iNumChannels] [, iPolyphony] </signature>
+        <signature>ienginenum 	fluidEngine	 [iChorusEnabled] [, iRevervEnabled] [, iNumChannels] [, iPolyphony] </signature>
       </opcode>
       <opcode>
         <name>fluidInfo</name>
@@ -3830,6 +3851,10 @@
       <opcode>
         <name>metro</name>
         <signature>ktrig  	metro	  kfreq [, initphase]</signature>
+      </opcode>
+      <opcode>
+        <name>metro2</name>
+        <signature>ktrig  	metro2	  kfreq, kswing [, iamp, initphase]</signature>
       </opcode>
       <opcode>
         <name>midifilestatus</name>
@@ -7102,7 +7127,7 @@
     </opcode>
     <opcode>
       <name>strecv</name>
-      <signature>asig 	strecv	 Sipaddr, iport</signature>
+      <signature>asig[,kstate] 	strecv	 Sipaddr, iport</signature>
     </opcode>
     <opcode>
       <name>socksend</name>
