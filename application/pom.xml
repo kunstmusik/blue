@@ -64,6 +64,11 @@
                                   <filter token="RELEASE_DATE" value="${blueReleaseDate}"/>
                                 </filterset>
                               </copy>
+
+                              <copy todir="target/blue/examples" overwrite="true"> 
+                                <fileset dir="../examples"/>
+                              </copy>
+
                             </target>
                         </configuration>
                     </execution>
