@@ -60,7 +60,9 @@
                                 <configuration>
                                     <target>
                                         <ant antfile="build.xml" target="copy-csound-manual"/>
-                                        <ant antfile="build.xml" target="generate-opcodes-xml"/>
+                                        <!--Commenting out as a generated version is usually in the repo,-->
+                                        <!--will need to be careful to keep it up to date.-->
+                                        <!--<ant antfile="build.xml" target="generate-opcodes-xml"/>-->
                                     </target>
                                 </configuration>
                             </execution>
