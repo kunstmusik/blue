@@ -69,6 +69,9 @@
                                 <fileset dir="../examples"/>
                               </copy>
 
+                              <copy file="../imageSrc/blueIcon.png" todir="target/blue/bin"/>
+                              <copy file="../blue.desktop.in" todir="target/blue/bin"/>
+                              <copy file="../install_desktop_starter.sh" todir="target/blue/bin"/>
                             </target>
                         </configuration>
                     </execution>
