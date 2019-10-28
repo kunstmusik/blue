@@ -93,6 +93,10 @@
                         <phase>package</phase>
                     </execution>
                 </executions>
+                <configuration>
+                    <installerOsSolaris>false</installerOsSolaris>
+                    <installerLicenseFile>LICENSE.txt</installerLicenseFile>
+                </configuration>
             </plugin>
             <!-- Permits NbModuleSuite to be run in integration-test phase: -->
             <plugin>
