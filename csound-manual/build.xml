@@ -24,7 +24,7 @@
     </target>
 
     <target name="generate-opcodes-xml" description="Generate opcodes.xml">
-        <exec executable="python">
+        <exec executable="python3">
             <arg value="quickrefBlue.py"/>
             <arg value="${CS_MANUAL_DIR}"/>
             <arg value="src/main/resources/csound/manual/impl/opcodes.xml"/>
