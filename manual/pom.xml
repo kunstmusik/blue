@@ -33,29 +33,17 @@
                 <executions>
                     <execution>
                         <id>default</id>
-                        <!-- Generate docbook as part of the generate-sources phase. -->
                         <phase>generate-sources</phase>
 
-                        <!-- Generate PDF and XHTML5 output. -->
                         <goals>
                             <goal>generate-html</goal>
                             <!--<goal>generate-pdf</goal>-->
                         </goals>
                         <configuration>
-                            <!-- I put my source in src/main/docbook. -->
                             <sourceDirectory>src/main/docbook</sourceDirectory>
                             <htmlCustomization>src/main/stylesheets/customXHTMLchunk.xsl</htmlCustomization>
-                            <!-- A comma separated list of top level docbook documents - book, article, and refpage -->
                             <includes>index.xml</includes>
-<!--                            <xincludeSupported>true</xincludeSupported>-->
-                            <!--              <chapterAutolabel>true</chapterAutolabel>-->
-                            <!--              <sectionAutolabel>true</sectionAutolabel>-->
-                            <!--              <sectionAutolabelMaxDepth>5</sectionAutolabelMaxDepth>-->
-                            <!--              <sectionLabelIncludesComponentLabel>true</sectionLabelIncludesComponentLabel>-->
 
-                            <!-- By default, docbkx doesn't know how to include any other resources in its output. In order to get my sd.css
-                                 file into the output, I use a preprocess section (which is a bunch of ant commands) to copy everything in
-                                 src/main/docbook-resources/xhtml5 into the xhtml5 generated output directory target/docbkx/xhtml5/. -->
                             <preProcess>
                                 <copy todir="${project.build.directory}/docbkx/html/images/">
                                     <fileset dir="src/main/docbook/images/"/>
@@ -67,6 +55,7 @@
                                          value="${project.version}"/>
 
                             </preProcess>
+                           <chunkedOutput>true</chunkedOutput>
                         </configuration>
                     </execution>
                 </executions>

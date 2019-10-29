@@ -69,6 +69,10 @@
                                 <fileset dir="../examples"/>
                               </copy>
 
+                              <copy todir="target/blue/manual" overwrite="true"> 
+                                <fileset dir="../manual/target/docbkx"/>
+                              </copy>
+
                               <copy file="../imageSrc/blueIcon.png" todir="target/blue/bin"/>
                               <copy file="../blue.desktop.in" todir="target/blue/bin"/>
                               <copy file="../install_desktop_starter.sh" todir="target/blue/bin"/>
