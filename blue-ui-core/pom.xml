@@ -270,6 +270,11 @@
             <type>jar</type>
         </dependency>
         <dependency>
+            <groupId>com.kunstmusik</groupId>
+            <artifactId>blue-ext-openjfx</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
             <groupId>org.controlsfx</groupId>
             <artifactId>controlsfx</artifactId>
             <version>8.40.15</version>

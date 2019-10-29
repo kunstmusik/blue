@@ -56,6 +56,11 @@
             <version>${project.version}</version>
         </dependency>
         <dependency>
+            <groupId>com.kunstmusik</groupId>
+            <artifactId>blue-ext-openjfx</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>blue-services</artifactId>
             <version>${project.version}</version>

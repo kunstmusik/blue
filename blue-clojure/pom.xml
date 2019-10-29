@@ -79,6 +79,11 @@
             <version>${project.version}</version>
         </dependency>
         <dependency>
+            <groupId>com.kunstmusik</groupId>
+            <artifactId>blue-ext-openjfx</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
             <groupId>org.clojure</groupId>
             <artifactId>clojure</artifactId>
             <version>1.8.0</version>

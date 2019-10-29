@@ -345,8 +345,8 @@ public class JConsole extends JTextArea implements KeyListener {
         if (running) {
             // I know it's depracated, but since this object is being destroyed,
             // this thread should go, too
-            pythonThread.stop();
-            pythonThread.destroy();
+            //pythonThread.stop();
+            //pythonThread.destroy();
         }
     }
 

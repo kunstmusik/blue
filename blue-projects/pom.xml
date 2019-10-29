@@ -109,6 +109,11 @@
             <artifactId>blue-ext-exml</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>com.kunstmusik</groupId>
+            <artifactId>blue-ext-openjfx</artifactId>
+            <version>${project.version}</version>
+        </dependency>
     </dependencies>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>

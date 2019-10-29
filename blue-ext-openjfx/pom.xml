@@ -14,6 +14,10 @@
         <groupId>org.apache.netbeans.utilities</groupId>
         <artifactId>nbm-maven-plugin</artifactId>
         <configuration>
+	<publicPackages>
+		<publicPackage>javafx</publicPackage>
+		<publicPackage>javafx.*</publicPackage>
+	</publicPackages>
         </configuration>
       </plugin>
       <plugin>
@@ -103,9 +107,28 @@
       <version>${openjfx.version}</version>
       <classifier>mac</classifier>
     </dependency>
+    <dependency>
+      <groupId>org.openjfx</groupId>
+      <artifactId>javafx-swing</artifactId>
+      <version>${openjfx.version}</version>
+      <classifier>win</classifier>
+    </dependency>
+    <dependency>
+      <groupId>org.openjfx</groupId>
+      <artifactId>javafx-swing</artifactId>
+      <version>${openjfx.version}</version>
+      <classifier>linux</classifier>
+    </dependency>
+    <dependency>
+      <groupId>org.openjfx</groupId>
+      <artifactId>javafx-swing</artifactId>
+      <version>${openjfx.version}</version>
+      <classifier>mac</classifier>
+    </dependency>
   </dependencies>
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <openjfx.version>13</openjfx.version>
   </properties>
 </project>
+
