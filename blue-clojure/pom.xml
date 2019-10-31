@@ -80,18 +80,23 @@
         </dependency>
         <dependency>
             <groupId>com.kunstmusik</groupId>
+            <artifactId>blue-ext-commons-lang3</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.kunstmusik</groupId>
             <artifactId>blue-ext-openjfx</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>org.clojure</groupId>
             <artifactId>clojure</artifactId>
-            <version>1.8.0</version>
+            <version>1.10.1</version>
          </dependency>
         <dependency>
             <groupId>com.cemerick</groupId>
             <artifactId>pomegranate</artifactId>
-            <version>0.3.1</version>
+            <version>1.1.0</version>
          </dependency>
         <dependency>
             <groupId>de.congrace</groupId>
