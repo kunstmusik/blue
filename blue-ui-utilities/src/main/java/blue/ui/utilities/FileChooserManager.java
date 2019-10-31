@@ -67,151 +67,65 @@ public class FileChooserManager {
         final DialogInfoSet temp = getDialogInfoSet(fileChooserId);
         final List<File> retVal = new ArrayList<>();
 
-        final boolean isMac = System.getProperty("os.name").toLowerCase().startsWith(
-                "mac");
+//        final boolean isMac = System.getProperty("os.name").toLowerCase().startsWith(
+//                "mac");
+//        
+//
+//        if (false) {
+//            // USE AWT IMPL ON MAC DUE TO ISSUES WITH FILE CHOOSER
+//            // THAT APPEAR TO BE INTRODUCED BY MacOS
+//            java.awt.FileDialog ff = new java.awt.FileDialog((Frame) SwingUtilities.windowForComponent(parent));
+//
+//            ff.setFilenameFilter((dir, name)
+//                    -> true
+//            );
+//
+//            ff.setMode(FileDialog.LOAD);
+//            ff.setTitle(temp.dialogTitle);
+//            ff.setMultipleMode(temp.isMultiSelect);
+//            ff.setVisible(true);
+//
+//            if (temp.isMultiSelect) {
+//                File[] files = ff.getFiles();
+//                for (File f : files) {
+//                    retVal.add(f);
+//                }
+//            } else {
+//                String f = ff.getFile();
+//                if (f != null) {
+//                    retVal.add(new File(f));
+//                }
+//            }
+//        } else {
+//            // Use JavaFX elsewhere
+        final CountDownLatch c = new CountDownLatch(1);
 
-        if (isMac) {
-            // USE AWT IMPL ON MAC DUE TO ISSUES WITH FILE CHOOSER
-            // THAT APPEAR TO BE INTRODUCED BY MacOS
-            java.awt.FileDialog ff = new java.awt.FileDialog((Frame) SwingUtilities.windowForComponent(parent));
+        Runnable r = () -> {
+            if (parent != null) {
+                parent.setEnabled(false);
+            }
+            Stage s = new Stage();
+            s.initOwner(null);
+            s.initModality(Modality.APPLICATION_MODAL);
 
-            ff.setFilenameFilter((dir, name)
-                    -> true
-            );
+            if (temp.directoriesOnly) {
+                DirectoryChooser chooser = new DirectoryChooser();
+                chooser.setTitle(temp.dialogTitle);
 
-            ff.setMode(FileDialog.LOAD);
-            ff.setTitle(temp.dialogTitle);
-            ff.setMultipleMode(temp.isMultiSelect);
-            ff.setVisible(true);
-
-            if (temp.isMultiSelect) {
-                File[] files = ff.getFiles();
-                for (File f : files) {
-                    retVal.add(f);
+                if (temp.currentDirectory != null) {
+                    chooser.setInitialDirectory(temp.currentDirectory);
                 }
-            } else {
-                String f = ff.getFile();
+
+                File f = chooser.showDialog(s);
                 if (f != null) {
-                    retVal.add(new File(f));
+                    retVal.add(f);
+                    temp.currentDirectory = f;
                 }
-            }
-        } else {
-            // Use JavaFX elsewhere
-
-            final CountDownLatch c = new CountDownLatch(1);
-            
-            Runnable r = () -> {
-                if (parent != null) {
-                    parent.setEnabled(false);
-                }
-                Stage s = new Stage();
-                s.initOwner(null);
-                s.initModality(Modality.APPLICATION_MODAL);
-
-                if (temp.directoriesOnly) {
-                    DirectoryChooser chooser = new DirectoryChooser();
-                    chooser.setTitle(temp.dialogTitle);
-
-                    if (temp.currentDirectory != null) {
-                        chooser.setInitialDirectory(temp.currentDirectory);
-                    }
-
-                    File f = chooser.showDialog(s);
-                    if (f != null) {
-                        retVal.add(f);
-                        temp.currentDirectory = f;
-                    }
-                } else {
-                    FileChooser f = new FileChooser();
-                    f.setTitle(temp.dialogTitle);
-                    f.getExtensionFilters().addAll(temp.filters);
-                    f.getExtensionFilters().add(allFilter);
-
-                    if (temp.currentDirectory != null) {
-                        f.setInitialDirectory(temp.currentDirectory);
-                    } else if (temp.selectedFile != null) {
-                        f.setInitialDirectory(temp.selectedFile.getParentFile());
-                    }
-                    if (temp.selectedFile != null) {
-                        f.setInitialFileName(temp.selectedFile.getName());
-                    }
-
-                    if (temp.isMultiSelect) {
-                        temp.selectedFile = null;
-                        List<File> found = f.showOpenMultipleDialog(s);
-                        if (found != null) {
-                            temp.currentDirectory = found.get(0).getParentFile();
-                            retVal.addAll(found);
-                        }
-                    } else {
-                        File ret = f.showOpenDialog(s);
-                        if (ret != null) {
-                            temp.currentDirectory = ret.getParentFile();
-                            retVal.add(ret);
-                        }
-                    }
-
-                }
-
-                c.countDown();
-            };
-
-            if (Platform.isFxApplicationThread()) {
-                r.run();
             } else {
-                Platform.runLater(r);
-                try {
-                    c.await();
-                } catch (InterruptedException ex) {
-                    Logger.getLogger(FileChooserManager.class.getName()).log(
-                            Level.SEVERE,
-                            null, ex);
-                } finally {
-                    if (parent != null) {
-                        parent.setEnabled(true);
-                    }
-                }
-            }
-        }
-
-        return retVal;
-    }
-
-    public File showSaveDialog(Object fileChooserId, Component parent) {
-        DialogInfoSet temp = getDialogInfoSet(fileChooserId);
-
-        final boolean isMac = System.getProperty("os.name").toLowerCase().startsWith(
-                "mac");
-
-        if (isMac) {
-            // USE AWT IMPL ON MAC DUE TO ISSUES WITH FILE CHOOSER
-            // THAT APPEAR TO BE INTRODUCED BY MacOS
-            java.awt.FileDialog ff = new java.awt.FileDialog((Frame) SwingUtilities.windowForComponent(parent));
-
-            ff.setFilenameFilter((File dir, String name)
-                    -> true
-            );
-
-            ff.setMode(FileDialog.SAVE);
-            ff.setTitle(temp.dialogTitle);
-//        ff.setMultipleMode(temp.isMultiSelect);
-            ff.setVisible(true);
-
-            return new File(ff.getFile());
-        } else {
-            // Use JavaFX elsewhere
-
-            final CountDownLatch c = new CountDownLatch(1);
-            final AtomicReference<File> retVal = new AtomicReference<>(null);
-
-            Platform.runLater(() -> {
-                Stage s = new Stage();
-                s.initOwner(null);
-                s.initModality(Modality.APPLICATION_MODAL);
-
                 FileChooser f = new FileChooser();
                 f.setTitle(temp.dialogTitle);
                 f.getExtensionFilters().addAll(temp.filters);
+                f.getExtensionFilters().add(allFilter);
 
                 if (temp.currentDirectory != null) {
                     f.setInitialDirectory(temp.currentDirectory);
@@ -222,26 +136,111 @@ public class FileChooserManager {
                     f.setInitialFileName(temp.selectedFile.getName());
                 }
 
-                File ret = f.showSaveDialog(s);
-                if (ret != null) {
-                    temp.currentDirectory = null;
-                    temp.selectedFile = ret;
-                    retVal.set(ret);
+                if (temp.isMultiSelect) {
+                    temp.selectedFile = null;
+                    List<File> found = f.showOpenMultipleDialog(s);
+                    if (found != null) {
+                        temp.currentDirectory = found.get(0).getParentFile();
+                        retVal.addAll(found);
+                    }
+                } else {
+                    File ret = f.showOpenDialog(s);
+                    if (ret != null) {
+                        temp.currentDirectory = ret.getParentFile();
+                        retVal.add(ret);
+                    }
                 }
 
-                c.countDown();
-            });
+            }
 
+            c.countDown();
+        };
+
+        if (Platform.isFxApplicationThread()) {
+            r.run();
+        } else {
+            Platform.runLater(r);
             try {
                 c.await();
             } catch (InterruptedException ex) {
                 Logger.getLogger(FileChooserManager.class.getName()).log(
                         Level.SEVERE,
                         null, ex);
+            } finally {
+                if (parent != null) {
+                    parent.setEnabled(true);
+                }
+            }
+        }
+//        }
+
+        return retVal;
+    }
+
+    public File showSaveDialog(Object fileChooserId, Component parent) {
+        DialogInfoSet temp = getDialogInfoSet(fileChooserId);
+
+//        final boolean isMac = System.getProperty("os.name").toLowerCase().startsWith(
+//                "mac");
+//
+//        if (false) {
+//            // USE AWT IMPL ON MAC DUE TO ISSUES WITH FILE CHOOSER
+//            // THAT APPEAR TO BE INTRODUCED BY MacOS
+//            java.awt.FileDialog ff = new java.awt.FileDialog((Frame) SwingUtilities.windowForComponent(parent));
+//
+//            ff.setFilenameFilter((File dir, String name)
+//                    -> true
+//            );
+//
+//            ff.setMode(FileDialog.SAVE);
+//            ff.setTitle(temp.dialogTitle);
+////        ff.setMultipleMode(temp.isMultiSelect);
+//            ff.setVisible(true);
+//
+//            return new File(ff.getFile());
+//        } else {
+//            // Use JavaFX elsewhere
+        final CountDownLatch c = new CountDownLatch(1);
+        final AtomicReference<File> retVal = new AtomicReference<>(null);
+
+        Platform.runLater(() -> {
+            Stage s = new Stage();
+            s.initOwner(null);
+            s.initModality(Modality.APPLICATION_MODAL);
+
+            FileChooser f = new FileChooser();
+            f.setTitle(temp.dialogTitle);
+            f.getExtensionFilters().addAll(temp.filters);
+
+            if (temp.currentDirectory != null) {
+                f.setInitialDirectory(temp.currentDirectory);
+            } else if (temp.selectedFile != null) {
+                f.setInitialDirectory(temp.selectedFile.getParentFile());
+            }
+            if (temp.selectedFile != null) {
+                f.setInitialFileName(temp.selectedFile.getName());
             }
 
-            return retVal.get();
+            File ret = f.showSaveDialog(s);
+            if (ret != null) {
+                temp.currentDirectory = null;
+                temp.selectedFile = ret;
+                retVal.set(ret);
+            }
+
+            c.countDown();
+        });
+
+        try {
+            c.await();
+        } catch (InterruptedException ex) {
+            Logger.getLogger(FileChooserManager.class.getName()).log(
+                    Level.SEVERE,
+                    null, ex);
         }
+
+        return retVal.get();
+//        }
     }
 
     private DialogInfoSet getDialogInfoSet(Object fileChooserId) {
