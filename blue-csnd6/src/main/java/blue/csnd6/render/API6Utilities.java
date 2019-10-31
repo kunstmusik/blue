@@ -4,7 +4,7 @@
  */
 package blue.csnd6.render;
 
-import csnd6.csnd6;
+import com.kunstmusik.csoundjna.Csound;
 
 /**
  *
@@ -24,11 +24,13 @@ public class API6Utilities {
                 apiAvailable = false;
             } else {
                 try {
+                    new Csound();
 //                    System.loadLibrary("_jcsound6");
-                     csnd6.csoundInitialize(csnd6.CSOUNDINIT_NO_ATEXIT | 
-                csnd6.CSOUNDINIT_NO_SIGNAL_HANDLER);
+//                     csnd6.csoundInitialize(csnd6.CSOUNDINIT_NO_ATEXIT | 
+//                csnd6.CSOUNDINIT_NO_SIGNAL_HANDLER);
                     apiAvailable = true;
                 } catch (Throwable e) {
+                    e.printStackTrace();
                     apiAvailable = false;
                 }
             }

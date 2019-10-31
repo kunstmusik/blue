@@ -23,11 +23,10 @@ import blue.settings.ProjectPropertiesUtil;
 import blue.soundObject.SoundObjectException;
 import blue.utility.FileUtilities;
 import blue.utility.TextUtilities;
-import csnd6.Csound;
-import csnd6.CsoundArgVList;
-import csnd6.CsoundMYFLTArray;
-import csnd6.controlChannelType;
-import csnd6.csnd6;
+import com.kunstmusik.csoundjna.ControlChannelType;
+import com.kunstmusik.csoundjna.Csound;
+import com.sun.jna.Memory;
+import com.sun.jna.Pointer;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.io.File;
@@ -92,7 +91,7 @@ public class CS6RealtimeRenderService implements RealtimeRenderService, PlayMode
 
         this.csound = new Csound();
         blueCallbackWrapper = new BlueCallbackWrapper(csound);
-        blueCallbackWrapper.SetMessageCallback();
+        csound.setMessageCallback(blueCallbackWrapper);
 
         if (this.io != null) {
             try {
@@ -107,24 +106,24 @@ public class CS6RealtimeRenderService implements RealtimeRenderService, PlayMode
 
         blueCallbackWrapper.setInputOutput(io);
 
-        CsoundArgVList argsList = new CsoundArgVList();
+        List<String> argsList = new ArrayList<>();
 
-        io.getOut().append("Render Command (");
+        io.getOut().append("API Render Command (");
 
         for (int i = 0; i < args.length; i++) {
-            argsList.Append(args[i]);
+            argsList.add(args[i]);
             io.getOut().append(" ").append(args[i]);
         }
 
         if (currentWorkingDirectory != null) {
             String sfdir = "--env:SFDIR=" + currentWorkingDirectory.getAbsolutePath();
-            argsList.Append(sfdir);
+            argsList.add(sfdir);
             io.getOut().append(" ").append(sfdir);
         }
 
         io.getOut().append(" )\n");
 
-        int retVal = csound.Compile(argsList.argc(), argsList.argv());
+        int retVal = csound.compile(argsList.toArray(new String[0]));
 
         if (retVal != 0) {
 
@@ -155,10 +154,10 @@ public class CS6RealtimeRenderService implements RealtimeRenderService, PlayMode
 
             }
             notifyPlayModeListeners(PlayModeListener.PLAY_MODE_STOP);
-            csound.Stop();
-            csound.Cleanup();
-            csound.SetMessageCallback(null);
-            csound.Reset();
+            csound.stop();
+            csound.cleanup();
+            csound.setMessageCallback(null);
+            csound.reset();
             csound = null;
             blueCallbackWrapper = null;
             return;
@@ -374,7 +373,7 @@ public class CS6RealtimeRenderService implements RealtimeRenderService, PlayMode
     @Override
     public void addBinding(CsoundBinding binding) {
         if (isRunning()) {
-            binding.setup(csound.GetSr(), csound.GetKsmps());
+            binding.setup(csound.getSr(), csound.getKsmps());
         }
         bindings.add(binding);
     }
@@ -405,7 +404,7 @@ public class CS6RealtimeRenderService implements RealtimeRenderService, PlayMode
         private double startTime;
         private BlueData blueData;
         private double[] valuesCache;
-        private CsoundMYFLTArray[] channelPtrCache;
+        private Pointer[] channelPtrCache;
         public boolean isRunning = true;
         CountDownLatch latch = new CountDownLatch(1);
         private final List<CsoundBinding> bindings;
@@ -451,7 +450,7 @@ public class CS6RealtimeRenderService implements RealtimeRenderService, PlayMode
 
         @Override
         public void run() {
-            int updateRate = (int) (csound.GetKr()
+            int updateRate = (int) (csound.getKr()
                     / PlaybackSettings.getInstance().getPlaybackFPS());
             int counter = 0;
 
@@ -465,7 +464,7 @@ public class CS6RealtimeRenderService implements RealtimeRenderService, PlayMode
 
             Parameter param;
 
-            double scoreTime = csound.GetScoreTime();
+            double scoreTime = csound.getScoreTime();
             double currentTime = 0.0f;
             double renderStartSeconds = 0.0f;
 
@@ -482,12 +481,12 @@ public class CS6RealtimeRenderService implements RealtimeRenderService, PlayMode
             createValuesCache(currentTime);
 
             for (StringChannel strChannel : stringChannels) {
-                csound.SetChannel(strChannel.getChannelName(),
+                csound.setStringChannel(strChannel.getChannelName(),
                         strChannel.getValue());
             }
 
             for (int i = 0; i < bindings.size(); i++) {
-                bindings.get(i).setup(csound.GetSr(), csound.GetKsmps());
+                bindings.get(i).setup(csound.getSr(), csound.getKsmps());
             }
 
             currentTime = (blueData == null) ? 0.0f : blueData.getRenderStartTime();
@@ -505,10 +504,10 @@ public class CS6RealtimeRenderService implements RealtimeRenderService, PlayMode
                     Message m = buffer.getMessage(i % capacity);
                     switch(m.messageType) {
                         case 0:
-                            csound.ReadScore(m.payload);
+                            csound.readScore(m.payload);
                             break;
                         case 1:
-                            csound.CompileOrc(m.payload);
+                            csound.compileOrc(m.payload);
                             break;
                     }
 
@@ -517,7 +516,7 @@ public class CS6RealtimeRenderService implements RealtimeRenderService, PlayMode
                 
                 counter++;
 
-                scoreTime = csound.GetScoreTime();
+                scoreTime = csound.getScoreTime();
 
                 if (renderUpdatesTime && counter > updateRate) {
                     manager.updateTimePointer(scoreTime);
@@ -549,7 +548,7 @@ public class CS6RealtimeRenderService implements RealtimeRenderService, PlayMode
 
                     if (value != valuesCache[i]) {
                         valuesCache[i] = value;
-                        channelPtrCache[i].SetValue(0, (double) value);
+                        channelPtrCache[i].setDouble(0, value);
                     }
                 }
 
@@ -558,7 +557,7 @@ public class CS6RealtimeRenderService implements RealtimeRenderService, PlayMode
                     if (strChannel.isDirty()) {
 //                        System.out.println(
 //                                "Setting Channel: " + strChannel.getChannelName() + " : " + strChannel.getValue());
-                        csound.SetChannel(strChannel.getChannelName(),
+                        csound.setStringChannel(strChannel.getChannelName(),
                                 strChannel.getValue());
                     }
                 }
@@ -567,7 +566,7 @@ public class CS6RealtimeRenderService implements RealtimeRenderService, PlayMode
                     bindings.get(i).updateValueToCsound();
                 }
 
-                keepRunning = csound.PerformKsmps() == 0 && keepRunning;
+                keepRunning = csound.performKsmps() == 0 && keepRunning;
 
                 for (int i = 0, size = bindings.size(); i < size; i++) {
                     bindings.get(i).updateValueFromCsound();
@@ -580,10 +579,10 @@ public class CS6RealtimeRenderService implements RealtimeRenderService, PlayMode
 
             bindings.clear();
 
-            csound.Stop();
-            csound.Cleanup();
-            csound.SetMessageCallback(null);
-            csound.Reset();
+            csound.stop();
+            csound.cleanup();
+            csound.setMessageCallback(null);
+            csound.reset();
 
             if (renderUpdatesTime) {
                 manager.endRender();
@@ -600,7 +599,7 @@ public class CS6RealtimeRenderService implements RealtimeRenderService, PlayMode
             final int size = parameters.size();
 
             valuesCache = new double[size];
-            channelPtrCache = new CsoundMYFLTArray[size];
+            channelPtrCache = new Pointer[size];
 
             for (int i = 0; i < size; i++) {
                 param = (Parameter) parameters.get(i);
@@ -613,11 +612,10 @@ public class CS6RealtimeRenderService implements RealtimeRenderService, PlayMode
                     valuesCache[i] = param.getFixedValue();
                 }
 
-                channelPtrCache[i] = new CsoundMYFLTArray(1);
-                csound.GetChannelPtr(channelPtrCache[i].GetPtr(), varName,
-                        controlChannelType.CSOUND_CONTROL_CHANNEL.swigValue() | controlChannelType.CSOUND_INPUT_CHANNEL.swigValue());
+                channelPtrCache[i] = csound.getChannelPtr(varName,
+                        ControlChannelType.CSOUND_CONTROL_CHANNEL | ControlChannelType.CSOUND_INPUT_CHANNEL);
 
-                channelPtrCache[i].SetValue(0, valuesCache[i]);
+                channelPtrCache[i].setDouble(0, valuesCache[i]);
             }
         }
     }
