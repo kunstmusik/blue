@@ -9,8 +9,8 @@ environment:
 platform: x64
 
 install:
-  - cmd: choco install ant -y -f -i
-  - cmd: choco install apache-fop -y -f -i
+  #- cmd: choco install ant -y -f -i
+  #- cmd: choco install apache-fop -y -f -i
   #- mvn dependency:get -Dartifact=junit:junit:4.8.2 -DrepoUrl=http://repo1.maven.org/maven2/
   #- mkdir C:\xsltproc
   #- cd C:\xsltproc
@@ -37,7 +37,6 @@ cache:
   - C:\Users\appveyor\.m2
 
 build_script:
-  #- ant -Dnbplatform.default.harness.dir=%cd%\netbeans\harness -Dnbplatform.default.netbeans.dest.dir=%cd%\netbeans -DfopCommand=fop -DxsltCmd=c:\xsltproc\xsltproc.exe test build-zip
   - cd manual
   - mvn compile
   - cd ..
@@ -61,15 +60,3 @@ artifacts:
   - path: application\target\blue*linux.sh
     name: Blue Linux 
 
-#cache:
-# - C:\Tools\vcpkg\ -> C:\projects\csound\msvc\downloadDependencies.ps1
-# - C:\projects\csound\msvc\cache
-
-#notifications:
-#  - provider: Email
-#    to:
-#      - CSOUND-DEV@listserv.heanet.ie
-#    subject: 'Build {{status}}'     # optional
-#    on_build_success: false
-#    on_build_failure: true
-#    on_build_status_changed: false
