@@ -17,7 +17,9 @@
 	<publicPackages>
 		<publicPackage>javafx</publicPackage>
 		<publicPackage>javafx.*</publicPackage>
+                <publicPackage>com.sun.*</publicPackage>
 	</publicPackages>
+	<moduleType>eager</moduleType>
         </configuration>
       </plugin>
       <plugin>
@@ -122,6 +124,42 @@
     <dependency>
       <groupId>org.openjfx</groupId>
       <artifactId>javafx-swing</artifactId>
+      <version>${openjfx.version}</version>
+      <classifier>mac</classifier>
+    </dependency>
+     <dependency>
+      <groupId>org.openjfx</groupId>
+      <artifactId>javafx-web</artifactId>
+      <version>${openjfx.version}</version>
+      <classifier>win</classifier>
+    </dependency>
+    <dependency>
+      <groupId>org.openjfx</groupId>
+      <artifactId>javafx-web</artifactId>
+      <version>${openjfx.version}</version>
+      <classifier>linux</classifier>
+    </dependency>
+    <dependency>
+      <groupId>org.openjfx</groupId>
+      <artifactId>javafx-web</artifactId>
+      <version>${openjfx.version}</version>
+      <classifier>mac</classifier>
+    </dependency>
+    <dependency>
+      <groupId>org.openjfx</groupId>
+      <artifactId>javafx-media</artifactId>
+      <version>${openjfx.version}</version>
+      <classifier>win</classifier>
+    </dependency>
+    <dependency>
+      <groupId>org.openjfx</groupId>
+      <artifactId>javafx-media</artifactId>
+      <version>${openjfx.version}</version>
+      <classifier>linux</classifier>
+    </dependency>
+    <dependency>
+      <groupId>org.openjfx</groupId>
+      <artifactId>javafx-media</artifactId>
       <version>${openjfx.version}</version>
       <classifier>mac</classifier>
     </dependency>
