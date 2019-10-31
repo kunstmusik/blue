@@ -41,8 +41,8 @@ build_script:
   - mvn compile
   - cd ..
   - mvn -P generate-manual -DCS_MANUAL_DIR=c:\manual-6.13.0 install
-  - cd application
-  - mvn nbm:build-installers
+  #- cd application
+  #- mvn nbm:build-installers
 
 # Tests
 
@@ -53,10 +53,10 @@ artifacts:
   - path: application\target\blue*.zip
     name: Blue Zip 
     type: zip
-  - path: application\target\blue*macosx.tgz
-    name: Blue MacOS 
-  - path: application\target\blue*windows.exe
-    name: Blue Windows 
-  - path: application\target\blue*linux.sh
-    name: Blue Linux 
+  #- path: application\target\blue*macosx.tgz
+  #  name: Blue MacOS 
+  #- path: application\target\blue*windows.exe
+  #  name: Blue Windows 
+  #- path: application\target\blue*linux.sh
+  #  name: Blue Linux 
 
