@@ -67,37 +67,37 @@ public class FileChooserManager {
         final DialogInfoSet temp = getDialogInfoSet(fileChooserId);
         final List<File> retVal = new ArrayList<>();
 
-//        final boolean isMac = System.getProperty("os.name").toLowerCase().startsWith(
-//                "mac");
-//        
-//
-//        if (false) {
-//            // USE AWT IMPL ON MAC DUE TO ISSUES WITH FILE CHOOSER
-//            // THAT APPEAR TO BE INTRODUCED BY MacOS
-//            java.awt.FileDialog ff = new java.awt.FileDialog((Frame) SwingUtilities.windowForComponent(parent));
-//
-//            ff.setFilenameFilter((dir, name)
-//                    -> true
-//            );
-//
-//            ff.setMode(FileDialog.LOAD);
-//            ff.setTitle(temp.dialogTitle);
-//            ff.setMultipleMode(temp.isMultiSelect);
-//            ff.setVisible(true);
-//
-//            if (temp.isMultiSelect) {
-//                File[] files = ff.getFiles();
-//                for (File f : files) {
-//                    retVal.add(f);
-//                }
-//            } else {
-//                String f = ff.getFile();
-//                if (f != null) {
-//                    retVal.add(new File(f));
-//                }
-//            }
-//        } else {
-//            // Use JavaFX elsewhere
+        final boolean isMac = System.getProperty("os.name").toLowerCase().startsWith(
+                "mac");
+        
+
+        if (false) {
+            // USE AWT IMPL ON MAC DUE TO ISSUES WITH FILE CHOOSER
+            // THAT APPEAR TO BE INTRODUCED BY MacOS
+            java.awt.FileDialog ff = new java.awt.FileDialog((Frame) SwingUtilities.windowForComponent(parent));
+
+            ff.setFilenameFilter((dir, name)
+                    -> true
+            );
+
+            ff.setMode(FileDialog.LOAD);
+            ff.setTitle(temp.dialogTitle);
+            ff.setMultipleMode(temp.isMultiSelect);
+            ff.setVisible(true);
+
+            if (temp.isMultiSelect) {
+                File[] files = ff.getFiles();
+                for (File f : files) {
+                    retVal.add(f);
+                }
+            } else {
+                String f = ff.getFile();
+                if (f != null) {
+                    retVal.add(new File(f));
+                }
+            }
+        } else {
+            // Use JavaFX elsewhere
         final CountDownLatch c = new CountDownLatch(1);
 
         Runnable r = () -> {
@@ -172,7 +172,7 @@ public class FileChooserManager {
                 }
             }
         }
-//        }
+        }
 
         return retVal;
     }
@@ -180,26 +180,26 @@ public class FileChooserManager {
     public File showSaveDialog(Object fileChooserId, Component parent) {
         DialogInfoSet temp = getDialogInfoSet(fileChooserId);
 
-//        final boolean isMac = System.getProperty("os.name").toLowerCase().startsWith(
-//                "mac");
-//
-//        if (false) {
-//            // USE AWT IMPL ON MAC DUE TO ISSUES WITH FILE CHOOSER
-//            // THAT APPEAR TO BE INTRODUCED BY MacOS
-//            java.awt.FileDialog ff = new java.awt.FileDialog((Frame) SwingUtilities.windowForComponent(parent));
-//
-//            ff.setFilenameFilter((File dir, String name)
-//                    -> true
-//            );
-//
-//            ff.setMode(FileDialog.SAVE);
-//            ff.setTitle(temp.dialogTitle);
-////        ff.setMultipleMode(temp.isMultiSelect);
-//            ff.setVisible(true);
-//
-//            return new File(ff.getFile());
-//        } else {
-//            // Use JavaFX elsewhere
+        final boolean isMac = System.getProperty("os.name").toLowerCase().startsWith(
+                "mac");
+
+        if (false) {
+            // USE AWT IMPL ON MAC DUE TO ISSUES WITH FILE CHOOSER
+            // THAT APPEAR TO BE INTRODUCED BY MacOS
+            java.awt.FileDialog ff = new java.awt.FileDialog((Frame) SwingUtilities.windowForComponent(parent));
+
+            ff.setFilenameFilter((File dir, String name)
+                    -> true
+            );
+
+            ff.setMode(FileDialog.SAVE);
+            ff.setTitle(temp.dialogTitle);
+//        ff.setMultipleMode(temp.isMultiSelect);
+            ff.setVisible(true);
+
+            return new File(ff.getFile());
+        } else {
+            // Use JavaFX elsewhere
         final CountDownLatch c = new CountDownLatch(1);
         final AtomicReference<File> retVal = new AtomicReference<>(null);
 
@@ -240,7 +240,7 @@ public class FileChooserManager {
         }
 
         return retVal.get();
-//        }
+        }
     }
 
     private DialogInfoSet getDialogInfoSet(Object fileChooserId) {
