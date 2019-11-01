@@ -71,7 +71,7 @@ public class FileChooserManager {
                 "mac");
         
 
-        if (false) {
+        if (isMac) {
             // USE AWT IMPL ON MAC DUE TO ISSUES WITH FILE CHOOSER
             // THAT APPEAR TO BE INTRODUCED BY MacOS
             java.awt.FileDialog ff = new java.awt.FileDialog((Frame) SwingUtilities.windowForComponent(parent));
@@ -183,7 +183,7 @@ public class FileChooserManager {
         final boolean isMac = System.getProperty("os.name").toLowerCase().startsWith(
                 "mac");
 
-        if (false) {
+        if (isMac) {
             // USE AWT IMPL ON MAC DUE TO ISSUES WITH FILE CHOOSER
             // THAT APPEAR TO BE INTRODUCED BY MacOS
             java.awt.FileDialog ff = new java.awt.FileDialog((Frame) SwingUtilities.windowForComponent(parent));
