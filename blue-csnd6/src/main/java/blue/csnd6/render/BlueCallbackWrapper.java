@@ -1,30 +1,36 @@
 package blue.csnd6.render;
 
 
-import com.kunstmusik.csoundjna.Csound;
-import com.kunstmusik.csoundjna.MessageCallback;
-import com.sun.jna.Pointer;
 import java.io.IOException;
 
-
+import csnd6.Csound;
+import csnd6.CsoundCallbackWrapper;
+import org.apache.commons.lang3.text.StrBuilder;
 import org.openide.util.Exceptions;
 import org.openide.windows.InputOutput;
 
-public class BlueCallbackWrapper implements MessageCallback {
+public class BlueCallbackWrapper extends CsoundCallbackWrapper {
 
     InputOutput io = null;
 
-    StringBuilder buffer;
-    private final Csound csound;
+    StrBuilder buffer = null;
 
     public BlueCallbackWrapper(Csound csound) {
-        this.buffer = null;
-        this.csound = csound;
+        super(csound.GetCsound());
+
     }
 
-//    public void MessageCallback(int arg0, String arg1) {
-//
-//    }
+    @Override
+    public void MessageCallback(int arg0, String arg1) {
+        if (buffer != null) {
+            buffer.append(arg1);
+        } else if (io == null) {
+            System.out.print(arg1);
+            System.out.flush();
+        } else {
+            io.getOut().append(arg1);
+        }
+    }
     
     public void setInputOutput(InputOutput io) {
         if(this.io != null && io != null) {
@@ -39,19 +45,7 @@ public class BlueCallbackWrapper implements MessageCallback {
         this.io = io;
     }
     
-    public void setStringBuffer(StringBuilder buffer) {
+    public void setStringBuffer(StrBuilder buffer) {
         this.buffer = buffer;
-    }
-
-    @Override
-    public void invoke(Pointer p, int attr, String msg) {
-        if (buffer != null) {
-            buffer.append(msg);
-        } else if (io == null) {
-            System.out.print(msg);
-            System.out.flush();
-        } else {
-            io.getOut().append(msg);
-        }    
     }
 }

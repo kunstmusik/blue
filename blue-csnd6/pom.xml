@@ -10,6 +10,21 @@
     <packaging>nbm</packaging>
 
 
+    <repositories>
+        <!-- 3rd party libraries installed via mvn deploy-file. e.g.:
+
+        mvn deploy:deploy-file -Durl=file:///$PWD/repo/ -Dfile=csnd6.jar -DgroupId=blue.third.party -DartifactId=com-csound-csnd6 -Dversion=6.0.0 -Dpackaging=jar
+
+        -->
+          <repository>
+            <id>project.local</id>
+            <name>project</name>
+            <url>
+              file://${project.basedir}/repo
+            </url>
+          </repository>
+      </repositories>
+
     <build>
         <plugins>
             <plugin>
@@ -97,16 +112,12 @@
             <artifactId>org-openide-io</artifactId>
             <version>${netbeans.version}</version>
         </dependency>
-          
+        
+        <!-- Local dependency-->
         <dependency>
-            <groupId>net.java.dev.jna</groupId>
-            <artifactId>jna</artifactId>
-            <version>5.5.0</version>
-        </dependency>
-        <dependency>
-            <groupId>net.java.dev.jna</groupId>
-            <artifactId>jna-platform</artifactId>
-            <version>5.5.0</version>
+            <groupId>blue.third.party</groupId>
+            <artifactId>com-csound-csnd6</artifactId>
+            <version>6.0.0</version>
         </dependency>
         
     </dependencies>
