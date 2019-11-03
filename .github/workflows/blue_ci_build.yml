@@ -44,10 +44,12 @@ jobs:
       - name: Build Blue 
         run: mvn -Dmaven.test.skip=true -Pgenerate-manual clean install
 
+      - run: mv application/target/blue-2.8.0-SNAPSHOT.zip blue-linux-2.8.0-SNAPSHOT.zip
+
       - uses: actions/upload-artifact@master
         with:
           name: Blue Linux Zip
-          path: application/target/blue-2.8.0-SNAPSHOT.zip 
+          path: blue-linux-2.8.0-SNAPSHOT.zip 
 
   windows:
     runs-on: windows-latest 
@@ -66,7 +68,9 @@ jobs:
       - name: Build Blue 
         run: mvn -Pgenerate-manual clean install
 
+      - run: mv application/target/blue-2.8.0-SNAPSHOT.zip blue-windows-2.8.0-SNAPSHOT.zip
+
       - uses: actions/upload-artifact@master
         with:
           name: Blue Windows Zip
-          path: application/target/blue-2.8.0-SNAPSHOT.zip 
+          path: blue-windows-2.8.0-SNAPSHOT.zip 
