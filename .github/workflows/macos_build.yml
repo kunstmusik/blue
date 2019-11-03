@@ -2,7 +2,7 @@ name: Blue CI Builds
 on: push
 
 jobs:
-  build:
+  macos: 
     runs-on: macOS-latest 
     steps:
       - uses: actions/checkout@v1
@@ -27,7 +27,7 @@ jobs:
         with:
           name: Blue (macOS .app)  
           path: application/target/blue_macOS_2.8.0-dev.zip 
-  build:
+  linux:
     runs-on: ubuntu-latest 
     steps:
       - uses: actions/checkout@v1
@@ -49,7 +49,7 @@ jobs:
           name: Blue Linux Zip
           path: application/target/blue-2.8.0-SNAPSHOT.zip 
 
-  build:
+  windows:
     runs-on: windows-latest 
     steps:
       - uses: actions/checkout@v1
