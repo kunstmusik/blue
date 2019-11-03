@@ -21,7 +21,7 @@ jobs:
 
       - name: Build macOS App 
         run: ant -f build-mac.xml
-        working-directory: ./pplication
+        working-directory: ./application
 
       - uses: actions/upload-artifact@master
         with:
