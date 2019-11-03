@@ -40,7 +40,7 @@ build_script:
   - cd manual
   - mvn compile
   - cd ..
-  - mvn -P generate-manual -DCS_MANUAL_DIR=c:\manual-6.13.0 install
+  - mvn -P generate-manual,macOS -DCS_MANUAL_DIR=c:\manual-6.13.0 install
   #- cd application
   #- ant -f build-mac.xml 
   #- cd application
