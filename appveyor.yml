@@ -41,6 +41,8 @@ build_script:
   - mvn compile
   - cd ..
   - mvn -P generate-manual -DCS_MANUAL_DIR=c:\manual-6.13.0 install
+  - cd application
+  - ant -f build-mac.xml 
   #- cd application
   #- mvn nbm:build-installers
 
