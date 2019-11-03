@@ -1,4 +1,4 @@
-name: macOS Build
+name: Blue CI Builds
 on: push
 
 jobs:
@@ -27,3 +27,46 @@ jobs:
         with:
           name: Blue (macOS .app)  
           path: application/target/blue_macOS_2.8.0-dev.zip 
+  build:
+    runs-on: ubuntu-latest 
+    steps:
+      - uses: actions/checkout@v1
+        with:
+          fetch-depth: 1
+      - uses: actions/setup-java@v1
+        with:
+          java-version: '11' 
+
+      - name: Build Blue Manual
+        run: mvn compile 
+        working-directory: ./manual
+
+      - name: Build Blue 
+        run: mvn -Pgenerate-manual clean install -Dmaven.test.skip
+
+      - uses: actions/upload-artifact@master
+        with:
+          name: Blue Linux Zip
+          path: application/target/blue-2.8.0-SNAPSHOT.zip 
+
+  build:
+    runs-on: windows-latest 
+    steps:
+      - uses: actions/checkout@v1
+        with:
+          fetch-depth: 1
+      - uses: actions/setup-java@v1
+        with:
+          java-version: '11' 
+
+      - name: Build Blue Manual
+        run: mvn compile 
+        working-directory: ./manual
+
+      - name: Build Blue 
+        run: mvn -Pgenerate-manual clean install -Dmaven.test.skip
+
+      - uses: actions/upload-artifact@master
+        with:
+          name: Blue Windows Zip
+          path: application/target/blue-2.8.0-SNAPSHOT.zip 
