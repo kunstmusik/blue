@@ -13,6 +13,7 @@ jobs:
           java-version: '11' 
       - run: cd manual
       - run: mvn compile 
+      - run: cd .. 
       - run: mvn -Pgenerate-manual clean install
       - run: cd application
       - run: ant -f build-mac.xml
