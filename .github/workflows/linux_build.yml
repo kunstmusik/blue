@@ -21,6 +21,6 @@ jobs:
 
       - uses: actions/upload-artifact@master
         with:
-          name: Blue .zip (Windows/Linux) 
+          name: Blue Linux Zip
           path: application/target/blue-2.8.0-SNAPSHOT.zip 
 
