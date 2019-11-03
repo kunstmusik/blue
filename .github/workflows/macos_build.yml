@@ -11,6 +11,17 @@ jobs:
       - uses: actions/setup-java@v1
         with:
           java-version: '11' 
-      - uses: LucaFeger/action-maven-cli@master 
+      - run: cd manual
+      - run: mvn compile 
+      - run: mvn -Pgenerate-manual clean install
+      - run: cd application
+      - run: ant -f build-mac.xml
+      - run: cd ..
+      - uses: actions/upload-artifact@master
         with:
-          args: -Pgenerate-manual clean install
+          name: Blue .zip (Windows/Linux) 
+            path: application/target/blue-2.8.0-SNAPSHOT.zip 
+      - uses: actions/upload-artifact@master
+        with:
+          name: Blue macOS .app .zip  
+            path: application/target/blue_macOS_2.8.0-dev.zip 
