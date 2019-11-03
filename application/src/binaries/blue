@@ -117,6 +117,9 @@ fi
 
 nbexec=`echo "$progdir"/../platform*/lib/nbexec`
 
+# default java.library.path for Linux
+DEFAULT_JAVA_LIB_PATH="-J-Djava.library.path=/usr/lib/jni:/usr/local/lib:/usr/lib"
+
 case "`uname`" in
     Darwin*)
         eval exec sh '"$nbexec"' \
@@ -140,6 +143,7 @@ case "`uname`" in
             --clusters '"$clusters"' \
             --userdir '"${userdir}"' \
             ${default_options} \
+            ${DEFAULT_JAVA_LIB_PATH} \
             "$args"
        exit 1
         ;;

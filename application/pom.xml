@@ -103,6 +103,7 @@
                 <configuration>
                     <installerOsSolaris>false</installerOsSolaris>
                     <installerLicenseFile>LICENSE.txt</installerLicenseFile>
+                    <binDirectory>src/binaries</binDirectory>
                 </configuration>
             </plugin>
             <!-- Permits NbModuleSuite to be run in integration-test phase: -->
