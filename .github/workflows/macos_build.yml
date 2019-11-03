@@ -42,7 +42,7 @@ jobs:
         working-directory: ./manual
 
       - name: Build Blue 
-        run: mvn -Pgenerate-manual clean install -Dmaven.test.skip
+        run: mvn -Dmaven.test.skip=true -Pgenerate-manual clean install
 
       - uses: actions/upload-artifact@master
         with:
@@ -64,7 +64,7 @@ jobs:
         working-directory: ./manual
 
       - name: Build Blue 
-        run: mvn -Pgenerate-manual clean install -Dmaven.test.skip
+        run: mvn -Pgenerate-manual clean install
 
       - uses: actions/upload-artifact@master
         with:
