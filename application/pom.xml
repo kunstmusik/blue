@@ -122,6 +122,31 @@
     </build>
 
     <profiles>
+      <profile>
+        <id>macOS</id>
+         <build>
+                <plugins>
+                    <plugin>
+                        <artifactId>maven-antrun-plugin</artifactId>
+                        <version>1.8</version>
+                        <executions>
+                            <execution>
+                                <id>build-mac-zip</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                                <configuration>
+                                    <target>
+                                        <ant antfile="build-mac.xml" target="build-mac-zip"/>
+                                    </target>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+              </plugins>
+            </build>
+      </profile>
         <profile>
             <id>deployment</id>
             <build>

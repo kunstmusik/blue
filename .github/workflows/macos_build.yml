@@ -17,11 +17,7 @@ jobs:
         working-directory: ./manual
 
       - name: Build Blue 
-        run: mvn -Pgenerate-manual clean install
-
-      - name: Build macOS App 
-        run: ant -f build-mac.xml
-        working-directory: ./application
+        run: mvn -Pgenerate-manual,macOS clean install
 
       - uses: actions/upload-artifact@master
         with:
