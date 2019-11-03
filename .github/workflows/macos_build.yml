@@ -11,13 +11,18 @@ jobs:
       - uses: actions/setup-java@v1
         with:
           java-version: '11' 
-      - run: cd manual
-      - run: mvn compile 
-      - run: cd .. 
-      - run: mvn -Pgenerate-manual clean install
-      - run: cd application
-      - run: ant -f build-mac.xml
-      - run: cd ..
+
+      - name: Build Blue Manual
+        run: mvn compile 
+        working-directory: ./manual
+
+      - name: Build Blue 
+        run: mvn -Pgenerate-manual clean install
+
+      - name: Build macOS App 
+        run: ant -f build-mac.xml
+        working-directory: ./pplication
+
       - uses: actions/upload-artifact@master
         with:
           name: Blue .zip (Windows/Linux) 
