@@ -10,13 +10,13 @@
     <property name="app.version" value="2.8.0"/>
     <property name="app.root" value="target/${app.name}.app"/>
     <property name="blue.root" value="target/${app.name}.app/Contents/Resources/blue/"/>
-    <property name="zipName" value="${app.name}_OSX_${blueVersion}.zip"/>
+    <property name="zipName" value="${app.name}_macOS_${blueVersion}.zip"/>
 
-  <target name="build-mac" description="Builds a MacOS .app and zip distribution of Blue. Execute 
+  <target name="build-mac" description="Builds a macOS .app and zip distribution of Blue. Execute
     after running 'mvn package' or 'mvn install'">
         <mkdir dir="${app.root}"/>
         <mkdir dir="${app.root}/Contents"/>
-        <mkdir dir="${app.root}/Contents/MacOS"/>
+        <mkdir dir="${app.root}/Contents/macOS"/>
         <mkdir dir="${app.root}/Contents/Resources"/>
 
         <copy file="../imageSrc/blue.icns" tofile="${app.root}/Contents/Resources/${app.name}.icns"/>
@@ -24,14 +24,14 @@
           <fileset dir="target/${app.name}/" />
         </copy>
 
-        <!-- move things around from maven build for MacOS -->
+        <!-- move things around from maven build for macOS -->
         <move file="${blue.root}/ChangeLog" todir="${app.root}"/>
         <move file="${blue.root}/README.TXT" todir="${app.root}"/>
         <move file="${blue.root}/manual" todir="${app.root}"/>
         <move file="${blue.root}/examples" todir="${app.root}"/>
 
       <!--TODO: move script to external file-->
-        <echo file="${app.root}/Contents/MacOS/${app.name}">#!/bin/sh
+        <echo file="${app.root}/Contents/macOS/${app.name}">#!/bin/sh
 #copied from nbexec
 resolve_symlink () {
     file="$$1"
@@ -62,10 +62,10 @@ scriptPath="$$parentDir/../Resources/${app.name}/bin"
 #run the main executable
 sh -- "$$scriptPath/${app.name}" "$$@"
 </echo>
-        <chmod file="${app.root}/Contents/MacOS/${app.name}" perm="755"/>
+        <chmod file="${app.root}/Contents/macOS/${app.name}" perm="755"/>
         <chmod file="${app.root}/Contents/Resources/${app.name}/bin/${app.name}" perm="755"/>
         <chmod dir="target" includes="${app.name}.app/Contents/Resources/${app.name}/platform*/lib/nbexec" perm="755"/>
-        
+
         <copy file="src/macos/Info.plist" tofile="${app.root}/Contents/Info.plist">
             <filterchain>
                 <replacestring from="$${app.name}" to="${app.name}"/>
@@ -74,7 +74,7 @@ sh -- "$$scriptPath/${app.name}" "$$@"
         </copy>
     </target>
 
-    <target name="build-mac-zip" description="Creates a zip of the MacOS .app"
+    <target name="build-mac-zip" description="Creates a zip of the macOS .app"
             depends="build-mac">
         <delete file="target/${zipName}" failonerror="false"/>
 

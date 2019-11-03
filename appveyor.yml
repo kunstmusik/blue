@@ -9,8 +9,7 @@ environment:
 platform: x64
 
 install:
-  - cmd: choco install ant -y -f -i
-  - cmd: choco install unzip -y -f -i
+  #- cmd: choco install ant -y -f -i
   #- cmd: choco install apache-fop -y -f -i
   #- mvn dependency:get -Dartifact=junit:junit:4.8.2 -DrepoUrl=http://repo1.maven.org/maven2/
   #- mkdir C:\xsltproc
@@ -42,8 +41,8 @@ build_script:
   - mvn compile
   - cd ..
   - mvn -P generate-manual -DCS_MANUAL_DIR=c:\manual-6.13.0 install
-  - cd application
-  - ant -f build-mac.xml 
+  #- cd application
+  #- ant -f build-mac.xml 
   #- cd application
   #- mvn nbm:build-installers
 
