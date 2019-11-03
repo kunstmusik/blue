@@ -20,8 +20,8 @@ jobs:
       - uses: actions/upload-artifact@master
         with:
           name: Blue .zip (Windows/Linux) 
-            path: application/target/blue-2.8.0-SNAPSHOT.zip 
+          path: application/target/blue-2.8.0-SNAPSHOT.zip 
       - uses: actions/upload-artifact@master
         with:
           name: Blue macOS .app .zip  
-            path: application/target/blue_macOS_2.8.0-dev.zip 
+          path: application/target/blue_macOS_2.8.0-dev.zip 
