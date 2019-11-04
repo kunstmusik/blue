@@ -1,5 +1,0 @@
-Manifest-Version: 1.0
-OpenIDE-Module: org.clojure
-OpenIDE-Module-Localizing-Bundle: org/clojure/Bundle.properties
-OpenIDE-Module-Specification-Version: 1.1
-

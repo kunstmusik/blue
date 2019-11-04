@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- based on Apache Netbeans' suite.xml build-mac target -->
+<project name="blue-build-mac" basedir="." default="build-mac-zip">
+
+
+    <property file="../blue-core/src/main/resources/blue/blueConstants.properties"/>
+
+    <property name="app.name" value="blue"/>
+    <!-- for Info.plist, must be only numbers and periods per Apple guidelines -->
+    <property name="app.version" value="2.8.0"/>
+    <property name="app.root" value="target/${app.name}.app"/>
+    <property name="blue.root" value="target/${app.name}.app/Contents/Resources/blue/"/>
+    <property name="zipName" value="${app.name}_macOS_${blueVersion}.zip"/>
+
+  <target name="build-mac" description="Builds a macOS .app and zip distribution of Blue. Execute
+    after running 'mvn package' or 'mvn install'">
+        <mkdir dir="${app.root}"/>
+        <mkdir dir="${app.root}/Contents"/>
+        <mkdir dir="${app.root}/Contents/macOS"/>
+        <mkdir dir="${app.root}/Contents/Resources"/>
+
+        <copy file="../imageSrc/blue.icns" tofile="${app.root}/Contents/Resources/${app.name}.icns"/>
+        <copy todir="${app.root}/Contents/Resources/${app.name}">
+          <fileset dir="target/${app.name}/" />
+        </copy>
+
+        <!-- move things around from maven build for macOS -->
+        <move file="${blue.root}/ChangeLog" todir="${app.root}"/>
+        <move file="${blue.root}/README.TXT" todir="${app.root}"/>
+        <move file="${blue.root}/manual" todir="${app.root}"/>
+        <move file="${blue.root}/examples" todir="${app.root}"/>
+
+      <!--TODO: move script to external file-->
+        <echo file="${app.root}/Contents/macOS/${app.name}">#!/bin/sh
+#copied from nbexec
+resolve_symlink () {
+    file="$$1"
+    while [ -h "$$file" ]; do
+        ls=`ls -ld "$$file"`
+        link=`expr "$$ls" : '^.*-> \(.*\)$' 2>/dev/null`
+        if expr "$$link" : '^/' 2> /dev/null >/dev/null; then
+            file="$$link"
+        else
+            file=`dirname "$$1"`"/$$link"
+        fi
+    done
+    echo "$file"
+}
+
+absolutize_path () {
+    oldpwd=`pwd`
+    cd "$$1"
+    abspath=`pwd`
+    cd "$${oldpwd}"
+    echo "$$abspath"
+}
+PRG="`resolve_symlink "$$0"`"
+parentDir="`dirname "$$PRG"`"
+parentDir="`absolutize_path "$$parentDir"`"
+#resolve the script path
+scriptPath="$$parentDir/../Resources/${app.name}/bin"
+#run the main executable
+sh -- "$$scriptPath/${app.name}" "$$@"
+</echo>
+        <chmod file="${app.root}/Contents/macOS/${app.name}" perm="755"/>
+        <chmod file="${app.root}/Contents/Resources/${app.name}/bin/${app.name}" perm="755"/>
+        <chmod dir="target" includes="${app.name}.app/Contents/Resources/${app.name}/platform*/lib/nbexec" perm="755"/>
+
+        <copy file="src/macos/Info.plist" tofile="${app.root}/Contents/Info.plist">
+            <filterchain>
+                <replacestring from="$${app.name}" to="${app.name}"/>
+                <replacestring from="$${app.version}" to="${app.version}"/>
+            </filterchain>
+        </copy>
+    </target>
+
+    <target name="build-mac-zip" description="Creates a zip of the macOS .app"
+            depends="build-mac">
+        <delete file="target/${zipName}" failonerror="false"/>
+
+        <exec executable="zip" dir="target">
+          <arg value="-yJr"/>
+          <arg value="${zipName}"/>
+          <arg value="${app.name}.app"/>
+        </exec>
+    </target>
+
+
+</project>

@@ -1,0 +1,6 @@
+Manifest-Version: 1.0
+OpenIDE-Module: blue.csnd6
+OpenIDE-Module-Install: blue/csnd6/Installer.class
+OpenIDE-Module-Localizing-Bundle: blue/csnd6/Bundle.properties
+OpenIDE-Module-Specification-Version: 1.0
+

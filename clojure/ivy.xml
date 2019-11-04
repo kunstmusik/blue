@@ -1,7 +1,0 @@
-<ivy-module version="2.0">
-    <info organisation="com.kunstmusik" module="clojure"/>
-    <dependencies>
-        <dependency org="org.clojure" name="clojure" rev="1.8.0"/>
-        <dependency org="com.cemerick" name="pomegranate" rev="0.3.1"/>
-    </dependencies>
-</ivy-module>
