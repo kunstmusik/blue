@@ -26,7 +26,7 @@
 
         <!-- move things around from maven build for macOS -->
         <move file="${blue.root}/ChangeLog" todir="${app.root}"/>
-        <move file="${blue.root}/README.TXT" todir="${app.root}"/>
+        <move file="${blue.root}/README.md" todir="${app.root}"/>
         <move file="${blue.root}/manual" todir="${app.root}"/>
         <move file="${blue.root}/examples" todir="${app.root}"/>
 
