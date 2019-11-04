@@ -1,9 +1,10 @@
 # Blue
-Version @VERSION@ - @RELEASE_DATE@
+
+Version @VERSION@ - @RELEASE_DATE@  
 Copyright (c) 2001-2019 Steven Yi - All Rights Reserved
 
-Email: stevenyi@gmail.com
-Web: https://blue.kunstmusik.com
+Email: stevenyi@gmail.com  
+Web: [https://blue.kunstmusik.com](https://blue.kunstmusik.com)
 
 This program comes with ABSOLUTELY NO WARRANTY and is licensed under the GNU
 Public License.  This is a free program and you are welcome to redistrbute it
@@ -28,8 +29,8 @@ suggestions, bugs, and feature requests, as it's all helped Blue grow over time.
 
 If this is your first time using Blue, you might want to check out the manual,
 which is available within the program from Help menu (the "Blue Manual" menu
-option).  The blue-users mailing list, accessible from
-http://blue.kunstmusik.com, is also a great place to ask questions.
+option).  A version of the manual is also available [online](https://blue.kunstmusik.com/manual/html/index.html). The blue-users mailing list, accessible from
+https://blue.kunstmusik.com, is also a great place to ask questions.
 
 Example .blue project files are provided in the examples folder, located in the
 directory where blue is installed. (Note for OSX, if you are using the blue
