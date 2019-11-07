@@ -20,6 +20,7 @@ package blue.soundObject.editor.sound;
 
 import blue.components.DragDirection;
 import blue.components.lines.Line;
+import blue.components.lines.LineEditorDialog;
 import blue.components.lines.LineList;
 import blue.components.lines.LinePoint;
 import blue.jfx.BlueFX;
@@ -52,8 +53,10 @@ import javafx.scene.paint.Color;
 import javafx.stage.Modality;
 import javafx.util.Callback;
 import javafx.util.converter.DoubleStringConverter;
+import javax.swing.SwingUtilities;
 import javax.swing.event.TableModelListener;
 import org.controlsfx.tools.Utils;
+import org.openide.windows.WindowManager;
 
 /**
  *
@@ -482,6 +485,14 @@ public class ParameterLineView extends Canvas {
     }
 
     private void editPoints() {
+
+//        SwingUtilities.invokeLater(() -> {
+//            LineEditorDialog dlg = LineEditorDialog.getInstance(WindowManager.getDefault().getMainWindow());
+//
+//            dlg.setLine(getSelectedLine());
+//            dlg.ask();
+//        });
+
         TableView<LinePoint> table = new TableView<>();
         TableColumn<LinePoint, Double> xCol = new TableColumn<>("x");
         TableColumn<LinePoint, Double> yCol = new TableColumn<>("y");
@@ -526,7 +537,10 @@ public class ParameterLineView extends Canvas {
         Dialog<ButtonType> d = new Dialog<>();
         d.initOwner(getScene().getWindow());
         d.initModality(Modality.APPLICATION_MODAL);
-        d.getDialogPane().setContent(new ScrollPane(table));
+        d.setResizable(true);
+        d.setHeight(400);
+        d.setWidth(300);
+        d.getDialogPane().setContent(table);
         d.getDialogPane().getStylesheets().add(BlueFX.getBlueFxCss());
         d.getDialogPane().getButtonTypes().setAll(ButtonType.OK);
         d.setTitle("Edit Points");

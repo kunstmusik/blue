@@ -172,7 +172,7 @@
 /* DIALOGS */
 
 .dialog-pane {
-    -fx-background-color: black;
+    -fx-background-color: secondary3;
 }
 
 .dialog-pane .label {
@@ -180,7 +180,7 @@
 }
 
 .dialog-pane:header .header-panel {
-    -fx-background-color: black;
+    -fx-background-color: secondary3;
 }
 
 .dialog-pane:header .header-panel .label {
