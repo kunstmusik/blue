@@ -19,13 +19,12 @@
 package blue.orchestra.editor.blueSynthBuilder.jfx.editors;
 
 import blue.components.lines.LineList;
-import blue.orchestra.blueSynthBuilder.BSBLineObject;
+import blue.jfx.BlueFX;
 import blue.orchestra.editor.blueSynthBuilder.LineListEditorDialog;
 import java.awt.EventQueue;
-import java.util.concurrent.CountDownLatch;
 import javafx.scene.control.Button;
 import javafx.scene.layout.BorderPane;
-import org.openide.util.Exceptions;
+import org.openide.windows.WindowManager;
 
 /**
  *
@@ -41,31 +40,33 @@ public class LineListEditor extends BorderPane {
 
         b.setOnAction(e -> {
             LineList newList = new LineList(list);
-            CountDownLatch latch = new CountDownLatch(1);
+//            CountDownLatch latch = new CountDownLatch(1);
             boolean[] retVal = new boolean[1];
             EventQueue.invokeLater(new Runnable() {
                 public void run() {
-                    try {
-                        LineListEditorDialog dlg = new LineListEditorDialog();
-                        dlg.setModal(true);
-                        dlg.setLineList(newList);
-                        retVal[0] = dlg.ask();
-                    } finally {
-                        latch.countDown();
+                    LineListEditorDialog dlg = new LineListEditorDialog(WindowManager.getDefault().getMainWindow());
+
+                    dlg.setModal(true);
+                    dlg.centerOnScreen();
+                    dlg.setLineList(newList);
+                    retVal[0] = dlg.ask();
+
+                    if (retVal[0]) {
+                        BlueFX.runOnFXThread(() -> {
+                            list.clear();
+                            list.addAll(newList);
+                        });
+
                     }
+
                 }
             });
 
-            try {
-                latch.await();
-            } catch (InterruptedException ex) {
-                Exceptions.printStackTrace(ex);
-            }
-
-            if (retVal[0]) {
-                list.clear();
-                list.addAll(newList);
-            }
+//            try {
+//                latch.await();
+//            } catch (InterruptedException ex) {
+//                Exceptions.printStackTrace(ex);
+//            }
         });
 
 //            FXMLLoader loader = new FXMLLoader(

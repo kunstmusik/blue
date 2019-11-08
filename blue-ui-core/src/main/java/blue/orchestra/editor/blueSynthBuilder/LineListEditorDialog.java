@@ -24,6 +24,7 @@ import blue.components.lines.LineListTable;
 import com.l2fprod.common.swing.BaseDialog;
 import java.awt.BorderLayout;
 import java.awt.Container;
+import java.awt.Frame;
 
 public class LineListEditorDialog extends BaseDialog {
 
@@ -31,8 +32,8 @@ public class LineListEditorDialog extends BaseDialog {
 
     LineListTable table;
 
-    public LineListEditorDialog() {
-        super();
+    public LineListEditorDialog(Frame window) {
+        super(window);
 
         this.getBanner().setVisible(false);
 

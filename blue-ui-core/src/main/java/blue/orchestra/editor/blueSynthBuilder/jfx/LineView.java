@@ -481,7 +481,10 @@ public class LineView extends Canvas {
         Dialog<ButtonType> d = new Dialog<>();
         d.initOwner(getScene().getWindow());
         d.initModality(Modality.APPLICATION_MODAL);
-        d.getDialogPane().setContent(new ScrollPane(table));
+        d.setResizable(true);
+        d.setHeight(400);
+        d.setWidth(300);
+        d.getDialogPane().setContent(table);
         d.getDialogPane().getStylesheets().add(BlueFX.getBlueFxCss());
         d.getDialogPane().getButtonTypes().setAll(ButtonType.OK);
         d.setTitle("Edit Points");
