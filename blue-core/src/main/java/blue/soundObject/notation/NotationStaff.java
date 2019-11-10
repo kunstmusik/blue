@@ -63,7 +63,7 @@ public class NotationStaff extends ArrayList<NotationNote> {
     }
 
     public NotationNote getNotationNote(int index) {
-        return (NotationNote) this.get(index);
+        return this.get(index);
     }
 
     public String getStaffName() {

@@ -20,7 +20,7 @@
 package blue.orchestra.blueSynthBuilder;
 
 public interface BSBGraphicInterfaceListener {
-    public void bsbObjectAdded(BSBObject bsbObj);
+    void bsbObjectAdded(BSBObject bsbObj);
 
-    public void bsbObjectRemoved(BSBObject bsbObj);
+    void bsbObjectRemoved(BSBObject bsbObj);
 }

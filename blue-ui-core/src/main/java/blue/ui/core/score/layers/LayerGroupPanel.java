@@ -30,13 +30,13 @@ import javax.swing.Action;
  * @author stevenyi
  */
 public interface LayerGroupPanel<T extends LayerGroup> {
-    public void marqueeSelectionPerformed(SelectionMarquee marquee);
+    void marqueeSelectionPerformed(SelectionMarquee marquee);
     
-    public void paintNavigatorView(Graphics2D g2d);
+    void paintNavigatorView(Graphics2D g2d);
 
-    public ScoreObjectView<?> getScoreObjectViewAtPoint(Point p);
+    ScoreObjectView<?> getScoreObjectViewAtPoint(Point p);
 
-    public Action[] getLayerActions();
+    Action[] getLayerActions();
 
-    public T getLayerGroup();
+    T getLayerGroup();
 }

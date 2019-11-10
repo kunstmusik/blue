@@ -29,7 +29,7 @@ public class NoteProcessorChainTable extends JTable {
 
     private static final Color HIGHLIGHTED_COLOR = new Color(127, 127, 127);
 
-    int hilightRows[];
+    int[] hilightRows;
 
     @Override
     public Component prepareRenderer(TableCellRenderer renderer, int row,
@@ -51,7 +51,7 @@ public class NoteProcessorChainTable extends JTable {
         return c;
     }
 
-    public void setHilightRows(int hilightRows[]) {
+    public void setHilightRows(int[] hilightRows) {
         this.hilightRows = hilightRows;
         this.repaint();
     }

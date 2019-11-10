@@ -35,6 +35,6 @@ public interface ProjectPlugin {
      * called when rendering a CSD to disk or compiling a CSD before rendering
      * in realtime or with BlueLive.
      */
-    public void preRender(BlueData data);         
+    void preRender(BlueData data);
 
 }

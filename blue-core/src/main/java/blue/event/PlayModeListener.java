@@ -26,9 +26,9 @@ import java.util.EventListener;
  * @author Steven Yi
  */
 public interface PlayModeListener extends EventListener {
-    public static int PLAY_MODE_STOP = 0;
+    int PLAY_MODE_STOP = 0;
 
-    public static int PLAY_MODE_PLAY = 1;
+    int PLAY_MODE_PLAY = 1;
 
-    public void playModeChanged(int playMode);
+    void playModeChanged(int playMode);
 }

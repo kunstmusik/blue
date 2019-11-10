@@ -236,7 +236,7 @@ public class RealtimeRenderSettings {
         prefs.putBoolean(PREFIX + MIDI_DRIVER_ENABLED, midiDriverEnabled);
         prefs.put(PREFIX + MIDI_DRIVER, midiDriver);
         prefs.putBoolean(PREFIX + MIDI_OUT_ENABLED, midiOutEnabled);
-        prefs.put(PREFIX + MIDI_OUT_TEXT, midiOutText.toString());
+        prefs.put(PREFIX + MIDI_OUT_TEXT, midiOutText);
         prefs.putBoolean(PREFIX + MIDI_IN_ENABLED, midiInEnabled);
         prefs.put(PREFIX + MIDI_IN_TEXT, midiInText);
 

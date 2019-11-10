@@ -30,13 +30,13 @@ package blue.services.render;
 public interface RealtimeRenderServiceFactory {
 
     /** Returns the Class for the generated RenderServices */
-    public Class<? extends RealtimeRenderService> getRenderServiceClass();
+    Class<? extends RealtimeRenderService> getRenderServiceClass();
 
     /** Creates an instance of a RealtimeRenderService */
-    public RealtimeRenderService createInstance();
+    RealtimeRenderService createInstance();
 
     /** Used when getting driver settings */
-    public DiskRenderService createDiskRenderService();
+    DiskRenderService createDiskRenderService();
     
     /** 
      * reports if this service is available.  For example, if the the user does
@@ -44,5 +44,5 @@ public interface RealtimeRenderServiceFactory {
      * false.
      * @return 
      */
-    public boolean isAvailable();
+    boolean isAvailable();
 }

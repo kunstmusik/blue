@@ -32,7 +32,7 @@ public class LiveObjectTest extends TestCase {
         Element elem1 = liveObj.saveAsXML(null);
         Element elem2;
         try {
-            elem2 = liveObj.loadFromXML(elem1, null).saveAsXML(null);
+            elem2 = LiveObject.loadFromXML(elem1, null).saveAsXML(null);
             assertEquals(elem1.toString(), elem2.toString());
         } catch (Exception ex) {
             ex.printStackTrace();

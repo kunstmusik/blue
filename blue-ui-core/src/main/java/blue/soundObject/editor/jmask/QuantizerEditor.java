@@ -155,7 +155,7 @@ public class QuantizerEditor extends javax.swing.JPanel implements DurationSetta
                 .addContainerGap())
         );
 
-        layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {gridSizeTypeComboBox, offsetTypeComboBox, strengthTypeComboBox});
+        layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, gridSizeTypeComboBox, offsetTypeComboBox, strengthTypeComboBox);
 
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)

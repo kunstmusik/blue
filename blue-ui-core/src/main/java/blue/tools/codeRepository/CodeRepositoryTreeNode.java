@@ -57,10 +57,7 @@ class CodeRepositoryTreeNode extends DefaultMutableTreeNode {
     public boolean isLeaf() {
         try {
             ElementHolder elem = (ElementHolder) this.getUserObject();
-            if (elem.isGroup) {
-                return false;
-            }
-            return true;
+            return !elem.isGroup;
         } catch (ClassCastException cce) {
             return (getChildCount() == 0);
         }

@@ -30,20 +30,20 @@ import java.util.ArrayList;
  */
 public interface DiskRenderService {
 
-    public void execWait(String[] args,
-            File currentWorkingDirectory,
-            double startTime,
-            TempoMapper mapper,
-            ArrayList<Parameter> parameters);
+    void execWait(String[] args,
+                  File currentWorkingDirectory,
+                  double startTime,
+                  TempoMapper mapper,
+                  ArrayList<Parameter> parameters);
 
-    public String execWaitAndCollect(String[] args, File currentWorkingDirectory);
+    String execWaitAndCollect(String[] args, File currentWorkingDirectory);
 
-    public void renderToDisk(DiskRenderJob job);
+    void renderToDisk(DiskRenderJob job);
             
-    public boolean isRunning();
+    boolean isRunning();
 
-    public void stop();
+    void stop();
 
-    public int getCsoundVersion(String csoundCommand);
+    int getCsoundVersion(String csoundCommand);
     
 }

@@ -193,7 +193,7 @@ public class InstrumentLibrary implements TreeModel {
 
     public Instrument getInstrumentById(String instrId) {
         StringTokenizer st = new StringTokenizer(instrId, ":");
-        int idArray[] = new int[st.countTokens()];
+        int[] idArray = new int[st.countTokens()];
 
         int count = 0;
         while (st.hasMoreTokens()) {

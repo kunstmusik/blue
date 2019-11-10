@@ -201,8 +201,8 @@ public class TableCanvas extends JComponent {
             //else let fall through
             default:
                 int tableLen = this.getWidth() - 10;
-                int tempTable[] = new int[tableLen];
-                int xvals[] = new int[tableLen];
+                int[] tempTable = new int[tableLen];
+                int[] xvals = new int[tableLen];
                 int tableHeight = this.getHeight() - 10;
 
                 double range = max - min;

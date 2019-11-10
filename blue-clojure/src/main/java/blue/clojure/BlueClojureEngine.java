@@ -123,7 +123,7 @@ public class BlueClojureEngine implements PropertyChangeListener {
                     retVal = obj.toString();
                 }
             } catch (Exception e) {
-                e.printStackTrace();;
+                e.printStackTrace();
                 throw e;
             }
         }
@@ -136,9 +136,7 @@ public class BlueClojureEngine implements PropertyChangeListener {
         if (BlueProjectManager.CURRENT_PROJECT.equals(evt.getPropertyName())) {
             if (this.currentProject != null
                     && !BlueProjectManager.getInstance().isProjectStillOpen(this.currentProject)) {
-                if (engines.containsKey(this.currentProject)) {
-                    engines.remove(this.currentProject);
-                }
+                engines.remove(this.currentProject);
             }
 
             this.currentProject = (BlueProject) evt.getNewValue();

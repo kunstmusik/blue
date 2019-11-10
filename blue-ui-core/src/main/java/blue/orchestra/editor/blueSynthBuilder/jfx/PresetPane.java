@@ -242,7 +242,7 @@ public class PresetPane extends HBox {
         }
         if (getPresetGroup().getCurrentPresetUniqueId() == null) {
             currentPresetText.setText(" No Preset Selected");
-            updateButton.setDisable(true);;
+            updateButton.setDisable(true);
         } else {
             PresetGroup pGroup = getPresetGroup();
             Preset preset = pGroup.findPresetByUniqueId(pGroup.getCurrentPresetUniqueId());

@@ -85,7 +85,7 @@ public class PchInversionProcessor implements NoteProcessor {
         }
     }
 
-    public static void main(String args[]) {
+    public static void main(String[] args) {
         NoteList n = new NoteList();
 
         for (int i = 0; i < 10; i++) {

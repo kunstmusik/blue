@@ -275,7 +275,7 @@ public class EffectEditor extends javax.swing.JPanel implements
         );
     }// </editor-fold>//GEN-END:initComponents
 
-    public static void main(String args[]) {
+    public static void main(String[] args) {
         GUI.setBlueLookAndFeel();
 
         EffectEditor editor = new EffectEditor();

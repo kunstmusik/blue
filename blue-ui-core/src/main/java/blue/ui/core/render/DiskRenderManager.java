@@ -39,7 +39,7 @@ public class DiskRenderManager {
         return instance;
     }
 
-    public String execWaitAndCollect(String args[], File currentWorkingDirectory) {
+    public String execWaitAndCollect(String[] args, File currentWorkingDirectory) {
         DiskRenderServiceFactory factory = DiskRenderSettings.getInstance().renderServiceFactory;
         DiskRenderService diskRenderService = factory.createInstance();
 

@@ -110,7 +110,7 @@ public class GaussianEditor extends javax.swing.JPanel implements DurationSettab
                 .addContainerGap())
         );
 
-        layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {meanTypeComboBox, sigmaTypeComboBox});
+        layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, meanTypeComboBox, sigmaTypeComboBox);
 
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)

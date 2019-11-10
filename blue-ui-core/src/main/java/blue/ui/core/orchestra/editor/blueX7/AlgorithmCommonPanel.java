@@ -38,7 +38,7 @@ import org.openide.util.ImageUtilities;
  */
 
 public class AlgorithmCommonPanel extends JComponent {
-    ImageIcon algoIcon[] = new ImageIcon[32];
+    ImageIcon[] algoIcon = new ImageIcon[32];
 
     JLabel algorithmPicture;
 

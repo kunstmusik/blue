@@ -68,12 +68,8 @@ public class ProjectVersion {
                 return (versionParts[i] < version.versionParts[i]); 
             }
         }
-        
-        if(beta && !version.beta) {
-            return true;
-        }
-        
-        return false;
+
+        return beta && !version.beta;
     }
     
     @Override

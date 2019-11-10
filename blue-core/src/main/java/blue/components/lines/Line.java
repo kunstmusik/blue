@@ -516,11 +516,8 @@ public class Line implements TableModel, ChangeListener, Iterable<LinePoint> {
     public boolean isCellEditable(int rowIndex, int columnIndex) {
         if (rowIndex == 0 && columnIndex == 0) {
             return false;
-        } else if (rightBound && rowIndex == (size() - 1) && columnIndex == 0) {
-            return false;
-        }
+        } else return !rightBound || rowIndex != (size() - 1) || columnIndex != 0;
 
-        return true;
     }
 
     @Override
@@ -1223,10 +1220,7 @@ public class Line implements TableModel, ChangeListener, Iterable<LinePoint> {
         double min = selectionStartTime + timeMod;
         double max = selectionEndTime + timeMod;
 
-        if (pointTime >= min && pointTime <= max) {
-            return true;
-        }
-        return false;
+        return pointTime >= min && pointTime <= max;
     }
 
     protected static void stripOuterPoints(List<LinePoint> points, double selectionStartTime, double selectionEndTime) {

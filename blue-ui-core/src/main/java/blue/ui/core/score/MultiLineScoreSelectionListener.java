@@ -24,5 +24,5 @@ package blue.ui.core.score;
  * @author stevenyi
  */
 public interface MultiLineScoreSelectionListener {
-    public void multiLineSelectionUpdated(MultiLineScoreSelection.UpdateType updateType);
+    void multiLineSelectionUpdated(MultiLineScoreSelection.UpdateType updateType);
 }

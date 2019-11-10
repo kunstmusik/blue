@@ -362,7 +362,7 @@ public class BlueSystem {
 
                 try {
                     Document doc = new Document(f);
-                    udoLibrary = udoLibrary.loadFromXML(doc.getRoot());
+                    udoLibrary = UDOLibrary.loadFromXML(doc.getRoot());
 
                 } catch (ParseException e1) {
                     e1.printStackTrace();
@@ -544,7 +544,7 @@ public class BlueSystem {
     /**
      * **************************************************************
      */
-    public static void main(String args[]) {
+    public static void main(String[] args) {
         System.out.println(BlueSystem.getConfDir());
     }
 

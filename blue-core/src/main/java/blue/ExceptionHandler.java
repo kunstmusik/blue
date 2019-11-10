@@ -37,7 +37,7 @@ public class ExceptionHandler {
     private ExceptionHandler() {}
     
     public static void printStackTrace(Exception ex) {
-        handler.printStackTrace(ex);
+        printStackTrace(ex);
     }
     
     public void handlePrintStackTrace(Exception ex) {

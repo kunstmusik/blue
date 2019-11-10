@@ -277,9 +277,7 @@ class MixerNode {
                 }
             }
 
-            if (isValidOut(channel.getOutChannel(), subChannelCache)) {
-                return true;
-            }
+            return isValidOut(channel.getOutChannel(), subChannelCache);
         }
 
         return false;

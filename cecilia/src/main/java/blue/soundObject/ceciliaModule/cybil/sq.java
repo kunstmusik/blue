@@ -88,7 +88,7 @@ class sq extends CybilAlgorithm {
                         break;
                     }
 
-                    Note note = (Note) notes.get(notes.size() - 1);
+                    Note note = notes.get(notes.size() - 1);
 
                     if (note.getStartTime() < timeLimit) {
                         break;

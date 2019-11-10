@@ -27,7 +27,7 @@ import electric.xml.Element;
  * @author Steven Yi
  */
 public interface WindowSettingsSavable {
-    public void loadWindowSettings(Element settings);
+    void loadWindowSettings(Element settings);
 
-    public Element saveWindowSettings();
+    Element saveWindowSettings();
 }

@@ -211,7 +211,7 @@ public class ScannedMatrixEditor extends JComponent {
         }
 
         for (int i = 0; i < matrixGridEditor.matrix.length; i++) {
-            matrixGridEditor.matrix[i] = Math.random() > 0.5d ? true : false;
+            matrixGridEditor.matrix[i] = Math.random() > 0.5d;
         }
         matrixGridEditor.repaint();
     }

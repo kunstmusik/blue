@@ -35,7 +35,7 @@ import javafx.beans.property.SimpleObjectProperty;
  */
 public class GridSettings {
 
-    public static enum GridStyle {
+    public enum GridStyle {
         NONE, DOT, LINE
     }
 

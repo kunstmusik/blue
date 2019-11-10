@@ -11,10 +11,10 @@ package blue.orchestra.blueSynthBuilder;
 
 public interface Randomizable {
 
-    public boolean isRandomizable();
+    boolean isRandomizable();
 
-    public void setRandomizable(boolean randomizable);
+    void setRandomizable(boolean randomizable);
 
-    public void randomize();
+    void randomize();
 
 }

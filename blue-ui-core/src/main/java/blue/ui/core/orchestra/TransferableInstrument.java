@@ -40,7 +40,7 @@ public class TransferableInstrument implements Transferable {
 
     private Object obj;
 
-    DataFlavor flavors[];
+    DataFlavor[] flavors;
 
     public TransferableInstrument(Object obj) {
         this.obj = obj;

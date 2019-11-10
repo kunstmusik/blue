@@ -28,7 +28,7 @@ public enum Alignment {
 
     private String string;
 
-    private Alignment(String name) {
+    Alignment(String name) {
         string = name;
     }
 

@@ -40,7 +40,7 @@ public class NoteProcessorChainMap extends HashMap<String, NoteProcessorChain> {
 
 
     public NoteProcessorChain getNoteProcessorChain(Object key) {
-        return (NoteProcessorChain) get(key);
+        return get(key);
     }
 
     public static NoteProcessorChainMap loadFromXML(Element data)

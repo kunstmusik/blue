@@ -97,7 +97,7 @@ public class BSBCloneTest extends TestCase {
 //            assertTrue(isEqual);
             Element elem1 = bsbObj.saveAsXML();
 
-            Element elem2 = ((BSBObject) obj).saveAsXML();
+            Element elem2 = obj.saveAsXML();
 
             assertEquals(elem1.getTextString(), elem2.getTextString());
         }
@@ -131,7 +131,7 @@ public class BSBCloneTest extends TestCase {
             Method m = null;
             try {
                 m = class1.getMethod("loadFromXML",
-                        new Class[]{Element.class});
+                        Element.class);
             } catch (SecurityException | NoSuchMethodException e1) {
                 // TODO Auto-generated catch block
                 e1.printStackTrace();

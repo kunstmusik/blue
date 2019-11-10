@@ -55,13 +55,13 @@ public interface SoundObject extends ScoreObject {
      * SoundObject does not support applying time behaviors and is assumed to
      * generate score for duration of subjectiveDuration
      */
-    public final static int TIME_BEHAVIOR_NOT_SUPPORTED = -1;
+    int TIME_BEHAVIOR_NOT_SUPPORTED = -1;
 
-    public final static int TIME_BEHAVIOR_SCALE = 0;
+    int TIME_BEHAVIOR_SCALE = 0;
 
-    public final static int TIME_BEHAVIOR_REPEAT = 1;
+    int TIME_BEHAVIOR_REPEAT = 1;
 
-    public final static int TIME_BEHAVIOR_NONE = 2;
+    int TIME_BEHAVIOR_NONE = 2;
 
     /**
      * Returns a blue.soundObject.editor.SoundObjectEditor, which is the GUI
@@ -118,8 +118,8 @@ public interface SoundObject extends ScoreObject {
 //    public NoteList generateNotes(double renderStart, double renderEnd)
 //            throws SoundObjectException;
 
-    public NoteList generateForCSD(CompileData compileData, double startTime, 
-            double endTime) throws SoundObjectException;
+    NoteList generateForCSD(CompileData compileData, double startTime,
+                            double endTime) throws SoundObjectException;
     
 
     /**
@@ -142,7 +142,7 @@ public interface SoundObject extends ScoreObject {
      * generation is dependent on the subjective duration of the soundObject.
      * For these SoundObjects you can return null here.
      */
-    public double getObjectiveDuration();
+    double getObjectiveDuration();
 
     /**
      * Returns a blue.soundObject.renderer.BarRenderer which renders the
@@ -154,36 +154,36 @@ public interface SoundObject extends ScoreObject {
      * Gets the NoteProcessorChain for this SoundObject. Return null if
      * SoundObject does not support noteProcessors.
      */
-    public NoteProcessorChain getNoteProcessorChain();
+    NoteProcessorChain getNoteProcessorChain();
 
-    public int getTimeBehavior();
+    int getTimeBehavior();
 
-    public void setTimeBehavior(int timeBehavior);
+    void setTimeBehavior(int timeBehavior);
 
     /**
      * Gets the point at which, in the score, a repeat of this score should
      * occur if the time behavior for this sound object is repeatable.
      */
-    public double getRepeatPoint();
+    double getRepeatPoint();
 
     /**
      * See getRepeatPoint
      */
-    public void setRepeatPoint(double repeatPoint);
+    void setRepeatPoint(double repeatPoint);
 
     /**
      * Returns and XML Element representation of this SoundObject
      * 
      * @param objRefMap
      */
-    public Element saveAsXML(Map<Object, String> objRefMap);
+    Element saveAsXML(Map<Object, String> objRefMap);
 
     /**
      * @param chain
      */
-    public void setNoteProcessorChain(NoteProcessorChain chain);
+    void setNoteProcessorChain(NoteProcessorChain chain);
 
     @Override
-    public SoundObject deepCopy();
+    SoundObject deepCopy();
     
 }

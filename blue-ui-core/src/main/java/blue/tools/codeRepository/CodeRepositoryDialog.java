@@ -198,7 +198,7 @@ public class CodeRepositoryDialog extends JDialog implements
                             selected = tempElem;
                             code1Text.setText(tempElem.text);
                         }
-                        undo.discardAllEdits();;
+                        undo.discardAllEdits();
                     }
                 }
             });

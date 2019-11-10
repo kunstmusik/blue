@@ -22,9 +22,9 @@ package blue.soundObject.tracker;
 
 public interface TrackListListener {
 
-    public void trackAdded(Track track, int index);
+    void trackAdded(Track track, int index);
 
-    public void trackRemoved(Track track, int index);
+    void trackRemoved(Track track, int index);
 
-    public void trackReordered(Track track, int oldIndex, int newIndex);
+    void trackReordered(Track track, int oldIndex, int newIndex);
 }

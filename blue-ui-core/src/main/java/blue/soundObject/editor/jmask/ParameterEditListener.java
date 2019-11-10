@@ -28,19 +28,19 @@ import blue.soundObject.jmask.Generator;
  */
 public interface ParameterEditListener {
 
-    public static final int PARAMETER_ADD_BEFORE = 0;
+    int PARAMETER_ADD_BEFORE = 0;
 
-    public static final int PARAMETER_ADD_AFTER = 1;
+    int PARAMETER_ADD_AFTER = 1;
 
-    public static final int PARAMETER_REMOVE = 2;
+    int PARAMETER_REMOVE = 2;
 
-    public static final int PARAMETER_CHANGE_TYPE = 3;
+    int PARAMETER_CHANGE_TYPE = 3;
     
-    public static final int PARAMETER_PUSH_UP = 4;
+    int PARAMETER_PUSH_UP = 4;
     
-    public static final int PARAMETER_PUSH_DOWN = 5;
+    int PARAMETER_PUSH_DOWN = 5;
 
-    public void parameterEdit(int editType, int parameterNum,
-            Generator generator);
+    void parameterEdit(int editType, int parameterNum,
+                       Generator generator);
 
 }

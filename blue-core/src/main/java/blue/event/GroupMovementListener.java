@@ -26,7 +26,7 @@ import javax.swing.JComponent;
  * @author steven
  */
 public interface GroupMovementListener extends EventListener {
-    public void initiateMovement(JComponent source);
+    void initiateMovement(JComponent source);
 
-    public void move(int offsetX, int offsetY);
+    void move(int offsetX, int offsetY);
 }

@@ -409,7 +409,7 @@ public class UDORepositoryBrowser extends JDialog {
         this.opcodeList = opcodeList;
     }
 
-    public static void main(String args[]) {
+    public static void main(String[] args) {
         GUI.setBlueLookAndFeel();
 
         UDORepositoryBrowser browser = new UDORepositoryBrowser(null);

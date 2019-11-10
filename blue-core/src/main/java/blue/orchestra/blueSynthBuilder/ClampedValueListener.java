@@ -23,13 +23,13 @@ package blue.orchestra.blueSynthBuilder;
  * @author stevenyi
  */
 public interface ClampedValueListener {
-    public enum PropertyType {
-        MIN, MAX, VALUE, RESOLUTION;
+    enum PropertyType {
+        MIN, MAX, VALUE, RESOLUTION
     }
 
-    public enum BoundaryType {
-        NONE, SCALE, TRUNCATE;
+    enum BoundaryType {
+        NONE, SCALE, TRUNCATE
     }
 
-    public void propertyChanged(PropertyType pType, BoundaryType bType);
+    void propertyChanged(PropertyType pType, BoundaryType bType);
 }

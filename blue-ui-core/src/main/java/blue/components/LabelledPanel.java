@@ -106,7 +106,7 @@ public class LabelledPanel extends JComponent {
         }
     }
 
-    public static void main(String args[]) {
+    public static void main(String[] args) {
 
         LabelledPanel panel = new LabelledPanel("Test Panel", new JPanel());
         GUI.showComponentAsStandalone(panel, "Title Bar Panel Test", true);

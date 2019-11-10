@@ -27,6 +27,6 @@ import javax.swing.JComponent;
  * @author stevenyi
  */
 public interface SelectionMarquee {
-    public boolean intersects(JComponent comp);
-    public Rectangle getTranslatedRect(JComponent comp);
+    boolean intersects(JComponent comp);
+    Rectangle getTranslatedRect(JComponent comp);
 }

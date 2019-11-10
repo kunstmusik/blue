@@ -698,7 +698,7 @@ public class BlueShareRemoteCaller {
     /* UTILITY METHODS */
 
     private static String checkNullString(String stringToCheck) {
-        if (stringToCheck == null) {;
+        if (stringToCheck == null) {
             return "";
         }
         return stringToCheck;

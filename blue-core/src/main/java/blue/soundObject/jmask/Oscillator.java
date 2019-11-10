@@ -70,8 +70,8 @@ public class Oscillator implements Generator, Maskable,
         freqTable.setMin(.001, false);
         freqTable.setMax(10, false);
         
-        TablePoint point1 = (TablePoint) freqTable.points.get(0);
-        TablePoint point2 = (TablePoint) freqTable.points.get(1);
+        TablePoint point1 = freqTable.points.get(0);
+        TablePoint point2 = freqTable.points.get(1);
         
         point1.setValue(1);
         point2.setValue(1);

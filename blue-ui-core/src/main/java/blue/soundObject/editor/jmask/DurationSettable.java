@@ -10,5 +10,5 @@ package blue.soundObject.editor.jmask;
  * @author steven
  */
 public interface DurationSettable {
-    public void setDuration(double duration);
+    void setDuration(double duration);
 }

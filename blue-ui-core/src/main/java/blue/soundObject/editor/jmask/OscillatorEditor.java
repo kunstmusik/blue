@@ -144,7 +144,7 @@ public class OscillatorEditor extends javax.swing.JPanel implements DurationSett
                 .addContainerGap())
         );
 
-        layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {exponentSpinner, phaseSpinner});
+        layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, exponentSpinner, phaseSpinner);
 
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)

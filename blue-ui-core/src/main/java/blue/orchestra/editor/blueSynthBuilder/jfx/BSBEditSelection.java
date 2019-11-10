@@ -187,7 +187,7 @@ public class BSBEditSelection {
             Pane p = (Pane) n;
             if (selection.contains(p.getUserData())) {
                 retVal.add(p);
-            };
+            }
         }
         return retVal;
     }

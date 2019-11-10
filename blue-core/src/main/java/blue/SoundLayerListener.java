@@ -22,7 +22,7 @@ package blue;
 import blue.soundObject.SoundObject;
 
 public interface SoundLayerListener {
-    public void soundObjectAdded(SoundLayer source, SoundObject sObj);
+    void soundObjectAdded(SoundLayer source, SoundObject sObj);
 
-    public void soundObjectRemoved(SoundLayer source, SoundObject sObj);
+    void soundObjectRemoved(SoundLayer source, SoundObject sObj);
 }

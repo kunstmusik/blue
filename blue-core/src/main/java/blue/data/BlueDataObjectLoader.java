@@ -27,6 +27,6 @@ import electric.xml.Element;
  * @author stevenyi
  */
 public interface BlueDataObjectLoader {
-    public Class<? extends BlueDataObject> getBlueDataObjectClass();
-    public BlueDataObject loadFromXML(Element elem);
+    Class<? extends BlueDataObject> getBlueDataObjectClass();
+    BlueDataObject loadFromXML(Element elem);
 }

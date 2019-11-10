@@ -240,9 +240,9 @@ class PropertyEditProxyEditor implements TableCellEditor, ActionListener {
 
     interface EditorDelegate {
 
-        public void setValue(Object val);
+        void setValue(Object val);
 
-        public Object getValue();
+        Object getValue();
     }
 
     /*

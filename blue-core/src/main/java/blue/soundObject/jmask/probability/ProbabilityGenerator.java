@@ -24,9 +24,9 @@ import electric.xml.Element;
 
 public interface ProbabilityGenerator extends DeepCopyable<ProbabilityGenerator> {
 
-    public String getName();
+    String getName();
 
-    public double getValue(double time, java.util.Random rnd);
+    double getValue(double time, java.util.Random rnd);
 
-    public Element saveAsXML();
+    Element saveAsXML();
 }

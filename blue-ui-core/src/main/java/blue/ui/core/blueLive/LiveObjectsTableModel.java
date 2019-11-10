@@ -111,7 +111,7 @@ public class LiveObjectsTableModel implements TableModel, ScoreObjectListener,
             return null;
         }
 
-        return (LiveObject) bins.getLiveObject(columnIndex, rowIndex);
+        return bins.getLiveObject(columnIndex, rowIndex);
     }
 
     @Override

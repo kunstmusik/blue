@@ -71,7 +71,7 @@ public final class UIUtils {
         }
         Boolean isXP = (Boolean)Toolkit.getDefaultToolkit().
                         getDesktopProperty("win.xpstyle.themeActive"); //NOI18N
-        return isXP == null ? false : isXP.booleanValue();
+        return isXP != null && isXP.booleanValue();
     }
 
      private static final Map<RenderingHints.Key, Object> getHints() {
@@ -116,7 +116,7 @@ public final class UIUtils {
     private static void checkOpenide() {
         try {
             utilsClass = Class.forName("org.openide.util.ImageUtilities"); //NOI18N
-            utilsMethod = utilsClass.getDeclaredMethod ( "loadImage", new Class[] {String.class}); //NOI18N
+            utilsMethod = utilsClass.getDeclaredMethod ( "loadImage", String.class); //NOI18N
             openideAvailable = Boolean.TRUE;
         } catch (Exception e) {
             openideAvailable = Boolean.FALSE;

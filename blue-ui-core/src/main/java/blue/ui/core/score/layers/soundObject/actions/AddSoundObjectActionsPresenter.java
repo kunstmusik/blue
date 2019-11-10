@@ -89,7 +89,7 @@ public final class AddSoundObjectActionsPresenter extends AbstractAction impleme
         
         try {
 
-            SoundObject sObj = (SoundObject) plugin.getInstance().
+            SoundObject sObj = plugin.getInstance().
                     getClass().newInstance();
 
             if(sObj instanceof PolyObject) {
@@ -98,7 +98,7 @@ public final class AddSoundObjectActionsPresenter extends AbstractAction impleme
             
             TimeState timeState = stc.getTimeState();
 
-            double start = (double) p.getX() / timeState.getPixelSecond();
+            double start = p.getX() / timeState.getPixelSecond();
 
             if (timeState.isSnapEnabled()) {
                 start = ScoreUtilities.getSnapValueStart(start,

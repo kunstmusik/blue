@@ -54,7 +54,7 @@ public class BSBVSliderBankView extends HBox implements ResizeableView {
                     List<? extends BSBVSlider> removedItems = c.getRemoved();
                     getChildren().removeIf(
                             a -> removedItems.contains(
-                                    (BSBVSlider) a.getUserData()));
+                                    a.getUserData()));
 
                     getChildren().addAll(
                             c.getAddedSubList().stream()

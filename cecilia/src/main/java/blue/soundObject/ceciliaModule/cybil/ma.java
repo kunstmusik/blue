@@ -66,7 +66,7 @@ class ma extends CybilAlgorithm {
                     double max = (maxDiff * x) + startMax;
                     double diff = max - min;
 
-                    double val = (double) (Math.random() * diff) + min;
+                    double val = (Math.random() * diff) + min;
 
                     String strVal = isInteger ? Integer.toString((int) val)
                             : Double.toString(val);

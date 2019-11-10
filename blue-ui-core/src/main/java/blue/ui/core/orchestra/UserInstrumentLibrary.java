@@ -581,7 +581,7 @@ class UserInstrumentTreePopup extends JPopupMenu {
     }
 
     private void addInstrument(Instrument instr) {
-        Instrument newInstrument = (Instrument) instr.deepCopy();
+        Instrument newInstrument = instr.deepCopy();
 
         InstrumentCategory currentCategory = (InstrumentCategory) userObj;
 

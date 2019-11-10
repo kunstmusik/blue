@@ -292,10 +292,7 @@ public class TrackList implements TableModel {
             } else if (counter == 0) {
                 return false;
             } else {
-                if (track.getTrackerNote(rowIndex).isOff()) {
-                    return false;
-                }
-                return true;
+                return !track.getTrackerNote(rowIndex).isOff();
             }
         }
         return true;

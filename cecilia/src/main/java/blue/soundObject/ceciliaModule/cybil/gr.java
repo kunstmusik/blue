@@ -56,7 +56,7 @@ class gr extends CybilAlgorithm {
 
             line.args.add(Double.toString(startPoint.value));
             line.args.add(Double.toString(endPoint.value));
-            line.args.add(Double.toString(duration) + "s");
+            line.args.add(duration + "s");
 
             System.out.println("gr:\n " + startPoint + "\n" + endPoint);
 

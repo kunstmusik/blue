@@ -55,7 +55,7 @@ public class PropertyEditor extends JComponent {
         propTableModel.setObject(obj);
     }
 
-    public static void main(String args[]) {
+    public static void main(String[] args) {
         JFrame mFrame = new JFrame();
         mFrame.setSize(800, 600);
         PropertyEditor a = new PropertyEditor();
@@ -156,10 +156,7 @@ class PropertyEditTableModel extends AbstractTableModel {
 
     @Override
     public boolean isCellEditable(int r, int c) {
-        if (c == 1) {
-            return true;
-        }
-        return false;
+        return c == 1;
     }
 
     @Override

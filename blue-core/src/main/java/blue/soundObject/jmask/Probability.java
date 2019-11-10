@@ -109,7 +109,7 @@ public class Probability implements Generator, Maskable,
         return generators;
     }
 
-    public static void main(String args[]) {
+    public static void main(String[] args) {
         Probability prob = new Probability();
         ProbabilityGenerator[] generators2 = prob.getGenerators();
 

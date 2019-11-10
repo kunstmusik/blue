@@ -28,5 +28,5 @@ package blue.ui.core.score;
  * @author stevenyi
  */
 public interface ScoreControllerListener {
-    public void scorePathChanged(ScorePath path); 
+    void scorePathChanged(ScorePath path);
 }

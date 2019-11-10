@@ -23,5 +23,5 @@ package blue;
  * @author stevenyi
  */
 public interface DeepCopyable<T> {
-    public T deepCopy(); 
+    T deepCopy();
 }

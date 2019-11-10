@@ -125,7 +125,7 @@ public class MidiImportSettingsDialog extends javax.swing.JDialog {
                 .addContainerGap())
         );
 
-        layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {cancelButton, okButton});
+        layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, cancelButton, okButton);
 
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -162,7 +162,7 @@ public class MidiImportSettingsDialog extends javax.swing.JDialog {
      * @param args
      *            the command line arguments
      */
-    public static void main(String args[]) {
+    public static void main(String[] args) {
         java.awt.EventQueue.invokeLater(() -> {
             new MidiImportSettingsDialog(new javax.swing.JFrame(), true)
                     .setVisible(true);

@@ -271,7 +271,7 @@ public class AudioFilePlayer extends javax.swing.JPanel {
                     .addContainerGap()))
         );
 
-        layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {jLabel1, jLabel3});
+        layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, jLabel1, jLabel3);
 
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)

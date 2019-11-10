@@ -60,7 +60,7 @@ public class ModeManager {
 
     public void previousMode() {
         if (mode.ordinal() > ScoreMode.SCORE.ordinal()) {
-            mode = ScoreMode.values()[mode.ordinal() - 1];;
+            mode = ScoreMode.values()[mode.ordinal() - 1];
         } else {
             mode = ScoreMode.MULTI_LINE;
         }

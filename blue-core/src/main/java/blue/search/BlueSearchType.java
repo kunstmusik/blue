@@ -20,6 +20,6 @@
 package blue.search;
 
 public interface BlueSearchType {
-    public String getSearchName();
+    String getSearchName();
 
 }

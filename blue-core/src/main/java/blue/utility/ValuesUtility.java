@@ -58,7 +58,7 @@ public class ValuesUtility {
         }
     }
 
-    public static void main(String args[]) {
+    public static void main(String[] args) {
         Object obj = new Object() {
             String val1 = "test";
 

@@ -54,7 +54,7 @@ public final class NudgeUpAction implements ActionListener {
         if (!selected.isEmpty()) {
             ScorePath path = ScoreController.getInstance().getScorePath();
 
-            ScoreObject[] scoreObjects = selected.<ScoreObject>toArray(
+            ScoreObject[] scoreObjects = selected.toArray(
                     new ScoreObject[selected.size()]);
             List<Layer> layers = path.getAllLayers();
             int[] indexes = new int[selected.size()];

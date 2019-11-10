@@ -125,7 +125,7 @@ public class RandomEditor extends javax.swing.JPanel implements DurationSettable
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
-        layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {maxSpinner, minSpinner});
+        layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, maxSpinner, minSpinner);
 
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)

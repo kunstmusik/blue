@@ -84,7 +84,7 @@ public class ExternalScoreEngine implements ScoreScriptEngine {
                         ".sco", BlueSystem.getCurrentProjectDirectory());
                 outFile.deleteOnExit();
 
-                commandLine = this.getPreparedCommandLine(commandLine, temp
+                commandLine = getPreparedCommandLine(commandLine, temp
                         .getName(), outFile.getName());
 
                 System.out.println("Calling command: " + commandLine);

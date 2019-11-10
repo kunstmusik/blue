@@ -161,7 +161,7 @@ public class Table extends AbstractTableModel {
         double[] y = new double[pointsSize];
 
         for (int i = 0; i < pointsSize; i++) {
-            TablePoint tp = (TablePoint) points.get(i);
+            TablePoint tp = points.get(i);
             x[i] = tp.getTime();
             y[i] = tp.getValue();
         }
@@ -244,7 +244,7 @@ public class Table extends AbstractTableModel {
     }
 
     public TablePoint getPoint(int index) {
-        return (TablePoint) points.get(index);
+        return points.get(index);
     }
 
     public void addPoint(int index, TablePoint point) {
@@ -501,7 +501,7 @@ public class Table extends AbstractTableModel {
     }
 
     public TablePoint getTablePoint(int index) {
-        return (TablePoint) points.get(index);
+        return points.get(index);
     }
 
     public int getInterpolationType() {

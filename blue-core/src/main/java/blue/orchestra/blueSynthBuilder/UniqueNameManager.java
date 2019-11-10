@@ -145,9 +145,7 @@ public class UniqueNameManager  {
         if (obj instanceof UniqueNameManager) {
             UniqueNameManager unm = (UniqueNameManager) obj;
 
-            if (defaultPrefix.equals(unm.defaultPrefix)) {
-                return true;
-            }
+            return defaultPrefix.equals(unm.defaultPrefix);
         }
         return false;
     }

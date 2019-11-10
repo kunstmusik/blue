@@ -24,27 +24,27 @@ package blue.orchestra.editor.blueSynthBuilder.jfx;
  */
 public interface ResizeableView {
 
-    public boolean canResizeWidgetWidth();
+    boolean canResizeWidgetWidth();
 
-    public boolean canResizeWidgetHeight();
+    boolean canResizeWidgetHeight();
 
-    public int getWidgetMinimumWidth();
+    int getWidgetMinimumWidth();
 
-    public int getWidgetMinimumHeight();
+    int getWidgetMinimumHeight();
 
-    public int getWidgetWidth();
+    int getWidgetWidth();
 
-    public void setWidgetWidth(int width);
+    void setWidgetWidth(int width);
 
-    public int getWidgetHeight();
+    int getWidgetHeight();
 
-    public void setWidgetHeight(int height);
+    void setWidgetHeight(int height);
 
-    public void setWidgetX(int x);
+    void setWidgetX(int x);
 
-    public int getWidgetX();
+    int getWidgetX();
 
-    public void setWidgetY(int y);
+    void setWidgetY(int y);
 
-    public int getWidgetY();
+    int getWidgetY();
 }

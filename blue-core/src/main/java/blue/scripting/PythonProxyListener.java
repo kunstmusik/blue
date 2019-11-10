@@ -24,5 +24,5 @@ package blue.scripting;
  * @author stevenyi
  */
 public interface PythonProxyListener {
-    public void pythonProxyReinitializePerformed();
+    void pythonProxyReinitializePerformed();
 }

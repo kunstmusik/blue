@@ -14,6 +14,6 @@ import blue.soundObject.NoteList;
 import electric.xml.Element;
 
 public interface NoteProcessor extends DeepCopyable<NoteProcessor> {
-    public void processNotes(NoteList in) throws NoteProcessorException;
-    public Element saveAsXML();
+    void processNotes(NoteList in) throws NoteProcessorException;
+    Element saveAsXML();
 }

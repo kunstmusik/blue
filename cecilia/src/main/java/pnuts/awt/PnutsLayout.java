@@ -141,7 +141,7 @@ public class PnutsLayout implements LayoutManager2, java.io.Serializable {
         }
     }
 
-    static int zero[] = new int[16];
+    static int[] zero = new int[16];
     static {
         for (int i = 0; i < zero.length; i++) {
             zero[i] = 0;
@@ -179,22 +179,22 @@ public class PnutsLayout implements LayoutManager2, java.io.Serializable {
     /**
      * @serial
      */
-    private int widths[];
+    private int[] widths;
 
     /**
      * @serial
      */
-    private int heights[];
+    private int[] heights;
 
     /**
      * @serial
      */
-    private int hfit[];
+    private int[] hfit;
 
     /**
      * @serial
      */
-    private int vfit[];
+    private int[] vfit;
 
     /**
      * @serial
@@ -209,22 +209,22 @@ public class PnutsLayout implements LayoutManager2, java.io.Serializable {
     /**
      * @serial
      */
-    int grid_x[];
+    int[] grid_x;
 
     /**
      * @serial
      */
-    int grid_y[];
+    int[] grid_y;
 
     /**
      * @serial
      */
-    int pos_x[] = new int[8];
+    int[] pos_x = new int[8];
 
     /**
      * @serial
      */
-    int pos_y[] = new int[8];
+    int[] pos_y = new int[8];
 
     /**
      * @serial
@@ -673,12 +673,12 @@ public class PnutsLayout implements LayoutManager2, java.io.Serializable {
             tab.put("padx", o2[0]);
             tab.put("pady", o2[1]);
         }
-        Object o3[] = (Object[]) iPadTable.get(comp);
+        Object[] o3 = (Object[]) iPadTable.get(comp);
         if (o3 != null) {
             tab.put("ipadx", o3[0]);
             tab.put("ipady", o3[1]);
         }
-        Object o4[] = (Object[]) spanTable.get(comp);
+        Object[] o4 = (Object[]) spanTable.get(comp);
         if (o4 != null) {
             tab.put("colspan", o4[0]);
             tab.put("rowspan", o4[1]);
@@ -821,7 +821,7 @@ public class PnutsLayout implements LayoutManager2, java.io.Serializable {
      * @return the value of "colspan" property
      */
     public int getColspan(Component comp) {
-        Object o[] = (Object[]) spanTable.get(comp);
+        Object[] o = (Object[]) spanTable.get(comp);
         if (o == null || o.length < 2) {
             return 1;
         } else {
@@ -853,7 +853,7 @@ public class PnutsLayout implements LayoutManager2, java.io.Serializable {
      * @return the value of "rowspan" property
      */
     public int getRowspan(Component comp) {
-        Object o[] = (Object[]) spanTable.get(comp);
+        Object[] o = (Object[]) spanTable.get(comp);
         if (o == null || o.length < 2) {
             return 1;
         } else {
@@ -1085,7 +1085,7 @@ public class PnutsLayout implements LayoutManager2, java.io.Serializable {
      */
     void bindContainer(Container target) {
 
-        BitSet map[] = new BitSet[cols];
+        BitSet[] map = new BitSet[cols];
         for (int i = 0; i < cols; i++) {
             map[i] = new BitSet();
         }
@@ -1112,7 +1112,7 @@ public class PnutsLayout implements LayoutManager2, java.io.Serializable {
          */
         for (int i = 0; i < nmembers; i++) {
             Component comp = target.getComponent(i);
-            Object p[] = (Object[]) spanTable.get(comp);
+            Object[] p = (Object[]) spanTable.get(comp);
             int colspan = 1;
             int rowspan = 1;
             if (p != null) {
@@ -1164,7 +1164,7 @@ public class PnutsLayout implements LayoutManager2, java.io.Serializable {
             j = pos_x[i];
             int colspan = 1;
             int rowspan = 1;
-            Object p[] = (Object[]) spanTable.get(m);
+            Object[] p = (Object[]) spanTable.get(m);
             if (p != null) {
                 colspan = ((Integer) p[0]).intValue();
                 rowspan = ((Integer) p[1]).intValue();
@@ -1207,7 +1207,7 @@ public class PnutsLayout implements LayoutManager2, java.io.Serializable {
                 d_height = d.height + ((Integer) ip[1]).intValue();
             }
 
-            Object pd[] = (Object[]) padTable.get(m);
+            Object[] pd = (Object[]) padTable.get(m);
             int px = padx;
             int py = pady;
             if (pd != null) {
@@ -1220,7 +1220,7 @@ public class PnutsLayout implements LayoutManager2, java.io.Serializable {
 
             int colspan = 1;
             int rowspan = 1;
-            Object p[] = (Object[]) spanTable.get(m);
+            Object[] p = (Object[]) spanTable.get(m);
             if (p != null) {
                 colspan = ((Integer) p[0]).intValue();
                 rowspan = ((Integer) p[1]).intValue();
@@ -1410,7 +1410,7 @@ public class PnutsLayout implements LayoutManager2, java.io.Serializable {
 
             int colspan = 1;
             int rowspan = 1;
-            Object p[] = (Object[]) spanTable.get(m);
+            Object[] p = (Object[]) spanTable.get(m);
             if (p != null) {
                 colspan = ((Integer) p[0]).intValue();
                 rowspan = ((Integer) p[1]).intValue();
@@ -1426,7 +1426,7 @@ public class PnutsLayout implements LayoutManager2, java.io.Serializable {
             int dw = d_width;
             int dh = d_height;
 
-            Object pt[] = (Object[]) padTable.get(m);
+            Object[] pt = (Object[]) padTable.get(m);
             int px = padx;
             int py = pady;
             if (pt != null) {
@@ -1539,7 +1539,7 @@ public class PnutsLayout implements LayoutManager2, java.io.Serializable {
         int y = pos_y[idx];
         int gx = grid_x[x];
         int gy = grid_y[y];
-        Object s[] = (Object[]) spanTable.get(target.getComponent(idx));
+        Object[] s = (Object[]) spanTable.get(target.getComponent(idx));
         int sx = 1;
         int sy = 1;
         if (s != null) {

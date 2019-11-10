@@ -31,7 +31,7 @@ public class SwingHTMLFontParser {
 
     static final Pattern SIZE_REGEX = Pattern.compile("size=\"([^\"]*)\"",
             Pattern.CASE_INSENSITIVE);
-    static final int SIZE_MAP[] = {8, 10, 12, 14, 18, 24, 36};
+    static final int[] SIZE_MAP = {8, 10, 12, 14, 18, 24, 36};
 
     public static Font parseFont(String text) {
         Matcher m = SIZE_REGEX.matcher(text);

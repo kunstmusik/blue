@@ -26,5 +26,5 @@ import electric.xml.Element;
  * @author stevenyi
  */
 public interface BlueDataObject extends DeepCopyable<BlueDataObject> {
-   public Element saveAsXML(); 
+   Element saveAsXML();
 }

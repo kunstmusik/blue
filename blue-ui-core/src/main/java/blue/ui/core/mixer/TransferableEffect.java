@@ -40,7 +40,7 @@ public class TransferableEffect implements Transferable {
 
     private Object obj;
 
-    DataFlavor flavors[];
+    DataFlavor[] flavors;
 
     public TransferableEffect(Object obj) {
         this.obj = obj;

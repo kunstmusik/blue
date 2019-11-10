@@ -24,5 +24,5 @@ package blue.score.layers;
  * @author stevenyi
  */
 public interface LayerGroupListener {
-    public void layerGroupChanged(LayerGroupDataEvent event);
+    void layerGroupChanged(LayerGroupDataEvent event);
 }

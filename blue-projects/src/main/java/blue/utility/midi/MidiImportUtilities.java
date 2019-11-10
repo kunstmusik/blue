@@ -80,7 +80,7 @@ public class MidiImportUtilities {
             divType = 1.0f;
         }
 
-        double ticksLength = (double) sequence.getResolution();
+        double ticksLength = sequence.getResolution();
 
         MidiImportSettings settings = getMidiImportSettings(tracks);
 

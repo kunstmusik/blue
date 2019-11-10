@@ -122,7 +122,7 @@ public class PatternObject extends AbstractSoundObject implements TableModel,
     }
 
     public Pattern getPattern(int index) {
-        return (Pattern) patterns.get(index);
+        return patterns.get(index);
     }
 
     /* COMPILATION METHODS */
@@ -392,7 +392,7 @@ public class PatternObject extends AbstractSoundObject implements TableModel,
 
     @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
-        Pattern p = (Pattern) patterns.get(rowIndex);
+        Pattern p = patterns.get(rowIndex);
 
         switch (columnIndex) {
             case 0:
@@ -406,7 +406,7 @@ public class PatternObject extends AbstractSoundObject implements TableModel,
 
     @Override
     public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
-        Pattern p = (Pattern) patterns.get(rowIndex);
+        Pattern p = patterns.get(rowIndex);
 
         switch (columnIndex) {
             case 0:

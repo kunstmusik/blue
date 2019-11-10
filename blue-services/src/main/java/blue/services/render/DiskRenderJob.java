@@ -28,13 +28,13 @@ import java.io.File;
  */
 public final class DiskRenderJob {
 
-    private String args[];
+    private String[] args;
     private String filename;
     private BlueData data;
     File currentWorkingDirectory;
 
-    public DiskRenderJob(String args[], String filename, BlueData data,
-            File currentWorkingDirectory) {
+    public DiskRenderJob(String[] args, String filename, BlueData data,
+                         File currentWorkingDirectory) {
         this.args = args;
         this.filename = filename;
         this.data = data;

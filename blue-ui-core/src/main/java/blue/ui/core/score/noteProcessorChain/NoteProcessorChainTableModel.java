@@ -247,10 +247,7 @@ public class NoteProcessorChainTableModel extends AbstractTableModel {
             return false;
         }
 
-        if (c == 1) {
-            return true;
-        }
-        return false;
+        return c == 1;
     }
 
     @Override

@@ -15,5 +15,5 @@ package blue.orchestra.blueSynthBuilder;
  * @author mbechard
  */
 public interface BSBObjectListener {
-    public void bsbObjectChanged(BSBObject object);
+    void bsbObjectChanged(BSBObject object);
 }

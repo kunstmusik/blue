@@ -26,6 +26,6 @@ import javax.script.ScriptException;
  * @author stevenyi
  */
 public interface ScoreScriptEngine {
-    public String getEngineName();
-    public String evalCode(String code, Map<String,Object> initValues) throws ScriptException;
+    String getEngineName();
+    String evalCode(String code, Map<String, Object> initValues) throws ScriptException;
 }

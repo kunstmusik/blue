@@ -227,7 +227,7 @@ public final class PasteSoundObjectAction extends AbstractAction implements Cont
                 if (originalToCopyMap.containsKey(instanceSObj)) {
                     copy = originalToCopyMap.get(instanceSObj);
                 } else {
-                    copy = (SoundObject) instance.getSoundObject().deepCopy();
+                    copy = instance.getSoundObject().deepCopy();
                     sObjLib.addSoundObject(copy);
                     originalToCopyMap.put(instanceSObj, copy);
                 }

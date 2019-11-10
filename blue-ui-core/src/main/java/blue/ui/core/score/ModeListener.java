@@ -25,5 +25,5 @@ package blue.ui.core.score;
  * @author steven
  */
 public interface ModeListener {
-    public void modeChanged(ScoreMode mode);
+    void modeChanged(ScoreMode mode);
 }

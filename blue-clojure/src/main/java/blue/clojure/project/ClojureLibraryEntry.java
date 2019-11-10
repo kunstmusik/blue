@@ -32,7 +32,6 @@ public class ClojureLibraryEntry implements BlueDataObject {
 
     private SimpleStringProperty dependencyCoordinates
             = new SimpleStringProperty(this, "coordinates", "org/library-name");
-    ;
     private SimpleStringProperty version = new SimpleStringProperty(this, "version", "1.0.0");
 
     public ClojureLibraryEntry() {

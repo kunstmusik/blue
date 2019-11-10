@@ -88,10 +88,7 @@ class SoundObjectLibraryTableModel extends AbstractTableModel {
 
     @Override
     public boolean isCellEditable(int r, int c) {
-        if (c == 0) {
-            return true;
-        }
-        return false;
+        return c == 0;
     }
 
     @Override

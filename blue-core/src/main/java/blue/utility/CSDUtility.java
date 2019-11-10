@@ -384,7 +384,7 @@ public class CSDUtility {
                         line = line.substring(line.indexOf("opcode") + 6)
                                 .trim();
 
-                        String parts[] = line.split(",");
+                        String[] parts = line.split(",");
 
                         if (parts.length != 3) {
                             System.err.println("Error parsing UDO: 3 args "
@@ -420,7 +420,7 @@ public class CSDUtility {
                             instr.setText(iBody.toString());
 
                             if (instrIds.indexOf(',') > -1) {
-                                String ids[] = instrIds.split(",");
+                                String[] ids = instrIds.split(",");
 
                                 for (int i = 0; i < ids.length; i++) {
                                     arrangement.insertInstrument(ids[i], instr);
@@ -484,7 +484,7 @@ public class CSDUtility {
         data.getGlobalOrcSco().setGlobalOrc(globalOrch.toString());
     }
 
-    public static void main(String args[]) {
+    public static void main(String[] args) {
         File test = new File("/work/blue/trappedInConvert/01-Trapped.csd");
 
         try {

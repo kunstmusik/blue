@@ -479,7 +479,7 @@ public class BSBVSliderBank extends AutomatableBSBObject implements
                     return;
                 }
 
-                BSBVSlider lastSlider = (BSBVSlider) sliders
+                BSBVSlider lastSlider = sliders
                         .get(sliders.size() - 1);
 
                 for (int i = 0; i < diff; i++) {
@@ -515,7 +515,7 @@ public class BSBVSliderBank extends AutomatableBSBObject implements
                 }
             } else {
                 for (int i = 0; i < -diff; i++) {
-                    BSBVSlider slider = (BSBVSlider) sliders
+                    BSBVSlider slider = sliders
                             .get(sliders.size() - 1);
 
                     sliders.remove(slider);
@@ -586,9 +586,9 @@ public class BSBVSliderBank extends AutomatableBSBObject implements
                 buffer.append(":");
             }
 
-            BSBVSlider slider = (BSBVSlider) sliders.get(i);
+            BSBVSlider slider = sliders.get(i);
 
-            buffer.append(Double.toString(slider.getValue()));
+            buffer.append(slider.getValue());
         }
 
         return buffer.toString();
@@ -601,7 +601,7 @@ public class BSBVSliderBank extends AutomatableBSBObject implements
      */
     @Override
     public void setPresetValue(String val) {
-        String vals[] = val.split(":");
+        String[] vals = val.split(":");
 
         int size = sliders.size() < vals.length ? sliders.size() : vals.length;
 
@@ -692,7 +692,7 @@ public class BSBVSliderBank extends AutomatableBSBObject implements
             }
 
             if (!param.isAutomationEnabled()) {
-                BSBVSlider slider = (BSBVSlider) sliders.get(i);
+                BSBVSlider slider = sliders.get(i);
                 param.setValue(slider.getValue());
             }
 
@@ -704,7 +704,7 @@ public class BSBVSliderBank extends AutomatableBSBObject implements
         }
 
         for (int i = 0; i < sliders.size(); i++) {
-            BSBVSlider slider = (BSBVSlider) sliders.get(i);
+            BSBVSlider slider = sliders.get(i);
 
             vals[1] = new Integer(i);
             String key = KEY_FMT.format(vals);

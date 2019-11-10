@@ -321,7 +321,7 @@ public final class SoundObjectLibraryTopComponent extends TopComponent
                         sObj);
 
                 // sObjEditPanel.editSoundObject(null);
-                fireSoundObjectRemoved((SoundObject) sObj);
+                fireSoundObjectRemoved(sObj);
 
                 sObjLibTable.revalidate();
             }

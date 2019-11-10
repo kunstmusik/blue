@@ -56,8 +56,8 @@ public class CompileProcessor extends OptionProcessor {
     protected Set<Option> getOptions() {
         Set<Option> options = new HashSet<>();
         
-        c.shortDescription(o, "Bundle.properties", "option.compile.description");
-        o.shortDescription(o, "Bundle.properties", "option.output.description");
+        Option.shortDescription(o, "Bundle.properties", "option.compile.description");
+        Option.shortDescription(o, "Bundle.properties", "option.output.description");
         
         options.add(OptionGroups.allOf(c,o));
         

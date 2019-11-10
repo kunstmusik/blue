@@ -206,7 +206,7 @@ public class TableEditor extends javax.swing.JPanel implements PropertyChangeLis
             .addComponent(maxTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 77, javax.swing.GroupLayout.PREFERRED_SIZE))
     );
 
-    layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {interpolationComboBox, interpolationSpinner, maxTextField, minTextField});
+    layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, interpolationComboBox, interpolationSpinner, maxTextField, minTextField);
 
     layout.setVerticalGroup(
         layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)

@@ -589,7 +589,7 @@ public class ParameterLinePanel extends JComponent implements
             return;
         }
 
-        double pixelSecond = (double) timeState.getPixelSecond();
+        double pixelSecond = timeState.getPixelSecond();
 
         double selectionStart;
         double selectionEnd;
@@ -1057,7 +1057,7 @@ public class ParameterLinePanel extends JComponent implements
             pressPoint = e.getPoint();
 
             final int x = e.getX();
-            final double pixelSecond = (double) timeState.getPixelSecond();
+            final double pixelSecond = timeState.getPixelSecond();
             final double mouseTime = x / pixelSecond;
 
             if (paramList.containsLine(selection.getSourceLine())) {
@@ -1240,7 +1240,7 @@ public class ParameterLinePanel extends JComponent implements
             // check if selection currently is for line that is contained in this panel
             if (paramList.containsLine(selection.getSourceLine())) {
                 int x = e.getX();
-                double pixelSecond = (double) timeState.getPixelSecond();
+                double pixelSecond = timeState.getPixelSecond();
 
                 if (verticalShift) {
 
@@ -1331,7 +1331,7 @@ public class ParameterLinePanel extends JComponent implements
                     y = bottomY;
                 }
 
-                double pixelSecond = (double) timeState.getPixelSecond();
+                double pixelSecond = timeState.getPixelSecond();
                 double dragTime = x / pixelSecond;
 
                 if (timeState.isSnapEnabled() && !e.isControlDown()) {

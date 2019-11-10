@@ -113,7 +113,7 @@ public class WeibullEditor extends javax.swing.JPanel implements DurationSettabl
                 .addContainerGap())
         );
 
-        layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {sTypeComboBox, tTypeComboBox});
+        layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, sTypeComboBox, tTypeComboBox);
 
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)

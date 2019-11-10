@@ -9,7 +9,7 @@ package blue.services.render;
  * @author stevenyi
  */
 public interface RenderTimeManagerListener {
-    public void renderInitiated();
-    public void renderEnded();
-    public void renderTimeUpdated(double timePointer);
+    void renderInitiated();
+    void renderEnded();
+    void renderTimeUpdated(double timePointer);
 }

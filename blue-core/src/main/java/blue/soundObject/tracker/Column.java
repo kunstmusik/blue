@@ -210,11 +210,7 @@ public class Column {
                         int oct = Integer.parseInt(parts[0]);
                         int pch = Integer.parseInt(parts[1]);
 
-                        if (parts[1].startsWith("0") && parts[1].length() > 1) {
-                            retVal = false;
-                        } else {
-                            retVal = true;
-                        }
+                        retVal = !parts[1].startsWith("0") || parts[1].length() <= 1;
 
                     } catch (NumberFormatException nfe) {
                         retVal = false;

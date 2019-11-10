@@ -82,7 +82,7 @@ public class MarkersList implements TableModel, PropertyChangeListener {
     }
 
     public Marker getMarker(int index) {
-        return (Marker) markers.get(index);
+        return markers.get(index);
     }
 
     public void removeMarker(Marker marker) {
@@ -90,7 +90,7 @@ public class MarkersList implements TableModel, PropertyChangeListener {
     }
 
     public void removeMarker(int index) {
-        Marker m = (Marker) markers.remove(index);
+        Marker m = markers.remove(index);
         m.removePropertyChangeListener(this);
 
         if (listeners == null) {

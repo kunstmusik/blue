@@ -31,16 +31,16 @@ import org.openide.util.lookup.InstanceContent;
  */
 public interface LayerGroupUIProvider {
     
-    public JComponent getLayerGroupPanel(LayerGroup<?> layerGroup, 
-            TimeState timeState, 
-            BlueData data, 
-            InstanceContent ic);
+    JComponent getLayerGroupPanel(LayerGroup<?> layerGroup,
+                                  TimeState timeState,
+                                  BlueData data,
+                                  InstanceContent ic);
 
 
-    public JComponent getLayerGroupHeaderPanel(LayerGroup<?> layerGroup, 
-                TimeState timeState, 
-                BlueData data,
-                InstanceContent ic);
+    JComponent getLayerGroupHeaderPanel(LayerGroup<?> layerGroup,
+                                        TimeState timeState,
+                                        BlueData data,
+                                        InstanceContent ic);
     
     /**
      * Returns a JComponent for editing the properties of this LayerGroup. This
@@ -50,5 +50,5 @@ public interface LayerGroupUIProvider {
      * @param layerGroup
      * @return 
      */
-    public JComponent getLayerGroupPropertiesPanel(LayerGroup<?> layerGroup);
+    JComponent getLayerGroupPropertiesPanel(LayerGroup<?> layerGroup);
 }

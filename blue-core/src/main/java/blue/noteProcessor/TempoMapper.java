@@ -135,7 +135,7 @@ public class TempoMapper {
     private static double getAreaUnderCurve(double factor1, double deltaBeat,
             double acceleration) {
         return (factor1 * deltaBeat)
-                + (0.5f * acceleration * (double) Math.pow(deltaBeat, 2));
+                + (0.5f * acceleration * Math.pow(deltaBeat, 2));
     }
 
     public double secondsToBeats(double seconds) {
@@ -176,7 +176,7 @@ public class TempoMapper {
                     double a = 0.5f * (btime1 - btime0) / (beat1 - beat0);
                     double b = btime0;
                     double c = time0 - seconds;
-                    x = (double) (Math.sqrt(b * b - (4 * a * c)) - b)
+                    x = (Math.sqrt(b * b - (4 * a * c)) - b)
                             / (2 * a);
                 }
                 

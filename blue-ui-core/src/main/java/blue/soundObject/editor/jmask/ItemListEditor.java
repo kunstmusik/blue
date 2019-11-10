@@ -136,7 +136,7 @@ public class ItemListEditor extends javax.swing.JPanel implements DurationSettab
                 .addContainerGap())
         );
 
-        layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {addButton, pushDownButton, pushUpButton, removeButton});
+        layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, addButton, pushDownButton, pushUpButton, removeButton);
 
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)

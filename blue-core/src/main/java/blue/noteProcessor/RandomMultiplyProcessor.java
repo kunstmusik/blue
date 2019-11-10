@@ -108,7 +108,7 @@ public class RandomMultiplyProcessor implements NoteProcessor {
                         pfield);
             }
 
-            double randVal = (double) ((r.nextDouble() * range) + min);
+            double randVal = (r.nextDouble() * range) + min;
 
             temp.setPField(Double.toString(fieldVal * randVal), pfield);
         }
@@ -162,7 +162,7 @@ public class RandomMultiplyProcessor implements NoteProcessor {
         return retVal;
     }
 
-    public static void main(String args[]) {
+    public static void main(String[] args) {
         NoteList n = new NoteList();
 
         for (int i = 0; i < 10; i++) {

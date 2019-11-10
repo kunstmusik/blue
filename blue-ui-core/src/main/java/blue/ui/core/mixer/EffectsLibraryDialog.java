@@ -222,7 +222,7 @@ public class EffectsLibraryDialog extends javax.swing.JDialog implements
     /**
      * @param args the command line arguments
      */
-    public static void main(String args[]) {
+    public static void main(String[] args) {
         GUI.setBlueLookAndFeel();
 
         EffectsLibraryDialog library = new EffectsLibraryDialog(null, true);

@@ -60,8 +60,8 @@ public final class AlignCenterAction extends AbstractAction implements ContextAw
             return;
         }
 
-        double initialStartTimes[] = new double[selected.size()];
-        double endingStartTimes[] = new double[selected.size()];
+        double[] initialStartTimes = new double[selected.size()];
+        double[] endingStartTimes = new double[selected.size()];
 
         double farLeft = Double.MAX_VALUE;
         double farRight = Double.MIN_VALUE;

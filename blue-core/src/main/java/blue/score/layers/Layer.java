@@ -27,14 +27,14 @@ import blue.score.ScoreObject;
  * @author stevenyi
  */
 public interface Layer extends DeepCopyable<Layer> {
-    public static final int LAYER_HEIGHT = 22;
+    int LAYER_HEIGHT = 22;
     
-    public String getName();
-    public void setName(String name);
-    public int getLayerHeight();
+    String getName();
+    void setName(String name);
+    int getLayerHeight();
     
-    public boolean accepts(ScoreObject object);
-    public boolean contains(ScoreObject object);
-    public boolean remove(ScoreObject object);
-    public void clearScoreObjects();
+    boolean accepts(ScoreObject object);
+    boolean contains(ScoreObject object);
+    boolean remove(ScoreObject object);
+    void clearScoreObjects();
 }

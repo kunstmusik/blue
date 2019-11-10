@@ -13,5 +13,5 @@ package blue.ui.core.orchestra.editor.blueX7;
  * Window>Preferences>Java>Code Generation>Code and Comments
  */
 public interface PointListener {
-    public void updateLabels();
+    void updateLabels();
 }

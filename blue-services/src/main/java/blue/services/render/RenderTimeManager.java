@@ -28,8 +28,8 @@ import java.beans.PropertyChangeListener;
  */
 public interface RenderTimeManager {
 
-    public static String RENDER_START = "renderStart";
-    public static String TIME_POINTER = "timePointer";
+    String RENDER_START = "renderStart";
+    String TIME_POINTER = "timePointer";
 
     // Property Change Methods
     void addPropertyChangeListener(PropertyChangeListener pcl);

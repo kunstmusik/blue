@@ -328,7 +328,7 @@ public class TempoEditor extends JComponent implements PropertyChangeListener {
         double value = percent * range;
 
         if (resolution > 0.0f) {
-            value = (double) (value - Math.IEEEremainder(value, resolution));
+            value = value - Math.IEEEremainder(value, resolution);
         }
 
         if (value > range) {

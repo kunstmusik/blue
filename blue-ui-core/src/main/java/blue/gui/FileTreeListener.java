@@ -29,5 +29,5 @@ import java.io.File;
  * Window>Preferences>Java>Code Generation>Code and Comments
  */
 public interface FileTreeListener {
-    public void fileSelected(File f);
+    void fileSelected(File f);
 }

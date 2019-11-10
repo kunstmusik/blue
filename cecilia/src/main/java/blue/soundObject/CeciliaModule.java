@@ -212,7 +212,7 @@ public class CeciliaModule extends AbstractSoundObject implements GenericViewabl
         retVal.addElement(moduleDefinition.saveAsXML());
 
         for (String key : stateData.keySet()) {
-            CeciliaObject cObj = (CeciliaObject) stateData.get(key);
+            CeciliaObject cObj = stateData.get(key);
             Element elem = cObj.saveAsXML();
             elem.setAttribute("nameKey", key);
 

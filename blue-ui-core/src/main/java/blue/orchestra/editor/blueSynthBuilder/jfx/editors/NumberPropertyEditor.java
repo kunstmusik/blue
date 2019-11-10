@@ -81,7 +81,7 @@ public class NumberPropertyEditor extends TextField {
                 item.setValue(getValueAsNumber());
                 setText(item.getValue().toString());
             } catch (Exception e) {
-                e.printStackTrace();;
+                e.printStackTrace();
                 setText(item.getValue().toString());
             }
         }

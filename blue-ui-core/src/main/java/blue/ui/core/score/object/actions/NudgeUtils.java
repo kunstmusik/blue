@@ -55,7 +55,7 @@ public class NudgeUtils {
 //        mBuffer.motionBufferObjects();
 //        setSelectionDragRegions();
         int len = scoreObjects.size();
-        ScoreObject[] objects = scoreObjects.<ScoreObject>toArray(
+        ScoreObject[] objects = scoreObjects.toArray(
                 new ScoreObject[scoreObjects.size()]);
         double[] startTimes = new double[len];
         double[] endTimes = new double[len];

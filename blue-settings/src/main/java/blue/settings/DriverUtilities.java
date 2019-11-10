@@ -229,7 +229,7 @@ public class DriverUtilities {
 
         String ioFlag = isInput ? "-M999" : "-M999";
 
-        String args[] = new String[]{
+        String[] args = new String[]{
             csoundCommand,
             ioFlag, "-+msg_color=false",
             "-+rtmidi=" + driver, "-m1024", tempFile.getAbsolutePath()
@@ -244,7 +244,7 @@ public class DriverUtilities {
         String startToken = "sorting score";
         String endToken = "***";
 
-        String lines[] = text.split("\\r?\\n");
+        String[] lines = text.split("\\r?\\n");
         for (String line : lines) {
             if (collect) {
                 if (endToken.length() > 0 && line.contains(endToken)) {
@@ -355,7 +355,7 @@ public class DriverUtilities {
         String startToken = "audio buffered in";
         String endToken = "inactive allocs";
 
-        String lines[] = text.split("\\r?\\n");
+        String[] lines = text.split("\\r?\\n");
         for (String line : lines) {
             if (collect) {
                 if (endToken.length() > 0 && line.contains(endToken)) {
@@ -390,7 +390,7 @@ public class DriverUtilities {
 
         String ioFlag = isInput ? "-iadc999" : "-odac999";
 
-        String args[] = new String[]{
+        String[] args = new String[]{
             csoundCommand,
             ioFlag, "-+msg_color=false",
             "-+rtaudio=" + driver, "-m1024", tempFile.getAbsolutePath()
@@ -421,7 +421,7 @@ public class DriverUtilities {
 
         String ioFlag = isInput ? "-iadc:xxx" : "-odac:xxx";
 
-        String args[] = new String[]{
+        String[] args = new String[]{
             csoundCommand,
             ioFlag, "-B4096",
             "-+msg_color=false", "-+rtaudio=jack", tempFile.getAbsolutePath()
@@ -483,7 +483,7 @@ public class DriverUtilities {
         } else {
             List<DeviceInfo> temp = parseCsoundOutput(retVal, isInput);
             for (DeviceInfo info : temp) {
-                String parts[] = info.toString().split("\\s+");
+                String[] parts = info.toString().split("\\s+");
                 devices.add(new DeviceInfo(
                         info.toString(),
                         parts[0]));

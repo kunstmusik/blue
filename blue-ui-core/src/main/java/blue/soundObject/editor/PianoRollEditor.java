@@ -251,7 +251,7 @@ public class PianoRollEditor extends ScoreObjectEditor implements
         }
     }
 
-    public static void main(String args[]) {
+    public static void main(String[] args) {
 
         GUI.setBlueLookAndFeel();
 

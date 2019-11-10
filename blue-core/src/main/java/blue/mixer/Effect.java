@@ -147,7 +147,7 @@ public class Effect implements Automatable {
                     break;
                 case "bsbParameterList":
                 case "parameterList":
-                    effect.parameterList = (ParameterList) ParameterList
+                    effect.parameterList = ParameterList
                             .loadFromXML(node);
                     break;
             }

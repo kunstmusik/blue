@@ -41,8 +41,8 @@ public class ResizeScoreObjectsListener extends BlueMouseAdapter {
     protected enum ResizeMode {
         
         RESIZE_RIGHT, RESIZE_LEFT
-    };
-    
+    }
+
     private static final int EDGE = 5;
     
     private Point startPoint;

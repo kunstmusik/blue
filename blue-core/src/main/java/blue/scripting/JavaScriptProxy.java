@@ -39,7 +39,7 @@ public class JavaScriptProxy {
         }
         String returnScore = "";
 
-        String init = "blueDuration = " + Double.toString(subjectiveDuration)
+        String init = "blueDuration = " + subjectiveDuration
                 + ";\n";
         init += "score = '';";
 

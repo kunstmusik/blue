@@ -451,7 +451,7 @@ public class BSBObjectViewHolder extends Pane {
                     temp.setX(temp.getX() + x);
                     temp.setY(temp.getY() + y);
                     rootGroup.addBSBObject(temp);
-                };
+                }
             });
 
             final Menu align = new Menu("Align");

@@ -373,7 +373,7 @@ public class ArrangementEditPanel extends JComponent
 
         Instrument instr = (Instrument) obj;
 
-        Instrument clone = (Instrument) instr.deepCopy();
+        Instrument clone = instr.deepCopy();
 
         if (clone instanceof BlueSynthBuilder) {
             ((BlueSynthBuilder) clone).clearParameters();

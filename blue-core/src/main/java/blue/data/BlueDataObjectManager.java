@@ -27,5 +27,5 @@ import electric.xml.Element;
  * @author stevenyi
  */
 public interface BlueDataObjectManager {
-    public BlueDataObject loadFromXML(Element element);
+    BlueDataObject loadFromXML(Element element);
 }

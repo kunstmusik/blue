@@ -27,5 +27,5 @@ package blue.score.layers;
  * @author stevenyi
  */
 public interface DeepCopyableLG<T> {
-    public T deepCopyLG(); 
+    T deepCopyLG();
 }

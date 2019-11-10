@@ -34,7 +34,7 @@ public interface LayerGroupProvider {
      * 
      * @return the name of the LayerGroup (i.e. "SoundObject", "Pattern")
      */
-    public String getLayerGroupName();
+    String getLayerGroupName();
     
     /**
      * Creates a new LayerGroup

@@ -110,7 +110,7 @@ public class AudioFileRenderer implements BarRenderer {
             g.setComposite(AlphaComposite.Src);
             g.setFont(renderFont);
 
-            String parts[] = sObjView.getSoundObject().getName().split(
+            String[] parts = sObjView.getSoundObject().getName().split(
                     "\\\\[n]");
 
             for (int i = 0; i < parts.length; i++) {

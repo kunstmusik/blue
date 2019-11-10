@@ -26,5 +26,5 @@ package blue;
  */
 public interface ArrangementListener {
 
-    public void arrangementChanged(ArrangementEvent arrEvt);
+    void arrangementChanged(ArrangementEvent arrEvt);
 }

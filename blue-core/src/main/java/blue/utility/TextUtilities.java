@@ -179,7 +179,7 @@ public class TextUtilities {
     }
 
     public static String getTextFromFile(File textFile)
-            throws FileNotFoundException, IOException {
+            throws IOException {
         StringBuilder buffer = new StringBuilder();
         try (BufferedReader br = new BufferedReader(new FileReader(textFile))) {
             String line;
@@ -203,7 +203,7 @@ public class TextUtilities {
      *         lines).
      */
     public static ArrayList getLinesFromFile(File textFile, boolean trim)
-            throws FileNotFoundException, IOException {
+            throws IOException {
         ArrayList lines = new ArrayList();
         try (BufferedReader br = new BufferedReader(new FileReader(textFile))) {
             String line;

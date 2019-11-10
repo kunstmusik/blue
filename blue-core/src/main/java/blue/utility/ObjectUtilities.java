@@ -93,9 +93,9 @@ public class ObjectUtilities {
         Object retVal = null;
 
         Method m = classToLoad.getMethod("loadFromXML",
-                new Class[] { Element.class });
+                Element.class);
         try{
-        retVal = m.invoke(null, new Object[] { elem });
+        retVal = m.invoke(null, elem);
         } catch(Exception e) {
            throw new Exception("Error with class: " + classToLoad, e); 
         }
@@ -113,9 +113,8 @@ public class ObjectUtilities {
 
         Object retVal = null;
 
-        Method m = classToLoad.getMethod("loadFromXML", new Class[] {
-                Element.class, Map.class });
-        retVal = m.invoke(null, new Object[] { elem, objRefMap });
+        Method m = classToLoad.getMethod("loadFromXML", Element.class, Map.class);
+        retVal = m.invoke(null, elem, objRefMap);
 
         return retVal;
     }

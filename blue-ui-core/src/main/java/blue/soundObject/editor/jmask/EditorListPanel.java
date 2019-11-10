@@ -76,7 +76,7 @@ public class EditorListPanel extends JComponent implements
             pEditor.setParameter(p, i + 1);
             this.add(pEditor);
 
-            pEditor.setDuration((double) jMask.getSubjectiveDuration());
+            pEditor.setDuration(jMask.getSubjectiveDuration());
 
             pEditor.addParameterEditListener(this);
         }
@@ -133,7 +133,7 @@ public class EditorListPanel extends JComponent implements
 
         this.add(pEditor, index);
         
-        pEditor.setDuration((double)jMask.getSubjectiveDuration());
+        pEditor.setDuration(jMask.getSubjectiveDuration());
 
         renumberParameterPanels();
         revalidate();

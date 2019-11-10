@@ -387,7 +387,7 @@ public class BSBLineObject extends BSBObject {
         private final String value;
         private final String separatorString;
 
-        private SeparatorType(String value, String separatorString) {
+        SeparatorType(String value, String separatorString) {
             this.value = value;
             this.separatorString = separatorString;
         }
@@ -412,5 +412,5 @@ public class BSBLineObject extends BSBObject {
         public String toString() {
             return value;
         }
-    };
+    }
 }

@@ -178,7 +178,7 @@ public class NoteProcessorChainEditor extends JComponent {
     }
 
     private void updateHilightRows() {
-        int hilightRows[] = npcModel.getHilightRows();
+        int[] hilightRows = npcModel.getHilightRows();
         npcTable.setHilightRows(hilightRows);
     }
 

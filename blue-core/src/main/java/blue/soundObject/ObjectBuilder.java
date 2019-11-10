@@ -254,7 +254,6 @@ public class ObjectBuilder extends AbstractSoundObject {
                     } else {
                         bsb.setLanguageType(LanguageType.PYTHON);
                     }
-                    ;
                     break;
                 case "graphicInterface":
                     bsb.setGraphicInterface(BSBGraphicInterface.loadFromXML(node));
@@ -361,7 +360,7 @@ public class ObjectBuilder extends AbstractSoundObject {
     }
 
     // ENUM FOR LANGUAGES
-    public static enum LanguageType {
+    public enum LanguageType {
         PYTHON("Python", "text/x-python"), 
         JAVASCRIPT("JavaScript", "text/javascript"), 
         CLOJURE("Clojure", "text/x-clojure"), 

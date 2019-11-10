@@ -226,7 +226,7 @@ class BumpBuffer {
         if (gc != null) {
             image = gc.createCompatibleImage(IMAGE_SIZE, IMAGE_SIZE);
         } else {
-            int cmap[] = { backColor.getRGB(), topColor.getRGB(),
+            int[] cmap = { backColor.getRGB(), topColor.getRGB(),
                     shadowColor.getRGB() };
             IndexColorModel icm = new IndexColorModel(8, 3, cmap, 0, false, -1,
                     DataBuffer.TYPE_BYTE);

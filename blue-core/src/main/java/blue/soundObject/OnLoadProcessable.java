@@ -26,9 +26,9 @@ package blue.soundObject;
  */
 public interface OnLoadProcessable {
 
-    public void setOnLoadProcessable(boolean onLoadProcessable);
+    void setOnLoadProcessable(boolean onLoadProcessable);
 
-    public boolean isOnLoadProcessable();
+    boolean isOnLoadProcessable();
 
-    public void processOnLoad() throws SoundObjectException;
+    void processOnLoad() throws SoundObjectException;
 }

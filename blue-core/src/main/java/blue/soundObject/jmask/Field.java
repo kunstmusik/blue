@@ -171,11 +171,11 @@ public class Field implements ListModel {
 
     // Fields
     public Parameter getParameter(int index) {
-        return (Parameter) parameters.get(index);
+        return parameters.get(index);
     }
 
     public Parameter removeParameter(int index) {
-        Parameter retVal = (Parameter) parameters.remove(index);
+        Parameter retVal = parameters.remove(index);
 
         ListDataEvent lde = new ListDataEvent(this,
                 ListDataEvent.INTERVAL_REMOVED, index, index);

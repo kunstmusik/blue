@@ -28,7 +28,7 @@ public class OpcodeDoc {
     public String signature = "";
     
     public void toString(String indentation, StringBuilder str) {
-        str.append(indentation).append("Opcode: ").append(opcodeName).append("\n");;
+        str.append(indentation).append("Opcode: ").append(opcodeName).append("\n");
 //        str.append(indentation).append("  Name: ").append(opcodeName).append("\n");
 //        str.append(indentation).append("  Signature: ").append(signature).append("\n");;
     }

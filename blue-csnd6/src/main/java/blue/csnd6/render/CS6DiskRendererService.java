@@ -130,7 +130,7 @@ public class CS6DiskRendererService implements DiskRenderService {
         do {
             counter++;
 
-            double scoreTime = (double) csound.GetScoreTime();
+            double scoreTime = csound.GetScoreTime();
 
             if (counter > updateRate) {
                 manager.updateTimePointer(scoreTime);
@@ -157,7 +157,7 @@ public class CS6DiskRendererService implements DiskRenderService {
                     String varName = param.getCompilationVarName();
 
                     double value = param.getValue(currentTime);
-                    csound.SetChannel(varName, (double) value);
+                    csound.SetChannel(varName, value);
 
                 }
             }
@@ -325,7 +325,7 @@ public class CS6DiskRendererService implements DiskRenderService {
         CsoundArgVList argsList = new CsoundArgVList();
         ioProvider.getOut().append("Render Command (");
 
-        String args[] = job.getArgs();
+        String[] args = job.getArgs();
         for (int i = 0; i < args.length; i++) {
             if (args[i].startsWith("\"") && args[i].endsWith("\"")) {
                 args[i] = args[i].substring(1, args[i].length() - 1);
@@ -357,7 +357,7 @@ public class CS6DiskRendererService implements DiskRenderService {
 
         while (csound.PerformKsmps() == 0 && keepRunning) {
             
-        };
+        }
         csound.Stop();
         csound.Cleanup();
         csound.SetMessageCallback(null);

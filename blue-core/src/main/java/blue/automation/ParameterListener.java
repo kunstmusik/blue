@@ -25,7 +25,7 @@ public interface ParameterListener {
      * Used to notify changes to the Parameter's properties. To be used by
      * Parameter selection popup menu
      */
-    public void parameterChanged(Parameter param);
+    void parameterChanged(Parameter param);
 
     /**
      * Use to nofity of changes to the Parameter's Line's values. To be used by
@@ -35,5 +35,5 @@ public interface ParameterListener {
      * 
      * @param param
      */
-    public void lineDataChanged(Parameter param);
+    void lineDataChanged(Parameter param);
 }

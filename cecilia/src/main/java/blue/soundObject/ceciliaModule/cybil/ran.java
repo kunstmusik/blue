@@ -37,7 +37,7 @@ class ran extends CybilFunction {
         min = getDoubleValue(arg1);
         max = getDoubleValue(arg2);
 
-        double ranValue = (double) (Math.random() * (max - min));
+        double ranValue = Math.random() * (max - min);
         ranValue += min;
 
         if (ranType.equals("i")) {

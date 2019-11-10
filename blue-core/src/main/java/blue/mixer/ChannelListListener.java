@@ -20,7 +20,7 @@
 package blue.mixer;
 
 public interface ChannelListListener {
-    public void channelAdded(Channel channel);
+    void channelAdded(Channel channel);
 
-    public void channelRemoved(Channel channel);
+    void channelRemoved(Channel channel);
 }

@@ -319,7 +319,7 @@ public class BSBXYController extends AutomatableBSBObject implements
 
     @Override
     public Element saveAsXML() {
-        Element retVal = super.getBasicXML(this);
+        Element retVal = getBasicXML(this);
 
         retVal.setAttribute("version", "2");
 

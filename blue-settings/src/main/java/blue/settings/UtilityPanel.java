@@ -101,7 +101,7 @@ final class UtilityPanel extends javax.swing.JPanel {
                 .addContainerGap())
         );
 
-        layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {jLabel1, jLabel2});
+        layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, jLabel1, jLabel2);
 
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)

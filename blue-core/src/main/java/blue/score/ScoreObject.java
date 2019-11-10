@@ -33,24 +33,24 @@ public interface ScoreObject extends DeepCopyable<ScoreObject> {
     /**
      * Sets the name of the ScoreObject.
      */
-    public void setName(String name);
+    void setName(String name);
 
     /**
      * Gets the name of the ScoreObject;
      */
-    public String getName();
+    String getName();
     
     /**
      * Gets the start time of the ScoreObject.
      */
     //FIXME -  change this to use double
-    public double getStartTime();
+    double getStartTime();
 
     /**
      * Sets the start time of the ScoreObject.
      */
     //FIXME -  change this to use double
-    public void setStartTime(double startTime);
+    void setStartTime(double startTime);
     
     /**
      * Gets the subjective duration of the ScoreObject.
@@ -59,7 +59,7 @@ public interface ScoreObject extends DeepCopyable<ScoreObject> {
      * ScoreObject is assigned to last, regardless of its contents.
      */
     //FIXME -  change this to use double
-    public double getSubjectiveDuration();
+    double getSubjectiveDuration();
 
     /**
      * Sets the subjective duration of the ScoreObject.
@@ -67,45 +67,45 @@ public interface ScoreObject extends DeepCopyable<ScoreObject> {
      * The subjective duration of the ScoreObject is the amount of time a
      * ScoreObject is assigned to last, regardless of its contents.
      */
-    public void setSubjectiveDuration(double duration);
+    void setSubjectiveDuration(double duration);
 
 //    boolean isLayerTransferrable();
     // maybe use interface of Resizable?
 //    boolean isLeftResizable()
     // boolean isRightResizble()
 
-    public double getMaxResizeRightDiff();
-    public double getMaxResizeLeftDiff();
-    public void resizeLeft(double newStartTime);
-    public void resizeRight(double newEndTime);
+    double getMaxResizeRightDiff();
+    double getMaxResizeLeftDiff();
+    void resizeLeft(double newStartTime);
+    void resizeRight(double newEndTime);
 
     /**
      * Adds a ScoreObjectListener to this ScoreObject
      * 
      * @param listener
      */
-    public void addScoreObjectListener(ScoreObjectListener listener);
+    void addScoreObjectListener(ScoreObjectListener listener);
 
     /**
      * Removes a ScoreObjectListener to this ScoreObject
      * 
      * @param listener
      */
-    public void removeScoreObjectListener(ScoreObjectListener listener);
+    void removeScoreObjectListener(ScoreObjectListener listener);
    
     /**
      * Gets background color for ScoreObject
      * 
      * @return
      */
-    public Color getBackgroundColor();
+    Color getBackgroundColor();
 
     /**
      * Sets background color for ScoreObject
      * 
      * @param color
      */
-    public void setBackgroundColor(Color color);
+    void setBackgroundColor(Color color);
 
-    public int getCloneSourceHashCode();
+    int getCloneSourceHashCode();
 }

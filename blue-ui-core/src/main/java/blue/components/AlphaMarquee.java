@@ -69,11 +69,8 @@ public class AlphaMarquee extends JComponent implements SelectionMarquee {
         int top = r.y;
         int bottom = top + r.height;
 
-        if (left < marqueeRight && right > marqueeLeft && top < marqueeBottom
-                && bottom > marqueeTop) {
-            return true;
-        }
-        return false;
+        return left < marqueeRight && right > marqueeLeft && top < marqueeBottom
+                && bottom > marqueeTop;
     }
 
     @Override

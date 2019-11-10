@@ -649,7 +649,7 @@ public class Grapher extends JComponent {
             CGraphPoint point = new CGraphPoint();
             double percent = (double) i / (NOISE_POINTS - 1);
             point.time = percent;
-            point.value = (double) Math.sin(percent * 2 * Math.PI);
+            point.value = Math.sin(percent * 2 * Math.PI);
             point.value = (point.value * .5f) + .5f;
 
             points.add(point);
@@ -679,8 +679,8 @@ public class Grapher extends JComponent {
 
         for (int i = 0; i < NOISE_POINTS; i++) {
             CGraphPoint point = new CGraphPoint();
-            point.time = (double) Math.random();
-            point.value = (double) Math.random();
+            point.time = Math.random();
+            point.value = Math.random();
 
             points.add(point);
         }

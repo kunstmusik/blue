@@ -108,7 +108,7 @@ public class Track implements TableModel {
             case 0:
                 retVal = null;
             default:
-                retVal = (Column) columns.get(index - 1);
+                retVal = columns.get(index - 1);
         }
 
         return retVal;
@@ -134,7 +134,7 @@ public class Track implements TableModel {
     }
 
     public TrackerNote getTrackerNote(int rowIndex) {
-        return (TrackerNote) trackerNotes.get(rowIndex);
+        return trackerNotes.get(rowIndex);
     }
 
     public void setName(String name) {
@@ -391,7 +391,7 @@ public class Track implements TableModel {
 
     @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
-        Column col = (Column) columns.get(rowIndex);
+        Column col = columns.get(rowIndex);
 
         if (columnIndex == 0) {
             return col.getName();
@@ -406,7 +406,7 @@ public class Track implements TableModel {
             return;
         }
 
-        Column col = (Column) columns.get(rowIndex);
+        Column col = columns.get(rowIndex);
 
         if (!col.getName().equals(aValue)) {
             col.setName((String) aValue);

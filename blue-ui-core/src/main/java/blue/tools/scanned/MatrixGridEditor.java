@@ -162,7 +162,7 @@ public class MatrixGridEditor extends JComponent {
         boolean[] matrix = new boolean[temp.size()];
 
         for (int i = 0; i < temp.size(); i++) {
-            matrix[i] = temp.get(i).equals("0") ? false : true;
+            matrix[i] = !temp.get(i).equals("0");
             // System.out.println("i: " + matrix[i]);
         }
 

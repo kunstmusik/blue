@@ -11,10 +11,7 @@ public final class ScalaFileFilter extends FileFilter {
         }
         String extension = getExtension(f);
 
-        if (extension != null && extension.equals("scl")) {
-            return true;
-        }
-        return false;
+        return extension != null && extension.equals("scl");
     }
 
     @Override

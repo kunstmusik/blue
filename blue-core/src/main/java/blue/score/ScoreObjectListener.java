@@ -20,5 +20,5 @@
 package blue.score;
 
 public interface ScoreObjectListener {
-    public void scoreObjectChanged(ScoreObjectEvent event);
+    void scoreObjectChanged(ScoreObjectEvent event);
 }

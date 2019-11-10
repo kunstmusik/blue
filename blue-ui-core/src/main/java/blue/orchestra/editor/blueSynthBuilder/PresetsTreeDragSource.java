@@ -128,7 +128,7 @@ class TransferablePreset implements Transferable {
     public static DataFlavor PRESET_GROUP_FLAVOR = new DataFlavor(
             PresetGroup.class, "BSB Preset Group");
 
-    DataFlavor flavors[] = { PRESET_FLAVOR, PRESET_GROUP_FLAVOR };
+    DataFlavor[] flavors = { PRESET_FLAVOR, PRESET_GROUP_FLAVOR };
 
     @Override
     public DataFlavor[] getTransferDataFlavors() {
@@ -137,11 +137,8 @@ class TransferablePreset implements Transferable {
 
     @Override
     public boolean isDataFlavorSupported(DataFlavor flavor) {
-        if (flavor.getRepresentationClass() == Preset.class
-                || flavor.getRepresentationClass() == PresetGroup.class) {
-            return true;
-        }
-        return false;
+        return flavor.getRepresentationClass() == Preset.class
+                || flavor.getRepresentationClass() == PresetGroup.class;
     }
 
     @Override

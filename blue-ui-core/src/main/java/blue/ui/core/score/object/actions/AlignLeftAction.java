@@ -61,8 +61,8 @@ public final class AlignLeftAction extends AbstractAction implements ContextAwar
         }
 
 
-        double initialStartTimes[] = new double[selected.size()];
-        double endingStartTimes[] = new double[selected.size()];
+        double[] initialStartTimes = new double[selected.size()];
+        double[] endingStartTimes = new double[selected.size()];
 
         double farLeft = Double.MAX_VALUE;
         int i = 0;

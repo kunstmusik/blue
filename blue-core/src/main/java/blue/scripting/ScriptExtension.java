@@ -27,11 +27,11 @@ package blue.scripting;
  */
 public interface ScriptExtension {
 
-    public String getName();
+    String getName();
 
-    public String getDescription();
+    String getDescription();
 
-    public String execute();
+    String execute();
 
-    public int getType();
+    int getType();
 }

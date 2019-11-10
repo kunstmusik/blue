@@ -133,7 +133,7 @@ public class CeciliaModuleCompilationUnit {
                 String initText = "gk" + graph.getObjectName();
                 initText += " init ";
 
-                CGraphPoint point = (CGraphPoint) graph.getPoints().get(0);
+                CGraphPoint point = graph.getPoints().get(0);
 
                 double max = graph.getMax();
                 double min = graph.getMax();
@@ -282,7 +282,7 @@ public class CeciliaModuleCompilationUnit {
             int newNum = tables.getOpenFTableNumber();
 
             newTableText.append("f");
-            newTableText.append(Integer.toString(newNum));
+            newTableText.append(newNum);
             newTableText.append("\t");
             newTableText.append(tableText);
             newTableText.append("\n");
@@ -361,7 +361,7 @@ public class CeciliaModuleCompilationUnit {
         for (Iterator iter = ceciliaVariables.keySet().iterator(); iter
                 .hasNext();) {
             String key = (String) iter.next();
-            String val = (String) ceciliaVariables.get(key);
+            String val = ceciliaVariables.get(key);
             retVal = TextUtilities.replaceAll(retVal, "[" + key + "]", val);
             retVal = TextUtilities.replaceAll(retVal, "$value(" + key + ")",
                     val);
@@ -464,7 +464,7 @@ public class CeciliaModuleCompilationUnit {
         NoteList nl = new NoteList();
 
         if (magicInstrId != Integer.MIN_VALUE) {
-            String magicNote = "i" + Integer.toString(magicInstrId) + " 0 "
+            String magicNote = "i" + magicInstrId + " 0 "
                     + cm.getSubjectiveDuration();
 
             nl.add(Note.createNote(magicNote));
@@ -495,7 +495,7 @@ public class CeciliaModuleCompilationUnit {
 
         if (scoreText.startsWith("#min")) {
             String noteLine = "i1 0 "
-                    + Double.toString(cm.getSubjectiveDuration());
+                    + cm.getSubjectiveDuration();
 
             notes.add(Note.createNote(noteLine));
         } else if (scoreText.startsWith("#cyb")) {

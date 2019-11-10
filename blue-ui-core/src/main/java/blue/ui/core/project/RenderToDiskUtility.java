@@ -121,7 +121,7 @@ public class RenderToDiskUtility {
      * @throws IOException
      */
     private DiskRenderCommand getDiskCommandLine(BlueData data) throws IOException {
-        String args[];
+        String[] args;
         String fileOutput;
         ProjectProperties props = data.getProjectProperties();
 
@@ -285,7 +285,7 @@ public class RenderToDiskUtility {
         public String[] args;
         public String filename;
 
-        public DiskRenderCommand(String args[], String filename) {
+        public DiskRenderCommand(String[] args, String filename) {
             this.args = args;
             this.filename = filename;
         }

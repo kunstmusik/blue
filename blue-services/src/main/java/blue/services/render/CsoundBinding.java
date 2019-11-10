@@ -33,8 +33,8 @@ public interface CsoundBinding {
      * @param ksmps 
      */
 
-   public void setup(double sr, long ksmps); 
-   public void updateValueToCsound(); 
-   public void updateValueFromCsound(); 
-   public void cleanup(); 
+    void setup(double sr, long ksmps);
+   void updateValueToCsound();
+   void updateValueFromCsound();
+   void cleanup();
 }

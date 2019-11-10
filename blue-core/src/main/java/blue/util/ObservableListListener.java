@@ -26,6 +26,6 @@ package blue.util;
  */
 public interface ObservableListListener<E> {
 
-    public void listChanged(ObservableListEvent<E> listEvent);
+    void listChanged(ObservableListEvent<E> listEvent);
     
 }

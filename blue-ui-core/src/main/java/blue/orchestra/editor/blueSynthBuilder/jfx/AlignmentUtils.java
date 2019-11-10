@@ -297,8 +297,8 @@ public class AlignmentUtils {
             case VERTICAL_CENTER:
                 Collections.sort(panes, verticalCenterComparator);
 
-                first = (Pane) panes.get(0);
-                last = (Pane) panes.get(size - 1);
+                first = panes.get(0);
+                last = panes.get(size - 1);
 
                 firstCenter = first.getLayoutY() + (first.getHeight() / 2);
                 lastCenter = last.getLayoutY() + (last.getHeight() / 2);

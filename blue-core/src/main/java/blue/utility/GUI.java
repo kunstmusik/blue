@@ -93,7 +93,7 @@ public class GUI {
 
         c.setEnabled(enabled);
 
-        Component comp[] = ((JComponent) c).getComponents();
+        Component[] comp = ((JComponent) c).getComponents();
 
         for (int i = 0; i < comp.length; i++) {
             comp[i].setEnabled(enabled);

@@ -297,7 +297,7 @@ public class BSBGroup extends BSBObject implements Iterable<BSBObject>, UniqueNa
 
     @Override
     public Element saveAsXML() {
-        Element retVal = super.getBasicXML(this);
+        Element retVal = getBasicXML(this);
 
         retVal.addElement("groupName").setText(getGroupName());
         retVal.addElement("backgroundColor").setText(getBackgroundColor().toString());

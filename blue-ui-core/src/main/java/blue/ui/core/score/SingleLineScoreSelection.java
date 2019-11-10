@@ -86,7 +86,7 @@ public class SingleLineScoreSelection {
         }
     }
     
-    public static interface SingleLineScoreSelectionListener {
-        public void singleLineScoreSelectionPerformed(SingleLineScoreSelection selection);
+    public interface SingleLineScoreSelectionListener {
+        void singleLineScoreSelectionPerformed(SingleLineScoreSelection selection);
     }
 }

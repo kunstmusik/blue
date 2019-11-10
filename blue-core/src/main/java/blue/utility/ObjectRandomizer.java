@@ -253,7 +253,7 @@ public class ObjectRandomizer {
         return new VMID().toString();
     }
 
-    public static void main(String args[]) {
+    public static void main(String[] args) {
         Object test = new BlueData();
 
         // System.out.println(ToStringBuilder.reflectionToString(test));

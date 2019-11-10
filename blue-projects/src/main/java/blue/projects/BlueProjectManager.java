@@ -455,11 +455,8 @@ fireProjectFileChanged();
 
             return (saveAs());
 
-        } else if (retVal == NotifyDescriptor.NO_OPTION) {
-            return true;
-        }
+        } else return retVal == NotifyDescriptor.NO_OPTION;
 
-        return false;
     }
 
     public void selectNextProject() {

@@ -172,7 +172,7 @@ public class SoundFontUtility {
         return info;
     }
 
-    public static void main(String args[]) {
+    public static void main(String[] args) {
         SoundFontInfo info = getSoundFontInfo(
                 "c:\\csound\\samples\\sf2\\Chinese Flute Zhudi Analog (906KB).sf2");
 

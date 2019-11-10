@@ -549,7 +549,7 @@ public class CS6RealtimeRenderService implements RealtimeRenderService, PlayMode
 
                     if (value != valuesCache[i]) {
                         valuesCache[i] = value;
-                        channelPtrCache[i].SetValue(0, (double) value);
+                        channelPtrCache[i].SetValue(0, value);
                     }
                 }
 
@@ -572,7 +572,7 @@ public class CS6RealtimeRenderService implements RealtimeRenderService, PlayMode
                 for (int i = 0, size = bindings.size(); i < size; i++) {
                     bindings.get(i).updateValueFromCsound();
                 }
-            };
+            }
 
             for (int i = 0; i < bindings.size(); i++) {
                 bindings.get(i).cleanup();

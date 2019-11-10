@@ -27,11 +27,11 @@ import electric.xml.Element;
 
 public interface Generator extends DeepCopyable<Generator> {
 
-    public Element saveAsXML();
+    Element saveAsXML();
 
-    public double getValue(double time, java.util.Random rnd);
+    double getValue(double time, java.util.Random rnd);
 
 //    public JComponent getEditor();
 
-    public void initialize(double duration);
+    void initialize(double duration);
 }

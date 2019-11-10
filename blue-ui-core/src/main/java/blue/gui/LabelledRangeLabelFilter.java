@@ -20,6 +20,6 @@ package blue.gui;
 
 public interface LabelledRangeLabelFilter {
 
-    public String filter(int sliderVal);
+    String filter(int sliderVal);
 
 }

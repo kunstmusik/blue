@@ -146,7 +146,7 @@ public class MaskEditor extends javax.swing.JPanel implements DurationSettable {
                 .addContainerGap())
         );
 
-        layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {highTypeComboBox, lowTypeComboBox});
+        layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, highTypeComboBox, lowTypeComboBox);
 
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)

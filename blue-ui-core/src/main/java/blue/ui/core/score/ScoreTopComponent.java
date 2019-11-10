@@ -138,7 +138,6 @@ public final class ScoreTopComponent extends TopComponent
     AlphaMarquee marquee = new AlphaMarquee();
     ScoreMouseWheelListener mouseWheelListener;
     LayerHeightWheelListener layerHeightWheelListener;
-    ;
     ScoreMouseListener listener = new ScoreMouseListener(this, content);
     TimeState currentTimeState = null;
     RenderTimeManager renderTimeManager
@@ -192,7 +191,7 @@ public final class ScoreTopComponent extends TopComponent
             }
         });
 
-        FileObject files[] = FileUtil.getConfigFile(
+        FileObject[] files = FileUtil.getConfigFile(
                 "blue/score/shortcuts").getChildren();
         InputMap inputMap = scorePanel.getInputMap(
                 WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
@@ -757,7 +756,7 @@ public final class ScoreTopComponent extends TopComponent
     @Override
     public void renderTimeUpdated(double timePointer) {
         this.timePointer = timePointer;
-        updateRenderTimePointer();;
+        updateRenderTimePointer();
     }
 
     @Override

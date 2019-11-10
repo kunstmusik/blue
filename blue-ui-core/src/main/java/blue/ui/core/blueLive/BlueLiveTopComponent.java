@@ -951,7 +951,7 @@ public final class BlueLiveTopComponent extends TopComponent
         String template = noteTemplateText.getText();
         String instrId = instrIdText.getText();
         double quarterNote = ((Double) quarterNoteSpinner.getValue()).doubleValue();
-        double dur = quarterNote * (double) time;
+        double dur = quarterNote * time;
 
         outputTextArea.setText(
                 outputTextArea.getText() + scoPadReceiver.getNotes(

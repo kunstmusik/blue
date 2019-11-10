@@ -54,7 +54,7 @@ public class BlueClojureEngineTest {
      */
     @Test
     public void testGetInstance() {
-        BlueClojureEngine expResult = BlueClojureEngine.getInstance();;
+        BlueClojureEngine expResult = BlueClojureEngine.getInstance();
         BlueClojureEngine result = BlueClojureEngine.getInstance();
         assertEquals(expResult, result);
     }

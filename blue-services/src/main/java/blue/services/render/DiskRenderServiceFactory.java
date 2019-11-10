@@ -30,7 +30,7 @@ package blue.services.render;
 public interface DiskRenderServiceFactory {
 
     /** Creates an instance of a RealtimeRenderService */
-    public DiskRenderService createInstance();
+    DiskRenderService createInstance();
 
     /** 
      * reports if this service is available.  For example, if the the user does
@@ -38,5 +38,5 @@ public interface DiskRenderServiceFactory {
      * false.
      * @return 
      */
-    public boolean isAvailable();
+    boolean isAvailable();
 }

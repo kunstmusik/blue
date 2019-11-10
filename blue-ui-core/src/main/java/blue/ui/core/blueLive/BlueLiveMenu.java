@@ -48,7 +48,7 @@ import org.openide.util.actions.Presenter;
 public final class BlueLiveMenu extends AbstractAction implements Presenter.Menu {
 
     JMenu menu = null; 
-    JMenuItem items[] = null;
+    JMenuItem[] items = null;
 
     @Override
     public void actionPerformed(ActionEvent e) {

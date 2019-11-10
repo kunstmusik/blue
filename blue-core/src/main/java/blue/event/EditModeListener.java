@@ -26,5 +26,5 @@ import java.util.EventListener;
  * @author Steven
  */
 public interface EditModeListener extends EventListener {
-    public void setEditing(boolean isEditing);
+    void setEditing(boolean isEditing);
 }

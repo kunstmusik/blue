@@ -35,7 +35,7 @@ public class TransferableTreeNode implements Transferable {
     public static DataFlavor TREE_PATH_FLAVOR = new DataFlavor(TreePath.class,
             "Tree Path");
 
-    DataFlavor flavors[] = { TREE_PATH_FLAVOR };
+    DataFlavor[] flavors = { TREE_PATH_FLAVOR };
 
     TreePath path;
 

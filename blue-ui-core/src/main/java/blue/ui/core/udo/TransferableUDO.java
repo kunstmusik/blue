@@ -40,7 +40,7 @@ public class TransferableUDO implements Transferable {
 
     private Object obj;
 
-    DataFlavor flavors[];
+    DataFlavor[] flavors;
 
     public TransferableUDO(Object obj) {
         this.obj = obj;

@@ -13,10 +13,10 @@ import blue.ui.core.score.layers.soundObject.SoundObjectView;
 import java.awt.Graphics;
 
 public interface BarRenderer {
-    public void render(Graphics graphics, SoundObjectView sObjView,
-            int pixelSeconds);
+    void render(Graphics graphics, SoundObjectView sObjView,
+                int pixelSeconds);
 
-    public void cleanup(SoundObjectView sObjView);
+    void cleanup(SoundObjectView sObjView);
 
     //public boolean accepts(SoundObject scoreObject);
 }

@@ -275,7 +275,7 @@ class CFilePanel extends JComponent {
             
             float val = slider.getValue() / 10.0f;
             
-            offsetLabel.setText(Float.toString(val) + "s");
+            offsetLabel.setText(val + "s");
             
             if (cfilein != null) {
                 cfilein.setOffset(slider.getValue());

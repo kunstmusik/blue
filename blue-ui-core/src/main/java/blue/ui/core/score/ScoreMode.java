@@ -24,5 +24,5 @@ package blue.ui.core.score;
  * @author stevenyi
  */
 public enum ScoreMode {
-    SCORE, SINGLE_LINE, MULTI_LINE;
+    SCORE, SINGLE_LINE, MULTI_LINE
 }

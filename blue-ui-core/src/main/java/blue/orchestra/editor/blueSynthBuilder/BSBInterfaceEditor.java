@@ -52,6 +52,7 @@ import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 import javafx.scene.control.TreeItem;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import org.controlsfx.control.BreadCrumbBar;
 import org.controlsfx.control.PropertySheet;
@@ -129,7 +130,7 @@ public class BSBInterfaceEditor extends JComponent {
                 presetPane = new PresetPane();
                 editEnabledCheckBox = new CheckBox("Edit Enabled");
 
-                presetPane.setMargin(editEnabledCheckBox,
+                HBox.setMargin(editEnabledCheckBox,
                         new Insets(5, 5, 5, 0));
                 presetPane.getChildren().add(editEnabledCheckBox);
 
@@ -194,9 +195,7 @@ public class BSBInterfaceEditor extends JComponent {
                             dividerPosition = editAreaPane.getDividerPositions()[0];
                             items.remove(rightPane);
                         }
-                        if (topBox.getChildren().contains(breadCrumbBar)) {
-                            topBox.getChildren().remove(breadCrumbBar);
-                        }
+                        topBox.getChildren().remove(breadCrumbBar);
                     }
                 });
                 bsbEditPane.requestFocus();

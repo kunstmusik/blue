@@ -80,7 +80,7 @@ public final class ShiftAction extends AbstractAction implements ContextAwareAct
             }
 
             int len = selected.size();
-            ScoreObject[] objects = selected.<ScoreObject>toArray(
+            ScoreObject[] objects = selected.toArray(
                     new ScoreObject[selected.size()]);
             double[] startTimes = new double[len];
             double[] endTimes = new double[len];

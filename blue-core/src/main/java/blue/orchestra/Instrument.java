@@ -48,29 +48,29 @@ public interface Instrument extends DeepCopyable<Instrument> {
     /**
      * Returns the name of the instrument.
      */
-    public String getName();
+    String getName();
 
     /**
      * Sets the name of the instrument.
      */
-    public void setName(String name);
+    void setName(String name);
 
     /**
      * Returns the comments for the instrument.
      */
-    public String getComment();
+    String getComment();
 
     /**
      * Sets the comments for the instrument.
      */
-    public void setComment(String comment);
+    void setComment(String comment);
 
     /**
      * During CSD Generation, allows instrument add any UDO's required.
      * 
      * @param udos
      */
-    public void generateUserDefinedOpcodes(OpcodeList udos);
+    void generateUserDefinedOpcodes(OpcodeList udos);
 
     /**
      * Returns a String value that contains Csound instrument text.
@@ -79,7 +79,7 @@ public interface Instrument extends DeepCopyable<Instrument> {
      * orchestra at compile-time.
      */
 
-    public String generateInstrument();
+    String generateInstrument();
 
     /**
      * Returns a String value that contains Csound instrument text that is
@@ -88,19 +88,19 @@ public interface Instrument extends DeepCopyable<Instrument> {
      * Should not include "instr #" or "endin", as this is added by the
      * orchestra at compile-time.
      */
-    public String generateAlwaysOnInstrument();
+    String generateAlwaysOnInstrument();
 
     /**
      * During CSD generation, an instance of Tables is passed into all
      * Instruments so that Instruments can add Csound ftables if they need to.
      */
-    public void generateFTables(Tables tables);
+    void generateFTables(Tables tables);
 
     /**
      * During CSD generation, get any global orc code that this instrument
      * generates (useful for init code for variables, etc.)
      */
-    public String generateGlobalOrc();
+    String generateGlobalOrc();
 
     /**
      * During CSD generation, get any global sco code that this instrument
@@ -124,10 +124,10 @@ public interface Instrument extends DeepCopyable<Instrument> {
      * ireverb [<TOTAL_DUR> + 5]
      * </code>
      */
-    public String generateGlobalSco();
+    String generateGlobalSco();
 
     // public static Instrument loadFromXML(Element data);
 
-    public Element saveAsXML();
+    Element saveAsXML();
 
 }

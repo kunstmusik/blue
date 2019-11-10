@@ -111,7 +111,7 @@ public class BetaEditor extends javax.swing.JPanel implements DurationSettable {
                 .addContainerGap())
         );
 
-        layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {aTypeComboBox, bTypeComboBox});
+        layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, aTypeComboBox, bTypeComboBox);
 
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)

@@ -36,8 +36,8 @@ public class ScoreUtilities {
 
     enum ParseState {
 
-        STARTING, COLLECTING;
-    };
+        STARTING, COLLECTING
+    }
 
     /**
      * gets will return a NoteList given a score input (String)
@@ -406,7 +406,7 @@ public class ScoreUtilities {
 
         for (int i = 0; i < sObjects.size(); i++) {
 
-            sObj = (SoundObject) sObjects.get(i);
+            sObj = sObjects.get(i);
 
             // System.out.println("StartTime: " + sObj.getStartTime());
             className = sObj.getClass().getName();
@@ -692,7 +692,7 @@ public class ScoreUtilities {
         return Math.round(time / snapValue) * snapValue;
     }
 
-    public static void main(String args[]) {
+    public static void main(String[] args) {
         NoteList n = new NoteList();
 
         try {

@@ -34,16 +34,16 @@ import java.util.Map;
 public interface LayerGroup<T extends Layer> extends List<T>, 
         DeepCopyableLG<LayerGroup<T>> {
     
-    public String getName();
+    String getName();
     
-    public void setName(String name);
+    void setName(String name);
     
     /**
      * Get NoteProcessorChain for this LayerGroup. 
      * 
      * @return 
      */
-    public NoteProcessorChain getNoteProcessorChain();
+    NoteProcessorChain getNoteProcessorChain();
     
     /**
      * Returns if solo layers are found in this group.  Score will use this to
@@ -52,7 +52,7 @@ public interface LayerGroup<T extends Layer> extends List<T>,
      * 
      * @return 
      */
-    public boolean hasSoloLayers();
+    boolean hasSoloLayers();
     
     /** 
      * Called when compiling a CSD.  LayerGroups should use CompileData to add
@@ -62,7 +62,7 @@ public interface LayerGroup<T extends Layer> extends List<T>,
      * 
      * @param compileData 
      */
-    public NoteList generateForCSD(CompileData compileData, double startTime, double endTime, boolean processWithSolo) throws ScoreGenerationException;
+    NoteList generateForCSD(CompileData compileData, double startTime, double endTime, boolean processWithSolo) throws ScoreGenerationException;
     
     /**
      * Returns an XML Representation of this object.
@@ -70,14 +70,14 @@ public interface LayerGroup<T extends Layer> extends List<T>,
      * @param sObjLibrary
      * @return 
      */
-    public Element saveAsXML(Map<Object, String> objRefMap);
+    Element saveAsXML(Map<Object, String> objRefMap);
 
     /**
      * Adds a new Layer at specified index.
      * 
      * @param index 
      */
-    public T newLayerAt(int index);
+    T newLayerAt(int index);
     
     /**
      * Removes Layer from startIndex to endIndex.
@@ -85,14 +85,14 @@ public interface LayerGroup<T extends Layer> extends List<T>,
      * @param startIndex
      * @param endindex 
      */
-    public void removeLayers(int startIndex, int endindex);
+    void removeLayers(int startIndex, int endindex);
     
     /**
      * Push up Layers from startIndex to endIndex.
      * @param startIndex
      * @param endIndex 
      */
-    public void pushUpLayers(int startIndex, int endIndex);
+    void pushUpLayers(int startIndex, int endIndex);
     
     /**
      * Push down Layers from startIndex to endIndex.
@@ -100,24 +100,24 @@ public interface LayerGroup<T extends Layer> extends List<T>,
      * @param startIndex
      * @param endIndex 
      */
-    public void pushDownLayers(int startIndex, int endIndex);
+    void pushDownLayers(int startIndex, int endIndex);
 
     /* LIFECYCLE EVENT CODE */
     
     /** Called when a project has been loaded and allows layer to initialize
      * any values.
      */
-    public void onLoadComplete();
+    void onLoadComplete();
 
     /* LISTENER CODE */
     
     /**
      * Add a LayerGroupListener to this LayerGroup.
      */
-    public void addLayerGroupListener(LayerGroupListener listener);
+    void addLayerGroupListener(LayerGroupListener listener);
     
     /**
      * Remove a LayerGroupListener to this LayerGroup.
      */
-    public void removeLayerGroupListener(LayerGroupListener listener);
+    void removeLayerGroupListener(LayerGroupListener listener);
 }

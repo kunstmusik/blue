@@ -160,7 +160,7 @@ public final class VirtualKeyboardTopComponent extends TopComponent {
             .addComponent(virtualKeyboardPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
 
-        layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {channelSpinner, octaveSpinner, velocitySpinner});
+        layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, channelSpinner, octaveSpinner, velocitySpinner);
 
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)

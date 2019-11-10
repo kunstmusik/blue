@@ -138,7 +138,7 @@ public class PolyObject extends ArrayList<SoundLayer> implements SoundObject,
      */
     public final int removeSoundObject(SoundObject sObj) {
         for (int i = 0; i < this.size(); i++) {
-            SoundLayer tempLayer = (SoundLayer) this.get(i);
+            SoundLayer tempLayer = this.get(i);
             if (tempLayer.contains(sObj)) {
                 tempLayer.remove(sObj);
                 return i;
@@ -424,7 +424,7 @@ public class PolyObject extends ArrayList<SoundLayer> implements SoundObject,
 
     public int getSoundLayerIndex(SoundObject sObj) {
         for (int i = 0; i < this.size(); i++) {
-            SoundLayer tempLayer = (SoundLayer) this.get(i);
+            SoundLayer tempLayer = this.get(i);
             if (tempLayer.contains(sObj)) {
                 return i;
             }

@@ -124,7 +124,7 @@ public class Note implements Comparable<Note> {
 
             if(!performCarry) {
                 try {
-                    int instr1 = (int) (Double.parseDouble((String)buffer.get(0)));
+                    int instr1 = (int) (Double.parseDouble(buffer.get(0)));
                     int instr2 = (int) (Double.parseDouble(previousNote.getPField(1)));
 
                     if(instr1 == instr2) {
@@ -147,7 +147,7 @@ public class Note implements Comparable<Note> {
         }
         
         // INITIALIZES PFIELD ARRAY
-        fields = (String[]) buffer.toArray(new String[buffer.size()]);
+        fields = buffer.toArray(new String[buffer.size()]);
 
         if(previousNote != null) {
 

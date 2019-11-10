@@ -91,10 +91,7 @@ public class StringChannel implements PropertyChangeListener {
         if ((this.value == null) ? (other.value != null) : !this.value.equals(other.value)) {
             return false;
         }
-        if ((this.channelName == null) ? (other.channelName != null) : !this.channelName.equals(other.channelName)) {
-            return false;
-        }
-        return true;
+        return (this.channelName == null) ? (other.channelName == null) : this.channelName.equals(other.channelName);
     }
 
 }

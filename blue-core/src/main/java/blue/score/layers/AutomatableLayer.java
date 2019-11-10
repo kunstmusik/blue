@@ -26,5 +26,5 @@ import blue.automation.ParameterIdList;
  * @author stevenyi
  */
 public interface AutomatableLayer extends Layer {
-    public ParameterIdList getAutomationParameters();
+    ParameterIdList getAutomationParameters();
 }

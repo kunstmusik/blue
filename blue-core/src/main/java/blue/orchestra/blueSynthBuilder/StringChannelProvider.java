@@ -24,6 +24,6 @@ package blue.orchestra.blueSynthBuilder;
  * @author stevenyi
  */
 public interface StringChannelProvider {
-    public StringChannel getStringChannel();
-    public boolean isStringChannelEnabled();
+    StringChannel getStringChannel();
+    boolean isStringChannelEnabled();
 }

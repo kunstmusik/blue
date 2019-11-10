@@ -37,7 +37,7 @@ public class MixerNodeTest extends TestCase {
         MixerNode node = MixerNode.getMixerGraph(mixer);
 
         assertEquals(1, node.children.size());
-        MixerNode mixerNode = ((MixerNode) node.children.get(0));
+        MixerNode mixerNode = node.children.get(0);
         assertEquals(channel, mixerNode.channel);
         assertEquals("1", mixerNode.channel.getName());
     }
@@ -58,11 +58,11 @@ public class MixerNodeTest extends TestCase {
         MixerNode node = MixerNode.getMixerGraph(mixer);
 
         assertEquals(2, node.children.size());
-        MixerNode mixerNode = ((MixerNode) node.children.get(0));
+        MixerNode mixerNode = node.children.get(0);
         assertEquals(channel, mixerNode.channel);
         assertEquals("1", mixerNode.channel.getName());
 
-        MixerNode mixerNode2 = ((MixerNode) node.children.get(1));
+        MixerNode mixerNode2 = node.children.get(1);
         assertEquals(subChannel1, mixerNode2.channel);
         assertEquals("subChannel1", mixerNode2.channel.getName());
     }
@@ -94,17 +94,17 @@ public class MixerNodeTest extends TestCase {
 
         assertEquals(1, node.children.size());
 
-        node = (MixerNode) node.children.get(0);
+        node = node.children.get(0);
 
         assertEquals(1, node.children.size());
         assertEquals(subChannel2, node.channel);
 
-        node = (MixerNode) node.children.get(0);
+        node = node.children.get(0);
 
         assertEquals(1, node.children.size());
         assertEquals(subChannel1, node.channel);
 
-        node = (MixerNode) node.children.get(0);
+        node = node.children.get(0);
 
         assertEquals(0, node.children.size());
         assertEquals(channel, node.channel);
@@ -145,14 +145,14 @@ public class MixerNodeTest extends TestCase {
 
         assertEquals(1, node.children.size());
 
-        node = (MixerNode) node.children.get(0);
+        node = node.children.get(0);
 
         assertEquals(2, node.children.size());
         assertEquals(subChannel2, node.channel);
 
-        MixerNode node2 = (MixerNode) node.children.get(1);
+        MixerNode node2 = node.children.get(1);
 
-        node = (MixerNode) node.children.get(0);
+        node = node.children.get(0);
 
         assertEquals(0, node.children.size());
         assertEquals(channel2, node.channel);
@@ -160,7 +160,7 @@ public class MixerNodeTest extends TestCase {
         assertEquals(1, node2.children.size());
         assertEquals(subChannel1, node2.channel);
 
-        node = (MixerNode) node2.children.get(0);
+        node = node2.children.get(0);
 
         assertEquals(0, node.children.size());
         assertEquals(channel, node.channel);
@@ -193,11 +193,11 @@ public class MixerNodeTest extends TestCase {
 
         assertEquals(3, node.children.size());
 
-        MixerNode mixerNode2 = ((MixerNode) node.children.get(1));
+        MixerNode mixerNode2 = node.children.get(1);
         assertEquals(subChannel2, mixerNode2.channel);
         assertEquals("subChannel2", mixerNode2.channel.getName());
 
-        MixerNode mixerNode3 = ((MixerNode) node.children.get(2));
+        MixerNode mixerNode3 = node.children.get(2);
         assertEquals(subChannel1, mixerNode3.channel);
         assertEquals("subChannel1", mixerNode3.channel.getName());
     }

@@ -166,7 +166,7 @@ public class Arrangement implements TableModel {
 
         }
 
-        Collections.<InstrumentAssignment>sort(arrangement);
+        Collections.sort(arrangement);
 
         fireTableDataChanged();
 
@@ -189,7 +189,7 @@ public class Arrangement implements TableModel {
         arrangement.add(ia);
 
         if(sort) {
-            Collections.<InstrumentAssignment>sort(arrangement);
+            Collections.sort(arrangement);
         }
 
         if (instr instanceof Automatable) {
@@ -217,7 +217,7 @@ public class Arrangement implements TableModel {
 
         arrangement.add(ia);
 
-        Collections.<InstrumentAssignment>sort(arrangement);
+        Collections.sort(arrangement);
     }
 
     public void replaceInstrument(String instrumentId, Instrument instr) {
@@ -303,7 +303,7 @@ public class Arrangement implements TableModel {
                 String oldId = ia.arrangementId;
 
                 ia.arrangementId = newId;
-                Collections.<InstrumentAssignment>sort(arrangement);
+                Collections.sort(arrangement);
 
                 if (arrangementListeners != null) {
                     fireArrangementChanged(new ArrangementEvent(

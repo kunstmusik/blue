@@ -73,7 +73,7 @@ public class DockingSplitPane extends JComponent {
         });
     }
 
-    public static void main(String args[]) {
+    public static void main(String[] args) {
         DockingSplitPane dsp = new DockingSplitPane(new JTextArea(), "Test",
                 new JTextArea());
         GUI.showComponentAsStandalone(dsp, "Docking Test", true);

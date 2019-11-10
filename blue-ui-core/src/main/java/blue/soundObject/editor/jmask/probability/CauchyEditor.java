@@ -111,7 +111,7 @@ public class CauchyEditor extends javax.swing.JPanel implements DurationSettable
                 .addContainerGap())
         );
 
-        layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {meanTypeComboBox, spreadTypeComboBox});
+        layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, meanTypeComboBox, spreadTypeComboBox);
 
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)

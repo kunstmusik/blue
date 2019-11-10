@@ -137,7 +137,7 @@ public class EffectEditorDialog extends javax.swing.JDialog implements
      * @param args
      *            the command line arguments
      */
-    public static void main(String args[]) {
+    public static void main(String[] args) {
         java.awt.EventQueue.invokeLater(() -> {
             new EffectEditorDialog(null, true).setVisible(true);
         });

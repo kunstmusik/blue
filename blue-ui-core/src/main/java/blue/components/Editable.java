@@ -24,9 +24,9 @@ package blue.components;
  * @author Steven Yi
  */
 public interface Editable {
-    public String getValue();
+    String getValue();
 
-    public boolean isValidValue(String value);
+    boolean isValidValue(String value);
 
-    public void setValue(String value);
+    void setValue(String value);
 }
