@@ -1,5 +1,4 @@
 Manifest-Version: 1.0
-OpenIDE-Module: blue.midi
 OpenIDE-Module-Localizing-Bundle: blue/midi/Bundle.properties
 OpenIDE-Module-Specification-Version: 1.0
 

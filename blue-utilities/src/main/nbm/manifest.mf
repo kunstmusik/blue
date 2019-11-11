@@ -1,5 +1,4 @@
 Manifest-Version: 1.0
-OpenIDE-Module: blue.utilities
 OpenIDE-Module-Localizing-Bundle: blue/utilities/Bundle.properties
 OpenIDE-Module-Specification-Version: 1.0
 

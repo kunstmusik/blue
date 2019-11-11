@@ -1,5 +1,4 @@
 Manifest-Version: 1.0
-OpenIDE-Module: blue.ui.editor
 OpenIDE-Module-Install: blue/ui/editor/Installer.class
 OpenIDE-Module-Layer: blue/ui/editor/layer.xml
 OpenIDE-Module-Localizing-Bundle: blue/ui/editor/Bundle.properties
