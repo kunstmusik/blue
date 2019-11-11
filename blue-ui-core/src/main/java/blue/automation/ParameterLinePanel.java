@@ -1620,7 +1620,11 @@ public class ParameterLinePanel extends JComponent implements
     public static int[] getYHeight(Line line) {
         for(ParameterLinePanel panel : ALL_PANELS) {
             if(panel.paramList.containsLine(line)) {
-                return new int[]{ panel.getY(), panel.getHeight()};
+                ScoreTopComponent scoreTopComponent = (ScoreTopComponent) WindowManager.getDefault().findTopComponent(
+                "ScoreTopComponent");
+                JComponent scorePanel = scoreTopComponent.getScorePanel();
+                Point p = SwingUtilities.convertPoint(panel.getParent(), panel.getLocation(), scorePanel);
+                return new int[]{ (int)p.getY(), panel.getHeight()};
             }
         }
         return null;

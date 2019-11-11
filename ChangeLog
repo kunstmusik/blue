@@ -22,6 +22,11 @@ upgrade to Java 11 for 2.8.0.
 
 * Clojure version updated to 1.10.1.
 
+FIX
+
+* Score: Selection marquee in single-line mode did not calculate y-position 
+  correclty when multiple Score Layers were present
+
 
 > Notes for 2.7.4 <
 [release 2019.07.19]
