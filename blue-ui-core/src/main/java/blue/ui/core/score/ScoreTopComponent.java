@@ -112,6 +112,8 @@ public final class ScoreTopComponent extends TopComponent
     private final InstanceContent content = new InstanceContent();
     private static ScoreTopComponent instance;
     private NoteProcessorDialog npcDialog = null;
+    private final ScoreController scoreController = ScoreController.getInstance();
+    
     SoundObject bufferSoundObject;
     BlueData data;
     ScoreObjectBar scoreObjectBar = new ScoreObjectBar();
@@ -145,6 +147,7 @@ public final class ScoreTopComponent extends TopComponent
     PropertyChangeListener layerPanelWidthListener = (PropertyChangeEvent evt) -> {
         SwingUtilities.invokeLater(this::checkSize);
     };
+    private ScorePath currentScorePath;
 
     private ScoreTopComponent() {
         initComponents();
@@ -155,8 +158,6 @@ public final class ScoreTopComponent extends TopComponent
         setToolTipText(Bundle.HINT_ScoreTopComponent());
 
         init();
-
-        final ScoreController scoreController = ScoreController.getInstance();
 
         scoreController.addScoreControllerListener(scoreObjectBar);
         scoreController.addScoreControllerListener(this);
@@ -290,6 +291,10 @@ public final class ScoreTopComponent extends TopComponent
             }  
             
         });
+        
+        scoreController.addScoreControllerListener((path) -> {
+            currentScorePath = path;
+        });
     }
 
     protected void checkSize() {
@@ -361,7 +366,7 @@ public final class ScoreTopComponent extends TopComponent
 
             Score score = data.getScore();
             score.addListener(this);
-            ScoreController.getInstance().setScore(score);
+            scoreController.setScore(score);
 
             content.add(score);
         } else {
@@ -467,11 +472,13 @@ public final class ScoreTopComponent extends TopComponent
 
         JButton manageButton = new JButton("Manage");
         manageButton.addActionListener((ActionEvent e) -> {
-            ScorePath path = ScoreController.getInstance().getScorePath();
+            if(currentScorePath == null) {
+                return;
+            }
 
             JDialog dialog;
 
-            if (path.getLastLayerGroup() == null) {
+            if (currentScorePath.getLastLayerGroup() == null) {
                 ScoreManagerDialog dlg = new ScoreManagerDialog(
                         WindowManager.getDefault().getMainWindow(), true);
                 dlg.setScore(data.getScore());
@@ -480,7 +487,7 @@ public final class ScoreTopComponent extends TopComponent
             } else {
                 LayerGroupManagerDialog dlg = new LayerGroupManagerDialog(
                         WindowManager.getDefault().getMainWindow(), true);
-                dlg.setLayerGroup(path.getLastLayerGroup());
+                dlg.setLayerGroup(currentScorePath.getLastLayerGroup());
                 dlg.setSize(300, 500);
                 dialog = dlg;
             }
@@ -622,7 +629,7 @@ public final class ScoreTopComponent extends TopComponent
         ModeManager.getInstance().addModeListener((ScoreMode mode) -> {
             SingleLineScoreSelection.getInstance().clear();
             MultiLineScoreSelection.getInstance().reset();
-            ScoreController.getInstance().setSelectedScoreObjects(null);
+            scoreController.setSelectedScoreObjects(null);
         });
     }
 
@@ -726,8 +733,7 @@ public final class ScoreTopComponent extends TopComponent
 
     private void updateRenderTimePointer() {
 
-        ScorePath path = ScoreController.getInstance().getScorePath();
-        if (path.getLastLayerGroup() != null) {
+        if (currentScorePath == null || currentScorePath.getLastLayerGroup() != null) {
             return;
         }
 
@@ -834,7 +840,7 @@ public final class ScoreTopComponent extends TopComponent
             this.currentTimeState.removePropertyChangeListener(this);
         }
 
-        ScoreController.getInstance().setSelectedScoreObjects(null);
+        scoreController.setSelectedScoreObjects(null);
 
         this.clearAll();
 
@@ -899,7 +905,7 @@ public final class ScoreTopComponent extends TopComponent
             return;
         }
 
-        ScoreController.getInstance().setSelectedScoreObjects(null);
+        scoreController.setSelectedScoreObjects(null);
 
         PolyObject pObj = (PolyObject) layerGroup;
 

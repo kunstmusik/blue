@@ -51,11 +51,11 @@ public class RenderTimeManagerImpl implements RenderTimeManager {
     private double timeAdjust = Double.NEGATIVE_INFINITY;
     private TempoMapper tempoMapper;
     private PolyObject polyObject;
-    TimingSource ts = null;
+    private final BlueProjectManager blueProjectManager;
     
+    TimingSource ts = null;
     BlueProject currentRenderingProject = null;
-
-
+    
     @Override
     public void initiateRender(double renderStart) {
         this.setRenderStart(renderStart);
@@ -92,7 +92,11 @@ public class RenderTimeManagerImpl implements RenderTimeManager {
         });
         ts.init();
         
-        currentRenderingProject = BlueProjectManager.getInstance().getCurrentProject();
+        currentRenderingProject = blueProjectManager.getCurrentProject();
+    }
+
+    public RenderTimeManagerImpl() {
+        blueProjectManager = BlueProjectManager.getInstance();
     }
 
     @Override
@@ -189,6 +193,6 @@ public class RenderTimeManagerImpl implements RenderTimeManager {
     @Override
     public boolean isCurrentProjectRendering() {
         return currentRenderingProject == 
-                BlueProjectManager.getInstance().getCurrentProject();
+                blueProjectManager.getCurrentProject();
     }
 }
