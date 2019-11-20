@@ -1,4 +1,6 @@
-image: Visual Studio 2019
+image: 
+  - Visual Studio 2019
+  - macos 
 
 #environment:
 #  APPVEYOR_SAVE_CACHE_ON_ERROR: "true"
@@ -9,28 +11,12 @@ environment:
 platform: x64
 
 install:
-  #- cmd: choco install ant -y -f -i
-  #- cmd: choco install apache-fop -y -f -i
-  #- mvn dependency:get -Dartifact=junit:junit:4.8.2 -DrepoUrl=http://repo1.maven.org/maven2/
-  #- mkdir C:\xsltproc
-  #- cd C:\xsltproc
-  #- ps: Invoke-WebRequest ftp://ftp.zlatkovic.com/libxml/iconv-1.9.2.win32.zip -OutFile iconv.zip
-  #- 7z e iconv.zip iconv.dll -r
-  #- ps: Invoke-WebRequest ftp://ftp.zlatkovic.com/libxml/libxml2-2.7.8.win32.zip -OutFile libxml2.zip
-  #- 7z e libxml2.zip libxml2.dll -r
-  #- ps: Invoke-WebRequest ftp://ftp.zlatkovic.com/libxml/libxslt-1.1.26.win32.zip -OutFile libxslt.zip
-  #- 7z e libxslt.zip libexslt.dll libxslt.dll xsltproc.exe -r
-  #- ps: Invoke-WebRequest ftp://ftp.zlatkovic.com/libxml/zlib-1.2.5.win32.zip -OutFile zlib.zip
-  #- 7z e zlib.zip zlib1.dll -r
-  #- rm *.zip
-  #- set PATH=%PATH%;%CD%
-  - cd C:\
   - ps: Invoke-WebRequest https://github.com/csound/manual/archive/6.13.0.zip  -OutFile manual-src.zip
-  - 7z x manual-src.zip
-  - cd manual-6.13.0
+  - cmd: 7z x manual-src.zip
+  - cmd: cd manual-6.13.0
   - ps: Invoke-WebRequest https://github.com/csound/csound/releases/download/6.13.0/Csound6.13.0_manual_html.zip -OutFile manual.zip
-  - 7z x manual.zip 
-  - cd %APPVEYOR_BUILD_FOLDER%
+  - cmd: 7z x manual.zip 
+  - cmd: cd %APPVEYOR_BUILD_FOLDER%
 
 
 cache:
@@ -40,16 +26,9 @@ build_script:
   - cd manual
   - mvn compile
   - cd ..
-  - mvn -P generate-manual -DCS_MANUAL_DIR=c:\manual-6.13.0 install
-  #- cd application
-  #- ant -f build-mac.xml 
+  - cmd: mvn -P generate-manual -DCS_MANUAL_DIR=.\manual-6.13.0 install
   #- cd application
   #- mvn nbm:build-installers
-
-# Tests
-
-#test_script:
-#  - ant test 
 
 artifacts:
   - path: application\target\blue*.zip
