@@ -11,13 +11,13 @@ environment:
 platform: x64
 
 install:
-  - ps: dir
   - ps: Invoke-WebRequest https://github.com/csound/manual/archive/6.13.0.zip  -OutFile manual-src.zip
   - cmd: 7z x manual-src.zip
   - cmd: cd manual-6.13.0
   - ps: Invoke-WebRequest https://github.com/csound/csound/releases/download/6.13.0/Csound6.13.0_manual_html.zip -OutFile manual.zip
   - cmd: 7z x manual.zip 
   - cmd: cd %APPVEYOR_BUILD_FOLDER%
+  - ps: dir
 
 
 cache:
@@ -27,7 +27,7 @@ build_script:
   - cd manual
   - mvn compile
   - cd ..
-  - cmd: mvn -P generate-manual -DCS_MANUAL_DIR=%APPVEYOR_BUILD_FOLDER%\..\manual-6.13.0 install
+  - cmd: mvn -P generate-manual -DCS_MANUAL_DIR=.\manual-6.13.0 install
   #- cd application
   #- mvn nbm:build-installers
 
