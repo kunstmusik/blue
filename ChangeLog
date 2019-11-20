@@ -15,6 +15,13 @@ information.
 > Notes for 2.8.0 <
 [release 2019.xx.xx]
 
+NEW
+
+* Score Timeline Shortcuts Added (active when timeline has focus)
+
+  * SPACE - start/stop rendering of project
+  * G - move to render start time (green line)
+
 UPDATED
 
 * Blue updated for Java 11. Built and tested against OpenJDK 11.  Users must

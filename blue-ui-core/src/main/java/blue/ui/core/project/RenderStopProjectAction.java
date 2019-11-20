@@ -22,7 +22,26 @@ package blue.ui.core.project;
 import blue.MainToolBar;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import org.openide.awt.ActionID;
+import org.openide.awt.ActionReference;
+import org.openide.awt.ActionReferences;
+import org.openide.awt.ActionRegistration;
+import org.openide.util.NbBundle;
 
+@ActionID(
+        category = "Blue",
+        id = "blue.ui.core.project.RenderStopProjectAction"
+)
+@ActionRegistration(
+        displayName = "#CTL_RenderStopProjectAction"
+)
+@NbBundle.Messages("CTL_RenderStopProjectAction=&Render/Stop Project")
+@ActionReferences({
+//@ActionReference(path = "Actions/Project", name = "#CTL_RenderStopProjectAction"),   
+@ActionReference(path = "blue/score/shortcuts", name = "SPACE"),
+@ActionReference(path = "Menu/Project", position=100),
+@ActionReference(path = "Shortcuts", name="F9")
+}        )   
 public final class RenderStopProjectAction implements ActionListener {
 
     @Override

@@ -68,13 +68,6 @@
                 <attr name="instanceCreate" methodvalue="org.openide.awt.Actions.alwaysEnabled"/>
                 <attr name="noIconInMenu" boolvalue="false"/>
             </file>-->
-            <file name="blue-ui-core-project-RenderStopProjectAction.instance">
-                <attr name="SystemFileSystem.localizingBundle" stringvalue="blue.ui.core.Bundle"/>
-                <attr name="delegate" newvalue="blue.ui.core.project.RenderStopProjectAction"/>
-                <attr name="displayName" bundlevalue="blue.ui.core.project.Bundle#CTL_RenderStopProjectAction"/>
-                <attr name="instanceCreate" methodvalue="org.openide.awt.Actions.alwaysEnabled"/>
-                <attr name="noIconInMenu" stringvalue="false"/>
-            </file>
             <file name="blue-ui-core-project-RenderToDiskAction.instance">
                 <attr name="SystemFileSystem.localizingBundle" stringvalue="blue.ui.core.Bundle"/>
                 <attr name="delegate" newvalue="blue.ui.core.project.RenderToDiskAction"/>
@@ -185,10 +178,7 @@
                 <attr name="originalFile" stringvalue="Actions/Project/blue-ui-core-project-GenerateCsdAction.instance"/>
                 <attr name="position" intvalue="50"/>
             </file>
-            <file name="blue-ui-core-project-RenderStopProjectAction.shadow">
-                <attr name="originalFile" stringvalue="Actions/Project/blue-ui-core-project-RenderStopProjectAction.instance"/>
-                <attr name="position" intvalue="100"/>
-            </file>
+            
             <file name="blue-ui-core-project-ToggleLoopRenderingAction-separatorBefore.instance">
                 <attr name="instanceClass" stringvalue="javax.swing.JSeparator"/>
                 <attr name="position" intvalue="450"/>
@@ -273,10 +263,6 @@
 
         <file name="F6.shadow">
             <attr name="originalFile" stringvalue="Actions/Window/blue-ui-core-soundFile-AudioFilePlayerAction.instance"/>
-        </file>
-
-        <file name="F9.shadow">
-            <attr name="originalFile" stringvalue="Actions/Project/blue-ui-core-project-RenderStopProjectAction.instance"/>
         </file>
 
         <file name="DS-F9.shadow">
