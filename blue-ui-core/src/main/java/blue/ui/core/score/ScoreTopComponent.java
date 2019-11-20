@@ -110,8 +110,6 @@ public final class ScoreTopComponent extends TopComponent
         PropertyChangeListener, SoundObjectProvider, ScoreControllerListener {
 
     private final InstanceContent content = new InstanceContent();
-    private static ScoreTopComponent instance;
-    private NoteProcessorDialog npcDialog = null;
     private final ScoreController scoreController = ScoreController.getInstance();
     
     SoundObject bufferSoundObject;
