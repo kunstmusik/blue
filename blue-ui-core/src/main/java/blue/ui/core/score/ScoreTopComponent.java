@@ -202,29 +202,6 @@ public final class ScoreTopComponent extends TopComponent
             actionMap.put(a.getValue(Action.NAME), a);
         }
 
-        inputMap.put(KeyStroke.getKeyStroke('1'), "switch-mode-score");
-        inputMap.put(KeyStroke.getKeyStroke('2'), "switch-mode-single-line");
-        inputMap.put(KeyStroke.getKeyStroke('3'), "switch-mode-multi-line");
-
-        actionMap.put("switch-mode-score", new AbstractAction() {
-            public void actionPerformed(ActionEvent ae) {
-                ModeManager.getInstance().setMode(ScoreMode.SCORE);
-                SingleLineScoreSelection.getInstance().updateSelection(null, -1.0, -1.0);
-            }
-        });
-        actionMap.put("switch-mode-single-line", new AbstractAction() {
-            public void actionPerformed(ActionEvent ae) {
-                ModeManager.getInstance().setMode(ScoreMode.SINGLE_LINE);
-                SingleLineScoreSelection.getInstance().updateSelection(null, -1.0, -1.0);
-            }
-        });
-        actionMap.put("switch-mode-multi-line", new AbstractAction() {
-            public void actionPerformed(ActionEvent ae) {
-                ModeManager.getInstance().setMode(ScoreMode.MULTI_LINE);
-                SingleLineScoreSelection.getInstance().updateSelection(null, -1.0, -1.0);
-            }
-        });
-
         SingleLineScoreSelection.getInstance().addListener(new SingleLineScoreSelection.SingleLineScoreSelectionListener() {
             WeakReference<Line> lastLine = null;
             int[] lastYHeight = null;
