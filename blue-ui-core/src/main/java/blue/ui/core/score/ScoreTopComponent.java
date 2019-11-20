@@ -670,6 +670,12 @@ public final class ScoreTopComponent extends TopComponent
     void readProperties(java.util.Properties p) {
         String version = p.getProperty("version");
     }
+    
+    public void scrollToRenderStartPointer() {
+        SwingUtilities.invokeLater(() -> {
+            scrollPane.getHorizontalScrollBar().setValue(renderStartPointer.getX());
+        });
+    }
 
 // TODO - Reevaulate to see if this can't be done with a
     // PropertyChangeListener on BlueData
@@ -791,7 +797,7 @@ public final class ScoreTopComponent extends TopComponent
                     return;
                 }
 
-                double val = ((Double) evt.getNewValue()).doubleValue();
+                double val = ((Double) evt.getNewValue());
 
                 //FIXME
                 TimeState timeState = data.getScore().getTimeState();
