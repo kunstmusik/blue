@@ -24,9 +24,9 @@ public class API6Utilities {
                 apiAvailable = false;
             } else {
                 try {
-//                    System.loadLibrary("_jcsound6");
-                     csnd6.csoundInitialize(csnd6.CSOUNDINIT_NO_ATEXIT | 
-                csnd6.CSOUNDINIT_NO_SIGNAL_HANDLER);
+                    System.loadLibrary("_jcsound6");
+//                     csnd6.csoundInitialize(csnd6.CSOUNDINIT_NO_ATEXIT | 
+//                csnd6.CSOUNDINIT_NO_SIGNAL_HANDLER);
                     apiAvailable = true;
                 } catch (Throwable e) {
                     apiAvailable = false;
