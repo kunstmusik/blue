@@ -29,7 +29,7 @@ import org.openide.awt.ActionRegistration;
 import org.openide.util.NbBundle;
 
 @ActionID(
-        category = "Blue",
+        category = "Project",
         id = "blue.ui.core.project.RenderStopProjectAction"
 )
 @ActionRegistration(
@@ -37,11 +37,10 @@ import org.openide.util.NbBundle;
 )
 @NbBundle.Messages("CTL_RenderStopProjectAction=&Render/Stop Project")
 @ActionReferences({
-//@ActionReference(path = "Actions/Project", name = "#CTL_RenderStopProjectAction"),   
-@ActionReference(path = "blue/score/shortcuts", name = "SPACE"),
-@ActionReference(path = "Menu/Project", position=100),
-@ActionReference(path = "Shortcuts", name="F9")
-}        )   
+    @ActionReference(path = "blue/score/shortcuts", name = "SPACE"),
+    @ActionReference(path = "Menu/Project", position = 100),
+    @ActionReference(path = "Shortcuts", name = "F9")
+})
 public final class RenderStopProjectAction implements ActionListener {
 
     @Override

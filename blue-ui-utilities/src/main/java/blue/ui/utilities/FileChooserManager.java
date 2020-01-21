@@ -69,7 +69,6 @@ public class FileChooserManager {
 
         final boolean isMac = System.getProperty("os.name").toLowerCase().startsWith(
                 "mac");
-        
 
         if (isMac) {
             // USE AWT IMPL ON MAC DUE TO ISSUES WITH FILE CHOOSER
@@ -85,93 +84,90 @@ public class FileChooserManager {
             ff.setMultipleMode(temp.isMultiSelect);
             ff.setVisible(true);
 
-            if (temp.isMultiSelect) {
-                File[] files = ff.getFiles();
+            final File[] files = ff.getFiles();
+
+            if (files != null) {
                 for (File f : files) {
                     retVal.add(f);
                 }
-            } else {
-                String f = ff.getFile();
-                if (f != null) {
-                    retVal.add(new File(f));
-                }
             }
+
         } else {
             // Use JavaFX elsewhere
-        final CountDownLatch c = new CountDownLatch(1);
+            final CountDownLatch c = new CountDownLatch(1);
 
-        Runnable r = () -> {
-            if (parent != null) {
-                parent.setEnabled(false);
-            }
-            Stage s = new Stage();
-            s.initOwner(null);
-            s.initModality(Modality.APPLICATION_MODAL);
-
-            if (temp.directoriesOnly) {
-                DirectoryChooser chooser = new DirectoryChooser();
-                chooser.setTitle(temp.dialogTitle);
-
-                if (temp.currentDirectory != null) {
-                    chooser.setInitialDirectory(temp.currentDirectory);
+            Runnable r = () -> {
+                if (parent != null) {
+                    parent.setEnabled(false);
                 }
+                Stage s = new Stage();
+                s.initOwner(null);
+                s.initModality(Modality.APPLICATION_MODAL);
 
-                File f = chooser.showDialog(s);
-                if (f != null) {
-                    retVal.add(f);
-                    temp.currentDirectory = f;
-                }
-            } else {
-                FileChooser f = new FileChooser();
-                f.setTitle(temp.dialogTitle);
-                f.getExtensionFilters().addAll(temp.filters);
-                f.getExtensionFilters().add(allFilter);
+                if (temp.directoriesOnly) {
+                    DirectoryChooser chooser = new DirectoryChooser();
+                    chooser.setTitle(temp.dialogTitle);
 
-                if (temp.currentDirectory != null) {
-                    f.setInitialDirectory(temp.currentDirectory);
-                } else if (temp.selectedFile != null) {
-                    f.setInitialDirectory(temp.selectedFile.getParentFile());
-                }
-                if (temp.selectedFile != null) {
-                    f.setInitialFileName(temp.selectedFile.getName());
-                }
+                    if (temp.currentDirectory != null) {
+                        chooser.setInitialDirectory(temp.currentDirectory);
+                    }
 
-                if (temp.isMultiSelect) {
-                    temp.selectedFile = null;
-                    List<File> found = f.showOpenMultipleDialog(s);
-                    if (found != null) {
-                        temp.currentDirectory = found.get(0).getParentFile();
-                        retVal.addAll(found);
+                    File f = chooser.showDialog(s);
+                    if (f != null) {
+                        retVal.add(f);
+                        temp.currentDirectory = f;
                     }
                 } else {
-                    File ret = f.showOpenDialog(s);
-                    if (ret != null) {
-                        temp.currentDirectory = ret.getParentFile();
-                        retVal.add(ret);
+                    FileChooser f = new FileChooser();
+                    f.setTitle(temp.dialogTitle);
+                    f.getExtensionFilters().addAll(temp.filters);
+                    f.getExtensionFilters().add(allFilter);
+
+                    if (temp.currentDirectory != null) {
+                        f.setInitialDirectory(temp.currentDirectory);
+                    } else if (temp.selectedFile != null) {
+                        f.setInitialDirectory(temp.selectedFile.getParentFile());
+                    }
+                    if (temp.selectedFile != null) {
+                        f.setInitialFileName(temp.selectedFile.getName());
+                    }
+
+                    if (temp.isMultiSelect) {
+                        temp.selectedFile = null;
+                        List<File> found = f.showOpenMultipleDialog(s);
+                        if (found != null) {
+                            temp.currentDirectory = found.get(0).getParentFile();
+                            retVal.addAll(found);
+                        }
+                    } else {
+                        File ret = f.showOpenDialog(s);
+                        if (ret != null) {
+                            temp.currentDirectory = ret.getParentFile();
+                            retVal.add(ret);
+                        }
+                    }
+
+                }
+
+                c.countDown();
+            };
+
+            if (Platform.isFxApplicationThread()) {
+                r.run();
+            } else {
+                Platform.runLater(r);
+                try {
+                    c.await();
+                } catch (InterruptedException ex) {
+                    Logger.getLogger(FileChooserManager.class.getName()).log(
+                            Level.SEVERE,
+                            null, ex);
+                } finally {
+                    if (parent != null) {
+                        parent.setEnabled(true);
                     }
                 }
-
             }
-
-            c.countDown();
-        };
-
-        if (Platform.isFxApplicationThread()) {
-            r.run();
-        } else {
-            Platform.runLater(r);
-            try {
-                c.await();
-            } catch (InterruptedException ex) {
-                Logger.getLogger(FileChooserManager.class.getName()).log(
-                        Level.SEVERE,
-                        null, ex);
-            } finally {
-                if (parent != null) {
-                    parent.setEnabled(true);
-                }
-            }
-        }
         }
 
         return retVal;
@@ -196,50 +192,52 @@ public class FileChooserManager {
             ff.setTitle(temp.dialogTitle);
 //        ff.setMultipleMode(temp.isMultiSelect);
             ff.setVisible(true);
+            final File[] files = ff.getFiles();
+            
+            return (files != null) ? files[0] : null;
 
-            return new File(ff.getFile());
         } else {
             // Use JavaFX elsewhere
-        final CountDownLatch c = new CountDownLatch(1);
-        final AtomicReference<File> retVal = new AtomicReference<>(null);
+            final CountDownLatch c = new CountDownLatch(1);
+            final AtomicReference<File> retVal = new AtomicReference<>(null);
 
-        Platform.runLater(() -> {
-            Stage s = new Stage();
-            s.initOwner(null);
-            s.initModality(Modality.APPLICATION_MODAL);
+            Platform.runLater(() -> {
+                Stage s = new Stage();
+                s.initOwner(null);
+                s.initModality(Modality.APPLICATION_MODAL);
 
-            FileChooser f = new FileChooser();
-            f.setTitle(temp.dialogTitle);
-            f.getExtensionFilters().addAll(temp.filters);
+                FileChooser f = new FileChooser();
+                f.setTitle(temp.dialogTitle);
+                f.getExtensionFilters().addAll(temp.filters);
 
-            if (temp.currentDirectory != null) {
-                f.setInitialDirectory(temp.currentDirectory);
-            } else if (temp.selectedFile != null) {
-                f.setInitialDirectory(temp.selectedFile.getParentFile());
+                if (temp.currentDirectory != null) {
+                    f.setInitialDirectory(temp.currentDirectory);
+                } else if (temp.selectedFile != null) {
+                    f.setInitialDirectory(temp.selectedFile.getParentFile());
+                }
+                if (temp.selectedFile != null) {
+                    f.setInitialFileName(temp.selectedFile.getName());
+                }
+
+                File ret = f.showSaveDialog(s);
+                if (ret != null) {
+                    temp.currentDirectory = null;
+                    temp.selectedFile = ret;
+                    retVal.set(ret);
+                }
+
+                c.countDown();
+            });
+
+            try {
+                c.await();
+            } catch (InterruptedException ex) {
+                Logger.getLogger(FileChooserManager.class.getName()).log(
+                        Level.SEVERE,
+                        null, ex);
             }
-            if (temp.selectedFile != null) {
-                f.setInitialFileName(temp.selectedFile.getName());
-            }
 
-            File ret = f.showSaveDialog(s);
-            if (ret != null) {
-                temp.currentDirectory = null;
-                temp.selectedFile = ret;
-                retVal.set(ret);
-            }
-
-            c.countDown();
-        });
-
-        try {
-            c.await();
-        } catch (InterruptedException ex) {
-            Logger.getLogger(FileChooserManager.class.getName()).log(
-                    Level.SEVERE,
-                    null, ex);
-        }
-
-        return retVal.get();
+            return retVal.get();
         }
     }
 
