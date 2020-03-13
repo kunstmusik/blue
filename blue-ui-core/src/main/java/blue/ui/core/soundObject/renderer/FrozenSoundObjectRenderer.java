@@ -9,12 +9,13 @@ import java.awt.*;
 /**
  * Title: blue Description: an object composition environment for csound
  * Copyright: Copyright (c) 2001 Company: steven yi music
- * 
+ *
  * @author steven yi
  * @version 1.0
  */
 @BarRendererPlugin(scoreObjectType = FrozenSoundObject.class)
 public class FrozenSoundObjectRenderer implements BarRenderer {
+
     private static Font renderFont = new Font("Dialog", Font.BOLD, 12);
 
     protected static Color selectedBgColor = Color.white;
@@ -75,19 +76,13 @@ public class FrozenSoundObjectRenderer implements BarRenderer {
         g.setColor(shadeColor);
         g.fillRect((int) (w * percentOriginal), 2, w, h - 4);
 
-        // DRAW BORDERS
-//        if (ProgramOptions.getGeneralSettings().isDrawFlatSObjBorders()) {
-//            g.setColor(Color.LIGHT_GRAY);
-//            g.drawRect(0, 2, w - 1, h - 4);
-//        } else {
-            g.setColor(border1);
-            g.drawLine(0, 2, w - 1, 2);
-            g.drawLine(0, 2, 0, h - 4);
+        g.setColor(border1);
+        g.drawLine(0, 2, w, 2);
+        g.drawLine(0, 2, 0, h - 2);
 
-            g.setColor(border2);
-            g.drawLine(0, h - 3, w, h - 3);
-            g.drawLine(w - 1, h - 3, w - 1, 2);
-//        }
+        g.setColor(border2);
+        g.drawLine(0, h - 2, w, h - 2);
+        g.drawLine(w, h - 2, w, 2);
 
         g.setPaint(fontColor);
 

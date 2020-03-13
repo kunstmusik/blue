@@ -26,7 +26,7 @@ public class AudioFileRenderer implements BarRenderer {
 
     private static Font renderFont = new Font("Dialog", Font.BOLD, 12);
 
-    protected static Color selectedBgColor = new Color(255,255,255,128);
+    protected static Color selectedBgColor = new Color(255, 255, 255, 128);
 
     protected static Color selectedBorder1 = selectedBgColor.brighter()
             .brighter();
@@ -40,7 +40,7 @@ public class AudioFileRenderer implements BarRenderer {
     private boolean isBright(Color c) {
         return c.getRed() + c.getGreen() + c.getBlue() > (128 * 3);
     }
-    
+
     @Override
     public void render(Graphics graphics, SoundObjectView sObjView,
             int pixelSeconds) {
@@ -73,36 +73,29 @@ public class AudioFileRenderer implements BarRenderer {
 
         }
 
-        if(isBright(bgColor)) {
+        if (isBright(bgColor)) {
             waveColor = bgColor.brighter().brighter();
         } else {
             waveColor = bgColor.darker().darker();
         }
-        
+
         g.setPaint(bgColor);
 
         g.fillRect(clip.x, 2, clip.width, h - 4);
 
         // Draw Waveform
-
         g.setPaint(waveColor);
 
         paintWaveform(g, sObjView, pixelSeconds);
 
         // DRAW BORDERS
-//        if (GeneralSettings.getInstance().isDrawFlatSObjBorders()) {
-//            g.setColor(Color.LIGHT_GRAY);
-//            g.drawRect(0, 2, w - 1, h - 4);
-//
-//        } else {
-            g.setColor(border1);
-            g.drawLine(0, 2, w - 1, 2);
-            g.drawLine(0, 2, 0, h - 4);
+        g.setColor(border1);
+        g.drawLine(0, 2, w, 2);
+        g.drawLine(0, 2, 0, h - 2);
 
-            g.setColor(border2);
-            g.drawLine(0, h - 3, w, h - 3);
-            g.drawLine(w - 1, h - 3, w - 1, 2);
-//        }
+        g.setColor(border2);
+        g.drawLine(0, h - 2, w, h - 2);
+        g.drawLine(w, h - 2, w, 2);
 
         g.setPaint(fontColor);
 
@@ -167,5 +160,5 @@ public class AudioFileRenderer implements BarRenderer {
     public void cleanup(SoundObjectView sObjView) {
         sObjView.putClientProperty(AUDIO_WAVEFORM_DATA, null);
     }
-    
+
 }

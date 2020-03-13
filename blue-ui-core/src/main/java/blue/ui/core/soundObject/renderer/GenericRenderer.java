@@ -11,12 +11,13 @@ import java.awt.*;
 /**
  * Title: blue Description: an object composition environment for csound
  * Copyright: Copyright (c) 2001 Company: steven yi music
- * 
+ *
  * @author steven yi
  * @version 1.0
  */
 @BarRendererPlugin(scoreObjectType = GenericViewable.class)
 public class GenericRenderer implements BarRenderer {
+
     protected int labelOffset = 5;
 
     private static Font renderFont = new Font("Dialog", Font.BOLD, 12);
@@ -34,7 +35,6 @@ public class GenericRenderer implements BarRenderer {
     // private Color normalBorder1;
     // private Color normalBorder2;
     // protected static Color normalFontColor = Color.white;
-
     public GenericRenderer() {
         // this(Color.darkGray);
     }
@@ -85,23 +85,15 @@ public class GenericRenderer implements BarRenderer {
 
         g.fillRect(0, 2, w, h - 4);
 
-        // DRAW BORDERS
-//        if (ProgramOptions.getGeneralSettings().isDrawFlatSObjBorders()) {
-//            g.setColor(Color.LIGHT_GRAY);
-//            g.drawRect(0, 2, w - 1, h - 4);
-//
-//        } else {
-            g.setColor(border1);
-            g.drawLine(0, 2, w - 1, 2);
-            g.drawLine(0, 2, 0, h - 4);
+        g.setColor(border1);
+        g.drawLine(0, 2, w, 2);
+        g.drawLine(0, 2, 0, h - 2);
 
-            g.setColor(border2);
-            g.drawLine(0, h - 3, w, h - 3);
-            g.drawLine(w - 1, h - 3, w - 1, 2);
-//        }
+        g.setColor(border2);
+        g.drawLine(0, h - 2, w, h - 2);
+        g.drawLine(w, h - 2, w, 2);
 
         // paint repeat
-
         double repeatPoint = sObj.getRepeatPoint();
 
         if (sObj.getTimeBehavior() == SoundObject.TIME_BEHAVIOR_REPEAT
@@ -120,7 +112,6 @@ public class GenericRenderer implements BarRenderer {
                 int lineX = (int) (lineTime * pixelSeconds);
 
                 // g.drawLine(lineX, 3, lineX, h - 4);
-
                 x[0] = lineX - 5;
                 x[1] = lineX;
                 x[2] = lineX;
@@ -162,7 +153,6 @@ public class GenericRenderer implements BarRenderer {
         // g.drawLine(0, h - 3, 0, h - 3);
         // g.drawLine(w - 1, 2, w - 1, 2);
         // g.drawLine(w - 1, h - 3, w - 1, h - 3);
-
     }
 
     @Override

@@ -364,7 +364,7 @@ public class AudioClipPanel extends JPanel
         int[] polyY = new int[len + 3];
         int h = getHeight() - 4;
 
-        if(fadeIn) {
+        if (fadeIn) {
             polyX[len] = xOffset + len;
             polyY[len] = 0;
             polyX[len + 1] = xOffset;
@@ -444,7 +444,7 @@ public class AudioClipPanel extends JPanel
         // paint fades
         if (audioClip.getFadeIn() > 0.0f) {
             g.setColor(fadeColor);
-            paintFade(graphics, 0, audioClip.getFadeInType(), 
+            paintFade(graphics, 0, audioClip.getFadeInType(),
                     audioClip.getFadeIn(), true);
 //            g.fillPolygon(new int[]{0, 0, leftFadeHandle.getX()},
 //                    new int[]{this.getHeight() - 4, 0, 0},
@@ -453,7 +453,7 @@ public class AudioClipPanel extends JPanel
 
         if (audioClip.getFadeOut() > 0.0f) {
             g.setColor(fadeColor);
-            paintFade(graphics, rightFadeHandle.getX() + 5, 
+            paintFade(graphics, rightFadeHandle.getX() + 5,
                     audioClip.getFadeOutType(), audioClip.getFadeOut(), false);
 //            g.fillPolygon(new int[]{rightFadeHandle.getX() + 5,
 //                getWidth() - 2, getWidth() - 2},
@@ -468,12 +468,12 @@ public class AudioClipPanel extends JPanel
 
         // DRAW BORDERS
         g.setColor(border1);
-        g.drawLine(0, 2, w - 1, 2);
-        g.drawLine(0, 2, 0, h - 4);
+        g.drawLine(0, 2, w, 2);
+        g.drawLine(0, 2, 0, h - 2);
 
         g.setColor(border2);
-        g.drawLine(0, h - 3, w, h - 3);
-        g.drawLine(w - 1, h - 3, w - 1, 2);
+        g.drawLine(0, h - 2, w, h - 2);
+        g.drawLine(w, h - 2, w, 2);
 
     }
 
