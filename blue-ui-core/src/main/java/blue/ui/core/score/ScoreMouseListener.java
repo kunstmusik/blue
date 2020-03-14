@@ -19,12 +19,15 @@
  */
 package blue.ui.core.score;
 
+import blue.components.AlphaMarquee;
 import blue.score.ScoreObject;
 import blue.ui.core.render.RealtimeRenderManager;
 import blue.ui.core.score.layers.LayerGroupPanel;
 import blue.ui.core.score.mouse.BlueMouseAdapter;
 import blue.ui.nbutilities.lazyplugin.LazyPlugin;
 import blue.ui.nbutilities.lazyplugin.LazyPluginFactory;
+import blue.ui.utilities.UiUtilities;
+import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.Point;
 import java.awt.event.MouseAdapter;
@@ -43,7 +46,6 @@ import org.openide.util.lookup.InstanceContent;
  */
 public class ScoreMouseListener extends MouseAdapter {
 
-    private static final int EDGE = 5;
     private final Cursor LEFT_RESIZE_CURSOR = Cursor
             .getPredefinedCursor(Cursor.W_RESIZE_CURSOR);
     private final Cursor RIGHT_RESIZE_CURSOR = Cursor
@@ -76,7 +78,7 @@ public class ScoreMouseListener extends MouseAdapter {
         RealtimeRenderManager.getInstance().stopAuditioning();
 
         scoreTC.getScorePanel().requestFocus();
-        
+
         if (e.isConsumed()) {
             return;
         }
@@ -102,7 +104,7 @@ public class ScoreMouseListener extends MouseAdapter {
 
         try {
             for (int i = 0; i < mouseListeners.length && !e.isConsumed(); i++) {
-                if(mouseListeners[i].acceptsMode(mode)) {
+                if (mouseListeners[i].acceptsMode(mode)) {
                     current = mouseListeners[i];
                     current.mousePressed(e);
                 }
@@ -152,40 +154,81 @@ public class ScoreMouseListener extends MouseAdapter {
     @Override
     public void mouseMoved(MouseEvent e
     ) {
-        if (e.isConsumed() || ModeManager.getInstance().getMode() != ScoreMode.SCORE) {
+        if (e.isConsumed()) {
+            final JLayeredPane scorePanel = scoreTC.getScorePanel();
+
+            if (scorePanel.getCursor() != NORMAL_CURSOR) {
+                scorePanel.setCursor(NORMAL_CURSOR);
+            }
             return;
         }
+        switch (ModeManager.getInstance().getMode()) {
+            case SCORE:
+                handleMouseMovedModeScore(e);
+                break;
+            case SINGLE_LINE:
+                break;
+            case MULTI_LINE:
+                handleMouseMovedModeMultiLine(e);
+                break;
+        }
 
+    }
+
+    private void handleMouseMovedModeMultiLine(MouseEvent e) {
+        final var scorePanel = scoreTC.getScorePanel();
+
+        final var marquee = scoreTC.getMarquee();
+
+        var resizeMode = UiUtilities.getResizeMode(e.getComponent(), e.getPoint(), marquee);
+
+        switch (resizeMode) {
+            case LEFT:
+                scorePanel.setCursor(RIGHT_RESIZE_CURSOR);
+                break;
+            case RIGHT:
+                scorePanel.setCursor(LEFT_RESIZE_CURSOR);
+                break;
+            default:
+                if (scorePanel.getCursor() != NORMAL_CURSOR) {
+                    scorePanel.setCursor(NORMAL_CURSOR);
+                }
+                break;
+        }
+    }
+
+    private void handleMouseMovedModeScore(MouseEvent e) {
         ScoreObjectView sObjView = scoreTC.getScoreObjectViewAtPoint(e);
 
         final JLayeredPane scorePanel = scoreTC.getScorePanel();
 
-        Collection<? extends ScoreObject> selectedObjects = 
-                scoreTC.getLookup().lookupAll(ScoreObject.class);
-        
+        Collection<? extends ScoreObject> selectedObjects
+                = scoreTC.getLookup().lookupAll(ScoreObject.class);
+
         // FIXME - perhaps optimize the lookup to cache results using lookup listener
         if (sObjView != null
-                && selectedObjects.size() == 1 
+                && selectedObjects.size() == 1
                 && selectedObjects.contains(
                         sObjView.getScoreObject())) {
 
-            Point p = SwingUtilities.convertPoint(e.getComponent(),
-                    e.getPoint(),
-                    (JComponent) sObjView);
-            JComponent comp = (JComponent) sObjView;
+            blue.ui.utilities.ResizeMode resizeMode = UiUtilities.getResizeMode(e.getComponent(), e.getPoint(), (Component) sObjView);
 
-            if (p.x > 0 && p.x < EDGE) {
-                scorePanel.setCursor(RIGHT_RESIZE_CURSOR);
-            } else if (p.x > comp.getWidth() - EDGE && p.x <= comp.getWidth()) {
-                scorePanel.setCursor(LEFT_RESIZE_CURSOR);
-            } else {
-                scorePanel.setCursor(MOVE_CURSOR);
+            switch (resizeMode) {
+                case LEFT:
+                    scorePanel.setCursor(RIGHT_RESIZE_CURSOR);
+                    break;
+                case RIGHT:
+                    scorePanel.setCursor(LEFT_RESIZE_CURSOR);
+                    break;
+                default:
+                    scorePanel.setCursor(MOVE_CURSOR);
+
+                    break;
             }
         } else {
-            if(scorePanel.getCursor() != NORMAL_CURSOR) {
+            if (scorePanel.getCursor() != NORMAL_CURSOR) {
                 scorePanel.setCursor(NORMAL_CURSOR);
             }
         }
-
     }
 }

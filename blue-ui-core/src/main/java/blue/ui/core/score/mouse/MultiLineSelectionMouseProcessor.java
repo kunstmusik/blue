@@ -33,6 +33,8 @@ import blue.ui.core.score.ScoreMode;
 import blue.ui.core.score.ScorePath;
 import blue.ui.core.score.layers.LayerGroupPanel;
 import static blue.ui.core.score.mouse.BlueMouseAdapter.scoreTC;
+import blue.ui.utilities.ResizeMode;
+import blue.ui.utilities.UiUtilities;
 import blue.utility.ScoreUtilities;
 import java.awt.Component;
 import java.awt.KeyboardFocusManager;
@@ -57,7 +59,7 @@ class MultiLineSelectionMouseProcessor extends BlueMouseAdapter {
     TimeState timeState = null;
 
     MultiLineScoreSelection selection = MultiLineScoreSelection.getInstance();
-    
+
     boolean isShiftDown = false;
 
     public MultiLineSelectionMouseProcessor() {
@@ -66,7 +68,7 @@ class MultiLineSelectionMouseProcessor extends BlueMouseAdapter {
             return false;
         });
     }
-    
+
     @Override
     public void mousePressed(MouseEvent e) {
 

@@ -34,6 +34,9 @@ FIX
 * Score: Selection marquee in single-line mode did not calculate y-position 
   correctly when multiple Score Layers were present
 
+* Fixed automation panels losing their lines when window configuration changed 
+  (e.g., opening/closing ScoreObject Properties)
+
 
 > Notes for 2.7.4 <
 [release 2019.07.19]

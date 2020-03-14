@@ -43,3 +43,4 @@ nb_jr_remoting.cfg
 # Ignore IDEA project files
 *.iml
 .idea
+/blue-utilities/nbproject/

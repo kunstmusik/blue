@@ -28,14 +28,15 @@ import blue.ui.core.score.ModeManager;
 import blue.ui.core.score.MultiLineScoreSelection;
 import blue.ui.core.score.ScoreController;
 import blue.ui.core.score.ScoreMode;
+import blue.ui.utilities.ResizeMode;
+import blue.ui.utilities.UiUtilities;
 import blue.utility.ScoreUtilities;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
-import java.util.Collection;
 import javax.swing.SwingUtilities;
 
-@ScoreMouseListenerPlugin(displayName = "MultiLineSelectionMouseProcessor",
+@ScoreMouseListenerPlugin(displayName = "MultiLineMoveMouseListener",
         position = 110)
 class MultiLineMoveMouseListener extends BlueMouseAdapter {
 
@@ -57,11 +58,15 @@ class MultiLineMoveMouseListener extends BlueMouseAdapter {
             return;
         }
 
-        AlphaMarquee marquee = scoreTC.getMarquee();
+        var marquee = scoreTC.getMarquee();
+
+        var resizeMode = UiUtilities.getResizeMode(e.getComponent(),
+                e.getPoint(), marquee);
+
         Point p = SwingUtilities.convertPoint(scoreTC.getScorePanel(),
                 e.getPoint(), marquee);
 
-        if (!marquee.isVisible() || !marquee.contains(p)) {
+        if (!marquee.isVisible() || !marquee.contains(p) || resizeMode != ResizeMode.NONE) {
             return;
         }
 
@@ -72,11 +77,12 @@ class MultiLineMoveMouseListener extends BlueMouseAdapter {
         startX = e.getX();
         minTranslation = -selection.getStartTime();
 
-        Collection<? extends ScoreObject> selectedObjects
-                = ScoreController.getInstance().getSelectedScoreObjects();
+        var selectedObjects = ScoreController.getInstance()
+                .getSelectedScoreObjects();
 
         selectedScoreObjects = selectedObjects.toArray(new ScoreObject[0]);
         startTimes = new double[selectedScoreObjects.length];
+
         for (int i = 0; i < selectedScoreObjects.length; i++) {
             ScoreObject sObj = selectedScoreObjects[i];
             startTimes[i] = sObj.getStartTime();
@@ -95,14 +101,12 @@ class MultiLineMoveMouseListener extends BlueMouseAdapter {
 
         e.consume();
 
-        AlphaMarquee marquee = scoreTC.getMarquee();
-
+//        var marquee = scoreTC.getMarquee();
         if (SwingUtilities.isLeftMouseButton(e)) {
             int x = e.getX();
             int diffX = x - startX;
 
             double translation = diffX / (double) timeState.getPixelSecond();
-            
 
             if (timeState.isSnapEnabled() && !e.isControlDown()) {
                 double newTime = ScoreUtilities.getSnapValueMove(
@@ -110,9 +114,9 @@ class MultiLineMoveMouseListener extends BlueMouseAdapter {
 
                 translation = newTime + minTranslation;
             }
-            
+
             translation = Math.max(translation, minTranslation);
-            
+
             selection.updateTranslation(translation);
 
             for (int i = 0; i < selectedScoreObjects.length; i++) {
@@ -129,10 +133,10 @@ class MultiLineMoveMouseListener extends BlueMouseAdapter {
         e.consume();
         if (SwingUtilities.isLeftMouseButton(e)) {
             AlphaMarquee marquee = scoreTC.getMarquee();
+            var scale = selection.getScale();
+            marquee.startTime = scale.getRangeStart();
+            marquee.endTime = scale.getRangeEnd();
 
-            marquee.startTime += selection.getTranslationTime();
-            marquee.endTime += selection.getTranslationTime();
-            
             selection.endTranslation();
         }
 

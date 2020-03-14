@@ -940,7 +940,7 @@ public class Line implements TableModel, ChangeListener, Iterable<LinePoint> {
                 <= (selectionEndTime - selectionStartTime);
 
 //        LinePoint targetStartP =
-        ArrayList<LinePoint> points = new ArrayList<>();
+        var points = new ArrayList<LinePoint>();
 
         for (Iterator<LinePoint> iter = iterator(); iter.hasNext();) {
 

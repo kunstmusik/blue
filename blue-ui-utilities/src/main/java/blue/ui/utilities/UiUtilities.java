@@ -19,6 +19,8 @@
  */
 package blue.ui.utilities;
 
+import java.awt.Component;
+import java.awt.Point;
 import java.awt.event.MouseEvent;
 import javax.swing.SwingUtilities;
 
@@ -28,7 +30,28 @@ import javax.swing.SwingUtilities;
  */
 public class UiUtilities {
 
+    
+    public static final int EDGE = 5;
+
     public static boolean isRightMouseButton(MouseEvent e) {
         return SwingUtilities.isRightMouseButton(e) && !SwingUtilities.isLeftMouseButton(e);
+    }
+
+    /**
+     * Calculate if left/right resize should occur according to to point, component, and
+     * EDGE
+     */
+    public static ResizeMode getResizeMode(Component source, Point point, Component target) {
+        Point p = SwingUtilities.convertPoint(source,
+                point,
+                target);
+
+        if (p.x > 0 && p.x < EDGE) {
+            return ResizeMode.LEFT;
+        } else if (p.x > target.getWidth() - EDGE && p.x <= target.getWidth()) {
+            return ResizeMode.RIGHT;
+        } else {
+            return ResizeMode.NONE;
+        }
     }
 }

@@ -33,6 +33,7 @@ import blue.ui.core.score.ScoreTopComponent;
 import blue.ui.core.score.SingleLineScoreSelection;
 import blue.ui.utilities.FileChooserManager;
 import blue.ui.utilities.UiUtilities;
+import blue.utilities.scales.ScaleLinear;
 import blue.utility.NumberUtilities;
 import blue.utility.ScoreUtilities;
 import java.awt.BasicStroke;
@@ -529,9 +530,9 @@ public class ParameterLinePanel extends JComponent implements
             return;
         }
 
-        ArrayList<LinePoint> points = new ArrayList<>();
+        var points = new ArrayList<LinePoint>();
 
-        for (Iterator<LinePoint> iter = line.iterator(); iter.hasNext();) {
+        for (var iter = line.iterator(); iter.hasNext();) {
 
             LinePoint lp = iter.next();
 
@@ -548,19 +549,12 @@ public class ParameterLinePanel extends JComponent implements
                 iter.remove();
             }
         }
+        
+        var scale = new ScaleLinear(selectionStartTime, selectionEndTime, 
+                newSelectionStartTime, newSelectionEndTime);
 
-        double oldStart = selectionStartTime;
-        double newStart = newSelectionStartTime;
-        double oldRange = selectionEndTime - selectionStartTime;
-        double newRange = newSelectionEndTime - newSelectionStartTime;
-
-        for (Iterator<LinePoint> iterator = points.iterator(); iterator.hasNext();) {
-            LinePoint lp = iterator.next();
-
-            double newX = (lp.getX() - oldStart);
-            newX = (newX / oldRange) * newRange;
-            newX += newStart;
-
+        for (var lp : points) {
+            double newX = scale.calc(lp.getX());
             lp.setLocation(newX, lp.getY());
             line.addLinePoint(lp);
         }
@@ -572,10 +566,10 @@ public class ParameterLinePanel extends JComponent implements
     private final void drawSelectionLine(Graphics g, Parameter p) {
         Line tempLine = p.getLine();
 
-        if (selectionList.size() > 0) {
-            tempLine = getSelectionSortedLine(tempLine);
-        } else if (newSelectionStartTime >= 0) {
+        if (newSelectionStartTime >= 0) {
             tempLine = getSelectionScalingSortedLine(tempLine);
+        } else if (selectionList.size() > 0) {
+            tempLine = getSelectionSortedLine(tempLine);
         } else if (ModeManager.getInstance().getMode() == ScoreMode.SCORE) {
             drawLine(g, p, false);
             return;
@@ -924,6 +918,17 @@ public class ParameterLinePanel extends JComponent implements
     @Override
     public void addNotify() {
         super.addNotify();
+        
+        if (parameterIdList != null) {
+            parameterIdList.addListDataListener(this);
+            parameterIdList.addListSelectionListener(this);
+        }
+
+        if (paramList != null) {
+            for (Parameter param : paramList) {
+                param.getLine().addTableModelListener(this);
+            }
+        }
 
         ModeManager.getInstance().addModeListener(this);
         
@@ -943,8 +948,8 @@ public class ParameterLinePanel extends JComponent implements
             }
         }
 
-        parameterIdList = null;
-        paramList = null;
+//        parameterIdList = null;
+//        paramList = null;
 
         ModeManager.getInstance().removeModeListener(this);
         ALL_PANELS.remove(this);

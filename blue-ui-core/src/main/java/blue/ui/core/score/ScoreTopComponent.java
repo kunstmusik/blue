@@ -111,7 +111,7 @@ public final class ScoreTopComponent extends TopComponent
 
     private final InstanceContent content = new InstanceContent();
     private final ScoreController scoreController = ScoreController.getInstance();
-    
+
     SoundObject bufferSoundObject;
     BlueData data;
     ScoreObjectBar scoreObjectBar = new ScoreObjectBar();
@@ -241,32 +241,39 @@ public final class ScoreTopComponent extends TopComponent
         final MultiLineScoreSelection multiSelection
                 = MultiLineScoreSelection.getInstance();
         multiSelection.addListener((updateType) -> {
-            final Collection<? extends Layer> selectedLayers = multiSelection.getSelectedLayers();
-            if(selectedLayers == null || selectedLayers.size() == 0) {
-                marquee.setBounds(-1,-1, 0, 0);
+            final var selectedLayers = multiSelection.getSelectedLayers();
+            if (selectedLayers == null || selectedLayers.size() == 0) {
+                marquee.setBounds(-1, -1, 0, 0);
                 marquee.setVisible(false);
             } else {
                 double pixelSecond = data.getScore().getTimeState().getPixelSecond();
-                double translate = multiSelection.getTranslationTime();
-                double newStart = multiSelection.getStartTime() + translate;
-                double newEnd = multiSelection.getEndTime() + translate;
+                var scale = multiSelection.getScale();
+                double newStart = multiSelection.getStartTime();
+                double newEnd = multiSelection.getEndTime();
+
+                if (updateType == MultiLineScoreSelection.UpdateType.TRANSLATION
+                        || updateType == MultiLineScoreSelection.UpdateType.SCALE) {
+                    newStart = scale.getRangeStart();
+                    newEnd = scale.getRangeEnd();
+                } 
+
                 int x = (int) (newStart * pixelSecond);
                 int width = (int) Math.ceil((newEnd - newStart) * pixelSecond);
-                
+
                 int min = Integer.MAX_VALUE, max = Integer.MIN_VALUE;
-                Score score  = BlueProjectManager.getInstance().getCurrentBlueData().getScore();
-                for(Layer layer : selectedLayers) {
+                Score score = BlueProjectManager.getInstance().getCurrentBlueData().getScore();
+                for (Layer layer : selectedLayers) {
                     int[] minMax = ScorePath.getTopBottomForLayer(layer, score);
                     min = Math.min(min, minMax[0]);
                     max = Math.max(max, minMax[1]);
                 }
-                
+
                 marquee.setVisible(true);
                 marquee.setBounds(x, min, width, max - min);
-            }  
-            
+            }
+
         });
-        
+
         scoreController.addScoreControllerListener((path) -> {
             currentScorePath = path;
         });
@@ -447,7 +454,7 @@ public final class ScoreTopComponent extends TopComponent
 
         JButton manageButton = new JButton("Manage");
         manageButton.addActionListener((ActionEvent e) -> {
-            if(currentScorePath == null) {
+            if (currentScorePath == null) {
                 return;
             }
 
@@ -670,7 +677,7 @@ public final class ScoreTopComponent extends TopComponent
     void readProperties(java.util.Properties p) {
         String version = p.getProperty("version");
     }
-    
+
     public void scrollToRenderStartPointer() {
         SwingUtilities.invokeLater(() -> {
             scrollPane.getHorizontalScrollBar().setValue(renderStartPointer.getX());

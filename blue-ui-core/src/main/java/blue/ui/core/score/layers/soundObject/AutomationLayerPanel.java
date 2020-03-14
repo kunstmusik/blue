@@ -31,6 +31,7 @@ import blue.ui.core.score.MultiLineScoreSelectionListener;
 import blue.ui.core.score.ScoreController;
 import blue.ui.core.score.ScorePath;
 import blue.ui.core.score.soundLayer.SoundLayerLayout;
+import blue.ui.utilities.ResizeMode;
 import java.awt.Component;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -46,8 +47,6 @@ public class AutomationLayerPanel extends JComponent implements
     private LayerGroup layerGroup = null;
 
     private TimeState timeState = null;
-
-    private int scaleLayerNum = -1;
 
     MultiLineScoreSelection selection = MultiLineScoreSelection.getInstance();
 
@@ -140,22 +139,36 @@ public class AutomationLayerPanel extends JComponent implements
 
     @Override
     public void multiLineSelectionUpdated(MultiLineScoreSelection.UpdateType updateType) {
+        final var scale = selection.getScale();
+        final var selectedLayers = selection.getSelectedLayers();
+
         switch (updateType) {
             case SELECTION:
                 setMultiLineDragStart(selection.getStartTime(),
-                        selection.getEndTime(),
-                        selection.getSelectedLayers());
+                        selection.getEndTime(), selectedLayers);
                 break;
             case TRANSLATION_START:
                 setMultiLineDragStart(selection.getStartTime(),
-                        selection.getEndTime(),
-                        selection.getSelectedLayers());
+                        selection.getEndTime(), selectedLayers);
                 break;
             case TRANSLATION:
-                setMultiLineTranslation(selection.getTranslationTime());
+                setMultiLineTranslation(scale.getRangeStart() - scale.getDomainStart());
                 break;
             case TRANSLATION_COMPLETE:
                 commitMultiLineDrag();
+                break;
+            case SCALE_START:
+                initiateScoreScale(scale.getDomainStart(), scale.getDomainEnd(), selectedLayers);
+                break;
+            case SCALE:
+                if (selection.getScaleDirection() == ResizeMode.LEFT) {
+                    setScoreScaleStart(scale.getRangeStart(), selectedLayers);
+                } else if (selection.getScaleDirection() == ResizeMode.RIGHT) {
+                    setScoreScaleEnd(scale.getRangeEnd(), selectedLayers);
+                }
+                break;
+            case SCALE_COMPLETE:
+                endScoreScale(selectedLayers);
                 break;
             case CLEAR:
                 clearMultiLineTranslation();
@@ -202,31 +215,55 @@ public class AutomationLayerPanel extends JComponent implements
     }
 
     /* SCORE SCALING */
-    public void initiateScoreScale(double startTime, double endTime, int scaleLayerNum) {
-        this.scaleLayerNum = scaleLayerNum;
+    public void initiateScoreScale(double startTime, double endTime,
+            Collection<? extends Layer> selectedLayers) {
 
-        ParameterLinePanel paramLinePanel
-                = ((ParameterLinePanel) this.getComponent(this.scaleLayerNum));
-        paramLinePanel.initiateScoreScale(startTime, endTime);
+        for (int i = 0; i < getComponentCount(); i++) {
+            ParameterLinePanel paramLinePanel = (ParameterLinePanel) getComponent(
+                    i);
+
+            if (selectedLayers != null && selectedLayers.contains(layerGroup.get(i))) {
+                paramLinePanel.initiateScoreScale(startTime, endTime);
+            }
+        }
     }
 
-    public void setScoreScaleStart(double newSelectionStartTime) {
-        ParameterLinePanel paramLinePanel
-                = ((ParameterLinePanel) this.getComponent(this.scaleLayerNum));
-        paramLinePanel.setScoreScaleStart(newSelectionStartTime);
+    public void setScoreScaleStart(double newSelectionStartTime,
+            Collection<? extends Layer> selectedLayers) {
+
+        for (int i = 0; i < getComponentCount(); i++) {
+            ParameterLinePanel paramLinePanel = (ParameterLinePanel) getComponent(
+                    i);
+
+            if (selectedLayers != null && selectedLayers.contains(layerGroup.get(i))) {
+                paramLinePanel.setScoreScaleStart(newSelectionStartTime);
+            }
+        }
+
     }
 
-    public void setScoreScaleEnd(double newSelectionEndTime) {
-        ParameterLinePanel paramLinePanel
-                = ((ParameterLinePanel) this.getComponent(this.scaleLayerNum));
-        paramLinePanel.setScoreScaleEnd(newSelectionEndTime);
+    public void setScoreScaleEnd(double newSelectionEndTime,
+            Collection<? extends Layer> selectedLayers) {
+
+        for (int i = 0; i < getComponentCount(); i++) {
+            ParameterLinePanel paramLinePanel = (ParameterLinePanel) getComponent(
+                    i);
+
+            if (selectedLayers != null && selectedLayers.contains(layerGroup.get(i))) {
+                paramLinePanel.setScoreScaleEnd(newSelectionEndTime);
+            }
+        }
     }
 
-    public void endScoreScale() {
-        ParameterLinePanel paramLinePanel
-                = ((ParameterLinePanel) this.getComponent(this.scaleLayerNum));
-        paramLinePanel.commitScoreScale();
-        this.scaleLayerNum = -1;
+    public void endScoreScale(Collection<? extends Layer> selectedLayers) {
+        for (int i = 0; i < getComponentCount(); i++) {
+            ParameterLinePanel paramLinePanel = (ParameterLinePanel) getComponent(
+                    i);
+
+            if (selectedLayers != null && selectedLayers.contains(layerGroup.get(i))) {
+                paramLinePanel.commitScoreScale();
+            }
+        }
     }
 
     @Override
