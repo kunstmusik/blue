@@ -19,10 +19,13 @@
  */
 package blue.ui.core.score.mouse;
 
+import blue.automation.AutomationManager;
 import blue.components.AlphaMarquee;
+import blue.components.lines.Line;
 import blue.plugin.ScoreMouseListenerPlugin;
 import blue.score.ScoreObject;
 import blue.score.TimeState;
+import blue.score.layers.AutomatableLayer;
 import blue.ui.core.render.RealtimeRenderManager;
 import blue.ui.core.score.ModeManager;
 import blue.ui.core.score.MultiLineScoreSelection;
@@ -34,6 +37,8 @@ import blue.utility.ScoreUtilities;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
+import java.util.List;
 import javax.swing.SwingUtilities;
 
 @ScoreMouseListenerPlugin(displayName = "MultiLineMoveMouseListener",
@@ -46,6 +51,7 @@ class MultiLineMoveMouseListener extends BlueMouseAdapter {
     double minTranslation = 0.0f;
     private ScoreObject[] selectedScoreObjects = null;
     private double[] startTimes = null;
+    List<Line> selectedLines = new ArrayList<>();
 
     TimeState timeState = null;
 
@@ -89,6 +95,20 @@ class MultiLineMoveMouseListener extends BlueMouseAdapter {
             minTranslation = Math.max(minTranslation, -startTimes[i]);
         }
 
+        selectedLines.clear();
+        for(var layer: selection.getSelectedLayers()) {
+            if(layer instanceof AutomatableLayer) {
+                var autoLayer = (AutomatableLayer) layer;
+                var paramIds = autoLayer.getAutomationParameters();
+                var autoManager = AutomationManager.getInstance();
+                for(var paramId: paramIds){
+                    var param = autoManager.getParameter(paramId);
+                    selectedLines.add(param.getLine());
+                    System.out.println(paramId + " : " + param);
+                }
+            }
+        }
+        
         selection.startTranslation();
     }
 
