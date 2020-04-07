@@ -22,25 +22,20 @@ package blue.ui.core.score.layers.soundObject;
 import blue.automation.ParameterLinePanel;
 import blue.score.TimeState;
 import blue.score.layers.AutomatableLayer;
-import blue.score.layers.Layer;
 import blue.score.layers.LayerGroup;
 import blue.score.layers.LayerGroupDataEvent;
 import blue.score.layers.LayerGroupListener;
 import blue.ui.core.score.MultiLineScoreSelection;
-import blue.ui.core.score.MultiLineScoreSelectionListener;
 import blue.ui.core.score.ScoreController;
 import blue.ui.core.score.ScorePath;
 import blue.ui.core.score.soundLayer.SoundLayerLayout;
-import blue.ui.utilities.ResizeMode;
 import java.awt.Component;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.Collection;
 import javax.swing.JComponent;
 
 public class AutomationLayerPanel extends JComponent implements
-        PropertyChangeListener, LayerGroupListener,
-        MultiLineScoreSelectionListener {
+        PropertyChangeListener, LayerGroupListener {
 
     SoundLayerLayout layout = new SoundLayerLayout();
 
@@ -125,147 +120,146 @@ public class AutomationLayerPanel extends JComponent implements
 //        ParameterLinePanel paramLinePanel = (ParameterLinePanel) getComponent(layerNum);
 //        paramLinePanel.addSelectionDragRegion(startTime, endTime);
 //    }
-    @Override
-    public void removeNotify() {
-        MultiLineScoreSelection.getInstance().removeListener(this);
-        super.removeNotify();
-    }
-
-    @Override
-    public void addNotify() {
-        super.addNotify();
-        MultiLineScoreSelection.getInstance().addListener(this);
-    }
-
-    @Override
-    public void multiLineSelectionUpdated(MultiLineScoreSelection.UpdateType updateType) {
-        final var scale = selection.getScale();
-        final var selectedLayers = selection.getSelectedLayers();
-
-        switch (updateType) {
-            case SELECTION:
-                setMultiLineDragStart(selection.getStartTime(),
-                        selection.getEndTime(), selectedLayers);
-                break;
-            case TRANSLATION_START:
-                setMultiLineDragStart(selection.getStartTime(),
-                        selection.getEndTime(), selectedLayers);
-                break;
-            case TRANSLATION:
-                setMultiLineTranslation(scale.getRangeStart() - scale.getDomainStart());
-                break;
-            case TRANSLATION_COMPLETE:
-                commitMultiLineDrag();
-                break;
-            case SCALE_START:
-                initiateScoreScale(scale.getDomainStart(), scale.getDomainEnd(), selectedLayers);
-                break;
-            case SCALE:
-                if (selection.getScaleDirection() == ResizeMode.LEFT) {
-                    setScoreScaleStart(scale.getRangeStart(), selectedLayers);
-                } else if (selection.getScaleDirection() == ResizeMode.RIGHT) {
-                    setScoreScaleEnd(scale.getRangeEnd(), selectedLayers);
-                }
-                break;
-            case SCALE_COMPLETE:
-                endScoreScale(selectedLayers);
-                break;
-            case CLEAR:
-                clearMultiLineTranslation();
-                break;
-        }
-    }
-
-    public void setMultiLineDragStart(double startTime, double endTime,
-            Collection<? extends Layer> selectedLayers) {
-        for (int i = 0; i < getComponentCount(); i++) {
-            ParameterLinePanel paramLinePanel = (ParameterLinePanel) getComponent(
-                    i);
-
-            if (selectedLayers != null && selectedLayers.contains(layerGroup.get(i))) {
-                paramLinePanel.setSelectionDragRegion(startTime, endTime);
-            } else {
-                paramLinePanel.clearSelectionDragRegions();
-            }
-        }
-    }
-
-    public void commitMultiLineDrag() {
-        for (int i = 0; i < getComponentCount(); i++) {
-            ParameterLinePanel paramLinePanel = (ParameterLinePanel) getComponent(
-                    i);
-            paramLinePanel.commitMultiLineDrag();
-        }
-    }
-
-    public void setMultiLineTranslation(double timeTranslate) {
-        for (int i = 0; i < getComponentCount(); i++) {
-            ParameterLinePanel paramLinePanel = (ParameterLinePanel) getComponent(
-                    i);
-            paramLinePanel.setMultiLineMouseTranslation(timeTranslate);
-        }
-    }
-
-    public void clearMultiLineTranslation() {
-        for (int i = 0; i < getComponentCount(); i++) {
-            ParameterLinePanel paramLinePanel = (ParameterLinePanel) getComponent(
-                    i);
-            paramLinePanel.clearSelectionDragRegions();
-        }
-    }
-
-    /* SCORE SCALING */
-    public void initiateScoreScale(double startTime, double endTime,
-            Collection<? extends Layer> selectedLayers) {
-
-        for (int i = 0; i < getComponentCount(); i++) {
-            ParameterLinePanel paramLinePanel = (ParameterLinePanel) getComponent(
-                    i);
-
-            if (selectedLayers != null && selectedLayers.contains(layerGroup.get(i))) {
-                paramLinePanel.initiateScoreScale(startTime, endTime);
-            }
-        }
-    }
-
-    public void setScoreScaleStart(double newSelectionStartTime,
-            Collection<? extends Layer> selectedLayers) {
-
-        for (int i = 0; i < getComponentCount(); i++) {
-            ParameterLinePanel paramLinePanel = (ParameterLinePanel) getComponent(
-                    i);
-
-            if (selectedLayers != null && selectedLayers.contains(layerGroup.get(i))) {
-                paramLinePanel.setScoreScaleStart(newSelectionStartTime);
-            }
-        }
-
-    }
-
-    public void setScoreScaleEnd(double newSelectionEndTime,
-            Collection<? extends Layer> selectedLayers) {
-
-        for (int i = 0; i < getComponentCount(); i++) {
-            ParameterLinePanel paramLinePanel = (ParameterLinePanel) getComponent(
-                    i);
-
-            if (selectedLayers != null && selectedLayers.contains(layerGroup.get(i))) {
-                paramLinePanel.setScoreScaleEnd(newSelectionEndTime);
-            }
-        }
-    }
-
-    public void endScoreScale(Collection<? extends Layer> selectedLayers) {
-        for (int i = 0; i < getComponentCount(); i++) {
-            ParameterLinePanel paramLinePanel = (ParameterLinePanel) getComponent(
-                    i);
-
-            if (selectedLayers != null && selectedLayers.contains(layerGroup.get(i))) {
-                paramLinePanel.commitScoreScale();
-            }
-        }
-    }
-
+//    @Override
+//    public void removeNotify() {
+//        //MultiLineScoreSelection.getInstance().removeListener(this);
+//        super.removeNotify();
+//    }
+//
+//    @Override
+//    public void addNotify() {
+//        super.addNotify();
+//       // MultiLineScoreSelection.getInstance().addListener(this);
+//    }
+//
+//    @Override
+//    public void multiLineSelectionUpdated(MultiLineScoreSelection.UpdateType updateType) {
+//        final var scale = selection.getScale();
+//        final var selectedLayers = selection.getSelectedLayers();
+//
+//        switch (updateType) {
+//            case SELECTION:
+//                setMultiLineDragStart(selection.getStartTime(),
+//                        selection.getEndTime(), selectedLayers);
+//                break;
+//            case TRANSLATION_START:
+//                setMultiLineDragStart(selection.getStartTime(),
+//                        selection.getEndTime(), selectedLayers);
+//                break;
+//            case TRANSLATION:
+//                setMultiLineTranslation(scale.getRangeStart() - scale.getDomainStart());
+//                break;
+//            case TRANSLATION_COMPLETE:
+//                commitMultiLineDrag();
+//                break;
+//            case SCALE_START:
+//                initiateScoreScale(scale.getDomainStart(), scale.getDomainEnd(), selectedLayers);
+//                break;
+//            case SCALE:
+//                if (selection.getScaleDirection() == ResizeMode.LEFT) {
+//                    setScoreScaleStart(scale.getRangeStart(), selectedLayers);
+//                } else if (selection.getScaleDirection() == ResizeMode.RIGHT) {
+//                    setScoreScaleEnd(scale.getRangeEnd(), selectedLayers);
+//                }
+//                break;
+//            case SCALE_COMPLETE:
+//                endScoreScale(selectedLayers);
+//                break;
+//            case CLEAR:
+//                clearMultiLineTranslation();
+//                break;
+//        }
+//    }
+//
+//    public void setMultiLineDragStart(double startTime, double endTime,
+//            Collection<? extends Layer> selectedLayers) {
+//        for (int i = 0; i < getComponentCount(); i++) {
+//            ParameterLinePanel paramLinePanel = (ParameterLinePanel) getComponent(
+//                    i);
+//
+//            if (selectedLayers != null && selectedLayers.contains(layerGroup.get(i))) {
+//                paramLinePanel.setSelectionDragRegion(startTime, endTime);
+//            } else {
+//                paramLinePanel.clearSelectionDragRegions();
+//            }
+//        }
+//    }
+//
+//    public void commitMultiLineDrag() {
+//        for (int i = 0; i < getComponentCount(); i++) {
+//            ParameterLinePanel paramLinePanel = (ParameterLinePanel) getComponent(
+//                    i);
+//            paramLinePanel.commitMultiLineDrag();
+//        }
+//    }
+//
+//    public void setMultiLineTranslation(double timeTranslate) {
+//        for (int i = 0; i < getComponentCount(); i++) {
+//            ParameterLinePanel paramLinePanel = (ParameterLinePanel) getComponent(
+//                    i);
+//            paramLinePanel.setMultiLineMouseTranslation(timeTranslate);
+//        }
+//    }
+//
+//    public void clearMultiLineTranslation() {
+//        for (int i = 0; i < getComponentCount(); i++) {
+//            ParameterLinePanel paramLinePanel = (ParameterLinePanel) getComponent(
+//                    i);
+//            paramLinePanel.clearSelectionDragRegions();
+//        }
+//    }
+//
+//    /* SCORE SCALING */
+//    public void initiateScoreScale(double startTime, double endTime,
+//            Collection<? extends Layer> selectedLayers) {
+//
+//        for (int i = 0; i < getComponentCount(); i++) {
+//            ParameterLinePanel paramLinePanel = (ParameterLinePanel) getComponent(
+//                    i);
+//
+//            if (selectedLayers != null && selectedLayers.contains(layerGroup.get(i))) {
+//                paramLinePanel.initiateScoreScale(startTime, endTime);
+//            }
+//        }
+//    }
+//
+//    public void setScoreScaleStart(double newSelectionStartTime,
+//            Collection<? extends Layer> selectedLayers) {
+//
+//        for (int i = 0; i < getComponentCount(); i++) {
+//            ParameterLinePanel paramLinePanel = (ParameterLinePanel) getComponent(
+//                    i);
+//
+//            if (selectedLayers != null && selectedLayers.contains(layerGroup.get(i))) {
+//                paramLinePanel.setScoreScaleStart(newSelectionStartTime);
+//            }
+//        }
+//
+//    }
+//
+//    public void setScoreScaleEnd(double newSelectionEndTime,
+//            Collection<? extends Layer> selectedLayers) {
+//
+//        for (int i = 0; i < getComponentCount(); i++) {
+//            ParameterLinePanel paramLinePanel = (ParameterLinePanel) getComponent(
+//                    i);
+//
+//            if (selectedLayers != null && selectedLayers.contains(layerGroup.get(i))) {
+//                paramLinePanel.setScoreScaleEnd(newSelectionEndTime);
+//            }
+//        }
+//    }
+//
+//    public void endScoreScale(Collection<? extends Layer> selectedLayers) {
+//        for (int i = 0; i < getComponentCount(); i++) {
+//            ParameterLinePanel paramLinePanel = (ParameterLinePanel) getComponent(
+//                    i);
+//
+//            if (selectedLayers != null && selectedLayers.contains(layerGroup.get(i))) {
+//                paramLinePanel.commitScoreScale();
+//            }
+//        }
+//    }
     @Override
     public void layerGroupChanged(LayerGroupDataEvent event) {
         switch (event.getType()) {

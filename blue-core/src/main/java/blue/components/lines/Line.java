@@ -887,6 +887,13 @@ public class Line implements TableModel, ChangeListener, Iterable<LinePoint> {
     public ObservableList<LinePoint> getObservableList() {
         return points;
     }
+    
+    public void setLinePoints(ObservableList<LinePoint> newPoints) {
+        points.forEach(lp -> lp.removeChangeListener(this));
+        newPoints.forEach(lp -> lp.addChangeListener(this));
+        points = newPoints;
+        fireTableDataChanged();
+    }
 
     protected void insertOrAdjust(double time, double value, boolean fromLeft) {
         LinePoint left = getLinePoint(time, true);
