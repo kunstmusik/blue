@@ -19,6 +19,7 @@
  */
 package blue.components.lines;
 
+import blue.utilities.scales.ScaleLinear;
 import blue.utility.TextUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
@@ -28,6 +29,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.rmi.dgc.VMID;
 import java.util.*;
+import java.util.stream.Collectors;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javax.swing.event.ChangeEvent;
@@ -516,7 +518,9 @@ public class Line implements TableModel, ChangeListener, Iterable<LinePoint> {
     public boolean isCellEditable(int rowIndex, int columnIndex) {
         if (rowIndex == 0 && columnIndex == 0) {
             return false;
-        } else return !rightBound || rowIndex != (size() - 1) || columnIndex != 0;
+        } else {
+            return !rightBound || rowIndex != (size() - 1) || columnIndex != 0;
+        }
 
     }
 
@@ -887,7 +891,7 @@ public class Line implements TableModel, ChangeListener, Iterable<LinePoint> {
     public ObservableList<LinePoint> getObservableList() {
         return points;
     }
-    
+
     public void setLinePoints(ObservableList<LinePoint> newPoints) {
         points.forEach(lp -> lp.removeChangeListener(this));
         newPoints.forEach(lp -> lp.addChangeListener(this));
@@ -1103,6 +1107,108 @@ public class Line implements TableModel, ChangeListener, Iterable<LinePoint> {
                 }
             }
 
+        }
+
+        this.sort();
+        stripTimeDeadPoints();
+        fireTableDataChanged();
+    }
+
+    public void processLineForSelectionScale(final ScaleLinear scale) {
+        final double domainStart = scale.getDomainStart();
+        final double domainEnd = scale.getDomainEnd();
+        final double rangeStart = scale.getRangeStart();
+        final double rangeEnd = scale.getRangeEnd();
+
+        // if not scaling, ignore
+        if (domainStart == rangeStart && domainEnd == rangeEnd) {
+            return;
+        }
+
+        final double domainStartOuterValue = getValue(domainStart, true);
+        final double domainStartInnerValue = getValue(domainStart, false);
+        final double domainEndOuterValue = getValue(domainEnd, false);
+        final double domainEndInnerValue = getValue(domainEnd, true);
+        final double rangeStartOuterValue = getValue(rangeStart, true);
+        final double rangeStartInnerValue = getValue(rangeStart, false);
+        final double rangeEndInnerValue = getValue(rangeEnd, false);
+        final double rangeEndOuterValue = getValue(rangeEnd, true);
+        
+//        System.out.println(domainStartOuterValue + " : " + domainStartInnerValue + " : " + domainEndInnerValue + " : " + domainEndOuterValue);
+//        System.out.println(rangeStartOuterValue + " : " + rangeStartInnerValue + " : " + rangeEndInnerValue + " : " + rangeEndOuterValue);
+
+        double deleteStart = Math.min(domainStart, rangeStart);
+        double deleteEnd = Math.max(domainEnd, rangeEnd);
+
+        List<LinePoint> affected = new ArrayList<>();
+        for (Iterator<LinePoint> iter = iterator(); iter.hasNext();) {
+
+            LinePoint lp = iter.next();
+            final double x = lp.getX();
+
+            if (x < deleteStart) {
+                continue;
+            } else if (x > deleteEnd) {
+                break;
+            }
+
+            if (x >= domainStart && x <= domainEnd) {
+                lp.setX(scale.calc(lp.getX()));
+                affected.add(lp);
+            } else {
+                iter.remove();
+            }
+        }
+
+        if (rangeStart > domainStart) {         // scaled right from left
+
+            if (domainStartOuterValue != getValue(domainStart, true)) {
+                insertOrAdjust(domainStart, domainStartOuterValue, true);
+            }
+            if (domainStartOuterValue != getValue(rangeStart, true)) {
+                insertOrAdjust(rangeStart, domainStartOuterValue, true);
+            }
+            if (domainStartInnerValue != getValue(rangeStart, false)) {
+                insertOrAdjust(rangeStart, domainStartInnerValue, false);
+            }
+            if (rangeEndInnerValue != getValue(rangeEnd, true)) {
+                insertOrAdjust(rangeEnd, rangeEndInnerValue, true);
+            }
+
+        } else if (rangeStart < domainStart) {  // scaled left from left
+            if (rangeStartOuterValue != getValue(getValue(rangeStart, true))) {
+                insertOrAdjust(rangeStart, rangeStartOuterValue, true);
+            }
+            if (domainStartInnerValue != getValue(rangeStart, false)) {
+                insertOrAdjust(rangeStart, domainStartInnerValue, false);
+            }
+            if (rangeEndInnerValue != getValue(rangeEnd, true)) {
+                insertOrAdjust(rangeEnd, rangeEndInnerValue, true);
+            }
+
+        } else if (rangeEnd > domainEnd) {      // scaled right from right
+            if(domainEndInnerValue != getValue(rangeEnd, true)) {
+                insertOrAdjust(rangeEnd, domainEndInnerValue, true);
+            }
+            if(rangeEndOuterValue != getValue(rangeEnd, false)) {
+                insertOrAdjust(rangeEnd, rangeEndOuterValue, false);
+            }
+            if(domainStartInnerValue != getValue(domainStart, false)) {
+                insertOrAdjust(domainStart, domainStartInnerValue, false);
+            }
+        } else if (rangeEnd < domainEnd) {      // scaled left from right
+            if(domainEndInnerValue != getValue(rangeEnd, true)) {
+                insertOrAdjust(rangeEnd, domainEndInnerValue, true);
+            }
+            if(domainEndOuterValue != getValue(rangeEnd, false)) {
+                insertOrAdjust(rangeEnd, domainEndOuterValue, false);
+            }
+            if(domainEndOuterValue != getValue(domainEnd, false)) {
+                insertOrAdjust(domainEnd, domainEndOuterValue, false);
+            }
+            if(domainStartInnerValue != getValue(domainStart, false)) {
+                insertOrAdjust(domainStart, domainStartInnerValue, false);
+            }
         }
 
         this.sort();

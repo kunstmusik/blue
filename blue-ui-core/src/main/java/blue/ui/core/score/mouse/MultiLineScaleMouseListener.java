@@ -19,14 +19,19 @@
  */
 package blue.ui.core.score.mouse;
 
+import blue.automation.AutomationManager;
+import blue.components.AlphaMarquee;
+import blue.components.lines.Line;
 import blue.plugin.ScoreMouseListenerPlugin;
 import blue.score.ScoreObject;
 import blue.score.TimeState;
+import blue.score.layers.AutomatableLayer;
 import blue.ui.core.render.RealtimeRenderManager;
 import blue.ui.core.score.ModeManager;
 import blue.ui.core.score.MultiLineScoreSelection;
 import blue.ui.core.score.ScoreController;
 import blue.ui.core.score.ScoreMode;
+import static blue.ui.core.score.mouse.BlueMouseAdapter.scoreTC;
 import blue.ui.utilities.ResizeMode;
 import blue.ui.utilities.UiUtilities;
 import blue.utilities.scales.ScaleLinear;
@@ -34,7 +39,9 @@ import blue.utility.ScoreUtilities;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import javax.swing.SwingUtilities;
 
@@ -45,11 +52,11 @@ class MultiLineScaleMouseListener extends BlueMouseAdapter {
     final static int EDGE = 5;
 
     private final MultiLineScoreSelection selection = MultiLineScoreSelection.getInstance();
-    private final Rectangle scrollRect = new Rectangle(0, 0, 1, 1);
 
     int startX = -1;
 
     private Map<ScoreObject, double[]> scoreObjectRecords = new HashMap<>();
+    private Map<Line, Line> lineSourceCopyMap = new HashMap<>();
 
     TimeState timeState = null;
 
@@ -107,13 +114,21 @@ class MultiLineScaleMouseListener extends BlueMouseAdapter {
             scoreObjectRecords.put(sObj, new double[]{t1, t2});
         }
 
-//        selectedScoreObjects = selectedObjects.toArray(new ScoreObject[0]);
-//        startTimes = new double[selectedScoreObjects.length];
-//        for (int i = 0; i < selectedScoreObjects.length; i++) {
-//            ScoreObject sObj = selectedScoreObjects[i];
-//            startTimes[i] = sObj.getStartTime();
-//            minTranslation = Math.max(minTranslation, -startTimes[i]);
-//        }
+        lineSourceCopyMap.clear();
+        for (var layer : selection.getSelectedLayers()) {
+            if (layer instanceof AutomatableLayer) {
+                var autoLayer = (AutomatableLayer) layer;
+                var paramIds = autoLayer.getAutomationParameters();
+                var autoManager = AutomationManager.getInstance();
+                for (var paramId : paramIds) {
+                    var param = autoManager.getParameter(paramId);
+                    var line = param.getLine();
+
+                    lineSourceCopyMap.put(line, new Line(line));
+                }
+            }
+        }
+
         e.consume();
         RealtimeRenderManager.getInstance().stopAuditioning();
 
@@ -157,11 +172,19 @@ class MultiLineScaleMouseListener extends BlueMouseAdapter {
                 double start = scale.calc(vals[0]);
                 double end = scale.calc(vals[1]);
 
-                System.out.printf("%g : %g\n", start, end);
+//                System.out.printf("%g : %g\n", start, end);
 
                 sObj.setStartTime(start);
                 sObj.setSubjectiveDuration(end - start);
             });
+
+            lineSourceCopyMap
+                    .forEach((source, copy) -> {
+                        var newLine = new Line(copy);
+                        newLine.processLineForSelectionScale(scale);
+                        source.setLinePoints(newLine.getObservableList());
+                    });
+
         }
 
         checkScroll(e);
@@ -171,10 +194,13 @@ class MultiLineScaleMouseListener extends BlueMouseAdapter {
     public void mouseReleased(MouseEvent e) {
         e.consume();
         if (SwingUtilities.isLeftMouseButton(e)) {
-//            AlphaMarquee marquee = scoreTC.getMarquee();
-//
-//            marquee.startTime += selection.getTranslationTime();
-//            marquee.endTime += selection.getTranslationTime();
+            AlphaMarquee marquee = scoreTC.getMarquee();
+            var scale = selection.getScale();
+            marquee.startTime = scale.getRangeStart();
+            marquee.endTime = scale.getRangeEnd();
+
+            lineSourceCopyMap.clear();
+            scoreObjectRecords.clear();
 
             selection.endScale();
         }

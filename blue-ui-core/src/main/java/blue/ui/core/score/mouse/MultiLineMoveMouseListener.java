@@ -22,7 +22,6 @@ package blue.ui.core.score.mouse;
 import blue.automation.AutomationManager;
 import blue.components.AlphaMarquee;
 import blue.components.lines.Line;
-import blue.components.lines.LinePoint;
 import blue.plugin.ScoreMouseListenerPlugin;
 import blue.score.ScoreObject;
 import blue.score.TimeState;
@@ -38,9 +37,8 @@ import blue.utility.ScoreUtilities;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Collectors;
+import java.util.HashMap;
+import java.util.Map;
 import javax.swing.SwingUtilities;
 
 @ScoreMouseListenerPlugin(displayName = "MultiLineMoveMouseListener",
@@ -53,7 +51,7 @@ class MultiLineMoveMouseListener extends BlueMouseAdapter {
     double minTranslation = 0.0f;
     private ScoreObject[] selectedScoreObjects = null;
     private double[] startTimes = null;
-    List<LineEntry> selectedLines = new ArrayList<>();
+    Map<Line, Line> lineSourceCopyMap = new HashMap<>();
 
     TimeState timeState = null;
 
@@ -97,7 +95,7 @@ class MultiLineMoveMouseListener extends BlueMouseAdapter {
             minTranslation = Math.max(minTranslation, -startTimes[i]);
         }
 
-        selectedLines.clear();
+        lineSourceCopyMap.clear();
         for (var layer : selection.getSelectedLayers()) {
             if (layer instanceof AutomatableLayer) {
                 var autoLayer = (AutomatableLayer) layer;
@@ -107,12 +105,7 @@ class MultiLineMoveMouseListener extends BlueMouseAdapter {
                     var param = autoManager.getParameter(paramId);
                     var line = param.getLine();
 
-                    var entry = new LineEntry();
-                    entry.sourceRef = line;
-                    entry.sourceCopy = new Line(line);
-                    entry.originalSelection = line.copy(selection.getStartTime(), selection.getEndTime());
-
-                    selectedLines.add(entry);
+                    lineSourceCopyMap.put(line, new Line(line));
                 }
             }
         }
@@ -146,16 +139,12 @@ class MultiLineMoveMouseListener extends BlueMouseAdapter {
             translation = Math.max(translation, minTranslation);
             final double trans = translation;
 
-            for (var entry : selectedLines) {
-                var lineSelection = entry.originalSelection.stream()
-                        .map(pt -> new LinePoint(pt.getX() + trans, pt.getY()))
-                        .collect(Collectors.toList());
-                var newLine = new Line(entry.sourceCopy);
-
+            lineSourceCopyMap.forEach((source, copy) -> {
+                var newLine = new Line(copy);
                 newLine.processLineForSelectionDrag(selection.getStartTime(),
                         selection.getEndTime(), trans);
-                entry.sourceRef.setLinePoints(newLine.getObservableList());
-            }
+                source.setLinePoints(newLine.getObservableList());
+            });
 
             for (int i = 0; i < selectedScoreObjects.length; i++) {
                 ScoreObject sObj = selectedScoreObjects[i];
@@ -177,7 +166,7 @@ class MultiLineMoveMouseListener extends BlueMouseAdapter {
             marquee.startTime = scale.getRangeStart();
             marquee.endTime = scale.getRangeEnd();
 
-            selectedLines.clear();
+            lineSourceCopyMap.clear();
             selectedScoreObjects = null;
             selection.endTranslation();
         }
@@ -194,11 +183,4 @@ class MultiLineMoveMouseListener extends BlueMouseAdapter {
         return mode == ScoreMode.MULTI_LINE;
     }
 
-    class LineEntry {
-
-        Line sourceRef;
-        Line sourceCopy;
-        List<LinePoint> originalSelection;
-
-    }
 }
