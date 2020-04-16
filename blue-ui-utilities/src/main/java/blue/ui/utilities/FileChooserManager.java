@@ -194,7 +194,7 @@ public class FileChooserManager {
             ff.setVisible(true);
             final File[] files = ff.getFiles();
             
-            return (files != null) ? files[0] : null;
+            return (files != null && files.length > 0) ? files[0] : null;
 
         } else {
             // Use JavaFX elsewhere
