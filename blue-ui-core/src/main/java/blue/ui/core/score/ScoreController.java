@@ -30,6 +30,7 @@ import blue.score.layers.AutomatableLayer;
 import blue.score.layers.Layer;
 import blue.score.layers.LayerGroup;
 import blue.score.layers.ScoreObjectLayer;
+import blue.ui.core.score.undo.LineChangeEdit;
 import blue.ui.core.score.undo.RemoveScoreObjectEdit;
 import blue.undo.BlueUndoManager;
 import java.util.ArrayList;
@@ -38,6 +39,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.WeakHashMap;
 import java.util.stream.Collectors;
@@ -212,9 +214,9 @@ public class ScoreController {
         }
     }
 
-    public void deleteScoreObjects() {
+    public Optional<RemoveScoreObjectEdit> deleteScoreObjects() {        
         if (lookup == null || content == null) {
-            return;
+            return Optional.empty();
         }
 
         Collection<? extends ScoreObject> scoreObjects
@@ -227,7 +229,7 @@ public class ScoreController {
         }
 
         if (scoreObjects.isEmpty()) {
-            return;
+            return Optional.empty();
         }
 
         List<Layer> layers = getScorePath().getAllLayers();
@@ -260,6 +262,7 @@ public class ScoreController {
         BlueUndoManager.setUndoManager("score");
         BlueUndoManager.addEdit(top);
 
+        return Optional.of(top);
     }
 
     public void cutScoreObjects() {
@@ -396,6 +399,7 @@ public class ScoreController {
 
         AutomationManager manager = AutomationManager.getInstance();
 
+        LineChangeEdit top = null;
         for (Layer layer : selection.getSelectedLayers()) {
             if (layer instanceof AutomatableLayer) {
                 AutomatableLayer al = (AutomatableLayer) layer;
@@ -404,11 +408,27 @@ public class ScoreController {
                 for (String paramId : params) {
                     Parameter param = manager.getParameter(paramId);
                     Line line = param.getLine();
+                    var sourceCopy = new Line(line);
                     line.delete(start, end);
+                    var endCopy = new Line(line);
+                    
+                    var edit = new LineChangeEdit(line, sourceCopy, endCopy);
+                    if(top == null) {
+                        top = edit;
+                    } else {
+                        top.appendNextEdit(edit);
+                    }
                 }
             }
         }
-        deleteScoreObjects();
+        var scoreObjectsEdit = deleteScoreObjects();
+        if(scoreObjectsEdit.isPresent()) {
+            scoreObjectsEdit.get().appendNextEdit(top);
+        } else if (top != null) {
+            BlueUndoManager.setUndoManager("score");
+            BlueUndoManager.addEdit(top);
+        }
+        
         selection.reset();
     }
 

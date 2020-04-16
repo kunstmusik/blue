@@ -7,19 +7,16 @@ package blue.ui.core.score.undo;
 import blue.BlueSystem;
 import blue.score.ScoreObject;
 import blue.score.layers.ScoreObjectLayer;
-import javax.swing.undo.AbstractUndoableEdit;
 import javax.swing.undo.CannotRedoException;
 import javax.swing.undo.CannotUndoException;
 
 /**
  * @author steven
  */
-public class RemoveScoreObjectEdit extends AbstractUndoableEdit {
+public class RemoveScoreObjectEdit extends AppendableEdit {
 
     private final ScoreObject sObj;
     private final ScoreObjectLayer layer;
-
-    RemoveScoreObjectEdit nextEdit = null;
 
     public RemoveScoreObjectEdit(ScoreObjectLayer layer, ScoreObject sObj) {
         this.layer = layer;
@@ -52,11 +49,4 @@ public class RemoveScoreObjectEdit extends AbstractUndoableEdit {
         return BlueSystem.getString("scoreGUI.action.removeSoundObjects");
     }
 
-    public void appendNextEdit(RemoveScoreObjectEdit nextEdit) {
-        if (this.nextEdit != null) {
-            this.nextEdit.appendNextEdit(nextEdit);
-        } else {
-            this.nextEdit = nextEdit;
-        }
-    }
 }
