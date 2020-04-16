@@ -19,6 +19,8 @@
 package blue.ui.core.score;
 
 import blue.components.lines.Line;
+import blue.ui.utilities.ResizeMode;
+import blue.utilities.scales.ScaleLinear;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -29,9 +31,10 @@ import java.util.Set;
 public class SingleLineScoreSelection {
 
     private Line sourceLine = null;
-    private double startTime = -1.0;
-    private double endTime = -1.0;
-    private double translation = 0.0;
+    
+    ScaleLinear scale = new ScaleLinear(-1.0, -1.0, -1.0, -1.0);
+
+    ResizeMode scaleDirection = ResizeMode.NONE;
     
     Set<SingleLineScoreSelectionListener> listeners = 
             new HashSet<SingleLineScoreSelectionListener>();
@@ -53,28 +56,64 @@ public class SingleLineScoreSelection {
     }
 
     public double getStartTime() {
-        return startTime;
+        return scale.getDomainStart();
     }
 
     public double getEndTime() {
-        return endTime;
+        return scale.getDomainEnd();
     }
     
-    public double getTranslation() {
-        return translation;
+    public double getRangeStartTime() {
+        return scale.getRangeStart();
+    }
+    
+    public double getRangeEndTime() {
+        return scale.getRangeEnd();
+    }
+        
+    public ScaleLinear getScale() {
+        return scale;
+    }
+
+    public ResizeMode getScaleDirection() {
+        return scaleDirection;
     }
     
     public void updateSelection(Line sourceLine, double startTime, double endTime) {
         this.sourceLine = sourceLine;
-        this.startTime = startTime;
-        this.endTime = endTime;
-        this.translation = 0.0;
+        scale.setDomain(startTime, endTime);
+        scale.setRange(startTime, endTime);
         notifyListeners();
     }
     
     public void updateTranslation(double translation) {
-        this.translation = translation;
+        scale.setRange(scale.getDomainStart() + translation, scale.getDomainEnd() + translation);
         notifyListeners();
+    }
+    
+    public void endTranslation() {
+        updateSelection(sourceLine, scale.getRangeStart(), scale.getRangeEnd());
+    }
+    
+     public void startScale(ResizeMode direction) {
+        this.scaleDirection = direction;
+
+        notifyListeners();
+    }
+
+    public void updateScale(double newScaleTime) {
+        if (scaleDirection == ResizeMode.LEFT) {
+            scale.setRange(newScaleTime, scale.getRangeEnd());
+        } else {
+            scale.setRange(scale.getRangeStart(), newScaleTime);
+        }
+
+        notifyListeners();
+    }
+
+    public void endScale() {
+        this.scaleDirection = ResizeMode.NONE;
+        updateSelection(sourceLine, scale.getRangeStart(), scale.getRangeEnd());
     }
 
     

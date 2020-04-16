@@ -30,12 +30,15 @@ import blue.ui.core.score.ScoreController;
 import blue.ui.core.score.ScoreMode;
 import blue.ui.core.score.ScoreTopComponent;
 import blue.ui.core.score.SingleLineScoreSelection;
+import blue.ui.utilities.ResizeMode;
 import blue.ui.utilities.UiUtilities;
+import blue.utilities.scales.ScaleLinear;
 import blue.utility.NumberUtilities;
 import blue.utility.ScoreUtilities;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Cursor;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Point;
@@ -49,6 +52,7 @@ import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.JComponent;
+import javax.swing.JLayeredPane;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
@@ -64,6 +68,8 @@ import org.openide.windows.WindowManager;
 public class ParameterLinePanel extends JComponent implements
         TableModelListener, ListDataListener, ListSelectionListener,
         ModeListener {
+
+    final static int EDGE = 5;
 
     private static final List<ParameterLinePanel> ALL_PANELS = new ArrayList<>();
 
@@ -95,7 +101,7 @@ public class ParameterLinePanel extends JComponent implements
 
     double transTime = 0;
 
-    SingleLineScoreSelection selection = SingleLineScoreSelection.getInstance();
+    final SingleLineScoreSelection selection = SingleLineScoreSelection.getInstance();
 
     public ParameterLinePanel() {
         lineListener = (TableModelEvent e) -> repaint();
@@ -349,7 +355,6 @@ public class ParameterLinePanel extends JComponent implements
 
             double min = p.getMin();
             double max = p.getMax();
-            BigDecimal resolution = p.getResolution();
 
             for (int i = 0; i < line.size(); i++) {
 
@@ -357,10 +362,6 @@ public class ParameterLinePanel extends JComponent implements
 
                 x = doubleToScreenX(point.getX());
                 y = doubleToScreenY(point.getY(), min, max);
-
-                if (drawPoints) {
-                    paintPoint(g, x, y);
-                }
 
                 if (previous != null) {
 
@@ -429,6 +430,14 @@ public class ParameterLinePanel extends JComponent implements
                 g.drawLine(lastX, lastY, getWidth(), lastY);
             }
 
+            if (drawPoints) {
+                for (int i = 0; i < line.size(); i++) {
+                    var lp = line.getLinePoint(i);
+                    x = doubleToScreenX(lp.getX());
+                    y = doubleToScreenY(lp.getY(), min, max);
+                    paintPoint(g, x, y);
+                }
+            }
         }
 
     }
@@ -461,9 +470,8 @@ public class ParameterLinePanel extends JComponent implements
             return;
         }
 
-        final double translation = selection.getTranslation();
-        final double selectionStart = selection.getStartTime() + translation;
-        final double selectionEnd = selection.getEndTime() + translation;
+        final double selectionStart = selection.getRangeStartTime();
+        final double selectionEnd = selection.getRangeEndTime();
 
         if (tempLine.size() == 1) {
             LinePoint lp = tempLine.getLinePoint(0);
@@ -926,25 +934,27 @@ public class ParameterLinePanel extends JComponent implements
                     sourceCopy = null;
                     return;
                 } else {
-
+                    // TRANSLATION OR SCALING OF SELECTION
                     if (SwingUtilities.isLeftMouseButton(e)) {
-
                         mouseDownInitialX = e.getX();
                         transTime = 0.0f;
 
-                        double marqueeLeft = selection.getStartTime();
-                        double marqueeRight = selection.getEndTime();
-
-                        initialStartTime = marqueeLeft;
+                        initialStartTime = selection.getStartTime();
 
                         verticalShift = e.isControlDown();
 
                         if (verticalShift) {
-                            vShifter.setup(currentParameter, marqueeLeft, marqueeRight);
+                            vShifter.setup(currentParameter, initialStartTime, selection.getEndTime());
                         }
 
                         initialY = e.getY();
                         sourceCopy = new Line(selection.getSourceLine());
+
+                        ScoreTopComponent scoreTC = (ScoreTopComponent) WindowManager.getDefault().findTopComponent("ScoreTopComponent");
+                        var resizeMode = UiUtilities.getResizeMode(e.getComponent(), e.getPoint(), scoreTC.getMarquee());
+                        if (resizeMode != ResizeMode.NONE) {
+                            selection.startScale(resizeMode);
+                        }
                     }
                     return;
 
@@ -1014,42 +1024,6 @@ public class ParameterLinePanel extends JComponent implements
         }
 
         @Override
-        public void mouseReleased(MouseEvent e) {
-            direction = DragDirection.NOT_SET;
-            vShifter.cleanup();
-            boolean didVerticalShift = verticalShift;
-            verticalShift = false;
-            justPasted = false;
-
-            if (ModeManager.getInstance().getMode() != ScoreMode.SINGLE_LINE) {
-                return;
-            }
-
-            e.consume();
-
-            if (currentParameter == null) {
-                return;
-            }
-
-            if (selectedPoint == null && !didVerticalShift
-                    && paramList.containsLine(selection.getSourceLine())
-                    && SwingUtilities.isLeftMouseButton(e)) {
-
-                // FIXME - update selection
-//                double selectionStartTime = selection.getStartTime();
-//                double selectionEndTime = selection.getEndTime();
-//                currentParameter.getLine().processLineForSelectionDrag(
-//                        selectionStartTime, selectionEndTime, transTime);
-            }
-
-            transTime = 0.0f;
-
-//            currentParameter.getLine().stripTimeDeadPoints();
-            repaint();
-
-        }
-
-        @Override
         public void mouseDragged(MouseEvent e) {
             if (ModeManager.getInstance().getMode() != ScoreMode.SINGLE_LINE) {
                 return;
@@ -1064,7 +1038,7 @@ public class ParameterLinePanel extends JComponent implements
             // check if selection currently is for line that is contained in this panel
             if (paramList.containsLine(selection.getSourceLine())) {
                 int x = e.getX();
-                double pixelSecond = timeState.getPixelSecond();
+                final double pixelSecond = timeState.getPixelSecond();
 
                 if (verticalShift) {
 
@@ -1076,31 +1050,57 @@ public class ParameterLinePanel extends JComponent implements
 
                     vShifter.processVShift(amount);
 
-                } else if (mouseDownInitialX > 0) { // MOVING OF SELECTION
+                } else if (mouseDownInitialX >= 0) { // MOVING OF SELECTION
                     if (SwingUtilities.isLeftMouseButton(e)) {
 
-                        transTime = (x - mouseDownInitialX) / pixelSecond;
+                        // SCALING
+                        if (selection.getScaleDirection() != ResizeMode.NONE) {
 
-                        double newTime = initialStartTime + transTime;
+                            final var edgeTime = EDGE / pixelSecond;
 
-                        if (timeState.isSnapEnabled() && !e.isControlDown()) {
-                            newTime = ScoreUtilities.getSnapValueMove(newTime,
-                                    timeState.getSnapValue());
-                            transTime = newTime - selection.getStartTime();
+                            double newTime = x / pixelSecond;
+
+                            if (timeState.isSnapEnabled() && !e.isControlDown()) {
+                                newTime = ScoreUtilities.getSnapValueMove(
+                                        newTime, timeState.getSnapValue());
+                            }
+
+                            ScaleLinear scale = selection.getScale();
+                            if (selection.getScaleDirection() == ResizeMode.LEFT) {
+                                newTime = Math.min(scale.getRangeEnd() - edgeTime, newTime);
+                                newTime = Math.max(newTime, 0.0);
+                            } else {
+                                newTime = Math.max(scale.getRangeStart() + edgeTime, newTime);
+                            }
+
+                            selection.updateScale(newTime);
+
+                            var newLine = new Line(sourceCopy);
+                            newLine.processLineForSelectionScale(selection.getScale());
+                            selection.getSourceLine().setLinePoints(newLine.getObservableList());
+                        } else {
+                            // TRANSLATION
+                            transTime = (x - mouseDownInitialX) / pixelSecond;
+
+                            double newTime = initialStartTime + transTime;
+
+                            if (timeState.isSnapEnabled() && !e.isControlDown()) {
+                                newTime = ScoreUtilities.getSnapValueMove(newTime,
+                                        timeState.getSnapValue());
+                                transTime = newTime - selection.getStartTime();
+                            }
+
+                            if (newTime < 0) {
+                                transTime -= newTime;
+                                newTime = 0;
+                            }
+
+                            var newLine = new Line(sourceCopy);
+                            newLine.processLineForSelectionDrag(selection.getStartTime(),
+                                    selection.getEndTime(), transTime);
+                            selection.getSourceLine().setLinePoints(newLine.getObservableList());
+                            selection.updateTranslation(transTime);
                         }
-
-                        if (newTime < 0) {
-                            transTime -= newTime;
-                            newTime = 0;
-                        }
-
-                        double endTime = newTime + (selection.getEndTime() - selection.getStartTime());
-
-                        var newLine = new Line(sourceCopy);
-                        newLine.processLineForSelectionDrag(selection.getStartTime(),
-                                selection.getEndTime(), transTime);
-                        selection.getSourceLine().setLinePoints(newLine.getObservableList());
-                        selection.updateTranslation(transTime);
                     }
                 } else {
                     if (x < 0) {
@@ -1179,6 +1179,39 @@ public class ParameterLinePanel extends JComponent implements
         }
 
         @Override
+        public void mouseReleased(MouseEvent e) {
+            direction = DragDirection.NOT_SET;
+            vShifter.cleanup();
+            boolean didVerticalShift = verticalShift;
+            verticalShift = false;
+            justPasted = false;
+
+            if (ModeManager.getInstance().getMode() != ScoreMode.SINGLE_LINE) {
+                return;
+            }
+
+            e.consume();
+
+            if (currentParameter == null) {
+                return;
+            }
+
+            if (selectedPoint == null && !didVerticalShift
+                    && paramList.containsLine(selection.getSourceLine())
+                    && SwingUtilities.isLeftMouseButton(e)) {
+
+                if (selection.getScaleDirection() == ResizeMode.NONE) {
+                    selection.endTranslation();
+                } else {
+                    selection.endScale();
+                }
+            }
+
+            transTime = 0.0f;
+            repaint();
+        }
+
+        @Override
         public void mouseMoved(MouseEvent e) {
             if (ModeManager.getInstance().getMode() != ScoreMode.SINGLE_LINE) {
                 return;
@@ -1186,6 +1219,24 @@ public class ParameterLinePanel extends JComponent implements
 
             if (currentParameter == null) {
                 return;
+            }
+
+            ScoreTopComponent scoreTC = (ScoreTopComponent) WindowManager.getDefault().findTopComponent("ScoreTopComponent");
+            final JLayeredPane scorePanel = scoreTC.getScorePanel();
+            var resizeMode = UiUtilities.getResizeMode(e.getComponent(), e.getPoint(), scoreTC.getMarquee());
+            //System.out.println("RESIZE_MODE: " + resizeMode);
+            switch (resizeMode) {
+                case LEFT:
+                    scorePanel.setCursor(Cursor.getPredefinedCursor(Cursor.W_RESIZE_CURSOR));
+                    break;
+                case RIGHT:
+                    scorePanel.setCursor(Cursor.getPredefinedCursor(Cursor.E_RESIZE_CURSOR));
+                    break;
+                default:
+                    if (getCursor() != Cursor.getDefaultCursor()) {
+                        scorePanel.setCursor(Cursor.getDefaultCursor());
+                    }
+                    break;
             }
 
             int x = e.getX();
@@ -1205,7 +1256,6 @@ public class ParameterLinePanel extends JComponent implements
         }
 
     }
-
 
     public static int[] getYHeight(Line line) {
         for (ParameterLinePanel panel : ALL_PANELS) {
