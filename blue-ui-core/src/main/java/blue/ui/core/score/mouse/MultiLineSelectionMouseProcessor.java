@@ -80,7 +80,10 @@ class MultiLineSelectionMouseProcessor extends BlueMouseAdapter {
         Point p = SwingUtilities.convertPoint(scoreTC.getScorePanel(),
                 e.getPoint(), marquee);
 
-        if (marquee.isVisible() && marquee.contains(p)) {
+        var resizeMode = UiUtilities.getResizeMode(e.getComponent(), e.getPoint(), marquee);
+        
+        if (marquee.isVisible() && (marquee.contains(p) || 
+                resizeMode != ResizeMode.NONE)) {
             return;
         }
 

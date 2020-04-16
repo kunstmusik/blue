@@ -48,7 +48,7 @@ public class UiUtilities {
 
         if (p.x > 0 && p.x < EDGE) {
             return ResizeMode.LEFT;
-        } else if (p.x > target.getWidth() - EDGE && p.x <= target.getWidth()) {
+        } else if (p.x > target.getWidth() - EDGE && p.x < target.getWidth()) {
             return ResizeMode.RIGHT;
         } else {
             return ResizeMode.NONE;
