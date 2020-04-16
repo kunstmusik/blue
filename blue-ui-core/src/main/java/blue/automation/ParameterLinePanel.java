@@ -22,7 +22,6 @@ package blue.automation;
 import blue.BlueSystem;
 import blue.components.DragDirection;
 import blue.components.lines.Line;
-import blue.components.lines.LineEditorDialog;
 import blue.components.lines.LinePoint;
 import blue.score.TimeState;
 import blue.ui.core.score.ModeListener;
@@ -31,9 +30,7 @@ import blue.ui.core.score.ScoreController;
 import blue.ui.core.score.ScoreMode;
 import blue.ui.core.score.ScoreTopComponent;
 import blue.ui.core.score.SingleLineScoreSelection;
-import blue.ui.utilities.FileChooserManager;
 import blue.ui.utilities.UiUtilities;
-import blue.utilities.scales.ScaleLinear;
 import blue.utility.NumberUtilities;
 import blue.utility.ScoreUtilities;
 import java.awt.BasicStroke;
@@ -45,27 +42,13 @@ import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.Stroke;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.PrintWriter;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
-import javafx.stage.FileChooser.ExtensionFilter;
-import javax.swing.AbstractAction;
-import javax.swing.Action;
 import javax.swing.JComponent;
-import javax.swing.JMenu;
-import javax.swing.JMenuItem;
-import javax.swing.JOptionPane;
-import javax.swing.JPopupMenu;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
@@ -73,7 +56,6 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
-import org.openide.util.Exceptions;
 import org.openide.windows.WindowManager;
 
 /**
@@ -82,12 +64,8 @@ import org.openide.windows.WindowManager;
 public class ParameterLinePanel extends JComponent implements
         TableModelListener, ListDataListener, ListSelectionListener,
         ModeListener {
-    
+
     private static final List<ParameterLinePanel> ALL_PANELS = new ArrayList<>();
-
-    private static final String FILE_BPF_IMPORT = "paramaterLinePanel.bpf_import";
-
-    private static final String FILE_BPF_EXPORT = "paramaterLinePanel.bpf_export";
 
     private static final Stroke STROKE1 = new BasicStroke(1);
 
@@ -99,7 +77,7 @@ public class ParameterLinePanel extends JComponent implements
 
     double leftBoundaryTime = -1.0, rightBoundaryTime = -1.0;
 
-    TableModelListener lineListener = null;
+    TableModelListener lineListener;
 
     ParameterIdList parameterIdList = null;
 
@@ -111,40 +89,16 @@ public class ParameterLinePanel extends JComponent implements
 
     LineCanvasMouseListener mouseListener = new LineCanvasMouseListener(this);
 
-    ArrayList<double[]> selectionList = new ArrayList<>();
-
     int mouseDownInitialX = -1;
-    
+
     double initialStartTime = -1.0;
 
     double transTime = 0;
 
-    private double selectionStartTime = -1;
-
-    private double selectionEndTime = -1;
-
-    private double newSelectionStartTime = -1;
-
-    private double newSelectionEndTime = -1;
-
     SingleLineScoreSelection selection = SingleLineScoreSelection.getInstance();
 
     public ParameterLinePanel() {
-        lineListener = (TableModelEvent e) -> {
-            repaint();
-        };
-
-        FileChooserManager fcm = FileChooserManager.getDefault();
-
-        fcm.addFilter(FILE_BPF_IMPORT, new ExtensionFilter(
-                "Break Point File", "*.bpf"));
-
-        fcm.addFilter(FILE_BPF_EXPORT, new ExtensionFilter(
-                "Break Point File", "*.bpf"));
-
-        fcm.setDialogTitle(FILE_BPF_IMPORT, "Import BPF File");
-        fcm.setDialogTitle(FILE_BPF_EXPORT, "Export BPF File");
-
+        lineListener = (TableModelEvent e) -> repaint();
     }
 
     public void setTimeState(TimeState timeState) {
@@ -248,7 +202,7 @@ public class ParameterLinePanel extends JComponent implements
             if (multiLineMode) {
                 g2d.setColor(line.getColor().darker());
                 drawSelectionLine(g2d, param);
-            } else if (editing && param == currentParameter) {
+            } else if (param == currentParameter) {
                 currentColor = line.getColor();
             } else {
                 g2d.setColor(line.getColor().darker());
@@ -263,7 +217,7 @@ public class ParameterLinePanel extends JComponent implements
         if (currentColor != null) {
             g2d.setColor(currentColor);
 
-            if (editing && paramList.containsLine(selection.getSourceLine())) {
+            if (paramList.containsLine(selection.getSourceLine())) {
                 drawSelectionLine(g2d, currentParameter);
             } else {
                 drawLine(g2d, currentParameter, true);
@@ -271,7 +225,7 @@ public class ParameterLinePanel extends JComponent implements
 
         }
 
-        if (editing && selectedPoint != null) {
+        if (selectedPoint != null) {
 
             double min = currentParameter.getMin();
             double max = currentParameter.getMax();
@@ -331,7 +285,7 @@ public class ParameterLinePanel extends JComponent implements
         g2d.drawString(yText, xLoc, yLoc + 14);
     }
 
-    private final void drawLine(Graphics g, Parameter p, boolean drawPoints) {
+    private void drawLine(Graphics g, Parameter p, boolean drawPoints) {
         Line line = p.getLine();
 
         Rectangle clipBounds = g.getClipBounds();
@@ -467,6 +421,7 @@ public class ParameterLinePanel extends JComponent implements
                 previous = point;
             }
 
+            assert previous != null;
             if (previous.getX() < this.getWidth()) {
                 int lastX = doubleToScreenX(previous.getX());
                 int lastY = doubleToScreenY(previous.getY(), min, max);
@@ -488,89 +443,12 @@ public class ParameterLinePanel extends JComponent implements
         }
     }
 
-    /**
-     * Returns a line that has the points sorted and those masked removed when
-     * handling SelectionMoving; not sure this will be good for long term as it
-     * doesn't seem performant but using for initial work and can reevaluate
-     * later.
-     *
-     * @param line
-     * @return
-     */
-    private Line getSelectionSortedLine(Line line) {
-        Line retVal = new Line(line);
-        double[] selPoints = selectionList.get(0);
-
-        double selectionStartTime = selPoints[0];
-        double selectionEndTime = selPoints[1];
-        retVal.processLineForSelectionDrag(selectionStartTime, selectionEndTime,
-                transTime);
-
-        return retVal;
-    }
-
-    /**
-     * Returns a line that has the points sorted and those masked removed when
-     * handling SelectionScaling; not sure this will be good for long term as it
-     * doesn't seem performant but using for initial work and can reevaluate
-     * later.
-     *
-     * @param line
-     * @return
-     */
-    private Line getSelectionScalingSortedLine(Line line) {
-        Line retVal = new Line(line);
-        processLineForSelectionScale(retVal);
-
-        return retVal;
-    }
-
-    private void processLineForSelectionScale(Line line) {
-        if (selectionStartTime < 0) {
-            return;
-        }
-
-        var points = new ArrayList<LinePoint>();
-
-        for (var iter = line.iterator(); iter.hasNext();) {
-
-            LinePoint lp = iter.next();
-
-            if (line.isFirstLinePoint(lp)) {
-                continue;
-            }
-
-            double pointTime = lp.getX();
-
-            if (pointTime >= selectionStartTime && pointTime <= selectionEndTime) {
-                points.add(lp);
-                iter.remove();
-            } else if (pointTime >= newSelectionStartTime && pointTime <= newSelectionEndTime) {
-                iter.remove();
-            }
-        }
-        
-        var scale = new ScaleLinear(selectionStartTime, selectionEndTime, 
-                newSelectionStartTime, newSelectionEndTime);
-
-        for (var lp : points) {
-            double newX = scale.calc(lp.getX());
-            lp.setLocation(newX, lp.getY());
-            line.addLinePoint(lp);
-        }
-
-        line.sort();
-    }
 
     /* Draws line when in selection mode (MULTILINE, SCORE when SCALING) */
-    private final void drawSelectionLine(Graphics g, Parameter p) {
+    private void drawSelectionLine(Graphics g, Parameter p) {
         Line tempLine = p.getLine();
 
-        if (newSelectionStartTime >= 0) {
-            tempLine = getSelectionScalingSortedLine(tempLine);
-        } else if (selectionList.size() > 0) {
-            tempLine = getSelectionSortedLine(tempLine);
-        } else if (ModeManager.getInstance().getMode() == ScoreMode.SCORE) {
+        if (ModeManager.getInstance().getMode() == ScoreMode.SCORE) {
             drawLine(g, p, false);
             return;
         }
@@ -583,18 +461,9 @@ public class ParameterLinePanel extends JComponent implements
             return;
         }
 
-        double pixelSecond = timeState.getPixelSecond();
-
-        double selectionStart;
-        double selectionEnd;
-
-        if (newSelectionStartTime >= 0) {
-            selectionStart = newSelectionStartTime;
-            selectionEnd = newSelectionEndTime;
-        } else {
-            selectionStart = selection.getStartTime();
-            selectionEnd = selection.getEndTime();
-        }
+        final double translation = selection.getTranslation();
+        final double selectionStart = selection.getStartTime() + translation;
+        final double selectionEnd = selection.getEndTime() + translation;
 
         if (tempLine.size() == 1) {
             LinePoint lp = tempLine.getLinePoint(0);
@@ -736,10 +605,9 @@ public class ParameterLinePanel extends JComponent implements
             }
 
         }
-
     }
 
-    private final void paintPoint(Graphics g, int x, int y) {
+    private void paintPoint(Graphics g, int x, int y) {
         Graphics2D g2d = (Graphics2D) g;
 
         Color c = g.getColor();
@@ -898,27 +766,10 @@ public class ParameterLinePanel extends JComponent implements
         return null;
     }
 
-    public LinePoint findGraphPoint(int x) {
-        Line currentLine = currentParameter.getLine();
-
-        for (int i = 0; i < currentLine.size(); i++) {
-            LinePoint point = currentLine.getLinePoint(i);
-
-            int tempX = doubleToScreenX(point.getX());
-
-            if (tempX >= x - 2 && tempX <= x + 2) {
-                return point;
-            }
-
-        }
-
-        return null;
-    }
-
     @Override
     public void addNotify() {
         super.addNotify();
-        
+
         if (parameterIdList != null) {
             parameterIdList.addListDataListener(this);
             parameterIdList.addListSelectionListener(this);
@@ -931,7 +782,7 @@ public class ParameterLinePanel extends JComponent implements
         }
 
         ModeManager.getInstance().addModeListener(this);
-        
+
         ALL_PANELS.add(this);
     }
 
@@ -950,7 +801,6 @@ public class ParameterLinePanel extends JComponent implements
 
 //        parameterIdList = null;
 //        paramList = null;
-
         ModeManager.getInstance().removeModeListener(this);
         ALL_PANELS.remove(this);
         super.removeNotify();
@@ -1039,6 +889,7 @@ public class ParameterLinePanel extends JComponent implements
         boolean verticalShift = false;
         private int initialY;
         boolean justPasted = false;
+        Line sourceCopy = null;
 
         LineVerticalShifter vShifter = new LineVerticalShifter();
 
@@ -1071,8 +922,8 @@ public class ParameterLinePanel extends JComponent implements
                         && !timeContains(mouseTime, selection.getStartTime(), selection.getEndTime())) {
                     transTime = 0.0f;
                     mouseDownInitialX = -1;
-                    clearSelectionDragRegions();
                     selection.updateSelection(null, -1.0, -1.0);
+                    sourceCopy = null;
                     return;
                 } else {
 
@@ -1083,18 +934,8 @@ public class ParameterLinePanel extends JComponent implements
 
                         double marqueeLeft = selection.getStartTime();
                         double marqueeRight = selection.getEndTime();
-                        
-                        initialStartTime = marqueeLeft;
 
-                        if (selectionList.size() == 0) {
-                            double[] points = new double[]{
-                                marqueeLeft, marqueeRight};
-                            selectionList.add(points);
-                        } else {
-                            double[] points = selectionList.get(0);
-                            points[0] = marqueeLeft;
-                            points[1] = marqueeRight;
-                        }
+                        initialStartTime = marqueeLeft;
 
                         verticalShift = e.isControlDown();
 
@@ -1103,6 +944,7 @@ public class ParameterLinePanel extends JComponent implements
                         }
 
                         initialY = e.getY();
+                        sourceCopy = new Line(selection.getSourceLine());
                     }
                     return;
 
@@ -1111,8 +953,7 @@ public class ParameterLinePanel extends JComponent implements
 
             transTime = 0.0f;
             mouseDownInitialX = -1;
-            clearSelectionDragRegions();
-            
+
             selection.updateSelection(null, -1.0, -1.0);
 
             if (currentParameter == null) {
@@ -1147,7 +988,6 @@ public class ParameterLinePanel extends JComponent implements
                 if ((e.getModifiers() & OS_CTRL_KEY) == OS_CTRL_KEY) {
                     ScoreController.getInstance().pasteSingleLine(startTime);
                     justPasted = true;
-                    return;
 
                 } else if (e.isShiftDown()) {
                     initialStartTime = startTime;
@@ -1165,7 +1005,7 @@ public class ParameterLinePanel extends JComponent implements
                 }
             } else if (UiUtilities.isRightMouseButton(e)) {
                 if (popup == null) {
-                    popup = new EditPointsPopup();
+                    popup = new EditPointsPopup(blue.automation.ParameterLinePanel.this);
                 }
                 popup.setLine(currentLine);
                 popup.show((Component) e.getSource(), e.getX(), e.getY());
@@ -1193,41 +1033,20 @@ public class ParameterLinePanel extends JComponent implements
 
             if (selectedPoint == null && !didVerticalShift
                     && paramList.containsLine(selection.getSourceLine())
-                    && selectionList.size() > 0
                     && SwingUtilities.isLeftMouseButton(e)) {
 
-                double[] selPoints = selectionList.get(0);
-
-                double selectionStartTime = selPoints[0];
-                double selectionEndTime = selPoints[1];
-                currentParameter.getLine().processLineForSelectionDrag(
-                        selectionStartTime, selectionEndTime, transTime);
+                // FIXME - update selection
+//                double selectionStartTime = selection.getStartTime();
+//                double selectionEndTime = selection.getEndTime();
+//                currentParameter.getLine().processLineForSelectionDrag(
+//                        selectionStartTime, selectionEndTime, transTime);
             }
 
-            clearSelectionDragRegions();
             transTime = 0.0f;
 
-            currentParameter.getLine().stripTimeDeadPoints();
-            
+//            currentParameter.getLine().stripTimeDeadPoints();
             repaint();
 
-        }
-
-        private double getInitialStartTime() {
-            if (selectionList.size() == 0) {
-                return 0;
-            }
-
-            double retVal = Double.MAX_VALUE;
-
-            for (int i = 0; i < selectionList.size(); i++) {
-                double[] points = selectionList.get(i);
-                if (points[0] < retVal) {
-                    retVal = points[0];
-                }
-            }
-
-            return retVal;
         }
 
         @Override
@@ -1260,26 +1079,28 @@ public class ParameterLinePanel extends JComponent implements
                 } else if (mouseDownInitialX > 0) { // MOVING OF SELECTION
                     if (SwingUtilities.isLeftMouseButton(e)) {
 
-                        transTime = (x - mouseDownInitialX)/ pixelSecond;
+                        transTime = (x - mouseDownInitialX) / pixelSecond;
 
                         double newTime = initialStartTime + transTime;
 
                         if (timeState.isSnapEnabled() && !e.isControlDown()) {
                             newTime = ScoreUtilities.getSnapValueMove(newTime,
                                     timeState.getSnapValue());
-                            transTime = newTime - getInitialStartTime();
+                            transTime = newTime - selection.getStartTime();
                         }
 
                         if (newTime < 0) {
                             transTime -= newTime;
                             newTime = 0;
                         }
-                        
+
                         double endTime = newTime + (selection.getEndTime() - selection.getStartTime());
 
-                        SingleLineScoreSelection selection
-                                = SingleLineScoreSelection.getInstance();
-                        selection.updateSelection(currentParameter.getLine(), newTime, endTime);
+                        var newLine = new Line(sourceCopy);
+                        newLine.processLineForSelectionDrag(selection.getStartTime(),
+                                selection.getEndTime(), transTime);
+                        selection.getSourceLine().setLinePoints(newLine.getObservableList());
+                        selection.updateTranslation(transTime);
                     }
                 } else {
                     if (x < 0) {
@@ -1288,20 +1109,18 @@ public class ParameterLinePanel extends JComponent implements
 
                     double startTime = initialStartTime;
                     double endTime = x / pixelSecond;
-                    
+
                     if (timeState.isSnapEnabled() && !e.isControlDown()) {
                         endTime = ScoreUtilities.getSnapValueMove(endTime,
                                 timeState.getSnapValue());
                     }
-                    
-                    if(endTime < startTime) {
+
+                    if (endTime < startTime) {
                         double temp = startTime;
                         startTime = endTime;
                         endTime = temp;
                     }
-                    
-                    SingleLineScoreSelection selection
-                            = SingleLineScoreSelection.getInstance();
+
                     selection.updateSelection(currentParameter.getLine(), startTime, endTime);
                 }
 
@@ -1343,8 +1162,8 @@ public class ParameterLinePanel extends JComponent implements
                     dragTime = ScoreUtilities.getSnapValueMove(dragTime,
                             timeState.getSnapValue());
                 }
-                
-                dragTime = Math.max(leftBoundaryTime, 
+
+                dragTime = Math.max(leftBoundaryTime,
                         Math.min(rightBoundaryTime, dragTime));
 
                 double min = currentParameter.getMin();
@@ -1387,249 +1206,15 @@ public class ParameterLinePanel extends JComponent implements
 
     }
 
-    /* MULTILINE MODE */
-//    public void addSelectionDragRegion(double startTime, double endTime) {
-//        selectionList.add(new double[] {startTime, endTime});
-//    }
-    public void setSelectionDragRegion(double startTime, double endTime) {
-        if (selectionList.size() == 0) {
-            selectionList.add(new double[2]);
-        }
-
-        double[] points = selectionList.get(0);
-        points[0] = startTime;
-        points[1] = endTime;
-        repaint();
-    }
-
-    public void clearSelectionDragRegions() {
-        selectionList.clear();
-        repaint();
-    }
-
-    public void setMultiLineMouseTranslation(double transTime) {
-        this.transTime = transTime;
-        repaint();
-    }
-
-    public void commitMultiLineDrag() {
-        if (this.paramList != null
-                && selectionList.size() > 0) {
-            double[] selPoints = selectionList.get(0);
-
-            double selectionStartTime = selPoints[0];
-            double selectionEndTime = selPoints[1];
-
-            for (int i = 0; i < this.paramList.size(); i++) {
-                Parameter param = paramList.get(i);
-
-                param.getLine().processLineForSelectionDrag(
-                        selectionStartTime, selectionEndTime, transTime);
-            }
-        }
-//        clearSelectionDragRegions();
-        transTime = 0.0f;
-    }
-
-    /* SCORE MODE*/
-    public void initiateScoreScale(double startTime, double endTime) {
-        this.selectionStartTime = startTime;
-        this.newSelectionStartTime = startTime;
-        this.selectionEndTime = endTime;
-        this.newSelectionEndTime = endTime;
-    }
-
-    /**
-     * Used by SCORE mode for scaling points when soundObject is scaled
-     *
-     * @param newSelectionStartX
-     */
-    public void setScoreScaleStart(double newSelectionStartTime) {
-        this.newSelectionStartTime = newSelectionStartTime;
-        repaint();
-    }
-
-    public void setScoreScaleEnd(double newSelectionEndTime) {
-        this.newSelectionEndTime = newSelectionEndTime;
-        repaint();
-    }
-
-    public void commitScoreScale() {
-        if (this.paramList != null) {
-            for (int i = 0; i < this.paramList.size(); i++) {
-                Parameter param = paramList.get(i);
-                processLineForSelectionScale(param.getLine());
-            }
-
-            selectionStartTime = selectionEndTime = -1;
-            newSelectionStartTime = newSelectionEndTime = -1;
-            transTime = 0;
-        }
-        repaint();
-    }
-
-    class EditPointsPopup extends JPopupMenu {
-
-        Line line = null;
-
-        JMenu selectParameterMenu;
-
-        ActionListener paramItemListener;
-
-        Action editPointsAction;
-
-        Action importBPF;
-
-        Action exportBPF;
-
-        public EditPointsPopup() {
-
-            selectParameterMenu = new JMenu("Select Parameter");
-
-            editPointsAction = new AbstractAction("Edit Points") {
-
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    Component root = SwingUtilities.getRoot(getInvoker());
-
-                    LineEditorDialog dialog = LineEditorDialog
-                            .getInstance(root);
-
-                    dialog.setLine(line);
-                    dialog.ask();
-                }
-
-            };
-
-            paramItemListener = (ActionEvent e) -> {
-                JMenuItem menuItem = (JMenuItem) e.getSource();
-                Parameter param = (Parameter) menuItem
-                        .getClientProperty("param");
-
-                parameterIdList.setSelectedParameter(param.getUniqueId());
-                ParameterLinePanel.this.repaint();
-            };
-
-            exportBPF = new AbstractAction("Export BPF") {
-
-                @Override
-                public void actionPerformed(ActionEvent arg0) {
-                    if (line != null && line.size() > 0) {
-                        File retVal = FileChooserManager.getDefault().showSaveDialog(
-                                FILE_BPF_EXPORT, SwingUtilities
-                                        .getRoot(ParameterLinePanel.this));
-
-                        if (retVal != null) {
-                            File f = retVal;
-
-                            try {
-                                try (PrintWriter out = new PrintWriter(
-                                        new FileWriter(f))) {
-                                    out.print(line.exportBPF());
-
-                                    out.flush();
-                                }
-
-                                JOptionPane.showMessageDialog(SwingUtilities
-                                        .getRoot(ParameterLinePanel.this),
-                                        "Line Exported as: "
-                                        + f.getAbsolutePath());
-
-                            } catch (IOException e) {
-                                Exceptions.printStackTrace(e);
-                            }
-
-                        }
-                    }
-
-                }
-
-            };
-
-            importBPF = new AbstractAction("Import BPF") {
-
-                @Override
-                public void actionPerformed(ActionEvent arg0) {
-                    if (line != null && line.size() > 0) {
-                        File retVal = FileChooserManager.getDefault().showSaveDialog(
-                                FILE_BPF_IMPORT, SwingUtilities
-                                        .getRoot(ParameterLinePanel.this));
-
-                        if (retVal != null) {
-                            File f = retVal;
-
-                            if (!line.importBPF(f)) {
-                                JOptionPane.showMessageDialog(SwingUtilities
-                                        .getRoot(ParameterLinePanel.this),
-                                        "Failed to import BPF from file "
-                                        + f.getAbsolutePath());
-                            }
-
-                        }
-                    }
-
-                }
-
-            };
-
-            this.add(selectParameterMenu);
-            this.add(editPointsAction);
-            this.addSeparator();
-            this.add(importBPF);
-            this.add(exportBPF);
-        }
-
-        public void repopulate() {
-            selectParameterMenu.removeAll();
-
-            if (paramList == null || paramList.size() == 0) {
-                return;
-            }
-
-            for (int i = 0; i < paramList.size(); i++) {
-                Parameter param = paramList.get(i);
-
-                JMenuItem item = new JMenuItem();
-                item.setText(param.getName());
-                item.setEnabled(param != currentParameter);
-                item.putClientProperty("param", param);
-                item.addActionListener(paramItemListener);
-
-                selectParameterMenu.add(item);
-            }
-        }
-
-        public void setLine(Line line) {
-            this.line = line;
-        }
-
-        @Override
-        public void show(Component invoker, int x, int y) {
-            if (paramList != null) {
-                repopulate();
-
-                editPointsAction.setEnabled(this.line != null);
-
-                boolean bpfEnabled = (this.line != null)
-                        && (currentParameter.getResolution().doubleValue() <= 0);
-
-                importBPF.setEnabled(bpfEnabled);
-                exportBPF.setEnabled(bpfEnabled);
-
-                super.show(invoker, x, y);
-            }
-        }
-
-    }
 
     public static int[] getYHeight(Line line) {
-        for(ParameterLinePanel panel : ALL_PANELS) {
-            if(panel.paramList.containsLine(line)) {
+        for (ParameterLinePanel panel : ALL_PANELS) {
+            if (panel.paramList.containsLine(line)) {
                 ScoreTopComponent scoreTopComponent = (ScoreTopComponent) WindowManager.getDefault().findTopComponent(
-                "ScoreTopComponent");
+                        "ScoreTopComponent");
                 JComponent scorePanel = scoreTopComponent.getScorePanel();
                 Point p = SwingUtilities.convertPoint(panel.getParent(), panel.getLocation(), scorePanel);
-                return new int[]{ (int)p.getY(), panel.getHeight()};
+                return new int[]{(int) p.getY(), panel.getHeight()};
             }
         }
         return null;

@@ -31,6 +31,7 @@ public class SingleLineScoreSelection {
     private Line sourceLine = null;
     private double startTime = -1.0;
     private double endTime = -1.0;
+    private double translation = 0.0;
     
     Set<SingleLineScoreSelectionListener> listeners = 
             new HashSet<SingleLineScoreSelectionListener>();
@@ -59,10 +60,20 @@ public class SingleLineScoreSelection {
         return endTime;
     }
     
+    public double getTranslation() {
+        return translation;
+    }
+    
     public void updateSelection(Line sourceLine, double startTime, double endTime) {
         this.sourceLine = sourceLine;
         this.startTime = startTime;
         this.endTime = endTime;
+        this.translation = 0.0;
+        notifyListeners();
+    }
+    
+    public void updateTranslation(double translation) {
+        this.translation = translation;
         notifyListeners();
     }
 

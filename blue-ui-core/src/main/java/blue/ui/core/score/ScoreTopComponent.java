@@ -226,8 +226,11 @@ public final class ScoreTopComponent extends TopComponent
 
                     marquee.setVisible(true);
                     double pixelSecond = data.getScore().getTimeState().getPixelSecond();
-                    int x = (int) (selection.getStartTime() * pixelSecond);
-                    int width = (int) Math.ceil((selection.getEndTime() - selection.getStartTime()) * pixelSecond);
+                    final var translation = selection.getTranslation();
+                    final var start = selection.getStartTime() + translation;
+                    final var end = selection.getEndTime() + translation;
+                    int x = (int) (start * pixelSecond);
+                    int width = (int) Math.ceil((end - start) * pixelSecond);
                     marquee.setBounds(x, yHeight[0], width, yHeight[1]);
                 } else {
                     marquee.setVisible(false);

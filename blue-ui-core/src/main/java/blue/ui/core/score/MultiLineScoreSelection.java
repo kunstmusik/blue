@@ -88,7 +88,7 @@ public class MultiLineScoreSelection {
 
         fireUpdate(UpdateType.SCALE_START);
 
-        System.out.println("Scale_Start: " + direction);
+//        System.out.println("Scale_Start: " + direction);
     }
 
     public void updateScale(double newScaleTime) {
@@ -100,7 +100,7 @@ public class MultiLineScoreSelection {
 
         fireUpdate(UpdateType.SCALE);
 
-        System.out.println("Scale_update: " + newScaleTime);
+//        System.out.println("Scale_update: " + newScaleTime);
     }
 
     public void endScale() {
@@ -109,7 +109,7 @@ public class MultiLineScoreSelection {
         this.endTime = scale.getRangeEnd();
         fireUpdate(UpdateType.SCALE_COMPLETE);
 
-        System.out.println("endScale: ");
+//        System.out.println("endScale: ");
 
     }
 
