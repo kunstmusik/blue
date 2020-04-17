@@ -7,7 +7,6 @@ package blue.ui.core.score.undo;
 import blue.BlueSystem;
 import blue.score.ScoreObject;
 import blue.score.layers.ScoreObjectLayer;
-import javax.swing.undo.AbstractUndoableEdit;
 import javax.swing.undo.CannotRedoException;
 import javax.swing.undo.CannotUndoException;
 
@@ -15,25 +14,15 @@ import javax.swing.undo.CannotUndoException;
  * @author steven
  *
  */
-public class AddScoreObjectEdit extends AbstractUndoableEdit {
+public class AddScoreObjectEdit extends AppendableEdit {
 
-    private ScoreObject sObj;
+    private final ScoreObject sObj;
 
-    private ScoreObjectLayer layer;
-
-    private AddScoreObjectEdit nextEdit = null;
+    private final ScoreObjectLayer layer;
 
     public AddScoreObjectEdit(ScoreObjectLayer layer, ScoreObject sObj) {
         this.layer = layer;
         this.sObj = sObj;
-    }
-
-    public void addSubEdit(AddScoreObjectEdit edit) {
-        if (nextEdit != null) {
-            nextEdit.addSubEdit(edit);
-        } else {
-            nextEdit = edit;
-        }
     }
 
     @Override

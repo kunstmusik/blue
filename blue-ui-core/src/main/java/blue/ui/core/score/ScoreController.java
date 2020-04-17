@@ -30,6 +30,9 @@ import blue.score.layers.AutomatableLayer;
 import blue.score.layers.Layer;
 import blue.score.layers.LayerGroup;
 import blue.score.layers.ScoreObjectLayer;
+import blue.ui.core.score.undo.AddScoreObjectEdit;
+import blue.ui.core.score.undo.AppendableEdit;
+import blue.ui.core.score.undo.CompoundAppendable;
 import blue.ui.core.score.undo.LineChangeEdit;
 import blue.ui.core.score.undo.RemoveScoreObjectEdit;
 import blue.undo.BlueUndoManager;
@@ -214,7 +217,7 @@ public class ScoreController {
         }
     }
 
-    public Optional<RemoveScoreObjectEdit> deleteScoreObjects() {        
+    public Optional<AppendableEdit> deleteScoreObjects() {
         if (lookup == null || content == null) {
             return Optional.empty();
         }
@@ -234,7 +237,8 @@ public class ScoreController {
 
         List<Layer> layers = getScorePath().getAllLayers();
 
-        RemoveScoreObjectEdit top = null;
+        CompoundAppendable compoundEdit = new CompoundAppendable();
+
         for (ScoreObject scoreObj : scoreObjects) {
 
             RemoveScoreObjectEdit edit = null;
@@ -250,17 +254,16 @@ public class ScoreController {
                         "Error: Unable to find Layer to remove ScoreObject: Internal Error");
             }
 
-            if (top == null) {
-                top = edit;
-            } else {
-                top.appendNextEdit(edit);
-            }
+            compoundEdit.addEdit(edit);
 
             content.remove(scoreObj);
         }
 
-        BlueUndoManager.setUndoManager("score");
-        BlueUndoManager.addEdit(top);
+        var top = compoundEdit.getTopEdit();
+        if (top != null) {
+            BlueUndoManager.setUndoManager("score");
+            BlueUndoManager.addEdit(top);
+        }
 
         return Optional.of(top);
     }
@@ -399,7 +402,7 @@ public class ScoreController {
 
         AutomationManager manager = AutomationManager.getInstance();
 
-        LineChangeEdit top = null;
+        CompoundAppendable compoundEdit = new CompoundAppendable();
         for (Layer layer : selection.getSelectedLayers()) {
             if (layer instanceof AutomatableLayer) {
                 AutomatableLayer al = (AutomatableLayer) layer;
@@ -411,24 +414,21 @@ public class ScoreController {
                     var sourceCopy = new Line(line);
                     line.delete(start, end);
                     var endCopy = new Line(line);
-                    
+
                     var edit = new LineChangeEdit(line, sourceCopy, endCopy);
-                    if(top == null) {
-                        top = edit;
-                    } else {
-                        top.appendNextEdit(edit);
-                    }
+                    compoundEdit.addEdit(edit);
                 }
             }
         }
+        var top = compoundEdit.getTopEdit();
         var scoreObjectsEdit = deleteScoreObjects();
-        if(scoreObjectsEdit.isPresent()) {
+        if (scoreObjectsEdit.isPresent()) {
             scoreObjectsEdit.get().appendNextEdit(top);
         } else if (top != null) {
             BlueUndoManager.setUndoManager("score");
             BlueUndoManager.addEdit(top);
         }
-        
+
         selection.reset();
     }
 
@@ -450,31 +450,44 @@ public class ScoreController {
         ScoreController controller = ScoreController.getInstance();
 
         Set<ScoreObject> selected = new HashSet<>();
+        CompoundAppendable compoundEdit = new CompoundAppendable();
 
-        for (Map.Entry<ScoreObject, ScoreObjectLayer> entry
-                : multiLineBuffer.scoreObjects.entrySet()) {
-            ScoreObject sObj = entry.getKey().deepCopy();
+        for (var entry : multiLineBuffer.scoreObjects.entrySet()) {
+            final var sObj = entry.getKey().deepCopy();
+            final var layer = entry.getValue();
+
             sObj.setStartTime(sObj.getStartTime() + adjust);
-            entry.getValue().add(sObj);
+            layer.add(sObj);
             selected.add(sObj);
+
+            compoundEdit.addEdit(new AddScoreObjectEdit(layer, sObj));
         }
         controller.setSelectedScoreObjects(selected);
 
-        for (Map.Entry<List<LinePoint>, Line> entry
-                : multiLineBuffer.automationData.entrySet()) {
+        for (var entry : multiLineBuffer.automationData.entrySet()) {
+
+            final Line line = entry.getValue();
+            final var sourceCopy = new Line(line);
             List<LinePoint> points
                     = entry.getKey().stream().map(lp -> {
                         LinePoint p = new LinePoint(lp);
                         p.setX(p.getX() + adjust);
                         return p;
                     }).collect(Collectors.toList());
-            Line line = entry.getValue();
             line.paste(points);
+            final var endCopy = new Line(line);
+            compoundEdit.addEdit(new LineChangeEdit(line, sourceCopy, endCopy));
         }
 
         MultiLineScoreSelection selection = MultiLineScoreSelection.getInstance();
         final double dur = selection.endTime - selection.startTime;
         selection.updateSelection(start, start + dur, multiLineBuffer.selectedLayers);
+
+        final var top = compoundEdit.getTopEdit();
+        if (top != null) {
+            BlueUndoManager.setUndoManager("score");
+            BlueUndoManager.addEdit(top);
+        }
     }
 
     public ScoreObjectBuffer getScoreObjectBuffer() {

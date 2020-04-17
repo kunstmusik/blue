@@ -33,6 +33,7 @@ import blue.soundObject.SoundObject;
 import blue.ui.core.score.ScoreController;
 import blue.ui.core.score.ScorePath;
 import blue.ui.core.score.undo.AddScoreObjectEdit;
+import blue.ui.core.score.undo.CompoundAppendable;
 import blue.undo.BlueUndoManager;
 import blue.utility.ScoreUtilities;
 import java.awt.Point;
@@ -150,16 +151,16 @@ public final class PasteSoundObjectAction extends AbstractAction implements Cont
         BlueData data = BlueProjectManager.getInstance().getCurrentBlueData();
         SoundObjectLibrary sObjLib = data.getSoundObjectLibrary();
 
-        AddScoreObjectEdit undoEdit = null;
+        CompoundAppendable compoundEdit = new CompoundAppendable();
 
         // FIXME - Need a generic way to handle shadow objects; perhaps need to
         // deal with this in the model...
         List<Instance> instanceSoundObjects = new ArrayList<>();
-        
+
         List<ScoreObject> copies = buffer.scoreObjects.stream()
                 .map(s -> s.deepCopy())
                 .collect(Collectors.toList());
-        
+
         for (int i = 0; i < copies.size(); i++) {
             ScoreObject sObj = copies.get(i);
 
@@ -174,24 +175,23 @@ public final class PasteSoundObjectAction extends AbstractAction implements Cont
 
             sObj.setStartTime(sObj.getStartTime() + startTranslation);
 
-            ScoreObjectLayer<ScoreObject> layer = 
-                    (ScoreObjectLayer<ScoreObject>) allLayers.get(newLayerIndex);
+            ScoreObjectLayer<ScoreObject> layer
+                    = (ScoreObjectLayer<ScoreObject>) allLayers.get(newLayerIndex);
             layer.add(sObj);
 
             AddScoreObjectEdit tempEdit = new AddScoreObjectEdit(layer, sObj);
 
-            if (undoEdit == null) {
-                undoEdit = tempEdit;
-            } else {
-                undoEdit.addSubEdit(tempEdit);
-            }
+            compoundEdit.addEdit(tempEdit);
         }
 
         checkAndAddInstanceSoundObjects(sObjLib, instanceSoundObjects);
 
-        BlueUndoManager.setUndoManager("score");
-        BlueUndoManager.addEdit(undoEdit);
-        
+        final var top = compoundEdit.getTopEdit();
+        if (top != null) {
+            BlueUndoManager.setUndoManager("score");
+            BlueUndoManager.addEdit(top);
+        }
+
         ScoreController.getInstance().setSelectedScoreObjects(copies);
     }
 

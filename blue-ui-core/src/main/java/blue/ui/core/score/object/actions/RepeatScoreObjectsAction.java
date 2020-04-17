@@ -24,6 +24,7 @@ import blue.score.layers.ScoreObjectLayer;
 import blue.ui.core.score.ScoreController;
 import blue.ui.core.score.ScorePath;
 import blue.ui.core.score.undo.AddScoreObjectEdit;
+import blue.ui.core.score.undo.CompoundAppendable;
 import blue.undo.BlueUndoManager;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -81,7 +82,7 @@ public final class RepeatScoreObjectsAction implements ActionListener {
             }
 
             ScorePath path = ScoreController.getInstance().getScorePath();
-            AddScoreObjectEdit top = null;
+            CompoundAppendable compoundEdit = new CompoundAppendable();
 
             for (ScoreObject sObj : scoreObjects) {
                 double start = sObj.getStartTime();
@@ -107,18 +108,16 @@ public final class RepeatScoreObjectsAction implements ActionListener {
 
                     AddScoreObjectEdit edit = new AddScoreObjectEdit(
                             layer, temp);
-                    if (top == null) {
-                        top = edit;
-                    } else {
-                        top.addSubEdit(edit);
-                    }
+                    compoundEdit.addEdit(edit);
                 }
 
             }
 
-            BlueUndoManager.setUndoManager("score");
-            BlueUndoManager.addEdit(top);
-
+            final var top = compoundEdit.getTopEdit();
+            if(top != null) {
+                BlueUndoManager.setUndoManager("score");
+                BlueUndoManager.addEdit(top);
+            }
         }
     }
 }

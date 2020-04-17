@@ -24,6 +24,7 @@ import blue.score.layers.ScoreObjectLayer;
 import blue.ui.core.score.ScoreController;
 import blue.ui.core.score.ScorePath;
 import blue.ui.core.score.undo.AddScoreObjectEdit;
+import blue.ui.core.score.undo.CompoundAppendable;
 import blue.undo.BlueUndoManager;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -55,14 +56,14 @@ public final class DuplicateScoreObjectsAction implements ActionListener {
         if (!scoreObjects.isEmpty()) {
 
             ScorePath path = ScoreController.getInstance().getScorePath();
-            AddScoreObjectEdit top = null;
+            CompoundAppendable compoundEdit = new CompoundAppendable();
 
             for (ScoreObject sObj : scoreObjects) {
                 ScoreObject clone = sObj.deepCopy();
                 clone.setStartTime(clone.getStartTime() + clone.getSubjectiveDuration());
 
                 ScoreObjectLayer layer = (ScoreObjectLayer) path.getLayerForScoreObject(sObj);
-                
+
                 if (layer == null) {
                     JOptionPane.showMessageDialog(
                             WindowManager.getDefault().getMainWindow(),
@@ -74,17 +75,17 @@ public final class DuplicateScoreObjectsAction implements ActionListener {
                 layer.add(clone);
 
                 AddScoreObjectEdit edit = new AddScoreObjectEdit(
-                       layer, clone); 
+                        layer, clone);
 
-                if (top == null) {
-                    top = edit;
-                } else {
-                    top.addSubEdit(edit);
-                }
+                compoundEdit.addEdit(edit);
+
             }
 
-            BlueUndoManager.setUndoManager("score");
-            BlueUndoManager.addEdit(top);
+            final var top = compoundEdit.getTopEdit();
+            if (top != null) {
+                BlueUndoManager.setUndoManager("score");
+                BlueUndoManager.addEdit(top);
+            }
 
         }
     }
