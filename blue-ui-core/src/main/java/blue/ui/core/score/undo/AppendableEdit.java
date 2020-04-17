@@ -20,7 +20,10 @@
  */
 package blue.ui.core.score.undo;
 
+import blue.components.lines.Line;
 import javax.swing.undo.AbstractUndoableEdit;
+import javax.swing.undo.CannotRedoException;
+import javax.swing.undo.CannotUndoException;
 
 /**
  *
@@ -35,6 +38,22 @@ public class AppendableEdit extends AbstractUndoableEdit {
             this.nextEdit.appendNextEdit(nextEdit);
         } else {
             this.nextEdit = nextEdit;
+        }
+    }
+    
+    @Override
+    public void redo() throws CannotRedoException {
+        if (nextEdit != null) {
+            nextEdit.redo();
+        }
+        super.redo(); 
+    }
+
+    @Override
+    public void undo() throws CannotUndoException {
+        super.undo(); 
+        if (nextEdit != null) {
+            nextEdit.undo();
         }
     }
 }

@@ -47,12 +47,9 @@ public class LineChangeEdit extends AppendableEdit {
 
     @Override
     public void redo() throws CannotRedoException {
-        super.redo(); 
         var newLine = new Line(endCopy);
         sourceRef.setLinePoints(newLine.getObservableList());
-        if (nextEdit != null) {
-            nextEdit.redo();
-        }
+        super.redo(); 
     }
 
     @Override
@@ -60,9 +57,6 @@ public class LineChangeEdit extends AppendableEdit {
         super.undo(); 
         var newLine = new Line(sourceCopy);
         sourceRef.setLinePoints(newLine.getObservableList());
-        if (nextEdit != null) {
-            nextEdit.undo();
-        }
     }
 
     

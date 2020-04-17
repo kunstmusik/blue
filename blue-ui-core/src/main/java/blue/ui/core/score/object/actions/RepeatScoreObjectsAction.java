@@ -113,11 +113,7 @@ public final class RepeatScoreObjectsAction implements ActionListener {
 
             }
 
-            final var top = compoundEdit.getTopEdit();
-            if(top != null) {
-                BlueUndoManager.setUndoManager("score");
-                BlueUndoManager.addEdit(top);
-            }
+            BlueUndoManager.addEdit("score", compoundEdit.getTopEdit());
         }
     }
 }

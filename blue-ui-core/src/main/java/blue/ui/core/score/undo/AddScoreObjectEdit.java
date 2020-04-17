@@ -27,24 +27,14 @@ public class AddScoreObjectEdit extends AppendableEdit {
 
     @Override
     public void redo() throws CannotRedoException {
-        super.redo();
-
         layer.add(sObj);
-
-        if (nextEdit != null) {
-            nextEdit.redo();
-        }
+        super.redo();
     }
 
     @Override
     public void undo() throws CannotUndoException {
         super.undo();
-
         layer.remove(sObj);
-        
-        if (nextEdit != null) {
-            nextEdit.undo();
-        }
     }
 
     @Override

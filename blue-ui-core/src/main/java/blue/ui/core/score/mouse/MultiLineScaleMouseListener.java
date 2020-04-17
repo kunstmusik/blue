@@ -32,8 +32,13 @@ import blue.ui.core.score.MultiLineScoreSelection;
 import blue.ui.core.score.ScoreController;
 import blue.ui.core.score.ScoreMode;
 import static blue.ui.core.score.mouse.BlueMouseAdapter.scoreTC;
+import blue.ui.core.score.undo.ClearLineSelectionEdit;
+import blue.ui.core.score.undo.CompoundAppendable;
+import blue.ui.core.score.undo.LineChangeEdit;
+import blue.ui.core.score.undo.MoveScoreObjectEdit;
 import blue.ui.utilities.ResizeMode;
 import blue.ui.utilities.UiUtilities;
+import blue.undo.BlueUndoManager;
 import blue.utilities.scales.ScaleLinear;
 import blue.utility.ScoreUtilities;
 import java.awt.Point;
@@ -170,7 +175,6 @@ class MultiLineScaleMouseListener extends BlueMouseAdapter {
                 double end = scale.calc(vals[1]);
 
 //                System.out.printf("%g : %g\n", start, end);
-
                 sObj.setStartTime(start);
                 sObj.setSubjectiveDuration(end - start);
             });
@@ -196,10 +200,33 @@ class MultiLineScaleMouseListener extends BlueMouseAdapter {
             marquee.startTime = scale.getRangeStart();
             marquee.endTime = scale.getRangeEnd();
 
+            CompoundAppendable compoundEdit = new CompoundAppendable();
+            compoundEdit.addEdit(new ClearLineSelectionEdit());
+
+            scoreObjectRecords.forEach((sObj, vals) -> {
+                double sourceStart = vals[0];
+                double sourceEnd = vals[1];
+
+                MoveScoreObjectEdit edit = new MoveScoreObjectEdit(
+                        sObj, null, null, sourceStart, sourceEnd - sourceStart,
+                        sObj.getStartTime(), sObj.getSubjectiveDuration());
+
+                compoundEdit.addEdit(edit);
+            });
+
+            lineSourceCopyMap
+                    .forEach((source, copy) -> {
+                        LineChangeEdit edit = new LineChangeEdit(source, copy, new Line(source));
+                        compoundEdit.addEdit(edit);
+                    });
+
             lineSourceCopyMap.clear();
             scoreObjectRecords.clear();
 
             selection.endScale();
+
+            BlueUndoManager.addEdit("score", compoundEdit.getTopEdit());
+
         }
 
         timeState = null;

@@ -11,11 +11,10 @@ import javax.swing.undo.UndoableEdit;
 /**
  * Title: blue Description: an object composition environment for csound
  * Copyright: Copyright (c) 2001 Company: steven yi music
- * 
+ *
  * @author steven yi
  * @version 1.0
  */
-
 public class BlueUndoManager {
 
     private static HashMap<String, UndoManager> undoGroup;
@@ -51,7 +50,7 @@ public class BlueUndoManager {
         return al;
     }
 
-    public static void setUndoGroup(HashMap<String,UndoManager> _undoGroup) {
+    public static void setUndoGroup(HashMap<String, UndoManager> _undoGroup) {
         undoGroup = _undoGroup;
     }
 
@@ -82,6 +81,13 @@ public class BlueUndoManager {
 
     public static void setRedoMenuItem(JMenuItem _redoMenuItem) {
         redoMenuItem = _redoMenuItem;
+    }
+
+    public static void addEdit(String undoManagerName, UndoableEdit edit) {
+        if (edit != null) {
+            BlueUndoManager.setUndoManager("score");
+            BlueUndoManager.addEdit(edit);
+        }
     }
 
     public static void addEdit(UndoableEdit edit) {

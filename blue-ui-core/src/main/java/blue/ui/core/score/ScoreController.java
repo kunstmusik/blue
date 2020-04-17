@@ -260,10 +260,7 @@ public class ScoreController {
         }
 
         var top = compoundEdit.getTopEdit();
-        if (top != null) {
-            BlueUndoManager.setUndoManager("score");
-            BlueUndoManager.addEdit(top);
-        }
+        BlueUndoManager.addEdit("score", top);
 
         return Optional.of(top);
     }
@@ -425,8 +422,7 @@ public class ScoreController {
         if (scoreObjectsEdit.isPresent()) {
             scoreObjectsEdit.get().appendNextEdit(top);
         } else if (top != null) {
-            BlueUndoManager.setUndoManager("score");
-            BlueUndoManager.addEdit(top);
+            BlueUndoManager.addEdit("score", top);
         }
 
         selection.reset();
@@ -483,11 +479,7 @@ public class ScoreController {
         final double dur = selection.endTime - selection.startTime;
         selection.updateSelection(start, start + dur, multiLineBuffer.selectedLayers);
 
-        final var top = compoundEdit.getTopEdit();
-        if (top != null) {
-            BlueUndoManager.setUndoManager("score");
-            BlueUndoManager.addEdit(top);
-        }
+        BlueUndoManager.addEdit("score", compoundEdit.getTopEdit());
     }
 
     public ScoreObjectBuffer getScoreObjectBuffer() {
