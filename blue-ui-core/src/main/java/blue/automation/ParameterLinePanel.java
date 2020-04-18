@@ -992,6 +992,7 @@ public class ParameterLinePanel extends JComponent implements
                         currentLine.removeLinePoint(selectedPoint);
 
                         selectedPoint = null;
+                        repaint();
                     }
                 } else {
                     // MOVING LINE POINT
