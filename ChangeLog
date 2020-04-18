@@ -32,6 +32,8 @@ upgrade to Java 11 for 2.8.0.
 * New implementation Parameter Automation system to allow for better translation
   and scaling of automation lines in both Single and Multi-line modes
 
+* Implemented undoability for all edits in Single-line and Multi-line mode
+
 FIX
 
 * Score: Selection marquee in single-line mode did not calculate y-position 

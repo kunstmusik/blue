@@ -30,8 +30,10 @@ import blue.ui.core.score.ScoreController;
 import blue.ui.core.score.ScoreMode;
 import blue.ui.core.score.ScoreTopComponent;
 import blue.ui.core.score.SingleLineScoreSelection;
+import blue.ui.core.score.undo.LineChangeEdit;
 import blue.ui.utilities.ResizeMode;
 import blue.ui.utilities.UiUtilities;
+import blue.undo.BlueUndoManager;
 import blue.utilities.scales.ScaleLinear;
 import blue.utility.NumberUtilities;
 import blue.utility.ScoreUtilities;
@@ -1196,14 +1198,21 @@ public class ParameterLinePanel extends JComponent implements
                 return;
             }
 
-            if (selectedPoint == null && !didVerticalShift
-                    && paramList.containsLine(selection.getSourceLine())
-                    && SwingUtilities.isLeftMouseButton(e)) {
+            if (SwingUtilities.isLeftMouseButton(e)) {
+                if (selectedPoint != null) {
 
-                if (selection.getScaleDirection() == ResizeMode.NONE) {
-                    selection.endTranslation();
-                } else {
-                    selection.endScale();
+                } else if (paramList.containsLine(selection.getSourceLine())) {
+                    if (didVerticalShift) {
+
+                    } else if (selection.getScaleDirection() == ResizeMode.NONE) {
+                        selection.endTranslation();
+                    } else {
+                        selection.endScale();
+                    }
+                    var line = selection.getSourceLine();
+                    var endCopy = new Line(line);
+                    BlueUndoManager.addEdit("score", new LineChangeEdit(line, new Line(line), endCopy));
+                    sourceCopy = null;
                 }
             }
 

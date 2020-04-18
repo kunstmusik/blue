@@ -290,8 +290,18 @@ public class ScoreController {
     public void deleteSingleLine() {
         SingleLineScoreSelection selection
                 = SingleLineScoreSelection.getInstance();
-        if (selection.getSourceLine() != null) {
-            selection.getSourceLine().delete(selection.getStartTime(), selection.getEndTime());
+        final var line = selection.getSourceLine();
+        if (line != null) {
+              
+            var sourceCopy = new Line(line);
+
+            line.delete(selection.getStartTime(), selection.getEndTime());
+            
+            var endCopy = new Line(line);
+            
+            BlueUndoManager.addEdit("score", 
+                    new LineChangeEdit(line, sourceCopy, endCopy));
+                    
             selection.clear();
         }
 
@@ -314,8 +324,15 @@ public class ScoreController {
                     p.setX(p.getX() + adjust);
                     return p;
                 }).collect(Collectors.toList());
-        singleLineBuffer.sourceLine.paste(points);
-
+        
+        
+        final Line line = singleLineBuffer.sourceLine;
+        final var sourceCopy = new Line(line);
+                line.paste(points);
+            final var endCopy = new Line(line);
+            BlueUndoManager.addEdit("score", 
+                    new LineChangeEdit(line, sourceCopy, endCopy));
+        
         SingleLineScoreSelection selection
                 = SingleLineScoreSelection.getInstance();
         selection.updateSelection(singleLineBuffer.sourceLine, points.get(0).getX(), points.get(points.size() - 1).getX());
