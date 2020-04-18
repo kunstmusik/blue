@@ -31,6 +31,9 @@ import blue.ui.core.score.ScoreMode;
 import blue.ui.core.score.ScoreTopComponent;
 import blue.ui.core.score.SingleLineScoreSelection;
 import blue.ui.core.score.undo.LineChangeEdit;
+import blue.ui.core.score.undo.LinePointAddEdit;
+import blue.ui.core.score.undo.LinePointChangeEdit;
+import blue.ui.core.score.undo.LinePointRemoveEdit;
 import blue.ui.utilities.ResizeMode;
 import blue.ui.utilities.UiUtilities;
 import blue.undo.BlueUndoManager;
@@ -900,6 +903,8 @@ public class ParameterLinePanel extends JComponent implements
         private int initialY;
         boolean justPasted = false;
         Line sourceCopy = null;
+        LinePoint lpSourceCopy = null;
+        boolean newLinePoint = false;
 
         LineVerticalShifter vShifter = new LineVerticalShifter();
 
@@ -978,12 +983,20 @@ public class ParameterLinePanel extends JComponent implements
                 if (UiUtilities.isRightMouseButton(e)) {
                     LinePoint first = currentLine.getLinePoint(0);
 
-                    if (selectedPoint != first) {
+                    if (selectedPoint != first) {                        
+                        final var linePointRemoveEdit = new LinePointRemoveEdit(
+                                currentLine, selectedPoint,
+                                currentLine.getObservableList().indexOf(selectedPoint));
+                        BlueUndoManager.addEdit("score", linePointRemoveEdit);
+                        
                         currentLine.removeLinePoint(selectedPoint);
+
                         selectedPoint = null;
                     }
                 } else {
+                    // MOVING LINE POINT
                     setBoundaryXValues();
+                    lpSourceCopy = new LinePoint(selectedPoint);
                 }
             } else if (SwingUtilities.isLeftMouseButton(e)) {
 
@@ -1013,6 +1026,7 @@ public class ParameterLinePanel extends JComponent implements
 
                 } else {
                     selectedPoint = insertGraphPoint(start, e.getY());
+                    newLinePoint = true;
                     setBoundaryXValues();
                 }
             } else if (UiUtilities.isRightMouseButton(e)) {
@@ -1200,7 +1214,18 @@ public class ParameterLinePanel extends JComponent implements
 
             if (SwingUtilities.isLeftMouseButton(e)) {
                 if (selectedPoint != null) {
-
+                    if (newLinePoint) {
+                        final var line = currentParameter.getLine();
+                        final var linePointAddEdit = new LinePointAddEdit(
+                                line, selectedPoint,
+                                line.getObservableList().indexOf(selectedPoint));
+                        BlueUndoManager.addEdit("score", linePointAddEdit);
+                    } else {
+                        final var linePointChangeEdit = new LinePointChangeEdit(
+                                selectedPoint, lpSourceCopy,
+                                new LinePoint(selectedPoint));
+                        BlueUndoManager.addEdit("score", linePointChangeEdit);
+                    }
                 } else if (paramList.containsLine(selection.getSourceLine())) {
                     if (didVerticalShift) {
 
@@ -1217,6 +1242,7 @@ public class ParameterLinePanel extends JComponent implements
             }
 
             transTime = 0.0f;
+            newLinePoint = false;
             repaint();
         }
 
