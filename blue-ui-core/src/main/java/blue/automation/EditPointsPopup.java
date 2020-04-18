@@ -21,7 +21,9 @@ package blue.automation;
 
 import blue.components.lines.Line;
 import blue.components.lines.LineEditorDialog;
+import blue.ui.core.score.undo.LineChangeEdit;
 import blue.ui.utilities.FileChooserManager;
+import blue.undo.BlueUndoManager;
 import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -41,7 +43,7 @@ import org.openide.util.Exceptions;
 
 /**
  *
- * @author syyigmmbp
+ * @author stevenyi
  */
 class EditPointsPopup extends JPopupMenu {
     
@@ -79,7 +81,15 @@ class EditPointsPopup extends JPopupMenu {
                 Component root = SwingUtilities.getRoot(getInvoker());
                 LineEditorDialog dialog = LineEditorDialog.getInstance(root);
                 dialog.setLine(line);
+                
+                final var sourceCopy = new Line(line);
                 dialog.ask();
+                
+                System.out.println("Equals: " + line.equals(sourceCopy));
+                if(!line.equals(sourceCopy)) {
+                    final var edit = new LineChangeEdit(line, sourceCopy, new Line(line));
+                    BlueUndoManager.addEdit("score", edit);
+                }
             }
         };
         paramItemListener = (ActionEvent e) -> {
