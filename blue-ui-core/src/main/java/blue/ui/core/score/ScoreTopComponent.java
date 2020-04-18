@@ -279,6 +279,7 @@ public final class ScoreTopComponent extends TopComponent
         scoreController.addScoreControllerListener((path) -> {
             currentScorePath = path;
         });
+        currentScorePath = scoreController.getScorePath();
     }
 
     protected void checkSize() {
