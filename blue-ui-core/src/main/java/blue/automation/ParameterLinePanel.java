@@ -30,6 +30,7 @@ import blue.ui.core.score.ScoreController;
 import blue.ui.core.score.ScoreMode;
 import blue.ui.core.score.ScoreTopComponent;
 import blue.ui.core.score.SingleLineScoreSelection;
+import blue.ui.core.score.undo.ClearLineSelectionEdit;
 import blue.ui.core.score.undo.LineChangeEdit;
 import blue.ui.core.score.undo.LinePointAddEdit;
 import blue.ui.core.score.undo.LinePointChangeEdit;
@@ -1202,6 +1203,7 @@ public class ParameterLinePanel extends JComponent implements
             boolean didVerticalShift = verticalShift;
             verticalShift = false;
             justPasted = false;
+            transTime = 0.0f;
 
             if (ModeManager.getInstance().getMode() != ScoreMode.SINGLE_LINE) {
                 return;
@@ -1228,22 +1230,27 @@ public class ParameterLinePanel extends JComponent implements
                         BlueUndoManager.addEdit("score", linePointChangeEdit);
                     }
                 } else if (paramList.containsLine(selection.getSourceLine())) {
-                    if (didVerticalShift) {
+                    if (didVerticalShift || mouseDownInitialX > 0) {
 
-                    } else if (selection.getScaleDirection() == ResizeMode.NONE) {
-                        selection.endTranslation();
-                    } else {
-                        selection.endScale();
+                        if (selection.getScaleDirection() == ResizeMode.NONE) {
+                            selection.endTranslation();
+                        } else {
+                            selection.endScale();
+                        }
+                        var line = selection.getSourceLine();
+                        var endCopy = new Line(line);
+                        ClearLineSelectionEdit top = new ClearLineSelectionEdit();
+                        top.appendNextEdit(new LineChangeEdit(line, new Line(sourceCopy), endCopy));
+                                
+                        BlueUndoManager.addEdit("score", top);
+                        sourceCopy = null;
+                        
                     }
-                    var line = selection.getSourceLine();
-                    var endCopy = new Line(line);
-                    BlueUndoManager.addEdit("score", new LineChangeEdit(line, new Line(line), endCopy));
-                    sourceCopy = null;
                 }
             }
-
-            transTime = 0.0f;
+            
             newLinePoint = false;
+
             repaint();
         }
 
