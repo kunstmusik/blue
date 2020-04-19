@@ -237,7 +237,8 @@ public class ParameterLinePanel extends JComponent implements
 
         }
 
-        if (selectedPoint != null) {
+        if (selectedPoint != null && currentParameter != null && 
+                currentParameter.getLine().getObservableList().contains(selectedPoint)) {
 
             double min = currentParameter.getMin();
             double max = currentParameter.getMax();
