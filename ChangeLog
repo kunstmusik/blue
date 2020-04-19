@@ -29,7 +29,7 @@ upgrade to Java 11 for 2.8.0.
 
 * Clojure version updated to 1.10.1.
 
-* New implementation Parameter Automation system to allow for better translation
+* Issue #449: New implementation Parameter Automation system to allow for better translation
   and scaling of automation lines in both Single and Multi-line modes
 
 * Implemented undoability for all edits in Single-line and Multi-line mode
