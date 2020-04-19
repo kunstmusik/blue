@@ -164,6 +164,11 @@
             <version>${netbeans.version}</version>
         </dependency>
         <dependency>
+            <groupId>org.netbeans.modules</groupId>
+            <artifactId>org-netbeans-modules-progress-ui</artifactId>
+            <version>${netbeans.version}</version>
+        </dependency>        
+        <dependency>
             <groupId>org.netbeans.api</groupId>
             <artifactId>org-netbeans-modules-editor-completion</artifactId>
             <version>${netbeans.version}</version>

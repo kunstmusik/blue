@@ -38,7 +38,6 @@ import blue.ui.core.render.DiskRenderManager;
 import blue.ui.core.score.ScoreController;
 import blue.ui.core.score.ScorePath;
 import blue.utility.FileUtilities;
-import blue.utility.ObjectUtilities;
 import blue.utility.SoundFileUtilities;
 import java.awt.Point;
 import java.awt.event.ActionEvent;
@@ -49,9 +48,9 @@ import java.util.List;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.JOptionPane;
+import org.netbeans.api.progress.BaseProgressUtils;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressRunnable;
-import org.netbeans.api.progress.ProgressUtils;
 import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
 import org.openide.awt.ActionRegistration;
@@ -109,7 +108,7 @@ public final class FreezeUnfreezeAction extends AbstractAction
                     "Error: Could not find layers for selected SoundObjects");
         }
 
-        ProgressUtils.showProgressDialogAndRun(
+        BaseProgressUtils.showProgressDialogAndRun(
                 new FreezeRunnable(sObjList, layers),
                 "Freeze/Unfreeze SoundObjects", true);
 
