@@ -257,7 +257,7 @@ public final class ScoreTopComponent extends TopComponent
                         || updateType == MultiLineScoreSelection.UpdateType.SCALE) {
                     newStart = scale.getRangeStart();
                     newEnd = scale.getRangeEnd();
-                } 
+                }
 
                 int x = (int) (newStart * pixelSecond);
                 int width = (int) Math.ceil((newEnd - newStart) * pixelSecond);
@@ -682,12 +682,48 @@ public final class ScoreTopComponent extends TopComponent
     }
 
     public void scrollToRenderStartPointer() {
-        SwingUtilities.invokeLater(() -> {
-            scrollPane.getHorizontalScrollBar().setValue(renderStartPointer.getX());
-        });
+        var x = renderStartPointer.getX();
+        if (x > 0) {
+            var scrollX = scrollPane.getHorizontalScrollBar().getValue();
+            var w = scrollPane.getViewport().getWidth();
+                        
+            final int newX = (x < scrollX || x > scrollX + w) ? 
+                    Math.max(0, x - 40) :
+                    -1;
+                    
+            if(newX >= 0) {
+            Runnable runner = () -> scrollPane.getHorizontalScrollBar().setValue(newX);
+                if (!SwingUtilities.isEventDispatchThread()) {
+                    SwingUtilities.invokeLater(runner);
+                } else {
+                    runner.run();
+                };
+            }
+        }
     }
 
-// TODO - Reevaulate to see if this can't be done with a
+    public void scrollToRenderLoopPointer() {
+        var x = renderLoopPointer.getX();
+        if (x > 0) {
+            var scrollX = scrollPane.getHorizontalScrollBar().getValue();
+            var w = scrollPane.getViewport().getWidth();
+                        
+            final int newX = (x < scrollX || x > scrollX + w) ? 
+                    Math.max(0, x - w + 40) :
+                    -1;
+                    
+            if(newX >= 0) {
+            Runnable runner = () -> scrollPane.getHorizontalScrollBar().setValue(newX);
+                if (!SwingUtilities.isEventDispatchThread()) {
+                    SwingUtilities.invokeLater(runner);
+                } else {
+                    runner.run();
+                };
+            }
+        }
+    }
+
+    // TODO - Reevaulate to see if this can't be done with a
     // PropertyChangeListener on BlueData
     public void updateRenderStartPointerX(int x, boolean fireUpdate) {
 

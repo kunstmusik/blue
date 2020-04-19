@@ -20,7 +20,8 @@ NEW
 * Score Timeline Shortcuts Added (active when timeline has focus)
 
   * SPACE - start/stop rendering of project
-  * G - move to render start time (green line)
+  * G - move to render start time (green line) (Issue #471)
+  * Y - move to render end time (yellow line)  (issue #471)
 
 UPDATED
 
