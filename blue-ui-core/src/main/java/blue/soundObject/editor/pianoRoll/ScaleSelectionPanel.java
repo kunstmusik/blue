@@ -25,6 +25,7 @@ import blue.ui.utilities.FileChooserManager;
 import blue.ui.utilities.UiUtilities;
 import java.awt.BorderLayout;
 import java.awt.Component;
+import java.awt.Frame;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
@@ -40,6 +41,7 @@ import javax.swing.JPopupMenu;
 import javax.swing.JTextField;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import org.openide.windows.WindowManager;
 
 public class ScaleSelectionPanel extends JComponent {
 
@@ -62,19 +64,20 @@ public class ScaleSelectionPanel extends JComponent {
 
         JButton fileButton = new JButton("...");
         fileButton.addActionListener((ActionEvent e) -> {
+            final Frame mainWindow = WindowManager.getDefault().getMainWindow();
             List<File> rValue = FileChooserManager.getDefault().showOpenDialog(
                     FILE_CHOOSER_ID,
-                    null);
-            
+                    mainWindow);
+
             if (!rValue.isEmpty()) {
                 File f = rValue.get(0);
-                
+
                 if (!f.exists()) {
                     return;
                 }
-                
+
                 scale = Scale.loadScale(f);
-                
+
                 updateDisplay();
                 fireChangeEvent();
             }
