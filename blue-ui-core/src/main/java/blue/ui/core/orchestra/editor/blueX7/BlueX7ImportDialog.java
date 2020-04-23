@@ -5,6 +5,7 @@ import blue.ui.utilities.FileChooserManager;
 import java.io.File;
 import java.util.List;
 import javax.swing.JOptionPane;
+import org.openide.windows.WindowManager;
 
 /**
  * <p>
@@ -36,7 +37,9 @@ public class BlueX7ImportDialog {
 
     public static void importFromDX7File(BlueX7 blueX7) {
 
-        List<File> retVal = FileChooserManager.getDefault().showOpenDialog(FILE_IMPORT, null);
+        
+        List<File> retVal = FileChooserManager.getDefault().showOpenDialog(FILE_IMPORT, 
+                WindowManager.getDefault().getMainWindow());
         byte[] sysex;
 
         if (retVal.isEmpty()) {

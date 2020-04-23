@@ -42,6 +42,7 @@ import javax.swing.JSlider;
 import javax.swing.JTextField;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import org.openide.windows.WindowManager;
 
 /**
  * @author steven
@@ -301,7 +302,7 @@ class CFilePanel extends JComponent {
                 .getString("ceciliaModule.chooseFile"));
 
         List<File> retVal = FileChooserManager.getDefault()
-                .showOpenDialog(FILE_MANAGER_GROUP, null);
+                .showOpenDialog(FILE_MANAGER_GROUP, WindowManager.getDefault().getMainWindow());
 
         if (retVal.isEmpty()) {
             return;

@@ -35,6 +35,7 @@ import javafx.stage.FileChooser.ExtensionFilter;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
+import org.openide.windows.WindowManager;
 
 /**
  * @author steven
@@ -86,7 +87,7 @@ public class ScaleEditor extends JComponent {
     protected void selectScale() {
         
         List<File> rValue = FileChooserManager.getDefault().showOpenDialog(ScaleSelectionPanel.FILE_CHOOSER_ID,
-                null);
+                WindowManager.getDefault().getMainWindow());
 
         if (!rValue.isEmpty()) {
             File f = rValue.get(0);

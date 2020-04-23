@@ -798,7 +798,7 @@ public class TrackEditor extends javax.swing.JPanel {
             return;
         }
 
-        List<File> rValue = FileChooserManager.getDefault().showOpenDialog(FILE_CHOOSER_ID, null);
+        List<File> rValue = FileChooserManager.getDefault().showOpenDialog(FILE_CHOOSER_ID, this);
 
         if (!rValue.isEmpty()) {
             File f = rValue.get(0);

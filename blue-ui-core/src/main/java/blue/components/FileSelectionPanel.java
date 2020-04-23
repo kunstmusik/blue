@@ -74,8 +74,10 @@ public class FileSelectionPanel extends JComponent {
     protected void selectFile() {
         FileChooserManager.getDefault().setDialogTitle(this.fileManagerGroup, "Choose File");
 
+        final Frame mainWindow = WindowManager.getDefault().getMainWindow();
+        
         List<File> retVal = FileChooserManager.getDefault().showOpenDialog(this.fileManagerGroup,
-                null);
+                mainWindow);
 
         if (retVal.isEmpty()) {
             return;

@@ -30,6 +30,7 @@ import java.io.IOException;
 import java.util.List;
 import javafx.stage.FileChooser.ExtensionFilter;
 import javax.swing.JFileChooser;
+import org.openide.windows.WindowManager;
 
 public class CeciliaModuleImportDialog {
     private static final String FILE_IMPORT = "ceciliaModuleImportDialog";
@@ -51,7 +52,8 @@ public class CeciliaModuleImportDialog {
 
     public static ModuleDefinition importCeciliaModule() {
 
-        List<File> retVal = FileChooserManager.getDefault().showOpenDialog(FILE_IMPORT, null);
+        List<File> retVal = FileChooserManager.getDefault().showOpenDialog(FILE_IMPORT, 
+                WindowManager.getDefault().getMainWindow());
 
         if (retVal.isEmpty()) {
             return null;

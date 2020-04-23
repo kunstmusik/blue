@@ -23,6 +23,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
+import org.openide.windows.WindowManager;
 
 
 /**
@@ -168,7 +169,7 @@ public class ScannedMatrixEditor extends JComponent {
 
     public void loadMatrix() {
         final FileChooserManager fcm = FileChooserManager.getDefault();
-        List<File> rValue = fcm.showOpenDialog(FILE_LOAD, null);
+        List<File> rValue = fcm.showOpenDialog(FILE_LOAD, this);
 
         if (!rValue.isEmpty()) {
             File temp = rValue.get(0);
@@ -182,7 +183,7 @@ public class ScannedMatrixEditor extends JComponent {
         }
         final FileChooserManager fcm = FileChooserManager.getDefault();
 
-        File rValue = fcm.showSaveDialog(FILE_SAVE, null);
+        File rValue = fcm.showSaveDialog(FILE_SAVE, WindowManager.getDefault().getMainWindow());
 
         if (rValue != null) {
             try {

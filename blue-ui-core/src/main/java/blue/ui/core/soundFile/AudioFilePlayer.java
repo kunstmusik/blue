@@ -44,6 +44,7 @@ import javax.sound.sampled.UnsupportedAudioFileException;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.JProgressBar;
+import org.openide.windows.WindowManager;
 
 /**
  *
@@ -325,7 +326,7 @@ public class AudioFilePlayer extends javax.swing.JPanel {
 
     private void selectFileButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_selectFileButtonActionPerformed
         List<File> rValue = FileChooserManager.getDefault().showOpenDialog(
-                this.getClass(), null);
+                this.getClass(), WindowManager.getDefault().getMainWindow());
 
         if (!rValue.isEmpty()) {
             File f = rValue.get(0);
