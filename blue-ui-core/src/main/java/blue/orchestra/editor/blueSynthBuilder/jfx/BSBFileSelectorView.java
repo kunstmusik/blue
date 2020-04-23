@@ -21,10 +21,12 @@ package blue.orchestra.editor.blueSynthBuilder.jfx;
 
 import blue.BlueSystem;
 import blue.orchestra.blueSynthBuilder.BSBFileSelector;
+import blue.ui.nbutilities.BlueNbUtilities;
 import blue.ui.utilities.FileChooserManager;
 import java.awt.Frame;
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.net.URLDecoder;
 import java.util.List;
 import javafx.event.ActionEvent;
@@ -37,6 +39,8 @@ import javafx.scene.input.DragEvent;
 import javafx.scene.input.Dragboard;
 import javafx.scene.input.TransferMode;
 import javafx.scene.layout.BorderPane;
+import javax.swing.SwingUtilities;
+import org.openide.util.Exceptions;
 import org.openide.windows.WindowManager;
 
 /**
@@ -94,10 +98,9 @@ public class BSBFileSelectorView extends BorderPane implements ResizeableView {
                                 file);
                     }
                 }
-
-                final Frame mainWindow = WindowManager.getDefault().getMainWindow();
+                
                 List<File> rValue = FileChooserManager.getDefault().showOpenDialog(
-                        FILE_SELECTOR_ID, mainWindow);
+                        FILE_SELECTOR_ID, BlueNbUtilities.getMainWindow());
 
                 if (!rValue.isEmpty()) {
                     File f = rValue.get(0);

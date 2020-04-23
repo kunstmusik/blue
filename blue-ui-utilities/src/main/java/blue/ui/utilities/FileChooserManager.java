@@ -17,6 +17,7 @@ import javafx.stage.FileChooser;
 import javafx.stage.FileChooser.ExtensionFilter;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 
 public class FileChooserManager {
@@ -71,25 +72,48 @@ public class FileChooserManager {
                 "mac");
 
         if (isMac) {
-            // USE AWT IMPL ON MAC DUE TO ISSUES WITH FILE CHOOSER
-            // THAT APPEAR TO BE INTRODUCED BY MacOS
-            java.awt.FileDialog ff = new java.awt.FileDialog((Frame) SwingUtilities.windowForComponent(parent));
+            // Use JavaFX elsewhere
+            final boolean isSwingEDT = SwingUtilities.isEventDispatchThread();
 
-            ff.setFilenameFilter((dir, name)
-                    -> true
-            );
+            Runnable r = () -> {
+                // USE AWT IMPL ON MAC DUE TO ISSUES WITH FILE CHOOSER
+                // THAT APPEAR TO BE INTRODUCED BY MacOS
+                java.awt.FileDialog ff = new java.awt.FileDialog((Frame) SwingUtilities.windowForComponent(parent));
 
-            ff.setMode(FileDialog.LOAD);
-            ff.setTitle(temp.dialogTitle);
-            ff.setMultipleMode(temp.isMultiSelect);
-            ff.setVisible(true);
+                ff.setFilenameFilter((dir, name)
+                        -> true
+                );
 
-            final File[] files = ff.getFiles();
+                ff.setMode(FileDialog.LOAD);
+                ff.setTitle(temp.dialogTitle);
+                ff.setMultipleMode(temp.isMultiSelect);
+                ff.setVisible(true);
 
-            if (files != null) {
-                for (File f : files) {
-                    retVal.add(f);
+                final File[] files = ff.getFiles();
+
+                if (files != null) {
+                    for (File f : files) {
+                        retVal.add(f);
+                    }
                 }
+                if (!isSwingEDT) {
+                    Platform.runLater(
+                            () -> Platform.exitNestedEventLoop(FileChooserManager.this, true));
+                }
+
+            };
+
+            if (isSwingEDT) {
+                r.run();
+            } else {
+                SwingUtilities.invokeLater(r);
+
+                Platform.enterNestedEventLoop(FileChooserManager.this);
+
+                if (parent != null) {
+                    parent.setEnabled(true);
+                }
+
             }
 
         } else {
@@ -180,21 +204,50 @@ public class FileChooserManager {
                 "mac");
 
         if (isMac) {
+            final boolean isSwingEDT = SwingUtilities.isEventDispatchThread();
+            final List<File> retVal = new ArrayList<>();
+
             // USE AWT IMPL ON MAC DUE TO ISSUES WITH FILE CHOOSER
             // THAT APPEAR TO BE INTRODUCED BY MacOS
-            java.awt.FileDialog ff = new java.awt.FileDialog((Frame) SwingUtilities.windowForComponent(parent));
+            Runnable r = () -> {
+                java.awt.FileDialog ff = new java.awt.FileDialog((Frame) SwingUtilities.windowForComponent(parent));
 
-            ff.setFilenameFilter((File dir, String name)
-                    -> true
-            );
+                ff.setFilenameFilter((File dir, String name)
+                        -> true
+                );
 
-            ff.setMode(FileDialog.SAVE);
-            ff.setTitle(temp.dialogTitle);
+                ff.setMode(FileDialog.SAVE);
+                ff.setTitle(temp.dialogTitle);
 //        ff.setMultipleMode(temp.isMultiSelect);
-            ff.setVisible(true);
-            final File[] files = ff.getFiles();
-            
-            return (files != null && files.length > 0) ? files[0] : null;
+                ff.setVisible(true);
+                
+                final File[] files = ff.getFiles();
+
+                if (files != null && files.length > 0) {
+                    retVal.add(files[0]);
+                };
+
+                if (!isSwingEDT) {
+                    Platform.runLater(
+                            () -> Platform.exitNestedEventLoop(FileChooserManager.this, true));
+                }
+
+            };
+
+            if (isSwingEDT) {
+                r.run();
+            } else {
+                SwingUtilities.invokeLater(r);
+
+                Platform.enterNestedEventLoop(FileChooserManager.this);
+
+                if (parent != null) {
+                    parent.setEnabled(true);
+                }
+
+            }
+
+            return (retVal.size() > 0) ? retVal.get(0) : null;
 
         } else {
             // Use JavaFX elsewhere

@@ -37,6 +37,7 @@ import blue.soundObject.PolyObjectLayerGroupProvider;
 import blue.ui.core.blueLive.BlueLiveToolBar;
 import blue.ui.core.midi.MidiInputEngine;
 import blue.ui.core.render.RealtimeRenderManager;
+import blue.ui.nbutilities.BlueNbUtilities;
 import blue.ui.utilities.FileChooserManager;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -186,11 +187,16 @@ public class Installer extends ModuleInstall {
         //            }
         //        }
         Platform.setImplicitExit(false);
-        // Initialize JavaFX by using this call
-        new JFXPanel();
+
+        SwingUtilities.invokeLater(() -> {
+            // Initialize JavaFX by using this call
+
+            new JFXPanel();
+            BlueNbUtilities.setMainWindow(WindowManager.getDefault().getMainWindow());
+        });
+
 //        Platform.runLater(()
 //                -> jfxPanel.setScene(new Scene(new Group())));
-
 //        FileChooserManager.getDefault().setJFXPanel(jfxPanel);
 //        WindowManager.getDefault().invokeWhenUIReady(()
 //                -> WindowManager.getDefault().getMainWindow().add(jfxPanel));

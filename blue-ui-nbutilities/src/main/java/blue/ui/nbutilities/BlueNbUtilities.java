@@ -20,6 +20,7 @@
 package blue.ui.nbutilities;
 
 import java.awt.Component;
+import java.awt.Frame;
 import javax.swing.JEditorPane;
 import javax.swing.JScrollPane;
 import javax.swing.text.EditorKit;
@@ -33,6 +34,16 @@ import org.openide.text.NbDocument;
  * @author stevenyi
  */
 public class BlueNbUtilities {
+    
+    static Frame mainWindow = null;
+    
+    public static void setMainWindow(Frame frame) {
+        mainWindow = frame;
+    }
+    public static Frame getMainWindow() {
+        return mainWindow;
+    }
+    
 
     /** Returns the original JEditorPane or the Netbeans Extended
      * Editor for the mimeType */
