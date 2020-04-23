@@ -38,57 +38,55 @@ import org.openide.util.Exceptions;
  *
  * @author stevenyi
  */
-@ProjectPluginEditorItem(displayName  = "Clojure", position = 10)
+@ProjectPluginEditorItem(displayName = "Clojure", position = 10)
 public class ClojureProjectPluginEditor extends ProjectPluginEditor {
 
     ClojureProjectDataEditorController controller;
+    JFXPanel panel;
 
     public ClojureProjectPluginEditor() {
         this.setLayout(new BorderLayout());
 
-        JFXPanel panel = new JFXPanel();
+        panel = new JFXPanel();
         this.add(panel, BorderLayout.CENTER);
-        final CountDownLatch latch = new CountDownLatch(1);
         Platform.runLater(() -> {
+            initFX();
+        });
+    }
 
-            FXMLLoader loader = new FXMLLoader(getClass().getResource(
-                    "ClojureProjectDataEditor.fxml"));
+    private void initFX() {
+        FXMLLoader loader = new FXMLLoader(getClass().getResource(
+                "ClojureProjectDataEditor.fxml"));
 
-            try {
-                loader.load();
-                controller = loader.getController();
-            } catch (IOException ex) {
-                Exceptions.printStackTrace(ex);
-            }
-            final Scene scene = new Scene(loader.getRoot());
-            BlueFX.style(scene);
-            Node root = loader.getRoot();
+        try {
+            loader.load();
+            controller = loader.getController();
+        } catch (IOException ex) {
+            Exceptions.printStackTrace(ex);
+        }
+        final Scene scene = new Scene(loader.getRoot());
+        BlueFX.style(scene);
+        Node root = loader.getRoot();
 //            root.setStyle("-fx-base: rgba(38, 51, 76, 1.0);"
 //                    + "-fx-background: rgba(38, 51, 76, 1.0);"
 //                    + "-fx-control-inner-background: black");
-            panel.setScene(scene);
-            latch.countDown();
-        });
-        
-        try {
-            latch.await();
-        } catch (InterruptedException ex) {
-            Exceptions.printStackTrace(ex);
-        }
+        panel.setScene(scene);
 
     }
 
     @Override
     public void edit(BlueData data) {
-        ClojureProjectData projData = ProjectPluginUtils.findPluginData(
-                data.getPluginData(), ClojureProjectData.class);
+        Platform.runLater(() -> {
+            ClojureProjectData projData = ProjectPluginUtils.findPluginData(
+                    data.getPluginData(), ClojureProjectData.class);
 
-        if(projData == null) {
-            projData = new ClojureProjectData();
-            data.getPluginData().add(projData);
-        }
+            if (projData == null) {
+                projData = new ClojureProjectData();
+                data.getPluginData().add(projData);
+            }
 
-        controller.setClojureProjectData(projData);
+            controller.setClojureProjectData(projData);
+        });
     }
-    
+
 }
