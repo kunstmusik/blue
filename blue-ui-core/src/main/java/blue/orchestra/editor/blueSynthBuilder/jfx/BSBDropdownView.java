@@ -21,14 +21,12 @@ package blue.orchestra.editor.blueSynthBuilder.jfx;
 
 import blue.orchestra.blueSynthBuilder.BSBDropdown;
 import blue.orchestra.blueSynthBuilder.BSBDropdownItem;
-import java.util.concurrent.CountDownLatch;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.value.ChangeListener;
 import javafx.scene.control.ComboBox;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
-import org.openide.util.Exceptions;
 
 /**
  *
@@ -64,24 +62,20 @@ public class BSBDropdownView extends ComboBox<BSBDropdownItem> {
                 mutating = true;
 
                 if (!Platform.isFxApplicationThread()) {
-                    CountDownLatch latch = new CountDownLatch(1);
                     Platform.runLater(() -> {
                         try {
                             getSelectionModel().select(newVal.intValue());
                         } finally {
-                            latch.countDown();
+                            mutating = false;
                         }
                     });
-                    try {
-                        latch.await();
-                    } catch (InterruptedException ex) {
-                        Exceptions.printStackTrace(ex);
-                    }
+
                 } else {
                     getSelectionModel().select(newVal.intValue());
+                    mutating = false;
+
                 }
 
-                mutating = false;
             }
         };
 

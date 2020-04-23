@@ -30,12 +30,10 @@ import java.lang.ref.WeakReference;
 import java.util.List;
 import java.util.Map;
 import java.util.WeakHashMap;
-import java.util.concurrent.CountDownLatch;
 import javafx.embed.swing.JFXPanel;
 import javafx.scene.Scene;
 import javax.swing.JDialog;
 import javax.swing.SwingUtilities;
-import org.openide.util.Exceptions;
 
 public class EffectEditorManager {
 
@@ -84,32 +82,9 @@ public class EffectEditorManager {
             dialog = new JDialog(root);
 
             JFXPanel panel = new JFXPanel();
-            CountDownLatch latch = new CountDownLatch(1);
-
-            double[] dims = new double[2];
-
-            BlueFX.runOnFXThread(() -> {
-                try {
-                    BSBEditPane editPanel = new BSBEditPane(BSBObjectRegistry
-                            .getBSBObjects(), false);
-                    editPanel.editBSBGraphicInterface(effect.getGraphicInterface());
-
-                    Scene scene = new Scene(editPanel);
-                    BlueFX.style(scene);
-                    panel.setScene(scene);
-                } finally {
-                    latch.countDown();
-                }
-            });
-
-            try {
-                latch.await();
-            } catch (InterruptedException ex) {
-                Exceptions.printStackTrace(ex);
-            }
 
             dialog.getContentPane().add(panel);
-            
+
             dialog.setTitle(getChannelNameForEffect(effect) + effect.getName());
 
             dialog.getRootPane().putClientProperty("SeparateWindow", Boolean.TRUE);
@@ -117,9 +92,20 @@ public class EffectEditorManager {
             dialog.setVisible(true);
 
             final JDialog dlg = dialog;
-            SwingUtilities.invokeLater(() -> {
-                dlg.pack();
-                dlg.setSize(dlg.getWidth() + 5, dlg.getHeight() + 5);
+            BlueFX.runOnFXThread(() -> {
+                BSBEditPane editPanel = new BSBEditPane(BSBObjectRegistry
+                        .getBSBObjects(), false);
+                editPanel.editBSBGraphicInterface(effect.getGraphicInterface());
+
+                Scene scene = new Scene(editPanel);
+                BlueFX.style(scene);
+                panel.setScene(scene);
+
+                SwingUtilities.invokeLater(() -> {
+                    dlg.pack();
+                    dlg.setSize(dlg.getWidth() + 5, dlg.getHeight() + 5);
+                });
+
             });
 
             map.put(effect, new WeakReference(dialog));
@@ -128,17 +114,17 @@ public class EffectEditorManager {
         }
 
     }
-    
+
     private String getChannelNameForEffect(Effect effect) {
         BlueData data = BlueProjectManager.getInstance().getCurrentProject().getData();
-        
+
         Mixer mixer = data.getMixer();
-        
+
         List<Channel> channels = mixer.getAllChannels();
-        
-        for(Channel channel: channels) {
-            if(channel.getPreEffects().contains(effect) || 
-                    channel.getPostEffects().contains(effect)) {
+
+        for (Channel channel : channels) {
+            if (channel.getPreEffects().contains(effect)
+                    || channel.getPostEffects().contains(effect)) {
                 return String.format("[%s] - ", channel.getName());
             }
         }

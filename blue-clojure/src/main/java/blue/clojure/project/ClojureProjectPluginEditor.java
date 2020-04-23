@@ -26,7 +26,6 @@ import blue.project.ProjectPluginEditor;
 import blue.project.ProjectPluginUtils;
 import java.awt.BorderLayout;
 import java.io.IOException;
-import java.util.concurrent.CountDownLatch;
 import javafx.application.Platform;
 import javafx.embed.swing.JFXPanel;
 import javafx.fxml.FXMLLoader;

@@ -38,7 +38,6 @@ import blue.utility.GUI;
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
-import java.util.concurrent.CountDownLatch;
 import javafx.embed.swing.JFXPanel;
 import javafx.scene.Scene;
 import javafx.scene.control.TextArea;
@@ -87,26 +86,16 @@ public class ObjectBuilderEditor extends ScoreObjectEditor {
         this.add(tabs, BorderLayout.CENTER);
 
         JFXPanel jfxCommentPanel = new JFXPanel();
-        CountDownLatch latch = new CountDownLatch(1);
 
         BlueFX.runOnFXThread(() -> {
-            try {
-                commentTextArea = new TextArea();
-                commentTextArea.setWrapText(true);
+            commentTextArea = new TextArea();
+            commentTextArea.setWrapText(true);
 
-                final Scene scene2 = new Scene(commentTextArea);
-                BlueFX.style(scene2);
-                jfxCommentPanel.setScene(scene2);
-            } finally {
-                latch.countDown();
-            }
+            final Scene scene2 = new Scene(commentTextArea);
+            BlueFX.style(scene2);
+            jfxCommentPanel.setScene(scene2);
+
         });
-
-        try {
-            latch.await();
-        } catch (InterruptedException ex) {
-            Exceptions.printStackTrace(ex);
-        }
 
         tabs.addTab("Comments", jfxCommentPanel);
 

@@ -26,7 +26,7 @@ import blue.orchestra.editor.blueSynthBuilder.PresetsManagerDialog;
 import blue.orchestra.editor.blueSynthBuilder.PresetsUtilities;
 import java.util.Collections;
 import java.util.Optional;
-import java.util.concurrent.CountDownLatch;
+import javafx.application.Platform;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.event.ActionEvent;
@@ -43,9 +43,7 @@ import javafx.scene.control.TextField;
 import javafx.scene.control.TextInputDialog;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
-import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
-import org.openide.util.Exceptions;
 import org.openide.windows.WindowManager;
 
 /**
@@ -193,8 +191,6 @@ public class PresetPane extends HBox {
             managePresets.setOnAction(e -> {
                 PresetGroup[] retVal = new PresetGroup[1];
 
-                CountDownLatch latch = new CountDownLatch(1);
-
                 SwingUtilities.invokeLater(() -> {
                     try {
                         if (presetsManager == null) {
@@ -204,15 +200,11 @@ public class PresetPane extends HBox {
 
                         retVal[0] = presetsManager.editPresetGroup(pGroup);
                     } finally {
-                        latch.countDown();
+                        Platform.runLater(() -> Platform.exitNestedEventLoop(PresetPane.this, true));
                     }
                 });
 
-                try {
-                    latch.await();
-                } catch (InterruptedException ex) {
-                    Exceptions.printStackTrace(ex);
-                }
+                Platform.enterNestedEventLoop(PresetPane.this);
 
                 if (retVal[0] != null) {
                     pGroup.setPresets(retVal[0].getPresets());
@@ -237,7 +229,7 @@ public class PresetPane extends HBox {
     }
 
     protected void updateCurrentPresetUI() {
-        if(getPresetGroup() == null) {
+        if (getPresetGroup() == null) {
             return;
         }
         if (getPresetGroup().getCurrentPresetUniqueId() == null) {

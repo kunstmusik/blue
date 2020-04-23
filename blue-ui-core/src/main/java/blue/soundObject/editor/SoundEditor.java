@@ -44,7 +44,6 @@ import blue.soundObject.editor.sound.TimeBar;
 import blue.ui.core.orchestra.editor.BlueSynthBuilderEditor;
 import java.awt.BorderLayout;
 import java.util.List;
-import java.util.concurrent.CountDownLatch;
 import javafx.embed.swing.JFXPanel;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
@@ -61,7 +60,6 @@ import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
-import org.openide.util.Exceptions;
 
 /**
  * Editor for Sound SoundObject.
@@ -113,12 +111,9 @@ public class SoundEditor extends ScoreObjectEditor {
         editor.setLabelText("[ Sound ]");
 
         JFXPanel jfxPanel = new JFXPanel();
-        CountDownLatch latch = new CountDownLatch(1);
         JFXPanel jfxCommentPanel = new JFXPanel();
 
         BlueFX.runOnFXThread(() -> {
-
-            try {
 
                 MenuButton btn = new MenuButton("Automations");
 
@@ -201,16 +196,7 @@ public class SoundEditor extends ScoreObjectEditor {
                 final Scene scene2 = new Scene(commentTextArea);
                 BlueFX.style(scene2);
                 jfxCommentPanel.setScene(scene2);
-            } finally {
-                latch.countDown();
-            }
         });
-
-        try {
-            latch.await();
-        } catch (InterruptedException ex) {
-            Exceptions.printStackTrace(ex);
-        }
 
         editor.getTabs().insertTab("Automation", null, jfxPanel, "", 1);
         editor.getTabs().addTab("Comments", jfxCommentPanel);

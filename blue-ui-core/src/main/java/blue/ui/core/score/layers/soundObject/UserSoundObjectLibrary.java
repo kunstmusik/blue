@@ -31,7 +31,6 @@ import java.awt.Dimension;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.CountDownLatch;
 import javafx.collections.ObservableList;
 import javafx.embed.swing.JFXPanel;
 import javafx.event.EventHandler;
@@ -55,7 +54,6 @@ import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.border.BevelBorder;
 import javax.swing.border.EmptyBorder;
-import org.openide.util.Exceptions;
 import org.openide.util.lookup.InstanceContent;
 
 /**
@@ -84,52 +82,41 @@ public class UserSoundObjectLibrary extends JComponent {
                         3, 3)));
 
         JFXPanel jfxPanel = new JFXPanel();
-
-        CountDownLatch latch = new CountDownLatch(1);
-
+        this.add(jfxPanel, BorderLayout.CENTER);
+        
         BlueFX.runOnFXThread(() -> {
-            try {
-                TreeView<LibraryItem<SoundObject>> treeView = new TreeView<>();
-                treeView.setRoot(soundObjectLibrary.getRoot());
+            TreeView<LibraryItem<SoundObject>> treeView = new TreeView<>();
+            treeView.setRoot(soundObjectLibrary.getRoot());
 
-                treeView.setEditable(true);
-                treeView.getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
-                treeView.setCellFactory(tv -> {
-                    return new LibraryItemCell();
-                });
+            treeView.setEditable(true);
+            treeView.getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
+            treeView.setCellFactory(tv -> {
+                return new LibraryItemCell();
+            });
 
-                treeView.getSelectionModel().selectedItemProperty().addListener(
-                        (obs, old, newVal) -> {
+            treeView.getSelectionModel().selectedItemProperty().addListener(
+                    (obs, old, newVal) -> {
 
-                            if (newVal == null) {
-                                return;
-                            }
-                            if (newVal.getValue().getValue() != null) {
-                                instanceContent.set(
-                                        Collections.singleton(newVal.getValue().getValue()),
-                                        null);
-                            } else {
-                                instanceContent.set(Collections.emptyList(), null);
-                            }
-                        });
+                        if (newVal == null) {
+                            return;
+                        }
+                        if (newVal.getValue().getValue() != null) {
+                            instanceContent.set(
+                                    Collections.singleton(newVal.getValue().getValue()),
+                                    null);
+                        } else {
+                            instanceContent.set(Collections.emptyList(), null);
+                        }
+                    });
 
-                final Scene scene = new Scene(treeView);
-                BlueFX.style(scene);
-                jfxPanel.setScene(scene);
+            final Scene scene = new Scene(treeView);
+            BlueFX.style(scene);
+            jfxPanel.setScene(scene);
 
-                treeView.setContextMenu(buildContextMenu(treeView));
-            } finally {
-                latch.countDown();
-            }
+            treeView.setContextMenu(buildContextMenu(treeView));
+
         });
 
-        try {
-            latch.await();
-        } catch (InterruptedException ex) {
-            Exceptions.printStackTrace(ex);
-        }
-
-        this.add(jfxPanel, BorderLayout.CENTER);
     }
 
     public ContextMenu buildContextMenu(
@@ -293,8 +280,8 @@ public class UserSoundObjectLibrary extends JComponent {
                     int row = Integer.parseInt(val);
                     TreeItem<LibraryItem<SoundObject>> treeItem = getTreeView().getTreeItem(row);
 
-                    if (!isInParentPath(treeItem, getTreeItem())&&
-                            getTreeItem() != treeItem.getParent()) {
+                    if (!isInParentPath(treeItem, getTreeItem())
+                            && getTreeItem() != treeItem.getParent()) {
                         evt.acceptTransferModes(TransferMode.MOVE);
                     }
                 }
@@ -303,7 +290,7 @@ public class UserSoundObjectLibrary extends JComponent {
         }
 
         private boolean isInParentPath(TreeItem<LibraryItem<SoundObject>> source, TreeItem<LibraryItem<SoundObject>> target) {
-            if(target == source) {
+            if (target == source) {
                 return true;
             } else if (target == null) {
                 return false;

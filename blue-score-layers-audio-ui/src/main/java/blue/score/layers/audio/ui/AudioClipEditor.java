@@ -26,7 +26,6 @@ import blue.score.layers.audio.core.AudioClip;
 import blue.soundObject.editor.ScoreObjectEditor;
 import java.awt.BorderLayout;
 import java.io.IOException;
-import java.util.concurrent.CountDownLatch;
 import javafx.application.Platform;
 import javafx.embed.swing.JFXPanel;
 import javafx.fxml.FXMLLoader;
@@ -50,7 +49,6 @@ public class AudioClipEditor extends ScoreObjectEditor {
 
         JFXPanel panel = new JFXPanel();
         this.add(panel, BorderLayout.CENTER);
-        final CountDownLatch latch = new CountDownLatch(1);
         Platform.runLater(() -> {
 
             FXMLLoader loader = new FXMLLoader(getClass().getResource(
@@ -69,14 +67,8 @@ public class AudioClipEditor extends ScoreObjectEditor {
 //                    + "-fx-background: rgba(38, 51, 76, 1.0);"
 //                    + "-fx-control-inner-background: black");
             panel.setScene(scene);
-            latch.countDown();
         });
         
-        try {
-            latch.await();
-        } catch (InterruptedException ex) {
-            Exceptions.printStackTrace(ex);
-        }
     }
 
     /**
@@ -106,7 +98,9 @@ public class AudioClipEditor extends ScoreObjectEditor {
 
     @Override
     public void editScoreObject(ScoreObject sObj) {
-        AudioClip newClip = (AudioClip) sObj;
-        controller.setAudioClip(newClip);
+        final AudioClip newClip = (AudioClip) sObj;
+        
+        BlueFX.runOnFXThread(() -> 
+                controller.setAudioClip(newClip));
     }
 }

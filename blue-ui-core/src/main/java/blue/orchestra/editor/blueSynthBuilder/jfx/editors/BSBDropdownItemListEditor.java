@@ -21,11 +21,9 @@ package blue.orchestra.editor.blueSynthBuilder.jfx.editors;
 import blue.jfx.BlueFX;
 import blue.orchestra.blueSynthBuilder.BSBDropdownItemList;
 import blue.orchestra.editor.blueSynthBuilder.DropdownItemEditorDialog;
-import java.util.concurrent.CountDownLatch;
 import javafx.scene.control.Button;
 import javafx.scene.layout.BorderPane;
 import javax.swing.SwingUtilities;
-import org.openide.util.Exceptions;
 import org.openide.windows.WindowManager;
 
 /**

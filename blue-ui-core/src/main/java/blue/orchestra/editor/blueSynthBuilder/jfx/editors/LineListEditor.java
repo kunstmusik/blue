@@ -40,7 +40,6 @@ public class LineListEditor extends BorderPane {
 
         b.setOnAction(e -> {
             LineList newList = new LineList(list);
-//            CountDownLatch latch = new CountDownLatch(1);
             boolean[] retVal = new boolean[1];
             EventQueue.invokeLater(new Runnable() {
                 public void run() {
@@ -62,11 +61,6 @@ public class LineListEditor extends BorderPane {
                 }
             });
 
-//            try {
-//                latch.await();
-//            } catch (InterruptedException ex) {
-//                Exceptions.printStackTrace(ex);
-//            }
         });
 
 //            FXMLLoader loader = new FXMLLoader(

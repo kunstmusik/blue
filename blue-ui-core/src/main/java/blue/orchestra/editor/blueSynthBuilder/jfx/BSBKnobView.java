@@ -23,7 +23,6 @@ import blue.jfx.controls.Knob;
 import blue.jfx.controls.ValuePanel;
 import blue.orchestra.blueSynthBuilder.BSBKnob;
 import blue.utility.NumberUtilities;
-import java.util.concurrent.CountDownLatch;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.IntegerBinding;
@@ -118,23 +117,18 @@ public class BSBKnobView extends BorderPane implements ResizeableView {
             if (!val[0]) {
                 val[0] = true;
                 if (!Platform.isFxApplicationThread()) {
-                    CountDownLatch latch = new CountDownLatch(1);
                     Platform.runLater(() -> {
                         try {
                             knobView.setValue(knob.getValue());
                         } finally {
-                            latch.countDown();
+                            val[0] = false;
                         }
                     });
-                    try {
-                        latch.await();
-                    } catch (InterruptedException ex) {
-                        Exceptions.printStackTrace(ex);
-                    }
+
                 } else {
                     knobView.setValue(knob.getValue());
+                    val[0] = false;
                 }
-                val[0] = false;
             }
         };
         final ChangeListener<Number> viewToKnobListener = (obs, old, newVal) -> {
@@ -213,13 +207,13 @@ public class BSBKnobView extends BorderPane implements ResizeableView {
 
     public int getWidgetMinimumHeight() {
         int h = 20;
-        if(knob.isValueDisplayEnabled()) {
-            h += (int)valuePanel.getHeight();
+        if (knob.isValueDisplayEnabled()) {
+            h += (int) valuePanel.getHeight();
         }
-        if(knob.isLabelEnabled()) {
-            h += (int)label.getHeight();
+        if (knob.isLabelEnabled()) {
+            h += (int) label.getHeight();
         }
-        return h; 
+        return h;
     }
 
     public int getWidgetWidth() {
@@ -234,17 +228,17 @@ public class BSBKnobView extends BorderPane implements ResizeableView {
         return (int) getHeight();
     }
 
-    public void setWidgetHeight(int height){
+    public void setWidgetHeight(int height) {
         int h = height;
-        if(knob.isValueDisplayEnabled()) {
-            h -= (int)valuePanel.getHeight();
+        if (knob.isValueDisplayEnabled()) {
+            h -= (int) valuePanel.getHeight();
         }
-        if(knob.isLabelEnabled()) {
-            h -= (int)label.getHeight();
+        if (knob.isLabelEnabled()) {
+            h -= (int) label.getHeight();
         }
 
         knob.setKnobWidth(Math.max(20, h));
-    } 
+    }
 
     public void setWidgetX(int x) {
         knob.setX(x);
@@ -254,7 +248,7 @@ public class BSBKnobView extends BorderPane implements ResizeableView {
         return knob.getX();
     }
 
-    public void setWidgetY(int y){
+    public void setWidgetY(int y) {
         knob.setY(y);
     }
 

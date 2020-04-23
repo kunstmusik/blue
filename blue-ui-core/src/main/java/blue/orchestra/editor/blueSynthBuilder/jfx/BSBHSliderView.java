@@ -19,13 +19,10 @@
  */
 package blue.orchestra.editor.blueSynthBuilder.jfx;
 
-import blue.jfx.BlueFX;
 import blue.jfx.controls.ValuePanel;
 import blue.orchestra.blueSynthBuilder.BSBHSlider;
 import blue.utility.NumberUtilities;
 import java.math.BigDecimal;
-import java.math.RoundingMode;
-import java.util.concurrent.CountDownLatch;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.value.ChangeListener;
@@ -33,7 +30,6 @@ import javafx.geometry.Orientation;
 import javafx.scene.control.Slider;
 import javafx.scene.layout.BorderPane;
 import javafx.util.StringConverter;
-import org.openide.util.Exceptions;
 
 /**
  *
@@ -92,23 +88,18 @@ public class BSBHSliderView extends BorderPane implements ResizeableView {
             if (!val[0]) {
                 val[0] = true;
                 if (!Platform.isFxApplicationThread()) {
-                    CountDownLatch latch = new CountDownLatch(1);
                     Platform.runLater(() -> {
                         try {
                             slider.setValue(bsbHSlider.getValue());
                         } finally {
-                            latch.countDown();
+                            val[0] = false;
                         }
                     });
-                    try {
-                        latch.await();
-                    } catch (InterruptedException ex) {
-                        Exceptions.printStackTrace(ex);
-                    }
+
                 } else {
                     slider.setValue(bsbHSlider.getValue());
+                    val[0] = false;
                 }
-                val[0] = false;
             }
         };
         final ChangeListener<Number> viewToSliderListener = (obs, old, newVal) -> {
@@ -152,7 +143,7 @@ public class BSBHSliderView extends BorderPane implements ResizeableView {
                 } else {
                     setRight(null);
                 }
-                
+
                 slider.setMinorTickCount(0);
                 updateTickCount();
 
@@ -191,7 +182,7 @@ public class BSBHSliderView extends BorderPane implements ResizeableView {
     }
 
     public int getWidgetMinimumHeight() {
-        return -1; 
+        return -1;
     }
 
     public int getWidgetWidth() {
@@ -208,8 +199,8 @@ public class BSBHSliderView extends BorderPane implements ResizeableView {
         return -1;
     }
 
-    public void setWidgetHeight(int height){
-    } 
+    public void setWidgetHeight(int height) {
+    }
 
     public void setWidgetX(int x) {
         bsbHSlider.setX(x);
@@ -219,10 +210,10 @@ public class BSBHSliderView extends BorderPane implements ResizeableView {
         return bsbHSlider.getX();
     }
 
-    public void setWidgetY(int y){
+    public void setWidgetY(int y) {
     }
 
     public int getWidgetY() {
         return -1;
-    } 
+    }
 }

@@ -21,14 +21,10 @@ package blue.orchestra.blueSynthBuilder;
 
 import blue.jfx.BlueFX;
 import java.util.Optional;
-import java.util.concurrent.CountDownLatch;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javafx.application.Platform;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
 import javax.swing.JOptionPane;
-import javax.swing.SwingUtilities;
 
 /**
  * Copied from blue-ui-core to deal with having scaling options called when

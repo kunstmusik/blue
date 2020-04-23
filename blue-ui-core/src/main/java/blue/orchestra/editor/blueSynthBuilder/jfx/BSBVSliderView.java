@@ -23,7 +23,6 @@ import blue.jfx.controls.ValuePanel;
 import blue.orchestra.blueSynthBuilder.BSBVSlider;
 import blue.utility.NumberUtilities;
 import java.math.BigDecimal;
-import java.util.concurrent.CountDownLatch;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.value.ChangeListener;
@@ -31,7 +30,6 @@ import javafx.geometry.Orientation;
 import javafx.scene.control.Slider;
 import javafx.scene.layout.BorderPane;
 import javafx.util.StringConverter;
-import org.openide.util.Exceptions;
 
 /**
  *
@@ -90,23 +88,19 @@ public class BSBVSliderView extends BorderPane implements ResizeableView {
             if (!val[0]) {
                 val[0] = true;
                 if (!Platform.isFxApplicationThread()) {
-                    CountDownLatch latch = new CountDownLatch(1);
                     Platform.runLater(() -> {
                         try {
                             slider.setValue(bsbVSlider.getValue());
                         } finally {
-                            latch.countDown();
+                            val[0] = false;
                         }
                     });
-                    try {
-                        latch.await();
-                    } catch (InterruptedException ex) {
-                        Exceptions.printStackTrace(ex);
-                    }
+
                 } else {
                     slider.setValue(bsbVSlider.getValue());
+                    val[0] = false;
+
                 }
-                val[0] = false;
             }
         };
         final ChangeListener<Number> viewToSliderListener = (obs, old, newVal) -> {
@@ -120,7 +114,6 @@ public class BSBVSliderView extends BorderPane implements ResizeableView {
         final ChangeListener<Number> tickListener = (obs, old, newVal) -> {
             updateTickCount();
         };
-
 
         sceneProperty().addListener((obs, old, newVal) -> {
             if (newVal == null) {
@@ -177,7 +170,6 @@ public class BSBVSliderView extends BorderPane implements ResizeableView {
         slider.setMajorTickUnit(bsbVSlider.getResolution().doubleValue());
     }
 
-
     public boolean canResizeWidgetWidth() {
         return false;
     }
@@ -207,10 +199,10 @@ public class BSBVSliderView extends BorderPane implements ResizeableView {
         return base + bsbVSlider.getSliderHeight();
     }
 
-    public void setWidgetHeight(int height){
+    public void setWidgetHeight(int height) {
         int base = bsbVSlider.isValueDisplayEnabled() ? 30 : 0;
         bsbVSlider.setSliderHeight(Math.max(45, height - base));
-    } 
+    }
 
     public void setWidgetX(int x) {
     }
@@ -219,11 +211,11 @@ public class BSBVSliderView extends BorderPane implements ResizeableView {
         return -1;
     }
 
-    public void setWidgetY(int y){
+    public void setWidgetY(int y) {
         bsbVSlider.setY(y);
     }
 
     public int getWidgetY() {
         return bsbVSlider.getY();
-    } 
+    }
 }
