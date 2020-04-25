@@ -311,11 +311,22 @@ public class PatternLayerPanel extends javax.swing.JPanel
     }//GEN-LAST:event_nameTextActionPerformed
 
     private void nameTextFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_nameTextFocusLost
+        if (patternLayer == null) {
+            return;
+        }
+
+        final var newName = nameText.getText();
+        if (!newName.equals(patternLayer.getName())) {
+            patternLayer.setName(nameText.getText());
+            nameLabel.setText(patternLayer.getName());
+        }
+        
         ((CardLayout) jPanel1.getLayout()).show(jPanel1, "label");
     }//GEN-LAST:event_nameTextFocusLost
 
     private void nameTextKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_nameTextKeyPressed
         if (evt.getKeyCode() == KeyEvent.VK_ESCAPE) {
+            nameText.setText(patternLayer.getName());
             ((CardLayout) jPanel1.getLayout()).show(jPanel1, "label");
         }
     }//GEN-LAST:event_nameTextKeyPressed

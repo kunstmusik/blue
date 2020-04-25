@@ -35,6 +35,8 @@ upgrade to Java 11 for 2.8.0.
 
 * Implemented undoability for all edits in Single-line and Multi-line mode
 
+* Issue #495: Commit name change for layers when focus lost
+
 FIX
 
 * Score: Selection marquee in single-line mode did not calculate y-position 

@@ -17,7 +17,6 @@
  * the Free Software Foundation Inc., 59 Temple Place - Suite 330,
  * Boston, MA  02111-1307 USA
  */
-
 package blue.ui.core.score.soundLayer;
 
 import blue.SoundLayer;
@@ -48,7 +47,7 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
 /**
- * 
+ *
  * @author steven
  */
 public class SoundLayerPanel extends javax.swing.JPanel implements
@@ -72,22 +71,24 @@ public class SoundLayerPanel extends javax.swing.JPanel implements
 
     private NoteProcessorChainMap npcMap;
 
-    /** Creates new form SoundLayerPanel */
+    /**
+     * Creates new form SoundLayerPanel
+     */
     public SoundLayerPanel(SoundLayer soundLayer, NoteProcessorChainMap npcMap) {
         initComponents();
         setSelected(false);
-        
+
         boolean automatable = ScoreController.getInstance().getScorePath().getLastLayerGroup() == null;
 
         muteToggleButton.putClientProperty("BlueToggleButton.selectColorOverride", Color.ORANGE.darker());
         soloToggleButton.putClientProperty("BlueToggleButton.selectColorOverride", Color.GREEN.darker());
-        
+
         automationButton.setVisible(automatable);
         paramSelectPanel.setVisible(automatable);
         this.automatable = automatable;
-        
+
         this.npcMap = npcMap;
-        
+
         this.sLayer = soundLayer;
 
         muteToggleButton.setSelected(sLayer.isMuted());
@@ -136,7 +137,7 @@ public class SoundLayerPanel extends javax.swing.JPanel implements
         }
         super.removeNotify();
     }
-    
+
     @Override
     public void addNotify() {
         if (this.paramIdList != null) {
@@ -401,17 +402,17 @@ public class SoundLayerPanel extends javax.swing.JPanel implements
         String id = paramIdList.getParameterId(index);
 
         Parameter param = AutomationManager.getInstance().getParameter(id);
-        
-        if(param != null) {
+
+        if (param != null) {
             param.getLine().setColor(paramColorSelect.getColor());
         }
     }// GEN-LAST:event_paramColorSelectPropertyChange
 
     private void formComponentResized(java.awt.event.ComponentEvent evt) {// GEN-FIRST:event_formComponentResized
-        if(sLayer == null) {
+        if (sLayer == null) {
             return;
         }
-        
+
         if (automatable && sLayer.getAutomationParameters().size() > 0) {
             paramSelectPanel.setVisible(getHeight() > 22);
         } else {
@@ -455,11 +456,22 @@ public class SoundLayerPanel extends javax.swing.JPanel implements
 
     private void nameTextKeyPressed(java.awt.event.KeyEvent evt) {// GEN-FIRST:event_nameTextKeyPressed
         if (evt.getKeyCode() == KeyEvent.VK_ESCAPE) {
+            nameText.setText(sLayer.getName());
             ((CardLayout) jPanel1.getLayout()).show(jPanel1, "label");
         }
     }// GEN-LAST:event_nameTextKeyPressed
 
     private void nameTextFocusLost(java.awt.event.FocusEvent evt) {// GEN-FIRST:event_nameTextFocusLost
+        if (sLayer == null) {
+            return;
+        }
+
+        final var newName = nameText.getText();
+        if (!newName.equals(sLayer.getName())) {
+            sLayer.setName(nameText.getText());
+            nameLabel.setText(sLayer.getName());
+        }
+
         ((CardLayout) jPanel1.getLayout()).show(jPanel1, "label");
     }// GEN-LAST:event_nameTextFocusLost
 
@@ -514,7 +526,7 @@ public class SoundLayerPanel extends javax.swing.JPanel implements
         }
 
         int index = paramIdList.getSelectedIndex();
-        
+
         if (paramIdList.size() <= 0 || index < 0) {
 
             updating = true;
@@ -531,11 +543,11 @@ public class SoundLayerPanel extends javax.swing.JPanel implements
 
             return;
         }
-        
+
         String id = paramIdList.getParameterId(index);
         Parameter param = AutomationManager.getInstance().getParameter(id);
-        
-        if(param == null) {
+
+        if (param == null) {
             updating = true;
             paramColorSelect.setEnabled(false);
             paramColorSelect.setColor(Color.BLACK);
@@ -548,7 +560,7 @@ public class SoundLayerPanel extends javax.swing.JPanel implements
 
             paramSelectPanel.setVisible(false);
 
-            return;            
+            return;
         }
 
         if (getHeight() > 22) {
@@ -575,19 +587,18 @@ public class SoundLayerPanel extends javax.swing.JPanel implements
     public void valueChanged(ListSelectionEvent e) {
         updateParameterPanel();
     }
-    
+
     // ListDataListener
-    
     @Override
     public void intervalAdded(ListDataEvent e) {
         updateParameterPanel();
     }
-    
+
     @Override
     public void intervalRemoved(ListDataEvent e) {
         updateParameterPanel();
     }
-    
+
     @Override
     public void contentsChanged(ListDataEvent lde) {
         updateParameterPanel();
@@ -608,7 +619,7 @@ public class SoundLayerPanel extends javax.swing.JPanel implements
             }
         }
     }
-    
+
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton automationButton;
@@ -642,8 +653,8 @@ public class SoundLayerPanel extends javax.swing.JPanel implements
     private javax.swing.JToggleButton soloToggleButton;
 
     // End of variables declaration//GEN-END:variables
-
     static class SoundLayerPanelMenu extends JPopupMenu {
+
         SoundLayer soundLayer = null;
 
         JMenuItem[] heightItems = new JMenuItem[9];
@@ -657,9 +668,9 @@ public class SoundLayerPanel extends javax.swing.JPanel implements
                 if (soundLayer == null) {
                     return;
                 }
-                
+
                 int heightIndex = Integer.parseInt(ae.getActionCommand()) - 1;
-                
+
                 soundLayer.setHeightIndex(heightIndex);
             };
 

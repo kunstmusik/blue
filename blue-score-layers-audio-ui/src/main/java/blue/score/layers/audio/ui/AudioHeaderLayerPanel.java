@@ -284,11 +284,22 @@ public class AudioHeaderLayerPanel extends javax.swing.JPanel
     }//GEN-LAST:event_nameTextActionPerformed
 
     private void nameTextFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_nameTextFocusLost
+        if (audioLayer == null) {
+            return;
+        }
+
+        final var newName = nameText.getText();
+        if (!newName.equals(audioLayer.getName())) {
+            audioLayer.setName(nameText.getText());
+            nameLabel.setText(audioLayer.getName());
+        }
+        
         ((CardLayout) jPanel1.getLayout()).show(jPanel1, "label");
     }//GEN-LAST:event_nameTextFocusLost
 
     private void nameTextKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_nameTextKeyPressed
         if (evt.getKeyCode() == KeyEvent.VK_ESCAPE) {
+            nameText.setText(audioLayer.getName());
             ((CardLayout) jPanel1.getLayout()).show(jPanel1, "label");
         }
     }//GEN-LAST:event_nameTextKeyPressed
@@ -317,7 +328,7 @@ public class AudioHeaderLayerPanel extends javax.swing.JPanel
                 channel,
                 audioLayer.getAutomationParameters()
         );
-        
+
         menu.add(channelMenu);
 
         menu.show(automationButton, 0, automationButton.getHeight());
@@ -337,8 +348,8 @@ public class AudioHeaderLayerPanel extends javax.swing.JPanel
         String id = paramIdList.getParameterId(index);
 
         Parameter param = AutomationManager.getInstance().getParameter(id);
-        
-        if(param != null) {
+
+        if (param != null) {
             param.getLine().setColor(paramColorSelect.getColor());
         }
     }//GEN-LAST:event_paramColorSelectPropertyChange
@@ -368,10 +379,10 @@ public class AudioHeaderLayerPanel extends javax.swing.JPanel
     }//GEN-LAST:event_paramNextButtonActionPerformed
 
     private void formComponentResized(java.awt.event.ComponentEvent evt) {//GEN-FIRST:event_formComponentResized
-        if(audioLayer == null) {
+        if (audioLayer == null) {
             return;
         }
-        
+
         if (audioLayer.getAutomationParameters().size() > 0) {
             paramSelectPanel.setVisible(getHeight() > 22);
         } else {
@@ -435,10 +446,9 @@ public class AudioHeaderLayerPanel extends javax.swing.JPanel
         setBorder(val ? selectionBorder : border);
     }
 
-
     private void updateParameterPanel() {
         int index = paramIdList.getSelectedIndex();
-        
+
         if (paramIdList.size() <= 0 || index < 0) {
 
             updating = true;
@@ -455,11 +465,11 @@ public class AudioHeaderLayerPanel extends javax.swing.JPanel
 
             return;
         }
-        
+
         String id = paramIdList.getParameterId(index);
         Parameter param = AutomationManager.getInstance().getParameter(id);
-        
-        if(param == null) {
+
+        if (param == null) {
             updating = true;
             paramColorSelect.setEnabled(false);
             paramColorSelect.setColor(Color.BLACK);
@@ -472,7 +482,7 @@ public class AudioHeaderLayerPanel extends javax.swing.JPanel
 
             paramSelectPanel.setVisible(false);
 
-            return;            
+            return;
         }
 
         if (getHeight() > 22) {
@@ -531,9 +541,9 @@ public class AudioHeaderLayerPanel extends javax.swing.JPanel
                 if (audioLayer == null) {
                     return;
                 }
-                
+
                 int heightIndex = Integer.parseInt(ae.getActionCommand()) - 1;
-                
+
                 audioLayer.setHeightIndex(heightIndex);
             };
 
