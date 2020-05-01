@@ -23,6 +23,7 @@
       depends="dir.check"
       unless="dir.exists">
       <mkdir dir="src/main/csoundManual"/>
+      <mkdir dir="target"/>
       <get src="${CS_MANUAL_URL}" dest="target"/>
       <unzip src="target/${CS_MANUAL_ZIP}" dest="target"/>
       <copy todir="src/main/csoundManual">
