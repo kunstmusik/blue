@@ -177,6 +177,11 @@ public class FileChooserManager {
 
             if (Platform.isFxApplicationThread()) {
                 r.run();
+
+                if (parent != null) {
+                    parent.setEnabled(true);
+                }
+
             } else {
                 Platform.runLater(r);
                 try {
@@ -219,7 +224,7 @@ public class FileChooserManager {
                 ff.setTitle(temp.dialogTitle);
 //        ff.setMultipleMode(temp.isMultiSelect);
                 ff.setVisible(true);
-                
+
                 final File[] files = ff.getFiles();
 
                 if (files != null && files.length > 0) {
@@ -254,6 +259,9 @@ public class FileChooserManager {
             final AtomicReference<File> retVal = new AtomicReference<>(null);
 
             Platform.runLater(() -> {
+                if (parent != null) {
+                    parent.setEnabled(false);
+                }
                 Stage s = new Stage();
                 s.initOwner(null);
                 s.initModality(Modality.APPLICATION_MODAL);
@@ -287,6 +295,10 @@ public class FileChooserManager {
                 Logger.getLogger(FileChooserManager.class.getName()).log(
                         Level.SEVERE,
                         null, ex);
+            } finally {
+                if (parent != null) {
+                    parent.setEnabled(true);
+                }
             }
 
             return retVal.get();
