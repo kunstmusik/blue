@@ -9,32 +9,11 @@
     <artifactId>blue-csnd6</artifactId>
     <packaging>nbm</packaging>
 
-
-    <repositories>
-        <!-- 3rd party libraries installed via mvn deploy-file. e.g.:
-
-        mvn deploy:deploy-file -Durl=file:///$PWD/repo/ -Dfile=csnd6.jar -DgroupId=blue.third.party -DartifactId=com-csound-csnd6 -Dversion=6.0.0 -Dpackaging=jar
-
-        -->
-          <repository>
-            <id>project.local</id>
-            <name>project</name>
-            <url>
-              file://${project.basedir}/repo
-            </url>
-          </repository>
-      </repositories>
-
     <build>
         <plugins>
             <plugin>
                 <groupId>org.apache.netbeans.utilities</groupId>
                 <artifactId>nbm-maven-plugin</artifactId>
-<!--                <configuration>
-                    <publicPackages>
-                        <publicPackage>csnd6</publicPackage>
-                    </publicPackages>
-                </configuration>-->
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -68,11 +47,6 @@
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>blue-core</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.kunstmusik</groupId>
-            <artifactId>blue-ext-commons-lang3</artifactId>
             <version>${project.version}</version>
         </dependency>            
         <dependency>
@@ -112,14 +86,11 @@
             <artifactId>org-openide-io</artifactId>
             <version>${netbeans.version}</version>
         </dependency>
-        
-        <!-- Local dependency-->
         <dependency>
-            <groupId>blue.third.party</groupId>
-            <artifactId>com-csound-csnd6</artifactId>
-            <version>6.0.0</version>
+            <groupId>com.kunstmusik</groupId>
+            <artifactId>CsoundJNI</artifactId>
+            <version>1.0.3</version>
         </dependency>
-        
     </dependencies>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>

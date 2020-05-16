@@ -4,7 +4,7 @@
  */
 package blue.csnd6.render;
 
-import csnd6.csnd6;
+import com.kunstmusik.csoundjni.CsoundJNI;
 
 /**
  *
@@ -24,7 +24,9 @@ public class API6Utilities {
                 apiAvailable = false;
             } else {
                 try {
-                    System.loadLibrary("_jcsound6");
+                    CsoundJNI.csoundInitialize(CsoundJNI.CSOUNDINIT_NO_ATEXIT | 
+                            CsoundJNI.CSOUNDINIT_NO_SIGNAL_HANDLER);
+//                    System.loadLibrary("_jcsound6");
 //                     csnd6.csoundInitialize(csnd6.CSOUNDINIT_NO_ATEXIT | 
 //                csnd6.CSOUNDINIT_NO_SIGNAL_HANDLER);
                     apiAvailable = true;

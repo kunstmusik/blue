@@ -18,12 +18,10 @@ import blue.services.render.DiskRenderService;
 import blue.services.render.RenderTimeManager;
 import blue.settings.PlaybackSettings;
 import blue.utility.FileUtilities;
-import csnd6.Csound;
-import csnd6.CsoundArgVList;
-import csnd6.csnd6;
+import com.kunstmusik.csoundjni.Csound;
+
 import java.awt.Color;
 import java.io.IOException;
-import org.apache.commons.lang3.text.StrBuilder;
 import org.openide.util.Exceptions;
 import org.openide.util.Lookup;
 import org.openide.windows.IOColors;
@@ -40,8 +38,8 @@ public class CS6DiskRendererService implements DiskRenderService {
     BlueCallbackWrapper blueCallbackWrapper; 
 
     public CS6DiskRendererService() {
-        csnd6.csoundInitialize(csnd6.CSOUNDINIT_NO_ATEXIT | 
-                csnd6.CSOUNDINIT_NO_SIGNAL_HANDLER);
+//        csnd6.csoundInitialize(csnd6.CSOUNDINIT_NO_ATEXIT | 
+//                csnd6.CSOUNDINIT_NO_SIGNAL_HANDLER);
     }
 
     @Override
@@ -70,8 +68,8 @@ public class CS6DiskRendererService implements DiskRenderService {
 
         //csnd.csoundInitialize(null, null, csnd.CSOUNDINIT_NO_SIGNAL_HANDLER);
         Csound csound = new Csound();
-        blueCallbackWrapper = new BlueCallbackWrapper(csound);
-        blueCallbackWrapper.SetMessageCallback();
+        blueCallbackWrapper = new BlueCallbackWrapper();
+        csound.setMessageCallback(blueCallbackWrapper);
         final InputOutput ioProvider = IOProvider.getDefault().
                 getIO("Csound", false);
 
@@ -87,37 +85,37 @@ public class CS6DiskRendererService implements DiskRenderService {
 
         notifyPlayModeListeners(PlayModeListener.PLAY_MODE_PLAY);
 
-        CsoundArgVList argsList = new CsoundArgVList();
+        var argsList = new ArrayList<String>();
         ioProvider.getOut().append("Render Command (");
 
         for (int i = 0; i < args.length; i++) {
             if (args[i].startsWith("\"") && args[i].endsWith("\"")) {
                 args[i] = args[i].substring(1, args[i].length() - 1);
             }
-            argsList.Append(args[i]);
+            argsList.add(args[i]);
             ioProvider.getOut().append(" ").append(args[i]);
         }
 
         if (currentWorkingDirectory != null) {
             String sfdir = "--env:SFDIR=" + currentWorkingDirectory.getAbsolutePath();
-            argsList.Append(sfdir);
+            argsList.add(sfdir);
             ioProvider.getOut().append(" ").append(sfdir);
         }
 
         ioProvider.getOut().append(" )\n");
         
-        int retVal = csound.Compile(argsList.argc(), argsList.argv());
+        int retVal = csound.compile(argsList.toArray(new String[0]));
 
         if (retVal != 0) {
             notifyPlayModeListeners(PlayModeListener.PLAY_MODE_STOP);
-            csound.Stop();
-            csound.Cleanup();
-            csound.SetMessageCallback(null);
-            csound.Reset();
+            csound.stop();
+            csound.cleanup();
+            csound.setMessageCallback(null);
+            csound.reset();
             return;
         }
 
-        int updateRate = (int) (csound.GetKr()
+        int updateRate = (int) (csound.getKr()
                 / PlaybackSettings.getInstance().getPlaybackFPS());
         int counter = 0;
 
@@ -131,7 +129,7 @@ public class CS6DiskRendererService implements DiskRenderService {
         do {
             counter++;
 
-            double scoreTime = csound.GetScoreTime();
+            double scoreTime = csound.getScoreTime();
 
             if (counter > updateRate) {
                 manager.updateTimePointer(scoreTime);
@@ -158,15 +156,15 @@ public class CS6DiskRendererService implements DiskRenderService {
                     String varName = param.getCompilationVarName();
 
                     double value = param.getValue(currentTime);
-                    csound.SetChannel(varName, value);
+                    csound.setChannel(varName, value);
 
                 }
             }
-        } while (csound.PerformKsmps() == 0 && keepRunning);
-        csound.Stop();
-        csound.Cleanup();
-        csound.SetMessageCallback(null);
-        csound.Reset();
+        } while (csound.performKsmps() == 0 && keepRunning);
+        csound.stop();
+        csound.cleanup();
+        csound.setMessageCallback(null);
+        csound.reset();
 
 
         manager.endRender();
@@ -193,45 +191,45 @@ public class CS6DiskRendererService implements DiskRenderService {
         initialize();
 
         Csound csound = new Csound();
-        blueCallbackWrapper = new BlueCallbackWrapper(csound);
-        blueCallbackWrapper.SetMessageCallback();
-
-        StrBuilder buffer = new StrBuilder();
+        blueCallbackWrapper = new BlueCallbackWrapper();
+        csound.setMessageCallback(blueCallbackWrapper);
+        
+        StringBuilder buffer = new StringBuilder();
         blueCallbackWrapper.setStringBuffer(buffer);
 
-        CsoundArgVList argsList = new CsoundArgVList();
+        var argsList = new ArrayList<String>();
 
         for (int i = 0; i < args.length; i++) {
             if (args[i].startsWith("\"") && args[i].endsWith("\"")) {
                 args[i] = args[i].substring(1, args[i].length() - 1);
             }
-            argsList.Append(args[i]);
+            argsList.add(args[i]);
         }
         
         if (currentWorkingDirectory != null) {
             String sfdir = "--env:SFDIR=" + currentWorkingDirectory.getAbsolutePath();
-            argsList.Append(sfdir);
+            argsList.add(sfdir);
         }
 
-        int retVal = csound.Compile(argsList.argc(), argsList.argv());
+        int retVal = csound.compile(argsList.toArray(new String[0]));
 
         if (retVal != 0) {
             blueCallbackWrapper.setStringBuffer(null);
-            csound.Stop();
-            csound.Cleanup();
-            csound.SetMessageCallback(null);
-            csound.Reset();
+            csound.stop();
+            csound.cleanup();
+            csound.setMessageCallback(null);
+            csound.reset();
             return buffer.toString();
         }
 
 
-        while (csound.PerformKsmps() == 0 && keepRunning) {
+        while (csound.performKsmps() == 0 && keepRunning) {
             // empty
         }
-        csound.Stop();
-        csound.Cleanup();
-        csound.SetMessageCallback(null);
-        csound.Reset();
+        csound.stop();
+        csound.cleanup();
+        csound.setMessageCallback(null);
+        csound.reset();
 
         keepRunning = false;
 
@@ -307,8 +305,8 @@ public class CS6DiskRendererService implements DiskRenderService {
         initialize();
 
         Csound csound = new Csound();
-        blueCallbackWrapper = new BlueCallbackWrapper(csound);
-        blueCallbackWrapper.SetMessageCallback();
+        blueCallbackWrapper = new BlueCallbackWrapper();
+        csound.setMessageCallback(blueCallbackWrapper);
         final InputOutput ioProvider = IOProvider.getDefault().
                 getIO("Csound (Disk)", false);
 
@@ -323,7 +321,7 @@ public class CS6DiskRendererService implements DiskRenderService {
 
         notifyPlayModeListeners(PlayModeListener.PLAY_MODE_PLAY);
 
-        CsoundArgVList argsList = new CsoundArgVList();
+        var argsList = new ArrayList<String>();
         ioProvider.getOut().append("Render Command (");
 
         String[] args = job.getArgs();
@@ -331,38 +329,38 @@ public class CS6DiskRendererService implements DiskRenderService {
             if (args[i].startsWith("\"") && args[i].endsWith("\"")) {
                 args[i] = args[i].substring(1, args[i].length() - 1);
             }
-            argsList.Append(args[i]);
+            argsList.add(args[i]);
             ioProvider.getOut().append(" ").append(args[i]);
         }
 
         if (job.getCurrentWorkingDirectory() != null) {
             String sfdir = "--env:SFDIR=" + job.getCurrentWorkingDirectory().getAbsolutePath();
-            argsList.Append(sfdir);
+            argsList.add(sfdir);
             ioProvider.getOut().append(" ").append(sfdir);
         }
 
-        argsList.Append(csdPath);
+        argsList.add(csdPath);
 
         ioProvider.getOut().append(" " + csdPath + " )\n");
 
-        int retVal = csound.Compile(argsList.argc(), argsList.argv());
+        int retVal = csound.compile(argsList.toArray(new String[0]));
 
         if (retVal != 0) {
             notifyPlayModeListeners(PlayModeListener.PLAY_MODE_STOP);
-            csound.Stop();
-            csound.Cleanup();
-            csound.SetMessageCallback(null);
-            csound.Reset();
+            csound.stop();
+            csound.cleanup();
+            csound.setMessageCallback(null);
+            csound.reset();
             return;
         }
 
-        while (csound.PerformKsmps() == 0 && keepRunning) {
+        while (csound.performKsmps() == 0 && keepRunning) {
             
         }
-        csound.Stop();
-        csound.Cleanup();
-        csound.SetMessageCallback(null);
-        csound.Reset();
+        csound.stop();
+        csound.cleanup();
+        csound.setMessageCallback(null);
+        csound.reset();
 
         keepRunning = false;
 
