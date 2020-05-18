@@ -311,11 +311,13 @@ public class AudioLayersPanel extends JLayeredPane implements LayerGroupListener
         Component[] components = getComponents();
 
         for (Component c : components) {
-            AudioClipPanel component = (AudioClipPanel) c;
-            Rectangle r = component.getBounds();
+            if(c instanceof AudioClipPanel) {
+                AudioClipPanel component = (AudioClipPanel) c;
+                Rectangle r = component.getBounds();
 
-            g2d.setColor(component.getScoreObject().getBackgroundColor());
-            g2d.fillRect(r.x, r.y, r.width, r.height);
+                g2d.setColor(component.getScoreObject().getBackgroundColor());
+                g2d.fillRect(r.x, r.y, r.width, r.height);
+            }
         }
     }
 

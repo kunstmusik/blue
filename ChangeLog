@@ -47,6 +47,8 @@ FIX
 * Fixed automation panels losing their lines when window configuration changed 
   (e.g., opening/closing ScoreObject Properties)
 
+* Fixed exception thrown when using AudioLayerGroups with ScoreNavigatorDialog
+
 
 > Notes for 2.7.4 <
 [release 2019.07.19]
