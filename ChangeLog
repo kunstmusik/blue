@@ -37,6 +37,8 @@ upgrade to Java 11 for 2.8.0.
 
 * Issue #495: Commit name change for layers when focus lost
 
+* Comment SoundObject bar renderer now respects Color value set in properties
+
 FIX
 
 * Score: Selection marquee in single-line mode did not calculate y-position 

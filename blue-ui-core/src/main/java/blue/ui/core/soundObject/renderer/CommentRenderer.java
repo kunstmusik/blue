@@ -3,6 +3,7 @@ package blue.ui.core.soundObject.renderer;
 import blue.plugin.BarRendererPlugin;
 import blue.score.layers.Layer;
 import blue.soundObject.Comment;
+import blue.soundObject.SoundObject;
 import blue.ui.core.score.layers.soundObject.SoundObjectView;
 import blue.ui.utilities.BlueGradientFactory;
 import java.awt.AlphaComposite;
@@ -33,18 +34,10 @@ public class CommentRenderer implements BarRenderer {
 
     protected static Color selectedFontColor = Color.darkGray;
 
-    protected static Color normalBgColor = new Color(Color.darkGray.getRed(),
-            Color.darkGray.getGreen(), Color.darkGray.getBlue(), 192);
-
-    private static Color normalBorder1 = normalBgColor.brighter().brighter();
-
-    private static Color normalBorder2 = normalBgColor.darker().darker();
-
-    protected static Color normalFontColor = Color.white;
-
     @Override
     public void render(Graphics graphics, SoundObjectView sObjView,
             int pixelSeconds) {
+
         Graphics2D g = (Graphics2D) graphics;
         g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,
                 RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
@@ -57,16 +50,26 @@ public class CommentRenderer implements BarRenderer {
         Color border2;
         Color fontColor;
 
+        SoundObject sObj = sObjView.getSoundObject();
+
         if (sObjView.isSelected()) {
             bgColor = selectedBgColor;
             border1 = selectedBorder1;
             border2 = selectedBorder2;
             fontColor = selectedFontColor;
         } else {
-            bgColor = normalBgColor;
-            border1 = normalBorder1;
-            border2 = normalBorder2;
-            fontColor = normalFontColor;
+            bgColor = sObj.getBackgroundColor();
+            border1 = bgColor.brighter().brighter();
+            border2 = bgColor.darker().darker();
+
+            int total = bgColor.getRed() + bgColor.getGreen()
+                    + bgColor.getBlue();
+
+            if (total > 128 * 3) {
+                fontColor = Color.black;
+            } else {
+                fontColor = Color.white;
+            }
         }
 
         g.setPaint(BlueGradientFactory.getGradientPaint(bgColor));
