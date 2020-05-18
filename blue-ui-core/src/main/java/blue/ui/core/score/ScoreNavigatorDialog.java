@@ -95,7 +95,6 @@ public class ScoreNavigatorDialog extends JDialog implements ComponentListener,
                         .getHeight());
                 drawPanel.repaint();
             }
-
         });
 
         overBox.addComponentListener(this);
@@ -160,7 +159,6 @@ public class ScoreNavigatorDialog extends JDialog implements ComponentListener,
         overBox.setSize(newW, newH);
 
         // repaint();
-
         isAdjusting = false;
 
     }
@@ -227,7 +225,6 @@ public class ScoreNavigatorDialog extends JDialog implements ComponentListener,
             ((JComponent) viewport.getView()).scrollRectToVisible(newRect);
 
             // repaint();
-
             isAdjusting = false;
         }
     }
@@ -252,6 +249,7 @@ public class ScoreNavigatorDialog extends JDialog implements ComponentListener,
     }
 
     static class NavBox extends JPanel {
+
         boolean dragging = false;
 
         public Point origin = null;
@@ -337,7 +335,7 @@ public class ScoreNavigatorDialog extends JDialog implements ComponentListener,
     }
 
     private class PreviewPanel extends JComponent {
-        
+
         public PreviewPanel() {
             super();
             setDoubleBuffered(true);
@@ -359,27 +357,25 @@ public class ScoreNavigatorDialog extends JDialog implements ComponentListener,
             int w = this.getWidth();
             int h = this.getHeight();
 
-            
-
             g2d.setColor(Color.BLACK);
             g2d.fillRect(0, 0, w, h);
 
-            if(layerPanel != null) {
-                
+            if (layerPanel != null) {
+
                 double xscale = ((double) w) / view.getWidth();
                 double yscale = ((double) h) / view.getHeight();
                 g2d.scale(xscale, yscale);
 
                 Component[] comps = layerPanel.getComponents();
-                
-                for(Component c : comps) {
-                    if(c instanceof LayerGroupPanel) {
+
+                for (Component c : comps) {
+                    if (c instanceof LayerGroupPanel) {
                         g2d.translate(c.getX(), c.getY());
-                        ((LayerGroupPanel)c).paintNavigatorView(g2d);
+                        ((LayerGroupPanel) c).paintNavigatorView(g2d);
                         g2d.translate(-c.getX(), -c.getY());
                     }
                 }
-                
+
             }
 
             g2d.dispose();
