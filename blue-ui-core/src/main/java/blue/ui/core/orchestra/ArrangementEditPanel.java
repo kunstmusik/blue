@@ -399,11 +399,12 @@ public class ArrangementEditPanel extends JComponent
         }
 
         this.arrangement = arrangement;
-        this.arrangement.addArrangementListener(this);
+        
 
         if (arrangement != null) {
             arrangementTable.setModel(arrangement);
             arrangementTable.setEnabled(true);
+            this.arrangement.addArrangementListener(this);            
             setupTableProperties();
         } else {
             arrangementTable.setEnabled(false);

@@ -177,7 +177,9 @@ public class ObservableArrayList<T> extends ArrayList<T> implements ObservableLi
         if (listeners == null) {
             listeners = new ArrayList<>();
         }
-        listeners.add(listener);
+        if(!listeners.contains(listener)) {
+            listeners.add(listener);
+        }
     }
 
     @Override
