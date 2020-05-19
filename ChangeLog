@@ -49,6 +49,9 @@ FIX
 
 * Fixed exception thrown when using AudioLayerGroups with ScoreNavigatorDialog
 
+* Updated ScoreNavigatorDialog to fix issues with repainting, now updates as 
+  score changes
+
 
 > Notes for 2.7.4 <
 [release 2019.07.19]

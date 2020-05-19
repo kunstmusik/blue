@@ -41,8 +41,6 @@ import java.awt.event.ComponentListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
-import java.awt.event.WindowEvent;
-import java.awt.event.WindowFocusListener;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JEditorPane;
@@ -102,19 +100,21 @@ public class ScoreNavigatorDialog extends JDialog implements ComponentListener,
         WindowSettingManager.getInstance().registerWindow("JScrollNavigator",
                 this);
 
-        this.addWindowFocusListener(new WindowFocusListener() {
-
-            @Override
-            public void windowGainedFocus(WindowEvent e) {
-                drawPanel.repaint();
-            }
-
-            @Override
-            public void windowLostFocus(WindowEvent e) {
-            }
-
-        });
-
+//        this.addWindowFocusListener(new WindowFocusListener() {
+//
+//            @Override
+//            public void windowGainedFocus(WindowEvent e) {
+//                updateOverBox();
+//                drawPanel.setSize(layeredPane.getWidth(), layeredPane
+//                        .getHeight());
+//                drawPanel.repaint();
+//            }
+//
+//            @Override
+//            public void windowLostFocus(WindowEvent e) {
+//            }
+//
+//        });
         getRootPane().putClientProperty("SeparateWindow", Boolean.TRUE);
     }
 
@@ -124,8 +124,13 @@ public class ScoreNavigatorDialog extends JDialog implements ComponentListener,
         Component view = jScrollPane.getViewport().getView();
 
         if (view != null) {
-            view.addComponentListener(this);
-            jScrollPane.getViewport().addComponentListener(this);
+
+            var sncl = new ScoreNavigatorContainerListener(evt -> {
+                updateOverBox();
+                repaint();
+            });
+
+            sncl.install(view);
             jScrollPane.getHorizontalScrollBar().addAdjustmentListener(this);
             jScrollPane.getVerticalScrollBar().addAdjustmentListener(this);
             updateOverBox();
@@ -190,10 +195,6 @@ public class ScoreNavigatorDialog extends JDialog implements ComponentListener,
 
     @Override
     public void componentResized(ComponentEvent e) {
-        if (e.getSource() == jScrollPane.getViewport()
-                || e.getSource() == jScrollPane.getViewport().getView()) {
-            updateOverBox();
-        }
     }
 
     @Override
@@ -263,7 +264,7 @@ public class ScoreNavigatorDialog extends JDialog implements ComponentListener,
             this.setBorder(new LineBorder(Color.WHITE, 1));
 
             this.setBackground(new Color(255, 255, 255, 32));
-            this.setOpaque(true);
+            this.setOpaque(false);
 
             this.addMouseListener(new MouseAdapter() {
 
