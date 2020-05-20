@@ -94,8 +94,7 @@
         <para>
           Extra flags to append to the commandline that might not be covered by
           options in the UI. Pressing the [?] button will open the documentation
-          for the Csound command flags (Csound Documentation Root but be set for
-          this to work).
+          for the Csound command flags.
         </para>
 
         <para>
@@ -202,8 +201,7 @@
         <para>
           Extra flags to append to the commandline that might not be covered by
           options in the UI. Pressing the [?] button will open the documentation
-          for the Csound command flags (Csound Documentation Root but be set for
-          this to work).
+          for the Csound command flags.
         </para>
 
         <para>

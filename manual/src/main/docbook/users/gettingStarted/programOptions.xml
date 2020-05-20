@@ -3,10 +3,9 @@
 
   <para>
     The first thing you'll want to do is set up your Program Options. Some
-    settings are required for features of blue to work (i.e. Render Settings,
-    the Csound Documentation Root for opening opcode help), others are there to
-    help setup your project defaults and save you time when creating new
-    projects.
+    settings are required for features of blue to work (e.g., Render Settings), 
+    while others are there to help setup your project defaults and save you 
+    time when creating new projects.
   </para>
 
   <para>
@@ -677,8 +676,7 @@
           <para>
           Extra flags to append to the commandline that might not be covered by
           options in the UI.  Pressing the [?] button will open the
-          documentation for the Csound command flags (Csound Documentation Root
-          but be set for this to work).
+          documentation for the Csound command flags. 
           </para>
         </listitem>
       </varlistentry>
@@ -939,8 +937,7 @@
           <para>
           Extra flags to append to the commandline that might not be covered by
           options in the UI.  Pressing the [?] button will open the
-          documentation for the Csound command flags (Csound Documentation Root
-          but be set for this to work).
+          documentation for the Csound command flags.
           </para>
         </listitem>
       </varlistentry>
