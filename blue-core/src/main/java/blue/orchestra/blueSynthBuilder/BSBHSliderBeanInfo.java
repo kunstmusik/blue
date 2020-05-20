@@ -43,14 +43,15 @@ public class BSBHSliderBeanInfo extends SimpleBeanInfo {
     private static final int PROPERTY_randomizable = 4;
     private static final int PROPERTY_resolution = 5;
     private static final int PROPERTY_sliderWidth = 6;
-    private static final int PROPERTY_valueDisplayEnabled = 7;
-    private static final int PROPERTY_x = 8;
-    private static final int PROPERTY_y = 9;
+    private static final int PROPERTY_value = 7;
+    private static final int PROPERTY_valueDisplayEnabled = 8;
+    private static final int PROPERTY_x = 9;
+    private static final int PROPERTY_y = 10;
 
     // Property array 
     /*lazy PropertyDescriptor*/
     private static PropertyDescriptor[] getPdescriptor(){
-        PropertyDescriptor[] properties = new PropertyDescriptor[10];
+        PropertyDescriptor[] properties = new PropertyDescriptor[11];
     
         try {
             properties[PROPERTY_automationAllowed] = new PropertyDescriptor ( "automationAllowed", blue.orchestra.blueSynthBuilder.BSBHSlider.class, "isAutomationAllowed", "setAutomationAllowed" ); // NOI18N
@@ -60,6 +61,7 @@ public class BSBHSliderBeanInfo extends SimpleBeanInfo {
             properties[PROPERTY_randomizable] = new PropertyDescriptor ( "randomizable", blue.orchestra.blueSynthBuilder.BSBHSlider.class, "isRandomizable", "setRandomizable" ); // NOI18N
             properties[PROPERTY_resolution] = new PropertyDescriptor ( "resolution", blue.orchestra.blueSynthBuilder.BSBHSlider.class, "getResolution", "setResolution" ); // NOI18N
             properties[PROPERTY_sliderWidth] = new PropertyDescriptor ( "sliderWidth", blue.orchestra.blueSynthBuilder.BSBHSlider.class, "getSliderWidth", "setSliderWidth" ); // NOI18N
+            properties[PROPERTY_value] = new PropertyDescriptor ( "value", blue.orchestra.blueSynthBuilder.BSBHSlider.class, "getValue", "setValue" ); // NOI18N
             properties[PROPERTY_valueDisplayEnabled] = new PropertyDescriptor ( "valueDisplayEnabled", blue.orchestra.blueSynthBuilder.BSBHSlider.class, "isValueDisplayEnabled", "setValueDisplayEnabled" ); // NOI18N
             properties[PROPERTY_x] = new PropertyDescriptor ( "x", blue.orchestra.blueSynthBuilder.BSBHSlider.class, "getX", "setX" ); // NOI18N
             properties[PROPERTY_y] = new PropertyDescriptor ( "y", blue.orchestra.blueSynthBuilder.BSBHSlider.class, "getY", "setY" ); // NOI18N

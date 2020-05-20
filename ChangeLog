@@ -94,6 +94,8 @@ UPDATED
   time values as points surrounding them) for different line operations (e.g.,
   dragging points, pasting, dragging)
 
+* Issue #501: BSB Sliders: Expose value field in property editor in edit mode
+
 FIX
 
 * BlueSynthBuilder 
