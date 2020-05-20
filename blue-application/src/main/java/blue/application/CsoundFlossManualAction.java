@@ -44,7 +44,7 @@ public final class CsoundFlossManualAction implements ActionListener {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        String url = "http://en.flossmanuals.net/csound";
+        String url = "https://flossmanual.csound.com/";
 
         try {
             if (Desktop.isDesktopSupported()) {
