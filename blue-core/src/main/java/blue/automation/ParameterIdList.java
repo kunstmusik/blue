@@ -186,8 +186,10 @@ public class ParameterIdList implements Iterable<String> {
         if (listListeners == null) {
             listListeners = new Vector();
         }
-
-        listListeners.add(l);
+        
+        if(!listListeners.contains(l)) {
+            listListeners.add(l);
+        }
     }
 
     public void removeListDataListener(ListDataListener l) {

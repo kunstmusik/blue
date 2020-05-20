@@ -109,26 +109,10 @@ public class ParameterLinePanel extends JComponent implements
 
     final SingleLineScoreSelection selection = SingleLineScoreSelection.getInstance();
 
-    public ParameterLinePanel() {
+    public ParameterLinePanel(TimeState timeState, ParameterIdList paramIdList) {
         lineListener = (TableModelEvent e) -> repaint();
-    }
-
-    public void setTimeState(TimeState timeState) {
         this.timeState = timeState;
-    }
-
-    public void setParameterIdList(ParameterIdList paramIdList) {
-        if (this.parameterIdList != null) {
-            this.parameterIdList.removeListDataListener(this);
-            this.parameterIdList.removeListSelectionListener(this);
-
-            if (this.paramList != null) {
-                for (Parameter param : this.paramList) {
-                    param.getLine().removeTableModelListener(lineListener);
-                }
-            }
-        }
-
+        
         this.parameterIdList = paramIdList;
         paramList = new ParameterList();
 
@@ -144,11 +128,8 @@ public class ParameterLinePanel extends JComponent implements
                 param.getLine().addTableModelListener(lineListener);
             }
         }
-
-        if (this.parameterIdList != null) {
-            this.parameterIdList.addListDataListener(this);
-            this.parameterIdList.addListSelectionListener(this);
-
+        
+         if (this.parameterIdList != null) {
             int index = this.parameterIdList.getSelectedIndex();
             if (index >= 0) {
                 String id = this.parameterIdList.getParameterId(index);
@@ -163,6 +144,7 @@ public class ParameterLinePanel extends JComponent implements
 
         modeChanged(ModeManager.getInstance().getMode());
     }
+
 
     /*
      * (non-Javadoc)

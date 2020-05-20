@@ -52,8 +52,12 @@ FIX
 * Updated ScoreNavigatorDialog to fix issues with repainting, now updates as 
   score changes
 
-* Fix issue with multiple mixer strips being added to mixer for project that is
-  open on first load
+* Fixed issue with multiple mixer strips being added to mixer for project that 
+  is open on first load
+
+* Fixed issue with multiple parameter options shown in popup menu in Single-Line
+  mode for project that is open on first load
+
 
 
 > Notes for 2.7.4 <

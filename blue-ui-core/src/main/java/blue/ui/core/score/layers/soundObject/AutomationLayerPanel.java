@@ -82,9 +82,8 @@ public class AutomationLayerPanel extends JComponent implements
         for (int i = 0; i < layerGroup.size(); i++) {
             AutomatableLayer sLayer = (AutomatableLayer) layerGroup.get(i);
 
-            ParameterLinePanel paramPanel = new ParameterLinePanel();
-            paramPanel.setTimeState(timeState);
-            paramPanel.setParameterIdList(sLayer.getAutomationParameters());
+            ParameterLinePanel paramPanel = new ParameterLinePanel(
+                    timeState, sLayer.getAutomationParameters());
 
             this.add(paramPanel);
 
@@ -111,7 +110,6 @@ public class AutomationLayerPanel extends JComponent implements
 //            }
         }
     }
-
 
     @Override
     public void layerGroupChanged(LayerGroupDataEvent event) {
@@ -155,9 +153,8 @@ public class AutomationLayerPanel extends JComponent implements
         int index = e.getStartIndex();
         AutomatableLayer sLayer = (AutomatableLayer) layerGroup.get(index);
 
-        ParameterLinePanel paramPanel = new ParameterLinePanel();
-        paramPanel.setTimeState(timeState);
-        paramPanel.setParameterIdList(sLayer.getAutomationParameters());
+        ParameterLinePanel paramPanel = new ParameterLinePanel(
+                timeState, sLayer.getAutomationParameters());
 
         // this.add(paramPanel);
         this.add(paramPanel, index);
