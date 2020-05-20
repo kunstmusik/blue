@@ -175,8 +175,15 @@ public class BSBVSliderBank extends AutomatableBSBObject implements
         value = new ClampedValue(bank.value);
         value.addListener(cvl);
         sliders.addListener(listChangeListener);
+        
+        setGap(bank.getGap());
+        setMaximum(bank.getMaximum());
+        setMinimum(bank.getMinimum());
+        setRandomizable(bank.isRandomizable());
+        setResolution(bank.getResolution());
+        setSliderHeight(bank.getSliderHeight());
         setValueDisplayEnabled(bank.isValueDisplayEnabled());
-
+        
         for (BSBVSlider slider : bank.sliders) {
             sliders.add(new BSBVSlider(slider));
         }

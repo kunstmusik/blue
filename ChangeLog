@@ -58,6 +58,7 @@ FIX
 * Fixed issue with multiple parameter options shown in popup menu in Single-Line
   mode for project that is open on first load
 
+* Issue #427: BSB/Effects: Slider banks did not copy properties when cloned
 
 
 > Notes for 2.7.4 <
