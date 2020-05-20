@@ -112,7 +112,7 @@ public class ParameterLinePanel extends JComponent implements
     public ParameterLinePanel(TimeState timeState, ParameterIdList paramIdList) {
         lineListener = (TableModelEvent e) -> repaint();
         this.timeState = timeState;
-        
+
         this.parameterIdList = paramIdList;
         paramList = new ParameterList();
 
@@ -128,8 +128,8 @@ public class ParameterLinePanel extends JComponent implements
                 param.getLine().addTableModelListener(lineListener);
             }
         }
-        
-         if (this.parameterIdList != null) {
+
+        if (this.parameterIdList != null) {
             int index = this.parameterIdList.getSelectedIndex();
             if (index >= 0) {
                 String id = this.parameterIdList.getParameterId(index);
@@ -219,8 +219,8 @@ public class ParameterLinePanel extends JComponent implements
 
         }
 
-        if (selectedPoint != null && currentParameter != null && 
-                currentParameter.getLine().getObservableList().contains(selectedPoint)) {
+        if (selectedPoint != null && currentParameter != null
+                && currentParameter.getLine().getObservableList().contains(selectedPoint)) {
 
             double min = currentParameter.getMin();
             double max = currentParameter.getMax();
@@ -888,6 +888,9 @@ public class ParameterLinePanel extends JComponent implements
         boolean justPasted = false;
         Line sourceCopy = null;
         LinePoint lpSourceCopy = null;
+        LinePoint previous = null;
+        LinePoint next = null;
+
         boolean newLinePoint = false;
 
         LineVerticalShifter vShifter = new LineVerticalShifter();
@@ -967,12 +970,12 @@ public class ParameterLinePanel extends JComponent implements
                 if (UiUtilities.isRightMouseButton(e)) {
                     LinePoint first = currentLine.getLinePoint(0);
 
-                    if (selectedPoint != first) {                        
+                    if (selectedPoint != first) {
                         final var linePointRemoveEdit = new LinePointRemoveEdit(
                                 currentLine, selectedPoint,
                                 currentLine.getObservableList().indexOf(selectedPoint));
                         BlueUndoManager.addEdit("score", linePointRemoveEdit);
-                        
+
                         currentLine.removeLinePoint(selectedPoint);
 
                         selectedPoint = null;
@@ -982,6 +985,26 @@ public class ParameterLinePanel extends JComponent implements
                     // MOVING LINE POINT
                     setBoundaryXValues();
                     lpSourceCopy = new LinePoint(selectedPoint);
+
+                    // dealing with multiple points with same times at boundaries
+                    var list = currentLine.getObservableList();
+                    int index = list.indexOf(selectedPoint);
+
+                    if (index > 1) {
+                        if (list.get(index - 1).getX() == list.get(index - 2).getX()) {
+                            previous = list.get(index - 1);
+                        } else {
+                            previous = null;
+                        }
+                    }
+
+                    if (index < list.size() - 3) {
+                        if (list.get(index + 1).getX() == list.get(index + 2).getX()) {
+                            next = list.get(index + 1);
+                        } else {
+                            next = null;
+                        }
+                    }
                 }
             } else if (SwingUtilities.isLeftMouseButton(e)) {
 
@@ -1010,9 +1033,30 @@ public class ParameterLinePanel extends JComponent implements
                     selection.updateSelection(currentLine, startTime, startTime);
 
                 } else {
+                    // INSERTING NEW LINE POINT
                     selectedPoint = insertGraphPoint(start, e.getY());
                     newLinePoint = true;
                     setBoundaryXValues();
+
+                    // dealing with multiple points with same times at boundaries
+                    var list = currentLine.getObservableList();
+                    int index = list.indexOf(selectedPoint);
+
+                    if (index > 1) {
+                        if (list.get(index - 1).getX() == list.get(index - 2).getX()) {
+                            previous = list.get(index - 1);
+                        } else {
+                            previous = null;
+                        }
+                    }
+
+                    if (index < list.size() - 3) {
+                        if (list.get(index + 1).getX() == list.get(index + 2).getX()) {
+                            next = list.get(index + 1);
+                        } else {
+                            next = null;
+                        }
+                    }
                 }
             } else if (UiUtilities.isRightMouseButton(e)) {
                 if (popup == null) {
@@ -1170,10 +1214,29 @@ public class ParameterLinePanel extends JComponent implements
                 double min = currentParameter.getMin();
                 double max = currentParameter.getMax();
 
-                if (selectedPoint != null) {
-                    selectedPoint.setLocation(dragTime,
-                            screenToDoubleY(y, min, max, currentParameter
-                                    .getResolution()));
+                selectedPoint.setLocation(dragTime,
+                        screenToDoubleY(y, min, max, currentParameter
+                                .getResolution()));
+
+                var line = currentParameter.getLine().getObservableList();
+                if (previous != null) {
+                    if (dragTime == previous.getX()) {
+                        if (line.contains(previous)) {
+                            currentParameter.getLine().removeLinePoint(previous);
+                        }
+                    } else if (!line.contains(previous)) {
+                        currentParameter.getLine().insertLinePoint(previous);
+                    }
+                }
+
+                if (next != null) {
+                    if (dragTime == next.getX()) {
+                        if (line.contains(next)) {
+                            currentParameter.getLine().removeLinePoint(next);
+                        }
+                    } else if (!line.contains(next)) {
+                        currentParameter.getLine().insertLinePointLeft(next);
+                    }
                 }
             }
             repaint();
@@ -1200,16 +1263,20 @@ public class ParameterLinePanel extends JComponent implements
 
             if (SwingUtilities.isLeftMouseButton(e)) {
                 if (selectedPoint != null) {
+                    final var line = currentParameter.getLine();
                     if (newLinePoint) {
-                        final var line = currentParameter.getLine();
                         final var linePointAddEdit = new LinePointAddEdit(
                                 line, selectedPoint,
-                                line.getObservableList().indexOf(selectedPoint));
+                                line.getObservableList().indexOf(selectedPoint),
+                                (previous != null) ? previous : next
+                        );
                         BlueUndoManager.addEdit("score", linePointAddEdit);
                     } else {
                         final var linePointChangeEdit = new LinePointChangeEdit(
-                                selectedPoint, lpSourceCopy,
-                                new LinePoint(selectedPoint));
+                                line, selectedPoint, lpSourceCopy,
+                                new LinePoint(selectedPoint),
+                                (previous != null) ? previous : next
+                        );
                         BlueUndoManager.addEdit("score", linePointChangeEdit);
                     }
                 } else if (paramList.containsLine(selection.getSourceLine())) {
@@ -1224,14 +1291,14 @@ public class ParameterLinePanel extends JComponent implements
                         var endCopy = new Line(line);
                         ClearLineSelectionEdit top = new ClearLineSelectionEdit();
                         top.appendNextEdit(new LineChangeEdit(line, new Line(sourceCopy), endCopy));
-                                
+
                         BlueUndoManager.addEdit("score", top);
                         sourceCopy = null;
-                        
+
                     }
                 }
             }
-            
+
             newLinePoint = false;
 
             repaint();
