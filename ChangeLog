@@ -58,6 +58,7 @@ FIX
 * Fixed issue with multiple parameter options shown in popup menu in Single-Line
   mode for project that is open on first load
 
+* Issue #444: Fixed Sound SoundObjects not sounding when auditioning
 
 
 > Notes for 2.7.4 <

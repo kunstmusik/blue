@@ -221,16 +221,7 @@ public class Sound extends AbstractSoundObject {
 
     @Override
     public Sound deepCopy() {
-        Sound sound = new Sound();
-        sound.subjectiveDuration = this.subjectiveDuration;
-        sound.startTime = this.startTime;
-        sound.name = this.name;
-        sound.backgroundColor = this.backgroundColor;
-        sound.setComment(this.getComment());
-
-        sound.setBlueSynthBuilder(this.bsbObj.deepCopy());
-
-        return sound;
+        return new Sound(this);
     }
 
 }
