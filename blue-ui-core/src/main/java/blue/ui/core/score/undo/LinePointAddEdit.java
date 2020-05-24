@@ -34,14 +34,17 @@ public class LinePointAddEdit extends AppendableEdit {
     private final Line line;
     private final LinePoint linePoint;
     private final int index;
+    private final LinePoint removedPoint;
 
-    public LinePointAddEdit(Line line, LinePoint linePoint, int index) {
+    public LinePointAddEdit(Line line, LinePoint linePoint, int index,
+            LinePoint removedPoint) {
         this.line = line;
         this.linePoint = linePoint;
         this.index = index;
+        this.removedPoint = removedPoint;
     }
 
-     @Override
+    @Override
     public String getPresentationName() {
         return "Line Point Add";
     }
@@ -49,12 +52,18 @@ public class LinePointAddEdit extends AppendableEdit {
     @Override
     public void redo() throws CannotRedoException {
         line.addLinePoint(index, linePoint);
-        super.redo(); 
+        if (removedPoint != null) {
+            line.removeLinePoint(removedPoint);
+        }
+        super.redo();
     }
 
     @Override
     public void undo() throws CannotUndoException {
-        super.undo(); 
+        super.undo();
         line.removeLinePoint(linePoint);
+        if(removedPoint != null) {
+            line.addLinePoint(index, removedPoint);
+        }
     }
 }

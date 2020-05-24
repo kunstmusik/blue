@@ -58,6 +58,8 @@ FIX
 * Fixed issue with multiple parameter options shown in popup menu in Single-Line
   mode for project that is open on first load
 
+* Issue #427: BSB/Effects: Slider banks did not copy properties when cloned
+
 * Issue #444: Fixed Sound SoundObjects not sounding when auditioning
 
 
@@ -93,6 +95,8 @@ UPDATED
 * Issue #441: For automation lines, clean up dead time points (those with same 
   time values as points surrounding them) for different line operations (e.g.,
   dragging points, pasting, dragging)
+
+* Issue #501: BSB Sliders: Expose value field in property editor in edit mode
 
 FIX
 

@@ -59,6 +59,7 @@ public class ScoreNavigatorDialog extends JDialog implements ComponentListener,
     private NavBox overBox = new NavBox();
 
     boolean isAdjusting = false;
+    boolean userModifyingBox = false;
     private JPanel layerPanel;
 
     public ScoreNavigatorDialog() {
@@ -96,6 +97,18 @@ public class ScoreNavigatorDialog extends JDialog implements ComponentListener,
         });
 
         overBox.addComponentListener(this);
+        overBox.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseReleased(MouseEvent e) {
+                userModifyingBox = false;
+            }
+
+            @Override
+            public void mousePressed(MouseEvent e) {
+                userModifyingBox = true;
+            }
+
+        });
 
         WindowSettingManager.getInstance().registerWindow("JScrollNavigator",
                 this);
@@ -126,8 +139,11 @@ public class ScoreNavigatorDialog extends JDialog implements ComponentListener,
         if (view != null) {
 
             var sncl = new ScoreNavigatorContainerListener(evt -> {
-                updateOverBox();
-                repaint();
+                if (!userModifyingBox) {
+                    updateOverBox();
+
+                    repaint();
+                }
             });
 
             sncl.install(view);
@@ -240,7 +256,7 @@ public class ScoreNavigatorDialog extends JDialog implements ComponentListener,
 
     @Override
     public void adjustmentValueChanged(AdjustmentEvent e) {
-        if (!isAdjusting) {
+        if (!isAdjusting && !userModifyingBox) {
             updateOverBox();
         }
     }

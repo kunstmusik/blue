@@ -3,7 +3,7 @@
  * and open the template in the editor.
  */
 
-/*
+ /*
  * DiskRenderSettingsPanel.java
  *
  * Created on Feb 8, 2009, 8:37:04 PM
@@ -12,7 +12,11 @@ package blue.ui.core.project;
 
 import blue.ProjectProperties;
 import blue.ui.utilities.SimpleDocumentListener;
+import java.io.File;
 import javax.swing.event.DocumentEvent;
+import org.openide.awt.HtmlBrowser;
+import org.openide.modules.InstalledFileLocator;
+import org.openide.util.Exceptions;
 
 /**
  *
@@ -22,75 +26,77 @@ public class DiskRenderSettingsPanel extends javax.swing.JPanel {
 
     private ProjectProperties projectProperties = null;
 
-    /** Creates new form DiskRenderSettingsPanel */
+    /**
+     * Creates new form DiskRenderSettingsPanel
+     */
     public DiskRenderSettingsPanel() {
         initComponents();
 
         diskSrText.getDocument().addDocumentListener(
                 new SimpleDocumentListener() {
 
-                    @Override
-                    public void documentChanged(DocumentEvent e) {
-                        if (projectProperties != null) {
-                            projectProperties.diskSampleRate = diskSrText.getText();
-                        }
-                    }
-                });
+            @Override
+            public void documentChanged(DocumentEvent e) {
+                if (projectProperties != null) {
+                    projectProperties.diskSampleRate = diskSrText.getText();
+                }
+            }
+        });
 
         diskKsmpsText.getDocument().addDocumentListener(
                 new SimpleDocumentListener() {
 
-                    @Override
-                    public void documentChanged(DocumentEvent e) {
-                        if (projectProperties != null) {
-                            projectProperties.diskKsmps = diskKsmpsText.getText();
-                        }
-                    }
-                });
+            @Override
+            public void documentChanged(DocumentEvent e) {
+                if (projectProperties != null) {
+                    projectProperties.diskKsmps = diskKsmpsText.getText();
+                }
+            }
+        });
 
         diskNchnlsText.getDocument().addDocumentListener(
                 new SimpleDocumentListener() {
 
-                    @Override
-                    public void documentChanged(DocumentEvent e) {
-                        if (projectProperties != null) {
-                            projectProperties.diskChannels = diskNchnlsText.getText();
-                        }
-                    }
-                });
-        
+            @Override
+            public void documentChanged(DocumentEvent e) {
+                if (projectProperties != null) {
+                    projectProperties.diskChannels = diskNchnlsText.getText();
+                }
+            }
+        });
+
         zeroDbFSText.getDocument().addDocumentListener(
                 new SimpleDocumentListener() {
 
-                    @Override
-                    public void documentChanged(DocumentEvent e) {
-                        if (projectProperties != null) {
-                            projectProperties.diskZeroDbFS = zeroDbFSText.getText();
-                        }
-                    }
-                });
+            @Override
+            public void documentChanged(DocumentEvent e) {
+                if (projectProperties != null) {
+                    projectProperties.diskZeroDbFS = zeroDbFSText.getText();
+                }
+            }
+        });
 
         fileNameText.getDocument().addDocumentListener(
                 new SimpleDocumentListener() {
 
-                    @Override
-                    public void documentChanged(DocumentEvent e) {
-                        if (projectProperties != null) {
-                            projectProperties.fileName = fileNameText.getText();
-                        }
-                    }
-                });
+            @Override
+            public void documentChanged(DocumentEvent e) {
+                if (projectProperties != null) {
+                    projectProperties.fileName = fileNameText.getText();
+                }
+            }
+        });
 
         diskAdvancedSettingsText.getDocument().addDocumentListener(
                 new SimpleDocumentListener() {
 
-                    @Override
-                    public void documentChanged(DocumentEvent e) {
-                        if (projectProperties != null) {
-                            projectProperties.diskAdvancedSettings = diskAdvancedSettingsText.getText();
-                        }
-                    }
-                });
+            @Override
+            public void documentChanged(DocumentEvent e) {
+                if (projectProperties != null) {
+                    projectProperties.diskAdvancedSettings = diskAdvancedSettingsText.getText();
+                }
+            }
+        });
     }
 
     public void setProjectProperties(ProjectProperties projectProperties) {
@@ -115,15 +121,15 @@ public class DiskRenderSettingsPanel extends javax.swing.JPanel {
 
             zeroDbFSCheckBox.setSelected(projectProperties.diskUseZeroDbFS);
             zeroDbFSText.setText(projectProperties.diskZeroDbFS);
-            
+
             this.projectProperties = projectProperties;
         }
     }
 
-    /** This method is called from within the constructor to
-     * initialize the form.
-     * WARNING: Do NOT modify this code. The content of this method is
-     * always regenerated by the Form Editor.
+    /**
+     * This method is called from within the constructor to initialize the form.
+     * WARNING: Do NOT modify this code. The content of this method is always
+     * regenerated by the Form Editor.
      */
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
@@ -361,23 +367,28 @@ public class DiskRenderSettingsPanel extends javax.swing.JPanel {
     }//GEN-LAST:event_diskNoteAmpCBoxActionPerformed
 
     private void jButton2openAdvancedFlags(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2openAdvancedFlags
-// TODO - implement method to get Program Options
-        //         String url = ProgramOptions.getGeneralSettings().getCsoundDocRoot()
-//            + "CommandFlags.html";
-//         URLOpener.openURL(url);
+        File manualDir = InstalledFileLocator.getDefault().
+                locate("csoundManual", "csound-manual", false);
+        File index = new File(manualDir, "CommandFlags.html");
+
+        try {
+            HtmlBrowser.URLDisplayer.getDefault().showURL(index.toURI().toURL());
+        } catch (Exception ex) {
+            Exceptions.printStackTrace(ex);
+        }
     }//GEN-LAST:event_jButton2openAdvancedFlags
 
     private void alwayRenderFromStartCBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_alwayRenderFromStartCBoxActionPerformed
         if (projectProperties != null) {
-            projectProperties.diskAlwaysRenderEntireProject =
-                    alwayRenderFromStartCBox.isSelected();
+            projectProperties.diskAlwaysRenderEntireProject
+                    = alwayRenderFromStartCBox.isSelected();
         }
 }//GEN-LAST:event_alwayRenderFromStartCBoxActionPerformed
 
     private void zeroDbFSCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_zeroDbFSCheckBoxActionPerformed
-         if (projectProperties != null) {
-            projectProperties.diskUseZeroDbFS =
-                    zeroDbFSCheckBox.isSelected();
+        if (projectProperties != null) {
+            projectProperties.diskUseZeroDbFS
+                    = zeroDbFSCheckBox.isSelected();
         }
     }//GEN-LAST:event_zeroDbFSCheckBoxActionPerformed
 

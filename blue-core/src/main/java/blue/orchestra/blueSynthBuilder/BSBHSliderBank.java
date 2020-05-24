@@ -173,6 +173,13 @@ public class BSBHSliderBank extends AutomatableBSBObject implements
         value = new ClampedValue(bank.value);
         value.addListener(cvl);
         sliders.addListener(listChangeListener);
+        
+        setGap(bank.getGap());
+        setMaximum(bank.getMaximum());
+        setMinimum(bank.getMinimum());
+        setRandomizable(bank.isRandomizable());
+        setResolution(bank.getResolution());
+        setSliderWidth(bank.getSliderWidth());
         setValueDisplayEnabled(bank.isValueDisplayEnabled());
 
         for (BSBHSlider slider : bank.sliders) {

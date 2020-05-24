@@ -34,11 +34,15 @@ public class LinePointChangeEdit extends AppendableEdit {
     private final LinePoint sourceRef;
     private final LinePoint sourceCopy;
     private final LinePoint endCopy;
+    private final LinePoint removedPoint;
+    private final Line line;
 
-    public LinePointChangeEdit(LinePoint sourceRef, LinePoint sourceCopy, LinePoint endCopy) {
+    public LinePointChangeEdit(Line line, LinePoint sourceRef, LinePoint sourceCopy, LinePoint endCopy, LinePoint removedPoint) {
+        this.line = line;
         this.sourceRef = sourceRef;
         this.sourceCopy = sourceCopy;
         this.endCopy = endCopy;
+        this.removedPoint = removedPoint;
     }
 
      @Override
@@ -49,6 +53,11 @@ public class LinePointChangeEdit extends AppendableEdit {
     @Override
     public void redo() throws CannotRedoException {
         sourceRef.setLocation(endCopy.getX(), endCopy.getY());
+        
+        if(removedPoint != null) {
+            line.removeLinePoint(removedPoint);
+        }
+        
         super.redo(); 
     }
 
@@ -56,5 +65,13 @@ public class LinePointChangeEdit extends AppendableEdit {
     public void undo() throws CannotUndoException {
         super.undo(); 
         sourceRef.setLocation(sourceCopy.getX(), sourceCopy.getY());
+        
+        if(removedPoint != null) {
+            var list = line.getObservableList();
+            int index = (endCopy.getX() > sourceCopy.getX()) ? 
+                    list.indexOf(sourceRef) + 1 : 
+                    list.indexOf(sourceRef) - 1;
+            list.add(index, removedPoint);
+        }
     }
 }

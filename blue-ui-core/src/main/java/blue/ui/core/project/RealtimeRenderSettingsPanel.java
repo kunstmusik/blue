@@ -12,7 +12,11 @@ package blue.ui.core.project;
 
 import blue.ProjectProperties;
 import blue.ui.utilities.SimpleDocumentListener;
+import java.io.File;
 import javax.swing.event.DocumentEvent;
+import org.openide.awt.HtmlBrowser;
+import org.openide.modules.InstalledFileLocator;
+import org.openide.util.Exceptions;
 
 /**
  *
@@ -381,10 +385,15 @@ public class RealtimeRenderSettingsPanel extends javax.swing.JPanel {
     }//GEN-LAST:event_audioOutCBoxActionPerformed
 
     private void jButton1openAdvancedFlags(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1openAdvancedFlags
-        // TODO - implement method to get Program Options
-        //         String url = ProgramOptions.getGeneralSettings().getCsoundDocRoot()
-//            + "CommandFlags.html";
-//         URLOpener.openURL(url);
+        File manualDir = InstalledFileLocator.getDefault().
+                locate("csoundManual", "csound-manual", false);
+        File index = new File(manualDir, "CommandFlags.html");
+
+        try {
+            HtmlBrowser.URLDisplayer.getDefault().showURL(index.toURI().toURL());
+        } catch (Exception ex) {
+            Exceptions.printStackTrace(ex);
+        }
     }//GEN-LAST:event_jButton1openAdvancedFlags
 
     private void zeroDbFSCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_zeroDbFSCheckBoxActionPerformed
