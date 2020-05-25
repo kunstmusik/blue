@@ -20,8 +20,12 @@
 package blue.settings;
 
 import java.io.File;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import org.openide.util.Exceptions;
 import org.openide.util.NbPreferences;
 
@@ -37,13 +41,17 @@ public class GeneralSettings {
     private static final String DRAW_ALPHA_BACKGROUND_ON_MARQUEE = "drawAlphaBackgroundOnMarquee";
     private static final String MESSAGE_COLORS_ENABLED = "messageColorsEnabled";
     private static final String NEW_USER_DEFAULTS_ENABLED = "newUserDefaultsEnabled";
-    private String csoundDocRoot = "";
+    private static final String DIRECTORY_TEMP_FILE_LIMIT = "directoryTempFileLimit";
+
     private File defaultDirectory = null;
     private boolean newUserDefaultsEnabled = true;
     private boolean alphaEnabled = false;
     private boolean messageColorsEnabled = false;
     private boolean csoundErrorWarningEnabled = true;
     private static GeneralSettings instance = null;
+    private int directoryTempFileLimit = 3;
+    
+    private Set<ChangeListener> changeListeners = new HashSet<>();
 
     private GeneralSettings() {
 //        setDefaultDirectory(new File(BlueSystem.getProgramRootDir()));
@@ -66,6 +74,8 @@ public class GeneralSettings {
                     PREFIX + MESSAGE_COLORS_ENABLED, false);
             instance.csoundErrorWarningEnabled = prefs.getBoolean(
                     PREFIX + CSOUND_ERROR_WARNING_ENABLED, true);
+            instance.directoryTempFileLimit = prefs.getInt(
+                    PREFIX + DIRECTORY_TEMP_FILE_LIMIT, 3);
         }
 
         return instance;
@@ -83,9 +93,12 @@ public class GeneralSettings {
         prefs.putBoolean(PREFIX + MESSAGE_COLORS_ENABLED, messageColorsEnabled);
         prefs.putBoolean(PREFIX + CSOUND_ERROR_WARNING_ENABLED,
                 csoundErrorWarningEnabled);
+        prefs.putInt(PREFIX + DIRECTORY_TEMP_FILE_LIMIT,
+                directoryTempFileLimit);
 
         try {
             prefs.sync();
+            fireChange();
         } catch (BackingStoreException ex) {
             Exceptions.printStackTrace(ex);
         }
@@ -131,4 +144,29 @@ public class GeneralSettings {
     public void setCsoundErrorWarningEnabled(boolean aCsoundErrorWarningEnabled) {
         csoundErrorWarningEnabled = aCsoundErrorWarningEnabled;
     }
+
+    public int getDirectoryTempFileLimit() {
+        return directoryTempFileLimit;
+    }
+
+    public void setDirectoryTempFileLimit(int directoryTempFileLimit) {
+        this.directoryTempFileLimit = directoryTempFileLimit;
+    }
+    
+    public void addChangeListener(ChangeListener cl) {
+        changeListeners.add(cl);
+    }
+    
+    public void removeChangeListener(ChangeListener cl) {
+        changeListeners.remove(cl);
+    }
+    
+    public void fireChange() {
+        var evt = new ChangeEvent(this);
+        for(var cl : changeListeners) {
+            cl.stateChanged(evt);
+        }
+    }
+    
+    
 }

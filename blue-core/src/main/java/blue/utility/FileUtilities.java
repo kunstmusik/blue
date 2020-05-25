@@ -17,14 +17,13 @@
  * the Free Software Foundation Inc., 59 Temple Place - Suite 330,
  * Boston, MA  02111-1307 USA
  */
-
 package blue.utility;
 
 import java.io.*;
 
 /**
  * @author steven
- * 
+ *
  */
 public class FileUtilities {
 
@@ -80,25 +79,7 @@ public class FileUtilities {
 
     public static File createTempTextFile(String prefix, String suffix,
             File directory, String text) {
-        File f;
-        try {
-            if (directory == null) {
-                f = File.createTempFile(prefix, suffix);
-            } else {
-                f = File.createTempFile(prefix, suffix, directory);
-            }
-
-            f.deleteOnExit();
-            try (PrintWriter out = new PrintWriter(new BufferedWriter(
-                         new FileWriter(f)))) {
-                out.print(text);
-                out.flush();
-            }
-
-        } catch (IOException e) {
-            return null;
-        }
-
-        return f;
+        return TempFileManager.getInstance().createTempTextFile(prefix, suffix,
+                directory, text);
     }
 }

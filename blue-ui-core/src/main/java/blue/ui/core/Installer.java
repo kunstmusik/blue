@@ -32,21 +32,20 @@ import blue.projects.BlueProjectManager;
 import blue.score.layers.LayerGroupProvider;
 import blue.score.layers.LayerGroupProviderManager;
 import blue.scripting.PythonProxy;
+import blue.settings.GeneralSettings;
 import blue.settings.ProjectDefaultsSettings;
 import blue.soundObject.PolyObjectLayerGroupProvider;
 import blue.ui.core.blueLive.BlueLiveToolBar;
 import blue.ui.core.midi.MidiInputEngine;
 import blue.ui.core.render.RealtimeRenderManager;
 import blue.ui.nbutilities.BlueNbUtilities;
-import blue.ui.utilities.FileChooserManager;
+import blue.utility.TempFileManager;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.Locale;
 import java.util.logging.Logger;
 import javafx.application.Platform;
 import javafx.embed.swing.JFXPanel;
-import javafx.scene.Group;
-import javafx.scene.Scene;
 import javax.swing.SwingUtilities;
 import org.openide.modules.InstalledFileLocator;
 import org.openide.modules.ModuleInstall;
@@ -54,6 +53,7 @@ import org.openide.util.Lookup;
 import org.openide.util.Lookup.Result;
 import org.openide.util.LookupEvent;
 import org.openide.util.LookupListener;
+import org.openide.util.NbPreferences;
 import org.openide.util.lookup.Lookups;
 import org.openide.windows.WindowManager;
 
@@ -125,6 +125,17 @@ public class Installer extends ModuleInstall {
             t.setPriority(Thread.MIN_PRIORITY);
             t.setDaemon(true);
             t.start();
+            
+            var tempFileManager = TempFileManager.getInstance();
+            var genSettings = GeneralSettings.getInstance();
+            
+            tempFileManager.setDirectoryTempFileLimit(genSettings.getDirectoryTempFileLimit());
+            
+            genSettings.addChangeListener(evt -> {
+                System.out.println("Temp file changed");
+                tempFileManager.setDirectoryTempFileLimit(genSettings.getDirectoryTempFileLimit());
+            });
+            
         });
 
         PythonProxy.setLibDir(InstalledFileLocator.getDefault().
