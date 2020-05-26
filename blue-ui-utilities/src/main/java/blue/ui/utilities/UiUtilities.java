@@ -54,4 +54,12 @@ public class UiUtilities {
             return ResizeMode.NONE;
         }
     }
+    
+    public static void invokeOnSwingThread(Runnable r) {
+        if(SwingUtilities.isEventDispatchThread()) {
+            r.run();
+        } else {
+            SwingUtilities.invokeLater(r);
+        }
+    }
 }

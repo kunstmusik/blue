@@ -618,23 +618,6 @@ public final class ScoreTopComponent extends TopComponent
         });
     }
 
-    // FIXME - this needs to be better done, perhaps hidden behind an interface
-    public int getHorizontalScrollValue() {
-        return scrollPane.getHorizontalScrollBar().getValue();
-    }
-
-    public int getVerticalScrollValue() {
-        return scrollPane.getVerticalScrollBar().getValue();
-    }
-
-    public void setHorizontalScrollValue(int value) {
-        scrollPane.getHorizontalScrollBar().setValue(value);
-    }
-
-    public void setVerticalScrollValue(int value) {
-        scrollPane.getVerticalScrollBar().setValue(value);
-    }
-
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -895,7 +878,7 @@ public final class ScoreTopComponent extends TopComponent
             mouseWheelListener.setTimeState(timeState);
 
             this.currentTimeState = timeState;
-            timeState.addPropertyChangeListener(this);
+            timeState.addPropertyChangeListener(0, this);
 
             scrollPane.repaint();
 
@@ -919,8 +902,8 @@ public final class ScoreTopComponent extends TopComponent
 
             layerHeaderPanel.repaint();
 
-            setHorizontalScrollValue(scrollX);
-            setVerticalScrollValue(scrollY);
+            scrollPane.getHorizontalScrollBar().setValue(scrollX);
+            scrollPane.getVerticalScrollBar().setValue(scrollY);
         }
     }
 
@@ -980,8 +963,8 @@ public final class ScoreTopComponent extends TopComponent
 
             layerHeaderPanel.repaint();
 
-            setHorizontalScrollValue(scrollX);
-            setVerticalScrollValue(scrollY);
+            scrollPane.getHorizontalScrollBar().setValue(scrollX);
+            scrollPane.getVerticalScrollBar().setValue(scrollY);
         }
     }
 

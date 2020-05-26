@@ -19,8 +19,8 @@
  */
 package blue.ui.core.score;
 
-import blue.BlueSystem;
 import blue.score.TimeState;
+import java.awt.Point;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import javax.swing.JScrollBar;
@@ -36,7 +36,7 @@ public class ScoreMouseWheelListener implements MouseWheelListener {
     JScrollPane scrollPane;
     MouseWheelListener[] listeners;
     TimeState timeState = null;
-    
+
     public ScoreMouseWheelListener(JScrollPane scrollPane) {
         this.scrollPane = scrollPane;
 
@@ -48,7 +48,7 @@ public class ScoreMouseWheelListener implements MouseWheelListener {
 
         scrollPane.addMouseWheelListener(this);
     }
-    
+
     public void setTimeState(TimeState timeState) {
         this.timeState = timeState;
     }
@@ -56,17 +56,23 @@ public class ScoreMouseWheelListener implements MouseWheelListener {
     @Override
     public void mouseWheelMoved(MouseWheelEvent e) {
 
-        int shortcutKey = BlueSystem.getMenuShortcutKey();
-		    
+        //int shortcutKey = BlueSystem.getMenuShortcutKey();
         if (e.isAltDown()) {
-            
-            if(timeState == null) {
+
+            if (timeState == null) {
                 return;
             }
             double value = e.getPreciseWheelRotation();
 
             final int xLoc = e.getX();
-            final float timeVal = xLoc / (float) timeState.getPixelSecond();
+            final var viewPort = scrollPane.getViewport();
+
+            final var localPt = SwingUtilities.convertPoint(e.getComponent(), e.getPoint(),
+                    viewPort.getView());
+
+            final var pos = viewPort.getViewPosition();
+
+            final var initPixelSecond = timeState.getPixelSecond();
 
             if (value > 0) {
                 timeState.raisePixelSecond();
@@ -74,27 +80,21 @@ public class ScoreMouseWheelListener implements MouseWheelListener {
                 timeState.lowerPixelSecond();
             }
 
-            SwingUtilities.invokeLater(() -> {
-                int newVal = (int) (timeVal * timeState.getPixelSecond());
-                
-                newVal -= xLoc;
-                
-                if (newVal > 0) {
-                    //FIXME
-                    scrollPane.getHorizontalScrollBar().setValue(newVal);
-                }
-            });
+            final var percent = timeState.getPixelSecond() / (double) initPixelSecond;
+
+            final var newX = Math.max(percent * localPt.x - xLoc, 0);
+            viewPort.setViewPosition(new Point((int) newX, pos.y));
+
             e.consume();
         } else if (e.isShiftDown()) {
 
             double value = e.getPreciseWheelRotation();
 
 //            value = (value > 0) ? 1 : -1;
-
             JScrollBar scrollBar = scrollPane.getHorizontalScrollBar();
 
             scrollBar.setValue(
-                    scrollBar.getValue() + (int)(value * scrollBar.getBlockIncrement()));
+                    scrollBar.getValue() + (int) (value * scrollBar.getBlockIncrement()));
 
             e.consume();
         } else {
@@ -104,7 +104,7 @@ public class ScoreMouseWheelListener implements MouseWheelListener {
             JScrollBar scrollBar = scrollPane.getVerticalScrollBar();
 
             scrollBar.setValue(
-                    scrollBar.getValue() + (int)(value * scrollBar.getBlockIncrement()));
+                    scrollBar.getValue() + (int) (value * scrollBar.getBlockIncrement()));
 
             e.consume();
         }

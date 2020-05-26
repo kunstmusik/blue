@@ -154,6 +154,15 @@ public class TimeState {
 
         listeners.add(pcl);
     }
+    
+    public void addPropertyChangeListener(int index, PropertyChangeListener pcl) {
+        if (listeners == null) {
+            listeners = new Vector<>();
+        }
+
+        listeners.add(index, pcl);
+    }
+    
 
     public void removePropertyChangeListener(PropertyChangeListener pcl) {
         if (listeners == null) {

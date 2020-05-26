@@ -97,18 +97,7 @@ public class AutomationLayerPanel extends JComponent implements
             if (evt.getPropertyName().equals("heightIndex")) {
                 revalidate();
             }
-        } else if (evt.getPropertyName().equals("pixelSecond")) {
-
-            // FIXME: Need to adjust marquee for pixelSecond changes, maybe should do it once in ScoreTopComponent...
-//            int pixelSecond = timeState.getPixelSecond();
-//
-//            if (marquee.isVisible()) {
-//                int newX = (int) (marquee.startTime * pixelSecond);
-//                marquee.setLocation(newX, marquee.getY());
-//                int newW = (int) (marquee.endTime * pixelSecond) - newX;
-//                marquee.setSize(newW, marquee.getHeight());
-//            }
-        }
+        } 
     }
 
     @Override

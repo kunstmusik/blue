@@ -35,6 +35,7 @@ import blue.ui.core.score.ScoreObjectView;
 import blue.ui.core.score.layers.LayerGroupPanel;
 import blue.ui.core.score.layers.SelectionMarquee;
 import blue.ui.utilities.ParentDispatchingMouseAdapter;
+import blue.ui.utilities.UiUtilities;
 import blue.utility.ObjectUtilities;
 import java.awt.Color;
 import java.awt.Component;
@@ -190,7 +191,7 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
     }
 
     public void reset() {
-        SwingUtilities.invokeLater(() -> {
+        UiUtilities.invokeOnSwingThread(() -> {
             Component[] components = sObjPanel.getComponents();
             for (int i = 0; i < components.length; i++) {
                 Component c = components[i];
@@ -215,13 +216,13 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
                     }
                 }
             }
-            if (ScoreController.getInstance().getScorePath().getLastLayerGroup() == null) {
-                BlueData data1 = BlueProjectManager.getInstance().getCurrentBlueData();
-                if (data1 != null) {
-                    int startTime = (int) (data1.getRenderStartTime() * timeState.getPixelSecond());
-                    int endTime = (int) (data1.getRenderEndTime() * timeState.getPixelSecond());
-                }
-            }
+//            if (ScoreController.getInstance().getScorePath().getLastLayerGroup() == null) {
+//                BlueData data1 = BlueProjectManager.getInstance().getCurrentBlueData();
+//                if (data1 != null) {
+//                    int startTime = (int) (data1.getRenderStartTime() * timeState.getPixelSecond());
+//                    int endTime = (int) (data1.getRenderEndTime() * timeState.getPixelSecond());
+//                }
+//            }
             checkSize();
             automationPanel.revalidate();
             revalidate();
