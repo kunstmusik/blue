@@ -91,7 +91,6 @@ public class AudioHeaderLayerPanel extends javax.swing.JPanel
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
-        java.awt.GridBagConstraints gridBagConstraints;
 
         jPanel2 = new javax.swing.JPanel();
         jPanel1 = new javax.swing.JPanel();
@@ -152,6 +151,7 @@ public class AudioHeaderLayerPanel extends javax.swing.JPanel
         muteToggleButton.setFocusable(false);
         muteToggleButton.setMargin(new java.awt.Insets(0, 3, 0, 3));
         muteToggleButton.setMaximumSize(new java.awt.Dimension(19, 19));
+        muteToggleButton.setPreferredSize(new java.awt.Dimension(19, 18));
         muteToggleButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 muteToggleButtonActionPerformed(evt);

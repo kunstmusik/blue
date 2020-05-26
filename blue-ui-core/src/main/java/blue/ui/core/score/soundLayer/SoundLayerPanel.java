@@ -158,7 +158,7 @@ public class SoundLayerPanel extends javax.swing.JPanel implements
      */
     // <editor-fold defaultstate="collapsed" desc=" Generated Code
     // <editor-fold defaultstate="collapsed" desc=" Generated Code
-    // ">//GEN-BEGIN:initComponents
+    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
         java.awt.GridBagConstraints gridBagConstraints;
 
@@ -178,23 +178,20 @@ public class SoundLayerPanel extends javax.swing.JPanel implements
         paramNextButton = new javax.swing.JButton();
         jPanel4 = new javax.swing.JPanel();
 
-        setLayout(new java.awt.GridBagLayout());
-
         addComponentListener(new java.awt.event.ComponentAdapter() {
             public void componentResized(java.awt.event.ComponentEvent evt) {
                 formComponentResized(evt);
             }
         });
+        setLayout(new java.awt.GridBagLayout());
 
-        jPanel2.setLayout(new javax.swing.BoxLayout(jPanel2,
-                javax.swing.BoxLayout.LINE_AXIS));
+        jPanel2.setLayout(new javax.swing.BoxLayout(jPanel2, javax.swing.BoxLayout.LINE_AXIS));
 
-        jPanel1.setLayout(new java.awt.CardLayout());
-
-        jPanel1.setBorder(javax.swing.BorderFactory.createEmptyBorder(0, 3, 0,
-                3));
+        jPanel1.setBorder(javax.swing.BorderFactory.createEmptyBorder(0, 3, 0, 3));
         jPanel1.setMinimumSize(new java.awt.Dimension(0, 0));
         jPanel1.setPreferredSize(new java.awt.Dimension(17, 17));
+        jPanel1.setLayout(new java.awt.CardLayout());
+
         nameLabel.setText("SoundObject Name");
         nameLabel.setMinimumSize(new java.awt.Dimension(0, 15));
         jPanel1.add(nameLabel, "label");
@@ -202,14 +199,14 @@ public class SoundLayerPanel extends javax.swing.JPanel implements
         nameText.setText("SoundObject Name");
         nameText.setMinimumSize(new java.awt.Dimension(0, 15));
         nameText.setPreferredSize(new java.awt.Dimension(115, 17));
-        nameText.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                nameTextActionPerformed(evt);
-            }
-        });
         nameText.addFocusListener(new java.awt.event.FocusAdapter() {
             public void focusLost(java.awt.event.FocusEvent evt) {
                 nameTextFocusLost(evt);
+            }
+        });
+        nameText.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                nameTextActionPerformed(evt);
             }
         });
         nameText.addKeyListener(new java.awt.event.KeyAdapter() {
@@ -217,26 +214,25 @@ public class SoundLayerPanel extends javax.swing.JPanel implements
                 nameTextKeyPressed(evt);
             }
         });
-
         jPanel1.add(nameText, "textField");
 
         jPanel2.add(jPanel1);
 
-        muteToggleButton.setFont(new java.awt.Font("Dialog", 1, 10));
+        muteToggleButton.setFont(new java.awt.Font("Dialog", 1, 10)); // NOI18N
         muteToggleButton.setText("M");
         muteToggleButton.setFocusPainted(false);
         muteToggleButton.setFocusable(false);
         muteToggleButton.setMargin(new java.awt.Insets(0, 3, 0, 3));
         muteToggleButton.setMaximumSize(new java.awt.Dimension(19, 19));
+        muteToggleButton.setPreferredSize(new java.awt.Dimension(19, 18));
         muteToggleButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 muteToggleButtonActionPerformed(evt);
             }
         });
-
         jPanel2.add(muteToggleButton);
 
-        soloToggleButton.setFont(new java.awt.Font("Dialog", 1, 10));
+        soloToggleButton.setFont(new java.awt.Font("Dialog", 1, 10)); // NOI18N
         soloToggleButton.setText("S");
         soloToggleButton.setFocusPainted(false);
         soloToggleButton.setFocusable(false);
@@ -247,24 +243,21 @@ public class SoundLayerPanel extends javax.swing.JPanel implements
                 soloToggleButtonActionPerformed(evt);
             }
         });
-
         jPanel2.add(soloToggleButton);
 
-        noteProcessorButton.setFont(new java.awt.Font("Dialog", 1, 10));
+        noteProcessorButton.setFont(new java.awt.Font("Dialog", 1, 10)); // NOI18N
         noteProcessorButton.setText("N");
         noteProcessorButton.setFocusPainted(false);
         noteProcessorButton.setFocusable(false);
         noteProcessorButton.setMargin(new java.awt.Insets(0, 3, 0, 3));
-        noteProcessorButton
-                .addActionListener(new java.awt.event.ActionListener() {
-                    public void actionPerformed(java.awt.event.ActionEvent evt) {
-                        noteProcessorButtonActionPerformed(evt);
-                    }
-                });
-
+        noteProcessorButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                noteProcessorButtonActionPerformed(evt);
+            }
+        });
         jPanel2.add(noteProcessorButton);
 
-        automationButton.setFont(new java.awt.Font("Dialog", 1, 10));
+        automationButton.setFont(new java.awt.Font("Dialog", 1, 10)); // NOI18N
         automationButton.setText("A");
         automationButton.setToolTipText("Automation Settings");
         automationButton.setFocusPainted(false);
@@ -275,10 +268,9 @@ public class SoundLayerPanel extends javax.swing.JPanel implements
                 automationButtonActionPerformed(evt);
             }
         });
-
         jPanel2.add(automationButton);
 
-        otherMenuButton.setFont(new java.awt.Font("Dialog", 1, 10));
+        otherMenuButton.setFont(new java.awt.Font("Dialog", 1, 10)); // NOI18N
         otherMenuButton.setIcon(IconFactory.getDownArrowIcon());
         otherMenuButton.setToolTipText("Automation Settings");
         otherMenuButton.setFocusPainted(false);
@@ -291,7 +283,6 @@ public class SoundLayerPanel extends javax.swing.JPanel implements
                 otherMenuButtonActionPerformed(evt);
             }
         });
-
         jPanel2.add(otherMenuButton);
 
         gridBagConstraints = new java.awt.GridBagConstraints();
@@ -301,36 +292,30 @@ public class SoundLayerPanel extends javax.swing.JPanel implements
         gridBagConstraints.weightx = 1.0;
         add(jPanel2, gridBagConstraints);
 
-        paramSelectPanel.setLayout(new javax.swing.BoxLayout(paramSelectPanel,
-                javax.swing.BoxLayout.LINE_AXIS));
-
         paramSelectPanel.setFocusable(false);
         paramSelectPanel.setPreferredSize(new java.awt.Dimension(100, 19));
-        paramColorSelect.setBorder(javax.swing.BorderFactory.createEmptyBorder(
-                3, 3, 3, 3));
+        paramSelectPanel.setLayout(new javax.swing.BoxLayout(paramSelectPanel, javax.swing.BoxLayout.LINE_AXIS));
+
+        paramColorSelect.setBorder(javax.swing.BorderFactory.createEmptyBorder(3, 3, 3, 3));
         paramColorSelect.setToolTipText("Parameter Line Color");
         paramColorSelect.setMaximumSize(new java.awt.Dimension(15, 15));
         paramColorSelect.setPreferredSize(new java.awt.Dimension(15, 15));
-        paramColorSelect
-                .addPropertyChangeListener(new java.beans.PropertyChangeListener() {
-                    public void propertyChange(
-                            java.beans.PropertyChangeEvent evt) {
-                        paramColorSelectPropertyChange(evt);
-                    }
-                });
-
+        paramColorSelect.addPropertyChangeListener(new java.beans.PropertyChangeListener() {
+            public void propertyChange(java.beans.PropertyChangeEvent evt) {
+                paramColorSelectPropertyChange(evt);
+            }
+        });
         paramSelectPanel.add(paramColorSelect);
 
-        paramNameLabel.setFont(new java.awt.Font("Dialog", 0, 10));
+        paramNameLabel.setFont(new java.awt.Font("Dialog", 0, 10)); // NOI18N
         paramNameLabel.setText("jLabel1");
-        paramNameLabel.setBorder(javax.swing.BorderFactory.createEmptyBorder(0,
-                3, 0, 0));
+        paramNameLabel.setBorder(javax.swing.BorderFactory.createEmptyBorder(0, 3, 0, 0));
         paramNameLabel.setFocusable(false);
         paramNameLabel.setMaximumSize(new java.awt.Dimension(32768, 15));
         paramNameLabel.setPreferredSize(new java.awt.Dimension(100, 15));
         paramSelectPanel.add(paramNameLabel);
 
-        paramPreviousButton.setFont(new java.awt.Font("Dialog", 1, 10));
+        paramPreviousButton.setFont(new java.awt.Font("Dialog", 1, 10)); // NOI18N
         paramPreviousButton.setIcon(IconFactory.getLeftArrowIcon());
         paramPreviousButton.setToolTipText("Automation Settings");
         paramPreviousButton.setFocusPainted(false);
@@ -338,16 +323,14 @@ public class SoundLayerPanel extends javax.swing.JPanel implements
         paramPreviousButton.setMargin(new java.awt.Insets(0, 0, 0, 0));
         paramPreviousButton.setMaximumSize(new java.awt.Dimension(15, 15));
         paramPreviousButton.setPreferredSize(new java.awt.Dimension(18, 17));
-        paramPreviousButton
-                .addActionListener(new java.awt.event.ActionListener() {
-                    public void actionPerformed(java.awt.event.ActionEvent evt) {
-                        paramPreviousButtonActionPerformed(evt);
-                    }
-                });
-
+        paramPreviousButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                paramPreviousButtonActionPerformed(evt);
+            }
+        });
         paramSelectPanel.add(paramPreviousButton);
 
-        paramNextButton.setFont(new java.awt.Font("Dialog", 1, 10));
+        paramNextButton.setFont(new java.awt.Font("Dialog", 1, 10)); // NOI18N
         paramNextButton.setIcon(IconFactory.getRightArrowIcon());
         paramNextButton.setToolTipText("Automation Settings");
         paramNextButton.setFocusPainted(false);
@@ -360,7 +343,6 @@ public class SoundLayerPanel extends javax.swing.JPanel implements
                 paramNextButtonActionPerformed(evt);
             }
         });
-
         paramSelectPanel.add(paramNextButton);
 
         gridBagConstraints = new java.awt.GridBagConstraints();
@@ -369,13 +351,11 @@ public class SoundLayerPanel extends javax.swing.JPanel implements
         gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
         add(paramSelectPanel, gridBagConstraints);
-
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 2;
         gridBagConstraints.weighty = 1.0;
         add(jPanel4, gridBagConstraints);
-
     }// </editor-fold>//GEN-END:initComponents
 
     private void otherMenuButtonActionPerformed(java.awt.event.ActionEvent evt) {// GEN-FIRST:event_otherMenuButtonActionPerformed
@@ -623,35 +603,20 @@ public class SoundLayerPanel extends javax.swing.JPanel implements
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton automationButton;
-
     private javax.swing.JPanel jPanel1;
-
     private javax.swing.JPanel jPanel2;
-
     private javax.swing.JPanel jPanel4;
-
     private javax.swing.JToggleButton muteToggleButton;
-
     private javax.swing.JLabel nameLabel;
-
     private javax.swing.JTextField nameText;
-
     private javax.swing.JButton noteProcessorButton;
-
     private javax.swing.JButton otherMenuButton;
-
     private blue.components.ColorSelectionPanel paramColorSelect;
-
     private javax.swing.JLabel paramNameLabel;
-
     private javax.swing.JButton paramNextButton;
-
     private javax.swing.JButton paramPreviousButton;
-
     private javax.swing.JPanel paramSelectPanel;
-
     private javax.swing.JToggleButton soloToggleButton;
-
     // End of variables declaration//GEN-END:variables
     static class SoundLayerPanelMenu extends JPopupMenu {
 
