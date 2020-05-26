@@ -11,6 +11,7 @@ import blue.Arrangement;
 import blue.BlueData;
 import blue.BlueSystem;
 import blue.SoundLayer;
+import blue.components.lines.LinePoint;
 import blue.orchestra.GenericInstrument;
 import blue.soundObject.*;
 import blue.udo.OpcodeList;
@@ -82,8 +83,8 @@ public class CSDUtility {
             parseCsScore(data, sco, importMode);
         }
 
-        if(data.getScore().get(0).isEmpty()) {
-            PolyObject pObj = (PolyObject)data.getScore().get(0);
+        if (data.getScore().get(0).isEmpty()) {
+            PolyObject pObj = (PolyObject) data.getScore().get(0);
             pObj.add(new SoundLayer());
         }
 
@@ -143,6 +144,30 @@ public class CSDUtility {
                 }
             } else if (line.startsWith("s")) {
                 iStatements.append(line).append("\n");
+            } else if (line.startsWith("t")) {
+                if (line.length() > 1) {
+                    line = line.substring(1).trim();
+                    var tempo = data.getScore().getTempo();
+                    var tLine = tempo.getLine();
+                    var parts = line.split("\\s+");
+
+                    if (parts.length % 2 == 0) {
+                        try {
+                            tLine.getObservableList().clear();
+                            for (int j = 0; j < parts.length; j += 2) {
+                                double time = Double.parseDouble(parts[j]);
+                                double t = Double.parseDouble(parts[j + 1]);
+                                tLine.addLinePoint(new LinePoint(time, t));
+                            }
+                            tempo.setEnabled(true);
+                        } catch (Exception e) {
+                            throw new RuntimeException("Invalid tempo statement found");
+                        }
+                    } else {
+                        throw new RuntimeException("Invalid tempo statement found");
+                    }
+                }
+
             }
 
         }

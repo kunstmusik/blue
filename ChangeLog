@@ -45,6 +45,8 @@ upgrade to Java 11 for 2.8.0.
 
 * Issue #399: Redid zooming on scrollwheel to zoom around mouse location
 
+* Issue #281: Implemented importing of tempos (t-statements) from CSDs
+
 FIX
 
 * Score: Selection marquee in single-line mode did not calculate y-position 
