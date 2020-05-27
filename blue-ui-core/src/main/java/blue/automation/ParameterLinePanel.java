@@ -66,6 +66,7 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
+import org.controlsfx.tools.Utils;
 import org.openide.windows.WindowManager;
 
 /**
@@ -1018,7 +1019,7 @@ public class ParameterLinePanel extends JComponent implements
 
                 final int OS_CTRL_KEY = BlueSystem.getMenuShortcutKey();
 
-                if ((e.getModifiers() & OS_CTRL_KEY) == OS_CTRL_KEY) {
+                if ((e.getModifiersEx() & OS_CTRL_KEY) == OS_CTRL_KEY) {
                     ScoreController.getInstance().pasteSingleLine(startTime);
                     justPasted = true;
 
@@ -1034,7 +1035,20 @@ public class ParameterLinePanel extends JComponent implements
 
                 } else {
                     // INSERTING NEW LINE POINT
-                    selectedPoint = insertGraphPoint(start, e.getY());
+                    if ((e.getModifiersEx() & MouseEvent.ALT_DOWN_MASK) == MouseEvent.ALT_DOWN_MASK) {
+                        // ...ON THE EXISTING LINE 
+                        final var time = screenToDoubleX(start);
+                        final var value = currentLine.getValue(time);
+                        final var lp = new LinePoint(time, value);
+                        currentLine.addLinePoint(lp);
+                        currentLine.sort();
+                        selectedPoint = lp;
+                    } else {
+                        // .. AT THE LOCATION OF THE MOUSE CLICK
+                        selectedPoint = insertGraphPoint(start, e.getY());
+                    }
+
+                    lpSourceCopy = new LinePoint(selectedPoint);
                     newLinePoint = true;
                     setBoundaryXValues();
 
@@ -1112,8 +1126,7 @@ public class ParameterLinePanel extends JComponent implements
 
                             ScaleLinear scale = selection.getScale();
                             if (selection.getScaleDirection() == ResizeMode.LEFT) {
-                                newTime = Math.min(scale.getRangeEnd() - edgeTime, newTime);
-                                newTime = Math.max(newTime, 0.0);
+                                newTime = Utils.clamp(0.0, newTime, scale.getRangeEnd() - edgeTime);
                             } else {
                                 newTime = Math.max(scale.getRangeStart() + edgeTime, newTime);
                             }
@@ -1172,50 +1185,51 @@ public class ParameterLinePanel extends JComponent implements
                 // check if there is a selected point, which means we're dragging a point
             } else if (selectedPoint != null) {
 
-                int x = e.getX();
-                int y = e.getY();
+                final int x = e.getX();
+                final int y = e.getY();
+                final int diffX = x - (int) pressPoint.getX();
+                final int diffY = y - (int) pressPoint.getY();
+
+                final double min = currentParameter.getMin();
+                final double max = currentParameter.getMax();
+                final int originX = doubleToScreenX(lpSourceCopy.getX());
+                final int originY = doubleToScreenY(lpSourceCopy.getY(), min, max);
+
+                int newX = originX + diffX;
+                int newY = originY + diffY;
 
                 if (direction == DragDirection.NOT_SET) {
-                    int magx = Math.abs(x - (int) pressPoint.getX());
-                    int magy = Math.abs(y - (int) pressPoint.getY());
-
+                    final int magx = Math.abs(diffX);
+                    final int magy = Math.abs(diffY);
                     direction = (magx > magy) ? DragDirection.LEFT_RIGHT
                             : DragDirection.UP_DOWN;
                 }
 
                 if (e.isControlDown()) {
                     if (direction == DragDirection.LEFT_RIGHT) {
-                        y = (int) pressPoint.getY();
+                        newY = originY;
                     } else {
-                        x = (int) pressPoint.getX();
+                        newX = originX;
                     }
                 }
 
                 int topY = 5;
                 int bottomY = getHeight() - 5;
 
-                if (y < topY) {
-                    y = topY;
-                } else if (y > bottomY) {
-                    y = bottomY;
-                }
+                newY = Math.min(bottomY, Math.max(topY, newY));
 
                 double pixelSecond = timeState.getPixelSecond();
-                double dragTime = x / pixelSecond;
+                double dragTime = newX / pixelSecond;
 
                 if (timeState.isSnapEnabled() && !e.isControlDown()) {
                     dragTime = ScoreUtilities.getSnapValueMove(dragTime,
                             timeState.getSnapValue());
                 }
 
-                dragTime = Math.max(leftBoundaryTime,
-                        Math.min(rightBoundaryTime, dragTime));
-
-                double min = currentParameter.getMin();
-                double max = currentParameter.getMax();
+                dragTime = Utils.clamp(leftBoundaryTime, dragTime, rightBoundaryTime);
 
                 selectedPoint.setLocation(dragTime,
-                        screenToDoubleY(y, min, max, currentParameter
+                        screenToDoubleY(newY, min, max, currentParameter
                                 .getResolution()));
 
                 var line = currentParameter.getLine().getObservableList();

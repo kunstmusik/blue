@@ -47,6 +47,11 @@ upgrade to Java 11 for 2.8.0.
 
 * Issue #281: Implemented importing of tempos (t-statements) from CSDs
 
+* Issue #388: Automation: added alt-click to insert point at time position of 
+  mouse but start y-value on current line. Moving is relative to the point's 
+  initial y-value. Works in conjunction with ctrl-dragging to restrict value 
+  change along one axis.
+
 FIX
 
 * Score: Selection marquee in single-line mode did not calculate y-position 
