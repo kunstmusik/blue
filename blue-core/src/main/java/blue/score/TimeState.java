@@ -90,7 +90,7 @@ public class TimeState {
 
     public void setSnapEnabled(boolean snapEnabled) {
         PropertyChangeEvent pce = new PropertyChangeEvent(this, "snapEnabled",
-                Boolean.valueOf(this.snapEnabled), Boolean.valueOf(snapEnabled));
+                this.snapEnabled, snapEnabled);
 
         this.snapEnabled = snapEnabled;
 
@@ -152,9 +152,11 @@ public class TimeState {
             listeners = new Vector<>();
         }
 
-        listeners.add(pcl);
+        if (!listeners.contains(pcl)) {
+            listeners.add(pcl);
+        }
     }
-    
+
     public void addPropertyChangeListener(int index, PropertyChangeListener pcl) {
         if (listeners == null) {
             listeners = new Vector<>();
@@ -162,7 +164,6 @@ public class TimeState {
 
         listeners.add(index, pcl);
     }
-    
 
     public void removePropertyChangeListener(PropertyChangeListener pcl) {
         if (listeners == null) {

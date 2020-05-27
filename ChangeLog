@@ -22,6 +22,7 @@ NEW
   * SPACE - start/stop rendering of project
   * G - move to render start time (green line) (Issue #471)
   * Y - move to render end time (yellow line)  (issue #471)
+  * Alt-S - toggle snap (Issue #492)
 
 UPDATED
 

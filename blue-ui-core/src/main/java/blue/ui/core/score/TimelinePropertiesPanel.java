@@ -26,6 +26,7 @@ import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.beans.PropertyChangeListener;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
@@ -54,6 +55,8 @@ class TimelinePropertiesPanel extends JComponent {
     boolean isUpdating = false;
 
     TimeState timeState;
+    
+    PropertyChangeListener pcl;
 
     public TimelinePropertiesPanel() {
 
@@ -91,6 +94,12 @@ class TimelinePropertiesPanel extends JComponent {
                     
                 }
             }
+        };
+        
+        pcl = pce -> {
+           if("snapEnabled".equals(pce.getPropertyName())) {
+               snapEnabledBox.setSelected((boolean) pce.getNewValue());
+           }
         };
 
         timeDisplayTime.addActionListener(timeActionListener);
@@ -147,6 +156,10 @@ class TimelinePropertiesPanel extends JComponent {
 
     public void setTimeState(TimeState timeState) {
         isUpdating = true;
+        
+        if(this.timeState != null) {
+            this.timeState.removePropertyChangeListener(pcl);
+        }
 
         this.timeState = timeState;
 
@@ -159,6 +172,8 @@ class TimelinePropertiesPanel extends JComponent {
         } else {
             timeDisplayNumber.setSelected(true);
         }
+        
+        timeState.addPropertyChangeListener(pcl);
 
         isUpdating = false;
     }
