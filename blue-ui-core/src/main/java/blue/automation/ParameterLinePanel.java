@@ -885,6 +885,7 @@ public class ParameterLinePanel extends JComponent implements
         LinePoint lpSourceCopy = null;
         LinePoint previous = null;
         LinePoint next = null;
+        int selectedPointIndex = 0;
 
         boolean newLinePoint = false;
 
@@ -1050,8 +1051,17 @@ public class ParameterLinePanel extends JComponent implements
 
                     // dealing with multiple points with same times at boundaries
                     var list = currentLine.getObservableList();
-                    int index = list.indexOf(selectedPoint);
-
+                    int index = -1;
+                    for(int i = 0; i < list.size(); i++) {
+                        // compare by reference rather than use indexOf to 
+                        // deal with value issues on removing/adding previous/next
+                        if(list.get(i) == selectedPoint) {
+                            index = i;
+                            break;
+                        }
+                    }
+                    selectedPointIndex = index;
+                    
                     if (index > 1) {
                         if (list.get(index - 1).getX() == list.get(index - 2).getX()) {
                             previous = list.get(index - 1);
@@ -1086,9 +1096,16 @@ public class ParameterLinePanel extends JComponent implements
 
             e.consume();
 
-            if (currentParameter == null || justPasted) {
+            if (currentParameter == null || justPasted || pressPoint == null) {
                 return;
             }
+            
+//            System.out.print(">>");
+//            for(var lp : currentParameter.getLine().getObservableList()) {
+//                System.out.printf(" [%g.2, %g.2], ", lp.getX(), lp.getY());
+//            }
+//            System.out.println("");
+            
 
             // check if selection currently is for line that is contained in this panel
             if (paramList.containsLine(selection.getSourceLine())) {
@@ -1230,27 +1247,38 @@ public class ParameterLinePanel extends JComponent implements
 
                 var line = currentParameter.getLine().getObservableList();
                 if (previous != null) {
+                    
+                    // testing by reference instead of equals() to prevent issue 
+                    // where selected and previous are equal in value that the condition
+                    // keeps triggering
+                    boolean previousFound = line.stream().anyMatch(lp -> lp == previous);
+                    
                     if (dragTime == previous.getX()) {
-                        if (line.contains(previous)) {
-                            currentParameter.getLine().removeLinePoint(previous);
+                        if (previousFound) {
+                            currentParameter.getLine().removeLinePoint(selectedPointIndex - 1);
                         }
-                    } else if (!line.contains(previous)) {
-                        currentParameter.getLine().insertLinePoint(previous);
+                    } else if (!previousFound) {
+                        currentParameter.getLine().addLinePoint(selectedPointIndex - 1, previous);
                     }
                 }
 
                 if (next != null) {
+                    // testing by reference instead of equals() to prevent issue 
+                    // where selected and next are equal in value that the condition
+                    // keeps triggering
+                    boolean nextFound = line.stream().anyMatch(lp -> lp == next);
                     if (dragTime == next.getX()) {
-                        if (line.contains(next)) {
-                            currentParameter.getLine().removeLinePoint(next);
+                        if (nextFound) {
+                            currentParameter.getLine().removeLinePoint(selectedPointIndex + 1);
                         }
-                    } else if (!line.contains(next)) {
-                        currentParameter.getLine().insertLinePointLeft(next);
+                    } else if (!nextFound) {
+                        currentParameter.getLine().addLinePoint(selectedPointIndex + 1, next);
                     }
                 }
             }
             repaint();
         }
+        
 
         @Override
         public void mouseReleased(MouseEvent e) {
@@ -1260,6 +1288,8 @@ public class ParameterLinePanel extends JComponent implements
             verticalShift = false;
             justPasted = false;
             transTime = 0.0f;
+            pressPoint = null;
+            selectedPointIndex = -1;
 
             if (ModeManager.getInstance().getMode() != ScoreMode.SINGLE_LINE) {
                 return;
@@ -1275,11 +1305,11 @@ public class ParameterLinePanel extends JComponent implements
                 if (selectedPoint != null) {
                     final var line = currentParameter.getLine();
                     final var oline = line.getObservableList();
-                    final var removedPoint = !oline.contains(previous) ? 
-                                previous : 
-                                !(oline.contains(next)) ?
-                                next :
-                                null;
+                    final var removedPoint = !oline.contains(previous)
+                            ? previous
+                            : !(oline.contains(next))
+                            ? next
+                            : null;
                     if (newLinePoint) {
                         final var linePointAddEdit = new LinePointAddEdit(
                                 line, selectedPoint,
