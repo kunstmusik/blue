@@ -487,9 +487,9 @@ public class Line implements TableModel, ChangeListener, Iterable<LinePoint> {
     public void removeLinePoint(LinePoint linePoint) {
         int index = points.indexOf(linePoint);
         if (index >= 0) {
-            points.remove(linePoint);
             linePoint.removeChangeListener(this);
-
+            points.remove(linePoint);
+            
             fireTableRowsDeleted(index, index);
         }
     }
