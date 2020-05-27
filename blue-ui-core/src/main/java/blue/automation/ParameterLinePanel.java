@@ -1013,7 +1013,7 @@ public class ParameterLinePanel extends JComponent implements
 
                 final int OS_CTRL_KEY = BlueSystem.getMenuShortcutKey();
 
-                if ((e.getModifiersEx() & OS_CTRL_KEY) == OS_CTRL_KEY) {
+                if ((e.getModifiers() & OS_CTRL_KEY) == OS_CTRL_KEY) {
                     ScoreController.getInstance().pasteSingleLine(startTime);
                     justPasted = true;
 
