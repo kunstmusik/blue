@@ -922,6 +922,12 @@ public class ParameterLinePanel extends JComponent implements
                     mouseDownInitialX = -1;
                     selection.updateSelection(null, -1.0, -1.0);
                     sourceCopy = null;
+                    direction = DragDirection.NOT_SET;
+                    verticalShift = false;
+                    justPasted = false;
+                    pressPoint = null;
+                    selectedPointIndex = -1;
+                    
                     return;
                 } else {
                     // TRANSLATION OR SCALING OF SELECTION
@@ -1363,7 +1369,9 @@ public class ParameterLinePanel extends JComponent implements
 
             ScoreTopComponent scoreTC = (ScoreTopComponent) WindowManager.getDefault().findTopComponent("ScoreTopComponent");
             final JLayeredPane scorePanel = scoreTC.getScorePanel();
-            var resizeMode = UiUtilities.getResizeMode(e.getComponent(), e.getPoint(), scoreTC.getMarquee());
+            final var marquee = scoreTC.getMarquee();
+            
+            var resizeMode = marquee.isVisible() ? UiUtilities.getResizeMode(e.getComponent(), e.getPoint(), scoreTC.getMarquee()) : ResizeMode.NONE;
             //System.out.println("RESIZE_MODE: " + resizeMode);
             switch (resizeMode) {
                 case LEFT:
