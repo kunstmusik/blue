@@ -59,6 +59,7 @@ import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.*;
+import javax.swing.border.BevelBorder;
 import javax.swing.border.Border;
 import javax.swing.border.LineBorder;
 import org.netbeans.api.settings.ConvertAsProperties;
@@ -485,7 +486,7 @@ public final class ScoreTopComponent extends TopComponent
             GUI.centerOnScreen(dialog);
             dialog.setVisible(true);
         });
-        manageButton.setPreferredSize(new Dimension(100, 40));
+        manageButton.setPreferredSize(new Dimension(100, 20));
 
         JPanel bottomHeaderPanel = new JPanel();
         bottomHeaderPanel.setPreferredSize(new Dimension(100, 14));
@@ -493,9 +494,24 @@ public final class ScoreTopComponent extends TopComponent
         layerHeaderViewPort.setBorder(null);
         layerHeaderViewPort.setView(layerHeaderPanel);
 
-        JPanel leftHeaderView = new JPanel(new BorderLayout());
-        leftHeaderView.add(tempoControlPanel, BorderLayout.NORTH);
-        leftHeaderView.add(manageButton, BorderLayout.SOUTH);
+        JPanel leftHeaderView = new JPanel(new GridBagLayout());
+        JLabel markersLabel = new JLabel("Markers");
+        markersLabel.setHorizontalAlignment(SwingConstants.RIGHT);
+        markersLabel.setFont(new Font("Dialog", Font.PLAIN, 10));
+        markersLabel.setPreferredSize(new Dimension(100, 20));
+        markersLabel.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
+        
+        var gbc = new GridBagConstraints();
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.weightx = 1.0;
+       
+        leftHeaderView.add(tempoControlPanel, gbc);
+        gbc.gridy = 1;
+        leftHeaderView.add(markersLabel, gbc);
+        gbc.gridy = 2;
+        leftHeaderView.add(manageButton, gbc);
 
         leftPanel.add(leftHeaderView, BorderLayout.NORTH);
         leftPanel.add(layerHeaderViewPort, BorderLayout.CENTER);

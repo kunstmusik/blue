@@ -306,7 +306,9 @@ public class MarkersBar extends JPanel implements PropertyChangeListener, TableM
 
         public PlayMarker(Marker marker) {
             setOpaque(true);
-            setBackground(Color.ORANGE);
+            
+            // Color ORANGE with slight alpha 
+            setBackground(new Color(255, 200, 0, 180));
             setForeground(Color.BLACK);
             setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
 
