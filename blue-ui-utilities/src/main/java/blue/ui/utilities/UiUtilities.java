@@ -22,6 +22,7 @@ package blue.ui.utilities;
 import java.awt.Component;
 import java.awt.Point;
 import java.awt.event.MouseEvent;
+import javax.swing.JScrollPane;
 import javax.swing.SwingUtilities;
 
 /**
@@ -61,5 +62,19 @@ public class UiUtilities {
         } else {
             SwingUtilities.invokeLater(r);
         }
+    }
+    
+    public static JScrollPane findParentScrollPane(Component c) {
+        JScrollPane retVal = null;
+        Component current = c;
+        while(current.getParent() != null) {
+            if(current.getParent() instanceof JScrollPane) {
+                retVal = (JScrollPane)current.getParent();
+                break;
+            } else {
+                current = current.getParent();
+            }
+        }
+        return retVal;
     }
 }

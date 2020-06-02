@@ -115,7 +115,12 @@ public final class ScoreTopComponent extends TopComponent
     SoundObject bufferSoundObject;
     BlueData data;
     ScoreObjectBar scoreObjectBar = new ScoreObjectBar();
+
+    // TODO - consider separate component for all bars
+    JPanel timelineBars = new JPanel();
+    MarkersBar markersBar = new MarkersBar();
     TimeBar timeBar = new TimeBar();
+
     Border libraryBorder = new LineBorder(Color.GREEN);
     JPanel leftPanel = new JPanel(new BorderLayout());
     JViewport layerHeaderViewPort = new JViewport();
@@ -346,6 +351,7 @@ public final class ScoreTopComponent extends TopComponent
             tempoEditor.setTempo(tempo);
 
             timeBar.setData(data);
+            markersBar.setData(data);
 
             this.data.addPropertyChangeListener(this);
 
@@ -480,7 +486,7 @@ public final class ScoreTopComponent extends TopComponent
             GUI.centerOnScreen(dialog);
             dialog.setVisible(true);
         });
-        manageButton.setPreferredSize(new Dimension(100, 20));
+        manageButton.setPreferredSize(new Dimension(100, 40));
 
         JPanel bottomHeaderPanel = new JPanel();
         bottomHeaderPanel.setPreferredSize(new Dimension(100, 14));
@@ -508,7 +514,20 @@ public final class ScoreTopComponent extends TopComponent
         headerPanel.setBackground(Color.BLACK);
 
         headerPanel.add(tempoEditor, BorderLayout.CENTER);
-        headerPanel.add(timeBar, BorderLayout.SOUTH);
+
+        // TIMELINE BARS
+//        timelineBars.setLayout(new BoxLayout(timelineBars, BoxLayout.Y_AXIS));
+//        timelineBars.add(markersBar);
+//        timelineBars.add(timeBar);
+        timelineBars.setLayout(new BorderLayout());
+        timelineBars.add(markersBar, BorderLayout.NORTH);        
+        timelineBars.add(timeBar, BorderLayout.SOUTH);
+        
+
+        markersBar.setPreferredSize(new Dimension(100, 20));
+        timeBar.setPreferredSize(new Dimension(100, 20));
+
+        headerPanel.add(timelineBars, BorderLayout.SOUTH);
 
         tempoEditor.addComponentListener(new ComponentAdapter() {
             @Override
@@ -584,11 +603,11 @@ public final class ScoreTopComponent extends TopComponent
             public void componentResized(ComponentEvent e) {
                 int newHeight = layerPanel.getHeight();
 
-                Dimension d = new Dimension(layerPanel.getWidth(), 20);
-                timeBar.setMinimumSize(d);
-                timeBar.setPreferredSize(d);
-                timeBar.setSize(d);
-                timeBar.repaint();
+                Dimension d = new Dimension(layerPanel.getWidth(), 40);
+                timelineBars.setMinimumSize(d);
+                timelineBars.setPreferredSize(d);
+                timelineBars.setSize(d);
+                timelineBars.repaint();
 
                 scorePanel.setSize(layerPanel.getSize());
                 scorePanel.setPreferredSize(layerPanel.getSize());
@@ -669,13 +688,13 @@ public final class ScoreTopComponent extends TopComponent
         if (x > 0) {
             var scrollX = scrollPane.getHorizontalScrollBar().getValue();
             var w = scrollPane.getViewport().getWidth();
-                        
-            final int newX = (x < scrollX || x > scrollX + w) ? 
-                    Math.max(0, x - 40) :
-                    -1;
-                    
-            if(newX >= 0) {
-            Runnable runner = () -> scrollPane.getHorizontalScrollBar().setValue(newX);
+
+            final int newX = (x < scrollX || x > scrollX + w)
+                    ? Math.max(0, x - 40)
+                    : -1;
+
+            if (newX >= 0) {
+                Runnable runner = () -> scrollPane.getHorizontalScrollBar().setValue(newX);
                 if (!SwingUtilities.isEventDispatchThread()) {
                     SwingUtilities.invokeLater(runner);
                 } else {
@@ -690,13 +709,13 @@ public final class ScoreTopComponent extends TopComponent
         if (x > 0) {
             var scrollX = scrollPane.getHorizontalScrollBar().getValue();
             var w = scrollPane.getViewport().getWidth();
-                        
-            final int newX = (x < scrollX || x > scrollX + w) ? 
-                    Math.max(0, x - w + 40) :
-                    -1;
-                    
-            if(newX >= 0) {
-            Runnable runner = () -> scrollPane.getHorizontalScrollBar().setValue(newX);
+
+            final int newX = (x < scrollX || x > scrollX + w)
+                    ? Math.max(0, x - w + 40)
+                    : -1;
+
+            if (newX >= 0) {
+                Runnable runner = () -> scrollPane.getHorizontalScrollBar().setValue(newX);
                 if (!SwingUtilities.isEventDispatchThread()) {
                     SwingUtilities.invokeLater(runner);
                 } else {
@@ -874,6 +893,8 @@ public final class ScoreTopComponent extends TopComponent
             tempoControlPanel.setVisible(true);
             timeBar.setRootTimeline(true);
             timeBar.setTimeState(timeState);
+            markersBar.setRootTimeline(true);
+            markersBar.setTimeState(timeState);
             timeProperties.setTimeState(timeState);
             mouseWheelListener.setTimeState(timeState);
 
@@ -946,6 +967,8 @@ public final class ScoreTopComponent extends TopComponent
             tempoControlPanel.setVisible(true);
             timeBar.setRootTimeline(false);
             timeBar.setTimeState(timeState);
+            markersBar.setRootTimeline(false);
+            markersBar.setTimeState(timeState);
             timeProperties.setTimeState(timeState);
             mouseWheelListener.setTimeState(timeState);
 

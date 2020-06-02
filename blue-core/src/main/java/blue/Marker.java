@@ -66,8 +66,7 @@ public class Marker implements Comparable<Marker> {
 
         this.time = time;
 
-        PropertyChangeEvent pce = new PropertyChangeEvent(this, "time",
-                new Double(oldVal), new Double(time));
+        PropertyChangeEvent pce = new PropertyChangeEvent(this, "time", oldVal, time);
 
         firePropertyChangeEvent(pce);
     }

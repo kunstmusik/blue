@@ -47,6 +47,10 @@ public class MarkersList implements TableModel, PropertyChangeListener {
             markers.add(new Marker(marker));
         }
     }
+    
+    public boolean contains(Marker m) {
+        return markers.contains(m);
+    }
 
     public void addMarker(double time) {
         String name = "Marker" + (markers.size() + 1);

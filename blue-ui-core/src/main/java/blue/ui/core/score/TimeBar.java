@@ -20,8 +20,6 @@
 package blue.ui.core.score;
 
 import blue.BlueData;
-import blue.Marker;
-import blue.MarkersList;
 import blue.score.TimeState;
 import blue.services.render.RenderTimeManager;
 import blue.services.render.RenderTimeManagerListener;
@@ -40,26 +38,22 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.LookAndFeel;
 import javax.swing.SwingUtilities;
-import javax.swing.ToolTipManager;
 import javax.swing.UIManager;
-import javax.swing.event.TableModelEvent;
-import javax.swing.event.TableModelListener;
 import org.openide.util.Lookup;
 
 /**
  * Title: blue (Object Composition Environment) Description: Copyright:
  * Copyright (c) steven yi Company: steven yi music
- * 
+ *
  * @author steven yi
  * @version 1.0
  */
 public final class TimeBar extends JPanel implements
-        PropertyChangeListener, TableModelListener, RenderTimeManagerListener {
+        PropertyChangeListener, RenderTimeManagerListener {
 
     private static final Font LABEL_FONT = new Font("dialog", Font.PLAIN, 11);
-    
-    // BufferedImage bufferedImage;
 
+    // BufferedImage bufferedImage;
     // Image image;
     private BlueData data;
 
@@ -70,18 +64,17 @@ public final class TimeBar extends JPanel implements
     private double renderStart = 0.0f;
 
     private double timePointer = 0.0f;
-    
+
     private boolean rootTimeline = true;
 
-    RenderTimeManager renderTimeManager = 
-                Lookup.getDefault().lookup(RenderTimeManager.class);
-    
+    RenderTimeManager renderTimeManager
+            = Lookup.getDefault().lookup(RenderTimeManager.class);
+
     public TimeBar() {
         this.setDoubleBuffered(true);
         this.setLayout(null);
 
         // this.add(playMarker);
-
         this.addMouseListener(new MouseAdapter() {
 
             int start;
@@ -98,22 +91,16 @@ public final class TimeBar extends JPanel implements
                     start = 0;
                 }
 
-                
                 double time = (double) start / timeState.getPixelSecond();
-                
+
                 if (timeState.isSnapEnabled() && !e.isShiftDown()) {
                     time = Math.round(time / timeState.getSnapValue()) * timeState.getSnapValue();
                 }
 
-              
-
                 if (SwingUtilities.isLeftMouseButton(e)) {
-                    if (e.isShiftDown() && rootTimeline) {
-                        data.getMarkersList().addMarker(time);
 
-                    } else {
-                        data.setRenderStartTime(time);
-                    }
+                    data.setRenderStartTime(time);
+
                 } else if (UiUtilities.isRightMouseButton(e)) {
                     data.setRenderEndTime(time);
                 }
@@ -141,7 +128,7 @@ public final class TimeBar extends JPanel implements
                 if (start < 0) {
                     start = 0;
                 }
-                
+
                 double time = (double) start / timeState.getPixelSecond();
 
                 if (timeState.isSnapEnabled() && !e.isShiftDown()) {
@@ -158,18 +145,17 @@ public final class TimeBar extends JPanel implements
             }
         });
 
-        
         renderTimeManager.addPropertyChangeListener(this);
         renderTimeManager.addRenderTimeManagerListener(this);
     }
 
     @Override
     public void paintComponent(Graphics g) {
-        
-        Graphics2D g2d = (Graphics2D)g;
+
+        Graphics2D g2d = (Graphics2D) g;
         Paint p = g2d.getPaint();
-        g2d.setPaint(BlueGradientFactory.getGradientPaint(getBackground()));        
-        g2d.fillRect(0,0, getWidth(), getHeight());
+        g2d.setPaint(BlueGradientFactory.getGradientPaint(getBackground()));
+        g2d.fillRect(0, 0, getWidth(), getHeight());
         g2d.setPaint(p);
 
         if (timeState == null || this.getHeight() == 0 || this.getWidth() == 0) {
@@ -229,10 +215,10 @@ public final class TimeBar extends JPanel implements
 //        if(lnf instanceof MetalLookAndFeel) {
 //            g.setColor(((MetalLookAndFeel)lnf).getPrimaryControl());
 //        } else {
-          g.setColor(getForeground());
+        g.setColor(getForeground());
 //        g.setColor(Color.WHITE);
 //        }
-        
+
         int startX = bounds.x;
         int endX = startX + bounds.width;
 
@@ -244,7 +230,6 @@ public final class TimeBar extends JPanel implements
 
 //        int longHeight = (int) (h * .5);
 //        int shortHeight = (int) (h * .75);
-        
         int longHeight = h - 6;
         int shortHeight = h - 3;
 
@@ -300,13 +285,11 @@ public final class TimeBar extends JPanel implements
     public void setData(BlueData data) {
         if (this.data != null) {
             this.data.removePropertyChangeListener(this);
-            this.data.getMarkersList().removeTableModelListener(this);
         }
 
         this.data = data;
 
         data.addPropertyChangeListener(this);
-        data.getMarkersList().addTableModelListener(this);
 
         // FIXME - should be using Score object
         //setPolyObject(data.getPolyObject());
@@ -314,15 +297,9 @@ public final class TimeBar extends JPanel implements
 
     }
 
-    public boolean isRootTimeline() {
-        return rootTimeline;
-    }
-
     public void setRootTimeline(boolean rootTimeline) {
         this.rootTimeline = rootTimeline;
     }
-    
-    
 
     /**
      * @param timeState
@@ -332,53 +309,19 @@ public final class TimeBar extends JPanel implements
             this.timeState.removePropertyChangeListener(this);
         }
 
-        Component[] components = getComponents();
-
         this.removeAll();
-
-        for (Component component : components) {
-            if (component instanceof PlayMarker) {
-                ((PlayMarker) component).cleanup();
-            }
-        }
-
 
         this.timeState = timeState;
 
-        if (rootTimeline) {
-            initializeMarkers();
-        }
-
-        
         this.timeState.addPropertyChangeListener(this);
 
         // updateBuffer();
         repaint();
     }
 
-    private void initializeMarkers() {
-        if (data == null) {
-            return;
-        }
-
-        MarkersList markers = data.getMarkersList();
-
-        for (int i = 0; i < markers.size(); i++) {
-            Marker m = markers.getMarker(i);
-            PlayMarker pm = new PlayMarker(m);
-
-            int x = (int) (m.getTime() * timeState.getPixelSecond());
-
-            pm.setLocation(x, 0);
-
-            this.add(pm);
-        }
-    }
-
     private void checkScroll(Point p) {
 
-        JScrollPane scrollPane = (JScrollPane) this.getParent().getParent().
-                getParent();
+        JScrollPane scrollPane = UiUtilities.findParentScrollPane(this);
 
         Point newPoint = new Point(p.x,
                 scrollPane.getViewport().getViewPosition().y);
@@ -407,18 +350,6 @@ public final class TimeBar extends JPanel implements
                     equals("pixelSecond")) {
                 // updateBuffer();
 
-                if (rootTimeline) {
-                    Component[] components = getComponents();
-                    this.removeAll();
-
-                    for (Component component : components) {
-                        if (component instanceof PlayMarker) {
-                            ((PlayMarker) component).cleanup();
-                        }
-                    }
-                    this.initializeMarkers();
-                }
-
                 repaint();
             }
         } else if (evt.getSource() == renderTimeManager) {
@@ -426,29 +357,7 @@ public final class TimeBar extends JPanel implements
                 this.renderStart = ((Double) evt.getNewValue()).doubleValue();
                 this.timePointer = -1.0f;
                 repaint();
-            } 
-//            else if (prop.equals(RenderTimeManager.TIME_POINTER)) {
-//                this.timePointer = ((Double) evt.getNewValue()).doubleValue();
-//                repaint();
-//            }
-        }
-    }
-
-    @Override
-    public void tableChanged(TableModelEvent e) {
-        if (e.getType() == TableModelEvent.DELETE ||
-                e.getType() == TableModelEvent.INSERT) {
-            Component[] components = getComponents();
-            this.removeAll();
-
-            for (Component component : components) {
-                if(component instanceof PlayMarker) {
-                    ((PlayMarker)component).cleanup();
-                }
             }
-
-            this.initializeMarkers();
-            this.repaint();
         }
     }
 
@@ -466,125 +375,4 @@ public final class TimeBar extends JPanel implements
         repaint();
     }
 
-    class PlayMarker extends JComponent implements PropertyChangeListener {
-
-        int w = 10;
-
-        int h = 10;
-
-        int[] xPoints = {0, 0, w};
-
-        int[] yPoints = {0, h, 0};
-
-        private Marker marker;
-
-        private int originX = -1;
-
-        public PlayMarker(Marker marker) {
-            ToolTipManager.sharedInstance().registerComponent(this);
-
-            Dimension d = new Dimension(10, 11);
-
-            this.setSize(d);
-
-            this.marker = marker;
-
-            marker.addPropertyChangeListener(this);
-
-            this.addMouseListener(new MouseAdapter() {
-
-                @Override
-                public void mousePressed(MouseEvent e) {
-                    originX = e.getX();
-                }
-
-                @Override
-                public void mouseReleased(MouseEvent e) {
-                    originX = -1;
-                    if (!PlayMarker.this.isVisible()) {
-                        data.getMarkersList().removeMarker(
-                                PlayMarker.this.marker);
-                        cleanup();
-                    }
-                }
-            });
-
-            this.addMouseMotionListener(new MouseMotionAdapter() {
-
-                @Override
-                public void mouseDragged(MouseEvent e) {
-                    if (originX >= 0) {
-                        PlayMarker playMarker = PlayMarker.this;
-
-                        Container parent = playMarker.getParent();
-
-                        Point p = SwingUtilities.convertPoint(playMarker, e.
-                                getPoint(), parent);
-
-                        int newX = p.x - originX;
-
-                        if (newX < 0) {
-                            newX = 0;
-                        }
-
-                        if (p.y > parent.getHeight()) {
-                            PlayMarker.this.setVisible(false);
-                            return;
-                        }
-
-                        PlayMarker.this.setVisible(true);
-
-                        double newTime = (double) newX / timeState.getPixelSecond();
-
-                        playMarker.setLocation(newX, 0);
-                        playMarker.marker.setTime(newTime);
-
-                        checkScroll(p);
-
-                    }
-                }
-            });
-        }
-
-        @Override
-        public String getToolTipText() {
-            return marker.getName() + " [" + marker.getTime() + "]";
-        }
-
-        @Override
-        public void paintComponent(Graphics g) {
-
-            Graphics2D g2d = (Graphics2D) g;
-
-            BasicStroke stroke = new BasicStroke(2, BasicStroke.CAP_ROUND,
-                    BasicStroke.JOIN_ROUND);
-            g2d.setStroke(stroke);
-
-            g2d.setColor(Color.ORANGE.brighter().brighter());
-            g2d.fillPolygon(xPoints, yPoints, 3);
-
-            g2d.setColor(Color.ORANGE);
-            g2d.drawPolygon(xPoints, yPoints, 3);
-
-        }
-
-        @Override
-        public void propertyChange(PropertyChangeEvent evt) {
-            if (evt.getSource() == marker) {
-                if (evt.getPropertyName().equals("time")) {
-                    double time = ((Double) evt.getNewValue()).doubleValue();
-                    int x = (int) (timeState.getPixelSecond() * time);
-
-                    this.setLocation(x, 0);
-                }
-            }
-        }
-
-        public void cleanup() {
-            if(marker != null) {
-                marker.removePropertyChangeListener(this);
-            }
-            marker = null;
-        }
-    }
 }
