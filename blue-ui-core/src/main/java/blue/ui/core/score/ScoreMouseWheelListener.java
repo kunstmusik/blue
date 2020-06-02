@@ -55,7 +55,7 @@ public class ScoreMouseWheelListener implements MouseWheelListener {
 
     @Override
     public void mouseWheelMoved(MouseWheelEvent e) {
-
+        e.getComponent().requestFocus();
         //int shortcutKey = BlueSystem.getMenuShortcutKey();
         if (e.isAltDown()) {
 
