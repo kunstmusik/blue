@@ -22,15 +22,11 @@ package blue.ui.core.score.layers.soundObject;
 import blue.BlueData;
 import blue.SoundLayer;
 import blue.SoundLayerListener;
-import blue.projects.BlueProjectManager;
 import blue.score.TimeState;
 import blue.score.layers.LayerGroupDataEvent;
 import blue.score.layers.LayerGroupListener;
 import blue.soundObject.PolyObject;
 import blue.soundObject.SoundObject;
-import blue.ui.core.score.ModeListener;
-import blue.ui.core.score.ModeManager;
-import blue.ui.core.score.ScoreController;
 import blue.ui.core.score.ScoreObjectView;
 import blue.ui.core.score.layers.LayerGroupPanel;
 import blue.ui.core.score.layers.SelectionMarquee;
@@ -165,9 +161,8 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
             double startTime = sObj.getStartTime();
 
             Object[] args = {sObj.getName(),
-                ObjectUtilities.getShortClassName(sObj),
-                new Double(startTime), new Double(subjectiveDuration),
-                new Double(startTime + subjectiveDuration)};
+                ObjectUtilities.getShortClassName(sObj), startTime, 
+                subjectiveDuration, startTime + subjectiveDuration};
 
             tip = toolTipFormat.format(args);
         }

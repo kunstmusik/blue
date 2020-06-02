@@ -23,6 +23,8 @@ NEW
   * G - move to render start time (green line) (Issue #471)
   * Y - move to render end time (yellow line)  (issue #471)
   * Alt-S - toggle snap (Issue #492)
+  * [ - navigate to previous marker (or start of project)
+  * ] - navigate to next marker (or end of project)
 
 UPDATED
 
@@ -52,6 +54,10 @@ upgrade to Java 11 for 2.8.0.
   mouse but start y-value on current line. Moving is relative to the point's 
   initial y-value. Works in conjunction with ctrl-dragging to restrict value 
   change along one axis.
+
+* Issue #507: Navigation to previous/next marker now scrolls score view to 
+  location marker. Keyboard shortcut for [ and ] added. Will navigate to end 
+  or beginning of score once past all markers.
 
 FIX
 

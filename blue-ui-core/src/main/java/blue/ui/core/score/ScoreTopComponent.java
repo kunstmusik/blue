@@ -57,7 +57,6 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -520,9 +519,8 @@ public final class ScoreTopComponent extends TopComponent
 //        timelineBars.add(markersBar);
 //        timelineBars.add(timeBar);
         timelineBars.setLayout(new BorderLayout());
-        timelineBars.add(markersBar, BorderLayout.NORTH);        
+        timelineBars.add(markersBar, BorderLayout.NORTH);
         timelineBars.add(timeBar, BorderLayout.SOUTH);
-        
 
         markersBar.setPreferredSize(new Dimension(100, 20));
         timeBar.setPreferredSize(new Dimension(100, 20));
@@ -681,6 +679,25 @@ public final class ScoreTopComponent extends TopComponent
 
     void readProperties(java.util.Properties p) {
         String version = p.getProperty("version");
+    }
+
+    /**
+     * Use to scroll view to time (e.g., navigating to markers).Will pad view
+     * with 12.5% of viewable width.
+     *
+     * @param beatTime
+     */
+    public void scrollToTime(double beatTime) {
+        final var x = (int) (beatTime * data.getScore().getTimeState().getPixelSecond());
+        var w = scrollPane.getViewport().getWidth();
+        final var newX = Math.max(0, x - (w / 8));
+
+        Runnable runner = () -> scrollPane.getHorizontalScrollBar().setValue(newX);
+        if (!SwingUtilities.isEventDispatchThread()) {
+            SwingUtilities.invokeLater(runner);
+        } else {
+            runner.run();
+        };
     }
 
     public void scrollToRenderStartPointer() {

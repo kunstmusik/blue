@@ -26,6 +26,8 @@ import blue.services.render.RenderTimeManager;
 import blue.services.render.RenderTimeManagerListener;
 import blue.settings.PlaybackSettings;
 import blue.ui.core.render.RealtimeRenderManager;
+import blue.ui.core.score.object.actions.NavigateToNextMarkerAction;
+import blue.ui.core.score.object.actions.NavigateToPreviousMarkerAction;
 import blue.utility.NumberUtilities;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
@@ -398,8 +400,11 @@ public class MainToolBar extends JToolBar implements PlayModeListener,
         }
     }
 
+    // TODO: This code has been duplicated to NavigateToNextMarkerAction
+    // When this toolbar is rewritten, reuse the above action and get rid of
+    // this code
     class NextMarkerAction extends AbstractAction {
-
+        NavigateToNextMarkerAction delegate = new NavigateToNextMarkerAction();
         public NextMarkerAction() {
             super("Go to Next Marker");
 
@@ -413,33 +418,15 @@ public class MainToolBar extends JToolBar implements PlayModeListener,
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            double startTime = data.getRenderStartTime();
-
-            MarkersList markers = data.getMarkersList();
-
-            Marker selected = null;
-
-            for (int i = 0; i < markers.size(); i++) {
-                Marker a = markers.getMarker(i);
-
-                if (a.getTime() > startTime) {
-                    selected = a;
-                    break;
-                }
-            }
-
-            if (selected == null) {
-                return;
-            }
-
-            double newStartTime = selected.getTime();
-
-            data.setRenderStartTime(newStartTime);
-
+            delegate.actionPerformed(e);
         }
     }
 
+    // TODO: This code has been duplicate to NavigateToPreviousMarkerAction
+    // When this toolbar is rewritten, reuse the above action and get rid of
+    // this code
     class PreviousMarkerAction extends AbstractAction {
+        NavigateToPreviousMarkerAction delegate = new NavigateToPreviousMarkerAction();
 
         public PreviousMarkerAction() {
             super("Go to Previous Marker");
@@ -454,27 +441,7 @@ public class MainToolBar extends JToolBar implements PlayModeListener,
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            double startTime = data.getRenderStartTime();
-            double newStartTime = 0.0f;
-
-            MarkersList markers = data.getMarkersList();
-
-            Marker selected = null;
-
-            for (int i = markers.size() - 1; i >= 0; i--) {
-                Marker a = markers.getMarker(i);
-
-                if (a.getTime() < startTime) {
-                    selected = a;
-                    break;
-                }
-            }
-
-            if (selected != null) {
-                newStartTime = selected.getTime();
-            }
-
-            data.setRenderStartTime(newStartTime);
+            delegate.actionPerformed(e);
         }
     }
 }
