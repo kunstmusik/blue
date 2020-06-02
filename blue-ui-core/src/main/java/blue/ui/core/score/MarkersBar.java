@@ -26,7 +26,6 @@ import blue.score.TimeState;
 import blue.ui.utilities.UiUtilities;
 import java.awt.BasicStroke;
 import java.awt.Color;
-import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Point;
@@ -37,7 +36,6 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import javax.swing.AbstractAction;
 import javax.swing.BorderFactory;
-import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
@@ -74,7 +72,7 @@ public class MarkersBar extends JPanel implements PropertyChangeListener, TableM
 
             @Override
             public void mousePressed(MouseEvent e) {
-
+                
                 if (!rootTimeline) {
                     return;
                 }
