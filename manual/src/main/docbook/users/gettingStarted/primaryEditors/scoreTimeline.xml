@@ -393,13 +393,13 @@
     <title>Score Bar</title>
 
     <para>
-      the poly object bar (shown above with only one polyObject, "root") shows
-      what polyObject you are currently editting. if you were to add a
-      polyObject named "phrase 1" to the main timeline shown above, then double
-      click that polyObject to edit it, the polyObject bar would have two
+      The PolyObject bar (shown above with only one PolyObject, "root") shows
+      what PolyObject you are currently editing. if you were to add a
+      PolyObject named "phrase 1" to the main timeline shown above, then double
+      click that PolyObject to edit it, the PolyObject bar would have two
       buttons on it, one for "root", and one for "phrase 1". you would then be
-      editting "phrase 1"'s timeline. by clicking on the "root" button of the
-      timeline, you would then return out of the polyObject's timeline and back
+      editing "phrase 1"'s timeline. by clicking on the "root" button of the
+      timeline, you would then return out of the PolyObject's timeline and back
       in the root's timeline.
     </para>
 
@@ -410,14 +410,14 @@
     <title>SoundLayer Editor</title>
 
     <para>
-      Below the polyObject bar on the left, you will see the soundLayer edittor.
+      Below the polyObject bar on the left, you will see the soundLayer editor.
       here you can change the name of the soundLayer, as well as mute the layer
       (all soundObject's on muted layers will not be used to generate notes when
       creating .CSD files).
     </para>
 
     <para>
-      on the bottom of the soundLayer edittor are four buttons, "^", "V", "+",
+      on the bottom of the soundLayer editor are four buttons, "^", "V", "+",
       and "-". "^" and "V" will push up or push down soundLayers. (HINT: You can
       move multiple soundLayers by clicking on one soundLayer, then holding down
       shift and clicking on the last of the soundLayers you want to move, then
@@ -435,7 +435,7 @@
 
     <para>
       Below the polyObject bar on the right is the main time line. it shows the
-      time line for the currently editted polyObject. The +/- buttons
+      time line for the currently edited polyObject. The +/- buttons
       next to the scrollbars are used to zoom in on the time line, and those
       settings will be maintained between work sessions.
     </para>
@@ -654,6 +654,37 @@
           <row>
             <entry>3</entry>
             <entry>switch to Multi Line mode</entry>
+          </row>
+
+          <row>
+            <entry>space</entry>
+            <entry>Start/stop rendering of project</entry>
+          </row>
+
+          <row>
+            <entry>space</entry>
+            <entry></entry>
+          </row>
+
+          <row>
+            <entry>G</entry>
+            <entry>Scroll score view to location of render start time (green line)</entry>
+          </row>
+          <row>
+            <entry>Y</entry>
+            <entry>Scroll score view to location of render end time (yellow line)</entry>
+          </row>
+          <row>
+            <entry>Alt-S</entry>
+            <entry>Toggle Snap</entry>
+          </row>
+          <row>
+            <entry>[</entry>
+            <entry>Set render start time to previous marker (or beginning of project) and scroll view to new time</entry>
+          </row>
+          <row>
+            <entry>]</entry>
+            <entry>Set render start time to next marker (or end of project) and scroll view to new time</entry>
           </row>
 
         </tbody>

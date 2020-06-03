@@ -167,11 +167,26 @@
     </para>
 
     <para>
+      To manipulate data for a single automation, use shift-drag to select a region of the automation 
+      data. Once selected you can ctrl-c to copy and ctrl-click to paste that data. You can also 
+      drag the selection to move the region or drag at the edges to scale the automation data. ctrl-z 
+      may be used to undo the above changes. 
+    </para>
+
+    <para>
       For finer control over the line points, right-click on the parameter line
       panel when not over an existing line point. A popup menu will appear and
       select "Edit Line Points". A dialog showing a table of line points with
       time values in one column and parameter values in a second column. The
       user can then enter in values by text entry.
+    </para>
+
+    <para>For changes of automation data for an entire layer or set of layers, use multi-line mode. 
+    This will alow you to select, copy/paste, drag, and resize automation data.  If shift is used when 
+    making a selection, it will also select underlying ScoreObjects. This will allow you to move both 
+    automation and ScoreObject data together. If you the selected region completely contains ScoreObjects 
+    (i.e., no part of any selected ScoreObjects extend outside of the region) you can also scale the 
+    automation and ScoreObject data together.
     </para>
 
   </section>
