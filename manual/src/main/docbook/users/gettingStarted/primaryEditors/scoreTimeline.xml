@@ -167,11 +167,11 @@
         which will let you add a soundObject to the soundObject library(only the
         one clicked on), convert soundObjects into a polyObject(any selected
         soundObjects), convert a soundObject into a genericScore soundObject, or
-        cut/paste/remove. Converting to a polyObject is useful if you're editting
+        cut/paste/remove. Converting to a polyObject is useful if you're editing
         on a time line and decide you'd like to group the soundObjects together to
         handle them as a single soundObject. Converting to a genericScore is
         useful if you're working with a soundObject that isn't a genericScore and
-        want to start editting it as a genericScore.
+        want to start editing it as a genericScore.
       </para> -->
     </simplesect>
     

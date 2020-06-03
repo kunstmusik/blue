@@ -5,7 +5,7 @@
     <title>Requirements</title>
 
     <para>
-      Blue requires a Java 8 (also known as 1.8) or greater JVM (Java Virtual 
+      Blue requires Java 11 or greater JVM (Java Virtual 
       Machine) to be installed on your system, as well as Csound. Java 
       installations usually come in two flavors: a JRE (Java Runtime Environment)
       which contains just a JVM for running applications, and a JDK (Java Development
@@ -22,45 +22,18 @@
       Machine. 
     </para>
 
-    <para>If you do not have Java installed, you can install the Oracle JDK 
-      available at:
+    <para>If you do not have Java installed, the recommended JDK to install is 
+      AdoptOpenJDK, available at:
     </para>
 
     <para>
-        <ulink url="http://java.oracle.com">http://java.oracle.com</ulink>
+        <ulink url="https://adoptopenjdk.net/">https://adoptopenjdk.net/</ulink>
     </para>
 
     <para>
-      On this page, look for the download link for Java SE and choose the JDK
-      download for your platform. Be sure to choose the version of JDK that 
-      matches your CPU type and Csound version (choose 64-bit if in doubt).
+      On this page, look for the download link for your platform. Be sure to choose 
+      the version of JDK that matches your CPU type and Csound version (choose 64-bit if in doubt).
     </para>
-
-    <para>
-      Blue also works with OpenJDK versions of Java. These are pure open-source
-      versions of Java that are often available through package managers on Linux.
-      If you do use an OpenJDK version of Java, be sure to install JavaFX, a UI
-      toolkit for Java that is often packaged separately from the main OpenJDK
-      package.  (Installing the Oracle JDK will include JavaFX automatically.)
-    </para>
-
-    <simplesect id="javaDebianInstall">
-      <title>Debian/Ubuntu Notes</title>
-
-      <para>
-        If you are using Debian, Ubuntu, or a Linux distribution based upon one
-        of those, be sure that you have JavaFX installed with Java.  (If you hava Java
-        installed but not JavaFX, you will find that Blue will open but an error happens 
-        during startup and a blank screen shows.)  If you
-        have OpenJDK Java installed, you can try running the command "sudo apt
-        install openjfx" to install JavaFX and then try running Blue.</para>
-
-      <para>
-        If that does not work, you should try installing Oracle Java.  This can be done
-        by using apt together with a PPA. Complete instructions are given 
-        <ulink url="http://www.webupd8.org/2012/09/install-oracle-java-8-in-ubuntu-via-ppa.html">here</ulink>.
-      </para>
-    </simplesect>
 
   </section>
 
@@ -68,15 +41,15 @@
     <title>Installing Blue</title>
 
     <para>
-      To install Blue, you should download the latest ZIP file or DMG from
+      To install Blue, you should download the latest ZIP file from
       the Blue releases page
       <ulink url="https://github.com/kunstmusik/blue/releases">here</ulink>. 
-      For OSX users, download the DMG file which contains a Blue.app.  You can 
+      For macOS users, download the macOS zip file which contains Blue.app.  You can 
       double-click the Application to run, as well as copy it to your 
       Applications folder to install it.</para>
 
     <para> 
-      For Linux and Windows users, download the ZIP file and unzip it.  Inside
+      For Linux and Windows users, download the appropriate zip file and unzip it.  Inside
       of the bin folder you will see a "blue" script for Linux or a
       "blue64.exe" file for use on Windows. (A 32-bit version, "blue.exe", is
       also included for those using an older version of Csound that is compiled
@@ -94,7 +67,7 @@
       <para>The section below has notes for individual platforms.</para>
 
       <simplesect>
-        <title>Mac OSX</title>
+        <title>macOS</title>
 
         <para>
           Blue uses the right mouse click often to show popup menus. If you do
@@ -111,22 +84,6 @@
  
       </simplesect>
       
-      <simplesect>
-        <title>Linux</title>
-
-        <para>
-          For 64-bit systems, you may run into issues when running Blue with
-          the API enabled where modifying widget values is not reflected in
-          performance. This is likely due to the Csound Java API being compiled
-          with SWIG &lt; 2.0. For example, some older versions of Csound in
-          Debian for amd64 is compiled with SWIG 1.3.0 and does not work with
-          Blue.  To work around this, you can install a newer version of Csound
-          if available (i.e. from a testing repo), or compile Csound yourself
-          and ensure you are using SWIG version 2.0 or greater. 
-        </para>
-
-      </simplesect>
-
     </section>
 
   </section>
@@ -181,7 +138,7 @@
         the ability to manipulate and edit widget values and automations
         in realtime during a render, as well as the ability to use BlueLive on 
         Windows.  Because of its enhancement to the user-experience while 
-        rendering and composing, it is now the preferred method of using Blue
+        rendering and composing, it is the preferred method of using Blue
         with Csound.  Blue should work out-of-the-box with the API if Csound is
         installed using the installers provided on Github, or installed
         via a package manager if on Linux.  
@@ -191,7 +148,7 @@
         <title>Note</title>
         <para>Blue currently
         only works with the API if the version of Csound used is compiled
-        using 64-bit doubles.  (The float version is not currently supported 
+        using 64-bit doubles.  (The float version is not supported 
         when using the API.)  There are technical difficulties in supporting
         two different versions of Csound API in the same build and it is not
         known if or when the float build will be supported.  For users 
@@ -213,12 +170,10 @@
       </note>
           
       <para>
-        The Java API for Csound is split into two parts: the csnd6.jar file as 
-        well as the lib_jcsound6.so native library (this file is called
-        _jcsound6.dll on Windows, and lib_jcsound6.jnilib on Mac OSX). Blue comes 
-        with its own copy of csnd6.jar; to use the API from Blue it will need 
-        to have access to the native library to work. If the API is not enabled
-        for use out-of-the-box, the following explains how to setup the API on 
+        Blue uses the CsoundJNI Java binding for Csound. This requires that Blue 
+        can find your installed version of Csound but is configured to do so for standard 
+        Csound installations. If the API is not enabled
+        when starting Blue, the following explains how to setup the API on 
         different platforms.
       </para>
     
@@ -228,17 +183,15 @@
         <para>Users using the Windows Installer for Csound should use the 
           double precision version from Github. (This is the default.) After 
           installing, the installer should setup everything such that Blue 
-          should work with the API. If for some reason it is unable to do so, or 
-          you have compiled Csound yourself and the location of jcsound6.dll is 
-          different from where it is installed with the installer, you can 
-          modify the Blue/etc/Blue.conf file to tell Blue where to find the 
-          _jcsound6.dll. For example, if the directory where jcsound6.dll is 
-          located is in c:\myCsound, open up Blue/etc/Blue.conf and modify the 
+          should work with the API. If for some reason it is unable to do so, you can 
+          modify the blue/etc/blue.conf file to tell Blue where to find the 
+          csound64.dll. For example, if the directory where csound64.dll is 
+          located is in c:\myCsound, open up blue/etc/blue.conf and modify the 
           default so that it contains:
         </para>
         
         <programlisting>
-default_options="--branding Blue -J-Xms256m -J-Xmx768m -J-Djava.library.path=c:/myCsound"
+default_options="--branding blue -J-Xms256m -J-Xmx768m -J-Djava.library.path=c:/myCsound"
         </programlisting>
       </simplesect>
       
@@ -248,29 +201,26 @@ default_options="--branding Blue -J-Xms256m -J-Xmx768m -J-Djava.library.path=c:/
         <para>
           Linux users should install a doubles version of Csound. The version of 
           Csound found in package repositories should be one compiled for 
-          doubles. After installing Csound and the Java interface for Csound,
-          locate where lib_jcsound6.so is and modify the Blue/bin/Blue file. 
+          doubles. After installing Csound, modify the blue/bin/blue file. 
           Search for the lines that contain "-J-Djava.library.path=/usr/lib/jni"
           and modify /usr/lib/jni (the default for Debian/Ubuntu-based systems)
-          to the directory where lib_jcsound.so is located.
+          to the directory where libcsound64.so is located.
         </para>
       </simplesect>
       
       <simplesect>
-        <title>Mac OSX</title>
+        <title>macOS</title>
         
-        <para>Mac OSX users should use the installer for Csound from 
-          Github. The installer should install both the float and doubles 
-          version of Csound. The lib_jcsound.jnilib will be installed into
-          /Library/Java/Extensions.  If you are compiling your own version of 
-          Csound, you can remove the symlink in /Library/Java/Extensions and 
-          either symlink your your version there or copy it into that folder.
+        <para>macOS users may use the installer for Csound from 
+          Github, install Csound with Homebrew, or self-compile. 
+          CsoundJNI is configured to find CsoundLib64 in all of the above scenarios for default 
+          installations. 
         </para>
             
       </simplesect>
     
       <simplesect>
-        <title>Checking the API is Enabled</title>
+        <title>Checking whether the API is Enabled</title>
         
         <para>
           To check if the API is enabled, open Blue and open up the Program
@@ -281,7 +231,6 @@ default_options="--branding Blue -J-Xms256m -J-Xmx768m -J-Djava.library.path=c:/
           system and Blue was able to find it, it will show a "Csound 6 API"
           option. If the Csound 6 Java API could be loaded, you will only have
           the "Commandline Runner" option which is always available.</para>
-          
       </simplesect>
     
     </section>
