@@ -1,5 +1,0 @@
-Manifest-Version: 1.0
-OpenIDE-Module: csound.manual
-OpenIDE-Module-Localizing-Bundle: csound/manual/Bundle.properties
-OpenIDE-Module-Specification-Version: 1.0
-

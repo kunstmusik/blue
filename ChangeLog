@@ -1,6 +1,6 @@
 blue
 version @VERSION@ - @RELEASE_DATE@
-copyright (c) 2001-2019 Steven Yi - all rights reserved
+copyright (c) 2001-2020 Steven Yi - all rights reserved
 
 email: stevenyi@gmail.com
 web: https://blue.kunstmusik.com
@@ -11,6 +11,77 @@ certain conditions.  Please see the accompanying license.txt file for more
 information.
 
 [CHANGE LOG]
+
+> Notes for 2.8.0 <
+[release 2020.06.03]
+
+NEW
+
+* Score Timeline Shortcuts Added (active when timeline has focus)
+
+  * SPACE - start/stop rendering of project
+  * G - move to render start time (green line) (Issue #471)
+  * Y - move to render end time (yellow line)  (issue #471)
+  * Alt-S - toggle snap (Issue #492)
+  * [ - navigate to previous marker (or start of project)
+  * ] - navigate to next marker (or end of project)
+
+UPDATED
+
+* Blue updated for Java 11. Built and tested against OpenJDK 11.  Users must
+upgrade to Java 11 for 2.8.0.
+
+* Clojure version updated to 1.10.1.
+
+* Issue #449: New implementation Parameter Automation system to allow for better translation
+  and scaling of automation lines in both Single and Multi-line modes
+
+* Implemented undoability for all edits in Single-line and Multi-line mode
+
+* Issue #495: Commit name change for layers when focus lost
+
+* Comment SoundObject bar renderer now respects Color value set in properties
+
+* Issue #402: Added configuration option under General settings for maximum 
+  number of temp files per directory (i.e., temp CSD files); minimum of 1, 
+  default to 3
+
+* Issue #399: Redid zooming on scrollwheel to zoom around mouse location
+
+* Issue #281: Implemented importing of tempos (t-statements) from CSDs
+
+* Issue #388: Automation: added alt-click to insert point at time position of 
+  mouse but start y-value on current line. Moving is relative to the point's 
+  initial y-value. Works in conjunction with ctrl-dragging to restrict value 
+  change along one axis.
+
+* Issue #507: Navigation to previous/next marker now scrolls score view to 
+  location marker. Keyboard shortcut for [ and ] added. Will navigate to end 
+  or beginning of score once past all markers.
+
+FIX
+
+* Score: Selection marquee in single-line mode did not calculate y-position 
+  correctly when multiple Score Layers were present
+
+* Fixed automation panels losing their lines when window configuration changed 
+  (e.g., opening/closing ScoreObject Properties)
+
+* Fixed exception thrown when using AudioLayerGroups with ScoreNavigatorDialog
+
+* Updated ScoreNavigatorDialog to fix issues with repainting, now updates as 
+  score changes
+
+* Fixed issue with multiple mixer strips being added to mixer for project that 
+  is open on first load
+
+* Fixed issue with multiple parameter options shown in popup menu in Single-Line
+  mode for project that is open on first load
+
+* Issue #427: BSB/Effects: Slider banks did not copy properties when cloned
+
+* Issue #444: Fixed Sound SoundObjects not sounding when auditioning
+
 
 > Notes for 2.7.4 <
 [release 2019.07.19]
@@ -44,6 +115,8 @@ UPDATED
 * Issue #441: For automation lines, clean up dead time points (those with same 
   time values as points surrounding them) for different line operations (e.g.,
   dragging points, pasting, dragging)
+
+* Issue #501: BSB Sliders: Expose value field in property editor in edit mode
 
 FIX
 

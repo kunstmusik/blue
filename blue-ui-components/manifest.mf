@@ -1,5 +1,0 @@
-Manifest-Version: 1.0
-OpenIDE-Module: blue.ui.components
-OpenIDE-Module-Localizing-Bundle: blue/ui/components/Bundle.properties
-OpenIDE-Module-Specification-Version: 1.0
-

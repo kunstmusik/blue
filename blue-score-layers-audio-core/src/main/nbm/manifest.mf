@@ -1,0 +1,5 @@
+Manifest-Version: 1.0
+OpenIDE-Module-Layer: blue/score/layers/audio/core/layer.xml
+OpenIDE-Module-Localizing-Bundle: blue/score/layers/audio/core/Bundle.properties
+OpenIDE-Module-Specification-Version: 1.0
+

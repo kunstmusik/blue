@@ -34,4 +34,13 @@ jython/release/*.pyc
 /update_stable.sh
 nb_jr_remoting.cfg
 */cache.properties
-netbeans
+/netbeans
+*/target/
+
+# Maven versions backup files
+*.versionsBackup
+
+# Ignore IDEA project files
+*.iml
+.idea
+/blue-utilities/nbproject/

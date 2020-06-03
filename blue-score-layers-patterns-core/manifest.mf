@@ -1,6 +1,0 @@
-Manifest-Version: 1.0
-OpenIDE-Module: blue.score.layers.patterns.core
-OpenIDE-Module-Layer: blue/score/layers/patterns/core/layer.xml
-OpenIDE-Module-Localizing-Bundle: blue/score/layers/patterns/core/Bundle.properties
-OpenIDE-Module-Specification-Version: 1.0
-

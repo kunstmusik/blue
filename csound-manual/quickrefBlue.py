@@ -11,8 +11,8 @@ import sys
 from categories import categories
 
 if len(sys.argv) != 3:
-    print "Error: Script must be called with 2 arguments"
-    print "Usage: quickrefBlue.py manualRoot fileOutName.xml"
+    print("Error: Script must be called with 2 arguments")
+    print("Usage: quickrefBlue.py manualRoot fileOutName.xml")
     sys.exit(1)
 
 manualRoot = sys.argv[1]
@@ -93,7 +93,7 @@ def createOpcode(opname, txt):
     name = entryText[entryText.find('<command>') + 9 : entryText.find('</command>')]
 
     if len(name) == 0:
-        print ">> COULD NOT CREATE OPCODE <<\n", entryText
+        print(">> COULD NOT CREATE OPCODE <<\n", entryText)
         return None
 
     retVal = Opcode()
@@ -190,7 +190,7 @@ for i,filename in enumerate(files):
     try:
         xmldoc = minidom.parseString(newfile)
     except:
-        print '>>> Failed to parse:', filename
+        print('>>> Failed to parse:', filename)
         continue
 
     xmldocId = xmldoc.documentElement.getAttribute('id')
@@ -247,7 +247,7 @@ for i,filename in enumerate(files):
             for num in range(len(synopsis)):
                 entry.append(synopsis[num].toxml())
         else:
-            print "no synopsis tag for file: " + filename
+            print("no synopsis tag for file: " + filename)
             entry = ''
     #print entry
 
@@ -257,13 +257,13 @@ for i,filename in enumerate(files):
         category = info[0].toxml()
         category = category[21:-23]
         if category == "Utilities" :
-            print "Skipping utility"
+            print("Skipping utility")
             continue
     else:
         #print "no info tag for file" + file
         category = "Miscellaneous"
         if (entry!=''):
-            print file + " sent to Miscellaneous"
+            print(file + " sent to Miscellaneous")
 
 
     if type(entry) == list:

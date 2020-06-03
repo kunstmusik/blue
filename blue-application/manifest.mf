@@ -1,6 +1,0 @@
-Manifest-Version: 1.0
-OpenIDE-Module: blue.application
-OpenIDE-Module-Layer: blue/application/layer.xml
-OpenIDE-Module-Localizing-Bundle: blue/application/Bundle.properties
-OpenIDE-Module-Specification-Version: 1.0
-

@@ -1,0 +1,76 @@
+name: Blue CI Builds
+on: push
+
+jobs:
+  macos: 
+    runs-on: macOS-latest 
+    steps:
+      - uses: actions/checkout@v1
+        with:
+          fetch-depth: 1
+      - uses: actions/setup-java@v1
+        with:
+          java-version: '11' 
+
+      - name: Build Blue Manual
+        run: mvn compile 
+        working-directory: ./manual
+
+      - name: Build Blue 
+        run: mvn -Pgenerate-manual,macOS clean install
+
+      #- uses: actions/upload-artifact@master
+      #  with:
+      #    name: Blue (Windows and Linux) 
+      #    path: application/target/blue-2.8.0-SNAPSHOT.zip 
+      - uses: actions/upload-artifact@master
+        with:
+          name: Blue (macOS .app)  
+          path: application/target/blue-macOS-2.8.0.zip 
+  linux:
+    runs-on: ubuntu-latest 
+    steps:
+      - uses: actions/checkout@v1
+        with:
+          fetch-depth: 1
+      - uses: actions/setup-java@v1
+        with:
+          java-version: '11' 
+
+      - name: Build Blue Manual
+        run: mvn compile 
+        working-directory: ./manual
+
+      - name: Build Blue 
+        run: mvn -Dmaven.test.skip=true -Pgenerate-manual clean install
+
+      - run: mv application/target/blue-2.8.0.zip blue-linux-2.8.0.zip
+
+      - uses: actions/upload-artifact@master
+        with:
+          name: Blue Linux Zip
+          path: blue-linux-2.8.0.zip 
+
+  windows:
+    runs-on: windows-latest 
+    steps:
+      - uses: actions/checkout@v1
+        with:
+          fetch-depth: 1
+      - uses: actions/setup-java@v1
+        with:
+          java-version: '11' 
+
+      - name: Build Blue Manual
+        run: mvn compile 
+        working-directory: ./manual
+
+      - name: Build Blue 
+        run: mvn -Pgenerate-manual clean install
+
+      - run: mv application/target/blue-2.8.0.zip blue-windows-2.8.0.zip
+
+      - uses: actions/upload-artifact@master
+        with:
+          name: Blue Windows Zip
+          path: blue-windows-2.8.0.zip 

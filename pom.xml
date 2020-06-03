@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.kunstmusik</groupId>
+    <artifactId>blue-parent</artifactId>
+    <version>2.8.0</version>
+    <packaging>pom</packaging>
+
+    <name>blue-parent</name>
+
+    <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.netbeans.utilities</groupId>
+                    <artifactId>nbm-maven-plugin</artifactId>
+                    <version>4.5</version>
+                    <extensions>true</extensions>
+                    <configuration>
+                        <brandingToken>${brandingToken}</brandingToken>
+                        <cluster>${brandingToken}</cluster>
+                        <useOSGiDependencies>false</useOSGiDependencies>
+                    </configuration>
+                    <executions>
+                        <execution>
+                            <id>default-cluster-app</id>
+                            <goals>
+                                <goal>cluster-app</goal>
+                            </goals>
+                            <phase>none</phase>
+                        </execution>
+                        <execution>
+                            <id>default-standalone-zip</id>
+                            <goals>
+                                <goal>standalone-zip</goal>
+                            </goals>
+                            <phase>none</phase>
+                        </execution>
+                    </executions>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <version>2.5.1</version>
+                    <configuration>
+                        <source>11</source>
+                        <target>11</target>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-jar-plugin</artifactId>
+                    <version>2.4</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+    </build>
+
+    <modules>
+        <module>branding</module>
+        <module>blue-ext-exml</module>
+        <module>blue-ext-jython</module>
+        <module>blue-ext-commons-lang3</module>
+        <module>blue-ext-openjfx</module>
+        <module>blue-utilities</module>
+        <module>blue-ui-utilities</module>
+        <module>blue-ui-components</module>
+        <module>blue-plaf</module>
+        <module>blue-plugin</module>
+        <module>blue-ui-nbutilities</module>
+        <module>blue-ui-filemanager</module>
+        <module>blue-jfx</module>
+        <module>blue-midi</module>
+        <module>csound-manual</module>
+        <module>blue-core</module>
+        <module>blue-services</module>
+        <module>blue-projects</module>
+        <module>blue-settings</module>
+        <module>blue-ui-core</module>
+        <module>blue-osc</module>
+        <module>blue-ui-editor</module>
+        <module>blue-score-layers-audio-core</module>
+        <module>blue-score-layers-audio-ui</module>
+        <module>blue-score-layers-patterns-core</module>
+        <module>blue-score-layers-patterns-ui</module>
+        <module>blue-clojure</module>
+        <module>blue-application</module>
+        <module>cecilia</module>
+        <module>application</module>
+        <module>blue-csnd6</module>
+    </modules>
+
+    <properties>
+        <netbeans.version>RELEASE113</netbeans.version>
+        <brandingToken>blue</brandingToken>
+    </properties>
+</project>
