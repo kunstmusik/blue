@@ -86,6 +86,16 @@ public class FileChooserManager {
                 ff.setMode(FileDialog.LOAD);
                 ff.setTitle(temp.dialogTitle);
                 ff.setMultipleMode(temp.isMultiSelect);
+
+                if (temp.currentDirectory != null) {
+                    ff.setDirectory(temp.currentDirectory.getAbsolutePath());
+                } else if (temp.selectedFile != null) {
+                    ff.setDirectory(temp.selectedFile.getParentFile().getAbsolutePath());
+                }
+                if (temp.selectedFile != null) {
+                    ff.setFile(temp.selectedFile.getName());
+                }
+
                 ff.setVisible(true);
 
                 final File[] files = ff.getFiles();
@@ -223,6 +233,16 @@ public class FileChooserManager {
                 ff.setMode(FileDialog.SAVE);
                 ff.setTitle(temp.dialogTitle);
 //        ff.setMultipleMode(temp.isMultiSelect);
+
+                if (temp.currentDirectory != null) {
+                    ff.setDirectory(temp.currentDirectory.getAbsolutePath());
+                } else if (temp.selectedFile != null) {
+                    ff.setDirectory(temp.selectedFile.getParentFile().getAbsolutePath());
+                }
+                if (temp.selectedFile != null) {
+                    ff.setFile(temp.selectedFile.getName());
+                }
+
                 ff.setVisible(true);
 
                 final File[] files = ff.getFiles();

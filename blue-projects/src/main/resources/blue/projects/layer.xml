@@ -26,6 +26,13 @@
                 <attr name="instanceCreate" methodvalue="org.openide.awt.Actions.alwaysEnabled"/>
                 <attr name="noIconInMenu" stringvalue="false"/>
             </file>
+            <file name="blue-projects-actions-OpenExampleProjectAction.instance">
+                <attr name="SystemFileSystem.localizingBundle" stringvalue="blue.projects.Bundle"/>
+                <attr name="delegate" newvalue="blue.projects.actions.OpenExampleProjectAction"/>
+                <attr name="displayName" bundlevalue="blue.projects.Bundle#CTL_OpenExampleProjectAction"/>
+                <attr name="instanceCreate" methodvalue="org.openide.awt.Actions.alwaysEnabled"/>
+                <attr name="noIconInMenu" stringvalue="false"/>
+            </file>            
             <file name="blue-projects-actions-CloseProjectAction.instance"/>
             <file name="blue-projects-actions-RecentProjectsAction.instance"/>
         </folder>
@@ -97,7 +104,10 @@
                 <attr name="originalFile" stringvalue="Actions/Edit/blue-projects-actions-OpenProjectAction.instance"/>
                 <attr name="position" intvalue="1425"/>
             </file>
-
+            <file name="blue-projects-actions-OpenExampleProjectAction.shadow">
+                <attr name="originalFile" stringvalue="Actions/Edit/blue-projects-actions-OpenExampleProjectAction.instance"/>
+                <attr name="position" intvalue="1426"/>
+            </file>
             <file name="blue-projects-actions-ImportCsdAction-separatorBefore.instance">
                 <attr name="instanceClass" stringvalue="javax.swing.JSeparator"/>
                 <attr name="position" intvalue="1430"/>

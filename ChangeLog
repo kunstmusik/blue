@@ -12,6 +12,15 @@ information.
 
 [CHANGE LOG]
 
+> Notes for 2.8.1 <
+[release 2020.xx.xx]
+
+NEW
+
+* Added "Open Example Project" menu option to File menu to make opening the
+examples easier
+
+
 > Notes for 2.8.0 <
 [release 2020.06.03]
 
