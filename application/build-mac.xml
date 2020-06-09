@@ -7,7 +7,7 @@
 
     <property name="app.name" value="blue"/>
     <!-- for Info.plist, must be only numbers and periods per Apple guidelines -->
-    <property name="app.version" value="2.8.0"/>
+    <property name="app.version" value="2.8.1"/>
     <property name="app.root" value="target/${app.name}.app"/>
     <property name="blue.root" value="target/${app.name}.app/Contents/Resources/blue/"/>
     <property name="zipName" value="${app.name}-macOS-${blueVersion}.zip"/>

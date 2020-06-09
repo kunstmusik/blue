@@ -19,14 +19,10 @@ jobs:
       - name: Build Blue 
         run: mvn -Pgenerate-manual,macOS clean install
 
-      #- uses: actions/upload-artifact@master
-      #  with:
-      #    name: Blue (Windows and Linux) 
-      #    path: application/target/blue-2.8.0-SNAPSHOT.zip 
       - uses: actions/upload-artifact@master
         with:
           name: Blue (macOS .app)  
-          path: application/target/blue-macOS-2.8.1-SNAPSHOT.zip 
+          path: application/target/blue-macOS-2.8.1-dev.zip 
   linux:
     runs-on: ubuntu-latest 
     steps:
