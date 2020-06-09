@@ -25,15 +25,6 @@ public class CommentRenderer implements BarRenderer {
 
     private static Font renderFont = new Font("Dialog", Font.ITALIC, 12);
 
-    protected static Color selectedBgColor = Color.white;
-
-    protected static Color selectedBorder1 = selectedBgColor.brighter()
-            .brighter();
-
-    protected static Color selectedBorder2 = selectedBgColor.darker().darker();
-
-    protected static Color selectedFontColor = Color.darkGray;
-
     @Override
     public void render(Graphics graphics, SoundObjectView sObjView,
             int pixelSeconds) {
@@ -53,10 +44,10 @@ public class CommentRenderer implements BarRenderer {
         SoundObject sObj = sObjView.getSoundObject();
 
         if (sObjView.isSelected()) {
-            bgColor = selectedBgColor;
-            border1 = selectedBorder1;
-            border2 = selectedBorder2;
-            fontColor = selectedFontColor;
+            bgColor = sObj.getBackgroundColor().brighter().brighter();
+            border1 = Color.WHITE;
+            border2 = Color.WHITE;
+            fontColor = Color.WHITE;
         } else {
             bgColor = sObj.getBackgroundColor();
             border1 = bgColor.brighter().brighter();
@@ -75,13 +66,23 @@ public class CommentRenderer implements BarRenderer {
         g.setPaint(BlueGradientFactory.getGradientPaint(bgColor));
         g.fillRect(0, 2, w, h - 4);
 
+        if (sObjView.isSelected()) {
+            g.setColor(bgColor.darker().darker().darker().darker());
+            g.fillRect(0, 2, w, 18);
+        }
+
         g.setColor(border1);
         g.drawLine(0, 2, w, 2);
         g.drawLine(0, 2, 0, h - 2);
 
         g.setColor(border2);
         g.drawLine(0, h - 2, w, h - 2);
-        g.drawLine(w, h - 2, w, 2);
+        g.drawLine(w - 1, h - 2, w - 1, 2);
+
+        if (sObjView.isSelected()) {
+            g.setColor(new Color(255, 255, 255, 196));
+            g.drawRect(1, 3, w - 3, h - 6);
+        }
 
         g.setPaint(fontColor);
 

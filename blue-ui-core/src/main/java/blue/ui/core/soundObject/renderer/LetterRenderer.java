@@ -48,8 +48,8 @@ public abstract class LetterRenderer extends GenericRenderer {
         SoundObject sObj = sObjView.getSoundObject();
 
         if (sObjView.isSelected()) {
-            boxColor = selectedBorder2;
-            fontColor = selectedFontColor;
+            boxColor = Color.WHITE;
+            fontColor = Color.BLACK;
         } else {
             Color bgColor = sObj.getBackgroundColor();
             boxColor = bgColor.brighter().brighter();
@@ -66,12 +66,12 @@ public abstract class LetterRenderer extends GenericRenderer {
 
         // DRAW BOX
         g.setColor(boxColor);
-        g.fillRect(2, 4, 9, 9);
+        g.fillRect(2, 5, 9, 9);
 
         // DRAW LETTER
         g.setColor(fontColor);
         g.setFont(miniFont);
-        g.drawString(letter, 3, 12);
+        g.drawString(letter, 3, 13);
 
     }
 }

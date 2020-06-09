@@ -56,10 +56,10 @@ public class FrozenSoundObjectRenderer implements BarRenderer {
         Color fontColor;
 
         if (sObjView.isSelected()) {
-            bgColor = selectedBgColor;
-            border1 = selectedBorder1;
-            border2 = selectedBorder2;
-            fontColor = selectedFontColor;
+            bgColor = normalBgColor.brighter().brighter();
+            border1 = Color.WHITE;
+            border2 = Color.WHITE;
+            fontColor = Color.WHITE;
         } else {
             bgColor = normalBgColor;
             border1 = normalBorder1;
@@ -76,13 +76,23 @@ public class FrozenSoundObjectRenderer implements BarRenderer {
         g.setColor(shadeColor);
         g.fillRect((int) (w * percentOriginal), 2, w, h - 4);
 
+        if (sObjView.isSelected()) {
+            g.setColor(bgColor.darker().darker().darker().darker());
+            g.fillRect(0, 2, w, 18);
+        }
+
         g.setColor(border1);
         g.drawLine(0, 2, w, 2);
         g.drawLine(0, 2, 0, h - 2);
 
         g.setColor(border2);
         g.drawLine(0, h - 2, w, h - 2);
-        g.drawLine(w, h - 2, w, 2);
+        g.drawLine(w - 1, h - 2, w - 1, 2);
+
+        if (sObjView.isSelected()) {
+            g.setColor(new Color(255, 255, 255, 196));
+            g.drawRect(1, 3, w - 3, h - 6);
+        }
 
         g.setPaint(fontColor);
 

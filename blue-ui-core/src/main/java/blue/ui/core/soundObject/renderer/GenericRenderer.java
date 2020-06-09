@@ -22,27 +22,8 @@ public class GenericRenderer implements BarRenderer {
 
     private static Font renderFont = new Font("Dialog", Font.BOLD, 12);
 
-    protected static Color selectedBgColor = Color.white;
-
-    protected static Color selectedBorder1 = selectedBgColor.brighter()
-            .brighter();
-
-    protected static Color selectedBorder2 = selectedBgColor.darker().darker();
-
-    protected static Color selectedFontColor = Color.darkGray;
-
-    // private Color normalBgColor;
-    // private Color normalBorder1;
-    // private Color normalBorder2;
-    // protected static Color normalFontColor = Color.white;
     public GenericRenderer() {
         // this(Color.darkGray);
-    }
-
-    public GenericRenderer(Color bgColor) {
-        // this.normalBgColor = bgColor;
-        // this.normalBorder1 = bgColor.brighter().brighter();
-        // this.normalBorder2 = bgColor.darker().darker();
     }
 
     @Override
@@ -50,6 +31,7 @@ public class GenericRenderer implements BarRenderer {
             int pixelSeconds) {
 
         Graphics2D g = (Graphics2D) graphics;
+
         int w = sObjView.getSize().width;
         int h = sObjView.getSize().height;
 
@@ -61,29 +43,32 @@ public class GenericRenderer implements BarRenderer {
         SoundObject sObj = sObjView.getSoundObject();
 
         if (sObjView.isSelected()) {
-            bgColor = selectedBgColor;
-            border1 = selectedBorder1;
-            border2 = selectedBorder2;
-            fontColor = selectedFontColor;
+            bgColor = sObj.getBackgroundColor().brighter().brighter();
+            border1 = Color.WHITE;
+            border2 = Color.WHITE;
+            fontColor = Color.WHITE;
         } else {
             bgColor = sObj.getBackgroundColor();
             border1 = bgColor.brighter().brighter();
             border2 = bgColor.darker().darker();
-
             int total = bgColor.getRed() + bgColor.getGreen()
                     + bgColor.getBlue();
 
             if (total > 128 * 3) {
-                fontColor = Color.black;
+                fontColor = Color.BLACK;
             } else {
-                fontColor = Color.white;
+                fontColor = Color.WHITE;
             }
-
         }
 
         g.setPaint(BlueGradientFactory.getGradientPaint(bgColor));
 
         g.fillRect(0, 2, w, h - 4);
+
+        if (sObjView.isSelected()) {
+            g.setColor(bgColor.darker().darker().darker().darker());
+            g.fillRect(0, 2, w, 18);
+        }
 
         g.setColor(border1);
         g.drawLine(0, 2, w, 2);
@@ -91,7 +76,13 @@ public class GenericRenderer implements BarRenderer {
 
         g.setColor(border2);
         g.drawLine(0, h - 2, w, h - 2);
-        g.drawLine(w, h - 2, w, 2);
+        g.drawLine(w - 1, h - 2, w - 1, 2);
+        
+        if(sObjView.isSelected()) {
+            g.setColor(new Color(255,255,255,196));
+            g.drawRect(1, 3, w - 3, h - 6);
+        }
+        
 
         // paint repeat
         double repeatPoint = sObj.getRepeatPoint();

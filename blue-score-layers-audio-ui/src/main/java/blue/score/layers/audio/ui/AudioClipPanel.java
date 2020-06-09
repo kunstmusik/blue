@@ -405,9 +405,9 @@ public class AudioClipPanel extends JPanel
 
         if (isSelected()) {
             bgColor = selectedBgColor;
-            border1 = selectedBorder1;
-            border2 = selectedBorder2;
-            fontColor = selectedFontColor;
+            border1 = Color.WHITE;
+            border2 = Color.WHITE;
+            fontColor = Color.WHITE;
             fadeColor = fadeDarkColor;
             waveColor = bgColor.brighter().brighter();
         } else {
@@ -463,6 +463,12 @@ public class AudioClipPanel extends JPanel
 
         g.translate(-1, -2);
 
+        
+        if (isSelected()) {
+            g.setColor(Color.BLACK);
+            g.fillRect(0, 2, w, 18);
+        }
+        
         g.setColor(fontColor);
         g.drawString(audioClip.getName(), 5, 15);
 
@@ -473,8 +479,12 @@ public class AudioClipPanel extends JPanel
 
         g.setColor(border2);
         g.drawLine(0, h - 2, w, h - 2);
-        g.drawLine(w, h - 2, w, 2);
+        g.drawLine(w - 1, h - 2, w - 1, 2);
 
+        if (isSelected()) {
+            g.setColor(new Color(255, 255, 255, 196));
+            g.drawRect(1, 3, w - 3, h - 6);
+        }
     }
 
     @Override
