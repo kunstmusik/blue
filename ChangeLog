@@ -18,7 +18,13 @@ information.
 NEW
 
 * Added "Open Example Project" menu option to File menu to make opening the
-examples easier
+  examples easier
+
+UPDATED
+
+* Issue #396: Updated how selected score objects are rendered; rather than all
+  white, now uses white border, lighter derived background colors, and shows a 
+  bar at top behind object label
 
 
 > Notes for 2.8.0 <
