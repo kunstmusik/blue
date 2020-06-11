@@ -162,6 +162,8 @@ public class EffectEditor extends javax.swing.JPanel implements
                     effect.getGraphicInterface());
             code1.getJEditorPane().setText(effect.getCode());
             commentsText.setText(effect.getComments());
+            commentsText.getJEditorPane().setCaretPosition(0);
+            commentsText.resetUndoManager();
 
             inSpinner.setValue(new Integer(effect.getNumIns()));
             outSpinner.setValue(new Integer(effect.getNumOuts()));

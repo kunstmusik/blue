@@ -100,6 +100,8 @@ public final class TablesTopComponent extends TopComponent {
             Tables localTables = project.getData().getTableSet();
             tablesText.setText(localTables.getTables());
             tablesText.getJEditorPane().setEditable(true);
+            tablesText.getJEditorPane().setCaretPosition(0);
+            tablesText.resetUndoManager();
             tables = localTables;
         }
         undo.discardAllEdits();

@@ -44,21 +44,21 @@ import org.openide.awt.UndoRedo;
  * @author steven
  */
 public class BSBCodeEditor extends JComponent {
-    
+
     BSBCompletionProvider completionProvider = new BSBCompletionProvider();
 
-    MimeTypeEditorComponent codePane = 
-            new MimeTypeEditorComponent("text/x-blue-synth-builder");
+    MimeTypeEditorComponent codePane
+            = new MimeTypeEditorComponent("text/x-blue-synth-builder");
 
-    MimeTypeEditorComponent alwaysOnCodePane = 
-            new MimeTypeEditorComponent("text/x-blue-synth-builder");
+    MimeTypeEditorComponent alwaysOnCodePane
+            = new MimeTypeEditorComponent("text/x-blue-synth-builder");
 
-    MimeTypeEditorComponent globalOrcEditPane = 
-            new MimeTypeEditorComponent("text/x-blue-synth-builder");
+    MimeTypeEditorComponent globalOrcEditPane
+            = new MimeTypeEditorComponent("text/x-blue-synth-builder");
 
-    MimeTypeEditorComponent globalScoEditPane = 
-            new MimeTypeEditorComponent("text/x-csound-sco");
-    
+    MimeTypeEditorComponent globalScoEditPane
+            = new MimeTypeEditorComponent("text/x-csound-sco");
+
     BlueSynthBuilder bsb = new BlueSynthBuilder();
 
     EditEnabledCheckBox editBox = new EditEnabledCheckBox();
@@ -72,7 +72,7 @@ public class BSBCodeEditor extends JComponent {
             alwaysOnCodePane.getJEditorPane().setEnabled(isEditing);
             globalOrcEditPane.getJEditorPane().setEnabled(isEditing);
             globalScoEditPane.getJEditorPane().setEnabled(isEditing);
-            
+
             if (bsb != null) {
                 bsb.setEditEnabled(isEditing);
             }
@@ -81,47 +81,47 @@ public class BSBCodeEditor extends JComponent {
         codePane.getDocument().addDocumentListener(
                 new SimpleDocumentListener() {
 
-                    @Override
-                    public void documentChanged(DocumentEvent e) {
-                        if (bsb != null) {
-                            bsb.setInstrumentText(codePane.getText());
-                        }
-                    }
-                });
+            @Override
+            public void documentChanged(DocumentEvent e) {
+                if (bsb != null) {
+                    bsb.setInstrumentText(codePane.getText());
+                }
+            }
+        });
 
         alwaysOnCodePane.getDocument().addDocumentListener(
                 new SimpleDocumentListener() {
 
-                    @Override
-                    public void documentChanged(DocumentEvent e) {
-                        if (bsb != null) {
-                            bsb.setAlwaysOnInstrumentText(alwaysOnCodePane.
-                                    getText());
-                        }
-                    }
-                });
+            @Override
+            public void documentChanged(DocumentEvent e) {
+                if (bsb != null) {
+                    bsb.setAlwaysOnInstrumentText(alwaysOnCodePane.
+                            getText());
+                }
+            }
+        });
 
         globalOrcEditPane.getDocument().addDocumentListener(
                 new SimpleDocumentListener() {
 
-                    @Override
-                    public void documentChanged(DocumentEvent e) {
-                        if (bsb != null) {
-                            bsb.setGlobalOrc(globalOrcEditPane.getText());
-                        }
-                    }
-                });
+            @Override
+            public void documentChanged(DocumentEvent e) {
+                if (bsb != null) {
+                    bsb.setGlobalOrc(globalOrcEditPane.getText());
+                }
+            }
+        });
 
         globalScoEditPane.getDocument().addDocumentListener(
                 new SimpleDocumentListener() {
 
-                    @Override
-                    public void documentChanged(DocumentEvent e) {
-                        if (bsb != null) {
-                            bsb.setGlobalSco(globalScoEditPane.getText());
-                        }
-                    }
-                });
+            @Override
+            public void documentChanged(DocumentEvent e) {
+                if (bsb != null) {
+                    bsb.setGlobalSco(globalScoEditPane.getText());
+                }
+            }
+        });
 
         JPanel topBar = new JPanel(new BorderLayout());
         topBar.add(editBox, BorderLayout.EAST);
@@ -147,14 +147,14 @@ public class BSBCodeEditor extends JComponent {
         alwaysOnCodePane.setUndoManager(undo);
         globalOrcEditPane.setUndoManager(undo);
         globalScoEditPane.setUndoManager(undo);
-        
+
         undo.setLimit(1000);
-        
-        codePane.getJEditorPane().putClientProperty("bsb-completion-provider", 
+
+        codePane.getJEditorPane().putClientProperty("bsb-completion-provider",
                 completionProvider);
-        alwaysOnCodePane.getJEditorPane().putClientProperty("bsb-completion-provider", 
+        alwaysOnCodePane.getJEditorPane().putClientProperty("bsb-completion-provider",
                 completionProvider);
-        globalOrcEditPane.getJEditorPane().putClientProperty("bsb-completion-provider", 
+        globalOrcEditPane.getJEditorPane().putClientProperty("bsb-completion-provider",
                 completionProvider);
 
         initActions();
@@ -167,13 +167,13 @@ public class BSBCodeEditor extends JComponent {
     }
 
     /**
-     * 
+     *
      */
     private void initActions() {
 
         this.getInputMap(WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(
                 KeyStroke.getKeyStroke(KeyEvent.VK_E, BlueSystem.
-                getMenuShortcutKey()), "switchEditMode");
+                        getMenuShortcutKey()), "switchEditMode");
         this.getActionMap().put("switchEditMode", new AbstractAction() {
 
             @Override
@@ -201,15 +201,19 @@ public class BSBCodeEditor extends JComponent {
 
         codePane.setText(bsb.getInstrumentText());
         codePane.getJEditorPane().setCaretPosition(0);
+        codePane.resetUndoManager();
 
         alwaysOnCodePane.setText(bsb.getAlwaysOnInstrumentText());
         alwaysOnCodePane.getJEditorPane().setCaretPosition(0);
+        alwaysOnCodePane.resetUndoManager();
 
         globalOrcEditPane.setText(bsb.getGlobalOrc());
         globalOrcEditPane.getJEditorPane().setCaretPosition(0);
+        globalOrcEditPane.resetUndoManager();
 
         globalScoEditPane.setText(bsb.getGlobalSco());
         globalScoEditPane.getJEditorPane().setCaretPosition(0);
+        globalScoEditPane.resetUndoManager();
 
         if (bsb != null) {
             if (editBox.isSelected() != bsb.isEditEnabled()) {

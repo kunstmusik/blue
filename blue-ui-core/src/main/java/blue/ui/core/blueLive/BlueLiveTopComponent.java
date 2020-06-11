@@ -484,6 +484,8 @@ public final class BlueLiveTopComponent extends TopComponent
             tempoSpinner.setValue(liveData.getTempo());
 
             liveCodeEditor.setText(liveData.getLiveCodeText());
+            liveCodeEditor.getJEditorPane().setCaretPosition(0);
+            liveCodeEditor.resetUndoManager();
 
             this.data = currentData;
 

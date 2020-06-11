@@ -105,6 +105,8 @@ public final class GlobalScoreTopComponent extends TopComponent {
             GlobalOrcSco localGlobals = project.getData().getGlobalOrcSco();
             scoreText.setText(localGlobals.getGlobalSco());
             scoreText.getJEditorPane().setEditable(true);
+            scoreText.getJEditorPane().setCaretPosition(0);
+            scoreText.resetUndoManager();
             globalOrcSco = localGlobals;
         }
         undo.discardAllEdits();

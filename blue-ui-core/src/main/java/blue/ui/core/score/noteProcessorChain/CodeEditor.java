@@ -142,6 +142,8 @@ public class CodeEditor extends JComponent {
 
         public void setCodeText(String code) {
             editor.setText(code);
+            editor.getJEditorPane().setCaretPosition(0);
+            editor.resetUndoManager();
             undo.discardAllEdits();
         }
 

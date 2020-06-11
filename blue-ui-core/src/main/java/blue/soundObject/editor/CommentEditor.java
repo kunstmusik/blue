@@ -94,6 +94,7 @@ public class CommentEditor extends ScoreObjectEditor {
         scoreEditPane.setText(this.sObj.getText());
         scoreEditPane.getJEditorPane().setEnabled(true);
         scoreEditPane.getJEditorPane().setCaretPosition(0);
+        scoreEditPane.resetUndoManager();
 
         undo.discardAllEdits();
     }

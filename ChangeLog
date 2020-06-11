@@ -26,6 +26,9 @@ UPDATED
   white, now uses white border, lighter derived background colors, and shows a 
   bar at top behind object label
 
+* Issue #514: redid comments component for instrument editor and SSO to use 
+  Netbeans editor component to enable code repository option
+
 
 > Notes for 2.8.0 <
 [release 2020.06.03]

@@ -2,6 +2,7 @@ package blue.ui.core.orchestra;
 
 import blue.orchestra.Instrument;
 import blue.orchestra.editor.InstrumentEditor;
+import blue.ui.nbutilities.MimeTypeEditorComponent;
 import blue.ui.nbutilities.lazyplugin.ClassAssociationProcessor;
 import blue.ui.nbutilities.lazyplugin.LazyPlugin;
 import blue.ui.nbutilities.lazyplugin.LazyPluginFactory;
@@ -45,7 +46,8 @@ public final class InstrumentEditPanel extends JComponent {
 
     Instrument currentInstrument = null;
 
-    JTextArea commentPane = new JTextArea();
+    //JTextArea commentPane = new JTextArea();
+    MimeTypeEditorComponent commentPane = new MimeTypeEditorComponent("text/plain");
 
     Border libraryBorder = new LineBorder(Color.GREEN);
 
@@ -59,8 +61,8 @@ public final class InstrumentEditPanel extends JComponent {
         tabs.add("Instrument Editor", editPanel);
         tabs.add("Comments", new JScrollPane(commentPane));
 
-        commentPane.setWrapStyleWord(true);
-        commentPane.setLineWrap(true);
+//        commentPane.getJEditorPane().setWrapStyleWord(true);
+//        commentPane.setLineWrap(true);
 
         editPanel.setLayout(cardLayout);
 
@@ -100,14 +102,14 @@ public final class InstrumentEditPanel extends JComponent {
 
         setEditingLibraryObject(false);
 
-        List<LazyPlugin<InstrumentEditor>> plugins = 
-                LazyPluginFactory.loadPlugins("blue/instrumentEditors",
-                        InstrumentEditor.class, 
+        List<LazyPlugin<InstrumentEditor>> plugins
+                = LazyPluginFactory.loadPlugins("blue/instrumentEditors",
+                        InstrumentEditor.class,
                         new ClassAssociationProcessor("instrumentType"));
 
         for (LazyPlugin<InstrumentEditor> plugin : plugins) {
 
-            instrEditorMap.put((Class)plugin.getMetaData("association"), 
+            instrEditorMap.put((Class) plugin.getMetaData("association"),
                     plugin);
         }
 
@@ -139,6 +141,8 @@ public final class InstrumentEditPanel extends JComponent {
 
         commentPane.setEnabled(true);
         commentPane.setText(instr.getComment());
+        commentPane.getJEditorPane().setCaretPosition(0);
+        commentPane.resetUndoManager();
 
         Class instrClass = instr.getClass();
         InstrumentEditor instrEditor = instrEditorCache.get(instrClass);

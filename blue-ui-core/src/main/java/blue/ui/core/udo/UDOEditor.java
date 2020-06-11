@@ -205,9 +205,12 @@ public class UDOEditor extends javax.swing.JPanel {
             inTypes.setEnabled(true);
             codeBody.getJEditorPane().setEnabled(true);
             comments.getJEditorPane().setEnabled(true);
+            
         }
         codeBody.getJEditorPane().setCaretPosition(0);
         comments.getJEditorPane().setCaretPosition(0);
+        codeBody.resetUndoManager();
+        comments.resetUndoManger();
     }
     
     /**

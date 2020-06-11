@@ -69,6 +69,8 @@ public class PatternScoreEditor extends JComponent {
         } else {
             score1.setText(pattern.getPatternScore());
             score1.getJEditorPane().setEditable(true);
+            score1.getJEditorPane().setCaretPosition(0);
+            score1.resetUndoManager();
         }
         
         undo.discardAllEdits();

@@ -129,14 +129,17 @@ public class JavaScriptInstrumentEditor extends InstrumentEditor {
         codeEditor.setText(this.instr.getText());
         codeEditor.getJEditorPane().setEnabled(true);
         codeEditor.getJEditorPane().setCaretPosition(0);
-
+        codeEditor.resetUndoManager();
+        
         globalOrcEditor.setText(this.instr.getGlobalOrc());
         globalOrcEditor.getJEditorPane().setEnabled(true);
         globalOrcEditor.getJEditorPane().setCaretPosition(0);
+        globalOrcEditor.resetUndoManager();
 
         globalScoEditor.setText(this.instr.getGlobalSco());
         globalScoEditor.getJEditorPane().setEnabled(true);
         globalScoEditor.getJEditorPane().setCaretPosition(0);
+        globalScoEditor.resetUndoManager();
 
         udoPanel.editOpcodeList(this.instr.getOpcodeList());
 

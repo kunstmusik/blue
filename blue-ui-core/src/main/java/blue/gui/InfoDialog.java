@@ -76,6 +76,7 @@ public class InfoDialog {
                 infoText = new MimeTypeEditorComponent(mimeType);
                 infoText.setText(information);
                 infoText.getJEditorPane().getCaret().setDot(0);
+                infoText.resetUndoManager();
 
                 final JDialog dlg = new JDialog(SwingUtilities.getWindowAncestor(parent));
                 dlg.getContentPane().add(infoText);

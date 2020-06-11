@@ -69,4 +69,14 @@ public class MimeTypeEditorComponent extends JPanel {
     public void setText(String text) {
         editor.setText(text);
     }
+
+    public void resetUndoManager() {
+        
+        var manager = editor.getDocument().getProperty("undo-manager");
+        
+        if(manager instanceof UndoManager) {
+            var undo = (UndoManager)manager;   
+            undo.discardAllEdits();
+        }
+    }
 }

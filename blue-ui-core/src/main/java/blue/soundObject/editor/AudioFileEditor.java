@@ -223,6 +223,8 @@ public class AudioFileEditor extends ScoreObjectEditor {
         af = (AudioFile) sObj;
 
         csoundCode.setText(af.getCsoundPostCode());
+        csoundCode.getJEditorPane().setCaretPosition(0);
+        csoundCode.resetUndoManager();
         setAudioFileInfo(af.getSoundFileName());
         
         undo.discardAllEdits();

@@ -42,6 +42,7 @@ import blue.soundObject.SoundObject;
 import blue.soundObject.editor.sound.ParameterLineView;
 import blue.soundObject.editor.sound.TimeBar;
 import blue.ui.core.orchestra.editor.BlueSynthBuilderEditor;
+import blue.ui.nbutilities.MimeTypeEditorComponent;
 import java.awt.BorderLayout;
 import java.util.List;
 import javafx.embed.swing.JFXPanel;
@@ -60,6 +61,8 @@ import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 
 /**
  * Editor for Sound SoundObject.
@@ -84,19 +87,20 @@ public class SoundEditor extends ScoreObjectEditor {
 
     ParameterLineView lineView;
     LineSelector lineSelector;
-    private TextArea commentTextArea;
+    MimeTypeEditorComponent commentPane = new MimeTypeEditorComponent("text/plain");
+    ;
     ScoreObjectListener sObjListener;
 
     public SoundEditor() {
 
         sObjListener = evt -> {
-            if(evt.getPropertyChanged() == ScoreObjectEvent.START_TIME ) {
+            if (evt.getPropertyChanged() == ScoreObjectEvent.START_TIME) {
                 lineView.setStartTime(evt.getScoreObject().getStartTime());
             } else if (evt.getPropertyChanged() == ScoreObjectEvent.DURATION) {
                 lineView.setDuration(evt.getScoreObject().getSubjectiveDuration());
             }
         };
-        
+
         try {
             jbInit();
         } catch (Exception e) {
@@ -111,96 +115,111 @@ public class SoundEditor extends ScoreObjectEditor {
         editor.setLabelText("[ Sound ]");
 
         JFXPanel jfxPanel = new JFXPanel();
-        JFXPanel jfxCommentPanel = new JFXPanel();
-
+        
         BlueFX.runOnFXThread(() -> {
 
-                MenuButton btn = new MenuButton("Automations");
+            MenuButton btn = new MenuButton("Automations");
 
-                BorderPane mainPane = new BorderPane();
-                lineView = new ParameterLineView(lineList);
-                lineSelector = new LineSelector(lineList);
+            BorderPane mainPane = new BorderPane();
+            lineView = new ParameterLineView(lineList);
+            lineSelector = new LineSelector(lineList);
 
-                lineView.widthProperty().bind(mainPane.widthProperty());
-                lineView.heightProperty().bind(mainPane.heightProperty().subtract(lineSelector.heightProperty()));
+            lineView.widthProperty().bind(mainPane.widthProperty());
+            lineView.heightProperty().bind(mainPane.heightProperty().subtract(lineSelector.heightProperty()));
 
-                lineSelector.getChildren().add(0, btn);
-                lineSelector.setSpacing(5.0);
-                lineView.selectedLineProperty().bind(lineSelector.selectedLineProperty());
-                
-                TimeBar tb = new TimeBar();
-                tb.startTimeProperty().bind(lineView.startTimeProperty());
-                tb.durationProperty().bind(lineView.durationProperty());
-                
-                Pane p = new Pane(lineView, tb);
-                p.setBackground(new Background(
-                        new BackgroundFill(
-                                Color.BLACK, CornerRadii.EMPTY, Insets.EMPTY)));
-                lineView.widthProperty().bind(p.widthProperty().subtract(20));
-                lineView.heightProperty().bind(p.heightProperty().subtract(40));
-                lineView.setLayoutX(10);
-                lineView.setLayoutY(30);
-                tb.widthProperty().bind(lineView.widthProperty());
-                tb.setHeight(20);
-                tb.setLayoutX(10);
-                tb.setLayoutY(10);
+            lineSelector.getChildren().add(0, btn);
+            lineSelector.setSpacing(5.0);
+            lineView.selectedLineProperty().bind(lineSelector.selectedLineProperty());
 
-                mainPane.setCenter(p);
-                mainPane.setTop(lineSelector);
+            TimeBar tb = new TimeBar();
+            tb.startTimeProperty().bind(lineView.startTimeProperty());
+            tb.durationProperty().bind(lineView.durationProperty());
 
-                btn.showingProperty().addListener((obs, old, newVal) -> {
-                    if (newVal) {
-                        if (sObj != null) {
-                            sObj.getBlueSynthBuilder().getParameterList().sorted()
-                                    .forEach((param) -> {
-                                        MenuItem m = new MenuItem(param.getName());
-                                        m.setOnAction(e -> {
-                                            param.setAutomationEnabled(!param.isAutomationEnabled());
-                                            if (param.isAutomationEnabled()) {
-                                                Line line = param.getLine();
-                                                line.setVarName(param.getName());
-                                                List<LinePoint> points = line.getObservableList();
-                                                if (points.size() < 2) {
-                                                    LinePoint lp = new LinePoint();
-                                                    lp.setLocation(1.0, points.get(0).getY());
-                                                    points.add(lp);
-                                                }
-                                                lineList.add(line);
-                                            } else {
-                                                lineList.remove(param.getLine());
-                                            }
+            Pane p = new Pane(lineView, tb);
+            p.setBackground(new Background(
+                    new BackgroundFill(
+                            Color.BLACK, CornerRadii.EMPTY, Insets.EMPTY)));
+            lineView.widthProperty().bind(p.widthProperty().subtract(20));
+            lineView.heightProperty().bind(p.heightProperty().subtract(40));
+            lineView.setLayoutX(10);
+            lineView.setLayoutY(30);
+            tb.widthProperty().bind(lineView.widthProperty());
+            tb.setHeight(20);
+            tb.setLayoutX(10);
+            tb.setLayoutY(10);
 
-                                            int colorCount = 0;
-                                            for (Line line : lineList) {
-                                                line.setColor(LineColors.getColor(colorCount++));
-                                            }
-                                        });
+            mainPane.setCenter(p);
+            mainPane.setTop(lineSelector);
+
+            btn.showingProperty().addListener((obs, old, newVal) -> {
+                if (newVal) {
+                    if (sObj != null) {
+                        sObj.getBlueSynthBuilder().getParameterList().sorted()
+                                .forEach((param) -> {
+                                    MenuItem m = new MenuItem(param.getName());
+                                    m.setOnAction(e -> {
+                                        param.setAutomationEnabled(!param.isAutomationEnabled());
                                         if (param.isAutomationEnabled()) {
-                                            m.setStyle("-fx-text-fill: green;");
+                                            Line line = param.getLine();
+                                            line.setVarName(param.getName());
+                                            List<LinePoint> points = line.getObservableList();
+                                            if (points.size() < 2) {
+                                                LinePoint lp = new LinePoint();
+                                                lp.setLocation(1.0, points.get(0).getY());
+                                                points.add(lp);
+                                            }
+                                            lineList.add(line);
+                                        } else {
+                                            lineList.remove(param.getLine());
                                         }
-                                        btn.getItems().add(m);
+
+                                        int colorCount = 0;
+                                        for (Line line : lineList) {
+                                            line.setColor(LineColors.getColor(colorCount++));
+                                        }
                                     });
-                        }
-                    } else {
-                        btn.getItems().clear();
+                                    if (param.isAutomationEnabled()) {
+                                        m.setStyle("-fx-text-fill: green;");
+                                    }
+                                    btn.getItems().add(m);
+                                });
                     }
-                });
+                } else {
+                    btn.getItems().clear();
+                }
+            });
 
-                final Scene scene = new Scene(mainPane);
-                BlueFX.style(scene);
-                jfxPanel.setScene(scene);
+            final Scene scene = new Scene(mainPane);
+            BlueFX.style(scene);
+            jfxPanel.setScene(scene);
 
-                commentTextArea = new TextArea();
-                commentTextArea.setWrapText(true);
-
-                final Scene scene2 = new Scene(commentTextArea);
-                BlueFX.style(scene2);
-                jfxCommentPanel.setScene(scene2);
         });
 
         editor.getTabs().insertTab("Automation", null, jfxPanel, "", 1);
-        editor.getTabs().addTab("Comments", jfxCommentPanel);
+        editor.getTabs().addTab("Comments", commentPane);
 
+        commentPane.getDocument().addDocumentListener(new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent e) {
+                updateComment();
+            }
+
+            @Override
+            public void removeUpdate(DocumentEvent e) {
+                updateComment();
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent e) {
+                updateComment();
+            }
+
+            private void updateComment() {
+                if (sObj != null) {
+                    sObj.setComment(commentPane.getText());
+                }
+            }
+        });
     }
 
     @Override
@@ -223,11 +242,16 @@ public class SoundEditor extends ScoreObjectEditor {
         if (this.sObj != null) {
             final Sound temp = this.sObj;
             BlueFX.runOnFXThread(() -> {
-                temp.commentProperty().unbind();
                 temp.removeScoreObjectListener(sObjListener);
             });
         }
-
+        
+        this.sObj = null;
+        
+        commentPane.setText(((Sound)sObj).getComment());
+        commentPane.getJEditorPane().setCaretPosition(0);
+        commentPane.resetUndoManager();
+        
         this.sObj = (Sound) sObj;
         editor.editInstrument(this.sObj.getBlueSynthBuilder());
 
@@ -249,8 +273,7 @@ public class SoundEditor extends ScoreObjectEditor {
             }
             lineView.setStartTime(this.sObj.getStartTime());
             lineView.setDuration(this.sObj.getSubjectiveDuration());
-            commentTextArea.setText(this.sObj.getComment());
-            this.sObj.commentProperty().bind(commentTextArea.textProperty());
+            
             this.sObj.addScoreObjectListener(sObjListener);
         });
     }

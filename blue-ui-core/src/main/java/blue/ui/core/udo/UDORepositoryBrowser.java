@@ -451,6 +451,8 @@ public class UDORepositoryBrowser extends JDialog {
             codeBody += udo.codeBody;
 
             codeText.setText(codeBody);
+            codeText.getJEditorPane().setCaretPosition(0);
+            codeText.resetUndoManager();
         }
 
         public UserDefinedOpcode getUDO() {

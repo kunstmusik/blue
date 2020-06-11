@@ -98,6 +98,7 @@ public class InstanceEditor extends ScoreObjectEditor {
         scoreEditPane.setText(BlueSystem
                 .getString("instanceObject.scoreGenMessage")
                 + "\n\n" + generatedNoteText);
+        scoreEditPane.resetUndoManager();
     }
 
     public final void testSoundObject() {
