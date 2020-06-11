@@ -51,6 +51,8 @@ public class PresetsTreeDragSource implements DragSourceListener,
     TransferablePreset transferable;
 
     Object oldNode;
+    
+    PresetGroup parent = null;
 
     public PresetsTreeDragSource(JTree tree, int actions) {
         sourceTree = tree;
@@ -70,7 +72,7 @@ public class PresetsTreeDragSource implements DragSourceListener,
         if (path.getLastPathComponent() instanceof Preset
                 || path.getLastPathComponent() instanceof PresetGroup) {
             oldNode = path.getLastPathComponent();
-
+            parent = (PresetGroup) path.getPathComponent(path.getPathCount() - 2);
             transferable = new TransferablePreset(oldNode);
             source.startDrag(dge, null, transferable, this);
         }
@@ -78,20 +80,22 @@ public class PresetsTreeDragSource implements DragSourceListener,
 
     @Override
     public void dragDropEnd(DragSourceDropEvent dsde) {
-        if (dsde.getDropSuccess()) {
-
-            if (oldNode instanceof Preset) {
-
-                ((PresetsTreeModel) sourceTree.getModel())
-                        .removePreset((Preset) oldNode);
-
-            } else if (oldNode instanceof PresetGroup) {
-
-                ((PresetsTreeModel) sourceTree.getModel())
-                        .removePresetGroup((PresetGroup) oldNode);
-
-            }
-        }
+        // TODO: Fix this all by changing preset/presetgroup to single 
+        // PresetNode and revise code around all of this
+//        if (dsde.getDropSuccess()) {
+//
+//            if (oldNode instanceof Preset) {
+//
+//                ((PresetsTreeModel) sourceTree.getModel())
+//                        .removePreset((Preset) oldNode);
+//
+//            } else if (oldNode instanceof PresetGroup) {
+//
+//                ((PresetsTreeModel) sourceTree.getModel())
+//                        .removePresetGroup((PresetGroup) oldNode);
+//
+//            }
+//        }
 
         oldNode = null;
     }

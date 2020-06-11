@@ -29,6 +29,10 @@ UPDATED
 * Issue #514: redid comments component for instrument editor and SSO to use 
   Netbeans editor component to enable code repository option
 
+FIX
+
+* BSB: PresetManager dialog had bugs when dragging and dropping nodes around
+
 
 > Notes for 2.8.0 <
 [release 2020.06.03]
