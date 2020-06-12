@@ -11,7 +11,7 @@ Public License.  This is a free program and you are welcome to redistrbute it
 under certain conditions. Please see the accompanying license.txt file for more
 information.
 
-[![Build status](https://ci.appveyor.com/api/projects/status/nf8ccdkqg5wboh6u/branch/develop?svg=true)](https://ci.appveyor.com/project/kunstmusik/blue/branch/develop)
+![Blue CI Builds](https://github.com/kunstmusik/blue/workflows/Blue%20CI%20Builds/badge.svg)
 
 The text file ChangeLog lists the history of changes for Blue and all
 accompanying programs.
