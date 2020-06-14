@@ -84,7 +84,7 @@ public class ClojureProjectDataTest {
 
         String expResult = "(use '[cemerick.pomegranate :only (add-dependencies)])\n"
                 + "(add-dependencies :coordinates '[[com.kunstmusik/score \"0.3.0\" :exclusions [org.clojure/clojure]]\n"
-                + "] :repositories (merge cemerick.pomegranate.aether/maven-central {\"clojars\" \"http://clojars.org/repo\"}))";
+                + "] :repositories (merge cemerick.pomegranate.aether/maven-central {\"clojars\" \"https://repo.clojars.org\"}))";
         String result = instance.getPomegranateString();
         assertEquals(expResult, result);
 
@@ -96,7 +96,7 @@ public class ClojureProjectDataTest {
         expResult = "(use '[cemerick.pomegranate :only (add-dependencies)])\n"
                 + "(add-dependencies :coordinates '[[com.kunstmusik/score \"0.3.0\" :exclusions [org.clojure/clojure]]\n"
                 + "[com.kunstmusik/pink \"0.3.0\" :exclusions [org.clojure/clojure]]\n"
-                + "] :repositories (merge cemerick.pomegranate.aether/maven-central {\"clojars\" \"http://clojars.org/repo\"}))";
+                + "] :repositories (merge cemerick.pomegranate.aether/maven-central {\"clojars\" \"https://repo.clojars.org\"}))";
         result = instance.getPomegranateString();
         assertEquals(expResult, result);
     }
