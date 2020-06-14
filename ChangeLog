@@ -33,6 +33,8 @@ FIX
 
 * BSB: PresetManager dialog had bugs when dragging and dropping nodes around
 
+* Clojure: Dependency resolution for clojars-hosted libraries was broken due to 
+  using older http url; fixed by updating to https://repo.clojars.org
 
 > Notes for 2.8.0 <
 [release 2020.06.03]
