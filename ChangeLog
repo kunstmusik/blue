@@ -29,6 +29,8 @@ UPDATED
 * Issue #514: redid comments component for instrument editor and SSO to use 
   Netbeans editor component to enable code repository option
 
+* Issue #392: made copy buffer shared between all BSB interface editors
+
 FIX
 
 * BSB: PresetManager dialog had bugs when dragging and dropping nodes around

@@ -38,13 +38,15 @@ import javafx.scene.layout.Pane;
  */
 public class BSBEditSelection {
 
+    private static ObservableSet<BSBObject> copyBuffer = FXCollections.observableSet();
+    
     public final ObservableSet<BSBObject> selection;
     private final Map<BSBObject, Point> startPositions;
     private double minX = 0.0;
     private double minY = 0.0;
     private int gridOffsetX = 0;
     private int gridOffsetY = 0;
-    private ObservableSet<BSBObject> copyBuffer = FXCollections.observableSet();
+    
     private boolean processingMove = false;
     GridSettings gridSettings = null;
     private final ObservableList<Node> nodeList;
@@ -147,7 +149,7 @@ public class BSBEditSelection {
     }
 
     void nudgeHorizontal(int val) {
-        if (selection.size() == 0
+        if (selection.isEmpty()
                 || selection.stream()
                         .mapToInt(BSBObject::getX)
                         .summaryStatistics().getMin() + val <= 0) {
@@ -159,7 +161,7 @@ public class BSBEditSelection {
     }
 
     void nudgeVertical(int val) {
-        if (selection.size() == 0
+        if (selection.isEmpty()
                 || selection.stream()
                         .mapToInt(BSBObject::getY)
                         .summaryStatistics().getMin() + val <= 0) {
