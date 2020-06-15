@@ -273,10 +273,11 @@ public class BSBEditPane extends Pane implements ListChangeListener<BSBGroup> {
         gridCanvas.visibleProperty().unbind();
 
         this.bsbInterface = bsbInterface;
-        selection.initialize(groupsList, bsbInterface.getGridSettings());
+        
 
         if (bsbInterface != null) {
-
+            selection.initialize(groupsList, bsbInterface.getGridSettings());
+            
             GridSettings gridSettings = bsbInterface.getGridSettings();
             gridSettings.widthProperty().addListener(gridListener);
             gridSettings.heightProperty().addListener(gridListener);
