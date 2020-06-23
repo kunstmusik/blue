@@ -4,6 +4,7 @@ import blue.plugin.BarRendererPlugin;
 import blue.score.layers.Layer;
 import blue.soundObject.GenericViewable;
 import blue.soundObject.SoundObject;
+import blue.soundObject.TimeBehavior;
 import blue.ui.core.score.layers.soundObject.SoundObjectView;
 import blue.ui.utilities.BlueGradientFactory;
 import java.awt.*;
@@ -77,17 +78,17 @@ public class GenericRenderer implements BarRenderer {
         g.setColor(border2);
         g.drawLine(0, h - 2, w, h - 2);
         g.drawLine(w - 1, h - 2, w - 1, 2);
-        
-        if(sObjView.isSelected()) {
-            g.setColor(new Color(255,255,255,196));
+
+        if (sObjView.isSelected()) {
+            g.setColor(new Color(255, 255, 255, 196));
             g.drawRect(1, 3, w - 3, h - 6);
         }
-        
 
         // paint repeat
         double repeatPoint = sObj.getRepeatPoint();
+        var tb = sObj.getTimeBehavior();
 
-        if (sObj.getTimeBehavior() == SoundObject.TIME_BEHAVIOR_REPEAT
+        if ((tb == TimeBehavior.REPEAT_CLASSIC || tb == TimeBehavior.REPEAT)
                 && repeatPoint > 0.0f) {
 
             double lineTime = repeatPoint;

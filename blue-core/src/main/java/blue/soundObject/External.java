@@ -37,7 +37,7 @@ public class External extends AbstractSoundObject {
 
     private NoteProcessorChain npc; 
 
-    private int timeBehavior;
+    private TimeBehavior timeBehavior;
 
     double repeatPoint = -1.0f;
 
@@ -50,7 +50,7 @@ public class External extends AbstractSoundObject {
     public External() {
         this.setName("External");
         npc = new NoteProcessorChain();
-        timeBehavior = SoundObject.TIME_BEHAVIOR_SCALE;
+        timeBehavior = TimeBehavior.SCALE;
     }
 
     public External(External external) {
@@ -157,12 +157,12 @@ public class External extends AbstractSoundObject {
     }
 
     @Override
-    public int getTimeBehavior() {
+    public TimeBehavior getTimeBehavior() {
         return this.timeBehavior;
     }
 
     @Override
-    public void setTimeBehavior(int timeBehavior) {
+    public void setTimeBehavior(TimeBehavior timeBehavior) {
         this.timeBehavior = timeBehavior;
     }
 

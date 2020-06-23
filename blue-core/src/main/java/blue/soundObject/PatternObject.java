@@ -48,7 +48,7 @@ public class PatternObject extends AbstractSoundObject implements TableModel,
 //    private static BarRenderer renderer = new GenericRenderer();
     private NoteProcessorChain npc = new NoteProcessorChain();
 
-    private int timeBehavior;
+    private TimeBehavior timeBehavior;
 
     double repeatPoint = -1.0f;
 
@@ -64,7 +64,7 @@ public class PatternObject extends AbstractSoundObject implements TableModel,
 
     public PatternObject() {
         this.setName("Pattern");
-        this.timeBehavior = TIME_BEHAVIOR_SCALE;
+        this.timeBehavior = TimeBehavior.SCALE;
     }
 
     public PatternObject(PatternObject pObj) {
@@ -223,12 +223,12 @@ public class PatternObject extends AbstractSoundObject implements TableModel,
     }
 
     @Override
-    public int getTimeBehavior() {
-        return timeBehavior;
+    public TimeBehavior getTimeBehavior() {
+        return this.timeBehavior;
     }
 
     @Override
-    public void setTimeBehavior(int timeBehavior) {
+    public void setTimeBehavior(TimeBehavior timeBehavior) {
         this.timeBehavior = timeBehavior;
     }
 

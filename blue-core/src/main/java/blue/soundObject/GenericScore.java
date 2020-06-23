@@ -17,7 +17,6 @@
  * the Free Software Foundation Inc., 59 Temple Place - Suite 330,
  * Boston, MA  02111-1307 USA
  */
-
 package blue.soundObject;
 
 /**
@@ -27,7 +26,6 @@ package blue.soundObject;
  * @author steven yi
  * @version 1.0
  */
-
 import blue.score.ScoreObjectEvent;
 import blue.*;
 import blue.noteProcessor.NoteProcessorChain;
@@ -37,13 +35,13 @@ import blue.utility.ScoreUtilities;
 import electric.xml.Element;
 import java.util.Map;
 
-@SoundObjectPlugin(displayName = "GenericScore", live=true, position = 40)
-public class GenericScore extends AbstractSoundObject implements 
+@SoundObjectPlugin(displayName = "GenericScore", live = true, position = 40)
+public class GenericScore extends AbstractSoundObject implements
         GenericViewable {
 
     private NoteProcessorChain npc = new NoteProcessorChain();
 
-    private int timeBehavior;
+    private TimeBehavior timeBehavior;
 
     double repeatPoint = -1.0f;
 
@@ -52,7 +50,7 @@ public class GenericScore extends AbstractSoundObject implements
     public GenericScore() {
         setName("GenericScore");
         score = "i1 0 2 3 4 5";
-        timeBehavior = SoundObject.TIME_BEHAVIOR_SCALE;
+        timeBehavior = TimeBehavior.SCALE;
     }
 
     public GenericScore(GenericScore score) {
@@ -64,7 +62,6 @@ public class GenericScore extends AbstractSoundObject implements
     }
 
     // public accessor methods
-
     public String getText() {
         return score;
     }
@@ -116,7 +113,6 @@ public class GenericScore extends AbstractSoundObject implements
         return nl;
     }
 
-
     public static GenericScore transformSoundObject(SoundObject sObj)
             throws SoundObjectException {
         GenericScore buffer = new GenericScore();
@@ -132,19 +128,18 @@ public class GenericScore extends AbstractSoundObject implements
 //    public BarRenderer getRenderer() {
 //        return renderer;
 //    }
-
     @Override
     public void setNoteProcessorChain(NoteProcessorChain noteProcessorChain) {
         this.npc = noteProcessorChain;
     }
 
     @Override
-    public int getTimeBehavior() {
+    public TimeBehavior getTimeBehavior() {
         return this.timeBehavior;
     }
 
     @Override
-    public void setTimeBehavior(int timeBehavior) {
+    public void setTimeBehavior(TimeBehavior timeBehavior) {
         this.timeBehavior = timeBehavior;
     }
 
@@ -175,8 +170,8 @@ public class GenericScore extends AbstractSoundObject implements
         SoundObjectUtilities.initBasicFromXML(data, genScore);
 
         String tempScore = data.getElement("score").getTextString();
-        
-        if(tempScore == null) {
+
+        if (tempScore == null) {
             genScore.setText("");
         } else {
             genScore.setText(tempScore);
@@ -201,12 +196,12 @@ public class GenericScore extends AbstractSoundObject implements
     }
 
     @Override
-    public NoteList generateForCSD(CompileData compileData, double startTime, 
+    public NoteList generateForCSD(CompileData compileData, double startTime,
             double endTime) throws SoundObjectException {
-        
+
         NoteList nl = generateNotes(startTime, endTime);
         return nl;
-        
+
     }
 
     @Override
@@ -214,4 +209,4 @@ public class GenericScore extends AbstractSoundObject implements
         return new GenericScore(this);
     }
 
-} 
+}

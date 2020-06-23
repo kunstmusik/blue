@@ -54,7 +54,7 @@ public class ObjectBuilder extends AbstractSoundObject {
     String commandLine;
     private boolean editEnabled = true;
     private NoteProcessorChain npc = new NoteProcessorChain();
-    private int timeBehavior;
+    private TimeBehavior timeBehavior;
     double repeatPoint = -1.0f;
     StringProperty comment;
 
@@ -66,7 +66,7 @@ public class ObjectBuilder extends AbstractSoundObject {
         presetGroup = new PresetGroup();
         code = "";
         commandLine = "";
-        timeBehavior = SoundObject.TIME_BEHAVIOR_SCALE;
+        timeBehavior = TimeBehavior.SCALE;
         comment = new SimpleStringProperty("");
         languageType = new SimpleObjectProperty<>(LanguageType.PYTHON);
 
@@ -171,12 +171,12 @@ public class ObjectBuilder extends AbstractSoundObject {
     }
 
     @Override
-    public int getTimeBehavior() {
+    public TimeBehavior getTimeBehavior() {
         return this.timeBehavior;
     }
 
     @Override
-    public void setTimeBehavior(int timeBehavior) {
+    public void setTimeBehavior(TimeBehavior timeBehavior) {
         this.timeBehavior = timeBehavior;
     }
 
@@ -361,9 +361,9 @@ public class ObjectBuilder extends AbstractSoundObject {
 
     // ENUM FOR LANGUAGES
     public enum LanguageType {
-        PYTHON("Python", "text/x-python"), 
-        JAVASCRIPT("JavaScript", "text/javascript"), 
-        CLOJURE("Clojure", "text/x-clojure"), 
+        PYTHON("Python", "text/x-python"),
+        JAVASCRIPT("JavaScript", "text/javascript"),
+        CLOJURE("Clojure", "text/x-clojure"),
         EXTERNAL("External", "text/plain");
 
         private String desc;

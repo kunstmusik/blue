@@ -43,7 +43,7 @@ public class TrackerObject extends AbstractSoundObject {
 
     private double duration = 4.0f;
 
-    private int timeBehavior = SoundObject.TIME_BEHAVIOR_SCALE;
+    private TimeBehavior timeBehavior = TimeBehavior.SCALE;
 
     double repeatPoint = -1.0f;
 
@@ -97,12 +97,12 @@ public class TrackerObject extends AbstractSoundObject {
     }
 
     @Override
-    public int getTimeBehavior() {
+    public TimeBehavior getTimeBehavior() {
         return timeBehavior;
     }
 
     @Override
-    public void setTimeBehavior(int timeBehavior) {
+    public void setTimeBehavior(TimeBehavior timeBehavior) {
         this.timeBehavior = timeBehavior;
     }
 

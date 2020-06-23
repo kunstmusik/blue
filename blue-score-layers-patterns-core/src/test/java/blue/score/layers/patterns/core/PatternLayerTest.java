@@ -22,8 +22,8 @@ package blue.score.layers.patterns.core;
 import blue.CompileData;
 import blue.soundObject.GenericScore;
 import blue.soundObject.NoteList;
-import blue.soundObject.SoundObject;
 import blue.soundObject.SoundObjectException;
+import blue.soundObject.TimeBehavior;
 import org.junit.*;
 import static org.junit.Assert.*;
 
@@ -48,7 +48,7 @@ public class PatternLayerTest {
         int patternBeatsLength = 4;
         PatternLayer instance = new PatternLayer();
         GenericScore score = new GenericScore();
-        score.setTimeBehavior(SoundObject.TIME_BEHAVIOR_NONE);
+        score.setTimeBehavior(TimeBehavior.NONE);
         score.setText("i1 0 .25 1 2\ni1 1 .25 1 2");
         instance.setSoundObject(score);
         instance.getPatternData().setPattern(0, true);

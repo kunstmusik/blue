@@ -66,7 +66,7 @@ public class PolyObject extends ArrayList<SoundLayer> implements SoundObject,
     protected Color backgroundColor = Color.DARK_GRAY;
     transient Vector<ScoreObjectListener> soundObjectListeners = null;
     private NoteProcessorChain npc = new NoteProcessorChain();
-    private int timeBehavior;
+    private TimeBehavior timeBehavior;
     double repeatPoint = -1.0f;
     private int defaultHeightIndex = 0;
     private TimeState timeState = new TimeState();
@@ -74,13 +74,13 @@ public class PolyObject extends ArrayList<SoundLayer> implements SoundObject,
 
     public PolyObject() {
         setName("polyObject");
-        timeBehavior = SoundObject.TIME_BEHAVIOR_SCALE;
+        timeBehavior = TimeBehavior.SCALE;
         this.setBackgroundColor(new Color(102, 102, 153));
     }
 
     public PolyObject(boolean isRoot) {
         setName("SoundObject Layer Group");
-        timeBehavior = SoundObject.TIME_BEHAVIOR_NONE;
+        timeBehavior = TimeBehavior.SCALE;
         this.setBackgroundColor(new Color(102, 102, 153));
     }
 
@@ -398,12 +398,12 @@ public class PolyObject extends ArrayList<SoundLayer> implements SoundObject,
 
 
     @Override
-    public int getTimeBehavior() {
+    public TimeBehavior getTimeBehavior() {
         return this.timeBehavior;
     }
 
     @Override
-    public void setTimeBehavior(int timeBehavior) {
+    public void setTimeBehavior(TimeBehavior timeBehavior) {
         this.timeBehavior = timeBehavior;
     }
 
@@ -716,7 +716,7 @@ public class PolyObject extends ArrayList<SoundLayer> implements SoundObject,
         List<SoundObject> sObjects = getSoundObjects(false);
 
         for (SoundObject element : sObjects) {
-            if (element.getTimeBehavior() == SoundObject.TIME_BEHAVIOR_NONE) {
+            if (element.getTimeBehavior() == TimeBehavior.NONE) {
                 return false;
             }
 

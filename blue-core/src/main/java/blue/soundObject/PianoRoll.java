@@ -33,7 +33,7 @@ public class PianoRoll extends AbstractSoundObject implements GenericViewable {
 
     public static final int GENERATE_MIDI = 2;
 
-    private int timeBehavior;
+    private TimeBehavior timeBehavior;
 
     double repeatPoint = -1.0f;
 
@@ -67,7 +67,7 @@ public class PianoRoll extends AbstractSoundObject implements GenericViewable {
 
     public PianoRoll() {
         this.setName("PianoRoll");
-        timeBehavior = TIME_BEHAVIOR_SCALE;
+        timeBehavior = TimeBehavior.SCALE;
         scale = Scale.get12TET();
         notes = new ArrayList<>();
         noteTemplate = "i <INSTR_ID> <START> <DUR> <FREQ>";
@@ -211,12 +211,12 @@ public class PianoRoll extends AbstractSoundObject implements GenericViewable {
     }
 
     @Override
-    public int getTimeBehavior() {
+    public TimeBehavior getTimeBehavior() {
         return this.timeBehavior;
     }
 
     @Override
-    public void setTimeBehavior(int timeBehavior) {
+    public void setTimeBehavior(TimeBehavior timeBehavior) {
         this.timeBehavior = timeBehavior;
     }
 

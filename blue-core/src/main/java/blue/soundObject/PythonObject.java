@@ -46,7 +46,7 @@ public class PythonObject extends AbstractSoundObject implements
 
     private NoteProcessorChain npc = new NoteProcessorChain();
 
-    private int timeBehavior;
+    private TimeBehavior timeBehavior;
 
     double repeatPoint = -1.0f;
 
@@ -58,7 +58,7 @@ public class PythonObject extends AbstractSoundObject implements
         setName("PythonObject");
         pythonCode = BlueSystem.getString("pythonObject.defaultCode");
         pythonCode += "\n\nscore = \"i1 0 2 3 4 5\"";
-        timeBehavior = SoundObject.TIME_BEHAVIOR_SCALE;
+        timeBehavior = TimeBehavior.SCALE;
     }
 
     public PythonObject(PythonObject pObj) {
@@ -131,12 +131,12 @@ public class PythonObject extends AbstractSoundObject implements
     }
 
     @Override
-    public int getTimeBehavior() {
+    public TimeBehavior getTimeBehavior() {
         return this.timeBehavior;
     }
 
     @Override
-    public void setTimeBehavior(int timeBehavior) {
+    public void setTimeBehavior(TimeBehavior timeBehavior) {
         this.timeBehavior = timeBehavior;
     }
 

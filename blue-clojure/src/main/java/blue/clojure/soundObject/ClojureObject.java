@@ -33,6 +33,7 @@ import blue.soundObject.SoundObject;
 import blue.score.ScoreObjectEvent;
 import blue.soundObject.SoundObjectException;
 import blue.soundObject.SoundObjectUtilities;
+import blue.soundObject.TimeBehavior;
 import blue.utility.ScoreUtilities;
 import electric.xml.Element;
 import java.io.File;
@@ -44,27 +45,27 @@ import javax.script.ScriptException;
  *
  * @author stevenyi
  */
-@SoundObjectPlugin(displayName="ClojureObject", position=25)
-public class ClojureObject extends AbstractSoundObject implements 
+@SoundObjectPlugin(displayName = "ClojureObject", position = 25)
+public class ClojureObject extends AbstractSoundObject implements
         OnLoadProcessable {
-    
+
     private NoteProcessorChain npc = new NoteProcessorChain();
 
-    private int timeBehavior;
+    private TimeBehavior timeBehavior;
 
     double repeatPoint = -1.0;
 
     private String clojureCode;
 
     private boolean onLoadProcessable = false;
-    
+
     public ClojureObject() {
         setName("(clojure-object)");
 
         clojureCode = ";use symbol blueDuration for duration from blue\n";
         clojureCode += "(def score \"i1 0 2 3 4 5\")";
 
-        timeBehavior = SoundObject.TIME_BEHAVIOR_SCALE;
+        timeBehavior = TimeBehavior.SCALE;
     }
 
     public ClojureObject(ClojureObject co) {
@@ -83,38 +84,38 @@ public class ClojureObject extends AbstractSoundObject implements
     public void setClojureCode(String code) {
         this.clojureCode = code;
     }
-    
+
     private Throwable getRootCauseException(ScriptException se) {
         ScriptException root = se;
         Throwable e = se;
-        while(e != null) {
+        while (e != null) {
             e = e.getCause();
-            if(e instanceof ScriptException) {
-                root = (ScriptException)e;
+            if (e instanceof ScriptException) {
+                root = (ScriptException) e;
             }
         }
         return root.getCause();
     }
-    
+
     protected final NoteList generateNotes(double renderStart, double renderEnd) throws
             SoundObjectException {
-        
+
         String tempScore = null;
-        
+
         File currentDirFile = BlueSystem.getCurrentProjectDirectory();
 
         HashMap<String, Object> initObjects = new HashMap<>();
         initObjects.put("score", "");
         initObjects.put("blueDuration", getSubjectiveDuration());
         initObjects.put("blueProjectDir", currentDirFile);
-        
+
         try {
             tempScore = BlueClojureEngine.getInstance().
                     processScript(clojureCode, initObjects, "score");
         } catch (ScriptException scriptEx) {
-            
-            String msg = "Clojure Error:\n" + 
-                    getRootCauseException(scriptEx).toString();
+
+            String msg = "Clojure Error:\n"
+                    + getRootCauseException(scriptEx).toString();
             throw new SoundObjectException(this, msg);
         }
 
@@ -137,8 +138,7 @@ public class ClojureObject extends AbstractSoundObject implements
         ScoreUtilities.setScoreStart(nl, startTime);
         return nl;
     }
-    
-    
+
     @Override
     public NoteList generateForCSD(CompileData compileData, double startTime, double endTime) throws SoundObjectException {
         return generateNotes(startTime, endTime);
@@ -155,12 +155,12 @@ public class ClojureObject extends AbstractSoundObject implements
     }
 
     @Override
-    public int getTimeBehavior() {
+    public TimeBehavior getTimeBehavior() {
         return timeBehavior;
     }
 
     @Override
-    public void setTimeBehavior(int timeBehavior) {
+    public void setTimeBehavior(TimeBehavior timeBehavior) {
         this.timeBehavior = timeBehavior;
     }
 
@@ -172,7 +172,7 @@ public class ClojureObject extends AbstractSoundObject implements
     @Override
     public void setRepeatPoint(double repeatPoint) {
         this.repeatPoint = repeatPoint;
-        
+
         ScoreObjectEvent event = new ScoreObjectEvent(this,
                 ScoreObjectEvent.REPEAT_POINT);
 
@@ -199,13 +199,12 @@ public class ClojureObject extends AbstractSoundObject implements
                     Boolean.valueOf(olpString).booleanValue());
         }
 
-
         return clojureObj;
 
     }
-    
+
     @Override
-        public Element saveAsXML(Map<Object, String> objRefMap) {
+    public Element saveAsXML(Map<Object, String> objRefMap) {
         Element retVal = SoundObjectUtilities.getBasicXML(this);
 
         retVal.addElement("clojureCode").setText(this.getClojureCode());
@@ -241,5 +240,5 @@ public class ClojureObject extends AbstractSoundObject implements
     public ClojureObject deepCopy() {
         return new ClojureObject(this);
     }
-    
+
 }
