@@ -21,8 +21,10 @@ package blue.orchestra.editor.blueSynthBuilder.jfx;
 
 import blue.BlueSystem;
 import blue.orchestra.blueSynthBuilder.BSBFileSelector;
+import blue.projects.BlueProjectManager;
 import blue.ui.nbutilities.BlueNbUtilities;
 import blue.ui.utilities.FileChooserManager;
+import blue.utility.FileUtilities;
 import java.awt.Frame;
 import java.io.File;
 import java.io.IOException;
@@ -67,13 +69,44 @@ public class BSBFileSelectorView extends BorderPane implements ResizeableView {
         fileNameField.setPromptText("Select a File");
 
         MenuItem clearMenuItem = new MenuItem("Clear");
-        clearMenuItem.setOnAction(new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent event) {
-                fileSelector.fileNameProperty().set("");
+        clearMenuItem.setOnAction((ActionEvent event) -> {
+            fileSelector.fileNameProperty().set("");
+        });
+
+        MenuItem copyToMediaFolder = new MenuItem("Copy to Media Folder");
+        copyToMediaFolder.setOnAction(evt -> {
+            final var f = BlueSystem.findFile(fileSelector.getFileName());
+            
+            if(f == null) return;
+            
+            final var fParent = f.getParentFile();
+            final var projectDir = BlueSystem.getCurrentProjectDirectory();
+            final var mediaFolder = BlueSystem.getCurrentBlueData().getProjectProperties().mediaFolder;
+
+            final var targetDir = (mediaFolder != null && !mediaFolder.isBlank())
+                    ? new File(projectDir, mediaFolder)
+                    : projectDir;
+            
+            final var targetFile = new File(targetDir, f.getName());
+
+            if (f.exists() && f.isFile() && !targetFile.equals(fParent)) {
+
+                if (!targetDir.exists()) {
+                    targetDir.mkdir();
+                }
+
+                try {
+                    FileUtilities.copyFile(f, targetFile);
+                    String absFilePath = targetFile.getCanonicalPath();
+                    String relPath = BlueSystem.getRelativePath(absFilePath);
+                    fileSelector.setFileName(relPath);
+                } catch (IOException ex) {
+                    Exceptions.printStackTrace(ex);
+                }
+
             }
         });
-        ContextMenu menu = new ContextMenu(clearMenuItem);
+        ContextMenu menu = new ContextMenu(clearMenuItem, copyToMediaFolder);
         fileNameField.setContextMenu(menu);
 
         Button btn = new Button("...");
@@ -98,7 +131,7 @@ public class BSBFileSelectorView extends BorderPane implements ResizeableView {
                                 file);
                     }
                 }
-                
+
                 List<File> rValue = FileChooserManager.getDefault().showOpenDialog(
                         FILE_SELECTOR_ID, BlueNbUtilities.getMainWindow());
 

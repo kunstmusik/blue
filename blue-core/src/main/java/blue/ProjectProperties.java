@@ -70,6 +70,10 @@ public final class ProjectProperties {
     public boolean diskCompleteOverride = false;
 
     public boolean diskAlwaysRenderEntireProject = false;
+    
+    /* MEDIA FOLDER */
+    
+    public String mediaFolder = "";
 
     public ProjectProperties() {
     }
@@ -257,6 +261,10 @@ public final class ProjectProperties {
                     retVal.diskAlwaysRenderEntireProject = Boolean.valueOf(nodeVal)
                             .booleanValue();
                     break;
+                    
+                case "mediaFolder":
+                    retVal.mediaFolder = nodeVal;
+                    break;
             }
 
         }
@@ -345,6 +353,8 @@ public final class ProjectProperties {
                 diskCompleteOverride));
         retVal.addElement(XMLUtilities.writeBoolean("diskAlwaysRenderEntireProject",
                 diskAlwaysRenderEntireProject));
+        
+        retVal.addElement("mediaFolder").setText(mediaFolder);
 
         return retVal;
     }

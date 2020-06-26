@@ -24,6 +24,14 @@ NEW
   "Repeat (Classic)" for backwards compatibility. New implementation will repeat 
   notes up to repeat point and truncate any notes that overlap boundary.  
 
+* "Media Folder" property added to Project Properties: used for certain 
+  operations to copy files into the media folder which should be a child of the 
+  project root folder (or the root if the property is left empty).
+
+* BSB File Widget: Added "Copy to Media Folder" shortcut in popup menu that will
+  copy the selected file to the media folder and update the value to use the 
+  version found in the media folder. 
+
 UPDATED
 
 * Issue #396: Updated how selected score objects are rendered; rather than all

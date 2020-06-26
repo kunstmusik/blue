@@ -512,7 +512,7 @@ public class BlueSystem {
 
         if (out != null) {
 
-            Map<Object, String> dummyRefMap = new HashMap<>(); 
+            Map<Object, String> dummyRefMap = new HashMap<>();
             String lib = soundObjectLibrary.saveAsXML(sObj -> sObj.getValue().saveAsXML(dummyRefMap)).toString();
 
             out.print(lib);
@@ -674,6 +674,31 @@ public class BlueSystem {
         }
 
         return null;
+    }
+
+    /**
+     * Checks if a file path is a child of the current project path
+     */
+    public static boolean isChildFile(String filePath, File root) {
+        if(filePath == null || filePath.isBlank() || root == null) {
+            return false;
+        }
+        
+        File file = findFile(filePath);
+        
+        if (root == null || file == null || !file.isFile()) {
+            return false;
+        }
+
+        try {
+            final var projectPath = root.getCanonicalPath();
+            final var fileCanPath = file.getCanonicalPath();
+
+            return fileCanPath.startsWith(projectPath);
+        } catch (IOException e) {
+            return false;
+        }
+
     }
 
     public static ClassLoader getClassLoader() {

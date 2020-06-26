@@ -110,7 +110,7 @@ public final class ProjectPropertiesTopComponent extends TopComponent {
         this.projectInformationPanel1.setProjectProperties(projectProperties);
         this.realtimeRenderSettingsPanel1.setProjectProperties(projectProperties);
         this.diskRenderSettingsPanel1.setProjectProperties(projectProperties);
-
+        this.mediaPanel1.setProjectProperties(projectProperties);
     }
 
     /**
@@ -127,6 +127,7 @@ public final class ProjectPropertiesTopComponent extends TopComponent {
         jScrollPane2 = new javax.swing.JScrollPane();
         diskRenderSettingsPanel1 = new blue.ui.core.project.DiskRenderSettingsPanel();
         projectInformationPanel1 = new blue.ui.core.project.ProjectInformationPanel();
+        mediaPanel1 = new blue.ui.core.project.MediaPanel();
 
         jScrollPane1.setViewportView(realtimeRenderSettingsPanel1);
 
@@ -136,12 +137,13 @@ public final class ProjectPropertiesTopComponent extends TopComponent {
 
         tabs.addTab(org.openide.util.NbBundle.getMessage(ProjectPropertiesTopComponent.class, "ProjectPropertiesTopComponent.jScrollPane2.TabConstraints.tabTitle"), jScrollPane2); // NOI18N
         tabs.addTab(org.openide.util.NbBundle.getMessage(ProjectPropertiesTopComponent.class, "ProjectPropertiesTopComponent.projectInformationPanel1.TabConstraints.tabTitle"), projectInformationPanel1); // NOI18N
+        tabs.addTab(org.openide.util.NbBundle.getMessage(ProjectPropertiesTopComponent.class, "ProjectPropertiesTopComponent.mediaPanel1.TabConstraints.tabTitle"), mediaPanel1); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(tabs, javax.swing.GroupLayout.DEFAULT_SIZE, 412, Short.MAX_VALUE)
+            .addComponent(tabs, javax.swing.GroupLayout.DEFAULT_SIZE, 536, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -153,6 +155,7 @@ public final class ProjectPropertiesTopComponent extends TopComponent {
     private blue.ui.core.project.DiskRenderSettingsPanel diskRenderSettingsPanel1;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
+    private blue.ui.core.project.MediaPanel mediaPanel1;
     private blue.ui.core.project.ProjectInformationPanel projectInformationPanel1;
     private blue.ui.core.project.RealtimeRenderSettingsPanel realtimeRenderSettingsPanel1;
     private javax.swing.JTabbedPane tabs;
