@@ -580,7 +580,9 @@ public class BlueSystem {
             return path;
         }
 
-        if (path.startsWith(projectPath)) {
+        if(path.equals(projectPath)) {
+            return "";
+        } else if (path.startsWith(projectPath)) {
             return path.substring(projectPath.length() + 1);
         }
 
