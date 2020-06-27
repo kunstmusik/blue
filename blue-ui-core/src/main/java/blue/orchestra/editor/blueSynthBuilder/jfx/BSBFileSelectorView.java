@@ -42,6 +42,8 @@ import javafx.scene.input.Dragboard;
 import javafx.scene.input.TransferMode;
 import javafx.scene.layout.BorderPane;
 import javax.swing.SwingUtilities;
+import org.openide.DialogDisplayer;
+import org.openide.NotifyDescriptor;
 import org.openide.util.Exceptions;
 import org.openide.windows.WindowManager;
 
@@ -75,12 +77,23 @@ public class BSBFileSelectorView extends BorderPane implements ResizeableView {
 
         MenuItem copyToMediaFolder = new MenuItem("Copy to Media Folder");
         copyToMediaFolder.setOnAction(evt -> {
+            final var projectDir = BlueSystem.getCurrentProjectDirectory();
+            
+            if(projectDir == null || !projectDir.exists()) {
+                var nd = new NotifyDescriptor("Please save this project before copying to the media directory.", 
+                        "Project not saved yet", NotifyDescriptor.DEFAULT_OPTION, 
+                        NotifyDescriptor.ERROR_MESSAGE, 
+                        null, null);
+                DialogDisplayer.getDefault().notify(nd);
+                return;
+            }
+            
             final var f = BlueSystem.findFile(fileSelector.getFileName());
             
             if(f == null) return;
             
             final var fParent = f.getParentFile();
-            final var projectDir = BlueSystem.getCurrentProjectDirectory();
+            
             final var mediaFolder = BlueSystem.getCurrentBlueData().getProjectProperties().mediaFolder;
 
             final var targetDir = (mediaFolder != null && !mediaFolder.isBlank())

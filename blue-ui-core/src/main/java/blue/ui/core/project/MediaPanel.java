@@ -7,6 +7,8 @@ import blue.ui.utilities.FileChooserManager;
 import blue.ui.utilities.SimpleDocumentListener;
 import java.io.IOException;
 import javax.swing.event.DocumentEvent;
+import org.openide.DialogDisplayer;
+import org.openide.NotifyDescriptor;
 import org.openide.util.Exceptions;
 
 /*
@@ -107,8 +109,20 @@ public class MediaPanel extends javax.swing.JPanel {
         var fcm = FileChooserManager.getDefault();
         var currentProjectDir = BlueSystem.getCurrentProjectDirectory();
 
-        if (currentProjectDir != null) {
+        if (currentProjectDir == null) {
+            final var projectDir = BlueSystem.getCurrentProjectDirectory();
+            
+            if(projectDir == null || !projectDir.exists()) {
+                var nd = new NotifyDescriptor("Please save this project before setting a media directory.", 
+                        "Project not saved yet", NotifyDescriptor.DEFAULT_OPTION, 
+                        NotifyDescriptor.ERROR_MESSAGE, 
+                        null, null);
+                DialogDisplayer.getDefault().notify(nd);
+                return;
+            }
+        } else {
             fcm.setCurrentDirectory(this, currentProjectDir);
+            fcm.setDirectoryChooser(this, true);
             var retVal = fcm.showOpenDialog(this, this);
             if (retVal != null && retVal.size() == 1) {
                 try {
