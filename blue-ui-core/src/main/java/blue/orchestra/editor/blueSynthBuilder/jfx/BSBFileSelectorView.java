@@ -42,6 +42,9 @@ import javafx.scene.input.Dragboard;
 import javafx.scene.input.TransferMode;
 import javafx.scene.layout.BorderPane;
 import javax.swing.SwingUtilities;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
 import org.openide.util.Exceptions;
@@ -78,29 +81,31 @@ public class BSBFileSelectorView extends BorderPane implements ResizeableView {
         MenuItem copyToMediaFolder = new MenuItem("Copy to Media Folder");
         copyToMediaFolder.setOnAction(evt -> {
             final var projectDir = BlueSystem.getCurrentProjectDirectory();
-            
-            if(projectDir == null || !projectDir.exists()) {
-                var nd = new NotifyDescriptor("Please save this project before copying to the media directory.", 
-                        "Project not saved yet", NotifyDescriptor.DEFAULT_OPTION, 
-                        NotifyDescriptor.ERROR_MESSAGE, 
+
+            if (projectDir == null || !projectDir.exists()) {
+                var nd = new NotifyDescriptor("Please save this project before copying to the media directory.",
+                        "Project not saved yet", NotifyDescriptor.DEFAULT_OPTION,
+                        NotifyDescriptor.ERROR_MESSAGE,
                         null, null);
                 DialogDisplayer.getDefault().notify(nd);
                 return;
             }
-            
+
             final var f = BlueSystem.findFile(fileSelector.getFileName());
-            
-            if(f == null) return;
-            
+
+            if (f == null) {
+                return;
+            }
+
             final var fParent = f.getParentFile();
-            
+
             final var mediaFolder = BlueSystem.getCurrentBlueData().getProjectProperties().mediaFolder;
 
             final var targetDir = (mediaFolder != null && !mediaFolder.isBlank())
                     ? new File(projectDir, mediaFolder)
                     : projectDir;
-            
-            final var targetFile = new File(targetDir, f.getName());
+
+            var targetFile = new File(targetDir, f.getName());
 
             if (f.exists() && f.isFile() && !targetFile.equals(fParent)) {
 
@@ -108,13 +113,17 @@ public class BSBFileSelectorView extends BorderPane implements ResizeableView {
                     targetDir.mkdir();
                 }
 
-                try {
-                    FileUtilities.copyFile(f, targetFile);
-                    String absFilePath = targetFile.getCanonicalPath();
-                    String relPath = BlueSystem.getRelativePath(absFilePath);
-                    fileSelector.setFileName(relPath);
-                } catch (IOException ex) {
-                    Exceptions.printStackTrace(ex);
+                targetFile = FileUtilities.copyToMediaFolder(f, targetFile);
+
+                if (targetFile != null) {
+                    String absFilePath;
+                    try {
+                        absFilePath = targetFile.getCanonicalPath();
+                        String relPath = BlueSystem.getRelativePath(absFilePath);
+                        fileSelector.setFileName(relPath);
+                    } catch (IOException ex) {
+                        Exceptions.printStackTrace(ex);
+                    }
                 }
 
             }

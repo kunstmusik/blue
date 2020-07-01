@@ -152,7 +152,11 @@
             <artifactId>blue-ext-commons-lang3</artifactId>
             <version>${project.version}</version>
         </dependency>    
-        
+        <dependency>
+            <groupId>com.kunstmusik</groupId>
+            <artifactId>blue-ext-commons-io</artifactId>
+            <version>${project.version}</version>
+        </dependency>    
         <dependency>
             <groupId>org.netbeans.api</groupId>
             <artifactId>org-netbeans-api-progress</artifactId>

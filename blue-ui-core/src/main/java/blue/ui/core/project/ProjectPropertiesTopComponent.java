@@ -69,7 +69,7 @@ public final class ProjectPropertiesTopComponent extends TopComponent {
 
     private static ProjectPropertiesTopComponent instance;
 
-    private Map<String, ProjectPluginEditor> pluginEditors = 
+    private final Map<String, ProjectPluginEditor> pluginEditors = 
             new HashMap<>();
 
     public ProjectPropertiesTopComponent() {

@@ -63,6 +63,7 @@
         <module>blue-ext-exml</module>
         <module>blue-ext-jython</module>
         <module>blue-ext-commons-lang3</module>
+        <module>blue-ext-commons-io</module>
         <module>blue-ext-openjfx</module>
         <module>blue-utilities</module>
         <module>blue-ui-utilities</module>
