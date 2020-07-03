@@ -101,17 +101,11 @@ public class BSBFileSelectorView extends BorderPane implements ResizeableView {
 
             final var mediaFolder = BlueSystem.getCurrentBlueData().getProjectProperties().mediaFolder;
 
-            final var targetDir = (mediaFolder != null && !mediaFolder.isBlank())
-                    ? new File(projectDir, mediaFolder)
-                    : projectDir;
+            final var targetDir = FileUtilities.resolveAndCreateMediaFolder(projectDir, mediaFolder);
 
             var targetFile = new File(targetDir, f.getName());
 
             if (f.exists() && f.isFile() && !targetFile.equals(fParent)) {
-
-                if (!targetDir.exists()) {
-                    targetDir.mkdir();
-                }
 
                 targetFile = FileUtilities.copyToMediaFolder(f, targetFile);
 

@@ -199,9 +199,8 @@ public class AudioLayersDropTargetListener implements DropTargetListener {
 
                 if (projectProps.copyToMediaFileOnImport && currentProjectDirectory != null) {
                     var mediaFolder = projectProps.mediaFolder;
-                    final var targetDir = (mediaFolder != null && !mediaFolder.isBlank())
-                            ? new File(currentProjectDirectory, mediaFolder)
-                            : currentProjectDirectory;
+                    final var targetDir = FileUtilities.
+                            resolveAndCreateMediaFolder(currentProjectDirectory, mediaFolder);
 
                     var target = new File(targetDir, f.getName());
                     f = FileUtilities.copyToMediaFolder(f, target);

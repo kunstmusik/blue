@@ -191,9 +191,8 @@ public class AudioFileEditor extends ScoreObjectEditor {
 
                     if (projectProps.copyToMediaFileOnImport && currentProjectDirectory != null) {
                         var mediaFolder = projectProps.mediaFolder;
-                        final var targetDir = (mediaFolder != null && !mediaFolder.isBlank())
-                                ? new File(currentProjectDirectory, mediaFolder)
-                                : currentProjectDirectory;
+                        final var targetDir = FileUtilities.
+                                resolveAndCreateMediaFolder(currentProjectDirectory, mediaFolder);
 
                         var target = new File(targetDir, temp.getName());
                         temp = FileUtilities.copyToMediaFolder(temp, target);

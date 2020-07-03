@@ -32,6 +32,11 @@ NEW
   copy the selected file to the media folder and update the value to use the 
   version found in the media folder. 
 
+* Implemented Copy audio files to media folder on import option in Project 
+  Properties which will be performed when importing audio into Audio Layers 
+  (via drag and drop), drag and drop onto soundObject layers, or changing audio
+  file in AudioFile soundObject editor
+
 UPDATED
 
 * Issue #396: Updated how selected score objects are rendered; rather than all

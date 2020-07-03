@@ -21,6 +21,8 @@ package blue.utility;
 
 import blue.BlueSystem;
 import java.io.*;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -88,10 +90,32 @@ public class FileUtilities {
                 directory, text);
     }
 
-    /** Utility for copying files to media folder.  
-     * Will check contents of files with same base names and optionall reuse 
-     * file found in target folder. Returned file points to where file was 
-     * actually copied to. 
+    /**
+     * Checks if mediaFolder is an absolute path or should be relative to
+     * project directory. Will call mkdirs() to ensure path exists.
+     *
+     * @param projectDir
+     * @param mediaFolder
+     * @return
+     */
+    public static File resolveAndCreateMediaFolder(File projectDir, String mediaFolder) {
+        
+        if(mediaFolder == null || mediaFolder.isBlank()) {
+            return projectDir;
+        }
+        
+        var path = Paths.get(mediaFolder);
+        var f = path.isAbsolute() ? new File(mediaFolder)
+                : new File(projectDir, mediaFolder);
+
+        f.mkdirs();
+        return f;
+    }
+
+    /**
+     * Utility for copying files to media folder. Will check contents of files
+     * with same base names and optionally reuse file found in target folder.
+     * Returned file points to where file was actually copied to.
      */
     public static File copyToMediaFolder(File src, File target) {
         final var fParent = target.getParentFile();
