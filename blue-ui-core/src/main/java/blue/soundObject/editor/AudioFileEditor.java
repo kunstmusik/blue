@@ -17,7 +17,6 @@
  * the Free Software Foundation Inc., 59 Temple Place - Suite 330,
  * Boston, MA  02111-1307 USA
  */
-
 package blue.soundObject.editor;
 
 import blue.BlueSystem;
@@ -28,6 +27,7 @@ import blue.soundObject.AudioFile;
 import blue.ui.nbutilities.MimeTypeEditorComponent;
 import blue.ui.utilities.FileChooserManager;
 import blue.ui.utilities.SimpleDocumentListener;
+import blue.utility.FileUtilities;
 import blue.utility.GUI;
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
@@ -52,11 +52,11 @@ import org.openide.awt.UndoRedo;
 
 /**
  * @author Administrator
- * 
+ *
  * To change the template for this generated type comment go to
  * Window>Preferences>Java>Code Generation>Code and Comments
  */
-@ScoreObjectEditorPlugin(scoreObjectType = AudioFile.class) 
+@ScoreObjectEditorPlugin(scoreObjectType = AudioFile.class)
 public class AudioFileEditor extends ScoreObjectEditor {
 
     JTextField audioFileName = new JTextField();
@@ -86,7 +86,7 @@ public class AudioFileEditor extends ScoreObjectEditor {
     JLabel channelVariables = new JLabel();
 
     LabelledItemPanel audioFileInfoPanel = new LabelledItemPanel();
-    
+
     UndoManager undo = new UndoRedo.Manager();
 
     public AudioFileEditor() {
@@ -111,14 +111,13 @@ public class AudioFileEditor extends ScoreObjectEditor {
                     af.setCsoundPostCode(csoundCode.getText());
                 }
             }
-        
+
         });
-        
+
         csoundCode.setUndoManager(undo);
         csoundCode.getDocument().addUndoableEditListener(undo);
 
         // INFORMATION PANEL
-
         // audioFileInfoPanel.addItem(BlueSystem
         // .getString("soundfile.infoPanel.infoLabel"), new JPanel());
         audioFileInfoPanel.addItem(BlueSystem
@@ -147,7 +146,6 @@ public class AudioFileEditor extends ScoreObjectEditor {
                 + " ", isBigEndianText);
 
         // AUDIO FILE EDITOR
-
         JPanel audioEditPanel = new JPanel();
         audioEditPanel.setLayout(new BorderLayout());
         audioEditPanel.setBorder(new EmptyBorder(5, 5, 5, 5));
@@ -168,7 +166,6 @@ public class AudioFileEditor extends ScoreObjectEditor {
         tabs.add(BlueSystem.getString("audioFile.tabTitle"), audioEditPanel);
 
         // CSOUND CODE EDITOR
-
         JPanel csoundPanel = new JPanel();
         csoundPanel.setLayout(new BorderLayout());
         csoundPanel.setBorder(new EmptyBorder(5, 5, 5, 5));
@@ -188,10 +185,26 @@ public class AudioFileEditor extends ScoreObjectEditor {
             File temp = rValue.get(0);
             if (temp.exists() && temp.isFile()) {
                 try {
+
+                    final var projectProps = BlueSystem.getCurrentBlueData().getProjectProperties();
+                    final File currentProjectDirectory = BlueSystem.getCurrentProjectDirectory();
+
+                    if (projectProps.copyToMediaFileOnImport && currentProjectDirectory != null) {
+                        var mediaFolder = projectProps.mediaFolder;
+                        final var targetDir = (mediaFolder != null && !mediaFolder.isBlank())
+                                ? new File(currentProjectDirectory, mediaFolder)
+                                : currentProjectDirectory;
+
+                        var target = new File(targetDir, temp.getName());
+                        temp = FileUtilities.copyToMediaFolder(temp, target);
+                    }
+
                     String absFilePath = temp.getCanonicalPath();
+
                     String relPath = BlueSystem.getRelativePath(absFilePath);
 
                     af.setSoundFileName(relPath);
+                    af.setName(temp.getName());
                     setAudioFileInfo(relPath);
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -226,7 +239,7 @@ public class AudioFileEditor extends ScoreObjectEditor {
         csoundCode.getJEditorPane().setCaretPosition(0);
         csoundCode.resetUndoManager();
         setAudioFileInfo(af.getSoundFileName());
-        
+
         undo.discardAllEdits();
     }
 
@@ -308,7 +321,7 @@ public class AudioFileEditor extends ScoreObjectEditor {
     private String getDuration(AudioFileFormat aFormat, AudioFormat format) {
         float duration = aFormat.getByteLength()
                 / (format.getSampleRate() * (format.getSampleSizeInBits() / 8) * format
-                        .getChannels());
+                .getChannels());
 
         int hours = (int) duration / 3600;
         duration = duration - (hours * 3600);

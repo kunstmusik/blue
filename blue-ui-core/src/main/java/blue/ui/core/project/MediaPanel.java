@@ -40,6 +40,8 @@ public class MediaPanel extends javax.swing.JPanel {
                 }
             }
         });
+        
+        
     }
 
     public void setProjectProperties(ProjectProperties projectProperties) {
@@ -47,6 +49,8 @@ public class MediaPanel extends javax.swing.JPanel {
 
         if (projectProperties != null) {
             mediaFolderTextField.setText(projectProperties.mediaFolder);
+            copyToMediaFolderOnImportCheckBox.setSelected(
+                    projectProperties.copyToMediaFileOnImport);
             this.projectProperties = projectProperties;
         }
     }
@@ -63,6 +67,7 @@ public class MediaPanel extends javax.swing.JPanel {
         jLabel1 = new javax.swing.JLabel();
         mediaFolderTextField = new javax.swing.JTextField();
         mediaFolderBrowseButton = new javax.swing.JButton();
+        copyToMediaFolderOnImportCheckBox = new javax.swing.JCheckBox();
 
         org.openide.awt.Mnemonics.setLocalizedText(jLabel1, org.openide.util.NbBundle.getMessage(MediaPanel.class, "MediaPanel.jLabel1.text")); // NOI18N
 
@@ -75,6 +80,13 @@ public class MediaPanel extends javax.swing.JPanel {
             }
         });
 
+        org.openide.awt.Mnemonics.setLocalizedText(copyToMediaFolderOnImportCheckBox, org.openide.util.NbBundle.getMessage(MediaPanel.class, "MediaPanel.copyToMediaFolderOnImportCheckBox.text")); // NOI18N
+        copyToMediaFolderOnImportCheckBox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                copyToMediaFolderOnImportCheckBoxActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -83,13 +95,18 @@ public class MediaPanel extends javax.swing.JPanel {
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
-                        .addGap(6, 6, 6)
-                        .addComponent(mediaFolderTextField)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(mediaFolderBrowseButton))
-                    .addGroup(layout.createSequentialGroup()
                         .addComponent(jLabel1)
-                        .addGap(0, 41, Short.MAX_VALUE)))
+                        .addGap(0, 41, Short.MAX_VALUE))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGap(6, 6, 6)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(copyToMediaFolderOnImportCheckBox, javax.swing.GroupLayout.PREFERRED_SIZE, 439, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addGap(0, 0, Short.MAX_VALUE))
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(mediaFolderTextField)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addComponent(mediaFolderBrowseButton)))))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -101,7 +118,9 @@ public class MediaPanel extends javax.swing.JPanel {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(mediaFolderTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(mediaFolderBrowseButton))
-                .addContainerGap(250, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(copyToMediaFolderOnImportCheckBox)
+                .addContainerGap(218, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -142,8 +161,15 @@ public class MediaPanel extends javax.swing.JPanel {
 
     }//GEN-LAST:event_mediaFolderBrowseButtonActionPerformed
 
+    private void copyToMediaFolderOnImportCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_copyToMediaFolderOnImportCheckBoxActionPerformed
+        if (projectProperties != null) {
+            projectProperties.copyToMediaFileOnImport = copyToMediaFolderOnImportCheckBox.isSelected();
+        }
+    }//GEN-LAST:event_copyToMediaFolderOnImportCheckBoxActionPerformed
+
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JCheckBox copyToMediaFolderOnImportCheckBox;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JButton mediaFolderBrowseButton;
     private javax.swing.JTextField mediaFolderTextField;

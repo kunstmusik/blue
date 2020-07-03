@@ -17,13 +17,13 @@
  * the Free Software Foundation Inc., 59 Temple Place - Suite 330,
  * Boston, MA  02111-1307 USA
  */
-
 package blue.ui.core.score.layers.soundObject;
 
 import blue.BlueSystem;
 import blue.score.TimeState;
 import blue.soundObject.AudioFile;
 import blue.soundObject.PolyObject;
+import blue.utility.FileUtilities;
 import blue.utility.SoundFileUtilities;
 import java.awt.Point;
 import java.awt.datatransfer.DataFlavor;
@@ -49,7 +49,7 @@ public class ScoreTimelineDropTargetListener implements DropTargetListener {
     DropTarget target;
 
     private ScoreTimeCanvas sTimeCanvas;
-    
+
     TimeState timeState;
 
     public ScoreTimelineDropTargetListener(ScoreTimeCanvas sTimeCanvas) {
@@ -60,8 +60,6 @@ public class ScoreTimelineDropTargetListener implements DropTargetListener {
     public void setTimeState(TimeState timeState) {
         this.timeState = timeState;
     }
-    
-    
 
     /*
      * (non-Javadoc)
@@ -116,6 +114,10 @@ public class ScoreTimelineDropTargetListener implements DropTargetListener {
      */
     @Override
     public void drop(DropTargetDropEvent dtde) {
+
+        final var projectProps = BlueSystem.getCurrentBlueData().getProjectProperties();
+        final File currentProjectDirectory = BlueSystem.getCurrentProjectDirectory();
+
         try {
             Transferable tr = dtde.getTransferable();
 
@@ -146,6 +148,18 @@ public class ScoreTimelineDropTargetListener implements DropTargetListener {
                 Point p = dtde.getLocation();
 
                 int index = sTimeCanvas.pObj.getLayerNumForY(p.y);
+
+                if (projectProps.copyToMediaFileOnImport && currentProjectDirectory != null) {
+                    var f = new File(s);
+                    var mediaFolder = projectProps.mediaFolder;
+                    final var targetDir = (mediaFolder != null && !mediaFolder.isBlank())
+                            ? new File(currentProjectDirectory, mediaFolder)
+                            : currentProjectDirectory;
+
+                    var target = new File(targetDir, f.getName());
+                    f = FileUtilities.copyToMediaFolder(f, target);
+                    s = f.getCanonicalPath();
+                }
 
                 AudioFile af = new AudioFile();
                 af.setName(sObjName);
@@ -200,6 +214,17 @@ public class ScoreTimelineDropTargetListener implements DropTargetListener {
                 Point p = dtde.getLocation();
 
                 int index = sTimeCanvas.pObj.getLayerNumForY(p.y);
+                
+                if (projectProps.copyToMediaFileOnImport && currentProjectDirectory != null) {
+                    var mediaFolder = projectProps.mediaFolder;
+                    final var targetDir = (mediaFolder != null && !mediaFolder.isBlank())
+                            ? new File(currentProjectDirectory, mediaFolder)
+                            : currentProjectDirectory;
+
+                    var target = new File(targetDir, f.getName());
+                    f = FileUtilities.copyToMediaFolder(f, target);
+                    str = f.getCanonicalPath();
+                }
 
                 AudioFile af = new AudioFile();
                 af.setName(sObjName);
