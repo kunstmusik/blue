@@ -55,6 +55,9 @@ FIX
 * Clojure: Dependency resolution for clojars-hosted libraries was broken due to 
   using older http url; fixed by updating to https://repo.clojars.org
 
+* Audio Layers: Audio Clips were not generating use project-relative paths when 
+  audio files were children of project root folder
+
 > Notes for 2.8.0 <
 [release 2020.06.03]
 
