@@ -12,10 +12,6 @@ jobs:
         with:
           java-version: '11' 
 
-      - name: Build Blue Manual
-        run: mvn compile 
-        working-directory: ./manual
-
       - name: Build Blue 
         run: mvn -Pgenerate-manual,macOS clean install
 
@@ -32,10 +28,6 @@ jobs:
       - uses: actions/setup-java@v1
         with:
           java-version: '11' 
-
-      - name: Build Blue Manual
-        run: mvn compile 
-        working-directory: ./manual
 
       - name: Build Blue 
         run: mvn -Dmaven.test.skip=true -Pgenerate-manual clean install
@@ -56,10 +48,6 @@ jobs:
       - uses: actions/setup-java@v1
         with:
           java-version: '11' 
-
-      - name: Build Blue Manual
-        run: mvn compile 
-        working-directory: ./manual
 
       - name: Build Blue 
         run: mvn -Pgenerate-manual clean install
