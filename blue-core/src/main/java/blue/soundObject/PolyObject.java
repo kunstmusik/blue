@@ -80,7 +80,7 @@ public class PolyObject extends ArrayList<SoundLayer> implements SoundObject,
 
     public PolyObject(boolean isRoot) {
         setName("SoundObject Layer Group");
-        timeBehavior = TimeBehavior.SCALE;
+        timeBehavior = TimeBehavior.NONE;
         this.setBackgroundColor(new Color(102, 102, 153));
     }
 
