@@ -36,18 +36,20 @@ public class BSBTextFieldBeanInfo extends SimpleBeanInfo {
 
 
     // Property identifiers//GEN-FIRST:Properties
-    private static final int PROPERTY_objectName = 0;
-    private static final int PROPERTY_textFieldWidth = 1;
-    private static final int PROPERTY_value = 2;
-    private static final int PROPERTY_x = 3;
-    private static final int PROPERTY_y = 4;
+    private static final int PROPERTY_comment = 0;
+    private static final int PROPERTY_objectName = 1;
+    private static final int PROPERTY_textFieldWidth = 2;
+    private static final int PROPERTY_value = 3;
+    private static final int PROPERTY_x = 4;
+    private static final int PROPERTY_y = 5;
 
     // Property array 
     /*lazy PropertyDescriptor*/
     private static PropertyDescriptor[] getPdescriptor(){
-        PropertyDescriptor[] properties = new PropertyDescriptor[5];
+        PropertyDescriptor[] properties = new PropertyDescriptor[6];
     
         try {
+            properties[PROPERTY_comment] = new PropertyDescriptor ( "comment", blue.orchestra.blueSynthBuilder.BSBTextField.class, "getComment", "setComment" ); // NOI18N
             properties[PROPERTY_objectName] = new PropertyDescriptor ( "objectName", blue.orchestra.blueSynthBuilder.BSBTextField.class, "getObjectName", "setObjectName" ); // NOI18N
             properties[PROPERTY_textFieldWidth] = new PropertyDescriptor ( "textFieldWidth", blue.orchestra.blueSynthBuilder.BSBTextField.class, "getTextFieldWidth", "setTextFieldWidth" ); // NOI18N
             properties[PROPERTY_value] = new PropertyDescriptor ( "value", blue.orchestra.blueSynthBuilder.BSBTextField.class, "getValue", "setValue" ); // NOI18N

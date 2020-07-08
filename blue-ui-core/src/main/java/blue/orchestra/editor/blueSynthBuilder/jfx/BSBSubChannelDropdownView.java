@@ -22,28 +22,53 @@ import blue.BlueData;
 import blue.mixer.Channel;
 import blue.orchestra.blueSynthBuilder.BSBSubChannelDropdown;
 import blue.projects.BlueProjectManager;
+import javafx.beans.value.ChangeListener;
 import javafx.scene.control.ChoiceBox;
+import javafx.scene.control.Tooltip;
 
 /**
  *
  * @author stevenyi
  */
 public class BSBSubChannelDropdownView extends ChoiceBox<String> {
-    
+
+    Tooltip tooltip = new Tooltip();
+
     public BSBSubChannelDropdownView(BSBSubChannelDropdown dropDown) {
         setUserData(dropDown);
 
         BlueData data = BlueProjectManager.getInstance().getCurrentProject().getData();
         // FIXME - update once Mixer is updated for JFX ObservableList
         itemsProperty().get().add(Channel.MASTER);
-        for(Channel c : data.getMixer().getSubChannels()){
+        for (Channel c : data.getMixer().getSubChannels()) {
             itemsProperty().get().add(c.getName());
         }
 
         getSelectionModel().select(dropDown.getChannelOutput());
 
-       getSelectionModel().selectedItemProperty().addListener((obs, old, newVal) -> {
-           dropDown.setChannelOutput(newVal);
-       });
+        getSelectionModel().selectedItemProperty().addListener((obs, old, newVal) -> {
+            dropDown.setChannelOutput(newVal);
+        });
+
+        ChangeListener<String> toolTipListener = (obs, old, newVal) -> {
+            var comment = dropDown.getComment();
+            if (comment == null || comment.isBlank()) {
+                setTooltip(null);
+            } else {
+                setTooltip(tooltip);
+            }
+        };
+
+        sceneProperty().addListener((obs, old, newVal) -> {
+            if (newVal == null) {
+                dropDown.commentProperty().removeListener(toolTipListener);
+                tooltip.textProperty().unbind();
+                setTooltip(null);
+            } else {
+                dropDown.commentProperty().addListener(toolTipListener);
+                tooltip.textProperty().bind(dropDown.commentProperty());
+                toolTipListener.changed(null, null, null);
+            }
+        });
     }
 }

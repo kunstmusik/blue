@@ -36,16 +36,18 @@ public class BSBSubChannelDropdownBeanInfo extends SimpleBeanInfo {
 
 
     // Property identifiers//GEN-FIRST:Properties
-    private static final int PROPERTY_objectName = 0;
-    private static final int PROPERTY_x = 1;
-    private static final int PROPERTY_y = 2;
+    private static final int PROPERTY_comment = 0;
+    private static final int PROPERTY_objectName = 1;
+    private static final int PROPERTY_x = 2;
+    private static final int PROPERTY_y = 3;
 
     // Property array 
     /*lazy PropertyDescriptor*/
     private static PropertyDescriptor[] getPdescriptor(){
-        PropertyDescriptor[] properties = new PropertyDescriptor[3];
+        PropertyDescriptor[] properties = new PropertyDescriptor[4];
     
         try {
+            properties[PROPERTY_comment] = new PropertyDescriptor ( "comment", blue.orchestra.blueSynthBuilder.BSBSubChannelDropdown.class, "getComment", "setComment" ); // NOI18N
             properties[PROPERTY_objectName] = new PropertyDescriptor ( "objectName", blue.orchestra.blueSynthBuilder.BSBSubChannelDropdown.class, "getObjectName", "setObjectName" ); // NOI18N
             properties[PROPERTY_x] = new PropertyDescriptor ( "x", blue.orchestra.blueSynthBuilder.BSBSubChannelDropdown.class, "getX", "setX" ); // NOI18N
             properties[PROPERTY_y] = new PropertyDescriptor ( "y", blue.orchestra.blueSynthBuilder.BSBSubChannelDropdown.class, "getY", "setY" ); // NOI18N

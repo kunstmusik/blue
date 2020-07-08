@@ -28,6 +28,7 @@ import javafx.beans.binding.Bindings;
 import javafx.beans.value.ChangeListener;
 import javafx.geometry.Orientation;
 import javafx.scene.control.Slider;
+import javafx.scene.control.Tooltip;
 import javafx.scene.layout.BorderPane;
 import javafx.util.StringConverter;
 
@@ -40,6 +41,8 @@ public class BSBHSliderView extends BorderPane implements ResizeableView {
     Slider slider;
     ValuePanel valuePanel;
     BSBHSlider bsbHSlider;
+
+    Tooltip tooltip = new Tooltip();
 
     public BSBHSliderView(BSBHSlider bsbHSlider) {
         setUserData(bsbHSlider);
@@ -114,6 +117,15 @@ public class BSBHSliderView extends BorderPane implements ResizeableView {
             updateTickCount();
         };
 
+        ChangeListener<String> toolTipListener = (obs, old, newVal) -> {
+            var comment = bsbHSlider.getComment();
+            if (comment == null || comment.isBlank()) {
+                slider.setTooltip(null);
+            } else {
+                slider.setTooltip(tooltip);
+            }
+        };
+
         sceneProperty().addListener((obs, old, newVal) -> {
             if (newVal == null) {
                 slider.maxProperty().unbind();
@@ -127,6 +139,10 @@ public class BSBHSliderView extends BorderPane implements ResizeableView {
                 bsbHSlider.maximumProperty().removeListener(tickListener);
                 bsbHSlider.minimumProperty().removeListener(tickListener);
                 bsbHSlider.resolutionProperty().removeListener(tickListener);
+
+                bsbHSlider.commentProperty().removeListener(toolTipListener);
+                tooltip.textProperty().unbind();
+                slider.setTooltip(null);
             } else {
                 slider.maxProperty().bind(bsbHSlider.maximumProperty());
                 slider.minProperty().bind(bsbHSlider.minimumProperty());
@@ -150,6 +166,10 @@ public class BSBHSliderView extends BorderPane implements ResizeableView {
                 bsbHSlider.maximumProperty().addListener(tickListener);
                 bsbHSlider.minimumProperty().addListener(tickListener);
                 bsbHSlider.resolutionProperty().addListener(tickListener);
+
+                bsbHSlider.commentProperty().addListener(toolTipListener);
+                tooltip.textProperty().bind(bsbHSlider.commentProperty());
+                toolTipListener.changed(null, null, null);
             }
         });
     }

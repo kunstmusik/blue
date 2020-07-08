@@ -36,19 +36,21 @@ public class BSBFileSelectorBeanInfo extends SimpleBeanInfo {
 
 
     // Property identifiers//GEN-FIRST:Properties
-    private static final int PROPERTY_fileName = 0;
-    private static final int PROPERTY_objectName = 1;
-    private static final int PROPERTY_stringChannelEnabled = 2;
-    private static final int PROPERTY_textFieldWidth = 3;
-    private static final int PROPERTY_x = 4;
-    private static final int PROPERTY_y = 5;
+    private static final int PROPERTY_comment = 0;
+    private static final int PROPERTY_fileName = 1;
+    private static final int PROPERTY_objectName = 2;
+    private static final int PROPERTY_stringChannelEnabled = 3;
+    private static final int PROPERTY_textFieldWidth = 4;
+    private static final int PROPERTY_x = 5;
+    private static final int PROPERTY_y = 6;
 
     // Property array 
     /*lazy PropertyDescriptor*/
     private static PropertyDescriptor[] getPdescriptor(){
-        PropertyDescriptor[] properties = new PropertyDescriptor[6];
+        PropertyDescriptor[] properties = new PropertyDescriptor[7];
     
         try {
+            properties[PROPERTY_comment] = new PropertyDescriptor ( "comment", blue.orchestra.blueSynthBuilder.BSBFileSelector.class, "getComment", "setComment" ); // NOI18N
             properties[PROPERTY_fileName] = new PropertyDescriptor ( "fileName", blue.orchestra.blueSynthBuilder.BSBFileSelector.class, "getFileName", "setFileName" ); // NOI18N
             properties[PROPERTY_objectName] = new PropertyDescriptor ( "objectName", blue.orchestra.blueSynthBuilder.BSBFileSelector.class, "getObjectName", "setObjectName" ); // NOI18N
             properties[PROPERTY_stringChannelEnabled] = new PropertyDescriptor ( "stringChannelEnabled", blue.orchestra.blueSynthBuilder.BSBFileSelector.class, "isStringChannelEnabled", "setStringChannelEnabled" ); // NOI18N

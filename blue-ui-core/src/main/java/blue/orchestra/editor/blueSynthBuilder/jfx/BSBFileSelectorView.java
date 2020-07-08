@@ -21,34 +21,28 @@ package blue.orchestra.editor.blueSynthBuilder.jfx;
 
 import blue.BlueSystem;
 import blue.orchestra.blueSynthBuilder.BSBFileSelector;
-import blue.projects.BlueProjectManager;
 import blue.ui.nbutilities.BlueNbUtilities;
 import blue.ui.utilities.FileChooserManager;
 import blue.utility.FileUtilities;
-import java.awt.Frame;
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
 import java.net.URLDecoder;
 import java.util.List;
+import javafx.beans.value.ChangeListener;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.scene.control.Button;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.TextField;
+import javafx.scene.control.Tooltip;
 import javafx.scene.input.DragEvent;
 import javafx.scene.input.Dragboard;
 import javafx.scene.input.TransferMode;
 import javafx.scene.layout.BorderPane;
-import javax.swing.SwingUtilities;
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
 import org.openide.util.Exceptions;
-import org.openide.windows.WindowManager;
 
 /**
  *
@@ -61,6 +55,8 @@ public class BSBFileSelectorView extends BorderPane implements ResizeableView {
     private static String FILE_SELECTOR_ID = "BSBFileSelector";
 
     private final BSBFileSelector fileSelector;
+    
+    Tooltip tooltip = new Tooltip();  
 
     TextField fileNameField;
 
@@ -271,15 +267,31 @@ public class BSBFileSelectorView extends BorderPane implements ResizeableView {
 
         });
 
+        ChangeListener<String> toolTipListener = (obs, old, newVal) -> {
+            var comment = fileSelector.getComment();
+            if (comment == null || comment.isBlank()) {
+                fileNameField.setTooltip(null);
+            } else {
+                fileNameField.setTooltip(tooltip);
+            }
+        };
+
         sceneProperty().addListener((obs, old, newVal) -> {
             if (newVal == null) {
                 fileNameField.textProperty().unbind();
                 fileNameField.prefWidthProperty().unbind();
+                fileNameField.setTooltip(null);
+                fileSelector.commentProperty().removeListener(toolTipListener);
+                tooltip.textProperty().unbind();
             } else {
                 fileNameField.textProperty().bind(fileSelector.fileNameProperty());
                 fileNameField.prefWidthProperty().bind(fileSelector.textFieldWidthProperty());
+                fileSelector.commentProperty().addListener(toolTipListener);
+                toolTipListener.changed(null, null, null);
+                tooltip.textProperty().bind(fileSelector.commentProperty());
             }
         });
+        
     }
 
     public boolean canResizeWidgetWidth() {

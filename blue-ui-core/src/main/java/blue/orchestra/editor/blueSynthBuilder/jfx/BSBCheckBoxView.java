@@ -21,14 +21,19 @@ package blue.orchestra.editor.blueSynthBuilder.jfx;
 
 import blue.orchestra.blueSynthBuilder.BSBCheckBox;
 import javafx.application.Platform;
+import javafx.beans.binding.Bindings;
 import javafx.beans.value.ChangeListener;
 import javafx.scene.control.CheckBox;
+import javafx.scene.control.Tooltip;
+import javafx.util.Duration;
 
 /**
  *
  * @author stevenyi
  */
 public class BSBCheckBoxView extends CheckBox {
+
+    Tooltip tooltip = new Tooltip();
 
     public BSBCheckBoxView(BSBCheckBox checkBox) {
         setUserData(checkBox);
@@ -65,19 +70,38 @@ public class BSBCheckBoxView extends CheckBox {
             }
         };
 
+        ChangeListener<String> toolTipListener = (obs, old, newVal) -> {
+            var comment = checkBox.getComment();
+            if (comment == null || comment.isBlank()) {
+                setTooltip(null);
+            } else {
+                setTooltip(tooltip);
+            }
+        };
+
         sceneProperty().addListener((obs, old, newVal) -> {
             if (newVal == null) {
 //                this.selectedProperty().unbindBidirectional(checkBox.selectedProperty());
                 checkBox.selectedProperty().removeListener(cboxToViewListener);
                 this.selectedProperty().removeListener(viewToCboxListener);
                 this.textProperty().unbind();
+                checkBox.commentProperty().removeListener(toolTipListener);
+                tooltip.textProperty().unbind();
+                setTooltip(null);
             } else {
                 setSelected(checkBox.isSelected());
 //                this.selectedProperty().bindBidirectional(checkBox.selectedProperty());
                 checkBox.selectedProperty().addListener(cboxToViewListener);
                 this.selectedProperty().addListener(viewToCboxListener);
                 this.textProperty().bind(checkBox.labelProperty());
+                checkBox.commentProperty().addListener(toolTipListener);
+                tooltip.textProperty().bind(checkBox.commentProperty());
+                toolTipListener.changed(null, null, null);
             }
         });
+
+        tooltip.setShowDelay(Duration.seconds(0.5));
+
     }
+
 }

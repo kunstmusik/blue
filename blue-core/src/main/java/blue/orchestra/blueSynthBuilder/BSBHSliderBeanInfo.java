@@ -37,24 +37,26 @@ public class BSBHSliderBeanInfo extends SimpleBeanInfo {
 
     // Property identifiers//GEN-FIRST:Properties
     private static final int PROPERTY_automationAllowed = 0;
-    private static final int PROPERTY_maximum = 1;
-    private static final int PROPERTY_minimum = 2;
-    private static final int PROPERTY_objectName = 3;
-    private static final int PROPERTY_randomizable = 4;
-    private static final int PROPERTY_resolution = 5;
-    private static final int PROPERTY_sliderWidth = 6;
-    private static final int PROPERTY_value = 7;
-    private static final int PROPERTY_valueDisplayEnabled = 8;
-    private static final int PROPERTY_x = 9;
-    private static final int PROPERTY_y = 10;
+    private static final int PROPERTY_comment = 1;
+    private static final int PROPERTY_maximum = 2;
+    private static final int PROPERTY_minimum = 3;
+    private static final int PROPERTY_objectName = 4;
+    private static final int PROPERTY_randomizable = 5;
+    private static final int PROPERTY_resolution = 6;
+    private static final int PROPERTY_sliderWidth = 7;
+    private static final int PROPERTY_value = 8;
+    private static final int PROPERTY_valueDisplayEnabled = 9;
+    private static final int PROPERTY_x = 10;
+    private static final int PROPERTY_y = 11;
 
     // Property array 
     /*lazy PropertyDescriptor*/
     private static PropertyDescriptor[] getPdescriptor(){
-        PropertyDescriptor[] properties = new PropertyDescriptor[11];
+        PropertyDescriptor[] properties = new PropertyDescriptor[12];
     
         try {
             properties[PROPERTY_automationAllowed] = new PropertyDescriptor ( "automationAllowed", blue.orchestra.blueSynthBuilder.BSBHSlider.class, "isAutomationAllowed", "setAutomationAllowed" ); // NOI18N
+            properties[PROPERTY_comment] = new PropertyDescriptor ( "comment", blue.orchestra.blueSynthBuilder.BSBHSlider.class, "getComment", "setComment" ); // NOI18N
             properties[PROPERTY_maximum] = new PropertyDescriptor ( "maximum", blue.orchestra.blueSynthBuilder.BSBHSlider.class, "getMaximum", "setMaximum" ); // NOI18N
             properties[PROPERTY_minimum] = new PropertyDescriptor ( "minimum", blue.orchestra.blueSynthBuilder.BSBHSlider.class, "getMinimum", "setMinimum" ); // NOI18N
             properties[PROPERTY_objectName] = new PropertyDescriptor ( "objectName", blue.orchestra.blueSynthBuilder.BSBHSlider.class, "getObjectName", "setObjectName" ); // NOI18N

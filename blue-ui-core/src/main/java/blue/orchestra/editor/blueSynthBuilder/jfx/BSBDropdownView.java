@@ -25,6 +25,7 @@ import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.value.ChangeListener;
 import javafx.scene.control.ComboBox;
+import javafx.scene.control.Tooltip;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 
@@ -36,6 +37,8 @@ public class BSBDropdownView extends ComboBox<BSBDropdownItem> {
 
     private final BSBDropdown dropdown;
     boolean mutating = false;
+
+    Tooltip tooltip = new Tooltip();
 
     public BSBDropdownView(BSBDropdown dropdown) {
         super(dropdown.dropdownItemsProperty());
@@ -96,16 +99,31 @@ public class BSBDropdownView extends ComboBox<BSBDropdownItem> {
             updateWidth();
         };
 
+        ChangeListener<String> toolTipListener = (obs, old, newVal) -> {
+            var comment = dropdown.getComment();
+            if (comment == null || comment.isBlank()) {
+                setTooltip(null);
+            } else {
+                setTooltip(tooltip);
+            }
+        };
+
         sceneProperty().addListener((obs, old, newVal) -> {
             if (newVal == null) {
                 dropdown.selectedIndexProperty().removeListener(cl);
                 dropdown.fontSizeProperty().removeListener(fontListener);
                 dropdown.getBSBDropdownItemList().removeListener(listListener);
+                dropdown.commentProperty().removeListener(toolTipListener);
+                tooltip.textProperty().unbind();
+                setTooltip(null);
             } else {
                 getSelectionModel().select(dropdown.getSelectedIndex());
                 dropdown.selectedIndexProperty().addListener(cl);
                 dropdown.fontSizeProperty().addListener(fontListener);
                 dropdown.getBSBDropdownItemList().addListener(listListener);
+                dropdown.commentProperty().addListener(toolTipListener);
+                tooltip.textProperty().bind(dropdown.commentProperty());
+                toolTipListener.changed(null, null, null);
             }
         });
 

@@ -37,25 +37,27 @@ public class BSBVSliderBankBeanInfo extends SimpleBeanInfo {
 
     // Property identifiers//GEN-FIRST:Properties
     private static final int PROPERTY_automationAllowed = 0;
-    private static final int PROPERTY_gap = 1;
-    private static final int PROPERTY_maximum = 2;
-    private static final int PROPERTY_minimum = 3;
-    private static final int PROPERTY_numberOfSliders = 4;
-    private static final int PROPERTY_objectName = 5;
-    private static final int PROPERTY_randomizable = 6;
-    private static final int PROPERTY_resolution = 7;
-    private static final int PROPERTY_sliderHeight = 8;
-    private static final int PROPERTY_valueDisplayEnabled = 9;
-    private static final int PROPERTY_x = 10;
-    private static final int PROPERTY_y = 11;
+    private static final int PROPERTY_comment = 1;
+    private static final int PROPERTY_gap = 2;
+    private static final int PROPERTY_maximum = 3;
+    private static final int PROPERTY_minimum = 4;
+    private static final int PROPERTY_numberOfSliders = 5;
+    private static final int PROPERTY_objectName = 6;
+    private static final int PROPERTY_randomizable = 7;
+    private static final int PROPERTY_resolution = 8;
+    private static final int PROPERTY_sliderHeight = 9;
+    private static final int PROPERTY_valueDisplayEnabled = 10;
+    private static final int PROPERTY_x = 11;
+    private static final int PROPERTY_y = 12;
 
     // Property array 
     /*lazy PropertyDescriptor*/
     private static PropertyDescriptor[] getPdescriptor(){
-        PropertyDescriptor[] properties = new PropertyDescriptor[12];
+        PropertyDescriptor[] properties = new PropertyDescriptor[13];
     
         try {
             properties[PROPERTY_automationAllowed] = new PropertyDescriptor ( "automationAllowed", blue.orchestra.blueSynthBuilder.BSBVSliderBank.class, "isAutomationAllowed", "setAutomationAllowed" ); // NOI18N
+            properties[PROPERTY_comment] = new PropertyDescriptor ( "comment", blue.orchestra.blueSynthBuilder.BSBVSliderBank.class, "getComment", "setComment" ); // NOI18N
             properties[PROPERTY_gap] = new PropertyDescriptor ( "gap", blue.orchestra.blueSynthBuilder.BSBVSliderBank.class, "getGap", "setGap" ); // NOI18N
             properties[PROPERTY_maximum] = new PropertyDescriptor ( "maximum", blue.orchestra.blueSynthBuilder.BSBVSliderBank.class, "getMaximum", "setMaximum" ); // NOI18N
             properties[PROPERTY_minimum] = new PropertyDescriptor ( "minimum", blue.orchestra.blueSynthBuilder.BSBVSliderBank.class, "getMinimum", "setMinimum" ); // NOI18N

@@ -31,9 +31,13 @@ import javafx.beans.value.ObservableValue;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
+import javafx.scene.control.Tooltip;
 import javafx.scene.layout.BorderPane;
+import javafx.util.Duration;
 import javafx.util.StringConverter;
 import org.openide.util.Exceptions;
+import org.openide.windows.IOTab;
+import org.openide.windows.InputOutput;
 
 /**
  * @author steven
@@ -48,6 +52,8 @@ public class BSBKnobView extends BorderPane implements ResizeableView {
 
     ValuePanel valuePanel;
     Label label;
+    
+    Tooltip tooltip = new Tooltip();
 
     /**
      * @param knob
@@ -157,6 +163,7 @@ public class BSBKnobView extends BorderPane implements ResizeableView {
                         knob.knobValueProperty().valueProperty());
                 label.textProperty().unbind();
                 label.fontProperty().unbind();
+                tooltip.textProperty().unbind();
             } else {
                 knobView.minProperty().bind(knob.knobValueProperty().minProperty());
                 knobView.maxProperty().bind(knob.knobValueProperty().maxProperty());
@@ -189,10 +196,23 @@ public class BSBKnobView extends BorderPane implements ResizeableView {
                 } else {
                     setTop(null);
                 }
+                
+                tooltip.textProperty().bind(
+                Bindings.when(knob.commentProperty().isEmpty())
+                        .then(Bindings.format("Value: %s", knobView.valueProperty().asString())
+                 
+                ).otherwise(
+                        Bindings.format("Value: %s\n\n%s", knobView.valueProperty().asString(), knob.commentProperty())
+                ));
+                
             }
         });
+        
+        
+        tooltip.setShowDelay(Duration.seconds(0.5));
+        knobView.setTooltip(tooltip);
     }
-
+    
     public boolean canResizeWidgetWidth() {
         return true;
     }
