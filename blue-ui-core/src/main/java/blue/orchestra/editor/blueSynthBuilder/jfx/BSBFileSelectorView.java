@@ -55,8 +55,8 @@ public class BSBFileSelectorView extends BorderPane implements ResizeableView {
     private static String FILE_SELECTOR_ID = "BSBFileSelector";
 
     private final BSBFileSelector fileSelector;
-    
-    Tooltip tooltip = new Tooltip();  
+
+    Tooltip tooltip = BSBTooltipUtil.createTooltip();
 
     TextField fileNameField;
 
@@ -270,9 +270,9 @@ public class BSBFileSelectorView extends BorderPane implements ResizeableView {
         ChangeListener<String> toolTipListener = (obs, old, newVal) -> {
             var comment = fileSelector.getComment();
             if (comment == null || comment.isBlank()) {
-                fileNameField.setTooltip(null);
+                BSBTooltipUtil.install(this, null);
             } else {
-                fileNameField.setTooltip(tooltip);
+                BSBTooltipUtil.install(this, tooltip);
             }
         };
 
@@ -280,9 +280,10 @@ public class BSBFileSelectorView extends BorderPane implements ResizeableView {
             if (newVal == null) {
                 fileNameField.textProperty().unbind();
                 fileNameField.prefWidthProperty().unbind();
-                fileNameField.setTooltip(null);
+                
                 fileSelector.commentProperty().removeListener(toolTipListener);
                 tooltip.textProperty().unbind();
+                BSBTooltipUtil.install(this, null);
             } else {
                 fileNameField.textProperty().bind(fileSelector.fileNameProperty());
                 fileNameField.prefWidthProperty().bind(fileSelector.textFieldWidthProperty());
@@ -291,7 +292,7 @@ public class BSBFileSelectorView extends BorderPane implements ResizeableView {
                 tooltip.textProperty().bind(fileSelector.commentProperty());
             }
         });
-        
+
     }
 
     public boolean canResizeWidgetWidth() {

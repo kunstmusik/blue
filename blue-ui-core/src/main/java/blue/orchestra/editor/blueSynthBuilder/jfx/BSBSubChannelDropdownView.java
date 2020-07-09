@@ -32,7 +32,7 @@ import javafx.scene.control.Tooltip;
  */
 public class BSBSubChannelDropdownView extends ChoiceBox<String> {
 
-    Tooltip tooltip = new Tooltip();
+    Tooltip tooltip = BSBTooltipUtil.createTooltip();
 
     public BSBSubChannelDropdownView(BSBSubChannelDropdown dropDown) {
         setUserData(dropDown);

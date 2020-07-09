@@ -42,7 +42,7 @@ public class BSBHSliderView extends BorderPane implements ResizeableView {
     ValuePanel valuePanel;
     BSBHSlider bsbHSlider;
 
-    Tooltip tooltip = new Tooltip();
+    Tooltip tooltip = BSBTooltipUtil.createTooltip();
 
     public BSBHSliderView(BSBHSlider bsbHSlider) {
         setUserData(bsbHSlider);
@@ -120,9 +120,9 @@ public class BSBHSliderView extends BorderPane implements ResizeableView {
         ChangeListener<String> toolTipListener = (obs, old, newVal) -> {
             var comment = bsbHSlider.getComment();
             if (comment == null || comment.isBlank()) {
-                slider.setTooltip(null);
+                BSBTooltipUtil.install(this, null);
             } else {
-                slider.setTooltip(tooltip);
+                BSBTooltipUtil.install(this, tooltip);
             }
         };
 
@@ -142,7 +142,7 @@ public class BSBHSliderView extends BorderPane implements ResizeableView {
 
                 bsbHSlider.commentProperty().removeListener(toolTipListener);
                 tooltip.textProperty().unbind();
-                slider.setTooltip(null);
+                BSBTooltipUtil.install(this, null);
             } else {
                 slider.maxProperty().bind(bsbHSlider.maximumProperty());
                 slider.minProperty().bind(bsbHSlider.minimumProperty());

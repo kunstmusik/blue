@@ -33,7 +33,7 @@ import javafx.util.Duration;
  */
 public class BSBCheckBoxView extends CheckBox {
 
-    Tooltip tooltip = new Tooltip();
+    Tooltip tooltip = BSBTooltipUtil.createTooltip();
 
     public BSBCheckBoxView(BSBCheckBox checkBox) {
         setUserData(checkBox);
@@ -99,8 +99,6 @@ public class BSBCheckBoxView extends CheckBox {
                 toolTipListener.changed(null, null, null);
             }
         });
-
-        tooltip.setShowDelay(Duration.seconds(0.5));
 
     }
 

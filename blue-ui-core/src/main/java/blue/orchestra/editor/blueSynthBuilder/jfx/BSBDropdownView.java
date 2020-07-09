@@ -38,7 +38,7 @@ public class BSBDropdownView extends ComboBox<BSBDropdownItem> {
     private final BSBDropdown dropdown;
     boolean mutating = false;
 
-    Tooltip tooltip = new Tooltip();
+    Tooltip tooltip = BSBTooltipUtil.createTooltip();
 
     public BSBDropdownView(BSBDropdown dropdown) {
         super(dropdown.dropdownItemsProperty());

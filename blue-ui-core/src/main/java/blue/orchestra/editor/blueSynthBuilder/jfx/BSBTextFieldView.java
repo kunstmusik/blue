@@ -20,26 +20,46 @@
 package blue.orchestra.editor.blueSynthBuilder.jfx;
 
 import blue.orchestra.blueSynthBuilder.BSBTextField;
+import javafx.beans.value.ChangeListener;
 import javafx.scene.control.TextField;
+import javafx.scene.control.Tooltip;
 
 /**
  *
  * @author stevenyi
  */
 public class BSBTextFieldView extends TextField implements ResizeableView {
+
     BSBTextField tf;
+
+    Tooltip tooltip = BSBTooltipUtil.createTooltip();
 
     public BSBTextFieldView(BSBTextField tf) {
         this.tf = tf;
         setUserData(tf);
 
+        ChangeListener<String> toolTipListener = (obs, old, newVal) -> {
+            var comment = tf.getComment();
+            if (comment == null || comment.isBlank()) {
+                setTooltip(null);
+            } else {
+                setTooltip(tooltip);
+            }
+        };
+
         sceneProperty().addListener((obs, old, newVal) -> {
             if (newVal == null) {
                 prefWidthProperty().unbind();
                 textProperty().unbindBidirectional(tf.valueProperty());
+                tf.commentProperty().removeListener(toolTipListener);
+                tooltip.textProperty().unbind();
+                setTooltip(null);
             } else {
                 prefWidthProperty().bind(tf.textFieldWidthProperty());
                 textProperty().bindBidirectional(tf.valueProperty());
+                tf.commentProperty().addListener(toolTipListener);
+                tooltip.textProperty().bind(tf.commentProperty());
+                toolTipListener.changed(null, null, null);
             }
         });
     }
@@ -57,7 +77,7 @@ public class BSBTextFieldView extends TextField implements ResizeableView {
     }
 
     public int getWidgetMinimumHeight() {
-        return -1; 
+        return -1;
     }
 
     public int getWidgetWidth() {
@@ -72,8 +92,8 @@ public class BSBTextFieldView extends TextField implements ResizeableView {
         return -1;
     }
 
-    public void setWidgetHeight(int height){
-    } 
+    public void setWidgetHeight(int height) {
+    }
 
     public void setWidgetX(int x) {
         tf.setX(x);
@@ -83,7 +103,7 @@ public class BSBTextFieldView extends TextField implements ResizeableView {
         return tf.getX();
     }
 
-    public void setWidgetY(int y){
+    public void setWidgetY(int y) {
         tf.setY(y);
     }
 

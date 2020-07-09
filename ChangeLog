@@ -41,6 +41,9 @@ NEW
   online at https://kunstmusik.github.io/blue-manual. Documentation help menu
   now opens the online site.
 
+* Issue #497: Implemented comment fields for BSB widgets that appear as tooltips
+  when in usage mode.
+
 UPDATED
 
 * Issue #396: Updated how selected score objects are rendered; rather than all

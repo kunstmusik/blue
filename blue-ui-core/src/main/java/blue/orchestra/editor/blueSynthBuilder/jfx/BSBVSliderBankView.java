@@ -23,8 +23,10 @@ import blue.orchestra.blueSynthBuilder.BSBVSlider;
 import blue.orchestra.blueSynthBuilder.BSBVSliderBank;
 import java.util.List;
 import java.util.stream.Collectors;
+import javafx.beans.value.ChangeListener;
 import javafx.collections.ListChangeListener;
 import javafx.scene.Node;
+import javafx.scene.control.Tooltip;
 import javafx.scene.layout.HBox;
 
 /**
@@ -35,6 +37,8 @@ public class BSBVSliderBankView extends HBox implements ResizeableView {
 
     BSBVSliderBank bsbVSliderBank;
 
+    Tooltip tooltip = BSBTooltipUtil.createTooltip();
+
     public BSBVSliderBankView(BSBVSliderBank sliderBank) {
         this.bsbVSliderBank = sliderBank;
         setUserData(sliderBank);
@@ -43,6 +47,15 @@ public class BSBVSliderBankView extends HBox implements ResizeableView {
                 .<Node>map(e -> new BSBVSliderView(e))
                 .collect(Collectors.toList());
         getChildren().addAll(views);
+
+        ChangeListener<String> toolTipListener = (obs, old, newVal) -> {
+            var comment = sliderBank.getComment();
+            if (comment == null || comment.isBlank()) {
+                BSBTooltipUtil.install(this, null);
+            } else {
+                BSBTooltipUtil.install(this, tooltip);
+            }
+        };
 
         ListChangeListener<BSBVSlider> lcl = c -> {
             while (c.next()) {
@@ -58,8 +71,10 @@ public class BSBVSliderBankView extends HBox implements ResizeableView {
 
                     getChildren().addAll(
                             c.getAddedSubList().stream()
-                            .<Node>map(a -> new BSBVSliderView(a))
-                            .collect(Collectors.toList()));
+                                    .<Node>map(a -> new BSBVSliderView(a))
+                                    .collect(Collectors.toList()));
+
+                    toolTipListener.changed(null, null, null);
 
                 }
             }
@@ -69,9 +84,17 @@ public class BSBVSliderBankView extends HBox implements ResizeableView {
             if (newVal == null) {
                 spacingProperty().unbind();
                 sliderBank.getSliders().removeListener(lcl);
+
+                sliderBank.commentProperty().removeListener(toolTipListener);
+                tooltip.textProperty().unbind();
+                BSBTooltipUtil.install(this, null);
             } else {
                 spacingProperty().bind(sliderBank.gapProperty());
                 sliderBank.getSliders().addListener(lcl);
+
+                sliderBank.commentProperty().addListener(toolTipListener);
+                tooltip.textProperty().bind(sliderBank.commentProperty());
+                toolTipListener.changed(null, null, null);
             }
         });
     }
@@ -105,10 +128,10 @@ public class BSBVSliderBankView extends HBox implements ResizeableView {
         return base + bsbVSliderBank.getSliderHeight();
     }
 
-    public void setWidgetHeight(int height){
+    public void setWidgetHeight(int height) {
         int base = bsbVSliderBank.isValueDisplayEnabled() ? 30 : 0;
         bsbVSliderBank.setSliderHeight(Math.max(45, height - base));
-    } 
+    }
 
     public void setWidgetX(int x) {
     }
@@ -117,11 +140,11 @@ public class BSBVSliderBankView extends HBox implements ResizeableView {
         return -1;
     }
 
-    public void setWidgetY(int y){
+    public void setWidgetY(int y) {
         bsbVSliderBank.setY(y);
     }
 
     public int getWidgetY() {
         return bsbVSliderBank.getY();
-    } 
+    }
 }

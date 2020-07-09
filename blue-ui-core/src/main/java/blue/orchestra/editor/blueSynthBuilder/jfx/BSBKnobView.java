@@ -52,8 +52,8 @@ public class BSBKnobView extends BorderPane implements ResizeableView {
 
     ValuePanel valuePanel;
     Label label;
-    
-    Tooltip tooltip = new Tooltip();
+
+    Tooltip tooltip = BSBTooltipUtil.createTooltip();
 
     /**
      * @param knob
@@ -196,23 +196,20 @@ public class BSBKnobView extends BorderPane implements ResizeableView {
                 } else {
                     setTop(null);
                 }
-                
+
                 tooltip.textProperty().bind(
-                Bindings.when(knob.commentProperty().isEmpty())
-                        .then(Bindings.format("Value: %s", knobView.valueProperty().asString())
-                 
-                ).otherwise(
-                        Bindings.format("Value: %s\n\n%s", knobView.valueProperty().asString(), knob.commentProperty())
-                ));
-                
+                        Bindings.when(knob.commentProperty().isEmpty())
+                                .then(Bindings.format("Value: %s", knobView.valueProperty().asString())
+                                ).otherwise(
+                                        Bindings.format("Value: %s\n\n%s", knobView.valueProperty().asString(), knob.commentProperty())
+                                ));
+
             }
         });
-        
-        
-        tooltip.setShowDelay(Duration.seconds(0.5));
+
         knobView.setTooltip(tooltip);
     }
-    
+
     public boolean canResizeWidgetWidth() {
         return true;
     }
