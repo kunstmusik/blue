@@ -19,6 +19,7 @@
  */
 package blue.orchestra.editor.blueSynthBuilder.jfx;
 
+import blue.jfx.BlueFX;
 import blue.orchestra.blueSynthBuilder.BSBTextField;
 import blue.orchestra.editor.blueSynthBuilder.BSBPreferences;
 import javafx.beans.value.ChangeListener;
@@ -40,13 +41,15 @@ public class BSBTextFieldView extends TextField implements ResizeableView {
         setUserData(tf);
 
         ChangeListener<Object> toolTipListener = (obs, old, newVal) -> {
-            var comment = tf.getComment();
-            var showComments = BSBPreferences.getInstance().getShowWidgetComments();
-            if (comment == null || comment.isBlank() || !showComments) {
-                setTooltip(null);
-            } else {
-                setTooltip(tooltip);
-            }
+            BlueFX.runOnFXThread(() -> {
+                var comment = tf.getComment();
+                var showComments = BSBPreferences.getInstance().getShowWidgetComments();
+                if (comment == null || comment.isBlank() || !showComments) {
+                    setTooltip(null);
+                } else {
+                    setTooltip(tooltip);
+                }
+            });
         };
 
         sceneProperty().addListener((obs, old, newVal) -> {

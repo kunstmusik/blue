@@ -42,7 +42,8 @@ NEW
   now opens the online site.
 
 * Issue #497: Implemented comment fields for BSB widgets that appear as tooltips
-  when in usage mode.
+  when in usage mode. Added "Show Widget Comments" menu option to View menu to  
+  turn on and off showing of the comments in tooltips.
 
 UPDATED
 

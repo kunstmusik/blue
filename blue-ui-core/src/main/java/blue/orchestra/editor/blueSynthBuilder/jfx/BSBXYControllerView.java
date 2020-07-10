@@ -111,13 +111,15 @@ public class BSBXYControllerView extends BorderPane implements ResizeableView {
         };
 
         ChangeListener<Object> toolTipListener = (obs, old, newVal) -> {
-            var comment = bsbXYController.getComment();
-            var showComments = BSBPreferences.getInstance().getShowWidgetComments();
-            if (comment == null || comment.isBlank() || !showComments) {
-                BSBTooltipUtil.install(this, null);
-            } else {
-                BSBTooltipUtil.install(this, tooltip);
-            }
+            BlueFX.runOnFXThread(() -> {
+                var comment = bsbXYController.getComment();
+                var showComments = BSBPreferences.getInstance().getShowWidgetComments();
+                if (comment == null || comment.isBlank() || !showComments) {
+                    BSBTooltipUtil.install(this, null);
+                } else {
+                    BSBTooltipUtil.install(this, tooltip);
+                }
+            });
         };
 
         sceneProperty().addListener((obs, old, newVal) -> {

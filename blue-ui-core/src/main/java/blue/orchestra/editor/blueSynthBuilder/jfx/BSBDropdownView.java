@@ -19,6 +19,7 @@
  */
 package blue.orchestra.editor.blueSynthBuilder.jfx;
 
+import blue.jfx.BlueFX;
 import blue.orchestra.blueSynthBuilder.BSBDropdown;
 import blue.orchestra.blueSynthBuilder.BSBDropdownItem;
 import blue.orchestra.editor.blueSynthBuilder.BSBPreferences;
@@ -101,13 +102,15 @@ public class BSBDropdownView extends ComboBox<BSBDropdownItem> {
         };
 
         ChangeListener<Object> toolTipListener = (obs, old, newVal) -> {
-            var comment = dropdown.getComment();
-            var showComments = BSBPreferences.getInstance().getShowWidgetComments();
-            if (comment == null || comment.isBlank() || !showComments) {
-                setTooltip(null);
-            } else {
-                setTooltip(tooltip);
-            }
+            BlueFX.runOnFXThread(() -> {
+                var comment = dropdown.getComment();
+                var showComments = BSBPreferences.getInstance().getShowWidgetComments();
+                if (comment == null || comment.isBlank() || !showComments) {
+                    setTooltip(null);
+                } else {
+                    setTooltip(tooltip);
+                }
+            });
         };
 
         sceneProperty().addListener((obs, old, newVal) -> {

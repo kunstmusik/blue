@@ -19,6 +19,7 @@
  */
 package blue.orchestra.editor.blueSynthBuilder.jfx;
 
+import blue.jfx.BlueFX;
 import blue.jfx.controls.ValuePanel;
 import blue.orchestra.blueSynthBuilder.BSBHSlider;
 import blue.orchestra.editor.blueSynthBuilder.BSBPreferences;
@@ -119,13 +120,15 @@ public class BSBHSliderView extends BorderPane implements ResizeableView {
         };
 
         ChangeListener<Object> toolTipListener = (obs, old, newVal) -> {
-            var comment = bsbHSlider.getComment();
-            var showComments = BSBPreferences.getInstance().getShowWidgetComments();
-            if (comment == null || comment.isBlank() || !showComments) {
-                BSBTooltipUtil.install(this, null);
-            } else {
-                BSBTooltipUtil.install(this, tooltip);
-            }
+            BlueFX.runOnFXThread(() -> {
+                var comment = bsbHSlider.getComment();
+                var showComments = BSBPreferences.getInstance().getShowWidgetComments();
+                if (comment == null || comment.isBlank() || !showComments) {
+                    BSBTooltipUtil.install(this, null);
+                } else {
+                    BSBTooltipUtil.install(this, tooltip);
+                }
+            });
         };
 
         sceneProperty().addListener((obs, old, newVal) -> {

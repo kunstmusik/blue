@@ -19,6 +19,7 @@
  */
 package blue.orchestra.editor.blueSynthBuilder.jfx;
 
+import blue.jfx.BlueFX;
 import blue.orchestra.blueSynthBuilder.BSBHSlider;
 import blue.orchestra.blueSynthBuilder.BSBHSliderBank;
 import blue.orchestra.editor.blueSynthBuilder.BSBPreferences;
@@ -51,13 +52,15 @@ public class BSBHSliderBankView extends VBox implements ResizeableView {
         getChildren().addAll(views);
 
         ChangeListener<Object> toolTipListener = (obs, old, newVal) -> {
-            var comment = sliderBank.getComment();
-            var showComments = BSBPreferences.getInstance().getShowWidgetComments();
-            if (comment == null || comment.isBlank() || !showComments) {
-                BSBTooltipUtil.install(this, null);
-            } else {
-                BSBTooltipUtil.install(this, tooltip);
-            }
+            BlueFX.runOnFXThread(() -> {
+                var comment = sliderBank.getComment();
+                var showComments = BSBPreferences.getInstance().getShowWidgetComments();
+                if (comment == null || comment.isBlank() || !showComments) {
+                    BSBTooltipUtil.install(this, null);
+                } else {
+                    BSBTooltipUtil.install(this, tooltip);
+                }
+            });
         };
 
         ListChangeListener<BSBHSlider> lcl = c -> {

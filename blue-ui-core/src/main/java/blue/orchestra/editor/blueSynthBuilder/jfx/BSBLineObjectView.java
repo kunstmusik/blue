@@ -20,6 +20,7 @@ package blue.orchestra.editor.blueSynthBuilder.jfx;
 
 import blue.components.lines.Line;
 import blue.components.lines.LineList;
+import blue.jfx.BlueFX;
 import blue.orchestra.blueSynthBuilder.BSBLineObject;
 import blue.orchestra.editor.blueSynthBuilder.BSBPreferences;
 import javafx.beans.value.ChangeListener;
@@ -68,13 +69,15 @@ public class BSBLineObjectView extends BorderPane implements ResizeableView {
         };
 
         ChangeListener<Object> toolTipListener = (obs, old, newVal) -> {
-            var comment = lines.getComment();
-            var showComments = BSBPreferences.getInstance().getShowWidgetComments();
-            if (comment == null || comment.isBlank() || !showComments) {
-                BSBTooltipUtil.install(this, null);
-            } else {
-                BSBTooltipUtil.install(this, tooltip);
-            }
+            BlueFX.runOnFXThread(() -> {
+                var comment = lines.getComment();
+                var showComments = BSBPreferences.getInstance().getShowWidgetComments();
+                if (comment == null || comment.isBlank() || !showComments) {
+                    BSBTooltipUtil.install(this, null);
+                } else {
+                    BSBTooltipUtil.install(this, tooltip);
+                }
+            });
         };
 
         sceneProperty().addListener((obs, old, newVal) -> {

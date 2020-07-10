@@ -20,6 +20,7 @@
 package blue.orchestra.editor.blueSynthBuilder.jfx;
 
 import blue.BlueSystem;
+import blue.jfx.BlueFX;
 import blue.orchestra.blueSynthBuilder.BSBFileSelector;
 import blue.orchestra.editor.blueSynthBuilder.BSBPreferences;
 import blue.ui.nbutilities.BlueNbUtilities;
@@ -269,13 +270,15 @@ public class BSBFileSelectorView extends BorderPane implements ResizeableView {
         });
 
         ChangeListener<Object> toolTipListener = (obs, old, newVal) -> {
-            var comment = fileSelector.getComment();
-            var showComments = BSBPreferences.getInstance().getShowWidgetComments();
-            if (comment == null || comment.isBlank() || !showComments) {
-                BSBTooltipUtil.install(this, null);
-            } else {
-                BSBTooltipUtil.install(this, tooltip);
-            }
+            BlueFX.runOnFXThread(() -> {
+                var comment = fileSelector.getComment();
+                var showComments = BSBPreferences.getInstance().getShowWidgetComments();
+                if (comment == null || comment.isBlank() || !showComments) {
+                    BSBTooltipUtil.install(this, null);
+                } else {
+                    BSBTooltipUtil.install(this, tooltip);
+                }
+            });
         };
 
         sceneProperty().addListener((obs, old, newVal) -> {
