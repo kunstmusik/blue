@@ -21,6 +21,7 @@ package blue.orchestra.editor.blueSynthBuilder.jfx;
 
 import blue.orchestra.blueSynthBuilder.BSBHSlider;
 import blue.orchestra.blueSynthBuilder.BSBHSliderBank;
+import blue.orchestra.editor.blueSynthBuilder.BSBPreferences;
 import java.util.List;
 import java.util.stream.Collectors;
 import javafx.beans.value.ChangeListener;
@@ -48,10 +49,11 @@ public class BSBHSliderBankView extends VBox implements ResizeableView {
                 .<Node>map(e -> new BSBHSliderView(e))
                 .collect(Collectors.toList());
         getChildren().addAll(views);
-        
-        ChangeListener<String> toolTipListener = (obs, old, newVal) -> {
+
+        ChangeListener<Object> toolTipListener = (obs, old, newVal) -> {
             var comment = sliderBank.getComment();
-            if (comment == null || comment.isBlank()) {
+            var showComments = BSBPreferences.getInstance().getShowWidgetComments();
+            if (comment == null || comment.isBlank() || !showComments) {
                 BSBTooltipUtil.install(this, null);
             } else {
                 BSBTooltipUtil.install(this, tooltip);
@@ -80,12 +82,13 @@ public class BSBHSliderBankView extends VBox implements ResizeableView {
             }
         };
 
-
-
         sceneProperty().addListener((obs, old, newVal) -> {
             if (newVal == null) {
                 spacingProperty().unbind();
                 sliderBank.getSliders().removeListener(lcl);
+
+                BSBPreferences.getInstance().showWidgetCommentsProperty()
+                        .removeListener(toolTipListener);
 
                 sliderBank.commentProperty().removeListener(toolTipListener);
                 tooltip.textProperty().unbind();
@@ -94,12 +97,15 @@ public class BSBHSliderBankView extends VBox implements ResizeableView {
                 spacingProperty().bind(sliderBank.gapProperty());
                 sliderBank.getSliders().addListener(lcl);
 
+                BSBPreferences.getInstance().showWidgetCommentsProperty()
+                        .addListener(toolTipListener);
+
                 sliderBank.commentProperty().addListener(toolTipListener);
                 tooltip.textProperty().bind(sliderBank.commentProperty());
                 toolTipListener.changed(null, null, null);
             }
         });
-        
+
     }
 
     public boolean canResizeWidgetWidth() {

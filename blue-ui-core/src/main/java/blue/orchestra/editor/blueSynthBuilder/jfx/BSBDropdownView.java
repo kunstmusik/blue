@@ -21,6 +21,7 @@ package blue.orchestra.editor.blueSynthBuilder.jfx;
 
 import blue.orchestra.blueSynthBuilder.BSBDropdown;
 import blue.orchestra.blueSynthBuilder.BSBDropdownItem;
+import blue.orchestra.editor.blueSynthBuilder.BSBPreferences;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.value.ChangeListener;
@@ -99,9 +100,10 @@ public class BSBDropdownView extends ComboBox<BSBDropdownItem> {
             updateWidth();
         };
 
-        ChangeListener<String> toolTipListener = (obs, old, newVal) -> {
+        ChangeListener<Object> toolTipListener = (obs, old, newVal) -> {
             var comment = dropdown.getComment();
-            if (comment == null || comment.isBlank()) {
+            var showComments = BSBPreferences.getInstance().getShowWidgetComments();
+            if (comment == null || comment.isBlank() || !showComments) {
                 setTooltip(null);
             } else {
                 setTooltip(tooltip);
@@ -113,6 +115,10 @@ public class BSBDropdownView extends ComboBox<BSBDropdownItem> {
                 dropdown.selectedIndexProperty().removeListener(cl);
                 dropdown.fontSizeProperty().removeListener(fontListener);
                 dropdown.getBSBDropdownItemList().removeListener(listListener);
+
+                BSBPreferences.getInstance().showWidgetCommentsProperty()
+                        .removeListener(toolTipListener);
+
                 dropdown.commentProperty().removeListener(toolTipListener);
                 tooltip.textProperty().unbind();
                 setTooltip(null);
@@ -121,6 +127,10 @@ public class BSBDropdownView extends ComboBox<BSBDropdownItem> {
                 dropdown.selectedIndexProperty().addListener(cl);
                 dropdown.fontSizeProperty().addListener(fontListener);
                 dropdown.getBSBDropdownItemList().addListener(listListener);
+
+                BSBPreferences.getInstance().showWidgetCommentsProperty()
+                        .addListener(toolTipListener);
+
                 dropdown.commentProperty().addListener(toolTipListener);
                 tooltip.textProperty().bind(dropdown.commentProperty());
                 toolTipListener.changed(null, null, null);

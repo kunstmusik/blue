@@ -21,6 +21,7 @@ package blue.orchestra.editor.blueSynthBuilder.jfx;
 import blue.BlueData;
 import blue.mixer.Channel;
 import blue.orchestra.blueSynthBuilder.BSBSubChannelDropdown;
+import blue.orchestra.editor.blueSynthBuilder.BSBPreferences;
 import blue.projects.BlueProjectManager;
 import javafx.beans.value.ChangeListener;
 import javafx.scene.control.ChoiceBox;
@@ -50,9 +51,10 @@ public class BSBSubChannelDropdownView extends ChoiceBox<String> {
             dropDown.setChannelOutput(newVal);
         });
 
-        ChangeListener<String> toolTipListener = (obs, old, newVal) -> {
+        ChangeListener<Object> toolTipListener = (obs, old, newVal) -> {
             var comment = dropDown.getComment();
-            if (comment == null || comment.isBlank()) {
+            var showComments = BSBPreferences.getInstance().getShowWidgetComments();
+            if (comment == null || comment.isBlank() || !showComments) {
                 setTooltip(null);
             } else {
                 setTooltip(tooltip);
@@ -61,10 +63,17 @@ public class BSBSubChannelDropdownView extends ChoiceBox<String> {
 
         sceneProperty().addListener((obs, old, newVal) -> {
             if (newVal == null) {
+                BSBPreferences.getInstance().showWidgetCommentsProperty()
+                        .removeListener(toolTipListener);
+
                 dropDown.commentProperty().removeListener(toolTipListener);
                 tooltip.textProperty().unbind();
                 setTooltip(null);
             } else {
+
+                BSBPreferences.getInstance().showWidgetCommentsProperty()
+                        .addListener(toolTipListener);
+
                 dropDown.commentProperty().addListener(toolTipListener);
                 tooltip.textProperty().bind(dropDown.commentProperty());
                 toolTipListener.changed(null, null, null);

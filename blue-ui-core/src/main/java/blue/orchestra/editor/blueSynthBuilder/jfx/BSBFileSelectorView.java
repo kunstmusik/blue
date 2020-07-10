@@ -21,6 +21,7 @@ package blue.orchestra.editor.blueSynthBuilder.jfx;
 
 import blue.BlueSystem;
 import blue.orchestra.blueSynthBuilder.BSBFileSelector;
+import blue.orchestra.editor.blueSynthBuilder.BSBPreferences;
 import blue.ui.nbutilities.BlueNbUtilities;
 import blue.ui.utilities.FileChooserManager;
 import blue.utility.FileUtilities;
@@ -267,9 +268,10 @@ public class BSBFileSelectorView extends BorderPane implements ResizeableView {
 
         });
 
-        ChangeListener<String> toolTipListener = (obs, old, newVal) -> {
+        ChangeListener<Object> toolTipListener = (obs, old, newVal) -> {
             var comment = fileSelector.getComment();
-            if (comment == null || comment.isBlank()) {
+            var showComments = BSBPreferences.getInstance().getShowWidgetComments();
+            if (comment == null || comment.isBlank() || !showComments) {
                 BSBTooltipUtil.install(this, null);
             } else {
                 BSBTooltipUtil.install(this, tooltip);
@@ -280,13 +282,20 @@ public class BSBFileSelectorView extends BorderPane implements ResizeableView {
             if (newVal == null) {
                 fileNameField.textProperty().unbind();
                 fileNameField.prefWidthProperty().unbind();
-                
+
+                BSBPreferences.getInstance().showWidgetCommentsProperty()
+                        .removeListener(toolTipListener);
+
                 fileSelector.commentProperty().removeListener(toolTipListener);
                 tooltip.textProperty().unbind();
                 BSBTooltipUtil.install(this, null);
             } else {
                 fileNameField.textProperty().bind(fileSelector.fileNameProperty());
                 fileNameField.prefWidthProperty().bind(fileSelector.textFieldWidthProperty());
+
+                BSBPreferences.getInstance().showWidgetCommentsProperty()
+                        .addListener(toolTipListener);
+
                 fileSelector.commentProperty().addListener(toolTipListener);
                 toolTipListener.changed(null, null, null);
                 tooltip.textProperty().bind(fileSelector.commentProperty());

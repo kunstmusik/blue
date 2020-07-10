@@ -21,6 +21,7 @@ package blue.orchestra.editor.blueSynthBuilder.jfx;
 
 import blue.jfx.controls.ValuePanel;
 import blue.orchestra.blueSynthBuilder.BSBHSlider;
+import blue.orchestra.editor.blueSynthBuilder.BSBPreferences;
 import blue.utility.NumberUtilities;
 import java.math.BigDecimal;
 import javafx.application.Platform;
@@ -117,9 +118,10 @@ public class BSBHSliderView extends BorderPane implements ResizeableView {
             updateTickCount();
         };
 
-        ChangeListener<String> toolTipListener = (obs, old, newVal) -> {
+        ChangeListener<Object> toolTipListener = (obs, old, newVal) -> {
             var comment = bsbHSlider.getComment();
-            if (comment == null || comment.isBlank()) {
+            var showComments = BSBPreferences.getInstance().getShowWidgetComments();
+            if (comment == null || comment.isBlank() || !showComments) {
                 BSBTooltipUtil.install(this, null);
             } else {
                 BSBTooltipUtil.install(this, tooltip);
@@ -139,6 +141,9 @@ public class BSBHSliderView extends BorderPane implements ResizeableView {
                 bsbHSlider.maximumProperty().removeListener(tickListener);
                 bsbHSlider.minimumProperty().removeListener(tickListener);
                 bsbHSlider.resolutionProperty().removeListener(tickListener);
+
+                BSBPreferences.getInstance().showWidgetCommentsProperty()
+                        .removeListener(toolTipListener);
 
                 bsbHSlider.commentProperty().removeListener(toolTipListener);
                 tooltip.textProperty().unbind();
@@ -166,6 +171,9 @@ public class BSBHSliderView extends BorderPane implements ResizeableView {
                 bsbHSlider.maximumProperty().addListener(tickListener);
                 bsbHSlider.minimumProperty().addListener(tickListener);
                 bsbHSlider.resolutionProperty().addListener(tickListener);
+
+                BSBPreferences.getInstance().showWidgetCommentsProperty()
+                        .addListener(toolTipListener);
 
                 bsbHSlider.commentProperty().addListener(toolTipListener);
                 tooltip.textProperty().bind(bsbHSlider.commentProperty());

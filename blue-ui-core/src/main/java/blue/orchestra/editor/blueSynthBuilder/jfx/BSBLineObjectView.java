@@ -21,6 +21,7 @@ package blue.orchestra.editor.blueSynthBuilder.jfx;
 import blue.components.lines.Line;
 import blue.components.lines.LineList;
 import blue.orchestra.blueSynthBuilder.BSBLineObject;
+import blue.orchestra.editor.blueSynthBuilder.BSBPreferences;
 import javafx.beans.value.ChangeListener;
 import javafx.collections.ListChangeListener;
 import javafx.scene.control.Tooltip;
@@ -66,9 +67,10 @@ public class BSBLineObjectView extends BorderPane implements ResizeableView {
             lineView.repaint();
         };
 
-        ChangeListener<String> toolTipListener = (obs, old, newVal) -> {
+        ChangeListener<Object> toolTipListener = (obs, old, newVal) -> {
             var comment = lines.getComment();
-            if (comment == null || comment.isBlank()) {
+            var showComments = BSBPreferences.getInstance().getShowWidgetComments();
+            if (comment == null || comment.isBlank() || !showComments) {
                 BSBTooltipUtil.install(this, null);
             } else {
                 BSBTooltipUtil.install(this, tooltip);
@@ -83,6 +85,9 @@ public class BSBLineObjectView extends BorderPane implements ResizeableView {
                 lineView.lockedProperty().unbind();
                 lines.getLines().removeListener(linesListener);
 
+                BSBPreferences.getInstance().showWidgetCommentsProperty()
+                        .removeListener(toolTipListener);
+
                 lines.commentProperty().removeListener(toolTipListener);
                 tooltip.textProperty().unbind();
                 BSBTooltipUtil.install(this, null);
@@ -92,6 +97,9 @@ public class BSBLineObjectView extends BorderPane implements ResizeableView {
                 selector.prefWidthProperty().bind(lines.canvasWidthProperty());
                 lineView.lockedProperty().bind(lines.lockedProperty());
                 lines.getLines().addListener(linesListener);
+
+                BSBPreferences.getInstance().showWidgetCommentsProperty()
+                        .addListener(toolTipListener);
 
                 lines.commentProperty().addListener(toolTipListener);
                 tooltip.textProperty().bind(lines.commentProperty());

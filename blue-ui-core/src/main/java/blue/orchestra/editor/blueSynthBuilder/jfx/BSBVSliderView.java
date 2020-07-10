@@ -21,6 +21,7 @@ package blue.orchestra.editor.blueSynthBuilder.jfx;
 
 import blue.jfx.controls.ValuePanel;
 import blue.orchestra.blueSynthBuilder.BSBVSlider;
+import blue.orchestra.editor.blueSynthBuilder.BSBPreferences;
 import blue.utility.NumberUtilities;
 import java.math.BigDecimal;
 import javafx.application.Platform;
@@ -118,9 +119,10 @@ public class BSBVSliderView extends BorderPane implements ResizeableView {
             updateTickCount();
         };
 
-        ChangeListener<String> toolTipListener = (obs, old, newVal) -> {
+        ChangeListener<Object> toolTipListener = (obs, old, newVal) -> {
             var comment = bsbVSlider.getComment();
-            if (comment == null || comment.isBlank()) {
+            var showComments = BSBPreferences.getInstance().getShowWidgetComments();
+            if (comment == null || comment.isBlank() || !showComments) {
                 slider.setTooltip(null);
             } else {
                 slider.setTooltip(tooltip);
@@ -141,6 +143,9 @@ public class BSBVSliderView extends BorderPane implements ResizeableView {
                 bsbVSlider.maximumProperty().removeListener(tickListener);
                 bsbVSlider.minimumProperty().removeListener(tickListener);
                 bsbVSlider.resolutionProperty().removeListener(tickListener);
+
+                BSBPreferences.getInstance().showWidgetCommentsProperty()
+                        .removeListener(toolTipListener);
 
                 bsbVSlider.commentProperty().removeListener(toolTipListener);
                 tooltip.textProperty().unbind();
@@ -168,6 +173,9 @@ public class BSBVSliderView extends BorderPane implements ResizeableView {
                 bsbVSlider.maximumProperty().addListener(tickListener);
                 bsbVSlider.minimumProperty().addListener(tickListener);
                 bsbVSlider.resolutionProperty().addListener(tickListener);
+
+                BSBPreferences.getInstance().showWidgetCommentsProperty()
+                        .addListener(toolTipListener);
 
                 bsbVSlider.commentProperty().addListener(toolTipListener);
                 tooltip.textProperty().bind(bsbVSlider.commentProperty());

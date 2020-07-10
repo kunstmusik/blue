@@ -22,6 +22,7 @@ package blue.orchestra.editor.blueSynthBuilder.jfx;
 import blue.jfx.controls.Knob;
 import blue.jfx.controls.ValuePanel;
 import blue.orchestra.blueSynthBuilder.BSBKnob;
+import blue.orchestra.editor.blueSynthBuilder.BSBPreferences;
 import blue.utility.NumberUtilities;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
@@ -33,11 +34,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.control.Tooltip;
 import javafx.scene.layout.BorderPane;
-import javafx.util.Duration;
 import javafx.util.StringConverter;
-import org.openide.util.Exceptions;
-import org.openide.windows.IOTab;
-import org.openide.windows.InputOutput;
 
 /**
  * @author steven
@@ -197,8 +194,10 @@ public class BSBKnobView extends BorderPane implements ResizeableView {
                     setTop(null);
                 }
 
+                var showCommentsProperty = BSBPreferences.getInstance().showWidgetCommentsProperty();
+            
                 tooltip.textProperty().bind(
-                        Bindings.when(knob.commentProperty().isEmpty())
+                        Bindings.when(Bindings.or(knob.commentProperty().isEmpty(), showCommentsProperty.not()))
                                 .then(Bindings.format("Value: %s", knobView.valueProperty().asString())
                                 ).otherwise(
                                         Bindings.format("Value: %s\n\n%s", knobView.valueProperty().asString(), knob.commentProperty())

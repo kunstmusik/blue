@@ -21,6 +21,7 @@ package blue.orchestra.editor.blueSynthBuilder.jfx;
 
 import blue.orchestra.blueSynthBuilder.BSBVSlider;
 import blue.orchestra.blueSynthBuilder.BSBVSliderBank;
+import blue.orchestra.editor.blueSynthBuilder.BSBPreferences;
 import java.util.List;
 import java.util.stream.Collectors;
 import javafx.beans.value.ChangeListener;
@@ -48,9 +49,10 @@ public class BSBVSliderBankView extends HBox implements ResizeableView {
                 .collect(Collectors.toList());
         getChildren().addAll(views);
 
-        ChangeListener<String> toolTipListener = (obs, old, newVal) -> {
+        ChangeListener<Object> toolTipListener = (obs, old, newVal) -> {
             var comment = sliderBank.getComment();
-            if (comment == null || comment.isBlank()) {
+            var showComments = BSBPreferences.getInstance().getShowWidgetComments();
+            if (comment == null || comment.isBlank() || !showComments) {
                 BSBTooltipUtil.install(this, null);
             } else {
                 BSBTooltipUtil.install(this, tooltip);
@@ -85,12 +87,18 @@ public class BSBVSliderBankView extends HBox implements ResizeableView {
                 spacingProperty().unbind();
                 sliderBank.getSliders().removeListener(lcl);
 
+                BSBPreferences.getInstance().showWidgetCommentsProperty()
+                        .removeListener(toolTipListener);
+
                 sliderBank.commentProperty().removeListener(toolTipListener);
                 tooltip.textProperty().unbind();
                 BSBTooltipUtil.install(this, null);
             } else {
                 spacingProperty().bind(sliderBank.gapProperty());
                 sliderBank.getSliders().addListener(lcl);
+
+                BSBPreferences.getInstance().showWidgetCommentsProperty()
+                        .addListener(toolTipListener);
 
                 sliderBank.commentProperty().addListener(toolTipListener);
                 tooltip.textProperty().bind(sliderBank.commentProperty());

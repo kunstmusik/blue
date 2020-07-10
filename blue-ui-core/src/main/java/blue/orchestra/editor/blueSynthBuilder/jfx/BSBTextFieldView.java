@@ -20,6 +20,7 @@
 package blue.orchestra.editor.blueSynthBuilder.jfx;
 
 import blue.orchestra.blueSynthBuilder.BSBTextField;
+import blue.orchestra.editor.blueSynthBuilder.BSBPreferences;
 import javafx.beans.value.ChangeListener;
 import javafx.scene.control.TextField;
 import javafx.scene.control.Tooltip;
@@ -38,9 +39,10 @@ public class BSBTextFieldView extends TextField implements ResizeableView {
         this.tf = tf;
         setUserData(tf);
 
-        ChangeListener<String> toolTipListener = (obs, old, newVal) -> {
+        ChangeListener<Object> toolTipListener = (obs, old, newVal) -> {
             var comment = tf.getComment();
-            if (comment == null || comment.isBlank()) {
+            var showComments = BSBPreferences.getInstance().getShowWidgetComments();
+            if (comment == null || comment.isBlank() || !showComments) {
                 setTooltip(null);
             } else {
                 setTooltip(tooltip);
@@ -51,12 +53,20 @@ public class BSBTextFieldView extends TextField implements ResizeableView {
             if (newVal == null) {
                 prefWidthProperty().unbind();
                 textProperty().unbindBidirectional(tf.valueProperty());
+
+                BSBPreferences.getInstance().showWidgetCommentsProperty()
+                        .removeListener(toolTipListener);
+
                 tf.commentProperty().removeListener(toolTipListener);
                 tooltip.textProperty().unbind();
                 setTooltip(null);
             } else {
                 prefWidthProperty().bind(tf.textFieldWidthProperty());
                 textProperty().bindBidirectional(tf.valueProperty());
+
+                BSBPreferences.getInstance().showWidgetCommentsProperty()
+                        .addListener(toolTipListener);
+
                 tf.commentProperty().addListener(toolTipListener);
                 tooltip.textProperty().bind(tf.commentProperty());
                 toolTipListener.changed(null, null, null);

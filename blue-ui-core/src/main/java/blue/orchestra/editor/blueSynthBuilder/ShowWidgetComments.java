@@ -47,12 +47,13 @@ public final class ShowWidgetComments extends AbstractAction implements Presente
     public void actionPerformed(ActionEvent e) {
         var prefs = BSBPreferences.getInstance();
         prefs.setShowWidgetComments(!prefs.getShowWidgetComments());
+        menuItem.setSelected(prefs.getShowWidgetComments());
     }
     
      @Override
     public JMenuItem getMenuPresenter() {
-
-        menuItem.setSelected(enabled);
+        var prefs = BSBPreferences.getInstance();
+        menuItem.setSelected(prefs.getShowWidgetComments());
 
         return menuItem;
     }
