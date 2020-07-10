@@ -29,6 +29,7 @@ import blue.ui.core.render.RealtimeRenderManager;
 import blue.ui.core.score.object.actions.NavigateToNextMarkerAction;
 import blue.ui.core.score.object.actions.NavigateToPreviousMarkerAction;
 import blue.utility.NumberUtilities;
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.beans.PropertyChangeEvent;
@@ -43,6 +44,9 @@ import javax.swing.JTextField;
 import javax.swing.JToolBar;
 import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
+import jiconfont.icons.elusive.Elusive;
+import jiconfont.icons.font_awesome.FontAwesome;
+import jiconfont.swing.IconFontSwing;
 import org.openide.awt.StatusDisplayer;
 import org.openide.util.ImageUtilities;
 import org.openide.util.Lookup;
@@ -54,6 +58,8 @@ public class MainToolBar extends JToolBar implements PlayModeListener,
         PropertyChangeListener, RenderTimeManagerListener {
 
     private static final String EMPTY_TIME = "--:--:--:--";
+
+    private static Color ICON_COLOR = new Color(230, 230, 255);
 
     private static MainToolBar instance = null;
 
@@ -85,8 +91,8 @@ public class MainToolBar extends JToolBar implements PlayModeListener,
 
     private boolean isUpdating = false;
 
-    RenderTimeManager renderTimeManager = 
-                Lookup.getDefault().lookup(RenderTimeManager.class);
+    RenderTimeManager renderTimeManager
+            = Lookup.getDefault().lookup(RenderTimeManager.class);
 
     public static MainToolBar getInstance() {
         if (instance == null) {
@@ -118,9 +124,10 @@ public class MainToolBar extends JToolBar implements PlayModeListener,
         playStartText.setFocusable(false);
         playEndText.setFocusable(false);
         playTimeText.setFocusable(false);
-        
-        rewindButton.setIcon(new ImageIcon(ImageUtilities.loadImage(
-                "blue/resources/images/Rewind16.gif")));
+
+//        rewindButton.setIcon(new ImageIcon(ImageUtilities.loadImage(
+//                "blue/resources/images/Rewind16.gif")));
+        rewindButton.setIcon(IconFontSwing.buildIcon(FontAwesome.FAST_BACKWARD, 14, ICON_COLOR));
 
         rewindButton.addActionListener((ActionEvent e) -> {
             rewind();
@@ -128,8 +135,7 @@ public class MainToolBar extends JToolBar implements PlayModeListener,
 
         rewindButton.setFocusable(false);
 
-        playButton.setIcon(new ImageIcon(ImageUtilities.loadImage(
-                "blue/resources/images/Play16.gif")));
+        playButton.setIcon(IconFontSwing.buildIcon(FontAwesome.PLAY, 14, ICON_COLOR));
 
         playButton.addActionListener((ActionEvent e) -> {
             renderProject();
@@ -137,8 +143,7 @@ public class MainToolBar extends JToolBar implements PlayModeListener,
 
         playButton.setFocusable(false);
 
-        stopButton.setIcon(new ImageIcon(ImageUtilities.loadImage(
-                "blue/resources/images/Stop16.gif")));
+        stopButton.setIcon(IconFontSwing.buildIcon(FontAwesome.STOP, 14, ICON_COLOR));
 
         stopButton.addActionListener((ActionEvent e) -> {
             stopRendering();
@@ -180,33 +185,31 @@ public class MainToolBar extends JToolBar implements PlayModeListener,
         this.add(rewindButton, null);
         this.add(playButton, null);
         this.add(stopButton, null);
-        
-        // Setup as Listener to RenderTimeManager
 
+        // Setup as Listener to RenderTimeManager
         renderTimeManager.addPropertyChangeListener((PropertyChangeEvent evt) -> {
             String prop = evt.getPropertyName();
-            
+
             if (evt.getSource() == renderTimeManager) {
                 if (prop.equals(RenderTimeManager.TIME_POINTER)) {
                     double val = ((Double) evt.getNewValue()).doubleValue();
-                    
+
                     if (val <= 0.0f) {
                         playTimeText.setText(EMPTY_TIME);
                     } else {
                         double latency = PlaybackSettings.getInstance().
                                 getPlaybackLatencyCorrection();
-                        
+
                         double newVal = val + renderTimeManager.getRenderStartTime() - latency;
-                        
+
                         playTimeText.setText(NumberUtilities.formatTime(
                                 newVal));
                     }
-                    
+
                 }
             }
         });
         renderTimeManager.addRenderTimeManagerListener(this);
-
 
         BlueProjectManager.getInstance().addPropertyChangeListener((PropertyChangeEvent evt) -> {
             if (BlueProjectManager.CURRENT_PROJECT.equals(evt.
@@ -228,7 +231,7 @@ public class MainToolBar extends JToolBar implements PlayModeListener,
     }
 
     /**
-     * 
+     *
      */
     public void rewind() {
         if (this.data != null) {
@@ -404,13 +407,13 @@ public class MainToolBar extends JToolBar implements PlayModeListener,
     // When this toolbar is rewritten, reuse the above action and get rid of
     // this code
     class NextMarkerAction extends AbstractAction {
+
         NavigateToNextMarkerAction delegate = new NavigateToNextMarkerAction();
+
         public NextMarkerAction() {
             super("Go to Next Marker");
 
-            ImageIcon icon = new ImageIcon(
-                    ImageUtilities.loadImage(
-                    "blue/resources/images/StepForward16.gif"));
+            var icon = IconFontSwing.buildIcon(FontAwesome.FORWARD, 14, ICON_COLOR);
 
             putValue(Action.SHORT_DESCRIPTION, "Go to Next Marker");
             putValue(Action.SMALL_ICON, icon);
@@ -426,14 +429,13 @@ public class MainToolBar extends JToolBar implements PlayModeListener,
     // When this toolbar is rewritten, reuse the above action and get rid of
     // this code
     class PreviousMarkerAction extends AbstractAction {
+
         NavigateToPreviousMarkerAction delegate = new NavigateToPreviousMarkerAction();
 
         public PreviousMarkerAction() {
             super("Go to Previous Marker");
 
-            ImageIcon icon = new ImageIcon(
-                    ImageUtilities.loadImage(
-                    "blue/resources/images/StepBack16.gif"));
+           var icon = IconFontSwing.buildIcon(FontAwesome.BACKWARD, 14, ICON_COLOR);
 
             putValue(Action.SHORT_DESCRIPTION, "Go to Previous Marker");
             putValue(Action.SMALL_ICON, icon);
