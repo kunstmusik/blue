@@ -19,6 +19,7 @@
  */
 package blue.orchestra.editor.blueSynthBuilder.jfx;
 
+import blue.jfx.BlueFX;
 import blue.jfx.controls.Knob;
 import blue.jfx.controls.ValuePanel;
 import blue.orchestra.blueSynthBuilder.BSBKnob;
@@ -144,6 +145,18 @@ public class BSBKnobView extends BorderPane implements ResizeableView {
 
         IntegerBinding knobViewHeight = knob.knobWidthProperty().subtract(4);
 
+        ChangeListener<Object> toolTipListener = (obs, old, newVal) -> {
+            BlueFX.runOnFXThread(() -> {
+                var comment = knob.getComment();
+                var showComments = BSBPreferences.getInstance().getShowWidgetComments();
+                if (comment == null || comment.isBlank() || !showComments) {
+                    BSBTooltipUtil.install(this, null);
+                } else {
+                    BSBTooltipUtil.install(this, tooltip);
+                }
+            });
+        };
+
         sceneProperty().addListener((ObservableValue<? extends Scene> obs, Scene old, Scene newVal) -> {
             if (newVal == null) {
                 knobView.minProperty().unbind();
@@ -161,6 +174,12 @@ public class BSBKnobView extends BorderPane implements ResizeableView {
                 label.textProperty().unbind();
                 label.fontProperty().unbind();
                 tooltip.textProperty().unbind();
+
+                BSBPreferences.getInstance().showWidgetCommentsProperty()
+                        .removeListener(toolTipListener);
+
+                tooltip.textProperty().unbind();
+                BSBTooltipUtil.install(this, null);
             } else {
                 knobView.minProperty().bind(knob.knobValueProperty().minProperty());
                 knobView.maxProperty().bind(knob.knobValueProperty().maxProperty());
@@ -195,7 +214,7 @@ public class BSBKnobView extends BorderPane implements ResizeableView {
                 }
 
                 var showCommentsProperty = BSBPreferences.getInstance().showWidgetCommentsProperty();
-            
+
                 tooltip.textProperty().bind(
                         Bindings.when(Bindings.or(knob.commentProperty().isEmpty(), showCommentsProperty.not()))
                                 .then(Bindings.format("Value: %s", knobView.valueProperty().asString())
@@ -203,10 +222,14 @@ public class BSBKnobView extends BorderPane implements ResizeableView {
                                         Bindings.format("Value: %s\n\n%s", knobView.valueProperty().asString(), knob.commentProperty())
                                 ));
 
+                BSBPreferences.getInstance().showWidgetCommentsProperty()
+                        .addListener(toolTipListener);
+
+                toolTipListener.changed(null, null, null);
+
             }
         });
 
-        knobView.setTooltip(tooltip);
     }
 
     public boolean canResizeWidgetWidth() {
