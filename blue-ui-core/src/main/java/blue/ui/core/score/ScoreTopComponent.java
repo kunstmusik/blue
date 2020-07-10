@@ -62,13 +62,14 @@ import javax.swing.*;
 import javax.swing.border.BevelBorder;
 import javax.swing.border.Border;
 import javax.swing.border.LineBorder;
+import jiconfont.icons.elusive.Elusive;
+import jiconfont.swing.IconFontSwing;
 import org.netbeans.api.settings.ConvertAsProperties;
 import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
 import org.openide.awt.ActionReferences;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
-import org.openide.util.ImageUtilities;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.Utilities;
@@ -500,13 +501,13 @@ public final class ScoreTopComponent extends TopComponent
         markersLabel.setFont(new Font("Dialog", Font.PLAIN, 10));
         markersLabel.setPreferredSize(new Dimension(100, 20));
         markersLabel.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
-        
+
         var gbc = new GridBagConstraints();
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.weightx = 1.0;
-       
+
         leftHeaderView.add(tempoControlPanel, gbc);
         gbc.gridy = 1;
         leftHeaderView.add(markersLabel, gbc);
@@ -550,57 +551,82 @@ public final class ScoreTopComponent extends TopComponent
             }
         });
 
-        ImageIcon icon = new ImageIcon(ImageUtilities.loadImage(
-                "blue/resources/images/ZoomIn16.gif"));
-        JButton zoomButton = new JButton(icon);
-        zoomButton.addActionListener((ActionEvent e) -> {
-            if (navigator == null) {
-                navigator = new ScoreNavigatorDialog(
-                        WindowManager.getDefault().getMainWindow());
-                navigator.setJScrollPane(scrollPane);
-                navigator.setLayerPanel(layerPanel);
-            }
-            navigator.setVisible(true);
-        });
+        Color ICON_COLOR = new Color(230, 230, 255);
+
+        JButton zoomButton = new JButton(IconFontSwing.buildIcon(Elusive.ZOOM_IN, 12, ICON_COLOR));
+
+        zoomButton.addActionListener(
+                (ActionEvent e) -> {
+                    if (navigator == null) {
+                        navigator = new ScoreNavigatorDialog(
+                                WindowManager.getDefault().getMainWindow());
+                        navigator.setJScrollPane(scrollPane);
+                        navigator.setLayerPanel(layerPanel);
+                    }
+                    navigator.setVisible(true);
+                }
+        );
 
         scrollPane.setColumnHeaderView(headerPanel);
+
         scrollPane.setCorner(JScrollPane.LOWER_RIGHT_CORNER, zoomButton);
+
         scrollPane.setCorner(JScrollPane.UPPER_RIGHT_CORNER, snapButton);
 
         layerPanel.setBackground(Color.BLACK);
-        layerPanel.setOpaque(true);
-        layerPanel.setLayout(new LinearLayout(Score.SPACER));
-        layerHeaderPanel.setLayout(new LinearLayout(Score.SPACER));
+
+        layerPanel.setOpaque(
+                true);
+        layerPanel.setLayout(
+                new LinearLayout(Score.SPACER));
+        layerHeaderPanel.setLayout(
+                new LinearLayout(Score.SPACER));
 
         scorePanel.add(layerPanel, JLayeredPane.DEFAULT_LAYER);
 
-        scrollPane.getViewport().setView(scorePanel);
-        scrollPane.getViewport().setScrollMode(JViewport.BLIT_SCROLL_MODE);
-        scrollPane.getViewport().setBackground(Color.BLACK);
+        scrollPane.getViewport()
+                .setView(scorePanel);
+        scrollPane.getViewport()
+                .setScrollMode(JViewport.BLIT_SCROLL_MODE);
+        scrollPane.getViewport()
+                .setBackground(Color.BLACK);
 
         topSplitPane.add(scrollPane, JSplitPane.RIGHT);
+
         topSplitPane.add(leftPanel, JSplitPane.LEFT);
-        topSplitPane.setDividerLocation(175);
 
-        timeProperties.setVisible(false);
-        timeProperties.setPreferredSize(new Dimension(150, 40));
+        topSplitPane.setDividerLocation(
+                175);
 
-        timeProperties.setVisible(false);
-        timeProperties.setPreferredSize(new Dimension(150, 40));
+        timeProperties.setVisible(
+                false);
+        timeProperties.setPreferredSize(
+                new Dimension(150, 40));
 
-        topPanel.setLayout(new BorderLayout());
-        topPanel.add(new ModeSelectionPanel(), BorderLayout.WEST);
+        timeProperties.setVisible(
+                false);
+        timeProperties.setPreferredSize(
+                new Dimension(150, 40));
+
+        topPanel.setLayout(
+                new BorderLayout());
+        topPanel.add(
+                new ModeSelectionPanel(), BorderLayout.WEST);
         topPanel.add(scoreObjectBar, BorderLayout.CENTER);
 
         this.add(timeProperties, BorderLayout.EAST);
 
-        snapButton.addActionListener((ActionEvent e) -> {
-            // showSnapPopup();
-            timeProperties.setVisible(!timeProperties.isVisible());
-        });
+        snapButton.addActionListener(
+                (ActionEvent e) -> {
+                    // showSnapPopup();
+                    timeProperties.setVisible(!timeProperties.isVisible());
+                }
+        );
 
         scorePanel.add(renderStartPointer, JLayeredPane.DRAG_LAYER);
+
         scorePanel.add(renderLoopPointer, JLayeredPane.DRAG_LAYER);
+
         scorePanel.add(renderTimePointer, JLayeredPane.DRAG_LAYER);
 
     }

@@ -20,6 +20,8 @@
 package blue;
 
 import blue.event.PlayModeListener;
+import blue.jfx.BlueFX;
+import blue.orchestra.editor.blueSynthBuilder.BSBPreferences;
 import blue.projects.BlueProject;
 import blue.projects.BlueProjectManager;
 import blue.services.render.RenderTimeManager;
@@ -36,6 +38,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
+import javax.swing.Box;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -66,6 +69,8 @@ public class MainToolBar extends JToolBar implements PlayModeListener,
     JButton previousMarkerButton;
 
     JButton nextMarkerButton;
+
+    JButton widgetInfoButton = new JButton();
 
     JButton rewindButton = new JButton();
 
@@ -149,6 +154,29 @@ public class MainToolBar extends JToolBar implements PlayModeListener,
             stopRendering();
         });
 
+        final var widgetInfoShowingIcon = IconFontSwing.buildIcon(FontAwesome.INFO_CIRCLE, 14, ICON_COLOR);
+        final var widgetInfoNotShowingIcon = IconFontSwing.buildIcon(FontAwesome.INFO_CIRCLE, 14, Color.LIGHT_GRAY);
+        final var prefs = BSBPreferences.getInstance();
+
+        Runnable updateWidgetIcon = () -> {
+            var icon = prefs.getShowWidgetComments() ? widgetInfoShowingIcon : widgetInfoNotShowingIcon;
+            widgetInfoButton.setIcon(icon);
+        };
+
+        widgetInfoButton.addActionListener(ae -> {
+            BlueFX.runOnFXThread(() -> {
+                prefs.setShowWidgetComments(!prefs.getShowWidgetComments());
+            });
+        });
+        widgetInfoButton.setFocusable(false);
+        widgetInfoButton.setToolTipText("Toggle showing BSB Widget information as tooltips in usage mode");
+
+        prefs.showWidgetCommentsProperty().addListener((obs, old, newVal) -> {
+            updateWidgetIcon.run();
+        });
+
+        updateWidgetIcon.run();
+
         stopButton.setFocusable(false);
 
         toolStartLabel.setText(
@@ -179,6 +207,8 @@ public class MainToolBar extends JToolBar implements PlayModeListener,
         this.add(playEndText, null);
         this.add(playTimeLabel);
         this.add(playTimeText);
+        this.add(Box.createHorizontalStrut(5));
+        this.add(widgetInfoButton, null);
         this.add(loopBox, null);
         this.add(previousMarkerButton);
         this.add(nextMarkerButton);
@@ -435,7 +465,7 @@ public class MainToolBar extends JToolBar implements PlayModeListener,
         public PreviousMarkerAction() {
             super("Go to Previous Marker");
 
-           var icon = IconFontSwing.buildIcon(FontAwesome.BACKWARD, 14, ICON_COLOR);
+            var icon = IconFontSwing.buildIcon(FontAwesome.BACKWARD, 14, ICON_COLOR);
 
             putValue(Action.SHORT_DESCRIPTION, "Go to Previous Marker");
             putValue(Action.SMALL_ICON, icon);
