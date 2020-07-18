@@ -1,10 +1,27 @@
-package blue.ui.core.soundObject.renderer;
+/*
+ * blue - object composition environment for csound
+ * Copyright (C) 2020
+ * Steven Yi <stevenyi@gmail.com>
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ */
+package blue.ui.core.score.layers.soundObject.views;
 
-import blue.plugin.BarRendererPlugin;
+import blue.plugin.SoundObjectViewPlugin;
 import blue.score.layers.Layer;
 import blue.soundObject.Comment;
-import blue.soundObject.SoundObject;
-import blue.ui.core.score.layers.soundObject.SoundObjectView;
 import blue.ui.utilities.BlueGradientFactory;
 import java.awt.AlphaComposite;
 import java.awt.Color;
@@ -14,36 +31,33 @@ import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 
 /**
- * Title: blue Description: an object composition environment for csound
- * Copyright: Copyright (c) 2001 Company: steven yi music
  *
- * @author steven yi
- * @version 1.0
+ * @author stevenyi
  */
-@BarRendererPlugin(scoreObjectType = Comment.class)
-public class CommentRenderer implements BarRenderer {
+@SoundObjectViewPlugin(scoreObjectType = Comment.class)
+public class CommentView extends SoundObjectView {
 
-    private static Font renderFont = new Font("Dialog", Font.ITALIC, 12);
+    protected static Font renderFont = new Font("Dialog", Font.ITALIC, 12);
 
     @Override
-    public void render(Graphics graphics, SoundObjectView sObjView,
-            int pixelSeconds) {
+    protected void paintComponent(Graphics graphics) {
+        super.paintComponent(graphics);
 
         Graphics2D g = (Graphics2D) graphics;
+
         g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,
                 RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
 
-        int w = sObjView.getSize().width;
-        int h = sObjView.getSize().height;
+        int w =getWidth();
+        int h = getHeight();
 
         Color bgColor;
         Color border1;
         Color border2;
         Color fontColor;
 
-        SoundObject sObj = sObjView.getSoundObject();
 
-        if (sObjView.isSelected()) {
+        if (isSelected()) {
             bgColor = sObj.getBackgroundColor().brighter().brighter();
             border1 = Color.WHITE;
             border2 = Color.WHITE;
@@ -66,7 +80,7 @@ public class CommentRenderer implements BarRenderer {
         g.setPaint(BlueGradientFactory.getGradientPaint(bgColor));
         g.fillRect(0, 2, w, h - 4);
 
-        if (sObjView.isSelected()) {
+        if (isSelected()) {
             g.setColor(bgColor.darker().darker().darker().darker());
             g.fillRect(0, 2, w, 18);
         }
@@ -79,7 +93,7 @@ public class CommentRenderer implements BarRenderer {
         g.drawLine(0, h - 2, w, h - 2);
         g.drawLine(w - 1, h - 2, w - 1, 2);
 
-        if (sObjView.isSelected()) {
+        if (isSelected()) {
             g.setColor(new Color(255, 255, 255, 196));
             g.drawRect(1, 3, w - 3, h - 6);
         }
@@ -90,7 +104,7 @@ public class CommentRenderer implements BarRenderer {
             g.setComposite(AlphaComposite.Src);
             g.setFont(renderFont);
 
-            String[] parts = sObjView.getSoundObject().getName().split(
+            String[] parts = sObj.getName().split(
                     "\\\\[n]");
 
             for (int i = 0; i < parts.length; i++) {
@@ -99,10 +113,6 @@ public class CommentRenderer implements BarRenderer {
             }
 
         }
-    }
-
-    @Override
-    public void cleanup(SoundObjectView sObjView) {
     }
 
 }

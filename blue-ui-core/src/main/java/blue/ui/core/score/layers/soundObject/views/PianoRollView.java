@@ -1,6 +1,6 @@
 /*
  * blue - object composition environment for csound
- * Copyright (C) 2012
+ * Copyright (C) 2020
  * Steven Yi <stevenyi@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
@@ -17,14 +17,13 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package blue.ui.core.soundObject.renderer;
+package blue.ui.core.score.layers.soundObject.views;
 
 import blue.SoundLayer;
-import blue.plugin.BarRendererPlugin;
+import blue.plugin.SoundObjectViewPlugin;
 import blue.soundObject.PianoRoll;
 import blue.soundObject.TimeBehavior;
 import blue.soundObject.pianoRoll.PianoNote;
-import blue.ui.core.score.layers.soundObject.SoundObjectView;
 import blue.utilities.scales.ScaleLinear;
 import java.awt.Graphics;
 import java.util.ArrayList;
@@ -33,16 +32,16 @@ import java.util.ArrayList;
  *
  * @author stevenyi
  */
-@BarRendererPlugin(scoreObjectType = PianoRoll.class)
-public class PianoRollRenderer extends GenericRenderer {
+@SoundObjectViewPlugin(scoreObjectType = PianoRoll.class)
+public class PianoRollView extends GenericView {
 
-    @Override
-    public void render(Graphics graphics, SoundObjectView sObjView, int pixelSeconds) {
-        super.render(graphics, sObjView, pixelSeconds);
+   @Override
+    protected void paintComponent(Graphics graphics) {
+        super.paintComponent(graphics);
 
-        PianoRoll pianoRoll = (PianoRoll) sObjView.getSoundObject();
+        PianoRoll pianoRoll = (PianoRoll) sObj;
 
-        if (sObjView.getHeight() <= SoundLayer.LAYER_HEIGHT || pianoRoll.getNotes().isEmpty()) {
+        if (getHeight() <= SoundLayer.LAYER_HEIGHT || pianoRoll.getNotes().isEmpty()) {
             return;
         }
 
@@ -53,7 +52,7 @@ public class PianoRollRenderer extends GenericRenderer {
 //        }
         PianoRollValueCache cache = generateCache(pianoRoll);
 
-        var drawMaxHeight = sObjView.getHeight() - SoundLayer.LAYER_HEIGHT - 6;
+        var drawMaxHeight = getHeight() - SoundLayer.LAYER_HEIGHT - 6;
 
         var noteHeight = Math.min(3, Math.max(1, drawMaxHeight / cache.range));
 
@@ -69,14 +68,14 @@ public class PianoRollRenderer extends GenericRenderer {
 
         int scaleDegrees = pianoRoll.getScale().getNumScaleDegrees();
 
-        var drawColor = (sObjView.isSelected()) ? pianoRoll.getBackgroundColor().darker() : pianoRoll.getBackgroundColor().brighter().brighter();
+        var drawColor = (isSelected()) ? pianoRoll.getBackgroundColor().darker() : pianoRoll.getBackgroundColor().brighter().brighter();
         graphics.setColor(drawColor);
 
         ScaleLinear yScale = new ScaleLinear(cache.min, cache.max, drawHeight, 0.0);
+        final var pixelSeconds = timeState.getPixelSecond();
 
         if (pianoRoll.getTimeBehavior() == TimeBehavior.SCALE) {
-            var duration = pianoRoll.getSubjectiveDuration();
-            var w = sObjView.getWidth();
+            var w = getWidth();
 
             ScaleLinear xScale = new ScaleLinear(0.0, cache.notesDuration, 0, w);
 
@@ -124,7 +123,6 @@ public class PianoRollRenderer extends GenericRenderer {
         } else if (pianoRoll.getTimeBehavior() == TimeBehavior.REPEAT_CLASSIC) {
             var duration = pianoRoll.getSubjectiveDuration();
             var repeat = pianoRoll.getRepeatPoint() > 0.0 ? pianoRoll.getRepeatPoint() : cache.notesDuration;
-            var w = sObjView.getWidth();
 
             var curTime = 0.0;
             var xStart = 0;
@@ -142,7 +140,6 @@ public class PianoRollRenderer extends GenericRenderer {
 //                    if (x + width > w) {
 //                        width = w - x;
 //                    }
-
                     graphics.fillRect((int) x + xStart, (int) y, (int) width, noteHeight);
 
                 }
@@ -169,7 +166,7 @@ public class PianoRollRenderer extends GenericRenderer {
             }
 
         } else if (pianoRoll.getTimeBehavior() == TimeBehavior.NONE) {
-            var w = sObjView.getWidth();
+            var w = getWidth();
 
             for (var note : pianoRoll.getNotes()) {
                 var x = note.getStart() * pixelSeconds;

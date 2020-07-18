@@ -17,7 +17,7 @@
  * the Free Software Foundation Inc., 59 Temple Place - Suite 330,
  * Boston, MA  02111-1307 USA
  */
-package blue.ui.core.score.layers.soundObject;
+package blue.ui.core.score.layers.soundObject.views;
 
 import blue.score.TimeState;
 import blue.score.layers.Layer;
@@ -26,10 +26,8 @@ import blue.score.ScoreObjectEvent;
 import blue.score.ScoreObjectListener;
 import blue.ui.core.score.ScoreObjectView;
 import blue.ui.core.score.ScoreTopComponent;
-import blue.ui.core.soundObject.renderer.BarRenderer;
-import blue.ui.core.soundObject.renderer.BarRendererCache;
 import java.awt.BorderLayout;
-import java.awt.Graphics;
+import java.awt.Font;
 import java.util.Collection;
 import javax.swing.JComponent;
 import org.openide.util.Lookup;
@@ -50,42 +48,23 @@ import org.openide.windows.WindowManager;
  * @author steven yi
  * @version 1.0
  */
-public final class SoundObjectView extends JComponent implements Comparable<SoundObjectView>,
+public abstract class SoundObjectView extends JComponent implements Comparable<SoundObjectView>,
         ScoreObjectListener, LookupListener, ScoreObjectView<SoundObject> {
 
-    private SoundObject sObj;
-    boolean selected = false;
-    private TimeState timeState;
-    BarRenderer renderer = null;
+    protected static Font renderFont = new Font("Dialog", Font.BOLD, 12);
+
+    protected SoundObject sObj;
+    protected boolean selected = false;
+    protected TimeState timeState;
     Lookup.Result<SoundObject> result = null;
 
-    public SoundObjectView(SoundObject sObj, TimeState timeState) {
+    public SoundObjectView() {
+    }
+
+    public void initialize(SoundObject sObj, TimeState timeState) {
         this.sObj = sObj;
         this.timeState = timeState;
 
-        renderer = BarRendererCache.getInstance().getBarRenderer(
-                this.sObj.getClass());
-
-        this.sObj.addScoreObjectListener(this);
-
-        try {
-            init();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    void cleanup() {
-        if (this.sObj != null) {
-            this.sObj.removeScoreObjectListener(this);
-
-            renderer.cleanup(this);
-            this.timeState = null;
-            this.sObj = null;
-        }
-    }
-
-    private void init() {
         this.setBounds(-1, 0, (int) (sObj.getSubjectiveDuration() * timeState
                 .getPixelSecond()), Layer.LAYER_HEIGHT);
         this.setLayout(new BorderLayout());
@@ -98,29 +77,10 @@ public final class SoundObjectView extends JComponent implements Comparable<Soun
 
     public void updateView(int newY, int newHeight) {
         this.setLocation(
-                (int) (this.getStartTime() * timeState.getPixelSecond()),
+                (int) (sObj.getStartTime() * timeState.getPixelSecond()),
                 newY);
-        this.setSize((int) (this.getSubjectiveDuration() * timeState
+        this.setSize((int) (sObj.getSubjectiveDuration() * timeState
                 .getPixelSecond()), newHeight);
-    }
-
-    /**
-     * ***************************
-     */
-    public void setStartTime(double yo) {
-        sObj.setStartTime(yo);
-    }
-
-    public double getStartTime() {
-        return sObj.getStartTime();
-    }
-
-    public double getSubjectiveDuration() {
-        return sObj.getSubjectiveDuration();
-    }
-
-    public void setSubjectiveTime(double yo) {
-        sObj.setSubjectiveDuration(yo);
     }
 
     public SoundObject getSoundObject() {
@@ -129,13 +89,6 @@ public final class SoundObjectView extends JComponent implements Comparable<Soun
 
     public boolean isSelected() {
         return selected;
-    }
-
-    @Override
-    public void paintComponent(Graphics graphics) {
-        if (renderer != null && timeState != null) {
-            renderer.render(graphics, this, timeState.getPixelSecond());
-        }
     }
 
     @Override
@@ -177,10 +130,6 @@ public final class SoundObjectView extends JComponent implements Comparable<Soun
         }
     }
 
-    public BarRenderer getRenderer() {
-        return renderer;
-    }
-
     @Override
     public void addNotify() {
         super.addNotify();
@@ -188,9 +137,13 @@ public final class SoundObjectView extends JComponent implements Comparable<Soun
         ScoreTopComponent scoreTopComponent = (ScoreTopComponent) WindowManager.getDefault().findTopComponent(
                 "ScoreTopComponent");
         result = scoreTopComponent.getLookup().lookupResult(
-                SoundObject.class);
+                SoundObject.class
+        );
         result.addLookupListener(this);
         resultChanged(null);
+
+        this.sObj.addScoreObjectListener(this);
+
     }
 
     @Override

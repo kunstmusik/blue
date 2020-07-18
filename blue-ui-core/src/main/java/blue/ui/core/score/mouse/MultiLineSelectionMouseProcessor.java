@@ -19,6 +19,7 @@
  */
 package blue.ui.core.score.mouse;
 
+import blue.ui.core.score.layers.soundObject.views.SoundObjectView;
 import blue.ui.core.score.layers.soundObject.*;
 import blue.components.AlphaMarquee;
 import blue.plugin.ScoreMouseListenerPlugin;

@@ -19,6 +19,7 @@
  */
 package blue.ui.core.score.layers.soundObject;
 
+import blue.ui.core.score.layers.soundObject.views.SoundObjectView;
 import blue.BlueData;
 import blue.SoundLayer;
 import blue.SoundLayerListener;
@@ -30,6 +31,7 @@ import blue.soundObject.SoundObject;
 import blue.ui.core.score.ScoreObjectView;
 import blue.ui.core.score.layers.LayerGroupPanel;
 import blue.ui.core.score.layers.SelectionMarquee;
+import blue.ui.core.score.layers.soundObject.views.SoundObjectViewFactory;
 import blue.ui.utilities.ParentDispatchingMouseAdapter;
 import blue.ui.utilities.UiUtilities;
 import blue.utility.ObjectUtilities;
@@ -161,7 +163,7 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
             double startTime = sObj.getStartTime();
 
             Object[] args = {sObj.getName(),
-                ObjectUtilities.getShortClassName(sObj), startTime, 
+                ObjectUtilities.getShortClassName(sObj), startTime,
                 subjectiveDuration, startTime + subjectiveDuration};
 
             tip = toolTipFormat.format(args);
@@ -198,7 +200,6 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
                             sObjView.getSoundObject());
 
                     if (index < 0) {
-                        sObjView.cleanup();
                         sObjPanel.remove(c);
                         soundObjectToViewMap.remove(
                                 sObjView.getSoundObject());
@@ -228,15 +229,6 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
 
     public void setPolyObject(PolyObject pObj, TimeState timeState) {
         Component[] components = sObjPanel.getComponents();
-
-        for (int i = 0; i < components.length; i++) {
-            Component c = components[i];
-
-            if (c instanceof SoundObjectView) {
-                SoundObjectView sObjView = (SoundObjectView) c;
-                sObjView.cleanup();
-            }
-        }
 
         sObjPanel.removeAll();
 
@@ -344,7 +336,10 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
     }
 
     private void addSoundObjectView(int soundLayerIndex, SoundObject sObj) {
-        SoundObjectView temp = new SoundObjectView(sObj, timeState);
+
+        var factory = SoundObjectViewFactory.getInstance();
+        SoundObjectView temp = factory.createView(sObj, timeState);
+
         temp.addComponentListener(sObjViewListener);
         sObjPanel.add(temp, 0);
         temp.setLocation(
@@ -364,7 +359,6 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
 
         SoundObjectView sObjView = this.soundObjectToViewMap.remove(sObj);
         sObjView.removeComponentListener(sObjViewListener);
-        sObjView.cleanup();
         sObjPanel.remove(sObjView);
 
         sObjPanel.repaint(sObjView.getBounds());
@@ -579,7 +573,7 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
 
         reset();
     }
-    
+
     /* Cleanup code on Remove */
     @Override
     public void removeNotify() {

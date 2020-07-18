@@ -21,7 +21,7 @@ import java.util.Map;
  * @author steven yi
  */
 @SoundObjectPlugin(displayName = "PianoRoll", live = true, position = 90)
-public class PianoRoll extends AbstractSoundObject implements GenericViewable {
+public class PianoRoll extends AbstractSoundObject {
 
     public static final int DISPLAY_TIME = 0;
 

@@ -1,6 +1,6 @@
 /*
  * blue - object composition environment for csound
- * Copyright (C) 2014
+ * Copyright (C) 2020
  * Steven Yi <stevenyi@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
@@ -19,7 +19,7 @@
  */
 package blue.plugin.processors;
 
-import blue.plugin.BarRendererPlugin;
+import blue.plugin.SoundObjectViewPlugin;
 import java.util.Set;
 import javax.annotation.processing.Processor;
 import javax.annotation.processing.RoundEnvironment;
@@ -41,30 +41,30 @@ import org.openide.util.lookup.ServiceProvider;
  * @author stevenyi
  */
 @ServiceProvider(service = Processor.class)
-@SupportedAnnotationTypes("blue.plugin.BarRendererPlugin")
+@SupportedAnnotationTypes("blue.plugin.SoundObjectViewPlugin")
 @SupportedSourceVersion(SourceVersion.RELEASE_8)
-public class BarRendererPluginProcessor extends LayerGeneratingProcessor {
+public class SoundObjectViewPluginProcessor extends LayerGeneratingProcessor {
 
     @Override
     protected boolean handleProcess(Set<? extends TypeElement> set, RoundEnvironment env)
             throws LayerGenerationException {
         Elements elements = processingEnv.getElementUtils();
-        for (Element e : env.getElementsAnnotatedWith(BarRendererPlugin.class)) {
+        for (Element e : env.getElementsAnnotatedWith(SoundObjectViewPlugin.class)) {
             TypeElement clazz = (TypeElement) e;
             String teName = elements.getBinaryName(clazz).toString();
-            BarRendererPlugin barRendererPlugin = 
-                    clazz.getAnnotation(BarRendererPlugin.class);
+            SoundObjectViewPlugin soundObjectViewPlugin = 
+                    clazz.getAnnotation(SoundObjectViewPlugin.class);
 
             File f = layer(e).file(
-                    "blue/score/barRenderers/" + teName.replace('.', '-') + ".instance");
+                    "blue/score/soundObjectViews/" + teName.replace('.', '-') + ".instance");
             TypeMirror tm = null;
             try {
-                barRendererPlugin.scoreObjectType();
+                soundObjectViewPlugin.scoreObjectType();
             } catch(MirroredTypeException mte) {
                 tm = mte.getTypeMirror();
             }
             
-            f.stringvalue("scoreObjectType", 
+            f.stringvalue("soundObjectType", 
                     tm.toString());
             f.write();
         }

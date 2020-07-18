@@ -1,6 +1,6 @@
 /*
  * blue - object composition environment for csound
- * Copyright (C) 2013
+ * Copyright (C) 2020
  * Steven Yi <stevenyi@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
@@ -19,16 +19,17 @@
  */
 package blue.clojure.soundObject;
 
-import blue.plugin.BarRendererPlugin;
-import blue.ui.core.soundObject.renderer.LetterRenderer;
+import blue.plugin.SoundObjectViewPlugin;
+import blue.ui.core.score.layers.soundObject.views.LetterRendererView;
 
 /**
  *
  * @author stevenyi
  */
-@BarRendererPlugin(scoreObjectType = ClojureObject.class)
-public class ClojureObjectRenderer extends LetterRenderer {
-    public ClojureObjectRenderer() {
-        super("C");
+@SoundObjectViewPlugin(scoreObjectType = ClojureObject.class)
+public class ClojureObjectView extends LetterRendererView {
+    public ClojureObjectView() {
+        super();
+        this.letter = "C";
     }
 }

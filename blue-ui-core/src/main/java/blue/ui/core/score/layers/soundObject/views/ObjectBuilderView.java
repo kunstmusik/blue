@@ -1,6 +1,6 @@
 /*
  * blue - object composition environment for csound
- * Copyright (C) 2014
+ * Copyright (C) 2020
  * Steven Yi <stevenyi@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
@@ -17,20 +17,19 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
+package blue.ui.core.score.layers.soundObject.views;
 
-package blue.plugin;
-
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import blue.plugin.SoundObjectViewPlugin;
+import blue.soundObject.ObjectBuilder;
 
 /**
  *
  * @author stevenyi
  */
-@Retention(RetentionPolicy.SOURCE)
-@Target(ElementType.TYPE)
-public @interface BarRendererPlugin {
-    Class scoreObjectType();
+@SoundObjectViewPlugin(scoreObjectType = ObjectBuilder.class)
+public class ObjectBuilderView extends LetterRendererView {
+    public ObjectBuilderView() {
+        super();
+        this.letter = "O";
+    }
 }

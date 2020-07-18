@@ -23,6 +23,7 @@
                         <publicPackage>blue.ui.core.score</publicPackage>
                         <publicPackage>blue.ui.core.score.layers</publicPackage>
                         <publicPackage>blue.ui.core.score.layers.soundObject</publicPackage>
+                        <publicPackage>blue.ui.core.score.layers.soundObject.views</publicPackage>
                         <publicPackage>blue.ui.core.soundObject.renderer</publicPackage>
                     </publicPackages>
                     <verifyRuntime>false</verifyRuntime>
