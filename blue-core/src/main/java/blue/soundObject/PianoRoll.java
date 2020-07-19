@@ -16,6 +16,8 @@ import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Map;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 
 /**
  * @author steven yi
@@ -41,7 +43,7 @@ public class PianoRoll extends AbstractSoundObject {
 
     private Scale scale;
 
-    private ArrayList<PianoNote> notes;
+    private ObservableList<PianoNote> notes;
 
     private String noteTemplate;
 
@@ -69,7 +71,7 @@ public class PianoRoll extends AbstractSoundObject {
         this.setName("PianoRoll");
         timeBehavior = TimeBehavior.SCALE;
         scale = Scale.get12TET();
-        notes = new ArrayList<>();
+        notes = FXCollections.observableArrayList();
         noteTemplate = "i <INSTR_ID> <START> <DUR> <FREQ>";
         instrumentId = "1";
         pixelSecond = 64;
@@ -83,7 +85,7 @@ public class PianoRoll extends AbstractSoundObject {
         repeatPoint = pr.repeatPoint;
         npc = new NoteProcessorChain(pr.npc);
         scale = new Scale(pr.scale);
-        notes = new ArrayList<>(pr.notes.size());
+        notes = FXCollections.observableArrayList();
 
         for (PianoNote pn : pr.notes) {
             notes.add(new PianoNote(pn));
@@ -330,15 +332,8 @@ public class PianoRoll extends AbstractSoundObject {
     /**
      * @return Returns the notes.
      */
-    public ArrayList<PianoNote> getNotes() {
+    public ObservableList<PianoNote> getNotes() {
         return notes;
-    }
-
-    /**
-     * @param notes The notes to set.
-     */
-    public void setNotes(ArrayList<PianoNote> notes) {
-        this.notes = notes;
     }
 
     /**

@@ -45,7 +45,7 @@ NEW
   when in usage mode. Added "Show Widget Comments" menu option to View menu to  
   turn on and off showing of the comments in tooltips.
 
-* PianoRoll: implemented rendering of notes in Bar renderer on timeline
+* PianoRoll: implemented rendering of notes in object view on timeline
 
 UPDATED
 

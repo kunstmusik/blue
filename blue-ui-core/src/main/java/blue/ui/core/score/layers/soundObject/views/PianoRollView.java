@@ -26,7 +26,9 @@ import blue.soundObject.TimeBehavior;
 import blue.soundObject.pianoRoll.PianoNote;
 import blue.utilities.scales.ScaleLinear;
 import java.awt.Graphics;
-import java.util.ArrayList;
+import java.beans.PropertyChangeListener;
+import java.util.List;
+import javafx.collections.ListChangeListener;
 
 /**
  *
@@ -35,7 +37,55 @@ import java.util.ArrayList;
 @SoundObjectViewPlugin(scoreObjectType = PianoRoll.class)
 public class PianoRollView extends GenericView {
 
-   @Override
+    PianoRollValueCache cache = new PianoRollValueCache();
+
+    PropertyChangeListener pcl = (pce) -> {
+        var pianoRoll = (PianoRoll) sObj;
+        updateCache(pianoRoll);
+        repaint();
+    };
+
+    ListChangeListener<PianoNote> lcl = (ce) -> {
+        while (ce.next()) {
+            if (ce.wasAdded()) {
+                for (var note : ce.getAddedSubList()) {
+                    note.addPropertyChangeListener(pcl);
+                }
+            } else if (ce.wasRemoved()) {
+                for (var note : ce.getRemoved()) {
+                    note.removePropertyChangeListener(pcl);
+                }
+            }
+        }
+
+        var pianoRoll = (PianoRoll) sObj;
+        updateCache(pianoRoll);
+        repaint();
+    };
+
+    @Override
+    public void removeNotify() {
+        var pianoRoll = (PianoRoll) sObj;
+        pianoRoll.getNotes().removeListener(lcl);
+        for (var note : pianoRoll.getNotes()) {
+            note.removePropertyChangeListener(pcl);
+        }
+        super.removeNotify();
+    }
+
+    @Override
+    public void addNotify() {
+        super.addNotify();
+        var pianoRoll = (PianoRoll) sObj;
+        updateCache(pianoRoll);
+
+        pianoRoll.getNotes().addListener(lcl);
+        for (var note : pianoRoll.getNotes()) {
+            note.addPropertyChangeListener(pcl);
+        }
+    }
+
+    @Override
     protected void paintComponent(Graphics graphics) {
         super.paintComponent(graphics);
 
@@ -44,13 +94,6 @@ public class PianoRollView extends GenericView {
         if (getHeight() <= SoundLayer.LAYER_HEIGHT || pianoRoll.getNotes().isEmpty()) {
             return;
         }
-
-//        PianoRollValueCache cache = (PianoRollValueCache) sObjView.getClientProperty(this);
-//        
-//        if(cache != null) {
-//            cac
-//        }
-        PianoRollValueCache cache = generateCache(pianoRoll);
 
         var drawMaxHeight = getHeight() - SoundLayer.LAYER_HEIGHT - 6;
 
@@ -186,9 +229,11 @@ public class PianoRollView extends GenericView {
 
     }
 
-    protected PianoRollValueCache generateCache(PianoRoll pianoRoll) {
-        PianoRollValueCache cache = new PianoRollValueCache();
-        ArrayList<PianoNote> notes = pianoRoll.getNotes();
+    protected void updateCache(PianoRoll pianoRoll) {
+
+        List<PianoNote> notes = pianoRoll.getNotes();
+
+        cache.reset();
 
         if (notes.size() > 0) {
             int scaleDegrees = pianoRoll.getScale().getNumScaleDegrees();
@@ -204,15 +249,25 @@ public class PianoRollView extends GenericView {
             cache.range = cache.max - cache.min + 1;
         }
 
-        return cache;
     }
 
     class PianoRollValueCache {
 
-        int max = 0;
-        int min = Integer.MAX_VALUE;
-        int range = -1;
-        double notesDuration = 0.0;
+        int max;
+        int min;
+        int range;
+        double notesDuration;
+
+        public PianoRollValueCache() {
+            reset();
+        }
+
+        public final void reset() {
+            max = 0;
+            min = Integer.MAX_VALUE;
+            range = -1;
+            notesDuration = 0.0;
+        }
     }
 
 }
