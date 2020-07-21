@@ -19,9 +19,14 @@
  */
 package blue.ui.core.score.layers.soundObject.views;
 
+import blue.BlueSystem;
 import blue.plugin.SoundObjectViewPlugin;
 import blue.score.layers.Layer;
 import blue.soundObject.FrozenSoundObject;
+import blue.ui.utilities.audio.AudioWaveformCache;
+import blue.ui.utilities.audio.AudioWaveformData;
+import blue.ui.utilities.audio.AudioWaveformListener;
+import blue.ui.utilities.audio.AudioWaveformUI;
 import java.awt.AlphaComposite;
 import java.awt.Color;
 import java.awt.Font;
@@ -35,7 +40,11 @@ import java.awt.Graphics2D;
 @SoundObjectViewPlugin(scoreObjectType = FrozenSoundObject.class)
 public class FrozenSoundObjectView extends SoundObjectView {
 
-      private static Font renderFont = new Font("Dialog", Font.BOLD, 12);
+    protected static AudioWaveformCache waveCache = AudioWaveformCache.getInstance();
+
+    private AudioWaveformData audioWaveformData = null;
+
+    private static Font renderFont = new Font("Dialog", Font.BOLD, 12);
 
     protected static Color selectedBgColor = Color.white;
 
@@ -73,6 +82,7 @@ public class FrozenSoundObjectView extends SoundObjectView {
         Color border1;
         Color border2;
         Color fontColor;
+        Color waveColor;
 
         if (isSelected()) {
             bgColor = normalBgColor.brighter().brighter();
@@ -86,6 +96,12 @@ public class FrozenSoundObjectView extends SoundObjectView {
             fontColor = normalFontColor;
         }
 
+        if (isBright(bgColor)) {
+            waveColor = bgColor.darker().darker();
+        } else {
+            waveColor = bgColor.brighter().brighter();
+        }
+
         g.setPaint(bgColor);
 
         // fill original soundObject area
@@ -94,12 +110,17 @@ public class FrozenSoundObjectView extends SoundObjectView {
         // fill extended area
         g.setColor(shadeColor);
         g.fillRect((int) (w * percentOriginal), 2, w, h - 4);
+        
+        // Draw Waveform
+        g.setPaint(waveColor);
 
+        paintWaveform(g, this, timeState.getPixelSecond());
+        
         if (isSelected()) {
             g.setColor(bgColor.darker().darker().darker().darker());
             g.fillRect(0, 2, w, 18);
         }
-
+        
         g.setColor(border1);
         g.drawLine(0, 2, w, 2);
         g.drawLine(0, 2, 0, h - 2);
@@ -129,4 +150,41 @@ public class FrozenSoundObjectView extends SoundObjectView {
         }
     }
 
+    private void paintWaveform(Graphics2D g, SoundObjectView sObjView,
+            int pixelSeconds) {
+
+        FrozenSoundObject fso = (FrozenSoundObject) sObj;
+
+        final String audioFilename = fso.getFrozenWaveFileName();
+        int sObjVisibleHeight = sObjView.getHeight() - 4;
+
+        if (this.audioWaveformData == null) {
+            this.audioWaveformData = waveCache.getAudioWaveformData(
+                    BlueSystem.getFullPath(audioFilename),
+                    pixelSeconds);
+
+            if (this.audioWaveformData.percentLoadingComplete < 1.0) {
+                waveCache.addAudioWaveformListener(new AudioWaveformListener(
+                        audioFilename, sObjView));
+            }
+
+        } else if (this.audioWaveformData.pixelSeconds != pixelSeconds
+                || !this.audioWaveformData.fileName.equals(audioFilename)) {
+            this.audioWaveformData = waveCache.getAudioWaveformData(
+                    BlueSystem.getFullPath(audioFilename),
+                    pixelSeconds);
+
+            if (this.audioWaveformData.percentLoadingComplete < 1.0) {
+                waveCache.addAudioWaveformListener(new AudioWaveformListener(
+                        audioFilename, sObjView));
+            }
+        }
+
+        g.translate(1, 2);
+
+        AudioWaveformUI.paintWaveForm(g, sObjVisibleHeight, this.audioWaveformData, 0);
+
+        g.translate(-1, -2);
+
+    }
 }

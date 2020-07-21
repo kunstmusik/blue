@@ -27,6 +27,7 @@ import blue.score.ScoreObjectListener;
 import blue.ui.core.score.ScoreObjectView;
 import blue.ui.core.score.ScoreTopComponent;
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Font;
 import java.util.Collection;
 import javax.swing.JComponent;
@@ -169,5 +170,9 @@ public abstract class SoundObjectView extends JComponent implements Comparable<S
     @Override
     public SoundObject getScoreObject() {
         return this.sObj;
+    }
+
+    protected boolean isBright(Color c) {
+        return c.getRed() + c.getGreen() + c.getBlue() > (128 * 3);
     }
 }

@@ -47,6 +47,8 @@ NEW
 
 * PianoRoll: implemented rendering of notes in object view on timeline
 
+* Issue #520: Render waveform for Frozen SoundObject freze file
+
 UPDATED
 
 * Issue #396: Updated how selected score objects are rendered; rather than all

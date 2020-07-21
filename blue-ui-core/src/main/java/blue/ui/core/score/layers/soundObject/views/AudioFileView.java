@@ -50,10 +50,6 @@ public class AudioFileView extends SoundObjectView {
     
     private AudioWaveformData audioWaveformData = null;
 
-    private boolean isBright(Color c) {
-        return c.getRed() + c.getGreen() + c.getBlue() > (128 * 3);
-    }
-
     @Override
     protected void paintComponent(Graphics graphics) {
         super.paintComponent(graphics);
@@ -85,9 +81,9 @@ public class AudioFileView extends SoundObjectView {
         }
 
         if (isBright(bgColor)) {
-            waveColor = bgColor.brighter().brighter();
-        } else {
             waveColor = bgColor.darker().darker();
+        } else {
+            waveColor = bgColor.brighter().brighter();
         }
 
         g.setPaint(bgColor);
@@ -137,7 +133,7 @@ public class AudioFileView extends SoundObjectView {
     private void paintWaveform(Graphics2D g, SoundObjectView sObjView,
             int pixelSeconds) {
 
-        AudioFile audioFile = (AudioFile) sObjView.getSoundObject();
+        AudioFile audioFile = (AudioFile) sObj;
 
         String audioFilename = audioFile.getSoundFileName();
         int sObjVisibleHeight = sObjView.getHeight() - 4;
