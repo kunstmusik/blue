@@ -43,7 +43,7 @@ public class PianoNoteView extends JPanel implements PropertyChangeListener,
 
     // private static Border NORMAL_BORDER = new LineBorder(Color.LIGHT_GRAY);
     private static Border NORMAL_BORDER = BorderFactory
-            .createBevelBorder(BevelBorder.RAISED);
+            .createLineBorder(Color.DARK_GRAY, 1);
 
     private static Color NORMAL_COLOR = Color.GRAY;
 

@@ -27,11 +27,15 @@ import blue.soundObject.PianoRoll;
 import blue.soundObject.pianoRoll.PianoNote;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.GradientPaint;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.KeyboardFocusManager;
+import java.awt.Point;
 import java.awt.Rectangle;
+import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
@@ -54,12 +58,14 @@ import javax.swing.JPopupMenu;
 import javax.swing.KeyStroke;
 import javax.swing.Scrollable;
 import javax.swing.SwingConstants;
+import jiconfont.icons.font_awesome.FontAwesome;
+import jiconfont.swing.IconFontSwing;
 
 /**
  * @author steven
  */
 public class PianoRollCanvas extends JLayeredPane implements Scrollable,
-        PropertyChangeListener  {
+        PropertyChangeListener {
 
     // TODO - This shouldn't be public, but it will be for now...
     public static final List<PianoNote> NOTE_COPY_BUFFER = new ArrayList<>();
@@ -76,7 +82,7 @@ public class PianoRollCanvas extends JLayeredPane implements Scrollable,
 
     private static Color OCTAVE_COLOR = new Color(198, 226, 255);
 
-    private static Color LINE_COLOR = Color.black;
+    private static Color LINE_COLOR = Color.DARK_GRAY.darker();
 
     protected PianoRoll p;
 
@@ -133,7 +139,7 @@ public class PianoRollCanvas extends JLayeredPane implements Scrollable,
         inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0),
                 "deleteNotes");
         final int osCtrlKey = BlueSystem.getMenuShortcutKey();
-        
+
         inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_X, osCtrlKey), "cut");
         inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_C, osCtrlKey), "copy");
 
@@ -195,7 +201,6 @@ public class PianoRollCanvas extends JLayeredPane implements Scrollable,
         popup.add(remove);
 
         // ZOOM ACTIONS
-
         actionMap.put("raisePixelSecond", new AbstractAction() {
 
             @Override
@@ -231,6 +236,20 @@ public class PianoRollCanvas extends JLayeredPane implements Scrollable,
             }
 
         });
+
+        // TODO - fix issue with setting cursor when shift is down and 
+        // normalize with NoteCanvasMouseListener's setCursor() calls
+//        Toolkit tk = Toolkit.getDefaultToolkit();
+//        Cursor editCursor = tk.createCustomCursor(
+//                IconFontSwing.buildImage(FontAwesome.PENCIL, 16),
+//                new Point(0, 0), "editing");
+//
+//        KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(key -> {
+//            var c = key.isShiftDown() ? editCursor : Cursor.getDefaultCursor();
+//            setCursor(c);
+//
+//            return false;
+//        });
     }
 
     public void cut() {
@@ -240,13 +259,13 @@ public class PianoRollCanvas extends JLayeredPane implements Scrollable,
 
     public void copy() {
         NOTE_COPY_BUFFER.clear();
-        for(PianoNoteView pnv : noteBuffer) {
-           NOTE_COPY_BUFFER.add(new PianoNote(pnv.getPianoNote()));
+        for (PianoNoteView pnv : noteBuffer) {
+            NOTE_COPY_BUFFER.add(new PianoNote(pnv.getPianoNote()));
         }
     }
 
     /**
-     * 
+     *
      */
     protected void removeNotes() {
         for (int i = 0; i < noteBuffer.size(); i++) {
@@ -325,10 +344,11 @@ public class PianoRollCanvas extends JLayeredPane implements Scrollable,
         for (int i = 0; i < octaves; i++) {
             int lineY = h - (i * octaveHeight);
 
-            Color lightColor = new Color(38, 51, 76);
+            Color lightColor = new Color(38, 51, 76).darker().darker()  ;
+            Color darkColor = lightColor.darker();
 
             GradientPaint backgroundPaint = new GradientPaint(0, lineY,
-                    Color.BLACK, 1, lineY - octaveHeight, lightColor);
+                    darkColor, 1, lineY - octaveHeight, lightColor);
             g2d.setPaint(backgroundPaint);
             g2d.fillRect(0, lineY - octaveHeight, w, octaveHeight);
 
@@ -352,16 +372,15 @@ public class PianoRollCanvas extends JLayeredPane implements Scrollable,
                 return;
             }
 
-             
             double snapValue = p.getSnapValue();
             int pixelSecond = p.getPixelSecond();
             double time;
-            
-            for(int i = 0; x < w; i++) {
-                 x = (int)((i * snapValue) * pixelSecond);
-                 g.drawLine(x, 0, x, h);
+
+            for (int i = 0; x < w; i++) {
+                x = (int) ((i * snapValue) * pixelSecond);
+                g.drawLine(x, 0, x, h);
             }
-            
+
         }
 
     }
@@ -444,7 +463,6 @@ public class PianoRollCanvas extends JLayeredPane implements Scrollable,
     }
 
     /* EVENT LISTENER CODE */
-
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
 
@@ -476,7 +494,7 @@ public class PianoRollCanvas extends JLayeredPane implements Scrollable,
 
     /**
      * Adds a selection listener to the ScoreMouseProcessor
-     * 
+     *
      * @param listener
      */
     public void addSelectionListener(SelectionListener<PianoNoteView> listener) {
@@ -484,7 +502,6 @@ public class PianoRollCanvas extends JLayeredPane implements Scrollable,
     }
 
     // IMPLEMENTATION FOR SCROLLABLE
-
     int maxUnitIncrement = 50;
 
     @Override
@@ -526,7 +543,6 @@ public class PianoRollCanvas extends JLayeredPane implements Scrollable,
         }
 
         // return visibleRect.height - maxUnitIncrement;
-
         return p.getNoteHeight() * 5;
     }
 
