@@ -5,6 +5,8 @@ import blue.*;
 import blue.noteProcessor.NoteProcessorChain;
 import blue.noteProcessor.NoteProcessorException;
 import blue.plugin.SoundObjectPlugin;
+import blue.soundObject.pianoRoll.FieldDef;
+import blue.soundObject.pianoRoll.FieldType;
 import blue.soundObject.pianoRoll.PianoNote;
 import blue.soundObject.pianoRoll.Scale;
 import blue.utility.ScoreUtilities;
@@ -66,16 +68,25 @@ public class PianoRoll extends AbstractSoundObject {
     private int timeUnit = 5;
 
     private int transposition = 0;
+    
+    private ObservableList<FieldDef> fieldDefinitions;
+
 
     public PianoRoll() {
         this.setName("PianoRoll");
         timeBehavior = TimeBehavior.SCALE;
         scale = Scale.get12TET();
         notes = FXCollections.observableArrayList();
-        noteTemplate = "i <INSTR_ID> <START> <DUR> <FREQ>";
+        noteTemplate = "i <INSTR_ID> <START> <DUR> <FREQ> <AMP>";
         instrumentId = "1";
         pixelSecond = 64;
         noteHeight = 15;
+        fieldDefinitions = FXCollections.observableArrayList();
+        
+        var ampdbField = new FieldDef();
+        ampdbField.setFieldName("AMP");
+        ampdbField.setFieldType(FieldType.CONTINUOUS);
+        fieldDefinitions.add(ampdbField);
     }
 
     public PianoRoll(PianoRoll pr) {
@@ -85,6 +96,14 @@ public class PianoRoll extends AbstractSoundObject {
         repeatPoint = pr.repeatPoint;
         npc = new NoteProcessorChain(pr.npc);
         scale = new Scale(pr.scale);
+        
+                
+        fieldDefinitions = FXCollections.observableArrayList();
+
+        for (var fieldDef : pr.getFieldDefinitions()) {
+            fieldDefinitions.add(new FieldDef(fieldDef));
+        }
+        
         notes = FXCollections.observableArrayList();
 
         for (PianoNote pn : pr.notes) {
@@ -101,6 +120,7 @@ public class PianoRoll extends AbstractSoundObject {
         pchGenerationMethod = pr.pchGenerationMethod;
         timeUnit = pr.timeUnit;
         transposition = pr.transposition;
+
     }
 
     @Override
@@ -335,6 +355,11 @@ public class PianoRoll extends AbstractSoundObject {
     public ObservableList<PianoNote> getNotes() {
         return notes;
     }
+
+    public ObservableList<FieldDef> getFieldDefinitions() {
+        return fieldDefinitions;
+    }
+    
 
     /**
      * @return Returns the noteTemplate.

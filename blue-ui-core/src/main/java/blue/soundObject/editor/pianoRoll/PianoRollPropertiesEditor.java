@@ -65,6 +65,8 @@ public class PianoRollPropertiesEditor extends JScrollPane {
             Integer.MAX_VALUE, 1);
 
     JSpinner transposition = new JSpinner(intModel);
+    
+    FieldDefinitionsEditor fieldDefinitionsEditor = new FieldDefinitionsEditor();
 
     private PianoRoll p;
 
@@ -125,6 +127,9 @@ public class PianoRollPropertiesEditor extends JScrollPane {
         mainPanel.addItem(BlueSystem.getString("pianoRoll.pchGeneration"), buttonPanel);
 
         mainPanel.addItem("Transposition:", transposition); // TODO - Translate!
+        
+        
+        mainPanel.addItem("Additional Fields:", fieldDefinitionsEditor);
 
         baseFrequencyText.addFocusListener(new FocusAdapter() {
 
@@ -293,6 +298,8 @@ public class PianoRollPropertiesEditor extends JScrollPane {
         }
 
         transposition.setValue(new Integer(p.getTransposition()));
+        
+        fieldDefinitionsEditor.setFieldDefinitions(p.getFieldDefinitions());
 
         isUpdating = false;
     }

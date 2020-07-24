@@ -25,6 +25,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
 /**
@@ -40,10 +41,13 @@ public class PianoNote implements Comparable<PianoNote> {
     double duration = 1.0f;
 
     String noteTemplate = "";
+    
+    List<Field> fields;
 
     private transient ArrayList listeners;
 
     public PianoNote() {
+        fields = new ArrayList<>();
     }
 
     public PianoNote(PianoNote pn) {
@@ -52,6 +56,11 @@ public class PianoNote implements Comparable<PianoNote> {
         start = pn.start;
         duration = pn.duration;
         noteTemplate = pn.noteTemplate;
+        
+        fields = new ArrayList<>();
+        for(var f : pn.fields) {
+            fields.add(new Field(f));
+        }
     }
     
 
@@ -104,6 +113,11 @@ public class PianoNote implements Comparable<PianoNote> {
         this.start = start;
         firePropertyChange(pce);
     }
+
+    public List<Field> getFields() {
+        return fields;
+    }
+    
 
     /* PROPERTY CHANGE EVENTS */
 

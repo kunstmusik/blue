@@ -24,18 +24,15 @@ import blue.components.AlphaMarquee;
 import blue.event.SelectionEvent;
 import blue.event.SelectionListener;
 import blue.soundObject.PianoRoll;
+import blue.soundObject.pianoRoll.Field;
 import blue.soundObject.pianoRoll.PianoNote;
 import java.awt.Color;
 import java.awt.Component;
-import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.GradientPaint;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
-import java.awt.KeyboardFocusManager;
-import java.awt.Point;
 import java.awt.Rectangle;
-import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
@@ -58,8 +55,6 @@ import javax.swing.JPopupMenu;
 import javax.swing.KeyStroke;
 import javax.swing.Scrollable;
 import javax.swing.SwingConstants;
-import jiconfont.icons.font_awesome.FontAwesome;
-import jiconfont.swing.IconFontSwing;
 
 /**
  * @author steven
@@ -422,6 +417,11 @@ public class PianoRollCanvas extends JLayeredPane implements Scrollable,
         PianoNote note = new PianoNote();
         note.setNoteTemplate(p.getNoteTemplate());
         note.setStart(startTime);
+        
+        for(var fd : p.getFieldDefinitions()) {
+            var f = new Field(fd);
+            note.getFields().add(f);
+        }
 
         int[] pch = getOctaveScaleDegreeForY(y);
         note.setOctave(pch[0]);
