@@ -18,6 +18,8 @@ import javax.swing.DefaultComboBoxModel;
 public class FieldSelectorView extends javax.swing.JPanel implements ListChangeListener<FieldDef> {
 
     private ObservableList<FieldDef> fieldDefinitions;
+    
+    FieldDef currentFieldDef = null;
 
     /**
      * Creates new form FieldSelectorView
@@ -42,7 +44,8 @@ public class FieldSelectorView extends javax.swing.JPanel implements ListChangeL
         fieldSelectorComboBox.setSelectedIndex(fieldDefinitions.isEmpty() ? -1 : 0);
 
         var selected = (FieldDef) fieldSelectorComboBox.getSelectedItem();
-        firePropertyChange("selectedFieldDef", null, selected);
+        firePropertyChange("selectedFieldDef", currentFieldDef, selected);
+        currentFieldDef = selected;
 
     }
 
@@ -70,7 +73,8 @@ public class FieldSelectorView extends javax.swing.JPanel implements ListChangeL
     private void fieldSelectorComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_fieldSelectorComboBoxActionPerformed
         var selected = (FieldDef) fieldSelectorComboBox.getSelectedItem();
 
-        firePropertyChange("selectedFieldDef", selected, selected);
+        firePropertyChange("selectedFieldDef", currentFieldDef, selected);
+        currentFieldDef = selected;
     }//GEN-LAST:event_fieldSelectorComboBoxActionPerformed
 
 
@@ -97,7 +101,8 @@ public class FieldSelectorView extends javax.swing.JPanel implements ListChangeL
         var selected = (FieldDef) fieldSelectorComboBox.getSelectedItem();
 
         if (selected != currentSelected) {
-            firePropertyChange("selectedFieldDef", null, selected);
+            firePropertyChange("selectedFieldDef", currentFieldDef, selected);
+            currentFieldDef = selected;
         }
     }
 
