@@ -134,7 +134,7 @@ public class FieldDefinitionsEditor extends javax.swing.JPanel {
         Set<String> fieldNames = fieldDefinitions.stream()
                 .map(fd -> fd.getFieldName())
                 .collect(Collectors.toSet());
-        int index = 0;
+        int index = 1;
         while (fieldNames.contains(fieldName)) {
             fieldName = "FIELD" + index;
             index++;
