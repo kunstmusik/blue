@@ -48,11 +48,15 @@ public class PianoRollScrollPaneLayout extends ScrollPaneLayout {
 
     public static final String SPLITTER = "Splitter"; // NOI18N
 
+    public static final String FIELD_DEFINITIONS_SELECTOR = "FieldDefinitionsSelector"; // NOI18N
+
     protected Component hleft, hright, vtop, vbottom = null;
 
     protected JViewport fieldEditorViewPort = null;
 
     protected Component splitter = null;
+
+    protected Component fieldDefSelector = null;
 
     @Override
     public void addLayoutComponent(String s, Component c) {
@@ -75,6 +79,9 @@ public class PianoRollScrollPaneLayout extends ScrollPaneLayout {
             case SPLITTER:
                 splitter = c;
                 break;
+            case FIELD_DEFINITIONS_SELECTOR:
+                fieldDefSelector = c;
+                break;
             default:
                 super.addLayoutComponent(s, c);
                 break;
@@ -95,6 +102,8 @@ public class PianoRollScrollPaneLayout extends ScrollPaneLayout {
             fieldEditorViewPort = null;
         } else if (c == splitter) {
             splitter = null;
+        } else if (c == fieldDefSelector) {
+            fieldDefSelector = null;
         } else {
             super.removeLayoutComponent(c);
         }
@@ -144,17 +153,23 @@ public class PianoRollScrollPaneLayout extends ScrollPaneLayout {
          * fixed width, arbitrary height.
          */
         Rectangle rowHeadR = new Rectangle(0, 0, 0, 0);
+        Rectangle fieldSelectorR = new Rectangle(0, 0, 0, 0);
 
         if ((rowHead != null) && (rowHead.isVisible())) {
-            int rowHeadWidth = Math.min(availR.width, rowHead
-                    .getPreferredSize().width);
+            int rowHeadWidth = Math.min(availR.width, 
+                    Math.max(rowHead.getPreferredSize().width, 
+                            fieldDefSelector.getPreferredSize().width));
+            
             rowHeadR.width = rowHeadWidth;
+            fieldSelectorR.width = rowHeadWidth;
             availR.width -= rowHeadWidth;
             if (leftToRight) {
                 rowHeadR.x = availR.x;
+                fieldSelectorR.x = rowHeadR.x;
                 availR.x += rowHeadWidth;
             } else {
                 rowHeadR.x = availR.x + availR.width;
+                fieldSelectorR.x = rowHeadR.x;                
             }
         }
 
@@ -342,10 +357,10 @@ public class PianoRollScrollPaneLayout extends ScrollPaneLayout {
                 }
             }
         }
-        
+
         Rectangle splitterRect = new Rectangle(availR.x,
                 availR.y + availR.height,
-                availR.width,5);
+                availR.width, 5);
 
         splitter.setBounds(splitterRect);
 
@@ -365,6 +380,11 @@ public class PianoRollScrollPaneLayout extends ScrollPaneLayout {
         rowHeadR.y = availR.y - vpbInsets.top;
         colHeadR.width = availR.width + vpbInsets.left + vpbInsets.right;
         colHeadR.x = availR.x - vpbInsets.left;
+        
+        fieldSelectorR.height = fieldEditorRect.height;
+        fieldSelectorR.y = fieldEditorRect.y;
+        
+        fieldDefSelector.setBounds(fieldSelectorR);
 
         /*
          * Set the bounds of the remaining components. The scrollbars are made

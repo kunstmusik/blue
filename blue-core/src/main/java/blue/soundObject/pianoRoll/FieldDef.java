@@ -150,4 +150,9 @@ public class FieldDef {
     protected double getClampedDefaultValue() {
         return Math.max(getMinValue(), Math.min(getMaxValue(), getDefaultValue()));
     }
+    
+    @Override
+    public String toString() {
+        return getFieldName();
+    }
 }

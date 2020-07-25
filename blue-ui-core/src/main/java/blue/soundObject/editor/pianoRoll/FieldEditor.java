@@ -91,4 +91,9 @@ public class FieldEditor extends JPanel {
         }
     }
 
+    public void setSelectedFieldDef(FieldDef fieldDef) {
+        selectedField = fieldDef;
+        repaint();
+    }
+
 }
