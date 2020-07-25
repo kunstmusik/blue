@@ -40,7 +40,7 @@ public class FieldDefinitionsTableModel implements TableModel, ListChangeListene
     };
 
     private static final Class[] COL_TYPES = new Class[]{
-        String.class, FieldType.class, Number.class, Number.class, Number.class
+        String.class, FieldType.class, Double.class, Double.class, Double.class
     };
 
     private final ObservableList<FieldDef> fieldDefinitions;
