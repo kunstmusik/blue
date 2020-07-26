@@ -19,6 +19,9 @@
  */
 package blue.soundObject.pianoRoll;
 
+import electric.xml.Element;
+import java.util.Map;
+import java.util.Objects;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 
@@ -57,12 +60,12 @@ public class FieldDef {
     public void setFieldType(FieldType fieldType) {
         if (fieldType != this.fieldType) {
             this.fieldType = fieldType;
-            
+
             var min = convertToFieldType(getMinValue());
             var max = convertToFieldType(getMaxValue());
             var defaultVal = convertToFieldType(getDefaultValue());
-            
-            if(min == max) {
+
+            if (min == max) {
                 max += 1;
             }
             setMinValue(min);
@@ -150,9 +153,80 @@ public class FieldDef {
     protected double getClampedDefaultValue() {
         return Math.max(getMinValue(), Math.min(getMaxValue(), getDefaultValue()));
     }
-    
+
     @Override
     public String toString() {
         return getFieldName();
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = 3;
+        hash = 97 * hash + Objects.hashCode(this.fieldType);
+        hash = 97 * hash + Objects.hashCode(this.fieldName);
+        hash = 97 * hash + (int) (Double.doubleToLongBits(this.getMinValue()) ^ (Double.doubleToLongBits(this.getMinValue()) >>> 32));
+        hash = 97 * hash + (int) (Double.doubleToLongBits(this.getMaxValue()) ^ (Double.doubleToLongBits(this.getMaxValue()) >>> 32));
+        hash = 97 * hash + (int) (Double.doubleToLongBits(this.getDefaultValue()) ^ (Double.doubleToLongBits(this.getDefaultValue()) >>> 32));
+
+        return hash;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final FieldDef other = (FieldDef) obj;
+        if (!Objects.equals(this.fieldName, other.fieldName)) {
+            return false;
+        }
+        if (this.fieldType != other.fieldType) {
+            return false;
+        }
+        if (Double.doubleToLongBits(this.getMinValue()) != Double.doubleToLongBits(other.getMinValue())) {
+            return false;
+        }
+        if (Double.doubleToLongBits(this.getMaxValue()) != Double.doubleToLongBits(other.getMaxValue())) {
+            return false;
+        }
+        if (Double.doubleToLongBits(this.getDefaultValue()) != Double.doubleToLongBits(other.getDefaultValue())) {
+            return false;
+        }
+        return true;
+    }
+
+    public static FieldDef loadFromXML(Element data) {
+
+        FieldDef fd = new FieldDef();
+
+        fd.setFieldName(data.getAttributeValue("name"));
+        fd.setFieldType(FieldType.valueOf(data.getAttributeValue("fieldType")));
+
+        var val = Double.parseDouble(data.getAttributeValue("min"));
+        fd.setMinValue(val);
+        val = Double.parseDouble(data.getAttributeValue("max"));
+        fd.setMaxValue(val);
+        val = Double.parseDouble(data.getAttributeValue("default"));
+        fd.setDefaultValue(val);
+
+        return fd;
+    }
+
+    public Element saveAsXML() {
+        Element retVal = new Element("fieldDef");
+
+        retVal.setAttribute("name", getFieldName());
+        retVal.setAttribute("fieldType", fieldType.name());
+        retVal.setAttribute("min", Double.toString(getMinValue()));
+        retVal.setAttribute("max", Double.toString(getMaxValue()));
+        retVal.setAttribute("default", Double.toString(getDefaultValue()));
+
+        return retVal;
     }
 }

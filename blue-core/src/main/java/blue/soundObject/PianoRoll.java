@@ -17,8 +17,10 @@ import electric.xml.Elements;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Objects;
 import javafx.beans.value.ChangeListener;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
@@ -294,9 +296,13 @@ public class PianoRoll extends AbstractSoundObject implements ListChangeListener
             Map<String, Object> objRefMap) throws Exception {
 
         PianoRoll p = new PianoRoll();
+        p.fieldDefinitions.clear();
+
         SoundObjectUtilities.initBasicFromXML(data, p);
 
         Elements nodes = data.getElements();
+
+        Map<String, FieldDef> fieldTypes = new HashMap<>();
 
         while (nodes.hasMoreElements()) {
             Element e = nodes.next();
@@ -331,8 +337,15 @@ public class PianoRoll extends AbstractSoundObject implements ListChangeListener
                 case "timeUnit":
                     p.setTimeUnit(Integer.parseInt(e.getTextString()));
                     break;
+                case "fieldDef": {
+                    var fd = FieldDef.loadFromXML(e);
+                    fieldTypes.put(fd.getFieldName(), fd);
+                    p.fieldDefinitions.add(fd);
+                    break;
+                }
                 case "pianoNote":
-                    p.notes.add(PianoNote.loadFromXML(e));
+                    // Assumes fieldDefs are loaded prior to pianoNotes
+                    p.notes.add(PianoNote.loadFromXML(e, fieldTypes));
                     break;
                 case "pchGenerationMethod":
                     p.setPchGenerationMethod(Integer.parseInt(e.getTextString()));
@@ -373,6 +386,10 @@ public class PianoRoll extends AbstractSoundObject implements ListChangeListener
 
         retVal.addElement("transposition").setText(
                 Integer.toString(this.getTransposition()));
+
+        for (var fieldDef : fieldDefinitions) {
+            retVal.addElement(fieldDef.saveAsXML());
+        }
 
         for (Iterator<PianoNote> iter = notes.iterator(); iter.hasNext();) {
             PianoNote note = iter.next();
@@ -606,7 +623,7 @@ public class PianoRoll extends AbstractSoundObject implements ListChangeListener
                 for (var fd : change.getAddedSubList()) {
                     fd.minValueProperty().addListener(fieldDefListener);
                     fd.maxValueProperty().addListener(fieldDefListener);
-                    
+
                     for (var pn : notes) {
                         pn.getFields().add(new Field(fd));
                     }
@@ -615,12 +632,99 @@ public class PianoRoll extends AbstractSoundObject implements ListChangeListener
                 for (var fd : change.getRemoved()) {
                     fd.minValueProperty().removeListener(fieldDefListener);
                     fd.maxValueProperty().removeListener(fieldDefListener);
-                    
+
                     for (var pn : notes) {
                         pn.getFields().removeIf(field -> field.getFieldDef() == fd);
                     }
                 }
             }
+
         }
     }
+
+    @Override
+    public int hashCode() {
+        int hash = 7;
+        hash = 37 * hash + Objects.hashCode(this.timeBehavior);
+        hash = 37 * hash + (int) (Double.doubleToLongBits(this.repeatPoint) ^ (Double.doubleToLongBits(this.repeatPoint) >>> 32));
+        hash = 37 * hash + Objects.hashCode(this.npc);
+        hash = 37 * hash + Objects.hashCode(this.scale);
+        hash = 37 * hash + Objects.hashCode(this.notes);
+        hash = 37 * hash + Objects.hashCode(this.noteTemplate);
+        hash = 37 * hash + Objects.hashCode(this.instrumentId);
+        hash = 37 * hash + this.pixelSecond;
+        hash = 37 * hash + this.noteHeight;
+        hash = 37 * hash + (this.snapEnabled ? 1 : 0);
+        hash = 37 * hash + (int) (Double.doubleToLongBits(this.snapValue) ^ (Double.doubleToLongBits(this.snapValue) >>> 32));
+        hash = 37 * hash + this.timeDisplay;
+        hash = 37 * hash + this.pchGenerationMethod;
+        hash = 37 * hash + this.timeUnit;
+        hash = 37 * hash + this.transposition;
+        hash = 37 * hash + Objects.hashCode(this.fieldDefinitions);
+        return hash;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final PianoRoll other = (PianoRoll) obj;
+        if (Double.doubleToLongBits(this.repeatPoint) != Double.doubleToLongBits(other.repeatPoint)) {
+            return false;
+        }
+        if (this.pixelSecond != other.pixelSecond) {
+            return false;
+        }
+        if (this.noteHeight != other.noteHeight) {
+            return false;
+        }
+        if (this.snapEnabled != other.snapEnabled) {
+            return false;
+        }
+        if (Double.doubleToLongBits(this.snapValue) != Double.doubleToLongBits(other.snapValue)) {
+            return false;
+        }
+        if (this.timeDisplay != other.timeDisplay) {
+            return false;
+        }
+        if (this.pchGenerationMethod != other.pchGenerationMethod) {
+            return false;
+        }
+        if (this.timeUnit != other.timeUnit) {
+            return false;
+        }
+        if (this.transposition != other.transposition) {
+            return false;
+        }
+        if (!Objects.equals(this.noteTemplate, other.noteTemplate)) {
+            return false;
+        }
+        if (!Objects.equals(this.instrumentId, other.instrumentId)) {
+            return false;
+        }
+        if (this.timeBehavior != other.timeBehavior) {
+            return false;
+        }
+        if (!Objects.equals(this.npc, other.npc)) {
+            return false;
+        }
+        if (!Objects.equals(this.scale, other.scale)) {
+            return false;
+        }
+        if (!Objects.equals(this.notes, other.notes)) {
+            return false;
+        }
+        if (!Objects.equals(this.fieldDefinitions, other.fieldDefinitions)) {
+            return false;
+        }
+        return true;
+    }
+
 }

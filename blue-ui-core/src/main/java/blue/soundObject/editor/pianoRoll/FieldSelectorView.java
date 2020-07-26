@@ -6,6 +6,7 @@
 package blue.soundObject.editor.pianoRoll;
 
 import blue.soundObject.pianoRoll.FieldDef;
+import blue.utility.ListUtil;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
@@ -91,8 +92,8 @@ public class FieldSelectorView extends javax.swing.JPanel implements ListChangeL
         model.addAll(fieldDefinitions);
         fieldSelectorComboBox.setModel(model);
 
-        var index = fieldDefinitions.indexOf(currentSelected);
-
+        var index = ListUtil.indexOfByRef(fieldDefinitions, currentSelected);
+                
         if (index < 0 && !fieldDefinitions.isEmpty()) {
             index = 0;
         }
