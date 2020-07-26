@@ -22,14 +22,14 @@ package blue.soundObject.editor.pianoRoll;
 import blue.event.SelectionEvent;
 import blue.event.SelectionListener;
 import blue.soundObject.PianoRoll;
-import blue.soundObject.pianoRoll.PianoNote;
-import java.util.ArrayList;
 import java.util.Collections;
+import javafx.beans.property.SimpleListProperty;
+import javafx.collections.FXCollections;
 
 /**
  * @author steven
  */
-public class NoteBuffer extends ArrayList<PianoNoteView> implements SelectionListener<PianoNoteView> {
+public class NoteBuffer extends SimpleListProperty<PianoNoteView> implements SelectionListener<PianoNoteView> {
     private static final int EDGE = 5;
 
     private PianoRoll pianoRoll = null;
@@ -43,6 +43,10 @@ public class NoteBuffer extends ArrayList<PianoNoteView> implements SelectionLis
     int startWidth;
     
     double[] initialStartTimes = null;
+    
+    public NoteBuffer() {
+        super(FXCollections.observableArrayList());
+    }
 
     public void startMove() {
         startX = new int[this.size()];

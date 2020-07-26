@@ -93,7 +93,7 @@ public class PianoRollEditor extends ScoreObjectEditor implements
     
     FieldSelectorView fieldSelectorView = new FieldSelectorView();
     
-    FieldEditor fieldEditor = new FieldEditor();
+    FieldEditor fieldEditor = new FieldEditor(noteCanvas.getNoteBuffer());
 
     private PianoRoll p;
 

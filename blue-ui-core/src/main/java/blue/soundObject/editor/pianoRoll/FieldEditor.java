@@ -22,8 +22,12 @@ package blue.soundObject.editor.pianoRoll;
 import blue.soundObject.PianoRoll;
 import blue.soundObject.pianoRoll.FieldDef;
 import blue.utilities.scales.ScaleLinear;
+import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.util.stream.Collectors;
+import javafx.collections.ListChangeListener;
 import javax.swing.JPanel;
 
 /**
@@ -35,9 +39,17 @@ public class FieldEditor extends JPanel {
     private PianoRoll p = null;
 
     FieldDef selectedField = null;
+    private final NoteBuffer buffer;
 
-    public FieldEditor() {
+    public FieldEditor(NoteBuffer buffer) {
         setBackground(Color.BLACK);
+        
+        this.buffer = buffer;
+        
+        ListChangeListener<PianoNoteView> lcl = (change) -> {
+            repaint();
+        };
+        this.buffer.addListener(lcl);
     }
 
     public void editPianoRoll(PianoRoll p) {
@@ -65,6 +77,11 @@ public class FieldEditor extends JPanel {
     protected void paintComponent(Graphics g) {
         super.paintComponent(g); //To change body of generated methods, choose Tools | Templates.
 
+        // TODO - refactor NoteBuffer to hold PianoNotes, work with this for the
+        // short term
+        
+        var selected = buffer.stream().map(pnv -> pnv.getPianoNote()).collect(Collectors.toSet());
+        
         if (selectedField == null) {
             return;
         }
@@ -76,7 +93,8 @@ public class FieldEditor extends JPanel {
 
         ScaleLinear sl = new ScaleLinear(selectedField.getMinValue(), selectedField.getMaxValue(), bottom, top);
 
-        g.setColor(Color.WHITE);
+        var g2d = (Graphics2D)g;
+                g2d.setStroke(new BasicStroke(2));        
         for (var note : p.getNotes()) {
             var x = (int) (pixelSecond * note.getStart());
 
@@ -85,8 +103,13 @@ public class FieldEditor extends JPanel {
                     .findFirst();
 
             if (field.isPresent()) {
+                
+                g.setColor(selected.contains(note) ? 
+                        Color.LIGHT_GRAY : Color.DARK_GRAY);
+
+                
                 var y = sl.calc(field.get().getValue());
-                g.drawLine(x, bottom, x, (int) y);
+                g2d.drawLine(x, bottom, x, (int) y);
             }
         }
     }

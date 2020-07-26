@@ -567,6 +567,12 @@ public class PianoRollCanvas extends JLayeredPane implements Scrollable,
         return p.getNoteHeight();
     }
 
+    public NoteBuffer getNoteBuffer() {
+        return noteBuffer;
+    }
+
+    
+    
     /**
      * @param x
      * @param y
