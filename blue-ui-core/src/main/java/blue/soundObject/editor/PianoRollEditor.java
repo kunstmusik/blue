@@ -156,8 +156,12 @@ public class PianoRollEditor extends ScoreObjectEditor implements
                 Dimension d = new Dimension(e.getComponent().getWidth(), 20);
                 timeBar.setSize(d);
                 timeBar.setPreferredSize(d);
+                
+                fieldEditor.setSize(d);
+                fieldEditor.setPreferredSize(d);
 
                 timeBar.repaint();
+                fieldEditor.repaint();
             }
 
         });
@@ -176,6 +180,7 @@ public class PianoRollEditor extends ScoreObjectEditor implements
                 fieldEditor.setSelectedFieldDef((FieldDef)evt.getNewValue());
             }
         });
+                
     }
 
     protected void generateTest() {
@@ -241,7 +246,7 @@ public class PianoRollEditor extends ScoreObjectEditor implements
         noteSP.add(horizontalViewChanger, PianoRollScrollPaneLayout.HORIZONTAL_RIGHT);
         noteSP.add(verticalViewChanger, PianoRollScrollPaneLayout.VERTICAL_BOTTOM);
 
-        JViewport fieldViewPort = new JViewport();
+        final JViewport fieldViewPort = new JViewport();
         fieldViewPort.setView(fieldEditor);
         
         noteSP.add(fieldViewPort, PianoRollScrollPaneLayout.COLUMN_FOOTER_VIEW);
@@ -276,6 +281,12 @@ public class PianoRollEditor extends ScoreObjectEditor implements
         noteSP.add(splitter, PianoRollScrollPaneLayout.SPLITTER);
         
         noteSP.putClientProperty("SplitterLocation", 100);
+        
+                
+        // sync fiew view port position to time bar viewport's location
+        noteScrollPane.getColumnHeader().addChangeListener(evt -> {
+            fieldViewPort.setViewPosition(noteScrollPane.getColumnHeader().getViewPosition());
+        });
     }
 
     private void centerNoteScrollPane() {
