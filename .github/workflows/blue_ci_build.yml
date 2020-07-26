@@ -30,7 +30,7 @@ jobs:
           java-version: '11' 
 
       - name: Build Blue 
-        run: mvn -Pgenerate-manual clean install
+        run: mvn -Dmaven.test.skip=true -Pgenerate-manual clean install
 
       - run: mv application/target/blue-2.8.1-SNAPSHOT.zip blue-linux-2.8.1-SNAPSHOT.zip
 
