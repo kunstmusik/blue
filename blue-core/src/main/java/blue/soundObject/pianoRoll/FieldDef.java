@@ -159,47 +159,47 @@ public class FieldDef {
         return getFieldName();
     }
 
-    @Override
-    public int hashCode() {
-        int hash = 3;
-        hash = 97 * hash + Objects.hashCode(this.fieldType);
-        hash = 97 * hash + Objects.hashCode(this.fieldName);
-        hash = 97 * hash + (int) (Double.doubleToLongBits(this.getMinValue()) ^ (Double.doubleToLongBits(this.getMinValue()) >>> 32));
-        hash = 97 * hash + (int) (Double.doubleToLongBits(this.getMaxValue()) ^ (Double.doubleToLongBits(this.getMaxValue()) >>> 32));
-        hash = 97 * hash + (int) (Double.doubleToLongBits(this.getDefaultValue()) ^ (Double.doubleToLongBits(this.getDefaultValue()) >>> 32));
-
-        return hash;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj) {
-            return true;
-        }
-        if (obj == null) {
-            return false;
-        }
-        if (getClass() != obj.getClass()) {
-            return false;
-        }
-        final FieldDef other = (FieldDef) obj;
-        if (!Objects.equals(this.fieldName, other.fieldName)) {
-            return false;
-        }
-        if (this.fieldType != other.fieldType) {
-            return false;
-        }
-        if (Double.doubleToLongBits(this.getMinValue()) != Double.doubleToLongBits(other.getMinValue())) {
-            return false;
-        }
-        if (Double.doubleToLongBits(this.getMaxValue()) != Double.doubleToLongBits(other.getMaxValue())) {
-            return false;
-        }
-        if (Double.doubleToLongBits(this.getDefaultValue()) != Double.doubleToLongBits(other.getDefaultValue())) {
-            return false;
-        }
-        return true;
-    }
+//    @Override
+//    public int hashCode() {
+//        int hash = 3;
+//        hash = 97 * hash + Objects.hashCode(this.fieldType);
+//        hash = 97 * hash + Objects.hashCode(this.fieldName);
+//        hash = 97 * hash + (int) (Double.doubleToLongBits(this.getMinValue()) ^ (Double.doubleToLongBits(this.getMinValue()) >>> 32));
+//        hash = 97 * hash + (int) (Double.doubleToLongBits(this.getMaxValue()) ^ (Double.doubleToLongBits(this.getMaxValue()) >>> 32));
+//        hash = 97 * hash + (int) (Double.doubleToLongBits(this.getDefaultValue()) ^ (Double.doubleToLongBits(this.getDefaultValue()) >>> 32));
+//
+//        return hash;
+//    }
+//
+//    @Override
+//    public boolean equals(Object obj) {
+//        if (this == obj) {
+//            return true;
+//        }
+//        if (obj == null) {
+//            return false;
+//        }
+//        if (getClass() != obj.getClass()) {
+//            return false;
+//        }
+//        final FieldDef other = (FieldDef) obj;
+//        if (!Objects.equals(this.fieldName, other.fieldName)) {
+//            return false;
+//        }
+//        if (this.fieldType != other.fieldType) {
+//            return false;
+//        }
+//        if (Double.doubleToLongBits(this.getMinValue()) != Double.doubleToLongBits(other.getMinValue())) {
+//            return false;
+//        }
+//        if (Double.doubleToLongBits(this.getMaxValue()) != Double.doubleToLongBits(other.getMaxValue())) {
+//            return false;
+//        }
+//        if (Double.doubleToLongBits(this.getDefaultValue()) != Double.doubleToLongBits(other.getDefaultValue())) {
+//            return false;
+//        }
+//        return true;
+//    }
 
     public static FieldDef loadFromXML(Element data) {
 

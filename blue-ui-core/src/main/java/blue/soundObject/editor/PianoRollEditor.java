@@ -38,6 +38,7 @@ import blue.soundObject.editor.pianoRoll.PianoRollScrollPaneLayout;
 import blue.soundObject.editor.pianoRoll.TimeBar;
 import blue.soundObject.editor.pianoRoll.TimelinePropertiesPanel;
 import blue.soundObject.pianoRoll.FieldDef;
+import blue.soundObject.pianoRoll.PianoNote;
 import blue.ui.components.IconFactory;
 import blue.utility.GUI;
 import java.awt.BorderLayout;
@@ -54,6 +55,8 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JPanel;
@@ -75,25 +78,27 @@ import javax.swing.SwingUtilities;
 public class PianoRollEditor extends ScoreObjectEditor implements
         PropertyChangeListener, ActionListener {
 
-    PianoRollPropertiesEditor props = new PianoRollPropertiesEditor();
+    ObservableList<PianoNote> selectedNotes = FXCollections.observableArrayList();
 
-    PianoRollCanvas noteCanvas = new PianoRollCanvas();
+    PianoRollPropertiesEditor props = new PianoRollPropertiesEditor(selectedNotes);
 
-    PianoRollCanvasHeader noteHeader = new PianoRollCanvasHeader();
+    PianoRollCanvas noteCanvas = new PianoRollCanvas(selectedNotes);
+
+    PianoRollCanvasHeader noteHeader = new PianoRollCanvasHeader(selectedNotes);
 
     TimeBar timeBar = new TimeBar();
 
     TimelinePropertiesPanel timeProperties = new TimelinePropertiesPanel();
 
-    NotePropertiesEditor noteTemplateEditor = new NotePropertiesEditor();
+    NotePropertiesEditor noteTemplateEditor = new NotePropertiesEditor(selectedNotes);
 
     JScrollPane noteScrollPane;
 
     JToggleButton snapButton = new JToggleButton();
-    
+
     FieldSelectorView fieldSelectorView = new FieldSelectorView();
-    
-    FieldEditor fieldEditor = new FieldEditor(noteCanvas.getNoteBuffer());
+
+    FieldEditor fieldEditor = new FieldEditor(selectedNotes);
 
     private PianoRoll p;
 
@@ -118,9 +123,6 @@ public class PianoRollEditor extends ScoreObjectEditor implements
         timeProperties.setVisible(false);
         timeProperties.setPreferredSize(new Dimension(150, 40));
 
-        noteCanvas.addSelectionListener(noteTemplateEditor);
-        noteCanvas.addSelectionListener(noteHeader);
-
         JButton testButton = new JButton("Test");
         testButton.addActionListener(evt -> generateTest());
 
@@ -139,8 +141,6 @@ public class PianoRollEditor extends ScoreObjectEditor implements
         tabs.add(BlueSystem.getString("pianoRoll.notes"), notesPanel);
         tabs.add(BlueSystem.getString("common.properties"), props);
 
-        props.setNoteBuffer(noteCanvas.noteBuffer);
-
         this.add(tabs, BorderLayout.CENTER);
 
         centerNoteScrollPane();
@@ -156,7 +156,7 @@ public class PianoRollEditor extends ScoreObjectEditor implements
                 Dimension d = new Dimension(e.getComponent().getWidth(), 20);
                 timeBar.setSize(d);
                 timeBar.setPreferredSize(d);
-                
+
                 fieldEditor.setSize(d);
                 fieldEditor.setPreferredSize(d);
 
@@ -169,18 +169,18 @@ public class PianoRollEditor extends ScoreObjectEditor implements
         noteScrollPane.getViewport().addComponentListener(
                 new ComponentAdapter() {
 
-                    @Override
-                    public void componentResized(ComponentEvent e) {
-                        noteCanvas.recalculateSize();
-                    }
-                });
-
-        fieldSelectorView.addPropertyChangeListener(evt -> {
-            if("selectedFieldDef".equals(evt.getPropertyName())) {
-                fieldEditor.setSelectedFieldDef((FieldDef)evt.getNewValue());
+            @Override
+            public void componentResized(ComponentEvent e) {
+                noteCanvas.recalculateSize();
             }
         });
-                
+
+        fieldSelectorView.addPropertyChangeListener(evt -> {
+            if ("selectedFieldDef".equals(evt.getPropertyName())) {
+                fieldEditor.setSelectedFieldDef((FieldDef) evt.getNewValue());
+            }
+        });
+
     }
 
     protected void generateTest() {
@@ -248,10 +248,10 @@ public class PianoRollEditor extends ScoreObjectEditor implements
 
         final JViewport fieldViewPort = new JViewport();
         fieldViewPort.setView(fieldEditor);
-        
+
         noteSP.add(fieldViewPort, PianoRollScrollPaneLayout.COLUMN_FOOTER_VIEW);
         noteSP.add(fieldSelectorView, PianoRollScrollPaneLayout.FIELD_DEFINITIONS_SELECTOR);
-        
+
         JPanel splitter = new JPanel() {
             @Override
             protected void paintComponent(Graphics g) {
@@ -260,29 +260,28 @@ public class PianoRollEditor extends ScoreObjectEditor implements
             }
         };
         splitter.setCursor(Cursor.getPredefinedCursor(Cursor.S_RESIZE_CURSOR));
-        
+
         var splitterListener = new MouseAdapter() {
             @Override
             public void mouseDragged(MouseEvent e) {
                 var pt = SwingUtilities.convertPoint(splitter, e.getPoint(), noteSP.getViewport());
-                
-                var max = noteSP.getHeight() - 
-                        noteSP.getHorizontalScrollBar().getHeight() 
+
+                var max = noteSP.getHeight()
+                        - noteSP.getHorizontalScrollBar().getHeight()
                         - noteSP.getColumnHeader().getView().getHeight();
-                
+
                 var loc = Math.max(5, Math.min(max - 5, max - pt.y));
-                
+
                 noteSP.putClientProperty("SplitterLocation", loc);
                 noteSP.revalidate();
-            }  
+            }
         };
         splitter.addMouseMotionListener(splitterListener);
-        
+
         noteSP.add(splitter, PianoRollScrollPaneLayout.SPLITTER);
-        
+
         noteSP.putClientProperty("SplitterLocation", 100);
-        
-                
+
         // sync fiew view port position to time bar viewport's location
         noteScrollPane.getColumnHeader().addChangeListener(evt -> {
             fieldViewPort.setViewPosition(noteScrollPane.getColumnHeader().getViewPosition());
@@ -323,7 +322,7 @@ public class PianoRollEditor extends ScoreObjectEditor implements
         timeProperties.setPianoRoll(p);
         fieldEditor.editPianoRoll(p);
         fieldSelectorView.setFields(p.getFieldDefinitions());
-        
+
         centerNoteScrollPane();
     }
 

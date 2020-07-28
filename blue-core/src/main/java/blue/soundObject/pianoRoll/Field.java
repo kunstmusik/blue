@@ -29,7 +29,7 @@ import java.util.Objects;
  */
 public class Field {
 
-    private final FieldDef fieldDef;
+    private FieldDef fieldDef;
     
     private double value = 0.0;
     
@@ -45,6 +45,11 @@ public class Field {
 
     public FieldDef getFieldDef() {
         return fieldDef;
+    }
+    
+    /** Should only be used when cloning a PianoRoll */
+    public void setFieldDef(FieldDef fieldDef) {
+        this.fieldDef = fieldDef;
     }
 
     public double getValue() {
@@ -76,34 +81,34 @@ public class Field {
         return retVal;
     }
 
-    @Override
-    public int hashCode() {
-        int hash = 7;
-        hash = 23 * hash + Objects.hashCode(this.fieldDef);
-        hash = 23 * hash + (int) (Double.doubleToLongBits(this.value) ^ (Double.doubleToLongBits(this.value) >>> 32));
-        return hash;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj) {
-            return true;
-        }
-        if (obj == null) {
-            return false;
-        }
-        if (getClass() != obj.getClass()) {
-            return false;
-        }
-        final Field other = (Field) obj;
-        if (Double.doubleToLongBits(this.value) != Double.doubleToLongBits(other.value)) {
-            return false;
-        }
-        if (!Objects.equals(this.fieldDef, other.fieldDef)) {
-            return false;
-        }
-        return true;
-    }
+//    @Override
+//    public int hashCode() {
+//        int hash = 7;
+//        hash = 23 * hash + Objects.hashCode(this.fieldDef);
+//        hash = 23 * hash + (int) (Double.doubleToLongBits(this.value) ^ (Double.doubleToLongBits(this.value) >>> 32));
+//        return hash;
+//    }
+//
+//    @Override
+//    public boolean equals(Object obj) {
+//        if (this == obj) {
+//            return true;
+//        }
+//        if (obj == null) {
+//            return false;
+//        }
+//        if (getClass() != obj.getClass()) {
+//            return false;
+//        }
+//        final Field other = (Field) obj;
+//        if (Double.doubleToLongBits(this.value) != Double.doubleToLongBits(other.value)) {
+//            return false;
+//        }
+//        if (!Objects.equals(this.fieldDef, other.fieldDef)) {
+//            return false;
+//        }
+//        return true;
+//    }
     
     
 }

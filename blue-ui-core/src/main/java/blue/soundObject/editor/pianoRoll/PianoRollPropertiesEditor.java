@@ -29,6 +29,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
+import javafx.collections.ObservableList;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JPanel;
@@ -72,9 +73,12 @@ public class PianoRollPropertiesEditor extends JScrollPane {
 
     private boolean isUpdating;
 
-    private NoteBuffer noteBuffer;
-
-    public PianoRollPropertiesEditor() {
+    private ObservableList<PianoNote> selectedNotes;
+    
+    
+    public PianoRollPropertiesEditor(ObservableList<PianoNote> selectedNotes) {
+        
+        this.selectedNotes = selectedNotes;
 
         LabelledItemPanel mainPanel = new LabelledItemPanel();
 
@@ -248,14 +252,13 @@ public class PianoRollPropertiesEditor extends JScrollPane {
     }
 
     protected void setSelectedNoteTemplates() {
-        if (p == null || noteBuffer == null) {
+        if (p == null) {
             return;
         }
 
         String noteTemplate = p.getNoteTemplate();
 
-        for (PianoNoteView pianoNoteView : noteBuffer) {
-            PianoNote note = pianoNoteView.getPianoNote();
+        for (var note : selectedNotes) {
             note.setNoteTemplate(noteTemplate);
         }
     }
@@ -304,7 +307,4 @@ public class PianoRollPropertiesEditor extends JScrollPane {
         isUpdating = false;
     }
 
-    public void setNoteBuffer(NoteBuffer noteBuffer) {
-        this.noteBuffer = noteBuffer;
-    }
 }

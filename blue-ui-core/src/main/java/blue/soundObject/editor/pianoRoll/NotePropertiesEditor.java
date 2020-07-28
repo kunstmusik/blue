@@ -21,11 +21,11 @@ package blue.soundObject.editor.pianoRoll;
 
 import blue.BlueSystem;
 import blue.event.SelectionEvent;
-import blue.event.SelectionListener;
 import blue.soundObject.pianoRoll.PianoNote;
 import java.awt.BorderLayout;
 import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
+import javafx.collections.ListChangeListener;
+import javafx.collections.ObservableList;
 import javax.swing.BorderFactory;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -36,8 +36,7 @@ import javax.swing.event.DocumentListener;
 /**
  * @author steven
  */
-public class NotePropertiesEditor extends JPanel implements
-        SelectionListener<PianoNoteView>, PropertyChangeListener {
+public class NotePropertiesEditor extends JPanel implements ListChangeListener<PianoNote> {
 
     PianoNote note = null;
 
@@ -45,15 +44,15 @@ public class NotePropertiesEditor extends JPanel implements
 
     JLabel label = new JLabel(BlueSystem.getString("pianoRoll.noteTemplate"));
 
-    // JTextField noteStartText = new JTextField();
-    // JTextField noteDurationText = new JTextField();
     private boolean isUpdating = false;
+    private final ObservableList<PianoNote> selectedNotes;
 
-    public NotePropertiesEditor() {
+    public NotePropertiesEditor(ObservableList<PianoNote> selectedNotes) {
+
+        this.selectedNotes = selectedNotes;
+
         this.setLayout(new BorderLayout(5, 5));
 
-        // this.setBorder(BorderFactory.createTitledBorder("Note Properties"));
-        // this.setBorder(BorderFactory.createEmptyBorder(5,5,5,5));
         label.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 0));
         noteTemplateText.setBorder(
                 BorderFactory.createCompoundBorder(
@@ -62,96 +61,46 @@ public class NotePropertiesEditor extends JPanel implements
 
         add(label, BorderLayout.WEST);
         add(noteTemplateText, BorderLayout.CENTER);
-//        addItem(BlueSystem.getString("pianoRoll.noteTemplate"),
-//                noteTemplateText);
-        // addItem("Note Start: ", noteStartText);
-        // addItem("Note Duration: ", noteDurationText);
 
         noteTemplateText.getDocument().addDocumentListener(
                 new DocumentListener() {
 
-                    @Override
-                    public void insertUpdate(DocumentEvent e) {
-                        updateNoteTemplate();
-                    }
+            @Override
+            public void insertUpdate(DocumentEvent e) {
+                updateNoteTemplate();
+            }
 
-                    @Override
-                    public void removeUpdate(DocumentEvent e) {
-                        updateNoteTemplate();
-                    }
+            @Override
+            public void removeUpdate(DocumentEvent e) {
+                updateNoteTemplate();
+            }
 
-                    @Override
-                    public void changedUpdate(DocumentEvent e) {
-                        updateNoteTemplate();
-                    }
+            @Override
+            public void changedUpdate(DocumentEvent e) {
+                updateNoteTemplate();
+            }
 
-                    private void updateNoteTemplate() {
-                        if (note != null && !isUpdating) {
-                            note.setNoteTemplate(noteTemplateText.getText());
-                        }
-                    }
+            private void updateNoteTemplate() {
+                if (note != null && !isUpdating) {
+                    note.setNoteTemplate(noteTemplateText.getText());
+                }
+            }
 
-                });
+        });
 
-        // noteStartText.addActionListener(new ActionListener() {
-        //
-        // public void actionPerformed(ActionEvent e) {
-        // /*if(note != null && !isUpdating) {
-        //
-        // }*/
-        // }
-        //
-        // });
     }
 
     @Override
-    public void selectionPerformed(SelectionEvent<PianoNoteView> e) {
-        isUpdating = true;
-
-        switch (e.getSelectionType()) {
-            case SelectionEvent.SELECTION_SINGLE:
-                PianoNoteView noteView = e.getSelectedItem();
-
-                // if(note != null) {
-                // note.removePropertyChangeListener(this);
-                // }
-                note = noteView.getPianoNote();
-
-                // note.addPropertyChangeListener(this);
-                noteTemplateText.setEditable(true);
-                // noteStartText.setEditable(true);
-                // noteDurationText.setEditable(true);
-                noteTemplateText.setText(note.getNoteTemplate());
-                // noteStartText.setText(Float.toString(note.getStart()));
-                // noteDurationText.setText(Float.toString(note.getDuration()));
-                break;
-            case SelectionEvent.SELECTION_ADD:
-            case SelectionEvent.SELECTION_CLEAR:
-                // if(note != null) {
-                // note.removePropertyChangeListener(this);
-                // }
-
-                note = null;
-                noteTemplateText.setEditable(false);
-                // noteStartText.setEditable(false);
-                // noteDurationText.setEditable(false);
-                noteTemplateText.setText("");
-                // noteStartText.setText("");
-            // noteDurationText.setText("");
+    public void onChanged(Change<? extends PianoNote> change) {
+        if (selectedNotes.size() == 1) {
+            note = selectedNotes.get(0);
+            noteTemplateText.setEditable(true);
+            noteTemplateText.setText(note.getNoteTemplate());
+        } else {
+            note = null;
+            noteTemplateText.setEditable(false);
+            noteTemplateText.setText("");
         }
-
-        isUpdating = false;
-    }
-
-    @Override
-    public void propertyChange(PropertyChangeEvent evt) {
-        // if(evt.getSource() == note) {
-        // if(evt.getPropertyName().equals("start")) {
-        // noteStartText.setText(Float.toString(note.getStart()));
-        // } else if(evt.getPropertyName().equals("duration")) {
-        // noteDurationText.setText(Float.toString(note.getDuration()));
-        // }
-        // }
     }
 
 }

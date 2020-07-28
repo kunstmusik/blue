@@ -20,7 +20,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Objects;
 import javafx.beans.value.ChangeListener;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
@@ -131,17 +130,26 @@ public class PianoRoll extends AbstractSoundObject implements ListChangeListener
 
         fieldDefinitions = FXCollections.observableArrayList();
 
+        Map<FieldDef, FieldDef> srcToCloneMap = new HashMap<>();
+        
         for (var fieldDef : pr.getFieldDefinitions()) {
             var clone = new FieldDef(fieldDef);
             fieldDefinitions.add(clone);
             clone.minValueProperty().addListener(fieldDefListener);
             clone.maxValueProperty().addListener(fieldDefListener);
+            
+            srcToCloneMap.put(fieldDef, clone);
         }
 
         notes = FXCollections.observableArrayList();
 
         for (PianoNote pn : pr.notes) {
-            notes.add(new PianoNote(pn));
+            var newNote = new PianoNote(pn);
+            notes.add(newNote);
+            
+            for(var f : newNote.getFields()) {
+                f.setFieldDef(srcToCloneMap.get(f.getFieldDef()));
+            }
         }
 
         noteTemplate = pr.noteTemplate;
@@ -642,89 +650,89 @@ public class PianoRoll extends AbstractSoundObject implements ListChangeListener
         }
     }
 
-    @Override
-    public int hashCode() {
-        int hash = 7;
-        hash = 37 * hash + Objects.hashCode(this.timeBehavior);
-        hash = 37 * hash + (int) (Double.doubleToLongBits(this.repeatPoint) ^ (Double.doubleToLongBits(this.repeatPoint) >>> 32));
-        hash = 37 * hash + Objects.hashCode(this.npc);
-        hash = 37 * hash + Objects.hashCode(this.scale);
-        hash = 37 * hash + Objects.hashCode(this.notes);
-        hash = 37 * hash + Objects.hashCode(this.noteTemplate);
-        hash = 37 * hash + Objects.hashCode(this.instrumentId);
-        hash = 37 * hash + this.pixelSecond;
-        hash = 37 * hash + this.noteHeight;
-        hash = 37 * hash + (this.snapEnabled ? 1 : 0);
-        hash = 37 * hash + (int) (Double.doubleToLongBits(this.snapValue) ^ (Double.doubleToLongBits(this.snapValue) >>> 32));
-        hash = 37 * hash + this.timeDisplay;
-        hash = 37 * hash + this.pchGenerationMethod;
-        hash = 37 * hash + this.timeUnit;
-        hash = 37 * hash + this.transposition;
-        hash = 37 * hash + Objects.hashCode(this.fieldDefinitions);
-        return hash;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj) {
-            return true;
-        }
-        if (obj == null) {
-            return false;
-        }
-        if (getClass() != obj.getClass()) {
-            return false;
-        }
-        final PianoRoll other = (PianoRoll) obj;
-        if (Double.doubleToLongBits(this.repeatPoint) != Double.doubleToLongBits(other.repeatPoint)) {
-            return false;
-        }
-        if (this.pixelSecond != other.pixelSecond) {
-            return false;
-        }
-        if (this.noteHeight != other.noteHeight) {
-            return false;
-        }
-        if (this.snapEnabled != other.snapEnabled) {
-            return false;
-        }
-        if (Double.doubleToLongBits(this.snapValue) != Double.doubleToLongBits(other.snapValue)) {
-            return false;
-        }
-        if (this.timeDisplay != other.timeDisplay) {
-            return false;
-        }
-        if (this.pchGenerationMethod != other.pchGenerationMethod) {
-            return false;
-        }
-        if (this.timeUnit != other.timeUnit) {
-            return false;
-        }
-        if (this.transposition != other.transposition) {
-            return false;
-        }
-        if (!Objects.equals(this.noteTemplate, other.noteTemplate)) {
-            return false;
-        }
-        if (!Objects.equals(this.instrumentId, other.instrumentId)) {
-            return false;
-        }
-        if (this.timeBehavior != other.timeBehavior) {
-            return false;
-        }
-        if (!Objects.equals(this.npc, other.npc)) {
-            return false;
-        }
-        if (!Objects.equals(this.scale, other.scale)) {
-            return false;
-        }
-        if (!Objects.equals(this.notes, other.notes)) {
-            return false;
-        }
-        if (!Objects.equals(this.fieldDefinitions, other.fieldDefinitions)) {
-            return false;
-        }
-        return true;
-    }
+//    @Override
+//    public int hashCode() {
+//        int hash = 7;
+//        hash = 37 * hash + Objects.hashCode(this.timeBehavior);
+//        hash = 37 * hash + (int) (Double.doubleToLongBits(this.repeatPoint) ^ (Double.doubleToLongBits(this.repeatPoint) >>> 32));
+//        hash = 37 * hash + Objects.hashCode(this.npc);
+//        hash = 37 * hash + Objects.hashCode(this.scale);
+//        hash = 37 * hash + Objects.hashCode(this.notes);
+//        hash = 37 * hash + Objects.hashCode(this.noteTemplate);
+//        hash = 37 * hash + Objects.hashCode(this.instrumentId);
+//        hash = 37 * hash + this.pixelSecond;
+//        hash = 37 * hash + this.noteHeight;
+//        hash = 37 * hash + (this.snapEnabled ? 1 : 0);
+//        hash = 37 * hash + (int) (Double.doubleToLongBits(this.snapValue) ^ (Double.doubleToLongBits(this.snapValue) >>> 32));
+//        hash = 37 * hash + this.timeDisplay;
+//        hash = 37 * hash + this.pchGenerationMethod;
+//        hash = 37 * hash + this.timeUnit;
+//        hash = 37 * hash + this.transposition;
+//        hash = 37 * hash + Objects.hashCode(this.fieldDefinitions);
+//        return hash;
+//    }
+//
+//    @Override
+//    public boolean equals(Object obj) {
+//        if (this == obj) {
+//            return true;
+//        }
+//        if (obj == null) {
+//            return false;
+//        }
+//        if (getClass() != obj.getClass()) {
+//            return false;
+//        }
+//        final PianoRoll other = (PianoRoll) obj;
+//        if (Double.doubleToLongBits(this.repeatPoint) != Double.doubleToLongBits(other.repeatPoint)) {
+//            return false;
+//        }
+//        if (this.pixelSecond != other.pixelSecond) {
+//            return false;
+//        }
+//        if (this.noteHeight != other.noteHeight) {
+//            return false;
+//        }
+//        if (this.snapEnabled != other.snapEnabled) {
+//            return false;
+//        }
+//        if (Double.doubleToLongBits(this.snapValue) != Double.doubleToLongBits(other.snapValue)) {
+//            return false;
+//        }
+//        if (this.timeDisplay != other.timeDisplay) {
+//            return false;
+//        }
+//        if (this.pchGenerationMethod != other.pchGenerationMethod) {
+//            return false;
+//        }
+//        if (this.timeUnit != other.timeUnit) {
+//            return false;
+//        }
+//        if (this.transposition != other.transposition) {
+//            return false;
+//        }
+//        if (!Objects.equals(this.noteTemplate, other.noteTemplate)) {
+//            return false;
+//        }
+//        if (!Objects.equals(this.instrumentId, other.instrumentId)) {
+//            return false;
+//        }
+//        if (this.timeBehavior != other.timeBehavior) {
+//            return false;
+//        }
+//        if (!Objects.equals(this.npc, other.npc)) {
+//            return false;
+//        }
+//        if (!Objects.equals(this.scale, other.scale)) {
+//            return false;
+//        }
+//        if (!Objects.equals(this.notes, other.notes)) {
+//            return false;
+//        }
+//        if (!Objects.equals(this.fieldDefinitions, other.fieldDefinitions)) {
+//            return false;
+//        }
+//        return true;
+//    }
 
 }

@@ -256,50 +256,50 @@ public class PianoNote implements Comparable<PianoNote> {
         return ToStringBuilder.reflectionToString(this);
     }
 
-    @Override
-    public int hashCode() {
-        int hash = 5;
-        hash = 97 * hash + this.octave;
-        hash = 97 * hash + this.scaleDegree;
-        hash = 97 * hash + (int) (Double.doubleToLongBits(this.start) ^ (Double.doubleToLongBits(this.start) >>> 32));
-        hash = 97 * hash + (int) (Double.doubleToLongBits(this.duration) ^ (Double.doubleToLongBits(this.duration) >>> 32));
-        hash = 97 * hash + Objects.hashCode(this.noteTemplate);
-        hash = 97 * hash + Objects.hashCode(this.fields);
-        return hash;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj) {
-            return true;
-        }
-        if (obj == null) {
-            return false;
-        }
-        if (getClass() != obj.getClass()) {
-            return false;
-        }
-        final PianoNote other = (PianoNote) obj;
-        if (this.octave != other.octave) {
-            return false;
-        }
-        if (this.scaleDegree != other.scaleDegree) {
-            return false;
-        }
-        if (Double.doubleToLongBits(this.start) != Double.doubleToLongBits(other.start)) {
-            return false;
-        }
-        if (Double.doubleToLongBits(this.duration) != Double.doubleToLongBits(other.duration)) {
-            return false;
-        }
-        if (!Objects.equals(this.noteTemplate, other.noteTemplate)) {
-            return false;
-        }
-        if (!Objects.equals(this.fields, other.fields)) {
-            return false;
-        }
-        return true;
-    }
+//    @Override
+//    public int hashCode() {
+//        int hash = 5;
+//        hash = 97 * hash + this.octave;
+//        hash = 97 * hash + this.scaleDegree;
+//        hash = 97 * hash + (int) (Double.doubleToLongBits(this.start) ^ (Double.doubleToLongBits(this.start) >>> 32));
+//        hash = 97 * hash + (int) (Double.doubleToLongBits(this.duration) ^ (Double.doubleToLongBits(this.duration) >>> 32));
+//        hash = 97 * hash + Objects.hashCode(this.noteTemplate);
+//        hash = 97 * hash + Objects.hashCode(this.fields);
+//        return hash;
+//    }
+//
+//    @Override
+//    public boolean equals(Object obj) {
+//        if (this == obj) {
+//            return true;
+//        }
+//        if (obj == null) {
+//            return false;
+//        }
+//        if (getClass() != obj.getClass()) {
+//            return false;
+//        }
+//        final PianoNote other = (PianoNote) obj;
+//        if (this.octave != other.octave) {
+//            return false;
+//        }
+//        if (this.scaleDegree != other.scaleDegree) {
+//            return false;
+//        }
+//        if (Double.doubleToLongBits(this.start) != Double.doubleToLongBits(other.start)) {
+//            return false;
+//        }
+//        if (Double.doubleToLongBits(this.duration) != Double.doubleToLongBits(other.duration)) {
+//            return false;
+//        }
+//        if (!Objects.equals(this.noteTemplate, other.noteTemplate)) {
+//            return false;
+//        }
+//        if (!Objects.equals(this.fields, other.fields)) {
+//            return false;
+//        }
+//        return true;
+//    }
     
     
     

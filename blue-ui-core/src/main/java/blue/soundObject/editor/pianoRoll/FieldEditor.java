@@ -21,13 +21,14 @@ package blue.soundObject.editor.pianoRoll;
 
 import blue.soundObject.PianoRoll;
 import blue.soundObject.pianoRoll.FieldDef;
+import blue.soundObject.pianoRoll.PianoNote;
 import blue.utilities.scales.ScaleLinear;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
-import java.util.stream.Collectors;
 import javafx.collections.ListChangeListener;
+import javafx.collections.ObservableList;
 import javax.swing.JPanel;
 
 /**
@@ -39,28 +40,21 @@ public class FieldEditor extends JPanel {
     private PianoRoll p = null;
 
     FieldDef selectedField = null;
-    private final NoteBuffer buffer;
 
-    public FieldEditor(NoteBuffer buffer) {
+    private final ObservableList<PianoNote> selectedNotes;
+
+    public FieldEditor(ObservableList<PianoNote> selectedNotes) {
+        this.selectedNotes = selectedNotes;
+
         setBackground(Color.BLACK);
-        
-        this.buffer = buffer;
-        
-        ListChangeListener<PianoNoteView> lcl = (change) -> {
+
+        ListChangeListener<PianoNote> lcl = (change) -> {
             repaint();
         };
-        this.buffer.addListener(lcl);
+        this.selectedNotes.addListener(lcl);
     }
 
     public void editPianoRoll(PianoRoll p) {
-//        if (this.p != null && this.p != p) {
-//            this.p.removePropertyChangeListener(this);
-//        }
-//
-//        if (this.p != p) {
-//            p.addPropertyChangeListener(this);
-//        }
-
         this.p = p;
 
         var fieldDefinitions = p.getFieldDefinitions();
@@ -77,11 +71,6 @@ public class FieldEditor extends JPanel {
     protected void paintComponent(Graphics g) {
         super.paintComponent(g); //To change body of generated methods, choose Tools | Templates.
 
-        // TODO - refactor NoteBuffer to hold PianoNotes, work with this for the
-        // short term
-        
-        var selected = buffer.stream().map(pnv -> pnv.getPianoNote()).collect(Collectors.toSet());
-        
         if (selectedField == null) {
             return;
         }
@@ -93,8 +82,8 @@ public class FieldEditor extends JPanel {
 
         ScaleLinear sl = new ScaleLinear(selectedField.getMinValue(), selectedField.getMaxValue(), bottom, top);
 
-        var g2d = (Graphics2D)g;
-                g2d.setStroke(new BasicStroke(2));        
+        var g2d = (Graphics2D) g;
+        g2d.setStroke(new BasicStroke(2));
         for (var note : p.getNotes()) {
             var x = (int) (pixelSecond * note.getStart());
 
@@ -103,11 +92,10 @@ public class FieldEditor extends JPanel {
                     .findFirst();
 
             if (field.isPresent()) {
-                
-                g.setColor(selected.contains(note) ? 
-                        Color.LIGHT_GRAY : Color.DARK_GRAY);
 
-                
+                g.setColor(selectedNotes.contains(note)
+                        ? Color.LIGHT_GRAY : Color.DARK_GRAY);
+
                 var y = sl.calc(field.get().getValue());
                 g2d.drawLine(x, bottom, x, (int) y);
             }
