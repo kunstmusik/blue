@@ -50,6 +50,7 @@ public class NotePropertiesEditor extends JPanel implements ListChangeListener<P
     public NotePropertiesEditor(ObservableList<PianoNote> selectedNotes) {
 
         this.selectedNotes = selectedNotes;
+        selectedNotes.addListener(this);
 
         this.setLayout(new BorderLayout(5, 5));
 
