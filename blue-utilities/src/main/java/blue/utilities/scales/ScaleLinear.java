@@ -109,9 +109,7 @@ public class ScaleLinear {
                 : rangeInput;
         
         final var m = (input - rangeStart) / rangeRange;
-        
-        System.out.println(rangeInput + " : " + input + " : " + m);
-        
+                
         final var out = m * domainRange + domainStart;
         
         return out;
