@@ -356,7 +356,6 @@ public class NoteCanvasMouseListener implements MouseListener,
                     snapValue);
         }        
         
-        System.out.println(endTime + " : "  + minEnd);
         endTime = Math.max(minEnd, endTime);
         
         double newDuration = endTime - nsd.originStart;
