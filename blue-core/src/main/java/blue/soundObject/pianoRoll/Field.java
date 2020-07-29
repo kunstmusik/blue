@@ -53,11 +53,11 @@ public class Field {
     }
 
     public double getValue() {
-        return value;
+        return fieldDef.convertToFieldType(value);
     }
-
+    
     public void setValue(double value) {
-        this.value = value;
+        this.value = fieldDef.convertToFieldType(value);
     }
 
     

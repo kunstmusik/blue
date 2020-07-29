@@ -27,7 +27,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
+import java.util.Optional;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
 /**
@@ -254,6 +254,13 @@ public class PianoNote implements Comparable<PianoNote> {
     @Override
     public String toString() {
         return ToStringBuilder.reflectionToString(this);
+    }
+    
+    public Optional<Field> getField(FieldDef fieldDef) {
+        if(fieldDef == null) {
+            return Optional.<Field>empty();
+        }
+        return fields.stream().filter(f -> f.getFieldDef() == fieldDef).findFirst();
     }
 
 //    @Override

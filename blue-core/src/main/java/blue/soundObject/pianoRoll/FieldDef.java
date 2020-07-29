@@ -23,7 +23,9 @@ import electric.xml.Element;
 import java.util.Map;
 import java.util.Objects;
 import javafx.beans.property.DoubleProperty;
+import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleDoubleProperty;
+import javafx.beans.property.SimpleObjectProperty;
 
 /**
  *
@@ -31,35 +33,36 @@ import javafx.beans.property.SimpleDoubleProperty;
  */
 public class FieldDef {
 
-    private FieldType fieldType = FieldType.CONTINUOUS;
     private String fieldName = "field";
 
     DoubleProperty minValue;
     DoubleProperty maxValue;
     DoubleProperty defaultValue;
+    ObjectProperty<FieldType> fieldType;
 
     public FieldDef() {
         minValue = new SimpleDoubleProperty(0.0);
         maxValue = new SimpleDoubleProperty(1.0);
         defaultValue = new SimpleDoubleProperty(1.0);
+        fieldType = new SimpleObjectProperty<>(FieldType.CONTINUOUS);
     }
 
     public FieldDef(FieldDef fieldDef) {
-        this.fieldType = fieldDef.fieldType;
         this.fieldName = fieldDef.fieldName;
 
         minValue = new SimpleDoubleProperty(fieldDef.getMinValue());
         maxValue = new SimpleDoubleProperty(fieldDef.getMaxValue());
         defaultValue = new SimpleDoubleProperty(fieldDef.getDefaultValue());
+        fieldType = new SimpleObjectProperty<>(fieldDef.getFieldType());
     }
 
     public FieldType getFieldType() {
-        return fieldType;
+        return fieldType.get();
     }
 
     public void setFieldType(FieldType fieldType) {
-        if (fieldType != this.fieldType) {
-            this.fieldType = fieldType;
+        if (fieldType != getFieldType()) {
+            this.fieldType.set(fieldType);
 
             var min = convertToFieldType(getMinValue());
             var max = convertToFieldType(getMaxValue());
@@ -72,7 +75,10 @@ public class FieldDef {
             setMaxValue(max);
             setDefaultValue(defaultVal);
         }
-
+    }
+    
+    public ObjectProperty<FieldType> fieldTypeProperty() {
+        return fieldType;
     }
 
     public String getFieldName() {
@@ -144,8 +150,8 @@ public class FieldDef {
     }
 
     protected double convertToFieldType(double val) {
-        if (fieldType == FieldType.DISCRETE) {
-            return (int) val;
+        if (getFieldType() == FieldType.DISCRETE) {
+            return (long) val;
         }
         return val;
     }
@@ -222,7 +228,7 @@ public class FieldDef {
         Element retVal = new Element("fieldDef");
 
         retVal.setAttribute("name", getFieldName());
-        retVal.setAttribute("fieldType", fieldType.name());
+        retVal.setAttribute("fieldType", getFieldType().name());
         retVal.setAttribute("min", Double.toString(getMinValue()));
         retVal.setAttribute("max", Double.toString(getMaxValue()));
         retVal.setAttribute("default", Double.toString(getDefaultValue()));

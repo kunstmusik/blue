@@ -12,6 +12,7 @@ import blue.soundObject.pianoRoll.PianoNote;
 import blue.soundObject.pianoRoll.Scale;
 import blue.utility.ScoreUtilities;
 import blue.utility.TextUtilities;
+import com.sun.javafx.binding.StringFormatter;
 import electric.xml.Element;
 import electric.xml.Elements;
 import java.beans.PropertyChangeEvent;
@@ -82,7 +83,6 @@ public class PianoRoll extends AbstractSoundObject implements ListChangeListener
                     var fields = pn.getFields();
                     var field = fields.stream().filter(v -> v.getFieldDef() == fd).findFirst();
                     field.ifPresent(fld -> fld.setValue(Math.max(newVal.doubleValue(), fld.getValue())));
-
                 }
                 break;
             } else if (fd.maxValueProperty() == obs) {
@@ -197,9 +197,7 @@ public class PianoRoll extends AbstractSoundObject implements ListChangeListener
             instrId = "\"" + instrId + "\"";
         }
 
-        for (Iterator<PianoNote> iter = notes.iterator(); iter.hasNext();) {
-            PianoNote n = iter.next();
-
+        for (var n : notes) {
             String freq = "";
 
             int octave = n.getOctave();
@@ -249,6 +247,17 @@ public class PianoRoll extends AbstractSoundObject implements ListChangeListener
             template = TextUtilities.replaceAll(template, "<DUR>", Double
                     .toString(n.getDuration()));
             template = TextUtilities.replaceAll(template, "<FREQ>", freq);
+            
+            
+            for(var field : n.getFields()) {
+                var fieldDef = field.getFieldDef();
+                var k = String.format("<%s>", fieldDef.getFieldName());
+                var v = (fieldDef.getFieldType() == FieldType.CONTINUOUS) ?
+                        Double.toString(field.getValue()) :
+                        Long.toString(Math.round(field.getValue()));
+                
+                template = TextUtilities.replaceAll(template, k, v);
+            }
 
             Note note = null;
 
