@@ -59,10 +59,7 @@ public final class InstrumentEditPanel extends JComponent {
         JTabbedPane tabs = new JTabbedPane();
 
         tabs.add("Instrument Editor", editPanel);
-        tabs.add("Comments", new JScrollPane(commentPane));
-
-//        commentPane.getJEditorPane().setWrapStyleWord(true);
-//        commentPane.setLineWrap(true);
+        tabs.add("Comments", commentPane);
 
         editPanel.setLayout(cardLayout);
 

@@ -70,6 +70,9 @@ FIX
 * Audio Layers: Audio Clips were not generating use project-relative paths when 
   audio files were children of project root folder
 
+* Issue #523: Comments tab for instruments did not scroll correctly
+
+
 > Notes for 2.8.0 <
 [release 2020.06.03]
 
