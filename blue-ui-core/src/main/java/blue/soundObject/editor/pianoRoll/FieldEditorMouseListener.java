@@ -51,7 +51,12 @@ public class FieldEditorMouseListener extends MouseAdapter {
     public void mousePressed(MouseEvent e) {
         Pin src = (Pin) e.getComponent();
         
-        if(!selectedNotes.contains(src.note)) {
+        if(selectedNotes.contains(src.note)) {
+            if(e.isShiftDown()) {
+                selectedNotes.remove(src.note);
+                return;
+            }
+        } else {
             if(e.isShiftDown()) {
                 selectedNotes.add(src.note);
             } else {
@@ -77,6 +82,10 @@ public class FieldEditorMouseListener extends MouseAdapter {
 
     @Override
     public void mouseDragged(MouseEvent e) {
+        if(originalValues == null) {
+            return;
+        }
+        
         Pin src = (Pin) e.getComponent();
         var pt = SwingUtilities.convertPoint(src, e.getPoint(), src.getParent());
         
