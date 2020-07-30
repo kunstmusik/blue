@@ -21,7 +21,8 @@ package blue.soundObject.pianoRoll;
 
 import electric.xml.Element;
 import java.util.Map;
-import java.util.Objects;
+import javafx.beans.property.DoubleProperty;
+import javafx.beans.property.SimpleDoubleProperty;
 
 /**
  *
@@ -30,12 +31,12 @@ import java.util.Objects;
 public class Field {
 
     private FieldDef fieldDef;
-    
-    private double value = 0.0;
-    
+
+    private DoubleProperty value;
+
     public Field(FieldDef fieldDef) {
         this.fieldDef = fieldDef;
-        this.value = fieldDef.getDefaultValue();
+        this.value = new SimpleDoubleProperty(fieldDef.getDefaultValue());
     }
 
     Field(Field f) {
@@ -46,21 +47,28 @@ public class Field {
     public FieldDef getFieldDef() {
         return fieldDef;
     }
-    
-    /** Should only be used when cloning a PianoRoll */
+
+    /**
+     * Should only be used when cloning a PianoRoll
+     */
     public void setFieldDef(FieldDef fieldDef) {
         this.fieldDef = fieldDef;
     }
 
     public double getValue() {
-        return fieldDef.convertToFieldType(value);
-    }
-    
-    public void setValue(double value) {
-        this.value = fieldDef.convertToFieldType(value);
+        return fieldDef.convertToFieldType(value.get());
     }
 
-    
+    public void setValue(double value) {
+        var newVal = Math.max(fieldDef.getMinValue(), Math.min(value, fieldDef.getMaxValue()));
+
+        this.value.set(fieldDef.convertToFieldType(newVal));
+    }
+
+    public DoubleProperty valueProperty() {
+        return value;
+    }
+
     public static Field loadFromXML(Element data, Map<String, FieldDef> fieldTypes) {
         String fieldName = data.getAttributeValue("name");
 
@@ -68,7 +76,7 @@ public class Field {
         Field f = new Field(fieldDef);
         var val = Double.parseDouble(data.getAttributeValue("val"));
         f.setValue(val);
-        
+
         return f;
     }
 
@@ -76,39 +84,9 @@ public class Field {
         Element retVal = new Element("field");
 
         retVal.setAttribute("name", fieldDef.getFieldName());
-        retVal.setAttribute("val", Double.toString(value));
-        
+        retVal.setAttribute("val", Double.toString(getValue()));
+
         return retVal;
     }
 
-//    @Override
-//    public int hashCode() {
-//        int hash = 7;
-//        hash = 23 * hash + Objects.hashCode(this.fieldDef);
-//        hash = 23 * hash + (int) (Double.doubleToLongBits(this.value) ^ (Double.doubleToLongBits(this.value) >>> 32));
-//        return hash;
-//    }
-//
-//    @Override
-//    public boolean equals(Object obj) {
-//        if (this == obj) {
-//            return true;
-//        }
-//        if (obj == null) {
-//            return false;
-//        }
-//        if (getClass() != obj.getClass()) {
-//            return false;
-//        }
-//        final Field other = (Field) obj;
-//        if (Double.doubleToLongBits(this.value) != Double.doubleToLongBits(other.value)) {
-//            return false;
-//        }
-//        if (!Objects.equals(this.fieldDef, other.fieldDef)) {
-//            return false;
-//        }
-//        return true;
-//    }
-    
-    
 }

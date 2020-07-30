@@ -24,16 +24,18 @@ import electric.xml.Elements;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
-import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
 /**
  * @author steven
  */
 public class PianoNote implements Comparable<PianoNote> {
+
     int octave = 8;
 
     int scaleDegree = 0;
@@ -43,10 +45,10 @@ public class PianoNote implements Comparable<PianoNote> {
     double duration = 1.0f;
 
     String noteTemplate = "";
-    
+
     List<Field> fields;
 
-    private transient ArrayList listeners;
+    private transient Set<PropertyChangeListener> listeners;
 
     public PianoNote() {
         fields = new ArrayList<>();
@@ -58,27 +60,20 @@ public class PianoNote implements Comparable<PianoNote> {
         start = pn.start;
         duration = pn.duration;
         noteTemplate = pn.noteTemplate;
-        
+
         fields = new ArrayList<>();
-        for(var f : pn.fields) {
+        for (var f : pn.fields) {
             fields.add(new Field(f));
         }
     }
-    
 
-    // public Note generateNote(final String noteTemplate) {
-    // String template = noteTemplate;
-    //
-    // return Note.createNote(template);
-    // }
 
     public double getDuration() {
         return duration;
     }
 
     public void setDuration(double duration) {
-        PropertyChangeEvent pce = new PropertyChangeEvent(this, "duration",
-                new Double(this.duration), new Double(duration));
+        PropertyChangeEvent pce = new PropertyChangeEvent(this, "duration", this.duration, duration);
         this.duration = duration;
         firePropertyChange(pce);
     }
@@ -88,8 +83,7 @@ public class PianoNote implements Comparable<PianoNote> {
     }
 
     public void setOctave(int octave) {
-        PropertyChangeEvent pce = new PropertyChangeEvent(this, "octave",
-                new Integer(this.octave), new Integer(octave));
+        PropertyChangeEvent pce = new PropertyChangeEvent(this, "octave", this.octave, octave);
         this.octave = octave;
         firePropertyChange(pce);
     }
@@ -99,8 +93,7 @@ public class PianoNote implements Comparable<PianoNote> {
     }
 
     public void setScaleDegree(int scaleDegree) {
-        PropertyChangeEvent pce = new PropertyChangeEvent(this, "scaleDegree",
-                new Integer(this.scaleDegree), new Integer(scaleDegree));
+        PropertyChangeEvent pce = new PropertyChangeEvent(this, "scaleDegree", this.scaleDegree, scaleDegree);
         this.scaleDegree = scaleDegree;
         firePropertyChange(pce);
     }
@@ -110,8 +103,7 @@ public class PianoNote implements Comparable<PianoNote> {
     }
 
     public void setStart(double start) {
-        PropertyChangeEvent pce = new PropertyChangeEvent(this, "start",
-                new Double(this.start), new Double(start));
+        PropertyChangeEvent pce = new PropertyChangeEvent(this, "start", this.start, start);
         this.start = start;
         firePropertyChange(pce);
     }
@@ -119,10 +111,9 @@ public class PianoNote implements Comparable<PianoNote> {
     public List<Field> getFields() {
         return fields;
     }
-    
+
 
     /* PROPERTY CHANGE EVENTS */
-
     public void addPropertyChangeListener(PropertyChangeListener listener) {
         checkListenersExists();
         this.listeners.add(listener);
@@ -136,16 +127,14 @@ public class PianoNote implements Comparable<PianoNote> {
     public void firePropertyChange(PropertyChangeEvent pce) {
         checkListenersExists();
 
-        for (Iterator iter = listeners.iterator(); iter.hasNext();) {
-            PropertyChangeListener listener = (PropertyChangeListener) iter
-                    .next();
+        for (var listener : listeners) {
             listener.propertyChange(pce);
         }
     }
 
     private void checkListenersExists() {
         if (listeners == null) {
-            listeners = new ArrayList();
+            listeners = new LinkedHashSet<>();
         }
     }
 
@@ -157,15 +146,13 @@ public class PianoNote implements Comparable<PianoNote> {
     }
 
     /**
-     * @param noteTemplate
-     *            The noteTemplate to set.
+     * @param noteTemplate The noteTemplate to set.
      */
     public void setNoteTemplate(String noteTemplate) {
         this.noteTemplate = noteTemplate;
     }
 
     /* SERIALIZATION */
-
     public static PianoNote loadFromXML(Element data, Map<String, FieldDef> fieldTypes) {
         PianoNote note = new PianoNote();
 
@@ -208,8 +195,8 @@ public class PianoNote implements Comparable<PianoNote> {
         retVal.addElement("duration").setText(Double.toString(duration));
 
         retVal.addElement("noteTemplate").setText(noteTemplate);
-        
-        for(var f : fields) {
+
+        for (var f : fields) {
             retVal.addElement(f.saveAsXML());
         }
 
@@ -219,95 +206,47 @@ public class PianoNote implements Comparable<PianoNote> {
     @Override
     public int compareTo(PianoNote note2) {
         int val = this.octave - note2.octave;
-        
-        if(val != 0) {
+
+        if (val != 0) {
             return val;
         }
-        
+
         val = this.scaleDegree - note2.scaleDegree;
-        
-        if(val != 0) {
+
+        if (val != 0) {
             return val;
         }
-        
+
         double val2 = this.start - note2.start;
-        
-        if(val2 != 0) {
-            if(val2 > 0) {
+
+        if (val2 != 0) {
+            if (val2 > 0) {
                 return 1;
             }
             return -1;
         }
-        
+
         val2 = this.duration - note2.duration;
-        
-        if(val2 != 0) {
-            if(val2 > 0) {
+
+        if (val2 != 0) {
+            if (val2 > 0) {
                 return 1;
             }
             return -1;
         }
-        
+
         return 0;
     }
-    
+
     @Override
     public String toString() {
         return ToStringBuilder.reflectionToString(this);
     }
-    
+
     public Optional<Field> getField(FieldDef fieldDef) {
-        if(fieldDef == null) {
+        if (fieldDef == null) {
             return Optional.<Field>empty();
         }
         return fields.stream().filter(f -> f.getFieldDef() == fieldDef).findFirst();
     }
-
-//    @Override
-//    public int hashCode() {
-//        int hash = 5;
-//        hash = 97 * hash + this.octave;
-//        hash = 97 * hash + this.scaleDegree;
-//        hash = 97 * hash + (int) (Double.doubleToLongBits(this.start) ^ (Double.doubleToLongBits(this.start) >>> 32));
-//        hash = 97 * hash + (int) (Double.doubleToLongBits(this.duration) ^ (Double.doubleToLongBits(this.duration) >>> 32));
-//        hash = 97 * hash + Objects.hashCode(this.noteTemplate);
-//        hash = 97 * hash + Objects.hashCode(this.fields);
-//        return hash;
-//    }
-//
-//    @Override
-//    public boolean equals(Object obj) {
-//        if (this == obj) {
-//            return true;
-//        }
-//        if (obj == null) {
-//            return false;
-//        }
-//        if (getClass() != obj.getClass()) {
-//            return false;
-//        }
-//        final PianoNote other = (PianoNote) obj;
-//        if (this.octave != other.octave) {
-//            return false;
-//        }
-//        if (this.scaleDegree != other.scaleDegree) {
-//            return false;
-//        }
-//        if (Double.doubleToLongBits(this.start) != Double.doubleToLongBits(other.start)) {
-//            return false;
-//        }
-//        if (Double.doubleToLongBits(this.duration) != Double.doubleToLongBits(other.duration)) {
-//            return false;
-//        }
-//        if (!Objects.equals(this.noteTemplate, other.noteTemplate)) {
-//            return false;
-//        }
-//        if (!Objects.equals(this.fields, other.fields)) {
-//            return false;
-//        }
-//        return true;
-//    }
-    
-    
-    
 }

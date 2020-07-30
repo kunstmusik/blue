@@ -12,7 +12,6 @@ import blue.soundObject.pianoRoll.PianoNote;
 import blue.soundObject.pianoRoll.Scale;
 import blue.utility.ScoreUtilities;
 import blue.utility.TextUtilities;
-import com.sun.javafx.binding.StringFormatter;
 import electric.xml.Element;
 import electric.xml.Elements;
 import java.beans.PropertyChangeEvent;
@@ -76,21 +75,37 @@ public class PianoRoll extends AbstractSoundObject implements ListChangeListener
 
     private ObservableList<FieldDef> fieldDefinitions;
 
-    ChangeListener<? super Number> fieldDefListener = (obs, old, newVal) -> {
+    ChangeListener<? super Number> minListener = (obs, old, newVal) -> {
         for (var fd : fieldDefinitions) {
             if (fd.minValueProperty() == obs) {
                 for (var pn : notes) {
-                    var fields = pn.getFields();
-                    var field = fields.stream().filter(v -> v.getFieldDef() == fd).findFirst();
+                    var field = pn.getField(fd);
                     field.ifPresent(fld -> fld.setValue(Math.max(newVal.doubleValue(), fld.getValue())));
                 }
                 break;
-            } else if (fd.maxValueProperty() == obs) {
-                for (var pn : notes) {
-                    var fields = pn.getFields();
-                    var field = fields.stream().filter(v -> v.getFieldDef() == fd).findFirst();
-                    field.ifPresent(fld -> fld.setValue(Math.min(newVal.doubleValue(), fld.getValue())));
+            }
+        }
+    };
 
+    ChangeListener<? super Number> maxListener = (obs, old, newVal) -> {
+        for (var fd : fieldDefinitions) {
+            if (fd.maxValueProperty() == obs) {
+                for (var pn : notes) {
+                    var field = pn.getField(fd);
+                    field.ifPresent(fld -> fld.setValue(Math.min(newVal.doubleValue(), fld.getValue())));
+                }
+                break;
+            }
+        }
+    };
+
+    ChangeListener<FieldType> fieldTypeListener = (obs, old, newVal) -> {
+        for (var fd : fieldDefinitions) {
+            if (fd.fieldTypeProperty() == obs) {
+                for (var pn : notes) {
+                    var field = pn.getField(fd);
+                    // will run through FieldDef's convertToFieldType()
+                    field.ifPresent(fld -> fld.setValue(fld.getValue()));
                 }
                 break;
             }
@@ -107,15 +122,13 @@ public class PianoRoll extends AbstractSoundObject implements ListChangeListener
         pixelSecond = 64;
         noteHeight = 15;
         fieldDefinitions = FXCollections.observableArrayList();
+        fieldDefinitions.addListener(this);
 
         // By default, add one field called AMP
         var ampField = new FieldDef();
         ampField.setFieldName("AMP");
         ampField.setFieldType(FieldType.CONTINUOUS);
         fieldDefinitions.add(ampField);
-
-        ampField.minValueProperty().addListener(fieldDefListener);
-        ampField.maxValueProperty().addListener(fieldDefListener);
 
         fieldDefinitions.addListener(this);
     }
@@ -129,15 +142,14 @@ public class PianoRoll extends AbstractSoundObject implements ListChangeListener
         scale = new Scale(pr.scale);
 
         fieldDefinitions = FXCollections.observableArrayList();
+        fieldDefinitions.addListener(this);
 
         Map<FieldDef, FieldDef> srcToCloneMap = new HashMap<>();
-        
+
         for (var fieldDef : pr.getFieldDefinitions()) {
             var clone = new FieldDef(fieldDef);
             fieldDefinitions.add(clone);
-            clone.minValueProperty().addListener(fieldDefListener);
-            clone.maxValueProperty().addListener(fieldDefListener);
-            
+
             srcToCloneMap.put(fieldDef, clone);
         }
 
@@ -146,8 +158,9 @@ public class PianoRoll extends AbstractSoundObject implements ListChangeListener
         for (PianoNote pn : pr.notes) {
             var newNote = new PianoNote(pn);
             notes.add(newNote);
-            
-            for(var f : newNote.getFields()) {
+
+            // set fieldDef for fields to use the new cloned version
+            for (var f : newNote.getFields()) {
                 f.setFieldDef(srcToCloneMap.get(f.getFieldDef()));
             }
         }
@@ -227,13 +240,19 @@ public class PianoRoll extends AbstractSoundObject implements ListChangeListener
                 scaleDegree = numScaleDegrees + scaleDegree;
             }
 
-            if (this.pchGenerationMethod == GENERATE_FREQUENCY) {
-                double f = scale.getFrequency(octave, scaleDegree);
-                freq = Double.toString(f);
-            } else if (this.pchGenerationMethod == GENERATE_PCH) {
-                freq = octave + "." + scaleDegree;
-            } else if (this.pchGenerationMethod == GENERATE_MIDI) {
-                freq = Integer.toString((octave * 12) + scaleDegree);
+            switch (this.pchGenerationMethod) {
+                case GENERATE_FREQUENCY:
+                    double f = scale.getFrequency(octave, scaleDegree);
+                    freq = Double.toString(f);
+                    break;
+                case GENERATE_PCH:
+                    freq = octave + "." + scaleDegree;
+                    break;
+                case GENERATE_MIDI:
+                    freq = Integer.toString((octave * 12) + scaleDegree);
+                    break;
+                default:
+                    break;
             }
 
             String template = n.getNoteTemplate();
@@ -247,15 +266,14 @@ public class PianoRoll extends AbstractSoundObject implements ListChangeListener
             template = TextUtilities.replaceAll(template, "<DUR>", Double
                     .toString(n.getDuration()));
             template = TextUtilities.replaceAll(template, "<FREQ>", freq);
-            
-            
-            for(var field : n.getFields()) {
+
+            for (var field : n.getFields()) {
                 var fieldDef = field.getFieldDef();
                 var k = String.format("<%s>", fieldDef.getFieldName());
-                var v = (fieldDef.getFieldType() == FieldType.CONTINUOUS) ?
-                        Double.toString(field.getValue()) :
-                        Long.toString(Math.round(field.getValue()));
-                
+                var v = (fieldDef.getFieldType() == FieldType.CONTINUOUS)
+                        ? Double.toString(field.getValue())
+                        : Long.toString(Math.round(field.getValue()));
+
                 template = TextUtilities.replaceAll(template, k, v);
             }
 
@@ -342,8 +360,7 @@ public class PianoRoll extends AbstractSoundObject implements ListChangeListener
                     p.setNoteHeight(Integer.parseInt(e.getTextString()));
                     break;
                 case "snapEnabled":
-                    p.setSnapEnabled(Boolean.valueOf(e.getTextString())
-                            .booleanValue());
+                    p.setSnapEnabled(Boolean.parseBoolean(e.getTextString()));
                     break;
                 case "snapValue":
                     p.setSnapValue(Double.parseDouble(e.getTextString()));
@@ -632,14 +649,15 @@ public class PianoRoll extends AbstractSoundObject implements ListChangeListener
     }
 
     // When there are changes to number of field definitions, ensure that
-    // piano notes have values for each field definition
+    // piano notes have field values adjusted
     @Override
     public void onChanged(Change<? extends FieldDef> change) {
         while (change.next()) {
             if (change.wasAdded()) {
                 for (var fd : change.getAddedSubList()) {
-                    fd.minValueProperty().addListener(fieldDefListener);
-                    fd.maxValueProperty().addListener(fieldDefListener);
+                    fd.minValueProperty().addListener(minListener);
+                    fd.maxValueProperty().addListener(maxListener);
+                    fd.fieldTypeProperty().addListener(fieldTypeListener);
 
                     for (var pn : notes) {
                         pn.getFields().add(new Field(fd));
@@ -647,101 +665,17 @@ public class PianoRoll extends AbstractSoundObject implements ListChangeListener
                 }
             } else if (change.wasRemoved()) {
                 for (var fd : change.getRemoved()) {
-                    fd.minValueProperty().removeListener(fieldDefListener);
-                    fd.maxValueProperty().removeListener(fieldDefListener);
+                    fd.minValueProperty().removeListener(minListener);
+                    fd.maxValueProperty().removeListener(maxListener);
+                    fd.fieldTypeProperty().removeListener(fieldTypeListener);
 
                     for (var pn : notes) {
                         pn.getFields().removeIf(field -> field.getFieldDef() == fd);
                     }
+
                 }
             }
-
         }
     }
-
-//    @Override
-//    public int hashCode() {
-//        int hash = 7;
-//        hash = 37 * hash + Objects.hashCode(this.timeBehavior);
-//        hash = 37 * hash + (int) (Double.doubleToLongBits(this.repeatPoint) ^ (Double.doubleToLongBits(this.repeatPoint) >>> 32));
-//        hash = 37 * hash + Objects.hashCode(this.npc);
-//        hash = 37 * hash + Objects.hashCode(this.scale);
-//        hash = 37 * hash + Objects.hashCode(this.notes);
-//        hash = 37 * hash + Objects.hashCode(this.noteTemplate);
-//        hash = 37 * hash + Objects.hashCode(this.instrumentId);
-//        hash = 37 * hash + this.pixelSecond;
-//        hash = 37 * hash + this.noteHeight;
-//        hash = 37 * hash + (this.snapEnabled ? 1 : 0);
-//        hash = 37 * hash + (int) (Double.doubleToLongBits(this.snapValue) ^ (Double.doubleToLongBits(this.snapValue) >>> 32));
-//        hash = 37 * hash + this.timeDisplay;
-//        hash = 37 * hash + this.pchGenerationMethod;
-//        hash = 37 * hash + this.timeUnit;
-//        hash = 37 * hash + this.transposition;
-//        hash = 37 * hash + Objects.hashCode(this.fieldDefinitions);
-//        return hash;
-//    }
-//
-//    @Override
-//    public boolean equals(Object obj) {
-//        if (this == obj) {
-//            return true;
-//        }
-//        if (obj == null) {
-//            return false;
-//        }
-//        if (getClass() != obj.getClass()) {
-//            return false;
-//        }
-//        final PianoRoll other = (PianoRoll) obj;
-//        if (Double.doubleToLongBits(this.repeatPoint) != Double.doubleToLongBits(other.repeatPoint)) {
-//            return false;
-//        }
-//        if (this.pixelSecond != other.pixelSecond) {
-//            return false;
-//        }
-//        if (this.noteHeight != other.noteHeight) {
-//            return false;
-//        }
-//        if (this.snapEnabled != other.snapEnabled) {
-//            return false;
-//        }
-//        if (Double.doubleToLongBits(this.snapValue) != Double.doubleToLongBits(other.snapValue)) {
-//            return false;
-//        }
-//        if (this.timeDisplay != other.timeDisplay) {
-//            return false;
-//        }
-//        if (this.pchGenerationMethod != other.pchGenerationMethod) {
-//            return false;
-//        }
-//        if (this.timeUnit != other.timeUnit) {
-//            return false;
-//        }
-//        if (this.transposition != other.transposition) {
-//            return false;
-//        }
-//        if (!Objects.equals(this.noteTemplate, other.noteTemplate)) {
-//            return false;
-//        }
-//        if (!Objects.equals(this.instrumentId, other.instrumentId)) {
-//            return false;
-//        }
-//        if (this.timeBehavior != other.timeBehavior) {
-//            return false;
-//        }
-//        if (!Objects.equals(this.npc, other.npc)) {
-//            return false;
-//        }
-//        if (!Objects.equals(this.scale, other.scale)) {
-//            return false;
-//        }
-//        if (!Objects.equals(this.notes, other.notes)) {
-//            return false;
-//        }
-//        if (!Objects.equals(this.fieldDefinitions, other.fieldDefinitions)) {
-//            return false;
-//        }
-//        return true;
-//    }
 
 }
