@@ -31,9 +31,9 @@ import javafx.beans.property.SimpleDoubleProperty;
 public class Field {
 
     private FieldDef fieldDef;
-    
+
     private DoubleProperty value;
-    
+
     public Field(FieldDef fieldDef) {
         this.fieldDef = fieldDef;
         this.value = new SimpleDoubleProperty(fieldDef.getDefaultValue());
@@ -47,8 +47,10 @@ public class Field {
     public FieldDef getFieldDef() {
         return fieldDef;
     }
-    
-    /** Should only be used when cloning a PianoRoll */
+
+    /**
+     * Should only be used when cloning a PianoRoll
+     */
     public void setFieldDef(FieldDef fieldDef) {
         this.fieldDef = fieldDef;
     }
@@ -56,16 +58,17 @@ public class Field {
     public double getValue() {
         return fieldDef.convertToFieldType(value.get());
     }
-    
+
     public void setValue(double value) {
-        this.value.set(fieldDef.convertToFieldType(value));
+        var newVal = Math.max(fieldDef.getMinValue(), Math.min(value, fieldDef.getMaxValue()));
+
+        this.value.set(fieldDef.convertToFieldType(newVal));
     }
-    
+
     public DoubleProperty valueProperty() {
         return value;
     }
 
-    
     public static Field loadFromXML(Element data, Map<String, FieldDef> fieldTypes) {
         String fieldName = data.getAttributeValue("name");
 
@@ -73,7 +76,7 @@ public class Field {
         Field f = new Field(fieldDef);
         var val = Double.parseDouble(data.getAttributeValue("val"));
         f.setValue(val);
-        
+
         return f;
     }
 
@@ -82,8 +85,8 @@ public class Field {
 
         retVal.setAttribute("name", fieldDef.getFieldName());
         retVal.setAttribute("val", Double.toString(getValue()));
-        
+
         return retVal;
-    }    
-    
+    }
+
 }
