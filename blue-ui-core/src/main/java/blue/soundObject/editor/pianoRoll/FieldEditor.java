@@ -20,26 +20,21 @@
 package blue.soundObject.editor.pianoRoll;
 
 import blue.soundObject.PianoRoll;
-import blue.soundObject.pianoRoll.Field;
 import blue.soundObject.pianoRoll.FieldDef;
 import blue.soundObject.pianoRoll.PianoNote;
 import blue.utilities.scales.ScaleLinear;
 import java.awt.BasicStroke;
 import java.awt.Color;
-import java.awt.Cursor;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
-import java.awt.RenderingHints;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.beans.PropertyChangeListener;
 import javafx.beans.value.ChangeListener;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javax.swing.JPanel;
-import javax.swing.SwingUtilities;
 
 /**
  *
@@ -59,40 +54,17 @@ public class FieldEditor extends JPanel {
         yScale.setDomain(selectedField.getMinValue(), selectedField.getMaxValue());
     };
 
-    ListChangeListener<PianoNote> lcl = (change) -> {
-        while (change.next()) {
-            if (change.wasAdded()) {
-                for (PianoNote note : change.getAddedSubList()) {
-                    var field = note.getField(selectedField);
-                    field.ifPresent(fld -> {
-                        Pin pin = new Pin(p, yScale, note, fld);
-                        add(pin);
-                    });
-                }
-            } else if (change.wasRemoved()) {
-                // TODO: Change this algorithm
-                for (var note : change.getRemoved()) {
-                    for (var c : getComponents()) {
-                        if (c instanceof Pin) {
-                            Pin p = (Pin) c;
-                            if (p.note == note) {
-                                remove(p);
-                                break;
-                            }
-                        }
-                    }
-                }
-            }
+    FieldEditorMouseListener fieldEditorMouseListener;
 
-        }
-        repaint();
-    };
+    ListChangeListener<PianoNote> lcl;
 
     public FieldEditor(ObservableList<PianoNote> selectedNotes) {
-        setLayout(null);
         this.selectedNotes = selectedNotes;
 
+        setLayout(null);
         setBackground(Color.BLACK);
+
+        fieldEditorMouseListener = new FieldEditorMouseListener(selectedNotes, yScale);
 
         ListChangeListener<PianoNote> selectionListener = chg -> repaint();
 
@@ -106,6 +78,45 @@ public class FieldEditor extends JPanel {
                 yScale.setRange(bottom, top);
                 repaint();
             }
+        });
+
+        lcl = (change) -> {
+            while (change.next()) {
+                if (change.wasAdded()) {
+                    for (PianoNote note : change.getAddedSubList()) {
+                        var field = note.getField(selectedField);
+                        field.ifPresent(fld -> {
+                            Pin pin = new Pin(p, yScale, note, fld, fieldEditorMouseListener, selectedNotes);
+                            add(pin);
+                        });
+                    }
+                } else if (change.wasRemoved()) {
+                    // TODO: Change this algorithm
+                    for (var note : change.getRemoved()) {
+                        for (var c : getComponents()) {
+                            if (c instanceof Pin) {
+                                Pin p = (Pin) c;
+                                if (p.note == note) {
+                                    remove(p);
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+
+            }
+            repaint();
+        };
+
+        addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (e.getClickCount() == 2) {
+                    selectedNotes.clear();
+                }
+            }
+
         });
     }
 
@@ -174,7 +185,7 @@ public class FieldEditor extends JPanel {
             for (PianoNote note : p.getNotes()) {
                 var field = note.getField(selectedField);
                 field.ifPresent(fld -> {
-                    Pin pin = new Pin(p, yScale, note, fld);
+                    Pin pin = new Pin(p, yScale, note, fld, fieldEditorMouseListener, selectedNotes);
                     add(pin);
                 });
 
@@ -184,87 +195,4 @@ public class FieldEditor extends JPanel {
         repaint();
     }
 
-    static class Pin extends JPanel {
-
-        public final Field field;
-        private final PianoRoll pianoRoll;
-        private final ScaleLinear yScale;
-        private final PianoNote note;
-
-        private javax.swing.event.ChangeListener cl = src -> updateLocation();
-        private PropertyChangeListener pcl = pce -> {
-            if ("start".equals(pce.getPropertyName())) {
-                updateLocation();
-            }
-        };
-
-        private ChangeListener<? super Number> valueListener
-                = (obs, old, newVal) -> updateLocation();
-
-        public Pin(PianoRoll p, ScaleLinear yScale, PianoNote n, Field field) {
-            this.pianoRoll = p;
-            this.yScale = yScale;
-            this.note = n;
-            this.field = field;
-
-            setSize(5, 5);
-            setOpaque(false);
-            setCursor(Cursor.getPredefinedCursor(Cursor.S_RESIZE_CURSOR));
-
-            addMouseMotionListener(new MouseAdapter() {
-                @Override
-                public void mouseDragged(MouseEvent e) {
-                    var pt = SwingUtilities.convertPoint(Pin.this, e.getPoint(), Pin.this.getParent());
-
-                    var val = yScale.calcReverse(pt.getY());
-                    field.setValue(val);
-                }
-            });
-        }
-
-        @Override
-        public void addNotify() {
-            super.addNotify();
-
-            field.valueProperty().addListener(valueListener);
-            updateLocation();
-            yScale.addChangeListener(cl);
-            note.addPropertyChangeListener(pcl);
-        }
-
-        @Override
-        public void removeNotify() {
-            yScale.removeChangeListener(cl);
-            note.removePropertyChangeListener(pcl);
-            field.valueProperty().removeListener(valueListener);
-
-            super.removeNotify();
-        }
-
-        
-        
-        private void updateLocation() {
-            var x = (int) (note.getStart() * pianoRoll.getPixelSecond());
-            var y = (int) yScale.calc(field.getValue());
-            setLocation(x - 2, y - 2);
-        }
-
-        @Override
-        protected void paintComponent(Graphics g) {
-            var g2d = (Graphics2D) g;
-            g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
-                    RenderingHints.VALUE_ANTIALIAS_ON);
-
-            g2d.setStroke(new BasicStroke(2));
-
-            final int width = getWidth() - 1;
-            final int height = getHeight() - 1;
-
-            g2d.setColor(Color.BLACK);
-            g.fillOval(0, 0, width, height);
-            g2d.setColor(Color.WHITE);
-            g2d.drawOval(0, 0, width, height);
-        }
-
-    }
 }
