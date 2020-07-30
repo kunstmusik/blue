@@ -21,7 +21,8 @@ package blue.soundObject.pianoRoll;
 
 import electric.xml.Element;
 import java.util.Map;
-import java.util.Objects;
+import javafx.beans.property.DoubleProperty;
+import javafx.beans.property.SimpleDoubleProperty;
 
 /**
  *
@@ -31,11 +32,11 @@ public class Field {
 
     private FieldDef fieldDef;
     
-    private double value = 0.0;
+    private DoubleProperty value;
     
     public Field(FieldDef fieldDef) {
         this.fieldDef = fieldDef;
-        this.value = fieldDef.getDefaultValue();
+        this.value = new SimpleDoubleProperty(fieldDef.getDefaultValue());
     }
 
     Field(Field f) {
@@ -53,11 +54,15 @@ public class Field {
     }
 
     public double getValue() {
-        return fieldDef.convertToFieldType(value);
+        return fieldDef.convertToFieldType(value.get());
     }
     
     public void setValue(double value) {
-        this.value = fieldDef.convertToFieldType(value);
+        this.value.set(fieldDef.convertToFieldType(value));
+    }
+    
+    public DoubleProperty valueProperty() {
+        return value;
     }
 
     
@@ -76,7 +81,7 @@ public class Field {
         Element retVal = new Element("field");
 
         retVal.setAttribute("name", fieldDef.getFieldName());
-        retVal.setAttribute("val", Double.toString(value));
+        retVal.setAttribute("val", Double.toString(getValue()));
         
         return retVal;
     }    
