@@ -30,9 +30,8 @@ import java.awt.Cursor;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
+import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
-import java.awt.event.MouseMotionListener;
 import java.util.ArrayList;
 import java.util.List;
 import javafx.collections.ObservableList;
@@ -44,18 +43,11 @@ import javax.swing.SwingUtilities;
 /**
  * @author steven
  */
-public class NoteCanvasMouseListener implements MouseListener,
-        MouseMotionListener {
+public class NoteCanvasMouseListener extends MouseAdapter {
 
     private static final int EDGE = 5;
 
     private static final int OS_CTRL_KEY = BlueSystem.getMenuShortcutKey();
-
-    private final Cursor RESIZE_CURSOR = Cursor
-            .getPredefinedCursor(Cursor.E_RESIZE_CURSOR);
-
-    private final Cursor NORMAL_CURSOR = Cursor
-            .getPredefinedCursor(Cursor.DEFAULT_CURSOR);
 
     private final PianoRollCanvas canvas;
     private final ObservableList<PianoNote> selectedNotes;
@@ -68,6 +60,7 @@ public class NoteCanvasMouseListener implements MouseListener,
 
     private NoteSourceData noteSourceData = new NoteSourceData();
     private PianoNote mouseNote = null;
+    private ResizeMode resizeMode = ResizeMode.NONE;
 
     public NoteCanvasMouseListener(PianoRollCanvas canvas, ObservableList<PianoNote> selectedNotes) {
         this.canvas = canvas;
@@ -85,15 +78,14 @@ public class NoteCanvasMouseListener implements MouseListener,
             }
         });
     }
-
-    @Override
-    public void mouseClicked(MouseEvent e) {
-    }
-
+    
+    
     @Override
     public void mousePressed(MouseEvent e) {
         canvas.requestFocus();
         Component comp = canvas.getComponentAt(e.getPoint());
+        
+        resizeMode = ResizeMode.NONE;
 
         if (UiUtilities.isRightMouseButton(e)) {
             if (comp instanceof PianoNoteView) {
@@ -112,8 +104,9 @@ public class NoteCanvasMouseListener implements MouseListener,
                 var noteView = (PianoNoteView) comp;
                 var note = noteView.getPianoNote();
 
-                if (canvas.getCursor() == RESIZE_CURSOR) {
+                if (e.getX() > noteView.getX() + noteView.getWidth() - EDGE) {
 
+                    resizeMode = ResizeMode.RESIZE_RIGHT;
                     if(!selectedNotes.contains(note)) {
                         selectedNotes.add(note);
                     }
@@ -181,7 +174,7 @@ public class NoteCanvasMouseListener implements MouseListener,
                 noteSourceData.setupData(selectedNotes, canvas.p.getScale());
                 mouseNote = note;
 
-                canvas.setCursor(RESIZE_CURSOR);
+                resizeMode = ResizeMode.RESIZE_RIGHT;
 
             } else {
                 selectedNotes.clear();
@@ -238,23 +231,6 @@ public class NoteCanvasMouseListener implements MouseListener,
         }
     }
 
-    @Override
-    public void mouseReleased(MouseEvent e) {
-        if (canvas.marquee.isVisible()) {
-            endMarquee();
-        }
-
-        start = null;
-        noteSourceData.clear();
-    }
-
-    @Override
-    public void mouseEntered(MouseEvent e) {
-    }
-
-    @Override
-    public void mouseExited(MouseEvent e) {
-    }
 
     /*
      * (non-Javadoc)
@@ -274,15 +250,33 @@ public class NoteCanvasMouseListener implements MouseListener,
             return;
         }
 
-        if (canvas.getCursor() == RESIZE_CURSOR) {
-            resizeNote(e);
-        } else if (canvas.getCursor() == NORMAL_CURSOR) {
-            moveNotes(e);
+        switch(resizeMode) {
+            case RESIZE_LEFT:
+                break;
+            case RESIZE_RIGHT:
+                resizeNote(e);
+                break;
+            case NONE:
+                moveNotes(e);
+                break;
         }
-
+        
         checkScroll(e);
     }
 
+    
+    @Override
+    public void mouseReleased(MouseEvent e) {
+        if (canvas.marquee.isVisible()) {
+            endMarquee();
+        }
+
+        start = null;
+        noteSourceData.clear();
+    }
+
+    
+    
     private void checkScroll(MouseEvent e) {
         Point temp = SwingUtilities.convertPoint(canvas, e.getPoint(), canvas
                 .getParent());
@@ -379,13 +373,11 @@ public class NoteCanvasMouseListener implements MouseListener,
         if (comp instanceof PianoNoteView) {
 
             if (e.getX() > (comp.getX() + comp.getWidth() - EDGE)) {
-                canvas.setCursor(RESIZE_CURSOR);
+                comp.setCursor(Cursor.getPredefinedCursor(Cursor.E_RESIZE_CURSOR));
             } else {
-                canvas.setCursor(NORMAL_CURSOR);
+                comp.setCursor(Cursor.getDefaultCursor());
             }
-        } else {
-            canvas.setCursor(NORMAL_CURSOR);
-        }
+        } 
     }
 
     public void endMarquee() {
@@ -472,5 +464,9 @@ public class NoteCanvasMouseListener implements MouseListener,
             this.scaleDegree = pianoNote.getScaleDegree();
         }
 
+    }
+    
+    static enum ResizeMode {
+        NONE, RESIZE_LEFT, RESIZE_RIGHT,
     }
 }

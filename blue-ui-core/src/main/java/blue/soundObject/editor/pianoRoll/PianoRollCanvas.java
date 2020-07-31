@@ -26,10 +26,12 @@ import blue.soundObject.pianoRoll.Field;
 import blue.soundObject.pianoRoll.PianoNote;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.GradientPaint;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.KeyboardFocusManager;
 import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ComponentAdapter;
@@ -237,19 +239,12 @@ public class PianoRollCanvas extends JLayeredPane implements Scrollable,
 
         });
 
-        // TODO - fix issue with setting cursor when shift is down and 
-        // normalize with NoteCanvasMouseListener's setCursor() calls
-//        Toolkit tk = Toolkit.getDefaultToolkit();
-//        Cursor editCursor = tk.createCustomCursor(
-//                IconFontSwing.buildImage(FontAwesome.PENCIL, 16),
-//                new Point(0, 0), "editing");
-//
-//        KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(key -> {
-//            var c = key.isShiftDown() ? editCursor : Cursor.getDefaultCursor();
-//            setCursor(c);
-//
-//            return false;
-//        });
+        KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(key -> {
+            var c = key.isShiftDown() ? Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR) : Cursor.getDefaultCursor();
+            setCursor(c);
+
+            return false;
+        });
     }
 
     public void cut() {
@@ -433,7 +428,7 @@ public class PianoRollCanvas extends JLayeredPane implements Scrollable,
         note.setScaleDegree(pch[1]);
 
         p.getNotes().add(note);
-        
+
         return note;
     }
 
