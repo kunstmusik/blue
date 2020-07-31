@@ -46,35 +46,36 @@ import javax.swing.SwingUtilities;
  */
 public class NoteCanvasMouseListener implements MouseListener,
         MouseMotionListener {
-    
+
     private static final int EDGE = 5;
-    
+
     private static final int OS_CTRL_KEY = BlueSystem.getMenuShortcutKey();
-    
+
     private final Cursor RESIZE_CURSOR = Cursor
             .getPredefinedCursor(Cursor.E_RESIZE_CURSOR);
-    
+
     private final Cursor NORMAL_CURSOR = Cursor
             .getPredefinedCursor(Cursor.DEFAULT_CURSOR);
-    
+
     private final PianoRollCanvas canvas;
     private final ObservableList<PianoNote> selectedNotes;
-    
+
     private Rectangle scrollRect = new Rectangle(0, 0, 1, 1);
     private Point start = null;
-    
+
     private JPopupMenu pasteMenu = new JPopupMenu();
     Point pastePoint = new Point(0, 0);
-    
+
     private NoteSourceData noteSourceData = new NoteSourceData();
-    
+    private PianoNote mouseNote = null;
+
     public NoteCanvasMouseListener(PianoRollCanvas canvas, ObservableList<PianoNote> selectedNotes) {
         this.canvas = canvas;
         this.selectedNotes = selectedNotes;
-        
+
         canvas.addMouseListener(this);
         canvas.addMouseMotionListener(this);
-        
+
         pasteMenu.add(new AbstractAction("Paste") {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -84,24 +85,24 @@ public class NoteCanvasMouseListener implements MouseListener,
             }
         });
     }
-    
+
     @Override
     public void mouseClicked(MouseEvent e) {
     }
-    
+
     @Override
     public void mousePressed(MouseEvent e) {
         canvas.requestFocus();
         Component comp = canvas.getComponentAt(e.getPoint());
-        
+
         if (UiUtilities.isRightMouseButton(e)) {
             if (comp instanceof PianoNoteView) {
                 var pnv = (PianoNoteView) comp;
-                
+
                 if (ListUtil.containsByRef(selectedNotes, pnv.getPianoNote())) {
                     canvas.showPopup(e.getX(), e.getY());
                 }
-                
+
             } else if (!PianoRollCanvas.NOTE_COPY_BUFFER.isEmpty()) {
                 pastePoint = e.getPoint();
                 pasteMenu.show(canvas, pastePoint.x, pastePoint.y);
@@ -110,13 +111,16 @@ public class NoteCanvasMouseListener implements MouseListener,
             if (comp instanceof PianoNoteView) {
                 var noteView = (PianoNoteView) comp;
                 var note = noteView.getPianoNote();
-                
+
                 if (canvas.getCursor() == RESIZE_CURSOR) {
-                    selectedNotes.clear();
-                    selectedNotes.add(note);
-                    
+
+                    if(!selectedNotes.contains(note)) {
+                        selectedNotes.add(note);
+                    }
+
                     noteSourceData.setupData(selectedNotes, canvas.p.getScale());
-                    
+                    mouseNote = note;
+
                     start = new Point(
                             noteView.getX() + noteView.getWidth(), e.getY());
                 } else if (ListUtil.containsByRef(selectedNotes, note)) {
@@ -124,132 +128,130 @@ public class NoteCanvasMouseListener implements MouseListener,
                         ListUtil.removeByRef(selectedNotes, note);
                     } else {
                         start = e.getPoint();
-                        
+
                         noteSourceData.setupData(selectedNotes, canvas.p.getScale());
-                        
+
                     }
                 } else {
                     start = null;
-                    
+
                     if (e.isShiftDown()) {
-                        
+
                         selectedNotes.add(note);
-                        
+
                     } else {
                         selectedNotes.clear();
                         selectedNotes.add(note);
                     }
                 }
-                
+
             } else if (((e.getModifiers() & OS_CTRL_KEY) == OS_CTRL_KEY) && !e.isShiftDown()) {
                 if (PianoRollCanvas.NOTE_COPY_BUFFER.isEmpty()) {
                     return;
                 }
-                
+
                 pasteNotes(e.getPoint());
-                
+
             } else if (e.isShiftDown() && ((e.getModifiers() & OS_CTRL_KEY) != OS_CTRL_KEY)) {
                 selectedNotes.clear();
                 // start = null;
 
                 int x = e.getX();
                 int y = e.getY();
-                
+
                 var pixelSecond = canvas.p.getPixelSecond();
-                
+
                 double startTime = (double) x / pixelSecond;
                 double duration = 5.0f / canvas.p.getPixelSecond();
-                
+
                 if (canvas.p.isSnapEnabled()) {
                     double snapValue = canvas.p.getSnapValue();
                     startTime = ScoreUtilities.getSnapValueStart(startTime, snapValue);
-                    
+
                     duration = canvas.p.getSnapValue();
                 }
-                
+
                 var note = canvas.addNote(startTime, y);
-                
+
                 note.setDuration(duration);
-                
-                
-                start = new Point(e.getX() + (int)Math.round(duration * pixelSecond), y);
-                
+
+                start = new Point(e.getX() + (int) Math.round(duration * pixelSecond), y);
+
                 selectedNotes.add(note);
                 noteSourceData.setupData(selectedNotes, canvas.p.getScale());
-                
+                mouseNote = note;
+
                 canvas.setCursor(RESIZE_CURSOR);
-                
+
             } else {
                 selectedNotes.clear();
                 start = null;
-                
+
                 canvas.marquee.setStart(e.getPoint());
                 canvas.marquee.setVisible(true);
             }
         }
     }
-    
-    
-    
+
     private void pasteNotes(Point p) {
         int x = p.x;
         int y = p.y;
-        
+
         double startTime = (double) x / canvas.p.getPixelSecond();
         int[] pchBase = canvas.getOctaveScaleDegreeForY(y);
         double timeAdjust = Double.MAX_VALUE;
         int topPitchNum = Integer.MIN_VALUE;
         int bottomPitchNum = Integer.MAX_VALUE;
         int scaleDegrees = canvas.p.getScale().getNumScaleDegrees();
-        
+
         if (canvas.p.isSnapEnabled()) {
             double snapValue = canvas.p.getSnapValue();
             startTime = ScoreUtilities.getSnapValueStart(startTime, snapValue);
         }
-        
+
         for (PianoNote note : PianoRollCanvas.NOTE_COPY_BUFFER) {
             timeAdjust = Math.min(timeAdjust, note.getStart());
             int pitchNum = note.getOctave() * scaleDegrees + note.getScaleDegree();
             topPitchNum = Math.max(topPitchNum, pitchNum);
             bottomPitchNum = Math.min(bottomPitchNum, pitchNum);
         }
-        
+
         selectedNotes.clear();
         start = null;
-        
+
         int basePitchNum = pchBase[0] * scaleDegrees + pchBase[1];
         int pitchNumAdjust = basePitchNum - topPitchNum;
         var pianoRollNotes = canvas.p.getNotes();
-        
+
         for (PianoNote note : PianoRollCanvas.NOTE_COPY_BUFFER) {
             PianoNote copy = new PianoNote(note);
             copy.setStart(startTime + (copy.getStart() - timeAdjust));
-            
+
             int pitchNum = copy.getOctave() * scaleDegrees + copy.getScaleDegree();
             pitchNum += pitchNumAdjust;
-            
+
             copy.setOctave(pitchNum / scaleDegrees);
             copy.setScaleDegree(pitchNum % scaleDegrees);
-            
+
             selectedNotes.add(copy);
             pianoRollNotes.add(copy);
         }
     }
-    
+
     @Override
     public void mouseReleased(MouseEvent e) {
         if (canvas.marquee.isVisible()) {
             endMarquee();
         }
-        
+
         start = null;
         noteSourceData.clear();
     }
-    
+
     @Override
     public void mouseEntered(MouseEvent e) {
     }
-    
+
     @Override
     public void mouseExited(MouseEvent e) {
     }
@@ -261,106 +263,109 @@ public class NoteCanvasMouseListener implements MouseListener,
      */
     @Override
     public void mouseDragged(MouseEvent e) {
-        
+
         if (canvas.marquee.isVisible()) {
             canvas.marquee.setDragPoint(e.getPoint());
             checkScroll(e);
             return;
         }
-        
+
         if (start == null) {
             return;
         }
-        
+
         if (canvas.getCursor() == RESIZE_CURSOR) {
             resizeNote(e);
         } else if (canvas.getCursor() == NORMAL_CURSOR) {
             moveNotes(e);
         }
-        
+
         checkScroll(e);
     }
-    
+
     private void checkScroll(MouseEvent e) {
         Point temp = SwingUtilities.convertPoint(canvas, e.getPoint(), canvas
                 .getParent());
         scrollRect.setLocation(temp);
         ((JViewport) (canvas.getParent())).scrollRectToVisible(scrollRect);
     }
-    
+
     private void moveNotes(MouseEvent e) {
         final int noteHeight = canvas.getNoteHeight();
-        
+
         final int diffX = e.getPoint().x - start.x;
         final int baseNoteNumDiff = (start.y / noteHeight) - (e.getPoint().y / noteHeight);
-        
+
         final var pianoRoll = canvas.p;
         final var scale = pianoRoll.getScale();
-        
+
         final int maxNoteNum = 16 * scale.getNumScaleDegrees() - 1;
         final int noteNumAdjust = Math.max(-noteSourceData.bottomScaleNoteNum,
                 Math.min(maxNoteNum - noteSourceData.topScaleNoteNum, baseNoteNumDiff));
-        
+
         final double baseAdjust = (double) diffX / canvas.p.getPixelSecond();
         final double timeAdjust;
-        
+
         if (baseAdjust + noteSourceData.noteSourceStart < 0.0) {
             timeAdjust = -noteSourceData.noteSourceStart;
         } else if (pianoRoll.isSnapEnabled()) {
             double snappedStart = ScoreUtilities.getSnapValueMove(
                     noteSourceData.noteSourceStart + baseAdjust,
                     canvas.p.getSnapValue());
-            
+
             timeAdjust = snappedStart - noteSourceData.noteSourceStart;
         } else {
             timeAdjust = baseAdjust;
         }
-        
+
         for (final var nd : noteSourceData.noteSourceData) {
             final var note = nd.pianoNote;
             note.setStart(nd.originStart + timeAdjust);
-            
+
             final var noteNum = nd.octave * scale.getNumScaleDegrees() + nd.scaleDegree;
             var newNoteNum = noteNum + noteNumAdjust;
             var newOct = newNoteNum / scale.getNumScaleDegrees();
             var newScaleDegree = newNoteNum % scale.getNumScaleDegrees();
-            
+
             note.setOctave(newOct);
-            note.setScaleDegree(newScaleDegree);            
+            note.setScaleDegree(newScaleDegree);
         }
-        
+
     }
 
     // TODO - make resize work with multiple notes
     private void resizeNote(MouseEvent e) {
-        int mouseX = e.getPoint().x;
-        var nsd = noteSourceData.noteSourceData.get(0);
-        var note = nsd.pianoNote;
-        var pixelSecond = canvas.p.getPixelSecond();
-        
-        int pixelStart = (int) (note.getStart() * pixelSecond);
-        
-        final double minEnd = (pixelStart + EDGE) / (double)pixelSecond;
-        
+        final int mouseX = e.getX();
+        final var pixelSecond = canvas.p.getPixelSecond();
+        final var snapEnabled = canvas.p.isSnapEnabled();
+
+        final var minDur = (EDGE) / (double) pixelSecond;
+
         var timeAdjust = (mouseX - start.x) / (double) pixelSecond;
-        
-        
-        var endTime = nsd.originStart + nsd.originDuration + timeAdjust;        
-        
-        if (canvas.p.isSnapEnabled()) {
-            
+        timeAdjust = Math.max(timeAdjust, noteSourceData.minTimeAdjust + minDur);
+
+        if (snapEnabled) {
             double snapValue = canvas.p.getSnapValue();
+            var mouseNsd = noteSourceData.noteSourceData.stream()
+                    .filter(nsd -> nsd.pianoNote == mouseNote).findFirst();
+            var nsd = mouseNsd.get();
+            var originEnd = nsd.originStart + nsd.originDuration;
+            var snapEndTime = ScoreUtilities.getSnapValueMove(
+                    originEnd + timeAdjust,
+                    snapValue
+            );
+
+            var newTimeAdjust = snapEndTime - originEnd;
             
-            endTime = ScoreUtilities.getSnapValueMove(
-                    endTime,
-                    snapValue);
-        }        
-        
-        endTime = Math.max(minEnd, endTime);
-        
-        double newDuration = endTime - nsd.originStart;
-        note.setDuration(newDuration);
-        
+            timeAdjust = (newTimeAdjust < timeAdjust) ? newTimeAdjust + snapValue : newTimeAdjust;
+        }
+
+        for (var nsd : noteSourceData.noteSourceData) {
+            var note = nsd.pianoNote;
+            double newDuration = nsd.originDuration + timeAdjust;
+            note.setDuration(newDuration);
+        }
+
     }
 
     /*
@@ -372,7 +377,7 @@ public class NoteCanvasMouseListener implements MouseListener,
     public void mouseMoved(MouseEvent e) {
         Component comp = canvas.getComponentAt(e.getPoint());
         if (comp instanceof PianoNoteView) {
-            
+
             if (e.getX() > (comp.getX() + comp.getWidth() - EDGE)) {
                 canvas.setCursor(RESIZE_CURSOR);
             } else {
@@ -382,36 +387,37 @@ public class NoteCanvasMouseListener implements MouseListener,
             canvas.setCursor(NORMAL_CURSOR);
         }
     }
-    
+
     public void endMarquee() {
         canvas.marquee.setVisible(false);
-        
+
         Component[] comps = canvas.getComponents();
-        
+
         selectedNotes.clear();
-        
+
         for (int i = 0; i < comps.length; i++) {
             if (!(comps[i] instanceof PianoNoteView)) {
                 continue;
             }
-            
+
             var pnv = (PianoNoteView) comps[i];
-            
+
             if (canvas.marquee.intersects(pnv)) {
                 selectedNotes.add(pnv.getPianoNote());
             }
-            
+
         }
-        
+
         canvas.marquee.setSize(1, 1);
         canvas.marquee.setLocation(-1, -1);
-        
+
     }
-    
+
     static class NoteSourceData {
-        
+
         public final List<NoteData> noteSourceData = new ArrayList<>();
         public double noteSourceStart = 0.0;
+        public double minTimeAdjust = 0.0;
         public int topScaleNoteNum = 0;
         public int bottomScaleNoteNum = 0;
 
@@ -419,42 +425,45 @@ public class NoteCanvasMouseListener implements MouseListener,
          * Sets up data cache for notes at their original times/pitches
          */
         public void setupData(List<PianoNote> selectedNotes, Scale scale) {
-            
+
             var numScaleDegrees = scale.getNumScaleDegrees();
-            
+
             noteSourceData.clear();
-            noteSourceStart = Double.MAX_VALUE;
-            
+            noteSourceStart = Double.POSITIVE_INFINITY;
+            minTimeAdjust = Double.NEGATIVE_INFINITY;
+
             topScaleNoteNum = Integer.MIN_VALUE;
             bottomScaleNoteNum = Integer.MAX_VALUE;
-            
+
             for (var note : selectedNotes) {
                 var noteNum = note.getOctave() * numScaleDegrees + note.getScaleDegree();
                 noteSourceData.add(new NoteData(note));
                 noteSourceStart = Math.min(noteSourceStart, note.getStart());
-                
+                minTimeAdjust = Math.max(minTimeAdjust, -note.getDuration());
+
                 topScaleNoteNum = Math.max(topScaleNoteNum, noteNum);
                 bottomScaleNoteNum = Math.min(bottomScaleNoteNum, noteNum);
             }
         }
-        
+
         public void clear() {
             noteSourceData.clear();
             noteSourceStart = 0.0;
+            minTimeAdjust = 0.0;
             topScaleNoteNum = 0;
             bottomScaleNoteNum = 0;
         }
-        
+
     }
-    
+
     static class NoteData {
-        
+
         public final PianoNote pianoNote;
         public final double originStart;
         public final double originDuration;
         public final int octave;
         public final int scaleDegree;
-        
+
         public NoteData(PianoNote pianoNote) {
             this.pianoNote = pianoNote;
             this.originStart = pianoNote.getStart();
@@ -462,6 +471,6 @@ public class NoteCanvasMouseListener implements MouseListener,
             this.octave = pianoNote.getOctave();
             this.scaleDegree = pianoNote.getScaleDegree();
         }
-        
+
     }
 }
