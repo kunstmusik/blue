@@ -48,18 +48,17 @@ public class FieldEditor extends JPanel {
 
     private final ObservableList<PianoNote> selectedNotes;
 
-    ScaleLinear yScale = new ScaleLinear(0, 1, 0, 1);
+    final ScaleLinear yScale;
 
-    ChangeListener<? super Number> domainListener = (ov, t, t1) -> {
-        yScale.setDomain(selectedField.getMinValue(), selectedField.getMaxValue());
-    };
+    ChangeListener<? super Number> domainListener;
 
     FieldEditorMouseListener fieldEditorMouseListener;
 
     ListChangeListener<PianoNote> lcl;
 
-    public FieldEditor(ObservableList<PianoNote> selectedNotes) {
+    public FieldEditor(ObservableList<PianoNote> selectedNotes, ScaleLinear yScale) {
         this.selectedNotes = selectedNotes;
+        this.yScale = yScale;
 
         setLayout(null);
         setBackground(Color.BLACK);
@@ -118,6 +117,10 @@ public class FieldEditor extends JPanel {
             }
 
         });
+
+        domainListener = (ov, t, t1) -> {
+            yScale.setDomain(selectedField.getMinValue(), selectedField.getMaxValue());
+        };
     }
 
     public void editPianoRoll(PianoRoll p) {

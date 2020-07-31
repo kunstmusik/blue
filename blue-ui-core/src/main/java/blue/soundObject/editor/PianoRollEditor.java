@@ -40,6 +40,7 @@ import blue.soundObject.editor.pianoRoll.TimelinePropertiesPanel;
 import blue.soundObject.pianoRoll.FieldDef;
 import blue.soundObject.pianoRoll.PianoNote;
 import blue.ui.components.IconFactory;
+import blue.utilities.scales.ScaleLinear;
 import blue.utility.GUI;
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -82,7 +83,9 @@ public class PianoRollEditor extends ScoreObjectEditor implements
 
     PianoRollPropertiesEditor props = new PianoRollPropertiesEditor(selectedNotes);
 
-    PianoRollCanvas noteCanvas = new PianoRollCanvas(selectedNotes);
+    ScaleLinear fieldEditorYScale = new ScaleLinear(0, 1, 0, 1);
+
+    PianoRollCanvas noteCanvas = new PianoRollCanvas(selectedNotes, fieldEditorYScale);
 
     PianoRollCanvasHeader noteHeader = new PianoRollCanvasHeader(selectedNotes);
 
@@ -98,7 +101,7 @@ public class PianoRollEditor extends ScoreObjectEditor implements
 
     FieldSelectorView fieldSelectorView = new FieldSelectorView();
 
-    FieldEditor fieldEditor = new FieldEditor(selectedNotes);
+    FieldEditor fieldEditor = new FieldEditor(selectedNotes, fieldEditorYScale);
 
     private PianoRoll p;
 
@@ -178,6 +181,7 @@ public class PianoRollEditor extends ScoreObjectEditor implements
         fieldSelectorView.addPropertyChangeListener(evt -> {
             if ("selectedFieldDef".equals(evt.getPropertyName())) {
                 fieldEditor.setSelectedFieldDef((FieldDef) evt.getNewValue());
+                noteCanvas.setSelectedFieldDef((FieldDef) evt.getNewValue());
             }
         });
 

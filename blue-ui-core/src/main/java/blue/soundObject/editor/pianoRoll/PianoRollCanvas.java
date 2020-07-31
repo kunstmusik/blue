@@ -23,7 +23,9 @@ import blue.BlueSystem;
 import blue.components.AlphaMarquee;
 import blue.soundObject.PianoRoll;
 import blue.soundObject.pianoRoll.Field;
+import blue.soundObject.pianoRoll.FieldDef;
 import blue.soundObject.pianoRoll.PianoNote;
+import blue.utilities.scales.ScaleLinear;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Cursor;
@@ -89,10 +91,17 @@ public class PianoRollCanvas extends JLayeredPane implements Scrollable,
     private final NoteCanvasMouseListener nMouse;
 
     private final ObservableList<PianoNote> selectedNotes;
+    private FieldDef selectedFieldDef = null;
+    private final ScaleLinear fieldEditorYScale;
 
-    public PianoRollCanvas(ObservableList<PianoNote> selectedNotes) {
+    public ScaleLinear getFieldEditorYScale() {
+        return fieldEditorYScale;
+    }
+
+    public PianoRollCanvas(ObservableList<PianoNote> selectedNotes, ScaleLinear fieldEditorYScale) {
 
         this.selectedNotes = selectedNotes;
+        this.fieldEditorYScale = fieldEditorYScale;
 
         this.setLayout(null);
         recalculateSize();
@@ -635,4 +644,11 @@ public class PianoRollCanvas extends JLayeredPane implements Scrollable,
         }
     }
 
+    public void setSelectedFieldDef(FieldDef fieldDef) {
+        this.selectedFieldDef = fieldDef;
+    }
+
+    public FieldDef getSelectedFieldDef() {
+        return selectedFieldDef;
+    }
 }

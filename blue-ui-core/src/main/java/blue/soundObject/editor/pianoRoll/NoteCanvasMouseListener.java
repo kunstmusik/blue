@@ -20,6 +20,7 @@
 package blue.soundObject.editor.pianoRoll;
 
 import blue.BlueSystem;
+import blue.soundObject.pianoRoll.Field;
 import blue.soundObject.pianoRoll.PianoNote;
 import blue.soundObject.pianoRoll.Scale;
 import blue.ui.utilities.UiUtilities;
@@ -60,7 +61,11 @@ public class NoteCanvasMouseListener extends MouseAdapter {
 
     private NoteSourceData noteSourceData = new NoteSourceData();
     private PianoNote mouseNote = null;
-    private ResizeMode resizeMode = ResizeMode.NONE;
+    private DragMode dragMode = DragMode.NONE;
+
+    // data for field editing
+    private double[] originalValues = null;
+    private Field[] affectedFields = null;
 
     public NoteCanvasMouseListener(PianoRollCanvas canvas, ObservableList<PianoNote> selectedNotes) {
         this.canvas = canvas;
@@ -78,14 +83,13 @@ public class NoteCanvasMouseListener extends MouseAdapter {
             }
         });
     }
-    
-    
+
     @Override
     public void mousePressed(MouseEvent e) {
         canvas.requestFocus();
         Component comp = canvas.getComponentAt(e.getPoint());
-        
-        resizeMode = ResizeMode.NONE;
+
+        dragMode = DragMode.NONE;
 
         if (UiUtilities.isRightMouseButton(e)) {
             if (comp instanceof PianoNoteView) {
@@ -104,10 +108,31 @@ public class NoteCanvasMouseListener extends MouseAdapter {
                 var noteView = (PianoNoteView) comp;
                 var note = noteView.getPianoNote();
 
-                if (e.getX() > noteView.getX() + noteView.getWidth() - EDGE) {
+                if ((e.getModifiers() & OS_CTRL_KEY) == OS_CTRL_KEY) {
+                    // MODIFY NOTE FIELD DATA
+                    var fieldDef = canvas.getSelectedFieldDef();
 
-                    resizeMode = ResizeMode.RESIZE_RIGHT;
-                    if(!selectedNotes.contains(note)) {
+                    if (fieldDef == null) {
+                        dragMode = DragMode.NONE;
+                    }
+                    start = e.getPoint();
+                    dragMode = DragMode.FIELD_EDIT;
+
+                    originalValues = new double[selectedNotes.size()];
+                    affectedFields = new Field[selectedNotes.size()];
+
+                    for (int i = 0; i < selectedNotes.size(); i++) {
+                        var n = selectedNotes.get(i);
+                        // If this throws an exception, let it get reported higher up
+                        var field = n.getField(fieldDef).get();
+                        affectedFields[i] = field;
+                        originalValues[i] = field.getValue();
+                    }
+
+                } else if (e.getX() > noteView.getX() + noteView.getWidth() - EDGE) {
+                    // RESIZE NOTE
+                    dragMode = DragMode.RESIZE_RIGHT;
+                    if (!selectedNotes.contains(note)) {
                         selectedNotes.add(note);
                     }
 
@@ -116,16 +141,20 @@ public class NoteCanvasMouseListener extends MouseAdapter {
 
                     start = new Point(
                             noteView.getX() + noteView.getWidth(), e.getY());
-                } else if (ListUtil.containsByRef(selectedNotes, note)) {
+                } else if (selectedNotes.contains(note)) {
                     if (e.isShiftDown() && selectedNotes.size() > 0) {
-                        ListUtil.removeByRef(selectedNotes, note);
+                        // DESELECT NOTE
+                        selectedNotes.remove(note);
                     } else {
+                        // START MOVE
                         start = e.getPoint();
+                        dragMode = DragMode.MOVE;
 
                         noteSourceData.setupData(selectedNotes, canvas.p.getScale());
 
                     }
                 } else {
+                    // SELECT NOTE
                     start = null;
 
                     if (e.isShiftDown()) {
@@ -139,6 +168,8 @@ public class NoteCanvasMouseListener extends MouseAdapter {
                 }
 
             } else if (((e.getModifiers() & OS_CTRL_KEY) == OS_CTRL_KEY) && !e.isShiftDown()) {
+                // PASTE NOTES
+
                 if (PianoRollCanvas.NOTE_COPY_BUFFER.isEmpty()) {
                     return;
                 }
@@ -146,6 +177,8 @@ public class NoteCanvasMouseListener extends MouseAdapter {
                 pasteNotes(e.getPoint());
 
             } else if (e.isShiftDown() && ((e.getModifiers() & OS_CTRL_KEY) != OS_CTRL_KEY)) {
+                // DRAW NOTES
+
                 selectedNotes.clear();
                 // start = null;
 
@@ -174,9 +207,10 @@ public class NoteCanvasMouseListener extends MouseAdapter {
                 noteSourceData.setupData(selectedNotes, canvas.p.getScale());
                 mouseNote = note;
 
-                resizeMode = ResizeMode.RESIZE_RIGHT;
+                dragMode = DragMode.RESIZE_RIGHT;
 
             } else {
+                // MARQUEE SELECT NOTES
                 selectedNotes.clear();
                 start = null;
 
@@ -246,25 +280,29 @@ public class NoteCanvasMouseListener extends MouseAdapter {
             return;
         }
 
-        if (start == null) {
+        if (start == null || dragMode == DragMode.NONE) {
             return;
         }
 
-        switch(resizeMode) {
+        switch (dragMode) {
+            case FIELD_EDIT:
+                modifyFields(e);
+                break;
             case RESIZE_LEFT:
                 break;
             case RESIZE_RIGHT:
                 resizeNote(e);
                 break;
-            case NONE:
+            case MOVE:
                 moveNotes(e);
                 break;
         }
-        
-        checkScroll(e);
+
+        if (dragMode != DragMode.FIELD_EDIT) {
+            checkScroll(e);
+        }
     }
 
-    
     @Override
     public void mouseReleased(MouseEvent e) {
         if (canvas.marquee.isVisible()) {
@@ -275,8 +313,6 @@ public class NoteCanvasMouseListener extends MouseAdapter {
         noteSourceData.clear();
     }
 
-    
-    
     private void checkScroll(MouseEvent e) {
         Point temp = SwingUtilities.convertPoint(canvas, e.getPoint(), canvas
                 .getParent());
@@ -350,7 +386,7 @@ public class NoteCanvasMouseListener extends MouseAdapter {
             );
 
             var newTimeAdjust = snapEndTime - originEnd;
-            
+
             timeAdjust = (newTimeAdjust < timeAdjust) ? newTimeAdjust + snapValue : newTimeAdjust;
         }
 
@@ -372,12 +408,14 @@ public class NoteCanvasMouseListener extends MouseAdapter {
         Component comp = canvas.getComponentAt(e.getPoint());
         if (comp instanceof PianoNoteView) {
 
-            if (e.getX() > (comp.getX() + comp.getWidth() - EDGE)) {
+            if ((e.getModifiers() & OS_CTRL_KEY) == OS_CTRL_KEY) {
+                comp.setCursor(Cursor.getPredefinedCursor(Cursor.S_RESIZE_CURSOR));
+            } else if (e.getX() > (comp.getX() + comp.getWidth() - EDGE)) {
                 comp.setCursor(Cursor.getPredefinedCursor(Cursor.E_RESIZE_CURSOR));
             } else {
                 comp.setCursor(Cursor.getDefaultCursor());
             }
-        } 
+        }
     }
 
     public void endMarquee() {
@@ -402,6 +440,34 @@ public class NoteCanvasMouseListener extends MouseAdapter {
 
         canvas.marquee.setSize(1, 1);
         canvas.marquee.setLocation(-1, -1);
+
+    }
+
+    private void modifyFields(MouseEvent e) {
+        if (originalValues == null) {
+            return;
+        }
+
+        var pt = e.getPoint();
+        var yDiff = pt.y - start.y;
+        var yScale = canvas.getFieldEditorYScale();
+
+        if (yDiff == 0) {
+            for (int i = 0; i < selectedNotes.size(); i++) {
+                affectedFields[i].setValue(originalValues[i]);
+            }
+        } else {
+            double valDiff;
+            if (yDiff < 0) {
+                valDiff = yScale.calcReverse(yScale.getRangeStart() + yDiff);
+            } else {
+                valDiff = yScale.calcReverse(yScale.getRangeEnd() + yDiff) - yScale.getDomainEnd();
+            }
+
+            for (int i = 0; i < selectedNotes.size(); i++) {
+                affectedFields[i].setValue(originalValues[i] + valDiff);
+            }
+        }
 
     }
 
@@ -465,8 +531,8 @@ public class NoteCanvasMouseListener extends MouseAdapter {
         }
 
     }
-    
-    static enum ResizeMode {
-        NONE, RESIZE_LEFT, RESIZE_RIGHT,
+
+    static enum DragMode {
+        NONE, MOVE, RESIZE_LEFT, RESIZE_RIGHT, FIELD_EDIT
     }
 }
