@@ -28,6 +28,7 @@ import blue.utility.ListUtil;
 import blue.utility.ScoreUtilities;
 import java.awt.Component;
 import java.awt.Cursor;
+import java.awt.KeyboardFocusManager;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
@@ -67,6 +68,9 @@ public class NoteCanvasMouseListener extends MouseAdapter {
     private double[] originalValues = null;
     private Field[] affectedFields = null;
 
+    Cursor canvasCursor = Cursor.getDefaultCursor();
+    PianoNoteView mouseMoveNoteView = null;
+
     public NoteCanvasMouseListener(PianoRollCanvas canvas, ObservableList<PianoNote> selectedNotes) {
         this.canvas = canvas;
         this.selectedNotes = selectedNotes;
@@ -81,6 +85,34 @@ public class NoteCanvasMouseListener extends MouseAdapter {
                     pasteNotes(pastePoint);
                 }
             }
+        });
+
+        // TODO: enable/disable only when visible?
+        KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(key -> {
+            if (dragMode == DragMode.NONE && mouseMoveNoteView != null) {
+
+                Cursor c = mouseMoveNoteView.getCursor();
+
+                if (c != Cursor.getPredefinedCursor(Cursor.E_RESIZE_CURSOR)
+                        && c != Cursor.getPredefinedCursor(Cursor.W_RESIZE_CURSOR)) {
+                    if ((key.getModifiers() & OS_CTRL_KEY) == OS_CTRL_KEY) {
+                        mouseMoveNoteView.setCursor(Cursor.getPredefinedCursor(Cursor.S_RESIZE_CURSOR));
+                        canvas.setCursor(Cursor.getPredefinedCursor(Cursor.S_RESIZE_CURSOR));
+                    } else {
+                        mouseMoveNoteView.setCursor(Cursor.getDefaultCursor());
+                        canvas.setCursor(canvasCursor);
+                    }
+                }
+
+            } else {
+                canvasCursor = key.isShiftDown() ? Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR) : Cursor.getDefaultCursor();
+
+                if (dragMode == DragMode.NONE) {
+                    canvas.setCursor(canvasCursor);
+                }
+            }
+
+            return false;
         });
     }
 
@@ -222,6 +254,7 @@ public class NoteCanvasMouseListener extends MouseAdapter {
 
             } else {
                 // MARQUEE SELECT NOTES
+                dragMode = DragMode.SELECTING;
                 selectedNotes.clear();
                 start = null;
 
@@ -284,18 +317,15 @@ public class NoteCanvasMouseListener extends MouseAdapter {
      */
     @Override
     public void mouseDragged(MouseEvent e) {
-
-        if (canvas.marquee.isVisible()) {
-            canvas.marquee.setDragPoint(e.getPoint());
-            checkScroll(e);
-            return;
-        }
-
         if (start == null || dragMode == DragMode.NONE) {
             return;
         }
 
         switch (dragMode) {
+            case SELECTING:
+                canvas.marquee.setDragPoint(e.getPoint());
+                checkScroll(e);
+                break;
             case FIELD_EDIT:
                 modifyFields(e);
                 break;
@@ -321,8 +351,15 @@ public class NoteCanvasMouseListener extends MouseAdapter {
             endMarquee();
         }
 
+        Component comp = canvas.getComponentAt(e.getPoint());
+
+        if (!(comp instanceof PianoNoteView)) {
+            canvas.setCursor(canvasCursor);
+        }
+
         start = null;
         noteSourceData.clear();
+        dragMode = DragMode.NONE;
     }
 
     private void checkScroll(MouseEvent e) {
@@ -349,11 +386,11 @@ public class NoteCanvasMouseListener extends MouseAdapter {
         final double timeAdjust;
 
         var snapEnabled = pianoRoll.isSnapEnabled();
-        
+
         if (baseAdjust + noteSourceData.noteSourceStart < 0.0) {
             timeAdjust = -noteSourceData.noteSourceStart;
-        } else if (snapEnabled && !e.isShiftDown() || 
-                e.isShiftDown() && !snapEnabled) {
+        } else if (snapEnabled && !e.isShiftDown()
+                || e.isShiftDown() && !snapEnabled) {
             double snappedStart = ScoreUtilities.getSnapValueMove(
                     noteSourceData.noteSourceStart + baseAdjust,
                     canvas.p.getSnapValue());
@@ -396,8 +433,8 @@ public class NoteCanvasMouseListener extends MouseAdapter {
         final var minTimeAdjust = -noteSourceData.minTimeAdjust - minDur;
         timeAdjust = Math.min(timeAdjust, minTimeAdjust);
 
-        if (snapEnabled && !e.isShiftDown() || 
-                e.isShiftDown() && !snapEnabled) {
+        if (snapEnabled && !e.isShiftDown()
+                || e.isShiftDown() && !snapEnabled) {
             double snapValue = canvas.p.getSnapValue();
             var mouseNsd = noteSourceData.noteSourceData.stream()
                     .filter(nsd -> nsd.pianoNote == mouseNote).findFirst();
@@ -436,8 +473,8 @@ public class NoteCanvasMouseListener extends MouseAdapter {
         var timeAdjust = (mouseX - start.x) / (double) pixelSecond;
         timeAdjust = Math.max(timeAdjust, noteSourceData.minTimeAdjust + minDur);
 
-        if (snapEnabled && !e.isShiftDown() || 
-                e.isShiftDown() && !snapEnabled) {
+        if (snapEnabled && !e.isShiftDown()
+                || e.isShiftDown() && !snapEnabled) {
             double snapValue = canvas.p.getSnapValue();
             var mouseNsd = noteSourceData.noteSourceData.stream()
                     .filter(nsd -> nsd.pianoNote == mouseNote).findFirst();
@@ -470,17 +507,25 @@ public class NoteCanvasMouseListener extends MouseAdapter {
     public void mouseMoved(MouseEvent e) {
         Component comp = canvas.getComponentAt(e.getPoint());
         if (comp instanceof PianoNoteView) {
+            mouseMoveNoteView = (PianoNoteView) comp;
             var x = e.getX();
 
             if ((e.getModifiers() & OS_CTRL_KEY) == OS_CTRL_KEY) {
                 comp.setCursor(Cursor.getPredefinedCursor(Cursor.S_RESIZE_CURSOR));
+                canvas.setCursor(Cursor.getPredefinedCursor(Cursor.S_RESIZE_CURSOR));
             } else if (x > (comp.getX() + comp.getWidth() - EDGE)) {
                 comp.setCursor(Cursor.getPredefinedCursor(Cursor.E_RESIZE_CURSOR));
+                canvas.setCursor(Cursor.getPredefinedCursor(Cursor.E_RESIZE_CURSOR));
             } else if (x >= comp.getX() && x <= comp.getX() + EDGE) {
                 comp.setCursor(Cursor.getPredefinedCursor(Cursor.W_RESIZE_CURSOR));
+                canvas.setCursor(Cursor.getPredefinedCursor(Cursor.W_RESIZE_CURSOR));
             } else {
                 comp.setCursor(Cursor.getDefaultCursor());
+                canvas.setCursor(Cursor.getDefaultCursor());
             }
+        } else {
+            mouseMoveNoteView = null;
+            canvas.setCursor(canvasCursor);
         }
     }
 
@@ -599,6 +644,6 @@ public class NoteCanvasMouseListener extends MouseAdapter {
     }
 
     static enum DragMode {
-        NONE, MOVE, RESIZE_LEFT, RESIZE_RIGHT, FIELD_EDIT
+        NONE, SELECTING, MOVE, RESIZE_LEFT, RESIZE_RIGHT, FIELD_EDIT
     }
 }

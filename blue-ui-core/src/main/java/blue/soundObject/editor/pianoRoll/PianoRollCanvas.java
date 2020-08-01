@@ -247,13 +247,6 @@ public class PianoRollCanvas extends JLayeredPane implements Scrollable,
             }
 
         });
-
-        KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(key -> {
-            var c = key.isShiftDown() ? Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR) : Cursor.getDefaultCursor();
-            setCursor(c);
-
-            return false;
-        });
     }
 
     public void cut() {
