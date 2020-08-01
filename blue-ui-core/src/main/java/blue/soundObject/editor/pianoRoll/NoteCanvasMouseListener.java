@@ -130,7 +130,7 @@ public class NoteCanvasMouseListener extends MouseAdapter {
                     }
 
                 } else if (e.getX() > noteView.getX() + noteView.getWidth() - EDGE) {
-                    // RESIZE NOTE
+                    // RESIZE NOTES RIGHT
                     dragMode = DragMode.RESIZE_RIGHT;
                     if (!selectedNotes.contains(note)) {
                         selectedNotes.add(note);
@@ -141,6 +141,17 @@ public class NoteCanvasMouseListener extends MouseAdapter {
 
                     start = new Point(
                             noteView.getX() + noteView.getWidth(), e.getY());
+                } else if (e.getX() >= comp.getX() && e.getX() <= comp.getX() + EDGE) {
+                    // RESIZE NOTES RIGHT
+                    dragMode = DragMode.RESIZE_LEFT;
+                    if (!selectedNotes.contains(note)) {
+                        selectedNotes.add(note);
+                    }
+
+                    noteSourceData.setupData(selectedNotes, canvas.p.getScale());
+                    mouseNote = note;
+
+                    start = e.getPoint();
                 } else if (selectedNotes.contains(note)) {
                     if (e.isShiftDown() && selectedNotes.size() > 0) {
                         // DESELECT NOTE
@@ -289,9 +300,10 @@ public class NoteCanvasMouseListener extends MouseAdapter {
                 modifyFields(e);
                 break;
             case RESIZE_LEFT:
+                resizeNotesLeft(e);
                 break;
             case RESIZE_RIGHT:
-                resizeNote(e);
+                resizeNotesRight(e);
                 break;
             case MOVE:
                 moveNotes(e);
@@ -336,9 +348,12 @@ public class NoteCanvasMouseListener extends MouseAdapter {
         final double baseAdjust = (double) diffX / canvas.p.getPixelSecond();
         final double timeAdjust;
 
+        var snapEnabled = pianoRoll.isSnapEnabled();
+        
         if (baseAdjust + noteSourceData.noteSourceStart < 0.0) {
             timeAdjust = -noteSourceData.noteSourceStart;
-        } else if (pianoRoll.isSnapEnabled()) {
+        } else if (snapEnabled && !e.isShiftDown() || 
+                e.isShiftDown() && !snapEnabled) {
             double snappedStart = ScoreUtilities.getSnapValueMove(
                     noteSourceData.noteSourceStart + baseAdjust,
                     canvas.p.getSnapValue());
@@ -363,8 +378,55 @@ public class NoteCanvasMouseListener extends MouseAdapter {
 
     }
 
-    // TODO - make resize work with multiple notes
-    private void resizeNote(MouseEvent e) {
+    private void resizeNotesLeft(MouseEvent e) {
+        final int mouseX = e.getX();
+        final var pixelSecond = canvas.p.getPixelSecond();
+        final var snapEnabled = canvas.p.isSnapEnabled();
+
+        final var minDur = (EDGE) / (double) pixelSecond;
+
+        // timeAdjust add to start time of original note, duration 
+        // adjusted to match original end
+        var timeAdjust = (mouseX - start.x) / (double) pixelSecond;
+
+        // don't adjust so that it goes below 0
+        timeAdjust = Math.max(-noteSourceData.noteSourceStart, timeAdjust);
+
+        // don't adjust so that it makes any note smaller that EDGE size
+        final var minTimeAdjust = -noteSourceData.minTimeAdjust - minDur;
+        timeAdjust = Math.min(timeAdjust, minTimeAdjust);
+
+        if (snapEnabled && !e.isShiftDown() || 
+                e.isShiftDown() && !snapEnabled) {
+            double snapValue = canvas.p.getSnapValue();
+            var mouseNsd = noteSourceData.noteSourceData.stream()
+                    .filter(nsd -> nsd.pianoNote == mouseNote).findFirst();
+            var nsd = mouseNsd.get();
+
+            var snapStartTime = ScoreUtilities.getSnapValueMove(
+                    nsd.originStart + timeAdjust,
+                    snapValue
+            );
+
+            var newTimeAdjust = snapStartTime - nsd.originStart;
+
+            timeAdjust = newTimeAdjust;
+            timeAdjust = (newTimeAdjust > minTimeAdjust) ? newTimeAdjust - snapValue : newTimeAdjust;
+        }
+
+        for (var nsd : noteSourceData.noteSourceData) {
+            var note = nsd.pianoNote;
+            var originEnd = nsd.originStart + nsd.originDuration;
+
+            double newStart = nsd.originStart + timeAdjust;
+            double newDuration = originEnd - newStart;
+            note.setStart(newStart);
+            note.setDuration(newDuration);
+        }
+
+    }
+
+    private void resizeNotesRight(MouseEvent e) {
         final int mouseX = e.getX();
         final var pixelSecond = canvas.p.getPixelSecond();
         final var snapEnabled = canvas.p.isSnapEnabled();
@@ -374,7 +436,8 @@ public class NoteCanvasMouseListener extends MouseAdapter {
         var timeAdjust = (mouseX - start.x) / (double) pixelSecond;
         timeAdjust = Math.max(timeAdjust, noteSourceData.minTimeAdjust + minDur);
 
-        if (snapEnabled) {
+        if (snapEnabled && !e.isShiftDown() || 
+                e.isShiftDown() && !snapEnabled) {
             double snapValue = canvas.p.getSnapValue();
             var mouseNsd = noteSourceData.noteSourceData.stream()
                     .filter(nsd -> nsd.pianoNote == mouseNote).findFirst();
@@ -407,11 +470,14 @@ public class NoteCanvasMouseListener extends MouseAdapter {
     public void mouseMoved(MouseEvent e) {
         Component comp = canvas.getComponentAt(e.getPoint());
         if (comp instanceof PianoNoteView) {
+            var x = e.getX();
 
             if ((e.getModifiers() & OS_CTRL_KEY) == OS_CTRL_KEY) {
                 comp.setCursor(Cursor.getPredefinedCursor(Cursor.S_RESIZE_CURSOR));
-            } else if (e.getX() > (comp.getX() + comp.getWidth() - EDGE)) {
+            } else if (x > (comp.getX() + comp.getWidth() - EDGE)) {
                 comp.setCursor(Cursor.getPredefinedCursor(Cursor.E_RESIZE_CURSOR));
+            } else if (x >= comp.getX() && x <= comp.getX() + EDGE) {
+                comp.setCursor(Cursor.getPredefinedCursor(Cursor.W_RESIZE_CURSOR));
             } else {
                 comp.setCursor(Cursor.getDefaultCursor());
             }
