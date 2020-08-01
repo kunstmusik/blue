@@ -7,7 +7,6 @@ package blue.soundObject.editor.pianoRoll;
 
 import blue.soundObject.pianoRoll.FieldDef;
 import blue.utility.ListUtil;
-import javafx.beans.value.ObservableValue;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javax.swing.DefaultComboBoxModel;

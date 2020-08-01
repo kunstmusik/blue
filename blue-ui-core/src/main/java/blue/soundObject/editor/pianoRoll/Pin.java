@@ -87,7 +87,7 @@ class Pin extends JPanel {
         setOpaque(false);
         setCursor(Cursor.getPredefinedCursor(Cursor.S_RESIZE_CURSOR));
         //  ToolTipManager.sharedInstance().registerComponent(this);
-    } //  ToolTipManager.sharedInstance().registerComponent(this);
+    } 
 
     @Override
     public void addNotify() {
