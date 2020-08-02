@@ -38,7 +38,7 @@ public class TransferableEffect implements Transferable {
     public static DataFlavor EFFECT_CAT_FLAVOR = new DataFlavor(
             EffectCategory.class, "Effect Category");
 
-    private Object obj;
+    private final Object obj;
 
     DataFlavor[] flavors;
 

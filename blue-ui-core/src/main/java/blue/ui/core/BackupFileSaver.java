@@ -37,7 +37,7 @@ public class BackupFileSaver implements Runnable {
 
     boolean shouldRun = true;
 
-    private BlueProjectManager projectManager;
+    private final BlueProjectManager projectManager;
 
     public BackupFileSaver() {
         this.projectManager = BlueProjectManager.getInstance();

@@ -74,7 +74,7 @@ public class TreeHilightDropListener implements DropTargetListener {
 
     // size of hotspot used to find
     // the whether user wants to insert element
-    private int hotspot = 5;
+    private final int hotspot = 5;
 
     // droppath - subclasses can access this in to accept/reject drop
     protected TreePath treePath = null;

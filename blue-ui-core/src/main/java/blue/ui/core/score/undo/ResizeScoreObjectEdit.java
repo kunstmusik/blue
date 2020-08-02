@@ -17,9 +17,10 @@ import javax.swing.undo.UndoableEdit;
  */
 
 public class ResizeScoreObjectEdit extends AbstractUndoableEdit {
-    private ScoreObject sObj;
+    private final ScoreObject sObj;
 
-    private double initialDuration, endingDuration;
+    private final double initialDuration;
+    private final double endingDuration;
 
     private ResizeScoreObjectEdit nextEdit = null;
 

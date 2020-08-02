@@ -17,15 +17,15 @@ import javax.swing.undo.CannotUndoException;
  */
 public class MoveScoreObjectsEdit extends AbstractUndoableEdit {
 
-    private ScoreObject[] scoreObjects;
+    private final ScoreObject[] scoreObjects;
 
-    private ScoreObjectLayer[] startLayers;
+    private final ScoreObjectLayer[] startLayers;
 
-    private ScoreObjectLayer[] endLayers;
+    private final ScoreObjectLayer[] endLayers;
 
-    private double[] initialStartTimes;
+    private final double[] initialStartTimes;
 
-    private double[] endingStartTimes;
+    private final double[] endingStartTimes;
 
     private String presentationName = null;
 

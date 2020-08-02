@@ -79,7 +79,7 @@ import org.openide.windows.WindowManager;
  */
 public class UserInstrumentLibrary extends JComponent {
 
-    private static MessageFormat toolTipFormat = new MessageFormat(
+    private static final MessageFormat toolTipFormat = new MessageFormat(
             "<html><b>Instrument Type:</b> {0}</html>");
 
     private static final UserInstrumentTreePopup popup = new UserInstrumentTreePopup();
@@ -606,11 +606,7 @@ class UserInstrumentTreePopup extends JPopupMenu {
         if (userObj instanceof InstrumentCategory) {
             addCategoryMenuItem.setVisible(true);
 
-            if (((InstrumentCategory) userObj).isRoot()) {
-                removeCategoryMenuItem.setVisible(false);
-            } else {
-                removeCategoryMenuItem.setVisible(true);
-            }
+            removeCategoryMenuItem.setVisible(!((InstrumentCategory) userObj).isRoot());
 
             addInstrumentMenu.setVisible(true);
             removeInstrumentMenuItem.setVisible(false);

@@ -15,11 +15,11 @@ import javax.swing.undo.CannotUndoException;
  */
 
 public class AlignEdit extends AbstractUndoableEdit {
-    private ScoreObject[] soundObjects;
+    private final ScoreObject[] soundObjects;
 
-    private double[] initalStartTimes;
+    private final double[] initalStartTimes;
 
-    private double[] endingStartTimes;
+    private final double[] endingStartTimes;
 
     private String presentationName;
 

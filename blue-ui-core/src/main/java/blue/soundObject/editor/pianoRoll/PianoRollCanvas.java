@@ -79,9 +79,9 @@ public class PianoRollCanvas extends JLayeredPane implements Scrollable,
 
     AlphaMarquee marquee = new AlphaMarquee();
 
-    private static Color OCTAVE_COLOR = new Color(198, 226, 255);
+    private static final Color OCTAVE_COLOR = new Color(198, 226, 255);
 
-    private static Color LINE_COLOR = Color.DARK_GRAY.darker();
+    private static final Color LINE_COLOR = Color.DARK_GRAY.darker();
 
     protected PianoRoll p;
 

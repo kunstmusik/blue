@@ -31,9 +31,12 @@ import javafx.scene.layout.Pane;
  */
 public class AlignmentUtils {
 
-    private static Comparator<Pane> leftComparator, horizontalCenterComparator,
-            rightComparator, topComparator, verticalCenterComparator,
-            bottomComparator;
+    private static final Comparator<Pane> leftComparator;
+    private static final Comparator<Pane> horizontalCenterComparator;
+    private static final Comparator<Pane> rightComparator;
+    private static final Comparator<Pane> topComparator;
+    private static final Comparator<Pane> verticalCenterComparator;
+    private static final Comparator<Pane> bottomComparator;
 
     static {
         leftComparator = new Comparator<Pane>() {

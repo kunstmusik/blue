@@ -98,7 +98,7 @@ public class ParameterLinePanel extends JComponent implements
 
     Parameter currentParameter = null;
 
-    private TimeState timeState;
+    private final TimeState timeState;
 
     LineCanvasMouseListener mouseListener = new LineCanvasMouseListener(this);
 

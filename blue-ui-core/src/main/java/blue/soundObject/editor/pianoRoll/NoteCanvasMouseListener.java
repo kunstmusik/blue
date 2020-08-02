@@ -54,13 +54,13 @@ public class NoteCanvasMouseListener extends MouseAdapter {
     private final PianoRollCanvas canvas;
     private final ObservableList<PianoNote> selectedNotes;
 
-    private Rectangle scrollRect = new Rectangle(0, 0, 1, 1);
+    private final Rectangle scrollRect = new Rectangle(0, 0, 1, 1);
     private Point start = null;
 
-    private JPopupMenu pasteMenu = new JPopupMenu();
+    private final JPopupMenu pasteMenu = new JPopupMenu();
     Point pastePoint = new Point(0, 0);
 
-    private NoteSourceData noteSourceData = new NoteSourceData();
+    private final NoteSourceData noteSourceData = new NoteSourceData();
     private PianoNote mouseNote = null;
     private DragMode dragMode = DragMode.NONE;
 
@@ -642,7 +642,7 @@ public class NoteCanvasMouseListener extends MouseAdapter {
 
     }
 
-    static enum DragMode {
+    enum DragMode {
         NONE, SELECTING, MOVE, RESIZE_LEFT, RESIZE_RIGHT, FIELD_EDIT
     }
 }

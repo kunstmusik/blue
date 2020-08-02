@@ -66,14 +66,14 @@ public class BSBEditPane extends Pane implements ListChangeListener<BSBGroup> {
             = Color.rgb(38, 51, 76, 0.5).brighter();
 
     private BSBGraphicInterface bsbInterface;
-    private BSBEditSelection selection;
+    private final BSBEditSelection selection;
 
     private ContextMenu popupMenu;
     private ContextMenu nonEditPopupMenu;
 
-    private SetChangeListener<BSBObject> scl;
+    private final SetChangeListener<BSBObject> scl;
 
-    private Rectangle marquee;
+    private final Rectangle marquee;
     int addX = 0, addY = 0;
 
     double startMarqueeX = -1.0;
@@ -82,13 +82,13 @@ public class BSBEditPane extends Pane implements ListChangeListener<BSBGroup> {
     Set<BSBObject> startSet = null;
     Set<BSBObject> selecting = new HashSet<>();
 
-    private Pane interfaceItemsPane;
-    private Canvas gridCanvas;
+    private final Pane interfaceItemsPane;
+    private final Canvas gridCanvas;
     Pane mousePane = new Pane();
 
-    private InvalidationListener gridListener;
+    private final InvalidationListener gridListener;
 
-    private BooleanProperty marqueeSelecting;
+    private final BooleanProperty marqueeSelecting;
 
     final boolean allowEditing;
 

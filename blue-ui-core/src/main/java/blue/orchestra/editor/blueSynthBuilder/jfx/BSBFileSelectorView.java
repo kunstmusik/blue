@@ -53,8 +53,8 @@ import org.openide.util.Exceptions;
 public class BSBFileSelectorView extends BorderPane implements ResizeableView {
 
     private static final int FILE_BUTTON_WIDTH = 30;
-    private static int OBJECT_HEIGHT = 30;
-    private static String FILE_SELECTOR_ID = "BSBFileSelector";
+    private static final int OBJECT_HEIGHT = 30;
+    private static final String FILE_SELECTOR_ID = "BSBFileSelector";
 
     private final BSBFileSelector fileSelector;
 

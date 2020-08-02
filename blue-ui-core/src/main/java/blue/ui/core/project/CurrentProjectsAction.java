@@ -35,7 +35,7 @@ import org.openide.awt.DynamicMenuContent;
 public class CurrentProjectsAction extends JMenuItem implements
         DynamicMenuContent {
 
-    private static ActionListener al;
+    private static final ActionListener al;
 
     static {
         al = (ActionEvent e) -> {

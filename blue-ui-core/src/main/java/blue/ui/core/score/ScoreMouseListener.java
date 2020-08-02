@@ -56,7 +56,7 @@ public class ScoreMouseListener extends MouseAdapter {
             .getPredefinedCursor(Cursor.MOVE_CURSOR);
     private final ScoreTopComponent scoreTC;
     private MouseAdapter currentGestureListener = null;
-    private BlueMouseAdapter[] mouseListeners;
+    private final BlueMouseAdapter[] mouseListeners;
 
     public ScoreMouseListener(ScoreTopComponent tc, InstanceContent content) {
         this.scoreTC = tc;

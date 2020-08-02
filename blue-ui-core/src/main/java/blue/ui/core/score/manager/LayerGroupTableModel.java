@@ -31,7 +31,7 @@ import javax.swing.table.AbstractTableModel;
  */
 public class LayerGroupTableModel extends AbstractTableModel  {
 
-    private Score score;
+    private final Score score;
     
     private final ArrayList<ListDataListener> listeners = 
             new ArrayList<>();

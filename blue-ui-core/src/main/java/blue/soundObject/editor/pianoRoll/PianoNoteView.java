@@ -41,16 +41,16 @@ public class PianoNoteView extends JPanel implements PropertyChangeListener,
     private static final int OCTAVES = 16;
 
     // private static Border NORMAL_BORDER = new LineBorder(Color.LIGHT_GRAY);
-    private static Border NORMAL_BORDER = BorderFactory
+    private static final Border NORMAL_BORDER = BorderFactory
             .createLineBorder(Color.DARK_GRAY, 1);
 
-    private static Color NORMAL_COLOR = Color.GRAY;
+    private static final Color NORMAL_COLOR = Color.GRAY;
 
-    private static Color SELECTED_COLOR = Color.WHITE;
+    private static final Color SELECTED_COLOR = Color.WHITE;
 
-    private PianoNote note;
+    private final PianoNote note;
 
-    private PianoRoll p;
+    private final PianoRoll p;
     private final ObservableList<PianoNote> selectedNotes;
 
     ListChangeListener<PianoNote> lcl;

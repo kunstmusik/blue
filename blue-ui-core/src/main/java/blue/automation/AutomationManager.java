@@ -72,7 +72,7 @@ public class AutomationManager implements
     /**
      * cache of all parameters in project
      */
-    private ArrayList<Parameter> allParameters = new ArrayList<>();
+    private final ArrayList<Parameter> allParameters = new ArrayList<>();
     BlueData data = null;
     Score score = null;
     ActionListener parameterActionListener;

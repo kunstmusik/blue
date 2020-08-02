@@ -51,17 +51,17 @@ import javax.swing.event.ListSelectionListener;
 @ScoreObjectEditorPlugin(scoreObjectType = PatternObject.class)
 public class PatternEditor extends ScoreObjectEditor {
 
-    private PatternLayerEditPanel layerPanel = new PatternLayerEditPanel();
+    private final PatternLayerEditPanel layerPanel = new PatternLayerEditPanel();
 
-    private PatternCanvas canvas = new PatternCanvas();
+    private final PatternCanvas canvas = new PatternCanvas();
 
-    private PatternScoreEditor patternScore = new PatternScoreEditor();
+    private final PatternScoreEditor patternScore = new PatternScoreEditor();
 
-    private PatternTimeBar timeBar = new PatternTimeBar();
+    private final PatternTimeBar timeBar = new PatternTimeBar();
 
     private PatternObject patternObj;
 
-    private PatternObjectPropertiesPanel props = new PatternObjectPropertiesPanel();
+    private final PatternObjectPropertiesPanel props = new PatternObjectPropertiesPanel();
 
     public PatternEditor() {
         this.setLayout(new BorderLayout());

@@ -120,7 +120,7 @@ public class PresetsTreeDragSource implements DragSourceListener,
 
 class TransferablePreset implements Transferable {
 
-    private Object obj;
+    private final Object obj;
 
     public TransferablePreset(Object obj) {
         this.obj = obj;

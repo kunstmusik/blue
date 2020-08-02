@@ -44,7 +44,7 @@ public class AudioFileView extends SoundObjectView {
 
     protected int labelOffset = 5;
 
-    private static Font renderFont = new Font("Dialog", Font.BOLD, 12);
+    private static final Font renderFont = new Font("Dialog", Font.BOLD, 12);
 
     protected static AudioWaveformCache waveCache = AudioWaveformCache.getInstance();
     

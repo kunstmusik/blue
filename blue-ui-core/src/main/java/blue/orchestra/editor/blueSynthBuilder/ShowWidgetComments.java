@@ -51,7 +51,7 @@ import org.openide.util.actions.Presenter;
 public final class ShowWidgetComments extends AbstractAction implements Presenter.Menu {
 
     JCheckBoxMenuItem menuItem;
-    private BSBPreferences prefs = BSBPreferences.getInstance();
+    private final BSBPreferences prefs = BSBPreferences.getInstance();
 
     public ShowWidgetComments() {
         menuItem = new JCheckBoxMenuItem();

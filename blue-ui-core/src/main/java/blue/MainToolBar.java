@@ -62,7 +62,7 @@ public class MainToolBar extends JToolBar implements PlayModeListener,
 
     private static final String EMPTY_TIME = "--:--:--:--";
 
-    private static Color ICON_COLOR = new Color(230, 230, 255);
+    private static final Color ICON_COLOR = new Color(230, 230, 255);
 
     private static MainToolBar instance = null;
 

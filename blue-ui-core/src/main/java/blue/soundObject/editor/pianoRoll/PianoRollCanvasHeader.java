@@ -48,11 +48,11 @@ public class PianoRollCanvasHeader extends JComponent implements
 
     int centerOctave = 8;
 
-    private static Color OCTAVE_COLOR = new Color(198, 226, 255);
+    private static final Color OCTAVE_COLOR = new Color(198, 226, 255);
 
     private PianoRoll p;
 
-    private HashMap<PianoNote, SelectedNoteHighlighter> noteHilightMap
+    private final HashMap<PianoNote, SelectedNoteHighlighter> noteHilightMap
             = new HashMap<>();
     
     private final ObservableList<PianoNote> selectedNotes;

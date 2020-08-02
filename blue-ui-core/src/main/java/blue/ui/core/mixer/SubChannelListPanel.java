@@ -57,17 +57,17 @@ public class SubChannelListPanel extends JComponent implements Scrollable,
 
     private ChannelList subChannels = null;
 
-    private JPopupMenu addPopup = new JPopupMenu();
+    private final JPopupMenu addPopup = new JPopupMenu();
 
-    private JPopupMenu removePopup = new JPopupMenu();
+    private final JPopupMenu removePopup = new JPopupMenu();
 
     private ChannelPanel selectedChannelPanel = null;
 
-    private MouseListener removePanelListener;
+    private final MouseListener removePanelListener;
 
-    private ArrayList models = new ArrayList();
+    private final ArrayList models = new ArrayList();
 
-    private Vector listeners = new Vector();
+    private final Vector listeners = new Vector();
 
     /** Creates a new instance of ChanelListPanel */
     public SubChannelListPanel() {

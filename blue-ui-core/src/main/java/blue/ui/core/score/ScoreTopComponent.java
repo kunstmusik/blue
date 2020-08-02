@@ -739,7 +739,7 @@ public final class ScoreTopComponent extends TopComponent
             SwingUtilities.invokeLater(runner);
         } else {
             runner.run();
-        };
+        }
     }
 
     public void scrollToRenderStartPointer() {
@@ -758,7 +758,7 @@ public final class ScoreTopComponent extends TopComponent
                     SwingUtilities.invokeLater(runner);
                 } else {
                     runner.run();
-                };
+                }
             }
         }
     }
@@ -779,7 +779,7 @@ public final class ScoreTopComponent extends TopComponent
                     SwingUtilities.invokeLater(runner);
                 } else {
                     runner.run();
-                };
+                }
             }
         }
     }

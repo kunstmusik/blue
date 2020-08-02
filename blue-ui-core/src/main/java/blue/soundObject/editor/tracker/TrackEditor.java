@@ -38,15 +38,15 @@ public class TrackEditor extends javax.swing.JPanel {
 
     private static final String FILE_CHOOSER_ID = "scaleSelectionPanel";
 
-    private TableModel EMPTY_MODEL = new DefaultTableModel();
+    private final TableModel EMPTY_MODEL = new DefaultTableModel();
 
-    private SpinnerModel MIN_DOUBLE_MODEL;
+    private final SpinnerModel MIN_DOUBLE_MODEL;
 
-    private SpinnerModel MAX_DOUBLE_MODEL;
+    private final SpinnerModel MAX_DOUBLE_MODEL;
 
-    private SpinnerModel MIN_INT_MODEL;
+    private final SpinnerModel MIN_INT_MODEL;
 
-    private SpinnerModel MAX_INT_MODEL;
+    private final SpinnerModel MAX_INT_MODEL;
 
     boolean changingNumberModels = false;
 

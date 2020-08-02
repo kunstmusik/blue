@@ -52,7 +52,7 @@ public class KeyboardLevelScalingPanel extends JComponent {
 
     public KeyboardLevelScalingPanel() {
         LabelledRangeLabelFilter filter = new LabelledRangeLabelFilter() {
-            String[] KbdBreakPointName = new String[] { "A-1", "A#-1", "B-1",
+            final String[] KbdBreakPointName = new String[] { "A-1", "A#-1", "B-1",
                     "C0", "C#0", "D0", "D#0", "E0", "F0", "F#0", "G0", "G#0",
                     "A0", "A#0", "B0", "C1", "C#1", "D1", "D#1", "E1", "F1",
                     "F#1", "G1", "G#1", "A1", "A#1", "B1", "C2", "C#2", "D2",

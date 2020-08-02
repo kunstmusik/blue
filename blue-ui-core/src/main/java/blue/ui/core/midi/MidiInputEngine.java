@@ -38,7 +38,7 @@ import javax.sound.midi.ShortMessage;
  */
 public final class MidiInputEngine implements Receiver {
 
-    private static MidiInputEngine instance = new MidiInputEngine();
+    private static final MidiInputEngine instance = new MidiInputEngine();
 
     private static BlueLiveToolBar toolbar;
 

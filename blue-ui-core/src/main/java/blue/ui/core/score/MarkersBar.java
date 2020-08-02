@@ -54,7 +54,7 @@ import javax.swing.event.TableModelListener;
  */
 public class MarkersBar extends JPanel implements PropertyChangeListener, TableModelListener {
 
-    private Rectangle scrollRect = new Rectangle(0, 0, 1, 1);
+    private final Rectangle scrollRect = new Rectangle(0, 0, 1, 1);
 
     private TimeState timeState = null;
 
@@ -296,9 +296,9 @@ public class MarkersBar extends JPanel implements PropertyChangeListener, TableM
 
         int[] yPoints = {0, h, 0};
 
-        private Marker marker;
+        private final Marker marker;
 
-        private int originX = -1;
+        private final int originX = -1;
 
         JLabel label;
 

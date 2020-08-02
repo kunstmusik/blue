@@ -32,8 +32,8 @@ import javax.swing.JPanel;
 
 public class SelectedNoteHighlighter extends JPanel implements PropertyChangeListener {
 
-    private PianoRoll pianoRoll;
-    private PianoNote note;
+    private final PianoRoll pianoRoll;
+    private final PianoNote note;
 
     private static final Set<String> NOTE_PROPS = new HashSet<>(Arrays.asList("octave", "scaleDegree"));
 

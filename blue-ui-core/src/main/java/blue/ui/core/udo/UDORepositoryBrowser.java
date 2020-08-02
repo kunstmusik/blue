@@ -62,7 +62,7 @@ import org.apache.xmlrpc.XmlRpcException;
 public class UDORepositoryBrowser extends JDialog {
     private static XmlRpcClient xrpc;
 
-    private static String UDO_REPO_URL = "http://www.csounds.com/udo/xmlrpc.php";
+    private static final String UDO_REPO_URL = "http://www.csounds.com/udo/xmlrpc.php";
 
     static {
         try {
@@ -431,7 +431,7 @@ public class UDORepositoryBrowser extends JDialog {
     }
 
     class UDODisplayPanel extends JComponent {
-        private MimeTypeEditorComponent codeText;
+        private final MimeTypeEditorComponent codeText;
 
         private UserDefinedOpcode udo;
 

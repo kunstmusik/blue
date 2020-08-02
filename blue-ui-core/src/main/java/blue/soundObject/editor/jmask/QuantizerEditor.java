@@ -27,7 +27,7 @@ import javax.swing.SpinnerNumberModel;
  * @author steven
  */
 public class QuantizerEditor extends javax.swing.JPanel implements DurationSettable {
-    private Quantizer quantizer;
+    private final Quantizer quantizer;
 
     public QuantizerEditor(Quantizer quantizer) {
         initComponents();

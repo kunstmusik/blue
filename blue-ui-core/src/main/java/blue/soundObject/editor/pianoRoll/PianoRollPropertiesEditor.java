@@ -73,7 +73,7 @@ public class PianoRollPropertiesEditor extends JScrollPane {
 
     private boolean isUpdating;
 
-    private ObservableList<PianoNote> selectedNotes;
+    private final ObservableList<PianoNote> selectedNotes;
     
     
     public PianoRollPropertiesEditor(ObservableList<PianoNote> selectedNotes) {

@@ -44,7 +44,7 @@ public class NotePropertiesEditor extends JPanel implements ListChangeListener<P
 
     JLabel label = new JLabel(BlueSystem.getString("pianoRoll.noteTemplate"));
 
-    private boolean isUpdating = false;
+    private final boolean isUpdating = false;
     private final ObservableList<PianoNote> selectedNotes;
 
     public NotePropertiesEditor(ObservableList<PianoNote> selectedNotes) {

@@ -50,14 +50,14 @@ import org.openide.util.Exceptions;
  */
 public class BSBGroupView extends BorderPane implements ResizeableView {
 
-    private Label label = new Label();
-    private Pane editorPane = new Pane();
-    private Pane containerPane = new Pane();
-    private Pane resizePane = new Pane();
+    private final Label label = new Label();
+    private final Pane editorPane = new Pane();
+    private final Pane containerPane = new Pane();
+    private final Pane resizePane = new Pane();
     private BooleanProperty editEnabledProperty = null;
     private BSBEditSelection selection;
     private ObservableList<BSBGroup> groupsList;
-    private BSBGroup bsbGroup;
+    private final BSBGroup bsbGroup;
 
     SetChangeListener<BSBObject> scl = sce -> {
         if (sce.wasAdded()) {

@@ -17,7 +17,7 @@ import org.openide.nodes.Sheet;
  * @author syi
  */
 public class UDONode extends AbstractNode {
-    private UserDefinedOpcode udo;
+    private final UserDefinedOpcode udo;
 
     public UDONode(final UserDefinedOpcode udo) {
         super(Children.LEAF);

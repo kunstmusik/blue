@@ -26,7 +26,7 @@ public enum Alignment {
     LEFT("Left"), HORIZONTAL_CENTER("Horizontal Center"), RIGHT("Right"), 
     TOP("Top"), VERTICAL_CENTER("Vertical Center"), BOTTOM("Bottom"); 
 
-    private String string;
+    private final String string;
 
     Alignment(String name) {
         string = name;

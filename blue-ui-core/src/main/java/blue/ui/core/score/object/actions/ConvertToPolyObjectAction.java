@@ -57,7 +57,7 @@ public final class ConvertToPolyObjectAction extends AbstractAction
     private final Collection<? extends ScoreObject> scoreObjects;
     private final Collection<? extends SoundObject> soundObjects;
     private final Point p;
-    private PolyObject pObj = new PolyObject();
+    private final PolyObject pObj = new PolyObject();
     private final ScorePath scorePath;
 
     public ConvertToPolyObjectAction() {

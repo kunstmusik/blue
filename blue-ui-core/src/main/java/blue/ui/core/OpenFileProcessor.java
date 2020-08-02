@@ -43,7 +43,7 @@ public class OpenFileProcessor extends OptionProcessor {
 
     private static final Logger log = Logger.getLogger(OpenFileProcessor.class.getName());
 
-    private Option c = Option.defaultArguments();
+    private final Option c = Option.defaultArguments();
 
     @Override
     protected Set<Option> getOptions() {

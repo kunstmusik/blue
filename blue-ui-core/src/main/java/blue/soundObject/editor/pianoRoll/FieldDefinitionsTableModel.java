@@ -45,7 +45,7 @@ public class FieldDefinitionsTableModel implements TableModel, ListChangeListene
 
     private final ObservableList<FieldDef> fieldDefinitions;
 
-    private Set<TableModelListener> listeners = new HashSet<>();
+    private final Set<TableModelListener> listeners = new HashSet<>();
 
     public FieldDefinitionsTableModel(ObservableList<FieldDef> fieldDefinitions) {
         this.fieldDefinitions = fieldDefinitions;
@@ -121,7 +121,6 @@ public class FieldDefinitionsTableModel implements TableModel, ListChangeListene
                 def.setDefaultValue((double) aValue);
                 break;
             default:
-                ;
         }
 
         TableModelEvent tme = new TableModelEvent(this, rowIndex, rowIndex, columnIndex);

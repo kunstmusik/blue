@@ -43,12 +43,12 @@ public class BlueSynthBuilderEditor extends InstrumentEditor {
 
     private BlueSynthBuilder bsb;
 
-    private BSBInterfaceEditor interfaceEditor = new BSBInterfaceEditor(
+    private final BSBInterfaceEditor interfaceEditor = new BSBInterfaceEditor(
             BSBObjectRegistry.getBSBObjects(), true);
 
-    private BSBCodeEditor codeEditor = new BSBCodeEditor();
+    private final BSBCodeEditor codeEditor = new BSBCodeEditor();
 
-    private EmbeddedOpcodeListPanel udoPanel = new EmbeddedOpcodeListPanel();
+    private final EmbeddedOpcodeListPanel udoPanel = new EmbeddedOpcodeListPanel();
 
     JLabel label = new JLabel("[ Blue Synth Builder ]");
     JTabbedPane tabs = new JTabbedPane();

@@ -19,9 +19,13 @@ package blue.tools.blueShare.soundObjects;
  */
 
 public class SoundObjectOption {
-    private int soundObjectId;
+    private final int soundObjectId;
 
-    private String screenName, name, type, description, category;
+    private final String screenName;
+    private final String name;
+    private final String type;
+    private final String description;
+    private final String category;
 
     public SoundObjectOption(int soundObjectId, String screenName, String name,
             String type, String description, String category) {

@@ -44,7 +44,7 @@ public class FrozenSoundObjectView extends SoundObjectView {
 
     private AudioWaveformData audioWaveformData = null;
 
-    private static Font renderFont = new Font("Dialog", Font.BOLD, 12);
+    private static final Font renderFont = new Font("Dialog", Font.BOLD, 12);
 
     protected static Color selectedBgColor = Color.white;
 
@@ -57,13 +57,13 @@ public class FrozenSoundObjectView extends SoundObjectView {
 
     protected static Color normalBgColor = new Color(193, 205, 205);
 
-    private static Color normalBorder1 = normalBgColor.brighter().brighter();
+    private static final Color normalBorder1 = normalBgColor.brighter().brighter();
 
-    private static Color normalBorder2 = normalBgColor.darker().darker();
+    private static final Color normalBorder2 = normalBgColor.darker().darker();
 
     protected static Color normalFontColor = Color.black;
 
-    private static Color shadeColor = new Color(0, 0, 0, 64);
+    private static final Color shadeColor = new Color(0, 0, 0, 64);
 
     @Override
     protected void paintComponent(Graphics graphics) {

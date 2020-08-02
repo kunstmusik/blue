@@ -111,11 +111,7 @@ class CodeRepositoryPopup extends JPopupMenu implements ActionListener {
         if (elem.isGroup) {
             addGroup.setVisible(true);
 
-            if (elem.title.equals(BlueSystem.getString("codeRepository.title"))) {
-                removeGroup.setVisible(false);
-            } else {
-                removeGroup.setVisible(true);
-            }
+            removeGroup.setVisible(!elem.title.equals(BlueSystem.getString("codeRepository.title")));
             addCode.setVisible(true);
             removeCode.setVisible(false);
         } else {

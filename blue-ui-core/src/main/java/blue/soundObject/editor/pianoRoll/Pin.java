@@ -41,9 +41,9 @@ import javax.swing.JPanel;
  */
 class Pin extends JPanel {
 
-    private static Color NORMAL_COLOR = Color.GRAY;
+    private static final Color NORMAL_COLOR = Color.GRAY;
 
-    private static Color SELECTED_COLOR = Color.WHITE;
+    private static final Color SELECTED_COLOR = Color.WHITE;
 
     public final Field field;
     public final PianoNote note;
@@ -54,15 +54,15 @@ class Pin extends JPanel {
 
     private Color drawColor;
 
-    private javax.swing.event.ChangeListener cl = src -> updateLocation();
+    private final javax.swing.event.ChangeListener cl = src -> updateLocation();
 
-    private PropertyChangeListener pcl = pce -> {
+    private final PropertyChangeListener pcl = pce -> {
         if ("start".equals(pce.getPropertyName())) {
             updateLocation();
         }
     };
 
-    private ChangeListener<? super Number> valueListener = (obs, old, newVal) -> updateLocation();
+    private final ChangeListener<? super Number> valueListener = (obs, old, newVal) -> updateLocation();
 
     ListChangeListener<PianoNote> lcl;
 

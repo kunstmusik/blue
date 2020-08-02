@@ -48,7 +48,7 @@ public class ScoreTimelineDropTargetListener implements DropTargetListener {
 
     DropTarget target;
 
-    private ScoreTimeCanvas sTimeCanvas;
+    private final ScoreTimeCanvas sTimeCanvas;
 
     TimeState timeState;
 

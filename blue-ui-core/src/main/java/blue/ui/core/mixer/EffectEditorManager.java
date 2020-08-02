@@ -39,7 +39,7 @@ public class EffectEditorManager {
 
     private static EffectEditorManager manager = null;
 
-    private Map<Effect, WeakReference<JDialog>> map = new WeakHashMap<>();
+    private final Map<Effect, WeakReference<JDialog>> map = new WeakHashMap<>();
 
     private EffectEditorManager() {
     }

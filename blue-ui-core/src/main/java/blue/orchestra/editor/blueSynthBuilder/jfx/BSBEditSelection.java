@@ -38,7 +38,7 @@ import javafx.scene.layout.Pane;
  */
 public class BSBEditSelection {
 
-    private static ObservableSet<BSBObject> copyBuffer = FXCollections.observableSet();
+    private static final ObservableSet<BSBObject> copyBuffer = FXCollections.observableSet();
     
     public final ObservableSet<BSBObject> selection;
     private final Map<BSBObject, Point> startPositions;

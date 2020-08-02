@@ -19,9 +19,12 @@ package blue.tools.blueShare.effects;
  */
 
 public class EffectOption {
-    private int instrumentId;
+    private final int instrumentId;
 
-    private String screenName, name, description, category;
+    private final String screenName;
+    private final String name;
+    private final String description;
+    private final String category;
 
     public EffectOption(int instrumentId, String screenName, String name,
             String description, String category) {

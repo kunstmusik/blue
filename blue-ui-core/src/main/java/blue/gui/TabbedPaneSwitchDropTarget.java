@@ -26,7 +26,7 @@ import java.awt.dnd.DropTargetDropEvent;
 import javax.swing.JTabbedPane;
 
 public class TabbedPaneSwitchDropTarget extends DropTargetAdapter {
-    private JTabbedPane tabs;
+    private final JTabbedPane tabs;
 
     public TabbedPaneSwitchDropTarget(JTabbedPane viewSelectPane) {
         this.tabs = viewSelectPane;

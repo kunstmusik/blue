@@ -45,7 +45,7 @@ public class MultiLineScoreSelection {
     ResizeMode scaleDirection = ResizeMode.NONE;
     Collection<? extends Layer> selectedLayers = new HashSet<>();
 
-    private Set<MultiLineScoreSelectionListener> listeners = new HashSet<>();
+    private final Set<MultiLineScoreSelectionListener> listeners = new HashSet<>();
 
     private static MultiLineScoreSelection INSTANCE = null;
 
