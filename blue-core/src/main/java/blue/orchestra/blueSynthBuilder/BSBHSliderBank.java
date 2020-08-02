@@ -50,14 +50,14 @@ import javafx.collections.ObservableList;
 public class BSBHSliderBank extends AutomatableBSBObject implements
         ParameterListener, Randomizable {
 
-    private static MessageFormat KEY_FMT = new MessageFormat("{0}_{1}");
+    private static final MessageFormat KEY_FMT = new MessageFormat("{0}_{1}");
 
     private ClampedValue value;
 
-    private IntegerProperty sliderWidth = new SimpleIntegerProperty(150);
-    private IntegerProperty gap = new SimpleIntegerProperty(5);
-    private BooleanProperty randomizable = new SimpleBooleanProperty(true);
-    private BooleanProperty valueDisplayEnabled = new SimpleBooleanProperty(true);
+    private final IntegerProperty sliderWidth = new SimpleIntegerProperty(150);
+    private final IntegerProperty gap = new SimpleIntegerProperty(5);
+    private final BooleanProperty randomizable = new SimpleBooleanProperty(true);
+    private final BooleanProperty valueDisplayEnabled = new SimpleBooleanProperty(true);
 
     private final ObservableList<BSBHSlider> sliders
             = FXCollections.observableArrayList();

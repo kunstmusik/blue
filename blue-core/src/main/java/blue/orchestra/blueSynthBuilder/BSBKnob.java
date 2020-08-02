@@ -54,13 +54,13 @@ public class BSBKnob extends AutomatableBSBObject implements ParameterListener,
     };
 
     private ClampedValue knobValue;
-    private IntegerProperty knobWidth = new SimpleIntegerProperty(60);
-    private BooleanProperty randomizable = new SimpleBooleanProperty(true);
-    private BooleanProperty valueDisplayEnabled = new SimpleBooleanProperty(true);
+    private final IntegerProperty knobWidth = new SimpleIntegerProperty(60);
+    private final BooleanProperty randomizable = new SimpleBooleanProperty(true);
+    private final BooleanProperty valueDisplayEnabled = new SimpleBooleanProperty(true);
 
-    private StringProperty label = new SimpleStringProperty("label");
-    private BooleanProperty labelEnabled = new SimpleBooleanProperty(true);
-    private ObjectProperty<Font> labelFont = new SimpleObjectProperty<>(new Font(12));
+    private final StringProperty label = new SimpleStringProperty("label");
+    private final BooleanProperty labelEnabled = new SimpleBooleanProperty(true);
+    private final ObjectProperty<Font> labelFont = new SimpleObjectProperty<>(new Font(12));
 
     public BSBKnob() {
         knobValue = new ClampedValue(0.0, 1.0, 0.0, new BigDecimal(-1.0));

@@ -28,7 +28,7 @@ import electric.xml.Element;
  * @author stevenyi
  */
 public abstract class ProjectUpgrader {
-    private ProjectVersion version;
+    private final ProjectVersion version;
     
     public ProjectUpgrader(String versionString) {
         this.version = ProjectVersion.parseVersion(versionString);

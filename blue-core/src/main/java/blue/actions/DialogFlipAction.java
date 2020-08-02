@@ -26,7 +26,7 @@ import javax.swing.KeyStroke;
 
 public class DialogFlipAction extends BlueAction {
 
-    private JDialog dialog;
+    private final JDialog dialog;
 
     public DialogFlipAction(String resourceName, JDialog dialog) {
         this(resourceName, dialog, null);

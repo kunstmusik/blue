@@ -68,7 +68,7 @@ public class BSBFileSelectorBeanInfo extends SimpleBeanInfo {
     // EventSet identifiers//GEN-FIRST:Events
 
     // EventSet array
-    private static EventSetDescriptor[] eventSets = new EventSetDescriptor[0];
+    private static final EventSetDescriptor[] eventSets = new EventSetDescriptor[0];
 
     private static EventSetDescriptor[] getEdescriptor(){
         return eventSets;
@@ -80,7 +80,7 @@ public class BSBFileSelectorBeanInfo extends SimpleBeanInfo {
     // Method identifiers//GEN-FIRST:Methods
 
     // Method array 
-    private static MethodDescriptor[] methods = new MethodDescriptor[0];
+    private static final MethodDescriptor[] methods = new MethodDescriptor[0];
 
     private static MethodDescriptor[] getMdescriptor(){
         return methods;
@@ -93,10 +93,10 @@ public class BSBFileSelectorBeanInfo extends SimpleBeanInfo {
     private static java.awt.Image iconColor32 = null;
     private static java.awt.Image iconMono16 = null;
     private static java.awt.Image iconMono32 = null;//GEN-END:IconsDef
-    private static String iconNameC16 = null;//GEN-BEGIN:Icons
-    private static String iconNameC32 = null;
-    private static String iconNameM16 = null;
-    private static String iconNameM32 = null;//GEN-END:Icons
+    private static final String iconNameC16 = null;//GEN-BEGIN:Icons
+    private static final String iconNameC32 = null;
+    private static final String iconNameM16 = null;
+    private static final String iconNameM32 = null;//GEN-END:Icons
 
     private static final int defaultPropertyIndex = -1;//GEN-BEGIN:Idx
     private static final int defaultEventIndex = -1;//GEN-END:Idx

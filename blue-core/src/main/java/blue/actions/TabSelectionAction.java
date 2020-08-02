@@ -25,9 +25,9 @@ import javax.swing.KeyStroke;
 
 public class TabSelectionAction extends BlueAction {
 
-    private JTabbedPane tabs;
+    private final JTabbedPane tabs;
 
-    private int index;
+    private final int index;
 
     public TabSelectionAction(String resourceName, KeyStroke keyStroke,
             JTabbedPane tabs, int index) {

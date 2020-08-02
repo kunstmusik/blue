@@ -48,7 +48,7 @@ public class CompileData {
     private final Map<Channel, Integer> channelIdAssignments;
     private final Map<Instrument, String> instrSourceId;
     private boolean handleParametersAndChannels = true;
-    private StringBuilder globalOrc;
+    private final StringBuilder globalOrc;
     
 
     public static CompileData createEmptyCompileData() {

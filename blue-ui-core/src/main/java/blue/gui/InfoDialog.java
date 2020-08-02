@@ -53,7 +53,6 @@ import org.openide.windows.WindowManager;
  */
 public class InfoDialog {
 
-    private static final JPanel infoPanel = null;
     private static JDialog dialog = null;
 
     private static JTabbedPane tabs = null;

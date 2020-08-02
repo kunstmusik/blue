@@ -42,15 +42,15 @@ public abstract class BSBObject implements DeepCopyable<BSBObject> {
      * Object name should be non-null and unique within BSBGraphicsInterface
      * collection
      */
-    private StringProperty objectName;
+    private final StringProperty objectName;
 
     // String label = "";
 
-    private IntegerProperty x;
-    private IntegerProperty y;
+    private final IntegerProperty x;
+    private final IntegerProperty y;
     
     /** Comment will show as part of the tool tip in usage mode */
-    private StringProperty comment;
+    private final StringProperty comment;
 
     public BSBObject() {
         x = new SimpleIntegerProperty(0);

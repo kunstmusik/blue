@@ -43,10 +43,10 @@ import javax.swing.SwingUtilities;
  */
 public class ClampedValue {
 
-    private DoubleProperty value;
-    private DoubleProperty min;
-    private DoubleProperty max;
-    private ObjectProperty<BigDecimal> resolution;
+    private final DoubleProperty value;
+    private final DoubleProperty min;
+    private final DoubleProperty max;
+    private final ObjectProperty<BigDecimal> resolution;
 
     List<ClampedValueListener> listeners = null;
 

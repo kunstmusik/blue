@@ -53,7 +53,7 @@ public class Mixer {
 
     public static final String MASTER_CHANNEL = "Master";
 
-    private ObservableList<ChannelList> channelListGroups = 
+    private final ObservableList<ChannelList> channelListGroups =
             new ObservableArrayList<>();
 
     private ChannelList channels = new ChannelList();

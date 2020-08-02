@@ -32,8 +32,6 @@ import javax.swing.SwingUtilities;
 
 public class LineEditorDialog extends BaseDialog {
 
-    private static final LineEditorDialog lineEditorDialog = null;
-
     private static final WeakHashMap<Component,LineEditorDialog> map = new WeakHashMap<>();
 
     JTable lineTable = new JTable();

@@ -37,8 +37,6 @@ public class MarkersList implements TableModel, PropertyChangeListener {
 
     private transient Vector listeners = null;
 
-    private transient Vector listListeners = null;
-
     public MarkersList() {
     }
 

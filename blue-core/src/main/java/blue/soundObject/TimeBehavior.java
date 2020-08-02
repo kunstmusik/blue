@@ -36,9 +36,9 @@ public enum TimeBehavior {
     REPEAT(3)
     ;
     
-    private int type;
+    private final int type;
 
-    private TimeBehavior(int type) {
+    TimeBehavior(int type) {
         this.type = type;
     }
     

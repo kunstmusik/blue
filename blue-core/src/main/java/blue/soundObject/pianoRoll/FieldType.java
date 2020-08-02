@@ -24,5 +24,5 @@ package blue.soundObject.pianoRoll;
  * @author stevenyi
  */
 public enum FieldType {
-    DISCRETE, CONTINUOUS;
+    DISCRETE, CONTINUOUS
 }

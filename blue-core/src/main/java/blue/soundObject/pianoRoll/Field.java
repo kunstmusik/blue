@@ -32,7 +32,7 @@ public class Field {
 
     private FieldDef fieldDef;
 
-    private DoubleProperty value;
+    private final DoubleProperty value;
 
     public Field(FieldDef fieldDef) {
         this.fieldDef = fieldDef;

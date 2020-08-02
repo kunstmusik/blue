@@ -38,7 +38,7 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 
 public class EffectsChain implements ListModel, PropertyChangeListener {
 
-    private ArrayList effects = new ArrayList();
+    private final ArrayList effects = new ArrayList();
 
     private transient List<ListDataListener> listeners = null;
 

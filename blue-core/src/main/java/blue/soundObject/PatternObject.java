@@ -60,7 +60,7 @@ public class PatternObject extends AbstractSoundObject implements TableModel,
 
     private transient Vector pListeners = null;
 
-    private ArrayList<Pattern> patterns = new ArrayList<>();
+    private final ArrayList<Pattern> patterns = new ArrayList<>();
 
     public PatternObject() {
         this.setName("Pattern");

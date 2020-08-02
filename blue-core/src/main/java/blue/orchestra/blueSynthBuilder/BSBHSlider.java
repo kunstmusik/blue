@@ -53,10 +53,10 @@ public class BSBHSlider extends AutomatableBSBObject implements
 
     private ClampedValue value;
 
-    private IntegerProperty sliderWidth = new SimpleIntegerProperty(150);
+    private final IntegerProperty sliderWidth = new SimpleIntegerProperty(150);
 
-    private BooleanProperty randomizable = new SimpleBooleanProperty(true);
-    private BooleanProperty valueDisplayEnabled = new SimpleBooleanProperty(true);
+    private final BooleanProperty randomizable = new SimpleBooleanProperty(true);
+    private final BooleanProperty valueDisplayEnabled = new SimpleBooleanProperty(true);
 
     public BSBHSlider() {
         value = new ClampedValue(0.0, 1.0, 0.0, new BigDecimal("0.1"));

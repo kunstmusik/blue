@@ -35,9 +35,9 @@ public class SelectionEvent<T> {
 
     public static final Object SELECTION_BLUE_LIVE = new Object();
     
-    private T itemSelected;
+    private final T itemSelected;
 
-    private int selectionType;
+    private final int selectionType;
     private Object selectionSubType = null;
 
     public SelectionEvent(T itemSelected, int selectionType) {

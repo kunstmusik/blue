@@ -51,7 +51,7 @@ public class Parameter implements TableModelListener {
     private String name = "";
     private String label = "";
     private BigDecimal resolution = new BigDecimal(-1);
-    private BooleanProperty automationEnabled = new SimpleBooleanProperty(false);
+    private final BooleanProperty automationEnabled = new SimpleBooleanProperty(false);
 
     private boolean updatingLine = false;
     private String uniqueId;

@@ -25,7 +25,7 @@ public class BlueUndoManager {
 
     private static JMenuItem redoMenuItem;
 
-    private static ActionListener al;
+    private static final ActionListener al;
 
     static {
         al = new ActionListener() {

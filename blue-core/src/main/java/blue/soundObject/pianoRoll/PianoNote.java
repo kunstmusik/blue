@@ -245,7 +245,7 @@ public class PianoNote implements Comparable<PianoNote> {
 
     public Optional<Field> getField(FieldDef fieldDef) {
         if (fieldDef == null) {
-            return Optional.<Field>empty();
+            return Optional.empty();
         }
         return fields.stream().filter(f -> f.getFieldDef() == fieldDef).findFirst();
     }

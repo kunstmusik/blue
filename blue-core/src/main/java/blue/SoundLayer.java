@@ -51,7 +51,7 @@ public final class SoundLayer extends ArrayList<SoundObject>
 
     private transient Vector<SoundLayerListener> layerListeners = null;
 
-    private static Comparator sObjComparator = new Comparator() {
+    private static final Comparator sObjComparator = new Comparator() {
 
         @Override
         public int compare(Object arg0, Object arg1) {
@@ -73,7 +73,7 @@ public final class SoundLayer extends ArrayList<SoundObject>
 
     };
 
-    private ParameterIdList automationParameters; 
+    private final ParameterIdList automationParameters;
 
     private String name = "";
 

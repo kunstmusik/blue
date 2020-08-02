@@ -50,19 +50,19 @@ public class BSBGroup extends BSBObject implements Iterable<BSBObject>, UniqueNa
 
     private transient ParameterList parameterList;
     private transient ObservableSet<BSBObject> allSet;
-    private StringProperty groupName = new SimpleStringProperty("Group");
-    private ObjectProperty<Color> backgroundColor = 
+    private final StringProperty groupName = new SimpleStringProperty("Group");
+    private final ObjectProperty<Color> backgroundColor =
             new SimpleObjectProperty<>(new Color(0,0,0,.2));
-    private ObjectProperty<Color> borderColor = 
+    private final ObjectProperty<Color> borderColor =
             new SimpleObjectProperty<>(Color.BLACK);
-    private ObjectProperty<Color> labelTextColor = 
+    private final ObjectProperty<Color> labelTextColor =
             new SimpleObjectProperty<>(Color.WHITE);
-    private BooleanProperty titleEnabled = new SimpleBooleanProperty(true);
+    private final BooleanProperty titleEnabled = new SimpleBooleanProperty(true);
 
     private final IntegerProperty width = new SimpleIntegerProperty(20);
     private final IntegerProperty height = new SimpleIntegerProperty(20);
 
-    private Set<BSBObject> backingSet = new HashSet<BSBObject>() {
+    private final Set<BSBObject> backingSet = new HashSet<BSBObject>() {
         @Override
         public boolean add(BSBObject bsbObj) {
             String objName = bsbObj.getObjectName();
@@ -97,7 +97,7 @@ public class BSBGroup extends BSBObject implements Iterable<BSBObject>, UniqueNa
         }
     };
 
-    private ObservableSet<BSBObject> interfaceItems
+    private final ObservableSet<BSBObject> interfaceItems
             = FXCollections.observableSet(backingSet);
 
     SetChangeListener<BSBObject> itemsListener = (change) -> {

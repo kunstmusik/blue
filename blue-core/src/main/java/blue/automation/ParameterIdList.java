@@ -41,7 +41,7 @@ public class ParameterIdList implements Iterable<String> {
         }
     };
 
-    private ArrayList<String> parameters;
+    private final ArrayList<String> parameters;
 
     private int selectedIndex = -1;
 

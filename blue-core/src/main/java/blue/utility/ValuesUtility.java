@@ -60,11 +60,11 @@ public class ValuesUtility {
 
     public static void main(String[] args) {
         Object obj = new Object() {
-            String val1 = "test";
+            final String val1 = "test";
 
-            String val2 = "test2";
+            final String val2 = "test2";
 
-            String val3 = null;
+            final String val3 = null;
         };
 
         System.out.println(ToStringBuilder.reflectionToString(obj));

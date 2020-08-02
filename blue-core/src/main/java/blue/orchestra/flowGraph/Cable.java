@@ -2,11 +2,11 @@ package blue.orchestra.flowGraph;
 
 public class Cable {
 
-    private GraphUnit send;
+    private final GraphUnit send;
 
     int sendPortIndex;
 
-    private GraphUnit receive;
+    private final GraphUnit receive;
 
     int receivePortIndex;
 
