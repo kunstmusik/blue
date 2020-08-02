@@ -317,14 +317,13 @@ public class NoteCanvasMouseListener extends MouseAdapter {
      */
     @Override
     public void mouseDragged(MouseEvent e) {
-        if (start == null || dragMode == DragMode.NONE) {
+        if (dragMode == DragMode.NONE) {
             return;
         }
 
         switch (dragMode) {
             case SELECTING:
                 canvas.marquee.setDragPoint(e.getPoint());
-                checkScroll(e);
                 break;
             case FIELD_EDIT:
                 modifyFields(e);
