@@ -95,7 +95,7 @@ public class NoteCanvasMouseListener extends MouseAdapter {
 
                 if (c != Cursor.getPredefinedCursor(Cursor.E_RESIZE_CURSOR)
                         && c != Cursor.getPredefinedCursor(Cursor.W_RESIZE_CURSOR)) {
-                    if ((key.getModifiers() & OS_CTRL_KEY) == OS_CTRL_KEY) {
+                    if ((key.getModifiers() & OS_CTRL_KEY) == OS_CTRL_KEY && canvas.getSelectedFieldDef() != null) {
                         mouseMoveNoteView.setCursor(Cursor.getPredefinedCursor(Cursor.S_RESIZE_CURSOR));
                         canvas.setCursor(Cursor.getPredefinedCursor(Cursor.S_RESIZE_CURSOR));
                     } else {
@@ -140,13 +140,14 @@ public class NoteCanvasMouseListener extends MouseAdapter {
                 var noteView = (PianoNoteView) comp;
                 var note = noteView.getPianoNote();
 
-                if ((e.getModifiers() & OS_CTRL_KEY) == OS_CTRL_KEY) {
+                if ((e.getModifiers() & OS_CTRL_KEY) == OS_CTRL_KEY &&  canvas.getSelectedFieldDef() != null) {
                     // MODIFY NOTE FIELD DATA
                     var fieldDef = canvas.getSelectedFieldDef();
-
-                    if (fieldDef == null) {
-                        dragMode = DragMode.NONE;
+                    
+                    if(!selectedNotes.contains(note)) {
+                        selectedNotes.add(note);
                     }
+                    
                     start = e.getPoint();
                     dragMode = DragMode.FIELD_EDIT;
 
@@ -509,7 +510,8 @@ public class NoteCanvasMouseListener extends MouseAdapter {
             mouseMoveNoteView = (PianoNoteView) comp;
             var x = e.getX();
 
-            if ((e.getModifiers() & OS_CTRL_KEY) == OS_CTRL_KEY) {
+            if ((e.getModifiers() & OS_CTRL_KEY) == OS_CTRL_KEY
+                    && canvas.getSelectedFieldDef() != null) {
                 comp.setCursor(Cursor.getPredefinedCursor(Cursor.S_RESIZE_CURSOR));
                 canvas.setCursor(Cursor.getPredefinedCursor(Cursor.S_RESIZE_CURSOR));
             } else if (x > (comp.getX() + comp.getWidth() - EDGE)) {
