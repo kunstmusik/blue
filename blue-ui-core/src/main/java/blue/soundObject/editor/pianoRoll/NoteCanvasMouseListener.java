@@ -70,6 +70,7 @@ public class NoteCanvasMouseListener extends MouseAdapter {
 
     Cursor canvasCursor = Cursor.getDefaultCursor();
     PianoNoteView mouseMoveNoteView = null;
+    boolean noteJustAdded = false;
 
     public NoteCanvasMouseListener(PianoRollCanvas canvas, ObservableList<PianoNote> selectedNotes) {
         this.canvas = canvas;
@@ -122,6 +123,7 @@ public class NoteCanvasMouseListener extends MouseAdapter {
         Component comp = canvas.getComponentAt(e.getPoint());
 
         dragMode = DragMode.NONE;
+        noteJustAdded = false;
 
         if (UiUtilities.isRightMouseButton(e)) {
             if (comp instanceof PianoNoteView) {
@@ -140,14 +142,14 @@ public class NoteCanvasMouseListener extends MouseAdapter {
                 var noteView = (PianoNoteView) comp;
                 var note = noteView.getPianoNote();
 
-                if ((e.getModifiers() & OS_CTRL_KEY) == OS_CTRL_KEY &&  canvas.getSelectedFieldDef() != null) {
+                if ((e.getModifiers() & OS_CTRL_KEY) == OS_CTRL_KEY && canvas.getSelectedFieldDef() != null) {
                     // MODIFY NOTE FIELD DATA
                     var fieldDef = canvas.getSelectedFieldDef();
-                    
-                    if(!selectedNotes.contains(note)) {
+
+                    if (!selectedNotes.contains(note)) {
                         selectedNotes.add(note);
                     }
-                    
+
                     start = e.getPoint();
                     dragMode = DragMode.FIELD_EDIT;
 
@@ -252,6 +254,7 @@ public class NoteCanvasMouseListener extends MouseAdapter {
                 mouseNote = note;
 
                 dragMode = DragMode.RESIZE_RIGHT;
+                noteJustAdded = true;
 
             } else {
                 // MARQUEE SELECT NOTES
@@ -360,6 +363,7 @@ public class NoteCanvasMouseListener extends MouseAdapter {
         start = null;
         noteSourceData.clear();
         dragMode = DragMode.NONE;
+        noteJustAdded = false;
     }
 
     private void checkScroll(MouseEvent e) {
@@ -473,8 +477,10 @@ public class NoteCanvasMouseListener extends MouseAdapter {
         var timeAdjust = (mouseX - start.x) / (double) pixelSecond;
         timeAdjust = Math.max(timeAdjust, noteSourceData.minTimeAdjust + minDur);
 
-        if (snapEnabled && !e.isShiftDown()
-                || e.isShiftDown() && !snapEnabled) {
+        var processSnap = noteJustAdded ? snapEnabled
+                : (snapEnabled && !e.isShiftDown() || e.isShiftDown() && !snapEnabled);
+
+        if (processSnap) {
             double snapValue = canvas.p.getSnapValue();
             var mouseNsd = noteSourceData.noteSourceData.stream()
                     .filter(nsd -> nsd.pianoNote == mouseNote).findFirst();
