@@ -56,6 +56,8 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javax.swing.BorderFactory;
@@ -81,11 +83,14 @@ public class PianoRollEditor extends ScoreObjectEditor implements
 
     ObservableList<PianoNote> selectedNotes = FXCollections.observableArrayList();
 
+    ObjectProperty<FieldDef> selectedFieldDef = new SimpleObjectProperty<>();
+
     PianoRollPropertiesEditor props = new PianoRollPropertiesEditor(selectedNotes);
 
     ScaleLinear fieldEditorYScale = new ScaleLinear(0, 1, 0, 1);
 
-    PianoRollCanvas noteCanvas = new PianoRollCanvas(selectedNotes, fieldEditorYScale);
+    PianoRollCanvas noteCanvas = new PianoRollCanvas(selectedNotes,
+            selectedFieldDef, fieldEditorYScale);
 
     PianoRollCanvasHeader noteHeader = new PianoRollCanvasHeader(selectedNotes);
 
@@ -99,9 +104,9 @@ public class PianoRollEditor extends ScoreObjectEditor implements
 
     JToggleButton snapButton = new JToggleButton();
 
-    FieldSelectorView fieldSelectorView = new FieldSelectorView();
+    FieldSelectorView fieldSelectorView = new FieldSelectorView(selectedFieldDef);
 
-    FieldEditor fieldEditor = new FieldEditor(selectedNotes, fieldEditorYScale);
+    FieldEditor fieldEditor = new FieldEditor(selectedNotes, selectedFieldDef, fieldEditorYScale);
 
     private PianoRoll p;
 
@@ -175,13 +180,6 @@ public class PianoRollEditor extends ScoreObjectEditor implements
             @Override
             public void componentResized(ComponentEvent e) {
                 noteCanvas.recalculateSize();
-            }
-        });
-
-        fieldSelectorView.addPropertyChangeListener(evt -> {
-            if ("selectedFieldDef".equals(evt.getPropertyName())) {
-                fieldEditor.setSelectedFieldDef((FieldDef) evt.getNewValue());
-                noteCanvas.setSelectedFieldDef((FieldDef) evt.getNewValue());
             }
         });
 
@@ -284,7 +282,7 @@ public class PianoRollEditor extends ScoreObjectEditor implements
 
         noteSP.add(splitter, PianoRollScrollPaneLayout.SPLITTER);
 
-        noteSP.putClientProperty("SplitterLocation", 100);
+        noteSP.putClientProperty("SplitterLocation", 60);
 
         // sync fiew view port position to time bar viewport's location
         noteScrollPane.getColumnHeader().addChangeListener(evt -> {

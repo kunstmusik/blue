@@ -31,6 +31,7 @@ import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import javafx.beans.property.ObjectProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
@@ -47,7 +48,7 @@ public class FieldEditor extends JPanel {
     FieldDef selectedField = null;
 
     private final ObservableList<PianoNote> selectedNotes;
-
+    private final ObjectProperty<FieldDef> selectedFieldDef;
     final ScaleLinear yScale;
 
     ChangeListener<? super Number> domainListener;
@@ -56,8 +57,11 @@ public class FieldEditor extends JPanel {
 
     ListChangeListener<PianoNote> lcl;
 
-    public FieldEditor(ObservableList<PianoNote> selectedNotes, ScaleLinear yScale) {
+    public FieldEditor(ObservableList<PianoNote> selectedNotes,
+            ObjectProperty<FieldDef> selectedFieldDef,
+            ScaleLinear yScale) {
         this.selectedNotes = selectedNotes;
+        this.selectedFieldDef = selectedFieldDef;
         this.yScale = yScale;
 
         setLayout(null);
@@ -121,6 +125,12 @@ public class FieldEditor extends JPanel {
         domainListener = (ov, t, t1) -> {
             yScale.setDomain(selectedField.getMinValue(), selectedField.getMaxValue());
         };
+        
+        
+        ChangeListener<? super FieldDef> selectedFieldListener = (obs, old, newVal) -> {
+            updateSelectedFieldDef(newVal);
+        };
+        selectedFieldDef.addListener(selectedFieldListener);
     }
 
     public void editPianoRoll(PianoRoll p) {
@@ -132,10 +142,6 @@ public class FieldEditor extends JPanel {
         if (this.p != null) {
             this.p.getNotes().addListener(lcl);
         }
-
-        var fieldDefinitions = p.getFieldDefinitions();
-        setSelectedFieldDef((fieldDefinitions.isEmpty()) ? null : fieldDefinitions.get(0));
-
     }
 
     @Override
@@ -170,7 +176,7 @@ public class FieldEditor extends JPanel {
         }
     }
 
-    public void setSelectedFieldDef(FieldDef fieldDef) {
+    private void updateSelectedFieldDef(FieldDef fieldDef) {
 
         if (selectedField != null) {
             selectedField.minValueProperty().removeListener(domainListener);

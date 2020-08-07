@@ -28,12 +28,10 @@ import blue.soundObject.pianoRoll.PianoNote;
 import blue.utilities.scales.ScaleLinear;
 import java.awt.Color;
 import java.awt.Component;
-import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.GradientPaint;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
-import java.awt.KeyboardFocusManager;
 import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ComponentAdapter;
@@ -47,6 +45,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.List;
+import javafx.beans.property.ObjectProperty;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javax.swing.AbstractAction;
@@ -91,14 +90,15 @@ public class PianoRollCanvas extends JLayeredPane implements Scrollable,
     private final NoteCanvasMouseListener nMouse;
 
     private final ObservableList<PianoNote> selectedNotes;
-    private FieldDef selectedFieldDef = null;
     private final ScaleLinear fieldEditorYScale;
 
     public ScaleLinear getFieldEditorYScale() {
         return fieldEditorYScale;
     }
 
-    public PianoRollCanvas(ObservableList<PianoNote> selectedNotes, ScaleLinear fieldEditorYScale) {
+    public PianoRollCanvas(ObservableList<PianoNote> selectedNotes, 
+            ObjectProperty<FieldDef> selectedFieldDef,
+            ScaleLinear fieldEditorYScale) {
 
         this.selectedNotes = selectedNotes;
         this.fieldEditorYScale = fieldEditorYScale;
@@ -107,7 +107,7 @@ public class PianoRollCanvas extends JLayeredPane implements Scrollable,
         recalculateSize();
         this.setBackground(Color.black);
 
-        nMouse = new NoteCanvasMouseListener(this, selectedNotes);
+        nMouse = new NoteCanvasMouseListener(this, selectedNotes, selectedFieldDef);
 
         cl = new ComponentAdapter() {
 
@@ -635,13 +635,5 @@ public class PianoRollCanvas extends JLayeredPane implements Scrollable,
                 }
             }
         }
-    }
-
-    public void setSelectedFieldDef(FieldDef fieldDef) {
-        this.selectedFieldDef = fieldDef;
-    }
-
-    public FieldDef getSelectedFieldDef() {
-        return selectedFieldDef;
-    }
+    }    
 }

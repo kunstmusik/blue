@@ -7,6 +7,7 @@ package blue.soundObject.editor.pianoRoll;
 
 import blue.soundObject.pianoRoll.FieldDef;
 import blue.utility.ListUtil;
+import javafx.beans.property.ObjectProperty;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javax.swing.DefaultComboBoxModel;
@@ -19,12 +20,13 @@ public class FieldSelectorView extends javax.swing.JPanel implements ListChangeL
 
     private ObservableList<FieldDef> fieldDefinitions;
     
-    FieldDef currentFieldDef = null;
+    private final ObjectProperty<FieldDef> selectedFieldDef;
 
     /**
      * Creates new form FieldSelectorView
      */
-    public FieldSelectorView() {
+    public FieldSelectorView(ObjectProperty<FieldDef> selectedFieldDef) {
+        this.selectedFieldDef = selectedFieldDef;
         initComponents();
     }
 
@@ -44,8 +46,7 @@ public class FieldSelectorView extends javax.swing.JPanel implements ListChangeL
         fieldSelectorComboBox.setSelectedIndex(fieldDefinitions.isEmpty() ? -1 : 0);
 
         var selected = (FieldDef) fieldSelectorComboBox.getSelectedItem();
-        firePropertyChange("selectedFieldDef", currentFieldDef, selected);
-        currentFieldDef = selected;
+        selectedFieldDef.setValue(selected);
 
     }
 
@@ -73,8 +74,7 @@ public class FieldSelectorView extends javax.swing.JPanel implements ListChangeL
     private void fieldSelectorComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_fieldSelectorComboBoxActionPerformed
         var selected = (FieldDef) fieldSelectorComboBox.getSelectedItem();
 
-        firePropertyChange("selectedFieldDef", currentFieldDef, selected);
-        currentFieldDef = selected;
+        selectedFieldDef.setValue(selected);
     }//GEN-LAST:event_fieldSelectorComboBoxActionPerformed
 
 
@@ -101,8 +101,7 @@ public class FieldSelectorView extends javax.swing.JPanel implements ListChangeL
         var selected = (FieldDef) fieldSelectorComboBox.getSelectedItem();
 
         if (selected != currentSelected) {
-            firePropertyChange("selectedFieldDef", currentFieldDef, selected);
-            currentFieldDef = selected;
+            selectedFieldDef.setValue(selected);
         }
     }
 
