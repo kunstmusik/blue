@@ -24,6 +24,7 @@ import blue.components.AlphaMarquee;
 import blue.soundObject.PianoRoll;
 import blue.soundObject.pianoRoll.Field;
 import blue.soundObject.pianoRoll.FieldDef;
+import blue.soundObject.pianoRoll.FieldType;
 import blue.soundObject.pianoRoll.PianoNote;
 import blue.utilities.scales.ScaleLinear;
 import java.awt.Color;
@@ -41,6 +42,7 @@ import java.awt.event.ContainerEvent;
 import java.awt.event.ContainerListener;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
@@ -58,6 +60,7 @@ import javax.swing.JPopupMenu;
 import javax.swing.KeyStroke;
 import javax.swing.Scrollable;
 import javax.swing.SwingConstants;
+import javax.swing.ToolTipManager;
 
 /**
  * @author steven
@@ -91,16 +94,18 @@ public class PianoRollCanvas extends JLayeredPane implements Scrollable,
 
     private final ObservableList<PianoNote> selectedNotes;
     private final ScaleLinear fieldEditorYScale;
+    private final ObjectProperty<FieldDef> selectedFieldDef;
 
     public ScaleLinear getFieldEditorYScale() {
         return fieldEditorYScale;
     }
 
-    public PianoRollCanvas(ObservableList<PianoNote> selectedNotes, 
+    public PianoRollCanvas(ObservableList<PianoNote> selectedNotes,
             ObjectProperty<FieldDef> selectedFieldDef,
             ScaleLinear fieldEditorYScale) {
 
         this.selectedNotes = selectedNotes;
+        this.selectedFieldDef = selectedFieldDef;
         this.fieldEditorYScale = fieldEditorYScale;
 
         this.setLayout(null);
@@ -247,6 +252,54 @@ public class PianoRollCanvas extends JLayeredPane implements Scrollable,
             }
 
         });
+
+        ToolTipManager.sharedInstance().registerComponent(this);
+    }
+
+    @Override
+    public String getToolTipText(MouseEvent e) {
+
+        String tip = null;
+
+        Object obj = this.getComponentAt(e.getPoint());
+        if (obj instanceof PianoNoteView) {
+            var pnv = (PianoNoteView) obj;
+            var note = pnv.getPianoNote();
+
+            StringBuilder builder = new StringBuilder("<b>Note: </b>");
+
+            switch (p.getPchGenerationMethod()) {
+                case PianoRoll.GENERATE_FREQUENCY:
+                    builder.append(String.format("%d.%02d", note.getOctave(), note.getScaleDegree()));
+                    break;
+                case PianoRoll.GENERATE_PCH:
+                    builder.append(String.format("%d.%d", note.getOctave(), note.getScaleDegree()));
+                    break;
+                case PianoRoll.GENERATE_MIDI:
+                    builder.append(String.format("%d", note.getOctave() * 12 + note.getScaleDegree()));
+                    break;
+            }
+
+            for (var fd : note.getFields()) {
+                var fDef = fd.getFieldDef();
+                builder.append("<br/>");
+                if (fDef == selectedFieldDef.getValue()) {
+                    builder.append("<b>").append(fDef.getFieldName()).append(":</b> ");
+                } else {
+                    builder.append(fDef.getFieldName()).append(": ");
+                }
+                if (fd.getFieldDef().getFieldType() == FieldType.DISCRETE) {
+                    builder.append(Integer.toString((int) fd.getValue()));
+                } else {
+                    builder.append(String.format("%.3g", fd.getValue()));
+                }
+            }
+
+            tip = String.format("<html>%s</html>",
+                    builder.toString());
+        }
+
+        return tip;
     }
 
     public void cut() {
@@ -635,5 +688,5 @@ public class PianoRollCanvas extends JLayeredPane implements Scrollable,
                 }
             }
         }
-    }    
+    }
 }
