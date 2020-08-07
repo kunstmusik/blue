@@ -130,7 +130,6 @@ public class PianoRoll extends AbstractSoundObject implements ListChangeListener
         ampField.setFieldType(FieldType.CONTINUOUS);
         fieldDefinitions.add(ampField);
 
-        fieldDefinitions.addListener(this);
     }
 
     public PianoRoll(PianoRoll pr) {
@@ -141,6 +140,8 @@ public class PianoRoll extends AbstractSoundObject implements ListChangeListener
         npc = new NoteProcessorChain(pr.npc);
         scale = new Scale(pr.scale);
 
+        notes = FXCollections.observableArrayList();
+
         fieldDefinitions = FXCollections.observableArrayList();
         fieldDefinitions.addListener(this);
 
@@ -148,12 +149,9 @@ public class PianoRoll extends AbstractSoundObject implements ListChangeListener
 
         for (var fieldDef : pr.getFieldDefinitions()) {
             var clone = new FieldDef(fieldDef);
-            fieldDefinitions.add(clone);
-
             srcToCloneMap.put(fieldDef, clone);
+            fieldDefinitions.add(clone);
         }
-
-        notes = FXCollections.observableArrayList();
 
         for (PianoNote pn : pr.notes) {
             var newNote = new PianoNote(pn);
@@ -176,7 +174,6 @@ public class PianoRoll extends AbstractSoundObject implements ListChangeListener
         timeUnit = pr.timeUnit;
         transposition = pr.transposition;
 
-        fieldDefinitions.addListener(this);
     }
 
     @Override
@@ -289,7 +286,7 @@ public class PianoRoll extends AbstractSoundObject implements ListChangeListener
         }
 
         nl.sort();
-        
+
         try {
             ScoreUtilities.applyNoteProcessorChain(nl, this.npc);
         } catch (NoteProcessorException e) {
