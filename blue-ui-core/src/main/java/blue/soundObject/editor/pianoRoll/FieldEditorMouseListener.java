@@ -50,6 +50,7 @@ public class FieldEditorMouseListener extends MouseAdapter {
     @Override
     public void mousePressed(MouseEvent e) {
         Pin src = (Pin) e.getComponent();
+        src.requestFocus();
         
         if(selectedNotes.contains(src.note)) {
             if(e.isShiftDown()) {
