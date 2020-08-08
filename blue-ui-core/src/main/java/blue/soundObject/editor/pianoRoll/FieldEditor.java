@@ -21,6 +21,7 @@ package blue.soundObject.editor.pianoRoll;
 
 import blue.soundObject.PianoRoll;
 import blue.soundObject.pianoRoll.FieldDef;
+import blue.soundObject.pianoRoll.FieldType;
 import blue.soundObject.pianoRoll.PianoNote;
 import blue.utilities.scales.ScaleLinear;
 import java.awt.BasicStroke;
@@ -36,6 +37,7 @@ import javafx.beans.value.ChangeListener;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javax.swing.JPanel;
+import javax.swing.ToolTipManager;
 
 /**
  *
@@ -68,6 +70,9 @@ public class FieldEditor extends JPanel {
         setBackground(Color.BLACK);
 
         fieldEditorMouseListener = new FieldEditorMouseListener(selectedNotes, yScale);
+        
+        this.addMouseListener(fieldEditorMouseListener);
+        this.addMouseMotionListener(fieldEditorMouseListener);
 
         ListChangeListener<PianoNote> selectionListener = chg -> repaint();
 
@@ -89,7 +94,7 @@ public class FieldEditor extends JPanel {
                     for (PianoNote note : change.getAddedSubList()) {
                         var field = note.getField(selectedField);
                         field.ifPresent(fld -> {
-                            Pin pin = new Pin(p, yScale, note, fld, fieldEditorMouseListener, selectedNotes);
+                            Pin pin = new Pin(p, yScale, note, fld, selectedNotes);
                             add(pin);
                         });
                     }
@@ -125,12 +130,36 @@ public class FieldEditor extends JPanel {
         domainListener = (ov, t, t1) -> {
             yScale.setDomain(selectedField.getMinValue(), selectedField.getMaxValue());
         };
-        
-        
+
         ChangeListener<? super FieldDef> selectedFieldListener = (obs, old, newVal) -> {
             updateSelectedFieldDef(newVal);
         };
         selectedFieldDef.addListener(selectedFieldListener);
+
+        ToolTipManager.sharedInstance().registerComponent(this);
+
+    }
+
+    @Override
+    public String getToolTipText(MouseEvent e) {
+
+        String tip = null;
+
+        Object obj = this.getComponentAt(e.getPoint());
+        if (obj instanceof Pin) {
+            
+            var pin = (Pin) obj;
+            var fd = pin.field;
+
+            if (fd.getFieldDef().getFieldType() == FieldType.DISCRETE) {
+                tip = Integer.toString((int) fd.getValue());
+            } else {
+                tip = String.format("%.3g", fd.getValue());
+            }
+
+        }
+
+        return tip;
     }
 
     public void editPianoRoll(PianoRoll p) {
@@ -194,7 +223,7 @@ public class FieldEditor extends JPanel {
             for (PianoNote note : p.getNotes()) {
                 var field = note.getField(selectedField);
                 field.ifPresent(fld -> {
-                    Pin pin = new Pin(p, yScale, note, fld, fieldEditorMouseListener, selectedNotes);
+                    Pin pin = new Pin(p, yScale, note, fld, selectedNotes);
                     add(pin);
                 });
 

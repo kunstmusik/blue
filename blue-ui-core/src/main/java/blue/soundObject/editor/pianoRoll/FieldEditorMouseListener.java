@@ -36,12 +36,13 @@ public class FieldEditorMouseListener extends MouseAdapter {
 
     private final ObservableList<PianoNote> selectedNotes;
     private final ScaleLinear yScale;
-    
+
     private double[] originalValues = null;
     private Field[] affectedFields = null;
 
     private double startValue = 0.0;
-    
+    private Pin currentPin = null;
+
     public FieldEditorMouseListener(ObservableList<PianoNote> selectedNotes, ScaleLinear yScale) {
         this.selectedNotes = selectedNotes;
         this.yScale = yScale;
@@ -49,51 +50,59 @@ public class FieldEditorMouseListener extends MouseAdapter {
 
     @Override
     public void mousePressed(MouseEvent e) {
-        Pin src = (Pin) e.getComponent();
-        src.requestFocus();
-        
-        if(selectedNotes.contains(src.note)) {
-            if(e.isShiftDown()) {
-                selectedNotes.remove(src.note);
-                return;
-            }
-        } else {
-            if(e.isShiftDown()) {
-                selectedNotes.add(src.note);
+        var fEditor = (FieldEditor) e.getComponent();
+        fEditor.requestFocus();
+
+        var comp = fEditor.getComponentAt(e.getPoint());
+
+        if (comp instanceof Pin) {
+            
+            var src = (Pin) comp;
+            currentPin = src;
+            
+            if (selectedNotes.contains(src.note)) {
+                if (e.isShiftDown()) {
+                    selectedNotes.remove(src.note);
+                    return;
+                }
             } else {
-                selectedNotes.clear();
-                selectedNotes.add(src.note);
+                if (e.isShiftDown()) {
+                    selectedNotes.add(src.note);
+                } else {
+                    selectedNotes.clear();
+                    selectedNotes.add(src.note);
+                }
             }
-        }
-        
-        startValue = src.field.getValue();
-        var fieldDef = src.field.getFieldDef();
-        
-        originalValues = new double[selectedNotes.size()];
-        affectedFields = new Field[selectedNotes.size()];
-        
-        for(int i = 0; i < selectedNotes.size(); i++) {
-            var n = selectedNotes.get(i);
-            // If this throws an exception, let it get reported higher up
-            var field = n.getField(fieldDef).get();
-            affectedFields[i] = field;
-            originalValues[i] = field.getValue();
+
+            startValue = src.field.getValue();
+            var fieldDef = src.field.getFieldDef();
+
+            originalValues = new double[selectedNotes.size()];
+            affectedFields = new Field[selectedNotes.size()];
+
+            for (int i = 0; i < selectedNotes.size(); i++) {
+                var n = selectedNotes.get(i);
+                // If this throws an exception, let it get reported higher up
+                var field = n.getField(fieldDef).get();
+                affectedFields[i] = field;
+                originalValues[i] = field.getValue();
+            }
         }
     }
 
     @Override
     public void mouseDragged(MouseEvent e) {
-        if(originalValues == null) {
+        if (originalValues == null || currentPin == null) {
             return;
         }
-        
-        Pin src = (Pin) e.getComponent();
-        var pt = SwingUtilities.convertPoint(src, e.getPoint(), src.getParent());
-        
+
+        Pin src = currentPin;
+        var pt = e.getPoint();
+
         var mouseVal = yScale.calcReverse(pt.getY());
         var valDiff = mouseVal - startValue;
-        
-        for(int i = 0; i < selectedNotes.size(); i++) {           
+
+        for (int i = 0; i < selectedNotes.size(); i++) {
             affectedFields[i].setValue(originalValues[i] + valDiff);
         }
     }
@@ -103,6 +112,7 @@ public class FieldEditorMouseListener extends MouseAdapter {
         affectedFields = null;
         startValue = 0.0;
         originalValues = null;
+        currentPin = null;
     }
 
 }

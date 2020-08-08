@@ -49,7 +49,6 @@ class Pin extends JPanel {
     public final PianoNote note;
     private final PianoRoll pianoRoll;
     private final ScaleLinear yScale;
-    private final FieldEditorMouseListener feml;
     private final ObservableList<PianoNote> selectedNotes;
 
     private Color drawColor;
@@ -66,13 +65,12 @@ class Pin extends JPanel {
 
     ListChangeListener<PianoNote> lcl;
 
-    public Pin(PianoRoll p, ScaleLinear yScale, PianoNote n, Field field, FieldEditorMouseListener feml,
+    public Pin(PianoRoll p, ScaleLinear yScale, PianoNote n, Field field,
             ObservableList<PianoNote> selectedNotes) {
         this.pianoRoll = p;
         this.yScale = yScale;
         this.note = n;
         this.field = field;
-        this.feml = feml;
         this.selectedNotes = selectedNotes;
 
         lcl = (change) -> {
@@ -86,7 +84,6 @@ class Pin extends JPanel {
         setSize(5,5);
         setOpaque(false);
         setCursor(Cursor.getPredefinedCursor(Cursor.S_RESIZE_CURSOR));
-        //  ToolTipManager.sharedInstance().registerComponent(this);
     } 
 
     @Override
@@ -97,8 +94,6 @@ class Pin extends JPanel {
         yScale.addChangeListener(cl);
         note.addPropertyChangeListener(pcl);
         selectedNotes.addListener(lcl);
-        addMouseListener(feml);
-        addMouseMotionListener(feml);
     }
 
     @Override
@@ -107,17 +102,9 @@ class Pin extends JPanel {
         note.removePropertyChangeListener(pcl);
         field.valueProperty().removeListener(valueListener);
         selectedNotes.removeListener(lcl);
-        removeMouseListener(feml);
-        removeMouseMotionListener(feml);
         super.removeNotify();
     }
 
-    //        @Override
-    //        public String getToolTipText() {
-    //            return field.getFieldDef().getFieldType() == FieldType.CONTINUOUS ?
-    //                    String.format("Value: %g", field.getValue()) :
-    //                    String.format("Value: %d", (int)field.getValue());
-    //        }
     private void updateLocation() {
         int x = (int) (note.getStart() * pianoRoll.getPixelSecond());
         int y = (int) yScale.calc(field.getValue());
