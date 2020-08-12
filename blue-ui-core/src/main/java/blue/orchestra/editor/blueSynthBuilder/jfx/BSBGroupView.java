@@ -18,8 +18,10 @@
  */
 package blue.orchestra.editor.blueSynthBuilder.jfx;
 
+import blue.jfx.BlueFX;
 import blue.orchestra.blueSynthBuilder.BSBGroup;
 import blue.orchestra.blueSynthBuilder.BSBObject;
+import blue.orchestra.editor.blueSynthBuilder.BSBPreferences;
 import blue.orchestra.editor.blueSynthBuilder.EditModeOnly;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
@@ -32,6 +34,7 @@ import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
+import javafx.scene.control.Tooltip;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.BackgroundFill;
 import javafx.scene.layout.Border;
@@ -58,6 +61,8 @@ public class BSBGroupView extends BorderPane implements ResizeableView {
     private BSBEditSelection selection;
     private ObservableList<BSBGroup> groupsList;
     private final BSBGroup bsbGroup;
+
+    Tooltip tooltip = BSBTooltipUtil.createTooltip();
 
     SetChangeListener<BSBObject> scl = sce -> {
         if (sce.wasAdded()) {
@@ -102,6 +107,18 @@ public class BSBGroupView extends BorderPane implements ResizeableView {
             }
         };
 
+        ChangeListener<Object> toolTipListener = (obs, old, newVal) -> {
+            BlueFX.runOnFXThread(() -> {
+                var comment = bsbGroup.getComment();
+                var showComments = BSBPreferences.getInstance().getShowWidgetComments();
+                if (comment == null || comment.isBlank() || !showComments) {
+                    BSBTooltipUtil.install(label, null);
+                } else {
+                    BSBTooltipUtil.install(label, tooltip);
+                }
+            });
+        };
+
         sceneProperty().addListener((ObservableValue<? extends Scene> obs, Scene old, Scene newVal) -> {
             if (newVal == null) {
                 label.textProperty().unbind();
@@ -112,6 +129,9 @@ public class BSBGroupView extends BorderPane implements ResizeableView {
                 bsbGroup.titleEnabledProperty().removeListener(titleEnabledLIstener);
                 resizePane.prefWidthProperty().unbind();
                 resizePane.prefHeightProperty().unbind();
+                tooltip.textProperty().unbind();
+                bsbGroup.commentProperty().removeListener(toolTipListener);
+                BSBTooltipUtil.install(label, null);
             } else {
                 label.textProperty().bind(bsbGroup.groupNameProperty());
                 bsbGroup.interfaceItemsProperty().addListener(scl);
@@ -132,11 +152,13 @@ public class BSBGroupView extends BorderPane implements ResizeableView {
                         }, bsbGroup.widthProperty(), editorPane.boundsInParentProperty()));
                 resizePane.prefHeightProperty().bind(
                         Bindings.createDoubleBinding(() -> {
-                           return Math.max(bsbGroup.getHeight(), editorPane.prefHeight(USE_PREF_SIZE)); 
+                            return Math.max(bsbGroup.getHeight(), editorPane.prefHeight(USE_PREF_SIZE));
                         }, bsbGroup.heightProperty(), editorPane.boundsInParentProperty()));
+                bsbGroup.commentProperty().addListener(toolTipListener);
+                tooltip.textProperty().bind(bsbGroup.commentProperty());
+                toolTipListener.changed(null, null, null);
             }
         });
-    
 
     }
 
@@ -214,20 +236,20 @@ public class BSBGroupView extends BorderPane implements ResizeableView {
 
     public int getWidgetMinimumWidth() {
         double base = editorPane.prefWidth(editorPane.getPrefHeight());
-        if(getTop() == label) {
+        if (getTop() == label) {
             base = Math.max(label.minWidth(label.getPrefHeight()), base);
         }
-        return Math.max(20, (int)base);
+        return Math.max(20, (int) base);
     }
 
     public int getWidgetMinimumHeight() {
-        double base = (getTop() == label) ?  label.minHeight(label.getPrefWidth()) : 0;
-        return Math.max(20, 
-                (int)(base + editorPane.prefHeight(editorPane.getPrefWidth())));
+        double base = (getTop() == label) ? label.minHeight(label.getPrefWidth()) : 0;
+        return Math.max(20,
+                (int) (base + editorPane.prefHeight(editorPane.getPrefWidth())));
     }
 
     public int getWidgetWidth() {
-        return (int)getWidth();
+        return (int) getWidth();
     }
 
     public void setWidgetWidth(int width) {
@@ -235,12 +257,12 @@ public class BSBGroupView extends BorderPane implements ResizeableView {
     }
 
     public int getWidgetHeight() {
-        return (int)getHeight();
+        return (int) getHeight();
     }
 
     public void setWidgetHeight(int height) {
-       double base = (getTop() == label) ?  label.prefHeight(label.getPrefWidth()) : 0;
-       bsbGroup.setHeight(height - (int)base); 
+        double base = (getTop() == label) ? label.prefHeight(label.getPrefWidth()) : 0;
+        bsbGroup.setHeight(height - (int) base);
     }
 
     public void setWidgetX(int x) {
