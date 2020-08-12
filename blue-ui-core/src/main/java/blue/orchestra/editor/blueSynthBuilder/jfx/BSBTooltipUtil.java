@@ -36,6 +36,8 @@ public class BSBTooltipUtil {
     public static Tooltip createTooltip() {
         Tooltip tooltip = new Tooltip();
         tooltip.setShowDelay(Duration.seconds(0.5));
+        tooltip.setWrapText(true);
+        tooltip.setMaxWidth(400);
         return tooltip;
     }
 
