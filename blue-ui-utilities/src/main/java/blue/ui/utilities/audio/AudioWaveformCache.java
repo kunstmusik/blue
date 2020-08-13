@@ -1,12 +1,16 @@
 package blue.ui.utilities.audio;
 
 import java.io.File;
+import java.io.IOException;
 import java.lang.ref.SoftReference;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import org.apache.commons.io.FileUtils;
 
 public class AudioWaveformCache {
 
@@ -16,7 +20,7 @@ public class AudioWaveformCache {
 
     private final Map<WaveformCacheKey, SoftReference<AudioWaveformData>> waveCache
             = new HashMap<>();
-    
+
     private List<AudioWaveformListener> listeners = null;
 
     private AudioWaveformCacheGenerator generator = null;
@@ -24,15 +28,16 @@ public class AudioWaveformCache {
     private static AudioWaveformCache INSTANCE = null;
 
     public static synchronized AudioWaveformCache getInstance() {
-        if(INSTANCE == null) {
+        if (INSTANCE == null) {
             INSTANCE = new AudioWaveformCache();
         }
 
         return INSTANCE;
     }
-    
-    private AudioWaveformCache() {}
-    
+
+    private AudioWaveformCache() {
+    }
+
     public synchronized AudioWaveformData getAudioWaveformData(
             String audioFilename, int pixelSeconds) {
 
@@ -40,10 +45,23 @@ public class AudioWaveformCache {
             return EMPTY_AUDIO_FILENAME;
         }
 
-        WaveformCacheKey key = new WaveformCacheKey(audioFilename, pixelSeconds);
-        
+        File f = new File(audioFilename);
+        long checksum = 0;
+
+        if (f.exists() && f.isFile()) {
+            try {
+                checksum = FileUtils.checksumCRC32(f);
+            } catch (IOException ex) {
+                Logger.getLogger(AudioWaveformCache.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+
+        WaveformCacheKey key = new WaveformCacheKey(audioFilename,
+                checksum,
+                pixelSeconds);
+
         SoftReference<AudioWaveformData> waveDataRef = waveCache.get(key);
-        
+
         if (waveDataRef != null && waveDataRef.get() != null) {
             return waveDataRef.get();
         }
@@ -54,10 +72,8 @@ public class AudioWaveformCache {
         waveData.data = null;
         waveData.percentLoadingComplete = 0.0;
 
-        File f = new File(audioFilename);
-
         if (!f.exists() && !f.isFile()) {
-            waveCache.put(new WaveformCacheKey(audioFilename, pixelSeconds), 
+            waveCache.put(new WaveformCacheKey(audioFilename, checksum, pixelSeconds),
                     new SoftReference<>(waveData));
             return waveData;
         }
@@ -79,7 +95,7 @@ public class AudioWaveformCache {
             generator.addAudioWaveformData(waveData);
         }
 
-        waveCache.put(new WaveformCacheKey(audioFilename, pixelSeconds), 
+        waveCache.put(new WaveformCacheKey(audioFilename, checksum, pixelSeconds),
                 new SoftReference<>(waveData));
         // System.out.println(refCountCache);
         return waveData;
@@ -108,14 +124,14 @@ public class AudioWaveformCache {
         }
 
         if (filename == AudioWaveformCacheGenerator.CACHE_GEN_COMPLETE) {
-            for(AudioWaveformListener listener : listeners) {
+            for (AudioWaveformListener listener : listeners) {
                 listener.waveDataGenerated();
             }
             listeners.clear();
             return;
         }
 
-        for(AudioWaveformListener listener : listeners) {
+        for (AudioWaveformListener listener : listeners) {
             if (listener.getFilename().equals(filename)) {
                 listener.waveDataGenerated();
             }

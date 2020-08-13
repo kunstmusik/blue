@@ -26,10 +26,12 @@ package blue.ui.utilities.audio;
 public class WaveformCacheKey {
 
     private final String fileName;
+    private long checksum;
     private final int pixelSeconds;
 
-    public WaveformCacheKey(String fileName, int pixelSeconds) {
+    public WaveformCacheKey(String fileName, long checksum, int pixelSeconds) {
         this.fileName = (fileName == null) ? "" : fileName;
+        this.checksum = checksum;
         this.pixelSeconds = pixelSeconds;
     }
 
@@ -38,6 +40,7 @@ public class WaveformCacheKey {
         if(obj instanceof WaveformCacheKey) {
             WaveformCacheKey that = (WaveformCacheKey)obj;
             return  this.fileName.equals(that.fileName) && 
+                    this.checksum == that.checksum &&
                     this.pixelSeconds == that.pixelSeconds;
         }     
         return false;
@@ -45,7 +48,7 @@ public class WaveformCacheKey {
 
     @Override
     public int hashCode() {
-        return fileName.hashCode() + pixelSeconds; 
+        return fileName.hashCode() + pixelSeconds + Long.hashCode(checksum); 
     }
 
     
