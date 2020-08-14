@@ -109,17 +109,10 @@ public class PianoRollPropertiesEditor extends JScrollPane {
         bg.add(midiOption);
 
         JPanel noteTemplatePanel = new JPanel(new BorderLayout());
-        JButton setAllNotesButton = new JButton(BlueSystem
-                .getString("pianoRoll.setAllNotes"));
-        JButton setSelectedNotesButton = new JButton(BlueSystem
-                .getString("pianoRoll.setSelectedNotes"));
-
-        JPanel noteButtonPanel = new JPanel(new GridLayout(1, 2));
-        noteButtonPanel.add(setSelectedNotesButton);
-        noteButtonPanel.add(setAllNotesButton);
-
+        JButton resetAllNotesButton = new JButton("Reset All Notes");
+        
         noteTemplatePanel.add(noteTemplateText, BorderLayout.CENTER);
-        noteTemplatePanel.add(noteButtonPanel, BorderLayout.EAST);
+        noteTemplatePanel.add(resetAllNotesButton, BorderLayout.EAST);
 
         mainPanel.addItem(BlueSystem.getString("pianoRoll.instrumentID"),
                 instrumentIDText);
@@ -178,13 +171,10 @@ public class PianoRollPropertiesEditor extends JScrollPane {
 
                 });
 
-        setAllNotesButton.addActionListener((ActionEvent e) -> {
-            setAllNoteTemplates();
+        resetAllNotesButton.addActionListener((ActionEvent e) -> {
+            resetAllNoteTemplates();
         });
 
-        setSelectedNotesButton.addActionListener((ActionEvent e) -> {
-            setSelectedNoteTemplates();
-        });
 
         instrumentIDText.getDocument().addDocumentListener(
                 new DocumentListener() {
@@ -239,27 +229,13 @@ public class PianoRollPropertiesEditor extends JScrollPane {
     /**
      * 
      */
-    protected void setAllNoteTemplates() {
+    protected void resetAllNoteTemplates() {
         if (p == null) {
             return;
         }
-
-        String noteTemplate = p.getNoteTemplate();
 
         for (PianoNote note : p.getNotes()) {
-            note.setNoteTemplate(noteTemplate);
-        }
-    }
-
-    protected void setSelectedNoteTemplates() {
-        if (p == null) {
-            return;
-        }
-
-        String noteTemplate = p.getNoteTemplate();
-
-        for (var note : selectedNotes) {
-            note.setNoteTemplate(noteTemplate);
+            note.setNoteTemplate(null);
         }
     }
 

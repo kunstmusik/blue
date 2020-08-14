@@ -314,6 +314,8 @@ public class PianoRollEditor extends ScoreObjectEditor implements
         }
 
         this.p = p;
+        
+        selectedNotes.clear();
 
         this.p.addPropertyChangeListener(this);
 
@@ -321,6 +323,7 @@ public class PianoRollEditor extends ScoreObjectEditor implements
         noteHeader.editPianoRoll(p);
         timeBar.editPianoRoll(p);
         props.editPianoRoll(p);
+        noteTemplateEditor.editPianoRoll(p);
         timeProperties.setPianoRoll(p);
         fieldEditor.editPianoRoll(p);
         fieldSelectorView.setFields(p.getFieldDefinitions());

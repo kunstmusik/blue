@@ -45,7 +45,14 @@ NEW
   when in usage mode. Added "Show Widget Comments" menu option to View menu to  
   turn on and off showing of the comments in tooltips.
 
-* PianoRoll: implemented rendering of notes in object view on timeline
+* PianoRoll:
+  
+  * implemented rendering of notes in object view on timeline
+
+  * New user-defined fields for PianoRoll and and field editor for notes; fields
+  allow adding additional pfield values for notes that are graphically edited 
+  (similarly to how Velocity is handled in many MIDI-based DAW PianoRolls). 
+  User can customize how many fields and kinds of fields to use for PianoRoll.
 
 * Issue #520: Render waveform for Frozen SoundObject freze file
 
@@ -59,6 +66,11 @@ UPDATED
   Netbeans editor component to enable code repository option
 
 * Issue #392: made copy buffer shared between all BSB interface editors
+
+* PianoRoll: note templates for notes are now set to use the PianoRoll's note 
+  template by default but permit overriding on a note-by-note basis; backwards 
+  compatible with prior note template system but more convenient given the new
+  Field system. 
 
 FIX
 

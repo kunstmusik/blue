@@ -196,6 +196,7 @@ public class PianoRoll extends AbstractSoundObject implements ListChangeListener
         NoteList nl = new NoteList();
 
         String instrId = instrumentId;
+        final String prNoteTemplate = noteTemplate;
 
         if (instrId != null) {
             instrId = instrId.trim();
@@ -253,6 +254,9 @@ public class PianoRoll extends AbstractSoundObject implements ListChangeListener
             }
 
             String template = n.getNoteTemplate();
+            if (template == null) {
+                template = prNoteTemplate;
+            }
 
             template = TextUtilities
                     .replaceAll(template, "<INSTR_ID>", instrId);
@@ -376,10 +380,19 @@ public class PianoRoll extends AbstractSoundObject implements ListChangeListener
                     p.fieldDefinitions.add(fd);
                     break;
                 }
-                case "pianoNote":
+                case "pianoNote": {
                     // Assumes fieldDefs are loaded prior to pianoNotes
-                    p.notes.add(PianoNote.loadFromXML(e, fieldTypes));
+                    var pn = PianoNote.loadFromXML(e, fieldTypes);
+
+                    // legacy: set note noteTemplate to null if found and equals
+                    // to PianoRoll's value
+                    if (p.getNoteTemplate().equals(pn.getNoteTemplate())) {
+                        pn.setNoteTemplate(null);
+                    }
+
+                    p.notes.add(pn);
                     break;
+                }
                 case "pchGenerationMethod":
                     p.setPchGenerationMethod(Integer.parseInt(e.getTextString()));
                     break;
@@ -454,7 +467,15 @@ public class PianoRoll extends AbstractSoundObject implements ListChangeListener
      * @param noteTemplate The noteTemplate to set.
      */
     public void setNoteTemplate(String noteTemplate) {
-        this.noteTemplate = noteTemplate;
+        final var newVal = (noteTemplate == null) ? "" : noteTemplate;
+
+        if (!newVal.equals(this.noteTemplate)) {
+            PropertyChangeEvent pce = new PropertyChangeEvent(this, "noteTemplate",
+                    this.noteTemplate, newVal);
+
+            this.noteTemplate = newVal;
+            firePropertyChange(pce);
+        }
     }
 
     /**

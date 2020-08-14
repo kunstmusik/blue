@@ -19,15 +19,16 @@
  */
 package blue.soundObject.editor.pianoRoll;
 
-import blue.BlueSystem;
-import blue.event.SelectionEvent;
+import blue.soundObject.PianoRoll;
 import blue.soundObject.pianoRoll.PianoNote;
 import java.awt.BorderLayout;
-import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javax.swing.BorderFactory;
-import javax.swing.JLabel;
+import javax.swing.JCheckBox;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.event.DocumentEvent;
@@ -36,16 +37,25 @@ import javax.swing.event.DocumentListener;
 /**
  * @author steven
  */
-public class NotePropertiesEditor extends JPanel implements ListChangeListener<PianoNote> {
+public class NotePropertiesEditor extends JPanel
+        implements ListChangeListener<PianoNote> {
 
-    PianoNote note = null;
+    ObjectProperty<PianoNote> selectedNote
+            = new SimpleObjectProperty<PianoNote>();
 
     JTextField noteTemplateText = new JTextField();
 
-    JLabel label = new JLabel(BlueSystem.getString("pianoRoll.noteTemplate"));
+    JCheckBox overrideNoteTemplate = new JCheckBox("Override Note Template");
 
-    private final boolean isUpdating = false;
+    private boolean isUpdating = false;
     private final ObservableList<PianoNote> selectedNotes;
+    private PianoRoll pianoRoll = null;
+
+    PropertyChangeListener pcl = pce -> {
+        if (!isUpdating && "noteTemplate".equals(pce.getPropertyName())) {
+            resetEditor();
+        }
+    };
 
     public NotePropertiesEditor(ObservableList<PianoNote> selectedNotes) {
 
@@ -54,13 +64,28 @@ public class NotePropertiesEditor extends JPanel implements ListChangeListener<P
 
         this.setLayout(new BorderLayout(5, 5));
 
-        label.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 0));
+        overrideNoteTemplate.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 0));
+        overrideNoteTemplate.addChangeListener(ce -> {
+            var selected = overrideNoteTemplate.isSelected();
+            noteTemplateText.setEnabled(selected);
+
+            if (!selected) {
+                final var note = selectedNote.get();
+                if (note != null
+                        && pianoRoll.getNoteTemplate().equals(note.getNoteTemplate())) {
+                    isUpdating = true;
+                    note.setNoteTemplate(null);
+                    isUpdating = false;
+                }
+            }
+
+        });
         noteTemplateText.setBorder(
                 BorderFactory.createCompoundBorder(
                         BorderFactory.createEmptyBorder(5, 5, 5, 5),
                         noteTemplateText.getBorder()));
 
-        add(label, BorderLayout.WEST);
+        add(overrideNoteTemplate, BorderLayout.WEST);
         add(noteTemplateText, BorderLayout.CENTER);
 
         noteTemplateText.getDocument().addDocumentListener(
@@ -82,24 +107,73 @@ public class NotePropertiesEditor extends JPanel implements ListChangeListener<P
             }
 
             private void updateNoteTemplate() {
-                if (note != null && !isUpdating) {
-                    note.setNoteTemplate(noteTemplateText.getText());
+                final var note = selectedNote.get();
+                if (note != null && !isUpdating && overrideNoteTemplate.isSelected()) {
+                    var template = noteTemplateText.getText();
+
+                    if (pianoRoll.getNoteTemplate().equals(template)) {
+                        template = null;
+                    }
+                    isUpdating = true;
+                    note.setNoteTemplate(template);
+                    isUpdating = false;
                 }
             }
 
         });
+        
+        selectedNote.addListener((obs, old, newVal) -> {
+            if(old != null) {
+                old.removePropertyChangeListener(pcl);
+            }
+            if(newVal != null) {
+                newVal.addPropertyChangeListener(pcl);
+            }
+        });
+    }
 
+    public void editPianoRoll(PianoRoll pianoRoll) {
+        if (this.pianoRoll != null) {
+            this.pianoRoll.removePropertyChangeListener(pcl);
+        }
+
+        this.pianoRoll = pianoRoll;
+
+        if (this.pianoRoll != null) {
+            this.pianoRoll.addPropertyChangeListener(pcl);
+        }
+
+        selectedNote.set(null);
+        resetEditor();
     }
 
     @Override
     public void onChanged(Change<? extends PianoNote> change) {
-        if (selectedNotes.size() == 1) {
-            note = selectedNotes.get(0);
-            noteTemplateText.setEditable(true);
-            noteTemplateText.setText(note.getNoteTemplate());
+        final var note = (selectedNotes.size() == 1 && pianoRoll != null)
+                ? selectedNotes.get(0)
+                : null;
+
+        selectedNote.set(note);
+        
+        resetEditor();
+    }
+
+    protected void resetEditor() {
+        final var note = selectedNote.get();
+        
+        if (note != null && pianoRoll != null) {
+            var noteTemplate = note.getNoteTemplate();
+
+            overrideNoteTemplate.setSelected(noteTemplate != null);
+            noteTemplateText.setEnabled(noteTemplate != null);
+
+            noteTemplateText.setText(noteTemplate == null
+                    ? pianoRoll.getNoteTemplate() : noteTemplate);
+            overrideNoteTemplate.setEnabled(true);
         } else {
-            note = null;
-            noteTemplateText.setEditable(false);
+            overrideNoteTemplate.setSelected(false);
+            overrideNoteTemplate.setEnabled(false);
+            noteTemplateText.setEnabled(false);
             noteTemplateText.setText("");
         }
     }
