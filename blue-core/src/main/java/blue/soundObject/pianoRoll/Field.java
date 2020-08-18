@@ -41,7 +41,7 @@ public class Field {
 
     Field(Field f) {
         this.fieldDef = f.fieldDef;
-        this.value = f.value;
+        this.value = new SimpleDoubleProperty(f.getValue());
     }
 
     public FieldDef getFieldDef() {
