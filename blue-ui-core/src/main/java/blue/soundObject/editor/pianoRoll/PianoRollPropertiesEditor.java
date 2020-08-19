@@ -171,6 +171,7 @@ public class PianoRollPropertiesEditor extends JScrollPane {
 
                 });
 
+        resetAllNotesButton.setToolTipText("Reset all notes with overridden templates to use the PianoRoll's note template.");
         resetAllNotesButton.addActionListener((ActionEvent e) -> {
             resetAllNoteTemplates();
         });
