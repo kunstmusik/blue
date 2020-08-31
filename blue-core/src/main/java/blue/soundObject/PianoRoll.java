@@ -698,4 +698,46 @@ public class PianoRoll extends AbstractSoundObject implements ListChangeListener
         }
     }
 
+    /**
+     * Used to check if target PianoRoll is compatible with this PianoRoll for
+     * the purpose of copying/pasting note data between the two. Pasted notes
+     * should ensure their fields are relinked to FieldDef's in target
+     * PianoRoll.
+     *
+     * @param target
+     * @return if target is compatible with this PianoRoll
+     */
+    public boolean isCompatible(PianoRoll target) {
+        if (this == target) {
+            return true;
+        }
+        if (target == null) {
+            return false;
+        }
+
+        if (!getScale().equals(target.getScale())) {
+            return false;
+        }
+
+        final var aFieldDefs = getFieldDefinitions();
+        final var bFieldDefs = target.getFieldDefinitions();
+
+        if (aFieldDefs.size() != bFieldDefs.size()) {
+            return false;
+        }
+
+        for (int i = 0; i < aFieldDefs.size(); i++) {
+            FieldDef afd = aFieldDefs.get(i);
+            FieldDef bfd = bFieldDefs.get(i);
+
+            if (!afd.getFieldName().equals(bfd.getFieldName())
+                    || afd.getFieldType() != bfd.getFieldType()
+                    || afd.getMinValue() != bfd.getMinValue()
+                    || afd.getMaxValue() != bfd.getMaxValue()) {
+                return false;
+            }
+        }
+        return true;
+    }
+
 }

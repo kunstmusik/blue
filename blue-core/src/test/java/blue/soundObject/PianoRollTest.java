@@ -22,7 +22,6 @@ package blue.soundObject;
 import blue.soundObject.pianoRoll.Field;
 import blue.soundObject.pianoRoll.FieldDef;
 import blue.soundObject.pianoRoll.PianoNote;
-import org.apache.commons.lang3.builder.EqualsBuilder;
 import static org.junit.Assert.*;
 import org.junit.Before;
 import org.junit.Test;
@@ -80,6 +79,23 @@ public class PianoRollTest {
 //        assertTrue(instance.equals(p2));
         
 //        assertTrue(EqualsBuilder.reflectionEquals(instance, p2, (String[])null));
+    }
+    
+    @Test 
+    public void testIsCompatible() {
+        var target = new PianoRoll(instance);
+        
+        assertTrue(instance.isCompatible(target));
+        
+        target.getFieldDefinitions().get(0).setFieldName("error");
+        
+        assertFalse(instance.isCompatible(target));
+        
+        target = new PianoRoll(instance);
+        var fd = new FieldDef();
+        target.getFieldDefinitions().add(fd);
+        
+        assertFalse(instance.isCompatible(target));
     }
 
 }

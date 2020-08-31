@@ -68,9 +68,6 @@ import javax.swing.ToolTipManager;
 public class PianoRollCanvas extends JLayeredPane implements Scrollable,
         PropertyChangeListener, ListChangeListener<PianoNote> {
 
-    // TODO - This shouldn't be public, but it will be for now...
-    public static final List<PianoNote> NOTE_COPY_BUFFER = new ArrayList<>();
-
     JPopupMenu popup = new JPopupMenu();
 
     private static final int RIGHT_EXTRA_SPACE = 100;
@@ -308,9 +305,14 @@ public class PianoRollCanvas extends JLayeredPane implements Scrollable,
     }
 
     public void copy() {
-        NOTE_COPY_BUFFER.clear();
+        var buffer = NoteCopyBuffer.getInstance();
+        buffer.clear();
+        
+        buffer.setSourcePianoRoll(p);
+        var copiedNotes = buffer.getCopiedNotes();
+        
         for (var note : selectedNotes) {
-            NOTE_COPY_BUFFER.add(new PianoNote(note));
+            copiedNotes.add(new PianoNote(note));
         }
     }
 

@@ -36,13 +36,17 @@ import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import javafx.beans.property.ObjectProperty;
 import javafx.collections.ObservableList;
 import javax.swing.AbstractAction;
 import javax.swing.JPopupMenu;
 import javax.swing.JViewport;
 import javax.swing.SwingUtilities;
+import org.openide.DialogDisplayer;
+import org.openide.NotifyDescriptor;
 
 /**
  * @author steven
@@ -75,8 +79,8 @@ public class NoteCanvasMouseListener extends MouseAdapter {
     PianoNoteView mouseMoveNoteView = null;
     boolean noteJustAdded = false;
 
-    public NoteCanvasMouseListener(PianoRollCanvas canvas, 
-            ObservableList<PianoNote> selectedNotes, 
+    public NoteCanvasMouseListener(PianoRollCanvas canvas,
+            ObservableList<PianoNote> selectedNotes,
             ObjectProperty<FieldDef> selectedFieldDef) {
         this.canvas = canvas;
         this.selectedNotes = selectedNotes;
@@ -88,7 +92,8 @@ public class NoteCanvasMouseListener extends MouseAdapter {
         pasteMenu.add(new AbstractAction("Paste") {
             @Override
             public void actionPerformed(ActionEvent e) {
-                if (PianoRollCanvas.NOTE_COPY_BUFFER.size() > 0) {
+                var buffer = NoteCopyBuffer.getInstance();
+                if (!buffer.getCopiedNotes().isEmpty()) {
                     pasteNotes(pastePoint);
                 }
             }
@@ -131,6 +136,8 @@ public class NoteCanvasMouseListener extends MouseAdapter {
         dragMode = DragMode.NONE;
         noteJustAdded = false;
 
+        final var buffer = NoteCopyBuffer.getInstance();
+
         if (UiUtilities.isRightMouseButton(e)) {
             if (comp instanceof PianoNoteView) {
                 var pnv = (PianoNoteView) comp;
@@ -139,7 +146,7 @@ public class NoteCanvasMouseListener extends MouseAdapter {
                     canvas.showPopup(e.getX(), e.getY());
                 }
 
-            } else if (!PianoRollCanvas.NOTE_COPY_BUFFER.isEmpty()) {
+            } else if (!buffer.getCopiedNotes().isEmpty()) {
                 pastePoint = e.getPoint();
                 pasteMenu.show(canvas, pastePoint.x, pastePoint.y);
             }
@@ -222,7 +229,7 @@ public class NoteCanvasMouseListener extends MouseAdapter {
             } else if (((e.getModifiers() & OS_CTRL_KEY) == OS_CTRL_KEY) && !e.isShiftDown()) {
                 // PASTE NOTES
 
-                if (PianoRollCanvas.NOTE_COPY_BUFFER.isEmpty()) {
+                if (buffer.getCopiedNotes().isEmpty()) {
                     return;
                 }
 
@@ -275,6 +282,29 @@ public class NoteCanvasMouseListener extends MouseAdapter {
     }
 
     private void pasteNotes(Point p) {
+        final var buffer = NoteCopyBuffer.getInstance();
+        final var sourcePianoRoll = buffer.getSourcePianoRoll();
+        final var currentPianoRoll = canvas.p;
+        final Map<FieldDef, FieldDef> srcToTargetMap = new HashMap<>();
+
+        if (!currentPianoRoll.isCompatible(sourcePianoRoll)) {
+            var nd = new NotifyDescriptor("Unable to paste notes as source and target PianoRolls are not compatible.",
+                    "Paste Error", NotifyDescriptor.DEFAULT_OPTION,
+                    NotifyDescriptor.ERROR_MESSAGE,
+                    null, null);
+            DialogDisplayer.getDefault().notify(nd);
+            return;
+        }
+
+        if (sourcePianoRoll != currentPianoRoll) {
+            var aDefs = sourcePianoRoll.getFieldDefinitions();
+            var bDefs = currentPianoRoll.getFieldDefinitions();
+            
+            for (int i = 0; i < aDefs.size(); i++) {
+                srcToTargetMap.put(aDefs.get(i), bDefs.get(i));
+            }
+        }
+
         int x = p.x;
         int y = p.y;
 
@@ -290,7 +320,7 @@ public class NoteCanvasMouseListener extends MouseAdapter {
             startTime = ScoreUtilities.getSnapValueStart(startTime, snapValue);
         }
 
-        for (PianoNote note : PianoRollCanvas.NOTE_COPY_BUFFER) {
+        for (PianoNote note : buffer.getCopiedNotes()) {
             timeAdjust = Math.min(timeAdjust, note.getStart());
             int pitchNum = note.getOctave() * scaleDegrees + note.getScaleDegree();
             topPitchNum = Math.max(topPitchNum, pitchNum);
@@ -304,8 +334,17 @@ public class NoteCanvasMouseListener extends MouseAdapter {
         int pitchNumAdjust = basePitchNum - topPitchNum;
         var pianoRollNotes = canvas.p.getNotes();
 
-        for (PianoNote note : PianoRollCanvas.NOTE_COPY_BUFFER) {
+        for (PianoNote note : buffer.getCopiedNotes()) {
             PianoNote copy = new PianoNote(note);
+            
+            // ensure field defs relinked if pasting to a different PianoRoll
+            if(!srcToTargetMap.isEmpty()) {
+                for(var f : copy.getFields()) {
+                    var fd = srcToTargetMap.get(f.getFieldDef());
+                    f.setFieldDef(fd);
+                }
+            }
+            
             copy.setStart(startTime + (copy.getStart() - timeAdjust));
 
             int pitchNum = copy.getOctave() * scaleDegrees + copy.getScaleDegree();
