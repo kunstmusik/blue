@@ -534,7 +534,7 @@ public class PianoRollCanvas extends JLayeredPane implements Scrollable,
                     break;
                 case "pixelSecond":
                 case "noteHeight":
-                    editPianoRoll(this.p);
+                    repaint();
                     break;
             }
 

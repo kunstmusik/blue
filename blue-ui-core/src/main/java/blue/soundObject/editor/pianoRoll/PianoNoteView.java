@@ -81,12 +81,14 @@ public class PianoNoteView extends JPanel implements PropertyChangeListener,
         super.addNotify();
         note.addPropertyChangeListener(this);
         selectedNotes.addListener(lcl);
+        p.addPropertyChangeListener(this);
     }
 
     @Override
     public void removeNotify() {
         note.removePropertyChangeListener(this);
         selectedNotes.removeListener(lcl);
+        p.removePropertyChangeListener(this);
         super.removeNotify();
     }
 
@@ -142,7 +144,10 @@ public class PianoNoteView extends JPanel implements PropertyChangeListener,
      */
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
-        if (evt.getSource() == note) {
+        var propName = evt.getPropertyName();
+        if (evt.getSource() == note || 
+                "pixelSecond".equals(propName) ||
+                "noteHeight".equals(propName)) {
             updatePropertiesFromNote();
         }
     }

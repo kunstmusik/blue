@@ -55,11 +55,7 @@ class Pin extends JPanel {
 
     private final javax.swing.event.ChangeListener cl = src -> updateLocation();
 
-    private final PropertyChangeListener pcl = pce -> {
-        if ("start".equals(pce.getPropertyName())) {
-            updateLocation();
-        }
-    };
+    private final PropertyChangeListener pcl;
 
     private final ChangeListener<? super Number> valueListener = (obs, old, newVal) -> updateLocation();
 
@@ -78,13 +74,25 @@ class Pin extends JPanel {
             drawColor = selected ? SELECTED_COLOR : NORMAL_COLOR;
         };
 
+        pcl = pce -> {
+            if (pce.getSource() == pianoRoll) {
+                if ("pixelSecond".equals(pce.getPropertyName())) {
+                    updateLocation();
+                }
+            } else {
+                if ("start".equals(pce.getPropertyName())) {
+                    updateLocation();
+                }
+            }
+        };
+
         var selected = selectedNotes.contains(note);
         drawColor = selected ? SELECTED_COLOR : NORMAL_COLOR;
 
-        setSize(5,5);
+        setSize(5, 5);
         setOpaque(false);
         setCursor(Cursor.getPredefinedCursor(Cursor.S_RESIZE_CURSOR));
-    } 
+    }
 
     @Override
     public void addNotify() {
@@ -94,6 +102,7 @@ class Pin extends JPanel {
         yScale.addChangeListener(cl);
         note.addPropertyChangeListener(pcl);
         selectedNotes.addListener(lcl);
+        pianoRoll.addPropertyChangeListener(pcl);
     }
 
     @Override
@@ -102,6 +111,8 @@ class Pin extends JPanel {
         note.removePropertyChangeListener(pcl);
         field.valueProperty().removeListener(valueListener);
         selectedNotes.removeListener(lcl);
+        pianoRoll.removePropertyChangeListener(pcl);
+
         super.removeNotify();
     }
 
@@ -122,7 +133,7 @@ class Pin extends JPanel {
         if (drawColor == SELECTED_COLOR) {
             g2d.setColor(drawColor);
             g.fillOval(0, 0, width, height);
-            g2d.drawOval(0, 0, width, height);            
+            g2d.drawOval(0, 0, width, height);
         } else {
             g2d.setColor(Color.BLACK);
             g.fillOval(0, 0, width, height);

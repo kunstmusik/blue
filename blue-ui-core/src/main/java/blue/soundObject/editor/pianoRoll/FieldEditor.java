@@ -32,6 +32,7 @@ import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.beans.PropertyChangeListener;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.collections.ListChangeListener;
@@ -58,6 +59,8 @@ public class FieldEditor extends JPanel {
     FieldEditorMouseListener fieldEditorMouseListener;
 
     ListChangeListener<PianoNote> lcl;
+    
+    PropertyChangeListener pcl;
 
     public FieldEditor(ObservableList<PianoNote> selectedNotes,
             ObjectProperty<FieldDef> selectedFieldDef,
@@ -138,6 +141,11 @@ public class FieldEditor extends JPanel {
 
         ToolTipManager.sharedInstance().registerComponent(this);
 
+        pcl = (pce) -> {
+            if("pixelSecond".equals(pce.getPropertyName())) {
+                repaint();
+            }
+        };
     }
 
     @Override
@@ -165,11 +173,13 @@ public class FieldEditor extends JPanel {
     public void editPianoRoll(PianoRoll p) {
         if (this.p != null) {
             this.p.getNotes().removeListener(lcl);
+            this.p.removePropertyChangeListener(pcl);
         }
         this.p = p;
 
         if (this.p != null) {
             this.p.getNotes().addListener(lcl);
+            this.p.addPropertyChangeListener(pcl);
         }
     }
 
