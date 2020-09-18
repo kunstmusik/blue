@@ -69,6 +69,7 @@ import javax.swing.JTabbedPane;
 import javax.swing.JToggleButton;
 import javax.swing.JViewport;
 import javax.swing.SwingUtilities;
+import javax.swing.Timer;
 
 /**
  * Title: blue Description: an object composition environment for csound
@@ -79,7 +80,7 @@ import javax.swing.SwingUtilities;
  */
 @ScoreObjectEditorPlugin(scoreObjectType = PianoRoll.class)
 public class PianoRollEditor extends ScoreObjectEditor implements
-        PropertyChangeListener, ActionListener {
+        PropertyChangeListener {
 
     ObservableList<PianoNote> selectedNotes = FXCollections.observableArrayList();
 
@@ -215,9 +216,16 @@ public class PianoRollEditor extends ScoreObjectEditor implements
 
         ScrollerButton plusHorz = new ScrollerButton("+");
         ScrollerButton minusHorz = new ScrollerButton("-");
-        plusHorz.setActionCommand("plusHorizontal");
-        minusHorz.setActionCommand("minusHorizontal");
-
+        
+        plusHorz.putClientProperty("timer", new Timer(100, (e) -> {
+            raisePixelSecond();
+        }));
+        
+        minusHorz.putClientProperty("timer", new Timer(100, (e) -> {
+            lowerPixelSecond();
+        }));
+        
+        
         horizontalViewChanger.add(plusHorz);
         horizontalViewChanger.add(minusHorz);
 
@@ -225,16 +233,38 @@ public class PianoRollEditor extends ScoreObjectEditor implements
 
         ScrollerButton plusVert = new ScrollerButton("+");
         ScrollerButton minusVert = new ScrollerButton("-");
-        plusVert.setActionCommand("plusVertical");
-        minusVert.setActionCommand("minusVertical");
+
+        plusVert.putClientProperty("timer", new Timer(100, (e) -> {
+            raiseHeight();
+        }));
+        
+        minusVert.putClientProperty("timer", new Timer(100, (e) -> {
+            lowerHeight();
+        }));
 
         verticalViewChanger.add(plusVert);
         verticalViewChanger.add(minusVert);
+        
+        var viewChangerListener = new MouseAdapter() {
+            @Override
+            public void mousePressed(MouseEvent e) {
+                var src = (ScrollerButton)e.getSource();
+                var timer = (Timer)src.getClientProperty("timer");
+                timer.start();
+            }
+            
+            @Override
+            public void mouseReleased(MouseEvent e) {
+                var src = (ScrollerButton)e.getSource();
+                var timer = (Timer)src.getClientProperty("timer");
+                timer.stop();
+            }
+        };
 
-        plusHorz.addActionListener(this);
-        minusHorz.addActionListener(this);
-        plusVert.addActionListener(this);
-        minusVert.addActionListener(this);
+        plusHorz.addMouseListener(viewChangerListener);
+        minusHorz.addMouseListener(viewChangerListener);
+        plusVert.addMouseListener(viewChangerListener);
+        minusVert.addMouseListener(viewChangerListener);
 
         noteSP
                 .setHorizontalScrollBarPolicy(
@@ -401,22 +431,4 @@ public class PianoRollEditor extends ScoreObjectEditor implements
         p.setPixelSecond(pixelSecond);
     }
 
-    @Override
-    public void actionPerformed(ActionEvent ae) {
-        String command = ae.getActionCommand();
-        switch (command) {
-            case "plusVertical":
-                raiseHeight();
-                break;
-            case "minusVertical":
-                lowerHeight();
-                break;
-            case "plusHorizontal":
-                raisePixelSecond();
-                break;
-            case "minusHorizontal":
-                lowerPixelSecond();
-                break;
-        }
-    }
 }
