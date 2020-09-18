@@ -72,6 +72,8 @@ UPDATED
   compatible with prior note template system but more convenient given the new
   Field system. 
 
+* Restored using Rhino JS interpreter as Nashorn was removed from Java 15
+
 FIX
 
 * BSB: PresetManager dialog had bugs when dragging and dropping nodes around

@@ -62,6 +62,7 @@
         <module>branding</module>
         <module>blue-ext-exml</module>
         <module>blue-ext-jython</module>
+        <module>blue-ext-rhino</module>        
         <module>blue-ext-commons-lang3</module>
         <module>blue-ext-commons-io</module>
         <module>blue-ext-openjfx</module>
