@@ -75,8 +75,8 @@ UPDATED
 * Restored using Rhino JS interpreter as Nashorn was removed from Java 15
 
 * Issue #532: Made zoom in/out buttons use a timer to repeatedly zoom when 
-  button is down and stop zooming when mouse is up (Score Timeline, PianoRoll)
- 
+  button is down and stop zooming when mouse is up (Score Timeline, PianoRoll) 
+
 
 FIX
 
@@ -89,6 +89,9 @@ FIX
   audio files were children of project root folder
 
 * Issue #523: Comments tab for instruments did not scroll correctly
+
+* Issue #527: Fixed performance issue with drawing of PianoRoll canvas on Linux
+  due to GradientPaint
 
 
 > Notes for 2.8.0 <

@@ -307,10 +307,10 @@ public class PianoRollCanvas extends JLayeredPane implements Scrollable,
     public void copy() {
         var buffer = NoteCopyBuffer.getInstance();
         buffer.clear();
-        
+
         buffer.setSourcePianoRoll(p);
         var copiedNotes = buffer.getCopiedNotes();
-        
+
         for (var note : selectedNotes) {
             copiedNotes.add(new PianoNote(note));
         }
@@ -390,14 +390,14 @@ public class PianoRollCanvas extends JLayeredPane implements Scrollable,
             h = octaves * octaveHeight;
         }
 
+        Color lightColor = new Color(38, 51, 76).darker().darker();
+        Color darkColor = lightColor.darker();
+
         for (int i = 0; i < octaves; i++) {
             int lineY = h - (i * octaveHeight);
 
-            Color lightColor = new Color(38, 51, 76).darker().darker();
-            Color darkColor = lightColor.darker();
-
             GradientPaint backgroundPaint = new GradientPaint(0, lineY,
-                    darkColor, 1, lineY - octaveHeight, lightColor);
+                    darkColor, 0, lineY - octaveHeight, lightColor);
             g2d.setPaint(backgroundPaint);
             g2d.fillRect(0, lineY - octaveHeight, w, octaveHeight);
 
