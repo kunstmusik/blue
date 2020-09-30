@@ -12,12 +12,11 @@ import java.util.Random;
 /**
  * Title: blue Description: an object composition environment for csound
  * Copyright: Copyright (c) 2001 Company: steven yi music
- * 
+ *
  * @author steven yi
  * @version 1.0
  */
-
-@NoteProcessorPlugin(displayName="RandomMultiplyProcessor", position = 50)
+@NoteProcessorPlugin(displayName = "RandomMultiplyProcessor", position = 50)
 public class RandomMultiplyProcessor implements NoteProcessor {
 
     int pfield = 4;
@@ -25,10 +24,10 @@ public class RandomMultiplyProcessor implements NoteProcessor {
     double min = 0f;
 
     double max = 1f;
-    
+
     boolean seedUsed = false;
-    
-    long seed = 0L;    
+
+    long seed = 0L;
 
     public RandomMultiplyProcessor() {
     }
@@ -40,6 +39,7 @@ public class RandomMultiplyProcessor implements NoteProcessor {
         seedUsed = rmp.seedUsed;
         seed = rmp.seed;
     }
+
     @Override
     public String toString() {
         return "[random multiply]";
@@ -69,12 +69,12 @@ public class RandomMultiplyProcessor implements NoteProcessor {
         this.max = Double.parseDouble(value);
     }
 
-       public String getSeedUsed() {
-        return Boolean.toString(seedUsed);
+    public boolean isSeedUsed() {
+        return seedUsed;
     }
 
-    public void setSeedUsed(String seedUsed) {
-        this.seedUsed = Boolean.valueOf(seedUsed.trim().toLowerCase());
+    public void setSeedUsed(boolean seedUsed) {
+        this.seedUsed = seedUsed;
     }
 
     public String getSeed() {
@@ -84,14 +84,14 @@ public class RandomMultiplyProcessor implements NoteProcessor {
     public void setSeed(String seed) {
         this.seed = Long.parseLong(seed);
     }
-    
+
     @Override
     public final void processNotes(NoteList in) throws NoteProcessorException {
         Note temp;
 
         double range = max - min;
         double fieldVal = 0f;
-        
+
         Random r = seedUsed ? new Random(seed) : new Random();
 
         for (int i = 0; i < in.size(); i++) {
@@ -132,11 +132,11 @@ public class RandomMultiplyProcessor implements NoteProcessor {
                     mp.setMax(node.getTextString());
                     break;
                 case "seedUsed":
-                    mp.setSeedUsed(node.getTextString());
+                    mp.setSeedUsed(Boolean.valueOf(node.getTextString()));
                     break;
                 case "seed":
                     mp.setSeed(node.getTextString());
-                    break;                    
+                    break;
             }
         }
 
@@ -156,9 +156,9 @@ public class RandomMultiplyProcessor implements NoteProcessor {
         retVal.addElement("pfield").setText(this.getPfield());
         retVal.addElement("min").setText(this.getMin());
         retVal.addElement("max").setText(this.getMax());
-        retVal.addElement("seedUsed").setText(this.getSeedUsed());
+        retVal.addElement("seedUsed").setText(Boolean.toString(this.isSeedUsed()));
         retVal.addElement("seed").setText(this.getSeed());
-        
+
         return retVal;
     }
 

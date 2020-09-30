@@ -106,10 +106,11 @@ public class NoteProcessorChainTableModel extends AbstractTableModel {
         ArrayList setMethods = new ArrayList();
 
         for (int i = 0; i < m.length; i++) {
-            if (m[i].getName().toLowerCase().startsWith("get")) {
+            var name = m[i].getName().toLowerCase();
+            if (name.startsWith("get") || name.startsWith(("is"))) {
                 getMethods.add(m[i]);
             }
-            if (m[i].getName().toLowerCase().startsWith("set")) {
+            if (name.startsWith("set")) {
                 setMethods.add(m[i]);
             }
         }
@@ -139,7 +140,10 @@ public class NoteProcessorChainTableModel extends AbstractTableModel {
     }
 
     private Method findSetMethod(Method getMethod, ArrayList a) {
-        String name = getMethod.getName().substring(3);
+        var methodName = getMethod.getName();
+        String name = methodName.startsWith("get") ? 
+                methodName.substring(3) :
+                methodName.substring(2);
         for (int i = 0; i < a.size(); i++) {
             Method temp = (Method) a.get(i);
             if (temp.getName().endsWith(name)) {

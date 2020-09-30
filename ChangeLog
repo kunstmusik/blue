@@ -77,6 +77,8 @@ UPDATED
 * Issue #532: Made zoom in/out buttons use a timer to repeatedly zoom when 
   button is down and stop zooming when mouse is up (Score Timeline, PianoRoll) 
 
+* Issue #524: Implemented checkbox editor for NoteProcessor properties that are 
+  true/false
 
 FIX
 

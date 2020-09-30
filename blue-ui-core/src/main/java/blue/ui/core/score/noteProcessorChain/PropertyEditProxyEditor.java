@@ -25,20 +25,15 @@ import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
-import java.util.EventObject;
-import java.util.Vector;
+import javax.swing.AbstractCellEditor;
+import javax.swing.JCheckBox;
 import javax.swing.JTable;
 import javax.swing.JTextField;
-import javax.swing.event.CellEditorListener;
-import javax.swing.event.ChangeEvent;
 import javax.swing.table.TableCellEditor;
 
+class PropertyEditProxyEditor extends AbstractCellEditor implements TableCellEditor, ActionListener {
 
-class PropertyEditProxyEditor implements TableCellEditor, ActionListener {
-
-    protected transient Vector listeners = new Vector();
-
-    // JCheckBox checkBox = new JCheckBox();
+    JCheckBox checkBox = new JCheckBox();
     JTextField textField = new JTextField();
 
     ScaleEditor scaleEditor = new ScaleEditor();
@@ -47,12 +42,13 @@ class PropertyEditProxyEditor implements TableCellEditor, ActionListener {
 
     // JTextField numberField = new JTextField();
     // JComboBox comboBox = new JComboBox();
-
     EditorDelegate textDelegate;
 
     EditorDelegate scaleDelegate;
 
     EditorDelegate codeDelegate;
+
+    EditorDelegate booleanDelegate;
 
     Component editor;
 
@@ -63,6 +59,8 @@ class PropertyEditProxyEditor implements TableCellEditor, ActionListener {
         textField.setBorder(null);
 
         scaleEditor.addActionListener(this);
+
+        checkBox.addActionListener(this);
 
         textDelegate = new EditorDelegate() {
             @Override
@@ -103,6 +101,20 @@ class PropertyEditProxyEditor implements TableCellEditor, ActionListener {
             }
 
         };
+
+        booleanDelegate = new EditorDelegate() {
+
+            @Override
+            public void setValue(Object val) {
+                checkBox.setSelected((Boolean) val);
+            }
+
+            @Override
+            public Object getValue() {
+                return checkBox.isSelected();
+            }
+
+        };
     }
 
     /*
@@ -134,7 +146,7 @@ class PropertyEditProxyEditor implements TableCellEditor, ActionListener {
         if (obj instanceof File) {
 
         } else if (obj instanceof Boolean) {
-            // return checkBox;
+            return checkBox;
         } else if (obj instanceof Number) {
             // return numberField;
         } else if (obj instanceof Scale) {
@@ -150,7 +162,7 @@ class PropertyEditProxyEditor implements TableCellEditor, ActionListener {
         if (obj instanceof File) {
 
         } else if (obj instanceof Boolean) {
-            // return checkBox;
+            return booleanDelegate;
         } else if (obj instanceof Number) {
             // return numberField;
         } else if (obj instanceof Scale) {
@@ -162,26 +174,6 @@ class PropertyEditProxyEditor implements TableCellEditor, ActionListener {
         return textDelegate;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see javax.swing.CellEditor#cancelCellEditing()
-     */
-    @Override
-    public void cancelCellEditing() {
-        fireEditingCanceled();
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see javax.swing.CellEditor#stopCellEditing()
-     */
-    @Override
-    public boolean stopCellEditing() {
-        fireEditingStopped();
-        return true;
-    }
 
     /*
      * (non-Javadoc)
@@ -194,48 +186,6 @@ class PropertyEditProxyEditor implements TableCellEditor, ActionListener {
             return null;
         }
         return delegate.getValue();
-    }
-
-    @Override
-    public boolean isCellEditable(EventObject anEvent) {
-        return true;
-    }
-
-    @Override
-    public boolean shouldSelectCell(EventObject anEvent) {
-        return true;
-    }
-
-    @Override
-    public void addCellEditorListener(CellEditorListener l) {
-        listeners.addElement(l);
-    }
-
-    @Override
-    public void removeCellEditorListener(CellEditorListener l) {
-        listeners.remove(l);
-    }
-
-    private void fireEditingCanceled() {
-        ChangeEvent ce = new ChangeEvent(this);
-        for (int i = listeners.size() - 1; i >= 0; i--) {
-            CellEditorListener listener = (CellEditorListener) listeners.get(i);
-            listener.editingCanceled(ce);
-        }
-        if (editor != null) {
-            editor.setVisible(false);
-        }
-    }
-
-    private void fireEditingStopped() {
-        ChangeEvent ce = new ChangeEvent(this);
-        for (int i = listeners.size() - 1; i >= 0; i--) {
-            CellEditorListener listener = (CellEditorListener) listeners.get(i);
-            listener.editingStopped(ce);
-        }
-        if (editor != null) {
-            editor.setVisible(false);
-        }
     }
 
     interface EditorDelegate {
@@ -252,6 +202,6 @@ class PropertyEditProxyEditor implements TableCellEditor, ActionListener {
      */
     @Override
     public void actionPerformed(ActionEvent e) {
-        fireEditingStopped();
+        stopCellEditing();
     }
 }

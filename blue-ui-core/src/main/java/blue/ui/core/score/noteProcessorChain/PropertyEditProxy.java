@@ -57,7 +57,7 @@ class PropertyEditProxy {
 
     public void setValue(Object val) throws Exception {
         Object[] args = new Object[1];
-        args[0] = val.toString();
+        args[0] = val;
         // Object o = setMethod.invoke(obj, args);
         setMethod.invoke(obj, args);
     }

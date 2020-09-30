@@ -69,12 +69,12 @@ public class RandomAddProcessor implements NoteProcessor {
         this.max = Double.parseDouble(value);
     }
 
-    public String getSeedUsed() {
-        return Boolean.toString(seedUsed);
+    public boolean isSeedUsed() {
+        return seedUsed;
     }
 
-    public void setSeedUsed(String seedUsed) {
-        this.seedUsed = Boolean.valueOf(seedUsed.trim().toLowerCase());
+    public void setSeedUsed(boolean seedUsed) {
+        this.seedUsed = seedUsed;
     }
 
     public String getSeed() {
@@ -131,7 +131,7 @@ public class RandomAddProcessor implements NoteProcessor {
                     rap.setMax(node.getTextString());
                     break;
                 case "seedUsed":
-                    rap.setSeedUsed(node.getTextString());
+                    rap.setSeedUsed(Boolean.valueOf(node.getTextString()));
                     break;
                 case "seed":
                     rap.setSeed(node.getTextString());
@@ -155,7 +155,7 @@ public class RandomAddProcessor implements NoteProcessor {
         retVal.addElement("pfield").setText(this.getPfield());
         retVal.addElement("min").setText(this.getMin());
         retVal.addElement("max").setText(this.getMax());
-        retVal.addElement("seedUsed").setText(this.getSeedUsed());
+        retVal.addElement("seedUsed").setText(Boolean.toString(seedUsed));
         retVal.addElement("seed").setText(this.getSeed());
 
         return retVal;
