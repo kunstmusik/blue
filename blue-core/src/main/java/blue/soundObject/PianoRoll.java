@@ -61,15 +61,15 @@ public class PianoRoll extends AbstractSoundObject implements ListChangeListener
 
     private transient ArrayList listeners;
 
-    private boolean snapEnabled = false;
+    private boolean snapEnabled = true;
 
-    private double snapValue = 1.0f;
+    private double snapValue = 0.25;
 
-    private int timeDisplay = DISPLAY_TIME;
+    private int timeDisplay = DISPLAY_NUMBER;
 
     private int pchGenerationMethod = GENERATE_FREQUENCY;
 
-    private int timeUnit = 5;
+    private int timeUnit = 4;
 
     private int transposition = 0;
 
