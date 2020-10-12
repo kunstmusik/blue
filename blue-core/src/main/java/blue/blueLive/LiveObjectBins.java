@@ -305,11 +305,7 @@ public class LiveObjectBins {
             for (int j = 0; j < liveObjectBins[0].length; j++) {
                 LiveObject lObj = liveObjectBins[i][j];
 
-                if (lObj != null && liveObjectSet.contains(lObj)) {
-                    lObj.setEnabled(true);
-                } else {
-                    lObj.setEnabled(false);
-                }
+                lObj.setEnabled(lObj != null && liveObjectSet.contains(lObj));
             }
         }
 

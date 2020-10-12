@@ -34,10 +34,10 @@ public class PythonProxy {
     private static InteractiveInterpreter interp;
     private static PythonInterpreter expressionInterpreter;
 
-    private static PySystemState state = new PySystemState();
+    private static final PySystemState state = new PySystemState();
     private static File libDir = null;
     
-    private static ArrayList<PythonProxyListener> listeners = 
+    private static final ArrayList<PythonProxyListener> listeners =
             new ArrayList<>();
 
     public static void setLibDir(File newLibDir) {

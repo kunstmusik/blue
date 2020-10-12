@@ -24,7 +24,7 @@ public final class SoundObjectLibrary extends ArrayList<SoundObject> {
 
     private boolean initializing = false;
 
-    private transient ArrayList<ChangeListener> listeners
+    private final transient ArrayList<ChangeListener> listeners
             = new ArrayList<>();
 
     public SoundObjectLibrary() {

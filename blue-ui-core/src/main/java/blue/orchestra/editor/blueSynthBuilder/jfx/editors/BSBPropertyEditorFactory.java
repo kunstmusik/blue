@@ -48,7 +48,7 @@ public class BSBPropertyEditorFactory extends DefaultPropertyEditorFactory {
 
         if (type == String.class) {
             return new PropertyEditor<String>() {
-                StringPropertyEditor tf = new StringPropertyEditor(item);
+                final StringPropertyEditor tf = new StringPropertyEditor(item);
 
                 @Override
                 public Node getEditor() {
@@ -69,7 +69,7 @@ public class BSBPropertyEditorFactory extends DefaultPropertyEditorFactory {
         } else if (isNumber(type)) {
             
             return new PropertyEditor<Number>() {
-                NumberPropertyEditor tf = new NumberPropertyEditor(item);
+                final NumberPropertyEditor tf = new NumberPropertyEditor(item);
 
                 @Override
                 public Node getEditor() {
@@ -90,7 +90,7 @@ public class BSBPropertyEditorFactory extends DefaultPropertyEditorFactory {
         } else if (type == BSBDropdownItemList.class) {
             
             return new PropertyEditor<BSBDropdownItemList>() {
-                BSBDropdownItemListEditor tf = new BSBDropdownItemListEditor();
+                final BSBDropdownItemListEditor tf = new BSBDropdownItemListEditor();
 
                 @Override
                 public Node getEditor() {
@@ -111,7 +111,7 @@ public class BSBPropertyEditorFactory extends DefaultPropertyEditorFactory {
         } else if (type == LineList.class) {
 
             return new PropertyEditor<LineList>() {
-                LineListEditor tf = new LineListEditor();
+                final LineListEditor tf = new LineListEditor();
 
                 @Override
                 public Node getEditor() {
@@ -134,7 +134,7 @@ public class BSBPropertyEditorFactory extends DefaultPropertyEditorFactory {
         return super.call(item);
     }
 
-    private static Class<?>[] numericTypes = new Class[]{
+    private static final Class<?>[] numericTypes = new Class[]{
         byte.class, Byte.class,
         short.class, Short.class,
         int.class, Integer.class,

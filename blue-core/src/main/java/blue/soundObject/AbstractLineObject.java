@@ -27,7 +27,7 @@ import java.util.Map;
  */
 public abstract class AbstractLineObject extends AbstractSoundObject {
 
-    private static String LINE_OBJECT_CACHE = "abstractLineObject.lineObjectCache";
+    private static final String LINE_OBJECT_CACHE = "abstractLineObject.lineObjectCache";
 
     protected LineList lines = new LineList();
 

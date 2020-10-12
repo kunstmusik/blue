@@ -366,8 +366,8 @@ public class ObjectBuilder extends AbstractSoundObject {
         CLOJURE("Clojure", "text/x-clojure"),
         EXTERNAL("External", "text/plain");
 
-        private String desc;
-        private String mimeType;
+        private final String desc;
+        private final String mimeType;
 
         LanguageType(String desc, String mimeType) {
             this.desc = desc;

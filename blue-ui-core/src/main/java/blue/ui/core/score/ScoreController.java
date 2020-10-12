@@ -72,7 +72,7 @@ public class ScoreController {
     private InstanceContent content;
     private Score score = null;
     WeakHashMap<Score, ScorePath> scorePaths = new WeakHashMap<>();
-    private List<ScoreControllerListener> listeners = new ArrayList<>();
+    private final List<ScoreControllerListener> listeners = new ArrayList<>();
     JScrollPane scrollPane = null;
 
     private ScoreController() {

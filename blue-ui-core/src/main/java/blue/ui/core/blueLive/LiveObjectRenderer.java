@@ -41,8 +41,8 @@ public class LiveObjectRenderer extends JLabel implements TableCellRenderer {
     private LiveObjectSet set;
     Border highlightedBorder = BorderFactory.createLineBorder(Color.WHITE);
     
-    private static Object HIGHGLIGHTED = new Object();
-    private static Color HIGHLIGHT_PAINT = new Color(255, 255, 255, 128);
+    private static final Object HIGHGLIGHTED = new Object();
+    private static final Color HIGHLIGHT_PAINT = new Color(255, 255, 255, 128);
     
     public LiveObjectRenderer() {
         setOpaque(true);

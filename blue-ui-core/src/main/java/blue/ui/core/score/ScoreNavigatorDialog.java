@@ -56,7 +56,7 @@ public class ScoreNavigatorDialog extends JDialog implements ComponentListener,
 
     private JScrollPane jScrollPane;
 
-    private NavBox overBox = new NavBox();
+    private final NavBox overBox = new NavBox();
 
     boolean isAdjusting = false;
     boolean userModifyingBox = false;

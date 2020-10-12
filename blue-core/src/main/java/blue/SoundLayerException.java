@@ -28,18 +28,18 @@ public class SoundLayerException extends Exception {
      * SoundLayer where Exception originated
      */
 
-    private SoundLayer soundLayer;
+    private final SoundLayer soundLayer;
 
     /**
      * Holds the text of the actual message
      */
-    private String message;
+    private final String message;
 
     /**
      * An exception that caused an error in the SoundLayer. Usually denotes an
      * error in a sub-SoundLayer or NoteProcessor.
      */
-    private Throwable cause;
+    private final Throwable cause;
 
     private int layerNumber = -1;
 

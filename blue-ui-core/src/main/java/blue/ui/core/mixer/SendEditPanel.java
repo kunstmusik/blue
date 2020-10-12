@@ -22,7 +22,7 @@ import javax.swing.event.ChangeEvent;
 public class SendEditPanel extends javax.swing.JPanel implements
         PropertyChangeListener {
 
-    private static MessageFormat format = new MessageFormat("{0,number,#.##}",
+    private static final MessageFormat format = new MessageFormat("{0,number,#.##}",
             Locale.ENGLISH);
 
     Send send = null;

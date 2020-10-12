@@ -156,7 +156,7 @@ public class CS6RealtimeRenderService implements RealtimeRenderService, PlayMode
             csound.stop();
             csound.cleanup();
             csound.setMessageCallback(null);
-            csound.reset();
+            csound.delete();
             csound = null;
             blueCallbackWrapper = null;
             return;
@@ -394,7 +394,7 @@ public class CS6RealtimeRenderService implements RealtimeRenderService, PlayMode
 
     static class APIRunnerThread implements Runnable {
 
-        private Csound csound;
+        private final Csound csound;
         private boolean keepRunning = true;
         private PlayModeListener playModeListener;
         private ArrayList parameters;
@@ -581,7 +581,7 @@ public class CS6RealtimeRenderService implements RealtimeRenderService, PlayMode
             csound.stop();
             csound.cleanup();
             csound.setMessageCallback(null);
-            csound.reset();
+            csound.delete();
 
             if (renderUpdatesTime) {
                 manager.endRender();

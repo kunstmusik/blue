@@ -41,9 +41,9 @@ public class WindowSettingManager {
 
     private static final String SETTINGS_FILE_NAME = "windowSettings.xml";
 
-    private HashMap<String,Window> windows = new HashMap<>();
+    private final HashMap<String,Window> windows = new HashMap<>();
 
-    private HashMap<String,Element> settings = new HashMap<>();
+    private final HashMap<String,Element> settings = new HashMap<>();
 
     private WindowSettingManager() {
         load();

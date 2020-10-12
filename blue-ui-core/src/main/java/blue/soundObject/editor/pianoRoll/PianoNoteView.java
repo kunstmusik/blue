@@ -23,95 +23,77 @@ import blue.soundObject.PianoRoll;
 import blue.soundObject.pianoRoll.PianoNote;
 import blue.soundObject.pianoRoll.Scale;
 import java.awt.Color;
-import java.awt.event.HierarchyEvent;
-import java.awt.event.HierarchyListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import javafx.collections.ListChangeListener;
+import javafx.collections.ObservableList;
 import javax.swing.BorderFactory;
 import javax.swing.JPanel;
-import javax.swing.border.BevelBorder;
 import javax.swing.border.Border;
 
 /**
  * @author steven
- * 
+ *
  */
-
 public class PianoNoteView extends JPanel implements PropertyChangeListener,
         Comparable<PianoNoteView> {
+
     private static final int OCTAVES = 16;
 
     // private static Border NORMAL_BORDER = new LineBorder(Color.LIGHT_GRAY);
-    private static Border NORMAL_BORDER = BorderFactory
+    private static final Border NORMAL_BORDER = BorderFactory
             .createLineBorder(Color.DARK_GRAY, 1);
 
-    private static Color NORMAL_COLOR = Color.GRAY;
+    private static final Color NORMAL_COLOR = Color.GRAY;
 
-    private static Color SELECTED_COLOR = Color.WHITE;
+    private static final Color SELECTED_COLOR = Color.WHITE;
 
-    private PianoNote note;
+    private final PianoNote note;
 
-    private PianoRoll p;
+    private final PianoRoll p;
+    private final ObservableList<PianoNote> selectedNotes;
 
-    public PianoNoteView(PianoNote note, PianoRoll p) {
+    ListChangeListener<PianoNote> lcl;
+
+    public PianoNoteView(PianoNote note, PianoRoll p, ObservableList<PianoNote> selectedNotes) {
         this.note = note;
         this.p = p;
+        this.selectedNotes = selectedNotes;
 
         this.setBackground(NORMAL_COLOR);
         this.setBorder(NORMAL_BORDER);
 
         this.setOpaque(true);
 
+        lcl = (change) -> {
+            var selected = selectedNotes.contains(note);
+            setBackground(selected ? SELECTED_COLOR : NORMAL_COLOR);
+        };
+
         updatePropertiesFromNote();
 
-        note.addPropertyChangeListener(this);
-
-        this.addHierarchyListener((HierarchyEvent e) -> {
-            if (getParent() == null) {
-                removeAsListener();
-            }
-        });
-
+        var selected = selectedNotes.contains(note);
+        setBackground(selected ? SELECTED_COLOR : NORMAL_COLOR);
     }
 
-    public void removeAsListener() {
+    @Override
+    public void addNotify() {
+        super.addNotify();
+        note.addPropertyChangeListener(this);
+        selectedNotes.addListener(lcl);
+        p.addPropertyChangeListener(this);
+    }
+
+    @Override
+    public void removeNotify() {
         note.removePropertyChangeListener(this);
+        selectedNotes.removeListener(lcl);
+        p.removePropertyChangeListener(this);
+        super.removeNotify();
     }
 
     public PianoNote getPianoNote() {
         return this.note;
-    }
-
-    public void updateNoteStartFromLocation() {
-        int pixelSecond = p.getPixelSecond();
-        
-        float start = this.getX() / (float) pixelSecond;
-
-        updateNotePitchFromY();
-        this.note.setStart(start);
-
-    }
-
-    public void updateNotePitchFromY() {
-        int scaleDegrees;
-        int total;
-        int yVal;
-        if (p.getPchGenerationMethod() == PianoRoll.GENERATE_MIDI) {
-            scaleDegrees = 12;
-
-            total = 128 * p.getNoteHeight();
-            yVal = total - this.getY();
-        } else {
-            scaleDegrees = p.getScale().getNumScaleDegrees();
-
-            total = scaleDegrees * p.getNoteHeight() * OCTAVES;
-            yVal = total - this.getY();
-        }
-        int layerIndex = (yVal / p.getNoteHeight()) - 1;
-        int oct = layerIndex / scaleDegrees;
-        int pch = layerIndex % scaleDegrees;
-        this.note.setOctave(oct);
-        this.note.setScaleDegree(pch);
     }
 
     private void updatePropertiesFromNote() {
@@ -162,28 +144,12 @@ public class PianoNoteView extends JPanel implements PropertyChangeListener,
      */
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
-        if (evt.getSource() == note) {
+        var propName = evt.getPropertyName();
+        if (evt.getSource() == note || 
+                "pixelSecond".equals(propName) ||
+                "noteHeight".equals(propName)) {
             updatePropertiesFromNote();
         }
-    }
-
-    /**
-     * 
-     */
-    public void setSelected(boolean selected) {
-        if (selected) {
-            setBackground(SELECTED_COLOR);
-        } else {
-            setBackground(NORMAL_COLOR);
-        }
-    }
-
-    /**
-     * 
-     */
-    public void updateNoteDurFromWidth() {
-        int pixelSecond = p.getPixelSecond();
-        this.note.setDuration((float) this.getWidth() / pixelSecond);
     }
 
     @Override

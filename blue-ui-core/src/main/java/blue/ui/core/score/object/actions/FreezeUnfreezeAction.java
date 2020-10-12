@@ -126,8 +126,8 @@ public final class FreezeUnfreezeAction extends AbstractAction
 
     static class FreezeRunnable implements ProgressRunnable<Void> {
 
-        private List<SoundObject> soundObjects;
-        private List<Layer> layers;
+        private final List<SoundObject> soundObjects;
+        private final List<Layer> layers;
 
         public FreezeRunnable(List<SoundObject> soundObjects, List<Layer> layers) {
             this.soundObjects = soundObjects;

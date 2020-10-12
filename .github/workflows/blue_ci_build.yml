@@ -15,7 +15,7 @@ jobs:
       - name: Build Blue 
         run: mvn -Pgenerate-manual,macOS clean install
 
-      - uses: actions/upload-artifact@master
+      - uses: actions/upload-artifact@v2
         with:
           name: Blue (macOS .app)  
           path: application/target/blue-macOS-2.8.1-dev.zip 
@@ -34,7 +34,7 @@ jobs:
 
       - run: mv application/target/blue-2.8.1-SNAPSHOT.zip blue-linux-2.8.1-SNAPSHOT.zip
 
-      - uses: actions/upload-artifact@master
+      - uses: actions/upload-artifact@v2
         with:
           name: Blue Linux Zip
           path: blue-linux-2.8.1-SNAPSHOT.zip 
@@ -54,7 +54,7 @@ jobs:
 
       - run: mv application/target/blue-2.8.1-SNAPSHOT.zip blue-windows-2.8.1-SNAPSHOT.zip
 
-      - uses: actions/upload-artifact@master
+      - uses: actions/upload-artifact@v2
         with:
           name: Blue Windows Zip
           path: blue-windows-2.8.1-SNAPSHOT.zip 

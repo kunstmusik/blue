@@ -33,11 +33,11 @@ public class ScoreObjectEvent {
     
     public static final int OTHER = Integer.MAX_VALUE;
 
-    private ScoreObject sObj;
+    private final ScoreObject sObj;
 
-    private int propertyChanged;
+    private final int propertyChanged;
 
-    private String namedProperty;
+    private final String namedProperty;
 
     public ScoreObjectEvent(ScoreObject sObj, int propertyChanged) {
         this(sObj, propertyChanged, null);

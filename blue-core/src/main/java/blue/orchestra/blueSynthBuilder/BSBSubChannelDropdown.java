@@ -27,7 +27,7 @@ import javafx.beans.property.StringProperty;
 
 public class BSBSubChannelDropdown extends BSBObject {
 
-    private StringProperty channelOutput = 
+    private final StringProperty channelOutput =
             new SimpleStringProperty(Channel.MASTER);
 
     public BSBSubChannelDropdown() {

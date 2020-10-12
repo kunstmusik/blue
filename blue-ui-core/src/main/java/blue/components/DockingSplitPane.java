@@ -33,9 +33,9 @@ import javax.swing.JTextArea;
  */
 
 public class DockingSplitPane extends JComponent {
-    private DockWindow window = new DockWindow();
+    private final DockWindow window = new DockWindow();
 
-    private JSplitPane jsp = new JSplitPane();
+    private final JSplitPane jsp = new JSplitPane();
 
     public DockingSplitPane(final JComponent primary, String dockItemName,
             JComponent dockableItem) {

@@ -28,7 +28,7 @@ import org.openide.awt.UndoRedo;
 @InstrumentEditorPlugin(instrumentType = GenericInstrument.class)
 public class GenericInstrumentEditor extends InstrumentEditor {
 
-    private static HashMap tokenMarkerTypes = new HashMap();
+    private static final HashMap tokenMarkerTypes = new HashMap();
 
     protected MimeTypeEditorComponent codeEditor
             = new MimeTypeEditorComponent("text/x-csound-orc");

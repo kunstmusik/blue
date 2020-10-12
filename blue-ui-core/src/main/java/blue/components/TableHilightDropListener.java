@@ -76,7 +76,7 @@ public class TableHilightDropListener implements DropTargetListener {
 
     // size of hotspot used to find
     // the whether user wants to insert element
-    private int hotspot = 5;
+    private final int hotspot = 5;
 
     // dropindex - subclasses can access this in to accept/reject drop
     protected int listIndex = -1;

@@ -17,7 +17,6 @@
  * Software Foundation Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307
  * USA
  */
-
 package blue.ui.core.score.noteProcessorChain;
 
 import java.awt.Color;
@@ -60,13 +59,14 @@ public class NoteProcessorChainTable extends JTable {
         super(npcModel);
         this.setDoubleBuffered(false);
 
+        this.setDefaultRenderer(PropertyEditProxy.class, new PropertyEditProxyRenderer());
         this.setDefaultEditor(PropertyEditProxy.class,
                 new PropertyEditProxyEditor());
     }
-    
+
     @Override
     public boolean getScrollableTracksViewportHeight() {
         return getPreferredSize().height < getParent().getHeight();
     }
 
-} 
+}

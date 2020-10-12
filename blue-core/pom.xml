@@ -96,7 +96,11 @@
             <artifactId>blue-ext-openjfx</artifactId>
             <version>${project.version}</version>
         </dependency>
-        
+        <dependency>
+            <groupId>com.kunstmusik</groupId>
+            <artifactId>blue-ext-rhino</artifactId>
+            <version>${project.version}</version>
+        </dependency>
         
         <!-- adding test dependencies-->
         

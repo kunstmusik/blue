@@ -57,7 +57,7 @@ import org.apache.xmlrpc.XmlRpcException;
 // TODO - CLEAN UP THE GUI CODE IN THIS CLASS
 public class InstrumentImportPane extends JComponent {
 
-    private String AVAILABLE_INSTRUMENTS_LABEL = BlueSystem
+    private final String AVAILABLE_INSTRUMENTS_LABEL = BlueSystem
             .getString("blueShare.availableInstruments");
 
     JSplitPane mainSplitPane = new JSplitPane();

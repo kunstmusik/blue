@@ -365,7 +365,7 @@ public class EffectsPopup extends JPopupMenu implements ChangeListener {
 
     class AddEffectAction extends AbstractAction {
 
-        private Effect effect;
+        private final Effect effect;
 
         public AddEffectAction(Effect effect) {
             this.effect = effect;

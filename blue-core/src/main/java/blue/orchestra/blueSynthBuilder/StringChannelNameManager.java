@@ -13,10 +13,10 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class StringChannelNameManager {
 
-    private static MessageFormat STRING_VAR_NAME = new MessageFormat(
+    private static final MessageFormat STRING_VAR_NAME = new MessageFormat(
             "gS_blue_str{0}");
     
-    private AtomicInteger stringChannelCounter = new AtomicInteger(0);
+    private final AtomicInteger stringChannelCounter = new AtomicInteger(0);
 
     public String getUniqueStringChannel() {
         Object vars = new Object[]{stringChannelCounter.getAndIncrement()};

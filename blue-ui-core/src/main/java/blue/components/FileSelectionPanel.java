@@ -48,11 +48,11 @@ public class FileSelectionPanel extends JComponent {
 
     private File selectedFile;
 
-    private JTextField fileNameText = new JTextField();
+    private final JTextField fileNameText = new JTextField();
 
-    private JLabel fileLabel = new JLabel();
+    private final JLabel fileLabel = new JLabel();
 
-    private String fileManagerGroup;
+    private final String fileManagerGroup;
 
     public FileSelectionPanel(String fileManagerGroup) {
         this.fileManagerGroup = fileManagerGroup == null ? DEFAULT_FILE_MANAGER_GROUP

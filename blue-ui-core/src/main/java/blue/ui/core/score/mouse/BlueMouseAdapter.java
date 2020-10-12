@@ -49,7 +49,7 @@ public abstract class BlueMouseAdapter extends MouseAdapter {
     public static ScoreTopComponent scoreTC = null;
     public static InstanceContent content;
 
-    private Rectangle scrollRect = new Rectangle(0,0,1,1);
+    private final Rectangle scrollRect = new Rectangle(0,0,1,1);
     
     public abstract boolean acceptsMode(ScoreMode mode);
 

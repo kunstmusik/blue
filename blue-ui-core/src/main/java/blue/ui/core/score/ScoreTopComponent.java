@@ -431,26 +431,37 @@ public final class ScoreTopComponent extends TopComponent
 
         ScrollerButton plusHorz = new ScrollerButton("+");
         ScrollerButton minusHorz = new ScrollerButton("-");
-        plusHorz.setActionCommand("plusHorizontal");
-        minusHorz.setActionCommand("minusHorizontal");
-
+        
+        plusHorz.putClientProperty("timer", new Timer(100, (e) -> {
+            currentTimeState.raisePixelSecond();
+        }));
+        
+        minusHorz.putClientProperty("timer", new Timer(100, (e) -> {
+            currentTimeState.lowerPixelSecond();
+        }));
+        
+        
         horizontalViewChanger.add(plusHorz);
         horizontalViewChanger.add(minusHorz);
-
-        ActionListener al = (ActionEvent e) -> {
-            String command = e.getActionCommand();
-            switch (command) {
-                case "minusHorizontal":
-                    currentTimeState.lowerPixelSecond();
-                    break;
-                case "plusHorizontal":
-                    currentTimeState.raisePixelSecond();
-                    break;
+        
+        var viewChangerListener = new MouseAdapter() {
+            @Override
+            public void mousePressed(MouseEvent e) {
+                var src = (ScrollerButton)e.getSource();
+                var timer = (Timer)src.getClientProperty("timer");
+                timer.start();
+            }
+            
+            @Override
+            public void mouseReleased(MouseEvent e) {
+                var src = (ScrollerButton)e.getSource();
+                var timer = (Timer)src.getClientProperty("timer");
+                timer.stop();
             }
         };
 
-        plusHorz.addActionListener(al);
-        minusHorz.addActionListener(al);
+        plusHorz.addMouseListener(viewChangerListener);
+        minusHorz.addMouseListener(viewChangerListener);
 
         scrollPane.add(horizontalViewChanger,
                 MyScrollPaneLayout.HORIZONTAL_RIGHT);
@@ -739,7 +750,7 @@ public final class ScoreTopComponent extends TopComponent
             SwingUtilities.invokeLater(runner);
         } else {
             runner.run();
-        };
+        }
     }
 
     public void scrollToRenderStartPointer() {
@@ -758,7 +769,7 @@ public final class ScoreTopComponent extends TopComponent
                     SwingUtilities.invokeLater(runner);
                 } else {
                     runner.run();
-                };
+                }
             }
         }
     }
@@ -779,7 +790,7 @@ public final class ScoreTopComponent extends TopComponent
                     SwingUtilities.invokeLater(runner);
                 } else {
                     runner.run();
-                };
+                }
             }
         }
     }

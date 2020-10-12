@@ -53,10 +53,10 @@ import javax.swing.event.ListSelectionListener;
 public class SoundLayerPanel extends javax.swing.JPanel implements
         ListSelectionListener, ListDataListener, PropertyChangeListener {
 
-    private static Border NORMAL_BORDER = BorderFactory
+    private static final Border NORMAL_BORDER = BorderFactory
             .createBevelBorder(BevelBorder.RAISED);
 
-    private static Border SELECTED_BORDER = BorderFactory.createBevelBorder(
+    private static final Border SELECTED_BORDER = BorderFactory.createBevelBorder(
             BevelBorder.RAISED, Color.GREEN, Color.GREEN.darker());
 
     private static SoundLayerPanelMenu OTHER_MENU = null;
@@ -69,7 +69,7 @@ public class SoundLayerPanel extends javax.swing.JPanel implements
 
     boolean updating = false;
 
-    private NoteProcessorChainMap npcMap;
+    private final NoteProcessorChainMap npcMap;
 
     /**
      * Creates new form SoundLayerPanel

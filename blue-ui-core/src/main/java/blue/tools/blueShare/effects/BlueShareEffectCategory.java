@@ -19,13 +19,13 @@ package blue.tools.blueShare.effects;
  */
 
 public class BlueShareEffectCategory {
-    private int categoryId;
+    private final int categoryId;
 
-    private String name;
+    private final String name;
 
-    private String description;
+    private final String description;
 
-    private BlueShareEffectCategory[] subcategories;
+    private final BlueShareEffectCategory[] subcategories;
 
     public BlueShareEffectCategory(int categoryId, String name,
             String description, BlueShareEffectCategory[] subcategories) {

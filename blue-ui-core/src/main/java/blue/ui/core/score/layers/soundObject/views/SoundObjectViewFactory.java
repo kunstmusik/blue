@@ -36,7 +36,7 @@ import org.openide.util.Exceptions;
  */
 public class SoundObjectViewFactory {
 
-    private Map<Class, Class> sObjViewMap = new HashMap<>();
+    private final Map<Class, Class> sObjViewMap = new HashMap<>();
 
     private static SoundObjectViewFactory INSTANCE = null;
 

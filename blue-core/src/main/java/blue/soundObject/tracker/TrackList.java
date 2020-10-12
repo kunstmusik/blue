@@ -41,7 +41,7 @@ public class TrackList implements TableModel {
 
     private int steps = 64;
 
-    private transient TableModelListener columnChangeListener
+    private final transient TableModelListener columnChangeListener
             = e -> {
                 TableModelEvent tme = new TableModelEvent(TrackList.this,
                         TableModelEvent.HEADER_ROW);

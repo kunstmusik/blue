@@ -44,13 +44,13 @@ public class Send implements Automatable, ParameterListener {
 
     private boolean enabled = true;
 
-    private ParameterList params = new ParameterList();
+    private final ParameterList params = new ParameterList();
 
     private Parameter levelParameter;
 
     private transient Vector<PropertyChangeListener> listeners = null;
 
-    private transient boolean updatingLine = false;
+    private final transient boolean updatingLine = false;
 
     public Send() {
         this(true);

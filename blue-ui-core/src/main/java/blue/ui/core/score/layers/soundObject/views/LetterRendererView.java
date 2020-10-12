@@ -30,7 +30,7 @@ import java.awt.Graphics2D;
  */
 public class LetterRendererView extends GenericView {
 
-    private static Font miniFont = new Font("Dialog", Font.BOLD, 10);
+    private static final Font miniFont = new Font("Dialog", Font.BOLD, 10);
 
     protected String letter = "";
 

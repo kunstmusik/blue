@@ -27,7 +27,7 @@ import java.beans.*;
 public class BSBCheckBoxBeanInfo extends SimpleBeanInfo {
 
     // Bean descriptor information will be obtained from introspection.//GEN-FIRST:BeanDescriptor
-    private static BeanDescriptor beanDescriptor = null;
+    private static final BeanDescriptor beanDescriptor = null;
     private static BeanDescriptor getBdescriptor(){//GEN-HEADEREND:BeanDescriptor
         // Here you can add code for customizing the BeanDescriptor.
 
@@ -67,7 +67,7 @@ public class BSBCheckBoxBeanInfo extends SimpleBeanInfo {
     // EventSet identifiers//GEN-FIRST:Events
 
     // EventSet array
-    private static EventSetDescriptor[] eventSets = new EventSetDescriptor[0];
+    private static final EventSetDescriptor[] eventSets = new EventSetDescriptor[0];
 
     private static EventSetDescriptor[] getEdescriptor(){
         return eventSets;
@@ -79,7 +79,7 @@ public class BSBCheckBoxBeanInfo extends SimpleBeanInfo {
     // Method identifiers//GEN-FIRST:Methods
 
     // Method array 
-    private static MethodDescriptor[] methods = new MethodDescriptor[0];
+    private static final MethodDescriptor[] methods = new MethodDescriptor[0];
 
     private static MethodDescriptor[] getMdescriptor(){
         return methods;

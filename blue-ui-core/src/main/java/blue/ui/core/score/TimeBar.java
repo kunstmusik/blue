@@ -59,7 +59,7 @@ public final class TimeBar extends JPanel implements
 
     private TimeState timeState;
 
-    private Rectangle scrollRect = new Rectangle(0, 0, 1, 1);
+    private final Rectangle scrollRect = new Rectangle(0, 0, 1, 1);
 
     private double renderStart = 0.0f;
 

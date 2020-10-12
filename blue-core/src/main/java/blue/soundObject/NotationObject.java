@@ -31,7 +31,7 @@ public class NotationObject extends AbstractSoundObject implements
 
     private TimeBehavior timeBehavior;
 
-    private NotationStaff staff;
+    private final NotationStaff staff;
 
     public NotationObject() {
         name = "Notation Object";

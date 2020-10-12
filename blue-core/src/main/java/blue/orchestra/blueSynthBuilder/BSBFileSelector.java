@@ -42,7 +42,7 @@ public class BSBFileSelector extends BSBObject implements StringChannelProvider 
     IntegerProperty textFieldWidth; 
     BooleanProperty stringChannelEnabled;
     
-    private StringChannel stringChannel;
+    private final StringChannel stringChannel;
     
     public BSBFileSelector() {
         fileName = new SimpleStringProperty("");

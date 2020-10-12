@@ -45,7 +45,14 @@ NEW
   when in usage mode. Added "Show Widget Comments" menu option to View menu to  
   turn on and off showing of the comments in tooltips.
 
-* PianoRoll: implemented rendering of notes in object view on timeline
+* PianoRoll:
+  
+  * implemented rendering of notes in object view on timeline
+
+  * New user-defined fields for PianoRoll and and field editor for notes; fields
+  allow adding additional pfield values for notes that are graphically edited 
+  (similarly to how Velocity is handled in many MIDI-based DAW PianoRolls). 
+  User can customize how many fields and kinds of fields to use for PianoRoll.
 
 * Issue #520: Render waveform for Frozen SoundObject freze file
 
@@ -60,6 +67,19 @@ UPDATED
 
 * Issue #392: made copy buffer shared between all BSB interface editors
 
+* PianoRoll: note templates for notes are now set to use the PianoRoll's note 
+  template by default but permit overriding on a note-by-note basis; backwards 
+  compatible with prior note template system but more convenient given the new
+  Field system. 
+
+* Restored using Rhino JS interpreter as Nashorn was removed from Java 15
+
+* Issue #532: Made zoom in/out buttons use a timer to repeatedly zoom when 
+  button is down and stop zooming when mouse is up (Score Timeline, PianoRoll) 
+
+* Issue #524: Implemented checkbox editor for NoteProcessor properties that are 
+  true/false
+
 FIX
 
 * BSB: PresetManager dialog had bugs when dragging and dropping nodes around
@@ -69,6 +89,12 @@ FIX
 
 * Audio Layers: Audio Clips were not generating use project-relative paths when 
   audio files were children of project root folder
+
+* Issue #523: Comments tab for instruments did not scroll correctly
+
+* Issue #527: Fixed performance issue with drawing of PianoRoll canvas on Linux
+  due to GradientPaint
+
 
 > Notes for 2.8.0 <
 [release 2020.06.03]

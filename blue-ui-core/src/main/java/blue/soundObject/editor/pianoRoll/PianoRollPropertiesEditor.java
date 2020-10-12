@@ -29,6 +29,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
+import javafx.collections.ObservableList;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JPanel;
@@ -65,14 +66,19 @@ public class PianoRollPropertiesEditor extends JScrollPane {
             Integer.MAX_VALUE, 1);
 
     JSpinner transposition = new JSpinner(intModel);
+    
+    FieldDefinitionsEditor fieldDefinitionsEditor = new FieldDefinitionsEditor();
 
     private PianoRoll p;
 
     private boolean isUpdating;
 
-    private NoteBuffer noteBuffer;
-
-    public PianoRollPropertiesEditor() {
+    private final ObservableList<PianoNote> selectedNotes;
+    
+    
+    public PianoRollPropertiesEditor(ObservableList<PianoNote> selectedNotes) {
+        
+        this.selectedNotes = selectedNotes;
 
         LabelledItemPanel mainPanel = new LabelledItemPanel();
 
@@ -103,17 +109,10 @@ public class PianoRollPropertiesEditor extends JScrollPane {
         bg.add(midiOption);
 
         JPanel noteTemplatePanel = new JPanel(new BorderLayout());
-        JButton setAllNotesButton = new JButton(BlueSystem
-                .getString("pianoRoll.setAllNotes"));
-        JButton setSelectedNotesButton = new JButton(BlueSystem
-                .getString("pianoRoll.setSelectedNotes"));
-
-        JPanel noteButtonPanel = new JPanel(new GridLayout(1, 2));
-        noteButtonPanel.add(setSelectedNotesButton);
-        noteButtonPanel.add(setAllNotesButton);
-
+        JButton resetAllNotesButton = new JButton("Reset All Notes");
+        
         noteTemplatePanel.add(noteTemplateText, BorderLayout.CENTER);
-        noteTemplatePanel.add(noteButtonPanel, BorderLayout.EAST);
+        noteTemplatePanel.add(resetAllNotesButton, BorderLayout.EAST);
 
         mainPanel.addItem(BlueSystem.getString("pianoRoll.instrumentID"),
                 instrumentIDText);
@@ -125,6 +124,9 @@ public class PianoRollPropertiesEditor extends JScrollPane {
         mainPanel.addItem(BlueSystem.getString("pianoRoll.pchGeneration"), buttonPanel);
 
         mainPanel.addItem("Transposition:", transposition); // TODO - Translate!
+        
+        
+        mainPanel.addItem("Additional Fields:", fieldDefinitionsEditor);
 
         baseFrequencyText.addFocusListener(new FocusAdapter() {
 
@@ -169,13 +171,11 @@ public class PianoRollPropertiesEditor extends JScrollPane {
 
                 });
 
-        setAllNotesButton.addActionListener((ActionEvent e) -> {
-            setAllNoteTemplates();
+        resetAllNotesButton.setToolTipText("Reset all notes with overridden templates to use the PianoRoll's note template.");
+        resetAllNotesButton.addActionListener((ActionEvent e) -> {
+            resetAllNoteTemplates();
         });
 
-        setSelectedNotesButton.addActionListener((ActionEvent e) -> {
-            setSelectedNoteTemplates();
-        });
 
         instrumentIDText.getDocument().addDocumentListener(
                 new DocumentListener() {
@@ -230,28 +230,13 @@ public class PianoRollPropertiesEditor extends JScrollPane {
     /**
      * 
      */
-    protected void setAllNoteTemplates() {
+    protected void resetAllNoteTemplates() {
         if (p == null) {
             return;
         }
 
-        String noteTemplate = p.getNoteTemplate();
-
         for (PianoNote note : p.getNotes()) {
-            note.setNoteTemplate(noteTemplate);
-        }
-    }
-
-    protected void setSelectedNoteTemplates() {
-        if (p == null || noteBuffer == null) {
-            return;
-        }
-
-        String noteTemplate = p.getNoteTemplate();
-
-        for (PianoNoteView pianoNoteView : noteBuffer) {
-            PianoNote note = pianoNoteView.getPianoNote();
-            note.setNoteTemplate(noteTemplate);
+            note.setNoteTemplate(null);
         }
     }
 
@@ -293,11 +278,10 @@ public class PianoRollPropertiesEditor extends JScrollPane {
         }
 
         transposition.setValue(new Integer(p.getTransposition()));
+        
+        fieldDefinitionsEditor.setFieldDefinitions(p.getFieldDefinitions());
 
         isUpdating = false;
     }
 
-    public void setNoteBuffer(NoteBuffer noteBuffer) {
-        this.noteBuffer = noteBuffer;
-    }
 }

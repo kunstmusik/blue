@@ -49,8 +49,8 @@ import org.openide.util.lookup.ServiceProvider;
 
 @ServiceProvider(service=OptionProcessor.class)
 public class CompileProcessor extends OptionProcessor {
-    private Option c = Option.requiredArgument('c', "compile");
-    private Option o = Option.requiredArgument('o', "output");
+    private final Option c = Option.requiredArgument('c', "compile");
+    private final Option o = Option.requiredArgument('o', "output");
 
     @Override
     protected Set<Option> getOptions() {

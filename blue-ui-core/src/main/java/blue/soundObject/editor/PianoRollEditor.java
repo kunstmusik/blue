@@ -1,32 +1,65 @@
+/*
+ * blue - object composition environment for csound
+ * Copyright (c) 2001-2020 Steven Yi (stevenyi@gmail.com)
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published
+ * by  the Free Software Foundation; either version 2 of the License or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; see the file COPYING.LIB.  If not, write to
+ * the Free Software Foundation Inc., 59 Temple Place - Suite 330,
+ * Boston, MA  02111-1307 USA
+ */
 package blue.soundObject.editor;
 
 import blue.BlueSystem;
 import blue.gui.ExceptionDialog;
 import blue.gui.InfoDialog;
-import blue.gui.MyScrollPaneLayout;
 import blue.gui.ScrollerButton;
 import blue.plugin.ScoreObjectEditorPlugin;
 import blue.score.ScoreObject;
 import blue.soundObject.NoteList;
 import blue.soundObject.PianoRoll;
 import blue.soundObject.SoundObject;
+import blue.soundObject.editor.pianoRoll.FieldEditor;
+import blue.soundObject.editor.pianoRoll.FieldSelectorView;
 import blue.soundObject.editor.pianoRoll.NotePropertiesEditor;
 import blue.soundObject.editor.pianoRoll.PianoRollCanvas;
 import blue.soundObject.editor.pianoRoll.PianoRollCanvasHeader;
 import blue.soundObject.editor.pianoRoll.PianoRollPropertiesEditor;
+import blue.soundObject.editor.pianoRoll.PianoRollScrollPaneLayout;
 import blue.soundObject.editor.pianoRoll.TimeBar;
 import blue.soundObject.editor.pianoRoll.TimelinePropertiesPanel;
+import blue.soundObject.pianoRoll.FieldDef;
+import blue.soundObject.pianoRoll.PianoNote;
 import blue.ui.components.IconFactory;
+import blue.utilities.scales.ScaleLinear;
 import blue.utility.GUI;
 import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Cursor;
 import java.awt.Dimension;
+import java.awt.Graphics;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleObjectProperty;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JPanel;
@@ -34,7 +67,9 @@ import javax.swing.JScrollBar;
 import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JToggleButton;
+import javax.swing.JViewport;
 import javax.swing.SwingUtilities;
+import javax.swing.Timer;
 
 /**
  * Title: blue Description: an object composition environment for csound
@@ -45,23 +80,34 @@ import javax.swing.SwingUtilities;
  */
 @ScoreObjectEditorPlugin(scoreObjectType = PianoRoll.class)
 public class PianoRollEditor extends ScoreObjectEditor implements
-        PropertyChangeListener, ActionListener {
+        PropertyChangeListener {
 
-    PianoRollPropertiesEditor props = new PianoRollPropertiesEditor();
+    ObservableList<PianoNote> selectedNotes = FXCollections.observableArrayList();
 
-    PianoRollCanvas noteCanvas = new PianoRollCanvas();
+    ObjectProperty<FieldDef> selectedFieldDef = new SimpleObjectProperty<>();
 
-    PianoRollCanvasHeader noteHeader = new PianoRollCanvasHeader();
+    PianoRollPropertiesEditor props = new PianoRollPropertiesEditor(selectedNotes);
+
+    ScaleLinear fieldEditorYScale = new ScaleLinear(0, 1, 0, 1);
+
+    PianoRollCanvas noteCanvas = new PianoRollCanvas(selectedNotes,
+            selectedFieldDef, fieldEditorYScale);
+
+    PianoRollCanvasHeader noteHeader = new PianoRollCanvasHeader(selectedNotes);
 
     TimeBar timeBar = new TimeBar();
 
     TimelinePropertiesPanel timeProperties = new TimelinePropertiesPanel();
 
-    NotePropertiesEditor noteTemplateEditor = new NotePropertiesEditor();
+    NotePropertiesEditor noteTemplateEditor = new NotePropertiesEditor(selectedNotes);
 
     JScrollPane noteScrollPane;
 
     JToggleButton snapButton = new JToggleButton();
+
+    FieldSelectorView fieldSelectorView = new FieldSelectorView(selectedFieldDef);
+
+    FieldEditor fieldEditor = new FieldEditor(selectedNotes, selectedFieldDef, fieldEditorYScale);
 
     private PianoRoll p;
 
@@ -86,9 +132,6 @@ public class PianoRollEditor extends ScoreObjectEditor implements
         timeProperties.setVisible(false);
         timeProperties.setPreferredSize(new Dimension(150, 40));
 
-        noteCanvas.addSelectionListener(noteTemplateEditor);
-        noteCanvas.addSelectionListener(noteHeader);
-
         JButton testButton = new JButton("Test");
         testButton.addActionListener(evt -> generateTest());
 
@@ -107,8 +150,6 @@ public class PianoRollEditor extends ScoreObjectEditor implements
         tabs.add(BlueSystem.getString("pianoRoll.notes"), notesPanel);
         tabs.add(BlueSystem.getString("common.properties"), props);
 
-        props.setNoteBuffer(noteCanvas.noteBuffer);
-
         this.add(tabs, BorderLayout.CENTER);
 
         centerNoteScrollPane();
@@ -125,7 +166,11 @@ public class PianoRollEditor extends ScoreObjectEditor implements
                 timeBar.setSize(d);
                 timeBar.setPreferredSize(d);
 
+                fieldEditor.setSize(d);
+                fieldEditor.setPreferredSize(d);
+
                 timeBar.repaint();
+                fieldEditor.repaint();
             }
 
         });
@@ -133,11 +178,11 @@ public class PianoRollEditor extends ScoreObjectEditor implements
         noteScrollPane.getViewport().addComponentListener(
                 new ComponentAdapter() {
 
-                    @Override
-                    public void componentResized(ComponentEvent e) {
-                        noteCanvas.recalculateSize();
-                    }
-                });
+            @Override
+            public void componentResized(ComponentEvent e) {
+                noteCanvas.recalculateSize();
+            }
+        });
 
     }
 
@@ -171,9 +216,16 @@ public class PianoRollEditor extends ScoreObjectEditor implements
 
         ScrollerButton plusHorz = new ScrollerButton("+");
         ScrollerButton minusHorz = new ScrollerButton("-");
-        plusHorz.setActionCommand("plusHorizontal");
-        minusHorz.setActionCommand("minusHorizontal");
-
+        
+        plusHorz.putClientProperty("timer", new Timer(100, (e) -> {
+            raisePixelSecond();
+        }));
+        
+        minusHorz.putClientProperty("timer", new Timer(100, (e) -> {
+            lowerPixelSecond();
+        }));
+        
+        
         horizontalViewChanger.add(plusHorz);
         horizontalViewChanger.add(minusHorz);
 
@@ -181,16 +233,38 @@ public class PianoRollEditor extends ScoreObjectEditor implements
 
         ScrollerButton plusVert = new ScrollerButton("+");
         ScrollerButton minusVert = new ScrollerButton("-");
-        plusVert.setActionCommand("plusVertical");
-        minusVert.setActionCommand("minusVertical");
+
+        plusVert.putClientProperty("timer", new Timer(100, (e) -> {
+            raiseHeight();
+        }));
+        
+        minusVert.putClientProperty("timer", new Timer(100, (e) -> {
+            lowerHeight();
+        }));
 
         verticalViewChanger.add(plusVert);
         verticalViewChanger.add(minusVert);
+        
+        var viewChangerListener = new MouseAdapter() {
+            @Override
+            public void mousePressed(MouseEvent e) {
+                var src = (ScrollerButton)e.getSource();
+                var timer = (Timer)src.getClientProperty("timer");
+                timer.start();
+            }
+            
+            @Override
+            public void mouseReleased(MouseEvent e) {
+                var src = (ScrollerButton)e.getSource();
+                var timer = (Timer)src.getClientProperty("timer");
+                timer.stop();
+            }
+        };
 
-        plusHorz.addActionListener(this);
-        minusHorz.addActionListener(this);
-        plusVert.addActionListener(this);
-        minusVert.addActionListener(this);
+        plusHorz.addMouseListener(viewChangerListener);
+        minusHorz.addMouseListener(viewChangerListener);
+        plusVert.addMouseListener(viewChangerListener);
+        minusVert.addMouseListener(viewChangerListener);
 
         noteSP
                 .setHorizontalScrollBarPolicy(
@@ -199,11 +273,51 @@ public class PianoRollEditor extends ScoreObjectEditor implements
                 .setVerticalScrollBarPolicy(
                         JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
 
-        noteSP.setLayout(new MyScrollPaneLayout());
+        noteSP.setLayout(new PianoRollScrollPaneLayout());
 
-        noteSP.add(horizontalViewChanger, MyScrollPaneLayout.HORIZONTAL_RIGHT);
-        noteSP.add(verticalViewChanger, MyScrollPaneLayout.VERTICAL_BOTTOM);
+        noteSP.add(horizontalViewChanger, PianoRollScrollPaneLayout.HORIZONTAL_RIGHT);
+        noteSP.add(verticalViewChanger, PianoRollScrollPaneLayout.VERTICAL_BOTTOM);
 
+        final JViewport fieldViewPort = new JViewport();
+        fieldViewPort.setView(fieldEditor);
+
+        noteSP.add(fieldViewPort, PianoRollScrollPaneLayout.COLUMN_FOOTER_VIEW);
+        noteSP.add(fieldSelectorView, PianoRollScrollPaneLayout.FIELD_DEFINITIONS_SELECTOR);
+
+        JPanel splitter = new JPanel() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                g.setColor(Color.DARK_GRAY);
+                g.fillRect(0, 0, getWidth(), getHeight());
+            }
+        };
+        splitter.setCursor(Cursor.getPredefinedCursor(Cursor.S_RESIZE_CURSOR));
+
+        var splitterListener = new MouseAdapter() {
+            @Override
+            public void mouseDragged(MouseEvent e) {
+                var pt = SwingUtilities.convertPoint(splitter, e.getPoint(), noteSP.getViewport());
+
+                var max = noteSP.getHeight()
+                        - noteSP.getHorizontalScrollBar().getHeight()
+                        - noteSP.getColumnHeader().getView().getHeight();
+
+                var loc = Math.max(5, Math.min(max - 5, max - pt.y));
+
+                noteSP.putClientProperty("SplitterLocation", loc);
+                noteSP.revalidate();
+            }
+        };
+        splitter.addMouseMotionListener(splitterListener);
+
+        noteSP.add(splitter, PianoRollScrollPaneLayout.SPLITTER);
+
+        noteSP.putClientProperty("SplitterLocation", 60);
+
+        // sync fiew view port position to time bar viewport's location
+        noteScrollPane.getColumnHeader().addChangeListener(evt -> {
+            fieldViewPort.setViewPosition(noteScrollPane.getColumnHeader().getViewPosition());
+        });
     }
 
     private void centerNoteScrollPane() {
@@ -230,6 +344,8 @@ public class PianoRollEditor extends ScoreObjectEditor implements
         }
 
         this.p = p;
+        
+        selectedNotes.clear();
 
         this.p.addPropertyChangeListener(this);
 
@@ -237,7 +353,10 @@ public class PianoRollEditor extends ScoreObjectEditor implements
         noteHeader.editPianoRoll(p);
         timeBar.editPianoRoll(p);
         props.editPianoRoll(p);
+        noteTemplateEditor.editPianoRoll(p);
         timeProperties.setPianoRoll(p);
+        fieldEditor.editPianoRoll(p);
+        fieldSelectorView.setFields(p.getFieldDefinitions());
 
         centerNoteScrollPane();
     }
@@ -312,22 +431,4 @@ public class PianoRollEditor extends ScoreObjectEditor implements
         p.setPixelSecond(pixelSecond);
     }
 
-    @Override
-    public void actionPerformed(ActionEvent ae) {
-        String command = ae.getActionCommand();
-        switch (command) {
-            case "plusVertical":
-                raiseHeight();
-                break;
-            case "minusVertical":
-                lowerHeight();
-                break;
-            case "plusHorizontal":
-                raisePixelSecond();
-                break;
-            case "minusHorizontal":
-                lowerPixelSecond();
-                break;
-        }
-    }
 }

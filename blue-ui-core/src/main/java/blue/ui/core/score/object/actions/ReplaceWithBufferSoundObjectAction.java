@@ -59,9 +59,9 @@ import org.openide.util.Utilities;
 public final class ReplaceWithBufferSoundObjectAction extends AbstractAction
         implements ContextAwareAction {
 
-    private Collection<? extends ScoreObject> scoreObjects;
-    private Collection<? extends SoundObject> soundObjects;
-    private Point p;
+    private final Collection<? extends ScoreObject> scoreObjects;
+    private final Collection<? extends SoundObject> soundObjects;
+    private final Point p;
     private final ScorePath scorePath;
 
     public ReplaceWithBufferSoundObjectAction() {

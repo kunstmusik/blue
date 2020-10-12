@@ -9,7 +9,7 @@ import java.awt.geom.Point2D;
 import javax.swing.JPanel;
 
 public class FlowGraphCanvas extends JPanel {
-    private FlowGraphPanel fGPanel;
+    private final FlowGraphPanel fGPanel;
 
     private Unit selectedUnit;
 

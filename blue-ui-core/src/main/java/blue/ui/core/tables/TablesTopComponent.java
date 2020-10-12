@@ -50,7 +50,7 @@ import org.openide.windows.TopComponent;
 public final class TablesTopComponent extends TopComponent {
 
     private static TablesTopComponent instance;
-    private MimeTypeEditorComponent tablesText = new MimeTypeEditorComponent(
+    private final MimeTypeEditorComponent tablesText = new MimeTypeEditorComponent(
             "text/x-csound-sco");
 
     private Tables tables = null;

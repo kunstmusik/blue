@@ -4,9 +4,9 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 
 public class FlowGraphCanvasMouseListener implements MouseListener {
-    private FlowGraphPanel fgPanel;
+    private final FlowGraphPanel fgPanel;
 
-    private FlowGraphCanvas canvas;
+    private final FlowGraphCanvas canvas;
 
     public FlowGraphCanvasMouseListener(FlowGraphPanel flowGraphPanel) {
         this.fgPanel = flowGraphPanel;

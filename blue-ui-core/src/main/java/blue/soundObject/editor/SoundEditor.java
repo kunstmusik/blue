@@ -88,7 +88,6 @@ public class SoundEditor extends ScoreObjectEditor {
     ParameterLineView lineView;
     LineSelector lineSelector;
     MimeTypeEditorComponent commentPane = new MimeTypeEditorComponent("text/plain");
-    ;
     ScoreObjectListener sObjListener;
 
     public SoundEditor() {

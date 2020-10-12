@@ -50,7 +50,7 @@ import javax.swing.SwingUtilities;
         position = 110)
 class MultiLineMoveMouseListener extends BlueMouseAdapter {
 
-    private Rectangle scrollRect = new Rectangle(0, 0, 1, 1);
+    private final Rectangle scrollRect = new Rectangle(0, 0, 1, 1);
 
     int startX = -1;
     double minTranslation = 0.0f;

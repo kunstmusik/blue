@@ -32,18 +32,18 @@ public class SoundObjectException extends ScoreGenerationException {
      * SoundObject where Exception originated
      */
 
-    private SoundObject soundObject;
+    private final SoundObject soundObject;
 
     /**
      * Holds the text of the actual message
      */
-    private String message;
+    private final String message;
 
     /**
      * An exception that caused an error in the SoundObject. Usually denotes an
      * error in a sub-SoundObject or NoteProcessor.
      */
-    private Throwable cause;
+    private final Throwable cause;
 
     private static final MessageFormat lineMessageFormat = new MessageFormat(
             "Line {0}: {1}");

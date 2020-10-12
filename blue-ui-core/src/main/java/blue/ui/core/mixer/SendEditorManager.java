@@ -30,7 +30,7 @@ public class SendEditorManager {
 
     private static SendEditorManager manager = null;
 
-    private HashMap map = new HashMap();
+    private final HashMap map = new HashMap();
 
     private SendEditorManager() {
 

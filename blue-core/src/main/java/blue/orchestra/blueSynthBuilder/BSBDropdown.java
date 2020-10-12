@@ -44,8 +44,8 @@ public class BSBDropdown extends AutomatableBSBObject implements
         ParameterListener, Randomizable {
 
     private BSBDropdownItemList dropdownItems;
-    private IntegerProperty selectedIndex = new SimpleIntegerProperty(0);
-    private BooleanProperty randomizable = new SimpleBooleanProperty(true);
+    private final IntegerProperty selectedIndex = new SimpleIntegerProperty(0);
+    private final BooleanProperty randomizable = new SimpleBooleanProperty(true);
 
     IntegerProperty fontSize = new SimpleIntegerProperty(12) {
         @Override
@@ -59,7 +59,7 @@ public class BSBDropdown extends AutomatableBSBObject implements
         
     };
 
-    private ListChangeListener<BSBDropdownItem> lcl = (c) -> {
+    private final ListChangeListener<BSBDropdownItem> lcl = (c) -> {
         if (parameters != null) {
             Parameter param = parameters.getParameter(getObjectName());
             if (param != null) {
@@ -68,7 +68,7 @@ public class BSBDropdown extends AutomatableBSBObject implements
         }
     };
 
-    private ChangeListener<Number> indexListener = (obs, old, newVal) -> {
+    private final ChangeListener<Number> indexListener = (obs, old, newVal) -> {
         if (parameters != null) {
             Parameter p = parameters.getParameter(getObjectName());
             if (p != null && !p.isAutomationEnabled()) {

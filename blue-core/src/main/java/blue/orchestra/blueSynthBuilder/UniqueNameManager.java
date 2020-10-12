@@ -32,7 +32,7 @@ import java.util.Set;
  * @author Steven
  */
 public class UniqueNameManager  {
-    private static MessageFormat NAME_FMT = new MessageFormat("{0}{1}");
+    private static final MessageFormat NAME_FMT = new MessageFormat("{0}{1}");
 
     private UniqueNameCollection collection = null;
 

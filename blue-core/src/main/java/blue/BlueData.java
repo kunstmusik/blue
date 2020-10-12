@@ -84,7 +84,7 @@ public class BlueData implements BlueDataObject {
     /**
      * Holds data for ProjectPlugins
      */
-    private List<BlueDataObject> pluginData;
+    private final List<BlueDataObject> pluginData;
 
     public BlueData() {
         arrangement = new Arrangement();

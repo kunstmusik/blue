@@ -19,13 +19,13 @@ package blue.tools.blueShare.instruments;
  */
 
 public class BlueShareInstrumentCategory {
-    private int categoryId;
+    private final int categoryId;
 
-    private String name;
+    private final String name;
 
-    private String description;
+    private final String description;
 
-    private BlueShareInstrumentCategory[] subcategories;
+    private final BlueShareInstrumentCategory[] subcategories;
 
     public BlueShareInstrumentCategory(int categoryId, String name,
             String description, BlueShareInstrumentCategory[] subcategories) {

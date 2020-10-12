@@ -112,7 +112,7 @@ public class ArrangementEditPanel extends JComponent
 
     private static final String EXPORT_DIALOG = "instr.export";
 
-    private static MessageFormat toolTipFormat = new MessageFormat(
+    private static final MessageFormat toolTipFormat = new MessageFormat(
             "<html><b>Instrument Type:</b> {0}</html>");
 
     private final AddInstrumentPopup popup = new AddInstrumentPopup();

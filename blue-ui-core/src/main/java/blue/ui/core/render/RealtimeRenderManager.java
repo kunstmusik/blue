@@ -52,15 +52,15 @@ import org.openide.windows.WindowManager;
  */
 public final class RealtimeRenderManager {
 
-    private boolean looping = false;
+    private final boolean looping = false;
     private static RealtimeRenderManager instance = null;
-    private ArrayList<PlayModeListener> listeners = new ArrayList<>();
-    private ArrayList<PlayModeListener> blueLiveListeners = new ArrayList<>();
+    private final ArrayList<PlayModeListener> listeners = new ArrayList<>();
+    private final ArrayList<PlayModeListener> blueLiveListeners = new ArrayList<>();
     private RealtimeRenderServiceFactory currentRenderServiceFactory = null;
     private RealtimeRenderService currentRenderService = null;
     private RealtimeRenderService currentBlueLiveRenderService = null;
-    private PlayModeListener realtimeListener;
-    private PlayModeListener blueLiveListener;
+    private final PlayModeListener realtimeListener;
+    private final PlayModeListener blueLiveListener;
     private boolean auditioning = false;
     private boolean shuttingDown = false;
 

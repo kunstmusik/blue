@@ -32,9 +32,9 @@ import java.util.List;
 
 public class ScoreUtilities {
 
-    private static int RAMP_END_NOT_FOUND = -1;
+    private static final int RAMP_END_NOT_FOUND = -1;
 
-    private static int PFIELD_NOT_FLOAT = -2;
+    private static final int PFIELD_NOT_FLOAT = -2;
 
     enum ParseState {
 

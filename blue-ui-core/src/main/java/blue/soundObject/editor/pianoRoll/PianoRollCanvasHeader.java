@@ -20,8 +20,8 @@
 package blue.soundObject.editor.pianoRoll;
 
 import blue.event.SelectionEvent;
-import blue.event.SelectionListener;
 import blue.soundObject.PianoRoll;
+import blue.soundObject.pianoRoll.PianoNote;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
@@ -29,36 +29,54 @@ import java.awt.Graphics;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.HashMap;
+import javafx.collections.ListChangeListener;
+import javafx.collections.ObservableList;
 import javax.swing.JComponent;
 
 /**
  * @author steven
  */
-
 public class PianoRollCanvasHeader extends JComponent implements
-        PropertyChangeListener, SelectionListener<PianoNoteView> {
+        PropertyChangeListener, ListChangeListener<PianoNote> {
 
     private static final Font labelFont = new Font("Dialog", Font.PLAIN, 10);
 
-    private static final String[] NOTE_NAMES = { "C", "C#/Db", "D", "D#/Eb",
-            "E", "F", "F#/Gb", "G", "G#/Ab", "A", "A#/Bb", "B" };
+    private static final String[] NOTE_NAMES = {"C", "C#/Db", "D", "D#/Eb",
+        "E", "F", "F#/Gb", "G", "G#/Ab", "A", "A#/Bb", "B"};
 
     int octaves = 16;
 
     int centerOctave = 8;
 
-    private static Color OCTAVE_COLOR = new Color(198, 226, 255);
+    private static final Color OCTAVE_COLOR = new Color(198, 226, 255);
 
     private PianoRoll p;
 
-    private HashMap<PianoNoteView, SelectedNoteHighlighter> noteHilightMap =
-            new HashMap<>();
+    private final HashMap<PianoNote, SelectedNoteHighlighter> noteHilightMap
+            = new HashMap<>();
+    
+    private final ObservableList<PianoNote> selectedNotes;
 
-    public PianoRollCanvasHeader() {
+    public PianoRollCanvasHeader(ObservableList<PianoNote> selectedNotes) {
         // this.setBackground(Color.darkGray);
+        this.selectedNotes = selectedNotes;
         setSizeForScale();
         this.setLayout(null);
     }
+
+    @Override
+    public void removeNotify() {
+        this.selectedNotes.removeListener(this);
+        super.removeNotify(); 
+    }
+
+    @Override
+    public void addNotify() {
+        super.addNotify(); 
+        this.selectedNotes.addListener(this);
+    }
+    
+    
 
     private void setSizeForScale() {
         if (p == null) {
@@ -207,61 +225,23 @@ public class PianoRollCanvasHeader extends JComponent implements
     }
 
     @Override
-    public void selectionPerformed(SelectionEvent<PianoNoteView> e) {
-        PianoNoteView pnv = e.getSelectedItem();
-        SelectedNoteHighlighter snh;
-
-        switch (e.getSelectionType()) {
-            case SelectionEvent.SELECTION_CLEAR:
-                for(SelectedNoteHighlighter tempSnh : noteHilightMap.values()) {
-                    tempSnh.cleanup();
+    public void onChanged(Change<? extends PianoNote> change) {
+        
+        while (change.next()) {
+            if (change.wasAdded()) {
+                for (var note : change.getAddedSubList()) {
+                    var snh = new SelectedNoteHighlighter(p, note);
+                    noteHilightMap.put(note, snh);
+                    this.add(snh);
                 }
-                noteHilightMap.clear();
-                this.removeAll();
-                repaint();
-
-                break;
-
-            case SelectionEvent.SELECTION_SINGLE:
-                for(SelectedNoteHighlighter tempSnh : noteHilightMap.values()) {
-                    tempSnh.cleanup();
+            } else if (change.wasRemoved()) {
+                for (var note : change.getRemoved()) {
+                    var snh = noteHilightMap.remove(note);
+                    this.remove(snh);
                 }
-                noteHilightMap.clear();
-                this.removeAll();
-
-                snh = new SelectedNoteHighlighter(pnv);
-                snh.setLocation(0, pnv.getY());
-
-                this.add(snh);
-                noteHilightMap.put(pnv, snh);
-
-                repaint();
-
-                break;
-
-            case SelectionEvent.SELECTION_ADD:
-                snh = new SelectedNoteHighlighter(pnv);
-                snh.setLocation(0, pnv.getY());
-
-                this.add(snh);
-                noteHilightMap.put(pnv, snh);
-
-                repaint();
-
-                break;
-                
-            case SelectionEvent.SELECTION_REMOVE:
-                snh = noteHilightMap.get(pnv);
-
-                this.remove(snh);
-
-                if (snh != null) {
-                    noteHilightMap.remove(pnv);
-                    snh.cleanup();
-                }
-
-                break;
+            }
         }
+        repaint();
     }
 
 }

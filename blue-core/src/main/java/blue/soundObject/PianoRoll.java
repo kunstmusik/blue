@@ -5,6 +5,9 @@ import blue.*;
 import blue.noteProcessor.NoteProcessorChain;
 import blue.noteProcessor.NoteProcessorException;
 import blue.plugin.SoundObjectPlugin;
+import blue.soundObject.pianoRoll.Field;
+import blue.soundObject.pianoRoll.FieldDef;
+import blue.soundObject.pianoRoll.FieldType;
 import blue.soundObject.pianoRoll.PianoNote;
 import blue.soundObject.pianoRoll.Scale;
 import blue.utility.ScoreUtilities;
@@ -14,16 +17,19 @@ import electric.xml.Elements;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import javafx.beans.value.ChangeListener;
 import javafx.collections.FXCollections;
+import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 
 /**
  * @author steven yi
  */
 @SoundObjectPlugin(displayName = "PianoRoll", live = true, position = 90)
-public class PianoRoll extends AbstractSoundObject {
+public class PianoRoll extends AbstractSoundObject implements ListChangeListener<FieldDef> {
 
     public static final int DISPLAY_TIME = 0;
 
@@ -55,27 +61,75 @@ public class PianoRoll extends AbstractSoundObject {
 
     private transient ArrayList listeners;
 
-    private boolean snapEnabled = false;
+    private boolean snapEnabled = true;
 
-    private double snapValue = 1.0f;
+    private double snapValue = 0.25;
 
-    private int timeDisplay = DISPLAY_TIME;
+    private int timeDisplay = DISPLAY_NUMBER;
 
     private int pchGenerationMethod = GENERATE_FREQUENCY;
 
-    private int timeUnit = 5;
+    private int timeUnit = 4;
 
     private int transposition = 0;
+
+    private ObservableList<FieldDef> fieldDefinitions;
+
+    ChangeListener<? super Number> minListener = (obs, old, newVal) -> {
+        for (var fd : fieldDefinitions) {
+            if (fd.minValueProperty() == obs) {
+                for (var pn : notes) {
+                    var field = pn.getField(fd);
+                    field.ifPresent(fld -> fld.setValue(Math.max(newVal.doubleValue(), fld.getValue())));
+                }
+                break;
+            }
+        }
+    };
+
+    ChangeListener<? super Number> maxListener = (obs, old, newVal) -> {
+        for (var fd : fieldDefinitions) {
+            if (fd.maxValueProperty() == obs) {
+                for (var pn : notes) {
+                    var field = pn.getField(fd);
+                    field.ifPresent(fld -> fld.setValue(Math.min(newVal.doubleValue(), fld.getValue())));
+                }
+                break;
+            }
+        }
+    };
+
+    ChangeListener<FieldType> fieldTypeListener = (obs, old, newVal) -> {
+        for (var fd : fieldDefinitions) {
+            if (fd.fieldTypeProperty() == obs) {
+                for (var pn : notes) {
+                    var field = pn.getField(fd);
+                    // will run through FieldDef's convertToFieldType()
+                    field.ifPresent(fld -> fld.setValue(fld.getValue()));
+                }
+                break;
+            }
+        }
+    };
 
     public PianoRoll() {
         this.setName("PianoRoll");
         timeBehavior = TimeBehavior.SCALE;
         scale = Scale.get12TET();
         notes = FXCollections.observableArrayList();
-        noteTemplate = "i <INSTR_ID> <START> <DUR> <FREQ>";
+        noteTemplate = "i <INSTR_ID> <START> <DUR> <FREQ> <AMP>";
         instrumentId = "1";
         pixelSecond = 64;
         noteHeight = 15;
+        fieldDefinitions = FXCollections.observableArrayList();
+        fieldDefinitions.addListener(this);
+
+        // By default, add one field called AMP
+        var ampField = new FieldDef();
+        ampField.setFieldName("AMP");
+        ampField.setFieldType(FieldType.CONTINUOUS);
+        fieldDefinitions.add(ampField);
+
     }
 
     public PianoRoll(PianoRoll pr) {
@@ -85,10 +139,28 @@ public class PianoRoll extends AbstractSoundObject {
         repeatPoint = pr.repeatPoint;
         npc = new NoteProcessorChain(pr.npc);
         scale = new Scale(pr.scale);
+
         notes = FXCollections.observableArrayList();
 
+        fieldDefinitions = FXCollections.observableArrayList();
+        fieldDefinitions.addListener(this);
+
+        Map<FieldDef, FieldDef> srcToCloneMap = new HashMap<>();
+
+        for (var fieldDef : pr.getFieldDefinitions()) {
+            var clone = new FieldDef(fieldDef);
+            srcToCloneMap.put(fieldDef, clone);
+            fieldDefinitions.add(clone);
+        }
+
         for (PianoNote pn : pr.notes) {
-            notes.add(new PianoNote(pn));
+            var newNote = new PianoNote(pn);
+            notes.add(newNote);
+
+            // set fieldDef for fields to use the new cloned version
+            for (var f : newNote.getFields()) {
+                f.setFieldDef(srcToCloneMap.get(f.getFieldDef()));
+            }
         }
 
         noteTemplate = pr.noteTemplate;
@@ -101,6 +173,7 @@ public class PianoRoll extends AbstractSoundObject {
         pchGenerationMethod = pr.pchGenerationMethod;
         timeUnit = pr.timeUnit;
         transposition = pr.transposition;
+
     }
 
     @Override
@@ -123,6 +196,7 @@ public class PianoRoll extends AbstractSoundObject {
         NoteList nl = new NoteList();
 
         String instrId = instrumentId;
+        final String prNoteTemplate = noteTemplate;
 
         if (instrId != null) {
             instrId = instrId.trim();
@@ -134,9 +208,7 @@ public class PianoRoll extends AbstractSoundObject {
             instrId = "\"" + instrId + "\"";
         }
 
-        for (Iterator<PianoNote> iter = notes.iterator(); iter.hasNext();) {
-            PianoNote n = iter.next();
-
+        for (var n : notes) {
             String freq = "";
 
             int octave = n.getOctave();
@@ -166,16 +238,25 @@ public class PianoRoll extends AbstractSoundObject {
                 scaleDegree = numScaleDegrees + scaleDegree;
             }
 
-            if (this.pchGenerationMethod == GENERATE_FREQUENCY) {
-                double f = scale.getFrequency(octave, scaleDegree);
-                freq = Double.toString(f);
-            } else if (this.pchGenerationMethod == GENERATE_PCH) {
-                freq = octave + "." + scaleDegree;
-            } else if (this.pchGenerationMethod == GENERATE_MIDI) {
-                freq = Integer.toString((octave * 12) + scaleDegree);
+            switch (this.pchGenerationMethod) {
+                case GENERATE_FREQUENCY:
+                    double f = scale.getFrequency(octave, scaleDegree);
+                    freq = Double.toString(f);
+                    break;
+                case GENERATE_PCH:
+                    freq = octave + "." + scaleDegree;
+                    break;
+                case GENERATE_MIDI:
+                    freq = Integer.toString((octave * 12) + scaleDegree);
+                    break;
+                default:
+                    break;
             }
 
             String template = n.getNoteTemplate();
+            if (template == null) {
+                template = prNoteTemplate;
+            }
 
             template = TextUtilities
                     .replaceAll(template, "<INSTR_ID>", instrId);
@@ -187,6 +268,16 @@ public class PianoRoll extends AbstractSoundObject {
                     .toString(n.getDuration()));
             template = TextUtilities.replaceAll(template, "<FREQ>", freq);
 
+            for (var field : n.getFields()) {
+                var fieldDef = field.getFieldDef();
+                var k = String.format("<%s>", fieldDef.getFieldName());
+                var v = (fieldDef.getFieldType() == FieldType.CONTINUOUS)
+                        ? Double.toString(field.getValue())
+                        : Long.toString(Math.round(field.getValue()));
+
+                template = TextUtilities.replaceAll(template, k, v);
+            }
+
             Note note = null;
 
             try {
@@ -197,6 +288,8 @@ public class PianoRoll extends AbstractSoundObject {
 
             nl.add(note);
         }
+
+        nl.sort();
 
         try {
             ScoreUtilities.applyNoteProcessorChain(nl, this.npc);
@@ -241,9 +334,13 @@ public class PianoRoll extends AbstractSoundObject {
             Map<String, Object> objRefMap) throws Exception {
 
         PianoRoll p = new PianoRoll();
+        p.fieldDefinitions.clear();
+
         SoundObjectUtilities.initBasicFromXML(data, p);
 
         Elements nodes = data.getElements();
+
+        Map<String, FieldDef> fieldTypes = new HashMap<>();
 
         while (nodes.hasMoreElements()) {
             Element e = nodes.next();
@@ -266,8 +363,7 @@ public class PianoRoll extends AbstractSoundObject {
                     p.setNoteHeight(Integer.parseInt(e.getTextString()));
                     break;
                 case "snapEnabled":
-                    p.setSnapEnabled(Boolean.valueOf(e.getTextString())
-                            .booleanValue());
+                    p.setSnapEnabled(Boolean.parseBoolean(e.getTextString()));
                     break;
                 case "snapValue":
                     p.setSnapValue(Double.parseDouble(e.getTextString()));
@@ -278,9 +374,25 @@ public class PianoRoll extends AbstractSoundObject {
                 case "timeUnit":
                     p.setTimeUnit(Integer.parseInt(e.getTextString()));
                     break;
-                case "pianoNote":
-                    p.notes.add(PianoNote.loadFromXML(e));
+                case "fieldDef": {
+                    var fd = FieldDef.loadFromXML(e);
+                    fieldTypes.put(fd.getFieldName(), fd);
+                    p.fieldDefinitions.add(fd);
                     break;
+                }
+                case "pianoNote": {
+                    // Assumes fieldDefs are loaded prior to pianoNotes
+                    var pn = PianoNote.loadFromXML(e, fieldTypes);
+
+                    // legacy: set note noteTemplate to null if found and equals
+                    // to PianoRoll's value
+                    if (p.getNoteTemplate().equals(pn.getNoteTemplate())) {
+                        pn.setNoteTemplate(null);
+                    }
+
+                    p.notes.add(pn);
+                    break;
+                }
                 case "pchGenerationMethod":
                     p.setPchGenerationMethod(Integer.parseInt(e.getTextString()));
                     break;
@@ -321,6 +433,10 @@ public class PianoRoll extends AbstractSoundObject {
         retVal.addElement("transposition").setText(
                 Integer.toString(this.getTransposition()));
 
+        for (var fieldDef : fieldDefinitions) {
+            retVal.addElement(fieldDef.saveAsXML());
+        }
+
         for (Iterator<PianoNote> iter = notes.iterator(); iter.hasNext();) {
             PianoNote note = iter.next();
             retVal.addElement(note.saveAsXML());
@@ -336,6 +452,10 @@ public class PianoRoll extends AbstractSoundObject {
         return notes;
     }
 
+    public ObservableList<FieldDef> getFieldDefinitions() {
+        return fieldDefinitions;
+    }
+
     /**
      * @return Returns the noteTemplate.
      */
@@ -347,7 +467,15 @@ public class PianoRoll extends AbstractSoundObject {
      * @param noteTemplate The noteTemplate to set.
      */
     public void setNoteTemplate(String noteTemplate) {
-        this.noteTemplate = noteTemplate;
+        final var newVal = (noteTemplate == null) ? "" : noteTemplate;
+
+        if (!newVal.equals(this.noteTemplate)) {
+            PropertyChangeEvent pce = new PropertyChangeEvent(this, "noteTemplate",
+                    this.noteTemplate, newVal);
+
+            this.noteTemplate = newVal;
+            firePropertyChange(pce);
+        }
     }
 
     /**
@@ -539,4 +667,77 @@ public class PianoRoll extends AbstractSoundObject {
     public PianoRoll deepCopy() {
         return new PianoRoll(this);
     }
+
+    // When there are changes to number of field definitions, ensure that
+    // piano notes have field values adjusted
+    @Override
+    public void onChanged(Change<? extends FieldDef> change) {
+        while (change.next()) {
+            if (change.wasAdded()) {
+                for (var fd : change.getAddedSubList()) {
+                    fd.minValueProperty().addListener(minListener);
+                    fd.maxValueProperty().addListener(maxListener);
+                    fd.fieldTypeProperty().addListener(fieldTypeListener);
+
+                    for (var pn : notes) {
+                        pn.getFields().add(new Field(fd));
+                    }
+                }
+            } else if (change.wasRemoved()) {
+                for (var fd : change.getRemoved()) {
+                    fd.minValueProperty().removeListener(minListener);
+                    fd.maxValueProperty().removeListener(maxListener);
+                    fd.fieldTypeProperty().removeListener(fieldTypeListener);
+
+                    for (var pn : notes) {
+                        pn.getFields().removeIf(field -> field.getFieldDef() == fd);
+                    }
+
+                }
+            }
+        }
+    }
+
+    /**
+     * Used to check if target PianoRoll is compatible with this PianoRoll for
+     * the purpose of copying/pasting note data between the two. Pasted notes
+     * should ensure their fields are relinked to FieldDef's in target
+     * PianoRoll.
+     *
+     * @param target
+     * @return if target is compatible with this PianoRoll
+     */
+    public boolean isCompatible(PianoRoll target) {
+        if (this == target) {
+            return true;
+        }
+        if (target == null) {
+            return false;
+        }
+
+        if (!getScale().equals(target.getScale())) {
+            return false;
+        }
+
+        final var aFieldDefs = getFieldDefinitions();
+        final var bFieldDefs = target.getFieldDefinitions();
+
+        if (aFieldDefs.size() != bFieldDefs.size()) {
+            return false;
+        }
+
+        for (int i = 0; i < aFieldDefs.size(); i++) {
+            FieldDef afd = aFieldDefs.get(i);
+            FieldDef bfd = bFieldDefs.get(i);
+
+            if (!afd.getFieldName().equals(bfd.getFieldName())
+                    || afd.getFieldType() != bfd.getFieldType()
+                    || afd.getMinValue() != bfd.getMinValue()
+                    || afd.getMaxValue() != bfd.getMaxValue()) {
+                return false;
+            }
+        }
+        return true;
+    }
+
 }

@@ -38,20 +38,22 @@ public class BSBGroupBeanInfo extends SimpleBeanInfo {
     // Property identifiers//GEN-FIRST:Properties
     private static final int PROPERTY_backgroundColor = 0;
     private static final int PROPERTY_borderColor = 1;
-    private static final int PROPERTY_groupName = 2;
-    private static final int PROPERTY_labelTextColor = 3;
-    private static final int PROPERTY_titleEnabled = 4;
-    private static final int PROPERTY_x = 5;
-    private static final int PROPERTY_y = 6;
+    private static final int PROPERTY_comment = 2;
+    private static final int PROPERTY_groupName = 3;
+    private static final int PROPERTY_labelTextColor = 4;
+    private static final int PROPERTY_titleEnabled = 5;
+    private static final int PROPERTY_x = 6;
+    private static final int PROPERTY_y = 7;
 
     // Property array 
     /*lazy PropertyDescriptor*/
     private static PropertyDescriptor[] getPdescriptor(){
-        PropertyDescriptor[] properties = new PropertyDescriptor[7];
+        PropertyDescriptor[] properties = new PropertyDescriptor[8];
     
         try {
             properties[PROPERTY_backgroundColor] = new PropertyDescriptor ( "backgroundColor", blue.orchestra.blueSynthBuilder.BSBGroup.class, "getBackgroundColor", "setBackgroundColor" ); // NOI18N
             properties[PROPERTY_borderColor] = new PropertyDescriptor ( "borderColor", blue.orchestra.blueSynthBuilder.BSBGroup.class, "getBorderColor", "setBorderColor" ); // NOI18N
+            properties[PROPERTY_comment] = new PropertyDescriptor ( "comment", blue.orchestra.blueSynthBuilder.BSBGroup.class, "getComment", "setComment" ); // NOI18N
             properties[PROPERTY_groupName] = new PropertyDescriptor ( "groupName", blue.orchestra.blueSynthBuilder.BSBGroup.class, "getGroupName", "setGroupName" ); // NOI18N
             properties[PROPERTY_labelTextColor] = new PropertyDescriptor ( "labelTextColor", blue.orchestra.blueSynthBuilder.BSBGroup.class, "getLabelTextColor", "setLabelTextColor" ); // NOI18N
             properties[PROPERTY_titleEnabled] = new PropertyDescriptor ( "titleEnabled", blue.orchestra.blueSynthBuilder.BSBGroup.class, "isTitleEnabled", "setTitleEnabled" ); // NOI18N
@@ -89,10 +91,10 @@ public class BSBGroupBeanInfo extends SimpleBeanInfo {
     private static java.awt.Image iconColor32 = null;
     private static java.awt.Image iconMono16 = null;
     private static java.awt.Image iconMono32 = null;//GEN-END:IconsDef
-    private static String iconNameC16 = null;//GEN-BEGIN:Icons
-    private static String iconNameC32 = null;
-    private static String iconNameM16 = null;
-    private static String iconNameM32 = null;//GEN-END:Icons
+    private static final String iconNameC16 = null;//GEN-BEGIN:Icons
+    private static final String iconNameC32 = null;
+    private static final String iconNameM16 = null;
+    private static final String iconNameM32 = null;//GEN-END:Icons
 
     private static final int defaultPropertyIndex = -1;//GEN-BEGIN:Idx
     private static final int defaultEventIndex = -1;//GEN-END:Idx

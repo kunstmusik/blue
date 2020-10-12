@@ -49,7 +49,7 @@ public class TableCanvas extends JComponent {
 
     private static final Stroke STROKE2 = new BasicStroke(2);
 
-    private static EditPointsPopup popup = null;
+    private static final EditPointsPopup popup = null;
     Table table = null;
     TablePoint selectedPoint = null;
     int leftBoundaryX = -1, rightBoundaryX = -1;

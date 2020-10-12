@@ -25,7 +25,7 @@ import java.util.HashMap;
 public class CopyBuffer {
     public static String INSTRUMENT = "instrument";
 
-    private static HashMap map = new HashMap();
+    private static final HashMap map = new HashMap();
 
     public static void setBufferedObject(String key, Object val) {
         map.put(key, val);

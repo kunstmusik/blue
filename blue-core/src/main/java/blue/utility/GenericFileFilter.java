@@ -8,9 +8,9 @@ import javax.swing.filechooser.FileFilter;
  */
 public class GenericFileFilter extends FileFilter {
 
-    private String[] extensions;
+    private final String[] extensions;
 
-    private String description;
+    private final String description;
 
     public GenericFileFilter(String extension, String description) {
         this(new String[] { extension }, description);
