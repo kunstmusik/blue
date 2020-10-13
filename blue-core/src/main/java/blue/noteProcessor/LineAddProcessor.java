@@ -51,7 +51,7 @@ public class LineAddProcessor implements NoteProcessor {
      * @see blue.noteProcessor.NoteProcessor#processNotes(blue.soundObject.NoteList)
      */
     @Override
-    public void processNotes(NoteList in) throws NoteProcessorException {
+    public NoteList processNotes(NoteList in) throws NoteProcessorException {
         Note temp;
         double addVal = 0f;
         double oldVal = 0f;
@@ -87,6 +87,7 @@ public class LineAddProcessor implements NoteProcessor {
             temp.setPField(Double.toString(oldVal + addVal), this.pfield);
 
         }
+        return in;
     }
 
     @Override

@@ -181,7 +181,7 @@ public class Score extends ObservableArrayList<LayerGroup<? extends Layer>> {
         }
 
         try {
-            ScoreUtilities.applyNoteProcessorChain(noteList, this.npc);
+            noteList = ScoreUtilities.applyNoteProcessorChain(noteList, this.npc);
         } catch (NoteProcessorException e) {
             throw new ScoreGenerationException(e);
         }

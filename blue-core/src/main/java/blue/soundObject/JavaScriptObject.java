@@ -98,7 +98,7 @@ public class JavaScriptObject extends AbstractSoundObject
                     javaScriptCode, subjectiveDuration, soundObjectId);
 
             NoteList nl = ScoreUtilities.getNotes(tempScore);
-            ScoreUtilities.applyNoteProcessorChain(nl, this.npc);
+            nl = ScoreUtilities.applyNoteProcessorChain(nl, this.npc);
             ScoreUtilities.applyTimeBehavior(nl, this.getTimeBehavior(), this
                     .getSubjectiveDuration(), this.getRepeatPoint());
             ScoreUtilities.setScoreStart(nl, startTime);

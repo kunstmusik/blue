@@ -74,7 +74,7 @@ public class JMask extends AbstractSoundObject {
 
         try {
             nl = temp.generateNotes(this.getSubjectiveDuration(), rnd);
-            ScoreUtilities.applyNoteProcessorChain(nl, this.npc);
+            nl = ScoreUtilities.applyNoteProcessorChain(nl, this.npc);
         } catch (Exception e) {
             throw new SoundObjectException(this, e);
         }

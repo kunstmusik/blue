@@ -100,7 +100,7 @@ public class GenericScore extends AbstractSoundObject implements
             throw new SoundObjectException(this, e);
         }
         try {
-            ScoreUtilities.applyNoteProcessorChain(nl, this.npc);
+            nl = ScoreUtilities.applyNoteProcessorChain(nl, this.npc);
         } catch (NoteProcessorException e) {
             throw new SoundObjectException(this, e);
         }

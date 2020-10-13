@@ -199,7 +199,7 @@ public class PatternObject extends AbstractSoundObject implements TableModel,
         }
 
         try {
-            ScoreUtilities.applyNoteProcessorChain(tempNoteList, this.npc);
+            tempNoteList = ScoreUtilities.applyNoteProcessorChain(tempNoteList, this.npc);
         } catch (NoteProcessorException e) {
             throw new SoundObjectException(this, e);
         }

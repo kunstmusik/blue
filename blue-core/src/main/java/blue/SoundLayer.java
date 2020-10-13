@@ -400,7 +400,7 @@ public final class SoundLayer extends ArrayList<SoundObject>
         }
 
         try {
-            ScoreUtilities.applyNoteProcessorChain(notes, this.npc);
+            notes = ScoreUtilities.applyNoteProcessorChain(notes, this.npc);
         } catch (NoteProcessorException e) {
             throw new SoundLayerException(this, "Error in SoundLayer: "
                     + this.getName(), e);

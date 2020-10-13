@@ -349,7 +349,7 @@ public class PolyObject extends ArrayList<SoundLayer> implements SoundObject,
         NoteList retVal = null;
 
         try {
-            ScoreUtilities.applyNoteProcessorChain(nl, this.npc);
+            nl = ScoreUtilities.applyNoteProcessorChain(nl, this.npc);
         } catch (NoteProcessorException e) {
             throw new SoundObjectException(this, e);
         }

@@ -43,9 +43,9 @@ public class RotateProcessor implements NoteProcessor {
     }
 
     @Override
-    public final void processNotes(NoteList in) throws NoteProcessorException {
+    public final NoteList processNotes(NoteList in) throws NoteProcessorException {
         if (in.size() < 2 || noteIndex == 1) {
-            return;
+            return in;
         }
 
         in.sort();
@@ -77,7 +77,8 @@ public class RotateProcessor implements NoteProcessor {
         }
 
         ScoreUtilities.normalizeNoteList(in);
-
+        
+        return in;
     }
 
     public static void main(String[] args) {

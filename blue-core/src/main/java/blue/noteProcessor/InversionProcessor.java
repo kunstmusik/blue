@@ -52,7 +52,7 @@ public class InversionProcessor implements NoteProcessor {
     }
 
     @Override
-    public final void processNotes(NoteList in) throws NoteProcessorException {
+    public final NoteList processNotes(NoteList in) throws NoteProcessorException {
         Note temp;
         for (int i = 0; i < in.size(); i++) {
             temp = in.get(i);
@@ -70,6 +70,7 @@ public class InversionProcessor implements NoteProcessor {
                         pfield);
             }
         }
+        return in;
     }
 
     public static void main(String[] args) {

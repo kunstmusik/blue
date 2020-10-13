@@ -292,7 +292,7 @@ public class PianoRoll extends AbstractSoundObject implements ListChangeListener
         nl.sort();
 
         try {
-            ScoreUtilities.applyNoteProcessorChain(nl, this.npc);
+           nl =  ScoreUtilities.applyNoteProcessorChain(nl, this.npc);
         } catch (NoteProcessorException e) {
             throw new SoundObjectException(this, e);
         }

@@ -52,7 +52,7 @@ public class LineMultiplyProcessor implements NoteProcessor {
      * @see blue.noteProcessor.NoteProcessor#processNotes(blue.soundObject.NoteList)
      */
     @Override
-    public void processNotes(NoteList in) throws NoteProcessorException {
+    public NoteList processNotes(NoteList in) throws NoteProcessorException {
         Note temp;
         double oldVal = 0f;
         double multiplyVal = 0f;
@@ -88,6 +88,7 @@ public class LineMultiplyProcessor implements NoteProcessor {
             temp.setPField(Double.toString(oldVal * multiplyVal), this.pfield);
 
         }
+        return in;
     }
 
     @Override

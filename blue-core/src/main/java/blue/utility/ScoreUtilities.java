@@ -29,6 +29,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import org.netbeans.api.annotations.common.CheckReturnValue;
 
 public class ScoreUtilities {
 
@@ -469,22 +470,16 @@ public class ScoreUtilities {
         }
     }
 
-    public static void applyNoteProcessorChain(NoteList notes,
+    @CheckReturnValue
+    public static NoteList applyNoteProcessorChain(NoteList notes,
             NoteProcessorChain npc) throws NoteProcessorException {
+        
+        NoteList retVal = notes;
         for (int i = 0; i < npc.size(); i++) {
             NoteProcessor np = npc.get(i);
-            // try {
-            np.processNotes(notes);
-            // } catch (NoteProcessorException ex) {
-            // JOptionPane.showMessageDialog(
-            // null,
-            // ex.getMessage(),
-            // ex.getProcessorName(),
-            // JOptionPane.ERROR_MESSAGE);
-            // throw new NoteProcessorRTException("An exception occured while
-            // applying a note processor", ex);
-            // }
+            retVal = np.processNotes(retVal);            
         }
+        return retVal;
     }
 
     public static void applyTimeBehavior(NoteList notes, TimeBehavior timeBehavior,

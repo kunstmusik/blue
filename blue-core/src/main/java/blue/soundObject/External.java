@@ -108,7 +108,7 @@ public class External extends AbstractSoundObject {
         }
 
         try {
-            ScoreUtilities.applyNoteProcessorChain(nl, this.npc);
+            nl = ScoreUtilities.applyNoteProcessorChain(nl, this.npc);
         } catch (NoteProcessorException npe) {
             throw new SoundObjectException(this, npe);
         }

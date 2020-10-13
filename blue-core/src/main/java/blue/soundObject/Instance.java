@@ -64,7 +64,7 @@ public class Instance extends AbstractSoundObject {
         ScoreUtilities.normalizeNoteList(nl);
 
         try {
-            ScoreUtilities.applyNoteProcessorChain(nl, this.npc);
+           nl =  ScoreUtilities.applyNoteProcessorChain(nl, this.npc);
         } catch (NoteProcessorException e) {
             throw new SoundObjectException(this, e);
         }

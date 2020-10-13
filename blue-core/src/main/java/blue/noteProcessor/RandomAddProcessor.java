@@ -86,7 +86,7 @@ public class RandomAddProcessor implements NoteProcessor {
     }
     
     @Override
-    public final void processNotes(NoteList in) throws NoteProcessorException {
+    public final NoteList processNotes(NoteList in) throws NoteProcessorException {
         Note temp;
 
         double range = max - min;
@@ -111,6 +111,7 @@ public class RandomAddProcessor implements NoteProcessor {
 
             temp.setPField(Double.toString(fieldVal + randVal), pfield);
         }
+        return in;
     }
 
     public static NoteProcessor loadFromXML(Element data) {

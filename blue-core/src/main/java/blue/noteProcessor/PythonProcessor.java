@@ -39,13 +39,14 @@ public class PythonProcessor implements NoteProcessor {
     }
 
     @Override
-    public void processNotes(NoteList in) throws NoteProcessorException {
+    public NoteList processNotes(NoteList in) throws NoteProcessorException {
         try {
             PythonProxy.processPythonNoteProcessor(in, code.getCode());
         } catch (PyException pyEx) {
             String msg = "Python NoteProcessor Error:\n" + pyEx.toString();
             throw new NoteProcessorException(this, msg);
         }
+        return in;
     }
 
     @Override

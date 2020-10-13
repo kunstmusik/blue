@@ -65,7 +65,7 @@ public class PchAddProcessor implements NoteProcessor {
     }
 
     @Override
-    public final void processNotes(NoteList in) throws NoteProcessorException {
+    public final NoteList processNotes(NoteList in) throws NoteProcessorException {
         Note temp;
         String val;
         for (int i = 0; i < in.size(); i++) {
@@ -93,6 +93,7 @@ public class PchAddProcessor implements NoteProcessor {
 
             temp.setPField(Double.toString(octave + strPch), pfield);
         }
+        return in;
     }
 
     public static void main(String[] args) {
