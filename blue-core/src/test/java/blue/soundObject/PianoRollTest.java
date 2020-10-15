@@ -25,6 +25,7 @@ import blue.soundObject.pianoRoll.PianoNote;
 import static org.junit.Assert.*;
 import org.junit.Before;
 import org.junit.Test;
+import org.openide.util.Exceptions;
 
 /**
  *
@@ -77,25 +78,33 @@ public class PianoRollTest {
         // FIXME - I removed equals and hashCode to match hash by ref behavior 
         // of other soundObjects. Need to fix this.
 //        assertTrue(instance.equals(p2));
-        
 //        assertTrue(EqualsBuilder.reflectionEquals(instance, p2, (String[])null));
     }
-    
-    @Test 
+
+    @Test
     public void testIsCompatible() {
         var target = new PianoRoll(instance);
-        
+
         assertTrue(instance.isCompatible(target));
-        
+
         target.getFieldDefinitions().get(0).setFieldName("error");
-        
+
         assertFalse(instance.isCompatible(target));
-        
+
         target = new PianoRoll(instance);
         var fd = new FieldDef();
         target.getFieldDefinitions().add(fd);
-        
+
         assertFalse(instance.isCompatible(target));
     }
 
+    @Test
+    public void testSpaceInNoteTemplate() throws SoundObjectException {
+        var note = instance.getNotes().get(0);
+        note.setNoteTemplate(" i <INSTR_ID> <START> <DUR> <FREQ> <AMP>");
+
+        var notes = instance.generateNotes(0, -1);
+
+        assertTrue("Exception was not thrown", true);
+    }
 }

@@ -196,7 +196,7 @@ public class PianoRoll extends AbstractSoundObject implements ListChangeListener
         NoteList nl = new NoteList();
 
         String instrId = instrumentId;
-        final String prNoteTemplate = noteTemplate;
+        final String prNoteTemplate = noteTemplate.trim();
 
         if (instrId != null) {
             instrId = instrId.trim();
@@ -256,7 +256,10 @@ public class PianoRoll extends AbstractSoundObject implements ListChangeListener
             String template = n.getNoteTemplate();
             if (template == null) {
                 template = prNoteTemplate;
+            } else {
+                template = template.trim();
             }
+            
 
             template = TextUtilities
                     .replaceAll(template, "<INSTR_ID>", instrId);
