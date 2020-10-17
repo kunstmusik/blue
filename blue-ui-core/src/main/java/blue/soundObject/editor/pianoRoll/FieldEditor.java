@@ -230,6 +230,8 @@ public class FieldEditor extends JPanel {
             selectedField.minValueProperty().addListener(domainListener);
             selectedField.maxValueProperty().addListener(domainListener);
 
+            yScale.setDomain(selectedField.getMinValue(), selectedField.getMaxValue());
+            
             for (PianoNote note : p.getNotes()) {
                 var field = note.getField(selectedField);
                 field.ifPresent(fld -> {
