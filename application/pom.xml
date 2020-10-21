@@ -51,13 +51,8 @@
                         </goals>
                         <configuration>
                             <target>
-                                <copy file="../ChangeLog" tofile="target/blue/ChangeLog" overwrite="true">
-                                    <filterset>
-                                        <filter token="VERSION" value="${blueVersion}"/>
-                                        <filter token="RELEASE_DATE" value="${blueReleaseDate}"/>
-                                    </filterset>
-                                </copy>
-
+                                <copy file="../ChangeLog.md" tofile="target/blue/ChangeLog.md" overwrite="true"/>
+                               
                                 <copy file="../README.md" tofile="target/blue/README.md" overwrite="true">
                                     <filterset>
                                         <filter token="VERSION" value="${blueVersion}"/>

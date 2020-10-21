@@ -13,7 +13,7 @@ information.
 
 ![Blue CI Builds](https://github.com/kunstmusik/blue/workflows/Blue%20CI%20Builds/badge.svg)
 
-The text file ChangeLog lists the history of changes for Blue and all
+The text file [ChangeLog.md](ChangeLog.md) lists the history of changes for Blue and all
 accompanying programs.
 
 ## Introduction
@@ -29,7 +29,7 @@ suggestions, bugs, and feature requests, as it's all helped Blue grow over time.
 
 If this is your first time using Blue, you might want to check out the manual,
 which is available within the program from Help menu (the "Blue Manual" menu
-option).  A version of the manual is also available [online](https://blue.kunstmusik.com/manual/html/index.html). The blue-users mailing list, accessible from
+option).  A version of the manual is also available [online](https://kunstmusik.github.io/blue-manual/). The blue-users mailing list, accessible from
 https://blue.kunstmusik.com, is also a great place to ask questions.
 
 Example .blue project files are provided in the examples folder, located in the
