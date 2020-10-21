@@ -72,7 +72,7 @@ public class FieldEditor extends JPanel {
         setLayout(null);
         setBackground(Color.BLACK);
 
-        fieldEditorMouseListener = new FieldEditorMouseListener(selectedNotes, yScale);
+        fieldEditorMouseListener = new FieldEditorMouseListener(selectedNotes, selectedFieldDef, yScale);
         
         this.addMouseListener(fieldEditorMouseListener);
         this.addMouseMotionListener(fieldEditorMouseListener);

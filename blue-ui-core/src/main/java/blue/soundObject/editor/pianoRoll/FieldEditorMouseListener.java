@@ -21,11 +21,18 @@ package blue.soundObject.editor.pianoRoll;
 
 import blue.soundObject.editor.pianoRoll.Pin;
 import blue.soundObject.pianoRoll.Field;
+import blue.soundObject.pianoRoll.FieldDef;
 import blue.soundObject.pianoRoll.PianoNote;
+import blue.ui.utilities.UiUtilities;
 import blue.utilities.scales.ScaleLinear;
+import java.awt.Component;
+import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import javafx.beans.property.ObjectProperty;
 import javafx.collections.ObservableList;
+import javax.swing.AbstractAction;
+import javax.swing.JPopupMenu;
 import javax.swing.SwingUtilities;
 
 /**
@@ -42,9 +49,13 @@ public class FieldEditorMouseListener extends MouseAdapter {
 
     private double startValue = 0.0;
     private Pin currentPin = null;
+    private final ObjectProperty<FieldDef> selectedFieldDef;
 
-    public FieldEditorMouseListener(ObservableList<PianoNote> selectedNotes, ScaleLinear yScale) {
+    public FieldEditorMouseListener(ObservableList<PianoNote> selectedNotes,
+            ObjectProperty<FieldDef> selectedFieldDef,
+            ScaleLinear yScale) {
         this.selectedNotes = selectedNotes;
+        this.selectedFieldDef = selectedFieldDef;
         this.yScale = yScale;
     }
 
@@ -53,13 +64,20 @@ public class FieldEditorMouseListener extends MouseAdapter {
         var fEditor = (FieldEditor) e.getComponent();
         fEditor.requestFocus();
 
+        if (UiUtilities.isRightMouseButton(e) && 
+                selectedNotes.size() > 0) {
+            showPopup(fEditor, e);
+            e.consume();
+            return;
+        }
+
         var comp = fEditor.getComponentAt(e.getPoint());
 
         if (comp instanceof Pin) {
-            
+
             var src = (Pin) comp;
             currentPin = src;
-            
+
             if (selectedNotes.contains(src.note)) {
                 if (e.isShiftDown()) {
                     selectedNotes.remove(src.note);
@@ -113,6 +131,27 @@ public class FieldEditorMouseListener extends MouseAdapter {
         startValue = 0.0;
         originalValues = null;
         currentPin = null;
+    }
+
+    protected void showPopup(Component comp, MouseEvent e) {
+        JPopupMenu menu = new JPopupMenu();
+
+        menu.add(new AbstractAction("Set selected field values to default") {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                var fieldDef = selectedFieldDef.get();
+
+                if (fieldDef != null) {
+                    for (var note : selectedNotes) {
+                        note.getField(fieldDef)
+                                .ifPresent(f -> f.setValue(fieldDef.getDefaultValue()));
+                    }
+                }
+            }
+
+        });
+        
+        menu.show(comp, e.getX(), e.getY());
     }
 
 }
