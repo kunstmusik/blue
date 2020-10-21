@@ -49,7 +49,6 @@ import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.MouseAdapter;
@@ -58,6 +57,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
+import javafx.beans.value.ObservableObjectValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javax.swing.BorderFactory;
@@ -86,11 +86,13 @@ public class PianoRollEditor extends ScoreObjectEditor implements
 
     ObjectProperty<FieldDef> selectedFieldDef = new SimpleObjectProperty<>();
 
+    private ObjectProperty<PianoRoll> currentPianoRoll = new SimpleObjectProperty<PianoRoll>();
+
     PianoRollPropertiesEditor props = new PianoRollPropertiesEditor(selectedNotes);
 
     ScaleLinear fieldEditorYScale = new ScaleLinear(0, 1, 0, 1);
 
-    PianoRollCanvas noteCanvas = new PianoRollCanvas(selectedNotes,
+    PianoRollCanvas noteCanvas = new PianoRollCanvas(currentPianoRoll, selectedNotes,
             selectedFieldDef, fieldEditorYScale);
 
     PianoRollCanvasHeader noteHeader = new PianoRollCanvasHeader(selectedNotes);
@@ -107,9 +109,7 @@ public class PianoRollEditor extends ScoreObjectEditor implements
 
     FieldSelectorView fieldSelectorView = new FieldSelectorView(selectedFieldDef);
 
-    FieldEditor fieldEditor = new FieldEditor(selectedNotes, selectedFieldDef, fieldEditorYScale);
-
-    private PianoRoll p;
+    FieldEditor fieldEditor = new FieldEditor(currentPianoRoll, selectedNotes, selectedFieldDef, fieldEditorYScale);
 
     public PianoRollEditor() {
         snapButton.setIcon(IconFactory.getLeftArrowIcon());
@@ -187,15 +187,15 @@ public class PianoRollEditor extends ScoreObjectEditor implements
     }
 
     protected void generateTest() {
-
-        if (this.p == null) {
+        var p = this.currentPianoRoll.get();
+        if (p == null) {
             return;
         }
 
         NoteList notes = null;
 
         try {
-            notes = ((SoundObject) this.p).generateForCSD(null, 0.0f, -1.0f);
+            notes = p.generateForCSD(null, 0.0f, -1.0f);
         } catch (Exception e) {
             ExceptionDialog.showExceptionDialog(SwingUtilities.getRoot(this), e);
         }
@@ -216,16 +216,15 @@ public class PianoRollEditor extends ScoreObjectEditor implements
 
         ScrollerButton plusHorz = new ScrollerButton("+");
         ScrollerButton minusHorz = new ScrollerButton("-");
-        
+
         plusHorz.putClientProperty("timer", new Timer(100, (e) -> {
             raisePixelSecond();
         }));
-        
+
         minusHorz.putClientProperty("timer", new Timer(100, (e) -> {
             lowerPixelSecond();
         }));
-        
-        
+
         horizontalViewChanger.add(plusHorz);
         horizontalViewChanger.add(minusHorz);
 
@@ -237,26 +236,26 @@ public class PianoRollEditor extends ScoreObjectEditor implements
         plusVert.putClientProperty("timer", new Timer(100, (e) -> {
             raiseHeight();
         }));
-        
+
         minusVert.putClientProperty("timer", new Timer(100, (e) -> {
             lowerHeight();
         }));
 
         verticalViewChanger.add(plusVert);
         verticalViewChanger.add(minusVert);
-        
+
         var viewChangerListener = new MouseAdapter() {
             @Override
             public void mousePressed(MouseEvent e) {
-                var src = (ScrollerButton)e.getSource();
-                var timer = (Timer)src.getClientProperty("timer");
+                var src = (ScrollerButton) e.getSource();
+                var timer = (Timer) src.getClientProperty("timer");
                 timer.start();
             }
-            
+
             @Override
             public void mouseReleased(MouseEvent e) {
-                var src = (ScrollerButton)e.getSource();
-                var timer = (Timer)src.getClientProperty("timer");
+                var src = (ScrollerButton) e.getSource();
+                var timer = (Timer) src.getClientProperty("timer");
                 timer.stop();
             }
         };
@@ -339,23 +338,26 @@ public class PianoRollEditor extends ScoreObjectEditor implements
 
         PianoRoll p = (PianoRoll) sObj;
 
-        if (this.p != null) {
-            this.p.removePropertyChangeListener(this);
+        var old = this.currentPianoRoll.get();
+
+        if (old != null) {
+            old.removePropertyChangeListener(this);
         }
 
-        this.p = p;
-        
         selectedNotes.clear();
 
-        this.p.addPropertyChangeListener(this);
+        this.currentPianoRoll.set(p);
 
-        noteCanvas.editPianoRoll(p);
+        p.addPropertyChangeListener(this);
+
+        // FIXME: Replace with passing currentPianoRoll property to 
+        // sub-components in their constructors
+        
         noteHeader.editPianoRoll(p);
         timeBar.editPianoRoll(p);
         props.editPianoRoll(p);
         noteTemplateEditor.editPianoRoll(p);
         timeProperties.setPianoRoll(p);
-        fieldEditor.editPianoRoll(p);
         fieldSelectorView.setFields(p.getFieldDefinitions());
 
         centerNoteScrollPane();
@@ -363,7 +365,8 @@ public class PianoRollEditor extends ScoreObjectEditor implements
 
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
-        if (evt.getSource() == this.p) {
+        var p = this.currentPianoRoll.get();
+        if (evt.getSource() == p) {
             if (evt.getPropertyName().equals("scale")) {
                 centerNoteScrollPane();
             }
@@ -381,6 +384,7 @@ public class PianoRollEditor extends ScoreObjectEditor implements
     }
 
     private void lowerHeight() {
+        var p = this.currentPianoRoll.get();
         if (p == null) {
             return;
         }
@@ -394,6 +398,7 @@ public class PianoRollEditor extends ScoreObjectEditor implements
     }
 
     private void raiseHeight() {
+        var p = this.currentPianoRoll.get();
         if (p == null) {
             return;
         }
@@ -407,6 +412,7 @@ public class PianoRollEditor extends ScoreObjectEditor implements
     }
 
     private void lowerPixelSecond() {
+        var p = this.currentPianoRoll.get();
         if (p == null) {
             return;
         }
@@ -423,6 +429,7 @@ public class PianoRollEditor extends ScoreObjectEditor implements
     }
 
     private void raisePixelSecond() {
+        var p = this.currentPianoRoll.get();
         if (p == null) {
             return;
         }

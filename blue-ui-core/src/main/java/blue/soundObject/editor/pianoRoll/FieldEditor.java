@@ -46,12 +46,11 @@ import javax.swing.ToolTipManager;
  */
 public class FieldEditor extends JPanel {
 
-    private PianoRoll p = null;
-
     FieldDef selectedField = null;
 
     private final ObservableList<PianoNote> selectedNotes;
     private final ObjectProperty<FieldDef> selectedFieldDef;
+    private final ObjectProperty<PianoRoll> currentPianoRoll;
     final ScaleLinear yScale;
 
     ChangeListener<? super Number> domainListener;
@@ -59,21 +58,24 @@ public class FieldEditor extends JPanel {
     FieldEditorMouseListener fieldEditorMouseListener;
 
     ListChangeListener<PianoNote> lcl;
-    
+
     PropertyChangeListener pcl;
 
-    public FieldEditor(ObservableList<PianoNote> selectedNotes,
+    public FieldEditor(ObjectProperty<PianoRoll> currentPianoRoll,
+            ObservableList<PianoNote> selectedNotes,
             ObjectProperty<FieldDef> selectedFieldDef,
             ScaleLinear yScale) {
         this.selectedNotes = selectedNotes;
         this.selectedFieldDef = selectedFieldDef;
+        this.currentPianoRoll = currentPianoRoll;
         this.yScale = yScale;
 
         setLayout(null);
         setBackground(Color.BLACK);
 
-        fieldEditorMouseListener = new FieldEditorMouseListener(selectedNotes, selectedFieldDef, yScale);
-        
+        fieldEditorMouseListener = new FieldEditorMouseListener(currentPianoRoll, 
+                selectedNotes, selectedFieldDef, yScale);
+
         this.addMouseListener(fieldEditorMouseListener);
         this.addMouseMotionListener(fieldEditorMouseListener);
 
@@ -97,6 +99,7 @@ public class FieldEditor extends JPanel {
                     for (PianoNote note : change.getAddedSubList()) {
                         var field = note.getField(selectedField);
                         field.ifPresent(fld -> {
+                            var p = this.currentPianoRoll.get();
                             Pin pin = new Pin(p, yScale, note, fld, selectedNotes);
                             add(pin);
                         });
@@ -142,10 +145,22 @@ public class FieldEditor extends JPanel {
         ToolTipManager.sharedInstance().registerComponent(this);
 
         pcl = (pce) -> {
-            if("pixelSecond".equals(pce.getPropertyName())) {
+            if ("pixelSecond".equals(pce.getPropertyName())) {
                 repaint();
             }
         };
+
+        this.currentPianoRoll.addListener((obs, old, newVal) -> {
+            if (old != null) {
+                old.getNotes().removeListener(lcl);
+                old.removePropertyChangeListener(pcl);
+            }
+
+            if (newVal != null) {
+                newVal.getNotes().addListener(lcl);
+                newVal.addPropertyChangeListener(pcl);
+            }
+        });
     }
 
     @Override
@@ -155,7 +170,7 @@ public class FieldEditor extends JPanel {
 
         Object obj = this.getComponentAt(e.getPoint());
         if (obj instanceof Pin) {
-            
+
             var pin = (Pin) obj;
             var fd = pin.field;
 
@@ -170,24 +185,13 @@ public class FieldEditor extends JPanel {
         return tip;
     }
 
-    public void editPianoRoll(PianoRoll p) {
-        if (this.p != null) {
-            this.p.getNotes().removeListener(lcl);
-            this.p.removePropertyChangeListener(pcl);
-        }
-        this.p = p;
-
-        if (this.p != null) {
-            this.p.getNotes().addListener(lcl);
-            this.p.addPropertyChangeListener(pcl);
-        }
-    }
-
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g); //To change body of generated methods, choose Tools | Templates.
 
-        if (selectedField == null) {
+        var p = currentPianoRoll.get();
+
+        if (selectedField == null || p == null) {
             return;
         }
 
@@ -231,8 +235,10 @@ public class FieldEditor extends JPanel {
             selectedField.maxValueProperty().addListener(domainListener);
 
             yScale.setDomain(selectedField.getMinValue(), selectedField.getMaxValue());
+
+            var p = currentPianoRoll.get();
             
-            for (PianoNote note : p.getNotes()) {
+            for (PianoNote note : currentPianoRoll.get().getNotes()) {
                 var field = note.getField(selectedField);
                 field.ifPresent(fld -> {
                     Pin pin = new Pin(p, yScale, note, fld, selectedNotes);

@@ -19,6 +19,7 @@
  */
 package blue.soundObject.editor.pianoRoll;
 
+import blue.soundObject.PianoRoll;
 import blue.soundObject.editor.pianoRoll.Pin;
 import blue.soundObject.pianoRoll.Field;
 import blue.soundObject.pianoRoll.FieldDef;
@@ -50,10 +51,13 @@ public class FieldEditorMouseListener extends MouseAdapter {
     private double startValue = 0.0;
     private Pin currentPin = null;
     private final ObjectProperty<FieldDef> selectedFieldDef;
+    private final ObjectProperty<PianoRoll> currentPianoRoll;
 
-    public FieldEditorMouseListener(ObservableList<PianoNote> selectedNotes,
+    public FieldEditorMouseListener(ObjectProperty<PianoRoll> currentPianoRoll,
+            ObservableList<PianoNote> selectedNotes,
             ObjectProperty<FieldDef> selectedFieldDef,
             ScaleLinear yScale) {
+        this.currentPianoRoll = currentPianoRoll;
         this.selectedNotes = selectedNotes;
         this.selectedFieldDef = selectedFieldDef;
         this.yScale = yScale;
@@ -64,8 +68,8 @@ public class FieldEditorMouseListener extends MouseAdapter {
         var fEditor = (FieldEditor) e.getComponent();
         fEditor.requestFocus();
 
-        if (UiUtilities.isRightMouseButton(e) && 
-                selectedNotes.size() > 0) {
+        if (UiUtilities.isRightMouseButton(e)
+                && selectedNotes.size() > 0) {
             showPopup(fEditor, e);
             e.consume();
             return;
@@ -150,7 +154,22 @@ public class FieldEditorMouseListener extends MouseAdapter {
             }
 
         });
-        
+
+        menu.add(new AbstractAction("Set all field values to default") {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                var fieldDef = selectedFieldDef.get();
+                var p = currentPianoRoll.get();
+                if (fieldDef != null && p != null) {
+                    for (var note : p.getNotes()) {
+                        note.getField(fieldDef)
+                                .ifPresent(f -> f.setValue(fieldDef.getDefaultValue()));
+                    }
+                }
+            }
+
+        });
+
         menu.show(comp, e.getX(), e.getY());
     }
 

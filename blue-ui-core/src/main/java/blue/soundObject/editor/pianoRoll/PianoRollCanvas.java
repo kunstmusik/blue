@@ -82,8 +82,6 @@ public class PianoRollCanvas extends JLayeredPane implements Scrollable,
 
     private static final Color LINE_COLOR = Color.DARK_GRAY.darker();
 
-    protected PianoRoll p;
-
     //public NoteBuffer noteBuffer = new NoteBuffer();
     ComponentListener cl;
 
@@ -92,15 +90,18 @@ public class PianoRollCanvas extends JLayeredPane implements Scrollable,
     private final ObservableList<PianoNote> selectedNotes;
     private final ScaleLinear fieldEditorYScale;
     private final ObjectProperty<FieldDef> selectedFieldDef;
+    private final ObjectProperty<PianoRoll> currentPianoRoll;
 
     public ScaleLinear getFieldEditorYScale() {
         return fieldEditorYScale;
     }
 
-    public PianoRollCanvas(ObservableList<PianoNote> selectedNotes,
+    public PianoRollCanvas(ObjectProperty<PianoRoll> currentPianoRoll,
+            ObservableList<PianoNote> selectedNotes,
             ObjectProperty<FieldDef> selectedFieldDef,
             ScaleLinear fieldEditorYScale) {
 
+        this.currentPianoRoll = currentPianoRoll;
         this.selectedNotes = selectedNotes;
         this.selectedFieldDef = selectedFieldDef;
         this.fieldEditorYScale = fieldEditorYScale;
@@ -109,7 +110,7 @@ public class PianoRollCanvas extends JLayeredPane implements Scrollable,
         recalculateSize();
         this.setBackground(Color.black);
 
-        nMouse = new NoteCanvasMouseListener(this, selectedNotes, selectedFieldDef);
+        nMouse = new NoteCanvasMouseListener(this, currentPianoRoll, selectedNotes, selectedFieldDef);
 
         cl = new ComponentAdapter() {
 
@@ -250,6 +251,39 @@ public class PianoRollCanvas extends JLayeredPane implements Scrollable,
 
         });
 
+        currentPianoRoll.addListener((obs, old, newVal) -> {
+            if (old == newVal) {
+                return;
+            }
+
+            if (old != null) {
+                old.removePropertyChangeListener(this);
+                old.getNotes().removeListener(this);
+            }
+
+            if (newVal == null) {
+                return;
+            }
+
+            newVal.addPropertyChangeListener(this);
+            newVal.getNotes().addListener(this);
+
+            this.removeAll();
+
+            this.add(marquee, JLayeredPane.DRAG_LAYER);
+            marquee.setVisible(false);
+
+            for (PianoNote note : newVal.getNotes()) {
+                addNoteView(note);
+            }
+
+            selectedNotes.clear();
+
+            recalculateSize();
+            revalidate();
+            repaint();
+        });
+
         ToolTipManager.sharedInstance().registerComponent(this);
     }
 
@@ -262,6 +296,8 @@ public class PianoRollCanvas extends JLayeredPane implements Scrollable,
         if (obj instanceof PianoNoteView) {
             var pnv = (PianoNoteView) obj;
             var note = pnv.getPianoNote();
+
+            var p = currentPianoRoll.get();
 
             StringBuilder builder = new StringBuilder("<b>Note: </b>");
 
@@ -305,6 +341,7 @@ public class PianoRollCanvas extends JLayeredPane implements Scrollable,
     }
 
     public void copy() {
+        var p = currentPianoRoll.get();
         var buffer = NoteCopyBuffer.getInstance();
         buffer.clear();
 
@@ -320,8 +357,9 @@ public class PianoRollCanvas extends JLayeredPane implements Scrollable,
      *
      */
     protected void removeNotes() {
+        var p = currentPianoRoll.get();
         for (var note : selectedNotes) {
-            this.p.getNotes().remove(note);
+            p.getNotes().remove(note);
         }
 
         selectedNotes.clear();
@@ -330,6 +368,7 @@ public class PianoRollCanvas extends JLayeredPane implements Scrollable,
     }
 
     public void recalculateSize() {
+        var p = currentPianoRoll.get();
         if (p == null) {
             return;
         }
@@ -362,6 +401,8 @@ public class PianoRollCanvas extends JLayeredPane implements Scrollable,
     @Override
     public void paintComponent(Graphics g) {
         Graphics2D g2d = (Graphics2D) g;
+
+        var p = currentPianoRoll.get();
 
         g.setColor(this.getBackground());
         g.fillRect(0, 0, this.getWidth(), this.getHeight());
@@ -434,43 +475,12 @@ public class PianoRollCanvas extends JLayeredPane implements Scrollable,
 
     }
 
-    public void editPianoRoll(PianoRoll p) {
-
-        if (this.p == p) {
-            return;
-        }
-
-        if (this.p != null) {
-            this.p.removePropertyChangeListener(this);
-            this.p.getNotes().removeListener(this);
-        }
-
-        p.addPropertyChangeListener(this);
-        p.getNotes().addListener(this);
-
-        this.p = p;
-
-        this.removeAll();
-
-        this.add(marquee, JLayeredPane.DRAG_LAYER);
-        marquee.setVisible(false);
-
-        for (PianoNote note : p.getNotes()) {
-            addNoteView(note);
-        }
-
-        selectedNotes.clear();
-
-        recalculateSize();
-        revalidate();
-        repaint();
-    }
-
     /**
      * @param x
      * @param y
      */
     public PianoNote addNote(double startTime, int y) {
+        var p = currentPianoRoll.get();
         PianoNote note = new PianoNote();
         note.setNoteTemplate(p.getNoteTemplate());
         note.setStart(startTime);
@@ -490,6 +500,7 @@ public class PianoRollCanvas extends JLayeredPane implements Scrollable,
     }
 
     public int[] getOctaveScaleDegreeForY(int y) {
+        var p = currentPianoRoll.get();
         int[] retVal = new int[2];
 
         int h = getHeight() - y;
@@ -507,6 +518,7 @@ public class PianoRollCanvas extends JLayeredPane implements Scrollable,
      * @param note
      */
     private PianoNoteView addNoteView(PianoNote note) {
+        var p = currentPianoRoll.get();
         PianoNoteView noteView = new PianoNoteView(note, p, selectedNotes);
         this.add(noteView);
         return noteView;
@@ -515,8 +527,9 @@ public class PianoRollCanvas extends JLayeredPane implements Scrollable,
     /* EVENT LISTENER CODE */
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
+        var p = currentPianoRoll.get();
 
-        if (evt.getSource() == this.p) {
+        if (evt.getSource() == p) {
 
             String propertyName = evt.getPropertyName();
             switch (propertyName) {
@@ -553,6 +566,8 @@ public class PianoRollCanvas extends JLayeredPane implements Scrollable,
     @Override
     public int getScrollableUnitIncrement(Rectangle visibleRect,
             int orientation, int direction) {
+        var p = currentPianoRoll.get();
+
         // Get the current position.
         int currentPosition = 0;
         if (orientation == SwingConstants.HORIZONTAL) {
@@ -583,6 +598,8 @@ public class PianoRollCanvas extends JLayeredPane implements Scrollable,
             return visibleRect.width - maxUnitIncrement;
         }
 
+        var p = currentPianoRoll.get();
+
         // return visibleRect.height - maxUnitIncrement;
         return p.getNoteHeight() * 5;
     }
@@ -601,6 +618,7 @@ public class PianoRollCanvas extends JLayeredPane implements Scrollable,
      * @return
      */
     public int getNoteHeight() {
+        var p = currentPianoRoll.get();
         if (p == null) {
             return 0;
         }
@@ -617,6 +635,7 @@ public class PianoRollCanvas extends JLayeredPane implements Scrollable,
     }
 
     private void lowerHeight() {
+        var p = currentPianoRoll.get();
         if (p == null) {
             return;
         }
@@ -630,6 +649,7 @@ public class PianoRollCanvas extends JLayeredPane implements Scrollable,
     }
 
     private void raiseHeight() {
+        var p = currentPianoRoll.get();
         if (p == null) {
             return;
         }
@@ -643,6 +663,7 @@ public class PianoRollCanvas extends JLayeredPane implements Scrollable,
     }
 
     private void lowerPixelSecond() {
+        var p = currentPianoRoll.get();
         if (p == null) {
             return;
         }
@@ -659,6 +680,7 @@ public class PianoRollCanvas extends JLayeredPane implements Scrollable,
     }
 
     private void raisePixelSecond() {
+        var p = currentPianoRoll.get();
         if (p == null) {
             return;
         }
