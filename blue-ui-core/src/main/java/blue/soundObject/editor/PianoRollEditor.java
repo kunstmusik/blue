@@ -151,9 +151,7 @@ public class PianoRollEditor extends ScoreObjectEditor implements
         tabs.add(BlueSystem.getString("common.properties"), props);
 
         this.add(tabs, BorderLayout.CENTER);
-
-        centerNoteScrollPane();
-
+        
         snapButton.addActionListener((ActionEvent e) -> {
             timeProperties.setVisible(!timeProperties.isVisible());
         });

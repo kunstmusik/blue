@@ -20,7 +20,6 @@
 package blue.soundObject.editor.pianoRoll;
 
 import blue.soundObject.PianoRoll;
-import blue.soundObject.editor.pianoRoll.Pin;
 import blue.soundObject.pianoRoll.Field;
 import blue.soundObject.pianoRoll.FieldDef;
 import blue.soundObject.pianoRoll.PianoNote;
@@ -34,7 +33,6 @@ import javafx.beans.property.ObjectProperty;
 import javafx.collections.ObservableList;
 import javax.swing.AbstractAction;
 import javax.swing.JPopupMenu;
-import javax.swing.SwingUtilities;
 
 /**
  *
