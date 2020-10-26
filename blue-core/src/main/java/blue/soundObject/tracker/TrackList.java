@@ -167,11 +167,11 @@ public class TrackList implements TableModel {
         }
     }
 
-    public NoteList generateNotes() throws NoteParseException {
+    public NoteList generateNotes(int stepsPerBeat) throws NoteParseException {
         NoteList retVal = new NoteList();
 
         for (Track tr : tracks) {
-            retVal.merge(tr.generateNotes());
+            retVal.merge(tr.generateNotes(stepsPerBeat));
         }
 
         return retVal;

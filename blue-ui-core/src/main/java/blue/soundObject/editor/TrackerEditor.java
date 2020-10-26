@@ -76,7 +76,9 @@ public class TrackerEditor extends ScoreObjectEditor {
 
     TrackerObject tracker = null;
 
-    JSpinner spinner;
+    JSpinner stepsSpinner;
+
+    JSpinner stepsPerBeatSpinner;    
 
     JSpinner octaveSpinner;
 
@@ -130,20 +132,32 @@ public class TrackerEditor extends ScoreObjectEditor {
         });
         helpButton.setFocusPainted(false);
 
-        spinner = new JSpinner();
-        spinner.setModel(new SpinnerNumberModel(16, 1, Integer.MAX_VALUE, 1));
-        spinner.addChangeListener((ChangeEvent e) -> {
+        stepsSpinner = new JSpinner();
+        stepsSpinner.setModel(new SpinnerNumberModel(16, 1, Integer.MAX_VALUE, 1));
+        stepsSpinner.addChangeListener((ChangeEvent e) -> {
             if (tracker != null) {
-                tracker.setSteps(((Integer) spinner.getValue()).intValue());
+                tracker.setSteps(((Integer) stepsSpinner.getValue()).intValue());
                 tracksEditor.revalidate();
                 tracksEditor.repaint();
             }
         });
 
         Dimension d = new Dimension(50, 20);
-        spinner.setSize(d);
-        spinner.setPreferredSize(d);
-        spinner.setMaximumSize(d);
+        stepsSpinner.setSize(d);
+        stepsSpinner.setPreferredSize(d);
+        stepsSpinner.setMaximumSize(d);
+        
+        stepsPerBeatSpinner = new JSpinner();
+        stepsPerBeatSpinner.setModel(new SpinnerNumberModel(4, 1, Integer.MAX_VALUE, 1));
+        stepsPerBeatSpinner.addChangeListener((ChangeEvent e) -> {
+            if (tracker != null) {
+                tracker.setStepsPerBeat(((Integer) stepsPerBeatSpinner.getValue()).intValue());
+            }
+        });
+
+        stepsPerBeatSpinner.setSize(d);
+        stepsPerBeatSpinner.setPreferredSize(d);
+        stepsPerBeatSpinner.setMaximumSize(d);        
 
         useKeyboardNotes = new JCheckBox("Use Keyboard Notes");
         useKeyboardNotes.addActionListener((ActionEvent e) -> {
@@ -170,8 +184,12 @@ public class TrackerEditor extends ScoreObjectEditor {
         panel.add(Box.createHorizontalStrut(10));
         panel.add(new JLabel("Steps"));
         panel.add(Box.createHorizontalStrut(5));
-        panel.add(spinner);
+        panel.add(stepsSpinner);
         panel.add(Box.createHorizontalStrut(10));
+        panel.add(new JLabel("Steps per Beat"));
+        panel.add(Box.createHorizontalStrut(5));
+        panel.add(stepsPerBeatSpinner);
+        panel.add(Box.createHorizontalStrut(10));        
         panel.add(useKeyboardNotes);
         panel.add(Box.createHorizontalStrut(5));
         panel.add(new JLabel("Octave"));
@@ -211,7 +229,8 @@ public class TrackerEditor extends ScoreObjectEditor {
 
         TrackerObject newTracker = (TrackerObject) sObj;
 
-        spinner.setValue(new Integer(newTracker.getSteps()));
+        stepsSpinner.setValue(new Integer(newTracker.getSteps()));
+        stepsPerBeatSpinner.setValue(new Integer(newTracker.getStepsPerBeat()));        
 
         this.tracker = newTracker;
 

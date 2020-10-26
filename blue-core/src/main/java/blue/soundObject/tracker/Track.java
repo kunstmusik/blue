@@ -232,7 +232,7 @@ public class Track implements TableModel {
         }
     }
 
-    public NoteList generateNotes() throws NoteParseException {
+    public NoteList generateNotes(int stepsPerBeat) throws NoteParseException {
         NoteList retVal = new NoteList();
 
         String instrId = getInstrumentId();
@@ -264,12 +264,17 @@ public class Track implements TableModel {
                     }
                     dur++;
                 }
+                                
+                final double noteStart = i / (double)stepsPerBeat;
+                final double noteDur = dur / (double)stepsPerBeat;                
 
-                String durStr = trNote.isTied() ? "-" + dur : Integer
-                        .toString(dur);
+                String durStr = trNote.isTied() ? "-" + noteDur : Double
+                        .toString(noteDur);
 
-                noteStr = TextUtilities.replaceAll(noteStr, "<START>", Integer
-                        .toString(i));
+                
+                
+                noteStr = TextUtilities.replaceAll(noteStr, "<START>", Double
+                        .toString(noteStart));
                 noteStr = TextUtilities.replaceAll(noteStr, "<DUR>", durStr);
 
                 Object[] colNameArg = new Object[1];
@@ -484,7 +489,7 @@ public class Track implements TableModel {
         Track retVal = new Track(false);
 
         Elements nodes = data.getElements();
-
+        
         while (nodes.hasMoreElements()) {
             Element node = nodes.next();
             String nodeName = node.getName();

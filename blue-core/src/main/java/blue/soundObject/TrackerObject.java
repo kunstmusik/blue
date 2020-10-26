@@ -41,15 +41,15 @@ public class TrackerObject extends AbstractSoundObject {
 
     private TrackList tracks = new TrackList();
 
-    private double duration = 4.0f;
+    private TimeBehavior timeBehavior = TimeBehavior.REPEAT;
 
-    private TimeBehavior timeBehavior = TimeBehavior.SCALE;
-
-    double repeatPoint = -1.0f;
+    double repeatPoint = 16.0f;
 
     private NoteProcessorChain npc = new NoteProcessorChain();
 
     private transient Vector listeners = null;
+    
+    int stepsPerBeat = 4;
 
     public TrackerObject() {
         this.setName("Tracker");
@@ -58,7 +58,7 @@ public class TrackerObject extends AbstractSoundObject {
     public TrackerObject(TrackerObject to) {
         super(to);
         tracks = new TrackList(to.tracks);
-        duration = to.duration;
+        stepsPerBeat = to.stepsPerBeat;
         timeBehavior = to.timeBehavior;
         repeatPoint = to.repeatPoint;
         npc = new NoteProcessorChain(to.npc);
@@ -68,7 +68,7 @@ public class TrackerObject extends AbstractSoundObject {
         NoteList nl;
 
         try {
-            nl = tracks.generateNotes();
+            nl = tracks.generateNotes(stepsPerBeat);
         } catch (NoteParseException e) {
             throw new SoundObjectException(this, e);
         }
@@ -88,7 +88,9 @@ public class TrackerObject extends AbstractSoundObject {
 
     @Override
     public double getObjectiveDuration() {
-        return duration;
+        
+        // FIXME: May need to recalculate this in the future...
+        return subjectiveDuration;
     }
 
     @Override
@@ -120,7 +122,7 @@ public class TrackerObject extends AbstractSoundObject {
     public Element saveAsXML(Map<Object, String> objRefMap) {
         Element retVal = SoundObjectUtilities.getBasicXML(this);
 
-        retVal.addElement(XMLUtilities.writeDouble("duration", getDuration()));
+        retVal.addElement(XMLUtilities.writeInt("stepsPerBeat", stepsPerBeat));
         retVal.addElement(tracks.saveAsXML());
 
         return retVal;
@@ -137,20 +139,24 @@ public class TrackerObject extends AbstractSoundObject {
 
         SoundObjectUtilities.initBasicFromXML(data, retVal);
 
+        // For legacy projects prior to 2.8.1, default to 1 step 
+        int stepsPerBeat = 1; 
+        
         Elements nodes = data.getElements();
 
         while (nodes.hasMoreElements()) {
             Element node = nodes.next();
             String nodeName = node.getName();
             switch (nodeName) {
-                case "duration":
-                    retVal.setDuration(XMLUtilities.readDouble(node));
+                case "stepsPerBeat":
+                    stepsPerBeat = XMLUtilities.readInt(node);
                     break;
                 case "trackList":
                     retVal.setTracks(TrackList.loadFromXML(node));
                     break;
             }
         }
+        retVal.stepsPerBeat = stepsPerBeat;
 
         return retVal;
     }
@@ -158,14 +164,6 @@ public class TrackerObject extends AbstractSoundObject {
     @Override
     public void setNoteProcessorChain(NoteProcessorChain chain) {
         this.npc = chain;
-    }
-
-    public double getDuration() {
-        return duration;
-    }
-
-    public void setDuration(double duration) {
-        this.duration = duration;
     }
 
     public int getSteps() {
@@ -190,6 +188,15 @@ public class TrackerObject extends AbstractSoundObject {
     public void setTracks(TrackList tracks) {
         this.tracks = tracks;
     }
+
+    public int getStepsPerBeat() {
+        return stepsPerBeat;
+    }
+
+    public void setStepsPerBeat(int stepsPerBeat) {
+        this.stepsPerBeat = stepsPerBeat;
+    }
+    
 
     @Override
     public boolean equals(Object obj) {

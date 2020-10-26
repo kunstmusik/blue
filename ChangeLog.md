@@ -78,6 +78,11 @@ information.
 * Issue #524: Implemented checkbox editor for NoteProcessor properties that are 
   true/false
 
+* PianoRoll and Tracker: Time Behavior set to Repeat by default
+
+* Tracker: "Steps per beat" property added to control start/duration generation;
+  useful in conjunction with repeat behavior
+
 ### FIX
 
 * BSB: PresetManager dialog had bugs when dragging and dropping nodes around
