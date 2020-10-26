@@ -114,7 +114,7 @@ public class PianoRoll extends AbstractSoundObject implements ListChangeListener
 
     public PianoRoll() {
         this.setName("PianoRoll");
-        timeBehavior = TimeBehavior.SCALE;
+        timeBehavior = TimeBehavior.REPEAT;
         scale = Scale.get12TET();
         notes = FXCollections.observableArrayList();
         noteTemplate = "i <INSTR_ID> <START> <DUR> <FREQ> <AMP>";
