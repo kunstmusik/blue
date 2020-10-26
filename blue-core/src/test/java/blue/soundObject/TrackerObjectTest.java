@@ -31,6 +31,7 @@ public class TrackerObjectTest extends TestCase {
         TrackerObject tracker = new TrackerObject();
 
         tracker.setTimeBehavior(TimeBehavior.NONE);
+        tracker.setStepsPerBeat(1);
 
         TrackList tracks = tracker.getTracks();
 
