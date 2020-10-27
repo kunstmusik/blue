@@ -86,6 +86,9 @@ information.
 * Tracker: "Steps per beat" property added to control start/duration generation;
   useful in conjunction with repeat behavior
 
+* Issue #539: UX improvement to select newly added instrument in Orchestra 
+  Manager
+
 ### FIX
 
 * BSB: PresetManager dialog had bugs when dragging and dropping nodes around
