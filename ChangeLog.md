@@ -52,6 +52,9 @@ information.
   (similarly to how Velocity is handled in many MIDI-based DAW PianoRolls). 
   User can customize how many fields and kinds of fields to use for PianoRoll.
 
+  * Introduced dark area in background to show repeat point or scaled time area
+  for notes
+
 * Issue #520: Render waveform for Frozen SoundObject freze file
 
 ### UPDATED

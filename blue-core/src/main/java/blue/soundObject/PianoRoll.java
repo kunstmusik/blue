@@ -259,7 +259,6 @@ public class PianoRoll extends AbstractSoundObject implements ListChangeListener
             } else {
                 template = template.trim();
             }
-            
 
             template = TextUtilities
                     .replaceAll(template, "<INSTR_ID>", instrId);
@@ -295,7 +294,7 @@ public class PianoRoll extends AbstractSoundObject implements ListChangeListener
         nl.sort();
 
         try {
-           nl =  ScoreUtilities.applyNoteProcessorChain(nl, this.npc);
+            nl = ScoreUtilities.applyNoteProcessorChain(nl, this.npc);
         } catch (NoteProcessorException e) {
             throw new SoundObjectException(this, e);
         }
@@ -315,7 +314,12 @@ public class PianoRoll extends AbstractSoundObject implements ListChangeListener
 
     @Override
     public void setTimeBehavior(TimeBehavior timeBehavior) {
+        PropertyChangeEvent pce = new PropertyChangeEvent(this, "timeBehavior",
+                this.timeBehavior, timeBehavior);
+
         this.timeBehavior = timeBehavior;
+
+        firePropertyChange(pce);
     }
 
     @Override

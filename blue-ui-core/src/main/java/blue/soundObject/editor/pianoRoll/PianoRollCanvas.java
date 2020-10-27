@@ -21,7 +21,10 @@ package blue.soundObject.editor.pianoRoll;
 
 import blue.BlueSystem;
 import blue.components.AlphaMarquee;
+import blue.score.ScoreObjectEvent;
+import blue.score.ScoreObjectListener;
 import blue.soundObject.PianoRoll;
+import blue.soundObject.TimeBehavior;
 import blue.soundObject.pianoRoll.Field;
 import blue.soundObject.pianoRoll.FieldDef;
 import blue.soundObject.pianoRoll.FieldType;
@@ -45,8 +48,6 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.ArrayList;
-import java.util.List;
 import javafx.beans.property.ObjectProperty;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
@@ -251,6 +252,14 @@ public class PianoRollCanvas extends JLayeredPane implements Scrollable,
 
         });
 
+        final ScoreObjectListener sObjListener = (evt) -> {
+            switch(evt.getPropertyChanged()) {
+                case ScoreObjectEvent.DURATION:
+                case ScoreObjectEvent.REPEAT_POINT:
+                    repaint();
+            }
+        };
+
         currentPianoRoll.addListener((obs, old, newVal) -> {
             if (old == newVal) {
                 return;
@@ -259,6 +268,7 @@ public class PianoRollCanvas extends JLayeredPane implements Scrollable,
             if (old != null) {
                 old.removePropertyChangeListener(this);
                 old.getNotes().removeListener(this);
+                old.removeScoreObjectListener(sObjListener);
             }
 
             if (newVal == null) {
@@ -267,6 +277,7 @@ public class PianoRollCanvas extends JLayeredPane implements Scrollable,
 
             newVal.addPropertyChangeListener(this);
             newVal.getNotes().addListener(this);
+            newVal.addScoreObjectListener(sObjListener);
 
             this.removeAll();
 
@@ -401,17 +412,18 @@ public class PianoRollCanvas extends JLayeredPane implements Scrollable,
     @Override
     public void paintComponent(Graphics g) {
         Graphics2D g2d = (Graphics2D) g;
-
-        var p = currentPianoRoll.get();
+        final var p = currentPianoRoll.get();
+        final var w = getWidth();
+        final var height = getHeight();
 
         g.setColor(this.getBackground());
-        g.fillRect(0, 0, this.getWidth(), this.getHeight());
+        g.fillRect(0, 0, w, height);
 
         if (p == null) {
             return;
         }
 
-        int w = this.getWidth();
+        final var pixelSecond = p.getPixelSecond();
 
         int h;
         int octaveHeight;
@@ -434,6 +446,7 @@ public class PianoRollCanvas extends JLayeredPane implements Scrollable,
         Color lightColor = new Color(38, 51, 76).darker().darker();
         Color darkColor = lightColor.darker();
 
+        // Draw gradient background
         for (int i = 0; i < octaves; i++) {
             int lineY = h - (i * octaveHeight);
 
@@ -441,6 +454,30 @@ public class PianoRollCanvas extends JLayeredPane implements Scrollable,
                     darkColor, 0, lineY - octaveHeight, lightColor);
             g2d.setPaint(backgroundPaint);
             g2d.fillRect(0, lineY - octaveHeight, w, octaveHeight);
+        }
+
+        // Draw vertical lines
+        g.setColor(LINE_COLOR);
+        if (p.isSnapEnabled()) {
+            int snapPixels = (int) (p.getSnapValue() * pixelSecond);
+
+            int x = 0;
+            if (snapPixels <= 0) {
+                return;
+            }
+
+            double snapValue = p.getSnapValue();
+
+            for (int i = 0; x < w; i++) {
+                x = (int) ((i * snapValue) * pixelSecond);
+                g.drawLine(x, 0, x, h);
+            }
+
+        }
+
+        // Draw horizontal lines
+        for (int i = 0; i < octaves; i++) {
+            int lineY = h - (i * octaveHeight);
 
             g.setColor(OCTAVE_COLOR);
 
@@ -454,25 +491,29 @@ public class PianoRollCanvas extends JLayeredPane implements Scrollable,
             }
         }
 
-        if (p.isSnapEnabled()) {
-            int snapPixels = (int) (p.getSnapValue() * p.getPixelSecond());
+        // Draw boundary area
+        g.setColor(new Color(0, 0, 0, 128));
 
-            int x = 0;
-            if (snapPixels <= 0) {
-                return;
-            }
+        int end;
+        var notes = p.getNotes();
+        final var timeBehavior = p.getTimeBehavior();
 
-            double snapValue = p.getSnapValue();
-            int pixelSecond = p.getPixelSecond();
-            double time;
+        if (notes.size() > 0 && timeBehavior == TimeBehavior.SCALE) {
+            var maxNote = notes.stream()
+                    .max((a, b) -> Double.compare(a.getStart() + a.getDuration(), b.getStart() + b.getDuration()))
+                    .get();
+            var endTime = maxNote.getStart() + maxNote.getDuration();
+            end = (int) (endTime * pixelSecond);
 
-            for (int i = 0; x < w; i++) {
-                x = (int) ((i * snapValue) * pixelSecond);
-                g.drawLine(x, 0, x, h);
-            }
+        } else if (p.getRepeatPoint() > 0
+                && (timeBehavior == TimeBehavior.REPEAT
+                || timeBehavior == TimeBehavior.REPEAT_CLASSIC)) {
+            end = (int) (p.getRepeatPoint() * pixelSecond);
 
+        } else {
+            end = (int) (p.getSubjectiveDuration() * pixelSecond);
         }
-
+        g.fillRect(end, 0, w - end, height);
     }
 
     /**
@@ -541,6 +582,7 @@ public class PianoRollCanvas extends JLayeredPane implements Scrollable,
                     break;
                 case "snapEnabled":
                 case "snapValue":
+                case "timeBehavior":
                     repaint();
                     break;
                 case "timeValue":
