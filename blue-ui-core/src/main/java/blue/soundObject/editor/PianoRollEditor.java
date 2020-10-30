@@ -116,7 +116,8 @@ public class PianoRollEditor extends ScoreObjectEditor implements
 
     FieldSelectorView fieldSelectorView = new FieldSelectorView(selectedFieldDef);
 
-    FieldEditor fieldEditor = new FieldEditor(currentPianoRoll, selectedNotes, selectedFieldDef, fieldEditorYScale);
+    FieldEditor fieldEditor = new FieldEditor(currentPianoRoll, selectedNotes, 
+            selectedFieldDef, fieldEditorYScale, undo);
 
     
     public PianoRollEditor() {

@@ -20,6 +20,7 @@
 package blue.soundObject.editor.pianoRoll;
 
 import blue.soundObject.PianoRoll;
+import blue.soundObject.editor.pianoRoll.undo.FieldsEdit;
 import blue.soundObject.pianoRoll.Field;
 import blue.soundObject.pianoRoll.FieldDef;
 import blue.soundObject.pianoRoll.PianoNote;
@@ -33,6 +34,7 @@ import javafx.beans.property.ObjectProperty;
 import javafx.collections.ObservableList;
 import javax.swing.AbstractAction;
 import javax.swing.JPopupMenu;
+import javax.swing.undo.UndoManager;
 
 /**
  *
@@ -50,15 +52,17 @@ public class FieldEditorMouseListener extends MouseAdapter {
     private Pin currentPin = null;
     private final ObjectProperty<FieldDef> selectedFieldDef;
     private final ObjectProperty<PianoRoll> currentPianoRoll;
+    private final UndoManager undoManager;
 
     public FieldEditorMouseListener(ObjectProperty<PianoRoll> currentPianoRoll,
             ObservableList<PianoNote> selectedNotes,
             ObjectProperty<FieldDef> selectedFieldDef,
-            ScaleLinear yScale) {
+            ScaleLinear yScale, UndoManager undoManager) {
         this.currentPianoRoll = currentPianoRoll;
         this.selectedNotes = selectedNotes;
         this.selectedFieldDef = selectedFieldDef;
         this.yScale = yScale;
+        this.undoManager = undoManager;
     }
 
     @Override
@@ -66,8 +70,7 @@ public class FieldEditorMouseListener extends MouseAdapter {
         var fEditor = (FieldEditor) e.getComponent();
         fEditor.requestFocus();
 
-        if (UiUtilities.isRightMouseButton(e)
-                && selectedNotes.size() > 0) {
+        if (UiUtilities.isRightMouseButton(e)) {
             showPopup(fEditor, e);
             e.consume();
             return;
@@ -129,6 +132,15 @@ public class FieldEditorMouseListener extends MouseAdapter {
 
     @Override
     public void mouseReleased(MouseEvent e) {
+
+        if (originalValues != null) {
+            var endValues = new double[originalValues.length];
+            for (int i = 0; i < affectedFields.length; i++) {
+                endValues[i] = affectedFields[i].getValue();
+            }
+            undoManager.addEdit(new FieldsEdit(affectedFields, originalValues, endValues));
+        }
+
         affectedFields = null;
         startValue = 0.0;
         originalValues = null;
@@ -144,12 +156,31 @@ public class FieldEditorMouseListener extends MouseAdapter {
                 var fieldDef = selectedFieldDef.get();
 
                 if (fieldDef != null) {
-                    for (var note : selectedNotes) {
-                        note.getField(fieldDef)
-                                .ifPresent(f -> f.setValue(fieldDef.getDefaultValue()));
+                    var size = selectedNotes.size();
+                    double[] originalValues = new double[size];
+                    double[] endValues = new double[size];
+                    Field[] affectedFields = new Field[size];
+
+                    for (int i = 0; i < selectedNotes.size(); i++) {
+                        var note = selectedNotes.get(i);
+
+                        var fld = note.getField(fieldDef).get();
+                        originalValues[i] = fld.getValue();
+                        endValues[i] = fieldDef.getDefaultValue();
+                        affectedFields[i] = fld;
+                        
+                        fld.setValue(endValues[i]);
                     }
+                    undoManager.addEdit(new FieldsEdit(affectedFields, originalValues, endValues));
                 }
             }
+
+            @Override
+            public boolean isEnabled() {
+                return selectedNotes.size() > 0;
+            }
+            
+            
 
         });
 
@@ -159,10 +190,24 @@ public class FieldEditorMouseListener extends MouseAdapter {
                 var fieldDef = selectedFieldDef.get();
                 var p = currentPianoRoll.get();
                 if (fieldDef != null && p != null) {
-                    for (var note : p.getNotes()) {
-                        note.getField(fieldDef)
-                                .ifPresent(f -> f.setValue(fieldDef.getDefaultValue()));
+                    
+                    var notes = p.getNotes();
+                    var size = notes.size();
+                    double[] originalValues = new double[size];
+                    double[] endValues = new double[size];
+                    Field[] affectedFields = new Field[size];
+
+                    for (int i = 0; i < notes.size(); i++) {
+                        var note = notes.get(i);
+
+                        var fld = note.getField(fieldDef).get();
+                        originalValues[i] = fld.getValue();
+                        endValues[i] = fieldDef.getDefaultValue();
+                        affectedFields[i] = fld;
+                        
+                        fld.setValue(endValues[i]);
                     }
+                    undoManager.addEdit(new FieldsEdit(affectedFields, originalValues, endValues));
                 }
             }
 

@@ -39,6 +39,7 @@ import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javax.swing.JPanel;
 import javax.swing.ToolTipManager;
+import javax.swing.undo.UndoManager;
 
 /**
  *
@@ -60,21 +61,23 @@ public class FieldEditor extends JPanel {
     ListChangeListener<PianoNote> lcl;
 
     PropertyChangeListener pcl;
+    private final UndoManager undoManager;
 
     public FieldEditor(ObjectProperty<PianoRoll> currentPianoRoll,
             ObservableList<PianoNote> selectedNotes,
             ObjectProperty<FieldDef> selectedFieldDef,
-            ScaleLinear yScale) {
+            ScaleLinear yScale, UndoManager undoManager) {
         this.selectedNotes = selectedNotes;
         this.selectedFieldDef = selectedFieldDef;
         this.currentPianoRoll = currentPianoRoll;
         this.yScale = yScale;
+        this.undoManager = undoManager;
 
         setLayout(null);
         setBackground(Color.BLACK);
 
         fieldEditorMouseListener = new FieldEditorMouseListener(currentPianoRoll, 
-                selectedNotes, selectedFieldDef, yScale);
+                selectedNotes, selectedFieldDef, yScale, undoManager);
 
         this.addMouseListener(fieldEditorMouseListener);
         this.addMouseMotionListener(fieldEditorMouseListener);
