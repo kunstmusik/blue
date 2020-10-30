@@ -60,7 +60,7 @@ public class PolyObject extends ArrayList<SoundLayer> implements SoundObject,
     private transient Vector<LayerGroupListener> layerGroupListeners = null;
     public static final int DISPLAY_TIME = 0;
     public static final int DISPLAY_NUMBER = 1;
-    protected double subjectiveDuration = 2.0f;
+    protected double subjectiveDuration = 4.0f;
     protected double startTime = 0.0f;
     protected String name = "";
     protected Color backgroundColor = Color.DARK_GRAY;

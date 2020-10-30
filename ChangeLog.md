@@ -89,6 +89,8 @@ information.
 * Issue #539: UX improvement to select newly added instrument in Orchestra 
   Manager
 
+* Default SoundObject duration changed to 4 beats from 2
+
 ### FIX
 
 * BSB: PresetManager dialog had bugs when dragging and dropping nodes around
