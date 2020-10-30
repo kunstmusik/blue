@@ -27,7 +27,6 @@ import blue.plugin.ScoreObjectEditorPlugin;
 import blue.score.ScoreObject;
 import blue.soundObject.NoteList;
 import blue.soundObject.PianoRoll;
-import blue.soundObject.SoundObject;
 import blue.soundObject.editor.pianoRoll.FieldEditor;
 import blue.soundObject.editor.pianoRoll.FieldSelectorView;
 import blue.soundObject.editor.pianoRoll.NotePropertiesEditor;
@@ -51,16 +50,19 @@ import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
-import javafx.beans.value.ObservableObjectValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javax.swing.AbstractAction;
+import javax.swing.ActionMap;
 import javax.swing.BorderFactory;
+import javax.swing.InputMap;
 import javax.swing.JButton;
 import javax.swing.JPanel;
 import javax.swing.JScrollBar;
@@ -68,8 +70,11 @@ import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JToggleButton;
 import javax.swing.JViewport;
+import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 import javax.swing.Timer;
+import javax.swing.undo.UndoManager;
+import org.openide.awt.UndoRedo;
 
 /**
  * Title: blue Description: an object composition environment for csound
@@ -82,6 +87,8 @@ import javax.swing.Timer;
 public class PianoRollEditor extends ScoreObjectEditor implements
         PropertyChangeListener {
 
+    UndoManager undo = new UndoRedo.Manager();
+    
     ObservableList<PianoNote> selectedNotes = FXCollections.observableArrayList();
 
     ObjectProperty<FieldDef> selectedFieldDef = new SimpleObjectProperty<>();
@@ -93,7 +100,7 @@ public class PianoRollEditor extends ScoreObjectEditor implements
     ScaleLinear fieldEditorYScale = new ScaleLinear(0, 1, 0, 1);
 
     PianoRollCanvas noteCanvas = new PianoRollCanvas(currentPianoRoll, selectedNotes,
-            selectedFieldDef, fieldEditorYScale);
+            selectedFieldDef, fieldEditorYScale, undo);
 
     PianoRollCanvasHeader noteHeader = new PianoRollCanvasHeader(selectedNotes);
 
@@ -111,6 +118,7 @@ public class PianoRollEditor extends ScoreObjectEditor implements
 
     FieldEditor fieldEditor = new FieldEditor(currentPianoRoll, selectedNotes, selectedFieldDef, fieldEditorYScale);
 
+    
     public PianoRollEditor() {
         snapButton.setIcon(IconFactory.getLeftArrowIcon());
         snapButton.setSelectedIcon(IconFactory.getRightArrowIcon());
@@ -182,7 +190,43 @@ public class PianoRollEditor extends ScoreObjectEditor implements
             }
         });
 
+        initActions();
     }
+    
+    private void initActions() {
+        InputMap inputMap = this.getInputMap(WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+        ActionMap actions = this.getActionMap();
+
+        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_Z, BlueSystem
+                .getMenuShortcutKey()), "undo");
+        
+        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_Z, BlueSystem
+                .getMenuShortcutKey() | KeyEvent.SHIFT_DOWN_MASK), "redo");
+
+        actions.put("undo", new AbstractAction() {
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if(undo.canUndo()) {
+                    undo.undo();
+                }
+            }
+
+        });
+        
+        actions.put("redo", new AbstractAction() {
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if(undo.canRedo()) {
+                    undo.redo();
+                }
+            }
+
+        });
+
+    }
+
 
     protected void generateTest() {
         var p = this.currentPianoRoll.get();
@@ -359,6 +403,8 @@ public class PianoRollEditor extends ScoreObjectEditor implements
         fieldSelectorView.setFields(p.getFieldDefinitions());
 
         centerNoteScrollPane();
+        
+        undo.discardAllEdits();
     }
 
     @Override

@@ -25,6 +25,7 @@ import blue.score.ScoreObjectEvent;
 import blue.score.ScoreObjectListener;
 import blue.soundObject.PianoRoll;
 import blue.soundObject.TimeBehavior;
+import blue.soundObject.editor.pianoRoll.undo.RemoveNotesEdit;
 import blue.soundObject.pianoRoll.Field;
 import blue.soundObject.pianoRoll.FieldDef;
 import blue.soundObject.pianoRoll.FieldType;
@@ -48,6 +49,7 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.ArrayList;
 import javafx.beans.property.ObjectProperty;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
@@ -62,6 +64,7 @@ import javax.swing.KeyStroke;
 import javax.swing.Scrollable;
 import javax.swing.SwingConstants;
 import javax.swing.ToolTipManager;
+import javax.swing.undo.UndoManager;
 
 /**
  * @author steven
@@ -92,6 +95,7 @@ public class PianoRollCanvas extends JLayeredPane implements Scrollable,
     private final ScaleLinear fieldEditorYScale;
     private final ObjectProperty<FieldDef> selectedFieldDef;
     private final ObjectProperty<PianoRoll> currentPianoRoll;
+    private final UndoManager undoManager;
 
     public ScaleLinear getFieldEditorYScale() {
         return fieldEditorYScale;
@@ -100,18 +104,19 @@ public class PianoRollCanvas extends JLayeredPane implements Scrollable,
     public PianoRollCanvas(ObjectProperty<PianoRoll> currentPianoRoll,
             ObservableList<PianoNote> selectedNotes,
             ObjectProperty<FieldDef> selectedFieldDef,
-            ScaleLinear fieldEditorYScale) {
+            ScaleLinear fieldEditorYScale, UndoManager undoManager) {
 
         this.currentPianoRoll = currentPianoRoll;
         this.selectedNotes = selectedNotes;
         this.selectedFieldDef = selectedFieldDef;
         this.fieldEditorYScale = fieldEditorYScale;
+        this.undoManager = undoManager;
 
         this.setLayout(null);
         recalculateSize();
         this.setBackground(Color.black);
 
-        nMouse = new NoteCanvasMouseListener(this, currentPianoRoll, selectedNotes, selectedFieldDef);
+        nMouse = new NoteCanvasMouseListener(this, currentPianoRoll, selectedNotes, selectedFieldDef, undoManager);
 
         cl = new ComponentAdapter() {
 
@@ -253,7 +258,7 @@ public class PianoRollCanvas extends JLayeredPane implements Scrollable,
         });
 
         final ScoreObjectListener sObjListener = (evt) -> {
-            switch(evt.getPropertyChanged()) {
+            switch (evt.getPropertyChanged()) {
                 case ScoreObjectEvent.DURATION:
                 case ScoreObjectEvent.REPEAT_POINT:
                     repaint();
@@ -369,11 +374,14 @@ public class PianoRollCanvas extends JLayeredPane implements Scrollable,
      */
     protected void removeNotes() {
         var p = currentPianoRoll.get();
+        var removed = new ArrayList<PianoNote>(selectedNotes);
         for (var note : selectedNotes) {
             p.getNotes().remove(note);
         }
 
         selectedNotes.clear();
+
+        undoManager.addEdit(new RemoveNotesEdit(p, removed));
 
         repaint();
     }
@@ -754,5 +762,6 @@ public class PianoRollCanvas extends JLayeredPane implements Scrollable,
                 }
             }
         }
+        repaint();
     }
 }

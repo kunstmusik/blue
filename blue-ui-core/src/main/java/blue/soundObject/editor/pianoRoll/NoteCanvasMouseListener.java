@@ -21,6 +21,9 @@ package blue.soundObject.editor.pianoRoll;
 
 import blue.BlueSystem;
 import blue.soundObject.PianoRoll;
+import blue.soundObject.editor.pianoRoll.undo.AddNotesEdit;
+import blue.soundObject.editor.pianoRoll.undo.FieldsEdit;
+import blue.soundObject.editor.pianoRoll.undo.NoteTimeEdit;
 import blue.soundObject.pianoRoll.Field;
 import blue.soundObject.pianoRoll.FieldDef;
 import blue.soundObject.pianoRoll.PianoNote;
@@ -46,6 +49,7 @@ import javax.swing.AbstractAction;
 import javax.swing.JPopupMenu;
 import javax.swing.JViewport;
 import javax.swing.SwingUtilities;
+import javax.swing.undo.UndoManager;
 import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
 
@@ -80,15 +84,18 @@ public class NoteCanvasMouseListener extends MouseAdapter {
     Cursor canvasCursor = Cursor.getDefaultCursor();
     PianoNoteView mouseMoveNoteView = null;
     boolean noteJustAdded = false;
+    private final UndoManager undoManager;
 
     public NoteCanvasMouseListener(PianoRollCanvas canvas,
             ObjectProperty<PianoRoll> currentPianoRoll,
             ObservableList<PianoNote> selectedNotes,
-            ObjectProperty<FieldDef> selectedFieldDef) {
+            ObjectProperty<FieldDef> selectedFieldDef,
+            UndoManager undoManager) {
         this.canvas = canvas;
         this.currentPianoRoll = currentPianoRoll;
         this.selectedNotes = selectedNotes;
         this.selectedFieldDef = selectedFieldDef;
+        this.undoManager = undoManager;
 
         canvas.addMouseListener(this);
         canvas.addMouseMotionListener(this);
@@ -274,6 +281,7 @@ public class NoteCanvasMouseListener extends MouseAdapter {
                 dragMode = DragMode.RESIZE_RIGHT;
                 noteJustAdded = true;
 
+                undoManager.addEdit(new AddNotesEdit(p, List.of(note)));
             } else {
                 // MARQUEE SELECT NOTES
                 dragMode = DragMode.SELECTING;
@@ -304,7 +312,7 @@ public class NoteCanvasMouseListener extends MouseAdapter {
         if (sourcePianoRoll != pianoRoll) {
             var aDefs = sourcePianoRoll.getFieldDefinitions();
             var bDefs = pianoRoll.getFieldDefinitions();
-            
+
             for (int i = 0; i < aDefs.size(); i++) {
                 srcToTargetMap.put(aDefs.get(i), bDefs.get(i));
             }
@@ -339,17 +347,19 @@ public class NoteCanvasMouseListener extends MouseAdapter {
         int pitchNumAdjust = basePitchNum - topPitchNum;
         var pianoRollNotes = pianoRoll.getNotes();
 
+        var newNotes = new ArrayList<PianoNote>();
         for (PianoNote note : buffer.getCopiedNotes()) {
             PianoNote copy = new PianoNote(note);
-            
+            newNotes.add(copy);
+
             // ensure field defs relinked if pasting to a different PianoRoll
-            if(!srcToTargetMap.isEmpty()) {
-                for(var f : copy.getFields()) {
+            if (!srcToTargetMap.isEmpty()) {
+                for (var f : copy.getFields()) {
                     var fd = srcToTargetMap.get(f.getFieldDef());
                     f.setFieldDef(fd);
                 }
             }
-            
+
             copy.setStart(startTime + (copy.getStart() - timeAdjust));
 
             int pitchNum = copy.getOctave() * scaleDegrees + copy.getScaleDegree();
@@ -361,6 +371,8 @@ public class NoteCanvasMouseListener extends MouseAdapter {
             selectedNotes.add(copy);
             pianoRollNotes.add(copy);
         }
+
+        undoManager.addEdit(new AddNotesEdit(pianoRoll, newNotes));
     }
 
 
@@ -404,6 +416,42 @@ public class NoteCanvasMouseListener extends MouseAdapter {
             endMarquee();
         }
 
+        switch (dragMode) {
+            case FIELD_EDIT: {
+                var endValues = new double[originalValues.length];
+                for (int i = 0; i < affectedFields.length; i++) {
+                    endValues[i] = affectedFields[i].getValue();
+                }
+                undoManager.addEdit(new FieldsEdit(affectedFields, originalValues, endValues));
+            }
+            break;
+            case RESIZE_LEFT:
+            case RESIZE_RIGHT:
+            case MOVE: {
+                if (!noteJustAdded) {
+                    var data = noteSourceData.noteSourceData;
+                    var size = data.size();
+                    PianoNote[] notes = new PianoNote[size];
+                    Number[][] originalValues = new Number[size][4];
+                    Number[][] endValues = new Number[size][4];
+                    for (int i = 0; i < size; i++) {
+                        var nsd = data.get(i);
+                        notes[i] = nsd.pianoNote;
+                        originalValues[i] = new Number[]{
+                            nsd.originStart, nsd.originDuration,
+                            nsd.octave, nsd.scaleDegree
+                        };
+                        endValues[i] = new Number[]{
+                            notes[i].getStart(), notes[i].getDuration(),
+                            notes[i].getOctave(), notes[i].getScaleDegree()
+                        };
+                    }
+                    undoManager.addEdit(new NoteTimeEdit(notes, originalValues, endValues));
+                }
+            }
+            break;
+        }
+
         Component comp = canvas.getComponentAt(e.getPoint());
 
         if (!(comp instanceof PianoNoteView)) {
@@ -414,6 +462,8 @@ public class NoteCanvasMouseListener extends MouseAdapter {
         noteSourceData.clear();
         dragMode = DragMode.NONE;
         noteJustAdded = false;
+        originalValues = null;
+        affectedFields = null;
     }
 
     private void checkScroll(MouseEvent e) {
