@@ -43,7 +43,7 @@ public class PianoRoll extends AbstractSoundObject implements ListChangeListener
 
     private TimeBehavior timeBehavior;
 
-    double repeatPoint = -1.0f;
+    double repeatPoint = 4.0;
 
     private NoteProcessorChain npc = new NoteProcessorChain();
 
