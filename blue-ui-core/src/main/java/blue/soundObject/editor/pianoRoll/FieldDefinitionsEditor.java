@@ -79,6 +79,7 @@ public class FieldDefinitionsEditor extends javax.swing.JPanel {
             }
 
         };
+        fieldDefinitionTable.setFillsViewportHeight(true);
         tableScrollPane.setViewportView(fieldDefinitionTable);
     }
 
