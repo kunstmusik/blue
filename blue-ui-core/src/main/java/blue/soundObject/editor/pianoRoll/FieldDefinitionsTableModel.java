@@ -19,6 +19,7 @@
  */
 package blue.soundObject.editor.pianoRoll;
 
+import blue.soundObject.editor.pianoRoll.undo.UndoablePropertyEdit;
 import blue.soundObject.pianoRoll.FieldDef;
 import blue.soundObject.pianoRoll.FieldType;
 import java.util.HashSet;
@@ -28,6 +29,7 @@ import javafx.collections.ObservableList;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.TableModel;
+import javax.swing.undo.UndoManager;
 
 /**
  *
@@ -46,10 +48,13 @@ public class FieldDefinitionsTableModel implements TableModel, ListChangeListene
     private final ObservableList<FieldDef> fieldDefinitions;
 
     private final Set<TableModelListener> listeners = new HashSet<>();
+    private final UndoManager undoManager;
 
-    public FieldDefinitionsTableModel(ObservableList<FieldDef> fieldDefinitions) {
+    public FieldDefinitionsTableModel(ObservableList<FieldDef> fieldDefinitions,
+            UndoManager undoManager) {
         this.fieldDefinitions = fieldDefinitions;
         this.fieldDefinitions.addListener(this);
+        this.undoManager = undoManager;
     }
 
     @Override
@@ -104,13 +109,27 @@ public class FieldDefinitionsTableModel implements TableModel, ListChangeListene
             case 0: {
                 String sVal = (String) aValue;
                 if (sVal != null && !sVal.isEmpty()) {
+                    var oldVal = def.getFieldName();
                     def.setFieldName(sVal);
+
+                    undoManager.addEdit(new UndoablePropertyEdit<String>(v -> {
+                        def.setFieldName(v);
+                        // should use listener on property but will go with this
+                        // for now
+                        fireTableModelChange(new TableModelEvent(this));
+                    }, oldVal, sVal));
                 }
                 break;
             }
-            case 1:
+            case 1: {
+                var oldVal = def.getFieldType();
                 def.setFieldType((FieldType) aValue);
+                undoManager.addEdit(new UndoablePropertyEdit<FieldType>(v -> {
+                    def.setFieldType(v);
+                    fireTableModelChange(new TableModelEvent(this));
+                }, oldVal, (FieldType) aValue));
                 break;
+            }
             case 2:
                 def.setMinValue((double) aValue);
                 break;

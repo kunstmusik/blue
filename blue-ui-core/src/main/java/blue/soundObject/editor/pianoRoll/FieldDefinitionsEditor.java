@@ -1,4 +1,4 @@
-    /*
+/*
  * blue - object composition environment for csound
  * Copyright (c) 2020 Steven Yi (stevenyi@gmail.com)
  *
@@ -19,14 +19,29 @@
  */
 package blue.soundObject.editor.pianoRoll;
 
+import blue.BlueSystem;
+import blue.soundObject.PianoRoll;
+import blue.soundObject.editor.pianoRoll.undo.UndoablePropertyEdit;
+import blue.soundObject.pianoRoll.Field;
 import blue.soundObject.pianoRoll.FieldDef;
 import blue.soundObject.pianoRoll.FieldType;
+import blue.soundObject.pianoRoll.PianoNote;
+import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
+import java.util.HashMap;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javafx.collections.ObservableList;
+import javax.swing.AbstractAction;
+import javax.swing.ActionMap;
 import javax.swing.DefaultCellEditor;
+import javax.swing.InputMap;
 import javax.swing.JComboBox;
+import static javax.swing.JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT;
+import javax.swing.KeyStroke;
 import javax.swing.table.TableColumn;
+import javax.swing.undo.UndoManager;
 
 /**
  *
@@ -35,16 +50,21 @@ import javax.swing.table.TableColumn;
 public class FieldDefinitionsEditor extends javax.swing.JPanel {
 
     private ObservableList<FieldDef> fieldDefinitions;
+    private final UndoManager undoManager;
+    private PianoRoll pianoRoll;
 
     /**
      * Creates new form FieldDefinitionsEditor
      */
-    public FieldDefinitionsEditor() {
+    public FieldDefinitionsEditor(UndoManager undoManager) {
+        this.undoManager = undoManager;
         initComponents();
     }
 
-    public void setFieldDefinitions(ObservableList<FieldDef> fieldDefinitions) {
+    public void editPianoRoll(PianoRoll p) {
 
+        ObservableList<FieldDef> fieldDefinitions = p.getFieldDefinitions();
+        this.pianoRoll = p;
         this.fieldDefinitions = fieldDefinitions;
 
         var oldModel = fieldDefinitionTable.getModel();
@@ -52,9 +72,11 @@ public class FieldDefinitionsEditor extends javax.swing.JPanel {
             ((FieldDefinitionsTableModel) oldModel).clearListener();
         }
 
-        fieldDefinitionTable.setModel(new FieldDefinitionsTableModel(fieldDefinitions));
+        var model = new FieldDefinitionsTableModel(fieldDefinitions, undoManager);
+        fieldDefinitionTable.setModel(model);
 
-        TableColumn fieldTypeColumn = fieldDefinitionTable.getColumnModel().getColumn(1);
+        var colModel = fieldDefinitionTable.getColumnModel();
+        TableColumn fieldTypeColumn = colModel.getColumn(1);
 
         JComboBox<FieldType> comboBox = new JComboBox<>();
         comboBox.addItem(FieldType.CONTINUOUS);
@@ -141,14 +163,56 @@ public class FieldDefinitionsEditor extends javax.swing.JPanel {
         }
         FieldDef fd = new FieldDef();
         fd.setFieldName(fieldName);
+
+        // add field definition
         fieldDefinitions.add(fd);
+        var row = fieldDefinitions.indexOf(fd);
+
+        // get newly created fields from notes
+        final var fieldMap = new HashMap<PianoNote, Optional<Field>>();
+
+        for (var note : pianoRoll.getNotes()) {
+            fieldMap.put(note, note.getField(fd));
+        }
+
+        undoManager.addEdit(new UndoablePropertyEdit<Boolean>(v -> {
+            if (v) {
+                for (var entry : fieldMap.entrySet()) {
+                    var fields = entry.getKey().getFields();
+                    entry.getValue().ifPresent(f -> fields.add(f));
+                }
+                fieldDefinitions.add(row, fd);
+            } else {
+                fieldDefinitions.remove(fd);
+            }
+        }, false, true));
     }//GEN-LAST:event_addButtonActionPerformed
 
     private void removeButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_removeButtonActionPerformed
         var row = fieldDefinitionTable.getSelectedRow();
 
         if (row >= 0) {
-            fieldDefinitions.remove(row);
+            final var fd = fieldDefinitions.get(row);
+
+            final var fieldMap = new HashMap<PianoNote, Optional<Field>>();
+
+            for (var note : pianoRoll.getNotes()) {
+                fieldMap.put(note, note.getField(fd));
+            }
+
+            fieldDefinitions.remove(fd);
+
+            undoManager.addEdit(new UndoablePropertyEdit<Boolean>(v -> {
+                if (v) {
+                    fieldDefinitions.remove(fd);
+                } else {
+                    for (var entry : fieldMap.entrySet()) {
+                        var fields = entry.getKey().getFields();
+                        entry.getValue().ifPresent(f -> fields.add(f));
+                    }
+                    fieldDefinitions.add(row, fd);
+                }
+            }, false, true));
         }
     }//GEN-LAST:event_removeButtonActionPerformed
 
