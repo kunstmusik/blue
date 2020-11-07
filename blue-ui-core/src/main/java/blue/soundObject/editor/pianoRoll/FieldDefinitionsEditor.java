@@ -26,20 +26,18 @@ import blue.soundObject.pianoRoll.Field;
 import blue.soundObject.pianoRoll.FieldDef;
 import blue.soundObject.pianoRoll.FieldType;
 import blue.soundObject.pianoRoll.PianoNote;
-import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
+import java.util.EventObject;
 import java.util.HashMap;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javafx.collections.ObservableList;
-import javax.swing.AbstractAction;
-import javax.swing.ActionMap;
 import javax.swing.DefaultCellEditor;
-import javax.swing.InputMap;
 import javax.swing.JComboBox;
-import static javax.swing.JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT;
-import javax.swing.KeyStroke;
+import javax.swing.JTable;
+import javax.swing.JTextField;
+import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableColumn;
 import javax.swing.undo.UndoManager;
 
@@ -52,6 +50,7 @@ public class FieldDefinitionsEditor extends javax.swing.JPanel {
     private ObservableList<FieldDef> fieldDefinitions;
     private final UndoManager undoManager;
     private PianoRoll pianoRoll;
+    private final JTable fieldDefinitionTable;
 
     /**
      * Creates new form FieldDefinitionsEditor
@@ -59,6 +58,28 @@ public class FieldDefinitionsEditor extends javax.swing.JPanel {
     public FieldDefinitionsEditor(UndoManager undoManager) {
         this.undoManager = undoManager;
         initComponents();
+        fieldDefinitionTable = new JTable() {
+            @Override
+            public TableCellEditor getDefaultEditor(Class<?> columnClass) {
+                return new DefaultCellEditor(new JTextField()) {
+                    @Override
+                    public boolean isCellEditable(EventObject anEvent) {
+                        if (anEvent instanceof KeyEvent) {
+                            int shortcutKey = BlueSystem.getMenuShortcutKey();
+                            KeyEvent ke = (KeyEvent) anEvent;
+                            if ((ke.getKeyCode() == KeyEvent.VK_Z || ke.getKeyCode() == KeyEvent.VK_Y)
+                                    && (ke.getModifiers() & shortcutKey) == shortcutKey) {
+                                return false;
+                            }
+                        }
+
+                        return super.isCellEditable(anEvent);
+                    }
+                };
+            }
+
+        };
+        tableScrollPane.setViewportView(fieldDefinitionTable);
     }
 
     public void editPianoRoll(PianoRoll p) {
@@ -72,7 +93,7 @@ public class FieldDefinitionsEditor extends javax.swing.JPanel {
             ((FieldDefinitionsTableModel) oldModel).clearListener();
         }
 
-        var model = new FieldDefinitionsTableModel(fieldDefinitions, undoManager);
+        var model = new FieldDefinitionsTableModel(p, fieldDefinitions, undoManager);
         fieldDefinitionTable.setModel(model);
 
         var colModel = fieldDefinitionTable.getColumnModel();
@@ -81,7 +102,21 @@ public class FieldDefinitionsEditor extends javax.swing.JPanel {
         JComboBox<FieldType> comboBox = new JComboBox<>();
         comboBox.addItem(FieldType.CONTINUOUS);
         comboBox.addItem(FieldType.DISCRETE);
-        fieldTypeColumn.setCellEditor(new DefaultCellEditor(comboBox));
+        fieldTypeColumn.setCellEditor(new DefaultCellEditor(comboBox) {
+            @Override
+            public boolean isCellEditable(EventObject anEvent) {
+                if (anEvent instanceof KeyEvent) {
+                    int shortcutKey = BlueSystem.getMenuShortcutKey();
+                    KeyEvent ke = (KeyEvent) anEvent;
+                    if ((ke.getKeyCode() == KeyEvent.VK_Z || ke.getKeyCode() == KeyEvent.VK_Y)
+                            && (ke.getModifiers() & shortcutKey) == shortcutKey) {
+                        return false;
+                    }
+                }
+
+                return super.isCellEditable(anEvent);
+            }
+        });
     }
 
     /**
@@ -93,25 +128,9 @@ public class FieldDefinitionsEditor extends javax.swing.JPanel {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        jScrollPane1 = new javax.swing.JScrollPane();
-        fieldDefinitionTable = new javax.swing.JTable();
         addButton = new javax.swing.JButton();
         removeButton = new javax.swing.JButton();
-
-        fieldDefinitionTable.setModel(new javax.swing.table.DefaultTableModel(
-            new Object [][] {
-                {null, null, null, null},
-                {null, null, null, null},
-                {null, null, null, null},
-                {null, null, null, null}
-            },
-            new String [] {
-                "Title 1", "Title 2", "Title 3", "Title 4"
-            }
-        ));
-        fieldDefinitionTable.setFillsViewportHeight(true);
-        fieldDefinitionTable.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
-        jScrollPane1.setViewportView(fieldDefinitionTable);
+        tableScrollPane = new javax.swing.JScrollPane();
 
         org.openide.awt.Mnemonics.setLocalizedText(addButton, org.openide.util.NbBundle.getMessage(FieldDefinitionsEditor.class, "FieldDefinitionsEditor.addButton.text")); // NOI18N
         addButton.addActionListener(new java.awt.event.ActionListener() {
@@ -131,19 +150,19 @@ public class FieldDefinitionsEditor extends javax.swing.JPanel {
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 330, Short.MAX_VALUE)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(addButton)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(removeButton)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(274, Short.MAX_VALUE))
+            .addComponent(tableScrollPane)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 181, Short.MAX_VALUE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(tableScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 187, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(addButton)
                     .addComponent(removeButton))
@@ -219,8 +238,7 @@ public class FieldDefinitionsEditor extends javax.swing.JPanel {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton addButton;
-    private javax.swing.JTable fieldDefinitionTable;
-    private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JButton removeButton;
+    private javax.swing.JScrollPane tableScrollPane;
     // End of variables declaration//GEN-END:variables
 }

@@ -19,10 +19,14 @@
  */
 package blue.soundObject.editor.pianoRoll;
 
+import blue.soundObject.PianoRoll;
 import blue.soundObject.editor.pianoRoll.undo.UndoablePropertyEdit;
+import blue.soundObject.pianoRoll.Field;
 import blue.soundObject.pianoRoll.FieldDef;
 import blue.soundObject.pianoRoll.FieldType;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
@@ -49,9 +53,12 @@ public class FieldDefinitionsTableModel implements TableModel, ListChangeListene
 
     private final Set<TableModelListener> listeners = new HashSet<>();
     private final UndoManager undoManager;
+    private final PianoRoll pianoRoll;
 
-    public FieldDefinitionsTableModel(ObservableList<FieldDef> fieldDefinitions,
+    public FieldDefinitionsTableModel(PianoRoll pianoRoll,
+            ObservableList<FieldDef> fieldDefinitions,
             UndoManager undoManager) {
+        this.pianoRoll = pianoRoll;
         this.fieldDefinitions = fieldDefinitions;
         this.fieldDefinitions.addListener(this);
         this.undoManager = undoManager;
@@ -116,29 +123,92 @@ public class FieldDefinitionsTableModel implements TableModel, ListChangeListene
                         def.setFieldName(v);
                         // should use listener on property but will go with this
                         // for now
-                        fireTableModelChange(new TableModelEvent(this));
+                        fireTableModelChange(new TableModelEvent(this, rowIndex));
                     }, oldVal, sVal));
                 }
-                break;
+
             }
+            break;
             case 1: {
                 var oldVal = def.getFieldType();
                 def.setFieldType((FieldType) aValue);
                 undoManager.addEdit(new UndoablePropertyEdit<FieldType>(v -> {
                     def.setFieldType(v);
-                    fireTableModelChange(new TableModelEvent(this));
+                    fireTableModelChange(new TableModelEvent(this, rowIndex));
                 }, oldVal, (FieldType) aValue));
-                break;
+
             }
-            case 2:
-                def.setMinValue((double) aValue);
-                break;
-            case 3:
-                def.setMaxValue((double) aValue);
-                break;
-            case 4:
-                def.setDefaultValue((double) aValue);
-                break;
+            break;
+            case 2: {
+                final var oldVal = def.getMinValue();
+                final var newVal = Double.parseDouble((String) aValue);
+                if (oldVal != newVal) {
+                    final var oldDefault = def.getDefaultValue();
+                    Map<Field, Double> oldFieldValues = new HashMap<>();
+
+                    for (var note : pianoRoll.getNotes()) {
+                        var fld = note.getField(def);
+                        fld.ifPresent(f -> oldFieldValues.put(f, f.getValue()));
+                    }
+
+                    def.setMinValue(newVal);
+
+                    undoManager.addEdit(new UndoablePropertyEdit<Boolean>(v -> {
+                        if (v) {
+                            def.setMinValue(newVal);
+                        } else {
+                            def.setMinValue(oldVal);
+                            def.setDefaultValue(oldDefault);
+                            for (var entry : oldFieldValues.entrySet()) {
+                                entry.getKey().setValue(entry.getValue());
+                            }
+                        }
+                        fireTableModelChange(new TableModelEvent(this, rowIndex));
+                    }, false, true));
+                }
+            }
+
+            break;
+            case 3: {
+                final var oldVal = def.getMaxValue();
+                final var newVal = Double.parseDouble((String) aValue);
+                if (oldVal != newVal) {
+                    final var oldDefault = def.getDefaultValue();
+                    Map<Field, Double> oldFieldValues = new HashMap<>();
+
+                    for (var note : pianoRoll.getNotes()) {
+                        var fld = note.getField(def);
+                        fld.ifPresent(f -> oldFieldValues.put(f, f.getValue()));
+                    }
+
+                    def.setMaxValue(newVal);
+
+                    undoManager.addEdit(new UndoablePropertyEdit<Boolean>(v -> {
+                        if (v) {
+                            def.setMaxValue(newVal);
+                        } else {
+                            def.setMaxValue(oldVal);
+                            def.setDefaultValue(oldDefault);
+                            for (var entry : oldFieldValues.entrySet()) {
+                                entry.getKey().setValue(entry.getValue());
+                            }
+                        }
+                        fireTableModelChange(new TableModelEvent(this, rowIndex));
+                    }, false, true));
+                }
+            }
+            break;
+            case 4: {
+                var oldVal = def.getDefaultValue();
+                final var newVal = Double.parseDouble((String) aValue);
+
+                def.setDefaultValue(newVal);
+
+                undoManager.addEdit(new UndoablePropertyEdit<Double>(v -> {
+                    def.setDefaultValue(v);
+                }, oldVal, newVal));
+            }
+            break;
             default:
         }
 
