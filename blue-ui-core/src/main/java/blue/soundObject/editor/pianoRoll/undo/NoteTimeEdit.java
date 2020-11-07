@@ -47,13 +47,13 @@ public class NoteTimeEdit extends AbstractUndoableEdit {
     
     @Override
     public void redo() throws CannotRedoException {
+        super.redo();
         for(int i = 0; i < notes.length; i++) {
             notes[i].setStart(endValues[i][0].doubleValue());
             notes[i].setDuration(endValues[i][1].doubleValue());
             notes[i].setOctave(endValues[i][2].intValue());
             notes[i].setScaleDegree(endValues[i][3].intValue());
         }
-        super.redo();
     }
 
     @Override

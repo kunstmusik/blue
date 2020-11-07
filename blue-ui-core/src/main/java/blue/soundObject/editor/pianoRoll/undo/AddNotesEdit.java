@@ -44,8 +44,8 @@ public class AddNotesEdit extends AbstractUndoableEdit {
     
     @Override
     public void redo() throws CannotRedoException {
-        pianoRoll.getNotes().addAll(notes);
         super.redo();
+        pianoRoll.getNotes().addAll(notes);
     }
 
     @Override

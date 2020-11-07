@@ -14,9 +14,8 @@ import blue.utility.ScoreUtilities;
 import blue.utility.TextUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
-import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.ArrayList;
+import java.beans.PropertyChangeSupport;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -59,8 +58,6 @@ public class PianoRoll extends AbstractSoundObject implements ListChangeListener
 
     private int noteHeight;
 
-    private transient ArrayList listeners;
-
     private boolean snapEnabled = true;
 
     private double snapValue = 0.25;
@@ -74,6 +71,8 @@ public class PianoRoll extends AbstractSoundObject implements ListChangeListener
     private int transposition = 0;
 
     private ObservableList<FieldDef> fieldDefinitions;
+
+    private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
 
     ChangeListener<? super Number> minListener = (obs, old, newVal) -> {
         for (var fd : fieldDefinitions) {
@@ -314,12 +313,10 @@ public class PianoRoll extends AbstractSoundObject implements ListChangeListener
 
     @Override
     public void setTimeBehavior(TimeBehavior timeBehavior) {
-        PropertyChangeEvent pce = new PropertyChangeEvent(this, "timeBehavior",
-                this.timeBehavior, timeBehavior);
-
+        var oldVal = this.timeBehavior;
         this.timeBehavior = timeBehavior;
 
-        firePropertyChange(pce);
+        pcs.firePropertyChange("timeBehavior", oldVal, timeBehavior);
     }
 
     @Override
@@ -477,11 +474,9 @@ public class PianoRoll extends AbstractSoundObject implements ListChangeListener
         final var newVal = (noteTemplate == null) ? "" : noteTemplate;
 
         if (!newVal.equals(this.noteTemplate)) {
-            PropertyChangeEvent pce = new PropertyChangeEvent(this, "noteTemplate",
-                    this.noteTemplate, newVal);
-
+            var oldVal = this.noteTemplate;
             this.noteTemplate = newVal;
-            firePropertyChange(pce);
+            pcs.firePropertyChange("noteTemplate", oldVal, newVal);
         }
     }
 
@@ -496,39 +491,18 @@ public class PianoRoll extends AbstractSoundObject implements ListChangeListener
      * @param scale The scale to set.
      */
     public void setScale(Scale scale) {
-        PropertyChangeEvent pce = new PropertyChangeEvent(this, "scale",
-                this.scale, scale);
-
+        var oldVal = this.scale;
         this.scale = scale;
-
-        firePropertyChange(pce);
+        pcs.firePropertyChange("scale", oldVal, scale);
     }
 
     /* PROPERTY CHANGE EVENTS */
     public void addPropertyChangeListener(PropertyChangeListener listener) {
-        checkListenersExists();
-        this.listeners.add(listener);
+        pcs.addPropertyChangeListener(listener);
     }
 
     public void removePropertyChangeListener(PropertyChangeListener listener) {
-        checkListenersExists();
-        this.listeners.remove(listener);
-    }
-
-    public void firePropertyChange(PropertyChangeEvent pce) {
-        checkListenersExists();
-
-        for (Iterator iter = listeners.iterator(); iter.hasNext();) {
-            PropertyChangeListener listener = (PropertyChangeListener) iter
-                    .next();
-            listener.propertyChange(pce);
-        }
-    }
-
-    private void checkListenersExists() {
-        if (listeners == null) {
-            listeners = new ArrayList();
-        }
+        pcs.removePropertyChangeListener(listener);
     }
 
     /**
@@ -542,13 +516,9 @@ public class PianoRoll extends AbstractSoundObject implements ListChangeListener
      * @param pixelSecond The pixelSecond to set.
      */
     public void setPixelSecond(int pixelSecond) {
-        PropertyChangeEvent pce = new PropertyChangeEvent(this, "pixelSecond",
-                new Integer(this.pixelSecond), new Integer(pixelSecond));
-
+        var oldVal = this.pixelSecond;
         this.pixelSecond = pixelSecond;
-
-        firePropertyChange(pce);
-
+        pcs.firePropertyChange("pixelSecond", oldVal, pixelSecond);
     }
 
     /**
@@ -562,13 +532,9 @@ public class PianoRoll extends AbstractSoundObject implements ListChangeListener
      * @param pixelSecond The pixelSecond to set.
      */
     public void setNoteHeight(int noteHeight) {
-        PropertyChangeEvent pce = new PropertyChangeEvent(this, "noteHeight",
-                new Integer(this.noteHeight), new Integer(noteHeight));
-
+        var oldVal = this.noteHeight;
         this.noteHeight = noteHeight;
-
-        firePropertyChange(pce);
-
+        pcs.firePropertyChange("noteHeight", oldVal, noteHeight);
     }
 
     /**
@@ -579,12 +545,9 @@ public class PianoRoll extends AbstractSoundObject implements ListChangeListener
     }
 
     public void setSnapEnabled(boolean snapEnabled) {
-        PropertyChangeEvent pce = new PropertyChangeEvent(this, "snapEnabled",
-                Boolean.valueOf(this.snapEnabled), Boolean.valueOf(snapEnabled));
-
+        var oldVal = this.snapEnabled;
         this.snapEnabled = snapEnabled;
-
-        firePropertyChange(pce);
+        pcs.firePropertyChange("snapEnabled", oldVal, snapEnabled);
     }
 
     public double getSnapValue() {
@@ -592,12 +555,10 @@ public class PianoRoll extends AbstractSoundObject implements ListChangeListener
     }
 
     public void setSnapValue(double snapValue) {
-        PropertyChangeEvent pce = new PropertyChangeEvent(this, "snapValue",
-                new Double(this.snapValue), new Double(snapValue));
-
+        var oldVal = this.snapValue;
         this.snapValue = snapValue;
 
-        firePropertyChange(pce);
+        pcs.firePropertyChange("snapValue", oldVal, snapValue);
     }
 
     public int getTimeDisplay() {
@@ -605,12 +566,9 @@ public class PianoRoll extends AbstractSoundObject implements ListChangeListener
     }
 
     public void setTimeDisplay(int timeDisplay) {
-        PropertyChangeEvent pce = new PropertyChangeEvent(this, "timeDisplay",
-                new Integer(this.timeDisplay), new Integer(timeDisplay));
-
+        var oldVal = this.timeDisplay;
         this.timeDisplay = timeDisplay;
-
-        firePropertyChange(pce);
+        pcs.firePropertyChange("timeDisplay", oldVal, timeDisplay);
     }
 
     public int getTimeUnit() {
@@ -618,12 +576,9 @@ public class PianoRoll extends AbstractSoundObject implements ListChangeListener
     }
 
     public void setTimeUnit(int timeUnit) {
-        PropertyChangeEvent pce = new PropertyChangeEvent(this, "timeUnit",
-                new Integer(this.timeUnit), new Integer(timeUnit));
-
+        var oldVal = this.timeUnit;
         this.timeUnit = timeUnit;
-
-        firePropertyChange(pce);
+        pcs.firePropertyChange("timeUnity", oldVal, timeUnit);
     }
 
     /**
@@ -637,7 +592,9 @@ public class PianoRoll extends AbstractSoundObject implements ListChangeListener
      * @param instrumentId The instrumentId to set.
      */
     public void setInstrumentId(String instrumentId) {
+        var oldVal = this.instrumentId;
         this.instrumentId = instrumentId;
+        pcs.firePropertyChange("instrumentId", oldVal, instrumentId);
     }
 
     public int getPchGenerationMethod() {
@@ -645,13 +602,9 @@ public class PianoRoll extends AbstractSoundObject implements ListChangeListener
     }
 
     public void setPchGenerationMethod(int pchGenerationMethod) {
-        PropertyChangeEvent pce = new PropertyChangeEvent(this,
-                "pchGenerationMethod", new Integer(this.pchGenerationMethod),
-                new Integer(pchGenerationMethod));
-
+        var oldVal = this.pchGenerationMethod;
         this.pchGenerationMethod = pchGenerationMethod;
-
-        firePropertyChange(pce);
+        pcs.firePropertyChange("pchGenerationMethod", oldVal, pchGenerationMethod);
     }
 
     public int getTransposition() {
@@ -659,7 +612,9 @@ public class PianoRoll extends AbstractSoundObject implements ListChangeListener
     }
 
     public void setTransposition(int transposition) {
+        var oldVal = this.transposition;
         this.transposition = transposition;
+        pcs.firePropertyChange("transposition", oldVal, transposition);
     }
 
     @Override

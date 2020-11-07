@@ -44,17 +44,17 @@ public class FieldsEdit extends AbstractUndoableEdit {
 
     @Override
     public void redo() throws CannotRedoException {
-        for (int i = 0; i < affectedFields.length; i++) {
-           affectedFields[i].setValue(endValues[i]);
-        }
         super.redo();
+        for (int i = 0; i < affectedFields.length; i++) {
+            affectedFields[i].setValue(endValues[i]);
+        }
     }
 
     @Override
     public void undo() throws CannotUndoException {
         super.undo();
         for (int i = 0; i < affectedFields.length; i++) {
-           affectedFields[i].setValue(originalValues[i]);
+            affectedFields[i].setValue(originalValues[i]);
         }
     }
 

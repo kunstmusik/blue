@@ -95,7 +95,7 @@ public class PianoRollEditor extends ScoreObjectEditor implements
 
     private ObjectProperty<PianoRoll> currentPianoRoll = new SimpleObjectProperty<PianoRoll>();
 
-    PianoRollPropertiesEditor props = new PianoRollPropertiesEditor(selectedNotes);
+    PianoRollPropertiesEditor props = new PianoRollPropertiesEditor(selectedNotes, undo);
 
     ScaleLinear fieldEditorYScale = new ScaleLinear(0, 1, 0, 1);
 
