@@ -20,7 +20,9 @@
 package blue.soundObject.editor.pianoRoll;
 
 import blue.soundObject.PianoRoll;
+import blue.soundObject.editor.pianoRoll.undo.UndoablePropertyEdit;
 import blue.soundObject.pianoRoll.PianoNote;
+import blue.ui.utilities.SimpleDocumentListener;
 import java.awt.BorderLayout;
 import java.beans.PropertyChangeListener;
 import javafx.beans.property.ObjectProperty;
@@ -32,7 +34,7 @@ import javax.swing.JCheckBox;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
+import javax.swing.undo.UndoManager;
 
 /**
  * @author steven
@@ -50,6 +52,7 @@ public class NotePropertiesEditor extends JPanel
     private boolean isUpdating = false;
     private final ObservableList<PianoNote> selectedNotes;
     private PianoRoll pianoRoll = null;
+    private final UndoManager undoManager;
 
     PropertyChangeListener pcl = pce -> {
         if (!isUpdating && "noteTemplate".equals(pce.getPropertyName())) {
@@ -57,9 +60,11 @@ public class NotePropertiesEditor extends JPanel
         }
     };
 
-    public NotePropertiesEditor(ObservableList<PianoNote> selectedNotes) {
+    public NotePropertiesEditor(ObservableList<PianoNote> selectedNotes,
+            UndoManager undoManager) {
 
         this.selectedNotes = selectedNotes;
+        this.undoManager = undoManager;
         selectedNotes.addListener(this);
 
         this.setLayout(new BorderLayout(5, 5));
@@ -69,12 +74,23 @@ public class NotePropertiesEditor extends JPanel
             var selected = overrideNoteTemplate.isSelected();
             noteTemplateText.setEnabled(selected);
 
-            if (!selected) {
+            if (!selected && !isUpdating) {
                 final var note = selectedNote.get();
                 if (note != null
                         && pianoRoll.getNoteTemplate().equals(note.getNoteTemplate())) {
                     isUpdating = true;
+
+                    var oldVal = note.getNoteTemplate();
+
                     note.setNoteTemplate(null);
+
+                    if (oldVal != null) {
+                        var edit = new UndoablePropertyEdit<String>(
+                                v -> note.setNoteTemplate(v),
+                                oldVal,
+                                null);
+                        undoManager.addEdit(edit);
+                    }
                     isUpdating = false;
                 }
             }
@@ -89,24 +105,10 @@ public class NotePropertiesEditor extends JPanel
         add(noteTemplateText, BorderLayout.CENTER);
 
         noteTemplateText.getDocument().addDocumentListener(
-                new DocumentListener() {
+                new SimpleDocumentListener() {
 
             @Override
-            public void insertUpdate(DocumentEvent e) {
-                updateNoteTemplate();
-            }
-
-            @Override
-            public void removeUpdate(DocumentEvent e) {
-                updateNoteTemplate();
-            }
-
-            @Override
-            public void changedUpdate(DocumentEvent e) {
-                updateNoteTemplate();
-            }
-
-            private void updateNoteTemplate() {
+            public void documentChanged(DocumentEvent e) {
                 final var note = selectedNote.get();
                 if (note != null && !isUpdating && overrideNoteTemplate.isSelected()) {
                     var template = noteTemplateText.getText();
@@ -115,18 +117,26 @@ public class NotePropertiesEditor extends JPanel
                         template = null;
                     }
                     isUpdating = true;
+
+                    var oldVal = note.getNoteTemplate();
                     note.setNoteTemplate(template);
+
+                    var edit = new UndoablePropertyEdit<String>(
+                            v -> note.setNoteTemplate(v),
+                            oldVal,
+                            template);
+                    undoManager.addEdit(edit);
                     isUpdating = false;
                 }
             }
 
         });
-        
+
         selectedNote.addListener((obs, old, newVal) -> {
-            if(old != null) {
+            if (old != null) {
                 old.removePropertyChangeListener(pcl);
             }
-            if(newVal != null) {
+            if (newVal != null) {
                 newVal.addPropertyChangeListener(pcl);
             }
         });
@@ -154,13 +164,17 @@ public class NotePropertiesEditor extends JPanel
                 : null;
 
         selectedNote.set(note);
-        
+
         resetEditor();
     }
 
     protected void resetEditor() {
+        if(isUpdating) {
+            return;
+        }
         final var note = selectedNote.get();
-        
+
+        isUpdating = true;
         if (note != null && pianoRoll != null) {
             var noteTemplate = note.getNoteTemplate();
 
@@ -176,6 +190,7 @@ public class NotePropertiesEditor extends JPanel
             noteTemplateText.setEnabled(false);
             noteTemplateText.setText("");
         }
+        isUpdating = false;
     }
 
 }

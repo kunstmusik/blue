@@ -108,7 +108,7 @@ public class PianoRollEditor extends ScoreObjectEditor implements
 
     TimelinePropertiesPanel timeProperties = new TimelinePropertiesPanel();
 
-    NotePropertiesEditor noteTemplateEditor = new NotePropertiesEditor(selectedNotes);
+    NotePropertiesEditor noteTemplateEditor = new NotePropertiesEditor(selectedNotes, undo);
 
     JScrollPane noteScrollPane;
 
