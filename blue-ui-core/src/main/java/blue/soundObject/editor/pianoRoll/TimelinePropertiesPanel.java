@@ -25,6 +25,8 @@ import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
@@ -35,7 +37,7 @@ import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.JTextField;
 
-public class TimelinePropertiesPanel extends JComponent {
+public class TimelinePropertiesPanel extends JComponent implements PropertyChangeListener {
 
     JCheckBox snapEnabledBox = new JCheckBox(BlueSystem
             .getString("scoreGUI.snapEnabled"));
@@ -67,7 +69,7 @@ public class TimelinePropertiesPanel extends JComponent {
                 return;
             }
             isUpdating = true;
-            
+
             try {
                 double val = Double.parseDouble(snapValue.getText());
                 if (val < 0) {
@@ -87,7 +89,7 @@ public class TimelinePropertiesPanel extends JComponent {
                     pianoRoll.setTimeDisplay(PianoRoll.DISPLAY_TIME);
                 } else if (e.getSource() == timeDisplayNumber) {
                     pianoRoll.setTimeDisplay(PianoRoll.DISPLAY_NUMBER);
-                    
+
                 }
             }
         };
@@ -102,7 +104,7 @@ public class TimelinePropertiesPanel extends JComponent {
         timeUnit.addActionListener((ActionEvent e) -> {
             try {
                 int val = Integer.parseInt(timeUnit.getText());
-                
+
                 if (val < 1) {
                     timeUnit.setText(Integer.toString(pianoRoll
                             .getTimeUnit()));
@@ -110,14 +112,13 @@ public class TimelinePropertiesPanel extends JComponent {
                 }
 
                 pianoRoll.setTimeUnit(val);
-                
+
             } catch (NumberFormatException nfe) {
                 timeUnit.setText(Integer.toString(pianoRoll.getTimeUnit()));
             }
         });
 
         // SET UP MENU
-
         this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 
         JPanel snapPanel = new JPanel();
@@ -148,7 +149,15 @@ public class TimelinePropertiesPanel extends JComponent {
     public void setPianoRoll(PianoRoll pianoRoll) {
         isUpdating = true;
 
+        if(this.pianoRoll != null) {
+            this.pianoRoll.removePropertyChangeListener(this);
+        }
+        
         this.pianoRoll = pianoRoll;
+        
+        if(this.pianoRoll != null) {
+            this.pianoRoll.addPropertyChangeListener(this);
+        }
 
         snapEnabledBox.setSelected(pianoRoll.isSnapEnabled());
         snapValue.setText(Double.toString(pianoRoll.getSnapValue()));
@@ -161,6 +170,17 @@ public class TimelinePropertiesPanel extends JComponent {
         }
 
         isUpdating = false;
+    }
+
+    @Override
+    public void propertyChange(PropertyChangeEvent evt) {
+        if (evt.getSource() == this.pianoRoll) {
+            switch (evt.getPropertyName()) {
+                case "snapEnabled":
+                    snapEnabledBox.setSelected((Boolean) evt.getNewValue());
+                    break;
+            }
+        }
     }
 
 }

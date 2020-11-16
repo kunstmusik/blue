@@ -36,6 +36,9 @@ import blue.soundObject.editor.pianoRoll.PianoRollPropertiesEditor;
 import blue.soundObject.editor.pianoRoll.PianoRollScrollPaneLayout;
 import blue.soundObject.editor.pianoRoll.TimeBar;
 import blue.soundObject.editor.pianoRoll.TimelinePropertiesPanel;
+import blue.soundObject.editor.pianoRoll.actions.RedoAction;
+import blue.soundObject.editor.pianoRoll.actions.ToggleSnapAction;
+import blue.soundObject.editor.pianoRoll.actions.UndoAction;
 import blue.soundObject.pianoRoll.FieldDef;
 import blue.soundObject.pianoRoll.PianoNote;
 import blue.ui.components.IconFactory;
@@ -50,7 +53,6 @@ import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
-import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
@@ -59,11 +61,12 @@ import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javax.swing.AbstractAction;
+import javax.swing.Action;
 import javax.swing.ActionMap;
 import javax.swing.BorderFactory;
 import javax.swing.InputMap;
 import javax.swing.JButton;
+import static javax.swing.JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT;
 import javax.swing.JPanel;
 import javax.swing.JScrollBar;
 import javax.swing.JScrollPane;
@@ -75,6 +78,9 @@ import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 import javax.swing.undo.UndoManager;
 import org.openide.awt.UndoRedo;
+import org.openide.util.Lookup;
+import org.openide.util.lookup.AbstractLookup;
+import org.openide.util.lookup.InstanceContent;
 
 /**
  * Title: blue Description: an object composition environment for csound
@@ -88,7 +94,7 @@ public class PianoRollEditor extends ScoreObjectEditor implements
         PropertyChangeListener {
 
     UndoManager undo = new UndoRedo.Manager();
-    
+
     ObservableList<PianoNote> selectedNotes = FXCollections.observableArrayList();
 
     ObjectProperty<FieldDef> selectedFieldDef = new SimpleObjectProperty<>();
@@ -116,11 +122,16 @@ public class PianoRollEditor extends ScoreObjectEditor implements
 
     FieldSelectorView fieldSelectorView = new FieldSelectorView(selectedFieldDef);
 
-    FieldEditor fieldEditor = new FieldEditor(currentPianoRoll, selectedNotes, 
+    FieldEditor fieldEditor = new FieldEditor(currentPianoRoll, selectedNotes,
             selectedFieldDef, fieldEditorYScale, undo);
 
-    
+    private InstanceContent instanceContent = new InstanceContent();
+    private Lookup context = new AbstractLookup(instanceContent);
+
     public PianoRollEditor() {
+        
+        instanceContent.add(undo);
+
         snapButton.setIcon(IconFactory.getLeftArrowIcon());
         snapButton.setSelectedIcon(IconFactory.getRightArrowIcon());
         snapButton.setFocusable(false);
@@ -160,7 +171,7 @@ public class PianoRollEditor extends ScoreObjectEditor implements
         tabs.add(BlueSystem.getString("common.properties"), props);
 
         this.add(tabs, BorderLayout.CENTER);
-        
+
         snapButton.addActionListener((ActionEvent e) -> {
             timeProperties.setVisible(!timeProperties.isVisible());
         });
@@ -193,41 +204,20 @@ public class PianoRollEditor extends ScoreObjectEditor implements
 
         initActions();
     }
-    
+
     private void initActions() {
         InputMap inputMap = this.getInputMap(WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
-        ActionMap actions = this.getActionMap();
+        ActionMap actionMap = this.getActionMap();
 
-        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_Z, BlueSystem
-                .getMenuShortcutKey()), "undo");
-        
-        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_Z, BlueSystem
-                .getMenuShortcutKey() | KeyEvent.SHIFT_DOWN_MASK), "redo");
+        Action[] actions = {new ToggleSnapAction(context),
+            new UndoAction(context), new RedoAction(context)};
 
-        actions.put("undo", new AbstractAction() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                if(undo.canUndo()) {
-                    undo.undo();
-                }
-            }
-
-        });
-        
-        actions.put("redo", new AbstractAction() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                if(undo.canRedo()) {
-                    undo.redo();
-                }
-            }
-
-        });
-
+        for (var a : actions) {
+            inputMap.put((KeyStroke) a.getValue(Action.ACCELERATOR_KEY),
+                    a.getValue(Action.NAME));
+            actionMap.put(a.getValue(Action.NAME), a);
+        }
     }
-
 
     protected void generateTest() {
         var p = this.currentPianoRoll.get();
@@ -385,17 +375,18 @@ public class PianoRollEditor extends ScoreObjectEditor implements
 
         if (old != null) {
             old.removePropertyChangeListener(this);
+            instanceContent.remove(p);
         }
 
         selectedNotes.clear();
 
         this.currentPianoRoll.set(p);
+        instanceContent.add(p);
 
         p.addPropertyChangeListener(this);
 
         // FIXME: Replace with passing currentPianoRoll property to 
         // sub-components in their constructors
-        
         noteHeader.editPianoRoll(p);
         timeBar.editPianoRoll(p);
         props.editPianoRoll(p);
@@ -404,7 +395,7 @@ public class PianoRollEditor extends ScoreObjectEditor implements
         fieldSelectorView.setFields(p.getFieldDefinitions());
 
         centerNoteScrollPane();
-        
+
         undo.discardAllEdits();
     }
 
@@ -412,9 +403,12 @@ public class PianoRollEditor extends ScoreObjectEditor implements
     public void propertyChange(PropertyChangeEvent evt) {
         var p = this.currentPianoRoll.get();
         if (evt.getSource() == p) {
-            if (evt.getPropertyName().equals("scale")) {
-                centerNoteScrollPane();
+            switch(evt.getPropertyName()) {
+                case "scale":
+                    centerNoteScrollPane();
+                    break;
             }
+            
         }
     }
 
