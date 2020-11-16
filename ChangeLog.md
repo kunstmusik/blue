@@ -106,6 +106,8 @@ information.
 * Issue #527: Fixed performance issue with drawing of PianoRoll canvas on Linux
   due to GradientPaint
 
+* Issue #545: Hide global tempo editor when editing PolyObject timeline
+
 
 ## [2.8.0] - 2020-06-03
 

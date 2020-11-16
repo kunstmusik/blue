@@ -1009,7 +1009,7 @@ public final class ScoreTopComponent extends TopComponent
         scoreController.setSelectedScoreObjects(null);
 
         PolyObject pObj = (PolyObject) layerGroup;
-
+        
         tempoEditor.setVisible(false);
         tempoControlPanel.setVisible(false);
 
@@ -1032,9 +1032,7 @@ public final class ScoreTopComponent extends TopComponent
             layerHeaderPanel.revalidate();
 
             TimeState timeState = pObj.getTimeState();
-            tempoEditor.setTimeState(timeState);
-            tempoEditor.setVisible(true);
-            tempoControlPanel.setVisible(true);
+            
             timeBar.setRootTimeline(false);
             timeBar.setTimeState(timeState);
             markersBar.setRootTimeline(false);
