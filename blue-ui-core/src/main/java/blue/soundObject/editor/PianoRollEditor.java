@@ -133,6 +133,7 @@ public class PianoRollEditor extends ScoreObjectEditor implements
         
         instanceContent.add(undo);
         instanceContent.add(selectedNotes);
+        instanceContent.add(currentPianoRoll);
         
         snapButton.setIcon(IconFactory.getLeftArrowIcon());
         snapButton.setSelectedIcon(IconFactory.getRightArrowIcon());
@@ -378,13 +379,11 @@ public class PianoRollEditor extends ScoreObjectEditor implements
         
         if (old != null) {
             old.removePropertyChangeListener(this);
-            instanceContent.remove(p);
         }
         
         selectedNotes.clear();
         
         this.currentPianoRoll.set(p);
-        instanceContent.add(p);
         
         p.addPropertyChangeListener(this);
 

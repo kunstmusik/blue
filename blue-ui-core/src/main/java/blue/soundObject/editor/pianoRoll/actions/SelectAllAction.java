@@ -22,6 +22,7 @@ package blue.soundObject.editor.pianoRoll.actions;
 
 import blue.soundObject.PianoRoll;
 import java.awt.event.ActionEvent;
+import javafx.beans.property.ObjectProperty;
 import javafx.collections.ObservableList;
 import javax.swing.AbstractAction;
 import static javax.swing.Action.ACCELERATOR_KEY;
@@ -40,15 +41,17 @@ public class SelectAllAction extends AbstractAction {
     private final Lookup lookup;
     
     public SelectAllAction(Lookup lookup) {
-        putValue(NAME, Bundle.CTL_UndoAction());
+        putValue(NAME, Bundle.CTL_SelectAllAction());
         putValue(ACCELERATOR_KEY, Utilities.stringToKey("D-A"));
         this.lookup = lookup;
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        var pianoRoll = lookup.lookup(PianoRoll.class);
+        var pianoRollProp = lookup.lookup(ObjectProperty.class);
+        var pianoRoll = (PianoRoll) pianoRollProp.get();
         var selectedNotes = lookup.lookup(ObservableList.class);
+        
         
         selectedNotes.setAll(pianoRoll.getNotes());
     }
