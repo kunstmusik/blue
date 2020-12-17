@@ -21,6 +21,7 @@ package blue.soundObject.editor.pianoRoll.actions;
 
 import blue.soundObject.PianoRoll;
 import java.awt.event.ActionEvent;
+import javafx.beans.property.ObjectProperty;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import org.openide.awt.ActionID;
@@ -35,8 +36,7 @@ import org.openide.util.Utilities;
 /* NOTE: Tried to use Netbeans action registration but could not find a way to 
   correctly use createContextAwareAction. Ended up instantiating directly from 
   PianoRollEditor.
-*/
-
+ */
 //@ActionID(
 //        category = "PianoRoll",
 //        id = "blue.soundObject.editor.pianoRoll.actions.ToggleSnapAction"
@@ -57,7 +57,6 @@ public final class ToggleSnapAction extends AbstractAction implements ContextAwa
 //    public ToggleSnapAction() {
 //        this(Utilities.actionsGlobalContext());
 //    }
-
     public ToggleSnapAction(Lookup context) {
         putValue(NAME, Bundle.CTL_ToggleSnapAction());
         putValue(ACCELERATOR_KEY, Utilities.stringToKey("A-S"));
@@ -66,9 +65,10 @@ public final class ToggleSnapAction extends AbstractAction implements ContextAwa
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        var p = context.lookup(PianoRoll.class);
-        if (p != null) {
-            p.setSnapEnabled(!p.isSnapEnabled());
+        var pianoRollProp = context.lookup(ObjectProperty.class);
+        var pianoRoll = (PianoRoll) pianoRollProp.get();
+        if (pianoRoll != null) {
+            pianoRoll.setSnapEnabled(!pianoRoll.isSnapEnabled());
         }
     }
 
