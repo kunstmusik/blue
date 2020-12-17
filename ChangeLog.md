@@ -55,6 +55,9 @@ information.
   * Introduced dark area in background to show repeat point or scaled time area
   for notes
 
+  * added keyboard shortcuts for undo (ctrl-z), redo (ctrl-shift-z), toggle snap
+  (alt-s), and select all notes (ctrl-a)
+
 * Issue #520: Render waveform for Frozen SoundObject freze file
 
 ### UPDATED

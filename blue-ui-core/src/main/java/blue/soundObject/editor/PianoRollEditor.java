@@ -37,6 +37,7 @@ import blue.soundObject.editor.pianoRoll.PianoRollScrollPaneLayout;
 import blue.soundObject.editor.pianoRoll.TimeBar;
 import blue.soundObject.editor.pianoRoll.TimelinePropertiesPanel;
 import blue.soundObject.editor.pianoRoll.actions.RedoAction;
+import blue.soundObject.editor.pianoRoll.actions.SelectAllAction;
 import blue.soundObject.editor.pianoRoll.actions.ToggleSnapAction;
 import blue.soundObject.editor.pianoRoll.actions.UndoAction;
 import blue.soundObject.pianoRoll.FieldDef;
@@ -92,147 +93,149 @@ import org.openide.util.lookup.InstanceContent;
 @ScoreObjectEditorPlugin(scoreObjectType = PianoRoll.class)
 public class PianoRollEditor extends ScoreObjectEditor implements
         PropertyChangeListener {
-
+    
     UndoManager undo = new UndoRedo.Manager();
-
+    
     ObservableList<PianoNote> selectedNotes = FXCollections.observableArrayList();
-
+    
     ObjectProperty<FieldDef> selectedFieldDef = new SimpleObjectProperty<>();
-
+    
     private ObjectProperty<PianoRoll> currentPianoRoll = new SimpleObjectProperty<PianoRoll>();
-
+    
     PianoRollPropertiesEditor props = new PianoRollPropertiesEditor(selectedNotes, undo);
-
+    
     ScaleLinear fieldEditorYScale = new ScaleLinear(0, 1, 0, 1);
-
+    
     PianoRollCanvas noteCanvas = new PianoRollCanvas(currentPianoRoll, selectedNotes,
             selectedFieldDef, fieldEditorYScale, undo);
-
+    
     PianoRollCanvasHeader noteHeader = new PianoRollCanvasHeader(selectedNotes);
-
+    
     TimeBar timeBar = new TimeBar();
-
+    
     TimelinePropertiesPanel timeProperties = new TimelinePropertiesPanel();
-
+    
     NotePropertiesEditor noteTemplateEditor = new NotePropertiesEditor(selectedNotes, undo);
-
+    
     JScrollPane noteScrollPane;
-
+    
     JToggleButton snapButton = new JToggleButton();
-
+    
     FieldSelectorView fieldSelectorView = new FieldSelectorView(selectedFieldDef);
-
+    
     FieldEditor fieldEditor = new FieldEditor(currentPianoRoll, selectedNotes,
             selectedFieldDef, fieldEditorYScale, undo);
-
+    
     private InstanceContent instanceContent = new InstanceContent();
     private Lookup context = new AbstractLookup(instanceContent);
-
+    
     public PianoRollEditor() {
         
         instanceContent.add(undo);
-
+        instanceContent.add(selectedNotes);
+        
         snapButton.setIcon(IconFactory.getLeftArrowIcon());
         snapButton.setSelectedIcon(IconFactory.getRightArrowIcon());
         snapButton.setFocusable(false);
-
+        
         this.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
         this.setLayout(new BorderLayout());
-
+        
         noteScrollPane = new JScrollPane();
         noteScrollPane.setViewportView(noteCanvas);
         noteScrollPane.setRowHeaderView(noteHeader);
         noteScrollPane.setColumnHeaderView(timeBar);
         noteScrollPane.setCorner(JScrollPane.UPPER_RIGHT_CORNER, snapButton);
-
+        
         noteScrollPane.setAutoscrolls(true);
-
+        
         setupNoteScrollBars(noteScrollPane);
-
+        
         timeProperties.setVisible(false);
         timeProperties.setPreferredSize(new Dimension(150, 40));
-
+        
         JButton testButton = new JButton("Test");
         testButton.addActionListener(evt -> generateTest());
-
+        
         JTabbedPane tabs = new JTabbedPane();
-
+        
         JPanel notesPanel = new JPanel(new BorderLayout());
-
+        
         JPanel topPanel = new JPanel(new BorderLayout());
         topPanel.add(noteTemplateEditor, BorderLayout.CENTER);
         topPanel.add(testButton, BorderLayout.EAST);
-
+        
         notesPanel.add(topPanel, BorderLayout.NORTH);
         notesPanel.add(noteScrollPane, BorderLayout.CENTER);
         notesPanel.add(timeProperties, BorderLayout.EAST);
-
+        
         tabs.add(BlueSystem.getString("pianoRoll.notes"), notesPanel);
         tabs.add(BlueSystem.getString("common.properties"), props);
-
+        
         this.add(tabs, BorderLayout.CENTER);
-
+        
         snapButton.addActionListener((ActionEvent e) -> {
             timeProperties.setVisible(!timeProperties.isVisible());
         });
-
+        
         noteCanvas.addComponentListener(new ComponentAdapter() {
-
+            
             @Override
             public void componentResized(ComponentEvent e) {
                 Dimension d = new Dimension(e.getComponent().getWidth(), 20);
                 timeBar.setSize(d);
                 timeBar.setPreferredSize(d);
-
+                
                 fieldEditor.setSize(d);
                 fieldEditor.setPreferredSize(d);
-
+                
                 timeBar.repaint();
                 fieldEditor.repaint();
             }
-
+            
         });
-
+        
         noteScrollPane.getViewport().addComponentListener(
                 new ComponentAdapter() {
-
+            
             @Override
             public void componentResized(ComponentEvent e) {
                 noteCanvas.recalculateSize();
             }
         });
-
+        
         initActions();
     }
-
+    
     private void initActions() {
         InputMap inputMap = this.getInputMap(WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
         ActionMap actionMap = this.getActionMap();
-
+        
         Action[] actions = {new ToggleSnapAction(context),
-            new UndoAction(context), new RedoAction(context)};
-
+            new UndoAction(context), new RedoAction(context),
+            new SelectAllAction(context)};
+        
         for (var a : actions) {
             inputMap.put((KeyStroke) a.getValue(Action.ACCELERATOR_KEY),
                     a.getValue(Action.NAME));
             actionMap.put(a.getValue(Action.NAME), a);
         }
     }
-
+    
     protected void generateTest() {
         var p = this.currentPianoRoll.get();
         if (p == null) {
             return;
         }
-
+        
         NoteList notes = null;
-
+        
         try {
             notes = p.generateForCSD(null, 0.0f, -1.0f);
         } catch (Exception e) {
             ExceptionDialog.showExceptionDialog(SwingUtilities.getRoot(this), e);
         }
-
+        
         if (notes != null) {
             InfoDialog.showInformationDialog(SwingUtilities.getRoot(this),
                     notes.toString(), BlueSystem
@@ -244,39 +247,39 @@ public class PianoRollEditor extends ScoreObjectEditor implements
      * @param noteScrollPane2
      */
     private void setupNoteScrollBars(JScrollPane noteSP) {
-
+        
         JPanel horizontalViewChanger = new JPanel(new GridLayout(1, 2));
-
+        
         ScrollerButton plusHorz = new ScrollerButton("+");
         ScrollerButton minusHorz = new ScrollerButton("-");
-
+        
         plusHorz.putClientProperty("timer", new Timer(100, (e) -> {
             raisePixelSecond();
         }));
-
+        
         minusHorz.putClientProperty("timer", new Timer(100, (e) -> {
             lowerPixelSecond();
         }));
-
+        
         horizontalViewChanger.add(plusHorz);
         horizontalViewChanger.add(minusHorz);
-
+        
         JPanel verticalViewChanger = new JPanel(new GridLayout(2, 1));
-
+        
         ScrollerButton plusVert = new ScrollerButton("+");
         ScrollerButton minusVert = new ScrollerButton("-");
-
+        
         plusVert.putClientProperty("timer", new Timer(100, (e) -> {
             raiseHeight();
         }));
-
+        
         minusVert.putClientProperty("timer", new Timer(100, (e) -> {
             lowerHeight();
         }));
-
+        
         verticalViewChanger.add(plusVert);
         verticalViewChanger.add(minusVert);
-
+        
         var viewChangerListener = new MouseAdapter() {
             @Override
             public void mousePressed(MouseEvent e) {
@@ -284,7 +287,7 @@ public class PianoRollEditor extends ScoreObjectEditor implements
                 var timer = (Timer) src.getClientProperty("timer");
                 timer.start();
             }
-
+            
             @Override
             public void mouseReleased(MouseEvent e) {
                 var src = (ScrollerButton) e.getSource();
@@ -292,30 +295,30 @@ public class PianoRollEditor extends ScoreObjectEditor implements
                 timer.stop();
             }
         };
-
+        
         plusHorz.addMouseListener(viewChangerListener);
         minusHorz.addMouseListener(viewChangerListener);
         plusVert.addMouseListener(viewChangerListener);
         minusVert.addMouseListener(viewChangerListener);
-
+        
         noteSP
                 .setHorizontalScrollBarPolicy(
                         JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
         noteSP
                 .setVerticalScrollBarPolicy(
                         JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
-
+        
         noteSP.setLayout(new PianoRollScrollPaneLayout());
-
+        
         noteSP.add(horizontalViewChanger, PianoRollScrollPaneLayout.HORIZONTAL_RIGHT);
         noteSP.add(verticalViewChanger, PianoRollScrollPaneLayout.VERTICAL_BOTTOM);
-
+        
         final JViewport fieldViewPort = new JViewport();
         fieldViewPort.setView(fieldEditor);
-
+        
         noteSP.add(fieldViewPort, PianoRollScrollPaneLayout.COLUMN_FOOTER_VIEW);
         noteSP.add(fieldSelectorView, PianoRollScrollPaneLayout.FIELD_DEFINITIONS_SELECTOR);
-
+        
         JPanel splitter = new JPanel() {
             @Override
             protected void paintComponent(Graphics g) {
@@ -324,26 +327,26 @@ public class PianoRollEditor extends ScoreObjectEditor implements
             }
         };
         splitter.setCursor(Cursor.getPredefinedCursor(Cursor.S_RESIZE_CURSOR));
-
+        
         var splitterListener = new MouseAdapter() {
             @Override
             public void mouseDragged(MouseEvent e) {
                 var pt = SwingUtilities.convertPoint(splitter, e.getPoint(), noteSP.getViewport());
-
+                
                 var max = noteSP.getHeight()
                         - noteSP.getHorizontalScrollBar().getHeight()
                         - noteSP.getColumnHeader().getView().getHeight();
-
+                
                 var loc = Math.max(5, Math.min(max - 5, max - pt.y));
-
+                
                 noteSP.putClientProperty("SplitterLocation", loc);
                 noteSP.revalidate();
             }
         };
         splitter.addMouseMotionListener(splitterListener);
-
+        
         noteSP.add(splitter, PianoRollScrollPaneLayout.SPLITTER);
-
+        
         noteSP.putClientProperty("SplitterLocation", 60);
 
         // sync fiew view port position to time bar viewport's location
@@ -351,38 +354,38 @@ public class PianoRollEditor extends ScoreObjectEditor implements
             fieldViewPort.setViewPosition(noteScrollPane.getColumnHeader().getViewPosition());
         });
     }
-
+    
     private void centerNoteScrollPane() {
         JScrollBar scrollbar = noteScrollPane.getVerticalScrollBar();
         int max = scrollbar.getMaximum();
         scrollbar.setValue((max / 32) * 13);
     }
-
+    
     @Override
     public void editScoreObject(ScoreObject sObj) {
-
+        
         if (sObj == null) {
             return;
         }
-
+        
         if (!(sObj instanceof PianoRoll)) {
             return;
         }
-
+        
         PianoRoll p = (PianoRoll) sObj;
-
+        
         var old = this.currentPianoRoll.get();
-
+        
         if (old != null) {
             old.removePropertyChangeListener(this);
             instanceContent.remove(p);
         }
-
+        
         selectedNotes.clear();
-
+        
         this.currentPianoRoll.set(p);
         instanceContent.add(p);
-
+        
         p.addPropertyChangeListener(this);
 
         // FIXME: Replace with passing currentPianoRoll property to 
@@ -393,17 +396,17 @@ public class PianoRollEditor extends ScoreObjectEditor implements
         noteTemplateEditor.editPianoRoll(p);
         timeProperties.setPianoRoll(p);
         fieldSelectorView.setFields(p.getFieldDefinitions());
-
+        
         centerNoteScrollPane();
-
+        
         undo.discardAllEdits();
     }
-
+    
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
         var p = this.currentPianoRoll.get();
         if (evt.getSource() == p) {
-            switch(evt.getPropertyName()) {
+            switch (evt.getPropertyName()) {
                 case "scale":
                     centerNoteScrollPane();
                     break;
@@ -411,70 +414,70 @@ public class PianoRollEditor extends ScoreObjectEditor implements
             
         }
     }
-
+    
     public static void main(String[] args) {
-
+        
         GUI.setBlueLookAndFeel();
-
+        
         PianoRollEditor pEditor = new PianoRollEditor();
         pEditor.editScoreObject(new PianoRoll());
-
+        
         GUI.showComponentAsStandalone(pEditor, "Piano Roll Editor", true);
     }
-
+    
     private void lowerHeight() {
         var p = this.currentPianoRoll.get();
         if (p == null) {
             return;
         }
-
+        
         int noteHeight = p.getNoteHeight();
-
+        
         if (noteHeight > 5) {
             noteHeight--;
             p.setNoteHeight(noteHeight);
         }
     }
-
+    
     private void raiseHeight() {
         var p = this.currentPianoRoll.get();
         if (p == null) {
             return;
         }
-
+        
         int noteHeight = p.getNoteHeight();
-
+        
         if (noteHeight < 25) {
             noteHeight++;
             p.setNoteHeight(noteHeight);
         }
     }
-
+    
     private void lowerPixelSecond() {
         var p = this.currentPianoRoll.get();
         if (p == null) {
             return;
         }
-
+        
         int pixelSecond = p.getPixelSecond();
-
+        
         if (pixelSecond <= 2) {
             return;
         }
-
+        
         pixelSecond -= 2;
-
+        
         p.setPixelSecond(pixelSecond);
     }
-
+    
     private void raisePixelSecond() {
         var p = this.currentPianoRoll.get();
         if (p == null) {
             return;
         }
-
+        
         int pixelSecond = p.getPixelSecond() + 2;
         p.setPixelSecond(pixelSecond);
     }
-
+    
 }
