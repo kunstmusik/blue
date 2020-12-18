@@ -58,7 +58,10 @@ information.
   * added keyboard shortcuts for undo (ctrl-z), redo (ctrl-shift-z), toggle snap
   (alt-s), and select all notes (ctrl-a)
 
-* Issue #520: Render waveform for Frozen SoundObject freze file
+* Issue #520: Render waveform for Frozen SoundObject freeze file
+
+* Issue #480: Option added for Score to follow current playback time when 
+  rendering project
 
 ### UPDATED
 

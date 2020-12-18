@@ -44,6 +44,7 @@ import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JTextField;
+import javax.swing.JToggleButton;
 import javax.swing.JToolBar;
 import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
@@ -70,6 +71,8 @@ public class MainToolBar extends JToolBar implements PlayModeListener,
 
     JButton nextMarkerButton;
 
+    JToggleButton followPlaybackButton = new JToggleButton("F");
+    
     JButton widgetInfoButton = new JButton();
 
     JButton rewindButton = new JButton();
@@ -171,6 +174,20 @@ public class MainToolBar extends JToolBar implements PlayModeListener,
         widgetInfoButton.setFocusable(false);
         widgetInfoButton.setToolTipText("Toggle showing BSB Widget information as tooltips in usage mode");
 
+        var playbackSettings = PlaybackSettings.getInstance();
+                
+        followPlaybackButton.setSelected(playbackSettings.isFollowPlayback());
+        followPlaybackButton.setToolTipText("Set whether Score scrolls to follow current playback time");
+        followPlaybackButton.addActionListener(evt -> {
+            playbackSettings.setFollowPlayback(followPlaybackButton.isSelected());
+            playbackSettings.save();
+        });
+        
+        PlaybackSettings.getPreferences().addPreferenceChangeListener(evt -> {
+            followPlaybackButton.setSelected(playbackSettings.isFollowPlayback());
+        });
+        
+        
         prefs.showWidgetCommentsProperty().addListener((obs, old, newVal) -> {
             updateWidgetIcon.run();
         });
@@ -208,6 +225,8 @@ public class MainToolBar extends JToolBar implements PlayModeListener,
         this.add(playTimeLabel);
         this.add(playTimeText);
         this.add(Box.createHorizontalStrut(5));
+        this.add(followPlaybackButton, null);
+        this.add(Box.createHorizontalStrut(5));        
         this.add(widgetInfoButton, null);
         this.add(loopBox, null);
         this.add(previousMarkerButton);
