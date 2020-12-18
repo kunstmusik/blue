@@ -22,6 +22,7 @@ package blue.ui.core.render;
 import blue.noteProcessor.TempoMapper;
 import blue.projects.BlueProject;
 import blue.projects.BlueProjectManager;
+import blue.services.render.RenderState;
 import blue.services.render.RenderTimeManager;
 import blue.services.render.RenderTimeManagerListener;
 import blue.settings.PlaybackSettings;
@@ -53,6 +54,8 @@ public class RenderTimeManagerImpl implements RenderTimeManager {
     private PolyObject polyObject;
     private final BlueProjectManager blueProjectManager;
     
+    private RenderState currentRenderState = RenderState.STOPPED;
+    
     TimingSource ts = null;
     BlueProject currentRenderingProject = null;
     
@@ -60,6 +63,7 @@ public class RenderTimeManagerImpl implements RenderTimeManager {
     public void initiateRender(double renderStart) {
         this.setRenderStart(renderStart);
 
+        setRenderState(RenderState.RENDERING);
         for (RenderTimeManagerListener listener : renderListeners) {
             listener.renderInitiated();
         }
@@ -121,6 +125,7 @@ public class RenderTimeManagerImpl implements RenderTimeManager {
         for (RenderTimeManagerListener listener : renderListeners) {
             listener.renderEnded();
         }
+        setRenderState(RenderState.STOPPED);
         if (ts != null) {
             ts.dispose();
             ts = null;
@@ -195,4 +200,16 @@ public class RenderTimeManagerImpl implements RenderTimeManager {
         return currentRenderingProject == 
                 blueProjectManager.getCurrentProject();
     }
+
+    public RenderState getRenderState() {
+        return currentRenderState;
+    }
+
+    public void setRenderState(RenderState currentRenderState) {
+        var oldState = currentRenderState;
+        this.currentRenderState = currentRenderState;
+        listeners.firePropertyChange(RENDER_STATE, oldState, currentRenderState);
+    }
+    
+    
 }

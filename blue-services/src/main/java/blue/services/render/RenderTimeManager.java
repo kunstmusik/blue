@@ -30,6 +30,8 @@ public interface RenderTimeManager {
 
     String RENDER_START = "renderStart";
     String TIME_POINTER = "timePointer";
+    
+    String RENDER_STATE = "renderState";
 
     // Property Change Methods
     void addPropertyChangeListener(PropertyChangeListener pcl);
@@ -56,4 +58,5 @@ public interface RenderTimeManager {
 
     void updateTimePointer(double timePointer);
     
+    RenderState getRenderState();
 }

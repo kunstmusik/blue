@@ -34,6 +34,7 @@ import blue.score.TimeState;
 import blue.score.layers.Layer;
 import blue.score.layers.LayerGroup;
 import blue.score.tempo.Tempo;
+import blue.services.render.RenderState;
 import blue.services.render.RenderTimeManager;
 import blue.services.render.RenderTimeManagerListener;
 import blue.settings.PlaybackSettings;
@@ -287,6 +288,14 @@ public final class ScoreTopComponent extends TopComponent
             currentScorePath = path;
         });
         currentScorePath = scoreController.getScorePath();
+
+        PlaybackSettings.getPreferences().addPreferenceChangeListener(evt -> {
+            if (renderTimeManager.getRenderState() == RenderState.RENDERING && evt.getKey().contains("followPlayback")) {
+                if (playbackSettings.isFollowPlayback()) {
+                    scrollToRenderTime();
+                }
+            }
+        });
     }
 
     protected void checkSize() {
@@ -846,7 +855,7 @@ public final class ScoreTopComponent extends TopComponent
             renderTimePointer.setLocation(-1, 0);
         } else {
             int oldX = renderTimePointer.getX();
-            int newX = (int) ((renderStart + timePointer - latency) * data.getScore().getTimeState().getPixelSecond());
+            int newX = Math.max(0, (int) ((renderStart + timePointer - latency) * data.getScore().getTimeState().getPixelSecond()));
             renderTimePointer.setLocation(newX, 0);
 
             if (playbackSettings.isFollowPlayback()) {
@@ -859,8 +868,23 @@ public final class ScoreTopComponent extends TopComponent
         }
     }
 
+    private void scrollToRenderTime() {
+        var rect = scrollPane.getViewport().getViewRect();
+
+        double latency = PlaybackSettings.getInstance().getPlaybackLatencyCorrection();
+        int newX = Math.max(0, (int) ((renderStart + timePointer - latency) * data.getScore().getTimeState().getPixelSecond()));
+        scrollPane.getViewport().setViewPosition(new Point(newX, rect.y));
+    }
+
     @Override
     public void renderInitiated() {
+        if (playbackSettings.isFollowPlaybackOnStart()) {
+            playbackSettings.setFollowPlayback(true);
+            playbackSettings.save();
+        }
+        if (playbackSettings.isFollowPlayback()) {
+            scrollToRenderTime();
+        }
     }
 
     @Override

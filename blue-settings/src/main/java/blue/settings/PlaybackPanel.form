@@ -19,20 +19,28 @@
           <Group type="102" attributes="0">
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="1" max="-2" attributes="0">
-                  <Component id="jLabel2" alignment="0" max="32767" attributes="1"/>
-                  <Component id="jLabel1" alignment="0" max="32767" attributes="1"/>
-                  <Component id="jLabel3" alignment="1" max="32767" attributes="1"/>
+                  <Component id="jLabel1" max="32767" attributes="1"/>
+                  <Component id="jLabel2" max="32767" attributes="1"/>
+                  <Component id="jLabel3" max="32767" attributes="1"/>
+                  <Component id="jLabel4" max="32767" attributes="1"/>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" attributes="0">
-                  <Component id="playbackLatencyCorrection" pref="310" max="32767" attributes="0"/>
-                  <Component id="playbackFPS" alignment="0" pref="310" max="32767" attributes="0"/>
                   <Group type="102" attributes="0">
-                      <Component id="followPlayback" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
+                      <Group type="103" groupAlignment="0" attributes="0">
+                          <Component id="playbackLatencyCorrection" alignment="1" pref="310" max="32767" attributes="0"/>
+                          <Component id="playbackFPS" alignment="1" max="32767" attributes="0"/>
+                      </Group>
+                      <EmptySpace min="-2" pref="6" max="-2" attributes="0"/>
+                  </Group>
+                  <Group type="102" attributes="0">
+                      <Group type="103" groupAlignment="0" attributes="0">
+                          <Component id="followPlayback" min="-2" max="-2" attributes="0"/>
+                          <Component id="followPlaybackOnRenderStart" min="-2" max="-2" attributes="0"/>
+                      </Group>
+                      <EmptySpace max="32767" attributes="0"/>
                   </Group>
               </Group>
-              <EmptySpace max="-2" attributes="0"/>
           </Group>
       </Group>
     </DimensionLayout>
@@ -52,9 +60,14 @@
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="3" attributes="0">
                   <Component id="jLabel3" alignment="3" min="-2" max="-2" attributes="0"/>
-                  <Component id="followPlayback" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="followPlayback" alignment="0" min="-2" max="-2" attributes="0"/>
               </Group>
-              <EmptySpace pref="64" max="32767" attributes="0"/>
+              <EmptySpace min="-2" pref="9" max="-2" attributes="0"/>
+              <Group type="103" groupAlignment="0" attributes="0">
+                  <Component id="jLabel4" min="-2" max="-2" attributes="0"/>
+                  <Component id="followPlaybackOnRenderStart" min="-2" max="-2" attributes="0"/>
+              </Group>
+              <EmptySpace pref="36" max="32767" attributes="0"/>
           </Group>
       </Group>
     </DimensionLayout>
@@ -106,6 +119,24 @@
       </Properties>
       <Events>
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="followPlaybackActionPerformed"/>
+      </Events>
+    </Component>
+    <Component class="javax.swing.JLabel" name="jLabel4">
+      <Properties>
+        <Property name="horizontalAlignment" type="int" value="11"/>
+        <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+          <ResourceString bundle="blue/settings/Bundle.properties" key="PlaybackPanel.jLabel4.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+        </Property>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JCheckBox" name="followPlaybackOnRenderStart">
+      <Properties>
+        <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+          <ResourceString bundle="blue/settings/Bundle.properties" key="PlaybackPanel.followPlaybackOnRenderStart.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+        </Property>
+      </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="followPlaybackOnRenderStartActionPerformed"/>
       </Events>
     </Component>
   </SubComponents>

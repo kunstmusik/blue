@@ -61,6 +61,8 @@ final class PlaybackPanel extends javax.swing.JPanel {
         playbackLatencyCorrection = new javax.swing.JTextField();
         jLabel3 = new javax.swing.JLabel();
         followPlayback = new javax.swing.JCheckBox();
+        jLabel4 = new javax.swing.JLabel();
+        followPlaybackOnRenderStart = new javax.swing.JCheckBox();
 
         org.openide.awt.Mnemonics.setLocalizedText(jLabel1, org.openide.util.NbBundle.getMessage(PlaybackPanel.class, "PlaybackPanel.jLabel1.text_1")); // NOI18N
 
@@ -85,6 +87,16 @@ final class PlaybackPanel extends javax.swing.JPanel {
             }
         });
 
+        jLabel4.setHorizontalAlignment(javax.swing.SwingConstants.TRAILING);
+        org.openide.awt.Mnemonics.setLocalizedText(jLabel4, org.openide.util.NbBundle.getMessage(PlaybackPanel.class, "PlaybackPanel.jLabel4.text")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(followPlaybackOnRenderStart, org.openide.util.NbBundle.getMessage(PlaybackPanel.class, "PlaybackPanel.followPlaybackOnRenderStart.text")); // NOI18N
+        followPlaybackOnRenderStart.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                followPlaybackOnRenderStartActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -92,17 +104,22 @@ final class PlaybackPanel extends javax.swing.JPanel {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
-                    .addComponent(jLabel2, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jLabel1, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jLabel3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(jLabel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jLabel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jLabel3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jLabel4, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(playbackLatencyCorrection, javax.swing.GroupLayout.DEFAULT_SIZE, 310, Short.MAX_VALUE)
-                    .addComponent(playbackFPS, javax.swing.GroupLayout.DEFAULT_SIZE, 310, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(followPlayback)
-                        .addGap(0, 0, Short.MAX_VALUE)))
-                .addContainerGap())
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(playbackLatencyCorrection, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 310, Short.MAX_VALUE)
+                            .addComponent(playbackFPS, javax.swing.GroupLayout.Alignment.TRAILING))
+                        .addGap(6, 6, 6))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(followPlayback)
+                            .addComponent(followPlaybackOnRenderStart))
+                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -119,7 +136,11 @@ final class PlaybackPanel extends javax.swing.JPanel {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel3)
                     .addComponent(followPlayback))
-                .addContainerGap(64, Short.MAX_VALUE))
+                .addGap(9, 9, 9)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jLabel4)
+                    .addComponent(followPlaybackOnRenderStart))
+                .addContainerGap(36, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -135,6 +156,12 @@ final class PlaybackPanel extends javax.swing.JPanel {
         }
      }//GEN-LAST:event_followPlaybackActionPerformed
 
+    private void followPlaybackOnRenderStartActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_followPlaybackOnRenderStartActionPerformed
+        if (!loading) {
+            controller.changed();
+        }
+    }//GEN-LAST:event_followPlaybackOnRenderStartActionPerformed
+
     void load() {
         loading = true;
 
@@ -144,6 +171,7 @@ final class PlaybackPanel extends javax.swing.JPanel {
         playbackLatencyCorrection.setText(
                 Float.toString(settings.getPlaybackLatencyCorrection()));
         followPlayback.setSelected(settings.isFollowPlayback());
+        followPlaybackOnRenderStart.setSelected(settings.isFollowPlaybackOnStart());
         
         loading = false;
     }
@@ -159,6 +187,7 @@ final class PlaybackPanel extends javax.swing.JPanel {
         }
 
         settings.setFollowPlayback(followPlayback.isSelected());
+        settings.setFollowPlaybackOnStart(followPlaybackOnRenderStart.isSelected());        
         settings.save();
 
     }
@@ -170,9 +199,11 @@ final class PlaybackPanel extends javax.swing.JPanel {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JCheckBox followPlayback;
+    private javax.swing.JCheckBox followPlaybackOnRenderStart;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
+    private javax.swing.JLabel jLabel4;
     private javax.swing.JSpinner playbackFPS;
     private javax.swing.JTextField playbackLatencyCorrection;
     // End of variables declaration//GEN-END:variables

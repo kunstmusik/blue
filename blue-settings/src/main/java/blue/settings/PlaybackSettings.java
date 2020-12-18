@@ -34,10 +34,12 @@ public class PlaybackSettings {
     private static final String PLAYBACK_FPS = "playbackFPS";
     private static final String PLAYBACK_LATENCY_CORRECTION = "playbackLatencyCorrection";
     private static final String FOLLOW_PLAYBACK = "followPlayback";
+    private static final String FOLLOW_PLAYBACK_ON_START = "followPlaybackOnStart";
     
     private int playbackFPS;
     private float playbackLatencyCorrection;
     private boolean followPlayback;
+    private boolean followPlaybackOnStart;
     private static PlaybackSettings instance = null;
 
     private PlaybackSettings() {
@@ -58,6 +60,8 @@ public class PlaybackSettings {
                     prefs.getFloat(PREFIX + PLAYBACK_LATENCY_CORRECTION, 0.00f);
             instance.followPlayback =
                     prefs.getBoolean(PREFIX + FOLLOW_PLAYBACK, true);
+            instance.followPlaybackOnStart =
+                    prefs.getBoolean(PREFIX + FOLLOW_PLAYBACK_ON_START, true);
         }
 
         return instance;
@@ -70,6 +74,7 @@ public class PlaybackSettings {
         prefs.putFloat(PREFIX + PLAYBACK_LATENCY_CORRECTION,
                 playbackLatencyCorrection);
         prefs.putBoolean(PREFIX + FOLLOW_PLAYBACK, followPlayback);
+        prefs.putBoolean(PREFIX + FOLLOW_PLAYBACK_ON_START, followPlaybackOnStart);
         
         try {
             prefs.sync();
@@ -113,4 +118,14 @@ public class PlaybackSettings {
     public void setFollowPlayback(boolean followPlayback) {
         this.followPlayback = followPlayback;
     }
+
+    public boolean isFollowPlaybackOnStart() {
+        return followPlaybackOnStart;
+    }
+
+    public void setFollowPlaybackOnStart(boolean followPlaybackOnStart) {
+        this.followPlaybackOnStart = followPlaybackOnStart;
+    }
+    
+    
 }
