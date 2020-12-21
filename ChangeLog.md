@@ -97,6 +97,8 @@ information.
 
 * Default SoundObject duration changed to 4 beats from 2
 
+* Jython interpreter updated to 2.7.2
+
 ### FIX
 
 * BSB: PresetManager dialog had bugs when dragging and dropping nodes around
