@@ -45,7 +45,7 @@ public final class EnableFollowScorePlaybackOnStartAction extends AbstractAction
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        prefs.setFollowPlaybackOnStart(menuItem.isSelected());
+        prefs.setFollowPlaybackOnStart(!prefs.isFollowPlaybackOnStart());
         prefs.save();
 
     }

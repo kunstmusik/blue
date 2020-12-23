@@ -45,7 +45,7 @@ public final class FollowScorePlaybackAction extends AbstractAction implements P
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        prefs.setFollowPlayback(menuItem.isSelected());
+        prefs.setFollowPlayback(!prefs.isFollowPlayback());
         prefs.save();
 
     }
