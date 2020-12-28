@@ -359,7 +359,7 @@ public final class ScoreTopComponent extends TopComponent
 
             Tempo tempo = data.getScore().getTempo();
             tempoControlPanel.setTempo(tempo);
-            tempoEditor.setTempo(tempo);
+            tempoEditor.setData(data);
 
             timeBar.setData(data);
             markersBar.setData(data);

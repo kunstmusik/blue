@@ -4,10 +4,12 @@
  */
 package blue.ui.core.score.tempo;
 
+import blue.BlueData;
 import blue.components.DragDirection;
 import blue.components.lines.Line;
 import blue.components.lines.LineEditorDialog;
 import blue.components.lines.LinePoint;
+import blue.score.Score;
 import blue.score.TimeState;
 import blue.score.tempo.Tempo;
 import blue.ui.core.score.ModeManager;
@@ -54,6 +56,7 @@ public class TempoEditor extends JComponent implements PropertyChangeListener {
 
     TableModelListener lineListener;
     Tempo tempo = null;
+    Score score = null;
     private TimeState timeState;
 
     LinePoint selectedPoint = null;
@@ -72,15 +75,24 @@ public class TempoEditor extends JComponent implements PropertyChangeListener {
         this.addMouseMotionListener(tempoEditorMouseListener);
     }
 
-    public void setTempo(Tempo tempo) {
+    public void setData(BlueData data) {
+        var score = data.getScore();
+        Tempo tempo = score.getTempo();
+
         if (this.tempo != null) {
             this.tempo.getLine().removeTableModelListener(lineListener);
             this.tempo.removePropertyChangeListener(this);
         }
 
+        if (this.score != null) {
+            score.getTimeState().removePropertyChangeListener(this);
+        }
+
         this.tempo = tempo;
         this.tempo.getLine().addTableModelListener(lineListener);
         this.tempo.addPropertyChangeListener(this);
+        this.score = score;
+        this.score.getTimeState().addPropertyChangeListener(this);
         this.setTempoVisible(tempo.isVisible());
     }
 
@@ -109,7 +121,7 @@ public class TempoEditor extends JComponent implements PropertyChangeListener {
         }
 
         Graphics2D g2d = (Graphics2D) g;
-        g2d.setStroke(STROKE2);
+        
 
         RenderingHints hints = new RenderingHints(
                 RenderingHints.KEY_ANTIALIASING,
@@ -122,6 +134,32 @@ public class TempoEditor extends JComponent implements PropertyChangeListener {
 
         Line tempoLine = this.tempo.getLine();
         boolean enabled = this.tempo.isEnabled();
+
+        if (score.getTimeState().isSnapEnabled()) {
+            if (timeState.isSnapEnabled()) {
+                g2d.setColor(Color.DARK_GRAY);
+
+                int snapPixels = (int) (timeState.getSnapValue() * timeState.getPixelSecond());
+
+                int x = 0;
+                if (snapPixels <= 0) {
+                    return;
+                }
+
+                int height = getHeight();
+                int width = getWidth();
+                double snapValue = timeState.getSnapValue();
+                int pixelSecond = timeState.getPixelSecond();
+
+                for (int i = 0; x < width; i++) {
+                    x = (int) ((i * snapValue) * pixelSecond);
+                    g.drawLine(x, 0, x, height);
+                }
+
+            }
+        }
+        
+        g2d.setStroke(STROKE2);
 
         if (enabled) {
             if (tempo.isVisible()) {
@@ -622,13 +660,17 @@ public class TempoEditor extends JComponent implements PropertyChangeListener {
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
         String prop = evt.getPropertyName();
-        switch (prop) {
-            case "enabled":
-                repaint();
-                break;
-            case "visible":
-                this.setTempoVisible(((Boolean) evt.getNewValue()).booleanValue());
-                break;
+        if (evt.getSource() == this.tempo) {
+            switch (prop) {
+                case "enabled":
+                    repaint();
+                    break;
+                case "visible":
+                    this.setTempoVisible(((Boolean) evt.getNewValue()).booleanValue());
+                    break;
+            }
+        } else if (evt.getSource() == this.score.getTimeState()) {
+            repaint();
         }
     }
 
