@@ -408,7 +408,17 @@ public class TableCanvas extends JComponent {
             } else {
                 if (SwingUtilities.isLeftMouseButton(e)) {
 
-                    selectedPoint = insertGraphPoint(e.getX(), e.getY());
+                    int x = e.getX();
+                    int y = e.getY();
+
+                    // INSERTING NEW LINE POINT
+                    if ((e.getModifiersEx() & MouseEvent.ALT_DOWN_MASK) == MouseEvent.ALT_DOWN_MASK) {
+                        // ...ON THE EXISTING LINE 
+                        final var time = screenToDoubleX(x);
+                        y = doubleToScreenY(table.getValue(time), table.getMin(), table.getMax());
+                    }
+
+                    selectedPoint = insertGraphPoint(x, y);
                     setBoundaryXValues();
                     // repaint();
 

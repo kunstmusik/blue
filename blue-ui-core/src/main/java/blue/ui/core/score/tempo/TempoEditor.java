@@ -16,6 +16,7 @@ import blue.ui.core.score.ModeManager;
 import blue.ui.utilities.UiUtilities;
 import blue.utility.GUI;
 import blue.utility.NumberUtilities;
+import blue.utility.ScoreUtilities;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Component;
@@ -28,9 +29,8 @@ import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.Stroke;
 import java.awt.event.ActionEvent;
+import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
-import java.awt.event.MouseMotionListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import javax.swing.AbstractAction;
@@ -68,8 +68,7 @@ public class TempoEditor extends JComponent implements PropertyChangeListener {
             repaint();
         };
 
-        TempoEditorMouseListener tempoEditorMouseListener
-                = new TempoEditorMouseListener(this);
+        final var tempoEditorMouseListener = new TempoEditorMouseListener();
 
         this.addMouseListener(tempoEditorMouseListener);
         this.addMouseMotionListener(tempoEditorMouseListener);
@@ -121,7 +120,6 @@ public class TempoEditor extends JComponent implements PropertyChangeListener {
         }
 
         Graphics2D g2d = (Graphics2D) g;
-        
 
         RenderingHints hints = new RenderingHints(
                 RenderingHints.KEY_ANTIALIASING,
@@ -158,7 +156,7 @@ public class TempoEditor extends JComponent implements PropertyChangeListener {
 
             }
         }
-        
+
         g2d.setStroke(STROKE2);
 
         if (enabled) {
@@ -416,18 +414,12 @@ public class TempoEditor extends JComponent implements PropertyChangeListener {
      * @param y
      * @return
      */
-    protected LinePoint insertGraphPoint(int x, int y) {
-        LinePoint point = new LinePoint();
-
-        Line currentLine = tempo.getLine();
-
-        double min = currentLine.getMin();
-        double max = currentLine.getMax();
-
-        point.setLocation(screenToDoubleX(x), screenToDoubleY(y, min, max,
-                -1));
+    protected LinePoint insertGraphPoint(double time, double value) {
+        LinePoint point = new LinePoint(time, value);
 
         int index = 1;
+
+        Line currentLine = tempo.getLine();
 
         LinePoint last = currentLine.getLinePoint(currentLine.size() - 1);
 
@@ -490,27 +482,10 @@ public class TempoEditor extends JComponent implements PropertyChangeListener {
         return null;
     }
 
-    public class TempoEditorMouseListener implements MouseListener, MouseMotionListener {
+    public class TempoEditorMouseListener extends MouseAdapter {
 
-        TempoEditor tempoEditor;
         DragDirection direction = DragDirection.NOT_SET;
         Point pressPoint = null;
-
-        public TempoEditorMouseListener(TempoEditor tempoEditor) {
-            this.tempoEditor = tempoEditor;
-        }
-
-        @Override
-        public void mouseClicked(MouseEvent e) {
-        }
-
-        @Override
-        public void mouseEntered(MouseEvent e) {
-        }
-
-        @Override
-        public void mouseExited(MouseEvent e) {
-        }
 
         @Override
         public void mousePressed(MouseEvent e) {
@@ -536,18 +511,29 @@ public class TempoEditor extends JComponent implements PropertyChangeListener {
 
                     int start = e.getX();
 
-                    if (timeState.isSnapEnabled() && !e.isShiftDown()) {
-                        int snapPixels = (int) (timeState.getSnapValue() * timeState.getPixelSecond());
-                        int fraction = start % snapPixels;
+                    double startTime = start / timeState.getPixelSecond();
 
-                        start = start - fraction;
-
-                        if (fraction > snapPixels / 2) {
-                            start += snapPixels;
-                        }
+                    if (timeState.isSnapEnabled() && !(e.isControlDown() && e.isShiftDown())) {
+                        startTime = ScoreUtilities.getSnapValueStart(startTime, timeState.getSnapValue());
                     }
 
-                    selectedPoint = insertGraphPoint(start, e.getY());
+                    final var line = tempo.getLine();
+                    // INSERTING NEW LINE POINT
+                    if ((e.getModifiersEx() & MouseEvent.ALT_DOWN_MASK) == MouseEvent.ALT_DOWN_MASK) {
+                        // ...ON THE EXISTING LINE 
+                        final var time = screenToDoubleX(start);
+                        final var value = line.getValue(time);
+                        selectedPoint = insertGraphPoint(time, value);
+                    } else {
+                        // .. AT THE LOCATION OF THE MOUSE CLICK
+                        double min = line.getMin();
+                        double max = line.getMax();
+
+                        double time = screenToDoubleX(start);
+                        double value = screenToDoubleY(e.getY(), min, max, -1.0);
+                        selectedPoint = insertGraphPoint(time, value);
+                    }
+
                     setBoundaryXValues();
                 } else if (UiUtilities.isRightMouseButton(e)) {
                     if (popup == null) {

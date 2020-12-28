@@ -58,6 +58,10 @@ public class SoundObjectParameterLine extends Line {
         double t = (time - start) / source.getSubjectiveDuration();
         return super.getValue(t);
     }
+    
+    public double getNormalizedTimeValue(double time) {
+        return super.getValue(time);
+    }
    
     public double getSourceStart() {
         return source.getStartTime();
