@@ -11,7 +11,7 @@ information.
 
 # CHANGE LOG
 
-## [2.8.1] - 2020-xx-xx
+## [2.8.1] - 2020-12-29
 
 ### NEW
 

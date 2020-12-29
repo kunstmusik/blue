@@ -7,10 +7,10 @@
 
 
     <property name="CS_MANUAL_ZIP"
-              value="Csound6.14.0_manual_html.zip"/>
+              value="Csound6.15.0_manual_html.zip"/>
 
     <property name="CS_MANUAL_URL"
-    value="https://github.com/csound/manual/releases/download/6.14.0/${CS_MANUAL_ZIP}"/>
+    value="https://github.com/csound/manual/releases/download/6.15.0/${CS_MANUAL_ZIP}"/>
 
     <target name="dir.check">
       <condition property="dir.exists">
