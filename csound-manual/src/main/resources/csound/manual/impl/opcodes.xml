@@ -604,7 +604,7 @@
       </opcode>
       <opcode>
         <name>lpshold</name>
-        <signature>ksig 	lpshold	 kfreq, ktrig, iphase, ktime0, kvalue0  [, kvalue1] [, ktime1] [, kvalue2] [, ktime2] [...]</signature>
+        <signature>ksig 	lpshold	 kfreq, ktrig, iphase, kvalue0, ktime0  [, kvalue1] [, ktime1] [, kvalue2] [, ktime2] [...]</signature>
       </opcode>
       <opcode>
         <name>lpsholdp</name>
@@ -1078,6 +1078,10 @@
         <signature>kres 	jspline	 kamp, kcpsMin, kcpsMax</signature>
       </opcode>
       <opcode>
+        <name>lfsr</name>
+        <signature>knum 	lfsr	 ilen, iprob [, iseed]</signature>
+      </opcode>
+      <opcode>
         <name>linrand</name>
         <signature>ares 	linrand	 krange</signature>
       </opcode>
@@ -1190,8 +1194,8 @@
         <signature>kx 	rnd31	 kscl, krpow [, iseed]</signature>
       </opcode>
       <opcode>
-        <name>seed</name>
-        <signature>seed	 ival</signature>
+        <name>rndseed</name>
+        <signature>rndseed	 ival</signature>
       </opcode>
       <opcode>
         <name>rspline</name>
@@ -2002,6 +2006,10 @@
       asig11, asig12, asig13, asig14, asig15, asig16, asig17, asig18, \
       asig19, asig20, asig21, asig22, asig23, asig24, asig25, asig26, \
       asig27, asig28, asig29, asig30, asig31, asig32</signature>
+      </opcode>
+      <opcode>
+        <name>outall</name>
+        <signature>outall	 asig</signature>
       </opcode>
       <opcode>
         <name>outc</name>
@@ -3987,6 +3995,14 @@
       <opcode>
         <name>checkbox</name>
         <signature>kres 	checkbox	 knum</signature>
+      </opcode>
+      <opcode>
+        <name>cntDelete</name>
+        <signature>kval 	cntDelete	 icnt</signature>
+      </opcode>
+      <opcode>
+        <name>cntDelete_i</name>
+        <signature>ival 	cntDelete_i	 icnt</signature>
       </opcode>
       <opcode>
         <name>cntCreate</name>
@@ -6071,7 +6087,7 @@
     <opcodeGroup name="Note Output">
       <opcode>
         <name>midiarp</name>
-        <signature>kMidiNoteNum, kCounter 	midiarp	 kRate[, kMode]</signature>
+        <signature>kMidiNoteNum, kTrigger 	midiarp	 kRate[, kMode]</signature>
       </opcode>
       <opcode>
         <name>midion</name>
@@ -7941,7 +7957,7 @@
     </opcode>
     <opcode>
       <name>product</name>
-      <signature>kres/ires	product	 karr[]/iarr[]  (k- or i-arrays )</signature>
+      <signature>kres/ires 	product	 karr[]/iarr[]  (k- or i-arrays )</signature>
     </opcode>
     <opcode>
       <name>reshapearray</name>
@@ -7957,7 +7973,7 @@
     </opcode>
     <opcode>
       <name>setrow</name>
-      <signature>i/kout[] 	setrow	i/kin[],i/krow</signature>
+      <signature>i/kout[] 	setrow	 i/kin[],i/krow</signature>
     </opcode>
     <opcode>
       <name>shiftin</name>
@@ -8080,7 +8096,7 @@
     <opcodeGroup name=" dot product">
       <opcode>
         <name>dot</name>
-        <signature>kres/ires	dot	 karr1[]/iarr1[], karr2[]/iarr2[]   (k- or i-arrays )</signature>
+        <signature>kres/ires 	dot	 karr1[]/iarr1[], karr2[]/iarr2[]   (k- or i-arrays )</signature>
       </opcode>
     </opcodeGroup>
     <opcodeGroup name=" Mel scale filterbank">
