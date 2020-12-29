@@ -158,6 +158,17 @@ public class WindowSettingManager {
         }
 
     }
+    
+    public boolean isVisible(String windowName) {
+        if(settings.containsKey(windowName)) {
+           var setting = settings.get(windowName);
+           var visElem = setting.getElement("visible");
+           if(visElem != null) {
+               return XMLUtilities.readBoolean(visElem);
+           }
+        }
+        return false;
+    }
 
     public static Element getBasicSettings(Window window) {
         Element root = new Element("window");
@@ -166,6 +177,7 @@ public class WindowSettingManager {
         root.addElement(XMLUtilities.writeInt("y", window.getY()));
         root.addElement(XMLUtilities.writeInt("width", window.getWidth()));
         root.addElement(XMLUtilities.writeInt("height", window.getHeight()));
+        root.addElement(XMLUtilities.writeBoolean("visible", window.isShowing()));
 
         return root;
     }

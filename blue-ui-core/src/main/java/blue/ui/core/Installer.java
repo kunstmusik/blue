@@ -261,7 +261,12 @@ public class Installer extends ModuleInstall {
 
     @Override
     public boolean closing() {
-        return BlueProjectManager.getInstance().closeAllFiles();
+        boolean result = BlueProjectManager.getInstance().closeAllFiles();
+
+        if (result) {
+            WindowSettingManager.getInstance().save();
+        }
+        return result;
     }
 
     @Override
@@ -269,8 +274,6 @@ public class Installer extends ModuleInstall {
         backupFileSaver.quitFileSaver();
 
         saveLibraries();
-
-        WindowSettingManager.getInstance().save();
 
         MainToolBar.getInstance().stopRendering();
         BlueLiveToolBar.getInstance().stopRendering();

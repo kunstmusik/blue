@@ -20,6 +20,7 @@
 package blue.ui.core.score;
 
 import blue.BlueData;
+import blue.WindowSettingManager;
 import blue.automation.AutomationManager;
 import blue.automation.ParameterLinePanel;
 import blue.components.AlphaMarquee;
@@ -575,18 +576,6 @@ public final class ScoreTopComponent extends TopComponent
 
         JButton zoomButton = new JButton(IconFontSwing.buildIcon(Elusive.ZOOM_IN, 12, ICON_COLOR));
 
-        zoomButton.addActionListener(
-                (ActionEvent e) -> {
-                    if (navigator == null) {
-                        navigator = new ScoreNavigatorDialog(
-                                WindowManager.getDefault().getMainWindow());
-                        navigator.setJScrollPane(scrollPane);
-                        navigator.setLayerPanel(layerPanel);
-                    }
-                    navigator.setVisible(true);
-                }
-        );
-
         scrollPane.setColumnHeaderView(headerPanel);
 
         scrollPane.setCorner(JScrollPane.LOWER_RIGHT_CORNER, zoomButton);
@@ -649,6 +638,18 @@ public final class ScoreTopComponent extends TopComponent
 
         scorePanel.add(renderTimePointer, JLayeredPane.DRAG_LAYER);
 
+        navigator = ScoreNavigatorDialog.getInstance(
+                WindowManager.getDefault().getMainWindow());
+        navigator.setJScrollPane(scrollPane);
+        navigator.setLayerPanel(layerPanel);
+
+        zoomButton.addActionListener(
+                (ActionEvent e) -> navigator.setVisible(true)
+        );
+
+        if (WindowSettingManager.getInstance().isVisible(ScoreNavigatorDialog.WINDOW_SETTING_NAME)) {
+            navigator.setVisible(true);
+        }
     }
 
     private void init() {
