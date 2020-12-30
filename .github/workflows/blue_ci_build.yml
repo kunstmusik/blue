@@ -18,7 +18,7 @@ jobs:
       - uses: actions/upload-artifact@v2
         with:
           name: Blue (macOS .app)  
-          path: application/target/blue-macOS-2.8.1-dev.zip 
+          path: application/target/blue-macOS-2.8.1.zip 
   linux:
     runs-on: ubuntu-latest 
     steps:
@@ -32,12 +32,12 @@ jobs:
       - name: Build Blue 
         run: mvn -Dmaven.test.skip=true -Pgenerate-manual clean install
 
-      - run: mv application/target/blue-2.8.1-SNAPSHOT.zip blue-linux-2.8.1-SNAPSHOT.zip
+      - run: mv application/target/blue-2.8.1.zip blue-linux-2.8.1.zip
 
       - uses: actions/upload-artifact@v2
         with:
           name: Blue Linux Zip
-          path: blue-linux-2.8.1-SNAPSHOT.zip 
+          path: blue-linux-2.8.1.zip 
 
   windows:
     runs-on: windows-latest 
@@ -52,9 +52,9 @@ jobs:
       - name: Build Blue 
         run: mvn -Pgenerate-manual clean install
 
-      - run: mv application/target/blue-2.8.1-SNAPSHOT.zip blue-windows-2.8.1-SNAPSHOT.zip
+      - run: mv application/target/blue-2.8.1.zip blue-windows-2.8.1.zip
 
       - uses: actions/upload-artifact@v2
         with:
           name: Blue Windows Zip
-          path: blue-windows-2.8.1-SNAPSHOT.zip 
+          path: blue-windows-2.8.1.zip 
