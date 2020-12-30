@@ -197,6 +197,8 @@ public class CodeRepositoryDialog extends JDialog implements
                             cards.show(editPanel, "enabled");
                             selected = tempElem;
                             code1Text.setText(tempElem.text);
+                            code1Text.getJEditorPane().setCaretPosition(0);
+                            code1Text.resetUndoManager();
                         }
                         undo.discardAllEdits();
                     }

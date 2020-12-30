@@ -35,7 +35,7 @@ public class TimeWarpProcessor implements NoteProcessor {
      * @see blue.noteProcessor.NoteProcessor#processNotes(blue.soundObject.NoteList)
      */
     @Override
-    public void processNotes(NoteList in) throws NoteProcessorException {
+    public NoteList processNotes(NoteList in) throws NoteProcessorException {
         Note temp;
         TempoMapper tm = TempoMapper.createTempoMapper(this.timeWarpString);
 
@@ -63,6 +63,7 @@ public class TimeWarpProcessor implements NoteProcessor {
             }
             temp.setSubjectiveDuration(newEnd - newStart);
         }
+        return in;
     }
 
     @Override

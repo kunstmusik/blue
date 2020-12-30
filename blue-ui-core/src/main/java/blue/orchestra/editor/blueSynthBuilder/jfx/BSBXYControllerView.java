@@ -22,8 +22,10 @@ package blue.orchestra.editor.blueSynthBuilder.jfx;
 import blue.jfx.BlueFX;
 import blue.orchestra.blueSynthBuilder.BSBXYController;
 import blue.orchestra.blueSynthBuilder.ClampedValue;
+import blue.orchestra.editor.blueSynthBuilder.BSBPreferences;
 import javafx.beans.value.ChangeListener;
 import javafx.scene.control.Label;
+import javafx.scene.control.Tooltip;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
@@ -42,6 +44,8 @@ public class BSBXYControllerView extends BorderPane implements ResizeableView {
     Rectangle xLine = new Rectangle();
     Rectangle rect = new Rectangle(3, 3);
     Label label = new Label();
+
+    Tooltip tooltip = BSBTooltipUtil.createTooltip();
 
     public BSBXYControllerView(BSBXYController bsbXYController) {
         setUserData(bsbXYController);
@@ -106,6 +110,18 @@ public class BSBXYControllerView extends BorderPane implements ResizeableView {
             BlueFX.runOnFXThread(r);
         };
 
+        ChangeListener<Object> toolTipListener = (obs, old, newVal) -> {
+            BlueFX.runOnFXThread(() -> {
+                var comment = bsbXYController.getComment();
+                var showComments = BSBPreferences.getInstance().getShowWidgetComments();
+                if (comment == null || comment.isBlank() || !showComments) {
+                    BSBTooltipUtil.install(this, null);
+                } else {
+                    BSBTooltipUtil.install(this, tooltip);
+                }
+            });
+        };
+
         sceneProperty().addListener((obs, old, newVal) -> {
             if (newVal == null) {
                 pane.prefWidthProperty().unbind();
@@ -127,6 +143,13 @@ public class BSBXYControllerView extends BorderPane implements ResizeableView {
                 bsbXYController.heightProperty().removeListener(labelListener);
                 bsbXYController.widthProperty().removeListener(xListener);
                 bsbXYController.widthProperty().removeListener(labelListener);
+
+                BSBPreferences.getInstance().showWidgetCommentsProperty()
+                        .removeListener(toolTipListener);
+
+                bsbXYController.commentProperty().removeListener(toolTipListener);
+                tooltip.textProperty().unbind();
+                BSBTooltipUtil.install(this, null);
             } else {
 
                 pane.prefWidthProperty().bind(bsbXYController.widthProperty());
@@ -152,6 +175,13 @@ public class BSBXYControllerView extends BorderPane implements ResizeableView {
 
                 bsbXYController.valueDisplayEnabledProperty().addListener(
                         displayVisibleListener);
+
+                BSBPreferences.getInstance().showWidgetCommentsProperty()
+                        .addListener(toolTipListener);
+
+                bsbXYController.commentProperty().addListener(toolTipListener);
+                tooltip.textProperty().bind(bsbXYController.commentProperty());
+                toolTipListener.changed(null, null, null);
             }
         });
     }

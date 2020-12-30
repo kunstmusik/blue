@@ -37,9 +37,9 @@ import java.util.List;
  */
 public class ScorePath {
 
-    private WeakReference<Score> scoreRef;
-    private List<WeakReference<LayerGroup>> layerGroups = new ArrayList<>();
-    private List<Point> scrollLocations = new ArrayList<>();
+    private final WeakReference<Score> scoreRef;
+    private final List<WeakReference<LayerGroup>> layerGroups = new ArrayList<>();
+    private final List<Point> scrollLocations = new ArrayList<>();
 
     public ScorePath(Score score) {
         this.scoreRef = new WeakReference<>(score);

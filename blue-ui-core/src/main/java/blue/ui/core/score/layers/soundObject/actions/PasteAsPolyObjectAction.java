@@ -61,11 +61,11 @@ import org.openide.util.Utilities;
         position = 60, separatorAfter = 65)
 public final class PasteAsPolyObjectAction extends AbstractAction implements ContextAwareAction {
 
-    private List<? extends ScoreObject> scoreObjects;
-    private List<Integer> layerIndexes;
-    private Point p;
-    private TimeState timeState;
-    private PolyObject pObj = new PolyObject();
+    private final List<? extends ScoreObject> scoreObjects;
+    private final List<Integer> layerIndexes;
+    private final Point p;
+    private final TimeState timeState;
+    private final PolyObject pObj = new PolyObject();
     private final ScorePath scorePath;
 
     public PasteAsPolyObjectAction() {

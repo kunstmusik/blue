@@ -25,20 +25,19 @@ import org.openide.awt.UndoRedo;
  *
  * @author steven
  */
-
 @InstrumentEditorPlugin(instrumentType = PythonInstrument.class)
 public class PythonInstrumentEditor extends InstrumentEditor {
 
-    private static HashMap tokenMarkerTypes = new HashMap();
-    
-    protected MimeTypeEditorComponent codeEditor =
-            new MimeTypeEditorComponent("text/x-python");
-    
-    protected MimeTypeEditorComponent globalOrcEditor =
-            new MimeTypeEditorComponent("text/x-csound-orc");
-    
-    protected MimeTypeEditorComponent globalScoEditor =
-            new MimeTypeEditorComponent("text/x-csound-sco");
+    private static final HashMap tokenMarkerTypes = new HashMap();
+
+    protected MimeTypeEditorComponent codeEditor
+            = new MimeTypeEditorComponent("text/x-python");
+
+    protected MimeTypeEditorComponent globalOrcEditor
+            = new MimeTypeEditorComponent("text/x-csound-orc");
+
+    protected MimeTypeEditorComponent globalScoEditor
+            = new MimeTypeEditorComponent("text/x-csound-sco");
 
     PythonInstrument instr;
     EmbeddedOpcodeListPanel udoPanel = new EmbeddedOpcodeListPanel();
@@ -60,33 +59,33 @@ public class PythonInstrumentEditor extends InstrumentEditor {
 
         globalOrcEditor.getDocument().addDocumentListener(
                 new SimpleDocumentListener() {
-                    @Override
-                    public void documentChanged(DocumentEvent e) {
-                        if (instr != null) {
-                            instr.setGlobalOrc(globalOrcEditor.getText());
-                        }
-                    }
-                });
+            @Override
+            public void documentChanged(DocumentEvent e) {
+                if (instr != null) {
+                    instr.setGlobalOrc(globalOrcEditor.getText());
+                }
+            }
+        });
 
         globalScoEditor.getDocument().addDocumentListener(
                 new SimpleDocumentListener() {
-                    @Override
-                    public void documentChanged(DocumentEvent e) {
-                        if (instr != null) {
-                            instr.setGlobalSco(globalScoEditor.getText());
-                        }
-                    }
-                });
+            @Override
+            public void documentChanged(DocumentEvent e) {
+                if (instr != null) {
+                    instr.setGlobalSco(globalScoEditor.getText());
+                }
+            }
+        });
 
         codeEditor.getDocument().addDocumentListener(
                 new SimpleDocumentListener() {
-                    @Override
-                    public void documentChanged(DocumentEvent e) {
-                        if (instr != null) {
-                            instr.setText(codeEditor.getText());
-                        }
-                    }
-                });
+            @Override
+            public void documentChanged(DocumentEvent e) {
+                if (instr != null) {
+                    instr.setText(codeEditor.getText());
+                }
+            }
+        });
 
         new TabWatchingUndoableEditGenerator(tabs, undo);
 
@@ -119,7 +118,7 @@ public class PythonInstrumentEditor extends InstrumentEditor {
                     .getString("instrument.noEditorAvailable"));
             codeEditor
                     .setText(
-                    "[ERROR] GenericEditor::editInstrument - not instance of GenericEditable");
+                            "[ERROR] GenericEditor::editInstrument - not instance of GenericEditable");
             codeEditor.getJEditorPane().setEnabled(false);
             return;
         }
@@ -129,20 +128,22 @@ public class PythonInstrumentEditor extends InstrumentEditor {
 //        if (marker != null) {
 //            textEditPane.setTokenMarker((TokenMarker) marker);
 //        }
-
         this.instr = (PythonInstrument) instr;
 
         codeEditor.setText(this.instr.getText());
         codeEditor.getJEditorPane().setEnabled(true);
         codeEditor.getJEditorPane().setCaretPosition(0);
+        codeEditor.resetUndoManager();
 
         globalOrcEditor.setText(this.instr.getGlobalOrc());
         globalOrcEditor.getJEditorPane().setEnabled(true);
         globalOrcEditor.getJEditorPane().setCaretPosition(0);
+        globalOrcEditor.resetUndoManager();
 
         globalScoEditor.setText(this.instr.getGlobalSco());
         globalScoEditor.getJEditorPane().setEnabled(true);
         globalScoEditor.getJEditorPane().setCaretPosition(0);
+        globalScoEditor.resetUndoManager();
 
         udoPanel.editOpcodeList(this.instr.getOpcodeList());
 
@@ -205,7 +206,7 @@ public class PythonInstrumentEditor extends InstrumentEditor {
         String instrumentText = ((Instrument) this.instr).generateInstrument();
         InfoDialog.showInformationDialog(SwingUtilities.getRoot(this),
                 instrumentText, BlueSystem
-                .getString("instrument.generatedInstrument"));
+                        .getString("instrument.generatedInstrument"));
     }// GEN-LAST:event_testButtonActionPerformed
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel editorLabel;

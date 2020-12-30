@@ -35,7 +35,7 @@ import javax.swing.table.TableCellEditor;
 public class ColorCellEditor implements TableCellEditor {
 
     protected transient List<CellEditorListener> listeners = null;
-    private ColorSelectionPanel panel = new ColorSelectionPanel();
+    private final ColorSelectionPanel panel = new ColorSelectionPanel();
 
     public ColorCellEditor() {
         panel.addPropertyChangeListener((PropertyChangeEvent evt) -> {

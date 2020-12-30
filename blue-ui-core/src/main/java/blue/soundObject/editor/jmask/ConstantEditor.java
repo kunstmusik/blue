@@ -32,7 +32,7 @@ import javax.swing.event.DocumentEvent;
  */
 public class ConstantEditor extends javax.swing.JPanel implements DurationSettable {
 
-    private Constant constant;
+    private final Constant constant;
 
     Border normalBorder;
 

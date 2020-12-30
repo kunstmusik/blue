@@ -33,36 +33,49 @@ public class PlaybackSettings {
     private static final String PREFIX = "playback.";
     private static final String PLAYBACK_FPS = "playbackFPS";
     private static final String PLAYBACK_LATENCY_CORRECTION = "playbackLatencyCorrection";
+    private static final String FOLLOW_PLAYBACK = "followPlayback";
+    private static final String FOLLOW_PLAYBACK_ON_START = "followPlaybackOnStart";
+    
     private int playbackFPS;
     private float playbackLatencyCorrection;
+    private boolean followPlayback;
+    private boolean followPlaybackOnStart;
     private static PlaybackSettings instance = null;
 
     private PlaybackSettings() {
     }
 
+    public static Preferences getPreferences() {
+        return NbPreferences.forModule(PlaybackSettings.class);
+    }
+    
     public static PlaybackSettings getInstance() {
         if (instance == null) {
             instance = new PlaybackSettings();
 
-            final Preferences prefs = NbPreferences.forModule(
-                    PlaybackSettings.class);
+            final Preferences prefs = getPreferences();
 
             instance.playbackFPS = prefs.getInt(PREFIX + PLAYBACK_FPS, 24);
             instance.playbackLatencyCorrection =
                     prefs.getFloat(PREFIX + PLAYBACK_LATENCY_CORRECTION, 0.00f);
-
+            instance.followPlayback =
+                    prefs.getBoolean(PREFIX + FOLLOW_PLAYBACK, true);
+            instance.followPlaybackOnStart =
+                    prefs.getBoolean(PREFIX + FOLLOW_PLAYBACK_ON_START, true);
         }
 
         return instance;
     }
 
     public void save() {
-        final Preferences prefs = NbPreferences.forModule(PlaybackSettings.class);
+        final Preferences prefs = getPreferences();
 
         prefs.putInt(PREFIX + PLAYBACK_FPS, playbackFPS);
         prefs.putFloat(PREFIX + PLAYBACK_LATENCY_CORRECTION,
                 playbackLatencyCorrection);
-
+        prefs.putBoolean(PREFIX + FOLLOW_PLAYBACK, followPlayback);
+        prefs.putBoolean(PREFIX + FOLLOW_PLAYBACK_ON_START, followPlaybackOnStart);
+        
         try {
             prefs.sync();
         } catch (BackingStoreException ex) {
@@ -97,4 +110,22 @@ public class PlaybackSettings {
     public void setPlaybackLatencyCorrection(float playbackLatencyCorrection) {
         this.playbackLatencyCorrection = playbackLatencyCorrection;
     }
+
+    public boolean isFollowPlayback() {
+        return followPlayback;
+    }
+
+    public void setFollowPlayback(boolean followPlayback) {
+        this.followPlayback = followPlayback;
+    }
+
+    public boolean isFollowPlaybackOnStart() {
+        return followPlaybackOnStart;
+    }
+
+    public void setFollowPlaybackOnStart(boolean followPlaybackOnStart) {
+        this.followPlaybackOnStart = followPlaybackOnStart;
+    }
+    
+    
 }

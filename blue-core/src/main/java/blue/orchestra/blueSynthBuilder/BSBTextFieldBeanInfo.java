@@ -36,18 +36,20 @@ public class BSBTextFieldBeanInfo extends SimpleBeanInfo {
 
 
     // Property identifiers//GEN-FIRST:Properties
-    private static final int PROPERTY_objectName = 0;
-    private static final int PROPERTY_textFieldWidth = 1;
-    private static final int PROPERTY_value = 2;
-    private static final int PROPERTY_x = 3;
-    private static final int PROPERTY_y = 4;
+    private static final int PROPERTY_comment = 0;
+    private static final int PROPERTY_objectName = 1;
+    private static final int PROPERTY_textFieldWidth = 2;
+    private static final int PROPERTY_value = 3;
+    private static final int PROPERTY_x = 4;
+    private static final int PROPERTY_y = 5;
 
     // Property array 
     /*lazy PropertyDescriptor*/
     private static PropertyDescriptor[] getPdescriptor(){
-        PropertyDescriptor[] properties = new PropertyDescriptor[5];
+        PropertyDescriptor[] properties = new PropertyDescriptor[6];
     
         try {
+            properties[PROPERTY_comment] = new PropertyDescriptor ( "comment", blue.orchestra.blueSynthBuilder.BSBTextField.class, "getComment", "setComment" ); // NOI18N
             properties[PROPERTY_objectName] = new PropertyDescriptor ( "objectName", blue.orchestra.blueSynthBuilder.BSBTextField.class, "getObjectName", "setObjectName" ); // NOI18N
             properties[PROPERTY_textFieldWidth] = new PropertyDescriptor ( "textFieldWidth", blue.orchestra.blueSynthBuilder.BSBTextField.class, "getTextFieldWidth", "setTextFieldWidth" ); // NOI18N
             properties[PROPERTY_value] = new PropertyDescriptor ( "value", blue.orchestra.blueSynthBuilder.BSBTextField.class, "getValue", "setValue" ); // NOI18N
@@ -74,7 +76,7 @@ public class BSBTextFieldBeanInfo extends SimpleBeanInfo {
     // Method identifiers//GEN-FIRST:Methods
 
     // Method array 
-    private static MethodDescriptor[] methods = new MethodDescriptor[0];
+    private static final MethodDescriptor[] methods = new MethodDescriptor[0];
 
     private static MethodDescriptor[] getMdescriptor(){
         return methods;
@@ -87,10 +89,10 @@ public class BSBTextFieldBeanInfo extends SimpleBeanInfo {
     private static java.awt.Image iconColor32 = null;
     private static java.awt.Image iconMono16 = null;
     private static java.awt.Image iconMono32 = null;//GEN-END:IconsDef
-    private static String iconNameC16 = null;//GEN-BEGIN:Icons
-    private static String iconNameC32 = null;
-    private static String iconNameM16 = null;
-    private static String iconNameM32 = null;//GEN-END:Icons
+    private static final String iconNameC16 = null;//GEN-BEGIN:Icons
+    private static final String iconNameC32 = null;
+    private static final String iconNameM16 = null;
+    private static final String iconNameM32 = null;//GEN-END:Icons
 
     private static final int defaultPropertyIndex = -1;//GEN-BEGIN:Idx
     private static final int defaultEventIndex = -1;//GEN-END:Idx

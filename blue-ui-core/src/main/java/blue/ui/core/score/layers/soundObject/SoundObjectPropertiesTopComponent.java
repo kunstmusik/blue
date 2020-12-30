@@ -25,6 +25,7 @@ import blue.score.ScoreObject;
 import blue.soundObject.SoundObject;
 import blue.score.ScoreObjectEvent;
 import blue.score.ScoreObjectListener;
+import blue.soundObject.TimeBehavior;
 import blue.ui.core.score.NoteProcessorChainEditor;
 import blue.ui.core.score.layers.SoundObjectProvider;
 import blue.ui.core.score.undo.ResizeScoreObjectEdit;
@@ -33,7 +34,9 @@ import blue.ui.utilities.SimpleDocumentListener;
 import blue.undo.BlueUndoManager;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import javax.swing.event.DocumentEvent;
 import org.netbeans.api.settings.ConvertAsProperties;
 import org.openide.awt.ActionID;
@@ -72,6 +75,16 @@ import org.openide.windows.TopComponent;
 })
 public final class SoundObjectPropertiesTopComponent extends TopComponent implements ScoreObjectListener, LookupListener {
 
+    private static final List<TimeBehavior> TIME_BEHAVIOR_INDEX_LIST;
+
+    static {
+        TIME_BEHAVIOR_INDEX_LIST = new ArrayList<>();
+        TIME_BEHAVIOR_INDEX_LIST.add(TimeBehavior.SCALE);
+        TIME_BEHAVIOR_INDEX_LIST.add(TimeBehavior.REPEAT);
+        TIME_BEHAVIOR_INDEX_LIST.add(TimeBehavior.REPEAT_CLASSIC);
+        TIME_BEHAVIOR_INDEX_LIST.add(TimeBehavior.NONE);
+    }
+
     private ScoreObject sObj = null;
 
     private static SoundObjectPropertiesTopComponent instance;
@@ -82,8 +95,8 @@ public final class SoundObjectPropertiesTopComponent extends TopComponent implem
 
     Lookup.Result<ScoreObject> result = null;
 
-    NoteProcessorChainEditor noteProcessorChainEditor2 = 
-            new NoteProcessorChainEditor();
+    NoteProcessorChainEditor noteProcessorChainEditor2
+            = new NoteProcessorChainEditor();
 
     private SoundObjectPropertiesTopComponent() {
         initComponents();
@@ -96,20 +109,20 @@ public final class SoundObjectPropertiesTopComponent extends TopComponent implem
 
         npcEditorPanel.setLayout(new BorderLayout());
         npcEditorPanel.add(noteProcessorChainEditor2, BorderLayout.CENTER);
-        noteProcessorChainEditor2.setMinimumSize(new Dimension(0,0));
+        noteProcessorChainEditor2.setMinimumSize(new Dimension(0, 0));
 
         nameText.getDocument().addDocumentListener(
                 new SimpleDocumentListener() {
 
-                    @Override
-                    public void documentChanged(DocumentEvent e) {
-                        if (nameText.getText() != null && sObj != null) {
-                            isUpdating = true;
-                            updateName();
-                            isUpdating = false;
-                        }
-                    }
-                });
+            @Override
+            public void documentChanged(DocumentEvent e) {
+                if (nameText.getText() != null && sObj != null) {
+                    isUpdating = true;
+                    updateName();
+                    isUpdating = false;
+                }
+            }
+        });
 
     }
 
@@ -137,20 +150,24 @@ public final class SoundObjectPropertiesTopComponent extends TopComponent implem
             updateProperties();
             colorPanel.setColor(sObj.getBackgroundColor());
 
-
             if (soundObj != null) {
                 noteProcessorChainEditor2.setNoteProcessorChain(
-                    soundObj.getNoteProcessorChain());
-                final int timeBehavior = soundObj.getTimeBehavior();
-                if (timeBehavior == SoundObject.TIME_BEHAVIOR_NOT_SUPPORTED) {
+                        soundObj.getNoteProcessorChain());
+                final var timeBehavior = soundObj.getTimeBehavior();
+                if (timeBehavior == TimeBehavior.NOT_SUPPORTED) {
                     timeBehaviorBox.setEnabled(false);
                     useRepeatPoint.setEnabled(false);
                     repeatePointText.setEnabled(false);
                 } else {
                     timeBehaviorBox.setEnabled(true);
-                    timeBehaviorBox.setSelectedIndex(timeBehavior);
 
-                    if (timeBehavior == SoundObject.TIME_BEHAVIOR_REPEAT) {
+                    var tb = timeBehavior;
+                    int tbBoxIndex = TIME_BEHAVIOR_INDEX_LIST.indexOf(tb);
+
+                    timeBehaviorBox.setSelectedIndex(tbBoxIndex);
+
+                    if (timeBehavior == TimeBehavior.REPEAT
+                            || timeBehavior == TimeBehavior.REPEAT_CLASSIC) {
 
                         useRepeatPoint.setEnabled(true);
 
@@ -260,9 +277,11 @@ public final class SoundObjectPropertiesTopComponent extends TopComponent implem
 
         SoundObject soundObj = (SoundObject) sObj;
 
-        soundObj.setTimeBehavior(timeBehaviorBox.getSelectedIndex());
+        var timeBehaviorIndex = timeBehaviorBox.getSelectedIndex();
+        var tb = TIME_BEHAVIOR_INDEX_LIST.get(timeBehaviorIndex);
+        soundObj.setTimeBehavior(tb);
 
-        if (timeBehaviorBox.getSelectedIndex() == SoundObject.TIME_BEHAVIOR_REPEAT) {
+        if (tb == TimeBehavior.REPEAT || tb == TimeBehavior.REPEAT_CLASSIC) {
 
             boolean repeatPointUsed = soundObj.getRepeatPoint() > 0.0f;
 
@@ -539,7 +558,7 @@ public final class SoundObjectPropertiesTopComponent extends TopComponent implem
             }
         });
 
-        timeBehaviorBox.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Scale", "Repeat", "None" }));
+        timeBehaviorBox.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Scale", "Repeat", "Repeat (Classic)", "None" }));
         timeBehaviorBox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 timeBehaviorBoxActionPerformed(evt);

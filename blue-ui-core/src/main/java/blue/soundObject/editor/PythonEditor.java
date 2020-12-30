@@ -121,6 +121,7 @@ public class PythonEditor extends ScoreObjectEditor {
         codeEditor.setText(tempPObj.getText());
         codeEditor.getJEditorPane().setEnabled(true);
         codeEditor.getJEditorPane().setCaretPosition(0);
+        codeEditor.resetUndoManager();
 
         processOnLoadCheckBox.setSelected(tempPObj.isOnLoadProcessable());
         processOnLoadCheckBox.setEnabled(true);

@@ -37,26 +37,28 @@ public class BSBKnobBeanInfo extends SimpleBeanInfo {
 
     // Property identifiers//GEN-FIRST:Properties
     private static final int PROPERTY_automationAllowed = 0;
-    private static final int PROPERTY_knobWidth = 1;
-    private static final int PROPERTY_label = 2;
-    private static final int PROPERTY_labelEnabled = 3;
-    private static final int PROPERTY_labelFont = 4;
-    private static final int PROPERTY_maximum = 5;
-    private static final int PROPERTY_minimum = 6;
-    private static final int PROPERTY_objectName = 7;
-    private static final int PROPERTY_randomizable = 8;
-    private static final int PROPERTY_value = 9;
-    private static final int PROPERTY_valueDisplayEnabled = 10;
-    private static final int PROPERTY_x = 11;
-    private static final int PROPERTY_y = 12;
+    private static final int PROPERTY_comment = 1;
+    private static final int PROPERTY_knobWidth = 2;
+    private static final int PROPERTY_label = 3;
+    private static final int PROPERTY_labelEnabled = 4;
+    private static final int PROPERTY_labelFont = 5;
+    private static final int PROPERTY_maximum = 6;
+    private static final int PROPERTY_minimum = 7;
+    private static final int PROPERTY_objectName = 8;
+    private static final int PROPERTY_randomizable = 9;
+    private static final int PROPERTY_value = 10;
+    private static final int PROPERTY_valueDisplayEnabled = 11;
+    private static final int PROPERTY_x = 12;
+    private static final int PROPERTY_y = 13;
 
     // Property array 
     /*lazy PropertyDescriptor*/
     private static PropertyDescriptor[] getPdescriptor(){
-        PropertyDescriptor[] properties = new PropertyDescriptor[13];
+        PropertyDescriptor[] properties = new PropertyDescriptor[14];
     
         try {
             properties[PROPERTY_automationAllowed] = new PropertyDescriptor ( "automationAllowed", blue.orchestra.blueSynthBuilder.BSBKnob.class, "isAutomationAllowed", "setAutomationAllowed" ); // NOI18N
+            properties[PROPERTY_comment] = new PropertyDescriptor ( "comment", blue.orchestra.blueSynthBuilder.BSBKnob.class, "getComment", "setComment" ); // NOI18N
             properties[PROPERTY_knobWidth] = new PropertyDescriptor ( "knobWidth", blue.orchestra.blueSynthBuilder.BSBKnob.class, "getKnobWidth", "setKnobWidth" ); // NOI18N
             properties[PROPERTY_label] = new PropertyDescriptor ( "label", blue.orchestra.blueSynthBuilder.BSBKnob.class, "getLabel", "setLabel" ); // NOI18N
             properties[PROPERTY_labelEnabled] = new PropertyDescriptor ( "labelEnabled", blue.orchestra.blueSynthBuilder.BSBKnob.class, "isLabelEnabled", "setLabelEnabled" ); // NOI18N
@@ -101,10 +103,10 @@ public class BSBKnobBeanInfo extends SimpleBeanInfo {
     private static java.awt.Image iconColor32 = null;
     private static java.awt.Image iconMono16 = null;
     private static java.awt.Image iconMono32 = null;//GEN-END:IconsDef
-    private static String iconNameC16 = null;//GEN-BEGIN:Icons
-    private static String iconNameC32 = null;
-    private static String iconNameM16 = null;
-    private static String iconNameM32 = null;//GEN-END:Icons
+    private static final String iconNameC16 = null;//GEN-BEGIN:Icons
+    private static final String iconNameC32 = null;
+    private static final String iconNameM16 = null;
+    private static final String iconNameM32 = null;//GEN-END:Icons
 
     private static final int defaultPropertyIndex = -1;//GEN-BEGIN:Idx
     private static final int defaultEventIndex = -1;//GEN-END:Idx

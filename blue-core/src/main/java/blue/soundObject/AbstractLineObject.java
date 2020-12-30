@@ -27,7 +27,7 @@ import java.util.Map;
  */
 public abstract class AbstractLineObject extends AbstractSoundObject {
 
-    private static String LINE_OBJECT_CACHE = "abstractLineObject.lineObjectCache";
+    private static final String LINE_OBJECT_CACHE = "abstractLineObject.lineObjectCache";
 
     protected LineList lines = new LineList();
 
@@ -237,12 +237,12 @@ public abstract class AbstractLineObject extends AbstractSoundObject {
     }
 
     @Override
-    public int getTimeBehavior() {
-        return SoundObject.TIME_BEHAVIOR_NOT_SUPPORTED;
+    public TimeBehavior getTimeBehavior() {
+        return TimeBehavior.NOT_SUPPORTED;
     }
 
     @Override
-    public void setTimeBehavior(int timeBehavior) {
+    public void setTimeBehavior(TimeBehavior timeBehavior) {
     }
 
     @Override

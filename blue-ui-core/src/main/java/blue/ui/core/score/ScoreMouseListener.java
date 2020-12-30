@@ -19,7 +19,6 @@
  */
 package blue.ui.core.score;
 
-import blue.components.AlphaMarquee;
 import blue.score.ScoreObject;
 import blue.ui.core.render.RealtimeRenderManager;
 import blue.ui.core.score.layers.LayerGroupPanel;
@@ -29,7 +28,6 @@ import blue.ui.nbutilities.lazyplugin.LazyPluginFactory;
 import blue.ui.utilities.UiUtilities;
 import java.awt.Component;
 import java.awt.Cursor;
-import java.awt.Point;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.Collection;
@@ -56,7 +54,7 @@ public class ScoreMouseListener extends MouseAdapter {
             .getPredefinedCursor(Cursor.MOVE_CURSOR);
     private final ScoreTopComponent scoreTC;
     private MouseAdapter currentGestureListener = null;
-    private BlueMouseAdapter[] mouseListeners;
+    private final BlueMouseAdapter[] mouseListeners;
 
     public ScoreMouseListener(ScoreTopComponent tc, InstanceContent content) {
         this.scoreTC = tc;

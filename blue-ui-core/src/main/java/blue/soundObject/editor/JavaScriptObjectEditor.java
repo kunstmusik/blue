@@ -119,6 +119,7 @@ public class JavaScriptObjectEditor extends ScoreObjectEditor {
         codeEditor.setText(this.sObj.getText());
         codeEditor.getJEditorPane().setEnabled(true);
         codeEditor.getJEditorPane().setCaretPosition(0);
+        codeEditor.resetUndoManager();
         processOnLoadCheckBox.setSelected(this.sObj.isOnLoadProcessable());
         processOnLoadCheckBox.setEnabled(true);
 

@@ -20,28 +20,31 @@
 package blue.orchestra.editor.blueSynthBuilder.jfx;
 
 import blue.BlueSystem;
+import blue.jfx.BlueFX;
 import blue.orchestra.blueSynthBuilder.BSBFileSelector;
+import blue.orchestra.editor.blueSynthBuilder.BSBPreferences;
 import blue.ui.nbutilities.BlueNbUtilities;
 import blue.ui.utilities.FileChooserManager;
-import java.awt.Frame;
+import blue.utility.FileUtilities;
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
 import java.net.URLDecoder;
 import java.util.List;
+import javafx.beans.value.ChangeListener;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.scene.control.Button;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.TextField;
+import javafx.scene.control.Tooltip;
 import javafx.scene.input.DragEvent;
 import javafx.scene.input.Dragboard;
 import javafx.scene.input.TransferMode;
 import javafx.scene.layout.BorderPane;
-import javax.swing.SwingUtilities;
+import org.openide.DialogDisplayer;
+import org.openide.NotifyDescriptor;
 import org.openide.util.Exceptions;
-import org.openide.windows.WindowManager;
 
 /**
  *
@@ -50,10 +53,12 @@ import org.openide.windows.WindowManager;
 public class BSBFileSelectorView extends BorderPane implements ResizeableView {
 
     private static final int FILE_BUTTON_WIDTH = 30;
-    private static int OBJECT_HEIGHT = 30;
-    private static String FILE_SELECTOR_ID = "BSBFileSelector";
+    private static final int OBJECT_HEIGHT = 30;
+    private static final String FILE_SELECTOR_ID = "BSBFileSelector";
 
     private final BSBFileSelector fileSelector;
+
+    Tooltip tooltip = BSBTooltipUtil.createTooltip();
 
     TextField fileNameField;
 
@@ -67,13 +72,55 @@ public class BSBFileSelectorView extends BorderPane implements ResizeableView {
         fileNameField.setPromptText("Select a File");
 
         MenuItem clearMenuItem = new MenuItem("Clear");
-        clearMenuItem.setOnAction(new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent event) {
-                fileSelector.fileNameProperty().set("");
+        clearMenuItem.setOnAction((ActionEvent event) -> {
+            fileSelector.fileNameProperty().set("");
+        });
+
+        MenuItem copyToMediaFolder = new MenuItem("Copy to Media Folder");
+        copyToMediaFolder.setOnAction(evt -> {
+            final var projectDir = BlueSystem.getCurrentProjectDirectory();
+
+            if (projectDir == null || !projectDir.exists()) {
+                var nd = new NotifyDescriptor("Please save this project before copying to the media directory.",
+                        "Project not saved yet", NotifyDescriptor.DEFAULT_OPTION,
+                        NotifyDescriptor.ERROR_MESSAGE,
+                        null, null);
+                DialogDisplayer.getDefault().notify(nd);
+                return;
+            }
+
+            final var f = BlueSystem.findFile(fileSelector.getFileName());
+
+            if (f == null) {
+                return;
+            }
+
+            final var fParent = f.getParentFile();
+
+            final var mediaFolder = BlueSystem.getCurrentBlueData().getProjectProperties().mediaFolder;
+
+            final var targetDir = FileUtilities.resolveAndCreateMediaFolder(projectDir, mediaFolder);
+
+            var targetFile = new File(targetDir, f.getName());
+
+            if (f.exists() && f.isFile() && !targetFile.equals(fParent)) {
+
+                targetFile = FileUtilities.copyToMediaFolder(f, targetFile);
+
+                if (targetFile != null) {
+                    String absFilePath;
+                    try {
+                        absFilePath = targetFile.getCanonicalPath();
+                        String relPath = BlueSystem.getRelativePath(absFilePath);
+                        fileSelector.setFileName(relPath);
+                    } catch (IOException ex) {
+                        Exceptions.printStackTrace(ex);
+                    }
+                }
+
             }
         });
-        ContextMenu menu = new ContextMenu(clearMenuItem);
+        ContextMenu menu = new ContextMenu(clearMenuItem, copyToMediaFolder);
         fileNameField.setContextMenu(menu);
 
         Button btn = new Button("...");
@@ -98,7 +145,7 @@ public class BSBFileSelectorView extends BorderPane implements ResizeableView {
                                 file);
                     }
                 }
-                
+
                 List<File> rValue = FileChooserManager.getDefault().showOpenDialog(
                         FILE_SELECTOR_ID, BlueNbUtilities.getMainWindow());
 
@@ -222,15 +269,42 @@ public class BSBFileSelectorView extends BorderPane implements ResizeableView {
 
         });
 
+        ChangeListener<Object> toolTipListener = (obs, old, newVal) -> {
+            BlueFX.runOnFXThread(() -> {
+                var comment = fileSelector.getComment();
+                var showComments = BSBPreferences.getInstance().getShowWidgetComments();
+                if (comment == null || comment.isBlank() || !showComments) {
+                    BSBTooltipUtil.install(this, null);
+                } else {
+                    BSBTooltipUtil.install(this, tooltip);
+                }
+            });
+        };
+
         sceneProperty().addListener((obs, old, newVal) -> {
             if (newVal == null) {
                 fileNameField.textProperty().unbind();
                 fileNameField.prefWidthProperty().unbind();
+
+                BSBPreferences.getInstance().showWidgetCommentsProperty()
+                        .removeListener(toolTipListener);
+
+                fileSelector.commentProperty().removeListener(toolTipListener);
+                tooltip.textProperty().unbind();
+                BSBTooltipUtil.install(this, null);
             } else {
                 fileNameField.textProperty().bind(fileSelector.fileNameProperty());
                 fileNameField.prefWidthProperty().bind(fileSelector.textFieldWidthProperty());
+
+                BSBPreferences.getInstance().showWidgetCommentsProperty()
+                        .addListener(toolTipListener);
+
+                fileSelector.commentProperty().addListener(toolTipListener);
+                toolTipListener.changed(null, null, null);
+                tooltip.textProperty().bind(fileSelector.commentProperty());
             }
         });
+
     }
 
     public boolean canResizeWidgetWidth() {

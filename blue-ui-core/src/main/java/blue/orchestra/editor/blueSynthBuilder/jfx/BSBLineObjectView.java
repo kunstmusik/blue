@@ -20,8 +20,12 @@ package blue.orchestra.editor.blueSynthBuilder.jfx;
 
 import blue.components.lines.Line;
 import blue.components.lines.LineList;
+import blue.jfx.BlueFX;
 import blue.orchestra.blueSynthBuilder.BSBLineObject;
+import blue.orchestra.editor.blueSynthBuilder.BSBPreferences;
+import javafx.beans.value.ChangeListener;
 import javafx.collections.ListChangeListener;
+import javafx.scene.control.Tooltip;
 import javafx.scene.layout.BorderPane;
 
 /**
@@ -32,6 +36,8 @@ public class BSBLineObjectView extends BorderPane implements ResizeableView {
 
     BSBLineObject lines;
     LineSelector selector;
+
+    Tooltip tooltip = BSBTooltipUtil.createTooltip();
 
     public BSBLineObjectView(BSBLineObject lines) {
         this.lines = lines;
@@ -62,6 +68,18 @@ public class BSBLineObjectView extends BorderPane implements ResizeableView {
             lineView.repaint();
         };
 
+        ChangeListener<Object> toolTipListener = (obs, old, newVal) -> {
+            BlueFX.runOnFXThread(() -> {
+                var comment = lines.getComment();
+                var showComments = BSBPreferences.getInstance().getShowWidgetComments();
+                if (comment == null || comment.isBlank() || !showComments) {
+                    BSBTooltipUtil.install(this, null);
+                } else {
+                    BSBTooltipUtil.install(this, tooltip);
+                }
+            });
+        };
+
         sceneProperty().addListener((obs, old, newVal) -> {
             if (newVal == null) {
                 lineView.widthProperty().unbind();
@@ -69,19 +87,32 @@ public class BSBLineObjectView extends BorderPane implements ResizeableView {
                 selector.prefWidthProperty().unbind();
                 lineView.lockedProperty().unbind();
                 lines.getLines().removeListener(linesListener);
+
+                BSBPreferences.getInstance().showWidgetCommentsProperty()
+                        .removeListener(toolTipListener);
+
+                lines.commentProperty().removeListener(toolTipListener);
+                tooltip.textProperty().unbind();
+                BSBTooltipUtil.install(this, null);
             } else {
                 lineView.widthProperty().bind(lines.canvasWidthProperty());
                 lineView.heightProperty().bind(lines.canvasHeightProperty());
                 selector.prefWidthProperty().bind(lines.canvasWidthProperty());
                 lineView.lockedProperty().bind(lines.lockedProperty());
                 lines.getLines().addListener(linesListener);
+
+                BSBPreferences.getInstance().showWidgetCommentsProperty()
+                        .addListener(toolTipListener);
+
+                lines.commentProperty().addListener(toolTipListener);
+                tooltip.textProperty().bind(lines.commentProperty());
+                toolTipListener.changed(null, null, null);
             }
         });
 
         selector.leftButton.setDisable(lines.getLines().size() < 2);
         selector.rightButton.setDisable(lines.getLines().size() < 2);
     }
-
 
     public boolean canResizeWidgetWidth() {
         return true;
@@ -98,7 +129,7 @@ public class BSBLineObjectView extends BorderPane implements ResizeableView {
     public int getWidgetMinimumHeight() {
 //        int base = lines.isValueDisplayEnabled() ? (int) label.getHeight() : 0;
 //        return base + 20;
-        return 40 + (int)selector.getHeight();
+        return 40 + (int) selector.getHeight();
     }
 
     public int getWidgetWidth() {
@@ -112,13 +143,13 @@ public class BSBLineObjectView extends BorderPane implements ResizeableView {
     public int getWidgetHeight() {
 //        int base = bsbXYController.isValueDisplayEnabled() ? (int) label.getHeight() : 0;
 //        return bsbXYController.getHeight() + base;
-        return lines.getCanvasHeight() + (int)selector.getHeight();
+        return lines.getCanvasHeight() + (int) selector.getHeight();
     }
 
     public void setWidgetHeight(int height) {
 //        int base = bsbXYController.isValueDisplayEnabled() ? (int) label.getHeight() : 0;
 //        bsbXYController.setHeight(height - base);
-        lines.setCanvasHeight(height - (int)selector.getHeight());
+        lines.setCanvasHeight(height - (int) selector.getHeight());
     }
 
     public void setWidgetX(int x) {

@@ -47,13 +47,16 @@ import java.util.logging.Logger;
 import javafx.application.Platform;
 import javafx.embed.swing.JFXPanel;
 import javax.swing.SwingUtilities;
+import jiconfont.icons.elusive.Elusive;
+import jiconfont.icons.font_awesome.FontAwesome;
+import jiconfont.icons.google_material_design_icons.GoogleMaterialDesignIcons;
+import jiconfont.swing.IconFontSwing;
 import org.openide.modules.InstalledFileLocator;
 import org.openide.modules.ModuleInstall;
 import org.openide.util.Lookup;
 import org.openide.util.Lookup.Result;
 import org.openide.util.LookupEvent;
 import org.openide.util.LookupListener;
-import org.openide.util.NbPreferences;
 import org.openide.util.lookup.Lookups;
 import org.openide.windows.WindowManager;
 
@@ -125,17 +128,17 @@ public class Installer extends ModuleInstall {
             t.setPriority(Thread.MIN_PRIORITY);
             t.setDaemon(true);
             t.start();
-            
+
             var tempFileManager = TempFileManager.getInstance();
             var genSettings = GeneralSettings.getInstance();
-            
+
             tempFileManager.setDirectoryTempFileLimit(genSettings.getDirectoryTempFileLimit());
-            
+
             genSettings.addChangeListener(evt -> {
                 System.out.println("Temp file changed");
                 tempFileManager.setDirectoryTempFileLimit(genSettings.getDirectoryTempFileLimit());
             });
-            
+
         });
 
         PythonProxy.setLibDir(InstalledFileLocator.getDefault().
@@ -211,6 +214,9 @@ public class Installer extends ModuleInstall {
 //        FileChooserManager.getDefault().setJFXPanel(jfxPanel);
 //        WindowManager.getDefault().invokeWhenUIReady(()
 //                -> WindowManager.getDefault().getMainWindow().add(jfxPanel));
+        IconFontSwing.register(Elusive.getIconFont());
+        IconFontSwing.register(GoogleMaterialDesignIcons.getIconFont());
+        IconFontSwing.register(FontAwesome.getIconFont());
     }
 
     @Override
@@ -255,7 +261,12 @@ public class Installer extends ModuleInstall {
 
     @Override
     public boolean closing() {
-        return BlueProjectManager.getInstance().closeAllFiles();
+        boolean result = BlueProjectManager.getInstance().closeAllFiles();
+
+        if (result) {
+            WindowSettingManager.getInstance().save();
+        }
+        return result;
     }
 
     @Override
@@ -263,8 +274,6 @@ public class Installer extends ModuleInstall {
         backupFileSaver.quitFileSaver();
 
         saveLibraries();
-
-        WindowSettingManager.getInstance().save();
 
         MainToolBar.getInstance().stopRendering();
         BlueLiveToolBar.getInstance().stopRendering();

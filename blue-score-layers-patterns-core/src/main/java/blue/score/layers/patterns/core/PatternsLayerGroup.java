@@ -136,7 +136,7 @@ public class PatternsLayerGroup extends ArrayList<PatternLayer>
 
         NoteList retVal = null;
 
-        ScoreUtilities.applyNoteProcessorChain(nl, this.npc);
+        nl = ScoreUtilities.applyNoteProcessorChain(nl, this.npc);
 
         if (start == 0.0f) {
             retVal = nl;

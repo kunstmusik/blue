@@ -19,8 +19,10 @@
  */
 package blue.orchestra.editor.blueSynthBuilder.jfx;
 
+import blue.jfx.BlueFX;
 import blue.jfx.controls.ValuePanel;
 import blue.orchestra.blueSynthBuilder.BSBHSlider;
+import blue.orchestra.editor.blueSynthBuilder.BSBPreferences;
 import blue.utility.NumberUtilities;
 import java.math.BigDecimal;
 import javafx.application.Platform;
@@ -28,6 +30,7 @@ import javafx.beans.binding.Bindings;
 import javafx.beans.value.ChangeListener;
 import javafx.geometry.Orientation;
 import javafx.scene.control.Slider;
+import javafx.scene.control.Tooltip;
 import javafx.scene.layout.BorderPane;
 import javafx.util.StringConverter;
 
@@ -40,6 +43,8 @@ public class BSBHSliderView extends BorderPane implements ResizeableView {
     Slider slider;
     ValuePanel valuePanel;
     BSBHSlider bsbHSlider;
+
+    Tooltip tooltip = BSBTooltipUtil.createTooltip();
 
     public BSBHSliderView(BSBHSlider bsbHSlider) {
         setUserData(bsbHSlider);
@@ -114,6 +119,18 @@ public class BSBHSliderView extends BorderPane implements ResizeableView {
             updateTickCount();
         };
 
+        ChangeListener<Object> toolTipListener = (obs, old, newVal) -> {
+            BlueFX.runOnFXThread(() -> {
+                var comment = bsbHSlider.getComment();
+                var showComments = BSBPreferences.getInstance().getShowWidgetComments();
+                if (comment == null || comment.isBlank() || !showComments) {
+                    BSBTooltipUtil.install(this, null);
+                } else {
+                    BSBTooltipUtil.install(this, tooltip);
+                }
+            });
+        };
+
         sceneProperty().addListener((obs, old, newVal) -> {
             if (newVal == null) {
                 slider.maxProperty().unbind();
@@ -127,6 +144,13 @@ public class BSBHSliderView extends BorderPane implements ResizeableView {
                 bsbHSlider.maximumProperty().removeListener(tickListener);
                 bsbHSlider.minimumProperty().removeListener(tickListener);
                 bsbHSlider.resolutionProperty().removeListener(tickListener);
+
+                BSBPreferences.getInstance().showWidgetCommentsProperty()
+                        .removeListener(toolTipListener);
+
+                bsbHSlider.commentProperty().removeListener(toolTipListener);
+                tooltip.textProperty().unbind();
+                BSBTooltipUtil.install(this, null);
             } else {
                 slider.maxProperty().bind(bsbHSlider.maximumProperty());
                 slider.minProperty().bind(bsbHSlider.minimumProperty());
@@ -150,6 +174,13 @@ public class BSBHSliderView extends BorderPane implements ResizeableView {
                 bsbHSlider.maximumProperty().addListener(tickListener);
                 bsbHSlider.minimumProperty().addListener(tickListener);
                 bsbHSlider.resolutionProperty().addListener(tickListener);
+
+                BSBPreferences.getInstance().showWidgetCommentsProperty()
+                        .addListener(toolTipListener);
+
+                bsbHSlider.commentProperty().addListener(toolTipListener);
+                tooltip.textProperty().bind(bsbHSlider.commentProperty());
+                toolTipListener.changed(null, null, null);
             }
         });
     }

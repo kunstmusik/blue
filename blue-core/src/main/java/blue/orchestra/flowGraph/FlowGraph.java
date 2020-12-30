@@ -7,9 +7,9 @@ import java.util.Iterator;
 
 public class FlowGraph{ 
 
-    private ArrayList units;
+    private final ArrayList units;
 
-    private ArrayList cables;
+    private final ArrayList cables;
 
     private String name;
 
@@ -158,7 +158,7 @@ public class FlowGraph{
 
         int[] portCounters;
 
-        private HashMap portMappings = new HashMap();
+        private final HashMap portMappings = new HashMap();
 
         public VariableManager() {
             portCounters = new int[VAR_PREFIXES.length];

@@ -38,7 +38,7 @@ public class TransferableInstrument implements Transferable {
     public static DataFlavor INSTR_CAT_FLAVOR = new DataFlavor(
             InstrumentCategory.class, "Instrument Category");
 
-    private Object obj;
+    private final Object obj;
 
     DataFlavor[] flavors;
 

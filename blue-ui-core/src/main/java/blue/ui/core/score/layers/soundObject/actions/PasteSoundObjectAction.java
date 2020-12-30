@@ -66,9 +66,9 @@ import org.openide.util.Utilities;
         position = 50)
 public final class PasteSoundObjectAction extends AbstractAction implements ContextAwareAction {
 
-    private Collection<? extends ScoreObject> scoreObjects;
-    private Point p;
-    private TimeState timeState;
+    private final Collection<? extends ScoreObject> scoreObjects;
+    private final Point p;
+    private final TimeState timeState;
     private final ScorePath scorePath;
 
     public PasteSoundObjectAction() {

@@ -1,19 +1,20 @@
 package blue.orchestra.flowGraph;
 
 public class Library {
-    private String name;
+    private final String name;
 
-    private String[] branch;
+    private final String[] branch;
 
-    private int numBranches;
+    private final int numBranches;
 
-    private int numUnits, maxUnits;
+    private int numUnits;
+    private final int maxUnits;
 
-    private String[] unitName;
+    private final String[] unitName;
 
-    private String[] unitCode;
+    private final String[] unitCode;
 
-    private int[] unitBranch;
+    private final int[] unitBranch;
 
     public Library() {
         name = "Unit Library";

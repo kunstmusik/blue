@@ -57,7 +57,7 @@ import org.apache.xmlrpc.XmlRpcException;
 // TODO - CLEAN UP THE GUI CODE IN THIS CLASS
 public class SoundObjectImportPane extends JComponent {
 
-    private String AVAILABLE_INSTRUMENTS_LABEL = "Available SoundObjects";
+    private final String AVAILABLE_INSTRUMENTS_LABEL = "Available SoundObjects";
 
     JSplitPane mainSplitPane = new JSplitPane();
 

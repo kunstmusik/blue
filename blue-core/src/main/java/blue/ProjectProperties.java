@@ -71,6 +71,10 @@ public final class ProjectProperties {
 
     public boolean diskAlwaysRenderEntireProject = false;
 
+    /* MEDIA FOLDER */
+    public String mediaFolder = "";
+    public boolean copyToMediaFileOnImport = true;
+
     public ProjectProperties() {
     }
 
@@ -113,6 +117,9 @@ public final class ProjectProperties {
         diskAdvancedSettings = props.diskAdvancedSettings;
         diskCompleteOverride = props.diskCompleteOverride;
         diskAlwaysRenderEntireProject = props.diskAlwaysRenderEntireProject;
+
+        mediaFolder = props.mediaFolder;
+        copyToMediaFileOnImport = props.copyToMediaFileOnImport;
     }
 
     public String getKsmps() {
@@ -257,6 +264,14 @@ public final class ProjectProperties {
                     retVal.diskAlwaysRenderEntireProject = Boolean.valueOf(nodeVal)
                             .booleanValue();
                     break;
+
+                case "mediaFolder":
+                    retVal.mediaFolder = nodeVal;
+                    break;
+                case "copyToMediaFolderOnImport":
+                    retVal.copyToMediaFileOnImport = Boolean.valueOf(nodeVal)
+                            .booleanValue();
+                    break;
             }
 
         }
@@ -345,6 +360,10 @@ public final class ProjectProperties {
                 diskCompleteOverride));
         retVal.addElement(XMLUtilities.writeBoolean("diskAlwaysRenderEntireProject",
                 diskAlwaysRenderEntireProject));
+
+        retVal.addElement("mediaFolder").setText(mediaFolder);
+        retVal.addElement(XMLUtilities.writeBoolean("copyToMediaFileOnImport",
+                copyToMediaFileOnImport));
 
         return retVal;
     }

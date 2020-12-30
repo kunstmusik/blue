@@ -41,6 +41,8 @@ import java.awt.event.ComponentListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowFocusListener;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JEditorPane;
@@ -54,19 +56,27 @@ import javax.swing.border.LineBorder;
 public class ScoreNavigatorDialog extends JDialog implements ComponentListener,
         AdjustmentListener, WindowSettingsSavable {
 
+    public static final String WINDOW_SETTING_NAME = "JScrollNavigator";
+
+
     private JScrollPane jScrollPane;
 
-    private NavBox overBox = new NavBox();
+    private final NavBox overBox = new NavBox();
 
     boolean isAdjusting = false;
     boolean userModifyingBox = false;
     private JPanel layerPanel;
 
-    public ScoreNavigatorDialog() {
-        this(null);
+    private static ScoreNavigatorDialog INSTANCE = null;
+    
+    public static synchronized ScoreNavigatorDialog getInstance(Frame owner) {
+        if(INSTANCE == null) {
+            INSTANCE = new ScoreNavigatorDialog(owner);
+        }
+        return INSTANCE;
     }
 
-    public ScoreNavigatorDialog(Frame owner) {
+    private ScoreNavigatorDialog(Frame owner) {
         super(owner);
 
         this.setTitle("Navigation");
@@ -110,7 +120,7 @@ public class ScoreNavigatorDialog extends JDialog implements ComponentListener,
 
         });
 
-        WindowSettingManager.getInstance().registerWindow("JScrollNavigator",
+        WindowSettingManager.getInstance().registerWindow(WINDOW_SETTING_NAME,
                 this);
 
 //        this.addWindowFocusListener(new WindowFocusListener() {
@@ -201,7 +211,7 @@ public class ScoreNavigatorDialog extends JDialog implements ComponentListener,
 
         jsp.setViewportView(blueEditorPane);
 
-        ScoreNavigatorDialog nav = new ScoreNavigatorDialog();
+        ScoreNavigatorDialog nav = new ScoreNavigatorDialog(null);
         nav.setJScrollPane(jsp);
 
         GUI.showComponentAsStandalone(jsp, "JScrollNavigator Test", true);

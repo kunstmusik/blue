@@ -7,23 +7,23 @@ import java.awt.Dimension;
 import javax.swing.*;
 
 public class FlowGraphPanel extends JPanel {
-    private UnitLibrary unitLibrary;
+    private final UnitLibrary unitLibrary;
 
-    private FlowGraph instrument;
+    private final FlowGraph instrument;
 
-    private FlowGraphCanvas flowGraphCanvas;
+    private final FlowGraphCanvas flowGraphCanvas;
 
-    private JLabel statusBar;
+    private final JLabel statusBar;
 
-    private JSlider zoomSlider;
+    private final JSlider zoomSlider;
 
     private double scale;
 
-    private JPopupMenu popupCanvas;
+    private final JPopupMenu popupCanvas;
 
-    private JPopupMenu popupUnit;
+    private final JPopupMenu popupUnit;
 
-    private JPopupMenu popupPort;
+    private final JPopupMenu popupPort;
 
     public FlowGraphPanel(FlowGraph instrument, UnitLibrary unitLibrary) {
         this.instrument = instrument;

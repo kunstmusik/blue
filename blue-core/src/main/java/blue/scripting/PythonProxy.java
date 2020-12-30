@@ -6,7 +6,9 @@ import blue.soundObject.NoteList;
 import blue.utility.FileUtilities;
 import java.io.File;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
+import org.openide.util.Exceptions;
 import org.python.core.*;
 import org.python.util.InteractiveInterpreter;
 import org.python.util.PythonInterpreter;
@@ -24,34 +26,43 @@ import org.python.util.PythonInterpreter;
  * <p>
  * Company: steven yi music
  * </p>
- * 
+ *
  * @author unascribed
  * @version 1.0
  */
-
 public class PythonProxy {
 
     private static InteractiveInterpreter interp;
     private static PythonInterpreter expressionInterpreter;
 
-    private static PySystemState state = new PySystemState();
+    private static final PySystemState state = new PySystemState();
     private static File libDir = null;
-    
-    private static ArrayList<PythonProxyListener> listeners = 
-            new ArrayList<>();
+
+    private static final ArrayList<PythonProxyListener> listeners
+            = new ArrayList<>();
 
     public static void setLibDir(File newLibDir) {
         libDir = newLibDir;
     }
-    
+
     public static final void reinitialize() {
-        if(Py.getSystemState() != state) {
+        if (Py.getSystemState() != state) {
+
+//            var jarLoc = InteractiveInterpreter.class.getProtectionDomain().getCodeSource().getLocation();
+//
+//            var jarPath = jarLoc.getPath();
+//            var jarStripped = jarPath.substring(5, jarPath.length() - 2);
+//
+//            System.out.println(jarStripped);
+//            var jarFile = new File(jarStripped);
+//            state.path.append(Py.newString(jarFile.getAbsolutePath() + File.separator + "Lib"));
+
             for (String pathEntry : getPythonLibPath().split(File.pathSeparator)) {
                 state.path.append(Py.newString(pathEntry));
             }
             Py.setSystemState(state);
         }
-        
+
         interp = new InteractiveInterpreter();
         interp.exec("import site");
         expressionInterpreter = new PythonInterpreter();
@@ -59,16 +70,16 @@ public class PythonProxy {
 
         System.out.println(BlueSystem
                 .getString("scripting.python.reinitialized"));
-        
-        for(PythonProxyListener listener : listeners) {
+
+        for (PythonProxyListener listener : listeners) {
             listener.pythonProxyReinitializePerformed();
         }
     }
-    
+
     public static final void addPythonProxyListener(PythonProxyListener listener) {
         listeners.add(listener);
     }
-    
+
     public static final void removePythonProxyListener(PythonProxyListener listener) {
         listeners.remove(listener);
     }
@@ -88,7 +99,6 @@ public class PythonProxy {
 //        String blueLibDir = BlueSystem.getLibDir() + File.separator;
 //        String userConfDir = BlueSystem.getUserConfigurationDirectory()
 //                + File.separator;
-
         interp.set("score", new PyString());
 
         interp.set("blueDuration", new PyFloat(subjectiveDuration));
@@ -110,7 +120,6 @@ public class PythonProxy {
 //                + " " + jythonFileName);
 //        interp.execfile(jythonFileName);
 //    }
-
     public static final String processPythonInstrument(String pythonCode) {
         if (interp == null) {
             reinitialize();
@@ -145,7 +154,6 @@ public class PythonProxy {
 //        String blueLibDir = BlueSystem.getLibDir() + File.separator;
 //        String userConfDir = BlueSystem.getUserConfigurationDirectory()
 //                + File.separator;
-
 //        MotionBuffer buffer = MotionBuffer.getInstance();
 //
 //        interp.set("selectedSoundObjects", buffer.getSoundObjectsAsArray());
@@ -197,20 +205,20 @@ public class PythonProxy {
         String pythonPath;
 
         if (programPythonPath != null) {
-            String path1 = programPythonPath + File.separator + "standard";
+//            String path1 = programPythonPath + File.separator + "standard";
             String path2 = programPythonPath + File.separator + "blue";
-            pythonPath = path1 + File.pathSeparator + 
+            pythonPath
+                    = //path1 + File.pathSeparator + 
                     path2 + File.pathSeparator + userPythonPath;
         } else {
             pythonPath = userPythonPath;
         }
-         
 
         System.out.println(BlueSystem.getString("scripting.python.libdir")
                 + " " + pythonPath);
         return (pythonPath);
     }
-    
+
     public static InteractiveInterpreter getInterpreter() {
         if (interp == null) {
             reinitialize();

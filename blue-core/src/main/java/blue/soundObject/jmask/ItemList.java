@@ -48,7 +48,7 @@ public class ItemList implements Generator, TableModel, Accumulatable {
 
     private int listType = CYCLE;
 
-    private ArrayList<Double> listItems; 
+    private final ArrayList<Double> listItems;
 
     private transient int index = 0;
 

@@ -65,9 +65,9 @@ import org.openide.util.Exceptions;
  */
 public class NoteProcessorChainEditor extends JComponent {
 
-    private NoteProcessorPopup noteProcPopup = new NoteProcessorPopup(this);
+    private final NoteProcessorPopup noteProcPopup = new NoteProcessorPopup(this);
 
-    private EditPopup editPopup = new EditPopup(this);
+    private final EditPopup editPopup = new EditPopup(this);
 
     NoteProcessorChain npc;
 
@@ -283,11 +283,11 @@ public class NoteProcessorChainEditor extends JComponent {
 
         HashMap<String, Class> npNameClassMap = new HashMap<>();
 
-        private JMenuItem saveChain;
+        private final JMenuItem saveChain;
 
-        private JMenu insertChain = new JMenu("Insert");
+        private final JMenu insertChain = new JMenu("Insert");
 
-        private JMenuItem removeChain;
+        private final JMenuItem removeChain;
 
         public NoteProcessorPopup(NoteProcessorChainEditor npcEditor) {
             this.npcEditor = npcEditor;
@@ -489,15 +489,15 @@ public class NoteProcessorChainEditor extends JComponent {
 
     static class EditPopup extends JPopupMenu {
 
-        private NoteProcessorChainEditor npcEditor;
+        private final NoteProcessorChainEditor npcEditor;
 
-        private JMenuItem removeProcessor = new JMenuItem();
+        private final JMenuItem removeProcessor = new JMenuItem();
 
-        private JMenuItem cutProcessor = new JMenuItem();
+        private final JMenuItem cutProcessor = new JMenuItem();
 
-        private JMenuItem copyProcessor = new JMenuItem();
+        private final JMenuItem copyProcessor = new JMenuItem();
 
-        private JMenuItem pasteProcessor = new JMenuItem();
+        private final JMenuItem pasteProcessor = new JMenuItem();
 
         public EditPopup(final NoteProcessorChainEditor npcEditor) {
             this.npcEditor = npcEditor;

@@ -30,7 +30,7 @@ public class ScoreScriptEngineManager {
 
     private static ScoreScriptEngineManager INSTANCE = null;
 
-    private Map<String, ScoreScriptEngine> engines;
+    private final Map<String, ScoreScriptEngine> engines;
 
     public static synchronized ScoreScriptEngineManager getInstance() {
         if (INSTANCE == null) {

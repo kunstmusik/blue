@@ -19,9 +19,11 @@
  */
 package blue.orchestra.editor.blueSynthBuilder.jfx;
 
+import blue.jfx.BlueFX;
 import blue.jfx.controls.Knob;
 import blue.jfx.controls.ValuePanel;
 import blue.orchestra.blueSynthBuilder.BSBKnob;
+import blue.orchestra.editor.blueSynthBuilder.BSBPreferences;
 import blue.utility.NumberUtilities;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
@@ -31,9 +33,9 @@ import javafx.beans.value.ObservableValue;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
+import javafx.scene.control.Tooltip;
 import javafx.scene.layout.BorderPane;
 import javafx.util.StringConverter;
-import org.openide.util.Exceptions;
 
 /**
  * @author steven
@@ -48,6 +50,8 @@ public class BSBKnobView extends BorderPane implements ResizeableView {
 
     ValuePanel valuePanel;
     Label label;
+
+    Tooltip tooltip = BSBTooltipUtil.createTooltip();
 
     /**
      * @param knob
@@ -141,6 +145,18 @@ public class BSBKnobView extends BorderPane implements ResizeableView {
 
         IntegerBinding knobViewHeight = knob.knobWidthProperty().subtract(4);
 
+        ChangeListener<Object> toolTipListener = (obs, old, newVal) -> {
+            BlueFX.runOnFXThread(() -> {
+                var comment = knob.getComment();
+                var showComments = BSBPreferences.getInstance().getShowWidgetComments();
+                if (comment == null || comment.isBlank() || !showComments) {
+                    BSBTooltipUtil.install(this, null);
+                } else {
+                    BSBTooltipUtil.install(this, tooltip);
+                }
+            });
+        };
+
         sceneProperty().addListener((ObservableValue<? extends Scene> obs, Scene old, Scene newVal) -> {
             if (newVal == null) {
                 knobView.minProperty().unbind();
@@ -157,6 +173,13 @@ public class BSBKnobView extends BorderPane implements ResizeableView {
                         knob.knobValueProperty().valueProperty());
                 label.textProperty().unbind();
                 label.fontProperty().unbind();
+                tooltip.textProperty().unbind();
+
+                BSBPreferences.getInstance().showWidgetCommentsProperty()
+                        .removeListener(toolTipListener);
+
+                tooltip.textProperty().unbind();
+                BSBTooltipUtil.install(this, null);
             } else {
                 knobView.minProperty().bind(knob.knobValueProperty().minProperty());
                 knobView.maxProperty().bind(knob.knobValueProperty().maxProperty());
@@ -189,8 +212,24 @@ public class BSBKnobView extends BorderPane implements ResizeableView {
                 } else {
                     setTop(null);
                 }
+
+                var showCommentsProperty = BSBPreferences.getInstance().showWidgetCommentsProperty();
+
+                tooltip.textProperty().bind(
+                        Bindings.when(Bindings.or(knob.commentProperty().isEmpty(), showCommentsProperty.not()))
+                                .then(Bindings.format("Value: %s", knobView.valueProperty().asString())
+                                ).otherwise(
+                                        Bindings.format("Value: %s\n\n%s", knobView.valueProperty().asString(), knob.commentProperty())
+                                ));
+
+                BSBPreferences.getInstance().showWidgetCommentsProperty()
+                        .addListener(toolTipListener);
+
+                toolTipListener.changed(null, null, null);
+
             }
         });
+
     }
 
     public boolean canResizeWidgetWidth() {

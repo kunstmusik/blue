@@ -51,13 +51,13 @@ public class FrozenSoundObjectEditor extends ScoreObjectEditor {
 
     private FrozenSoundObject fso;
 
-    private JLabel frozenObjectName = new JLabel();
+    private final JLabel frozenObjectName = new JLabel();
 
-    private JLabel frozenObjectType = new JLabel();
+    private final JLabel frozenObjectType = new JLabel();
 
-    private JLabel frozenWaveFileName = new JLabel();
+    private final JLabel frozenWaveFileName = new JLabel();
 
-    private JLabel frozenSoundObjectDuration = new JLabel();
+    private final JLabel frozenSoundObjectDuration = new JLabel();
 
     public FrozenSoundObjectEditor() {
         JButton button = new JButton("Save Copy");

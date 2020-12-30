@@ -175,6 +175,8 @@ public class ExternalEditor extends ScoreObjectEditor {
 //        scoreEditPane.setSyntaxType(external.getSyntaxType());
 
         score1EditPane.setText(this.external.getText());
+        score1EditPane.getJEditorPane().setCaretPosition(0);
+        score1EditPane.resetUndoManager();
         commandText.setText(this.external.getCommandLine());
 
         undo.discardAllEdits();

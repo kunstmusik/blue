@@ -23,16 +23,19 @@ import blue.noteProcessor.NoteProcessor;
 import blue.noteProcessor.NoteProcessorChain;
 import blue.noteProcessor.NoteProcessorException;
 import blue.soundObject.*;
+import static blue.soundObject.TimeBehavior.NONE;
+import static blue.soundObject.TimeBehavior.SCALE;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import org.netbeans.api.annotations.common.CheckReturnValue;
 
 public class ScoreUtilities {
 
-    private static int RAMP_END_NOT_FOUND = -1;
+    private static final int RAMP_END_NOT_FOUND = -1;
 
-    private static int PFIELD_NOT_FLOAT = -2;
+    private static final int PFIELD_NOT_FLOAT = -2;
 
     enum ParseState {
 
@@ -133,9 +136,9 @@ public class ScoreUtilities {
                             }
                         }
                     } else if (c == '\n') {
-                        if(i < lastIndex) {
+                        if (i < lastIndex) {
                             c = in.charAt(i + 1);
-                                                           
+
                             if (Character.isDigit(c) || c == '\"' || c == '.') {
                                 break;
                             } else {
@@ -394,7 +397,7 @@ public class ScoreUtilities {
         Collections.sort(sObjects, new Comparator<SoundObject>() {
             @Override
             public int compare(SoundObject s1, SoundObject s2) {
-                return (int)(s1.getStartTime() - s2.getStartTime());
+                return (int) (s1.getStartTime() - s2.getStartTime());
             }
         });
 
@@ -467,25 +470,19 @@ public class ScoreUtilities {
         }
     }
 
-    public static void applyNoteProcessorChain(NoteList notes,
+    @CheckReturnValue
+    public static NoteList applyNoteProcessorChain(NoteList notes,
             NoteProcessorChain npc) throws NoteProcessorException {
+        
+        NoteList retVal = notes;
         for (int i = 0; i < npc.size(); i++) {
             NoteProcessor np = npc.get(i);
-            // try {
-            np.processNotes(notes);
-            // } catch (NoteProcessorException ex) {
-            // JOptionPane.showMessageDialog(
-            // null,
-            // ex.getMessage(),
-            // ex.getProcessorName(),
-            // JOptionPane.ERROR_MESSAGE);
-            // throw new NoteProcessorRTException("An exception occured while
-            // applying a note processor", ex);
-            // }
+            retVal = np.processNotes(retVal);            
         }
+        return retVal;
     }
 
-    public static void applyTimeBehavior(NoteList notes, int timeBehavior,
+    public static void applyTimeBehavior(NoteList notes, TimeBehavior timeBehavior,
             double subjectiveDuration, double repeatPoint) {
 
         applyTimeBehavior(notes, timeBehavior, subjectiveDuration, repeatPoint,
@@ -493,14 +490,14 @@ public class ScoreUtilities {
 
     }
 
-    public static void applyTimeBehavior(NoteList notes, int timeBehavior,
+    public static void applyTimeBehavior(NoteList notes, TimeBehavior timeBehavior,
             double subjectiveDuration, double repeatPoint, double durationForScale) {
 
         if (notes.size() == 0) {
             return;
         }
 
-        if (timeBehavior == SoundObject.TIME_BEHAVIOR_SCALE) {
+        if (timeBehavior == TimeBehavior.SCALE) {
             double dur = durationForScale;
 
             if (durationForScale < 0.0f) {
@@ -509,7 +506,56 @@ public class ScoreUtilities {
 
             double multiplier = subjectiveDuration / dur;
             scaleScore(notes, multiplier);
-        } else if (timeBehavior == SoundObject.TIME_BEHAVIOR_REPEAT) {
+        } else if (timeBehavior == TimeBehavior.REPEAT) {
+            
+            // Truncates notes to repeat window boundaries
+            
+            NoteList originalNotes = new NoteList(notes);
+            originalNotes.sort();
+            
+            double objDur = durationForScale;
+
+            if (durationForScale < 0.0f) {
+                objDur = getTotalDuration(originalNotes);
+            }
+
+            double repeatDur = objDur;
+
+            if (objDur > 0 && repeatPoint > 0.0f) {
+                repeatDur = repeatPoint;
+            }
+
+            NoteList tempNL = null;
+
+            if (repeatDur <= 0) {
+                return;
+            }
+
+            notes.clear();
+            
+            double windowStart = 0.0f;
+            double windowEnd = Math.min(repeatDur, subjectiveDuration);
+
+            while (windowStart < subjectiveDuration) {
+                tempNL = new NoteList(originalNotes);
+                ScoreUtilities.setScoreStart(tempNL, windowStart);
+                
+                final var end = windowEnd;
+                tempNL.removeIf(n -> n.getStartTime() >= end);
+                
+                for(var note: tempNL) {
+                    var noteStart = note.getStartTime();
+                    if(noteStart + note.getSubjectiveDuration() > windowEnd) {
+                        note.setSubjectiveDuration(windowEnd - noteStart);
+                    }
+                }
+                   
+                notes.merge(tempNL);
+                windowStart += repeatDur;
+                windowEnd = Math.min(windowStart + repeatDur, subjectiveDuration);
+            }
+
+        } else if (timeBehavior == TimeBehavior.REPEAT_CLASSIC) {
             NoteList originalNotes = new NoteList(notes);
             originalNotes.sort();
 
@@ -554,11 +600,12 @@ public class ScoreUtilities {
                     notes.add(tempNote);
                 } else {
                     // stop processing of notes as the rest will be invalid
+                    System.out.println("Not emitting note: " + tempNote);
                     break;
                 }
             }
 
-        } else if (timeBehavior == SoundObject.TIME_BEHAVIOR_NONE) {
+        } else if (timeBehavior == TimeBehavior.NONE) {
             return;
         }
 

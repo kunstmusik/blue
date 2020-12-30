@@ -5,23 +5,30 @@ import blue.*;
 import blue.noteProcessor.NoteProcessorChain;
 import blue.noteProcessor.NoteProcessorException;
 import blue.plugin.SoundObjectPlugin;
+import blue.soundObject.pianoRoll.Field;
+import blue.soundObject.pianoRoll.FieldDef;
+import blue.soundObject.pianoRoll.FieldType;
 import blue.soundObject.pianoRoll.PianoNote;
 import blue.soundObject.pianoRoll.Scale;
 import blue.utility.ScoreUtilities;
 import blue.utility.TextUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
-import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.ArrayList;
+import java.beans.PropertyChangeSupport;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import javafx.beans.value.ChangeListener;
+import javafx.collections.FXCollections;
+import javafx.collections.ListChangeListener;
+import javafx.collections.ObservableList;
 
 /**
  * @author steven yi
  */
 @SoundObjectPlugin(displayName = "PianoRoll", live = true, position = 90)
-public class PianoRoll extends AbstractSoundObject implements GenericViewable {
+public class PianoRoll extends AbstractSoundObject implements ListChangeListener<FieldDef> {
 
     public static final int DISPLAY_TIME = 0;
 
@@ -33,15 +40,15 @@ public class PianoRoll extends AbstractSoundObject implements GenericViewable {
 
     public static final int GENERATE_MIDI = 2;
 
-    private int timeBehavior;
+    private TimeBehavior timeBehavior;
 
-    double repeatPoint = -1.0f;
+    double repeatPoint = 4.0;
 
     private NoteProcessorChain npc = new NoteProcessorChain();
 
     private Scale scale;
 
-    private ArrayList<PianoNote> notes;
+    private ObservableList<PianoNote> notes;
 
     private String noteTemplate;
 
@@ -51,29 +58,77 @@ public class PianoRoll extends AbstractSoundObject implements GenericViewable {
 
     private int noteHeight;
 
-    private transient ArrayList listeners;
+    private boolean snapEnabled = true;
 
-    private boolean snapEnabled = false;
+    private double snapValue = 0.25;
 
-    private double snapValue = 1.0f;
-
-    private int timeDisplay = DISPLAY_TIME;
+    private int timeDisplay = DISPLAY_NUMBER;
 
     private int pchGenerationMethod = GENERATE_FREQUENCY;
 
-    private int timeUnit = 5;
+    private int timeUnit = 4;
 
     private int transposition = 0;
 
+    private ObservableList<FieldDef> fieldDefinitions;
+
+    private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
+
+    ChangeListener<? super Number> minListener = (obs, old, newVal) -> {
+        for (var fd : fieldDefinitions) {
+            if (fd.minValueProperty() == obs) {
+                for (var pn : notes) {
+                    var field = pn.getField(fd);
+                    field.ifPresent(fld -> fld.setValue(Math.max(newVal.doubleValue(), fld.getValue())));
+                }
+                break;
+            }
+        }
+    };
+
+    ChangeListener<? super Number> maxListener = (obs, old, newVal) -> {
+        for (var fd : fieldDefinitions) {
+            if (fd.maxValueProperty() == obs) {
+                for (var pn : notes) {
+                    var field = pn.getField(fd);
+                    field.ifPresent(fld -> fld.setValue(Math.min(newVal.doubleValue(), fld.getValue())));
+                }
+                break;
+            }
+        }
+    };
+
+    ChangeListener<FieldType> fieldTypeListener = (obs, old, newVal) -> {
+        for (var fd : fieldDefinitions) {
+            if (fd.fieldTypeProperty() == obs) {
+                for (var pn : notes) {
+                    var field = pn.getField(fd);
+                    // will run through FieldDef's convertToFieldType()
+                    field.ifPresent(fld -> fld.setValue(fld.getValue()));
+                }
+                break;
+            }
+        }
+    };
+
     public PianoRoll() {
         this.setName("PianoRoll");
-        timeBehavior = TIME_BEHAVIOR_SCALE;
+        timeBehavior = TimeBehavior.REPEAT;
         scale = Scale.get12TET();
-        notes = new ArrayList<>();
-        noteTemplate = "i <INSTR_ID> <START> <DUR> <FREQ>";
+        notes = FXCollections.observableArrayList();
+        noteTemplate = "i <INSTR_ID> <START> <DUR> <FREQ> <AMP>";
         instrumentId = "1";
         pixelSecond = 64;
         noteHeight = 15;
+        fieldDefinitions = FXCollections.observableArrayList();
+        fieldDefinitions.addListener(this);
+
+        // By default, add one field called AMP
+        var ampField = new FieldDef();
+        ampField.setFieldName("AMP");
+        ampField.setFieldType(FieldType.CONTINUOUS);
+        fieldDefinitions.add(ampField);
+
     }
 
     public PianoRoll(PianoRoll pr) {
@@ -83,10 +138,28 @@ public class PianoRoll extends AbstractSoundObject implements GenericViewable {
         repeatPoint = pr.repeatPoint;
         npc = new NoteProcessorChain(pr.npc);
         scale = new Scale(pr.scale);
-        notes = new ArrayList<>(pr.notes.size());
+
+        notes = FXCollections.observableArrayList();
+
+        fieldDefinitions = FXCollections.observableArrayList();
+        fieldDefinitions.addListener(this);
+
+        Map<FieldDef, FieldDef> srcToCloneMap = new HashMap<>();
+
+        for (var fieldDef : pr.getFieldDefinitions()) {
+            var clone = new FieldDef(fieldDef);
+            srcToCloneMap.put(fieldDef, clone);
+            fieldDefinitions.add(clone);
+        }
 
         for (PianoNote pn : pr.notes) {
-            notes.add(new PianoNote(pn));
+            var newNote = new PianoNote(pn);
+            notes.add(newNote);
+
+            // set fieldDef for fields to use the new cloned version
+            for (var f : newNote.getFields()) {
+                f.setFieldDef(srcToCloneMap.get(f.getFieldDef()));
+            }
         }
 
         noteTemplate = pr.noteTemplate;
@@ -99,6 +172,7 @@ public class PianoRoll extends AbstractSoundObject implements GenericViewable {
         pchGenerationMethod = pr.pchGenerationMethod;
         timeUnit = pr.timeUnit;
         transposition = pr.transposition;
+
     }
 
     @Override
@@ -121,6 +195,7 @@ public class PianoRoll extends AbstractSoundObject implements GenericViewable {
         NoteList nl = new NoteList();
 
         String instrId = instrumentId;
+        final String prNoteTemplate = noteTemplate.trim();
 
         if (instrId != null) {
             instrId = instrId.trim();
@@ -132,9 +207,7 @@ public class PianoRoll extends AbstractSoundObject implements GenericViewable {
             instrId = "\"" + instrId + "\"";
         }
 
-        for (Iterator<PianoNote> iter = notes.iterator(); iter.hasNext();) {
-            PianoNote n = iter.next();
-
+        for (var n : notes) {
             String freq = "";
 
             int octave = n.getOctave();
@@ -164,16 +237,27 @@ public class PianoRoll extends AbstractSoundObject implements GenericViewable {
                 scaleDegree = numScaleDegrees + scaleDegree;
             }
 
-            if (this.pchGenerationMethod == GENERATE_FREQUENCY) {
-                double f = scale.getFrequency(octave, scaleDegree);
-                freq = Double.toString(f);
-            } else if (this.pchGenerationMethod == GENERATE_PCH) {
-                freq = octave + "." + scaleDegree;
-            } else if (this.pchGenerationMethod == GENERATE_MIDI) {
-                freq = Integer.toString((octave * 12) + scaleDegree);
+            switch (this.pchGenerationMethod) {
+                case GENERATE_FREQUENCY:
+                    double f = scale.getFrequency(octave, scaleDegree);
+                    freq = Double.toString(f);
+                    break;
+                case GENERATE_PCH:
+                    freq = octave + "." + scaleDegree;
+                    break;
+                case GENERATE_MIDI:
+                    freq = Integer.toString((octave * 12) + scaleDegree);
+                    break;
+                default:
+                    break;
             }
 
             String template = n.getNoteTemplate();
+            if (template == null) {
+                template = prNoteTemplate;
+            } else {
+                template = template.trim();
+            }
 
             template = TextUtilities
                     .replaceAll(template, "<INSTR_ID>", instrId);
@@ -184,6 +268,16 @@ public class PianoRoll extends AbstractSoundObject implements GenericViewable {
             template = TextUtilities.replaceAll(template, "<DUR>", Double
                     .toString(n.getDuration()));
             template = TextUtilities.replaceAll(template, "<FREQ>", freq);
+
+            for (var field : n.getFields()) {
+                var fieldDef = field.getFieldDef();
+                var k = String.format("<%s>", fieldDef.getFieldName());
+                var v = (fieldDef.getFieldType() == FieldType.CONTINUOUS)
+                        ? Double.toString(field.getValue())
+                        : Long.toString(Math.round(field.getValue()));
+
+                template = TextUtilities.replaceAll(template, k, v);
+            }
 
             Note note = null;
 
@@ -196,8 +290,10 @@ public class PianoRoll extends AbstractSoundObject implements GenericViewable {
             nl.add(note);
         }
 
+        nl.sort();
+
         try {
-            ScoreUtilities.applyNoteProcessorChain(nl, this.npc);
+            nl = ScoreUtilities.applyNoteProcessorChain(nl, this.npc);
         } catch (NoteProcessorException e) {
             throw new SoundObjectException(this, e);
         }
@@ -211,13 +307,16 @@ public class PianoRoll extends AbstractSoundObject implements GenericViewable {
     }
 
     @Override
-    public int getTimeBehavior() {
+    public TimeBehavior getTimeBehavior() {
         return this.timeBehavior;
     }
 
     @Override
-    public void setTimeBehavior(int timeBehavior) {
+    public void setTimeBehavior(TimeBehavior timeBehavior) {
+        var oldVal = this.timeBehavior;
         this.timeBehavior = timeBehavior;
+
+        pcs.firePropertyChange("timeBehavior", oldVal, timeBehavior);
     }
 
     @Override
@@ -239,9 +338,13 @@ public class PianoRoll extends AbstractSoundObject implements GenericViewable {
             Map<String, Object> objRefMap) throws Exception {
 
         PianoRoll p = new PianoRoll();
+        p.fieldDefinitions.clear();
+
         SoundObjectUtilities.initBasicFromXML(data, p);
 
         Elements nodes = data.getElements();
+
+        Map<String, FieldDef> fieldTypes = new HashMap<>();
 
         while (nodes.hasMoreElements()) {
             Element e = nodes.next();
@@ -264,8 +367,7 @@ public class PianoRoll extends AbstractSoundObject implements GenericViewable {
                     p.setNoteHeight(Integer.parseInt(e.getTextString()));
                     break;
                 case "snapEnabled":
-                    p.setSnapEnabled(Boolean.valueOf(e.getTextString())
-                            .booleanValue());
+                    p.setSnapEnabled(Boolean.parseBoolean(e.getTextString()));
                     break;
                 case "snapValue":
                     p.setSnapValue(Double.parseDouble(e.getTextString()));
@@ -276,9 +378,25 @@ public class PianoRoll extends AbstractSoundObject implements GenericViewable {
                 case "timeUnit":
                     p.setTimeUnit(Integer.parseInt(e.getTextString()));
                     break;
-                case "pianoNote":
-                    p.notes.add(PianoNote.loadFromXML(e));
+                case "fieldDef": {
+                    var fd = FieldDef.loadFromXML(e);
+                    fieldTypes.put(fd.getFieldName(), fd);
+                    p.fieldDefinitions.add(fd);
                     break;
+                }
+                case "pianoNote": {
+                    // Assumes fieldDefs are loaded prior to pianoNotes
+                    var pn = PianoNote.loadFromXML(e, fieldTypes);
+
+                    // legacy: set note noteTemplate to null if found and equals
+                    // to PianoRoll's value
+                    if (p.getNoteTemplate().equals(pn.getNoteTemplate())) {
+                        pn.setNoteTemplate(null);
+                    }
+
+                    p.notes.add(pn);
+                    break;
+                }
                 case "pchGenerationMethod":
                     p.setPchGenerationMethod(Integer.parseInt(e.getTextString()));
                     break;
@@ -319,6 +437,10 @@ public class PianoRoll extends AbstractSoundObject implements GenericViewable {
         retVal.addElement("transposition").setText(
                 Integer.toString(this.getTransposition()));
 
+        for (var fieldDef : fieldDefinitions) {
+            retVal.addElement(fieldDef.saveAsXML());
+        }
+
         for (Iterator<PianoNote> iter = notes.iterator(); iter.hasNext();) {
             PianoNote note = iter.next();
             retVal.addElement(note.saveAsXML());
@@ -330,15 +452,12 @@ public class PianoRoll extends AbstractSoundObject implements GenericViewable {
     /**
      * @return Returns the notes.
      */
-    public ArrayList<PianoNote> getNotes() {
+    public ObservableList<PianoNote> getNotes() {
         return notes;
     }
 
-    /**
-     * @param notes The notes to set.
-     */
-    public void setNotes(ArrayList<PianoNote> notes) {
-        this.notes = notes;
+    public ObservableList<FieldDef> getFieldDefinitions() {
+        return fieldDefinitions;
     }
 
     /**
@@ -352,7 +471,13 @@ public class PianoRoll extends AbstractSoundObject implements GenericViewable {
      * @param noteTemplate The noteTemplate to set.
      */
     public void setNoteTemplate(String noteTemplate) {
-        this.noteTemplate = noteTemplate;
+        final var newVal = (noteTemplate == null) ? "" : noteTemplate;
+
+        if (!newVal.equals(this.noteTemplate)) {
+            var oldVal = this.noteTemplate;
+            this.noteTemplate = newVal;
+            pcs.firePropertyChange("noteTemplate", oldVal, newVal);
+        }
     }
 
     /**
@@ -366,39 +491,18 @@ public class PianoRoll extends AbstractSoundObject implements GenericViewable {
      * @param scale The scale to set.
      */
     public void setScale(Scale scale) {
-        PropertyChangeEvent pce = new PropertyChangeEvent(this, "scale",
-                this.scale, scale);
-
+        var oldVal = this.scale;
         this.scale = scale;
-
-        firePropertyChange(pce);
+        pcs.firePropertyChange("scale", oldVal, scale);
     }
 
     /* PROPERTY CHANGE EVENTS */
     public void addPropertyChangeListener(PropertyChangeListener listener) {
-        checkListenersExists();
-        this.listeners.add(listener);
+        pcs.addPropertyChangeListener(listener);
     }
 
     public void removePropertyChangeListener(PropertyChangeListener listener) {
-        checkListenersExists();
-        this.listeners.remove(listener);
-    }
-
-    public void firePropertyChange(PropertyChangeEvent pce) {
-        checkListenersExists();
-
-        for (Iterator iter = listeners.iterator(); iter.hasNext();) {
-            PropertyChangeListener listener = (PropertyChangeListener) iter
-                    .next();
-            listener.propertyChange(pce);
-        }
-    }
-
-    private void checkListenersExists() {
-        if (listeners == null) {
-            listeners = new ArrayList();
-        }
+        pcs.removePropertyChangeListener(listener);
     }
 
     /**
@@ -412,13 +516,9 @@ public class PianoRoll extends AbstractSoundObject implements GenericViewable {
      * @param pixelSecond The pixelSecond to set.
      */
     public void setPixelSecond(int pixelSecond) {
-        PropertyChangeEvent pce = new PropertyChangeEvent(this, "pixelSecond",
-                new Integer(this.pixelSecond), new Integer(pixelSecond));
-
+        var oldVal = this.pixelSecond;
         this.pixelSecond = pixelSecond;
-
-        firePropertyChange(pce);
-
+        pcs.firePropertyChange("pixelSecond", oldVal, pixelSecond);
     }
 
     /**
@@ -432,13 +532,9 @@ public class PianoRoll extends AbstractSoundObject implements GenericViewable {
      * @param pixelSecond The pixelSecond to set.
      */
     public void setNoteHeight(int noteHeight) {
-        PropertyChangeEvent pce = new PropertyChangeEvent(this, "noteHeight",
-                new Integer(this.noteHeight), new Integer(noteHeight));
-
+        var oldVal = this.noteHeight;
         this.noteHeight = noteHeight;
-
-        firePropertyChange(pce);
-
+        pcs.firePropertyChange("noteHeight", oldVal, noteHeight);
     }
 
     /**
@@ -449,12 +545,9 @@ public class PianoRoll extends AbstractSoundObject implements GenericViewable {
     }
 
     public void setSnapEnabled(boolean snapEnabled) {
-        PropertyChangeEvent pce = new PropertyChangeEvent(this, "snapEnabled",
-                Boolean.valueOf(this.snapEnabled), Boolean.valueOf(snapEnabled));
-
+        var oldVal = this.snapEnabled;
         this.snapEnabled = snapEnabled;
-
-        firePropertyChange(pce);
+        pcs.firePropertyChange("snapEnabled", oldVal, snapEnabled);
     }
 
     public double getSnapValue() {
@@ -462,12 +555,10 @@ public class PianoRoll extends AbstractSoundObject implements GenericViewable {
     }
 
     public void setSnapValue(double snapValue) {
-        PropertyChangeEvent pce = new PropertyChangeEvent(this, "snapValue",
-                new Double(this.snapValue), new Double(snapValue));
-
+        var oldVal = this.snapValue;
         this.snapValue = snapValue;
 
-        firePropertyChange(pce);
+        pcs.firePropertyChange("snapValue", oldVal, snapValue);
     }
 
     public int getTimeDisplay() {
@@ -475,12 +566,9 @@ public class PianoRoll extends AbstractSoundObject implements GenericViewable {
     }
 
     public void setTimeDisplay(int timeDisplay) {
-        PropertyChangeEvent pce = new PropertyChangeEvent(this, "timeDisplay",
-                new Integer(this.timeDisplay), new Integer(timeDisplay));
-
+        var oldVal = this.timeDisplay;
         this.timeDisplay = timeDisplay;
-
-        firePropertyChange(pce);
+        pcs.firePropertyChange("timeDisplay", oldVal, timeDisplay);
     }
 
     public int getTimeUnit() {
@@ -488,12 +576,9 @@ public class PianoRoll extends AbstractSoundObject implements GenericViewable {
     }
 
     public void setTimeUnit(int timeUnit) {
-        PropertyChangeEvent pce = new PropertyChangeEvent(this, "timeUnit",
-                new Integer(this.timeUnit), new Integer(timeUnit));
-
+        var oldVal = this.timeUnit;
         this.timeUnit = timeUnit;
-
-        firePropertyChange(pce);
+        pcs.firePropertyChange("timeUnity", oldVal, timeUnit);
     }
 
     /**
@@ -507,7 +592,9 @@ public class PianoRoll extends AbstractSoundObject implements GenericViewable {
      * @param instrumentId The instrumentId to set.
      */
     public void setInstrumentId(String instrumentId) {
+        var oldVal = this.instrumentId;
         this.instrumentId = instrumentId;
+        pcs.firePropertyChange("instrumentId", oldVal, instrumentId);
     }
 
     public int getPchGenerationMethod() {
@@ -515,13 +602,9 @@ public class PianoRoll extends AbstractSoundObject implements GenericViewable {
     }
 
     public void setPchGenerationMethod(int pchGenerationMethod) {
-        PropertyChangeEvent pce = new PropertyChangeEvent(this,
-                "pchGenerationMethod", new Integer(this.pchGenerationMethod),
-                new Integer(pchGenerationMethod));
-
+        var oldVal = this.pchGenerationMethod;
         this.pchGenerationMethod = pchGenerationMethod;
-
-        firePropertyChange(pce);
+        pcs.firePropertyChange("pchGenerationMethod", oldVal, pchGenerationMethod);
     }
 
     public int getTransposition() {
@@ -529,7 +612,9 @@ public class PianoRoll extends AbstractSoundObject implements GenericViewable {
     }
 
     public void setTransposition(int transposition) {
+        var oldVal = this.transposition;
         this.transposition = transposition;
+        pcs.firePropertyChange("transposition", oldVal, transposition);
     }
 
     @Override
@@ -544,4 +629,77 @@ public class PianoRoll extends AbstractSoundObject implements GenericViewable {
     public PianoRoll deepCopy() {
         return new PianoRoll(this);
     }
+
+    // When there are changes to number of field definitions, ensure that
+    // piano notes have field values adjusted
+    @Override
+    public void onChanged(Change<? extends FieldDef> change) {
+        while (change.next()) {
+            if (change.wasAdded()) {
+                for (var fd : change.getAddedSubList()) {
+                    fd.minValueProperty().addListener(minListener);
+                    fd.maxValueProperty().addListener(maxListener);
+                    fd.fieldTypeProperty().addListener(fieldTypeListener);
+
+                    for (var pn : notes) {
+                        pn.getFields().add(new Field(fd));
+                    }
+                }
+            } else if (change.wasRemoved()) {
+                for (var fd : change.getRemoved()) {
+                    fd.minValueProperty().removeListener(minListener);
+                    fd.maxValueProperty().removeListener(maxListener);
+                    fd.fieldTypeProperty().removeListener(fieldTypeListener);
+
+                    for (var pn : notes) {
+                        pn.getFields().removeIf(field -> field.getFieldDef() == fd);
+                    }
+
+                }
+            }
+        }
+    }
+
+    /**
+     * Used to check if target PianoRoll is compatible with this PianoRoll for
+     * the purpose of copying/pasting note data between the two. Pasted notes
+     * should ensure their fields are relinked to FieldDef's in target
+     * PianoRoll.
+     *
+     * @param target
+     * @return if target is compatible with this PianoRoll
+     */
+    public boolean isCompatible(PianoRoll target) {
+        if (this == target) {
+            return true;
+        }
+        if (target == null) {
+            return false;
+        }
+
+        if (!getScale().equals(target.getScale())) {
+            return false;
+        }
+
+        final var aFieldDefs = getFieldDefinitions();
+        final var bFieldDefs = target.getFieldDefinitions();
+
+        if (aFieldDefs.size() != bFieldDefs.size()) {
+            return false;
+        }
+
+        for (int i = 0; i < aFieldDefs.size(); i++) {
+            FieldDef afd = aFieldDefs.get(i);
+            FieldDef bfd = bFieldDefs.get(i);
+
+            if (!afd.getFieldName().equals(bfd.getFieldName())
+                    || afd.getFieldType() != bfd.getFieldType()
+                    || afd.getMinValue() != bfd.getMinValue()
+                    || afd.getMaxValue() != bfd.getMaxValue()) {
+                return false;
+            }
+        }
+        return true;
+    }
+
 }

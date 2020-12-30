@@ -102,6 +102,8 @@ public final class GlobalOrchestraTopComponent extends TopComponent {
             GlobalOrcSco localGlobals = project.getData().getGlobalOrcSco();
             editor.setText(localGlobals.getGlobalOrc());
             editor.getJEditorPane().setEditable(true);
+            editor.getJEditorPane().setCaretPosition(0);
+            editor.resetUndoManager();
             globalOrcSco = localGlobals;
         }
         

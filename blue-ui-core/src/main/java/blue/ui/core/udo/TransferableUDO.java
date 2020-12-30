@@ -38,7 +38,7 @@ public class TransferableUDO implements Transferable {
     public static DataFlavor UDO_CAT_FLAVOR = new DataFlavor(UDOCategory.class,
             "UDO Category");
 
-    private Object obj;
+    private final Object obj;
 
     DataFlavor[] flavors;
 

@@ -27,6 +27,7 @@ import blue.soundObject.GenericScore;
 import blue.soundObject.NoteList;
 import blue.soundObject.SoundObject;
 import blue.soundObject.SoundObjectException;
+import blue.soundObject.TimeBehavior;
 import blue.utility.ObjectUtilities;
 import blue.utility.ScoreUtilities;
 import electric.xml.Element;
@@ -56,7 +57,7 @@ public class PatternLayer implements Layer {
         soundObject = new GenericScore();
         soundObject.setStartTime(0);
         soundObject.setSubjectiveDuration(4.0f);
-        soundObject.setTimeBehavior(SoundObject.TIME_BEHAVIOR_NONE);
+        soundObject.setTimeBehavior(TimeBehavior.NONE);
         patternData = new PatternData();
     }
 

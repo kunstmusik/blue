@@ -112,7 +112,7 @@ public class ArrangementEditPanel extends JComponent
 
     private static final String EXPORT_DIALOG = "instr.export";
 
-    private static MessageFormat toolTipFormat = new MessageFormat(
+    private static final MessageFormat toolTipFormat = new MessageFormat(
             "<html><b>Instrument Type:</b> {0}</html>");
 
     private final AddInstrumentPopup popup = new AddInstrumentPopup();
@@ -298,7 +298,11 @@ public class ArrangementEditPanel extends JComponent
                     OrchestraEdit.ADD);
             BlueUndoManager.setUndoManager("orchestra");
             BlueUndoManager.addEdit(edit);
+
+            int index = arrangement.getIndexByArrangementId(instrId);
+            arrangementTable.getSelectionModel().setSelectionInterval(index, index);
         }
+
     }
 
     public void convertToBSB() {
@@ -399,12 +403,11 @@ public class ArrangementEditPanel extends JComponent
         }
 
         this.arrangement = arrangement;
-        
 
         if (arrangement != null) {
             arrangementTable.setModel(arrangement);
             arrangementTable.setEnabled(true);
-            this.arrangement.addArrangementListener(this);            
+            this.arrangement.addArrangementListener(this);
             setupTableProperties();
         } else {
             arrangementTable.setEnabled(false);

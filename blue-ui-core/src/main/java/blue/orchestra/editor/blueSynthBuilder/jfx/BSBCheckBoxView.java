@@ -19,16 +19,23 @@
  */
 package blue.orchestra.editor.blueSynthBuilder.jfx;
 
+import blue.jfx.BlueFX;
 import blue.orchestra.blueSynthBuilder.BSBCheckBox;
+import blue.orchestra.editor.blueSynthBuilder.BSBPreferences;
 import javafx.application.Platform;
+import javafx.beans.binding.Bindings;
 import javafx.beans.value.ChangeListener;
 import javafx.scene.control.CheckBox;
+import javafx.scene.control.Tooltip;
+import javafx.util.Duration;
 
 /**
  *
  * @author stevenyi
  */
 public class BSBCheckBoxView extends CheckBox {
+
+    Tooltip tooltip = BSBTooltipUtil.createTooltip();
 
     public BSBCheckBoxView(BSBCheckBox checkBox) {
         setUserData(checkBox);
@@ -65,19 +72,47 @@ public class BSBCheckBoxView extends CheckBox {
             }
         };
 
+        ChangeListener<Object> toolTipListener = (obs, old, newVal) -> {
+            BlueFX.runOnFXThread(() -> {
+                var comment = checkBox.getComment();
+                var showComments = BSBPreferences.getInstance().getShowWidgetComments();
+                if (comment == null || comment.isBlank() || !showComments) {
+                    setTooltip(null);
+                } else {
+                    setTooltip(tooltip);
+                }
+            });
+        };
+
         sceneProperty().addListener((obs, old, newVal) -> {
             if (newVal == null) {
 //                this.selectedProperty().unbindBidirectional(checkBox.selectedProperty());
                 checkBox.selectedProperty().removeListener(cboxToViewListener);
                 this.selectedProperty().removeListener(viewToCboxListener);
                 this.textProperty().unbind();
+
+                BSBPreferences.getInstance().showWidgetCommentsProperty()
+                        .removeListener(toolTipListener);
+
+                checkBox.commentProperty().removeListener(toolTipListener);
+                tooltip.textProperty().unbind();
+                setTooltip(null);
             } else {
                 setSelected(checkBox.isSelected());
 //                this.selectedProperty().bindBidirectional(checkBox.selectedProperty());
                 checkBox.selectedProperty().addListener(cboxToViewListener);
                 this.selectedProperty().addListener(viewToCboxListener);
                 this.textProperty().bind(checkBox.labelProperty());
+
+                BSBPreferences.getInstance().showWidgetCommentsProperty()
+                        .addListener(toolTipListener);
+
+                checkBox.commentProperty().addListener(toolTipListener);
+                tooltip.textProperty().bind(checkBox.commentProperty());
+                toolTipListener.changed(null, null, null);
             }
         });
+
     }
+
 }

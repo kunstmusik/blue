@@ -36,7 +36,7 @@ import javax.swing.SwingUtilities;
 public class HandGrabberMouseListener implements MouseListener,
         MouseMotionListener {
 
-    private JScrollPane jsp;
+    private final JScrollPane jsp;
 
     int startX = 0;
 

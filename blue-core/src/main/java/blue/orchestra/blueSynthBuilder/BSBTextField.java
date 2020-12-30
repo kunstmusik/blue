@@ -28,9 +28,9 @@ import javafx.beans.property.StringProperty;
 
 public class BSBTextField extends BSBObject {
 
-    private StringProperty value = new SimpleStringProperty("");
+    private final StringProperty value = new SimpleStringProperty("");
 
-    private IntegerProperty textFieldWidth = new SimpleIntegerProperty(100) {
+    private final IntegerProperty textFieldWidth = new SimpleIntegerProperty(100) {
         @Override
         protected void invalidated() {
             if (get() < 5) {

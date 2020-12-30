@@ -30,7 +30,8 @@ public class TrackerObjectTest extends TestCase {
     public final void testGenerateNotes() {
         TrackerObject tracker = new TrackerObject();
 
-        tracker.setTimeBehavior(SoundObject.TIME_BEHAVIOR_NONE);
+        tracker.setTimeBehavior(TimeBehavior.NONE);
+        tracker.setStepsPerBeat(1);
 
         TrackList tracks = tracker.getTracks();
 

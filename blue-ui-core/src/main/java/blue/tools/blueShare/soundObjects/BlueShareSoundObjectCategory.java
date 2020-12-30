@@ -19,13 +19,13 @@ package blue.tools.blueShare.soundObjects;
  */
 
 public class BlueShareSoundObjectCategory {
-    private int categoryId;
+    private final int categoryId;
 
-    private String name;
+    private final String name;
 
-    private String description;
+    private final String description;
 
-    private BlueShareSoundObjectCategory[] subcategories;
+    private final BlueShareSoundObjectCategory[] subcategories;
 
     public BlueShareSoundObjectCategory(int categoryId, String name,
             String description, BlueShareSoundObjectCategory[] subcategories) {

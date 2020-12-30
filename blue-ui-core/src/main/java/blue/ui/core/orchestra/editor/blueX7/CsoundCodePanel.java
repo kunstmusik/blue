@@ -66,6 +66,8 @@ public class CsoundCodePanel extends JComponent {
     public void editBlueX7(BlueX7 blueX7) {
         this.blueX7 = null;
         postCodeText.setText(blueX7.getCsoundPostCode());
+        postCodeText.getJEditorPane().setCaretPosition(0);
+        postCodeText.resetUndoManager();
         undo.discardAllEdits();
         this.blueX7 = blueX7;
     }

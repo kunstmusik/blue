@@ -22,13 +22,20 @@ package blue.soundObject.editor.pianoRoll;
 import blue.BlueSystem;
 import blue.gui.LabelledItemPanel;
 import blue.soundObject.PianoRoll;
+import blue.soundObject.editor.pianoRoll.undo.UndoablePropertyEdit;
 import blue.soundObject.pianoRoll.PianoNote;
+import blue.soundObject.pianoRoll.Scale;
+import blue.ui.utilities.SimpleDocumentListener;
 import java.awt.BorderLayout;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import java.util.HashMap;
+import javafx.collections.ObservableList;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JPanel;
@@ -39,7 +46,7 @@ import javax.swing.JTextField;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
+import javax.swing.undo.UndoManager;
 
 /**
  * @author steven
@@ -66,18 +73,76 @@ public class PianoRollPropertiesEditor extends JScrollPane {
 
     JSpinner transposition = new JSpinner(intModel);
 
+    FieldDefinitionsEditor fieldDefinitionsEditor;
+
     private PianoRoll p;
 
     private boolean isUpdating;
 
-    private NoteBuffer noteBuffer;
+    private final ObservableList<PianoNote> selectedNotes;
+    private final UndoManager undoManager;
 
-    public PianoRollPropertiesEditor() {
+    private final PropertyChangeListener pcl = new PropertyChangeListener() {
+        @Override
+        public void propertyChange(PropertyChangeEvent pce) {
+
+            if (isUpdating) {
+                return;
+            }
+
+            isUpdating = true;
+            switch (pce.getPropertyName()) {
+                case "scale": {
+                    var oldVal = (Scale) pce.getOldValue();
+                    var newVal = (Scale) pce.getNewValue();
+                    oldVal.removePropertyChangeListener(this);
+                    newVal.addPropertyChangeListener(this);
+                    scalePanel.setScale(newVal);
+                }
+                break;
+                case "pchGenerationMethod": {
+                    int method = (Integer) pce.getNewValue();
+                    switch (method) {
+                        case PianoRoll.GENERATE_FREQUENCY:
+                            frequencyOption.setSelected(true);
+                            break;
+                        case PianoRoll.GENERATE_PCH:
+                            pchOption.setSelected(true);
+                            break;
+                        case PianoRoll.GENERATE_MIDI:
+                            midiOption.setSelected(true);
+                            break;
+                    }
+                }
+                break;
+                case "transposition": {
+                    transposition.setValue((Integer) pce.getNewValue());
+                }
+                break;
+                case "baseFrequency": {
+                    baseFrequencyText.setText(Double.toString((Double) pce.getNewValue()));
+                }
+                break;
+            }
+            isUpdating = false;
+
+        }
+
+    };
+
+    public PianoRollPropertiesEditor(ObservableList<PianoNote> selectedNotes, UndoManager undoManager) {
+
+        this.selectedNotes = selectedNotes;
+        this.undoManager = undoManager;
 
         LabelledItemPanel mainPanel = new LabelledItemPanel();
 
         ActionListener timeActionListener = (ActionEvent e) -> {
             if (!isUpdating) {
+                isUpdating = true;
+
+                int oldVal = p.getPchGenerationMethod();
+
                 if (e.getSource() == frequencyOption) {
                     p.setPchGenerationMethod(PianoRoll.GENERATE_FREQUENCY);
                 } else if (e.getSource() == pchOption) {
@@ -85,6 +150,14 @@ public class PianoRollPropertiesEditor extends JScrollPane {
                 } else if (e.getSource() == midiOption) {
                     p.setPchGenerationMethod(PianoRoll.GENERATE_MIDI);
                 }
+
+                int newVal = p.getPchGenerationMethod();
+
+                undoManager.addEdit(new UndoablePropertyEdit<Integer>(v -> {
+                    p.setPchGenerationMethod(v);
+                }, oldVal, newVal));
+
+                isUpdating = false;
             }
         };
 
@@ -103,17 +176,10 @@ public class PianoRollPropertiesEditor extends JScrollPane {
         bg.add(midiOption);
 
         JPanel noteTemplatePanel = new JPanel(new BorderLayout());
-        JButton setAllNotesButton = new JButton(BlueSystem
-                .getString("pianoRoll.setAllNotes"));
-        JButton setSelectedNotesButton = new JButton(BlueSystem
-                .getString("pianoRoll.setSelectedNotes"));
-
-        JPanel noteButtonPanel = new JPanel(new GridLayout(1, 2));
-        noteButtonPanel.add(setSelectedNotesButton);
-        noteButtonPanel.add(setAllNotesButton);
+        JButton resetAllNotesButton = new JButton("Reset All Notes");
 
         noteTemplatePanel.add(noteTemplateText, BorderLayout.CENTER);
-        noteTemplatePanel.add(noteButtonPanel, BorderLayout.EAST);
+        noteTemplatePanel.add(resetAllNotesButton, BorderLayout.EAST);
 
         mainPanel.addItem(BlueSystem.getString("pianoRoll.instrumentID"),
                 instrumentIDText);
@@ -125,6 +191,9 @@ public class PianoRollPropertiesEditor extends JScrollPane {
         mainPanel.addItem(BlueSystem.getString("pianoRoll.pchGeneration"), buttonPanel);
 
         mainPanel.addItem("Transposition:", transposition); // TODO - Translate!
+
+        fieldDefinitionsEditor = new FieldDefinitionsEditor(undoManager);
+        mainPanel.addItem("Additional Fields:", fieldDefinitionsEditor);
 
         baseFrequencyText.addFocusListener(new FocusAdapter() {
 
@@ -144,118 +213,130 @@ public class PianoRollPropertiesEditor extends JScrollPane {
         });
 
         noteTemplateText.getDocument().addDocumentListener(
-                new DocumentListener() {
-
-                    @Override
-                    public void insertUpdate(DocumentEvent e) {
-                        updateNoteTemplate();
-                    }
-
-                    @Override
-                    public void removeUpdate(DocumentEvent e) {
-                        updateNoteTemplate();
-                    }
-
-                    @Override
-                    public void changedUpdate(DocumentEvent e) {
-                        updateNoteTemplate();
-                    }
-
-                    private void updateNoteTemplate() {
-                        if (p != null && !isUpdating) {
-                            p.setNoteTemplate(noteTemplateText.getText());
-                        }
-                    }
-
-                });
-
-        setAllNotesButton.addActionListener((ActionEvent e) -> {
-            setAllNoteTemplates();
+                new SimpleDocumentListener() {
+            @Override
+            public void documentChanged(DocumentEvent e) {
+                if (p != null && !isUpdating) {
+                    isUpdating = true;
+                    p.setNoteTemplate(noteTemplateText.getText());
+                    isUpdating = false;
+                }
+            }
         });
 
-        setSelectedNotesButton.addActionListener((ActionEvent e) -> {
-            setSelectedNoteTemplates();
+        resetAllNotesButton.setToolTipText("Reset all notes with overridden templates to use the PianoRoll's note template.");
+        resetAllNotesButton.addActionListener((ActionEvent e) -> {
+            resetAllNoteTemplates();
         });
 
         instrumentIDText.getDocument().addDocumentListener(
-                new DocumentListener() {
-
-                    @Override
-                    public void insertUpdate(DocumentEvent e) {
-                        updateInstrumentId();
-                    }
-
-                    @Override
-                    public void removeUpdate(DocumentEvent e) {
-                        updateInstrumentId();
-                    }
-
-                    @Override
-                    public void changedUpdate(DocumentEvent e) {
-                        updateInstrumentId();
-                    }
-
-                    private void updateInstrumentId() {
-                        if (p != null && !isUpdating) {
-                            p.setInstrumentId(instrumentIDText.getText());
-                        }
-                    }
-
-                });
-
-         this.setViewportView(mainPanel);
-         this.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-         this.setBorder(null);
-
-         scalePanel.addChangeListener((ChangeEvent e) -> {
-             if (p != null) {
-                 p.setScale(scalePanel.getScale());
-             }
+                new SimpleDocumentListener() {
+            @Override
+            public void documentChanged(DocumentEvent e) {
+                if (p != null && !isUpdating) {
+                    isUpdating = true;
+                    p.setInstrumentId(instrumentIDText.getText());
+                    isUpdating = false;
+                }
+            }
         });
+
+        this.setViewportView(mainPanel);
+        this.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        this.setBorder(null);
+
+        scalePanel.addChangeListener((ChangeEvent e) -> {
+            if (p != null && !isUpdating) {
+                isUpdating = true;
+                final var oldVal = p.getScale();
+                final var newVal = scalePanel.getScale();
+
+                oldVal.removePropertyChangeListener(pcl);
+                newVal.addPropertyChangeListener(pcl);
+                p.setScale(newVal);
+
+                undoManager.addEdit(
+                        new UndoablePropertyEdit<Scale>(v -> {
+                            p.setScale(v);
+                        }, oldVal, newVal));
+                isUpdating = false;
+            }
+        });
+
+        setupUndo();
+    }
+
+    protected void setupUndo() {
+        instrumentIDText.getDocument().addUndoableEditListener(undoManager);
+        noteTemplateText.getDocument().addUndoableEditListener(undoManager);
+
     }
 
     /**
-     * 
+     *
      */
     protected void updateTransposition() {
-        if (p == null) {
+        if (p == null || isUpdating) {
             return;
         }
 
         Integer val = (Integer) transposition.getValue();
 
-        p.setTransposition(val.intValue());
+        final int oldVal = p.getTransposition();
+        final int newVal = val.intValue();
+
+        isUpdating = true;
+        p.setTransposition(newVal);
+
+        undoManager.addEdit(new UndoablePropertyEdit<Integer>(v -> {
+            p.setTransposition(v);
+        }, oldVal, newVal));
+        isUpdating = false;
     }
 
     /**
-     * 
+     *
      */
-    protected void setAllNoteTemplates() {
-        if (p == null) {
+    protected void resetAllNoteTemplates() {
+        if (p == null || isUpdating) {
             return;
         }
 
-        String noteTemplate = p.getNoteTemplate();
+        isUpdating = true;
+        final var oldValuesMap = new HashMap<PianoNote, String>();
+        final var globalTemplate = p.getNoteTemplate();
 
         for (PianoNote note : p.getNotes()) {
-            note.setNoteTemplate(noteTemplate);
-        }
-    }
+            var old = note.getNoteTemplate();
+            note.setNoteTemplate(null);
 
-    protected void setSelectedNoteTemplates() {
-        if (p == null || noteBuffer == null) {
-            return;
+            if (old != null && !globalTemplate.equals(old)) {
+                oldValuesMap.put(note, old);
+            }
         }
-
-        String noteTemplate = p.getNoteTemplate();
-
-        for (PianoNoteView pianoNoteView : noteBuffer) {
-            PianoNote note = pianoNoteView.getPianoNote();
-            note.setNoteTemplate(noteTemplate);
+        if (oldValuesMap.size() > 0) {
+            undoManager.addEdit(new UndoablePropertyEdit<Boolean>(
+                    v -> {
+                        if (v) {
+                            for (PianoNote note : oldValuesMap.keySet()) {
+                                note.setNoteTemplate(null);
+                            }
+                        } else {
+                            for (var entry : oldValuesMap.entrySet()) {
+                                entry.getKey().setNoteTemplate(entry.getValue());
+                            }
+                        }
+                    },
+                    false, true));
         }
+        isUpdating = false;
     }
 
     protected void updateBaseFrequency() {
+        if (p == null || isUpdating) {
+            return;
+        }
+
         double newValue;
 
         try {
@@ -270,13 +351,26 @@ public class PianoRollPropertiesEditor extends JScrollPane {
             newValue = 0.0f;
         }
 
+        isUpdating = true;
+        var oldVal = p.getScale().getBaseFrequency();
         p.getScale().setBaseFrequency(newValue);
+
+        undoManager.addEdit(
+                new UndoablePropertyEdit<Double>(v -> {
+                    p.getScale().setBaseFrequency(v);
+                }, oldVal, newValue));
+
+        isUpdating = false;
     }
 
     public void editPianoRoll(PianoRoll p) {
-        isUpdating = false;
+        isUpdating = true;
 
-        this.p = p;
+        if (this.p != null) {
+            this.p.removePropertyChangeListener(pcl);
+            this.p.getScale().removePropertyChangeListener(pcl);
+        }
+        this.p = null;
 
         noteTemplateText.setText(p.getNoteTemplate());
         instrumentIDText.setText(p.getInstrumentId());
@@ -294,10 +388,12 @@ public class PianoRollPropertiesEditor extends JScrollPane {
 
         transposition.setValue(new Integer(p.getTransposition()));
 
+        fieldDefinitionsEditor.editPianoRoll(p);
+
+        this.p = p;
+        this.p.addPropertyChangeListener(pcl);
+        this.p.getScale().addPropertyChangeListener(pcl);
         isUpdating = false;
     }
 
-    public void setNoteBuffer(NoteBuffer noteBuffer) {
-        this.noteBuffer = noteBuffer;
-    }
 }

@@ -22,6 +22,8 @@ package blue.soundObject.pianoRoll;
 import blue.utility.TextUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -32,7 +34,6 @@ import org.apache.commons.lang3.builder.HashCodeBuilder;
 /**
  * @author steven
  */
-
 public class Scale {
 
     private String scaleName = "";
@@ -43,10 +44,14 @@ public class Scale {
 
     private double octave = 2.0;
 
+    private transient final PropertyChangeSupport pcs;
+
     private Scale() {
+        pcs = new PropertyChangeSupport(this);
     }
 
-    public Scale(Scale scale){
+    public Scale(Scale scale) {
+        pcs = new PropertyChangeSupport(this);
         scaleName = scale.scaleName;
         ratios = scale.ratios.clone();
         baseFrequency = scale.baseFrequency;
@@ -164,7 +169,6 @@ public class Scale {
     }
 
     /* CONVERSION METHODS */
-
     public int getNumScaleDegrees() {
         return ratios.length;
     }
@@ -190,7 +194,6 @@ public class Scale {
     }
 
     /* SERIALIZATION */
-
     public static Scale loadFromXML(Element data) {
         Scale scale = new Scale();
 
@@ -254,8 +257,7 @@ public class Scale {
     }
 
     /**
-     * @param scaleName
-     *            The scaleName to set.
+     * @param scaleName The scaleName to set.
      */
     public void setScaleName(String scaleName) {
         this.scaleName = scaleName;
@@ -269,12 +271,22 @@ public class Scale {
     }
 
     /**
-     * @param baseFrequency
-     *            The baseFrequency to set.
+     * @param baseFrequency The baseFrequency to set.
      */
     public void setBaseFrequency(double baseFrequency) {
+        var oldVal = this.baseFrequency;
         this.baseFrequency = baseFrequency;
+        pcs.firePropertyChange("baseFrequency", oldVal, baseFrequency);
     }
+    
+    public void addPropertyChangeListener(PropertyChangeListener pcl) {
+        pcs.addPropertyChangeListener(pcl);
+    }
+    
+    public void removePropertyChangeListener(PropertyChangeListener pcl) {
+        pcs.removePropertyChangeListener(pcl);
+    }
+            
 
     public void copyValues(Scale scale) {
         this.octave = scale.octave;
@@ -282,7 +294,7 @@ public class Scale {
         this.scaleName = scale.scaleName;
         this.baseFrequency = scale.baseFrequency;
     }
-    
+
     @Override
     public boolean equals(Object obj) {
         return EqualsBuilder.reflectionEquals(this, obj);
@@ -292,7 +304,7 @@ public class Scale {
     public int hashCode() {
         return HashCodeBuilder.reflectionHashCode(this);
     }
-    
+
     @Override
     public String toString() {
         return getScaleName();

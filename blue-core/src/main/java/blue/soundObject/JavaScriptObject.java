@@ -43,7 +43,7 @@ public class JavaScriptObject extends AbstractSoundObject
 
     private NoteProcessorChain npc = new NoteProcessorChain();
 
-    private int timeBehavior;
+    private TimeBehavior timeBehavior;
 
     double repeatPoint = -1.0f;
 
@@ -53,7 +53,7 @@ public class JavaScriptObject extends AbstractSoundObject
         setName("javaScriptObject");
         javaScriptCode = BlueSystem.getString("rhinoObject.defaultCode");
         javaScriptCode += "\n\nscore = \"i1 0 2 3 4 5\";";
-        timeBehavior = SoundObject.TIME_BEHAVIOR_SCALE;
+        timeBehavior = TimeBehavior.SCALE;
     }
 
     public JavaScriptObject(JavaScriptObject ro) {
@@ -98,7 +98,7 @@ public class JavaScriptObject extends AbstractSoundObject
                     javaScriptCode, subjectiveDuration, soundObjectId);
 
             NoteList nl = ScoreUtilities.getNotes(tempScore);
-            ScoreUtilities.applyNoteProcessorChain(nl, this.npc);
+            nl = ScoreUtilities.applyNoteProcessorChain(nl, this.npc);
             ScoreUtilities.applyTimeBehavior(nl, this.getTimeBehavior(), this
                     .getSubjectiveDuration(), this.getRepeatPoint());
             ScoreUtilities.setScoreStart(nl, startTime);
@@ -111,23 +111,13 @@ public class JavaScriptObject extends AbstractSoundObject
         // ScoreUtilities.scaleScore(notes, (subjectiveDuration/totalDur));
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see blue.soundObject.SoundObject#getTimeBehavior()
-     */
     @Override
-    public int getTimeBehavior() {
+    public TimeBehavior getTimeBehavior() {
         return this.timeBehavior;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see blue.soundObject.SoundObject#setTimeBehavior(int)
-     */
     @Override
-    public void setTimeBehavior(int timeBehavior) {
+    public void setTimeBehavior(TimeBehavior timeBehavior) {
         this.timeBehavior = timeBehavior;
     }
 

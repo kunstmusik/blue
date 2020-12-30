@@ -60,7 +60,7 @@ public class SwitchProcessor implements NoteProcessor {
     }
 
     @Override
-    public final void processNotes(NoteList in) throws NoteProcessorException {
+    public final NoteList processNotes(NoteList in) throws NoteProcessorException {
         Note temp;
         String tempPField;
         int pcount = 0;
@@ -84,6 +84,7 @@ public class SwitchProcessor implements NoteProcessor {
             temp.setPField(temp.getPField(pfield2), pfield1);
             temp.setPField(tempPField, pfield2);
         }
+        return in;
     }
 
     public static void main(String[] args) {

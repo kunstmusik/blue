@@ -19,12 +19,15 @@
  */
 package blue.orchestra.editor.blueSynthBuilder.jfx;
 
+import blue.jfx.BlueFX;
 import blue.orchestra.blueSynthBuilder.BSBDropdown;
 import blue.orchestra.blueSynthBuilder.BSBDropdownItem;
+import blue.orchestra.editor.blueSynthBuilder.BSBPreferences;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.value.ChangeListener;
 import javafx.scene.control.ComboBox;
+import javafx.scene.control.Tooltip;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 
@@ -36,6 +39,8 @@ public class BSBDropdownView extends ComboBox<BSBDropdownItem> {
 
     private final BSBDropdown dropdown;
     boolean mutating = false;
+
+    Tooltip tooltip = BSBTooltipUtil.createTooltip();
 
     public BSBDropdownView(BSBDropdown dropdown) {
         super(dropdown.dropdownItemsProperty());
@@ -96,16 +101,42 @@ public class BSBDropdownView extends ComboBox<BSBDropdownItem> {
             updateWidth();
         };
 
+        ChangeListener<Object> toolTipListener = (obs, old, newVal) -> {
+            BlueFX.runOnFXThread(() -> {
+                var comment = dropdown.getComment();
+                var showComments = BSBPreferences.getInstance().getShowWidgetComments();
+                if (comment == null || comment.isBlank() || !showComments) {
+                    setTooltip(null);
+                } else {
+                    setTooltip(tooltip);
+                }
+            });
+        };
+
         sceneProperty().addListener((obs, old, newVal) -> {
             if (newVal == null) {
                 dropdown.selectedIndexProperty().removeListener(cl);
                 dropdown.fontSizeProperty().removeListener(fontListener);
                 dropdown.getBSBDropdownItemList().removeListener(listListener);
+
+                BSBPreferences.getInstance().showWidgetCommentsProperty()
+                        .removeListener(toolTipListener);
+
+                dropdown.commentProperty().removeListener(toolTipListener);
+                tooltip.textProperty().unbind();
+                setTooltip(null);
             } else {
                 getSelectionModel().select(dropdown.getSelectedIndex());
                 dropdown.selectedIndexProperty().addListener(cl);
                 dropdown.fontSizeProperty().addListener(fontListener);
                 dropdown.getBSBDropdownItemList().addListener(listListener);
+
+                BSBPreferences.getInstance().showWidgetCommentsProperty()
+                        .addListener(toolTipListener);
+
+                dropdown.commentProperty().addListener(toolTipListener);
+                tooltip.textProperty().bind(dropdown.commentProperty());
+                toolTipListener.changed(null, null, null);
             }
         });
 

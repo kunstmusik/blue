@@ -24,9 +24,9 @@ package blue.soundObject;
  */
 public class NoteParseException extends Exception {
 
-    private String errorMessage;
+    private final String errorMessage;
 
-    private String badNoteText;
+    private final String badNoteText;
 
     private int lineNum = -1;
 

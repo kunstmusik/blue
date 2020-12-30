@@ -74,7 +74,7 @@ public class ClojureProjectData implements BlueDataObject {
       
       builder.append("] :repositories (merge ");
       builder.append("cemerick.pomegranate.aether/maven-central ");
-      builder.append("{\"clojars\" \"http://clojars.org/repo\"}))");
+      builder.append("{\"clojars\" \"https://repo.clojars.org\"}))");
 
       return builder.toString();
     }

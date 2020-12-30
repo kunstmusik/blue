@@ -19,31 +19,68 @@
 package blue.orchestra.editor.blueSynthBuilder.jfx;
 
 import blue.BlueData;
+import blue.jfx.BlueFX;
 import blue.mixer.Channel;
 import blue.orchestra.blueSynthBuilder.BSBSubChannelDropdown;
+import blue.orchestra.editor.blueSynthBuilder.BSBPreferences;
 import blue.projects.BlueProjectManager;
+import javafx.beans.value.ChangeListener;
 import javafx.scene.control.ChoiceBox;
+import javafx.scene.control.Tooltip;
 
 /**
  *
  * @author stevenyi
  */
 public class BSBSubChannelDropdownView extends ChoiceBox<String> {
-    
+
+    Tooltip tooltip = BSBTooltipUtil.createTooltip();
+
     public BSBSubChannelDropdownView(BSBSubChannelDropdown dropDown) {
         setUserData(dropDown);
 
         BlueData data = BlueProjectManager.getInstance().getCurrentProject().getData();
         // FIXME - update once Mixer is updated for JFX ObservableList
         itemsProperty().get().add(Channel.MASTER);
-        for(Channel c : data.getMixer().getSubChannels()){
+        for (Channel c : data.getMixer().getSubChannels()) {
             itemsProperty().get().add(c.getName());
         }
 
         getSelectionModel().select(dropDown.getChannelOutput());
 
-       getSelectionModel().selectedItemProperty().addListener((obs, old, newVal) -> {
-           dropDown.setChannelOutput(newVal);
-       });
+        getSelectionModel().selectedItemProperty().addListener((obs, old, newVal) -> {
+            dropDown.setChannelOutput(newVal);
+        });
+
+        ChangeListener<Object> toolTipListener = (obs, old, newVal) -> {
+            BlueFX.runOnFXThread(() -> {
+                var comment = dropDown.getComment();
+                var showComments = BSBPreferences.getInstance().getShowWidgetComments();
+                if (comment == null || comment.isBlank() || !showComments) {
+                    setTooltip(null);
+                } else {
+                    setTooltip(tooltip);
+                }
+            });
+        };
+
+        sceneProperty().addListener((obs, old, newVal) -> {
+            if (newVal == null) {
+                BSBPreferences.getInstance().showWidgetCommentsProperty()
+                        .removeListener(toolTipListener);
+
+                dropDown.commentProperty().removeListener(toolTipListener);
+                tooltip.textProperty().unbind();
+                setTooltip(null);
+            } else {
+
+                BSBPreferences.getInstance().showWidgetCommentsProperty()
+                        .addListener(toolTipListener);
+
+                dropDown.commentProperty().addListener(toolTipListener);
+                tooltip.textProperty().bind(dropDown.commentProperty());
+                toolTipListener.changed(null, null, null);
+            }
+        });
     }
 }

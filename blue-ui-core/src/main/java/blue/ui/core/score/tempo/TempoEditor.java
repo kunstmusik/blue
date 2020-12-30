@@ -4,16 +4,19 @@
  */
 package blue.ui.core.score.tempo;
 
+import blue.BlueData;
 import blue.components.DragDirection;
 import blue.components.lines.Line;
 import blue.components.lines.LineEditorDialog;
 import blue.components.lines.LinePoint;
+import blue.score.Score;
 import blue.score.TimeState;
 import blue.score.tempo.Tempo;
 import blue.ui.core.score.ModeManager;
 import blue.ui.utilities.UiUtilities;
 import blue.utility.GUI;
 import blue.utility.NumberUtilities;
+import blue.utility.ScoreUtilities;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Component;
@@ -26,9 +29,8 @@ import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.Stroke;
 import java.awt.event.ActionEvent;
+import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
-import java.awt.event.MouseMotionListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import javax.swing.AbstractAction;
@@ -54,6 +56,7 @@ public class TempoEditor extends JComponent implements PropertyChangeListener {
 
     TableModelListener lineListener;
     Tempo tempo = null;
+    Score score = null;
     private TimeState timeState;
 
     LinePoint selectedPoint = null;
@@ -65,22 +68,30 @@ public class TempoEditor extends JComponent implements PropertyChangeListener {
             repaint();
         };
 
-        TempoEditorMouseListener tempoEditorMouseListener
-                = new TempoEditorMouseListener(this);
+        final var tempoEditorMouseListener = new TempoEditorMouseListener();
 
         this.addMouseListener(tempoEditorMouseListener);
         this.addMouseMotionListener(tempoEditorMouseListener);
     }
 
-    public void setTempo(Tempo tempo) {
+    public void setData(BlueData data) {
+        var score = data.getScore();
+        Tempo tempo = score.getTempo();
+
         if (this.tempo != null) {
             this.tempo.getLine().removeTableModelListener(lineListener);
             this.tempo.removePropertyChangeListener(this);
         }
 
+        if (this.score != null) {
+            score.getTimeState().removePropertyChangeListener(this);
+        }
+
         this.tempo = tempo;
         this.tempo.getLine().addTableModelListener(lineListener);
         this.tempo.addPropertyChangeListener(this);
+        this.score = score;
+        this.score.getTimeState().addPropertyChangeListener(this);
         this.setTempoVisible(tempo.isVisible());
     }
 
@@ -109,7 +120,6 @@ public class TempoEditor extends JComponent implements PropertyChangeListener {
         }
 
         Graphics2D g2d = (Graphics2D) g;
-        g2d.setStroke(STROKE2);
 
         RenderingHints hints = new RenderingHints(
                 RenderingHints.KEY_ANTIALIASING,
@@ -122,6 +132,32 @@ public class TempoEditor extends JComponent implements PropertyChangeListener {
 
         Line tempoLine = this.tempo.getLine();
         boolean enabled = this.tempo.isEnabled();
+
+        if (score.getTimeState().isSnapEnabled()) {
+            if (timeState.isSnapEnabled()) {
+                g2d.setColor(Color.DARK_GRAY);
+
+                int snapPixels = (int) (timeState.getSnapValue() * timeState.getPixelSecond());
+
+                int x = 0;
+                if (snapPixels <= 0) {
+                    return;
+                }
+
+                int height = getHeight();
+                int width = getWidth();
+                double snapValue = timeState.getSnapValue();
+                int pixelSecond = timeState.getPixelSecond();
+
+                for (int i = 0; x < width; i++) {
+                    x = (int) ((i * snapValue) * pixelSecond);
+                    g.drawLine(x, 0, x, height);
+                }
+
+            }
+        }
+
+        g2d.setStroke(STROKE2);
 
         if (enabled) {
             if (tempo.isVisible()) {
@@ -378,18 +414,12 @@ public class TempoEditor extends JComponent implements PropertyChangeListener {
      * @param y
      * @return
      */
-    protected LinePoint insertGraphPoint(int x, int y) {
-        LinePoint point = new LinePoint();
-
-        Line currentLine = tempo.getLine();
-
-        double min = currentLine.getMin();
-        double max = currentLine.getMax();
-
-        point.setLocation(screenToDoubleX(x), screenToDoubleY(y, min, max,
-                -1));
+    protected LinePoint insertGraphPoint(double time, double value) {
+        LinePoint point = new LinePoint(time, value);
 
         int index = 1;
+
+        Line currentLine = tempo.getLine();
 
         LinePoint last = currentLine.getLinePoint(currentLine.size() - 1);
 
@@ -452,27 +482,10 @@ public class TempoEditor extends JComponent implements PropertyChangeListener {
         return null;
     }
 
-    public class TempoEditorMouseListener implements MouseListener, MouseMotionListener {
+    public class TempoEditorMouseListener extends MouseAdapter {
 
-        TempoEditor tempoEditor;
         DragDirection direction = DragDirection.NOT_SET;
         Point pressPoint = null;
-
-        public TempoEditorMouseListener(TempoEditor tempoEditor) {
-            this.tempoEditor = tempoEditor;
-        }
-
-        @Override
-        public void mouseClicked(MouseEvent e) {
-        }
-
-        @Override
-        public void mouseEntered(MouseEvent e) {
-        }
-
-        @Override
-        public void mouseExited(MouseEvent e) {
-        }
 
         @Override
         public void mousePressed(MouseEvent e) {
@@ -498,18 +511,29 @@ public class TempoEditor extends JComponent implements PropertyChangeListener {
 
                     int start = e.getX();
 
-                    if (timeState.isSnapEnabled() && !e.isShiftDown()) {
-                        int snapPixels = (int) (timeState.getSnapValue() * timeState.getPixelSecond());
-                        int fraction = start % snapPixels;
+                    double startTime = start / timeState.getPixelSecond();
 
-                        start = start - fraction;
-
-                        if (fraction > snapPixels / 2) {
-                            start += snapPixels;
-                        }
+                    if (timeState.isSnapEnabled() && !(e.isControlDown() && e.isShiftDown())) {
+                        startTime = ScoreUtilities.getSnapValueStart(startTime, timeState.getSnapValue());
                     }
 
-                    selectedPoint = insertGraphPoint(start, e.getY());
+                    final var line = tempo.getLine();
+                    // INSERTING NEW LINE POINT
+                    if ((e.getModifiersEx() & MouseEvent.ALT_DOWN_MASK) == MouseEvent.ALT_DOWN_MASK) {
+                        // ...ON THE EXISTING LINE 
+                        final var time = screenToDoubleX(start);
+                        final var value = line.getValue(time);
+                        selectedPoint = insertGraphPoint(time, value);
+                    } else {
+                        // .. AT THE LOCATION OF THE MOUSE CLICK
+                        double min = line.getMin();
+                        double max = line.getMax();
+
+                        double time = screenToDoubleX(start);
+                        double value = screenToDoubleY(e.getY(), min, max, -1.0);
+                        selectedPoint = insertGraphPoint(time, value);
+                    }
+
                     setBoundaryXValues();
                 } else if (UiUtilities.isRightMouseButton(e)) {
                     if (popup == null) {
@@ -622,13 +646,17 @@ public class TempoEditor extends JComponent implements PropertyChangeListener {
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
         String prop = evt.getPropertyName();
-        switch (prop) {
-            case "enabled":
-                repaint();
-                break;
-            case "visible":
-                this.setTempoVisible(((Boolean) evt.getNewValue()).booleanValue());
-                break;
+        if (evt.getSource() == this.tempo) {
+            switch (prop) {
+                case "enabled":
+                    repaint();
+                    break;
+                case "visible":
+                    this.setTempoVisible(((Boolean) evt.getNewValue()).booleanValue());
+                    break;
+            }
+        } else if (evt.getSource() == this.score.getTimeState()) {
+            repaint();
         }
     }
 

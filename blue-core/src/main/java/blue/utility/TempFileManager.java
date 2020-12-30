@@ -39,7 +39,7 @@ public class TempFileManager {
 
     private int directoryTempFileLimit = 3;
 
-    private Map<File, Queue<File>> dirTempFiles = new HashMap<>();
+    private final Map<File, Queue<File>> dirTempFiles = new HashMap<>();
 
     public static TempFileManager getInstance() {
         if (INSTANCE == null) {

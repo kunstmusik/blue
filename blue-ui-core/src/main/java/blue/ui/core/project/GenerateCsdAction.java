@@ -38,7 +38,7 @@ import org.openide.windows.WindowManager;
 
 public final class GenerateCsdAction implements ActionListener {
 
-    private static String FILE_GEN = "blueMainFrame.generateCSD";
+    private static final String FILE_GEN = "blueMainFrame.generateCSD";
 
     @Override
     public void actionPerformed(ActionEvent e) {

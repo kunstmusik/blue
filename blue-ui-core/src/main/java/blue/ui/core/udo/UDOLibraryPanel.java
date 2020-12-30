@@ -498,11 +498,7 @@ class UDOTreePopup extends JPopupMenu {
         if (userObj instanceof UDOCategory) {
             addCategoryMenuItem.setVisible(true);
 
-            if (((UDOCategory) userObj).isRoot()) {
-                removeCategoryMenuItem.setVisible(false);
-            } else {
-                removeCategoryMenuItem.setVisible(true);
-            }
+            removeCategoryMenuItem.setVisible(!((UDOCategory) userObj).isRoot());
 
             addInstrumentMenu.setVisible(true);
             removeInstrumentMenuItem.setVisible(false);

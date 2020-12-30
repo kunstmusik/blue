@@ -16,7 +16,7 @@ public class ParameterNameManager {
     private static final MessageFormat PARAM_VAR_NAME = new MessageFormat(
             "gk_blue_auto{0}");
     
-    private AtomicInteger paramNameCounter;
+    private final AtomicInteger paramNameCounter;
 
     public ParameterNameManager(){
         this(0);

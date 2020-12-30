@@ -121,6 +121,7 @@ public class ClojureObjectEditor extends ScoreObjectEditor {
         codeEditor.setText(tempPObj.getClojureCode());
         codeEditor.getJEditorPane().setEnabled(true);
         codeEditor.getJEditorPane().setCaretPosition(0);
+        codeEditor.resetUndoManager();
 
         processOnLoadCheckBox.setSelected(tempPObj.isOnLoadProcessable());
         processOnLoadCheckBox.setEnabled(true);

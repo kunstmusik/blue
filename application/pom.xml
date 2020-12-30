@@ -5,7 +5,7 @@
     <parent>
         <groupId>com.kunstmusik</groupId>
         <artifactId>blue-parent</artifactId>
-        <version>2.8.0</version>
+        <version>2.8.1</version>
     </parent>
 
     <artifactId>blue</artifactId>
@@ -51,31 +51,22 @@
                         </goals>
                         <configuration>
                             <target>
-                              <copy file="../ChangeLog" tofile="target/blue/ChangeLog" overwrite="true">
-                                <filterset>
-                                  <filter token="VERSION" value="${blueVersion}"/>
-                                  <filter token="RELEASE_DATE" value="${blueReleaseDate}"/>
-                                </filterset>
-                              </copy>
+                                <copy file="../ChangeLog.md" tofile="target/blue/ChangeLog.md" overwrite="true"/>
+                               
+                                <copy file="../README.md" tofile="target/blue/README.md" overwrite="true">
+                                    <filterset>
+                                        <filter token="VERSION" value="${blueVersion}"/>
+                                        <filter token="RELEASE_DATE" value="${blueReleaseDate}"/>
+                                    </filterset>
+                                </copy>
 
-                              <copy file="../README.md" tofile="target/blue/README.md" overwrite="true">
-                                <filterset>
-                                  <filter token="VERSION" value="${blueVersion}"/>
-                                  <filter token="RELEASE_DATE" value="${blueReleaseDate}"/>
-                                </filterset>
-                              </copy>
+                                <copy todir="target/blue/examples" overwrite="true"> 
+                                    <fileset dir="../examples"/>
+                                </copy>
 
-                              <copy todir="target/blue/examples" overwrite="true"> 
-                                <fileset dir="../examples"/>
-                              </copy>
-
-                              <copy todir="target/blue/manual" overwrite="true"> 
-                                <fileset dir="../manual/target/docbkx"/>
-                              </copy>
-
-                              <copy file="../imageSrc/blueIcon.png" todir="target/blue/bin"/>
-                              <copy file="src/linux/blue.desktop.in" todir="target/blue/bin"/>
-                              <copy file="src/linux/install_desktop_starter.sh" todir="target/blue/bin"/>
+                                <copy file="../imageSrc/blueIcon.png" todir="target/blue/bin"/>
+                                <copy file="src/linux/blue.desktop.in" todir="target/blue/bin"/>
+                                <copy file="src/linux/install_desktop_starter.sh" todir="target/blue/bin"/>
                             </target>
                         </configuration>
                     </execution>
@@ -122,9 +113,9 @@
     </build>
 
     <profiles>
-      <profile>
-        <id>macOS</id>
-         <build>
+        <profile>
+            <id>macOS</id>
+            <build>
                 <plugins>
                     <plugin>
                         <artifactId>maven-antrun-plugin</artifactId>
@@ -144,9 +135,9 @@
                             </execution>
                         </executions>
                     </plugin>
-              </plugins>
+                </plugins>
             </build>
-      </profile>
+        </profile>
         <profile>
             <id>deployment</id>
             <build>
@@ -171,7 +162,7 @@
     </profiles>
 
     <dependencies>
-      <!-- NETBEANS PLATFORM AND IDE DEPENDENCIES -->
+        <!-- NETBEANS PLATFORM AND IDE DEPENDENCIES -->
         <dependency>
             <groupId>org.netbeans.cluster</groupId>
             <artifactId>platform</artifactId>
@@ -179,42 +170,42 @@
             <type>pom</type>
             <exclusions>
                 <exclusion>
-                    <groupId>org.netbeans.external</groupId>
+                    <groupId>org.netbeans.html</groupId>
                     <artifactId>net-java-html-boot</artifactId>
                 </exclusion>
                 <exclusion>
-                    <groupId>org.netbeans.external</groupId>
+                    <groupId>org.netbeans.html</groupId>
                     <artifactId>net-java-html-boot-fx</artifactId>
                 </exclusion>
                 <exclusion>
-                    <groupId>org.netbeans.external</groupId>
+                    <groupId>org.netbeans.html</groupId>
                     <artifactId>net-java-html</artifactId>
                 </exclusion>
                 <exclusion>
-                    <groupId>org.netbeans.external</groupId>
+                    <groupId>org.netbeans.html</groupId>
                     <artifactId>net-java-html-boot-script</artifactId>
                 </exclusion>
                 <exclusion>
-                    <groupId>org.netbeans.external</groupId>
+                    <groupId>org.netbeans.html</groupId>
                     <artifactId>net-java-html-geo</artifactId>
                 </exclusion>
                 <exclusion>
-                    <groupId>org.netbeans.external</groupId>
+                    <groupId>org.netbeans.html</groupId>
                     <artifactId>net-java-html-json</artifactId>
                 </exclusion>
                 <exclusion>
-                    <groupId>org.netbeans.external</groupId>
+                    <groupId>org.netbeans.html</groupId>
                     <artifactId>net-java-html-sound</artifactId>
                 </exclusion>
                 <exclusion>
-                    <groupId>org.netbeans.external</groupId>
+                    <groupId>org.netbeans.html</groupId>
                     <artifactId>org-netbeans-html-ko4j</artifactId>
                 </exclusion>
                 <exclusion>
-                    <groupId>org.netbeans.external</groupId>
+                    <groupId>org.netbeans.html</groupId>
                     <artifactId>org-netbeans-html-xhr4j</artifactId>
                 </exclusion>
-<!--                <exclusion>
+                <!--                <exclusion>
                     <groupId>org.netbeans.api</groupId>
                     <artifactId>org-netbeans-api-annotations-common</artifactId>
                 </exclusion>-->
@@ -354,9 +345,42 @@
                     <groupId>org.netbeans.modules</groupId>
                     <artifactId>org-netbeans-modules-core-kit</artifactId>
                 </exclusion>
+                
                 <exclusion>
-                    <groupId>org.netbeans.external</groupId>
-                    <artifactId>asm-all-5.0.1</artifactId>
+                    <groupId>org.ow2.asm</groupId>
+                    <artifactId>asm-7.2</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.ow2.asm</groupId>
+                    <artifactId>asm-commons-7.2</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.ow2.asm</groupId>
+                    <artifactId>asm-tree-7.2</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.netbeans.api</groupId>
+                    <artifactId>org-netbeans-libs-asm</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.netbeans.api</groupId>
+                    <artifactId>org-netbeans-libs-flatlaf</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.netbeans.modules</groupId>
+                    <artifactId>org-netbeans-swing-laf-flatlaf</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.netbeans.modules</groupId>
+                    <artifactId>org-netbeans-swing-laf-dark</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>commons-io</groupId>
+                    <artifactId>org-apache-commons-io</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>commons-lang</groupId>
+                    <artifactId>org-apache-commons-lang</artifactId>
                 </exclusion>
             </exclusions>
         </dependency>
@@ -371,15 +395,15 @@
                     <artifactId>org-netbeans-modules-jellytools-ide</artifactId>
                 </exclusion>
                 <exclusion>
-                    <groupId>org.netbeans.external</groupId>
+                    <groupId>com.google.guava</groupId>
                     <artifactId>com-google-guava</artifactId>
                 </exclusion>
                 <exclusion>
-                    <groupId>org.netbeans.external</groupId>
+                    <groupId>com.google.code.gson</groupId>
                     <artifactId>com-google-gson</artifactId>
                 </exclusion>
                 <exclusion>
-                    <groupId>org.netbeans.external</groupId>
+                    <groupId>com.googlecode.javaewah</groupId>
                     <artifactId>com-googlecode-javaewah-JavaEWAH</artifactId>
                 </exclusion>
                 <exclusion>
@@ -399,9 +423,9 @@
                     <artifactId>org-apache-commons-httpclient</artifactId>
                 </exclusion>
                 <exclusion>
-                    <groupId>org.netbeans.external</groupId>
-                    <artifactId>org-apache-commons-io</artifactId>
-                </exclusion>
+                    <groupId>commons-lang</groupId>
+                    <artifactId>org-apache-commons-lang</artifactId>
+                </exclusion>                
                 <exclusion>
                     <groupId>org.netbeans.external</groupId>
                     <artifactId>org-apache-commons-logging</artifactId>
@@ -415,35 +439,35 @@
                     <artifactId>org-apache-xmlrpc</artifactId>
                 </exclusion>
                 <exclusion>
-                    <groupId>org.netbeans.external</groupId>
+                    <groupId>org.jibx.config.3rdparty.org.eclipse</groupId>
                     <artifactId>org-eclipse-core-contenttype</artifactId>
                 </exclusion>
                 <exclusion>
-                    <groupId>org.netbeans.external</groupId>
+                    <groupId>org.eclipse.core</groupId>
                     <artifactId>org-eclipse-core-jobs</artifactId>
                 </exclusion>
                 <exclusion>
-                    <groupId>org.netbeans.external</groupId>
+                    <groupId>org.eclipse.core</groupId>
                     <artifactId>org-eclipse-core-net</artifactId>
                 </exclusion>
                 <exclusion>
-                    <groupId>org.netbeans.external</groupId>
+                    <groupId>org.eclipse.core</groupId>
                     <artifactId>org-eclipse-core-runtime</artifactId>
                 </exclusion>
                 <exclusion>
-                    <groupId>org.netbeans.external</groupId>
+                    <groupId>org.eclipse.core</groupId>
                     <artifactId>org-eclipse-core-runtime-compatibility-auth</artifactId>
                 </exclusion>
                 <exclusion>
-                    <groupId>org.netbeans.external</groupId>
+                    <groupId>org.eclipse.equinox</groupId>
                     <artifactId>org-eclipse-equinox-app</artifactId>
                 </exclusion>
                 <exclusion>
-                    <groupId>org.netbeans.external</groupId>
+                    <groupId>org.eclipse.core</groupId>
                     <artifactId>org-eclipse-equinox-preferences</artifactId>
                 </exclusion>
                 <exclusion>
-                    <groupId>org.netbeans.external</groupId>
+                    <groupId>org.jibx.config.3rdparty.org.eclipse</groupId>
                     <artifactId>org-eclipse-equinox-common</artifactId>
                 </exclusion>
                 <exclusion>
@@ -455,11 +479,11 @@
                     <artifactId>org-eclipse-equinox-security</artifactId>
                 </exclusion>
                 <exclusion>
-                    <groupId>org.netbeans.external</groupId>
+                    <groupId>org.eclipse.jgit</groupId>
                     <artifactId>org-eclipse-jgit</artifactId>
                 </exclusion>
                 <exclusion>
-                    <groupId>org.netbeans.external</groupId>
+                    <groupId>org.eclipse.jgit</groupId>
                     <artifactId>org-eclipse-jgit-java7</artifactId>
                 </exclusion>
                 <exclusion>
@@ -1289,6 +1313,30 @@
                 <exclusion>
                     <groupId>org.netbeans.modules</groupId>
                     <artifactId>org-netbeans-modules-extexecution-process</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.netbeans.api</groupId>
+                    <artifactId>org-netbeans-libs-graalsdk</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>commons-io</groupId>
+                    <artifactId>org-apache-commons-io</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>commons-lang</groupId>
+                    <artifactId>org-apache-commons-lang</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.bouncycastle</groupId>
+                    <artifactId>bcpg</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.bouncycastle</groupId>
+                    <artifactId>bcprov</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.netbeans.api</groupId>
+                    <artifactId>org-netbeans-modules-jumpto</artifactId>
                 </exclusion>
             </exclusions>
         </dependency>

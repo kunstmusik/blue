@@ -19,7 +19,14 @@
  */
 package blue.utility;
 
+import blue.BlueSystem;
 import java.io.*;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.openide.util.Exceptions;
 
 /**
  * @author steven
@@ -81,5 +88,76 @@ public class FileUtilities {
             File directory, String text) {
         return TempFileManager.getInstance().createTempTextFile(prefix, suffix,
                 directory, text);
+    }
+
+    /**
+     * Checks if mediaFolder is an absolute path or should be relative to
+     * project directory. Will call mkdirs() to ensure path exists.
+     *
+     * @param projectDir
+     * @param mediaFolder
+     * @return
+     */
+    public static File resolveAndCreateMediaFolder(File projectDir, String mediaFolder) {
+        
+        if(mediaFolder == null || mediaFolder.isBlank()) {
+            return projectDir;
+        }
+        
+        var path = Paths.get(mediaFolder);
+        var f = path.isAbsolute() ? new File(mediaFolder)
+                : new File(projectDir, mediaFolder);
+
+        f.mkdirs();
+        return f;
+    }
+
+    /**
+     * Utility for copying files to media folder. Will check contents of files
+     * with same base names and optionally reuse file found in target folder.
+     * Returned file points to where file was actually copied to.
+     */
+    public static File copyToMediaFolder(File src, File target) {
+        final var fParent = target.getParentFile();
+
+        File retVal = target;
+
+        if (src.exists() && src.isFile() && !target.equals(fParent)) {
+
+            if (!fParent.exists()) {
+                fParent.mkdir();
+            }
+
+            try {
+                if (target.exists()) {
+                    if (FileUtils.contentEquals(src, target)) {
+
+                    } else {
+                        var fName = target.getName();
+                        var parent = target.getParent();
+                        var base = FilenameUtils.getBaseName(fName);
+                        var ext = FilenameUtils.getExtension(fName);
+
+                        for (int i = 1; i < 1000; i++) {
+                            var indexStr = StringUtils.leftPad(Integer.toString(i), 3, '0');
+                            var newTarget = new File(parent, String.format("%s-%s.%s", base, indexStr, ext));
+                            if (!newTarget.exists()) {
+                                retVal = target = newTarget;
+                                FileUtilities.copyFile(src, target);
+                                break;
+                            }
+                        }
+                    }
+                } else {
+                    FileUtilities.copyFile(src, target);
+                }
+
+            } catch (IOException ex) {
+                Exceptions.printStackTrace(ex);
+                retVal = null;
+            }
+            return retVal;
+        }
+        return null;
     }
 }

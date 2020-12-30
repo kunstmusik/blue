@@ -14,7 +14,7 @@ import org.openide.nodes.Node;
  * @author syi
  */
 public class OpcodeListChildren extends Children.Keys<OpcodeList> {
-    private OpcodeList opcodeList;
+    private final OpcodeList opcodeList;
 
     public OpcodeListChildren(OpcodeList opcodeList) {
         this.opcodeList = opcodeList;

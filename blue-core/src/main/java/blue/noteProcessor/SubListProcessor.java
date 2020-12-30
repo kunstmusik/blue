@@ -52,22 +52,22 @@ public class SubListProcessor implements NoteProcessor {
     }
 
     @Override
-    public final void processNotes(NoteList in) throws NoteProcessorException {
+    public final NoteList processNotes(NoteList in) throws NoteProcessorException {
         NoteList tempList = new NoteList();
 
         if (end < 1) {
             throw new NoteProcessorException(this, BlueSystem
                     .getString("noteProcessorException.noteListEnd"));
         }
+        // FIXME: WHY IS THIS WRITTEN THIS WAY!?!? Definitely fix this.
         for (int i = 0; i < in.size(); i++) {
             if (i >= (start - 1) && i <= (end - 1)) {
                 tempList.add(in.get(i));
             }
         }
-        in.clear();
-        in.merge(tempList);
-
-        blue.utility.ScoreUtilities.normalizeNoteList(in);
+        
+        blue.utility.ScoreUtilities.normalizeNoteList(tempList);
+        return tempList;
 
     }
 

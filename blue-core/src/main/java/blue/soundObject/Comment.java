@@ -9,16 +9,14 @@ import java.util.Map;
 /**
  * Title: blue Description: an object composition environment for csound
  * Copyright: Copyright (c) 2001 Company: steven yi music
- * 
+ *
  * @author steven yi
  * @version 1.0
  */
-
-@SoundObjectPlugin(displayName = "Comment", live=false, position = 20)
+@SoundObjectPlugin(displayName = "Comment", live = false, position = 20)
 public class Comment extends AbstractSoundObject {
 
 //    private static BarRenderer renderer = new CommentRenderer();
-
     private String commentText;
 
     public Comment() {
@@ -54,12 +52,12 @@ public class Comment extends AbstractSoundObject {
     }
 
     @Override
-    public int getTimeBehavior() {
-        return SoundObject.TIME_BEHAVIOR_NOT_SUPPORTED;
+    public TimeBehavior getTimeBehavior() {
+        return TimeBehavior.NOT_SUPPORTED;
     }
 
     @Override
-    public void setTimeBehavior(int timeBehavior) {
+    public void setTimeBehavior(TimeBehavior timeBehavior) {
     }
 
     @Override

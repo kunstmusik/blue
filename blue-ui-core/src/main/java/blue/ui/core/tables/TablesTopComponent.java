@@ -50,7 +50,7 @@ import org.openide.windows.TopComponent;
 public final class TablesTopComponent extends TopComponent {
 
     private static TablesTopComponent instance;
-    private MimeTypeEditorComponent tablesText = new MimeTypeEditorComponent(
+    private final MimeTypeEditorComponent tablesText = new MimeTypeEditorComponent(
             "text/x-csound-sco");
 
     private Tables tables = null;
@@ -100,6 +100,8 @@ public final class TablesTopComponent extends TopComponent {
             Tables localTables = project.getData().getTableSet();
             tablesText.setText(localTables.getTables());
             tablesText.getJEditorPane().setEditable(true);
+            tablesText.getJEditorPane().setCaretPosition(0);
+            tablesText.resetUndoManager();
             tables = localTables;
         }
         undo.discardAllEdits();

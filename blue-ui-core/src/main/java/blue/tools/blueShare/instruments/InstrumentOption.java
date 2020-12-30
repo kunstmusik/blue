@@ -19,9 +19,13 @@ package blue.tools.blueShare.instruments;
  */
 
 public class InstrumentOption {
-    private int instrumentId;
+    private final int instrumentId;
 
-    private String screenName, name, type, description, category;
+    private final String screenName;
+    private final String name;
+    private final String type;
+    private final String description;
+    private final String category;
 
     public InstrumentOption(int instrumentId, String screenName, String name,
             String type, String description, String category) {

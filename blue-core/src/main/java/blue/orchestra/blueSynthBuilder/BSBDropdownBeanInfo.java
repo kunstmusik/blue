@@ -38,21 +38,23 @@ public class BSBDropdownBeanInfo extends SimpleBeanInfo {
     // Property identifiers//GEN-FIRST:Properties
     private static final int PROPERTY_automationAllowed = 0;
     private static final int PROPERTY_BSBDropdownItemList = 1;
-    private static final int PROPERTY_fontSize = 2;
-    private static final int PROPERTY_objectName = 3;
-    private static final int PROPERTY_randomizable = 4;
-    private static final int PROPERTY_selectedIndex = 5;
-    private static final int PROPERTY_x = 6;
-    private static final int PROPERTY_y = 7;
+    private static final int PROPERTY_comment = 2;
+    private static final int PROPERTY_fontSize = 3;
+    private static final int PROPERTY_objectName = 4;
+    private static final int PROPERTY_randomizable = 5;
+    private static final int PROPERTY_selectedIndex = 6;
+    private static final int PROPERTY_x = 7;
+    private static final int PROPERTY_y = 8;
 
     // Property array 
     /*lazy PropertyDescriptor*/
     private static PropertyDescriptor[] getPdescriptor(){
-        PropertyDescriptor[] properties = new PropertyDescriptor[8];
+        PropertyDescriptor[] properties = new PropertyDescriptor[9];
     
         try {
             properties[PROPERTY_automationAllowed] = new PropertyDescriptor ( "automationAllowed", blue.orchestra.blueSynthBuilder.BSBDropdown.class, "isAutomationAllowed", "setAutomationAllowed" ); // NOI18N
             properties[PROPERTY_BSBDropdownItemList] = new PropertyDescriptor ( "BSBDropdownItemList", blue.orchestra.blueSynthBuilder.BSBDropdown.class, "getBSBDropdownItemList", "setBSBDropdownItemList" ); // NOI18N
+            properties[PROPERTY_comment] = new PropertyDescriptor ( "comment", blue.orchestra.blueSynthBuilder.BSBDropdown.class, "getComment", "setComment" ); // NOI18N
             properties[PROPERTY_fontSize] = new PropertyDescriptor ( "fontSize", blue.orchestra.blueSynthBuilder.BSBDropdown.class, "getFontSize", "setFontSize" ); // NOI18N
             properties[PROPERTY_objectName] = new PropertyDescriptor ( "objectName", blue.orchestra.blueSynthBuilder.BSBDropdown.class, "getObjectName", "setObjectName" ); // NOI18N
             properties[PROPERTY_randomizable] = new PropertyDescriptor ( "randomizable", blue.orchestra.blueSynthBuilder.BSBDropdown.class, "isRandomizable", "setRandomizable" ); // NOI18N
@@ -91,10 +93,10 @@ public class BSBDropdownBeanInfo extends SimpleBeanInfo {
     private static java.awt.Image iconColor32 = null;
     private static java.awt.Image iconMono16 = null;
     private static java.awt.Image iconMono32 = null;//GEN-END:IconsDef
-    private static String iconNameC16 = null;//GEN-BEGIN:Icons
-    private static String iconNameC32 = null;
-    private static String iconNameM16 = null;
-    private static String iconNameM32 = null;//GEN-END:Icons
+    private static final String iconNameC16 = null;//GEN-BEGIN:Icons
+    private static final String iconNameC32 = null;
+    private static final String iconNameM16 = null;
+    private static final String iconNameM32 = null;//GEN-END:Icons
 
     private static final int defaultPropertyIndex = -1;//GEN-BEGIN:Idx
     private static final int defaultEventIndex = -1;//GEN-END:Idx

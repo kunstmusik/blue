@@ -41,7 +41,7 @@ public class TrackList implements TableModel {
 
     private int steps = 64;
 
-    private transient TableModelListener columnChangeListener
+    private final transient TableModelListener columnChangeListener
             = e -> {
                 TableModelEvent tme = new TableModelEvent(TrackList.this,
                         TableModelEvent.HEADER_ROW);
@@ -167,11 +167,11 @@ public class TrackList implements TableModel {
         }
     }
 
-    public NoteList generateNotes() throws NoteParseException {
+    public NoteList generateNotes(int stepsPerBeat) throws NoteParseException {
         NoteList retVal = new NoteList();
 
         for (Track tr : tracks) {
-            retVal.merge(tr.generateNotes());
+            retVal.merge(tr.generateNotes(stepsPerBeat));
         }
 
         return retVal;

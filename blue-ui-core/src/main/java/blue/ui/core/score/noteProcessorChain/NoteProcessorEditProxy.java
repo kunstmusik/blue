@@ -24,11 +24,12 @@ import blue.noteProcessor.NoteProcessor;
 
 class NoteProcessorEditProxy {
 
-    private String name;
+    private final String name;
 
-    private int startRow, endRow;
+    private final int startRow;
+    private final int endRow;
 
-    private NoteProcessor np;
+    private final NoteProcessor np;
 
     public NoteProcessorEditProxy(NoteProcessor np, int startRow, int endRow) {
         this.np = np;

@@ -37,25 +37,27 @@ public class BSBHSliderBankBeanInfo extends SimpleBeanInfo {
 
     // Property identifiers//GEN-FIRST:Properties
     private static final int PROPERTY_automationAllowed = 0;
-    private static final int PROPERTY_gap = 1;
-    private static final int PROPERTY_maximum = 2;
-    private static final int PROPERTY_minimum = 3;
-    private static final int PROPERTY_numberOfSliders = 4;
-    private static final int PROPERTY_objectName = 5;
-    private static final int PROPERTY_randomizable = 6;
-    private static final int PROPERTY_resolution = 7;
-    private static final int PROPERTY_sliderWidth = 8;
-    private static final int PROPERTY_valueDisplayEnabled = 9;
-    private static final int PROPERTY_x = 10;
-    private static final int PROPERTY_y = 11;
+    private static final int PROPERTY_comment = 1;
+    private static final int PROPERTY_gap = 2;
+    private static final int PROPERTY_maximum = 3;
+    private static final int PROPERTY_minimum = 4;
+    private static final int PROPERTY_numberOfSliders = 5;
+    private static final int PROPERTY_objectName = 6;
+    private static final int PROPERTY_randomizable = 7;
+    private static final int PROPERTY_resolution = 8;
+    private static final int PROPERTY_sliderWidth = 9;
+    private static final int PROPERTY_valueDisplayEnabled = 10;
+    private static final int PROPERTY_x = 11;
+    private static final int PROPERTY_y = 12;
 
     // Property array 
     /*lazy PropertyDescriptor*/
     private static PropertyDescriptor[] getPdescriptor(){
-        PropertyDescriptor[] properties = new PropertyDescriptor[12];
+        PropertyDescriptor[] properties = new PropertyDescriptor[13];
     
         try {
             properties[PROPERTY_automationAllowed] = new PropertyDescriptor ( "automationAllowed", blue.orchestra.blueSynthBuilder.BSBHSliderBank.class, "isAutomationAllowed", "setAutomationAllowed" ); // NOI18N
+            properties[PROPERTY_comment] = new PropertyDescriptor ( "comment", blue.orchestra.blueSynthBuilder.BSBHSliderBank.class, "getComment", "setComment" ); // NOI18N
             properties[PROPERTY_gap] = new PropertyDescriptor ( "gap", blue.orchestra.blueSynthBuilder.BSBHSliderBank.class, "getGap", "setGap" ); // NOI18N
             properties[PROPERTY_maximum] = new PropertyDescriptor ( "maximum", blue.orchestra.blueSynthBuilder.BSBHSliderBank.class, "getMaximum", "setMaximum" ); // NOI18N
             properties[PROPERTY_minimum] = new PropertyDescriptor ( "minimum", blue.orchestra.blueSynthBuilder.BSBHSliderBank.class, "getMinimum", "setMinimum" ); // NOI18N
@@ -99,10 +101,10 @@ public class BSBHSliderBankBeanInfo extends SimpleBeanInfo {
     private static java.awt.Image iconColor32 = null;
     private static java.awt.Image iconMono16 = null;
     private static java.awt.Image iconMono32 = null;//GEN-END:IconsDef
-    private static String iconNameC16 = null;//GEN-BEGIN:Icons
-    private static String iconNameC32 = null;
-    private static String iconNameM16 = null;
-    private static String iconNameM32 = null;//GEN-END:Icons
+    private static final String iconNameC16 = null;//GEN-BEGIN:Icons
+    private static final String iconNameC32 = null;
+    private static final String iconNameM16 = null;
+    private static final String iconNameM32 = null;//GEN-END:Icons
 
     private static final int defaultPropertyIndex = -1;//GEN-BEGIN:Idx
     private static final int defaultEventIndex = -1;//GEN-END:Idx

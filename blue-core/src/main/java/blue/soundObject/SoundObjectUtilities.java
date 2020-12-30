@@ -26,7 +26,7 @@ import java.util.List;
 
 /**
  * @author steven
- * 
+ *
  * Utility class for SoundObjects to use
  */
 public class SoundObjectUtilities {
@@ -45,12 +45,9 @@ public class SoundObjectUtilities {
 
         retVal.addElement("backgroundColor").setText(colorStr);
 
-        if (sObj.getTimeBehavior() != SoundObject.TIME_BEHAVIOR_NOT_SUPPORTED) {
+        if (sObj.getTimeBehavior() != TimeBehavior.NOT_SUPPORTED) {
             retVal.addElement("timeBehavior").setText(
-                    Integer.toString(sObj.getTimeBehavior()));
-        }
-
-        if (sObj.getTimeBehavior() == SoundObject.TIME_BEHAVIOR_REPEAT) {
+                    Integer.toString(sObj.getTimeBehavior().getType()));
             retVal.addElement("repeatPoint").setText(
                     Double.toString(sObj.getRepeatPoint()));
         }
@@ -67,15 +64,14 @@ public class SoundObjectUtilities {
         sObj.setSubjectiveDuration(Double.parseDouble(data
                 .getTextString("subjectiveDuration")));
         sObj.setStartTime(Double.parseDouble(data.getTextString("startTime")));
-        
+
         String name = data.getTextString("name");
-        
-        if(name == null) {
+
+        if (name == null) {
             sObj.setName("");
         } else {
             sObj.setName(name);
         }
-        
 
         if (data.getElement("backgroundColor") != null) {
             String colorStr = data.getTextString("backgroundColor");
@@ -84,12 +80,12 @@ public class SoundObjectUtilities {
         }
 
         if (data.getElement("timeBehavior") != null) {
-            sObj.setTimeBehavior(Integer.parseInt(data
-                    .getTextString("timeBehavior")));
+            int type = Integer.parseInt(data
+                    .getTextString("timeBehavior"));
+            sObj.setTimeBehavior(TimeBehavior.valueByType(type));
         }
 
-        if (sObj.getTimeBehavior() == SoundObject.TIME_BEHAVIOR_REPEAT
-                && data.getElement("repeatPoint") != null) {
+        if (data.getElement("repeatPoint") != null) {
             sObj.setRepeatPoint(Double.parseDouble(data
                     .getTextString("repeatPoint")));
         }
@@ -101,14 +97,14 @@ public class SoundObjectUtilities {
     }
 
     public static boolean isOrContainsInstance(SoundObject sObj) {
-        if(sObj instanceof Instance) {
+        if (sObj instanceof Instance) {
             return true;
         }
 
-        if(sObj instanceof PolyObject) {
-            PolyObject pObj = (PolyObject)sObj;
-            for(SoundObject soundObject : pObj.getSoundObjects(true)) {
-                if(isOrContainsInstance(soundObject)) {
+        if (sObj instanceof PolyObject) {
+            PolyObject pObj = (PolyObject) sObj;
+            for (SoundObject soundObject : pObj.getSoundObjects(true)) {
+                if (isOrContainsInstance(soundObject)) {
                     return true;
                 }
             }

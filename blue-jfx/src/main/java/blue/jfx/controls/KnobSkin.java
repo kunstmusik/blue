@@ -53,7 +53,7 @@ public class KnobSkin extends SkinBase<Knob> {
 
     DoubleBinding percent;
     boolean invalid = true;
-    Tooltip tooltip = new Tooltip();
+//    Tooltip tooltip = new Tooltip();
 
     InvalidationListener invalidListener = o -> invalid = true;
 
@@ -69,8 +69,8 @@ public class KnobSkin extends SkinBase<Knob> {
         knob.widthProperty().addListener(invalidListener);
         knob.heightProperty().addListener(invalidListener);
 
-        knob.setTooltip(tooltip);
-        tooltip.textProperty().bind(knob.valueProperty().asString());
+//        knob.setTooltip(tooltip);
+//        tooltip.textProperty().bind(knob.valueProperty().asString());
     }
 
     private void initHandlers() {

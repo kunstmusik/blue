@@ -80,7 +80,7 @@ import org.openide.util.ImageUtilities;
 public class FileTree extends JComponent {
     private static final Comparator<File> c = new AlphabeticalFileComparator();
 
-    private ArrayList<FileTreeListener> listeners = new ArrayList<>();
+    private final ArrayList<FileTreeListener> listeners = new ArrayList<>();
     
     JList<File> directoryList = new JList<>();
 
@@ -307,7 +307,7 @@ public class FileTree extends JComponent {
 }
 
 class FileListCellRenderer extends JLabel implements ListCellRenderer<File> {
-    private static ImageIcon dirIcon = new ImageIcon(
+    private static final ImageIcon dirIcon = new ImageIcon(
             ImageUtilities.loadImage("blue/resources/images/Directory.gif"));
 
     private File selectedDir;

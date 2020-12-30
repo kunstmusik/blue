@@ -214,6 +214,8 @@ public class PolyObjectEditor extends ScoreObjectEditor {
         }
 
         sObjScoreDisplay.setText(scoreText);
+        sObjScoreDisplay.getJEditorPane().setCaretPosition(0);
+        sObjScoreDisplay.resetUndoManager();
     }
 
     public void clear() {

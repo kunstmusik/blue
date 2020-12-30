@@ -25,7 +25,7 @@ import java.util.Locale;
 
 public class NumberUtilities {
 
-    private static MessageFormat FLOAT_FMT = new MessageFormat(
+    private static final MessageFormat FLOAT_FMT = new MessageFormat(
             "{0,number,##.##########}", Locale.ENGLISH);
 
     private static final MessageFormat TIME_FORMAT = new MessageFormat(

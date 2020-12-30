@@ -18,11 +18,11 @@ import javax.swing.undo.UndoableEdit;
  */
 public class ReplaceScoreObjectEdit extends AbstractUndoableEdit {
 
-    private ScoreObject oldSObj;
+    private final ScoreObject oldSObj;
 
-    private ScoreObject newSObj;
+    private final ScoreObject newSObj;
 
-    private ScoreObjectLayer layer;
+    private final ScoreObjectLayer layer;
 
     private ReplaceScoreObjectEdit nextEdit = null;
 

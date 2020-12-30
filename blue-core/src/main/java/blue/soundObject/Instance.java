@@ -15,16 +15,14 @@ import java.util.Map;
  * @author steven yi
  * @version 1.0
  */
-
 public class Instance extends AbstractSoundObject {
 
 //    private static BarRenderer renderer = new LetterRenderer("I");
-
     private SoundObject sObj;
 
     private NoteProcessorChain npc = new NoteProcessorChain();
 
-    private int timeBehavior;
+    private TimeBehavior timeBehavior;
 
     double repeatPoint = -1.0f;
 
@@ -39,16 +37,18 @@ public class Instance extends AbstractSoundObject {
         this.sObj = sObj;
         setName(sObj.getName());
         this.setBackgroundColor(sObj.getBackgroundColor());
-        timeBehavior = SoundObject.TIME_BEHAVIOR_SCALE;
+        timeBehavior = TimeBehavior.SCALE;
     }
 
     public Instance() {
         this.name = "Instance: ";
     }
 
-    /** Copy Constructor
-     * NOTE: intentionally keeps same SoundObject reference in copy as original 
-     * @param instance 
+    /**
+     * Copy Constructor NOTE: intentionally keeps same SoundObject reference in
+     * copy as original
+     *
+     * @param instance
      */
     public Instance(Instance instance) {
         super(instance);
@@ -59,13 +59,12 @@ public class Instance extends AbstractSoundObject {
         repeatPoint = instance.repeatPoint;
     }
 
-
     public void processNotes(NoteList nl) throws SoundObjectException {
-        
+
         ScoreUtilities.normalizeNoteList(nl);
 
         try {
-            ScoreUtilities.applyNoteProcessorChain(nl, this.npc);
+           nl =  ScoreUtilities.applyNoteProcessorChain(nl, this.npc);
         } catch (NoteProcessorException e) {
             throw new SoundObjectException(this, e);
         }
@@ -92,12 +91,12 @@ public class Instance extends AbstractSoundObject {
     }
 
     @Override
-    public int getTimeBehavior() {
+    public TimeBehavior getTimeBehavior() {
         return this.timeBehavior;
     }
 
     @Override
-    public void setTimeBehavior(int timeBehavior) {
+    public void setTimeBehavior(TimeBehavior timeBehavior) {
         this.timeBehavior = timeBehavior;
     }
 
@@ -130,13 +129,13 @@ public class Instance extends AbstractSoundObject {
         String id = data.getElement("soundObjectReference")
                 .getAttributeValue("soundObjectLibraryID");
 
-        if("null".equals(id)) {
+        if ("null".equals(id)) {
             throw new Exception("ERROR: SoundObject Instance found pointing to an library item that no longer exists");
         }
-        
+
         Object sObj = objRefMap.get(id);
-        if(sObj != null) {
-            instance.setSoundObject((SoundObject)sObj);
+        if (sObj != null) {
+            instance.setSoundObject((SoundObject) sObj);
         } else {
             throw new Exception("Could not find SoundObject pointed to from Instance with ID: " + id);
         }
@@ -170,8 +169,7 @@ public class Instance extends AbstractSoundObject {
     }
 
     /**
-     * @param obj
-     *            The sObj to set.
+     * @param obj The sObj to set.
      */
     public void setSoundObject(SoundObject obj) {
         sObj = obj;
@@ -179,15 +177,15 @@ public class Instance extends AbstractSoundObject {
 
     @Override
     public NoteList generateForCSD(CompileData compileData, double startTime, double endTime)
-    throws SoundObjectException {
+            throws SoundObjectException {
         NoteList nl = sObj.generateForCSD(compileData, startTime, endTime);
         processNotes(nl);
-        
+
         return nl;
     }
 
     @Override
     public Instance deepCopy() {
-        return new Instance(this); 
+        return new Instance(this);
     }
 }

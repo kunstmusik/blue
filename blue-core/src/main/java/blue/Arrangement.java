@@ -294,6 +294,16 @@ public class Arrangement implements TableModel {
         }
         return null;
     }
+    
+    public int getIndexByArrangementId(String arrangementId) {
+        for (int i = 0; i < this.arrangement.size(); i++) {
+            var ia = this.arrangement.get(i);
+            if (ia.arrangementId.equals(arrangementId)) {
+                return i;
+            }
+        }
+        return -1;
+    }
 
     public void changeInstrumentId(Instrument instr, String newId) {
         for (Iterator<InstrumentAssignment> iter = arrangement.iterator(); iter.

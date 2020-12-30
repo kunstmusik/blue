@@ -36,7 +36,7 @@ public class RetrogradeProcessor implements NoteProcessor {
     }
 
     @Override
-    public final void processNotes(NoteList in) {
+    public final NoteList processNotes(NoteList in) {
         in.sort();
         Note temp;
         int size = in.size();
@@ -50,6 +50,7 @@ public class RetrogradeProcessor implements NoteProcessor {
             temp.setStartTime(totalTime
                     - (temp.getStartTime() + temp.getSubjectiveDuration()));
         }
+        return in;
     }
 
     public static void main(String[] args) {

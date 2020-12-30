@@ -52,18 +52,6 @@ import java.util.Map;
 public interface SoundObject extends ScoreObject {
 
     /**
-     * SoundObject does not support applying time behaviors and is assumed to
-     * generate score for duration of subjectiveDuration
-     */
-    int TIME_BEHAVIOR_NOT_SUPPORTED = -1;
-
-    int TIME_BEHAVIOR_SCALE = 0;
-
-    int TIME_BEHAVIOR_REPEAT = 1;
-
-    int TIME_BEHAVIOR_NONE = 2;
-
-    /**
      * Returns a blue.soundObject.editor.SoundObjectEditor, which is the GUI
      * editor for the SoundObject.
      */
@@ -156,9 +144,9 @@ public interface SoundObject extends ScoreObject {
      */
     NoteProcessorChain getNoteProcessorChain();
 
-    int getTimeBehavior();
+    TimeBehavior getTimeBehavior();
 
-    void setTimeBehavior(int timeBehavior);
+    void setTimeBehavior(TimeBehavior timeBehavior);
 
     /**
      * Gets the point at which, in the score, a repeat of this score should

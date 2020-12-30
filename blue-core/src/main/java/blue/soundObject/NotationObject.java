@@ -23,21 +23,21 @@ import java.util.Map;
  * @author unascribed
  * @version 1.0
  */
-public class NotationObject extends AbstractSoundObject implements 
+public class NotationObject extends AbstractSoundObject implements
         GenericViewable {
 //    private static BarRenderer renderer = new GenericRenderer();
 
     private NoteProcessorChain npc = new NoteProcessorChain();
 
-    private int timeBehavior;
+    private TimeBehavior timeBehavior;
 
-    private NotationStaff staff; 
+    private final NotationStaff staff;
 
     public NotationObject() {
         name = "Notation Object";
         subjectiveDuration = 2.0f;
         startTime = 0.0f;
-        timeBehavior = SoundObject.TIME_BEHAVIOR_SCALE;
+        timeBehavior = TimeBehavior.SCALE;
         staff = new NotationStaff();
     }
 
@@ -45,7 +45,7 @@ public class NotationObject extends AbstractSoundObject implements
         super(nObj);
         npc = new NoteProcessorChain(nObj.npc);
         timeBehavior = nObj.timeBehavior;
-        staff = new NotationStaff(nObj.staff); 
+        staff = new NotationStaff(nObj.staff);
     }
 
     /*
@@ -92,26 +92,14 @@ public class NotationObject extends AbstractSoundObject implements
         return staff;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see blue.soundObject.SoundObject#getTimeBehavior()
-     */
     @Override
-    public int getTimeBehavior() {
-        // TODO Auto-generated method stub
-        return 0;
+    public TimeBehavior getTimeBehavior() {
+        return this.timeBehavior;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see blue.soundObject.SoundObject#setTimeBehavior(int)
-     */
     @Override
-    public void setTimeBehavior(int timeBehavior) {
-        // TODO Auto-generated method stub
-
+    public void setTimeBehavior(TimeBehavior timeBehavior) {
+        this.timeBehavior = timeBehavior;
     }
 
     @Override

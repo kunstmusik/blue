@@ -4,7 +4,7 @@
     <parent>
         <groupId>com.kunstmusik</groupId>
         <artifactId>blue-parent</artifactId>
-        <version>2.8.0</version>
+        <version>2.8.1</version>
     </parent>
     <artifactId>blue-core</artifactId>
     <packaging>nbm</packaging>
@@ -69,11 +69,21 @@
             <groupId>com.kunstmusik</groupId>
             <artifactId>blue-ext-commons-lang3</artifactId>
             <version>${project.version}</version>
-        </dependency>        
+        </dependency>    
+        <dependency>
+            <groupId>com.kunstmusik</groupId>
+            <artifactId>blue-ext-commons-io</artifactId>
+            <version>${project.version}</version>
+        </dependency>           
 
         <dependency>
             <groupId>org.netbeans.api</groupId>
             <artifactId>org-openide-util-lookup</artifactId>
+            <version>${netbeans.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.netbeans.api</groupId>
+            <artifactId>org-openide-util</artifactId>
             <version>${netbeans.version}</version>
         </dependency>
         <dependency>
@@ -86,7 +96,11 @@
             <artifactId>blue-ext-openjfx</artifactId>
             <version>${project.version}</version>
         </dependency>
-        
+        <dependency>
+            <groupId>com.kunstmusik</groupId>
+            <artifactId>blue-ext-rhino</artifactId>
+            <version>${project.version}</version>
+        </dependency>
         
         <!-- adding test dependencies-->
         

@@ -41,7 +41,7 @@ public class JMask extends AbstractSoundObject {
 
     private Field field = new Field();
 
-    private int timeBehavior;
+    private TimeBehavior timeBehavior;
 
     double repeatPoint = -1.0f;
 
@@ -51,7 +51,7 @@ public class JMask extends AbstractSoundObject {
 
     public JMask() {
         setName("JMask");
-        timeBehavior = SoundObject.TIME_BEHAVIOR_SCALE;
+        timeBehavior = TimeBehavior.SCALE;
     }
 
     public JMask(JMask jmask) {
@@ -74,7 +74,7 @@ public class JMask extends AbstractSoundObject {
 
         try {
             nl = temp.generateNotes(this.getSubjectiveDuration(), rnd);
-            ScoreUtilities.applyNoteProcessorChain(nl, this.npc);
+            nl = ScoreUtilities.applyNoteProcessorChain(nl, this.npc);
         } catch (Exception e) {
             throw new SoundObjectException(this, e);
         }
@@ -106,8 +106,13 @@ public class JMask extends AbstractSoundObject {
     }
 
     @Override
-    public int getTimeBehavior() {
-        return timeBehavior;
+    public TimeBehavior getTimeBehavior() {
+        return this.timeBehavior;
+    }
+
+    @Override
+    public void setTimeBehavior(TimeBehavior timeBehavior) {
+        this.timeBehavior = timeBehavior;
     }
 
     public static SoundObject loadFromXML(Element data,
@@ -168,11 +173,6 @@ public class JMask extends AbstractSoundObject {
                 ScoreObjectEvent.REPEAT_POINT);
 
         fireScoreObjectEvent(event);
-    }
-
-    @Override
-    public void setTimeBehavior(int timeBehavior) {
-        this.timeBehavior = timeBehavior;
     }
 
     public Field getField() {

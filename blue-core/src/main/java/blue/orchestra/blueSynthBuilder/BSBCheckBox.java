@@ -37,11 +37,11 @@ import javafx.beans.value.ChangeListener;
  */
 public class BSBCheckBox extends AutomatableBSBObject implements ParameterListener, Randomizable {
 
-    private StringProperty label;
-    private BooleanProperty selected;
-    private BooleanProperty randomizable;
+    private final StringProperty label;
+    private final BooleanProperty selected;
+    private final BooleanProperty randomizable;
 
-    private ChangeListener<Boolean> listener = (obs, old, newVal) -> {
+    private final ChangeListener<Boolean> listener = (obs, old, newVal) -> {
         if (parameters != null) {
             Parameter p = parameters.getParameter(getObjectName());
             if (p != null && !p.isAutomationEnabled()) {

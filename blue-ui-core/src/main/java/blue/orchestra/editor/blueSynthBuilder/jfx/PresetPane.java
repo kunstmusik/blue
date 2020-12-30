@@ -52,7 +52,7 @@ import org.openide.windows.WindowManager;
  */
 public class PresetPane extends HBox {
 
-    private ObjectProperty<PresetGroup> presetGroup;
+    private final ObjectProperty<PresetGroup> presetGroup;
     private BSBGraphicInterface bsbInterface = null;
 
     ContextMenu rootMenu = new ContextMenu();

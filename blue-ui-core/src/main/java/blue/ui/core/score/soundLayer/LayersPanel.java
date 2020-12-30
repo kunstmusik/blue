@@ -49,13 +49,13 @@ import skt.swing.SwingUtil;
 
 public class LayersPanel extends JComponent implements LayerGroupListener {
 
-    private SoundLayerLayout layout = new SoundLayerLayout();
+    private final SoundLayerLayout layout = new SoundLayerLayout();
 
     private PolyObject pObj = null;
 
     private NoteProcessorChainMap npcMap = null;
 
-    private SelectionModel selection = new SelectionModel();
+    private final SelectionModel selection = new SelectionModel();
     
     JPopupMenu menu;
 

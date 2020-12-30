@@ -28,7 +28,7 @@ import javafx.scene.control.Label;
  */
 public class BSBLabelView extends Label {
 
-    private BSBLabel label;
+    private final BSBLabel label;
 
     public BSBLabelView(BSBLabel label) {
         setUserData(label);

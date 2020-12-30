@@ -38,24 +38,26 @@ public class BSBLineObjectBeanInfo extends SimpleBeanInfo {
     // Property identifiers//GEN-FIRST:Properties
     private static final int PROPERTY_canvasHeight = 0;
     private static final int PROPERTY_canvasWidth = 1;
-    private static final int PROPERTY_leadingZero = 2;
-    private static final int PROPERTY_lines = 3;
-    private static final int PROPERTY_locked = 4;
-    private static final int PROPERTY_objectName = 5;
-    private static final int PROPERTY_relativeXValues = 6;
-    private static final int PROPERTY_separatorType = 7;
-    private static final int PROPERTY_x = 8;
-    private static final int PROPERTY_XMax = 9;
-    private static final int PROPERTY_y = 10;
+    private static final int PROPERTY_comment = 2;
+    private static final int PROPERTY_leadingZero = 3;
+    private static final int PROPERTY_lines = 4;
+    private static final int PROPERTY_locked = 5;
+    private static final int PROPERTY_objectName = 6;
+    private static final int PROPERTY_relativeXValues = 7;
+    private static final int PROPERTY_separatorType = 8;
+    private static final int PROPERTY_x = 9;
+    private static final int PROPERTY_XMax = 10;
+    private static final int PROPERTY_y = 11;
 
     // Property array 
     /*lazy PropertyDescriptor*/
     private static PropertyDescriptor[] getPdescriptor(){
-        PropertyDescriptor[] properties = new PropertyDescriptor[11];
+        PropertyDescriptor[] properties = new PropertyDescriptor[12];
     
         try {
             properties[PROPERTY_canvasHeight] = new PropertyDescriptor ( "canvasHeight", blue.orchestra.blueSynthBuilder.BSBLineObject.class, "getCanvasHeight", "setCanvasHeight" ); // NOI18N
             properties[PROPERTY_canvasWidth] = new PropertyDescriptor ( "canvasWidth", blue.orchestra.blueSynthBuilder.BSBLineObject.class, "getCanvasWidth", "setCanvasWidth" ); // NOI18N
+            properties[PROPERTY_comment] = new PropertyDescriptor ( "comment", blue.orchestra.blueSynthBuilder.BSBLineObject.class, "getComment", "setComment" ); // NOI18N
             properties[PROPERTY_leadingZero] = new PropertyDescriptor ( "leadingZero", blue.orchestra.blueSynthBuilder.BSBLineObject.class, "isLeadingZero", "setLeadingZero" ); // NOI18N
             properties[PROPERTY_lines] = new PropertyDescriptor ( "lines", blue.orchestra.blueSynthBuilder.BSBLineObject.class, "getLines", "setLines" ); // NOI18N
             properties[PROPERTY_locked] = new PropertyDescriptor ( "locked", blue.orchestra.blueSynthBuilder.BSBLineObject.class, "isLocked", "setLocked" ); // NOI18N
@@ -76,7 +78,7 @@ public class BSBLineObjectBeanInfo extends SimpleBeanInfo {
     // EventSet identifiers//GEN-FIRST:Events
 
     // EventSet array
-    private static EventSetDescriptor[] eventSets = new EventSetDescriptor[0];
+    private static final EventSetDescriptor[] eventSets = new EventSetDescriptor[0];
 
     private static EventSetDescriptor[] getEdescriptor(){
         return eventSets;
@@ -88,7 +90,7 @@ public class BSBLineObjectBeanInfo extends SimpleBeanInfo {
     // Method identifiers//GEN-FIRST:Methods
 
     // Method array 
-    private static MethodDescriptor[] methods = new MethodDescriptor[0];
+    private static final MethodDescriptor[] methods = new MethodDescriptor[0];
 
     private static MethodDescriptor[] getMdescriptor(){
         return methods;
@@ -101,10 +103,10 @@ public class BSBLineObjectBeanInfo extends SimpleBeanInfo {
     private static java.awt.Image iconColor32 = null;
     private static java.awt.Image iconMono16 = null;
     private static java.awt.Image iconMono32 = null;//GEN-END:IconsDef
-    private static String iconNameC16 = null;//GEN-BEGIN:Icons
-    private static String iconNameC32 = null;
-    private static String iconNameM16 = null;
-    private static String iconNameM32 = null;//GEN-END:Icons
+    private static final String iconNameC16 = null;//GEN-BEGIN:Icons
+    private static final String iconNameC32 = null;
+    private static final String iconNameM16 = null;
+    private static final String iconNameM32 = null;//GEN-END:Icons
 
     private static final int defaultPropertyIndex = -1;//GEN-BEGIN:Idx
     private static final int defaultEventIndex = -1;//GEN-END:Idx

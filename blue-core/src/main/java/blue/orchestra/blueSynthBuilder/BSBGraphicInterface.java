@@ -43,11 +43,11 @@ public class BSBGraphicInterface {
 
     UniqueNameManager nameManager = new UniqueNameManager();
 
-    private BooleanProperty editEnabled = new SimpleBooleanProperty(true);
+    private final BooleanProperty editEnabled = new SimpleBooleanProperty(true);
 
     private GridSettings gridSettings;
 
-    private ObservableSet<BSBObject> allSet
+    private final ObservableSet<BSBObject> allSet
             = FXCollections.observableSet(new HashSet<>());
 
     public BSBGraphicInterface() {

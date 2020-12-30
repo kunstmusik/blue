@@ -17,7 +17,6 @@
  * Software Foundation Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307
  * USA
  */
-
 package blue.soundObject;
 
 import blue.*;
@@ -35,7 +34,7 @@ import javax.swing.JOptionPane;
  * @author Steven Yi
  *
  */
-@SoundObjectPlugin(displayName = "AudioFile", live=false, position = 10)
+@SoundObjectPlugin(displayName = "AudioFile", live = false, position = 10)
 public class AudioFile extends AbstractSoundObject {
 
     private String soundFileName;
@@ -61,13 +60,13 @@ public class AudioFile extends AbstractSoundObject {
     }
 
     // TODO - EXCEPTION - Look at Code to determine if Exception is Needed
-    public NoteList generateNotes(int instrumentNumber, double renderStart, 
+    public NoteList generateNotes(int instrumentNumber, double renderStart,
             double renderEnd) throws SoundObjectException {
         NoteList n = new NoteList();
 
         double newDur = subjectiveDuration;
 
-        if(renderEnd > 0 && renderEnd < subjectiveDuration) {
+        if (renderEnd > 0 && renderEnd < subjectiveDuration) {
             newDur = renderEnd;
         }
 
@@ -95,9 +94,9 @@ public class AudioFile extends AbstractSoundObject {
     }
 
     public Instrument generateInstrument() {
-        
+
         String instrumentText = generateInstrumentText();
-        
+
         if (instrumentText == null) {
             return null;
         }
@@ -164,7 +163,7 @@ public class AudioFile extends AbstractSoundObject {
 
     public int findPowerOfTwo(double seconds) {
         int sr = 44100;
-        int samples = (int)Math.round(seconds * sr);
+        int samples = (int) Math.round(seconds * sr);
 
         int powTwoSamples = 2;
 
@@ -190,12 +189,12 @@ public class AudioFile extends AbstractSoundObject {
     }
 
     @Override
-    public int getTimeBehavior() {
-        return SoundObject.TIME_BEHAVIOR_NOT_SUPPORTED;
+    public TimeBehavior getTimeBehavior() {
+        return TimeBehavior.NOT_SUPPORTED;
     }
 
     @Override
-    public void setTimeBehavior(int timeBehavior) {
+    public void setTimeBehavior(TimeBehavior timeBehavior) {
     }
 
     @Override
@@ -207,9 +206,7 @@ public class AudioFile extends AbstractSoundObject {
     public void setRepeatPoint(double repeatPoint) {
     }
 
-
     // METHODS SPECIFIC FOR THIS SOUNDOBJECT
-
     public String getCsoundPostCode() {
         return csoundPostCode;
     }
@@ -238,12 +235,12 @@ public class AudioFile extends AbstractSoundObject {
         SoundObjectUtilities.initBasicFromXML(data, aFile);
 
         String sFileName = data.getElement("soundFileName")
-                        .getTextString();
+                .getTextString();
 
-        if(sFileName != null) {
+        if (sFileName != null) {
             aFile.setSoundFileName(sFileName);
         }
-        
+
         aFile.setCsoundPostCode(data.getElement("csoundPostCode")
                 .getTextString());
 
@@ -267,11 +264,11 @@ public class AudioFile extends AbstractSoundObject {
     }
 
     @Override
-    public NoteList generateForCSD(CompileData compileData, double startTime, 
-            double endTime)  throws SoundObjectException {
+    public NoteList generateForCSD(CompileData compileData, double startTime,
+            double endTime) throws SoundObjectException {
         Instrument instr = this.generateInstrument();
-        if(instr == null) {
-             throw new RuntimeException(new SoundObjectException(this, BlueSystem
+        if (instr == null) {
+            throw new RuntimeException(new SoundObjectException(this, BlueSystem
                     .getString("audioFile.couldNotGenerate")
                     + " " + getSoundFileName()));
         }

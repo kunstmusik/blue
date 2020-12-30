@@ -19,6 +19,7 @@
  */
 package blue.ui.core.score.mouse;
 
+import blue.ui.core.score.layers.soundObject.views.SoundObjectView;
 import blue.ui.core.score.layers.soundObject.*;
 import blue.components.AlphaMarquee;
 import blue.plugin.ScoreMouseListenerPlugin;
@@ -48,7 +49,7 @@ import javax.swing.SwingUtilities;
         position = 100)
 class MultiLineSelectionMouseProcessor extends BlueMouseAdapter {
 
-    private Rectangle scrollRect = new Rectangle(0, 0, 1, 1);
+    private final Rectangle scrollRect = new Rectangle(0, 0, 1, 1);
 
     Layer startLayer = null;
     Layer lastLayer = null;

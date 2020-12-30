@@ -19,6 +19,7 @@
  */
 package blue.score.layers.audio.core;
 
+import blue.BlueSystem;
 import blue.CompileData;
 import blue.automation.ParameterIdList;
 import blue.mixer.Channel;
@@ -44,6 +45,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import org.openide.util.Exceptions;
 
 /**
  *
@@ -373,7 +375,17 @@ public class AudioLayer extends ArrayList<AudioClip>
                             ? adjustedEndTime - newStart
                             : (newEnd - newStart);
 
-            String path = clip.getAudioFile().getAbsolutePath().replace('\\', '/');
+            var f = clip.getAudioFile();
+            
+            String path;
+            try {
+                path = BlueSystem.getRelativePath(f.getCanonicalPath());
+                path = path.replace('\\', '/');
+            } catch (IOException ex) {
+                Exceptions.printStackTrace(ex);
+                path = f.getAbsolutePath();
+            }
+            
 
             n.setPField(Integer.toString(instrId), 1);
             n.setStartTime(newStart);

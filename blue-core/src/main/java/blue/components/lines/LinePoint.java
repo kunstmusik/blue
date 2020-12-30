@@ -33,11 +33,11 @@ import javax.swing.event.ChangeListener;
  */
 public class LinePoint implements Comparable<LinePoint> {
 
-    private DoubleProperty x = new SimpleDoubleProperty(0.0);
-    private DoubleProperty y = new SimpleDoubleProperty(0.0);
+    private final DoubleProperty x = new SimpleDoubleProperty(0.0);
+    private final DoubleProperty y = new SimpleDoubleProperty(0.0);
 
     private transient Vector listeners = null;
-    private transient ChangeEvent changeEvent = new ChangeEvent(this);
+    private final transient ChangeEvent changeEvent = new ChangeEvent(this);
 
 
     public LinePoint(){}

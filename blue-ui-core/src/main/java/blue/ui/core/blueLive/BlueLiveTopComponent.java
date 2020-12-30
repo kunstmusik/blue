@@ -30,6 +30,7 @@ import blue.projects.BlueProjectManager;
 import blue.score.ScoreObject;
 import blue.soundObject.NoteList;
 import blue.soundObject.SoundObject;
+import blue.soundObject.TimeBehavior;
 import blue.ui.core.render.RealtimeRenderManager;
 import blue.ui.core.score.ScoreController;
 import blue.ui.core.score.layers.SoundObjectProvider;
@@ -484,6 +485,8 @@ public final class BlueLiveTopComponent extends TopComponent
             tempoSpinner.setValue(liveData.getTempo());
 
             liveCodeEditor.setText(liveData.getLiveCodeText());
+            liveCodeEditor.getJEditorPane().setCaretPosition(0);
+            liveCodeEditor.resetUndoManager();
 
             this.data = currentData;
 
@@ -497,8 +500,8 @@ public final class BlueLiveTopComponent extends TopComponent
         try {
             SoundObject sObj = liveObject.getSoundObject();
 
-            if (sObj.getTimeBehavior() != SoundObject.TIME_BEHAVIOR_NOT_SUPPORTED) {
-                sObj.setTimeBehavior(SoundObject.TIME_BEHAVIOR_NONE);
+            if (sObj.getTimeBehavior() != TimeBehavior.NOT_SUPPORTED) {
+                sObj.setTimeBehavior(TimeBehavior.NONE);
             }
 
             nl = sObj.generateForCSD(compileData, 0.0f, -1.0f);
@@ -983,8 +986,8 @@ public final class BlueLiveTopComponent extends TopComponent
 
                     SoundObject sObj = liveObj.getSoundObject();
 
-                    if (sObj.getTimeBehavior() != SoundObject.TIME_BEHAVIOR_NOT_SUPPORTED) {
-                        sObj.setTimeBehavior(SoundObject.TIME_BEHAVIOR_NONE);
+                    if (sObj.getTimeBehavior() != TimeBehavior.NOT_SUPPORTED) {
+                        sObj.setTimeBehavior(TimeBehavior.NONE);
                     }
 
                     nl.addAll(sObj.generateForCSD(compileData, 0.0f, -1.0f));

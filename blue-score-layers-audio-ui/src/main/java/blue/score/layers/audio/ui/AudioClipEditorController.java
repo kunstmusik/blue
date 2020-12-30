@@ -19,6 +19,7 @@
  */
 package blue.score.layers.audio.ui;
 
+import blue.BlueSystem;
 import blue.jfx.BlueFX;
 import blue.jfx.binding.ChoiceBinder;
 import blue.jfx.binding.DoubleBinder;
@@ -126,7 +127,10 @@ public class AudioClipEditorController implements Initializable {
         BlueFX.runOnFXThread(() -> {
             audioDurationText.setText(Double.toString(
                     audioClip.getAudioDuration()));
-            audioFileText.setText(audioClip.getAudioFile().getAbsolutePath());
+            
+            String path = BlueSystem.getRelativePath(
+                    audioClip.getAudioFile().getAbsolutePath());
+            audioFileText.setText(path);
 
             startTimeBinder.setDoubleProperty(audioClip,
                     audioClip.startProperty());

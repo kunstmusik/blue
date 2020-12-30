@@ -30,11 +30,11 @@ public class LayerGroupDataEvent {
     public static final int DATA_ADDED = 0;
     public static final int DATA_REMOVED = 1;
     public static final int DATA_CHANGED = 2;
-    private int startIndex;
-    private int endIndex;
-    private int type;
-    private LayerGroup source;
-    private ArrayList<Layer> layers;
+    private final int startIndex;
+    private final int endIndex;
+    private final int type;
+    private final LayerGroup source;
+    private final ArrayList<Layer> layers;
 
     public LayerGroupDataEvent(LayerGroup source, int type, int startIndex, int endIndex) {
         this(source, type, startIndex, endIndex, null);

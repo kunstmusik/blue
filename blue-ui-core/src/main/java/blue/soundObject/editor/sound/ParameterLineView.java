@@ -20,9 +20,9 @@ package blue.soundObject.editor.sound;
 
 import blue.components.DragDirection;
 import blue.components.lines.Line;
-import blue.components.lines.LineEditorDialog;
 import blue.components.lines.LineList;
 import blue.components.lines.LinePoint;
+import blue.components.lines.SoundObjectParameterLine;
 import blue.jfx.BlueFX;
 import blue.utility.NumberUtilities;
 import java.util.Optional;
@@ -42,7 +42,6 @@ import javafx.scene.control.ButtonType;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Dialog;
 import javafx.scene.control.MenuItem;
-import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.cell.PropertyValueFactory;
@@ -53,10 +52,8 @@ import javafx.scene.paint.Color;
 import javafx.stage.Modality;
 import javafx.util.Callback;
 import javafx.util.converter.DoubleStringConverter;
-import javax.swing.SwingUtilities;
 import javax.swing.event.TableModelListener;
 import org.controlsfx.tools.Utils;
-import org.openide.windows.WindowManager;
 
 /**
  *
@@ -321,7 +318,18 @@ public class ParameterLineView extends Canvas {
                 editPointsMenu.show(ParameterLineView.this, me.getScreenX(), me.getScreenY());
             } else if (me.isPrimaryButtonDown()) {
                 if (!isLocked()) {
-                    selectedPoint = insertGraphPoint(me.getX(), me.getY());
+                    
+                    double x = Math.max(0, Math.min(getWidth(), me.getX()));
+                    double y = Math.max(0, Math.min(getHeight(), me.getY()));
+                    
+                    if(me.isAltDown()) {
+                        final var time = x/getWidth();
+                        final var line = (SoundObjectParameterLine)getSelectedLine();
+                        final var val = line.getNormalizedTimeValue(time);
+                        y = yToScreen(val, line.getMin(), line.getMax());
+                    }
+                    
+                    selectedPoint = insertGraphPoint(x, y);
                     repaint();
                     setBoundaryXValues();
                 }

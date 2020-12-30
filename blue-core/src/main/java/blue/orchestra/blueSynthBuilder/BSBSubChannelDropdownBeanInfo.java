@@ -36,16 +36,18 @@ public class BSBSubChannelDropdownBeanInfo extends SimpleBeanInfo {
 
 
     // Property identifiers//GEN-FIRST:Properties
-    private static final int PROPERTY_objectName = 0;
-    private static final int PROPERTY_x = 1;
-    private static final int PROPERTY_y = 2;
+    private static final int PROPERTY_comment = 0;
+    private static final int PROPERTY_objectName = 1;
+    private static final int PROPERTY_x = 2;
+    private static final int PROPERTY_y = 3;
 
     // Property array 
     /*lazy PropertyDescriptor*/
     private static PropertyDescriptor[] getPdescriptor(){
-        PropertyDescriptor[] properties = new PropertyDescriptor[3];
+        PropertyDescriptor[] properties = new PropertyDescriptor[4];
     
         try {
+            properties[PROPERTY_comment] = new PropertyDescriptor ( "comment", blue.orchestra.blueSynthBuilder.BSBSubChannelDropdown.class, "getComment", "setComment" ); // NOI18N
             properties[PROPERTY_objectName] = new PropertyDescriptor ( "objectName", blue.orchestra.blueSynthBuilder.BSBSubChannelDropdown.class, "getObjectName", "setObjectName" ); // NOI18N
             properties[PROPERTY_x] = new PropertyDescriptor ( "x", blue.orchestra.blueSynthBuilder.BSBSubChannelDropdown.class, "getX", "setX" ); // NOI18N
             properties[PROPERTY_y] = new PropertyDescriptor ( "y", blue.orchestra.blueSynthBuilder.BSBSubChannelDropdown.class, "getY", "setY" ); // NOI18N
@@ -81,10 +83,10 @@ public class BSBSubChannelDropdownBeanInfo extends SimpleBeanInfo {
     private static java.awt.Image iconColor32 = null;
     private static java.awt.Image iconMono16 = null;
     private static java.awt.Image iconMono32 = null;//GEN-END:IconsDef
-    private static String iconNameC16 = null;//GEN-BEGIN:Icons
-    private static String iconNameC32 = null;
-    private static String iconNameM16 = null;
-    private static String iconNameM32 = null;//GEN-END:Icons
+    private static final String iconNameC16 = null;//GEN-BEGIN:Icons
+    private static final String iconNameC32 = null;
+    private static final String iconNameM16 = null;
+    private static final String iconNameM32 = null;//GEN-END:Icons
 
     private static final int defaultPropertyIndex = -1;//GEN-BEGIN:Idx
     private static final int defaultEventIndex = -1;//GEN-END:Idx

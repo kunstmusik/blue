@@ -14,7 +14,7 @@ import java.util.Vector;
  */
 
 public abstract class AbstractSoundObject implements SoundObject {
-    protected double subjectiveDuration = 2.0f;
+    protected double subjectiveDuration = 4.0f;
 
     protected double startTime = 0.0f;
 

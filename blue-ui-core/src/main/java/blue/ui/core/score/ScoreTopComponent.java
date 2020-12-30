@@ -20,6 +20,7 @@
 package blue.ui.core.score;
 
 import blue.BlueData;
+import blue.WindowSettingManager;
 import blue.automation.AutomationManager;
 import blue.automation.ParameterLinePanel;
 import blue.components.AlphaMarquee;
@@ -34,6 +35,7 @@ import blue.score.TimeState;
 import blue.score.layers.Layer;
 import blue.score.layers.LayerGroup;
 import blue.score.tempo.Tempo;
+import blue.services.render.RenderState;
 import blue.services.render.RenderTimeManager;
 import blue.services.render.RenderTimeManagerListener;
 import blue.settings.PlaybackSettings;
@@ -62,13 +64,14 @@ import javax.swing.*;
 import javax.swing.border.BevelBorder;
 import javax.swing.border.Border;
 import javax.swing.border.LineBorder;
+import jiconfont.icons.elusive.Elusive;
+import jiconfont.swing.IconFontSwing;
 import org.netbeans.api.settings.ConvertAsProperties;
 import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
 import org.openide.awt.ActionReferences;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
-import org.openide.util.ImageUtilities;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.Utilities;
@@ -128,6 +131,7 @@ public final class ScoreTopComponent extends TopComponent
     JLayeredPane scorePanel = new JLayeredPane();
     JPanel layerPanel = new JPanel();
     Point syncPosition = new Point(0, 0);
+    PlaybackSettings playbackSettings = PlaybackSettings.getInstance();
     TimePointer renderStartPointer = new TimePointer(Color.GREEN);
     TimePointer renderLoopPointer = new TimePointer(Color.YELLOW);
     TimePointer renderTimePointer = new TimePointer(Color.ORANGE);
@@ -285,6 +289,14 @@ public final class ScoreTopComponent extends TopComponent
             currentScorePath = path;
         });
         currentScorePath = scoreController.getScorePath();
+
+        PlaybackSettings.getPreferences().addPreferenceChangeListener(evt -> {
+            if (renderTimeManager.getRenderState() == RenderState.RENDERING && evt.getKey().contains("followPlayback")) {
+                if (playbackSettings.isFollowPlayback()) {
+                    scrollToRenderTime();
+                }
+            }
+        });
     }
 
     protected void checkSize() {
@@ -348,7 +360,7 @@ public final class ScoreTopComponent extends TopComponent
 
             Tempo tempo = data.getScore().getTempo();
             tempoControlPanel.setTempo(tempo);
-            tempoEditor.setTempo(tempo);
+            tempoEditor.setData(data);
 
             timeBar.setData(data);
             markersBar.setData(data);
@@ -430,26 +442,36 @@ public final class ScoreTopComponent extends TopComponent
 
         ScrollerButton plusHorz = new ScrollerButton("+");
         ScrollerButton minusHorz = new ScrollerButton("-");
-        plusHorz.setActionCommand("plusHorizontal");
-        minusHorz.setActionCommand("minusHorizontal");
+
+        plusHorz.putClientProperty("timer", new Timer(100, (e) -> {
+            currentTimeState.raisePixelSecond();
+        }));
+
+        minusHorz.putClientProperty("timer", new Timer(100, (e) -> {
+            currentTimeState.lowerPixelSecond();
+        }));
 
         horizontalViewChanger.add(plusHorz);
         horizontalViewChanger.add(minusHorz);
 
-        ActionListener al = (ActionEvent e) -> {
-            String command = e.getActionCommand();
-            switch (command) {
-                case "minusHorizontal":
-                    currentTimeState.lowerPixelSecond();
-                    break;
-                case "plusHorizontal":
-                    currentTimeState.raisePixelSecond();
-                    break;
+        var viewChangerListener = new MouseAdapter() {
+            @Override
+            public void mousePressed(MouseEvent e) {
+                var src = (ScrollerButton) e.getSource();
+                var timer = (Timer) src.getClientProperty("timer");
+                timer.start();
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent e) {
+                var src = (ScrollerButton) e.getSource();
+                var timer = (Timer) src.getClientProperty("timer");
+                timer.stop();
             }
         };
 
-        plusHorz.addActionListener(al);
-        minusHorz.addActionListener(al);
+        plusHorz.addMouseListener(viewChangerListener);
+        minusHorz.addMouseListener(viewChangerListener);
 
         scrollPane.add(horizontalViewChanger,
                 MyScrollPaneLayout.HORIZONTAL_RIGHT);
@@ -500,13 +522,13 @@ public final class ScoreTopComponent extends TopComponent
         markersLabel.setFont(new Font("Dialog", Font.PLAIN, 10));
         markersLabel.setPreferredSize(new Dimension(100, 20));
         markersLabel.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
-        
+
         var gbc = new GridBagConstraints();
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.weightx = 1.0;
-       
+
         leftHeaderView.add(tempoControlPanel, gbc);
         gbc.gridy = 1;
         leftHeaderView.add(markersLabel, gbc);
@@ -550,59 +572,84 @@ public final class ScoreTopComponent extends TopComponent
             }
         });
 
-        ImageIcon icon = new ImageIcon(ImageUtilities.loadImage(
-                "blue/resources/images/ZoomIn16.gif"));
-        JButton zoomButton = new JButton(icon);
-        zoomButton.addActionListener((ActionEvent e) -> {
-            if (navigator == null) {
-                navigator = new ScoreNavigatorDialog(
-                        WindowManager.getDefault().getMainWindow());
-                navigator.setJScrollPane(scrollPane);
-                navigator.setLayerPanel(layerPanel);
-            }
-            navigator.setVisible(true);
-        });
+        Color ICON_COLOR = new Color(230, 230, 255);
+
+        JButton zoomButton = new JButton(IconFontSwing.buildIcon(Elusive.ZOOM_IN, 12, ICON_COLOR));
 
         scrollPane.setColumnHeaderView(headerPanel);
+
         scrollPane.setCorner(JScrollPane.LOWER_RIGHT_CORNER, zoomButton);
+
         scrollPane.setCorner(JScrollPane.UPPER_RIGHT_CORNER, snapButton);
 
         layerPanel.setBackground(Color.BLACK);
-        layerPanel.setOpaque(true);
-        layerPanel.setLayout(new LinearLayout(Score.SPACER));
-        layerHeaderPanel.setLayout(new LinearLayout(Score.SPACER));
+
+        layerPanel.setOpaque(
+                true);
+        layerPanel.setLayout(
+                new LinearLayout(Score.SPACER));
+        layerHeaderPanel.setLayout(
+                new LinearLayout(Score.SPACER));
 
         scorePanel.add(layerPanel, JLayeredPane.DEFAULT_LAYER);
 
-        scrollPane.getViewport().setView(scorePanel);
-        scrollPane.getViewport().setScrollMode(JViewport.BLIT_SCROLL_MODE);
-        scrollPane.getViewport().setBackground(Color.BLACK);
+        scrollPane.getViewport()
+                .setView(scorePanel);
+        scrollPane.getViewport()
+                .setScrollMode(JViewport.BLIT_SCROLL_MODE);
+        scrollPane.getViewport()
+                .setBackground(Color.BLACK);
 
         topSplitPane.add(scrollPane, JSplitPane.RIGHT);
+
         topSplitPane.add(leftPanel, JSplitPane.LEFT);
-        topSplitPane.setDividerLocation(175);
 
-        timeProperties.setVisible(false);
-        timeProperties.setPreferredSize(new Dimension(150, 40));
+        topSplitPane.setDividerLocation(
+                175);
 
-        timeProperties.setVisible(false);
-        timeProperties.setPreferredSize(new Dimension(150, 40));
+        timeProperties.setVisible(
+                false);
+        timeProperties.setPreferredSize(
+                new Dimension(150, 40));
 
-        topPanel.setLayout(new BorderLayout());
-        topPanel.add(new ModeSelectionPanel(), BorderLayout.WEST);
+        timeProperties.setVisible(
+                false);
+        timeProperties.setPreferredSize(
+                new Dimension(150, 40));
+
+        topPanel.setLayout(
+                new BorderLayout());
+        topPanel.add(
+                new ModeSelectionPanel(), BorderLayout.WEST);
         topPanel.add(scoreObjectBar, BorderLayout.CENTER);
 
         this.add(timeProperties, BorderLayout.EAST);
 
-        snapButton.addActionListener((ActionEvent e) -> {
-            // showSnapPopup();
-            timeProperties.setVisible(!timeProperties.isVisible());
-        });
+        snapButton.addActionListener(
+                (ActionEvent e) -> {
+                    // showSnapPopup();
+                    timeProperties.setVisible(!timeProperties.isVisible());
+                }
+        );
 
         scorePanel.add(renderStartPointer, JLayeredPane.DRAG_LAYER);
+
         scorePanel.add(renderLoopPointer, JLayeredPane.DRAG_LAYER);
+
         scorePanel.add(renderTimePointer, JLayeredPane.DRAG_LAYER);
 
+        navigator = ScoreNavigatorDialog.getInstance(
+                WindowManager.getDefault().getMainWindow());
+        navigator.setJScrollPane(scrollPane);
+        navigator.setLayerPanel(layerPanel);
+
+        zoomButton.addActionListener(
+                (ActionEvent e) -> navigator.setVisible(true)
+        );
+
+        if (WindowSettingManager.getInstance().isVisible(ScoreNavigatorDialog.WINDOW_SETTING_NAME)) {
+            navigator.setVisible(true);
+        }
     }
 
     private void init() {
@@ -713,7 +760,7 @@ public final class ScoreTopComponent extends TopComponent
             SwingUtilities.invokeLater(runner);
         } else {
             runner.run();
-        };
+        }
     }
 
     public void scrollToRenderStartPointer() {
@@ -732,7 +779,7 @@ public final class ScoreTopComponent extends TopComponent
                     SwingUtilities.invokeLater(runner);
                 } else {
                     runner.run();
-                };
+                }
             }
         }
     }
@@ -753,7 +800,7 @@ public final class ScoreTopComponent extends TopComponent
                     SwingUtilities.invokeLater(runner);
                 } else {
                     runner.run();
-                };
+                }
             }
         }
     }
@@ -808,13 +855,37 @@ public final class ScoreTopComponent extends TopComponent
         if (renderStart < 0.0f || timePointer < latency) {
             renderTimePointer.setLocation(-1, 0);
         } else {
-            int x = (int) ((renderStart + timePointer - latency) * data.getScore().getTimeState().getPixelSecond());
-            renderTimePointer.setLocation(x, 0);
+            int oldX = renderTimePointer.getX();
+            int newX = Math.max(0, (int) ((renderStart + timePointer - latency) * data.getScore().getTimeState().getPixelSecond()));
+            renderTimePointer.setLocation(newX, 0);
+
+            if (playbackSettings.isFollowPlayback()) {
+                var rect = scrollPane.getViewport().getViewRect();
+                var right = rect.x + rect.width;
+                if (oldX <= right && newX >= right) {
+                    scrollPane.getViewport().setViewPosition(new Point(newX, rect.y));
+                }
+            }
         }
+    }
+
+    private void scrollToRenderTime() {
+        var rect = scrollPane.getViewport().getViewRect();
+
+        double latency = PlaybackSettings.getInstance().getPlaybackLatencyCorrection();
+        int newX = Math.max(0, (int) ((renderStart + timePointer - latency) * data.getScore().getTimeState().getPixelSecond()));
+        scrollPane.getViewport().setViewPosition(new Point(newX, rect.y));
     }
 
     @Override
     public void renderInitiated() {
+        if (playbackSettings.isFollowPlaybackOnStart()) {
+            playbackSettings.setFollowPlayback(true);
+            playbackSettings.save();
+        }
+        if (playbackSettings.isFollowPlayback()) {
+            scrollToRenderTime();
+        }
     }
 
     @Override
@@ -995,9 +1066,7 @@ public final class ScoreTopComponent extends TopComponent
             layerHeaderPanel.revalidate();
 
             TimeState timeState = pObj.getTimeState();
-            tempoEditor.setTimeState(timeState);
-            tempoEditor.setVisible(true);
-            tempoControlPanel.setVisible(true);
+
             timeBar.setRootTimeline(false);
             timeBar.setTimeState(timeState);
             markersBar.setRootTimeline(false);

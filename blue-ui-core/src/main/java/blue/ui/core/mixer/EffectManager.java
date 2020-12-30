@@ -23,7 +23,7 @@ import java.text.MessageFormat;
 
 public class EffectManager {
 
-    private MessageFormat fmt = new MessageFormat("blueEffect{0}");
+    private final MessageFormat fmt = new MessageFormat("blueEffect{0}");
 
     int counter = 0;
 

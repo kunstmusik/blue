@@ -17,7 +17,6 @@
  * Software Foundation Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307
  * USA
  */
-
 package blue.soundObject.ceciliaModule;
 
 import blue.Arrangement;
@@ -30,13 +29,12 @@ import blue.soundObject.CeciliaModule;
 import blue.soundObject.Note;
 import blue.soundObject.NoteList;
 import blue.soundObject.NoteParseException;
-import blue.soundObject.SoundObject;
+import blue.soundObject.TimeBehavior;
 import blue.soundObject.ceciliaModule.cybil.CybilCompiler;
 import blue.utility.ScoreUtilities;
 import blue.utility.TextUtilities;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -257,7 +255,6 @@ public class CeciliaModuleCompilationUnit {
             String newNum = (String) ftableNumMap.get(oldNum);
 
             // System.err.println("ftable" + oldNum + " : " + newNum);
-
             retVal = TextUtilities
                     .replaceAll(retVal, "ftable" + oldNum, newNum);
 
@@ -265,7 +262,6 @@ public class CeciliaModuleCompilationUnit {
 
         // clean up any extra ftable statements
         // retVal = TextUtilities.replaceAll(text, "ftable", "");
-
         return retVal;
     }
 
@@ -342,7 +338,6 @@ public class CeciliaModuleCompilationUnit {
             String newId = Integer.toString(newNum);
 
             // System.out.println("Key/ID: " + key + " : " + newId);
-
             instrIDMap.put(key.trim(), newId);
 
         }
@@ -455,8 +450,7 @@ public class CeciliaModuleCompilationUnit {
     }
 
     /**
-     * @return
-     * @throws NoteParseException
+     * @return @throws NoteParseException
      */
     public NoteList generateNotes(CeciliaModule cm) throws NoteParseException {
         parseScore(cm, cm.getModuleDefinition().score.trim());
@@ -480,7 +474,7 @@ public class CeciliaModuleCompilationUnit {
             nl.add(note);
         }
 
-        ScoreUtilities.applyTimeBehavior(nl, SoundObject.TIME_BEHAVIOR_SCALE,
+        ScoreUtilities.applyTimeBehavior(nl, TimeBehavior.SCALE,
                 cm.getSubjectiveDuration(), cm.getRepeatPoint());
 
         ScoreUtilities.setScoreStart(nl, cm.getStartTime());

@@ -27,7 +27,7 @@ import java.beans.*;
 public class BSBCheckBoxBeanInfo extends SimpleBeanInfo {
 
     // Bean descriptor information will be obtained from introspection.//GEN-FIRST:BeanDescriptor
-    private static BeanDescriptor beanDescriptor = null;
+    private static final BeanDescriptor beanDescriptor = null;
     private static BeanDescriptor getBdescriptor(){//GEN-HEADEREND:BeanDescriptor
         // Here you can add code for customizing the BeanDescriptor.
 
@@ -36,19 +36,21 @@ public class BSBCheckBoxBeanInfo extends SimpleBeanInfo {
 
     // Property identifiers//GEN-FIRST:Properties
     private static final int PROPERTY_automationAllowed = 0;
-    private static final int PROPERTY_label = 1;
-    private static final int PROPERTY_objectName = 2;
-    private static final int PROPERTY_randomizable = 3;
-    private static final int PROPERTY_x = 4;
-    private static final int PROPERTY_y = 5;
+    private static final int PROPERTY_comment = 1;
+    private static final int PROPERTY_label = 2;
+    private static final int PROPERTY_objectName = 3;
+    private static final int PROPERTY_randomizable = 4;
+    private static final int PROPERTY_x = 5;
+    private static final int PROPERTY_y = 6;
 
     // Property array 
     /*lazy PropertyDescriptor*/
     private static PropertyDescriptor[] getPdescriptor(){
-        PropertyDescriptor[] properties = new PropertyDescriptor[6];
+        PropertyDescriptor[] properties = new PropertyDescriptor[7];
     
         try {
             properties[PROPERTY_automationAllowed] = new PropertyDescriptor ( "automationAllowed", blue.orchestra.blueSynthBuilder.BSBCheckBox.class, "isAutomationAllowed", "setAutomationAllowed" ); // NOI18N
+            properties[PROPERTY_comment] = new PropertyDescriptor ( "comment", blue.orchestra.blueSynthBuilder.BSBCheckBox.class, "getComment", "setComment" ); // NOI18N
             properties[PROPERTY_label] = new PropertyDescriptor ( "label", blue.orchestra.blueSynthBuilder.BSBCheckBox.class, "getLabel", "setLabel" ); // NOI18N
             properties[PROPERTY_objectName] = new PropertyDescriptor ( "objectName", blue.orchestra.blueSynthBuilder.BSBCheckBox.class, "getObjectName", "setObjectName" ); // NOI18N
             properties[PROPERTY_randomizable] = new PropertyDescriptor ( "randomizable", blue.orchestra.blueSynthBuilder.BSBCheckBox.class, "isRandomizable", "setRandomizable" ); // NOI18N
@@ -65,7 +67,7 @@ public class BSBCheckBoxBeanInfo extends SimpleBeanInfo {
     // EventSet identifiers//GEN-FIRST:Events
 
     // EventSet array
-    private static EventSetDescriptor[] eventSets = new EventSetDescriptor[0];
+    private static final EventSetDescriptor[] eventSets = new EventSetDescriptor[0];
 
     private static EventSetDescriptor[] getEdescriptor(){
         return eventSets;
@@ -77,7 +79,7 @@ public class BSBCheckBoxBeanInfo extends SimpleBeanInfo {
     // Method identifiers//GEN-FIRST:Methods
 
     // Method array 
-    private static MethodDescriptor[] methods = new MethodDescriptor[0];
+    private static final MethodDescriptor[] methods = new MethodDescriptor[0];
 
     private static MethodDescriptor[] getMdescriptor(){
         return methods;

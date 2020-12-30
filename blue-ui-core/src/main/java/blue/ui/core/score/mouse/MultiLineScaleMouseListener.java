@@ -57,8 +57,8 @@ class MultiLineScaleMouseListener extends BlueMouseAdapter {
 
     int startX = -1;
 
-    private Map<ScoreObject, double[]> scoreObjectRecords = new HashMap<>();
-    private Map<Line, Line> lineSourceCopyMap = new HashMap<>();
+    private final Map<ScoreObject, double[]> scoreObjectRecords = new HashMap<>();
+    private final Map<Line, Line> lineSourceCopyMap = new HashMap<>();
 
     TimeState timeState = null;
 
@@ -150,7 +150,7 @@ class MultiLineScaleMouseListener extends BlueMouseAdapter {
 
         if (SwingUtilities.isLeftMouseButton(e)) {
             final int x = e.getX();
-            final double pixelSecond = (double) timeState.getPixelSecond();
+            final double pixelSecond = timeState.getPixelSecond();
             final var edgeTime = EDGE / pixelSecond;
 
             double newTime = x / pixelSecond;

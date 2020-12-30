@@ -14,27 +14,32 @@ package blue.scripting;
  * @version 1.0
  */
 import blue.BlueSystem;
-import javax.script.ScriptEngine;
-import javax.script.ScriptEngineManager;
-import javax.script.ScriptException;
+import org.mozilla.javascript.Context;
+import org.mozilla.javascript.JavaScriptException;
+import org.mozilla.javascript.Scriptable;
 
 public class JavaScriptProxy {
 
-    private static ScriptEngine engine = null;
+    private static Context cx;
+
+    private static Scriptable scope;
 
     static {
 
     }
 
     public static final void reinitialize() {
-        ScriptEngineManager manager = new ScriptEngineManager();
-        engine = manager.getEngineByName("JavaScript");
+        if (cx != null) {
+            Context.exit();
+        }
+        cx = Context.enter();
+        scope = cx.initStandardObjects(null);
         System.out.println(BlueSystem.getString("scripting.js.reinitialized"));
     }
 
     public static final String processJavascriptScore(String script,
-            double subjectiveDuration, String soundObjectId) throws ScriptException {
-        if (engine == null) {
+            double subjectiveDuration, String soundObjectId) throws JavaScriptException {
+        if (cx == null) {
             reinitialize();
         }
         String returnScore = "";
@@ -43,12 +48,12 @@ public class JavaScriptProxy {
                 + ";\n";
         init += "score = '';";
 
-        engine.eval(init);
-        engine.eval(script);
+        cx.evaluateString(scope, init, "init", 1, null);
+        cx.evaluateString(scope, script, soundObjectId, 1, null);
 
-        Object obj = engine.get("score");
-        if (obj != null) {
-            returnScore = obj.toString();
+        Object obj = scope.get("score", scope);
+        if (obj != Scriptable.NOT_FOUND) {
+            returnScore = Context.toString(obj);
         }
 
         return returnScore;
@@ -56,7 +61,7 @@ public class JavaScriptProxy {
 
     public static final String processJavascriptInstrument(String script,
             String instrumentId) {
-        if (engine == null) {
+        if (cx == null) {
             reinitialize();
         }
         String returnInstrument = "";
@@ -64,14 +69,14 @@ public class JavaScriptProxy {
         String init = "instrument = '';\n";
 
         try {
-            engine.eval(init);
-            engine.eval(script);
+            cx.evaluateString(scope, init, "init", 1, null);
+            cx.evaluateString(scope, script, instrumentId, 1, null);
 
-            Object obj = engine.get("instrument");
+            Object obj = scope.get("instrument", scope);
             if (obj != null) {
                 returnInstrument = obj.toString();
             }
-        } catch (ScriptException e) {
+        } catch (JavaScriptException e) {
             System.out.println(e.getLocalizedMessage());
         }
 

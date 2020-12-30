@@ -63,6 +63,11 @@ public class FileChooserManager {
         temp.isMultiSelect = val;
     }
 
+    public void setDirectoryChooser(Object fileChooserId, boolean isDirectoriesOnly) {
+        DialogInfoSet temp = getDialogInfoSet(fileChooserId);
+        temp.directoriesOnly = isDirectoriesOnly;
+    }
+
     public List<File> showOpenDialog(Object fileChooserId, Component parent) {
         final DialogInfoSet temp = getDialogInfoSet(fileChooserId);
         final List<File> retVal = new ArrayList<>();
@@ -86,10 +91,27 @@ public class FileChooserManager {
                 ff.setMode(FileDialog.LOAD);
                 ff.setTitle(temp.dialogTitle);
                 ff.setMultipleMode(temp.isMultiSelect);
+
+                if (temp.currentDirectory != null) {
+                    ff.setDirectory(temp.currentDirectory.getAbsolutePath());
+                } else if (temp.selectedFile != null) {
+                    ff.setDirectory(temp.selectedFile.getParentFile().getAbsolutePath());
+                }
+                if (temp.selectedFile != null) {
+                    ff.setFile(temp.selectedFile.getName());
+                }
+                
+                if(temp.directoriesOnly) {
+                    System.setProperty("apple.awt.fileDialogForDirectories", "true");
+                }
+
                 ff.setVisible(true);
 
                 final File[] files = ff.getFiles();
 
+                System.setProperty("apple.awt.fileDialogForDirectories", "false");
+
+                
                 if (files != null) {
                     for (File f : files) {
                         retVal.add(f);
@@ -141,35 +163,54 @@ public class FileChooserManager {
                         temp.currentDirectory = f;
                     }
                 } else {
-                    FileChooser f = new FileChooser();
-                    f.setTitle(temp.dialogTitle);
-                    f.getExtensionFilters().addAll(temp.filters);
-                    f.getExtensionFilters().add(allFilter);
 
-                    if (temp.currentDirectory != null) {
-                        f.setInitialDirectory(temp.currentDirectory);
-                    } else if (temp.selectedFile != null) {
-                        f.setInitialDirectory(temp.selectedFile.getParentFile());
-                    }
-                    if (temp.selectedFile != null) {
-                        f.setInitialFileName(temp.selectedFile.getName());
-                    }
+                    if (temp.directoriesOnly) {
 
-                    if (temp.isMultiSelect) {
-                        temp.selectedFile = null;
-                        List<File> found = f.showOpenMultipleDialog(s);
-                        if (found != null) {
-                            temp.currentDirectory = found.get(0).getParentFile();
-                            retVal.addAll(found);
+                        DirectoryChooser d = new DirectoryChooser();
+                        d.setTitle(temp.dialogTitle);
+
+                        if (temp.currentDirectory != null) {
+                            d.setInitialDirectory(temp.currentDirectory);
                         }
-                    } else {
-                        File ret = f.showOpenDialog(s);
+
+                        File ret = d.showDialog(s);
                         if (ret != null) {
                             temp.currentDirectory = ret.getParentFile();
                             retVal.add(ret);
                         }
-                    }
 
+                    } else {
+
+                        FileChooser f = new FileChooser();
+                        f.setTitle(temp.dialogTitle);
+                        f.getExtensionFilters().addAll(temp.filters);
+                        f.getExtensionFilters().add(allFilter);
+
+                        if (temp.currentDirectory != null) {
+                            f.setInitialDirectory(temp.currentDirectory);
+                        } else if (temp.selectedFile != null) {
+                            f.setInitialDirectory(temp.selectedFile.getParentFile());
+                        }
+                        if (temp.selectedFile != null) {
+                            f.setInitialFileName(temp.selectedFile.getName());
+                        }
+
+                        if (temp.isMultiSelect) {
+                            temp.selectedFile = null;
+                            List<File> found = f.showOpenMultipleDialog(s);
+                            if (found != null) {
+                                temp.currentDirectory = found.get(0).getParentFile();
+                                retVal.addAll(found);
+                            }
+                        } else {
+                            File ret = f.showOpenDialog(s);
+                            if (ret != null) {
+                                temp.currentDirectory = ret.getParentFile();
+                                retVal.add(ret);
+                            }
+                        }
+
+                    }
                 }
 
                 c.countDown();
@@ -223,6 +264,16 @@ public class FileChooserManager {
                 ff.setMode(FileDialog.SAVE);
                 ff.setTitle(temp.dialogTitle);
 //        ff.setMultipleMode(temp.isMultiSelect);
+
+                if (temp.currentDirectory != null) {
+                    ff.setDirectory(temp.currentDirectory.getAbsolutePath());
+                } else if (temp.selectedFile != null) {
+                    ff.setDirectory(temp.selectedFile.getParentFile().getAbsolutePath());
+                }
+                if (temp.selectedFile != null) {
+                    ff.setFile(temp.selectedFile.getName());
+                }
+
                 ff.setVisible(true);
 
                 final File[] files = ff.getFiles();
@@ -292,9 +343,10 @@ public class FileChooserManager {
             try {
                 c.await();
             } catch (InterruptedException ex) {
-                Logger.getLogger(FileChooserManager.class.getName()).log(
-                        Level.SEVERE,
-                        null, ex);
+                Logger.getLogger(FileChooserManager.class
+                        .getName()).log(
+                                Level.SEVERE,
+                                null, ex);
             } finally {
                 if (parent != null) {
                     parent.setEnabled(true);
@@ -323,6 +375,7 @@ public class FileChooserManager {
 
     public boolean isDialogDefined(Object fileChooserId) {
         return dialogInfoSets.containsKey(fileChooserId);
+
     }
 
     public static class DialogInfoSet {

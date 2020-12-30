@@ -48,14 +48,14 @@ public class VirtualKeyboardController implements Initializable {
     private Spinner<Integer> octaveSpinner;
 
     private static final int KEY_OFFSET = 21;
-    private AtomicBoolean[] keyStates = new AtomicBoolean[88];
-    private AtomicBoolean[] changedKeyStates = new AtomicBoolean[88];
-    private int[] whiteKeys = new int[7];
-    private int lastMidiKey = -1;
-    private int octave = 5;
-    private int channel = 0;
-    private int velocity = 127;
-    private MidiInputManager midiEngine = MidiInputManager.getInstance();
+    private final AtomicBoolean[] keyStates = new AtomicBoolean[88];
+    private final AtomicBoolean[] changedKeyStates = new AtomicBoolean[88];
+    private final int[] whiteKeys = new int[7];
+    private final int lastMidiKey = -1;
+    private final int octave = 5;
+    private final int channel = 0;
+    private final int velocity = 127;
+    private final MidiInputManager midiEngine = MidiInputManager.getInstance();
 
     /**
      * Initializes the controller class.
