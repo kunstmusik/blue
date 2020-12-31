@@ -185,7 +185,11 @@ public class BlueProjectManager {
             Collection<? extends ProjectPlugin> plugins = 
                     Lookups.forPath("blue/project/plugins").lookupAll(ProjectPlugin.class);
             for(ProjectPlugin plugin : plugins) {
-                plugin.preRender(project.getData());
+                try {
+                    plugin.preRender(project.getData());
+                } catch (Exception e) {
+                    Exceptions.printStackTrace(e);
+                }
             }
             
             new Thread(() -> {
