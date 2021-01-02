@@ -29,8 +29,8 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.List;
-import javafx.stage.FileChooser.ExtensionFilter;
 import javax.swing.JOptionPane;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import org.openide.windows.WindowManager;
 
 public class EffectsUtil {
@@ -46,8 +46,8 @@ public class EffectsUtil {
                 .getDefaultDirectory()
                 + File.separator + "default.effect");
 
-        ExtensionFilter presetFilter = new ExtensionFilter(
-                "blue Effect File", "*.effect");
+        var presetFilter = new FileNameExtensionFilter(
+                "blue Effect File", "effect");
         final FileChooserManager fcm = FileChooserManager.getDefault();
 
         fcm.addFilter(IMPORT_DIALOG, presetFilter);

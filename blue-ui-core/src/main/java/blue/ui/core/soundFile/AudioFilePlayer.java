@@ -31,7 +31,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.List;
-import javafx.stage.FileChooser.ExtensionFilter;
 import javax.sound.sampled.AudioFileFormat;
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioInputStream;
@@ -41,9 +40,9 @@ import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.Mixer;
 import javax.sound.sampled.SourceDataLine;
 import javax.sound.sampled.UnsupportedAudioFileException;
-import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.JProgressBar;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import org.openide.windows.WindowManager;
 
 /**
@@ -64,9 +63,9 @@ public class AudioFilePlayer extends javax.swing.JPanel {
 
     static {
         FileChooserManager.getDefault().addFilter(AudioFilePlayer.class,
-                new ExtensionFilter("AIFF file (.aif, aiff)", "*.aif", "*.aiff"));
+                new FileNameExtensionFilter("AIFF file (.aif, aiff)", "aif", "aiff"));
         FileChooserManager.getDefault().addFilter(AudioFilePlayer.class,
-                new ExtensionFilter("WAV file (.wav)", "*.wav"));
+                new FileNameExtensionFilter("WAV file (.wav)", "wav"));
     }
 
     /** Creates new form AudioFilePlayer */

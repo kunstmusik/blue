@@ -31,9 +31,9 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.util.List;
-import javafx.stage.FileChooser.ExtensionFilter;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import org.openide.windows.WindowManager;
 
 public final class ImportCsdAction implements ActionListener {
@@ -43,7 +43,7 @@ public final class ImportCsdAction implements ActionListener {
 //        fcm.setAcceptAllFileFilterUsed(false);
         fcm.setMultiSelectionEnabled(this.getClass(), false);
         fcm.addFilter(this.getClass(),
-                new ExtensionFilter("CSD File", "*.csd"));
+                new FileNameExtensionFilter("CSD File", "csd", "CSD"));
         fcm.setSelectedFile(this.getClass(),
                 GeneralSettings.getInstance().getDefaultDirectory());
         fcm.setDialogTitle(this.getClass(), "Select CSD File");

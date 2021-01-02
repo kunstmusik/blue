@@ -31,7 +31,6 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
-import javafx.stage.FileChooser;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.JMenu;
@@ -39,6 +38,7 @@ import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
 import javax.swing.SwingUtilities;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import org.openide.util.Exceptions;
 
 /**
@@ -54,11 +54,11 @@ class EditPointsPopup extends JPopupMenu {
     static {
         FileChooserManager fcm = FileChooserManager.getDefault();
 
-        fcm.addFilter(FILE_BPF_IMPORT, new FileChooser.ExtensionFilter(
-                "Break Point File", "*.bpf"));
+        fcm.addFilter(FILE_BPF_IMPORT, new FileNameExtensionFilter(
+                "Break Point File", "bpf"));
 
-        fcm.addFilter(FILE_BPF_EXPORT, new FileChooser.ExtensionFilter(
-                "Break Point File", "*.bpf"));
+        fcm.addFilter(FILE_BPF_EXPORT, new FileNameExtensionFilter(
+                "Break Point File", "bpf"));
 
         fcm.setDialogTitle(FILE_BPF_IMPORT, "Import BPF File");
         fcm.setDialogTitle(FILE_BPF_EXPORT, "Export BPF File");

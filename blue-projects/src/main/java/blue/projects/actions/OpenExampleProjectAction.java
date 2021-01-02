@@ -10,7 +10,6 @@ import blue.projects.*;
 import blue.projects.recentProjects.RecentProjectsList;
 import blue.score.Score;
 import blue.score.layers.LayerGroup;
-import blue.settings.GeneralSettings;
 import blue.soundObject.AudioFile;
 import blue.soundObject.PolyObject;
 import blue.soundObject.SoundObject;
@@ -22,14 +21,12 @@ import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.logging.Logger;
-import javafx.stage.FileChooser.ExtensionFilter;
-import javax.swing.JFileChooser;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
 import org.openide.awt.StatusDisplayer;
@@ -47,7 +44,7 @@ public final class OpenExampleProjectAction implements ActionListener {
 //        fcm.setAcceptAllFileFilterUsed(false);
         fcm.setMultiSelectionEnabled(this.getClass(), true);
         fcm.addFilter(this.getClass(),
-                new ExtensionFilter("blue Project File (*.blue)", "*.blue"));
+                new FileNameExtensionFilter("Blue Project File (*.blue)", "blue"));
     }
     
     protected String getPath() {

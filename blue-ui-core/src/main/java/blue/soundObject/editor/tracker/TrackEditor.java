@@ -20,13 +20,12 @@ import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.io.File;
 import java.util.List;
-import javafx.stage.FileChooser.ExtensionFilter;
 import javax.swing.ListSelectionModel;
 import javax.swing.SpinnerModel;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableModel;
 
@@ -887,7 +886,7 @@ public class TrackEditor extends javax.swing.JPanel {
 
         fcm.setDialogTitle(FILE_CHOOSER_ID, BlueSystem
                 .getString("pianoRoll.selectScalaFile"));
-        fcm.addFilter(FILE_CHOOSER_ID, new ExtensionFilter("Scala File (*.scl)", "*.scl"));
+        fcm.addFilter(FILE_CHOOSER_ID, new FileNameExtensionFilter("Scala File (*.scl)", "scl"));
 
         // SET DEFAULT DIR
         String fileName = BlueSystem.getUserConfigurationDirectory();

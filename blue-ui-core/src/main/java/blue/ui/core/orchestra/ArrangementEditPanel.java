@@ -69,13 +69,11 @@ import java.io.PrintWriter;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
-import javafx.stage.FileChooser.ExtensionFilter;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JComponent;
-import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
@@ -90,6 +88,7 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumnModel;
 import javax.swing.table.TableModel;
@@ -226,8 +225,8 @@ public class ArrangementEditPanel extends JComponent
                 .getDefaultDirectory()
                 + File.separator + "default.binstr");
 
-        ExtensionFilter presetFilter = new ExtensionFilter(
-                "blue Instrument File", "*.binstr");
+        var presetFilter = new FileNameExtensionFilter(
+                "blue Instrument File", "binstr");
         final FileChooserManager fcm = FileChooserManager.getDefault();
 
         fcm.addFilter(IMPORT_DIALOG, presetFilter);

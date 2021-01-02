@@ -31,20 +31,20 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.util.List;
-import javafx.stage.FileChooser.ExtensionFilter;
-import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
+import javax.swing.filechooser.FileFilter;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import org.openide.awt.StatusDisplayer;
 import org.openide.windows.WindowManager;
 
 public final class ImportOrcScoAction implements ActionListener {
 
-    ExtensionFilter orcFilter = new ExtensionFilter(
-            "Csound ORC File (*.orc)", "*.orc");
+    FileFilter orcFilter = new FileNameExtensionFilter(
+            "Csound ORC File (*.orc)", "orc");
 
-    ExtensionFilter scoFilter = new ExtensionFilter(
-            "Csound SCO File (*.sco)", "*.sco");
+    FileFilter scoFilter = new FileNameExtensionFilter(
+            "Csound SCO File (*.sco)", "sco");
 
     public ImportOrcScoAction() {
         FileChooserManager fcm = FileChooserManager.getDefault();
