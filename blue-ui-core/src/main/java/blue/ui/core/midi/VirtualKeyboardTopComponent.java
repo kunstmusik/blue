@@ -53,20 +53,6 @@ public final class VirtualKeyboardTopComponent extends TopComponent {
         setName(Bundle.CTL_VirtualKeyboardTopComponent());
         setToolTipText(Bundle.HINT_VirtualKeyboardTopComponent());
 
-//        JFXPanel panel = new JFXPanel();
-//        this.setLayout(new BorderLayout());
-//        this.add(panel);
-//
-//        Platform.runLater(() -> {
-//            FXMLLoader loader = new FXMLLoader(getClass().getResource(
-//                    "VirtualKeyboard.fxml"));
-//            try {
-//                loader.load();
-//                panel.setScene(new Scene(loader.getRoot()));
-//            } catch (IOException ex) {
-//                Exceptions.printStackTrace(ex);
-//            }
-//        });
         channelSpinner.addChangeListener((ChangeEvent ce) -> {
             virtualKeyboardPanel1.setChannel(((Integer) channelSpinner.getValue()) - 1);
         });

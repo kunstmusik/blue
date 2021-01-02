@@ -209,11 +209,6 @@ public class Installer extends ModuleInstall {
             BlueNbUtilities.setMainWindow(WindowManager.getDefault().getMainWindow());
         });
 
-//        Platform.runLater(()
-//                -> jfxPanel.setScene(new Scene(new Group())));
-//        FileChooserManager.getDefault().setJFXPanel(jfxPanel);
-//        WindowManager.getDefault().invokeWhenUIReady(()
-//                -> WindowManager.getDefault().getMainWindow().add(jfxPanel));
         IconFontSwing.register(Elusive.getIconFont());
         IconFontSwing.register(GoogleMaterialDesignIcons.getIconFont());
         IconFontSwing.register(FontAwesome.getIconFont());
