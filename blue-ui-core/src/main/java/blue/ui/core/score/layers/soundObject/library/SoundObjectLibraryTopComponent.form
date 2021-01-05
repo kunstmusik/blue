@@ -73,7 +73,7 @@
                 <Component class="javax.swing.JButton" name="copyButton">
                   <Properties>
                     <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                      <ResourceString bundle="blue/ui/core/score/layers/soundObject/Bundle.properties" key="SoundObjectLibraryTopComponent.copyButton.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+                      <ResourceString bundle="blue/ui/core/score/layers/soundObject/library/Bundle.properties" key="SoundObjectLibraryTopComponent.copyButton.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                     </Property>
                   </Properties>
                   <Events>
@@ -83,7 +83,7 @@
                 <Component class="javax.swing.JButton" name="copyInstanceButton">
                   <Properties>
                     <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                      <ResourceString bundle="blue/ui/core/score/layers/soundObject/Bundle.properties" key="SoundObjectLibraryTopComponent.copyInstanceButton.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+                      <ResourceString bundle="blue/ui/core/score/layers/soundObject/library/Bundle.properties" key="SoundObjectLibraryTopComponent.copyInstanceButton.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                     </Property>
                   </Properties>
                   <Events>
@@ -93,7 +93,7 @@
                 <Component class="javax.swing.JButton" name="removeButton">
                   <Properties>
                     <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                      <ResourceString bundle="blue/ui/core/score/layers/soundObject/Bundle.properties" key="SoundObjectLibraryTopComponent.removeButton.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+                      <ResourceString bundle="blue/ui/core/score/layers/soundObject/library/Bundle.properties" key="SoundObjectLibraryTopComponent.removeButton.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                     </Property>
                   </Properties>
                   <Events>

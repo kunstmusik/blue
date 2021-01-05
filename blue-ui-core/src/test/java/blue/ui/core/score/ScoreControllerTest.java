@@ -42,8 +42,7 @@ import org.openide.util.lookup.InstanceContent;
  */
 public class ScoreControllerTest {
     private ScoreController scoreController;
-    private ScoreController.ScoreObjectBuffer buffer;
-    
+        
     public ScoreControllerTest() {
         BlueUndoManager.setUndoGroup(new HashMap<>());
     }
@@ -79,13 +78,11 @@ public class ScoreControllerTest {
 
         scoreController.setLookupAndContent(new AbstractLookup(content), content);
 
-        this.buffer = scoreController.getScoreObjectBuffer();
     }
 
     @After
     public void tearDown() {
         System.out.println("tear down");
-        this.buffer.clear();
     }
     /**
      * Test of getInstance method, of class ScoreController.
@@ -100,16 +97,16 @@ public class ScoreControllerTest {
     /**
      * Test of copyScoreObjects method, of class ScoreController.
      */
-    @Test
-    public void testCopyScoreObjects() {
-        scoreController.copyScoreObjects();
-
-        assertEquals(2, buffer.scoreObjects.size());
-        assertEquals(2, buffer.layerIndexes.size());
-
-        assertEquals(buffer.layerIndexes.get(0), buffer.layerIndexes.get(1));
-
-    }
+//    @Test
+//    public void testCopyScoreObjects() {
+//        scoreController.copyScoreObjects();
+//
+//        assertEquals(2, buffer.scoreObjects.size());
+//        assertEquals(2, buffer.layerIndexes.size());
+//
+//        assertEquals(buffer.layerIndexes.get(0), buffer.layerIndexes.get(1));
+//
+//    }
 
     /**
      * Test of deleteScoreObjects method, of class ScoreController.
@@ -121,37 +118,35 @@ public class ScoreControllerTest {
         PolyObject pObj = (PolyObject) score.get(0);
         Lookup lookup = scoreController.getLookup();
         
-        assertEquals(0, buffer.scoreObjects.size());
         assertEquals(2, pObj.get(1).size());
         assertEquals(2, lookup.lookupAll(ScoreObject.class).size());
         
         scoreController.deleteScoreObjects();
 
-        assertEquals(0, buffer.scoreObjects.size());
         assertEquals(0, pObj.get(1).size());
         assertEquals(0, lookup.lookupAll(ScoreObject.class).size());
 
     }
 
-    /**
-     * Test of cutScoreObjects method, of class ScoreController.
-     */
-    @Test
-    public void testCutScoreObjects() {
-        System.out.println("cut score objects");
-        Score score = scoreController.getScore();
-        PolyObject pObj = (PolyObject) score.get(0);
-        Lookup lookup = scoreController.getLookup();
-       
-        assertEquals(0, buffer.scoreObjects.size());
-        assertEquals(2, pObj.get(1).size());
-        assertEquals(2, lookup.lookupAll(ScoreObject.class).size());
-        
-        scoreController.cutScoreObjects();
-
-        assertEquals(2, buffer.scoreObjects.size());
-        assertEquals(0, pObj.get(1).size());
-        assertEquals(0, lookup.lookupAll(ScoreObject.class).size());
-    }
+//    /**
+//     * Test of cutScoreObjects method, of class ScoreController.
+//     */
+//    @Test
+//    public void testCutScoreObjects() {
+//        System.out.println("cut score objects");
+//        Score score = scoreController.getScore();
+//        PolyObject pObj = (PolyObject) score.get(0);
+//        Lookup lookup = scoreController.getLookup();
+//       
+//        assertEquals(0, buffer.scoreObjects.size());
+//        assertEquals(2, pObj.get(1).size());
+//        assertEquals(2, lookup.lookupAll(ScoreObject.class).size());
+//        
+//        scoreController.cutScoreObjects();
+//
+//        assertEquals(2, buffer.scoreObjects.size());
+//        assertEquals(0, pObj.get(1).size());
+//        assertEquals(0, lookup.lookupAll(ScoreObject.class).size());
+//    }
 
 }

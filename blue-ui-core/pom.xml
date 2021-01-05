@@ -261,6 +261,20 @@
             <artifactId>org-openide-windows</artifactId>
             <version>${netbeans.version}</version>
         </dependency>
+        
+        <dependency>
+            <groupId>org.netbeans.api</groupId>
+            <artifactId>org-openide-actions</artifactId>
+            <version>${netbeans.version}</version>
+        </dependency>
+
+         <dependency>
+            <groupId>org.netbeans.api</groupId>
+            <artifactId>org-openide-explorer</artifactId>
+            <version>${netbeans.version}</version>
+        </dependency>
+
+        
         <!-- https://mvnrepository.com/artifact/org.apache.xmlrpc/xmlrpc-client -->
         <dependency>
             <groupId>xmlrpc</groupId>

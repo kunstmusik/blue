@@ -3,7 +3,6 @@ package blue.tools.blueShare.soundObjects;
 import blue.BlueSystem;
 import blue.library.Library;
 import blue.library.LibraryItem;
-import blue.library.LibraryTreeItem;
 import blue.soundObject.SoundObject;
 import blue.tools.blueShare.BlueShareRemoteCaller;
 import electric.xml.ParseException;
@@ -16,7 +15,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
-import javafx.scene.control.TreeItem;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JComponent;
@@ -375,17 +373,17 @@ public class SoundObjectImportPane extends JComponent {
     }
 
     protected void importSoundObjectToLibrary(Library<SoundObject> lib, SoundObject sObj) {
-        for (TreeItem<LibraryItem<SoundObject>> item : lib.getRoot().getChildren()) {
+        for (LibraryItem<SoundObject> item : lib.getRoot().getChildren()) {
             if (!item.isLeaf() && 
                     item.getValue().toString().equals("Imported SoundObjects")) {
-                item.getChildren().add(new LibraryTreeItem(new LibraryItem<>(sObj)));
+                item.getChildren().add(new LibraryItem<>(item, sObj));
                 return;
             }
         }
 
-        LibraryTreeItem importFolder = new LibraryTreeItem(
-                new LibraryItem<>("Imported SoundObjects"));
-        importFolder.getChildren().add(new LibraryTreeItem(new LibraryItem<>(sObj)));
+        var importFolder = 
+                new LibraryItem<>(lib.getRoot(), "Imported SoundObjects");
+        importFolder.getChildren().add(new LibraryItem<>(importFolder, sObj));
         lib.getRoot().getChildren().add(importFolder);
     }
 

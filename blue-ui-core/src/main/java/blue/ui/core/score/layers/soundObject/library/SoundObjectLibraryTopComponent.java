@@ -17,7 +17,7 @@
  *  the Free Software Foundation Inc., 59 Temple Place - Suite 330,
  *  Boston, MA  02111-1307 USA
  */
-package blue.ui.core.score.layers.soundObject;
+package blue.ui.core.score.layers.soundObject.library;
 
 import blue.BlueData;
 import blue.SoundObjectLibrary;
@@ -26,12 +26,16 @@ import blue.projects.BlueProjectManager;
 import blue.soundObject.Instance;
 import blue.soundObject.SoundObject;
 import blue.ui.core.score.ScoreController;
+import blue.ui.core.score.ScoreObjectCopy;
 import blue.ui.core.score.layers.SoundObjectProvider;
+import java.awt.Toolkit;
+import java.awt.datatransfer.StringSelection;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.Collections;
+import java.util.List;
 import javax.swing.ListSelectionModel;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -47,7 +51,7 @@ import org.openide.util.lookup.InstanceContent;
 import org.openide.windows.TopComponent;
 
 @ConvertAsProperties(
-        dtd = "-//blue.ui.core.score.layers.soundObject//SoundObjectLibrary//EN",
+        dtd = "-//blue.ui.core.score.layers.soundObject.library//SoundObjectLibrary//EN",
         autostore = false
 )
 @TopComponent.Description(
@@ -56,7 +60,7 @@ import org.openide.windows.TopComponent;
         persistenceType = TopComponent.PERSISTENCE_ALWAYS
 )
 @TopComponent.Registration(mode = "properties", openAtStartup = false)
-@ActionID(category = "Window", id = "blue.ui.core.score.layers.soundObject.SoundObjectLibraryTopComponent")
+@ActionID(category = "Window", id = "blue.ui.core.score.layers.soundObject.library.SoundObjectLibraryTopComponent")
 @ActionReferences({
     @ActionReference(path = "Menu/Window", position = 300)
     ,
@@ -80,13 +84,11 @@ public final class SoundObjectLibraryTopComponent extends TopComponent
 
     private SoundObjectLibrary sObjLib = new SoundObjectLibrary();
 
-    final ScoreController.ScoreObjectBuffer scoreObjectBuffer
-            = ScoreController.getInstance().getScoreObjectBuffer();
-
     private SoundObjectLibraryTopComponent() {
         initComponents();
 
         associateLookup(new AbstractLookup(content));
+        
 
         setName(NbBundle.getMessage(SoundObjectLibraryTopComponent.class,
                 "CTL_SoundObjectLibraryTopComponent"));
@@ -118,6 +120,11 @@ public final class SoundObjectLibraryTopComponent extends TopComponent
         });
 
         reinitialize();
+        
+        
+        
+        
+        
         splitPane.setRightComponent(new UserSoundObjectLibrary(content));
         splitPane.setDividerLocation(200);
     }
@@ -278,9 +285,9 @@ public final class SoundObjectLibraryTopComponent extends TopComponent
             ScoreController.getInstance().setSelectedScoreObjects(
                     Collections.singleton(tempSObj));
 
-            scoreObjectBuffer.clear();
-            scoreObjectBuffer.scoreObjects.add(tempSObj);
-            scoreObjectBuffer.layerIndexes.add(0);
+            var copy = new ScoreObjectCopy(List.of(tempSObj), List.of(0));
+            var clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+            clipboard.setContents(copy, new StringSelection(""));
         }
 }//GEN-LAST:event_copyButtonActionPerformed
 
@@ -294,9 +301,9 @@ public final class SoundObjectLibraryTopComponent extends TopComponent
             ScoreController.getInstance().setSelectedScoreObjects(
                     Collections.singleton(tempSObj));
 
-            scoreObjectBuffer.clear();
-            scoreObjectBuffer.scoreObjects.add(tempSObj);
-            scoreObjectBuffer.layerIndexes.add(0);
+            var copy = new ScoreObjectCopy(List.of(tempSObj), List.of(0));
+            var clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+            clipboard.setContents(copy, new StringSelection(""));
         }
     }//GEN-LAST:event_copyInstanceButtonActionPerformed
 

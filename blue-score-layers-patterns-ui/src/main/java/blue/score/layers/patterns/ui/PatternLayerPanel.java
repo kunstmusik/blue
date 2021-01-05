@@ -25,6 +25,7 @@ import blue.score.layers.patterns.core.PatternLayer;
 import blue.soundObject.SoundObject;
 import blue.soundObject.TimeBehavior;
 import blue.ui.components.IconFactory;
+import blue.ui.core.clipboard.BlueClipboardUtils;
 import blue.ui.core.score.ScoreController;
 import blue.ui.core.score.layers.soundObject.ScoreObjectEditorTopComponent;
 import java.awt.CardLayout;
@@ -364,9 +365,8 @@ public class PatternLayerPanel extends javax.swing.JPanel
     }//GEN-LAST:event_editSObjMenuItemActionPerformed
 
     private void setSObjFromBufferMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_setSObjFromBufferMenuItemActionPerformed
-        ScoreController controller = ScoreController.getInstance();
-        ScoreController.ScoreObjectBuffer buffer = controller.getScoreObjectBuffer();
-        if (buffer.scoreObjects.size() == 1) {
+        var buffer = BlueClipboardUtils.getScoreObjectCopy();
+        if (buffer != null && buffer.scoreObjects.size() == 1) {
             ScoreObject scoreObj = buffer.scoreObjects.get(0);
             if(!(scoreObj instanceof SoundObject)) {
                return; 

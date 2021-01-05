@@ -44,13 +44,14 @@ public class LibraryTreeModel implements TreeModel {
     public LibraryTreeModel(Library<? extends SoundObject> library) {
         this.library = library;
 
-        library.getRoot().addEventHandler(TreeItem.childrenModificationEvent(), 
-                evt -> {
-                    for(TreeModelListener listener : listeners) {
-                        listener.treeStructureChanged(new TreeModelEvent(this, new TreePath(library.getRoot())));
-                    }
-//                    System.out.println(evt.getEventType() + " : " + evt.); 
-                });
+        // FIXME - Replace usage of this with BeanTreeView and Node API
+//        library.getRoot().addEventHandler(TreeItem.childrenModificationEvent(), 
+//                evt -> {
+//                    for(TreeModelListener listener : listeners) {
+//                        listener.treeStructureChanged(new TreeModelEvent(this, new TreePath(library.getRoot())));
+//                    }
+////                    System.out.println(evt.getEventType() + " : " + evt.); 
+//                });
     }
 
     @Override

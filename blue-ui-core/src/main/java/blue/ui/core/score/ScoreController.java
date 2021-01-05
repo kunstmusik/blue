@@ -36,6 +36,8 @@ import blue.ui.core.score.undo.CompoundAppendable;
 import blue.ui.core.score.undo.LineChangeEdit;
 import blue.ui.core.score.undo.RemoveScoreObjectEdit;
 import blue.undo.BlueUndoManager;
+import java.awt.Toolkit;
+import java.awt.datatransfer.StringSelection;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -66,9 +68,10 @@ public class ScoreController {
     }
 
     private Lookup lookup;
-    private final ScoreObjectBuffer buffer = new ScoreObjectBuffer();
+    
     private final SingleLineBuffer singleLineBuffer = new SingleLineBuffer();
     private final MultiLineBuffer multiLineBuffer = new MultiLineBuffer();
+    
     private InstanceContent content;
     private Score score = null;
     WeakHashMap<Score, ScorePath> scorePaths = new WeakHashMap<>();
@@ -184,11 +187,13 @@ public class ScoreController {
             return;
         }
 
-        buffer.clear();
+        
         List<Layer> layers = getScorePath().getAllLayers();
 
         int layerMin = Integer.MAX_VALUE;
-        List<Integer> indexes = new ArrayList<>();
+        
+        List<ScoreObject> copyScoreObjects = new ArrayList<>();
+        List<Integer> copyIndices = new ArrayList<>();
 
         for (ScoreObject scoreObject : scoreObjects) {
             Layer foundLayer = null;
@@ -204,17 +209,17 @@ public class ScoreController {
                         "Error: Trying to copy a ScoreObject without a layer: Internal Error");
             }
             int layerIndex = layers.indexOf(foundLayer);
-            buffer.scoreObjects.add(scoreObject);
-            indexes.add(layerIndex);
+            copyScoreObjects.add(scoreObject);
+            copyIndices.add(layerIndex);
 
             if (layerIndex < layerMin) {
                 layerMin = layerIndex;
             }
         }
 
-        for (Integer layerIndex : indexes) {
-            buffer.layerIndexes.add(layerIndex - layerMin);
-        }
+        var copy = new ScoreObjectCopy(copyScoreObjects, copyIndices);
+        var clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+        clipboard.setContents(copy, new StringSelection(""));
     }
 
     public Optional<AppendableEdit> deleteScoreObjects() {
@@ -499,10 +504,6 @@ public class ScoreController {
         BlueUndoManager.addEdit("score", compoundEdit.getTopEdit());
     }
 
-    public ScoreObjectBuffer getScoreObjectBuffer() {
-        return buffer;
-    }
-
     /**
      * Set the current collection of selected ScoreObjects. Can pass null to
      * clear the selection.
@@ -543,17 +544,6 @@ public class ScoreController {
             return null;
         }
         return lookup.lookupAll(ScoreObject.class);
-    }
-
-    public static class ScoreObjectBuffer {
-
-        public final List<ScoreObject> scoreObjects = new ArrayList<>();
-        public final List<Integer> layerIndexes = new ArrayList<>();
-
-        public void clear() {
-            scoreObjects.clear();
-            layerIndexes.clear();
-        }
     }
 
     public static class SingleLineBuffer {

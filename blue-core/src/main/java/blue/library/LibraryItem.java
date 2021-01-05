@@ -19,6 +19,10 @@
 package blue.library;
 
 import blue.soundObject.SoundObject;
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 
 /**
  *
@@ -26,15 +30,37 @@ import blue.soundObject.SoundObject;
  */
 public class LibraryItem<T extends SoundObject> {
 
-    String displayName = null;
-    T value = null;
+    private ObservableList<LibraryItem<T>> children;
+    private String displayName = null;
+    private T value = null;
+    
+    PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);
+    private LibraryItem<T> parent;
 
-    public LibraryItem(String displayName) {
+    /** Constructor for folder items **/
+    public LibraryItem(LibraryItem<T> parent, String displayName) {
+        children = FXCollections.observableArrayList();
         this.displayName = displayName;
+        this.parent = parent;
     }
 
-    public LibraryItem(T value) {
+    /** Constructor for leaf items */
+    public LibraryItem(LibraryItem<T> parent, T value) {
+        this.parent = parent;
+        children = null;
         this.value = value;
+    }
+    
+    public LibraryItem<T> getParent() {
+        return parent;
+    }
+    
+    public ObservableList<LibraryItem<T>> getChildren() {
+        return children;
+    }
+    
+    public boolean isLeaf() {
+        return value != null; 
     }
 
     @Override
@@ -50,11 +76,39 @@ public class LibraryItem<T extends SoundObject> {
     }
 
     public void setText(String textVal) {
+        var oldName = toString();
+        
         if(value == null){
             displayName = textVal;
         } else {
             value.setName(textVal);
         }
+        propertyChangeSupport.firePropertyChange("displayName", oldName, textVal);
+    }
+    
+    public void addPropertyChangeListener(PropertyChangeListener listener) {
+        propertyChangeSupport.addPropertyChangeListener(listener);
+    }
+    
+    public void removePropertyChangeListener(PropertyChangeListener listener) {
+        propertyChangeSupport.removePropertyChangeListener(listener);
     }
 
+    public LibraryItem<T> deepCopy() {
+        return this.deepCopy(this.parent);
+    }
+    
+    public LibraryItem<T> deepCopy(LibraryItem<T> parent) {
+        LibraryItem<T> clone;
+        if(isLeaf()) {
+            clone = new LibraryItem<T>(parent, (T)getValue().deepCopy());
+        } else {
+            clone = new LibraryItem<>(parent, this.displayName);
+            
+            for(var child : getChildren()) {
+                clone.getChildren().add(child.deepCopy(clone));
+            }
+        }
+        return clone;
+    }
 }

@@ -11,6 +11,18 @@ information.
 
 # CHANGE LOG
 
+## [2.8.2] - 2021-xx-xx
+
+### UPDATED 
+
+* Removed JavaFX
+
+* Redesigned SoundObjectLibrary window: supports drag and drop reorganization, 
+  additional popup menu options for editing and organization
+   
+
+
+
 ## [2.8.1] - 2020-12-29
 
 ### NEW
