@@ -24,7 +24,6 @@ import electric.xml.Elements;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Function;
-//import javafx.scene.control.TreeItem;
 
 /**
  *
