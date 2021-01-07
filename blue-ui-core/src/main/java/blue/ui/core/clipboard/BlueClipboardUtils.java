@@ -20,10 +20,13 @@
 package blue.ui.core.clipboard;
 
 import blue.ui.core.score.ScoreObjectCopy;
+import java.awt.GraphicsEnvironment;
 import java.awt.Toolkit;
+import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.io.IOException;
 import org.openide.util.Exceptions;
+import org.openide.util.Lookup;
 
 /**
  *
@@ -31,8 +34,25 @@ import org.openide.util.Exceptions;
  */
 public class BlueClipboardUtils {
     
+    
+    /** Matches implementation in org.netbeans.modules.openide.explorer.ExplorerActionsImpl
+     */
+    public static Clipboard getClipboard() {
+        if (GraphicsEnvironment.isHeadless()) {
+            return null;
+        }
+        Clipboard c = Lookup.getDefault().lookup(Clipboard.class);
+
+        if (c == null) {
+            c = Toolkit.getDefaultToolkit().getSystemClipboard();
+        }
+
+        return c;
+    
+    }
+    
     public static ScoreObjectCopy getScoreObjectCopy() {
-        var c = Toolkit.getDefaultToolkit().getSystemClipboard();
+        var c = getClipboard();
         if(c.isDataFlavorAvailable(ScoreObjectCopy.DATA_FLAVOR)) {
             try {
                 return (ScoreObjectCopy) c.getData(ScoreObjectCopy.DATA_FLAVOR);

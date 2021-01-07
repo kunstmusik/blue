@@ -25,6 +25,7 @@ import blue.projects.BlueProject;
 import blue.projects.BlueProjectManager;
 import blue.soundObject.Instance;
 import blue.soundObject.SoundObject;
+import blue.ui.core.clipboard.BlueClipboardUtils;
 import blue.ui.core.score.ScoreController;
 import blue.ui.core.score.ScoreObjectCopy;
 import blue.ui.core.score.layers.SoundObjectProvider;
@@ -62,8 +63,7 @@ import org.openide.windows.TopComponent;
 @TopComponent.Registration(mode = "properties", openAtStartup = false)
 @ActionID(category = "Window", id = "blue.ui.core.score.layers.soundObject.library.SoundObjectLibraryTopComponent")
 @ActionReferences({
-    @ActionReference(path = "Menu/Window", position = 300)
-    ,
+    @ActionReference(path = "Menu/Window", position = 300),
     @ActionReference(path = "Shortcuts", name = "F4")
 })
 @TopComponent.OpenActionRegistration(
@@ -88,7 +88,6 @@ public final class SoundObjectLibraryTopComponent extends TopComponent
         initComponents();
 
         associateLookup(new AbstractLookup(content));
-        
 
         setName(NbBundle.getMessage(SoundObjectLibraryTopComponent.class,
                 "CTL_SoundObjectLibraryTopComponent"));
@@ -120,11 +119,7 @@ public final class SoundObjectLibraryTopComponent extends TopComponent
         });
 
         reinitialize();
-        
-        
-        
-        
-        
+
         splitPane.setRightComponent(new UserSoundObjectLibrary(content));
         splitPane.setDividerLocation(200);
     }
@@ -286,7 +281,7 @@ public final class SoundObjectLibraryTopComponent extends TopComponent
                     Collections.singleton(tempSObj));
 
             var copy = new ScoreObjectCopy(List.of(tempSObj), List.of(0));
-            var clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+            var clipboard = BlueClipboardUtils.getClipboard();
             clipboard.setContents(copy, new StringSelection(""));
         }
 }//GEN-LAST:event_copyButtonActionPerformed
@@ -302,7 +297,7 @@ public final class SoundObjectLibraryTopComponent extends TopComponent
                     Collections.singleton(tempSObj));
 
             var copy = new ScoreObjectCopy(List.of(tempSObj), List.of(0));
-            var clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+            var clipboard = BlueClipboardUtils.getClipboard();
             clipboard.setContents(copy, new StringSelection(""));
         }
     }//GEN-LAST:event_copyInstanceButtonActionPerformed

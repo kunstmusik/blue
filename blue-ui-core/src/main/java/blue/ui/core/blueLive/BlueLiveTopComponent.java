@@ -378,7 +378,7 @@ public final class BlueLiveTopComponent extends TopComponent
                 if (lObj != null) {
                     ScoreObject sObj = lObj.getSoundObject().deepCopy();
                     var copy = new ScoreObjectCopy(List.of(sObj), List.of(0));
-                    var clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+                    var clipboard = BlueClipboardUtils.getClipboard();
                     clipboard.setContents(copy, new StringSelection(""));
                 }
             }
@@ -1307,7 +1307,7 @@ public final class BlueLiveTopComponent extends TopComponent
                     SoundObject sObj = lObj.getSoundObject().deepCopy();
 
                     var copy = new ScoreObjectCopy(List.of(sObj), List.of(0));
-                    var clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+                    var clipboard = BlueClipboardUtils.getClipboard();
                     clipboard.setContents(copy, new StringSelection(""));
 
                     model.setValueAt(null, mouseRow, mouseColumn);
@@ -1323,7 +1323,7 @@ public final class BlueLiveTopComponent extends TopComponent
                     SoundObject sObj = lObj.getSoundObject().deepCopy();
 
                     var copy = new ScoreObjectCopy(List.of(sObj), List.of(0));
-                    var clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+                    var clipboard = BlueClipboardUtils.getClipboard();
                     clipboard.setContents(copy, new StringSelection(""));
 
                 }

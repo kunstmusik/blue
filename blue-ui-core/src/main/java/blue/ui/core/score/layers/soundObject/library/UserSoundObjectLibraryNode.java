@@ -199,7 +199,7 @@ public class UserSoundObjectLibraryNode extends AbstractNode {
             added.put(new ExTransferable.Single(ScoreObjectCopy.DATA_FLAVOR) {
                 @Override
                 protected ScoreObjectCopy getData() {
-                    return new ScoreObjectCopy(List.of(item.getValue()), List.of(0));
+                    return new ScoreObjectCopy(List.of(item.getValue().deepCopy()), List.of(0));
                 }
             });
         } else {
@@ -245,7 +245,7 @@ public class UserSoundObjectLibraryNode extends AbstractNode {
 
         try {
             if (t.isDataFlavorSupported(ScoreObjectCopy.DATA_FLAVOR)) {
-                final var buffer = BlueClipboardUtils.getScoreObjectCopy();
+                final var buffer = (ScoreObjectCopy) t.getTransferData(ScoreObjectCopy.DATA_FLAVOR);
                 if (buffer == null || !buffer.isOnlySoundObjects() || buffer.scoreObjects.size() != 1) {
                     return null;
                 }

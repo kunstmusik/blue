@@ -30,6 +30,7 @@ import blue.score.layers.AutomatableLayer;
 import blue.score.layers.Layer;
 import blue.score.layers.LayerGroup;
 import blue.score.layers.ScoreObjectLayer;
+import blue.ui.core.clipboard.BlueClipboardUtils;
 import blue.ui.core.score.undo.AddScoreObjectEdit;
 import blue.ui.core.score.undo.AppendableEdit;
 import blue.ui.core.score.undo.CompoundAppendable;
@@ -68,10 +69,10 @@ public class ScoreController {
     }
 
     private Lookup lookup;
-    
+
     private final SingleLineBuffer singleLineBuffer = new SingleLineBuffer();
     private final MultiLineBuffer multiLineBuffer = new MultiLineBuffer();
-    
+
     private InstanceContent content;
     private Score score = null;
     WeakHashMap<Score, ScorePath> scorePaths = new WeakHashMap<>();
@@ -187,11 +188,10 @@ public class ScoreController {
             return;
         }
 
-        
         List<Layer> layers = getScorePath().getAllLayers();
 
         int layerMin = Integer.MAX_VALUE;
-        
+
         List<ScoreObject> copyScoreObjects = new ArrayList<>();
         List<Integer> copyIndices = new ArrayList<>();
 
@@ -218,7 +218,7 @@ public class ScoreController {
         }
 
         var copy = new ScoreObjectCopy(copyScoreObjects, copyIndices);
-        var clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+        var clipboard = BlueClipboardUtils.getClipboard();
         clipboard.setContents(copy, new StringSelection(""));
     }
 
@@ -297,16 +297,16 @@ public class ScoreController {
                 = SingleLineScoreSelection.getInstance();
         final var line = selection.getSourceLine();
         if (line != null) {
-              
+
             var sourceCopy = new Line(line);
 
             line.delete(selection.getStartTime(), selection.getEndTime());
-            
+
             var endCopy = new Line(line);
-            
-            BlueUndoManager.addEdit("score", 
+
+            BlueUndoManager.addEdit("score",
                     new LineChangeEdit(line, sourceCopy, endCopy));
-                    
+
             selection.clear();
         }
 
@@ -329,15 +329,14 @@ public class ScoreController {
                     p.setX(p.getX() + adjust);
                     return p;
                 }).collect(Collectors.toList());
-        
-        
+
         final Line line = singleLineBuffer.sourceLine;
         final var sourceCopy = new Line(line);
-                line.paste(points);
-            final var endCopy = new Line(line);
-            BlueUndoManager.addEdit("score", 
-                    new LineChangeEdit(line, sourceCopy, endCopy));
-        
+        line.paste(points);
+        final var endCopy = new Line(line);
+        BlueUndoManager.addEdit("score",
+                new LineChangeEdit(line, sourceCopy, endCopy));
+
         SingleLineScoreSelection selection
                 = SingleLineScoreSelection.getInstance();
         selection.updateSelection(singleLineBuffer.sourceLine, points.get(0).getX(), points.get(points.size() - 1).getX());
