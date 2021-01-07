@@ -23,6 +23,8 @@ import blue.BlueSystem;
 import blue.score.TimeState;
 import blue.soundObject.AudioFile;
 import blue.soundObject.PolyObject;
+import blue.soundObject.SoundObject;
+import blue.ui.core.score.ScoreObjectCopy;
 import blue.utility.FileUtilities;
 import blue.utility.SoundFileUtilities;
 import java.awt.Point;
@@ -68,17 +70,12 @@ public class ScoreTimelineDropTargetListener implements DropTargetListener {
      */
     @Override
     public void dragEnter(DropTargetDragEvent dtde) {
-        boolean isFile = dtde
-                .isDataFlavorSupported(DataFlavor.javaFileListFlavor);
 
-        if (!isFile) {
-            if (dtde.isDataFlavorSupported(DataFlavor.stringFlavor)) {
-                isFile = true;
-            }
-        }
-
-        if (isFile) {
+        if (dtde.isDataFlavorSupported(DataFlavor.javaFileListFlavor)
+                || dtde.isDataFlavorSupported(DataFlavor.stringFlavor)) {
             dtde.acceptDrag(DnDConstants.ACTION_LINK);
+        } else if (dtde.isDataFlavorSupported(ScoreObjectCopy.DATA_FLAVOR)) {
+            dtde.acceptDrag(DnDConstants.ACTION_COPY);
         } else {
             dtde.rejectDrag();
         }
@@ -240,6 +237,22 @@ public class ScoreTimelineDropTargetListener implements DropTargetListener {
 
                 dtde.dropComplete(true);
                 return;
+            } else if (dtde.isDataFlavorSupported(ScoreObjectCopy.DATA_FLAVOR)) {
+                var scoreObjectCopy = (ScoreObjectCopy) tr.getTransferData(ScoreObjectCopy.DATA_FLAVOR);
+                if (scoreObjectCopy != null && scoreObjectCopy.isOnlySoundObjects() && scoreObjectCopy.scoreObjects.size() == 1) {
+                    Point p = dtde.getLocation();
+                    PolyObject pObj = sTimeCanvas.getPolyObject();
+                    
+                    int index = sTimeCanvas.pObj.getLayerNumForY(p.y);
+                    var sObjCopy = (SoundObject) scoreObjectCopy.scoreObjects.get(0).deepCopy();
+                    float startTime = (float) p.x / timeState.getPixelSecond();
+                    sObjCopy.setStartTime(startTime);
+                    pObj.addSoundObject(index, sObjCopy);
+                    dtde.dropComplete(true);
+                    
+                    return;
+                }
+
             }
             dtde.rejectDrop();
         } catch (UnsupportedFlavorException | IOException | UnsupportedAudioFileException e) {
