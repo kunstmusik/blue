@@ -138,7 +138,7 @@ public class BSBObjectViewHolder extends JLayeredPane {
                         selection.add(bsbObj);
                     }
                 } else {
-                    if (selection.size() != 1 || !selection.contains(bsbObj)) {
+                    if (!selection.contains(bsbObj)) {
                         selection.clear();
                         selection.add(bsbObj);
                     }
