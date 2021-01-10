@@ -50,9 +50,12 @@ public class BSBObjectViewHolder extends JLayeredPane {
 
     JPanel mouseCapturePanel = new JPanel();
 
-    boolean dragging = false;
-
     Point originPoint;
+    BSBObject[] selectedObjects;
+    int[] startX;
+    int[] startY;
+    int minTransX = -1;
+    int minTransY = -1;
 
     // boolean selected = false;
     private static Border selectBorder = BorderFactory
@@ -141,14 +144,34 @@ public class BSBObjectViewHolder extends JLayeredPane {
                     }
                 }
 
-//                groupMovementSelectionList.initiateMovement(BSBObjectViewHolder.this);
+                int minX = Integer.MAX_VALUE;
+                int minY = Integer.MAX_VALUE;
+                startX = new int[selection.size()];
+                startY = new int[selection.size()];
+                selectedObjects = selection.toArray(new BSBObject[selection.size()]);
+                
+                for(var i = 0; i < selectedObjects.length; i++) {
+                    var temp = selectedObjects[i];
+                    startX[i] = temp.getX();
+                    startY[i] = temp.getY();
+                    minX = Math.min(minX, startX[i]);
+                    minY = Math.min(minY, startY[i]);
+                }
+                minTransX = -minX;
+                minTransY = -minY;
+                                
                 e.consume();
             }
 
             @Override
             public void mouseReleased(MouseEvent e) {
                 originPoint = null;
-
+                startX = null;
+                startY = null;
+                minTransX = -1;
+                minTransY = -1;
+                selectedObjects = null;
+                
                 e.consume();
             }
 
@@ -158,8 +181,20 @@ public class BSBObjectViewHolder extends JLayeredPane {
 
             @Override
             public void mouseDragged(MouseEvent e) {
-                //setNewLocation(e.getPoint());
+                if(selectedObjects == null) return;
+                
+                var newPoint = SwingUtilities.convertPoint(
+                        BSBObjectViewHolder.this, e.getPoint(), getParent());
 
+                var transX = Math.max(minTransX, newPoint.x - originPoint.x);
+                var transY = Math.max(minTransY, newPoint.y - originPoint.y);
+                
+                for(int i = 0; i < selectedObjects.length; i++) {
+                    var bsbObj = selectedObjects[i];
+                    bsbObj.setX(startX[i] + transX);
+                    bsbObj.setY(startY[i] + transY);
+                }
+                
                 e.consume();
             }
 
