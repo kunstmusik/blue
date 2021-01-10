@@ -501,12 +501,16 @@ public class BSBEditPanel extends JLayeredPane implements
      *
      * @param bsbObj
      */
-    public BSBObjectViewHolder addBSBObject(BSBObject bsbObj) {
+    private BSBObjectViewHolder addBSBObject(BSBObject bsbObj) {
 
         return addBSBObject(bsbObj, true);
     }
 
-    public BSBObjectViewHolder addBSBObject(BSBObject bsbObj, boolean revalidate) {
+    public void addNewBSBObject(BSBObject bsbObj) {
+        currentBSBGroup.interfaceItemsProperty().add(bsbObj);
+    }
+    
+    private BSBObjectViewHolder addBSBObject(BSBObject bsbObj, boolean revalidate) {
 
         BSBObjectViewHolder viewHolder = getEditorForBSBObject(bsbObj);
         this.add(viewHolder, JLayeredPane.DEFAULT_LAYER);
