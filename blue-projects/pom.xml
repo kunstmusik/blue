@@ -16,7 +16,9 @@
                 <configuration>
                     <publicPackages>
                         <publicPackage>blue.projects</publicPackage>
-                        <publicPackage>blue.projects.*</publicPackage>
+                        <publicPackage>blue.projects.actions</publicPackage>
+                        <publicPackage>blue.projects.recentProjects</publicPackage>
+                        <publicPackage>blue.utility.midi</publicPackage>
                     </publicPackages>
                 </configuration>
             </plugin>
