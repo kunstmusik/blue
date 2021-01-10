@@ -19,7 +19,6 @@
  */
 package blue.orchestra.editor.blueSynthBuilder.swing;
 
-import blue.components.lines.LineBoundaryDialog;
 import blue.orchestra.blueSynthBuilder.BSBVSlider;
 import blue.orchestra.blueSynthBuilder.BSBVSliderBank;
 import java.awt.Component;
@@ -27,13 +26,17 @@ import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.LayoutManager;
 import java.util.List;
-import javax.swing.JOptionPane;
+import javafx.beans.value.ChangeListener;
+import javafx.collections.ListChangeListener;
 
 public class BSBVSliderBankView extends BSBObjectView<BSBVSliderBank> {
 
     private static final int VALUE_DISPLAY_HEIGHT = 30;
 
     private static final int VALUE_DISPLAY_WIDTH = 50;
+
+    private final ListChangeListener<BSBVSlider> sliderNumListener;
+    private final ChangeListener sizeChangeListener;
 
     /**
      * @param slider
@@ -45,6 +48,14 @@ public class BSBVSliderBankView extends BSBObjectView<BSBVSliderBank> {
 
         resetSlidersUI();
 
+        sliderNumListener = c -> {
+            resetSlidersUI();
+        };
+
+        sizeChangeListener = (obs, old, newVal) -> {
+            this.setSize(getPreferredSize());
+            revalidate();
+        };
     }
 
     private void resetSlidersUI() {
@@ -61,160 +72,27 @@ public class BSBVSliderBankView extends BSBObjectView<BSBVSliderBank> {
             this.add(new BSBVSliderView(vSlider));
         }
 
-        int size = sliders.size();
-        int w = (size * VALUE_DISPLAY_WIDTH)
-                + (bsbObj.getGap() * (size - 1));
-
-        Dimension d = new Dimension(w, bsbObj.getSliderHeight() + 30);
-
-        this.setSize(d);
-        this.setPreferredSize(d);
-
-        this.revalidate();
+        this.setSize(getPreferredSize());
 
     }
 
-//    public int getNumberOfSliders() {
-//        return sliderBank.getNumberOfSliders();
-//    }
-//
-//    public void setNumberOfSliders(int numSliders) {
-//        if (numSliders > sliderBank.getNumberOfSliders()
-//                && !sliderBank.willBeUnique(numSliders)) {
-//            JOptionPane
-//                    .showMessageDialog(
-//                            this,
-//                            "Can not set the new number of "
-//                                    + "sliders as a replacement key clash was detected.",
-//                            "Error: Replacement Key Clash",
-//                            JOptionPane.ERROR_MESSAGE);
-//            return;
-//        }
-//
-//        if (numSliders != sliderBank.getNumberOfSliders() && numSliders > 0) {
-//            sliderBank.setNumberOfSliders(numSliders);
-//            resetSlidersUI();
-//        }
-//    }
-//
-//    public void setMinimum(float minimum) {
-//        if (minimum >= sliderBank.getMaximum()) {
-//            JOptionPane.showMessageDialog(null, "Error: Min value "
-//                    + "can not be set greater or equals to Max value.",
-//                    "Error", JOptionPane.ERROR_MESSAGE);
-//            return;
-//        }
-//
-//        String retVal = LineBoundaryDialog.getLinePointMethod();
-//
-//        if (retVal == null) {
-//            return;
-//        }
-//
-//        boolean truncate = (retVal == LineBoundaryDialog.TRUNCATE);
-//        sliderBank.setMinimum(minimum, truncate);
-//
-//        for (int i = 0; i < getComponentCount(); i++) {
-//            BSBVSliderView view = (BSBVSliderView) getComponent(i);
-//            view.setMinimum(minimum, truncate);
-//        }
-//    }
-//
-//    public float getMinimum() {
-//        return sliderBank.getMinimum();
-//    }
-//
-//    public float getMaximum() {
-//        return sliderBank.getMaximum();
-//    }
-//
-//    public void setMaximum(float maximum) {
-//        if (maximum <= sliderBank.getMinimum()) {
-//            JOptionPane.showMessageDialog(null, "Error: Max value "
-//                    + "can not be set less than or " + "equal to Min value.",
-//                    "Error", JOptionPane.ERROR_MESSAGE);
-//
-//            return;
-//        }
-//
-//        String retVal = LineBoundaryDialog.getLinePointMethod();
-//
-//        if (retVal == null) {
-//            return;
-//        }
-//
-//        boolean truncate = (retVal == LineBoundaryDialog.TRUNCATE);
-//        sliderBank.setMaximum(maximum, truncate);
-//
-//        for (int i = 0; i < getComponentCount(); i++) {
-//            BSBVSliderView view = (BSBVSliderView) getComponent(i);
-//            view.setMaximum(maximum, truncate);
-//        }
-//    }
-//
-//    public float getResolution() {
-//        return sliderBank.getResolution();
-//    }
-//
-//    public void setResolution(float resolution) {
-//        sliderBank.setResolution(resolution);
-//
-//        for (int i = 0; i < getComponentCount(); i++) {
-//            BSBVSliderView view = (BSBVSliderView) getComponent(i);
-//            view.setResolution(resolution);
-//        }
-//    }
-//
-//    public int getSliderHeight() {
-//        return sliderBank.getSliderHeight();
-//    }
-//
-//    public void setSliderHeight(int sliderHeight) {
-//        sliderBank.setSliderHeight(sliderHeight);
-//
-//        int size = sliderBank.getSliders().size();
-//        int w = (size * VALUE_DISPLAY_WIDTH)
-//                + (sliderBank.getGap() * (size - 1));
-//
-//        Dimension d = new Dimension(w, sliderBank.getSliderHeight() + 30);
-//
-//        this.setSize(d);
-//        this.setPreferredSize(d);
-//
-//        for (int i = 0; i < getComponentCount(); i++) {
-//            BSBVSliderView view = (BSBVSliderView) getComponent(i);
-//            view.setSliderHeight(sliderHeight);
-//        }
-//
-//        revalidate();
-//    }
-//
-//    public int getGap() {
-//        return sliderBank.getGap();
-//    }
-//
-//    public void setGap(int gap) {
-//        sliderBank.setGap(gap);
-//
-//        int size = sliderBank.getSliders().size();
-//        int w = (size * VALUE_DISPLAY_WIDTH)
-//                + (sliderBank.getGap() * (size - 1));
-//
-//        Dimension d = new Dimension(w, sliderBank.getSliderHeight() + 30);
-//
-//        this.setSize(d);
-//        this.setPreferredSize(d);
-//
-//        revalidate();
-//    }
-//
-//    public boolean isRandomizable() {
-//        return sliderBank.isRandomizable();
-//    }
-//
-//    public void setRandomizable(boolean randomizable) {
-//        sliderBank.setRandomizable(randomizable);
-//    }
+    @Override
+    public void addNotify() {
+        super.addNotify();
+        bsbObj.getSliders().addListener(sliderNumListener);
+        bsbObj.gapProperty().addListener(sizeChangeListener);
+        bsbObj.sliderHeightProperty().addListener(sizeChangeListener);
+        bsbObj.valueDisplayEnabledProperty().addListener(sizeChangeListener);
+    }
+
+    @Override
+    public void removeNotify() {
+        super.removeNotify();
+        bsbObj.getSliders().removeListener(sliderNumListener);
+        bsbObj.gapProperty().removeListener(sizeChangeListener);
+        bsbObj.sliderHeightProperty().removeListener(sizeChangeListener);
+        bsbObj.valueDisplayEnabledProperty().removeListener(sizeChangeListener);
+    }
 
     class VSliderBankLayout implements LayoutManager {
 
@@ -241,23 +119,11 @@ public class BSBVSliderBankView extends BSBObjectView<BSBVSliderBank> {
                 return new Dimension(0, 0);
             }
 
-            if (parent.getParent() == null) {
-                return new Dimension(0, 0);
-            }
-
-            Component c = parent.getComponent(0);
-
-            Dimension size = c.getPreferredSize();
-
-            int widthAdjustment = 0;
-            int h = size.height;
-
-            if (bsbObj != null) {
-                widthAdjustment = bsbObj.getGap();
-                h = bsbObj.getSliderHeight();
-            }
-
-            int w = (count * size.width) + widthAdjustment;
+            int w = (VALUE_DISPLAY_WIDTH * count)
+                    + (getBSBObject().getGap() * (count - 1));
+            int h = bsbObj.isValueDisplayEnabled()
+                    ? getBSBObject().getSliderHeight() + VALUE_DISPLAY_HEIGHT
+                    : getBSBObject().getSliderHeight();
 
             return new Dimension(w, h);
         }
@@ -269,24 +135,27 @@ public class BSBVSliderBankView extends BSBObjectView<BSBVSliderBank> {
                 return;
             }
 
-            if (parent.getParent() == null) {
-                return;
-            }
+//            if (parent.getParent() == null) {
+//                return;
+//            }
 
             int gap = 0;
             int h = 0;
 
             if (bsbObj != null) {
                 gap = bsbObj.getGap();
-                h = bsbObj.getSliderHeight() + 30;
+                
+                h = bsbObj.isValueDisplayEnabled() ? 
+                    getBSBObject().getSliderHeight()+ VALUE_DISPLAY_HEIGHT :
+                    getBSBObject().getSliderHeight();
             }
 
             for (int i = 0; i < count; i++) {
                 Component temp = parent.getComponent(i);
 
-                int w = (VALUE_DISPLAY_WIDTH * i) + (gap * i);
+                int x = (VALUE_DISPLAY_WIDTH * i) + (gap * i);
 
-                temp.setLocation(w, 0);
+                temp.setLocation(x, 0);
                 temp.setSize(VALUE_DISPLAY_WIDTH, h);
             }
         }

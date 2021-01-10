@@ -21,10 +21,12 @@ package blue.orchestra.editor.blueSynthBuilder.swing;
 
 import blue.components.ValueSlider;
 import blue.orchestra.blueSynthBuilder.BSBVSlider;
+import blue.ui.utilities.UiUtilities;
 import blue.utility.NumberUtilities;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.beans.PropertyChangeEvent;
+import javafx.beans.value.ChangeListener;
 import javax.swing.event.ChangeEvent;
 
 /**
@@ -36,7 +38,15 @@ public class BSBVSliderView extends BSBObjectView<BSBVSlider> {
     private static final int VALUE_DISPLAY_WIDTH = 50;
     private final ValueSlider valSlider;
     ValuePanel valuePanel = new ValuePanel();
-    private boolean updating = false;
+    private volatile boolean updating = false;
+
+    final ChangeListener<Boolean> vdeListener;
+
+    final ChangeListener<Number> resListener;
+    final ChangeListener<Number> minListener;
+    final ChangeListener<Number> maxListener;
+    final ChangeListener<Number> valueListener;
+    final ChangeListener<Number> heightListener;
 
     /**
      * @param slider
@@ -48,216 +58,141 @@ public class BSBVSliderView extends BSBObjectView<BSBVSlider> {
         valSlider = new ValueSlider();
         valSlider.setOrientation(ValueSlider.VERTICAL);
 
-        setSize(VALUE_DISPLAY_WIDTH, slider.getSliderHeight()
-                + VALUE_DISPLAY_HEIGHT);
-
         valSlider.setOpaque(false);
         valSlider.addChangeListener((ChangeEvent e) -> {
             if (!updating) {
-                updateValue();
+                updating = true;
+                bsbObj.setValue(getValueFromSlider());
+                updating = false;
             }
         });
-
-        updateSliderSettings();
 
         valuePanel.setPreferredSize(new Dimension(VALUE_DISPLAY_WIDTH,
                 VALUE_DISPLAY_HEIGHT));
 
         this.setLayout(new BorderLayout());
         this.add(valSlider, BorderLayout.CENTER);
-        this.add(valuePanel, BorderLayout.SOUTH);
 
-        updateValueText();
+        if (bsbObj.isValueDisplayEnabled()) {
+            this.add(valuePanel, BorderLayout.SOUTH);
+        }
 
-//        slider.addPropertyChangeListener(this);
+        this.setSize(getPreferredSize());
         updating = false;
-        
+
         valuePanel.addPropertyChangeListener((PropertyChangeEvent evt) -> {
             if ("value".equals(evt.getPropertyName())) {
                 try {
                     float val = Float.parseFloat(valuePanel.getPendingValue());
-                    
+
                     updating = true;
-                    
-                    BSBVSliderView.this.bsbObj.setValue(val);
-                    
-                    updateSliderSettings();
-                    updateValueText();
-                    
+
+                    getBSBObject().setValue(val);
+
                     updating = false;
-                    
+
                 } catch (NumberFormatException nfe) {
                 }
             }
         });
+        
+        this.vdeListener = (obs, old, newVal) -> {
+            UiUtilities.invokeOnSwingThread(() -> {
+                if (!newVal) {
+                    remove(valuePanel);
+                } else {
+                    if (valuePanel.getParent() == null) {
+                        add(valuePanel, BorderLayout.SOUTH);
+                    }
+                }
+                setSize(getPreferredSize());
+            });
+        };
+
+        this.resListener = (obs, old, newVal) -> {
+            UiUtilities.invokeOnSwingThread(() -> {
+                valSlider.setResolution(getNumTicks());
+                valuePanel.setValue(NumberUtilities.formatDouble(getValueFromSlider()));        
+            });
+        };
+        this.minListener = (obs, old, newVal) -> {
+            UiUtilities.invokeOnSwingThread(() -> {
+                valSlider.setMinimum(newVal.doubleValue());
+                valSlider.setResolution(getNumTicks());
+                valuePanel.setValue(NumberUtilities.formatDouble(getValueFromSlider()));        
+            });
+        };
+        this.maxListener = (obs, old, newVal) -> {
+            UiUtilities.invokeOnSwingThread(() -> {
+                valSlider.setMaximum(newVal.doubleValue());
+                valSlider.setResolution(getNumTicks());
+                valuePanel.setValue(NumberUtilities.formatDouble(getValueFromSlider()));
+            });
+        };
+        this.valueListener = (obs, old, newVal) -> {
+            UiUtilities.invokeOnSwingThread(() -> {
+                valSlider.setValue(newVal.doubleValue());
+                valuePanel.setValue(NumberUtilities.formatDouble(getValueFromSlider()));
+            });
+        };
+        this.heightListener = (obs, old, newVal) -> {
+            valSlider.setSize(VALUE_DISPLAY_WIDTH, newVal.intValue());
+            setSize(getPreferredSize());
+        };
     }
 
-    /**
-     * @param slider
-     */
-    private void updateSliderSettings() {
-        double minimum = bsbObj.getMinimum();
-        double maximum = bsbObj.getMaximum();
-        double value = bsbObj.getValue();
-        int resolution;
+    @Override
+    public void addNotify() {
+        super.addNotify();
 
-//        if (slider.getResolution() > 0) {
-//            resolution = (int) ((maximum - minimum) / slider.getResolution());
-//        } else {
-            resolution = (int) ((maximum - minimum) * 100);
-//        }
+        bsbObj.resolutionProperty().addListener(resListener);
+        bsbObj.minimumProperty().addListener(minListener);
+        bsbObj.maximumProperty().addListener(maxListener);
+        bsbObj.valueProperty().addListener(valueListener);
+        bsbObj.sliderHeightProperty().addListener(heightListener);
+        bsbObj.valueDisplayEnabledProperty().addListener(vdeListener);
 
-        valSlider.setMinimum(minimum);
-        valSlider.setMaximum(maximum);
-        valSlider.setResolution(resolution);
-        valSlider.setValue(value);
+        valSlider.setMinimum(bsbObj.getMinimum());
+        valSlider.setMaximum(bsbObj.getMaximum());
+        valSlider.setValue(bsbObj.getValue());
+        valSlider.setResolution(getNumTicks());
     }
 
-    private void updateValueText() {
+    @Override
+    public void removeNotify() {
+        super.removeNotify();
+
+        bsbObj.resolutionProperty().removeListener(resListener);
+        bsbObj.minimumProperty().removeListener(minListener);
+        bsbObj.maximumProperty().removeListener(maxListener);
+        bsbObj.valueProperty().removeListener(valueListener);
+        bsbObj.sliderHeightProperty().removeListener(heightListener);
+        bsbObj.valueDisplayEnabledProperty().removeListener(vdeListener);
+    }
+
+    private int getNumTicks() {
+        double res = bsbObj.getResolution().doubleValue();
+        double range = (bsbObj.getMaximum() - bsbObj.getMinimum());
+        return (res > 0) ? (int) (range / res) : (int) (range * 100);
+    }
+
+    protected double getValueFromSlider() {
         double newVal;
-//        if (slider.getResolution() > 0.0f) {
-//            newVal = (valSlider.getValue() * slider.getResolution())
-//                    + this.slider.getMinimum();
-//        } else {
-            newVal = (valSlider.getValue() * .01) + bsbObj.getMinimum();
-//        }
-        String valueStr = NumberUtilities.formatDouble(newVal);
-        valuePanel.setValue(valueStr);
+        double res = bsbObj.getResolution().doubleValue();
+        double min = bsbObj.getMinimum();
+
+        newVal = (res > 0) ? (valSlider.getValue() * res) + min
+                : (valSlider.getValue() * 0.01f) + min;
+
+        return newVal;
     }
 
-    protected void updateValue() {
-        double newVal;
+    @Override
+    public Dimension getPreferredSize() {
+        var h = (bsbObj.isValueDisplayEnabled())
+                ? bsbObj.getSliderHeight()+ VALUE_DISPLAY_HEIGHT
+                : bsbObj.getSliderHeight();
 
-//        if (slider.getResolution() > 0) {
-//            newVal = (valSlider.getValue() * slider.getResolution())
-//                    + slider.getMinimum();
-//        } else {
-            newVal = (valSlider.getValue() * .01) + bsbObj.getMinimum();
-//        }
-
-        valuePanel.setValue(NumberUtilities.formatDouble(newVal));
-        bsbObj.setValue(newVal);
+        return new Dimension(VALUE_DISPLAY_WIDTH, h);
     }
-
-//    public void setMinimum(float minimum) {
-//        if (minimum >= slider.getMaximum()) {
-//            JOptionPane.showMessageDialog(null, "Error: Min value "
-//                    + "can not be set greater or equals to Max value.",
-//                    "Error", JOptionPane.ERROR_MESSAGE);
-//            return;
-//        }
-//
-//        String retVal = LineBoundaryDialog.getLinePointMethod();
-//
-//        if (retVal == null) {
-//            return;
-//        }
-//
-//        slider.setMinimum(minimum, (retVal == LineBoundaryDialog.TRUNCATE));
-//        updateSliderSettings();
-//    }
-//
-//    /**
-//     * used by BSBVSliderBankView
-//     */
-//    public void setMinimum(float minimum, boolean truncate) {
-//        slider.setMinimum(minimum, truncate);
-//        updateSliderSettings();
-//    }
-//
-//    public float getMinimum() {
-//        return slider.getMinimum();
-//    }
-//
-//    public float getMaximum() {
-//        return slider.getMaximum();
-//    }
-//
-//    public void setMaximum(float maximum) {
-//        if (maximum <= slider.getMinimum()) {
-//            JOptionPane.showMessageDialog(null, "Error: Max value "
-//                    + "can not be set less than or " + "equal to Min value.",
-//                    "Error", JOptionPane.ERROR_MESSAGE);
-//
-//            return;
-//        }
-//
-//        String retVal = LineBoundaryDialog.getLinePointMethod();
-//
-//        if (retVal == null) {
-//            return;
-//        }
-//
-//        slider.setMaximum(maximum, (retVal == LineBoundaryDialog.TRUNCATE));
-//        updateSliderSettings();
-//    }
-//
-//    /**
-//     * used by BSBVSliderBankView
-//     */
-//    public void setMaximum(float maximum, boolean truncate) {
-//        slider.setMaximum(maximum, truncate);
-//        updateSliderSettings();
-//    }
-//
-//    public float getResolution() {
-//        return slider.getResolution();
-//    }
-//
-//    public void setResolution(float resolution) {
-//        updating = true;
-//
-//        slider.setResolution(resolution);
-//        updateSliderSettings();
-//        updateValueText();
-//
-//        updating = false;
-//    }
-//
-//    public int getSliderHeight() {
-//        return slider.getSliderHeight();
-//    }
-//
-//    public void setSliderHeight(int sliderHeight) {
-//        Dimension d = new Dimension(valSlider.getWidth(), sliderHeight);
-//
-//        valSlider.setPreferredSize(d);
-//        valSlider.setSize(d);
-//
-//        d = new Dimension(valuePanel.getWidth(), sliderHeight + 30);
-//
-//        this.setPreferredSize(d);
-//        this.setSize(d);
-//
-//        slider.setSliderHeight(sliderHeight);
-//
-//        revalidate();
-//    }
-//
-//    public boolean isRandomizable() {
-//        return slider.isRandomizable();
-//    }
-//
-//    public void setRandomizable(boolean randomizable) {
-//        slider.setRandomizable(randomizable);
-//    }
-
-//    @Override
-//    public void propertyChange(PropertyChangeEvent pce) {
-//        if (pce.getSource() == this.bsbObj) {
-//            if (pce.getPropertyName().equals("updateValue")) {
-//                updating = true;
-//
-//                updateSliderSettings();
-//                updateValueText();
-//
-//                updating = false;
-//            }
-//        }
-//    }
-//
-//    @Override
-//    public void cleanup() {
-//        slider.removePropertyChangeListener(this);
-//    }
 }

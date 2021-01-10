@@ -31,9 +31,6 @@ import javafx.collections.ListChangeListener;
 
 /**
  * @author steven
- *
- * To change the template for this generated type comment go to Window -
- * Preferences - Java - Code Generation - Code and Comments
  */
 public class BSBHSliderBankView extends BSBObjectView<BSBHSliderBank> {
 
@@ -59,8 +56,8 @@ public class BSBHSliderBankView extends BSBObjectView<BSBHSliderBank> {
         };
         
         sizeChangeListener = (obs, old, newVal) -> {
-            revalidate();
             this.setSize(getPreferredSize());
+            revalidate();
         };
     }
 
@@ -128,7 +125,10 @@ public class BSBHSliderBankView extends BSBObjectView<BSBHSliderBank> {
 //                return new Dimension(0, 0);
 //            }
 
-            int w = getBSBObject().getSliderWidth() + VALUE_DISPLAY_WIDTH;
+            
+            int w = bsbObj.isValueDisplayEnabled() ? 
+                    getBSBObject().getSliderWidth() + VALUE_DISPLAY_WIDTH :
+                    getBSBObject().getSliderWidth();
             int h = (VALUE_DISPLAY_HEIGHT * count)
                     + (getBSBObject().getGap() * (count - 1));
 
@@ -151,7 +151,10 @@ public class BSBHSliderBankView extends BSBObjectView<BSBHSliderBank> {
 
             if (getBSBObject() != null) {
                 gap = getBSBObject().getGap();
-                w = getBSBObject().getSliderWidth() + VALUE_DISPLAY_WIDTH;
+                
+                w = bsbObj.isValueDisplayEnabled() ? 
+                    getBSBObject().getSliderWidth() + VALUE_DISPLAY_WIDTH :
+                    getBSBObject().getSliderWidth();
             }
 
             int h = VALUE_DISPLAY_HEIGHT;
