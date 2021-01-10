@@ -19,16 +19,10 @@
  */
 package blue.orchestra.editor.blueSynthBuilder.swing;
 
-import blue.jfx.BlueFX;
 import blue.orchestra.blueSynthBuilder.BSBCheckBox;
-import blue.orchestra.editor.blueSynthBuilder.BSBPreferences;
 import blue.ui.utilities.UiUtilities;
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
-import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javax.swing.JCheckBox;
 
