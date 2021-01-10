@@ -27,7 +27,7 @@ import blue.orchestra.blueSynthBuilder.BSBObjectRegistry;
 import blue.orchestra.blueSynthBuilder.PresetGroup;
 import blue.orchestra.editor.InstrumentEditor;
 import blue.orchestra.editor.blueSynthBuilder.BSBCodeEditor;
-import blue.orchestra.editor.blueSynthBuilder.BSBInterfaceEditor;
+import blue.orchestra.editor.blueSynthBuilder.swing.BSBInterfaceEditor;
 import blue.plugin.InstrumentEditorPlugin;
 import blue.ui.core.udo.EmbeddedOpcodeListPanel;
 import java.awt.BorderLayout;

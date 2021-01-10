@@ -43,7 +43,7 @@ public class BSBLabelView extends Label {
                 this.fontProperty().unbind();
             } else {
                 this.textProperty().bind(label.labelProperty());
-                this.fontProperty().bind(label.fontProperty());
+//                this.fontProperty().bind(label.fontProperty());
             }
         });
     }

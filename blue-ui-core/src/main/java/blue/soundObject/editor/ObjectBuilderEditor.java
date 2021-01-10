@@ -26,7 +26,7 @@ import blue.gui.InfoDialog;
 import blue.jfx.BlueFX;
 import blue.orchestra.blueSynthBuilder.BSBGraphicInterface;
 import blue.orchestra.blueSynthBuilder.PresetGroup;
-import blue.orchestra.editor.blueSynthBuilder.BSBInterfaceEditor;
+import blue.orchestra.editor.blueSynthBuilder.swing.BSBInterfaceEditor;
 import blue.plugin.ScoreObjectEditorPlugin;
 import blue.score.ScoreObject;
 import blue.soundObject.NoteList;
@@ -50,7 +50,6 @@ import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
 import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
-import org.openide.util.Exceptions;
 
 @ScoreObjectEditorPlugin(scoreObjectType = ObjectBuilder.class)
 public class ObjectBuilderEditor extends ScoreObjectEditor {

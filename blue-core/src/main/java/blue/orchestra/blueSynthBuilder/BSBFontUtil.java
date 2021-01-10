@@ -21,7 +21,7 @@ package blue.orchestra.blueSynthBuilder;
 
 import electric.xml.Element;
 import electric.xml.Elements;
-import javafx.scene.text.Font;
+import java.awt.Font;
 
 /**
  *
@@ -55,7 +55,7 @@ public class BSBFontUtil {
                    break;
            }
        }
-       return new Font(name, size);
+       return new Font(name, Font.PLAIN, (int)size);
    }
    
 }

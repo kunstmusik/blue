@@ -22,11 +22,11 @@ package blue.orchestra.blueSynthBuilder;
 import static blue.orchestra.blueSynthBuilder.SwingHTMLFontParser.parseFont;
 import static blue.orchestra.blueSynthBuilder.SwingHTMLFontParser.stripHTML;
 import electric.xml.Element;
+import java.awt.Font;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
-import javafx.scene.text.Font;
 
 /**
  * @author steven
@@ -34,7 +34,7 @@ import javafx.scene.text.Font;
 public class BSBLabel extends BSBObject {
 
     StringProperty label = new SimpleStringProperty("label");
-    ObjectProperty<Font> font = new SimpleObjectProperty<>(new Font(12));
+    ObjectProperty<Font> font = new SimpleObjectProperty<>(new Font(Font.DIALOG, Font.PLAIN, 12));
 
     public BSBLabel() {
     }

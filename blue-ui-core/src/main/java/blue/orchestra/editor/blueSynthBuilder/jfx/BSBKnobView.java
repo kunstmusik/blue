@@ -200,7 +200,7 @@ public class BSBKnobView extends BorderPane implements ResizeableView {
                         knob.knobValueProperty().valueProperty(), converter);
 
                 label.textProperty().bind(knob.labelProperty());
-                label.fontProperty().bind(knob.labelFontProperty());
+//                label.fontProperty().bind(knob.labelFontProperty());
 
                 if (knob.isValueDisplayEnabled()) {
                     setBottom(valuePanel);

@@ -125,9 +125,9 @@
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.nuiton.thirdparty</groupId>
-            <artifactId>l2fprod-common</artifactId>
-            <version>0.1</version>
+            <groupId>com.l2fprod.common</groupId>
+            <artifactId>l2fprod-common-shared</artifactId>
+            <version>6.9.1</version>
         </dependency>
         <dependency>
             <groupId>de.sciss</groupId>
