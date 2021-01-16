@@ -36,10 +36,6 @@ import blue.orchestra.blueSynthBuilder.BSBGraphicInterface;
 import blue.orchestra.blueSynthBuilder.BSBObjectEntry;
 import blue.orchestra.blueSynthBuilder.Preset;
 import blue.orchestra.blueSynthBuilder.PresetGroup;
-import com.l2fprod.common.propertysheet.PropertyEditorRegistry;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
-import java.beans.PropertyEditor;
 import javax.swing.JLabel;
 import javax.swing.JTabbedPane;
 
@@ -51,14 +47,11 @@ public class BSBInterfaceEditor extends JComponent implements PresetListener {
     private final BSBEditPanel bsbEditPanel;
 
     private final BSBObjectPropertySheet bsbPropSheet;
-
-//    PropertySheetPanel gridPropertySheet = new PropertySheetPanel();
+    private final GridSettingsEditPanel gridSettingsEditPanel;
 
     PresetsPanel presets = new PresetsPanel();
 
     EditEnabledCheckBox editBox = new EditEnabledCheckBox();
-
-//    AlignmentPanel alignPanel = new AlignmentPanel();
 
     JPanel rightBar = new JPanel(new BorderLayout());
 
@@ -98,8 +91,8 @@ public class BSBInterfaceEditor extends JComponent implements PresetListener {
         tabs.add(BlueSystem
                 .getString("instrument.bsb.objectProperties"), bsbPropSheet);
         
-        // FIXME:
-        tabs.add("Grid", new JLabel("FIXME"));
+        gridSettingsEditPanel = new GridSettingsEditPanel();
+        tabs.add("Grid", gridSettingsEditPanel);
 //        tabs.add("Grid", gridPropertySheet);
 //
 //        gridPropertySheet.setMode(PropertySheet.VIEW_AS_FLAT_LIST);
@@ -194,6 +187,7 @@ public class BSBInterfaceEditor extends JComponent implements PresetListener {
         bsbPropSheet.clear();
 
         this.bsbEditPanel.editBSBGraphicInterface(gInterface);
+        gridSettingsEditPanel.editGridSettings(gInterface.getGridSettings());
 
         presets.setVisible(pGroup != null);
 

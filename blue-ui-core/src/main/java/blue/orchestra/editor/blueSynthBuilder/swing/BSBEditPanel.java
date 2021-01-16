@@ -22,8 +22,6 @@ package blue.orchestra.editor.blueSynthBuilder.swing;
 import blue.BlueSystem;
 import blue.components.AlphaMarquee;
 import blue.event.EditModeListener;
-import blue.event.GroupMovementSelectionList;
-import blue.event.SelectionEvent;
 import blue.orchestra.blueSynthBuilder.BSBGraphicInterface;
 import blue.orchestra.blueSynthBuilder.BSBGroup;
 import blue.orchestra.blueSynthBuilder.BSBObject;
@@ -31,9 +29,8 @@ import blue.orchestra.blueSynthBuilder.BSBObjectEntry;
 import blue.orchestra.blueSynthBuilder.GridSettings;
 import static blue.orchestra.blueSynthBuilder.GridSettings.GridStyle.DOT;
 import static blue.orchestra.blueSynthBuilder.GridSettings.GridStyle.LINE;
-import blue.orchestra.editor.blueSynthBuilder.EditModeOnly;
-import blue.orchestra.editor.blueSynthBuilder.jfx.BSBGroupView;
 import blue.ui.utilities.UiUtilities;
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.event.ActionEvent;
@@ -50,7 +47,6 @@ import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.stream.Collectors;
 import javafx.beans.InvalidationListener;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.value.ChangeListener;
@@ -72,6 +68,9 @@ import javax.swing.KeyStroke;
 public class BSBEditPanel extends JLayeredPane implements
         EditModeListener,
         PropertyChangeListener, ListChangeListener<BSBGroup> {
+
+    private static final Color GRID_COLOR
+            = new Color(38, 51, 76, 128).brighter();
 
     protected static final BSBObjectEditPopup bsbObjPopup = new BSBObjectEditPopup();
     private final BSBEditPanelPopup popup;
@@ -509,7 +508,7 @@ public class BSBEditPanel extends JLayeredPane implements
     public void addNewBSBObject(BSBObject bsbObj) {
         currentBSBGroup.interfaceItemsProperty().add(bsbObj);
     }
-    
+
     private BSBObjectViewHolder addBSBObject(BSBObject bsbObj, boolean revalidate) {
 
         BSBObjectViewHolder viewHolder = getEditorForBSBObject(bsbObj);
@@ -550,7 +549,6 @@ public class BSBEditPanel extends JLayeredPane implements
 //            BSBGroupPanel bsbGroupView = (BSBGroupPanel) objectView;
 //            //bsbGroupPanel.initialize(editEnabledProperty, selection, groupsList);
 //        }
-
         viewHolder.addComponentListener(cl);
 
         return viewHolder;
@@ -666,9 +664,14 @@ public class BSBEditPanel extends JLayeredPane implements
 
         GridSettings gridSettings = bsbInterface.getGridSettings();
 
-        g.setColor(getBackground().brighter());
+        g.setColor(GRID_COLOR);
         int w = gridSettings.getWidth();
         int h = gridSettings.getHeight();
+        
+        if (w < 1 || h < 1) {
+            return;
+        }
+        
         int totalWidth = getWidth();
         int totalHeight = getHeight();
 
