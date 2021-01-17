@@ -26,7 +26,6 @@ import blue.utility.NumberUtilities;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import javafx.beans.value.ChangeListener;
 import javax.swing.event.ChangeEvent;
 
