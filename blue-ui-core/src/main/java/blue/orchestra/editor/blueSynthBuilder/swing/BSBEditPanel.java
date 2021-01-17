@@ -66,7 +66,6 @@ import javax.swing.KeyStroke;
  *
  */
 public class BSBEditPanel extends JLayeredPane implements
-        EditModeListener,
         PropertyChangeListener, ListChangeListener<BSBGroup> {
 
     private static final Color GRID_COLOR
@@ -75,7 +74,7 @@ public class BSBEditPanel extends JLayeredPane implements
     protected static final BSBObjectEditPopup bsbObjPopup = new BSBObjectEditPopup();
     private final BSBEditPanelPopup popup;
     private BSBEditPanelNonEditPopup nonEditPopup;
-    private boolean isEditing = false;
+
     private BSBGraphicInterface bsbInterface = null;
 
     private final ObservableSet<BSBObject> selection;
@@ -103,6 +102,7 @@ public class BSBEditPanel extends JLayeredPane implements
                 setBSBObjects(groupsList.get(0).interfaceItemsProperty());
             }
         }
+        setEditing(newVal);
     };
 
     private final boolean allowEditing;
@@ -370,13 +370,18 @@ public class BSBEditPanel extends JLayeredPane implements
      *
      */
     protected void recalculateSize() {
+
+        if (bsbInterface == null) {
+            return;
+        }
+
         int maxW = 1;
         int maxH = 1;
 
         for (var c : getComponentsInLayer(DEFAULT_LAYER)) {
             if (c instanceof BSBObjectViewHolder) {
                 var viewHolder = (BSBObjectViewHolder) c;
-                if (!isEditing && viewHolder.isEditModeOnly()) {
+                if (!isEditing() && viewHolder.isEditModeOnly()) {
                     continue;
                 }
                 int newW = viewHolder.getX() + viewHolder.getWidth();
@@ -399,12 +404,12 @@ public class BSBEditPanel extends JLayeredPane implements
     }
 
     public boolean isEditing() {
-        return isEditing;
+        return (!allowEditing || bsbInterface == null)
+                ? false
+                : bsbInterface.isEditEnabled();
     }
 
-    @Override
     public void setEditing(boolean isEditing) {
-        this.isEditing = isEditing;
         for (var c : this.getComponentsInLayer(JLayeredPane.DEFAULT_LAYER)) {
             var viewHolder = (BSBObjectViewHolder) c;
             viewHolder.setEditing(isEditing);
@@ -436,24 +441,17 @@ public class BSBEditPanel extends JLayeredPane implements
 
 //        clearBSBObjects();
         if (bsbInterface != null) {
-
-//            this.selectionList.setGridSettings(bsbInterface.getGridSettings());
-//            bsbInterface.getGridSettings().addPropertyChangeListener(this);
-//            
-//            selection.initialize(groupsList, bsbInterface.getGridSettings());
             GridSettings gridSettings = bsbInterface.getGridSettings();
             gridSettings.widthProperty().addListener(gridListener);
             gridSettings.heightProperty().addListener(gridListener);
             gridSettings.gridStyleProperty().addListener(gridListener);
 
             if (allowEditing) {
-//                gridCanvas.visibleProperty().bind(bsbInterface.editEnabledProperty());
                 bsbInterface.editEnabledProperty().addListener(
                         editEnabledListener);
-            } else {
-//                gridCanvas.setVisible(false);
-            }
+            } 
             this.bsbInterface = bsbInterface;
+            setEditing(isEditing());
 
             groupsList.setAll(bsbInterface.getRootGroup());
         } else {
@@ -667,11 +665,11 @@ public class BSBEditPanel extends JLayeredPane implements
         g.setColor(GRID_COLOR);
         int w = gridSettings.getWidth();
         int h = gridSettings.getHeight();
-        
+
         if (w < 1 || h < 1) {
             return;
         }
-        
+
         int totalWidth = getWidth();
         int totalHeight = getHeight();
 

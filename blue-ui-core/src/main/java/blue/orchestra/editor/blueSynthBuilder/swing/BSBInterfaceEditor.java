@@ -24,20 +24,21 @@ import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import javax.swing.AbstractAction;
-import javax.swing.BorderFactory;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.KeyStroke;
 
 import blue.BlueSystem;
-import blue.components.EditEnabledCheckBox;
 import blue.orchestra.blueSynthBuilder.BSBGraphicInterface;
 import blue.orchestra.blueSynthBuilder.BSBObjectEntry;
 import blue.orchestra.blueSynthBuilder.Preset;
 import blue.orchestra.blueSynthBuilder.PresetGroup;
-import javax.swing.JLabel;
+import javafx.beans.value.ChangeListener;
+import javax.swing.JCheckBox;
+import javax.swing.JSplitPane;
 import javax.swing.JTabbedPane;
+import javax.swing.SwingUtilities;
 
 /**
  * @author Steven
@@ -48,36 +49,39 @@ public class BSBInterfaceEditor extends JComponent implements PresetListener {
 
     private final BSBObjectPropertySheet bsbPropSheet;
     private final GridSettingsEditPanel gridSettingsEditPanel;
+    JSplitPane splitPane;
+    JTabbedPane rightTabs;
 
     PresetsPanel presets = new PresetsPanel();
 
-    EditEnabledCheckBox editBox = new EditEnabledCheckBox();
+    JCheckBox editBox;
 
-    JPanel rightBar = new JPanel(new BorderLayout());
-
+//    JPanel rightBar = new JPanel(new BorderLayout());
     private BSBGraphicInterface gInterface;
 
-    boolean isUpdating = false;
+    volatile boolean isUpdating = false;
+    ChangeListener<Boolean> editEnabledListener;
 
     public BSBInterfaceEditor(BSBObjectEntry[] bsbObjectEntries,
             boolean showAutomatable) {
 
-        
         bsbEditPanel = new BSBEditPanel(bsbObjectEntries);
 
         bsbPropSheet = new BSBObjectPropertySheet(showAutomatable, bsbEditPanel.getSelection());
 
-
         presets.addPresetListener(this);
 
-        editBox.addEditModeListener(bsbEditPanel);
-        editBox.addEditModeListener(isEditing ->
-                rightBar.setVisible(isEditing));
+        editBox = new JCheckBox("Edit Enabled");
 
-        editBox.addEditModeListener((boolean isEditing) -> {
-            if (!isUpdating && gInterface != null) {
-                gInterface.setEditEnabled(isEditing);
+        editBox.addActionListener(ae -> {
+            if (isUpdating || gInterface == null) {
+                return;
             }
+            isUpdating = true;
+
+            gInterface.setEditEnabled(editBox.isSelected());
+
+            isUpdating = false;
         });
 
         JPanel topBar = new JPanel(new BorderLayout());
@@ -87,63 +91,64 @@ public class BSBInterfaceEditor extends JComponent implements PresetListener {
         JScrollPane editScrollPane = new JScrollPane(bsbEditPanel);
         editScrollPane.setAutoscrolls(true);
 
-        JTabbedPane tabs = new JTabbedPane();
-        tabs.add(BlueSystem
+        rightTabs = new JTabbedPane();
+        rightTabs.add(BlueSystem
                 .getString("instrument.bsb.objectProperties"), bsbPropSheet);
-        
+
         gridSettingsEditPanel = new GridSettingsEditPanel();
-        tabs.add("Grid", gridSettingsEditPanel);
-//        tabs.add("Grid", gridPropertySheet);
-//
-//        gridPropertySheet.setMode(PropertySheet.VIEW_AS_FLAT_LIST);
-//        gridPropertySheet.setToolBarVisible(false);
-//        gridPropertySheet.setDescriptionVisible(false);
-//        gridPropertySheet.getTable().setEditorFactory(
-//                new PropertyEditorRegistryEx());
-//        PropertyEditorRegistry registry = (PropertyEditorRegistry) gridPropertySheet.getTable().getEditorFactory();
-//        registry.registerEditor(Enum.class, new EnumComboBoxPropertyEditor());
-//        gridPropertySheet.setPreferredSize(new Dimension(250, 30));
-//
-//        gridPropertySheet.addPropertySheetChangeListener((PropertyChangeEvent evt) -> {
-//            if (gInterface != null) {
-//                Property prop = (Property) evt.getSource();
-//                prop.writeToObject(gInterface.getGridSettings());
-//            }
-//        });
-//
-//        try {
-//            gridPropertySheet.setBeanInfo(Introspector.getBeanInfo(
-//                    GridSettings.class, Object.class));
-//        } catch (IntrospectionException ex) {
-//            Exceptions.printStackTrace(ex);
-//        }
+        rightTabs.add("Grid", gridSettingsEditPanel);
 
 //        rightBar.add(new JLabel(BlueSystem
 //                .getString("instrument.bsb.objectProperties")),
 //                BorderLayout.NORTH);
 //        rightBar.add(bsbPropSheet, BorderLayout.CENTER);
-        rightBar.add(tabs, BorderLayout.CENTER);
+//        rightBar.add(tabs, BorderLayout.CENTER);
 //        rightBar.add(alignPanel, BorderLayout.SOUTH);
-
-        rightBar.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-
+//        rightBar.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
         this.setLayout(new BorderLayout());
         this.add(topBar, BorderLayout.NORTH);
 
-        // JSplitPane split = new JSplitPane();
-        // split.add(editScrollPane, JSplitPane.LEFT);
-        // split.add(rightBar, JSplitPane.RIGHT);
-        // this.add(split, BorderLayout.CENTER);
-        this.add(editScrollPane, BorderLayout.CENTER);
-        this.add(rightBar, BorderLayout.EAST);
+        splitPane = new JSplitPane();
+        splitPane.setLeftComponent(editScrollPane);
+        splitPane.setRightComponent(rightTabs);
+
+        this.add(splitPane, BorderLayout.CENTER);
 
         bsbPropSheet.setPreferredSize(new Dimension(250, 30));
-        
-//        alignPanel.setJComponentList(bsbEditPanel.getSelectionList());
-
-        rightBar.setVisible(false);
 
         initActions();
+
+        editEnabledListener = (obs, old, newVal) -> setupSplit();
+    }
+
+    private void setupSplit() {
+        if (gInterface == null) {
+            return;
+        }
+
+        if (gInterface.isEditEnabled()) {
+            if (!rightTabs.isVisible()) {
+                int savedLoc = (Integer) splitPane.getClientProperty("savedLoc");
+                int savedDividerSize = (Integer) splitPane.getClientProperty("savedDividerSize");
+                rightTabs.setVisible(true);
+                splitPane.setDividerLocation(savedLoc);
+                splitPane.setDividerSize(savedDividerSize);
+            }
+        } else if (rightTabs.isVisible()) {
+            splitPane.putClientProperty("savedLoc", splitPane.getDividerLocation());
+            splitPane.putClientProperty("savedDividerSize", splitPane.getDividerSize());
+            rightTabs.setVisible(false);
+//            splitPane.setDividerLocation(1.0);
+            splitPane.setDividerSize(0);
+        }
+    }
+
+    @Override
+    public void addNotify() {
+        super.addNotify();
+
+        SwingUtilities.invokeLater(
+                () -> splitPane.setDividerLocation(splitPane.getWidth() - 250));
     }
 
     /**
@@ -170,32 +175,36 @@ public class BSBInterfaceEditor extends JComponent implements PresetListener {
 
         isUpdating = true;
 
+        if (this.gInterface != null) {
+            this.gInterface.editEnabledProperty().removeListener(editEnabledListener);
+        }
+
         this.gInterface = gInterface;
 
         editBox.setEnabled(gInterface != null);
 
         // FIXME
         if (gInterface != null) {
-            if (editBox.isSelected() != gInterface.isEditEnabled()) {
-                editBox.doClick();
-            }
-//            gridPropertySheet.readFromObject(gInterface.getGridSettings());
-        } else {
-//            gridPropertySheet.readFromObject(null);
+            this.gInterface.editEnabledProperty().addListener(editEnabledListener);
+            editBox.setSelected(this.gInterface.isEditEnabled());
         }
+        setupSplit();
 
         bsbPropSheet.clear();
 
-        this.bsbEditPanel.editBSBGraphicInterface(gInterface);
-        gridSettingsEditPanel.editGridSettings(gInterface.getGridSettings());
+        try {
+            this.bsbEditPanel.editBSBGraphicInterface(gInterface);
+            gridSettingsEditPanel.editGridSettings(gInterface.getGridSettings());
 
-        presets.setVisible(pGroup != null);
+            presets.setVisible(pGroup != null);
 
-        if (pGroup != null) {
-            this.presets.editPresetGroup(gInterface, pGroup);
+            if (pGroup != null) {
+                this.presets.editPresetGroup(gInterface, pGroup);
+            }
+
+        } finally {
+            isUpdating = false;
         }
-
-        isUpdating = false;
     }
 
     /*
@@ -210,7 +219,5 @@ public class BSBInterfaceEditor extends JComponent implements PresetListener {
             this.bsbEditPanel.editBSBGraphicInterface(gInterface);
         }
     }
-
-
 
 }
