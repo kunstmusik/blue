@@ -41,7 +41,7 @@ public class BSBKnobView extends BSBObjectView<BSBKnob> {
 
     ValuePanel valuePanel;
 
-    boolean updating = false;
+    volatile boolean updating = false;
 
     ScaleLinear scale;
 
@@ -85,6 +85,25 @@ public class BSBKnobView extends BSBObjectView<BSBKnob> {
 
         label.setVisible(bsbObj.isLabelEnabled());
         valuePanel.setVisible(bsbObj.isValueDisplayEnabled());
+        valuePanel.addPropertyChangeListener(evt -> {
+            if (updating) {
+                return;
+            }
+
+            if ("value".equals(evt.getPropertyName())) {
+                updating = true;
+                try {
+                    double val = Double.parseDouble(valuePanel.getPendingValue());
+
+                    bsbObj.setValue(val);
+                    knobView.setVal(scale.calc(val));
+                } catch (NumberFormatException nfe) {
+                    // ignore
+                } finally {
+                    updating = false;
+                }
+            }
+        });
 
         updateValueDisplay();
 
@@ -96,7 +115,9 @@ public class BSBKnobView extends BSBObjectView<BSBKnob> {
             updateValueDisplay();
         };
         valueListener = (obs, old, newVal) -> {
-            knobView.setVal(knob.getValue());
+            if (!updating) {
+                knobView.setVal(knob.getValue());
+            }
             updateValueDisplay();
         };
         knobWidthListener = (obs, old, newVal) -> {
