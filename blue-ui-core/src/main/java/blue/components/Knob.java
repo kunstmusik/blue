@@ -6,6 +6,7 @@
  */
 package blue.components;
 
+import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
@@ -25,18 +26,19 @@ import javax.swing.event.ChangeListener;
 import javax.swing.event.EventListenerList;
 
 public class Knob extends JComponent {
-    private final static float START = 225;
 
-    private final static float LENGTH = 270;
+    private final static double START = 225;
 
-    private final static float PI = (float) 3.1415;
+    private final static double LENGTH = 270;
 
-    private final static float START_ANG = (START / 360) * PI * 2;
+    private final static double PI = (double) 3.1415;
 
-    private final static float LENGTH_ANG = (LENGTH / 360) * PI * 2;
+    private final static double START_ANG = (START / 360) * PI * 2;
 
-    // private final static float DRAG_RES = (float) 0.01;
-    private final static float MULTIP = 180 / PI;
+    private final static double LENGTH_ANG = (LENGTH / 360) * PI * 2;
+
+    // private final static double DRAG_RES = (double) 0.01;
+    private final static double MULTIP = 180 / PI;
 
     private final static Color DEFAULT_FOCUS_COLOR = new Color(0x8080ff);
 
@@ -44,9 +46,9 @@ public class Knob extends JComponent {
 
     private int SHADOWY = 1;
 
-    private float DRAG_SPEED;
+    private double DRAG_SPEED;
 
-    private float CLICK_SPEED;
+    private double CLICK_SPEED;
 
     private int size;
 
@@ -61,8 +63,9 @@ public class Knob extends JComponent {
     private final static Dimension MIN_SIZE = new Dimension(40, 40);
 
     // private final static Dimension PREF_SIZE = new Dimension(80, 80);
-
     private final static int DEFAULT_PREF_WIDTH = 80;
+    
+    private static final Color TRACK_BACKGROUND_COLOR = new Color(0,0,0, 64);
 
     // Set the antialiasing to get the right look!
     private final static RenderingHints AALIAS = new RenderingHints(
@@ -72,19 +75,22 @@ public class Knob extends JComponent {
 
     private final EventListenerList listenerList = new EventListenerList();
 
-    private final Arc2D hitArc = new Arc2D.Float(Arc2D.PIE);
+    private final Arc2D hitArc = new Arc2D.Double(Arc2D.PIE);
 
-    private float ang = START_ANG;
+    private double ang = START_ANG;
 
-    private float val;
+    private double val;
 
     private int dragpos = -1;
 
-    private float startVal;
+    private double startVal;
 
     private Color focusColor;
 
     private double lastAng;
+    
+    private Color trackColor = new Color(63, 102, 150);
+    
 
     public Knob() {
         createKnob(DEFAULT_PREF_WIDTH);
@@ -139,7 +145,7 @@ public class Knob extends JComponent {
             @Override
             public void mouseDragged(MouseEvent me) {
                 if (dragType == SIMPLE) {
-                    float f = DRAG_SPEED * ((me.getX() + me.getY()) - dragpos);
+                    double f = DRAG_SPEED * ((me.getX() + me.getY()) - dragpos);
                     setValue(startVal + f);
                 } else if (dragType == ROUND) {
                     // Measure relative the middle of the button!
@@ -147,7 +153,7 @@ public class Knob extends JComponent {
                     int ypos = middle - me.getY();
                     double ang = Math.atan2(xpos, ypos);
                     double diff = lastAng - ang;
-                    setValue((float) (getValue() + (diff / LENGTH_ANG)));
+                    setValue((double) (getValue() + (diff / LENGTH_ANG)));
 
                     lastAng = ang;
                 }
@@ -220,16 +226,16 @@ public class Knob extends JComponent {
         setValue(val - CLICK_SPEED);
     }
 
-    public float getValue() {
+    public double getValue() {
         return val;
     }
 
-    public void setValue(float val) {
+    public void setValue(double val) {
         setVal(val);
         fireChangeEvent();
     }
 
-    public void setVal(float val) {
+    public void setVal(double val) {
         if (val < 0) {
             val = 0;
         }
@@ -273,59 +279,118 @@ public class Knob extends JComponent {
     // Paint the DKnob
     @Override
     public void paint(Graphics g) {
+        Graphics2D g2d = (Graphics2D) g;
+        g2d.addRenderingHints(AALIAS);
+        final var initialTransform = g2d.getTransform();
+        
+        
         int width = getWidth();
         int height = getHeight();
-        size = Math.min(width, height) - 22;
-        middle = 10 + size / 2;
+        size = Math.min(width, height) - 2;
+        middle = size / 2;
+        
+        g2d.translate((width - size) / 2, (height - size)/ 2);
 
-        if (g instanceof Graphics2D) {
-            Graphics2D g2d = (Graphics2D) g;
-            g2d.setBackground(getParent().getBackground());
-            g2d.addRenderingHints(AALIAS);
 
-            // For the size of the "mouse click" area
-            hitArc.setFrame(4, 4, size + 12, size + 12);
-        }
+//        g.setColor(getBackground());
+//        g.fillRect(0, 0, width, height);
+        
+        // check this
+        hitArc.setFrame(0, 0, width, height);
 
-        // Paint the "markers"
-        for (float a2 = START_ANG; a2 >= START_ANG - LENGTH_ANG; a2 = a2
-                - (float) (LENGTH_ANG / 10.01)) {
-            int x = 10 + size / 2 + (int) ((6 + size / 2) * Math.cos(a2));
-            int y = 10 + size / 2 - (int) ((6 + size / 2) * Math.sin(a2));
-            g.drawLine(10 + size / 2, 10 + size / 2, x, y);
+        // DRAW TRACK
+        Arc2D.Double path = new Arc2D.Double(0, 0, size, size, START, -LENGTH, Arc2D.PIE);
 
-        }
+        g2d.setPaint(TRACK_BACKGROUND_COLOR);
+        g2d.fill(path);
+        g2d.setPaint(Color.BLACK);
+        g2d.draw(path);
+        
+        // DRAW TRACK VALUE
+        path.setAngleExtent(getValue() * -LENGTH);
+        g2d.setPaint(trackColor);
+        g2d.fill(path);
+        g2d.setPaint(trackColor.brighter()  );
+        g2d.draw(path);
+        
+        
+        // DRAW KNOB CENTER
+        g2d.setPaint(Color.BLACK);
+        
+        int knobCenterSize = (int)(size * .65);
+        
+        g2d.fillOval(middle - knobCenterSize /2, middle - knobCenterSize/2, knobCenterSize, knobCenterSize);
 
+        /* VALUE INDICATOR */
+        g2d.translate(middle, middle);
+        final var extent = getValue() * .75;
+        g2d.rotate(Math.PI * 2.0 * (-.625 + extent));
+        g2d.setStroke(new BasicStroke(2.0f));        
+        
+        // DRAW VALUE LINE
+        g2d.setPaint(trackColor.brighter().brighter());
+        g2d.drawLine(middle/2, 0, middle, 0);
+        
+        // DRAW KNOB VALUE INDICATOR LINE
+        g2d.setPaint(trackColor);
+       
+//        var len = (int)(size * .35);
+        
+        int notchWidth = size / 9;
+        int notchAdj = notchWidth / 2;
+        var len = knobCenterSize / 2 + notchWidth;
+        
+        g2d.fillRoundRect(-notchAdj, -notchAdj, 
+               len, notchWidth, notchWidth, notchWidth);
+        
+        g2d.setPaint(Color.BLACK);
+        
+        g2d.drawRoundRect(-notchAdj, -notchAdj, 
+               len, notchWidth, notchWidth, notchWidth);
+        
+        // restore state
+                
+        g2d.setTransform(initialTransform);
+                
+        return;
+
+//        // Paint the "markers"
+//        for (double a2 = START_ANG; a2 >= START_ANG - LENGTH_ANG; a2 = a2
+//                - (double) (LENGTH_ANG / 10.01)) {
+//            int x = 10 + size / 2 + (int) ((6 + size / 2) * Math.cos(a2));
+//            int y = 10 + size / 2 - (int) ((6 + size / 2) * Math.sin(a2));
+//            g.drawLine(10 + size / 2, 10 + size / 2, x, y);
+//
+//        }
         // Set the position of the Zero
         // g.drawString("0", 2, size + 10);
-
         // Paint focus if in focus
-        if (hasFocus()) {
-            g.setColor(focusColor);
-        } else {
-            g.setColor(Color.white);
-        }
-
-        g.fillOval(10, 10, size, size);
-        g.setColor(Color.gray);
-        g.fillOval(14 + SHADOWX, 14 + SHADOWY, size - 8, size - 8);
-
-        g.setColor(Color.black);
-        g.drawArc(10, 10, size, size, 315, 270);
-        g.fillOval(14, 14, size - 8, size - 8);
-        g.setColor(Color.white);
-
-        int x = 10 + size / 2 + (int) (size / 2 * Math.cos(ang));
-        int y = 10 + size / 2 - (int) (size / 2 * Math.sin(ang));
-        g.drawLine(10 + size / 2, 10 + size / 2, x, y);
-        g.setColor(Color.gray);
-        int s2 = Math.max(size / 6, 6);
-        g.drawOval(10 + s2, 10 + s2, size - s2 * 2, size - s2 * 2);
-
-        int dx = (int) (2 * Math.sin(ang));
-        int dy = (int) (2 * Math.cos(ang));
-        g.drawLine(10 + dx + size / 2, 10 + dy + size / 2, x, y);
-        g.drawLine(10 - dx + size / 2, 10 - dy + size / 2, x, y);
+//        if (hasFocus()) {
+//            g.setColor(focusColor);
+//        } else {
+//            g.setColor(Color.white);
+//        }
+//
+//        g.fillOval(10, 10, size, size);
+//        g.setColor(Color.gray);
+//        g.fillOval(14 + SHADOWX, 14 + SHADOWY, size - 8, size - 8);
+//
+//        g.setColor(Color.black);
+//        g.drawArc(10, 10, size, size, 315, 270);
+//        g.fillOval(14, 14, size - 8, size - 8);
+//        g.setColor(Color.white);
+//
+//        int x = 10 + size / 2 + (int) (size / 2 * Math.cos(ang));
+//        int y = 10 + size / 2 - (int) (size / 2 * Math.sin(ang));
+//        g.drawLine(10 + size / 2, 10 + size / 2, x, y);
+//        g.setColor(Color.gray);
+//        int s2 = Math.max(size / 6, 6);
+//        g.drawOval(10 + s2, 10 + s2, size - s2 * 2, size - s2 * 2);
+//
+//        int dx = (int) (2 * Math.sin(ang));
+//        int dy = (int) (2 * Math.cos(ang));
+//        g.drawLine(10 + dx + size / 2, 10 + dy + size / 2, x, y);
+//        g.drawLine(10 - dx + size / 2, 10 - dy + size / 2, x, y);
     }
 
 //    public static void main(String args[]) {
