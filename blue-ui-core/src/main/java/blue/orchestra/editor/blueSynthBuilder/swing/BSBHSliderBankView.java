@@ -32,7 +32,8 @@ import javafx.collections.ListChangeListener;
 /**
  * @author steven
  */
-public class BSBHSliderBankView extends BSBObjectView<BSBHSliderBank> {
+public class BSBHSliderBankView extends BSBObjectView<BSBHSliderBank> implements
+        ResizeableView {
 
     private static final int VALUE_DISPLAY_HEIGHT = 30;
 
@@ -40,7 +41,7 @@ public class BSBHSliderBankView extends BSBObjectView<BSBHSliderBank> {
 
     private final ListChangeListener<BSBHSlider> sliderNumListener;
     private final ChangeListener sizeChangeListener;
-    
+
     /**
      * @param slider
      */
@@ -50,11 +51,11 @@ public class BSBHSliderBankView extends BSBObjectView<BSBHSliderBank> {
         this.setLayout(new VSliderBankLayout());
 
         resetSlidersUI();
-        
+
         sliderNumListener = c -> {
             resetSlidersUI();
         };
-        
+
         sizeChangeListener = (obs, old, newVal) -> {
             this.setSize(getPreferredSize());
             revalidate();
@@ -80,7 +81,7 @@ public class BSBHSliderBankView extends BSBObjectView<BSBHSliderBank> {
 
     @Override
     public void addNotify() {
-        super.addNotify(); 
+        super.addNotify();
         bsbObj.getSliders().addListener(sliderNumListener);
         bsbObj.gapProperty().addListener(sizeChangeListener);
         bsbObj.sliderWidthProperty().addListener(sizeChangeListener);
@@ -89,13 +90,13 @@ public class BSBHSliderBankView extends BSBObjectView<BSBHSliderBank> {
 
     @Override
     public void removeNotify() {
-        super.removeNotify(); 
+        super.removeNotify();
         bsbObj.getSliders().removeListener(sliderNumListener);
         bsbObj.gapProperty().removeListener(sizeChangeListener);
         bsbObj.sliderWidthProperty().removeListener(sizeChangeListener);
         bsbObj.valueDisplayEnabledProperty().removeListener(sizeChangeListener);
     }
-    
+
     class VSliderBankLayout implements LayoutManager {
 
         public VSliderBankLayout() {
@@ -124,11 +125,9 @@ public class BSBHSliderBankView extends BSBObjectView<BSBHSliderBank> {
 //            if (parent.getParent() == null) {
 //                return new Dimension(0, 0);
 //            }
-
-            
-            int w = bsbObj.isValueDisplayEnabled() ? 
-                    getBSBObject().getSliderWidth() + VALUE_DISPLAY_WIDTH :
-                    getBSBObject().getSliderWidth();
+            int w = bsbObj.isValueDisplayEnabled()
+                    ? getBSBObject().getSliderWidth() + VALUE_DISPLAY_WIDTH
+                    : getBSBObject().getSliderWidth();
             int h = (VALUE_DISPLAY_HEIGHT * count)
                     + (getBSBObject().getGap() * (count - 1));
 
@@ -145,16 +144,15 @@ public class BSBHSliderBankView extends BSBObjectView<BSBHSliderBank> {
 //            if (parent.getParent() == null) {
 //                return;
 //            }
-
             int gap = 0;
             int w = 0;
 
             if (getBSBObject() != null) {
                 gap = getBSBObject().getGap();
-                
-                w = bsbObj.isValueDisplayEnabled() ? 
-                    getBSBObject().getSliderWidth() + VALUE_DISPLAY_WIDTH :
-                    getBSBObject().getSliderWidth();
+
+                w = bsbObj.isValueDisplayEnabled()
+                        ? getBSBObject().getSliderWidth() + VALUE_DISPLAY_WIDTH
+                        : getBSBObject().getSliderWidth();
             }
 
             int h = VALUE_DISPLAY_HEIGHT;
@@ -169,5 +167,56 @@ public class BSBHSliderBankView extends BSBObjectView<BSBHSliderBank> {
             }
         }
 
+    }
+    
+    // RESIZEABLE VIEW
+    
+     public boolean canResizeWidgetWidth() {
+        return true;
+    }
+
+    public boolean canResizeWidgetHeight() {
+        return false;
+    }
+
+    public int getWidgetMinimumWidth() {
+        int base = bsbObj.isValueDisplayEnabled() ? 50 : 0;
+        return 45 + base;
+    }
+
+    public int getWidgetMinimumHeight() {
+        return -1;
+    }
+
+    public int getWidgetWidth() {
+        int base = bsbObj.isValueDisplayEnabled() ? 50 : 0;
+        return base + bsbObj.getSliderWidth();
+    }
+
+    public void setWidgetWidth(int width) {
+        int base = bsbObj.isValueDisplayEnabled() ? 50 : 0;
+        bsbObj.setSliderWidth(Math.max(45, width - base));
+    }
+
+    public int getWidgetHeight() {
+        return -1;
+    }
+
+    public void setWidgetHeight(int height) {
+    }
+
+    public void setWidgetX(int x) {
+        bsbObj.setX(x);
+    }
+
+    public int getWidgetX() {
+        return bsbObj.getX();
+    }
+
+    public void setWidgetY(int y) {
+    }
+
+    public int getWidgetY() {
+        return -1;
     }
 }

@@ -39,7 +39,7 @@ import javax.swing.border.LineBorder;
 import org.wonderly.awt.Packer;
 
 public class BSBLineObjectView extends BSBObjectView<BSBLineObject> implements
-        PropertyChangeListener {
+        PropertyChangeListener, ResizeableView {
 
     LineCanvas lineCanvas = new LineCanvas();
 
@@ -285,8 +285,57 @@ public class BSBLineObjectView extends BSBObjectView<BSBLineObject> implements
 //        lineCanvas.setLocked(locked);
 //    }
 
-    @Override
-    public String toString() {
-        return "";
+    public boolean canResizeWidgetWidth() {
+        return true;
+    }
+
+    public boolean canResizeWidgetHeight() {
+        return true;
+    }
+
+    public int getWidgetMinimumWidth() {
+        return 40;
+    }
+
+    public int getWidgetMinimumHeight() {
+//        int base = lines.isValueDisplayEnabled() ? (int) label.getHeight() : 0;
+//        return base + 20;
+        return 40 + (int) lineSelector.getHeight();
+    }
+
+    public int getWidgetWidth() {
+        return bsbObj.getCanvasWidth();
+    }
+
+    public void setWidgetWidth(int width) {
+        bsbObj.setCanvasWidth(Math.max(40, width));
+    }
+
+    public int getWidgetHeight() {
+//        int base = bsbXYController.isValueDisplayEnabled() ? (int) label.getHeight() : 0;
+//        return bsbXYController.getHeight() + base;
+        return bsbObj.getCanvasHeight() + (int) lineSelector.getHeight();
+    }
+
+    public void setWidgetHeight(int height) {
+//        int base = bsbXYController.isValueDisplayEnabled() ? (int) label.getHeight() : 0;
+//        bsbXYController.setHeight(height - base);
+        bsbObj.setCanvasHeight(height - (int) lineSelector.getHeight());
+    }
+
+    public void setWidgetX(int x) {
+        bsbObj.setX(x);
+    }
+
+    public int getWidgetX() {
+        return bsbObj.getX();
+    }
+
+    public void setWidgetY(int y) {
+        bsbObj.setY(y);
+    }
+
+    public int getWidgetY() {
+        return bsbObj.getY();
     }
 }

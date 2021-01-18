@@ -21,7 +21,6 @@ package blue.orchestra.editor.blueSynthBuilder.swing;
 
 import blue.BlueSystem;
 import blue.components.AlphaMarquee;
-import blue.event.EditModeListener;
 import blue.orchestra.blueSynthBuilder.BSBGraphicInterface;
 import blue.orchestra.blueSynthBuilder.BSBGroup;
 import blue.orchestra.blueSynthBuilder.BSBObject;
@@ -449,7 +448,7 @@ public class BSBEditPanel extends JLayeredPane implements
             if (allowEditing) {
                 bsbInterface.editEnabledProperty().addListener(
                         editEnabledListener);
-            } 
+            }
             this.bsbInterface = bsbInterface;
             setEditing(isEditing());
 
@@ -533,8 +532,9 @@ public class BSBEditPanel extends JLayeredPane implements
                 ? bsbInterface.editEnabledProperty() : null;
 
         BSBObjectView objectView = BSBObjectEditorFactory.getView(bsbObj);
-        BSBObjectViewHolder viewHolder = new BSBObjectViewHolder(editEnabledProperty,
-                selection, groupsList, objectView);
+        BSBObjectViewHolder viewHolder
+                = new BSBObjectViewHolder(editEnabledProperty,
+                        selection, groupsList, bsbInterface.getGridSettings(), objectView);
 
 //        if (objectView instanceof EditModeOnly) {
 //            if (allowEditing) {

@@ -41,7 +41,7 @@ import javax.swing.border.LineBorder;
  *
  * @author stevenyi
  */
-public class BSBGroupPanel extends BSBObjectView<BSBGroup> {
+public class BSBGroupPanel extends BSBObjectView<BSBGroup> implements ResizeableView{
 
     JLabel label;
     JPanel editorPanel = new JPanel(null);
@@ -245,68 +245,61 @@ public class BSBGroupPanel extends BSBObjectView<BSBGroup> {
 //        }
     }
 
-//    protected void removeBSBObject(BSBObject bsbObj) {
-//        BSBObjectViewHolder found = null;
-//        for (var c : editorPanel.getComponents()) {
-//            if (c instanceof BSBObjectViewHolder) {
-//                var vh = (BSBObjectViewHolder) c;
-//                if (vh.getBSBObjectView().getBSBObject() == bsbObj) {
-//                    found = vh;
-//                    break;
-//                }
-//            }
+
+    public boolean canResizeWidgetWidth() {
+        return true;
+    }
+
+    public boolean canResizeWidgetHeight() {
+        return true;
+    }
+
+    public int getWidgetMinimumWidth() {
+//        double base = editorPane.prefWidth(editorPane.getPrefHeight());
+//        if (getTop() == label) {
+//            base = Math.max(label.minWidth(label.getPrefHeight()), base);
 //        }
-//
-//        if (found != null) {
-//            editorPanel.remove(found);
-////            found.visibleProperty().unbind();
-//        }
-//    }
-//    static class BSBGroupPanelLayout implements LayoutManager {
-//
-//        private final JLabel topLabel;
-//
-//        public BSBGroupPanelLayout(JLabel topLabel) {
-//            this.topLabel = topLabel;
-//        }
-//
-//        @Override
-//        public void addLayoutComponent(String name, Component comp) {
-//        }
-//
-//        @Override
-//        public void removeLayoutComponent(Component comp) {
-//        }
-//
-//        @Override
-//        public Dimension preferredLayoutSize(Container parent) {
-//            var labelD = topLabel.getPreferredSize();
-//            var d = new Dimension(labelD.width, labelD.height);
-//
-//            var components = parent.getComponents();
-//
-//            if (components.length > 0) {
-//                for (var c : parent.getComponents()) {
-//                    d.width = Math.max(d.width, c.getX() + c.getWidth());
-//                    d.height = Math.max(d.height, c.getY() + c.getHeight());
-//                }
-//
-//                // add inset size
-//                d.width += parent.getInsets().right;
-//                d.height += parent.getInsets().bottom;
-//            }
-//            return d;
-//        }
-//
-//        @Override
-//        public Dimension minimumLayoutSize(Container parent) {
-//            return preferredLayoutSize(parent);
-//        }
-//
-//        @Override
-//        public void layoutContainer(Container parent) {
-//
-//        }
-//
-//    }
+//        return Math.max(20, (int) base);
+return 0;
+    }
+
+    public int getWidgetMinimumHeight() {
+//        double base = (getTop() == label) ? label.minHeight(label.getPrefWidth()) : 0;
+//        return Math.max(20,
+//                (int) (base + editorPane.prefHeight(editorPane.getPrefWidth())));
+return 0;
+    }
+
+    public int getWidgetWidth() {
+        return (int) getWidth();
+    }
+
+    public void setWidgetWidth(int width) {
+        bsbObj.setWidth(width);
+    }
+
+    public int getWidgetHeight() {
+        return (int) getHeight();
+    }
+
+    public void setWidgetHeight(int height) {
+        double base = label.isVisible() ? label.getPreferredSize().height : 0;
+        bsbObj.setHeight(height - (int) base);
+    }
+
+    public void setWidgetX(int x) {
+        bsbObj.setX(x);
+    }
+
+    public int getWidgetX() {
+        return bsbObj.getX();
+    }
+
+    public void setWidgetY(int y) {
+        bsbObj.setY(y);
+    }
+
+    public int getWidgetY() {
+        return bsbObj.getY();
+    }
 }

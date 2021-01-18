@@ -25,7 +25,7 @@ import java.awt.BorderLayout;
 import javax.swing.JTextField;
 import javax.swing.event.DocumentEvent;
 
-public class BSBTextFieldView extends BSBObjectView<BSBTextField> {
+public class BSBTextFieldView extends BSBObjectView<BSBTextField> implements ResizeableView{
 
     JTextField textField = new JTextField();
 
@@ -69,6 +69,50 @@ public class BSBTextFieldView extends BSBObjectView<BSBTextField> {
         this.setSize(w, this.getHeight());
     }
 
-//    @Override
-//    public void cleanup() {}
+    public boolean canResizeWidgetWidth() {
+        return true;
+    }
+
+    public boolean canResizeWidgetHeight() {
+        return false;
+    }
+
+    public int getWidgetMinimumWidth() {
+        return 5;
+    }
+
+    public int getWidgetMinimumHeight() {
+        return -1;
+    }
+
+    public int getWidgetWidth() {
+        return bsbObj.getTextFieldWidth();
+    }
+
+    public void setWidgetWidth(int width) {
+        bsbObj.setTextFieldWidth(Math.max(5, width));
+    }
+
+    public int getWidgetHeight() {
+        return -1;
+    }
+
+    public void setWidgetHeight(int height) {
+    }
+
+    public void setWidgetX(int x) {
+        bsbObj.setX(x);
+    }
+
+    public int getWidgetX() {
+        return bsbObj.getX();
+    }
+
+    public void setWidgetY(int y) {
+        bsbObj.setY(y);
+    }
+
+    public int getWidgetY() {
+        return bsbObj.getY();
+    }
 }

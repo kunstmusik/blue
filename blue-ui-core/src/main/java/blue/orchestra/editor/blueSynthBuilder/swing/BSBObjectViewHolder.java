@@ -21,12 +21,15 @@ package blue.orchestra.editor.blueSynthBuilder.swing;
 
 import blue.orchestra.blueSynthBuilder.BSBGroup;
 import blue.orchestra.blueSynthBuilder.BSBObject;
+import blue.orchestra.blueSynthBuilder.GridSettings;
 import blue.orchestra.editor.blueSynthBuilder.EditModeOnly;
 import blue.ui.utilities.UiUtilities;
 import java.awt.Color;
+import java.awt.Cursor;
 import java.awt.Point;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
+import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
@@ -36,6 +39,7 @@ import javafx.collections.ObservableList;
 import javafx.collections.ObservableSet;
 import javafx.collections.SetChangeListener;
 import javax.swing.BorderFactory;
+import javax.swing.JComponent;
 import javax.swing.JLayeredPane;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
@@ -48,7 +52,7 @@ public class BSBObjectViewHolder extends JLayeredPane {
 
     BSBObjectView objectView;
 
-    JPanel mouseCapturePanel = new JPanel();
+    JPanel mouseCapturePanel = new JPanel(null);
 
     Point originPoint;
     BSBObject[] selectedObjects;
@@ -56,6 +60,8 @@ public class BSBObjectViewHolder extends JLayeredPane {
     int[] startY;
     int minTransX = -1;
     int minTransY = -1;
+
+    JComponent[] resizeHandles = new JComponent[4];
 
     // boolean selected = false;
     private static Border selectBorder = BorderFactory
@@ -68,15 +74,18 @@ public class BSBObjectViewHolder extends JLayeredPane {
     private final ChangeListener<Boolean> editEnabledListener;
     private final BooleanProperty editEnabledProperty;
     private final SetChangeListener<BSBObject> selectionListener;
+    private final GridSettings gridSettings;
 
     public BSBObjectViewHolder(BooleanProperty editEnabledProperty,
             ObservableSet<BSBObject> selection,
             ObservableList<BSBGroup> groupsList,
+            GridSettings gridSettings,
             BSBObjectView objectView) {
 
         this.editEnabledProperty = editEnabledProperty;
         this.objectView = objectView;
         this.selection = selection;
+        this.gridSettings = gridSettings;
 
         this.setLayout(null);
         this.add(objectView, DEFAULT_LAYER);
@@ -149,8 +158,8 @@ public class BSBObjectViewHolder extends JLayeredPane {
                 startX = new int[selection.size()];
                 startY = new int[selection.size()];
                 selectedObjects = selection.toArray(new BSBObject[selection.size()]);
-                
-                for(var i = 0; i < selectedObjects.length; i++) {
+
+                for (var i = 0; i < selectedObjects.length; i++) {
                     var temp = selectedObjects[i];
                     startX[i] = temp.getX();
                     startY[i] = temp.getY();
@@ -159,7 +168,7 @@ public class BSBObjectViewHolder extends JLayeredPane {
                 }
                 minTransX = -minX;
                 minTransY = -minY;
-                                
+
                 e.consume();
             }
 
@@ -171,7 +180,7 @@ public class BSBObjectViewHolder extends JLayeredPane {
                 minTransX = -1;
                 minTransY = -1;
                 selectedObjects = null;
-                
+
                 e.consume();
             }
 
@@ -181,20 +190,22 @@ public class BSBObjectViewHolder extends JLayeredPane {
 
             @Override
             public void mouseDragged(MouseEvent e) {
-                if(selectedObjects == null) return;
-                
+                if (selectedObjects == null) {
+                    return;
+                }
+
                 var newPoint = SwingUtilities.convertPoint(
                         BSBObjectViewHolder.this, e.getPoint(), getParent());
 
                 var transX = Math.max(minTransX, newPoint.x - originPoint.x);
                 var transY = Math.max(minTransY, newPoint.y - originPoint.y);
-                
-                for(int i = 0; i < selectedObjects.length; i++) {
+
+                for (int i = 0; i < selectedObjects.length; i++) {
                     var bsbObj = selectedObjects[i];
                     bsbObj.setX(startX[i] + transX);
                     bsbObj.setY(startY[i] + transY);
                 }
-                
+
                 e.consume();
             }
 
@@ -210,6 +221,19 @@ public class BSBObjectViewHolder extends JLayeredPane {
             public void componentResized(ComponentEvent e) {
                 setSize(e.getComponent().getSize());
                 mouseCapturePanel.setSize(e.getComponent().getSize());
+
+                if (resizeHandles[0] != null) {
+                    resizeHandles[0].setLocation(getWidth() / 2 - 2, 0);
+                }
+                if (resizeHandles[1] != null) {
+                    resizeHandles[1].setLocation(getWidth() / 2 - 2, getHeight() - 5);
+                }
+                if (resizeHandles[2] != null) {
+                    resizeHandles[2].setLocation(0, getHeight() / 2 - 2);
+                }
+                if (resizeHandles[3] != null) {
+                    resizeHandles[3].setLocation(getWidth() - 5, getHeight() / 2 - 2);
+                }
             }
 
         });
@@ -226,6 +250,8 @@ public class BSBObjectViewHolder extends JLayeredPane {
         selectionListener = (change) -> {
             updateBorder();
         };
+
+        setupResizeHandles();
     }
 
     @Override
@@ -272,22 +298,29 @@ public class BSBObjectViewHolder extends JLayeredPane {
         }
         mouseCapturePanel.setEnabled(isEditing);
         mouseCapturePanel.setVisible(isEditing);
+
         objectView.setEnabled(!isEditing);
         updateBorder();
     }
 
-    @Override
-    public void setLocation(int x, int y) {
-        super.setLocation(x, y);
-        this.objectView.setNewLocation(x, y);
-    }
-
     private void updateBorder() {
-        if (editEnabledProperty != null && editEnabledProperty.getValue()
-                && selection.contains(getBSBObjectView().getBSBObject())) {
+        var selected = editEnabledProperty != null && editEnabledProperty.getValue()
+                && selection.contains(getBSBObjectView().getBSBObject());
+        if (selected) {
             mouseCapturePanel.setBorder(selectBorder);
+
         } else {
             mouseCapturePanel.setBorder(null);
+        }
+
+        setResizeHandlesVisible(selected && selection.size() == 1);
+    }
+
+    private void setResizeHandlesVisible(boolean visible) {
+        for (var c : resizeHandles) {
+            if (c != null) {
+                c.setVisible(visible);
+            }
         }
     }
 
@@ -302,4 +335,181 @@ public class BSBObjectViewHolder extends JLayeredPane {
         return objectView instanceof EditModeOnly;
     }
 
+    // RESIZING
+    private void setupResizeHandles() {
+        if (!(objectView instanceof ResizeableView)) {
+            return;
+        }
+
+        var mouseHandler = new MouseAdapter() {
+
+            Point origin = null;
+            Cursor parentCursor = null;
+
+            @Override
+            public void mousePressed(MouseEvent e) {
+                var comp = e.getComponent();
+                var parent = BSBObjectViewHolder.this.getParent();
+                parentCursor = parent.getCursor();
+                parent.setCursor(comp.getCursor());
+                origin = SwingUtilities.convertPoint(comp, e.getPoint(), parent);
+                e.consume();
+            }
+
+            @Override
+            public void mouseDragged(MouseEvent e) {
+                var curPoint = SwingUtilities.convertPoint(e.getComponent(), e.getPoint(), BSBObjectViewHolder.this.getParent());
+
+                if (e.getComponent() == resizeHandles[0]) {
+                    resizeUp(origin, curPoint);
+                } else if (e.getComponent() == resizeHandles[1]) {
+                    resizeDown(origin, curPoint);
+                } else if (e.getComponent() == resizeHandles[2]) {
+                    resizeLeft(origin, curPoint);
+                } else if (e.getComponent() == resizeHandles[3]) {
+                    resizeRight(origin, curPoint);
+                }
+
+                e.consume();
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent e) {
+                var parent = BSBObjectViewHolder.this.getParent();
+                parent.setCursor(parentCursor);
+
+                origin = null;
+                parentCursor = null;
+
+                e.consume();
+            }
+
+        };
+
+        var rView = (ResizeableView) objectView;
+
+        if (rView.canResizeWidgetHeight()) {
+            var topHandle = new JPanel();
+            topHandle.setSize(5, 5);
+            topHandle.setBackground(Color.GREEN);
+            mouseCapturePanel.add(topHandle, JLayeredPane.DRAG_LAYER);
+            topHandle.setLocation(getWidth() / 2 - 2, 0);
+            topHandle.addMouseListener(mouseHandler);
+            topHandle.addMouseMotionListener(mouseHandler);
+            topHandle.setCursor(Cursor.getPredefinedCursor(Cursor.N_RESIZE_CURSOR));
+            resizeHandles[0] = topHandle;
+
+            var bottomHandle = new JPanel();
+            bottomHandle.setSize(5, 5);
+            bottomHandle.setBackground(Color.GREEN);
+            mouseCapturePanel.add(bottomHandle, JLayeredPane.DRAG_LAYER);
+            bottomHandle.setLocation(getWidth() / 2 - 2, getHeight() - 5);
+            bottomHandle.addMouseListener(mouseHandler);
+            bottomHandle.addMouseMotionListener(mouseHandler);
+            bottomHandle.setCursor(Cursor.getPredefinedCursor(Cursor.S_RESIZE_CURSOR));
+            resizeHandles[1] = bottomHandle;
+        }
+        if (rView.canResizeWidgetWidth()) {
+            var leftHandle = new JPanel();
+            leftHandle.setSize(5, 5);
+            leftHandle.setBackground(Color.GREEN);
+            mouseCapturePanel.add(leftHandle, JLayeredPane.DRAG_LAYER);
+            leftHandle.setLocation(0, getHeight() / 2 - 2);
+            leftHandle.addMouseListener(mouseHandler);
+            leftHandle.addMouseMotionListener(mouseHandler);
+            leftHandle.setCursor(Cursor.getPredefinedCursor(Cursor.W_RESIZE_CURSOR));
+            resizeHandles[2] = leftHandle;
+
+            var rightHandle = new JPanel();
+            rightHandle.setSize(5, 5);
+            rightHandle.setBackground(Color.GREEN);
+            mouseCapturePanel.add(rightHandle, JLayeredPane.DRAG_LAYER);
+            rightHandle.setLocation(getWidth() - 5, getHeight() / 2 - 2);
+            rightHandle.addMouseListener(mouseHandler);
+            rightHandle.addMouseMotionListener(mouseHandler);
+            rightHandle.setCursor(Cursor.getPredefinedCursor(Cursor.E_RESIZE_CURSOR));
+            resizeHandles[3] = rightHandle;
+        }
+    }
+
+    protected void resizeRight(Point origin, Point curPoint) {
+        var x = curPoint.x;
+        var rView = (ResizeableView) objectView;
+
+        if (gridSettings.isSnapEnabled()) {
+            var w = gridSettings.getWidth();
+            x = (int) Math.round((double) x / w);
+            x *= w;
+        }
+
+        var newWidth = Math.max(x - rView.getWidgetX(),
+                rView.getWidgetMinimumWidth());
+
+        if (newWidth != rView.getWidgetWidth()) {
+            rView.setWidgetWidth(newWidth);
+        }
+
+    }
+
+    protected void resizeLeft(Point origin, Point curPoint) {
+        var x = Math.max(0, curPoint.x);
+        var rView = (ResizeableView) objectView;
+
+        if (gridSettings.isSnapEnabled()) {
+            var w = gridSettings.getWidth();
+            x = (int) Math.round((double) x / w);
+            x *= w;
+        }
+
+        var curRight = rView.getWidgetX() + rView.getWidgetWidth();
+
+        var newWidth = Math.max(curRight - x,
+                rView.getWidgetMinimumWidth());
+
+        if (newWidth != rView.getWidgetWidth()) {
+            rView.setWidgetX(x);
+            rView.setWidgetWidth(newWidth);
+        }
+
+    }
+
+    protected void resizeUp(Point origin, Point curPoint) {
+        var y = Math.max(0, curPoint.y);
+        var rView = (ResizeableView) objectView;
+
+        if (gridSettings.isSnapEnabled()) {
+            var h = gridSettings.getHeight();
+            y = (int) Math.round((double) y / h);
+            y *= h;
+        }
+
+        var curBottom = rView.getWidgetY() + rView.getWidgetHeight();
+        var newHeight = Math.max(curBottom - y,
+                rView.getWidgetMinimumHeight());
+
+        System.out.println("ResizeUp: " + curBottom + " : " + newHeight);
+
+        if (newHeight != rView.getWidgetHeight()) {
+            rView.setWidgetY(y);
+            rView.setWidgetHeight(newHeight);
+        }
+    }
+
+    protected void resizeDown(Point origin, Point curPoint) {
+        var y = Math.max(0, curPoint.y);
+        var rView = (ResizeableView) objectView;
+
+        if (gridSettings.isSnapEnabled()) {
+            var h = gridSettings.getHeight();
+            y = (int) Math.round((double) y / h);
+            y *= h;
+        }
+
+        var newHeight = Math.max(y - rView.getWidgetY(),
+                rView.getWidgetMinimumHeight());
+
+        if (newHeight != rView.getWidgetHeight()) {
+            rView.setWidgetHeight(newHeight);
+        }
+    }
 }

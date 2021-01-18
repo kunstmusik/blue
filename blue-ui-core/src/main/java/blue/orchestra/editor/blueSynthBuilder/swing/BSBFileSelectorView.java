@@ -50,7 +50,8 @@ import org.openide.util.Exceptions;
  * @author steven
  * @author Michael Bechard
  */
-public class BSBFileSelectorView extends BSBObjectView<BSBFileSelector> {
+public class BSBFileSelectorView extends BSBObjectView<BSBFileSelector> implements 
+        ResizeableView {
 
     private static final int FILE_BUTTON_WIDTH = 30;
     private static int OBJECT_HEIGHT = 30;
@@ -329,5 +330,51 @@ public class BSBFileSelectorView extends BSBObjectView<BSBFileSelector> {
                 dtde.rejectDrop();
             }
         }
+    }
+    
+    public boolean canResizeWidgetWidth() {
+        return true;
+    }
+
+    public boolean canResizeWidgetHeight() {
+        return false;
+    }
+
+    public int getWidgetMinimumWidth() {
+        return 10 + FILE_BUTTON_WIDTH;
+    }
+
+    public int getWidgetMinimumHeight() {
+        return -1;
+    }
+
+    public int getWidgetWidth() {
+        return bsbObj.getTextFieldWidth();
+    }
+
+    public void setWidgetWidth(int width) {
+        bsbObj.setTextFieldWidth(Math.max(10, width));
+    }
+
+    public int getWidgetHeight() {
+        return -1;
+    }
+
+    public void setWidgetHeight(int height) {
+    }
+
+    public void setWidgetX(int x) {
+        bsbObj.setX(x);
+    }
+
+    public int getWidgetX() {
+        return bsbObj.getX();
+    }
+
+    public void setWidgetY(int y) {
+    }
+
+    public int getWidgetY() {
+        return -1;
     }
 }

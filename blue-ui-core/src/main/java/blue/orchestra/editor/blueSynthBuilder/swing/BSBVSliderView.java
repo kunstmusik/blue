@@ -32,7 +32,8 @@ import javax.swing.event.ChangeEvent;
 /**
  * @author steven
  */
-public class BSBVSliderView extends BSBObjectView<BSBVSlider> {
+public class BSBVSliderView extends BSBObjectView<BSBVSlider> implements
+        ResizeableView {
 
     private static final int VALUE_DISPLAY_HEIGHT = 30;
     private static final int VALUE_DISPLAY_WIDTH = 50;
@@ -95,7 +96,7 @@ public class BSBVSliderView extends BSBObjectView<BSBVSlider> {
                 }
             }
         });
-        
+
         this.vdeListener = (obs, old, newVal) -> {
             UiUtilities.invokeOnSwingThread(() -> {
                 if (!newVal) {
@@ -112,14 +113,14 @@ public class BSBVSliderView extends BSBObjectView<BSBVSlider> {
         this.resListener = (obs, old, newVal) -> {
             UiUtilities.invokeOnSwingThread(() -> {
                 valSlider.setResolution(getNumTicks());
-                valuePanel.setValue(NumberUtilities.formatDouble(getValueFromSlider()));        
+                valuePanel.setValue(NumberUtilities.formatDouble(getValueFromSlider()));
             });
         };
         this.minListener = (obs, old, newVal) -> {
             UiUtilities.invokeOnSwingThread(() -> {
                 valSlider.setMinimum(newVal.doubleValue());
                 valSlider.setResolution(getNumTicks());
-                valuePanel.setValue(NumberUtilities.formatDouble(getValueFromSlider()));        
+                valuePanel.setValue(NumberUtilities.formatDouble(getValueFromSlider()));
             });
         };
         this.maxListener = (obs, old, newVal) -> {
@@ -190,9 +191,58 @@ public class BSBVSliderView extends BSBObjectView<BSBVSlider> {
     @Override
     public Dimension getPreferredSize() {
         var h = (bsbObj.isValueDisplayEnabled())
-                ? bsbObj.getSliderHeight()+ VALUE_DISPLAY_HEIGHT
+                ? bsbObj.getSliderHeight() + VALUE_DISPLAY_HEIGHT
                 : bsbObj.getSliderHeight();
 
         return new Dimension(VALUE_DISPLAY_WIDTH, h);
+    }
+
+    public boolean canResizeWidgetWidth() {
+        return false;
+    }
+
+    public boolean canResizeWidgetHeight() {
+        return true;
+    }
+
+    public int getWidgetMinimumWidth() {
+        return -1;
+    }
+
+    public int getWidgetMinimumHeight() {
+        int base = bsbObj.isValueDisplayEnabled() ? 30 : 0;
+        return 45 + base;
+    }
+
+    public int getWidgetWidth() {
+        return -1;
+    }
+
+    public void setWidgetWidth(int width) {
+    }
+
+    public int getWidgetHeight() {
+        int base = bsbObj.isValueDisplayEnabled() ? 30 : 0;
+        return base + bsbObj.getSliderHeight();
+    }
+
+    public void setWidgetHeight(int height) {
+        int base = bsbObj.isValueDisplayEnabled() ? 30 : 0;
+        bsbObj.setSliderHeight(Math.max(45, height - base));
+    }
+
+    public void setWidgetX(int x) {
+    }
+
+    public int getWidgetX() {
+        return -1;
+    }
+
+    public void setWidgetY(int y) {
+        bsbObj.setY(y);
+    }
+
+    public int getWidgetY() {
+        return bsbObj.getY();
     }
 }

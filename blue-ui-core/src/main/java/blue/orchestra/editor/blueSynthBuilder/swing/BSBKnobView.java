@@ -32,7 +32,7 @@ import javax.swing.JLabel;
 /**
  * @author steven
  */
-public class BSBKnobView extends BSBObjectView<BSBKnob> {
+public class BSBKnobView extends BSBObjectView<BSBKnob> implements ResizeableView {
 
     private static final int VALUE_HEIGHT = 14;
 
@@ -221,5 +221,75 @@ public class BSBKnobView extends BSBObjectView<BSBKnob> {
         }
         return new Dimension(bsbObj.getKnobWidth(), height);
 
+    }
+
+    public boolean canResizeWidgetWidth() {
+        return true;
+    }
+
+    public boolean canResizeWidgetHeight() {
+        return true;
+    }
+
+    public int getWidgetMinimumWidth() {
+        return 20;
+    }
+
+    public int getWidgetMinimumHeight() {
+        int h = 20;
+        if (bsbObj.isValueDisplayEnabled()) {
+            h += (int) valuePanel.getHeight();
+        }
+        if (bsbObj.isLabelEnabled()) {
+            h += (int) label.getHeight();
+        }
+        return h;
+    }
+
+    public int getWidgetWidth() {
+        return bsbObj.getKnobWidth();
+    }
+
+    public void setWidgetWidth(int width) {
+        bsbObj.setKnobWidth(Math.max(20, width));
+    }
+
+    public int getWidgetHeight() {
+        int h = bsbObj.getKnobWidth();
+        if (bsbObj.isValueDisplayEnabled()) {
+            h += (int) valuePanel.getHeight();
+        }
+        if (bsbObj.isLabelEnabled()) {
+            h += (int) label.getHeight();
+        }
+        return h;
+    }
+
+    public void setWidgetHeight(int height) {
+        int h = height;
+        if (bsbObj.isValueDisplayEnabled()) {
+            h -= (int) valuePanel.getHeight();
+        }
+        if (bsbObj.isLabelEnabled()) {
+            h -= (int) label.getHeight();
+        }
+
+        bsbObj.setKnobWidth(Math.max(20, h));
+    }
+
+    public void setWidgetX(int x) {
+        bsbObj.setX(x);
+    }
+
+    public int getWidgetX() {
+        return bsbObj.getX();
+    }
+
+    public void setWidgetY(int y) {
+        bsbObj.setY(y);
+    }
+
+    public int getWidgetY() {
+        return bsbObj.getY();
     }
 }

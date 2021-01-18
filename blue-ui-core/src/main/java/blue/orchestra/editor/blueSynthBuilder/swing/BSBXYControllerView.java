@@ -17,7 +17,6 @@
  * the Free Software Foundation Inc., 59 Temple Place - Suite 330,
  * Boston, MA  02111-1307 USA
  */
-
 package blue.orchestra.editor.blueSynthBuilder.swing;
 
 import blue.components.lines.LineBoundaryDialog;
@@ -37,7 +36,8 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 
-public class BSBXYControllerView extends BSBObjectView<BSBXYController> {
+public class BSBXYControllerView extends BSBObjectView<BSBXYController>
+        implements ResizeableView {
 
     private static MessageFormat labelMessage = new MessageFormat(
             "x: {0,number,#.####} y: {1,number,#.####}");
@@ -81,7 +81,6 @@ public class BSBXYControllerView extends BSBObjectView<BSBXYController> {
         drawPanel.setBackground(Color.BLACK);
 
 //        this.controller.addPropertyChangeListener(this);
-
         updateLabel();
 
         updateSize();
@@ -91,7 +90,6 @@ public class BSBXYControllerView extends BSBObjectView<BSBXYController> {
 //    public void cleanup() {
 //        this.controller.removePropertyChangeListener(this);
 //    }
-
     protected void setValues(int x, int y) {
 
         int newX = x;
@@ -109,7 +107,7 @@ public class BSBXYControllerView extends BSBObjectView<BSBXYController> {
             newY = drawPanel.getHeight();
         }
 
-        double xVal = newX / (double)drawPanel.getWidth();
+        double xVal = newX / (double) drawPanel.getWidth();
         double yVal = (drawPanel.getHeight() - newY)
                 / (double) drawPanel.getHeight();
 
@@ -137,11 +135,10 @@ public class BSBXYControllerView extends BSBObjectView<BSBXYController> {
         this.setPreferredSize(d);
 
         // drawPanel.setSize(d);
-
     }
 
     private void updateLabel() {
-        Object[] vals = new Object[] { bsbObj.getXValue(), bsbObj.getYValue() };
+        Object[] vals = new Object[]{bsbObj.getXValue(), bsbObj.getYValue()};
         label.setText(labelMessage.format(vals));
     }
 
@@ -262,7 +259,6 @@ public class BSBXYControllerView extends BSBObjectView<BSBXYController> {
 //    public void setRandomizable(boolean randomizable) {
 //        controller.setRandomizable(randomizable);
 //    }
-
 //    @Override
 //    public void propertyChange(PropertyChangeEvent evt) {
 //        if (evt.getSource() != bsbObj) {
@@ -290,6 +286,56 @@ public class BSBXYControllerView extends BSBObjectView<BSBXYController> {
 //                break;
 //        }
 //    }
+    public boolean canResizeWidgetWidth() {
+        return true;
+    }
+
+    public boolean canResizeWidgetHeight() {
+        return true;
+    }
+
+    public int getWidgetMinimumWidth() {
+        return 20;
+    }
+
+    public int getWidgetMinimumHeight() {
+        int base = bsbObj.isValueDisplayEnabled() ? (int) label.getHeight() : 0;
+        return base + 20;
+    }
+
+    public int getWidgetWidth() {
+        return bsbObj.getWidth();
+    }
+
+    public void setWidgetWidth(int width) {
+        bsbObj.setWidth(Math.max(20, width));
+    }
+
+    public int getWidgetHeight() {
+        int base = bsbObj.isValueDisplayEnabled() ? (int) label.getHeight() : 0;
+        return bsbObj.getHeight() + base;
+    }
+
+    public void setWidgetHeight(int height) {
+        int base = bsbObj.isValueDisplayEnabled() ? (int) label.getHeight() : 0;
+        bsbObj.setHeight(height - base);
+    }
+
+    public void setWidgetX(int x) {
+        bsbObj.setX(x);
+    }
+
+    public int getWidgetX() {
+        return bsbObj.getX();
+    }
+
+    public void setWidgetY(int y) {
+        bsbObj.setY(y);
+    }
+
+    public int getWidgetY() {
+        return bsbObj.getY();
+    }
 
 }
 

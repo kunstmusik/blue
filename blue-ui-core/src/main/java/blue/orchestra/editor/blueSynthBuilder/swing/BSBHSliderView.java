@@ -29,7 +29,7 @@ import java.beans.PropertyChangeEvent;
 import javafx.beans.value.ChangeListener;
 import javax.swing.event.ChangeEvent;
 
-public class BSBHSliderView extends BSBObjectView<BSBHSlider> {
+public class BSBHSliderView extends BSBObjectView<BSBHSlider> implements ResizeableView{
 
     private static final int VALUE_DISPLAY_HEIGHT = 30;
 
@@ -198,4 +198,53 @@ public class BSBHSliderView extends BSBObjectView<BSBHSlider> {
         return new Dimension(w, VALUE_DISPLAY_HEIGHT);
     }
 
+    
+     public boolean canResizeWidgetWidth() {
+        return true;
+    }
+
+    public boolean canResizeWidgetHeight() {
+        return false;
+    }
+
+    public int getWidgetMinimumWidth() {
+        int base = bsbObj.isValueDisplayEnabled() ? 50 : 0;
+        return 45 + base;
+    }
+
+    public int getWidgetMinimumHeight() {
+        return -1;
+    }
+
+    public int getWidgetWidth() {
+        int base = bsbObj.isValueDisplayEnabled() ? 50 : 0;
+        return base + bsbObj.getSliderWidth();
+    }
+
+    public void setWidgetWidth(int width) {
+        int base = bsbObj.isValueDisplayEnabled() ? 50 : 0;
+        bsbObj.setSliderWidth(Math.max(45, width - base));
+    }
+
+    public int getWidgetHeight() {
+        return -1;
+    }
+
+    public void setWidgetHeight(int height) {
+    }
+
+    public void setWidgetX(int x) {
+        bsbObj.setX(x);
+    }
+
+    public int getWidgetX() {
+        return bsbObj.getX();
+    }
+
+    public void setWidgetY(int y) {
+    }
+
+    public int getWidgetY() {
+        return -1;
+    }
 }

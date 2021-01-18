@@ -29,7 +29,8 @@ import java.util.List;
 import javafx.beans.value.ChangeListener;
 import javafx.collections.ListChangeListener;
 
-public class BSBVSliderBankView extends BSBObjectView<BSBVSliderBank> {
+public class BSBVSliderBankView extends BSBObjectView<BSBVSliderBank> implements 
+        ResizeableView {
 
     private static final int VALUE_DISPLAY_HEIGHT = 30;
 
@@ -160,5 +161,54 @@ public class BSBVSliderBankView extends BSBObjectView<BSBVSliderBank> {
             }
         }
 
+    }
+    
+     public boolean canResizeWidgetWidth() {
+        return false;
+    }
+
+    public boolean canResizeWidgetHeight() {
+        return true;
+    }
+
+    public int getWidgetMinimumWidth() {
+        return -1;
+    }
+
+    public int getWidgetMinimumHeight() {
+        int base = bsbObj.isValueDisplayEnabled() ? 30 : 0;
+        return 45 + base;
+    }
+
+    public int getWidgetWidth() {
+        return -1;
+    }
+
+    public void setWidgetWidth(int width) {
+    }
+
+    public int getWidgetHeight() {
+        int base = bsbObj.isValueDisplayEnabled() ? 30 : 0;
+        return base + bsbObj.getSliderHeight();
+    }
+
+    public void setWidgetHeight(int height) {
+        int base = bsbObj.isValueDisplayEnabled() ? 30 : 0;
+        bsbObj.setSliderHeight(Math.max(45, height - base));
+    }
+
+    public void setWidgetX(int x) {
+    }
+
+    public int getWidgetX() {
+        return -1;
+    }
+
+    public void setWidgetY(int y) {
+        bsbObj.setY(y);
+    }
+
+    public int getWidgetY() {
+        return bsbObj.getY();
     }
 }
