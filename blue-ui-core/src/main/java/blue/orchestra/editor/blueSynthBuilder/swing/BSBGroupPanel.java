@@ -44,7 +44,7 @@ import javax.swing.border.LineBorder;
 public class BSBGroupPanel extends BSBObjectView<BSBGroup> implements ResizeableView {
 
     JLabel label;
-    JPanel editorPanel = new JPanel(null);
+    JPanel editorPanel;
 
     private BooleanProperty editEnabledProperty = null;
     private BSBEditSelection selection;
@@ -52,8 +52,10 @@ public class BSBGroupPanel extends BSBObjectView<BSBGroup> implements Resizeable
 
     ChangeListener<Color> bgColorListener;
     ChangeListener<Color> borderColorListener;
-    ChangeListener<Boolean> titleEnabledLIstener;
+    ChangeListener<Color> titleColorListener;
+    ChangeListener<Boolean> titleEnabledListener;
     ChangeListener<String> titleListener;
+    ChangeListener<Number> widthHeightListener;
 
 //    SetChangeListener<BSBObject> scl = sce -> {
 //        if (sce.wasAdded()) {
@@ -81,6 +83,22 @@ public class BSBGroupPanel extends BSBObjectView<BSBGroup> implements Resizeable
         label.setOpaque(true);
         label.setHorizontalAlignment(JLabel.CENTER);
 
+        editorPanel = new JPanel(null) {
+            @Override
+            public Dimension getPreferredSize() {
+                int w = 10;
+                int h = 10;
+
+                for (var c : getComponents()) {
+                    w = Math.max(w, c.getX() + c.getWidth());
+                    h = Math.max(w, c.getX() + c.getHeight());
+                }
+
+                return new Dimension(w + 10, h + 10);
+            }
+
+        };
+
 //        label.setSize(label.getWidth(), label.getHeight() + 10);
         add(label, BorderLayout.NORTH);
         add(editorPanel, BorderLayout.CENTER);
@@ -88,15 +106,10 @@ public class BSBGroupPanel extends BSBObjectView<BSBGroup> implements Resizeable
         editorPanel.setMinimumSize(new Dimension(20, 20));
         editorPanel.setLayout(null);
 
-//        label.setPadding(new Insets(2, 8, 2, 8));
-//        editorPane.setPadding(new Insets(0, 9, 9, 0));
-//        containerPane.getChildren().addAll(resizePane, editorPane);
-//        setTop(label);
-//        setCenter(containerPane);
-//        editorPane.setMinSize(20.0, 20.0);
-//        label.setMaxWidth(Double.MAX_VALUE);
         updateBackgroundColor();
         updateBorderColor();
+        updateTitleColor();
+        label.setVisible(bsbObj.isTitleEnabled());
 
         bgColorListener = (obs, old, newVal) -> {
             updateBackgroundColor();
@@ -106,16 +119,21 @@ public class BSBGroupPanel extends BSBObjectView<BSBGroup> implements Resizeable
             updateBorderColor();
         };
 
-        titleEnabledLIstener = (obs, old, newVal) -> {
-            if (newVal) {
-                remove(label);
-            } else {
-                add(label, BorderLayout.NORTH);
-            }
+        titleColorListener = (obs, old, newVal) -> {
+            updateTitleColor();
         };
-        
+
+        titleEnabledListener = (obs, old, newVal) -> {
+            label.setVisible(newVal);
+            setSize(getPreferredSize());
+        };
+
         titleListener = (obs, old, newVal) -> {
             label.setText(newVal);
+        };
+
+        widthHeightListener = (obs, old, newVal) -> {
+            setSize(getPreferredSize());
         };
 
         for (var bsbObj : bsbObj.interfaceItemsProperty()) {
@@ -125,20 +143,21 @@ public class BSBGroupPanel extends BSBObjectView<BSBGroup> implements Resizeable
         label.setText(bsbObj.getGroupName());
         updateBackgroundColor();
         updateBorderColor();
-        setupSizes();
 
+        setSize(getPreferredSize());
     }
 
     @Override
     public void addNotify() {
         super.addNotify();
-        
-        
-        
+
         bsbObj.backgroundColorProperty().addListener(bgColorListener);
         bsbObj.borderColorProperty().addListener(borderColorListener);
-        bsbObj.titleEnabledProperty().addListener(titleEnabledLIstener);
+        bsbObj.labelTextColorProperty().addListener(titleColorListener);
+        bsbObj.titleEnabledProperty().addListener(titleEnabledListener);
         bsbObj.groupNameProperty().addListener(titleListener);
+        bsbObj.widthProperty().addListener(widthHeightListener);
+        bsbObj.heightProperty().addListener(widthHeightListener);
 //        label.textProperty().bind(bsbGroup.groupNameProperty());
 //                bsbGroup.interfaceItemsProperty().addListener(scl);
 //                bsbGroup.backgroundColorProperty().addListener(bgColorListener);
@@ -150,7 +169,7 @@ public class BSBGroupPanel extends BSBObjectView<BSBGroup> implements Resizeable
 //                } else {
 //                    setTop(null);
 //                }
-//                bsbGroup.titleEnabledProperty().addListener(titleEnabledLIstener);
+//                bsbGroup.titleEnabledProperty().addListener(titleEnabledListener);
 //
 //                resizePane.prefWidthProperty().bind(
 //                        Bindings.createDoubleBinding(() -> {
@@ -165,60 +184,59 @@ public class BSBGroupPanel extends BSBObjectView<BSBGroup> implements Resizeable
 //                toolTipListener.changed(null, null, null);
 
     }
-    
+
     @Override
     public void removeNotify() {
         super.removeNotify();
-        
+
         bsbObj.backgroundColorProperty().removeListener(bgColorListener);
         bsbObj.borderColorProperty().removeListener(borderColorListener);
-        bsbObj.titleEnabledProperty().removeListener(titleEnabledLIstener);
+        bsbObj.labelTextColorProperty().removeListener(titleColorListener);
+        bsbObj.titleEnabledProperty().removeListener(titleEnabledListener);
         bsbObj.groupNameProperty().removeListener(titleListener);
-        
+        bsbObj.widthProperty().removeListener(widthHeightListener);
+        bsbObj.heightProperty().removeListener(widthHeightListener);
+
         //          label.textProperty().unbind();
 //                bsbGroup.interfaceItemsProperty().removeListener(scl);
 //                bsbGroup.backgroundColorProperty().removeListener(bgColorListener);
 //                bsbGroup.borderColorProperty().removeListener(borderColorListener);
 //                label.textFillProperty().unbind();
-//                bsbGroup.titleEnabledProperty().removeListener(titleEnabledLIstener);
+//                bsbGroup.titleEnabledProperty().removeListener(titleEnabledListener);
 //                resizePane.prefWidthProperty().unbind();
 //                resizePane.prefHeightProperty().unbind();
 //                tooltip.textProperty().unbind();
 //                bsbGroup.commentProperty().removeListener(toolTipListener);
 //                BSBTooltipUtil.install(label, null);
-
-    }
-    
-    
-
-    private void setupSizes() {
-
-        var labelD = label.getPreferredSize();
-        var width = Math.max(bsbObj.getWidth(), labelD.width);
-        var height = Math.max(bsbObj.getHeight(), labelD.height);
-
-        var components = editorPanel.getComponents();
-
-        if (components.length > 0) {
-            for (var c : components) {
-                var p = c.getPreferredSize();
-                width = Math.max(width, c.getX() + p.width);
-                height = Math.max(height, c.getY() + p.height);
-            }
-
-            // add inset size
-//                d.width += parent.getInsets().right;
-//                d.height += parent.getInsets().bottom;
-            width += 10;
-            height += 10;
-        }
-
-        editorPanel.setSize(new Dimension(width, height));
-        editorPanel.setPreferredSize(new Dimension(width, height));
-
-        setSize(getPreferredSize());
     }
 
+//    private void setupSizes() {
+//
+//        var labelD = label.getPreferredSize();
+//        var width = Math.max(bsbObj.getWidth(), labelD.width);
+//        var height = Math.max(bsbObj.getHeight(), labelD.height);
+//
+//        var components = editorPanel.getComponents();
+//
+//        if (components.length > 0) {
+//            for (var c : components) {
+//                var p = c.getPreferredSize();
+//                width = Math.max(width, c.getX() + p.width);
+//                height = Math.max(height, c.getY() + p.height);
+//            }
+//
+//            // add inset size
+////                d.width += parent.getInsets().right;
+////                d.height += parent.getInsets().bottom;
+//            width += 10;
+//            height += 10;
+//        }
+//
+//        editorPanel.setSize(new Dimension(width, height));
+//        editorPanel.setPreferredSize(new Dimension(width, height));
+//
+//        setSize(getPreferredSize());
+//    }
     private void updateBackgroundColor() {
         editorPanel.setBackground(bsbObj.getBackgroundColor());
     }
@@ -226,6 +244,10 @@ public class BSBGroupPanel extends BSBObjectView<BSBGroup> implements Resizeable
     private void updateBorderColor() {
         label.setBackground(bsbObj.getBorderColor());
         editorPanel.setBorder(new LineBorder(bsbObj.getBorderColor()));
+    }
+
+    private void updateTitleColor() {
+        label.setForeground(bsbObj.getLabelTextColor());
     }
 
     protected void addBSBObject(BSBObject bsbObj) {
@@ -257,6 +279,23 @@ public class BSBGroupPanel extends BSBObjectView<BSBGroup> implements Resizeable
 //        }
     }
 
+    @Override
+    public Dimension getPreferredSize() {
+        int base = label.isVisible() ? label.getHeight() : 0;
+        final Dimension labelPrefSize = label.getPreferredSize();
+        
+        var w = Math.max(bsbObj.getWidth(), editorPanel.getPreferredSize().width);
+
+        w = Math.max(labelPrefSize.width, w);
+        var h = base + Math.max(bsbObj.getHeight(),
+                editorPanel.getPreferredSize().height);
+        if (label.isVisible()) {
+            h += labelPrefSize.height;
+        }
+
+        return new Dimension(w, h);
+    }
+
     public boolean canResizeWidgetWidth() {
         return true;
     }
@@ -266,19 +305,23 @@ public class BSBGroupPanel extends BSBObjectView<BSBGroup> implements Resizeable
     }
 
     public int getWidgetMinimumWidth() {
-//        double base = editorPane.prefWidth(editorPane.getPrefHeight());
-//        if (getTop() == label) {
-//            base = Math.max(label.minWidth(label.getPrefHeight()), base);
-//        }
-//        return Math.max(20, (int) base);
-        return 0;
+        return Math.max(label.getMinimumSize().width, editorPanel.getPreferredSize().width);
+////        double base = editorPane.prefWidth(editorPane.getPrefHeight());
+////        if (getTop() == label) {
+////            base = Math.max(label.minWidth(label.getPrefHeight()), base);
+////        }
+////        return Math.max(20, (int) base);
+//        return 0;
     }
 
     public int getWidgetMinimumHeight() {
+        int base = label.isVisible() ? label.getHeight() : 0;
+        return Math.max(20, base + editorPanel.getPreferredSize().height);
+//        return Math.max(20, base)
 //        double base = (getTop() == label) ? label.minHeight(label.getPrefWidth()) : 0;
 //        return Math.max(20,
 //                (int) (base + editorPane.prefHeight(editorPane.getPrefWidth())));
-        return 0;
+//        return 0;
     }
 
     public int getWidgetWidth() {
@@ -286,16 +329,17 @@ public class BSBGroupPanel extends BSBObjectView<BSBGroup> implements Resizeable
     }
 
     public void setWidgetWidth(int width) {
-        bsbObj.setWidth(width);
+        bsbObj.setWidth(Math.max(20, width));
     }
 
     public int getWidgetHeight() {
-        return (int) getHeight();
+//        double base = label.isVisible() ? label.getHeight() : 0;
+        return getPreferredSize().height;
     }
 
     public void setWidgetHeight(int height) {
-        double base = label.isVisible() ? label.getPreferredSize().height : 0;
-        bsbObj.setHeight(height - (int) base);
+        double base = label.isVisible() ? label.getHeight(): 0;
+        bsbObj.setHeight(Math.max(20, height - (int) base));
     }
 
     public void setWidgetX(int x) {
