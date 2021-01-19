@@ -709,6 +709,7 @@ public class BSBEditPanel extends JLayeredPane implements
         } else {
             this.currentBSBGroup = null;
         }
+        repaint();
     }
 
     public ObservableSet<BSBObject> getSelection() {
