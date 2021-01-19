@@ -41,7 +41,7 @@ import javax.swing.border.LineBorder;
  *
  * @author stevenyi
  */
-public class BSBGroupPanel extends BSBObjectView<BSBGroup> implements ResizeableView{
+public class BSBGroupPanel extends BSBObjectView<BSBGroup> implements ResizeableView {
 
     JLabel label;
     JPanel editorPanel = new JPanel(null);
@@ -49,6 +49,11 @@ public class BSBGroupPanel extends BSBObjectView<BSBGroup> implements Resizeable
     private BooleanProperty editEnabledProperty = null;
     private BSBEditSelection selection;
     private ObservableList<BSBGroup> groupsList;
+
+    ChangeListener<Color> bgColorListener;
+    ChangeListener<Color> borderColorListener;
+    ChangeListener<Boolean> titleEnabledLIstener;
+    ChangeListener<String> titleListener;
 
 //    SetChangeListener<BSBObject> scl = sce -> {
 //        if (sce.wasAdded()) {
@@ -93,20 +98,24 @@ public class BSBGroupPanel extends BSBObjectView<BSBGroup> implements Resizeable
         updateBackgroundColor();
         updateBorderColor();
 
-        ChangeListener bgColorListener = (obs, old, newVal) -> {
+        bgColorListener = (obs, old, newVal) -> {
             updateBackgroundColor();
         };
 
-        ChangeListener borderColorListener = (obs, old, newVal) -> {
+        borderColorListener = (obs, old, newVal) -> {
             updateBorderColor();
         };
 
-        ChangeListener<Boolean> titleEnabledLIstener = (obs, old, newVal) -> {
+        titleEnabledLIstener = (obs, old, newVal) -> {
             if (newVal) {
                 remove(label);
             } else {
                 add(label, BorderLayout.NORTH);
             }
+        };
+        
+        titleListener = (obs, old, newVal) -> {
+            label.setText(newVal);
         };
 
         for (var bsbObj : bsbObj.interfaceItemsProperty()) {
@@ -123,6 +132,13 @@ public class BSBGroupPanel extends BSBObjectView<BSBGroup> implements Resizeable
     @Override
     public void addNotify() {
         super.addNotify();
+        
+        
+        
+        bsbObj.backgroundColorProperty().addListener(bgColorListener);
+        bsbObj.borderColorProperty().addListener(borderColorListener);
+        bsbObj.titleEnabledProperty().addListener(titleEnabledLIstener);
+        bsbObj.groupNameProperty().addListener(titleListener);
 //        label.textProperty().bind(bsbGroup.groupNameProperty());
 //                bsbGroup.interfaceItemsProperty().addListener(scl);
 //                bsbGroup.backgroundColorProperty().addListener(bgColorListener);
@@ -148,8 +164,32 @@ public class BSBGroupPanel extends BSBObjectView<BSBGroup> implements Resizeable
 //                tooltip.textProperty().bind(bsbGroup.commentProperty());
 //                toolTipListener.changed(null, null, null);
 
+    }
+    
+    @Override
+    public void removeNotify() {
+        super.removeNotify();
+        
+        bsbObj.backgroundColorProperty().removeListener(bgColorListener);
+        bsbObj.borderColorProperty().removeListener(borderColorListener);
+        bsbObj.titleEnabledProperty().removeListener(titleEnabledLIstener);
+        bsbObj.groupNameProperty().removeListener(titleListener);
+        
+        //          label.textProperty().unbind();
+//                bsbGroup.interfaceItemsProperty().removeListener(scl);
+//                bsbGroup.backgroundColorProperty().removeListener(bgColorListener);
+//                bsbGroup.borderColorProperty().removeListener(borderColorListener);
+//                label.textFillProperty().unbind();
+//                bsbGroup.titleEnabledProperty().removeListener(titleEnabledLIstener);
+//                resizePane.prefWidthProperty().unbind();
+//                resizePane.prefHeightProperty().unbind();
+//                tooltip.textProperty().unbind();
+//                bsbGroup.commentProperty().removeListener(toolTipListener);
+//                BSBTooltipUtil.install(label, null);
 
     }
+    
+    
 
     private void setupSizes() {
 
@@ -179,41 +219,13 @@ public class BSBGroupPanel extends BSBObjectView<BSBGroup> implements Resizeable
         setSize(getPreferredSize());
     }
 
-    @Override
-    public void removeNotify() {
-        super.removeNotify();
-
-//          label.textProperty().unbind();
-//                bsbGroup.interfaceItemsProperty().removeListener(scl);
-//                bsbGroup.backgroundColorProperty().removeListener(bgColorListener);
-//                bsbGroup.borderColorProperty().removeListener(borderColorListener);
-//                label.textFillProperty().unbind();
-//                bsbGroup.titleEnabledProperty().removeListener(titleEnabledLIstener);
-//                resizePane.prefWidthProperty().unbind();
-//                resizePane.prefHeightProperty().unbind();
-//                tooltip.textProperty().unbind();
-//                bsbGroup.commentProperty().removeListener(toolTipListener);
-//                BSBTooltipUtil.install(label, null);
-    }
-
     private void updateBackgroundColor() {
-
-        editorPanel.setBackground(new Color(0, 0, 0, 0.2f));
-//        editorPanel.setBackground(bsbObj.getBackgroundColor());
-//        resizePane.setBackground(
-//                new Background(
-//                        new BackgroundFill(bsbGroup.getBackgroundColor(), CornerRadii.EMPTY, Insets.EMPTY)));
+        editorPanel.setBackground(bsbObj.getBackgroundColor());
     }
 
     private void updateBorderColor() {
-        label.setBackground(Color.BLACK);
-        editorPanel.setBorder(new LineBorder(Color.BLACK));
-//        label.setBackground(
-//        bsbGroup.getBorderColor()
-//                new Background(
-//                        new BackgroundFill(bsbGroup.getBorderColor(), new CornerRadii(4, 4, 0, 0, false), Insets.EMPTY)));
-//        
-//        resizePane.setBorder(new Border(new BorderStroke(bsbGroup.getBorderColor(), BorderStrokeStyle.SOLID, CornerRadii.EMPTY, new BorderWidths(1))));
+        label.setBackground(bsbObj.getBorderColor());
+        editorPanel.setBorder(new LineBorder(bsbObj.getBorderColor()));
     }
 
     protected void addBSBObject(BSBObject bsbObj) {
@@ -245,7 +257,6 @@ public class BSBGroupPanel extends BSBObjectView<BSBGroup> implements Resizeable
 //        }
     }
 
-
     public boolean canResizeWidgetWidth() {
         return true;
     }
@@ -260,14 +271,14 @@ public class BSBGroupPanel extends BSBObjectView<BSBGroup> implements Resizeable
 //            base = Math.max(label.minWidth(label.getPrefHeight()), base);
 //        }
 //        return Math.max(20, (int) base);
-return 0;
+        return 0;
     }
 
     public int getWidgetMinimumHeight() {
 //        double base = (getTop() == label) ? label.minHeight(label.getPrefWidth()) : 0;
 //        return Math.max(20,
 //                (int) (base + editorPane.prefHeight(editorPane.getPrefWidth())));
-return 0;
+        return 0;
     }
 
     public int getWidgetWidth() {
