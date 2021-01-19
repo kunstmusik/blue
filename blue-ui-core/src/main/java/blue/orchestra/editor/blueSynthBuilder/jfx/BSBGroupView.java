@@ -137,7 +137,7 @@ public class BSBGroupView extends BorderPane implements ResizeableView {
                 bsbGroup.interfaceItemsProperty().addListener(scl);
                 bsbGroup.backgroundColorProperty().addListener(bgColorListener);
                 bsbGroup.borderColorProperty().addListener(borderColorListener);
-                label.textFillProperty().bind(bsbGroup.labelTextColorProperty());
+//                label.textFillProperty().bind(bsbGroup.labelTextColorProperty());
 
                 if (bsbGroup.isTitleEnabled()) {
                     setTop(label);
@@ -163,17 +163,17 @@ public class BSBGroupView extends BorderPane implements ResizeableView {
     }
 
     private void updateBackgroundColor() {
-        resizePane.setBackground(
-                new Background(
-                        new BackgroundFill(bsbGroup.getBackgroundColor(), CornerRadii.EMPTY, Insets.EMPTY)));
+//        resizePane.setBackground(
+//                new Background(
+//                        new BackgroundFill(bsbGroup.getBackgroundColor(), CornerRadii.EMPTY, Insets.EMPTY)));
 
     }
 
     private void updateBorderColor() {
-        label.setBackground(
-                new Background(
-                        new BackgroundFill(bsbGroup.getBorderColor(), new CornerRadii(4, 4, 0, 0, false), Insets.EMPTY)));
-        resizePane.setBorder(new Border(new BorderStroke(bsbGroup.getBorderColor(), BorderStrokeStyle.SOLID, CornerRadii.EMPTY, new BorderWidths(1))));
+//        label.setBackground(
+//                new Background(
+//                        new BackgroundFill(bsbGroup.getBorderColor(), new CornerRadii(4, 4, 0, 0, false), Insets.EMPTY)));
+//        resizePane.setBorder(new Border(new BorderStroke(bsbGroup.getBorderColor(), BorderStrokeStyle.SOLID, CornerRadii.EMPTY, new BorderWidths(1))));
     }
 
     public void initialize(BooleanProperty editEnabledProperty, BSBEditSelection selection,
