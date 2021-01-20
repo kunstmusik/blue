@@ -91,7 +91,7 @@ public class BSBGroupPanel extends BSBObjectView<BSBGroup> implements Resizeable
 
                 for (var c : getComponents()) {
                     w = Math.max(w, c.getX() + c.getWidth());
-                    h = Math.max(w, c.getX() + c.getHeight());
+                    h = Math.max(h, c.getY() + c.getHeight());
                 }
 
                 return new Dimension(w + 10, h + 10);
@@ -133,6 +133,7 @@ public class BSBGroupPanel extends BSBObjectView<BSBGroup> implements Resizeable
         };
 
         widthHeightListener = (obs, old, newVal) -> {
+            editorPanel.setSize(editorPanel.getPreferredSize());
             setSize(getPreferredSize());
         };
 
@@ -289,9 +290,7 @@ public class BSBGroupPanel extends BSBObjectView<BSBGroup> implements Resizeable
         w = Math.max(labelPrefSize.width, w);
         var h = base + Math.max(bsbObj.getHeight(),
                 editorPanel.getPreferredSize().height);
-        if (label.isVisible()) {
-            h += labelPrefSize.height;
-        }
+        
 
         return new Dimension(w, h);
     }
@@ -338,8 +337,8 @@ public class BSBGroupPanel extends BSBObjectView<BSBGroup> implements Resizeable
     }
 
     public void setWidgetHeight(int height) {
-        double base = label.isVisible() ? label.getHeight(): 0;
-        bsbObj.setHeight(Math.max(20, height - (int) base));
+        int base = label.isVisible() ? label.getHeight(): 0;
+        bsbObj.setHeight(Math.max(20, height -   base));
     }
 
     public void setWidgetX(int x) {
