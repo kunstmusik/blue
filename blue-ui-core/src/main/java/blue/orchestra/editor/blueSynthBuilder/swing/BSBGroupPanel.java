@@ -57,13 +57,6 @@ public class BSBGroupPanel extends BSBObjectView<BSBGroup> implements Resizeable
     ChangeListener<String> titleListener;
     ChangeListener<Number> widthHeightListener;
 
-//    SetChangeListener<BSBObject> scl = sce -> {
-//        if (sce.wasAdded()) {
-//            addBSBObject(sce.getElementAdded());
-//        } else {
-//            removeBSBObject(sce.getElementRemoved());
-//        }
-//    };
     public BSBGroupPanel(BSBGroup bsbGroup) {
         super(bsbGroup);
 
@@ -99,7 +92,6 @@ public class BSBGroupPanel extends BSBObjectView<BSBGroup> implements Resizeable
 
         };
 
-//        label.setSize(label.getWidth(), label.getHeight() + 10);
         add(label, BorderLayout.NORTH);
         add(editorPanel, BorderLayout.CENTER);
 
@@ -159,31 +151,6 @@ public class BSBGroupPanel extends BSBObjectView<BSBGroup> implements Resizeable
         bsbObj.groupNameProperty().addListener(titleListener);
         bsbObj.widthProperty().addListener(widthHeightListener);
         bsbObj.heightProperty().addListener(widthHeightListener);
-//        label.textProperty().bind(bsbGroup.groupNameProperty());
-//                bsbGroup.interfaceItemsProperty().addListener(scl);
-//                bsbGroup.backgroundColorProperty().addListener(bgColorListener);
-//                bsbGroup.borderColorProperty().addListener(borderColorListener);
-//                label.textFillProperty().bind(bsbGroup.labelTextColorProperty());
-//
-//                if (bsbGroup.isTitleEnabled()) {
-//                    setTop(label);
-//                } else {
-//                    setTop(null);
-//                }
-//                bsbGroup.titleEnabledProperty().addListener(titleEnabledListener);
-//
-//                resizePane.prefWidthProperty().bind(
-//                        Bindings.createDoubleBinding(() -> {
-//                            return Math.max(bsbGroup.getWidth(), editorPane.prefWidth(USE_PREF_SIZE));
-//                        }, bsbGroup.widthProperty(), editorPane.boundsInParentProperty()));
-//                resizePane.prefHeightProperty().bind(
-//                        Bindings.createDoubleBinding(() -> {
-//                            return Math.max(bsbGroup.getHeight(), editorPane.prefHeight(USE_PREF_SIZE));
-//                        }, bsbGroup.heightProperty(), editorPane.boundsInParentProperty()));
-//                bsbGroup.commentProperty().addListener(toolTipListener);
-//                tooltip.textProperty().bind(bsbGroup.commentProperty());
-//                toolTipListener.changed(null, null, null);
-
     }
 
     @Override
@@ -197,47 +164,8 @@ public class BSBGroupPanel extends BSBObjectView<BSBGroup> implements Resizeable
         bsbObj.groupNameProperty().removeListener(titleListener);
         bsbObj.widthProperty().removeListener(widthHeightListener);
         bsbObj.heightProperty().removeListener(widthHeightListener);
-
-        //          label.textProperty().unbind();
-//                bsbGroup.interfaceItemsProperty().removeListener(scl);
-//                bsbGroup.backgroundColorProperty().removeListener(bgColorListener);
-//                bsbGroup.borderColorProperty().removeListener(borderColorListener);
-//                label.textFillProperty().unbind();
-//                bsbGroup.titleEnabledProperty().removeListener(titleEnabledListener);
-//                resizePane.prefWidthProperty().unbind();
-//                resizePane.prefHeightProperty().unbind();
-//                tooltip.textProperty().unbind();
-//                bsbGroup.commentProperty().removeListener(toolTipListener);
-//                BSBTooltipUtil.install(label, null);
     }
 
-//    private void setupSizes() {
-//
-//        var labelD = label.getPreferredSize();
-//        var width = Math.max(bsbObj.getWidth(), labelD.width);
-//        var height = Math.max(bsbObj.getHeight(), labelD.height);
-//
-//        var components = editorPanel.getComponents();
-//
-//        if (components.length > 0) {
-//            for (var c : components) {
-//                var p = c.getPreferredSize();
-//                width = Math.max(width, c.getX() + p.width);
-//                height = Math.max(height, c.getY() + p.height);
-//            }
-//
-//            // add inset size
-////                d.width += parent.getInsets().right;
-////                d.height += parent.getInsets().bottom;
-//            width += 10;
-//            height += 10;
-//        }
-//
-//        editorPanel.setSize(new Dimension(width, height));
-//        editorPanel.setPreferredSize(new Dimension(width, height));
-//
-//        setSize(getPreferredSize());
-//    }
     private void updateBackgroundColor() {
         editorPanel.setBackground(bsbObj.getBackgroundColor());
     }
@@ -256,33 +184,11 @@ public class BSBGroupPanel extends BSBObjectView<BSBGroup> implements Resizeable
         BSBObjectView objectView = BSBObjectEditorFactory.getView(bsbObj);
         objectView.setLocation(bsbObj.getX(), bsbObj.getY());
         editorPanel.add(objectView);
-
-//        try {
-//            Region objectView = blue.orchestra.editor.blueSynthBuilder.jfx.BSBObjectEditorFactory.getView(bsbObj);
-//            // FIXME
-////            BooleanProperty editEnabledProperty = allowEditing ? bsbInterface.editEnabledProperty() : null;
-//            blue.orchestra.editor.blueSynthBuilder.jfx.BSBObjectViewHolder viewHolder = new blue.orchestra.editor.blueSynthBuilder.jfx.BSBObjectViewHolder(editEnabledProperty,
-//                    selection, groupsList, objectView);
-//            if (objectView instanceof EditModeOnly) {
-//                if (editEnabledProperty != null) {
-//                    viewHolder.visibleProperty().bind(editEnabledProperty);
-//                } else {
-//                    viewHolder.setVisible(false);
-//                }
-//            }
-//            if (bsbObj instanceof BSBGroup) {
-//                BSBGroupView bsbGroupView = (BSBGroupView) objectView;
-//                bsbGroupView.initialize(editEnabledProperty, selection, groupsList);
-//            }
-//            editorPane.getChildren().add(viewHolder);
-//        } catch (Exception e) {
-//            Exceptions.printStackTrace(e);
-//        }
     }
 
     @Override
     public Dimension getPreferredSize() {
-        int base = label.isVisible() ? label.getHeight() : 0;
+        int base = label.isVisible() ? label.getPreferredSize().height : 0;
         final Dimension labelPrefSize = label.getPreferredSize();
         
         var w = Math.max(bsbObj.getWidth(), editorPanel.getPreferredSize().width);
