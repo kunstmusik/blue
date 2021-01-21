@@ -21,6 +21,7 @@ package blue.orchestra.editor.blueSynthBuilder.swing;
 
 import java.awt.CardLayout;
 import java.awt.Color;
+import java.awt.Graphics;
 import java.awt.event.*;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -38,11 +39,14 @@ public class ValuePanel extends JPanel {
     JLabel valueDisplay = new JLabel("0.0");
     JTextField valueField = new JTextField();
     CardLayout cards = new CardLayout();
+    
+    Color bgColor = new Color(20, 29, 45);
 
     public ValuePanel() {
         valueDisplay.setHorizontalAlignment(SwingConstants.CENTER);
-        valueDisplay.setBorder(new LineBorder(Color.gray, 1));
-
+        
+        valueField.setHorizontalAlignment(SwingConstants.CENTER);
+        
         valueDisplay.addMouseListener(new MouseAdapter() {
 
             @Override
@@ -96,4 +100,13 @@ public class ValuePanel extends JPanel {
         firePropertyChange("value", valueDisplay.getText(), valueField.getText());
         cards.show(this, "display");
     }
+
+    @Override
+    public void paintComponent(Graphics g) {
+        g.setColor(bgColor);
+        
+        g.fillRoundRect(0, 0, getWidth(), getHeight(), 4, 4);
+    }
+    
+    
 }
