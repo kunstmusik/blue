@@ -89,6 +89,7 @@ public class BSBEditPanel extends JLayeredPane implements
     private final SetChangeListener<BSBObject> scl;
 
     ObservableList<BSBGroup> groupsList = FXCollections.observableArrayList();
+
     BSBGroup currentBSBGroup = null;
 
     ChangeListener<Boolean> editEnabledListener = (obs, old, newVal) -> {
@@ -714,6 +715,10 @@ public class BSBEditPanel extends JLayeredPane implements
 
     public ObservableSet<BSBObject> getSelection() {
         return selection;
+    }
+
+    public ObservableList<BSBGroup> getGroupsList() {
+        return groupsList;
     }
 
 }

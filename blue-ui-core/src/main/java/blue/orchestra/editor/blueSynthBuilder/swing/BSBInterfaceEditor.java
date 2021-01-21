@@ -53,6 +53,7 @@ public class BSBInterfaceEditor extends JComponent implements PresetListener {
     JTabbedPane rightTabs;
 
     PresetsPanel presets = new PresetsPanel();
+    BreadCrumbBar breadCrumbBar; 
 
     JCheckBox editBox;
 
@@ -61,6 +62,7 @@ public class BSBInterfaceEditor extends JComponent implements PresetListener {
 
     volatile boolean isUpdating = false;
     ChangeListener<Boolean> editEnabledListener;
+    
 
     public BSBInterfaceEditor(BSBObjectEntry[] bsbObjectEntries,
             boolean showAutomatable) {
@@ -98,30 +100,29 @@ public class BSBInterfaceEditor extends JComponent implements PresetListener {
         gridSettingsEditPanel = new GridSettingsEditPanel();
         rightTabs.add("Grid", gridSettingsEditPanel);
 
-//        rightBar.add(new JLabel(BlueSystem
-//                .getString("instrument.bsb.objectProperties")),
-//                BorderLayout.NORTH);
-//        rightBar.add(bsbPropSheet, BorderLayout.CENTER);
-//        rightBar.add(tabs, BorderLayout.CENTER);
-//        rightBar.add(alignPanel, BorderLayout.SOUTH);
-//        rightBar.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
         this.setLayout(new BorderLayout());
         this.add(topBar, BorderLayout.NORTH);
 
         splitPane = new JSplitPane();
         splitPane.setLeftComponent(editScrollPane);
         splitPane.setRightComponent(rightTabs);
+        
+        breadCrumbBar = new BreadCrumbBar(bsbEditPanel.getGroupsList());
 
-        this.add(splitPane, BorderLayout.CENTER);
+        JPanel middle = new JPanel(new BorderLayout());
+        middle.add(breadCrumbBar, BorderLayout.NORTH);
+        middle.add(splitPane, BorderLayout.CENTER);
+        
+        this.add(middle, BorderLayout.CENTER);
 
         bsbPropSheet.setPreferredSize(new Dimension(250, 30));
 
         initActions();
 
-        editEnabledListener = (obs, old, newVal) -> setupSplit();
+        editEnabledListener = (obs, old, newVal) -> setupEditInterface();
     }
 
-    private void setupSplit() {
+    private void setupEditInterface() {
         if (gInterface == null) {
             return;
         }
@@ -141,6 +142,8 @@ public class BSBInterfaceEditor extends JComponent implements PresetListener {
 //            splitPane.setDividerLocation(1.0);
             splitPane.setDividerSize(0);
         }
+        
+        breadCrumbBar.setVisible(gInterface.isEditEnabled());
     }
 
     @Override
@@ -188,7 +191,7 @@ public class BSBInterfaceEditor extends JComponent implements PresetListener {
             this.gInterface.editEnabledProperty().addListener(editEnabledListener);
             editBox.setSelected(this.gInterface.isEditEnabled());
         }
-        setupSplit();
+        setupEditInterface();
 
         bsbPropSheet.clear();
 
