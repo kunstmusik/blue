@@ -297,22 +297,26 @@ public class Knob extends JComponent {
         
         // check this
         hitArc.setFrame(0, 0, width, height);
+        
+        g2d.setStroke(new BasicStroke(1.0f));        
 
         // DRAW TRACK
-        Arc2D.Double path = new Arc2D.Double(0, 0, size, size, START, -LENGTH, Arc2D.PIE);
-
+        Arc2D.Double trackPath = new Arc2D.Double(0, 0, size, size, START, -LENGTH, Arc2D.PIE);
         g2d.setPaint(TRACK_BACKGROUND_COLOR);
-        g2d.fill(path);
-        g2d.setPaint(Color.BLACK);
-        g2d.draw(path);
+        g2d.fill(trackPath);
         
         // DRAW TRACK VALUE
-        path.setAngleExtent(getValue() * -LENGTH);
+        Arc2D.Double path = new Arc2D.Double(0, 0, size, size, START, -LENGTH * getValue(), Arc2D.PIE);
+
         g2d.setPaint(trackColor);
         g2d.fill(path);
-        g2d.setPaint(trackColor.brighter()  );
-        g2d.draw(path);
-        
+//        g2d.setPaint(trackColor.brighter()  );
+//        g2d.draw(path);
+
+        // DRAW TRACK BORDER
+        g2d.setPaint(Color.BLACK);
+        g2d.draw(trackPath);
+
         
         // DRAW KNOB CENTER
         g2d.setPaint(Color.BLACK);
