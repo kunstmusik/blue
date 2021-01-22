@@ -22,13 +22,22 @@ package blue.orchestra.editor.blueSynthBuilder.swing;
 import blue.orchestra.blueSynthBuilder.BSBTextField;
 import blue.ui.utilities.SimpleDocumentListener;
 import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Graphics;
+import javafx.beans.value.ChangeListener;
 import javax.swing.JTextField;
+import javax.swing.border.EmptyBorder;
 import javax.swing.event.DocumentEvent;
 
 public class BSBTextFieldView extends BSBObjectView<BSBTextField> implements ResizeableView{
 
     JTextField textField = new JTextField();
 
+    ChangeListener<Number> textWidthListener;
+    
+    public static Color BG_COLOR = new Color(20, 29, 45);
+
+    
     public BSBTextFieldView(final BSBTextField bsbText) {
         super(bsbText);
         
@@ -36,7 +45,11 @@ public class BSBTextFieldView extends BSBObjectView<BSBTextField> implements Res
         this.add(textField);
 
         textField.setText(bsbText.getValue());
-
+        textField.setOpaque(false);
+        var insets = textField.getBorder().getBorderInsets(this);
+        textField.setBorder(null);
+        textField.setBorder(new EmptyBorder(insets));
+        
         textField.getDocument().addDocumentListener(
                 new SimpleDocumentListener() {
 
@@ -50,25 +63,34 @@ public class BSBTextFieldView extends BSBObjectView<BSBTextField> implements Res
 
                 });
 
+        textWidthListener = (obs, old, newVal) -> {
+            this.setSize(bsbText.getTextFieldWidth(), (int) textField
+                .getPreferredSize().getHeight());
+        };
+        
         this.setSize(bsbText.getTextFieldWidth(), (int) textField
                 .getPreferredSize().getHeight());
     }
-//
-//    public int getTextFieldWidth() {
-//        return bsbText.getTextFieldWidth();
-//    }
 
-    public void setTextFieldWidth(int width) {
-        int w = width;
-        if (w < 5) {
-            w = 5;
-        }
-
-        bsbObj.setTextFieldWidth(w);
-
-        this.setSize(w, this.getHeight());
+    @Override
+    public void addNotify() {
+        super.addNotify(); 
+        bsbObj.textFieldWidthProperty().addListener(textWidthListener);
     }
 
+    @Override
+    public void removeNotify() {
+        super.removeNotify(); 
+        bsbObj.textFieldWidthProperty().removeListener(textWidthListener);
+    }
+
+    public void paintComponent(Graphics g) {
+        g.setColor(BG_COLOR);
+        
+        g.fillRoundRect(0, 0, getWidth(), getHeight(), 4, 4);
+    }
+    
+    
     public boolean canResizeWidgetWidth() {
         return true;
     }

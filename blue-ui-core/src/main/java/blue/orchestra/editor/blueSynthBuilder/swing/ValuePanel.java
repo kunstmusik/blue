@@ -36,17 +36,17 @@ import javax.swing.border.LineBorder;
  */
 public class ValuePanel extends JPanel {
 
+    private static final Color BG_COLOR = new Color(20, 29, 45);
+
     JLabel valueDisplay = new JLabel("0.0");
     JTextField valueField = new JTextField();
     CardLayout cards = new CardLayout();
-    
-    Color bgColor = new Color(20, 29, 45);
 
     public ValuePanel() {
         valueDisplay.setHorizontalAlignment(SwingConstants.CENTER);
-        
+
         valueField.setHorizontalAlignment(SwingConstants.CENTER);
-        
+
         valueDisplay.addMouseListener(new MouseAdapter() {
 
             @Override
@@ -80,7 +80,7 @@ public class ValuePanel extends JPanel {
         valueField.setText(value);
         valueDisplay.setToolTipText(value);
     }
-    
+
     public String getPendingValue() {
         return valueField.getText();
     }
@@ -103,10 +103,9 @@ public class ValuePanel extends JPanel {
 
     @Override
     public void paintComponent(Graphics g) {
-        g.setColor(bgColor);
-        
+        g.setColor(BG_COLOR);
+
         g.fillRoundRect(0, 0, getWidth(), getHeight(), 4, 4);
     }
-    
-    
+
 }
