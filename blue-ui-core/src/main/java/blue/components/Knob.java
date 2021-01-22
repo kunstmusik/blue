@@ -298,7 +298,7 @@ public class Knob extends JComponent {
         // check this
         hitArc.setFrame(0, 0, width, height);
         
-        g2d.setStroke(new BasicStroke(1.0f));        
+        g2d.setStroke(new BasicStroke(0.5f));        
 
         // DRAW TRACK
         Arc2D.Double trackPath = new Arc2D.Double(0, 0, size, size, START, -LENGTH, Arc2D.PIE);
@@ -343,7 +343,7 @@ public class Knob extends JComponent {
         int notchWidth = size / 9;
         int notchAdj = notchWidth / 2;
         var len = knobCenterSize / 2 + notchWidth;
-        
+        g2d.setStroke(new BasicStroke(1.0f));        
         g2d.fillRoundRect(-notchAdj, -notchAdj, 
                len, notchWidth, notchWidth, notchWidth);
         
