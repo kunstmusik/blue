@@ -26,33 +26,29 @@ import blue.orchestra.blueSynthBuilder.BSBSubChannelDropdown;
 import blue.projects.BlueProjectManager;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Vector;
+import javafx.beans.value.ChangeListener;
 import javax.swing.ComboBoxModel;
 import javax.swing.JComboBox;
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
-import org.openide.awt.DropDownButtonFactory;
 
 /**
  * @author Steven Yi
  */
-public class BSBSubChannelDropdownView extends BSBObjectView<BSBSubChannelDropdown> implements
-        PropertyChangeListener {
+public class BSBSubChannelDropdownView extends BSBObjectView<BSBSubChannelDropdown> {
 
     SubChannelComboBoxModel model;
     JComboBox comboBox;
     ActionListener updateIndexListener;
     boolean updating = false;
+    private ChangeListener<String> channelListener;
 
     public BSBSubChannelDropdownView(BSBSubChannelDropdown dropdown) {
         super(dropdown);
-        
+
         this.setLayout(null);
 
         model = new SubChannelComboBoxModel();
@@ -74,42 +70,28 @@ public class BSBSubChannelDropdownView extends BSBObjectView<BSBSubChannelDropdo
 
         revalidate();
 
-        
+        channelListener = (obs, old, newVal) -> {
+            updating = true;
+            comboBox.setSelectedItem(newVal);
+            updating = false;
+        };
+
     }
 
     @Override
     public void addNotify() {
-        super.addNotify(); 
-        
-        bsbObj.addPropertyChangeListener(this);
+        super.addNotify();
+
+        bsbObj.channelOutputProperty().addListener(channelListener);
     }
 
     @Override
     public void removeNotify() {
-        super.removeNotify(); 
-        bsbObj.removePropertyChangeListener(this);
-    }
-    
-    
+        super.removeNotify();
+        bsbObj.channelOutputProperty().removeListener(channelListener);
 
-//    @Override
-//    public void cleanup() {
-//        model.clearListeners();
-//        dropdown.removePropertyChangeListener(this);
-//    }
-
-    @Override
-    public void propertyChange(PropertyChangeEvent evt) {
-        if (evt.getSource() == this.bsbObj) {
-            if (evt.getPropertyName().equals("channelOutput")) {
-                if (evt.getOldValue().equals(comboBox.getSelectedItem())) {
-                    updating = true;
-                    comboBox.setSelectedItem(evt.getNewValue());
-                    updating = false;
-                }
-            }
-        }
     }
+
 }
 
 class SubChannelComboBoxModel implements ComboBoxModel, ChannelListListener {
