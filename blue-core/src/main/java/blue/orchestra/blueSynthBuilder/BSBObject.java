@@ -66,8 +66,6 @@ public abstract class BSBObject implements DeepCopyable<BSBObject> {
         comment = new SimpleStringProperty(bsbObj.getComment());
     }
 
-    transient Vector listeners = null;
-
     transient PropertyChangeSupport propListeners = null;
 
     transient UniqueNameManager unm = null;
@@ -225,30 +223,6 @@ public abstract class BSBObject implements DeepCopyable<BSBObject> {
     }
 
     // EVENT LISTENERS
-
-    public void addListener(BSBObjectListener listener) {
-        if (listeners == null) {
-            listeners = new Vector();
-        }
-
-        listeners.add(listener);
-    }
-
-    public void removeListener(BSBObjectListener listener) {
-        if (listeners != null) {
-            listeners.remove(listener);
-        }
-    }
-
-    protected void fireBSBObjectChanged() {
-        if (listeners != null) {
-            Iterator it = listeners.iterator();
-            while (it.hasNext()) {
-                BSBObjectListener currListener = (BSBObjectListener) it.next();
-                currListener.bsbObjectChanged(this);
-            }
-        }
-    }
 
     public void addPropertyChangeListener(PropertyChangeListener pcl) {
         if (propListeners == null) {

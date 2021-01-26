@@ -37,6 +37,7 @@ import javax.swing.ComboBoxModel;
 import javax.swing.JComboBox;
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
+import org.openide.awt.DropDownButtonFactory;
 
 /**
  * @author Steven Yi
@@ -44,7 +45,6 @@ import javax.swing.event.ListDataListener;
 public class BSBSubChannelDropdownView extends BSBObjectView<BSBSubChannelDropdown> implements
         PropertyChangeListener {
 
-    BSBSubChannelDropdown dropdown = null;
     SubChannelComboBoxModel model;
     JComboBox comboBox;
     ActionListener updateIndexListener;
@@ -74,8 +74,23 @@ public class BSBSubChannelDropdownView extends BSBObjectView<BSBSubChannelDropdo
 
         revalidate();
 
-        dropdown.addPropertyChangeListener(this);
+        
     }
+
+    @Override
+    public void addNotify() {
+        super.addNotify(); 
+        
+        bsbObj.addPropertyChangeListener(this);
+    }
+
+    @Override
+    public void removeNotify() {
+        super.removeNotify(); 
+        bsbObj.removePropertyChangeListener(this);
+    }
+    
+    
 
 //    @Override
 //    public void cleanup() {
@@ -85,7 +100,7 @@ public class BSBSubChannelDropdownView extends BSBObjectView<BSBSubChannelDropdo
 
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
-        if (evt.getSource() == this.dropdown) {
+        if (evt.getSource() == this.bsbObj) {
             if (evt.getPropertyName().equals("channelOutput")) {
                 if (evt.getOldValue().equals(comboBox.getSelectedItem())) {
                     updating = true;

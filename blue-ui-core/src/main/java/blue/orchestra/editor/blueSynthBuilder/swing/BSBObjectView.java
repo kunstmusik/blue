@@ -79,13 +79,4 @@ public abstract class BSBObjectView<T extends BSBObject> extends JComponent {
         }
     }
 
-    public void addBSBObjectListener(BSBObjectListener listener) {
-        bsbObj.addListener(listener);
-    }
-
-    public void removeBSBObjectListener(BSBObjectListener listener) {
-        bsbObj.removeListener(listener);
-    }
-
-//    public abstract void cleanup();
 }

@@ -250,7 +250,6 @@ public class BSBDropdown extends AutomatableBSBObject implements
 
     public final void setRandomizable(boolean value) {
         randomizable.set(value);
-        fireBSBObjectChanged();
     }
 
     @Override
