@@ -59,6 +59,7 @@ import javax.swing.ActionMap;
 import javax.swing.InputMap;
 import javax.swing.JLayeredPane;
 import javax.swing.KeyStroke;
+import jdk.net.Sockets;
 
 /**
  * @author steven
@@ -112,7 +113,7 @@ public class BSBEditPanel extends JLayeredPane implements
     }
 
     public BSBEditPanel(BSBObjectEntry[] bsbObjectEntries, boolean allowEditing) {
-
+        
         this.selection = FXCollections.observableSet();
         this.allowEditing = allowEditing;
 
@@ -720,5 +721,5 @@ public class BSBEditPanel extends JLayeredPane implements
     public ObservableList<BSBGroup> getGroupsList() {
         return groupsList;
     }
-
+    
 }

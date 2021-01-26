@@ -103,8 +103,8 @@ public class ValuePanel extends JPanel {
 
     @Override
     public void paintComponent(Graphics g) {
+        super.paintComponent(g);
         g.setColor(BG_COLOR);
-
         g.fillRoundRect(0, 0, getWidth(), getHeight(), 4, 4);
     }
 

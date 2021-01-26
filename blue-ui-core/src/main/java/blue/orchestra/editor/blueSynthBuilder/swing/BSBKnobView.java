@@ -165,7 +165,7 @@ public class BSBKnobView extends BSBObjectView<BSBKnob> implements ResizeableVie
         bsbObj.labelEnabledProperty().addListener(labelEnabledListener);
         bsbObj.labelProperty().addListener(labelListener);
 
-//        setSize(getPreferredSize());
+        setSize(getPreferredSize());
 //        revalidate();
 //        repaint();
     }
@@ -291,5 +291,5 @@ public class BSBKnobView extends BSBObjectView<BSBKnob> implements ResizeableVie
 
     public int getWidgetY() {
         return bsbObj.getY();
-    }
+    }    
 }

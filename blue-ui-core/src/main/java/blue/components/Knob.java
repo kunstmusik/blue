@@ -64,8 +64,8 @@ public class Knob extends JComponent {
 
     // private final static Dimension PREF_SIZE = new Dimension(80, 80);
     private final static int DEFAULT_PREF_WIDTH = 80;
-    
-    private static final Color TRACK_BACKGROUND_COLOR = new Color(0,0,0, 64);
+
+    private static final Color TRACK_BACKGROUND_COLOR = new Color(0, 0, 0, 64);
 
     // Set the antialiasing to get the right look!
     private final static RenderingHints AALIAS = new RenderingHints(
@@ -88,9 +88,8 @@ public class Knob extends JComponent {
     private Color focusColor;
 
     private double lastAng;
-    
+
     private Color trackColor = new Color(63, 102, 150);
-    
 
     public Knob() {
         createKnob(DEFAULT_PREF_WIDTH);
@@ -198,6 +197,7 @@ public class Knob extends JComponent {
                 repaint();
             }
         });
+        
     }
 
     public void setDragType(int type) {
@@ -278,33 +278,29 @@ public class Knob extends JComponent {
 
     // Paint the DKnob
     @Override
-    public void paint(Graphics g) {
+    public void paintComponent(Graphics g) {
         Graphics2D g2d = (Graphics2D) g;
         g2d.addRenderingHints(AALIAS);
         final var initialTransform = g2d.getTransform();
-        
-        
+
         int width = getWidth();
         int height = getHeight();
         size = Math.min(width, height) - 2;
         middle = size / 2;
-        
-        g2d.translate((width - size) / 2, (height - size)/ 2);
+        // check this
+        hitArc.setFrame(0, 0, width, height);
 
+        g2d.translate((width - size) / 2, (height - size) / 2);
 
 //        g.setColor(getBackground());
 //        g.fillRect(0, 0, width, height);
-        
-        // check this
-        hitArc.setFrame(0, 0, width, height);
-        
-        g2d.setStroke(new BasicStroke(0.5f));        
+        g2d.setStroke(new BasicStroke(0.5f));
 
         // DRAW TRACK
         Arc2D.Double trackPath = new Arc2D.Double(0, 0, size, size, START, -LENGTH, Arc2D.PIE);
         g2d.setPaint(TRACK_BACKGROUND_COLOR);
         g2d.fill(trackPath);
-        
+
         // DRAW TRACK VALUE
         Arc2D.Double path = new Arc2D.Double(0, 0, size, size, START, -LENGTH * getValue(), Arc2D.PIE);
 
@@ -317,45 +313,42 @@ public class Knob extends JComponent {
         g2d.setPaint(Color.BLACK);
         g2d.draw(trackPath);
 
-        
         // DRAW KNOB CENTER
         g2d.setPaint(Color.BLACK);
-        
-        int knobCenterSize = (int)(size * .65);
-        
-        g2d.fillOval(middle - knobCenterSize /2, middle - knobCenterSize/2, knobCenterSize, knobCenterSize);
+
+        int knobCenterSize = (int) (size * .65);
+
+        g2d.fillOval(middle - knobCenterSize / 2, middle - knobCenterSize / 2, knobCenterSize, knobCenterSize);
 
         /* VALUE INDICATOR */
         g2d.translate(middle, middle);
         final var extent = getValue() * .75;
         g2d.rotate(Math.PI * 2.0 * (-.625 + extent));
-        g2d.setStroke(new BasicStroke(2.0f));        
-        
+        g2d.setStroke(new BasicStroke(2.0f));
+
         // DRAW VALUE LINE
         g2d.setPaint(trackColor.brighter().brighter());
-        g2d.drawLine(middle/2, 0, middle, 0);
-        
+        g2d.drawLine(middle / 2, 0, middle, 0);
+
         // DRAW KNOB VALUE INDICATOR LINE
         g2d.setPaint(trackColor);
-       
+
 //        var len = (int)(size * .35);
-        
         int notchWidth = size / 9;
         int notchAdj = notchWidth / 2;
         var len = knobCenterSize / 2 + notchWidth;
-        g2d.setStroke(new BasicStroke(1.0f));        
-        g2d.fillRoundRect(-notchAdj, -notchAdj, 
-               len, notchWidth, notchWidth, notchWidth);
-        
+        g2d.setStroke(new BasicStroke(1.0f));
+        g2d.fillRoundRect(-notchAdj, -notchAdj,
+                len, notchWidth, notchWidth, notchWidth);
+
         g2d.setPaint(Color.BLACK);
-        
-        g2d.drawRoundRect(-notchAdj, -notchAdj, 
-               len, notchWidth, notchWidth, notchWidth);
-        
+
+        g2d.drawRoundRect(-notchAdj, -notchAdj,
+                len, notchWidth, notchWidth, notchWidth);
+
         // restore state
-                
         g2d.setTransform(initialTransform);
-                
+
         return;
 
 //        // Paint the "markers"

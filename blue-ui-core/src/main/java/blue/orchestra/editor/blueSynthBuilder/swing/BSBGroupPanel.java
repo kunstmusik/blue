@@ -22,15 +22,18 @@ package blue.orchestra.editor.blueSynthBuilder.swing;
 import blue.orchestra.blueSynthBuilder.BSBGroup;
 import blue.orchestra.blueSynthBuilder.BSBObject;
 import blue.orchestra.editor.blueSynthBuilder.jfx.BSBEditSelection;
+import java.awt.AlphaComposite;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.Insets;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.collections.ObservableList;
 import javax.swing.JLabel;
-import javax.swing.JPanel;
+import javax.swing.JLayeredPane;
 import javax.swing.border.LineBorder;
 
 /**
@@ -44,7 +47,7 @@ import javax.swing.border.LineBorder;
 public class BSBGroupPanel extends BSBObjectView<BSBGroup> implements ResizeableView {
 
     JLabel label;
-    JPanel editorPanel;
+    JLayeredPane editorPanel;
 
     private BooleanProperty editEnabledProperty = null;
     private BSBEditSelection selection;
@@ -76,7 +79,7 @@ public class BSBGroupPanel extends BSBObjectView<BSBGroup> implements Resizeable
         label.setOpaque(true);
         label.setHorizontalAlignment(JLabel.CENTER);
 
-        editorPanel = new JPanel(null) {
+        editorPanel = new JLayeredPane() {
             @Override
             public Dimension getPreferredSize() {
                 int w = 10;
@@ -90,6 +93,18 @@ public class BSBGroupPanel extends BSBObjectView<BSBGroup> implements Resizeable
                 return new Dimension(w + 10, h + 10);
             }
 
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g); 
+                
+//                Graphics2D g2d = (Graphics2D) g.create();
+//                g2d.setComposite(AlphaComposite.SrcOver.derive(getAlpha()));
+                g.setColor(getBackground());
+                g.fillRect(0, 0, getWidth(), getHeight());
+//                g2d.dispose();
+            }
+            
+            
         };
 
         add(label, BorderLayout.NORTH);
@@ -97,6 +112,7 @@ public class BSBGroupPanel extends BSBObjectView<BSBGroup> implements Resizeable
 
         editorPanel.setMinimumSize(new Dimension(20, 20));
         editorPanel.setLayout(null);
+        editorPanel.setOpaque(false);
 
         updateBackgroundColor();
         updateBorderColor();
@@ -190,13 +206,12 @@ public class BSBGroupPanel extends BSBObjectView<BSBGroup> implements Resizeable
     public Dimension getPreferredSize() {
         int base = label.isVisible() ? label.getPreferredSize().height : 0;
         final Dimension labelPrefSize = label.getPreferredSize();
-        
+
         var w = Math.max(bsbObj.getWidth(), editorPanel.getPreferredSize().width);
 
         w = Math.max(labelPrefSize.width, w);
         var h = base + Math.max(bsbObj.getHeight(),
                 editorPanel.getPreferredSize().height);
-        
 
         return new Dimension(w, h);
     }
@@ -243,8 +258,8 @@ public class BSBGroupPanel extends BSBObjectView<BSBGroup> implements Resizeable
     }
 
     public void setWidgetHeight(int height) {
-        int base = label.isVisible() ? label.getHeight(): 0;
-        bsbObj.setHeight(Math.max(20, height -   base));
+        int base = label.isVisible() ? label.getHeight() : 0;
+        bsbObj.setHeight(Math.max(20, height - base));
     }
 
     public void setWidgetX(int x) {
