@@ -22,12 +22,13 @@ package blue.orchestra.editor.blueSynthBuilder.swing;
 import java.awt.CardLayout;
 import java.awt.Color;
 import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
 import java.awt.event.*;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
-import javax.swing.border.LineBorder;
 
 /**
  * Panel that switches between a label and a text field for editing
@@ -41,6 +42,14 @@ public class ValuePanel extends JPanel {
     JLabel valueDisplay = new JLabel("0.0");
     JTextField valueField = new JTextField();
     CardLayout cards = new CardLayout();
+
+    private final static RenderingHints AALIAS;
+    
+    static {
+        AALIAS = new RenderingHints(
+            RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        AALIAS.put(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+    }
 
     public ValuePanel() {
         valueDisplay.setHorizontalAlignment(SwingConstants.CENTER);
@@ -73,6 +82,8 @@ public class ValuePanel extends JPanel {
         this.add(valueDisplay, "display");
         this.add(valueField, "edit");
         cards.show(this, "display");
+
+        setOpaque(false);
     }
 
     public void setValue(String value) {
@@ -103,9 +114,16 @@ public class ValuePanel extends JPanel {
 
     @Override
     public void paintComponent(Graphics g) {
-        super.paintComponent(g);
-        g.setColor(BG_COLOR);
-        g.fillRoundRect(0, 0, getWidth(), getHeight(), 4, 4);
+//        super.paintComponent(g);
+//        if (getParent() != null) {
+//            g.setColor(getParent().getBackground());
+//        }
+//        g.fillRect(0, 0, getWidth(), getHeight());
+
+        Graphics2D g2d = (Graphics2D)g;
+        g2d.setRenderingHints(AALIAS);
+        g2d.setColor(BG_COLOR);
+        g2d.fillRoundRect(0, 0, getWidth(), getHeight(), 6, 6);
     }
 
 }
