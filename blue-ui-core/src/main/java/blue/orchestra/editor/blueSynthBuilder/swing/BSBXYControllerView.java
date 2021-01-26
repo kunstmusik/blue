@@ -19,7 +19,6 @@
  */
 package blue.orchestra.editor.blueSynthBuilder.swing;
 
-import blue.components.lines.LineBoundaryDialog;
 import blue.orchestra.blueSynthBuilder.BSBXYController;
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -29,11 +28,9 @@ import java.awt.Graphics;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.text.MessageFormat;
+import javafx.beans.value.ChangeListener;
 import javax.swing.JLabel;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 
 public class BSBXYControllerView extends BSBObjectView<BSBXYController>
@@ -45,6 +42,10 @@ public class BSBXYControllerView extends BSBObjectView<BSBXYController>
     private final DrawPanel drawPanel;
 
     JLabel label = new JLabel();
+
+    ChangeListener<Number> labelListener;
+    ChangeListener<Number> widthHeightListener;
+    ChangeListener<Boolean> valueDisplayEnabledListener;
 
     public BSBXYControllerView(BSBXYController controller) {
         super(controller);
@@ -80,16 +81,47 @@ public class BSBXYControllerView extends BSBObjectView<BSBXYController>
                 controller.getHeight()));
         drawPanel.setBackground(Color.BLACK);
 
-//        this.controller.addPropertyChangeListener(this);
+        labelListener = (obs, old, newVal) -> {
+            updateLabel();
+            drawPanel.repaint();
+        };
+        widthHeightListener = (obs, old, newVal) -> {
+            updateSize();
+            drawPanel.repaint();
+        };
+        valueDisplayEnabledListener = (obs, old, newVal) -> {
+            label.setVisible(newVal);
+            updateSize();
+            revalidate();
+        };
+
         updateLabel();
 
         updateSize();
     }
 
-//    @Override
-//    public void cleanup() {
-//        this.controller.removePropertyChangeListener(this);
-//    }
+    @Override
+    public void addNotify() {
+        super.addNotify();
+
+        bsbObj.widthProperty().addListener(widthHeightListener);
+        bsbObj.heightProperty().addListener(widthHeightListener);
+        bsbObj.xValueProperty().valueProperty().addListener(labelListener);
+        bsbObj.yValueProperty().valueProperty().addListener(labelListener);
+        bsbObj.valueDisplayEnabledProperty().addListener(valueDisplayEnabledListener);
+    }
+
+    @Override
+    public void removeNotify() {
+        super.removeNotify();
+
+        bsbObj.widthProperty().removeListener(widthHeightListener);
+        bsbObj.heightProperty().removeListener(widthHeightListener);
+        bsbObj.xValueProperty().valueProperty().removeListener(labelListener);
+        bsbObj.yValueProperty().valueProperty().removeListener(labelListener);
+        bsbObj.valueDisplayEnabledProperty().removeListener(valueDisplayEnabledListener);
+    }
+
     protected void setValues(int x, int y) {
 
         int newX = x;
@@ -128,8 +160,10 @@ public class BSBXYControllerView extends BSBObjectView<BSBXYController>
         drawPanel.setPreferredSize(d);
         drawPanel.setSize(d);
 
-        d = new Dimension(bsbObj.getWidth(), bsbObj.getHeight()
-                + label.getHeight());
+        if (label.isVisible()) {
+            d = new Dimension(bsbObj.getWidth(), bsbObj.getHeight()
+                    + label.getHeight());
+        }
 
         this.setSize(d);
         this.setPreferredSize(d);
@@ -142,150 +176,7 @@ public class BSBXYControllerView extends BSBObjectView<BSBXYController>
         label.setText(labelMessage.format(vals));
     }
 
-//    public int getViewWidth() {
-//        return controller.getWidth();
-//    }
-//
-//    public void setViewWidth(int width) {
-//        if (width <= 0) {
-//            return;
-//        }
-//
-//        controller.setWidth(width);
-//    }
-//
-//    public int getViewHeight() {
-//        return controller.getHeight();
-//    }
-//
-//    public void setViewHeight(int height) {
-//        if (height <= 0) {
-//            return;
-//        }
-//
-//        controller.setHeight(height);
-//    }
-//
-//    public float getXMin() {
-//        return controller.getXMin();
-//    }
-//
-//    public void setXMin(float value) {
-//        if (value >= controller.getXMax()) {
-//            JOptionPane.showMessageDialog(null, "Error: Min value "
-//                    + "can not be set greater or equals to Max value.",
-//                    "Error", JOptionPane.ERROR_MESSAGE);
-//            return;
-//        }
-//
-//        String retVal = LineBoundaryDialog.getLinePointMethod();
-//
-//        if (retVal == null) {
-//            return;
-//        }
-//
-//        controller.setXMin(value, (retVal == LineBoundaryDialog.TRUNCATE));
-//    }
-//
-//    public float getXMax() {
-//        return controller.getXMax();
-//    }
-//
-//    public void setXMax(float value) {
-//        if (value <= controller.getXMin()) {
-//            JOptionPane.showMessageDialog(null, "Error: Max value "
-//                    + "can not be set less than or " + "equal to Min value.",
-//                    "Error", JOptionPane.ERROR_MESSAGE);
-//
-//            return;
-//        }
-//
-//        String retVal = LineBoundaryDialog.getLinePointMethod();
-//
-//        if (retVal == null) {
-//            return;
-//        }
-//
-//        controller.setXMax(value, (retVal == LineBoundaryDialog.TRUNCATE));
-//    }
-//
-//    public float getYMin() {
-//        return controller.getYMin();
-//    }
-//
-//    public void setYMin(float value) {
-//        if (value >= controller.getYMax()) {
-//            JOptionPane.showMessageDialog(null, "Error: Min value "
-//                    + "can not be set greater or equals to Max value.",
-//                    "Error", JOptionPane.ERROR_MESSAGE);
-//            return;
-//        }
-//
-//        String retVal = LineBoundaryDialog.getLinePointMethod();
-//
-//        if (retVal == null) {
-//            return;
-//        }
-//
-//        controller.setYMin(value, (retVal == LineBoundaryDialog.TRUNCATE));
-//    }
-//
-//    public float getYMax() {
-//        return controller.getYMax();
-//    }
-//
-//    public void setYMax(float value) {
-//        if (value <= controller.getYMin()) {
-//            JOptionPane.showMessageDialog(null, "Error: Max value "
-//                    + "can not be set less than or " + "equal to Min value.",
-//                    "Error", JOptionPane.ERROR_MESSAGE);
-//
-//            return;
-//        }
-//
-//        String retVal = LineBoundaryDialog.getLinePointMethod();
-//
-//        if (retVal == null) {
-//            return;
-//        }
-//
-//        controller.setYMax(value, (retVal == LineBoundaryDialog.TRUNCATE));
-//    }
-//
-//    public boolean isRandomizable() {
-//        return controller.isRandomizable();
-//    }
-//
-//    public void setRandomizable(boolean randomizable) {
-//        controller.setRandomizable(randomizable);
-//    }
-//    @Override
-//    public void propertyChange(PropertyChangeEvent evt) {
-//        if (evt.getSource() != bsbObj) {
-//            return;
-//        }
-//
-//        String prop = evt.getPropertyName();
-//        switch (prop) {
-//            case "width":
-//            case "height":
-//                updateSize();
-//                revalidate();
-//                repaint();
-//                break;
-//            case "xValue":
-//            case "yValue":
-//                drawPanel.repaint();
-//                updateLabel();
-//                break;
-//            case "xMin":
-//            case "xMax":
-//            case "yMin":
-//            case "yMax":
-//                updateLabel();
-//                break;
-//        }
-//    }
+    // RESIZEABLE VIEW
     public boolean canResizeWidgetWidth() {
         return true;
     }
