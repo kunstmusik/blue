@@ -67,9 +67,13 @@ public class Knob extends JComponent {
 
     private static final Color TRACK_BACKGROUND_COLOR = new Color(0, 0, 0, 64);
 
-    // Set the antialiasing to get the right look!
-    private final static RenderingHints AALIAS = new RenderingHints(
-            RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+    private final static RenderingHints AALIAS;
+
+    static {
+        AALIAS = new RenderingHints(
+                RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        AALIAS.put(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+    }
 
     private ChangeEvent changeEvent = null;
 
@@ -197,7 +201,7 @@ public class Knob extends JComponent {
                 repaint();
             }
         });
-        
+
     }
 
     public void setDragType(int type) {
@@ -327,8 +331,8 @@ public class Knob extends JComponent {
         g2d.setStroke(new BasicStroke(2.0f));
 
         // DRAW VALUE LINE
-        g2d.setPaint(trackColor.brighter().brighter());
-        g2d.drawLine(middle / 2, 0, middle, 0);
+        g2d.setPaint(trackColor.brighter());
+        g2d.drawLine(middle / 2, 0, middle - 2, 0);
 
         // DRAW KNOB VALUE INDICATOR LINE
         g2d.setPaint(trackColor);
