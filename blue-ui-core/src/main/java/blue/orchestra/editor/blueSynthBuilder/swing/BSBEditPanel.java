@@ -113,7 +113,7 @@ public class BSBEditPanel extends JLayeredPane implements
     }
 
     public BSBEditPanel(BSBObjectEntry[] bsbObjectEntries, boolean allowEditing) {
-        
+
         this.selection = FXCollections.observableSet();
         this.allowEditing = allowEditing;
 
@@ -475,14 +475,23 @@ public class BSBEditPanel extends JLayeredPane implements
      */
     private void clearBSBObjects() {
 
-        for (var c : this.getComponentsInLayer(JLayeredPane.DEFAULT_LAYER)) {
-            var viewHolder = (BSBObjectViewHolder) c;
+//        for (var c : this.getComponentsInLayer(JLayeredPane.DEFAULT_LAYER)) {
+//            var viewHolder = (BSBObjectViewHolder) c;
+//
+//            viewHolder.removeComponentListener(cl);
+//            this.remove(c);
+//        }
 
-            viewHolder.removeComponentListener(cl);
-            this.remove(c);
+        for (var c : getComponents()) {
+            if (c instanceof BSBObjectViewHolder) {
+                var viewHolder = (BSBObjectViewHolder) c;
+
+                viewHolder.removeComponentListener(cl);
+            }
+
         }
-
-//        this.add(marquee, JLayeredPane.DRAG_LAYER);
+        this.removeAll();
+        this.add(marquee, JLayeredPane.DRAG_LAYER);
         marquee.setVisible(false);
 
 //        for (BSBObjectViewHolder viewHolder : objectViews) {
@@ -509,9 +518,14 @@ public class BSBEditPanel extends JLayeredPane implements
     }
 
     private BSBObjectViewHolder addBSBObject(BSBObject bsbObj, boolean revalidate) {
-
         BSBObjectViewHolder viewHolder = getEditorForBSBObject(bsbObj);
-        this.add(viewHolder, JLayeredPane.DEFAULT_LAYER);
+
+        if (bsbObj instanceof BSBGroup) {
+            this.add(viewHolder, JLayeredPane.DEFAULT_LAYER, 0);
+        } else {
+            this.add(viewHolder, JLayeredPane.DEFAULT_LAYER);
+            setComponentZOrder(viewHolder, 0);
+        }
 
         if (revalidate) {
             revalidate();
@@ -524,9 +538,11 @@ public class BSBEditPanel extends JLayeredPane implements
     protected void setBSBObjects(Collection<BSBObject> bsbObjects) {
         if (bsbInterface != null) {
             for (var bsbOj : bsbObjects) {
-                add(getEditorForBSBObject(bsbOj), DEFAULT_LAYER);
+                addBSBObject(bsbOj, false);
             }
         }
+        revalidate();
+        repaint();
     }
 
     private BSBObjectViewHolder getEditorForBSBObject(BSBObject bsbObj) {
@@ -721,5 +737,5 @@ public class BSBEditPanel extends JLayeredPane implements
     public ObservableList<BSBGroup> getGroupsList() {
         return groupsList;
     }
-    
+
 }
