@@ -328,9 +328,9 @@ public class Knob extends JComponent {
         g2d.translate(middle, middle);
         final var extent = getValue() * .75;
         g2d.rotate(Math.PI * 2.0 * (-.625 + extent));
-        g2d.setStroke(new BasicStroke(2.0f));
 
         // DRAW VALUE LINE
+        g2d.setStroke(new BasicStroke(size / 30.0f));        
         g2d.setPaint(trackColor.brighter());
         g2d.drawLine(middle / 2, 0, middle - 2, 0);
 
@@ -338,14 +338,15 @@ public class Knob extends JComponent {
         g2d.setPaint(trackColor);
 
 //        var len = (int)(size * .35);
-        int notchWidth = size / 9;
-        int notchAdj = notchWidth / 2;
+        int notchAdj = (size / 18);
+        int notchWidth = 2 * notchAdj;
+
         var len = knobCenterSize / 2 + notchWidth;
-        g2d.setStroke(new BasicStroke(1.0f));
+        g2d.setStroke(new BasicStroke(size / 40.0f));
         g2d.fillRoundRect(-notchAdj, -notchAdj,
                 len, notchWidth, notchWidth, notchWidth);
 
-        g2d.setPaint(Color.BLACK);
+        g2d.setPaint(new Color(16,16,16));
 
         g2d.drawRoundRect(-notchAdj, -notchAdj,
                 len, notchWidth, notchWidth, notchWidth);
