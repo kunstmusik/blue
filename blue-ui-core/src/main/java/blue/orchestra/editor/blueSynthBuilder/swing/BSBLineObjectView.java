@@ -29,9 +29,9 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import javafx.beans.value.ChangeListener;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
@@ -45,9 +45,12 @@ public class BSBLineObjectView extends BSBObjectView<BSBLineObject> implements
 
     LineSelector lineSelector = new LineSelector();
 
+    ChangeListener<Number> widthHeightListener;
+    ChangeListener<Boolean> lockedListener;
+
     public BSBLineObjectView(BSBLineObject lineObj) {
         super(lineObj);
-        
+
         this.setLayout(new BorderLayout());
         this.add(lineCanvas, BorderLayout.CENTER);
         this.add(lineSelector, BorderLayout.SOUTH);
@@ -67,13 +70,36 @@ public class BSBLineObjectView extends BSBObjectView<BSBLineObject> implements
 
         repaint();
 
+        widthHeightListener = (obs, old, newVal) -> {
+            int w = bsbObj.getCanvasWidth();
+            int h = bsbObj.getCanvasHeight();
+            lineCanvas.setSize(new Dimension(w, h));
+            this.setSize(w, h + lineSelector.getPreferredSize().height);
+            this.revalidate();
+        };
+
+        lockedListener = (obs, old, newVal) -> {
+            lineCanvas.setLocked(newVal);
+        };
+
         lineObj.addPropertyChangeListener(this);
     }
 
-//    @Override
-//    public void cleanup() {
-//        bsbObj.removePropertyChangeListener(this);
-//    }
+    @Override
+    public void addNotify() {
+        super.addNotify();
+        bsbObj.canvasWidthProperty().addListener(widthHeightListener);
+        bsbObj.canvasHeightProperty().addListener(widthHeightListener);
+        bsbObj.lockedProperty().addListener(lockedListener);
+    }
+
+    @Override
+    public void removeNotify() {
+        super.removeNotify();
+        bsbObj.canvasWidthProperty().removeListener(widthHeightListener);
+        bsbObj.canvasHeightProperty().removeListener(widthHeightListener);
+        bsbObj.lockedProperty().removeListener(lockedListener);
+    }
 
     public LineList getLineList() {
         return bsbObj.getLines();
@@ -89,38 +115,6 @@ public class BSBLineObjectView extends BSBObjectView<BSBLineObject> implements
         }
     }
 
-//    public BSBLineObjectView getLineObjectView() {
-//        return this;
-//    }
-//
-//    public void setLineObjectView(BSBLineObjectView view) {
-//
-//    }
-//
-//    public int getCanvasHeight() {
-//        return lineObj.getCanvasHeight();
-//    }
-//
-//    public int getCanvasWidth() {
-//        return lineObj.getCanvasWidth();
-//    }
-//
-//    public void setCanvasHeight(int canvasHeight) {
-//        lineObj.setCanvasHeight(canvasHeight);
-//    }
-//
-//    public void setCanvasWidth(int canvasWidth) {
-//        lineObj.setCanvasWidth(canvasWidth);
-//    }
-//
-//    public boolean isLeadingZero() {
-//        return lineObj.isLeadingZero();
-//    }
-//
-//    public void setLeadingZero(boolean leadingZero) {
-//        lineObj.setLeadingZero(leadingZero);
-//    }
-
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
         if (evt.getSource() != bsbObj) {
@@ -129,14 +123,6 @@ public class BSBLineObjectView extends BSBObjectView<BSBLineObject> implements
 
         String prop = evt.getPropertyName();
         switch (prop) {
-            case "canvasWidth":
-            case "canvasHeight":
-                int w = bsbObj.getCanvasWidth();
-                int h = bsbObj.getCanvasHeight();
-                lineCanvas.setSize(new Dimension(w, h));
-                this.setSize(w, h + lineSelector.getPreferredSize().height);
-                this.revalidate();
-                break;
             case "presetValue":
                 this.repaint();
                 break;
@@ -145,6 +131,7 @@ public class BSBLineObjectView extends BSBObjectView<BSBLineObject> implements
     }
 
     static class LineSelector extends JComponent {
+
         JLabel label = new JLabel();
 
         private LineList lines;
@@ -284,7 +271,6 @@ public class BSBLineObjectView extends BSBObjectView<BSBLineObject> implements
 //        lineObj.setLocked(locked);
 //        lineCanvas.setLocked(locked);
 //    }
-
     public boolean canResizeWidgetWidth() {
         return true;
     }
