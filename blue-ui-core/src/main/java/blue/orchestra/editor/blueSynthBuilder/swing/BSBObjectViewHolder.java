@@ -197,8 +197,19 @@ public class BSBObjectViewHolder extends JLayeredPane {
                 var newPoint = SwingUtilities.convertPoint(
                         BSBObjectViewHolder.this, e.getPoint(), getParent());
 
-                var transX = Math.max(minTransX, newPoint.x - originPoint.x);
-                var transY = Math.max(minTransY, newPoint.y - originPoint.y);
+                var transX = newPoint.x - originPoint.x;
+                var transY = newPoint.y - originPoint.y;
+
+                if (gridSettings != null && gridSettings.isSnapEnabled()) {
+                    int w = gridSettings.getWidth();
+                    int h = gridSettings.getHeight();
+                    
+                    transX = (Math.round(transX / w) * w) + (minTransX % w);
+                    transY = (Math.round(transY / h) * h) + (minTransY % h);
+                }
+
+                transX = Math.max(minTransX, transX);
+                transY = Math.max(minTransY, transY);
 
                 for (int i = 0; i < selectedObjects.length; i++) {
                     var bsbObj = selectedObjects[i];
