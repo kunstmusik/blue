@@ -48,10 +48,10 @@ public class BSBLineObject extends BSBObject {
             = new SimpleObjectProperty<>(SeparatorType.NONE);
     BooleanProperty locked = new SimpleBooleanProperty(false);
 
-    private LineList lines;
+    ObjectProperty<LineList> lines = new SimpleObjectProperty<>();
 
     public BSBLineObject() {
-        lines = new LineList();
+        setLines(new LineList());
     }
 
     public BSBLineObject(BSBLineObject lineObj) {
@@ -63,7 +63,7 @@ public class BSBLineObject extends BSBObject {
         setLeadingZero(lineObj.isLeadingZero());
         setSeparatorType(lineObj.getSeparatorType());
         setLocked(lineObj.isLocked());
-        lines = new LineList(lineObj.lines);
+        setLines(new LineList(lineObj.getLines()));
     }
 
     public static BSBObject loadFromXML(Element data) {
@@ -127,7 +127,7 @@ public class BSBLineObject extends BSBObject {
                 .addElement(XMLUtilities.writeBoolean("leadingZero",
                         isLeadingZero()));
         retVal.addElement(XMLUtilities.writeBoolean("locked", isLocked()));
-        retVal.addElement(lines.saveAsXML());
+        retVal.addElement(getLines().saveAsXML());
 
         return retVal;
     }
@@ -137,6 +137,7 @@ public class BSBLineObject extends BSBObject {
 //    }
     @Override
     public String[] getReplacementKeys() {
+        var lines = getLines();
         String[] vals = new String[lines.size()];
         String objName = getObjectName();
 
@@ -150,9 +151,7 @@ public class BSBLineObject extends BSBObject {
 
     @Override
     public void setupForCompilation(BSBCompilationUnit compilationUnit) {
-        for (Iterator iter = lines.iterator(); iter.hasNext();) {
-            Line line = (Line) iter.next();
-
+        for (var line: getLines()) {
             String key = getObjectName() + "_" + line.getVarName();
             String val = getLineString(line);
 
@@ -202,10 +201,8 @@ public class BSBLineObject extends BSBObject {
 
         buffer.append("version=2");
 
-        for (Iterator iter = lines.iterator(); iter.hasNext();) {
+        for (var line : getLines()) {
             buffer.append("@_@");
-
-            Line line = (Line) iter.next();
 
             StringBuilder temp = new StringBuilder();
             temp.append(line.getVarName());
@@ -275,8 +272,7 @@ public class BSBLineObject extends BSBObject {
     }
 
     private Line getLineByName(String name) {
-        for (Iterator iter = lines.iterator(); iter.hasNext();) {
-            Line line = (Line) iter.next();
+        for (var line : getLines()) {
             if (line.getVarName().equals(name)) {
                 return line;
             }
@@ -284,11 +280,17 @@ public class BSBLineObject extends BSBObject {
         return null;
     }
 
-    public void setLines(LineList lines) {
-        this.lines = lines;
+    public void setLines(LineList lineList) {
+        var oldVal = getLines();
+        this.lines.set(lineList);
+        propListeners.firePropertyChange("lines", oldVal, lineList);
     }
 
     public LineList getLines() {
+        return lines.get();
+    }
+    
+    public ObjectProperty<LineList> linesProperty() {
         return lines;
     }
 

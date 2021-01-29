@@ -47,6 +47,7 @@ public class BSBLineObjectView extends BSBObjectView<BSBLineObject> implements
 
     ChangeListener<Number> widthHeightListener;
     ChangeListener<Boolean> lockedListener;
+    ChangeListener<LineList> linesListener;
 
     public BSBLineObjectView(BSBLineObject lineObj) {
         super(lineObj);
@@ -82,6 +83,10 @@ public class BSBLineObjectView extends BSBObjectView<BSBLineObject> implements
             lineCanvas.setLocked(newVal);
         };
 
+        linesListener = (obs, old, newVal) -> {
+            setLineList(newVal);
+        };
+        
         lineObj.addPropertyChangeListener(this);
     }
 
@@ -91,6 +96,7 @@ public class BSBLineObjectView extends BSBObjectView<BSBLineObject> implements
         bsbObj.canvasWidthProperty().addListener(widthHeightListener);
         bsbObj.canvasHeightProperty().addListener(widthHeightListener);
         bsbObj.lockedProperty().addListener(lockedListener);
+        bsbObj.linesProperty().addListener(linesListener);
     }
 
     @Override
@@ -99,6 +105,7 @@ public class BSBLineObjectView extends BSBObjectView<BSBLineObject> implements
         bsbObj.canvasWidthProperty().removeListener(widthHeightListener);
         bsbObj.canvasHeightProperty().removeListener(widthHeightListener);
         bsbObj.lockedProperty().removeListener(lockedListener);
+        bsbObj.linesProperty().removeListener(linesListener);
     }
 
     public LineList getLineList() {
@@ -106,13 +113,13 @@ public class BSBLineObjectView extends BSBObjectView<BSBLineObject> implements
     }
 
     public void setLineList(LineList lines) {
-        bsbObj.setLines(lines);
         lineCanvas.setLineList(lines);
         lineSelector.setLineList(lines);
 
         if (lines.size() > 0) {
             lineCanvas.setSelectedLine(lines.get(0));
         }
+        repaint();
     }
 
     @Override

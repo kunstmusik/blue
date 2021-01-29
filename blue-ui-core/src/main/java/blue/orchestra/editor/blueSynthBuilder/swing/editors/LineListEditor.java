@@ -19,10 +19,10 @@
  */
 package blue.orchestra.editor.blueSynthBuilder.swing.editors;
 
-import blue.orchestra.blueSynthBuilder.BSBDropdown;
-import blue.orchestra.blueSynthBuilder.BSBDropdownItemList;
-import blue.orchestra.editor.blueSynthBuilder.swing.BSBDropdownView;
-import blue.orchestra.editor.blueSynthBuilder.swing.DropdownItemEditorDialog;
+import blue.components.lines.LineList;
+import blue.components.lines.LineListTable;
+import blue.orchestra.editor.blueSynthBuilder.LineListEditorDialog;
+import blue.orchestra.editor.blueSynthBuilder.swing.BSBLineObjectView;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Graphics;
@@ -34,25 +34,24 @@ import java.beans.PropertyChangeSupport;
 import java.beans.PropertyEditor;
 import javax.swing.JButton;
 import javax.swing.JPanel;
+import org.openide.windows.WindowManager;
 
 /**
  * @author steven
  */
-public class DropdownItemsPropertyEditor implements PropertyEditor {
+public class LineListEditor implements PropertyEditor {
 
-    private static final DropdownItemEditorDialog dialog = new DropdownItemEditorDialog();
+    private static LineListEditorDialog dialog;
 
     PropertyChangeSupport listeners = new PropertyChangeSupport(this);
 
-    BSBDropdownItemList items = null;
-
-    BSBDropdownView view = null;
+    LineList items = null;
 
     Component editor;
 
     JButton button;
 
-    public DropdownItemsPropertyEditor() {
+    public LineListEditor() {
         editor = new JPanel(new BorderLayout(0, 0));
 
         ((JPanel) editor).add("East", button = new JButton("..."));
@@ -71,16 +70,34 @@ public class DropdownItemsPropertyEditor implements PropertyEditor {
      * This method is a hack to get the view updated
      */
     protected void editItems() {
-        BSBDropdownItemList old = items;
-        BSBDropdownItemList newList = new BSBDropdownItemList(old);
-        dialog.show(newList);
+        if (dialog == null) {
+            dialog = new LineListEditorDialog(WindowManager.getDefault().getMainWindow());
+            dialog.setModal(true);
+        }
 
-        listeners.firePropertyChange("value", old, newList);
+        LineList temp = new LineList();
+        for (int i = 0; i < items.size(); i++) {
+            temp.add(items.get(i));
+        }
 
-        old.clear();
-        old.addAll(newList);
+        dialog.setLineList(temp);
+        boolean val = dialog.ask();
 
-//        view.refresh();
+        if (val) {
+            items = temp;
+            items.setAll(items);
+        }
+
+        // BSBDropdownItemList old = items;
+        // BSBDropdownItemList newList = (BSBDropdownItemList) items.clone();
+        // dialog.show(newList);
+        //
+        // listeners.firePropertyChange("value", old, newList);
+        //
+        // old.clear();
+        // old.addAll(newList);
+
+        // view.refresh();
     }
 
     /*
@@ -90,8 +107,13 @@ public class DropdownItemsPropertyEditor implements PropertyEditor {
      */
     @Override
     public Component getCustomEditor() {
-
-        return editor;
+        LineListTable table = new LineListTable();
+        this.items = new LineList(items);
+        table.setLineList(items);
+        table.addTableModelListener(tme -> {
+            setValue(items);
+        });
+        return table;
     }
 
     /*
@@ -101,18 +123,19 @@ public class DropdownItemsPropertyEditor implements PropertyEditor {
      */
     @Override
     public boolean supportsCustomEditor() {
-        return false;
+        return true;
     }
 
     @Override
     public Object getValue() {
-        return view;
+        return items;
     }
 
     @Override
     public void setValue(Object value) {
-        this.view = (BSBDropdownView) value;
-        this.items = ((BSBDropdown) view.getBSBObject()).getBSBDropdownItemList();
+//        this.view = (BSBLineObjectView) value;
+        this.items = (LineList)value;
+        listeners.firePropertyChange("", null, null);
     }
 
     @Override
@@ -136,6 +159,7 @@ public class DropdownItemsPropertyEditor implements PropertyEditor {
 
     @Override
     public void paintValue(Graphics gfx, Rectangle box) {
+
     }
 
     /*
@@ -145,7 +169,7 @@ public class DropdownItemsPropertyEditor implements PropertyEditor {
      */
     @Override
     public boolean isPaintable() {
-        return false;
+        return true;
     }
 
     @Override
@@ -159,7 +183,7 @@ public class DropdownItemsPropertyEditor implements PropertyEditor {
     }
 
     protected void firePropertyChange(Object oldValue, Object newValue) {
-        listeners.firePropertyChange("value", oldValue, newValue);
+        listeners.firePropertyChange("lines", oldValue, newValue);
     }
 
 }

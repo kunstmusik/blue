@@ -19,10 +19,7 @@
  */
 package blue.orchestra.editor.blueSynthBuilder.swing;
 
-import blue.event.SelectionEvent;
-import blue.event.SelectionListener;
 import blue.orchestra.blueSynthBuilder.BSBObject;
-import blue.orchestra.blueSynthBuilder.BSBObjectListener;
 import java.awt.BorderLayout;
 import java.beans.IntrospectionException;
 import java.beans.PropertyChangeListener;

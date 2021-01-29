@@ -25,7 +25,9 @@ import blue.MainToolBar;
 import blue.WindowSettingManager;
 import blue.automation.ParameterTimeManagerFactory;
 import blue.automation.ParameterTimeManagerImpl;
+import blue.components.lines.LineList;
 import blue.midi.MidiInputManager;
+import blue.orchestra.editor.blueSynthBuilder.swing.editors.LineListEditor;
 import blue.osc.OSCManager;
 import blue.projects.BlueProject;
 import blue.projects.BlueProjectManager;
@@ -42,6 +44,10 @@ import blue.ui.nbutilities.BlueNbUtilities;
 import blue.utility.TempFileManager;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.beans.PropertyEditorManager;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Locale;
 import java.util.logging.Logger;
 import javafx.application.Platform;
@@ -209,9 +215,17 @@ public class Installer extends ModuleInstall {
             BlueNbUtilities.setMainWindow(WindowManager.getDefault().getMainWindow());
         });
 
+        // REGISTER ICON FONTS
         IconFontSwing.register(Elusive.getIconFont());
         IconFontSwing.register(GoogleMaterialDesignIcons.getIconFont());
         IconFontSwing.register(FontAwesome.getIconFont());
+
+        // REGISTER GLOBAL PROPERTY EDITORS
+        List<String> paths = Arrays.asList(PropertyEditorManager.getEditorSearchPath());
+        paths = new ArrayList(paths);
+        paths.add("blue.orchestra.editor.blueSynthBuilder.swing.editors");
+        PropertyEditorManager.setEditorSearchPath(paths.toArray(new String[0]));
+        PropertyEditorManager.registerEditor(LineList.class, LineListEditor.class);
     }
 
     @Override
