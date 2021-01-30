@@ -225,7 +225,8 @@ public class Installer extends ModuleInstall {
         paths = new ArrayList(paths);
         paths.add("blue.orchestra.editor.blueSynthBuilder.swing.editors");
         PropertyEditorManager.setEditorSearchPath(paths.toArray(new String[0]));
-        PropertyEditorManager.registerEditor(LineList.class, LineListEditor.class);
+        // editors from above path will be found based on className + "Editor"
+        //PropertyEditorManager.registerEditor(LineList.class, LineListEditor.class);
     }
 
     @Override
