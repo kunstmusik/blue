@@ -22,7 +22,6 @@ package blue.orchestra.editor.blueSynthBuilder.swing.editors;
 import blue.orchestra.blueSynthBuilder.BSBDropdown;
 import blue.orchestra.blueSynthBuilder.BSBDropdownItemList;
 import blue.orchestra.editor.blueSynthBuilder.swing.BSBDropdownView;
-import blue.orchestra.editor.blueSynthBuilder.swing.DropdownItemEditorDialog;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Graphics;
@@ -40,47 +39,12 @@ import javax.swing.JPanel;
  */
 public class BSBDropdownItemListEditor implements PropertyEditor {
 
-    private static final DropdownItemEditorDialog dialog = new DropdownItemEditorDialog();
-
     PropertyChangeSupport listeners = new PropertyChangeSupport(this);
 
     BSBDropdownItemList items = null;
 
-    BSBDropdownView view = null;
-
-    Component editor;
-
-    JButton button;
-
     public BSBDropdownItemListEditor() {
-        editor = new JPanel(new BorderLayout(0, 0));
-
-        ((JPanel) editor).add("East", button = new JButton("..."));
-        button.setMargin(new Insets(0, 0, 0, 0));
-
-        button.addActionListener((ActionEvent e) -> {
-            // selectColor();
-            // JOptionPane.showMessageDialog(null, "test");
-            editItems();
-        });
-
-        ((JPanel) editor).setOpaque(false);
-    }
-
-    /**
-     * This method is a hack to get the view updated
-     */
-    protected void editItems() {
-        BSBDropdownItemList old = items;
-        BSBDropdownItemList newList = new BSBDropdownItemList(old);
-        dialog.show(newList);
-
-        listeners.firePropertyChange("value", old, newList);
-
-        old.clear();
-        old.addAll(newList);
-
-//        view.refresh();
+        
     }
 
     /*
@@ -90,7 +54,11 @@ public class BSBDropdownItemListEditor implements PropertyEditor {
      */
     @Override
     public Component getCustomEditor() {
-
+        this.items = new BSBDropdownItemList(items);
+        var editor = new DropdownItemEditorPanel(items);
+        editor.table.getModel().addTableModelListener(tme -> {
+            setValue(items);
+        });
         return editor;
     }
 
@@ -101,18 +69,18 @@ public class BSBDropdownItemListEditor implements PropertyEditor {
      */
     @Override
     public boolean supportsCustomEditor() {
-        return false;
+        return true;
     }
 
     @Override
     public Object getValue() {
-        return view;
+        return items;
     }
 
     @Override
     public void setValue(Object value) {
-        this.view = (BSBDropdownView) value;
-        this.items = ((BSBDropdown) view.getBSBObject()).getBSBDropdownItemList();
+        this.items = (BSBDropdownItemList) value;
+        listeners.firePropertyChange("", null, null);
     }
 
     @Override
@@ -156,10 +124,6 @@ public class BSBDropdownItemListEditor implements PropertyEditor {
     @Override
     public void removePropertyChangeListener(PropertyChangeListener listener) {
         listeners.removePropertyChangeListener(listener);
-    }
-
-    protected void firePropertyChange(Object oldValue, Object newValue) {
-        listeners.firePropertyChange("value", oldValue, newValue);
     }
 
 }

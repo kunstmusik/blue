@@ -50,13 +50,13 @@ public class BSBDropdown extends AutomatableBSBObject implements
     IntegerProperty fontSize = new SimpleIntegerProperty(12) {
         @Override
         protected void invalidated() {
-            if(get() < 8) {
+            if (get() < 8) {
                 set(8);
             } else if (get() > 36) {
                 set(36);
             }
         }
-        
+
     };
 
     private final ListChangeListener<BSBDropdownItem> lcl = (c) -> {
@@ -106,9 +106,7 @@ public class BSBDropdown extends AutomatableBSBObject implements
         if (versionStr != null) {
             version = Integer.parseInt(versionStr);
         }
-        
-        
-        
+
         Elements nodes = data.getElements();
         int selectedIndex = 0;
 
@@ -132,20 +130,20 @@ public class BSBDropdown extends AutomatableBSBObject implements
             }
         }
         dropDown.setSelectedIndex(selectedIndex);
-        
-        if(version < 2) {
+
+        if (version < 2) {
             int fontSize = 12;
-            
-            for(BSBDropdownItem dropdownItem : dropDown.dropdownItems) {
+
+            for (BSBDropdownItem dropdownItem : dropDown.dropdownItems) {
                 String str = dropdownItem.getName();
                 Font f = SwingHTMLFontParser.parseFont(str);
-                if(f.getSize() != 12.0) {
-                    fontSize = (int)f.getSize();
+                if (f.getSize() != 12.0) {
+                    fontSize = (int) f.getSize();
                 }
                 dropdownItem.setName(SwingHTMLFontParser.stripHTML(str));
             }
-            
-            if(fontSize != 12) {
+
+            if (fontSize != 12) {
                 dropDown.setFontSize(fontSize);
             }
         }
@@ -157,7 +155,7 @@ public class BSBDropdown extends AutomatableBSBObject implements
     public Element saveAsXML() {
         Element retVal = getBasicXML(this);
         retVal.setAttribute("version", "2");
-        
+
         retVal.addElement("selectedIndex").setText(
                 Integer.toString(this.getSelectedIndex()));
         retVal.addElement("fontSize").setText(
@@ -214,7 +212,22 @@ public class BSBDropdown extends AutomatableBSBObject implements
     }
 
     public void setBSBDropdownItemList(BSBDropdownItemList list) {
+        var oldVal = this.dropdownItems;
+
+        if (oldVal != null) {
+            oldVal.removeListener(lcl);
+        }
         this.dropdownItems = list;
+        if (list != null) {
+            list.addListener(lcl);
+            if (parameters != null) {
+                Parameter param = parameters.getParameter(getObjectName());
+                if (param != null) {
+                    param.setMax(Math.max(0, dropdownItems.size() - 1), true);
+                }
+            }
+        }
+        propListeners.firePropertyChange("bsbDropdownItemList", oldVal, list);
     }
 
     public ObservableList<BSBDropdownItem> dropdownItemsProperty() {

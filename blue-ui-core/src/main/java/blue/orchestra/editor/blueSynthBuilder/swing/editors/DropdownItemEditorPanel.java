@@ -18,23 +18,15 @@
  * Boston, MA  02111-1307 USA
  */
 
-package blue.orchestra.editor.blueSynthBuilder.swing;
+package blue.orchestra.editor.blueSynthBuilder.swing.editors;
 
 import blue.BlueSystem;
-import blue.WindowSettingManager;
-import blue.WindowSettingsSavable;
 import blue.orchestra.blueSynthBuilder.BSBDropdownItem;
 import blue.orchestra.blueSynthBuilder.BSBDropdownItemList;
-import electric.xml.Element;
 import java.awt.BorderLayout;
-import java.awt.FlowLayout;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
 import javax.swing.JButton;
-import javax.swing.JDialog;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
@@ -43,8 +35,7 @@ import javax.swing.table.AbstractTableModel;
 /**
  * @author Steven Yi
  */
-public class DropdownItemEditorDialog extends JDialog implements
-        WindowSettingsSavable {
+public class DropdownItemEditorPanel extends JPanel {
 
     BSBDropdownItemList items = null;
 
@@ -52,10 +43,13 @@ public class DropdownItemEditorDialog extends JDialog implements
 
     JTable table;
 
-    public DropdownItemEditorDialog() {
-        this.setModal(true);
+    public DropdownItemEditorPanel(BSBDropdownItemList items) {
 
-        this.getContentPane().setLayout(new BorderLayout());
+        this.items = items;
+        
+        model.setDropdownItems(items);
+        
+        setLayout(new BorderLayout());
 
         JPanel topPanel = new JPanel();
         topPanel.setLayout(new GridLayout(1, 4));
@@ -94,45 +88,8 @@ public class DropdownItemEditorDialog extends JDialog implements
         table = new JTable(model);
         JScrollPane scrollPane = new JScrollPane(table);
 
-        FlowLayout flowLayout = new FlowLayout(FlowLayout.CENTER);
-        JPanel closePanel = new JPanel(flowLayout);
-
-        JButton closeButton = new JButton(BlueSystem
-                .getString("menu.file.close.text"));
-
-        closeButton.addActionListener((ActionEvent e) -> {
-            closeDialog();
-        });
-
-        closePanel.add(closeButton);
-
-        this.getContentPane().add(topPanel, BorderLayout.NORTH);
-        this.getContentPane().add(scrollPane, BorderLayout.CENTER);
-        this.getContentPane().add(closePanel, BorderLayout.SOUTH);
-
-        this.setSize(400, 300);
-
-        WindowSettingManager.getInstance().registerWindow(
-                "DropdownItemEditorDialog", this);
-
-        this.addWindowListener(new WindowAdapter() {
-            @Override
-            public void windowClosing(WindowEvent arg0) {
-                if (table.getCellEditor() != null) {
-                    table.getCellEditor().stopCellEditing();
-                }
-            }
-        });
-    }
-
-    /**
-     * 
-     */
-    protected void closeDialog() {
-        if (table.getCellEditor() != null) {
-            table.getCellEditor().stopCellEditing();
-        }
-        this.dispose();
+        add(topPanel, BorderLayout.NORTH);
+        add(scrollPane, BorderLayout.CENTER);
     }
 
     void addItem() {
@@ -161,23 +118,6 @@ public class DropdownItemEditorDialog extends JDialog implements
 
     }
 
-    public void show(BSBDropdownItemList items) {
-        this.items = items;
-        blue.utility.GUI.centerOnScreen(this);
-        model.setDropdownItems(items);
-        super.setVisible(true);
-
-    }
-
-    @Override
-    public void loadWindowSettings(Element settings) {
-        WindowSettingManager.setBasicSettings(settings, this);
-    }
-
-    @Override
-    public Element saveWindowSettings() {
-        return WindowSettingManager.getBasicSettings(this);
-    }
 }
 
 final class DropdownItemsTableModel extends AbstractTableModel {

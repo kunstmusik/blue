@@ -25,11 +25,14 @@ import blue.ui.utilities.UiUtilities;
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.EventListener;
 import javafx.beans.InvalidationListener;
 import javafx.beans.value.ChangeListener;
 import javax.swing.ComboBoxModel;
 import javax.swing.JComboBox;
+import javax.swing.SwingUtilities;
 import javax.swing.event.EventListenerList;
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
@@ -37,7 +40,7 @@ import javax.swing.event.ListDataListener;
 /**
  * @author Steven Yi
  */
-public class BSBDropdownView extends BSBObjectView<BSBDropdown> {
+public class BSBDropdownView extends BSBObjectView<BSBDropdown> implements PropertyChangeListener {
 
     private final DropdownComboBoxModel model = new DropdownComboBoxModel();
 
@@ -47,16 +50,12 @@ public class BSBDropdownView extends BSBObjectView<BSBDropdown> {
 
     private final ChangeListener<? super Number> indexListener;
 
-    private final InvalidationListener listListener;
-
     private boolean updating = false;
 
     // FIXME: font size, width handling
     public BSBDropdownView(BSBDropdown dropdown) {
         super(dropdown);
         updating = true;
-
-        
 
         this.setLayout(new BorderLayout());
 
@@ -66,7 +65,7 @@ public class BSBDropdownView extends BSBObjectView<BSBDropdown> {
 
         this.add(comboBox, BorderLayout.CENTER);
 
-        comboBox.setSize(comboBox.getPreferredSize());
+//        comboBox.setSize(comboBox.getPreferredSize());
         this.setSize(comboBox.getPreferredSize());
 
         int index = dropdown.getSelectedIndex();
@@ -95,10 +94,6 @@ public class BSBDropdownView extends BSBObjectView<BSBDropdown> {
             }
         };
 
-        this.listListener = o -> {
-            model.refresh();
-        };
-
         comboBox.addActionListener(updateIndexListener);
 
         updating = false;
@@ -110,16 +105,35 @@ public class BSBDropdownView extends BSBObjectView<BSBDropdown> {
     @Override
     public void addNotify() {
         super.addNotify();
-        getBSBObject().selectedIndexProperty().addListener(indexListener);
-        getBSBObject().dropdownItemsProperty().addListener(listListener);
+        bsbObj.selectedIndexProperty().addListener(indexListener);
+        bsbObj.addPropertyChangeListener(this);
     }
 
     @Override
 
     public void removeNotify() {
         super.removeNotify();
-        getBSBObject().selectedIndexProperty().removeListener(indexListener);
-        getBSBObject().dropdownItemsProperty().removeListener(listListener);
+        bsbObj.selectedIndexProperty().removeListener(indexListener);
+        bsbObj.removePropertyChangeListener(this);
+    }
+
+    @Override
+    public void propertyChange(PropertyChangeEvent evt) {
+        if ("bsbDropdownItemList".equals(evt.getPropertyName())) {
+            UiUtilities.invokeOnSwingThread(() -> {
+                updating = true;
+                model.refresh();
+                comboBox.setModel(model);
+                SwingUtilities.invokeLater(() -> {
+                    setSize(comboBox.getPreferredSize());
+                    revalidate();
+                });
+
+                bsbObj.setSelectedIndex(comboBox.getSelectedIndex());
+                updating = false;
+            });
+
+        }
     }
 
 }
