@@ -279,6 +279,8 @@ public class BSBObjectViewHolder extends JLayeredPane {
         if (editEnabledProperty != null) {
             editEnabledProperty.addListener(editEnabledListener);
             setEditing(editEnabledProperty.getValue());
+        } else {
+            setEditing(false);
         }
         selection.addListener(selectionListener);
     }
@@ -348,7 +350,7 @@ public class BSBObjectViewHolder extends JLayeredPane {
 
     // RESIZING
     private void setupResizeHandles() {
-        if (!(objectView instanceof ResizeableView)) {
+        if (!(objectView instanceof ResizeableView) || editEnabledProperty == null) {
             return;
         }
 

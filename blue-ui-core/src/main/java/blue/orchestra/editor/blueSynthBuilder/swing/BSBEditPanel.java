@@ -371,34 +371,7 @@ public class BSBEditPanel extends JLayeredPane implements
      *
      */
     protected void recalculateSize() {
-
-        if (bsbInterface == null) {
-            return;
-        }
-
-        int maxW = 1;
-        int maxH = 1;
-
-        for (var c : getComponentsInLayer(DEFAULT_LAYER)) {
-            if (c instanceof BSBObjectViewHolder) {
-                var viewHolder = (BSBObjectViewHolder) c;
-                if (!isEditing() && viewHolder.isEditModeOnly()) {
-                    continue;
-                }
-                int newW = viewHolder.getX() + viewHolder.getWidth();
-                int newH = viewHolder.getY() + viewHolder.getHeight();
-
-                if (newW > maxW) {
-                    maxW = newW;
-                }
-
-                if (newH > maxH) {
-                    maxH = newH;
-                }
-            }
-        }
-
-        Dimension d = new Dimension(maxW, maxH);
+        Dimension d = getPreferredSize();
         this.setSize(d);
         this.setPreferredSize(d);
 
@@ -452,9 +425,10 @@ public class BSBEditPanel extends JLayeredPane implements
                         editEnabledListener);
             }
             this.bsbInterface = bsbInterface;
-            setEditing(isEditing());
 
             groupsList.setAll(bsbInterface.getRootGroup());
+
+            setEditing(isEditing());
         } else {
             groupsList.clear();
         }
@@ -481,7 +455,6 @@ public class BSBEditPanel extends JLayeredPane implements
 //            viewHolder.removeComponentListener(cl);
 //            this.remove(c);
 //        }
-
         for (var c : getComponents()) {
             if (c instanceof BSBObjectViewHolder) {
                 var viewHolder = (BSBObjectViewHolder) c;
@@ -524,7 +497,7 @@ public class BSBEditPanel extends JLayeredPane implements
             this.add(viewHolder, JLayeredPane.DEFAULT_LAYER, 0);
         } else {
             this.add(viewHolder, JLayeredPane.DEFAULT_LAYER);
-            setComponentZOrder(viewHolder, 0);
+//            setComponentZOrder(viewHolder, 0);
         }
 
         if (revalidate) {
@@ -572,7 +545,7 @@ public class BSBEditPanel extends JLayeredPane implements
 
     protected void removeBSBObject(BSBObject bsbObj) {
         BSBObjectViewHolder found = null;
-        for (var c : getComponentsInLayer(DEFAULT_LAYER)) {
+        for (var c : getComponents()) {
             if (c instanceof BSBObjectViewHolder) {
                 var vh = (BSBObjectViewHolder) c;
                 if (vh.getBSBObjectView().getBSBObject() == bsbObj) {
@@ -738,4 +711,39 @@ public class BSBEditPanel extends JLayeredPane implements
         return groupsList;
     }
 
+    @Override
+    public Dimension getPreferredSize() {
+        if (bsbInterface == null) {
+            return new Dimension(10,10);
+        }
+
+        int maxW = 1;
+        int maxH = 1;
+
+        for (var c : getComponents()) {
+            if (c instanceof BSBObjectViewHolder) {
+                var viewHolder = (BSBObjectViewHolder) c;
+                if (!isEditing() && viewHolder.isEditModeOnly()) {
+                    continue;
+                }
+                
+                var view = viewHolder.getBSBObjectView();
+                
+                int newW = viewHolder.getX() + view.getWidth();
+                int newH = viewHolder.getY() + view.getHeight();
+
+                if (newW > maxW) {
+                    maxW = newW;
+                }
+
+                if (newH > maxH) {
+                    maxH = newH;
+                }
+            }
+        }
+
+        return new Dimension(maxW + 10, maxH + 10);
+    }
+
+    
 }

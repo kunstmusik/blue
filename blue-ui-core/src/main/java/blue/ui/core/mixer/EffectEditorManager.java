@@ -20,18 +20,15 @@
 package blue.ui.core.mixer;
 
 import blue.BlueData;
-import blue.jfx.BlueFX;
 import blue.mixer.*;
 import blue.orchestra.blueSynthBuilder.BSBObjectRegistry;
-import blue.orchestra.editor.blueSynthBuilder.jfx.BSBEditPane;
+import blue.orchestra.editor.blueSynthBuilder.swing.BSBEditPanel;
 import blue.projects.BlueProjectManager;
 import java.awt.Frame;
 import java.lang.ref.WeakReference;
 import java.util.List;
 import java.util.Map;
 import java.util.WeakHashMap;
-import javafx.embed.swing.JFXPanel;
-import javafx.scene.Scene;
 import javax.swing.JDialog;
 import javax.swing.SwingUtilities;
 
@@ -81,32 +78,18 @@ public class EffectEditorManager {
         if (dialog == null) {
             dialog = new JDialog(root);
 
-            JFXPanel panel = new JFXPanel();
-
-            dialog.getContentPane().add(panel);
+            BSBEditPanel panel = new BSBEditPanel(BSBObjectRegistry.getBSBObjects(), false);
+            panel.editBSBGraphicInterface(effect.getGraphicInterface());
 
             dialog.setTitle(getChannelNameForEffect(effect) + effect.getName());
 
             dialog.getRootPane().putClientProperty("SeparateWindow", Boolean.TRUE);
 
-            dialog.setVisible(true);
+            dialog.setContentPane(panel);
 
-            final JDialog dlg = dialog;
-            BlueFX.runOnFXThread(() -> {
-                BSBEditPane editPanel = new BSBEditPane(BSBObjectRegistry
-                        .getBSBObjects(), false);
-                editPanel.editBSBGraphicInterface(effect.getGraphicInterface());
-
-                Scene scene = new Scene(editPanel);
-                BlueFX.style(scene);
-                panel.setScene(scene);
-
-                SwingUtilities.invokeLater(() -> {
-                    dlg.pack();
-                    dlg.setSize(dlg.getWidth() + 5, dlg.getHeight() + 5);
-                });
-
-            });
+            final var dlg = dialog;
+            dlg.pack();
+            dlg.setVisible(true);
 
             map.put(effect, new WeakReference(dialog));
         } else {
