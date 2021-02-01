@@ -25,7 +25,6 @@ import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.io.IOException;
-import javafx.scene.input.DataFormat;
 import javax.swing.AbstractAction;
 import javax.swing.BorderFactory;
 import javax.swing.JComponent;
@@ -52,8 +51,6 @@ public class UserSoundObjectLibrary extends JComponent implements ExplorerManage
     Library<SoundObject> soundObjectLibrary;
     InstanceContent instanceContent;
     Lookup lookup;
-
-    DataFormat sObjDataFormat = DataFormat.PLAIN_TEXT;
 
     public UserSoundObjectLibrary(InstanceContent instanceContent) {
         setLayout(new BorderLayout());
