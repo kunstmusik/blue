@@ -21,13 +21,10 @@ package blue.orchestra.editor.blueSynthBuilder.swing;
 
 import blue.orchestra.blueSynthBuilder.BSBGroup;
 import blue.orchestra.blueSynthBuilder.BSBObject;
-import blue.orchestra.editor.blueSynthBuilder.jfx.BSBEditSelection;
-import java.awt.AlphaComposite;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
-import java.awt.Graphics2D;
 import java.awt.Insets;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.value.ChangeListener;
@@ -50,7 +47,6 @@ public class BSBGroupPanel extends BSBObjectView<BSBGroup> implements Resizeable
     JLayeredPane editorPanel;
 
     private BooleanProperty editEnabledProperty = null;
-    private BSBEditSelection selection;
     private ObservableList<BSBGroup> groupsList;
 
     ChangeListener<Color> bgColorListener;
