@@ -14,7 +14,6 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
 import java.util.HashMap;
-import javafx.scene.control.TreeItem;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JComponent;
@@ -164,8 +163,8 @@ public class SoundObjectExportPane extends JComponent {
                 }
 
                 Object userObj = path.getLastPathComponent();
-                TreeItem<LibraryItem<SoundObject>> node = 
-                    (TreeItem<LibraryItem<SoundObject>>) userObj;
+                LibraryItem<SoundObject> node = 
+                    (LibraryItem<SoundObject>) userObj;
 
                 if (!node.isLeaf()) {
                     descriptionText.setText(SELECT_INSTR_TEXT);
@@ -173,7 +172,7 @@ public class SoundObjectExportPane extends JComponent {
                     return;
                 }
 
-                SoundObject instr = node.getValue().getValue();
+                SoundObject instr = node.getValue();
 
                 if (instr instanceof Sound) {
                     descriptionText.setText(((Sound) instr).getComment());
@@ -217,14 +216,14 @@ public class SoundObjectExportPane extends JComponent {
 
             Object userObj = path.getLastPathComponent();
 
-            TreeItem<LibraryItem<SoundObject>> node = 
-                    (TreeItem<LibraryItem<SoundObject>>) userObj;
+            LibraryItem<SoundObject> node = 
+                    (LibraryItem<SoundObject>) userObj;
 
             if (!node.isLeaf()) {
                 return;
             }
 
-            SoundObject soundObject = node.getValue().getValue();
+            SoundObject soundObject = node.getValue();
 
             DefaultMutableTreeNode tempNode = (DefaultMutableTreeNode) categoryTree
                     .getSelectionPath().getLastPathComponent();

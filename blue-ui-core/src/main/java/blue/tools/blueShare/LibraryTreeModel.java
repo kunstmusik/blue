@@ -24,7 +24,6 @@ import blue.soundObject.SoundObject;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import javafx.scene.control.TreeItem;
 import javax.swing.event.TreeModelEvent;
 import javax.swing.event.TreeModelListener;
 import javax.swing.tree.TreeModel;
@@ -61,8 +60,8 @@ public class LibraryTreeModel implements TreeModel {
 
     @Override
     public Object getChild(Object parent, int index) {
-        TreeItem<LibraryItem<SoundObject>> node = 
-                (TreeItem<LibraryItem<SoundObject>>) parent;
+        LibraryItem<SoundObject> node = 
+                (LibraryItem<SoundObject>) parent;
         if(node.isLeaf()) {
             return null;
         }
@@ -71,15 +70,15 @@ public class LibraryTreeModel implements TreeModel {
 
     @Override
     public int getChildCount(Object parent) {
-        TreeItem<LibraryItem<SoundObject>> node = 
-                (TreeItem<LibraryItem<SoundObject>>) parent;
+        LibraryItem<SoundObject> node = 
+                (LibraryItem<SoundObject>) parent;
         return node.getChildren().size();
     }
 
     @Override
     public boolean isLeaf(Object node) {
-        TreeItem<LibraryItem<SoundObject>> n = 
-                (TreeItem<LibraryItem<SoundObject>>) node;
+        LibraryItem<SoundObject> n = 
+                (LibraryItem<SoundObject>) node;
         return n.isLeaf();
     }
 
@@ -99,8 +98,8 @@ public class LibraryTreeModel implements TreeModel {
 
     @Override
     public int getIndexOfChild(Object parent, Object child) {
-        TreeItem<LibraryItem<SoundObject>> node = 
-                (TreeItem<LibraryItem<SoundObject>>) parent;
+        LibraryItem<SoundObject> node = 
+                (LibraryItem<SoundObject>) parent;
         return node.getChildren().indexOf(child);
     }
 
