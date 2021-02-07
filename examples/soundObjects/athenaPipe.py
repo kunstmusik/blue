@@ -22,12 +22,12 @@ def process(infile):
 	a = open(foutName + ".sco", "r")
 
 	for line in a.readlines():
-		print line
+		print(line)
 
 
 args = sys.argv
 
 if len(args) != 2:
-	print "Error: Input Script Filename must be given"
+	print("Error: Input Script Filename must be given")
 else:
 	process(args[1])
