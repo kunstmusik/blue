@@ -17,11 +17,12 @@
  * the Free Software Foundation Inc., 59 Temple Place - Suite 330,
  * Boston, MA  02111-1307 USA
  */
-
 package blue.orchestra.editor.blueSynthBuilder.swing;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import javax.swing.JComponent;
+import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
 
@@ -29,6 +30,7 @@ import javax.swing.JPopupMenu;
  * @author Steven Yi
  */
 public class BSBObjectEditPopup extends JPopupMenu implements ActionListener {
+
     private BSBEditPanel bsbEditPanel = null;
 
     private BSBObjectViewHolder viewHolder;
@@ -38,7 +40,6 @@ public class BSBObjectEditPopup extends JPopupMenu implements ActionListener {
     private JMenuItem copy = new JMenuItem("Copy");
 
     // private JMenuItem paste = new JMenuItem("Paste");
-
     public BSBObjectEditPopup() {
         JMenuItem remove = new JMenuItem("Remove");
 
@@ -46,10 +47,46 @@ public class BSBObjectEditPopup extends JPopupMenu implements ActionListener {
         cut.addActionListener(this);
         copy.addActionListener(this);
 
-        this.add(remove);
-        this.addSeparator();
+        ActionListener alignListener = ae -> {
+            var selection = bsbEditPanel.getSelectedViews();
+            var compSource = (JComponent) ae.getSource();
+            var alignment = (Alignment) compSource.getClientProperty("userData");
+
+            AlignmentUtils.align(selection, alignment);
+        };
+
+        ActionListener distributeListener = ae -> {
+            var selection = bsbEditPanel.getSelectedViews();
+            var compSource = (JComponent) ae.getSource();
+            var alignment = (Alignment) compSource.getClientProperty("userData");
+
+            AlignmentUtils.distribute(selection, alignment);
+        };
+
+        JMenu alignMenu = new JMenu("Align");
+        JMenu distributeMenu = new JMenu("Distribute");
+
+        for (Alignment alignment : Alignment.values()) {
+
+            JMenuItem a = new JMenuItem(alignment.toString());
+            a.putClientProperty("userData", alignment);
+            a.addActionListener(alignListener);
+
+            JMenuItem d = new JMenuItem(alignment.toString());
+            d.putClientProperty("userData", alignment);
+            d.addActionListener(distributeListener);
+
+            alignMenu.add(a);
+            distributeMenu.add(d);
+        }
+
         this.add(cut);
         this.add(copy);
+        this.add(remove);
+        this.addSeparator();
+        this.add(alignMenu);
+        this.add(distributeMenu);
+
     }
 
     public void setBSBEditPanel(BSBEditPanel bsbEditPanel) {

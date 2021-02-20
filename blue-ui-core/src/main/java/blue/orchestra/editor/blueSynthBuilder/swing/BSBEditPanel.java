@@ -59,7 +59,6 @@ import javax.swing.ActionMap;
 import javax.swing.InputMap;
 import javax.swing.JLayeredPane;
 import javax.swing.KeyStroke;
-import jdk.net.Sockets;
 
 /**
  * @author steven
@@ -604,20 +603,6 @@ public class BSBEditPanel extends JLayeredPane implements
             groupsList.get(groupsList.size() - 1).interfaceItemsProperty().remove(bsbObj);
         }
 
-//        for (BSBObjectViewHolder viewHolder : selectionList) {
-//            BSBObject bsbObj = viewHolder.getBSBObjectView().getBSBObject();
-//
-//            if (bsbInterface != null) {
-//                bsbInterface.remove(bsbObj);
-//            }
-//
-//            viewHolder.removeSelectionListener(this);
-//            viewHolder.setGroupMovementListener(null);
-//            viewHolder.removeComponentListener(cl);
-//            viewHolder.getBSBObjectView().cleanup();
-//
-//            this.remove(viewHolder);
-//        }
         selection.clear();
 
         repaint();
@@ -630,12 +615,6 @@ public class BSBEditPanel extends JLayeredPane implements
         return (copyBuffer.size() > 0);
     }
 
-//    /**
-//     * @return
-//     */
-//    public List<BSBObjectViewHolder> getSelectionList() {
-//        return selectionList;
-//    }
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
         if (!"snapEnabled".equals(evt.getPropertyName())) {
@@ -705,6 +684,21 @@ public class BSBEditPanel extends JLayeredPane implements
 
     public ObservableSet<BSBObject> getSelection() {
         return selection;
+    }
+    
+    public List<BSBObjectViewHolder> getSelectedViews() {
+        List<BSBObjectViewHolder> retVal = new ArrayList<>();
+        
+        for(var c: getComponents()) {
+            if(c instanceof BSBObjectViewHolder) {
+                var holder = (BSBObjectViewHolder)c;
+                var bsbObjView = holder.getBSBObjectView();
+                if(selection.contains(bsbObjView.getBSBObject())) {
+                    retVal.add(holder);
+                }
+            }
+        }
+        return retVal;
     }
 
     public ObservableList<BSBGroup> getGroupsList() {
