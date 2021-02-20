@@ -18,7 +18,7 @@ jobs:
       - uses: actions/upload-artifact@v2
         with:
           name: Blue (macOS .app)  
-          path: application/target/blue-macOS-2.8.2-dev.zip 
+          path: application/target/blue-macOS-2.8.2.zip 
   linux:
     runs-on: ubuntu-latest 
     steps:
