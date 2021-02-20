@@ -1369,11 +1369,6 @@
         -->
         <dependency>
             <groupId>${project.groupId}</groupId>
-            <artifactId>blue-jfx</artifactId>
-            <version>${project.version}</version>
-        </dependency> 
-        <dependency>
-            <groupId>${project.groupId}</groupId>
             <artifactId>blue-core</artifactId>
             <version>${project.version}</version>
         </dependency>

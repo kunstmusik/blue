@@ -25,9 +25,7 @@ import blue.MainToolBar;
 import blue.WindowSettingManager;
 import blue.automation.ParameterTimeManagerFactory;
 import blue.automation.ParameterTimeManagerImpl;
-import blue.components.lines.LineList;
 import blue.midi.MidiInputManager;
-import blue.orchestra.editor.blueSynthBuilder.swing.editors.LineListEditor;
 import blue.osc.OSCManager;
 import blue.projects.BlueProject;
 import blue.projects.BlueProjectManager;
@@ -50,8 +48,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.logging.Logger;
-import javafx.application.Platform;
-import javafx.embed.swing.JFXPanel;
 import javax.swing.SwingUtilities;
 import jiconfont.icons.elusive.Elusive;
 import jiconfont.icons.font_awesome.FontAwesome;
@@ -206,12 +202,8 @@ public class Installer extends ModuleInstall {
         //                return comp;
         //            }
         //        }
-        Platform.setImplicitExit(false);
-
+        
         SwingUtilities.invokeLater(() -> {
-            // Initialize JavaFX by using this call
-
-            new JFXPanel();
             BlueNbUtilities.setMainWindow(WindowManager.getDefault().getMainWindow());
         });
 

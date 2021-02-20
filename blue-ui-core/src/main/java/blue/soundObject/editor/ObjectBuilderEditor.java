@@ -23,7 +23,6 @@ import blue.BlueSystem;
 import blue.CompileData;
 import blue.gui.ExceptionDialog;
 import blue.gui.InfoDialog;
-import blue.jfx.BlueFX;
 import blue.orchestra.blueSynthBuilder.BSBGraphicInterface;
 import blue.orchestra.blueSynthBuilder.PresetGroup;
 import blue.orchestra.editor.blueSynthBuilder.swing.BSBInterfaceEditor;
@@ -34,13 +33,12 @@ import blue.soundObject.ObjectBuilder;
 import blue.soundObject.ObjectBuilderRegistry;
 import blue.soundObject.SoundObjectException;
 import blue.soundObject.editor.objectBuilder.ObjectBuilderCodeEditor;
+import blue.ui.nbutilities.MimeTypeEditorComponent;
+import blue.ui.utilities.SimpleDocumentListener;
 import blue.utility.GUI;
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
-import javafx.embed.swing.JFXPanel;
-import javafx.scene.Scene;
-import javafx.scene.control.TextArea;
 import javax.swing.AbstractAction;
 import javax.swing.ActionMap;
 import javax.swing.InputMap;
@@ -50,6 +48,7 @@ import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
 import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
+import javax.swing.event.DocumentEvent;
 
 @ScoreObjectEditorPlugin(scoreObjectType = ObjectBuilder.class)
 public class ObjectBuilderEditor extends ScoreObjectEditor {
@@ -61,7 +60,7 @@ public class ObjectBuilderEditor extends ScoreObjectEditor {
 
     private final ObjectBuilderCodeEditor codeEditor = new ObjectBuilderCodeEditor();
 
-    private TextArea commentTextArea;
+    MimeTypeEditorComponent commentPane = new MimeTypeEditorComponent("text/plain");
 
     public ObjectBuilderEditor() {
         JTabbedPane tabs = new JTabbedPane();
@@ -84,19 +83,16 @@ public class ObjectBuilderEditor extends ScoreObjectEditor {
         this.add(topPanel, BorderLayout.NORTH);
         this.add(tabs, BorderLayout.CENTER);
 
-        JFXPanel jfxCommentPanel = new JFXPanel();
-
-        BlueFX.runOnFXThread(() -> {
-            commentTextArea = new TextArea();
-            commentTextArea.setWrapText(true);
-
-            final Scene scene2 = new Scene(commentTextArea);
-            BlueFX.style(scene2);
-            jfxCommentPanel.setScene(scene2);
-
+        commentPane.getDocument().addDocumentListener(new SimpleDocumentListener() {
+            @Override
+            public void documentChanged(DocumentEvent e) {
+                if (objectBuilder != null) {
+                    objectBuilder.setComment(commentPane.getText());
+                }
+            }
         });
 
-        tabs.addTab("Comments", jfxCommentPanel);
+        tabs.addTab("Comments", commentPane);
 
         initActions();
     }
@@ -129,24 +125,19 @@ public class ObjectBuilderEditor extends ScoreObjectEditor {
             return;
         }
 
-        if (this.objectBuilder != null) {
-            final ObjectBuilder temp = this.objectBuilder;
-            BlueFX.runOnFXThread(()
-                    -> temp.commentProperty().unbind());
-        }
+        this.objectBuilder = null;
 
-        this.objectBuilder = (ObjectBuilder) sObj;
+        var tempObjBuilder = (ObjectBuilder) sObj;
 
-        PresetGroup presetGroup = objectBuilder.getPresetGroup();
-        BSBGraphicInterface graphicInterface = objectBuilder
+        PresetGroup presetGroup = tempObjBuilder.getPresetGroup();
+        BSBGraphicInterface graphicInterface = tempObjBuilder
                 .getGraphicInterface();
         this.interfaceEditor.editInterface(graphicInterface, presetGroup);
-        this.codeEditor.editObjectBuilder(objectBuilder);
+        this.codeEditor.editObjectBuilder(tempObjBuilder);
+        commentPane.setText(tempObjBuilder.getComment());
 
-        BlueFX.runOnFXThread(() -> {
-            commentTextArea.setText(this.objectBuilder.getComment());
-            this.objectBuilder.commentProperty().bind(commentTextArea.textProperty());
-        });
+        this.objectBuilder = tempObjBuilder;
+
     }
 
     public final void testSoundObject() {

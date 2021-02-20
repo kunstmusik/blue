@@ -20,7 +20,6 @@
 package blue;
 
 import blue.event.PlayModeListener;
-import blue.jfx.BlueFX;
 import blue.orchestra.editor.blueSynthBuilder.BSBPreferences;
 import blue.projects.BlueProject;
 import blue.projects.BlueProjectManager;
@@ -30,6 +29,7 @@ import blue.settings.PlaybackSettings;
 import blue.ui.core.render.RealtimeRenderManager;
 import blue.ui.core.score.object.actions.NavigateToNextMarkerAction;
 import blue.ui.core.score.object.actions.NavigateToPreviousMarkerAction;
+import blue.ui.utilities.UiUtilities;
 import blue.utility.NumberUtilities;
 import java.awt.Color;
 import java.awt.Dimension;
@@ -39,7 +39,6 @@ import java.beans.PropertyChangeListener;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.Box;
-import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
@@ -48,11 +47,9 @@ import javax.swing.JToggleButton;
 import javax.swing.JToolBar;
 import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
-import jiconfont.icons.elusive.Elusive;
 import jiconfont.icons.font_awesome.FontAwesome;
 import jiconfont.swing.IconFontSwing;
 import org.openide.awt.StatusDisplayer;
-import org.openide.util.ImageUtilities;
 import org.openide.util.Lookup;
 
 /**
@@ -167,7 +164,7 @@ public class MainToolBar extends JToolBar implements PlayModeListener,
         };
 
         widgetInfoButton.addActionListener(ae -> {
-            BlueFX.runOnFXThread(() -> {
+            UiUtilities.invokeOnSwingThread(() -> {
                 prefs.setShowWidgetComments(!prefs.getShowWidgetComments());
             });
         });

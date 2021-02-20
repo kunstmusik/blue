@@ -73,7 +73,6 @@
         <module>blue-plugin</module>
         <module>blue-ui-nbutilities</module>
         <module>blue-ui-filemanager</module>
-        <module>blue-jfx</module>
         <module>blue-midi</module>
         <module>csound-manual</module>
         <module>blue-core</module>

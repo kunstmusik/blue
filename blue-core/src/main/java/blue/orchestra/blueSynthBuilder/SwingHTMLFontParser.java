@@ -21,7 +21,6 @@ package blue.orchestra.blueSynthBuilder;
 import java.awt.Font;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import javafx.scene.text.FontWeight;
 
 /**
  *
