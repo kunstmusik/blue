@@ -152,6 +152,7 @@ public abstract class SoundObjectView extends JComponent implements Comparable<S
         super.removeNotify();
         result.removeLookupListener(this);
         result = null;
+        this.sObj.removeScoreObjectListener(this);
     }
 
     @Override

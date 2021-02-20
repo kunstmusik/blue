@@ -32,9 +32,11 @@ import java.awt.event.ActionEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import javafx.beans.value.ChangeListener;
+import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
+import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 import org.wonderly.awt.Packer;
 
@@ -56,6 +58,8 @@ public class BSBLineObjectView extends BSBObjectView<BSBLineObject> implements
         this.add(lineCanvas, BorderLayout.CENTER);
         this.add(lineSelector, BorderLayout.SOUTH);
 
+        lineCanvas.setBorder(BorderFactory.createCompoundBorder(new EmptyBorder(5,5,5,5), 
+                new LineBorder(Color.LIGHT_GRAY, 1)));
         lineCanvas.setLocked(lineObj.isLocked());
 
         lineSelector.setLineCanvas(lineCanvas);

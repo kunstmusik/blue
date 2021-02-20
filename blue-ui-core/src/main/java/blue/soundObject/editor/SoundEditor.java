@@ -23,15 +23,8 @@ import blue.Arrangement;
 import blue.BlueSystem;
 import blue.CompileData;
 import blue.Tables;
-import blue.automation.LineColors;
-import blue.automation.Parameter;
-import blue.components.lines.Line;
-import blue.components.lines.LineList;
-import blue.components.lines.LinePoint;
 import blue.gui.ExceptionDialog;
 import blue.gui.InfoDialog;
-import blue.jfx.BlueFX;
-import blue.orchestra.editor.blueSynthBuilder.jfx.LineSelector;
 import blue.plugin.ScoreObjectEditorPlugin;
 import blue.score.ScoreObject;
 import blue.score.ScoreObjectEvent;
@@ -39,24 +32,10 @@ import blue.score.ScoreObjectListener;
 import blue.soundObject.NoteList;
 import blue.soundObject.Sound;
 import blue.soundObject.SoundObject;
-import blue.soundObject.editor.sound.ParameterLineView;
-import blue.soundObject.editor.sound.TimeBar;
+import blue.soundObject.editor.sound.AutomationPanel;
 import blue.ui.core.orchestra.editor.BlueSynthBuilderEditor;
 import blue.ui.nbutilities.MimeTypeEditorComponent;
 import java.awt.BorderLayout;
-import java.util.List;
-import javafx.embed.swing.JFXPanel;
-import javafx.geometry.Insets;
-import javafx.scene.Scene;
-import javafx.scene.control.MenuButton;
-import javafx.scene.control.MenuItem;
-import javafx.scene.control.TextArea;
-import javafx.scene.layout.Background;
-import javafx.scene.layout.BackgroundFill;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.CornerRadii;
-import javafx.scene.layout.Pane;
-import javafx.scene.paint.Color;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -81,25 +60,13 @@ public class SoundEditor extends ScoreObjectEditor {
 
     JButton testButton = new JButton();
 
-    LineList lineList = new LineList();
 
     BlueSynthBuilderEditor editor = new BlueSynthBuilderEditor();
 
-    ParameterLineView lineView;
-    LineSelector lineSelector;
+    AutomationPanel automationPanel = new AutomationPanel();
+
     MimeTypeEditorComponent commentPane = new MimeTypeEditorComponent("text/plain");
-    ScoreObjectListener sObjListener;
-
     public SoundEditor() {
-
-        sObjListener = evt -> {
-            if (evt.getPropertyChanged() == ScoreObjectEvent.START_TIME) {
-                lineView.setStartTime(evt.getScoreObject().getStartTime());
-            } else if (evt.getPropertyChanged() == ScoreObjectEvent.DURATION) {
-                lineView.setDuration(evt.getScoreObject().getSubjectiveDuration());
-            }
-        };
-
         try {
             jbInit();
         } catch (Exception e) {
@@ -112,89 +79,7 @@ public class SoundEditor extends ScoreObjectEditor {
         this.setLayout(new BorderLayout());
         this.add(editor);
         editor.setLabelText("[ Sound ]");
-
-        JFXPanel jfxPanel = new JFXPanel();
-        
-        BlueFX.runOnFXThread(() -> {
-
-            MenuButton btn = new MenuButton("Automations");
-
-            BorderPane mainPane = new BorderPane();
-            lineView = new ParameterLineView(lineList);
-            lineSelector = new LineSelector(lineList);
-
-            lineView.widthProperty().bind(mainPane.widthProperty());
-            lineView.heightProperty().bind(mainPane.heightProperty().subtract(lineSelector.heightProperty()));
-
-            lineSelector.getChildren().add(0, btn);
-            lineSelector.setSpacing(5.0);
-            lineView.selectedLineProperty().bind(lineSelector.selectedLineProperty());
-
-            TimeBar tb = new TimeBar();
-            tb.startTimeProperty().bind(lineView.startTimeProperty());
-            tb.durationProperty().bind(lineView.durationProperty());
-
-            Pane p = new Pane(lineView, tb);
-            p.setBackground(new Background(
-                    new BackgroundFill(
-                            Color.BLACK, CornerRadii.EMPTY, Insets.EMPTY)));
-            lineView.widthProperty().bind(p.widthProperty().subtract(20));
-            lineView.heightProperty().bind(p.heightProperty().subtract(40));
-            lineView.setLayoutX(10);
-            lineView.setLayoutY(30);
-            tb.widthProperty().bind(lineView.widthProperty());
-            tb.setHeight(20);
-            tb.setLayoutX(10);
-            tb.setLayoutY(10);
-
-            mainPane.setCenter(p);
-            mainPane.setTop(lineSelector);
-
-            btn.showingProperty().addListener((obs, old, newVal) -> {
-                if (newVal) {
-                    if (sObj != null) {
-                        sObj.getBlueSynthBuilder().getParameterList().sorted()
-                                .forEach((param) -> {
-                                    MenuItem m = new MenuItem(param.getName());
-                                    m.setOnAction(e -> {
-                                        param.setAutomationEnabled(!param.isAutomationEnabled());
-                                        if (param.isAutomationEnabled()) {
-                                            Line line = param.getLine();
-                                            line.setVarName(param.getName());
-                                            List<LinePoint> points = line.getObservableList();
-                                            if (points.size() < 2) {
-                                                LinePoint lp = new LinePoint();
-                                                lp.setLocation(1.0, points.get(0).getY());
-                                                points.add(lp);
-                                            }
-                                            lineList.add(line);
-                                        } else {
-                                            lineList.remove(param.getLine());
-                                        }
-
-                                        int colorCount = 0;
-                                        for (Line line : lineList) {
-                                            line.setColor(LineColors.getColor(colorCount++));
-                                        }
-                                    });
-                                    if (param.isAutomationEnabled()) {
-                                        m.setStyle("-fx-text-fill: green;");
-                                    }
-                                    btn.getItems().add(m);
-                                });
-                    }
-                } else {
-                    btn.getItems().clear();
-                }
-            });
-
-            final Scene scene = new Scene(mainPane);
-            BlueFX.style(scene);
-            jfxPanel.setScene(scene);
-
-        });
-
-        editor.getTabs().insertTab("Automation", null, jfxPanel, "", 1);
+        editor.getTabs().insertTab("Automation", null, automationPanel, "", 1);
         editor.getTabs().addTab("Comments", commentPane);
 
         commentPane.getDocument().addDocumentListener(new DocumentListener() {
@@ -223,14 +108,8 @@ public class SoundEditor extends ScoreObjectEditor {
 
     @Override
     public final void editScoreObject(ScoreObject sObj) {
-        if (sObj == null) {
-            this.sObj = null;
-            editorLabel.setText("no editor available");
-            editor.editInstrument(null);
-            return;
-        }
 
-        if (!(sObj instanceof Sound)) {
+        if (sObj == null || !(sObj instanceof Sound)) {
             this.sObj = null;
             editorLabel.setText("no editor available");
             editor.editInstrument(null);
@@ -238,43 +117,16 @@ public class SoundEditor extends ScoreObjectEditor {
             return;
         }
 
-        if (this.sObj != null) {
-            final Sound temp = this.sObj;
-            BlueFX.runOnFXThread(() -> {
-                temp.removeScoreObjectListener(sObjListener);
-            });
-        }
-        
         this.sObj = null;
-        
-        commentPane.setText(((Sound)sObj).getComment());
+
+        commentPane.setText(((Sound) sObj).getComment());
         commentPane.getJEditorPane().setCaretPosition(0);
         commentPane.resetUndoManager();
-        
+
         this.sObj = (Sound) sObj;
         editor.editInstrument(this.sObj.getBlueSynthBuilder());
+        automationPanel.editSound(this.sObj);
 
-        BlueFX.runOnFXThread(() -> {
-            lineList.clear();
-            int colorCount = 0;
-            for (Parameter p : this.sObj.getBlueSynthBuilder().getParameterList().sorted()) {
-                if (p.isAutomationEnabled()) {
-                    p.getLine().setVarName(p.getName());
-                    p.getLine().setColor(LineColors.getColor(colorCount++));
-                    List<LinePoint> points = p.getLine().getObservableList();
-                    if (points.size() < 2) {
-                        LinePoint lp = new LinePoint();
-                        lp.setLocation(1.0, points.get(0).getY());
-                        points.add(lp);
-                    }
-                    lineList.add(p.getLine());
-                }
-            }
-            lineView.setStartTime(this.sObj.getStartTime());
-            lineView.setDuration(this.sObj.getSubjectiveDuration());
-            
-            this.sObj.addScoreObjectListener(sObjListener);
-        });
     }
 
     public final void testSoundObject() {
