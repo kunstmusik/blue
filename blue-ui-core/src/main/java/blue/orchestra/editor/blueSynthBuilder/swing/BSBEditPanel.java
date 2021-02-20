@@ -78,8 +78,8 @@ public class BSBEditPanel extends JLayeredPane implements
 
     private final ObservableSet<BSBObject> selection;
 
-    private final List<BSBObject> copyBuffer = new ArrayList<>();
-    int copyX, copyY;
+    private static final List<BSBObject> copyBuffer = new ArrayList<>();
+    private static int copyX, copyY;
 
     private final AlphaMarquee marquee = new AlphaMarquee();
 
@@ -570,8 +570,13 @@ public class BSBEditPanel extends JLayeredPane implements
     protected void copy() {
         copyBuffer.clear();
 
+        copyX = Integer.MAX_VALUE;
+        copyY = Integer.MAX_VALUE;
+        
         for (var bsbObj : selection) {
             copyBuffer.add(bsbObj.deepCopy());
+            copyX = Math.min(copyX, bsbObj.getX());
+            copyY = Math.min(copyY, bsbObj.getY());
         }
     }
 
