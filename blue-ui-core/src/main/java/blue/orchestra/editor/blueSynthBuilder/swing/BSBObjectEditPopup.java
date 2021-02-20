@@ -19,12 +19,18 @@
  */
 package blue.orchestra.editor.blueSynthBuilder.swing;
 
+import blue.orchestra.blueSynthBuilder.BSBGroup;
+import blue.orchestra.blueSynthBuilder.BSBObject;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.List;
+import java.util.stream.Collectors;
 import javax.swing.JComponent;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
+import javax.swing.event.PopupMenuEvent;
+import javax.swing.event.PopupMenuListener;
 
 /**
  * @author Steven Yi
@@ -39,6 +45,9 @@ public class BSBObjectEditPopup extends JPopupMenu implements ActionListener {
 
     private JMenuItem copy = new JMenuItem("Copy");
 
+    JMenuItem makeGroup = new JMenuItem("Make Group");
+    JMenuItem breakGroup = new JMenuItem("Break Group");
+
     // private JMenuItem paste = new JMenuItem("Paste");
     public BSBObjectEditPopup() {
         JMenuItem remove = new JMenuItem("Remove");
@@ -47,6 +56,60 @@ public class BSBObjectEditPopup extends JPopupMenu implements ActionListener {
         cut.addActionListener(this);
         copy.addActionListener(this);
 
+        // make/break groups
+        makeGroup.addActionListener(ae -> {
+            var selection = bsbEditPanel.getSelection();
+            var groupsList = bsbEditPanel.getGroupsList();
+            var curGroup = groupsList.get(groupsList.size() - 1);
+
+            List<BSBObject> bsbObjs = selection.stream()
+                    .map(b -> b.deepCopy())
+                    .collect(Collectors.toList());
+            int x = Integer.MAX_VALUE;
+            int y = Integer.MAX_VALUE;
+
+            for (BSBObject bsbObj : bsbObjs) {
+                x = Math.min(x, bsbObj.getX());
+                y = Math.min(y, bsbObj.getY());
+            }
+
+            for (BSBObject bsbObj : bsbObjs) {
+                bsbObj.setX(bsbObj.getX() - x + 10);
+                bsbObj.setY(bsbObj.getY() - y + 10);
+            }
+
+            curGroup.interfaceItemsProperty().removeAll(selection);
+            selection.clear();
+
+            BSBGroup group = new BSBGroup();
+            group.interfaceItemsProperty().addAll(bsbObjs);
+            group.setX(x);
+            group.setY(y);
+
+            groupsList.get(groupsList.size() - 1).addBSBObject(group);
+        });
+
+        breakGroup.addActionListener(ae -> {
+            var selection = bsbEditPanel.getSelection();
+            var groupsList = bsbEditPanel.getGroupsList();
+            var curGroup = groupsList.get(groupsList.size() - 1);
+
+            BSBGroup group = (BSBGroup) selection.toArray()[0];
+
+            int x = group.getX();
+            int y = group.getY();
+
+            curGroup.interfaceItemsProperty().remove(group);
+
+            for (BSBObject bsbObj : group) {
+                BSBObject temp = bsbObj.deepCopy();
+                temp.setX(temp.getX() + x);
+                temp.setY(temp.getY() + y);
+                curGroup.addBSBObject(temp);
+            }
+        });
+
+        // alignment/distribution
         ActionListener alignListener = ae -> {
             var selection = bsbEditPanel.getSelectedViews();
             var compSource = (JComponent) ae.getSource();
@@ -80,13 +143,34 @@ public class BSBObjectEditPopup extends JPopupMenu implements ActionListener {
             distributeMenu.add(d);
         }
 
+        // setup menu
         this.add(cut);
         this.add(copy);
         this.add(remove);
         this.addSeparator();
+        this.add(makeGroup);
+        this.add(breakGroup);
+        this.addSeparator();
         this.add(alignMenu);
         this.add(distributeMenu);
 
+        this.addPopupMenuListener(new PopupMenuListener() {
+            @Override
+            public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
+                var selection = bsbEditPanel.getSelection();
+
+                breakGroup.setEnabled(selection.size() == 1 
+                        && (selection.toArray()[0] instanceof BSBGroup));
+            }
+
+            @Override
+            public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
+            }
+
+            @Override
+            public void popupMenuCanceled(PopupMenuEvent e) {
+            }
+        });
     }
 
     public void setBSBEditPanel(BSBEditPanel bsbEditPanel) {
