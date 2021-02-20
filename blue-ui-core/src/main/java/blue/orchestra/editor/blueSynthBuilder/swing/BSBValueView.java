@@ -26,7 +26,6 @@ import java.awt.Color;
 import java.awt.Graphics;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
-import javafx.scene.layout.BorderPane;
 import javax.swing.JLabel;
 
 /**
@@ -34,8 +33,6 @@ import javax.swing.JLabel;
  */
 public class BSBValueView extends BSBObjectView<BSBValue> implements EditModeOnly,
         ChangeListener<String> {
-
-    BorderPane pane;
 
     JLabel displayLabel;
 
