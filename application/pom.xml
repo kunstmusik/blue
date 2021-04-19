@@ -1338,6 +1338,18 @@
                     <groupId>org.netbeans.api</groupId>
                     <artifactId>org-netbeans-modules-jumpto</artifactId>
                 </exclusion>
+                <exclusion>
+                    <groupId>org.netbeans.api</groupId>
+                    <artifactId>org-netbeans-modules-html-indexing</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.netbeans.api</groupId>
+                    <artifactId>org-netbeans-modules-db-core</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.netbeans.api</groupId>
+                    <artifactId>org-netbeans-libs-truffleapi</artifactId>
+                </exclusion>
             </exclusions>
         </dependency>
         
