@@ -22,7 +22,7 @@ package blue.orchestra.editor.blueSynthBuilder.swing;
 import blue.orchestra.blueSynthBuilder.BSBGroup;
 import blue.orchestra.blueSynthBuilder.BSBObject;
 import blue.orchestra.blueSynthBuilder.GridSettings;
-import blue.orchestra.editor.blueSynthBuilder.EditModeOnly;
+import blue.orchestra.editor.blueSynthBuilder.EditModeConditional;
 import blue.ui.utilities.UiUtilities;
 import java.awt.Color;
 import java.awt.Cursor;
@@ -345,7 +345,7 @@ public class BSBObjectViewHolder extends JLayeredPane {
     }
 
     public boolean isEditModeOnly() {
-        return objectView instanceof EditModeOnly;
+        return !(objectView instanceof BSBGroupPanel) && objectView instanceof EditModeConditional;
     }
 
     // RESIZING

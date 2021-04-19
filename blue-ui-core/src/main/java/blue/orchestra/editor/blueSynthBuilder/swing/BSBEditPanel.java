@@ -26,8 +26,7 @@ import blue.orchestra.blueSynthBuilder.BSBGroup;
 import blue.orchestra.blueSynthBuilder.BSBObject;
 import blue.orchestra.blueSynthBuilder.BSBObjectEntry;
 import blue.orchestra.blueSynthBuilder.GridSettings;
-import static blue.orchestra.blueSynthBuilder.GridSettings.GridStyle.DOT;
-import static blue.orchestra.blueSynthBuilder.GridSettings.GridStyle.LINE;
+import blue.orchestra.editor.blueSynthBuilder.EditModeConditional;
 import blue.ui.utilities.UiUtilities;
 import java.awt.Color;
 import java.awt.Dimension;
@@ -522,6 +521,11 @@ public class BSBEditPanel extends JLayeredPane implements
                 ? bsbInterface.editEnabledProperty() : null;
 
         BSBObjectView objectView = BSBObjectEditorFactory.getView(bsbObj);
+        
+        if(objectView instanceof EditModeConditional) {
+            ((EditModeConditional) objectView).setEditEnabledProperty(editEnabledProperty);
+        }
+        
         BSBObjectViewHolder viewHolder
                 = new BSBObjectViewHolder(editEnabledProperty,
                         selection, groupsList, bsbInterface.getGridSettings(), objectView);

@@ -20,21 +20,25 @@
 package blue.orchestra.editor.blueSynthBuilder.swing;
 
 import blue.orchestra.blueSynthBuilder.BSBValue;
-import blue.orchestra.editor.blueSynthBuilder.EditModeOnly;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Graphics;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javax.swing.JLabel;
+import blue.orchestra.editor.blueSynthBuilder.EditModeConditional;
+import javafx.beans.property.BooleanProperty;
 
 /**
  * @author steven
  */
-public class BSBValueView extends BSBObjectView<BSBValue> implements EditModeOnly,
+public class BSBValueView extends BSBObjectView<BSBValue> implements EditModeConditional,
         ChangeListener<String> {
 
     JLabel displayLabel;
+    private BooleanProperty editEnabledProperty;
+    
+    ChangeListener<Boolean> editEnabledListener;
 
     /**
      * @param knob
@@ -58,6 +62,10 @@ public class BSBValueView extends BSBObjectView<BSBValue> implements EditModeOnl
         this.add(displayLabel, BorderLayout.CENTER);
 
         displayLabel.setOpaque(false);
+        
+        editEnabledListener = (obs, old, newVal) -> {
+            setVisible(newVal);
+        };
     }
 
     @Override
@@ -67,6 +75,10 @@ public class BSBValueView extends BSBObjectView<BSBValue> implements EditModeOnl
         updateLabel();
 
         bsbObj.objectNameProperty().addListener(this);
+        if(editEnabledProperty != null) {
+            editEnabledProperty.addListener(editEnabledListener);
+            setVisible(editEnabledProperty.get());
+        }
     }
 
     @Override
@@ -74,6 +86,10 @@ public class BSBValueView extends BSBObjectView<BSBValue> implements EditModeOnl
         super.removeNotify();
 
         bsbObj.objectNameProperty().removeListener(this);
+        
+        if(editEnabledProperty != null) {
+            editEnabledProperty.removeListener(editEnabledListener);
+        }
     }
 
     public void updateLabel() {
@@ -86,5 +102,10 @@ public class BSBValueView extends BSBObjectView<BSBValue> implements EditModeOnl
     @Override
     public void changed(ObservableValue<? extends String> ov, String t, String t1) {
         updateLabel();
+    }
+
+    @Override
+    public void setEditEnabledProperty(BooleanProperty editEnabled) {
+        this.editEnabledProperty = editEnabled;
     }
 }

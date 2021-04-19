@@ -21,6 +21,7 @@ package blue.orchestra.editor.blueSynthBuilder.swing;
 
 import blue.orchestra.blueSynthBuilder.BSBGroup;
 import blue.orchestra.blueSynthBuilder.BSBObject;
+import blue.orchestra.editor.blueSynthBuilder.EditModeConditional;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
@@ -41,7 +42,7 @@ import javax.swing.border.LineBorder;
  *
  * @author stevenyi
  */
-public class BSBGroupPanel extends BSBObjectView<BSBGroup> implements ResizeableView {
+public class BSBGroupPanel extends BSBObjectView<BSBGroup> implements ResizeableView, EditModeConditional {
 
     JLabel label;
     JLayeredPane editorPanel;
@@ -91,16 +92,15 @@ public class BSBGroupPanel extends BSBObjectView<BSBGroup> implements Resizeable
 
             @Override
             protected void paintComponent(Graphics g) {
-                super.paintComponent(g); 
-                
+                super.paintComponent(g);
+
 //                Graphics2D g2d = (Graphics2D) g.create();
 //                g2d.setComposite(AlphaComposite.SrcOver.derive(getAlpha()));
                 g.setColor(getBackground());
                 g.fillRect(0, 0, getWidth(), getHeight());
 //                g2d.dispose();
             }
-            
-            
+
         };
 
         add(label, BorderLayout.NORTH);
@@ -194,7 +194,13 @@ public class BSBGroupPanel extends BSBObjectView<BSBGroup> implements Resizeable
     protected void addBSBObject(BSBObject bsbObj) {
 
         BSBObjectView objectView = BSBObjectEditorFactory.getView(bsbObj);
+
+        if(objectView instanceof EditModeConditional) {
+            ((EditModeConditional) objectView).setEditEnabledProperty(editEnabledProperty);
+        }
+        
         objectView.setLocation(bsbObj.getX(), bsbObj.getY());
+        
         editorPanel.add(objectView);
     }
 
@@ -272,5 +278,16 @@ public class BSBGroupPanel extends BSBObjectView<BSBGroup> implements Resizeable
 
     public int getWidgetY() {
         return bsbObj.getY();
+    }
+
+    @Override
+    public void setEditEnabledProperty(BooleanProperty editEnabled) {
+        this.editEnabledProperty = editEnabled;
+        
+        for(var c: editorPanel.getComponents()) {
+            if(c instanceof EditModeConditional) {
+                ((EditModeConditional) c).setEditEnabledProperty(editEnabled);
+            }
+        }
     }
 }

@@ -20,7 +20,6 @@
 package blue.orchestra.editor.blueSynthBuilder.swing;
 
 import blue.orchestra.blueSynthBuilder.BSBObject;
-import blue.orchestra.blueSynthBuilder.BSBObjectListener;
 import blue.orchestra.editor.blueSynthBuilder.BSBPreferences;
 import javax.swing.JComponent;
 
