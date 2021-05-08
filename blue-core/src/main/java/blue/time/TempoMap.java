@@ -7,9 +7,8 @@ package blue.time;
 
 /**
  *
- * @author syyigmmbp
+ * @author Steven Yi
  */
-public class MeasureBeatTime {
-    long measure;
-    double beat;
+public class TempoMap {
+    
 }
