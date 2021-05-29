@@ -51,7 +51,8 @@ import org.openide.util.Lookup;
 public final class TimeBar extends JPanel implements
         PropertyChangeListener, RenderTimeManagerListener {
 
-    private static final Font LABEL_FONT = new Font("dialog", Font.PLAIN, 11);
+    private static final Font LABEL_FONT = UIManager.getFont("Label.font")
+            .deriveFont(Font.PLAIN, 11);
 
     // BufferedImage bufferedImage;
     // Image image;

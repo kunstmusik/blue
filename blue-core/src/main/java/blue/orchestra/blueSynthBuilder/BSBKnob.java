@@ -61,7 +61,7 @@ public class BSBKnob extends AutomatableBSBObject implements ParameterListener,
 
     private final StringProperty label = new SimpleStringProperty("label");
     private final BooleanProperty labelEnabled = new SimpleBooleanProperty(true);
-    private final ObjectProperty<Font> labelFont = new SimpleObjectProperty<>(new Font(Font.DIALOG, Font.PLAIN, 12));
+    private final ObjectProperty<Font> labelFont = new SimpleObjectProperty<>(new Font("Roboto", Font.PLAIN, 12));
 
     public BSBKnob() {
         knobValue = new ClampedValue(0.0, 1.0, 0.0, new BigDecimal(-1.0));

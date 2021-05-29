@@ -75,7 +75,8 @@ public class BSBXYControllerView extends BSBObjectView<BSBXYController>
         this.add(drawPanel, BorderLayout.CENTER);
         this.add(label, BorderLayout.SOUTH);
 
-        label.setFont(new Font("Dialog", Font.PLAIN, 10));
+        label.setFont(label.getFont().deriveFont(Font.PLAIN, 10));
+                
 
         drawPanel.setPreferredSize(new Dimension(controller.getWidth(),
                 controller.getHeight()));

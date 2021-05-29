@@ -37,10 +37,11 @@ public class BSBFontUtil {
    }
 
    public static Font loadFromXML(Element f) {
-       String name = "System Regular";
+       String name = "Roboto";
        double size = 12.0f;
 
        Elements nodes = f.getElements();
+       int style = Font.PLAIN;
        while(nodes.hasMoreElements()) {
            Element elem = nodes.next();
 
@@ -55,7 +56,15 @@ public class BSBFontUtil {
                    break;
            }
        }
-       return new Font(name, Font.PLAIN, (int)size);
+       
+       if("System Regular".equals(name)) {
+           name = "Roboto";
+       } else if("System Bold".equals(name)) {
+           name = "Roboto";
+           style = Font.BOLD;
+       }
+       
+       return new Font(name, style, (int)size);
    }
    
 }

@@ -34,7 +34,7 @@ import javafx.beans.property.StringProperty;
 public class BSBLabel extends BSBObject {
 
     StringProperty label = new SimpleStringProperty("label");
-    ObjectProperty<Font> font = new SimpleObjectProperty<>(new Font(Font.DIALOG, Font.PLAIN, 12));
+    ObjectProperty<Font> font = new SimpleObjectProperty<>(new Font("Roboto", Font.PLAIN, 12));
 
     public BSBLabel() {
     }

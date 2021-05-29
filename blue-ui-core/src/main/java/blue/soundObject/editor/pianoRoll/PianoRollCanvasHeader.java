@@ -19,7 +19,6 @@
  */
 package blue.soundObject.editor.pianoRoll;
 
-import blue.event.SelectionEvent;
 import blue.soundObject.PianoRoll;
 import blue.soundObject.pianoRoll.PianoNote;
 import java.awt.Color;
@@ -32,6 +31,7 @@ import java.util.HashMap;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javax.swing.JComponent;
+import javax.swing.UIManager;
 
 /**
  * @author steven
@@ -39,7 +39,8 @@ import javax.swing.JComponent;
 public class PianoRollCanvasHeader extends JComponent implements
         PropertyChangeListener, ListChangeListener<PianoNote> {
 
-    private static final Font labelFont = new Font("Dialog", Font.PLAIN, 10);
+    private static final Font labelFont = 
+            UIManager.getFont("Label.font").deriveFont(Font.PLAIN, 10);
 
     private static final String[] NOTE_NAMES = {"C", "C#/Db", "D", "D#/Eb",
         "E", "F", "F#/Gb", "G", "G#/Ab", "A", "A#/Bb", "B"};

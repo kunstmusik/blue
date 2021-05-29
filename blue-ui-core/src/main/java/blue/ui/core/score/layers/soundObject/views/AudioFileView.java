@@ -33,6 +33,7 @@ import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
+import javax.swing.UIManager;
 
 /**
  *
@@ -44,7 +45,8 @@ public class AudioFileView extends SoundObjectView {
 
     protected int labelOffset = 5;
 
-    private static final Font renderFont = new Font("Dialog", Font.BOLD, 12);
+    private static final Font renderFont = UIManager.getFont("Label.font")
+            .deriveFont(Font.BOLD, 12);
 
     protected static AudioWaveformCache waveCache = AudioWaveformCache.getInstance();
     

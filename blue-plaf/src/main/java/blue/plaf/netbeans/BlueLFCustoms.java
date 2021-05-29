@@ -71,7 +71,7 @@ public final class BlueLFCustoms extends LFCustoms {
         }
         
         //XXX fetch the custom font size here instead
-        Font controlFont = new Font("Dialog", Font.PLAIN, fontsize); //NOI18N
+        Font controlFont = new Font("Roboto", Font.PLAIN, fontsize); //NOI18N
         final Color tabBarColor = new Color(63, 102, 150);
         
         Object[] result = {
@@ -84,7 +84,7 @@ public final class BlueLFCustoms extends LFCustoms {
             LISTFONT, controlFont,
             TREEFONT, controlFont,
             PANELFONT, controlFont,
-            SUBFONT, new Font ("Dialog", Font.PLAIN, Math.min(fontsize - 1, 6)),
+            SUBFONT, new Font ("Roboto", Font.PLAIN, Math.min(fontsize - 1, 6)),
             //Bug in JDK 1.5 thru b59 - pale blue is incorrectly returned for this
             "textInactiveText", Color.GRAY, //NOI18N
             // #61395        

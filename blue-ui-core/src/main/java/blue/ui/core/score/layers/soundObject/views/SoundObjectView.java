@@ -31,6 +31,7 @@ import java.awt.Color;
 import java.awt.Font;
 import java.util.Collection;
 import javax.swing.JComponent;
+import javax.swing.UIManager;
 import org.openide.util.Lookup;
 import org.openide.util.LookupEvent;
 import org.openide.util.LookupListener;
@@ -52,7 +53,8 @@ import org.openide.windows.WindowManager;
 public abstract class SoundObjectView extends JComponent implements Comparable<SoundObjectView>,
         ScoreObjectListener, LookupListener, ScoreObjectView<SoundObject> {
 
-    protected static Font renderFont = new Font("Dialog", Font.BOLD, 12);
+    protected static Font renderFont = 
+            UIManager.getFont("Label.font").deriveFont(Font.BOLD, 12);
 
     protected SoundObject sObj;
     protected boolean selected = false;

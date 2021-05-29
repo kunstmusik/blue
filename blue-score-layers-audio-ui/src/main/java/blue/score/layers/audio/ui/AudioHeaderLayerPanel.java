@@ -145,7 +145,7 @@ public class AudioHeaderLayerPanel extends javax.swing.JPanel
 
         jPanel2.add(jPanel1);
 
-        muteToggleButton.setFont(new java.awt.Font("Dialog", 1, 10)); // NOI18N
+        muteToggleButton.setFont(muteToggleButton.getFont().deriveFont(muteToggleButton.getFont().getStyle() | java.awt.Font.BOLD, 10));
         muteToggleButton.setText(org.openide.util.NbBundle.getMessage(AudioHeaderLayerPanel.class, "AudioHeaderLayerPanel.muteToggleButton.text")); // NOI18N
         muteToggleButton.setFocusPainted(false);
         muteToggleButton.setFocusable(false);
@@ -159,7 +159,7 @@ public class AudioHeaderLayerPanel extends javax.swing.JPanel
         });
         jPanel2.add(muteToggleButton);
 
-        soloToggleButton.setFont(new java.awt.Font("Dialog", 1, 10)); // NOI18N
+        soloToggleButton.setFont(soloToggleButton.getFont().deriveFont(soloToggleButton.getFont().getStyle() | java.awt.Font.BOLD, 10));
         soloToggleButton.setText(org.openide.util.NbBundle.getMessage(AudioHeaderLayerPanel.class, "AudioHeaderLayerPanel.soloToggleButton.text")); // NOI18N
         soloToggleButton.setFocusPainted(false);
         soloToggleButton.setFocusable(false);
@@ -172,7 +172,7 @@ public class AudioHeaderLayerPanel extends javax.swing.JPanel
         });
         jPanel2.add(soloToggleButton);
 
-        automationButton.setFont(new java.awt.Font("Dialog", 1, 10)); // NOI18N
+        automationButton.setFont(automationButton.getFont().deriveFont(automationButton.getFont().getStyle() | java.awt.Font.BOLD, 10));
         automationButton.setText(org.openide.util.NbBundle.getMessage(AudioHeaderLayerPanel.class, "AudioHeaderLayerPanel.automationButton.text")); // NOI18N
         automationButton.setToolTipText(org.openide.util.NbBundle.getMessage(AudioHeaderLayerPanel.class, "AudioHeaderLayerPanel.automationButton.toolTipText")); // NOI18N
         automationButton.setFocusPainted(false);
@@ -187,7 +187,7 @@ public class AudioHeaderLayerPanel extends javax.swing.JPanel
         });
         jPanel2.add(automationButton);
 
-        otherMenuButton.setFont(new java.awt.Font("Dialog", 1, 10)); // NOI18N
+        otherMenuButton.setFont(otherMenuButton.getFont().deriveFont(otherMenuButton.getFont().getStyle() | java.awt.Font.BOLD, 10));
         otherMenuButton.setIcon(IconFactory.getDownArrowIcon());
         otherMenuButton.setToolTipText(org.openide.util.NbBundle.getMessage(AudioHeaderLayerPanel.class, "AudioHeaderLayerPanel.otherMenuButton.toolTipText")); // NOI18N
         otherMenuButton.setFocusPainted(false);
@@ -217,7 +217,7 @@ public class AudioHeaderLayerPanel extends javax.swing.JPanel
         });
         paramSelectPanel.add(paramColorSelect);
 
-        paramNameLabel.setFont(new java.awt.Font("Dialog", 0, 10)); // NOI18N
+        paramNameLabel.setFont(paramNameLabel.getFont().deriveFont((float)10));
         paramNameLabel.setText(org.openide.util.NbBundle.getMessage(AudioHeaderLayerPanel.class, "AudioHeaderLayerPanel.paramNameLabel.text")); // NOI18N
         paramNameLabel.setBorder(javax.swing.BorderFactory.createEmptyBorder(0, 3, 0, 0));
         paramNameLabel.setFocusable(false);
@@ -225,7 +225,7 @@ public class AudioHeaderLayerPanel extends javax.swing.JPanel
         paramNameLabel.setPreferredSize(new java.awt.Dimension(100, 15));
         paramSelectPanel.add(paramNameLabel);
 
-        paramPreviousButton.setFont(new java.awt.Font("Dialog", 1, 10)); // NOI18N
+        paramPreviousButton.setFont(paramPreviousButton.getFont().deriveFont(paramPreviousButton.getFont().getStyle() | java.awt.Font.BOLD, 10));
         paramPreviousButton.setIcon(IconFactory.getLeftArrowIcon());
         paramPreviousButton.setToolTipText(org.openide.util.NbBundle.getMessage(AudioHeaderLayerPanel.class, "AudioHeaderLayerPanel.paramPreviousButton.toolTipText")); // NOI18N
         paramPreviousButton.setFocusPainted(false);
@@ -240,7 +240,7 @@ public class AudioHeaderLayerPanel extends javax.swing.JPanel
         });
         paramSelectPanel.add(paramPreviousButton);
 
-        paramNextButton.setFont(new java.awt.Font("Dialog", 1, 10)); // NOI18N
+        paramNextButton.setFont(paramNextButton.getFont().deriveFont(paramNextButton.getFont().getStyle() | java.awt.Font.BOLD, 10));
         paramNextButton.setIcon(IconFactory.getRightArrowIcon());
         paramNextButton.setToolTipText(org.openide.util.NbBundle.getMessage(AudioHeaderLayerPanel.class, "AudioHeaderLayerPanel.paramNextButton.toolTipText")); // NOI18N
         paramNextButton.setFocusPainted(false);

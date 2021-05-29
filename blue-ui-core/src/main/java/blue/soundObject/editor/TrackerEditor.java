@@ -118,7 +118,7 @@ public class TrackerEditor extends ScoreObjectEditor {
         addButton.setFocusPainted(false);
 
         JLabel label = new JLabel("Tracker");
-        label.setFont(new Font("Dialog", Font.BOLD, 16));
+        label.setFont(label.getFont().deriveFont(Font.BOLD, 16));
 
         JButton button = new JButton("Test");
         button.addActionListener((ActionEvent e) -> {

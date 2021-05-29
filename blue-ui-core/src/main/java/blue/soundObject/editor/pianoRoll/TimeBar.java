@@ -28,13 +28,14 @@ import java.awt.Rectangle;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import javax.swing.JComponent;
+import javax.swing.UIManager;
 
 /**
  * @author steven
  */
 
 public final class TimeBar extends JComponent implements PropertyChangeListener {
-    private static final Font LABEL_FONT = new Font("dialog", Font.PLAIN, 11);
+    private static final Font LABEL_FONT = UIManager.getFont("Label.font").deriveFont(Font.PLAIN, 10);
 
     private PianoRoll pianoRoll;
 

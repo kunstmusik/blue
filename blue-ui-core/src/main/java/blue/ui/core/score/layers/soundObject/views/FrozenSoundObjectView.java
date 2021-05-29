@@ -32,6 +32,7 @@ import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import javax.swing.UIManager;
 
 /**
  *
@@ -44,7 +45,8 @@ public class FrozenSoundObjectView extends SoundObjectView {
 
     private AudioWaveformData audioWaveformData = null;
 
-    private static final Font renderFont = new Font("Dialog", Font.BOLD, 12);
+    private static final Font renderFont = 
+            UIManager.getFont("Label.font").deriveFont(Font.BOLD, 12);
 
     protected static Color selectedBgColor = Color.white;
 

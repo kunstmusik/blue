@@ -86,6 +86,11 @@
             <artifactId>org-netbeans-swing-plaf</artifactId>
             <version>${netbeans.version}</version>
         </dependency>
+<!--        <dependency>
+            <groupId>com.formdev</groupId>
+            <artifactId>flatlaf</artifactId>
+            <version>1.2</version>
+        </dependency>-->
     </dependencies>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>

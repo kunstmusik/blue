@@ -29,6 +29,7 @@ import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
+import javax.swing.UIManager;
 
 /**
  *
@@ -37,7 +38,8 @@ import java.awt.RenderingHints;
 @SoundObjectViewPlugin(scoreObjectType = Comment.class)
 public class CommentView extends SoundObjectView {
 
-    protected static Font renderFont = new Font("Dialog", Font.ITALIC, 12);
+    protected static Font renderFont
+            = UIManager.getFont("Label.font").deriveFont(Font.ITALIC, 12);
 
     @Override
     protected void paintComponent(Graphics graphics) {
@@ -48,14 +50,13 @@ public class CommentView extends SoundObjectView {
         g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,
                 RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
 
-        int w =getWidth();
+        int w = getWidth();
         int h = getHeight();
 
         Color bgColor;
         Color border1;
         Color border2;
         Color fontColor;
-
 
         if (isSelected()) {
             bgColor = sObj.getBackgroundColor().brighter().brighter();

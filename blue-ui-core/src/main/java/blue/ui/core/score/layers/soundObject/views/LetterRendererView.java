@@ -23,6 +23,7 @@ import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import javax.swing.UIManager;
 
 /**
  *
@@ -30,7 +31,8 @@ import java.awt.Graphics2D;
  */
 public class LetterRendererView extends GenericView {
 
-    private static final Font miniFont = new Font("Dialog", Font.BOLD, 10);
+    private static final Font miniFont = 
+            UIManager.getFont("Label.font").deriveFont(Font.BOLD, 10);
 
     protected String letter = "";
 

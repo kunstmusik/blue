@@ -19,6 +19,7 @@
  */
 package blue.plaf;
 
+import blue.plaf.fonts.Fonts;
 import blue.plaf.netbeans.BlueLFCustoms;
 import java.awt.Color;
 import java.awt.event.KeyEvent;
@@ -48,6 +49,8 @@ public class Installer extends ModuleInstall {
 
     @Override
     public void validate() throws IllegalStateException {
+        Fonts.registerRobotoFonts();
+        
         Preferences prefs = NbPreferences.root().node("laf");
         prefs.put("laf", BlueLookAndFeel.class.getName());
 

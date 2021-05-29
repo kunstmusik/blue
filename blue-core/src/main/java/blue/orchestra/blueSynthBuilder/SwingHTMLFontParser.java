@@ -58,7 +58,7 @@ public class SwingHTMLFontParser {
         if (text.contains("<b>") || retVal > 2) {
             weight = Font.BOLD;
         }
-        Font f = new Font(Font.DIALOG, weight, SIZE_MAP[retVal]);
+        Font f = new Font("Roboto", weight, SIZE_MAP[retVal]);
         return f;
     }
 

@@ -39,8 +39,11 @@ public class BSBLabelView extends BSBObjectView<BSBLabel> {
     InvalidationListener textListener = o -> {
         UiUtilities.invokeOnSwingThread(() -> {
             jlabel.setText(getBSBObject().getLabel());
-            this.setSize(jlabel.getPreferredSize());
-            repaint();
+            
+            var prefSize = jlabel.getPreferredSize();
+            this.setSize(prefSize.width + 1, prefSize.height + 1);
+            
+//            invalidate();
         });
     };
 
@@ -52,10 +55,10 @@ public class BSBLabelView extends BSBObjectView<BSBLabel> {
 
         jlabel.setText(label.getLabel());
         jlabel.setFont(label.getFont());
-
-        this.setSize(jlabel.getPreferredSize());
-
-        repaint();
+        
+        //this.setSize(jlabel.getPreferredSize());
+        
+        //repaint();
     }
 
     /*
@@ -70,6 +73,9 @@ public class BSBLabelView extends BSBObjectView<BSBLabel> {
     public void addNotify() {
         super.addNotify(); 
         getBSBObject().labelProperty().addListener(textListener);
+        
+        var prefSize = jlabel.getPreferredSize();
+        this.setSize(prefSize.width + 1, prefSize.height + 1);
     }
 
     @Override

@@ -27,6 +27,7 @@ import java.text.DecimalFormat;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import javax.swing.JPanel;
+import javax.swing.UIManager;
 
 /**
  *
@@ -36,7 +37,7 @@ public class TimeBar extends JPanel {
 
     DoubleProperty startTime = new SimpleDoubleProperty(0.0);
     DoubleProperty duration = new SimpleDoubleProperty(1.0);
-    Font f = new Font("Dialog", Font.PLAIN, 10);
+    Font f = UIManager.getFont("Label.font").deriveFont(Font.PLAIN, 10);
     DecimalFormat df = new DecimalFormat();
 
     public TimeBar() {
