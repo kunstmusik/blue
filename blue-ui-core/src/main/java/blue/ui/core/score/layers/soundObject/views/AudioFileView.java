@@ -90,7 +90,7 @@ public class AudioFileView extends SoundObjectView {
 
         g.setPaint(bgColor);
 
-        g.fillRect(clip.x, 2, clip.width, h - 4);
+        g.fillRect(clip.x, 1, clip.width, h - 2);
 
         // Draw Waveform
         g.setPaint(waveColor);
@@ -104,17 +104,13 @@ public class AudioFileView extends SoundObjectView {
 
         // DRAW BORDERS
         g.setColor(border1);
-        g.drawLine(0, 2, w, 2);
-        g.drawLine(0, 2, 0, h - 2);
+        g.drawRect(0, 1, w, h-2);
+        
 
-        g.setColor(border2);
-        g.drawLine(0, h - 2, w, h - 2);
-        g.drawLine(w - 1, h - 2, w - 1, 2);
-
-        if (isSelected()) {
-            g.setColor(new Color(255, 255, 255, 196));
-            g.drawRect(1, 3, w - 3, h - 6);
-        }
+//        if (isSelected()) {
+//            g.setColor(new Color(255, 255, 255, 196));
+//            g.drawRect(1, 2, w - 2, h - 6);
+//        }
 
         g.setPaint(fontColor);
 

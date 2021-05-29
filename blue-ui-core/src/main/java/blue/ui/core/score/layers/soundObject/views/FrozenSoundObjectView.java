@@ -107,11 +107,11 @@ public class FrozenSoundObjectView extends SoundObjectView {
         g.setPaint(bgColor);
 
         // fill original soundObject area
-        g.fillRect(0, 2, w, h - 4);
+        g.fillRect(0, 1, w, h - 2);
 
         // fill extended area
         g.setColor(shadeColor);
-        g.fillRect((int) (w * percentOriginal), 2, w, h - 4);
+        g.fillRect((int) (w * percentOriginal), 1, w, h - 2);
         
         // Draw Waveform
         g.setPaint(waveColor);
@@ -124,17 +124,19 @@ public class FrozenSoundObjectView extends SoundObjectView {
         }
         
         g.setColor(border1);
-        g.drawLine(0, 2, w, 2);
-        g.drawLine(0, 2, 0, h - 2);
-
-        g.setColor(border2);
-        g.drawLine(0, h - 2, w, h - 2);
-        g.drawLine(w - 1, h - 2, w - 1, 2);
-
-        if (isSelected()) {
-            g.setColor(new Color(255, 255, 255, 196));
-            g.drawRect(1, 3, w - 3, h - 6);
-        }
+        g.drawRect(0, 1, w, h-2);
+        
+//        g.drawLine(0, 2, w, 2);
+//        g.drawLine(0, 2, 0, h - 2);
+//
+//        g.setColor(border2);
+//        g.drawLine(0, h - 2, w, h - 2);
+//        g.drawLine(w - 1, h - 2, w - 1, 2);
+//
+//        if (isSelected()) {
+//            g.setColor(new Color(255, 255, 255, 196));
+//            g.drawRect(1, 3, w - 3, h - 6);
+//        }
 
         g.setPaint(fontColor);
 

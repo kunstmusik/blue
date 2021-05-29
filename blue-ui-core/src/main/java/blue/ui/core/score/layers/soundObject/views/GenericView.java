@@ -47,7 +47,7 @@ public class GenericView extends SoundObjectView {
 
         int w = getWidth();
         int h = getHeight();
-
+        
         Color bgColor;
         Color border1;
         Color border2;
@@ -74,25 +74,28 @@ public class GenericView extends SoundObjectView {
 
         g.setPaint(BlueGradientFactory.getGradientPaint(bgColor));
 
-        g.fillRect(0, 2, w, h - 4);
+        g.fillRect(0, 1, w, h-2);
 
         if (isSelected()) {
             g.setColor(bgColor.darker().darker().darker().darker());
             g.fillRect(0, 2, w, 18);
         }
 
+        
+        
         g.setColor(border1);
-        g.drawLine(0, 2, w, 2);
-        g.drawLine(0, 2, 0, h - 2);
+        g.drawRect(0, 1, w, h-2);
+//        g.drawLine(0, 1, w-1, 1);
+//        g.drawLine(0, 1, 0, h - 2);
+//
+//        g.setColor(border2);
+//        g.drawLine(0, h - 2, w-1, h - 2);
+//        g.drawLine(w - 1, h - 2, w - 1, 2);
 
-        g.setColor(border2);
-        g.drawLine(0, h - 2, w, h - 2);
-        g.drawLine(w - 1, h - 2, w - 1, 2);
-
-        if (isSelected()) {
-            g.setColor(new Color(255, 255, 255, 196));
-            g.drawRect(1, 3, w - 3, h - 6);
-        }
+//        if (isSelected()) {
+//            g.setColor(new Color(255, 255, 255, 196));
+//            g.drawRect(1, 3, w - 3, h - 6);
+//        }
 
         // paint repeat
         double repeatPoint = sObj.getRepeatPoint();
