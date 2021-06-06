@@ -1351,6 +1351,22 @@
                     <groupId>org.netbeans.api</groupId>
                     <artifactId>org-netbeans-libs-truffleapi</artifactId>
                 </exclusion>
+                <exclusion>
+                    <groupId>org.netbeans.api</groupId>
+                    <artifactId>org-netbeans-modules-gsf-testrunner</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.netbeans.modules</groupId>
+                    <artifactId>org-netbeans-modules-nativeimage-api</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.netbeans.modules</groupId>
+                    <artifactId>org-netbeans-modules-nativeimage-api</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.netbeans.modules</groupId>
+                    <artifactId>org-netbeans-modules-markdown</artifactId>
+                </exclusion>
             </exclusions>
         </dependency>
         
