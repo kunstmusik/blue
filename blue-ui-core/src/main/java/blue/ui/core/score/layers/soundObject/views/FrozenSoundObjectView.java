@@ -124,7 +124,7 @@ public class FrozenSoundObjectView extends SoundObjectView {
         }
         
         g.setColor(border1);
-        g.drawRect(0, 1, w, h-2);
+        g.drawRect(0, 1, w - 1, h-2);
         
 //        g.drawLine(0, 2, w, 2);
 //        g.drawLine(0, 2, 0, h - 2);

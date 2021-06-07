@@ -83,8 +83,7 @@ public class GenericView extends SoundObjectView {
 
         
         
-        g.setColor(border1);
-        g.drawRect(0, 1, w, h-2);
+
 //        g.drawLine(0, 1, w-1, 1);
 //        g.drawLine(0, 1, 0, h - 2);
 //
@@ -151,6 +150,12 @@ public class GenericView extends SoundObjectView {
                 g.drawString(parts[i], labelOffset, y);
             }
         }
+        
+        // DRAW BORDER
+        g.setColor(border1);
+        g.drawRect(0, 1, w-1, h-2);
     }
 
+    
+    
 }
