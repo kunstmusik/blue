@@ -24,7 +24,9 @@ import blue.soundObject.PolyObject;
 import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.Rectangle;
+import java.awt.RenderingHints;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import javax.swing.JComponent;
@@ -47,6 +49,10 @@ public final class TimeBar extends JComponent implements PropertyChangeListener 
 
     @Override
     public void paintComponent(Graphics g) {
+        
+        Graphics2D g2d = (Graphics2D) g;
+        g2d.setRenderingHint(RenderingHints. KEY_ANTIALIASING,RenderingHints. VALUE_ANTIALIAS_ON);
+        
         super.paintComponent(g);
 
         if (pianoRoll == null || this.getHeight() == 0 || this.getWidth() == 0) {

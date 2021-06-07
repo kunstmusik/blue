@@ -154,6 +154,9 @@ public final class TimeBar extends JPanel implements
     public void paintComponent(Graphics g) {
 
         Graphics2D g2d = (Graphics2D) g;
+        
+        g2d.setRenderingHint(RenderingHints. KEY_ANTIALIASING,RenderingHints. VALUE_ANTIALIAS_ON);
+        
         Paint p = g2d.getPaint();
         g2d.setPaint(BlueGradientFactory.getGradientPaint(getBackground()));
         g2d.fillRect(0, 0, getWidth(), getHeight());
