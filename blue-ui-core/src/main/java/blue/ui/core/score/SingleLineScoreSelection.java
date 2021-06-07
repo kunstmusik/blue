@@ -39,15 +39,14 @@ public class SingleLineScoreSelection {
     Set<SingleLineScoreSelectionListener> listeners = 
             new HashSet<SingleLineScoreSelectionListener>();
     
-    private static final SingleLineScoreSelection INSTANCE;
-
-    static {
-        INSTANCE= new SingleLineScoreSelection();
-    }
+    private static SingleLineScoreSelection INSTANCE;
 
     private SingleLineScoreSelection(){}
     
     public static synchronized SingleLineScoreSelection getInstance() {
+        if(INSTANCE == null) {
+            INSTANCE= new SingleLineScoreSelection();
+        }
         return INSTANCE;
     }
 
