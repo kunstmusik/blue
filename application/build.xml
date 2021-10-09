@@ -41,7 +41,8 @@
     <target name="download-jdk"
             description="Downloads JDK"
             depends="dir.check"
-            unless="dir.exists" 
+            unless="dir.exists"
+            if="embed.jdk" 
     >
 
         
