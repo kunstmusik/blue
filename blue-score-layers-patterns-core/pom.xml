@@ -45,11 +45,6 @@
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>de.congrace</groupId>
-            <artifactId>exp4j</artifactId>
-            <version>0.3.11</version>
-        </dependency>
-        <dependency>
             <groupId>com.kunstmusik</groupId>
             <artifactId>blue-ext-exml</artifactId>
             <version>${project.version}</version>

@@ -16,7 +16,7 @@
                 <plugin>
                     <groupId>org.apache.netbeans.utilities</groupId>
                     <artifactId>nbm-maven-plugin</artifactId>
-                    <version>4.5</version>
+                    <version>4.6</version>
                     <extensions>true</extensions>
                     <configuration>
                         <brandingToken>${brandingToken}</brandingToken>
@@ -94,7 +94,7 @@
     </modules>
 
     <properties>
-        <netbeans.version>RELEASE124</netbeans.version>
+        <netbeans.version>RELEASE125</netbeans.version>
         <brandingToken>blue</brandingToken>
     </properties>
 </project>

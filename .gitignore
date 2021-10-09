@@ -36,6 +36,7 @@ nb_jr_remoting.cfg
 */cache.properties
 /netbeans
 */target/
+*/nb-configuration.xml
 
 # Maven versions backup files
 *.versionsBackup
@@ -44,3 +45,12 @@ nb_jr_remoting.cfg
 *.iml
 .idea
 /blue-utilities/nbproject/
+
+# Ignore files from VS Code Java extensions
+.settings
+.factorypath
+.classpath
+.project
+
+# Ignore VSCode directories
+.vscode

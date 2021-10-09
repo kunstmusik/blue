@@ -19,10 +19,7 @@
  */
 package blue.clojure;
 
-import blue.BlueData;
-import blue.projects.BlueProject;
 import blue.projects.BlueProjectManager;
-import java.beans.PropertyChangeEvent;
 import java.util.HashMap;
 import javax.script.ScriptException;
 import static org.junit.Assert.*;
