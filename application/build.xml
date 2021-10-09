@@ -15,6 +15,10 @@
         <os family="windows" />
     </condition>
     
+    <condition property="jdk.zip" value="${jdk.windows}" else="${jdk.mac}">
+        <isset property="isWindows"/>
+    </condition>
+    
     <condition property="embed.jdk">
         <or>
             <!--<isset property="isMac"/>-->
@@ -39,9 +43,7 @@
             depends="dir.check"
             unless="dir.exists" 
     >
-        <condition property="jdk_zip" value="${jdk.windows}" else="${jdk.mac}">
-            <isset property="isWindows"/>
-        </condition>
+
         
         <mkdir dir="target"/>
         <get src="${jdk.src.root}/${jdk.zip}" dest="target"/>

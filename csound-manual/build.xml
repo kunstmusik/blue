@@ -19,7 +19,7 @@
     </target>
 
     <target name="-download-csound-manual"
-      description="Downlaods HTML Csound Manual into project"
+      description="Downloads HTML Csound Manual into project"
       depends="dir.check"
       unless="dir.exists">
       <mkdir dir="src/main/csoundManual"/>
