@@ -64,10 +64,12 @@
                                 <copy todir="target/blue/examples" overwrite="true"> 
                                     <fileset dir="../examples"/>
                                 </copy>
-
+                               
                                 <copy file="../imageSrc/blueIcon.png" todir="target/blue/bin"/>
                                 <copy file="src/linux/blue.desktop.in" todir="target/blue/bin"/>
                                 <copy file="src/linux/install_desktop_starter.sh" todir="target/blue/bin"/>
+                                
+                                <ant antfile="build.xml" target="package-jdk"/>
                             </target>
                         </configuration>
                     </execution>
@@ -96,6 +98,8 @@
                     <installerOsSolaris>false</installerOsSolaris>
                     <installerLicenseFile>LICENSE.txt</installerLicenseFile>
                     <binDirectory>src/binaries</binDirectory>
+                    <installerOsLinux>false</installerOsLinux>
+                    <installerOsMacosx>false</installerOsMacosx>
                 </configuration>
             </plugin>
             <!-- Permits NbModuleSuite to be run in integration-test phase: -->

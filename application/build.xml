@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="blue.jdk"  basedir="." default="package-jdk">
+    <description>Downloads JDK to embed into Blue application</description>
+
+    <property name="jdk.src.root" value="https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17%2B35/"/>
+
+    <property name="jdk.windows" 
+              value="OpenJDK17-jdk_x64_windows_hotspot_17_35.zip"/>
+
+    <condition property="isMac">
+        <os family="mac" />
+    </condition>
+
+    <condition property="isWindows">
+        <os family="windows" />
+    </condition>
+    
+    <condition property="embed.jdk">
+        <or>
+            <!--<isset property="isMac"/>-->
+            <isset property="isWindows"/>
+        </or>
+    </condition>
+    
+    <target name="dir.check">
+        <condition property="dir.exists">
+            <available file="./src/jdk" type="dir"/>
+        </condition>
+    </target>
+    
+    <target name="targetdir.check">
+        <condition property="target.jdk.exists">
+            <available file="./target/blue/jdk" type="dir"/>
+        </condition>
+    </target>
+
+    <target name="download-jdk"
+            description="Downloads JDK"
+            depends="dir.check"
+            unless="dir.exists" 
+    >
+        <condition property="jdk_zip" value="${jdk.windows}" else="${jdk.mac}">
+            <isset property="isWindows"/>
+        </condition>
+        
+        <mkdir dir="target"/>
+        <get src="${jdk.src.root}/${jdk.zip}" dest="target"/>
+        <unzip src="target/${jdk.windows}" dest="src"/>
+        <move file="./src/jdk-17+35" toFile="./src/jdk"/>
+    </target>
+    
+    <target name="package-jdk" depends="download-jdk" if="embed.jdk" unless="target.jdk.exists">
+        <copy todir="target/blue/jdk">
+            <fileset dir="src/jdk"/>
+        </copy>
+        <replace dir="target/blue/etc" includes="*.conf" token='#jdkhome="/path/to/jdk"' value='jdkhome="jdk"'/>
+    </target>
+</project>
+
+
