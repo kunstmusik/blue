@@ -16,20 +16,6 @@
         <signature>ar 	adsynt2	 kamp, kcps, iwfn, ifreqfn, iampfn, icnt [, iphs]</signature>
       </opcode>
       <opcode>
-        <name>beadsynt</name>
-        <signature>aout 	beadsynt	 kFreqs[], kAmps[], kBws[] \
-                   [, inumosc, iflags, kfreq, kbw, ifn, iphs ]</signature>
-      </opcode>
-      <opcode>
-        <name>beadsynt</name>
-        <signature>aout 	beadsynt	 ifreqft, iampft, ibwft, inumosc \
-                   [, iflags, kfreq, kbw, ifn, iphs ]</signature>
-      </opcode>
-      <opcode>
-        <name>beosc</name>
-        <signature>aout 	beosc	 xfreq, kbw [, ifn, iphs, inoisetype ]</signature>
-      </opcode>
-      <opcode>
         <name>hsboscil</name>
         <signature>ares 	hsboscil	 kamp, ktone, kbrite, ibasfreq, iwfn, ioctfn \
                [, ioctcnt] [, iphs]</signature>
@@ -599,8 +585,8 @@
       </opcode>
       <opcode>
         <name>loopxseg</name>
-        <signature>ksig 	loopxseg	 kfreq, ktrig, iphase, ktime0, kvalue0 [, ktime1] [, kvalue1] \
-      [, ktime2] [, kvalue2] [...]</signature>
+        <signature>ksig 	loopxseg	 kfreq, ktrig, iphase, kvalue0, ktime0  [, kvalue1] [, ktime1] \
+      [, kvalue2] [, ktime2] [...]</signature>
       </opcode>
       <opcode>
         <name>lpshold</name>
@@ -614,6 +600,10 @@
       <opcode>
         <name>scale</name>
         <signature>kscl 	scale	 kinput, kmax, kmin[, kimax, kimin]</signature>
+      </opcode>
+      <opcode>
+        <name>scale2</name>
+        <signature>kscl 	scale2	 kinput, kmin, kmax[, kimin, kimax][ihtime]</signature>
       </opcode>
       <opcode>
         <name>transeg</name>
@@ -638,6 +628,22 @@
       <opcode>
         <name>transegr</name>
         <signature>kres 	transegr	 ia, idur, itype, ib [, idur2] [, itype] [, ic] ...</signature>
+      </opcode>
+      <opcode>
+        <name>trigexpseg</name>
+        <signature>ares 	trigexpseg	 kTrig, ia, idur1, ib [, idur2] [, ic] [...]</signature>
+      </opcode>
+      <opcode>
+        <name>trigexpseg</name>
+        <signature>kres 	trigexpseg	 kTrig, ia, idur1, ib [, idur2] [, ic] [...]</signature>
+      </opcode>
+      <opcode>
+        <name>triglinseg</name>
+        <signature>ares 	triglinseg	 kTrig, ia, idur1, ib [, idur2] [, ic] [...]</signature>
+      </opcode>
+      <opcode>
+        <name>triglinseg</name>
+        <signature>kres 	triglinseg	 kTrig, ia, idur1, ib [, idur2] [, ic] [...]</signature>
       </opcode>
       <opcode>
         <name>xyscale</name>
@@ -668,6 +674,16 @@
       <opcode>
         <name>envlpxr</name>
         <signature>kres 	envlpxr	 kamp, irise, idec, ifn, iatss, iatdec [, ixmod] [,irind]</signature>
+      </opcode>
+      <opcode>
+        <name>gtadsr</name>
+        <signature>ares 	gtadsr	 asig, katt, kdec, ksus,
+    krel, kgate</signature>
+      </opcode>
+      <opcode>
+        <name>gtadsr</name>
+        <signature>xres 	gtadsr	 kamp, katt, kdec, ksus,
+    krel, kgate</signature>
       </opcode>
       <opcode>
         <name>linen</name>
@@ -726,7 +742,7 @@
       </opcode>
       <opcode>
         <name>chuap</name>
-        <signature>aI3, aV2, aV1 	chuap	 kL, kR0, kC1, kG, kGa, kGb, kE, kC2, iI3, iV2, iV1, ktime_step</signature>
+        <signature>aI3, aV2, aV1 	chuap	 kL, kR0, kC2, kG, kGa, kGb, kE, kC1, iI3, iV2, iV1, ktime_step</signature>
       </opcode>
       <opcode>
         <name>crunch</name>
@@ -1396,7 +1412,7 @@
       </opcode>
       <opcode>
         <name>sfilist</name>
-        <signature>sfilist	 ifilhandle</signature>
+        <signature>sfilist	 ifilhandle [, Sprintprefix] </signature>
       </opcode>
       <opcode>
         <name>sfinstr</name>
@@ -1425,7 +1441,7 @@
       <opcode>
         <name>sflooper</name>
         <signature>ar1, ar2 	sflooper	 ivel, inotenum, kamp, kpitch, ipreindex, kloopstart, kloopend, kcrossfade \
-      [, istart, imode, ifenv, iskip] </signature>
+      [, istart, imode, ifenv, iskip, iflag] </signature>
       </opcode>
       <opcode>
         <name>sfpassign</name>
@@ -1470,8 +1486,16 @@
         <signature>scanhammer	 isrc, idst, ipos, imult</signature>
       </opcode>
       <opcode>
+        <name>scanmap</name>
+        <signature>kpos, kvel 	scanmap	 iscan, kamp, kvamp [, iwhich]</signature>
+      </opcode>
+      <opcode>
         <name>scans</name>
         <signature>ares 	scans	 kamp, kfreq, ifn, id [, iorder]</signature>
+      </opcode>
+      <opcode>
+        <name>scansmap</name>
+        <signature>scansmap	 kpos, kvel, iscan, kamp, kvamp [, iwhich]</signature>
       </opcode>
       <opcode>
         <name>scantable</name>
@@ -1479,8 +1503,15 @@
       </opcode>
       <opcode>
         <name>scanu</name>
-        <signature>scanu	 init, irate, ifnvel, ifnmass, ifnstif, ifncentr, ifndamp, kmass, \
-      kstif, kcentr, kdamp, ileft, iright, kpos, kstrngth, ain, idisp, id</signature>
+        <signature>scanu	 init, irate, ifndisplace,
+    ifnmass, ifnmatrix, ifncentr, ifndamp, kmass, kmtrxstiff, kcentr,
+    kdamp, ileft, iright, kpos, kdisplace, ain, idisp, id</signature>
+      </opcode>
+      <opcode>
+        <name>scanu2</name>
+        <signature>scanu2	 init, irate, ifndisplace,
+    ifnmass, ifnmatrix, ifncentr, ifndamp, kmass, kmtrxstiff, kcentr,
+    kdamp, ileft, iright, kpos, kdisplace, ain, idisp, id</signature>
       </opcode>
       <opcode>
         <name>xscanmap</name>
@@ -1496,8 +1527,8 @@
       </opcode>
       <opcode>
         <name>xscanu</name>
-        <signature>xscanu	 init, irate, ifnvel, ifnmass, ifnstif, ifncentr, ifndamp, kmass, \
-      kstif, kcentr, kdamp, ileft, iright, kpos, kstrngth, ain, idisp, id</signature>
+        <signature>xscanu	 init, irate, ifndisplace, ifnmass, ifnmatrix, ifncentr, ifndamp, kmass, \
+      kmtrxstiff, kcentr, kdamp, ileft, iright, kpos, kdisplace, ain, idisp, id</signature>
       </opcode>
     </opcodeGroup>
     <opcodeGroup name="STK Opcodes">
@@ -2320,6 +2351,10 @@
         <signature>ir 	filevalid	 ifilcod</signature>
       </opcode>
       <opcode>
+        <name>filevalid</name>
+        <signature>kr 	filevalid	 ifilcod</signature>
+      </opcode>
+      <opcode>
         <name>mp3len</name>
         <signature>ir 	mp3len	 ifilcod</signature>
       </opcode>
@@ -2528,6 +2563,11 @@
       <opcode>
         <name>bformdec1</name>
         <signature>aout[] 	bformdec1	 isetup, abform[]</signature>
+      </opcode>
+      <opcode>
+        <name>bformdec2</name>
+        <signature>aout[] 	bformdec2	 isetup, abform[], [idecoder, idistance, ifreq, \
+		imix, ifilel, ifiler]</signature>
       </opcode>
       <opcode>
         <name>bformenc</name>
@@ -3078,6 +3118,14 @@
           <signature>ares 	rezzy	 asig, xfco, xres [, imode, iskip]</signature>
         </opcode>
         <opcode>
+          <name>skf</name>
+          <signature>asig 	skf	 asig, xcf, xK[, ihp, istor]</signature>
+        </opcode>
+        <opcode>
+          <name>spf</name>
+          <signature>asig 	spf	 alp,ahp,abp, xcf, xR[, istor]</signature>
+        </opcode>
+        <opcode>
           <name>statevar</name>
           <signature>ahp,alp,abp,abr 	statevar	 ain, xcf, xq [, iosamps, istor]</signature>
         </opcode>
@@ -3086,8 +3134,17 @@
           <signature>alow, ahigh, aband 	svfilter	  asig, kcf, kq [, iscl] [, iskip]</signature>
         </opcode>
         <opcode>
+          <name>svn</name>
+          <signature>ahp,alp,abp,abr 	svn	 asig, xcf, xQ,
+    kdrive[, ifn,inm,imx, istor]</signature>
+        </opcode>
+        <opcode>
           <name>tbvcf</name>
           <signature>ares 	tbvcf	 asig, xfco, xres, kdist, kasym [, iskip]</signature>
+        </opcode>
+        <opcode>
+          <name>vclpf</name>
+          <signature>asig 	vclpf	 ain, xcf, xres[, istor]</signature>
         </opcode>
         <opcode>
           <name>vlowres</name>
@@ -3281,10 +3338,6 @@
         <signature>kres 	mediank	 kin, ksize, imaxsize [, iskip]</signature>
       </opcode>
       <opcode>
-        <name>mode</name>
-        <signature>aout 	mode	 ain, xfreq, xQ [, iskip]</signature>
-      </opcode>
-      <opcode>
         <name>tone</name>
         <signature>ares 	tone	 asig, khp [, iskip]</signature>
       </opcode>
@@ -3361,6 +3414,10 @@
       <opcode>
         <name>hilbert2</name>
         <signature>ar1, ar2 	hilbert2	 asig, ifftsize, ihopsize</signature>
+      </opcode>
+      <opcode>
+        <name>mvmfilter</name>
+        <signature>aout 	mvmfilter	 ain, xfreq, xTau [, iskip]</signature>
       </opcode>
       <opcode>
         <name>nlfilt</name>
@@ -3499,6 +3556,16 @@
         <signature>minaccum	 aAccumulator, aInput</signature>
       </opcode>
     </opcodeGroup>
+    <opcodeGroup name="Panning and Spatialization ">
+      <opcode>
+        <name>ms2st</name>
+        <signature>aleft,aright 	ms2st	 as,am,kwidth</signature>
+      </opcode>
+      <opcode>
+        <name>st2ms</name>
+        <signature>am,as 	st2ms	 aleft,aright</signature>
+      </opcode>
+    </opcodeGroup>
     <opcodeGroup name=" Phase Shaping">
       <opcode>
         <name>vps</name>
@@ -3589,6 +3656,16 @@
       <opcode>
         <name>turnoff2</name>
         <signature>turnoff2	 kinsno, kmode, krelease
+        </signature>
+      </opcode>
+      <opcode>
+        <name>turnoff2_i</name>
+        <signature>turnoff2_i	 insno, imode, irelease
+    </signature>
+      </opcode>
+      <opcode>
+        <name>turnoff3</name>
+        <signature>turnoff3	 kinsno
     </signature>
       </opcode>
       <opcode>
@@ -4061,6 +4138,10 @@
         <signature>ktrig  	metro2	  kfreq, kswing [, iamp, initphase]</signature>
       </opcode>
       <opcode>
+        <name>metrobpm</name>
+        <signature>ktrig  	metrobpm	  kfreq [, initphase] [, kgate]</signature>
+      </opcode>
+      <opcode>
         <name>midifilestatus</name>
         <signature>ksig  	midifilestatus</signature>
       </opcode>
@@ -4133,6 +4214,17 @@
       <opcode>
         <name>seqtime2</name>
         <signature>ktrig_out 	seqtime2	 ktrig_in, ktime_unit, kstart, kloop, kinitndx, kfn_times</signature>
+      </opcode>
+      <opcode>
+        <name>sequ</name>
+        <signature>kres  	sequ	  irhythm[], iinstr[], idata[], kbpm, klen [, kmode] [, kstep] [, kreset] [, kverbose]
+    </signature>
+      </opcode>
+      <opcode>
+        <name>sequ</name>
+        <signature>kres  	sequ	  irhythm[], iinstr[],
+    idata[][], kbpm, klen [, kmode] [, kstep] [, kreset] [, kverbose]
+    </signature>
       </opcode>
       <opcode>
         <name>setctrl</name>
@@ -4359,6 +4451,11 @@
     <opcode>
       <name>arduinoRead</name>
       <signature>kval 	arduinoRead	 iPort, iStream[, iSmooth]</signature>
+    </opcode>
+    <opcode>
+      <name>arduinoReadF</name>
+      <signature>kval 	arduinoReadF	 iPort, iStream1,
+      iStream2, iStream3</signature>
     </opcode>
     <opcode>
       <name>arduinoStart</name>
@@ -4778,14 +4875,6 @@
         <signature>ftslicei	 ifnsource, ifndest [, istart, iend, istep ]</signature>
       </opcode>
       <opcode>
-        <name>getrowlin</name>
-        <signature>kOut[] 	getrowlin	 kMtx[], krow [, kstart, kend, kstep ]</signature>
-      </opcode>
-      <opcode>
-        <name>getrowlin</name>
-        <signature>kOut[] 	getrowlin	 krow, ifn, inumcols [, iskip, start, iend, istep ]</signature>
-      </opcode>
-      <opcode>
         <name>ptablew</name>
         <signature>ptablew	 asig, andx, ifn [, ixmode] [, ixoff] [, iwgmode]</signature>
       </opcode>
@@ -4884,10 +4973,6 @@
       <opcode>
         <name>tabrec</name>
         <signature>tabrec	   ktrig_start, ktrig_stop, knumtics, kfn, kin1 [,kin2,...,kinN]</signature>
-      </opcode>
-      <opcode>
-        <name>tabrowlin</name>
-        <signature>tabrowlin	 krow, ifnsrc, ifndest, inumcols [, ioffset, istart, iend, istep ]</signature>
       </opcode>
     </opcodeGroup>
     <opcode>
@@ -5277,6 +5362,10 @@
       <opcode>
         <name>clear</name>
         <signature>clear	 avar1 [, avar2] [, avar3] [...]</signature>
+      </opcode>
+      <opcode>
+        <name>clear</name>
+        <signature>clear	 avar[]</signature>
       </opcode>
       <opcode>
         <name>vincr</name>
@@ -5854,6 +5943,26 @@
         <name>ctrlinit</name>
         <signature>ctrlinit	 ichnl, ictlno1, ival1 [, ictlno2] [, ival2] [, ictlno3] \
       [, ival3] [,...ival32]</signature>
+      </opcode>
+      <opcode>
+        <name>ctrlpreset</name>
+        <signature>kpreset 	ctrlpreset	 ktag, kchnl, kctlno1, [kctlno2] [, kctlno3] ...</signature>
+      </opcode>
+      <opcode>
+        <name>ctrlprint</name>
+        <signature> 	ctrlprint	 kcont[][, Sfile]</signature>
+      </opcode>
+      <opcode>
+        <name>ctrlprintpresets</name>
+        <signature> 	ctrlprintpresets	 [Sfilenam]</signature>
+      </opcode>
+      <opcode>
+        <name>ctrlsave</name>
+        <signature>kconnt[] 	ctrlsave	 ichnl, ictlno1, [ictlno2] [, ictlno3] ...</signature>
+      </opcode>
+      <opcode>
+        <name>ctrlselect</name>
+        <signature> 	ctrlselect	 kpre</signature>
       </opcode>
       <opcode>
         <name>initc14</name>
@@ -6544,6 +6653,14 @@
         <signature>ftrks 	partials	 ffr, fphs, kthresh, kminpts, kmaxgap, imaxtracks</signature>
       </opcode>
       <opcode>
+        <name>pvs2array</name>
+        <signature>kframe 	pvs2array	 kvar[], fsig</signature>
+      </opcode>
+      <opcode>
+        <name>pvs2array</name>
+        <signature>kframe 	pvs2array	 kmags[], kfreqs[], fsig</signature>
+      </opcode>
+      <opcode>
         <name>pvs2tab</name>
         <signature>kframe 	pvs2tab	 tvar|kvar[], fsig</signature>
       </opcode>
@@ -6642,6 +6759,14 @@
         <signature>fsig 	pvsfreeze	 fsigin, kfreeza, kfreezf</signature>
       </opcode>
       <opcode>
+        <name>pvsfromarray</name>
+        <signature>fsig 	pvsfromarray	 karr[][,ihopsize, iwinsize, iwintype]</signature>
+      </opcode>
+      <opcode>
+        <name>pvsfromarray</name>
+        <signature>fsig 	pvsfromarray	 kmags[], kfreqs[][,ihopsize, iwinsize, iwintype]</signature>
+      </opcode>
+      <opcode>
         <name>pvsftr</name>
         <signature>pvsftr	 fsrc, ifna [, ifnf]</signature>
       </opcode>
@@ -6676,10 +6801,6 @@
       <opcode>
         <name>pvsinit</name>
         <signature>fsig 	pvsinit	 isize[, iolap, iwinsize, iwintype, iformat]</signature>
-      </opcode>
-      <opcode>
-        <name>pvslock</name>
-        <signature>fsig 	pvslock	 fsigin, klock</signature>
       </opcode>
       <opcode>
         <name>pvsmaska</name>
@@ -8063,6 +8184,12 @@
       <opcode>
         <name>rect2pol</name>
         <signature>kout[] 	rect2pol	 kin[]</signature>
+      </opcode>
+    </opcodeGroup>
+    <opcodeGroup name=" Autocorrelation">
+      <opcode>
+        <name>autocorr</name>
+        <signature>kout[] 	autocorr	 kin[]</signature>
       </opcode>
     </opcodeGroup>
     <opcodeGroup name=" Cepstrum">
