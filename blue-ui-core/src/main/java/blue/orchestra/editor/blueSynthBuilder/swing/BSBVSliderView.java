@@ -38,7 +38,10 @@ public class BSBVSliderView extends BSBObjectView<BSBVSlider> implements
     private static final int VALUE_DISPLAY_HEIGHT = 30;
     private static final int VALUE_DISPLAY_WIDTH = 50;
     private final ValueSlider valSlider;
+    final javax.swing.event.ChangeListener valSliderListener;
+
     ValuePanel valuePanel = new ValuePanel();
+
     private volatile boolean updating = false;
 
     final ChangeListener<Boolean> vdeListener;
@@ -60,13 +63,13 @@ public class BSBVSliderView extends BSBObjectView<BSBVSlider> implements
         valSlider.setOrientation(ValueSlider.VERTICAL);
 
         valSlider.setOpaque(false);
-        valSlider.addChangeListener((ChangeEvent e) -> {
+        valSliderListener = (ChangeEvent e) -> {
             if (!updating) {
                 updating = true;
                 bsbObj.setValue(getValueFromSlider());
                 updating = false;
             }
-        });
+        };
 
         valuePanel.setPreferredSize(new Dimension(VALUE_DISPLAY_WIDTH,
                 VALUE_DISPLAY_HEIGHT));
@@ -146,22 +149,34 @@ public class BSBVSliderView extends BSBObjectView<BSBVSlider> implements
     public void addNotify() {
         super.addNotify();
 
-        bsbObj.resolutionProperty().addListener(resListener);
-        bsbObj.minimumProperty().addListener(minListener);
-        bsbObj.maximumProperty().addListener(maxListener);
-        bsbObj.valueProperty().addListener(valueListener);
-        bsbObj.sliderHeightProperty().addListener(heightListener);
-        bsbObj.valueDisplayEnabledProperty().addListener(vdeListener);
+        updating = true;
 
-        valSlider.setMinimum(bsbObj.getMinimum());
-        valSlider.setMaximum(bsbObj.getMaximum());
-        valSlider.setValue(bsbObj.getValue());
-        valSlider.setResolution(getNumTicks());
+        try {
+            bsbObj.resolutionProperty().addListener(resListener);
+            bsbObj.minimumProperty().addListener(minListener);
+            bsbObj.maximumProperty().addListener(maxListener);
+            bsbObj.valueProperty().addListener(valueListener);
+            bsbObj.sliderHeightProperty().addListener(heightListener);
+            bsbObj.valueDisplayEnabledProperty().addListener(vdeListener);
+
+            valSlider.setMinimum(bsbObj.getMinimum());
+            valSlider.setMaximum(bsbObj.getMaximum());
+
+            valSlider.setResolution(getNumTicks());
+            valSlider.setValue(bsbObj.getValue());
+            valSlider.addChangeListener(valSliderListener);            
+            updateValueDisplay();
+        } finally {
+            updating = false;
+        }
     }
 
     @Override
     public void removeNotify() {
         super.removeNotify();
+
+        updating = true;
+        valSlider.removeChangeListener(valSliderListener);
 
         bsbObj.resolutionProperty().removeListener(resListener);
         bsbObj.minimumProperty().removeListener(minListener);
@@ -169,6 +184,7 @@ public class BSBVSliderView extends BSBObjectView<BSBVSlider> implements
         bsbObj.valueProperty().removeListener(valueListener);
         bsbObj.sliderHeightProperty().removeListener(heightListener);
         bsbObj.valueDisplayEnabledProperty().removeListener(vdeListener);
+        updating = false;
     }
 
     private int getNumTicks() {
@@ -244,5 +260,20 @@ public class BSBVSliderView extends BSBObjectView<BSBVSlider> implements
 
     public int getWidgetY() {
         return bsbObj.getY();
+    }
+    
+    private void updateValueDisplay() {
+        var knob = getBSBObject();
+        double val = knob.getValue();
+
+        String strVal = NumberUtilities.formatDouble(val);
+
+        if (strVal.length() > 7) {
+            strVal = strVal.substring(0, 7);
+        }
+
+        final String v = strVal;
+
+        UiUtilities.invokeOnSwingThread(() -> valuePanel.setValue(v));
     }
 }
