@@ -20,7 +20,7 @@ information.
 * Redesigned SoundObjectLibrary window: supports drag and drop reorganization, 
   additional popup menu options for editing and organization
    
-* Issue #638: Added JMask to Pattern Layers
+* Issue #639: Added JMask to Pattern Layers
 
 
 
