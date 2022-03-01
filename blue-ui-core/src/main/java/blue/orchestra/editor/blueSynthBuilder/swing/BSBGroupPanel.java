@@ -195,25 +195,26 @@ public class BSBGroupPanel extends BSBObjectView<BSBGroup> implements Resizeable
 
         BSBObjectView objectView = BSBObjectEditorFactory.getView(bsbObj);
 
-        if(objectView instanceof EditModeConditional) {
+        if (objectView instanceof EditModeConditional) {
             ((EditModeConditional) objectView).setEditEnabledProperty(editEnabledProperty);
         }
-        
+
         objectView.setLocation(bsbObj.getX(), bsbObj.getY());
-        
+
         editorPanel.add(objectView);
     }
 
     @Override
     public Dimension getPreferredSize() {
-        int base = label.isVisible() ? label.getPreferredSize().height : 0;
         final Dimension labelPrefSize = label.getPreferredSize();
+        var editorPrefSize = editorPanel.getPreferredSize();
 
-        var w = Math.max(bsbObj.getWidth(), editorPanel.getPreferredSize().width);
+        int base = label.isVisible() ? labelPrefSize.height : 0;
+
+        var w = Math.max(bsbObj.getWidth(), editorPrefSize.width);
 
         w = Math.max(labelPrefSize.width, w);
-        var h = base + Math.max(bsbObj.getHeight(),
-                editorPanel.getPreferredSize().height);
+        var h = base + Math.max(bsbObj.getHeight(), editorPrefSize.height);
 
         return new Dimension(w, h);
     }
@@ -283,9 +284,9 @@ public class BSBGroupPanel extends BSBObjectView<BSBGroup> implements Resizeable
     @Override
     public void setEditEnabledProperty(BooleanProperty editEnabled) {
         this.editEnabledProperty = editEnabled;
-        
-        for(var c: editorPanel.getComponents()) {
-            if(c instanceof EditModeConditional) {
+
+        for (var c : editorPanel.getComponents()) {
+            if (c instanceof EditModeConditional) {
                 ((EditModeConditional) c).setEditEnabledProperty(editEnabled);
             }
         }
