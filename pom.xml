@@ -94,7 +94,7 @@
     </modules>
 
     <properties>
-        <netbeans.version>RELEASE126</netbeans.version>
+        <netbeans.version>RELEASE130</netbeans.version>
         <brandingToken>blue</brandingToken>
     </properties>
 </project>
