@@ -370,8 +370,14 @@ public class BSBEditPanel extends JLayeredPane implements
      */
     protected void recalculateSize() {
         Dimension d = getPreferredSize();
-        this.setSize(d);
-        this.setPreferredSize(d);
+        var size = getSize();
+
+        if (Math.abs(d.width - size.width) > 10
+                || Math.abs(d.height - size.height) > 10) {
+
+            this.setSize(d);
+            this.setPreferredSize(d);
+        }
 
     }
 
@@ -521,11 +527,11 @@ public class BSBEditPanel extends JLayeredPane implements
                 ? bsbInterface.editEnabledProperty() : null;
 
         BSBObjectView objectView = BSBObjectEditorFactory.getView(bsbObj);
-        
-        if(objectView instanceof EditModeConditional) {
+
+        if (objectView instanceof EditModeConditional) {
             ((EditModeConditional) objectView).setEditEnabledProperty(editEnabledProperty);
         }
-        
+
         BSBObjectViewHolder viewHolder
                 = new BSBObjectViewHolder(editEnabledProperty,
                         selection, groupsList, bsbInterface.getGridSettings(), objectView);
@@ -576,7 +582,7 @@ public class BSBEditPanel extends JLayeredPane implements
 
         copyX = Integer.MAX_VALUE;
         copyY = Integer.MAX_VALUE;
-        
+
         for (var bsbObj : selection) {
             copyBuffer.add(bsbObj.deepCopy());
             copyX = Math.min(copyX, bsbObj.getX());
@@ -694,15 +700,15 @@ public class BSBEditPanel extends JLayeredPane implements
     public ObservableSet<BSBObject> getSelection() {
         return selection;
     }
-    
+
     public List<BSBObjectViewHolder> getSelectedViews() {
         List<BSBObjectViewHolder> retVal = new ArrayList<>();
-        
-        for(var c: getComponents()) {
-            if(c instanceof BSBObjectViewHolder) {
-                var holder = (BSBObjectViewHolder)c;
+
+        for (var c : getComponents()) {
+            if (c instanceof BSBObjectViewHolder) {
+                var holder = (BSBObjectViewHolder) c;
                 var bsbObjView = holder.getBSBObjectView();
-                if(selection.contains(bsbObjView.getBSBObject())) {
+                if (selection.contains(bsbObjView.getBSBObject())) {
                     retVal.add(holder);
                 }
             }
@@ -717,7 +723,7 @@ public class BSBEditPanel extends JLayeredPane implements
     @Override
     public Dimension getPreferredSize() {
         if (bsbInterface == null) {
-            return new Dimension(10,10);
+            return new Dimension(10, 10);
         }
 
         int maxW = 1;
@@ -729,9 +735,9 @@ public class BSBEditPanel extends JLayeredPane implements
                 if (!isEditing() && viewHolder.isEditModeOnly()) {
                     continue;
                 }
-                
+
                 var view = viewHolder.getBSBObjectView();
-                
+
                 int newW = viewHolder.getX() + view.getWidth();
                 int newH = viewHolder.getY() + view.getHeight();
 
@@ -748,5 +754,4 @@ public class BSBEditPanel extends JLayeredPane implements
         return new Dimension(maxW + 10, maxH + 10);
     }
 
-    
 }
