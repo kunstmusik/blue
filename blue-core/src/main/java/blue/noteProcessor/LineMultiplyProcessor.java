@@ -34,7 +34,7 @@ import electric.xml.Element;
 @NoteProcessorPlugin(displayName="LineMultiplyProcessor", position = 150)
 public class LineMultiplyProcessor implements NoteProcessor {
 
-    private String lineMultiplyString = "0 0";
+    private String lineMultiplyString = "0 1";
 
     private int pfield = 4;
 
