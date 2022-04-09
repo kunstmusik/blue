@@ -35,10 +35,21 @@ public class BSBLabelView extends BSBObjectView<BSBLabel> {
 
     private JLabel jlabel = new JLabel();
 
-    // FIXME: FONT, tooltip
+    // FIXME: tooltip
     InvalidationListener textListener = o -> {
         UiUtilities.invokeOnSwingThread(() -> {
             jlabel.setText(getBSBObject().getLabel());
+            
+            var prefSize = jlabel.getPreferredSize();
+            this.setSize(prefSize.width + 1, prefSize.height + 1);
+            
+//            invalidate();
+        });
+    };
+
+    InvalidationListener fontListener = o -> {
+        UiUtilities.invokeOnSwingThread(() -> {
+            jlabel.setFont(getBSBObject().getFont());
             
             var prefSize = jlabel.getPreferredSize();
             this.setSize(prefSize.width + 1, prefSize.height + 1);
@@ -73,6 +84,7 @@ public class BSBLabelView extends BSBObjectView<BSBLabel> {
     public void addNotify() {
         super.addNotify(); 
         getBSBObject().labelProperty().addListener(textListener);
+        getBSBObject().fontProperty().addListener(fontListener);
         
         var prefSize = jlabel.getPreferredSize();
         this.setSize(prefSize.width + 1, prefSize.height + 1);
@@ -82,6 +94,7 @@ public class BSBLabelView extends BSBObjectView<BSBLabel> {
     public void removeNotify() {
         super.removeNotify(); 
         getBSBObject().labelProperty().removeListener(textListener);
+        getBSBObject().fontProperty().removeListener(fontListener);
     }
 
 }
