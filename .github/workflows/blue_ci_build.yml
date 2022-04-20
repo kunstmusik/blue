@@ -17,7 +17,7 @@ jobs:
 
       - uses: actions/upload-artifact@v2
         with:
-          name: Blue (macOS .app)  
+          name: Blue (macOS arm64 .app)  
           path: application/target/blue-macOS-arm64-2.8.2.zip 
   macos_x86_64: 
     runs-on: macos-latest 
@@ -36,7 +36,7 @@ jobs:
 
       - uses: actions/upload-artifact@v2
         with:
-          name: Blue (macOS .app)  
+          name: Blue (macOS x86_64 .app)  
           path: application/target/blue-macOS-x86_64-2.8.2.zip 
   linux:
     runs-on: ubuntu-latest 
