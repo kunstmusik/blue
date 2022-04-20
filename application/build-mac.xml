@@ -2,6 +2,7 @@
 <!-- based on Apache Netbeans' suite.xml build-mac target -->
 <project name="blue-build-mac" basedir="." default="build-mac-zip">
 
+    <property environment="env"/>
 
     <property file="../blue-core/src/main/resources/blue/blueConstants.properties"/>
 
@@ -10,7 +11,12 @@
     <property name="app.version" value="2.8.2"/>
     <property name="app.root" value="target/${app.name}.app"/>
     <property name="blue.root" value="target/${app.name}.app/Contents/Resources/blue/"/>
-    <property name="zipName" value="${app.name}-macOS-${blueVersion}.zip"/>
+    
+    <condition property="zipName" value="${app.name}-macOS-x86_64-${blueVersion}.zip" else="${app.name}-macOS-arm64-${blueVersion}.zip">
+        <isset property="env.BUILD_X86_64"/>
+    </condition>
+    
+    <!--<property name="zipName" value="${app.name}-macOS-${blueVersion}.zip"/>-->
 
   <target name="build-mac" description="Builds a macOS .app and zip distribution of Blue. Execute
     after running 'mvn package' or 'mvn install'">
@@ -20,9 +26,11 @@
         <mkdir dir="${app.root}/Contents/Resources"/>
 
         <copy file="../imageSrc/blue.icns" tofile="${app.root}/Contents/Resources/${app.name}.icns"/>
-        <copy todir="${app.root}/Contents/Resources/${app.name}">
-          <fileset dir="target/${app.name}/" />
-        </copy>
+        <exec executable="cp">
+            <arg value="-r"/>
+            <arg value="./target/${app.name}"/>
+            <arg value="${app.root}/Contents/Resources/${app.name}"/>
+        </exec>
 
         <!-- move things around from maven build for macOS -->
         <move file="${blue.root}/ChangeLog.md" todir="${app.root}"/>
