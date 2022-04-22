@@ -54,3 +54,7 @@ nb_jr_remoting.cfg
 
 # Ignore VSCode directories
 .vscode
+
+# Ignore maven-wrapper files that are downloaded by the wrapper
+.mvn/wrapper/maven-wrapper.jar
+
