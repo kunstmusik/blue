@@ -91,10 +91,20 @@
             <artifactId>blue-ext-openjfx</artifactId>
             <version>${project.version}</version>
         </dependency>
-        <dependency>
+        <!--        <dependency>
             <groupId>com.kunstmusik</groupId>
-            <artifactId>blue-ext-rhino</artifactId>
+            <artifactId>blue-ext-graaljs</artifactId>
             <version>${project.version}</version>
+        </dependency>-->
+        <dependency>
+            <groupId>org.netbeans.api</groupId>
+            <artifactId>org-netbeans-api-scripting</artifactId>
+            <version>${netbeans.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.netbeans.api</groupId>
+            <artifactId>org-netbeans-libs-graaljs</artifactId>
+            <version>${netbeans.version}</version>
         </dependency>
         
         <!-- adding test dependencies-->

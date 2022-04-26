@@ -9,6 +9,8 @@ import blue.utility.UDOUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
 import java.util.HashMap;
+import javax.script.ScriptException;
+import org.openide.util.Exceptions;
 
 /**
  * <p>
@@ -84,16 +86,21 @@ public class JavaScriptInstrument extends AbstractInstrument {
 
     @Override
     public String generateInstrument() {
-        String retVal = JavaScriptProxy.processJavascriptInstrument(this.getText(),
-                this.getName());
-
-        if (udoReplacementValues != null) {
-            retVal = TextUtilities.replaceOpcodeNames(udoReplacementValues,
-                    retVal);
-            udoReplacementValues = null;
+        try {
+            String retVal = JavaScriptProxy.processJavascriptInstrument(this.getText(),
+                    this.getName());
+            
+            if (udoReplacementValues != null) {
+                retVal = TextUtilities.replaceOpcodeNames(udoReplacementValues,
+                        retVal);
+                udoReplacementValues = null;
+            }
+            
+            return retVal;
+        } catch (ScriptException ex) {
+            Exceptions.printStackTrace(ex);
+            return "";
         }
-
-        return retVal;
     }
 
     @Override
