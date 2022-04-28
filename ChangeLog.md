@@ -11,7 +11,7 @@ information.
 
 # CHANGE LOG
 
-## [2.8.2] - 2021-xx-xx
+## [2.8.2] - 2022-xx-xx
 
 ### UPDATED 
 
@@ -22,6 +22,7 @@ information.
    
 * Issue #639: Added JMask to Pattern Layers
 
+* JavaScript objects: Replaced Rhino processor with graal.js 
 
 
 ## [2.8.1] - 2020-12-29
