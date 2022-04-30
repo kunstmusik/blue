@@ -134,7 +134,7 @@ public class BSBHSliderView extends BSBObjectView<BSBHSlider> implements Resizea
         };
         this.valueListener = (obs, old, newVal) -> {
             UiUtilities.invokeOnSwingThread(() -> {
-                valSlider.setValue(getValueFromSlider());
+                valSlider.setValue(newVal.doubleValue());
                 valuePanel.setValue(NumberUtilities.formatDouble(getValueFromSlider()));
             });
         };
