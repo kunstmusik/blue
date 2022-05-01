@@ -721,7 +721,7 @@ public class ParameterLinePanel extends JComponent implements
             return point;
         }
 
-        for (int i = 0; i < currentLine.size(); i++) {
+        for (int i = 0; i < currentLine.size() - 1; i++) {
             LinePoint p1 = currentLine.getLinePoint(i);
             LinePoint p2 = currentLine.getLinePoint(i + 1);
 
