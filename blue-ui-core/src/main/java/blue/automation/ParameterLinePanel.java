@@ -57,6 +57,8 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.List;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javax.swing.JComponent;
 import javax.swing.JLayeredPane;
 import javax.swing.SwingUtilities;
@@ -64,6 +66,8 @@ import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import javax.swing.event.PopupMenuEvent;
+import javax.swing.event.PopupMenuListener;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import org.controlsfx.tools.Utils;
@@ -684,11 +688,11 @@ public class ParameterLinePanel extends JComponent implements
             LinePoint p1 = currentLine.getLinePoint(currentLine.size() - 2);
 
             leftBoundaryTime = p1.getX();
-            rightBoundaryTime = screenToDoubleX(this.getWidth());
+            rightBoundaryTime = Double.POSITIVE_INFINITY;
             return;
         }
 
-        for (int i = 0; i < currentLine.size(); i++) {
+        for (int i = 0; i < currentLine.size() - 1; i++) {
             if (currentLine.getLinePoint(i) == selectedPoint) {
                 LinePoint p1 = currentLine.getLinePoint(i - 1);
                 LinePoint p2 = currentLine.getLinePoint(i + 1);
@@ -882,6 +886,8 @@ public class ParameterLinePanel extends JComponent implements
         private int initialY;
         boolean justPasted = false;
         Line sourceCopy = null;
+        
+        ObservableList<LinePoint> sourceLinePoints = null;
         LinePoint lpSourceCopy = null;
         LinePoint previous = null;
         LinePoint next = null;
@@ -1046,12 +1052,16 @@ public class ParameterLinePanel extends JComponent implements
                         double min = currentParameter.getMin();
                         double max = currentParameter.getMax();
 
+                 
                         double time = screenToDoubleX(start);
                         double value = screenToDoubleY(e.getY(), min, max, currentParameter.getResolution());
                         selectedPoint = insertGraphPoint(time, value);
                     }
 
                     lpSourceCopy = new LinePoint(selectedPoint);
+                    sourceLinePoints = FXCollections.observableArrayList(currentParameter.getLine().getObservableList());
+                    selectedPointIndex = currentParameter.getLine().getObservableList().indexOf(selectedPoint);
+                    
                     newLinePoint = true;
                     setBoundaryXValues();
 
@@ -1087,15 +1097,31 @@ public class ParameterLinePanel extends JComponent implements
             } else if (UiUtilities.isRightMouseButton(e)) {
                 if (popup == null) {
                     popup = new EditPointsPopup(blue.automation.ParameterLinePanel.this);
+                    popup.addPopupMenuListener(new PopupMenuListener() {
+                        @Override
+                        public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
+                        }
+
+                        @Override
+                        public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
+                            SwingUtilities.invokeLater(() -> ParameterLinePanel.this.repaint());
+                        }
+
+                        @Override
+                        public void popupMenuCanceled(PopupMenuEvent e) {
+                        }
+                        
+                    });
                 }
                 popup.setLine(currentLine);
                 popup.show((Component) e.getSource(), e.getX(), e.getY());
             }
 
         }
-
+   
         @Override
         public void mouseDragged(MouseEvent e) {
+            
             if (ModeManager.getInstance().getMode() != ScoreMode.SINGLE_LINE) {
                 return;
             }
@@ -1249,38 +1275,36 @@ public class ParameterLinePanel extends JComponent implements
 
                 selectedPoint.setLocation(dragTime,
                         screenToDoubleY(newY, min, max, currentParameter
-                                .getResolution()));
-
-                var line = currentParameter.getLine().getObservableList();
-                if (previous != null) {
+                                .getResolution()));            
+                
+                var linePoints = FXCollections.observableArrayList(sourceLinePoints);
+                                
+                int index = linePoints.indexOf(selectedPoint);
+                int leftIndex = index;
+                int rightIndex = index;
+                
+                
+                while(leftIndex > 2) {
+                    var pt0 = linePoints.get(leftIndex - 2);
                     
-                    // testing by reference instead of equals() to prevent issue 
-                    // where selected and previous are equal in value that the condition
-                    // keeps triggering
-                    boolean previousFound = line.stream().anyMatch(lp -> lp == previous);
+                    if(pt0.getX() == dragTime) {
+                        linePoints.remove(leftIndex  - 1);
+                    } else {
+                        break;
+                    }
+                    leftIndex--;
+                }
+                while(rightIndex < linePoints.size() - 2) {
+                    var pt0 = linePoints.get(rightIndex + 2);
                     
-                    if (dragTime == previous.getX()) {
-                        if (previousFound) {
-                            currentParameter.getLine().removeLinePoint(selectedPointIndex - 1);
-                        }
-                    } else if (!previousFound) {
-                        currentParameter.getLine().addLinePoint(selectedPointIndex - 1, previous);
+                    if(pt0.getX() == dragTime) {
+                        linePoints.remove(rightIndex + 1);
+                    } else {
+                        break;
                     }
                 }
-
-                if (next != null) {
-                    // testing by reference instead of equals() to prevent issue 
-                    // where selected and next are equal in value that the condition
-                    // keeps triggering
-                    boolean nextFound = line.stream().anyMatch(lp -> lp == next);
-                    if (dragTime == next.getX()) {
-                        if (nextFound) {
-                            currentParameter.getLine().removeLinePoint(selectedPointIndex + 1);
-                        }
-                    } else if (!nextFound) {
-                        currentParameter.getLine().addLinePoint(selectedPointIndex + 1, next);
-                    }
-                }
+                                
+                currentParameter.getLine().setLinePoints(linePoints);
             }
             repaint();
         }
