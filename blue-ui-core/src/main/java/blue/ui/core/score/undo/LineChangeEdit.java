@@ -30,6 +30,7 @@ import javax.swing.undo.CannotUndoException;
  */
 public class LineChangeEdit extends AppendableEdit {
 
+    // using copies of Line as they do deep copies of line points
     private final Line sourceRef;
     private final Line sourceCopy;
     private final Line endCopy;

@@ -32,9 +32,6 @@ import blue.ui.core.score.ScoreTopComponent;
 import blue.ui.core.score.SingleLineScoreSelection;
 import blue.ui.core.score.undo.ClearLineSelectionEdit;
 import blue.ui.core.score.undo.LineChangeEdit;
-import blue.ui.core.score.undo.LinePointAddEdit;
-import blue.ui.core.score.undo.LinePointChangeEdit;
-import blue.ui.core.score.undo.LinePointRemoveEdit;
 import blue.ui.utilities.ResizeMode;
 import blue.ui.utilities.UiUtilities;
 import blue.undo.BlueUndoManager;
@@ -977,12 +974,13 @@ public class ParameterLinePanel extends JComponent implements
                     LinePoint first = currentLine.getLinePoint(0);
 
                     if (selectedPoint != first) {
-                        final var linePointRemoveEdit = new LinePointRemoveEdit(
-                                currentLine, selectedPoint,
-                                currentLine.getObservableList().indexOf(selectedPoint));
-                        BlueUndoManager.addEdit("score", linePointRemoveEdit);
-
+                        var sourceCopy = new Line(currentLine);
+                        
                         currentLine.removeLinePoint(selectedPoint);
+                        
+                        var endCopy = new Line(currentLine);
+                        var edit = new LineChangeEdit(currentLine, sourceCopy, endCopy);
+                        BlueUndoManager.addEdit("score", edit);
 
                         selectedPoint = null;
                         repaint();
@@ -991,11 +989,13 @@ public class ParameterLinePanel extends JComponent implements
                     // MOVING LINE POINT
                     setBoundaryXValues();
                     lpSourceCopy = new LinePoint(selectedPoint);
+                    sourceCopy = new Line(currentParameter.getLine());
+
                     sourceLinePoints = FXCollections.observableArrayList(currentParameter.getLine().getObservableList());
                     sourceLinePoints.sort((p1, p2) -> {
                         return (int) Math.signum(p1.getX() - p2.getX());
                     });
-                    
+
                     // dealing with multiple points with same times at boundaries
                     var list = currentLine.getObservableList();
                     int index = list.indexOf(selectedPoint);
@@ -1062,6 +1062,7 @@ public class ParameterLinePanel extends JComponent implements
                     }
 
                     lpSourceCopy = new LinePoint(selectedPoint);
+                    sourceCopy = new Line(currentParameter.getLine());
                     sourceLinePoints = FXCollections.observableArrayList(currentParameter.getLine().getObservableList());
                     sourceLinePoints.sort((p1, p2) -> {
                         return (int) Math.signum(p1.getX() - p2.getX());
@@ -1305,7 +1306,7 @@ public class ParameterLinePanel extends JComponent implements
 
             var linePoints = FXCollections.observableArrayList(sourceLinePoints);
             int index = -1;
-            
+
             for (int i = 0; i < linePoints.size(); i++) {
                 // compare by reference rather than use indexOf to 
                 // deal with value issues on removing/adding previous/next
@@ -1314,11 +1315,11 @@ public class ParameterLinePanel extends JComponent implements
                     break;
                 }
             }
-            
-            if(index < 0) {
+
+            if (index < 0) {
                 throw new RuntimeException("Unable to find selected point in current line");
             }
-            
+
             int leftIndex = index;
             int rightIndex = index;
             if (dragTime == 0.0) {
@@ -1380,19 +1381,24 @@ public class ParameterLinePanel extends JComponent implements
                             ? next
                             : null;
                     if (newLinePoint) {
-                        final var linePointAddEdit = new LinePointAddEdit(
-                                line, selectedPoint,
-                                line.getObservableList().indexOf(selectedPoint),
-                                removedPoint
-                        );
-                        BlueUndoManager.addEdit("score", linePointAddEdit);
+//                        final var linePointAddEdit = new LinePointAddEdit(
+//                                line, selectedPoint,
+//                                line.getObservableList().indexOf(selectedPoint),
+//                                removedPoint
+//                        );
+                        var endCopy = new Line(line);
+                        var edit = new LineChangeEdit(line, new Line(sourceCopy), endCopy);
+                        BlueUndoManager.addEdit("score", edit);
                     } else {
-                        final var linePointChangeEdit = new LinePointChangeEdit(
-                                line, selectedPoint, lpSourceCopy,
-                                new LinePoint(selectedPoint),
-                                removedPoint
-                        );
-                        BlueUndoManager.addEdit("score", linePointChangeEdit);
+//                        final var linePointChangeEdit = new LinePointChangeEdit(
+//                                line, selectedPoint, lpSourceCopy,
+//                                new LinePoint(selectedPoint),
+//                                removedPoint
+//                        );
+                        var endCopy = new Line(line);
+                        var edit = new LineChangeEdit(line, new Line(sourceCopy), endCopy);
+                        BlueUndoManager.addEdit("score", edit);
+//                        BlueUndoManager.addEdit("score", linePointChangeEdit);
                     }
                 } else if (paramList.containsLine(selection.getSourceLine())) {
                     if (didVerticalShift || mouseDownInitialX > 0) {

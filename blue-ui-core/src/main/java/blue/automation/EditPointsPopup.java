@@ -98,12 +98,19 @@ class EditPointsPopup extends JPopupMenu {
             @Override
             public void actionPerformed(ActionEvent e) {
                 if (line != null) {
+                    
+                    var sourceCopy = new Line(line);
+                    
                     var linePoints = line.getObservableList();
                     linePoints.clear();
                     linePoints.add(new LinePoint(0, 0.5));
                     if (line.isRightBound()) {
                         linePoints.add(new LinePoint(1.0, 0.5));
                     }
+                    
+                    var endCopy = new Line(line);
+                    var edit = new LineChangeEdit(line, sourceCopy, endCopy);
+                    BlueUndoManager.addEdit("score", edit);
                 }
             }
         };
