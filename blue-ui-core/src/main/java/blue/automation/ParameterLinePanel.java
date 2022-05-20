@@ -886,12 +886,11 @@ public class ParameterLinePanel extends JComponent implements
         private int initialY;
         boolean justPasted = false;
         Line sourceCopy = null;
-        
+
         ObservableList<LinePoint> sourceLinePoints = null;
         LinePoint lpSourceCopy = null;
         LinePoint previous = null;
         LinePoint next = null;
-        int selectedPointIndex = 0;
 
         boolean newLinePoint = false;
 
@@ -932,8 +931,7 @@ public class ParameterLinePanel extends JComponent implements
                     verticalShift = false;
                     justPasted = false;
                     pressPoint = null;
-                    selectedPointIndex = -1;
-                    
+
                     return;
                 } else {
                     // TRANSLATION OR SCALING OF SELECTION
@@ -993,7 +991,11 @@ public class ParameterLinePanel extends JComponent implements
                     // MOVING LINE POINT
                     setBoundaryXValues();
                     lpSourceCopy = new LinePoint(selectedPoint);
-
+                    sourceLinePoints = FXCollections.observableArrayList(currentParameter.getLine().getObservableList());
+                    sourceLinePoints.sort((p1, p2) -> {
+                        return (int) Math.signum(p1.getX() - p2.getX());
+                    });
+                    
                     // dealing with multiple points with same times at boundaries
                     var list = currentLine.getObservableList();
                     int index = list.indexOf(selectedPoint);
@@ -1027,10 +1029,12 @@ public class ParameterLinePanel extends JComponent implements
                 final int OS_CTRL_KEY = BlueSystem.getMenuShortcutKey();
 
                 if ((e.getModifiers() & OS_CTRL_KEY) == OS_CTRL_KEY) {
+                    // PASTING POINTS
                     ScoreController.getInstance().pasteSingleLine(startTime);
                     justPasted = true;
 
                 } else if (e.isShiftDown()) {
+                    // PERFORMING A SELECTION
                     initialStartTime = startTime;
                     ScoreTopComponent scoreTC = (ScoreTopComponent) WindowManager.getDefault().findTopComponent("ScoreTopComponent");
                     Rectangle rect = new Rectangle(start, 0, 1, getHeight());
@@ -1052,7 +1056,6 @@ public class ParameterLinePanel extends JComponent implements
                         double min = currentParameter.getMin();
                         double max = currentParameter.getMax();
 
-                 
                         double time = screenToDoubleX(start);
                         double value = screenToDoubleY(e.getY(), min, max, currentParameter.getResolution());
                         selectedPoint = insertGraphPoint(time, value);
@@ -1060,24 +1063,25 @@ public class ParameterLinePanel extends JComponent implements
 
                     lpSourceCopy = new LinePoint(selectedPoint);
                     sourceLinePoints = FXCollections.observableArrayList(currentParameter.getLine().getObservableList());
-                    selectedPointIndex = currentParameter.getLine().getObservableList().indexOf(selectedPoint);
-                    
+                    sourceLinePoints.sort((p1, p2) -> {
+                        return (int) Math.signum(p1.getX() - p2.getX());
+                    });
+
                     newLinePoint = true;
                     setBoundaryXValues();
 
                     // dealing with multiple points with same times at boundaries
                     var list = currentLine.getObservableList();
                     int index = -1;
-                    for(int i = 0; i < list.size(); i++) {
+                    for (int i = 0; i < list.size(); i++) {
                         // compare by reference rather than use indexOf to 
                         // deal with value issues on removing/adding previous/next
-                        if(list.get(i) == selectedPoint) {
+                        if (list.get(i) == selectedPoint) {
                             index = i;
                             break;
                         }
                     }
-                    selectedPointIndex = index;
-                    
+
                     if (index > 1) {
                         if (list.get(index - 1).getX() == list.get(index - 2).getX()) {
                             previous = list.get(index - 1);
@@ -1110,7 +1114,7 @@ public class ParameterLinePanel extends JComponent implements
                         @Override
                         public void popupMenuCanceled(PopupMenuEvent e) {
                         }
-                        
+
                     });
                 }
                 popup.setLine(currentLine);
@@ -1118,10 +1122,10 @@ public class ParameterLinePanel extends JComponent implements
             }
 
         }
-   
+
         @Override
         public void mouseDragged(MouseEvent e) {
-            
+
             if (ModeManager.getInstance().getMode() != ScoreMode.SINGLE_LINE) {
                 return;
             }
@@ -1131,14 +1135,12 @@ public class ParameterLinePanel extends JComponent implements
             if (currentParameter == null || justPasted || pressPoint == null) {
                 return;
             }
-            
+
 //            System.out.print(">>");
 //            for(var lp : currentParameter.getLine().getObservableList()) {
 //                System.out.printf(" [%g.2, %g.2], ", lp.getX(), lp.getY());
 //            }
 //            System.out.println("");
-            
-
             // check if selection currently is for line that is contained in this panel
             if (paramList.containsLine(selection.getSourceLine())) {
                 int x = e.getX();
@@ -1275,40 +1277,78 @@ public class ParameterLinePanel extends JComponent implements
 
                 selectedPoint.setLocation(dragTime,
                         screenToDoubleY(newY, min, max, currentParameter
-                                .getResolution()));            
-                
-                var linePoints = FXCollections.observableArrayList(sourceLinePoints);
-                                
-                int index = linePoints.indexOf(selectedPoint);
-                int leftIndex = index;
-                int rightIndex = index;
-                
-                
-                while(leftIndex > 2) {
+                                .getResolution()));
+
+                var linePoints = getTimeCleanedLinePoints(
+                        sourceLinePoints, selectedPoint, dragTime);
+
+                currentParameter.getLine().setLinePoints(linePoints);
+            }
+            repaint();
+        }
+
+        /**
+         * Given original source line points and selected point that is being
+         * dragged, return a copy that removes any points that have the same
+         * time value (i.e., getX() value) and where there are either > 2 points
+         * at that time or if moving the point at time 0 to replace the time 0
+         * point.
+         *
+         * @param sourceLinePoints
+         * @param selectedPoint
+         * @param dragTime
+         * @return
+         */
+        private ObservableList<LinePoint> getTimeCleanedLinePoints(
+                List<LinePoint> sourceLinePoints,
+                LinePoint selectedPoint, double dragTime) {
+
+            var linePoints = FXCollections.observableArrayList(sourceLinePoints);
+            int index = -1;
+            
+            for (int i = 0; i < linePoints.size(); i++) {
+                // compare by reference rather than use indexOf to 
+                // deal with value issues on removing/adding previous/next
+                if (linePoints.get(i) == selectedPoint) {
+                    index = i;
+                    break;
+                }
+            }
+            
+            if(index < 0) {
+                throw new RuntimeException("Unable to find selected point in current line");
+            }
+            
+            int leftIndex = index;
+            int rightIndex = index;
+            if (dragTime == 0.0) {
+//                linePoints.remove(0, leftIndex);
+                linePoints.removeIf(lp -> {
+                    return lp != selectedPoint && lp.getX() == 0.0;
+                });
+            } else {
+                while (leftIndex >= 2) {
                     var pt0 = linePoints.get(leftIndex - 2);
-                    
-                    if(pt0.getX() == dragTime) {
-                        linePoints.remove(leftIndex  - 1);
+
+                    if (pt0.getX() == dragTime) {
+                        linePoints.remove(leftIndex - 1);
                     } else {
                         break;
                     }
                     leftIndex--;
                 }
-                while(rightIndex < linePoints.size() - 2) {
+                while (rightIndex < linePoints.size() - 2) {
                     var pt0 = linePoints.get(rightIndex + 2);
-                    
-                    if(pt0.getX() == dragTime) {
+
+                    if (pt0.getX() == dragTime) {
                         linePoints.remove(rightIndex + 1);
                     } else {
                         break;
                     }
                 }
-                                
-                currentParameter.getLine().setLinePoints(linePoints);
             }
-            repaint();
+            return linePoints;
         }
-        
 
         @Override
         public void mouseReleased(MouseEvent e) {
@@ -1319,7 +1359,6 @@ public class ParameterLinePanel extends JComponent implements
             justPasted = false;
             transTime = 0.0f;
             pressPoint = null;
-            selectedPointIndex = -1;
 
             if (ModeManager.getInstance().getMode() != ScoreMode.SINGLE_LINE) {
                 return;
@@ -1394,7 +1433,7 @@ public class ParameterLinePanel extends JComponent implements
             ScoreTopComponent scoreTC = (ScoreTopComponent) WindowManager.getDefault().findTopComponent("ScoreTopComponent");
             final JLayeredPane scorePanel = scoreTC.getScorePanel();
             final var marquee = scoreTC.getMarquee();
-            
+
             var resizeMode = marquee.isVisible() ? UiUtilities.getResizeMode(e.getComponent(), e.getPoint(), scoreTC.getMarquee()) : ResizeMode.NONE;
             //System.out.println("RESIZE_MODE: " + resizeMode);
             switch (resizeMode) {
