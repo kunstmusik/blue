@@ -30,8 +30,10 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
@@ -65,6 +67,7 @@ public final class AudioClip implements ScoreObject, Comparable<AudioClip> {
     private DoubleProperty fadeOut = new SimpleDoubleProperty(0.0f);
     private ObjectProperty<FadeType> fadeOutType = new SimpleObjectProperty<>(
             FadeType.LINEAR);
+    private BooleanProperty looping = new SimpleBooleanProperty(true);
 
     transient List<ScoreObjectListener> scoreObjListeners = null;
     transient int cloneSourceHashCode = 0;
@@ -101,6 +104,7 @@ public final class AudioClip implements ScoreObject, Comparable<AudioClip> {
         setFadeInType(ac.getFadeInType());
         setFadeOut(ac.getFadeOut());
         setFadeOutType(ac.getFadeOutType());
+        setLooping(ac.isLooping());
         this.cloneSourceHashCode = ac.hashCode();
     }
 
@@ -194,6 +198,25 @@ public final class AudioClip implements ScoreObject, Comparable<AudioClip> {
         return fadeOut;
     }
 
+    public void setLooping(boolean looping) {
+        this.looping.set(looping);
+        
+        if(!looping) {
+            var durLimit = getAudioDuration() - getFileStartTime();
+            if(getSubjectiveDuration() > durLimit) {
+                setSubjectiveDuration(durLimit);
+            }
+        }
+    }
+
+    public boolean isLooping() {
+        return looping.get();
+    }
+
+    public BooleanProperty loopingProperty() {
+        return looping;
+    }
+
     // GETTERS/SETTERS 
     public File getAudioFile() {
         return audioFile.get();
@@ -214,7 +237,7 @@ public final class AudioClip implements ScoreObject, Comparable<AudioClip> {
     }
 
     public void setAudioDuration(double originalDuration) {
-        setDuration(originalDuration);
+        audioDuration = originalDuration;
     }
 
     @Override
@@ -234,58 +257,66 @@ public final class AudioClip implements ScoreObject, Comparable<AudioClip> {
 
     @Override
     public void setSubjectiveDuration(double duration) {
-        double dur = Math.min(duration,
-                getAudioDuration() - getFileStartTime());
+//        double dur = Math.min(duration,
+//                getAudioDuration() - getFileStartTime());
 
-        setDuration(dur);
+        setDuration(duration);
     }
 
     @Override
-    public double getMaxResizeRightDiff() {
-        return audioDuration - (getFileStartTime() + getDuration());
+    public double[] getResizeRightLimits() {
+        
+        return isLooping()
+                ? new double[]{-getSubjectiveDuration(), Double.MAX_VALUE}
+                : new double[]{-getSubjectiveDuration(), (getAudioDuration() - (getSubjectiveDuration() + getFileStartTime()))};
     }
 
     @Override
-    public double getMaxResizeLeftDiff() {
-        return (getStart() < getFileStartTime()) ? -getStart() : -getFileStartTime();
+    public double[] getResizeLeftLimits() {
+
+        var leftLimit = isLooping()
+                ? -getStartTime()
+                : Math.max(-getStart(), -getFileStartTime());
+
+        return new double[]{leftLimit, getSubjectiveDuration()};
     }
 
     @Override
     public void resizeLeft(double newStartTime) {
 
-        if (newStartTime >= getStart() + getDuration()) {
-            return;
+        final var start = getStartTime();
+        double diff = start - newStartTime;
+        double fileStart = getFileStartTime() - diff;
+        double audioDur = getAudioDuration();
+
+        if (audioDur > 0) {
+            while (fileStart < 0) {
+                fileStart += audioDur;
+            }
+            while (fileStart > audioDur) {
+                fileStart -= audioDur;
+            }
+
         }
 
-        double diff = newStartTime - getStart();
-        double maxFileStartDiff = -getFileStartTime();
-
-        if (diff < maxFileStartDiff) {
-            diff = maxFileStartDiff;
-        }
-
-        double maxDurDiff = getAudioDuration() - getDuration();
-        if (-diff > maxDurDiff) {
-            diff = -maxDurDiff;
-        }
-
-        setFileStartTime(getFileStartTime() + diff);
-        setStartTime(getStart() + diff);
-        setSubjectiveDuration(getDuration() - diff);
+        setStartTime(newStartTime);
+        setFileStartTime(fileStart);
+        setSubjectiveDuration(getDuration() + diff);
     }
 
     @Override
     public void resizeRight(double newEndTime) {
+        setSubjectiveDuration(newEndTime - getStart());
 
-        if (newEndTime <= getStart()) {
-            return;
-        }
-
-        double newDur = newEndTime - getStart();
-
-        newDur = (newDur > getAudioDuration()) ? getAudioDuration() : newDur;
-
-        setSubjectiveDuration(newDur);
+//        if (newEndTime <= getStart()) {
+//            return;
+//        }
+//
+//        double newDur = newEndTime - getStart();
+//
+//        newDur = (newDur > getAudioDuration()) ? getAudioDuration() : newDur;
+//
+//        setSubjectiveDuration(newDur);
     }
 
     @Override
@@ -361,6 +392,7 @@ public final class AudioClip implements ScoreObject, Comparable<AudioClip> {
         root.addElement("fadeInType").setText(getFadeInType().toString());
         root.addElement(XMLUtilities.writeDouble("fadeOut", getFadeOut()));
         root.addElement("fadeOutType").setText(getFadeOutType().toString());
+        root.addElement(XMLUtilities.writeBoolean("looping", isLooping()));
 
         String colorStr = Integer.toString(getBackgroundColor().getRGB());
         root.addElement("backgroundColor").setText(colorStr);
@@ -415,6 +447,9 @@ public final class AudioClip implements ScoreObject, Comparable<AudioClip> {
                     break;
                 case "fadeOutType":
                     clip.setFadeOutType(FadeType.fromString(nodeText));
+                    break;
+                case "looping":
+                    clip.setLooping(XMLUtilities.readBoolean(node));
                     break;
             }
         }

@@ -135,6 +135,11 @@ public final class ScoreTopComponent extends TopComponent
     TimePointer renderStartPointer = new TimePointer(Color.GREEN);
     TimePointer renderLoopPointer = new TimePointer(Color.YELLOW);
     TimePointer renderTimePointer = new TimePointer(Color.ORANGE);
+    
+    TimePointer guideLineStart = new TimePointer(Color.CYAN);
+    TimePointer guideLineEnd = new TimePointer(Color.CYAN);
+    TimePointer guideLines[] = new TimePointer[] { guideLineStart, guideLineEnd};
+    
     double renderStart = -1.0f;
     double timePointer = -1.0f;
     JToggleButton snapButton = new JToggleButton();
@@ -637,6 +642,11 @@ public final class ScoreTopComponent extends TopComponent
         scorePanel.add(renderLoopPointer, JLayeredPane.DRAG_LAYER);
 
         scorePanel.add(renderTimePointer, JLayeredPane.DRAG_LAYER);
+        scorePanel.add(guideLineStart, JLayeredPane.DRAG_LAYER);
+        scorePanel.add(guideLineEnd, JLayeredPane.DRAG_LAYER);
+        
+        guideLineStart.setVisible(false);
+        guideLineEnd.setVisible(false);
 
         navigator = ScoreNavigatorDialog.getInstance(
                 WindowManager.getDefault().getMainWindow());
@@ -676,6 +686,9 @@ public final class ScoreTopComponent extends TopComponent
                 renderStartPointer.setSize(1, newHeight);
                 renderLoopPointer.setSize(1, newHeight);
                 renderTimePointer.setSize(1, newHeight);
+                guideLineStart.setSize(1, newHeight);
+                guideLineEnd.setSize(1, newHeight);
+                
             }
         });
 
@@ -1099,6 +1112,10 @@ public final class ScoreTopComponent extends TopComponent
 
     public AlphaMarquee getMarquee() {
         return marquee;
+    }
+    
+    public TimePointer[] getGuideLines() {
+        return guideLines;
     }
 
     public JPanel getLayerPanel() {

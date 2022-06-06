@@ -24,6 +24,12 @@ information.
 
 * JavaScript objects: Replaced Rhino processor with graal.js 
 
+* Score Timeline: Implemented resizing multiple selected objects and undo 
+  functionality
+
+* Issue #615: Implemented Looping option for AudioClips and allow resizing from
+  sides beyond duration of audio clip when looping is enabled. 
+
 
 ## [2.8.1] - 2020-12-29
 

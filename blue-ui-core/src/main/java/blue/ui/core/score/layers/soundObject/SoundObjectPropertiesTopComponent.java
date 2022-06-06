@@ -28,7 +28,7 @@ import blue.score.ScoreObjectListener;
 import blue.soundObject.TimeBehavior;
 import blue.ui.core.score.NoteProcessorChainEditor;
 import blue.ui.core.score.layers.SoundObjectProvider;
-import blue.ui.core.score.undo.ResizeScoreObjectEdit;
+import blue.ui.core.score.undo.DurationScoreObjectEdit;
 import blue.ui.core.score.undo.StartTimeEdit;
 import blue.ui.utilities.SimpleDocumentListener;
 import blue.undo.BlueUndoManager;
@@ -264,7 +264,7 @@ public final class SoundObjectPropertiesTopComponent extends TopComponent implem
 
         BlueUndoManager.setUndoManager("score");
 
-        BlueUndoManager.addEdit(new ResizeScoreObjectEdit(this.sObj,
+        BlueUndoManager.addEdit(new DurationScoreObjectEdit(this.sObj,
                 initialDuration, this.sObj.getSubjectiveDuration()));
 
     }

@@ -22,7 +22,7 @@ package blue.ui.core.score.object.actions;
 import blue.BlueSystem;
 import blue.score.ScoreObject;
 import blue.soundObject.SoundObject;
-import blue.ui.core.score.undo.ResizeScoreObjectEdit;
+import blue.ui.core.score.undo.DurationScoreObjectEdit;
 import blue.undo.BlueUndoManager;
 import java.awt.event.ActionEvent;
 import java.util.Collection;
@@ -66,7 +66,7 @@ public final class SetSubjectiveToObjectiveTimeAction extends AbstractAction
     public void actionPerformed(ActionEvent e) {
 
         if (soundObjects.size() > 0 && scoreObjects.size() == soundObjects.size()) {
-            ResizeScoreObjectEdit top = null;
+            DurationScoreObjectEdit top = null;
             for (SoundObject soundObject : soundObjects) {
 
                 if (soundObject.getObjectiveDuration() <= 0) {
@@ -85,7 +85,7 @@ public final class SetSubjectiveToObjectiveTimeAction extends AbstractAction
                 if (oldTime != newTime) {
                     soundObject.setSubjectiveDuration(
                             newTime);
-                    ResizeScoreObjectEdit edit = new ResizeScoreObjectEdit(
+                    DurationScoreObjectEdit edit = new DurationScoreObjectEdit(
                             soundObject, oldTime, newTime);
 
                     if(top == null) {

@@ -98,6 +98,8 @@ public class AudioClipEditor extends ScoreObjectEditor {
         fadeOutTypeComboBox = new javax.swing.JComboBox<>();
         fadeOutTextField = new javax.swing.JTextField();
         fadeInTypeComboBox = new javax.swing.JComboBox<>();
+        jLabel10 = new javax.swing.JLabel();
+        loopingCheckbox = new javax.swing.JCheckBox();
         startTimeTextField = new javax.swing.JTextField();
         durationTextField = new javax.swing.JTextField();
 
@@ -162,6 +164,15 @@ public class AudioClipEditor extends ScoreObjectEditor {
             }
         });
 
+        org.openide.awt.Mnemonics.setLocalizedText(jLabel10, org.openide.util.NbBundle.getMessage(AudioClipEditor.class, "AudioClipEditor.jLabel10.text")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(loopingCheckbox, org.openide.util.NbBundle.getMessage(AudioClipEditor.class, "AudioClipEditor.loopingCheckbox.text")); // NOI18N
+        loopingCheckbox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                loopingCheckboxActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
@@ -175,22 +186,26 @@ public class AudioClipEditor extends ScoreObjectEditor {
                             .addComponent(jLabel4))
                         .addGap(44, 44, 44)
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(fileDurationTextField)
+                            .addComponent(fileDurationTextField, javax.swing.GroupLayout.DEFAULT_SIZE, 389, Short.MAX_VALUE)
                             .addComponent(fileStartTextField)))
                     .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addComponent(jLabel9)
+                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jLabel9)
+                            .addComponent(jLabel10))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(fadeOutTypeComboBox, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addComponent(jLabel8)
-                        .addGap(43, 43, 43)
-                        .addComponent(fadeOutTextField))
+                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(jPanel1Layout.createSequentialGroup()
+                                .addComponent(loopingCheckbox)
+                                .addGap(0, 0, Short.MAX_VALUE))
+                            .addComponent(fadeOutTypeComboBox, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(jLabel7)
-                            .addComponent(jLabel6))
+                            .addComponent(jLabel6)
+                            .addComponent(jLabel8))
                         .addGap(18, 18, 18)
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(fadeOutTextField)
                             .addComponent(fadeInTextField)
                             .addComponent(fadeInTypeComboBox, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
                 .addContainerGap())
@@ -221,7 +236,11 @@ public class AudioClipEditor extends ScoreObjectEditor {
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel9)
                     .addComponent(fadeOutTypeComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel10)
+                    .addComponent(loopingCheckbox))
+                .addContainerGap(46, Short.MAX_VALUE))
         );
 
         startTimeTextField.setText(org.openide.util.NbBundle.getMessage(AudioClipEditor.class, "AudioClipEditor.startTimeTextField.text")); // NOI18N
@@ -295,7 +314,7 @@ public class AudioClipEditor extends ScoreObjectEditor {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jScrollPane1)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 362, Short.MAX_VALUE)
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -405,6 +424,16 @@ public class AudioClipEditor extends ScoreObjectEditor {
         isUpdating = false;
     }//GEN-LAST:event_fadeOutTypeComboBoxActionPerformed
 
+    private void loopingCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_loopingCheckboxActionPerformed
+        if (this.clip == null || isUpdating) {
+            return;
+        }
+
+        isUpdating = true;
+        this.clip.setLooping(loopingCheckbox.isSelected());
+        isUpdating = false;
+    }//GEN-LAST:event_loopingCheckboxActionPerformed
+
     @Override
     public void editScoreObject(ScoreObject sObj) {
         final AudioClip newClip = (AudioClip) sObj;
@@ -417,6 +446,7 @@ public class AudioClipEditor extends ScoreObjectEditor {
             this.clip.fadeInTypeProperty().removeListener(cl);
             this.clip.fadeOutProperty().removeListener(cl);
             this.clip.fadeOutTypeProperty().removeListener(cl);
+            this.clip.loopingProperty().removeListener(cl);
         }
 
         this.clip = newClip;
@@ -437,6 +467,8 @@ public class AudioClipEditor extends ScoreObjectEditor {
 
         fadeOutTypeComboBox.setSelectedItem(clip.getFadeInType());
         fadeInTypeComboBox.setSelectedItem(clip.getFadeOutType());
+        
+        loopingCheckbox.setSelected(clip.isLooping());
 
         isUpdating = false;
 
@@ -447,6 +479,7 @@ public class AudioClipEditor extends ScoreObjectEditor {
         this.clip.fadeInTypeProperty().addListener(cl);
         this.clip.fadeOutProperty().addListener(cl);
         this.clip.fadeOutTypeProperty().addListener(cl);
+        this.clip.loopingProperty().addListener(cl);
 
     }
 
@@ -461,6 +494,7 @@ public class AudioClipEditor extends ScoreObjectEditor {
     private javax.swing.JTextField fileDurationTextField;
     private javax.swing.JTextField fileStartTextField;
     private javax.swing.JLabel jLabel1;
+    private javax.swing.JLabel jLabel10;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
@@ -472,6 +506,7 @@ public class AudioClipEditor extends ScoreObjectEditor {
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JCheckBox loopingCheckbox;
     private javax.swing.JTextField startTimeTextField;
     // End of variables declaration//GEN-END:variables
 }

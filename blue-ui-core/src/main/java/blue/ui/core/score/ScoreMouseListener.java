@@ -205,7 +205,7 @@ public class ScoreMouseListener extends MouseAdapter {
 
         // FIXME - perhaps optimize the lookup to cache results using lookup listener
         if (sObjView != null
-                && selectedObjects.size() == 1
+                && selectedObjects.size() >= 1
                 && selectedObjects.contains(
                         sObjView.getScoreObject())) {
 

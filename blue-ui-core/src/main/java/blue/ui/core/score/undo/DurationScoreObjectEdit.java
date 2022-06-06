@@ -16,15 +16,15 @@ import javax.swing.undo.UndoableEdit;
  * 
  */
 
-public class ResizeScoreObjectEdit extends AbstractUndoableEdit {
+public class DurationScoreObjectEdit extends AbstractUndoableEdit {
     private final ScoreObject sObj;
 
     private final double initialDuration;
     private final double endingDuration;
 
-    private ResizeScoreObjectEdit nextEdit = null;
+    private DurationScoreObjectEdit nextEdit = null;
 
-    public ResizeScoreObjectEdit(ScoreObject sObj, double initialDuration,
+    public DurationScoreObjectEdit(ScoreObject sObj, double initialDuration,
             double endingDuration) {
 
         this.initialDuration = initialDuration;
@@ -57,9 +57,9 @@ public class ResizeScoreObjectEdit extends AbstractUndoableEdit {
 
     @Override
     public boolean addEdit(UndoableEdit anEdit) {
-        if (anEdit instanceof ResizeScoreObjectEdit) {
+        if (anEdit instanceof DurationScoreObjectEdit) {
             if (nextEdit == null) {
-                nextEdit = (ResizeScoreObjectEdit) anEdit;
+                nextEdit = (DurationScoreObjectEdit) anEdit;
                 return true;
             } else {
                 return nextEdit.addEdit(anEdit);

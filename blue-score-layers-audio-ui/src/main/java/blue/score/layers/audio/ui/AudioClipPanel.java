@@ -99,6 +99,10 @@ public class AudioClipPanel extends JPanel
     ChangeListener<FadeType> fadeTypeListener = (obs, o, n) -> {
         repaint();
     };
+    
+    ChangeListener<Boolean> loopingListener = (obs, o, n) -> {
+        repaint();
+    };
 
     MouseAdapter releaseOutsideAdapter = new MouseAdapter() {
         @Override
@@ -122,7 +126,7 @@ public class AudioClipPanel extends JPanel
         public void mouseEntered(MouseEvent e) {
             Color bgColor;
             if (selected) {
-                bgColor = selectedFontColor;
+                bgColor = Color.WHITE;
             } else {
                 bgColor = audioClip.getBackgroundColor();
 
@@ -295,6 +299,7 @@ public class AudioClipPanel extends JPanel
         audioClip.fadeInTypeProperty().addListener(fadeTypeListener);
         audioClip.fadeOutProperty().addListener(fadeListener);
         audioClip.fadeOutTypeProperty().addListener(fadeTypeListener);
+        audioClip.loopingProperty().addListener(loopingListener);
         timeState.addPropertyChangeListener(this);
 
         ScoreTopComponent scoreTopComponent = (ScoreTopComponent) WindowManager.getDefault().findTopComponent(
@@ -321,6 +326,7 @@ public class AudioClipPanel extends JPanel
         audioClip.fadeInTypeProperty().removeListener(fadeTypeListener);
         audioClip.fadeOutProperty().removeListener(fadeListener);
         audioClip.fadeOutTypeProperty().removeListener(fadeTypeListener);
+        audioClip.loopingProperty().removeListener(loopingListener);
 
         timeState.removePropertyChangeListener(this);
         result.removeLookupListener(this);
@@ -439,7 +445,7 @@ public class AudioClipPanel extends JPanel
 
         int audioFileStart = (int) (audioClip.getFileStartTime() * timeState.getPixelSecond());
         AudioWaveformUI.paintWaveForm(g, this.getHeight() - 4, waveData,
-                audioFileStart);
+                audioFileStart, audioClip.isLooping());
 
         // paint fades
         if (audioClip.getFadeIn() > 0.0f) {

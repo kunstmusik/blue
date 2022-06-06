@@ -74,8 +74,17 @@ public interface ScoreObject extends DeepCopyable<ScoreObject> {
 //    boolean isLeftResizable()
     // boolean isRightResizble()
 
-    double getMaxResizeRightDiff();
-    double getMaxResizeLeftDiff();
+    /** Return double array of limits of left diff and right diff when doing 
+     * a resize from the right side of objects.
+     * @return 
+     */
+    double[] getResizeRightLimits();
+    
+    /** Return double array of limits of left diff and right diff when doing 
+     * a resize from the left side of objects.
+     * @return 
+     */
+    double[] getResizeLeftLimits();
     void resizeLeft(double newStartTime);
     void resizeRight(double newEndTime);
 
