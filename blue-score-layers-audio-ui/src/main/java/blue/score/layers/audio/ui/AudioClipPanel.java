@@ -99,7 +99,7 @@ public class AudioClipPanel extends JPanel
     ChangeListener<FadeType> fadeTypeListener = (obs, o, n) -> {
         repaint();
     };
-    
+
     ChangeListener<Boolean> loopingListener = (obs, o, n) -> {
         repaint();
     };
@@ -189,8 +189,19 @@ public class AudioClipPanel extends JPanel
                 } else {
                     double newTime = initialStartTime
                             - ((double) xDiff / timeState.getPixelSecond());
-                    newTime = Math.max(0.0f, newTime);
-                    newTime = Math.min(audioClip.getAudioDuration() - audioClip.getDuration(), newTime);
+                    double audioDuration = audioClip.getAudioDuration();
+
+                    if (audioClip.isLooping()) {
+                        while (newTime < 0) {
+                            newTime += audioDuration;
+                        }
+                        newTime %= audioDuration;
+
+                    } else {
+                        newTime = Math.max(0.0f, newTime);
+                        newTime = Math.min(audioDuration - audioClip.getDuration(), newTime);
+                    }
+                    System.out.println("new time: " + newTime);
                     audioClip.setFileStartTime(newTime);
                 }
 
@@ -469,18 +480,17 @@ public class AudioClipPanel extends JPanel
 
         g.translate(-1, -2);
 
-        
         if (isSelected()) {
             g.setColor(Color.BLACK);
             g.fillRect(0, 2, w, 18);
         }
-        
+
         g.setColor(fontColor);
         g.drawString(audioClip.getName(), 5, 15);
 
         // DRAW BORDERS
         g.setColor(border1);
-        g.drawRect(0, 1, w, h-2);
+        g.drawRect(0, 1, w, h - 2);
 //        g.drawLine(0, 2, 0, h - 2);
 //
 //        g.setColor(border2);
