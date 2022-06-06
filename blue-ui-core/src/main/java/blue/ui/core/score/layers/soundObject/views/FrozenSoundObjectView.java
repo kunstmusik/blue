@@ -186,7 +186,7 @@ public class FrozenSoundObjectView extends SoundObjectView {
 
         g.translate(1, 2);
 
-        AudioWaveformUI.paintWaveForm(g, sObjVisibleHeight, this.audioWaveformData, 0);
+        AudioWaveformUI.paintWaveForm(g, sObjVisibleHeight, this.audioWaveformData, 0, false);
 
         g.translate(-1, -2);
 
