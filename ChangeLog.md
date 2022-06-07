@@ -15,7 +15,8 @@ information.
 
 ### UPDATED 
 
-* Removed JavaFX
+* Removed JavaFX: BlueSynthBuilder and Effects remimplemented to Swing GUI 
+  toolkit.
 
 * Redesigned SoundObjectLibrary window: supports drag and drop reorganization, 
   additional popup menu options for editing and organization
@@ -24,7 +25,7 @@ information.
 
 * JavaScript objects: Replaced Rhino processor with graal.js 
 
-* Score Timeline: Implemented resizing multiple selected objects and undo 
+* Issue #625: Implemented resizing multiple selected objects and undo 
   functionality
 
 * Issue #615: Implemented Looping option for AudioClips and allow resizing from
