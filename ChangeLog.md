@@ -31,6 +31,9 @@ information.
 * Issue #615: Implemented Looping option for AudioClips and allow resizing from
   sides beyond duration of audio clip when looping is enabled. 
 
+* Issue #665: Implemented guidelines for start/end boundary of selected objects
+  for easier visual alignment of objects when moving/resizing
+
 
 ## [2.8.1] - 2020-12-29
 

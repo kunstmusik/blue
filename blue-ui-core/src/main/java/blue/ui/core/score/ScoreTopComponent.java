@@ -31,6 +31,7 @@ import blue.projects.BlueProject;
 import blue.projects.BlueProjectManager;
 import blue.score.Score;
 import blue.score.ScoreObject;
+import blue.score.ScoreObjectListener;
 import blue.score.TimeState;
 import blue.score.layers.Layer;
 import blue.score.layers.LayerGroup;
@@ -135,11 +136,11 @@ public final class ScoreTopComponent extends TopComponent
     TimePointer renderStartPointer = new TimePointer(Color.GREEN);
     TimePointer renderLoopPointer = new TimePointer(Color.YELLOW);
     TimePointer renderTimePointer = new TimePointer(Color.ORANGE);
-    
-    TimePointer guideLineStart = new TimePointer(Color.CYAN);
-    TimePointer guideLineEnd = new TimePointer(Color.CYAN);
-    TimePointer guideLines[] = new TimePointer[] { guideLineStart, guideLineEnd};
-    
+
+    TimePointer guideLineStart = new TimePointer(Color.WHITE);
+    TimePointer guideLineEnd = new TimePointer(Color.WHITE);
+    TimePointer guideLines[] = new TimePointer[]{guideLineStart, guideLineEnd};
+
     double renderStart = -1.0f;
     double timePointer = -1.0f;
     JToggleButton snapButton = new JToggleButton();
@@ -160,6 +161,9 @@ public final class ScoreTopComponent extends TopComponent
         SwingUtilities.invokeLater(this::checkSize);
     };
     private ScorePath currentScorePath;
+    private final Lookup.Result<ScoreObject> selectedScoreObjectsResults;
+    private ScoreObject selectionStartObject = null;
+    private ScoreObject selectionEndObject = null;
 
     private ScoreTopComponent() {
         initComponents();
@@ -302,6 +306,68 @@ public final class ScoreTopComponent extends TopComponent
                 }
             }
         });
+
+        // SELECTION GUIDE LINE HANDLING
+        
+        ScoreObjectListener selectionTimeListener = (evt) -> {
+            updateGuideLines();
+        };
+        selectedScoreObjectsResults = scoreController.getLookup().lookupResult(ScoreObject.class);
+        selectedScoreObjectsResults.addLookupListener((le) -> {
+            var sObj = scoreController.getSelectedScoreObjects();
+
+            if (selectionStartObject != null) {
+                selectionStartObject.removeScoreObjectListener(selectionTimeListener);
+                selectionEndObject.removeScoreObjectListener(selectionTimeListener);
+            }
+
+            if (!sObj.isEmpty()) {
+               
+                double min = Double.POSITIVE_INFINITY;
+                double max = Double.NEGATIVE_INFINITY;
+                for (var obj : sObj) {
+                    var start = obj.getStartTime();
+                    var end = start + obj.getSubjectiveDuration();
+                    
+                    if(start < min) {
+                        selectionStartObject = obj;
+                        min = start;
+                    }
+                    if(end > max) {
+                        selectionEndObject = obj;
+                        max = end;
+                    }
+                }
+                
+                selectionStartObject.addScoreObjectListener(selectionTimeListener);
+                if(selectionEndObject != selectionStartObject) {
+                    selectionEndObject.addScoreObjectListener(selectionTimeListener);
+                }
+            } else {
+                selectionStartObject = null;
+                selectionEndObject = null;
+            }
+            
+            updateGuideLines();
+        });
+    }
+
+    /** Update visibility and position of guidelines */
+    protected void updateGuideLines() {
+        var sObj = scoreController.getSelectedScoreObjects();
+
+        var visible = selectionStartObject != null;
+        guideLineStart.setVisible(visible);
+        guideLineEnd.setVisible(visible);
+
+        if (visible) {
+           
+            double start = selectionStartObject.getStartTime();
+            double end = selectionEndObject.getStartTime() + selectionEndObject.getSubjectiveDuration();
+            double pixelSecond = data.getScore().getTimeState().getPixelSecond();
+            guideLineStart.setLocation((int)(pixelSecond * start), 0);
+            guideLineEnd.setLocation((int)(pixelSecond * end), 0);
+        }
     }
 
     protected void checkSize() {
@@ -644,7 +710,7 @@ public final class ScoreTopComponent extends TopComponent
         scorePanel.add(renderTimePointer, JLayeredPane.DRAG_LAYER);
         scorePanel.add(guideLineStart, JLayeredPane.DRAG_LAYER);
         scorePanel.add(guideLineEnd, JLayeredPane.DRAG_LAYER);
-        
+
         guideLineStart.setVisible(false);
         guideLineEnd.setVisible(false);
 
@@ -669,10 +735,10 @@ public final class ScoreTopComponent extends TopComponent
 
         Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
 
-        layerPanel.addComponentListener(new ComponentAdapter() {
+        scrollPane.getViewport().addComponentListener(new ComponentAdapter() {
             @Override
             public void componentResized(ComponentEvent e) {
-                int newHeight = layerPanel.getHeight();
+                int newHeight = Math.max(layerPanel.getHeight(), scrollPane.getViewport().getHeight());
 
                 Dimension d = new Dimension(layerPanel.getWidth(), 40);
                 timelineBars.setMinimumSize(d);
@@ -688,7 +754,7 @@ public final class ScoreTopComponent extends TopComponent
                 renderTimePointer.setSize(1, newHeight);
                 guideLineStart.setSize(1, newHeight);
                 guideLineEnd.setSize(1, newHeight);
-                
+
             }
         });
 
@@ -949,6 +1015,8 @@ public final class ScoreTopComponent extends TopComponent
                     int newW = (int) (marquee.endTime * pixelSecond) - newX;
                     marquee.setSize(newW, marquee.getHeight());
                 }
+                
+                updateGuideLines();
             }
         } else if (evt.getSource() == data) {
             boolean isRenderStartTime = evt.getPropertyName().equals(
@@ -1113,7 +1181,7 @@ public final class ScoreTopComponent extends TopComponent
     public AlphaMarquee getMarquee() {
         return marquee;
     }
-    
+
     public TimePointer[] getGuideLines() {
         return guideLines;
     }
