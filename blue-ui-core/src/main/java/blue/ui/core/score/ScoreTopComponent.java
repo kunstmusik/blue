@@ -735,7 +735,7 @@ public final class ScoreTopComponent extends TopComponent
 
         Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
 
-        scrollPane.getViewport().addComponentListener(new ComponentAdapter() {
+        var componentListener = new ComponentAdapter() {
             @Override
             public void componentResized(ComponentEvent e) {
                 int newHeight = Math.max(layerPanel.getHeight(), scrollPane.getViewport().getHeight());
@@ -756,7 +756,10 @@ public final class ScoreTopComponent extends TopComponent
                 guideLineEnd.setSize(1, newHeight);
 
             }
-        });
+        };
+        
+        layerPanel.addComponentListener(componentListener);
+        scrollPane.getViewport().addComponentListener(componentListener);
 
         try {
             formInit();
