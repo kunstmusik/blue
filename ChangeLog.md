@@ -34,6 +34,9 @@ information.
 * Issue #665: Implemented guidelines for start/end boundary of selected objects
   for easier visual alignment of objects when moving/resizing
 
+* Issue #696: Added "Reset Line" popup menu option to BSB LineObject editors 
+
+
 
 ## [2.8.1] - 2020-12-29
 
