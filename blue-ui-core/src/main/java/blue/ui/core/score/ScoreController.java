@@ -49,6 +49,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.WeakHashMap;
 import java.util.stream.Collectors;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 import javax.swing.JScrollPane;
 import org.openide.util.Lookup;
 import org.openide.util.lookup.InstanceContent;
@@ -76,8 +78,12 @@ public class ScoreController {
     private InstanceContent content;
     private Score score = null;
     WeakHashMap<Score, ScorePath> scorePaths = new WeakHashMap<>();
+    
+    private BooleanProperty scoreObjectsMoving = new SimpleBooleanProperty(false);
+    
     private final List<ScoreControllerListener> listeners = new ArrayList<>();
     JScrollPane scrollPane = null;
+    
 
     private ScoreController() {
     }
@@ -544,6 +550,11 @@ public class ScoreController {
         }
         return lookup.lookupAll(ScoreObject.class);
     }
+
+    public BooleanProperty getScoreObjectsMovingProperty() {
+        return scoreObjectsMoving;
+    }    
+    
 
     public static class SingleLineBuffer {
 

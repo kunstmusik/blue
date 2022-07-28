@@ -350,17 +350,22 @@ public final class ScoreTopComponent extends TopComponent
             
             updateGuideLines();
         });
+
+        scoreController.getScoreObjectsMovingProperty().addListener((obs, old, newVal) -> {
+            guideLineStart.setVisible(newVal);
+            guideLineEnd.setVisible(newVal);
+        });
+        
+
     }
 
     /** Update visibility and position of guidelines */
     protected void updateGuideLines() {
         var sObj = scoreController.getSelectedScoreObjects();
 
-        var visible = selectionStartObject != null;
-        guideLineStart.setVisible(visible);
-        guideLineEnd.setVisible(visible);
+        var selectionAvailable = selectionStartObject != null;
 
-        if (visible) {
+        if (selectionAvailable) {
            
             double start = selectionStartObject.getStartTime();
             double end = selectionEndObject.getStartTime() + selectionEndObject.getSubjectiveDuration();
