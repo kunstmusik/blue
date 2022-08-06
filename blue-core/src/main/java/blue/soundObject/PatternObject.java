@@ -64,7 +64,7 @@ public class PatternObject extends AbstractSoundObject implements TableModel,
 
     public PatternObject() {
         this.setName("Pattern");
-        this.timeBehavior = TimeBehavior.SCALE;
+        this.timeBehavior = TimeBehavior.REPEAT;
     }
 
     public PatternObject(PatternObject pObj) {
