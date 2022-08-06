@@ -26,6 +26,7 @@ import blue.utilities.scales.ScaleLinear;
 import blue.utility.NumberUtilities;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
+import java.awt.Font;
 import javafx.beans.value.ChangeListener;
 import javax.swing.JLabel;
 
@@ -37,6 +38,7 @@ public class BSBKnobView extends BSBObjectView<BSBKnob> implements ResizeableVie
     private static final int VALUE_HEIGHT = 14;
 
     JLabel label;
+    JLabel emptyLabel;
     Knob knobView;
 
     ValuePanel valuePanel;
@@ -51,6 +53,7 @@ public class BSBKnobView extends BSBObjectView<BSBKnob> implements ResizeableVie
     ChangeListener<Boolean> vdeListener;
     ChangeListener<Boolean> labelEnabledListener;
     ChangeListener<String> labelListener;
+    ChangeListener<Font> labelFontListener;
 
     /**
      * @param knob
@@ -64,6 +67,7 @@ public class BSBKnobView extends BSBObjectView<BSBKnob> implements ResizeableVie
         valuePanel = new ValuePanel();
 
         label.setHorizontalAlignment(JLabel.CENTER);
+        label.setFont(knob.getLabelFont());
 
         knobView.addChangeListener(ce -> {
             if (!updating) {
@@ -139,6 +143,13 @@ public class BSBKnobView extends BSBObjectView<BSBKnob> implements ResizeableVie
         };
         labelListener = (obs, old, newVal) -> {
             label.setText(newVal);
+            setSize(getPreferredSize());
+            revalidate();
+        };
+        labelFontListener = (obs, old, newVal) -> {
+            label.setFont(newVal);
+            setSize(getPreferredSize());
+            revalidate();
         };
 
         Dimension prefSize = new Dimension(bsbObj.getKnobWidth(), bsbObj.getKnobWidth());
@@ -164,6 +175,7 @@ public class BSBKnobView extends BSBObjectView<BSBKnob> implements ResizeableVie
         bsbObj.valueDisplayEnabledProperty().addListener(vdeListener);
         bsbObj.labelEnabledProperty().addListener(labelEnabledListener);
         bsbObj.labelProperty().addListener(labelListener);
+        bsbObj.labelFontProperty().addListener(labelFontListener);
 
         setSize(getPreferredSize());
 //        revalidate();
@@ -182,6 +194,7 @@ public class BSBKnobView extends BSBObjectView<BSBKnob> implements ResizeableVie
         bsbObj.valueDisplayEnabledProperty().removeListener(vdeListener);
         bsbObj.labelEnabledProperty().removeListener(labelEnabledListener);
         bsbObj.labelProperty().removeListener(labelListener);
+        bsbObj.labelFontProperty().removeListener(labelFontListener);
     }
 
     protected void updateKnobValue() {
@@ -219,7 +232,9 @@ public class BSBKnobView extends BSBObjectView<BSBKnob> implements ResizeableVie
         if (bsbObj.isValueDisplayEnabled()) {
             height += VALUE_HEIGHT;
         }
-        return new Dimension(bsbObj.getKnobWidth(), height);
+
+        int width = Math.max(bsbObj.getKnobWidth(), (int) label.getPreferredSize().getWidth());
+        return new Dimension(width, height);
 
     }
 
@@ -291,5 +306,5 @@ public class BSBKnobView extends BSBObjectView<BSBKnob> implements ResizeableVie
 
     public int getWidgetY() {
         return bsbObj.getY();
-    }    
+    }
 }
