@@ -36,6 +36,11 @@ information.
 
 * Issue #696: Added "Reset Line" popup menu option to BSB LineObject editors 
 
+* Issue #697: Added Test Button to slide in right panel for previewing score 
+  generation from object.
+
+* PatternObject now defaults to time behavior Repeat.
+
 
 
 ## [2.8.1] - 2020-12-29
