@@ -40,7 +40,6 @@ public class BSBKnobView extends BSBObjectView<BSBKnob> implements ResizeableVie
     private static final int VALUE_HEIGHT = 14;
 
     JLabel label;
-    JLabel emptyLabel;
     Knob knobView;
 
     ValuePanel valuePanel;

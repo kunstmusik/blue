@@ -21,6 +21,7 @@ package blue.orchestra.editor.blueSynthBuilder.swing;
 
 import java.awt.CardLayout;
 import java.awt.Color;
+import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
@@ -52,6 +53,7 @@ public class ValuePanel extends JPanel {
     }
 
     public ValuePanel() {
+        valueDisplay.setFont(Font.decode("Roboto-11"));
         valueDisplay.setHorizontalAlignment(SwingConstants.CENTER);
 
         valueField.setHorizontalAlignment(SwingConstants.CENTER);
