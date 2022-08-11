@@ -94,10 +94,12 @@ public class BSBEditPanel extends JLayeredPane implements
     ChangeListener<Boolean> editEnabledListener = (obs, old, newVal) -> {
         if (newVal) {
             if (groupsList.size() > 1) {
+                clearBSBObjects();
                 setBSBObjects(currentBSBGroup.interfaceItemsProperty());
             }
         } else {
             if (groupsList.size() > 1) {
+                clearBSBObjects();
                 setBSBObjects(groupsList.get(0).interfaceItemsProperty());
             }
         }
