@@ -349,7 +349,7 @@ public class SoundObjectImportPane extends JComponent {
 
             importSoundObjectToLibrary(instrLib, soundObject);
 
-            String message = BlueSystem.getString("blueShare.importSuccess");
+            String message = "SoundObject imported successfully.";
             JOptionPane.showMessageDialog(null, message, BlueSystem
                     .getString("common.success"), JOptionPane.PLAIN_MESSAGE);
 
@@ -375,7 +375,7 @@ public class SoundObjectImportPane extends JComponent {
     protected void importSoundObjectToLibrary(Library<SoundObject> lib, SoundObject sObj) {
         for (LibraryItem<SoundObject> item : lib.getRoot().getChildren()) {
             if (!item.isLeaf() && 
-                    item.getValue().toString().equals("Imported SoundObjects")) {
+                    item.toString().equals("Imported SoundObjects")) {
                 item.getChildren().add(new LibraryItem<>(item, sObj));
                 return;
             }
