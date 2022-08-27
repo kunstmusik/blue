@@ -76,7 +76,7 @@ public class TempFileCleaner implements PropertyChangeListener {
         
         File[] tempFiles = parentProjDir.listFiles((File dir, String name) -> name.startsWith("tempCsd") && name.endsWith(".csd"));
         
-        if(tempFiles.length > 0) {
+        if(tempFiles != null && tempFiles.length > 0) {
             int retVal = JOptionPane.showConfirmDialog(
                     WindowManager.getDefault().getMainWindow(),
                         "Temporary CSD files were found.  These are "
