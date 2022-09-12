@@ -22,11 +22,13 @@ package blue.orchestra.editor.blueSynthBuilder.swing;
 import blue.orchestra.blueSynthBuilder.BSBGroup;
 import blue.orchestra.blueSynthBuilder.BSBObject;
 import blue.orchestra.editor.blueSynthBuilder.EditModeConditional;
+import blue.ui.utilities.UiUtilities;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Insets;
+import javafx.beans.InvalidationListener;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.collections.ObservableList;
@@ -56,6 +58,15 @@ public class BSBGroupPanel extends BSBObjectView<BSBGroup> implements Resizeable
     ChangeListener<Boolean> titleEnabledListener;
     ChangeListener<String> titleListener;
     ChangeListener<Number> widthHeightListener;
+    
+    InvalidationListener fontListener = o -> {
+        UiUtilities.invokeOnSwingThread(() -> {
+            label.setFont(getBSBObject().getFont());
+            
+            var prefSize = label.getPreferredSize();
+            this.setSize(prefSize.width + 1, prefSize.height + 1);
+            });
+    };
 
     public BSBGroupPanel(BSBGroup bsbGroup) {
         super(bsbGroup);
@@ -75,6 +86,7 @@ public class BSBGroupPanel extends BSBObjectView<BSBGroup> implements Resizeable
         };
         label.setOpaque(true);
         label.setHorizontalAlignment(JLabel.CENTER);
+        label.setFont(bsbGroup.getFont());
 
         editorPanel = new JLayeredPane() {
             @Override
@@ -163,6 +175,8 @@ public class BSBGroupPanel extends BSBObjectView<BSBGroup> implements Resizeable
         bsbObj.groupNameProperty().addListener(titleListener);
         bsbObj.widthProperty().addListener(widthHeightListener);
         bsbObj.heightProperty().addListener(widthHeightListener);
+        bsbObj.fontProperty().addListener(fontListener);
+
     }
 
     @Override
@@ -176,6 +190,8 @@ public class BSBGroupPanel extends BSBObjectView<BSBGroup> implements Resizeable
         bsbObj.groupNameProperty().removeListener(titleListener);
         bsbObj.widthProperty().removeListener(widthHeightListener);
         bsbObj.heightProperty().removeListener(widthHeightListener);
+        bsbObj.fontProperty().removeListener(fontListener);
+
     }
 
     private void updateBackgroundColor() {

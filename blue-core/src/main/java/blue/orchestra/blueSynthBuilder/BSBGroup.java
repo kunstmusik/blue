@@ -26,6 +26,7 @@ import blue.utility.XMLUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
 import java.awt.Color;
+import java.awt.Font;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -62,6 +63,8 @@ public class BSBGroup extends BSBObject implements Iterable<BSBObject>, UniqueNa
 
     private final IntegerProperty width = new SimpleIntegerProperty(20);
     private final IntegerProperty height = new SimpleIntegerProperty(20);
+    
+    ObjectProperty<Font> font = new SimpleObjectProperty<>(new Font("Roboto", Font.PLAIN, 12));
 
     private final Set<BSBObject> backingSet = new HashSet<BSBObject>() {
         @Override
@@ -204,6 +207,18 @@ public class BSBGroup extends BSBObject implements Iterable<BSBObject>, UniqueNa
     public final BooleanProperty titleEnabledProperty(){
         return titleEnabled;
     }
+    
+    public final void setFont(Font f) {
+        font.set(f);
+    }
+
+    public final Font getFont() {
+        return font.get();
+    }
+
+    public final ObjectProperty<Font> fontProperty() {
+        return font;
+    }
      
 
     public void addBSBObject(BSBObject bsbObj) {
@@ -291,6 +306,9 @@ public class BSBGroup extends BSBObject implements Iterable<BSBObject>, UniqueNa
                 case "height":
                     bsbGroup.setHeight(Integer.parseInt(node.getTextString()));
                     break;
+                case "font":
+                       bsbGroup.setFont(BSBFontUtil.loadFromXML(data.getElement("font")));
+                       break;
             }
         }
         return bsbGroup;
@@ -308,6 +326,8 @@ public class BSBGroup extends BSBObject implements Iterable<BSBObject>, UniqueNa
                 isTitleEnabled()));
         retVal.addElement("width").setText(Integer.toString(getWidth()));
         retVal.addElement("height").setText(Integer.toString(getHeight()));
+        retVal.addElement(BSBFontUtil.saveAsXML(getFont()));
+
 
 //        retVal.setAttribute("editEnabled", Boolean.toString(isEditEnabled()));
         for (BSBObject bsbObj : interfaceItems) {

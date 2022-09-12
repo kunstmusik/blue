@@ -41,6 +41,7 @@ information.
 
 * PatternObject now defaults to time behavior Repeat.
 
+* Issue #703: Add ability to edit font for BSBGroup panel title label
 
 
 ## [2.8.1] - 2020-12-29
