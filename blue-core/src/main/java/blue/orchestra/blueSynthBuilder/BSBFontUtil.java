@@ -32,6 +32,7 @@ public class BSBFontUtil {
        Element root = new Element("font");
        root.addElement("name").setText(f.getName());
        root.addElement("size").setText(Double.toString(f.getSize()));
+       root.addElement("style").setText(Integer.toString(f.getStyle()));
 
        return root;
    }
@@ -52,6 +53,8 @@ public class BSBFontUtil {
                case "size":
                    size = Double.parseDouble(elem.getTextString());
                    break;
+               case "style":
+                   style = Integer.parseInt(elem.getTextString());
                default:
                    break;
            }
