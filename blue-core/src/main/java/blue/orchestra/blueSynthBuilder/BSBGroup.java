@@ -151,6 +151,10 @@ public class BSBGroup extends BSBObject implements Iterable<BSBObject>, UniqueNa
         setTitleEnabled(group.isTitleEnabled());
         setWidth(group.getWidth());
         setHeight(group.getHeight());
+        
+        Font f = new Font(group.getFont().getAttributes());
+        setFont(f);
+        
         // FIXME - double check that not sharing UNM is correct (UNM 
 //        unm = group.unm;
 
