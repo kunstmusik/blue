@@ -44,6 +44,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import javafx.beans.InvalidationListener;
 import javafx.beans.property.BooleanProperty;
@@ -284,7 +285,7 @@ public class BSBEditPanel extends JLayeredPane implements
                 if (isEditing() && selection.size() > 0) {
                     GridSettings gridSettings = bsbInterface.getGridSettings();
                     int val = gridSettings.isSnapEnabled() ? gridSettings.getHeight() : 1;
-//                    selectionList.nudgeUp(val);
+                    BSBNudgeUtils.nudgeVertical(selection, -val);
                 }
             }
         });
@@ -295,7 +296,7 @@ public class BSBEditPanel extends JLayeredPane implements
                 if (isEditing() && selection.size() > 0) {
                     GridSettings gridSettings = bsbInterface.getGridSettings();
                     int val = gridSettings.isSnapEnabled() ? gridSettings.getHeight() : 10;
-//                    selectionList.nudgeUp(val);
+                    BSBNudgeUtils.nudgeVertical(selection, -val);
                 }
             }
         });
@@ -306,7 +307,7 @@ public class BSBEditPanel extends JLayeredPane implements
                 if (isEditing() && selection.size() > 0) {
                     GridSettings gridSettings = bsbInterface.getGridSettings();
                     int val = gridSettings.isSnapEnabled() ? gridSettings.getHeight() : 1;
-//                    selectionList.nudgeDown(val);
+                    BSBNudgeUtils.nudgeVertical(selection, val);
                 }
             }
         });
@@ -317,7 +318,7 @@ public class BSBEditPanel extends JLayeredPane implements
                 if (isEditing() && selection.size() > 0) {
                     GridSettings gridSettings = bsbInterface.getGridSettings();
                     int val = gridSettings.isSnapEnabled() ? gridSettings.getHeight() : 10;
-//                    selectionList.nudgeDown(val);
+                    BSBNudgeUtils.nudgeVertical(selection, val);
                 }
             }
         });
@@ -328,7 +329,7 @@ public class BSBEditPanel extends JLayeredPane implements
                 if (isEditing() && selection.size() > 0) {
                     GridSettings gridSettings = bsbInterface.getGridSettings();
                     int val = gridSettings.isSnapEnabled() ? gridSettings.getHeight() : 1;
-//                    selectionList.nudgeLeft(val);
+                    BSBNudgeUtils.nudgeHorizontal(selection, -val);
                 }
             }
         });
@@ -339,7 +340,7 @@ public class BSBEditPanel extends JLayeredPane implements
                 if (isEditing() && selection.size() > 0) {
                     GridSettings gridSettings = bsbInterface.getGridSettings();
                     int val = gridSettings.isSnapEnabled() ? gridSettings.getHeight() : 10;
-//                    selectionList.nudgeLeft(val);
+                    BSBNudgeUtils.nudgeHorizontal(selection, -val);
                 }
             }
         });
@@ -350,7 +351,7 @@ public class BSBEditPanel extends JLayeredPane implements
                 if (isEditing() && selection.size() > 0) {
                     GridSettings gridSettings = bsbInterface.getGridSettings();
                     int val = gridSettings.isSnapEnabled() ? gridSettings.getHeight() : 1;
-//                    selectionList.nudgeRight(val);
+                    BSBNudgeUtils.nudgeHorizontal(selection, val);
                 }
             }
         });
@@ -361,7 +362,7 @@ public class BSBEditPanel extends JLayeredPane implements
                 if (isEditing() && selection.size() > 0) {
                     GridSettings gridSettings = bsbInterface.getGridSettings();
                     int val = gridSettings.isSnapEnabled() ? gridSettings.getHeight() : 10;
-//                    selectionList.nudgeRight(val);
+                    BSBNudgeUtils.nudgeHorizontal(selection, val);
                 }
             }
         });
@@ -754,6 +755,65 @@ public class BSBEditPanel extends JLayeredPane implements
         }
 
         return new Dimension(maxW + 10, maxH + 10);
+    }
+    
+    
+    static class BSBNudgeUtils {
+        
+        public static enum DIRECTION {
+            HORIZONTAL, VERTICAL;
+        }
+        
+        public static HashMap<BSBObject, int[]> nudgeHorizontal(Collection<BSBObject> objects, int amount) {
+            if(objects.isEmpty()) {
+                return null;
+            }
+            if(amount < 0) {
+                var obj = objects.stream().min((a,b) -> a.getX() - b.getX()).get();
+                if(obj.getX() + amount < 0) {
+                    return null;
+                }
+            }
+//            System.out.println("Nudge Horizontal: " + amount);
+
+            var startEndValues = new HashMap<BSBObject, int[]>();
+            
+            for(var obj : objects) {
+                var start = obj.getX();
+                var end = start + amount;
+                obj.setX(end);
+                
+                startEndValues.put(obj, new int[]{start,end});
+            }
+            
+            return startEndValues;
+        }
+        
+        public static HashMap<BSBObject, int[]> nudgeVertical(Collection<BSBObject> objects, int amount) {
+            if(objects.isEmpty()) {
+                return null;
+            }
+            
+            if(amount < 0) {
+                var obj = objects.stream().min((a,b) -> a.getY() - b.getY()).get();
+                if(obj.getY() + amount < 0) {
+                    return null;
+                }
+            }
+//            System.out.println("Nudge Vertical: " + amount);
+
+            var startEndValues = new HashMap<BSBObject, int[]>();
+            
+            for(var obj : objects) {
+                var start = obj.getY();
+                var end = start + amount;
+                obj.setY(end);
+                
+                startEndValues.put(obj, new int[]{start,end});
+            }
+            
+            return startEndValues;
+        }
     }
 
 }

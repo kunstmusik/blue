@@ -43,6 +43,8 @@ information.
 
 * Issue #703: Add ability to edit font for BSBGroup panel title label
 
+* Issue #672: Reimplemented keyboard arrow movement of selected BSB Objects
+
 
 ## [2.8.1] - 2020-12-29
 
