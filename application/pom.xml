@@ -379,7 +379,7 @@
                     <groupId>org.netbeans.modules</groupId>
                     <artifactId>org-netbeans-swing-laf-dark</artifactId>
                 </exclusion>
-                 <exclusion>
+                <exclusion>
                     <groupId>org.netbeans.modules</groupId>
                     <artifactId>org-netbeans-modules-htmlui</artifactId>
                 </exclusion>
@@ -915,11 +915,11 @@
                     <groupId>org.netbeans.modules</groupId>
                     <artifactId>org-netbeans-modules-project-spi-intern-impl</artifactId>
                 </exclusion>
-<!--                <exclusion>
+                <!--                <exclusion>
                     <groupId>org.netbeans.api</groupId>
                     <artifactId>org-netbeans-modules-projectapi</artifactId>
                 </exclusion>-->
-<!--                <exclusion>
+                <!--                <exclusion>
                     <groupId>org.netbeans.modules</groupId>
                     <artifactId>org-netbeans-modules-projectapi-nb</artifactId>
                 </exclusion>-->
@@ -1374,6 +1374,14 @@
                 <exclusion>
                     <groupId>org.netbeans.modules</groupId>
                     <artifactId>org-netbeans-modules-markdown</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.netbeans.modules</groupId>
+                    <artifactId>org-netbeans-modules-languages-toml</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.netbeans.api</groupId>
+                    <artifactId>org-netbeans-libs-tomlj</artifactId>
                 </exclusion>
             </exclusions>
         </dependency>
