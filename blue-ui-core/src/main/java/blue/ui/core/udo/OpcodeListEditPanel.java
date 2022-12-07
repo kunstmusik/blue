@@ -32,6 +32,7 @@ import blue.utility.UDOUtilities;
 import electric.xml.Document;
 import electric.xml.Element;
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Insets;
 import java.awt.Point;
@@ -76,6 +77,9 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
+import jiconfont.icons.font_awesome.FontAwesome;
+import jiconfont.icons.google_material_design_icons.GoogleMaterialDesignIcons;
+import jiconfont.swing.IconFontSwing;
 import org.openide.util.Exceptions;
 
 /**
@@ -117,7 +121,9 @@ public class OpcodeListEditPanel extends JComponent {
                 .createBevelBorder(BevelBorder.RAISED), new EmptyBorder(3, 3,
                 3, 3)));
 
-        JButton addButton = new JButton("+");
+        
+        
+        JButton addButton = new JButton(IconFontSwing.buildIcon(GoogleMaterialDesignIcons.ADD, 14, Color.WHITE));
         addButton.setMargin(smallButtonInsets);
         addButton.setToolTipText("Add User-Defined Opcode");
         addButton.addActionListener((ActionEvent e) -> {
@@ -133,8 +139,8 @@ public class OpcodeListEditPanel extends JComponent {
         importPopup.add(importBlueUDO);
         importPopup.add(importCsoundUDO);
 
-        JButton importButton = new JButton("I");
-        importButton.setMargin(new Insets(1, 6, 1, 7));
+        JButton importButton = new JButton(IconFontSwing.buildIcon(GoogleMaterialDesignIcons.FILE_UPLOAD, 14, Color.WHITE));
+        importButton.setMargin(smallButtonInsets);
         importButton
                 .setToolTipText("Import User-Defined Opcode");
         importButton.addActionListener((ActionEvent e) -> {
@@ -142,16 +148,16 @@ public class OpcodeListEditPanel extends JComponent {
                     importButton.getHeight());
         });
 
-        JButton removeButton = new JButton("-");
-        removeButton.setMargin(new Insets(1, 4, 1, 5));
+        JButton removeButton = new JButton(IconFontSwing.buildIcon(GoogleMaterialDesignIcons.DELETE_FOREVER, 14, Color.WHITE));
+        removeButton.setMargin(smallButtonInsets);
         removeButton.setToolTipText("Remove User-Defined Opcode");
         removeButton.addActionListener((ActionEvent e) -> {
             removeUDO();
         });
 
-        JButton pushUpButton = new JButton("^");
+        JButton pushUpButton = new JButton(IconFontSwing.buildIcon(GoogleMaterialDesignIcons.ARROW_UPWARD, 14, Color.WHITE));
         pushUpButton.setToolTipText("Push Up");
-        pushUpButton.setMargin(new Insets(4, 4, 0, 3));
+        pushUpButton.setMargin(smallButtonInsets);
         pushUpButton.addActionListener((ActionEvent e) -> {
             int[] rows = table.getSelectedRows();
             if (rows.length > 0 && rows[0] > 0) {
@@ -162,8 +168,8 @@ public class OpcodeListEditPanel extends JComponent {
             }
         });
 
-        JButton pushDownButton = new JButton("V");
-        pushDownButton.setMargin(new Insets(2, 3, 0, 4));
+        JButton pushDownButton = new JButton(IconFontSwing.buildIcon(GoogleMaterialDesignIcons.ARROW_DOWNWARD, 14, Color.WHITE));
+        pushDownButton.setMargin(smallButtonInsets);
         pushDownButton.setToolTipText("Push Down");
         pushDownButton.addActionListener((ActionEvent e) -> {
             int[] rows = table.getSelectedRows();
