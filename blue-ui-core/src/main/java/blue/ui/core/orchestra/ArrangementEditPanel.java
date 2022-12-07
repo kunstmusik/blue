@@ -42,6 +42,7 @@ import blue.utility.ObjectUtilities;
 import electric.xml.Document;
 import electric.xml.Element;
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Insets;
 import java.awt.Point;
@@ -95,6 +96,8 @@ import javax.swing.table.TableModel;
 import javax.swing.undo.AbstractUndoableEdit;
 import javax.swing.undo.CannotRedoException;
 import javax.swing.undo.CannotUndoException;
+import jiconfont.icons.google_material_design_icons.GoogleMaterialDesignIcons;
+import jiconfont.swing.IconFontSwing;
 import org.openide.util.Exceptions;
 
 /**
@@ -126,7 +129,7 @@ public class ArrangementEditPanel extends JComponent
 
     public ArrangementEditPanel() {
 
-        Insets smallButtonInsets = new Insets(0, 3, 0, 3);
+        Insets smallButtonInsets = new Insets(0, 1, 0, 0);
 
         JPanel topPanel = new JPanel(new BorderLayout());
         topPanel.setBorder(BorderFactory.createCompoundBorder(BorderFactory
@@ -135,7 +138,7 @@ public class ArrangementEditPanel extends JComponent
 
         JLabel label = new JLabel("Orchestra");
 
-        final JButton addButton = new JButton("+");
+        final JButton addButton = new JButton(IconFontSwing.buildIcon(GoogleMaterialDesignIcons.ADD, 14, Color.WHITE));
         addButton.setMargin(smallButtonInsets);
         addButton.setToolTipText("Add Instrument");
         addButton.addActionListener((ActionEvent e) -> {

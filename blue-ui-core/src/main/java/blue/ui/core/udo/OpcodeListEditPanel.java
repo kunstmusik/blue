@@ -114,7 +114,7 @@ public class OpcodeListEditPanel extends JComponent {
 
         table.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
-        Insets smallButtonInsets = new Insets(0, 3, 0, 3);
+        Insets smallButtonInsets = new Insets(0, 1, 0, 0);
 
         label = new JLabel("User-Defined Opcodes");
         label.setBorder(BorderFactory.createCompoundBorder(BorderFactory
