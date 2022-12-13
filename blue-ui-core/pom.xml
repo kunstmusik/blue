@@ -264,7 +264,17 @@
             <artifactId>org-openide-explorer</artifactId>
             <version>${netbeans.version}</version>
         </dependency>
-
+        
+        <dependency>
+            <groupId>org.netbeans.api</groupId>
+            <artifactId>org-netbeans-libs-flatlaf</artifactId>
+            <version>${netbeans.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.netbeans.modules</groupId>
+            <artifactId>org-netbeans-swing-laf-flatlaf</artifactId>
+            <version>${netbeans.version}</version>
+        </dependency>
         
         <!-- https://mvnrepository.com/artifact/org.apache.xmlrpc/xmlrpc-client -->
         <dependency>
@@ -342,6 +352,7 @@
             <artifactId>jiconfont-font_awesome</artifactId>
             <version>4.7.0.1</version>
         </dependency>
+
     </dependencies>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
