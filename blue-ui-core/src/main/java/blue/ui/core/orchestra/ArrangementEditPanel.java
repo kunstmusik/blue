@@ -153,11 +153,6 @@ public class ArrangementEditPanel extends JComponent
         arrangementTable = new JTable() {
 
             @Override
-            public boolean getScrollableTracksViewportHeight() {
-                return getPreferredSize().height < getParent().getHeight();
-            }
-
-            @Override
             public String getToolTipText(MouseEvent e) {
                 String tip = null;
                 java.awt.Point p = e.getPoint();
@@ -179,6 +174,8 @@ public class ArrangementEditPanel extends JComponent
                 return tip;
             }
         };
+        
+        arrangementTable.setFillsViewportHeight(true);
 
         arrangementTable.addMouseListener(new MouseAdapter() {
 
