@@ -80,8 +80,19 @@ public class SoundLayerPanel extends javax.swing.JPanel implements
 
         boolean automatable = ScoreController.getInstance().getScorePath().getLastLayerGroup() == null;
 
-        muteToggleButton.putClientProperty("BlueToggleButton.selectColorOverride", Color.ORANGE.darker());
-        soloToggleButton.putClientProperty("BlueToggleButton.selectColorOverride", Color.GREEN.darker());
+        var normalColor = muteToggleButton.getBackground();
+
+        muteToggleButton.addChangeListener(ce -> {
+            muteToggleButton.setBackground(
+                    muteToggleButton.isSelected()
+                    ? Color.ORANGE.darker() : normalColor);
+        });
+        
+        soloToggleButton.addChangeListener(ce -> {
+            soloToggleButton.setBackground(
+                    soloToggleButton.isSelected()
+                    ? Color.GREEN.darker() : normalColor);
+        });
 
         automationButton.setVisible(automatable);
         paramSelectPanel.setVisible(automatable);

@@ -73,10 +73,19 @@ public class AudioHeaderLayerPanel extends javax.swing.JPanel
         muteToggleButton.setSelected(audioLayer.isMuted());
         soloToggleButton.setSelected(audioLayer.isSolo());
 
-        muteToggleButton.putClientProperty(
-                "BlueToggleButton.selectColorOverride", Color.ORANGE.darker());
-        soloToggleButton.putClientProperty(
-                "BlueToggleButton.selectColorOverride", Color.GREEN.darker());
+        var normalColor = muteToggleButton.getBackground();
+
+        muteToggleButton.addChangeListener(ce -> {
+            muteToggleButton.setBackground(
+                    muteToggleButton.isSelected()
+                    ? Color.ORANGE.darker() : normalColor);
+        });
+        
+        soloToggleButton.addChangeListener(ce -> {
+            soloToggleButton.setBackground(
+                    soloToggleButton.isSelected()
+                    ? Color.GREEN.darker() : normalColor);
+        });
 
         paramIdList = audioLayer.getAutomationParameters();
 

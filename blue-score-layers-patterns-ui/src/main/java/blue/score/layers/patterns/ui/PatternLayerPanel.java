@@ -148,13 +148,25 @@ public class PatternLayerPanel extends javax.swing.JPanel
         this.patternLayer = layer;
 
         nameLabel.setText(patternLayer.getName());
+        
+        var normalColor = muteToggleButton.getBackground();
+
+        muteToggleButton.addChangeListener(ce -> {
+            muteToggleButton.setBackground(
+                    muteToggleButton.isSelected()
+                    ? Color.ORANGE.darker() : normalColor);
+        });
+        
+        soloToggleButton.addChangeListener(ce -> {
+            soloToggleButton.setBackground(
+                    soloToggleButton.isSelected()
+                    ? Color.GREEN.darker() : normalColor);
+        });
+
+        
         muteToggleButton.setSelected(patternLayer.isMuted());
         soloToggleButton.setSelected(patternLayer.isSolo());
 
-        muteToggleButton.putClientProperty(
-                "BlueToggleButton.selectColorOverride", Color.ORANGE.darker());
-        soloToggleButton.putClientProperty(
-                "BlueToggleButton.selectColorOverride", Color.GREEN.darker());
         this.patternLayer.addPropertyChangeListener(this);
     }
 
