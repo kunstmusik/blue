@@ -25,12 +25,15 @@ import blue.score.layers.LayerGroup;
 import blue.score.layers.LayerGroupProvider;
 import blue.score.layers.LayerGroupProviderManager;
 import blue.ui.core.score.layers.LayerGroupUIProviderManager;
+import java.awt.Color;
 import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumn;
+import jiconfont.icons.google_material_design_icons.GoogleMaterialDesignIcons;
+import jiconfont.swing.IconFontSwing;
 import org.openide.DialogDescriptor;
 import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
@@ -58,6 +61,24 @@ public class ScoreManagerDialog extends javax.swing.JDialog {
         col.setMaxWidth(50);
         col.setMinWidth(50);
         col.setPreferredWidth(50);
+        
+        lGroupAddButton.setText("");
+        lGroupAddButton.setIcon(IconFontSwing.buildIcon(GoogleMaterialDesignIcons.ADD, 14, Color.WHITE));
+        lGroupMinusButton.setText("");
+        lGroupMinusButton.setIcon(IconFontSwing.buildIcon(GoogleMaterialDesignIcons.DELETE_FOREVER, 14, Color.WHITE));
+        lGroupPushUpButton.setText("");
+        lGroupPushUpButton.setIcon(IconFontSwing.buildIcon(GoogleMaterialDesignIcons.ARROW_UPWARD, 14, Color.WHITE));
+        lGroupPushDownButton.setText("");
+        lGroupPushDownButton.setIcon(IconFontSwing.buildIcon(GoogleMaterialDesignIcons.ARROW_DOWNWARD, 14, Color.WHITE));
+        
+        layersAddButton.setText("");
+        layersAddButton.setIcon(IconFontSwing.buildIcon(GoogleMaterialDesignIcons.ADD, 14, Color.WHITE));
+        layersMinusButton.setText("");
+        layersMinusButton.setIcon(IconFontSwing.buildIcon(GoogleMaterialDesignIcons.DELETE_FOREVER, 14, Color.WHITE));
+        layersPushUpButton.setText("");
+        layersPushUpButton.setIcon(IconFontSwing.buildIcon(GoogleMaterialDesignIcons.ARROW_UPWARD, 14, Color.WHITE));
+        layersPushDownButton.setText("");
+        layersPushDownButton.setIcon(IconFontSwing.buildIcon(GoogleMaterialDesignIcons.ARROW_DOWNWARD, 14, Color.WHITE));
     }
     
     public void setScore(Score score) {
