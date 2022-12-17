@@ -120,6 +120,11 @@ public class SoundLayerPanel extends javax.swing.JPanel implements
         }
 
         updateParameterPanel();
+                
+        muteToggleButton.setFont(muteToggleButton.getFont().deriveFont(10.0f));
+        soloToggleButton.setFont(muteToggleButton.getFont().deriveFont(10.0f));
+        noteProcessorButton.setFont(muteToggleButton.getFont().deriveFont(10.0f));
+        automationButton.setFont(muteToggleButton.getFont().deriveFont(10.0f));
     }
 
     public void setSelected(boolean val) {
@@ -229,13 +234,13 @@ public class SoundLayerPanel extends javax.swing.JPanel implements
 
         jPanel2.add(jPanel1);
 
-        muteToggleButton.setFont(new java.awt.Font("Dialog", 1, 10)); // NOI18N
         muteToggleButton.setText("M");
         muteToggleButton.setFocusPainted(false);
         muteToggleButton.setFocusable(false);
-        muteToggleButton.setMargin(new java.awt.Insets(0, 3, 0, 3));
+        muteToggleButton.setMargin(null);
         muteToggleButton.setMaximumSize(new java.awt.Dimension(19, 19));
-        muteToggleButton.setPreferredSize(new java.awt.Dimension(19, 18));
+        muteToggleButton.setMinimumSize(new java.awt.Dimension(19, 19));
+        muteToggleButton.setPreferredSize(new java.awt.Dimension(19, 19));
         muteToggleButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 muteToggleButtonActionPerformed(evt);
@@ -243,12 +248,13 @@ public class SoundLayerPanel extends javax.swing.JPanel implements
         });
         jPanel2.add(muteToggleButton);
 
-        soloToggleButton.setFont(new java.awt.Font("Dialog", 1, 10)); // NOI18N
         soloToggleButton.setText("S");
         soloToggleButton.setFocusPainted(false);
         soloToggleButton.setFocusable(false);
-        soloToggleButton.setMargin(new java.awt.Insets(0, 3, 0, 3));
+        soloToggleButton.setMargin(null);
         soloToggleButton.setMaximumSize(new java.awt.Dimension(19, 19));
+        soloToggleButton.setMinimumSize(new java.awt.Dimension(19, 19));
+        soloToggleButton.setPreferredSize(new java.awt.Dimension(19, 19));
         soloToggleButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 soloToggleButtonActionPerformed(evt);
@@ -256,11 +262,14 @@ public class SoundLayerPanel extends javax.swing.JPanel implements
         });
         jPanel2.add(soloToggleButton);
 
-        noteProcessorButton.setFont(new java.awt.Font("Dialog", 1, 10)); // NOI18N
         noteProcessorButton.setText("N");
         noteProcessorButton.setFocusPainted(false);
         noteProcessorButton.setFocusable(false);
-        noteProcessorButton.setMargin(new java.awt.Insets(0, 3, 0, 3));
+        noteProcessorButton.setMargin(null);
+        noteProcessorButton.setMaximumSize(new java.awt.Dimension(19, 19));
+        noteProcessorButton.setMinimumSize(new java.awt.Dimension(19, 19));
+        noteProcessorButton.setPreferredSize(new java.awt.Dimension(19, 19));
+        noteProcessorButton.setSize(new java.awt.Dimension(19, 19));
         noteProcessorButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 noteProcessorButtonActionPerformed(evt);
@@ -268,12 +277,14 @@ public class SoundLayerPanel extends javax.swing.JPanel implements
         });
         jPanel2.add(noteProcessorButton);
 
-        automationButton.setFont(new java.awt.Font("Dialog", 1, 10)); // NOI18N
         automationButton.setText("A");
         automationButton.setToolTipText("Automation Settings");
         automationButton.setFocusPainted(false);
         automationButton.setFocusable(false);
-        automationButton.setMargin(new java.awt.Insets(0, 3, 0, 3));
+        automationButton.setMargin(null);
+        automationButton.setMaximumSize(new java.awt.Dimension(19, 19));
+        automationButton.setMinimumSize(new java.awt.Dimension(19, 19));
+        automationButton.setPreferredSize(new java.awt.Dimension(19, 19));
         automationButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 automationButtonActionPerformed(evt);
