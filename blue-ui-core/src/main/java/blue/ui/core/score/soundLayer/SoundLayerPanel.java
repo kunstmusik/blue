@@ -70,6 +70,8 @@ public class SoundLayerPanel extends javax.swing.JPanel implements
     boolean updating = false;
 
     private final NoteProcessorChainMap npcMap;
+    
+    Color normalColor;
 
     /**
      * Creates new form SoundLayerPanel
@@ -80,7 +82,7 @@ public class SoundLayerPanel extends javax.swing.JPanel implements
 
         boolean automatable = ScoreController.getInstance().getScorePath().getLastLayerGroup() == null;
 
-        var normalColor = muteToggleButton.getBackground();
+        normalColor = muteToggleButton.getBackground();
 
         muteToggleButton.addChangeListener(ce -> {
             muteToggleButton.setBackground(
@@ -107,16 +109,18 @@ public class SoundLayerPanel extends javax.swing.JPanel implements
         nameLabel.setText(sLayer.getName());
 
         int size = sLayer.getNoteProcessorChain().size();
-        noteProcessorButton.setBackground(size == 0 ? null : Color.GREEN);
+        noteProcessorButton.setBackground(size == 0 ? normalColor : Color.GREEN);
 
         paramIdList = sLayer.getAutomationParameters();
 
         NoteProcessorChain npc = sLayer.getNoteProcessorChain();
 
+        
+        
         if (npc.size() > 0) {
             noteProcessorButton.setBackground(Color.RED.darker());
         } else {
-            noteProcessorButton.setBackground(null);
+            noteProcessorButton.setBackground(normalColor);
         }
 
         updateParameterPanel();
@@ -501,7 +505,7 @@ public class SoundLayerPanel extends javax.swing.JPanel implements
         if (npc.size() > 0) {
             noteProcessorButton.setBackground(Color.RED.darker());
         } else {
-            noteProcessorButton.setBackground(null);
+            noteProcessorButton.setBackground(normalColor);
         }
     }// GEN-LAST:event_noteProcessorButtonActionPerformed
 
