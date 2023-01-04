@@ -21,8 +21,12 @@
 package blue.soundObject.editor.jmask;
 
 import blue.soundObject.jmask.ItemList;
+import blue.ui.utilities.BlueCommonIcons;
+import java.awt.Color;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.ListSelectionModel;
+import jiconfont.icons.google_material_design_icons.GoogleMaterialDesignIcons;
+import jiconfont.swing.IconFontSwing;
 
 /**
  * 
@@ -43,6 +47,18 @@ public class ItemListEditor extends javax.swing.JPanel implements DurationSettab
 
         optionsComboBox.setSelectedIndex(itemList.getListType());
         itemList.addTableModelListener(itemsTable);
+        
+        pushUpButton.setText("");
+        pushUpButton.setIcon(BlueCommonIcons.PUSH_UP);
+        
+        pushDownButton.setText("");
+        pushDownButton.setIcon(BlueCommonIcons.PUSH_DOWN);
+        
+        addButton.setText("");
+        addButton.setIcon(BlueCommonIcons.ADD);
+        
+        removeButton.setText("");
+        removeButton.setIcon(BlueCommonIcons.REMOVE);
     }
 
     /**

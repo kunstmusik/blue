@@ -3,13 +3,13 @@
  *
  * Created on August 9, 2006, 3:52 PM
  */
-
 package blue.soundObject.editor.tracker;
 
 import blue.BlueSystem;
 import blue.soundObject.pianoRoll.Scale;
 import blue.soundObject.tracker.Column;
 import blue.soundObject.tracker.Track;
+import blue.ui.utilities.BlueCommonIcons;
 import blue.ui.utilities.FileChooserManager;
 import blue.ui.utilities.SimpleDocumentListener;
 import blue.utility.GUI;
@@ -30,7 +30,7 @@ import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableModel;
 
 /**
- * 
+ *
  * @author steven
  */
 public class TrackEditor extends javax.swing.JPanel {
@@ -51,7 +51,9 @@ public class TrackEditor extends javax.swing.JPanel {
 
     Column selectedColumn = null;
 
-    /** Creates new form TrackEditor */
+    /**
+     * Creates new form TrackEditor
+     */
     public TrackEditor() {
         initComponents();
 
@@ -65,9 +67,9 @@ public class TrackEditor extends javax.swing.JPanel {
             if (selectedColumn == null) {
                 return;
             }
-            
+
             int colType = 0;
-            
+
             if (e.getSource() == pchRadioButton) {
                 colType = Column.TYPE_PCH;
             } else if (e.getSource() == bluePchRadioButton) {
@@ -79,7 +81,7 @@ public class TrackEditor extends javax.swing.JPanel {
             } else if (e.getSource() == numberRadioButton) {
                 colType = Column.TYPE_NUM;
             }
-            
+
             selectedColumn.setType(colType);
             setColumnUI(selectedColumn);
         };
@@ -198,18 +200,18 @@ public class TrackEditor extends javax.swing.JPanel {
         columnsTable.getSelectionModel().addListSelectionListener((ListSelectionEvent e) -> {
             if (!e.getValueIsAdjusting()) {
                 int index = columnsTable.getSelectedRow();
-                
+
                 if (index < 0) {
                     // clear props ?
                     setColumn(null);
                 } else {
                     setColumn(track.getColumn(index + 1));
                 }
-                
+
                 removeColumnButton
                         .setEnabled((selectedColumn != null && track
                                 .getRowCount() > 1));
-                
+
                 pushUpButton.setEnabled(index > 0);
                 pushDownButton.setEnabled(index < columnsTable
                         .getModel().getRowCount() - 1);
@@ -220,37 +222,36 @@ public class TrackEditor extends javax.swing.JPanel {
          * Setting up listeners for track value changes and setting values to
          * track object
          */
-
         trackNameTextField.getDocument().addDocumentListener(
                 new SimpleDocumentListener() {
-                    @Override
-                    public void documentChanged(DocumentEvent e) {
-                        if (track != null) {
-                            track.setName(trackNameTextField.getText());
-                        }
-                    }
-                });
+            @Override
+            public void documentChanged(DocumentEvent e) {
+                if (track != null) {
+                    track.setName(trackNameTextField.getText());
+                }
+            }
+        });
 
         noteTemplateTextField.getDocument().addDocumentListener(
                 new SimpleDocumentListener() {
-                    @Override
-                    public void documentChanged(DocumentEvent e) {
-                        if (track != null) {
-                            track.setNoteTemplate(noteTemplateTextField
-                                    .getText());
-                        }
-                    }
-                });
+            @Override
+            public void documentChanged(DocumentEvent e) {
+                if (track != null) {
+                    track.setNoteTemplate(noteTemplateTextField
+                            .getText());
+                }
+            }
+        });
 
         instrIdTextField.getDocument().addDocumentListener(
                 new SimpleDocumentListener() {
-                    @Override
-                    public void documentChanged(DocumentEvent e) {
-                        if (track != null) {
-                            track.setInstrumentId(instrIdTextField.getText());
-                        }
-                    }
-                });
+            @Override
+            public void documentChanged(DocumentEvent e) {
+                if (track != null) {
+                    track.setInstrumentId(instrIdTextField.getText());
+                }
+            }
+        });
 
         baseFreqText.addFocusListener(new FocusAdapter() {
 
@@ -266,6 +267,15 @@ public class TrackEditor extends javax.swing.JPanel {
         });
 
         setTrack(null);
+
+        pushUpButton.setText("");
+        pushUpButton.setIcon(BlueCommonIcons.PUSH_UP);
+        pushDownButton.setText("");
+        pushDownButton.setIcon(BlueCommonIcons.PUSH_DOWN);
+        addColumnButton.setText("");
+        addColumnButton.setIcon(BlueCommonIcons.ADD);
+        removeColumnButton.setText("");
+        removeColumnButton.setIcon(BlueCommonIcons.REMOVE);
     }
 
     protected void updateBaseFrequency() {

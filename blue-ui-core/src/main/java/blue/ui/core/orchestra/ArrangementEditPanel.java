@@ -35,6 +35,7 @@ import blue.orchestra.Instrument;
 import blue.settings.GeneralSettings;
 import blue.ui.nbutilities.lazyplugin.LazyPlugin;
 import blue.ui.nbutilities.lazyplugin.LazyPluginFactory;
+import blue.ui.utilities.BlueCommonIcons;
 import blue.ui.utilities.FileChooserManager;
 import blue.ui.utilities.UiUtilities;
 import blue.undo.BlueUndoManager;
@@ -42,7 +43,6 @@ import blue.utility.ObjectUtilities;
 import electric.xml.Document;
 import electric.xml.Element;
 import java.awt.BorderLayout;
-import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Insets;
 import java.awt.Point;
@@ -96,8 +96,6 @@ import javax.swing.table.TableModel;
 import javax.swing.undo.AbstractUndoableEdit;
 import javax.swing.undo.CannotRedoException;
 import javax.swing.undo.CannotUndoException;
-import jiconfont.icons.google_material_design_icons.GoogleMaterialDesignIcons;
-import jiconfont.swing.IconFontSwing;
 import org.openide.util.Exceptions;
 
 /**
@@ -138,7 +136,7 @@ public class ArrangementEditPanel extends JComponent
 
         JLabel label = new JLabel("Orchestra");
 
-        final JButton addButton = new JButton(IconFontSwing.buildIcon(GoogleMaterialDesignIcons.ADD, 14, Color.WHITE));
+        final JButton addButton = new JButton(BlueCommonIcons.ADD);
         addButton.setMargin(smallButtonInsets);
         addButton.setToolTipText("Add Instrument");
         addButton.addActionListener((ActionEvent e) -> {

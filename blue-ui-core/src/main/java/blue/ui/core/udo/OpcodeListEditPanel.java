@@ -25,6 +25,7 @@ import blue.settings.GeneralSettings;
 import blue.udo.OpcodeList;
 import blue.udo.UDOCategory;
 import blue.udo.UserDefinedOpcode;
+import blue.ui.utilities.BlueCommonIcons;
 import blue.ui.utilities.FileChooserManager;
 import blue.ui.utilities.UiUtilities;
 import blue.utility.TextUtilities;
@@ -77,7 +78,6 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
-import jiconfont.icons.font_awesome.FontAwesome;
 import jiconfont.icons.google_material_design_icons.GoogleMaterialDesignIcons;
 import jiconfont.swing.IconFontSwing;
 import org.openide.util.Exceptions;
@@ -123,7 +123,7 @@ public class OpcodeListEditPanel extends JComponent {
 
         
         
-        JButton addButton = new JButton(IconFontSwing.buildIcon(GoogleMaterialDesignIcons.ADD, 14, Color.WHITE));
+        JButton addButton = new JButton(BlueCommonIcons.ADD);
         addButton.setMargin(smallButtonInsets);
         addButton.setToolTipText("Add User-Defined Opcode");
         addButton.addActionListener((ActionEvent e) -> {
@@ -148,14 +148,14 @@ public class OpcodeListEditPanel extends JComponent {
                     importButton.getHeight());
         });
 
-        JButton removeButton = new JButton(IconFontSwing.buildIcon(GoogleMaterialDesignIcons.DELETE_FOREVER, 14, Color.WHITE));
+        JButton removeButton = new JButton(BlueCommonIcons.REMOVE);
         removeButton.setMargin(smallButtonInsets);
         removeButton.setToolTipText("Remove User-Defined Opcode");
         removeButton.addActionListener((ActionEvent e) -> {
             removeUDO();
         });
 
-        JButton pushUpButton = new JButton(IconFontSwing.buildIcon(GoogleMaterialDesignIcons.ARROW_UPWARD, 14, Color.WHITE));
+        JButton pushUpButton = new JButton(BlueCommonIcons.PUSH_UP);
         pushUpButton.setToolTipText("Push Up");
         pushUpButton.setMargin(smallButtonInsets);
         pushUpButton.addActionListener((ActionEvent e) -> {
@@ -168,7 +168,7 @@ public class OpcodeListEditPanel extends JComponent {
             }
         });
 
-        JButton pushDownButton = new JButton(IconFontSwing.buildIcon(GoogleMaterialDesignIcons.ARROW_DOWNWARD, 14, Color.WHITE));
+        JButton pushDownButton = new JButton(BlueCommonIcons.PUSH_DOWN);
         pushDownButton.setMargin(smallButtonInsets);
         pushDownButton.setToolTipText("Push Down");
         pushDownButton.addActionListener((ActionEvent e) -> {

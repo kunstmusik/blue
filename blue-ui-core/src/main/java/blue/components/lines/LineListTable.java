@@ -22,6 +22,7 @@ package blue.components.lines;
 import blue.components.ColorCellEditor;
 import blue.event.SelectionEvent;
 import blue.event.SelectionListener;
+import blue.ui.utilities.BlueCommonIcons;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
@@ -90,12 +91,12 @@ public class LineListTable extends JComponent {
         JPanel buttonPanel = new JPanel();
         buttonPanel.setLayout(new GridLayout(1, 2));
 
-        JButton addButton = new JButton("+");
+        JButton addButton = new JButton(BlueCommonIcons.ADD);
         addButton.addActionListener((ActionEvent e) -> {
             addLine();
         });
 
-        JButton removeButton = new JButton("-");
+        JButton removeButton = new JButton(BlueCommonIcons.REMOVE);
         removeButton.addActionListener((ActionEvent e) -> {
             removeLine();
         });

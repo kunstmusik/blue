@@ -25,6 +25,7 @@ import blue.score.layers.LayerGroup;
 import blue.score.layers.LayerGroupProvider;
 import blue.score.layers.LayerGroupProviderManager;
 import blue.ui.core.score.layers.LayerGroupUIProviderManager;
+import blue.ui.utilities.BlueCommonIcons;
 import java.awt.Color;
 import java.awt.Point;
 import java.awt.event.ActionEvent;
@@ -63,22 +64,22 @@ public class ScoreManagerDialog extends javax.swing.JDialog {
         col.setPreferredWidth(50);
         
         lGroupAddButton.setText("");
-        lGroupAddButton.setIcon(IconFontSwing.buildIcon(GoogleMaterialDesignIcons.ADD, 14, Color.WHITE));
+        lGroupAddButton.setIcon(BlueCommonIcons.ADD);
         lGroupMinusButton.setText("");
-        lGroupMinusButton.setIcon(IconFontSwing.buildIcon(GoogleMaterialDesignIcons.DELETE_FOREVER, 14, Color.WHITE));
+        lGroupMinusButton.setIcon(BlueCommonIcons.REMOVE);
         lGroupPushUpButton.setText("");
-        lGroupPushUpButton.setIcon(IconFontSwing.buildIcon(GoogleMaterialDesignIcons.ARROW_UPWARD, 14, Color.WHITE));
+        lGroupPushUpButton.setIcon(BlueCommonIcons.PUSH_UP);
         lGroupPushDownButton.setText("");
-        lGroupPushDownButton.setIcon(IconFontSwing.buildIcon(GoogleMaterialDesignIcons.ARROW_DOWNWARD, 14, Color.WHITE));
+        lGroupPushDownButton.setIcon(BlueCommonIcons.PUSH_DOWN);
         
         layersAddButton.setText("");
-        layersAddButton.setIcon(IconFontSwing.buildIcon(GoogleMaterialDesignIcons.ADD, 14, Color.WHITE));
+        layersAddButton.setIcon(BlueCommonIcons.ADD);
         layersMinusButton.setText("");
-        layersMinusButton.setIcon(IconFontSwing.buildIcon(GoogleMaterialDesignIcons.DELETE_FOREVER, 14, Color.WHITE));
+        layersMinusButton.setIcon(BlueCommonIcons.REMOVE);
         layersPushUpButton.setText("");
-        layersPushUpButton.setIcon(IconFontSwing.buildIcon(GoogleMaterialDesignIcons.ARROW_UPWARD, 14, Color.WHITE));
+        layersPushUpButton.setIcon(BlueCommonIcons.PUSH_UP);
         layersPushDownButton.setText("");
-        layersPushDownButton.setIcon(IconFontSwing.buildIcon(GoogleMaterialDesignIcons.ARROW_DOWNWARD, 14, Color.WHITE));
+        layersPushDownButton.setIcon(BlueCommonIcons.PUSH_DOWN);
     }
     
     public void setScore(Score score) {
