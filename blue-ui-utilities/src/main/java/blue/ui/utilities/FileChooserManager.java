@@ -83,7 +83,9 @@ public class FileChooserManager {
             if (temp.currentDirectory != null) {
                 ff.setDirectory(temp.currentDirectory.getAbsolutePath());
             } else if (temp.selectedFile != null) {
-                ff.setDirectory(temp.selectedFile.getParentFile().getAbsolutePath());
+                if(temp.selectedFile.getParentFile() != null) {
+                    ff.setDirectory(temp.selectedFile.getParentFile().getAbsolutePath());
+                }
             }
             if (temp.selectedFile != null) {
                 ff.setFile(temp.selectedFile.getName());
