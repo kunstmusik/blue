@@ -145,6 +145,11 @@ public class Installer extends ModuleInstall {
             replaceCtrlShortcutsWithMacShortcuts();
 
         }
+
+        // let comboboxes be smaller than 72px
+        // see https://github.com/kunstmusik/blue/issues/719
+        UIManager.put( "ComboBox.minimumWidth", 0 );
+
         
 //        BlueLaf.setup();
         FlatLaf.registerCustomDefaultsSource("blue.plaf.themes", getClass().getClassLoader());
