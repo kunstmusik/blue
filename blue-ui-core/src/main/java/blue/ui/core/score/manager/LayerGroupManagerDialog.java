@@ -21,6 +21,7 @@ package blue.ui.core.score.manager;
 
 import blue.BlueSystem;
 import blue.score.layers.LayerGroup;
+import blue.ui.utilities.BlueCommonIcons;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumn;
@@ -46,6 +47,15 @@ public class LayerGroupManagerDialog extends javax.swing.JDialog {
         col.setMaxWidth(50);
         col.setMinWidth(50);
         col.setPreferredWidth(50);
+        
+        layersAddButton.setText("");
+        layersAddButton.setIcon(BlueCommonIcons.ADD);
+        layersMinusButton.setText("");
+        layersMinusButton.setIcon(BlueCommonIcons.REMOVE);
+        layersPushUpButton.setText("");
+        layersPushUpButton.setIcon(BlueCommonIcons.PUSH_UP);
+        layersPushDownButton.setText("");
+        layersPushDownButton.setIcon(BlueCommonIcons.PUSH_DOWN);
     }
     
     public void setLayerGroup(LayerGroup layerGroup) {
