@@ -198,7 +198,10 @@ public class MidiInputProcessor {
                 retVal = ampConstant;
                 break;
             case AMP:
-                retVal = Double.toString(((key * key) / 16239.0) * 30000);
+                retVal = Double.toString(((key * key) / 16129.0) * 30000);
+                break;
+            case AMP_0DBFS:
+                retVal = Double.toString(((key * key) / 16129.0));
                 break;
         }
 

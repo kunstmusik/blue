@@ -13,6 +13,10 @@ information.
 
 ## [2.8.2] - 2022-xx-xx
 
+### NEW
+
+* MIDI Input Panel: Added AmpDBFS mode where amplitude is scaled to 0-1 range. 
+
 ### UPDATED 
 
 * Removed JavaFX: BlueSynthBuilder and Effects remimplemented to Swing GUI 
@@ -44,6 +48,9 @@ information.
 * Issue #703: Add ability to edit font for BSBGroup panel title label
 
 * Issue #672: Reimplemented keyboard arrow movement of selected BSB Objects
+
+* Issue #502: Implemented different velocities on Virtual Keyboard keys by 
+  hitting different parts of the key (softer towards top, louder towards bottom)
 
 
 ## [2.8.1] - 2020-12-29
