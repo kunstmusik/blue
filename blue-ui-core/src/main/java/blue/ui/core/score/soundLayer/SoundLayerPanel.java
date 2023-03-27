@@ -82,19 +82,10 @@ public class SoundLayerPanel extends javax.swing.JPanel implements
 
         boolean automatable = ScoreController.getInstance().getScorePath().getLastLayerGroup() == null;
 
-        normalColor = muteToggleButton.getBackground();
-
-        muteToggleButton.addChangeListener(ce -> {
-            muteToggleButton.setBackground(
-                    muteToggleButton.isSelected()
-                    ? Color.ORANGE.darker() : normalColor);
-        });
+        normalColor = noteProcessorButton.getBackground();
         
-        soloToggleButton.addChangeListener(ce -> {
-            soloToggleButton.setBackground(
-                    soloToggleButton.isSelected()
-                    ? Color.GREEN.darker() : normalColor);
-        });
+        muteToggleButton.putClientProperty( "FlatLaf.style", "selectedBackground: #b28c00" );
+        soloToggleButton.putClientProperty( "FlatLaf.style", "selectedBackground: #00b200" );
 
         automationButton.setVisible(automatable);
         paramSelectPanel.setVisible(automatable);
@@ -109,7 +100,7 @@ public class SoundLayerPanel extends javax.swing.JPanel implements
         nameLabel.setText(sLayer.getName());
 
         int size = sLayer.getNoteProcessorChain().size();
-        noteProcessorButton.setBackground(size == 0 ? normalColor : Color.GREEN);
+        noteProcessorButton.setBackground(size == 0 ? normalColor : Color.RED.darker());
 
         paramIdList = sLayer.getAutomationParameters();
 
