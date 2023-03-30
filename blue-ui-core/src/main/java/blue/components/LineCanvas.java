@@ -148,7 +148,7 @@ public class LineCanvas extends JComponent implements TableModelListener {
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
 
-        Insets insets = getInsets();
+        //Insets insets = getInsets();
 
         Graphics2D g2d = (Graphics2D) g;
         g2d.setStroke(STROKE2);
@@ -161,7 +161,6 @@ public class LineCanvas extends JComponent implements TableModelListener {
         g2d.setColor(Color.black);
         g2d.fillRect(0, 0, this.getWidth(), this.getHeight());
 
-        g2d.setClip(insets.left, insets.top, getWidth() - insets.right - insets.left, getHeight() - insets.bottom - insets.top);
         //g2d.translate(insets.left, insets.top);
 
         // g.setColor(bgColor);
@@ -202,7 +201,6 @@ public class LineCanvas extends JComponent implements TableModelListener {
                 drawPointInformation(g2d, x, y);
             }
         }
-        g2d.setClip(null);
     }
 
     /**
