@@ -81,6 +81,7 @@ public class BSBLineObjectView extends BSBObjectView<BSBLineObject> implements
             lineCanvas.setSize(new Dimension(w, h));
             this.setSize(w, h + lineSelector.getPreferredSize().height);
             this.revalidate();
+            this.repaint();
         };
 
         lockedListener = (obs, old, newVal) -> {
