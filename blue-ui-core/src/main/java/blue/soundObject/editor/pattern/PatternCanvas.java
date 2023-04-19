@@ -36,7 +36,9 @@ import javax.swing.event.TableModelListener;
 
 public class PatternCanvas extends JComponent implements TableModelListener,
         PropertyChangeListener {
+
     private static final Color PATTERN_COLOR = new Color(198, 226, 255);
+    private static final Color INACTIVE_COLOR = Color.DARK_GRAY.darker().darker();
 
     private PatternObject patObj;
 
@@ -87,7 +89,6 @@ public class PatternCanvas extends JComponent implements TableModelListener,
         }
 
         // draw patternBoxes in
-
         int x1, y1;
 
         int subDivisions = patObj.getSubDivisions();
@@ -96,20 +97,22 @@ public class PatternCanvas extends JComponent implements TableModelListener,
         int patternWidth = steps * h;
         int patternHeight = (patObj.size()) * h;
 
-        g.setColor(PATTERN_COLOR);
         for (int i = 0; i < patObj.size(); i++) {
 
             Pattern p = patObj.getPattern(i);
 
             for (int j = 0; j < steps; j++) {
 
+                x1 = j * h;
+                y1 = i * h;
+
                 if (p.values[j]) {
-
-                    x1 = j * h;
-                    y1 = i * h;
-
-                    g.fillRect(x1, y1, h, h);
+                    g.setColor(PATTERN_COLOR);
+                } else {
+                    g.setColor(INACTIVE_COLOR);
                 }
+                g.fillRoundRect(x1 + 2, y1 + 2, h - 4, h - 4, 5, 5);
+
             }
         }
 
@@ -178,6 +181,7 @@ public class PatternCanvas extends JComponent implements TableModelListener,
 }
 
 class PatternCanvasMouseListener implements MouseListener, MouseMotionListener {
+
     PatternCanvas canvas;
 
     boolean isWrite = false;
@@ -234,7 +238,6 @@ class PatternCanvasMouseListener implements MouseListener, MouseMotionListener {
 
         // System.out.println("Is Write:" + this.isWrite + " : " + x + " : " +
         // y);
-
         setPatternValue(x, y, this.isWrite);
 
         canvas.repaint();
