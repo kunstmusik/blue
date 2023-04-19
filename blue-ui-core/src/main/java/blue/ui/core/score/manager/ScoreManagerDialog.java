@@ -48,8 +48,6 @@ public class ScoreManagerDialog extends javax.swing.JDialog {
 
     private Score score;
     
-    private JPopupMenu addLayerGroupMenu = null;
-
     /**
      * Creates new form ScoreManagerDialog
      */
@@ -504,8 +502,7 @@ public class ScoreManagerDialog extends javax.swing.JDialog {
     }
     
     private JPopupMenu getAddLayerGroupMenu() {
-        if(addLayerGroupMenu == null) {
-            addLayerGroupMenu = new JPopupMenu();
+        var addLayerGroupMenu = new JPopupMenu();
             
             ActionListener listener = (ActionEvent e) -> {
                 JMenuItem menuItem = (JMenuItem)e.getSource();
@@ -534,7 +531,6 @@ public class ScoreManagerDialog extends javax.swing.JDialog {
                 item.addActionListener(listener);
                 addLayerGroupMenu.add(item);
             }
-        }
         
         return addLayerGroupMenu;
     }
