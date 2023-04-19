@@ -59,6 +59,8 @@ information.
 * Issue #502: Implemented different velocities on Virtual Keyboard keys by 
   hitting different parts of the key (softer towards top, louder towards bottom)
 
+* Issue #721: Double click marker to edit marker name
+
 
 ## [2.8.1] - 2020-12-29
 
