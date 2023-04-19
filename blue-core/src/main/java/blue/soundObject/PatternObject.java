@@ -329,6 +329,9 @@ public class PatternObject extends AbstractSoundObject implements TableModel,
             return;
         }
 
+        int oldBeats = this.beats * this.subDivisions;
+        int oldSubDivisions = this.subDivisions;
+        
         this.beats = beats;
         this.subDivisions = subDivisions;
 
@@ -337,10 +340,11 @@ public class PatternObject extends AbstractSoundObject implements TableModel,
         for (Iterator iter = patterns.iterator(); iter.hasNext();) {
             Pattern p = (Pattern) iter.next();
 
+            var oldValues = p.values;
             p.values = new boolean[numBeats];
-
-            for (int i = 0; i < p.values.length; i++) {
-                p.values[i] = false;
+            
+            if(oldSubDivisions == subDivisions) {
+                System.arraycopy(oldValues, 0, p.values, 0, Math.min(oldBeats, numBeats));
             }
         }
 

@@ -43,7 +43,14 @@ information.
 * Issue #697: Added Test Button to slide in right panel for previewing score 
   generation from object.
 
-* PatternObject now defaults to time behavior Repeat.
+* PatternObject:
+
+  * now defaults to time behavior Repeat.
+
+  * Updated UI style
+  
+  * Fixed to save pattern when modifying number of beats. (Still clears if 
+    number of subdivisions changes as there isn't a clear mapping.)
 
 * Issue #703: Add ability to edit font for BSBGroup panel title label
 
