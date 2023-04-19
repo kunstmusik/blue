@@ -369,7 +369,7 @@ public final class ScoreTopComponent extends TopComponent
            
             double start = selectionStartObject.getStartTime();
             double end = selectionEndObject.getStartTime() + selectionEndObject.getSubjectiveDuration();
-            double pixelSecond = data.getScore().getTimeState().getPixelSecond();
+            double pixelSecond = currentTimeState.getPixelSecond();
             guideLineStart.setLocation((int)(pixelSecond * start), 0);
             guideLineEnd.setLocation((int)(pixelSecond * end), 0);
         }
