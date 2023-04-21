@@ -1257,6 +1257,14 @@
                 </exclusion>
                 <exclusion>
                     <groupId>org.netbeans.api</groupId>
+                    <artifactId>org-netbeans-modules-go-lang</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.netbeans.api</groupId>
+                    <artifactId>org-netbeans-modules-lexer-antlr4</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.netbeans.api</groupId>
                     <artifactId>org-netbeans-libs-bytelist</artifactId>
                 </exclusion>
                 <exclusion>
