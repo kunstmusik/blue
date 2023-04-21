@@ -33,6 +33,7 @@ import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
+import java.awt.RenderingHints;
 import javax.swing.UIManager;
 
 /**
@@ -42,14 +43,13 @@ import javax.swing.UIManager;
 @SoundObjectViewPlugin(scoreObjectType = AudioFile.class)
 public class AudioFileView extends SoundObjectView {
 
-
     protected int labelOffset = 5;
 
     private static final Font renderFont = UIManager.getFont("Label.font")
             .deriveFont(Font.BOLD, 12);
 
     protected static AudioWaveformCache waveCache = AudioWaveformCache.getInstance();
-    
+
     private AudioWaveformData audioWaveformData = null;
 
     @Override
@@ -57,6 +57,8 @@ public class AudioFileView extends SoundObjectView {
         super.paintComponent(graphics);
 
         Graphics2D g = (Graphics2D) graphics;
+        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+                RenderingHints.VALUE_ANTIALIAS_ON);
         int w = getWidth();
         int h = getHeight();
 
@@ -104,14 +106,12 @@ public class AudioFileView extends SoundObjectView {
 
         // DRAW BORDERS
         g.setColor(border1);
-        g.drawRect(0, 1, w-1, h-2);
-        
+        g.drawRect(0, 1, w - 1, h - 2);
 
 //        if (isSelected()) {
 //            g.setColor(new Color(255, 255, 255, 196));
 //            g.drawRect(1, 2, w - 2, h - 6);
 //        }
-
         g.setPaint(fontColor);
 
         if (h >= 20) {
@@ -136,7 +136,6 @@ public class AudioFileView extends SoundObjectView {
         String audioFilename = audioFile.getSoundFileName();
         int sObjVisibleHeight = sObjView.getHeight() - 4;
 
-        
         if (this.audioWaveformData == null) {
             this.audioWaveformData = waveCache.getAudioWaveformData(
                     BlueSystem.getFullPath(audioFilename),
@@ -152,7 +151,7 @@ public class AudioFileView extends SoundObjectView {
             this.audioWaveformData = waveCache.getAudioWaveformData(
                     BlueSystem.getFullPath(audioFilename),
                     pixelSeconds);
-            
+
             if (this.audioWaveformData.percentLoadingComplete < 1.0) {
                 waveCache.addAudioWaveformListener(new AudioWaveformListener(
                         audioFilename, sObjView));
@@ -166,5 +165,5 @@ public class AudioFileView extends SoundObjectView {
         g.translate(-1, -2);
 
     }
-    
+
 }
