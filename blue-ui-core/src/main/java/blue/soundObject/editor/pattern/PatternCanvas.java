@@ -25,6 +25,8 @@ import blue.utility.GUI;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
@@ -77,6 +79,10 @@ public class PatternCanvas extends JComponent implements TableModelListener,
 
         super.paintComponent(g);
 
+        Graphics2D graphics = (Graphics2D) g;
+        graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+                RenderingHints.VALUE_ANTIALIAS_ON);
+
         if (patObj == null) {
             return;
         }
@@ -111,7 +117,7 @@ public class PatternCanvas extends JComponent implements TableModelListener,
                 } else {
                     g.setColor(INACTIVE_COLOR);
                 }
-                g.fillRoundRect(x1 + 2, y1 + 2, h - 4, h - 4, 5, 5);
+                g.fillRoundRect(x1 + 3, y1 + 3, h - 5, h - 5, 5, 5);
 
             }
         }
