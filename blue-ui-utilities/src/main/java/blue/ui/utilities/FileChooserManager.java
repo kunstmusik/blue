@@ -162,7 +162,7 @@ public class FileChooserManager {
             SwingUtilities.invokeLater(r);
         }
 
-        return retVal.get(0);
+        return retVal.size() == 0 ? null : retVal.get(0);
     }
 
     private DialogInfoSet getDialogInfoSet(Object fileChooserId) {
