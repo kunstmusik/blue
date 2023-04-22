@@ -40,7 +40,8 @@ public class PatternCanvas extends JComponent implements TableModelListener,
         PropertyChangeListener {
 
     private static final Color PATTERN_COLOR = new Color(198, 226, 255);
-    private static final Color INACTIVE_COLOR = Color.DARK_GRAY.darker().darker();
+    private static final Color INACTIVE_COLOR0 = new Color(16,16,16);
+    private static final Color INACTIVE_COLOR1 = new Color(32,32,32);
 
     private PatternObject patObj;
 
@@ -115,7 +116,7 @@ public class PatternCanvas extends JComponent implements TableModelListener,
                 if (p.values[j]) {
                     g.setColor(PATTERN_COLOR);
                 } else {
-                    g.setColor(INACTIVE_COLOR);
+                    g.setColor(i % 2 == 0 ? INACTIVE_COLOR0 : INACTIVE_COLOR1);
                 }
                 g.fillRoundRect(x1 + 3, y1 + 3, h - 5, h - 5, 5, 5);
 
