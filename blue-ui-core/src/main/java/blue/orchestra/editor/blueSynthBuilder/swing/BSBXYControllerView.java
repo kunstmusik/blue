@@ -95,10 +95,14 @@ public class BSBXYControllerView extends BSBObjectView<BSBXYController>
             updateSize();
             revalidate();
         };
+        
+                
+        label.setVisible(bsbObj.isValueDisplayEnabled());
 
         updateLabel();
 
         updateSize();
+
     }
 
     @Override
