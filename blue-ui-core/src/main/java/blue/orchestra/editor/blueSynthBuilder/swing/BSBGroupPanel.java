@@ -58,14 +58,12 @@ public class BSBGroupPanel extends BSBObjectView<BSBGroup> implements Resizeable
     ChangeListener<Boolean> titleEnabledListener;
     ChangeListener<String> titleListener;
     ChangeListener<Number> widthHeightListener;
-    
+
     InvalidationListener fontListener = o -> {
         UiUtilities.invokeOnSwingThread(() -> {
             label.setFont(getBSBObject().getFont());
-            
-            var prefSize = label.getPreferredSize();
-            this.setSize(prefSize.width + 1, prefSize.height + 1);
-            });
+            setSize(getPreferredSize());
+        });
     };
 
     public BSBGroupPanel(BSBGroup bsbGroup) {
