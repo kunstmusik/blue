@@ -101,6 +101,8 @@ public class LineCanvas extends JComponent implements TableModelListener {
 
                 screenToDataScaleX.setDomain(insets.left, getWidth() - insets.right);
                 screenToDataScaleY.setDomain(getHeight() - insets.bottom, insets.top);
+                
+                repaint();
             }
         });
 
