@@ -56,7 +56,7 @@ public class ScoreControllerTest {
         
         InstanceContent content = new InstanceContent();
         Score score = new Score();
-        scoreController.setScore(score);
+        scoreController.setScore(score, 0.0);
         PolyObject pObj = (PolyObject) score.get(0);
         SoundLayer layer1 = new SoundLayer();
         SoundLayer layer2 = new SoundLayer();
