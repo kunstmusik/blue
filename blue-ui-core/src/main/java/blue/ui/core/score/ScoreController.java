@@ -101,7 +101,7 @@ public class ScoreController {
         return this.lookup;
     }
 
-    public void setScore(Score score) {
+    public void setScore(Score score, double renderStartTime) {
         ScorePath path = scorePaths.get(this.score);
         if (path != null) {
             path.setScrollX(scrollPane.getHorizontalScrollBar().getValue());
@@ -114,18 +114,12 @@ public class ScoreController {
         if (path == null) {
             path = new ScorePath(score);
             scorePaths.put(score, path);
+            
+            path.setScrollX(Math.max(0, (int)(score.getTimeState().getPixelSecond() * renderStartTime) - 40));
+            path.setScrollY(0);
         }
 
         fireScorePathChanged();
-
-        final ScorePath fPath = path;
-//            SwingUtilities.invokeLater(new Runnable() {
-//                @Override
-//                public void run() {
-        scrollPane.getHorizontalScrollBar().setValue(fPath.getScrollX());
-        scrollPane.getVerticalScrollBar().setValue(fPath.getScrollY());
-//                }
-//            });
     }
 
     public void editLayerGroup(LayerGroup layerGroup) {
@@ -145,13 +139,8 @@ public class ScoreController {
         if (path.editLayerGroup(layerGroup)) {
             fireScorePathChanged();
 
-//            SwingUtilities.invokeLater(new Runnable() {
-//                @Override
-//                public void run() {
             scrollPane.getHorizontalScrollBar().setValue(path.getScrollX());
             scrollPane.getVerticalScrollBar().setValue(path.getScrollY());
-//                }
-//            });
         }
 
     }

@@ -385,7 +385,7 @@ public class MainToolBar extends JToolBar implements PlayModeListener,
     @Override
     public void playModeChanged(final int playMode) {
 
-        SwingUtilities.invokeLater(() -> {
+        UiUtilities.invokeOnSwingThread(() -> {
             if (playMode == PLAY_MODE_PLAY) {
                 playButton.setEnabled(false);
                 StatusDisplayer.getDefault().setStatusText(BlueSystem.getString("message.renderingCSD"));

@@ -1109,7 +1109,7 @@ public class ParameterLinePanel extends JComponent implements
 
                         @Override
                         public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
-                            SwingUtilities.invokeLater(() -> ParameterLinePanel.this.repaint());
+                            UiUtilities.invokeOnSwingThread(() -> ParameterLinePanel.this.repaint());
                         }
 
                         @Override
