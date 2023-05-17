@@ -29,7 +29,7 @@ public class JavaScriptProxy {
 
     }
 
-    public static final void reinitialize() {
+    public static synchronized final void reinitialize() {
 //        if (cx != null) {
 //            Context.exit();
 //        }
@@ -37,11 +37,12 @@ public class JavaScriptProxy {
 //        scope = cx.initStandardObjects(null);
 //        engine = new ScriptEngineManager().getEngineByName("graal.js");
         engine = Scripting.createManager().getEngineByMimeType("text/javascript");
-
+        engine.getContext().setAttribute(ScriptEngine.FILENAME, "script.mjs", ScriptContext.ENGINE_SCOPE);
+//        Context.newBuilder("js").allowIO(true).currentWorkingDirectory(workingDirectory)
         System.out.println(BlueSystem.getString("scripting.js.reinitialized"));
     }
 
-    public static final String processJavascriptScore(String script,
+    public static synchronized final String processJavascriptScore(String script,
             double subjectiveDuration, String soundObjectId) throws ScriptException {
         if (engine == null) {
             reinitialize();
@@ -57,6 +58,7 @@ public class JavaScriptProxy {
         
 //        engine.setBindings(bindings, ScriptContext.GLOBAL_SCOPE);
         //engine.setContext(context);
+        
         engine.eval(init);
         engine.eval(script);
 
@@ -73,7 +75,7 @@ public class JavaScriptProxy {
         return res.toString();
     }
 
-    public static final String processJavascriptInstrument(String script,
+    public static synchronized final String processJavascriptInstrument(String script,
             String instrumentId) throws ScriptException {
         if (engine == null) {
             reinitialize();
