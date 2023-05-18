@@ -126,12 +126,12 @@ public class BSBKnobView extends BSBObjectView<BSBKnob> implements ResizeableVie
 
         minMaxListener = (obs, old, newVal) -> {
             scale.setDomain(knob.getMinimum(), knob.getMaximum());
-            knobView.setVal(knob.getValue());
+            knobView.setVal(scale.calc(knob.getValue()));
             updateValueDisplay();
         };
         valueListener = (obs, old, newVal) -> {
             if (!updating) {
-                knobView.setVal(knob.getValue());
+                knobView.setVal(scale.calc(knob.getValue()));
             }
             updateValueDisplay();
         };
