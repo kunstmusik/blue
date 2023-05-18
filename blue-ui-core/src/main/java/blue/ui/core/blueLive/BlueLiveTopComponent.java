@@ -40,6 +40,7 @@ import blue.ui.nbutilities.MimeTypeEditorComponent;
 import blue.ui.nbutilities.lazyplugin.AttributeFilter;
 import blue.ui.nbutilities.lazyplugin.LazyPlugin;
 import blue.ui.nbutilities.lazyplugin.LazyPluginFactory;
+import blue.ui.utilities.BlueCommonIcons;
 import blue.ui.utilities.SimpleDocumentListener;
 import blue.ui.utilities.UiUtilities;
 import blue.utility.ScoreUtilities;
@@ -443,6 +444,15 @@ public final class BlueLiveTopComponent extends TopComponent
             }
         });
         liveCodePanel.add(liveCodeEditor, BorderLayout.CENTER);
+        
+        buttonAdd.setText("");
+        buttonAdd.setIcon(BlueCommonIcons.ADD);
+        buttonRemove.setText("");
+        buttonRemove.setIcon(BlueCommonIcons.REMOVE);
+        buttonUp.setText("");
+        buttonUp.setIcon(BlueCommonIcons.PUSH_UP);
+        buttonDown.setText("");
+        buttonDown.setIcon(BlueCommonIcons.PUSH_DOWN);
     }
 
     private void reinitialize() {
