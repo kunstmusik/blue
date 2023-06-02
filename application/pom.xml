@@ -841,6 +841,14 @@
                 </exclusion>
                 <exclusion>
                     <groupId>org.netbeans.modules</groupId>
+                    <artifactId>org-netbeans-modules-languages-go</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.netbeans.modules</groupId>
+                    <artifactId>org-netbeans-modules-languages-hcl</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.netbeans.modules</groupId>
                     <artifactId>org-netbeans-modules-lexer-nbbridge</artifactId>
                 </exclusion>
                 <exclusion>
