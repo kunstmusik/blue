@@ -22,14 +22,13 @@ package blue.ui.core.tools;
 import blue.tools.codeRepository.CodeRepositoryDialog;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import org.openide.windows.WindowManager;
 
 public final class CodeRepositoryEditorAction implements ActionListener {
 
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        CodeRepositoryDialog c = new CodeRepositoryDialog(WindowManager.getDefault().getMainWindow());
+        CodeRepositoryDialog c = new CodeRepositoryDialog(null);
         
         c.setVisible(true);
 

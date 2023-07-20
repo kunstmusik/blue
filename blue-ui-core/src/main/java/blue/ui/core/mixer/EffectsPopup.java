@@ -505,9 +505,9 @@ public class EffectsPopup extends JPopupMenu implements ChangeListener {
                     Effect effect = (Effect) obj;
 
                     if (effectDialog == null) {
-                        Frame root = WindowManager.getDefault().getMainWindow();
+//                        Frame root = WindowManager.getDefault().getMainWindow();
 
-                        effectDialog = new EffectEditorDialog(root, true);
+                        effectDialog = new EffectEditorDialog(null, true);
                     }
 
                     effectDialog.setEffect(effect);

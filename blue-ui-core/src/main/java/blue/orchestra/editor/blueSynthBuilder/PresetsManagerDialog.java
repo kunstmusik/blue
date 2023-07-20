@@ -390,7 +390,7 @@ public class PresetsManagerDialog extends JDialog implements
             remove.setEnabled(userObj != model.getRoot());
             cut.setEnabled(userObj != model.getRoot());
 
-            super.show(dialog, x, y);
+            super.show(tree, x, y);
         }
     }
 

@@ -569,13 +569,13 @@ public final class ScoreTopComponent extends TopComponent
 
             if (currentScorePath.getLastLayerGroup() == null) {
                 ScoreManagerDialog dlg = new ScoreManagerDialog(
-                        WindowManager.getDefault().getMainWindow(), true);
+                        null, true);
                 dlg.setScore(data.getScore());
                 dlg.setSize(600, 500);
                 dialog = dlg;
             } else {
                 LayerGroupManagerDialog dlg = new LayerGroupManagerDialog(
-                        WindowManager.getDefault().getMainWindow(), true);
+                        null, true);
                 dlg.setLayerGroup(currentScorePath.getLastLayerGroup());
                 dlg.setSize(300, 500);
                 dialog = dlg;

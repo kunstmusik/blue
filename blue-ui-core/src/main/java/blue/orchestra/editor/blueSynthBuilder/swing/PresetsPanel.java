@@ -192,8 +192,7 @@ public class PresetsPanel extends javax.swing.JPanel {
         @Override
 	    public void actionPerformed(ActionEvent e) {
 		    if (presetsManager == null) {
-           		presetsManager = new PresetsManagerDialog(
-				    WindowManager.getDefault().getMainWindow());
+           		presetsManager = new PresetsManagerDialog(null);
 		    }
 
 		    PresetGroup retVal = presetsManager.editPresetGroup(presetGroup);
