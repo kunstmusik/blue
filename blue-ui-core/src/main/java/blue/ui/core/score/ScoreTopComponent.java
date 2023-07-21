@@ -66,6 +66,7 @@ import java.util.WeakHashMap;
 import javax.swing.*;
 import javax.swing.border.BevelBorder;
 import javax.swing.border.Border;
+import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 import jiconfont.icons.elusive.Elusive;
 import jiconfont.swing.IconFontSwing;
@@ -685,9 +686,12 @@ public final class ScoreTopComponent extends TopComponent
         timeProperties.setVisible(false);
         timeProperties.setPreferredSize(new Dimension(150, 40));
 
-        topPanel.setLayout(new BorderLayout());
-        topPanel.add(new ModeSelectionPanel(), BorderLayout.WEST);
-        topPanel.add(scoreObjectBar, BorderLayout.CENTER);
+        var topLayout = new BoxLayout(topPanel, BoxLayout.X_AXIS);
+        var modeSelectionPanel = new ModeSelectionPanel();
+        modeSelectionPanel.setBorder(new EmptyBorder(5,5,5,5));
+        topPanel.setLayout(topLayout);
+        topPanel.add(modeSelectionPanel);
+        topPanel.add(scoreObjectBar);
 
         this.add(timeProperties, BorderLayout.EAST);
 
