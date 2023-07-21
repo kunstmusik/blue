@@ -239,6 +239,7 @@ public final class ScoreObjectBar extends JComponent implements ActionListener,
             }
         }
         currentPath = path;
+        revalidate();
         repaint();
     }
 
