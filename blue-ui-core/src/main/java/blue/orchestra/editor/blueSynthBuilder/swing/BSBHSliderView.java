@@ -24,9 +24,11 @@ import blue.orchestra.blueSynthBuilder.BSBHSlider;
 import blue.ui.utilities.UiUtilities;
 import blue.utility.NumberUtilities;
 import java.awt.BorderLayout;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.beans.PropertyChangeEvent;
 import javafx.beans.value.ChangeListener;
+import javax.swing.BoxLayout;
 import javax.swing.event.ChangeEvent;
 
 public class BSBHSliderView extends BSBObjectView<BSBHSlider> implements ResizeableView {
@@ -71,12 +73,17 @@ public class BSBHSliderView extends BSBObjectView<BSBHSlider> implements Resizea
 
         valuePanel.setPreferredSize(new Dimension(VALUE_DISPLAY_WIDTH,
                 VALUE_DISPLAY_HEIGHT));
+        valuePanel.setMaximumSize(new Dimension(VALUE_DISPLAY_WIDTH,
+                VALUE_DISPLAY_HEIGHT));
+        valSlider.setAlignmentY(Component.CENTER_ALIGNMENT);
 
-        this.setLayout(new BorderLayout());
-        this.add(valSlider, BorderLayout.CENTER);
+        var layout = new BoxLayout(this, BoxLayout.X_AXIS);
+
+        this.setLayout(layout);
+        this.add(valSlider);
 
         if (bsbObj.isValueDisplayEnabled()) {
-            this.add(valuePanel, BorderLayout.EAST);
+            this.add(valuePanel);
         }
 
         this.setSize(getPreferredSize());
@@ -139,7 +146,7 @@ public class BSBHSliderView extends BSBObjectView<BSBHSlider> implements Resizea
             });
         };
         this.widthListener = (obs, old, newVal) -> {
-            valSlider.setSize(newVal.intValue(), VALUE_DISPLAY_HEIGHT);
+            valSlider.setPreferredSize(new Dimension(newVal.intValue(), 0));
             setSize(getPreferredSize());
         };
     }

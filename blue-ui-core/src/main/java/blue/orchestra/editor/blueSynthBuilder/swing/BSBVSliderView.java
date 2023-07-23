@@ -24,9 +24,11 @@ import blue.orchestra.blueSynthBuilder.BSBVSlider;
 import blue.ui.utilities.UiUtilities;
 import blue.utility.NumberUtilities;
 import java.awt.BorderLayout;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.beans.PropertyChangeEvent;
 import javafx.beans.value.ChangeListener;
+import javax.swing.BoxLayout;
 import javax.swing.event.ChangeEvent;
 
 /**
@@ -73,12 +75,17 @@ public class BSBVSliderView extends BSBObjectView<BSBVSlider> implements
 
         valuePanel.setPreferredSize(new Dimension(VALUE_DISPLAY_WIDTH,
                 VALUE_DISPLAY_HEIGHT));
+        valuePanel.setMaximumSize(new Dimension(VALUE_DISPLAY_WIDTH,
+                VALUE_DISPLAY_HEIGHT));
+        valSlider.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        this.setLayout(new BorderLayout());
-        this.add(valSlider, BorderLayout.CENTER);
+        var layout = new BoxLayout(this, BoxLayout.Y_AXIS);
+        this.setLayout(layout);
+        
+        this.add(valSlider);
 
         if (bsbObj.isValueDisplayEnabled()) {
-            this.add(valuePanel, BorderLayout.SOUTH);
+            this.add(valuePanel);
         }
 
         this.setSize(getPreferredSize());
@@ -140,7 +147,7 @@ public class BSBVSliderView extends BSBObjectView<BSBVSlider> implements
             });
         };
         this.heightListener = (obs, old, newVal) -> {
-            valSlider.setSize(VALUE_DISPLAY_WIDTH, newVal.intValue());
+            valSlider.setPreferredSize(new Dimension(0, newVal.intValue()));
             setSize(getPreferredSize());
         };
     }
