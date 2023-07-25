@@ -24,13 +24,13 @@ import blue.orchestra.blueSynthBuilder.BSBKnob;
 import blue.ui.utilities.UiUtilities;
 import blue.utilities.scales.ScaleLinear;
 import blue.utility.NumberUtilities;
-import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import javafx.beans.value.ChangeListener;
 import javax.swing.JLabel;
+import javax.swing.ToolTipManager;
 
 /**
  * @author steven
@@ -81,16 +81,16 @@ public class BSBKnobView extends BSBObjectView<BSBKnob> implements ResizeableVie
 
         setLayout(new GridBagLayout());
         var gbc = new GridBagConstraints();
-        
+
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.gridx = 0;
         gbc.gridy = 0;
         add(label, gbc);
-        
+
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridy = 1;
         add(knobView, gbc);
-        
+
         gbc.gridy = 2;
         add(valuePanel, gbc);
 
@@ -139,11 +139,11 @@ public class BSBKnobView extends BSBObjectView<BSBKnob> implements ResizeableVie
             var d = new Dimension(newVal.intValue(), newVal.intValue());
             knobView.setSize(d);
             knobView.setPreferredSize(d);
-            
+
             d = new Dimension(newVal.intValue(), VALUE_HEIGHT);
             valuePanel.setSize(d);
             valuePanel.setPreferredSize(d);
-            
+
             setSize(getPreferredSize());
             revalidate();
         };
@@ -171,15 +171,24 @@ public class BSBKnobView extends BSBObjectView<BSBKnob> implements ResizeableVie
         Dimension prefSize = new Dimension(bsbObj.getKnobWidth(), bsbObj.getKnobWidth());
         knobView.setPreferredSize(prefSize);
         knobView.setSize(prefSize);
-        
+
         var d = new Dimension(bsbObj.getKnobWidth(), VALUE_HEIGHT);
         valuePanel.setSize(d);
         valuePanel.setPreferredSize(d);
-            
+
         setSize(getPreferredSize());
+
+                ToolTipManager.sharedInstance().registerComponent(knobView);
 
         revalidate();
     }
+    
+     @Override
+            public String getToolTipText() {
+                return shouldShowToolTip()
+                        ? NumberUtilities.formatDouble(bsbObj.getValue()) : "";
+                
+            }
 
     @Override
     public void addNotify() {

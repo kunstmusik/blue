@@ -70,6 +70,7 @@ public class BSBHSliderView extends BSBObjectView<BSBHSlider> implements Resizea
                 updating = false;
             }
         };
+        valSlider.setToolTipText(NumberUtilities.formatDouble(slider.getValue()));
 
         valuePanel.setPreferredSize(new Dimension(VALUE_DISPLAY_WIDTH,
                 VALUE_DISPLAY_HEIGHT));
@@ -142,6 +143,7 @@ public class BSBHSliderView extends BSBObjectView<BSBHSlider> implements Resizea
         this.valueListener = (obs, old, newVal) -> {
             UiUtilities.invokeOnSwingThread(() -> {
                 valSlider.setValue(newVal.doubleValue());
+                valSlider.setToolTipText(NumberUtilities.formatDouble(newVal.doubleValue()));
                 valuePanel.setValue(NumberUtilities.formatDouble(getValueFromSlider()));
             });
         };

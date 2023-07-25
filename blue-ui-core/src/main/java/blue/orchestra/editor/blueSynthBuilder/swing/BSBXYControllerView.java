@@ -20,6 +20,7 @@
 package blue.orchestra.editor.blueSynthBuilder.swing;
 
 import blue.orchestra.blueSynthBuilder.BSBXYController;
+import blue.utility.NumberUtilities;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
@@ -179,6 +180,11 @@ public class BSBXYControllerView extends BSBObjectView<BSBXYController>
     private void updateLabel() {
         Object[] vals = new Object[]{bsbObj.getXValue(), bsbObj.getYValue()};
         label.setText(labelMessage.format(vals));
+        drawPanel.setToolTipText(
+                    String.format("X: %s\nY:%s", 
+                            NumberUtilities.formatDouble(bsbObj.getXValue()),
+                            NumberUtilities.formatDouble(bsbObj.getYValue()))
+            );
     }
 
     // RESIZEABLE VIEW
