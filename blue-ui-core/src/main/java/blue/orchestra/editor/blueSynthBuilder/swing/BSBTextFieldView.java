@@ -26,21 +26,29 @@ import java.awt.Color;
 import java.awt.Graphics;
 import javafx.beans.value.ChangeListener;
 import javax.swing.JTextField;
+import javax.swing.ToolTipManager;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.DocumentEvent;
 
-public class BSBTextFieldView extends BSBObjectView<BSBTextField> implements ResizeableView{
+public class BSBTextFieldView extends BSBObjectView<BSBTextField> implements ResizeableView {
 
-    JTextField textField = new JTextField();
+    JTextField textField = new JTextField() {
+        @Override
+        public String getToolTipText() {
+            return shouldShowToolTip() ? bsbObj.getComment() : null;
+        }
+    };
 
     ChangeListener<Number> textWidthListener;
-    
+    ChangeListener<String> textValueListener;
+
     public static Color BG_COLOR = new Color(20, 29, 45);
 
+    volatile boolean updating = false;
     
     public BSBTextFieldView(final BSBTextField bsbText) {
         super(bsbText);
-        
+
         this.setLayout(new BorderLayout());
         this.add(textField);
 
@@ -49,48 +57,61 @@ public class BSBTextFieldView extends BSBObjectView<BSBTextField> implements Res
         var insets = textField.getBorder().getBorderInsets(this);
         textField.setBorder(null);
         textField.setBorder(new EmptyBorder(insets));
-        
+
         textField.getDocument().addDocumentListener(
                 new SimpleDocumentListener() {
 
-                    @Override
-                    public void documentChanged(DocumentEvent e) {
-                        if (bsbText != null) {
-                            bsbText.setValue(textField.getText());
-                        }
+            @Override
+            public void documentChanged(DocumentEvent e) {
+                if (bsbText != null && !updating) {
+                    updating = true;
+                    bsbText.setValue(textField.getText());
+                    updating = false;
+                }
 
-                    }
+            }
 
-                });
+        });
+        
+        textValueListener = (obs, old, newVal) -> {
+            if(!updating) {
+                textField.setText(newVal);
+            }
+        };
 
         textWidthListener = (obs, old, newVal) -> {
             this.setSize(bsbText.getTextFieldWidth(), (int) textField
-                .getPreferredSize().getHeight());
+                    .getPreferredSize().getHeight());
         };
-        
+
         this.setSize(bsbText.getTextFieldWidth(), (int) textField
                 .getPreferredSize().getHeight());
     }
 
     @Override
     public void addNotify() {
-        super.addNotify(); 
+        super.addNotify();
         bsbObj.textFieldWidthProperty().addListener(textWidthListener);
+        bsbObj.valueProperty().addListener(textValueListener);
+
+        ToolTipManager.sharedInstance().registerComponent(textField);
     }
 
     @Override
     public void removeNotify() {
-        super.removeNotify(); 
+        super.removeNotify();
         bsbObj.textFieldWidthProperty().removeListener(textWidthListener);
+        bsbObj.valueProperty().removeListener(textValueListener);
+
+        ToolTipManager.sharedInstance().unregisterComponent(textField);
     }
 
     public void paintComponent(Graphics g) {
         g.setColor(BG_COLOR);
-        
+
         g.fillRoundRect(0, 0, getWidth(), getHeight(), 4, 4);
     }
-    
-    
+
     public boolean canResizeWidgetWidth() {
         return true;
     }

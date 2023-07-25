@@ -34,6 +34,7 @@ import javafx.beans.value.ChangeListener;
 import javafx.collections.ObservableList;
 import javax.swing.JLabel;
 import javax.swing.JLayeredPane;
+import javax.swing.ToolTipManager;
 import javax.swing.border.LineBorder;
 
 /**
@@ -79,6 +80,11 @@ public class BSBGroupPanel extends BSBObjectView<BSBGroup> implements Resizeable
                     return insets;
                 }
                 return new Insets(1, 0, 2, 0);
+            }
+
+            @Override
+            public String getToolTipText() {
+                return shouldShowToolTip() ? bsbObj.getComment() : null;
             }
 
         };
@@ -175,6 +181,8 @@ public class BSBGroupPanel extends BSBObjectView<BSBGroup> implements Resizeable
         bsbObj.heightProperty().addListener(widthHeightListener);
         bsbObj.fontProperty().addListener(fontListener);
 
+        ToolTipManager.sharedInstance().registerComponent(this);
+        ToolTipManager.sharedInstance().registerComponent(label);
     }
 
     @Override
@@ -190,6 +198,8 @@ public class BSBGroupPanel extends BSBObjectView<BSBGroup> implements Resizeable
         bsbObj.heightProperty().removeListener(widthHeightListener);
         bsbObj.fontProperty().removeListener(fontListener);
 
+        ToolTipManager.sharedInstance().unregisterComponent(this);
+        ToolTipManager.sharedInstance().unregisterComponent(label);
     }
 
     private void updateBackgroundColor() {

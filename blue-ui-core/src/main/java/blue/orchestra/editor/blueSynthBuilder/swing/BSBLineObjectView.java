@@ -36,6 +36,7 @@ import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
+import javax.swing.ToolTipManager;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 import org.wonderly.awt.Packer;
@@ -43,7 +44,12 @@ import org.wonderly.awt.Packer;
 public class BSBLineObjectView extends BSBObjectView<BSBLineObject> implements
         PropertyChangeListener, ResizeableView {
 
-    LineCanvas lineCanvas = new LineCanvas();
+    LineCanvas lineCanvas = new LineCanvas() {
+        @Override
+        public String getToolTipText() {
+            return shouldShowToolTip() ? bsbObj.getComment() : null;
+        }
+    };
 
     LineSelector lineSelector = new LineSelector();
 
@@ -58,7 +64,7 @@ public class BSBLineObjectView extends BSBObjectView<BSBLineObject> implements
         this.add(lineCanvas, BorderLayout.CENTER);
         this.add(lineSelector, BorderLayout.SOUTH);
 
-        lineCanvas.setBorder(BorderFactory.createCompoundBorder(new EmptyBorder(5,5,5,5), 
+        lineCanvas.setBorder(BorderFactory.createCompoundBorder(new EmptyBorder(5, 5, 5, 5),
                 new LineBorder(Color.LIGHT_GRAY, 1)));
         lineCanvas.setLocked(lineObj.isLocked());
 
@@ -91,7 +97,7 @@ public class BSBLineObjectView extends BSBObjectView<BSBLineObject> implements
         linesListener = (obs, old, newVal) -> {
             setLineList(newVal);
         };
-        
+
         lineObj.addPropertyChangeListener(this);
     }
 
@@ -102,6 +108,8 @@ public class BSBLineObjectView extends BSBObjectView<BSBLineObject> implements
         bsbObj.canvasHeightProperty().addListener(widthHeightListener);
         bsbObj.lockedProperty().addListener(lockedListener);
         bsbObj.linesProperty().addListener(linesListener);
+
+        ToolTipManager.sharedInstance().registerComponent(lineCanvas);
     }
 
     @Override
@@ -111,6 +119,8 @@ public class BSBLineObjectView extends BSBObjectView<BSBLineObject> implements
         bsbObj.canvasHeightProperty().removeListener(widthHeightListener);
         bsbObj.lockedProperty().removeListener(lockedListener);
         bsbObj.linesProperty().removeListener(linesListener);
+
+        ToolTipManager.sharedInstance().unregisterComponent(lineCanvas);
     }
 
     public LineList getLineList() {

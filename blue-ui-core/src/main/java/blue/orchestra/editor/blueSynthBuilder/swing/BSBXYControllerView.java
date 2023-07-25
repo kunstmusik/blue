@@ -33,6 +33,7 @@ import java.text.MessageFormat;
 import javafx.beans.value.ChangeListener;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.ToolTipManager;
 
 public class BSBXYControllerView extends BSBObjectView<BSBXYController>
         implements ResizeableView {
@@ -51,7 +52,13 @@ public class BSBXYControllerView extends BSBObjectView<BSBXYController>
     public BSBXYControllerView(BSBXYController controller) {
         super(controller);
 
-        drawPanel = new DrawPanel(controller);
+        drawPanel = new DrawPanel(controller) {
+            @Override
+            public String getToolTipText() {
+                return shouldShowToolTip() ? bsbObj.getComment() : null;
+            }
+        };
+
         drawPanel.addMouseListener(new MouseAdapter() {
 
             @Override
@@ -115,6 +122,8 @@ public class BSBXYControllerView extends BSBObjectView<BSBXYController>
         bsbObj.xValueProperty().valueProperty().addListener(labelListener);
         bsbObj.yValueProperty().valueProperty().addListener(labelListener);
         bsbObj.valueDisplayEnabledProperty().addListener(valueDisplayEnabledListener);
+        
+        ToolTipManager.sharedInstance().registerComponent(drawPanel);
     }
 
     @Override
@@ -126,6 +135,8 @@ public class BSBXYControllerView extends BSBObjectView<BSBXYController>
         bsbObj.xValueProperty().valueProperty().removeListener(labelListener);
         bsbObj.yValueProperty().valueProperty().removeListener(labelListener);
         bsbObj.valueDisplayEnabledProperty().removeListener(valueDisplayEnabledListener);
+        
+        ToolTipManager.sharedInstance().unregisterComponent(drawPanel);
     }
 
     protected void setValues(int x, int y) {
@@ -180,11 +191,6 @@ public class BSBXYControllerView extends BSBObjectView<BSBXYController>
     private void updateLabel() {
         Object[] vals = new Object[]{bsbObj.getXValue(), bsbObj.getYValue()};
         label.setText(labelMessage.format(vals));
-        drawPanel.setToolTipText(
-                    String.format("X: %s\nY:%s", 
-                            NumberUtilities.formatDouble(bsbObj.getXValue()),
-                            NumberUtilities.formatDouble(bsbObj.getYValue()))
-            );
     }
 
     // RESIZEABLE VIEW

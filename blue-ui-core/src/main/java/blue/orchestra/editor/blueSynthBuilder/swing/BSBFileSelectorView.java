@@ -42,6 +42,7 @@ import javax.swing.AbstractAction;
 import javax.swing.JButton;
 import javax.swing.JPopupMenu;
 import javax.swing.JTextField;
+import javax.swing.ToolTipManager;
 import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
 import org.openide.util.Exceptions;
@@ -50,14 +51,19 @@ import org.openide.util.Exceptions;
  * @author steven
  * @author Michael Bechard
  */
-public class BSBFileSelectorView extends BSBObjectView<BSBFileSelector> implements 
+public class BSBFileSelectorView extends BSBObjectView<BSBFileSelector> implements
         ResizeableView {
 
     private static final int FILE_BUTTON_WIDTH = 30;
     private static int OBJECT_HEIGHT = 30;
     private static String FILE_SELECTOR_ID = "BSBFileSelector";
 
-    JTextField fileNameField = new JTextField();
+    JTextField fileNameField = new JTextField() {
+        @Override
+        public String getToolTipText() {
+            return shouldShowToolTip() ? bsbObj.getComment() : null;
+        }
+    };
 
     ChangeListener<String> fileNameListener;
     ChangeListener<Number> textWidthListener;
@@ -147,6 +153,7 @@ public class BSBFileSelectorView extends BSBObjectView<BSBFileSelector> implemen
         bsbObj.fileNameProperty().addListener(fileNameListener);
         bsbObj.textFieldWidthProperty().addListener(textWidthListener);
 
+        ToolTipManager.sharedInstance().registerComponent(fileNameField);
     }
 
     @Override
@@ -154,6 +161,8 @@ public class BSBFileSelectorView extends BSBObjectView<BSBFileSelector> implemen
         super.removeNotify();
         bsbObj.fileNameProperty().removeListener(fileNameListener);
         bsbObj.textFieldWidthProperty().removeListener(textWidthListener);
+
+        ToolTipManager.sharedInstance().unregisterComponent(fileNameField);
     }
 
     public void resetText() {
@@ -219,7 +228,7 @@ public class BSBFileSelectorView extends BSBObjectView<BSBFileSelector> implemen
                 }
             }
         });
-        
+
         popup.show(this, x, y);
     }
 
@@ -331,7 +340,7 @@ public class BSBFileSelectorView extends BSBObjectView<BSBFileSelector> implemen
             }
         }
     }
-    
+
     public boolean canResizeWidgetWidth() {
         return true;
     }

@@ -33,6 +33,7 @@ import javafx.beans.value.ChangeListener;
 import javax.swing.ComboBoxModel;
 import javax.swing.JComboBox;
 import javax.swing.SwingUtilities;
+import javax.swing.ToolTipManager;
 import javax.swing.event.EventListenerList;
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
@@ -61,7 +62,12 @@ public class BSBDropdownView extends BSBObjectView<BSBDropdown> implements Prope
 
         model.setDropDown(dropdown);
 
-        comboBox = new JComboBox<>(model);
+        comboBox = new JComboBox<>(model) {
+            @Override
+            public String getToolTipText() {
+                return shouldShowToolTip() ? bsbObj.getComment() : null;
+            }
+        };
 
         this.add(comboBox, BorderLayout.CENTER);
 
@@ -107,6 +113,8 @@ public class BSBDropdownView extends BSBObjectView<BSBDropdown> implements Prope
         super.addNotify();
         bsbObj.selectedIndexProperty().addListener(indexListener);
         bsbObj.addPropertyChangeListener(this);
+        
+        ToolTipManager.sharedInstance().registerComponent(comboBox);
     }
 
     @Override
@@ -115,6 +123,8 @@ public class BSBDropdownView extends BSBObjectView<BSBDropdown> implements Prope
         super.removeNotify();
         bsbObj.selectedIndexProperty().removeListener(indexListener);
         bsbObj.removePropertyChangeListener(this);
+        
+        ToolTipManager.sharedInstance().unregisterComponent(comboBox);
     }
 
     @Override

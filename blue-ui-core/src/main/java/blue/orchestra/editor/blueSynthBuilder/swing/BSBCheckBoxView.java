@@ -25,6 +25,7 @@ import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import javafx.beans.value.ChangeListener;
 import javax.swing.JCheckBox;
+import javax.swing.ToolTipManager;
 
 /**
  * @author steven
@@ -33,7 +34,12 @@ public class BSBCheckBoxView extends BSBObjectView<BSBCheckBox> {
 
     final BSBCheckBox checkBox;
 
-    JCheckBox uiBox = new JCheckBox();
+    JCheckBox uiBox = new JCheckBox() {
+        @Override
+        public String getToolTipText() {
+            return shouldShowToolTip() ? bsbObj.getComment() : null;
+        }
+    };
 
     private volatile boolean updating = false;
 
@@ -42,7 +48,7 @@ public class BSBCheckBoxView extends BSBObjectView<BSBCheckBox> {
         if (!updating) {
             try {
                 updating = true;
-                
+
                 UiUtilities.invokeOnSwingThread(() -> {
                     uiBox.setSelected(newVal);
                 });
@@ -51,7 +57,7 @@ public class BSBCheckBoxView extends BSBObjectView<BSBCheckBox> {
             }
         }
     };
-    
+
     ChangeListener<String> labelListener = (obs, old, newVal) -> {
         uiBox.setText(newVal);
     };
@@ -61,11 +67,11 @@ public class BSBCheckBoxView extends BSBObjectView<BSBCheckBox> {
      */
     public BSBCheckBoxView(BSBCheckBox checkBox) {
         super(checkBox);
-        
+
         updating = true;
 
         this.checkBox = checkBox;
-        
+
         uiBox.setOpaque(false);
         uiBox.addActionListener((ActionEvent e) -> {
             if (!updating) {
@@ -84,17 +90,18 @@ public class BSBCheckBoxView extends BSBObjectView<BSBCheckBox> {
 
     }
 
-
     @Override
     public void addNotify() {
         uiBox.setSelected(checkBox.isSelected());
         uiBox.setText(checkBox.getLabel());
-        
+
         checkBox.selectedProperty().addListener(cboxToViewListener);
         checkBox.labelProperty().addListener(labelListener);
-        
+
         setSize(uiBox.getPreferredSize());
-        
+
+        ToolTipManager.sharedInstance().registerComponent(uiBox);
+
         super.addNotify();
     }
 
@@ -102,6 +109,8 @@ public class BSBCheckBoxView extends BSBObjectView<BSBCheckBox> {
     public void removeNotify() {
         checkBox.selectedProperty().removeListener(cboxToViewListener);
         checkBox.labelProperty().removeListener(labelListener);
+
+        ToolTipManager.sharedInstance().unregisterComponent(uiBox);
 
         super.removeNotify();
     }

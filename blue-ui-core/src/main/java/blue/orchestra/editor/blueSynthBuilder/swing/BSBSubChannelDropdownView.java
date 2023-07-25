@@ -32,6 +32,7 @@ import java.util.List;
 import javafx.beans.value.ChangeListener;
 import javax.swing.ComboBoxModel;
 import javax.swing.JComboBox;
+import javax.swing.ToolTipManager;
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
 
@@ -52,7 +53,12 @@ public class BSBSubChannelDropdownView extends BSBObjectView<BSBSubChannelDropdo
         this.setLayout(null);
 
         model = new SubChannelComboBoxModel();
-        comboBox = new JComboBox(model);
+        comboBox = new JComboBox(model) {
+            @Override
+            public String getToolTipText() {
+                return shouldShowToolTip() ? bsbObj.getComment() : null;
+            }
+        };
 
         comboBox.setSelectedItem(dropdown.getChannelOutput());
 
@@ -83,6 +89,8 @@ public class BSBSubChannelDropdownView extends BSBObjectView<BSBSubChannelDropdo
         super.addNotify();
 
         bsbObj.channelOutputProperty().addListener(channelListener);
+
+        ToolTipManager.sharedInstance().registerComponent(comboBox);
     }
 
     @Override
@@ -90,6 +98,7 @@ public class BSBSubChannelDropdownView extends BSBObjectView<BSBSubChannelDropdo
         super.removeNotify();
         bsbObj.channelOutputProperty().removeListener(channelListener);
 
+        ToolTipManager.sharedInstance().unregisterComponent(comboBox);
     }
 
 }

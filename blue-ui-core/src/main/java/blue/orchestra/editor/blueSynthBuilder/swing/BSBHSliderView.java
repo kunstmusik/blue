@@ -29,6 +29,7 @@ import java.awt.Dimension;
 import java.beans.PropertyChangeEvent;
 import javafx.beans.value.ChangeListener;
 import javax.swing.BoxLayout;
+import javax.swing.ToolTipManager;
 import javax.swing.event.ChangeEvent;
 
 public class BSBHSliderView extends BSBObjectView<BSBHSlider> implements ResizeableView {
@@ -60,7 +61,12 @@ public class BSBHSliderView extends BSBObjectView<BSBHSlider> implements Resizea
 
         updating = true;
 
-        valSlider = new ValueSlider();
+        valSlider = new ValueSlider() {
+            @Override
+            public String getToolTipText() {
+                return shouldShowToolTip() ? bsbObj.getComment() : null;
+            }
+        };
 
         valSlider.setOpaque(false);
         valSliderListener = (ChangeEvent e) -> {
@@ -70,7 +76,6 @@ public class BSBHSliderView extends BSBObjectView<BSBHSlider> implements Resizea
                 updating = false;
             }
         };
-        valSlider.setToolTipText(NumberUtilities.formatDouble(slider.getValue()));
 
         valuePanel.setPreferredSize(new Dimension(VALUE_DISPLAY_WIDTH,
                 VALUE_DISPLAY_HEIGHT));
@@ -143,7 +148,6 @@ public class BSBHSliderView extends BSBObjectView<BSBHSlider> implements Resizea
         this.valueListener = (obs, old, newVal) -> {
             UiUtilities.invokeOnSwingThread(() -> {
                 valSlider.setValue(newVal.doubleValue());
-                valSlider.setToolTipText(NumberUtilities.formatDouble(newVal.doubleValue()));
                 valuePanel.setValue(NumberUtilities.formatDouble(getValueFromSlider()));
             });
         };
@@ -170,8 +174,11 @@ public class BSBHSliderView extends BSBObjectView<BSBHSlider> implements Resizea
             valSlider.setMinimum(bsbObj.getMinimum());
             valSlider.setMaximum(bsbObj.getMaximum());
             valSlider.setResolution(getNumTicks());
-            valSlider.setValue(bsbObj.getValue());            
+            valSlider.setValue(bsbObj.getValue());
             valSlider.addChangeListener(valSliderListener);
+
+            ToolTipManager.sharedInstance().registerComponent(valSlider);
+
             updateValueDisplay();
         } finally {
             updating = false;
@@ -190,6 +197,9 @@ public class BSBHSliderView extends BSBObjectView<BSBHSlider> implements Resizea
         bsbObj.valueProperty().removeListener(valueListener);
         bsbObj.sliderWidthProperty().removeListener(widthListener);
         bsbObj.valueDisplayEnabledProperty().removeListener(vdeListener);
+
+        ToolTipManager.sharedInstance().unregisterComponent(valSlider);
+
         updating = false;
     }
 
@@ -267,7 +277,7 @@ public class BSBHSliderView extends BSBObjectView<BSBHSlider> implements Resizea
     public int getWidgetY() {
         return -1;
     }
-    
+
     private void updateValueDisplay() {
         var knob = getBSBObject();
         double val = knob.getValue();

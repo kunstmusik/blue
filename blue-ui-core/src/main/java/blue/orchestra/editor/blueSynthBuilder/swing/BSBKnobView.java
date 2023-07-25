@@ -64,7 +64,12 @@ public class BSBKnobView extends BSBObjectView<BSBKnob> implements ResizeableVie
         updating = true;
 
         label = new JLabel(knob.getLabel());
-        knobView = new Knob(bsbObj.getKnobWidth());
+        knobView = new Knob(bsbObj.getKnobWidth()) {
+            @Override
+            public String getToolTipText() {
+                return shouldShowToolTip() ? bsbObj.getComment() : null;
+            }
+        };
         valuePanel = new ValuePanel();
 
         label.setHorizontalAlignment(JLabel.CENTER);
@@ -178,24 +183,15 @@ public class BSBKnobView extends BSBObjectView<BSBKnob> implements ResizeableVie
 
         setSize(getPreferredSize());
 
-                ToolTipManager.sharedInstance().registerComponent(knobView);
+        ToolTipManager.sharedInstance().registerComponent(knobView);
 
         revalidate();
     }
-    
-     @Override
-            public String getToolTipText() {
-                return shouldShowToolTip()
-                        ? NumberUtilities.formatDouble(bsbObj.getValue()) : "";
-                
-            }
 
     @Override
     public void addNotify() {
         super.addNotify();
 
-//        bsbObj.valueDisplayEnabledProperty().addListener(vdeListener);
-//        bsbObj.min().addListener(vdeListener);
         var valProp = bsbObj.knobValueProperty();
         valProp.valueProperty().addListener(valueListener);
         valProp.minProperty().addListener(minMaxListener);
@@ -207,8 +203,9 @@ public class BSBKnobView extends BSBObjectView<BSBKnob> implements ResizeableVie
         bsbObj.labelFontProperty().addListener(labelFontListener);
 
         setSize(getPreferredSize());
-//        revalidate();
-//        repaint();
+
+        ToolTipManager.sharedInstance().registerComponent(this);
+        ToolTipManager.sharedInstance().registerComponent(knobView);
     }
 
     @Override
@@ -224,6 +221,9 @@ public class BSBKnobView extends BSBObjectView<BSBKnob> implements ResizeableVie
         bsbObj.labelEnabledProperty().removeListener(labelEnabledListener);
         bsbObj.labelProperty().removeListener(labelListener);
         bsbObj.labelFontProperty().removeListener(labelFontListener);
+
+        ToolTipManager.sharedInstance().unregisterComponent(this);
+        ToolTipManager.sharedInstance().unregisterComponent(knobView);
     }
 
     protected void updateKnobValue() {
