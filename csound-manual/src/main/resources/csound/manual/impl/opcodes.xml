@@ -292,8 +292,7 @@
       </opcode>
       <opcode>
         <name>granule</name>
-        <signature>ares 	granule	 xamp, ivoice, iratio, imode, ithd, ifn, ipshift, igskip, \
-      igskip_os, ilength, kgap, igap_os, kgsize, igsize_os, iatt, idec \
+        <signature>ares 	granule	 xamp, ivoice, iratio, imode, ithd, ifn, ipshift, igskip, igskip_os, ilength, kgap, igap_os, kgsize, igsize_os, iatt, idec \
       [, iseed] [, ipitch1] [, ipitch2] [, ipitch3] [, ipitch4] [, ifnenv]</signature>
       </opcode>
       <opcode>
@@ -3338,6 +3337,10 @@
         <signature>kres 	mediank	 kin, ksize, imaxsize [, iskip]</signature>
       </opcode>
       <opcode>
+        <name>mode</name>
+        <signature>aout 	mode	 ain, xfreq, xQ [, iskip]</signature>
+      </opcode>
+      <opcode>
         <name>tone</name>
         <signature>ares 	tone	 asig, khp [, iskip]</signature>
       </opcode>
@@ -3389,11 +3392,11 @@
       </opcode>
       <opcode>
         <name>filter2</name>
-        <signature>ares 	filter2	 asig, iM, iN, ib0, ib1, ..., ibM, ia1, ia2, ..., iaN</signature>
+        <signature>ares 	filter2	 asig, ibcoefs, iacoefs, ib0, ib1, ..., ibM, ia1, ia2, ..., iaN</signature>
       </opcode>
       <opcode>
         <name>filter2</name>
-        <signature>kres 	filter2	 ksig, iM, iN, ib0, ib1, ..., ibM, ia1, ia2, ..., iaN</signature>
+        <signature>kres 	filter2	 ksig, ibcoefs, iacoefs, ib0, ib1, ..., ibM, ia1, ia2, ..., iaN</signature>
       </opcode>
       <opcode>
         <name>fmanal</name>
@@ -3559,7 +3562,7 @@
     <opcodeGroup name="Panning and Spatialization ">
       <opcode>
         <name>ms2st</name>
-        <signature>aleft,aright 	ms2st	 as,am,kwidth</signature>
+        <signature>aleft,aright 	ms2st	 am, as, kwidth</signature>
       </opcode>
       <opcode>
         <name>st2ms</name>
@@ -4352,6 +4355,30 @@
       <opcode>
         <name>dates</name>
         <signature>Sir 	dates	 [ itime]</signature>
+      </opcode>
+      <opcode>
+        <name>elapsedcycles</name>
+        <signature>ires 	elapsedcycles</signature>
+      </opcode>
+      <opcode>
+        <name>elapsedcycles</name>
+        <signature>kres 	elapsedcycles</signature>
+      </opcode>
+      <opcode>
+        <name>elapsedtime</name>
+        <signature>ires 	elapsedtime</signature>
+      </opcode>
+      <opcode>
+        <name>elapsedtime</name>
+        <signature>kres 	elapsedtime</signature>
+      </opcode>
+      <opcode>
+        <name>eventcycles</name>
+        <signature>kres 	eventcycles</signature>
+      </opcode>
+      <opcode>
+        <name>eventtime</name>
+        <signature>kres 	eventtime</signature>
       </opcode>
       <opcode>
         <name>readclock</name>
