@@ -29,5 +29,32 @@ package blue.time;
  * @author Steven Yi
  */
 public class TimeUtilities {
+    public static double convertSampleTimeToSeconds(long sampleTime, long sampleRate) {
+        return sampleTime / (double)sampleRate;
+    }
     
+    public static String convertSecondsToTimeString(double timeSeconds) {        
+        int hours = (int) (timeSeconds / 3600);
+        int minutes = (int) ((timeSeconds % 3600) / 60);
+        int seconds = (int) (timeSeconds % 60);
+        int milliseconds = (int) Math.round((timeSeconds - (int) timeSeconds) * 1000);
+
+        String timeString = String.format("%02d:%02d:%02d.%03d", hours, minutes, seconds, milliseconds);
+        return timeString;
+    }
+    
+    public static double convertTimeToSeconds(int hours, int minutes, int seconds, int milliseconds) {
+        return hours * 3600 + minutes * 60 + seconds + milliseconds / 1000.0;
+    }
+    
+    // FIXME: need to review if this is correct
+    public static String convertSecondsToSMPTE(double timeSeconds, double smpteFrameRate) {
+        int hours = (int) (timeSeconds / 3600);
+        int minutes = (int) ((timeSeconds % 3600) / 60);
+        int seconds = (int) (timeSeconds % 60);
+        int frameNumber = (int) Math.round((timeSeconds - (int) timeSeconds) * smpteFrameRate);
+
+        String timeString = String.format("%02d:%02d:%02d.%02d", hours, minutes, seconds, frameNumber);
+        return timeString;
+    }
 }
