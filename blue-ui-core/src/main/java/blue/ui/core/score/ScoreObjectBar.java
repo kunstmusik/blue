@@ -239,6 +239,7 @@ public final class ScoreObjectBar extends JComponent implements ActionListener,
             }
         }
         currentPath = path;
+        revalidate();
         repaint();
     }
 
@@ -306,7 +307,7 @@ public final class ScoreObjectBar extends JComponent implements ActionListener,
 
             final String finalName = name;
 
-            SwingUtilities.invokeLater(() -> {
+            UiUtilities.invokeOnSwingThread(() -> {
                 LayerGroupButton.this.setText(finalName);
             });
 

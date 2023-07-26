@@ -70,6 +70,8 @@ public class SoundLayerPanel extends javax.swing.JPanel implements
     boolean updating = false;
 
     private final NoteProcessorChainMap npcMap;
+    
+    Color normalColor;
 
     /**
      * Creates new form SoundLayerPanel
@@ -80,8 +82,10 @@ public class SoundLayerPanel extends javax.swing.JPanel implements
 
         boolean automatable = ScoreController.getInstance().getScorePath().getLastLayerGroup() == null;
 
-        muteToggleButton.putClientProperty("BlueToggleButton.selectColorOverride", Color.ORANGE.darker());
-        soloToggleButton.putClientProperty("BlueToggleButton.selectColorOverride", Color.GREEN.darker());
+        normalColor = noteProcessorButton.getBackground();
+        
+        muteToggleButton.putClientProperty( "FlatLaf.style", "selectedBackground: #b28c00" );
+        soloToggleButton.putClientProperty( "FlatLaf.style", "selectedBackground: #00b200" );
 
         automationButton.setVisible(automatable);
         paramSelectPanel.setVisible(automatable);
@@ -96,19 +100,26 @@ public class SoundLayerPanel extends javax.swing.JPanel implements
         nameLabel.setText(sLayer.getName());
 
         int size = sLayer.getNoteProcessorChain().size();
-        noteProcessorButton.setBackground(size == 0 ? null : Color.GREEN);
+        noteProcessorButton.setBackground(size == 0 ? normalColor : Color.RED.darker());
 
         paramIdList = sLayer.getAutomationParameters();
 
         NoteProcessorChain npc = sLayer.getNoteProcessorChain();
 
+        
+        
         if (npc.size() > 0) {
             noteProcessorButton.setBackground(Color.RED.darker());
         } else {
-            noteProcessorButton.setBackground(null);
+            noteProcessorButton.setBackground(normalColor);
         }
 
         updateParameterPanel();
+                
+        muteToggleButton.setFont(muteToggleButton.getFont().deriveFont(10.0f));
+        soloToggleButton.setFont(muteToggleButton.getFont().deriveFont(10.0f));
+        noteProcessorButton.setFont(muteToggleButton.getFont().deriveFont(10.0f));
+        automationButton.setFont(muteToggleButton.getFont().deriveFont(10.0f));
     }
 
     public void setSelected(boolean val) {
@@ -218,13 +229,13 @@ public class SoundLayerPanel extends javax.swing.JPanel implements
 
         jPanel2.add(jPanel1);
 
-        muteToggleButton.setFont(new java.awt.Font("Dialog", 1, 10)); // NOI18N
         muteToggleButton.setText("M");
         muteToggleButton.setFocusPainted(false);
         muteToggleButton.setFocusable(false);
-        muteToggleButton.setMargin(new java.awt.Insets(0, 3, 0, 3));
+        muteToggleButton.setMargin(null);
         muteToggleButton.setMaximumSize(new java.awt.Dimension(19, 19));
-        muteToggleButton.setPreferredSize(new java.awt.Dimension(19, 18));
+        muteToggleButton.setMinimumSize(new java.awt.Dimension(19, 19));
+        muteToggleButton.setPreferredSize(new java.awt.Dimension(19, 19));
         muteToggleButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 muteToggleButtonActionPerformed(evt);
@@ -232,12 +243,13 @@ public class SoundLayerPanel extends javax.swing.JPanel implements
         });
         jPanel2.add(muteToggleButton);
 
-        soloToggleButton.setFont(new java.awt.Font("Dialog", 1, 10)); // NOI18N
         soloToggleButton.setText("S");
         soloToggleButton.setFocusPainted(false);
         soloToggleButton.setFocusable(false);
-        soloToggleButton.setMargin(new java.awt.Insets(0, 3, 0, 3));
+        soloToggleButton.setMargin(null);
         soloToggleButton.setMaximumSize(new java.awt.Dimension(19, 19));
+        soloToggleButton.setMinimumSize(new java.awt.Dimension(19, 19));
+        soloToggleButton.setPreferredSize(new java.awt.Dimension(19, 19));
         soloToggleButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 soloToggleButtonActionPerformed(evt);
@@ -245,11 +257,14 @@ public class SoundLayerPanel extends javax.swing.JPanel implements
         });
         jPanel2.add(soloToggleButton);
 
-        noteProcessorButton.setFont(new java.awt.Font("Dialog", 1, 10)); // NOI18N
         noteProcessorButton.setText("N");
         noteProcessorButton.setFocusPainted(false);
         noteProcessorButton.setFocusable(false);
-        noteProcessorButton.setMargin(new java.awt.Insets(0, 3, 0, 3));
+        noteProcessorButton.setMargin(null);
+        noteProcessorButton.setMaximumSize(new java.awt.Dimension(19, 19));
+        noteProcessorButton.setMinimumSize(new java.awt.Dimension(19, 19));
+        noteProcessorButton.setPreferredSize(new java.awt.Dimension(19, 19));
+        noteProcessorButton.setSize(new java.awt.Dimension(19, 19));
         noteProcessorButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 noteProcessorButtonActionPerformed(evt);
@@ -257,12 +272,14 @@ public class SoundLayerPanel extends javax.swing.JPanel implements
         });
         jPanel2.add(noteProcessorButton);
 
-        automationButton.setFont(new java.awt.Font("Dialog", 1, 10)); // NOI18N
         automationButton.setText("A");
         automationButton.setToolTipText("Automation Settings");
         automationButton.setFocusPainted(false);
         automationButton.setFocusable(false);
-        automationButton.setMargin(new java.awt.Insets(0, 3, 0, 3));
+        automationButton.setMargin(null);
+        automationButton.setMaximumSize(new java.awt.Dimension(19, 19));
+        automationButton.setMinimumSize(new java.awt.Dimension(19, 19));
+        automationButton.setPreferredSize(new java.awt.Dimension(19, 19));
         automationButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 automationButtonActionPerformed(evt);
@@ -479,7 +496,7 @@ public class SoundLayerPanel extends javax.swing.JPanel implements
         if (npc.size() > 0) {
             noteProcessorButton.setBackground(Color.RED.darker());
         } else {
-            noteProcessorButton.setBackground(null);
+            noteProcessorButton.setBackground(normalColor);
         }
     }// GEN-LAST:event_noteProcessorButtonActionPerformed
 

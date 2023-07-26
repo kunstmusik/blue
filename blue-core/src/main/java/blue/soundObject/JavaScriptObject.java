@@ -104,6 +104,7 @@ public class JavaScriptObject extends AbstractSoundObject
             ScoreUtilities.setScoreStart(nl, startTime);
             return nl;
         } catch (Exception e) {
+            e.printStackTrace();
             throw new SoundObjectException(this, e);
         }
 

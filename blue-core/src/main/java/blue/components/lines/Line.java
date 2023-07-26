@@ -381,16 +381,6 @@ public class Line implements TableModel, ChangeListener, Iterable<LinePoint> {
         return color;
     }
 
-    public javafx.scene.paint.Color getColorFX() {
-        int r = color.getRed();
-        int g = color.getGreen();
-        int b = color.getBlue();
-        int a = color.getAlpha();
-
-        return javafx.scene.paint.Color.rgb(
-                r, g, b, a / 255.0);
-    }
-
     public void setColor(Color color) {
         this.color = color;
 

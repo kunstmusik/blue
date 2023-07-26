@@ -42,7 +42,7 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Vector;
-import javafx.stage.FileChooser.ExtensionFilter;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
 import org.openide.awt.StatusDisplayer;
@@ -91,7 +91,7 @@ public class BlueProjectManager {
 //        fcm.setAcceptAllFileFilterUsed(false);
         fcm.setMultiSelectionEnabled(this.getClass(), false);
         fcm.addFilter(this.getClass(),
-                new ExtensionFilter("blue Project File", "*.blue"));
+                new FileNameExtensionFilter("Blue Project File", "blue"));
         fcm.setSelectedFile(this.getClass(),
                 new File(
                 GeneralSettings.getInstance().getDefaultDirectory() + File.separator + "default.blue"));
@@ -185,7 +185,11 @@ public class BlueProjectManager {
             Collection<? extends ProjectPlugin> plugins = 
                     Lookups.forPath("blue/project/plugins").lookupAll(ProjectPlugin.class);
             for(ProjectPlugin plugin : plugins) {
-                plugin.preRender(project.getData());
+                try {
+                    plugin.preRender(project.getData());
+                } catch (Exception e) {
+                    Exceptions.printStackTrace(e);
+                }
             }
             
             new Thread(() -> {

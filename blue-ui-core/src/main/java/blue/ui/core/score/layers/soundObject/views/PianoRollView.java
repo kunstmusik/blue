@@ -26,6 +26,8 @@ import blue.soundObject.TimeBehavior;
 import blue.soundObject.pianoRoll.PianoNote;
 import blue.utilities.scales.ScaleLinear;
 import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
 import java.beans.PropertyChangeListener;
 import java.util.List;
 import javafx.collections.ListChangeListener;
@@ -88,6 +90,10 @@ public class PianoRollView extends GenericView {
     @Override
     protected void paintComponent(Graphics graphics) {
         super.paintComponent(graphics);
+
+        Graphics2D g2d = (Graphics2D) graphics;
+        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+                RenderingHints.VALUE_ANTIALIAS_ON);
 
         PianoRoll pianoRoll = (PianoRoll) sObj;
 

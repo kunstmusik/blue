@@ -24,17 +24,20 @@ import blue.components.lines.LineEditorDialog;
 import blue.components.lines.LineList;
 import blue.components.lines.LinePoint;
 import blue.ui.utilities.UiUtilities;
+import blue.utilities.scales.ScaleLinear;
 import blue.utility.NumberUtilities;
-import blue.utility.ScoreUtilities;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.Insets;
 import java.awt.Point;
 import java.awt.RenderingHints;
 import java.awt.Stroke;
 import java.awt.event.ActionEvent;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
@@ -70,8 +73,38 @@ public class LineCanvas extends JComponent implements TableModelListener {
 
     TableModelListener lineListener = null;
 
+    
+    /** Used to map from data coordinates to other coordinates for viewing 
+     (see Sound SoundObject editor) */
+    ScaleLinear dataProjectionX;
+    
+    /** Used to map from screen coordinates (domain) to data x coordinates (range) */
+    ScaleLinear screenToDataScaleX;
+    /** Used to map from screen coordinates (domain) to data y coordinates (range)*/
+    ScaleLinear screenToDataScaleY;
+
     public LineCanvas() {
         new LineCanvasMouseListener(this);
+
+        Insets insets = getInsets();
+
+        screenToDataScaleX = new ScaleLinear(insets.left, getWidth() - insets.right, 0, 1.0);
+        screenToDataScaleY = new ScaleLinear(getHeight() - insets.bottom, insets.top, 0, 1.0);
+        dataProjectionX = new ScaleLinear(0, 1, 0, 1);
+        dataProjectionX.setClamped(false);
+        
+
+        this.addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentResized(ComponentEvent e) {
+                Insets insets = getInsets();
+
+                screenToDataScaleX.setDomain(insets.left, getWidth() - insets.right);
+                screenToDataScaleY.setDomain(getHeight() - insets.bottom, insets.top);
+                
+                repaint();
+            }
+        });
 
         lineListener = (TableModelEvent e) -> {
             repaint();
@@ -117,6 +150,8 @@ public class LineCanvas extends JComponent implements TableModelListener {
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
 
+        //Insets insets = getInsets();
+
         Graphics2D g2d = (Graphics2D) g;
         g2d.setStroke(STROKE2);
 
@@ -125,13 +160,14 @@ public class LineCanvas extends JComponent implements TableModelListener {
                 RenderingHints.VALUE_ANTIALIAS_ON);
         g2d.setRenderingHints(hints);
 
-        // g.setColor(bgColor);
         g2d.setColor(Color.black);
         g2d.fillRect(0, 0, this.getWidth(), this.getHeight());
 
-        g2d.setColor(Color.lightGray);
-        g2d.drawRect(5, 5, this.getWidth() - 10, this.getHeight() - 10);
+        //g2d.translate(insets.left, insets.top);
 
+        // g.setColor(bgColor);
+//        g2d.setColor(Color.lightGray);
+//        g2d.drawRect(0, 0, this.getWidth(), this.getHeight());
         Color currentColor = null;
 
         if (lineList == null) {
@@ -156,8 +192,9 @@ public class LineCanvas extends JComponent implements TableModelListener {
             double min = currentLine.getMin();
             double max = currentLine.getMax();
 
-            int x = doubleToScreenX(selectedPoint.getX());
-            int y = doubleToScreenY(selectedPoint.getY(), min, max);
+            int x = (int)screenToDataScaleX.calcReverse(selectedPoint.getX());
+            screenToDataScaleY.setRange(min, max);
+            int y = (int)screenToDataScaleY.calcReverse(selectedPoint.getY());
 
             g2d.setColor(Color.red);
             paintPoint(g2d, x, y);
@@ -180,7 +217,7 @@ public class LineCanvas extends JComponent implements TableModelListener {
         double yVal = selectedPoint.getY();
         double xVal = selectedPoint.getX();
 
-        String xText = "x: " + NumberUtilities.formatDouble(xVal);
+        String xText = "x: " + NumberUtilities.formatDouble(dataProjectionX.calc(xVal));
         String yText = "y: " + NumberUtilities.formatDouble(yVal);
 
         // Rectangle2D xRect = g2d.getFontMetrics().getStringBounds(xText, g2d);
@@ -195,15 +232,15 @@ public class LineCanvas extends JComponent implements TableModelListener {
         int height = 28;
 
         // System.out.println("width: " + width + " height: " + height);
-        int xLoc = x + 5;
-        int yLoc = y + 5;
+        int xLoc = x;
+        int yLoc = y;
 
         if (x + width > this.getWidth()) {
-            xLoc = x - width - 5;
+            xLoc = x - width;
         }
 
         if (y + height > this.getHeight()) {
-            yLoc = y - 14 - 5;
+            yLoc = y - 14;
         }
 
         g2d.drawString(xText, xLoc, yLoc);
@@ -220,8 +257,9 @@ public class LineCanvas extends JComponent implements TableModelListener {
         for (int i = 0; i < line.size(); i++) {
             LinePoint point = line.getLinePoint(i);
 
-            xValues[i] = doubleToScreenX(point.getX());
-            yValues[i] = doubleToScreenY(point.getY(), min, max);
+            xValues[i] = (int)screenToDataScaleX.calcReverse(point.getX());
+            screenToDataScaleY.setRange(min, max);
+            yValues[i] = (int)screenToDataScaleY.calcReverse(point.getY());
         }
 
         g.drawPolyline(xValues, yValues, xValues.length);
@@ -246,49 +284,21 @@ public class LineCanvas extends JComponent implements TableModelListener {
         g.drawOval(x - 3, y - 3, 7, 7);
     }
 
-    private int doubleToScreenX(double val) {
-        int width = this.getWidth() - 10;
-        return (int) Math.round(val * width) + 5;
-    }
-
-    private int doubleToScreenY(double yVal, double min, double max) {
-        int height = this.getHeight() - 10;
-
-        double range = max - min;
-
-        double percent = (yVal - min) / range;
-
-        int y = (int) Math.round(height * (1.0f - percent)) + 5;
-
-        return y;
-    }
-
-    private double screenToDoubleX(int val) {
-        double width = this.getWidth() - 10;
-        return (val - 5) / width;
-    }
-
-    private double screenToDoubleY(int val, double min, double max) {
-        double height = this.getHeight() - 10;
-        double percent = 1 - ((val - 5) / height);
-        double range = max - min;
-
-        return (percent * range) + min;
-    }
-
     public void setBoundaryXValues() {
         if (selectedPoint == null) {
             return;
         }
 
+        var insets = getInsets();
+        
         if (selectedPoint == currentLine.getLinePoint(0)) {
-            leftBoundaryX = 5;
-            rightBoundaryX = 5;
+            leftBoundaryX = insets.left;
+            rightBoundaryX = insets.left;
             return;
         } else if (selectedPoint == currentLine
                 .getLinePoint(currentLine.size() - 1)) {
-            leftBoundaryX = this.getWidth() - 5;
-            rightBoundaryX = this.getWidth() - 5;
+            leftBoundaryX = this.getWidth() - insets.right;
+            rightBoundaryX = this.getWidth() - insets.right;
             return;
         }
 
@@ -296,8 +306,8 @@ public class LineCanvas extends JComponent implements TableModelListener {
             if (currentLine.getLinePoint(i) == selectedPoint) {
                 LinePoint p1 = currentLine.getLinePoint(i - 1);
                 LinePoint p2 = currentLine.getLinePoint(i + 1);
-                leftBoundaryX = doubleToScreenX(p1.getX());
-                rightBoundaryX = doubleToScreenX(p2.getX());
+                leftBoundaryX = (int)(screenToDataScaleX.calcReverse(p1.getX()));
+                rightBoundaryX = (int)(screenToDataScaleX.calcReverse(p2.getX()));
                 return;
             }
         }
@@ -312,7 +322,7 @@ public class LineCanvas extends JComponent implements TableModelListener {
      * @return
      */
     protected LinePoint insertGraphPoint(int x, int y) {
-        if (x < 5 || x > this.getWidth() - 5 || y < 5 || y > this.getHeight() - 5) {
+        if (x < 0 || x >= this.getWidth() || y < 0 || y >= this.getHeight()) {
             return null;
         }
 
@@ -320,7 +330,8 @@ public class LineCanvas extends JComponent implements TableModelListener {
         double max = currentLine.getMax();
 
         LinePoint point = new LinePoint();
-        point.setLocation(screenToDoubleX(x), screenToDoubleY(y, min, max));
+        screenToDataScaleY.setRange(min, max);
+        point.setLocation(screenToDataScaleX.calc(x), screenToDataScaleY.calc(y));
 
         int index = 1;
 
@@ -346,11 +357,12 @@ public class LineCanvas extends JComponent implements TableModelListener {
         for (int i = 0; i < currentLine.size(); i++) {
             LinePoint point = currentLine.getLinePoint(i);
 
-            int tempX = doubleToScreenX(point.getX());
-            int tempY = doubleToScreenY(point.getY(), min, max);
+            int tempX = (int)screenToDataScaleX.calcReverse(point.getX());
+            screenToDataScaleY.setRange(min, max);
+            int tempY = (int)screenToDataScaleY.calcReverse(point.getY());
 
-            if (tempX >= x - 2 && tempX <= x + 2 && tempY >= y - 2
-                    && tempY <= y + 2) {
+            if (tempX >= x - 3 && tempX <= x + 3 && tempY >= y - 3
+                    && tempY <= y + 3) {
                 return point;
             }
 
@@ -363,9 +375,9 @@ public class LineCanvas extends JComponent implements TableModelListener {
         for (int i = 0; i < currentLine.size(); i++) {
             LinePoint point = currentLine.getLinePoint(i);
 
-            int tempX = doubleToScreenX(point.getX());
+            int tempX = (int)screenToDataScaleX.calcReverse(point.getX());
 
-            if (tempX >= x - 2 && tempX <= x + 2) {
+            if (tempX >= x - 3 && tempX <= x + 3) {
                 return point;
             }
 
@@ -431,9 +443,10 @@ public class LineCanvas extends JComponent implements TableModelListener {
                         // INSERTING NEW LINE POINT
                         if ((e.getModifiersEx() & MouseEvent.ALT_DOWN_MASK) == MouseEvent.ALT_DOWN_MASK) {
                             // ...ON THE EXISTING LINE 
-                            final var time = screenToDoubleX(x);
+                            final var time = screenToDataScaleX.calc(x);
                             final var val = currentLine.getValue(time);
-                            y = doubleToScreenY(val, currentLine.getMin(), currentLine.getMax());
+                            screenToDataScaleY.setRange(currentLine.getMin(), currentLine.getMax());
+                            y = (int)screenToDataScaleY.calcReverse(val);
                         }
 
                         selectedPoint = insertGraphPoint(x, y);
@@ -487,8 +500,8 @@ public class LineCanvas extends JComponent implements TableModelListener {
                     }
                 }
 
-                int topY = 5;
-                int bottomY = getHeight() - 5;
+                int topY = 0;
+                int bottomY = getHeight();
 
                 if (x < leftBoundaryX) {
                     x = leftBoundaryX;
@@ -505,9 +518,10 @@ public class LineCanvas extends JComponent implements TableModelListener {
                 double min = currentLine.getMin();
                 double max = currentLine.getMax();
 
-                double doubleYValue = screenToDoubleY(y, min, max);
+                screenToDataScaleY.setRange(min, max);
+                double doubleYValue = screenToDataScaleY.calc(y);
 
-                selectedPoint.setLocation(screenToDoubleX(x),
+                selectedPoint.setLocation(screenToDataScaleX.calc(x),
                         doubleYValue);
 
                 if (currentLine.isEndPointsLinked()) {
@@ -582,6 +596,28 @@ public class LineCanvas extends JComponent implements TableModelListener {
                 }
 
             });
+            
+            this.add(new AbstractAction("Reset Line") {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (line != null) {
+                    
+//                    var sourceCopy = new Line(line);
+                    
+                    var linePoints = line.getObservableList();
+                    linePoints.clear();
+                    linePoints.add(new LinePoint(0, 0.5));
+                    if (line.isRightBound()) {
+                        linePoints.add(new LinePoint(1.0, 0.5));
+                    }
+                    LineCanvas.this.repaint();
+//                    var endCopy = new Line(line);
+//                    var edit = new LineChangeEdit(line, sourceCopy, endCopy);
+//                    BlueUndoManager.addEdit("score", edit);
+                }
+            }
+            });
+
         }
 
         public void setLine(Line line) {
@@ -612,5 +648,11 @@ public class LineCanvas extends JComponent implements TableModelListener {
         if (currentLine != null) {
             currentLine.removeTableModelListener(lineListener);
         }
+    }
+    
+    
+    /** Add offset and scaling for viewing of X data */
+    public void setDataProjectionX(double rangeStart, double rangeEnd) {
+        dataProjectionX.setRange(rangeStart, rangeEnd);
     }
 }

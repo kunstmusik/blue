@@ -47,6 +47,9 @@ import javax.swing.ToolTipManager;
 import javax.swing.event.MouseInputAdapter;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
+import org.openide.DialogDescriptor;
+import org.openide.DialogDisplayer;
+import org.openide.NotifyDescriptor;
 
 /**
  *
@@ -72,7 +75,7 @@ public class MarkersBar extends JPanel implements PropertyChangeListener, TableM
 
             @Override
             public void mousePressed(MouseEvent e) {
-                
+
                 if (!rootTimeline) {
                     return;
                 }
@@ -304,7 +307,7 @@ public class MarkersBar extends JPanel implements PropertyChangeListener, TableM
 
         public PlayMarker(Marker marker) {
             setOpaque(true);
-            
+
             // Color ORANGE with slight alpha 
             setBackground(new Color(255, 200, 0, 180));
             setForeground(Color.BLACK);
@@ -341,6 +344,31 @@ public class MarkersBar extends JPanel implements PropertyChangeListener, TableM
                             }
                         });
                         popup.show(PlayMarker.this, e.getX(), e.getY());
+                    } else if (e.getClickCount() == 2) {
+                        boolean complete = false;
+
+                        while (!complete) {
+                            NotifyDescriptor.InputLine input
+                                    = new NotifyDescriptor.InputLine("Name: ", "Enter Marker Name");
+                            input.setInputText(marker.getName());
+
+                            Object result = DialogDisplayer.getDefault().notify(input);
+                            if (result != NotifyDescriptor.OK_OPTION) {
+                                return;
+                            }
+
+                            String newName = input.getInputText();
+                            if (newName != null && newName.trim().length() > 0) {
+                                marker.setName(newName);
+                                complete = true;
+                            } else {
+                                DialogDisplayer.getDefault().notify(
+                                        new NotifyDescriptor.Message(
+                                                "Name must be not be empty.",
+                                                NotifyDescriptor.ERROR_MESSAGE)
+                                );
+                            }
+                        }
                     } else {
                         Point p = SwingUtilities.convertPoint(PlayMarker.this, e.getPoint(), getParent());
                         start = p.x;
@@ -354,6 +382,7 @@ public class MarkersBar extends JPanel implements PropertyChangeListener, TableM
                 }
 
                 @Override
+
                 public void mouseReleased(MouseEvent e) {
                     // TODO - add undoability?
                     start = -1;
@@ -361,7 +390,7 @@ public class MarkersBar extends JPanel implements PropertyChangeListener, TableM
 
                 @Override
                 public void mouseDragged(MouseEvent e) {
-                    if(start < 0) {
+                    if (start < 0) {
                         return;
                     }
                     Point p = SwingUtilities.convertPoint(PlayMarker.this, e.getPoint(), getParent());
@@ -384,6 +413,7 @@ public class MarkersBar extends JPanel implements PropertyChangeListener, TableM
             };
 
             this.addMouseListener(mouseListener);
+
             this.addMouseMotionListener(mouseListener);
 
             invalidate();

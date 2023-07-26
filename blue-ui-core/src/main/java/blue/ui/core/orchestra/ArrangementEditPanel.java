@@ -35,6 +35,7 @@ import blue.orchestra.Instrument;
 import blue.settings.GeneralSettings;
 import blue.ui.nbutilities.lazyplugin.LazyPlugin;
 import blue.ui.nbutilities.lazyplugin.LazyPluginFactory;
+import blue.ui.utilities.BlueCommonIcons;
 import blue.ui.utilities.FileChooserManager;
 import blue.ui.utilities.UiUtilities;
 import blue.undo.BlueUndoManager;
@@ -69,13 +70,11 @@ import java.io.PrintWriter;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
-import javafx.stage.FileChooser.ExtensionFilter;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JComponent;
-import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
@@ -90,6 +89,7 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumnModel;
 import javax.swing.table.TableModel;
@@ -127,7 +127,7 @@ public class ArrangementEditPanel extends JComponent
 
     public ArrangementEditPanel() {
 
-        Insets smallButtonInsets = new Insets(0, 3, 0, 3);
+        Insets smallButtonInsets = new Insets(0, 1, 0, 0);
 
         JPanel topPanel = new JPanel(new BorderLayout());
         topPanel.setBorder(BorderFactory.createCompoundBorder(BorderFactory
@@ -136,7 +136,7 @@ public class ArrangementEditPanel extends JComponent
 
         JLabel label = new JLabel("Orchestra");
 
-        final JButton addButton = new JButton("+");
+        final JButton addButton = new JButton(BlueCommonIcons.ADD);
         addButton.setMargin(smallButtonInsets);
         addButton.setToolTipText("Add Instrument");
         addButton.addActionListener((ActionEvent e) -> {
@@ -149,11 +149,6 @@ public class ArrangementEditPanel extends JComponent
         topPanel.add(addButton, BorderLayout.EAST);
 
         arrangementTable = new JTable() {
-
-            @Override
-            public boolean getScrollableTracksViewportHeight() {
-                return getPreferredSize().height < getParent().getHeight();
-            }
 
             @Override
             public String getToolTipText(MouseEvent e) {
@@ -177,6 +172,8 @@ public class ArrangementEditPanel extends JComponent
                 return tip;
             }
         };
+        
+        arrangementTable.setFillsViewportHeight(true);
 
         arrangementTable.addMouseListener(new MouseAdapter() {
 
@@ -226,8 +223,8 @@ public class ArrangementEditPanel extends JComponent
                 .getDefaultDirectory()
                 + File.separator + "default.binstr");
 
-        ExtensionFilter presetFilter = new ExtensionFilter(
-                "blue Instrument File", "*.binstr");
+        var presetFilter = new FileNameExtensionFilter(
+                "blue Instrument File", "binstr");
         final FileChooserManager fcm = FileChooserManager.getDefault();
 
         fcm.addFilter(IMPORT_DIALOG, presetFilter);

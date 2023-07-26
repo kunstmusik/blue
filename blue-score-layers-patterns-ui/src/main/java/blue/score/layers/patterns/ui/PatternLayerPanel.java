@@ -25,6 +25,7 @@ import blue.score.layers.patterns.core.PatternLayer;
 import blue.soundObject.SoundObject;
 import blue.soundObject.TimeBehavior;
 import blue.ui.components.IconFactory;
+import blue.ui.core.clipboard.BlueClipboardUtils;
 import blue.ui.core.score.ScoreController;
 import blue.ui.core.score.layers.soundObject.ScoreObjectEditorTopComponent;
 import java.awt.CardLayout;
@@ -147,14 +148,17 @@ public class PatternLayerPanel extends javax.swing.JPanel
         this.patternLayer = layer;
 
         nameLabel.setText(patternLayer.getName());
+        
+        muteToggleButton.putClientProperty( "FlatLaf.style", "selectedBackground: #b28c00" );
+        soloToggleButton.putClientProperty( "FlatLaf.style", "selectedBackground: #00b200" );
+        
         muteToggleButton.setSelected(patternLayer.isMuted());
         soloToggleButton.setSelected(patternLayer.isSolo());
 
-        muteToggleButton.putClientProperty(
-                "BlueToggleButton.selectColorOverride", Color.ORANGE.darker());
-        soloToggleButton.putClientProperty(
-                "BlueToggleButton.selectColorOverride", Color.GREEN.darker());
         this.patternLayer.addPropertyChangeListener(this);
+        
+        muteToggleButton.setFont(muteToggleButton.getFont().deriveFont(10.0f));
+        soloToggleButton.setFont(muteToggleButton.getFont().deriveFont(10.0f));
     }
 
     protected void editSoundObject() {
@@ -257,12 +261,12 @@ public class PatternLayerPanel extends javax.swing.JPanel
 
         add(jPanel1);
 
-        muteToggleButton.setFont(new java.awt.Font("Dialog", 1, 10)); // NOI18N
         muteToggleButton.setText(org.openide.util.NbBundle.getMessage(PatternLayerPanel.class, "PatternLayerPanel.muteToggleButton.text")); // NOI18N
         muteToggleButton.setFocusPainted(false);
         muteToggleButton.setFocusable(false);
         muteToggleButton.setMargin(new java.awt.Insets(0, 3, 0, 3));
         muteToggleButton.setMaximumSize(new java.awt.Dimension(19, 19));
+        muteToggleButton.setPreferredSize(new java.awt.Dimension(19, 19));
         muteToggleButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 muteToggleButtonActionPerformed(evt);
@@ -270,12 +274,12 @@ public class PatternLayerPanel extends javax.swing.JPanel
         });
         add(muteToggleButton);
 
-        soloToggleButton.setFont(new java.awt.Font("Dialog", 1, 10)); // NOI18N
         soloToggleButton.setText(org.openide.util.NbBundle.getMessage(PatternLayerPanel.class, "PatternLayerPanel.soloToggleButton.text")); // NOI18N
         soloToggleButton.setFocusPainted(false);
         soloToggleButton.setFocusable(false);
         soloToggleButton.setMargin(new java.awt.Insets(0, 3, 0, 3));
         soloToggleButton.setMaximumSize(new java.awt.Dimension(19, 19));
+        soloToggleButton.setPreferredSize(new java.awt.Dimension(19, 19));
         soloToggleButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 soloToggleButtonActionPerformed(evt);
@@ -364,9 +368,8 @@ public class PatternLayerPanel extends javax.swing.JPanel
     }//GEN-LAST:event_editSObjMenuItemActionPerformed
 
     private void setSObjFromBufferMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_setSObjFromBufferMenuItemActionPerformed
-        ScoreController controller = ScoreController.getInstance();
-        ScoreController.ScoreObjectBuffer buffer = controller.getScoreObjectBuffer();
-        if (buffer.scoreObjects.size() == 1) {
+        var buffer = BlueClipboardUtils.getScoreObjectCopy();
+        if (buffer != null && buffer.scoreObjects.size() == 1) {
             ScoreObject scoreObj = buffer.scoreObjects.get(0);
             if(!(scoreObj instanceof SoundObject)) {
                return; 

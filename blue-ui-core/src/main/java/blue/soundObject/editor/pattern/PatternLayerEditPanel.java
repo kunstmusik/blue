@@ -2,12 +2,12 @@ package blue.soundObject.editor.pattern;
 
 import blue.soundObject.PatternObject;
 import blue.soundObject.pattern.Pattern;
+import blue.ui.utilities.BlueCommonIcons;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.awt.Point;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.AdjustmentEvent;
 import java.awt.event.AdjustmentListener;
 import javax.swing.JButton;
@@ -49,13 +49,14 @@ public class PatternLayerEditPanel extends JComponent implements
 
     JTable layerTable;
 
-    JButton buttonUp = new JButton("^");
+    
+    JButton buttonUp = new JButton(BlueCommonIcons.PUSH_UP);
 
-    JButton buttonDown = new JButton("V");
+    JButton buttonDown = new JButton(BlueCommonIcons.PUSH_DOWN);
+    
+    JButton buttonAdd = new JButton(BlueCommonIcons.ADD);
 
-    JButton buttonAdd = new JButton("+");
-
-    JButton buttonRemove = new JButton("-");
+    JButton buttonRemove = new JButton(BlueCommonIcons.REMOVE);
 
     private PatternObject pattern;
 

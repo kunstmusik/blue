@@ -3,7 +3,7 @@ on: push
 
 jobs:
   macos: 
-    runs-on: macOS-latest 
+    runs-on: macos-latest 
     steps:
       - uses: actions/checkout@v1
         with:
@@ -17,8 +17,27 @@ jobs:
 
       - uses: actions/upload-artifact@v2
         with:
-          name: Blue (macOS .app)  
-          path: application/target/blue-macOS-2.8.1.zip 
+          name: Blue (macOS arm64 .app)  
+          path: application/target/blue-macOS-arm64-2.9.0.zip 
+  macos_x86_64: 
+    runs-on: macos-latest 
+    steps:
+      - uses: actions/checkout@v1
+        with:
+          fetch-depth: 1
+      - uses: actions/setup-java@v1
+        with:
+          java-version: '11' 
+
+      - name: Build Blue 
+        env: 
+          BUILD_X86_64: 1 
+        run: mvn -Pgenerate-manual,macOS clean install
+
+      - uses: actions/upload-artifact@v2
+        with:
+          name: Blue (macOS x86_64 .app)  
+          path: application/target/blue-macOS-x86_64-2.9.0.zip 
   linux:
     runs-on: ubuntu-latest 
     steps:
@@ -32,12 +51,12 @@ jobs:
       - name: Build Blue 
         run: mvn -Dmaven.test.skip=true -Pgenerate-manual clean install
 
-      - run: mv application/target/blue-2.8.1.zip blue-linux-2.8.1.zip
+      - run: mv application/target/blue-2.9.0.zip blue-linux-2.9.0.zip
 
       - uses: actions/upload-artifact@v2
         with:
           name: Blue Linux Zip
-          path: blue-linux-2.8.1.zip 
+          path: blue-linux-2.9.0.zip 
 
   windows:
     runs-on: windows-latest 
@@ -52,9 +71,9 @@ jobs:
       - name: Build Blue 
         run: mvn -Pgenerate-manual clean install
 
-      - run: mv application/target/blue-2.8.1.zip blue-windows-2.8.1.zip
+      - run: mv application/target/blue-2.9.0.zip blue-windows-2.9.0.zip
 
       - uses: actions/upload-artifact@v2
         with:
           name: Blue Windows Zip
-          path: blue-windows-2.8.1.zip 
+          path: blue-windows-2.9.0.zip 

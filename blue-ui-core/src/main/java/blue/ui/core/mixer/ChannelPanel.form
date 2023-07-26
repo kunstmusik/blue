@@ -75,6 +75,9 @@
         <Property name="orientation" type="int" value="1"/>
         <Property name="value" type="int" value="0"/>
       </Properties>
+      <Events>
+        <EventHandler event="mouseClicked" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="levelSliderMouseClicked"/>
+      </Events>
     </Component>
     <Component class="javax.swing.JLabel" name="channelNameLabel">
       <Properties>

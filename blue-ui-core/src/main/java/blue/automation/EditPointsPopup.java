@@ -21,6 +21,7 @@ package blue.automation;
 
 import blue.components.lines.Line;
 import blue.components.lines.LineEditorDialog;
+import blue.components.lines.LinePoint;
 import blue.ui.core.score.undo.LineChangeEdit;
 import blue.ui.utilities.FileChooserManager;
 import blue.undo.BlueUndoManager;
@@ -31,7 +32,6 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
-import javafx.stage.FileChooser;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.JMenu;
@@ -39,6 +39,7 @@ import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
 import javax.swing.SwingUtilities;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import org.openide.util.Exceptions;
 
 /**
@@ -46,7 +47,7 @@ import org.openide.util.Exceptions;
  * @author stevenyi
  */
 class EditPointsPopup extends JPopupMenu {
-    
+
     private static final String FILE_BPF_IMPORT = "paramaterLinePanel.bpf_import";
 
     private static final String FILE_BPF_EXPORT = "paramaterLinePanel.bpf_export";
@@ -54,20 +55,21 @@ class EditPointsPopup extends JPopupMenu {
     static {
         FileChooserManager fcm = FileChooserManager.getDefault();
 
-        fcm.addFilter(FILE_BPF_IMPORT, new FileChooser.ExtensionFilter(
-                "Break Point File", "*.bpf"));
+        fcm.addFilter(FILE_BPF_IMPORT, new FileNameExtensionFilter(
+                "Break Point File", "bpf"));
 
-        fcm.addFilter(FILE_BPF_EXPORT, new FileChooser.ExtensionFilter(
-                "Break Point File", "*.bpf"));
+        fcm.addFilter(FILE_BPF_EXPORT, new FileNameExtensionFilter(
+                "Break Point File", "bpf"));
 
         fcm.setDialogTitle(FILE_BPF_IMPORT, "Import BPF File");
         fcm.setDialogTitle(FILE_BPF_EXPORT, "Export BPF File");
     }
-    
+
     Line line = null;
     JMenu selectParameterMenu;
     ActionListener paramItemListener;
     Action editPointsAction;
+    Action resetLine;
     Action importBPF;
     Action exportBPF;
     private final ParameterLinePanel paramLinePanel;
@@ -81,16 +83,38 @@ class EditPointsPopup extends JPopupMenu {
                 Component root = SwingUtilities.getRoot(getInvoker());
                 LineEditorDialog dialog = LineEditorDialog.getInstance(root);
                 dialog.setLine(line);
-                
+
                 final var sourceCopy = new Line(line);
                 dialog.ask();
-                
-                if(!line.equals(sourceCopy)) {
+
+                if (!line.equals(sourceCopy)) {
                     final var edit = new LineChangeEdit(line, sourceCopy, new Line(line));
                     BlueUndoManager.addEdit("score", edit);
                 }
             }
         };
+
+        resetLine = new AbstractAction("Reset Line") {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (line != null) {
+                    
+                    var sourceCopy = new Line(line);
+                    
+                    var linePoints = line.getObservableList();
+                    linePoints.clear();
+                    linePoints.add(new LinePoint(0, 0.5));
+                    if (line.isRightBound()) {
+                        linePoints.add(new LinePoint(1.0, 0.5));
+                    }
+                    
+                    var endCopy = new Line(line);
+                    var edit = new LineChangeEdit(line, sourceCopy, endCopy);
+                    BlueUndoManager.addEdit("score", edit);
+                }
+            }
+        };
+
         paramItemListener = (ActionEvent e) -> {
             JMenuItem menuItem = (JMenuItem) e.getSource();
             Parameter param = (Parameter) menuItem.getClientProperty("param");
@@ -131,10 +155,17 @@ class EditPointsPopup extends JPopupMenu {
                 }
             }
         };
+
         this.add(selectParameterMenu);
+
         this.add(editPointsAction);
+
+        this.add(resetLine);
+
         this.addSeparator();
+
         this.add(importBPF);
+
         this.add(exportBPF);
     }
 
@@ -169,5 +200,5 @@ class EditPointsPopup extends JPopupMenu {
             super.show(invoker, x, y);
         }
     }
-    
+
 }

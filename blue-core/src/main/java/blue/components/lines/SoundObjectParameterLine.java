@@ -70,4 +70,11 @@ public class SoundObjectParameterLine extends Line {
     public double getSourceDuration(){
         return source.getSubjectiveDuration();
     }
+
+    @Override
+    public String toString() {
+        return getVarName();
+    }
+    
+    
 }

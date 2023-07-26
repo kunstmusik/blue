@@ -7,6 +7,7 @@ ifadeInType = p8
 ifadeInTime = p9
 ifadeOutType = p10
 ifadeOutTime = p11
+iwrap = p12
 
 ifileStart = istart + ioffset
 
@@ -16,7 +17,7 @@ aenv, ainv blue_fade ioffset, iclipDur, ifadeInTime, ifadeInType, ifadeOutTime, 
 
 if (ichannels == 1) then
   
-    a0  diskin2 Saudio_file, 1, ifileStart
+    a0  diskin2 Saudio_file, 1, ifileStart, iwrap
 
     if (aenv[0] == 1 && aenv[ksmps-1] == 1) then
         {0} = a0
@@ -27,7 +28,7 @@ if (ichannels == 1) then
 
 elseif (ichannels == 2) then
 
-    a0, a1  diskin2 Saudio_file, 1, ifileStart
+    a0, a1  diskin2 Saudio_file, 1, ifileStart, iwrap
 
     if (aenv[0] == 1 && aenv[ksmps-1] == 1) then
         {0} = a0

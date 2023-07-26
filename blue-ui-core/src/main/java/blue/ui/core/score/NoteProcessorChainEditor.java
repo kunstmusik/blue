@@ -27,6 +27,7 @@ import blue.ui.core.score.noteProcessorChain.NoteProcessorChainTable;
 import blue.ui.core.score.noteProcessorChain.NoteProcessorChainTableModel;
 import blue.ui.nbutilities.lazyplugin.LazyPlugin;
 import blue.ui.nbutilities.lazyplugin.LazyPluginFactory;
+import blue.ui.utilities.BlueCommonIcons;
 import blue.ui.utilities.UiUtilities;
 import blue.utility.ObjectUtilities;
 import java.awt.BorderLayout;
@@ -56,6 +57,8 @@ import javax.swing.border.Border;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
+import jiconfont.icons.google_material_design_icons.GoogleMaterialDesignIcons;
+import jiconfont.swing.IconFontSwing;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 import org.openide.util.Exceptions;
@@ -75,13 +78,13 @@ public class NoteProcessorChainEditor extends JComponent {
 
     NoteProcessorChainTable npcTable;
 
-    JButton addButton = new JButton();
+    JButton addButton = new JButton(BlueCommonIcons.ADD);
 
-    JButton removeButton = new JButton();
+    JButton removeButton = new JButton(BlueCommonIcons.REMOVE);
 
-    JButton pushUpButton = new JButton();
+    JButton pushUpButton = new JButton(BlueCommonIcons.PUSH_UP);
 
-    JButton pushDownButton = new JButton();
+    JButton pushDownButton = new JButton(BlueCommonIcons.PUSH_DOWN);
 
     JPanel topPanel;
 
@@ -145,21 +148,17 @@ public class NoteProcessorChainEditor extends JComponent {
 
         addButton.setToolTipText(BlueSystem
                 .getString("soundObjectProperties.noteProcessors.add"));
-        addButton.setText("+");
         addButton.addActionListener(this::showNoteProcessorPopup);
         removeButton.setToolTipText(BlueSystem
                 .getString("soundObjectProperties.noteProcessors.remove"));
-        removeButton.setText("-");
         removeButton.addActionListener((ActionEvent e) -> {
             removeCurrentNoteProcessor();
         });
         pushUpButton.setToolTipText(BlueSystem
                 .getString("soundObjectProperties.noteProcessors.pushUp"));
-        pushUpButton.setText("^");
         pushUpButton.addActionListener(this::pushUpNoteProcessor);
         pushDownButton.setToolTipText(BlueSystem
                 .getString("soundObjectProperties.noteProcessors.pushDown"));
-        pushDownButton.setText("V");
         pushDownButton.addActionListener(this::pushDownNoteProcessor);
 
         noteProcessorEditPanel.setLayout(noteProcessorCardLayout);

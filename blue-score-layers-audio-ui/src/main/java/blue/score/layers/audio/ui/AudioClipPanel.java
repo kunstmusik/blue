@@ -100,6 +100,10 @@ public class AudioClipPanel extends JPanel
         repaint();
     };
 
+    ChangeListener<Boolean> loopingListener = (obs, o, n) -> {
+        repaint();
+    };
+
     MouseAdapter releaseOutsideAdapter = new MouseAdapter() {
         @Override
         public void mouseReleased(MouseEvent e) {
@@ -122,7 +126,7 @@ public class AudioClipPanel extends JPanel
         public void mouseEntered(MouseEvent e) {
             Color bgColor;
             if (selected) {
-                bgColor = selectedFontColor;
+                bgColor = Color.WHITE;
             } else {
                 bgColor = audioClip.getBackgroundColor();
 
@@ -185,8 +189,19 @@ public class AudioClipPanel extends JPanel
                 } else {
                     double newTime = initialStartTime
                             - ((double) xDiff / timeState.getPixelSecond());
-                    newTime = Math.max(0.0f, newTime);
-                    newTime = Math.min(audioClip.getAudioDuration() - audioClip.getDuration(), newTime);
+                    double audioDuration = audioClip.getAudioDuration();
+
+                    if (audioClip.isLooping()) {
+                        while (newTime < 0) {
+                            newTime += audioDuration;
+                        }
+                        newTime %= audioDuration;
+
+                    } else {
+                        newTime = Math.max(0.0f, newTime);
+                        newTime = Math.min(audioDuration - audioClip.getDuration(), newTime);
+                    }
+                    System.out.println("new time: " + newTime);
                     audioClip.setFileStartTime(newTime);
                 }
 
@@ -295,6 +310,7 @@ public class AudioClipPanel extends JPanel
         audioClip.fadeInTypeProperty().addListener(fadeTypeListener);
         audioClip.fadeOutProperty().addListener(fadeListener);
         audioClip.fadeOutTypeProperty().addListener(fadeTypeListener);
+        audioClip.loopingProperty().addListener(loopingListener);
         timeState.addPropertyChangeListener(this);
 
         ScoreTopComponent scoreTopComponent = (ScoreTopComponent) WindowManager.getDefault().findTopComponent(
@@ -321,6 +337,7 @@ public class AudioClipPanel extends JPanel
         audioClip.fadeInTypeProperty().removeListener(fadeTypeListener);
         audioClip.fadeOutProperty().removeListener(fadeListener);
         audioClip.fadeOutTypeProperty().removeListener(fadeTypeListener);
+        audioClip.loopingProperty().removeListener(loopingListener);
 
         timeState.removePropertyChangeListener(this);
         result.removeLookupListener(this);
@@ -430,7 +447,7 @@ public class AudioClipPanel extends JPanel
 
         g.setPaint(BlueGradientFactory.getGradientPaint(bgColor));
 
-        g.fillRect(0, 2, w, h - 4);
+        g.fillRect(0, 1, w, h - 2);
 
         // DRAW WAVEFORM
         g.setColor(waveColor);
@@ -439,7 +456,7 @@ public class AudioClipPanel extends JPanel
 
         int audioFileStart = (int) (audioClip.getFileStartTime() * timeState.getPixelSecond());
         AudioWaveformUI.paintWaveForm(g, this.getHeight() - 4, waveData,
-                audioFileStart);
+                audioFileStart, audioClip.isLooping());
 
         // paint fades
         if (audioClip.getFadeIn() > 0.0f) {
@@ -463,28 +480,27 @@ public class AudioClipPanel extends JPanel
 
         g.translate(-1, -2);
 
-        
         if (isSelected()) {
             g.setColor(Color.BLACK);
             g.fillRect(0, 2, w, 18);
         }
-        
+
         g.setColor(fontColor);
         g.drawString(audioClip.getName(), 5, 15);
 
         // DRAW BORDERS
         g.setColor(border1);
-        g.drawLine(0, 2, w, 2);
-        g.drawLine(0, 2, 0, h - 2);
-
-        g.setColor(border2);
-        g.drawLine(0, h - 2, w, h - 2);
-        g.drawLine(w - 1, h - 2, w - 1, 2);
-
-        if (isSelected()) {
-            g.setColor(new Color(255, 255, 255, 196));
-            g.drawRect(1, 3, w - 3, h - 6);
-        }
+        g.drawRect(0, 1, w, h - 2);
+//        g.drawLine(0, 2, 0, h - 2);
+//
+//        g.setColor(border2);
+//        g.drawLine(0, h - 2, w, h - 2);
+//        g.drawLine(w - 1, h - 2, w - 1, 2);
+//
+//        if (isSelected()) {
+//            g.setColor(new Color(255, 255, 255, 196));
+//            g.drawRect(1, 3, w - 3, h - 6);
+//        }
     }
 
     @Override

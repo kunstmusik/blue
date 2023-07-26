@@ -31,6 +31,7 @@ import blue.soundObject.TrackerObject;
 import blue.soundObject.editor.tracker.TracksEditor;
 import blue.soundObject.tracker.Track;
 import blue.soundObject.tracker.TrackList;
+import blue.ui.utilities.BlueCommonIcons;
 import blue.utility.GUI;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
@@ -102,7 +103,7 @@ public class TrackerEditor extends ScoreObjectEditor {
 
         // panel.setLayout(new FlowLayout(FlowLayout.LEADING));
 
-        JButton addButton = new JButton("+");
+        JButton addButton = new JButton(BlueCommonIcons.ADD);
         addButton.addActionListener((ActionEvent e) -> {
             if (tracker != null) {
                 Track t = new Track();
@@ -118,7 +119,7 @@ public class TrackerEditor extends ScoreObjectEditor {
         addButton.setFocusPainted(false);
 
         JLabel label = new JLabel("Tracker");
-        label.setFont(new Font("Dialog", Font.BOLD, 16));
+        label.setFont(label.getFont().deriveFont(Font.BOLD, 16));
 
         JButton button = new JButton("Test");
         button.addActionListener((ActionEvent e) -> {

@@ -67,8 +67,10 @@ import org.openide.util.lookup.InstanceContent;
 public class AudioLayersPanel extends JLayeredPane implements LayerGroupListener,
         PropertyChangeListener, LayerGroupPanel<AudioLayerGroup>, AudioLayerListener {
 
-    private static Font renderFont = new Font("Dialog", Font.BOLD, 12);
-    private static final Color PATTERN_COLOR = new Color(198, 226, 255);
+    private static final Color HLINE_COLOR = Color.DARK_GRAY.darker().darker();
+    private static final Color VLINE_COLOR = Color.DARK_GRAY;
+    private static Font renderFont = new Font("Roboto", Font.BOLD, 12);
+
     private AudioLayerGroup layerGroup;
     private final TimeState timeState;
     private PropertyChangeListener heightListener;
@@ -311,7 +313,7 @@ public class AudioLayersPanel extends JLayeredPane implements LayerGroupListener
         Component[] components = getComponents();
 
         for (Component c : components) {
-            if(c instanceof AudioClipPanel) {
+            if (c instanceof AudioClipPanel) {
                 AudioClipPanel component = (AudioClipPanel) c;
                 Rectangle r = component.getBounds();
 
@@ -329,7 +331,7 @@ public class AudioLayersPanel extends JLayeredPane implements LayerGroupListener
         g.fillRect(0, 0, width, height);
 
         int y = 0;
-        g.setColor(Color.DARK_GRAY);
+        g.setColor(HLINE_COLOR);
         g.drawLine(0, 0, width, 0);
 
         for (AudioLayer layer : layerGroup) {
@@ -346,6 +348,8 @@ public class AudioLayersPanel extends JLayeredPane implements LayerGroupListener
                 return;
             }
 
+            g.setColor(VLINE_COLOR);
+            
             double snapValue = timeState.getSnapValue();
             int pixelSecond = timeState.getPixelSecond();
 

@@ -31,10 +31,10 @@ import java.io.File;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Vector;
-import javafx.stage.FileChooser.ExtensionFilter;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import org.openide.windows.WindowManager;
 
 /**
@@ -131,7 +131,7 @@ public class ScaleEditor extends JComponent {
         FileChooserManager.getDefault().setDialogTitle(ScaleSelectionPanel.FILE_CHOOSER_ID, BlueSystem
                 .getString("pianoRoll.selectScalaFile"));
         FileChooserManager.getDefault().addFilter(ScaleSelectionPanel.FILE_CHOOSER_ID, 
-                new ExtensionFilter("Scala File (*.scl)", "*.scl"));
+                new FileNameExtensionFilter("Scala File (*.scl)", "scl"));
 
         // SET DEFAULT DIR
         String fileName = BlueSystem.getUserConfigurationDirectory();

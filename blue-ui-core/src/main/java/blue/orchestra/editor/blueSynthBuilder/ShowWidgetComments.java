@@ -19,10 +19,8 @@
  */
 package blue.orchestra.editor.blueSynthBuilder;
 
-import blue.jfx.BlueFX;
+import blue.ui.utilities.UiUtilities;
 import java.awt.event.ActionEvent;
-import java.awt.event.ComponentEvent;
-import java.awt.event.ComponentListener;
 import javax.swing.AbstractAction;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JMenuItem;
@@ -66,7 +64,7 @@ public final class ShowWidgetComments extends AbstractAction implements Presente
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        BlueFX.runOnFXThread(() -> {
+        UiUtilities.invokeOnSwingThread(() -> {
             prefs.setShowWidgetComments(!prefs.getShowWidgetComments());
         });
     }

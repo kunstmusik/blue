@@ -20,10 +20,13 @@ package blue.orchestra.blueSynthBuilder;
 
 import blue.automation.ParameterList;
 import blue.mixer.Channel;
+import blue.utility.ColorUtils;
 import blue.utility.ObjectUtilities;
 import blue.utility.XMLUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
+import java.awt.Color;
+import java.awt.Font;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -40,7 +43,6 @@ import javafx.beans.property.StringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableSet;
 import javafx.collections.SetChangeListener;
-import javafx.scene.paint.Color;
 
 /**
  *
@@ -52,7 +54,7 @@ public class BSBGroup extends BSBObject implements Iterable<BSBObject>, UniqueNa
     private transient ObservableSet<BSBObject> allSet;
     private final StringProperty groupName = new SimpleStringProperty("Group");
     private final ObjectProperty<Color> backgroundColor =
-            new SimpleObjectProperty<>(new Color(0,0,0,.2));
+            new SimpleObjectProperty<>(new Color(0,0,0,.2f));
     private final ObjectProperty<Color> borderColor =
             new SimpleObjectProperty<>(Color.BLACK);
     private final ObjectProperty<Color> labelTextColor =
@@ -61,6 +63,8 @@ public class BSBGroup extends BSBObject implements Iterable<BSBObject>, UniqueNa
 
     private final IntegerProperty width = new SimpleIntegerProperty(20);
     private final IntegerProperty height = new SimpleIntegerProperty(20);
+    
+    ObjectProperty<Font> font = new SimpleObjectProperty<>(new Font("Roboto", Font.PLAIN, 12));
 
     private final Set<BSBObject> backingSet = new HashSet<BSBObject>() {
         @Override
@@ -147,6 +151,10 @@ public class BSBGroup extends BSBObject implements Iterable<BSBObject>, UniqueNa
         setTitleEnabled(group.isTitleEnabled());
         setWidth(group.getWidth());
         setHeight(group.getHeight());
+        
+        Font f = new Font(group.getFont().getAttributes());
+        setFont(f);
+        
         // FIXME - double check that not sharing UNM is correct (UNM 
 //        unm = group.unm;
 
@@ -202,6 +210,18 @@ public class BSBGroup extends BSBObject implements Iterable<BSBObject>, UniqueNa
 
     public final BooleanProperty titleEnabledProperty(){
         return titleEnabled;
+    }
+    
+    public final void setFont(Font f) {
+        font.set(f);
+    }
+
+    public final Font getFont() {
+        return font.get();
+    }
+
+    public final ObjectProperty<Font> fontProperty() {
+        return font;
     }
      
 
@@ -268,13 +288,13 @@ public class BSBGroup extends BSBObject implements Iterable<BSBObject>, UniqueNa
                     bsbGroup.setGroupName(node.getTextString());
                     break;
                 case "backgroundColor":
-                    bsbGroup.setBackgroundColor(Color.valueOf(node.getTextString()));
+                    bsbGroup.setBackgroundColor(ColorUtils.decode(node.getTextString()));
                     break;
                 case "borderColor":
-                    bsbGroup.setBorderColor(Color.valueOf(node.getTextString()));
+                    bsbGroup.setBorderColor(ColorUtils.decode(node.getTextString()));
                     break;
                 case "labelTextColor":
-                    bsbGroup.setLabelTextColor(Color.valueOf(node.getTextString()));
+                    bsbGroup.setLabelTextColor(ColorUtils.decode(node.getTextString()));
                     break;
                 case "bsbObject":
                     Object obj = ObjectUtilities.loadFromXML(node);
@@ -290,6 +310,9 @@ public class BSBGroup extends BSBObject implements Iterable<BSBObject>, UniqueNa
                 case "height":
                     bsbGroup.setHeight(Integer.parseInt(node.getTextString()));
                     break;
+                case "font":
+                       bsbGroup.setFont(BSBFontUtil.loadFromXML(data.getElement("font")));
+                       break;
             }
         }
         return bsbGroup;
@@ -300,13 +323,15 @@ public class BSBGroup extends BSBObject implements Iterable<BSBObject>, UniqueNa
         Element retVal = getBasicXML(this);
 
         retVal.addElement("groupName").setText(getGroupName());
-        retVal.addElement("backgroundColor").setText(getBackgroundColor().toString());
-        retVal.addElement("borderColor").setText(getBorderColor().toString());
-        retVal.addElement("labelTextColor").setText(getLabelTextColor().toString());
+        retVal.addElement("backgroundColor").setText(ColorUtils.encode(getBackgroundColor()));
+        retVal.addElement("borderColor").setText(ColorUtils.encode(getBorderColor()));
+        retVal.addElement("labelTextColor").setText(ColorUtils.encode(getLabelTextColor()));
         retVal.addElement(XMLUtilities.writeBoolean("titleEnabled",
                 isTitleEnabled()));
         retVal.addElement("width").setText(Integer.toString(getWidth()));
         retVal.addElement("height").setText(Integer.toString(getHeight()));
+        retVal.addElement(BSBFontUtil.saveAsXML(getFont()));
+
 
 //        retVal.setAttribute("editEnabled", Boolean.toString(isEditEnabled()));
         for (BSBObject bsbObj : interfaceItems) {

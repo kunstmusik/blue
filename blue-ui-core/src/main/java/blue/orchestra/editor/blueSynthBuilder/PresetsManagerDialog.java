@@ -29,7 +29,6 @@ import blue.settings.GeneralSettings;
 import blue.ui.utilities.FileChooserManager;
 import blue.ui.utilities.UiUtilities;
 import blue.utility.GUI;
-import blue.utility.ObjectUtilities;
 import electric.xml.Document;
 import electric.xml.Element;
 import electric.xml.ParseException;
@@ -38,7 +37,6 @@ import java.awt.Dimension;
 import java.awt.Frame;
 import java.awt.dnd.DnDConstants;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
@@ -46,7 +44,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.List;
-import javafx.stage.FileChooser.ExtensionFilter;
 import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JMenuItem;
@@ -55,7 +52,7 @@ import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.JTree;
-import javax.swing.filechooser.FileFilter;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 
@@ -360,8 +357,8 @@ public class PresetsManagerDialog extends JDialog implements
                     .getDefaultDirectory()
                     + File.separator + "default.preset");
 
-            ExtensionFilter presetFilter = new ExtensionFilter(
-                    "Preset file", "*.preset");
+            var presetFilter = new FileNameExtensionFilter(
+                    "Preset file", "preset");
 
             FileChooserManager.getDefault().addFilter(IMPORT_DIALOG, presetFilter);
             FileChooserManager.getDefault().setDialogTitle(IMPORT_DIALOG, "Import Presets");
@@ -393,7 +390,7 @@ public class PresetsManagerDialog extends JDialog implements
             remove.setEnabled(userObj != model.getRoot());
             cut.setEnabled(userObj != model.getRoot());
 
-            super.show(dialog, x, y);
+            super.show(tree, x, y);
         }
     }
 

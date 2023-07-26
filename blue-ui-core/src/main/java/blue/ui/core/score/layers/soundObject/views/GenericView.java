@@ -29,6 +29,7 @@ import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.RenderingHints;
 
 /**
  *
@@ -44,6 +45,8 @@ public class GenericView extends SoundObjectView {
         super.paintComponent(graphics);
 
         Graphics2D g = (Graphics2D) graphics;
+        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+                RenderingHints.VALUE_ANTIALIAS_ON);
 
         int w = getWidth();
         int h = getHeight();
@@ -74,26 +77,23 @@ public class GenericView extends SoundObjectView {
 
         g.setPaint(BlueGradientFactory.getGradientPaint(bgColor));
 
-        g.fillRect(0, 2, w, h - 4);
+        g.fillRect(0, 1, w, h - 2);
 
         if (isSelected()) {
             g.setColor(bgColor.darker().darker().darker().darker());
             g.fillRect(0, 2, w, 18);
         }
 
-        g.setColor(border1);
-        g.drawLine(0, 2, w, 2);
-        g.drawLine(0, 2, 0, h - 2);
-
-        g.setColor(border2);
-        g.drawLine(0, h - 2, w, h - 2);
-        g.drawLine(w - 1, h - 2, w - 1, 2);
-
-        if (isSelected()) {
-            g.setColor(new Color(255, 255, 255, 196));
-            g.drawRect(1, 3, w - 3, h - 6);
-        }
-
+//        g.drawLine(0, 1, w-1, 1);
+//        g.drawLine(0, 1, 0, h - 2);
+//
+//        g.setColor(border2);
+//        g.drawLine(0, h - 2, w-1, h - 2);
+//        g.drawLine(w - 1, h - 2, w - 1, 2);
+//        if (isSelected()) {
+//            g.setColor(new Color(255, 255, 255, 196));
+//            g.drawRect(1, 3, w - 3, h - 6);
+//        }
         // paint repeat
         double repeatPoint = sObj.getRepeatPoint();
         var tb = sObj.getTimeBehavior();
@@ -148,6 +148,10 @@ public class GenericView extends SoundObjectView {
                 g.drawString(parts[i], labelOffset, y);
             }
         }
+
+        // DRAW BORDER
+        g.setColor(border1);
+        g.drawRect(0, 1, w - 1, h - 2);
     }
 
 }

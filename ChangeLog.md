@@ -1,5 +1,5 @@
 # Blue
-Copyright (c) 2001-2020 Steven Yi - All Rights Reserved
+Copyright (c) 2001-2023 Steven Yi - All Rights Reserved
 
 Email: stevenyi@gmail.com
 Web: https://blue.kunstmusik.com
@@ -10,6 +10,59 @@ certain conditions.  Please see the accompanying license.txt file for more
 information.
 
 # CHANGE LOG
+
+## [2.9.0] - 2023-07-26
+
+### NEW
+
+* macOS and Windows builds now include embedded Java JDK
+
+* MIDI Input Panel: Added AmpDBFS mode where amplitude is scaled to 0-1 range. 
+
+### UPDATED 
+
+* Removed JavaFX: BlueSynthBuilder and Effects remimplemented to Swing GUI 
+  toolkit.
+
+* Redesigned SoundObjectLibrary window: supports drag and drop reorganization, 
+  additional popup menu options for editing and organization
+   
+* Issue #639: Added JMask to Pattern Layers
+
+* JavaScript objects: Replaced Rhino processor with graal.js 
+
+* Issue #625: Implemented resizing multiple selected objects and undo 
+  functionality
+
+* Issue #615: Implemented Looping option for AudioClips and allow resizing from
+  sides beyond duration of audio clip when looping is enabled. 
+
+* Issue #665: Implemented guidelines for start/end boundary of selected objects
+  for easier visual alignment of objects when moving/resizing
+
+* Issue #696: Added "Reset Line" popup menu option to BSB LineObject editors 
+
+* Issue #697: Added Test Button to slide in right panel for previewing score 
+  generation from object.
+
+* PatternObject:
+
+  * now defaults to time behavior Repeat.
+
+  * Updated UI style
+  
+  * Fixed to save pattern when modifying number of beats. (Still clears if 
+    number of subdivisions changes as there isn't a clear mapping.)
+
+* Issue #703: Add ability to edit font for BSBGroup panel title label
+
+* Issue #672: Reimplemented keyboard arrow movement of selected BSB Objects
+
+* Issue #502: Implemented different velocities on Virtual Keyboard keys by 
+  hitting different parts of the key (softer towards top, louder towards bottom)
+
+* Issue #721: Double click marker to edit marker name
+
 
 ## [2.8.1] - 2020-12-29
 

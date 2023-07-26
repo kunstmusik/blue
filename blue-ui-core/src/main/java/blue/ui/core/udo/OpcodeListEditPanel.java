@@ -25,15 +25,15 @@ import blue.settings.GeneralSettings;
 import blue.udo.OpcodeList;
 import blue.udo.UDOCategory;
 import blue.udo.UserDefinedOpcode;
+import blue.ui.utilities.BlueCommonIcons;
 import blue.ui.utilities.FileChooserManager;
 import blue.ui.utilities.UiUtilities;
-import blue.utility.CSDUtility;
 import blue.utility.TextUtilities;
 import blue.utility.UDOUtilities;
 import electric.xml.Document;
 import electric.xml.Element;
-import electric.xml.ParseException;
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Insets;
 import java.awt.Point;
@@ -59,7 +59,6 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
-import javafx.stage.FileChooser;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JComponent;
@@ -78,6 +77,9 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
+import javax.swing.filechooser.FileNameExtensionFilter;
+import jiconfont.icons.google_material_design_icons.GoogleMaterialDesignIcons;
+import jiconfont.swing.IconFontSwing;
 import org.openide.util.Exceptions;
 
 /**
@@ -112,14 +114,16 @@ public class OpcodeListEditPanel extends JComponent {
 
         table.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
-        Insets smallButtonInsets = new Insets(0, 3, 0, 3);
+        Insets smallButtonInsets = new Insets(0, 1, 0, 0);
 
         label = new JLabel("User-Defined Opcodes");
         label.setBorder(BorderFactory.createCompoundBorder(BorderFactory
                 .createBevelBorder(BevelBorder.RAISED), new EmptyBorder(3, 3,
                 3, 3)));
 
-        JButton addButton = new JButton("+");
+        
+        
+        JButton addButton = new JButton(BlueCommonIcons.ADD);
         addButton.setMargin(smallButtonInsets);
         addButton.setToolTipText("Add User-Defined Opcode");
         addButton.addActionListener((ActionEvent e) -> {
@@ -135,8 +139,8 @@ public class OpcodeListEditPanel extends JComponent {
         importPopup.add(importBlueUDO);
         importPopup.add(importCsoundUDO);
 
-        JButton importButton = new JButton("I");
-        importButton.setMargin(new Insets(1, 6, 1, 7));
+        JButton importButton = new JButton(IconFontSwing.buildIcon(GoogleMaterialDesignIcons.FILE_UPLOAD, 14, Color.WHITE));
+        importButton.setMargin(smallButtonInsets);
         importButton
                 .setToolTipText("Import User-Defined Opcode");
         importButton.addActionListener((ActionEvent e) -> {
@@ -144,16 +148,16 @@ public class OpcodeListEditPanel extends JComponent {
                     importButton.getHeight());
         });
 
-        JButton removeButton = new JButton("-");
-        removeButton.setMargin(new Insets(1, 4, 1, 5));
+        JButton removeButton = new JButton(BlueCommonIcons.REMOVE);
+        removeButton.setMargin(smallButtonInsets);
         removeButton.setToolTipText("Remove User-Defined Opcode");
         removeButton.addActionListener((ActionEvent e) -> {
             removeUDO();
         });
 
-        JButton pushUpButton = new JButton("^");
+        JButton pushUpButton = new JButton(BlueCommonIcons.PUSH_UP);
         pushUpButton.setToolTipText("Push Up");
-        pushUpButton.setMargin(new Insets(4, 4, 0, 3));
+        pushUpButton.setMargin(smallButtonInsets);
         pushUpButton.addActionListener((ActionEvent e) -> {
             int[] rows = table.getSelectedRows();
             if (rows.length > 0 && rows[0] > 0) {
@@ -164,8 +168,8 @@ public class OpcodeListEditPanel extends JComponent {
             }
         });
 
-        JButton pushDownButton = new JButton("V");
-        pushDownButton.setMargin(new Insets(2, 3, 0, 4));
+        JButton pushDownButton = new JButton(BlueCommonIcons.PUSH_DOWN);
+        pushDownButton.setMargin(smallButtonInsets);
         pushDownButton.setToolTipText("Push Down");
         pushDownButton.addActionListener((ActionEvent e) -> {
             int[] rows = table.getSelectedRows();
@@ -220,12 +224,12 @@ public class OpcodeListEditPanel extends JComponent {
         final FileChooserManager fcm = FileChooserManager.getDefault();
 
         fcm.addFilter(IMPORT_BLUE_UDO_DIALOG,
-                new FileChooser.ExtensionFilter("Blue UDO File", "*.blueUDO"));
+                new FileNameExtensionFilter("Blue UDO File", "blueUDO"));
         fcm.setDialogTitle(IMPORT_BLUE_UDO_DIALOG, "Import Blue User-Defined Opcode");
         fcm.setSelectedFile(IMPORT_BLUE_UDO_DIALOG, defaultFile);
 
         fcm.addFilter(IMPORT_CSOUND_UDO_DIALOG,
-                new FileChooser.ExtensionFilter("Csound File",  "*.udo", "*.orc", "*.csd"));
+                new FileNameExtensionFilter("Csound File",  "udo", "orc", "csd"));
         fcm.setDialogTitle(IMPORT_CSOUND_UDO_DIALOG, "Import Csound User-Defined Opcodes");
         fcm.setSelectedFile(IMPORT_CSOUND_UDO_DIALOG, defaultCsoundUdoFile);
     }
@@ -598,12 +602,12 @@ public class OpcodeListEditPanel extends JComponent {
             final FileChooserManager fcm = FileChooserManager.getDefault();
 
             fcm.addFilter(EXPORT_BLUE_UDO_DIALOG,
-                    new FileChooser.ExtensionFilter("Blue UDO File", "*.blueUDO"));
+                    new FileNameExtensionFilter("Blue UDO File", "blueUDO"));
             fcm.setDialogTitle(EXPORT_BLUE_UDO_DIALOG, "Export Blue User-Defined Opcode");
             fcm.setSelectedFile(EXPORT_BLUE_UDO_DIALOG, defaultFile);
 
             fcm.addFilter(EXPORT_CSOUND_UDO_DIALOG,
-                    new FileChooser.ExtensionFilter("Csound UDO File", "*.udo"));
+                    new FileNameExtensionFilter("Csound UDO File", "udo", "inc"));
             fcm.setDialogTitle(EXPORT_CSOUND_UDO_DIALOG, "Export Csound User-Defined Opcode");
             fcm.setSelectedFile(EXPORT_CSOUND_UDO_DIALOG, defaultCsoundUdoFile);
         }

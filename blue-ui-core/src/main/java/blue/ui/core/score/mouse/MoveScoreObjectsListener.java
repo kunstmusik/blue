@@ -150,8 +150,10 @@ public class MoveScoreObjectsListener extends BlueMouseAdapter {
         ScoreController scoreController = ScoreController.getInstance();
         ScorePath scorePath = ScoreController.getInstance().getScorePath();
         List<Layer> allLayers = scorePath.getAllLayers();
-
+        
         e.consume();
+        
+        ScoreController.getInstance().getScoreObjectsMovingProperty().set(true);
 
         if (initialDrag) {
             initialDrag = false;
@@ -225,6 +227,8 @@ public class MoveScoreObjectsListener extends BlueMouseAdapter {
 
         e.consume();
 
+        ScoreController.getInstance().getScoreObjectsMovingProperty().set(false);
+        
         if (!initialDrag) {
             List<Layer> allLayers = ScoreController.getInstance().getScorePath().getAllLayers();
 

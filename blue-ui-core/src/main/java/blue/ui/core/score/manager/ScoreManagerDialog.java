@@ -25,12 +25,16 @@ import blue.score.layers.LayerGroup;
 import blue.score.layers.LayerGroupProvider;
 import blue.score.layers.LayerGroupProviderManager;
 import blue.ui.core.score.layers.LayerGroupUIProviderManager;
+import blue.ui.utilities.BlueCommonIcons;
+import java.awt.Color;
 import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumn;
+import jiconfont.icons.google_material_design_icons.GoogleMaterialDesignIcons;
+import jiconfont.swing.IconFontSwing;
 import org.openide.DialogDescriptor;
 import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
@@ -44,8 +48,6 @@ public class ScoreManagerDialog extends javax.swing.JDialog {
 
     private Score score;
     
-    private JPopupMenu addLayerGroupMenu = null;
-
     /**
      * Creates new form ScoreManagerDialog
      */
@@ -58,6 +60,24 @@ public class ScoreManagerDialog extends javax.swing.JDialog {
         col.setMaxWidth(50);
         col.setMinWidth(50);
         col.setPreferredWidth(50);
+        
+        lGroupAddButton.setText("");
+        lGroupAddButton.setIcon(BlueCommonIcons.ADD);
+        lGroupMinusButton.setText("");
+        lGroupMinusButton.setIcon(BlueCommonIcons.REMOVE);
+        lGroupPushUpButton.setText("");
+        lGroupPushUpButton.setIcon(BlueCommonIcons.PUSH_UP);
+        lGroupPushDownButton.setText("");
+        lGroupPushDownButton.setIcon(BlueCommonIcons.PUSH_DOWN);
+        
+        layersAddButton.setText("");
+        layersAddButton.setIcon(BlueCommonIcons.ADD);
+        layersMinusButton.setText("");
+        layersMinusButton.setIcon(BlueCommonIcons.REMOVE);
+        layersPushUpButton.setText("");
+        layersPushUpButton.setIcon(BlueCommonIcons.PUSH_UP);
+        layersPushDownButton.setText("");
+        layersPushDownButton.setIcon(BlueCommonIcons.PUSH_DOWN);
     }
     
     public void setScore(Score score) {
@@ -482,8 +502,7 @@ public class ScoreManagerDialog extends javax.swing.JDialog {
     }
     
     private JPopupMenu getAddLayerGroupMenu() {
-        if(addLayerGroupMenu == null) {
-            addLayerGroupMenu = new JPopupMenu();
+        var addLayerGroupMenu = new JPopupMenu();
             
             ActionListener listener = (ActionEvent e) -> {
                 JMenuItem menuItem = (JMenuItem)e.getSource();
@@ -512,7 +531,6 @@ public class ScoreManagerDialog extends javax.swing.JDialog {
                 item.addActionListener(listener);
                 addLayerGroupMenu.add(item);
             }
-        }
         
         return addLayerGroupMenu;
     }

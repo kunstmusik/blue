@@ -164,6 +164,13 @@ public class BSBHSlider extends AutomatableBSBObject implements
         return valueDisplayEnabled;
     }
 
+    private static double parseNum(String string, int version) {
+        if (version < 2) {
+            return Double.parseDouble(string);
+        }
+        return Double.parseDouble(string);
+    }
+    
     public static BSBObject loadFromXML(Element data) {
         BSBHSlider slider = new BSBHSlider();
         double minVal = 0.0;
@@ -183,10 +190,10 @@ public class BSBHSlider extends AutomatableBSBObject implements
             final String nodeText = node.getTextString();
             switch (nodeName) {
                 case "minimum":
-                    minVal = Double.parseDouble(nodeText);
+                    minVal = parseNum(nodeText, version);
                     break;
                 case "maximum":
-                    maxVal = Double.parseDouble(nodeText);
+                    maxVal = parseNum(nodeText, version);
                     break;
                 case "resolution":
                     res = new BigDecimal(Double.parseDouble(nodeText))

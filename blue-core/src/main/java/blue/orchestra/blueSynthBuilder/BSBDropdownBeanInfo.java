@@ -67,6 +67,8 @@ public class BSBDropdownBeanInfo extends SimpleBeanInfo {
         }//GEN-HEADEREND:Properties
         // Here you can add code for customizing the properties array.
 
+        properties[PROPERTY_BSBDropdownItemList].setDisplayName("Dropdown Items");
+        
         return properties;     }//GEN-LAST:Properties
 
     // EventSet identifiers//GEN-FIRST:Events

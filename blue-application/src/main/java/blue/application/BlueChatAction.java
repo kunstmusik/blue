@@ -21,13 +21,13 @@ import org.openide.util.NbBundle.Messages;
 @ActionReferences({
     @ActionReference(path = "Menu/Help", position = 1600, separatorBefore = 1550)
 })
-@Messages("CTL_BlueChatAction=blue/Csound IRC Chat")
+@Messages("CTL_BlueChatAction=Blue/Csound Chat")
 public final class BlueChatAction implements ActionListener {
 
     @Override
     public void actionPerformed(ActionEvent e) {
 
-        String url = "http://webchat.freenode.net/?channels=%23csound%2C%23bluecsound";
+        String url = "https://discord.gg/tw7XGWRKZ3";
 
         try {
             URLDisplayer.getDefault().showURL(new URL(url));

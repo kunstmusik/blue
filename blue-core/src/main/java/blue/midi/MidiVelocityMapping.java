@@ -25,7 +25,7 @@ package blue.midi;
  * @author syi
  */
 public enum MidiVelocityMapping {
-    MIDI, AMP, CONSTANT;
+    MIDI, CONSTANT, AMP_0DBFS, AMP;
 
     @Override
     public String toString() {
@@ -33,7 +33,9 @@ public enum MidiVelocityMapping {
             case MIDI:
                 return "MIDI";
             case AMP:
-                return "Amp";
+                return "Amp (max 32768)";
+            case AMP_0DBFS:
+                return "Amp (0dbfs = 1)";
             case CONSTANT:
                 return "Constant";
         }

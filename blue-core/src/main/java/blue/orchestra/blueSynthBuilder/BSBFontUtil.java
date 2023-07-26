@@ -21,7 +21,7 @@ package blue.orchestra.blueSynthBuilder;
 
 import electric.xml.Element;
 import electric.xml.Elements;
-import javafx.scene.text.Font;
+import java.awt.Font;
 
 /**
  *
@@ -32,15 +32,17 @@ public class BSBFontUtil {
        Element root = new Element("font");
        root.addElement("name").setText(f.getName());
        root.addElement("size").setText(Double.toString(f.getSize()));
+       root.addElement("style").setText(Integer.toString(f.getStyle()));
 
        return root;
    }
 
    public static Font loadFromXML(Element f) {
-       String name = "System Regular";
+       String name = "Roboto";
        double size = 12.0f;
 
        Elements nodes = f.getElements();
+       int style = Font.PLAIN;
        while(nodes.hasMoreElements()) {
            Element elem = nodes.next();
 
@@ -51,11 +53,21 @@ public class BSBFontUtil {
                case "size":
                    size = Double.parseDouble(elem.getTextString());
                    break;
+               case "style":
+                   style = Integer.parseInt(elem.getTextString());
                default:
                    break;
            }
        }
-       return new Font(name, size);
+       
+       if("System Regular".equals(name)) {
+           name = "Roboto";
+       } else if("System Bold".equals(name)) {
+           name = "Roboto";
+           style = Font.BOLD;
+       }
+       
+       return new Font(name, style, (int)size);
    }
    
 }

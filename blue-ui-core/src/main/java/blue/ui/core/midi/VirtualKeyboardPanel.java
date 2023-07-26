@@ -47,6 +47,7 @@ public class VirtualKeyboardPanel extends JComponent {
     private int lastMidiKey = -1;
     private int octave = 5;
     private int channel = 0;
+    private boolean velocityOverride = false;
     private int velocity = 127;
     private final MidiInputManager midiEngine = MidiInputManager.getInstance();
 
@@ -80,10 +81,17 @@ public class VirtualKeyboardPanel extends JComponent {
 
                     keyStates[key].set(true);
 
-
                     try {
                         ShortMessage sme = new ShortMessage();
-                        sme.setMessage(ShortMessage.NOTE_ON, channel, key + KEY_OFFSET, velocity);
+
+                        var h = (double) getHeight();
+                        if (!isWhiteKey(key)) {
+                            h *= 0.625;
+                        }
+
+                        var vel = velocityOverride ? velocity : (int) (127 * me.getY() / h);
+//                        System.out.println("Velocity: " + vel);
+                        sme.setMessage(ShortMessage.NOTE_ON, channel, key + KEY_OFFSET, vel);
 
                         midiEngine.send(sme, 0L);
 
@@ -148,7 +156,6 @@ public class VirtualKeyboardPanel extends JComponent {
 
                         keyStates[key].compareAndSet(false, true);
 
-
                         try {
 
                             ShortMessage sme = new ShortMessage();
@@ -156,7 +163,9 @@ public class VirtualKeyboardPanel extends JComponent {
                             sme.setMessage(ShortMessage.NOTE_OFF, channel, lastMidiKey + KEY_OFFSET, velocity);
                             midiEngine.send(sme, 0L);
 
-                            sme.setMessage(ShortMessage.NOTE_ON, channel, key + KEY_OFFSET, velocity);
+                            var vel = velocityOverride ? velocity : (int) (127 * me.getY() / (double) getHeight());
+//                            System.out.println("Velocity: " + velocity);
+                            sme.setMessage(ShortMessage.NOTE_ON, channel, key + KEY_OFFSET, vel);
                             midiEngine.send(sme, 0L);
 
                         } catch (InvalidMidiDataException ex) {
@@ -174,19 +183,19 @@ public class VirtualKeyboardPanel extends JComponent {
 
         this.addKeyListener(new TimedKeyListener() {
 
-            @Override 
-            public void keyPressed(KeyEvent e) {                                
+            @Override
+            public void keyPressed(KeyEvent e) {
                 int oldVal;
-                switch(e.getKeyCode()) {
+                switch (e.getKeyCode()) {
                     case KeyEvent.VK_UP:
-                        if(e.isShiftDown()) {
-                            if(channel < 15) {
+                        if (e.isShiftDown()) {
+                            if (channel < 15) {
                                 oldVal = channel;
                                 channel += 1;
                                 firePropertyChange("channel", oldVal, channel);
                             }
                         } else {
-                            if(octave < 7) {
+                            if (octave < 7) {
                                 oldVal = octave;
                                 octave += 1;
                                 firePropertyChange("octave", oldVal, octave);
@@ -194,14 +203,14 @@ public class VirtualKeyboardPanel extends JComponent {
                         }
                         break;
                     case KeyEvent.VK_DOWN:
-                        if(e.isShiftDown()) {
-                            if(channel > 0) {
+                        if (e.isShiftDown()) {
+                            if (channel > 0) {
                                 oldVal = channel;
                                 channel -= 1;
                                 firePropertyChange("channel", oldVal, channel);
                             }
                         } else {
-                            if(octave > 0) {
+                            if (octave > 0) {
                                 oldVal = octave;
                                 octave -= 1;
                                 firePropertyChange("octave", oldVal, octave);
@@ -212,7 +221,7 @@ public class VirtualKeyboardPanel extends JComponent {
                         super.keyPressed(e);
                 }
             }
-            
+
             @Override
             public void KeyPressed(KeyEvent e) {
                 handleKey(e.getKeyChar(), true);
@@ -250,8 +259,15 @@ public class VirtualKeyboardPanel extends JComponent {
         this.velocity = velocity;
     }
 
-    public void allNotesOff() {
+    public boolean isVelocityOverride() {
+        return velocityOverride;
+    }
 
+    public void setVelocityOverride(boolean val) {
+        this.velocityOverride = val;
+    }
+
+    public void allNotesOff() {
 
         ShortMessage sme = new ShortMessage();
 
@@ -265,7 +281,7 @@ public class VirtualKeyboardPanel extends JComponent {
                 }
             }
         }
-        
+
         repaint();
 
     }
@@ -282,13 +298,11 @@ public class VirtualKeyboardPanel extends JComponent {
         float runningX = 0;
         int yval = 0;
 
-
         g.setColor(Color.WHITE);
         g.fillRect(0, 0, getWidth(), getHeight());
 
         g.setColor(Color.BLACK);
         g.drawRect(0, 0, getWidth(), getHeight());
-
 
         int lineHeight = whiteKeyHeight - 1;
 
@@ -362,7 +376,6 @@ public class VirtualKeyboardPanel extends JComponent {
 
         float leftKeyBound = blackKeyWidth / 2.0f;
         float rightKeyBound = whiteKeyWidth - leftKeyBound;
-
 
         // 52 white keys
         int whiteKey = (int) (x / whiteKeyWidth);
@@ -570,7 +583,7 @@ public class VirtualKeyboardPanel extends JComponent {
 
                 int state = keyDown ? ShortMessage.NOTE_ON : ShortMessage.NOTE_OFF;
 
-                sme.setMessage(state, channel, index + KEY_OFFSET, velocity);
+                sme.setMessage(state, channel, index + KEY_OFFSET, velocityOverride ? velocity : 127);
 
                 midiEngine.send(sme, 0L);
 

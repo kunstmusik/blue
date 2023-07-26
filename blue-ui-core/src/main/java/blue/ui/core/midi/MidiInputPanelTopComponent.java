@@ -52,6 +52,7 @@ public final class MidiInputPanelTopComponent extends TopComponent {
             if (BlueProjectManager.CURRENT_PROJECT.equals(evt.
                     getPropertyName())) {
                 reinitialize();
+                
             }
         });
 

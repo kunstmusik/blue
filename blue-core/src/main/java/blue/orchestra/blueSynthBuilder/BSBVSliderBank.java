@@ -540,7 +540,6 @@ public class BSBVSliderBank extends AutomatableBSBObject implements
 
             }
         }
-        fireBSBObjectChanged();
     }
 
     /*

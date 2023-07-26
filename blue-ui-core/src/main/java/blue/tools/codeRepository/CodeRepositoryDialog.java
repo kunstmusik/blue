@@ -52,8 +52,6 @@ import org.openide.awt.UndoRedo;
 public class CodeRepositoryDialog extends JDialog implements
         WindowSettingsSavable {
 
-    private static final CodeRepositoryPopup popup = new CodeRepositoryPopup();
-
     JSplitPane topSplit = new JSplitPane();
 
     BorderLayout borderLayout1 = new BorderLayout();
@@ -217,6 +215,7 @@ public class CodeRepositoryDialog extends JDialog implements
 
     private void showPopup(CodeRepositoryTreeNode node, ElementHolder elem,
             int x, int y) {
+        var popup = new CodeRepositoryPopup();
         popup.show(this, node, elem, x, y);
     }
 

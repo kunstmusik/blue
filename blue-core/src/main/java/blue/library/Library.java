@@ -24,7 +24,6 @@ import electric.xml.Elements;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Function;
-import javafx.scene.control.TreeItem;
 
 /**
  *
@@ -32,7 +31,7 @@ import javafx.scene.control.TreeItem;
  */
 public class Library<T extends SoundObject> {
 
-    TreeItem<LibraryItem<T>> root;
+    LibraryItem<T> root;
 
     static final Set<String> FOLDER_NAMES;
 
@@ -46,7 +45,7 @@ public class Library<T extends SoundObject> {
 
     public static <T extends SoundObject> Library<T> createLibrary(String rootName) {
         Library<T> lib = new Library<>();
-        lib.root = new LibraryTreeItem<>(new LibraryItem<T>(rootName));
+        lib.root = new LibraryItem<T>(null, rootName);
         return lib;
     }
 
@@ -54,22 +53,23 @@ public class Library<T extends SoundObject> {
             Function<Element, T> loader) {
         Library<T> lib = new Library<>();
         
-        lib.root = loadLibraryItem(elem.getElement("category"), loader);
+        lib.root = loadLibraryItem(null, elem.getElement("category"), loader);
         return lib;
     }
 
-    private static <T extends SoundObject> TreeItem<LibraryItem<T>> loadLibraryItem(Element elem,
+    private static <T extends SoundObject> LibraryItem<T> loadLibraryItem(LibraryItem<T> parent, Element elem,
             Function<Element, T> loader) {
-        TreeItem<LibraryItem<T>> item;
+        
+        LibraryItem<T> item;
         if (FOLDER_NAMES.contains(elem.getName())) {
-            item = new LibraryTreeItem<>(new LibraryItem<>(elem.getAttributeValue("categoryName")));
+            item = new LibraryItem<>(parent, elem.getAttributeValue("categoryName"));
 
             Elements children = elem.getElements();
             while (children.hasMoreElements()) {
-                item.getChildren().add(loadLibraryItem(children.next(), loader));
+                item.getChildren().add(loadLibraryItem(item, children.next(), loader));
             }
         } else {
-            item = new LibraryTreeItem<>(new LibraryItem<>(loader.apply(elem)));
+            item = new LibraryItem<>(parent, loader.apply(elem));
         }
 
         return item;
@@ -81,28 +81,27 @@ public class Library<T extends SoundObject> {
         return retVal;
     }
 
-    private Element saveAsXML(TreeItem<LibraryItem<T>> item,
+    private Element saveAsXML(LibraryItem<T> item,
             Function<LibraryItem<T>, Element> saver) {
 
-        LibraryItem<T> libItem = item.getValue();
         Element retVal;
 
-        if(libItem.getValue() == null) {
+        if(!item.isLeaf()) {
             retVal = new Element("category");
-            retVal.setAttribute("categoryName", libItem.displayName);
+            retVal.setAttribute("categoryName", item.toString());
 
-            for(TreeItem<LibraryItem<T>> child : item.getChildren()) {
+            for(var child : item.getChildren()) {
                retVal.addElement(saveAsXML(child, saver)); 
             }
             
         } else {
-            retVal = saver.apply(libItem); 
+            retVal = saver.apply(item); 
         }
 
         return retVal;
     }
 
-    public TreeItem<LibraryItem<T>> getRoot() {
+    public LibraryItem<T> getRoot() {
         return root;
     }
 

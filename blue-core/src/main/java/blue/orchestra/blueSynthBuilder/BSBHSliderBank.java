@@ -536,7 +536,6 @@ public class BSBHSliderBank extends AutomatableBSBObject implements
 
             }
         }
-        fireBSBObjectChanged();
     }
 
     /*

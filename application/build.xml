@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="blue.jdk"   
+         xmlns:if="ant:if"
+         basedir="." 
+         default="package-jdk">
+    <description>Downloads JDK to embed into Blue application</description>
+
+    <property environment="env"/>
+
+    <property name="jdk.src.root" value="https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.7%2B7/"/>
+
+    <property name="jdk.windows" 
+              value="OpenJDK17U-jdk_x64_windows_hotspot_17.0.7_7.zip"/>
+
+    <property name="jdk.mac.arm64"
+              value="OpenJDK17U-jdk_aarch64_mac_hotspot_17.0.7_7.tar.gz"/>
+        
+    <property name="jdk.mac.x86_64"
+              value="OpenJDK17U-jdk_x64_mac_hotspot_17.0.7_7.tar.gz"/> 
+    
+    <condition property="isMac">
+        <os family="mac" />
+    </condition>
+
+    <condition property="isWindows">
+        <os family="windows" />
+    </condition>
+    
+    <condition property="jdk.mac" value="${jdk.mac.x86_64}" else="${jdk.mac.arm64}">
+        <isset property="env.BUILD_X86_64"/>
+    </condition>
+    
+    <condition property="jdk.zip" value="${jdk.windows}" else="${jdk.mac}">
+        <isset property="isWindows"/>
+    </condition>
+    
+    <condition property="embed.jdk">
+        <or>
+            <isset property="isMac"/>
+            <isset property="isWindows"/>
+        </or>
+    </condition>
+    
+    <target name="dir.check">
+        <condition property="dir.exists">
+            <available file="./src/jdk" type="dir"/>
+        </condition>
+    </target>
+    
+    <target name="targetdir.check">
+        <condition property="target.jdk.exists">
+            <available file="./src/jdk" type="dir"/>
+        </condition>
+    </target>
+
+    <target name="download-jdk"
+            description="Downloads JDK"
+            depends="dir.check"
+            unless="dir.exists"
+            if="embed.jdk" 
+    >        
+        <mkdir dir="target"/>
+        <get src="${jdk.src.root}/${jdk.zip}" dest="target"/>
+        <unzip if:set="isWindows" src="target/${jdk.windows}" dest="target"/>
+        <move if:set="isWindows" file="./target/jdk-17.0.7+7" toFile="./src/jdk"/>
+        
+        <exec if:set="isMac" executable="tar">
+            <arg value="xzvf"/>
+            <arg value="target/${jdk.mac}"/>
+            <arg value="-Ctarget"/>
+        </exec>
+        <exec if:set="isMac" executable="mv">
+            <arg value="./target/jdk-17.0.7+7/Contents/Home"/>
+            <arg value="./src/jdk"/>
+        </exec>
+        
+    </target>
+    
+    <target name="package-jdk" depends="download-jdk" if="embed.jdk" unless="target.jdk.exists">
+        <mkdir dir="target/blue/etc"/>
+
+        <copy if:set="isWindows" todir="target/blue/jdk">
+            <fileset dir="src/jdk"/>
+        </copy>
+        <exec if:set="isMac" executable="cp">
+            <arg value="-r"/>
+            <arg value="./src/jdk"/>
+            <arg value="./target/blue/jdk"/>
+        </exec>
+        <replace if:set="isWindows" dir="target/blue/etc" includes="*.conf" token='#jdkhome="/path/to/jdk"' value='jdkhome="jdk"'/>
+        <replace if:set="isMac" dir="target/blue/etc" includes="*.conf" token='#jdkhome="/path/to/jdk"' value='jdkhome="jdk"'/>
+    </target>
+</project>
+
+

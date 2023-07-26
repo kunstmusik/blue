@@ -42,10 +42,12 @@ import blue.ui.nbutilities.BlueNbUtilities;
 import blue.utility.TempFileManager;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.beans.PropertyEditorManager;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Locale;
 import java.util.logging.Logger;
-import javafx.application.Platform;
-import javafx.embed.swing.JFXPanel;
 import javax.swing.SwingUtilities;
 import jiconfont.icons.elusive.Elusive;
 import jiconfont.icons.font_awesome.FontAwesome;
@@ -200,23 +202,23 @@ public class Installer extends ModuleInstall {
         //                return comp;
         //            }
         //        }
-        Platform.setImplicitExit(false);
-
+        
         SwingUtilities.invokeLater(() -> {
-            // Initialize JavaFX by using this call
-
-            new JFXPanel();
             BlueNbUtilities.setMainWindow(WindowManager.getDefault().getMainWindow());
         });
 
-//        Platform.runLater(()
-//                -> jfxPanel.setScene(new Scene(new Group())));
-//        FileChooserManager.getDefault().setJFXPanel(jfxPanel);
-//        WindowManager.getDefault().invokeWhenUIReady(()
-//                -> WindowManager.getDefault().getMainWindow().add(jfxPanel));
+        // REGISTER ICON FONTS
         IconFontSwing.register(Elusive.getIconFont());
         IconFontSwing.register(GoogleMaterialDesignIcons.getIconFont());
         IconFontSwing.register(FontAwesome.getIconFont());
+
+        // REGISTER GLOBAL PROPERTY EDITORS
+        List<String> paths = Arrays.asList(PropertyEditorManager.getEditorSearchPath());
+        paths = new ArrayList(paths);
+        paths.add("blue.orchestra.editor.blueSynthBuilder.swing.editors");
+        PropertyEditorManager.setEditorSearchPath(paths.toArray(new String[0]));
+        // editors from above path will be found based on className + "Editor"
+        //PropertyEditorManager.registerEditor(LineList.class, LineListEditor.class);
     }
 
     @Override

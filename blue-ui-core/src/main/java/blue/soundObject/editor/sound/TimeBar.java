@@ -19,58 +19,64 @@
 package blue.soundObject.editor.sound;
 
 import blue.ui.utilities.GraphLabels;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
 import java.text.DecimalFormat;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleDoubleProperty;
-import javafx.scene.canvas.Canvas;
-import javafx.scene.canvas.GraphicsContext;
-import javafx.scene.paint.Color;
-import javafx.scene.text.Font;
-import javafx.scene.text.FontWeight;
-import javafx.scene.text.Text;
+import javax.swing.JPanel;
+import javax.swing.UIManager;
 
 /**
  *
  * @author stevenyi
  */
-public class TimeBar extends Canvas {
+public class TimeBar extends JPanel {
 
     DoubleProperty startTime = new SimpleDoubleProperty(0.0);
     DoubleProperty duration = new SimpleDoubleProperty(1.0);
-    Font f = Font.font("System", FontWeight.LIGHT, 10);
-    Text t = new Text();
+    Font f = UIManager.getFont("Label.font").deriveFont(Font.PLAIN, 10);
     DecimalFormat df = new DecimalFormat();
 
     public TimeBar() {
-        repaint();
+//        repaint();
 
-        boundsInParentProperty().addListener((obs, old, newVal) -> repaint());
+//        boundsInParentProperty().addListener((obs, old, newVal) -> repaint());
+    
+        setBackground(new Color(32, 32, 32));
         startTime.addListener((obs, old, newVal) -> repaint());
         duration.addListener((obs, old, newVal) -> repaint());
-
-        getGraphicsContext2D().setFont(f);
-        t.setFont(f);
+        setPreferredSize(new Dimension(0, 20));
     }
 
-    public final void repaint() {
-        GraphicsContext gc = getGraphicsContext2D();
-        double w = getWidth();
-        double h = getHeight();
+    @Override
+    protected void paintComponent(final Graphics g) {
+                        
+        Graphics2D g2d = (Graphics2D) g;
+        g2d.setRenderingHint(RenderingHints. KEY_ANTIALIASING,RenderingHints. VALUE_ANTIALIAS_ON);
 
-        gc.setFill(Color.BLACK);
-        gc.fillRect(0, 0, w, h);
-
-        gc.setStroke(Color.WHITE);
-
+        super.paintComponent(g); 
+        final var w = getWidth();
+        final var h = getHeight();
+        
+        g.setColor(getBackground());
+        g.fillRect(0, 0, w, h);
+        
+        g.setColor(Color.WHITE);
+        g.setFont(f);
+        
         GraphLabels.drawTicks(getStartTime(), getStartTime() + getDuration(), (int) (w / 100),
                 (num, nfrac) -> {
                     df.setMaximumFractionDigits(nfrac);
                     df.setMinimumFractionDigits(nfrac);
                     String txt = df.format(num);
-                    t.setText(txt);
-                    double x = getWidth() * (num - getStartTime()) / getDuration();
-                    gc.strokeLine(x, 10, x, h);
-                    gc.strokeText(txt, 0 + x + 2, 16);
+                    int x = (int)(w * (num - getStartTime()) / getDuration());
+                    g.drawLine(x, 10, x, h);
+                    g.drawString(txt, 0 + x + 2, 16);
                 });
 
     }

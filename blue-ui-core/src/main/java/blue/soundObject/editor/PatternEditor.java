@@ -17,12 +17,16 @@
  * the Free Software Foundation Inc., 59 Temple Place - Suite 330,
  * Boston, MA  02111-1307 USA
  */
-
 package blue.soundObject.editor;
 
+import blue.BlueSystem;
+import blue.gui.ExceptionDialog;
+import blue.gui.InfoDialog;
 import blue.plugin.ScoreObjectEditorPlugin;
 import blue.score.ScoreObject;
+import blue.soundObject.NoteList;
 import blue.soundObject.PatternObject;
+import blue.soundObject.SoundObject;
 import blue.soundObject.editor.pattern.PatternCanvas;
 import blue.soundObject.editor.pattern.PatternLayerEditPanel;
 import blue.soundObject.editor.pattern.PatternObjectPropertiesPanel;
@@ -34,38 +38,43 @@ import blue.utility.GUI;
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
+import javax.swing.JButton;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JToggleButton;
 import javax.swing.ScrollPaneConstants;
+import javax.swing.SwingUtilities;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
 /**
  * @author Steven Yi
  */
-
 @ScoreObjectEditorPlugin(scoreObjectType = PatternObject.class)
 public class PatternEditor extends ScoreObjectEditor {
-
+    
     private final PatternLayerEditPanel layerPanel = new PatternLayerEditPanel();
-
+    
     private final PatternCanvas canvas = new PatternCanvas();
-
+    
     private final PatternScoreEditor patternScore = new PatternScoreEditor();
-
+    
     private final PatternTimeBar timeBar = new PatternTimeBar();
-
+    
     private PatternObject patternObj;
-
+    
     private final PatternObjectPropertiesPanel props = new PatternObjectPropertiesPanel();
-
+    
+    private final JSplitPane mainSplitPane;
+    
     public PatternEditor() {
         this.setLayout(new BorderLayout());
-
+        
         layerPanel.addListSelectionListener((ListSelectionEvent e) -> {
             if (e.getValueIsAdjusting()) {
                 return;
@@ -75,18 +84,24 @@ public class PatternEditor extends ScoreObjectEditor {
                 patternScore.setPattern(p);
             }
         });
-
+        
         JToggleButton setTimeButton = new JToggleButton();
         setTimeButton.setIcon(IconFactory.getLeftArrowIcon());
         setTimeButton.setSelectedIcon(IconFactory.getRightArrowIcon());
         setTimeButton.setFocusable(false);
-
+        
+        JButton testButton = new JButton(BlueSystem.getString("common.test"));
+        testButton.addActionListener((ae) -> testSoundObject());
+        JPanel rightPanel = new JPanel(new BorderLayout());
+        rightPanel.add(testButton, BorderLayout.NORTH);
+        rightPanel.add(props, BorderLayout.CENTER);
+        
         setTimeButton.addActionListener((ActionEvent e) -> {
-            props.setVisible(!props.isVisible());
+            rightPanel.setVisible(!rightPanel.isVisible());
         });
-
+        
         final JScrollPane scroll = new JScrollPane(canvas);
-
+        
         scroll.setColumnHeaderView(timeBar);
         scroll.setCorner(JScrollPane.UPPER_RIGHT_CORNER, setTimeButton);
         scroll.getVerticalScrollBar().addAdjustmentListener(layerPanel);
@@ -94,62 +109,97 @@ public class PatternEditor extends ScoreObjectEditor {
                 .setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
         scroll
                 .setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
-
+        
         JSplitPane topSplitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
         topSplitPane.add(layerPanel);
         topSplitPane.add(scroll);
         topSplitPane.setDividerLocation(200);
-
+        
         JPanel topPanel = new JPanel(new BorderLayout());
         topPanel.add(topSplitPane, BorderLayout.CENTER);
-        topPanel.add(props, BorderLayout.EAST);
-
-        JSplitPane mainSplitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
+        topPanel.add(rightPanel, BorderLayout.EAST);
+        
+        mainSplitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
         mainSplitPane.add(topPanel);
         mainSplitPane.add(patternScore);
         mainSplitPane.setDividerLocation(0.8d);
-
-        props.setVisible(false);
-
+        
+        rightPanel.setVisible(false);
+        
         this.add(mainSplitPane, BorderLayout.CENTER);
-
+        
         layerPanel.getViewPort().addMouseWheelListener((MouseWheelEvent e) -> {
-            if(!e.isShiftDown()) {
-                for(MouseWheelListener listener: scroll.getMouseWheelListeners()) {
+            if (!e.isShiftDown()) {
+                for (MouseWheelListener listener : scroll.getMouseWheelListeners()) {
                     listener.mouseWheelMoved(e);
                 }
             }
         });
-    }
-
+        
+        var cl = new ComponentAdapter() {
+            @Override
+            public void componentResized(ComponentEvent e) {
+                super.componentResized(e);                
+                if (mainSplitPane.getHeight() > 400) {
+                    mainSplitPane.setDividerLocation(mainSplitPane.getHeight() - 200);
+                } else {
+                    mainSplitPane.setDividerLocation(0.6d);
+                }
+                mainSplitPane.removeComponentListener(this);
+            }
+            
+        };
+        mainSplitPane.addComponentListener(cl);
+    }    
+    
     @Override
     public void editScoreObject(ScoreObject sObj) {
         if (sObj == null) {
             return;
         }
-
+        
         if (!(sObj instanceof PatternObject)) {
             return;
         }
-
+        
         PatternObject p = (PatternObject) sObj;
-
+        
         this.patternObj = p;
-
+        
         layerPanel.setPatternObject(p);
         canvas.setPatternObject(p);
         timeBar.setPatternObject(p);
         props.setPatternObject(p);
-
+        
     }
-
+    
+    public final void testSoundObject() {
+        if (this.patternObj == null) {
+            return;
+        }
+        
+        NoteList notes = null;
+        
+        try {
+            notes = patternObj.generateForCSD(null, 0.0f, -1.0f);
+        } catch (Exception e) {
+            ExceptionDialog.showExceptionDialog(SwingUtilities.getRoot(this), e);
+        }
+        
+        if (notes != null) {
+            InfoDialog.showInformationDialog(SwingUtilities.getRoot(this),
+                    notes.toString(), BlueSystem
+                    .getString("soundObject.generatedScore"));
+        }
+    }
+    
     public static void main(String[] args) {
         GUI.setBlueLookAndFeel();
-
+        
         PatternEditor patternEditor = new PatternEditor();
-
+        
         patternEditor.editScoreObject(new PatternObject());
-
+        
         GUI.showComponentAsStandalone(patternEditor, "Pattern Editor", true);
     }
 }

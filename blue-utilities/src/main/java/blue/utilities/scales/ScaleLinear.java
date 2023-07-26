@@ -37,7 +37,7 @@ public class ScaleLinear {
     private double rangeEnd;
     private double rangeRange;
 
-    boolean clamp = true;
+    boolean clamped = true;
     
     transient Set<ChangeListener> listeners = null;
     ChangeEvent ce = new ChangeEvent(this);
@@ -84,6 +84,14 @@ public class ScaleLinear {
     public double getRangeRange() {
         return rangeRange;
     }
+
+    public boolean isClamped() {
+        return clamped;
+    }
+
+    public void setClamped(boolean clamped) {
+        this.clamped = clamped;
+    }    
     
     private double clamp(double value, double bound1, double bound2) {
         return (bound1 < bound2) ?
@@ -92,7 +100,7 @@ public class ScaleLinear {
     }
     
     public double calc(final double domainInput) {
-        final var input = clamp
+        final var input = clamped
                 ? clamp(domainInput, domainStart, domainEnd)
                 : domainInput;
 
@@ -104,7 +112,7 @@ public class ScaleLinear {
     
     /** calculates reverse mapping from range to domain value */
     public double calcReverse(final double rangeInput) {
-        final var input = clamp
+        final var input = clamped
                 ? clamp(rangeInput, rangeStart, rangeEnd)
                 : rangeInput;
         

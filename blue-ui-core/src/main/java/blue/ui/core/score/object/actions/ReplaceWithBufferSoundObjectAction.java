@@ -29,7 +29,8 @@ import blue.score.layers.ScoreObjectLayer;
 import blue.soundObject.Instance;
 import blue.soundObject.PolyObject;
 import blue.soundObject.SoundObject;
-import blue.ui.core.score.ScoreController;
+import blue.ui.core.clipboard.BlueClipboardUtils;
+import blue.ui.core.score.ScoreObjectCopy;
 import blue.ui.core.score.ScorePath;
 import blue.ui.core.score.undo.ReplaceScoreObjectEdit;
 import blue.undo.BlueUndoManager;
@@ -86,8 +87,10 @@ public final class ReplaceWithBufferSoundObjectAction extends AbstractAction
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        ScoreController.ScoreObjectBuffer buffer
-                = ScoreController.getInstance().getScoreObjectBuffer();
+        var buffer = BlueClipboardUtils.getScoreObjectCopy();
+        
+        if(buffer == null || !buffer.isOnlySoundObjects()) return;
+        
         List<Layer> layers = scorePath.getAllLayers();
 
         BlueData data = BlueProjectManager.getInstance().getCurrentBlueData();
@@ -127,8 +130,9 @@ public final class ReplaceWithBufferSoundObjectAction extends AbstractAction
         return new ReplaceWithBufferSoundObjectAction(actionContext);
     }
 
-    protected SoundObject getReplacementObject(ScoreController.ScoreObjectBuffer buffer,
+    protected SoundObject getReplacementObject(ScoreObjectCopy buffer,
             List<Instance> instances) {
+        
         if (buffer.scoreObjects.size() == 1) {
             SoundObject sObj = (SoundObject) buffer.scoreObjects.get(0).deepCopy();
             if (sObj instanceof Instance) {
@@ -142,7 +146,7 @@ public final class ReplaceWithBufferSoundObjectAction extends AbstractAction
         int minLayer = Integer.MAX_VALUE;
         int maxLayer = Integer.MIN_VALUE;
 
-        for (Integer layerIndex : buffer.layerIndexes) {
+        for (Integer layerIndex : buffer.layerIndices) {
             if (layerIndex < minLayer) {
                 minLayer = layerIndex;
             }
@@ -159,7 +163,7 @@ public final class ReplaceWithBufferSoundObjectAction extends AbstractAction
 
         for (int i = 0; i < buffer.scoreObjects.size(); i++) {
             ScoreObject scoreObj = buffer.scoreObjects.get(i);
-            int layerIndex = buffer.layerIndexes.get(i);
+            int layerIndex = buffer.layerIndices.get(i);
             SoundLayer layer = pObj.get(layerIndex - minLayer);
 
             SoundObject clone = (SoundObject) scoreObj.deepCopy();

@@ -20,9 +20,12 @@
 package blue.ui.core.score.layers.soundObject.actions;
 
 import blue.BlueSystem;
+import blue.SoundLayer;
 import blue.score.TimeState;
 import blue.soundObject.PolyObject;
 import blue.soundObject.SoundObject;
+import blue.ui.core.score.ScoreController;
+import blue.ui.core.score.ScorePath;
 import blue.ui.core.score.ScoreTopComponent;
 import blue.ui.core.score.layers.soundObject.ScoreTimeCanvas;
 import blue.ui.core.score.undo.AddScoreObjectEdit;
@@ -33,6 +36,7 @@ import blue.utility.ScoreUtilities;
 import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.lang.ref.WeakReference;
+import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -73,46 +77,48 @@ public final class AddSoundObjectActionsPresenter extends AbstractAction impleme
             return;
         }
 
-        ScoreTimeCanvas sTimeCanvas = sTimeCanvasRef.get();
+        var scorePath = ScoreController.getInstance().getScorePath();
+
         Point p = pRef.get();
-        int sLayerIndex = sTimeCanvas.getPolyObject().getLayerNumForY(
-                (int) p.getY());
 
         ScoreTopComponent stc = (ScoreTopComponent) WindowManager.getDefault().
                 findTopComponent("ScoreTopComponent");
 
-        LazyPlugin<SoundObject> plugin = (LazyPlugin<SoundObject>)
-                ((JMenuItem)e.getSource()).getClientProperty(
+        LazyPlugin<SoundObject> plugin = (LazyPlugin<SoundObject>) ((JMenuItem) e.getSource()).getClientProperty(
                 "plugin");
 
-        
-        
         try {
 
-            SoundObject sObj = plugin.getInstance().
-                    getClass().newInstance();
+            var l = scorePath.getGlobalLayerForY(p.y);
 
-            if(sObj instanceof PolyObject) {
-                ((PolyObject)sObj).newLayerAt(0);
+            if (l instanceof SoundLayer) {
+                var sLayer = (SoundLayer) l;
+                SoundObject sObj = plugin.getInstance().
+                        getClass().getDeclaredConstructor().newInstance();
+
+                if (sObj instanceof PolyObject) {
+                    ((PolyObject) sObj).newLayerAt(0);
+                }
+
+                TimeState timeState = stc.getTimeState();
+
+                double start = p.getX() / timeState.getPixelSecond();
+
+                if (timeState.isSnapEnabled()) {
+                    start = ScoreUtilities.getSnapValueStart(start,
+                            timeState.getSnapValue());
+                }
+                sObj.setStartTime(start);
+
+                sLayer.add(sObj);
+                BlueUndoManager.setUndoManager("score");
+                BlueUndoManager.addEdit(new AddScoreObjectEdit(
+                        sLayer, sObj));
             }
-            
-            TimeState timeState = stc.getTimeState();
 
-            double start = p.getX() / timeState.getPixelSecond();
-
-            if (timeState.isSnapEnabled()) {
-                start = ScoreUtilities.getSnapValueStart(start,
-                        timeState.getSnapValue());
-            }
-            sObj.setStartTime(start);
-
-            sTimeCanvas.getPolyObject().addSoundObject(sLayerIndex, sObj);
-
-            BlueUndoManager.setUndoManager("score");
-            BlueUndoManager.addEdit(new AddScoreObjectEdit(
-                    sTimeCanvas.getPolyObject().get(sLayerIndex), sObj));
-
-        } catch (InstantiationException | IllegalAccessException ex) {
+        } catch (InstantiationException | NoSuchMethodException
+                | SecurityException | IllegalAccessException
+                | InvocationTargetException ex) {
             Exceptions.printStackTrace(ex);
         }
     }
@@ -123,8 +129,8 @@ public final class AddSoundObjectActionsPresenter extends AbstractAction impleme
             menu = new JMenu("Add SoundObject");
 
             List<LazyPlugin<SoundObject>> plugins = LazyPluginFactory.loadPlugins(
-                "blue/score/soundObjects", SoundObject.class);
-            
+                    "blue/score/soundObjects", SoundObject.class);
+
             for (LazyPlugin<SoundObject> plugin : plugins) {
 
                 JMenuItem temp = new JMenuItem();

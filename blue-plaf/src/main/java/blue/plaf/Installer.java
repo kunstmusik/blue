@@ -19,18 +19,17 @@
  */
 package blue.plaf;
 
-import blue.plaf.netbeans.BlueLFCustoms;
+import blue.plaf.fonts.Fonts;
+import com.formdev.flatlaf.FlatLaf;
 import java.awt.Color;
 import java.awt.event.KeyEvent;
 import java.util.logging.Logger;
 import java.util.prefs.Preferences;
 import javax.swing.BorderFactory;
 import javax.swing.KeyStroke;
-import javax.swing.LookAndFeel;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.plaf.InputMapUIResource;
-import javax.swing.plaf.metal.MetalLookAndFeel;
 import org.netbeans.swing.tabcontrol.plaf.*;
 import org.openide.modules.ModuleInstall;
 import org.openide.util.Exceptions;
@@ -44,15 +43,17 @@ import org.openide.windows.WindowManager;
 public class Installer extends ModuleInstall {
 
     Logger logger = Logger.getLogger("blue.plaf.Installer");
-    private BlueLFCustoms customs = new BlueLFCustoms();
+//    private BlueLFCustoms customs = new BlueLFCustoms();
 
     @Override
     public void validate() throws IllegalStateException {
-        Preferences prefs = NbPreferences.root().node("laf");
-        prefs.put("laf", BlueLookAndFeel.class.getName());
+        Fonts.registerRobotoFonts();
+        
+       Preferences prefs = NbPreferences.root().node("laf");
+       prefs.put("laf", "com.formdev.flatlaf.FlatDarkLaf");
 
-        UIManager.put("Nb.BlueLFCustoms", customs);
-        UIManager.put("nb.dark.theme", true);
+//        UIManager.put("Nb.BlueLFCustoms", customs);
+//        UIManager.put("nb.dark.theme", true);
         boolean isMac = System.getProperty("os.name").toLowerCase().startsWith(
                 "mac");
 
@@ -96,12 +97,12 @@ public class Installer extends ModuleInstall {
             } else {
                 UIManager.put("customFontSize", in.intValue());
             }
-            UIManager.installLookAndFeel("Blue", BlueLookAndFeel.class.getName());
-            UIManager.put("Nb.BlueLFCustoms", customs);
-            UIManager.put("swing.boldMetal", false);
-            MetalLookAndFeel.setCurrentTheme(new BlueTheme());
-            LookAndFeel plaf = new blue.plaf.BlueLookAndFeel();
-            UIManager.setLookAndFeel(plaf);
+//            UIManager.installLookAndFeel("Blue", BlueLookAndFeel.class.getName());
+//            UIManager.put("Nb.BlueLFCustoms", customs);
+//            UIManager.put("swing.boldMetal", false);
+//            MetalLookAndFeel.setCurrentTheme(new BlueTheme());
+//            LookAndFeel plaf = new blue.plaf.BlueLookAndFeel();
+//            UIManager.setLookAndFeel(plaf);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -110,9 +111,9 @@ public class Installer extends ModuleInstall {
         // condition and sometimes BlueLFCustoms isn't found when app starts...
         // Doing this work here ensures the keys/values are registered and tab
         // colors are correct 
-        UIManager.getDefaults().putDefaults(customs.createGuaranteedKeysAndValues());
-        UIManager.getDefaults().putDefaults(customs.createApplicationSpecificKeysAndValues());
-        UIManager.getDefaults().putDefaults(customs.createLookAndFeelCustomizationKeysAndValues());
+//        UIManager.getDefaults().putDefaults(customs.createGuaranteedKeysAndValues());
+//        UIManager.getDefaults().putDefaults(customs.createApplicationSpecificKeysAndValues());
+//        UIManager.getDefaults().putDefaults(customs.createLookAndFeelCustomizationKeysAndValues());
 
         UIManager.put(DefaultTabbedContainerUI.KEY_EDITOR_CONTENT_BORDER,
                 BorderFactory.createEmptyBorder());
@@ -144,6 +145,14 @@ public class Installer extends ModuleInstall {
             replaceCtrlShortcutsWithMacShortcuts();
 
         }
+
+        // let comboboxes be smaller than 72px
+        // see https://github.com/kunstmusik/blue/issues/719
+        UIManager.put( "ComboBox.minimumWidth", 0 );
+
+        
+//        BlueLaf.setup();
+        FlatLaf.registerCustomDefaultsSource("blue.plaf.themes", getClass().getClassLoader());
 
         logger.info("Finished blue PLAF installation");
 
@@ -277,6 +286,9 @@ public class Installer extends ModuleInstall {
                 if (val instanceof InputMapUIResource) {
                     InputMapUIResource map = (InputMapUIResource) val;
 
+                    if(map == null || map.allKeys() == null) {
+                        return;
+                    }
                     for (KeyStroke keyStroke : map.allKeys()) {
 
                         int modifiers = keyStroke.getModifiers();

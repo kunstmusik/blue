@@ -27,13 +27,11 @@ import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Frame;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
 import java.util.List;
 import java.util.Vector;
-import javafx.stage.FileChooser.ExtensionFilter;
 import javax.swing.AbstractAction;
 import javax.swing.JButton;
 import javax.swing.JComponent;
@@ -41,6 +39,7 @@ import javax.swing.JPopupMenu;
 import javax.swing.JTextField;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import org.openide.windows.WindowManager;
 
 public class ScaleSelectionPanel extends JComponent {
@@ -119,7 +118,7 @@ public class ScaleSelectionPanel extends JComponent {
 
         fcm.setDialogTitle(FILE_CHOOSER_ID, BlueSystem.getString(
                 "pianoRoll.selectScalaFile"));
-        fcm.addFilter(FILE_CHOOSER_ID, new ExtensionFilter("Scala File (*.scl)", "*.scl"));
+        fcm.addFilter(FILE_CHOOSER_ID, new FileNameExtensionFilter("Scala File (*.scl)", "scl"));
 
         // SET DEFAULT DIR
         String fileName = BlueSystem.getUserConfigurationDirectory();

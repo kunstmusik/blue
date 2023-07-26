@@ -18,10 +18,9 @@
  */
 package blue.orchestra.blueSynthBuilder;
 
+import java.awt.Font;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import javafx.scene.text.Font;
-import javafx.scene.text.FontWeight;
 
 /**
  *
@@ -54,11 +53,12 @@ public class SwingHTMLFontParser {
         }
         retVal = Math.min(Math.max(0, retVal), 6);
 
-        FontWeight weight = FontWeight.NORMAL;
+        int weight = Font.PLAIN;
+
         if (text.contains("<b>") || retVal > 2) {
-            weight = FontWeight.BOLD;
+            weight = Font.BOLD;
         }
-        Font f = Font.font("System Regular", weight, SIZE_MAP[retVal]);
+        Font f = new Font("Roboto", weight, SIZE_MAP[retVal]);
         return f;
     }
 

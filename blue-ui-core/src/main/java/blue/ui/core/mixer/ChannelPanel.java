@@ -282,6 +282,11 @@ public class ChannelPanel extends javax.swing.JPanel implements
         levelSlider.setMinimum(-960);
         levelSlider.setOrientation(javax.swing.JSlider.VERTICAL);
         levelSlider.setValue(0);
+        levelSlider.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                levelSliderMouseClicked(evt);
+            }
+        });
 
         channelNameLabel.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         channelNameLabel.setText("Channel");
@@ -307,7 +312,7 @@ public class ChannelPanel extends javax.swing.JPanel implements
 
         postList.setFont(new java.awt.Font("Dialog", 0, 10)); // NOI18N
         postList.setModel(new javax.swing.AbstractListModel() {
-            final String[] strings = { "Item 1", "Item 2", "Item 3", "Item 4", "Item 5" };
+            String[] strings = { "Item 1", "Item 2", "Item 3", "Item 4", "Item 5" };
             public int getSize() { return strings.length; }
             public Object getElementAt(int i) { return strings[i]; }
         });
@@ -321,7 +326,7 @@ public class ChannelPanel extends javax.swing.JPanel implements
 
         preList.setFont(new java.awt.Font("Dialog", 0, 10)); // NOI18N
         preList.setModel(new javax.swing.AbstractListModel() {
-            final String[] strings = { "Item 1", "Item 2", "Item 3", "Item 4", "Item 5" };
+            String[] strings = { "Item 1", "Item 2", "Item 3", "Item 4", "Item 5" };
             public int getSize() { return strings.length; }
             public Object getElementAt(int i) { return strings[i]; }
         });
@@ -393,6 +398,13 @@ public class ChannelPanel extends javax.swing.JPanel implements
                 .addComponent(outputList, javax.swing.GroupLayout.PREFERRED_SIZE, 28, javax.swing.GroupLayout.PREFERRED_SIZE))
         );
     }// </editor-fold>//GEN-END:initComponents
+
+    private void levelSliderMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_levelSliderMouseClicked
+        if(evt.getClickCount() == 2) {
+            channel.setLevel(0.0);
+        }
+
+    }//GEN-LAST:event_levelSliderMouseClicked
 
     private void preListFocusLost(java.awt.event.FocusEvent evt) {// GEN-FIRST:event_preListFocusLost
         preList.setSelectedIndex(-1);

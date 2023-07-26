@@ -31,17 +31,22 @@ import blue.score.ScoreObject;
 import blue.soundObject.NoteList;
 import blue.soundObject.SoundObject;
 import blue.soundObject.TimeBehavior;
+import blue.ui.core.clipboard.BlueClipboardUtils;
 import blue.ui.core.render.RealtimeRenderManager;
 import blue.ui.core.score.ScoreController;
+import blue.ui.core.score.ScoreObjectCopy;
 import blue.ui.core.score.layers.SoundObjectProvider;
 import blue.ui.nbutilities.MimeTypeEditorComponent;
 import blue.ui.nbutilities.lazyplugin.AttributeFilter;
 import blue.ui.nbutilities.lazyplugin.LazyPlugin;
 import blue.ui.nbutilities.lazyplugin.LazyPluginFactory;
+import blue.ui.utilities.BlueCommonIcons;
 import blue.ui.utilities.SimpleDocumentListener;
 import blue.ui.utilities.UiUtilities;
 import blue.utility.ScoreUtilities;
 import java.awt.BorderLayout;
+import java.awt.Toolkit;
+import java.awt.datatransfer.StringSelection;
 import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
 import java.util.Collections;
@@ -83,8 +88,7 @@ import skt.swing.SwingUtil;
         position = 800)
 @ActionID(category = "Window", id = "blue.ui.core.blueLive.BlueLiveTopComponent")
 @ActionReferences({
-    @ActionReference(path = "Menu/Window", position = 1700, separatorAfter = 1750)
-    ,
+    @ActionReference(path = "Menu/Window", position = 1700, separatorAfter = 1750),
     @ActionReference(path = "Shortcuts", name = "D-8")
 })
 @TopComponent.OpenActionRegistration(
@@ -373,14 +377,10 @@ public final class BlueLiveTopComponent extends TopComponent
                         liveObjectsTable.getSelectedColumn());
 
                 if (lObj != null) {
-
-                    ScoreObject copy = lObj.getSoundObject().deepCopy();
-                    final ScoreController.ScoreObjectBuffer scoreObjectBuffer
-                            = ScoreController.getInstance().getScoreObjectBuffer();
-
-                    scoreObjectBuffer.clear();
-                    scoreObjectBuffer.scoreObjects.add(copy);
-                    scoreObjectBuffer.layerIndexes.add(0);
+                    ScoreObject sObj = lObj.getSoundObject().deepCopy();
+                    var copy = new ScoreObjectCopy(List.of(sObj), List.of(0));
+                    var clipboard = BlueClipboardUtils.getClipboard();
+                    clipboard.setContents(copy, new StringSelection(""));
                 }
             }
         };
@@ -391,10 +391,10 @@ public final class BlueLiveTopComponent extends TopComponent
 
             @Override
             public void actionPerformed(ActionEvent e) {
-                final ScoreController.ScoreObjectBuffer scoreObjectBuffer
-                        = ScoreController.getInstance().getScoreObjectBuffer();
+                final var scoreObjectBuffer
+                        = BlueClipboardUtils.getScoreObjectCopy();
 
-                if (scoreObjectBuffer.scoreObjects.size() != 1) {
+                if (scoreObjectBuffer == null || scoreObjectBuffer.scoreObjects.size() != 1) {
                     return;
                 }
                 ScoreObject scoreObj = scoreObjectBuffer.scoreObjects.get(0);
@@ -438,12 +438,21 @@ public final class BlueLiveTopComponent extends TopComponent
                 new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                
+
                 String orc = liveCodeEditor.getJEditorPane().getSelectedText();
                 RealtimeRenderManager.getInstance().evalOrc(orc);
             }
         });
         liveCodePanel.add(liveCodeEditor, BorderLayout.CENTER);
+        
+        buttonAdd.setText("");
+        buttonAdd.setIcon(BlueCommonIcons.ADD);
+        buttonRemove.setText("");
+        buttonRemove.setIcon(BlueCommonIcons.REMOVE);
+        buttonUp.setText("");
+        buttonUp.setIcon(BlueCommonIcons.PUSH_UP);
+        buttonDown.setText("");
+        buttonDown.setIcon(BlueCommonIcons.PUSH_DOWN);
     }
 
     private void reinitialize() {
@@ -1305,14 +1314,11 @@ public final class BlueLiveTopComponent extends TopComponent
 
                 if (lObj != null) {
 
-                    SoundObject copy = lObj.getSoundObject().deepCopy();
+                    SoundObject sObj = lObj.getSoundObject().deepCopy();
 
-                    ScoreController.ScoreObjectBuffer scoreObjectBuffer
-                            = ScoreController.getInstance().getScoreObjectBuffer();
-
-                    scoreObjectBuffer.clear();
-                    scoreObjectBuffer.scoreObjects.add(copy);
-                    scoreObjectBuffer.layerIndexes.add(0);
+                    var copy = new ScoreObjectCopy(List.of(sObj), List.of(0));
+                    var clipboard = BlueClipboardUtils.getClipboard();
+                    clipboard.setContents(copy, new StringSelection(""));
 
                     model.setValueAt(null, mouseRow, mouseColumn);
                     content.set(Collections.emptyList(), null);
@@ -1324,21 +1330,19 @@ public final class BlueLiveTopComponent extends TopComponent
 
                 if (lObj != null) {
 
-                    SoundObject copy = lObj.getSoundObject().deepCopy();
+                    SoundObject sObj = lObj.getSoundObject().deepCopy();
 
-                    ScoreController.ScoreObjectBuffer scoreObjectBuffer
-                            = ScoreController.getInstance().getScoreObjectBuffer();
+                    var copy = new ScoreObjectCopy(List.of(sObj), List.of(0));
+                    var clipboard = BlueClipboardUtils.getClipboard();
+                    clipboard.setContents(copy, new StringSelection(""));
 
-                    scoreObjectBuffer.clear();
-                    scoreObjectBuffer.scoreObjects.add(copy);
-                    scoreObjectBuffer.layerIndexes.add(0);
                 }
             });
             pasteMenuItem.addActionListener((ActionEvent e) -> {
-                ScoreController.ScoreObjectBuffer scoreObjectBuffer
-                        = ScoreController.getInstance().getScoreObjectBuffer();
+                var scoreObjectBuffer
+                        = BlueClipboardUtils.getScoreObjectCopy();
 
-                if (scoreObjectBuffer.scoreObjects.size() != 1) {
+                if (scoreObjectBuffer == null || scoreObjectBuffer.scoreObjects.size() != 1) {
                     return;
                 }
                 ScoreObject scoreObj = scoreObjectBuffer.scoreObjects.get(0);
@@ -1423,10 +1427,9 @@ public final class BlueLiveTopComponent extends TopComponent
                     removeColumn.setEnabled(
                             liveObjectsTable.getColumnCount() > 1);
 
-                    ScoreController.ScoreObjectBuffer buffer
-                            = ScoreController.getInstance().getScoreObjectBuffer();
+                    var buffer = BlueClipboardUtils.getScoreObjectCopy();
 
-                    if (buffer.scoreObjects.size() == 1) {
+                    if (buffer != null && buffer.scoreObjects.size() == 1 && buffer.isOnlySoundObjects()) {
                         pasteMenuItem.setEnabled(
                                 liveSoundObjectTemplates.containsKey(
                                         buffer.scoreObjects.get(0).getClass()));

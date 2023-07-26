@@ -51,7 +51,8 @@ import org.openide.util.Lookup;
 public final class TimeBar extends JPanel implements
         PropertyChangeListener, RenderTimeManagerListener {
 
-    private static final Font LABEL_FONT = new Font("dialog", Font.PLAIN, 11);
+    private static final Font LABEL_FONT = UIManager.getFont("Label.font")
+            .deriveFont(Font.PLAIN, 11);
 
     // BufferedImage bufferedImage;
     // Image image;
@@ -153,6 +154,9 @@ public final class TimeBar extends JPanel implements
     public void paintComponent(Graphics g) {
 
         Graphics2D g2d = (Graphics2D) g;
+        
+        g2d.setRenderingHint(RenderingHints. KEY_ANTIALIASING,RenderingHints. VALUE_ANTIALIAS_ON);
+        
         Paint p = g2d.getPaint();
         g2d.setPaint(BlueGradientFactory.getGradientPaint(getBackground()));
         g2d.fillRect(0, 0, getWidth(), getHeight());

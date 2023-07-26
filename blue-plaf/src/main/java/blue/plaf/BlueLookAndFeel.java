@@ -2,6 +2,7 @@ package blue.plaf;
 
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Insets;
 import java.awt.Toolkit;
@@ -14,6 +15,7 @@ import javax.swing.border.AbstractBorder;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 import javax.swing.plaf.ColorUIResource;
+import javax.swing.plaf.FontUIResource;
 import javax.swing.plaf.metal.MetalLookAndFeel;
 
 
@@ -61,7 +63,7 @@ public class BlueLookAndFeel extends MetalLookAndFeel {
     @Override
     protected void initClassDefaults(UIDefaults table) {
         super.initClassDefaults(table);
-
+        
         putDefault(table, "ButtonUI");
         putDefault(table, "ComboBoxUI");
         putDefault(table, "ToggleButtonUI");
@@ -126,6 +128,8 @@ public class BlueLookAndFeel extends MetalLookAndFeel {
     protected void initComponentDefaults(UIDefaults table) {
         super.initComponentDefaults(table);
         
+        Font controlFont = new Font("Roboto", Font.PLAIN, 12); //NOI18N
+        
         Object[] defaults = {
         
             "CheckBox.icon", BlueIconFactory.getCheckBoxIcon(),
@@ -173,6 +177,41 @@ public class BlueLookAndFeel extends MetalLookAndFeel {
             "Spinner.border", BlueBorderUtilities.getTextFieldBorder(),
             "Spinner.arrowButtonBorder", BlueBorderUtilities.getButtonBorder(),
             "Spinner.background", Color.BLACK,
+            
+            // FONTS
+            
+            "Button.font", controlFont,
+            "ToggleButton.font", controlFont,
+            "RadioButton.font", controlFont,
+            "CheckBox.font", controlFont,
+            "ColorChooser.font", controlFont,
+            "ComboBox.font", controlFont,
+            "Label.font", controlFont,
+            "List.font", controlFont,
+            "MenuBar.font", controlFont,
+            "MenuItem.font", controlFont,
+            "RadioButtonMenuItem.font", controlFont,
+            "CheckBoxMenuItem.font", controlFont,
+            "Menu.font", controlFont,
+            "PopupMenu.font", controlFont,
+            "OptionPane.font", controlFont,
+            "Panel.font", controlFont,
+            "ProgressBar.font", controlFont,
+            "ScrollPane.font", controlFont,
+            "Viewport.font", controlFont,
+            "TabbedPane.font", controlFont,
+            "Table.font", controlFont,
+            "TableHeader.font", controlFont,
+            "TextField.font", controlFont,
+            "PasswordField.font", controlFont,
+            "TextArea.font", controlFont,
+            "TextPane.font", controlFont,
+            "EditorPane.font", controlFont,
+            "TitledBorder.font", controlFont,
+            "ToolBar.font", controlFont,
+            "ToolTip.font", controlFont,
+            "Tree.font", controlFont,
+
         };
 
         table.putDefaults(defaults);

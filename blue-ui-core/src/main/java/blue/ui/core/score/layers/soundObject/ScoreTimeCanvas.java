@@ -71,6 +71,10 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
             "<html><b>Name:</b> {0}<br>" + "<b>Type:</b> {1}<br>" + "<b>Start Time:</b> {2}<br>" + "<b>Duration:</b> {3}<br>" + "<b>End Time:</b> {4}</html>");
     private final HashMap<SoundObject, SoundObjectView> soundObjectToViewMap
             = new HashMap<>();
+    
+    private static final Color HLINE_COLOR = Color.DARK_GRAY.darker().darker();
+    private static final Color VLINE_COLOR = Color.DARK_GRAY;   
+            
     int time;
     PolyObject pObj;
     TimeState timeState = null;
@@ -393,7 +397,8 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
         }
 
         int y = 0;
-        g.setColor(Color.DARK_GRAY);
+        g.setColor(HLINE_COLOR);
+        
         g.drawLine(0, 0, width, 0);
 
         for (SoundLayer layer : getPolyObject()) {
@@ -410,6 +415,8 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
             if (snapPixels <= 0) {
                 return;
             }
+            
+            g.setColor(VLINE_COLOR);
 
             int height = getPolyObject().getTotalHeight();
             double snapValue = timeState.getSnapValue();

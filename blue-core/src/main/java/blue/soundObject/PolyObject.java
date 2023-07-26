@@ -806,13 +806,13 @@ public class PolyObject extends ArrayList<SoundLayer> implements SoundObject,
     }
 
     @Override
-    public double getMaxResizeRightDiff() {
-        return Double.MAX_VALUE;
+    public double[] getResizeRightLimits() {
+        return new double[]{-getSubjectiveDuration(), Double.MAX_VALUE};
     }
 
     @Override
-    public double getMaxResizeLeftDiff() {
-        return -getStartTime();
+    public double[] getResizeLeftLimits() {
+        return new double[] { -getStartTime(), getSubjectiveDuration() };
     }
     
     @Override

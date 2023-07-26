@@ -8,12 +8,12 @@ import java.util.Vector;
 /**
  * Title: blue Description: an object composition environment for csound
  * Copyright: Copyright (c) 2001 Company: steven yi music
- * 
+ *
  * @author steven yi
  * @version 1.0
  */
-
 public abstract class AbstractSoundObject implements SoundObject {
+
     protected double subjectiveDuration = 4.0f;
 
     protected double startTime = 0.0f;
@@ -83,15 +83,15 @@ public abstract class AbstractSoundObject implements SoundObject {
     }
 
     @Override
-    public double getMaxResizeRightDiff() {
-        return Double.MAX_VALUE;
+    public double[] getResizeRightLimits() {
+        return new double[]{-getSubjectiveDuration(), Double.MAX_VALUE};
     }
 
     @Override
-    public double getMaxResizeLeftDiff() {
-        return -getStartTime();
+    public double[] getResizeLeftLimits() {
+        return new double[] { -getStartTime(), getSubjectiveDuration() };
     }
-    
+
     @Override
     public void resizeLeft(double newStartTime) {
         double diff = startTime - newStartTime;
@@ -145,7 +145,6 @@ public abstract class AbstractSoundObject implements SoundObject {
         fireScoreObjectEvent(event);
     }
 
-    
     @Override
     public int getCloneSourceHashCode() {
         return cloneSourceHashCode;

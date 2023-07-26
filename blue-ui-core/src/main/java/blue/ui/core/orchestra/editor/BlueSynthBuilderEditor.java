@@ -27,11 +27,10 @@ import blue.orchestra.blueSynthBuilder.BSBObjectRegistry;
 import blue.orchestra.blueSynthBuilder.PresetGroup;
 import blue.orchestra.editor.InstrumentEditor;
 import blue.orchestra.editor.blueSynthBuilder.BSBCodeEditor;
-import blue.orchestra.editor.blueSynthBuilder.BSBInterfaceEditor;
+import blue.orchestra.editor.blueSynthBuilder.swing.BSBInterfaceEditor;
 import blue.plugin.InstrumentEditorPlugin;
 import blue.ui.core.udo.EmbeddedOpcodeListPanel;
 import java.awt.BorderLayout;
-import javafx.application.Platform;
 import javax.swing.JLabel;
 import javax.swing.JTabbedPane;
 
@@ -88,12 +87,9 @@ public class BlueSynthBuilderEditor extends InstrumentEditor {
 
         PresetGroup presetGroup = bsb.getPresetGroup();
         BSBGraphicInterface graphicInterface = bsb.getGraphicInterface();
-
-        Platform.runLater(()
-                -> interfaceEditor.editInterface(graphicInterface, presetGroup)
-        );
+ 
+        interfaceEditor.editInterface(graphicInterface, presetGroup);        
         this.codeEditor.editBlueSynthBuilder(bsb);
-
         this.udoPanel.editOpcodeList(bsb.getOpcodeList());
     }
 

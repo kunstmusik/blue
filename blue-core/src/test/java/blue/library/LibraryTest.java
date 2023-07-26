@@ -39,7 +39,7 @@ public class LibraryTest {
         System.out.println("createLibrary");
         Library<SoundObject> result = Library.createLibrary("SoundObjects");
 
-        assertEquals("SoundObjects", result.getRoot().getValue().toString());
+        assertEquals("SoundObjects", result.getRoot().toString());
     }
     
 }

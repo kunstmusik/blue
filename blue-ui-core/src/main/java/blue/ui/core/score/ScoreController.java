@@ -30,12 +30,15 @@ import blue.score.layers.AutomatableLayer;
 import blue.score.layers.Layer;
 import blue.score.layers.LayerGroup;
 import blue.score.layers.ScoreObjectLayer;
+import blue.ui.core.clipboard.BlueClipboardUtils;
 import blue.ui.core.score.undo.AddScoreObjectEdit;
 import blue.ui.core.score.undo.AppendableEdit;
 import blue.ui.core.score.undo.CompoundAppendable;
 import blue.ui.core.score.undo.LineChangeEdit;
 import blue.ui.core.score.undo.RemoveScoreObjectEdit;
 import blue.undo.BlueUndoManager;
+import java.awt.Toolkit;
+import java.awt.datatransfer.StringSelection;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -46,6 +49,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.WeakHashMap;
 import java.util.stream.Collectors;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 import javax.swing.JScrollPane;
 import org.openide.util.Lookup;
 import org.openide.util.lookup.InstanceContent;
@@ -66,14 +71,19 @@ public class ScoreController {
     }
 
     private Lookup lookup;
-    private final ScoreObjectBuffer buffer = new ScoreObjectBuffer();
+
     private final SingleLineBuffer singleLineBuffer = new SingleLineBuffer();
     private final MultiLineBuffer multiLineBuffer = new MultiLineBuffer();
+
     private InstanceContent content;
     private Score score = null;
     WeakHashMap<Score, ScorePath> scorePaths = new WeakHashMap<>();
+    
+    private BooleanProperty scoreObjectsMoving = new SimpleBooleanProperty(false);
+    
     private final List<ScoreControllerListener> listeners = new ArrayList<>();
     JScrollPane scrollPane = null;
+    
 
     private ScoreController() {
     }
@@ -91,7 +101,7 @@ public class ScoreController {
         return this.lookup;
     }
 
-    public void setScore(Score score) {
+    public void setScore(Score score, double renderStartTime) {
         ScorePath path = scorePaths.get(this.score);
         if (path != null) {
             path.setScrollX(scrollPane.getHorizontalScrollBar().getValue());
@@ -104,18 +114,12 @@ public class ScoreController {
         if (path == null) {
             path = new ScorePath(score);
             scorePaths.put(score, path);
+            
+            path.setScrollX(Math.max(0, (int)(score.getTimeState().getPixelSecond() * renderStartTime) - 40));
+            path.setScrollY(0);
         }
 
         fireScorePathChanged();
-
-        final ScorePath fPath = path;
-//            SwingUtilities.invokeLater(new Runnable() {
-//                @Override
-//                public void run() {
-        scrollPane.getHorizontalScrollBar().setValue(fPath.getScrollX());
-        scrollPane.getVerticalScrollBar().setValue(fPath.getScrollY());
-//                }
-//            });
     }
 
     public void editLayerGroup(LayerGroup layerGroup) {
@@ -135,13 +139,8 @@ public class ScoreController {
         if (path.editLayerGroup(layerGroup)) {
             fireScorePathChanged();
 
-//            SwingUtilities.invokeLater(new Runnable() {
-//                @Override
-//                public void run() {
             scrollPane.getHorizontalScrollBar().setValue(path.getScrollX());
             scrollPane.getVerticalScrollBar().setValue(path.getScrollY());
-//                }
-//            });
         }
 
     }
@@ -184,11 +183,12 @@ public class ScoreController {
             return;
         }
 
-        buffer.clear();
         List<Layer> layers = getScorePath().getAllLayers();
 
         int layerMin = Integer.MAX_VALUE;
-        List<Integer> indexes = new ArrayList<>();
+
+        List<ScoreObject> copyScoreObjects = new ArrayList<>();
+        List<Integer> copyIndices = new ArrayList<>();
 
         for (ScoreObject scoreObject : scoreObjects) {
             Layer foundLayer = null;
@@ -204,17 +204,17 @@ public class ScoreController {
                         "Error: Trying to copy a ScoreObject without a layer: Internal Error");
             }
             int layerIndex = layers.indexOf(foundLayer);
-            buffer.scoreObjects.add(scoreObject);
-            indexes.add(layerIndex);
+            copyScoreObjects.add(scoreObject);
+            copyIndices.add(layerIndex);
 
             if (layerIndex < layerMin) {
                 layerMin = layerIndex;
             }
         }
 
-        for (Integer layerIndex : indexes) {
-            buffer.layerIndexes.add(layerIndex - layerMin);
-        }
+        var copy = new ScoreObjectCopy(copyScoreObjects, copyIndices);
+        var clipboard = BlueClipboardUtils.getClipboard();
+        clipboard.setContents(copy, new StringSelection(""));
     }
 
     public Optional<AppendableEdit> deleteScoreObjects() {
@@ -292,16 +292,16 @@ public class ScoreController {
                 = SingleLineScoreSelection.getInstance();
         final var line = selection.getSourceLine();
         if (line != null) {
-              
+
             var sourceCopy = new Line(line);
 
             line.delete(selection.getStartTime(), selection.getEndTime());
-            
+
             var endCopy = new Line(line);
-            
-            BlueUndoManager.addEdit("score", 
+
+            BlueUndoManager.addEdit("score",
                     new LineChangeEdit(line, sourceCopy, endCopy));
-                    
+
             selection.clear();
         }
 
@@ -324,15 +324,14 @@ public class ScoreController {
                     p.setX(p.getX() + adjust);
                     return p;
                 }).collect(Collectors.toList());
-        
-        
+
         final Line line = singleLineBuffer.sourceLine;
         final var sourceCopy = new Line(line);
-                line.paste(points);
-            final var endCopy = new Line(line);
-            BlueUndoManager.addEdit("score", 
-                    new LineChangeEdit(line, sourceCopy, endCopy));
-        
+        line.paste(points);
+        final var endCopy = new Line(line);
+        BlueUndoManager.addEdit("score",
+                new LineChangeEdit(line, sourceCopy, endCopy));
+
         SingleLineScoreSelection selection
                 = SingleLineScoreSelection.getInstance();
         selection.updateSelection(singleLineBuffer.sourceLine, points.get(0).getX(), points.get(points.size() - 1).getX());
@@ -499,10 +498,6 @@ public class ScoreController {
         BlueUndoManager.addEdit("score", compoundEdit.getTopEdit());
     }
 
-    public ScoreObjectBuffer getScoreObjectBuffer() {
-        return buffer;
-    }
-
     /**
      * Set the current collection of selected ScoreObjects. Can pass null to
      * clear the selection.
@@ -545,16 +540,10 @@ public class ScoreController {
         return lookup.lookupAll(ScoreObject.class);
     }
 
-    public static class ScoreObjectBuffer {
-
-        public final List<ScoreObject> scoreObjects = new ArrayList<>();
-        public final List<Integer> layerIndexes = new ArrayList<>();
-
-        public void clear() {
-            scoreObjects.clear();
-            layerIndexes.clear();
-        }
-    }
+    public BooleanProperty getScoreObjectsMovingProperty() {
+        return scoreObjectsMoving;
+    }    
+    
 
     public static class SingleLineBuffer {
 

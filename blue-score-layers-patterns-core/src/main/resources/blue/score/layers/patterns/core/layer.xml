@@ -62,6 +62,13 @@
                                   stringvalue="blue/score/soundObjects/blue-soundObject-TrackerObject.instance"/>
                             <attr name="position" intvalue="800"/>
                         </file>
+                        
+                        <file name="blue-soundObject-JMask.shadow">
+                            <attr name="originalFile" 
+                                  stringvalue="blue/score/soundObjects/blue-soundObject-JMask.instance"/>
+                            <attr name="position" intvalue="900"/>
+                        </file>
+
 
                     </folder>
                 </folder>

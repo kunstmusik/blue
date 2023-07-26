@@ -361,7 +361,7 @@ public class AudioLayer extends ArrayList<AudioClip>
                 continue;
             }
 
-            Note n = Note.createNote(11);
+            Note n = Note.createNote(12);
 
             double adjustedStart = clipStart - startTime;
             double adjustedEnd = clipEnd - startTime;
@@ -406,6 +406,8 @@ public class AudioLayer extends ArrayList<AudioClip>
             fadeType = clip.getFadeOutType().ordinal();
             n.setPField(Integer.toString(fadeType), 10);
             n.setPField(Double.toString(clip.getFadeOut()), 11);
+            
+            n.setPField(clip.isLooping() ? "1" : "0", 12);
 
             notes.add(n);
 

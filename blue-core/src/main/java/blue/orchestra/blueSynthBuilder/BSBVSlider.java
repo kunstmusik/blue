@@ -206,7 +206,7 @@ public class BSBVSlider extends AutomatableBSBObject implements
                     val = Double.parseDouble(nodeText);
                     break;
                 case "sliderHeight":
-                    slider.setSliderHeight(Integer.parseInt(node.getTextString()));
+                    slider.setSliderHeight(Integer.parseInt(nodeText));
                     break;
                 case "randomizable":
                     slider.setRandomizable(XMLUtilities.readBoolean(node));

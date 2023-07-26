@@ -3,7 +3,7 @@ package blue.ui.core.score.layers.soundObject;
 import blue.BlueSystem;
 import blue.gui.LabelledItemPanel;
 import blue.score.ScoreObject;
-import blue.ui.core.score.undo.ResizeScoreObjectEdit;
+import blue.ui.core.score.undo.DurationScoreObjectEdit;
 import blue.ui.core.score.undo.StartTimeEdit;
 import blue.undo.BlueUndoManager;
 import java.awt.BorderLayout;
@@ -112,7 +112,7 @@ public class QuickTimeDialog extends JDialog {
 
                 if (initialSubjectiveDuration != newSubjectiveDuration) {
                     scoreObj.setSubjectiveDuration(newSubjectiveDuration);
-                    ResizeScoreObjectEdit resizeEdit = new ResizeScoreObjectEdit(
+                    DurationScoreObjectEdit resizeEdit = new DurationScoreObjectEdit(
                             scoreObj, initialSubjectiveDuration,
                             newSubjectiveDuration);
 

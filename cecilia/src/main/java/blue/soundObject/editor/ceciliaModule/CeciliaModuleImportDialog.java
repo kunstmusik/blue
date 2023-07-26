@@ -28,17 +28,16 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.List;
-import javafx.stage.FileChooser.ExtensionFilter;
-import javax.swing.JFileChooser;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import org.openide.windows.WindowManager;
 
 public class CeciliaModuleImportDialog {
     private static final String FILE_IMPORT = "ceciliaModuleImportDialog";
 
-    private static final ExtensionFilter fileFilter;
+    private static final FileNameExtensionFilter fileFilter;
 
     static {
-        fileFilter = new ExtensionFilter("blue Cecilia Module (*.bcm)", "*.bcm");
+        fileFilter = new FileNameExtensionFilter("blue Cecilia Module (*.bcm)", "bcm");
         FileChooserManager.getDefault().setDialogTitle(FILE_IMPORT, BlueSystem
                 .getString("ceciliaModule.openFileTitle"));
         String libFolder = BlueSystem.getLibDir() + File.separator

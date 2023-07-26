@@ -17,12 +17,12 @@
  * the Free Software Foundation Inc., 59 Temple Place - Suite 330,
  * Boston, MA  02111-1307 USA
  */
-
 package blue.tools.soundFont;
 
 import blue.gui.FileTree;
 import blue.gui.FileTreeListener;
 import blue.gui.FileTreePopup;
+import blue.ui.core.clipboard.BlueClipboardUtils;
 import blue.utility.GUI;
 import java.awt.BorderLayout;
 import java.awt.Component;
@@ -58,12 +58,12 @@ public class SoundFontViewer extends JComponent {
 
         fTree.setMinimumSize(new Dimension(0, 0));
 
-        String[] filters = { ".sf2" };
+        String[] filters = {".sf2"};
 
         fTree.setFilters(filters);
 
         fTree.addFileTreeListener(this::getSoundFontInfo);
-        
+
         fTree.addFileTreePopup(new SFFileTreePopup());
 
         JTabbedPane tabs = new JTabbedPane();
@@ -101,7 +101,6 @@ public class SoundFontViewer extends JComponent {
                 "Sound Font Viewer", true);
     }
 
-    
     private class SFFileTreePopup extends JPopupMenu implements FileTreePopup {
 
         private File file;
@@ -109,22 +108,20 @@ public class SoundFontViewer extends JComponent {
         public SFFileTreePopup() {
             JMenuItem menuItem = new JMenuItem("Copy Path");
             menuItem.addActionListener((ActionEvent arg0) -> {
-                if(file != null && file.exists() && file.isFile()) {
-                    Clipboard clipboard = getToolkit().getSystemClipboard();
+                if (file != null && file.exists() && file.isFile()) {
+                    var clipboard = BlueClipboardUtils.getClipboard();
                     clipboard.setContents(new StringSelection(file.getAbsolutePath()), null);
                 }
             });
-            
+
             this.add(menuItem);
         }
-        
+
         @Override
         public void show(File f, Component c, int x, int y) {
             this.file = f;
             this.show(c, x, y);
         }
 
-        
-        
     }
 }

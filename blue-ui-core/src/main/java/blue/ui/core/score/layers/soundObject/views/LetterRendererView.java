@@ -23,6 +23,8 @@ import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.RenderingHints;
+import javax.swing.UIManager;
 
 /**
  *
@@ -30,7 +32,8 @@ import java.awt.Graphics2D;
  */
 public class LetterRendererView extends GenericView {
 
-    private static final Font miniFont = new Font("Dialog", Font.BOLD, 10);
+    private static final Font miniFont
+            = UIManager.getFont("Label.font").deriveFont(Font.BOLD, 10);
 
     protected String letter = "";
 
@@ -38,12 +41,14 @@ public class LetterRendererView extends GenericView {
         super();
         labelOffset = 13;
     }
-    
+
     @Override
     protected void paintComponent(Graphics graphics) {
         super.paintComponent(graphics);
 
-         Graphics2D g = (Graphics2D) graphics;
+        Graphics2D g = (Graphics2D) graphics;
+        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+                RenderingHints.VALUE_ANTIALIAS_ON);
 
         Color boxColor;
         Color fontColor;

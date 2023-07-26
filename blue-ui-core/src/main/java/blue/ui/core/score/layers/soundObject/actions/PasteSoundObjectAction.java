@@ -30,6 +30,7 @@ import blue.score.layers.ScoreObjectLayer;
 import blue.soundObject.Instance;
 import blue.soundObject.PolyObject;
 import blue.soundObject.SoundObject;
+import blue.ui.core.clipboard.BlueClipboardUtils;
 import blue.ui.core.score.ScoreController;
 import blue.ui.core.score.ScorePath;
 import blue.ui.core.score.undo.AddScoreObjectEdit;
@@ -87,15 +88,20 @@ public final class PasteSoundObjectAction extends AbstractAction implements Cont
 
     @Override
     public boolean isEnabled() {
-        ScoreController.ScoreObjectBuffer buffer
-                = ScoreController.getInstance().getScoreObjectBuffer();
+        var buffer = BlueClipboardUtils.getScoreObjectCopy();
 
-        return buffer.scoreObjects.size() > 0
+        return buffer != null && buffer.scoreObjects.size() > 0
                 && scorePath.getGlobalLayerForY(p.y) != null;
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
+        var buffer = BlueClipboardUtils.getScoreObjectCopy();
+
+        if (buffer == null) {
+            return;
+        }
+        
         double start = (double) p.x / timeState.getPixelSecond();
 
         if (timeState.isSnapEnabled()) {
@@ -103,7 +109,6 @@ public final class PasteSoundObjectAction extends AbstractAction implements Cont
                     timeState.getSnapValue());
         }
 
-        ScoreController.ScoreObjectBuffer buffer = ScoreController.getInstance().getScoreObjectBuffer();
         List<Layer> allLayers = scorePath.getAllLayers();
         int selectedLayerIndex = scorePath.getGlobalLayerIndexForY(p.y);
 
@@ -113,7 +118,7 @@ public final class PasteSoundObjectAction extends AbstractAction implements Cont
 
         for (int i = 0; i < buffer.scoreObjects.size(); i++) {
             ScoreObject scoreObj = buffer.scoreObjects.get(i);
-            int layer = buffer.layerIndexes.get(i);
+            int layer = buffer.layerIndices.get(i);
 
             if (scoreObj.getStartTime() < bufferStart) {
                 bufferStart = scoreObj.getStartTime();
@@ -136,7 +141,7 @@ public final class PasteSoundObjectAction extends AbstractAction implements Cont
 
         for (int i = 0; i < buffer.scoreObjects.size(); i++) {
             ScoreObject scoreObj = buffer.scoreObjects.get(i);
-            int index = buffer.layerIndexes.get(i);
+            int index = buffer.layerIndices.get(i);
             Layer layer = allLayers.get(index + layerTranslation);
 
             if (!layer.accepts(scoreObj)) {
@@ -164,7 +169,7 @@ public final class PasteSoundObjectAction extends AbstractAction implements Cont
         for (int i = 0; i < copies.size(); i++) {
             ScoreObject sObj = copies.get(i);
 
-            int newLayerIndex = buffer.layerIndexes.get(i) + layerTranslation;
+            int newLayerIndex = buffer.layerIndices.get(i) + layerTranslation;
 
             if (sObj instanceof Instance) {
                 instanceSoundObjects.add((Instance) sObj);

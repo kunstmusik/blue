@@ -17,7 +17,6 @@
  * Software Foundation Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307
  * USA
  */
-
 package blue.tools.codeRepository;
 
 import blue.BlueSystem;
@@ -27,7 +26,8 @@ import java.awt.event.ActionListener;
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
 
-class CodeRepositoryPopup extends JPopupMenu implements ActionListener {
+class CodeRepositoryPopup extends JPopupMenu {
+
     CodeRepositoryDialog repository;
 
     ElementHolder elem;
@@ -48,22 +48,7 @@ class CodeRepositoryPopup extends JPopupMenu implements ActionListener {
 
     public CodeRepositoryPopup() {
 
-        addGroup.addActionListener(this);
-        this.add(addGroup);
-
-        removeGroup.addActionListener(this);
-        this.add(removeGroup);
-
-        addCode.addActionListener(this);
-        this.add(addCode);
-
-        removeCode.addActionListener(this);
-        this.add(removeCode);
-    }
-
-    @Override
-    public void actionPerformed(ActionEvent ae) {
-        if (ae.getSource() == addGroup) {
+        addGroup.addActionListener(ae -> {
             ElementHolder elem = new ElementHolder();
             elem.isGroup = true;
             elem.title = BlueSystem.getString("codeRepository.newGroup");
@@ -74,11 +59,16 @@ class CodeRepositoryPopup extends JPopupMenu implements ActionListener {
 
             repository.treeModel.insertNodeInto(newNode, this.node, this.node
                     .getChildCount());
+        });
+        this.add(addGroup);
 
-        } else if (ae.getSource() == removeGroup) {
+        removeGroup.addActionListener(ae -> {
             repository.treeModel.removeNodeFromParent(this.node);
             repository.cards.show(repository.editPanel, "disabled");
-        } else if (ae.getSource() == addCode) {
+        });
+        this.add(removeGroup);
+
+        addCode.addActionListener(ae -> {
             ElementHolder elem = new ElementHolder();
             elem.isGroup = false;
             elem.title = BlueSystem.getString("codeRepository.newCode");
@@ -96,10 +86,14 @@ class CodeRepositoryPopup extends JPopupMenu implements ActionListener {
 
             repository.treeModel.insertNodeInto(newNode, this.node, this.node
                     .getChildCount());
-        } else if (ae.getSource() == removeCode) {
+        });
+        this.add(addCode);
+
+        removeCode.addActionListener(ae -> {
             repository.treeModel.removeNodeFromParent(this.node);
             repository.cards.show(repository.editPanel, "disabled");
-        }
+        });
+        this.add(removeCode);
     }
 
     public void show(CodeRepositoryDialog repository,

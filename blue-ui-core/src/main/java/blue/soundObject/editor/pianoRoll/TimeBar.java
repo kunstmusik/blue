@@ -24,17 +24,20 @@ import blue.soundObject.PolyObject;
 import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.Rectangle;
+import java.awt.RenderingHints;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import javax.swing.JComponent;
+import javax.swing.UIManager;
 
 /**
  * @author steven
  */
 
 public final class TimeBar extends JComponent implements PropertyChangeListener {
-    private static final Font LABEL_FONT = new Font("dialog", Font.PLAIN, 11);
+    private static final Font LABEL_FONT = UIManager.getFont("Label.font").deriveFont(Font.PLAIN, 10);
 
     private PianoRoll pianoRoll;
 
@@ -46,6 +49,10 @@ public final class TimeBar extends JComponent implements PropertyChangeListener 
 
     @Override
     public void paintComponent(Graphics g) {
+        
+        Graphics2D g2d = (Graphics2D) g;
+        g2d.setRenderingHint(RenderingHints. KEY_ANTIALIASING,RenderingHints. VALUE_ANTIALIAS_ON);
+        
         super.paintComponent(g);
 
         if (pianoRoll == null || this.getHeight() == 0 || this.getWidth() == 0) {

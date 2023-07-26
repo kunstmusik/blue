@@ -7,10 +7,10 @@
 
 
     <property name="CS_MANUAL_ZIP"
-              value="Csound6.15.0_manual_html.zip"/>
+              value="Csound6.18.0_manual_html.zip"/>
 
     <property name="CS_MANUAL_URL"
-    value="https://github.com/csound/manual/releases/download/6.15.0/${CS_MANUAL_ZIP}"/>
+    value="https://github.com/csound/manual/releases/download/6.18.0/${CS_MANUAL_ZIP}"/>
 
     <target name="dir.check">
       <condition property="dir.exists">
@@ -19,7 +19,7 @@
     </target>
 
     <target name="-download-csound-manual"
-      description="Downlaods HTML Csound Manual into project"
+      description="Downloads HTML Csound Manual into project"
       depends="dir.check"
       unless="dir.exists">
       <mkdir dir="src/main/csoundManual"/>

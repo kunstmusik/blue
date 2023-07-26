@@ -93,7 +93,7 @@ public class BlueShare {
         }
 
         if (dialog == null) {
-            dialog = new BlueShareDialog(WindowManager.getDefault().getMainWindow(), true);
+            dialog = new BlueShareDialog(null, true);
         }
 
         dialog.setInstrumentCategories(categories);

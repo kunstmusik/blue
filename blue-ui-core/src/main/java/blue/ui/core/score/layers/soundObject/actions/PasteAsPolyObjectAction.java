@@ -23,7 +23,6 @@ import blue.BlueData;
 import blue.SoundLayer;
 import blue.SoundObjectLibrary;
 import blue.projects.BlueProjectManager;
-import blue.score.Score;
 import blue.score.ScoreObject;
 import blue.score.TimeState;
 import blue.score.layers.Layer;
@@ -31,7 +30,8 @@ import blue.score.layers.ScoreObjectLayer;
 import blue.soundObject.Instance;
 import blue.soundObject.PolyObject;
 import blue.soundObject.SoundObject;
-import blue.ui.core.score.ScoreController;
+import blue.ui.core.clipboard.BlueClipboardUtils;
+import blue.ui.core.score.ScoreObjectCopy;
 import blue.ui.core.score.ScorePath;
 import blue.ui.core.score.undo.AddScoreObjectEdit;
 import blue.undo.BlueUndoManager;
@@ -60,13 +60,11 @@ import org.openide.util.Utilities;
 @ActionReference(path = "blue/score/layers/soundObject/actions",
         position = 60, separatorAfter = 65)
 public final class PasteAsPolyObjectAction extends AbstractAction implements ContextAwareAction {
-
-    private final List<? extends ScoreObject> scoreObjects;
-    private final List<Integer> layerIndexes;
     private final Point p;
     private final TimeState timeState;
     private final PolyObject pObj = new PolyObject();
     private final ScorePath scorePath;
+    private ScoreObjectCopy scoreObjectCopy = null;
 
     public PasteAsPolyObjectAction() {
         this(Utilities.actionsGlobalContext());
@@ -77,26 +75,25 @@ public final class PasteAsPolyObjectAction extends AbstractAction implements Con
         super(NbBundle.getMessage(PasteAsPolyObjectAction.class,
                 "CTL_PasteAsPolyObjectAction"));
 
-        ScoreController scoreController = ScoreController.getInstance();
-        Score score = scoreController.getScore();
-
-        this.scoreObjects = scoreController.getScoreObjectBuffer().scoreObjects;
-        this.layerIndexes = scoreController.getScoreObjectBuffer().layerIndexes;
         this.p = lookup.lookup(Point.class);
         this.timeState = lookup.lookup(TimeState.class);
         this.scorePath = lookup.lookup(ScorePath.class);
+        
+        scoreObjectCopy = BlueClipboardUtils.getScoreObjectCopy();
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
 
+        if(scoreObjectCopy == null) return;
+        
         BlueData data = BlueProjectManager.getInstance().getCurrentBlueData();
         SoundObjectLibrary sObjLib = data.getSoundObjectLibrary();
         List<Instance> instanceSoundObjects = new ArrayList<>();
-        ScoreController.ScoreObjectBuffer buffer
-                = ScoreController.getInstance().getScoreObjectBuffer();
-
+        
         double start = (double) p.x / timeState.getPixelSecond();
+        
+        
 
         if (timeState.isSnapEnabled()) {
             start = ScoreUtilities.getSnapValueStart(start,
@@ -106,7 +103,7 @@ public final class PasteAsPolyObjectAction extends AbstractAction implements Con
         int minLayer = Integer.MAX_VALUE;
         int maxLayer = Integer.MIN_VALUE;
 
-        for (Integer layerIndex : layerIndexes) {
+        for (Integer layerIndex : scoreObjectCopy.layerIndices) {
             if (layerIndex < minLayer) {
                 minLayer = layerIndex;
             }
@@ -121,9 +118,9 @@ public final class PasteAsPolyObjectAction extends AbstractAction implements Con
             pObj.newLayerAt(-1);
         }
 
-        for (int i = 0; i < scoreObjects.size(); i++) {
-            ScoreObject scoreObj = scoreObjects.get(i);
-            int layerIndex = layerIndexes.get(i);
+        for (int i = 0; i < scoreObjectCopy.scoreObjects.size(); i++) {
+            ScoreObject scoreObj = scoreObjectCopy.scoreObjects.get(i);
+            int layerIndex = scoreObjectCopy.layerIndices.get(i);
             SoundLayer layer = pObj.get(layerIndex - minLayer);
 
             SoundObject clone = (SoundObject)scoreObj.deepCopy();
@@ -152,15 +149,13 @@ public final class PasteAsPolyObjectAction extends AbstractAction implements Con
 
     @Override
     public boolean isEnabled() {
-        for (ScoreObject scoreObj : scoreObjects) {
-            if (!(scoreObj instanceof SoundObject)) {
-                return false;
-            }
+        if(scoreObjectCopy == null || !scoreObjectCopy.isOnlySoundObjects()) {
+            return false;
         }
-
+        
         Layer layer = scorePath.getGlobalLayerForY(p.y);
 
-        return scoreObjects.size() > 0 && layer != null && layer.accepts(
+        return scoreObjectCopy.scoreObjects.size() > 0 && layer != null && layer.accepts(
                 pObj);
     }
 
