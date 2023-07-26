@@ -1,5 +1,5 @@
 # Blue
-Copyright (c) 2001-2020 Steven Yi - All Rights Reserved
+Copyright (c) 2001-2023 Steven Yi - All Rights Reserved
 
 Email: stevenyi@gmail.com
 Web: https://blue.kunstmusik.com
@@ -11,9 +11,11 @@ information.
 
 # CHANGE LOG
 
-## [2.8.2] - 2022-xx-xx
+## [2.9.0] - 2023-07-26
 
 ### NEW
+
+* macOS and Windows builds now include embedded Java JDK
 
 * MIDI Input Panel: Added AmpDBFS mode where amplitude is scaled to 0-1 range. 
 
