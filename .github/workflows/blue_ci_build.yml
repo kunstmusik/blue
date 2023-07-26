@@ -18,7 +18,7 @@ jobs:
       - uses: actions/upload-artifact@v2
         with:
           name: Blue (macOS arm64 .app)  
-          path: application/target/blue-macOS-arm64-2.9.0.zip 
+          path: application/target/blue-macOS-arm64-2.9.1-SNAPSHOT.zip 
   macos_x86_64: 
     runs-on: macos-latest 
     steps:
@@ -37,7 +37,7 @@ jobs:
       - uses: actions/upload-artifact@v2
         with:
           name: Blue (macOS x86_64 .app)  
-          path: application/target/blue-macOS-x86_64-2.9.0.zip 
+          path: application/target/blue-macOS-x86_64-2.9.1-SNAPSHOT.zip 
   linux:
     runs-on: ubuntu-latest 
     steps:
@@ -51,12 +51,12 @@ jobs:
       - name: Build Blue 
         run: mvn -Dmaven.test.skip=true -Pgenerate-manual clean install
 
-      - run: mv application/target/blue-2.9.0.zip blue-linux-2.9.0.zip
+      - run: mv application/target/blue-2.9.1-SNAPSHOT.zip blue-linux-2.9.1-SNAPSHOT.zip
 
       - uses: actions/upload-artifact@v2
         with:
           name: Blue Linux Zip
-          path: blue-linux-2.9.0.zip 
+          path: blue-linux-2.9.1-SNAPSHOT.zip 
 
   windows:
     runs-on: windows-latest 
@@ -71,9 +71,9 @@ jobs:
       - name: Build Blue 
         run: mvn -Pgenerate-manual clean install
 
-      - run: mv application/target/blue-2.9.0.zip blue-windows-2.9.0.zip
+      - run: mv application/target/blue-2.9.1-SNAPSHOT.zip blue-windows-2.9.1-SNAPSHOT.zip
 
       - uses: actions/upload-artifact@v2
         with:
           name: Blue Windows Zip
-          path: blue-windows-2.9.0.zip 
+          path: blue-windows-2.9.1-SNAPSHOT.zip 

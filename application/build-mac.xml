@@ -8,7 +8,7 @@
 
     <property name="app.name" value="blue"/>
     <!-- for Info.plist, must be only numbers and periods per Apple guidelines -->
-    <property name="app.version" value="2.9.0"/>
+    <property name="app.version" value="2.9.1-SNAPSHOT"/>
     <property name="app.root" value="target/${app.name}.app"/>
     <property name="blue.root" value="target/${app.name}.app/Contents/Resources/blue/"/>
     
