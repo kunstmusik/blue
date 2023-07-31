@@ -21,22 +21,20 @@ package blue.ui.core.project;
 
 import blue.BlueData;
 import blue.BlueSystem;
-import blue.MainToolBar;
+import blue.ui.core.toolbar.MainToolBar;
 import blue.ProjectProperties;
 import blue.gui.ExceptionDialog;
 import blue.services.render.DiskRenderJob;
 import blue.services.render.DiskRenderService;
 import blue.settings.DiskRenderSettings;
 import blue.settings.GeneralSettings;
-import blue.ui.core.render.ProcessConsole;
-import blue.ui.core.soundFile.AudioFilePlayerTopComponent;
+import blue.ui.core.render.RealtimeRenderManager;
 import blue.ui.utilities.FileChooserManager;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.function.Consumer;
-import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import org.netbeans.api.progress.ProgressHandle;
@@ -67,8 +65,10 @@ public class RenderToDiskUtility {
     public void renderToDisk(BlueData data, 
             Consumer<File> completionCallback) {
 
-        if (MainToolBar.getInstance().isRendering()) {
-            MainToolBar.getInstance().stopRendering();
+        var manager = RealtimeRenderManager.getInstance();
+        
+        if (manager.isRendering()) {
+            manager.stopRendering();
         }
 
         try {

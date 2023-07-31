@@ -21,7 +21,7 @@ package blue.ui.core;
 
 import blue.BlueConstants;
 import blue.BlueSystem;
-import blue.MainToolBar;
+import blue.ui.core.toolbar.MainToolBar;
 import blue.WindowSettingManager;
 import blue.automation.ParameterTimeManagerFactory;
 import blue.automation.ParameterTimeManagerImpl;
@@ -86,28 +86,7 @@ public class Installer extends ModuleInstall {
         PolyObjectLayerGroupProvider.setDefaultHeightIndexProvider(() -> {
             return ProjectDefaultsSettings.getInstance().layerHeightDefault;
         });
-//        System.setProperty("netbeans.winsys.no_toolbars", "true");
-//
-//        SwingUtilities.invokeLater(new Runnable() {
-//
-//            @Override
-//            public void run() {
-//                //Get the main window of the NetBeans Platform:
-//                JFrame frame = (JFrame) WindowManager.getDefault().getMainWindow();
-//                //Get our custom main toolbar:  
-//                JPanel panel = new JPanel();
-//                panel.setLayout(new FlowLayout(FlowLayout.CENTER));
-//                panel.add(new blue.ui.core.toolbar.MainToolBar(), BorderLayout.CENTER);
-//                panel.setPreferredSize(new Dimension(100, 70));
-//
-//                //Set the new layout of our root pane:
-//                frame.getRootPane().setLayout(new MyRootPaneLayout(panel));
-//                //Install a new toolbar component into the layered pane 
-//                //of the main frame on layer 0: 
-//                panel.putClientProperty(JLayeredPane.LAYER_PROPERTY, 0);
-//                frame.getRootPane().getLayeredPane().add(panel, 0);
-//            }
-//        });
+
         ParameterTimeManagerFactory.setInstance(new ParameterTimeManagerImpl());
 
         windowTitlePropertyChangeListener = (PropertyChangeEvent evt) -> {
@@ -202,7 +181,6 @@ public class Installer extends ModuleInstall {
         //                return comp;
         //            }
         //        }
-        
         SwingUtilities.invokeLater(() -> {
             BlueNbUtilities.setMainWindow(WindowManager.getDefault().getMainWindow());
         });
@@ -276,9 +254,6 @@ public class Installer extends ModuleInstall {
         backupFileSaver.quitFileSaver();
 
         saveLibraries();
-
-        MainToolBar.getInstance().stopRendering();
-        BlueLiveToolBar.getInstance().stopRendering();
 
         result.removeLookupListener(lookupListener);
 

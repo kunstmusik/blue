@@ -19,7 +19,8 @@
  */
 package blue.ui.core.project;
 
-import blue.MainToolBar;
+import blue.projects.BlueProjectManager;
+import blue.ui.core.render.RealtimeRenderManager;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import org.openide.awt.ActionID;
@@ -45,12 +46,16 @@ public final class RenderStopProjectAction implements ActionListener {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        MainToolBar mainToolBar = MainToolBar.getInstance();
+        var manager = RealtimeRenderManager.getInstance();
 
-        if (mainToolBar.isRendering()) {
-            mainToolBar.stopRendering();
+        if (manager.isRendering()) {
+            manager.stopRendering();
         } else {
-            mainToolBar.renderProject();
+            var data = BlueProjectManager.getInstance().getCurrentBlueData();
+
+            if (data != null) {
+                RealtimeRenderManager.getInstance().renderProject(data);
+            }
         }
     }
 }

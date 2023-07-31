@@ -26,7 +26,7 @@ information.
 
 ### UPDATED 
 
-* Removed JavaFX: BlueSynthBuilder and Effects remimplemented to Swing GUI 
+* Removed JavaFX: BlueSynthBuilder and Effects reimplemented to Swing GUI 
   toolkit.
 
 * Redesigned SoundObjectLibrary window: supports drag and drop reorganization, 

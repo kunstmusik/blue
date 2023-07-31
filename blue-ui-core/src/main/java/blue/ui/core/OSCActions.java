@@ -19,9 +19,12 @@
  */
 package blue.ui.core;
 
-import blue.MainToolBar;
+import blue.ui.core.toolbar.MainToolBar;
 import blue.osc.OSCAction;
 import blue.osc.OSCManager;
+import blue.projects.BlueProjectManager;
+import blue.services.render.RealtimeRenderService;
+import blue.ui.core.render.RealtimeRenderManager;
 import de.sciss.net.OSCMessage;
 
 /**
@@ -36,28 +39,26 @@ public class OSCActions {
     public static void installActions(OSCManager manager) {
 
         /* SCORE ACTIONS */
-
         OSCManager.getInstance().registerOSCAction(new OSCAction("/score/play") {
 
             @Override
             public void actionPerformed(OSCMessage message) {
-                MainToolBar mainToolBar = MainToolBar.getInstance();
+                var data = BlueProjectManager.getInstance().getCurrentBlueData();
 
-                if (!mainToolBar.isRendering()) {
-                    mainToolBar.renderProject();
+                if (data != null) {
+                    RealtimeRenderManager.getInstance().renderProject(data);
                 }
             }
         });
-
 
         OSCManager.getInstance().registerOSCAction(new OSCAction("/score/stop") {
 
             @Override
             public void actionPerformed(OSCMessage message) {
-                MainToolBar mainToolBar = MainToolBar.getInstance();
+                var manager = RealtimeRenderManager.getInstance();
 
-                if (mainToolBar.isRendering()) {
-                    mainToolBar.stopRendering();
+                if (manager.isRendering()) {
+                    manager.stopRendering();
                 }
             }
         });
@@ -66,9 +67,12 @@ public class OSCActions {
 
             @Override
             public void actionPerformed(OSCMessage message) {
-               MainToolBar mainToolBar = MainToolBar.getInstance();
+                var data = BlueProjectManager.getInstance().getCurrentBlueData();
 
-               mainToolBar.rewind();
+                if (data != null) {
+                    data.setRenderStartTime(0.0f);
+                    data.setRenderEndTime(-1.0f);
+                }
             }
         });
 
@@ -87,37 +91,36 @@ public class OSCActions {
         });
 
         /* BLUE LIVE ACTIONS */
-
-         OSCManager.getInstance().registerOSCAction(new OSCAction("/blueLive/onOff") {
+        OSCManager.getInstance().registerOSCAction(new OSCAction("/blueLive/onOff") {
 
             @Override
             public void actionPerformed(OSCMessage message) {
             }
-            
+
         });
 
-          OSCManager.getInstance().registerOSCAction(new OSCAction("/blueLive/recompile") {
+        OSCManager.getInstance().registerOSCAction(new OSCAction("/blueLive/recompile") {
 
             @Override
             public void actionPerformed(OSCMessage message) {
             }
-            
+
         });
 
-           OSCManager.getInstance().registerOSCAction(new OSCAction("/blueLive/allNotesOff") {
+        OSCManager.getInstance().registerOSCAction(new OSCAction("/blueLive/allNotesOff") {
 
             @Override
             public void actionPerformed(OSCMessage message) {
             }
-            
+
         });
 
-            OSCManager.getInstance().registerOSCAction(new OSCAction("/blueLive/toggleMidiInput") {
+        OSCManager.getInstance().registerOSCAction(new OSCAction("/blueLive/toggleMidiInput") {
 
             @Override
             public void actionPerformed(OSCMessage message) {
             }
-            
+
         });
 
     }

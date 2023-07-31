@@ -5,10 +5,11 @@
 package blue.ui.core.project;
 
 import blue.BlueData;
-import blue.MainToolBar;
+import blue.ui.core.toolbar.MainToolBar;
 import blue.projects.BlueProject;
 import blue.projects.BlueProjectManager;
 import blue.services.render.RenderTimeManager;
+import blue.ui.core.render.RealtimeRenderManager;
 import blue.ui.core.score.ScoreController;
 import blue.ui.core.score.ScorePath;
 import java.awt.event.ActionEvent;
@@ -36,7 +37,7 @@ public final class AddMarkerAction implements ActionListener {
 
         ScorePath path = ScoreController.getInstance().getScorePath();
         if (path.getLastLayerGroup() == null) {
-            double markerTime = MainToolBar.getInstance().isRendering()
+            double markerTime = RealtimeRenderManager.getInstance().isRendering()
                     ? timeManager.getRenderTime() + timeManager.getRenderStartTime()
                     : data.getRenderStartTime();
             data.getMarkersList().addMarker(markerTime);

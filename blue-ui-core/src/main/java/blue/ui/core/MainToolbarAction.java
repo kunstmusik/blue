@@ -19,7 +19,7 @@
  */
 package blue.ui.core;
 
-import blue.MainToolBar;
+import blue.ui.core.toolbar.MainToolBar;
 import java.awt.Component;
 import org.openide.util.actions.Presenter;
 
