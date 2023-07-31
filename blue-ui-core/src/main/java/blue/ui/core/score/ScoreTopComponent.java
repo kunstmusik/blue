@@ -1102,8 +1102,6 @@ public final class ScoreTopComponent extends TopComponent
 
             layerHeaderPanel.repaint();
             
-            System.out.println("SCROLL: " + scrollX + " : " + scrollY + " : " + scrollPane.getHorizontalScrollBar().getMaximum());
-            
             SwingUtilities.invokeLater(() -> {
                 scrollPane.getHorizontalScrollBar().setValue(scrollX);
                 scrollPane.getVerticalScrollBar().setValue(scrollY);
