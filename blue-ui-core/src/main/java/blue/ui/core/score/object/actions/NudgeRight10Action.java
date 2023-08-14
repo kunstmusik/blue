@@ -50,7 +50,7 @@ public final class NudgeRight10Action implements ActionListener {
                 WindowManager.getDefault().findTopComponent("ScoreTopComponent");
 
         if (!scoreObjects.isEmpty()) {
-            float adjust = 10.0f / scoreTopComponent.getTimeState().getPixelSecond();
+            double adjust = 10.0f / scoreTopComponent.getTimeState().getPixelSecond();
             NudgeUtils.nudgeHorizontal(adjust, scoreObjects);
         }
     }

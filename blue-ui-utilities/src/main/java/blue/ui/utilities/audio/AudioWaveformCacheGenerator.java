@@ -53,7 +53,7 @@ public class AudioWaveformCacheGenerator extends Thread {
         this.workQueue.add(audioWaveformData);
     }
 
-    public int getPixelSeconds() {
+    public double getPixelSeconds() {
         if (workQueue.isEmpty()) {
             return -1;
         }
@@ -125,7 +125,7 @@ public class AudioWaveformCacheGenerator extends Thread {
                 int numBytesPerSample = audioInputStream.getFormat()
                         .getSampleSizeInBits() / 8;
 
-                int numFramesToRead = sr / waveData.pixelSeconds;
+                int numFramesToRead = (int)(sr / waveData.pixelSeconds);
 
                 boolean bigEndian = format.isBigEndian();
 

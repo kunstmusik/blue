@@ -27,9 +27,9 @@ public class WaveformCacheKey {
 
     private final String fileName;
     private long checksum;
-    private final int pixelSeconds;
+    private final double pixelSeconds;
 
-    public WaveformCacheKey(String fileName, long checksum, int pixelSeconds) {
+    public WaveformCacheKey(String fileName, long checksum, double pixelSeconds) {
         this.fileName = (fileName == null) ? "" : fileName;
         this.checksum = checksum;
         this.pixelSeconds = pixelSeconds;
@@ -48,7 +48,7 @@ public class WaveformCacheKey {
 
     @Override
     public int hashCode() {
-        return fileName.hashCode() + pixelSeconds + Long.hashCode(checksum); 
+        return fileName.hashCode() + Double.hashCode(pixelSeconds) + Long.hashCode(checksum); 
     }
 
     

@@ -10,7 +10,7 @@ public class AudioWaveformData {
 
     public boolean valid = true;
 
-    public int pixelSeconds;
+    public double pixelSeconds;
 
     /** Channels x datapairs (equal 2 * width for min/max pairs) */
     public double[][] data;

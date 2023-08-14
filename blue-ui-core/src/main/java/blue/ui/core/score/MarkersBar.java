@@ -283,10 +283,11 @@ public class MarkersBar extends JPanel implements PropertyChangeListener, TableM
 
     @Override
     protected void paintComponent(Graphics g) {
+        var bounds = g.getClipBounds();
         g.setColor(Color.BLACK);
-        g.fillRect(0, 0, getWidth(), getHeight());
+        g.fillRect(bounds.x, bounds.y, bounds.width, bounds.height);
         g.setColor(Color.DARK_GRAY);
-        g.drawLine(0, getHeight() - 1, getWidth(), getHeight() - 1);
+        g.drawLine(bounds.x, bounds.y + bounds.height - 1, bounds.x + bounds.width, bounds.y + bounds.height - 1);
     }
 
     class PlayMarker extends JLabel implements PropertyChangeListener {

@@ -163,7 +163,7 @@ public class ScoreTimelineDropTargetListener implements DropTargetListener {
 
                 PolyObject pObj = sTimeCanvas.getPolyObject();
 
-                float startTime = (float) p.x / timeState.getPixelSecond();
+                double startTime = p.x / timeState.getPixelSecond();
                 float dur = SoundFileUtilities.getDurationInSeconds(s);
 
                 af.setStartTime(startTime);
@@ -227,7 +227,7 @@ public class ScoreTimelineDropTargetListener implements DropTargetListener {
 
                 PolyObject pObj = sTimeCanvas.getPolyObject();
 
-                float startTime = (float) p.x / timeState.getPixelSecond();
+                double startTime = p.x / timeState.getPixelSecond();
                 float dur = SoundFileUtilities.getDurationInSeconds(str);
 
                 af.setStartTime(startTime);
@@ -245,7 +245,7 @@ public class ScoreTimelineDropTargetListener implements DropTargetListener {
                     
                     int index = sTimeCanvas.pObj.getLayerNumForY(p.y);
                     var sObjCopy = (SoundObject) scoreObjectCopy.scoreObjects.get(0).deepCopy();
-                    float startTime = (float) p.x / timeState.getPixelSecond();
+                    double startTime = p.x / timeState.getPixelSecond();
                     sObjCopy.setStartTime(startTime);
                     pObj.addSoundObject(index, sObjCopy);
                     dtde.dropComplete(true);

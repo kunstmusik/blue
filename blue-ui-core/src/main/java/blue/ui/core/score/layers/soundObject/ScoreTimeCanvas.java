@@ -305,7 +305,7 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
         int tempTime = (int) (getPolyObject().getMaxTime() / 60) + 2;
         int height = getPolyObject().getTotalHeight();
 
-        int width = tempTime * timeState.getPixelSecond() * 60;
+        int width = (int)(tempTime * timeState.getPixelSecond() * 60);
 //
 //        if (getParent() != null) {
 //
@@ -420,7 +420,7 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
 
             int height = getPolyObject().getTotalHeight();
             double snapValue = timeState.getSnapValue();
-            int pixelSecond = timeState.getPixelSecond();
+            double pixelSecond = timeState.getPixelSecond();
             double time;
             for (int i = 0; x < width; i++) {
                 x = (int) ((i * snapValue) * pixelSecond);

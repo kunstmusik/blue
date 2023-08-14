@@ -258,8 +258,8 @@ public class AudioLayersPanel extends JLayeredPane implements LayerGroupListener
     protected Dimension checkSize() {
         int h = layerGroup.getTotalHeight();
         int tempTime = (int) (layerGroup.getMaxTime() / 60) + 2;
-        int width = tempTime * timeState.getPixelSecond() * 60;
-        final Dimension d = new Dimension(width, h);
+        double width = tempTime * timeState.getPixelSecond() * 60;
+        final Dimension d = new Dimension((int)width, h);
         this.setPreferredSize(d);
         return d;
     }
@@ -351,7 +351,7 @@ public class AudioLayersPanel extends JLayeredPane implements LayerGroupListener
             g.setColor(VLINE_COLOR);
             
             double snapValue = timeState.getSnapValue();
-            int pixelSecond = timeState.getPixelSecond();
+            double pixelSecond = timeState.getPixelSecond();
 
             for (int i = 0; x < getWidth(); i++) {
                 x = (int) ((i * snapValue) * pixelSecond);

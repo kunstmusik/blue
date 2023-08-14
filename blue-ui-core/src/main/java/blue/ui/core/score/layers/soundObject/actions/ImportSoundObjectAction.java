@@ -110,7 +110,7 @@ public final class ImportSoundObjectAction extends AbstractAction
                         start = start - (start % snapPixels);
                     }
 
-                    float startTime = (float) start / timeState.getPixelSecond();
+                    double startTime = start / timeState.getPixelSecond();
                     tempSobj.setStartTime(startTime);
 
                     ((SoundLayer) layer).add(tempSobj);

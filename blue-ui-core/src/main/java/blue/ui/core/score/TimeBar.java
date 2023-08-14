@@ -25,18 +25,20 @@ import blue.services.render.RenderTimeManager;
 import blue.services.render.RenderTimeManagerListener;
 import blue.settings.PlaybackSettings;
 import blue.soundObject.PolyObject;
+import blue.time.TimeUtilities;
 import blue.ui.utilities.BlueGradientFactory;
 import blue.ui.utilities.UiUtilities;
+import blue.utilities.MemoizedFunction;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.text.DecimalFormat;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
-import javax.swing.LookAndFeel;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import org.openide.util.Lookup;
@@ -67,6 +69,12 @@ public final class TimeBar extends JPanel implements
     private double timePointer = 0.0f;
 
     private boolean rootTimeline = true;
+
+    MemoizedFunction<Double, Double> getMajorTimeUnit = new MemoizedFunction<>(
+            this::calcMajorTimeUnit);
+
+    MemoizedFunction<Double, Double> getMajorBeatUnit = new MemoizedFunction<>(
+            this::calcMajorBeatUnit);
 
     RenderTimeManager renderTimeManager
             = Lookup.getDefault().lookup(RenderTimeManager.class);
@@ -108,12 +116,6 @@ public final class TimeBar extends JPanel implements
 
             }
 
-            // public void mouseReleased(MouseEvent e) {
-            // int end = e.getX();
-            // System.out.println("[for time rescaling]");
-            // System.out.println("start: " + start + " end: " + end);
-            //
-            // }
         });
 
         this.addMouseMotionListener(new MouseMotionAdapter() {
@@ -154,9 +156,9 @@ public final class TimeBar extends JPanel implements
     public void paintComponent(Graphics g) {
 
         Graphics2D g2d = (Graphics2D) g;
-        
-        g2d.setRenderingHint(RenderingHints. KEY_ANTIALIASING,RenderingHints. VALUE_ANTIALIAS_ON);
-        
+
+        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
         Paint p = g2d.getPaint();
         g2d.setPaint(BlueGradientFactory.getGradientPaint(getBackground()));
         g2d.fillRect(0, 0, getWidth(), getHeight());
@@ -194,6 +196,35 @@ public final class TimeBar extends JPanel implements
         }
     }
 
+    private double calcMajorBeatUnit(double pixelTime) {
+        int minMajorWidth = 100;
+
+        var v = Math.log(pixelTime / minMajorWidth) / Math.log(2);
+        var majorBeatUnit = 1.0 / Math.pow(2, (int) v);
+
+        return majorBeatUnit;
+    }
+
+    private double calcMajorTimeUnit(double pixelTime) {
+        int minMajorWidth = 100;
+
+        double majorTimeUnit = 0;
+        double[] units = {1, 2, 4, 10, 15, 20, 30, 60, 150, 300, 600, 900, 1200, 1800, 3600, 7200, 14400};
+        var width = 0.0;
+
+        if (pixelTime < minMajorWidth) {
+            for (int i = 0; i < units.length && width < minMajorWidth; i++) {
+                width = units[i] * pixelTime;
+                majorTimeUnit = units[i];
+            }
+
+        } else {
+            var v = Math.log(pixelTime / minMajorWidth) / Math.log(2);
+            majorTimeUnit = 1.0 / Math.pow(2, (int) v);
+        }
+        return majorTimeUnit;
+    }
+
     private void drawLinesAndNumbers(Graphics g) {
         Rectangle bounds = g.getClipBounds();
 
@@ -211,76 +242,112 @@ public final class TimeBar extends JPanel implements
             textWidth = fontMetrics.stringWidth("000");
         }
 
-        int pixelTime = timeState.getPixelSecond();
-        int timeUnit = timeState.getTimeUnit();
+        double pixelTime = timeState.getPixelSecond();
 
-        LookAndFeel lnf = UIManager.getLookAndFeel();
-
-//        if(lnf instanceof MetalLookAndFeel) {
-//            g.setColor(((MetalLookAndFeel)lnf).getPrimaryControl());
-//        } else {
         g.setColor(getForeground());
-//        g.setColor(Color.WHITE);
-//        }
 
         int startX = bounds.x;
         int endX = startX + bounds.width;
 
+        double startTime = startX / (double) pixelTime;
+        double endTime = endX / (double) pixelTime;
+        double duration = endTime - startTime;
+
         g.drawLine(startX, h, endX, h);
 
-        int lastVal = 0;
+        DecimalFormat df = new DecimalFormat();
 
-        int divisions = getWidth() / pixelTime;
+        if (timeState.getTimeDisplay() == TimeState.DISPLAY_TIME) {
+            double majorTimeUnit = getMajorTimeUnit.invoke(pixelTime);
+            //System.out.println("Major Time Unit: " + majorTimeUnit + " : " + pixelTime);
+            var startVal = ((int) (startTime / majorTimeUnit) * majorTimeUnit);
 
-//        int longHeight = (int) (h * .5);
-//        int shortHeight = (int) (h * .75);
-        int longHeight = h - 6;
-        int shortHeight = h - 3;
-
-        int start = (startX / pixelTime);
-        int end = (endX / pixelTime) + 1;
-
-        end = end > divisions ? divisions : end;
-
-        for (int i = start; i < end; i++) {
-            int lineX = i * pixelTime;
-
-            if (i % timeUnit == 0) {
-                if (lineX == 0 || lineX - lastVal > textWidth) {
-                    g.drawLine(lineX, h, lineX, longHeight);
-                    lastVal = lineX;
-                } else {
-                    g.drawLine(lineX, h, lineX, shortHeight);
-                }
-            } else {
-                g.drawLine(lineX, h, lineX, shortHeight);
+            for (double i = startVal; i < endTime; i += majorTimeUnit) {
+                String txt = TimeUtilities.convertSecondsToTimeString(i);
+                int x = (int) (bounds.width * (i - startTime) / duration) + startX;
+                g.drawLine(x, 10, x, h);
+                g.drawString(txt, 0 + x + 2, 16);
             }
+
+        } else if (timeState.getTimeDisplay() == TimeState.DISPLAY_BEATS) {
+            double majorBeatUnit = getMajorBeatUnit.invoke(pixelTime);
+            var startVal = ((int) (startTime / majorBeatUnit) * majorBeatUnit);
+
+//            System.out.println(startVal + " : " + majorBeatUnit);
+            for (double i = startVal; i < endTime; i += majorBeatUnit) {
+                String txt = df.format(i);
+                int x = (int) (bounds.width * (i - startTime) / duration) + startX;
+                g.drawLine(x, 10, x, h);
+                g.drawString(txt, 0 + x + 2, 16);
+            }
+
         }
 
-        // DRAW LABELS
-        g.setFont(LABEL_FONT);
-        lastVal = 0;
-        for (int i = start; i < end; i++) {
-            if (i % timeUnit == 0) {
-                String time = "";
-
-                if (timeDisplay == PolyObject.DISPLAY_TIME) {
-                    int min = i / 60;
-                    int sec = i % 60;
-                    String seconds = (sec < 10) ? "0" + sec : String.valueOf(sec);
-                    time = min + ":" + seconds;
-                } else if (timeDisplay == PolyObject.DISPLAY_NUMBER) {
-                    time = Integer.toString(i);
-                }
-
-                int labelX = (i * pixelTime);
-
-                if (labelX == 0 || labelX - lastVal > textWidth) {
-                    g.drawString(time, labelX + 3, 14);
-                    lastVal = labelX;
-                }
-            }
-        }
+        //        GraphLabels.drawTicks(startTime, endTime, (int) (bounds.width / 64),
+        //                (num, nfrac) -> {
+        //                    df.setMaximumFractionDigits(nfrac);
+        //                    df.setMinimumFractionDigits(nfrac);
+        ////                    String txt = df.format(num);
+        //                    String txt = TimeUtilities.convertSecondsToTimeString(num);
+        //                    int x = (int) (bounds.width * (num - startTime) / duration) + startX;
+        //                    g.drawLine(x, 10, x, h);
+        //                    g.drawString(txt, 0 + x + 2, 16);
+        //                });
+        //        
+        //        
+        //        int lastVal = 0;
+        //
+        //        int divisions = getWidth() / pixelTime;
+        //
+        ////        int longHeight = (int) (h * .5);
+        ////        int shortHeight = (int) (h * .75);
+        //        int longHeight = h - 6;
+        //        int shortHeight = h - 3;
+        //
+        //        int start = (startX / pixelTime);
+        //        int end = (endX / pixelTime) + 1;
+        //
+        //        end = end > divisions ? divisions : end;
+        //
+        //        for (int i = start; i < end; i++) {
+        //            int lineX = i * pixelTime;
+        //
+        //            if (i % timeUnit == 0) {
+        //                if (lineX == 0 || lineX - lastVal > textWidth) {
+        //                    g.drawLine(lineX, h, lineX, longHeight);
+        //                    lastVal = lineX;
+        //                } else {
+        //                    g.drawLine(lineX, h, lineX, shortHeight);
+        //                }
+        //            } else {
+        //                g.drawLine(lineX, h, lineX, shortHeight);
+        //            }
+        //        }
+        //
+        //        // DRAW LABELS
+        //        g.setFont(LABEL_FONT);
+        //        lastVal = 0;
+        //        for (int i = start; i < end; i++) {
+        //            if (i % timeUnit == 0) {
+        //                String time = "";
+        //
+        //                if (timeDisplay == PolyObject.DISPLAY_TIME) {
+        //                    int min = i / 60;
+        //                    int sec = i % 60;
+        //                    String seconds = (sec < 10) ? "0" + sec : String.valueOf(sec);
+        //                    time = min + ":" + seconds;
+        //                } else if (timeDisplay == PolyObject.DISPLAY_BEATS) {
+        //                    time = Integer.toString(i);
+        //                }
+        //
+        //                int labelX = (i * pixelTime);
+        //
+        //                if (labelX == 0 || labelX - lastVal > textWidth) {
+        //                    g.drawString(time, labelX + 3, 14);
+        //                    lastVal = labelX;
+        //                }
+        //            }
+        //        }
     }
 
     /**

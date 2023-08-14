@@ -75,8 +75,7 @@ public final class SelectAllAfterAction extends AbstractAction
 //            return;
 //        }
 
-        float pointTime = (float) p.x
-                / timeState.getPixelSecond();
+        double pointTime = p.x / timeState.getPixelSecond();
         List<ScoreObject> newSelected = new ArrayList<>();
         List<Layer> allLayers = scorePath.getAllLayers();
 

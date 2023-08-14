@@ -44,13 +44,10 @@ class TimelinePropertiesPanel extends JComponent {
 
     JTextField snapValue = new JTextField();
 
-    JTextField timeUnit = new JTextField();
-
     JRadioButton timeDisplayTime = new JRadioButton(BlueSystem
             .getString("scoreGUI.timeline.time"));
 
-    JRadioButton timeDisplayNumber = new JRadioButton(BlueSystem
-            .getString("scoreGUI.timeline.number"));
+    JRadioButton timeDisplayBeats = new JRadioButton("Beats");
 
     boolean isUpdating = false;
 
@@ -89,7 +86,7 @@ class TimelinePropertiesPanel extends JComponent {
             if (!isUpdating) {
                 if (e.getSource() == timeDisplayTime) {
                     timeState.setTimeDisplay(PolyObject.DISPLAY_TIME);
-                } else if (e.getSource() == timeDisplayNumber) {
+                } else if (e.getSource() == timeDisplayBeats) {
                     timeState.setTimeDisplay(PolyObject.DISPLAY_NUMBER);
                     
                 }
@@ -103,27 +100,12 @@ class TimelinePropertiesPanel extends JComponent {
         };
 
         timeDisplayTime.addActionListener(timeActionListener);
-        timeDisplayNumber.addActionListener(timeActionListener);
+        timeDisplayBeats.addActionListener(timeActionListener);
 
         ButtonGroup bg = new ButtonGroup();
         bg.add(timeDisplayTime);
-        bg.add(timeDisplayNumber);
+        bg.add(timeDisplayBeats);
 
-        timeUnit.addActionListener((ActionEvent e) -> {
-            try {
-                int val = Integer.parseInt(timeUnit.getText());
-                
-                if (val < 1) {
-                    timeUnit.setText(Integer.toString(timeState.getTimeUnit()));
-                    return;
-                }
-
-                timeState.setTimeUnit(val);
-                
-            } catch (NumberFormatException nfe) {
-                timeUnit.setText(Integer.toString(timeState.getTimeUnit()));
-            }
-        });
 
         // SET UP MENU
 
@@ -144,8 +126,7 @@ class TimelinePropertiesPanel extends JComponent {
         timeDisplayPanel.setLayout(new GridLayout(3, 1));
         timeDisplayPanel.setMaximumSize(new Dimension(150, 200));
         timeDisplayPanel.add(timeDisplayTime);
-        timeDisplayPanel.add(timeDisplayNumber);
-        timeDisplayPanel.add(timeUnit);
+        timeDisplayPanel.add(timeDisplayBeats);
 
         this.add(snapPanel);
         this.add(timeDisplayPanel);
@@ -165,12 +146,11 @@ class TimelinePropertiesPanel extends JComponent {
 
         snapEnabledBox.setSelected(timeState.isSnapEnabled());
         snapValue.setText(Double.toString(timeState.getSnapValue()));
-        timeUnit.setText(Integer.toString(timeState.getTimeUnit()));
 
         if (timeState.getTimeDisplay() == TimeState.DISPLAY_TIME) {
             timeDisplayTime.setSelected(true);
         } else {
-            timeDisplayNumber.setSelected(true);
+            timeDisplayBeats.setSelected(true);
         }
         
         timeState.addPropertyChangeListener(pcl);

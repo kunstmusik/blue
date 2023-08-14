@@ -150,7 +150,7 @@ public class AudioLayersDropTargetListener implements DropTargetListener {
             af.setName(f.getName());
             af.setAudioFile(f);
 
-            float startTime = (float) p.x / audioLayersPanel.getTimeState().getPixelSecond();
+            double startTime = p.x / audioLayersPanel.getTimeState().getPixelSecond();
 
             af.setStartTime(startTime);
             af.setSubjectiveDuration(af.getAudioDuration());
@@ -209,7 +209,7 @@ public class AudioLayersDropTargetListener implements DropTargetListener {
                 af.setName(sObjName);
                 af.setAudioFile(f);
 
-                float startTime = (float) p.x / audioLayersPanel.getTimeState().getPixelSecond();
+                double startTime = p.x / audioLayersPanel.getTimeState().getPixelSecond();
 
                 af.setStartTime(startTime);
                 af.setSubjectiveDuration(af.getAudioDuration());
@@ -273,7 +273,7 @@ public class AudioLayersDropTargetListener implements DropTargetListener {
                 af.setName(sObjName);
                 af.setAudioFile(f);
 
-                float startTime = (float) p.x / audioLayersPanel.getTimeState().getPixelSecond();
+                double startTime = p.x / audioLayersPanel.getTimeState().getPixelSecond();
 
                 af.setStartTime(startTime);
                 af.setSubjectiveDuration(af.getAudioDuration());

@@ -76,8 +76,7 @@ public final class SelectAllBeforeAction extends AbstractAction implements
 //            return;
 //        }
 
-        float pointTime = (float) p.x
-                / timeState.getPixelSecond();
+        double pointTime = p.x / timeState.getPixelSecond();
         List<ScoreObject> newSelected = new ArrayList<>();
 
         List<Layer> allLayers = scorePath.getAllLayers();

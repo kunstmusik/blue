@@ -531,7 +531,7 @@ public class AudioClipPanel extends JPanel
     }
 
     protected void reset() {
-        int pixelSecond = timeState.getPixelSecond();
+        double pixelSecond = timeState.getPixelSecond();
         double x = audioClip.getStartTime() * pixelSecond;
         double width = audioClip.getSubjectiveDuration() * pixelSecond;
         setBounds((int) x, getY(), (int) width, getHeight());

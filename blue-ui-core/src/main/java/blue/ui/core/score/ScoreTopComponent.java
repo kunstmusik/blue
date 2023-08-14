@@ -990,7 +990,7 @@ public final class ScoreTopComponent extends TopComponent
 
         } else if (evt.getSource() == currentTimeState) {
             if (evt.getPropertyName().equals("pixelSecond")) {
-                int pixelSecond = currentTimeState.getPixelSecond();
+                double pixelSecond = currentTimeState.getPixelSecond();
                 double val = data.getRenderStartTime();
 
                 int newX = (int) (val * pixelSecond);

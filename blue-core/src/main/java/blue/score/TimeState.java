@@ -33,55 +33,48 @@ import java.util.Vector;
 public class TimeState {
 
     public static final int DISPLAY_TIME = 0;
-    public static final int DISPLAY_NUMBER = 1;
+    public static final int DISPLAY_BEATS = 1;
 
     private transient Vector<PropertyChangeListener> listeners = null;
 
-    private int pixelSecond = 64;
     private boolean snapEnabled = false;
     private double snapValue = 1.0f;
     private int timeDisplay = DISPLAY_TIME;
-    private int timeUnit = 5;
+
+    private int zoomIterations = 0;
 
     public TimeState() {
     }
 
     public TimeState(TimeState timeState) {
-        pixelSecond = timeState.pixelSecond;
         snapEnabled = timeState.snapEnabled;
         snapValue = timeState.snapValue;
         timeDisplay = timeState.timeDisplay;
-        timeUnit = timeState.timeUnit;
+        zoomIterations = timeState.zoomIterations;
     }
 
-    public int getPixelSecond() {
-        return this.pixelSecond;
+    public double getPixelSecond() {
+        return 100 * Math.exp(Math.log(2) * (zoomIterations / 32.0));
     }
 
-    public void setPixelSecond(int pixelSecond) {
+    public void lowerPixelSecond() {
+        var oldPs = getPixelSecond();
+        zoomIterations--;
+        var newPs = getPixelSecond();
         PropertyChangeEvent pce = new PropertyChangeEvent(this, "pixelSecond",
-                new Integer(this.pixelSecond), new Integer(pixelSecond));
-
-        this.pixelSecond = pixelSecond;
+                oldPs, newPs);
 
         firePropertyChangeEvent(pce);
     }
 
-    public void lowerPixelSecond() {
-        int temp = getPixelSecond();
-
-        if (temp <= 2) {
-            return;
-        }
-
-        temp -= 2;
-
-        setPixelSecond(temp);
-    }
-
     public void raisePixelSecond() {
-        int temp = getPixelSecond() + 2;
-        setPixelSecond(temp);
+        var oldPs = getPixelSecond();
+        zoomIterations++;
+        var newPs = getPixelSecond();
+        PropertyChangeEvent pce = new PropertyChangeEvent(this, "pixelSecond",
+                oldPs, newPs);
+
+        firePropertyChangeEvent(pce);
     }
 
     public boolean isSnapEnabled() {
@@ -119,19 +112,6 @@ public class TimeState {
                 new Integer(this.timeDisplay), new Integer(timeDisplay));
 
         this.timeDisplay = timeDisplay;
-
-        firePropertyChangeEvent(pce);
-    }
-
-    public int getTimeUnit() {
-        return timeUnit;
-    }
-
-    public void setTimeUnit(int timeUnit) {
-        PropertyChangeEvent pce = new PropertyChangeEvent(this, "timeUnit",
-                new Integer(this.timeUnit), new Integer(timeUnit));
-
-        this.timeUnit = timeUnit;
 
         firePropertyChangeEvent(pce);
     }
@@ -187,9 +167,13 @@ public class TimeState {
             String nodeName = e.getName();
             final String nodeText = e.getTextString();
             switch (nodeName) {
-                case "pixelSecond":
-                    timeState.pixelSecond = Integer.parseInt(nodeText);
-                    break;
+                case "pixelSecond": {
+                    var pixelSecond = Integer.parseInt(nodeText);
+                    timeState.zoomIterations = (int) ((Math.log(pixelSecond / 100.0) / Math.log(2)) * 32.0);
+                }
+                break;
+                case "zoomIterations":
+                    timeState.zoomIterations = Integer.parseInt(nodeText);
                 case "snapEnabled":
                     timeState.snapEnabled = Boolean.parseBoolean(nodeText);
                     break;
@@ -198,9 +182,6 @@ public class TimeState {
                     break;
                 case "timeDisplay":
                     timeState.timeDisplay = Integer.parseInt(nodeText);
-                    break;
-                case "timeUnit":
-                    timeState.timeUnit = Integer.parseInt(nodeText);
                     break;
             }
         }
@@ -211,13 +192,12 @@ public class TimeState {
     public Element saveAsXML() {
         Element retVal = new Element("timeState");
 
-        retVal.addElement(XMLUtilities.writeInt("pixelSecond",
-                this.pixelSecond));
+        retVal.addElement(XMLUtilities.writeInt("zoomIterations",
+                this.zoomIterations));
         retVal.addElement(XMLUtilities.writeBoolean("snapEnabled",
                 this.snapEnabled));
         retVal.addElement(XMLUtilities.writeDouble("snapValue", this.snapValue));
         retVal.addElement(XMLUtilities.writeInt("timeDisplay", this.timeDisplay));
-        retVal.addElement(XMLUtilities.writeInt("timeUnit", this.timeUnit));
 
         return retVal;
     }

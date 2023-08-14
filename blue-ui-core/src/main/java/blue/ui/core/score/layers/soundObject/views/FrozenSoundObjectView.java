@@ -157,7 +157,7 @@ public class FrozenSoundObjectView extends SoundObjectView {
     }
 
     private void paintWaveform(Graphics2D g, SoundObjectView sObjView,
-            int pixelSeconds) {
+            double pixelSeconds) {
 
         FrozenSoundObject fso = (FrozenSoundObject) sObj;
 

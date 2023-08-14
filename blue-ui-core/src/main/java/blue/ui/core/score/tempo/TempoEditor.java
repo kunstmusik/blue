@@ -115,6 +115,8 @@ public class TempoEditor extends JComponent implements PropertyChangeListener {
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
 
+        var bounds = g.getClipBounds();
+        
         if (this.tempo == null) {
             return;
         }
@@ -147,7 +149,7 @@ public class TempoEditor extends JComponent implements PropertyChangeListener {
                 int height = getHeight();
                 int width = getWidth();
                 double snapValue = timeState.getSnapValue();
-                int pixelSecond = timeState.getPixelSecond();
+                double pixelSecond = timeState.getPixelSecond();
 
                 for (int i = 0; x < width; i++) {
                     x = (int) ((i * snapValue) * pixelSecond);
@@ -170,7 +172,8 @@ public class TempoEditor extends JComponent implements PropertyChangeListener {
             g2d.setColor(Color.DARK_GRAY);
             drawLine(g2d, tempoLine, false);
             g2d.setColor(Color.WHITE);
-            g2d.drawLine(0, getHeight() - 1, getWidth(), getHeight() - 1);
+            g2d.setStroke(STROKE1);
+            g2d.drawLine(bounds.x, bounds.y + bounds.height - 1, bounds.x + bounds.width, bounds.y + bounds.height - 1);
             return;
         }
 
@@ -187,9 +190,10 @@ public class TempoEditor extends JComponent implements PropertyChangeListener {
             drawPointInformation(g2d, x, y);
 
         }
-
+        
         g2d.setColor(Color.WHITE);
-        g2d.drawLine(0, getHeight() - 1, getWidth(), getHeight() - 1);
+        g2d.setStroke(STROKE1);
+        g2d.drawLine(bounds.x, bounds.y + bounds.height - 1, bounds.x + bounds.width, bounds.y + bounds.height - 1);
     }
 
     /**
