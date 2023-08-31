@@ -77,8 +77,8 @@ public class TransportControls extends JPanel {
 
     public TransportControls() {
 
-        this.setBorder(BorderFactory.createEmptyBorder(10,10,5,10));
-        
+        this.setBorder(BorderFactory.createEmptyBorder(10, 10, 5, 10));
+
         this.setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
 
         previousMarkerButton = new JButton(new PreviousMarkerAction());
@@ -149,14 +149,14 @@ public class TransportControls extends JPanel {
         this.add(followPlaybackButton, null);
         this.add(Box.createHorizontalStrut(5));
         this.add(loopButton, null);
-        
-        previousMarkerButton.setMargin(new Insets(5,5,5,7));
-        nextMarkerButton.setMargin(new Insets(5,7,5,6));
-        rewindButton.setMargin(new Insets(5,7,5,6 ));
-        playButton.setMargin(new Insets(5,7,5,5));
-        stopButton.setMargin(new Insets(5,7,5,6));
-        followPlaybackButton.setMargin(new Insets(5,7,5,7));
-        loopButton.setMargin(new Insets(5,7,5,7));
+
+        previousMarkerButton.setMargin(new Insets(5, 5, 5, 7));
+        nextMarkerButton.setMargin(new Insets(5, 7, 5, 6));
+        rewindButton.setMargin(new Insets(5, 7, 5, 6));
+        playButton.setMargin(new Insets(5, 7, 5, 5));
+        stopButton.setMargin(new Insets(5, 7, 5, 6));
+        followPlaybackButton.setMargin(new Insets(5, 7, 5, 7));
+        loopButton.setMargin(new Insets(5, 7, 5, 7));
 
         dataListener = (evt) -> {
             switch (evt.getPropertyName()) {
@@ -192,8 +192,10 @@ public class TransportControls extends JPanel {
 
         this.data = blueData;
 
-        if(this.data != null) {
+        if (this.data != null) {
             data.addPropertyChangeListener(dataListener);
+            loopButton.setSelected(data.isLoopRendering());
+            updateRepeatIcon();
         }
 
     }
