@@ -148,8 +148,6 @@ public class TimeDisplayPanel extends javax.swing.JPanel {
         
         var insets = getInsets();
         
-        System.out.println(insets);
-
         g.setColor(Color.BLACK);
         g.fillRoundRect(insets.left, insets.top, w - insets.right - insets.left, h - insets.top - insets.bottom, 16, 16);
     }
