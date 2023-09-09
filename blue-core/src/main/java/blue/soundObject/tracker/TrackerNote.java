@@ -23,7 +23,6 @@ import blue.utility.XMLUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
 import java.util.ArrayList;
-import org.apache.commons.lang3.builder.EqualsBuilder;
 
 public class TrackerNote {
 
@@ -119,11 +118,6 @@ public class TrackerNote {
         }
 
         return false;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        return EqualsBuilder.reflectionEquals(this, obj);
     }
 
     public Element saveAsXML() {

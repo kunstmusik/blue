@@ -23,7 +23,6 @@ package blue.soundObject.jmask;
 
 import electric.xml.Element;
 import electric.xml.Elements;
-import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
 public class Constant implements Generator, Accumulatable {
@@ -80,14 +79,6 @@ public class Constant implements Generator, Accumulatable {
     @Override
     public double getValue(double time, java.util.Random rnd) {
         return value;
-    }
-
-//    public JComponent getEditor() {
-//        return new ConstantEditor(this);
-//    }
-    @Override
-    public boolean equals(Object obj) {
-        return EqualsBuilder.reflectionEquals(this, obj);
     }
 
     @Override

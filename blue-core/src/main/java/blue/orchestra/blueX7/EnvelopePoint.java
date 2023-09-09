@@ -1,7 +1,6 @@
 package blue.orchestra.blueX7;
 
 import electric.xml.Element;
-import org.apache.commons.lang3.builder.EqualsBuilder;
 
 /**
  * <p>
@@ -52,10 +51,5 @@ public class EnvelopePoint {
         retVal.setAttribute("y", Integer.toString(y));
 
         return retVal;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        return EqualsBuilder.reflectionEquals(this, obj);
     }
 }

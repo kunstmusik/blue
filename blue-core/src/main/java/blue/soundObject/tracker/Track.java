@@ -34,7 +34,6 @@ import java.util.Vector;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.TableModel;
-import org.apache.commons.lang3.builder.EqualsBuilder;
 
 public class Track implements TableModel {
 
@@ -449,11 +448,6 @@ public class Track implements TableModel {
 
             listener.tableChanged(tme);
         }
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        return EqualsBuilder.reflectionEquals(this, obj);
     }
 
     /* SERIALIZATION METHODS */

@@ -32,7 +32,6 @@ import java.util.Vector;
 import javax.swing.ListModel;
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
-import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
 public class Field implements ListModel {
@@ -276,11 +275,6 @@ public class Field implements ListModel {
             ListDataListener listener = (ListDataListener) iter.next();
             listener.contentsChanged(lde);
         }
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        return EqualsBuilder.reflectionEquals(this, obj);
     }
 
     @Override
