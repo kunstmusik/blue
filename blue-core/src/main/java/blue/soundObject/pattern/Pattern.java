@@ -21,7 +21,6 @@ package blue.soundObject.pattern;
 
 import electric.xml.Element;
 import electric.xml.Elements;
-import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
 public class Pattern {
@@ -150,14 +149,6 @@ public class Pattern {
         retVal.values = values;
 
         return retVal;
-    }
-
-    /**
-     * @see java.lang.Object#equals(Object)
-     */
-    @Override
-    public boolean equals(Object object) {
-        return EqualsBuilder.reflectionEquals(this, object);
     }
 
     @Override

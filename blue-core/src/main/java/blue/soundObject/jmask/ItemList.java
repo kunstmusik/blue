@@ -31,7 +31,6 @@ import java.util.Vector;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.TableModel;
-import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
 public class ItemList implements Generator, TableModel, Accumulatable {
@@ -328,11 +327,6 @@ public class ItemList implements Generator, TableModel, Accumulatable {
 
     public void setListType(int listType) {
         this.listType = listType;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        return EqualsBuilder.reflectionEquals(this, obj);
     }
 
     @Override

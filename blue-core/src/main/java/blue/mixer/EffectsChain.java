@@ -33,7 +33,6 @@ import java.util.Vector;
 import javax.swing.ListModel;
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
-import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
 public class EffectsChain implements ListModel, PropertyChangeListener {
@@ -141,11 +140,6 @@ public class EffectsChain implements ListModel, PropertyChangeListener {
 
     public int size() {
         return effects.size();
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        return EqualsBuilder.reflectionEquals(this, obj);
     }
 
     public void pushUp(int index) {

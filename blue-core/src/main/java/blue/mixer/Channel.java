@@ -35,7 +35,6 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Vector;
-import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
 /**
@@ -373,11 +372,6 @@ public class Channel implements Comparable<Channel>, ParameterListener {
         } catch (NumberFormatException nfe) {
             return (this.getName()).compareToIgnoreCase(chanB.getName());
         }
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        return EqualsBuilder.reflectionEquals(this, obj);
     }
 
     @Override

@@ -26,7 +26,6 @@ import blue.utility.ObjectUtilities;
 import blue.utility.XMLUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
-import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
 public class Probability implements Generator, Maskable,
@@ -116,11 +115,6 @@ public class Probability implements Generator, Maskable,
         for (int i = 0; i < generators2.length; i++) {
             System.out.println("Generator: " + generators2[i].getName());
         }
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        return EqualsBuilder.reflectionEquals(this, obj);
     }
 
     @Override

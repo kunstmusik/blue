@@ -23,7 +23,6 @@ package blue.soundObject.jmask;
 
 import electric.xml.Element;
 import electric.xml.Elements;
-import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
 public class Random implements Generator, Quantizable, Accumulatable {
@@ -101,11 +100,6 @@ public class Random implements Generator, Quantizable, Accumulatable {
 
     public void setMin(double min) {
         this.min = min;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        return EqualsBuilder.reflectionEquals(this, obj);
     }
 
     @Override

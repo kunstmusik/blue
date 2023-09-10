@@ -22,7 +22,6 @@ package blue.mixer;
 import blue.CompileData;
 import blue.orchestra.GenericInstrument;
 import blue.udo.OpcodeList;
-import blue.utility.ObjectUtilities;
 import blue.util.ObservableArrayList;
 import blue.util.ObservableList;
 import blue.utility.XMLUtilities;
@@ -33,7 +32,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.text.StrBuilder;
 
 /**
@@ -459,9 +457,4 @@ public class Mixer {
     }
 
     
-    
-    @Override
-    public boolean equals(Object obj) {
-        return EqualsBuilder.reflectionEquals(this, obj);
-    }
 }

@@ -3,7 +3,6 @@ package blue.orchestra.blueX7;
 import blue.utility.XMLUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
-import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.text.StrBuilder;
 
 /**
@@ -166,8 +165,4 @@ public class Operator {
         return retVal;
     }
 
-    @Override
-    public boolean equals(Object obj) {
-        return EqualsBuilder.reflectionEquals(this, obj);
-    }
 }
