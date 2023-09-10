@@ -1,5 +1,3 @@
-package blue.time;
-
 /*
  * blue - object composition environment for csound
  * Copyright (c) 2020 Steven Yi (stevenyi@gmail.com)
@@ -19,6 +17,8 @@ package blue.time;
  * the Free Software Foundation Inc., 59 Temple Place - Suite 330,
  * Boston, MA  02111-1307 USA
  */
+
+package blue.time;
 
 /**
  * 

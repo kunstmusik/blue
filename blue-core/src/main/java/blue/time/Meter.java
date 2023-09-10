@@ -1,18 +1,46 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * blue - object composition environment for csound
+ * Copyright (c) 2023 Steven Yi (stevenyi@gmail.com)
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published
+ * by  the Free Software Foundation; either version 2 of the License or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; see the file COPYING.LIB.  If not, write to
+ * the Free Software Foundation Inc., 59 Temple Place - Suite 330,
+ * Boston, MA  02111-1307 USA
  */
 package blue.time;
 
 /**
  *
- * @author syyigmmbp
+ * @author syi
  */
 public class Meter {
     /** Minimum 1, max unbounded */
-    long numBeats;
+    public long numBeats;
     
     /** Duration of beat, should be 1, 2, 4, 8, 16, 32 */
-    long beatLength;  
+    public long beatLength;  
+    
+    public Meter() {
+        this(4, 4);
+    }
+    
+    public Meter(long numBeats, long beatLength) {
+        this.numBeats = numBeats;
+        this.beatLength = beatLength;
+    }
+    
+    public Meter(Meter meter) {
+        this.numBeats = meter.numBeats;
+        this.beatLength = meter.beatLength;
+    }
 }

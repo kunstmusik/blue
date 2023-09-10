@@ -1,6 +1,6 @@
 /*
  * blue - object composition environment for csound
- * Copyright (c) 2021 Steven Yi (stevenyi@gmail.com)
+ * Copyright (c) 2023 Steven Yi (stevenyi@gmail.com)
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published
@@ -19,21 +19,39 @@
  */
 package blue.time;
 
+import blue.noteProcessor.TempoMapper;
+
 /**
  *
  * Class to hold time values.  
  * 
  * @author Steven Yi
  */
-public class TimeUnit {
+public abstract class TimeUnit {
     
-    double csoundBeats;
+    abstract double toBeats();
+    abstract double toSeconds(TempoMapper mapper);
     
-    long measure;
-    double beat; 
-    
-    
-    
-    long sampleFrames; 
-    
+    public static class BeatTime extends TimeUnit {
+        
+        @Override
+        double toBeats() {
+            throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+        }
+
+        @Override
+        double toSeconds(TempoMapper mapper) {
+            throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+        }
+    }
 }
+    
+//    double csoundBeats;
+//    
+//    long measure;
+//    double beat; 
+//    
+//    long sampleFrames; 
+//    
+//    double seconds;
+//}
