@@ -32,7 +32,6 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.AbstractTableModel;
-import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
 public class Table extends AbstractTableModel {
@@ -421,11 +420,6 @@ public class Table extends AbstractTableModel {
         retVal.addElement(pointsNode);
 
         return retVal;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        return EqualsBuilder.reflectionEquals(this, obj, false, this.getClass());
     }
 
     @Override

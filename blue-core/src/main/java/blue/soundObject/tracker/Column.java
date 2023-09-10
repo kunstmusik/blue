@@ -24,7 +24,6 @@ import blue.utility.ScoreUtilities;
 import blue.utility.XMLUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
-import org.apache.commons.lang3.builder.EqualsBuilder;
 
 public class Column {
 
@@ -161,11 +160,6 @@ public class Column {
 
     public void setOutputFrequency(boolean outputFrequency) {
         this.outputFrequency = outputFrequency;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        return EqualsBuilder.reflectionEquals(this, obj);
     }
 
     /* VALIDATION AND OTHER METHODS */

@@ -27,7 +27,6 @@ import blue.orchestra.blueSynthBuilder.BSBGraphicInterface;
 import blue.orchestra.blueSynthBuilder.PresetGroup;
 import blue.plugin.SoundObjectPlugin;
 import blue.score.ScoreObjectEvent;
-import blue.scripting.PythonProxy;
 import blue.scripting.ScoreScriptEngine;
 import blue.scripting.ScoreScriptEngineManager;
 import blue.utility.ScoreUtilities;
@@ -42,8 +41,6 @@ import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javax.script.ScriptException;
-import org.apache.commons.lang3.builder.EqualsBuilder;
-import org.python.core.PyException;
 
 @SoundObjectPlugin(displayName = "ObjectBuilder", live = true, position = 70)
 public class ObjectBuilder extends AbstractSoundObject {
@@ -328,11 +325,6 @@ public class ObjectBuilder extends AbstractSoundObject {
 
     public void setPresetGroup(PresetGroup presetGroup) {
         this.presetGroup = presetGroup;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        return EqualsBuilder.reflectionEquals(this, obj);
     }
 
     public boolean isEditEnabled() {

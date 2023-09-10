@@ -23,7 +23,6 @@ package blue.soundObject.jmask;
 
 import electric.xml.Element;
 import electric.xml.Elements;
-import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
 public class Segment implements Generator, Quantizable, Accumulatable {
@@ -78,11 +77,6 @@ public class Segment implements Generator, Quantizable, Accumulatable {
 
     public Table getTable() {
         return table;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        return EqualsBuilder.reflectionEquals(this, obj);
     }
 
     @Override

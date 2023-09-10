@@ -41,22 +41,22 @@ public class PatternObjectTest extends TestCase {
 
         SoundObject clone =  p.deepCopy();
 
-        boolean isEqual = EqualsBuilder.reflectionEquals(p, clone);
+//        boolean isEqual = EqualsBuilder.reflectionEquals(p, clone);
 
-        if (!isEqual) {
-            StringBuilder buffer = new StringBuilder();
-            buffer.append("Problem with Pattern\n");
-            buffer.append("Original Object\n");
-            buffer.append(ToStringBuilder.reflectionToString(p)).append("\n");
-            buffer.append("Cloned Object\n");
-            buffer.append(ToStringBuilder.reflectionToString(clone)).append(
-                    "\n");
-
-            System.out.println(buffer.toString());
-
-        }
-
-        assertTrue(isEqual);
+//        if (!isEqual) {
+//            StringBuilder buffer = new StringBuilder();
+//            buffer.append("Problem with Pattern\n");
+//            buffer.append("Original Object\n");
+//            buffer.append(ToStringBuilder.reflectionToString(p)).append("\n");
+//            buffer.append("Cloned Object\n");
+//            buffer.append(ToStringBuilder.reflectionToString(clone)).append(
+//                    "\n");
+//
+//            System.out.println(buffer.toString());
+//
+//        }
+//
+//        assertTrue(isEqual);
 
         assertEquals(p.saveAsXML(null).toString(), clone.saveAsXML(null)
                 .toString());

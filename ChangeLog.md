@@ -11,6 +11,14 @@ information.
 
 # CHANGE LOG
 
+## [2.9.1] - 2023-09-10
+
+### FIX
+
+* Issues #758 - fixed issues with selection of JMask, Tracker, and other objects
+  due to issue with implementing equals() 
+
+
 ## [2.9.0] - 2023-07-26
 
 ### NEW

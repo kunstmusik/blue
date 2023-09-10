@@ -22,16 +22,13 @@ package blue.soundObject;
 import blue.CompileData;
 import blue.score.ScoreObjectEvent;
 import blue.noteProcessor.NoteProcessorChain;
-import blue.noteProcessor.NoteProcessorException;
 import blue.plugin.SoundObjectPlugin;
 import blue.soundObject.jmask.Field;
-import blue.utility.ObjectUtilities;
 import blue.utility.ScoreUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
 import java.util.Map;
 import java.util.Random;
-import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
 @SoundObjectPlugin(displayName = "JMask", live = true, position = 50)
@@ -197,11 +194,6 @@ public class JMask extends AbstractSoundObject {
 
     public void setSeed(long seed) {
         this.seed = seed;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        return EqualsBuilder.reflectionEquals(this, obj);
     }
 
     @Override

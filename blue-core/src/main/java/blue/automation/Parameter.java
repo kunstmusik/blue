@@ -32,7 +32,6 @@ import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
-import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
 /**
@@ -386,28 +385,6 @@ public class Parameter implements TableModelListener {
         }
 
         return retVal;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (!(obj instanceof Parameter)) {
-            return false;
-        }
-
-        Parameter other = (Parameter) obj;
-
-        return new EqualsBuilder()
-                .append(uniqueId, other.uniqueId)
-                .append(min, other.min)
-                .append(max, other.max)
-                .append(label, other.label)
-                .append(resolution, other.resolution)
-                .append(line, other.line)
-                .append(automationEnabled.get(), other.automationEnabled.get())
-                .append(updatingLine, other.updatingLine)
-                .append(value, other.value)
-                .isEquals();
-
     }
 
     @Override

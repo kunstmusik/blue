@@ -25,9 +25,7 @@ import electric.xml.Elements;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Iterator;
-import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
@@ -212,11 +210,6 @@ public class ChannelList extends ObservableArrayList<Channel> {
     @Override
     public int hashCode() {
         return HashCodeBuilder.reflectionHashCode(11, 41, this, false);
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        return EqualsBuilder.reflectionEquals(this, obj, false);
     }
 
     public void addPropertyChangeListener(PropertyChangeListener pcl) {
