@@ -30,7 +30,6 @@ import java.util.Vector;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.TableModel;
-import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
 public class TrackList implements TableModel {
@@ -369,11 +368,6 @@ public class TrackList implements TableModel {
             }
         }
         return index;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        return EqualsBuilder.reflectionEquals(this, obj);
     }
 
     @Override

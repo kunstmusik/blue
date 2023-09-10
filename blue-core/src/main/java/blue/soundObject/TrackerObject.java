@@ -34,7 +34,6 @@ import java.beans.PropertyChangeListener;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Vector;
-import org.apache.commons.lang3.builder.EqualsBuilder;
 
 @SoundObjectPlugin(displayName = "TrackerObject", live=true, position = 140)
 public class TrackerObject extends AbstractSoundObject {
@@ -197,12 +196,6 @@ public class TrackerObject extends AbstractSoundObject {
         this.stepsPerBeat = stepsPerBeat;
     }
     
-
-    @Override
-    public boolean equals(Object obj) {
-        return EqualsBuilder.reflectionEquals(this, obj);
-    }
-
     private void firePropertyChangeEvent(PropertyChangeEvent pce) {
         if (listeners == null) {
             return;

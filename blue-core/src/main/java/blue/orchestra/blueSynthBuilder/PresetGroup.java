@@ -23,7 +23,6 @@ import electric.xml.Element;
 import electric.xml.Elements;
 import java.util.ArrayList;
 import java.util.Iterator;
-import org.apache.commons.lang3.builder.EqualsBuilder;
 
 /**
  * @author steven
@@ -277,11 +276,6 @@ public class PresetGroup implements Comparable<PresetGroup> {
     @Override
     public String toString() {
         return getPresetGroupName();
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        return EqualsBuilder.reflectionEquals(this, obj);
     }
 
 }

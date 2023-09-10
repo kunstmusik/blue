@@ -19,8 +19,6 @@
  */
 package blue.noteProcessor;
 
-import org.apache.commons.lang3.builder.EqualsBuilder;
-
 public class Code {
 
     private String code = "";
@@ -45,8 +43,4 @@ public class Code {
         return "Edit Code";
     }
 
-    @Override
-    public boolean equals(Object obj) {
-        return EqualsBuilder.reflectionEquals(this, obj);
-    }
 }

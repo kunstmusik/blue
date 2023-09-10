@@ -23,13 +23,10 @@ import blue.DeepCopyable;
 import electric.xml.Element;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
-import java.util.Iterator;
-import java.util.Vector;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
-import org.apache.commons.lang3.builder.EqualsBuilder;
 
 /**
  * @author Steven Yi
@@ -211,11 +208,6 @@ public abstract class BSBObject implements DeepCopyable<BSBObject> {
     public abstract String getPresetValue();
 
     public abstract void setPresetValue(String val);
-
-    @Override
-    public boolean equals(Object obj) {
-        return EqualsBuilder.reflectionEquals(this, obj);
-    }
 
     // EVENT LISTENERS
     public void addPropertyChangeListener(PropertyChangeListener pcl) {

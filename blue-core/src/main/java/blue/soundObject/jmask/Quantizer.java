@@ -24,7 +24,6 @@ package blue.soundObject.jmask;
 import blue.utility.XMLUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
-import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
 public class Quantizer {
@@ -191,11 +190,6 @@ public class Quantizer {
 //		}
         return retVal;
 
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        return EqualsBuilder.reflectionEquals(this, obj);
     }
 
     @Override

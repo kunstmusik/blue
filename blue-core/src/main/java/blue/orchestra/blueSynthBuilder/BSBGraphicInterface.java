@@ -28,7 +28,6 @@ import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableSet;
-import org.apache.commons.lang3.builder.EqualsBuilder;
 
 /**
  * Stores BSBObjects, notification of changes used by BSBParameterList to keep
@@ -131,11 +130,6 @@ public class BSBGraphicInterface {
         retVal.addElement(rootGroup.saveAsXML());
 
         return retVal;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        return EqualsBuilder.reflectionEquals(this, obj);
     }
 
     public final void setEditEnabled(boolean value) {

@@ -26,7 +26,6 @@ import java.util.Iterator;
 import java.util.Vector;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
 public class TablePoint {
@@ -63,11 +62,6 @@ public class TablePoint {
         retVal.setAttribute("value", Double.toString(getValue()));
 
         return retVal;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        return EqualsBuilder.reflectionEquals(this, obj);
     }
 
     @Override

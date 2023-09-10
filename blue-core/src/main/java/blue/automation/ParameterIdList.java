@@ -26,7 +26,6 @@ import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
 public class ParameterIdList implements Iterable<String> {
@@ -259,10 +258,6 @@ public class ParameterIdList implements Iterable<String> {
     }
 
     /* OTHER METHODS */
-    @Override
-    public boolean equals(Object obj) {
-        return EqualsBuilder.reflectionEquals(this, obj);
-    }
 
     @Override
     public String toString() {
