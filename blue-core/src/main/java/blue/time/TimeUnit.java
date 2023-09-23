@@ -19,33 +19,116 @@
  */
 package blue.time;
 
-import blue.noteProcessor.TempoMapper;
+import javafx.beans.property.DoubleProperty;
+import javafx.beans.property.LongProperty;
+import javafx.beans.property.SimpleDoubleProperty;
+import javafx.beans.property.SimpleLongProperty;
 
 /**
  *
- * Class to hold time values.  
- * 
+ * Class to hold time values.
+ *ˆ
  * @author Steven Yi
  */
 public abstract class TimeUnit {
-    
-    abstract double toBeats();
-    abstract double toSeconds(TempoMapper mapper);
-    
+
+    public abstract double toBeats(TimeContext timeContext);
+
+    public abstract double toSeconds(TimeContext timeContext);
+
     public static class BeatTime extends TimeUnit {
-        
+
+        DoubleProperty csoundBeats = new SimpleDoubleProperty(0.0);
+
+        public BeatTime() {
+        }
+
+        public BeatTime(double csoundBeats) {
+            this.csoundBeats.set(csoundBeats);
+        }
+
+        public BeatTime(BeatTime beatTime) {
+            setCsoundBeats(beatTime.getCsoundBeats());
+        }
+
+        public double getCsoundBeats() {
+            return csoundBeats.get();
+        }
+
+        public void setCsoundBeats(double csoundBeats) {
+            this.csoundBeats.set(csoundBeats);
+        }
+
+        public final DoubleProperty csoundBeatsProperty() {
+            return csoundBeats;
+        }
+
+        public double toBeats(TimeContext timeContext) {
+            return getCsoundBeats();
+        }
+
         @Override
-        double toBeats() {
+        public double toSeconds(TimeContext timeContext) {
+            return -1;
+        }
+    }
+
+    public static class MeasureBeatsTime extends TimeUnit {
+
+        LongProperty measures = new SimpleLongProperty(0);
+        DoubleProperty beats = new SimpleDoubleProperty(0);
+
+        public MeasureBeatsTime() {
+        }
+
+        public MeasureBeatsTime(long measures, double beats) {
+            setMeasures(measures);
+            setBeats(beats);
+        }
+
+        public MeasureBeatsTime(MeasureBeatsTime measureBeatsTime) {
+            setMeasures(measureBeatsTime.getMeasures());
+            setBeats(measureBeatsTime.getBeats());
+        }
+
+        public long getMeasures() {
+            return measures.get();
+        }
+
+        public void setMeasures(long measures) {
+            this.measures.set(measures);
+        }
+
+        public final LongProperty measuresProperty() {
+            return measures;
+        }
+
+        public double getBeats() {
+            return beats.get();
+        }
+
+        public void setBeats(double beats) {
+            this.beats.set(beats);
+        }
+
+        public final DoubleProperty beatsProperty() {
+            return beats;
+        }
+
+        @Override
+        public double toBeats(TimeContext timeContext) {
             throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
         }
 
         @Override
-        double toSeconds(TempoMapper mapper) {
+        public double toSeconds(TimeContext timeContext) {
             throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
         }
+
     }
+
 }
-    
+
 //    double csoundBeats;
 //    
 //    long measure;

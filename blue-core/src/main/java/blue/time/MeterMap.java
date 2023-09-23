@@ -21,6 +21,13 @@ package blue.time;
 
 import java.util.ArrayList;
 import java.util.List;
+import javafx.beans.Observable;
+import javafx.beans.property.LongProperty;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleLongProperty;
+import javafx.beans.property.SimpleObjectProperty;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 
 /**
  *
@@ -28,32 +35,61 @@ import java.util.List;
  */
 public class MeterMap {
 
-    List<MeasureMeterPair> measureMeterList;
+    ObservableList<MeasureMeterPair> measureMeterList;
 
     public MeterMap() {
-        measureMeterList = new ArrayList<>();
+        measureMeterList
+                = FXCollections.observableArrayList(
+                        e -> new Observable[]{
+                            e.measureNumberProperty(),
+                            e.meterProperty()
+                        }
+                );
     }
 
     public MeterMap(MeterMap meterMap) {
-        measureMeterList = new ArrayList<>(
+        measureMeterList = FXCollections.observableArrayList(
                 meterMap.measureMeterList.stream().map(e -> new MeasureMeterPair(e)).toList());
     }
 
     private static class MeasureMeterPair {
 
-        public long measureNumber;
+        public LongProperty measureNumber;
 
-        public Meter meter;
+        public ObjectProperty<Meter> meter;
 
         public MeasureMeterPair(long measureNumber, Meter meter) {
-            this.measureNumber = measureNumber;
-            this.meter = meter;
+            this.measureNumber = new SimpleLongProperty(measureNumber);
+            this.meter = new SimpleObjectProperty(meter);
         }
 
         public MeasureMeterPair(MeasureMeterPair pair) {
-            this.measureNumber = pair.measureNumber;
-            this.meter = new Meter(pair.meter);
+            setMeasureNumber(pair.getMeasureNumber());
+            setMeter(new Meter(pair.getMeter()));
         }
 
+        public long getMeasureNumber() {
+            return measureNumber.get();
+        }
+
+        public void setMeasureNumber(long measureNumber) {
+            this.measureNumber.set(measureNumber);
+        }
+
+        public LongProperty measureNumberProperty() {
+            return this.measureNumber;
+        }
+
+        public Meter getMeter() {
+            return meter.get();
+        }
+
+        public void setMeter(Meter meter) {
+            this.meter.set(meter);
+        }
+
+        public ObjectProperty<Meter> meterProperty() {
+            return this.meter;
+        }
     }
 }
