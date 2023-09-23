@@ -511,7 +511,7 @@ public final class ProcessConsole implements DiskRenderService {
                         io.getOut().append(line).append("\n");
                     }
 
-                    yield();
+                    Thread.yield();
                 }
 
             } catch (    IOException | NullPointerException e) {

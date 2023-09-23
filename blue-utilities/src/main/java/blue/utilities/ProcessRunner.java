@@ -341,7 +341,7 @@ public final class ProcessRunner  {
                         buffer.append(line).append("\n");
                     } 
 
-                    yield();
+                    Thread.yield();
                 }
 
                 // System.out.println("Finished.");
