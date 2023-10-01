@@ -13,6 +13,8 @@ information.
 
 ## [2.9.2] - 2023-xx-xx
 
+* Updated Jython interpreter to 2.7.3
+
 
 ## [2.9.1] - 2023-09-10
 
