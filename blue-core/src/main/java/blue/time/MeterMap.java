@@ -19,8 +19,6 @@
  */
 package blue.time;
 
-import java.util.ArrayList;
-import java.util.List;
 import javafx.beans.Observable;
 import javafx.beans.property.LongProperty;
 import javafx.beans.property.ObjectProperty;
@@ -45,6 +43,7 @@ public class MeterMap {
                             e.meterProperty()
                         }
                 );
+        measureMeterList.add(new MeasureMeterPair(1, new Meter(4,4)));
     }
 
     public MeterMap(MeterMap meterMap) {
