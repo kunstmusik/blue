@@ -11,6 +11,13 @@ information.
 
 # CHANGE LOG
 
+## [2.9.2] - 2023-xx-xx
+
+### FIX
+
+* Redid filechooser manager to hold on to Filechoosers so that they will
+  maintain last state (i.e., last file or folder selected) between uses
+
 ## [2.9.1] - 2023-09-10
 
 ### FIX
