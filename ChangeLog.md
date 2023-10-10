@@ -13,8 +13,13 @@ information.
 
 ## [2.9.2] - 2023-xx-xx
 
-* Updated Jython interpreter to 2.7.3
+### Updated
 
+* Updated Jython interpreter to 2.7.3
+### FIX
+
+* Redid filechooser manager to hold on to Filechoosers so that they will
+  maintain last state (i.e., last file or folder selected) between uses
 
 ## [2.9.1] - 2023-09-10
 
