@@ -26,15 +26,19 @@ import javafx.beans.property.SimpleLongProperty;
 
 /**
  *
- * Class to hold time values.
- *ˆ
+ * Class to hold time values. ˆ
+ *
  * @author Steven Yi
  */
 public abstract class TimeUnit {
 
-    public abstract double toBeats(TimeContext timeContext);
+    public static BeatTime beats(double csoundBeats) {
+        return new BeatTime(csoundBeats);
+    }
 
-    public abstract double toSeconds(TimeContext timeContext);
+    public static MeasureBeatsTime measureBeats(long measure, double beats) {
+        return new MeasureBeatsTime(measure, beats);
+    }
 
     public static class BeatTime extends TimeUnit {
 
@@ -63,78 +67,55 @@ public abstract class TimeUnit {
             return csoundBeats;
         }
 
-        public double toBeats(TimeContext timeContext) {
-            return getCsoundBeats();
-        }
-
-        @Override
-        public double toSeconds(TimeContext timeContext) {
-            return -1;
-        }
     }
 
+    /**
+     * TimeUnit in measure number and beatNumber. Measure number and beat number
+     * both start at 1.
+     */
     public static class MeasureBeatsTime extends TimeUnit {
 
-        LongProperty measures = new SimpleLongProperty(0);
-        DoubleProperty beats = new SimpleDoubleProperty(0);
+        LongProperty measureNumber = new SimpleLongProperty(0);
+        DoubleProperty beatNumber = new SimpleDoubleProperty(0);
 
         public MeasureBeatsTime() {
         }
 
         public MeasureBeatsTime(long measures, double beats) {
-            setMeasures(measures);
-            setBeats(beats);
+            setMeasure(measures);
+            setBeatNumber(beats);
         }
 
         public MeasureBeatsTime(MeasureBeatsTime measureBeatsTime) {
-            setMeasures(measureBeatsTime.getMeasures());
-            setBeats(measureBeatsTime.getBeats());
+            setMeasure(measureBeatsTime.getMeasureNumber());
+            setBeatNumber(measureBeatsTime.getBeatNumber());
         }
 
-        public long getMeasures() {
-            return measures.get();
+        public long getMeasureNumber() {
+            return measureNumber.get();
         }
 
-        public void setMeasures(long measures) {
-            this.measures.set(measures);
+        public void setMeasure(long measure) {
+            assert (measure > 0);
+            this.measureNumber.set(measure);
         }
 
-        public final LongProperty measuresProperty() {
-            return measures;
+        public final LongProperty measureNumberProperty() {
+            return measureNumber;
         }
 
-        public double getBeats() {
-            return beats.get();
+        public double getBeatNumber() {
+            return beatNumber.get();
         }
 
-        public void setBeats(double beats) {
-            this.beats.set(beats);
+        public void setBeatNumber(double beats) {
+            assert (beats >= 1);
+            this.beatNumber.set(beats);
         }
 
-        public final DoubleProperty beatsProperty() {
-            return beats;
+        public final DoubleProperty beatNumberProperty() {
+            return beatNumber;
         }
-
-        @Override
-        public double toBeats(TimeContext timeContext) {
-            throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
-        }
-
-        @Override
-        public double toSeconds(TimeContext timeContext) {
-            throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
-        }
-
     }
 
 }
-
-//    double csoundBeats;
-//    
-//    long measure;
-//    double beat; 
-//    
-//    long sampleFrames; 
-//    
-//    double seconds;
-//}

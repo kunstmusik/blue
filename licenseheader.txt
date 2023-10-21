@@ -1,5 +1,5 @@
 /*
- * blue - object composition environment for csound
+ * Blue - Integrated Music Environment for Csound
  * Copyright (c) 2023 Steven Yi (stevenyi@gmail.com)
  *
  * This program is free software; you can redistribute it and/or modify
@@ -17,37 +17,3 @@
  * the Free Software Foundation Inc., 59 Temple Place - Suite 330,
  * Boston, MA  02111-1307 USA
  */
-package blue.time;
-
-/**
- *
- * @author syi
- */
-public class Meter {
-    /** Minimum 1, max unbounded */
-    public final long numBeats;
-    
-    /** Duration of beat, should be 1, 2, 4, 8, 16, 32 */
-    public final long beatLength;  
-    
-    public Meter() {
-        this(4, 4);
-    }
-    
-    public Meter(long numBeats, long beatLength) {
-        assert(numBeats > 0);
-        assert(beatLength >= 0);
-        
-        this.numBeats = numBeats;
-        this.beatLength = beatLength;
-    }
-    
-    public Meter(Meter meter) {
-        this.numBeats = meter.numBeats;
-        this.beatLength = meter.beatLength;
-    }
-    
-    public double getMeasureBeatDuration() {
-        return numBeats * (4.0 / beatLength);
-    }
-}
