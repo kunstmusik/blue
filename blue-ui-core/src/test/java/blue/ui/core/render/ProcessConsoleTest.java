@@ -19,15 +19,7 @@
  */
 package blue.ui.core.render;
 
-import blue.automation.Parameter;
-import blue.event.PlayModeListener;
-import blue.noteProcessor.TempoMapper;
-import blue.services.render.DiskRenderJob;
-import blue.services.render.RenderTimeManager;
-import java.io.File;
-import java.util.ArrayList;
 import org.junit.Test;
-import static org.junit.Assert.*;
 
 /**
  *

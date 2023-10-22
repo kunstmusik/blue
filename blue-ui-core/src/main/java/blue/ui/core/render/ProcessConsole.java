@@ -23,13 +23,13 @@ import blue.BlueData;
 import blue.BlueSystem;
 import blue.automation.Parameter;
 import blue.event.PlayModeListener;
-import blue.noteProcessor.TempoMapper;
 import blue.score.ScoreGenerationException;
 import blue.services.render.CSDRenderService;
 import blue.services.render.CsdRenderResult;
 import blue.services.render.DiskRenderJob;
 import blue.services.render.DiskRenderService;
 import blue.services.render.RenderTimeManager;
+import blue.time.TempoMap;
 import blue.utility.FileUtilities;
 import java.awt.Color;
 import java.io.BufferedReader;
@@ -435,7 +435,7 @@ public final class ProcessConsole implements DiskRenderService {
 
     // TODO - finish implementing!
     @Override
-    public void execWait(String[] args, File currentWorkingDirectory, double startTime, TempoMapper mapper, ArrayList<Parameter> parameters) {
+    public void execWait(String[] args, File currentWorkingDirectory, double startTime, TempoMap tempoMap, ArrayList<Parameter> parameters) {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 

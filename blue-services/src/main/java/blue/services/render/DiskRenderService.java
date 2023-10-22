@@ -20,7 +20,7 @@
 package blue.services.render;
 
 import blue.automation.Parameter;
-import blue.noteProcessor.TempoMapper;
+import blue.time.TempoMap;
 import java.io.File;
 import java.util.ArrayList;
 
@@ -33,7 +33,7 @@ public interface DiskRenderService {
     void execWait(String[] args,
                   File currentWorkingDirectory,
                   double startTime,
-                  TempoMapper mapper,
+                  TempoMap tempoMap,
                   ArrayList<Parameter> parameters);
 
     String execWaitAndCollect(String[] args, File currentWorkingDirectory);

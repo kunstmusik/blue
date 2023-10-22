@@ -9,7 +9,24 @@ import java.util.Vector;
 
 import blue.automation.Parameter;
 import blue.event.PlayModeListener;
-import blue.noteProcessor.TempoMapper;
+import blue.score.ScoreGenerationException;
+import blue.services.render.CSDRenderService;
+import blue.services.render.CsdRenderResult;
+import blue.services.render.DiskRenderJob;
+import blue.services.render.DiskRenderService;
+import blue.services.render.RenderTimeManager;
+import blue.settings.PlaybackSettings;
+import blue.time.TempoMap;
+import blue.utility.FileUtilities;
+import com.kunstmusik.csoundjni.Csound;
+
+import java.awt.Color;
+import java.io.IOException;
+import org.openide.util.Exceptions;
+import org.openide.util.Lookup;
+import org.openide.windows.IOColors;
+import org.openide.windows.IOProvider;
+import org.openide.windows.InputOutput;
 import blue.score.ScoreGenerationException;
 import blue.services.render.CSDRenderService;
 import blue.services.render.CsdRenderResult;
@@ -19,7 +36,6 @@ import blue.services.render.RenderTimeManager;
 import blue.settings.PlaybackSettings;
 import blue.utility.FileUtilities;
 import com.kunstmusik.csoundjni.Csound;
-
 import java.awt.Color;
 import java.io.IOException;
 import org.openide.util.Exceptions;
@@ -63,7 +79,7 @@ public class CS6DiskRendererService implements DiskRenderService {
     private void exec(String[] args,
             File currentWorkingDirectory,
             double startTime,
-            TempoMapper mapper,
+            TempoMap tempoMap,
             ArrayList<Parameter> parameters) {
 
         //csnd.csoundInitialize(null, null, csnd.CSOUNDINIT_NO_SIGNAL_HANDLER);
@@ -139,9 +155,9 @@ public class CS6DiskRendererService implements DiskRenderService {
             double currentTime = 0.0f;
 
             if (startTime >= 0.0f) {
-                if (mapper != null) {
-                    double renderStartSeconds = mapper.beatsToSeconds(startTime);
-                    currentTime = mapper.secondsToBeats(
+                if (tempoMap != null) {
+                    double renderStartSeconds = tempoMap.beatsToSeconds(startTime);
+                    currentTime = tempoMap.secondsToBeats(
                             scoreTime + renderStartSeconds);
                     currentTime -= startTime;
                 } else {
@@ -179,7 +195,7 @@ public class CS6DiskRendererService implements DiskRenderService {
     public void execWait(String[] args,
             File currentWorkingDirectory,
             double startTime,
-            TempoMapper mapper,
+            TempoMap mapper,
             ArrayList<Parameter> parameters) {
         initialize();
         exec(args, currentWorkingDirectory, startTime, mapper, parameters);

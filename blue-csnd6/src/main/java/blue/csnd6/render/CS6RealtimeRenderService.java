@@ -11,7 +11,6 @@ import blue.BlueSystem;
 import blue.LiveData;
 import blue.automation.Parameter;
 import blue.event.PlayModeListener;
-import blue.noteProcessor.TempoMapper;
 import blue.orchestra.blueSynthBuilder.StringChannel;
 import blue.services.render.CSDRenderService;
 import blue.services.render.CsoundBinding;
@@ -21,6 +20,7 @@ import blue.settings.GeneralSettings;
 import blue.settings.PlaybackSettings;
 import blue.settings.ProjectPropertiesUtil;
 import blue.soundObject.SoundObjectException;
+import blue.time.TempoMap;
 import blue.utility.FileUtilities;
 import blue.utility.TextUtilities;
 import com.kunstmusik.csoundjni.Csound;
@@ -165,7 +165,7 @@ public class CS6RealtimeRenderService implements RealtimeRenderService, PlayMode
 
         runnerThread = new APIRunnerThread(blueData, csound, this,
                 result.getParameters(), result.getStringChannels(),
-                result.getTempoMapper(), renderStart, bindings);
+                result.getTempoMap(), renderStart, bindings);
 
         notifyPlayModeListeners(PlayModeListener.PLAY_MODE_PLAY);
         Thread t = new Thread(runnerThread);
@@ -201,7 +201,7 @@ public class CS6RealtimeRenderService implements RealtimeRenderService, PlayMode
 
             RenderTimeManager timeManager = Lookup.getDefault().lookup(
                     RenderTimeManager.class);
-            timeManager.setTempoMapper(result.getTempoMapper());
+            timeManager.setTempoMap(result.getTempoMap());
 
             String csd = result.getCsdText();
 
@@ -399,7 +399,7 @@ public class CS6RealtimeRenderService implements RealtimeRenderService, PlayMode
         private PlayModeListener playModeListener;
         private ArrayList parameters;
         private ArrayList<StringChannel> stringChannels;
-        private TempoMapper mapper;
+        private TempoMap tempoMap;
         private double startTime;
         private BlueData blueData;
         private double[] valuesCache;
@@ -414,7 +414,7 @@ public class CS6RealtimeRenderService implements RealtimeRenderService, PlayMode
                 PlayModeListener playModeListener,
                 ArrayList parameters,
                 ArrayList<StringChannel> stringChannels,
-                TempoMapper mapper,
+                TempoMap tempoMap,
                 double startTime,
                 List<CsoundBinding> bindings) {
             this.blueData = blueData;
@@ -422,7 +422,7 @@ public class CS6RealtimeRenderService implements RealtimeRenderService, PlayMode
             this.playModeListener = playModeListener;
             this.parameters = parameters;
             this.stringChannels = stringChannels;
-            this.mapper = mapper;
+            this.tempoMap = tempoMap;
             this.startTime = startTime;
             this.bindings = bindings;
         }
@@ -468,9 +468,9 @@ public class CS6RealtimeRenderService implements RealtimeRenderService, PlayMode
             double renderStartSeconds = 0.0f;
 
             if (renderUpdatesTime) {
-                if (mapper != null) {
-                    renderStartSeconds = mapper.beatsToSeconds(startTime);
-                    currentTime = mapper.secondsToBeats(
+                if (tempoMap != null) {
+                    renderStartSeconds = tempoMap.beatsToSeconds(startTime);
+                    currentTime = tempoMap.secondsToBeats(
                             scoreTime + renderStartSeconds);
                 } else {
                     currentTime = startTime + scoreTime;
@@ -524,8 +524,8 @@ public class CS6RealtimeRenderService implements RealtimeRenderService, PlayMode
 
                 if (blueData == null) {
                     if (renderUpdatesTime) {
-                        if (mapper != null) {
-                            currentTime = mapper.secondsToBeats(
+                        if (tempoMap != null) {
+                            currentTime = tempoMap.secondsToBeats(
                                     scoreTime + renderStartSeconds);
                         } else {
                             currentTime = startTime + scoreTime;

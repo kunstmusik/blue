@@ -5,6 +5,7 @@ import blue.plugin.NoteProcessorPlugin;
 import blue.soundObject.Note;
 import blue.soundObject.NoteList;
 import blue.soundObject.NoteParseException;
+import blue.time.TempoMap;
 import electric.xml.Element;
 
 /**
@@ -37,7 +38,7 @@ public class TimeWarpProcessor implements NoteProcessor {
     @Override
     public NoteList processNotes(NoteList in) throws NoteProcessorException {
         Note temp;
-        TempoMapper tm = TempoMapper.createTempoMapper(this.timeWarpString);
+        TempoMap tm = TempoMap.createTempoMap(this.timeWarpString);
 
         if (tm == null) {
             throw new NoteProcessorException(this, BlueSystem

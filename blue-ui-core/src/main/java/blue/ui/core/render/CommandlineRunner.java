@@ -122,7 +122,7 @@ public class CommandlineRunner implements PlayModeListener, RealtimeRenderServic
 
             RenderTimeManager timeManager = Lookup.getDefault().lookup(
                     RenderTimeManager.class);
-            timeManager.setTempoMapper(result.getTempoMapper());
+            timeManager.setTempoMap(result.getTempoMap());
 
             String csd = result.getCsdText();
 

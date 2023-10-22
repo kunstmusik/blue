@@ -24,7 +24,6 @@ import blue.components.lines.SoundObjectParameterLine;
 import blue.mixer.Channel;
 import blue.mixer.ChannelList;
 import blue.mixer.Mixer;
-import blue.noteProcessor.TempoMapper;
 import blue.orchestra.GenericInstrument;
 import blue.orchestra.Instrument;
 import blue.orchestra.blueSynthBuilder.StringChannel;
@@ -39,6 +38,7 @@ import blue.soundObject.Note;
 import blue.soundObject.NoteList;
 import blue.soundObject.NoteParseException;
 import blue.soundObject.SoundObjectException;
+import blue.time.TempoMap;
 import blue.udo.OpcodeList;
 import blue.ui.core.project.ProjectPluginManager;
 import blue.utility.NumberUtilities;
@@ -180,15 +180,15 @@ public class CSDRender extends CSDRenderService {
         score.append("</CsoundSynthesizer>");
 
 //        Tempo tempo = data.getScore().getTempo();
-        TempoMapper tempoMapper = null;
+        TempoMap tempoMap = null;
 
 //        if (tempo.isEnabled()) {
-//            tempoMapper = CSDRender.getTempoMapper(tempo);
+//            tempoMapper = CSDRender.getTempoMap(tempo);
 //        } else {
-//            tempoMapper = CSDRender.getTempoMapper(globalSco);
+//            tempoMapper = CSDRender.getTempoMap(globalSco);
 //        }
         CsdRenderResult renderResult
-                = new CsdRenderResult(score.toString(), tempoMapper,
+                = new CsdRenderResult(score.toString(), tempoMap,
                         originalParameters, stringChannels);
 
         return renderResult;
@@ -292,14 +292,14 @@ public class CSDRender extends CSDRenderService {
         }
 
         Tempo tempo = data.getScore().getTempo();
-        TempoMapper tempoMapper = null;
+        TempoMap tempoMap = null;
 
         if (tempo.isEnabled()) {
-            tempoMapper = getTempoMapper(tempo);
+            tempoMap = getTempoMap(tempo);
             globalOrcSco.appendGlobalSco(
                     getTempoScore(tempo, renderStartTime, endTime));
         } else {
-            tempoMapper = getTempoMapper(globalOrcSco.getGlobalSco());
+            tempoMap = getTempoMap(globalOrcSco.getGlobalSco());
         }
 
         double totalDur = blue.utility.ScoreUtilities.getTotalDuration(
@@ -325,7 +325,7 @@ public class CSDRender extends CSDRenderService {
         String globalSco = globalOrcSco.getGlobalSco() + "\n";
         globalSco += arrangement.generateGlobalSco(compileData) + "\n";
         globalSco = preprocessSco(globalSco, totalDur, renderStartTime,
-                processingStart, tempoMapper);
+                processingStart, tempoMap);
 
         double globalDur;
         try {
@@ -423,7 +423,7 @@ public class CSDRender extends CSDRenderService {
         csd.append("</CsoundSynthesizer>");
 
         CsdRenderResult renderResult
-                = new CsdRenderResult(csd.toString(), tempoMapper,
+                = new CsdRenderResult(csd.toString(), tempoMap,
                         originalParameters, stringChannels);
 
         return renderResult;
@@ -682,7 +682,7 @@ public class CSDRender extends CSDRenderService {
 
     private String preprocessSco(String in, double totalDur,
             double renderStartTime, double processingStart,
-            TempoMapper tempoMapper) {
+            TempoMap tempoMapper) {
         String temp = blue.utility.TextUtilities.replaceAll(in, "<TOTAL_DUR>",
                 Double.toString(totalDur));
 
@@ -692,10 +692,10 @@ public class CSDRender extends CSDRenderService {
         temp = blue.utility.TextUtilities.replaceAll(temp, "<RENDER_START>",
                 Double.toString(renderStartTime));
 
-        TempoMapper localTempoMapper = tempoMapper;
+        TempoMap localTempoMap = tempoMapper;
 
-        if (localTempoMapper == null) {
-            localTempoMapper = getTempoMapper(in);
+        if (localTempoMap == null) {
+            localTempoMap = getTempoMap(in);
         }
 
         if (tempoMapper != null) {
@@ -1095,7 +1095,7 @@ public class CSDRender extends CSDRenderService {
 //        globalOrcSco.appendGlobalSco(paramScore.toString());
     }
 
-    protected TempoMapper getTempoMapper(Tempo tempo) {
+    protected TempoMap getTempoMap(Tempo tempo) {
         StrBuilder buffer = new StrBuilder();
         Line line = tempo.getLine();
         for (int i = 0; i < line.size(); i++) {
@@ -1105,11 +1105,11 @@ public class CSDRender extends CSDRenderService {
             buffer.append(" ").append(lp.getY());
         }
 
-        return TempoMapper.createTempoMapper(buffer.toString());
+        return TempoMap.createTempoMap(buffer.toString());
     }
 
-    private TempoMapper getTempoMapper(String globalSco) {
-        TempoMapper mapper = null;
+    private TempoMap getTempoMap(String globalSco) {
+        TempoMap mapper = null;
 
         StringTokenizer st = new StringTokenizer(globalSco, "\n");
 
@@ -1117,7 +1117,7 @@ public class CSDRender extends CSDRenderService {
             String temp = st.nextToken().trim();
 
             if (temp.startsWith("t")) {
-                mapper = TempoMapper.createTempoMapper(temp.substring(1));
+                mapper = TempoMap.createTempoMap(temp.substring(1));
             }
 
         }
