@@ -450,8 +450,9 @@ public class AutomationManager implements
             if (retVal == NotifyDescriptor.YES_OPTION) {
 
                 ParameterIdList idList = selectedParamIdList;
+                var copy = new ArrayList<String>(idList.getParameters());
 
-                for (String paramId : idList.getParameters()) {
+                for (String paramId : copy) {
                     Parameter param = getParameter(paramId);
 
                     param.setAutomationEnabled(false);
