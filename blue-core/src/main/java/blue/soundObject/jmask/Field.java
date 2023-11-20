@@ -203,7 +203,8 @@ public class Field implements ListModel {
 
     public void changeParameter(int index, Generator gen) {
         Parameter param = Parameter.create(gen);
-        parameters.remove(index);
+        var oldParam = parameters.remove(index);        
+        param.setName(oldParam.getName());
         parameters.add(index, param);
 
         ListDataEvent lde = new ListDataEvent(this,
