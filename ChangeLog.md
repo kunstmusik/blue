@@ -16,10 +16,18 @@ information.
 ### Updated
 
 * Updated Jython interpreter to 2.7.3
+
 ### FIX
 
 * Redid filechooser manager to hold on to Filechoosers so that they will
   maintain last state (i.e., last file or folder selected) between uses
+
+* JMask:
+
+  * Maintain name of parameter when changing parameter type
+ 
+  * Show parameter name in the popup for setting visibility of parameters
+
 
 ## [2.9.1] - 2023-09-10
 
