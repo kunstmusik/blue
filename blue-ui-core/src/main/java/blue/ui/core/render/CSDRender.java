@@ -175,7 +175,7 @@ public class CSDRender extends CSDRenderService {
 
         appendCsInstruments(compileData, data, udos, arrangement, globalOrcSco, score,
                 mixer, true);
-        appendCsScore(globalSco, ftables, generatedNotes, totalDur, score);
+        appendCsScore(score, globalSco, ftables, generatedNotes, totalDur, false);
 
         score.append("</CsoundSynthesizer>");
 
@@ -418,7 +418,7 @@ public class CSDRender extends CSDRenderService {
 
         appendCsInstruments(compileData, data, udos, arrangement, globalOrcSco, csd, mixer,
                 isRealTime);
-        appendCsScore(globalSco, ftables, generatedNotes, totalDur, csd);
+        appendCsScore(csd, globalSco, ftables, generatedNotes, totalDur, true);
 
         csd.append("</CsoundSynthesizer>");
 
@@ -605,8 +605,8 @@ public class CSDRender extends CSDRenderService {
         score.append(";\n\n");
     }
 
-    private void appendCsScore(String globalSco, String ftables,
-            NoteList generatedNotes, double totalDur, StrBuilder score) {
+    private void appendCsScore(StrBuilder score, String globalSco, String ftables,
+            NoteList generatedNotes, double totalDur, boolean useEStatement) {
 
         score.append("<CsScore>\n\n");
         score.append(ftables).append("\n");
@@ -619,7 +619,9 @@ public class CSDRender extends CSDRenderService {
         } else {
             score.append("f0 ").append(totalDur).append("\n");
         }
-        score.append("e\n\n");
+        if(useEStatement) {
+            score.append("e\n\n");
+        }
         score.append("</CsScore>\n\n");
     }
 

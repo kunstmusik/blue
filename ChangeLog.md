@@ -28,6 +28,9 @@ information.
  
   * Show parameter name in the popup for setting visibility of parameters
 
+* BlueLive:
+
+  * Do not generate e-statement when generating CSD for BlueLive
 
 ## [2.9.1] - 2023-09-10
 
