@@ -19,10 +19,7 @@
  */
 package blue.mixer;
 
-import blue.automation.Parameter;
-import electric.xml.Element;
 import junit.framework.TestCase;
-import org.apache.commons.lang3.builder.ToStringBuilder;
 
 public class MixerTest extends TestCase {
     

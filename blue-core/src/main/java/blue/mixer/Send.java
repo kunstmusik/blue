@@ -21,8 +21,6 @@
 package blue.mixer;
 
 import blue.automation.*;
-import blue.components.lines.Line;
-import blue.components.lines.LinePoint;
 import blue.orchestra.blueSynthBuilder.StringChannel;
 import electric.xml.Element;
 import electric.xml.Elements;

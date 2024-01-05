@@ -19,11 +19,11 @@
  */
 package blue.soundObject;
 
-import blue.components.lines.SoundObjectParameterLine;
 import blue.*;
 import blue.automation.Parameter;
 import blue.automation.ParameterList;
 import blue.components.lines.Line;
+import blue.components.lines.SoundObjectParameterLine;
 import blue.noteProcessor.NoteProcessorChain;
 import blue.orchestra.BlueSynthBuilder;
 import blue.plugin.SoundObjectPlugin;

@@ -20,8 +20,8 @@ package blue.orchestra.blueSynthBuilder;
 
 import electric.xml.Element;
 import java.math.BigDecimal;
-import org.junit.Test;
 import static org.junit.Assert.*;
+import org.junit.Test;
 
 /**
  *

@@ -20,7 +20,6 @@
 package blue.soundObject.jmask.probability;
 
 import electric.xml.Element;
-import javax.swing.JComponent;
 
 public class Uniform implements ProbabilityGenerator {
 

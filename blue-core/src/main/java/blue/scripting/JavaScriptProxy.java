@@ -16,9 +16,7 @@ package blue.scripting;
 import blue.BlueSystem;
 import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
-import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
-import javax.script.SimpleScriptContext;
 import org.netbeans.api.scripting.Scripting;
 
 public class JavaScriptProxy {

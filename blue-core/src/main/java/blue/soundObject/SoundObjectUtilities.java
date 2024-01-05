@@ -22,7 +22,6 @@ package blue.soundObject;
 import blue.noteProcessor.NoteProcessorChain;
 import electric.xml.Element;
 import java.awt.Color;
-import java.util.List;
 
 /**
  * @author steven

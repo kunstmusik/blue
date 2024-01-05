@@ -21,7 +21,6 @@ package blue.orchestra.blueSynthBuilder;
 
 import electric.xml.Element;
 import electric.xml.Elements;
-import java.util.ArrayList;
 import java.util.Iterator;
 import javafx.beans.property.SimpleListProperty;
 import javafx.collections.FXCollections;

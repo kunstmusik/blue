@@ -20,9 +20,9 @@
 package blue.soundObject;
 
 import blue.CompileData;
-import blue.score.ScoreObjectEvent;
 import blue.noteProcessor.NoteProcessorChain;
 import blue.plugin.SoundObjectPlugin;
+import blue.score.ScoreObjectEvent;
 import blue.soundObject.jmask.Field;
 import blue.utility.ScoreUtilities;
 import electric.xml.Element;

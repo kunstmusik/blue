@@ -23,8 +23,6 @@ import blue.noteProcessor.NoteProcessor;
 import blue.noteProcessor.NoteProcessorChain;
 import blue.noteProcessor.NoteProcessorException;
 import blue.soundObject.*;
-import static blue.soundObject.TimeBehavior.NONE;
-import static blue.soundObject.TimeBehavior.SCALE;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;

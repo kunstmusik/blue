@@ -15,9 +15,6 @@ import java.awt.Toolkit;
 import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
 import javax.swing.*;
 
 public class GUI {

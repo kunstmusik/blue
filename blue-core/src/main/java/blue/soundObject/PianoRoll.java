@@ -1,10 +1,10 @@
 package blue.soundObject;
 
-import blue.score.ScoreObjectEvent;
 import blue.*;
 import blue.noteProcessor.NoteProcessorChain;
 import blue.noteProcessor.NoteProcessorException;
 import blue.plugin.SoundObjectPlugin;
+import blue.score.ScoreObjectEvent;
 import blue.soundObject.pianoRoll.Field;
 import blue.soundObject.pianoRoll.FieldDef;
 import blue.soundObject.pianoRoll.FieldType;

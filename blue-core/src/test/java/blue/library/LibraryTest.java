@@ -19,8 +19,8 @@
 package blue.library;
 
 import blue.soundObject.SoundObject;
-import org.junit.Test;
 import static org.junit.Assert.*;
+import org.junit.Test;
 
 /**
  *

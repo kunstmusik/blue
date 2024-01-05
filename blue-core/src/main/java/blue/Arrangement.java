@@ -26,7 +26,6 @@ import blue.mixer.Mixer;
 import blue.orchestra.GenericInstrument;
 import blue.orchestra.Instrument;
 import blue.udo.OpcodeList;
-import blue.utility.ObjectUtilities;
 import blue.utility.TextUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
@@ -35,7 +34,6 @@ import java.util.regex.Pattern;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.TableModel;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.text.StrBuilder;
 
 /**

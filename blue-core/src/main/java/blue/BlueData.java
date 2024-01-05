@@ -28,7 +28,6 @@ import blue.udo.OpcodeList;
 import blue.upgrades.UpgradeManager;
 import blue.utility.TextUtilities;
 import blue.utility.UDOUtilities;
-import electric.xml.Attribute;
 import electric.xml.Document;
 import electric.xml.Element;
 import electric.xml.Elements;

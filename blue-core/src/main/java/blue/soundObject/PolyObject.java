@@ -19,17 +19,16 @@
  */
 package blue.soundObject;
 
-import blue.score.ScoreObjectEvent;
-import blue.score.ScoreObjectListener;
 import blue.*;
 import blue.noteProcessor.NoteProcessorChain;
 import blue.noteProcessor.NoteProcessorException;
 import blue.plugin.SoundObjectPlugin;
 import blue.score.ScoreObject;
+import blue.score.ScoreObjectEvent;
+import blue.score.ScoreObjectListener;
 import blue.score.TimeState;
 import blue.score.layers.AutomatableLayerGroup;
 import blue.score.layers.Layer;
-import blue.score.layers.LayerGroup;
 import blue.score.layers.LayerGroupDataEvent;
 import blue.score.layers.LayerGroupListener;
 import blue.score.layers.ScoreObjectLayerGroup;

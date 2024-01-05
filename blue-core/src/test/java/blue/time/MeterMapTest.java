@@ -19,12 +19,8 @@ package blue.time;
 
 import java.util.concurrent.atomic.AtomicInteger;
 import javafx.collections.ListChangeListener;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
 import static org.junit.Assert.*;
+import org.junit.Test;
 
 /**
  *

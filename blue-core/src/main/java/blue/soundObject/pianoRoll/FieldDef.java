@@ -20,8 +20,6 @@
 package blue.soundObject.pianoRoll;
 
 import electric.xml.Element;
-import java.util.Map;
-import java.util.Objects;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleDoubleProperty;

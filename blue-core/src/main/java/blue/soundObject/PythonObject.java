@@ -19,11 +19,11 @@
  */
 package blue.soundObject;
 
-import blue.score.ScoreObjectEvent;
 import blue.*;
 import blue.noteProcessor.NoteProcessorChain;
 import blue.noteProcessor.NoteProcessorException;
 import blue.plugin.SoundObjectPlugin;
+import blue.score.ScoreObjectEvent;
 import blue.scripting.PythonProxy;
 import blue.utility.ScoreUtilities;
 import electric.xml.Element;

@@ -23,8 +23,8 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableSet;
-import org.junit.Test;
 import static org.junit.Assert.*;
+import org.junit.Test;
 
 /**
  *

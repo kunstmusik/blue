@@ -18,7 +18,6 @@
  */
 package blue.library;
 
-import blue.soundObject.SoundObject;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;

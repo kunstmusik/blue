@@ -26,11 +26,11 @@ package blue.soundObject;
  * @author steven yi
  * @version 1.0
  */
-import blue.score.ScoreObjectEvent;
 import blue.*;
 import blue.noteProcessor.NoteProcessorChain;
 import blue.noteProcessor.NoteProcessorException;
 import blue.plugin.SoundObjectPlugin;
+import blue.score.ScoreObjectEvent;
 import blue.utility.ScoreUtilities;
 import electric.xml.Element;
 import java.util.Map;

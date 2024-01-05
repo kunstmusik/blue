@@ -18,11 +18,8 @@
  */
 package blue.mixer;
 
-import blue.automation.Parameter;
-import electric.xml.Element;
-import java.beans.PropertyChangeListener;
-import org.junit.Test;
 import static org.junit.Assert.*;
+import org.junit.Test;
 
 /**
  *

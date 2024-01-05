@@ -13,7 +13,6 @@ import electric.xml.Elements;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.Properties;
 import org.apache.commons.lang3.text.StrBuilder;
 
 /**

@@ -19,7 +19,6 @@
  */
 package blue.time;
 
-import java.util.ArrayList;
 import javafx.beans.Observable;
 import javafx.beans.property.SimpleListProperty;
 import javafx.collections.FXCollections;
