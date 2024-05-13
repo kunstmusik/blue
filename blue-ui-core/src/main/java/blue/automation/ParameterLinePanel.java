@@ -36,6 +36,7 @@ import blue.ui.utilities.ResizeMode;
 import blue.ui.utilities.UiUtilities;
 import blue.undo.BlueUndoManager;
 import blue.utilities.scales.ScaleLinear;
+import blue.utility.MathUtils;
 import blue.utility.NumberUtilities;
 import blue.utility.ScoreUtilities;
 import java.awt.BasicStroke;
@@ -67,7 +68,6 @@ import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
-import org.controlsfx.tools.Utils;
 import org.openide.windows.WindowManager;
 
 /**
@@ -1174,7 +1174,7 @@ public class ParameterLinePanel extends JComponent implements
 
                             ScaleLinear scale = selection.getScale();
                             if (selection.getScaleDirection() == ResizeMode.LEFT) {
-                                newTime = Utils.clamp(0.0, newTime, scale.getRangeEnd() - edgeTime);
+                                newTime = MathUtils.clamp(0.0, newTime, scale.getRangeEnd() - edgeTime);
                             } else {
                                 newTime = Math.max(scale.getRangeStart() + edgeTime, newTime);
                             }
@@ -1274,7 +1274,7 @@ public class ParameterLinePanel extends JComponent implements
                             timeState.getSnapValue());
                 }
 
-                dragTime = Utils.clamp(leftBoundaryTime, dragTime, rightBoundaryTime);
+                dragTime = MathUtils.clamp(leftBoundaryTime, dragTime, rightBoundaryTime);
 
                 selectedPoint.setLocation(dragTime,
                         screenToDoubleY(newY, min, max, currentParameter

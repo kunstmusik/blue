@@ -27,6 +27,7 @@ import blue.ui.core.score.ScoreController;
 import blue.ui.core.score.ScoreMode;
 import blue.ui.core.score.undo.ResizeScoreObjectsEdit;
 import blue.undo.BlueUndoManager;
+import blue.utility.MathUtils;
 import blue.utility.ScoreUtilities;
 import java.awt.Cursor;
 import java.awt.Point;
@@ -35,7 +36,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import org.controlsfx.tools.Utils;
 
 /**
  *
@@ -213,7 +213,7 @@ public class ResizeScoreObjectsListener extends BlueMouseAdapter {
             newEnd = currentSObjTimes.end + maxDiffTime;
         }
 
-        double diff = Utils.clamp(minDiffTime, newEnd - currentSObjTimes.end, maxDiffTime);
+        double diff = MathUtils.clamp(minDiffTime, newEnd - currentSObjTimes.end, maxDiffTime);
 
         for (int i = 0; i < startEndTimes.length; i++) {
             blue.ui.core.score.undo.StartEndTime t = startEndTimes[i];
@@ -268,7 +268,7 @@ public class ResizeScoreObjectsListener extends BlueMouseAdapter {
             newStart = currentSObjTimes.start + minDiffTime;
         }
 
-        double diff = Utils.clamp(minDiffTime, newStart - currentSObjTimes.start, maxDiffTime);
+        double diff = MathUtils.clamp(minDiffTime, newStart - currentSObjTimes.start, maxDiffTime);
 
         for (int i = 0; i < startEndTimes.length; i++) {
             blue.ui.core.score.undo.StartEndTime t = startEndTimes[i];

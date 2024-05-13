@@ -1399,6 +1399,10 @@
                     <groupId>org.netbeans.api</groupId>
                     <artifactId>org-netbeans-libs-tomlj</artifactId>
                 </exclusion>
+                <exclusion>
+                    <groupId>org.netbeans.modules</groupId>
+                    <artifactId>org-netbeans-modules-project-dependency</artifactId>
+                </exclusion>
             </exclusions>
         </dependency>
         
