@@ -349,8 +349,7 @@
                 <exclusion>
                     <groupId>org.netbeans.modules</groupId>
                     <artifactId>org-netbeans-modules-core-kit</artifactId>
-                </exclusion>
-                
+                </exclusion>    
                 <exclusion>
                     <groupId>org.ow2.asm</groupId>
                     <artifactId>asm-7.2</artifactId>
@@ -1402,6 +1401,10 @@
                 <exclusion>
                     <groupId>org.netbeans.modules</groupId>
                     <artifactId>org-netbeans-modules-project-dependency</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.netbeans.api</groupId>
+                    <artifactId>org-netbeans-libs-tomljava</artifactId>
                 </exclusion>
             </exclusions>
         </dependency>
