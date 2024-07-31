@@ -1,7 +1,8 @@
 package blue.csnd6.render;
 
-import com.kunstmusik.csoundjni.MessageCallback;
+import com.kunstmusik.csoundffm.MessageCallback;
 import java.io.IOException;
+import java.lang.foreign.MemorySegment;
 
 import org.openide.util.Exceptions;
 import org.openide.windows.InputOutput;
@@ -30,14 +31,17 @@ public class BlueCallbackWrapper implements MessageCallback {
     }
 
     @Override
-    public void callback(int attr, String msg) {
+    public void callback(MemorySegment csound, int attr, MemorySegment msg) {
+        
+        String msgText = msg.reinterpret(Integer.MAX_VALUE).getString(0);
+        
         if (buffer != null) {
-            buffer.append(msg);
+            buffer.append(msgText);
         } else if (io == null) {
-            System.out.print(msg);
+            System.out.print(msgText);
             System.out.flush();
         } else {
-            io.getOut().append(msg);
+            io.getOut().append(msgText);
         }
     }
 }

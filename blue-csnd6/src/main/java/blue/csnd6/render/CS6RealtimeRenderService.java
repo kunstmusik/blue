@@ -6,7 +6,6 @@ package blue.csnd6.render;
 
 import blue.services.render.CsdRenderResult;
 import blue.BlueData;
-//import blue.BlueMainFrame;
 import blue.BlueSystem;
 import blue.LiveData;
 import blue.automation.Parameter;
@@ -23,12 +22,14 @@ import blue.soundObject.SoundObjectException;
 import blue.time.TempoMap;
 import blue.utility.FileUtilities;
 import blue.utility.TextUtilities;
-import com.kunstmusik.csoundjni.Csound;
+import com.kunstmusik.csoundffm.Csound;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.io.File;
 import java.io.IOException;
-import java.nio.DoubleBuffer;
+import java.lang.foreign.MemorySegment;
+import java.lang.foreign.ValueLayout;
+import static java.lang.foreign.ValueLayout.JAVA_DOUBLE;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -66,8 +67,6 @@ public class CS6RealtimeRenderService implements RealtimeRenderService, PlayMode
     private Csound csound;
 
     public CS6RealtimeRenderService() {
-//        csnd6.csoundInitialize(csnd6.CSOUNDINIT_NO_ATEXIT
-//                | csnd6.CSOUNDINIT_NO_SIGNAL_HANDLER);
     }
 
     @Override
@@ -156,7 +155,6 @@ public class CS6RealtimeRenderService implements RealtimeRenderService, PlayMode
             csound.stop();
             csound.cleanup();
             csound.setMessageCallback(null);
-            csound.delete();
             csound = null;
             blueCallbackWrapper = null;
             return;
@@ -403,7 +401,7 @@ public class CS6RealtimeRenderService implements RealtimeRenderService, PlayMode
         private double startTime;
         private BlueData blueData;
         private double[] valuesCache;
-        private DoubleBuffer[] channelPtrCache;
+        private MemorySegment[] channelPtrCache;
         public boolean isRunning = true;
         CountDownLatch latch = new CountDownLatch(1);
         private final List<CsoundBinding> bindings;
@@ -547,7 +545,7 @@ public class CS6RealtimeRenderService implements RealtimeRenderService, PlayMode
 
                     if (value != valuesCache[i]) {
                         valuesCache[i] = value;
-                        channelPtrCache[i].put(0, value);
+                        channelPtrCache[i].set(ValueLayout.JAVA_DOUBLE, 0, value);
                     }
                 }
 
@@ -581,7 +579,6 @@ public class CS6RealtimeRenderService implements RealtimeRenderService, PlayMode
             csound.stop();
             csound.cleanup();
             csound.setMessageCallback(null);
-            csound.delete();
 
             if (renderUpdatesTime) {
                 manager.endRender();
@@ -598,7 +595,7 @@ public class CS6RealtimeRenderService implements RealtimeRenderService, PlayMode
             final int size = parameters.size();
 
             valuesCache = new double[size];
-            channelPtrCache = new DoubleBuffer[size];
+            channelPtrCache = new MemorySegment[size];
 
             for (int i = 0; i < size; i++) {
                 param = (Parameter) parameters.get(i);
@@ -612,7 +609,7 @@ public class CS6RealtimeRenderService implements RealtimeRenderService, PlayMode
                 }
 
                 channelPtrCache[i] = csound.getControlChannelPtr(varName);
-                channelPtrCache[i].put(0, valuesCache[i]);
+                channelPtrCache[i].set(JAVA_DOUBLE, 0, valuesCache[i]);
             }
         }
     }
