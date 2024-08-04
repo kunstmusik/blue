@@ -19,7 +19,6 @@
  */
 package blue.ui.core.score.layers.soundObject.library;
 
-import blue.ui.core.score.layers.soundObject.library.SoundObjectLibraryUtils;
 import blue.BlueData;
 import blue.SoundLayer;
 import blue.SoundObjectLibrary;
