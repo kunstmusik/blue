@@ -71,7 +71,7 @@ public class CS6RealtimeRenderService implements RealtimeRenderService, PlayMode
 
     @Override
     public String toString() {
-        return "Csound 6 API";
+        return "Csound 7 API";
     }
 
     @Override
@@ -152,14 +152,15 @@ public class CS6RealtimeRenderService implements RealtimeRenderService, PlayMode
 
             }
             notifyPlayModeListeners(PlayModeListener.PLAY_MODE_STOP);
-            csound.stop();
-            csound.cleanup();
+            csound.reset();
             csound.setMessageCallback(null);
             csound = null;
             blueCallbackWrapper = null;
             return;
 
         }
+        
+        csound.start();
 
         runnerThread = new APIRunnerThread(blueData, csound, this,
                 result.getParameters(), result.getStringChannels(),
@@ -501,10 +502,10 @@ public class CS6RealtimeRenderService implements RealtimeRenderService, PlayMode
                     Message m = buffer.getMessage(i % capacity);
                     switch (m.messageType) {
                         case 0:
-                            csound.readScore(m.payload);
+                            csound.eventString(m.payload, 0);
                             break;
                         case 1:
-                            csound.compileOrc(m.payload);
+                            csound.compileOrc(m.payload, 0);
                             break;
                     }
 
@@ -576,8 +577,7 @@ public class CS6RealtimeRenderService implements RealtimeRenderService, PlayMode
 
             bindings.clear();
 
-            csound.stop();
-            csound.cleanup();
+            csound.reset();
             csound.setMessageCallback(null);
 
             if (renderUpdatesTime) {

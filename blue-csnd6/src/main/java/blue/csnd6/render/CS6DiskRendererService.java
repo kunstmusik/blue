@@ -44,7 +44,7 @@ public class CS6DiskRendererService implements DiskRenderService {
 
     @Override
     public String toString() {
-        return "Csound 6 API";
+        return "Csound 7 API";
     }
 
     @Override
@@ -108,12 +108,11 @@ public class CS6DiskRendererService implements DiskRenderService {
 
         if (retVal != 0) {
             notifyPlayModeListeners(PlayModeListener.PLAY_MODE_STOP);
-            csound.stop();
-            csound.cleanup();
             csound.setMessageCallback(null);
             csound.reset();
             return;
         }
+        csound.start();
 
         int updateRate = (int) (csound.getKr()
                 / PlaybackSettings.getInstance().getPlaybackFPS());
@@ -161,10 +160,9 @@ public class CS6DiskRendererService implements DiskRenderService {
                 }
             }
         } while (csound.performKsmps() == 0 && keepRunning);
-        csound.stop();
-        csound.cleanup();
-        csound.setMessageCallback(null);
+
         csound.reset();
+        csound.setMessageCallback(null);
 
 
         manager.endRender();
@@ -215,19 +213,18 @@ public class CS6DiskRendererService implements DiskRenderService {
 
         if (retVal != 0) {
             blueCallbackWrapper.setStringBuffer(null);
-            csound.stop();
-            csound.cleanup();
-            csound.setMessageCallback(null);
             csound.reset();
+            csound.setMessageCallback(null);
+
             return buffer.toString();
         }
+        
+        csound.start();
 
 
         while (csound.performKsmps() == 0 && keepRunning) {
             // empty
         }
-        csound.stop();
-        csound.cleanup();
         csound.setMessageCallback(null);
         csound.reset();
 
@@ -347,21 +344,20 @@ public class CS6DiskRendererService implements DiskRenderService {
 
         if (retVal != 0) {
             notifyPlayModeListeners(PlayModeListener.PLAY_MODE_STOP);
-            csound.stop();
-            csound.cleanup();
             csound.setMessageCallback(null);
             csound.reset();
             return;
         }
+        
+        csound.start();
 
         while (csound.performKsmps() == 0 && keepRunning) {
             
         }
-        csound.stop();
-        csound.cleanup();
+        
         csound.setMessageCallback(null);
         csound.reset();
-
+        
         keepRunning = false;
 
         notifyPlayModeListeners(PlayModeListener.PLAY_MODE_STOP);
@@ -371,6 +367,6 @@ public class CS6DiskRendererService implements DiskRenderService {
 
     @Override
     public int getCsoundVersion(String csoundCommand) {
-        return 6;
+        return 7;
     }
 }

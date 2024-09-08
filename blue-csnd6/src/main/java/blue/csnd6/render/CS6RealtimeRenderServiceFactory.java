@@ -44,7 +44,7 @@ public class CS6RealtimeRenderServiceFactory implements RealtimeRenderServiceFac
 
     @Override 
     public String toString() {
-        return "Csound 6 API";
+        return "Csound 7 API";
     }
 
     @Override
