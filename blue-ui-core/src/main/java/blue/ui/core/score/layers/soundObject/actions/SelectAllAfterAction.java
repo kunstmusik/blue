@@ -80,10 +80,9 @@ public final class SelectAllAfterAction extends AbstractAction
         List<Layer> allLayers = scorePath.getAllLayers();
 
         for (Layer layer : allLayers) {
-            if (layer instanceof ScoreObjectLayer) {
-                ScoreObjectLayer<ScoreObject> sLayer = (ScoreObjectLayer) layer;
+            if (layer instanceof ScoreObjectLayer sLayer) {
 
-                for (ScoreObject scoreObject : sLayer) {
+                for (ScoreObject scoreObject : (ScoreObjectLayer<ScoreObject>) sLayer) {
                     if (scoreObject.getStartTime() >= pointTime) {
                         newSelected.add(scoreObject);
                     }

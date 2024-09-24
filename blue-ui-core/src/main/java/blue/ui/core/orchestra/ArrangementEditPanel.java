@@ -312,8 +312,7 @@ public class ArrangementEditPanel extends JComponent
 
         Instrument instr = arrangement.getInstrument(selectedRow);
 
-        if (instr instanceof GenericInstrument) {
-            GenericInstrument genInstr = (GenericInstrument) instr;
+        if (instr instanceof GenericInstrument genInstr) {
 
             BlueSynthBuilder bsb = new BlueSynthBuilder();
 
@@ -376,8 +375,8 @@ public class ArrangementEditPanel extends JComponent
 
         Instrument clone = instr.deepCopy();
 
-        if (clone instanceof BlueSynthBuilder) {
-            ((BlueSynthBuilder) clone).clearParameters();
+        if (clone instanceof BlueSynthBuilder blueSynthBuilder) {
+            blueSynthBuilder.clearParameters();
         }
 
         addInstrument(clone);
@@ -576,8 +575,8 @@ public class ArrangementEditPanel extends JComponent
 
                 dtde.acceptDrop(DnDConstants.ACTION_COPY);
 
-                if (instrument instanceof BlueSynthBuilder) {
-                    ((BlueSynthBuilder) instrument).clearParameters();
+                if (instrument instanceof BlueSynthBuilder blueSynthBuilder) {
+                    blueSynthBuilder.clearParameters();
                 }
 
                 addInstrument(instrument, listIndex);

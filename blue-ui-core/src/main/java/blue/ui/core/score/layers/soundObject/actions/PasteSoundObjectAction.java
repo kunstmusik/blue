@@ -171,10 +171,9 @@ public final class PasteSoundObjectAction extends AbstractAction implements Cont
 
             int newLayerIndex = buffer.layerIndices.get(i) + layerTranslation;
 
-            if (sObj instanceof Instance) {
-                instanceSoundObjects.add((Instance) sObj);
-            } else if (sObj instanceof PolyObject) {
-                PolyObject pObj = (PolyObject) sObj;
+            if (sObj instanceof Instance instance) {
+                instanceSoundObjects.add(instance);
+            } else if (sObj instanceof PolyObject pObj) {
                 getInstancesFromPolyObject(instanceSoundObjects, pObj);
             }
 
@@ -209,12 +208,10 @@ public final class PasteSoundObjectAction extends AbstractAction implements Cont
             PolyObject pObj) {
         for (SoundLayer layer : pObj) {
             for (SoundObject sObj : layer) {
-                if (sObj instanceof Instance) {
-                    Instance instance = (Instance) sObj;
+                if (sObj instanceof Instance instance) {
                     instanceSoundObjects.add(instance);
-                } else if (sObj instanceof PolyObject) {
-                    getInstancesFromPolyObject(instanceSoundObjects,
-                            (PolyObject) sObj);
+                } else if (sObj instanceof PolyObject polyObject) {
+                    getInstancesFromPolyObject(instanceSoundObjects, polyObject);
                 }
             }
         }

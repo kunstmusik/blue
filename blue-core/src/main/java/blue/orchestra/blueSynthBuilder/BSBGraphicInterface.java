@@ -93,13 +93,14 @@ public class BSBGraphicInterface {
             switch (name) {
                 case "bsbObject":
                     BSBObject obj = (BSBObject) ObjectUtilities.loadFromXML(node);
-                    if (obj instanceof BSBGroup) {
-                        graphicInterface.setRootGroup((BSBGroup) obj);
+                    if (obj instanceof BSBGroup bSBGroup) {
+                        graphicInterface.setRootGroup(bSBGroup);
                     } else {
                         // legacy reading of BSBObjects stored here pre-2.7.0
                         graphicInterface.getRootGroup().addBSBObject(obj);
                     }
                     break;
+
                 case "gridSettings":
                     gridSettings = GridSettings.loadFromXML(node);
                     break;

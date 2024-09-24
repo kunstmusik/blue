@@ -130,8 +130,7 @@ public class UDOTreeDropTarget implements DropTargetListener {
                 UDOLibrary udoLibrary = (UDOLibrary) tree.getModel();
 
                 // iLibrary.removeInstrument(instrument);
-                if (node instanceof UDOCategory) {
-                    UDOCategory parentNode = (UDOCategory) node;
+                if (node instanceof UDOCategory parentNode) {
 
                     udoLibrary.addUDO(parentNode, udo);
                 } else if (node instanceof UserDefinedOpcode) {

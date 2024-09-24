@@ -205,8 +205,7 @@ public class AutomationManager implements
             for (int i = 0; i < arrangement.size(); i++) {
                 Instrument instr = arrangement.getInstrument(i);
 
-                if (instr instanceof Automatable) {
-                    Automatable temp = (Automatable) instr;
+                if (instr instanceof Automatable temp) {
                     ParameterList parameters = temp.getParameterList();
 
                     // parameterMap.put(temp, parameters);
@@ -260,8 +259,7 @@ public class AutomationManager implements
         for (int i = 0; i < arrangement.size(); i++) {
             Instrument instr = arrangement.getInstrument(i);
 
-            if (instr instanceof Automatable) {
-                Automatable temp = (Automatable) instr;
+            if (instr instanceof Automatable temp) {
                 ParameterList parameters = temp.getParameterList();
 
                 allParameters.addAll(parameters);
@@ -494,11 +492,11 @@ public class AutomationManager implements
                     JMenu effectMenu = new JMenu();
                     MenuScroller.setScrollerFor(effectMenu);
 
-                    if (automatable instanceof Effect) {
-                        effectMenu.setText(((Effect) automatable).getName());
-                    } else if (automatable instanceof Send) {
+                    if (automatable instanceof Effect effect) {
+                        effectMenu.setText(effect.getName());
+                    } else if (automatable instanceof Send send) {
                         effectMenu.setText("Send: "
-                                + ((Send) automatable).getSendChannel());
+                                + send.getSendChannel());
                     } else {
                         effectMenu.setText("ERROR");
                     }
@@ -562,11 +560,11 @@ public class AutomationManager implements
                     JMenu effectMenu = new JMenu();
                     MenuScroller.setScrollerFor(effectMenu);
 
-                    if (automatable instanceof Effect) {
-                        effectMenu.setText(((Effect) automatable).getName());
-                    } else if (automatable instanceof Send) {
+                    if (automatable instanceof Effect effect) {
+                        effectMenu.setText(effect.getName());
+                    } else if (automatable instanceof Send send) {
                         effectMenu.setText("Send: "
-                                + ((Send) automatable).getSendChannel());
+                                + send.getSendChannel());
                     } else {
                         effectMenu.setText("ERROR");
                     }
@@ -607,8 +605,7 @@ public class AutomationManager implements
 
         for (LayerGroup<? extends Layer> layerGroup : score) {
 
-            if (layerGroup instanceof PolyObject) {
-                PolyObject pObj = (PolyObject) layerGroup;
+            if (layerGroup instanceof PolyObject pObj) {
 
                 for (SoundLayer layer : pObj) {
                     ParameterIdList automationParameters = layer.getAutomationParameters();
@@ -747,8 +744,7 @@ public class AutomationManager implements
 
         for (LayerGroup<? extends Layer> layerGroup : score) {
 
-            if (layerGroup instanceof PolyObject) {
-                PolyObject pObj = (PolyObject) layerGroup;
+            if (layerGroup instanceof PolyObject pObj) {
 
                 for (SoundLayer layer : pObj) {
                     ParameterIdList automationParameters = layer.getAutomationParameters();

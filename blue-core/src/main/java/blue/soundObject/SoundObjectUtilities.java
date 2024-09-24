@@ -100,8 +100,7 @@ public class SoundObjectUtilities {
             return true;
         }
 
-        if (sObj instanceof PolyObject) {
-            PolyObject pObj = (PolyObject) sObj;
+        if (sObj instanceof PolyObject pObj) {
             for (SoundObject soundObject : pObj.getSoundObjects(true)) {
                 if (isOrContainsInstance(soundObject)) {
                     return true;

@@ -652,8 +652,7 @@ public class ScoreUtilities {
 
             if (sObj instanceof Comment) {
                 continue;
-            } else if (sObj instanceof PolyObject) {
-                PolyObject pObj = (PolyObject) sObj;
+            } else if (sObj instanceof PolyObject pObj) {
                 if (pObj.isScoreGenerationEmpty()) {
                     continue;
                 }

@@ -63,9 +63,9 @@ public class ReplaceScoreObjectEdit extends AbstractUndoableEdit {
 
     @Override
     public boolean addEdit(UndoableEdit anEdit) {
-        if (anEdit instanceof ReplaceScoreObjectEdit) {
+        if (anEdit instanceof ReplaceScoreObjectEdit replaceScoreObjectEdit) {
             if (nextEdit == null) {
-                nextEdit = (ReplaceScoreObjectEdit) anEdit;
+                nextEdit = replaceScoreObjectEdit;
                 return true;
             } else {
                 return nextEdit.addEdit(anEdit);

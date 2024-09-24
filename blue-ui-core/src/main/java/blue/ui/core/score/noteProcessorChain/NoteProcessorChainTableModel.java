@@ -218,9 +218,9 @@ public class NoteProcessorChainTableModel extends AbstractTableModel {
     public Object getValueAt(int row, int column) {
         Object obj = props.get(row);
 
-        if (obj instanceof NoteProcessorEditProxy) {
+        if (obj instanceof NoteProcessorEditProxy noteProcessorEditProxy) {
             if (column == 0) {
-                return ((NoteProcessorEditProxy) obj).getName();
+                return noteProcessorEditProxy.getName();
             }
             return "";
 

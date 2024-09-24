@@ -143,9 +143,9 @@ public final class FreezeUnfreezeAction extends AbstractAction
                 SoundObject sObj = soundObjects.get(i);
                 SoundLayer layer = (SoundLayer) layers.get(i);
 
-                if (sObj instanceof FrozenSoundObject) {
+                if (sObj instanceof FrozenSoundObject frozenSoundObject) {
                     handle.progress("Unfreezing SoundObject...", i);
-                    FrozenSoundObject frozenObj = (FrozenSoundObject) sObj;
+                    FrozenSoundObject frozenObj = frozenSoundObject;
 
                     layer.remove(sObj);
                     
@@ -341,9 +341,8 @@ public final class FreezeUnfreezeAction extends AbstractAction
 
             for (LayerGroup lGroup : score) {
 
-                if (lGroup instanceof PolyObject) {
+                if (lGroup instanceof PolyObject pObj) {
 
-                    PolyObject pObj = (PolyObject) lGroup;
                     retVal += freezeReferenceCount(pObj, waveFileName);
                 }
             }
@@ -356,11 +355,10 @@ public final class FreezeUnfreezeAction extends AbstractAction
             List<SoundObject> sObjects = pObj.getSoundObjects(true);
 
             for (SoundObject sObj : sObjects) {
-                if (sObj instanceof PolyObject) {
-                    retVal += freezeReferenceCount((PolyObject)sObj,
+                if (sObj instanceof PolyObject polyObject) {
+                    retVal += freezeReferenceCount(polyObject,
                             waveFileName);
-                } else if (sObj instanceof FrozenSoundObject) {
-                    FrozenSoundObject fso = (FrozenSoundObject) sObj;
+                } else if (sObj instanceof FrozenSoundObject fso) {
                     if (fso.getFrozenWaveFileName().equals(waveFileName)) {
                         retVal += 1;
                     }

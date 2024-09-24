@@ -102,8 +102,7 @@ public class CompileData {
     
     public int addInstrument(Instrument instrument) {
         if(handleParametersAndChannels && stringChannels != null && originalParameters != null) {
-            if(instrument instanceof Automatable) {
-                Automatable auto = (Automatable) instrument;
+            if(instrument instanceof Automatable auto) {
                 ArrayList<StringChannel> tempStringChannels = auto.getStringChannels();
                 if(tempStringChannels != null) {
                     stringChannels.addAll(tempStringChannels);

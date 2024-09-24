@@ -59,8 +59,8 @@ public final class AlignActionsPresenter extends AbstractAction implements Conte
 
         for (Action action : actions) {
             Action temp = action;
-            if (action instanceof ContextAwareAction) {
-                temp = ((ContextAwareAction) action).createContextAwareInstance(
+            if (action instanceof ContextAwareAction contextAwareAction) {
+                temp = contextAwareAction.createContextAwareInstance(
                         scoreTC.getLookup());
             }
             menu.add(new JMenuItem(temp));

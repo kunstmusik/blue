@@ -218,8 +218,8 @@ public class ChannelPanel extends javax.swing.JPanel implements
         postList.setModel(fakeModel);
 
         ComboBoxModel model = this.outputList.getModel();
-        if (model instanceof ChannelOutComboBoxModel) {
-            ((ChannelOutComboBoxModel) model).clearListeners();
+        if (model instanceof ChannelOutComboBoxModel channelOutComboBoxModel) {
+            channelOutComboBoxModel.clearListeners();
         }
     }
 
@@ -436,21 +436,19 @@ public class ChannelPanel extends javax.swing.JPanel implements
 
             Frame root = WindowManager.getDefault().getMainWindow();
 
-            if (obj instanceof Effect) {
-                Effect effect = (Effect) obj;
+            if (obj instanceof Effect effect) {
 
                 EffectEditorManager.getInstance()
                         .openEffectEditor(root, effect);
-            } else if (obj instanceof Send) {
-                Send send = (Send) obj;
+            } else if (obj instanceof Send send) {
 
                 ComboBoxModel model = outputList.getModel();
                 ComboBoxModel temp = null;
 
-                if (model instanceof ChannelOutComboBoxModel) {
-                    temp = ((ChannelOutComboBoxModel) model).getCopy();
-                } else if (model instanceof SubChannelOutComboBoxModel) {
-                    temp = ((SubChannelOutComboBoxModel) model).getCopy();
+                if (model instanceof ChannelOutComboBoxModel channelOutComboBoxModel) {
+                    temp = channelOutComboBoxModel.getCopy();
+                } else if (model instanceof SubChannelOutComboBoxModel subChannelOutComboBoxModel) {
+                    temp = subChannelOutComboBoxModel.getCopy();
                 }
 
                 SendEditorManager.getInstance()
@@ -487,21 +485,19 @@ public class ChannelPanel extends javax.swing.JPanel implements
 
             Frame root = WindowManager.getDefault().getMainWindow();
 
-            if (obj instanceof Effect) {
-                Effect effect = (Effect) obj;
+            if (obj instanceof Effect effect) {
 
                 EffectEditorManager.getInstance()
                         .openEffectEditor(root, effect);
-            } else if (obj instanceof Send) {
-                Send send = (Send) obj;
+            } else if (obj instanceof Send send) {
 
                 ComboBoxModel model = outputList.getModel();
                 ComboBoxModel temp = null;
 
-                if (model instanceof ChannelOutComboBoxModel) {
-                    temp = ((ChannelOutComboBoxModel) model).getCopy();
-                } else if (model instanceof SubChannelOutComboBoxModel) {
-                    temp = ((SubChannelOutComboBoxModel) model).getCopy();
+                if (model instanceof ChannelOutComboBoxModel channelOutComboBoxModel) {
+                    temp = channelOutComboBoxModel.getCopy();
+                } else if (model instanceof SubChannelOutComboBoxModel subChannelOutComboBoxModel) {
+                    temp = subChannelOutComboBoxModel.getCopy();
                 }
 
                 SendEditorManager.getInstance()
@@ -682,14 +678,12 @@ public class ChannelPanel extends javax.swing.JPanel implements
                     index, isSelected, cellHasFocus);
 
             if (list.getModel() != null && index >= 0) {
-                if (list.getModel() instanceof EffectsChain) {
+                if (list.getModel() instanceof EffectsChain chain) {
 
-                    EffectsChain chain = (EffectsChain) list.getModel();
 
                     Object obj = chain.getElementAt(index);
 
-                    if (obj instanceof Effect) {
-                        Effect effect = (Effect) obj;
+                    if (obj instanceof Effect effect) {
 
                         if (effect.isEnabled()) {
                             c.setForeground(ENABLED_COLOR);

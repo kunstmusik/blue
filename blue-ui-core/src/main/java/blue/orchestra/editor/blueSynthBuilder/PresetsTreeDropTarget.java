@@ -97,17 +97,15 @@ public class PresetsTreeDropTarget implements DropTargetListener {
 
                     PresetGroup parentNode = (PresetGroup) node;
 
-                    if (transferNode instanceof Preset) {
-                        Preset preset = (Preset) transferNode;
+                    if (transferNode instanceof Preset preset) {
 
                         presetsTreeModel.removePreset(preset);
                         presetsTreeModel.addPreset(parentNode, new Preset(preset));
 
                         dtde.dropComplete(true);
 
-                    } else if (transferNode instanceof PresetGroup) {
+                    } else if (transferNode instanceof PresetGroup presetGroup) {
 
-                        PresetGroup presetGroup = (PresetGroup) transferNode;
 
                         presetsTreeModel.removePresetGroup(presetGroup);
                         presetsTreeModel

@@ -307,8 +307,7 @@ public class EffectsLibrary implements TreeModel {
     public int getChildCount(Object parent) {
         if (parent instanceof Effect) {
             return 0;
-        } else if (parent instanceof EffectCategory) {
-            EffectCategory cat = (EffectCategory) parent;
+        } else if (parent instanceof EffectCategory cat) {
             return cat.getSubCategories().size() + cat.getEffects().size();
         }
 
@@ -355,10 +354,10 @@ public class EffectsLibrary implements TreeModel {
     public void valueForPathChanged(TreePath path, Object newValue) {
         Object obj = path.getLastPathComponent();
 
-        if (obj instanceof EffectCategory) {
-            ((EffectCategory) obj).setCategoryName(newValue.toString());
-        } else if (obj instanceof Effect) {
-            ((Effect) obj).setName(newValue.toString());
+        if (obj instanceof EffectCategory effectCategory) {
+            effectCategory.setCategoryName(newValue.toString());
+        } else if (obj instanceof Effect effect) {
+            effect.setName(newValue.toString());
         }
 
         TreeModelEvent e = new TreeModelEvent(this, path);

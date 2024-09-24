@@ -291,8 +291,7 @@ class MixerNode {
         for (int i = 0; i < chain.getSize(); i++) {
             Object obj = chain.getElementAt(i);
 
-            if (obj instanceof Send) {
-                Send send = (Send) obj;
+            if (obj instanceof Send send) {
 
                 if (send.getSendChannel().equals(Channel.MASTER)) {
                     index = i;
@@ -365,8 +364,7 @@ class MixerNode {
         for (int i = 0; i <= lastIndex; i++) {
             Object obj = chain.getElementAt(i);
 
-            if (obj instanceof Effect) {
-                Effect effect = (Effect) obj;
+            if (obj instanceof Effect effect) {
 
                 if (effect.isEnabled()) {
 
@@ -387,8 +385,7 @@ class MixerNode {
                     buffer.append(effectName).append("\t");
                     buffer.append(signalChannels).append("\n");
                 }
-            } else if (obj instanceof Send) {
-                Send send = (Send) obj;
+            } else if (obj instanceof Send send) {
 
                 if (send.isEnabled()) {
                     String[] parts = signalChannels.split(",");

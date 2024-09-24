@@ -102,8 +102,7 @@ class MultiLineMoveMouseListener extends BlueMouseAdapter {
 
         lineSourceCopyMap.clear();
         for (var layer : selection.getSelectedLayers()) {
-            if (layer instanceof AutomatableLayer) {
-                var autoLayer = (AutomatableLayer) layer;
+            if (layer instanceof AutomatableLayer autoLayer) {
                 var paramIds = autoLayer.getAutomationParameters();
                 var autoManager = AutomationManager.getInstance();
                 for (var paramId : paramIds) {

@@ -168,8 +168,8 @@ public class Arrangement implements TableModel {
 
         fireTableDataChanged();
 
-        if (instrument instanceof Automatable) {
-            fireAutomatableAdded((Automatable) instrument);
+        if (instrument instanceof Automatable automatable) {
+            fireAutomatableAdded(automatable);
         }
 
         return retVal;
@@ -190,8 +190,8 @@ public class Arrangement implements TableModel {
             Collections.sort(arrangement);
         }
 
-        if (instr instanceof Automatable) {
-            fireAutomatableAdded((Automatable) instr);
+        if (instr instanceof Automatable automatable) {
+            fireAutomatableAdded(automatable);
         }
 
         fireTableDataChanged();
@@ -229,8 +229,8 @@ public class Arrangement implements TableModel {
         }
         fireTableDataChanged();
 
-        if (instr instanceof Automatable) {
-            fireAutomatableAdded((Automatable) instr);
+        if (instr instanceof Automatable automatable) {
+            fireAutomatableAdded(automatable);
         }
     }
 
@@ -804,8 +804,8 @@ public class Arrangement implements TableModel {
 
         fireTableDataChanged();
 
-        if (ia.instr instanceof Automatable) {
-            fireAutomatableRemoved((Automatable) ia.instr);
+        if (ia.instr instanceof Automatable automatable) {
+            fireAutomatableRemoved(automatable);
         }
 
         return ia.instr;

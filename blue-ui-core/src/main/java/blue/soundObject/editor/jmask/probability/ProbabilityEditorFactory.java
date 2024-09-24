@@ -35,18 +35,18 @@ import javax.swing.JComponent;
 public class ProbabilityEditorFactory {
 
     public static JComponent getView(ProbabilityGenerator pGen) {
-        if (pGen instanceof Beta) {
-            return new BetaEditor((Beta)pGen);
-        } else if (pGen instanceof Cauchy) {
-            return new CauchyEditor((Cauchy)pGen);
-        } else if (pGen instanceof Exponential) {
-            return new ExponentialEditor((Exponential)pGen);
-        } else if (pGen instanceof Gaussian) {
-            return new GaussianEditor((Gaussian)pGen);
-        } else if (pGen instanceof Linear) {
-            return new LinearEditor((Linear)pGen);
-        } else if (pGen instanceof Weibull) {
-            return new WeibullEditor((Weibull)pGen);
+        if (pGen instanceof Beta beta) {
+            return new BetaEditor(beta);
+        } else if (pGen instanceof Cauchy cauchy) {
+            return new CauchyEditor(cauchy);
+        } else if (pGen instanceof Exponential exponential) {
+            return new ExponentialEditor(exponential);
+        } else if (pGen instanceof Gaussian gaussian) {
+            return new GaussianEditor(gaussian);
+        } else if (pGen instanceof Linear linear) {
+            return new LinearEditor(linear);
+        } else if (pGen instanceof Weibull weibull) {
+            return new WeibullEditor(weibull);
         }
 
         return null;

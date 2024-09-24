@@ -438,8 +438,7 @@ public class CSDRender extends CSDRenderService {
             if (ia.enabled) {
                 Instrument instr = ia.instr;
 
-                if (instr instanceof Automatable) {
-                    Automatable auto = (Automatable) instr;
+                if (instr instanceof Automatable auto) {
                     ArrayList<StringChannel> stringChannels = auto.getStringChannels();
 
                     if (stringChannels != null) {

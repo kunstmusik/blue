@@ -126,8 +126,8 @@ public final class PasteAsPolyObjectAction extends AbstractAction implements Con
             SoundObject clone = (SoundObject)scoreObj.deepCopy();
             layer.add(clone);
 
-            if (clone instanceof Instance) {
-                instanceSoundObjects.add((Instance) clone);
+            if (clone instanceof Instance instance) {
+                instanceSoundObjects.add(instance);
             }
 
         }

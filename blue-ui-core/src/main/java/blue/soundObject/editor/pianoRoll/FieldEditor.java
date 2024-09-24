@@ -111,8 +111,7 @@ public class FieldEditor extends JPanel {
                     // TODO: Change this algorithm
                     for (var note : change.getRemoved()) {
                         for (var c : getComponents()) {
-                            if (c instanceof Pin) {
-                                Pin p = (Pin) c;
+                            if (c instanceof Pin p) {
                                 if (p.note == note) {
                                     remove(p);
                                     break;
@@ -172,9 +171,8 @@ public class FieldEditor extends JPanel {
         String tip = null;
 
         Object obj = this.getComponentAt(e.getPoint());
-        if (obj instanceof Pin) {
+        if (obj instanceof Pin pin) {
 
-            var pin = (Pin) obj;
             var fd = pin.field;
 
             if (fd.getFieldDef().getFieldType() == FieldType.DISCRETE) {

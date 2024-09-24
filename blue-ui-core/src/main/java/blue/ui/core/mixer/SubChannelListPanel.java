@@ -327,14 +327,12 @@ public class SubChannelListPanel extends JComponent implements Scrollable,
         for (int i = 0; i < arr.size(); i++) {
             Instrument instr = arr.getInstrument(i);
 
-            if (instr instanceof BlueSynthBuilder) {
-                BlueSynthBuilder bsb = (BlueSynthBuilder) instr;
+            if (instr instanceof BlueSynthBuilder bsb) {
 
                 BSBGraphicInterface bsbInterface = bsb.getGraphicInterface();
 
                 for (BSBObject bsbObj : bsbInterface.getAllSet()) {
-                    if (bsbObj instanceof BSBSubChannelDropdown) {
-                        BSBSubChannelDropdown bsbSubDrop = (BSBSubChannelDropdown) bsbObj;
+                    if (bsbObj instanceof BSBSubChannelDropdown bsbSubDrop) {
                         if (bsbSubDrop.getChannelOutput().equals(oldName)) {
                             bsbSubDrop.setChannelOutput(newName);
                         }
@@ -367,14 +365,12 @@ public class SubChannelListPanel extends JComponent implements Scrollable,
         for (int i = 0; i < arr.size(); i++) {
             Instrument instr = arr.getInstrument(i);
 
-            if (instr instanceof BlueSynthBuilder) {
-                BlueSynthBuilder bsb = (BlueSynthBuilder) instr;
+            if (instr instanceof BlueSynthBuilder bsb) {
 
                 BSBGraphicInterface bsbInterface = bsb.getGraphicInterface();
 
                 for (BSBObject bsbObj : bsbInterface.getAllSet()) {
-                    if (bsbObj instanceof BSBSubChannelDropdown) {
-                        BSBSubChannelDropdown bsbSubDrop = (BSBSubChannelDropdown) bsbObj;
+                    if (bsbObj instanceof BSBSubChannelDropdown bsbSubDrop) {
                         if (bsbSubDrop.getChannelOutput()
                                 .equals(removedChannel)) {
                             bsbSubDrop.setChannelOutput(Channel.MASTER);

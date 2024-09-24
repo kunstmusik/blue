@@ -141,10 +141,11 @@ public class Score extends ObservableArrayList<LayerGroup<? extends Layer>> {
                                 "Unable to load Score LayerGroup of type: " + node.getName());
                     }
                     score.add(layerGroup);
-                    if(layerGroup instanceof PolyObject) {
-                        ((PolyObject)layerGroup).setTimeBehavior(TimeBehavior.NONE);
+                    if(layerGroup instanceof PolyObject polyObject) {
+                        polyObject.setTimeBehavior(TimeBehavior.NONE);
                     }
                     break;
+
             }
         }
 
@@ -195,8 +196,7 @@ public class Score extends ObservableArrayList<LayerGroup<? extends Layer>> {
         for (LayerGroup<? extends Layer> layerGroup : this) {
             for (Layer layer : layerGroup) {
                 boolean found = false;
-                if (layer instanceof ScoreObjectLayer) {
-                    ScoreObjectLayer scoreLayer = (ScoreObjectLayer) layer;
+                if (layer instanceof ScoreObjectLayer scoreLayer) {
                     if (!Collections.disjoint(scoreLayer, scoreObjects)) {
                         retVal.add(layerGroup);
                         found = true;

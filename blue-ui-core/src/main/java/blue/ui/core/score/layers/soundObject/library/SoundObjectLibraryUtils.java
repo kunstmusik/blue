@@ -41,16 +41,15 @@ public class SoundObjectLibraryUtils {
         library.removeSoundObject(sObj);
 
         for (SoundObject tempObj : library) {
-            if(tempObj instanceof PolyObject) {
-                removeSoundObjectInstances((PolyObject)tempObj, sObj);
+            if(tempObj instanceof PolyObject polyObject) {
+                removeSoundObjectInstances(polyObject, sObj);
             } 
         }
        
         Score score = data.getScore();
         for(LayerGroup layerGroup : score) {
 
-            if(layerGroup instanceof PolyObject) {
-                PolyObject pObj = (PolyObject) layerGroup;
+            if(layerGroup instanceof PolyObject pObj) {
                 removeSoundObjectInstances(pObj, sObj);
             }
         }
@@ -64,13 +63,12 @@ public class SoundObjectLibraryUtils {
             ArrayList<SoundObject> instances = new ArrayList<>();
             
             for (SoundObject tempObject : layer) {
-                if(tempObject instanceof Instance) {
-                    Instance instance = (Instance)tempObject;
+                if(tempObject instanceof Instance instance) {
                     if(instance.getSoundObject() == sObj) {
                         instances.add(instance);
                     }
-                } else if (tempObject instanceof PolyObject) {
-                    removeSoundObjectInstances((PolyObject)tempObject, sObj);
+                } else if (tempObject instanceof PolyObject polyObject1) {
+                    removeSoundObjectInstances(polyObject1, sObj);
                 } 
             }
 

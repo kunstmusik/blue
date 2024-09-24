@@ -244,8 +244,8 @@ final public class ScoreObjectEditorTopComponent extends TopComponent
                 BlueData data = BlueProjectManager.getInstance()
                         .getCurrentBlueData();
 
-        if (sObj instanceof Instance) {
-            sObjToEdit = ((Instance) sObj).getSoundObject();
+        if (sObj instanceof Instance instance1) {
+            sObjToEdit = instance1.getSoundObject();
             this.setEditingLibraryObject(SelectionEvent.SELECTION_LIBRARY);
         } else if (data.getSoundObjectLibrary().contains(sObjToEdit)){
             this.setEditingLibraryObject(SelectionEvent.SELECTION_LIBRARY);

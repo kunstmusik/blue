@@ -223,8 +223,7 @@ public class UDOLibrary implements TreeModel {
     public int getChildCount(Object parent) {
         if (parent instanceof UserDefinedOpcode) {
             return 0;
-        } else if (parent instanceof UDOCategory) {
-            UDOCategory cat = (UDOCategory) parent;
+        } else if (parent instanceof UDOCategory cat) {
             return cat.getSubCategories().size()
                     + cat.getUserDefinedOpcodes().size();
         }
@@ -272,10 +271,10 @@ public class UDOLibrary implements TreeModel {
     public void valueForPathChanged(TreePath path, Object newValue) {
         Object obj = path.getLastPathComponent();
 
-        if (obj instanceof UDOCategory) {
-            ((UDOCategory) obj).setCategoryName(newValue.toString());
-        } else if (obj instanceof UserDefinedOpcode) {
-            ((UserDefinedOpcode) obj).setOpcodeName(newValue.toString());
+        if (obj instanceof UDOCategory uDOCategory) {
+            uDOCategory.setCategoryName(newValue.toString());
+        } else if (obj instanceof UserDefinedOpcode userDefinedOpcode) {
+            userDefinedOpcode.setOpcodeName(newValue.toString());
         }
 
         TreeModelEvent e = new TreeModelEvent(this, path);

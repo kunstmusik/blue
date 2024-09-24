@@ -385,8 +385,7 @@ public class ScoreController {
 
         // COPY AUTOMATION DATA 
         for (Layer layer : selection.getSelectedLayers()) {
-            if (layer instanceof AutomatableLayer) {
-                AutomatableLayer al = (AutomatableLayer) layer;
+            if (layer instanceof AutomatableLayer al) {
                 ParameterIdList params = al.getAutomationParameters();
 
                 for (String paramId : params) {
@@ -417,8 +416,7 @@ public class ScoreController {
 
         CompoundAppendable compoundEdit = new CompoundAppendable();
         for (Layer layer : selection.getSelectedLayers()) {
-            if (layer instanceof AutomatableLayer) {
-                AutomatableLayer al = (AutomatableLayer) layer;
+            if (layer instanceof AutomatableLayer al) {
                 ParameterIdList params = al.getAutomationParameters();
 
                 for (String paramId : params) {

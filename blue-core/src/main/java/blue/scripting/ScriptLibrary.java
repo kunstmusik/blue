@@ -299,8 +299,7 @@ public class ScriptLibrary implements TreeModel {
     public int getChildCount(Object parent) {
         if (parent instanceof Script) {
             return 0;
-        } else if (parent instanceof ScriptCategory) {
-            ScriptCategory cat = (ScriptCategory) parent;
+        } else if (parent instanceof ScriptCategory cat) {
             return cat.getSubCategories().size() + cat.getScripts().size();
         }
 
@@ -347,10 +346,10 @@ public class ScriptLibrary implements TreeModel {
     public void valueForPathChanged(TreePath path, Object newValue) {
         Object obj = path.getLastPathComponent();
 
-        if (obj instanceof ScriptCategory) {
-            ((ScriptCategory) obj).setCategoryName(newValue.toString());
-        } else if (obj instanceof Script) {
-            ((Script) obj).setName(newValue.toString());
+        if (obj instanceof ScriptCategory scriptCategory) {
+            scriptCategory.setCategoryName(newValue.toString());
+        } else if (obj instanceof Script script) {
+            script.setName(newValue.toString());
         }
 
         TreeModelEvent e = new TreeModelEvent(this, path);

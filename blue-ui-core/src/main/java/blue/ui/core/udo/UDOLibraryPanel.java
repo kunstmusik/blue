@@ -292,8 +292,8 @@ public class UDOLibraryPanel extends JComponent {
         }
 
         Object obj = selectionPath.getLastPathComponent();
-        if (obj instanceof UserDefinedOpcode) {
-            return (UserDefinedOpcode) obj;
+        if (obj instanceof UserDefinedOpcode userDefinedOpcode) {
+            return userDefinedOpcode;
         }
         return null;
     }
@@ -412,8 +412,8 @@ class UDOTreePopup extends JPopupMenu {
         }
 
         Object bufObj;
-        if (userObj instanceof UserDefinedOpcode) {
-            bufObj = new UserDefinedOpcode((UserDefinedOpcode) userObj);
+        if (userObj instanceof UserDefinedOpcode userDefinedOpcode) {
+            bufObj = new UserDefinedOpcode(userDefinedOpcode);
         } else {
             bufObj = new UDOCategory((UDOCategory) userObj); 
         }
@@ -428,10 +428,10 @@ class UDOTreePopup extends JPopupMenu {
             return;
         }
 
-        if (bufferedObj instanceof UserDefinedOpcode) {
-            addUDO((UserDefinedOpcode) bufferedObj);
-        } else if(bufferedObj instanceof UserDefinedOpcode[]) {
-            for(UserDefinedOpcode udo : (UserDefinedOpcode[])bufferedObj) {
+        if (bufferedObj instanceof UserDefinedOpcode userDefinedOpcode) {
+            addUDO(userDefinedOpcode);
+        } else if(bufferedObj instanceof UserDefinedOpcode[] userDefinedOpcodes) {
+            for(UserDefinedOpcode udo : userDefinedOpcodes) {
                 addUDO(udo);
             }
         } else {
@@ -495,10 +495,10 @@ class UDOTreePopup extends JPopupMenu {
         this.instrGUI = instrGui;
         this.userObj = userObj;
 
-        if (userObj instanceof UDOCategory) {
+        if (userObj instanceof UDOCategory uDOCategory) {
             addCategoryMenuItem.setVisible(true);
 
-            removeCategoryMenuItem.setVisible(!((UDOCategory) userObj).isRoot());
+            removeCategoryMenuItem.setVisible(!uDOCategory.isRoot());
 
             addInstrumentMenu.setVisible(true);
             removeInstrumentMenuItem.setVisible(false);

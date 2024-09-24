@@ -280,9 +280,9 @@ public class ItemList implements Generator, TableModel, Accumulatable {
 
     @Override
     public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
-        if (aValue instanceof Double) {
+        if (aValue instanceof Double aDouble) {
             listItems.remove(rowIndex);
-            listItems.add(rowIndex, (Double) aValue);
+            listItems.add(rowIndex, aDouble);
         }
 
         TableModelEvent tme = new TableModelEvent(this, rowIndex);

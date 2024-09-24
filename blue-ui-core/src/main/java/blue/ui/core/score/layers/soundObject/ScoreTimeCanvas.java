@@ -160,8 +160,8 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
         String tip = null;
 
         Object obj = this.getComponentAt(e.getPoint());
-        if (obj instanceof SoundObjectView) {
-            SoundObject sObj = ((SoundObjectView) obj).getSoundObject();
+        if (obj instanceof SoundObjectView soundObjectView) {
+            SoundObject sObj = soundObjectView.getSoundObject();
 
             double subjectiveDuration = sObj.getSubjectiveDuration();
             double startTime = sObj.getStartTime();
@@ -197,8 +197,7 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
             for (int i = 0; i < components.length; i++) {
                 Component c = components[i];
 
-                if (c instanceof SoundObjectView) {
-                    SoundObjectView sObjView = (SoundObjectView) c;
+                if (c instanceof SoundObjectView sObjView) {
 
                     int index = getPolyObject().getSoundLayerIndex(
                             sObjView.getSoundObject());
@@ -606,8 +605,8 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
     @Override
     public ScoreObjectView getScoreObjectViewAtPoint(Point p) {
         Component c = sObjPanel.getComponentAt(p);
-        if (c instanceof ScoreObjectView) {
-            return (ScoreObjectView) c;
+        if (c instanceof ScoreObjectView scoreObjectView) {
+            return scoreObjectView;
         }
         return null;
     }

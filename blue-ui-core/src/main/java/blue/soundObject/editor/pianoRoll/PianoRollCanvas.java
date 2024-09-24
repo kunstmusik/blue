@@ -309,8 +309,7 @@ public class PianoRollCanvas extends JLayeredPane implements Scrollable,
         String tip = null;
 
         Object obj = this.getComponentAt(e.getPoint());
-        if (obj instanceof PianoNoteView) {
-            var pnv = (PianoNoteView) obj;
+        if (obj instanceof PianoNoteView pnv) {
             var note = pnv.getPianoNote();
 
             var p = currentPianoRoll.get();
@@ -750,8 +749,7 @@ public class PianoRollCanvas extends JLayeredPane implements Scrollable,
                 // TODO - Improve algorithm as this performance is not good
                 for (var note : change.getRemoved()) {
                     for (var c : getComponents()) {
-                        if (c instanceof PianoNoteView) {
-                            var pnv = (PianoNoteView) c;
+                        if (c instanceof PianoNoteView pnv) {
 
                             if (pnv.getPianoNote() == note) {
                                 remove(pnv);

@@ -123,8 +123,7 @@ public class WindowSettingManager {
 
             Element node;
 
-            if (w instanceof WindowSettingsSavable) {
-                WindowSettingsSavable savable = (WindowSettingsSavable) w;
+            if (w instanceof WindowSettingsSavable savable) {
                 node = savable.saveWindowSettings();
             } else {
                 node = getBasicSettings(w);
@@ -151,8 +150,7 @@ public class WindowSettingManager {
         windows.put(windowName, window);
 
         if (settings.containsKey(windowName)) {
-            if (window instanceof WindowSettingsSavable) {
-                WindowSettingsSavable savable = (WindowSettingsSavable) window;
+            if (window instanceof WindowSettingsSavable savable) {
                 savable.loadWindowSettings(settings.get(windowName));
             }
         }

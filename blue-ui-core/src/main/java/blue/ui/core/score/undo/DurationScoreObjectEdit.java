@@ -57,9 +57,9 @@ public class DurationScoreObjectEdit extends AbstractUndoableEdit {
 
     @Override
     public boolean addEdit(UndoableEdit anEdit) {
-        if (anEdit instanceof DurationScoreObjectEdit) {
+        if (anEdit instanceof DurationScoreObjectEdit durationScoreObjectEdit) {
             if (nextEdit == null) {
-                nextEdit = (DurationScoreObjectEdit) anEdit;
+                nextEdit = durationScoreObjectEdit;
                 return true;
             } else {
                 return nextEdit.addEdit(anEdit);

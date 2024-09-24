@@ -136,13 +136,11 @@ public class InstrumentTreeDropTarget implements DropTargetListener {
                 InstrumentLibrary iLibrary = (InstrumentLibrary) tree
                         .getModel();
 
-                if (instrument instanceof BlueSynthBuilder) {
-                    ((BlueSynthBuilder) instrument).clearParameters();
+                if (instrument instanceof BlueSynthBuilder blueSynthBuilder) {
+                    blueSynthBuilder.clearParameters();
                 }
-
                 // iLibrary.removeInstrument(instrument);
-                if (node instanceof InstrumentCategory) {
-                    InstrumentCategory parentNode = (InstrumentCategory) node;
+                if (node instanceof InstrumentCategory parentNode) {
                     iLibrary.addInstrument(parentNode, instrument);
                 } else if (node instanceof Instrument) {
                     InstrumentCategory parentNode = (InstrumentCategory) parentpath

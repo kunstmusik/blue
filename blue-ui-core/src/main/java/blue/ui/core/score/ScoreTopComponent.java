@@ -1259,8 +1259,8 @@ public final class ScoreTopComponent extends TopComponent
                 layerPanel);
 
         Component c = layerPanel.getComponentAt(p);
-        if (c instanceof LayerGroupPanel) {
-            retVal = (LayerGroupPanel) c;
+        if (c instanceof LayerGroupPanel layerGroupPanel) {
+            retVal = layerGroupPanel;
         }
         return retVal;
     }

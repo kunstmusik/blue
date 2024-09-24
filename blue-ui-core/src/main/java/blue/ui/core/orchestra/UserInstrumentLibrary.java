@@ -317,8 +317,8 @@ public class UserInstrumentLibrary extends JComponent {
         }
 
         Object obj = selectionPath.getLastPathComponent();
-        if (obj instanceof Instrument) {
-            return (Instrument) obj;
+        if (obj instanceof Instrument instrument) {
+            return instrument;
         }
         return null;
     }
@@ -530,8 +530,8 @@ class UserInstrumentTreePopup extends JPopupMenu {
 
         Object bufferedObj;
 
-        if (userObj instanceof Instrument) {
-            bufferedObj = ((Instrument) userObj).deepCopy();
+        if (userObj instanceof Instrument instrument) {
+            bufferedObj = instrument.deepCopy();
         } else {
             bufferedObj = new InstrumentCategory((InstrumentCategory)userObj);
         }
@@ -545,8 +545,8 @@ class UserInstrumentTreePopup extends JPopupMenu {
         }
 
         Object bufferedObj = CopyBuffer.getBufferedObject(CopyBuffer.INSTRUMENT);
-        if (bufferedObj instanceof Instrument) {
-            addInstrument((Instrument) bufferedObj);
+        if (bufferedObj instanceof Instrument instrument) {
+            addInstrument(instrument);
         } else {
             addInstrumentCategory(
                     new InstrumentCategory((InstrumentCategory)bufferedObj));
@@ -603,10 +603,10 @@ class UserInstrumentTreePopup extends JPopupMenu {
         this.instrGUI = instrGui;
         this.userObj = userObj;
 
-        if (userObj instanceof InstrumentCategory) {
+        if (userObj instanceof InstrumentCategory instrumentCategory) {
             addCategoryMenuItem.setVisible(true);
 
-            removeCategoryMenuItem.setVisible(!((InstrumentCategory) userObj).isRoot());
+            removeCategoryMenuItem.setVisible(!instrumentCategory.isRoot());
 
             addInstrumentMenu.setVisible(true);
             removeInstrumentMenuItem.setVisible(false);

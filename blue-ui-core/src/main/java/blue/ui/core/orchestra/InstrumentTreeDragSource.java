@@ -71,10 +71,10 @@ public class InstrumentTreeDragSource implements DragSourceListener,
             oldNode = path.getLastPathComponent();
 
             Object cloneNode = null;
-            if(oldNode instanceof Instrument) {
-                cloneNode = ((Instrument)oldNode).deepCopy();
-            } else if(oldNode instanceof InstrumentCategory){
-                cloneNode = new InstrumentCategory((InstrumentCategory) oldNode);
+            if(oldNode instanceof Instrument instrument) {
+                cloneNode = instrument.deepCopy();
+            } else if(oldNode instanceof InstrumentCategory instrumentCategory){
+                cloneNode = new InstrumentCategory(instrumentCategory);
             }
 
             transferable = new TransferableInstrument(cloneNode);
@@ -92,15 +92,15 @@ public class InstrumentTreeDragSource implements DragSourceListener,
 
             if (dsde.getDropAction() == DnDConstants.ACTION_MOVE) {
 
-                if (oldNode instanceof Instrument) {
+                if (oldNode instanceof Instrument instrument) {
 
                     ((InstrumentLibrary) sourceTree.getModel())
-                            .removeInstrument((Instrument) oldNode);
+                            .removeInstrument(instrument);
 
-                } else if (oldNode instanceof InstrumentCategory) {
+                } else if (oldNode instanceof InstrumentCategory instrumentCategory) {
 
                     ((InstrumentLibrary) sourceTree.getModel())
-                            .removeCategory((InstrumentCategory) oldNode);
+                            .removeCategory(instrumentCategory);
 
                 }
             }

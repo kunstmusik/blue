@@ -151,8 +151,7 @@ public class NoteCanvasMouseListener extends MouseAdapter {
         var p = currentPianoRoll.get();
 
         if (UiUtilities.isRightMouseButton(e)) {
-            if (comp instanceof PianoNoteView) {
-                var pnv = (PianoNoteView) comp;
+            if (comp instanceof PianoNoteView pnv) {
 
                 if (ListUtil.containsByRef(selectedNotes, pnv.getPianoNote())) {
                     canvas.showPopup(e.getX(), e.getY());
@@ -163,8 +162,7 @@ public class NoteCanvasMouseListener extends MouseAdapter {
                 pasteMenu.show(canvas, pastePoint.x, pastePoint.y);
             }
         } else if (SwingUtilities.isLeftMouseButton(e)) {
-            if (comp instanceof PianoNoteView) {
-                var noteView = (PianoNoteView) comp;
+            if (comp instanceof PianoNoteView noteView) {
                 var note = noteView.getPianoNote();
 
                 if ((e.getModifiers() & OS_CTRL_KEY) == OS_CTRL_KEY && selectedFieldDef.getValue() != null) {
@@ -614,8 +612,8 @@ public class NoteCanvasMouseListener extends MouseAdapter {
     @Override
     public void mouseMoved(MouseEvent e) {
         Component comp = canvas.getComponentAt(e.getPoint());
-        if (comp instanceof PianoNoteView) {
-            mouseMoveNoteView = (PianoNoteView) comp;
+        if (comp instanceof PianoNoteView pianoNoteView) {
+            mouseMoveNoteView = pianoNoteView;
             var x = e.getX();
 
             if ((e.getModifiers() & OS_CTRL_KEY) == OS_CTRL_KEY

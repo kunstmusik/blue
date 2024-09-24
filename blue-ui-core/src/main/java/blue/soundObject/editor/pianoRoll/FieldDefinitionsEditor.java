@@ -64,9 +64,9 @@ public class FieldDefinitionsEditor extends javax.swing.JPanel {
                 return new DefaultCellEditor(new JTextField()) {
                     @Override
                     public boolean isCellEditable(EventObject anEvent) {
-                        if (anEvent instanceof KeyEvent) {
+                        if (anEvent instanceof KeyEvent keyEvent) {
                             int shortcutKey = BlueSystem.getMenuShortcutKey();
-                            KeyEvent ke = (KeyEvent) anEvent;
+                            KeyEvent ke = keyEvent;
                             if ((ke.getKeyCode() == KeyEvent.VK_Z || ke.getKeyCode() == KeyEvent.VK_Y)
                                     && (ke.getModifiers() & shortcutKey) == shortcutKey) {
                                 return false;
@@ -90,8 +90,8 @@ public class FieldDefinitionsEditor extends javax.swing.JPanel {
         this.fieldDefinitions = fieldDefinitions;
 
         var oldModel = fieldDefinitionTable.getModel();
-        if (oldModel instanceof FieldDefinitionsTableModel) {
-            ((FieldDefinitionsTableModel) oldModel).clearListener();
+        if (oldModel instanceof FieldDefinitionsTableModel fieldDefinitionsTableModel) {
+            fieldDefinitionsTableModel.clearListener();
         }
 
         var model = new FieldDefinitionsTableModel(p, fieldDefinitions, undoManager);
@@ -106,9 +106,9 @@ public class FieldDefinitionsEditor extends javax.swing.JPanel {
         fieldTypeColumn.setCellEditor(new DefaultCellEditor(comboBox) {
             @Override
             public boolean isCellEditable(EventObject anEvent) {
-                if (anEvent instanceof KeyEvent) {
+                if (anEvent instanceof KeyEvent keyEvent) {
                     int shortcutKey = BlueSystem.getMenuShortcutKey();
-                    KeyEvent ke = (KeyEvent) anEvent;
+                    KeyEvent ke = keyEvent;
                     if ((ke.getKeyCode() == KeyEvent.VK_Z || ke.getKeyCode() == KeyEvent.VK_Y)
                             && (ke.getModifiers() & shortcutKey) == shortcutKey) {
                         return false;

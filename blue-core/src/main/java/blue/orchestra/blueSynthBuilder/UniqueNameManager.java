@@ -142,8 +142,7 @@ public class UniqueNameManager  {
 
     @Override
     public boolean equals(Object obj) {
-        if (obj instanceof UniqueNameManager) {
-            UniqueNameManager unm = (UniqueNameManager) obj;
+        if (obj instanceof UniqueNameManager unm) {
 
             return defaultPrefix.equals(unm.defaultPrefix);
         }

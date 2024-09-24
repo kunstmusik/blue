@@ -69,8 +69,8 @@ public class PresetsPanel extends javax.swing.JPanel {
 
         addPresetListener = (ActionEvent e) -> {
             Object obj = e.getSource();
-            if (obj instanceof AddPresetMenuItem) {
-                PresetGroup presetGroup1 = ((AddPresetMenuItem) obj).
+            if (obj instanceof AddPresetMenuItem addPresetMenuItem) {
+                PresetGroup presetGroup1 = addPresetMenuItem.
                         getPresetGroup();
                 addPreset(presetGroup1);
             }
@@ -78,8 +78,8 @@ public class PresetsPanel extends javax.swing.JPanel {
 
         addFolderListener = (ActionEvent e) -> {
             Object obj = e.getSource();
-            if (obj instanceof AddFolderMenuItem) {
-                PresetGroup presetGroup1 = ((AddFolderMenuItem) obj).
+            if (obj instanceof AddFolderMenuItem addFolderMenuItem) {
+                PresetGroup presetGroup1 = addFolderMenuItem.
                         getPresetGroup();
                 addFolder(presetGroup1);
             }

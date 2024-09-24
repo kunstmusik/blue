@@ -67,9 +67,8 @@ public class ScoPadReceiver implements Receiver {
     @Override
     public void send(MidiMessage message, long timeStamp) {
 
-        if (message instanceof ShortMessage) {
+        if (message instanceof ShortMessage shortMsg) {
 
-            ShortMessage shortMsg = (ShortMessage) message;
             int noteNum, velocity;
             // long duration;
             MidiNote n;

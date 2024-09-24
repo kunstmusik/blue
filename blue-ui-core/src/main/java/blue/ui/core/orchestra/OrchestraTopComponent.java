@@ -75,11 +75,11 @@ public final class OrchestraTopComponent extends TopComponent {
         userInstrumentLibrary.addSelectionListener((SelectionEvent e) -> {
             Object obj = e.getSelectedItem();
             
-            if (obj instanceof Instrument) {
+            if (obj instanceof Instrument instrument) {
                 isChanging = true;
                 
                 instrumentEditPanel1.setEditingLibraryObject(true);
-                editInstrument((Instrument) obj);
+                editInstrument(instrument);
                 
                 arrangementPanel.deselect();
                 isChanging = false;

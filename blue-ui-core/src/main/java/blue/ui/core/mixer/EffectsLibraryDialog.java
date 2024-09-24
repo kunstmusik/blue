@@ -341,17 +341,17 @@ public class EffectsLibraryDialog extends javax.swing.JDialog implements
 
                     if (bufferedObject != null) {
 
-                        if (bufferedObject instanceof EffectCategory) {
+                        if (bufferedObject instanceof EffectCategory effectCategory) {
                             EffectCategory category = new EffectCategory(
-                                    (EffectCategory) bufferedObject);
+                                    effectCategory);
 
                             EffectsLibrary.getInstance().addCategory(cat,
                                     category);
 
-                        } else if (bufferedObject instanceof Effect) {
-                            Effect effect = new Effect((Effect) bufferedObject);
+                        } else if (bufferedObject instanceof Effect effect) {
+                            Effect effectCopy = new Effect(effect);
 
-                            EffectsLibrary.getInstance().addEffect(cat, effect);
+                            EffectsLibrary.getInstance().addEffect(cat, effectCopy);
 
                         }
                     }

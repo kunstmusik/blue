@@ -187,8 +187,7 @@ public class BSBEditPanel extends JLayeredPane implements
                 if (marquee.isVisible()) {
 
                     for (var c : getComponentsInLayer(DEFAULT_LAYER)) {
-                        if (c instanceof BSBObjectViewHolder) {
-                            var viewHolder = (BSBObjectViewHolder) c;
+                        if (c instanceof BSBObjectViewHolder viewHolder) {
                             if (marquee.intersects(viewHolder)) {
                                 selection.add(viewHolder.getBSBObjectView().getBSBObject());
                             }
@@ -463,8 +462,7 @@ public class BSBEditPanel extends JLayeredPane implements
 //            this.remove(c);
 //        }
         for (var c : getComponents()) {
-            if (c instanceof BSBObjectViewHolder) {
-                var viewHolder = (BSBObjectViewHolder) c;
+            if (c instanceof BSBObjectViewHolder viewHolder) {
 
                 viewHolder.removeComponentListener(cl);
             }
@@ -531,8 +529,8 @@ public class BSBEditPanel extends JLayeredPane implements
 
         BSBObjectView objectView = BSBObjectEditorFactory.getView(bsbObj);
 
-        if (objectView instanceof EditModeConditional) {
-            ((EditModeConditional) objectView).setEditEnabledProperty(editEnabledProperty);
+        if (objectView instanceof EditModeConditional editModeConditional) {
+            editModeConditional.setEditEnabledProperty(editEnabledProperty);
         }
 
         BSBObjectViewHolder viewHolder
@@ -558,8 +556,7 @@ public class BSBEditPanel extends JLayeredPane implements
     protected void removeBSBObject(BSBObject bsbObj) {
         BSBObjectViewHolder found = null;
         for (var c : getComponents()) {
-            if (c instanceof BSBObjectViewHolder) {
-                var vh = (BSBObjectViewHolder) c;
+            if (c instanceof BSBObjectViewHolder vh) {
                 if (vh.getBSBObjectView().getBSBObject() == bsbObj) {
                     found = vh;
                     break;
@@ -708,8 +705,7 @@ public class BSBEditPanel extends JLayeredPane implements
         List<BSBObjectViewHolder> retVal = new ArrayList<>();
 
         for (var c : getComponents()) {
-            if (c instanceof BSBObjectViewHolder) {
-                var holder = (BSBObjectViewHolder) c;
+            if (c instanceof BSBObjectViewHolder holder) {
                 var bsbObjView = holder.getBSBObjectView();
                 if (selection.contains(bsbObjView.getBSBObject())) {
                     retVal.add(holder);
@@ -733,8 +729,7 @@ public class BSBEditPanel extends JLayeredPane implements
         int maxH = 1;
 
         for (var c : getComponents()) {
-            if (c instanceof BSBObjectViewHolder) {
-                var viewHolder = (BSBObjectViewHolder) c;
+            if (c instanceof BSBObjectViewHolder viewHolder) {
                 if (!isEditing() && viewHolder.isEditModeOnly()) {
                     continue;
                 }

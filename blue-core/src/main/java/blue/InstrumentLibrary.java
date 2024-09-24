@@ -224,8 +224,7 @@ public class InstrumentLibrary implements TreeModel {
     public int getChildCount(Object parent) {
         if (parent instanceof Instrument) {
             return 0;
-        } else if (parent instanceof InstrumentCategory) {
-            InstrumentCategory cat = (InstrumentCategory) parent;
+        } else if (parent instanceof InstrumentCategory cat) {
             return cat.getSubCategories().size() + cat.getInstruments().size();
         }
 
@@ -272,10 +271,10 @@ public class InstrumentLibrary implements TreeModel {
     public void valueForPathChanged(TreePath path, Object newValue) {
         Object obj = path.getLastPathComponent();
 
-        if (obj instanceof InstrumentCategory) {
-            ((InstrumentCategory) obj).setCategoryName(newValue.toString());
-        } else if (obj instanceof Instrument) {
-            ((Instrument) obj).setName(newValue.toString());
+        if (obj instanceof InstrumentCategory instrumentCategory) {
+            instrumentCategory.setCategoryName(newValue.toString());
+        } else if (obj instanceof Instrument instrument) {
+            instrument.setName(newValue.toString());
         }
 
         TreeModelEvent e = new TreeModelEvent(this, path);

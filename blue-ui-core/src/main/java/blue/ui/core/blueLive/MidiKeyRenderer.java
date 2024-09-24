@@ -49,8 +49,8 @@ public class MidiKeyRenderer extends JLabel implements TableCellRenderer {
 
         String label = "";
 
-        if (value instanceof Integer) {
-            int val = ((Integer) value).intValue();
+        if (value instanceof Integer integer) {
+            int val = integer.intValue();
 
             if (val < 0 || val > 127) {
                 label = "";

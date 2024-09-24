@@ -68,8 +68,8 @@ public final class UserDefinedOpcodeTopComponent extends TopComponent {
               
               isChanging = true;
               
-              if (obj instanceof UserDefinedOpcode) {
-                  uDOEditor1.editUserDefinedOpcode((UserDefinedOpcode) obj);
+              if (obj instanceof UserDefinedOpcode userDefinedOpcode) {
+                  uDOEditor1.editUserDefinedOpcode(userDefinedOpcode);
                   uDOEditor1.setBorder(libraryBorder);
               } else {
                   uDOEditor1.editUserDefinedOpcode(null);

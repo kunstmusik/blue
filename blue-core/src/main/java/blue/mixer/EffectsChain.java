@@ -48,10 +48,10 @@ public class EffectsChain implements ListModel, PropertyChangeListener {
 
     public EffectsChain(EffectsChain chain) {
         for(Object item : chain.effects) {
-            if(item instanceof Effect) {
-                addEffect(new Effect((Effect)item));
-            } else if (item instanceof Send){
-                addSend(new Send((Send)item));
+            if(item instanceof Effect effect) {
+                addEffect(new Effect(effect));
+            } else if (item instanceof Send send){
+                addSend(new Send(send));
             } 
         }
     }
@@ -62,11 +62,9 @@ public class EffectsChain implements ListModel, PropertyChangeListener {
         for (Iterator it = effects.iterator(); it.hasNext();) {
             Object obj = it.next();
 
-            if (obj instanceof Effect) {
-                Effect elem = (Effect) obj;
+            if (obj instanceof Effect elem) {
                 retVal.addElement(elem.saveAsXML());
-            } else if (obj instanceof Send) {
-                Send send = (Send) obj;
+            } else if (obj instanceof Send send) {
                 retVal.addElement(send.saveAsXML());
             }
         }
@@ -124,8 +122,8 @@ public class EffectsChain implements ListModel, PropertyChangeListener {
     public Object removeElementAt(int index) {
         Object obj = effects.remove(index);
 
-        if (obj instanceof Send) {
-            ((Send) obj).removePropertyChangeListener(this);
+        if (obj instanceof Send send) {
+            send.removePropertyChangeListener(this);
         }
 
         ListDataEvent lde = new ListDataEvent(this,
@@ -172,8 +170,8 @@ public class EffectsChain implements ListModel, PropertyChangeListener {
         for (int i = 0; i < this.size(); i++) {
             Object obj = this.getElementAt(i);
 
-            if (obj instanceof Send) {
-                temp.add((Send) obj);
+            if (obj instanceof Send send) {
+                temp.add(send);
             }
         }
 

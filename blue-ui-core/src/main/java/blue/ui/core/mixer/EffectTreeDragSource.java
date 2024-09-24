@@ -70,10 +70,10 @@ public class EffectTreeDragSource implements DragSourceListener,
                 || path.getLastPathComponent() instanceof EffectCategory) {
             oldNode = path.getLastPathComponent();
             Object cloneNode = null;
-            if (oldNode instanceof Effect) {
-                 cloneNode = new Effect((Effect)oldNode);
-            } else if(oldNode instanceof EffectCategory) {
-                cloneNode = new EffectCategory((EffectCategory)oldNode);
+            if (oldNode instanceof Effect effect) {
+                 cloneNode = new Effect(effect);
+            } else if(oldNode instanceof EffectCategory effectCategory) {
+                cloneNode = new EffectCategory(effectCategory);
             }
 
             transferable = new TransferableEffect(cloneNode);
@@ -89,11 +89,10 @@ public class EffectTreeDragSource implements DragSourceListener,
             // System.out.println("DragSource: " + oldNode.hashCode());
             if (dsde.getDropAction() == DnDConstants.ACTION_MOVE) {
 
-                if (oldNode instanceof Effect) {
-                    EffectsLibrary.getInstance().removeEffect((Effect) oldNode);
-                } else if (oldNode instanceof EffectCategory) {
-                    EffectsLibrary.getInstance().removeEffectCategory(
-                            (EffectCategory) oldNode);
+                if (oldNode instanceof Effect effect) {
+                    EffectsLibrary.getInstance().removeEffect(effect);
+                } else if (oldNode instanceof EffectCategory effectCategory) {
+                    EffectsLibrary.getInstance().removeEffectCategory(effectCategory);
                 }
             }
 

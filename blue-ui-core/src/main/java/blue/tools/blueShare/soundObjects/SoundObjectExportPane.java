@@ -174,10 +174,10 @@ public class SoundObjectExportPane extends JComponent {
 
                 SoundObject instr = node.getValue();
 
-                if (instr instanceof Sound) {
-                    descriptionText.setText(((Sound) instr).getComment());
-                } else if (instr instanceof ObjectBuilder) {
-                    descriptionText.setText(((ObjectBuilder) instr).getComment());
+                if (instr instanceof Sound sound) {
+                    descriptionText.setText(sound.getComment());
+                } else if (instr instanceof ObjectBuilder objectBuilder) {
+                    descriptionText.setText(objectBuilder.getComment());
                 } else {
                     descriptionText.setText("");
                 }

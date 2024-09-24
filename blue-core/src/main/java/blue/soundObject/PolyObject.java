@@ -696,8 +696,7 @@ public class PolyObject extends ArrayList<SoundLayer> implements SoundObject,
         for (SoundObject element : sObjects) {
             if (element instanceof Comment) {
                 continue;
-            } else if (element instanceof PolyObject) {
-                PolyObject pObj = (PolyObject) element;
+            } else if (element instanceof PolyObject pObj) {
                 if (!pObj.isScoreGenerationEmpty()) {
                     return false;
                 }
@@ -719,8 +718,7 @@ public class PolyObject extends ArrayList<SoundLayer> implements SoundObject,
                 return false;
             }
 
-            if (element instanceof PolyObject) {
-                PolyObject pObj = (PolyObject) element;
+            if (element instanceof PolyObject pObj) {
                 if (!pObj.isAdjustedTimeCalculateable()) {
                     return false;
                 }
@@ -740,10 +738,9 @@ public class PolyObject extends ArrayList<SoundLayer> implements SoundObject,
 
             for (int j = 0; j < sLayer.size(); j++) {
                 sObj = sLayer.get(j);
-                if (sObj instanceof PolyObject) {
-                    ((PolyObject) sObj).onLoadComplete();
-                } else if (sObj instanceof OnLoadProcessable) {
-                    OnLoadProcessable olp = (OnLoadProcessable) sObj;
+                if (sObj instanceof PolyObject polyObject) {
+                    polyObject.onLoadComplete();
+                } else if (sObj instanceof OnLoadProcessable olp) {
                     if (olp.isOnLoadProcessable()) {
                         try {
                             olp.processOnLoad();

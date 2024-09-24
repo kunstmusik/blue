@@ -91,13 +91,12 @@ public final class AddSoundObjectActionsPresenter extends AbstractAction impleme
 
             var l = scorePath.getGlobalLayerForY(p.y);
 
-            if (l instanceof SoundLayer) {
-                var sLayer = (SoundLayer) l;
+            if (l instanceof SoundLayer sLayer) {
                 SoundObject sObj = plugin.getInstance().
                         getClass().getDeclaredConstructor().newInstance();
 
-                if (sObj instanceof PolyObject) {
-                    ((PolyObject) sObj).newLayerAt(0);
+                if (sObj instanceof PolyObject polyObject) {
+                    polyObject.newLayerAt(0);
                 }
 
                 TimeState timeState = stc.getTimeState();

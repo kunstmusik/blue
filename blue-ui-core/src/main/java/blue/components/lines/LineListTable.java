@@ -154,8 +154,8 @@ class ColorCellRenderer extends DefaultTableCellRenderer {
     public Component getTableCellRendererComponent(JTable table, Object value,
             boolean isSelected, boolean hasFocus, int row, int col) {
 
-        if (value instanceof Color) {
-            this.setBackground((Color) value);
+        if (value instanceof Color color) {
+            this.setBackground(color);
         } else {
             this.setBackground(Color.BLACK);
         }

@@ -42,8 +42,7 @@ public class ParameterHelper {
             if (ia.enabled) {
                 Instrument instr = ia.instr;
 
-                if (instr instanceof Automatable) {
-                    Automatable auto = (Automatable) instr;
+                if (instr instanceof Automatable auto) {
                     ParameterList list = auto.getParameterList();
                     params.addAll(list);
                 }
@@ -76,8 +75,7 @@ public class ParameterHelper {
             if (ia.enabled) {
                 Instrument instr = ia.instr;
 
-                if (instr instanceof Automatable) {
-                    Automatable auto = (Automatable) instr;
+                if (instr instanceof Automatable auto) {
                     ParameterList list = auto.getParameterList();
 
                     addActiveParametersFromList(params, list);
@@ -166,8 +164,7 @@ public class ParameterHelper {
         for (int i = 0; i < arrangement.size(); i++) {
             Instrument instr = arrangement.getInstrument(i);
 
-            if (instr instanceof Automatable) {
-                Automatable temp = (Automatable) instr;
+            if (instr instanceof Automatable temp) {
                 temp.getParameterList().clearCompilationVarNames();
             }
         }

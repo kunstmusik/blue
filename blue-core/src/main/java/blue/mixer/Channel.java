@@ -412,16 +412,16 @@ public class Channel implements Comparable<Channel>, ParameterListener {
         for (int i = 0; i < preEffects.size(); i++) {
             Object obj = preEffects.getElementAt(i);
 
-            if (obj instanceof Send) {
-                temp.add((Send)obj);
+            if (obj instanceof Send send) {
+                temp.add(send);
             }
         }
 
         for (int i = 0; i < postEffects.size(); i++) {
             Object obj = postEffects.getElementAt(i);
 
-            if (obj instanceof Send) {
-                temp.add((Send)obj);
+            if (obj instanceof Send send) {
+                temp.add(send);
             }
         }
 

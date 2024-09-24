@@ -370,13 +370,12 @@ public class OpcodeListEditPanel extends JComponent {
     }
 
     private void handlePaste(Object obj) {
-        if (obj instanceof UserDefinedOpcode) {
+        if (obj instanceof UserDefinedOpcode userDefinedOpcode) {
 
-            opcodeList.addOpcode(new UserDefinedOpcode((UserDefinedOpcode) obj));
+            opcodeList.addOpcode(new UserDefinedOpcode(userDefinedOpcode));
 
-        } else if (obj instanceof UserDefinedOpcode[]) {
+        } else if (obj instanceof UserDefinedOpcode[] udos) {
 
-            UserDefinedOpcode[] udos = (UserDefinedOpcode[]) obj;
 
             UserDefinedOpcode[] copies = new UserDefinedOpcode[udos.length];
 
@@ -385,8 +384,7 @@ public class OpcodeListEditPanel extends JComponent {
             }
 
             opcodeList.addOpcodes(copies);
-        } else if (obj instanceof UDOCategory) {
-            UDOCategory cat = (UDOCategory) obj;
+        } else if (obj instanceof UDOCategory cat) {
 
             ArrayList<UserDefinedOpcode> udos = cat.getAllUserDefinedOpcodes();
 

@@ -70,8 +70,7 @@ public class PaletteWindow extends JFrame {
                 for (int j = 0; j < subComponents.length; j++) {
                     Component component2 = subComponents[j];
 
-                    if (component2 instanceof JButton) {
-                        JButton b = (JButton) component2;
+                    if (component2 instanceof JButton b) {
 
                         b.setIcon(UIManager
                                 .getIcon("InternalFrame.paletteCloseIcon"));

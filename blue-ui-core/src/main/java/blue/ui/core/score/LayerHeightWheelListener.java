@@ -56,8 +56,7 @@ public class LayerHeightWheelListener implements MouseWheelListener {
             Layer layer = ScoreController.getInstance().getScorePath().getGlobalLayerForY(
                     p.y);
 
-            if(layer instanceof ScoreObjectLayer) {
-                ScoreObjectLayer sLayer = (ScoreObjectLayer)layer;
+            if(layer instanceof ScoreObjectLayer sLayer) {
                 int index = sLayer.getHeightIndex();
                 int newIndex = index + value;
     

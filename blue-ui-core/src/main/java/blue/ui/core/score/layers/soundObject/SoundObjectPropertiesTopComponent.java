@@ -128,8 +128,8 @@ public final class SoundObjectPropertiesTopComponent extends TopComponent implem
 
     private void setScoreObject(ScoreObject scoreObj) {
         SoundObject soundObj = null;
-        if (scoreObj instanceof SoundObject) {
-            soundObj = (SoundObject) scoreObj;
+        if (scoreObj instanceof SoundObject soundObject) {
+            soundObj = soundObject;
         }
 
         isUpdating = true;
@@ -203,8 +203,8 @@ public final class SoundObjectPropertiesTopComponent extends TopComponent implem
             subjectiveDurationText.setText(Double.toString(sObj
                     .getSubjectiveDuration()));
 
-            if (sObj instanceof SoundObject) {
-                double repeatPoint = ((SoundObject) sObj).getRepeatPoint();
+            if (sObj instanceof SoundObject soundObject) {
+                double repeatPoint = soundObject.getRepeatPoint();
                 repeatePointText.setText(Double.toString(repeatPoint));
             }
 

@@ -243,8 +243,7 @@ public class MarkersBar extends JPanel implements PropertyChangeListener, TableM
                 if (rootTimeline) {
 
                     for (var c : getComponents()) {
-                        if (c instanceof PlayMarker) {
-                            var pMarker = (PlayMarker) c;
+                        if (c instanceof PlayMarker pMarker) {
                             var x = pMarker.marker.getTime() * timeState.getPixelSecond();
                             pMarker.setLocation((int) x, 0);
                         }
@@ -267,8 +266,7 @@ public class MarkersBar extends JPanel implements PropertyChangeListener, TableM
                 break;
             case TableModelEvent.DELETE:
                 for (var c : getComponents()) {
-                    if (c instanceof PlayMarker) {
-                        var pm = (PlayMarker) c;
+                    if (c instanceof PlayMarker pm) {
                         if (!markersList.contains(pm.marker)) {
                             remove(pm);
                         }
