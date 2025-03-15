@@ -107,12 +107,12 @@ public class Send implements Automatable, ParameterListener {
 
     public void setLevel(double level) {
         levelParameter.setValue(level);
-        
+
         double oldVal = this.level;
         this.level = level;
 
         PropertyChangeEvent pce = new PropertyChangeEvent(this, "level",
-                new Double(oldVal), new Double(level));
+                oldVal, level);
 
         firePropertyChangeEvent(pce);
     }
@@ -195,8 +195,7 @@ public class Send implements Automatable, ParameterListener {
             return;
         }
 
-        for (Iterator<PropertyChangeListener> iter =
-                new Vector<>(listeners).iterator(); iter.hasNext();) {
+        for (Iterator<PropertyChangeListener> iter = new Vector<>(listeners).iterator(); iter.hasNext();) {
             PropertyChangeListener listener = iter.next();
 
             listener.propertyChange(pce);
@@ -208,7 +207,7 @@ public class Send implements Automatable, ParameterListener {
             listeners = new Vector<>();
         }
 
-        if(!listeners.contains(pcl)) {
+        if (!listeners.contains(pcl)) {
             listeners.add(pcl);
         }
     }
@@ -231,7 +230,7 @@ public class Send implements Automatable, ParameterListener {
             this.level = level;
 
             PropertyChangeEvent pce = new PropertyChangeEvent(this, "level",
-                    new Double(oldVal), new Double(level));
+                    oldVal, level);
 
             firePropertyChangeEvent(pce);
         }

@@ -969,7 +969,7 @@ public final class BlueLiveTopComponent extends TopComponent
                 outputTextArea.getText() + scoPadReceiver.getNotes(
                 template, instrId, start, dur));
 
-        startSpinner.setValue(new Double(start + dur));
+        startSpinner.setValue(start + dur);
     }//GEN-LAST:event_outputTextAreaKeyPressed
 
     private void noteTemplateTextMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_noteTemplateTextMousePressed

@@ -382,8 +382,7 @@ public class BSBVSlider extends AutomatableBSBObject implements
             setValue(newValue);
 
             if (propListeners != null) {
-                propListeners.firePropertyChange("updateValue", new Double(
-                        oldValue), new Double(newValue));
+                propListeners.firePropertyChange("updateValue", oldValue, newValue);
             }
         }
     }

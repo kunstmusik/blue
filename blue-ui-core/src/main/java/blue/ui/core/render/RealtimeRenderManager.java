@@ -208,30 +208,29 @@ public final class RealtimeRenderManager {
                 .boxed()
                 .collect(Collectors.toSet());
 
-        while(iter.hasNext()) {
+        while (iter.hasNext()) {
             LayerGroup<? extends Layer> lg = iter.next();
-            if(lg instanceof ScoreObjectLayerGroup) {
-               ScoreObjectLayerGroup<? extends ScoreObjectLayer> slg =  
-                       (ScoreObjectLayerGroup<? extends ScoreObjectLayer>) lg; 
-               
-                Iterator<? extends ScoreObjectLayer<? extends ScoreObject>> layerIter 
-                        = slg.iterator();
+            if (lg instanceof ScoreObjectLayerGroup) {
+                @SuppressWarnings("unchecked")
+                var slg = (ScoreObjectLayerGroup<? extends ScoreObjectLayer<? extends ScoreObject>>) lg;
 
-                while(layerIter.hasNext()) {
-                   ScoreObjectLayer<? extends ScoreObject> layer = layerIter.next();
+                Iterator<? extends ScoreObjectLayer<? extends ScoreObject>> layerIter = slg.iterator();
 
-                   layer.removeIf(s -> !cloneSources.contains(s.getCloneSourceHashCode()));
+                while (layerIter.hasNext()) {
+                    ScoreObjectLayer<? extends ScoreObject> layer = layerIter.next();
 
-                   if(layer.isEmpty()) {
-                       layerIter.remove();
-                   } else {
-                       layer.setSolo(false);
-                       layer.setMuted(false);
-                   }
+                    layer.removeIf(s -> !cloneSources.contains(s.getCloneSourceHashCode()));
+
+                    if (layer.isEmpty()) {
+                        layerIter.remove();
+                    } else {
+                        layer.setSolo(false);
+                        layer.setMuted(false);
+                    }
                 }
-                if(slg.isEmpty()) {
+                if (slg.isEmpty()) {
                     iter.remove();
-                }                
+                }
             } else {
                 iter.remove();
             }
@@ -254,9 +253,9 @@ public final class RealtimeRenderManager {
         List<PolyObject> path = null;
         filterScore(tempData.getScore(), scoreObjects);
 
-        if(data.getScore().isEmpty()) {
+        if (data.getScore().isEmpty()) {
             throw new RuntimeException("Error: unable to find root LayerGroups for objects...");
-        } 
+        }
 
         double minTime = Double.MAX_VALUE;
         double maxTime = Double.MIN_VALUE;
@@ -326,7 +325,7 @@ public final class RealtimeRenderManager {
     }
 
     public void evalOrc(String orchestra) {
-        if (isBlueLiveRendering()){
+        if (isBlueLiveRendering()) {
             currentBlueLiveRenderService.evalOrc(orchestra);
         }
     }
@@ -344,13 +343,12 @@ public final class RealtimeRenderManager {
             retVal = new ArrayList<>();
             retVal.add(pObj);
         } else {
-            List<SoundObject> pObjs = allSObj.stream().
-                    filter(a -> a instanceof PolyObject).
-                    collect(Collectors.toList());
-            for(SoundObject obj : pObjs) {
-                PolyObject tempPObj = (PolyObject)obj;
+            List<SoundObject> pObjs = allSObj.stream().filter(a -> a instanceof PolyObject)
+                    .collect(Collectors.toList());
+            for (SoundObject obj : pObjs) {
+                PolyObject tempPObj = (PolyObject) obj;
                 retVal = getPolyObjectPath(tempPObj, soundObject);
-                if(retVal != null) {
+                if (retVal != null) {
                     retVal.add(0, pObj);
                     break;
                 }

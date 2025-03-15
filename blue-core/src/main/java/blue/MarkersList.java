@@ -160,7 +160,7 @@ public class MarkersList implements TableModel, PropertyChangeListener {
 
         switch (columnIndex) {
             case 0:
-                return new Double(m.getTime());
+                return m.getTime();
             case 1:
                 return m.getName();
         }

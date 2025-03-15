@@ -139,8 +139,7 @@ public class RenderTimeManagerImpl implements RenderTimeManager {
         double oldVal = this.renderStart;
         this.renderStart = renderStart;
 
-        listeners.firePropertyChange(RENDER_START, new Double(oldVal),
-                new Double(renderStart));
+        listeners.firePropertyChange(RENDER_START, oldVal, renderStart);
     }
 
     private void setTimePointer(double timePointer) {

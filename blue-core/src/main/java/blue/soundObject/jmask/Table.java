@@ -289,10 +289,10 @@ public class Table extends AbstractTableModel {
         TablePoint tp = getPoint(rowIndex);
 
         if (columnIndex == 0) {
-            return new Double(tp.getTime());
+            return tp.getTime();
         }
 
-        return new Double(tp.getValue());
+        return tp.getValue();
     }
 
     @Override
@@ -358,7 +358,7 @@ public class Table extends AbstractTableModel {
 
         if (propChangeSupport != null) {
             propChangeSupport.firePropertyChange("interpolation",
-                    new Double(oldVal), new Double(interpolation));
+                    oldVal, interpolation);
         }
     }
 
@@ -456,7 +456,7 @@ public class Table extends AbstractTableModel {
 
         if (propChangeSupport != null) {
             propChangeSupport.firePropertyChange("min",
-                    new Double(oldVal), new Double(this.min));
+                    oldVal, this.min);
         }
     }
 
@@ -489,7 +489,7 @@ public class Table extends AbstractTableModel {
 
         if (propChangeSupport != null) {
             propChangeSupport.firePropertyChange("max",
-                    new Double(oldVal), new Double(this.max));
+                    oldVal, this.max);
         }
 
     }
@@ -514,7 +514,7 @@ public class Table extends AbstractTableModel {
 
         if (propChangeSupport != null) {
             propChangeSupport.firePropertyChange("interpolationType",
-                    new Double(oldVal), new Double(interpolationType));
+                    oldVal, interpolationType);
         }
     }
 

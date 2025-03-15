@@ -178,7 +178,7 @@ public class ItemListEditor extends javax.swing.JPanel implements DurationSettab
     }// GEN-LAST:event_optionsComboBoxActionPerformed
 
     private void addButtonActionPerformed(java.awt.event.ActionEvent evt) {// GEN-FIRST:event_addButtonActionPerformed
-        itemList.addListItem(new Double(0.0), itemsTable.getSelectedRow());
+        itemList.addListItem(0.0, itemsTable.getSelectedRow());
     }// GEN-LAST:event_addButtonActionPerformed
 
     private void removeButtonActionPerformed(java.awt.event.ActionEvent evt) {// GEN-FIRST:event_removeButtonActionPerformed

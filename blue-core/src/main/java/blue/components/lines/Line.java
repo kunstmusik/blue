@@ -522,10 +522,10 @@ public class Line implements TableModel, ChangeListener, Iterable<LinePoint> {
         LinePoint p = points.get(rowIndex);
 
         if (columnIndex == 0) {
-            return new Double(p.getX());
+            return p.getX();
         }
 
-        return new Double(p.getY());
+        return p.getY();
     }
 
     /*

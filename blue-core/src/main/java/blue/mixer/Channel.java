@@ -296,7 +296,7 @@ public class Channel implements Comparable<Channel>, ParameterListener {
 
         this.level = level;
 
-        firePropertyChange(LEVEL, new Double(oldVal), new Double(level));
+        firePropertyChange(LEVEL, oldVal, level);
     }
 
     public Parameter getLevelParameter() {
@@ -335,7 +335,7 @@ public class Channel implements Comparable<Channel>, ParameterListener {
 
     public void firePropertyChange(String propertyName, double oldVal,
             double newVal) {
-        firePropertyChange(propertyName, new Double(oldVal), new Double(newVal));
+        firePropertyChange(propertyName, oldVal, newVal);
     }
 
     public void firePropertyChange(String propertyName, boolean oldVal,
@@ -388,7 +388,7 @@ public class Channel implements Comparable<Channel>, ParameterListener {
             double oldVal = this.level;
             this.level = level;
 
-            firePropertyChange(LEVEL, new Double(oldVal), new Double(level));
+            firePropertyChange(LEVEL, oldVal, level);
         }
     }
 

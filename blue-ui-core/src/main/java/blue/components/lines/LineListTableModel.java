@@ -115,9 +115,9 @@ public class LineListTableModel extends AbstractTableModel {
             case 1:
                 return line.getVarName();
             case 2:
-                return new Double(line.getMin());
+                return line.getMin();
             case 3:
-                return new Double(line.getMax());
+                return line.getMax();
             case 4:
                 return Boolean.valueOf(line.isEndPointsLinked());
         }

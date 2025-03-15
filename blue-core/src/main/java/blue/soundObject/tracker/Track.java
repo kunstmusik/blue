@@ -337,7 +337,7 @@ public class Track implements TableModel {
 
     public void firePropertyChange(String propertyName, double oldVal,
             double newVal) {
-        firePropertyChange(propertyName, new Double(oldVal), new Double(newVal));
+        firePropertyChange(propertyName, oldVal, newVal);
     }
 
     public void firePropertyChange(String propertyName, boolean oldVal,

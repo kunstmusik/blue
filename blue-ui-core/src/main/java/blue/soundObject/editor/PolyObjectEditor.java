@@ -312,9 +312,9 @@ public class PolyObjectEditor extends ScoreObjectEditor {
             if (parm2 == 0) {
                 return temp.getName();
             } else if (parm2 == 1) {
-                return new Float(temp.getStartTime());
+                return temp.getStartTime();
             } else if (parm2 == 2) {
-                return new Float(temp.getObjectiveDuration());
+                return temp.getObjectiveDuration();
             } else {
                 System.err.println("error in OrchestraTableModel");
                 return null;

@@ -451,8 +451,7 @@ public class BlueData implements BlueDataObject {
         }
 
         PropertyChangeEvent pce = new PropertyChangeEvent(this,
-                "renderStartTime", new Double(this.renderStartTime), new Double(
-                        renderStartTime));
+                "renderStartTime", this.renderStartTime, renderStartTime);
 
         this.renderStartTime = renderStartTime;
 
@@ -460,8 +459,7 @@ public class BlueData implements BlueDataObject {
 
         if (renderStartTime >= this.renderEndTime) {
             PropertyChangeEvent pce2 = new PropertyChangeEvent(this,
-                    "renderLoopTime", new Double(this.renderEndTime), new Double(
-                            -1.0f));
+                    "renderLoopTime", this.renderEndTime, -1.0f);
 
             this.renderEndTime = -1.0f;
 
@@ -486,8 +484,7 @@ public class BlueData implements BlueDataObject {
         }
 
         PropertyChangeEvent pce = new PropertyChangeEvent(this,
-                "renderLoopTime", new Double(this.renderEndTime), new Double(
-                        newRenderLoopTime));
+                "renderLoopTime", this.renderEndTime, newRenderLoopTime);
 
         this.renderEndTime = newRenderLoopTime;
 

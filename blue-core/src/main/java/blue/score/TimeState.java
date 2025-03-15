@@ -96,7 +96,7 @@ public class TimeState {
 
     public void setSnapValue(double snapValue) {
         PropertyChangeEvent pce = new PropertyChangeEvent(this, "snapValue",
-                new Double(this.snapValue), new Double(snapValue));
+                this.snapValue, snapValue);
 
         this.snapValue = snapValue;
 

@@ -31,9 +31,9 @@ public class WeibullEditor extends javax.swing.JPanel implements DurationSettabl
 
         tSpinner.setModel(
                 new SpinnerNumberModel(
-                    new Double(weibull.getT()), 
-                    new Double(Double.MIN_VALUE),
-                    null, new Double(0.1)));
+                    weibull.getT(), 
+                    Double.MIN_VALUE,
+                    null, 0.1));
 
         sTypeComboBox.setSelectedIndex(weibull.isSTableEnabled() ? 1 : 0);
         tTypeComboBox.setSelectedIndex(weibull.isTTableEnabled() ? 1 : 0);
