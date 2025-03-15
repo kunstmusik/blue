@@ -65,7 +65,7 @@ public class NoteProcessorException extends Exception {
         } else if (this.pfield == -1) {
             return message;
         } else {
-            Object[] args = { new Integer(pfield), message };
+            Object[] args = { pfield, message };
             return messageFormat.format(args);
         }
     }

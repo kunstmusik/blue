@@ -167,7 +167,7 @@ final class PlaybackPanel extends javax.swing.JPanel {
 
         PlaybackSettings settings = PlaybackSettings.getInstance();
 
-        playbackFPS.setValue(new Integer(settings.getPlaybackFPS()));
+        playbackFPS.setValue(settings.getPlaybackFPS());
         playbackLatencyCorrection.setText(
                 Float.toString(settings.getPlaybackLatencyCorrection()));
         followPlayback.setSelected(settings.isFollowPlayback());

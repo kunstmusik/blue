@@ -883,10 +883,10 @@ final class RealtimeRenderSettingsPanel extends javax.swing.JPanel {
         midiInText.setText(settings.midiInText);
 
         hardwareBufferCBox.setSelected(settings.hardwareBufferEnabled);
-        hardwareBufferSpinner.setValue(new Integer(settings.hardwareBufferSize));
+        hardwareBufferSpinner.setValue(settings.hardwareBufferSize);
 
         softwareBufferCBox.setSelected(settings.softwareBufferEnabled);
-        softwareBufferSpinner.setValue(new Integer(settings.softwareBufferSize));
+        softwareBufferSpinner.setValue(settings.softwareBufferSize);
 
         noteAmpCBox.setSelected(settings.noteAmpsEnabled);
         outOfRangeCBox.setSelected(settings.outOfRangeEnabled);

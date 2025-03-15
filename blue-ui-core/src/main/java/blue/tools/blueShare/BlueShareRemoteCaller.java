@@ -127,7 +127,7 @@ public class BlueShareRemoteCaller {
         String result;
         Document doc;
 
-        v.add(new Integer(iCategory.getCategoryId()));
+        v.add(iCategory.getCategoryId());
 
         result = (String) xrpc.execute("blueShare.getInstrumentList", v);
         doc = new Document(result);
@@ -201,10 +201,10 @@ public class BlueShareRemoteCaller {
 
     public static Instrument getInstrument(InstrumentOption iOption)
             throws IOException, XmlRpcException, ParseException {
-        Vector v = new Vector();
+        Vector<Integer> v = new Vector<>();
         String result;
 
-        v.add(new Integer(iOption.getInstrumentId()));
+        v.add(iOption.getInstrumentId());
 
         result = (String) xrpc.execute("blueShare.getInstrument", v);
 
@@ -243,7 +243,7 @@ public class BlueShareRemoteCaller {
 
         v.add(username);
         v.add(password);
-        v.add(new Integer(categoryId));
+        v.add(categoryId);
         v.add(name);
         v.add(instrumentType);
         v.add(description);
@@ -262,7 +262,7 @@ public class BlueShareRemoteCaller {
         Vector v = new Vector();
         v.add(username);
         v.add(password);
-        v.add(new Integer(instrumentId));
+        v.add(instrumentId);
 
         return (Boolean)xrpc.execute("blueShare.removeInstrument", v);
     }
@@ -271,7 +271,7 @@ public class BlueShareRemoteCaller {
 
     public static BlueShareEffectCategory[] getEffectCategoryTree()
             throws IOException, XmlRpcException, ParseException {
-        Vector v = new Vector();
+        Vector<Integer> v = new Vector<>();
         String result;
         Document doc;
 
@@ -345,11 +345,11 @@ public class BlueShareRemoteCaller {
     public static EffectOption[] getEffectOptions(
             BlueShareEffectCategory iCategory) throws IOException,
             XmlRpcException, ParseException {
-        Vector v = new Vector();
+        Vector<Integer> v = new Vector<>();
         String result;
         Document doc;
 
-        v.add(new Integer(iCategory.getCategoryId()));
+        v.add(iCategory.getCategoryId());
 
         result = (String) xrpc.execute("blueShare.getEffectList", v);
         doc = new Document(result);
@@ -420,10 +420,10 @@ public class BlueShareRemoteCaller {
 
     public static Effect getEffect(EffectOption iOption) throws IOException,
             XmlRpcException, ParseException {
-        Vector v = new Vector();
+        Vector<Integer> v = new Vector<>();
         String result;
 
-        v.add(new Integer(iOption.getInstrumentId()));
+        v.add(iOption.getInstrumentId());
 
         result = (String) xrpc.execute("blueShare.getEffect", v);
 
@@ -443,11 +443,11 @@ public class BlueShareRemoteCaller {
             int categoryId, String name, String description,
             String instrumentText) throws IOException, XmlRpcException {
 
-        Vector v = new Vector();
+        Vector<Object> v = new Vector<>();
 
         v.add(username);
         v.add(password);
-        v.add(new Integer(categoryId));
+        v.add(categoryId);
         v.add(name);
         v.add(description);
         v.add(instrumentText);
@@ -462,10 +462,10 @@ public class BlueShareRemoteCaller {
     public static boolean removeEffect(String username, String password,
             int effectId) throws XmlRpcException, IOException {
 
-        Vector v = new Vector();
+        Vector<Object> v = new Vector<>();
         v.add(username);
         v.add(password);
-        v.add(new Integer(effectId));
+        v.add(effectId);
 
         return (Boolean) xrpc.execute("blueShare.removeEffect", v);
     }
@@ -550,11 +550,11 @@ public class BlueShareRemoteCaller {
     public static SoundObjectOption[] getSoundObjectOptions(
             BlueShareSoundObjectCategory iCategory) throws IOException,
             XmlRpcException, ParseException {
-        Vector v = new Vector();
+        Vector<Integer> v = new Vector<>();
         String result;
         Document doc;
 
-        v.add(new Integer(iCategory.getCategoryId()));
+        v.add(iCategory.getCategoryId());
 
         result = (String) xrpc.execute("blueShare.getSoundObjectList", v);
         doc = new Document(result);
@@ -628,10 +628,10 @@ public class BlueShareRemoteCaller {
 
     public static SoundObject getSoundObject(SoundObjectOption iOption)
             throws IOException, XmlRpcException, ParseException {
-        Vector v = new Vector();
+        Vector<Integer> v = new Vector<>();
         String result;
 
-        v.add(new Integer(iOption.getSoundObjectId()));
+        v.add(iOption.getSoundObjectId());
 
         result = (String) xrpc.execute("blueShare.getSoundObject", v);
 
@@ -666,11 +666,11 @@ public class BlueShareRemoteCaller {
             String description, String soundObjectText) throws IOException,
             XmlRpcException {
 
-        Vector v = new Vector();
+        Vector<Object> v = new Vector<>();
 
         v.add(username);
         v.add(password);
-        v.add(new Integer(categoryId));
+        v.add(categoryId);
         v.add(name);
         v.add(soundObjectType);
         v.add(description);
@@ -686,10 +686,10 @@ public class BlueShareRemoteCaller {
     public static boolean removeSoundObject(String username, String password,
             int soundObjectId) throws XmlRpcException, IOException {
 
-        Vector v = new Vector();
+        Vector<Object> v = new Vector<>();
         v.add(username);
         v.add(password);
-        v.add(new Integer(soundObjectId));
+        v.add(soundObjectId);
 
         return (Boolean) xrpc.execute("blueShare.removeSoundObject", v);
     }

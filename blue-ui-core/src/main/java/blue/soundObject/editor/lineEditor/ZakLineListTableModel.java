@@ -60,8 +60,7 @@ public class ZakLineListTableModel extends LineListTableModel {
 
         if (columnIndex == 1) {
             Line line = lines.get(rowIndex);
-            Integer tempChannel = new Integer(line.getChannel());
-            return tempChannel.toString();
+            return Integer.toString(line.getChannel());
         } else {
             return super.getValueAt(rowIndex, columnIndex);
         }

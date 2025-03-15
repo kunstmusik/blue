@@ -268,7 +268,7 @@ public class CSDUtility {
     // ramp's, etc.
     private static void setSoundObjectsPerInstrument(BlueData data,
             ScoreSection section) {
-        TreeMap map = new TreeMap();
+        TreeMap<Integer, StringBuffer> map = new TreeMap<>();
 
         StringTokenizer st = new StringTokenizer(section.scoreText, "\n");
         String line = "";
@@ -294,7 +294,7 @@ public class CSDUtility {
                 continue;
             }
 
-            iNum = new Integer(Integer.parseInt(note.getPField(1)));
+            iNum = Integer.parseInt(note.getPField(1));
 
             if (map.containsKey(iNum)) {
                 buffer = (StringBuffer) map.get(iNum);
@@ -309,11 +309,11 @@ public class CSDUtility {
 
         SoundLayer sLayer;
 
-        for (Iterator iter = map.entrySet().iterator(); iter.hasNext();) {
-            Map.Entry entry = (Entry) iter.next();
+        for (var iter = map.entrySet().iterator(); iter.hasNext();) {
+            var entry = iter.next();
 
-            iNum = (Integer) entry.getKey();
-            buffer = (StringBuffer) entry.getValue();
+            iNum = entry.getKey();
+            buffer = entry.getValue();
 
             if (buffer == null) {
                 continue;

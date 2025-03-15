@@ -25,8 +25,8 @@ public class BlueShareTest {
             // XmlRpcClient("http://localhost/blueShare/blueShareServer.php");
             XmlRpcClient xrpc = new XmlRpcClient(
                     "http://www.kunstmusik.com/blueShare/blueShareServer.php");
-            Vector v = new Vector();
-            v.addElement(new Integer(1));
+            Vector<Object> v = new Vector<>();
+            v.add(1);
             String result = (String) xrpc.execute(
                     "blueShare.getInstrumentList", v);
             System.out.println("result: " + result);

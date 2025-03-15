@@ -109,7 +109,7 @@ public class TimeState {
 
     public void setTimeDisplay(int timeDisplay) {
         PropertyChangeEvent pce = new PropertyChangeEvent(this, "timeDisplay",
-                new Integer(this.timeDisplay), new Integer(timeDisplay));
+                this.timeDisplay, timeDisplay);
 
         this.timeDisplay = timeDisplay;
 

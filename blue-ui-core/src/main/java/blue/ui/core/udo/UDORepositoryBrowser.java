@@ -247,7 +247,7 @@ public class UDORepositoryBrowser extends JDialog {
         if (itemId >= 0) {
             String result = null;
             Vector<Integer> v = new Vector<>();
-            v.add(new Integer(itemId));
+            v.add(itemId);
 
             try {
 

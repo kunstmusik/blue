@@ -83,8 +83,8 @@ public class PatternObjectPropertiesPanel extends JComponent {
         this.isUpdating = true;
 
         this.patternObj = p;
-        beatsSpinner.setValue(new Integer(p.getBeats()));
-        subDivisionsSpinner.setValue(new Integer(p.getSubDivisions()));
+        beatsSpinner.setValue(p.getBeats());
+        subDivisionsSpinner.setValue(p.getSubDivisions());
 
         this.isUpdating = false;
     }

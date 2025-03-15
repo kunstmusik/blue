@@ -39,7 +39,7 @@ public class TimedKeyListener
     private boolean gameModus = false;
 
     private void fireKeyReleased(KeyEvent e) {
-        if (set.remove(new Integer(e.getKeyCode()))) {
+        if (set.remove(e.getKeyCode())) {
             KeyReleased(e);
         }
     }
@@ -71,7 +71,7 @@ public class TimedKeyListener
         if (timer.isRunning()) {
             timer.stop();
         } else {
-            if (set.add(new Integer(e.getKeyCode()))) {
+            if (set.add(e.getKeyCode())) {
                 if (gameModus) {
                     KeyPressed(e);
                     return;

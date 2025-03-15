@@ -55,7 +55,7 @@ public final class RepeatScoreObjectsAction implements ActionListener {
 
             Object retVal = JOptionPane.showInputDialog(
                     WindowManager.getDefault().getMainWindow(),
-                    "Enter number of times to repeat:", new Integer(1));
+                    "Enter number of times to repeat:", 1);
 
             if (retVal == null) {
                 return;

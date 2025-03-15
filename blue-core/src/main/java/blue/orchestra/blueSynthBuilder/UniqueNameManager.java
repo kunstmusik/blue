@@ -77,7 +77,7 @@ public class UniqueNameManager  {
 
         Object[] vals = new Object[2];
         vals[0] = getPrefix(currentName);
-        vals[1] = new Integer(nameIndex);
+        vals[1] = nameIndex;
 
         Set<String> names = collection.getNames();
 
@@ -86,7 +86,7 @@ public class UniqueNameManager  {
         clone.setObjectName(NAME_FMT.format(vals));
 
         while (!isUniquelyNamed(clone, names)) {
-            vals[1] = new Integer(++nameIndex);
+            vals[1] = ++nameIndex;
             clone.setObjectName(NAME_FMT.format(vals));
         }
 

@@ -31,7 +31,7 @@ public class EffectManager {
         int num = counter;
         counter++;
 
-        return fmt.format(new Object[] { new Integer(num) });
+        return fmt.format(new Object[] { num });
     }
 
 }

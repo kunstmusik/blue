@@ -175,7 +175,7 @@ public class TrackerObject extends AbstractSoundObject {
         tracks.setSteps(steps);
 
         PropertyChangeEvent pce = new PropertyChangeEvent(this, "steps",
-                new Integer(oldSteps), new Integer(steps));
+                oldSteps, steps);
 
         firePropertyChangeEvent(pce);
     }

@@ -51,8 +51,7 @@ public class Mixer {
 
     public static final String MASTER_CHANNEL = "Master";
 
-    private final ObservableList<ChannelList> channelListGroups =
-            new ObservableArrayList<>();
+    private final ObservableList<ChannelList> channelListGroups = new ObservableArrayList<>();
 
     private ChannelList channels = new ChannelList();
 
@@ -81,7 +80,7 @@ public class Mixer {
         subChannels = new ChannelList(mixer.subChannels);
         master = new Channel(mixer.master);
 
-        for(ChannelList chanList : mixer.channelListGroups) {
+        for (ChannelList chanList : mixer.channelListGroups) {
             channelListGroups.add(new ChannelList(chanList));
         }
 
@@ -184,7 +183,7 @@ public class Mixer {
 
         return allChannels;
     }
-    
+
     public List<Channel> getAllChannels() {
         List<Channel> allChannels = new ArrayList<>();
 
@@ -192,23 +191,21 @@ public class Mixer {
             allChannels.addAll(list);
         }
         allChannels.addAll(channels);
-        
+
         allChannels.addAll(subChannels);
         allChannels.add(master);
 
         return allChannels;
     }
-    
-    
-    
-    
+
     public Channel findChannelById(String id) {
-        if (id == null) return null;
-        
+        if (id == null)
+            return null;
+
         for (ChannelList list : channelListGroups) {
-            for(Channel c : list) {
-                if(id.equals(c.getAssociation())) {
-                   return c;
+            for (Channel c : list) {
+                if (id.equals(c.getAssociation())) {
+                    return c;
                 }
             }
         }
@@ -241,15 +238,15 @@ public class Mixer {
 
     public static String getChannelVar(int blueChannelId, int channel) {
         return GA_VAR
-                .format(new Object[]{
-                    new Integer(blueChannelId), 
-                    new Integer(channel)});
+                .format(new Object[] {
+                        blueChannelId,
+                        channel });
     }
 
     public static String getSubChannelVar(String subChannelName, int channel) {
-        return SUBMIX_VAR.format(new Object[]{
-            subChannelName,
-            new Integer(channel)});
+        return SUBMIX_VAR.format(new Object[] {
+                subChannelName,
+                channel });
     }
 
     public String getVar(CompileData data, Channel c, int channel) {
@@ -336,7 +333,7 @@ public class Mixer {
 
         buffer
                 .append(MixerNode.getMixerCode(data, this, udos, manager, node,
-                                nchnls));
+                        nchnls));
 
         buffer.append("outc ");
 
@@ -456,5 +453,4 @@ public class Mixer {
         return subChannelCache;
     }
 
-    
 }

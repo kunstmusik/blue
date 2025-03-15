@@ -80,7 +80,7 @@ public class BSBVSliderBank extends AutomatableBSBObject implements
             Object[] vals = new Object[2];
             vals[0] = getObjectName();
 
-            vals[1] = new Integer(index);
+            vals[1] = index;
             String key = KEY_FMT.format(vals);
 
             Parameter param = parameters.getParameter(key);
@@ -288,7 +288,7 @@ public class BSBVSliderBank extends AutomatableBSBObject implements
                 vals[0] = objectName;
 
                 for (int i = 0; i < sliders.size(); i++) {
-                    vals[1] = new Integer(i);
+                    vals[1] = i;
 
                     String objName = KEY_FMT.format(vals);
 
@@ -313,7 +313,8 @@ public class BSBVSliderBank extends AutomatableBSBObject implements
 
             if (!objectName.isEmpty()) {
                 for (int i = 0; i < sliders.size(); i++) {
-                    vals[1] = new Integer(i);
+                    vals[1] = i;
+                    vals2[1] = i;
 
                     String oldKey = KEY_FMT.format(vals);
 
@@ -323,8 +324,8 @@ public class BSBVSliderBank extends AutomatableBSBObject implements
                 boolean missingParameters = false;
 
                 for (int i = 0; i < sliders.size(); i++) {
-                    vals[1] = new Integer(i);
-                    vals2[1] = new Integer(i);
+                    vals[1] = i;
+                    vals2[1] = i;
                     String oldKey = KEY_FMT.format(vals);
                     String newKey = KEY_FMT.format(vals2);
 
@@ -339,7 +340,7 @@ public class BSBVSliderBank extends AutomatableBSBObject implements
 
                 if (missingParameters) {
                     for (int i = 0; i < sliders.size(); i++) {
-                        vals[1] = new Integer(i);
+                        vals[1] = i;
 
                         String oldKey = KEY_FMT.format(vals);
                         parameters.removeParameter(oldKey);
@@ -463,7 +464,7 @@ public class BSBVSliderBank extends AutomatableBSBObject implements
         vals[0] = getObjectName();
 
         for (int i = this.getNumberOfSliders(); i < numSliders; i++) {
-            vals[1] = new Integer(i);
+            vals[1] = i;
             String key = KEY_FMT.format(vals);
             if (!unm.isUnique(key)) {
                 return false;
@@ -496,7 +497,7 @@ public class BSBVSliderBank extends AutomatableBSBObject implements
                     if (parameters != null && objectName != null
                             && objectName.trim().length() > 0) {
 
-                        vals[1] = new Integer(sliders.size() - 1);
+                        vals[1] = sliders.size() - 1;
                         String key = KEY_FMT.format(vals);
 
                         Parameter param = new Parameter();
@@ -530,7 +531,7 @@ public class BSBVSliderBank extends AutomatableBSBObject implements
                     if (parameters != null && objectName != null
                             && objectName.trim().length() > 0) {
 
-                        vals[1] = new Integer(sliders.size());
+                        vals[1] = sliders.size();
                         String key = KEY_FMT.format(vals);
 
                         parameters.removeParameter(key);
@@ -555,7 +556,7 @@ public class BSBVSliderBank extends AutomatableBSBObject implements
         for (int i = 0; i < sliders.size(); i++) {
             BSBVSlider slider = sliders.get(i);
 
-            vals[1] = new Integer(i);
+            vals[1] = i;
             String key = KEY_FMT.format(vals);
 
             if (parameters != null) {
@@ -632,7 +633,7 @@ public class BSBVSliderBank extends AutomatableBSBObject implements
         vals[0] = getObjectName();
 
         for (int i = 0; i < sliders.size(); i++) {
-            vals[1] = new Integer(i);
+            vals[1] = i;
             String key = KEY_FMT.format(vals);
 
             retVal[i] = key;
@@ -655,14 +656,14 @@ public class BSBVSliderBank extends AutomatableBSBObject implements
                     Object[] vals = new Object[2];
                     vals[0] = objectName;
 
-                    vals[1] = new Integer(0);
+                    vals[1] = 0;
                     Parameter param = parameters.getParameter(KEY_FMT.format(vals));
 
                     if (param != null && param.isAutomationEnabled()) {
                         automationAllowed = true;
                     } else {
                         for (int i = 0; i < sliders.size(); i++) {
-                            vals[1] = new Integer(i);
+                            vals[1] = i;
 
                             String oldKey = KEY_FMT.format(vals);
 
@@ -687,7 +688,7 @@ public class BSBVSliderBank extends AutomatableBSBObject implements
         boolean missingParameters = false;
 
         for (int i = 0; i < sliders.size(); i++) {
-            vals[1] = new Integer(i);
+            vals[1] = i;
             String key = KEY_FMT.format(vals);
 
             Parameter param = parameters.getParameter(key);
@@ -712,7 +713,7 @@ public class BSBVSliderBank extends AutomatableBSBObject implements
         for (int i = 0; i < sliders.size(); i++) {
             BSBVSlider slider = sliders.get(i);
 
-            vals[1] = new Integer(i);
+            vals[1] = i;
             String key = KEY_FMT.format(vals);
 
             // clear for safety
@@ -775,7 +776,7 @@ public class BSBVSliderBank extends AutomatableBSBObject implements
 
                 if (objectName != null && objectName.length() != 0) {
                     for (int i = 0; i < sliders.size(); i++) {
-                        vals[1] = new Integer(i);
+                        vals[1] = i;
 
                         String oldKey = KEY_FMT.format(vals);
 
@@ -808,7 +809,7 @@ public class BSBVSliderBank extends AutomatableBSBObject implements
             vals[0] = getObjectName();
 
             for (int i = 0; i < sliders.size(); i++) {
-                vals[1] = new Integer(i);
+                vals[1] = i;
                 String key = KEY_FMT.format(vals);
 
                 Parameter param = parameters.getParameter(key);

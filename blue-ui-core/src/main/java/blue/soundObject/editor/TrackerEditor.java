@@ -230,8 +230,8 @@ public class TrackerEditor extends ScoreObjectEditor {
 
         TrackerObject newTracker = (TrackerObject) sObj;
 
-        stepsSpinner.setValue(new Integer(newTracker.getSteps()));
-        stepsPerBeatSpinner.setValue(new Integer(newTracker.getStepsPerBeat()));        
+        stepsSpinner.setValue(newTracker.getSteps());
+        stepsPerBeatSpinner.setValue(newTracker.getStepsPerBeat());        
 
         this.tracker = newTracker;
 

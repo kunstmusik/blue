@@ -19,9 +19,9 @@ public class Tables {
 
     // used when compiling tables from instruments that are used across
     // instruments
-    private transient HashMap compilationVariables = null;
+    private transient HashMap<Object, Object> compilationVariables = null;
 
-    private transient HashSet ftableNumberSet = null;
+    private transient HashSet<Integer> ftableNumberSet = null;
 
     public Tables() {
     }
@@ -61,7 +61,7 @@ public class Tables {
 
     public void setCompilationVariable(Object key, Object value) {
         if (compilationVariables == null) {
-            compilationVariables = new HashMap();
+            compilationVariables = new HashMap<>();
         }
 
         compilationVariables.put(key, value);
@@ -73,26 +73,26 @@ public class Tables {
         }
 
         int counter = 1;
-        Integer tableNum = new Integer(counter);
+        int tableNum = counter;
         while (ftableNumberSet.contains(tableNum)) {
             counter++;
-            tableNum = new Integer(counter);
+            tableNum = counter;
         }
         ftableNumberSet.add(tableNum);
 
         return counter;
     }
-    
+
     public void addFtgenNumber(int ftgenNum) {
         if (ftableNumberSet == null) {
             ftableNumberSet = getFtableNumberSet(this.getTables());
         }
-        
-        ftableNumberSet.add(new Integer(ftgenNum));
+
+        ftableNumberSet.add(ftgenNum);
     }
 
-    private static HashSet getFtableNumberSet(String ftableText) {
-        HashSet ftableNumbers = new HashSet();
+    private static HashSet<Integer> getFtableNumberSet(String ftableText) {
+        HashSet<Integer> ftableNumbers = new HashSet<>();
         StringTokenizer st = new StringTokenizer(ftableText, "\n");
         String line;
         String tempLine;
@@ -114,7 +114,7 @@ public class Tables {
                     index++;
                 }
                 try {
-                    ftableNumbers.add(new Integer(temp));
+                    ftableNumbers.add(Integer.valueOf(temp));
                 } catch (NumberFormatException nfe) {
                     System.err
                             .println("[error] - Tables::getFtableNumberSet - could not parse FTable number for text: "

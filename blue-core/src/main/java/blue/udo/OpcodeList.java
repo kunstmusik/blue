@@ -284,12 +284,12 @@ public class OpcodeList extends ArrayList<UserDefinedOpcode> implements TableMod
     }
 
     public String getUniqueName() {
-        Object[] obj = new Object[]{new Integer(counter++)};
+        Object[] obj = new Object[]{counter++};
 
         String uniqueName = fmt.format(obj);
 
         while (!isNameUnique(uniqueName)) {
-            obj[0] = new Integer(counter++);
+            obj[0] = counter++;
             uniqueName = fmt.format(obj);
         }
 

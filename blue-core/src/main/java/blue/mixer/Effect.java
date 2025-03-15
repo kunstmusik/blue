@@ -36,9 +36,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Vector;
-import org.apache.commons.lang3.text.StrBuilder;
 
 public class Effect implements Automatable {
 
@@ -50,7 +48,7 @@ public class Effect implements Automatable {
     private String comments = "";
     private OpcodeList opcodeList;
     private boolean enabled = true;
-    private transient Vector listeners = null;
+    private transient Vector<PropertyChangeListener> listeners = null;
     private ParameterList parameterList = null;
 
     public Effect() {
@@ -89,7 +87,7 @@ public class Effect implements Automatable {
         BSBCompilationUnit bsbUnit = new BSBCompilationUnit();
         graphicInterface.setupForCompilation(bsbUnit);
 
-        StrBuilder buffer = new StrBuilder();
+        StringBuilder buffer = new StringBuilder();
         buffer.append(getXinText()).append("\n");
 
         buffer.append(bsbUnit.replaceBSBValues(code)).append("\n");
@@ -200,8 +198,8 @@ public class Effect implements Automatable {
     }
 
     public void setNumIns(int numIns) {
-        Integer oldVal = new Integer(this.numIns);
-        Integer newVal = new Integer(numIns);
+        int oldVal = this.numIns;
+        int newVal = numIns;
 
         PropertyChangeEvent pce = new PropertyChangeEvent(this, "numIns",
                 oldVal, newVal);
@@ -217,8 +215,8 @@ public class Effect implements Automatable {
 
     public void setNumOuts(int numOuts) {
 
-        Integer oldVal = new Integer(this.numOuts);
-        Integer newVal = new Integer(numOuts);
+        int oldVal = this.numOuts;
+        int newVal = numOuts;
 
         PropertyChangeEvent pce = new PropertyChangeEvent(this, "numOuts",
                 oldVal, newVal);
@@ -253,9 +251,8 @@ public class Effect implements Automatable {
             return;
         }
 
-        for (Iterator iter = listeners.iterator(); iter.hasNext();) {
-            PropertyChangeListener listener = (PropertyChangeListener) iter
-                    .next();
+        for (var iter = listeners.iterator(); iter.hasNext();) {
+            var listener = iter.next();
 
             listener.propertyChange(pce);
         }
@@ -263,7 +260,7 @@ public class Effect implements Automatable {
 
     public void addPropertyChangeListener(PropertyChangeListener pcl) {
         if (listeners == null) {
-            listeners = new Vector();
+            listeners = new Vector<>();
         }
 
         listeners.add(pcl);
@@ -297,15 +294,15 @@ public class Effect implements Automatable {
         return getName();
     }
 
-//    public JComponent getEditor() {
-//        // TODO - fix this!
-////        return null;
-//        BSBEditPanel editPanel = new BSBEditPanel(BSBObjectRegistry
-//                .getBSBObjects());
-//        editPanel.editBSBGraphicInterface(graphicInterface);
-//
-//        return editPanel;
-//    }
+    // public JComponent getEditor() {
+    // // TODO - fix this!
+    //// return null;
+    // BSBEditPanel editPanel = new BSBEditPanel(BSBObjectRegistry
+    // .getBSBObjects());
+    // editPanel.editBSBGraphicInterface(graphicInterface);
+    //
+    // return editPanel;
+    // }
 
     private String getXinText() {
         StringBuilder buffer = new StringBuilder();
