@@ -17,7 +17,6 @@
  * the Free Software Foundation Inc., 59 Temple Place - Suite 330,
  * Boston, MA  02111-1307 USA
  */
-
 package blue.mixer;
 
 import blue.automation.Parameter;
@@ -39,10 +38,9 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 
 /**
  * Design Notes:
- * 
+ *
  * @author Steven Yi
  */
-
 public class Channel implements Comparable<Channel>, ParameterListener {
 
     public static final String MASTER = "Master";
@@ -73,12 +71,11 @@ public class Channel implements Comparable<Channel>, ParameterListener {
 
     private double level = 0.0f;
 
-    Parameter levelParameter; 
+    Parameter levelParameter;
 
     private String association = null;
 
     private transient boolean updatingLine = false;
-
 
     public Channel() {
         preEffects = new EffectsChain();
@@ -95,7 +92,7 @@ public class Channel implements Comparable<Channel>, ParameterListener {
         levelParameter.addParameterListener(this);
     }
 
-    public Channel(Channel channel){
+    public Channel(Channel channel) {
 
         preEffects = new EffectsChain(channel.preEffects);
         postEffects = new EffectsChain(channel.postEffects);
@@ -116,10 +113,10 @@ public class Channel implements Comparable<Channel>, ParameterListener {
         Channel channel = new Channel();
 
         String associationVal = data.getAttributeValue("association");
-        if(associationVal != null && !"null".equals(associationVal)) {
+        if (associationVal != null && !"null".equals(associationVal)) {
             channel.setAssociation(data.getAttributeValue("association"));
         }
-        
+
         Elements nodes = data.getElements();
 
         while (nodes.hasMoreElements()) {
@@ -156,8 +153,8 @@ public class Channel implements Comparable<Channel>, ParameterListener {
             }
 
         }
-        
-        if(!channel.levelParameter.isAutomationEnabled()) {
+
+        if (!channel.levelParameter.isAutomationEnabled()) {
             channel.levelParameter.setValue(channel.getLevel());
         }
 
@@ -167,10 +164,10 @@ public class Channel implements Comparable<Channel>, ParameterListener {
     public Element saveAsXML() {
         Element retVal = new Element("channel");
 
-        if(association != null) {
+        if (association != null) {
             retVal.setAttribute("association", association);
         }
-        
+
         retVal.addElement(new Element("name").setText(name));
         retVal.addElement(new Element("outChannel").setText(outChannel));
         retVal.addElement(XMLUtilities.writeDouble("level", level));
@@ -331,17 +328,6 @@ public class Channel implements Comparable<Channel>, ParameterListener {
             return;
         }
         listeners.remove(pcl);
-    }
-
-    public void firePropertyChange(String propertyName, double oldVal,
-            double newVal) {
-        firePropertyChange(propertyName, oldVal, newVal);
-    }
-
-    public void firePropertyChange(String propertyName, boolean oldVal,
-            boolean newVal) {
-        firePropertyChange(propertyName, Boolean.valueOf(oldVal), Boolean
-                .valueOf(newVal));
     }
 
     public void firePropertyChange(String propertyName, Object oldVal,
