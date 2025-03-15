@@ -13,6 +13,7 @@
             <plugin>
                 <groupId>org.apache.netbeans.utilities</groupId>
                 <artifactId>nbm-maven-plugin</artifactId>
+                <extensions>true</extensions>
                 <configuration>
                   <publicPackages>
                     <publicPackage>blue.utilities</publicPackage>

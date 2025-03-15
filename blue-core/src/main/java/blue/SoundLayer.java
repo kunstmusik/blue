@@ -248,7 +248,7 @@ public final class SoundLayer extends ArrayList<SoundObject>
         this.heightIndex = heightIndex;
 
         PropertyChangeEvent pce = new PropertyChangeEvent(this, "heightIndex",
-                new Integer(oldHeight), new Integer(heightIndex));
+                Integer.valueOf(oldHeight), Integer.valueOf(heightIndex));
 
         firePropertyChangeEvent(pce);
     }

@@ -43,7 +43,7 @@ import org.openide.util.lookup.ServiceProvider;
  */
 @ServiceProvider(service = Processor.class)
 @SupportedAnnotationTypes("blue.plugin.ProjectPluginEditorItem")
-@SupportedSourceVersion(SourceVersion.RELEASE_8)
+@SupportedSourceVersion(SourceVersion.RELEASE_23)
 public class ProjectPluginEditorItemProcessor extends LayerGeneratingProcessor {
 
     @Override
