@@ -97,7 +97,7 @@ public class AddSemiColonLineCommentAction extends BaseAction {
     private void comment(BaseDocument doc, int startOffset, int lineCount) throws BadLocationException {
         for (int offset = startOffset; lineCount > 0; lineCount--) {
             doc.insertString(offset, COMMENT_STRING, null); // NOI18N
-            offset = org.netbeans.editor.Utilities.getRowStart(doc, offset, +1);;
+            offset = org.netbeans.editor.Utilities.getRowStart(doc, offset, +1);
         }
     }
 }

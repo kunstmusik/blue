@@ -62,7 +62,7 @@ public class Scale {
         Scale scale = new Scale();
         scale.setScaleName(scalaFile.getName());
 
-        ArrayList lines;
+        ArrayList<String> lines;
 
         try {
             /*
@@ -86,9 +86,7 @@ public class Scale {
         int pitchCount = 0;
         int index = 0;
 
-        int count = lines.size();
-        for (int i = 0; i < count; i++) {
-            String line = (String) lines.get(i);
+        for (String line : lines) {
 
             if (line.startsWith("!")) {
                 // Comment
@@ -240,9 +238,9 @@ public class Scale {
 
         Element ratiosNode = retVal.addElement("ratios");
 
-        for (int i = 0; i < ratios.length; i++) {
+        for (double ratio : ratios) {
             Element node = new Element("ratio").setText(Double
-                    .toString(ratios[i]));
+                    .toString(ratio));
             ratiosNode.addElement(node);
         }
 

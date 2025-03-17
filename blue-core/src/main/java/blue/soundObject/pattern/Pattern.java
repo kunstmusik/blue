@@ -23,6 +23,8 @@ import electric.xml.Element;
 import electric.xml.Elements;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
+import java.util.Arrays;
+
 public class Pattern {
     public boolean[] values;
 
@@ -37,9 +39,7 @@ public class Pattern {
     public Pattern(int beats) {
         values = new boolean[beats];
 
-        for (int i = 0; i < values.length; i++) {
-            values[i] = false;
-        }
+        Arrays.fill(values, false);
     }
 
     public Pattern(Pattern p) {
@@ -92,8 +92,8 @@ public class Pattern {
 
         StringBuilder buffer = new StringBuilder();
 
-        for (int i = 0; i < values.length; i++) {
-            if (values[i]) {
+        for (boolean value : values) {
+            if (value) {
                 buffer.append("1");
             } else {
                 buffer.append("0");

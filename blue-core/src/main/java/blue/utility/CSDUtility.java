@@ -183,15 +183,15 @@ public class CSDUtility {
 
             case IMPORT_SINGLE_SOUNDOBJECT:
                 sections = getScoreSections(noteText);
-                for (int i = 0; i < sections.length; i++) {
-                    setSoundObjectPerSection(data, sections[i]);
+                for (ScoreSection scoreSection : sections) {
+                    setSoundObjectPerSection(data, scoreSection);
                 }
                 break;
 
             case IMPORT_SOUNDOBJECT_PER_INSTRUMENT:
                 sections = getScoreSections(noteText);
-                for (int i = 0; i < sections.length; i++) {
-                    setSoundObjectsPerInstrument(data, sections[i]);
+                for (ScoreSection section : sections) {
+                    setSoundObjectsPerInstrument(data, section);
                 }
 
                 break;
@@ -309,9 +309,7 @@ public class CSDUtility {
 
         SoundLayer sLayer;
 
-        for (var iter = map.entrySet().iterator(); iter.hasNext();) {
-            var entry = iter.next();
-
+        for (Entry<Integer, StringBuffer> entry : map.entrySet()) {
             iNum = entry.getKey();
             buffer = entry.getValue();
 
@@ -447,8 +445,8 @@ public class CSDUtility {
                             if (instrIds.indexOf(',') > -1) {
                                 String[] ids = instrIds.split(",");
 
-                                for (int i = 0; i < ids.length; i++) {
-                                    arrangement.insertInstrument(ids[i], instr);
+                                for (String id : ids) {
+                                    arrangement.insertInstrument(id, instr);
                                 }
 
                             } else {

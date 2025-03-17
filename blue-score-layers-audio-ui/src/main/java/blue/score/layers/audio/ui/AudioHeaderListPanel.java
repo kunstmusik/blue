@@ -145,7 +145,7 @@ public class AudioHeaderListPanel extends JPanel implements
                         Component c = SwingUtilities.getDeepestComponentAt(
                                 AudioHeaderListPanel.this, me.getX(), me.getY());
                         
-                        if (c != null && c instanceof JLabel) {
+                        if (c instanceof JLabel) {
                             Component panel = getComponentAt(me.getPoint());
                             
                             ((AudioHeaderLayerPanel) panel).editName();

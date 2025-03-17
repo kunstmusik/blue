@@ -259,10 +259,7 @@ public class Grapher extends JComponent {
 
     public CGraphPoint findGraphPoint(int x, int y) {
 
-        for (Iterator iter = currentGraph.getPoints().iterator(); iter
-                .hasNext();) {
-            CGraphPoint point = (CGraphPoint) iter.next();
-
+        for (CGraphPoint point : currentGraph.getPoints()) {
             int tempX = doubleToScreenX(point.time);
             int tempY = doubleToScreenY(point.value);
 
@@ -277,10 +274,7 @@ public class Grapher extends JComponent {
     }
 
     public CGraphPoint findGraphPoint(int x) {
-        for (Iterator iter = currentGraph.getPoints().iterator(); iter
-                .hasNext();) {
-            CGraphPoint point = (CGraphPoint) iter.next();
-
+        for (CGraphPoint point : currentGraph.getPoints()) {
             int tempX = doubleToScreenX(point.time);
 
             if (tempX >= x - 2 && tempX <= x + 2) {
@@ -311,8 +305,8 @@ public class Grapher extends JComponent {
             return;
         }
 
-        for (Iterator iter = map.values().iterator(); iter.hasNext();) {
-            CeciliaObject element = (CeciliaObject) iter.next();
+        for (Object o : map.values()) {
+            CeciliaObject element = (CeciliaObject) o;
 
             if (element instanceof CGraph) {
                 CGraph graph = (CGraph) element;
@@ -379,8 +373,8 @@ public class Grapher extends JComponent {
         Color currentColor = null;
 
         // for(Iterator iter = graphs.values().iterator(); iter.hasNext();) {
-        for (Iterator iter = graphOrder.iterator(); iter.hasNext();) {
-            String objectName = (String) iter.next();
+        for (Object o : graphOrder) {
+            String objectName = (String) o;
 
             CGraph tempGraph = (CGraph) graphs.get(objectName);
 
@@ -480,9 +474,7 @@ public class Grapher extends JComponent {
         int prevX = -1;
         int prevY = -1;
 
-        for (Iterator iter = tempGraph.getPoints().iterator(); iter.hasNext();) {
-            CGraphPoint point = (CGraphPoint) iter.next();
-
+        for (CGraphPoint point : tempGraph.getPoints()) {
             int x = doubleToScreenX(point.time);
             int y = doubleToScreenY(point.value);
 
@@ -597,10 +589,7 @@ public class Grapher extends JComponent {
             return;
         }
 
-        for (Iterator iter = currentGraph.getPoints().iterator(); iter
-                .hasNext();) {
-            CGraphPoint point = (CGraphPoint) iter.next();
-
+        for (CGraphPoint point : currentGraph.getPoints()) {
             int val = doubleToScreenY(point.value);
             val -= 1;
 
@@ -620,10 +609,7 @@ public class Grapher extends JComponent {
             return;
         }
 
-        for (Iterator iter = currentGraph.getPoints().iterator(); iter
-                .hasNext();) {
-            CGraphPoint point = (CGraphPoint) iter.next();
-
+        for (CGraphPoint point : currentGraph.getPoints()) {
             int val = doubleToScreenY(point.value);
             val += 1;
 

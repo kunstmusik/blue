@@ -217,8 +217,7 @@ public final class SoundLayer extends ArrayList<SoundObject>
             retVal.addElement(sObj.saveAsXML(objRefMap));
         }
 
-        for (Iterator iter = automationParameters.iterator(); iter.hasNext();) {
-            String id = (String) iter.next();
+        for (String id : automationParameters) {
             retVal.addElement("parameterId").setText(id);
         }
 

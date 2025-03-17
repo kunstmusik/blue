@@ -154,8 +154,7 @@ public class PresetsPanel extends javax.swing.JPanel {
 
     private void setPresetsMenu(PresetGroup pGroup, JMenu menu) {
 
-        for (Iterator<PresetGroup> iter = pGroup.getSubGroups().iterator(); iter.hasNext();) {
-            PresetGroup subGroup = iter.next();
+        for (PresetGroup subGroup : pGroup.getSubGroups()) {
             JMenu subMenu = new JMenu(subGroup.getPresetGroupName());
             setPresetsMenu(subGroup, subMenu);
 
@@ -166,8 +165,7 @@ public class PresetsPanel extends javax.swing.JPanel {
             }
         }
 
-        for (Iterator<Preset> iter = pGroup.getPresets().iterator(); iter.hasNext();) {
-            Preset preset = iter.next();
+        for (Preset preset : pGroup.getPresets()) {
             SetPresetAction presetAction = new SetPresetAction(preset, this);
 
             if (menu == null) {

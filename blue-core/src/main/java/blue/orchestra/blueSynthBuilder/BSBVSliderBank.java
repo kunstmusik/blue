@@ -586,14 +586,14 @@ public class BSBVSliderBank extends AutomatableBSBObject implements
 
         StringBuilder buffer = new StringBuilder();
 
-        for (int i = 0; i < sliders.size(); i++) {
+        for (BSBVSlider bsbvSlider : sliders) {
             if (first) {
                 first = false;
             } else {
                 buffer.append(":");
             }
 
-            BSBVSlider slider = sliders.get(i);
+            BSBVSlider slider = bsbvSlider;
 
             buffer.append(slider.getValue());
         }

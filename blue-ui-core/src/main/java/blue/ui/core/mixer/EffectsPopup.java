@@ -326,8 +326,8 @@ public class EffectsPopup extends JPopupMenu implements ChangeListener {
         ArrayList categories = category.getSubCategories();
         ArrayList effects = category.getEffects();
 
-        for (int i = 0; i < categories.size(); i++) {
-            EffectCategory cat = (EffectCategory) categories.get(i);
+        for (Object object : categories) {
+            EffectCategory cat = (EffectCategory) object;
 
             JMenu catMenu = new JMenu(cat.getCategoryName());
 
@@ -337,8 +337,8 @@ public class EffectsPopup extends JPopupMenu implements ChangeListener {
 
         int counter = 0;
 
-        for (int i = 0; i < effects.size(); i++) {
-            Effect effect = (Effect) effects.get(i);
+        for (Object o : effects) {
+            Effect effect = (Effect) o;
 
             AddEffectAction action = new AddEffectAction(effect);
 

@@ -111,8 +111,8 @@ public class PatternData {
 
         StringBuilder buffer = new StringBuilder();
 
-        for (int i = 0; i < patterns.length; i++) {
-            if (patterns[i]) {
+        for (boolean pattern : patterns) {
+            if (pattern) {
                 buffer.append("1");
             } else {
                 buffer.append("0");

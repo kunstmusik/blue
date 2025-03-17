@@ -259,9 +259,7 @@ public final class MixerTopComponent extends TopComponent
 
         if (oldIdCount == 0 && newIdCount == 1) {
             // rename old channel
-            for (int i = 0; i < channels.size(); i++) {
-                Channel channel = channels.get(i);
-
+            for (Channel channel : channels) {
                 if (channel.getName().equals(oldId)) {
                     channel.setName(newId);
                     break;

@@ -396,10 +396,10 @@ public class EffectImportPane extends JComponent {
             BlueShareEffectCategory[] categories) {
         DefaultMutableTreeNode temp;
 
-        for (int i = 0; i < categories.length; i++) {
-            temp = new DefaultMutableTreeNode(categories[i]);
+        for (BlueShareEffectCategory category : categories) {
+            temp = new DefaultMutableTreeNode(category);
             parent.add(temp);
-            addSubCategories(temp, categories[i].getSubCategories());
+            addSubCategories(temp, category.getSubCategories());
         }
     }
 

@@ -58,18 +58,14 @@ public class PaletteWindow extends JFrame {
                 .getComponentsInLayer(JLayeredPane.FRAME_CONTENT_LAYER
                         .intValue());
 
-        for (int i = 0; i < comps.length; i++) {
-            Component component = comps[i];
-
+        for (Component component : comps) {
             if (component != dialog2.getContentPane()) {
                 JComponent c = ((JComponent) component);
                 c.setPreferredSize(new Dimension(12, 12));
 
                 Component[] subComponents = c.getComponents();
 
-                for (int j = 0; j < subComponents.length; j++) {
-                    Component component2 = subComponents[j];
-
+                for (Component component2 : subComponents) {
                     if (component2 instanceof JButton b) {
 
                         b.setIcon(UIManager

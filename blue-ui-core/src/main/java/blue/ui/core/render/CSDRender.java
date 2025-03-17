@@ -964,8 +964,8 @@ public class CSDRender extends CSDRenderService {
     }
 
     private void assignParameterNames(ArrayList parameters, ParameterNameManager pnm) {
-        for (int i = 0; i < parameters.size(); i++) {
-            Parameter param = (Parameter) parameters.get(i);
+        for (Object parameter : parameters) {
+            Parameter param = (Parameter) parameter;
             param.setCompilationVarName(pnm.getUniqueParamName());
         }
     }
@@ -998,7 +998,7 @@ public class CSDRender extends CSDRenderService {
 
         for (int i = 0; i < parameters.size(); i++) {
             Parameter param = (Parameter) parameters.get(i);
-            varNum[0] = new Integer(i);
+            varNum[0] = i;
             String varName = param.getCompilationVarName();
 
             //param.setCompilationVarName(varName);

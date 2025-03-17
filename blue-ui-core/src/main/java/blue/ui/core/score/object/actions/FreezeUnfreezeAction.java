@@ -284,11 +284,11 @@ public final class FreezeUnfreezeAction extends AbstractAction
 
             int counter = -1;
 
-            for (int i = 0; i < files.length; i++) {
-                if (files[i].startsWith("freeze")) {
+            for (String file : files) {
+                if (file.startsWith("freeze")) {
                     try {
-                        int num = Integer.parseInt(files[i].substring(6,
-                                files[i].indexOf(".")));
+                        int num = Integer.parseInt(file.substring(6,
+                                file.indexOf(".")));
                         if (counter < num) {
                             counter = num;
                         }

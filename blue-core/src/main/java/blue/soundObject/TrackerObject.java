@@ -31,7 +31,6 @@ import electric.xml.Element;
 import electric.xml.Elements;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Vector;
 
@@ -46,7 +45,7 @@ public class TrackerObject extends AbstractSoundObject {
 
     private NoteProcessorChain npc = new NoteProcessorChain();
 
-    private transient Vector listeners = null;
+    private transient Vector<PropertyChangeListener> listeners = null;
     
     int stepsPerBeat = 4;
 
@@ -201,17 +200,14 @@ public class TrackerObject extends AbstractSoundObject {
             return;
         }
 
-        for (Iterator iter = listeners.iterator(); iter.hasNext();) {
-            PropertyChangeListener listener = (PropertyChangeListener) iter
-                    .next();
-
+        for (PropertyChangeListener listener : listeners) {
             listener.propertyChange(pce);
         }
     }
 
     public void addPropertyChangeListener(PropertyChangeListener pcl) {
         if (listeners == null) {
-            listeners = new Vector();
+            listeners = new Vector<PropertyChangeListener>();
         }
 
         listeners.add(pcl);

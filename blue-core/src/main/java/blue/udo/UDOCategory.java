@@ -68,8 +68,7 @@ public class UDOCategory {
             return true;
         }
 
-        for (Iterator iter = subCategories.iterator(); iter.hasNext();) {
-            UDOCategory category = (UDOCategory) iter.next();
+        for (UDOCategory category : subCategories) {
             if (category.removeUDO(udo)) {
                 return true;
             }
@@ -87,9 +86,7 @@ public class UDOCategory {
             return true;
         }
 
-        for (Iterator iter = subCategories.iterator(); iter.hasNext();) {
-            UDOCategory tempCategory = (UDOCategory) iter.next();
-
+        for (UDOCategory tempCategory : subCategories) {
             if (tempCategory.removeUDOCategory(category)) {
                 return true;
             }
@@ -210,13 +207,11 @@ public class UDOCategory {
         retVal.setAttribute("categoryName", this.getCategoryName());
         retVal.setAttribute("isRoot", Boolean.toString(this.isRoot()));
 
-        for (Iterator iter = subCategories.iterator(); iter.hasNext();) {
-            UDOCategory tempCat = (UDOCategory) iter.next();
+        for (UDOCategory tempCat : subCategories) {
             retVal.addElement(tempCat.saveAsXML());
         }
 
-        for (Iterator iter = udos.iterator(); iter.hasNext();) {
-            UserDefinedOpcode udo = (UserDefinedOpcode) iter.next();
+        for (UserDefinedOpcode udo : udos) {
             retVal.addElement(udo.saveAsXML());
         }
 

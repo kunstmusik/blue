@@ -570,8 +570,7 @@ public class OpcodeListEditPanel extends JComponent {
                     UDOBuffer buffer = UDOBuffer.getInstance();
                     Object obj = buffer.getBufferedObject();
 
-                    paste.setEnabled(obj != null
-                            && (obj instanceof UserDefinedOpcode[]
+                    paste.setEnabled((obj instanceof UserDefinedOpcode[]
                             || obj instanceof UserDefinedOpcode
                             || obj instanceof UDOCategory));
 

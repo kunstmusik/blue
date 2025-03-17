@@ -24,7 +24,6 @@ import blue.utility.ListUtil;
 import electric.xml.Element;
 import electric.xml.Elements;
 import java.util.ArrayList;
-import java.util.Iterator;
 
 /**
  * @author Steven Yi
@@ -35,9 +34,9 @@ public class ScriptCategory {
 
     private String categoryName = "New Script Category";
 
-    private ArrayList subCategories = new ArrayList();
+    private ArrayList<ScriptCategory> subCategories = new ArrayList<>();
 
-    private ArrayList scripts = new ArrayList();
+    private ArrayList<Script> scripts = new ArrayList<>();
 
     private boolean isRoot = false;
 
@@ -55,9 +54,8 @@ public class ScriptCategory {
             return true;
         }
 
-        for (Iterator iter = subCategories.iterator(); iter.hasNext();) {
-            ScriptCategory category = (ScriptCategory) iter.next();
-            if (category.removeScript(effect)) {
+        for (ScriptCategory subCategory : subCategories) {
+            if (subCategory.removeScript(effect)) {
                 return true;
             }
 
@@ -74,10 +72,8 @@ public class ScriptCategory {
             return true;
         }
 
-        for (Iterator iter = subCategories.iterator(); iter.hasNext();) {
-            ScriptCategory tempCategory = (ScriptCategory) iter.next();
-
-            if (tempCategory.removeScriptCategory(category)) {
+        for (ScriptCategory subCategory : subCategories) {
+            if (subCategory.removeScriptCategory(category)) {
                 return true;
             }
         }
@@ -117,7 +113,7 @@ public class ScriptCategory {
     /**
      * @return Returns the instruments.
      */
-    public ArrayList getScripts() {
+    public ArrayList<Script> getScripts() {
         return scripts;
     }
 
@@ -125,14 +121,14 @@ public class ScriptCategory {
      * @param scripts
      *            The scripts to set.
      */
-    public void setScripts(ArrayList scripts) {
+    public void setScripts(ArrayList<Script> scripts) {
         this.scripts = scripts;
     }
 
     /**
      * @return Returns the subCategories.
      */
-    public ArrayList getSubCategories() {
+    public ArrayList<ScriptCategory> getSubCategories() {
         return subCategories;
     }
 
@@ -140,7 +136,7 @@ public class ScriptCategory {
      * @param subCategories
      *            The subCategories to set.
      */
-    public void setSubCategories(ArrayList subCategories) {
+    public void setSubCategories(ArrayList<ScriptCategory> subCategories) {
         this.subCategories = subCategories;
     }
 
@@ -188,14 +184,12 @@ public class ScriptCategory {
         retVal.setAttribute("categoryName", this.getCategoryName());
         retVal.setAttribute("isRoot", Boolean.toString(this.isRoot()));
 
-        for (Iterator iter = subCategories.iterator(); iter.hasNext();) {
-            ScriptCategory tempCat = (ScriptCategory) iter.next();
-            retVal.addElement(tempCat.saveAsXML());
+        for (ScriptCategory subCategory : subCategories) {
+            retVal.addElement(subCategory.saveAsXML());
         }
 
-        for (Iterator iter = scripts.iterator(); iter.hasNext();) {
-            Script effect = (Script) iter.next();
-            retVal.addElement(effect.saveAsXML());
+        for (Script script : scripts) {
+            retVal.addElement(script.saveAsXML());
         }
 
         return retVal;

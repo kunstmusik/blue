@@ -42,8 +42,8 @@ public class ScoreMouseWheelListener implements MouseWheelListener {
 
         listeners = scrollPane.getMouseWheelListeners();
 
-        for (int i = 0; i < listeners.length; i++) {
-            scrollPane.removeMouseWheelListener(listeners[i]);
+        for (MouseWheelListener listener : listeners) {
+            scrollPane.removeMouseWheelListener(listener);
         }
 
         scrollPane.addMouseWheelListener(this);

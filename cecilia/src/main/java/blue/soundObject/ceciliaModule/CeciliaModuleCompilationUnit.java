@@ -112,8 +112,8 @@ public class CeciliaModuleCompilationUnit {
 
         StringBuffer orcBuffer = new StringBuffer();
 
-        for (Iterator iter = stateData.values().iterator(); iter.hasNext();) {
-            CeciliaObject stateObj = (CeciliaObject) iter.next();
+        for (Object o : stateData.values()) {
+            CeciliaObject stateObj = (CeciliaObject) o;
 
             if (stateObj instanceof CToggle) {
                 orcBuffer.append(((CToggle) stateObj).generateToggleText());
@@ -187,8 +187,8 @@ public class CeciliaModuleCompilationUnit {
 
         double runningTime = 0.0f;
 
-        for (Iterator iter = points.iterator(); iter.hasNext();) {
-            CGraphPoint point = (CGraphPoint) iter.next();
+        for (Object o : points) {
+            CGraphPoint point = (CGraphPoint) o;
 
             if (firstPoint) {
                 double value = (point.value * range) + min;
@@ -218,8 +218,8 @@ public class CeciliaModuleCompilationUnit {
         StringBuffer buffer = new StringBuffer();
         buffer.append(this.globalOrc);
 
-        for (Iterator iter = magicInstrument_instr.iterator(); iter.hasNext();) {
-            String line = (String) iter.next();
+        for (Object o : magicInstrument_instr) {
+            String line = (String) o;
             buffer.append(line).append("\n");
         }
 
@@ -271,8 +271,8 @@ public class CeciliaModuleCompilationUnit {
     public void generateFTables(CeciliaModule cm, Tables tables) {
         StringBuffer newTableText = new StringBuffer();
 
-        for (Iterator iter = ftables.keySet().iterator(); iter.hasNext();) {
-            String oldNum = (String) iter.next();
+        for (Object o : ftables.keySet()) {
+            String oldNum = (String) o;
             String tableText = (String) ftables.get(oldNum);
 
             int newNum = tables.getOpenFTableNumber();
@@ -326,8 +326,8 @@ public class CeciliaModuleCompilationUnit {
             magicInstrId = arrangement.addInstrument(magicInstrument);
         }
 
-        for (Iterator iter = instruments.keySet().iterator(); iter.hasNext();) {
-            String key = (String) iter.next();
+        for (Object o : instruments.keySet()) {
+            String key = (String) o;
             GenericInstrument instr = (GenericInstrument) instruments.get(key);
 
             instr.setText(setGlobalUnique(instr.getText()));
@@ -353,9 +353,7 @@ public class CeciliaModuleCompilationUnit {
 
         appendSinfoVariables(retVal);
 
-        for (Iterator iter = ceciliaVariables.keySet().iterator(); iter
-                .hasNext();) {
-            String key = (String) iter.next();
+        for (String key : ceciliaVariables.keySet()) {
             String val = ceciliaVariables.get(key);
             retVal = TextUtilities.replaceAll(retVal, "[" + key + "]", val);
             retVal = TextUtilities.replaceAll(retVal, "$value(" + key + ")",
@@ -440,8 +438,8 @@ public class CeciliaModuleCompilationUnit {
         GenericInstrument instr = new GenericInstrument();
         StringBuffer instrText = new StringBuffer();
 
-        for (Iterator iter = magicInstrument_instr.iterator(); iter.hasNext();) {
-            String line = (String) iter.next();
+        for (Object o : magicInstrument_instr) {
+            String line = (String) o;
             instrText.append(line).append("\n");
         }
         instr.setText(instrText.toString());
@@ -465,8 +463,7 @@ public class CeciliaModuleCompilationUnit {
 
         }
 
-        for (Iterator iter = notes.iterator(); iter.hasNext();) {
-            Note note = (Note) iter.next();
+        for (Note note : notes) {
             String id = note.getPField(1).trim();
 
             String newId = (String) instrIDMap.get(id);

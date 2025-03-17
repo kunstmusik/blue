@@ -251,9 +251,7 @@ public class Effect implements Automatable {
             return;
         }
 
-        for (var iter = listeners.iterator(); iter.hasNext();) {
-            var listener = iter.next();
-
+        for (PropertyChangeListener listener : listeners) {
             listener.propertyChange(pce);
         }
     }

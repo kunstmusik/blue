@@ -84,8 +84,8 @@ public class SerializationCodeWriter extends javax.swing.JFrame {
         StringBuilder saveCode = new StringBuilder();
         StringBuilder loadCode = new StringBuilder();
 
-        for (int i = 0; i < lines.length; i++) {
-            String line = lines[i].trim();
+        for (String s : lines) {
+            String line = s.trim();
 
             if (line.length() == 0) {
                 continue;
@@ -113,7 +113,7 @@ public class SerializationCodeWriter extends javax.swing.JFrame {
                     break;
                 case "boolean":
                     saveCode.append(
-                            "retVal.addElement(XMLUtilities.writeBoolean(\"")
+                                    "retVal.addElement(XMLUtilities.writeBoolean(\"")
                             .append(varName).append("\", ").append(varName).append(
                                     "));\n");
                     loadCode.append("retVal.").append(varName).append(

@@ -58,8 +58,8 @@ public class UniqueNameManager  {
     private boolean isUniquelyNamed(BSBObject bsbObj, Set<String> names) {
         String[] keys = bsbObj.getReplacementKeys();
 
-        for (int i = 0; i < keys.length; i++) {
-            if (!isUnique(keys[i], names)) {
+        for (String key : keys) {
+            if (!isUnique(key, names)) {
                 return false;
             }
         }

@@ -412,8 +412,7 @@ public class Table extends AbstractTableModel {
 
         Element pointsNode = new Element("points");
 
-        for (Iterator it = points.iterator(); it.hasNext();) {
-            TablePoint tPoint = (TablePoint) it.next();
+        for (TablePoint tPoint : points) {
             pointsNode.addElement(tPoint.saveAsXML());
         }
 
@@ -439,9 +438,7 @@ public class Table extends AbstractTableModel {
         double oldVal = this.min;
         this.min = min;
 
-        for (Iterator iter = points.iterator(); iter.hasNext();) {
-            TablePoint point = (TablePoint) iter.next();
-
+        for (TablePoint point : points) {
             double newVal;
 
             if (truncate) {
@@ -472,9 +469,7 @@ public class Table extends AbstractTableModel {
         double oldVal = this.max;
         this.max = max;
 
-        for (Iterator iter = points.iterator(); iter.hasNext();) {
-            TablePoint point = (TablePoint) iter.next();
-
+        for (TablePoint point : points) {
             double newVal;
 
             if (truncate) {

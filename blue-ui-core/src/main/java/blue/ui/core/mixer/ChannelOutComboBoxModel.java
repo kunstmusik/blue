@@ -135,8 +135,8 @@ public class ChannelOutComboBoxModel implements ComboBoxModel,
             return;
         }
 
-        for (Iterator it = listeners.iterator(); it.hasNext();) {
-            ListDataListener listener = (ListDataListener) it.next();
+        for (Object o : listeners) {
+            ListDataListener listener = (ListDataListener) o;
 
             switch (lde.getType()) {
                 case ListDataEvent.INTERVAL_ADDED:
@@ -158,8 +158,8 @@ public class ChannelOutComboBoxModel implements ComboBoxModel,
         }
 
         if (copies != null) {
-            for (int i = 0; i < copies.size(); i++) {
-                ((ChannelOutComboBoxModel) copies.get(i)).reconcile(oldName,
+            for (Object copy : copies) {
+                ((ChannelOutComboBoxModel) copy).reconcile(oldName,
                         newName);
             }
         }

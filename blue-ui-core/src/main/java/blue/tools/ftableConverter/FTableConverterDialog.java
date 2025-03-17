@@ -98,9 +98,9 @@ public class FTableConverterDialog extends javax.swing.JDialog implements
 
         StringBuffer buffer = new StringBuffer();
 
-        for (int i = 0; i < lines.length; i++) {
+        for (String s : lines) {
 
-            String line = lines[i].substring(lines[i].indexOf("f") + 1);
+            String line = s.substring(s.indexOf("f") + 1);
 
             int commentIndex = line.indexOf(";");
             String comment = "";

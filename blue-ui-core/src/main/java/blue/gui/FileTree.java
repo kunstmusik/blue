@@ -204,8 +204,7 @@ public class FileTree extends JComponent {
     }
 
     protected void fireFileSelected(File f) {
-        for (int i = 0; i < listeners.size(); i++) {
-            FileTreeListener ftl = listeners.get(i);
+        for (FileTreeListener ftl : listeners) {
             ftl.fileSelected(f);
         }
     }
@@ -247,18 +246,18 @@ public class FileTree extends JComponent {
             v.add(dir.getParentFile());
         }
 
-        for (int i = 0; i < files.length; i++) {
-            if (files[i].getName().startsWith(".")) {
+        for (File file : files) {
+            if (file.getName().startsWith(".")) {
                 continue;
             }
-            if (files[i].isFile()) {
-                fileName = files[i].getName();
+            if (file.isFile()) {
+                fileName = file.getName();
 
                 if (filter(fileName)) {
-                    v.add(files[i]);
+                    v.add(file);
                 }
-            } else if (files[i].isDirectory()) {
-                v.add(files[i]);
+            } else if (file.isDirectory()) {
+                v.add(file);
             }
 
         }
@@ -271,8 +270,8 @@ public class FileTree extends JComponent {
         if (filenameExtensions == null) {
             return false;
         }
-        for (int i = 0; i < filenameExtensions.length; i++) {
-            if (fileName.toLowerCase().endsWith(filenameExtensions[i])) {
+        for (String filenameExtension : filenameExtensions) {
+            if (fileName.toLowerCase().endsWith(filenameExtension)) {
                 return true;
             }
         }
@@ -355,9 +354,9 @@ class DriveSelectorPopupMenu extends JPopupMenu implements ActionListener {
         File[] drives = File.listRoots();
         JMenuItem temp;
 
-        for (int i = 0; i < drives.length; i++) {
-            temp = new JMenuItem(drives[i].getAbsolutePath());
-            temp.setActionCommand(drives[i].getAbsolutePath());
+        for (File drive : drives) {
+            temp = new JMenuItem(drive.getAbsolutePath());
+            temp.setActionCommand(drive.getAbsolutePath());
             temp.addActionListener(this);
             this.add(temp);
 

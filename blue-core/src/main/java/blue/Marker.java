@@ -32,7 +32,7 @@ public class Marker implements Comparable<Marker> {
 
     private String name;
 
-    transient Vector listeners = null;
+    transient Vector<PropertyChangeListener> listeners = null;
 
     public Marker() {
     }
@@ -94,17 +94,14 @@ public class Marker implements Comparable<Marker> {
             return;
         }
 
-        for (Iterator iter = listeners.iterator(); iter.hasNext();) {
-            PropertyChangeListener listener = (PropertyChangeListener) iter
-                    .next();
-
+        for (PropertyChangeListener listener : listeners) {
             listener.propertyChange(pce);
         }
     }
 
     public void addPropertyChangeListener(PropertyChangeListener pcl) {
         if (listeners == null) {
-            listeners = new Vector();
+            listeners = new Vector<>();
         }
 
         listeners.add(pcl);

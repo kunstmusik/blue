@@ -155,7 +155,7 @@ public class PatternsHeaderListPanel extends JPanel implements
                         Component c = SwingUtilities.getDeepestComponentAt(
                                 PatternsHeaderListPanel.this, me.getX(), me.getY());
 
-                        if (c != null && c instanceof JLabel) {
+                        if (c instanceof JLabel) {
                             Component panel = getComponentAt(me.getPoint());
 
                             ((PatternLayerPanel) panel).editName();

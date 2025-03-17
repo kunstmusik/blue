@@ -108,17 +108,17 @@ public class BlueToolTipUI extends MetalToolTipUI {
         KeyStroke[] keys = comp.getRegisteredKeyStrokes();
         String controlKeyStr = "";
 
-        for (int i = 0; i < keys.length; i++) {
-            int mod = keys[i].getModifiers();
-            int condition = comp.getConditionForKeyStroke(keys[i]);
+        for (KeyStroke key : keys) {
+            int mod = key.getModifiers();
+            int condition = comp.getConditionForKeyStroke(key);
 
             if (condition == JComponent.WHEN_IN_FOCUSED_WINDOW
                     && ((mod & InputEvent.ALT_MASK) != 0
-                            || (mod & InputEvent.CTRL_MASK) != 0
-                            || (mod & InputEvent.SHIFT_MASK) != 0 || (mod & InputEvent.META_MASK) != 0)) {
+                    || (mod & InputEvent.CTRL_MASK) != 0
+                    || (mod & InputEvent.SHIFT_MASK) != 0 || (mod & InputEvent.META_MASK) != 0)) {
                 controlKeyStr = KeyEvent.getKeyModifiersText(mod)
                         + acceleratorDelimiter
-                        + KeyEvent.getKeyText(keys[i].getKeyCode());
+                        + KeyEvent.getKeyText(key.getKeyCode());
                 break;
             }
         }

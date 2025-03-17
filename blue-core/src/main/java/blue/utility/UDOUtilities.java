@@ -135,9 +135,7 @@ public class UDOUtilities {
             OpcodeList masterList) {
         HashMap keyValues = new HashMap();
 
-        for (Iterator iter = newList.iterator(); iter.hasNext();) {
-            UserDefinedOpcode udo = (UserDefinedOpcode) iter.next();
-
+        for (UserDefinedOpcode udo : newList) {
             if (keyValues.size() > 0) {
                 udo.codeBody = TextUtilities.replaceOpcodeNames(keyValues,
                         udo.codeBody);

@@ -101,11 +101,6 @@
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
-            <artifactId>blue-ui-nbutilities</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>${project.groupId}</groupId>
             <artifactId>blue-ui-utilities</artifactId>
             <version>${project.version}</version>
         </dependency>
@@ -304,7 +299,6 @@
             <artifactId>timingframework-swing</artifactId>
             <version>7.3.1</version>
         </dependency>
-        
         <dependency>
             <groupId>com.github.jiconfont</groupId>
             <artifactId>jiconfont-swing</artifactId>

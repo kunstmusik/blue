@@ -403,8 +403,7 @@ public class Line implements TableModel, ChangeListener, Iterable<LinePoint> {
      */
     public LinePoint getLinePoint(double time, boolean fromLeft) {
         if (fromLeft) {
-            for (int i = 0; i < points.size(); i++) {
-                LinePoint lp = points.get(i);
+            for (LinePoint lp : points) {
                 if (lp.getX() == time) {
                     return lp;
                 } else if (lp.getX() > time) {
@@ -632,8 +631,7 @@ public class Line implements TableModel, ChangeListener, Iterable<LinePoint> {
 
     public void fireTableChanged(TableModelEvent e) {
         if (listeners != null) {
-            for (Iterator iter = listeners.iterator(); iter.hasNext();) {
-                TableModelListener listener = (TableModelListener) iter.next();
+            for (TableModelListener listener : listeners) {
                 listener.tableChanged(e);
             }
         }
@@ -770,9 +768,7 @@ public class Line implements TableModel, ChangeListener, Iterable<LinePoint> {
 
     public void setResolution(BigDecimal resolution) {
         this.resolution = resolution;
-        for (Iterator iter = points.iterator(); iter.hasNext();) {
-            LinePoint point = (LinePoint) iter.next();
-
+        for (LinePoint point : points) {
             double newVal = LineUtils.snapToResolution(point.getY(), this.min,
                     this.max, this.resolution);
 
@@ -801,9 +797,7 @@ public class Line implements TableModel, ChangeListener, Iterable<LinePoint> {
 
         StrBuilder builder = new StrBuilder();
 
-        for (Iterator iter = points.iterator(); iter.hasNext();) {
-            LinePoint point = (LinePoint) iter.next();
-
+        for (LinePoint point : points) {
             builder.append(point.getX()).append("\t").append(point.getY())
                     .append("\n");
         }
@@ -1242,9 +1236,7 @@ public class Line implements TableModel, ChangeListener, Iterable<LinePoint> {
 
         List<LinePoint> retVal = new ArrayList<>();
 
-        for (Iterator<LinePoint> iter = iterator(); iter.hasNext();) {
-
-            LinePoint lp = iter.next();
+        for (LinePoint lp : this) {
 
             double pointTime = lp.getX();
 

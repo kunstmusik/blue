@@ -119,7 +119,7 @@ public class FileChooserManager {
 
             if (files != null && files.length > 0) {
                 retVal.add(files[0]);
-            };
+            }
 
         };
 

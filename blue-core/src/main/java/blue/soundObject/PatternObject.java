@@ -31,7 +31,6 @@ import electric.xml.Elements;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Vector;
 import javax.swing.event.TableModelEvent;
@@ -56,9 +55,9 @@ public class PatternObject extends AbstractSoundObject implements TableModel,
 
     private int subDivisions = 4;
 
-    private transient Vector listeners = null;
+    private transient Vector<TableModelListener> listeners = null;
 
-    private transient Vector pListeners = null;
+    private transient Vector<PropertyChangeListener> pListeners = null;
 
     private final ArrayList<Pattern> patterns = new ArrayList<>();
 
@@ -298,8 +297,7 @@ public class PatternObject extends AbstractSoundObject implements TableModel,
 
         retVal.addElement(patternsNode);
 
-        for (Iterator iter = patterns.iterator(); iter.hasNext();) {
-            Pattern element = (Pattern) iter.next();
+        for (Pattern element : patterns) {
             patternsNode.addElement(element.saveAsXML());
         }
 
@@ -337,13 +335,11 @@ public class PatternObject extends AbstractSoundObject implements TableModel,
 
         int numBeats = beats * subDivisions;
 
-        for (Iterator iter = patterns.iterator(); iter.hasNext();) {
-            Pattern p = (Pattern) iter.next();
-
+        for (Pattern p : patterns) {
             var oldValues = p.values;
             p.values = new boolean[numBeats];
-            
-            if(oldSubDivisions == subDivisions) {
+
+            if (oldSubDivisions == subDivisions) {
                 System.arraycopy(oldValues, 0, p.values, 0, Math.min(oldBeats, numBeats));
             }
         }
@@ -428,7 +424,7 @@ public class PatternObject extends AbstractSoundObject implements TableModel,
     @Override
     public void addTableModelListener(TableModelListener l) {
         if (listeners == null) {
-            listeners = new Vector();
+            listeners = new Vector<>();
         }
         listeners.add(l);
     }
@@ -448,8 +444,7 @@ public class PatternObject extends AbstractSoundObject implements TableModel,
 
         TableModelEvent tme = new TableModelEvent(this);
 
-        for (Iterator iter = listeners.iterator(); iter.hasNext();) {
-            TableModelListener listener = (TableModelListener) iter.next();
+        for (TableModelListener listener : listeners) {
             listener.tableChanged(tme);
         }
     }
@@ -460,17 +455,14 @@ public class PatternObject extends AbstractSoundObject implements TableModel,
             return;
         }
 
-        for (Iterator iter = pListeners.iterator(); iter.hasNext();) {
-            PropertyChangeListener listener = (PropertyChangeListener) iter
-                    .next();
-
+        for (PropertyChangeListener listener : pListeners) {
             listener.propertyChange(pce);
         }
     }
 
     public void addPropertyChangeListener(PropertyChangeListener pcl) {
         if (pListeners == null) {
-            pListeners = new Vector();
+            pListeners = new Vector<>();
         }
         pListeners.add(pcl);
     }

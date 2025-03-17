@@ -369,12 +369,12 @@ public class TracksEditor extends JPanel {
         } else {
             ActionMap actionMap = table.getActionMap();
             InputMap inputMap = table.getInputMap(WHEN_FOCUSED);
-            for (int i = 0; i < keyboardNoteActions.length; i++) {
-                String name = (String) keyboardNoteActions[i]
+            for (Action keyboardNoteAction : keyboardNoteActions) {
+                String name = (String) keyboardNoteAction
                         .getValue(Action.NAME);
 
                 actionMap.remove(name);
-                inputMap.remove((KeyStroke) keyboardNoteActions[i]
+                inputMap.remove((KeyStroke) keyboardNoteAction
                         .getValue(Action.ACCELERATOR_KEY));
             }
         }
@@ -658,11 +658,11 @@ public class TracksEditor extends JPanel {
                 final Component[] components = getComponents();
 
                 SwingUtilities.invokeLater(() -> {
-                    for (int i = 0; i < components.length; i++) {
-                        if (components[i] == c) {
-                            components[i].setBackground(Color.GREEN);
+                    for (Component component : components) {
+                        if (component == c) {
+                            component.setBackground(Color.GREEN);
                         } else {
-                            components[i].setBackground(null);
+                            component.setBackground(null);
                         }
                     }
                     

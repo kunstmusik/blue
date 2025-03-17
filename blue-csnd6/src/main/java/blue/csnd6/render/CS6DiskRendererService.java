@@ -30,7 +30,7 @@ import org.openide.windows.InputOutput;
 
 public class CS6DiskRendererService implements DiskRenderService {
 
-    Vector listeners = new Vector();
+    private Vector<PlayModeListener> listeners = new Vector<>();
     RenderTimeManager renderTimeManager = null;
     private volatile boolean keepRunning = false;
     // NOTE: Must store at class level to prevent pre-mature garbage collection
@@ -150,8 +150,8 @@ public class CS6DiskRendererService implements DiskRenderService {
 
 
             if (parameters != null) {
-                for (int i = 0; i < parameters.size(); i++) {
-                    param = parameters.get(i);
+                for (Parameter parameter : parameters) {
+                    param = parameter;
                     String varName = param.getCompilationVarName();
 
                     double value = param.getValue(currentTime);
@@ -249,8 +249,7 @@ public class CS6DiskRendererService implements DiskRenderService {
     }
 
     public void notifyPlayModeListeners(int playMode) {
-        for (Iterator iter = listeners.iterator(); iter.hasNext();) {
-            PlayModeListener listener = (PlayModeListener) iter.next();
+        for (PlayModeListener listener : listeners) {
             listener.playModeChanged(playMode);
         }
     }

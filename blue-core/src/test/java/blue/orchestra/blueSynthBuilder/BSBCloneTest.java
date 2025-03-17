@@ -30,9 +30,7 @@ public class BSBCloneTest extends TestCase {
     public void testSerialize() {
         BSBObjectEntry[] bsbObjects = BSBObjectRegistry.getBSBObjects();
 
-        for (int i = 0; i < bsbObjects.length; i++) {
-            BSBObjectEntry entry = bsbObjects[i];
-
+        for (BSBObjectEntry entry : bsbObjects) {
             Class class1 = entry.bsbObjectClass;
 
             BSBObject bsbObj = null;
@@ -58,9 +56,7 @@ public class BSBCloneTest extends TestCase {
     public void testClone() {
         BSBObjectEntry[] bsbObjects = BSBObjectRegistry.getBSBObjects();
 
-        for (int i = 0; i < bsbObjects.length; i++) {
-            BSBObjectEntry entry = bsbObjects[i];
-
+        for (BSBObjectEntry entry : bsbObjects) {
             Class class1 = entry.bsbObjectClass;
 
             BSBObject bsbObj = null;
@@ -106,9 +102,7 @@ public class BSBCloneTest extends TestCase {
     public void testLoadSave() {
         BSBObjectEntry[] bsbObjects = BSBObjectRegistry.getBSBObjects();
 
-        for (int i = 0; i < bsbObjects.length; i++) {
-            BSBObjectEntry entry = bsbObjects[i];
-
+        for (BSBObjectEntry entry : bsbObjects) {
             Class class1 = entry.bsbObjectClass;
 
             BSBObject bsbObj = null;

@@ -158,8 +158,8 @@ public class Operator {
         retVal.addElement(XMLUtilities.writeInt("modulationPitch",
                 modulationPitch));
 
-        for (int i = 0; i < envelopePoints.length; i++) {
-            retVal.addElement(envelopePoints[i].saveAsXML());
+        for (EnvelopePoint envelopePoint : envelopePoints) {
+            retVal.addElement(envelopePoint.saveAsXML());
         }
 
         return retVal;

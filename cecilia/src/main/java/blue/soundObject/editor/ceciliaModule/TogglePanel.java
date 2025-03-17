@@ -26,7 +26,6 @@ import blue.soundObject.ceciliaModule.CeciliaObject;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.HashMap;
-import java.util.Iterator;
 import javax.swing.JCheckBox;
 import javax.swing.JComponent;
 import pnuts.awt.PnutsLayout;
@@ -79,8 +78,8 @@ public class TogglePanel extends JComponent implements ActionListener {
             return;
         }
 
-        for (Iterator iter = map.values().iterator(); iter.hasNext();) {
-            CeciliaObject element = (CeciliaObject) iter.next();
+        for (Object o : map.values()) {
+            CeciliaObject element = (CeciliaObject) o;
 
             if (element instanceof CToggle) {
                 CToggle toggle = (CToggle) element;

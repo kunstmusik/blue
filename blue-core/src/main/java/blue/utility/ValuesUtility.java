@@ -38,18 +38,18 @@ public class ValuesUtility {
 
         Field[] fields = c.getDeclaredFields();
 
-        for (int i = 0; i < fields.length; i++) {
-            if (fields[i].getType() == String.class) {
+        for (Field field : fields) {
+            if (field.getType() == String.class) {
                 try {
-                    if (fields[i].get(obj) == null) {
+                    if (field.get(obj) == null) {
                         if (printMessages) {
                             System.err
                                     .println("ValuesUtility: Null String found in "
                                             + c.getName()
                                             + " field: "
-                                            + fields[i].getName());
+                                            + field.getName());
                         }
-                        fields[i].set(obj, "");
+                        field.set(obj, "");
                     }
                 } catch (IllegalAccessException iae) {
                     iae.printStackTrace();

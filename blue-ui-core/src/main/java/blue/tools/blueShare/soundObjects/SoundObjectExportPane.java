@@ -200,10 +200,10 @@ public class SoundObjectExportPane extends JComponent {
             BlueShareSoundObjectCategory[] categories) {
         DefaultMutableTreeNode temp;
 
-        for (int i = 0; i < categories.length; i++) {
-            temp = new DefaultMutableTreeNode(categories[i]);
+        for (BlueShareSoundObjectCategory category : categories) {
+            temp = new DefaultMutableTreeNode(category);
             parent.add(temp);
-            addSubCategories(temp, categories[i].getSubCategories());
+            addSubCategories(temp, category.getSubCategories());
         }
     }
 

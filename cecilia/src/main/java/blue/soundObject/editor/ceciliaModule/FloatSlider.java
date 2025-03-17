@@ -179,8 +179,8 @@ public class FloatSlider extends JComponent {
     }
 
     private void fireChangeEvent(ChangeEvent ce) {
-        for (Iterator iter = listeners.iterator(); iter.hasNext();) {
-            ChangeListener listener = (ChangeListener) iter.next();
+        for (Object o : listeners) {
+            ChangeListener listener = (ChangeListener) o;
 
             listener.stateChanged(ce);
         }
@@ -195,8 +195,8 @@ public class FloatSlider extends JComponent {
     }
 
     private void fireActionEvent(ActionEvent ae) {
-        for (Iterator iter = actionListeners.iterator(); iter.hasNext();) {
-            ActionListener listener = (ActionListener) iter.next();
+        for (Object actionListener : actionListeners) {
+            ActionListener listener = (ActionListener) actionListener;
 
             listener.actionPerformed(ae);
         }

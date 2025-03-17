@@ -61,8 +61,7 @@ public class BSBDropdownItemList extends SimpleListProperty<BSBDropdownItem> {
     public Element saveAsXML() {
         Element retVal = new Element("bsbDropdownItemList");
 
-        for (Iterator iter = this.iterator(); iter.hasNext();) {
-            BSBDropdownItem item = (BSBDropdownItem) iter.next();
+        for (BSBDropdownItem item : this) {
             retVal.addElement(item.saveAsXML());
         }
 

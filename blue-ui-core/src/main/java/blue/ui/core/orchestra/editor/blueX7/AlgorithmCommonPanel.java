@@ -175,8 +175,8 @@ public class AlgorithmCommonPanel extends JComponent {
             checkData();
         };
 
-        for (int i = 0; i < operatorEnabled.length; i++) {
-            operatorEnabled[i].addActionListener(al);
+        for (JCheckBox jCheckBox : operatorEnabled) {
+            jCheckBox.addActionListener(al);
         }
     }
 

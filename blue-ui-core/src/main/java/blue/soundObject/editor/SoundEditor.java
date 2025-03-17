@@ -109,7 +109,7 @@ public class SoundEditor extends ScoreObjectEditor {
     @Override
     public final void editScoreObject(ScoreObject sObj) {
 
-        if (sObj == null || !(sObj instanceof Sound)) {
+        if (!(sObj instanceof Sound)) {
             this.sObj = null;
             editorLabel.setText("no editor available");
             editor.editInstrument(null);

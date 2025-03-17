@@ -59,9 +59,7 @@ public class EffectsChain implements ListModel, PropertyChangeListener {
     public Element saveAsXML() {
         Element retVal = new Element("effectsChain");
 
-        for (Iterator it = effects.iterator(); it.hasNext();) {
-            Object obj = it.next();
-
+        for (Object obj : effects) {
             if (obj instanceof Effect elem) {
                 retVal.addElement(elem.saveAsXML());
             } else if (obj instanceof Send send) {

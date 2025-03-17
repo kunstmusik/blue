@@ -100,13 +100,12 @@ public class BlueLiveBinding implements CsoundBinding {
     protected void triggerLiveData() {
         LiveObjectSet liveObjects = data.getLiveObjectBins().getEnabledLiveObjectSet();
 
-        if (liveObjects.size() > 0) {
+        if (!liveObjects.isEmpty()) {
 
             NoteList nl = new NoteList();
             try {
 
-                for (int i = 0, size = liveObjects.size(); i < size; i++) {
-                    LiveObject liveObj = liveObjects.get(i);
+                for (LiveObject liveObj : liveObjects) {
                     SoundObject sObj = liveObj.getSoundObject();
 
                     if (sObj.getTimeBehavior() != TimeBehavior.NOT_SUPPORTED) {

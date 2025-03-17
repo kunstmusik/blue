@@ -41,13 +41,13 @@ public class ObjectRandomizer {
     public static void randomize(Object obj) {
         Method[] methods = obj.getClass().getMethods();
 
-        for (int i = 0; i < methods.length; i++) {
+        for (Method method : methods) {
 
-            if (!methods[i].getName().startsWith("set")) {
+            if (!method.getName().startsWith("set")) {
                 continue;
             }
 
-            Class[] params = methods[i].getParameterTypes();
+            Class[] params = method.getParameterTypes();
 
             if (params.length != 1) {
                 continue;
@@ -61,7 +61,7 @@ public class ObjectRandomizer {
 
                 if (argClass.isArray()) {
 
-                    System.err.println("Is Array: " + methods[i]);
+                    System.err.println("Is Array: " + method);
                     // int len = Array.getLength(obj);
                     //
                     // for (int j = 0; j < len; j++) {
@@ -137,14 +137,14 @@ public class ObjectRandomizer {
                 }
             } catch (IllegalArgumentException e) {
                 // TODO Auto-generated catch block
-                System.err.println("IllegalArgumentException: " + methods[i]);
+                System.err.println("IllegalArgumentException: " + method);
                 // e.printStackTrace();
                 // } catch (IllegalAccessException e) {
                 // // TODO Auto-generated catch block
                 // System.err.println("IllegalAccessException: " + methods[i]);
                 // e.printStackTrace();
             } catch (NullPointerException e) {
-                System.err.println("NullPointerException: " + methods[i]);
+                System.err.println("NullPointerException: " + method);
             }
         }
     }
@@ -152,8 +152,8 @@ public class ObjectRandomizer {
     public static void randomizeFields(Object obj) {
         Field[] fields = obj.getClass().getDeclaredFields();
 
-        for (int i = 0; i < fields.length; i++) {
-            int modifiers = fields[i].getModifiers();
+        for (Field field : fields) {
+            int modifiers = field.getModifiers();
 
             if ((modifiers & Modifier.STATIC) > 0
                     || (modifiers & Modifier.TRANSIENT) > 0
@@ -161,9 +161,9 @@ public class ObjectRandomizer {
                 continue;
             }
 
-            Class declaringClass = fields[i].getDeclaringClass();
+            Class declaringClass = field.getDeclaringClass();
 
-            fields[i].setAccessible(true);
+            field.setAccessible(true);
 
             // System.out.println(fields[i]);
 
@@ -171,7 +171,7 @@ public class ObjectRandomizer {
 
                 if (declaringClass.isArray()) {
 
-                    System.err.println("Is Array: " + fields[i]);
+                    System.err.println("Is Array: " + field);
                     int len = Array.getLength(obj);
 
                     for (int j = 0; j < len; j++) {
@@ -185,7 +185,7 @@ public class ObjectRandomizer {
                             Array.setDouble(obj, j, 100.0 * Math.random());
                         } else if (declaringClass == Boolean.class) {
                             Array
-                                    .setBoolean(obj, j, !fields[i]
+                                    .setBoolean(obj, j, !field
                                             .getBoolean(obj));
                         } else if (declaringClass == Long.class) {
                             Array
@@ -210,25 +210,25 @@ public class ObjectRandomizer {
                 } else {
 
                     if (declaringClass == Integer.class) {
-                        fields[i].setInt(obj, (int) (100 * Math.random()));
+                        field.setInt(obj, (int) (100 * Math.random()));
                     } else if (declaringClass == Float.class) {
-                        fields[i].setFloat(obj,
+                        field.setFloat(obj,
                                 (float) (100.0f * Math.random()));
                     } else if (declaringClass == Double.class) {
-                        fields[i].setDouble(obj, 100.0 * Math.random());
+                        field.setDouble(obj, 100.0 * Math.random());
                     } else if (declaringClass == Boolean.class) {
-                        fields[i].setBoolean(obj, !fields[i].getBoolean(obj));
+                        field.setBoolean(obj, !field.getBoolean(obj));
                     } else if (declaringClass == Long.class) {
-                        fields[i].setLong(obj, (long) (100L * Math.random()));
+                        field.setLong(obj, (long) (100L * Math.random()));
                     } else if (declaringClass == String.class) {
                         String str = getRandomString();
                         System.out.println(str);
 
-                        fields[i].set(obj, str);
+                        field.set(obj, str);
                     } else if (declaringClass == Character.class) {
-                        fields[i].setChar(obj, (char) (Math.random() * 127));
+                        field.setChar(obj, (char) (Math.random() * 127));
                     } else {
-                        Object obj2 = fields[i].get(obj);
+                        Object obj2 = field.get(obj);
 
                         if (obj2 != null) {
                             ObjectRandomizer.randomizeFields(obj2);
@@ -237,14 +237,14 @@ public class ObjectRandomizer {
                 }
             } catch (IllegalArgumentException e) {
                 // TODO Auto-generated catch block
-                System.err.println("IllegalArgumentException: " + fields[i]);
+                System.err.println("IllegalArgumentException: " + field);
                 // e.printStackTrace();
             } catch (IllegalAccessException e) {
                 // TODO Auto-generated catch block
-                System.err.println("IllegalAccessException: " + fields[i]);
+                System.err.println("IllegalAccessException: " + field);
                 // e.printStackTrace();
             } catch (NullPointerException e) {
-                System.err.println("NullPointerException: " + fields[i]);
+                System.err.println("NullPointerException: " + field);
             }
         }
     }

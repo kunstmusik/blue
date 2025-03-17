@@ -259,29 +259,29 @@ public class BlueLookAndFeel extends MetalLookAndFeel {
         int menuShortcutKey = Toolkit.getDefaultToolkit()
                 .getMenuShortcutKeyMask();
 
-        for (int i = 0; i < keys.length; i++) {
+        for (KeyStroke key : keys) {
 
             boolean found = false;
 
-            int modifiers = keys[i].getModifiers();
+            int modifiers = key.getModifiers();
 
-            if ((keys[i].getModifiers() & KeyEvent.CTRL_DOWN_MASK) == KeyEvent.CTRL_DOWN_MASK) {
+            if ((key.getModifiers() & KeyEvent.CTRL_DOWN_MASK) == KeyEvent.CTRL_DOWN_MASK) {
                 modifiers = modifiers - KeyEvent.CTRL_DOWN_MASK;
                 found = true;
             }
 
-            if ((keys[i].getModifiers() & KeyEvent.CTRL_MASK) == KeyEvent.CTRL_MASK) {
+            if ((key.getModifiers() & KeyEvent.CTRL_MASK) == KeyEvent.CTRL_MASK) {
                 modifiers = modifiers - KeyEvent.CTRL_MASK;
                 found = true;
             }
 
             if (found) {
                 modifiers = modifiers | menuShortcutKey;
-                KeyStroke keystroke = KeyStroke.getKeyStroke(keys[i]
-                        .getKeyCode(), modifiers, keys[i].isOnKeyRelease());
+                KeyStroke keystroke = KeyStroke.getKeyStroke(key
+                        .getKeyCode(), modifiers, key.isOnKeyRelease());
 
-                Object obj = inputMap.get(keys[i]);
-                inputMap.remove(keys[i]);
+                Object obj = inputMap.get(key);
+                inputMap.remove(key);
                 inputMap.put(keystroke, obj);
 
                 // System.out.println("Old Key: " + keys[i]);

@@ -1182,8 +1182,8 @@ public final class BlueLiveTopComponent extends TopComponent
             }
         };
 
-        for (int i = 0; i < items.length; i++) {
-            JMenuItem item = new JMenuItem(items[i]);
+        for (String s : items) {
+            JMenuItem item = new JMenuItem(s);
             item.addActionListener(al);
             noteTemplatePopup.add(item);
         }

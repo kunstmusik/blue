@@ -40,11 +40,11 @@ public class RandomEditor extends javax.swing.JPanel implements DurationSettable
                 Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, 1.0) {
             @Override
             public void setValue(Object value) {
-                if ((value == null) || !(value instanceof Number)) {
+                if (!(value instanceof Number)) {
                     throw new IllegalArgumentException("illegal value");
                 }
 
-                double val = ((Double) value).doubleValue();
+                double val = (Double) value;
 
                 if (val > random.getMax()) {
                     throw new IllegalArgumentException("illegal value");
@@ -58,11 +58,11 @@ public class RandomEditor extends javax.swing.JPanel implements DurationSettable
                 Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, 1.0) {
             @Override
             public void setValue(Object value) {
-                if ((value == null) || !(value instanceof Number)) {
+                if (!(value instanceof Number)) {
                     throw new IllegalArgumentException("illegal value");
                 }
 
-                double val = ((Double) value).doubleValue();
+                double val = (Double) value;
 
                 if (val < random.getMin()) {
                     throw new IllegalArgumentException("illegal value");

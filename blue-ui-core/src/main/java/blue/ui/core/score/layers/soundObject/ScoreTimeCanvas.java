@@ -194,9 +194,7 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
     public void reset() {
         UiUtilities.invokeOnSwingThread(() -> {
             Component[] components = sObjPanel.getComponents();
-            for (int i = 0; i < components.length; i++) {
-                Component c = components[i];
-
+            for (Component c : components) {
                 if (c instanceof SoundObjectView sObjView) {
 
                     int index = getPolyObject().getSoundLayerIndex(
@@ -243,8 +241,8 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
 
             SoundLayer tempLayer;
 
-            for (int i = 0; i < pObj.size(); i++) {
-                tempLayer = pObj.get(i);
+            for (SoundLayer soundObjects : pObj) {
+                tempLayer = soundObjects;
                 tempLayer.removePropertyChangeListener(heightListener);
                 tempLayer.removeSoundLayerListener(this);
             }
@@ -590,13 +588,13 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
     @Override
     public void marqueeSelectionPerformed(SelectionMarquee marquee) {
         Component[] comps = sObjPanel.getComponents();
-        for (int i = 0; i < comps.length; i++) {
-            if (!(comps[i] instanceof SoundObjectView)) {
+        for (Component comp : comps) {
+            if (!(comp instanceof SoundObjectView)) {
                 continue;
             }
 
-            if (marquee.intersects((JComponent) comps[i])) {
-                content.add(((SoundObjectView) comps[i]).getSoundObject());
+            if (marquee.intersects((JComponent) comp)) {
+                content.add(((SoundObjectView) comp).getSoundObject());
             }
 
         }

@@ -87,17 +87,14 @@ public class RandomAddProcessor implements NoteProcessor {
     
     @Override
     public final NoteList processNotes(NoteList in) throws NoteProcessorException {
-        Note temp;
-
         double range = max - min;
         double fieldVal = 0.0;
 
         Random r = seedUsed ? new Random(seed) : new Random();
 
-        for (int i = 0; i < in.size(); i++) {
-            temp = in.get(i);
+        for (Note note : in) {
             try {
-                fieldVal = Double.parseDouble(temp.getPField(pfield));
+                fieldVal = Double.parseDouble(note.getPField(pfield));
             } catch (NumberFormatException ex) {
                 throw new NoteProcessorException(this, BlueSystem
                         .getString("noteProcessorException.pfieldNotDouble"),
@@ -109,7 +106,7 @@ public class RandomAddProcessor implements NoteProcessor {
             }
             double randVal = (r.nextDouble() * range) + min;
 
-            temp.setPField(Double.toString(fieldVal + randVal), pfield);
+            note.setPField(Double.toString(fieldVal + randVal), pfield);
         }
         return in;
     }

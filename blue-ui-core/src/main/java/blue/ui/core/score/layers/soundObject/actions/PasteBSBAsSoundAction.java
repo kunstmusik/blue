@@ -81,7 +81,7 @@ public final class PasteBSBAsSoundAction extends AbstractAction implements Conte
     public boolean isEnabled() {
         Object obj = CopyBuffer.getBufferedObject(CopyBuffer.INSTRUMENT);
         
-        return obj != null && obj instanceof BlueSynthBuilder
+        return obj instanceof BlueSynthBuilder
                 && scorePath.getGlobalLayerForY(p.y) != null;
     }
     

@@ -112,8 +112,8 @@ public class Probability implements Generator, Maskable,
         Probability prob = new Probability();
         ProbabilityGenerator[] generators2 = prob.getGenerators();
 
-        for (int i = 0; i < generators2.length; i++) {
-            System.out.println("Generator: " + generators2[i].getName());
+        for (ProbabilityGenerator probabilityGenerator : generators2) {
+            System.out.println("Generator: " + probabilityGenerator.getName());
         }
     }
 

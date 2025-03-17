@@ -5,6 +5,7 @@ import blue.orchestra.blueX7.Operator;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.Arrays;
 
 /**
  * <p>
@@ -123,9 +124,7 @@ public class BlueX7SysexReader {
          * blueX7.algorithmCommon.operators[5] = (temp & 1) > 0;
          */
 
-        for (int i = 0; i < blueX7.algorithmCommon.operators.length; i++) {
-            blueX7.algorithmCommon.operators[i] = true;
-        }
+        Arrays.fill(blueX7.algorithmCommon.operators, true);
     }
 
     public static final void importFromBank(BlueX7 blueX7, byte[] sysex,

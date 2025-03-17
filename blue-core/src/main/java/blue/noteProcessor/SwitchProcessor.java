@@ -61,14 +61,11 @@ public class SwitchProcessor implements NoteProcessor {
 
     @Override
     public final NoteList processNotes(NoteList in) throws NoteProcessorException {
-        Note temp;
         String tempPField;
         int pcount = 0;
-        for (int i = 0; i < in.size(); i++) {
-            temp = in.get(i);
-
+        for (Note note : in) {
             // validate necessary pfields are there
-            pcount = temp.getPCount();
+            pcount = note.getPCount();
             if (pfield1 < 1 || pfield1 >= pcount) {
                 throw new NoteProcessorException(this, BlueSystem
                         .getString("noteProcessorException.missingPfield"),
@@ -80,9 +77,9 @@ public class SwitchProcessor implements NoteProcessor {
                         pfield2);
             }
 
-            tempPField = temp.getPField(pfield1);
-            temp.setPField(temp.getPField(pfield2), pfield1);
-            temp.setPField(tempPField, pfield2);
+            tempPField = note.getPField(pfield1);
+            note.setPField(note.getPField(pfield2), pfield1);
+            note.setPField(tempPField, pfield2);
         }
         return in;
     }

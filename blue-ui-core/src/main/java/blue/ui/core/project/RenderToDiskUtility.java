@@ -176,15 +176,15 @@ public class RenderToDiskUtility {
     protected static String getFileOutputFromCommand(String command) {
         String[] parts = command.split(" ");
 
-        for (int i = 0; i < parts.length; i++) {
-            String part = parts[i].toLowerCase();
+        for (String s : parts) {
+            String part = s.toLowerCase();
 
             if (part.endsWith(".wav") || part.endsWith(".aiff") || part.endsWith(
                     ".aif")) {
-                if (parts[i].charAt(0) == '-') {
-                    return parts[i].substring(parts[i].indexOf("o") + 1);
+                if (s.charAt(0) == '-') {
+                    return s.substring(s.indexOf("o") + 1);
                 }
-                return parts[i];
+                return s;
             }
         }
 

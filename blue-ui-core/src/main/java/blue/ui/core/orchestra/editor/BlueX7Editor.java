@@ -68,8 +68,8 @@ public class BlueX7Editor extends InstrumentEditor {
                 return;
             }
             int val = ((JSlider) e.getSource()).getValue();
-            for (int i = 0; i < operators.length; i++) {
-                operators[i].modulation.pitch.setValue(val);
+            for (OperatorPanel operator : operators) {
+                operator.modulation.pitch.setValue(val);
             }
         };
 
@@ -78,8 +78,8 @@ public class BlueX7Editor extends InstrumentEditor {
                 return;
             }
             int val = ((JComboBox) e.getSource()).getSelectedIndex();
-            for (int i = 0; i < operators.length; i++) {
-                operators[i].oscilator.syncCombo.setSelectedIndex(val);
+            for (OperatorPanel operator : operators) {
+                operator.oscilator.syncCombo.setSelectedIndex(val);
             }
         };
 
@@ -152,7 +152,7 @@ public class BlueX7Editor extends InstrumentEditor {
 
     @Override
     public void editInstrument(Instrument instr) {
-        if (instr == null || !(instr instanceof BlueX7)) {
+        if (!(instr instanceof BlueX7)) {
             this.blueX7 = null;
             System.err
                     .println("[ERROR] BlueX7Editor::editInstrument - not instance of blueX7");

@@ -183,8 +183,8 @@ public class SliderPanel extends JComponent implements ChangeListener,
             return;
         }
 
-        for (Iterator iter = map.values().iterator(); iter.hasNext();) {
-            CeciliaObject element = (CeciliaObject) iter.next();
+        for (Object o : map.values()) {
+            CeciliaObject element = (CeciliaObject) o;
 
             if (element instanceof CSlider) {
                 CSlider slider = (CSlider) element;

@@ -127,7 +127,7 @@ public class LayersPanel extends JComponent implements LayerGroupListener {
                         Component c = SwingUtilities.getDeepestComponentAt(
                                 LayersPanel.this, me.getX(), me.getY());
 
-                        if (c != null && c instanceof JLabel) {
+                        if (c instanceof JLabel) {
                             Component panel = getComponentAt(me.getPoint());
 
                             ((SoundLayerPanel) panel).editName();

@@ -25,7 +25,6 @@ import blue.noteProcessor.NoteProcessor;
 import blue.noteProcessor.NoteProcessorChain;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
-import java.util.Iterator;
 import javax.swing.table.AbstractTableModel;
 
 public class NoteProcessorChainTableModel extends AbstractTableModel {
@@ -47,9 +46,8 @@ public class NoteProcessorChainTableModel extends AbstractTableModel {
     }
 
     public void setCurrentNoteProcessor(int row) {
-        for (Iterator iter = npcProxies.iterator(); iter.hasNext();) {
-            NoteProcessorEditProxy element = (NoteProcessorEditProxy) iter
-                    .next();
+        for (Object npcProxy : npcProxies) {
+            NoteProcessorEditProxy element = (NoteProcessorEditProxy) npcProxy;
 
             if (row >= element.getStartRow() && row <= element.getEndRow()) {
                 currentNoteProcessor = element.getNoteProcessor();
@@ -63,12 +61,11 @@ public class NoteProcessorChainTableModel extends AbstractTableModel {
         if (this.currentNoteProcessor == null) {
             return null;
         }
-        for (Iterator iter = npcProxies.iterator(); iter.hasNext();) {
-            NoteProcessorEditProxy element = (NoteProcessorEditProxy) iter
-                    .next();
+        for (Object npcProxy : npcProxies) {
+            NoteProcessorEditProxy element = (NoteProcessorEditProxy) npcProxy;
 
             if (element.getNoteProcessor() == this.currentNoteProcessor) {
-                return new int[] { element.getStartRow(), element.getEndRow() };
+                return new int[]{element.getStartRow(), element.getEndRow()};
             }
         }
         return null;
@@ -92,8 +89,8 @@ public class NoteProcessorChainTableModel extends AbstractTableModel {
 
         int startRow = 0;
 
-        for (int i = 0; i < npc.size(); i++) {
-            startRow += setupNoteProcessor(npc.get(i), startRow);
+        for (NoteProcessor noteProcessor : npc) {
+            startRow += setupNoteProcessor(noteProcessor, startRow);
         }
         this.fireTableDataChanged();
     }
@@ -105,13 +102,13 @@ public class NoteProcessorChainTableModel extends AbstractTableModel {
         ArrayList getMethods = new ArrayList();
         ArrayList setMethods = new ArrayList();
 
-        for (int i = 0; i < m.length; i++) {
-            var name = m[i].getName().toLowerCase();
+        for (Method method : m) {
+            var name = method.getName().toLowerCase();
             if (name.startsWith("get") || name.startsWith(("is"))) {
-                getMethods.add(m[i]);
+                getMethods.add(method);
             }
             if (name.startsWith("set")) {
-                setMethods.add(m[i]);
+                setMethods.add(method);
             }
         }
 
@@ -120,8 +117,8 @@ public class NoteProcessorChainTableModel extends AbstractTableModel {
 
         int rowCount = 0;
 
-        for (int i = 0; i < getMethods.size(); i++) {
-            Method getTemp = (Method) getMethods.get(i);
+        for (Object getMethod : getMethods) {
+            Method getTemp = (Method) getMethod;
             Method setTemp = findSetMethod(getTemp, setMethods);
             if (setTemp != null) {
                 propName = setTemp.getName().substring(3);
@@ -144,8 +141,8 @@ public class NoteProcessorChainTableModel extends AbstractTableModel {
         String name = methodName.startsWith("get") ? 
                 methodName.substring(3) :
                 methodName.substring(2);
-        for (int i = 0; i < a.size(); i++) {
-            Method temp = (Method) a.get(i);
+        for (Object o : a) {
+            Method temp = (Method) o;
             if (temp.getName().endsWith(name)) {
                 return temp;
             }

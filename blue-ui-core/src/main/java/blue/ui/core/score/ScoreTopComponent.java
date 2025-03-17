@@ -140,7 +140,7 @@ public final class ScoreTopComponent extends TopComponent
 
     TimePointer guideLineStart = new TimePointer(Color.WHITE);
     TimePointer guideLineEnd = new TimePointer(Color.WHITE);
-    TimePointer guideLines[] = new TimePointer[]{guideLineStart, guideLineEnd};
+    TimePointer[] guideLines = new TimePointer[]{guideLineStart, guideLineEnd};
 
     double renderStart = -1.0f;
     double timePointer = -1.0f;

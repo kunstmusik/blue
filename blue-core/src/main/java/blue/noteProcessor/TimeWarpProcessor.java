@@ -37,7 +37,6 @@ public class TimeWarpProcessor implements NoteProcessor {
      */
     @Override
     public NoteList processNotes(NoteList in) throws NoteProcessorException {
-        Note temp;
         TempoMap tm = TempoMap.createTempoMap(this.timeWarpString);
 
         if (tm == null) {
@@ -47,22 +46,21 @@ public class TimeWarpProcessor implements NoteProcessor {
 
         double newStart, newEnd;
 
-        for (int i = 0; i < in.size(); i++) {
-            temp = in.get(i);
+        for (Note note : in) {
             try {
-                newStart = tm.beatsToSeconds(temp.getStartTime());
-                newEnd = tm.beatsToSeconds(temp.getStartTime()
-                        + temp.getSubjectiveDuration());
+                newStart = tm.beatsToSeconds(note.getStartTime());
+                newEnd = tm.beatsToSeconds(note.getStartTime()
+                        + note.getSubjectiveDuration());
             } catch (Exception ex) {
                 throw new NoteProcessorException(this, BlueSystem
                         .getString("noteProcessorException.timeWarp"));
             }
-            temp.setStartTime(newStart);
+            note.setStartTime(newStart);
             if (newEnd - newStart < 0) {
                 throw new NoteProcessorException(this, BlueSystem
                         .getString("noteProcessorException.timeWarp"));
             }
-            temp.setSubjectiveDuration(newEnd - newStart);
+            note.setSubjectiveDuration(newEnd - newStart);
         }
         return in;
     }

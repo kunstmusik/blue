@@ -109,8 +109,8 @@ public class CS6RealtimeRenderService implements RealtimeRenderService, PlayMode
         List<String> argsList = new ArrayList<String>(
                 Arrays.asList(args));
 
-        for (int i = 0; i < args.length; i++) {
-            io.getOut().append(" ").append(args[i]);
+        for (String arg : args) {
+            io.getOut().append(" ").append(arg);
         }
 
         if (currentWorkingDirectory != null) {
@@ -330,8 +330,7 @@ public class CS6RealtimeRenderService implements RealtimeRenderService, PlayMode
             return;
         }
 
-        for (Iterator<PlayModeListener> iter = listeners.iterator(); iter.hasNext();) {
-            PlayModeListener listener = iter.next();
+        for (PlayModeListener listener : listeners) {
             listener.playModeChanged(playMode);
         }
     }
@@ -483,8 +482,8 @@ public class CS6RealtimeRenderService implements RealtimeRenderService, PlayMode
                         strChannel.getValue());
             }
 
-            for (int i = 0; i < bindings.size(); i++) {
-                bindings.get(i).setup(csound.getSr(), csound.getKsmps());
+            for (CsoundBinding item : bindings) {
+                item.setup(csound.getSr(), csound.getKsmps());
             }
 
             currentTime = (blueData == null) ? 0.0f : blueData.getRenderStartTime();
@@ -550,8 +549,7 @@ public class CS6RealtimeRenderService implements RealtimeRenderService, PlayMode
                     }
                 }
 
-                for (int i = 0, size = stringChannels.size(); i < size; i++) {
-                    StringChannel strChannel = stringChannels.get(i);
+                for (StringChannel strChannel : stringChannels) {
                     if (strChannel.isDirty()) {
 //                        System.out.println(
 //                                "Setting Channel: " + strChannel.getChannelName() + " : " + strChannel.getValue());
@@ -560,19 +558,19 @@ public class CS6RealtimeRenderService implements RealtimeRenderService, PlayMode
                     }
                 }
 
-                for (int i = 0, size = bindings.size(); i < size; i++) {
-                    bindings.get(i).updateValueToCsound();
+                for (CsoundBinding csoundBinding : bindings) {
+                    csoundBinding.updateValueToCsound();
                 }
 
                 keepRunning = csound.performKsmps() == 0 && keepRunning;
 
-                for (int i = 0, size = bindings.size(); i < size; i++) {
-                    bindings.get(i).updateValueFromCsound();
+                for (CsoundBinding binding : bindings) {
+                    binding.updateValueFromCsound();
                 }
             }
 
-            for (int i = 0; i < bindings.size(); i++) {
-                bindings.get(i).cleanup();
+            for (CsoundBinding binding : bindings) {
+                binding.cleanup();
             }
 
             bindings.clear();

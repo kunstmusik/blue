@@ -756,7 +756,7 @@ public class BSBEditPanel extends JLayeredPane implements
     static class BSBNudgeUtils {
         
         public static enum DIRECTION {
-            HORIZONTAL, VERTICAL;
+            HORIZONTAL, VERTICAL
         }
         
         public static HashMap<BSBObject, int[]> nudgeHorizontal(Collection<BSBObject> objects, int amount) {

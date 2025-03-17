@@ -52,7 +52,6 @@ public class LineAddProcessor implements NoteProcessor {
      */
     @Override
     public NoteList processNotes(NoteList in) throws NoteProcessorException {
-        Note temp;
         double addVal = 0f;
         double oldVal = 0f;
         ValueTimeMapper tm = ValueTimeMapper
@@ -64,11 +63,10 @@ public class LineAddProcessor implements NoteProcessor {
                     pfield);
         }
 
-        for (int i = 0; i < in.size(); i++) {
-            temp = in.get(i);
+        for (Note note : in) {
             try {
-                oldVal = Double.parseDouble(temp.getPField(this.pfield));
-                addVal = tm.getValueForBeat(temp.getStartTime());
+                oldVal = Double.parseDouble(note.getPField(this.pfield));
+                addVal = tm.getValueForBeat(note.getStartTime());
             } catch (NumberFormatException ex) {
                 throw new NoteProcessorException(this, BlueSystem
                         .getString("noteProcessorException.pfieldNotDouble"),
@@ -84,7 +82,7 @@ public class LineAddProcessor implements NoteProcessor {
                         .getString("noteProcessorException.noteBeatErr"),
                         pfield);
             }
-            temp.setPField(Double.toString(oldVal + addVal), this.pfield);
+            note.setPField(Double.toString(oldVal + addVal), this.pfield);
 
         }
         return in;

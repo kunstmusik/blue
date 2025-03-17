@@ -35,7 +35,7 @@ public class MarkersList implements TableModel, PropertyChangeListener {
 
     ArrayList<Marker> markers = new ArrayList<>();
 
-    private transient Vector listeners = null;
+    private transient Vector<TableModelListener> listeners = null;
 
     public MarkersList() {
     }
@@ -75,8 +75,7 @@ public class MarkersList implements TableModel, PropertyChangeListener {
         TableModelEvent tme = new TableModelEvent(this, index, index,
                 TableModelEvent.ALL_COLUMNS, TableModelEvent.INSERT);
 
-        for (Iterator iter = listeners.iterator(); iter.hasNext();) {
-            TableModelListener listener = (TableModelListener) iter.next();
+        for (TableModelListener listener : listeners) {
             listener.tableChanged(tme);
         }
 
@@ -102,8 +101,7 @@ public class MarkersList implements TableModel, PropertyChangeListener {
         TableModelEvent tme = new TableModelEvent(this, index, index,
                 TableModelEvent.ALL_COLUMNS, TableModelEvent.DELETE);
 
-        for (Iterator iter = listeners.iterator(); iter.hasNext();) {
-            TableModelListener listener = (TableModelListener) iter.next();
+        for (TableModelListener listener : listeners) {
             listener.tableChanged(tme);
         }
     }
@@ -223,7 +221,7 @@ public class MarkersList implements TableModel, PropertyChangeListener {
     @Override
     public void addTableModelListener(TableModelListener l) {
         if (listeners == null) {
-            listeners = new Vector();
+            listeners = new Vector<TableModelListener>();
         }
         listeners.add(l);
     }
@@ -243,8 +241,7 @@ public class MarkersList implements TableModel, PropertyChangeListener {
 
         TableModelEvent tme = new TableModelEvent(this);
 
-        for (Iterator iter = listeners.iterator(); iter.hasNext();) {
-            TableModelListener listener = (TableModelListener) iter.next();
+        for (TableModelListener listener : listeners) {
             listener.tableChanged(tme);
         }
     }

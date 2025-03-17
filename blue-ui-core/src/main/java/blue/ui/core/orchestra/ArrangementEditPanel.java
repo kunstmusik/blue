@@ -367,7 +367,7 @@ public class ArrangementEditPanel extends JComponent
     public void pasteInstrument() {
         Object obj = CopyBuffer.getBufferedObject(CopyBuffer.INSTRUMENT);
 
-        if (obj == null || !(obj instanceof Instrument)) {
+        if (!(obj instanceof Instrument)) {
             return;
         }
 
@@ -442,8 +442,8 @@ public class ArrangementEditPanel extends JComponent
             }
         }
 
-        for (int i = 0; i < idList.size(); i++) {
-            channels.checkOrCreate(idList.get(i));
+        for (String s : idList) {
+            channels.checkOrCreate(s);
         }
     }
 
@@ -759,8 +759,7 @@ public class ArrangementEditPanel extends JComponent
                     }
 
                     Object bufferedObj = CopyBuffer.getBufferedObject(CopyBuffer.INSTRUMENT);
-                    boolean bufferFull = bufferedObj != null
-                            && (bufferedObj instanceof Instrument);
+                    boolean bufferFull = (bufferedObj instanceof Instrument);
                     pasteMenuItem.setEnabled(bufferFull);
                 }
 

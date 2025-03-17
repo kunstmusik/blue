@@ -441,8 +441,7 @@ public class PianoRoll extends AbstractSoundObject implements ListChangeListener
             retVal.addElement(fieldDef.saveAsXML());
         }
 
-        for (Iterator<PianoNote> iter = notes.iterator(); iter.hasNext();) {
-            PianoNote note = iter.next();
+        for (PianoNote note : notes) {
             retVal.addElement(note.saveAsXML());
         }
 

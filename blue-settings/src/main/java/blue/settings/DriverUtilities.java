@@ -435,9 +435,7 @@ public class DriverUtilities {
                 && retVal.contains("does not match JACK sample rate")) {
             String[] lines = retVal.split("\n");
 
-            for (int i = 0; i < lines.length; i++) {
-                String line = lines[i];
-
+            for (String line : lines) {
                 if (line.contains("does not match JACK sample rate")) {
                     sr = line.substring(line.lastIndexOf(" ") + 1);
                     break;

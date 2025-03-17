@@ -210,9 +210,9 @@ public class UDORepositoryBrowser extends JDialog {
 
         String[] lines = codeText.split("\n");
 
-        for (int i = 0; i < lines.length; i++) {
+        for (String s : lines) {
             if (mode == 0) {
-                String line = lines[i].trim();
+                String line = s.trim();
                 line = TextUtilities.stripSingleLineComments(line);
 
                 if (line.startsWith("opcode")) {
@@ -225,7 +225,7 @@ public class UDORepositoryBrowser extends JDialog {
                     mode = 1;
                 }
             } else if (mode == 1) {
-                String line = lines[i];
+                String line = s;
                 if (line.contains("endop")) {
                     break;
                 }

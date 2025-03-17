@@ -78,8 +78,8 @@ public class AudioLayersPanel extends JLayeredPane implements LayerGroupListener
     AffineTransform transform = new AffineTransform();
     // transforms from screen to virtual time
     AffineTransform reverseTransform = new AffineTransform();
-    double srcPts[] = new double[4];
-    double destPts[] = new double[4];
+    double[] srcPts = new double[4];
+    double[] destPts = new double[4];
     Map<AudioClip, AudioClipPanel> clipPanelMap = new HashMap<>();
     private final InstanceContent content;
     AutomationLayerPanel automationPanel = new AutomationLayerPanel();
@@ -295,13 +295,13 @@ public class AudioLayersPanel extends JLayeredPane implements LayerGroupListener
     @Override
     public void marqueeSelectionPerformed(SelectionMarquee marquee) {
         Component[] comps = getComponents();
-        for (int i = 0; i < comps.length; i++) {
-            if (!(comps[i] instanceof AudioClipPanel)) {
+        for (Component comp : comps) {
+            if (!(comp instanceof AudioClipPanel)) {
                 continue;
             }
 
-            if (marquee.intersects((JComponent) comps[i])) {
-                content.add(((AudioClipPanel) comps[i]).getScoreObject());
+            if (marquee.intersects((JComponent) comp)) {
+                content.add(((AudioClipPanel) comp).getScoreObject());
             }
 
         }

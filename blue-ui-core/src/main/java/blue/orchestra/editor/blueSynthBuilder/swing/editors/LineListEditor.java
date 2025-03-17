@@ -76,8 +76,8 @@ public class LineListEditor implements PropertyEditor {
         }
 
         LineList temp = new LineList();
-        for (int i = 0; i < items.size(); i++) {
-            temp.add(items.get(i));
+        for (blue.components.lines.Line item : items) {
+            temp.add(item);
         }
 
         dialog.setLineList(temp);

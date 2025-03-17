@@ -195,9 +195,7 @@ public class Send implements Automatable, ParameterListener {
             return;
         }
 
-        for (Iterator<PropertyChangeListener> iter = new Vector<>(listeners).iterator(); iter.hasNext();) {
-            PropertyChangeListener listener = iter.next();
-
+        for (PropertyChangeListener listener : new Vector<>(listeners)) {
             listener.propertyChange(pce);
         }
     }

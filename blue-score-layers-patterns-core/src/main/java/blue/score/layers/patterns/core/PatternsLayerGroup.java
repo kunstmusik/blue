@@ -146,8 +146,8 @@ public class PatternsLayerGroup extends ArrayList<PatternLayer>
             NoteList buffer = new NoteList();
             Note tempNote;
 
-            for (int i = 0; i < nl.size(); i++) {
-                tempNote = nl.get(i);
+            for (Note note : nl) {
+                tempNote = note;
 
                 if (tempNote.getStartTime() >= 0) {
                     buffer.add(tempNote);
@@ -162,8 +162,8 @@ public class PatternsLayerGroup extends ArrayList<PatternLayer>
             NoteList buffer = new NoteList();
             Note tempNote;
 
-            for (int i = 0; i < retVal.size(); i++) {
-                tempNote = retVal.get(i);
+            for (Note note : retVal) {
+                tempNote = note;
 
                 if (tempNote.getStartTime() <= endTime) {
                     buffer.add(tempNote);

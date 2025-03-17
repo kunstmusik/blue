@@ -339,9 +339,7 @@ public class Channel implements Comparable<Channel>, ParameterListener {
         PropertyChangeEvent pce = new PropertyChangeEvent(this, propertyName,
                 oldVal, newVal);
 
-        for (Iterator<PropertyChangeListener> it = listeners.iterator(); it.hasNext();) {
-            PropertyChangeListener pcl = it.next();
-
+        for (PropertyChangeListener pcl : listeners) {
             pcl.propertyChange(pce);
 
         }

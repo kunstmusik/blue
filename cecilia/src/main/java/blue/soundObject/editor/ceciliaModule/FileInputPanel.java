@@ -159,9 +159,8 @@ public class FileInputPanel extends JComponent {
             }
         }
 
-        for (Iterator iter = cm.getStateData().values().iterator(); iter
-                .hasNext();) {
-            CeciliaObject element = (CeciliaObject) iter.next();
+        for (Object o : cm.getStateData().values()) {
+            CeciliaObject element = (CeciliaObject) o;
 
             if (element instanceof CFileIn) {
                 CFileIn cfileIn = (CFileIn) element;

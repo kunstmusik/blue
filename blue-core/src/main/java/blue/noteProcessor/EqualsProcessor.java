@@ -59,18 +59,15 @@ public class EqualsProcessor implements NoteProcessor {
 
     @Override
     public final NoteList processNotes(NoteList in) throws NoteProcessorException {
-        Note temp;
-
-        for (int i = 0; i < in.size(); i++) {
-            temp = in.get(i);
+        for (Note note : in) {
             try {
                 if (this.pfield == 3) {
                     // set the subjectiveDuration to the value
                     // as that is what is used in the Note class
                     // for generating the note's p3
-                    temp.setSubjectiveDuration(Double.parseDouble(this.value));
+                    note.setSubjectiveDuration(Double.parseDouble(this.value));
                 } else {
-                    temp.setPField(this.value, this.pfield);
+                    note.setPField(this.value, this.pfield);
                 }
             } catch (NumberFormatException ex) {
                 throw new NoteProcessorException(this, BlueSystem

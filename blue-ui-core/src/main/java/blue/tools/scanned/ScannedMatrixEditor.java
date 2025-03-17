@@ -153,9 +153,6 @@ public class ScannedMatrixEditor extends JComponent {
             try {
                 int numOfMasses = Integer.parseInt(returnText);
                 boolean[] matrix = new boolean[numOfMasses * numOfMasses];
-                for (int i = 0; i < matrix.length; i++) {
-                    matrix[i] = false;
-                }
                 matrixGridEditor.setMatrix(matrix);
             } catch (NumberFormatException e) {
                 JOptionPane.showMessageDialog(null, BlueSystem

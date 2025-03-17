@@ -16,10 +16,7 @@ import java.awt.LayoutManager;
 import java.awt.LayoutManager2;
 import java.awt.Point;
 import java.awt.Rectangle;
-import java.util.BitSet;
-import java.util.Enumeration;
-import java.util.Hashtable;
-import java.util.StringTokenizer;
+import java.util.*;
 
 /**
  * The PnutsLayout is a general purpose geometry manager. It is more
@@ -143,9 +140,7 @@ public class PnutsLayout implements LayoutManager2, java.io.Serializable {
 
     static int[] zero = new int[16];
     static {
-        for (int i = 0; i < zero.length; i++) {
-            zero[i] = 0;
-        }
+        Arrays.fill(zero, 0);
     }
 
     /**
@@ -1292,14 +1287,14 @@ public class PnutsLayout implements LayoutManager2, java.io.Serializable {
         }
 
         hfits = 0;
-        for (int i = 0; i < hfit.length; i++) {
-            if ((hfit[i] & 1) != 0) {
+        for (int k : hfit) {
+            if ((k & 1) != 0) {
                 hfits++;
             }
         }
         vfits = 0;
-        for (int i = 0; i < vfit.length; i++) {
-            if ((vfit[i] & 1) != 0) {
+        for (int j : vfit) {
+            if ((j & 1) != 0) {
                 vfits++;
             }
         }

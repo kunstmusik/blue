@@ -65,8 +65,8 @@ public class LineMultiplyProcessor implements NoteProcessor {
                     pfield);
         }
 
-        for (int i = 0; i < in.size(); i++) {
-            temp = in.get(i);
+        for (Note note : in) {
+            temp = note;
             try {
                 oldVal = Double.parseDouble(temp.getPField(this.pfield));
                 multiplyVal = tm.getValueForBeat(temp.getStartTime());

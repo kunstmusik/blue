@@ -111,7 +111,7 @@ public class PatternLayerPanel extends javax.swing.JPanel
 
         };
 
-        FileObject sObjFiles[] = FileUtil.getConfigFile(
+        FileObject[] sObjFiles = FileUtil.getConfigFile(
                 "blue/score/layers/patterns/soundObjects").getChildren();
         List<FileObject> orderedSObjFiles = FileUtil.getOrder(
                 Arrays.asList(sObjFiles), true);

@@ -100,7 +100,7 @@ class MultiLineSelectionMouseProcessor extends BlueMouseAdapter {
 
         Layer layer = scorePath.getGlobalLayerForY(e.getY());
 
-        if (layer == null || !(layer instanceof ScoreObjectLayer)) {
+        if (!(layer instanceof ScoreObjectLayer)) {
             return;
         }
 
@@ -149,7 +149,7 @@ class MultiLineSelectionMouseProcessor extends BlueMouseAdapter {
 
             Layer layer = scorePath.getGlobalLayerForY(e.getY());
 
-            if (layer != null && (layer instanceof ScoreObjectLayer)) {
+            if (layer instanceof ScoreObjectLayer) {
                 lastLayer = layer;
             }
 

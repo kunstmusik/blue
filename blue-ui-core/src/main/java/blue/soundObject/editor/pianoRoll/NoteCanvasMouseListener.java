@@ -643,12 +643,12 @@ public class NoteCanvasMouseListener extends MouseAdapter {
 
         selectedNotes.clear();
 
-        for (int i = 0; i < comps.length; i++) {
-            if (!(comps[i] instanceof PianoNoteView)) {
+        for (Component comp : comps) {
+            if (!(comp instanceof PianoNoteView)) {
                 continue;
             }
 
-            var pnv = (PianoNoteView) comps[i];
+            var pnv = (PianoNoteView) comp;
 
             if (canvas.marquee.intersects(pnv)) {
                 selectedNotes.add(pnv.getPianoNote());

@@ -104,9 +104,7 @@ public class Field implements ListModel {
     public Element saveAsXML() {
         Element retVal = new Element("field");
 
-        for (Iterator it = parameters.iterator(); it.hasNext();) {
-            Parameter param = (Parameter) it.next();
-
+        for (Parameter param : parameters) {
             retVal.addElement(param.saveAsXML());
         }
 

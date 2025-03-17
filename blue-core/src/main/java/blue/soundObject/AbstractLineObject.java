@@ -161,9 +161,8 @@ public abstract class AbstractLineObject extends AbstractSoundObject {
         @SuppressWarnings("unchecked")
         HashMap<String, Integer> stringTables = (HashMap<String, Integer>) obj;
 
-        for (Iterator<Line> iter = lines.iterator(); iter.hasNext();) {
+        for (Line line : lines) {
 
-            Line line = iter.next();
             String table = createTable(line);
 
             int tableNum;
@@ -187,9 +186,7 @@ public abstract class AbstractLineObject extends AbstractSoundObject {
     public void generateInstruments(CompileData compileData, Integer[] instrLineArray, HashMap<String, Integer> ftableNumMap) {
         int i = 0;
 
-        for (Iterator<Line> iter = lines.iterator(); iter.hasNext();) {
-            Line line = iter.next();
-
+        for (Line line : lines) {
             String lineName;
 
             if (line.isZak()) {

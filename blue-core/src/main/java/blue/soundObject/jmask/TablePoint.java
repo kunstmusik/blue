@@ -22,7 +22,6 @@
 package blue.soundObject.jmask;
 
 import electric.xml.Element;
-import java.util.Iterator;
 import java.util.Vector;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -34,7 +33,7 @@ public class TablePoint {
 
     private double value = .5;
 
-    private transient Vector listeners = null;
+    private transient Vector<ChangeListener> listeners = null;
 
     private transient ChangeEvent changeEvent = null;
 
@@ -99,7 +98,7 @@ public class TablePoint {
     /* EVENT CODE */
     public void addChangeListener(ChangeListener pcl) {
         if (listeners == null) {
-            listeners = new Vector();
+            listeners = new Vector<ChangeListener>();
         }
         listeners.add(pcl);
     }
@@ -112,9 +111,8 @@ public class TablePoint {
 
     public void fireChangeEvent(ChangeEvent pce) {
         if (listeners != null) {
-            for (Iterator iter = listeners.iterator(); iter.hasNext();) {
-                ChangeListener pcl = (ChangeListener) iter.next();
-                pcl.stateChanged(pce);
+            for (ChangeListener listener : listeners) {
+                listener.stateChanged(pce);
             }
         }
     }

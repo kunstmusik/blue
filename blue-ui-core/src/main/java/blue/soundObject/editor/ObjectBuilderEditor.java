@@ -118,7 +118,7 @@ public class ObjectBuilderEditor extends ScoreObjectEditor {
 
     @Override
     public void editScoreObject(ScoreObject sObj) {
-        if (sObj == null || !(sObj instanceof ObjectBuilder)) {
+        if (!(sObj instanceof ObjectBuilder)) {
             this.objectBuilder = null;
             System.err.println("[ERROR] ObjectBuilder::editSoundObject - "
                     + "not instance of ObjectBuilder");

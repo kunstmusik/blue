@@ -41,9 +41,7 @@ class CybilNode {
             spacer += ">";
         }
 
-        for (Iterator iter = args.iterator(); iter.hasNext();) {
-            Object arg = iter.next();
-
+        for (Object arg : args) {
             if (arg instanceof CybilNode) {
                 CybilNode node = (CybilNode) arg;
                 buffer.append(node.printVals(level + 1));

@@ -85,8 +85,7 @@ public class Arrangement implements TableModel {
 
         int max = 0;
 
-        for (int i = 0; i < arrangement.size(); i++) {
-            InstrumentAssignment ia = arrangement.get(i);
+        for (InstrumentAssignment ia : arrangement) {
             try {
                 int instrNum = Integer.parseInt(ia.arrangementId);
                 if (instrNum > max) {
@@ -122,8 +121,7 @@ public class Arrangement implements TableModel {
 
             int counter = currentInstrumentNum + 1;
 
-            for (int i = 0; i < arrangement.size(); i++) {
-                InstrumentAssignment ia = arrangement.get(i);
+            for (InstrumentAssignment ia : arrangement) {
                 try {
                     if (counter == Integer.parseInt(ia.arrangementId)) {
                         counter++;
@@ -199,8 +197,7 @@ public class Arrangement implements TableModel {
     }
 
     public boolean containsInstrumentId(String instrId) {
-        for (int i = 0; i < arrangement.size(); i++) {
-            InstrumentAssignment ia = arrangement.get(i);
+        for (InstrumentAssignment ia : arrangement) {
             if (ia.arrangementId.equals(instrId)) {
                 return true;
             }
@@ -219,10 +216,7 @@ public class Arrangement implements TableModel {
     }
 
     public void replaceInstrument(String instrumentId, Instrument instr) {
-        for (Iterator<InstrumentAssignment> iter = arrangement.iterator(); iter.
-                hasNext();) {
-            InstrumentAssignment ia = iter.next();
-
+        for (InstrumentAssignment ia : arrangement) {
             if (ia.arrangementId.equals(instrumentId)) {
                 ia.instr = instr;
             }
@@ -256,9 +250,7 @@ public class Arrangement implements TableModel {
     }
 
     public String getInstrumentId(Instrument instr) {
-        for (Iterator<InstrumentAssignment> iter = arrangement.iterator(); iter.
-                hasNext();) {
-            InstrumentAssignment ia = iter.next();
+        for (InstrumentAssignment ia : arrangement) {
             if (ia.instr == instr) {
                 return ia.arrangementId;
             }
@@ -283,9 +275,7 @@ public class Arrangement implements TableModel {
     }
 
     public Instrument getInstrument(String arrangementId) {
-        for (Iterator<InstrumentAssignment> iter = arrangement.iterator(); iter.
-                hasNext();) {
-            InstrumentAssignment ia = iter.next();
+        for (InstrumentAssignment ia : arrangement) {
             if (ia.arrangementId.equals(arrangementId)) {
                 return ia.instr;
             }
@@ -304,9 +294,7 @@ public class Arrangement implements TableModel {
     }
 
     public void changeInstrumentId(Instrument instr, String newId) {
-        for (Iterator<InstrumentAssignment> iter = arrangement.iterator(); iter.
-                hasNext();) {
-            InstrumentAssignment ia = iter.next();
+        for (InstrumentAssignment ia : arrangement) {
             if (ia.instr == instr) {
                 String oldId = ia.arrangementId;
 
@@ -337,10 +325,7 @@ public class Arrangement implements TableModel {
 
         ArrayList<Instrument> instruments = new ArrayList<>();
 
-        for (Iterator<InstrumentAssignment> iter = arrangement.iterator(); iter.
-                hasNext();) {
-            InstrumentAssignment ia = iter.next();
-
+        for (InstrumentAssignment ia : arrangement) {
             if (!ia.enabled) {
                 continue;
             }
@@ -374,10 +359,7 @@ public class Arrangement implements TableModel {
     public String generateGlobalSco(CompileData data) {
         StrBuilder retVal = new StrBuilder();
 
-        for (Iterator<InstrumentAssignment> iter = arrangement.iterator(); iter.
-                hasNext();) {
-            InstrumentAssignment ia = iter.next();
-
+        for (InstrumentAssignment ia : arrangement) {
             if (!ia.enabled) {
                 continue;
             }
@@ -421,10 +403,7 @@ public class Arrangement implements TableModel {
             preGenList = new ArrayList<>();
         }
 
-        for (Iterator<InstrumentAssignment> iter = arrangement.iterator(); iter.
-                hasNext();) {
-            InstrumentAssignment ia = iter.next();
-
+        for (InstrumentAssignment ia : arrangement) {
             preGenList.add(ia);
 
             if (!ia.enabled) {
@@ -452,10 +431,7 @@ public class Arrangement implements TableModel {
             buffer = preGenerationCache;
         }
 
-        for (Iterator<InstrumentAssignment> iter = arrangement.iterator(); iter.
-                hasNext();) {
-            InstrumentAssignment ia = iter.next();
-
+        for (InstrumentAssignment ia : arrangement) {
             if (!preGenList.contains(ia)) {
 
                 if (!ia.enabled) {
@@ -922,8 +898,7 @@ public class Arrangement implements TableModel {
 
         TableModelEvent tme = new TableModelEvent(this);
 
-        for (Iterator iter = listeners.iterator(); iter.hasNext();) {
-            TableModelListener listener = (TableModelListener) iter.next();
+        for (TableModelListener listener : listeners) {
             listener.tableChanged(tme);
         }
 
@@ -952,8 +927,7 @@ public class Arrangement implements TableModel {
             return;
         }
 
-        for (Iterator iter = arrangementListeners.iterator(); iter.hasNext();) {
-            ArrangementListener listener = (ArrangementListener) iter.next();
+        for (ArrangementListener listener : arrangementListeners) {
             listener.arrangementChanged(arrEvt);
         }
     }

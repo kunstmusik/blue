@@ -162,9 +162,8 @@ public class EffectsLibrary implements TreeModel {
             return v;
         }
 
-        for (Iterator iter = current.getSubCategories().iterator(); iter
-                .hasNext();) {
-            EffectCategory cat = (EffectCategory) iter.next();
+        for (Object o : current.getSubCategories()) {
+            EffectCategory cat = (EffectCategory) o;
             Object pathObj = getPathForObject(cat, obj, v);
             if (pathObj != null) {
                 v.add(current);
@@ -368,26 +367,26 @@ public class EffectsLibrary implements TreeModel {
     // UTILITY METHODS FOR FIRING EVENTS
 
     private void fireNodesChanged(TreeModelEvent e) {
-        for (int i = 0; i < listeners.size(); i++) {
-            ((TreeModelListener) listeners.get(i)).treeNodesChanged(e);
+        for (Object listener : listeners) {
+            ((TreeModelListener) listener).treeNodesChanged(e);
         }
     }
 
     private void fireNodesInserted(TreeModelEvent e) {
-        for (int i = 0; i < listeners.size(); i++) {
-            ((TreeModelListener) listeners.get(i)).treeNodesInserted(e);
+        for (Object listener : listeners) {
+            ((TreeModelListener) listener).treeNodesInserted(e);
         }
     }
 
     private void fireNodesRemoved(TreeModelEvent e) {
-        for (int i = 0; i < listeners.size(); i++) {
-            ((TreeModelListener) listeners.get(i)).treeNodesRemoved(e);
+        for (Object listener : listeners) {
+            ((TreeModelListener) listener).treeNodesRemoved(e);
         }
     }
 
     private void fireTreeStructureChanged(TreeModelEvent e) {
-        for (int i = 0; i < listeners.size(); i++) {
-            ((TreeModelListener) listeners.get(i)).treeStructureChanged(e);
+        for (Object listener : listeners) {
+            ((TreeModelListener) listener).treeStructureChanged(e);
         }
     }
 
@@ -438,8 +437,8 @@ public class EffectsLibrary implements TreeModel {
             return cat;
         }
 
-        for (Iterator iter = cat.getSubCategories().iterator(); iter.hasNext();) {
-            EffectCategory c = (EffectCategory) iter.next();
+        for (Object o : cat.getSubCategories()) {
+            EffectCategory c = (EffectCategory) o;
 
             EffectCategory temp = findParent(c, obj);
 
@@ -465,8 +464,8 @@ public class EffectsLibrary implements TreeModel {
     public void fireChangeEvent() {
         ChangeEvent evt = new ChangeEvent(this);
 
-        for (Iterator it = changeListeners.iterator(); it.hasNext();) {
-            ChangeListener listener = (ChangeListener) it.next();
+        for (Object changeListener : changeListeners) {
+            ChangeListener listener = (ChangeListener) changeListener;
             listener.stateChanged(evt);
         }
     }
@@ -474,8 +473,8 @@ public class EffectsLibrary implements TreeModel {
     public void importEffect(Effect effect) {
         ArrayList categories = rootEffectCategory.getSubCategories();
 
-        for (Iterator iter = categories.iterator(); iter.hasNext();) {
-            EffectCategory cat = (EffectCategory) iter.next();
+        for (Object category : categories) {
+            EffectCategory cat = (EffectCategory) category;
             if (cat.getCategoryName().equals("Imported Effects")) {
                 addEffect(cat, effect);
                 save();

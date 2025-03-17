@@ -230,8 +230,8 @@ public class AutomationManager implements
 
             ChannelList subChannels = mixer.getSubChannels();
             subChannels.removeListener(this);
-            for (int i = 0; i < subChannels.size(); i++) {
-                removeListenerFromChannel(subChannels.get(i));
+            for (Channel subChannel : subChannels) {
+                removeListenerFromChannel(subChannel);
             }
 
             removeListenerFromChannel(mixer.getMaster());
@@ -287,8 +287,8 @@ public class AutomationManager implements
 
         ChannelList subChannels = mixer.getSubChannels();
         subChannels.addListener(this);
-        for (int i = 0; i < subChannels.size(); i++) {
-            addListenerToChannel(subChannels.get(i));
+        for (Channel subChannel : subChannels) {
+            addListenerToChannel(subChannel);
         }
 
         addListenerToChannel(mixer.getMaster());
@@ -408,8 +408,8 @@ public class AutomationManager implements
             if (channels.size() > 0) {
                 JMenu channelsMenu = new JMenu("Channels");
 
-                for (int i = 0; i < channels.size(); i++) {
-                    channelsMenu.add(buildChannelMenu(channels.get(i),
+                for (Channel channel : channels) {
+                    channelsMenu.add(buildChannelMenu(channel,
                             paramIdList));
                 }
 
@@ -421,9 +421,8 @@ public class AutomationManager implements
 
             if (subChannels.size() > 0) {
                 JMenu subChannelsMenu = new JMenu("Sub-Channels");
-                for (int i = 0; i < subChannels.size(); i++) {
-                    subChannelsMenu.add(buildChannelMenu(subChannels.get(
-                            i), paramIdList));
+                for (Channel subChannel : subChannels) {
+                    subChannelsMenu.add(buildChannelMenu(subChannel, paramIdList));
                 }
 
                 mixerRoot.add(subChannelsMenu);
@@ -645,8 +644,7 @@ public class AutomationManager implements
 
         allParameters.removeAll(params);
 
-        for (int i = 0; i < params.size(); i++) {
-            Parameter param = params.get(i);
+        for (Parameter param : params) {
             removedParamIds.add(param.getUniqueId());
         }
 
@@ -702,8 +700,7 @@ public class AutomationManager implements
             parameterList.removeListener(parameterListListener);
             allParameters.removeAll(parameterList);
 
-            for (int j = 0; j < parameterList.size(); j++) {
-                Parameter parameter = parameterList.get(j);
+            for (Parameter parameter : parameterList) {
                 if (parameter.isAutomationEnabled()) {
                     removedParamIds.add(parameter.getUniqueId());
                 }
@@ -717,8 +714,7 @@ public class AutomationManager implements
             parameterList.removeListener(parameterListListener);
             allParameters.removeAll(parameterList);
 
-            for (int j = 0; j < parameterList.size(); j++) {
-                Parameter parameter = parameterList.get(j);
+            for (Parameter parameter : parameterList) {
                 if (parameter.isAutomationEnabled()) {
                     removedParamIds.add(parameter.getUniqueId());
                 }

@@ -51,9 +51,9 @@ public class Track implements TableModel {
 
     ArrayList<TrackerNote> trackerNotes = new ArrayList<>();
 
-    private transient Vector listeners = null;
+    private transient Vector<PropertyChangeListener> listeners = null;
 
-    private transient Vector tableListeners = null;
+    private transient Vector<TableModelListener> tableListeners = null;
 
     public Track() {
         this(true);
@@ -220,8 +220,7 @@ public class Track implements TableModel {
 
         if (columns.contains(col)) {
 
-            for (Iterator iter = trackerNotes.iterator(); iter.hasNext();) {
-                TrackerNote trNote = (TrackerNote) iter.next();
+            for (TrackerNote trNote : trackerNotes) {
                 trNote.removeColumn(index);
             }
 
@@ -317,7 +316,7 @@ public class Track implements TableModel {
 
     public void addPropertyChangeListener(PropertyChangeListener pcl) {
         if (listeners == null) {
-            listeners = new Vector();
+            listeners = new Vector<PropertyChangeListener>();
         }
         listeners.add(pcl);
     }
@@ -355,11 +354,8 @@ public class Track implements TableModel {
         PropertyChangeEvent pce = new PropertyChangeEvent(this, propertyName,
                 oldVal, newVal);
 
-        for (Iterator it = listeners.iterator(); it.hasNext();) {
-            PropertyChangeListener pcl = (PropertyChangeListener) it.next();
-
-            pcl.propertyChange(pce);
-
+        for (PropertyChangeListener listener : listeners) {
+            listener.propertyChange(pce);
         }
     }
 
@@ -423,7 +419,7 @@ public class Track implements TableModel {
     @Override
     public void addTableModelListener(TableModelListener l) {
         if (tableListeners == null) {
-            tableListeners = new Vector();
+            tableListeners = new Vector<TableModelListener>();
         }
         tableListeners.add(l);
     }
@@ -443,9 +439,7 @@ public class Track implements TableModel {
 
         TableModelEvent tme = new TableModelEvent(this);
 
-        for (Iterator iter = tableListeners.iterator(); iter.hasNext();) {
-            TableModelListener listener = (TableModelListener) iter.next();
-
+        for (TableModelListener listener : tableListeners) {
             listener.tableChanged(tme);
         }
     }
@@ -463,8 +457,7 @@ public class Track implements TableModel {
 
         retVal.addElement(colElement);
 
-        for (Iterator iter = columns.iterator(); iter.hasNext();) {
-            Column col = (Column) iter.next();
+        for (Column col : columns) {
             colElement.addElement(col.saveAsXML());
         }
 

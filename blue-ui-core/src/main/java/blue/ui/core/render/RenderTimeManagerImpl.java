@@ -88,9 +88,9 @@ public class RenderTimeManagerImpl implements RenderTimeManager {
                     adjustedTime = tempoMapper.secondsToBeats(adjustedTime + renderStartSeconds);
                     adjustedTime -= getRenderStartTime();
                 }
-                
-                for (int i = 0, size = renderListeners.size(); i < size; i++) {
-                    renderListeners.get(i).renderTimeUpdated(adjustedTime);
+
+                for (RenderTimeManagerListener renderListener : renderListeners) {
+                    renderListener.renderTimeUpdated(adjustedTime);
                 }
             }
         });

@@ -127,7 +127,8 @@ public final class PythonLexer implements Lexer<PythonTokenId> {
         END_LONGSTRING_DOUBLE,
         /** We've processed the string content in a single-quoted long string */
         END_LONGSTRING_SINGLE,
-    };
+    }
+
     private State state;
 
     public PythonLexer(LexerRestartInfo<PythonTokenId> info) {

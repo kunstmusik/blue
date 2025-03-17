@@ -103,13 +103,11 @@ public class LiveObjectBins {
         retVal.setAttribute("columns", Integer.toString(liveObjectBins.length));
         retVal.setAttribute("rows", Integer.toString(liveObjectBins[0].length));
 
-        for (int i = 0; i < liveObjectBins.length; i++) {
+        for (LiveObject[] liveObjectBin : liveObjectBins) {
 
             Element bin = retVal.addElement("bin");
 
-            for (int j = 0; j < liveObjectBins[i].length; j++) {
-                LiveObject lObj = liveObjectBins[i][j];
-
+            for (LiveObject lObj : liveObjectBin) {
                 if (lObj == null) {
                     bin.addElement("null");
                 } else {
@@ -192,11 +190,11 @@ public class LiveObjectBins {
         int readCounter = 0;
         boolean inserted = false;
 
-        for (int i = 0; i < newBins.length; i++) {
+        for (LiveObject[] newBin : newBins) {
             if (!inserted && readCounter == index) {
                 inserted = true;
             } else {
-                System.arraycopy(liveObjectBins[readCounter], 0, newBins[i], 0, liveObjectBins[0].length);
+                System.arraycopy(liveObjectBins[readCounter], 0, newBin, 0, liveObjectBins[0].length);
                 readCounter++;
             }
         }
@@ -263,9 +261,9 @@ public class LiveObjectBins {
             return -1;
         }
 
-        for (int i = 0; i < liveObjectBins.length; i++) {
-            for (int j = 0; j < liveObjectBins[i].length; j++) {
-                if (liveObjectBins[i][j] == liveObject) {
+        for (LiveObject[] liveObjectBin : liveObjectBins) {
+            for (int j = 0; j < liveObjectBin.length; j++) {
+                if (liveObjectBin[j] == liveObject) {
                     return j;
                 }
             }
@@ -286,9 +284,9 @@ public class LiveObjectBins {
 
         LiveObjectSet retVal = new LiveObjectSet();
 
-        for (int i = 0; i < liveObjectBins.length; i++) {
+        for (LiveObject[] liveObjectBin : liveObjectBins) {
             for (int j = 0; j < liveObjectBins[0].length; j++) {
-                LiveObject lObj = liveObjectBins[i][j];
+                LiveObject lObj = liveObjectBin[j];
 
                 if (lObj != null && lObj.isEnabled()) {
                     retVal.add(lObj);
@@ -301,9 +299,9 @@ public class LiveObjectBins {
 
     public void setEnabledFromLiveObjectSet(LiveObjectSet liveObjectSet) {
 
-        for (int i = 0; i < liveObjectBins.length; i++) {
+        for (LiveObject[] liveObjectBin : liveObjectBins) {
             for (int j = 0; j < liveObjectBins[0].length; j++) {
-                LiveObject lObj = liveObjectBins[i][j];
+                LiveObject lObj = liveObjectBin[j];
 
                 lObj.setEnabled(lObj != null && liveObjectSet.contains(lObj));
             }
@@ -319,9 +317,9 @@ public class LiveObjectBins {
             return null;
         }
 
-        for (int i = 0; i < liveObjectBins.length; i++) {
+        for (LiveObject[] liveObjectBin : liveObjectBins) {
             for (int j = 0; j < liveObjectBins[0].length; j++) {
-                LiveObject lObj = liveObjectBins[i][j];
+                LiveObject lObj = liveObjectBin[j];
 
                 if (lObj != null && uniqueId.equals(lObj.getUniqueId())) {
                     return lObj;

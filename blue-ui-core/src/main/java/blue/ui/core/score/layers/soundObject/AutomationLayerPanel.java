@@ -79,8 +79,8 @@ public class AutomationLayerPanel extends JComponent implements
             return;
         }
 
-        for (int i = 0; i < layerGroup.size(); i++) {
-            AutomatableLayer sLayer = (AutomatableLayer) layerGroup.get(i);
+        for (Object o : layerGroup) {
+            AutomatableLayer sLayer = (AutomatableLayer) o;
 
             ParameterLinePanel paramPanel = new ParameterLinePanel(
                     timeState, sLayer.getAutomationParameters());

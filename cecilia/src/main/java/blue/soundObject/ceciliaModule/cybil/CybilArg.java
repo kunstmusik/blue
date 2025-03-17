@@ -43,9 +43,7 @@ abstract class CybilArg {
             spacer += ">";
         }
 
-        for (Iterator iter = args.iterator(); iter.hasNext();) {
-            Object arg = iter.next();
-
+        for (Object arg : args) {
             if (arg instanceof CybilArg) {
                 CybilArg argObj = (CybilArg) arg;
                 buffer.append(argObj.printVals(level + 1));

@@ -106,10 +106,10 @@ public class CodeRepositoryDropTarget implements DropTargetListener {
         try {
             Transferable tr = dtde.getTransferable();
             DataFlavor[] flavors = tr.getTransferDataFlavors();
-            for (int i = 0; i < flavors.length; i++) {
-                if (tr.isDataFlavorSupported(flavors[i])) {
+            for (DataFlavor flavor : flavors) {
+                if (tr.isDataFlavorSupported(flavor)) {
                     dtde.acceptDrop(dtde.getDropAction());
-                    TreePath p = (TreePath) tr.getTransferData(flavors[i]);
+                    TreePath p = (TreePath) tr.getTransferData(flavor);
                     DefaultMutableTreeNode node = (DefaultMutableTreeNode) p
                             .getLastPathComponent();
                     DefaultTreeModel model = (DefaultTreeModel) tree.getModel();

@@ -151,7 +151,7 @@ public class FrozenSoundObject extends AbstractSoundObject {
 
         Object obj = compileData.getCompilationVariable(FSO_HAS_BEEN_COMPILED);
 
-        if (obj == null || obj != Boolean.TRUE) {
+        if (obj != Boolean.TRUE) {
 
             compileData.setCompilationVariable(FSO_HAS_BEEN_COMPILED,
                     Boolean.TRUE);

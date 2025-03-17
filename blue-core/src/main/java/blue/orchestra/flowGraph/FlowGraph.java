@@ -1,9 +1,6 @@
 package blue.orchestra.flowGraph;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Iterator;
+import java.util.*;
 
 public class FlowGraph{ 
 
@@ -28,8 +25,8 @@ public class FlowGraph{
 
         varManager.setupOutPorts(units);
 
-        for (Iterator it = units.iterator(); it.hasNext();) {
-            GraphUnit graphUnit = (GraphUnit) it.next();
+        for (Object unit : units) {
+            GraphUnit graphUnit = (GraphUnit) unit;
 
             if (!(graphUnit.getInputs().size() == 0 && graphUnit.getOutputs()
                     .size() == 0)) {
@@ -76,8 +73,8 @@ public class FlowGraph{
     private Cable[] getInConnections(GraphUnit graphUnit, int portNum) {
         ArrayList temp = new ArrayList();
 
-        for (int i = 0; i < cables.size(); i++) {
-            Cable cable = (Cable) cables.get(i);
+        for (Object o : cables) {
+            Cable cable = (Cable) o;
 
             if (cable.getToUnit() == graphUnit
                     && cable.receivePortIndex == portNum) {
@@ -162,9 +159,7 @@ public class FlowGraph{
 
         public VariableManager() {
             portCounters = new int[VAR_PREFIXES.length];
-            for (int i = 0; i < portCounters.length; i++) {
-                portCounters[i] = 0;
-            }
+            Arrays.fill(portCounters, 0);
         }
 
         public String getCodeWithReplacedOutputs(GraphUnit graphUnit) {
@@ -189,8 +184,8 @@ public class FlowGraph{
         }
 
         public void setupOutPorts(ArrayList units) {
-            for (Iterator iter = units.iterator(); iter.hasNext();) {
-                GraphUnit graphUnit = (GraphUnit) iter.next();
+            for (Object unit : units) {
+                GraphUnit graphUnit = (GraphUnit) unit;
 
                 PortList outs = graphUnit.getOutputs();
 

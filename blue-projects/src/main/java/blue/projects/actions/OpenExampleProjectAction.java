@@ -282,8 +282,7 @@ public final class OpenExampleProjectAction implements ActionListener {
     }
 
     private static void checkAudioFiles(PolyObject pObj, ArrayList<String> filesList) {
-        for (Iterator<SoundObject> iter = pObj.getSoundObjects(true).iterator(); iter.hasNext();) {
-            SoundObject sObj = iter.next();
+        for (SoundObject sObj : pObj.getSoundObjects(true)) {
             if (sObj instanceof AudioFile) {
                 AudioFile af = (AudioFile) sObj;
 

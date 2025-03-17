@@ -235,8 +235,8 @@ public class UserInstrumentLibrary extends JComponent {
 
     public void fireSelected(SelectionEvent se) {
 
-        for (int i = 0; i < listeners.size(); i++) {
-            SelectionListener listener = (SelectionListener) listeners.get(i);
+        for (Object o : listeners) {
+            SelectionListener listener = (SelectionListener) o;
             listener.selectionPerformed(se);
         }
 

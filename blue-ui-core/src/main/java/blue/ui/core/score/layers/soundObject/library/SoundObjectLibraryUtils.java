@@ -57,24 +57,22 @@ public class SoundObjectLibraryUtils {
     } 
 
     protected static void removeSoundObjectInstances(PolyObject polyObject, SoundObject sObj) {
-        for (int i = 0; i < polyObject.size(); i++) {
-            SoundLayer layer = polyObject.get(i);
-
+        for (SoundLayer layer : polyObject) {
             ArrayList<SoundObject> instances = new ArrayList<>();
-            
+
             for (SoundObject tempObject : layer) {
-                if(tempObject instanceof Instance instance) {
-                    if(instance.getSoundObject() == sObj) {
+                if (tempObject instanceof Instance instance) {
+                    if (instance.getSoundObject() == sObj) {
                         instances.add(instance);
                     }
                 } else if (tempObject instanceof PolyObject polyObject1) {
                     removeSoundObjectInstances(polyObject1, sObj);
-                } 
+                }
             }
 
             for (SoundObject tempObject : instances) {
                 layer.remove(tempObject);
             }
-         }
+        }
     }
 }

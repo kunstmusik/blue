@@ -53,13 +53,11 @@ public class InversionProcessor implements NoteProcessor {
 
     @Override
     public final NoteList processNotes(NoteList in) throws NoteProcessorException {
-        Note temp;
-        for (int i = 0; i < in.size(); i++) {
-            temp = in.get(i);
+        for (Note note : in) {
             try {
-                double fieldVal = Double.parseDouble(temp.getPField(pfield));
+                double fieldVal = Double.parseDouble(note.getPField(pfield));
                 double addVal = -1 * (fieldVal - this.value);
-                temp.setPField(Double.toString(this.value + addVal), pfield);
+                note.setPField(Double.toString(this.value + addVal), pfield);
             } catch (NumberFormatException ex) {
                 throw new NoteProcessorException(this, BlueSystem
                         .getString("noteProcessorException.pfieldNotDouble"),

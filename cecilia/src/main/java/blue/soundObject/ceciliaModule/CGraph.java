@@ -340,9 +340,7 @@ public class CGraph extends CeciliaObject {
         retVal.addElement("size").setText(Integer.toString(this.getSize()));
         retVal.addElement("color").setText(this.getColor());
 
-        for (Iterator iter = points.iterator(); iter.hasNext();) {
-            CGraphPoint cgp = (CGraphPoint) iter.next();
-
+        for (CGraphPoint cgp : points) {
             retVal.addElement(cgp.saveAsXML());
         }
 

@@ -366,8 +366,8 @@ public class PolyObject extends ArrayList<SoundLayer> implements SoundObject,
             NoteList buffer = new NoteList();
             Note tempNote;
 
-            for (int i = 0; i < nl.size(); i++) {
-                tempNote = nl.get(i);
+            for (Note note : nl) {
+                tempNote = note;
 
                 if (tempNote.getStartTime() >= 0) {
                     buffer.add(tempNote);
@@ -382,8 +382,8 @@ public class PolyObject extends ArrayList<SoundLayer> implements SoundObject,
             NoteList buffer = new NoteList();
             Note tempNote;
 
-            for (int i = 0; i < retVal.size(); i++) {
-                tempNote = retVal.get(i);
+            for (Note note : retVal) {
+                tempNote = note;
 
                 if (tempNote.getStartTime() <= endTime) {
                     buffer.add(tempNote);
@@ -477,8 +477,7 @@ public class PolyObject extends ArrayList<SoundLayer> implements SoundObject,
         }
 
         if (heightIndex >= 0) {
-            for (int i = 0; i < pObj.size(); i++) {
-                SoundLayer layer = pObj.get(i);
+            for (SoundLayer layer : pObj) {
                 layer.setHeightIndex(heightIndex);
             }
 
@@ -736,8 +735,8 @@ public class PolyObject extends ArrayList<SoundLayer> implements SoundObject,
 
         for (SoundLayer sLayer : this) {
 
-            for (int j = 0; j < sLayer.size(); j++) {
-                sObj = sLayer.get(j);
+            for (SoundObject soundObject : sLayer) {
+                sObj = soundObject;
                 if (sObj instanceof PolyObject polyObject) {
                     polyObject.onLoadComplete();
                 } else if (sObj instanceof OnLoadProcessable olp) {

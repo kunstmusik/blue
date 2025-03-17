@@ -277,9 +277,7 @@ public class Mixer {
             }
         }
 
-        for (int i = 0; i < subChannels.size(); i++) {
-            Channel c = subChannels.get(i);
-
+        for (Channel c : subChannels) {
             for (int j = 0; j < nchnls; j++) {
                 buffer.append(getSubChannelVar(c.getName(), j)).append(
                         "\tinit\t0\n");
@@ -414,8 +412,8 @@ public class Mixer {
         Send[] sends = subChannel1.getSends();
         String target = subChannel2.getName();
 
-        for (int i = 0; i < sends.length; i++) {
-            String channelName = sends[i].getSendChannel();
+        for (Send send : sends) {
+            String channelName = send.getSendChannel();
 
             if (channelName.equals(Channel.MASTER)) {
                 continue;
@@ -433,13 +431,10 @@ public class Mixer {
     }
 
     private Channel getSubChannelByName(String name) {
-        for (int i = 0; i < subChannels.size(); i++) {
-            Channel c = subChannels.get(i);
-            if (c.getName().equals(name)) {
-                return c;
-            }
-        }
-        return null;
+        return subChannels.stream()
+                .filter(c -> c.getName().equals(name))
+                .findFirst()
+                .orElse(null);
     }
 
     public Map<String, Channel> getSubChannelCache() {

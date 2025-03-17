@@ -70,8 +70,8 @@ public class FieldTest extends TestCase {
 
         result = field.generateNotes(duration, r);
 
-        for (int i = 0; i < result.size(); i++) {
-            assertEquals("2", result.get(i).getPField(1));
+        for (var note : result) {
+            assertEquals("2", note.getPField(1));
         }
 
         Constant c2 = (Constant) field.getParameter(1).getGenerator();

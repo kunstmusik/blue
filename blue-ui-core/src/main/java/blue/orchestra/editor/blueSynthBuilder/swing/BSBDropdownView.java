@@ -190,8 +190,8 @@ class DropdownComboBoxModel implements ComboBoxModel<BSBDropdownItem> {
                 ListDataEvent.CONTENTS_CHANGED, 0, dropdown.dropdownItemsProperty()
                         .size());
 
-        for (int i = 0; i < eventListeners.length; i++) {
-            ((ListDataListener) eventListeners[i]).contentsChanged(e);
+        for (EventListener eventListener : eventListeners) {
+            ((ListDataListener) eventListener).contentsChanged(e);
         }
     }
 
@@ -208,8 +208,8 @@ class DropdownComboBoxModel implements ComboBoxModel<BSBDropdownItem> {
                 ListDataEvent.CONTENTS_CHANGED, 0, dropdown.dropdownItemsProperty()
                         .size());
 
-        for (int i = 0; i < eventListeners.length; i++) {
-            ((ListDataListener) eventListeners[i]).contentsChanged(e);
+        for (EventListener eventListener : eventListeners) {
+            ((ListDataListener) eventListener).contentsChanged(e);
         }
     }
 

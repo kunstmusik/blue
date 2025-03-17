@@ -133,7 +133,7 @@ public class BlueX7 extends AbstractInstrument {
 
         // adding FTables that all BlueX7 generated instruments will use (start
         // static ftable generation)
-        if (obj == null || obj != Boolean.TRUE) {
+        if (obj != Boolean.TRUE) {
 
             tables.setCompilationVariable(BLUEX7_HAS_BEEN_COMPILED,
                     Boolean.TRUE);
@@ -454,12 +454,12 @@ public class BlueX7 extends AbstractInstrument {
         retVal.addElement(algorithmCommon.saveAsXML());
         retVal.addElement(lfo.saveAsXML());
 
-        for (int i = 0; i < operators.length; i++) {
-            retVal.addElement(operators[i].saveAsXML());
+        for (Operator operator : operators) {
+            retVal.addElement(operator.saveAsXML());
         }
 
-        for (int i = 0; i < peg.length; i++) {
-            retVal.addElement(peg[i].saveAsXML());
+        for (EnvelopePoint envelopePoint : peg) {
+            retVal.addElement(envelopePoint.saveAsXML());
         }
 
         retVal.addElement("csoundPostCode").setText(csoundPostCode);

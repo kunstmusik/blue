@@ -21,14 +21,13 @@ package blue.orchestra.blueSynthBuilder;
 
 import blue.utility.TextUtilities;
 import java.util.HashMap;
-import java.util.Iterator;
 
 /**
  * @author steven
  */
 public class BSBCompilationUnit {
 
-    HashMap replacementValues = new HashMap();
+    HashMap<String, String> replacementValues = new HashMap<>();
 
     public void addReplacementValue(String key, String value) {
         if (key != null && key.length() > 0) {
@@ -39,10 +38,8 @@ public class BSBCompilationUnit {
     public String replaceBSBValues(final String instrText) {
         String retVal = instrText;
 
-        for (Iterator iter = replacementValues.keySet().iterator(); iter.hasNext();) {
-            String key = (String) iter.next();
-
-            String val = (String) replacementValues.get(key);
+        for (String key : replacementValues.keySet()) {
+            String val = replacementValues.get(key);
             key = "<" + key + ">";
 
             // System.err.println(key + " : " + val);

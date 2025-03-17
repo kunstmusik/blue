@@ -91,7 +91,7 @@ public class TrackEditor extends javax.swing.JPanel {
 
             @Override
             public void setValue(Object value) {
-                if ((value == null) || !(value instanceof Number)) {
+                if (!(value instanceof Number)) {
                     throw new IllegalArgumentException("illegal value");
                 }
 
@@ -117,7 +117,7 @@ public class TrackEditor extends javax.swing.JPanel {
 
             @Override
             public void setValue(Object value) {
-                if ((value == null) || !(value instanceof Number)) {
+                if (!(value instanceof Number)) {
                     throw new IllegalArgumentException("illegal value");
                 }
 
@@ -143,7 +143,7 @@ public class TrackEditor extends javax.swing.JPanel {
 
             @Override
             public void setValue(Object value) {
-                if ((value == null) || !(value instanceof Number)) {
+                if (!(value instanceof Number)) {
                     throw new IllegalArgumentException("illegal value");
                 }
 
@@ -169,7 +169,7 @@ public class TrackEditor extends javax.swing.JPanel {
 
             @Override
             public void setValue(Object value) {
-                if ((value == null) || !(value instanceof Number)) {
+                if (!(value instanceof Number)) {
                     throw new IllegalArgumentException("illegal value");
                 }
 
