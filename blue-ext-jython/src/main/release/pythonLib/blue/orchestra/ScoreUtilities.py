@@ -1,4 +1,4 @@
-eimport string
+import string
 import copy
 import math
 
