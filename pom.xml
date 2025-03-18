@@ -87,7 +87,6 @@
         <module>blue-score-layers-patterns-ui</module>
         <module>blue-clojure</module>
         <module>blue-application</module>
-        <module>cecilia</module>
         <module>application</module>
         <module>blue-csnd6</module>
     </modules>
