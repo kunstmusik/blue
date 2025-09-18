@@ -1092,7 +1092,7 @@ public final class ScoreTopComponent extends TopComponent
             renderLoopPointer.setVisible(true);
             renderTimePointer.setVisible(true);
 
-            scorePanel.add(marquee, 500);
+            scorePanel.add(marquee, Integer.valueOf(500));
             marquee.setVisible(false);
 
             updateRenderStartPointerX(startTime, false);
