@@ -374,7 +374,7 @@
                     <groupId>org.netbeans.api</groupId>
                     <artifactId>org-netbeans-libs-asm</artifactId>
                 </exclusion>
-<!--                <exclusion>
+                <!--                <exclusion>
                     <groupId>org.netbeans.api</groupId>
                     <artifactId>org-netbeans-libs-flatlaf</artifactId>
                 </exclusion>
@@ -1413,6 +1413,10 @@
                 <exclusion>
                     <groupId>org.netbeans.api</groupId>
                     <artifactId>org-netbeans-libs-tomljava</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.netbeans.modules</groupId>
+                    <artifactId>org-netbeans-modules-svg</artifactId>
                 </exclusion>
             </exclusions>
         </dependency>
