@@ -16,7 +16,7 @@
                 <plugin>
                     <groupId>org.apache.netbeans.utilities</groupId>
                     <artifactId>nbm-maven-plugin</artifactId>
-                    <version>14.2</version>
+                    <version>14.4</version>
                     <extensions>true</extensions>
                     <configuration>
                         <brandingToken>${brandingToken}</brandingToken>
@@ -46,7 +46,7 @@
                     <version>3.13.0</version>
                     <configuration>
                         <proc>full</proc>
-                        <release>23</release>
+                        <release>25</release>
                     </configuration>
                 </plugin>
                 <plugin>

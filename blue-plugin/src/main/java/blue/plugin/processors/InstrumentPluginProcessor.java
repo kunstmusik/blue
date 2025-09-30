@@ -40,7 +40,7 @@ import org.openide.util.lookup.ServiceProvider;
  */
 @ServiceProvider(service = Processor.class)
 @SupportedAnnotationTypes("blue.plugin.InstrumentPlugin")
-@SupportedSourceVersion(SourceVersion.RELEASE_23)
+@SupportedSourceVersion(SourceVersion.RELEASE_25)
 public class InstrumentPluginProcessor extends LayerGeneratingProcessor {
 
     @Override
