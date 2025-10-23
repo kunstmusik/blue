@@ -20,6 +20,7 @@
 package blue.score;
 
 import blue.DeepCopyable;
+import blue.time.TimeUnit;
 import java.awt.Color;
 
 /**
@@ -41,31 +42,48 @@ public interface ScoreObject extends DeepCopyable<ScoreObject> {
     String getName();
     
     /**
-     * Gets the start time of the ScoreObject.
+     * Gets the start time of the ScoreObject in Csound beats.
+     * 
+     * This is a convenience method that extracts beats from the internal TimeUnit.
+     * For more control over time representation, use {@link #getStartTimeUnit()}.
+     * 
+     * @return the start time in Csound beats
      */
-    //FIXME -  change this to use double
     double getStartTime();
 
     /**
-     * Sets the start time of the ScoreObject.
+     * Sets the start time of the ScoreObject in Csound beats.
+     * 
+     * This is a convenience method that creates a BeatTime TimeUnit internally.
+     * For more control over time representation, use {@link #setStartTimeUnit(TimeUnit)}.
+     * 
+     * @param startTime the start time in Csound beats
      */
-    //FIXME -  change this to use double
     void setStartTime(double startTime);
     
     /**
-     * Gets the subjective duration of the ScoreObject.
+     * Gets the subjective duration of the ScoreObject in Csound beats.
      * 
      * The subjective duration of the ScoreObject is the amount of time a
      * ScoreObject is assigned to last, regardless of its contents.
+     * 
+     * This is a convenience method that extracts beats from the internal TimeUnit.
+     * For more control over time representation, use {@link #getSubjectiveDurationUnit()}.
+     * 
+     * @return the subjective duration in Csound beats
      */
-    //FIXME -  change this to use double
     double getSubjectiveDuration();
 
     /**
-     * Sets the subjective duration of the ScoreObject.
+     * Sets the subjective duration of the ScoreObject in Csound beats.
      * 
      * The subjective duration of the ScoreObject is the amount of time a
      * ScoreObject is assigned to last, regardless of its contents.
+     * 
+     * This is a convenience method that creates a BeatTime TimeUnit internally.
+     * For more control over time representation, use {@link #setSubjectiveDurationUnit(TimeUnit)}.
+     * 
+     * @param duration the subjective duration in Csound beats
      */
     void setSubjectiveDuration(double duration);
 
@@ -117,4 +135,38 @@ public interface ScoreObject extends DeepCopyable<ScoreObject> {
     void setBackgroundColor(Color color);
 
     int getCloneSourceHashCode();
+    
+    // ========== TimeUnit-based API ==========
+    
+    /**
+     * Gets the start time as a TimeUnit.
+     * The TimeBase is determined by the stored TimeUnit type.
+     * 
+     * @return the start time as a TimeUnit
+     */
+    TimeUnit getStartTimeUnit();
+    
+    /**
+     * Sets the start time using a TimeUnit.
+     * The TimeUnit's type determines how the time is stored and interpreted.
+     * 
+     * @param startTime the start time as a TimeUnit
+     */
+    void setStartTimeUnit(TimeUnit startTime);
+    
+    /**
+     * Gets the subjective duration as a TimeUnit.
+     * The TimeBase is determined by the stored TimeUnit type.
+     * 
+     * @return the duration as a TimeUnit
+     */
+    TimeUnit getSubjectiveDurationUnit();
+    
+    /**
+     * Sets the subjective duration using a TimeUnit.
+     * The TimeUnit's type determines how the duration is stored and interpreted.
+     * 
+     * @param duration the duration as a TimeUnit
+     */
+    void setSubjectiveDurationUnit(TimeUnit duration);
 }

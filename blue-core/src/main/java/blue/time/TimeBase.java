@@ -29,11 +29,15 @@ public enum TimeBase {
     /** Delegate to project default timebase */
     PROJECT_DEFAULT,
     
-    /** Class Blue timebase using global number of Csound beats. Does not take 
+    /** Classic Blue timebase using global number of Csound beats. Does not take 
      * into account measures.
      */
-    
     CSOUND_BEATS, 
+    
+    /** Musical time using measure number and beat within measure. Requires
+     * MeterMap context to interpret and convert to absolute time.
+     */
+    MEASURE_BEATS,
     
     /** Hours:Minutes:Seconds.MS **/
     TIME, 

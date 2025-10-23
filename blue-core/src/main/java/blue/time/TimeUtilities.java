@@ -21,10 +21,18 @@
 package blue.time;
 
 /**
- * 
  * Utility class for converting time values according to meter and tempo. 
- * Support conversions from Csound beat time, samples, bar/beats, 
- * Min:Sec:Ms, H:M:S.F.
+ * Supports conversions between all TimeUnit types using TimeContext.
+ * 
+ * All conversions route through Csound beats as the canonical intermediate:
+ * TimeUnit → Csound beats → TimeUnit
+ * 
+ * Conversion flow:
+ * - MeasureBeatsTime → MeterMap → Csound beats
+ * - BeatTime → direct (already in Csound beats)
+ * - Csound beats → TempoMap → seconds
+ * - Seconds → sample rate → frames
+ * - Seconds → TimeValue/SMPTEValue
  *
  * @author Steven Yi
  */
@@ -56,5 +64,164 @@ public class TimeUtilities {
 
         String timeString = String.format("%02d:%02d:%02d.%02d", hours, minutes, seconds, frameNumber);
         return timeString;
+    }
+    
+    // ========== TimeUnit Conversion Methods ==========
+    
+    /**
+     * Converts any TimeUnit to Csound beats using the provided TimeContext.
+     * This is the core conversion that all other conversions route through.
+     * 
+     * @param timeUnit the TimeUnit to convert
+     * @param context the TimeContext providing meter, tempo, and sample rate
+     * @return the equivalent time in Csound beats
+     */
+    public static double timeUnitToBeats(TimeUnit timeUnit, TimeContext context) {
+        if (timeUnit == null) {
+            throw new IllegalArgumentException("TimeUnit cannot be null");
+        }
+        if (context == null) {
+            throw new IllegalArgumentException("TimeContext cannot be null");
+        }
+        
+        return switch (timeUnit.getTimeBase()) {
+            case CSOUND_BEATS -> ((TimeUnit.BeatTime) timeUnit).getCsoundBeats();
+            case MEASURE_BEATS -> context.getMeterMap().toBeats((TimeUnit.MeasureBeatsTime) timeUnit);
+            case TIME -> {
+                TimeUnit.TimeValue tv = (TimeUnit.TimeValue) timeUnit;
+                double seconds = tv.toSeconds();
+                yield context.getTempoMap().secondsToBeats(seconds);
+            }
+            case SMPTE -> {
+                TimeUnit.SMPTEValue sv = (TimeUnit.SMPTEValue) timeUnit;
+                // TODO: SMPTE frame rate should come from TimeContext
+                double frameRate = 30.0; // Default, should be configurable
+                double seconds = sv.toSeconds(frameRate);
+                yield context.getTempoMap().secondsToBeats(seconds);
+            }
+            case FRAME -> {
+                TimeUnit.FrameValue fv = (TimeUnit.FrameValue) timeUnit;
+                double seconds = fv.toSeconds(context.getSampleRate());
+                yield context.getTempoMap().secondsToBeats(seconds);
+            }
+            case PROJECT_DEFAULT -> throw new IllegalArgumentException(
+                "Cannot convert PROJECT_DEFAULT TimeBase - must be resolved to concrete TimeBase first");
+        };
+    }
+    
+    /**
+     * Converts Csound beats to a TimeUnit of the specified TimeBase.
+     * 
+     * @param beats the time in Csound beats
+     * @param targetTimeBase the desired TimeBase for the result
+     * @param context the TimeContext providing meter, tempo, and sample rate
+     * @return a new TimeUnit of the specified type
+     */
+    public static TimeUnit beatsToTimeUnit(double beats, TimeBase targetTimeBase, TimeContext context) {
+        if (context == null) {
+            throw new IllegalArgumentException("TimeContext cannot be null");
+        }
+        if (targetTimeBase == TimeBase.PROJECT_DEFAULT) {
+            throw new IllegalArgumentException(
+                "Cannot convert to PROJECT_DEFAULT TimeBase - must specify concrete TimeBase");
+        }
+        
+        return switch (targetTimeBase) {
+            case CSOUND_BEATS -> TimeUnit.beats(beats);
+            case MEASURE_BEATS -> context.getMeterMap().toMeasureBeats(TimeUnit.beats(beats));
+            case TIME -> {
+                double seconds = context.getTempoMap().beatsToSeconds(beats);
+                int hours = (int) (seconds / 3600);
+                int minutes = (int) ((seconds % 3600) / 60);
+                int secs = (int) (seconds % 60);
+                int millis = (int) Math.round((seconds - (int) seconds) * 1000);
+                yield TimeUnit.time(hours, minutes, secs, millis);
+            }
+            case SMPTE -> {
+                double seconds = context.getTempoMap().beatsToSeconds(beats);
+                // TODO: SMPTE frame rate should come from TimeContext
+                double frameRate = 30.0; // Default, should be configurable
+                int hours = (int) (seconds / 3600);
+                int minutes = (int) ((seconds % 3600) / 60);
+                int secs = (int) (seconds % 60);
+                int frames = (int) Math.round((seconds - (int) seconds) * frameRate);
+                yield TimeUnit.smpte(hours, minutes, secs, frames);
+            }
+            case FRAME -> {
+                double seconds = context.getTempoMap().beatsToSeconds(beats);
+                long frameNumber = Math.round(seconds * context.getSampleRate());
+                yield TimeUnit.frames(frameNumber);
+            }
+            case PROJECT_DEFAULT -> throw new IllegalStateException("Should not reach here");
+        };
+    }
+    
+    /**
+     * Converts a TimeUnit from one TimeBase to another.
+     * 
+     * @param timeUnit the source TimeUnit
+     * @param targetTimeBase the desired target TimeBase
+     * @param context the TimeContext for conversion
+     * @return a new TimeUnit in the target TimeBase
+     */
+    public static TimeUnit convertTimeUnit(TimeUnit timeUnit, TimeBase targetTimeBase, TimeContext context) {
+        // Short circuit if already in target TimeBase
+        if (timeUnit.getTimeBase() == targetTimeBase) {
+            return timeUnit;
+        }
+        
+        // Convert through Csound beats as intermediate
+        double beats = timeUnitToBeats(timeUnit, context);
+        return beatsToTimeUnit(beats, targetTimeBase, context);
+    }
+    
+    /**
+     * Converts seconds to a TimeUnit of the specified TimeBase.
+     * 
+     * @param seconds the time in seconds
+     * @param targetTimeBase the desired TimeBase
+     * @param context the TimeContext for conversion
+     * @return a new TimeUnit of the specified type
+     */
+    public static TimeUnit secondsToTimeUnit(double seconds, TimeBase targetTimeBase, TimeContext context) {
+        double beats = context.getTempoMap().secondsToBeats(seconds);
+        return beatsToTimeUnit(beats, targetTimeBase, context);
+    }
+    
+    /**
+     * Converts a TimeUnit to seconds.
+     * 
+     * @param timeUnit the TimeUnit to convert
+     * @param context the TimeContext for conversion
+     * @return the time in seconds
+     */
+    public static double timeUnitToSeconds(TimeUnit timeUnit, TimeContext context) {
+        double beats = timeUnitToBeats(timeUnit, context);
+        return context.getTempoMap().beatsToSeconds(beats);
+    }
+    
+    /**
+     * Converts a sample frame number to a TimeUnit.
+     * 
+     * @param frameNumber the audio sample frame number
+     * @param targetTimeBase the desired TimeBase
+     * @param context the TimeContext for conversion
+     * @return a new TimeUnit of the specified type
+     */
+    public static TimeUnit framesToTimeUnit(long frameNumber, TimeBase targetTimeBase, TimeContext context) {
+        double seconds = frameNumber / (double) context.getSampleRate();
+        return secondsToTimeUnit(seconds, targetTimeBase, context);
+    }
+    
+    /**
+     * Converts a TimeUnit to a sample frame number.
+     * 
+     * @param timeUnit the TimeUnit to convert
+     * @param context the TimeContext for conversion
+     * @return the audio sample frame number
+     */
+    public static long timeUnitToFrames(TimeUnit timeUnit, TimeContext context) {
+        double seconds = timeUnitToSeconds(timeUnit, context);
+        return Math.round(seconds * context.getSampleRate());
     }
 }

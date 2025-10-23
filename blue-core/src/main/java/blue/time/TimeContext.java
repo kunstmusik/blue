@@ -47,4 +47,28 @@ public class TimeContext {
         this.meterMap = new MeterMap(tc.meterMap);
         this.tempoMap = new TempoMap(tc.tempoMap);
     }
+    
+    public long getSampleRate() {
+        return sampleRate;
+    }
+    
+    public void setSampleRate(long sampleRate) {
+        this.sampleRate = sampleRate;
+    }
+    
+    public MeterMap getMeterMap() {
+        return meterMap;
+    }
+    
+    public void setMeterMap(MeterMap meterMap) {
+        this.meterMap = meterMap;
+    }
+    
+    public TempoMap getTempoMap() {
+        return tempoMap;
+    }
+    
+    public void setTempoMap(TempoMap tempoMap) {
+        this.tempoMap = tempoMap;
+    }
 }

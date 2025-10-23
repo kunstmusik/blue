@@ -78,6 +78,113 @@ public class MeterMapTest {
     
     @Test 
     public void testToMeasureBeats() {
+        MeterMap meterMap = new MeterMap();
         
+        // Test basic conversion in 4/4
+        TimeUnit.MeasureBeatsTime result = meterMap.toMeasureBeats(TimeUnit.beats(0.0));
+        assertEquals(1, result.getMeasureNumber());
+        assertEquals(1.0, result.getBeatNumber(), 0.001);
+        
+        result = meterMap.toMeasureBeats(TimeUnit.beats(4.0));
+        assertEquals(2, result.getMeasureNumber());
+        assertEquals(1.0, result.getBeatNumber(), 0.001);
+        
+        result = meterMap.toMeasureBeats(TimeUnit.beats(6.5));
+        assertEquals(2, result.getMeasureNumber());
+        assertEquals(3.5, result.getBeatNumber(), 0.001);
+    }
+    
+    @Test
+    public void testToMeasureBeatsWithMeterChanges() {
+        MeterMap meterMap = new MeterMap();
+        meterMap.add(new MeasureMeterPair(9, new Meter(3, 4)));
+        
+        // Before meter change (4/4)
+        TimeUnit.MeasureBeatsTime result = meterMap.toMeasureBeats(TimeUnit.beats(0.0));
+        assertEquals(1, result.getMeasureNumber());
+        assertEquals(1.0, result.getBeatNumber(), 0.001);
+        
+        result = meterMap.toMeasureBeats(TimeUnit.beats(4.0));
+        assertEquals(2, result.getMeasureNumber());
+        assertEquals(1.0, result.getBeatNumber(), 0.001);
+        
+        // After meter change (3/4)
+        result = meterMap.toMeasureBeats(TimeUnit.beats(32.0));
+        assertEquals(9, result.getMeasureNumber());
+        assertEquals(1.0, result.getBeatNumber(), 0.001);
+        
+        result = meterMap.toMeasureBeats(TimeUnit.beats(35.0));
+        assertEquals(10, result.getMeasureNumber());
+        assertEquals(1.0, result.getBeatNumber(), 0.001);
+        
+        result = meterMap.toMeasureBeats(TimeUnit.beats(36.5));
+        assertEquals(10, result.getMeasureNumber());
+        assertEquals(2.5, result.getBeatNumber(), 0.001);
+    }
+    
+    @Test
+    public void testRoundTripConversion() {
+        MeterMap meterMap = new MeterMap();
+        meterMap.add(new MeasureMeterPair(9, new Meter(3, 4)));
+        meterMap.add(new MeasureMeterPair(17, new Meter(7, 8)));
+        
+        // Test round-trip: MeasureBeats → Beats → MeasureBeats
+        TimeUnit.MeasureBeatsTime original = TimeUnit.measureBeats(1, 1);
+        double beats = meterMap.toBeats(original);
+        TimeUnit.MeasureBeatsTime roundTrip = meterMap.toMeasureBeats(TimeUnit.beats(beats));
+        assertEquals(original.getMeasureNumber(), roundTrip.getMeasureNumber());
+        assertEquals(original.getBeatNumber(), roundTrip.getBeatNumber(), 0.001);
+        
+        original = TimeUnit.measureBeats(5, 3.5);
+        beats = meterMap.toBeats(original);
+        roundTrip = meterMap.toMeasureBeats(TimeUnit.beats(beats));
+        assertEquals(original.getMeasureNumber(), roundTrip.getMeasureNumber());
+        assertEquals(original.getBeatNumber(), roundTrip.getBeatNumber(), 0.001);
+        
+        original = TimeUnit.measureBeats(10, 2);
+        beats = meterMap.toBeats(original);
+        roundTrip = meterMap.toMeasureBeats(TimeUnit.beats(beats));
+        assertEquals(original.getMeasureNumber(), roundTrip.getMeasureNumber());
+        assertEquals(original.getBeatNumber(), roundTrip.getBeatNumber(), 0.001);
+        
+        original = TimeUnit.measureBeats(20, 5.5);
+        beats = meterMap.toBeats(original);
+        roundTrip = meterMap.toMeasureBeats(TimeUnit.beats(beats));
+        assertEquals(original.getMeasureNumber(), roundTrip.getMeasureNumber());
+        assertEquals(original.getBeatNumber(), roundTrip.getBeatNumber(), 0.001);
+    }
+    
+    @Test(expected = IllegalStateException.class)
+    public void testToBeatsEmptyMeterMap() {
+        MeterMap meterMap = new MeterMap();
+        meterMap.clear();
+        meterMap.toBeats(TimeUnit.measureBeats(1, 1));
+    }
+    
+    @Test(expected = IllegalArgumentException.class)
+    public void testToBeatsMeasureBeforeFirstEntry() {
+        MeterMap meterMap = new MeterMap();
+        // MeterMap starts at measure 1, try measure 0
+        meterMap.toBeats(TimeUnit.measureBeats(0, 1));
+    }
+    
+    @Test(expected = IllegalArgumentException.class)
+    public void testToBeatsBeatExceedsMeter() {
+        MeterMap meterMap = new MeterMap();
+        // 4/4 meter, try beat 5
+        meterMap.toBeats(TimeUnit.measureBeats(1, 5));
+    }
+    
+    @Test(expected = IllegalStateException.class)
+    public void testToMeasureBeatsEmptyMeterMap() {
+        MeterMap meterMap = new MeterMap();
+        meterMap.clear();
+        meterMap.toMeasureBeats(TimeUnit.beats(0.0));
+    }
+    
+    @Test(expected = IllegalArgumentException.class)
+    public void testToMeasureBeatsNegativeBeats() {
+        MeterMap meterMap = new MeterMap();
+        meterMap.toMeasureBeats(TimeUnit.beats(-1.0));
     }
 }

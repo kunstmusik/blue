@@ -19,8 +19,12 @@
  */
 package blue.time;
 
+import java.util.Objects;
+
 /**
- *
+ * Represents a musical time signature (meter).
+ * Immutable value object.
+ * 
  * @author syi
  */
 public class Meter {
@@ -47,7 +51,31 @@ public class Meter {
         this.beatLength = meter.beatLength;
     }
     
+    /**
+     * Calculates the duration of one measure in Csound beats (quarter notes).
+     * For example, 4/4 time = 4 beats, 3/4 time = 3 beats, 6/8 time = 3 beats.
+     * 
+     * @return duration of one measure in Csound beats
+     */
     public double getMeasureBeatDuration() {
         return numBeats * (4.0 / beatLength);
+    }
+    
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (!(obj instanceof Meter)) return false;
+        Meter other = (Meter) obj;
+        return numBeats == other.numBeats && beatLength == other.beatLength;
+    }
+    
+    @Override
+    public int hashCode() {
+        return Objects.hash(numBeats, beatLength);
+    }
+    
+    @Override
+    public String toString() {
+        return numBeats + "/" + beatLength;
     }
 }

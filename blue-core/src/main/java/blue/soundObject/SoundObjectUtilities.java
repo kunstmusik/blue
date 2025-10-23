@@ -20,6 +20,7 @@
 package blue.soundObject;
 
 import blue.noteProcessor.NoteProcessorChain;
+import blue.time.TimeUnit;
 import electric.xml.Element;
 import java.awt.Color;
 
@@ -34,10 +35,10 @@ public class SoundObjectUtilities {
         Element retVal = new Element("soundObject");
         retVal.setAttribute("type", sObj.getClass().getName());
 
-        retVal.addElement("subjectiveDuration").setText(
-                Double.toString(sObj.getSubjectiveDuration()));
-        retVal.addElement("startTime").setText(
-                Double.toString(sObj.getStartTime()));
+        // Save as TimeUnit (new format)
+        retVal.addElement(sObj.getStartTimeUnit().saveAsXML().setName("startTimeUnit"));
+        retVal.addElement(sObj.getSubjectiveDurationUnit().saveAsXML().setName("durationUnit"));
+        
         retVal.addElement("name").setText(sObj.getName());
 
         String colorStr = Integer.toString(sObj.getBackgroundColor().getRGB());
@@ -60,9 +61,44 @@ public class SoundObjectUtilities {
 
     public static void initBasicFromXML(Element data, SoundObject sObj)
             throws Exception {
-        sObj.setSubjectiveDuration(Double.parseDouble(data
-                .getTextString("subjectiveDuration")));
-        sObj.setStartTime(Double.parseDouble(data.getTextString("startTime")));
+        
+        // Migration: Try new TimeUnit format first, fall back to old double format
+        Element startTimeUnitElement = data.getElement("startTimeUnit");
+        Element durationUnitElement = data.getElement("durationUnit");
+        
+        // Load start time
+        if (startTimeUnitElement != null) {
+            // New format: TimeUnit
+            Element timeUnitData = startTimeUnitElement.getElement("timeUnit");
+            if (timeUnitData != null) {
+                sObj.setStartTimeUnit(TimeUnit.loadFromXML(timeUnitData));
+            } else {
+                throw new Exception("Invalid startTimeUnit element: missing timeUnit child");
+            }
+        } else if (data.getElement("startTime") != null) {
+            // Old format: double (migrate to BeatTime)
+            double startTime = Double.parseDouble(data.getTextString("startTime"));
+            sObj.setStartTime(startTime);  // Uses double API which creates BeatTime
+        } else {
+            throw new Exception("Missing both startTimeUnit and startTime elements");
+        }
+        
+        // Load duration
+        if (durationUnitElement != null) {
+            // New format: TimeUnit
+            Element timeUnitData = durationUnitElement.getElement("timeUnit");
+            if (timeUnitData != null) {
+                sObj.setSubjectiveDurationUnit(TimeUnit.loadFromXML(timeUnitData));
+            } else {
+                throw new Exception("Invalid durationUnit element: missing timeUnit child");
+            }
+        } else if (data.getElement("subjectiveDuration") != null) {
+            // Old format: double (migrate to BeatTime)
+            double duration = Double.parseDouble(data.getTextString("subjectiveDuration"));
+            sObj.setSubjectiveDuration(duration);  // Uses double API which creates BeatTime
+        } else {
+            throw new Exception("Missing both durationUnit and subjectiveDuration elements");
+        }
 
         String name = data.getTextString("name");
 
