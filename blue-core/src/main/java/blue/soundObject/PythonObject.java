@@ -80,7 +80,7 @@ public class PythonObject extends AbstractSoundObject implements
 
     @Override
     public double getObjectiveDuration() {
-        return subjectiveDuration;
+        return getSubjectiveDuration();
     }
 
     @Override
@@ -104,7 +104,7 @@ public class PythonObject extends AbstractSoundObject implements
 
         try {
             tempScore = PythonProxy.processPythonScore(pythonCode,
-                    subjectiveDuration);
+                    getSubjectiveDuration());
         } catch (PyException pyEx) {
             String msg = "Jython Error:\n" + pyEx.toString();
             throw new SoundObjectException(this, msg);
@@ -126,7 +126,7 @@ public class PythonObject extends AbstractSoundObject implements
 
         ScoreUtilities.applyTimeBehavior(nl, this.getTimeBehavior(), this.
                 getSubjectiveDuration(), this.getRepeatPoint());
-        ScoreUtilities.setScoreStart(nl, startTime);
+        ScoreUtilities.setScoreStart(nl, getStartTime());
         return nl;
     }
 

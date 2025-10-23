@@ -71,7 +71,7 @@ public class Instance extends AbstractSoundObject {
 
         ScoreUtilities.applyTimeBehavior(nl, this.getTimeBehavior(), this
                 .getSubjectiveDuration(), this.getRepeatPoint());
-        ScoreUtilities.setScoreStart(nl, startTime);
+        ScoreUtilities.setScoreStart(nl, getStartTime());
 
     }
 

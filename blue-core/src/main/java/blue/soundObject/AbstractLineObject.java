@@ -57,6 +57,7 @@ public abstract class AbstractLineObject extends AbstractSoundObject {
 
         NoteList notes = new NoteList();
 
+        final double subjectiveDuration = getSubjectiveDuration();
         double newDur = subjectiveDuration;
 
         if (renderEnd > 0 && renderEnd < subjectiveDuration) {
@@ -92,7 +93,7 @@ public abstract class AbstractLineObject extends AbstractSoundObject {
             buffer.delete(0, buffer.length());
         }
 
-        ScoreUtilities.setScoreStart(notes, startTime);
+        ScoreUtilities.setScoreStart(notes, getStartTime());
 
         return notes;
     }

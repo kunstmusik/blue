@@ -35,9 +35,9 @@ public class SoundObjectUtilities {
         Element retVal = new Element("soundObject");
         retVal.setAttribute("type", sObj.getClass().getName());
 
-        // Save as TimeUnit (new format)
+        // Save as TimeUnit (new format) - directly rename to save space
         retVal.addElement(sObj.getStartTimeUnit().saveAsXML().setName("startTimeUnit"));
-        retVal.addElement(sObj.getSubjectiveDurationUnit().saveAsXML().setName("durationUnit"));
+        retVal.addElement(sObj.getSubjectiveDurationUnit().saveAsXML().setName("subjectiveDurationUnit"));
         
         retVal.addElement("name").setText(sObj.getName());
 
@@ -64,17 +64,12 @@ public class SoundObjectUtilities {
         
         // Migration: Try new TimeUnit format first, fall back to old double format
         Element startTimeUnitElement = data.getElement("startTimeUnit");
-        Element durationUnitElement = data.getElement("durationUnit");
+        Element durationUnitElement = data.getElement("subjectiveDurationUnit");
         
         // Load start time
         if (startTimeUnitElement != null) {
-            // New format: TimeUnit
-            Element timeUnitData = startTimeUnitElement.getElement("timeUnit");
-            if (timeUnitData != null) {
-                sObj.setStartTimeUnit(TimeUnit.loadFromXML(timeUnitData));
-            } else {
-                throw new Exception("Invalid startTimeUnit element: missing timeUnit child");
-            }
+            // New format: TimeUnit (element is directly the timeUnit)
+            sObj.setStartTimeUnit(TimeUnit.loadFromXML(startTimeUnitElement));
         } else if (data.getElement("startTime") != null) {
             // Old format: double (migrate to BeatTime)
             double startTime = Double.parseDouble(data.getTextString("startTime"));
@@ -85,19 +80,14 @@ public class SoundObjectUtilities {
         
         // Load duration
         if (durationUnitElement != null) {
-            // New format: TimeUnit
-            Element timeUnitData = durationUnitElement.getElement("timeUnit");
-            if (timeUnitData != null) {
-                sObj.setSubjectiveDurationUnit(TimeUnit.loadFromXML(timeUnitData));
-            } else {
-                throw new Exception("Invalid durationUnit element: missing timeUnit child");
-            }
+            // New format: TimeUnit (element is directly the timeUnit)
+            sObj.setSubjectiveDurationUnit(TimeUnit.loadFromXML(durationUnitElement));
         } else if (data.getElement("subjectiveDuration") != null) {
             // Old format: double (migrate to BeatTime)
             double duration = Double.parseDouble(data.getTextString("subjectiveDuration"));
             sObj.setSubjectiveDuration(duration);  // Uses double API which creates BeatTime
         } else {
-            throw new Exception("Missing both durationUnit and subjectiveDuration elements");
+            throw new Exception("Missing both subjectiveDurationUnit and subjectiveDuration elements");
         }
 
         String name = data.getTextString("name");

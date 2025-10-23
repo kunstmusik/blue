@@ -64,6 +64,7 @@ public class AudioFile extends AbstractSoundObject {
             double renderEnd) throws SoundObjectException {
         NoteList n = new NoteList();
 
+        final double subjectiveDuration = getSubjectiveDuration();
         double newDur = subjectiveDuration;
 
         if (renderEnd > 0 && renderEnd < subjectiveDuration) {
@@ -75,7 +76,7 @@ public class AudioFile extends AbstractSoundObject {
         StringBuilder buffer = new StringBuilder();
 
         buffer.append("i").append(instrumentNumber);
-        buffer.append("\t").append(startTime + renderStart);
+        buffer.append("\t").append(getStartTime() + renderStart);
         buffer.append("\t").append(newDur);
         buffer.append("\t").append(renderStart);
 
@@ -176,7 +177,7 @@ public class AudioFile extends AbstractSoundObject {
 
     @Override
     public double getObjectiveDuration() {
-        return subjectiveDuration;
+        return getSubjectiveDuration();
     }
 
     @Override

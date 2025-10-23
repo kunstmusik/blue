@@ -57,7 +57,7 @@ public class FrozenSoundObject extends AbstractSoundObject {
 
     @Override
     public double getObjectiveDuration() {
-        return this.subjectiveDuration;
+        return this.getSubjectiveDuration();
     }
 
     @Override
@@ -111,6 +111,7 @@ public class FrozenSoundObject extends AbstractSoundObject {
             return n;
         }
 
+        final double subjectiveDuration = getSubjectiveDuration();
         double newDur = subjectiveDuration;
 
         if(renderEnd > 0 && renderEnd < subjectiveDuration) {
@@ -122,7 +123,7 @@ public class FrozenSoundObject extends AbstractSoundObject {
         StringBuilder buffer = new StringBuilder();
 
         buffer.append("i").append(instrumentNumber);
-        buffer.append("\t").append(startTime + renderStart);
+        buffer.append("\t").append(getStartTime() + renderStart);
         buffer.append("\t").append(newDur);
         buffer.append("\t\"").append(this.getFrozenWaveFileName()).append("\"");
         buffer.append("\t").append(renderStart);

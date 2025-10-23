@@ -79,7 +79,7 @@ public class Sound extends AbstractSoundObject {
 
     @Override
     public double getObjectiveDuration() {
-        return subjectiveDuration;
+        return getSubjectiveDuration();
     }
 
     @Override
@@ -125,8 +125,8 @@ public class Sound extends AbstractSoundObject {
     public NoteList generateNotes(int instrumentNumber, double renderStart, double renderEnd) throws SoundObjectException {
         NoteList n = new NoteList();
 
-        String noteText = "i" + instrumentNumber + "\t" + startTime + "\t"
-                + subjectiveDuration;
+        String noteText = "i" + instrumentNumber + "\t" + getStartTime() + "\t"
+                + getSubjectiveDuration();
 
         Note tempNote = null;
 

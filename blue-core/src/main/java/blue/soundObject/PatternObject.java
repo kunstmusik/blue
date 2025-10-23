@@ -206,7 +206,7 @@ public class PatternObject extends AbstractSoundObject implements TableModel,
         ScoreUtilities.applyTimeBehavior(tempNoteList, this.getTimeBehavior(),
                 this.getSubjectiveDuration(), this.getRepeatPoint(), beats);
 
-        ScoreUtilities.setScoreStart(tempNoteList, startTime);
+        ScoreUtilities.setScoreStart(tempNoteList, getStartTime());
 
         return tempNoteList;
     }

@@ -34,9 +34,9 @@ public class NotationObject extends AbstractSoundObject implements
     private final NotationStaff staff;
 
     public NotationObject() {
-        name = "Notation Object";
-        subjectiveDuration = 2.0f;
-        startTime = 0.0f;
+        setName("Notation Object");
+        setSubjectiveDuration(2.0f);
+        setStartTime(0.0f);
         timeBehavior = TimeBehavior.SCALE;
         staff = new NotationStaff();
     }

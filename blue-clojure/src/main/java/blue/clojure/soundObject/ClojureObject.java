@@ -135,7 +135,7 @@ public class ClojureObject extends AbstractSoundObject implements
 
         ScoreUtilities.applyTimeBehavior(nl, this.getTimeBehavior(), this.
                 getSubjectiveDuration(), this.getRepeatPoint());
-        ScoreUtilities.setScoreStart(nl, startTime);
+        ScoreUtilities.setScoreStart(nl, getStartTime());
         return nl;
     }
 
@@ -146,7 +146,7 @@ public class ClojureObject extends AbstractSoundObject implements
 
     @Override
     public double getObjectiveDuration() {
-        return subjectiveDuration;
+        return getSubjectiveDuration();
     }
 
     @Override

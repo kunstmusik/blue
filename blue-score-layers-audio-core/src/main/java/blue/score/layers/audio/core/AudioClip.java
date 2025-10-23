@@ -262,23 +262,54 @@ public final class AudioClip implements ScoreObject, Comparable<AudioClip> {
 
         setDuration(duration);
     }
+    
+    @Override
+    public blue.time.TimeUnit getStartTimeUnit() {
+        return blue.time.TimeUnit.beats(getStart());
+    }
+    
+    @Override
+    public void setStartTimeUnit(blue.time.TimeUnit timeUnit) {
+        if (timeUnit instanceof blue.time.TimeUnit.BeatTime) {
+            setStart(((blue.time.TimeUnit.BeatTime) timeUnit).getCsoundBeats());
+        } else {
+            setStart(blue.time.TimeUtilities.timeUnitToBeats(timeUnit, blue.time.TimeContextManager.getContext()));
+        }
+    }
+    
+    @Override
+    public blue.time.TimeUnit getSubjectiveDurationUnit() {
+        return blue.time.TimeUnit.beats(getDuration());
+    }
+    
+    @Override
+    public void setSubjectiveDurationUnit(blue.time.TimeUnit timeUnit) {
+        if (timeUnit instanceof blue.time.TimeUnit.BeatTime) {
+            setDuration(((blue.time.TimeUnit.BeatTime) timeUnit).getCsoundBeats());
+        } else {
+            setDuration(blue.time.TimeUtilities.timeUnitToBeats(timeUnit, blue.time.TimeContextManager.getContext()));
+        }
+    }
 
     @Override
     public double[] getResizeRightLimits() {
+        final double subjectiveDuration = getSubjectiveDuration();
         
         return isLooping()
-                ? new double[]{-getSubjectiveDuration(), Double.MAX_VALUE}
-                : new double[]{-getSubjectiveDuration(), (getAudioDuration() - (getSubjectiveDuration() + getFileStartTime()))};
+                ? new double[]{-subjectiveDuration, Double.MAX_VALUE}
+                : new double[]{-subjectiveDuration, (getAudioDuration() - (subjectiveDuration + getFileStartTime()))};
     }
 
     @Override
     public double[] getResizeLeftLimits() {
+        final double startTime = getStartTime();
+        final double subjectiveDuration = getSubjectiveDuration();
 
         var leftLimit = isLooping()
-                ? -getStartTime()
+                ? -startTime
                 : Math.max(-getStart(), -getFileStartTime());
 
-        return new double[]{leftLimit, getSubjectiveDuration()};
+        return new double[]{leftLimit, subjectiveDuration};
     }
 
     @Override

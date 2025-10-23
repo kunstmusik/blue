@@ -79,7 +79,7 @@ public class TrackerObject extends AbstractSoundObject {
         ScoreUtilities.applyTimeBehavior(nl, this.getTimeBehavior(), this
                 .getSubjectiveDuration(), this.getRepeatPoint(), getSteps());
 
-        ScoreUtilities.setScoreStart(nl, startTime);
+        ScoreUtilities.setScoreStart(nl, getStartTime());
 
         return nl;
     }
@@ -88,7 +88,7 @@ public class TrackerObject extends AbstractSoundObject {
     public double getObjectiveDuration() {
         
         // FIXME: May need to recalculate this in the future...
-        return subjectiveDuration;
+        return getSubjectiveDuration();
     }
 
     @Override

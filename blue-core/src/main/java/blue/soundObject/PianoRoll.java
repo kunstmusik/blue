@@ -301,7 +301,7 @@ public class PianoRoll extends AbstractSoundObject implements ListChangeListener
         ScoreUtilities.applyTimeBehavior(nl, this.getTimeBehavior(), this
                 .getSubjectiveDuration(), this.getRepeatPoint());
 
-        ScoreUtilities.setScoreStart(nl, startTime);
+        ScoreUtilities.setScoreStart(nl, getStartTime());
 
         return nl;
     }

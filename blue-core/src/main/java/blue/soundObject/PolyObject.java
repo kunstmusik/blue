@@ -59,8 +59,17 @@ public class PolyObject extends ArrayList<SoundLayer> implements SoundObject,
     private transient Vector<LayerGroupListener> layerGroupListeners = null;
     public static final int DISPLAY_TIME = 0;
     public static final int DISPLAY_NUMBER = 1;
+    
+    // TimeUnit storage - single source of truth
+    protected blue.time.TimeUnit startTimeUnit = blue.time.TimeUnit.beats(0.0);
+    protected blue.time.TimeUnit durationUnit = blue.time.TimeUnit.beats(4.0);
+    
+    // Legacy fields for backward compatibility (deprecated, use TimeUnit methods)
+    @Deprecated
     protected double subjectiveDuration = 4.0f;
+    @Deprecated
     protected double startTime = 0.0f;
+    
     protected String name = "";
     protected Color backgroundColor = Color.DARK_GRAY;
     transient Vector<ScoreObjectListener> soundObjectListeners = null;
@@ -86,8 +95,8 @@ public class PolyObject extends ArrayList<SoundLayer> implements SoundObject,
     public PolyObject(PolyObject pObj) {
         super(pObj.size());
         name = pObj.name;
-        startTime = pObj.startTime;
-        subjectiveDuration = pObj.subjectiveDuration;
+        startTimeUnit = pObj.startTimeUnit;
+        durationUnit = pObj.durationUnit;
         timeBehavior = pObj.timeBehavior;
         repeatPoint = pObj.repeatPoint;
         npc = new NoteProcessorChain(pObj.npc);
@@ -200,8 +209,9 @@ public class PolyObject extends ArrayList<SoundLayer> implements SoundObject,
 
         for (int i = 1; i < size; i++) {
             temp = sObjects.get(i);
-            if (temp.getStartTime() < min) {
-                min = temp.getStartTime();
+            double tempStartTime = temp.getStartTime();
+            if (tempStartTime < min) {
+                min = tempStartTime;
             }
         }
 
@@ -772,7 +782,7 @@ public class PolyObject extends ArrayList<SoundLayer> implements SoundObject,
 
     @Override
     public void setStartTime(double startTime) {
-        this.startTime = startTime;
+        this.startTimeUnit = blue.time.TimeUnit.beats(startTime);
 
         ScoreObjectEvent event = new ScoreObjectEvent(this,
                 ScoreObjectEvent.START_TIME);
@@ -782,12 +792,30 @@ public class PolyObject extends ArrayList<SoundLayer> implements SoundObject,
 
     @Override
     public double getStartTime() {
-        return startTime;
+        if (startTimeUnit instanceof blue.time.TimeUnit.BeatTime) {
+            return ((blue.time.TimeUnit.BeatTime) startTimeUnit).getCsoundBeats();
+        }
+        return blue.time.TimeUtilities.timeUnitToBeats(startTimeUnit, blue.time.TimeContextManager.getContext());
+    }
+    
+    @Override
+    public void setStartTimeUnit(blue.time.TimeUnit timeUnit) {
+        this.startTimeUnit = timeUnit;
+        
+        ScoreObjectEvent event = new ScoreObjectEvent(this,
+                ScoreObjectEvent.START_TIME);
+        
+        fireSoundObjectEvent(event);
+    }
+    
+    @Override
+    public blue.time.TimeUnit getStartTimeUnit() {
+        return startTimeUnit;
     }
 
     @Override
     public void setSubjectiveDuration(double subjectiveDuration) {
-        this.subjectiveDuration = subjectiveDuration;
+        this.durationUnit = blue.time.TimeUnit.beats(subjectiveDuration);
 
         ScoreObjectEvent event = new ScoreObjectEvent(this,
                 ScoreObjectEvent.DURATION);
@@ -797,29 +825,52 @@ public class PolyObject extends ArrayList<SoundLayer> implements SoundObject,
 
     @Override
     public double getSubjectiveDuration() {
-        return subjectiveDuration;
+        if (durationUnit instanceof blue.time.TimeUnit.BeatTime) {
+            return ((blue.time.TimeUnit.BeatTime) durationUnit).getCsoundBeats();
+        }
+        return blue.time.TimeUtilities.timeUnitToBeats(durationUnit, blue.time.TimeContextManager.getContext());
+    }
+    
+    @Override
+    public void setSubjectiveDurationUnit(blue.time.TimeUnit timeUnit) {
+        this.durationUnit = timeUnit;
+        
+        ScoreObjectEvent event = new ScoreObjectEvent(this,
+                ScoreObjectEvent.DURATION);
+        
+        fireSoundObjectEvent(event);
+    }
+    
+    @Override
+    public blue.time.TimeUnit getSubjectiveDurationUnit() {
+        return durationUnit;
     }
 
     @Override
     public double[] getResizeRightLimits() {
-        return new double[]{-getSubjectiveDuration(), Double.MAX_VALUE};
+        final double subjectiveDuration = getSubjectiveDuration();
+        return new double[]{-subjectiveDuration, Double.MAX_VALUE};
     }
 
     @Override
     public double[] getResizeLeftLimits() {
-        return new double[] { -getStartTime(), getSubjectiveDuration() };
+        final double startTime = getStartTime();
+        final double subjectiveDuration = getSubjectiveDuration();
+        return new double[] { -startTime, subjectiveDuration };
     }
     
     @Override
     public void resizeLeft(double newStartTime) {
-        double diff = startTime - newStartTime;
+        final double currentStartTime = getStartTime();
+        final double currentDuration = getSubjectiveDuration();
+        double diff = currentStartTime - newStartTime;
         setStartTime(newStartTime);
-        setSubjectiveDuration(subjectiveDuration + diff);
+        setSubjectiveDuration(currentDuration + diff);
     }
 
     @Override
     public void resizeRight(double newEndTime) {
-        setSubjectiveDuration(newEndTime - startTime);
+        setSubjectiveDuration(newEndTime - getStartTime());
     }
 
     @Override

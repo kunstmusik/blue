@@ -74,7 +74,7 @@ public class JavaScriptObject extends AbstractSoundObject
 
     @Override
     public double getObjectiveDuration() {
-        return subjectiveDuration;
+        return getSubjectiveDuration();
     }
 
     @Override
@@ -90,17 +90,17 @@ public class JavaScriptObject extends AbstractSoundObject
     public NoteList generateNotes(double renderStart, double renderEnd) throws SoundObjectException {
         // System.out.println("[JavaScriptObject] attempting to generate score for
         // object " + this.name + " at time " + this.startTime);
-        String soundObjectId = "[ " + this.name + " : " + this.startTime
+        String soundObjectId = "[ " + this.name + " : " + this.getStartTime()
                 + " ] ";
         try {
             String tempScore = blue.scripting.JavaScriptProxy.processJavascriptScore(
-                    javaScriptCode, subjectiveDuration, soundObjectId);
+                    javaScriptCode, getSubjectiveDuration(), soundObjectId);
 
             NoteList nl = ScoreUtilities.getNotes(tempScore);
             nl = ScoreUtilities.applyNoteProcessorChain(nl, this.npc);
             ScoreUtilities.applyTimeBehavior(nl, this.getTimeBehavior(), this
                     .getSubjectiveDuration(), this.getRepeatPoint());
-            ScoreUtilities.setScoreStart(nl, startTime);
+            ScoreUtilities.setScoreStart(nl, getStartTime());
             return nl;
         } catch (Exception e) {
             e.printStackTrace();
