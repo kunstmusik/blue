@@ -18,6 +18,7 @@
 
 package blue.time;
 
+import electric.xml.Element;
 import javafx.beans.property.LongProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleLongProperty;
@@ -65,5 +66,24 @@ public class MeasureMeterPair {
 
     public ObjectProperty<Meter> meterProperty() {
         return this.meter;
+    }
+    
+    /**
+     * Save MeasureMeterPair to XML.
+     */
+    public Element saveAsXML() {
+        Element retVal = new Element("measureMeterPair");
+        retVal.addElement("measureNumber").setText(Long.toString(getMeasureNumber()));
+        retVal.addElement(getMeter().saveAsXML());
+        return retVal;
+    }
+    
+    /**
+     * Load MeasureMeterPair from XML.
+     */
+    public static MeasureMeterPair loadFromXML(Element data) {
+        long measureNumber = Long.parseLong(data.getElement("measureNumber").getTextString());
+        Meter meter = Meter.loadFromXML(data.getElement("meter"));
+        return new MeasureMeterPair(measureNumber, meter);
     }
 }

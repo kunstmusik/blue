@@ -19,6 +19,8 @@
  */
 package blue.time;
 
+import electric.xml.Element;
+
 /**
  * Context of time for a project. Used to resolve TimeUnit values according to meter, tempo, and sample rate.
  *
@@ -70,5 +72,40 @@ public class TimeContext {
     
     public void setTempoMap(TempoMap tempoMap) {
         this.tempoMap = tempoMap;
+    }
+    
+    /**
+     * Save TimeContext to XML.
+     */
+    public Element saveAsXML() {
+        Element retVal = new Element("timeContext");
+        retVal.addElement("sampleRate").setText(Long.toString(sampleRate));
+        retVal.addElement(meterMap.saveAsXML());
+        retVal.addElement(tempoMap.saveAsXML());
+        return retVal;
+    }
+    
+    /**
+     * Load TimeContext from XML.
+     */
+    public static TimeContext loadFromXML(Element data) {
+        TimeContext tc = new TimeContext();
+        
+        Element sampleRateElem = data.getElement("sampleRate");
+        if (sampleRateElem != null) {
+            tc.setSampleRate(Long.parseLong(sampleRateElem.getTextString()));
+        }
+        
+        Element meterMapElem = data.getElement("meterMap");
+        if (meterMapElem != null) {
+            tc.setMeterMap(MeterMap.loadFromXML(meterMapElem));
+        }
+        
+        Element tempoMapElem = data.getElement("tempoMap");
+        if (tempoMapElem != null) {
+            tc.setTempoMap(TempoMap.loadFromXML(tempoMapElem));
+        }
+        
+        return tc;
     }
 }

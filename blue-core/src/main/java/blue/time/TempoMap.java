@@ -19,6 +19,8 @@
  */
 package blue.time;
 
+import electric.xml.Element;
+import electric.xml.Elements;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.StringTokenizer;
@@ -243,5 +245,71 @@ public class TempoMap {
             this.beat = pair.beat;
             this.tempo = pair.tempo;
         }
+        
+        /**
+         * Save BeatTempoPair to XML.
+         */
+        public Element saveAsXML() {
+            Element retVal = new Element("beatTempoPair");
+            retVal.addElement("beat").setText(Double.toString(beat));
+            retVal.addElement("tempo").setText(Double.toString(tempo));
+            return retVal;
+        }
+        
+        /**
+         * Load BeatTempoPair from XML.
+         */
+        public static BeatTempoPair loadFromXML(Element data) {
+            double beat = Double.parseDouble(data.getElement("beat").getTextString());
+            double tempo = Double.parseDouble(data.getElement("tempo").getTextString());
+            return new BeatTempoPair(beat, tempo);
+        }
+    }
+    
+    /**
+     * Save TempoMap to XML.
+     */
+    public Element saveAsXML() {
+        Element retVal = new Element("tempoMap");
+        
+        for (BeatTempoPair pair : timeMap) {
+            retVal.addElement(pair.saveAsXML());
+        }
+        
+        return retVal;
+    }
+    
+    /**
+     * Load TempoMap from XML.
+     * Note: This loads the beat/tempo pairs and recalculates accumulatedTime
+     * using the createTempoMap logic.
+     */
+    public static TempoMap loadFromXML(Element data) {
+        // Load all tempo entries
+        Elements pairs = data.getElements("beatTempoPair");
+        
+        // Build tempo string for createTempoMap
+        StringBuilder tempoString = new StringBuilder();
+        while (pairs.hasMoreElements()) {
+            Element pairElement = pairs.next();
+            double beat = Double.parseDouble(pairElement.getElement("beat").getTextString());
+            double tempo = Double.parseDouble(pairElement.getElement("tempo").getTextString());
+            
+            if (tempoString.length() > 0) {
+                tempoString.append(" ");
+            }
+            tempoString.append(beat).append(" ").append(tempo);
+        }
+        
+        // Use createTempoMap to properly calculate accumulatedTime
+        if (tempoString.length() > 0) {
+            TempoMap loaded = createTempoMap(tempoString.toString());
+            if (loaded != null) {
+                return loaded;
+            }
+        }
+        
+        // If loading failed or empty, return default
+        return new TempoMap();
     }
 }

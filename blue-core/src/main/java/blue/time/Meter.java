@@ -19,6 +19,7 @@
  */
 package blue.time;
 
+import electric.xml.Element;
 import java.util.Objects;
 
 /**
@@ -77,5 +78,24 @@ public class Meter {
     @Override
     public String toString() {
         return numBeats + "/" + beatLength;
+    }
+    
+    /**
+     * Save Meter to XML.
+     */
+    public Element saveAsXML() {
+        Element retVal = new Element("meter");
+        retVal.addElement("numBeats").setText(Long.toString(numBeats));
+        retVal.addElement("beatLength").setText(Long.toString(beatLength));
+        return retVal;
+    }
+    
+    /**
+     * Load Meter from XML.
+     */
+    public static Meter loadFromXML(Element data) {
+        long numBeats = Long.parseLong(data.getElement("numBeats").getTextString());
+        long beatLength = Long.parseLong(data.getElement("beatLength").getTextString());
+        return new Meter(numBeats, beatLength);
     }
 }

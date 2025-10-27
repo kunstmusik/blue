@@ -31,6 +31,8 @@ import blue.settings.GeneralSettings;
 import blue.settings.ProjectDefaultsSettings;
 import blue.settings.RealtimeRenderSettings;
 import blue.soundObject.PolyObject;
+import blue.time.TimeContext;
+import blue.time.TimeContextScope;
 import blue.ui.utilities.FileChooserManager;
 import blue.undo.BlueUndoManager;
 import java.beans.PropertyChangeEvent;
@@ -489,6 +491,37 @@ fireProjectFileChanged();
         }
 
         setCurrentProject(projects.get(index));
+    }
+
+    /**
+     * Execute an action within the current project's TimeContext.
+     * 
+     * This utility method automatically sets up the appropriate TimeContext
+     * for the current project and ensures it's properly cleaned up after
+     * the action completes, even if an exception occurs.
+     * 
+     * Usage:
+     * <pre>
+     * BlueProjectManager.inProjectTimeContext(() -> {
+     *     // Automatically uses current project's TimeContext
+     *     double beats = obj.getStartTime();
+     *     // Process...
+     * });
+     * </pre>
+     * 
+     * @param action the action to execute within the project's TimeContext
+     * @throws IllegalStateException if no current project exists
+     */
+    public static void inProjectTimeContext(Runnable action) {
+        BlueProject project = getInstance().getCurrentProject();
+        if (project == null) {
+            throw new IllegalStateException("No current project");
+        }
+        
+        TimeContext context = project.getData().getTimeContext();
+        try (var scope = new TimeContextScope(context)) {
+            action.run();
+        }
     }
 
 }

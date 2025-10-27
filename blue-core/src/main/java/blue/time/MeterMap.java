@@ -19,6 +19,8 @@
  */
 package blue.time;
 
+import electric.xml.Element;
+import electric.xml.Elements;
 import javafx.beans.Observable;
 import javafx.beans.property.SimpleListProperty;
 import javafx.collections.FXCollections;
@@ -193,6 +195,43 @@ public class MeterMap extends SimpleListProperty<MeasureMeterPair> {
         long measureNumber = baseMeasure + additionalMeasures;
         
         return TimeUnit.measureBeats(measureNumber, beatNumber);
+    }
+    
+    /**
+     * Save MeterMap to XML.
+     */
+    public Element saveAsXML() {
+        Element retVal = new Element("meterMap");
+        
+        for (MeasureMeterPair pair : this) {
+            retVal.addElement(pair.saveAsXML());
+        }
+        
+        return retVal;
+    }
+    
+    /**
+     * Load MeterMap from XML.
+     */
+    public static MeterMap loadFromXML(Element data) {
+        MeterMap meterMap = new MeterMap();
+        
+        // Clear default entry
+        meterMap.clear();
+        
+        // Load all meter entries
+        Elements pairs = data.getElements("measureMeterPair");
+        while (pairs.hasMoreElements()) {
+            Element pairElement = pairs.next();
+            meterMap.add(MeasureMeterPair.loadFromXML(pairElement));
+        }
+        
+        // If empty after loading, add default
+        if (meterMap.isEmpty()) {
+            meterMap.add(new MeasureMeterPair(1, new Meter(4, 4)));
+        }
+        
+        return meterMap;
     }
 
 }

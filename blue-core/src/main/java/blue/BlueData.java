@@ -24,6 +24,7 @@ import blue.midi.MidiInputProcessor;
 import blue.mixer.Mixer;
 import blue.noteProcessor.NoteProcessorChainMap;
 import blue.score.Score;
+import blue.time.TimeContext;
 import blue.udo.OpcodeList;
 import blue.upgrades.UpgradeManager;
 import blue.utility.TextUtilities;
@@ -80,6 +81,8 @@ public class BlueData implements BlueDataObject {
 
     private MidiInputProcessor midiInputProcessor;
 
+    private TimeContext timeContext;
+
     /**
      * Holds data for ProjectPlugins
      */
@@ -109,6 +112,7 @@ public class BlueData implements BlueDataObject {
         // score.addLayerGroup(new PolyObject());
         liveData = new LiveData();
         midiInputProcessor = new MidiInputProcessor();
+        timeContext = new TimeContext();
         pluginData = new ArrayList<>();
     }
 
@@ -138,6 +142,7 @@ public class BlueData implements BlueDataObject {
         score = new Score(data.getScore());
         liveData = new LiveData(data.getLiveData());
         midiInputProcessor = new MidiInputProcessor(data.getMidiInputProcessor());
+        timeContext = new TimeContext(data.getTimeContext());
         pluginData = new ArrayList<>();
 
         for (BlueDataObject pData : data.getPluginData()) {
@@ -350,6 +355,9 @@ public class BlueData implements BlueDataObject {
                     blueData.midiInputProcessor = MidiInputProcessor.loadFromXML(
                             node);
                     break;
+                case "timeContext":
+                    blueData.timeContext = TimeContext.loadFromXML(node);
+                    break;
                 case "pluginData":
                     Elements pluginElems = node.getElements();
                     while (pluginElems.hasMoreElements()) {
@@ -414,6 +422,7 @@ public class BlueData implements BlueDataObject {
                 Boolean.toString(loopRendering));
 
         retVal.addElement(midiInputProcessor.saveAsXML());
+        retVal.addElement(timeContext.saveAsXML());
 
         Element pluginElems = retVal.addElement("pluginData");
 
@@ -551,6 +560,14 @@ public class BlueData implements BlueDataObject {
 
     public MidiInputProcessor getMidiInputProcessor() {
         return midiInputProcessor;
+    }
+
+    public TimeContext getTimeContext() {
+        return timeContext;
+    }
+
+    public void setTimeContext(TimeContext timeContext) {
+        this.timeContext = timeContext;
     }
 
     @Override
