@@ -182,6 +182,10 @@ public class BlueProjectManager {
                 BlueSystem.setCurrentProjectDirectory(null);
             }
             
+            // Set TimeContext for the current thread (EDT)
+            // This makes TimeContext available for all UI operations
+            blue.time.TimeContextManager.setContext(project.getData().getTimeContext());
+            
             final Score score = project.getData().getScore();
           
             Collection<? extends ProjectPlugin> plugins = 
