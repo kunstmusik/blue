@@ -89,19 +89,19 @@ public class TimeUtilities {
             case MEASURE_BEATS -> context.getMeterMap().toBeats((TimeUnit.MeasureBeatsTime) timeUnit);
             case TIME -> {
                 TimeUnit.TimeValue tv = (TimeUnit.TimeValue) timeUnit;
-                double seconds = tv.toSeconds();
+                double seconds = tv.toTotalSeconds();
                 yield context.getTempoMap().secondsToBeats(seconds);
             }
             case SMPTE -> {
                 TimeUnit.SMPTEValue sv = (TimeUnit.SMPTEValue) timeUnit;
                 // TODO: SMPTE frame rate should come from TimeContext
                 double frameRate = 30.0; // Default, should be configurable
-                double seconds = sv.toSeconds(frameRate);
+                double seconds = sv.toTotalSeconds(frameRate);
                 yield context.getTempoMap().secondsToBeats(seconds);
             }
             case FRAME -> {
                 TimeUnit.FrameValue fv = (TimeUnit.FrameValue) timeUnit;
-                double seconds = fv.toSeconds(context.getSampleRate());
+                double seconds = fv.toTotalSeconds(context.getSampleRate());
                 yield context.getTempoMap().secondsToBeats(seconds);
             }
             case PROJECT_DEFAULT -> throw new IllegalArgumentException(

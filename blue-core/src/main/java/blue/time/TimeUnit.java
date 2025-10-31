@@ -20,10 +20,6 @@
 package blue.time;
 
 import electric.xml.Element;
-import javafx.beans.property.DoubleProperty;
-import javafx.beans.property.LongProperty;
-import javafx.beans.property.SimpleDoubleProperty;
-import javafx.beans.property.SimpleLongProperty;
 
 /**
  * Abstract base class for time value representations.
@@ -54,20 +50,21 @@ public abstract class TimeUnit {
     /**
      * Absolute time representation using Csound beats (quarter note = 1 beat).
      * Independent of meter structure.
+     * 
+     * This is an immutable value object.
      */
-    public static class BeatTime extends TimeUnit {
-
-        DoubleProperty csoundBeats = new SimpleDoubleProperty(0.0);
-
-        public BeatTime() {
-        }
+    public static final class BeatTime extends TimeUnit {
+        
+        public static final BeatTime ZERO = new BeatTime(0.0);
+        
+        private final double csoundBeats;
 
         public BeatTime(double csoundBeats) {
-            this.csoundBeats.set(csoundBeats);
+            this.csoundBeats = csoundBeats;
         }
 
         public BeatTime(BeatTime beatTime) {
-            setCsoundBeats(beatTime.getCsoundBeats());
+            this.csoundBeats = beatTime.csoundBeats;
         }
         
         @Override
@@ -76,15 +73,25 @@ public abstract class TimeUnit {
         }
 
         public double getCsoundBeats() {
-            return csoundBeats.get();
-        }
-
-        public void setCsoundBeats(double csoundBeats) {
-            this.csoundBeats.set(csoundBeats);
-        }
-
-        public final DoubleProperty csoundBeatsProperty() {
             return csoundBeats;
+        }
+        
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (!(o instanceof BeatTime)) return false;
+            BeatTime that = (BeatTime) o;
+            return Double.compare(that.csoundBeats, csoundBeats) == 0;
+        }
+        
+        @Override
+        public int hashCode() {
+            return Double.hashCode(csoundBeats);
+        }
+        
+        @Override
+        public String toString() {
+            return String.format("BeatTime[%.3f beats]", csoundBeats);
         }
 
     }
@@ -95,23 +102,32 @@ public abstract class TimeUnit {
      * 
      * Measure numbers and beat numbers both start at 1.
      * Beat number is relative to the meter at that measure (e.g., beat 1-4 in 4/4).
+     * 
+     * This is an immutable value object.
      */
-    public static class MeasureBeatsTime extends TimeUnit {
-
-        LongProperty measureNumber = new SimpleLongProperty(1);
-        DoubleProperty beatNumber = new SimpleDoubleProperty(1.0);
-
-        public MeasureBeatsTime() {
-        }
+    public static final class MeasureBeatsTime extends TimeUnit {
+        
+        public static final MeasureBeatsTime ZERO = new MeasureBeatsTime(1, 1.0);
+        
+        private final long measureNumber;
+        private final double beatNumber;
 
         public MeasureBeatsTime(long measures, double beats) {
-            setMeasure(measures);
-            setBeatNumber(beats);
+            if (measures < 1) {
+                throw new IllegalArgumentException(
+                    "Measure number must be >= 1, got: " + measures);
+            }
+            if (beats < 1.0) {
+                throw new IllegalArgumentException(
+                    "Beat number must be >= 1.0, got: " + beats);
+            }
+            this.measureNumber = measures;
+            this.beatNumber = beats;
         }
 
         public MeasureBeatsTime(MeasureBeatsTime measureBeatsTime) {
-            setMeasure(measureBeatsTime.getMeasureNumber());
-            setBeatNumber(measureBeatsTime.getBeatNumber());
+            this.measureNumber = measureBeatsTime.measureNumber;
+            this.beatNumber = measureBeatsTime.beatNumber;
         }
         
         @Override
@@ -120,64 +136,74 @@ public abstract class TimeUnit {
         }
 
         public long getMeasureNumber() {
-            return measureNumber.get();
-        }
-
-        public void setMeasure(long measure) {
-            if (measure < 1) {
-                throw new IllegalArgumentException(
-                    "Measure number must be >= 1, got: " + measure);
-            }
-            this.measureNumber.set(measure);
-        }
-
-        public final LongProperty measureNumberProperty() {
             return measureNumber;
         }
 
         public double getBeatNumber() {
-            return beatNumber.get();
-        }
-
-        public void setBeatNumber(double beats) {
-            if (beats < 1.0) {
-                throw new IllegalArgumentException(
-                    "Beat number must be >= 1.0, got: " + beats);
-            }
-            this.beatNumber.set(beats);
-        }
-
-        public final DoubleProperty beatNumberProperty() {
             return beatNumber;
+        }
+        
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (!(o instanceof MeasureBeatsTime)) return false;
+            MeasureBeatsTime that = (MeasureBeatsTime) o;
+            return measureNumber == that.measureNumber &&
+                   Double.compare(that.beatNumber, beatNumber) == 0;
+        }
+        
+        @Override
+        public int hashCode() {
+            int result = Long.hashCode(measureNumber);
+            result = 31 * result + Double.hashCode(beatNumber);
+            return result;
+        }
+        
+        @Override
+        public String toString() {
+            return String.format("MeasureBeatsTime[m%d:%.3f]", measureNumber, beatNumber);
         }
     }
 
     /**
      * Clock time representation using hours, minutes, seconds, and milliseconds.
      * Independent of tempo and meter - represents absolute wall-clock time.
+     * 
+     * This is an immutable value object.
      */
-    public static class TimeValue extends TimeUnit {
+    public static final class TimeValue extends TimeUnit {
         
-        LongProperty hours = new SimpleLongProperty(0);
-        LongProperty minutes = new SimpleLongProperty(0);
-        LongProperty seconds = new SimpleLongProperty(0);
-        LongProperty milliseconds = new SimpleLongProperty(0);
+        public static final TimeValue ZERO = new TimeValue(0, 0, 0, 0);
         
-        public TimeValue() {
-        }
+        private final long hours;
+        private final long minutes;
+        private final long seconds;
+        private final long milliseconds;
         
         public TimeValue(long hours, long minutes, long seconds, long milliseconds) {
-            setHours(hours);
-            setMinutes(minutes);
-            setSeconds(seconds);
-            setMilliseconds(milliseconds);
+            if (hours < 0) {
+                throw new IllegalArgumentException("Hours cannot be negative: " + hours);
+            }
+            if (minutes < 0 || minutes >= 60) {
+                throw new IllegalArgumentException("Minutes must be 0-59, got: " + minutes);
+            }
+            if (seconds < 0 || seconds >= 60) {
+                throw new IllegalArgumentException("Seconds must be 0-59, got: " + seconds);
+            }
+            if (milliseconds < 0 || milliseconds >= 1000) {
+                throw new IllegalArgumentException("Milliseconds must be 0-999, got: " + milliseconds);
+            }
+            this.hours = hours;
+            this.minutes = minutes;
+            this.seconds = seconds;
+            this.milliseconds = milliseconds;
         }
         
         public TimeValue(TimeValue timeValue) {
-            setHours(timeValue.getHours());
-            setMinutes(timeValue.getMinutes());
-            setSeconds(timeValue.getSeconds());
-            setMilliseconds(timeValue.getMilliseconds());
+            this.hours = timeValue.hours;
+            this.minutes = timeValue.minutes;
+            this.seconds = timeValue.seconds;
+            this.milliseconds = timeValue.milliseconds;
         }
         
         @Override
@@ -186,62 +212,18 @@ public abstract class TimeUnit {
         }
         
         public long getHours() {
-            return hours.get();
-        }
-        
-        public void setHours(long hours) {
-            if (hours < 0) {
-                throw new IllegalArgumentException("Hours cannot be negative: " + hours);
-            }
-            this.hours.set(hours);
-        }
-        
-        public final LongProperty hoursProperty() {
             return hours;
         }
         
         public long getMinutes() {
-            return minutes.get();
-        }
-        
-        public void setMinutes(long minutes) {
-            if (minutes < 0 || minutes >= 60) {
-                throw new IllegalArgumentException("Minutes must be 0-59, got: " + minutes);
-            }
-            this.minutes.set(minutes);
-        }
-        
-        public final LongProperty minutesProperty() {
             return minutes;
         }
         
         public long getSeconds() {
-            return seconds.get();
-        }
-        
-        public void setSeconds(long seconds) {
-            if (seconds < 0 || seconds >= 60) {
-                throw new IllegalArgumentException("Seconds must be 0-59, got: " + seconds);
-            }
-            this.seconds.set(seconds);
-        }
-        
-        public final LongProperty secondsProperty() {
             return seconds;
         }
         
         public long getMilliseconds() {
-            return milliseconds.get();
-        }
-        
-        public void setMilliseconds(long milliseconds) {
-            if (milliseconds < 0 || milliseconds >= 1000) {
-                throw new IllegalArgumentException("Milliseconds must be 0-999, got: " + milliseconds);
-            }
-            this.milliseconds.set(milliseconds);
-        }
-        
-        public final LongProperty millisecondsProperty() {
             return milliseconds;
         }
         
@@ -249,37 +231,50 @@ public abstract class TimeUnit {
          * Converts this time value to total seconds.
          * @return total seconds as a double
          */
-        public double toSeconds() {
-            return hours.get() * 3600.0 + minutes.get() * 60.0 + seconds.get() + milliseconds.get() / 1000.0;
+        public double toTotalSeconds() {
+            return hours * 3600.0 + minutes * 60.0 + seconds + milliseconds / 1000.0;
         }
     }
 
     /**
      * SMPTE timecode representation using hours, minutes, seconds, and frames.
      * Frame rate must be provided by TimeContext for conversion to absolute time.
+     * 
+     * This is an immutable value object.
      */
-    public static class SMPTEValue extends TimeUnit {
+    public static final class SMPTEValue extends TimeUnit {
         
-        LongProperty hours = new SimpleLongProperty(0);
-        LongProperty minutes = new SimpleLongProperty(0);
-        LongProperty seconds = new SimpleLongProperty(0);
-        LongProperty frames = new SimpleLongProperty(0);
+        public static final SMPTEValue ZERO = new SMPTEValue(0, 0, 0, 0);
         
-        public SMPTEValue() {
-        }
+        private final long hours;
+        private final long minutes;
+        private final long seconds;
+        private final long frames;
         
         public SMPTEValue(long hours, long minutes, long seconds, long frames) {
-            setHours(hours);
-            setMinutes(minutes);
-            setSeconds(seconds);
-            setFrames(frames);
+            if (hours < 0) {
+                throw new IllegalArgumentException("Hours cannot be negative: " + hours);
+            }
+            if (minutes < 0 || minutes >= 60) {
+                throw new IllegalArgumentException("Minutes must be 0-59, got: " + minutes);
+            }
+            if (seconds < 0 || seconds >= 60) {
+                throw new IllegalArgumentException("Seconds must be 0-59, got: " + seconds);
+            }
+            if (frames < 0) {
+                throw new IllegalArgumentException("Frames cannot be negative: " + frames);
+            }
+            this.hours = hours;
+            this.minutes = minutes;
+            this.seconds = seconds;
+            this.frames = frames;
         }
         
         public SMPTEValue(SMPTEValue smpteValue) {
-            setHours(smpteValue.getHours());
-            setMinutes(smpteValue.getMinutes());
-            setSeconds(smpteValue.getSeconds());
-            setFrames(smpteValue.getFrames());
+            this.hours = smpteValue.hours;
+            this.minutes = smpteValue.minutes;
+            this.seconds = smpteValue.seconds;
+            this.frames = smpteValue.frames;
         }
         
         @Override
@@ -288,63 +283,18 @@ public abstract class TimeUnit {
         }
         
         public long getHours() {
-            return hours.get();
-        }
-        
-        public void setHours(long hours) {
-            if (hours < 0) {
-                throw new IllegalArgumentException("Hours cannot be negative: " + hours);
-            }
-            this.hours.set(hours);
-        }
-        
-        public final LongProperty hoursProperty() {
             return hours;
         }
         
         public long getMinutes() {
-            return minutes.get();
-        }
-        
-        public void setMinutes(long minutes) {
-            if (minutes < 0 || minutes >= 60) {
-                throw new IllegalArgumentException("Minutes must be 0-59, got: " + minutes);
-            }
-            this.minutes.set(minutes);
-        }
-        
-        public final LongProperty minutesProperty() {
             return minutes;
         }
         
         public long getSeconds() {
-            return seconds.get();
-        }
-        
-        public void setSeconds(long seconds) {
-            if (seconds < 0 || seconds >= 60) {
-                throw new IllegalArgumentException("Seconds must be 0-59, got: " + seconds);
-            }
-            this.seconds.set(seconds);
-        }
-        
-        public final LongProperty secondsProperty() {
             return seconds;
         }
         
         public long getFrames() {
-            return frames.get();
-        }
-        
-        public void setFrames(long frames) {
-            if (frames < 0) {
-                throw new IllegalArgumentException("Frames cannot be negative: " + frames);
-            }
-            // Note: Max frames depends on frame rate, validated during conversion
-            this.frames.set(frames);
-        }
-        
-        public final LongProperty framesProperty() {
             return frames;
         }
         
@@ -353,31 +303,60 @@ public abstract class TimeUnit {
          * @param frameRate the SMPTE frame rate (e.g., 24, 25, 29.97, 30, 60)
          * @return total seconds as a double
          */
-        public double toSeconds(double frameRate) {
+        public double toTotalSeconds(double frameRate) {
             if (frameRate <= 0) {
                 throw new IllegalArgumentException("Frame rate must be positive: " + frameRate);
             }
-            return hours.get() * 3600.0 + minutes.get() * 60.0 + seconds.get() + frames.get() / frameRate;
+            return hours * 3600.0 + minutes * 60.0 + seconds + frames / frameRate;
+        }
+        
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (!(o instanceof SMPTEValue)) return false;
+            SMPTEValue that = (SMPTEValue) o;
+            return hours == that.hours &&
+                   minutes == that.minutes &&
+                   seconds == that.seconds &&
+                   frames == that.frames;
+        }
+        
+        @Override
+        public int hashCode() {
+            int result = Long.hashCode(hours);
+            result = 31 * result + Long.hashCode(minutes);
+            result = 31 * result + Long.hashCode(seconds);
+            result = 31 * result + Long.hashCode(frames);
+            return result;
+        }
+        
+        @Override
+        public String toString() {
+            return String.format("SMPTEValue[%02d:%02d:%02d:%02d]", hours, minutes, seconds, frames);
         }
     }
 
     /**
      * Audio sample frame number representation.
      * Requires sample rate from TimeContext for conversion to time.
+     * 
+     * This is an immutable value object.
      */
-    public static class FrameValue extends TimeUnit {
+    public static final class FrameValue extends TimeUnit {
         
-        LongProperty frameNumber = new SimpleLongProperty(0);
+        public static final FrameValue ZERO = new FrameValue(0);
         
-        public FrameValue() {
-        }
+        private final long frameNumber;
         
         public FrameValue(long frameNumber) {
-            setFrameNumber(frameNumber);
+            if (frameNumber < 0) {
+                throw new IllegalArgumentException("Frame number cannot be negative: " + frameNumber);
+            }
+            this.frameNumber = frameNumber;
         }
         
         public FrameValue(FrameValue frameValue) {
-            setFrameNumber(frameValue.getFrameNumber());
+            this.frameNumber = frameValue.frameNumber;
         }
         
         @Override
@@ -386,17 +365,6 @@ public abstract class TimeUnit {
         }
         
         public long getFrameNumber() {
-            return frameNumber.get();
-        }
-        
-        public void setFrameNumber(long frameNumber) {
-            if (frameNumber < 0) {
-                throw new IllegalArgumentException("Frame number cannot be negative: " + frameNumber);
-            }
-            this.frameNumber.set(frameNumber);
-        }
-        
-        public final LongProperty frameNumberProperty() {
             return frameNumber;
         }
         
@@ -405,11 +373,29 @@ public abstract class TimeUnit {
          * @param sampleRate the audio sample rate (e.g., 44100, 48000)
          * @return time in seconds
          */
-        public double toSeconds(long sampleRate) {
+        public double toTotalSeconds(long sampleRate) {
             if (sampleRate <= 0) {
                 throw new IllegalArgumentException("Sample rate must be positive: " + sampleRate);
             }
-            return frameNumber.get() / (double) sampleRate;
+            return frameNumber / (double) sampleRate;
+        }
+        
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (!(o instanceof FrameValue)) return false;
+            FrameValue that = (FrameValue) o;
+            return frameNumber == that.frameNumber;
+        }
+        
+        @Override
+        public int hashCode() {
+            return Long.hashCode(frameNumber);
+        }
+        
+        @Override
+        public String toString() {
+            return String.format("FrameValue[%d frames]", frameNumber);
         }
     }
 
