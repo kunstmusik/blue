@@ -151,7 +151,7 @@ public class TimeUtilitiesTest {
         assertTrue(result instanceof TimeUnit.TimeValue);
         // Measure 3, beat 2 = 9 beats at 60 BPM = 9 seconds
         TimeUnit.TimeValue tv = (TimeUnit.TimeValue) result;
-        assertEquals(9, tv.toSeconds(), 0.001);
+        assertEquals(9, tv.toTotalSeconds(), 0.001);
     }
     
     // ========== Round-trip Conversion Tests ==========
@@ -180,7 +180,7 @@ public class TimeUtilitiesTest {
         TimeUnit intermediate = TimeUtilities.convertTimeUnit(original, TimeBase.FRAME, context);
         TimeUnit result = TimeUtilities.convertTimeUnit(intermediate, TimeBase.TIME, context);
         TimeUnit.TimeValue tv = (TimeUnit.TimeValue) result;
-        assertEquals(original.toSeconds(), tv.toSeconds(), 0.1); // Allow small rounding error
+        assertEquals(original.toTotalSeconds(), tv.toTotalSeconds(), 0.1); // Allow small rounding error
     }
     
     // ========== Helper Method Tests ==========

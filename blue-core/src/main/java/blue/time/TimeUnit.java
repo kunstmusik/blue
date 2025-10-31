@@ -27,6 +27,8 @@ import electric.xml.Element;
  * TimeUnits can represent time in different formats (beats, measure/beats, 
  * clock time, SMPTE, frames) and are converted between formats using a 
  * TimeContext that provides meter, tempo, and sample rate information.
+ * 
+ * All TimeUnit subclasses are immutable value objects.
  *
  * @author Steven Yi
  */
@@ -38,6 +40,107 @@ public abstract class TimeUnit {
      * @return the TimeBase enum value corresponding to this TimeUnit type
      */
     public abstract TimeBase getTimeBase();
+    
+    // ========== Conversion Methods ==========
+    
+    /**
+     * Converts this TimeUnit to Csound beats using the provided TimeContext.
+     * TimeContext is the first parameter for consistency across all context-dependent methods.
+     * 
+     * @param context the TimeContext providing meter, tempo, and sample rate information
+     * @return the time value in Csound beats (quarter note = 1 beat)
+     */
+    public abstract double toBeats(TimeContext context);
+    
+    /**
+     * Converts this TimeUnit to seconds using the provided TimeContext.
+     * TimeContext is the first parameter for consistency across all context-dependent methods.
+     * 
+     * @param context the TimeContext providing meter, tempo, and sample rate information
+     * @return the time value in seconds
+     */
+    public abstract double toSeconds(TimeContext context);
+    
+    /**
+     * Converts this TimeUnit to audio sample frames using the provided TimeContext.
+     * TimeContext is the first parameter for consistency across all context-dependent methods.
+     * 
+     * @param context the TimeContext providing meter, tempo, and sample rate information
+     * @return the time value in audio sample frames
+     */
+    public abstract long toFrames(TimeContext context);
+    
+    // ========== Comparison Methods ==========
+    
+    /**
+     * Returns true if this TimeUnit is less than the other TimeUnit.
+     * TimeContext is the first parameter for consistency.
+     * 
+     * @param context the TimeContext for conversion
+     * @param other the TimeUnit to compare against
+     * @return true if this < other
+     */
+    public boolean lt(TimeContext context, TimeUnit other) {
+        return this.toBeats(context) < other.toBeats(context);
+    }
+    
+    /**
+     * Returns true if this TimeUnit is greater than the other TimeUnit.
+     * TimeContext is the first parameter for consistency.
+     * 
+     * @param context the TimeContext for conversion
+     * @param other the TimeUnit to compare against
+     * @return true if this > other
+     */
+    public boolean gt(TimeContext context, TimeUnit other) {
+        return this.toBeats(context) > other.toBeats(context);
+    }
+    
+    /**
+     * Returns true if this TimeUnit is less than or equal to the other TimeUnit.
+     * TimeContext is the first parameter for consistency.
+     * 
+     * @param context the TimeContext for conversion
+     * @param other the TimeUnit to compare against
+     * @return true if this <= other
+     */
+    public boolean lte(TimeContext context, TimeUnit other) {
+        return this.toBeats(context) <= other.toBeats(context);
+    }
+    
+    /**
+     * Returns true if this TimeUnit is greater than or equal to the other TimeUnit.
+     * TimeContext is the first parameter for consistency.
+     * 
+     * @param context the TimeContext for conversion
+     * @param other the TimeUnit to compare against
+     * @return true if this >= other
+     */
+    public boolean gte(TimeContext context, TimeUnit other) {
+        return this.toBeats(context) >= other.toBeats(context);
+    }
+    
+    // ========== Arithmetic Methods ==========
+    
+    /**
+     * Adds another TimeUnit to this TimeUnit, returning a new TimeUnit of the same type.
+     * TimeContext is the first parameter for consistency.
+     * 
+     * @param context the TimeContext for conversion
+     * @param other the TimeUnit to add
+     * @return a new TimeUnit of the same type as this, representing the sum
+     */
+    public abstract TimeUnit add(TimeContext context, TimeUnit other);
+    
+    /**
+     * Subtracts another TimeUnit from this TimeUnit, returning a new TimeUnit of the same type.
+     * TimeContext is the first parameter for consistency.
+     * 
+     * @param context the TimeContext for conversion
+     * @param other the TimeUnit to subtract
+     * @return a new TimeUnit of the same type as this, representing the difference
+     */
+    public abstract TimeUnit subtract(TimeContext context, TimeUnit other);
 
     public static BeatTime beats(double csoundBeats) {
         return new BeatTime(csoundBeats);
@@ -74,6 +177,38 @@ public abstract class TimeUnit {
 
         public double getCsoundBeats() {
             return csoundBeats;
+        }
+        
+        // Conversion methods
+        
+        @Override
+        public double toBeats(TimeContext context) {
+            return csoundBeats;
+        }
+        
+        @Override
+        public double toSeconds(TimeContext context) {
+            return context.getTempoMap().beatsToSeconds(csoundBeats);
+        }
+        
+        @Override
+        public long toFrames(TimeContext context) {
+            double seconds = toSeconds(context);
+            return Math.round(seconds * context.getSampleRate());
+        }
+        
+        // Arithmetic methods
+        
+        @Override
+        public TimeUnit add(TimeContext context, TimeUnit other) {
+            double otherBeats = other.toBeats(context);
+            return new BeatTime(this.csoundBeats + otherBeats);
+        }
+        
+        @Override
+        public TimeUnit subtract(TimeContext context, TimeUnit other) {
+            double otherBeats = other.toBeats(context);
+            return new BeatTime(this.csoundBeats - otherBeats);
         }
         
         @Override
@@ -141,6 +276,44 @@ public abstract class TimeUnit {
 
         public double getBeatNumber() {
             return beatNumber;
+        }
+        
+        // Conversion methods
+        
+        @Override
+        public double toBeats(TimeContext context) {
+            return context.getMeterMap().toBeats(this);
+        }
+        
+        @Override
+        public double toSeconds(TimeContext context) {
+            double beats = toBeats(context);
+            return context.getTempoMap().beatsToSeconds(beats);
+        }
+        
+        @Override
+        public long toFrames(TimeContext context) {
+            double seconds = toSeconds(context);
+            return Math.round(seconds * context.getSampleRate());
+        }
+        
+        // Arithmetic methods
+        
+        @Override
+        public TimeUnit add(TimeContext context, TimeUnit other) {
+            // Convert to beats, add, convert back to measure/beats
+            double thisBeats = this.toBeats(context);
+            double otherBeats = other.toBeats(context);
+            double resultBeats = thisBeats + otherBeats;
+            return context.getMeterMap().toMeasureBeats(TimeUnit.beats(resultBeats));
+        }
+        
+        @Override
+        public TimeUnit subtract(TimeContext context, TimeUnit other) {
+            double thisBeats = this.toBeats(context);
+            double otherBeats = other.toBeats(context);
+            double resultBeats = thisBeats - otherBeats;
+            return context.getMeterMap().toMeasureBeats(TimeUnit.beats(resultBeats));
         }
         
         @Override
@@ -234,6 +407,54 @@ public abstract class TimeUnit {
         public double toTotalSeconds() {
             return hours * 3600.0 + minutes * 60.0 + seconds + milliseconds / 1000.0;
         }
+        
+        // Conversion methods
+        
+        @Override
+        public double toBeats(TimeContext context) {
+            double seconds = toTotalSeconds();
+            return context.getTempoMap().secondsToBeats(seconds);
+        }
+        
+        @Override
+        public double toSeconds(TimeContext context) {
+            return toTotalSeconds();
+        }
+        
+        @Override
+        public long toFrames(TimeContext context) {
+            double seconds = toTotalSeconds();
+            return Math.round(seconds * context.getSampleRate());
+        }
+        
+        // Arithmetic methods
+        
+        @Override
+        public TimeUnit add(TimeContext context, TimeUnit other) {
+            double thisSeconds = this.toTotalSeconds();
+            double otherSeconds = other.toSeconds(context);
+            double resultSeconds = thisSeconds + otherSeconds;
+            // Convert back to hours:minutes:seconds:milliseconds
+            long totalMs = Math.round(resultSeconds * 1000);
+            long h = totalMs / 3600000;
+            long m = (totalMs % 3600000) / 60000;
+            long s = (totalMs % 60000) / 1000;
+            long ms = totalMs % 1000;
+            return new TimeValue(h, m, s, ms);
+        }
+        
+        @Override
+        public TimeUnit subtract(TimeContext context, TimeUnit other) {
+            double thisSeconds = this.toTotalSeconds();
+            double otherSeconds = other.toSeconds(context);
+            double resultSeconds = Math.max(0, thisSeconds - otherSeconds);
+            long totalMs = Math.round(resultSeconds * 1000);
+            long h = totalMs / 3600000;
+            long m = (totalMs % 3600000) / 60000;
+            long s = (totalMs % 60000) / 1000;
+            long ms = totalMs % 1000;
+            return new TimeValue(h, m, s, ms);
+        }
     }
 
     /**
@@ -310,6 +531,60 @@ public abstract class TimeUnit {
             return hours * 3600.0 + minutes * 60.0 + seconds + frames / frameRate;
         }
         
+        // Conversion methods
+        
+        @Override
+        public double toBeats(TimeContext context) {
+            // TODO: SMPTE frame rate should come from TimeContext
+            double frameRate = 30.0; // Default
+            double seconds = toTotalSeconds(frameRate);
+            return context.getTempoMap().secondsToBeats(seconds);
+        }
+        
+        @Override
+        public double toSeconds(TimeContext context) {
+            // TODO: SMPTE frame rate should come from TimeContext
+            double frameRate = 30.0; // Default
+            return toTotalSeconds(frameRate);
+        }
+        
+        @Override
+        public long toFrames(TimeContext context) {
+            double seconds = toSeconds(context);
+            return Math.round(seconds * context.getSampleRate());
+        }
+        
+        // Arithmetic methods
+        
+        @Override
+        public TimeUnit add(TimeContext context, TimeUnit other) {
+            double frameRate = 30.0; // TODO: from TimeContext
+            double thisSeconds = this.toTotalSeconds(frameRate);
+            double otherSeconds = other.toSeconds(context);
+            double resultSeconds = thisSeconds + otherSeconds;
+            // Convert back to SMPTE
+            long totalFrames = Math.round(resultSeconds * frameRate);
+            long h = totalFrames / (long)(frameRate * 3600);
+            long m = (totalFrames % (long)(frameRate * 3600)) / (long)(frameRate * 60);
+            long s = (totalFrames % (long)(frameRate * 60)) / (long)frameRate;
+            long f = totalFrames % (long)frameRate;
+            return new SMPTEValue(h, m, s, f);
+        }
+        
+        @Override
+        public TimeUnit subtract(TimeContext context, TimeUnit other) {
+            double frameRate = 30.0; // TODO: from TimeContext
+            double thisSeconds = this.toTotalSeconds(frameRate);
+            double otherSeconds = other.toSeconds(context);
+            double resultSeconds = Math.max(0, thisSeconds - otherSeconds);
+            long totalFrames = Math.round(resultSeconds * frameRate);
+            long h = totalFrames / (long)(frameRate * 3600);
+            long m = (totalFrames % (long)(frameRate * 3600)) / (long)(frameRate * 60);
+            long s = (totalFrames % (long)(frameRate * 60)) / (long)frameRate;
+            long f = totalFrames % (long)frameRate;
+            return new SMPTEValue(h, m, s, f);
+        }
+        
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
@@ -378,6 +653,38 @@ public abstract class TimeUnit {
                 throw new IllegalArgumentException("Sample rate must be positive: " + sampleRate);
             }
             return frameNumber / (double) sampleRate;
+        }
+        
+        // Conversion methods
+        
+        @Override
+        public double toBeats(TimeContext context) {
+            double seconds = toTotalSeconds(context.getSampleRate());
+            return context.getTempoMap().secondsToBeats(seconds);
+        }
+        
+        @Override
+        public double toSeconds(TimeContext context) {
+            return toTotalSeconds(context.getSampleRate());
+        }
+        
+        @Override
+        public long toFrames(TimeContext context) {
+            return frameNumber;
+        }
+        
+        // Arithmetic methods
+        
+        @Override
+        public TimeUnit add(TimeContext context, TimeUnit other) {
+            long otherFrames = other.toFrames(context);
+            return new FrameValue(this.frameNumber + otherFrames);
+        }
+        
+        @Override
+        public TimeUnit subtract(TimeContext context, TimeUnit other) {
+            long otherFrames = other.toFrames(context);
+            return new FrameValue(Math.max(0, this.frameNumber - otherFrames));
         }
         
         @Override
