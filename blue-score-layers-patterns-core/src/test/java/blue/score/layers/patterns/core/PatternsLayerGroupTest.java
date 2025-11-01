@@ -24,6 +24,7 @@ import blue.score.ScoreGenerationException;
 import blue.soundObject.GenericScore;
 import blue.soundObject.NoteList;
 import blue.soundObject.TimeBehavior;
+import blue.time.TimeContext;
 import org.junit.*;
 import static org.junit.Assert.*;
 
@@ -57,9 +58,9 @@ public class PatternsLayerGroupTest {
         patternLayer.getPatternData().setPattern(1, true);
         patternLayer.getPatternData().setPattern(2, true);
         
+        TimeContext context = new TimeContext();
         
-        
-        NoteList result = instance.generateForCSD(compileData, startTime,
+        NoteList result = instance.generateForCSD(context, compileData, startTime,
                 endTime, false);
         assertEquals(4, result.size());
         assertEquals("1.0", result.get(1).getPField(2));

@@ -25,6 +25,7 @@ import blue.score.ScoreObjectListener;
 import blue.score.TimeState;
 import blue.score.layers.audio.core.AudioClip;
 import blue.score.layers.audio.core.FadeType;
+import blue.time.TimeContextManager;
 import blue.ui.core.score.ScoreObjectView;
 import blue.ui.core.score.ScoreTopComponent;
 import blue.ui.utilities.BlueGradientFactory;
@@ -532,8 +533,9 @@ public class AudioClipPanel extends JPanel
 
     protected void reset() {
         double pixelSecond = timeState.getPixelSecond();
-        double x = audioClip.getStartTime() * pixelSecond;
-        double width = audioClip.getSubjectiveDuration() * pixelSecond;
+        var context = TimeContextManager.getContext();
+        double x = audioClip.getStartTime().toBeats(context) * pixelSecond;
+        double width = audioClip.getSubjectiveDuration().toBeats(context) * pixelSecond;
         setBounds((int) x, getY(), (int) width, getHeight());
         updateFadeHandleLocations();
     }

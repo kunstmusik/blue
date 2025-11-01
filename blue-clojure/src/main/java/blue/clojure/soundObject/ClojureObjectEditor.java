@@ -30,6 +30,7 @@ import blue.soundObject.NoteList;
 import blue.soundObject.SoundObject;
 import blue.soundObject.SoundObjectException;
 import blue.soundObject.editor.ScoreObjectEditor;
+import blue.time.TimeContextManager;
 import blue.ui.nbutilities.MimeTypeEditorComponent;
 import blue.ui.utilities.SimpleDocumentListener;
 import java.awt.BorderLayout;
@@ -139,7 +140,8 @@ public class ClojureObjectEditor extends ScoreObjectEditor {
         NoteList notes = null;
 
         try {
-            notes = ((SoundObject) this.clojureObj).generateForCSD(CompileData.createEmptyCompileData(),
+            var context = TimeContextManager.getContext();
+            notes = ((SoundObject) this.clojureObj).generateForCSD(context, CompileData.createEmptyCompileData(),
                     0.0f, -1.0f);
         } catch (SoundObjectException e) {
             ExceptionDialog.showExceptionDialog(SwingUtilities.getRoot(this), e);

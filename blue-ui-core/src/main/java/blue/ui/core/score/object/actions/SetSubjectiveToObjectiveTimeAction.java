@@ -74,7 +74,8 @@ public final class SetSubjectiveToObjectiveTimeAction extends AbstractAction
             DurationScoreObjectEdit top = null;
             for (SoundObject soundObject : soundObjects) {
 
-                if (soundObject.getObjectiveDuration(context) <= 0) {
+                TimeUnit objDuration = soundObject.getObjectiveDuration(context);
+                if (objDuration.toBeats(context) <= 0) {
                     JOptionPane.showMessageDialog(
                             null,
                             BlueSystem.getString(
@@ -85,13 +86,11 @@ public final class SetSubjectiveToObjectiveTimeAction extends AbstractAction
                     return;
                 }
                 TimeUnit oldTime = soundObject.getSubjectiveDuration();
-                double newTime = soundObject.getObjectiveDuration(context);
 
-                if (oldTime.toBeats(context) != newTime) {
-                    soundObject.setSubjectiveDuration(
-                            TimeUnit.beats(newTime));
+                if (oldTime.toBeats(context) != objDuration.toBeats(context)) {
+                    soundObject.setSubjectiveDuration(objDuration);
                     DurationScoreObjectEdit edit = new DurationScoreObjectEdit(
-                            soundObject, oldTime, TimeUnit.beats(newTime));
+                            soundObject, oldTime, objDuration);
 
                     if(top == null) {
                         top = edit;

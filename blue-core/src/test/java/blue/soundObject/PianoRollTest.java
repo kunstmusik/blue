@@ -22,6 +22,7 @@ package blue.soundObject;
 import blue.soundObject.pianoRoll.Field;
 import blue.soundObject.pianoRoll.FieldDef;
 import blue.soundObject.pianoRoll.PianoNote;
+import blue.time.TimeContext;
 import static org.junit.Assert.*;
 import org.junit.Before;
 import org.junit.Test;
@@ -102,7 +103,8 @@ public class PianoRollTest {
         var note = instance.getNotes().get(0);
         note.setNoteTemplate(" i <INSTR_ID> <START> <DUR> <FREQ> <AMP>");
 
-        var notes = instance.generateNotes(0, -1);
+        TimeContext context = new TimeContext();
+        var notes = instance.generateNotes(context, 0.0, -1.0);
 
         assertTrue("Exception was not thrown", true);
     }

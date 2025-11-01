@@ -22,6 +22,8 @@ package blue.score.layers.audio.core;
 import blue.score.ScoreObject;
 import blue.score.ScoreObjectEvent;
 import blue.score.ScoreObjectListener;
+import blue.time.TimeContext;
+import blue.time.TimeUnit;
 import blue.utility.XMLUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
@@ -198,15 +200,21 @@ public final class AudioClip implements ScoreObject, Comparable<AudioClip> {
         return fadeOut;
     }
 
-    public void setLooping(boolean looping) {
+    public void setLooping(TimeContext context, boolean looping) {
         this.looping.set(looping);
         
         if(!looping) {
             var durLimit = getAudioDuration() - getFileStartTime();
-            if(getSubjectiveDuration() > durLimit) {
-                setSubjectiveDuration(durLimit);
+            var subjDur = getSubjectiveDuration();
+            if(subjDur.gt(context, TimeUnit.beats(durLimit))) {
+                setSubjectiveDuration(TimeUnit.beats(durLimit));
             }
         }
+    }
+
+    // Simple setter for copy constructor and deserialization - no validation
+    private void setLooping(boolean looping) {
+        this.looping.set(looping);
     }
 
     public boolean isLooping() {
@@ -241,59 +249,36 @@ public final class AudioClip implements ScoreObject, Comparable<AudioClip> {
     }
 
     @Override
-    public double getStartTime() {
-        return getStart();
+    public TimeUnit getStartTime() {
+        return TimeUnit.beats(getStart());
     }
 
     @Override
-    public void setStartTime(double start) {
-        setStart(start);
-    }
-
-    @Override
-    public double getSubjectiveDuration() {
-        return getDuration();
-    }
-
-    @Override
-    public void setSubjectiveDuration(double duration) {
-//        double dur = Math.min(duration,
-//                getAudioDuration() - getFileStartTime());
-
-        setDuration(duration);
-    }
-    
-    @Override
-    public blue.time.TimeUnit getStartTimeUnit() {
-        return blue.time.TimeUnit.beats(getStart());
-    }
-    
-    @Override
-    public void setStartTimeUnit(blue.time.TimeUnit timeUnit) {
-        if (timeUnit instanceof blue.time.TimeUnit.BeatTime) {
-            setStart(((blue.time.TimeUnit.BeatTime) timeUnit).getCsoundBeats());
+    public void setStartTime(TimeUnit timeUnit) {
+        if (timeUnit instanceof TimeUnit.BeatTime bt) {
+            setStart(bt.getCsoundBeats());
         } else {
-            setStart(blue.time.TimeUtilities.timeUnitToBeats(timeUnit, blue.time.TimeContextManager.getContext()));
-        }
-    }
-    
-    @Override
-    public blue.time.TimeUnit getSubjectiveDurationUnit() {
-        return blue.time.TimeUnit.beats(getDuration());
-    }
-    
-    @Override
-    public void setSubjectiveDurationUnit(blue.time.TimeUnit timeUnit) {
-        if (timeUnit instanceof blue.time.TimeUnit.BeatTime) {
-            setDuration(((blue.time.TimeUnit.BeatTime) timeUnit).getCsoundBeats());
-        } else {
-            setDuration(blue.time.TimeUtilities.timeUnitToBeats(timeUnit, blue.time.TimeContextManager.getContext()));
+            throw new IllegalArgumentException("AudioClip only supports BeatTime. Use resizeLeft/resizeRight with TimeContext for conversion.");
         }
     }
 
     @Override
-    public double[] getResizeRightLimits() {
-        final double subjectiveDuration = getSubjectiveDuration();
+    public TimeUnit getSubjectiveDuration() {
+        return TimeUnit.beats(getDuration());
+    }
+
+    @Override
+    public void setSubjectiveDuration(TimeUnit timeUnit) {
+        if (timeUnit instanceof TimeUnit.BeatTime bt) {
+            setDuration(bt.getCsoundBeats());
+        } else {
+            throw new IllegalArgumentException("AudioClip only supports BeatTime. Use resizeLeft/resizeRight with TimeContext for conversion.");
+        }
+    }
+
+    @Override
+    public double[] getResizeRightLimits(TimeContext context) {
+        final double subjectiveDuration = getSubjectiveDuration().toBeats(context);
         
         return isLooping()
                 ? new double[]{-subjectiveDuration, Double.MAX_VALUE}
@@ -301,9 +286,9 @@ public final class AudioClip implements ScoreObject, Comparable<AudioClip> {
     }
 
     @Override
-    public double[] getResizeLeftLimits() {
-        final double startTime = getStartTime();
-        final double subjectiveDuration = getSubjectiveDuration();
+    public double[] getResizeLeftLimits(TimeContext context) {
+        final double startTime = getStartTime().toBeats(context);
+        final double subjectiveDuration = getSubjectiveDuration().toBeats(context);
 
         var leftLimit = isLooping()
                 ? -startTime
@@ -313,9 +298,9 @@ public final class AudioClip implements ScoreObject, Comparable<AudioClip> {
     }
 
     @Override
-    public void resizeLeft(double newStartTime) {
+    public void resizeLeft(TimeContext context, double newStartTime) {
 
-        final var start = getStartTime();
+        final var start = getStartTime().toBeats(context);
         double diff = start - newStartTime;
         double fileStart = getFileStartTime() - diff;
         double audioDur = getAudioDuration();
@@ -330,14 +315,14 @@ public final class AudioClip implements ScoreObject, Comparable<AudioClip> {
 
         }
 
-        setStartTime(newStartTime);
+        setStartTime(TimeUnit.beats(newStartTime));
         setFileStartTime(fileStart);
-        setSubjectiveDuration(getDuration() + diff);
+        setSubjectiveDuration(TimeUnit.beats(getDuration() + diff));
     }
 
     @Override
-    public void resizeRight(double newEndTime) {
-        setSubjectiveDuration(newEndTime - getStart());
+    public void resizeRight(TimeContext context, double newEndTime) {
+        setSubjectiveDuration(TimeUnit.beats(newEndTime - getStart()));
 
 //        if (newEndTime <= getStart()) {
 //            return;

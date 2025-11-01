@@ -24,6 +24,7 @@ import blue.score.Score;
 import blue.score.ScoreObject;
 import blue.soundObject.GenericScore;
 import blue.soundObject.PolyObject;
+import blue.time.TimeUnit;
 import blue.undo.BlueUndoManager;
 import java.util.HashMap;
 import javax.swing.JScrollPane;
@@ -65,9 +66,9 @@ public class ScoreControllerTest {
         pObj.add(layer2);
 
         GenericScore score1 = new GenericScore();
-        score1.setStartTime(2.0f);
+        score1.setStartTime(TimeUnit.beats(2.0));
         GenericScore score2 = new GenericScore();
-        score2.setStartTime(4.0f);
+        score2.setStartTime(TimeUnit.beats(4.0));
 
         layer2.add(score1);
         layer2.add(score2);

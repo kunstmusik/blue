@@ -101,7 +101,7 @@ public class PatternsLayerGroup extends ArrayList<PatternLayer>
     }
 
     @Override
-    public NoteList generateForCSD(CompileData compileData, double startTime, double endTime, boolean processWithSolo) throws ScoreGenerationException {
+    public NoteList generateForCSD(TimeContext context, CompileData compileData, double startTime, double endTime, boolean processWithSolo) throws ScoreGenerationException {
 
         NoteList noteList = new NoteList();
 
@@ -109,7 +109,7 @@ public class PatternsLayerGroup extends ArrayList<PatternLayer>
             for (PatternLayer patternLayer : this) {
                 if (patternLayer.isSolo()) {
                     if (!patternLayer.isMuted()) {
-                        noteList.merge(patternLayer.generateForCSD(compileData,
+                        noteList.merge(patternLayer.generateForCSD(context, compileData,
                                 startTime, endTime,
                                 patternBeatsLength));
                     }
@@ -118,7 +118,7 @@ public class PatternsLayerGroup extends ArrayList<PatternLayer>
         } else {
             for (PatternLayer patternLayer : this) {
                 if (!patternLayer.isMuted()) {
-                    noteList.merge(patternLayer.generateForCSD(compileData,
+                    noteList.merge(patternLayer.generateForCSD(context, compileData,
                             startTime, endTime,
                             patternBeatsLength));
                 }

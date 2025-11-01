@@ -25,6 +25,7 @@ import blue.score.ScoreObject;
 import blue.score.layers.audio.core.AudioClip;
 import blue.score.layers.audio.core.FadeType;
 import blue.soundObject.editor.ScoreObjectEditor;
+import blue.time.TimeContextManager;
 import javafx.beans.value.ChangeListener;
 import javax.swing.DefaultComboBoxModel;
 
@@ -430,7 +431,7 @@ public class AudioClipEditor extends ScoreObjectEditor {
         }
 
         isUpdating = true;
-        this.clip.setLooping(loopingCheckbox.isSelected());
+        this.clip.setLooping(TimeContextManager.getContext(), loopingCheckbox.isSelected());
         isUpdating = false;
     }//GEN-LAST:event_loopingCheckboxActionPerformed
 
@@ -457,8 +458,9 @@ public class AudioClipEditor extends ScoreObjectEditor {
                 clip.getAudioFile().getAbsolutePath());
         audioFileNameTextField.setText(path);
 
-        startTimeTextField.setText(Double.toString(clip.getStartTime()));
-        durationTextField.setText(Double.toString(clip.getSubjectiveDuration()));
+        var context = TimeContextManager.getContext();
+        startTimeTextField.setText(Double.toString(clip.getStartTime().toBeats(context)));
+        durationTextField.setText(Double.toString(clip.getSubjectiveDuration().toBeats(context)));
 
         fileStartTextField.setText(Double.toString(clip.getFileStartTime()));
         fileDurationTextField.setText(Double.toString(clip.getDuration()));

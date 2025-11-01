@@ -23,6 +23,7 @@ import blue.soundObject.tracker.Column;
 import blue.soundObject.tracker.Track;
 import blue.soundObject.tracker.TrackList;
 import blue.soundObject.tracker.TrackerNote;
+import blue.time.TimeContext;
 import junit.framework.TestCase;
 
 public class TrackerObjectTest extends TestCase {
@@ -44,9 +45,10 @@ public class TrackerObjectTest extends TestCase {
         tracks.addTrack(track3);
 
         NoteList nl;
+        TimeContext context = new TimeContext();
 
         try {
-            nl = tracker.generateNotes(0.0f, -1.0f);
+            nl = tracker.generateNotes(context, 0.0, -1.0);
             assertEquals(0, nl.size());
         } catch (SoundObjectException e) {
             fail("Tracker threw exception\n" + e.getMessage());
@@ -84,7 +86,7 @@ public class TrackerObjectTest extends TestCase {
         String expectedScore = "i1\t0.0\t-64\t8.00\t80\t1";
 
         try {
-            nl = tracker.generateNotes(0.0f, -1.0f);
+            nl = tracker.generateNotes(context, 0.0, -1.0);
             assertEquals(1, nl.size());
             assertEquals(expectedScore, nl.toString().trim());
         } catch (SoundObjectException e) {
@@ -96,7 +98,7 @@ public class TrackerObjectTest extends TestCase {
         track1.getTrackerNote(1).setOff(true);
 
         try {
-            nl = tracker.generateNotes(0.0f, -1.0f);
+            nl = tracker.generateNotes(context, 0.0, -1.0);
             assertEquals(1, nl.size());
             assertEquals(expectedScore, nl.toString().trim());
         } catch (SoundObjectException e) {
@@ -110,7 +112,7 @@ public class TrackerObjectTest extends TestCase {
         expectedScore = "i\"test\"\t0.0\t-1\t8.00\t80\t1";
 
         try {
-            nl = tracker.generateNotes(0.0f, -1.0f);
+            nl = tracker.generateNotes(context, 0.0, -1.0);
             assertEquals(1, nl.size());
             assertEquals(expectedScore, nl.toString().trim());
         } catch (SoundObjectException e) {

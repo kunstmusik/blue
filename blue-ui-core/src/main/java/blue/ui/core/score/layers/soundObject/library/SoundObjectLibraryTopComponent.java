@@ -302,7 +302,8 @@ public final class SoundObjectLibraryTopComponent extends TopComponent
             SoundObject originalSObj = sObjLib.getSoundObject(index);
             Instance tempSObj = new Instance(originalSObj);
             tempSObj.setStartTime(TimeUnit.beats(0.0));
-            tempSObj.setSubjectiveDuration(TimeUnit.beats(tempSObj.getObjectiveDuration(context)));
+            TimeUnit objDur = tempSObj.getObjectiveDuration(context);
+            tempSObj.setSubjectiveDuration(objDur);
             ScoreController.getInstance().setSelectedScoreObjects(
                     Collections.singleton(tempSObj));
 

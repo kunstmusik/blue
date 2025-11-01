@@ -32,6 +32,8 @@ import blue.score.layers.ScoreObjectLayer;
 import blue.soundObject.Note;
 import blue.soundObject.NoteList;
 import blue.soundObject.SoundObjectException;
+import blue.time.TimeContext;
+import blue.time.TimeContextManager;
 import electric.xml.Element;
 import electric.xml.Elements;
 import java.beans.PropertyChangeEvent;
@@ -320,7 +322,7 @@ public class AudioLayer extends ArrayList<AudioClip>
         return instrId;
     }
 
-    NoteList generateForCSD(CompileData compileData, double startTime, double endTime) throws SoundObjectException {
+    NoteList generateForCSD(TimeContext context, CompileData compileData, double startTime, double endTime) throws SoundObjectException {
 
         if (compileData.getCompilationVariable("BLUE_FADE_UDO") == null) {
             StringBuilder str = new StringBuilder();
@@ -351,9 +353,9 @@ public class AudioLayer extends ArrayList<AudioClip>
 
         for (AudioClip clip : this) {
 
-            double clipStart = clip.getStartTime();
+            double clipStart = clip.getStartTime().toBeats(context);
             double clipFileStart = clip.getFileStartTime();
-            double clipDur = clip.getSubjectiveDuration();
+            double clipDur = clip.getSubjectiveDuration().toBeats(context);
             double clipEnd = clipStart + clipDur;
 
             if (clipEnd <= startTime
@@ -502,8 +504,10 @@ public class AudioLayer extends ArrayList<AudioClip>
     public double getMaxTime() {
         double max = 0.0f;
 
+        var context = TimeContextManager.getContext();
+
         for (AudioClip clip : this) {
-            double end = clip.getStartTime() + clip.getSubjectiveDuration();
+            double end = clip.getStartTime().toBeats(context) + clip.getSubjectiveDuration().toBeats(context);
             if (end > max) {
                 max = end;
             }

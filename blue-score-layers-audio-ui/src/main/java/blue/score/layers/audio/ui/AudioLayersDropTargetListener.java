@@ -23,6 +23,7 @@ import blue.BlueSystem;
 import blue.score.layers.audio.core.AudioClip;
 import blue.score.layers.audio.core.AudioLayer;
 import blue.score.layers.audio.core.AudioLayerGroup;
+import blue.time.TimeUnit;
 import blue.utility.FileUtilities;
 import java.awt.Point;
 import java.awt.datatransfer.DataFlavor;
@@ -152,8 +153,8 @@ public class AudioLayersDropTargetListener implements DropTargetListener {
 
             double startTime = p.x / audioLayersPanel.getTimeState().getPixelSecond();
 
-            af.setStartTime(startTime);
-            af.setSubjectiveDuration(af.getAudioDuration());
+            af.setStartTime(TimeUnit.beats(startTime));
+            af.setSubjectiveDuration(TimeUnit.beats(af.getAudioDuration()));
 
             AudioLayer layer = audioLayerGroup.get(index);
             layer.add(af);
@@ -211,8 +212,8 @@ public class AudioLayersDropTargetListener implements DropTargetListener {
 
                 double startTime = p.x / audioLayersPanel.getTimeState().getPixelSecond();
 
-                af.setStartTime(startTime);
-                af.setSubjectiveDuration(af.getAudioDuration());
+                af.setStartTime(TimeUnit.beats(startTime));
+                af.setSubjectiveDuration(TimeUnit.beats(af.getAudioDuration()));
 
                 AudioLayer layer = audioLayerGroup.get(index);
                 layer.add(af);
@@ -275,8 +276,8 @@ public class AudioLayersDropTargetListener implements DropTargetListener {
 
                 double startTime = p.x / audioLayersPanel.getTimeState().getPixelSecond();
 
-                af.setStartTime(startTime);
-                af.setSubjectiveDuration(af.getAudioDuration());
+                af.setStartTime(TimeUnit.beats(startTime));
+                af.setSubjectiveDuration(TimeUnit.beats(af.getAudioDuration()));
 
                 AudioLayer layer = audioLayerGroup.get(index);
                 layer.add(af);
