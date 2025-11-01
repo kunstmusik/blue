@@ -191,6 +191,26 @@
             <version>${netbeans.version}</version>
             <scope>test</scope>
         </dependency>
+
+        <!-- Test dependencies for DiskRenderServiceFactory implementations -->
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>blue-csnd6</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>blue-settings</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>blue-services</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
