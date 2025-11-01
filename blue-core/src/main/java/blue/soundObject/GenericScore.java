@@ -74,7 +74,7 @@ public class GenericScore extends AbstractSoundObject implements
     }
 
     @Override
-    public double getObjectiveDuration(TimeContext context) {
+    public TimeUnit getObjectiveDuration(TimeContext context) {
         NoteList notes = null;
 
         try {
@@ -84,9 +84,9 @@ public class GenericScore extends AbstractSoundObject implements
             e.printStackTrace();
         }
         if (notes == null) {
-            return 0;
+            return TimeUnit.beats(0.0);
         } else {
-            return ScoreUtilities.getTotalDuration(notes);
+            return TimeUnit.beats(ScoreUtilities.getTotalDuration(notes));
         }
     }
 

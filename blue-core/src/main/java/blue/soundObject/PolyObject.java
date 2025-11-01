@@ -29,6 +29,7 @@ import blue.score.ScoreObjectListener;
 import blue.score.TimeState;
 import blue.score.layers.AutomatableLayerGroup;
 import blue.time.TimeContext;
+import blue.time.TimeUnit;
 import blue.score.layers.Layer;
 import blue.score.layers.LayerGroupDataEvent;
 import blue.score.layers.LayerGroupListener;
@@ -153,7 +154,7 @@ public class PolyObject extends ArrayList<SoundLayer> implements SoundObject,
     // public accessor methods
     //FIXME
     @Override
-    public double getObjectiveDuration(TimeContext context) {
+    public TimeUnit getObjectiveDuration(TimeContext context) {
         double totalDuration;
         try {
             totalDuration = ScoreUtilities.getTotalDuration(this.
@@ -162,7 +163,7 @@ public class PolyObject extends ArrayList<SoundLayer> implements SoundObject,
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-        return totalDuration;
+        return TimeUnit.beats(totalDuration);
     }
 
     @Override

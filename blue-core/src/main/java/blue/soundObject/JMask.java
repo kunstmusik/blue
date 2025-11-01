@@ -25,6 +25,7 @@ import blue.plugin.SoundObjectPlugin;
 import blue.score.ScoreObjectEvent;
 import blue.soundObject.jmask.Field;
 import blue.time.TimeContext;
+import blue.time.TimeUnit;
 import blue.utility.ScoreUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
@@ -93,8 +94,8 @@ public class JMask extends AbstractSoundObject {
     }
 
     @Override
-    public double getObjectiveDuration(TimeContext context) {
-        return getSubjectiveDuration().toBeats(context);
+    public TimeUnit getObjectiveDuration(TimeContext context) {
+        return getSubjectiveDuration();
     }
 
 //    public BarRenderer getRenderer() {

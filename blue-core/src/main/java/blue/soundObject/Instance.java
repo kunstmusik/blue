@@ -5,6 +5,7 @@ import blue.noteProcessor.NoteProcessorChain;
 import blue.noteProcessor.NoteProcessorException;
 import blue.score.ScoreObjectEvent;
 import blue.time.TimeContext;
+import blue.time.TimeUnit;
 import blue.utility.ScoreUtilities;
 import electric.xml.Element;
 import java.util.Map;
@@ -79,8 +80,8 @@ public class Instance extends AbstractSoundObject {
     }
 
     @Override
-    public double getObjectiveDuration(TimeContext context) {
-        return sObj.getSubjectiveDuration().toBeats(context);
+    public TimeUnit getObjectiveDuration(TimeContext context) {
+        return sObj.getSubjectiveDuration();
     }
 
     @Override

@@ -353,7 +353,7 @@ public class CSDUtility {
 
         GenericScore genScore = new GenericScore();
         genScore.setText(noteText);
-        genScore.setSubjectiveDuration(TimeUnit.beats(genScore.getObjectiveDuration(context)));
+        genScore.setSubjectiveDuration(genScore.getObjectiveDuration(context));
         genScore.setName(name);
         return genScore;
     }

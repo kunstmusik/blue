@@ -11,6 +11,7 @@ import blue.soundObject.pianoRoll.FieldType;
 import blue.soundObject.pianoRoll.PianoNote;
 import blue.soundObject.pianoRoll.Scale;
 import blue.time.TimeContext;
+import blue.time.TimeUnit;
 import blue.utility.ScoreUtilities;
 import blue.utility.TextUtilities;
 import electric.xml.Element;
@@ -188,8 +189,8 @@ public class PianoRoll extends AbstractSoundObject implements ListChangeListener
 
     // TODO - Implement using notes
     @Override
-    public double getObjectiveDuration(TimeContext context) {
-        return this.getSubjectiveDuration().toBeats(context);
+    public TimeUnit getObjectiveDuration(TimeContext context) {
+        return this.getSubjectiveDuration();
     }
 
     public NoteList generateNotes(TimeContext context, double renderStart, double renderEnd) throws SoundObjectException {

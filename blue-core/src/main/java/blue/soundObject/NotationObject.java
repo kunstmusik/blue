@@ -63,8 +63,8 @@ public class NotationObject extends AbstractSoundObject implements
     }
 
     @Override
-    public double getObjectiveDuration(TimeContext context) {
-        return this.getSubjectiveDuration().toBeats(context);
+    public TimeUnit getObjectiveDuration(TimeContext context) {
+        return this.getSubjectiveDuration();
     }
 
 //    public BarRenderer getRenderer() {

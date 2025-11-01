@@ -24,6 +24,7 @@ import blue.noteProcessor.NoteProcessorChain;
 import blue.plugin.SoundObjectPlugin;
 import blue.score.ScoreObjectEvent;
 import blue.time.TimeContext;
+import blue.time.TimeUnit;
 import blue.utility.ScoreUtilities;
 import electric.xml.Element;
 import java.util.Map;
@@ -74,8 +75,8 @@ public class JavaScriptObject extends AbstractSoundObject
     }
 
     @Override
-    public double getObjectiveDuration(TimeContext context) {
-        return getSubjectiveDuration().toBeats(context);
+    public TimeUnit getObjectiveDuration(TimeContext context) {
+        return getSubjectiveDuration();
     }
 
     @Override

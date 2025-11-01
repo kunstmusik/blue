@@ -30,6 +30,7 @@ import blue.score.ScoreObjectEvent;
 import blue.scripting.ScoreScriptEngine;
 import blue.scripting.ScoreScriptEngineManager;
 import blue.time.TimeContext;
+import blue.time.TimeUnit;
 import blue.utility.ScoreUtilities;
 import blue.utility.XMLUtilities;
 import electric.xml.Element;
@@ -153,8 +154,8 @@ public class ObjectBuilder extends AbstractSoundObject {
 
     // END GENERATION METHODS
     @Override
-    public double getObjectiveDuration(TimeContext context) {
-        return getSubjectiveDuration().toBeats(context);
+    public TimeUnit getObjectiveDuration(TimeContext context) {
+        return getSubjectiveDuration();
     }
 
 //    public BarRenderer getRenderer() {

@@ -8,6 +8,7 @@ import blue.score.ScoreObjectEvent;
 import blue.scripting.ScoreScriptEngine;
 import blue.scripting.ScoreScriptEngineManager;
 import blue.time.TimeContext;
+import blue.time.TimeUnit;
 import blue.utility.ScoreUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
@@ -75,8 +76,8 @@ public class External extends AbstractSoundObject {
     }
 
     @Override
-    public double getObjectiveDuration(TimeContext context) {
-        return this.getSubjectiveDuration().toBeats(context);
+    public TimeUnit getObjectiveDuration(TimeContext context) {
+        return this.getSubjectiveDuration();
     }
 
     public String getText() {

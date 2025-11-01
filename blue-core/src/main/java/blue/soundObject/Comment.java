@@ -4,6 +4,7 @@ import blue.*;
 import blue.noteProcessor.NoteProcessorChain;
 import blue.plugin.SoundObjectPlugin;
 import blue.time.TimeContext;
+import blue.time.TimeUnit;
 import electric.xml.Element;
 import java.util.Map;
 
@@ -48,9 +49,8 @@ public class Comment extends AbstractSoundObject {
     }
 
     @Override
-    public double getObjectiveDuration(TimeContext context) {
-        // Comment has no actual duration, but return subjective duration in beats
-        return this.getSubjectiveDuration().toBeats(context);
+    public TimeUnit getObjectiveDuration(TimeContext context) {
+        return this.getSubjectiveDuration();
     }
 
     @Override
