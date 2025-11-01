@@ -1,12 +1,12 @@
 package blue.soundObject;
 
-import blue.score.ScoreObjectEvent;
-import blue.score.ScoreObjectListener;
-import blue.time.TimeContextManager;
-import blue.time.TimeUnit;
-import blue.time.TimeUtilities;
 import java.awt.Color;
 import java.util.Vector;
+
+import blue.score.ScoreObjectEvent;
+import blue.score.ScoreObjectListener;
+import blue.time.TimeContext;
+import blue.time.TimeUnit;
 
 /**
  * Title: blue Description: an object composition environment for csound
@@ -64,8 +64,12 @@ public abstract class AbstractSoundObject implements SoundObject {
     }
 
     @Override
-    public void setStartTime(double startTime) {
-        this.startTimeUnit = TimeUnit.beats(startTime);
+    public void setStartTime(TimeUnit startTime) {
+        if (startTime == null) {
+            throw new IllegalArgumentException("Start time cannot be null");
+        }
+        
+        this.startTimeUnit = startTime;
 
         ScoreObjectEvent event = new ScoreObjectEvent(this,
                 ScoreObjectEvent.START_TIME);
@@ -74,19 +78,17 @@ public abstract class AbstractSoundObject implements SoundObject {
     }
 
     @Override
-    public double getStartTime() {
-        // Fast path: if already BeatTime, extract directly
-        if (startTimeUnit instanceof TimeUnit.BeatTime) {
-            return ((TimeUnit.BeatTime) startTimeUnit).getCsoundBeats();
-        }
-        
-        // Convert from other TimeUnit types using TimeContext
-        return TimeUtilities.timeUnitToBeats(startTimeUnit, TimeContextManager.getContext());
+    public TimeUnit getStartTime() {
+        return startTimeUnit;
     }
 
     @Override
-    public void setSubjectiveDuration(double subjectiveDuration) {
-        this.durationUnit = TimeUnit.beats(subjectiveDuration);
+    public void setSubjectiveDuration(TimeUnit duration) {
+        if (duration == null) {
+            throw new IllegalArgumentException("Duration cannot be null");
+        }
+        
+        this.durationUnit = duration;
 
         ScoreObjectEvent event = new ScoreObjectEvent(this,
                 ScoreObjectEvent.DURATION);
@@ -95,39 +97,36 @@ public abstract class AbstractSoundObject implements SoundObject {
     }
 
     @Override
-    public double getSubjectiveDuration() {
-        // Fast path: if already BeatTime, extract directly
-        if (durationUnit instanceof TimeUnit.BeatTime) {
-            return ((TimeUnit.BeatTime) durationUnit).getCsoundBeats();
-        }
-        
-        // Convert from other TimeUnit types using TimeContext
-        return TimeUtilities.timeUnitToBeats(durationUnit, TimeContextManager.getContext());
+    public TimeUnit getSubjectiveDuration() {
+        return durationUnit;
     }
 
     @Override
-    public double[] getResizeRightLimits() {
-        return new double[]{-getSubjectiveDuration(), Double.MAX_VALUE};
+    public double[] getResizeRightLimits(TimeContext context) {
+        double duration = durationUnit.toBeats(context);
+        return new double[]{-duration, Double.MAX_VALUE};
     }
 
     @Override
-    public double[] getResizeLeftLimits() {
-        return new double[] { -getStartTime(), getSubjectiveDuration() };
+    public double[] getResizeLeftLimits(TimeContext context) {
+        double start = startTimeUnit.toBeats(context);
+        double duration = durationUnit.toBeats(context);
+        return new double[] { -start, duration };
     }
 
     @Override
-    public void resizeLeft(double newStartTime) {
-        double currentStart = getStartTime();
-        double currentDuration = getSubjectiveDuration();
+    public void resizeLeft(TimeContext context, double newStartTime) {
+        double currentStart = startTimeUnit.toBeats(context);
+        double currentDuration = durationUnit.toBeats(context);
         double diff = currentStart - newStartTime;
-        setStartTime(newStartTime);
-        setSubjectiveDuration(currentDuration + diff);
+        setStartTime(TimeUnit.beats(newStartTime));
+        setSubjectiveDuration(TimeUnit.beats(currentDuration + diff));
     }
 
     @Override
-    public void resizeRight(double newEndTime) {
-        double currentStart = getStartTime();
-        setSubjectiveDuration(newEndTime - currentStart);
+    public void resizeRight(TimeContext context, double newEndTime) {
+        double currentStart = startTimeUnit.toBeats(context);
+        setSubjectiveDuration(TimeUnit.beats(newEndTime - currentStart));
     }
 
     @Override
@@ -174,46 +173,6 @@ public abstract class AbstractSoundObject implements SoundObject {
     @Override
     public int getCloneSourceHashCode() {
         return cloneSourceHashCode;
-    }
-    
-    // ========== TimeUnit-based API Implementation ==========
-    
-    @Override
-    public TimeUnit getStartTimeUnit() {
-        return startTimeUnit;
-    }
-    
-    @Override
-    public void setStartTimeUnit(TimeUnit startTimeUnit) {
-        if (startTimeUnit == null) {
-            throw new IllegalArgumentException("Start time cannot be null");
-        }
-        
-        // Store TimeUnit in its original format
-        this.startTimeUnit = startTimeUnit;
-        
-        ScoreObjectEvent event = new ScoreObjectEvent(this,
-                ScoreObjectEvent.START_TIME);
-        fireScoreObjectEvent(event);
-    }
-    
-    @Override
-    public TimeUnit getSubjectiveDurationUnit() {
-        return durationUnit;
-    }
-    
-    @Override
-    public void setSubjectiveDurationUnit(TimeUnit durationUnit) {
-        if (durationUnit == null) {
-            throw new IllegalArgumentException("Duration cannot be null");
-        }
-        
-        // Store TimeUnit in its original format
-        this.durationUnit = durationUnit;
-        
-        ScoreObjectEvent event = new ScoreObjectEvent(this,
-                ScoreObjectEvent.DURATION);
-        fireScoreObjectEvent(event);
     }
     
 }

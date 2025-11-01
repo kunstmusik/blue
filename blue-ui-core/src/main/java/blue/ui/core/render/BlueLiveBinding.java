@@ -29,6 +29,8 @@ import blue.services.render.CsoundBinding;
 import blue.soundObject.NoteList;
 import blue.soundObject.SoundObject;
 import blue.soundObject.TimeBehavior;
+import blue.time.TimeContext;
+import blue.time.TimeContextManager;
 import blue.ui.core.blueLive.BlueLiveToolBar;
 import blue.utility.ScoreUtilities;
 import java.util.concurrent.ExecutorService;
@@ -104,6 +106,7 @@ public class BlueLiveBinding implements CsoundBinding {
 
             NoteList nl = new NoteList();
             try {
+                TimeContext context = TimeContextManager.getContext();
 
                 for (LiveObject liveObj : liveObjects) {
                     SoundObject sObj = liveObj.getSoundObject();
@@ -112,7 +115,7 @@ public class BlueLiveBinding implements CsoundBinding {
                         sObj.setTimeBehavior(TimeBehavior.NONE);
                     }
 
-                    nl.addAll(sObj.generateForCSD(compileData, 0.0f, -1.0f));
+                    nl.addAll(sObj.generateForCSD(context, compileData, 0.0f, -1.0f));
                 }
             } catch (Exception e) {
                 Exceptions.printStackTrace(e);

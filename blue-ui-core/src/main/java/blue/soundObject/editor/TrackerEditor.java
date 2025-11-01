@@ -31,6 +31,8 @@ import blue.soundObject.TrackerObject;
 import blue.soundObject.editor.tracker.TracksEditor;
 import blue.soundObject.tracker.Track;
 import blue.soundObject.tracker.TrackList;
+import blue.time.TimeContext;
+import blue.time.TimeContextManager;
 import blue.ui.utilities.BlueCommonIcons;
 import blue.utility.GUI;
 import java.awt.BorderLayout;
@@ -247,7 +249,8 @@ public class TrackerEditor extends ScoreObjectEditor {
         NoteList notes = null;
 
         try {
-            notes = tracker.generateNotes(0.0f, -1.0f);
+            TimeContext context = TimeContextManager.getContext();
+            notes = tracker.generateNotes(context, 0.0f, -1.0f);
         } catch (SoundObjectException e) {
             ExceptionDialog
                     .showExceptionDialog(SwingUtilities.getRoot(this), e);

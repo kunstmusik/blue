@@ -28,6 +28,7 @@ import blue.score.layers.LayerGroup;
 import blue.score.layers.LayerGroupDataEvent;
 import blue.score.layers.LayerGroupListener;
 import blue.soundObject.*;
+import blue.time.TimeContext;
 import blue.utility.ScoreUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
@@ -293,7 +294,7 @@ public class PatternsLayerGroup extends ArrayList<PatternLayer>
     }
 
     @Override
-    public void onLoadComplete() {
+    public void onLoadComplete(TimeContext context) {
         for (PatternLayer layer : this) {
             SoundObject sObj = layer.getSoundObject();
 
@@ -301,7 +302,7 @@ public class PatternsLayerGroup extends ArrayList<PatternLayer>
                 OnLoadProcessable olp = (OnLoadProcessable) sObj;
                 if (olp.isOnLoadProcessable()) {
                     try {
-                        olp.processOnLoad();
+                        olp.processOnLoad(context);
                     } catch (SoundObjectException soe) {
                         throw new RuntimeException(new SoundObjectException(sObj,
                                 "Error during on load processing:", soe));

@@ -8,6 +8,8 @@ import blue.score.ScoreObject;
 import blue.soundObject.GenericScore;
 import blue.soundObject.NoteList;
 import blue.soundObject.SoundObject;
+import blue.time.TimeContext;
+import blue.time.TimeContextManager;
 import blue.ui.nbutilities.MimeTypeEditorComponent;
 import blue.ui.utilities.SimpleDocumentListener;
 import java.awt.BorderLayout;
@@ -147,7 +149,8 @@ public class GenericScoreEditor extends ScoreObjectEditor {
         NoteList notes = null;
 
         try {
-            notes = ((SoundObject) this.sObj).generateForCSD(null, 0.0f, -1.0f);
+            TimeContext context = TimeContextManager.getContext();
+            notes = ((SoundObject) this.sObj).generateForCSD(context, null, 0.0f, -1.0f);
         } catch (Exception e) {
             ExceptionDialog.showExceptionDialog(SwingUtilities.getRoot(this), e);
         }

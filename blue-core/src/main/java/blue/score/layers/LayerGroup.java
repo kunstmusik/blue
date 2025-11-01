@@ -23,6 +23,7 @@ import blue.CompileData;
 import blue.noteProcessor.NoteProcessorChain;
 import blue.score.ScoreGenerationException;
 import blue.soundObject.NoteList;
+import blue.time.TimeContext;
 import electric.xml.Element;
 import java.util.List;
 import java.util.Map;
@@ -62,7 +63,7 @@ public interface LayerGroup<T extends Layer> extends List<T>,
      * 
      * @param compileData 
      */
-    NoteList generateForCSD(CompileData compileData, double startTime, double endTime, boolean processWithSolo) throws ScoreGenerationException;
+    NoteList generateForCSD(TimeContext context, CompileData compileData, double startTime, double endTime, boolean processWithSolo) throws ScoreGenerationException;
     
     /**
      * Returns an XML Representation of this object.
@@ -106,8 +107,9 @@ public interface LayerGroup<T extends Layer> extends List<T>,
     
     /** Called when a project has been loaded and allows layer to initialize
      * any values.
+     * @param context the TimeContext for time conversions
      */
-    void onLoadComplete();
+    void onLoadComplete(TimeContext context);
 
     /* LISTENER CODE */
     

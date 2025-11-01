@@ -20,6 +20,9 @@
 package blue.ui.core.score.object.actions;
 
 import blue.score.ScoreObject;
+import blue.time.TimeContext;
+import blue.time.TimeContextManager;
+import blue.time.TimeUnit;
 import blue.ui.core.score.undo.AlignEdit;
 import blue.undo.BlueUndoManager;
 import java.awt.event.ActionEvent;
@@ -60,8 +63,10 @@ public final class AlignCenterAction extends AbstractAction implements ContextAw
             return;
         }
 
-        double[] initialStartTimes = new double[selected.size()];
-        double[] endingStartTimes = new double[selected.size()];
+        TimeContext context = TimeContextManager.getContext();
+        
+        TimeUnit[] initialStartTimes = new TimeUnit[selected.size()];
+        TimeUnit[] endingStartTimes = new TimeUnit[selected.size()];
 
         double farLeft = Double.MAX_VALUE;
         double farRight = Double.MIN_VALUE;
@@ -70,10 +75,10 @@ public final class AlignCenterAction extends AbstractAction implements ContextAw
 
         for (ScoreObject scoreObj : selected) {
             initialStartTimes[i] = scoreObj.getStartTime();
-            end = initialStartTimes[i] + scoreObj.getSubjectiveDuration();
+            end = initialStartTimes[i].toBeats(context) + scoreObj.getSubjectiveDuration().toBeats(context);
 
-            if(initialStartTimes[i] < farLeft) {
-                farLeft = initialStartTimes[i];
+            if(initialStartTimes[i].toBeats(context) < farLeft) {
+                farLeft = initialStartTimes[i].toBeats(context);
             } 
             if(end > farRight) {
                 farRight = end;
@@ -88,9 +93,9 @@ public final class AlignCenterAction extends AbstractAction implements ContextAw
         i = 0;
 
         for (ScoreObject scoreObj : selected) {
-            newEndTime = centerTime - (scoreObj.getSubjectiveDuration() / 2);
-            scoreObj.setStartTime(newEndTime);
-            endingStartTimes[i] = newEndTime;
+            newEndTime = centerTime - (scoreObj.getSubjectiveDuration().toBeats(context) / 2);
+            scoreObj.setStartTime(TimeUnit.beats(newEndTime));
+            endingStartTimes[i] = TimeUnit.beats(newEndTime);
             i++;
         }
 

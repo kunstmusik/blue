@@ -20,6 +20,9 @@
 package blue.ui.core.score.object.actions;
 
 import blue.score.ScoreObject;
+import blue.time.TimeContext;
+import blue.time.TimeContextManager;
+import blue.time.TimeUnit;
 import blue.ui.core.score.undo.AlignEdit;
 import blue.undo.BlueUndoManager;
 import java.awt.event.ActionEvent;
@@ -62,9 +65,11 @@ public final class FollowTheLeaderAction extends AbstractAction implements Conte
 
     @Override
     public void actionPerformed(ActionEvent e) {
+        TimeContext context = TimeContextManager.getContext();
+        
         List<ScoreObject> scoreObjs = new ArrayList<>(selected);
         Collections.sort(scoreObjs, (ScoreObject o1, ScoreObject o2) -> {
-            double diff = o1.getStartTime() - o2.getStartTime();
+            double diff = o1.getStartTime().toBeats(context) - o2.getStartTime().toBeats(context);
             if (diff > 0) {
                 return 1;
             } else if (diff < 0) {
@@ -73,22 +78,23 @@ public final class FollowTheLeaderAction extends AbstractAction implements Conte
             return 0;
         });
 
-        double[] initialStartTimes = new double[scoreObjs.size()];
-        double[] endStartTimes = new double[scoreObjs.size()];
+        TimeUnit[] initialStartTimes = new TimeUnit[scoreObjs.size()];
+        TimeUnit[] endStartTimes = new TimeUnit[scoreObjs.size()];
 
         for (int i = 0; i < scoreObjs.size(); i++) {
             initialStartTimes[i] = scoreObjs.get(i).getStartTime();
         }
 
         ScoreObject initial = scoreObjs.get(0);
-        double runningTotal = initial.getStartTime() + initial.getSubjectiveDuration();
+        double runningTotal = initial.getStartTime().toBeats(context) + 
+                             initial.getSubjectiveDuration().toBeats(context);
         endStartTimes[0] = initial.getStartTime();
 
         for (int i = 1; i < scoreObjs.size(); i++) {
             ScoreObject current = scoreObjs.get(i);
-            endStartTimes[i] = runningTotal;
-            current.setStartTime(runningTotal);
-            runningTotal += current.getSubjectiveDuration();
+            endStartTimes[i] = TimeUnit.beats(runningTotal);
+            current.setStartTime(TimeUnit.beats(runningTotal));
+            runningTotal += current.getSubjectiveDuration().toBeats(context);
         }
 
         BlueUndoManager.setUndoManager("score");
@@ -100,7 +106,6 @@ public final class FollowTheLeaderAction extends AbstractAction implements Conte
 
         BlueUndoManager.addEdit(edit);
     }
-
     @Override
     public boolean isEnabled() {
         return selected.size() > 1;

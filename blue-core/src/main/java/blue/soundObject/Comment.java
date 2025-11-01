@@ -3,6 +3,7 @@ package blue.soundObject;
 import blue.*;
 import blue.noteProcessor.NoteProcessorChain;
 import blue.plugin.SoundObjectPlugin;
+import blue.time.TimeContext;
 import electric.xml.Element;
 import java.util.Map;
 
@@ -47,8 +48,9 @@ public class Comment extends AbstractSoundObject {
     }
 
     @Override
-    public double getObjectiveDuration() {
-        return this.getSubjectiveDuration();
+    public double getObjectiveDuration(TimeContext context) {
+        // Comment has no actual duration, but return subjective duration in beats
+        return this.getSubjectiveDuration().toBeats(context);
     }
 
     @Override
@@ -101,7 +103,7 @@ public class Comment extends AbstractSoundObject {
     }
 
     @Override
-    public NoteList generateForCSD(CompileData compileData, double startTime, double endTime) {
+    public NoteList generateForCSD(TimeContext context, CompileData compileData, double startTime, double endTime) {
         return null;
     }
 

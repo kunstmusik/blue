@@ -14,6 +14,8 @@ import blue.SoundLayer;
 import blue.components.lines.LinePoint;
 import blue.orchestra.GenericInstrument;
 import blue.soundObject.*;
+import blue.time.TimeContext;
+import blue.time.TimeUnit;
 import blue.udo.OpcodeList;
 import blue.udo.UserDefinedOpcode;
 import java.io.BufferedReader;
@@ -252,10 +254,11 @@ public class CSDUtility {
 
     private static void setSoundObjectPerSection(BlueData data,
             ScoreSection section) {
+        TimeContext context = data.getTimeContext();
         GenericScore genScore = createSizedGenericScore(section.scoreText,
-                BlueSystem.getString("csd.importedScore"));
+                BlueSystem.getString("csd.importedScore"), context);
 
-        genScore.setStartTime(section.sectionStartTime);
+        genScore.setStartTime(TimeUnit.beats(section.sectionStartTime));
 
         PolyObject pObj = (PolyObject) data.getScore().get(0);
 
@@ -268,6 +271,7 @@ public class CSDUtility {
     // ramp's, etc.
     private static void setSoundObjectsPerInstrument(BlueData data,
             ScoreSection section) {
+        TimeContext context = data.getTimeContext();
         TreeMap<Integer, StringBuffer> map = new TreeMap<>();
 
         StringTokenizer st = new StringTokenizer(section.scoreText, "\n");
@@ -335,9 +339,9 @@ public class CSDUtility {
             ScoreUtilities.normalizeNoteList(notes);
 
             GenericScore genScore = createSizedGenericScore(notes.toString(),
-                    "Instrument " + iNum.toString());
+                    "Instrument " + iNum.toString(), context);
 
-            genScore.setStartTime(minStart + section.sectionStartTime);
+            genScore.setStartTime(TimeUnit.beats(minStart + section.sectionStartTime));
 
             sLayer.add(genScore);
 
@@ -345,11 +349,11 @@ public class CSDUtility {
     }
 
     private static GenericScore createSizedGenericScore(String noteText,
-            String name) {
+            String name, TimeContext context) {
 
         GenericScore genScore = new GenericScore();
         genScore.setText(noteText);
-        genScore.setSubjectiveDuration(genScore.getObjectiveDuration());
+        genScore.setSubjectiveDuration(TimeUnit.beats(genScore.getObjectiveDuration(context)));
         genScore.setName(name);
         return genScore;
     }

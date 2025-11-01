@@ -33,6 +33,8 @@ import blue.soundObject.editor.pattern.PatternObjectPropertiesPanel;
 import blue.soundObject.editor.pattern.PatternScoreEditor;
 import blue.soundObject.editor.pattern.PatternTimeBar;
 import blue.soundObject.pattern.Pattern;
+import blue.time.TimeContext;
+import blue.time.TimeContextManager;
 import blue.ui.components.IconFactory;
 import blue.utility.GUI;
 import java.awt.BorderLayout;
@@ -181,7 +183,8 @@ public class PatternEditor extends ScoreObjectEditor {
         NoteList notes = null;
         
         try {
-            notes = patternObj.generateForCSD(null, 0.0f, -1.0f);
+            TimeContext context = TimeContextManager.getContext();
+            notes = patternObj.generateForCSD(context, null, 0.0f, -1.0f);
         } catch (Exception e) {
             ExceptionDialog.showExceptionDialog(SwingUtilities.getRoot(this), e);
         }

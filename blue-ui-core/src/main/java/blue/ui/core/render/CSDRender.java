@@ -39,6 +39,8 @@ import blue.soundObject.NoteList;
 import blue.soundObject.NoteParseException;
 import blue.soundObject.SoundObjectException;
 import blue.time.TempoMap;
+import blue.time.TimeContext;
+import blue.time.TimeContextManager;
 import blue.udo.OpcodeList;
 import blue.ui.core.project.ProjectPluginManager;
 import blue.utility.NumberUtilities;
@@ -243,7 +245,8 @@ public class CSDRender extends CSDRenderService {
 
         NoteList generatedNotes;
         try {
-            generatedNotes = data.getScore().generateForCSD(compileData,
+            TimeContext context = TimeContextManager.getContext();
+            generatedNotes = data.getScore().generateForCSD(context, compileData,
                     startTime, endTime);
         } catch (ScoreGenerationException ex) {
             throw new RuntimeException(ex);

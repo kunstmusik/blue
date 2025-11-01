@@ -4,6 +4,7 @@ import blue.*;
 import blue.noteProcessor.NoteProcessorChain;
 import blue.noteProcessor.NoteProcessorException;
 import blue.score.ScoreObjectEvent;
+import blue.time.TimeContext;
 import blue.utility.ScoreUtilities;
 import electric.xml.Element;
 import java.util.Map;
@@ -59,7 +60,7 @@ public class Instance extends AbstractSoundObject {
         repeatPoint = instance.repeatPoint;
     }
 
-    public void processNotes(NoteList nl) throws SoundObjectException {
+    public void processNotes(TimeContext context, NoteList nl) throws SoundObjectException {
 
         ScoreUtilities.normalizeNoteList(nl);
 
@@ -69,15 +70,17 @@ public class Instance extends AbstractSoundObject {
             throw new SoundObjectException(this, e);
         }
 
-        ScoreUtilities.applyTimeBehavior(nl, this.getTimeBehavior(), this
-                .getSubjectiveDuration(), this.getRepeatPoint());
-        ScoreUtilities.setScoreStart(nl, getStartTime());
+        double duration = this.getSubjectiveDuration().toBeats(context);
+        double startTime = getStartTime().toBeats(context);
+        
+        ScoreUtilities.applyTimeBehavior(nl, this.getTimeBehavior(), duration, this.getRepeatPoint());
+        ScoreUtilities.setScoreStart(nl, startTime);
 
     }
 
     @Override
-    public double getObjectiveDuration() {
-        return sObj.getSubjectiveDuration();
+    public double getObjectiveDuration(TimeContext context) {
+        return sObj.getSubjectiveDuration().toBeats(context);
     }
 
     @Override
@@ -176,10 +179,10 @@ public class Instance extends AbstractSoundObject {
     }
 
     @Override
-    public NoteList generateForCSD(CompileData compileData, double startTime, double endTime)
+    public NoteList generateForCSD(TimeContext context, CompileData compileData, double startTime, double endTime)
             throws SoundObjectException {
-        NoteList nl = sObj.generateForCSD(compileData, startTime, endTime);
-        processNotes(nl);
+        NoteList nl = sObj.generateForCSD(context, compileData, startTime, endTime);
+        processNotes(context, nl);
 
         return nl;
     }

@@ -25,6 +25,7 @@ import blue.noteProcessor.NoteProcessorChain;
 import blue.noteProcessor.NoteProcessorException;
 import blue.plugin.SoundObjectPlugin;
 import blue.soundObject.tracker.TrackList;
+import blue.time.TimeContext;
 import blue.utility.ScoreUtilities;
 import blue.utility.XMLUtilities;
 import electric.xml.Element;
@@ -62,7 +63,7 @@ public class TrackerObject extends AbstractSoundObject {
         npc = new NoteProcessorChain(to.npc);
     }
 
-    public NoteList generateNotes(double renderStart, double renderEnd) throws SoundObjectException {
+    public NoteList generateNotes(TimeContext context, double renderStart, double renderEnd) throws SoundObjectException {
         NoteList nl;
 
         try {
@@ -76,19 +77,20 @@ public class TrackerObject extends AbstractSoundObject {
             throw new SoundObjectException(this, e);
         }
 
-        ScoreUtilities.applyTimeBehavior(nl, this.getTimeBehavior(), this
-                .getSubjectiveDuration(), this.getRepeatPoint(), getSteps());
-
-        ScoreUtilities.setScoreStart(nl, getStartTime());
+        double duration = this.getSubjectiveDuration().toBeats(context);
+        double startTime = getStartTime().toBeats(context);
+        
+        ScoreUtilities.applyTimeBehavior(nl, this.getTimeBehavior(), duration, this.getRepeatPoint(), getSteps());
+        ScoreUtilities.setScoreStart(nl, startTime);
 
         return nl;
     }
 
     @Override
-    public double getObjectiveDuration() {
+    public double getObjectiveDuration(TimeContext context) {
         
         // FIXME: May need to recalculate this in the future...
-        return getSubjectiveDuration();
+        return getSubjectiveDuration().toBeats(context);
     }
 
     @Override
@@ -221,9 +223,9 @@ public class TrackerObject extends AbstractSoundObject {
     }
 
     @Override
-    public NoteList generateForCSD(CompileData compileData, double startTime, double endTime) 
+    public NoteList generateForCSD(TimeContext context, CompileData compileData, double startTime, double endTime) 
             throws SoundObjectException {
-        return generateNotes(startTime, endTime);
+        return generateNotes(context, startTime, endTime);
     }
 
     @Override

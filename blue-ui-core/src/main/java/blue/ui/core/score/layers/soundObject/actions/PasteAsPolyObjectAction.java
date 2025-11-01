@@ -30,6 +30,9 @@ import blue.score.layers.ScoreObjectLayer;
 import blue.soundObject.Instance;
 import blue.soundObject.PolyObject;
 import blue.soundObject.SoundObject;
+import blue.time.TimeContext;
+import blue.time.TimeContextManager;
+import blue.time.TimeUnit;
 import blue.ui.core.clipboard.BlueClipboardUtils;
 import blue.ui.core.score.ScoreObjectCopy;
 import blue.ui.core.score.ScorePath;
@@ -134,9 +137,10 @@ public final class PasteAsPolyObjectAction extends AbstractAction implements Con
 
         sObjLib.checkAndAddInstanceSoundObjects(instanceSoundObjects);
 
-        pObj.normalizeSoundObjects();
+        TimeContext context = TimeContextManager.getContext();
+        pObj.normalizeSoundObjects(context);
 
-        pObj.setStartTime(start);
+        pObj.setStartTime(TimeUnit.beats(start));
         final ScoreObjectLayer layer = (ScoreObjectLayer) scorePath.getGlobalLayerForY(
                 p.y);
         layer.add(pObj);

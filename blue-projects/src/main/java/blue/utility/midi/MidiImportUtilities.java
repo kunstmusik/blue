@@ -25,6 +25,7 @@ import blue.soundObject.Note;
 import blue.soundObject.NoteList;
 import blue.soundObject.NoteParseException;
 import blue.soundObject.PolyObject;
+import blue.time.TimeUnit;
 import blue.utilities.MidiUtilities;
 import blue.utility.*;
 import java.awt.Frame;
@@ -116,13 +117,13 @@ public class MidiImportUtilities {
             if (trSettings.isTrim()) {
                 // Assumes NoteList is already sorted
                 double start = nl.get(0).getStartTime();
-                genSco.setStartTime(start);
+                genSco.setStartTime(TimeUnit.beats(start));
                 ScoreUtilities.normalizeNoteList(nl);
             } else {
-                genSco.setStartTime(0.0f);
+                genSco.setStartTime(TimeUnit.beats(0.0));
             }
 
-            genSco.setSubjectiveDuration(ScoreUtilities.getTotalDuration(nl));
+            genSco.setSubjectiveDuration(TimeUnit.beats(ScoreUtilities.getTotalDuration(nl)));
             genSco.setText(nl.toString());
 
             genSco.setName("Track " + i);

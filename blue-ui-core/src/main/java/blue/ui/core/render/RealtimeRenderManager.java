@@ -37,6 +37,8 @@ import blue.settings.RealtimeRenderSettings;
 import blue.soundObject.PolyObject;
 import blue.soundObject.SoundObject;
 import blue.soundObject.SoundObjectException;
+import blue.time.TimeContext;
+import blue.time.TimeContextManager;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -259,10 +261,11 @@ public final class RealtimeRenderManager {
 
         double minTime = Double.MAX_VALUE;
         double maxTime = Double.MIN_VALUE;
+        TimeContext context = TimeContextManager.getContext();
 
         for (ScoreObject sObj : scoreObjects) {
-            double startTime = sObj.getStartTime();
-            double endTime = startTime + sObj.getSubjectiveDuration();
+            double startTime = sObj.getStartTime().toBeats(context);
+            double endTime = startTime + sObj.getSubjectiveDuration().toBeats(context);
 
             if (startTime < minTime) {
                 minTime = startTime;

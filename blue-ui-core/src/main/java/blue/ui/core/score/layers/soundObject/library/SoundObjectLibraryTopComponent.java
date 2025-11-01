@@ -25,6 +25,9 @@ import blue.projects.BlueProject;
 import blue.projects.BlueProjectManager;
 import blue.soundObject.Instance;
 import blue.soundObject.SoundObject;
+import blue.time.TimeContext;
+import blue.time.TimeContextManager;
+import blue.time.TimeUnit;
 import blue.ui.core.clipboard.BlueClipboardUtils;
 import blue.ui.core.score.ScoreController;
 import blue.ui.core.score.ScoreObjectCopy;
@@ -295,10 +298,11 @@ public final class SoundObjectLibraryTopComponent extends TopComponent
     private void copyInstanceButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_copyInstanceButtonActionPerformed
         int index = sObjLibTable.getSelectedRow();
         if (index != -1) {
+            TimeContext context = TimeContextManager.getContext();
             SoundObject originalSObj = sObjLib.getSoundObject(index);
             Instance tempSObj = new Instance(originalSObj);
-            tempSObj.setStartTime(0.0f);
-            tempSObj.setSubjectiveDuration(tempSObj.getObjectiveDuration());
+            tempSObj.setStartTime(TimeUnit.beats(0.0));
+            tempSObj.setSubjectiveDuration(TimeUnit.beats(tempSObj.getObjectiveDuration(context)));
             ScoreController.getInstance().setSelectedScoreObjects(
                     Collections.singleton(tempSObj));
 

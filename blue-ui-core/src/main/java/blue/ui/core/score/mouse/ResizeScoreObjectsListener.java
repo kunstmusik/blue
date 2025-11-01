@@ -19,20 +19,20 @@
  */
 package blue.ui.core.score.mouse;
 
-import blue.ui.core.score.undo.StartEndTime;
 import blue.plugin.ScoreMouseListenerPlugin;
 import blue.score.ScoreObject;
 import blue.score.TimeState;
+import blue.time.TimeContext;
+import blue.time.TimeContextManager;
 import blue.ui.core.score.ScoreController;
 import blue.ui.core.score.ScoreMode;
 import blue.ui.core.score.undo.ResizeScoreObjectsEdit;
+import blue.ui.core.score.undo.StartDurationUnit;
 import blue.undo.BlueUndoManager;
 import blue.utility.MathUtils;
 import blue.utility.ScoreUtilities;
 import java.awt.Cursor;
-import java.awt.Point;
 import java.awt.event.MouseEvent;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -51,9 +51,8 @@ public class ResizeScoreObjectsListener extends BlueMouseAdapter {
 
     private static final int EDGE = 5;
 
-    private Point startPoint;
-    StartEndTime[] startEndTimes = null;
-    StartEndTime currentSObjTimes = null;
+    StartDurationUnit[] startDurationUnits = null;
+    StartDurationUnit currentSObjTimes = null;
     private boolean resized = false;
 
     ResizeMode resizeMode = ResizeMode.RESIZE_LEFT;
@@ -95,23 +94,23 @@ public class ResizeScoreObjectsListener extends BlueMouseAdapter {
         resizeMode = getResizeMode(c);
         resized = false;
 
-        startPoint = e.getPoint();
         selectedScoreObjects = temp.toArray(new ScoreObject[0]);
-        startEndTimes = new StartEndTime[selectedScoreObjects.length];
+        startDurationUnits = new StartDurationUnit[selectedScoreObjects.length];
 
         minDiffTime = Double.NEGATIVE_INFINITY;
         maxDiffTime = Double.POSITIVE_INFINITY;
 
         TimeState timeState = scoreTC.getTimeState();
+        TimeContext context = TimeContextManager.getContext();
         double pixelSeconds = (double) timeState.getPixelSecond();
 
         if (resizeMode == ResizeMode.RESIZE_LEFT) {
             for (int i = 0; i < selectedScoreObjects.length; i++) {
                 final ScoreObject sObj = selectedScoreObjects[i];
 
-                startEndTimes[i] = new StartEndTime(sObj);
+                startDurationUnits[i] = new StartDurationUnit(sObj);
 
-                double[] limits = sObj.getResizeLeftLimits();
+                double[] limits = sObj.getResizeLeftLimits(context);
 
                 var leftMaxDiff = limits[0];
                 var rightMaxDiff = limits[1] - (EDGE / pixelSeconds);
@@ -124,9 +123,9 @@ public class ResizeScoreObjectsListener extends BlueMouseAdapter {
         } else if (resizeMode == ResizeMode.RESIZE_RIGHT) {
             for (int i = 0; i < selectedScoreObjects.length; i++) {
                 final ScoreObject sObj = selectedScoreObjects[i];
-                startEndTimes[i] = new StartEndTime(sObj);
+                startDurationUnits[i] = new StartDurationUnit(sObj);
 
-                double[] limits = sObj.getResizeRightLimits();
+                double[] limits = sObj.getResizeRightLimits(context);
 
                 var leftMaxDiff = limits[0] + (EDGE / pixelSeconds);
                 var rightMaxDiff = (limits[1] != Double.MAX_VALUE)
@@ -142,7 +141,7 @@ public class ResizeScoreObjectsListener extends BlueMouseAdapter {
             throw new RuntimeException("Error: Invalid Resize Mode: " + resizeMode);
         }
 
-        currentSObjTimes = new StartEndTime(currentScoreObjectView.getScoreObject());
+        currentSObjTimes = new StartDurationUnit(currentScoreObjectView.getScoreObject());
     }
 
     @Override
@@ -163,20 +162,19 @@ public class ResizeScoreObjectsListener extends BlueMouseAdapter {
 
         if (resized) {
 
-            StartEndTime[] finalTimes = (StartEndTime[]) Stream.of(selectedScoreObjects)
-                    .map(sObj -> new StartEndTime(sObj))
+            StartDurationUnit[] finalTimes = (StartDurationUnit[]) Stream.of(selectedScoreObjects)
+                    .map(sObj -> new StartDurationUnit(sObj))
                     .collect(Collectors.toList())
-                    .toArray(new StartEndTime[0]);
+                    .toArray(new StartDurationUnit[0]);
 
-            var edit = new ResizeScoreObjectsEdit(selectedScoreObjects, startEndTimes, finalTimes);
+            var edit = new ResizeScoreObjectsEdit(selectedScoreObjects, startDurationUnits, finalTimes);
 
             BlueUndoManager.addEdit("score", edit);
 
         }
 
         resized = false;
-        startPoint = null;
-        startEndTimes = null;
+        startDurationUnits = null;
         selectedScoreObjects = null;
     }
 
@@ -186,6 +184,7 @@ public class ResizeScoreObjectsListener extends BlueMouseAdapter {
         }
 
         TimeState timeState = scoreTC.getTimeState();
+        TimeContext context = TimeContextManager.getContext();
         int xVal = e.getX();
         double newEnd;
 //        var currentSobj = currentScoreObjectView.getScoreObject();
@@ -197,29 +196,29 @@ public class ResizeScoreObjectsListener extends BlueMouseAdapter {
                     xVal / (double) timeState.getPixelSecond(), snapValue);
 
             double minTime = ScoreUtilities.getSnapValueMove(
-                    currentSObjTimes.start + snapValue / 2, snapValue);
+                    currentSObjTimes.start().toBeats(context) + snapValue / 2, snapValue);
 
             newEnd = (endTime < minTime) ? minTime : endTime;
 
         } else {
 
             double endTime = (double) xVal / timeState.getPixelSecond();
-            double minTime = currentSObjTimes.start;
+            double minTime = currentSObjTimes.start().toBeats(context);
 
             newEnd = (endTime < minTime) ? minTime : endTime;
         }
 
-        if (newEnd > currentSObjTimes.end + maxDiffTime) {
-            newEnd = currentSObjTimes.end + maxDiffTime;
+        if (newEnd > currentSObjTimes.end(context).toBeats(context) + maxDiffTime) {
+            newEnd = currentSObjTimes.end(context).toBeats(context) + maxDiffTime;
         }
 
-        double diff = MathUtils.clamp(minDiffTime, newEnd - currentSObjTimes.end, maxDiffTime);
+        double diff = MathUtils.clamp(minDiffTime, newEnd - currentSObjTimes.end(context).toBeats(context), maxDiffTime);
 
-        for (int i = 0; i < startEndTimes.length; i++) {
-            blue.ui.core.score.undo.StartEndTime t = startEndTimes[i];
+        for (int i = 0; i < startDurationUnits.length; i++) {
+            blue.ui.core.score.undo.StartDurationUnit t = startDurationUnits[i];
             var sObj = selectedScoreObjects[i];
-            var end = t.end + diff;
-            sObj.resizeRight(end);
+            var end = t.end(context).toBeats(context) + diff;
+            sObj.resizeRight(context, end);
         }
 
     }
@@ -231,13 +230,14 @@ public class ResizeScoreObjectsListener extends BlueMouseAdapter {
         }
 
         TimeState timeState = scoreTC.getTimeState();
+        TimeContext context = TimeContextManager.getContext();
         int xVal = e.getX();
         double newStart;
 
         if (timeState.isSnapEnabled()) {
             double snapValue = timeState.getSnapValue();
             double endTime = ScoreUtilities.getSnapValueMove(
-                    currentSObjTimes.end - (snapValue * .5001f), snapValue);
+                    currentSObjTimes.end(context).toBeats(context) - (snapValue * .5001f), snapValue);
 
             newStart = ScoreUtilities.getSnapValueMove(
                     xVal / (double) timeState.getPixelSecond(),
@@ -250,7 +250,7 @@ public class ResizeScoreObjectsListener extends BlueMouseAdapter {
             }
         } else {
 
-            double maxTime = currentSObjTimes.end;
+            double maxTime = currentSObjTimes.end(context).toBeats(context);
 
             if (xVal < 0) {
                 xVal = 0;
@@ -264,17 +264,17 @@ public class ResizeScoreObjectsListener extends BlueMouseAdapter {
 
         }
 
-        if (newStart < currentSObjTimes.start + minDiffTime) {
-            newStart = currentSObjTimes.start + minDiffTime;
+        if (newStart < currentSObjTimes.start().toBeats(context) + minDiffTime) {
+            newStart = currentSObjTimes.start().toBeats(context) + minDiffTime;
         }
 
-        double diff = MathUtils.clamp(minDiffTime, newStart - currentSObjTimes.start, maxDiffTime);
+        double diff = MathUtils.clamp(minDiffTime, newStart - currentSObjTimes.start().toBeats(context), maxDiffTime);
 
-        for (int i = 0; i < startEndTimes.length; i++) {
-            blue.ui.core.score.undo.StartEndTime t = startEndTimes[i];
+        for (int i = 0; i < startDurationUnits.length; i++) {
+            StartDurationUnit t = startDurationUnits[i];
             var sObj = selectedScoreObjects[i];
-            var start = t.start + diff;
-            sObj.resizeLeft(start);
+            var start = t.start().toBeats(context) + diff;
+            sObj.resizeLeft(context, start);
         }
 
     }

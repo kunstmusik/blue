@@ -26,6 +26,9 @@ import blue.soundObject.SoundObject;
 import blue.score.ScoreObjectEvent;
 import blue.score.ScoreObjectListener;
 import blue.soundObject.TimeBehavior;
+import blue.time.TimeContext;
+import blue.time.TimeContextManager;
+import blue.time.TimeUnit;
 import blue.ui.core.score.NoteProcessorChainEditor;
 import blue.ui.core.score.layers.SoundObjectProvider;
 import blue.ui.core.score.undo.DurationScoreObjectEdit;
@@ -210,9 +213,9 @@ public final class SoundObjectPropertiesTopComponent extends TopComponent implem
 
     private void updateProperties() {
         if (sObj != null) {
-            startTimePanel.setTimeUnit(sObj.getStartTimeUnit());
+            startTimePanel.setTimeUnit(sObj.getStartTime());
             nameText.setText(sObj.getName());
-            durationPanel.setTimeUnit(sObj.getSubjectiveDurationUnit());
+            durationPanel.setTimeUnit(sObj.getSubjectiveDuration());
 
             if (sObj instanceof SoundObject soundObject) {
                 double repeatPoint = soundObject.getRepeatPoint();
@@ -224,8 +227,11 @@ public final class SoundObjectPropertiesTopComponent extends TopComponent implem
     }
 
     private void updateEndTime() {
-        endTimeText.setText(Double.toString(this.sObj.getStartTime()
-                + this.sObj.getSubjectiveDuration()));
+        TimeContext context = TimeContextManager.getContext();
+        double startBeats = sObj.getStartTime().toBeats(context);
+        double durationBeats = sObj.getSubjectiveDuration().toBeats(context);
+        double endTime = startBeats + durationBeats;
+        endTimeText.setText(Double.toString(endTime));
     }
 
     protected void updateName() {
@@ -237,30 +243,30 @@ public final class SoundObjectPropertiesTopComponent extends TopComponent implem
     }
 
     protected void updateStartTime() {
-        double initialStart = sObj.getStartTime();
+        TimeUnit initialStart = sObj.getStartTime();
         var newTimeUnit = startTimePanel.getTimeUnit();
         
         if (newTimeUnit == null) {
-            startTimePanel.setTimeUnit(sObj.getStartTimeUnit());
+            startTimePanel.setTimeUnit(sObj.getStartTime());
             return;
         }
         
-        sObj.setStartTimeUnit(newTimeUnit);
+        sObj.setStartTime(newTimeUnit);
         
         BlueUndoManager.setUndoManager("score");
         BlueUndoManager.addEdit(new StartTimeEdit(initialStart, sObj.getStartTime(), sObj));
     }
 
     protected void updateSubjectiveDuration() {
-        double initialDuration = sObj.getSubjectiveDuration();
+        TimeUnit initialDuration = sObj.getSubjectiveDuration();
         var newTimeUnit = durationPanel.getTimeUnit();
         
         if (newTimeUnit == null) {
-            durationPanel.setTimeUnit(sObj.getSubjectiveDurationUnit());
+            durationPanel.setTimeUnit(sObj.getSubjectiveDuration());
             return;
         }
         
-        sObj.setSubjectiveDurationUnit(newTimeUnit);
+        sObj.setSubjectiveDuration(newTimeUnit);
         
         BlueUndoManager.setUndoManager("score");
         BlueUndoManager.addEdit(new DurationScoreObjectEdit(this.sObj,
@@ -313,7 +319,8 @@ public final class SoundObjectPropertiesTopComponent extends TopComponent implem
             double dur = -1.0f;
 
             if (useRepeatPoint.isSelected()) {
-                dur = sObj.getSubjectiveDuration();
+                TimeContext context = TimeContextManager.getContext();
+                dur = soundObj.getSubjectiveDuration().toBeats(context);
             }
 
             soundObj.setRepeatPoint(dur);
@@ -407,13 +414,13 @@ public final class SoundObjectPropertiesTopComponent extends TopComponent implem
                 break;
             case ScoreObjectEvent.START_TIME:
                 if (!isUpdating) {
-                    startTimePanel.setTimeUnit(sObj.getStartTimeUnit());
+                    startTimePanel.setTimeUnit(sObj.getStartTime());
                 }
                 updateEndTime();
                 break;
             case ScoreObjectEvent.DURATION:
                 if (!isUpdating) {
-                    durationPanel.setTimeUnit(sObj.getSubjectiveDurationUnit());
+                    durationPanel.setTimeUnit(sObj.getSubjectiveDuration());
                 }
                 updateEndTime();
                 break;

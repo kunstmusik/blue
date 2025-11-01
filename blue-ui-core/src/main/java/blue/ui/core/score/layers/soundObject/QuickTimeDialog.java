@@ -3,6 +3,9 @@ package blue.ui.core.score.layers.soundObject;
 import blue.BlueSystem;
 import blue.gui.LabelledItemPanel;
 import blue.score.ScoreObject;
+import blue.time.TimeContext;
+import blue.time.TimeContextManager;
+import blue.time.TimeUnit;
 import blue.ui.core.score.undo.DurationScoreObjectEdit;
 import blue.ui.core.score.undo.StartTimeEdit;
 import blue.undo.BlueUndoManager;
@@ -92,8 +95,10 @@ public class QuickTimeDialog extends JDialog {
     private void handleWindowDeactivated() {
         if (scoreObj != null) {
             try {
-                double initialStart = scoreObj.getStartTime();
-                double initialSubjectiveDuration = scoreObj
+                TimeContext context = TimeContextManager.getContext();
+                
+                TimeUnit initialStart = scoreObj.getStartTime();
+                TimeUnit initialSubjectiveDuration = scoreObj
                         .getSubjectiveDuration();
 
                 double newStart = Double.parseDouble(startText.getText());
@@ -103,18 +108,18 @@ public class QuickTimeDialog extends JDialog {
                 BlueUndoManager.setUndoManager("score");
 
                 StartTimeEdit edit = null;
-                if (initialStart != newStart) {
-                    scoreObj.setStartTime(newStart);
+                if (initialStart.toBeats(context) != newStart) {
+                    scoreObj.setStartTime(TimeUnit.beats(newStart));
                     edit = new StartTimeEdit(initialStart,
-                            newStart, scoreObj);
+                            TimeUnit.beats(newStart), scoreObj);
                     BlueUndoManager.addEdit(edit);
                 }
 
-                if (initialSubjectiveDuration != newSubjectiveDuration) {
-                    scoreObj.setSubjectiveDuration(newSubjectiveDuration);
+                if (initialSubjectiveDuration.toBeats(context) != newSubjectiveDuration) {
+                    scoreObj.setSubjectiveDuration(TimeUnit.beats(newSubjectiveDuration));
                     DurationScoreObjectEdit resizeEdit = new DurationScoreObjectEdit(
                             scoreObj, initialSubjectiveDuration,
-                            newSubjectiveDuration);
+                            TimeUnit.beats(newSubjectiveDuration));
 
                     if (edit != null) {
                         edit.addEdit(resizeEdit);
@@ -148,8 +153,10 @@ public class QuickTimeDialog extends JDialog {
         // SwingUtilities.convertPointToScreen(p, stCanvas);
         // this.setLocation(p.x, p.y - this.getHeight());
 
-        startText.setText(Double.toString(scoreObj.getStartTime()));
-        durText.setText(Double.toString(scoreObj.getSubjectiveDuration()));
+        TimeContext context = TimeContextManager.getContext();
+        
+        startText.setText(Double.toString(scoreObj.getStartTime().toBeats(context)));
+        durText.setText(Double.toString(scoreObj.getSubjectiveDuration().toBeats(context)));
 
         super.show();
         startText.requestFocus();

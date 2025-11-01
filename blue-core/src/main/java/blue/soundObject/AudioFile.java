@@ -24,6 +24,7 @@ import blue.noteProcessor.NoteProcessorChain;
 import blue.orchestra.GenericInstrument;
 import blue.orchestra.Instrument;
 import blue.plugin.SoundObjectPlugin;
+import blue.time.TimeContext;
 import blue.utility.SoundFileUtilities;
 import electric.xml.Element;
 import java.io.IOException;
@@ -60,11 +61,11 @@ public class AudioFile extends AbstractSoundObject {
     }
 
     // TODO - EXCEPTION - Look at Code to determine if Exception is Needed
-    public NoteList generateNotes(int instrumentNumber, double renderStart,
+    public NoteList generateNotes(TimeContext context, int instrumentNumber, double renderStart,
             double renderEnd) throws SoundObjectException {
         NoteList n = new NoteList();
 
-        final double subjectiveDuration = getSubjectiveDuration();
+        final double subjectiveDuration = getSubjectiveDuration().toBeats(context);
         double newDur = subjectiveDuration;
 
         if (renderEnd > 0 && renderEnd < subjectiveDuration) {
@@ -76,7 +77,7 @@ public class AudioFile extends AbstractSoundObject {
         StringBuilder buffer = new StringBuilder();
 
         buffer.append("i").append(instrumentNumber);
-        buffer.append("\t").append(getStartTime() + renderStart);
+        buffer.append("\t").append(getStartTime().toBeats(context) + renderStart);
         buffer.append("\t").append(newDur);
         buffer.append("\t").append(renderStart);
 
@@ -176,8 +177,8 @@ public class AudioFile extends AbstractSoundObject {
     }
 
     @Override
-    public double getObjectiveDuration() {
-        return getSubjectiveDuration();
+    public double getObjectiveDuration(TimeContext context) {
+        return getSubjectiveDuration().toBeats(context);
     }
 
     @Override
@@ -265,7 +266,7 @@ public class AudioFile extends AbstractSoundObject {
     }
 
     @Override
-    public NoteList generateForCSD(CompileData compileData, double startTime,
+    public NoteList generateForCSD(TimeContext context, CompileData compileData, double startTime,
             double endTime) throws SoundObjectException {
         Instrument instr = this.generateInstrument();
         if (instr == null) {
@@ -274,7 +275,7 @@ public class AudioFile extends AbstractSoundObject {
                     + " " + getSoundFileName()));
         }
         int instrNum = compileData.addInstrument(instr);
-        NoteList nl = this.generateNotes(instrNum, startTime, endTime);
+        NoteList nl = this.generateNotes(context, instrNum, startTime, endTime);
         return nl;
     }
 

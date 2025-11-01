@@ -42,6 +42,9 @@ import blue.services.render.RenderTimeManagerListener;
 import blue.settings.PlaybackSettings;
 import blue.soundObject.PolyObject;
 import blue.soundObject.SoundObject;
+import blue.time.TimeContext;
+import blue.time.TimeContextManager;
+import blue.time.TimeUnit;
 import blue.ui.components.IconFactory;
 import blue.ui.core.score.layers.LayerGroupPanel;
 import blue.ui.core.score.layers.LayerGroupUIProviderManager;
@@ -321,12 +324,13 @@ public final class ScoreTopComponent extends TopComponent
             }
 
             if (!sObj.isEmpty()) {
-
+                TimeContext context = TimeContextManager.getContext();
+                
                 double min = Double.POSITIVE_INFINITY;
                 double max = Double.NEGATIVE_INFINITY;
                 for (var obj : sObj) {
-                    var start = obj.getStartTime();
-                    var end = start + obj.getSubjectiveDuration();
+                    var start = obj.getStartTime().toBeats(context);
+                    var end = start + obj.getSubjectiveDuration().toBeats(context);
 
                     if (start < min) {
                         selectionStartObject = obj;
@@ -366,9 +370,11 @@ public final class ScoreTopComponent extends TopComponent
         var selectionAvailable = selectionStartObject != null;
 
         if (selectionAvailable) {
-
-            double start = selectionStartObject.getStartTime();
-            double end = selectionEndObject.getStartTime() + selectionEndObject.getSubjectiveDuration();
+            TimeContext context = TimeContextManager.getContext();
+            
+            double start = selectionStartObject.getStartTime().toBeats(context);
+            double end = selectionEndObject.getStartTime().toBeats(context) + 
+                         selectionEndObject.getSubjectiveDuration().toBeats(context);
             double pixelSecond = currentTimeState.getPixelSecond();
             guideLineStart.setLocation((int) (pixelSecond * start), 0);
             guideLineEnd.setLocation((int) (pixelSecond * end), 0);

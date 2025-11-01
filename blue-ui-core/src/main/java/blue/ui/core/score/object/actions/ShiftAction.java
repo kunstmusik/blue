@@ -21,6 +21,9 @@ package blue.ui.core.score.object.actions;
 
 import blue.BlueSystem;
 import blue.score.ScoreObject;
+import blue.time.TimeContext;
+import blue.time.TimeContextManager;
+import blue.time.TimeUnit;
 import blue.ui.core.score.undo.AlignEdit;
 import blue.undo.BlueUndoManager;
 import java.awt.event.ActionEvent;
@@ -71,8 +74,9 @@ public final class ShiftAction extends AbstractAction implements ContextAwareAct
         try {
             double val = Double.parseDouble(value);
 
+            TimeContext context = TimeContextManager.getContext();
             for (ScoreObject scoreObj : selected) {
-                if ((scoreObj.getStartTime() + val) < 0) {
+                if ((scoreObj.getStartTime().toBeats(context) + val) < 0) {
                     JOptionPane.showMessageDialog(null, BlueSystem
                             .getString("scoreGUI.action.shift.error"));
                     return;
@@ -82,13 +86,13 @@ public final class ShiftAction extends AbstractAction implements ContextAwareAct
             int len = selected.size();
             ScoreObject[] objects = selected.toArray(
                     new ScoreObject[selected.size()]);
-            double[] startTimes = new double[len];
-            double[] endTimes = new double[len];
+            TimeUnit[] startTimes = new TimeUnit[len];
+            TimeUnit[] endTimes = new TimeUnit[len];
 
             for (int i = 0; i < len; i++) {
                 ScoreObject scoreObj = objects[i];
                 startTimes[i] = scoreObj.getStartTime();
-                endTimes[i] = startTimes[i] + val;
+                endTimes[i] = TimeUnit.beats(startTimes[i].toBeats(context) + val);
                 scoreObj.setStartTime(endTimes[i]);
             }
 

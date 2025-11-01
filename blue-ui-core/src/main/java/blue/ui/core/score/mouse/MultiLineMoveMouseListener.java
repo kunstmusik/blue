@@ -26,6 +26,9 @@ import blue.plugin.ScoreMouseListenerPlugin;
 import blue.score.ScoreObject;
 import blue.score.TimeState;
 import blue.score.layers.AutomatableLayer;
+import blue.time.TimeContext;
+import blue.time.TimeContextManager;
+import blue.time.TimeUnit;
 import blue.ui.core.render.RealtimeRenderManager;
 import blue.ui.core.score.ModeManager;
 import blue.ui.core.score.MultiLineScoreSelection;
@@ -55,7 +58,7 @@ class MultiLineMoveMouseListener extends BlueMouseAdapter {
     int startX = -1;
     double minTranslation = 0.0f;
     private ScoreObject[] selectedScoreObjects = null;
-    private double[] startTimes = null;
+    private TimeUnit[] startTimes = null;
     Map<Line, Line> lineSourceCopyMap = new HashMap<>();
 
     TimeState timeState = null;
@@ -84,6 +87,8 @@ class MultiLineMoveMouseListener extends BlueMouseAdapter {
         e.consume();
         RealtimeRenderManager.getInstance().stopAuditioning();
         timeState = scoreTC.getTimeState();
+        
+        TimeContext context = TimeContextManager.getContext();
 
         startX = e.getX();
         minTranslation = -selection.getStartTime();
@@ -92,12 +97,12 @@ class MultiLineMoveMouseListener extends BlueMouseAdapter {
                 .getSelectedScoreObjects();
 
         selectedScoreObjects = selectedObjects.toArray(new ScoreObject[0]);
-        startTimes = new double[selectedScoreObjects.length];
+        startTimes = new TimeUnit[selectedScoreObjects.length];
 
         for (int i = 0; i < selectedScoreObjects.length; i++) {
             ScoreObject sObj = selectedScoreObjects[i];
             startTimes[i] = sObj.getStartTime();
-            minTranslation = Math.max(minTranslation, -startTimes[i]);
+            minTranslation = Math.max(minTranslation, -startTimes[i].toBeats(context));
         }
 
         lineSourceCopyMap.clear();
@@ -152,7 +157,8 @@ class MultiLineMoveMouseListener extends BlueMouseAdapter {
 
             for (int i = 0; i < selectedScoreObjects.length; i++) {
                 ScoreObject sObj = selectedScoreObjects[i];
-                sObj.setStartTime(startTimes[i] + trans);
+                TimeContext context = TimeContextManager.getContext();
+                sObj.setStartTime(TimeUnit.beats(startTimes[i].toBeats(context) + trans));
             }
 
             selection.updateTranslation(translation);

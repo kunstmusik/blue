@@ -24,6 +24,8 @@ import blue.gui.LabelledItemPanel;
 import blue.plugin.ScoreObjectEditorPlugin;
 import blue.score.ScoreObject;
 import blue.soundObject.FrozenSoundObject;
+import blue.time.TimeContext;
+import blue.time.TimeContextManager;
 import blue.ui.utilities.FileChooserManager;
 import blue.utility.FileUtilities;
 import java.awt.BorderLayout;
@@ -107,8 +109,9 @@ public class FrozenSoundObjectEditor extends ScoreObjectEditor {
 
         frozenWaveFileName.setText(fso.getFrozenWaveFileName());
 
+        TimeContext context = TimeContextManager.getContext();
         frozenSoundObjectDuration.setText(Double.toString(fso.
-                getFrozenSoundObject().getSubjectiveDuration()));
+                getFrozenSoundObject().getSubjectiveDuration().toBeats(context)));
 
     }
 

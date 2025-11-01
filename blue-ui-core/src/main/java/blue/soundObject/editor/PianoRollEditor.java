@@ -42,6 +42,8 @@ import blue.soundObject.editor.pianoRoll.actions.ToggleSnapAction;
 import blue.soundObject.editor.pianoRoll.actions.UndoAction;
 import blue.soundObject.pianoRoll.FieldDef;
 import blue.soundObject.pianoRoll.PianoNote;
+import blue.time.TimeContext;
+import blue.time.TimeContextManager;
 import blue.ui.components.IconFactory;
 import blue.utilities.scales.ScaleLinear;
 import blue.utility.GUI;
@@ -232,7 +234,8 @@ public class PianoRollEditor extends ScoreObjectEditor implements
         NoteList notes = null;
         
         try {
-            notes = p.generateForCSD(null, 0.0f, -1.0f);
+            TimeContext context = TimeContextManager.getContext();
+            notes = p.generateForCSD(context, null, 0.0f, -1.0f);
         } catch (Exception e) {
             ExceptionDialog.showExceptionDialog(SwingUtilities.getRoot(this), e);
         }

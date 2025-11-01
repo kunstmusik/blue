@@ -25,6 +25,7 @@ import blue.noteProcessor.NoteProcessorException;
 import blue.plugin.SoundObjectPlugin;
 import blue.score.ScoreObjectEvent;
 import blue.soundObject.pattern.Pattern;
+import blue.time.TimeContext;
 import blue.utility.ScoreUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
@@ -125,7 +126,7 @@ public class PatternObject extends AbstractSoundObject implements TableModel,
     }
 
     /* COMPILATION METHODS */
-    public NoteList generateNotes(double renderStart, double renderEnd) throws SoundObjectException {
+    public NoteList generateNotes(TimeContext context, double renderStart, double renderEnd) throws SoundObjectException {
         NoteList tempNoteList = new NoteList();
 
         // check if solo is selected, if so, return only that layer's notes if
@@ -203,17 +204,20 @@ public class PatternObject extends AbstractSoundObject implements TableModel,
             throw new SoundObjectException(this, e);
         }
 
+        double duration = this.getSubjectiveDuration().toBeats(context);
+        double startTime = getStartTime().toBeats(context);
+        
         ScoreUtilities.applyTimeBehavior(tempNoteList, this.getTimeBehavior(),
-                this.getSubjectiveDuration(), this.getRepeatPoint(), beats);
+                duration, this.getRepeatPoint(), beats);
 
-        ScoreUtilities.setScoreStart(tempNoteList, getStartTime());
+        ScoreUtilities.setScoreStart(tempNoteList, startTime);
 
         return tempNoteList;
     }
 
     @Override
-    public double getObjectiveDuration() {
-        return getSubjectiveDuration();
+    public double getObjectiveDuration(TimeContext context) {
+        return getSubjectiveDuration().toBeats(context);
     }
 
     @Override
@@ -475,10 +479,10 @@ public class PatternObject extends AbstractSoundObject implements TableModel,
     }
 
     @Override
-    public NoteList generateForCSD(CompileData compileData, double startTime,
+    public NoteList generateForCSD(TimeContext context, CompileData compileData, double startTime,
             double endTime) throws SoundObjectException {
 
-        return generateNotes(startTime, endTime);
+        return generateNotes(context, startTime, endTime);
 
     }
 

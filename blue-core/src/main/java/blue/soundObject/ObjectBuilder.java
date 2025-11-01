@@ -29,6 +29,7 @@ import blue.plugin.SoundObjectPlugin;
 import blue.score.ScoreObjectEvent;
 import blue.scripting.ScoreScriptEngine;
 import blue.scripting.ScoreScriptEngineManager;
+import blue.time.TimeContext;
 import blue.utility.ScoreUtilities;
 import blue.utility.XMLUtilities;
 import electric.xml.Element;
@@ -84,7 +85,7 @@ public class ObjectBuilder extends AbstractSoundObject {
     }
 
     // GENERATION METHODS
-    public NoteList generateNotes(BSBCompilationUnit bsbCompilationUnit, double renderStart, double renderEnd) throws SoundObjectException {
+    public NoteList generateNotes(TimeContext context, BSBCompilationUnit bsbCompilationUnit, double renderStart, double renderEnd) throws SoundObjectException {
         String codeToRun = bsbCompilationUnit.replaceBSBValues(code);
 
         String tempScore = null;
@@ -125,9 +126,11 @@ public class ObjectBuilder extends AbstractSoundObject {
             throw new SoundObjectException(this, e);
         }
 
-        ScoreUtilities.applyTimeBehavior(nl, this.getTimeBehavior(), this
-                .getSubjectiveDuration(), this.getRepeatPoint());
-        ScoreUtilities.setScoreStart(nl, getStartTime());
+        double duration = this.getSubjectiveDuration().toBeats(context);
+        double startTime = getStartTime().toBeats(context);
+        
+        ScoreUtilities.applyTimeBehavior(nl, this.getTimeBehavior(), duration, this.getRepeatPoint());
+        ScoreUtilities.setScoreStart(nl, startTime);
 
         return nl;
     }
@@ -150,8 +153,8 @@ public class ObjectBuilder extends AbstractSoundObject {
 
     // END GENERATION METHODS
     @Override
-    public double getObjectiveDuration() {
-        return getSubjectiveDuration();
+    public double getObjectiveDuration(TimeContext context) {
+        return getSubjectiveDuration().toBeats(context);
     }
 
 //    public BarRenderer getRenderer() {
@@ -336,12 +339,12 @@ public class ObjectBuilder extends AbstractSoundObject {
     }
 
     @Override
-    public NoteList generateForCSD(CompileData compileData, double startTime,
+    public NoteList generateForCSD(TimeContext context, CompileData compileData, double startTime,
             double endTime) throws SoundObjectException {
         BSBCompilationUnit bsbCompilationUnit = new BSBCompilationUnit();
         graphicInterface.setupForCompilation(bsbCompilationUnit);
 
-        NoteList nl = generateNotes(bsbCompilationUnit, startTime, endTime);
+        NoteList nl = generateNotes(context, bsbCompilationUnit, startTime, endTime);
         return nl;
 
     }

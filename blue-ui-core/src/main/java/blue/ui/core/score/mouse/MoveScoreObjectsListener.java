@@ -25,6 +25,9 @@ import blue.score.ScoreObject;
 import blue.score.TimeState;
 import blue.score.layers.Layer;
 import blue.score.layers.ScoreObjectLayer;
+import blue.time.TimeContext;
+import blue.time.TimeContextManager;
+import blue.time.TimeUnit;
 import blue.ui.core.score.ScoreController;
 import blue.ui.core.score.ScoreMode;
 import blue.ui.core.score.ScorePath;
@@ -54,7 +57,7 @@ public class MoveScoreObjectsListener extends BlueMouseAdapter {
     boolean initialDrag = true;
 
     private ScoreObject[] selectedScoreObjects = null;
-    private double[] startTimes = null;
+    private TimeUnit[] startTimes = null;
     private double minDiffTime = Double.MIN_VALUE;
     private int[] startLayerIndices = null;
     private int[] currentLayerIndices = null;
@@ -108,11 +111,12 @@ public class MoveScoreObjectsListener extends BlueMouseAdapter {
 
         e.consume();
 
+        TimeContext context = TimeContextManager.getContext();
         ScorePath scorePath = ScoreController.getInstance().getScorePath();
 
         startPoint = e.getPoint();
         selectedScoreObjects = temp.toArray(new ScoreObject[0]);
-        startTimes = new double[selectedScoreObjects.length];
+        startTimes = new TimeUnit[selectedScoreObjects.length];
         startLayerIndices = new int[selectedScoreObjects.length];
         currentLayerIndices = new int[selectedScoreObjects.length];
 
@@ -129,8 +133,9 @@ public class MoveScoreObjectsListener extends BlueMouseAdapter {
 
         for (int i = 0; i < selectedScoreObjects.length; i++) {
             startTimes[i] = selectedScoreObjects[i].getStartTime();
-            if (startTimes[i] < minDiffTime) {
-                minDiffTime = startTimes[i];
+            double startBeats = startTimes[i].toBeats(context);
+            if (startBeats < minDiffTime) {
+                minDiffTime = startBeats;
             }
             startLayerIndices[i] = currentLayerIndices[i]
                     = scorePath.getGlobalLayerIndexForScoreObject(
@@ -149,6 +154,7 @@ public class MoveScoreObjectsListener extends BlueMouseAdapter {
     public void mouseDragged(MouseEvent e) {
         ScoreController scoreController = ScoreController.getInstance();
         ScorePath scorePath = ScoreController.getInstance().getScorePath();
+        TimeContext context = TimeContextManager.getContext();
         List<Layer> allLayers = scorePath.getAllLayers();
         
         e.consume();
@@ -199,7 +205,7 @@ public class MoveScoreObjectsListener extends BlueMouseAdapter {
         }
 
         for (int i = 0; i < selectedScoreObjects.length; i++) {
-            selectedScoreObjects[i].setStartTime(startTimes[i] + diffTime);
+            selectedScoreObjects[i].setStartTime(TimeUnit.beats(startTimes[i].toBeats(context) + diffTime));
             if (layerAdjusted) {
                 ScoreObject scoreObj = selectedScoreObjects[i];
                 int startIndex = startLayerIndices[i];
@@ -233,7 +239,7 @@ public class MoveScoreObjectsListener extends BlueMouseAdapter {
             List<Layer> allLayers = ScoreController.getInstance().getScorePath().getAllLayers();
 
             int len = startTimes.length;
-            double[] endTimes = new double[len];
+            TimeUnit[] endTimes = new TimeUnit[len];
             ScoreObjectLayer[] startLayers = new ScoreObjectLayer[len];
             ScoreObjectLayer[] endLayers = new ScoreObjectLayer[len];
 

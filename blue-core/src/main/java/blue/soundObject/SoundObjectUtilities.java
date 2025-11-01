@@ -36,8 +36,8 @@ public class SoundObjectUtilities {
         retVal.setAttribute("type", sObj.getClass().getName());
 
         // Save as TimeUnit (new format) - directly rename to save space
-        retVal.addElement(sObj.getStartTimeUnit().saveAsXML().setName("startTimeUnit"));
-        retVal.addElement(sObj.getSubjectiveDurationUnit().saveAsXML().setName("subjectiveDurationUnit"));
+        retVal.addElement(sObj.getStartTime().saveAsXML().setName("startTimeUnit"));
+        retVal.addElement(sObj.getSubjectiveDuration().saveAsXML().setName("subjectiveDurationUnit"));
         
         retVal.addElement("name").setText(sObj.getName());
 
@@ -69,11 +69,11 @@ public class SoundObjectUtilities {
         // Load start time
         if (startTimeUnitElement != null) {
             // New format: TimeUnit (element is directly the timeUnit)
-            sObj.setStartTimeUnit(TimeUnit.loadFromXML(startTimeUnitElement));
+            sObj.setStartTime(TimeUnit.loadFromXML(startTimeUnitElement));
         } else if (data.getElement("startTime") != null) {
             // Old format: double (migrate to BeatTime)
             double startTime = Double.parseDouble(data.getTextString("startTime"));
-            sObj.setStartTime(startTime);  // Uses double API which creates BeatTime
+            sObj.setStartTime(TimeUnit.beats(startTime));
         } else {
             throw new Exception("Missing both startTimeUnit and startTime elements");
         }
@@ -81,11 +81,11 @@ public class SoundObjectUtilities {
         // Load duration
         if (durationUnitElement != null) {
             // New format: TimeUnit (element is directly the timeUnit)
-            sObj.setSubjectiveDurationUnit(TimeUnit.loadFromXML(durationUnitElement));
+            sObj.setSubjectiveDuration(TimeUnit.loadFromXML(durationUnitElement));
         } else if (data.getElement("subjectiveDuration") != null) {
             // Old format: double (migrate to BeatTime)
             double duration = Double.parseDouble(data.getTextString("subjectiveDuration"));
-            sObj.setSubjectiveDuration(duration);  // Uses double API which creates BeatTime
+            sObj.setSubjectiveDuration(TimeUnit.beats(duration));
         } else {
             throw new Exception("Missing both subjectiveDurationUnit and subjectiveDuration elements");
         }

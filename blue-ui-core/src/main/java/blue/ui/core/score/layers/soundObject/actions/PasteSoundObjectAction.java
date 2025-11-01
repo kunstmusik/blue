@@ -30,6 +30,9 @@ import blue.score.layers.ScoreObjectLayer;
 import blue.soundObject.Instance;
 import blue.soundObject.PolyObject;
 import blue.soundObject.SoundObject;
+import blue.time.TimeContext;
+import blue.time.TimeContextManager;
+import blue.time.TimeUnit;
 import blue.ui.core.clipboard.BlueClipboardUtils;
 import blue.ui.core.score.ScoreController;
 import blue.ui.core.score.ScorePath;
@@ -114,13 +117,15 @@ public final class PasteSoundObjectAction extends AbstractAction implements Cont
 
         int minLayer = Integer.MAX_VALUE;
         int maxLayer = Integer.MIN_VALUE;
-        double bufferStart = Double.POSITIVE_INFINITY;
+        TimeUnit bufferStart = null;
 
+        TimeContext context = TimeContextManager.getContext();
+        
         for (int i = 0; i < buffer.scoreObjects.size(); i++) {
             ScoreObject scoreObj = buffer.scoreObjects.get(i);
             int layer = buffer.layerIndices.get(i);
 
-            if (scoreObj.getStartTime() < bufferStart) {
+            if (bufferStart == null || scoreObj.getStartTime().lt(context, bufferStart)) {
                 bufferStart = scoreObj.getStartTime();
             }
             if (layer < minLayer) {
@@ -132,7 +137,7 @@ public final class PasteSoundObjectAction extends AbstractAction implements Cont
         }
 
         int layerTranslation = selectedLayerIndex - minLayer;
-        double startTranslation = start - bufferStart;
+        TimeUnit startTranslation = TimeUnit.beats(start).subtract(context, bufferStart);
 
         if ((maxLayer + layerTranslation) >= allLayers.size()) {
             JOptionPane.showMessageDialog(null, "Not Enough Layers to Paste");
@@ -177,7 +182,7 @@ public final class PasteSoundObjectAction extends AbstractAction implements Cont
                 getInstancesFromPolyObject(instanceSoundObjects, pObj);
             }
 
-            sObj.setStartTime(sObj.getStartTime() + startTranslation);
+            sObj.setStartTime(sObj.getStartTime().add(context, startTranslation));
 
             ScoreObjectLayer<ScoreObject> layer
                     = (ScoreObjectLayer<ScoreObject>) allLayers.get(newLayerIndex);

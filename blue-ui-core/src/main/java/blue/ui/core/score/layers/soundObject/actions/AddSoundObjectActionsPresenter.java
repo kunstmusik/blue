@@ -24,6 +24,7 @@ import blue.SoundLayer;
 import blue.score.TimeState;
 import blue.soundObject.PolyObject;
 import blue.soundObject.SoundObject;
+import blue.time.TimeUnit;
 import blue.ui.core.score.ScoreController;
 import blue.ui.core.score.ScorePath;
 import blue.ui.core.score.ScoreTopComponent;
@@ -107,7 +108,7 @@ public final class AddSoundObjectActionsPresenter extends AbstractAction impleme
                     start = ScoreUtilities.getSnapValueStart(start,
                             timeState.getSnapValue());
                 }
-                sObj.setStartTime(start);
+                sObj.setStartTime(TimeUnit.beats(start));
 
                 sLayer.add(sObj);
                 BlueUndoManager.setUndoManager("score");

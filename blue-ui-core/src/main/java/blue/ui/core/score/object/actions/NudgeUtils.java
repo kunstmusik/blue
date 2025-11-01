@@ -20,6 +20,9 @@
 package blue.ui.core.score.object.actions;
 
 import blue.score.ScoreObject;
+import blue.time.TimeContext;
+import blue.time.TimeContextManager;
+import blue.time.TimeUnit;
 import blue.ui.core.score.undo.MoveScoreObjectsEdit;
 import blue.undo.BlueUndoManager;
 import java.util.Collection;
@@ -37,11 +40,12 @@ public class NudgeUtils {
             return;
         }
 
+        TimeContext context = TimeContextManager.getContext();
         double adjustedTime = timeValue;
 
         if (timeValue < 0.0f) {
             for (ScoreObject scoreObj : scoreObjects) {
-                double start = scoreObj.getStartTime();
+                double start = scoreObj.getStartTime().toBeats(context);
                 if (start == 0.0) {
                     return;
                 }
@@ -57,13 +61,13 @@ public class NudgeUtils {
         int len = scoreObjects.size();
         ScoreObject[] objects = scoreObjects.toArray(
                 new ScoreObject[scoreObjects.size()]);
-        double[] startTimes = new double[len];
-        double[] endTimes = new double[len];
+        TimeUnit[] startTimes = new TimeUnit[len];
+        TimeUnit[] endTimes = new TimeUnit[len];
 
         for (int i = 0; i < objects.length; i++) {
             ScoreObject scoreObj = objects[i];
             startTimes[i] = scoreObj.getStartTime();
-            endTimes[i] = scoreObj.getStartTime() + adjustedTime;
+            endTimes[i] = TimeUnit.beats(scoreObj.getStartTime().toBeats(context) + adjustedTime);
             scoreObj.setStartTime(endTimes[i]);
         }
 

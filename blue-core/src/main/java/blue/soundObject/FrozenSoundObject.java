@@ -23,6 +23,7 @@ package blue.soundObject;
 import blue.*;
 import blue.noteProcessor.NoteProcessorChain;
 import blue.orchestra.GenericInstrument;
+import blue.time.TimeContext;
 import blue.utility.ObjectUtilities;
 import electric.xml.Element;
 import java.util.Map;
@@ -56,8 +57,8 @@ public class FrozenSoundObject extends AbstractSoundObject {
     }
 
     @Override
-    public double getObjectiveDuration() {
-        return this.getSubjectiveDuration();
+    public double getObjectiveDuration(TimeContext context) {
+        return this.getSubjectiveDuration().toBeats(context);
     }
 
     @Override
@@ -104,14 +105,14 @@ public class FrozenSoundObject extends AbstractSoundObject {
         this.frozenWaveFileName = frozenWaveFileName;
     }
 
-    public NoteList generateNotes(double renderStart, double renderEnd) throws SoundObjectException {
+    public NoteList generateNotes(TimeContext context, double renderStart, double renderEnd) throws SoundObjectException {
         NoteList n = new NoteList();
 
         if (instrumentNumber == 0) {
             return n;
         }
 
-        final double subjectiveDuration = getSubjectiveDuration();
+        final double subjectiveDuration = getSubjectiveDuration().toBeats(context);
         double newDur = subjectiveDuration;
 
         if(renderEnd > 0 && renderEnd < subjectiveDuration) {
@@ -123,7 +124,7 @@ public class FrozenSoundObject extends AbstractSoundObject {
         StringBuilder buffer = new StringBuilder();
 
         buffer.append("i").append(instrumentNumber);
-        buffer.append("\t").append(getStartTime() + renderStart);
+        buffer.append("\t").append(getStartTime().toBeats(context) + renderStart);
         buffer.append("\t").append(newDur);
         buffer.append("\t\"").append(this.getFrozenWaveFileName()).append("\"");
         buffer.append("\t").append(renderStart);
@@ -266,11 +267,11 @@ public class FrozenSoundObject extends AbstractSoundObject {
     }
 
     @Override
-    public NoteList generateForCSD(CompileData compileData, double startTime, 
+    public NoteList generateForCSD(TimeContext context, CompileData compileData, double startTime, 
             double endTime) throws SoundObjectException {
         
         generateInstruments(compileData);
-        NoteList nl = generateNotes(startTime, endTime);
+        NoteList nl = generateNotes(context, startTime, endTime);
         
         return nl;
     }

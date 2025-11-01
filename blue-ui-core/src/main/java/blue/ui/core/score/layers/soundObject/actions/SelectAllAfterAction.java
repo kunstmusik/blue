@@ -23,6 +23,9 @@ import blue.score.ScoreObject;
 import blue.score.TimeState;
 import blue.score.layers.Layer;
 import blue.score.layers.ScoreObjectLayer;
+import blue.time.TimeContext;
+import blue.time.TimeContextManager;
+import blue.time.TimeUnit;
 import blue.ui.core.score.ScoreController;
 import blue.ui.core.score.ScorePath;
 import java.awt.Point;
@@ -75,7 +78,9 @@ public final class SelectAllAfterAction extends AbstractAction
 //            return;
 //        }
 
+        TimeContext context = TimeContextManager.getContext();
         double pointTime = p.x / timeState.getPixelSecond();
+        TimeUnit pointTimeUnit = TimeUnit.beats(pointTime);
         List<ScoreObject> newSelected = new ArrayList<>();
         List<Layer> allLayers = scorePath.getAllLayers();
 
@@ -83,7 +88,7 @@ public final class SelectAllAfterAction extends AbstractAction
             if (layer instanceof ScoreObjectLayer sLayer) {
 
                 for (ScoreObject scoreObject : (ScoreObjectLayer<ScoreObject>) sLayer) {
-                    if (scoreObject.getStartTime() >= pointTime) {
+                    if (scoreObject.getStartTime().gte(context, pointTimeUnit)) {
                         newSelected.add(scoreObject);
                     }
                 }

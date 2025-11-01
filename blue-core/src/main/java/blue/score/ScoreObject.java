@@ -20,6 +20,7 @@
 package blue.score;
 
 import blue.DeepCopyable;
+import blue.time.TimeContext;
 import blue.time.TimeUnit;
 import java.awt.Color;
 
@@ -42,50 +43,42 @@ public interface ScoreObject extends DeepCopyable<ScoreObject> {
     String getName();
     
     /**
-     * Gets the start time of the ScoreObject in Csound beats.
+     * Gets the start time of the ScoreObject as a TimeUnit.
+     * The TimeUnit type determines how the time is represented (beats, measure/beats, time, SMPTE, frames).
      * 
-     * This is a convenience method that extracts beats from the internal TimeUnit.
-     * For more control over time representation, use {@link #getStartTimeUnit()}.
-     * 
-     * @return the start time in Csound beats
+     * @return the start time as a TimeUnit
      */
-    double getStartTime();
+    TimeUnit getStartTime();
 
     /**
-     * Sets the start time of the ScoreObject in Csound beats.
+     * Sets the start time of the ScoreObject using a TimeUnit.
+     * The TimeUnit's type determines how the time is stored and interpreted.
      * 
-     * This is a convenience method that creates a BeatTime TimeUnit internally.
-     * For more control over time representation, use {@link #setStartTimeUnit(TimeUnit)}.
-     * 
-     * @param startTime the start time in Csound beats
+     * @param startTime the start time as a TimeUnit
      */
-    void setStartTime(double startTime);
+    void setStartTime(TimeUnit startTime);
     
     /**
-     * Gets the subjective duration of the ScoreObject in Csound beats.
+     * Gets the subjective duration of the ScoreObject as a TimeUnit.
      * 
      * The subjective duration of the ScoreObject is the amount of time a
      * ScoreObject is assigned to last, regardless of its contents.
+     * The TimeUnit type determines how the duration is represented.
      * 
-     * This is a convenience method that extracts beats from the internal TimeUnit.
-     * For more control over time representation, use {@link #getSubjectiveDurationUnit()}.
-     * 
-     * @return the subjective duration in Csound beats
+     * @return the subjective duration as a TimeUnit
      */
-    double getSubjectiveDuration();
+    TimeUnit getSubjectiveDuration();
 
     /**
-     * Sets the subjective duration of the ScoreObject in Csound beats.
+     * Sets the subjective duration of the ScoreObject using a TimeUnit.
      * 
      * The subjective duration of the ScoreObject is the amount of time a
      * ScoreObject is assigned to last, regardless of its contents.
+     * The TimeUnit's type determines how the duration is stored and interpreted.
      * 
-     * This is a convenience method that creates a BeatTime TimeUnit internally.
-     * For more control over time representation, use {@link #setSubjectiveDurationUnit(TimeUnit)}.
-     * 
-     * @param duration the subjective duration in Csound beats
+     * @param duration the subjective duration as a TimeUnit
      */
-    void setSubjectiveDuration(double duration);
+    void setSubjectiveDuration(TimeUnit duration);
 
 //    boolean isLayerTransferrable();
     // maybe use interface of Resizable?
@@ -94,17 +87,35 @@ public interface ScoreObject extends DeepCopyable<ScoreObject> {
 
     /** Return double array of limits of left diff and right diff when doing 
      * a resize from the right side of objects.
-     * @return 
+     * 
+     * @param context the TimeContext for time conversions
+     * @return array of [minDiff, maxDiff]
      */
-    double[] getResizeRightLimits();
+    double[] getResizeRightLimits(TimeContext context);
     
     /** Return double array of limits of left diff and right diff when doing 
      * a resize from the left side of objects.
-     * @return 
+     * 
+     * @param context the TimeContext for time conversions
+     * @return array of [minDiff, maxDiff]
      */
-    double[] getResizeLeftLimits();
-    void resizeLeft(double newStartTime);
-    void resizeRight(double newEndTime);
+    double[] getResizeLeftLimits(TimeContext context);
+    
+    /**
+     * Resizes the object from the left side.
+     * 
+     * @param context the TimeContext for time conversions
+     * @param newStartTime the new start time in beats
+     */
+    void resizeLeft(TimeContext context, double newStartTime);
+    
+    /**
+     * Resizes the object from the right side.
+     * 
+     * @param context the TimeContext for time conversions
+     * @param newEndTime the new end time in beats
+     */
+    void resizeRight(TimeContext context, double newEndTime);
 
     /**
      * Adds a ScoreObjectListener to this ScoreObject
@@ -136,37 +147,4 @@ public interface ScoreObject extends DeepCopyable<ScoreObject> {
 
     int getCloneSourceHashCode();
     
-    // ========== TimeUnit-based API ==========
-    
-    /**
-     * Gets the start time as a TimeUnit.
-     * The TimeBase is determined by the stored TimeUnit type.
-     * 
-     * @return the start time as a TimeUnit
-     */
-    TimeUnit getStartTimeUnit();
-    
-    /**
-     * Sets the start time using a TimeUnit.
-     * The TimeUnit's type determines how the time is stored and interpreted.
-     * 
-     * @param startTime the start time as a TimeUnit
-     */
-    void setStartTimeUnit(TimeUnit startTime);
-    
-    /**
-     * Gets the subjective duration as a TimeUnit.
-     * The TimeBase is determined by the stored TimeUnit type.
-     * 
-     * @return the duration as a TimeUnit
-     */
-    TimeUnit getSubjectiveDurationUnit();
-    
-    /**
-     * Sets the subjective duration using a TimeUnit.
-     * The TimeUnit's type determines how the duration is stored and interpreted.
-     * 
-     * @param duration the duration as a TimeUnit
-     */
-    void setSubjectiveDurationUnit(TimeUnit duration);
 }

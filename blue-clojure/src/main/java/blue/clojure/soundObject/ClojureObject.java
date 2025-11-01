@@ -34,6 +34,7 @@ import blue.score.ScoreObjectEvent;
 import blue.soundObject.SoundObjectException;
 import blue.soundObject.SoundObjectUtilities;
 import blue.soundObject.TimeBehavior;
+import blue.time.TimeContext;
 import blue.utility.ScoreUtilities;
 import electric.xml.Element;
 import java.io.File;
@@ -97,16 +98,18 @@ public class ClojureObject extends AbstractSoundObject implements
         return root.getCause();
     }
 
-    protected final NoteList generateNotes(double renderStart, double renderEnd) throws
+    protected final NoteList generateNotes(TimeContext context, double renderStart, double renderEnd) throws
             SoundObjectException {
 
         String tempScore = null;
 
         File currentDirFile = BlueSystem.getCurrentProjectDirectory();
 
+        double duration = getSubjectiveDuration().toBeats(context);
+        
         HashMap<String, Object> initObjects = new HashMap<>();
         initObjects.put("score", "");
-        initObjects.put("blueDuration", getSubjectiveDuration());
+        initObjects.put("blueDuration", duration);
         initObjects.put("blueProjectDir", currentDirFile);
 
         try {
@@ -133,20 +136,21 @@ public class ClojureObject extends AbstractSoundObject implements
             throw new SoundObjectException(this, e);
         }
 
-        ScoreUtilities.applyTimeBehavior(nl, this.getTimeBehavior(), this.
-                getSubjectiveDuration(), this.getRepeatPoint());
-        ScoreUtilities.setScoreStart(nl, getStartTime());
+        double startTime = getStartTime().toBeats(context);
+        
+        ScoreUtilities.applyTimeBehavior(nl, this.getTimeBehavior(), duration, this.getRepeatPoint());
+        ScoreUtilities.setScoreStart(nl, startTime);
         return nl;
     }
 
     @Override
-    public NoteList generateForCSD(CompileData compileData, double startTime, double endTime) throws SoundObjectException {
-        return generateNotes(startTime, endTime);
+    public NoteList generateForCSD(TimeContext context, CompileData compileData, double startTime, double endTime) throws SoundObjectException {
+        return generateNotes(context, startTime, endTime);
     }
 
     @Override
-    public double getObjectiveDuration() {
-        return getSubjectiveDuration();
+    public double getObjectiveDuration(TimeContext context) {
+        return getSubjectiveDuration().toBeats(context);
     }
 
     @Override
@@ -230,9 +234,9 @@ public class ClojureObject extends AbstractSoundObject implements
     }
 
     @Override
-    public void processOnLoad() throws SoundObjectException {
+    public void processOnLoad(TimeContext context) throws SoundObjectException {
         if (onLoadProcessable) {
-            this.generateNotes(0.0f, -1.0f);
+            this.generateNotes(context, 0.0f, -1.0f);
         }
     }
 

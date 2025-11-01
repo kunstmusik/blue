@@ -33,6 +33,8 @@ import blue.score.ScoreObject;
 import blue.soundObject.NoteList;
 import blue.soundObject.PolyObject;
 import blue.soundObject.SoundObject;
+import blue.time.TimeContext;
+import blue.time.TimeContextManager;
 import blue.udo.OpcodeList;
 import blue.ui.nbutilities.MimeTypeEditorComponent;
 import java.awt.BorderLayout;
@@ -205,7 +207,8 @@ public class PolyObjectEditor extends ScoreObjectEditor {
         String scoreText = "";
 
         try {
-            scoreText = sObj.generateForCSD(CompileData.createEmptyCompileData(), 
+            TimeContext context = TimeContextManager.getContext();
+            scoreText = sObj.generateForCSD(context, CompileData.createEmptyCompileData(), 
                     0.0f, -1.0f).toString();
         } catch (Exception e) {
 //            ExceptionDialog
@@ -253,7 +256,8 @@ public class PolyObjectEditor extends ScoreObjectEditor {
         NoteList generatedNotes = null;
 
         try {
-            generatedNotes = tempPObj.generateForCSD(compileData, 0.0f, -1.0f);
+            TimeContext context = TimeContextManager.getContext();
+            generatedNotes = tempPObj.generateForCSD(context, compileData, 0.0f, -1.0f);
         } catch (Exception e) {
             Exceptions.printStackTrace(e);
             return;
@@ -314,7 +318,8 @@ public class PolyObjectEditor extends ScoreObjectEditor {
             } else if (parm2 == 1) {
                 return temp.getStartTime();
             } else if (parm2 == 2) {
-                return temp.getObjectiveDuration();
+                TimeContext context = TimeContextManager.getContext();
+                return temp.getObjectiveDuration(context);
             } else {
                 System.err.println("error in OrchestraTableModel");
                 return null;

@@ -25,6 +25,7 @@ import blue.noteProcessor.NoteProcessorException;
 import blue.plugin.SoundObjectPlugin;
 import blue.score.ScoreObjectEvent;
 import blue.scripting.PythonProxy;
+import blue.time.TimeContext;
 import blue.utility.ScoreUtilities;
 import electric.xml.Element;
 import java.util.Map;
@@ -79,8 +80,8 @@ public class PythonObject extends AbstractSoundObject implements
     }
 
     @Override
-    public double getObjectiveDuration() {
-        return getSubjectiveDuration();
+    public double getObjectiveDuration(TimeContext context) {
+        return getSubjectiveDuration().toBeats(context);
     }
 
     @Override
@@ -93,7 +94,7 @@ public class PythonObject extends AbstractSoundObject implements
         this.npc = chain;
     }
 
-    public final NoteList generateNotes(double renderStart, double renderEnd) throws
+    public final NoteList generateNotes(TimeContext context, double renderStart, double renderEnd) throws
             SoundObjectException {
         /*
          * System.out.println( "[pythonObject] attempting to generate score for
@@ -102,9 +103,10 @@ public class PythonObject extends AbstractSoundObject implements
 
         String tempScore = null;
 
+        double duration = getSubjectiveDuration().toBeats(context);
+        
         try {
-            tempScore = PythonProxy.processPythonScore(pythonCode,
-                    getSubjectiveDuration());
+            tempScore = PythonProxy.processPythonScore(pythonCode, duration);
         } catch (PyException pyEx) {
             String msg = "Jython Error:\n" + pyEx.toString();
             throw new SoundObjectException(this, msg);
@@ -124,9 +126,10 @@ public class PythonObject extends AbstractSoundObject implements
             throw new SoundObjectException(this, e);
         }
 
-        ScoreUtilities.applyTimeBehavior(nl, this.getTimeBehavior(), this.
-                getSubjectiveDuration(), this.getRepeatPoint());
-        ScoreUtilities.setScoreStart(nl, getStartTime());
+        double startTime = getStartTime().toBeats(context);
+        
+        ScoreUtilities.applyTimeBehavior(nl, this.getTimeBehavior(), duration, this.getRepeatPoint());
+        ScoreUtilities.setScoreStart(nl, startTime);
         return nl;
     }
 
@@ -207,17 +210,17 @@ public class PythonObject extends AbstractSoundObject implements
     }
 
     @Override
-    public void processOnLoad() throws SoundObjectException {
+    public void processOnLoad(TimeContext context) throws SoundObjectException {
         if (onLoadProcessable) {
-            this.generateNotes(0.0f, -1.0f);
+            this.generateNotes(context, 0.0f, -1.0f);
         }
     }
 
     @Override
-    public NoteList generateForCSD(CompileData compileData, double startTime, 
+    public NoteList generateForCSD(TimeContext context, CompileData compileData, double startTime, 
             double endTime) throws SoundObjectException {
         
-        return generateNotes(startTime, endTime);
+        return generateNotes(context, startTime, endTime);
         
     }
 

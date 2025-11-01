@@ -23,6 +23,7 @@ package blue.soundObject;
 import blue.CompileData;
 import blue.noteProcessor.NoteProcessorChain;
 import blue.score.ScoreObject;
+import blue.time.TimeContext;
 import electric.xml.Element;
 import java.util.Map;
 
@@ -106,7 +107,7 @@ public interface SoundObject extends ScoreObject {
 //    public NoteList generateNotes(double renderStart, double renderEnd)
 //            throws SoundObjectException;
 
-    NoteList generateForCSD(CompileData compileData, double startTime,
+    NoteList generateForCSD(TimeContext context, CompileData compileData, double startTime,
                             double endTime) throws SoundObjectException;
     
 
@@ -130,7 +131,7 @@ public interface SoundObject extends ScoreObject {
      * generation is dependent on the subjective duration of the soundObject.
      * For these SoundObjects you can return null here.
      */
-    double getObjectiveDuration();
+    double getObjectiveDuration(TimeContext context);
 
     /**
      * Returns a blue.soundObject.renderer.BarRenderer which renders the

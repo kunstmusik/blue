@@ -10,6 +10,7 @@ import blue.soundObject.pianoRoll.FieldDef;
 import blue.soundObject.pianoRoll.FieldType;
 import blue.soundObject.pianoRoll.PianoNote;
 import blue.soundObject.pianoRoll.Scale;
+import blue.time.TimeContext;
 import blue.utility.ScoreUtilities;
 import blue.utility.TextUtilities;
 import electric.xml.Element;
@@ -187,11 +188,11 @@ public class PianoRoll extends AbstractSoundObject implements ListChangeListener
 
     // TODO - Implement using notes
     @Override
-    public double getObjectiveDuration() {
-        return this.getSubjectiveDuration();
+    public double getObjectiveDuration(TimeContext context) {
+        return this.getSubjectiveDuration().toBeats(context);
     }
 
-    public NoteList generateNotes(double renderStart, double renderEnd) throws SoundObjectException {
+    public NoteList generateNotes(TimeContext context, double renderStart, double renderEnd) throws SoundObjectException {
         NoteList nl = new NoteList();
 
         String instrId = instrumentId;
@@ -298,10 +299,11 @@ public class PianoRoll extends AbstractSoundObject implements ListChangeListener
             throw new SoundObjectException(this, e);
         }
 
-        ScoreUtilities.applyTimeBehavior(nl, this.getTimeBehavior(), this
-                .getSubjectiveDuration(), this.getRepeatPoint());
-
-        ScoreUtilities.setScoreStart(nl, getStartTime());
+        double duration = this.getSubjectiveDuration().toBeats(context);
+        double startTime = getStartTime().toBeats(context);
+        
+        ScoreUtilities.applyTimeBehavior(nl, this.getTimeBehavior(), duration, this.getRepeatPoint());
+        ScoreUtilities.setScoreStart(nl, startTime);
 
         return nl;
     }
@@ -617,10 +619,10 @@ public class PianoRoll extends AbstractSoundObject implements ListChangeListener
     }
 
     @Override
-    public NoteList generateForCSD(CompileData compileData, double startTime,
+    public NoteList generateForCSD(TimeContext context, CompileData compileData, double startTime,
             double endTime) throws SoundObjectException {
 
-        return generateNotes(startTime, endTime);
+        return generateNotes(context, startTime, endTime);
 
     }
 

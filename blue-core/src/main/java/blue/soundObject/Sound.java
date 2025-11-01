@@ -27,6 +27,7 @@ import blue.components.lines.SoundObjectParameterLine;
 import blue.noteProcessor.NoteProcessorChain;
 import blue.orchestra.BlueSynthBuilder;
 import blue.plugin.SoundObjectPlugin;
+import blue.time.TimeContext;
 import electric.xml.Element;
 import electric.xml.Elements;
 import java.util.Map;
@@ -78,8 +79,8 @@ public class Sound extends AbstractSoundObject {
     }
 
     @Override
-    public double getObjectiveDuration() {
-        return getSubjectiveDuration();
+    public double getObjectiveDuration(TimeContext context) {
+        return getSubjectiveDuration().toBeats(context);
     }
 
     @Override
@@ -209,7 +210,7 @@ public class Sound extends AbstractSoundObject {
     }
 
     @Override
-    public NoteList generateForCSD(CompileData compileData, double startTime,
+    public NoteList generateForCSD(TimeContext context, CompileData compileData, double startTime,
             double endTime) throws SoundObjectException {
 
         bsbObj.getParameterList().clearCompilationVarNames();

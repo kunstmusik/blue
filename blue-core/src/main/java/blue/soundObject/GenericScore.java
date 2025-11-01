@@ -31,6 +31,9 @@ import blue.noteProcessor.NoteProcessorChain;
 import blue.noteProcessor.NoteProcessorException;
 import blue.plugin.SoundObjectPlugin;
 import blue.score.ScoreObjectEvent;
+import blue.time.TimeContext;
+import blue.time.TimeContextManager;
+import blue.time.TimeUnit;
 import blue.utility.ScoreUtilities;
 import electric.xml.Element;
 import java.util.Map;
@@ -71,7 +74,7 @@ public class GenericScore extends AbstractSoundObject implements
     }
 
     @Override
-    public double getObjectiveDuration() {
+    public double getObjectiveDuration(TimeContext context) {
         NoteList notes = null;
 
         try {
@@ -92,7 +95,7 @@ public class GenericScore extends AbstractSoundObject implements
         return npc;
     }
 
-    public final NoteList generateNotes(double renderStart, double renderEnd) throws SoundObjectException {
+    public final NoteList generateNotes(TimeContext context, double renderStart, double renderEnd) throws SoundObjectException {
         NoteList nl;
         try {
             nl = ScoreUtilities.getNotes(score);
@@ -105,10 +108,11 @@ public class GenericScore extends AbstractSoundObject implements
             throw new SoundObjectException(this, e);
         }
 
-        ScoreUtilities.applyTimeBehavior(nl, this.getTimeBehavior(), this
-                .getSubjectiveDuration(), this.getRepeatPoint());
-
-        ScoreUtilities.setScoreStart(nl, getStartTime());
+        double duration = this.getSubjectiveDuration().toBeats(context);
+        double startTime = this.getStartTime().toBeats(context);
+        
+        ScoreUtilities.applyTimeBehavior(nl, this.getTimeBehavior(), duration, this.getRepeatPoint());
+        ScoreUtilities.setScoreStart(nl, startTime);
 
         return nl;
     }
@@ -120,8 +124,10 @@ public class GenericScore extends AbstractSoundObject implements
         buffer.setSubjectiveDuration(sObj.getSubjectiveDuration());
         buffer.setName("GEN: " + sObj.getName());
 
-        sObj.setStartTime(0.0f);
-        buffer.setText(sObj.generateForCSD(null, 0.0f, -1.0f).toString());
+        sObj.setStartTime(TimeUnit.beats(0.0));
+        // This static utility should be called from UI layer with TimeContext set
+        TimeContext context = TimeContextManager.getContext();
+        buffer.setText(sObj.generateForCSD(context, null, 0.0f, -1.0f).toString());
         return buffer;
     }
 
@@ -196,10 +202,10 @@ public class GenericScore extends AbstractSoundObject implements
     }
 
     @Override
-    public NoteList generateForCSD(CompileData compileData, double startTime,
+    public NoteList generateForCSD(TimeContext context, CompileData compileData, double startTime,
             double endTime) throws SoundObjectException {
 
-        NoteList nl = generateNotes(startTime, endTime);
+        NoteList nl = generateNotes(context, startTime, endTime);
         return nl;
 
     }

@@ -30,6 +30,9 @@ import blue.score.layers.AutomatableLayer;
 import blue.score.layers.Layer;
 import blue.score.layers.LayerGroup;
 import blue.score.layers.ScoreObjectLayer;
+import blue.time.TimeContext;
+import blue.time.TimeContextManager;
+import blue.time.TimeUnit;
 import blue.ui.core.clipboard.BlueClipboardUtils;
 import blue.ui.core.score.undo.AddScoreObjectEdit;
 import blue.ui.core.score.undo.AppendableEdit;
@@ -358,6 +361,7 @@ public class ScoreController {
         multiLineBuffer.selectionStart = start;
 
         List<Layer> layers = getScorePath().getAllLayers();
+        TimeContext context = TimeContextManager.getContext();
         double minScoreTime = start;
 
         // COPY SCORE OBJECTS
@@ -378,7 +382,7 @@ public class ScoreController {
             // deep copy to lock in scoreObject properties 
             multiLineBuffer.scoreObjects.put(scoreObject.deepCopy(),
                     (ScoreObjectLayer) foundLayer);
-            minScoreTime = Math.min(minScoreTime, scoreObject.getStartTime());
+            minScoreTime = Math.min(minScoreTime, scoreObject.getStartTime().toBeats(context));
         }
 
         multiLineBuffer.scorePasteMin = minScoreTime;
@@ -461,12 +465,13 @@ public class ScoreController {
 
         Set<ScoreObject> selected = new HashSet<>();
         CompoundAppendable compoundEdit = new CompoundAppendable();
+        TimeContext context = TimeContextManager.getContext();
 
         for (var entry : multiLineBuffer.scoreObjects.entrySet()) {
             final var sObj = entry.getKey().deepCopy();
             final var layer = entry.getValue();
 
-            sObj.setStartTime(sObj.getStartTime() + adjust);
+            sObj.setStartTime(sObj.getStartTime().add(context, TimeUnit.beats(adjust)));
             layer.add(sObj);
             selected.add(sObj);
 

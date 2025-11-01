@@ -8,6 +8,8 @@ import blue.score.ScoreObject;
 import blue.soundObject.Instance;
 import blue.soundObject.NoteList;
 import blue.soundObject.SoundObject;
+import blue.time.TimeContext;
+import blue.time.TimeContextManager;
 import blue.ui.nbutilities.MimeTypeEditorComponent;
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
@@ -88,7 +90,8 @@ public class InstanceEditor extends ScoreObjectEditor {
         try {
             SoundObject clone = instance.getSoundObject().deepCopy();
 
-            generatedNoteText = clone.generateForCSD(CompileData.createEmptyCompileData(), 
+            TimeContext context = TimeContextManager.getContext();
+            generatedNoteText = clone.generateForCSD(context, CompileData.createEmptyCompileData(), 
                     0.0f, -1.0f).toString();
         } catch (Exception e) {
             Exceptions.printStackTrace(e);
@@ -112,7 +115,8 @@ public class InstanceEditor extends ScoreObjectEditor {
 
             SoundObject clone = instance.getSoundObject().deepCopy();
 
-            notes = clone.generateForCSD(CompileData.createEmptyCompileData(), 
+            TimeContext context = TimeContextManager.getContext();
+            notes = clone.generateForCSD(context, CompileData.createEmptyCompileData(), 
                     0.0f, -1.0f);
         } catch (Exception e) {
             Exceptions.printStackTrace(e);

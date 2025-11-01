@@ -6,6 +6,7 @@ package blue.ui.core.score.undo;
 
 import blue.BlueSystem;
 import blue.score.ScoreObject;
+import blue.time.TimeUnit;
 import javax.swing.undo.AbstractUndoableEdit;
 import javax.swing.undo.CannotRedoException;
 import javax.swing.undo.CannotUndoException;
@@ -16,15 +17,15 @@ import javax.swing.undo.UndoableEdit;
  * 
  */
 public class StartTimeEdit extends AbstractUndoableEdit {
-    double initialStart;
+    TimeUnit initialStart;
 
-    double newStart;
+    TimeUnit newStart;
 
     ScoreObject sObj;
 
     UndoableEdit nextEdit = null;
 
-    public StartTimeEdit(double initialStart, double newStart, ScoreObject sObj) {
+    public StartTimeEdit(TimeUnit initialStart, TimeUnit newStart, ScoreObject sObj) {
 
         this.initialStart = initialStart;
         this.newStart = newStart;

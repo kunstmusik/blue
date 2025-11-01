@@ -49,22 +49,6 @@ public class TimeContextManager {
     private static final ThreadLocal<TimeContext> CONTEXT = new ThreadLocal<>();
     
     /**
-     * Default TimeContext: 4/4 time, 60 BPM, 44100 Hz sample rate.
-     * Used only when explicitly requested via getContextOrDefault().
-     */
-    private static final TimeContext DEFAULT_CONTEXT = createDefaultContext();
-    
-    private static TimeContext createDefaultContext() {
-        // MeterMap constructor already initializes with 4/4 at measure 1
-        MeterMap meterMap = new MeterMap();
-        
-        // TempoMap constructor already initializes with 60 BPM at beat 0
-        TempoMap tempoMap = new TempoMap();
-        
-        return new TimeContext(44100, meterMap, tempoMap);
-    }
-    
-    /**
      * Sets the TimeContext for the current thread.
      * This should be called by the Score/Project before processing.
      * 
@@ -94,18 +78,6 @@ public class TimeContextManager {
         return context;
     }
     
-    /**
-     * Gets the TimeContext for the current thread, or returns a default if none is set.
-     * 
-     * Use this only when a default context is acceptable (e.g., tests, utilities).
-     * For production code, prefer getContext() which enforces explicit setup.
-     * 
-     * @return the TimeContext for this thread, or default (4/4, 60 BPM) if none set
-     */
-    public static TimeContext getContextOrDefault() {
-        TimeContext context = CONTEXT.get();
-        return context != null ? context : DEFAULT_CONTEXT;
-    }
     
     /**
      * Clears the TimeContext for the current thread.
@@ -113,15 +85,6 @@ public class TimeContextManager {
      */
     public static void clearContext() {
         CONTEXT.remove();
-    }
-    
-    /**
-     * Gets the default TimeContext (4/4, 60 BPM, 44100 Hz).
-     * 
-     * @return the default TimeContext
-     */
-    public static TimeContext getDefaultContext() {
-        return DEFAULT_CONTEXT;
     }
     
     /**

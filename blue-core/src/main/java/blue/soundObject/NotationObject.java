@@ -3,6 +3,8 @@ package blue.soundObject;
 import blue.*;
 import blue.noteProcessor.NoteProcessorChain;
 import blue.soundObject.notation.NotationStaff;
+import blue.time.TimeContext;
+import blue.time.TimeUnit;
 import electric.xml.Element;
 import java.util.Map;
 
@@ -35,8 +37,8 @@ public class NotationObject extends AbstractSoundObject implements
 
     public NotationObject() {
         setName("Notation Object");
-        setSubjectiveDuration(2.0f);
-        setStartTime(0.0f);
+        setSubjectiveDuration(TimeUnit.beats(2.0));
+        setStartTime(TimeUnit.beats(0.0));
         timeBehavior = TimeBehavior.SCALE;
         staff = new NotationStaff();
     }
@@ -61,8 +63,8 @@ public class NotationObject extends AbstractSoundObject implements
     }
 
     @Override
-    public double getObjectiveDuration() {
-        return this.getSubjectiveDuration();
+    public double getObjectiveDuration(TimeContext context) {
+        return this.getSubjectiveDuration().toBeats(context);
     }
 
 //    public BarRenderer getRenderer() {
@@ -133,7 +135,7 @@ public class NotationObject extends AbstractSoundObject implements
     }
 
     @Override
-    public NoteList generateForCSD(CompileData compileData, double startTime, double endTime) {
+    public NoteList generateForCSD(TimeContext context, CompileData compileData, double startTime, double endTime) {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 

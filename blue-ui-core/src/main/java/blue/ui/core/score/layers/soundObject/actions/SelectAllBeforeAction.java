@@ -19,10 +19,15 @@
  */
 package blue.ui.core.score.layers.soundObject.actions;
 
+import blue.components.lines.Line;
+import blue.components.lines.LinePoint;
 import blue.score.ScoreObject;
 import blue.score.TimeState;
 import blue.score.layers.Layer;
 import blue.score.layers.ScoreObjectLayer;
+import blue.time.TimeContext;
+import blue.time.TimeContextManager;
+import blue.time.TimeUnit;
 import blue.ui.core.score.ScoreController;
 import blue.ui.core.score.ScorePath;
 import java.awt.Point;
@@ -79,14 +84,14 @@ public final class SelectAllBeforeAction extends AbstractAction implements
         double pointTime = p.x / timeState.getPixelSecond();
         List<ScoreObject> newSelected = new ArrayList<>();
 
+        TimeContext context = TimeContextManager.getContext();
         List<Layer> allLayers = scorePath.getAllLayers();
 
         for (Layer layer : allLayers) {
             if (layer instanceof ScoreObjectLayer sLayer) {
 
                 for (ScoreObject scoreObject : (ScoreObjectLayer<ScoreObject>)sLayer) {
-                    if (scoreObject.getStartTime() + scoreObject.getSubjectiveDuration()
-                            <= pointTime) {
+                    if (scoreObject.getStartTime().add(context, scoreObject.getSubjectiveDuration()).lte(context, TimeUnit.beats(pointTime))) {
                         newSelected.add(scoreObject);
                     }
                 }

@@ -23,6 +23,7 @@ import blue.noteProcessor.NoteProcessor;
 import blue.noteProcessor.NoteProcessorChain;
 import blue.noteProcessor.NoteProcessorException;
 import blue.soundObject.*;
+import blue.time.TimeContext;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -387,12 +388,14 @@ public class ScoreUtilities {
      * @param pObj
      * @return
      */
-    public static double getProcessingStartTime(PolyObject pObj) {
+    public static double getProcessingStartTime(TimeContext context, PolyObject pObj) {
         List<SoundObject> sObjects = pObj.getSoundObjects(false);
         Collections.sort(sObjects, new Comparator<SoundObject>() {
             @Override
             public int compare(SoundObject s1, SoundObject s2) {
-                return (int) (s1.getStartTime() - s2.getStartTime());
+                double t1 = s1.getStartTime().toBeats(context);
+                double t2 = s2.getStartTime().toBeats(context);
+                return Double.compare(t1, t2);
             }
         });
 
@@ -411,10 +414,11 @@ public class ScoreUtilities {
                 continue;
             }
 
-            if (sObj.getStartTime() < time) {
+            double startTime = sObj.getStartTime().toBeats(context);
+            if (startTime < time) {
                 // nl = sObj.generateNotes();
                 // if (nl != null && nl.size() != 0) {
-                time = sObj.getStartTime();
+                time = startTime;
                 // }
             }
 
@@ -599,12 +603,13 @@ public class ScoreUtilities {
     /**
      * **************************************************************
      */
-    public static double getMaxTime(SoundObject[] sObjects) {
+    public static double getMaxTime(TimeContext context, SoundObject[] sObjects) {
         double max = 0.0f;
 
         for (SoundObject sObject : sObjects) {
-            double val = sObject.getStartTime()
-                    + sObject.getSubjectiveDuration();
+            double start = sObject.getStartTime().toBeats(context);
+            double duration = sObject.getSubjectiveDuration().toBeats(context);
+            double val = start + duration;
             if (val > max) {
                 max = val;
             }
@@ -612,11 +617,13 @@ public class ScoreUtilities {
         return max;
     }
 
-    public static double getMaxTime(List<SoundObject> sObjects) {
+    public static double getMaxTime(TimeContext context, List<SoundObject> sObjects) {
         double max = 0.0f;
 
         for (SoundObject sObj : sObjects) {
-            double val = sObj.getStartTime() + sObj.getSubjectiveDuration();
+            double start = sObj.getStartTime().toBeats(context);
+            double duration = sObj.getSubjectiveDuration().toBeats(context);
+            double val = start + duration;
             if (val > max) {
                 max = val;
             }
@@ -624,7 +631,7 @@ public class ScoreUtilities {
         return max;
     }
 
-    public static double getMaxTimeWithEmptyCheck(List<SoundObject> sObjects) {
+    public static double getMaxTimeWithEmptyCheck(TimeContext context, List<SoundObject> sObjects) {
         double max = 0.0f;
 
         for (SoundObject sObj : sObjects) {
@@ -637,7 +644,9 @@ public class ScoreUtilities {
                 }
             }
 
-            double val = sObj.getStartTime() + sObj.getSubjectiveDuration();
+            double start = sObj.getStartTime().toBeats(context);
+            double duration = sObj.getSubjectiveDuration().toBeats(context);
+            double val = start + duration;
             if (val > max) {
                 max = val;
             }
@@ -646,11 +655,11 @@ public class ScoreUtilities {
         return max;
     }
 
-    public static double getMinTime(SoundObject[] sObjects) {
-        double min = getMaxTime(sObjects);
+    public static double getMinTime(TimeContext context, SoundObject[] sObjects) {
+        double min = getMaxTime(context, sObjects);
 
         for (SoundObject sObject : sObjects) {
-            double val = sObject.getStartTime();
+            double val = sObject.getStartTime().toBeats(context);
             if (val < min) {
                 min = val;
             }
@@ -659,11 +668,11 @@ public class ScoreUtilities {
 
     }
 
-    public static double getMinTime(List<SoundObject> sObjects) {
-        double min = getMaxTime(sObjects);
+    public static double getMinTime(TimeContext context, List<SoundObject> sObjects) {
+        double min = getMaxTime(context, sObjects);
 
         for (SoundObject sObj : sObjects) {
-            double val = sObj.getStartTime();
+            double val = sObj.getStartTime().toBeats(context);
             if (val < min) {
                 min = val;
             }

@@ -24,6 +24,8 @@ import blue.score.layers.Layer;
 import blue.soundObject.SoundObject;
 import blue.score.ScoreObjectEvent;
 import blue.score.ScoreObjectListener;
+import blue.time.TimeContext;
+import blue.time.TimeContextManager;
 import blue.ui.core.score.ScoreObjectView;
 import blue.ui.core.score.ScoreTopComponent;
 import java.awt.BorderLayout;
@@ -68,7 +70,8 @@ public abstract class SoundObjectView extends JComponent implements Comparable<S
         this.sObj = sObj;
         this.timeState = timeState;
 
-        this.setBounds(-1, 0, (int) (sObj.getSubjectiveDuration() * timeState
+        TimeContext context = TimeContextManager.getContext();
+        this.setBounds(-1, 0, (int) (sObj.getSubjectiveDuration().toBeats(context) * timeState
                 .getPixelSecond()), Layer.LAYER_HEIGHT);
         this.setLayout(new BorderLayout());
         this.setDoubleBuffered(true);
@@ -79,10 +82,11 @@ public abstract class SoundObjectView extends JComponent implements Comparable<S
     }
 
     public void updateView(int newY, int newHeight) {
+        TimeContext context = TimeContextManager.getContext();
         this.setLocation(
-                (int) (sObj.getStartTime() * timeState.getPixelSecond()),
+                (int) (sObj.getStartTime().toBeats(context) * timeState.getPixelSecond()),
                 newY);
-        this.setSize((int) (sObj.getSubjectiveDuration() * timeState
+        this.setSize((int) (sObj.getSubjectiveDuration().toBeats(context) * timeState
                 .getPixelSecond()), newHeight);
     }
 

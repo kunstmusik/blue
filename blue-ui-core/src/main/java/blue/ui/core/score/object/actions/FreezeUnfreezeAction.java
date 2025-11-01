@@ -34,6 +34,9 @@ import blue.settings.UtilitySettings;
 import blue.soundObject.FrozenSoundObject;
 import blue.soundObject.PolyObject;
 import blue.soundObject.SoundObject;
+import blue.time.TimeContext;
+import blue.time.TimeContextManager;
+import blue.time.TimeUnit;
 import blue.ui.core.render.DiskRenderManager;
 import blue.ui.core.score.ScoreController;
 import blue.ui.core.score.ScorePath;
@@ -193,9 +196,10 @@ public final class FreezeUnfreezeAction extends AbstractAction
             SoundLayer sLayer = tempPObj.newLayerAt(-1);
 
             SoundObject tempSObj = sObj.deepCopy();
-            tempData.setRenderStartTime(tempSObj.getStartTime());
+            TimeContext context = TimeContextManager.getContext();
+            tempData.setRenderStartTime(tempSObj.getStartTime().toBeats(context));
 
-            double renderEndTime = tempSObj.getStartTime() + tempSObj.getSubjectiveDuration();
+            double renderEndTime = tempSObj.getStartTime().toBeats(context) + tempSObj.getSubjectiveDuration().toBeats(context);
             Mixer m = data.getMixer();
 
             if (m.isEnabled()) {
@@ -214,7 +218,7 @@ public final class FreezeUnfreezeAction extends AbstractAction
 
             try {
                 result = CSDRenderService.getDefault().generateCSD(tempData,
-                        tempSObj.getStartTime(), renderEndTime, false, false);
+                        tempSObj.getStartTime().toBeats(context), renderEndTime, false, false);
                 tempCSD = result.getCsdText();
             } catch (Exception e) {
 //                ExceptionDialog.showExceptionDialog(SwingUtilities.getRoot(this),
@@ -260,7 +264,7 @@ public final class FreezeUnfreezeAction extends AbstractAction
                 double soundFileDuration = SoundFileUtilities.getDurationInSeconds(
                         fullTempFileName);
 
-                fso.setSubjectiveDuration(soundFileDuration);
+                fso.setSubjectiveDuration(TimeUnit.beats(soundFileDuration));
 
                 int numChannels = SoundFileUtilities.getNumberOfChannels(
                         fullTempFileName);

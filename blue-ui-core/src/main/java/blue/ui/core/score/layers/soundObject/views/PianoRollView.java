@@ -24,6 +24,8 @@ import blue.plugin.SoundObjectViewPlugin;
 import blue.soundObject.PianoRoll;
 import blue.soundObject.TimeBehavior;
 import blue.soundObject.pianoRoll.PianoNote;
+import blue.time.TimeContext;
+import blue.time.TimeContextManager;
 import blue.utilities.scales.ScaleLinear;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
@@ -139,6 +141,7 @@ public class PianoRollView extends GenericView {
             }
 
         } else if (pianoRoll.getTimeBehavior() == TimeBehavior.REPEAT) {
+            TimeContext context = TimeContextManager.getContext();
             var duration = pianoRoll.getSubjectiveDuration();
             var repeat = pianoRoll.getRepeatPoint() > 0.0 ? pianoRoll.getRepeatPoint() : cache.notesDuration;
 
@@ -148,7 +151,7 @@ public class PianoRollView extends GenericView {
 
             ScaleLinear xScale = new ScaleLinear(0.0, repeat, 0, windowWidth);
 
-            while (curTime < duration) {
+            while (curTime < duration.toBeats(context)) {
                 for (var note : pianoRoll.getNotes()) {
                     var x = xScale.calc(note.getStart());
 
@@ -170,6 +173,7 @@ public class PianoRollView extends GenericView {
             }
 
         } else if (pianoRoll.getTimeBehavior() == TimeBehavior.REPEAT_CLASSIC) {
+            TimeContext context = TimeContextManager.getContext();
             var duration = pianoRoll.getSubjectiveDuration();
             var repeat = pianoRoll.getRepeatPoint() > 0.0 ? pianoRoll.getRepeatPoint() : cache.notesDuration;
 
@@ -177,7 +181,7 @@ public class PianoRollView extends GenericView {
             var xStart = 0;
             var windowWidth = repeat * pixelSeconds;
 
-            while (curTime + repeat < duration) {
+            while (curTime + repeat < duration.toBeats(context)) {
                 for (var note : pianoRoll.getNotes()) {
                     var x = note.getStart() * pixelSeconds;
 
@@ -196,7 +200,7 @@ public class PianoRollView extends GenericView {
                 xStart += windowWidth;
             }
 
-            var remainingDur = duration - curTime;
+            var remainingDur = duration.toBeats(context) - curTime;
 
             for (var note : pianoRoll.getNotes()) {
 

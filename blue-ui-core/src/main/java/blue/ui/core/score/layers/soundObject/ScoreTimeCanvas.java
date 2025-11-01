@@ -28,6 +28,9 @@ import blue.score.layers.LayerGroupDataEvent;
 import blue.score.layers.LayerGroupListener;
 import blue.soundObject.PolyObject;
 import blue.soundObject.SoundObject;
+import blue.time.TimeContext;
+import blue.time.TimeContextManager;
+import blue.time.TimeUnit;
 import blue.ui.core.score.ScoreObjectView;
 import blue.ui.core.score.layers.LayerGroupPanel;
 import blue.ui.core.score.layers.SelectionMarquee;
@@ -163,8 +166,10 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
         if (obj instanceof SoundObjectView soundObjectView) {
             SoundObject sObj = soundObjectView.getSoundObject();
 
-            double subjectiveDuration = sObj.getSubjectiveDuration();
-            double startTime = sObj.getStartTime();
+            TimeContext context = TimeContextManager.getContext();
+            
+            double subjectiveDuration = sObj.getSubjectiveDuration().toBeats(context);
+            double startTime = sObj.getStartTime().toBeats(context);
 
             Object[] args = {sObj.getName(),
                 ObjectUtilities.getShortClassName(sObj), startTime,
@@ -299,7 +304,9 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
             return;
         }
 
-        int tempTime = (int) (getPolyObject().getMaxTime() / 60) + 2;
+        TimeContext context = TimeContextManager.getContext();
+        
+        int tempTime = (int) (getPolyObject().getMaxTime(context) / 60) + 2;
         int height = getPolyObject().getTotalHeight();
 
         int width = (int)(tempTime * timeState.getPixelSecond() * 60);
@@ -337,17 +344,18 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
     }
 
     private void addSoundObjectView(int soundLayerIndex, SoundObject sObj) {
-
+        TimeContext context = TimeContextManager.getContext();
+        
         var factory = SoundObjectViewFactory.getInstance();
         SoundObjectView temp = factory.createView(sObj, timeState);
 
         temp.addComponentListener(sObjViewListener);
         sObjPanel.add(temp, 0);
         temp.setLocation(
-                (int) (sObj.getStartTime() * timeState.getPixelSecond()),
+                (int) (sObj.getStartTime().toBeats(context) * timeState.getPixelSecond()),
                 getPolyObject().getYForLayerNum(soundLayerIndex));
         temp.setSize(
-                (int) (sObj.getSubjectiveDuration() * timeState.getPixelSecond()),
+                (int) (sObj.getSubjectiveDuration().toBeats(context) * timeState.getPixelSecond()),
                 getPolyObject().getSoundLayerHeight(soundLayerIndex));
 
         // add to map of soundObjects and views

@@ -33,6 +33,8 @@ import blue.soundObject.NoteList;
 import blue.soundObject.Sound;
 import blue.soundObject.SoundObject;
 import blue.soundObject.editor.sound.AutomationPanel;
+import blue.time.TimeContext;
+import blue.time.TimeContextManager;
 import blue.ui.core.orchestra.editor.BlueSynthBuilderEditor;
 import blue.ui.nbutilities.MimeTypeEditorComponent;
 import java.awt.BorderLayout;
@@ -137,7 +139,8 @@ public class SoundEditor extends ScoreObjectEditor {
         NoteList notes = null;
 
         try {
-            notes = ((SoundObject) this.sObj).generateForCSD(new CompileData(new Arrangement(), new Tables()), 0.0f, -1.0f);
+            TimeContext context = TimeContextManager.getContext();
+            notes = ((SoundObject) this.sObj).generateForCSD(context, new CompileData(new Arrangement(), new Tables()), 0.0f, -1.0f);
         } catch (Exception e) {
             ExceptionDialog.showExceptionDialog(SwingUtilities.getRoot(this), e);
         }

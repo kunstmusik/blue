@@ -20,6 +20,9 @@
 package blue.ui.core.score.object.actions;
 
 import blue.score.ScoreObject;
+import blue.time.TimeContext;
+import blue.time.TimeContextManager;
+import blue.time.TimeUnit;
 import blue.ui.core.score.ScoreController;
 import blue.ui.core.score.undo.MoveScoreObjectsEdit;
 import blue.undo.BlueUndoManager;
@@ -65,12 +68,14 @@ public final class ReverseAction extends AbstractAction
             return;
         }
 
+        TimeContext context = TimeContextManager.getContext();
+        
         double start = Double.MAX_VALUE;
         double end = Double.MIN_VALUE;
 
         for (ScoreObject scoreObject : scoreObjects) {
-            double tempStart = scoreObject.getStartTime();
-            double tempEnd = tempStart + scoreObject.getSubjectiveDuration();
+            double tempStart = scoreObject.getStartTime().toBeats(context);
+            double tempEnd = tempStart + scoreObject.getSubjectiveDuration().toBeats(context);
 
             if (tempStart < start) {
                 start = tempStart;
@@ -84,20 +89,20 @@ public final class ReverseAction extends AbstractAction
         int len = scoreObjects.size();
         ScoreObject[] objects = scoreObjects.toArray(
                 new ScoreObject[scoreObjects.size()]);
-        double[] startTimes = new double[len];
-        double[] endTimes = new double[len];
+        TimeUnit[] startTimes = new TimeUnit[len];
+        TimeUnit[] endTimes = new TimeUnit[len];
         
         for (int i = 0; i < len; i++) {
             ScoreObject scoreObj = objects[i];
-            double tempStart = scoreObj.getStartTime();
-            double tempEnd = tempStart + scoreObj.getSubjectiveDuration();
+            double tempStart = scoreObj.getStartTime().toBeats(context);
+            double tempEnd = tempStart + scoreObj.getSubjectiveDuration().toBeats(context);
 
             double newStart = start + (end - tempEnd);
 
-            scoreObj.setStartTime(newStart);
+            scoreObj.setStartTime(TimeUnit.beats(newStart));
 
-            startTimes[i] = tempStart;
-            endTimes[i] = newStart;
+            startTimes[i] = TimeUnit.beats(tempStart);
+            endTimes[i] = TimeUnit.beats(newStart);
         }
 
         BlueUndoManager.setUndoManager("score");

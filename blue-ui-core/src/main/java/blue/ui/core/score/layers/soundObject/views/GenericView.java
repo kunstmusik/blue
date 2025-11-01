@@ -23,6 +23,8 @@ import blue.plugin.SoundObjectViewPlugin;
 import blue.score.layers.Layer;
 import blue.soundObject.GenericViewable;
 import blue.soundObject.TimeBehavior;
+import blue.time.TimeContext;
+import blue.time.TimeContextManager;
 import blue.ui.utilities.BlueGradientFactory;
 import java.awt.AlphaComposite;
 import java.awt.Color;
@@ -101,8 +103,9 @@ public class GenericView extends SoundObjectView {
         if ((tb == TimeBehavior.REPEAT_CLASSIC || tb == TimeBehavior.REPEAT)
                 && repeatPoint > 0.0f) {
 
+            TimeContext context = TimeContextManager.getContext();
             double lineTime = repeatPoint;
-            double dur = sObj.getSubjectiveDuration();
+            double dur = sObj.getSubjectiveDuration().toBeats(context);
 
             int[] x = new int[3];
             int[] y = new int[3];

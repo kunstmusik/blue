@@ -12,11 +12,11 @@ import blue.components.lines.LineList;
 import blue.components.lines.LinePoint;
 import blue.noteProcessor.NoteProcessorChain;
 import blue.orchestra.GenericInstrument;
+import blue.time.TimeContext;
 import blue.utility.NumberUtilities;
 import blue.utility.ScoreUtilities;
 import electric.xml.Element;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 
 /**
@@ -52,12 +52,12 @@ public abstract class AbstractLineObject extends AbstractSoundObject {
 
     /* RENDER TO CSD FUNCTIONS */
 
-    public NoteList generateNotes(Integer[] instrLineArray, double renderStart, double renderEnd)
+    public NoteList generateNotes(TimeContext context, Integer[] instrLineArray, double renderStart, double renderEnd)
             throws SoundObjectException {
 
         NoteList notes = new NoteList();
 
-        final double subjectiveDuration = getSubjectiveDuration();
+        final double subjectiveDuration = getSubjectiveDuration().toBeats(context);
         double newDur = subjectiveDuration;
 
         if (renderEnd > 0 && renderEnd < subjectiveDuration) {
@@ -93,7 +93,8 @@ public abstract class AbstractLineObject extends AbstractSoundObject {
             buffer.delete(0, buffer.length());
         }
 
-        ScoreUtilities.setScoreStart(notes, getStartTime());
+        double startTime = getStartTime().toBeats(context);
+        ScoreUtilities.setScoreStart(notes, startTime);
 
         return notes;
     }
@@ -220,8 +221,8 @@ public abstract class AbstractLineObject extends AbstractSoundObject {
     /* GENERIC SOUND OBJECT METHODS */
 
     @Override
-    public double getObjectiveDuration() {
-        return getSubjectiveDuration();
+    public double getObjectiveDuration(TimeContext context) {
+        return getSubjectiveDuration().toBeats(context);
     }
 
     @Override
@@ -265,7 +266,7 @@ public abstract class AbstractLineObject extends AbstractSoundObject {
     }
 
     @Override
-    public NoteList generateForCSD(CompileData compileData, double startTime, double endTime) {
+    public NoteList generateForCSD(TimeContext context, CompileData compileData, double startTime, double endTime) {
 
         Integer[] instrLineArray = new Integer[lines.size() * 2];
         HashMap<String, Integer> ftableNumMap = new HashMap<>();
@@ -274,7 +275,7 @@ public abstract class AbstractLineObject extends AbstractSoundObject {
         generateInstruments(compileData, instrLineArray, ftableNumMap);
 
         try {
-            return generateNotes(instrLineArray, startTime, endTime);
+            return generateNotes(context, instrLineArray, startTime, endTime);
         } catch (SoundObjectException ex) {
             throw new RuntimeException(ex);
         }

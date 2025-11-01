@@ -30,6 +30,7 @@ import blue.score.tempo.Tempo;
 import blue.soundObject.NoteList;
 import blue.soundObject.PolyObject;
 import blue.soundObject.TimeBehavior;
+import blue.time.TimeContext;
 import blue.util.ObservableArrayList;
 import blue.utility.ScoreUtilities;
 import electric.xml.Element;
@@ -157,13 +158,13 @@ public class Score extends ObservableArrayList<LayerGroup<? extends Layer>> {
         return score;
     }
 
-    public void processOnLoad() {
+    public void processOnLoad(TimeContext context) {
         for (LayerGroup layerGroup : this) {
-            layerGroup.onLoadComplete();
+            layerGroup.onLoadComplete(context);
         }
     }
 
-    public NoteList generateForCSD(CompileData compileData, double startTime, double endTime) throws ScoreGenerationException {
+    public NoteList generateForCSD(TimeContext context, CompileData compileData, double startTime, double endTime) throws ScoreGenerationException {
         NoteList noteList = new NoteList();
 
         boolean soloFound = false;
@@ -176,7 +177,7 @@ public class Score extends ObservableArrayList<LayerGroup<? extends Layer>> {
         }
 
         for (LayerGroup layerGroup : this) {
-            NoteList nl = layerGroup.generateForCSD(compileData, startTime,
+            NoteList nl = layerGroup.generateForCSD(context, compileData, startTime,
                     endTime, soloFound);
             noteList.merge(nl);
         }

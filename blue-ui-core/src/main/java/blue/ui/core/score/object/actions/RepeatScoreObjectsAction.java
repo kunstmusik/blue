@@ -21,6 +21,9 @@ package blue.ui.core.score.object.actions;
 
 import blue.score.ScoreObject;
 import blue.score.layers.ScoreObjectLayer;
+import blue.time.TimeContext;
+import blue.time.TimeContextManager;
+import blue.time.TimeUnit;
 import blue.ui.core.score.ScoreController;
 import blue.ui.core.score.ScorePath;
 import blue.ui.core.score.undo.AddScoreObjectEdit;
@@ -84,16 +87,18 @@ public final class RepeatScoreObjectsAction implements ActionListener {
             ScorePath path = ScoreController.getInstance().getScorePath();
             CompoundAppendable compoundEdit = new CompoundAppendable();
 
+            TimeContext context = TimeContextManager.getContext();
+            
             for (ScoreObject sObj : scoreObjects) {
-                double start = sObj.getStartTime();
+                double start = sObj.getStartTime().toBeats(context);
                 ScoreObjectLayer layer = (ScoreObjectLayer) path.getLayerForScoreObject(
                         sObj);
                 for (int j = 0; j < count; j++) {
                     ScoreObject temp = sObj.deepCopy();
 
-                    start += sObj.getSubjectiveDuration();
+                    start += sObj.getSubjectiveDuration().toBeats(context);
 
-                    temp.setStartTime(start);
+                    temp.setStartTime(TimeUnit.beats(start));
 
                     if (layer == null) {
                         JOptionPane.showMessageDialog(

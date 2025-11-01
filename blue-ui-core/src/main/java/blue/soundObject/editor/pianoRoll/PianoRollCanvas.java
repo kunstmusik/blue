@@ -26,6 +26,8 @@ import blue.score.ScoreObjectListener;
 import blue.soundObject.PianoRoll;
 import blue.soundObject.TimeBehavior;
 import blue.soundObject.editor.pianoRoll.undo.RemoveNotesEdit;
+import blue.time.TimeContext;
+import blue.time.TimeContextManager;
 import blue.soundObject.pianoRoll.Field;
 import blue.soundObject.pianoRoll.FieldDef;
 import blue.soundObject.pianoRoll.FieldType;
@@ -501,6 +503,7 @@ public class PianoRollCanvas extends JLayeredPane implements Scrollable,
         // Draw boundary area
         g.setColor(new Color(0, 0, 0, 128));
 
+        TimeContext context = TimeContextManager.getContext();
         int end;
         var notes = p.getNotes();
         final var timeBehavior = p.getTimeBehavior();
@@ -518,7 +521,7 @@ public class PianoRollCanvas extends JLayeredPane implements Scrollable,
             end = (int) (p.getRepeatPoint() * pixelSecond);
 
         } else {
-            end = (int) (p.getSubjectiveDuration() * pixelSecond);
+            end = (int) (p.getSubjectiveDuration().toBeats(context) * pixelSecond);
         }
         g.fillRect(end, 0, w - end, height);
     }

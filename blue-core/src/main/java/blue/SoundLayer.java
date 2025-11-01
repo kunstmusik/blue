@@ -36,6 +36,7 @@ import blue.score.layers.AutomatableLayer;
 import blue.score.layers.ScoreObjectLayer;
 import blue.soundObject.NoteList;
 import blue.soundObject.SoundObject;
+import blue.time.TimeContext;
 import blue.utility.ObjectUtilities;
 import blue.utility.ScoreUtilities;
 import electric.xml.Element;
@@ -51,27 +52,22 @@ public final class SoundLayer extends ArrayList<SoundObject>
 
     private transient Vector<SoundLayerListener> layerListeners = null;
 
-    private static final Comparator sObjComparator = new Comparator() {
+    private static Comparator<SoundObject> createComparator(TimeContext context) {
+        return new Comparator<SoundObject>() {
+            @Override
+            public int compare(SoundObject a, SoundObject b) {
+                double aStart = a.getStartTime().toBeats(context);
+                double bStart = b.getStartTime().toBeats(context);
 
-        @Override
-        public int compare(Object arg0, Object arg1) {
-            SoundObject a = (SoundObject) arg0;
-            SoundObject b = (SoundObject) arg1;
-
-            double aStart = a.getStartTime();
-            double bStart = b.getStartTime();
-
-            if (aStart > bStart) {
-                return 1;
-            } else if (aStart < bStart) {
-                return -1;
+                if (aStart > bStart) {
+                    return 1;
+                } else if (aStart < bStart) {
+                    return -1;
+                }
+                return 0;
             }
-
-            return 0;
-
-        }
-
-    };
+        };
+    }
 
     private final ParameterIdList automationParameters;
 
@@ -159,8 +155,8 @@ public final class SoundLayer extends ArrayList<SoundObject>
      * called by PolyObject::getMaxTime()
      */
 
-    public double getMaxTime() {
-        return ScoreUtilities.getMaxTime(this);
+    public double getMaxTime(TimeContext context) {
+        return ScoreUtilities.getMaxTime(context, this.toArray(new SoundObject[0]));
     }
 
     public static SoundLayer loadFromXML(Element data,
@@ -352,18 +348,18 @@ public final class SoundLayer extends ArrayList<SoundObject>
      * SoundLayer if possible, if not possible, will adjust to render everything
      * and filter on top layer.
      */
-    public NoteList generateForCSD(CompileData compileData, double startTime, 
+    public NoteList generateForCSD(TimeContext context, CompileData compileData, double startTime, 
             double endTime) throws SoundLayerException {
         
         NoteList notes = new NoteList();
         
-        Collections.sort(this, sObjComparator);
+        Collections.sort(this, createComparator(context));
 
         for (SoundObject sObj : this) {
             try {
             
-                double sObjStart = sObj.getStartTime();
-                double sObjDur = sObj.getSubjectiveDuration();
+                double sObjStart = sObj.getStartTime().toBeats(context);
+                double sObjDur = sObj.getSubjectiveDuration().toBeats(context);
                 double sObjEnd = sObjStart + sObjDur;
 
                 if (sObjEnd > startTime) {
@@ -374,7 +370,7 @@ public final class SoundLayer extends ArrayList<SoundObject>
                             adjustedStart = 0.0f;
                         }
 
-                        notes.merge((sObj).generateForCSD(compileData, adjustedStart, -1.0f));
+                        notes.merge((sObj).generateForCSD(context, compileData, adjustedStart, -1.0f));
                     } else if (sObjStart < endTime) {
 
                         double adjustedStart = startTime - sObjStart;
@@ -388,7 +384,7 @@ public final class SoundLayer extends ArrayList<SoundObject>
                             adjustedEnd = -1.0f;
                         }
 
-                        notes.merge((sObj).generateForCSD(compileData, adjustedStart,
+                        notes.merge((sObj).generateForCSD(context, compileData, adjustedStart,
                                 adjustedEnd));
                     }
                 }

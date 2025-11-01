@@ -31,9 +31,11 @@ import blue.score.ScoreObject;
 import blue.soundObject.NoteList;
 import blue.soundObject.SoundObject;
 import blue.soundObject.TimeBehavior;
+import blue.time.TimeContext;
+import blue.time.TimeContextManager;
+import blue.time.TimeUnit;
 import blue.ui.core.clipboard.BlueClipboardUtils;
 import blue.ui.core.render.RealtimeRenderManager;
-import blue.ui.core.score.ScoreController;
 import blue.ui.core.score.ScoreObjectCopy;
 import blue.ui.core.score.layers.SoundObjectProvider;
 import blue.ui.nbutilities.MimeTypeEditorComponent;
@@ -413,7 +415,7 @@ public final class BlueLiveTopComponent extends TopComponent
                 }
 
                 SoundObject copy = sObj.deepCopy();
-                copy.setStartTime(0.0f);
+                copy.setStartTime(TimeUnit.beats(0.0f));
 
                 addSoundObject(column, row, copy);
             }
@@ -513,7 +515,8 @@ public final class BlueLiveTopComponent extends TopComponent
                 sObj.setTimeBehavior(TimeBehavior.NONE);
             }
 
-            nl = sObj.generateForCSD(compileData, 0.0f, -1.0f);
+            TimeContext context = TimeContextManager.getContext();
+            nl = sObj.generateForCSD(context, compileData, 0.0f, -1.0f);
         } catch (Exception e) {
             Exceptions.printStackTrace(e);
         }
@@ -999,7 +1002,8 @@ public final class BlueLiveTopComponent extends TopComponent
                         sObj.setTimeBehavior(TimeBehavior.NONE);
                     }
 
-                    nl.addAll(sObj.generateForCSD(compileData, 0.0f, -1.0f));
+                    TimeContext context = TimeContextManager.getContext();
+                    nl.addAll(sObj.generateForCSD(context, compileData, 0.0f, -1.0f));
                 }
             } catch (Exception e) {
                 Exceptions.printStackTrace(e);
@@ -1357,7 +1361,7 @@ public final class BlueLiveTopComponent extends TopComponent
                 }
 
                 SoundObject copy = sObj.deepCopy();
-                copy.setStartTime(0.0f);
+                copy.setStartTime(TimeUnit.beats(0.0f));
                 addSoundObject(mouseColumn, mouseRow, copy);
             });
 

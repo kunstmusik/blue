@@ -24,6 +24,7 @@ import blue.noteProcessor.NoteProcessorChain;
 import blue.plugin.SoundObjectPlugin;
 import blue.score.ScoreObjectEvent;
 import blue.soundObject.jmask.Field;
+import blue.time.TimeContext;
 import blue.utility.ScoreUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
@@ -61,7 +62,7 @@ public class JMask extends AbstractSoundObject {
         seed = jmask.seed;
     }
 
-    public NoteList generateNotes(double renderStart, double renderEnd) throws SoundObjectException {
+    public NoteList generateNotes(TimeContext context, double renderStart, double renderEnd) throws SoundObjectException {
 
         Field temp = new Field(field);
 
@@ -69,17 +70,19 @@ public class JMask extends AbstractSoundObject {
 
         NoteList nl;
 
+        double duration = this.getSubjectiveDuration().toBeats(context);
+        
         try {
-            nl = temp.generateNotes(this.getSubjectiveDuration(), rnd);
+            nl = temp.generateNotes(duration, rnd);
             nl = ScoreUtilities.applyNoteProcessorChain(nl, this.npc);
         } catch (Exception e) {
             throw new SoundObjectException(this, e);
         }
 
-        ScoreUtilities.applyTimeBehavior(nl, this.getTimeBehavior(), this
-                .getSubjectiveDuration(), this.getRepeatPoint());
-
-        ScoreUtilities.setScoreStart(nl, getStartTime());
+        double startTime = getStartTime().toBeats(context);
+        
+        ScoreUtilities.applyTimeBehavior(nl, this.getTimeBehavior(), duration, this.getRepeatPoint());
+        ScoreUtilities.setScoreStart(nl, startTime);
 
         return nl;
     }
@@ -90,8 +93,8 @@ public class JMask extends AbstractSoundObject {
     }
 
     @Override
-    public double getObjectiveDuration() {
-        return getSubjectiveDuration();
+    public double getObjectiveDuration(TimeContext context) {
+        return getSubjectiveDuration().toBeats(context);
     }
 
 //    public BarRenderer getRenderer() {
@@ -202,10 +205,10 @@ public class JMask extends AbstractSoundObject {
     }
 
     @Override
-    public NoteList generateForCSD(CompileData compileData, double startTime,
+    public NoteList generateForCSD(TimeContext context, CompileData compileData, double startTime,
             double endTime) throws SoundObjectException {
 
-        NoteList nl = generateNotes(startTime, endTime);
+        NoteList nl = generateNotes(context, startTime, endTime);
         return nl;
 
     }

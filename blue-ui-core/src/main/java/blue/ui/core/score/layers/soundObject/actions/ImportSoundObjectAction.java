@@ -24,6 +24,7 @@ import blue.score.TimeState;
 import blue.score.layers.Layer;
 import blue.score.layers.ScoreObjectLayer;
 import blue.soundObject.SoundObject;
+import blue.time.TimeUnit;
 import blue.ui.core.score.ScorePath;
 import blue.ui.core.score.layers.LayerGroupPanel;
 import blue.ui.core.score.layers.soundObject.ScoreTimeCanvas;
@@ -111,7 +112,7 @@ public final class ImportSoundObjectAction extends AbstractAction
                     }
 
                     double startTime = start / timeState.getPixelSecond();
-                    tempSobj.setStartTime(startTime);
+                    tempSobj.setStartTime(TimeUnit.beats(startTime));
 
                     ((SoundLayer) layer).add(tempSobj);
 
