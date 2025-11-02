@@ -26,7 +26,6 @@ import java.util.*;
 import javafx.beans.property.SimpleListProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.transformation.SortedList;
-import org.apache.commons.lang3.text.StrBuilder;
 
 public class ParameterList extends SimpleListProperty<Parameter> {
 
@@ -119,7 +118,7 @@ public class ParameterList extends SimpleListProperty<Parameter> {
 
     @Override
     public String toString() {
-        StrBuilder buffer = new StrBuilder();
+        StringBuilder buffer = new StringBuilder();
 
         for (Parameter param : this) {
             buffer.append(param.toString()).append("\n");

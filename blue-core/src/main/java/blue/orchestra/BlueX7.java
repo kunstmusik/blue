@@ -13,7 +13,6 @@ import electric.xml.Elements;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import org.apache.commons.lang3.text.StrBuilder;
 
 /**
  * <p>
@@ -127,7 +126,7 @@ public class BlueX7 extends AbstractInstrument {
 
     @Override
     public void generateFTables(Tables tables) {
-        StrBuilder buffer = new StrBuilder();
+        StringBuilder buffer = new StringBuilder();
 
         Object obj = tables.getCompilationVariable(BLUEX7_HAS_BEEN_COMPILED);
 
@@ -275,7 +274,7 @@ public class BlueX7 extends AbstractInstrument {
     }
 
     private String generateFTableForOperator(Operator op, int tableNum) {
-        StrBuilder buffer = new StrBuilder();
+        StringBuilder buffer = new StringBuilder();
 
         buffer.append("f ").append(tableNum).append(" 0 32 -2 ");
         buffer.append(Integer.toString(op.outputLevel)).append(" ");
@@ -304,7 +303,7 @@ public class BlueX7 extends AbstractInstrument {
         String algNum = this.algorithmCommon.algorithm < 10 ? "0"
                 + this.algorithmCommon.algorithm : Integer
                 .toString(this.algorithmCommon.algorithm);
-        StrBuilder buffer = new StrBuilder();
+        StringBuilder buffer = new StringBuilder();
 
         try {
             try (BufferedReader br = new BufferedReader(new InputStreamReader(

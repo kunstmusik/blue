@@ -36,7 +36,6 @@ import javax.swing.event.ChangeListener;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.TableModel;
-import org.apache.commons.lang3.text.StrBuilder;
 
 /**
  * This Line class is used in a number of places in blue. For situations like
@@ -795,7 +794,7 @@ public class Line implements TableModel, ChangeListener, Iterable<LinePoint> {
             return null;
         }
 
-        StrBuilder builder = new StrBuilder();
+        StringBuilder builder = new StringBuilder();
 
         for (LinePoint point : points) {
             builder.append(point.getX()).append("\t").append(point.getY())

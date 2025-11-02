@@ -34,7 +34,6 @@ import java.util.regex.Pattern;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.TableModel;
-import org.apache.commons.lang3.text.StrBuilder;
 
 /**
  * @author steven
@@ -56,7 +55,7 @@ public class Arrangement implements TableModel {
 
     private transient HashMap compilationVariables;
 
-    private transient StrBuilder preGenerationCache = null;
+    private transient StringBuilder preGenerationCache = null;
 
     private transient ArrayList<InstrumentAssignment> preGenList = new ArrayList<>();
 
@@ -321,7 +320,7 @@ public class Arrangement implements TableModel {
     }
 
     public String generateGlobalOrc(CompileData data) {
-        StrBuilder retVal = new StrBuilder();
+        StringBuilder retVal = new StringBuilder();
 
         ArrayList<Instrument> instruments = new ArrayList<>();
 
@@ -357,7 +356,7 @@ public class Arrangement implements TableModel {
     }
 
     public String generateGlobalSco(CompileData data) {
-        StrBuilder retVal = new StrBuilder();
+        StringBuilder retVal = new StringBuilder();
 
         for (InstrumentAssignment ia : arrangement) {
             if (!ia.enabled) {
@@ -399,7 +398,7 @@ public class Arrangement implements TableModel {
     public void preGenerateOrchestra(CompileData data, Mixer mixer, int nchnls,
             ArrayList<Instrument> alwaysOnInstruments) {
         if (preGenerationCache == null) {
-            preGenerationCache = new StrBuilder();
+            preGenerationCache = new StringBuilder();
             preGenList = new ArrayList<>();
         }
 
@@ -423,10 +422,10 @@ public class Arrangement implements TableModel {
     }
 
     public String generateOrchestra(CompileData data, Mixer mixer, int nchnls) {
-        StrBuilder buffer;
+        StringBuilder buffer;
 
         if (preGenerationCache == null) {
-            buffer = new StrBuilder();
+            buffer = new StringBuilder();
         } else {
             buffer = preGenerationCache;
         }
@@ -451,7 +450,7 @@ public class Arrangement implements TableModel {
         return retVal;
     }
 
-    private void appendInstrumentText(CompileData data, StrBuilder buffer,
+    private void appendInstrumentText(CompileData data, StringBuilder buffer,
             InstrumentAssignment ia, Mixer mixer, int nchnls) {
         Instrument instr = ia.instr;
 
@@ -574,7 +573,7 @@ public class Arrangement implements TableModel {
             return input;
         }
 
-        StrBuilder buffer = new StrBuilder();
+        StringBuilder buffer = new StringBuilder();
         String[] lines = NEW_LINES.split(input);
 
         boolean blueMixerInFound = false;

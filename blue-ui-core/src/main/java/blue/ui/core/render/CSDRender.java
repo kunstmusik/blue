@@ -52,7 +52,6 @@ import java.util.StringTokenizer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.text.StrBuilder;
 import org.openide.util.lookup.ServiceProvider;
 
 @ServiceProvider(service = CSDRenderService.class)
@@ -172,7 +171,7 @@ public class CSDRender extends CSDRenderService {
 
         String ftables = tables.getTables();
 
-        StrBuilder score = new StrBuilder();
+        StringBuilder score = new StringBuilder();
         score.append("<CsoundSynthesizer>\n\n");
 
         appendCsInstruments(compileData, data, udos, arrangement, globalOrcSco, score,
@@ -414,7 +413,7 @@ public class CSDRender extends CSDRenderService {
             globalOrcSco.appendGlobalOrc(tempGlobalOrc);
         }
 
-        StrBuilder csd = new StrBuilder();
+        StringBuilder csd = new StringBuilder();
         appendProjectInfo(data, csd);
 
         csd.append("<CsoundSynthesizer>\n\n");
@@ -486,7 +485,7 @@ public class CSDRender extends CSDRenderService {
         }
     }
 
-    private void createParamNote(StrBuilder paramScore, int instrId,
+    private void createParamNote(StringBuilder paramScore, int instrId,
             double startTime, double dur, double startVal, double endVal) {
         paramScore.append("i");
         paramScore.append(instrId).append("\t");
@@ -561,7 +560,7 @@ public class CSDRender extends CSDRenderService {
 
     protected Instrument createAllNotesOffInstrument(String[] instrIds) {
         GenericInstrument instr = new GenericInstrument();
-        StrBuilder buffer = new StrBuilder();
+        StringBuilder buffer = new StringBuilder();
 
         buffer.append("koff init 0\n"
                 + "if (koff == 0) then\n");
@@ -592,7 +591,7 @@ public class CSDRender extends CSDRenderService {
         return instr;
     }
 
-    private void appendProjectInfo(BlueData data, StrBuilder score) {
+    private void appendProjectInfo(BlueData data, StringBuilder score) {
         ProjectProperties props = data.getProjectProperties();
         String notes = props.notes.replaceAll("\n", "\n; ");
 
@@ -607,7 +606,7 @@ public class CSDRender extends CSDRenderService {
         score.append(";\n\n");
     }
 
-    private void appendCsScore(StrBuilder score, String globalSco, String ftables,
+    private void appendCsScore(StringBuilder score, String globalSco, String ftables,
             NoteList generatedNotes, double totalDur, boolean useEStatement) {
 
         score.append("<CsScore>\n\n");
@@ -629,7 +628,7 @@ public class CSDRender extends CSDRenderService {
 
     private void appendCsInstruments(CompileData compileData, BlueData data,
             OpcodeList udos, Arrangement arrangement, GlobalOrcSco globalOrcSco,
-            StrBuilder score, Mixer mixer, boolean isRealTime) {
+            StringBuilder score, Mixer mixer, boolean isRealTime) {
 
         ProjectProperties projProps = data.getProjectProperties();
 
@@ -719,7 +718,7 @@ public class CSDRender extends CSDRenderService {
         GenericInstrument instr = new GenericInstrument();
         instr.setName("Param: " + param.getName());
 
-        StrBuilder buffer = new StrBuilder();
+        StringBuilder buffer = new StringBuilder();
         String compilationVarName = param.getCompilationVarName();
 
         if (param.getResolution().doubleValue() > 0.0f) {
@@ -739,7 +738,7 @@ public class CSDRender extends CSDRenderService {
     }
 
     private void appendParameterScore(Parameter param, int instrId,
-            StrBuilder paramScore, double renderStart, double renderEnd) {
+            StringBuilder paramScore, double renderStart, double renderEnd) {
 
         Line line = param.getLine();
 
@@ -940,7 +939,7 @@ public class CSDRender extends CSDRenderService {
             return "t 0 " + line.getLinePoint(line.size() - 1).getY();
         }
 
-        StrBuilder buffer = new StrBuilder();
+        StringBuilder buffer = new StringBuilder();
         buffer.append("t 0 ").append(line.getValue(renderStart));
 
         for (int i = 0; i < line.size(); i++) {
@@ -980,8 +979,8 @@ public class CSDRender extends CSDRenderService {
 
         Object[] varNum = new Object[1];
 
-        StrBuilder initStatements = new StrBuilder();
-        StrBuilder paramScore = new StrBuilder();
+        StringBuilder initStatements = new StringBuilder();
+        StringBuilder paramScore = new StringBuilder();
 
         boolean useAPI = isRealTime && _usingAPI;
 
@@ -1052,8 +1051,8 @@ public class CSDRender extends CSDRenderService {
 
         Object[] varNum = new Object[1];
 
-        StrBuilder initStatements = new StrBuilder();
-        StrBuilder paramScore = new StrBuilder();
+        StringBuilder initStatements = new StringBuilder();
+        StringBuilder paramScore = new StringBuilder();
 
         for (StringChannel strChannel : stringChannels) {
             String varName = strChannel.getChannelName();
@@ -1100,7 +1099,7 @@ public class CSDRender extends CSDRenderService {
     }
 
     protected TempoMap getTempoMap(Tempo tempo) {
-        StrBuilder buffer = new StrBuilder();
+        StringBuilder buffer = new StringBuilder();
         Line line = tempo.getLine();
         for (int i = 0; i < line.size(); i++) {
             LinePoint lp = line.getLinePoint(i);

@@ -32,7 +32,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.apache.commons.lang3.text.StrBuilder;
 
 /**
  * TODO - need to create dependency graph, then do depth first crawl to create
@@ -264,7 +263,7 @@ public class Mixer {
     }
 
     public String getInitStatements(CompileData data, int nchnls) {
-        StrBuilder buffer = new StrBuilder();
+        StringBuilder buffer = new StringBuilder();
 
         List<Channel> allChannels = getAllSourceChannels();
 
@@ -293,7 +292,7 @@ public class Mixer {
     }
 
     public String getClearStatements(CompileData data, int nchnls) {
-        StrBuilder buffer = new StrBuilder();
+        StringBuilder buffer = new StringBuilder();
 
         List<Channel> allChannels = getAllSourceChannels();
         for (Channel c : allChannels) {
@@ -323,7 +322,7 @@ public class Mixer {
         GenericInstrument instr = new GenericInstrument();
         instr.setName("Blue Mixer Instrument");
 
-        StrBuilder buffer = new StrBuilder();
+        StringBuilder buffer = new StringBuilder();
 
         MixerNode node = MixerNode.getMixerGraph(this);
 

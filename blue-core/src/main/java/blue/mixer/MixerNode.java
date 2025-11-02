@@ -7,7 +7,6 @@ import blue.udo.UserDefinedOpcode;
 import blue.utility.MusicFunctions;
 import blue.utility.NumberUtilities;
 import java.util.*;
-import org.apache.commons.lang3.text.StrBuilder;
 
 /**
  * A Mixer's channels and subchannels are translated to a MixerNode graph that
@@ -51,7 +50,7 @@ class MixerNode {
     }
 
     private String str(int depth) {
-        StrBuilder retVal = new StrBuilder();
+        StringBuilder retVal = new StringBuilder();
 
         for (int i = 0; i < depth; i++) {
             retVal.append(" ");
@@ -92,7 +91,7 @@ class MixerNode {
     public static String getMixerCode(CompileData data, Mixer mixer, OpcodeList udos,
             EffectManager manager, MixerNode mixerNode, int nchnls) {
 
-        StrBuilder buffer = new StrBuilder();
+        StringBuilder buffer = new StringBuilder();
 
         List<MixerNode> nodes = new ArrayList<>();
         flattenToList(mixerNode, nodes);
@@ -310,7 +309,7 @@ class MixerNode {
     }
 
     private static void applyFader(CompileData data, Mixer mixer, MixerNode node, int nchnls,
-            StrBuilder buffer) {
+            StringBuilder buffer) {
         String modifier = null;
 
         Parameter levelParam = node.channel.getLevelParameter();
@@ -350,7 +349,7 @@ class MixerNode {
     }
 
     private static void applyEffects(EffectsChain chain, OpcodeList udos,
-            EffectManager manager, String signalChannels, StrBuilder buffer,
+            EffectManager manager, String signalChannels, StringBuilder buffer,
             final int lastSendIndex, Set<String> inputSignalCache) {
 
         int lastIndex = lastSendIndex;
