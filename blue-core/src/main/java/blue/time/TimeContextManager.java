@@ -20,11 +20,12 @@
 package blue.time;
 
 /**
- * Thread-local manager for TimeContext.
- * 
+ * Singleton manager for TimeContext.
+ *
  * Provides access to TimeContext without requiring it to be stored in every object.
- * Each thread maintains its own TimeContext, making this safe for concurrent operations.
- * 
+ * Uses a volatile singleton pattern to ensure thread safety while avoiding threading
+ * issues in UI painting operations.
+ *
  * Usage:
  * <pre>
  * // Set context before processing
@@ -35,44 +36,36 @@ package blue.time;
  * } finally {
  *     TimeContextManager.clearContext();
  * }
- * 
- * // Or use try-with-resources
- * try (var scope = new TimeContextScope(project.getTimeContext())) {
- *     // Process score objects
- * }
- * </pre>
- * 
  * @author Steven Yi
  */
 public class TimeContextManager {
     
-    private static final ThreadLocal<TimeContext> CONTEXT = new ThreadLocal<>();
+    private static volatile TimeContext context;
     
     /**
-     * Sets the TimeContext for the current thread.
+     * Sets the TimeContext for the application.
      * This should be called by the Score/Project before processing.
-     * 
-     * @param context the TimeContext to use for conversions
+     *
+     * @param newContext the TimeContext to use for conversions
      * @throws IllegalArgumentException if context is null
      */
-    public static void setContext(TimeContext context) {
-        if (context == null) {
+    public static void setContext(TimeContext newContext) {
+        if (newContext == null) {
             throw new IllegalArgumentException("TimeContext cannot be null");
         }
-        CONTEXT.set(context);
+        context = newContext;
     }
     
     /**
-     * Gets the TimeContext for the current thread.
-     * 
-     * @return the TimeContext for this thread
-     * @throws IllegalStateException if no TimeContext has been set for this thread
+     * Gets the TimeContext for the application.
+     *
+     * @return the TimeContext for the application
+     * @throws IllegalStateException if no TimeContext has been set
      */
     public static TimeContext getContext() {
-        TimeContext context = CONTEXT.get();
         if (context == null) {
             throw new IllegalStateException(
-                "No TimeContext set for current thread. " +
+                "No TimeContext set. " +
                 "Call TimeContextManager.setContext() before accessing time conversions.");
         }
         return context;
@@ -80,19 +73,19 @@ public class TimeContextManager {
     
     
     /**
-     * Clears the TimeContext for the current thread.
+     * Clears the TimeContext.
      * Should be called after processing is complete.
      */
     public static void clearContext() {
-        CONTEXT.remove();
+        context = null;
     }
     
     /**
-     * Checks if a TimeContext is currently set for this thread.
-     * 
+     * Checks if a TimeContext is currently set.
+     *
      * @return true if a TimeContext is set, false otherwise
      */
     public static boolean hasContext() {
-        return CONTEXT.get() != null;
+        return context != null;
     }
 }

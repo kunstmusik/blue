@@ -33,7 +33,6 @@ import blue.settings.RealtimeRenderSettings;
 import blue.soundObject.PolyObject;
 import blue.time.TimeContext;
 import blue.time.TimeContextManager;
-import blue.time.TimeContextScope;
 import blue.ui.utilities.FileChooserManager;
 import blue.undo.BlueUndoManager;
 import java.beans.PropertyChangeEvent;
@@ -59,7 +58,6 @@ import org.openide.windows.WindowManager;
  */
 public class BlueProjectManager {
 
-//    Logger logger = Logger.getLogger("BlueProjectManager");
     public static final String CURRENT_PROJECT = "currentProject";
 
     public static final String PROJECT_FILE = "projectFile";
@@ -183,13 +181,13 @@ public class BlueProjectManager {
                 BlueSystem.setCurrentProjectDirectory(null);
             }
             
-            // Set TimeContext for the current thread (EDT)
-            // This makes TimeContext available for all UI operations
-            blue.time.TimeContextManager.setContext(project.getData().getTimeContext());
+            // Set TimeContext for the application
+            // This makes TimeContext available for all operations
+            TimeContextManager.setContext(project.getData().getTimeContext());
             
             final Score score = project.getData().getScore();
           
-            Collection<? extends ProjectPlugin> plugins = 
+            Collection<? extends ProjectPlugin> plugins =
                     Lookups.forPath("blue/project/plugins").lookupAll(ProjectPlugin.class);
             for(ProjectPlugin plugin : plugins) {
                 try {
@@ -201,15 +199,20 @@ public class BlueProjectManager {
             
             new Thread(() -> {
                 try {
-                    // UI operation - set TimeContext before processing
-                    inProjectTimeContext(() -> {
-                        try {
-                            TimeContext context = TimeContextManager.getContext();
-                            score.processOnLoad(context);
-                        } catch (Exception ex) {
-                            Exceptions.printStackTrace(ex);
+                    // Set TimeContext for this thread's operation
+                    TimeContext context = project.getData().getTimeContext();
+                    TimeContext previousContext = TimeContextManager.hasContext() ? TimeContextManager.getContext() : null;
+                    TimeContextManager.setContext(context);
+
+                    try {
+                        score.processOnLoad(context);
+                    } finally {
+                        if (previousContext != null) {
+                            TimeContextManager.setContext(previousContext);
+                        } else {
+                            TimeContextManager.clearContext();
                         }
-                    });
+                    }
                 } catch (Exception ex) {
                     Exceptions.printStackTrace(ex);
                 }
@@ -506,35 +509,5 @@ fireProjectFileChanged();
         setCurrentProject(projects.get(index));
     }
 
-    /**
-     * Execute an action within the current project's TimeContext.
-     * 
-     * This utility method automatically sets up the appropriate TimeContext
-     * for the current project and ensures it's properly cleaned up after
-     * the action completes, even if an exception occurs.
-     * 
-     * Usage:
-     * <pre>
-     * BlueProjectManager.inProjectTimeContext(() -> {
-     *     // Automatically uses current project's TimeContext
-     *     double beats = obj.getStartTime();
-     *     // Process...
-     * });
-     * </pre>
-     * 
-     * @param action the action to execute within the project's TimeContext
-     * @throws IllegalStateException if no current project exists
-     */
-    public static void inProjectTimeContext(Runnable action) {
-        BlueProject project = getInstance().getCurrentProject();
-        if (project == null) {
-            throw new IllegalStateException("No current project");
-        }
-        
-        TimeContext context = project.getData().getTimeContext();
-        try (var scope = new TimeContextScope(context)) {
-            action.run();
-        }
-    }
 
 }

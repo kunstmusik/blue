@@ -194,20 +194,28 @@ public class SoundObjectTimePanel extends JPanel {
             TimeUnit oldValue = currentTimeUnit;
             
             // Use project's TimeContext for proper conversion with meter, tempo, and sample rate
-            // The entire operation including property change firing must be within the TimeContext
-            // because listeners may trigger operations that need the TimeContext
-            BlueProjectManager.inProjectTimeContext(() -> {
-                TimeContext context = TimeContextManager.getContext();
+            // Get the current project's TimeContext
+            TimeContext context = BlueProjectManager.getInstance().getCurrentProject().getData().getTimeContext();
+            TimeContext previousContext = TimeContextManager.hasContext() ? TimeContextManager.getContext() : null;
+            TimeContextManager.setContext(context);
+
+            try {
                 currentTimeUnit = TimeUtilities.convertTimeUnit(oldValue, newTimeBase, context);
-                
+
                 TimeUnitEditor editor = getEditorForTimeBase(newTimeBase);
                 if (editor != null) {
                     editor.setTimeUnit(currentTimeUnit);
                 }
-                
+
                 // Fire property change so parent component is notified
                 propertyChangeSupport.firePropertyChange("timeUnit", oldValue, currentTimeUnit);
-            });
+            } finally {
+                if (previousContext != null) {
+                    TimeContextManager.setContext(previousContext);
+                } else {
+                    TimeContextManager.clearContext();
+                }
+            }
         }
     }
 
@@ -222,9 +230,19 @@ public class SoundObjectTimePanel extends JPanel {
             currentTimeUnit = editor.getTimeUnit();
             
             // Fire property change within TimeContext since listeners may need it
-            BlueProjectManager.inProjectTimeContext(() -> {
+            TimeContext context = BlueProjectManager.getInstance().getCurrentProject().getData().getTimeContext();
+            TimeContext previousContext = TimeContextManager.hasContext() ? TimeContextManager.getContext() : null;
+            TimeContextManager.setContext(context);
+
+            try {
                 propertyChangeSupport.firePropertyChange("timeUnit", oldValue, currentTimeUnit);
-            });
+            } finally {
+                if (previousContext != null) {
+                    TimeContextManager.setContext(previousContext);
+                } else {
+                    TimeContextManager.clearContext();
+                }
+            }
         }
     }
 
