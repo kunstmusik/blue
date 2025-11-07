@@ -28,6 +28,7 @@ import blue.projects.BlueProjectManager;
 import blue.score.Score;
 import blue.score.ScoreObject;
 import blue.score.layers.ScoreObjectLayer;
+import blue.time.TimeContext;
 import blue.ui.core.render.RealtimeRenderManager;
 import blue.ui.core.score.ScoreTopComponent;
 import de.sciss.net.OSCMessage;
@@ -87,9 +88,10 @@ public class OSCActions {
             @Override
             public void actionPerformed(OSCMessage message) {
                 var data = BlueProjectManager.getInstance().getCurrentBlueData();
-                
+
                 if (data != null) {
                     final double currentStartTime = data.getRenderStartTime();
+                    TimeContext context = data.getTimeContext();
                     MarkersList markers = data.getMarkersList();
                     Marker selected = null;
 
@@ -105,7 +107,7 @@ public class OSCActions {
                     }
 
                     final double newStartTime = (selected == null)
-                            ? getEndTimeOfScore(data.getScore())
+                            ? getEndTimeOfScore(data.getScore(), context)
                             : selected.getTime();
 
                     if (newStartTime > currentStartTime) {
@@ -220,14 +222,14 @@ public class OSCActions {
     /**
      * Helper method to calculate end time of score
      */
-    private static double getEndTimeOfScore(Score score) {
+    private static double getEndTimeOfScore(Score score, TimeContext context) {
         double max = 0.0;
         for (var layer : score.getAllLayers()) {
             if (layer instanceof ScoreObjectLayer) {
                 final var sLayer = (ScoreObjectLayer<ScoreObject>) layer;
 
                 var layerMax = sLayer.stream()
-                        .mapToDouble(sObj -> sObj.getStartTime() + sObj.getSubjectiveDuration())
+                        .mapToDouble(sObj -> sObj.getStartTime().toBeats(context) + sObj.getSubjectiveDuration().toBeats(context))
                         .max();
 
                 if (layerMax.isPresent()) {
