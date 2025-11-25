@@ -50,8 +50,8 @@ public class LayerGroupProviderManager extends ArrayList<LayerGroupProvider> {
         this.addAll(providers);
     }
 
-    public LayerGroup loadFromXML(Element node, Map<String, Object> objRefMap) {
-        LayerGroup layerGroup = null;
+    public LayerGroup<? extends Layer> loadFromXML(Element node, Map<String, Object> objRefMap) {
+        LayerGroup<? extends Layer> layerGroup = null;
         
         for(LayerGroupProvider provider : this) {
             layerGroup = provider.loadFromXML(node, objRefMap);

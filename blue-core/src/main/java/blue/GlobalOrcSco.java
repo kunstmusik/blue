@@ -26,7 +26,7 @@ public class GlobalOrcSco {
 
     String globalSco = "";
 
-    private transient HashMap compilationVariables;
+    private transient HashMap<Object, Object> compilationVariables;
 
     public GlobalOrcSco() {
     }
@@ -89,7 +89,7 @@ public class GlobalOrcSco {
 
     public Object getCompilationVariable(Object key) {
         if (compilationVariables == null) {
-            compilationVariables = new HashMap();
+            compilationVariables = new HashMap<>();
             return null;
         }
 
@@ -104,7 +104,7 @@ public class GlobalOrcSco {
 
     public void setCompilationVariable(Object key, Object value) {
         if (compilationVariables == null) {
-            compilationVariables = new HashMap();
+            compilationVariables = new HashMap<>();
         }
 
         compilationVariables.put(key, value);

@@ -42,7 +42,7 @@ import java.util.Map;
  */
 public class CompileData {
     
-    private final HashMap compileMap = new HashMap();
+    private final HashMap<Object, Object> compileMap = new HashMap<>();
     private final Arrangement arrangement;
     private final Tables tables;
     private final Map<Channel, Integer> channelIdAssignments;

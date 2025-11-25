@@ -17,7 +17,6 @@
  * Software Foundation Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307
  * USA
  */
-
 package blue.mixer;
 
 import blue.automation.Automatable;
@@ -118,36 +117,26 @@ public class Effect implements Automatable {
             Element node = nodes.next();
             String nodeName = node.getName();
             switch (nodeName) {
-                case "name":
+                case "name" ->
                     effect.setName(node.getTextString());
-                    break;
-                case "enabled":
+                case "enabled" ->
                     effect.setEnabled(XMLUtilities.readBoolean(node));
-                    break;
-                case "numIns":
+                case "numIns" ->
                     effect.setNumIns(XMLUtilities.readInt(node));
-                    break;
-                case "numOuts":
+                case "numOuts" ->
                     effect.setNumOuts(XMLUtilities.readInt(node));
-                    break;
-                case "code":
+                case "code" ->
                     effect.setCode(node.getTextString());
-                    break;
-                case "comments":
+                case "comments" ->
                     effect.setComments(node.getTextString());
-                    break;
-                case "opcodeList":
+                case "opcodeList" ->
                     effect.opcodeList = OpcodeList.loadFromXML(node);
-                    break;
-                case "graphicInterface":
+                case "graphicInterface" ->
                     effect.setGraphicInterface(BSBGraphicInterface
                             .loadFromXML(node));
-                    break;
-                case "bsbParameterList":
-                case "parameterList":
+                case "bsbParameterList", "parameterList" ->
                     effect.parameterList = ParameterList
                             .loadFromXML(node);
-                    break;
             }
         }
 

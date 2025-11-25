@@ -103,8 +103,8 @@ public class Arrangement implements TableModel {
 
         arrangement.add(ia);
 
-        if (instrument instanceof Automatable) {
-            fireAutomatableAdded((Automatable) ia.instr);
+        if (ia.instr instanceof Automatable automatable) {
+            fireAutomatableAdded(automatable);
         }
 
         return max + 1;

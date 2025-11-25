@@ -56,7 +56,7 @@ public class InstrumentAssignment implements Comparable<InstrumentAssignment> {
         String enabled = data.getAttributeValue("isEnabled");
 
         if (enabled != null) {
-            retVal.enabled = Boolean.valueOf(enabled).booleanValue();
+            retVal.enabled = Boolean.parseBoolean(enabled);
         }
 
         if (data.getElement("instrument") != null) {
@@ -100,7 +100,7 @@ public class InstrumentAssignment implements Comparable<InstrumentAssignment> {
         String enabled = data.getAttributeValue("isEnabled");
 
         if (enabled != null) {
-            retVal.enabled = Boolean.valueOf(enabled).booleanValue();
+            retVal.enabled = Boolean.parseBoolean(enabled);
         }
 
         return retVal;

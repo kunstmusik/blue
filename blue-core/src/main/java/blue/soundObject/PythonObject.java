@@ -175,8 +175,7 @@ public class PythonObject extends AbstractSoundObject implements
         String olpString = data.getAttributeValue("onLoadProcessable");
 
         if (olpString != null) {
-            pObj.setOnLoadProcessable(
-                    Boolean.valueOf(olpString).booleanValue());
+            pObj.setOnLoadProcessable(Boolean.parseBoolean(olpString));
         }
 
 

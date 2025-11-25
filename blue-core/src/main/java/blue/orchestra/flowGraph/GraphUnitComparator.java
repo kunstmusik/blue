@@ -2,11 +2,9 @@ package blue.orchestra.flowGraph;
 
 import java.util.Comparator;
 
-class GraphUnitComparator implements Comparator {
+class GraphUnitComparator implements Comparator<GraphUnit> {
     @Override
-    public int compare(Object o1, Object o2) {
-        GraphUnit a = (GraphUnit) o1;
-        GraphUnit b = (GraphUnit) o2;
+    public int compare(GraphUnit a, GraphUnit b) {
 
         double x1 = a.coordinate.x;
         double y1 = a.coordinate.y;

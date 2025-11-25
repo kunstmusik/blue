@@ -17,7 +17,6 @@
  * the Free Software Foundation Inc., 59 Temple Place - Suite 330,
  * Boston, MA  02111-1307 USA
  */
-
 package blue.mixer;
 
 import blue.automation.*;
@@ -34,8 +33,8 @@ import java.util.Vector;
 /**
  * @author Steven Yi
  */
-
 public class Send implements Automatable, ParameterListener {
+
     private String sendChannel = Channel.MASTER;
 
     private double level = 1.0f;
@@ -145,21 +144,17 @@ public class Send implements Automatable, ParameterListener {
             Element node = nodes.next();
             String nodeName = node.getName();
             switch (nodeName) {
-                case "sendChannel":
+                case "sendChannel" ->
                     send.sendChannel = node.getTextString();
-                    break;
-                case "level":
+                case "level" ->
                     send.level = Double.parseDouble(node.getTextString());
-                    break;
-                case "enabled":
-                    send.enabled = Boolean.valueOf(node.getTextString())
-                            .booleanValue();
-                    break;
-                case "parameter":
+                case "enabled" ->
+                    send.enabled = Boolean.parseBoolean(node.getTextString());
+                case "parameter" -> {
                     send.levelParameter = Parameter.loadFromXML(node);
                     send.levelParameter.addParameterListener(send);
                     send.params.add(send.levelParameter);
-                    break;
+                }
             }
         }
 

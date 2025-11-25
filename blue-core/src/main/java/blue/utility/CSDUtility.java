@@ -204,7 +204,7 @@ public class CSDUtility {
     }
 
     private static ScoreSection[] getScoreSections(String scoreText) {
-        ArrayList scoreSections = new ArrayList();
+        ArrayList<ScoreSection> scoreSections = new ArrayList<>();
         StringTokenizer st = new StringTokenizer(scoreText, "\n");
         String line = "";
 

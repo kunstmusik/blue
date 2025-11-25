@@ -140,14 +140,14 @@ public class Line implements TableModel, ChangeListener, Iterable<LinePoint> {
     public static Line loadFromXML(Element data) {
         Line line = new Line(false, false);
         switch (data.getName()) {
-            case "line":
+            case "line" -> {
                 line.varName = data.getAttributeValue("name");
                 line.setZak(false);
-                break;
-            case "zakline":
+            }
+            case "zakline" -> {
                 line.channel = Integer.parseInt(data.getAttributeValue("channel"));
                 line.setZak(true);
-                break;
+            }
         }
 
         int version = 1;
@@ -187,13 +187,13 @@ public class Line implements TableModel, ChangeListener, Iterable<LinePoint> {
         String rBound = data.getAttributeValue("rightBound");
 
         if (rBound != null && rBound.length() > 0) {
-            line.rightBound = Boolean.valueOf(rBound).booleanValue();
+            line.rightBound = Boolean.parseBoolean(rBound);
         }
 
         String endLinked = data.getAttributeValue("endPointsLinked");
 
         if (endLinked != null && endLinked.length() > 0) {
-            line.endPointsLinked = Boolean.valueOf(endLinked).booleanValue();
+            line.endPointsLinked = Boolean.parseBoolean(endLinked);
         }
 
         Elements nodes = data.getElements();

@@ -707,7 +707,6 @@ public class PolyObject extends ArrayList<SoundLayer> implements SoundObject,
                 if (!pObj.isScoreGenerationEmpty()) {
                     return false;
                 }
-
                 continue;
             }
 

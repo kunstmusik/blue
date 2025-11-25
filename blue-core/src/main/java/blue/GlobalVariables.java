@@ -4,7 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class GlobalVariables {
-    private static final Map map = new HashMap();
+    private static final Map<String, String> map = new HashMap<>();
 
     public static String USER_CONFIG_DIR = "userConfigurationDirectory";
 

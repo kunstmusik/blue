@@ -41,7 +41,7 @@ public class XMLUtilities {
     }
 
     public static boolean readBoolean(Element data) {
-        return Boolean.valueOf(data.getTextString()).booleanValue();
+        return Boolean.parseBoolean(data.getTextString());
     }
 
     public static double readDouble(Element data) {

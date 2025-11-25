@@ -17,7 +17,6 @@
  * the Free Software Foundation Inc., 59 Temple Place - Suite 330,
  * Boston, MA  02111-1307 USA
  */
-
 package blue.udo;
 
 import electric.xml.Element;
@@ -40,7 +39,8 @@ public class UserDefinedOpcode {
 
     public String comments = "";
 
-    public UserDefinedOpcode() {}
+    public UserDefinedOpcode() {
+    }
 
     public UserDefinedOpcode(UserDefinedOpcode udo) {
         opcodeName = udo.opcodeName;
@@ -49,7 +49,6 @@ public class UserDefinedOpcode {
         codeBody = udo.codeBody;
         comments = udo.comments;
     }
-
 
     public static UserDefinedOpcode loadFromXML(Element data) {
         UserDefinedOpcode retVal = new UserDefinedOpcode();
@@ -65,21 +64,16 @@ public class UserDefinedOpcode {
                 val = "";
             }
             switch (node.getName()) {
-                case "opcodeName":
+                case "opcodeName" ->
                     retVal.opcodeName = val;
-                    break;
-                case "outTypes":
+                case "outTypes" ->
                     retVal.outTypes = val;
-                    break;
-                case "inTypes":
+                case "inTypes" ->
                     retVal.inTypes = val;
-                    break;
-                case "codeBody":
+                case "codeBody" ->
                     retVal.codeBody = val;
-                    break;
-                case "comments":
+                case "comments" ->
                     retVal.comments = val;
-                    break;
             }
         }
 
@@ -104,11 +98,11 @@ public class UserDefinedOpcode {
         buffer.append("\topcode ").append(opcodeName);
         buffer.append(",").append(outTypes);
         buffer.append(",").append(inTypes);
-       
-        if(commentText != null) {
+
+        if (commentText != null) {
             buffer.append(" ; ").append(commentText);
         }
-        
+
         buffer.append("\n");
 
         // if(inArgs.trim().length() > 0) {
@@ -118,13 +112,11 @@ public class UserDefinedOpcode {
         // if(useLocalKsmps) {
         // buffer.append("setksmps ").append(localKsmps).append("\n");
         // }
-
         buffer.append("\n").append(codeBody).append("\n\n");
 
         // if(outArgs.trim().length() > 0) {
         // buffer.append("xout ").append(outArgs).append("\n");
         // }
-
         buffer.append("\tendop");
 
         return buffer.toString();
@@ -156,7 +148,6 @@ public class UserDefinedOpcode {
         //
         // udo.inArgs = "ipch";
         // udo.outArgs = "iout";
-
         udo.codeBody = "ipch\t xin\niout	= (ipch < 15 ? cpspch(ipch) : ipch)\n\txout iout	";
 
         System.out.println(udo.toString());

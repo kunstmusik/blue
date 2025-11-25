@@ -155,8 +155,7 @@ public class JavaScriptObject extends AbstractSoundObject
         String olpString = data.getAttributeValue("onLoadProcessable");
 
         if (olpString != null) {
-            sObj.setOnLoadProcessable(
-                    Boolean.valueOf(olpString).booleanValue());
+            sObj.setOnLoadProcessable(Boolean.parseBoolean(olpString));
         }
 
         return sObj;

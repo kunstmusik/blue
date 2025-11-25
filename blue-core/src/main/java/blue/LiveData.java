@@ -40,7 +40,7 @@ public class LiveData {
     private boolean commandLineEnabled = false;
     private boolean commandLineOverride = false;
     private boolean repeatEnabled = false;
-    private String liveCodeText = ""; 
+    private String liveCodeText = "";
 
     public LiveData() {
         liveObjectBins = new LiveObjectBins();
@@ -115,47 +115,38 @@ public class LiveData {
             Element node = nodes.next();
             String name = node.getName();
             switch (name) {
-                case "commandLine":
+                case "commandLine" ->
                     liveData.setCommandLine(node.getTextString());
-                    break;
-                case "commandLineEnabled":
+                case "commandLineEnabled" -> {
                     liveData.setCommandLineEnabled(XMLUtilities.readBoolean(node));
                     doCommandLineUpgrade = false;
-                    break;
-                case "commandLineOverride":
+                }
+                case "commandLineOverride" -> {
                     liveData.setCommandLineOverride(XMLUtilities.readBoolean(node));
                     doCommandLineUpgrade = false;
-                    break;
-                case "soundObject":
+                }
+                case "soundObject" -> {
                     SoundObject sObj = (SoundObject) ObjectUtilities.loadFromXML(
                             node, objRefMap);
                     LiveObject lObj = new LiveObject();
                     lObj.setSObj(sObj);
                     oldFormat.add(lObj);
-                    break;
-                case "liveObject":
-                    oldFormat.add(LiveObject.loadFromXML(node,
-                            objRefMap));
-                    break;
-                case "liveObjectBins":
+                }
+                case "liveObject" ->
+                    oldFormat.add(LiveObject.loadFromXML(node, objRefMap));
+                case "liveObjectBins" ->
                     liveData.liveObjectBins = LiveObjectBins.loadFromXML(node,
                             objRefMap);
-                    break;
-                case "repeat":
+                case "repeat" ->
                     liveData.repeat = XMLUtilities.readInt(node);
-                    break;
-                case "tempo":
+                case "tempo" ->
                     liveData.tempo = XMLUtilities.readInt(node);
-                    break;
-                case "liveObjectSetList":
+                case "liveObjectSetList" ->
                     liveObjectSetsNode = node;
-                    break;
-                case "repeatEnabled":
+                case "repeatEnabled" ->
                     liveData.setRepeatEnabled(XMLUtilities.readBoolean(node));
-                    break;
-                case "liveCodeText":
+                case "liveCodeText" ->
                     liveData.setLiveCodeText(node.getTextString());
-                    break;
             }
 
         }

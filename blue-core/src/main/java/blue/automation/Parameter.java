@@ -352,7 +352,7 @@ public class Parameter implements TableModelListener {
 
         val = data.getAttributeValue("automationEnabled");
         if (val != null && val.length() > 0) {
-            retVal.setAutomationEnabled(Boolean.valueOf(val).booleanValue());
+            retVal.setAutomationEnabled(Boolean.parseBoolean(val));
         }
 
         Elements nodes = data.getElements();

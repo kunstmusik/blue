@@ -46,7 +46,7 @@ public class Tables {
 
     public Object getCompilationVariable(Object key) {
         if (compilationVariables == null) {
-            compilationVariables = new HashMap();
+            compilationVariables = new HashMap<>();
             return null;
         }
 

@@ -123,33 +123,28 @@ public class Channel implements Comparable<Channel>, ParameterListener {
             Element node = nodes.next();
             String nodeName = node.getName();
             switch (nodeName) {
-                case "name":
+                case "name" ->
                     channel.setName(node.getTextString());
-                    break;
-                case "outChannel":
+                case "outChannel" ->
                     channel.setOutChannel(node.getTextString());
-                    break;
-                case "level":
+                case "level" ->
                     channel.setLevel(XMLUtilities.readDouble(node));
-                    break;
-                case "muted":
+                case "muted" ->
                     channel.setMuted(XMLUtilities.readBoolean(node));
-                    break;
-                case "solo":
+                case "solo" ->
                     channel.setSolo(XMLUtilities.readBoolean(node));
-                    break;
-                case "effectsChain":
+                case "effectsChain" -> {
                     if (node.getAttributeValue("bin").equals("pre")) {
                         channel.setPreEffects(EffectsChain.loadFromXML(node));
                     } else {
                         channel.setPostEffects(EffectsChain.loadFromXML(node));
                     }
-                    break;
-                case "parameter":
+                }
+                case "parameter" -> {
                     channel.levelParameter.removeParameterListener(channel);
                     channel.levelParameter = Parameter.loadFromXML(node);
                     channel.levelParameter.addParameterListener(channel);
-                    break;
+                }
             }
 
         }

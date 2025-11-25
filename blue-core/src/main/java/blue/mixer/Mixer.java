@@ -96,39 +96,34 @@ public class Mixer {
             Element node = nodes.next();
             String nodeName = node.getName();
             switch (nodeName) {
-                case "enabled":
+                case "enabled" ->
                     mixer.setEnabled(XMLUtilities.readBoolean(node));
-                    break;
-                case "extraRenderTime":
+                case "extraRenderTime" ->
                     mixer.setExtraRenderTime(XMLUtilities.readDouble(node));
-                    break;
-                case "channelList":
+                case "channelList" -> {
                     String listType = node.getAttributeValue("list");
                     switch (listType) {
-                        case "channels":
+                        case "channels" -> {
                             mixer.setChannels(ChannelList.loadFromXML(node));
                             mixer.getChannels().setListName("Orchestra");
                             mixer.getChannels().setListNameEditSupported(false);
-                            break;
-                        case "subChannels":
+                        }
+                        case "subChannels" -> {
                             mixer.setSubChannels(ChannelList.loadFromXML(node));
                             mixer.getSubChannels().setListName("SubChannels");
                             mixer.getSubChannels().setListNameEditSupported(false);
-                            break;
+                        }
                     }
-                    break;
-                case "channelListGroups":
-
+                }
+                case "channelListGroups" -> {
                     Elements listGroupsNodes = node.getElements();
                     while (listGroupsNodes.hasMoreElements()) {
                         mixer.channelListGroups.add(ChannelList.loadFromXML(
                                 listGroupsNodes.next()));
                     }
-
-                    break;
-                case "channel":
+                }
+                case "channel" ->
                     mixer.setMaster(Channel.loadFromXML(node));
-                    break;
             }
 
         }
@@ -198,8 +193,9 @@ public class Mixer {
     }
 
     public Channel findChannelById(String id) {
-        if (id == null)
+        if (id == null) {
             return null;
+        }
 
         for (ChannelList list : channelListGroups) {
             for (Channel c : list) {
@@ -237,15 +233,15 @@ public class Mixer {
 
     public static String getChannelVar(int blueChannelId, int channel) {
         return GA_VAR
-                .format(new Object[] {
-                        blueChannelId,
-                        channel });
+                .format(new Object[]{
+            blueChannelId,
+            channel});
     }
 
     public static String getSubChannelVar(String subChannelName, int channel) {
-        return SUBMIX_VAR.format(new Object[] {
-                subChannelName,
-                channel });
+        return SUBMIX_VAR.format(new Object[]{
+            subChannelName,
+            channel});
     }
 
     public String getVar(CompileData data, Channel c, int channel) {

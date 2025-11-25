@@ -169,7 +169,7 @@ public class BlueSynthBuilder extends AbstractInstrument implements
 
         String editEnabledStr = data.getAttributeValue("editEnabled");
         if (editEnabledStr != null) {
-            bsb.setEditEnabled(Boolean.valueOf(editEnabledStr).booleanValue());
+            bsb.setEditEnabled(Boolean.parseBoolean(editEnabledStr));
         }
 
         Elements nodes = data.getElements();

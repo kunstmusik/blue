@@ -131,9 +131,9 @@ public class UDOUtilities {
      * @return
      */
 
-    public static HashMap appendUserDefinedOpcodes(OpcodeList newList,
+    public static HashMap<String, String> appendUserDefinedOpcodes(OpcodeList newList,
             OpcodeList masterList) {
-        HashMap keyValues = new HashMap();
+        HashMap<String, String> keyValues = new HashMap<>();
 
         for (UserDefinedOpcode udo : newList) {
             if (keyValues.size() > 0) {

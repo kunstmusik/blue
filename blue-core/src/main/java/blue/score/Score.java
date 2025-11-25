@@ -50,7 +50,7 @@ public class Score extends ObservableArrayList<LayerGroup<? extends Layer>> {
 
     Tempo tempo = null;
     TimeState timeState = null;
-    private NoteProcessorChain npc; 
+    private NoteProcessorChain npc;
 
     public static final int SPACER = 36;
 
@@ -73,11 +73,10 @@ public class Score extends ObservableArrayList<LayerGroup<? extends Layer>> {
         npc = new NoteProcessorChain(score.npc);
         tempo = new Tempo(score.tempo);
 
-        for(LayerGroup<? extends Layer> lg :score) {
-            add(lg.deepCopyLG());    
+        for (LayerGroup<? extends Layer> lg : score) {
+            add(lg.deepCopyLG());
         }
     }
-
 
     public Tempo getTempo() {
         return tempo;
@@ -109,7 +108,7 @@ public class Score extends ObservableArrayList<LayerGroup<? extends Layer>> {
         retVal.addElement(timeState.saveAsXML());
         retVal.addElement(npc.saveAsXML());
 
-        for (LayerGroup layerGroup : this) {
+        for (LayerGroup<? extends Layer> layerGroup : this) {
             retVal.addElement(layerGroup.saveAsXML(objRefMap));
         }
 
@@ -126,26 +125,23 @@ public class Score extends ObservableArrayList<LayerGroup<? extends Layer>> {
         while (nodes.hasMoreElements()) {
             Element node = nodes.next();
             switch (node.getName()) {
-                case "tempo":
+                case "tempo" ->
                     score.tempo = Tempo.loadFromXML(node);
-                    break;
-                case "timeState":
+                case "timeState" ->
                     score.timeState = TimeState.loadFromXML(node);
-                    break;
-                case "noteProcessorChain":
+                case "noteProcessorChain" ->
                     score.npc = NoteProcessorChain.loadFromXML(node);
-                    break;
-                default:
-                    LayerGroup layerGroup = manager.loadFromXML(node, objRefMap);
+                default -> {
+                    LayerGroup<? extends Layer> layerGroup = manager.loadFromXML(node, objRefMap);
                     if (layerGroup == null) {
                         throw new RuntimeException(
                                 "Unable to load Score LayerGroup of type: " + node.getName());
                     }
                     score.add(layerGroup);
-                    if(layerGroup instanceof PolyObject polyObject) {
+                    if (layerGroup instanceof PolyObject polyObject) {
                         polyObject.setTimeBehavior(TimeBehavior.NONE);
                     }
-                    break;
+                }
 
             }
         }
@@ -159,7 +155,7 @@ public class Score extends ObservableArrayList<LayerGroup<? extends Layer>> {
     }
 
     public void processOnLoad(TimeContext context) {
-        for (LayerGroup layerGroup : this) {
+        for (LayerGroup<? extends Layer> layerGroup : this) {
             layerGroup.onLoadComplete(context);
         }
     }
@@ -176,7 +172,7 @@ public class Score extends ObservableArrayList<LayerGroup<? extends Layer>> {
             }
         }
 
-        for (LayerGroup layerGroup : this) {
+        for (LayerGroup<? extends Layer> layerGroup : this) {
             NoteList nl = layerGroup.generateForCSD(context, compileData, startTime,
                     endTime, soloFound);
             noteList.merge(nl);
@@ -271,11 +267,9 @@ public class Score extends ObservableArrayList<LayerGroup<? extends Layer>> {
         return hash;
     }
 
-
     @Override
     public boolean equals(Object obj) {
         return obj == this;
     }
 
-     
 }

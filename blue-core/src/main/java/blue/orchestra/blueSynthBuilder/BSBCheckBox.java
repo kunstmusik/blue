@@ -175,7 +175,7 @@ public class BSBCheckBox extends AutomatableBSBObject implements ParameterListen
      */
     @Override
     public void setPresetValue(String val) {
-        setSelected(Boolean.valueOf(val).booleanValue());
+        setSelected(Boolean.parseBoolean(val));
     }
 
 //    /* RANDOMIZABLE METHODS */

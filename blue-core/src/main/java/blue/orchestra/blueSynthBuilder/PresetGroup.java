@@ -120,7 +120,7 @@ public class PresetGroup implements Comparable<PresetGroup> {
 
         val = data.getAttributeValue("currentPresetModified");
         if (val != null && val.length() > 0) {
-            group.setCurrentPresetModified(Boolean.valueOf(val).booleanValue());
+            group.setCurrentPresetModified(Boolean.parseBoolean(val));
         }
 
         Elements nodes = data.getElements();

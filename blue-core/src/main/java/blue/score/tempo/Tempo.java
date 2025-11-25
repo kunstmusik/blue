@@ -31,7 +31,7 @@ public class Tempo {
 
     private boolean enabled = false;
     private boolean visible = false;
-    private Line line; 
+    private Line line;
     private transient Vector<PropertyChangeListener> listeners = null;
 
     public Tempo() {
@@ -42,23 +42,22 @@ public class Tempo {
     }
 
     public Tempo(Tempo tempo) {
-        line = new Line(tempo.line); 
+        line = new Line(tempo.line);
         enabled = tempo.enabled;
         visible = tempo.visible;
     }
-    
-    
+
     public boolean isEnabled() {
         return enabled;
     }
 
     public void setEnabled(boolean enabled) {
-        if(this.enabled != enabled) {
-            PropertyChangeEvent pce = new PropertyChangeEvent(this, "enabled", 
+        if (this.enabled != enabled) {
+            PropertyChangeEvent pce = new PropertyChangeEvent(this, "enabled",
                     this.enabled, enabled);
-        
+
             this.enabled = enabled;
-            
+
             firePropertyChangeEvent(pce);
         }
     }
@@ -68,12 +67,12 @@ public class Tempo {
     }
 
     public void setVisible(boolean visible) {
-        if(this.visible != visible) {
-            PropertyChangeEvent pce = new PropertyChangeEvent(this, "visible", 
+        if (this.visible != visible) {
+            PropertyChangeEvent pce = new PropertyChangeEvent(this, "visible",
                     Boolean.valueOf(this.visible), Boolean.valueOf(visible));
-        
+
             this.visible = visible;
-            
+
             firePropertyChangeEvent(pce);
         }
     }
@@ -86,8 +85,6 @@ public class Tempo {
         this.line = line;
     }
 
-   
-    
     private void firePropertyChangeEvent(PropertyChangeEvent pce) {
         if (listeners == null) {
             return;
@@ -112,38 +109,35 @@ public class Tempo {
         }
         listeners.remove(pcl);
     }
-    
+
     public Element saveAsXML() {
         Element retVal = new Element("tempo");
-        
+
         retVal.addElement(XMLUtilities.writeBoolean("enabled", enabled));
         retVal.addElement(XMLUtilities.writeBoolean("visible", visible));
         retVal.addElement(line.saveAsXML());
-        
+
         return retVal;
     }
-    
+
     public static Tempo loadFromXML(Element data) {
         Tempo retVal = new Tempo();
 
         Elements nodes = data.getElements();
 
-        while(nodes.hasMoreElements()) {
+        while (nodes.hasMoreElements()) {
             Element node = nodes.next();
             String nodeName = node.getName();
             switch (nodeName) {
-                case "enabled":
-                    retVal.enabled = Boolean.valueOf(node.getTextString()).booleanValue();
-                    break;
-                case "visible":
-                    retVal.visible = Boolean.valueOf(node.getTextString()).booleanValue();
-                    break;
-                case "line":
+                case "enabled" ->
+                    retVal.enabled = Boolean.parseBoolean(node.getTextString());
+                case "visible" ->
+                    retVal.visible = Boolean.parseBoolean(node.getTextString());
+                case "line" ->
                     retVal.line = Line.loadFromXML(node);
-                    break;
             }
         }
-        
+
         return retVal;
     }
 }

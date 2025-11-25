@@ -37,7 +37,7 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 
 public class EffectsChain implements ListModel, PropertyChangeListener {
 
-    private final ArrayList effects = new ArrayList();
+    private final ArrayList<Object> effects = new ArrayList<>();
 
     private transient List<ListDataListener> listeners = null;
 
@@ -47,12 +47,12 @@ public class EffectsChain implements ListModel, PropertyChangeListener {
     }
 
     public EffectsChain(EffectsChain chain) {
-        for(Object item : chain.effects) {
-            if(item instanceof Effect effect) {
+        for (Object item : chain.effects) {
+            if (item instanceof Effect effect) {
                 addEffect(new Effect(effect));
-            } else if (item instanceof Send send){
+            } else if (item instanceof Send send) {
                 addSend(new Send(send));
-            } 
+            }
         }
     }
 
@@ -79,12 +79,10 @@ public class EffectsChain implements ListModel, PropertyChangeListener {
             Element node = nodes.next();
             String nodeName = node.getName();
             switch (nodeName) {
-                case "effect":
+                case "effect" ->
                     chain.addEffect(Effect.loadFromXML(node));
-                    break;
-                case "send":
+                case "send" ->
                     chain.addSend(Send.loadFromXML(node));
-                    break;
             }
         }
 
@@ -178,7 +176,7 @@ public class EffectsChain implements ListModel, PropertyChangeListener {
 
         return sends;
     }
-    
+
     public boolean contains(Effect effect) {
         return effects.contains(effect);
     }

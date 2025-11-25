@@ -167,22 +167,18 @@ public class TimeState {
             String nodeName = e.getName();
             final String nodeText = e.getTextString();
             switch (nodeName) {
-                case "pixelSecond": {
+                case "pixelSecond" -> {
                     var pixelSecond = Integer.parseInt(nodeText);
                     timeState.zoomIterations = (int) ((Math.log(pixelSecond / 100.0) / Math.log(2)) * 32.0);
                 }
-                break;
-                case "zoomIterations":
+                case "zoomIterations" ->
                     timeState.zoomIterations = Integer.parseInt(nodeText);
-                case "snapEnabled":
+                case "snapEnabled" ->
                     timeState.snapEnabled = Boolean.parseBoolean(nodeText);
-                    break;
-                case "snapValue":
+                case "snapValue" ->
                     timeState.snapValue = Double.parseDouble(nodeText);
-                    break;
-                case "timeDisplay":
+                case "timeDisplay" ->
                     timeState.timeDisplay = Integer.parseInt(nodeText);
-                    break;
             }
         }
 
