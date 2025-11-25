@@ -76,12 +76,10 @@ public class ClojureLibraryEntry implements BlueDataObject {
             final String nodeText = node.getTextString();
 
             switch (node.getName()) {
-                case "coordinates":
+                case "coordinates" ->
                     lib.setDependencyCoordinates(nodeText);
-                    break;
-                case "version":
+                case "version" ->
                     lib.setVersion(nodeText);
-                    break;
             }
         }
 

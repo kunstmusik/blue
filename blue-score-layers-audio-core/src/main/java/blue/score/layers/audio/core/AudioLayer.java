@@ -100,12 +100,12 @@ public class AudioLayer extends ArrayList<AudioClip>
 
     @Override
     public boolean remove(ScoreObject o) {
-        if (!(o instanceof AudioClip)) {
+        if (!(o instanceof AudioClip audioClip)) {
             return false;
         }
         boolean retVal = super.remove(o);
         if (retVal) {
-            fireAudioClipRemoved((AudioClip) o);
+            fireAudioClipRemoved(audioClip);
         }
         return retVal;
     }
@@ -201,9 +201,9 @@ public class AudioLayer extends ArrayList<AudioClip>
 
         layer.setName(data.getAttributeValue("name"));
         layer.setMuted(
-                Boolean.valueOf(data.getAttributeValue("muted")).booleanValue());
+                Boolean.parseBoolean(data.getAttributeValue("muted")));
         layer.setSolo(
-                Boolean.valueOf(data.getAttributeValue("solo")).booleanValue());
+                Boolean.parseBoolean(data.getAttributeValue("solo")));
 
         if (data.getAttribute("uniqueId") != null) {
             layer.uniqueId = data.getAttributeValue("uniqueId");

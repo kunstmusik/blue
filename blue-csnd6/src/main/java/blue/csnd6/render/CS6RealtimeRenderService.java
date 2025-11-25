@@ -106,7 +106,7 @@ public class CS6RealtimeRenderService implements RealtimeRenderService, PlayMode
 
         io.getOut().append("Render Command (");
 
-        List<String> argsList = new ArrayList<String>(
+        List<String> argsList = new ArrayList<>(
                 Arrays.asList(args));
 
         for (String arg : args) {
@@ -312,7 +312,7 @@ public class CS6RealtimeRenderService implements RealtimeRenderService, PlayMode
     @Override
     public void addPlayModeListener(PlayModeListener listener) {
         if (listeners == null) {
-            listeners = new Vector<PlayModeListener>();
+            listeners = new Vector<>();
         }
 
         listeners.add(listener);
@@ -395,7 +395,7 @@ public class CS6RealtimeRenderService implements RealtimeRenderService, PlayMode
         private final Csound csound;
         private boolean keepRunning = true;
         private PlayModeListener playModeListener;
-        private ArrayList parameters;
+        private ArrayList<Parameter> parameters;
         private ArrayList<StringChannel> stringChannels;
         private TempoMap tempoMap;
         private double startTime;
@@ -410,7 +410,7 @@ public class CS6RealtimeRenderService implements RealtimeRenderService, PlayMode
         public APIRunnerThread(BlueData blueData,
                 Csound csound,
                 PlayModeListener playModeListener,
-                ArrayList parameters,
+                ArrayList<Parameter> parameters,
                 ArrayList<StringChannel> stringChannels,
                 TempoMap tempoMap,
                 double startTime,
@@ -500,12 +500,8 @@ public class CS6RealtimeRenderService implements RealtimeRenderService, PlayMode
                 for (int i = buffer.getReadStart(); i < last; i++) {
                     Message m = buffer.getMessage(i % capacity);
                     switch (m.messageType) {
-                        case 0:
-                            csound.eventString(m.payload, 0);
-                            break;
-                        case 1:
-                            csound.compileOrc(m.payload, 0);
-                            break;
+                        case 0 -> csound.eventString(m.payload, 0);
+                        case 1 -> csound.compileOrc(m.payload, 0);
                     }
 
                 }

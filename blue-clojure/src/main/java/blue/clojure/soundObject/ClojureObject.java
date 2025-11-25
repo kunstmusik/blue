@@ -107,7 +107,7 @@ public class ClojureObject extends AbstractSoundObject implements
         File currentDirFile = BlueSystem.getCurrentProjectDirectory();
 
         double duration = getSubjectiveDuration().toBeats(context);
-        
+
         HashMap<String, Object> initObjects = new HashMap<>();
         initObjects.put("score", "");
         initObjects.put("blueDuration", duration);
@@ -138,7 +138,7 @@ public class ClojureObject extends AbstractSoundObject implements
         }
 
         double startTime = getStartTime().toBeats(context);
-        
+
         ScoreUtilities.applyTimeBehavior(nl, this.getTimeBehavior(), duration, this.getRepeatPoint());
         ScoreUtilities.setScoreStart(nl, startTime);
         return nl;
@@ -200,8 +200,7 @@ public class ClojureObject extends AbstractSoundObject implements
         String olpString = data.getAttributeValue("onLoadProcessable");
 
         if (olpString != null) {
-            clojureObj.setOnLoadProcessable(
-                    Boolean.valueOf(olpString).booleanValue());
+            clojureObj.setOnLoadProcessable(Boolean.parseBoolean(olpString));
         }
 
         return clojureObj;

@@ -49,40 +49,20 @@ public class DriverUtilities {
             return null;
         }
 
-        List<DeviceInfo> devices = null;
-
         String driverLow = driver.toLowerCase().trim();
 
-        switch (driverLow) {
-            case "pulse":
-                devices = getAudioDevicesPulse(isInput);
-                break;
-
-            case "alsa":
-                devices = getAudioDevicesAlsa(isInput);
-                break;
-
-            case "jack":
-                devices = getAudioDevicesJack(csoundCommand, service, isInput);
-                break;
-
-            case "portaudio":
-            case "pa":
-            case "pa_cb":
-            case "pa_bl":
-            case "winmm":
-            case "mme":
-            case "coreaudio":
-            case "auhal":
-                devices = getAudioDevicesGeneric(csoundCommand, driver,
-                        service,
-                        isInput);
-                break;
-
-            default:
-                devices = null;
-
-        }
+        List<DeviceInfo> devices = switch (driverLow) {
+            case "pulse" ->
+                getAudioDevicesPulse(isInput);
+            case "alsa" ->
+                getAudioDevicesAlsa(isInput);
+            case "jack" ->
+                getAudioDevicesJack(csoundCommand, service, isInput);
+            case "portaudio", "pa", "pa_cb", "pa_bl", "winmm", "mme", "coreaudio", "auhal" ->
+                getAudioDevicesGeneric(csoundCommand, driver, service, isInput);
+            default ->
+                null;
+        };
 
         return devices;
     }
@@ -90,19 +70,16 @@ public class DriverUtilities {
     public static List<DeviceInfo> getMidiDevices(String csoundCommand,
             String driver, DiskRenderService service, boolean isInput) {
 
-        List<DeviceInfo> devices;
         String driverLow = driver.toLowerCase().trim();
 
-        switch (driverLow) {
-            case "alsa":
-                devices = getMidiDevicesAlsa(isInput);
-                break;
-            case "alsaseq":
-                devices = getMidiDevicesAlsaSeq(isInput);
-                break;
-            default:
-                devices = getMidiDevicesGeneric(csoundCommand, driver, service, isInput);
-        }
+        List<DeviceInfo> devices = switch (driverLow) {
+            case "alsa" ->
+                getMidiDevicesAlsa(isInput);
+            case "alsaseq" ->
+                getMidiDevicesAlsaSeq(isInput);
+            default ->
+                getMidiDevicesGeneric(csoundCommand, driver, service, isInput);
+        };
 
         return devices;
     }
@@ -125,8 +102,8 @@ public class DriverUtilities {
         }
         return devices;
     }
-    
-      protected static List<DeviceInfo> getMidiDevicesAlsaSeq(boolean isInput) {
+
+    protected static List<DeviceInfo> getMidiDevicesAlsaSeq(boolean isInput) {
 
         List<DeviceInfo> devices = null;
 
@@ -136,7 +113,7 @@ public class DriverUtilities {
 
         try {
             String values = TextUtilities.getTextFromFile(f);
-            devices =  parseAlsaMidiDevices(values, portType, "%d:%d");
+            devices = parseAlsaMidiDevices(values, portType, "%d:%d");
         } catch (IOException | NumberFormatException ex) {
 //            ex.printStackTrace();
             return null;
@@ -156,7 +133,7 @@ public class DriverUtilities {
         return parseCsoundMidiOutput(output, isInput);
     }
 
-    protected static List<DeviceInfo> parseAlsaMidiDevices(String seqClients, 
+    protected static List<DeviceInfo> parseAlsaMidiDevices(String seqClients,
             String portType, String deviceIdFormat) {
 
         if (seqClients == null || seqClients.isEmpty()
@@ -552,7 +529,7 @@ public class DriverUtilities {
                 String chn = port.substring(end);
 
                 if (portMap.containsKey(portName)) {
-                    portMap.put(portName, 
+                    portMap.put(portName,
                             portMap.get(portName) + 1);
                 } else {
                     portMap.put(portName, 1);

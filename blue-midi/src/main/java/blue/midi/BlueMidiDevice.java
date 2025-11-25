@@ -109,8 +109,7 @@ public class BlueMidiDevice {
 
     @Override
     public final boolean equals(Object obj) {
-        if (obj instanceof BlueMidiDevice) {
-            BlueMidiDevice dev2 = (BlueMidiDevice) obj;
+        if (obj instanceof BlueMidiDevice dev2) {
             MidiDevice.Info info2 = dev2.info;
 
             return (info.getDescription().equals(info2.getDescription())

@@ -134,9 +134,9 @@ public class PatternLayer implements Layer {
 
         layer.setName(data.getAttributeValue("name"));
         layer.setMuted(
-                Boolean.valueOf(data.getAttributeValue("muted")).booleanValue());
+                Boolean.parseBoolean(data.getAttributeValue("muted")));
         layer.setSolo(
-                Boolean.valueOf(data.getAttributeValue("solo")).booleanValue());
+                Boolean.parseBoolean(data.getAttributeValue("solo")));
 
         Elements nodes = data.getElements();
 

@@ -28,12 +28,11 @@ import org.openide.util.lookup.ServiceProvider;
  *
  * @author stevenyi
  */
-
 @ServiceProvider(service = RealtimeRenderServiceFactory.class, position = 100)
 public class CS6RealtimeRenderServiceFactory implements RealtimeRenderServiceFactory {
 
     @Override
-    public Class getRenderServiceClass() {
+    public Class<? extends RealtimeRenderService> getRenderServiceClass() {
         return CS6RealtimeRenderService.class;
     }
 
@@ -42,7 +41,7 @@ public class CS6RealtimeRenderServiceFactory implements RealtimeRenderServiceFac
         return new CS6RealtimeRenderService();
     }
 
-    @Override 
+    @Override
     public String toString() {
         return "Csound 7 API";
     }

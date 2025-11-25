@@ -37,8 +37,7 @@ public class WaveformCacheKey {
 
     @Override
     public boolean equals(Object obj) {
-        if(obj instanceof WaveformCacheKey) {
-            WaveformCacheKey that = (WaveformCacheKey)obj;
+        if(obj instanceof WaveformCacheKey that) {
             return  this.fileName.equals(that.fileName) && 
                     this.checksum == that.checksum &&
                     this.pixelSeconds == that.pixelSeconds;

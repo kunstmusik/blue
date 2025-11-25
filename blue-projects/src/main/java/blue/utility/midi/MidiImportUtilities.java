@@ -154,14 +154,11 @@ public class MidiImportUtilities {
             MidiEvent me = track.get(j);
             MidiMessage message = me.getMessage();
 
-            if (message instanceof ShortMessage) {
-
-                ShortMessage shortMsg = (ShortMessage) message;
+            if (message instanceof ShortMessage shortMsg) {
                 int noteNum, velocity;
                 MNote n;
 
                 double time = (me.getTick() / ticksLength) * divType;
-
 
                 switch (shortMsg.getCommand()) {
                     case ShortMessage.NOTE_ON:
@@ -215,7 +212,6 @@ public class MidiImportUtilities {
         return nl;
     }
 
-
     private static MidiImportSettings getMidiImportSettings(Track[] tracks) {
         MidiImportSettings settings = new MidiImportSettings();
 
@@ -229,11 +225,8 @@ public class MidiImportUtilities {
                 MidiEvent me = track.get(j);
                 MidiMessage message = me.getMessage();
 
-                if (message instanceof ShortMessage) {
-
-                    ShortMessage shortMsg = (ShortMessage) message;
+                if (message instanceof ShortMessage shortMsg) {
                     int velocity;
-                    MNote n;
 
                     switch (shortMsg.getCommand()) {
                         case ShortMessage.NOTE_ON:
@@ -287,8 +280,8 @@ public class MidiImportUtilities {
 //            e.printStackTrace();
 //        }
 //    }
-
     private static class MNote {
+
         public int velocity = -1;
 
         public double start = -1.0f;

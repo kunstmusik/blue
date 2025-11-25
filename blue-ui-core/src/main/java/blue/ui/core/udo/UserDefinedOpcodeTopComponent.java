@@ -64,7 +64,7 @@ public final class UserDefinedOpcodeTopComponent extends TopComponent {
 //        setIcon(Utilities.loadImage(ICON_PATH, true));
 
           uDOLibraryPanel1.addSelectionListener((SelectionEvent e) -> {
-              Object obj = e.getSelectedItem();
+              Object obj = e.selectedItem();
               
               isChanging = true;
               

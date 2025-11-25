@@ -231,11 +231,9 @@ public final class OpenExampleProjectAction implements ActionListener {
 
         for (LayerGroup<?> layerGroup : score) {
 
-            if (!(layerGroup instanceof PolyObject)) {
+            if (!(layerGroup instanceof PolyObject pObj)) {
                 continue;
             }
-
-            PolyObject pObj = (PolyObject) layerGroup;
 
             checkAudioFiles(pObj, filesList);
         }
@@ -268,11 +266,9 @@ public final class OpenExampleProjectAction implements ActionListener {
 
                 for (LayerGroup<?> layerGroup : score) {
 
-                    if (!(layerGroup instanceof PolyObject)) {
+                    if (!(layerGroup instanceof PolyObject pObj)) {
                         continue;
                     }
-
-                    PolyObject pObj = (PolyObject) layerGroup;
 
                     reconcileAudioFiles(pObj, map);
                 }
@@ -283,9 +279,7 @@ public final class OpenExampleProjectAction implements ActionListener {
 
     private static void checkAudioFiles(PolyObject pObj, ArrayList<String> filesList) {
         for (SoundObject sObj : pObj.getSoundObjects(true)) {
-            if (sObj instanceof AudioFile) {
-                AudioFile af = (AudioFile) sObj;
-
+            if (sObj instanceof AudioFile af) {
                 String soundFileName = af.getSoundFileName();
                 if (soundFileName == null) {
                     continue;
@@ -296,24 +290,22 @@ public final class OpenExampleProjectAction implements ActionListener {
                         filesList.add(soundFileName);
                     }
                 }
-            } else if (sObj instanceof PolyObject) {
-                checkAudioFiles((PolyObject) sObj, filesList);
+            } else if (sObj instanceof PolyObject polyObj) {
+                checkAudioFiles(polyObj, filesList);
             }
         }
     }
 
     private static void reconcileAudioFiles(PolyObject pObj, Map<String, String> map) {
         for (SoundObject sObj : pObj.getSoundObjects(true)) {
-            if (sObj instanceof AudioFile) {
-                AudioFile af = (AudioFile) sObj;
-
+            if (sObj instanceof AudioFile af) {
                 String soundFileName = af.getSoundFileName();
 
                 if (map.containsKey(soundFileName)) {
                     af.setSoundFileName(map.get(soundFileName));
                 }
-            } else if (sObj instanceof PolyObject) {
-                reconcileAudioFiles((PolyObject) sObj, map);
+            } else if (sObj instanceof PolyObject polyObj) {
+                reconcileAudioFiles(polyObj, map);
             }
         }
 

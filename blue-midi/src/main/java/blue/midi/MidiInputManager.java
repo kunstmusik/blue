@@ -67,7 +67,7 @@ public class MidiInputManager implements Receiver, ChangeListener {
     public void rescan() {
         MidiDevice.Info[] infoList = MidiSystem.getMidiDeviceInfo();
 
-        Vector<BlueMidiDevice> newItems = new Vector<>();
+        Vector<BlueMidiDevice> newItems = new Vector<>();;
 
         for (MidiDevice.Info info : infoList) {
             try {

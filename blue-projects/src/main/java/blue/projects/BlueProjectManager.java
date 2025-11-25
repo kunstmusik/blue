@@ -85,7 +85,6 @@ public class BlueProjectManager {
         BlueProject project = createNewProject();
 
         // TODO - initialize project to defaults from options
-
         setCurrentProject(project);
 
         FileChooserManager fcm = FileChooserManager.getDefault();
@@ -95,25 +94,24 @@ public class BlueProjectManager {
                 new FileNameExtensionFilter("Blue Project File", "blue"));
         fcm.setSelectedFile(this.getClass(),
                 new File(
-                GeneralSettings.getInstance().getDefaultDirectory() + File.separator + "default.blue"));
+                        GeneralSettings.getInstance().getDefaultDirectory() + File.separator + "default.blue"));
     }
 
     public static BlueProject createNewProject() {
         final BlueData blueData = new BlueData();
         BlueProject project = new BlueProject(blueData, null);
 
-        for(LayerGroup<?> layerGroup : blueData.getScore()) {
-            if(layerGroup instanceof PolyObject) {
-                PolyObject pObj = (PolyObject)layerGroup;
+        for (LayerGroup<?> layerGroup : blueData.getScore()) {
+            if (layerGroup instanceof PolyObject pObj) {
                 pObj.setDefaultHeightIndex(
                         ProjectDefaultsSettings.getInstance().layerHeightDefault);
-                
-                if(pObj.size() == 0) {
+
+                if (pObj.size() == 0) {
                     pObj.newLayerAt(-1);
                 }
             }
         }
-        
+
         blueData.getMixer().setEnabled(
                 ProjectDefaultsSettings.getInstance().mixerEnabled);
 
@@ -141,7 +139,6 @@ public class BlueProjectManager {
         proj.advancedSettings = rtSettings.advancedSettings;
 
         // proj.commandLine = ProgramOptions.getDefaultCommandline();
-
         DiskRenderSettings diskSettings = DiskRenderSettings.getInstance();
 
         proj.diskSampleRate = diskSettings.defaultSr;
@@ -180,23 +177,23 @@ public class BlueProjectManager {
             } else {
                 BlueSystem.setCurrentProjectDirectory(null);
             }
-            
+
             // Set TimeContext for the application
             // This makes TimeContext available for all operations
             TimeContextManager.setContext(project.getData().getTimeContext());
-            
+
             final Score score = project.getData().getScore();
-          
-            Collection<? extends ProjectPlugin> plugins =
-                    Lookups.forPath("blue/project/plugins").lookupAll(ProjectPlugin.class);
-            for(ProjectPlugin plugin : plugins) {
+
+            Collection<? extends ProjectPlugin> plugins
+                    = Lookups.forPath("blue/project/plugins").lookupAll(ProjectPlugin.class);
+            for (ProjectPlugin plugin : plugins) {
                 try {
                     plugin.preRender(project.getData());
                 } catch (Exception e) {
                     Exceptions.printStackTrace(e);
                 }
             }
-            
+
             new Thread(() -> {
                 try {
                     // Set TimeContext for this thread's operation
@@ -217,8 +214,7 @@ public class BlueProjectManager {
                     Exceptions.printStackTrace(ex);
                 }
             }).start();
-            
-            
+
         }
 
         fireUpdatedCurrentProject(previousProject, currentProject);
@@ -285,7 +281,7 @@ public class BlueProjectManager {
         }
     }
 
-    protected synchronized void fireUpdatedCurrentProject(BlueProject oldProject, 
+    protected synchronized void fireUpdatedCurrentProject(BlueProject oldProject,
             BlueProject newProject) {
 
         if (listeners == null || listeners.size() == 0) {
@@ -357,11 +353,11 @@ public class BlueProjectManager {
         FileChooserManager fcm = FileChooserManager.getDefault();
 
         if (getCurrentProject().getDataFile() != null) {
-           fcm.setSelectedFile(this.getClass(), getCurrentProject().getDataFile());
+            fcm.setSelectedFile(this.getClass(), getCurrentProject().getDataFile());
         } else {
-           fcm.setSelectedFile(this.getClass(),
-                new File(
-                GeneralSettings.getInstance().getDefaultDirectory() + File.separator + "default.blue"));
+            fcm.setSelectedFile(this.getClass(),
+                    new File(
+                            GeneralSettings.getInstance().getDefaultDirectory() + File.separator + "default.blue"));
         }
 
         File rValue = fcm.showSaveDialog(this.getClass(),
@@ -375,9 +371,9 @@ public class BlueProjectManager {
 
             if (temp.exists()) {
                 NotifyDescriptor descriptor = new NotifyDescriptor.Confirmation(
-                "Are you sure you would like to overwite the project file: " +
-                 temp.getAbsolutePath(),
-                "Overwrite Project?");
+                        "Are you sure you would like to overwite the project file: "
+                        + temp.getAbsolutePath(),
+                        "Overwrite Project?");
 
                 Object retVal = DialogDisplayer.getDefault().notify(descriptor);
 
@@ -411,13 +407,13 @@ public class BlueProjectManager {
 //                blueMenuBar.resetRecentFiles();
 //                ProgramOptions.save();
 //
-RecentProjectsList.getInstance().addFile(temp.getAbsolutePath());
+            RecentProjectsList.getInstance().addFile(temp.getAbsolutePath());
 // fileName = temp;
 
-getCurrentProject().setDataFile(temp);
-BlueSystem.setCurrentProjectDirectory(temp.getParentFile());
-temp = null;
-fireProjectFileChanged();
+            getCurrentProject().setDataFile(temp);
+            BlueSystem.setCurrentProjectDirectory(temp.getParentFile());
+            temp = null;
+            fireProjectFileChanged();
 
 //                this.setTitle(BlueConstants.getVersion() + " - " + currentDataFile.dataFile.
 //                        getName());
@@ -477,7 +473,9 @@ fireProjectFileChanged();
 
             return (saveAs());
 
-        } else return retVal == NotifyDescriptor.NO_OPTION;
+        } else {
+            return retVal == NotifyDescriptor.NO_OPTION;
+        }
 
     }
 
@@ -508,6 +506,5 @@ fireProjectFileChanged();
 
         setCurrentProject(projects.get(index));
     }
-
 
 }

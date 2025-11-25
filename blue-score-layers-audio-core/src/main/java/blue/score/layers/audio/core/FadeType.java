@@ -44,18 +44,13 @@ public enum FadeType {
    }
 
    public static FadeType fromString(String type) {
-        switch (type) {
-            case "Linear":
-                return LINEAR;
-            case "Constant Power":
-                return CONSTANT_POWER;
-            case "Symmetric":
-                return SYMMETRIC;
-            case "Fast":
-                return FAST;
-            case "Slow":
-                return SLOW;
-        }
-        return null;
+        return switch (type) {
+            case "Linear" -> LINEAR;
+            case "Constant Power" -> CONSTANT_POWER;
+            case "Symmetric" -> SYMMETRIC;
+            case "Fast" -> FAST;
+            case "Slow" -> SLOW;
+            default -> null;
+        };
     }
 }

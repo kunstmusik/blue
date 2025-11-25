@@ -61,8 +61,7 @@ public class BlueButtonBorder extends AbstractBorder implements UIResource {
     @Override
     public void paintBorder(Component c, Graphics g, int x, int y, int w, int h) {
 
-        if (c instanceof JToggleButton) {
-            JToggleButton button = (JToggleButton) c;
+        if (c instanceof JToggleButton button) {
             ButtonModel model = button.getModel();
             
             // Optimizations are welcome here!

@@ -108,16 +108,14 @@ public class ClojureObjectEditor extends ScoreObjectEditor {
             return;
         }
 
-        if (!(sObj instanceof ClojureObject)) {            
+        if (!(sObj instanceof ClojureObject tempPObj)) {            
             codeEditor.setText(
                     "[ERROR] not instance " +
-                    "of ClojoureSOundObject");
+                    "of ClojureSoundObject");
             codeEditor.getJEditorPane().setEnabled(false);
             processOnLoadCheckBox.setEnabled(false);
             return;
         }
-
-        ClojureObject tempPObj = (ClojureObject) sObj;
 
         codeEditor.setText(tempPObj.getClojureCode());
         codeEditor.getJEditorPane().setEnabled(true);

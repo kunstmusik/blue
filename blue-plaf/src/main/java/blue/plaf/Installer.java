@@ -283,8 +283,7 @@ public class Installer extends ModuleInstall {
                 //System.out.println("MAP: " + key);
                 Object val = UIManager.getLookAndFeelDefaults().get(key);
 
-                if (val instanceof InputMapUIResource) {
-                    InputMapUIResource map = (InputMapUIResource) val;
+                if (val instanceof InputMapUIResource map) {
 
                     if(map == null || map.allKeys() == null) {
                         return;

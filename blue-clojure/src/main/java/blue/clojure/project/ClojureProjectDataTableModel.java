@@ -83,13 +83,11 @@ public class ClojureProjectDataTableModel extends AbstractTableModel implements 
         
         var entry = data.libraryList().get(rowIndex);
         
-        switch(columnIndex) {
-            case 0:
-                return entry.getDependencyCoordinates();
-            case 1:
-                return entry.getVersion();
-        }
-        return null;
+        return switch(columnIndex) {
+            case 0 -> entry.getDependencyCoordinates();
+            case 1 -> entry.getVersion();
+            default -> null;
+        };
     }
 
     @Override
@@ -99,12 +97,8 @@ public class ClojureProjectDataTableModel extends AbstractTableModel implements 
         var entry = data.libraryList().get(rowIndex);
         
         switch(columnIndex) {
-            case 0:
-                entry.setDependencyCoordinates((String)aValue);
-                break;
-            case 1:
-                entry.setVersion((String)aValue);
-                break;
+            case 0 -> entry.setDependencyCoordinates((String)aValue);
+            case 1 -> entry.setVersion((String)aValue);
         }
     }
 

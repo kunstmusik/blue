@@ -104,7 +104,7 @@ class BlueBumps implements Icon {
 
     @Override
     public void paintIcon(Component c, Graphics g, int x, int y) {
-        GraphicsConfiguration gc = (g instanceof Graphics2D) ? ((Graphics2D) g)
+        GraphicsConfiguration gc = (g instanceof Graphics2D g2d) ? g2d
                 .getDeviceConfiguration()
                 : null;
 

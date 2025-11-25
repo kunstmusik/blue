@@ -168,11 +168,9 @@ public class AutomationManager implements
 
                 for (LayerGroup<? extends Layer> layerGroup : score) {
 
-                    if (!(layerGroup instanceof PolyObject)) {
+                    if (!(layerGroup instanceof PolyObject pObj)) {
                         continue;
                     }
-
-                    PolyObject pObj = (PolyObject) layerGroup;
 
                     for (SoundLayer layer : pObj) {
                         if (layer.getAutomationParameters() == paramIdList) {
