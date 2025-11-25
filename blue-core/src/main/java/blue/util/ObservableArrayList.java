@@ -76,6 +76,7 @@ public class ObservableArrayList<T> extends ArrayList<T> implements ObservableLi
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public boolean remove(Object o) {
         int index = indexOf(o);
         boolean retVal = super.remove(o);

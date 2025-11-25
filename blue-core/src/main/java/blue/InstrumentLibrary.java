@@ -84,7 +84,7 @@ public class InstrumentLibrary implements TreeModel {
     }
 
     private Object[] getPathForObject(Object obj) {
-        Vector v = new Vector();
+        Vector<Object> v = new Vector<>();
         getPathForObject(getRootInstrumentCategory(), obj, v);
 
         Collections.reverse(v);
@@ -93,7 +93,7 @@ public class InstrumentLibrary implements TreeModel {
     }
 
     private Object getPathForObject(InstrumentCategory current, Object obj,
-            Vector v) {
+            Vector<Object> v) {
 
         if (current == obj) {
             return v;

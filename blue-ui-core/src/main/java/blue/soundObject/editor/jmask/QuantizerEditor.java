@@ -72,6 +72,7 @@ public class QuantizerEditor extends javax.swing.JPanel implements DurationSetta
      */
     // <editor-fold defaultstate="collapsed" desc=" Generated Code
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
+    @SuppressWarnings({"unchecked", "rawtypes"})
     private void initComponents() {
 
         gridSizeButtonGroup = new javax.swing.ButtonGroup();

@@ -42,7 +42,7 @@ import javax.swing.event.ListDataListener;
 public class BSBSubChannelDropdownView extends BSBObjectView<BSBSubChannelDropdown> {
 
     SubChannelComboBoxModel model;
-    JComboBox comboBox;
+    JComboBox<String> comboBox;
     ActionListener updateIndexListener;
     boolean updating = false;
     private ChangeListener<String> channelListener;
@@ -53,7 +53,7 @@ public class BSBSubChannelDropdownView extends BSBObjectView<BSBSubChannelDropdo
         this.setLayout(null);
 
         model = new SubChannelComboBoxModel();
-        comboBox = new JComboBox(model) {
+        comboBox = new JComboBox<>(model) {
             @Override
             public String getToolTipText() {
                 return shouldShowToolTip() ? bsbObj.getComment() : null;
@@ -103,12 +103,12 @@ public class BSBSubChannelDropdownView extends BSBObjectView<BSBSubChannelDropdo
 
 }
 
-class SubChannelComboBoxModel implements ComboBoxModel, ChannelListListener {
+class SubChannelComboBoxModel implements ComboBoxModel<String>, ChannelListListener {
 
     List<ListDataListener> listeners = Collections.synchronizedList(
             new ArrayList<ListDataListener>());
     Mixer mixer;
-    Object selected = null;
+    String selected = null;
 
     public SubChannelComboBoxModel() {
         this.mixer = BlueProjectManager.getInstance().getCurrentBlueData().getMixer();
@@ -126,7 +126,7 @@ class SubChannelComboBoxModel implements ComboBoxModel, ChannelListListener {
      * @see javax.swing.ComboBoxModel#getSelectedItem()
      */
     @Override
-    public Object getSelectedItem() {
+    public String getSelectedItem() {
         return selected;
 
     }
@@ -138,7 +138,7 @@ class SubChannelComboBoxModel implements ComboBoxModel, ChannelListListener {
      */
     @Override
     public void setSelectedItem(Object anItem) {
-        this.selected = anItem;
+        this.selected = (String) anItem;
 
         ListDataEvent lde = new ListDataEvent(this,
                 ListDataEvent.CONTENTS_CHANGED, -1, -1);
@@ -163,7 +163,7 @@ class SubChannelComboBoxModel implements ComboBoxModel, ChannelListListener {
      * @see javax.swing.ListModel#getElementAt(int)
      */
     @Override
-    public Object getElementAt(int index) {
+    public String getElementAt(int index) {
         if (index == 0) {
             return Channel.MASTER;
         }

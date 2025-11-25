@@ -37,6 +37,7 @@ public class BSBVSliderBankView extends BSBObjectView<BSBVSliderBank> implements
     private static final int VALUE_DISPLAY_WIDTH = 50;
 
     private final ListChangeListener<BSBVSlider> sliderNumListener;
+    @SuppressWarnings("rawtypes")
     private final ChangeListener sizeChangeListener;
 
     /**
@@ -78,6 +79,7 @@ public class BSBVSliderBankView extends BSBObjectView<BSBVSliderBank> implements
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public void addNotify() {
         super.addNotify();
         bsbObj.getSliders().addListener(sliderNumListener);
@@ -87,6 +89,7 @@ public class BSBVSliderBankView extends BSBObjectView<BSBVSliderBank> implements
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public void removeNotify() {
         super.removeNotify();
         bsbObj.getSliders().removeListener(sliderNumListener);

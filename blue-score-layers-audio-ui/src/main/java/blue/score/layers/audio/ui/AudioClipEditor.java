@@ -40,6 +40,7 @@ public class AudioClipEditor extends ScoreObjectEditor {
 
     volatile boolean isUpdating = false;
 
+    @SuppressWarnings("rawtypes")
     private ChangeListener cl;
 
     /**
@@ -436,6 +437,7 @@ public class AudioClipEditor extends ScoreObjectEditor {
     }//GEN-LAST:event_loopingCheckboxActionPerformed
 
     @Override
+    @SuppressWarnings("unchecked")
     public void editScoreObject(ScoreObject sObj) {
         final AudioClip newClip = (AudioClip) sObj;
 

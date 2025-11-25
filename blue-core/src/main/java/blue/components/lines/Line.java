@@ -820,7 +820,7 @@ public class Line implements TableModel, ChangeListener, Iterable<LinePoint> {
             return false;
         }
 
-        ArrayList temp = new ArrayList();
+        ArrayList<LinePoint> temp = new ArrayList<>();
 
         StringTokenizer lines = new StringTokenizer(text, "\n");
 

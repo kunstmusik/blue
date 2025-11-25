@@ -88,7 +88,7 @@ public class UserInstrumentLibrary extends JComponent {
 
     JTree libraryTree = new JTree();
 
-    ArrayList listeners = new ArrayList();
+    ArrayList<SelectionListener<Object>> listeners = new ArrayList<>();
 
     public UserInstrumentLibrary() {
         this.setLayout(new BorderLayout());
@@ -161,7 +161,7 @@ public class UserInstrumentLibrary extends JComponent {
 
                     showPopup(userObject, (int) p.getX(), (int) p.getY());
                 } else {
-                    SelectionEvent se = new SelectionEvent(userObject,
+                    SelectionEvent<Object> se = new SelectionEvent<>(userObject,
                             SelectionEvent.SELECTION_SINGLE);
 
                     fireSelected(se);
@@ -225,21 +225,18 @@ public class UserInstrumentLibrary extends JComponent {
         libraryTree.setModel(iLibrary);
     }
 
-    public void addSelectionListener(SelectionListener listener) {
+    public void addSelectionListener(SelectionListener<Object> listener) {
         listeners.add(listener);
     }
 
-    public void removeSelectionListener(SelectionListener listener) {
+    public void removeSelectionListener(SelectionListener<Object> listener) {
         listeners.remove(listener);
     }
 
-    public void fireSelected(SelectionEvent se) {
-
-        for (Object o : listeners) {
-            SelectionListener listener = (SelectionListener) o;
+    public void fireSelected(SelectionEvent<Object> se) {
+        for (SelectionListener<Object> listener : listeners) {
             listener.selectionPerformed(se);
         }
-
     }
 
     protected void cutNode() {

@@ -74,6 +74,7 @@ public class AccumulatorEditor extends javax.swing.JPanel implements DurationSet
      */
     // <editor-fold defaultstate="collapsed" desc=" Generated Code
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
+    @SuppressWarnings({"unchecked", "rawtypes"})
     private void initComponents() {
 
         highButtonGroup = new javax.swing.ButtonGroup();

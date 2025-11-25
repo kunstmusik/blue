@@ -30,16 +30,15 @@ public class BlueComboBoxUI extends MetalComboBoxUI {
     
  
     @Override
-    protected ListCellRenderer createRenderer() {
-        ListCellRenderer c =  new BlueComboBoxRenderer();
-        return c;
+    protected ListCellRenderer<Object> createRenderer() {
+        return new BlueComboBoxRenderer();
     }
     
     public static class BlueComboBoxRenderer extends BasicComboBoxRenderer.UIResource {
         
         @Override
         public Component getListCellRendererComponent(
-                                                 JList list, 
+                                                 JList<?> list, 
                                                  Object value,
                                                  int index, 
                                                  boolean isSelected, 

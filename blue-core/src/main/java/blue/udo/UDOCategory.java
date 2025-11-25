@@ -147,7 +147,7 @@ public class UDOCategory {
     /**
      * @param instruments The instruments to set.
      */
-    public void setUserDefinedOpcodes(ArrayList instruments) {
+    public void setUserDefinedOpcodes(ArrayList<UserDefinedOpcode> instruments) {
         this.udos = instruments;
     }
 
@@ -161,7 +161,7 @@ public class UDOCategory {
     /**
      * @param subCategories The subCategories to set.
      */
-    public void setSubCategories(ArrayList subCategories) {
+    public void setSubCategories(ArrayList<UDOCategory> subCategories) {
         this.subCategories = subCategories;
     }
 

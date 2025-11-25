@@ -53,7 +53,7 @@ public class Arrangement implements TableModel {
 
     private transient Vector<AutomatableCollectionListener> automatableCollectionListeners = null;
 
-    private transient HashMap compilationVariables;
+    private transient HashMap<String, Object> compilationVariables;
 
     private transient StringBuilder preGenerationCache = null;
 
@@ -315,7 +315,11 @@ public class Arrangement implements TableModel {
         return arrangement;
     }
 
-    public void setArrangement(ArrayList arrangement) {
+    /**
+     * @deprecated This method appears to be unused legacy code.
+     */
+    @Deprecated
+    public void setArrangement(ArrayList<InstrumentAssignment> arrangement) {
         this.arrangement = arrangement;
     }
 
@@ -822,7 +826,7 @@ public class Arrangement implements TableModel {
     }
 
     @Override
-    public Class getColumnClass(int columnIndex) {
+    public Class<?> getColumnClass(int columnIndex) {
         if (columnIndex == 0) {
             return Boolean.class;
         }
@@ -948,11 +952,7 @@ public class Arrangement implements TableModel {
 
     private void fireAutomatableAdded(Automatable automatable) {
         if (automatableCollectionListeners != null) {
-            Iterator iter = new Vector(automatableCollectionListeners).iterator();
-
-            while (iter.hasNext()) {
-                AutomatableCollectionListener listener = (AutomatableCollectionListener) iter.
-                        next();
+            for (AutomatableCollectionListener listener : new Vector<>(automatableCollectionListeners)) {
                 listener.automatableAdded(automatable);
             }
         }
@@ -960,10 +960,7 @@ public class Arrangement implements TableModel {
 
     private void fireAutomatableRemoved(Automatable automatable) {
         if (automatableCollectionListeners != null) {
-            Iterator iter = new Vector(automatableCollectionListeners).iterator();
-            while (iter.hasNext()) {
-                AutomatableCollectionListener listener = (AutomatableCollectionListener) iter.
-                        next();
+            for (AutomatableCollectionListener listener : new Vector<>(automatableCollectionListeners)) {
                 listener.automatableRemoved(automatable);
             }
         }

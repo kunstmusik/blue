@@ -84,7 +84,7 @@ public class UDOLibrary implements TreeModel {
     }
 
     private Object[] getPathForObject(Object obj) {
-        Vector v = new Vector();
+        Vector<Object> v = new Vector<>();
         getPathForObject(getRootUDOCategory(), obj, v);
 
         Collections.reverse(v);
@@ -92,7 +92,7 @@ public class UDOLibrary implements TreeModel {
         return v.toArray();
     }
 
-    private Object getPathForObject(UDOCategory current, Object obj, Vector v) {
+    private Object getPathForObject(UDOCategory current, Object obj, Vector<Object> v) {
 
         if (current == obj) {
             return v;

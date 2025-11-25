@@ -259,12 +259,7 @@ public final class SoundLayer extends ArrayList<SoundObject>
             return;
         }
 
-        Iterator iter = new Vector(propListeners).iterator();
-
-        while (iter.hasNext()) {
-            PropertyChangeListener listener = (PropertyChangeListener) iter
-                    .next();
-
+        for (PropertyChangeListener listener : new Vector<>(propListeners)) {
             listener.propertyChange(pce);
         }
     }
@@ -306,10 +301,7 @@ public final class SoundLayer extends ArrayList<SoundObject>
 
     private void fireSoundObjectAdded(SoundObject sObj) {
         if (layerListeners != null) {
-            Iterator iter = new Vector(layerListeners).iterator();
-
-            while (iter.hasNext()) {
-                SoundLayerListener listener = (SoundLayerListener) iter.next();
+            for (SoundLayerListener listener : new Vector<>(layerListeners)) {
                 listener.soundObjectAdded(this, sObj);
             }
         }
@@ -317,10 +309,7 @@ public final class SoundLayer extends ArrayList<SoundObject>
 
     private void fireSoundObjectRemoved(SoundObject sObj) {
         if (layerListeners != null) {
-            Iterator iter = new Vector(layerListeners).iterator();
-
-            while (iter.hasNext()) {
-                SoundLayerListener listener = (SoundLayerListener) iter.next();
+            for (SoundLayerListener listener : new Vector<>(layerListeners)) {
                 listener.soundObjectRemoved(this, sObj);
             }
         }

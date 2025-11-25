@@ -30,23 +30,15 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 
 public class ParameterIdList implements Iterable<String> {
 
-    private static final Comparator comparator = new Comparator() {
-        @Override
-        public int compare(Object o1, Object o2) {
-            String s1 = (String) o1;
-            String s2 = (String) o2;
-
-            return s1.compareToIgnoreCase(s2);
-        }
-    };
+    private static final Comparator<String> comparator = (s1, s2) -> s1.compareToIgnoreCase(s2);
 
     private final ArrayList<String> parameters;
 
     private int selectedIndex = -1;
 
-    transient Vector listListeners = null;
+    transient Vector<ListDataListener> listListeners = null;
 
-    transient Vector listSelectionListeners = null;
+    transient Vector<ListSelectionListener> listSelectionListeners = null;
 
     public ParameterIdList() {
         parameters = new ArrayList<>();
@@ -183,7 +175,7 @@ public class ParameterIdList implements Iterable<String> {
     /* LIST DATA LISTENER CODE */
     public void addListDataListener(ListDataListener l) {
         if (listListeners == null) {
-            listListeners = new Vector();
+            listListeners = new Vector<>();
         }
         
         if(!listListeners.contains(l)) {
@@ -202,10 +194,7 @@ public class ParameterIdList implements Iterable<String> {
             return;
         }
 
-        Iterator iter = new Vector(listListeners).iterator();
-
-        while (iter.hasNext()) {
-            ListDataListener listener = (ListDataListener) iter.next();
+        for (ListDataListener listener : new Vector<>(listListeners)) {
             listener.intervalAdded(lde);
         }
     }
@@ -215,10 +204,7 @@ public class ParameterIdList implements Iterable<String> {
             return;
         }
 
-        Iterator iter = new Vector(listListeners).iterator();
-
-        while (iter.hasNext()) {
-            ListDataListener listener = (ListDataListener) iter.next();
+        for (ListDataListener listener : new Vector<>(listListeners)) {
             listener.intervalRemoved(lde);
         }
     }
@@ -226,7 +212,7 @@ public class ParameterIdList implements Iterable<String> {
     /* LIST SELECTION LISTENER CODE */
     public void addListSelectionListener(ListSelectionListener listener) {
         if (listSelectionListeners == null) {
-            listSelectionListeners = new Vector();
+            listSelectionListeners = new Vector<>();
         }
 
         if (listSelectionListeners.contains(listener)) {
@@ -244,14 +230,10 @@ public class ParameterIdList implements Iterable<String> {
 
     private void fireListSelectionEvent(int index) {
         if (listSelectionListeners != null && listSelectionListeners.size() > 0) {
-            Iterator iter = new Vector(listSelectionListeners).iterator();
-
             ListSelectionEvent lse = new ListSelectionEvent(this, index, index,
                     false);
 
-            while (iter.hasNext()) {
-                ListSelectionListener listener = (ListSelectionListener) iter
-                        .next();
+            for (ListSelectionListener listener : new Vector<>(listSelectionListeners)) {
                 listener.valueChanged(lse);
             }
         }

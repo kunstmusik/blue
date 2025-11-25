@@ -38,7 +38,7 @@ public class Field implements ListModel {
 
     ArrayList<Parameter> parameters = new ArrayList<>();
 
-    private transient Vector listListeners = null;
+    private transient Vector<ListDataListener> listListeners = null;
 
     public Field() {
         this(true);
@@ -223,7 +223,7 @@ public class Field implements ListModel {
     @Override
     public void addListDataListener(ListDataListener l) {
         if (listListeners == null) {
-            listListeners = new Vector();
+            listListeners = new Vector<>();
         }
 
         listListeners.add(l);
@@ -241,10 +241,7 @@ public class Field implements ListModel {
             return;
         }
 
-        Iterator iter = new Vector(listListeners).iterator();
-
-        while (iter.hasNext()) {
-            ListDataListener listener = (ListDataListener) iter.next();
+        for (ListDataListener listener : new Vector<>(listListeners)) {
             listener.intervalAdded(lde);
         }
     }
@@ -254,10 +251,7 @@ public class Field implements ListModel {
             return;
         }
 
-        Iterator iter = new Vector(listListeners).iterator();
-
-        while (iter.hasNext()) {
-            ListDataListener listener = (ListDataListener) iter.next();
+        for (ListDataListener listener : new Vector<>(listListeners)) {
             listener.intervalRemoved(lde);
         }
     }
@@ -267,10 +261,7 @@ public class Field implements ListModel {
             return;
         }
 
-        Iterator iter = new Vector(listListeners).iterator();
-
-        while (iter.hasNext()) {
-            ListDataListener listener = (ListDataListener) iter.next();
+        for (ListDataListener listener : new Vector<>(listListeners)) {
             listener.contentsChanged(lde);
         }
     }

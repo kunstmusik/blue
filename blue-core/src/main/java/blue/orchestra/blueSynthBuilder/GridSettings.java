@@ -41,7 +41,7 @@ public class GridSettings {
 
     private final IntegerProperty width = new SimpleIntegerProperty(10);
     private final IntegerProperty height = new SimpleIntegerProperty(10);
-    private final ObjectProperty<GridStyle> gridStyle = new SimpleObjectProperty(GridStyle.DOT);
+    private final ObjectProperty<GridStyle> gridStyle = new SimpleObjectProperty<>(GridStyle.DOT);
     private final BooleanProperty snapEnabled = new SimpleBooleanProperty(true);
 
     public GridSettings() {

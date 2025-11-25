@@ -28,7 +28,7 @@ public class ModeManager {
 
     private ScoreMode mode = ScoreMode.SCORE;
 
-    private Vector listeners = null;
+    private Vector<ModeListener> listeners = null;
 
     private ModeManager() {
     }
@@ -71,7 +71,7 @@ public class ModeManager {
     /* Listener Code */
     public void addModeListener(ModeListener listener) {
         if (listeners == null) {
-            listeners = new Vector();
+            listeners = new Vector<>();
         }
         if (!listeners.contains(listener)) {
             listeners.add(listener);
@@ -86,10 +86,7 @@ public class ModeManager {
 
     public void fireModeChanged(ScoreMode mode) {
         if (listeners != null) {
-            Iterator iter = new Vector(listeners).iterator();
-
-            while (iter.hasNext()) {
-                ModeListener listener = (ModeListener) iter.next();
+            for (ModeListener listener : new Vector<>(listeners)) {
                 listener.modeChanged(mode);
             }
         }

@@ -36,7 +36,7 @@ public class MeasureMeterPair {
 
     public MeasureMeterPair(long measureNumber, Meter meter) {
         this.measureNumber = new SimpleLongProperty(measureNumber);
-        this.meter = new SimpleObjectProperty(meter);
+        this.meter = new SimpleObjectProperty<>(meter);
     }
 
     public MeasureMeterPair(MeasureMeterPair pair) {

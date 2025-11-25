@@ -35,7 +35,6 @@ import java.awt.event.ItemEvent;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
-import javafx.collections.ListChangeListener;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
@@ -63,8 +62,7 @@ public class AutomationPanel extends JPanel {
 
     LineCanvas lineView;
 
-    private ListChangeListener lcl;
-    private JComboBox lineSelectionDropdown;
+    private JComboBox<Line> lineSelectionDropdown;
     private LineListComboBoxModel lineListModel = new LineListComboBoxModel();
 
     Sound sound = null;
@@ -90,7 +88,7 @@ public class AutomationPanel extends JPanel {
         lineListModel.setLineList(lineList);
         lineListModel.setSelectedItem(lineList.size() > 0 ? lineList.get(0) : null);
 
-        lineSelectionDropdown = new JComboBox(lineListModel);
+        lineSelectionDropdown = new JComboBox<>(lineListModel);
 
         JButton editAutomations = new JButton("Edit");
         editAutomations.addActionListener(ae -> showEditDialog());

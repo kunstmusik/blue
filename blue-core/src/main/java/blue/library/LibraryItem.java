@@ -98,6 +98,7 @@ public class LibraryItem<T extends SoundObject> {
         return this.deepCopy(this.parent);
     }
     
+    @SuppressWarnings("unchecked")
     public LibraryItem<T> deepCopy(LibraryItem<T> parent) {
         LibraryItem<T> clone;
         if(isLeaf()) {
