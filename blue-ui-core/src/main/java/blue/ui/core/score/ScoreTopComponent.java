@@ -148,6 +148,7 @@ public final class ScoreTopComponent extends TopComponent
     double renderStart = -1.0f;
     double timePointer = -1.0f;
     JToggleButton snapButton = new JToggleButton();
+    TimeFormatSelector timeFormatSelector = new TimeFormatSelector();
     TimelinePropertiesPanel timeProperties = new TimelinePropertiesPanel();
     TempoEditorControl tempoControlPanel = new TempoEditorControl();
     TempoEditor tempoEditor = new TempoEditor();
@@ -449,6 +450,7 @@ public final class ScoreTopComponent extends TopComponent
 
             timeBar.setData(data);
             markersBar.setData(data);
+            timeFormatSelector.setTimeState(timeState);
 
             this.data.addPropertyChangeListener(this);
 
@@ -698,6 +700,17 @@ public final class ScoreTopComponent extends TopComponent
         topPanel.setLayout(topLayout);
         topPanel.add(modeSelectionPanel);
         topPanel.add(scoreObjectBar);
+        topPanel.add(Box.createHorizontalGlue());
+        topPanel.add(timeFormatSelector);
+        topPanel.add(Box.createHorizontalStrut(10));
+        
+        // Connect format selector to timeline bar
+        timeFormatSelector.addActionListener((e) -> {
+            TimeDisplayFormat format = timeFormatSelector.getSelectedFormat();
+            if (format != null) {
+                timeBar.setDisplayFormat(format);
+            }
+        });
 
         this.add(timeProperties, BorderLayout.EAST);
 
@@ -1028,10 +1041,12 @@ public final class ScoreTopComponent extends TopComponent
                     return;
                 }
 
-                double val = ((Double) evt.getNewValue());
+                double val = ((Number) evt.getNewValue()).doubleValue();
 
-                //FIXME
-                TimeState timeState = data.getScore().getTimeState();
+                // Use currentTimeState if available (handles both root and layer views)
+                TimeState timeState = (currentTimeState != null) 
+                        ? currentTimeState 
+                        : data.getScore().getTimeState();
                 int newX = (int) (val * timeState.getPixelSecond());
 
                 if (isRenderStartTime) {

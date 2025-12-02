@@ -19,29 +19,37 @@
  */
 package blue.ui.core.score;
 
-import blue.BlueData;
-import blue.score.TimeState;
-import blue.services.render.RenderTimeManager;
-import blue.services.render.RenderTimeManagerListener;
-import blue.settings.PlaybackSettings;
-import blue.soundObject.PolyObject;
-import blue.time.TimeUtilities;
-import blue.ui.utilities.BlueGradientFactory;
-import blue.ui.utilities.UiUtilities;
-import blue.utilities.MemoizedFunction;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Paint;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.RenderingHints;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.text.DecimalFormat;
+
 import javax.swing.JComponent;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
+
 import org.openide.util.Lookup;
+
+import blue.BlueData;
+import blue.score.TimeState;
+import blue.services.render.RenderTimeManager;
+import blue.services.render.RenderTimeManagerListener;
+import blue.settings.PlaybackSettings;
+import blue.time.TimeContext;
+import blue.ui.utilities.BlueGradientFactory;
+import blue.ui.utilities.UiUtilities;
+import blue.utilities.MemoizedFunction;
 
 /**
  * Title: blue (Object Composition Environment) Description: Copyright:
@@ -69,6 +77,8 @@ public final class TimeBar extends JPanel implements
     private double timePointer = 0.0f;
 
     private boolean rootTimeline = true;
+    
+    private TimeDisplayFormat displayFormat = TimeDisplayFormat.BEATS;
 
     MemoizedFunction<Double, Double> getMajorTimeUnit = new MemoizedFunction<>(
             this::calcMajorTimeUnit);
@@ -230,18 +240,6 @@ public final class TimeBar extends JPanel implements
 
         int h = 19;
 
-        int timeDisplay = timeState.getTimeDisplay();
-
-        int textWidth;
-
-        FontMetrics fontMetrics = g.getFontMetrics();
-        if (timeDisplay == PolyObject.DISPLAY_TIME) {
-            textWidth = fontMetrics.stringWidth("00:00");
-        } else {
-            // Assuming less than 1000 measures
-            textWidth = fontMetrics.stringWidth("000");
-        }
-
         double pixelTime = timeState.getPixelSecond();
 
         g.setColor(getForeground());
@@ -255,32 +253,15 @@ public final class TimeBar extends JPanel implements
 
         g.drawLine(startX, h, endX, h);
 
-        DecimalFormat df = new DecimalFormat();
-
-        if (timeState.getTimeDisplay() == TimeState.DISPLAY_TIME) {
-            double majorTimeUnit = getMajorTimeUnit.invoke(pixelTime);
-            //System.out.println("Major Time Unit: " + majorTimeUnit + " : " + pixelTime);
-            var startVal = ((int) (startTime / majorTimeUnit) * majorTimeUnit);
-
-            for (double i = startVal; i < endTime; i += majorTimeUnit) {
-                String txt = TimeUtilities.convertSecondsToTimeString(i);
-                int x = (int) (bounds.width * (i - startTime) / duration) + startX;
-                g.drawLine(x, 10, x, h);
-                g.drawString(txt, 0 + x + 2, 16);
-            }
-
-        } else if (timeState.getTimeDisplay() == TimeState.DISPLAY_BEATS) {
-            double majorBeatUnit = getMajorBeatUnit.invoke(pixelTime);
-            var startVal = ((int) (startTime / majorBeatUnit) * majorBeatUnit);
-
-//            System.out.println(startVal + " : " + majorBeatUnit);
-            for (double i = startVal; i < endTime; i += majorBeatUnit) {
-                String txt = df.format(i);
-                int x = (int) (bounds.width * (i - startTime) / duration) + startX;
-                g.drawLine(x, 10, x, h);
-                g.drawString(txt, 0 + x + 2, 16);
-            }
-
+        // Get TimeContext for formatting
+        TimeContext context = (data != null) ? data.getTimeContext() : null;
+        
+        // Choose rendering based on display format
+        switch (displayFormat) {
+            case TIME, SMPTE -> drawTimeBasedRuler(g, bounds, h, pixelTime, startTime, endTime, duration, context);
+            case SAMPLES -> drawSamplesRuler(g, bounds, h, pixelTime, startTime, endTime, duration, context);
+            case MEASURE_BEATS -> drawMeasureBeatsRuler(g, bounds, h, pixelTime, startTime, endTime, duration, context);
+            default -> drawBeatsRuler(g, bounds, h, pixelTime, startTime, endTime, duration);
         }
 
         //        GraphLabels.drawTicks(startTime, endTime, (int) (bounds.width / 64),
@@ -348,6 +329,275 @@ public final class TimeBar extends JPanel implements
         //                }
         //            }
         //        }
+    }
+    
+    /**
+     * Draws ruler using beats format (0, 1, 2, 3...)
+     */
+    private void drawBeatsRuler(Graphics g, Rectangle bounds, int h, 
+            double pixelTime, double startTime, double endTime, double duration) {
+        double majorBeatUnit = getMajorBeatUnit.invoke(pixelTime);
+        var startVal = ((int) (startTime / majorBeatUnit) * majorBeatUnit);
+        var df = new java.text.DecimalFormat();
+
+        for (double i = startVal; i < endTime; i += majorBeatUnit) {
+            String txt = df.format(i);
+            int x = (int) (bounds.width * (i - startTime) / duration) + bounds.x;
+            g.drawLine(x, 10, x, h);
+            g.drawString(txt, x + 2, 16);
+        }
+    }
+    
+    /**
+     * Draws ruler using time format (0:00, 0:01...)
+     * Uses Paul Heckbert's "Nice Numbers" algorithm for adaptive scaling.
+     * Note: The timeline is in beats, so we need to convert between beats and seconds.
+     */
+    private void drawTimeBasedRuler(Graphics g, Rectangle bounds, int h,
+            double pixelTime, double startBeat, double endBeat, double beatDuration,
+            TimeContext context) {
+        // Convert beat range to seconds for calculating time increments
+        double startSeconds = TimeDisplayFormat.beatsToSeconds(startBeat, context);
+        double endSeconds = TimeDisplayFormat.beatsToSeconds(endBeat, context);
+        
+        // Use nice numbers algorithm for adaptive tick spacing
+        int nticks = Math.max(bounds.width / 80, 2); // Aim for ~80 pixels between ticks
+        double range = niceNum(endSeconds - startSeconds, false);
+        double d = niceNum(range / (nticks - 1), true);
+        double graphMin = Math.floor(startSeconds / d) * d;
+        double graphMax = Math.ceil(endSeconds / d) * d;
+        int nfrac = (int) Math.max(-Math.floor(Math.log10(d)), 0);
+        
+        for (double seconds = graphMin; seconds < graphMax + 0.5 * d; seconds += d) {
+            // Convert seconds back to beat position for x calculation
+            double beatPos = TimeDisplayFormat.secondsToBeats(seconds, context);
+            int x = (int) (bounds.width * (beatPos - startBeat) / beatDuration) + bounds.x;
+            
+            if (x >= bounds.x && x <= bounds.x + bounds.width) {
+                String txt = formatTimeWithPrecision(seconds, nfrac);
+                g.drawLine(x, 10, x, h);
+                g.drawString(txt, x + 2, 16);
+            }
+        }
+    }
+    
+    /**
+     * Format seconds as time string with appropriate precision.
+     * @param seconds the time in seconds
+     * @param nfrac number of fractional digits needed
+     */
+    private String formatTimeWithPrecision(double seconds, int nfrac) {
+        int totalSeconds = (int) seconds;
+        int minutes = totalSeconds / 60;
+        int secs = totalSeconds % 60;
+        double fracSeconds = seconds - totalSeconds;
+        
+        if (minutes >= 60) {
+            int hours = minutes / 60;
+            minutes = minutes % 60;
+            if (nfrac > 0) {
+                int millis = (int) Math.round(fracSeconds * Math.pow(10, nfrac));
+                String fracFormat = "%0" + nfrac + "d";
+                return String.format("%d:%02d:%02d." + fracFormat, hours, minutes, secs, millis);
+            }
+            return String.format("%d:%02d:%02d", hours, minutes, secs);
+        }
+        
+        if (nfrac > 0) {
+            int millis = (int) Math.round(fracSeconds * Math.pow(10, nfrac));
+            String fracFormat = "%0" + nfrac + "d";
+            return String.format("%d:%02d." + fracFormat, minutes, secs, millis);
+        }
+        return String.format("%d:%02d", minutes, secs);
+    }
+    
+    /**
+     * Draws ruler using measure:beats format (1:1, 1:2, 2:1...)
+     * Uses Paul Heckbert's "Nice Numbers" algorithm for adaptive scaling.
+     */
+    private void drawMeasureBeatsRuler(Graphics g, Rectangle bounds, int h,
+            double pixelTime, double startTime, double endTime, double duration,
+            TimeContext context) {
+        // Use nice numbers algorithm for adaptive tick spacing based on beats
+        int nticks = Math.max(bounds.width / 80, 2); // Aim for ~80 pixels between ticks
+        double range = niceNum(endTime - startTime, false);
+        double d = niceNum(range / (nticks - 1), true);
+        double graphMin = Math.floor(startTime / d) * d;
+        double graphMax = Math.ceil(endTime / d) * d;
+        int nfrac = (int) Math.max(-Math.floor(Math.log10(d)), 0);
+
+        for (double beatPos = graphMin; beatPos < graphMax + 0.5 * d; beatPos += d) {
+            String txt = formatMeasureBeats(beatPos, context, nfrac);
+            int x = (int) (bounds.width * (beatPos - startTime) / duration) + bounds.x;
+            if (x >= bounds.x && x <= bounds.x + bounds.width) {
+                g.drawLine(x, 10, x, h);
+                g.drawString(txt, x + 2, 16);
+            }
+        }
+    }
+    
+    /**
+     * Format beat position as measure:beat with appropriate precision.
+     */
+    private String formatMeasureBeats(double beatPos, TimeContext context, int nfrac) {
+        if (context == null || context.getMeterMap() == null) {
+            // Fallback to simple beat display
+            if (nfrac == 0) {
+                return String.valueOf((int) beatPos);
+            }
+            return String.format("%%.%df".formatted(nfrac), beatPos);
+        }
+        
+        var meterMap = context.getMeterMap();
+        var measureBeats = meterMap.toMeasureBeats(blue.time.TimeUnit.beats(beatPos));
+        long measure = measureBeats.getMeasureNumber();
+        double beat = measureBeats.getBeatNumber();
+        
+        // Show as measure:beat with appropriate decimal places
+        if (nfrac == 0 || beat == Math.floor(beat)) {
+            return String.format("%d:%d", measure, (int) beat);
+        }
+        // Build format string like "%d:%.2f" for nfrac=2
+        String formatStr = "%d:%." + nfrac + "f";
+        return String.format(formatStr, measure, beat);
+    }
+    
+    /**
+     * Draws ruler using samples format (0, 44100, 88200...)
+     * Uses Paul Heckbert's "Nice Numbers" algorithm for adaptive scaling.
+     * Note: Samples correlate to time, so we use time-based calculation.
+     */
+    private void drawSamplesRuler(Graphics g, Rectangle bounds, int h,
+            double pixelTime, double startBeat, double endBeat, double beatDuration,
+            TimeContext context) {
+        // Convert beat range to seconds
+        double startSeconds = TimeDisplayFormat.beatsToSeconds(startBeat, context);
+        double endSeconds = TimeDisplayFormat.beatsToSeconds(endBeat, context);
+        
+        // Get sample rate (default 44100)
+        int sampleRate = getSampleRate(context);
+        
+        // Calculate sample range
+        double startSample = startSeconds * sampleRate;
+        double endSample = endSeconds * sampleRate;
+        
+        // Use nice numbers algorithm for adaptive tick spacing
+        int nticks = Math.max(bounds.width / 80, 2); // Aim for ~80 pixels between ticks
+        double range = niceNum(endSample - startSample, false);
+        double d = niceNum(range / (nticks - 1), true);
+        double graphMin = Math.floor(startSample / d) * d;
+        double graphMax = Math.ceil(endSample / d) * d;
+        int nfrac = (int) Math.max(-Math.floor(Math.log10(d)), 0);
+        
+        for (double sample = graphMin; sample < graphMax + 0.5 * d; sample += d) {
+            // Convert sample back to beat position for x calculation
+            double seconds = sample / sampleRate;
+            double beatPos = TimeDisplayFormat.secondsToBeats(seconds, context);
+            int x = (int) (bounds.width * (beatPos - startBeat) / beatDuration) + bounds.x;
+            
+            if (x >= bounds.x && x <= bounds.x + bounds.width) {
+                String txt = formatSampleCountWithPrecision(sample, nfrac);
+                g.drawLine(x, 10, x, h);
+                g.drawString(txt, x + 2, 16);
+            }
+        }
+    }
+    
+    /**
+     * Get sample rate from context or use default.
+     */
+    private int getSampleRate(TimeContext context) {
+        // TODO: Get from project settings when available
+        return 44100;
+    }
+    
+    /**
+     * Format sample count for display with appropriate precision based on zoom level.
+     * @param samples the sample count (can be fractional for display purposes)
+     * @param nfrac number of fractional digits needed for the base unit
+     */
+    private String formatSampleCountWithPrecision(double samples, int nfrac) {
+        // Determine the best unit (M, k, or raw) based on the magnitude
+        if (Math.abs(samples) >= 1000000) {
+            double val = samples / 1000000.0;
+            // Calculate precision needed for millions
+            int mfrac = Math.max(0, nfrac - 6);
+            if (mfrac == 0 && val == Math.floor(val)) {
+                return String.format("%dM", (long) val);
+            }
+            // Show enough decimals to distinguish values
+            int displayFrac = Math.max(1, Math.min(3, nfrac > 0 ? nfrac - 5 : 1));
+            return String.format("%%.%dfM".formatted(displayFrac), val);
+        } else if (Math.abs(samples) >= 1000) {
+            double val = samples / 1000.0;
+            // Calculate precision needed for thousands
+            int kfrac = Math.max(0, nfrac - 3);
+            if (kfrac == 0 && val == Math.floor(val)) {
+                return String.format("%dk", (long) val);
+            }
+            int displayFrac = Math.max(1, Math.min(3, nfrac > 0 ? nfrac - 2 : 1));
+            return String.format("%%.%dfk".formatted(displayFrac), val);
+        }
+        // Raw sample count
+        if (nfrac == 0 || samples == Math.floor(samples)) {
+            return String.valueOf((long) samples);
+        }
+        return String.format("%%.%df".formatted(nfrac), samples);
+    }
+    
+    /**
+     * Paul Heckbert's "Nice Numbers" algorithm for graph labels.
+     * Returns a "nice" number approximately equal to x.
+     * Rounds the number if round is true, takes ceiling if false.
+     */
+    private double niceNum(double x, boolean round) {
+        if (x == 0) return 0;
+        
+        long exp = (long) Math.floor(Math.log10(Math.abs(x)));
+        double f = x / Math.pow(10, exp);
+        double nf;
+        
+        if (round) {
+            if (f < 1.5) {
+                nf = 1;
+            } else if (f < 3) {
+                nf = 2;
+            } else if (f < 7) {
+                nf = 5;
+            } else {
+                nf = 10;
+            }
+        } else {
+            if (f <= 1) {
+                nf = 1;
+            } else if (f <= 2) {
+                nf = 2;
+            } else if (f <= 5) {
+                nf = 5;
+            } else {
+                nf = 10;
+            }
+        }
+        return nf * Math.pow(10, exp);
+    }
+    
+    /**
+     * Sets the display format for the timeline ruler.
+     * @param format the TimeDisplayFormat to use
+     */
+    public void setDisplayFormat(TimeDisplayFormat format) {
+        if (format != null && format != this.displayFormat) {
+            this.displayFormat = format;
+            repaint();
+        }
+    }
+    
+    /**
+     * Gets the current display format.
+     * @return the current TimeDisplayFormat
+     */
+    public TimeDisplayFormat getDisplayFormat() {
+        return displayFormat;
     }
 
     /**

@@ -157,7 +157,7 @@ public class MeterMap extends SimpleListProperty<MeasureMeterPair> {
      * @throws IllegalStateException if MeterMap is empty
      * @throws IllegalArgumentException if beats is negative or before first measure
      */
-    TimeUnit.MeasureBeatsTime toMeasureBeats(TimeUnit.BeatTime beatTime) {
+    public TimeUnit.MeasureBeatsTime toMeasureBeats(TimeUnit.BeatTime beatTime) {
         if (this.isEmpty()) {
             throw new IllegalStateException("MeterMap is empty");
         }
