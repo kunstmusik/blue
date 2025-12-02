@@ -19,19 +19,19 @@
  */
 package blue.ui.core.blueLive;
 
+import java.awt.event.ActionEvent;
+import java.beans.PropertyChangeEvent;
+
+import javax.swing.JButton;
+import javax.swing.JToggleButton;
+import javax.swing.JToolBar;
+
 import blue.BlueData;
 import blue.event.PlayModeListener;
 import blue.midi.MidiInputManager;
 import blue.projects.BlueProject;
 import blue.projects.BlueProjectManager;
 import blue.ui.core.render.RealtimeRenderManager;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
-import javax.swing.JButton;
-import javax.swing.JToggleButton;
-import javax.swing.JToolBar;
 
 /**
  *
