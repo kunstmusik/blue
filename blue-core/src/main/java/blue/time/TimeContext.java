@@ -88,7 +88,7 @@ public class TimeContext {
     /**
      * Load TimeContext from XML.
      */
-    public static TimeContext loadFromXML(Element data) {
+    public static TimeContext loadFromXML(Element data) throws Exception {
         TimeContext tc = new TimeContext();
         
         Element sampleRateElem = data.getElement("sampleRate");

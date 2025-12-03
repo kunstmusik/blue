@@ -35,7 +35,6 @@ import blue.score.ScoreObjectListener;
 import blue.score.TimeState;
 import blue.score.layers.Layer;
 import blue.score.layers.LayerGroup;
-import blue.score.tempo.Tempo;
 import blue.services.render.RenderState;
 import blue.services.render.RenderTimeManager;
 import blue.services.render.RenderTimeManagerListener;
@@ -444,8 +443,7 @@ public final class ScoreTopComponent extends TopComponent
             TimeState timeState = data.getScore().getTimeState();
             currentTimeState = timeState;
 
-            Tempo tempo = data.getScore().getTempo();
-            tempoControlPanel.setTempo(tempo);
+            tempoControlPanel.setTempoMap(data.getScore().getTempoMap());
             tempoEditor.setData(data);
 
             timeBar.setData(data);

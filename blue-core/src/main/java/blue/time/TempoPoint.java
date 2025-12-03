@@ -1,0 +1,305 @@
+/*
+ * blue - object composition environment for csound
+ * Copyright (c) 2000-2025 Steven Yi (stevenyi@gmail.com)
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published
+ * by the Free Software Foundation; either version 2 of the License or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; see the file COPYING.LIB. If not, write to
+ * the Free Software Foundation Inc., 59 Temple Place - Suite 330,
+ * Boston, MA 02111-1307 USA
+ */
+package blue.time;
+
+import electric.xml.Element;
+
+/**
+ * Represents a single tempo point in a TempoMap.
+ * 
+ * A TempoPoint defines:
+ * - A position as a TimeUnit (BeatTime or MeasureBeatsTime)
+ * - A tempo value (in BPM)
+ * - A curve type defining how tempo transitions TO the next point
+ * 
+ * The position is stored as a TimeUnit, allowing tempo changes to be
+ * specified in either Csound beats or measure/beat notation. A cached
+ * beat value is maintained for efficient sorting and calculations.
+ * 
+ * @author stevenyi
+ */
+public class TempoPoint implements Comparable<TempoPoint> {
+    
+    /** Position as a TimeUnit (BeatTime or MeasureBeatsTime) */
+    private TimeUnit position;
+    
+    /** Cached beat position for sorting and calculations */
+    private double cachedBeat;
+    
+    /** Tempo in BPM (always > 0) */
+    private double tempo;
+    
+    /** How tempo transitions from this point to the next */
+    private CurveType curveType;
+    
+    /** Cached accumulated time in seconds from beat 0 to this point */
+    double accumulatedTime = 0.0;
+    
+    /**
+     * Creates a tempo point at beat 0 with tempo 60 BPM and LINEAR curve.
+     */
+    public TempoPoint() {
+        this(TimeUnit.beats(0.0), 60.0, CurveType.LINEAR);
+    }
+    
+    /**
+     * Creates a tempo point with the specified beat and tempo, using LINEAR curve.
+     * Convenience constructor that creates a BeatTime position.
+     * 
+     * @param beat the beat position (must be >= 0)
+     * @param tempo the tempo in BPM (must be > 0)
+     */
+    public TempoPoint(double beat, double tempo) {
+        this(TimeUnit.beats(beat), tempo, CurveType.LINEAR);
+    }
+    
+    /**
+     * Creates a tempo point with the specified beat, tempo, and curve type.
+     * Convenience constructor that creates a BeatTime position.
+     * 
+     * @param beat the beat position (must be >= 0)
+     * @param tempo the tempo in BPM (must be > 0)
+     * @param curveType the curve type for transition to next point
+     */
+    public TempoPoint(double beat, double tempo, CurveType curveType) {
+        this(TimeUnit.beats(beat), tempo, curveType);
+    }
+    
+    /**
+     * Creates a tempo point with the specified TimeUnit position, tempo, and curve type.
+     * 
+     * @param position the position as a TimeUnit (BeatTime or MeasureBeatsTime)
+     * @param tempo the tempo in BPM (must be > 0)
+     * @param curveType the curve type for transition to next point
+     */
+    public TempoPoint(TimeUnit position, double tempo, CurveType curveType) {
+        if (position == null) {
+            throw new IllegalArgumentException("Position cannot be null");
+        }
+        if (!(position instanceof TimeUnit.BeatTime) && !(position instanceof TimeUnit.MeasureBeatsTime)) {
+            throw new IllegalArgumentException(
+                "TempoPoint position must be BeatTime or MeasureBeatsTime, got: " + 
+                position.getClass().getSimpleName());
+        }
+        if (tempo <= 0) {
+            throw new IllegalArgumentException("Tempo must be > 0, got: " + tempo);
+        }
+        this.position = position;
+        this.tempo = tempo;
+        this.curveType = curveType != null ? curveType : CurveType.LINEAR;
+        
+        // Initialize cached beat (will be recalculated by TempoMap if MeasureBeatsTime)
+        if (position instanceof TimeUnit.BeatTime beatTime) {
+            this.cachedBeat = beatTime.getCsoundBeats();
+        } else {
+            // For MeasureBeatsTime, set a placeholder - TempoMap will recalculate
+            this.cachedBeat = 0.0;
+        }
+    }
+    
+    /**
+     * Copy constructor.
+     */
+    public TempoPoint(TempoPoint other) {
+        this.position = other.position;
+        this.cachedBeat = other.cachedBeat;
+        this.tempo = other.tempo;
+        this.curveType = other.curveType;
+        this.accumulatedTime = other.accumulatedTime;
+    }
+    
+    // ========== Getters ==========
+    
+    /**
+     * Gets the position as a TimeUnit.
+     */
+    public TimeUnit getPosition() {
+        return position;
+    }
+    
+    /**
+     * Gets the cached beat position (for sorting and calculations).
+     * This is automatically updated when the position changes or when
+     * the MeterMap changes (for MeasureBeatsTime positions).
+     */
+    public double getBeat() {
+        return cachedBeat;
+    }
+    
+    public double getTempo() {
+        return tempo;
+    }
+    
+    public CurveType getCurveType() {
+        return curveType;
+    }
+    
+    public double getAccumulatedTime() {
+        return accumulatedTime;
+    }
+    
+    // ========== Setters ==========
+    
+    /**
+     * Sets the position as a TimeUnit.
+     */
+    public void setPosition(TimeUnit position) {
+        if (position == null) {
+            throw new IllegalArgumentException("Position cannot be null");
+        }
+        if (!(position instanceof TimeUnit.BeatTime) && !(position instanceof TimeUnit.MeasureBeatsTime)) {
+            throw new IllegalArgumentException(
+                "TempoPoint position must be BeatTime or MeasureBeatsTime, got: " + 
+                position.getClass().getSimpleName());
+        }
+        this.position = position;
+        
+        // Update cached beat for BeatTime
+        if (position instanceof TimeUnit.BeatTime beatTime) {
+            this.cachedBeat = beatTime.getCsoundBeats();
+        }
+    }
+    
+    /**
+     * Sets the position using a beat value (creates a BeatTime).
+     * Convenience method for backward compatibility.
+     */
+    public void setBeat(double beat) {
+        if (beat < 0) {
+            throw new IllegalArgumentException("Beat must be >= 0, got: " + beat);
+        }
+        this.position = TimeUnit.beats(beat);
+        this.cachedBeat = beat;
+    }
+    
+    public void setTempo(double tempo) {
+        if (tempo <= 0) {
+            throw new IllegalArgumentException("Tempo must be > 0, got: " + tempo);
+        }
+        this.tempo = tempo;
+    }
+    
+    public void setCurveType(CurveType curveType) {
+        this.curveType = curveType != null ? curveType : CurveType.LINEAR;
+    }
+    
+    // ========== Beat Calculation ==========
+    
+    /**
+     * Recalculates the cached beat value using the provided MeterMap.
+     * This should be called by TempoMap when the MeterMap changes.
+     * 
+     * @param meterMap the meter map for measure-to-beat conversion
+     */
+    public void recalculateBeat(MeterMap meterMap) {
+        if (position instanceof TimeUnit.BeatTime beatTime) {
+            this.cachedBeat = beatTime.getCsoundBeats();
+        } else if (position instanceof TimeUnit.MeasureBeatsTime measureTime) {
+            this.cachedBeat = meterMap.toBeats(measureTime);
+        }
+    }
+    
+    // ========== Comparable ==========
+    
+    @Override
+    public int compareTo(TempoPoint other) {
+        return Double.compare(this.cachedBeat, other.cachedBeat);
+    }
+    
+    // ========== XML Serialization ==========
+    
+    /**
+     * Saves this tempo point to XML.
+     */
+    public Element saveAsXML() {
+        Element retVal = new Element("tempoPoint");
+        retVal.setAttribute("tempo", Double.toString(tempo));
+        retVal.setAttribute("curve", curveType.name());
+        
+        // Reuse TimeUnit's XML serialization
+        retVal.addElement(position.saveAsXML());
+        
+        return retVal;
+    }
+    
+    /**
+     * Loads a tempo point from XML.
+     */
+    public static TempoPoint loadFromXML(Element data) throws Exception {
+        double tempo = Double.parseDouble(data.getAttributeValue("tempo"));
+        CurveType curveType = CurveType.fromString(data.getAttributeValue("curve"));
+        
+        // Try to load position from child timeUnit element
+        Element timeUnitElement = data.getElement("timeUnit");
+        TimeUnit position;
+        
+        if (timeUnitElement != null) {
+            // New format: uses TimeUnit's XML serialization
+            position = TimeUnit.loadFromXML(timeUnitElement);
+        } else {
+            // Legacy format: beat stored as attribute
+            String beatStr = data.getAttributeValue("beat");
+            double beat = beatStr != null ? Double.parseDouble(beatStr) : 0.0;
+            position = TimeUnit.beats(beat);
+        }
+        
+        return new TempoPoint(position, tempo, curveType);
+    }
+    
+    /**
+     * Loads a tempo point from the old BeatTempoPair XML format.
+     * Used for backward compatibility.
+     */
+    public static TempoPoint loadFromLegacyXML(Element data) {
+        double beat = Double.parseDouble(data.getElement("beat").getTextString());
+        double tempo = Double.parseDouble(data.getElement("tempo").getTextString());
+        // Legacy format always used linear interpolation and beat positions
+        return new TempoPoint(TimeUnit.beats(beat), tempo, CurveType.LINEAR);
+    }
+    
+    @Override
+    public String toString() {
+        if (position instanceof TimeUnit.MeasureBeatsTime measureTime) {
+            return String.format("TempoPoint[m%d:%.2f (beat=%.2f), tempo=%.2f, curve=%s]", 
+                measureTime.getMeasureNumber(), measureTime.getBeatNumber(),
+                cachedBeat, tempo, curveType);
+        } else {
+            return String.format("TempoPoint[beat=%.2f, tempo=%.2f, curve=%s]", 
+                cachedBeat, tempo, curveType);
+        }
+    }
+    
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (!(obj instanceof TempoPoint other)) return false;
+        return position.equals(other.position) &&
+               Double.compare(tempo, other.tempo) == 0 &&
+               curveType == other.curveType;
+    }
+    
+    @Override
+    public int hashCode() {
+        int result = position.hashCode();
+        result = 31 * result + Double.hashCode(tempo);
+        result = 31 * result + curveType.hashCode();
+        return result;
+    }
+}

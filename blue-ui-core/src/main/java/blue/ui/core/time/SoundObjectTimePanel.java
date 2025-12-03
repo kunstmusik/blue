@@ -195,7 +195,7 @@ public class SoundObjectTimePanel extends JPanel {
             
             // Use project's TimeContext for proper conversion with meter, tempo, and sample rate
             // Get the current project's TimeContext
-            TimeContext context = BlueProjectManager.getInstance().getCurrentProject().getData().getTimeContext();
+            TimeContext context = BlueProjectManager.getInstance().getCurrentProject().getData().getScore().getTimeContext();
             TimeContext previousContext = TimeContextManager.hasContext() ? TimeContextManager.getContext() : null;
             TimeContextManager.setContext(context);
 
@@ -230,7 +230,7 @@ public class SoundObjectTimePanel extends JPanel {
             currentTimeUnit = editor.getTimeUnit();
             
             // Fire property change within TimeContext since listeners may need it
-            TimeContext context = BlueProjectManager.getInstance().getCurrentProject().getData().getTimeContext();
+            TimeContext context = BlueProjectManager.getInstance().getCurrentProject().getData().getScore().getTimeContext();
             TimeContext previousContext = TimeContextManager.hasContext() ? TimeContextManager.getContext() : null;
             TimeContextManager.setContext(context);
 

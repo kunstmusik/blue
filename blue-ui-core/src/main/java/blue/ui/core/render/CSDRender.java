@@ -29,7 +29,6 @@ import blue.orchestra.Instrument;
 import blue.orchestra.blueSynthBuilder.StringChannel;
 import blue.orchestra.blueSynthBuilder.StringChannelNameManager;
 import blue.score.ScoreGenerationException;
-import blue.score.tempo.Tempo;
 import blue.services.render.CSDRenderService;
 import blue.services.render.CsdRenderResult;
 import blue.settings.PlaybackSettings;
@@ -39,8 +38,6 @@ import blue.soundObject.NoteList;
 import blue.soundObject.NoteParseException;
 import blue.soundObject.SoundObjectException;
 import blue.time.TempoMap;
-import blue.time.TimeContext;
-import blue.time.TimeContextManager;
 import blue.udo.OpcodeList;
 import blue.ui.core.project.ProjectPluginManager;
 import blue.utility.NumberUtilities;
@@ -244,8 +241,7 @@ public class CSDRender extends CSDRenderService {
 
         NoteList generatedNotes;
         try {
-            TimeContext context = TimeContextManager.getContext();
-            generatedNotes = data.getScore().generateForCSD(context, compileData,
+            generatedNotes = data.getScore().generateForCSD(compileData,
                     startTime, endTime);
         } catch (ScoreGenerationException ex) {
             throw new RuntimeException(ex);
@@ -293,13 +289,13 @@ public class CSDRender extends CSDRenderService {
             }
         }
 
-        Tempo tempo = data.getScore().getTempo();
+        TempoMap scoreTempoMap = data.getScore().getTempoMap();
         TempoMap tempoMap = null;
 
-        if (tempo.isEnabled()) {
-            tempoMap = getTempoMap(tempo);
+        if (scoreTempoMap.isEnabled()) {
+            tempoMap = scoreTempoMap;
             globalOrcSco.appendGlobalSco(
-                    getTempoScore(tempo, renderStartTime, endTime));
+                    getTempoScore(scoreTempoMap, renderStartTime, endTime));
         } else {
             tempoMap = getTempoMap(globalOrcSco.getGlobalSco());
         }
@@ -926,29 +922,26 @@ public class CSDRender extends CSDRenderService {
 
     }
 
-    protected String getTempoScore(Tempo tempo, double renderStart,
+    protected String getTempoScore(TempoMap tempoMap, double renderStart,
             double renderEnd) {
 
-        Line line = tempo.getLine();
-
-        if (line.size() == 1) {
-            return "t 0 " + line.getLinePoint(0).getY();
+        if (tempoMap.size() == 1) {
+            return "t 0 " + tempoMap.getTempo(0);
         }
 
-        if (renderStart > line.getLinePoint(line.size() - 1).getX()) {
-            return "t 0 " + line.getLinePoint(line.size() - 1).getY();
+        if (renderStart > tempoMap.getBeat(tempoMap.size() - 1)) {
+            return "t 0 " + tempoMap.getTempo(tempoMap.size() - 1);
         }
 
         StringBuilder buffer = new StringBuilder();
-        buffer.append("t 0 ").append(line.getValue(renderStart));
+        buffer.append("t 0 ").append(tempoMap.getTempoAt(renderStart));
 
-        for (int i = 0; i < line.size(); i++) {
-            LinePoint lp = line.getLinePoint(i);
-            double pointBeat = lp.getX();
+        for (int i = 0; i < tempoMap.size(); i++) {
+            double pointBeat = tempoMap.getBeat(i);
             if (pointBeat > renderStart) {
                 if (renderEnd < 0 || pointBeat < renderEnd) {
                     buffer.append(" ").append(pointBeat - renderStart);
-                    buffer.append(" ").append(lp.getY());
+                    buffer.append(" ").append(tempoMap.getTempo(i));
                 } else {
                     break;
                 }
@@ -957,7 +950,7 @@ public class CSDRender extends CSDRenderService {
 
         if (renderEnd > 0) {
             buffer.append(" ").append(renderEnd - renderStart);
-            buffer.append(" ").append(line.getValue(renderEnd));
+            buffer.append(" ").append(tempoMap.getTempoAt(renderEnd));
         }
 
         buffer.append("\n");
@@ -1096,19 +1089,6 @@ public class CSDRender extends CSDRenderService {
         }
 
 //        globalOrcSco.appendGlobalSco(paramScore.toString());
-    }
-
-    protected TempoMap getTempoMap(Tempo tempo) {
-        StringBuilder buffer = new StringBuilder();
-        Line line = tempo.getLine();
-        for (int i = 0; i < line.size(); i++) {
-            LinePoint lp = line.getLinePoint(i);
-
-            buffer.append(" ").append(lp.getX());
-            buffer.append(" ").append(lp.getY());
-        }
-
-        return TempoMap.createTempoMap(buffer.toString());
     }
 
     private TempoMap getTempoMap(String globalSco) {

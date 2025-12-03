@@ -19,53 +19,53 @@
 package blue.time;
 
 import electric.xml.Element;
-import javafx.beans.property.LongProperty;
-import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.SimpleLongProperty;
-import javafx.beans.property.SimpleObjectProperty;
 
 /**
+ * Represents a meter (time signature) change at a specific measure number.
+ * This is an immutable value object.
  *
  * @author stevenyi
  */
-public class MeasureMeterPair {
+public final class MeasureMeterPair {
 
-    public LongProperty measureNumber;
-
-    public ObjectProperty<Meter> meter;
+    private final long measureNumber;
+    private final Meter meter;
 
     public MeasureMeterPair(long measureNumber, Meter meter) {
-        this.measureNumber = new SimpleLongProperty(measureNumber);
-        this.meter = new SimpleObjectProperty<>(meter);
+        if (measureNumber < 1) {
+            throw new IllegalArgumentException("Measure number must be >= 1, got: " + measureNumber);
+        }
+        if (meter == null) {
+            throw new IllegalArgumentException("Meter cannot be null");
+        }
+        this.measureNumber = measureNumber;
+        this.meter = meter;
     }
 
     public MeasureMeterPair(MeasureMeterPair pair) {
-        setMeasureNumber(pair.getMeasureNumber());
-        setMeter(new Meter(pair.getMeter()));
+        this(pair.measureNumber, new Meter(pair.meter));
     }
 
     public long getMeasureNumber() {
-        return measureNumber.get();
-    }
-
-    public void setMeasureNumber(long measureNumber) {
-        this.measureNumber.set(measureNumber);
-    }
-
-    public LongProperty measureNumberProperty() {
-        return this.measureNumber;
+        return measureNumber;
     }
 
     public Meter getMeter() {
-        return meter.get();
+        return meter;
     }
-
-    public void setMeter(Meter meter) {
-        this.meter.set(meter);
+    
+    /**
+     * Creates a new MeasureMeterPair with a different measure number.
+     */
+    public MeasureMeterPair withMeasureNumber(long newMeasureNumber) {
+        return new MeasureMeterPair(newMeasureNumber, this.meter);
     }
-
-    public ObjectProperty<Meter> meterProperty() {
-        return this.meter;
+    
+    /**
+     * Creates a new MeasureMeterPair with a different meter.
+     */
+    public MeasureMeterPair withMeter(Meter newMeter) {
+        return new MeasureMeterPair(this.measureNumber, newMeter);
     }
     
     /**

@@ -24,7 +24,6 @@ import blue.midi.MidiInputProcessor;
 import blue.mixer.Mixer;
 import blue.noteProcessor.NoteProcessorChainMap;
 import blue.score.Score;
-import blue.time.TimeContext;
 import blue.udo.OpcodeList;
 import blue.upgrades.UpgradeManager;
 import blue.utility.TextUtilities;
@@ -81,8 +80,6 @@ public class BlueData implements BlueDataObject {
 
     private MidiInputProcessor midiInputProcessor;
 
-    private TimeContext timeContext;
-
     /**
      * Holds data for ProjectPlugins
      */
@@ -112,7 +109,6 @@ public class BlueData implements BlueDataObject {
         // score.addLayerGroup(new PolyObject());
         liveData = new LiveData();
         midiInputProcessor = new MidiInputProcessor();
-        timeContext = new TimeContext();
         pluginData = new ArrayList<>();
     }
 
@@ -142,7 +138,6 @@ public class BlueData implements BlueDataObject {
         score = new Score(data.getScore());
         liveData = new LiveData(data.getLiveData());
         midiInputProcessor = new MidiInputProcessor(data.getMidiInputProcessor());
-        timeContext = new TimeContext(data.getTimeContext());
         pluginData = new ArrayList<>();
 
         for (BlueDataObject pData : data.getPluginData()) {
@@ -356,7 +351,16 @@ public class BlueData implements BlueDataObject {
                             node);
                     break;
                 case "timeContext":
-                    blueData.timeContext = TimeContext.loadFromXML(node);
+                    // Legacy: timeContext used to be stored in BlueData,
+                    // now it's part of Score. Migrate if Score doesn't have one yet.
+                    if (blueData.score != null && blueData.score.getTimeContext() != null) {
+                        try {
+                            blueData.score.setTimeContext(
+                                blue.time.TimeContext.loadFromXML(node));
+                        } catch (Exception e) {
+                            throw new RuntimeException("Failed to load timeContext", e);
+                        }
+                    }
                     break;
                 case "pluginData":
                     Elements pluginElems = node.getElements();
@@ -383,7 +387,7 @@ public class BlueData implements BlueDataObject {
         } else {
             blueData.mixer.setEnabled(false);
         }
-
+        
         return blueData;
     }
 
@@ -422,7 +426,7 @@ public class BlueData implements BlueDataObject {
                 Boolean.toString(loopRendering));
 
         retVal.addElement(midiInputProcessor.saveAsXML());
-        retVal.addElement(timeContext.saveAsXML());
+        // Note: timeContext is now saved as part of Score
 
         Element pluginElems = retVal.addElement("pluginData");
 
@@ -560,14 +564,6 @@ public class BlueData implements BlueDataObject {
 
     public MidiInputProcessor getMidiInputProcessor() {
         return midiInputProcessor;
-    }
-
-    public TimeContext getTimeContext() {
-        return timeContext;
-    }
-
-    public void setTimeContext(TimeContext timeContext) {
-        this.timeContext = timeContext;
     }
 
     @Override

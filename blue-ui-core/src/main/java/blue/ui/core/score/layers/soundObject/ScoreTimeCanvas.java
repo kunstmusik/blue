@@ -139,7 +139,10 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
 
         dropTargetListener = new ScoreTimelineDropTargetListener(this);
 
+        // Configure tooltips: show immediately, never dismiss
         ToolTipManager.sharedInstance().registerComponent(this);
+        ToolTipManager.sharedInstance().setInitialDelay(0);
+        ToolTipManager.sharedInstance().setDismissDelay(Integer.MAX_VALUE);
 
         this.setFocusable(true);
 

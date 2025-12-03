@@ -180,7 +180,7 @@ public class BlueProjectManager {
 
             // Set TimeContext for the application
             // This makes TimeContext available for all operations
-            TimeContextManager.setContext(project.getData().getTimeContext());
+            TimeContextManager.setContext(project.getData().getScore().getTimeContext());
 
             final Score score = project.getData().getScore();
 
@@ -197,12 +197,12 @@ public class BlueProjectManager {
             new Thread(() -> {
                 try {
                     // Set TimeContext for this thread's operation
-                    TimeContext context = project.getData().getTimeContext();
+                    TimeContext context = project.getData().getScore().getTimeContext();
                     TimeContext previousContext = TimeContextManager.hasContext() ? TimeContextManager.getContext() : null;
                     TimeContextManager.setContext(context);
 
                     try {
-                        score.processOnLoad(context);
+                        score.processOnLoad();
                     } finally {
                         if (previousContext != null) {
                             TimeContextManager.setContext(previousContext);

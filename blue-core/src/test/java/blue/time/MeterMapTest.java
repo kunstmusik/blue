@@ -18,7 +18,7 @@
 package blue.time;
 
 import java.util.concurrent.atomic.AtomicInteger;
-import javafx.collections.ListChangeListener;
+
 import static org.junit.Assert.*;
 import org.junit.Test;
 
@@ -29,21 +29,18 @@ import org.junit.Test;
 public class MeterMapTest {
 
     @Test
-    public void testObservableNotifications() {
+    public void testListenerNotifications() {
         MeterMap meterMap = new MeterMap();
 
         final var notificationCount = new AtomicInteger(0);
 
-        ListChangeListener<MeasureMeterPair> lcl = (c) -> {
-//            System.out.println(c.toString());
-            while (c.next()) {
-                notificationCount.incrementAndGet();
-            }
-        };
+        MeterMap.MeterMapListener listener = () -> notificationCount.incrementAndGet();
 
-        meterMap.addListener(lcl);
-        meterMap.add(new MeasureMeterPair(16, new Meter(3,4)));
-        meterMap.get(0).setMeter(new Meter(5,4));
+        meterMap.addListener(listener);
+        meterMap.add(new MeasureMeterPair(16, new Meter(3, 4)));
+        
+        // MeasureMeterPair is now immutable, so we use set() to replace
+        meterMap.set(0, meterMap.get(0).withMeter(new Meter(5, 4)));
         
         assertEquals(2, notificationCount.get());
     }

@@ -26,10 +26,10 @@ import blue.score.layers.Layer;
 import blue.score.layers.LayerGroup;
 import blue.score.layers.LayerGroupProviderManager;
 import blue.score.layers.ScoreObjectLayer;
-import blue.score.tempo.Tempo;
 import blue.soundObject.NoteList;
 import blue.soundObject.PolyObject;
 import blue.soundObject.TimeBehavior;
+import blue.time.TempoMap;
 import blue.time.TimeContext;
 import blue.util.ObservableArrayList;
 import blue.utility.ScoreUtilities;
@@ -48,8 +48,8 @@ import java.util.Objects;
  */
 public class Score extends ObservableArrayList<LayerGroup<? extends Layer>> {
 
-    Tempo tempo = null;
-    TimeState timeState = null;
+    private TimeContext timeContext = null;
+    private TimeState timeState = null;
     private NoteProcessorChain npc;
 
     public static final int SPACER = 36;
@@ -65,25 +65,32 @@ public class Score extends ObservableArrayList<LayerGroup<? extends Layer>> {
             timeState = new TimeState();
         }
         npc = new NoteProcessorChain();
-        tempo = new Tempo();
+        timeContext = new TimeContext();
     }
 
     public Score(Score score) {
+        timeContext = new TimeContext(score.timeContext);
         timeState = new TimeState(score.timeState);
         npc = new NoteProcessorChain(score.npc);
-        tempo = new Tempo(score.tempo);
 
         for (LayerGroup<? extends Layer> lg : score) {
             add(lg.deepCopyLG());
         }
     }
 
-    public Tempo getTempo() {
-        return tempo;
+    public TimeContext getTimeContext() {
+        return timeContext;
     }
 
-    public void setTempo(Tempo tempo) {
-        this.tempo = tempo;
+    public void setTimeContext(TimeContext timeContext) {
+        this.timeContext = timeContext;
+    }
+    
+    /**
+     * Convenience method to get the TempoMap from the TimeContext.
+     */
+    public TempoMap getTempoMap() {
+        return timeContext.getTempoMap();
     }
 
     public TimeState getTimeState() {
@@ -104,7 +111,7 @@ public class Score extends ObservableArrayList<LayerGroup<? extends Layer>> {
 
     public Element saveAsXML(Map<Object, String> objRefMap) {
         Element retVal = new Element("score");
-        retVal.addElement(tempo.saveAsXML());
+        retVal.addElement(timeContext.saveAsXML());
         retVal.addElement(timeState.saveAsXML());
         retVal.addElement(npc.saveAsXML());
 
@@ -125,8 +132,14 @@ public class Score extends ObservableArrayList<LayerGroup<? extends Layer>> {
         while (nodes.hasMoreElements()) {
             Element node = nodes.next();
             switch (node.getName()) {
-                case "tempo" ->
-                    score.tempo = Tempo.loadFromXML(node);
+                case "tempo" -> {
+                    // Legacy: migrate old <tempo> XML to TimeContext
+                    score.timeContext = new TimeContext();
+                    score.timeContext.setTempoMap(
+                        TempoMap.loadFromLegacyTempoXML(node));
+                }
+                case "timeContext" ->
+                    score.timeContext = TimeContext.loadFromXML(node);
                 case "timeState" ->
                     score.timeState = TimeState.loadFromXML(node);
                 case "noteProcessorChain" ->
@@ -150,17 +163,22 @@ public class Score extends ObservableArrayList<LayerGroup<? extends Layer>> {
             PolyObject pObj = new PolyObject(true);
             score.add(pObj);
         }
+        
+        // Ensure timeContext is never null
+        if (score.timeContext == null) {
+            score.timeContext = new TimeContext();
+        }
 
         return score;
     }
 
-    public void processOnLoad(TimeContext context) {
+    public void processOnLoad() {
         for (LayerGroup<? extends Layer> layerGroup : this) {
-            layerGroup.onLoadComplete(context);
+            layerGroup.onLoadComplete(timeContext);
         }
     }
 
-    public NoteList generateForCSD(TimeContext context, CompileData compileData, double startTime, double endTime) throws ScoreGenerationException {
+    public NoteList generateForCSD(CompileData compileData, double startTime, double endTime) throws ScoreGenerationException {
         NoteList noteList = new NoteList();
 
         boolean soloFound = false;
@@ -173,7 +191,7 @@ public class Score extends ObservableArrayList<LayerGroup<? extends Layer>> {
         }
 
         for (LayerGroup<? extends Layer> layerGroup : this) {
-            NoteList nl = layerGroup.generateForCSD(context, compileData, startTime,
+            NoteList nl = layerGroup.generateForCSD(timeContext, compileData, startTime,
                     endTime, soloFound);
             noteList.merge(nl);
         }
@@ -262,7 +280,7 @@ public class Score extends ObservableArrayList<LayerGroup<? extends Layer>> {
     @Override
     public int hashCode() {
         int hash = 7;
-        hash = 79 * hash + Objects.hashCode(this.tempo);
+        hash = 79 * hash + Objects.hashCode(this.timeContext);
         hash = 79 * hash + Objects.hashCode(this.timeState);
         return hash;
     }

@@ -70,7 +70,7 @@ public class TimeContextSerializationTest {
     }
     
     @Test
-    public void testTempoMapSerialization() {
+    public void testTempoMapSerialization() throws Exception {
         TempoMap original = TempoMap.createTempoMap("0 60 4 120 8 90");
         assertNotNull(original);
         
@@ -95,7 +95,7 @@ public class TimeContextSerializationTest {
     }
     
     @Test
-    public void testTimeContextSerialization() {
+    public void testTimeContextSerialization() throws Exception {
         TimeContext original = new TimeContext();
         original.setSampleRate(48000);
         
@@ -138,7 +138,7 @@ public class TimeContextSerializationTest {
     }
     
     @Test
-    public void testTimeContextDefaultSerialization() {
+    public void testTimeContextDefaultSerialization() throws Exception {
         // Test that default TimeContext serializes and loads correctly
         TimeContext original = new TimeContext();
         

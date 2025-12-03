@@ -27,6 +27,12 @@ import java.beans.PropertyChangeListener;
 import java.util.Vector;
 
 /**
+ * UI/editing state for the score timeline.
+ * 
+ * TODO: Future enhancement - consider integrating with TimeUnit system:
+ * - snapValue could be a TimeUnit (snap to beat, measure, etc.)
+ * - timeDisplay could support DISPLAY_MEASURES mode
+ * - formatTime() method could use TimeContext for conversions
  *
  * @author stevenyi
  */

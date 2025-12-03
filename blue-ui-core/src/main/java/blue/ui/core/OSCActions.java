@@ -91,7 +91,7 @@ public class OSCActions {
 
                 if (data != null) {
                     final double currentStartTime = data.getRenderStartTime();
-                    TimeContext context = data.getTimeContext();
+                    TimeContext context = data.getScore().getTimeContext();
                     MarkersList markers = data.getMarkersList();
                     Marker selected = null;
 

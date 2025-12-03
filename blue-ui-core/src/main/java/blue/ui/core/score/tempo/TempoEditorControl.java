@@ -5,7 +5,7 @@
  */
 package blue.ui.core.score.tempo;
 
-import blue.score.tempo.Tempo;
+import blue.time.TempoMap;
 import blue.ui.components.IconFactory;
 import java.awt.Dimension;
 import java.util.Vector;
@@ -19,18 +19,18 @@ public class TempoEditorControl extends javax.swing.JPanel {
     Vector listeners = null;
     
     boolean closed = true;
-    private Tempo tempo;
+    private TempoMap tempoMap;
 
     /** Creates new form TempoEditorControl */
     public TempoEditorControl() {
         initComponents();
     }
-    public void setTempo(Tempo tempo) {
-        this.tempo = null;
+    public void setTempoMap(TempoMap tempoMap) {
+        this.tempoMap = null;
         
-        this.useTempoCheckBox.setSelected(tempo.isEnabled());
-        setTempoVisible(tempo.isVisible());
-        this.tempo = tempo;
+        this.useTempoCheckBox.setSelected(tempoMap.isEnabled());
+        setTempoVisible(tempoMap.isVisible());
+        this.tempoMap = tempoMap;
     }
     
     public void setTempoVisible(boolean tempoVisible) {
@@ -92,15 +92,15 @@ public class TempoEditorControl extends javax.swing.JPanel {
         );
     }// </editor-fold>//GEN-END:initComponents
     private void layerHeightButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_layerHeightButtonActionPerformed
-        if(this.tempo != null) {
-            tempo.setVisible(!tempo.isVisible());
-            setTempoVisible(tempo.isVisible());
+        if(this.tempoMap != null) {
+            tempoMap.setVisible(!tempoMap.isVisible());
+            setTempoVisible(tempoMap.isVisible());
         }
     }//GEN-LAST:event_layerHeightButtonActionPerformed
 
     private void useTempoCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_useTempoCheckBoxActionPerformed
-        if(this.tempo != null) {
-            tempo.setEnabled(useTempoCheckBox.isSelected());
+        if(this.tempoMap != null) {
+            tempoMap.setEnabled(useTempoCheckBox.isSelected());
         }
 }//GEN-LAST:event_useTempoCheckBoxActionPerformed
 

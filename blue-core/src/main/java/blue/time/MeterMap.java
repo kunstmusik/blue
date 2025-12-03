@@ -21,9 +21,13 @@ package blue.time;
 
 import electric.xml.Element;
 import electric.xml.Elements;
-import javafx.beans.Observable;
-import javafx.beans.property.SimpleListProperty;
-import javafx.collections.FXCollections;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.stream.Stream;
 
 /**
  * Manages time signature (meter) changes across a musical timeline.
@@ -34,35 +38,101 @@ import javafx.collections.FXCollections;
  * 
  * Automatically maintains a cache of measure start beats for efficient
  * conversion between measure/beat positions and absolute Csound beats.
+ * 
+ * Entries are always kept sorted by measure number.
  *
  * @author stevenyi
  */
-public class MeterMap extends SimpleListProperty<MeasureMeterPair> {
+public class MeterMap {
+    
+    /**
+     * Listener interface for MeterMap changes.
+     */
+    public interface MeterMapListener {
+        void meterMapChanged();
+    }
 
+    private final List<MeasureMeterPair> entries = new ArrayList<>();
+    private final List<MeterMapListener> listeners = new CopyOnWriteArrayList<>();
     protected double[] measureStartBeats = new double[0];
 
     public MeterMap() {
-        super(FXCollections.observableArrayList(
-                e -> new Observable[]{
-                    e.measureNumberProperty(),
-                    e.meterProperty()
-                }
-        ));
-
-        add(new MeasureMeterPair(1, new Meter(4, 4)));
-        addListener((Observable obs) -> {
-            updateMeasureStartBeats();
-        });
+        entries.add(new MeasureMeterPair(1, new Meter(4, 4)));
         updateMeasureStartBeats();
     }
 
     public MeterMap(MeterMap meterMap) {
-        super(FXCollections.observableArrayList(
-                meterMap.stream().map(e -> new MeasureMeterPair(e)).toList()));
-        addListener((Observable obs) -> {
-            updateMeasureStartBeats();
-        });
+        for (MeasureMeterPair pair : meterMap.entries) {
+            entries.add(new MeasureMeterPair(pair));
+        }
         updateMeasureStartBeats();
+    }
+    
+    // ========== Listener Management ==========
+    
+    public void addListener(MeterMapListener listener) {
+        if (listener != null && !listeners.contains(listener)) {
+            listeners.add(listener);
+        }
+    }
+    
+    public void removeListener(MeterMapListener listener) {
+        listeners.remove(listener);
+    }
+    
+    private void fireChanged() {
+        updateMeasureStartBeats();
+        for (MeterMapListener listener : listeners) {
+            listener.meterMapChanged();
+        }
+    }
+    
+    // ========== List Operations ==========
+    
+    public int size() {
+        return entries.size();
+    }
+    
+    public boolean isEmpty() {
+        return entries.isEmpty();
+    }
+    
+    public MeasureMeterPair get(int index) {
+        return entries.get(index);
+    }
+    
+    public void add(MeasureMeterPair pair) {
+        entries.add(pair);
+        sortEntries();
+        fireChanged();
+    }
+    
+    public void set(int index, MeasureMeterPair pair) {
+        entries.set(index, pair);
+        sortEntries();
+        fireChanged();
+    }
+    
+    public void remove(int index) {
+        entries.remove(index);
+        fireChanged();
+    }
+    
+    public void clear() {
+        entries.clear();
+        fireChanged();
+    }
+    
+    public Stream<MeasureMeterPair> stream() {
+        return entries.stream();
+    }
+    
+    public List<MeasureMeterPair> getEntries() {
+        return Collections.unmodifiableList(entries);
+    }
+    
+    private void sortEntries() {
+        entries.sort(Comparator.comparingLong(MeasureMeterPair::getMeasureNumber));
     }
 
     private void updateMeasureStartBeats() {
@@ -203,7 +273,7 @@ public class MeterMap extends SimpleListProperty<MeasureMeterPair> {
     public Element saveAsXML() {
         Element retVal = new Element("meterMap");
         
-        for (MeasureMeterPair pair : this) {
+        for (MeasureMeterPair pair : entries) {
             retVal.addElement(pair.saveAsXML());
         }
         

@@ -254,7 +254,7 @@ public final class TimeBar extends JPanel implements
         g.drawLine(startX, h, endX, h);
 
         // Get TimeContext for formatting
-        TimeContext context = (data != null) ? data.getTimeContext() : null;
+        TimeContext context = (data != null) ? data.getScore().getTimeContext() : null;
         
         // Choose rendering based on display format
         switch (displayFormat) {

@@ -11,9 +11,9 @@ import blue.Arrangement;
 import blue.BlueData;
 import blue.BlueSystem;
 import blue.SoundLayer;
-import blue.components.lines.LinePoint;
 import blue.orchestra.GenericInstrument;
 import blue.soundObject.*;
+import blue.time.TempoPoint;
 import blue.time.TimeContext;
 import blue.time.TimeUnit;
 import blue.udo.OpcodeList;
@@ -149,19 +149,23 @@ public class CSDUtility {
             } else if (line.startsWith("t")) {
                 if (line.length() > 1) {
                     line = line.substring(1).trim();
-                    var tempo = data.getScore().getTempo();
-                    var tLine = tempo.getLine();
+                    var tempoMap = data.getScore().getTempoMap();
                     var parts = line.split("\\s+");
 
                     if (parts.length % 2 == 0) {
                         try {
-                            tLine.getObservableList().clear();
+                            tempoMap.reset();
                             for (int j = 0; j < parts.length; j += 2) {
-                                double time = Double.parseDouble(parts[j]);
-                                double t = Double.parseDouble(parts[j + 1]);
-                                tLine.addLinePoint(new LinePoint(time, t));
+                                double beat = Double.parseDouble(parts[j]);
+                                double tempo = Double.parseDouble(parts[j + 1]);
+                                if (j == 0) {
+                                    // First point - set it (reset already created one at beat 0)
+                                    tempoMap.setTempoPoint(0, beat, tempo);
+                                } else {
+                                    tempoMap.addTempoPoint(new TempoPoint(beat, tempo));
+                                }
                             }
-                            tempo.setEnabled(true);
+                            tempoMap.setEnabled(true);
                         } catch (Exception e) {
                             throw new RuntimeException("Invalid tempo statement found");
                         }
@@ -254,7 +258,7 @@ public class CSDUtility {
 
     private static void setSoundObjectPerSection(BlueData data,
             ScoreSection section) {
-        TimeContext context = data.getTimeContext();
+        TimeContext context = data.getScore().getTimeContext();
         GenericScore genScore = createSizedGenericScore(section.scoreText,
                 BlueSystem.getString("csd.importedScore"), context);
 
@@ -271,7 +275,7 @@ public class CSDUtility {
     // ramp's, etc.
     private static void setSoundObjectsPerInstrument(BlueData data,
             ScoreSection section) {
-        TimeContext context = data.getTimeContext();
+        TimeContext context = data.getScore().getTimeContext();
         TreeMap<Integer, StringBuffer> map = new TreeMap<>();
 
         StringTokenizer st = new StringTokenizer(section.scoreText, "\n");
