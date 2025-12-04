@@ -213,7 +213,7 @@ public class CSDRender extends CSDRenderService {
         // making copies to use for adding compileTime tables and instruments
         Tables tables = new Tables(data.getTableSet());
 
-        ArrayList originalParameters;
+        ArrayList<Parameter> originalParameters;
 
 //        if (usingAPI) {
         originalParameters = ParameterHelper.getAllParameters(
@@ -226,7 +226,6 @@ public class CSDRender extends CSDRenderService {
 
         Arrangement arrangement = new Arrangement(data.getArrangement());
         arrangement.clearUnusedInstrAssignments();
-        boolean hasInstruments = arrangement.size() > 0;
 
         CompileData compileData = new CompileData(arrangement, tables,
                 stringChannels, originalParameters, scnm, pnm);
