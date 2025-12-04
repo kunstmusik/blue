@@ -41,7 +41,7 @@ public class TempoMapTest {
         assertEquals(1, tm.size());
         assertEquals(0.0, tm.getBeat(0), EPSILON);
         assertEquals(60.0, tm.getTempo(0), EPSILON);
-        assertEquals(CurveType.LINEAR, tm.getCurveType(0));
+        assertEquals(CurveType.CONSTANT, tm.getCurveType(0));
         assertFalse(tm.isEnabled());
         assertFalse(tm.isVisible());
     }
@@ -291,15 +291,20 @@ public class TempoMapTest {
     @Test
     public void testPropertyChangeListener() {
         TempoMap tm = new TempoMap();
-        String[] lastProperty = {null};
+        java.util.List<String> properties = new java.util.ArrayList<>();
         
-        tm.addPropertyChangeListener(evt -> lastProperty[0] = evt.getPropertyName());
+        tm.addPropertyChangeListener(evt -> properties.add(evt.getPropertyName()));
         
         tm.setEnabled(true);
-        assertEquals("enabled", lastProperty[0]);
+        // setEnabled fires "enabled" then "data" (via fireChanged)
+        assertTrue(properties.contains("enabled"));
+        assertTrue(properties.contains("data"));
         
+        properties.clear();
         tm.setVisible(true);
-        assertEquals("visible", lastProperty[0]);
+        // setVisible only fires "visible"
+        assertEquals(1, properties.size());
+        assertEquals("visible", properties.get(0));
     }
     
     // ========== MeasureBeatsTime Position Tests ==========

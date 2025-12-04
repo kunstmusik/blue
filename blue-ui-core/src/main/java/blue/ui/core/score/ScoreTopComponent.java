@@ -50,8 +50,8 @@ import blue.ui.core.score.layers.LayerGroupUIProviderManager;
 import blue.ui.core.score.layers.SoundObjectProvider;
 import blue.ui.core.score.manager.LayerGroupManagerDialog;
 import blue.ui.core.score.manager.ScoreManagerDialog;
-import blue.ui.core.score.tempo.TempoEditor;
 import blue.ui.core.score.tempo.TempoEditorControl;
+import blue.ui.core.score.tempo.TempoEditorPanel;
 import blue.ui.utilities.LinearLayout;
 import blue.ui.utilities.UiUtilities;
 import blue.util.ObservableListEvent;
@@ -150,7 +150,7 @@ public final class ScoreTopComponent extends TopComponent
     TimeFormatSelector timeFormatSelector = new TimeFormatSelector();
     TimelinePropertiesPanel timeProperties = new TimelinePropertiesPanel();
     TempoEditorControl tempoControlPanel = new TempoEditorControl();
-    TempoEditor tempoEditor = new TempoEditor();
+    TempoEditorPanel tempoEditorPanel = new TempoEditorPanel();
     ScoreNavigatorDialog navigator = null;
     volatile boolean checkingSize = false;
     AlphaMarquee marquee = new AlphaMarquee();
@@ -444,7 +444,7 @@ public final class ScoreTopComponent extends TopComponent
             currentTimeState = timeState;
 
             tempoControlPanel.setTempoMap(data.getScore().getTempoMap());
-            tempoEditor.setData(data);
+            tempoEditorPanel.setData(data);
 
             timeBar.setData(data);
             markersBar.setData(data);
@@ -633,12 +633,9 @@ public final class ScoreTopComponent extends TopComponent
         final JPanel headerPanel = new JPanel(new BorderLayout());
         headerPanel.setBackground(Color.BLACK);
 
-        headerPanel.add(tempoEditor, BorderLayout.CENTER);
+        headerPanel.add(tempoEditorPanel, BorderLayout.CENTER);
 
         // TIMELINE BARS
-//        timelineBars.setLayout(new BoxLayout(timelineBars, BoxLayout.Y_AXIS));
-//        timelineBars.add(markersBar);
-//        timelineBars.add(timeBar);
         timelineBars.setLayout(new BorderLayout());
         timelineBars.add(markersBar, BorderLayout.NORTH);
         timelineBars.add(timeBar, BorderLayout.SOUTH);
@@ -648,7 +645,7 @@ public final class ScoreTopComponent extends TopComponent
 
         headerPanel.add(timelineBars, BorderLayout.SOUTH);
 
-        tempoEditor.addComponentListener(new ComponentAdapter() {
+        tempoEditorPanel.addComponentListener(new ComponentAdapter() {
             @Override
             public void componentResized(ComponentEvent e) {
                 headerPanel.revalidate();
@@ -1087,8 +1084,8 @@ public final class ScoreTopComponent extends TopComponent
             layerPanel.validate();
             layerHeaderPanel.validate();
 
-            tempoEditor.setTimeState(timeState);
-            tempoEditor.setVisible(true);
+            tempoEditorPanel.setTimeState(timeState);
+            tempoEditorPanel.setVisible(true);
             tempoControlPanel.setVisible(true);
             timeBar.setRootTimeline(true);
             timeBar.setTimeState(timeState);
@@ -1141,7 +1138,7 @@ public final class ScoreTopComponent extends TopComponent
 
         PolyObject pObj = (PolyObject) layerGroup;
 
-        tempoEditor.setVisible(false);
+        tempoEditorPanel.setVisible(false);
         tempoControlPanel.setVisible(false);
 
         if (this.currentTimeState != null) {

@@ -71,7 +71,7 @@ public class TempoMap {
     private boolean visible = false;
 
     public TempoMap() {
-        points.add(new TempoPoint(0, DEFAULT_TEMPO, CurveType.LINEAR));
+        points.add(new TempoPoint(0, DEFAULT_TEMPO, CurveType.CONSTANT));
     }
 
     public TempoMap(TempoMap tempoMap) {
@@ -149,6 +149,8 @@ public class TempoMap {
         for (TempoMapListener listener : listeners) {
             listener.tempoMapChanged();
         }
+        // Also notify PropertyChangeListeners for UI components
+        firePropertyChange("data", null, points);
     }
     
     private void firePropertyChange(String propertyName, Object oldValue, Object newValue) {

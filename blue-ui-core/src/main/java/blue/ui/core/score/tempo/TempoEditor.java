@@ -12,7 +12,6 @@ import blue.ui.utilities.UiUtilities;
 import blue.utility.ScoreUtilities;
 import java.awt.BasicStroke;
 import java.awt.Color;
-import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Point;
@@ -78,21 +77,18 @@ public class TempoEditor extends JComponent implements PropertyChangeListener {
         this.tempoMap.addPropertyChangeListener(this);
         this.score = score;
         this.score.getTimeState().addPropertyChangeListener(this);
-        this.setTempoVisible(tempoMap.isVisible());
     }
 
     public void setTimeState(TimeState timeState) {
         this.timeState = timeState;
     }
 
+    /**
+     * @deprecated Use TempoEditorPanel.setExpanded() instead
+     */
+    @Deprecated
     public void setTempoVisible(boolean tempoVisible) {
-        if (tempoVisible) {
-            this.setPreferredSize(new Dimension(1, 100));
-            this.setSize(this.getWidth(), 100);
-        } else {
-            this.setPreferredSize(new Dimension(1, 20));
-            this.setSize(this.getWidth(), 20);
-        }
+        // Height is now managed by TempoEditorPanel
     }
 
     @Override
@@ -249,10 +245,11 @@ public class TempoEditor extends JComponent implements PropertyChangeListener {
         if (evt.getSource() == this.tempoMap) {
             switch (prop) {
                 case "enabled":
+                case "data":
                     repaint();
                     break;
                 case "visible":
-                    this.setTempoVisible(((Boolean) evt.getNewValue()).booleanValue());
+                    // Visibility is now managed by TempoEditorPanel
                     break;
             }
         } else if (this.score != null && evt.getSource() == this.score.getTimeState()) {
@@ -337,7 +334,7 @@ public class TempoEditor extends JComponent implements PropertyChangeListener {
         tempo = Math.max(MIN_TEMPO, Math.min(MAX_TEMPO, tempo));
         
         // Add the point (TempoMap will sort it)
-        tempoMap.addTempoPoint(new TempoPoint(beat, tempo));
+        tempoMap.addTempoPoint(new TempoPoint(beat, tempo, CurveType.CONSTANT));
         
         // Find the index of the newly added point
         for (int i = 0; i < tempoMap.size(); i++) {
