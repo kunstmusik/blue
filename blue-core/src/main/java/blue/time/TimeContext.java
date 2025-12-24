@@ -28,24 +28,31 @@ import electric.xml.Element;
  */
 public class TimeContext {
     
+    /** Default PPQ (Pulses Per Quarter note) - industry standard */
+    public static final int DEFAULT_PPQ = 480;
+    
     private long sampleRate;
+    private int ppq;
     private MeterMap meterMap;
     private TempoMap tempoMap;
     
     public TimeContext() {
         sampleRate = 44100;
+        ppq = DEFAULT_PPQ;
         meterMap = new MeterMap();
         tempoMap = new TempoMap();
     }
     
     public TimeContext(long sampleRate, MeterMap meterMap, TempoMap tempoMap) {
         this.sampleRate = sampleRate;
+        this.ppq = DEFAULT_PPQ;
         this.meterMap = meterMap;
         this.tempoMap = tempoMap;
     }
     
     public TimeContext(TimeContext tc) {
         this.sampleRate = tc.sampleRate;
+        this.ppq = tc.ppq;
         this.meterMap = new MeterMap(tc.meterMap);
         this.tempoMap = new TempoMap(tc.tempoMap);
     }
@@ -56,6 +63,29 @@ public class TimeContext {
     
     public void setSampleRate(long sampleRate) {
         this.sampleRate = sampleRate;
+    }
+    
+    /**
+     * Get the PPQ (Pulses Per Quarter note) for this context.
+     * Used for tick-based musical time representations (BBT, BBST).
+     * @return PPQ value (default 480)
+     */
+    public int getPPQ() {
+        return ppq;
+    }
+    
+    /**
+     * Set the PPQ (Pulses Per Quarter note) for this context.
+     * @param ppq PPQ value, must be positive and divisible by 4
+     */
+    public void setPPQ(int ppq) {
+        if (ppq <= 0) {
+            throw new IllegalArgumentException("PPQ must be positive: " + ppq);
+        }
+        if (ppq % 4 != 0) {
+            throw new IllegalArgumentException("PPQ must be divisible by 4: " + ppq);
+        }
+        this.ppq = ppq;
     }
     
     public MeterMap getMeterMap() {
@@ -80,6 +110,7 @@ public class TimeContext {
     public Element saveAsXML() {
         Element retVal = new Element("timeContext");
         retVal.addElement("sampleRate").setText(Long.toString(sampleRate));
+        retVal.addElement("ppq").setText(Integer.toString(ppq));
         retVal.addElement(meterMap.saveAsXML());
         retVal.addElement(tempoMap.saveAsXML());
         return retVal;
@@ -94,6 +125,11 @@ public class TimeContext {
         Element sampleRateElem = data.getElement("sampleRate");
         if (sampleRateElem != null) {
             tc.setSampleRate(Long.parseLong(sampleRateElem.getTextString()));
+        }
+        
+        Element ppqElem = data.getElement("ppq");
+        if (ppqElem != null) {
+            tc.setPPQ(Integer.parseInt(ppqElem.getTextString()));
         }
         
         Element meterMapElem = data.getElement("meterMap");

@@ -51,7 +51,7 @@ import org.openide.windows.WindowManager;
         displayName = "#CTL_EditMeterMapAction"
 )
 @ActionReference(path = "Menu/Project", position = 395)
-@Messages("CTL_EditMeterMapAction=Edit Meter Map...")
+@Messages("CTL_EditMeterMapAction=Edit Time Signature Map...")
 public final class EditMeterMapAction implements ActionListener {
 
     @Override

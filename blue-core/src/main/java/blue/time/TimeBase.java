@@ -34,10 +34,20 @@ public enum TimeBase {
      */
     CSOUND_BEATS, 
     
-    /** Musical time using measure number and beat within measure. Requires
-     * MeterMap context to interpret and convert to absolute time.
+    /** BBT (Bars.Beats.Ticks) - Ardour/Qtractor style.
+     * Uses PPQ-based ticks for sub-beat precision.
      */
-    MEASURE_BEATS,
+    BBT,
+    
+    /** BBST (Bars.Beats.Sixteenths.Ticks) - Cubase/Reason style.
+     * Uses sixteenth-note subdivisions with PPQ-based sub-ticks.
+     */
+    BBST,
+    
+    /** BBF (Bars.Beats.Fraction) - REAPER style.
+     * Uses percentage-based fraction (0-99) for sub-beat precision.
+     */
+    BBF,
     
     /** Hours:Minutes:Seconds.MS **/
     TIME, 

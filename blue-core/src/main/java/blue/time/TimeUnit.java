@@ -146,8 +146,16 @@ public abstract class TimeUnit {
         return new BeatTime(csoundBeats);
     }
 
-    public static MeasureBeatsTime measureBeats(long measure, double beats) {
-        return new MeasureBeatsTime(measure, beats);
+    public static BBTTime bbt(long bar, int beat, int ticks) {
+        return new BBTTime(bar, beat, ticks);
+    }
+    
+    public static BBSTTime bbst(long bar, int beat, int sixteenth, int ticks) {
+        return new BBSTTime(bar, beat, sixteenth, ticks);
+    }
+    
+    public static BBFTime bbf(long bar, int beat, int fraction) {
+        return new BBFTime(bar, beat, fraction);
     }
 
     /**
@@ -232,57 +240,69 @@ public abstract class TimeUnit {
     }
 
     /**
-     * Musical time representation using measure number and beat within measure.
-     * Requires MeterMap context to interpret and convert to absolute time.
+     * BBT (Bars.Beats.Ticks) time representation.
+     * Uses PPQ-based ticks for sub-beat precision.
+     * Matches Ardour/Qtractor style.
      * 
-     * Measure numbers and beat numbers both start at 1.
-     * Beat number is relative to the meter at that measure (e.g., beat 1-4 in 4/4).
+     * Bar and beat numbers are 1-based.
+     * Ticks range from 0 to PPQ-1 (e.g., 0-479 at PPQ=480).
      * 
      * This is an immutable value object.
      */
-    public static final class MeasureBeatsTime extends TimeUnit {
+    public static final class BBTTime extends TimeUnit {
         
-        public static final MeasureBeatsTime ZERO = new MeasureBeatsTime(1, 1.0);
+        public static final BBTTime ZERO = new BBTTime(1, 1, 0);
         
-        private final long measureNumber;
-        private final double beatNumber;
+        private final long bar;
+        private final int beat;
+        private final int ticks;
 
-        public MeasureBeatsTime(long measures, double beats) {
-            if (measures < 1) {
-                throw new IllegalArgumentException(
-                    "Measure number must be >= 1, got: " + measures);
+        public BBTTime(long bar, int beat, int ticks) {
+            if (bar < 1) {
+                throw new IllegalArgumentException("Bar must be >= 1, got: " + bar);
             }
-            if (beats < 1.0) {
-                throw new IllegalArgumentException(
-                    "Beat number must be >= 1.0, got: " + beats);
+            if (beat < 1) {
+                throw new IllegalArgumentException("Beat must be >= 1, got: " + beat);
             }
-            this.measureNumber = measures;
-            this.beatNumber = beats;
+            if (ticks < 0) {
+                throw new IllegalArgumentException("Ticks must be >= 0, got: " + ticks);
+            }
+            this.bar = bar;
+            this.beat = beat;
+            this.ticks = ticks;
         }
 
-        public MeasureBeatsTime(MeasureBeatsTime measureBeatsTime) {
-            this.measureNumber = measureBeatsTime.measureNumber;
-            this.beatNumber = measureBeatsTime.beatNumber;
+        public BBTTime(BBTTime bbtTime) {
+            this.bar = bbtTime.bar;
+            this.beat = bbtTime.beat;
+            this.ticks = bbtTime.ticks;
         }
         
         @Override
         public TimeBase getTimeBase() {
-            return TimeBase.MEASURE_BEATS;
+            return TimeBase.BBT;
         }
 
-        public long getMeasureNumber() {
-            return measureNumber;
+        public long getBar() {
+            return bar;
         }
 
-        public double getBeatNumber() {
-            return beatNumber;
+        public int getBeat() {
+            return beat;
+        }
+        
+        public int getTicks() {
+            return ticks;
         }
         
         // Conversion methods
         
         @Override
         public double toBeats(TimeContext context) {
-            return context.getMeterMap().toBeats(this);
+            // Get the absolute beat position for bar:beat from MeterMap
+            double absoluteBeats = context.getMeterMap().barBeatToBeats(bar, beat);
+            // Add tick fraction
+            return absoluteBeats + (ticks / (double) context.getPPQ());
         }
         
         @Override
@@ -301,40 +321,362 @@ public abstract class TimeUnit {
         
         @Override
         public TimeUnit add(TimeContext context, TimeUnit other) {
-            // Convert to beats, add, convert back to measure/beats
             double thisBeats = this.toBeats(context);
             double otherBeats = other.toBeats(context);
             double resultBeats = thisBeats + otherBeats;
-            return context.getMeterMap().toMeasureBeats(TimeUnit.beats(resultBeats));
+            return context.getMeterMap().beatsToBBT(resultBeats, context.getPPQ());
         }
         
         @Override
         public TimeUnit subtract(TimeContext context, TimeUnit other) {
             double thisBeats = this.toBeats(context);
             double otherBeats = other.toBeats(context);
-            double resultBeats = thisBeats - otherBeats;
-            return context.getMeterMap().toMeasureBeats(TimeUnit.beats(resultBeats));
+            double resultBeats = Math.max(0, thisBeats - otherBeats);
+            return context.getMeterMap().beatsToBBT(resultBeats, context.getPPQ());
+        }
+        
+        /**
+         * Convert to BBST format.
+         * @param ppq the PPQ value for tick calculation
+         * @return equivalent BBSTTime
+         */
+        public BBSTTime toBBST(int ppq) {
+            int ticksPerSixteenth = ppq / 4;
+            int sixteenth = (ticks / ticksPerSixteenth) + 1;
+            int subTicks = ticks % ticksPerSixteenth;
+            return new BBSTTime(bar, beat, sixteenth, subTicks);
+        }
+        
+        /**
+         * Convert to BBF format.
+         * @param ppq the PPQ value for fraction calculation
+         * @return equivalent BBFTime
+         */
+        public BBFTime toBBF(int ppq) {
+            int fraction = (ticks * 100) / ppq;
+            return new BBFTime(bar, beat, fraction);
         }
         
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
-            if (!(o instanceof MeasureBeatsTime)) return false;
-            MeasureBeatsTime that = (MeasureBeatsTime) o;
-            return measureNumber == that.measureNumber &&
-                   Double.compare(that.beatNumber, beatNumber) == 0;
+            if (!(o instanceof BBTTime)) return false;
+            BBTTime that = (BBTTime) o;
+            return bar == that.bar && beat == that.beat && ticks == that.ticks;
         }
         
         @Override
         public int hashCode() {
-            int result = Long.hashCode(measureNumber);
-            result = 31 * result + Double.hashCode(beatNumber);
+            int result = Long.hashCode(bar);
+            result = 31 * result + beat;
+            result = 31 * result + ticks;
             return result;
         }
         
         @Override
         public String toString() {
-            return String.format("MeasureBeatsTime[m%d:%.3f]", measureNumber, beatNumber);
+            return String.format("%d.%d.%d", bar, beat, ticks);
+        }
+    }
+
+    /**
+     * BBST (Bars.Beats.Sixteenths.Ticks) time representation.
+     * Uses sixteenth-note subdivisions with PPQ-based sub-ticks.
+     * Matches Cubase/Reason style.
+     * 
+     * Bar and beat numbers are 1-based.
+     * Sixteenth is 1-4 (which 16th note within the beat).
+     * Ticks range from 0 to (PPQ/4)-1 (e.g., 0-119 at PPQ=480).
+     * 
+     * This is an immutable value object.
+     */
+    public static final class BBSTTime extends TimeUnit {
+        
+        public static final BBSTTime ZERO = new BBSTTime(1, 1, 1, 0);
+        
+        private final long bar;
+        private final int beat;
+        private final int sixteenth;
+        private final int ticks;
+
+        public BBSTTime(long bar, int beat, int sixteenth, int ticks) {
+            if (bar < 1) {
+                throw new IllegalArgumentException("Bar must be >= 1, got: " + bar);
+            }
+            if (beat < 1) {
+                throw new IllegalArgumentException("Beat must be >= 1, got: " + beat);
+            }
+            if (sixteenth < 1 || sixteenth > 4) {
+                throw new IllegalArgumentException("Sixteenth must be 1-4, got: " + sixteenth);
+            }
+            if (ticks < 0) {
+                throw new IllegalArgumentException("Ticks must be >= 0, got: " + ticks);
+            }
+            this.bar = bar;
+            this.beat = beat;
+            this.sixteenth = sixteenth;
+            this.ticks = ticks;
+        }
+
+        public BBSTTime(BBSTTime bbstTime) {
+            this.bar = bbstTime.bar;
+            this.beat = bbstTime.beat;
+            this.sixteenth = bbstTime.sixteenth;
+            this.ticks = bbstTime.ticks;
+        }
+        
+        @Override
+        public TimeBase getTimeBase() {
+            return TimeBase.BBST;
+        }
+
+        public long getBar() {
+            return bar;
+        }
+
+        public int getBeat() {
+            return beat;
+        }
+        
+        public int getSixteenth() {
+            return sixteenth;
+        }
+        
+        public int getTicks() {
+            return ticks;
+        }
+        
+        /**
+         * Convert to total ticks within the beat (0 to PPQ-1).
+         * @param ppq the PPQ value
+         * @return total ticks
+         */
+        public int toTotalTicks(int ppq) {
+            int ticksPerSixteenth = ppq / 4;
+            return (sixteenth - 1) * ticksPerSixteenth + ticks;
+        }
+        
+        // Conversion methods
+        
+        @Override
+        public double toBeats(TimeContext context) {
+            int ppq = context.getPPQ();
+            int totalTicks = toTotalTicks(ppq);
+            double absoluteBeats = context.getMeterMap().barBeatToBeats(bar, beat);
+            return absoluteBeats + (totalTicks / (double) ppq);
+        }
+        
+        @Override
+        public double toSeconds(TimeContext context) {
+            double beats = toBeats(context);
+            return context.getTempoMap().beatsToSeconds(beats);
+        }
+        
+        @Override
+        public long toFrames(TimeContext context) {
+            double seconds = toSeconds(context);
+            return Math.round(seconds * context.getSampleRate());
+        }
+        
+        // Arithmetic methods
+        
+        @Override
+        public TimeUnit add(TimeContext context, TimeUnit other) {
+            double thisBeats = this.toBeats(context);
+            double otherBeats = other.toBeats(context);
+            double resultBeats = thisBeats + otherBeats;
+            return context.getMeterMap().beatsToBBST(resultBeats, context.getPPQ());
+        }
+        
+        @Override
+        public TimeUnit subtract(TimeContext context, TimeUnit other) {
+            double thisBeats = this.toBeats(context);
+            double otherBeats = other.toBeats(context);
+            double resultBeats = Math.max(0, thisBeats - otherBeats);
+            return context.getMeterMap().beatsToBBST(resultBeats, context.getPPQ());
+        }
+        
+        /**
+         * Convert to BBT format.
+         * @param ppq the PPQ value for tick calculation
+         * @return equivalent BBTTime
+         */
+        public BBTTime toBBT(int ppq) {
+            int totalTicks = toTotalTicks(ppq);
+            return new BBTTime(bar, beat, totalTicks);
+        }
+        
+        /**
+         * Convert to BBF format.
+         * @param ppq the PPQ value for fraction calculation
+         * @return equivalent BBFTime
+         */
+        public BBFTime toBBF(int ppq) {
+            int totalTicks = toTotalTicks(ppq);
+            int fraction = (totalTicks * 100) / ppq;
+            return new BBFTime(bar, beat, fraction);
+        }
+        
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (!(o instanceof BBSTTime)) return false;
+            BBSTTime that = (BBSTTime) o;
+            return bar == that.bar && beat == that.beat && 
+                   sixteenth == that.sixteenth && ticks == that.ticks;
+        }
+        
+        @Override
+        public int hashCode() {
+            int result = Long.hashCode(bar);
+            result = 31 * result + beat;
+            result = 31 * result + sixteenth;
+            result = 31 * result + ticks;
+            return result;
+        }
+        
+        @Override
+        public String toString() {
+            return String.format("%d.%d.%d.%d", bar, beat, sixteenth, ticks);
+        }
+    }
+
+    /**
+     * BBF (Bars.Beats.Fraction) time representation.
+     * Uses percentage-based fraction for sub-beat precision.
+     * Matches REAPER style.
+     * 
+     * Bar and beat numbers are 1-based.
+     * Fraction is 0-99 (percentage of beat).
+     * 
+     * This is an immutable value object.
+     */
+    public static final class BBFTime extends TimeUnit {
+        
+        public static final BBFTime ZERO = new BBFTime(1, 1, 0);
+        
+        private final long bar;
+        private final int beat;
+        private final int fraction;
+
+        public BBFTime(long bar, int beat, int fraction) {
+            if (bar < 1) {
+                throw new IllegalArgumentException("Bar must be >= 1, got: " + bar);
+            }
+            if (beat < 1) {
+                throw new IllegalArgumentException("Beat must be >= 1, got: " + beat);
+            }
+            if (fraction < 0 || fraction > 99) {
+                throw new IllegalArgumentException("Fraction must be 0-99, got: " + fraction);
+            }
+            this.bar = bar;
+            this.beat = beat;
+            this.fraction = fraction;
+        }
+
+        public BBFTime(BBFTime bbfTime) {
+            this.bar = bbfTime.bar;
+            this.beat = bbfTime.beat;
+            this.fraction = bbfTime.fraction;
+        }
+        
+        @Override
+        public TimeBase getTimeBase() {
+            return TimeBase.BBF;
+        }
+
+        public long getBar() {
+            return bar;
+        }
+
+        public int getBeat() {
+            return beat;
+        }
+        
+        public int getFraction() {
+            return fraction;
+        }
+        
+        // Conversion methods
+        
+        @Override
+        public double toBeats(TimeContext context) {
+            double absoluteBeats = context.getMeterMap().barBeatToBeats(bar, beat);
+            return absoluteBeats + (fraction / 100.0);
+        }
+        
+        @Override
+        public double toSeconds(TimeContext context) {
+            double beats = toBeats(context);
+            return context.getTempoMap().beatsToSeconds(beats);
+        }
+        
+        @Override
+        public long toFrames(TimeContext context) {
+            double seconds = toSeconds(context);
+            return Math.round(seconds * context.getSampleRate());
+        }
+        
+        // Arithmetic methods
+        
+        @Override
+        public TimeUnit add(TimeContext context, TimeUnit other) {
+            double thisBeats = this.toBeats(context);
+            double otherBeats = other.toBeats(context);
+            double resultBeats = thisBeats + otherBeats;
+            return context.getMeterMap().beatsToBBF(resultBeats);
+        }
+        
+        @Override
+        public TimeUnit subtract(TimeContext context, TimeUnit other) {
+            double thisBeats = this.toBeats(context);
+            double otherBeats = other.toBeats(context);
+            double resultBeats = Math.max(0, thisBeats - otherBeats);
+            return context.getMeterMap().beatsToBBF(resultBeats);
+        }
+        
+        /**
+         * Convert to BBT format.
+         * @param ppq the PPQ value for tick calculation
+         * @return equivalent BBTTime
+         */
+        public BBTTime toBBT(int ppq) {
+            int ticks = (fraction * ppq) / 100;
+            return new BBTTime(bar, beat, ticks);
+        }
+        
+        /**
+         * Convert to BBST format.
+         * @param ppq the PPQ value for tick calculation
+         * @return equivalent BBSTTime
+         */
+        public BBSTTime toBBST(int ppq) {
+            int totalTicks = (fraction * ppq) / 100;
+            int ticksPerSixteenth = ppq / 4;
+            int sixteenth = (totalTicks / ticksPerSixteenth) + 1;
+            int subTicks = totalTicks % ticksPerSixteenth;
+            return new BBSTTime(bar, beat, sixteenth, subTicks);
+        }
+        
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (!(o instanceof BBFTime)) return false;
+            BBFTime that = (BBFTime) o;
+            return bar == that.bar && beat == that.beat && fraction == that.fraction;
+        }
+        
+        @Override
+        public int hashCode() {
+            int result = Long.hashCode(bar);
+            result = 31 * result + beat;
+            result = 31 * result + fraction;
+            return result;
+        }
+        
+        @Override
+        public String toString() {
+            return String.format("%d.%d.%02d", bar, beat, fraction);
         }
     }
 
@@ -734,10 +1076,22 @@ public abstract class TimeUnit {
         if (this instanceof BeatTime) {
             BeatTime bt = (BeatTime) this;
             element.addElement("csoundBeats").setText(Double.toString(bt.getCsoundBeats()));
-        } else if (this instanceof MeasureBeatsTime) {
-            MeasureBeatsTime mbt = (MeasureBeatsTime) this;
-            element.addElement("measureNumber").setText(Long.toString(mbt.getMeasureNumber()));
-            element.addElement("beatNumber").setText(Double.toString(mbt.getBeatNumber()));
+        } else if (this instanceof BBTTime) {
+            BBTTime bbt = (BBTTime) this;
+            element.addElement("bar").setText(Long.toString(bbt.getBar()));
+            element.addElement("beat").setText(Integer.toString(bbt.getBeat()));
+            element.addElement("ticks").setText(Integer.toString(bbt.getTicks()));
+        } else if (this instanceof BBSTTime) {
+            BBSTTime bbst = (BBSTTime) this;
+            element.addElement("bar").setText(Long.toString(bbst.getBar()));
+            element.addElement("beat").setText(Integer.toString(bbst.getBeat()));
+            element.addElement("sixteenth").setText(Integer.toString(bbst.getSixteenth()));
+            element.addElement("ticks").setText(Integer.toString(bbst.getTicks()));
+        } else if (this instanceof BBFTime) {
+            BBFTime bbf = (BBFTime) this;
+            element.addElement("bar").setText(Long.toString(bbf.getBar()));
+            element.addElement("beat").setText(Integer.toString(bbf.getBeat()));
+            element.addElement("fraction").setText(Integer.toString(bbf.getFraction()));
         } else if (this instanceof TimeValue) {
             TimeValue tv = (TimeValue) this;
             element.addElement("hours").setText(Long.toString(tv.getHours()));
@@ -777,10 +1131,24 @@ public abstract class TimeUnit {
                 double csoundBeats = Double.parseDouble(element.getTextString("csoundBeats"));
                 yield new BeatTime(csoundBeats);
             }
-            case "MeasureBeatsTime" -> {
-                long measureNumber = Long.parseLong(element.getTextString("measureNumber"));
-                double beatNumber = Double.parseDouble(element.getTextString("beatNumber"));
-                yield new MeasureBeatsTime(measureNumber, beatNumber);
+            case "BBTTime" -> {
+                long bar = Long.parseLong(element.getTextString("bar"));
+                int beat = Integer.parseInt(element.getTextString("beat"));
+                int ticks = Integer.parseInt(element.getTextString("ticks"));
+                yield new BBTTime(bar, beat, ticks);
+            }
+            case "BBSTTime" -> {
+                long bar = Long.parseLong(element.getTextString("bar"));
+                int beat = Integer.parseInt(element.getTextString("beat"));
+                int sixteenth = Integer.parseInt(element.getTextString("sixteenth"));
+                int ticks = Integer.parseInt(element.getTextString("ticks"));
+                yield new BBSTTime(bar, beat, sixteenth, ticks);
+            }
+            case "BBFTime" -> {
+                long bar = Long.parseLong(element.getTextString("bar"));
+                int beat = Integer.parseInt(element.getTextString("beat"));
+                int fraction = Integer.parseInt(element.getTextString("fraction"));
+                yield new BBFTime(bar, beat, fraction);
             }
             case "TimeValue" -> {
                 long hours = Long.parseLong(element.getTextString("hours"));

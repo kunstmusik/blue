@@ -29,114 +29,162 @@ import javax.swing.SpinnerNumberModel;
 import javax.swing.event.ChangeEvent;
 
 /**
- * Editor for MeasureTime TimeUnits. Displays two spinners for editing
- * measure number (long) and beat within measure (double).
+ * Editor for BBT/BBST/BBF TimeUnits. Displays spinners for editing
+ * bar, beat, sixteenth, and ticks (for BBST format).
+ * 
+ * TODO: Update to support text-based BBT/BBST/BBF input
  * 
  * @author steven yi
  */
 public class MeasureTimeEditor extends TimeUnitEditor {
     
-    private final JLabel measureLabel;
-    private final JSpinner measureSpinner;
+    private final JLabel barLabel;
+    private final JSpinner barSpinner;
     private final JLabel beatLabel;
     private final JSpinner beatSpinner;
+    private final JLabel sixteenthLabel;
+    private final JSpinner sixteenthSpinner;
+    private final JLabel ticksLabel;
+    private final JSpinner ticksSpinner;
     
     /**
-     * Creates a new MeasureTimeEditor.
+     * Creates a new MeasureTimeEditor for BBST format.
      */
     public MeasureTimeEditor() {
         super();
         setLayout(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(0, 0, 0, 5); // 5px gap between components
+        gbc.insets = new Insets(0, 0, 0, 3);
         gbc.anchor = GridBagConstraints.WEST;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         
-        // Measure spinner (long, min 1)
-        measureLabel = new JLabel("Measure:");
-        SpinnerNumberModel measureModel = new SpinnerNumberModel(1L, 1L, Long.MAX_VALUE, 1L);
-        measureSpinner = new JSpinner(measureModel);
-        configureSpinnerEditor(measureSpinner, "0");
+        // Bar spinner (long, min 1)
+        barLabel = new JLabel("Bar:");
+        SpinnerNumberModel barModel = new SpinnerNumberModel(1L, 1L, Long.MAX_VALUE, 1L);
+        barSpinner = new JSpinner(barModel);
+        configureSpinnerEditor(barSpinner, "0");
         
-        // Beat spinner (double, min 0.0)
+        // Beat spinner (int, 1-4 for 4/4)
         beatLabel = new JLabel("Beat:");
-        SpinnerNumberModel beatModel = new SpinnerNumberModel(0.0, 0.0, Double.MAX_VALUE, 0.25);
+        SpinnerNumberModel beatModel = new SpinnerNumberModel(1, 1, 16, 1);
         beatSpinner = new JSpinner(beatModel);
+        configureSpinnerEditor(beatSpinner, "0");
         
-        // Set editor to show decimal places for beats
-        configureSpinnerEditor(beatSpinner, "0.####");
+        // Sixteenth spinner (int, 1-4)
+        sixteenthLabel = new JLabel("16th:");
+        SpinnerNumberModel sixteenthModel = new SpinnerNumberModel(1, 1, 4, 1);
+        sixteenthSpinner = new JSpinner(sixteenthModel);
+        configureSpinnerEditor(sixteenthSpinner, "0");
         
-        // Add Measure label - fixed size
+        // Ticks spinner (int, 0-119 for PPQ=480)
+        ticksLabel = new JLabel("Ticks:");
+        SpinnerNumberModel ticksModel = new SpinnerNumberModel(0, 0, 119, 1);
+        ticksSpinner = new JSpinner(ticksModel);
+        configureSpinnerEditor(ticksSpinner, "0");
+        
+        // Layout: Bar label + spinner
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.weightx = 0.0;
-        gbc.insets = new Insets(0, 0, 0, 5);
-        add(measureLabel, gbc);
-
-        // Add Measure spinner - expandable, equal weight
+        add(barLabel, gbc);
         gbc.gridx = 1;
-        gbc.weightx = 0.5; // Half the available space
-        add(measureSpinner, gbc);
+        gbc.weightx = 0.25;
+        add(barSpinner, gbc);
 
-        // Add Beat label - fixed size
+        // Beat label + spinner
         gbc.gridx = 2;
         gbc.weightx = 0.0;
-        gbc.insets = new Insets(0, 5, 0, 5);
         add(beatLabel, gbc);
-
-        // Add Beat spinner - expandable, equal weight
         gbc.gridx = 3;
-        gbc.weightx = 0.5; // Half the available space
-        gbc.insets = new Insets(0, 0, 0, 0);
+        gbc.weightx = 0.25;
         add(beatSpinner, gbc);
-        
-        // Reset insets for any future additions
+
+        // Sixteenth label + spinner
+        gbc.gridx = 4;
+        gbc.weightx = 0.0;
+        add(sixteenthLabel, gbc);
+        gbc.gridx = 5;
+        gbc.weightx = 0.25;
+        add(sixteenthSpinner, gbc);
+
+        // Ticks label + spinner
+        gbc.gridx = 6;
+        gbc.weightx = 0.0;
+        add(ticksLabel, gbc);
+        gbc.gridx = 7;
+        gbc.weightx = 0.25;
         gbc.insets = new Insets(0, 0, 0, 0);
+        add(ticksSpinner, gbc);
         
         // Listen for changes
-        measureSpinner.addChangeListener((ChangeEvent e) -> {
-            if (!isUpdating()) {
-                fireStateChanged();
-            }
+        barSpinner.addChangeListener((ChangeEvent e) -> {
+            if (!isUpdating()) fireStateChanged();
         });
-        
         beatSpinner.addChangeListener((ChangeEvent e) -> {
-            if (!isUpdating()) {
-                fireStateChanged();
-            }
+            if (!isUpdating()) fireStateChanged();
+        });
+        sixteenthSpinner.addChangeListener((ChangeEvent e) -> {
+            if (!isUpdating()) fireStateChanged();
+        });
+        ticksSpinner.addChangeListener((ChangeEvent e) -> {
+            if (!isUpdating()) fireStateChanged();
         });
     }
     
     @Override
     protected void updateDisplay() {
         TimeUnit timeUnit = getTimeUnit();
-        if (timeUnit instanceof TimeUnit.MeasureBeatsTime measureTime) {
-            measureSpinner.setValue(measureTime.getMeasureNumber());
-            beatSpinner.setValue(measureTime.getBeatNumber());
+        if (timeUnit instanceof TimeUnit.BBSTTime bbst) {
+            barSpinner.setValue(bbst.getBar());
+            beatSpinner.setValue(bbst.getBeat());
+            sixteenthSpinner.setValue(bbst.getSixteenth());
+            ticksSpinner.setValue(bbst.getTicks());
+        } else if (timeUnit instanceof TimeUnit.BBTTime bbt) {
+            // Convert BBT to BBST for display
+            TimeUnit.BBSTTime bbst = bbt.toBBST(480); // Default PPQ
+            barSpinner.setValue(bbst.getBar());
+            beatSpinner.setValue(bbst.getBeat());
+            sixteenthSpinner.setValue(bbst.getSixteenth());
+            ticksSpinner.setValue(bbst.getTicks());
+        } else if (timeUnit instanceof TimeUnit.BBFTime bbf) {
+            // Convert BBF to BBST for display
+            TimeUnit.BBSTTime bbst = bbf.toBBST(480); // Default PPQ
+            barSpinner.setValue(bbst.getBar());
+            beatSpinner.setValue(bbst.getBeat());
+            sixteenthSpinner.setValue(bbst.getSixteenth());
+            ticksSpinner.setValue(bbst.getTicks());
         } else {
-            measureSpinner.setValue(1L);
-            beatSpinner.setValue(1.0);
+            barSpinner.setValue(1L);
+            beatSpinner.setValue(1);
+            sixteenthSpinner.setValue(1);
+            ticksSpinner.setValue(0);
         }
     }
     
     @Override
     protected TimeUnit updateModel() {
-        long measure = ((Number) measureSpinner.getValue()).longValue();
-        double beat = ((Number) beatSpinner.getValue()).doubleValue();
-        return TimeUnit.measureBeats(measure, beat);
+        long bar = ((Number) barSpinner.getValue()).longValue();
+        int beat = ((Number) beatSpinner.getValue()).intValue();
+        int sixteenth = ((Number) sixteenthSpinner.getValue()).intValue();
+        int ticks = ((Number) ticksSpinner.getValue()).intValue();
+        return TimeUnit.bbst(bar, beat, sixteenth, ticks);
     }
     
     @Override
     protected void enableComponents(boolean enabled) {
-        measureLabel.setEnabled(enabled);
-        measureSpinner.setEnabled(enabled);
+        barLabel.setEnabled(enabled);
+        barSpinner.setEnabled(enabled);
         beatLabel.setEnabled(enabled);
         beatSpinner.setEnabled(enabled);
+        sixteenthLabel.setEnabled(enabled);
+        sixteenthSpinner.setEnabled(enabled);
+        ticksLabel.setEnabled(enabled);
+        ticksSpinner.setEnabled(enabled);
     }
     
     private static void configureSpinnerEditor(JSpinner spinner, String pattern) {
         JSpinner.NumberEditor editor = new JSpinner.NumberEditor(spinner, pattern);
         spinner.setEditor(editor);
-        editor.getTextField().setColumns(pattern.replace("#", "0").length());
+        editor.getTextField().setColumns(3);
     }
 }

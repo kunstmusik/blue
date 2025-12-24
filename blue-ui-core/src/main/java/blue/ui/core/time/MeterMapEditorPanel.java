@@ -117,7 +117,7 @@ public class MeterMapEditorPanel extends JPanel {
         int result = JOptionPane.showConfirmDialog(
             parent,
             panel,
-            "Edit Meter Map",
+            "Edit Time Signature Map",
             JOptionPane.OK_CANCEL_OPTION,
             JOptionPane.PLAIN_MESSAGE
         );

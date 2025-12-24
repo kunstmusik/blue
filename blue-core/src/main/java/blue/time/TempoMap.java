@@ -245,6 +245,35 @@ public class TempoMap {
     }
     
     /**
+     * Updates the tempo point at the given index with a new position (as TimeUnit) and tempo.
+     * Preserves the existing curve type.
+     * 
+     * @param index the index of the tempo point to update
+     * @param position the new position as a TimeUnit (BeatTime, BBTTime, BBSTTime, or BBFTime)
+     * @param tempo the new tempo in BPM (must be > 0)
+     */
+    public void setTempoPoint(int index, TimeUnit position, double tempo) {
+        setTempoPoint(index, position, tempo, points.get(index).getCurveType());
+    }
+    
+    /**
+     * Updates the tempo point at the given index with a new position (as TimeUnit), tempo, and curve type.
+     * 
+     * @param index the index of the tempo point to update
+     * @param position the new position as a TimeUnit (BeatTime, BBTTime, BBSTTime, or BBFTime)
+     * @param tempo the new tempo in BPM (must be > 0)
+     * @param curveType the curve type for transition to next point
+     */
+    public void setTempoPoint(int index, TimeUnit position, double tempo, CurveType curveType) {
+        TempoPoint point = points.get(index);
+        point.setPosition(position);
+        point.setTempo(tempo);
+        point.setCurveType(curveType);
+        sortEntries();
+        fireChanged();
+    }
+    
+    /**
      * Sets only the curve type at the given index.
      */
     public void setCurveType(int index, CurveType curveType) {
@@ -281,15 +310,15 @@ public class TempoMap {
     }
     
     /**
-     * Recalculates the cached beat positions for all tempo points using the provided MeterMap.
-     * This should be called when the MeterMap changes, as MeasureBeatsTime positions
+     * Recalculates the cached beat positions for all tempo points using the provided TimeContext.
+     * This should be called when the MeterMap changes, as BBT/BBST/BBF positions
      * depend on the meter map for conversion to beats.
      * 
-     * @param meterMap the meter map for measure-to-beat conversion
+     * @param context the time context for bar/beat-to-beat conversion
      */
-    public void recalculateBeatPositions(MeterMap meterMap) {
+    public void recalculateBeatPositions(TimeContext context) {
         for (TempoPoint point : points) {
-            point.recalculateBeat(meterMap);
+            point.recalculateBeat(context);
         }
         sortEntries();
         recalculateAccumulatedTimes();

@@ -87,10 +87,15 @@ public class TempoEditorPanel extends JPanel implements PropertyChangeListener {
 
     public void setExpanded(boolean expanded) {
         if (this.expanded != expanded) {
+            boolean oldExpanded = this.expanded;
             this.expanded = expanded;
             lineGraph.setVisible(expanded);
             updatePreferredSize();
             revalidate();
+            repaint();
+            
+            // Fire property change so parent containers can react
+            firePropertyChange("expanded", oldExpanded, expanded);
             
             // Sync with tempoMap visibility
             if (tempoMap != null && tempoMap.isVisible() != expanded) {

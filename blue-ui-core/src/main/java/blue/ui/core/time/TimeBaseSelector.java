@@ -50,6 +50,9 @@ public class TimeBaseSelector extends JComboBox<TimeBase> {
     public TimeBaseSelector(boolean includeProjectDefault) {
         super(getTimeBases(includeProjectDefault));
         setRenderer(new TimeBaseRenderer());
+        // Prevent overly wide preferred/min sizes driven by long display strings
+        // (e.g., previously including full formatting hints in the label).
+        setPrototypeDisplayValue(TimeBase.BBST);
     }
     
     /**
@@ -65,7 +68,9 @@ public class TimeBaseSelector extends JComboBox<TimeBase> {
             // Exclude PROJECT_DEFAULT - only show concrete time bases
             return new TimeBase[] {
                 TimeBase.CSOUND_BEATS,
-                TimeBase.MEASURE_BEATS,
+                TimeBase.BBT,
+                TimeBase.BBST,
+                TimeBase.BBF,
                 TimeBase.TIME,
                 TimeBase.SMPTE,
                 TimeBase.FRAME
@@ -121,7 +126,9 @@ public class TimeBaseSelector extends JComboBox<TimeBase> {
             return switch (timeBase) {
                 case PROJECT_DEFAULT -> "Project Default";
                 case CSOUND_BEATS -> "Csound Beats";
-                case MEASURE_BEATS -> "Measure/Beats";
+                case BBT -> "BBT (Bar.Beat.Ticks)";
+                case BBST -> "BBST (Bar.Beat.16th.Ticks)";
+                case BBF -> "BBF (Bar.Beat.Fraction)";
                 case TIME -> "Time (HH:MM:SS.mmm)";
                 case SMPTE -> "SMPTE (HH:MM:SS:FF)";
                 case FRAME -> "Sample Frames";

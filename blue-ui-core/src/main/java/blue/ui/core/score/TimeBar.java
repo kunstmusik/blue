@@ -181,26 +181,40 @@ public final class TimeBar extends JPanel implements
         drawLinesAndNumbers(g);
 
         if (rootTimeline) {
+            // Get clip bounds to account for scroll offset
+            Rectangle clipBounds = g.getClipBounds();
+            double pixelTime = timeState.getPixelSecond();
+            double startTime = clipBounds.x / pixelTime;
+            
+            // Draw render start marker (green)
             g.setColor(Color.GREEN);
-            int x = (int) (data.getRenderStartTime() * timeState.getPixelSecond());
-            g.drawLine(x, 0, x, this.getHeight());
-
-            double renderLoopTime = data.getRenderEndTime();
-
-            if (renderLoopTime >= 0.0f) {
-                g.setColor(Color.YELLOW);
-                x = (int) (data.getRenderEndTime() * timeState.getPixelSecond());
+            double renderStartTime = data.getRenderStartTime();
+            int x = (int) ((renderStartTime - startTime) * pixelTime) + clipBounds.x;
+            if (x >= clipBounds.x - 1 && x <= clipBounds.x + clipBounds.width + 1) {
                 g.drawLine(x, 0, x, this.getHeight());
             }
 
+            // Draw render end marker (yellow)
+            double renderLoopTime = data.getRenderEndTime();
+            if (renderLoopTime >= 0.0f) {
+                g.setColor(Color.YELLOW);
+                x = (int) ((renderLoopTime - startTime) * pixelTime) + clipBounds.x;
+                if (x >= clipBounds.x - 1 && x <= clipBounds.x + clipBounds.width + 1) {
+                    g.drawLine(x, 0, x, this.getHeight());
+                }
+            }
+
+            // Draw playback position marker (orange)
             if (renderTimeManager.isCurrentProjectRendering()) {
                 double latency = PlaybackSettings.getInstance().getPlaybackLatencyCorrection();
 
                 if (timePointer > latency && renderStart >= 0.0f) {
                     g.setColor(Color.ORANGE);
-                    x = (int) ((timePointer + renderStart - latency) * timeState.
-                            getPixelSecond());
-                    g.drawLine(x, 0, x, this.getHeight());
+                    double playbackTime = timePointer + renderStart - latency;
+                    x = (int) ((playbackTime - startTime) * pixelTime) + clipBounds.x;
+                    if (x >= clipBounds.x - 1 && x <= clipBounds.x + clipBounds.width + 1) {
+                        g.drawLine(x, 0, x, this.getHeight());
+                    }
                 }
             }
         }
@@ -260,7 +274,7 @@ public final class TimeBar extends JPanel implements
         switch (displayFormat) {
             case TIME, SMPTE -> drawTimeBasedRuler(g, bounds, h, pixelTime, startTime, endTime, duration, context);
             case SAMPLES -> drawSamplesRuler(g, bounds, h, pixelTime, startTime, endTime, duration, context);
-            case MEASURE_BEATS -> drawMeasureBeatsRuler(g, bounds, h, pixelTime, startTime, endTime, duration, context);
+            case BBST -> drawMeasureBeatsRuler(g, bounds, h, pixelTime, startTime, endTime, duration, context);
             default -> drawBeatsRuler(g, bounds, h, pixelTime, startTime, endTime, duration);
         }
 
@@ -412,54 +426,186 @@ public final class TimeBar extends JPanel implements
     }
     
     /**
-     * Draws ruler using measure:beats format (1:1, 1:2, 2:1...)
-     * Uses Paul Heckbert's "Nice Numbers" algorithm for adaptive scaling.
+     * Draws ruler using measure:beats format with musical powers-of-2 grouping.
+     * Properly handles time signature changes by iterating through actual measure boundaries.
+     * - Zoomed out: labels every 32, 16, 8, 4, 2 measures
+     * - Medium: labels every measure
+     * - Zoomed in: labels measure + whole beats (respecting meter)
      */
     private void drawMeasureBeatsRuler(Graphics g, Rectangle bounds, int h,
             double pixelTime, double startTime, double endTime, double duration,
             TimeContext context) {
-        // Use nice numbers algorithm for adaptive tick spacing based on beats
-        int nticks = Math.max(bounds.width / 80, 2); // Aim for ~80 pixels between ticks
-        double range = niceNum(endTime - startTime, false);
-        double d = niceNum(range / (nticks - 1), true);
-        double graphMin = Math.floor(startTime / d) * d;
-        double graphMax = Math.ceil(endTime / d) * d;
-        int nfrac = (int) Math.max(-Math.floor(Math.log10(d)), 0);
-
-        for (double beatPos = graphMin; beatPos < graphMax + 0.5 * d; beatPos += d) {
-            String txt = formatMeasureBeats(beatPos, context, nfrac);
-            int x = (int) (bounds.width * (beatPos - startTime) / duration) + bounds.x;
-            if (x >= bounds.x && x <= bounds.x + bounds.width) {
-                g.drawLine(x, 10, x, h);
-                g.drawString(txt, x + 2, 16);
-            }
-        }
-    }
-    
-    /**
-     * Format beat position as measure:beat with appropriate precision.
-     */
-    private String formatMeasureBeats(double beatPos, TimeContext context, int nfrac) {
+        
         if (context == null || context.getMeterMap() == null) {
-            // Fallback to simple beat display
-            if (nfrac == 0) {
-                return String.valueOf((int) beatPos);
-            }
-            return String.format("%%.%df".formatted(nfrac), beatPos);
+            // Fallback to simple beats ruler
+            drawBeatsRuler(g, bounds, h, pixelTime, startTime, endTime, duration);
+            return;
         }
         
         var meterMap = context.getMeterMap();
-        var measureBeats = meterMap.toMeasureBeats(blue.time.TimeUnit.beats(beatPos));
-        long measure = measureBeats.getMeasureNumber();
-        double beat = measureBeats.getBeatNumber();
         
-        // Show as measure:beat with appropriate decimal places
-        if (nfrac == 0 || beat == Math.floor(beat)) {
-            return String.format("%d:%d", measure, (int) beat);
+        // Get approximate pixels per measure using first meter (for determining grouping level)
+        var firstMeter = meterMap.get(0).getMeter();
+        double approxBeatsPerMeasure = firstMeter.getMeasureBeatDuration();
+        double approxPixelsPerMeasure = approxBeatsPerMeasure * pixelTime;
+        double pixelsPerBeat = pixelTime;
+        
+        // We want at least ~60 pixels between labels
+        int minLabelSpacing = 60;
+        
+        // Determine the display level:
+        // Level 1: Group measures by powers of 2 (1, 2, 4, 8, 16, 32...)
+        // Level 2: Show every measure
+        // Level 3: Show measure + whole beats
+        
+        int measureGrouping = 1;
+        boolean showBeats = false;
+        
+        if (approxPixelsPerMeasure < minLabelSpacing) {
+            // Zoomed out - group measures by powers of 2
+            while (measureGrouping * approxPixelsPerMeasure < minLabelSpacing) {
+                measureGrouping *= 2;
+            }
+        } else if (pixelsPerBeat >= minLabelSpacing) {
+            // Zoomed in enough to show individual beats
+            showBeats = true;
         }
-        // Build format string like "%d:%.2f" for nfrac=2
-        String formatStr = "%d:%." + nfrac + "f";
-        return String.format(formatStr, measure, beat);
+        // else: show every measure (measureGrouping = 1, showBeats = false)
+        
+        // Find the starting measure from the start beat position
+        var startBBST = meterMap.beatsToBBST(Math.max(0, startTime), context.getPPQ());
+        long startMeasure = startBBST.getBar();
+        
+        // Align to measure grouping
+        if (measureGrouping > 1) {
+            startMeasure = ((startMeasure - 1) / measureGrouping) * measureGrouping + 1;
+        }
+        
+        // Iterate through measures and draw labels
+        long currentMeasure = startMeasure;
+        Color normalColor = g.getColor();
+        Color separatorColor = normalColor.darker();
+        
+        while (true) {
+            // Get the beat position for the start of this measure
+            double measureStartBeat = getMeasureStartBeat(meterMap, currentMeasure);
+            
+            if (measureStartBeat > endTime + approxBeatsPerMeasure) {
+                break; // Past the visible range
+            }
+            
+            if (measureStartBeat >= 0) {
+                // Draw measure label with full-height line
+                int x = (int) ((measureStartBeat - startTime) * pixelTime) + bounds.x;
+                if (x >= bounds.x - 50 && x <= bounds.x + bounds.width + 50) {
+                    String txt = String.valueOf(currentMeasure);
+                    g.setColor(normalColor);
+                    g.drawLine(x, 0, x, h);  // Full height line for measures
+                    g.drawString(txt, x + 2, 16);
+                }
+                
+                // If showing beats, draw beat labels within this measure
+                if (showBeats && measureGrouping == 1) {
+                    var meter = getMeterAtMeasure(meterMap, currentMeasure);
+                    int numBeats = (int) meter.numBeats;
+                    double beatDuration = 4.0 / meter.beatLength; // Duration of one beat in Csound beats
+                    
+                    for (int beat = 2; beat <= numBeats; beat++) {
+                        double beatPos = measureStartBeat + (beat - 1) * beatDuration;
+                        if (beatPos > endTime) break;
+                        
+                        int beatX = (int) ((beatPos - startTime) * pixelTime) + bounds.x;
+                        if (beatX >= bounds.x - 50 && beatX <= bounds.x + bounds.width + 50) {
+                            // Draw partial line for beats (not full height)
+                            g.setColor(normalColor);
+                            g.drawLine(beatX, 10, beatX, h);
+                            
+                            // Draw measure|beat label with darker separator
+                            String measurePart = String.valueOf(currentMeasure);
+                            String beatPart = String.valueOf(beat);
+                            int measureWidth = g.getFontMetrics().stringWidth(measurePart);
+                            
+                            g.drawString(measurePart, beatX + 2, 16);
+                            g.setColor(separatorColor);
+                            g.drawString("|", beatX + 2 + measureWidth, 16);
+                            g.setColor(normalColor);
+                            int separatorWidth = g.getFontMetrics().stringWidth("|");
+                            g.drawString(beatPart, beatX + 2 + measureWidth + separatorWidth, 16);
+                        }
+                    }
+                }
+            }
+            
+            currentMeasure += measureGrouping;
+        }
+        g.setColor(normalColor);
+    }
+    
+    /**
+     * Get the beat position for the start of a measure.
+     * Calculates by iterating through meter entries.
+     */
+    private double getMeasureStartBeat(blue.time.MeterMap meterMap, long measureNumber) {
+        if (measureNumber <= 1) {
+            return 0.0;
+        }
+        
+        double beats = 0.0;
+        long processedUpToMeasure = 1; // We've accounted for beats up to (but not including) this measure
+        
+        for (int i = 0; i < meterMap.size(); i++) {
+            var entry = meterMap.get(i);
+            long entryStartMeasure = entry.getMeasureNumber();
+            var meter = entry.getMeter();
+            double beatsPerMeasure = meter.getMeasureBeatDuration();
+            
+            // Find where this meter section ends
+            long meterEndMeasure;
+            if (i + 1 < meterMap.size()) {
+                meterEndMeasure = meterMap.get(i + 1).getMeasureNumber();
+            } else {
+                meterEndMeasure = Long.MAX_VALUE; // This meter continues forever
+            }
+            
+            // How many measures in this meter section contribute to our target?
+            if (measureNumber <= entryStartMeasure) {
+                // Target measure is before this meter entry starts
+                break;
+            }
+            
+            // Calculate measures to count in this section
+            long sectionStart = Math.max(entryStartMeasure, processedUpToMeasure);
+            long sectionEnd = Math.min(measureNumber, meterEndMeasure);
+            long measuresInSection = sectionEnd - sectionStart;
+            
+            if (measuresInSection > 0) {
+                beats += measuresInSection * beatsPerMeasure;
+                processedUpToMeasure = sectionEnd;
+            }
+            
+            if (processedUpToMeasure >= measureNumber) {
+                break;
+            }
+        }
+        
+        return beats;
+    }
+    
+    /**
+     * Get the meter in effect at a given measure.
+     */
+    private blue.time.Meter getMeterAtMeasure(blue.time.MeterMap meterMap, long measureNumber) {
+        // Find the meter entry that applies to this measure
+        blue.time.Meter meter = meterMap.get(0).getMeter();
+        for (int i = 0; i < meterMap.size(); i++) {
+            var entry = meterMap.get(i);
+            if (entry.getMeasureNumber() <= measureNumber) {
+                meter = entry.getMeter();
+            } else {
+                break;
+            }
+        }
+        return meter;
     }
     
     /**

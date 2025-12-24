@@ -51,8 +51,8 @@ public class SoundObjectTimePanel extends JPanel {
 
     private final BeatTimeEditor beatTimeEditor;
     private final MeasureTimeEditor measureTimeEditor;
-    private final SecondTimeEditor secondTimeEditor;
-    private final SecondTimeEditor smpteTimeEditor;
+    private final TimecodeEditor secondTimeEditor;
+    private final TimecodeEditor smpteTimeEditor;
     private final SampleTimeEditor sampleTimeEditor;
 
     private TimeUnit currentTimeUnit;
@@ -80,13 +80,17 @@ public class SoundObjectTimePanel extends JPanel {
         // Create all editors
         beatTimeEditor = new BeatTimeEditor();
         measureTimeEditor = new MeasureTimeEditor();
-        secondTimeEditor = new SecondTimeEditor();
-        smpteTimeEditor = new SecondTimeEditor();
+        secondTimeEditor = new TimecodeEditor(TimecodeEditor.Mode.TIME);
+        smpteTimeEditor = new TimecodeEditor(TimecodeEditor.Mode.SMPTE);
         sampleTimeEditor = new SampleTimeEditor();
 
         // Add editors to card panel
         editorPanel.add(beatTimeEditor, "CSOUND_BEATS");
-        editorPanel.add(measureTimeEditor, "MEASURE_BEATS");
+        // BBT, BBST, BBF all use the same measure editor for now
+        // TODO: Update MeasureTimeEditor to support text-based BBT/BBST/BBF input
+        editorPanel.add(measureTimeEditor, "BBT");
+        editorPanel.add(measureTimeEditor, "BBST");
+        editorPanel.add(measureTimeEditor, "BBF");
         editorPanel.add(secondTimeEditor, "TIME");
         editorPanel.add(smpteTimeEditor, "SMPTE");
         editorPanel.add(sampleTimeEditor, "FRAME");
@@ -112,6 +116,18 @@ public class SoundObjectTimePanel extends JPanel {
         secondTimeEditor.addChangeListener(editorChangeListener);
         smpteTimeEditor.addChangeListener(editorChangeListener);
         sampleTimeEditor.addChangeListener(editorChangeListener);
+    }
+
+    public void setTimeBaseSelectionEnabled(boolean enabled) {
+        timeBaseSelector.setEnabled(enabled);
+    }
+
+    public void setPositionEditingEnabled(boolean enabled) {
+        beatTimeEditor.setEnabled(enabled);
+        measureTimeEditor.setEnabled(enabled);
+        secondTimeEditor.setEnabled(enabled);
+        smpteTimeEditor.setEnabled(enabled);
+        sampleTimeEditor.setEnabled(enabled);
     }
 
     /**
@@ -259,7 +275,7 @@ public class SoundObjectTimePanel extends JPanel {
     private TimeUnitEditor getEditorForTimeBase(TimeBase timeBase) {
         return switch (timeBase) {
             case CSOUND_BEATS -> beatTimeEditor;
-            case MEASURE_BEATS -> measureTimeEditor;
+            case BBT, BBST, BBF -> measureTimeEditor;
             case TIME -> secondTimeEditor;
             case SMPTE -> smpteTimeEditor;
             case FRAME -> sampleTimeEditor;
@@ -287,11 +303,7 @@ public class SoundObjectTimePanel extends JPanel {
     @Override
     public void setEnabled(boolean enabled) {
         super.setEnabled(enabled);
-        timeBaseSelector.setEnabled(enabled);
-        beatTimeEditor.setEnabled(enabled);
-        measureTimeEditor.setEnabled(enabled);
-        secondTimeEditor.setEnabled(enabled);
-        smpteTimeEditor.setEnabled(enabled);
-        sampleTimeEditor.setEnabled(enabled);
+        setTimeBaseSelectionEnabled(enabled);
+        setPositionEditingEnabled(enabled);
     }
 }

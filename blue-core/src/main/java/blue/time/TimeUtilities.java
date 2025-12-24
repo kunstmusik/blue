@@ -28,7 +28,7 @@ package blue.time;
  * TimeUnit → Csound beats → TimeUnit
  * 
  * Conversion flow:
- * - MeasureBeatsTime → MeterMap → Csound beats
+ * - BBTTime/BBSTTime/BBFTime → MeterMap → Csound beats
  * - BeatTime → direct (already in Csound beats)
  * - Csound beats → TempoMap → seconds
  * - Seconds → sample rate → frames
@@ -86,7 +86,9 @@ public class TimeUtilities {
         
         return switch (timeUnit.getTimeBase()) {
             case CSOUND_BEATS -> ((TimeUnit.BeatTime) timeUnit).getCsoundBeats();
-            case MEASURE_BEATS -> context.getMeterMap().toBeats((TimeUnit.MeasureBeatsTime) timeUnit);
+            case BBT -> timeUnit.toBeats(context);
+            case BBST -> timeUnit.toBeats(context);
+            case BBF -> timeUnit.toBeats(context);
             case TIME -> {
                 TimeUnit.TimeValue tv = (TimeUnit.TimeValue) timeUnit;
                 double seconds = tv.toTotalSeconds();
@@ -128,7 +130,9 @@ public class TimeUtilities {
         
         return switch (targetTimeBase) {
             case CSOUND_BEATS -> TimeUnit.beats(beats);
-            case MEASURE_BEATS -> context.getMeterMap().toMeasureBeats(TimeUnit.beats(beats));
+            case BBT -> context.getMeterMap().beatsToBBT(beats, context.getPPQ());
+            case BBST -> context.getMeterMap().beatsToBBST(beats, context.getPPQ());
+            case BBF -> context.getMeterMap().beatsToBBF(beats);
             case TIME -> {
                 double seconds = context.getTempoMap().beatsToSeconds(beats);
                 int hours = (int) (seconds / 3600);

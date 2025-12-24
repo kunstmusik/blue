@@ -48,10 +48,10 @@ public class TimeUtilitiesTest {
     }
     
     @Test
-    public void testTimeUnitToBeatsWithMeasureBeatsTime() {
-        TimeUnit.MeasureBeatsTime mbt = TimeUnit.measureBeats(2, 3);
-        double result = TimeUtilities.timeUnitToBeats(mbt, context);
-        // Measure 2, beat 3 in 4/4 = 4 + 2 = 6 beats
+    public void testTimeUnitToBeatsWithBBSTTime() {
+        TimeUnit.BBSTTime bbst = TimeUnit.bbst(2, 3, 1, 0);
+        double result = TimeUtilities.timeUnitToBeats(bbst, context);
+        // Bar 2, beat 3 in 4/4 = 4 + 2 = 6 beats
         assertEquals(6.0, result, 0.001);
     }
     
@@ -91,13 +91,13 @@ public class TimeUtilitiesTest {
     }
     
     @Test
-    public void testBeatsToTimeUnitMeasureBeatsTime() {
-        // 6 beats in 4/4 = measure 2, beat 3
-        TimeUnit result = TimeUtilities.beatsToTimeUnit(6.0, TimeBase.MEASURE_BEATS, context);
-        assertTrue(result instanceof TimeUnit.MeasureBeatsTime);
-        TimeUnit.MeasureBeatsTime mbt = (TimeUnit.MeasureBeatsTime) result;
-        assertEquals(2, mbt.getMeasureNumber());
-        assertEquals(3.0, mbt.getBeatNumber(), 0.001);
+    public void testBeatsToTimeUnitBBSTTime() {
+        // 6 beats in 4/4 = bar 2, beat 3
+        TimeUnit result = TimeUtilities.beatsToTimeUnit(6.0, TimeBase.BBST, context);
+        assertTrue(result instanceof TimeUnit.BBSTTime);
+        TimeUnit.BBSTTime bbst = (TimeUnit.BBSTTime) result;
+        assertEquals(2, bbst.getBar());
+        assertEquals(3, bbst.getBeat());
     }
     
     @Test
@@ -134,22 +134,22 @@ public class TimeUtilitiesTest {
     }
     
     @Test
-    public void testConvertTimeUnitBeatTimeToMeasureBeats() {
+    public void testConvertTimeUnitBeatTimeToBBST() {
         TimeUnit.BeatTime bt = TimeUnit.beats(8.0);
-        TimeUnit result = TimeUtilities.convertTimeUnit(bt, TimeBase.MEASURE_BEATS, context);
-        assertTrue(result instanceof TimeUnit.MeasureBeatsTime);
-        TimeUnit.MeasureBeatsTime mbt = (TimeUnit.MeasureBeatsTime) result;
-        // 8 beats in 4/4 = measure 3, beat 1
-        assertEquals(3, mbt.getMeasureNumber());
-        assertEquals(1.0, mbt.getBeatNumber(), 0.001);
+        TimeUnit result = TimeUtilities.convertTimeUnit(bt, TimeBase.BBST, context);
+        assertTrue(result instanceof TimeUnit.BBSTTime);
+        TimeUnit.BBSTTime bbst = (TimeUnit.BBSTTime) result;
+        // 8 beats in 4/4 = bar 3, beat 1
+        assertEquals(3, bbst.getBar());
+        assertEquals(1, bbst.getBeat());
     }
     
     @Test
-    public void testConvertTimeUnitMeasureBeatsToTime() {
-        TimeUnit.MeasureBeatsTime mbt = TimeUnit.measureBeats(3, 2);
-        TimeUnit result = TimeUtilities.convertTimeUnit(mbt, TimeBase.TIME, context);
+    public void testConvertTimeUnitBBSTToTime() {
+        TimeUnit.BBSTTime bbst = TimeUnit.bbst(3, 2, 1, 0);
+        TimeUnit result = TimeUtilities.convertTimeUnit(bbst, TimeBase.TIME, context);
         assertTrue(result instanceof TimeUnit.TimeValue);
-        // Measure 3, beat 2 = 9 beats at 60 BPM = 9 seconds
+        // Bar 3, beat 2 = 9 beats at 60 BPM = 9 seconds
         TimeUnit.TimeValue tv = (TimeUnit.TimeValue) result;
         assertEquals(9, tv.toTotalSeconds(), 0.001);
     }
@@ -157,21 +157,21 @@ public class TimeUtilitiesTest {
     // ========== Round-trip Conversion Tests ==========
     
     @Test
-    public void testRoundTripBeatTimeToMeasureBeats() {
-        TimeUnit.BeatTime original = TimeUnit.beats(12.5);
-        TimeUnit intermediate = TimeUtilities.convertTimeUnit(original, TimeBase.MEASURE_BEATS, context);
+    public void testRoundTripBeatTimeToBBST() {
+        TimeUnit.BeatTime original = TimeUnit.beats(12.0); // Use whole number to avoid tick rounding
+        TimeUnit intermediate = TimeUtilities.convertTimeUnit(original, TimeBase.BBST, context);
         TimeUnit result = TimeUtilities.convertTimeUnit(intermediate, TimeBase.CSOUND_BEATS, context);
         assertEquals(original.getCsoundBeats(), ((TimeUnit.BeatTime) result).getCsoundBeats(), 0.001);
     }
     
     @Test
-    public void testRoundTripMeasureBeatsToTime() {
-        TimeUnit.MeasureBeatsTime original = TimeUnit.measureBeats(5, 3);
+    public void testRoundTripBBSTToTime() {
+        TimeUnit.BBSTTime original = TimeUnit.bbst(5, 3, 1, 0);
         TimeUnit intermediate = TimeUtilities.convertTimeUnit(original, TimeBase.TIME, context);
-        TimeUnit result = TimeUtilities.convertTimeUnit(intermediate, TimeBase.MEASURE_BEATS, context);
-        TimeUnit.MeasureBeatsTime mbt = (TimeUnit.MeasureBeatsTime) result;
-        assertEquals(original.getMeasureNumber(), mbt.getMeasureNumber());
-        assertEquals(original.getBeatNumber(), mbt.getBeatNumber(), 0.001);
+        TimeUnit result = TimeUtilities.convertTimeUnit(intermediate, TimeBase.BBST, context);
+        TimeUnit.BBSTTime bbst = (TimeUnit.BBSTTime) result;
+        assertEquals(original.getBar(), bbst.getBar());
+        assertEquals(original.getBeat(), bbst.getBeat());
     }
     
     @Test
@@ -222,15 +222,15 @@ public class TimeUtilitiesTest {
         // Add meter change: 3/4 starting at measure 5
         context.getMeterMap().add(new MeasureMeterPair(5, new Meter(3, 4)));
         
-        // Measure 6, beat 2 in 3/4
-        TimeUnit.MeasureBeatsTime mbt = TimeUnit.measureBeats(6, 2);
-        double beats = TimeUtilities.timeUnitToBeats(mbt, context);
+        // Bar 6, beat 2 in 3/4
+        TimeUnit.BBSTTime bbst = TimeUnit.bbst(6, 2, 1, 0);
+        double beats = TimeUtilities.timeUnitToBeats(bbst, context);
         
         // Convert back
-        TimeUnit result = TimeUtilities.beatsToTimeUnit(beats, TimeBase.MEASURE_BEATS, context);
-        TimeUnit.MeasureBeatsTime roundTrip = (TimeUnit.MeasureBeatsTime) result;
+        TimeUnit result = TimeUtilities.beatsToTimeUnit(beats, TimeBase.BBST, context);
+        TimeUnit.BBSTTime roundTrip = (TimeUnit.BBSTTime) result;
         
-        assertEquals(mbt.getMeasureNumber(), roundTrip.getMeasureNumber());
-        assertEquals(mbt.getBeatNumber(), roundTrip.getBeatNumber(), 0.001);
+        assertEquals(bbst.getBar(), roundTrip.getBar());
+        assertEquals(bbst.getBeat(), roundTrip.getBeat());
     }
 }

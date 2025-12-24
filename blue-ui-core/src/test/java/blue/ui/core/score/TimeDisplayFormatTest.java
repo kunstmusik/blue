@@ -68,30 +68,31 @@ public class TimeDisplayFormatTest {
         assertEquals("4", TimeDisplayFormat.BEATS.formatCompact(4.0, null));
     }
 
-    // ========== MEASURE_BEATS format tests ==========
+    // ========== BBST format tests ==========
 
     @Test
-    public void testMeasureBeatsFormat() {
-        // In 4/4 time, beat 0 = measure 1:beat 1
-        assertEquals("1:1.00", TimeDisplayFormat.MEASURE_BEATS.format(0.0, context));
-        // Beat 4 = measure 2:beat 1
-        assertEquals("2:1.00", TimeDisplayFormat.MEASURE_BEATS.format(4.0, context));
-        // Beat 2 = measure 1:beat 3 (beat number is 1-indexed, and quarter = 1 beat in 4/4)
-        // Actually in the code, beat 0 maps to measure 1, beat 1.0, so:
-        // beat 2 => measure 1, beat 2+1 = beat 3.0 (if 1-indexed)
-        // Need to check the actual implementation
+    public void testBBSTFormat() {
+        // In 4/4 time, beat 0 = bar 1, beat 1, sixteenth 1, ticks 0
+        String formatted = TimeDisplayFormat.BBST.format(0.0, context);
+        assertTrue("Expected BBST format starting with 1.1, got: " + formatted, 
+                formatted.startsWith("1.1"));
+        // Beat 4 = bar 2, beat 1
+        formatted = TimeDisplayFormat.BBST.format(4.0, context);
+        assertTrue("Expected BBST format starting with 2.1, got: " + formatted, 
+                formatted.startsWith("2.1"));
     }
 
     @Test
-    public void testMeasureBeatsFormatCompact() {
-        assertEquals("1:1", TimeDisplayFormat.MEASURE_BEATS.formatCompact(0.0, context));
-        assertEquals("2:1", TimeDisplayFormat.MEASURE_BEATS.formatCompact(4.0, context));
+    public void testBBSTFormatCompact() {
+        String formatted = TimeDisplayFormat.BBST.formatCompact(0.0, context);
+        assertTrue("Expected compact BBST format, got: " + formatted, 
+                formatted.startsWith("1.1"));
     }
 
     @Test
-    public void testMeasureBeatsFormatFallsBackToBeatsWithNullContext() {
-        assertEquals("4.00", TimeDisplayFormat.MEASURE_BEATS.format(4.0, null));
-        assertEquals("4", TimeDisplayFormat.MEASURE_BEATS.formatCompact(4.0, null));
+    public void testBBSTFormatFallsBackToBeatsWithNullContext() {
+        assertEquals("4.00", TimeDisplayFormat.BBST.format(4.0, null));
+        assertEquals("4", TimeDisplayFormat.BBST.formatCompact(4.0, null));
     }
 
     // ========== TIME format tests ==========
@@ -135,7 +136,7 @@ public class TimeDisplayFormatTest {
     @Test
     public void testDisplayNames() {
         assertEquals("Beats", TimeDisplayFormat.BEATS.getDisplayName());
-        assertEquals("Measures:Beats", TimeDisplayFormat.MEASURE_BEATS.getDisplayName());
+        assertEquals("BBST", TimeDisplayFormat.BBST.getDisplayName());
         assertEquals("Time", TimeDisplayFormat.TIME.getDisplayName());
         assertEquals("SMPTE", TimeDisplayFormat.SMPTE.getDisplayName());
         assertEquals("Samples", TimeDisplayFormat.SAMPLES.getDisplayName());
@@ -144,7 +145,7 @@ public class TimeDisplayFormatTest {
     @Test
     public void testExamples() {
         assertEquals("0.0, 4.0, 8.0", TimeDisplayFormat.BEATS.getExample());
-        assertEquals("1:1.0, 2:1.0", TimeDisplayFormat.MEASURE_BEATS.getExample());
+        assertEquals("1.1.1.0, 2.1.1.0", TimeDisplayFormat.BBST.getExample());
         assertEquals("0:00.000", TimeDisplayFormat.TIME.getExample());
         assertEquals("00:00:00:00", TimeDisplayFormat.SMPTE.getExample());
         assertEquals("0, 44100", TimeDisplayFormat.SAMPLES.getExample());
@@ -174,9 +175,9 @@ public class TimeDisplayFormatTest {
         assertEquals(0, TimeDisplayFormat.TIME.toTimeStateValue());
         assertEquals(0, TimeDisplayFormat.SMPTE.toTimeStateValue());
         
-        // BEATS and MEASURE_BEATS map to DISPLAY_BEATS = 1
+        // BEATS and BBST map to DISPLAY_BEATS = 1
         assertEquals(1, TimeDisplayFormat.BEATS.toTimeStateValue());
-        assertEquals(1, TimeDisplayFormat.MEASURE_BEATS.toTimeStateValue());
+        assertEquals(1, TimeDisplayFormat.BBST.toTimeStateValue());
         assertEquals(1, TimeDisplayFormat.SAMPLES.toTimeStateValue());
     }
 
@@ -187,7 +188,7 @@ public class TimeDisplayFormatTest {
         
         // Verify all expected formats are present
         assertNotNull(TimeDisplayFormat.valueOf("BEATS"));
-        assertNotNull(TimeDisplayFormat.valueOf("MEASURE_BEATS"));
+        assertNotNull(TimeDisplayFormat.valueOf("BBST"));
         assertNotNull(TimeDisplayFormat.valueOf("TIME"));
         assertNotNull(TimeDisplayFormat.valueOf("SMPTE"));
         assertNotNull(TimeDisplayFormat.valueOf("SAMPLES"));

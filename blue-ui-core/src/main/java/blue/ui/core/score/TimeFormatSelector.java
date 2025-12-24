@@ -63,7 +63,7 @@ public class TimeFormatSelector extends JComboBox<TimeDisplayFormat>
         setMaximumSize(new Dimension(200, 28));
         
         // Allow dropdown popup to be wider than the component
-        setPrototypeDisplayValue(TimeDisplayFormat.MEASURE_BEATS);
+        setPrototypeDisplayValue(TimeDisplayFormat.BBST);
         
         // Handle selection changes
         addActionListener(this::onSelectionChanged);

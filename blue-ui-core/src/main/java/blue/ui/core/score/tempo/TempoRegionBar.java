@@ -20,11 +20,18 @@
 package blue.ui.core.score.tempo;
 
 import blue.BlueData;
+import blue.projects.BlueProjectManager;
 import blue.score.Score;
 import blue.score.TimeState;
 import blue.time.CurveType;
 import blue.time.TempoMap;
 import blue.time.TempoPoint;
+import blue.time.TimeBase;
+import blue.time.TimeContext;
+import blue.time.TimeContextManager;
+import blue.time.TimeUnit;
+import blue.time.TimeUtilities;
+import blue.ui.core.time.SoundObjectTimePanel;
 import blue.ui.utilities.UiUtilities;
 import blue.utility.ScoreUtilities;
 
@@ -273,6 +280,15 @@ public class TempoRegionBar extends JComponent implements PropertyChangeListener
     private void showRegionPopupMenu(MouseEvent e, int regionIndex) {
         JPopupMenu popup = new JPopupMenu();
         
+        // Edit Tempo option
+        JMenuItem editItem = new JMenuItem("Edit Tempo...");
+        editItem.addActionListener(evt -> {
+            showEditTempoDialog(regionIndex);
+        });
+        popup.add(editItem);
+        
+        popup.addSeparator();
+        
         CurveType currentType = tempoMap.getCurveType(regionIndex);
         
         JMenuItem constantItem = new JMenuItem("Constant");
@@ -303,6 +319,115 @@ public class TempoRegionBar extends JComponent implements PropertyChangeListener
         
         popup.show(this, e.getX(), e.getY());
     }
+    
+    private void showEditTempoDialog(int regionIndex) {
+        TempoPoint tempoPoint = tempoMap.getPoint(regionIndex);
+        double currentTempo = tempoPoint.getTempo();
+        TimeUnit currentPosition = tempoPoint.getPosition();
+        
+        // Calculate valid beat range to avoid duplicates
+        final double minBeat;
+        final double maxBeat;
+        
+        if (regionIndex > 0) {
+            minBeat = tempoMap.getBeat(regionIndex - 1) + 0.001;
+        } else {
+            minBeat = 0.0;
+        }
+        if (regionIndex < tempoMap.size() - 1) {
+            maxBeat = tempoMap.getBeat(regionIndex + 1) - 0.001;
+        } else {
+            maxBeat = Double.MAX_VALUE;
+        }
+        
+        // Create main panel with BoxLayout for vertical stacking
+        JPanel panel = new JPanel();
+        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+        panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+
+        // Position section with time unit selection
+        JPanel positionSection = new JPanel(new BorderLayout(5, 5));
+        positionSection.setBorder(BorderFactory.createTitledBorder("Position"));
+
+        SoundObjectTimePanel timePanel = new SoundObjectTimePanel();
+        // Use the actual TimeUnit from the tempo point (preserves Measure:Beats if that's how it was entered)
+        timePanel.setTimeUnit(currentPosition);
+        timePanel.setTimeBaseSelectionEnabled(true);
+        timePanel.setPositionEditingEnabled(regionIndex > 0); // First point must stay at beat 0
+
+        positionSection.add(timePanel, BorderLayout.CENTER);
+        panel.add(positionSection);
+        panel.add(Box.createVerticalStrut(10));
+
+        // Tempo section
+        JPanel tempoSection = new JPanel(new BorderLayout(5, 5));
+        tempoSection.setBorder(BorderFactory.createTitledBorder("Tempo"));
+
+        JPanel tempoRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
+        JSpinner tempoSpinner = new JSpinner(new SpinnerNumberModel((int) currentTempo, 1, 999, 1));
+        tempoRow.add(tempoSpinner);
+        tempoRow.add(new JLabel("BPM"));
+        tempoSection.add(tempoRow, BorderLayout.CENTER);
+
+        panel.add(tempoSection);
+
+        int result = JOptionPane.showConfirmDialog(
+            SwingUtilities.getWindowAncestor(this),
+            panel,
+            "Edit Tempo Point",
+            JOptionPane.OK_CANCEL_OPTION,
+            JOptionPane.PLAIN_MESSAGE
+        );
+        
+        if (result == JOptionPane.OK_OPTION) {
+            int newTempo = (Integer) tempoSpinner.getValue();
+            
+            // Get the TimeUnit directly from the panel
+            TimeUnit timeUnit = timePanel.getTimeUnit();
+            
+            // Convert to beats for range validation
+            double newBeat = convertTimeUnitToBeats(timeUnit);
+            
+            // Validate range - if out of range, clamp and use beats
+            if (newBeat < minBeat || newBeat > maxBeat) {
+                newBeat = Math.max(minBeat, Math.min(maxBeat, newBeat));
+                timeUnit = TimeUnit.beats(newBeat);
+            }
+            
+            // Update the tempo point with the TimeUnit directly
+            tempoMap.setTempoPoint(regionIndex, timeUnit, newTempo);
+            repaint();
+        }
+    }
+    
+    /**
+     * Converts a TimeUnit to Csound beats using the current TimeContext.
+     */
+    private double convertTimeUnitToBeats(TimeUnit timeUnit) {
+        if (timeUnit instanceof TimeUnit.BeatTime beatTime) {
+            return beatTime.getCsoundBeats();
+        }
+        
+        // For other time units, use TimeContext to convert
+        TimeContext context = BlueProjectManager.getInstance()
+            .getCurrentProject().getData().getScore().getTimeContext();
+        TimeContext previousContext = TimeContextManager.hasContext() ? TimeContextManager.getContext() : null;
+        TimeContextManager.setContext(context);
+        
+        try {
+            TimeUnit beatsUnit = TimeUtilities.convertTimeUnit(timeUnit, TimeBase.CSOUND_BEATS, context);
+            if (beatsUnit instanceof TimeUnit.BeatTime beatTime) {
+                return beatTime.getCsoundBeats();
+            }
+            return 0.0;
+        } finally {
+            if (previousContext != null) {
+                TimeContextManager.setContext(previousContext);
+            } else {
+                TimeContextManager.clearContext();
+            }
+        }
+    }
 
     private class TempoRegionMouseListener extends MouseAdapter {
         @Override
@@ -318,7 +443,7 @@ public class TempoRegionBar extends JComponent implements PropertyChangeListener
                     showRegionPopupMenu(e, regionIndex);
                 }
             } else if (SwingUtilities.isLeftMouseButton(e) && e.getClickCount() == 2) {
-                // Double-click to add new tempo point
+                // Double-click to add new tempo point or edit existing one
                 double beat = screenXToBeat(e.getX());
                 
                 // Apply snap if enabled
@@ -326,9 +451,18 @@ public class TempoRegionBar extends JComponent implements PropertyChangeListener
                     beat = ScoreUtilities.getSnapValueStart(beat, timeState.getSnapValue());
                 }
                 
-                // Get current tempo at this beat for initial value
-                double tempo = tempoMap.getTempoAt(beat);
+                // Check if there's already a tempo point at this beat (with small tolerance)
+                final double tolerance = 0.001;
+                for (int i = 0; i < tempoMap.size(); i++) {
+                    if (Math.abs(tempoMap.getBeat(i) - beat) < tolerance) {
+                        // Edit existing tempo point
+                        showEditTempoDialog(i);
+                        return;
+                    }
+                }
                 
+                // No existing point - add new one
+                double tempo = tempoMap.getTempoAt(beat);
                 tempoMap.addTempoPoint(new TempoPoint(beat, tempo, CurveType.CONSTANT));
                 repaint();
             }

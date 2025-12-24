@@ -285,7 +285,7 @@ public class MarkersBar extends JPanel implements PropertyChangeListener, TableM
         g.setColor(Color.BLACK);
         g.fillRect(bounds.x, bounds.y, bounds.width, bounds.height);
         g.setColor(Color.DARK_GRAY);
-        g.drawLine(bounds.x, bounds.y + bounds.height - 1, bounds.x + bounds.width, bounds.y + bounds.height - 1);
+        g.drawLine(bounds.x, bounds.y + bounds.height, bounds.x + bounds.width, bounds.y + bounds.height);
     }
 
     class PlayMarker extends JLabel implements PropertyChangeListener {

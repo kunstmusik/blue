@@ -159,31 +159,30 @@ public class MeterMap {
     }
 
     /**
-     * Converts a measure/beat time to absolute Csound beats.
+     * Converts a bar/beat position to absolute Csound beats.
+     * This is the core conversion method for BBT/BBST/BBF time units.
      * 
-     * @param measureBeatsTime the measure/beat position to convert
-     * @return the equivalent position in Csound beats
+     * @param bar the bar (measure) number (1-based)
+     * @param beat the beat number within the bar (1-based)
+     * @return the equivalent position in Csound beats (without tick fraction)
      * @throws IllegalStateException if MeterMap is empty
-     * @throws IllegalArgumentException if measure is before first meter entry
+     * @throws IllegalArgumentException if bar is before first meter entry
      *         or if beat number exceeds the meter's beat count
      */
-    double toBeats(TimeUnit.MeasureBeatsTime measureBeatsTime) {
+    public double barBeatToBeats(long bar, int beat) {
         if (this.isEmpty()) {
             throw new IllegalStateException("MeterMap is empty");
         }
 
-        long measure = measureBeatsTime.getMeasureNumber();
-        double beatNumber = measureBeatsTime.getBeatNumber();
-        
-        if (measure < this.get(0).getMeasureNumber()) {
+        if (bar < this.get(0).getMeasureNumber()) {
             throw new IllegalArgumentException(
-                "Measure " + measure + " is before first meter entry at measure " + 
+                "Bar " + bar + " is before first meter entry at measure " + 
                 this.get(0).getMeasureNumber());
         }
 
-        // Find the meter entry that applies to this measure
+        // Find the meter entry that applies to this bar
         int index = this.size() - 1;
-        while (index != 0 && this.get(index).getMeasureNumber() > measure) {
+        while (index != 0 && this.get(index).getMeasureNumber() > bar) {
             index--;
         }
 
@@ -191,17 +190,17 @@ public class MeterMap {
         var meter = meterEntry.getMeter();
         
         // Validate beat number doesn't exceed meter's beat count
-        if (beatNumber > meter.numBeats) {
+        if (beat > meter.numBeats) {
             throw new IllegalArgumentException(
-                "Beat number " + beatNumber + " exceeds meter " + meter + 
+                "Beat number " + beat + " exceeds meter " + meter + 
                 " which has " + meter.numBeats + " beats per measure");
         }
         
-        var measureNumInRange = measure - meterEntry.getMeasureNumber();
+        var measureNumInRange = bar - meterEntry.getMeasureNumber();
         double retVal = measureStartBeats[index];
 
         retVal += (measureNumInRange * meter.getMeasureBeatDuration()) 
-                + ((beatNumber - 1.0) * (4.0 / meter.beatLength));
+                + ((beat - 1) * (4.0 / meter.beatLength));
         return retVal;
     }
 
@@ -216,32 +215,27 @@ public class MeterMap {
     }
 
     /**
-     * Converts absolute Csound beats to measure/beat time.
+     * Converts absolute Csound beats to BBT (Bars.Beats.Ticks) time.
      * 
-     * This is the inverse operation of toBeats(MeasureBeatsTime). It finds
-     * which measure the beat falls in and calculates the beat position within
-     * that measure according to the meter in effect.
-     * 
-     * @param beatTime the absolute beat time to convert
-     * @return a new MeasureBeatsTime representing the measure/beat position
+     * @param csoundBeats the absolute beat position to convert
+     * @param ppq the PPQ (pulses per quarter note) for tick calculation
+     * @return a new BBTTime representing the bar/beat/tick position
      * @throws IllegalStateException if MeterMap is empty
-     * @throws IllegalArgumentException if beats is negative or before first measure
+     * @throws IllegalArgumentException if beats is negative
      */
-    public TimeUnit.MeasureBeatsTime toMeasureBeats(TimeUnit.BeatTime beatTime) {
+    public TimeUnit.BBTTime beatsToBBT(double csoundBeats, int ppq) {
         if (this.isEmpty()) {
             throw new IllegalStateException("MeterMap is empty");
         }
         
-        double beats = beatTime.getCsoundBeats();
-        
-        if (beats < 0) {
-            throw new IllegalArgumentException("Beats cannot be negative: " + beats);
+        if (csoundBeats < 0) {
+            throw new IllegalArgumentException("Beats cannot be negative: " + csoundBeats);
         }
         
         // Find which meter range this beat falls into
         int index = 0;
         for (int i = 1; i < this.size(); i++) {
-            if (beats >= measureStartBeats[i]) {
+            if (csoundBeats >= measureStartBeats[i]) {
                 index = i;
             } else {
                 break;
@@ -251,7 +245,7 @@ public class MeterMap {
         var meterEntry = this.get(index);
         var meter = meterEntry.getMeter();
         long baseMeasure = meterEntry.getMeasureNumber();
-        double beatsFromRangeStart = beats - measureStartBeats[index];
+        double beatsFromRangeStart = csoundBeats - measureStartBeats[index];
         
         // Calculate how many complete measures and remaining beats
         double measureDuration = meter.getMeasureBeatDuration();
@@ -260,11 +254,100 @@ public class MeterMap {
         
         // Convert remaining beats to beat number within measure
         // Beat number starts at 1, and is scaled by meter's beat length
-        double beatNumber = 1.0 + (remainingBeats / (4.0 / meter.beatLength));
+        double beatWithFraction = 1.0 + (remainingBeats / (4.0 / meter.beatLength));
         
-        long measureNumber = baseMeasure + additionalMeasures;
+        int wholeBeat = (int) beatWithFraction;
+        double fractionalBeat = beatWithFraction - wholeBeat;
+        int ticks = (int) Math.round(fractionalBeat * ppq);
         
-        return TimeUnit.measureBeats(measureNumber, beatNumber);
+        // Handle tick overflow (ticks == ppq means next beat)
+        if (ticks >= ppq) {
+            ticks = 0;
+            wholeBeat++;
+            // Handle beat overflow to next measure
+            if (wholeBeat > meter.numBeats) {
+                wholeBeat = 1;
+                additionalMeasures++;
+            }
+        }
+        
+        long bar = baseMeasure + additionalMeasures;
+        
+        return TimeUnit.bbt(bar, wholeBeat, ticks);
+    }
+    
+    /**
+     * Converts absolute Csound beats to BBST (Bars.Beats.Sixteenths.Ticks) time.
+     * 
+     * @param csoundBeats the absolute beat position to convert
+     * @param ppq the PPQ (pulses per quarter note) for tick calculation
+     * @return a new BBSTTime representing the bar/beat/sixteenth/tick position
+     * @throws IllegalStateException if MeterMap is empty
+     * @throws IllegalArgumentException if beats is negative
+     */
+    public TimeUnit.BBSTTime beatsToBBST(double csoundBeats, int ppq) {
+        TimeUnit.BBTTime bbt = beatsToBBT(csoundBeats, ppq);
+        return bbt.toBBST(ppq);
+    }
+    
+    /**
+     * Converts absolute Csound beats to BBF (Bars.Beats.Fraction) time.
+     * 
+     * @param csoundBeats the absolute beat position to convert
+     * @return a new BBFTime representing the bar/beat/fraction position
+     * @throws IllegalStateException if MeterMap is empty
+     * @throws IllegalArgumentException if beats is negative
+     */
+    public TimeUnit.BBFTime beatsToBBF(double csoundBeats) {
+        if (this.isEmpty()) {
+            throw new IllegalStateException("MeterMap is empty");
+        }
+        
+        if (csoundBeats < 0) {
+            throw new IllegalArgumentException("Beats cannot be negative: " + csoundBeats);
+        }
+        
+        // Find which meter range this beat falls into
+        int index = 0;
+        for (int i = 1; i < this.size(); i++) {
+            if (csoundBeats >= measureStartBeats[i]) {
+                index = i;
+            } else {
+                break;
+            }
+        }
+        
+        var meterEntry = this.get(index);
+        var meter = meterEntry.getMeter();
+        long baseMeasure = meterEntry.getMeasureNumber();
+        double beatsFromRangeStart = csoundBeats - measureStartBeats[index];
+        
+        // Calculate how many complete measures and remaining beats
+        double measureDuration = meter.getMeasureBeatDuration();
+        long additionalMeasures = (long) (beatsFromRangeStart / measureDuration);
+        double remainingBeats = beatsFromRangeStart - (additionalMeasures * measureDuration);
+        
+        // Convert remaining beats to beat number within measure
+        double beatWithFraction = 1.0 + (remainingBeats / (4.0 / meter.beatLength));
+        
+        int wholeBeat = (int) beatWithFraction;
+        double fractionalBeat = beatWithFraction - wholeBeat;
+        int fraction = (int) Math.round(fractionalBeat * 100);
+        
+        // Handle fraction overflow (fraction == 100 means next beat)
+        if (fraction >= 100) {
+            fraction = 0;
+            wholeBeat++;
+            // Handle beat overflow to next measure
+            if (wholeBeat > meter.numBeats) {
+                wholeBeat = 1;
+                additionalMeasures++;
+            }
+        }
+        
+        long bar = baseMeasure + additionalMeasures;
+        
+        return TimeUnit.bbf(bar, wholeBeat, fraction);
     }
     
     /**

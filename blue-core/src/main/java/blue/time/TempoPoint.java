@@ -25,19 +25,19 @@ import electric.xml.Element;
  * Represents a single tempo point in a TempoMap.
  * 
  * A TempoPoint defines:
- * - A position as a TimeUnit (BeatTime or MeasureBeatsTime)
+ * - A position as a TimeUnit (BeatTime, BBTTime, BBSTTime, or BBFTime)
  * - A tempo value (in BPM)
  * - A curve type defining how tempo transitions TO the next point
  * 
  * The position is stored as a TimeUnit, allowing tempo changes to be
- * specified in either Csound beats or measure/beat notation. A cached
+ * specified in either Csound beats or bar/beat notation. A cached
  * beat value is maintained for efficient sorting and calculations.
  * 
  * @author stevenyi
  */
 public class TempoPoint implements Comparable<TempoPoint> {
     
-    /** Position as a TimeUnit (BeatTime or MeasureBeatsTime) */
+    /** Position as a TimeUnit (BeatTime, BBTTime, BBSTTime, or BBFTime) */
     private TimeUnit position;
     
     /** Cached beat position for sorting and calculations */
@@ -85,7 +85,7 @@ public class TempoPoint implements Comparable<TempoPoint> {
     /**
      * Creates a tempo point with the specified TimeUnit position, tempo, and curve type.
      * 
-     * @param position the position as a TimeUnit (BeatTime or MeasureBeatsTime)
+     * @param position the position as a TimeUnit (BeatTime, BBTTime, BBSTTime, or BBFTime)
      * @param tempo the tempo in BPM (must be > 0)
      * @param curveType the curve type for transition to next point
      */
@@ -93,9 +93,12 @@ public class TempoPoint implements Comparable<TempoPoint> {
         if (position == null) {
             throw new IllegalArgumentException("Position cannot be null");
         }
-        if (!(position instanceof TimeUnit.BeatTime) && !(position instanceof TimeUnit.MeasureBeatsTime)) {
+        if (!(position instanceof TimeUnit.BeatTime) && 
+            !(position instanceof TimeUnit.BBTTime) &&
+            !(position instanceof TimeUnit.BBSTTime) &&
+            !(position instanceof TimeUnit.BBFTime)) {
             throw new IllegalArgumentException(
-                "TempoPoint position must be BeatTime or MeasureBeatsTime, got: " + 
+                "TempoPoint position must be BeatTime, BBTTime, BBSTTime, or BBFTime, got: " + 
                 position.getClass().getSimpleName());
         }
         if (tempo <= 0) {
@@ -105,11 +108,11 @@ public class TempoPoint implements Comparable<TempoPoint> {
         this.tempo = tempo;
         this.curveType = curveType != null ? curveType : CurveType.LINEAR;
         
-        // Initialize cached beat (will be recalculated by TempoMap if MeasureBeatsTime)
+        // Initialize cached beat (will be recalculated by TempoMap if bar/beat time)
         if (position instanceof TimeUnit.BeatTime beatTime) {
             this.cachedBeat = beatTime.getCsoundBeats();
         } else {
-            // For MeasureBeatsTime, set a placeholder - TempoMap will recalculate
+            // For BBT/BBST/BBF, set a placeholder - TempoMap will recalculate
             this.cachedBeat = 0.0;
         }
     }
@@ -137,7 +140,7 @@ public class TempoPoint implements Comparable<TempoPoint> {
     /**
      * Gets the cached beat position (for sorting and calculations).
      * This is automatically updated when the position changes or when
-     * the MeterMap changes (for MeasureBeatsTime positions).
+     * the MeterMap changes (for BBT/BBST/BBF positions).
      */
     public double getBeat() {
         return cachedBeat;
@@ -164,9 +167,12 @@ public class TempoPoint implements Comparable<TempoPoint> {
         if (position == null) {
             throw new IllegalArgumentException("Position cannot be null");
         }
-        if (!(position instanceof TimeUnit.BeatTime) && !(position instanceof TimeUnit.MeasureBeatsTime)) {
+        if (!(position instanceof TimeUnit.BeatTime) && 
+            !(position instanceof TimeUnit.BBTTime) &&
+            !(position instanceof TimeUnit.BBSTTime) &&
+            !(position instanceof TimeUnit.BBFTime)) {
             throw new IllegalArgumentException(
-                "TempoPoint position must be BeatTime or MeasureBeatsTime, got: " + 
+                "TempoPoint position must be BeatTime, BBTTime, BBSTTime, or BBFTime, got: " + 
                 position.getClass().getSimpleName());
         }
         this.position = position;
@@ -203,16 +209,17 @@ public class TempoPoint implements Comparable<TempoPoint> {
     // ========== Beat Calculation ==========
     
     /**
-     * Recalculates the cached beat value using the provided MeterMap.
+     * Recalculates the cached beat value using the provided TimeContext.
      * This should be called by TempoMap when the MeterMap changes.
      * 
-     * @param meterMap the meter map for measure-to-beat conversion
+     * @param context the time context for bar/beat-to-beat conversion
      */
-    public void recalculateBeat(MeterMap meterMap) {
+    public void recalculateBeat(TimeContext context) {
         if (position instanceof TimeUnit.BeatTime beatTime) {
             this.cachedBeat = beatTime.getCsoundBeats();
-        } else if (position instanceof TimeUnit.MeasureBeatsTime measureTime) {
-            this.cachedBeat = meterMap.toBeats(measureTime);
+        } else {
+            // BBTTime, BBSTTime, BBFTime all use toBeats(context)
+            this.cachedBeat = position.toBeats(context);
         }
     }
     
@@ -276,13 +283,13 @@ public class TempoPoint implements Comparable<TempoPoint> {
     
     @Override
     public String toString() {
-        if (position instanceof TimeUnit.MeasureBeatsTime measureTime) {
-            return String.format("TempoPoint[m%d:%.2f (beat=%.2f), tempo=%.2f, curve=%s]", 
-                measureTime.getMeasureNumber(), measureTime.getBeatNumber(),
-                cachedBeat, tempo, curveType);
-        } else {
+        if (position instanceof TimeUnit.BeatTime) {
             return String.format("TempoPoint[beat=%.2f, tempo=%.2f, curve=%s]", 
                 cachedBeat, tempo, curveType);
+        } else {
+            // BBT, BBST, or BBF - show the position string and cached beat
+            return String.format("TempoPoint[%s (beat=%.2f), tempo=%.2f, curve=%s]", 
+                position.toString(), cachedBeat, tempo, curveType);
         }
     }
     

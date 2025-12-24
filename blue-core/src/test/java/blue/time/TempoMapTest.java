@@ -307,16 +307,16 @@ public class TempoMapTest {
         assertEquals("visible", properties.get(0));
     }
     
-    // ========== MeasureBeatsTime Position Tests ==========
+    // ========== BBSTTime Position Tests ==========
     
     @Test
-    public void testTempoPointWithMeasureBeatsTime() {
-        // Create a tempo point at measure 2, beat 1
-        TempoPoint point = new TempoPoint(TimeUnit.measureBeats(2, 1.0), 120.0, CurveType.LINEAR);
+    public void testTempoPointWithBBSTTime() {
+        // Create a tempo point at bar 2, beat 1
+        TempoPoint point = new TempoPoint(TimeUnit.bbst(2, 1, 1, 0), 120.0, CurveType.LINEAR);
         
         assertEquals(120.0, point.getTempo(), EPSILON);
         assertEquals(CurveType.LINEAR, point.getCurveType());
-        assertTrue(point.getPosition() instanceof TimeUnit.MeasureBeatsTime);
+        assertTrue(point.getPosition() instanceof TimeUnit.BBSTTime);
     }
     
     @Test
@@ -324,19 +324,16 @@ public class TempoMapTest {
         TempoMap tm = new TempoMap();
         tm.setEnabled(true);
         
-        // Add a tempo point at measure 2, beat 1 (in 4/4, this is beat 5)
-        tm.addTempoPoint(new TempoPoint(TimeUnit.measureBeats(2, 1.0), 120.0, CurveType.LINEAR));
+        // Add a tempo point at bar 2, beat 1 (in 4/4, this is beat 4)
+        tm.addTempoPoint(new TempoPoint(TimeUnit.bbst(2, 1, 1, 0), 120.0, CurveType.LINEAR));
         
-        // Create a default 4/4 meter map
-        MeterMap meterMap = new MeterMap();
+        // Create a TimeContext with default 4/4 meter map
+        TimeContext context = new TimeContext();
         
         // Recalculate beat positions
-        tm.recalculateBeatPositions(meterMap);
+        tm.recalculateBeatPositions(context);
         
-        // In 4/4, measure 2 beat 1 = beat 5 (measure 1 has beats 1-4, measure 2 starts at beat 5)
-        // Actually measure 1 = beats 0-3.999, measure 2 = beats 4-7.999
-        // So measure 2, beat 1 = beat 4 + 1 = beat 5? Let's check the actual calculation
-        // MeterMap.toBeats for measure 2, beat 1 in 4/4 should give us the correct value
+        // In 4/4, bar 2 beat 1 = beat 4 (bar 1 has beats 0-3.999, bar 2 starts at beat 4)
         
         // The second point should have its beat recalculated
         assertEquals(2, tm.size());

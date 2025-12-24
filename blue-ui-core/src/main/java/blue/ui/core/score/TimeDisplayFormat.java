@@ -20,7 +20,6 @@
 package blue.ui.core.score;
 
 import blue.time.TimeContext;
-import blue.time.TimeUnit;
 
 /**
  * Enum defining the available time display formats for the timeline ruler
@@ -55,19 +54,18 @@ public enum TimeDisplayFormat {
     },
     
     /**
-     * Musical notation format showing Measure:Beat (e.g., "1:1.0", "2:3.0").
+     * BBST format showing Bar.Beat.Sixteenth.Ticks (e.g., "1.1.1.0", "2.3.2.60").
      * Requires MeterMap context for proper calculation.
      */
-    MEASURE_BEATS("Measures:Beats", "1:1.0, 2:1.0") {
+    BBST("BBST", "1.1.1.0, 2.1.1.0") {
         @Override
         public String format(double beatPosition, TimeContext context) {
             if (context == null || context.getMeterMap() == null) {
                 return BEATS.format(beatPosition, context);
             }
             var meterMap = context.getMeterMap();
-            var measureBeats = meterMap.toMeasureBeats(TimeUnit.beats(beatPosition));
-            return String.format("%d:%.2f", measureBeats.getMeasureNumber(), 
-                    measureBeats.getBeatNumber());
+            var bbst = meterMap.beatsToBBST(beatPosition, context.getPPQ());
+            return bbst.toString();
         }
         
         @Override
@@ -76,14 +74,12 @@ public enum TimeDisplayFormat {
                 return BEATS.formatCompact(beatPosition, context);
             }
             var meterMap = context.getMeterMap();
-            var measureBeats = meterMap.toMeasureBeats(TimeUnit.beats(beatPosition));
-            double beatInMeasure = measureBeats.getBeatNumber();
-            if (beatInMeasure == Math.floor(beatInMeasure)) {
-                return String.format("%d:%d", measureBeats.getMeasureNumber(), 
-                        (int) beatInMeasure);
+            var bbst = meterMap.beatsToBBST(beatPosition, context.getPPQ());
+            // Compact: show bar.beat.sixteenth (omit ticks if 0)
+            if (bbst.getTicks() == 0) {
+                return String.format("%d.%d.%d", bbst.getBar(), bbst.getBeat(), bbst.getSixteenth());
             }
-            return String.format("%d:%.1f", measureBeats.getMeasureNumber(), 
-                    beatInMeasure);
+            return bbst.toString();
         }
     },
     
@@ -312,7 +308,7 @@ public enum TimeDisplayFormat {
     public int toTimeStateValue() {
         return switch (this) {
             case TIME, SMPTE -> 0;     // Maps to DISPLAY_TIME
-            case BEATS, MEASURE_BEATS, SAMPLES -> 1; // Maps to DISPLAY_BEATS
+            case BEATS, BBST, SAMPLES -> 1; // Maps to DISPLAY_BEATS
         };
     }
     

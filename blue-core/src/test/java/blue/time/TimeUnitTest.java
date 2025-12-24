@@ -128,66 +128,128 @@ public class TimeUnitTest {
         assertEquals(bt1.hashCode(), bt2.hashCode());
     }
     
-    // ========== MeasureBeatsTime Tests ==========
+    // ========== BBSTTime Tests ==========
     
     @Test
-    public void testMeasureBeatsTimeGetTimeBase() {
-        TimeUnit.MeasureBeatsTime mbt = TimeUnit.measureBeats(1, 1);
-        assertEquals(TimeBase.MEASURE_BEATS, mbt.getTimeBase());
+    public void testBBSTTimeGetTimeBase() {
+        TimeUnit.BBSTTime bbst = TimeUnit.bbst(1, 1, 1, 0);
+        assertEquals(TimeBase.BBST, bbst.getTimeBase());
     }
     
     @Test
-    public void testMeasureBeatsTimeImmutability() {
-        TimeUnit.MeasureBeatsTime mbt = TimeUnit.measureBeats(5, 3.5);
-        assertEquals(5, mbt.getMeasureNumber());
-        assertEquals(3.5, mbt.getBeatNumber(), 0.001);
+    public void testBBSTTimeImmutability() {
+        TimeUnit.BBSTTime bbst = TimeUnit.bbst(5, 3, 2, 60);
+        assertEquals(5, bbst.getBar());
+        assertEquals(3, bbst.getBeat());
+        assertEquals(2, bbst.getSixteenth());
+        assertEquals(60, bbst.getTicks());
     }
     
     @Test
-    public void testMeasureBeatsTimeCopyConstructor() {
-        TimeUnit.MeasureBeatsTime original = TimeUnit.measureBeats(10, 2.5);
-        TimeUnit.MeasureBeatsTime copy = new TimeUnit.MeasureBeatsTime(original);
-        assertEquals(original.getMeasureNumber(), copy.getMeasureNumber());
-        assertEquals(original.getBeatNumber(), copy.getBeatNumber(), 0.001);
+    public void testBBSTTimeCopyConstructor() {
+        TimeUnit.BBSTTime original = TimeUnit.bbst(10, 2, 3, 30);
+        TimeUnit.BBSTTime copy = new TimeUnit.BBSTTime(original);
+        assertEquals(original.getBar(), copy.getBar());
+        assertEquals(original.getBeat(), copy.getBeat());
+        assertEquals(original.getSixteenth(), copy.getSixteenth());
+        assertEquals(original.getTicks(), copy.getTicks());
     }
     
     @Test
-    public void testMeasureBeatsTimeConversions() {
-        // Measure 1, beat 1 = 0 beats (start of first measure)
-        TimeUnit.MeasureBeatsTime mbt = TimeUnit.measureBeats(1, 1);
-        assertEquals(0.0, mbt.toBeats(context), 0.001);
+    public void testBBSTTimeConversions() {
+        // Bar 1, beat 1, sixteenth 1, ticks 0 = 0 beats (start of first measure)
+        TimeUnit.BBSTTime bbst = TimeUnit.bbst(1, 1, 1, 0);
+        assertEquals(0.0, bbst.toBeats(context), 0.001);
         
-        // Measure 2, beat 1 = 4 beats (start of second measure in 4/4)
-        mbt = TimeUnit.measureBeats(2, 1);
-        assertEquals(4.0, mbt.toBeats(context), 0.001);
+        // Bar 2, beat 1, sixteenth 1, ticks 0 = 4 beats (start of second measure in 4/4)
+        bbst = TimeUnit.bbst(2, 1, 1, 0);
+        assertEquals(4.0, bbst.toBeats(context), 0.001);
         
-        // Measure 1, beat 3 = 2 beats
-        mbt = TimeUnit.measureBeats(1, 3);
-        assertEquals(2.0, mbt.toBeats(context), 0.001);
-        assertEquals(2.0, mbt.toSeconds(context), 0.001); // 2 beats at 60 BPM = 2 seconds
+        // Bar 1, beat 3, sixteenth 1, ticks 0 = 2 beats
+        bbst = TimeUnit.bbst(1, 3, 1, 0);
+        assertEquals(2.0, bbst.toBeats(context), 0.001);
+        assertEquals(2.0, bbst.toSeconds(context), 0.001); // 2 beats at 60 BPM = 2 seconds
     }
     
     @Test
-    public void testMeasureBeatsTimeArithmetic() {
-        TimeUnit.MeasureBeatsTime mbt1 = TimeUnit.measureBeats(1, 1); // 0 beats
+    public void testBBSTTimeArithmetic() {
+        TimeUnit.BBSTTime bbst1 = TimeUnit.bbst(1, 1, 1, 0); // 0 beats
         TimeUnit.BeatTime bt = TimeUnit.beats(2.0);
         
-        TimeUnit result = mbt1.add(context, bt);
-        assertTrue(result instanceof TimeUnit.MeasureBeatsTime);
-        // 0 + 2 = 2 beats = measure 1, beat 3
-        TimeUnit.MeasureBeatsTime mbtResult = (TimeUnit.MeasureBeatsTime) result;
-        assertEquals(1, mbtResult.getMeasureNumber());
-        assertEquals(3.0, mbtResult.getBeatNumber(), 0.001);
+        TimeUnit result = bbst1.add(context, bt);
+        assertTrue(result instanceof TimeUnit.BBSTTime);
+        // 0 + 2 = 2 beats = bar 1, beat 3
+        TimeUnit.BBSTTime bbstResult = (TimeUnit.BBSTTime) result;
+        assertEquals(1, bbstResult.getBar());
+        assertEquals(3, bbstResult.getBeat());
     }
     
     @Test(expected = IllegalArgumentException.class)
-    public void testMeasureBeatsTimeInvalidMeasure() {
-        TimeUnit.measureBeats(0, 1);
+    public void testBBSTTimeInvalidBar() {
+        TimeUnit.bbst(0, 1, 1, 0);
     }
     
     @Test(expected = IllegalArgumentException.class)
-    public void testMeasureBeatsTimeInvalidBeat() {
-        TimeUnit.measureBeats(1, 0.5);
+    public void testBBSTTimeInvalidBeat() {
+        TimeUnit.bbst(1, 0, 1, 0);
+    }
+    
+    @Test(expected = IllegalArgumentException.class)
+    public void testBBSTTimeInvalidSixteenth() {
+        TimeUnit.bbst(1, 1, 5, 0);
+    }
+    
+    // ========== BBTTime Tests ==========
+    
+    @Test
+    public void testBBTTimeGetTimeBase() {
+        TimeUnit.BBTTime bbt = TimeUnit.bbt(1, 1, 0);
+        assertEquals(TimeBase.BBT, bbt.getTimeBase());
+    }
+    
+    @Test
+    public void testBBTTimeConversions() {
+        // Bar 1, beat 1, ticks 0 = 0 beats
+        TimeUnit.BBTTime bbt = TimeUnit.bbt(1, 1, 0);
+        assertEquals(0.0, bbt.toBeats(context), 0.001);
+        
+        // Bar 1, beat 1, ticks 240 = 0.5 beats (half a beat at PPQ=480)
+        bbt = TimeUnit.bbt(1, 1, 240);
+        assertEquals(0.5, bbt.toBeats(context), 0.001);
+    }
+    
+    @Test
+    public void testBBTToBBSTConversion() {
+        TimeUnit.BBTTime bbt = TimeUnit.bbt(1, 2, 240); // 240 ticks = sixteenth 3
+        TimeUnit.BBSTTime bbst = bbt.toBBST(480);
+        assertEquals(1, bbst.getBar());
+        assertEquals(2, bbst.getBeat());
+        assertEquals(3, bbst.getSixteenth()); // 240/120 = 2, so sixteenth 3
+        assertEquals(0, bbst.getTicks());
+    }
+    
+    // ========== BBFTime Tests ==========
+    
+    @Test
+    public void testBBFTimeGetTimeBase() {
+        TimeUnit.BBFTime bbf = TimeUnit.bbf(1, 1, 0);
+        assertEquals(TimeBase.BBF, bbf.getTimeBase());
+    }
+    
+    @Test
+    public void testBBFTimeConversions() {
+        // Bar 1, beat 1, fraction 0 = 0 beats
+        TimeUnit.BBFTime bbf = TimeUnit.bbf(1, 1, 0);
+        assertEquals(0.0, bbf.toBeats(context), 0.001);
+        
+        // Bar 1, beat 1, fraction 50 = 0.5 beats
+        bbf = TimeUnit.bbf(1, 1, 50);
+        assertEquals(0.5, bbf.toBeats(context), 0.001);
+    }
+    
+    @Test(expected = IllegalArgumentException.class)
+    public void testBBFTimeInvalidFraction() {
+        TimeUnit.bbf(1, 1, 100); // fraction must be 0-99
     }
     
     // ========== TimeValue Tests ==========

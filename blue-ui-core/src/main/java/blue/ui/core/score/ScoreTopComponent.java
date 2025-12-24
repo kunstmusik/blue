@@ -19,6 +19,68 @@
  */
 package blue.ui.core.score;
 
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.GridLayout;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.Toolkit;
+import java.awt.event.ActionEvent;
+import java.awt.event.AdjustmentEvent;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseWheelEvent;
+import java.awt.event.MouseWheelListener;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import java.lang.ref.WeakReference;
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.swing.Action;
+import javax.swing.ActionMap;
+import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.InputMap;
+import javax.swing.JButton;
+import javax.swing.JComponent;
+import javax.swing.JDialog;
+import javax.swing.JLabel;
+import javax.swing.JLayeredPane;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JSplitPane;
+import javax.swing.JToggleButton;
+import javax.swing.JViewport;
+import javax.swing.KeyStroke;
+import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
+import javax.swing.Timer;
+import javax.swing.border.BevelBorder;
+import javax.swing.border.EmptyBorder;
+
+import org.netbeans.api.settings.ConvertAsProperties;
+import org.openide.awt.ActionID;
+import org.openide.awt.ActionReference;
+import org.openide.awt.ActionReferences;
+import org.openide.filesystems.FileObject;
+import org.openide.filesystems.FileUtil;
+import org.openide.util.Lookup;
+import org.openide.util.NbBundle;
+import org.openide.util.Utilities;
+import org.openide.util.lookup.AbstractLookup;
+import org.openide.util.lookup.InstanceContent;
+import org.openide.windows.TopComponent;
+import org.openide.windows.WindowManager;
+
 import blue.BlueData;
 import blue.WindowSettingManager;
 import blue.automation.AutomationManager;
@@ -40,16 +102,15 @@ import blue.services.render.RenderTimeManager;
 import blue.services.render.RenderTimeManagerListener;
 import blue.settings.PlaybackSettings;
 import blue.soundObject.PolyObject;
-import blue.soundObject.SoundObject;
 import blue.time.TimeContext;
 import blue.time.TimeContextManager;
-import blue.time.TimeUnit;
 import blue.ui.components.IconFactory;
 import blue.ui.core.score.layers.LayerGroupPanel;
 import blue.ui.core.score.layers.LayerGroupUIProviderManager;
 import blue.ui.core.score.layers.SoundObjectProvider;
 import blue.ui.core.score.manager.LayerGroupManagerDialog;
 import blue.ui.core.score.manager.ScoreManagerDialog;
+import blue.ui.core.score.meter.MeterRegionBar;
 import blue.ui.core.score.tempo.TempoEditorControl;
 import blue.ui.core.score.tempo.TempoEditorPanel;
 import blue.ui.utilities.LinearLayout;
@@ -57,34 +118,8 @@ import blue.ui.utilities.UiUtilities;
 import blue.util.ObservableListEvent;
 import blue.util.ObservableListListener;
 import blue.utility.GUI;
-import java.awt.*;
-import java.awt.event.*;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
-import java.lang.ref.WeakReference;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.WeakHashMap;
-import javax.swing.*;
-import javax.swing.border.BevelBorder;
-import javax.swing.border.Border;
-import javax.swing.border.EmptyBorder;
-import javax.swing.border.LineBorder;
 import jiconfont.icons.elusive.Elusive;
 import jiconfont.swing.IconFontSwing;
-import org.netbeans.api.settings.ConvertAsProperties;
-import org.openide.awt.ActionID;
-import org.openide.awt.ActionReference;
-import org.openide.awt.ActionReferences;
-import org.openide.filesystems.FileObject;
-import org.openide.filesystems.FileUtil;
-import org.openide.util.Lookup;
-import org.openide.util.NbBundle;
-import org.openide.util.Utilities;
-import org.openide.util.lookup.AbstractLookup;
-import org.openide.util.lookup.InstanceContent;
-import org.openide.windows.TopComponent;
-import org.openide.windows.WindowManager;
 
 /**
  * TopComponent for Score Timeline.
@@ -124,10 +159,12 @@ public final class ScoreTopComponent extends TopComponent
     BlueData data;
     ScoreObjectBar scoreObjectBar = new ScoreObjectBar();
 
-    // TODO - consider separate component for all bars
-    JPanel timelineBars = new JPanel();
+    // Timeline bars are now added directly to bottomBarsPanel in initComponents()
     MarkersBar markersBar = new MarkersBar();
     TimeBar timeBar = new TimeBar();
+    
+    // Column header panel for tempo, time sig, markers, and time bars
+    JPanel columnHeaderPanel = new JPanel();
 
     JPanel leftPanel = new JPanel(new BorderLayout());
     JViewport layerHeaderViewPort = new JViewport();
@@ -151,6 +188,7 @@ public final class ScoreTopComponent extends TopComponent
     TimelinePropertiesPanel timeProperties = new TimelinePropertiesPanel();
     TempoEditorControl tempoControlPanel = new TempoEditorControl();
     TempoEditorPanel tempoEditorPanel = new TempoEditorPanel();
+    MeterRegionBar meterRegionBar = new MeterRegionBar();
     ScoreNavigatorDialog navigator = null;
     volatile boolean checkingSize = false;
     AlphaMarquee marquee = new AlphaMarquee();
@@ -407,10 +445,48 @@ public final class ScoreTopComponent extends TopComponent
                     c.setSize(width, d2.height);
                 }
 
+                // Also resize column header panel to match content width for scrolling
+                updateColumnHeaderSize(width);
+
                 scrollPane.validate();
             }
             checkingSize = false;
         }
+    }
+    
+    /**
+     * Updates the column header panel and its children to match the given content width.
+     * This is necessary for proper horizontal scrolling of the time bar, markers bar, etc.
+     */
+    private void updateColumnHeaderSize(int contentWidth) {
+        // Calculate total height from children's preferred sizes
+        int totalHeight = 0;
+        for (Component child : columnHeaderPanel.getComponents()) {
+            totalHeight += child.getPreferredSize().height;
+        }
+        
+        Dimension headerSize = new Dimension(contentWidth, totalHeight);
+        columnHeaderPanel.setPreferredSize(headerSize);
+        columnHeaderPanel.setSize(headerSize);
+        
+        // Resize child components to match width and do proper layout
+        for (Component child : columnHeaderPanel.getComponents()) {
+            Dimension childPref = child.getPreferredSize();
+            child.setSize(contentWidth, childPref.height);
+            child.setPreferredSize(new Dimension(contentWidth, childPref.height));
+            
+            // For panels with their own layout, recursively resize and validate
+            if (child instanceof JPanel childPanel) {
+                for (Component grandChild : childPanel.getComponents()) {
+                    Dimension gcPref = grandChild.getPreferredSize();
+                    grandChild.setSize(contentWidth, gcPref.height);
+                    grandChild.setPreferredSize(new Dimension(contentWidth, gcPref.height));
+                }
+                childPanel.doLayout();
+            }
+        }
+        columnHeaderPanel.doLayout();
+        columnHeaderPanel.revalidate();
     }
 
     public synchronized void reinitialize() {
@@ -445,6 +521,7 @@ public final class ScoreTopComponent extends TopComponent
 
             tempoControlPanel.setTempoMap(data.getScore().getTempoMap());
             tempoEditorPanel.setData(data);
+            meterRegionBar.setData(data);
 
             timeBar.setData(data);
             markersBar.setData(data);
@@ -600,6 +677,13 @@ public final class ScoreTopComponent extends TopComponent
         layerHeaderViewPort.setView(layerHeaderPanel);
 
         JPanel leftHeaderView = new JPanel(new GridBagLayout());
+        
+        JLabel timeSigLabel = new JLabel("Time Signature");
+        timeSigLabel.setHorizontalAlignment(SwingConstants.RIGHT);
+        timeSigLabel.setFont(new Font("Dialog", Font.PLAIN, 10));
+        timeSigLabel.setPreferredSize(new Dimension(100, 20));
+        timeSigLabel.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
+        
         JLabel markersLabel = new JLabel("Markers");
         markersLabel.setHorizontalAlignment(SwingConstants.RIGHT);
         markersLabel.setFont(new Font("Dialog", Font.PLAIN, 10));
@@ -614,8 +698,10 @@ public final class ScoreTopComponent extends TopComponent
 
         leftHeaderView.add(tempoControlPanel, gbc);
         gbc.gridy = 1;
-        leftHeaderView.add(markersLabel, gbc);
+        leftHeaderView.add(timeSigLabel, gbc);
         gbc.gridy = 2;
+        leftHeaderView.add(markersLabel, gbc);
+        gbc.gridy = 3;
         leftHeaderView.add(manageButton, gbc);
 
         leftPanel.add(leftHeaderView, BorderLayout.NORTH);
@@ -630,33 +716,66 @@ public final class ScoreTopComponent extends TopComponent
             }
         });
 
-        final JPanel headerPanel = new JPanel(new BorderLayout());
-        headerPanel.setBackground(Color.BLACK);
+        columnHeaderPanel.setLayout(new BoxLayout(columnHeaderPanel, BoxLayout.Y_AXIS));
+        columnHeaderPanel.setBackground(Color.BLACK);
 
-        headerPanel.add(tempoEditorPanel, BorderLayout.CENTER);
+        tempoEditorPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 100));
+        columnHeaderPanel.add(tempoEditorPanel);
 
-        // TIMELINE BARS
-        timelineBars.setLayout(new BorderLayout());
-        timelineBars.add(markersBar, BorderLayout.NORTH);
-        timelineBars.add(timeBar, BorderLayout.SOUTH);
-
+        // TIME SIG, MARKERS, AND TIME BARS
+        JPanel bottomBarsPanel = new JPanel();
+        bottomBarsPanel.setLayout(new BoxLayout(bottomBarsPanel, BoxLayout.Y_AXIS));
+        bottomBarsPanel.setBackground(Color.BLACK);
+        
+        // Time Signature bar
+        meterRegionBar.setPreferredSize(new Dimension(100, 20));
+        meterRegionBar.setMaximumSize(new Dimension(Integer.MAX_VALUE, 20));
+        meterRegionBar.setMinimumSize(new Dimension(1, 20));
+        bottomBarsPanel.add(meterRegionBar);
+        
+        // Markers bar
         markersBar.setPreferredSize(new Dimension(100, 20));
+        markersBar.setMaximumSize(new Dimension(Integer.MAX_VALUE, 20));
+        markersBar.setMinimumSize(new Dimension(1, 20));
+        bottomBarsPanel.add(markersBar);
+        
+        // Time bar
         timeBar.setPreferredSize(new Dimension(100, 20));
+        timeBar.setMaximumSize(new Dimension(Integer.MAX_VALUE, 20));
+        timeBar.setMinimumSize(new Dimension(1, 20));
+        bottomBarsPanel.add(timeBar);
 
-        headerPanel.add(timelineBars, BorderLayout.SOUTH);
+        bottomBarsPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 60));
+        columnHeaderPanel.add(bottomBarsPanel);
 
         tempoEditorPanel.addComponentListener(new ComponentAdapter() {
             @Override
             public void componentResized(ComponentEvent e) {
-                headerPanel.revalidate();
+                // When tempo editor expands/collapses, update the column header size
+                int contentWidth = layerPanel.getWidth();
+                if (contentWidth > 0) {
+                    updateColumnHeaderSize(contentWidth);
+                }
             }
+        });
+        
+        // Listen for expanded property change to update column header
+        tempoEditorPanel.addPropertyChangeListener("expanded", evt -> {
+            SwingUtilities.invokeLater(() -> {
+                int contentWidth = layerPanel.getWidth();
+                if (contentWidth > 0) {
+                    updateColumnHeaderSize(contentWidth);
+                    scrollPane.revalidate();
+                    scrollPane.repaint();
+                }
+            });
         });
 
         Color ICON_COLOR = new Color(230, 230, 255);
 
         JButton zoomButton = new JButton(IconFontSwing.buildIcon(Elusive.ZOOM_IN, 12, ICON_COLOR));
 
-        scrollPane.setColumnHeaderView(headerPanel);
+        scrollPane.setColumnHeaderView(columnHeaderPanel);
 
         scrollPane.setCorner(JScrollPane.LOWER_RIGHT_CORNER, zoomButton);
 
@@ -752,12 +871,11 @@ public final class ScoreTopComponent extends TopComponent
             @Override
             public void componentResized(ComponentEvent e) {
                 int newHeight = Math.max(layerPanel.getHeight(), scrollPane.getViewport().getHeight());
+                int contentWidth = layerPanel.getWidth();
 
-                Dimension d = new Dimension(layerPanel.getWidth(), 40);
-                timelineBars.setMinimumSize(d);
-                timelineBars.setPreferredSize(d);
-                timelineBars.setSize(d);
-                timelineBars.repaint();
+                // Resize column header panel for proper scrolling
+                updateColumnHeaderSize(contentWidth);
+                columnHeaderPanel.repaint();
 
                 scorePanel.setSize(layerPanel.getSize());
                 scorePanel.setPreferredSize(layerPanel.getSize());
@@ -1087,6 +1205,8 @@ public final class ScoreTopComponent extends TopComponent
             tempoEditorPanel.setTimeState(timeState);
             tempoEditorPanel.setVisible(true);
             tempoControlPanel.setVisible(true);
+            meterRegionBar.setTimeState(timeState);
+            meterRegionBar.setVisible(true);
             timeBar.setRootTimeline(true);
             timeBar.setTimeState(timeState);
             markersBar.setRootTimeline(true);
@@ -1140,6 +1260,7 @@ public final class ScoreTopComponent extends TopComponent
 
         tempoEditorPanel.setVisible(false);
         tempoControlPanel.setVisible(false);
+        meterRegionBar.setVisible(false);
 
         if (this.currentTimeState != null) {
             this.currentTimeState.removePropertyChangeListener(this);
