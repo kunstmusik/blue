@@ -7,6 +7,7 @@ import blue.score.ScoreObjectEvent;
 import blue.score.ScoreObjectListener;
 import blue.time.TimeContext;
 import blue.time.TimeUnit;
+import blue.time.TimeUtilities;
 
 /**
  * Title: blue Description: an object composition environment for csound
@@ -119,14 +120,16 @@ public abstract class AbstractSoundObject implements SoundObject {
         double currentStart = startTimeUnit.toBeats(context);
         double currentDuration = durationUnit.toBeats(context);
         double diff = currentStart - newStartTime;
-        setStartTime(TimeUnit.beats(newStartTime));
-        setSubjectiveDuration(TimeUnit.beats(currentDuration + diff));
+        // Preserve the original TimeUnit type
+        setStartTime(TimeUtilities.beatsToTimeUnit(newStartTime, startTimeUnit.getTimeBase(), context));
+        setSubjectiveDuration(TimeUtilities.beatsToTimeUnit(currentDuration + diff, durationUnit.getTimeBase(), context));
     }
 
     @Override
     public void resizeRight(TimeContext context, double newEndTime) {
         double currentStart = startTimeUnit.toBeats(context);
-        setSubjectiveDuration(TimeUnit.beats(newEndTime - currentStart));
+        // Preserve the original TimeUnit type
+        setSubjectiveDuration(TimeUtilities.beatsToTimeUnit(newEndTime - currentStart, durationUnit.getTimeBase(), context));
     }
 
     @Override

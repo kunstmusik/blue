@@ -29,6 +29,7 @@ import blue.score.layers.AutomatableLayer;
 import blue.time.TimeContext;
 import blue.time.TimeContextManager;
 import blue.time.TimeUnit;
+import blue.time.TimeUtilities;
 import blue.ui.core.render.RealtimeRenderManager;
 import blue.ui.core.score.ModeManager;
 import blue.ui.core.score.MultiLineScoreSelection;
@@ -158,7 +159,9 @@ class MultiLineMoveMouseListener extends BlueMouseAdapter {
             for (int i = 0; i < selectedScoreObjects.length; i++) {
                 ScoreObject sObj = selectedScoreObjects[i];
                 TimeContext context = TimeContextManager.getContext();
-                sObj.setStartTime(TimeUnit.beats(startTimes[i].toBeats(context) + trans));
+                // Preserve the original TimeUnit type
+                double newBeats = startTimes[i].toBeats(context) + trans;
+                sObj.setStartTime(TimeUtilities.beatsToTimeUnit(newBeats, startTimes[i].getTimeBase(), context));
             }
 
             selection.updateTranslation(translation);

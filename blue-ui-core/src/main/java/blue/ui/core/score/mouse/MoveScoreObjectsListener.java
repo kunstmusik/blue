@@ -28,6 +28,7 @@ import blue.score.layers.ScoreObjectLayer;
 import blue.time.TimeContext;
 import blue.time.TimeContextManager;
 import blue.time.TimeUnit;
+import blue.time.TimeUtilities;
 import blue.ui.core.score.ScoreController;
 import blue.ui.core.score.ScoreMode;
 import blue.ui.core.score.ScorePath;
@@ -205,7 +206,9 @@ public class MoveScoreObjectsListener extends BlueMouseAdapter {
         }
 
         for (int i = 0; i < selectedScoreObjects.length; i++) {
-            selectedScoreObjects[i].setStartTime(TimeUnit.beats(startTimes[i].toBeats(context) + diffTime));
+            // Preserve the original TimeUnit type
+            double newBeats = startTimes[i].toBeats(context) + diffTime;
+            selectedScoreObjects[i].setStartTime(TimeUtilities.beatsToTimeUnit(newBeats, startTimes[i].getTimeBase(), context));
             if (layerAdjusted) {
                 ScoreObject scoreObj = selectedScoreObjects[i];
                 int startIndex = startLayerIndices[i];
