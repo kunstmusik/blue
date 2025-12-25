@@ -26,34 +26,22 @@ import blue.time.TimeContextManager;
 import blue.time.TimeUnit;
 import blue.time.TimeUtilities;
 import java.awt.BorderLayout;
-import java.awt.CardLayout;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
-import javax.swing.event.ChangeListener;
 
 /**
  * Composite panel for editing TimeUnit values with TimeBase selection.
- * Combines a TimeBaseSelector with the appropriate TimeUnitEditor based on
- * the selected TimeBase.
- * 
- * This panel automatically switches between different TimeUnit editors when
- * the TimeBase changes, and handles conversion between TimeUnit types.
+ * Combines a TimeBaseSelector with a unified TextTimeUnitEditor that handles
+ * all TimeBase formats via text input.
  * 
  * @author steven yi
  */
 public class SoundObjectTimePanel extends JPanel {
 
     private final TimeBaseSelector timeBaseSelector;
-    private final JPanel editorPanel;
-    private final CardLayout editorCardLayout;
-
-    private final BeatTimeEditor beatTimeEditor;
-    private final MeasureTimeEditor measureTimeEditor;
-    private final TimecodeEditor secondTimeEditor;
-    private final TimecodeEditor smpteTimeEditor;
-    private final SampleTimeEditor sampleTimeEditor;
+    private final TextTimeUnitEditor textEditor;
 
     private TimeUnit currentTimeUnit;
     private boolean updating = false;
@@ -66,36 +54,16 @@ public class SoundObjectTimePanel extends JPanel {
         propertyChangeSupport = new PropertyChangeSupport(this);
         setLayout(new BorderLayout());
 
-        // TimeBase selector in NORTH - no label needed, context is clear
-        // Exclude PROJECT_DEFAULT - properties panel shows actual TimeBase
+        // TimeBase selector in NORTH
         timeBaseSelector = new TimeBaseSelector(false);
         add(timeBaseSelector, BorderLayout.NORTH);
 
-        // Card panel for switching between editors in CENTER
-        // CENTER will fill width and grow vertically as needed
-        editorCardLayout = new CardLayout();
-        editorPanel = new JPanel(editorCardLayout);
-        editorPanel.setBorder(new EmptyBorder(3, 0, 3, 0)); // Add this line
-
-        // Create all editors
-        beatTimeEditor = new BeatTimeEditor();
-        measureTimeEditor = new MeasureTimeEditor();
-        secondTimeEditor = new TimecodeEditor(TimecodeEditor.Mode.TIME);
-        smpteTimeEditor = new TimecodeEditor(TimecodeEditor.Mode.SMPTE);
-        sampleTimeEditor = new SampleTimeEditor();
-
-        // Add editors to card panel
-        editorPanel.add(beatTimeEditor, "CSOUND_BEATS");
-        // BBT, BBST, BBF all use the same measure editor for now
-        // TODO: Update MeasureTimeEditor to support text-based BBT/BBST/BBF input
-        editorPanel.add(measureTimeEditor, "BBT");
-        editorPanel.add(measureTimeEditor, "BBST");
-        editorPanel.add(measureTimeEditor, "BBF");
-        editorPanel.add(secondTimeEditor, "TIME");
-        editorPanel.add(smpteTimeEditor, "SMPTE");
-        editorPanel.add(sampleTimeEditor, "FRAME");
-
-        add(editorPanel, BorderLayout.CENTER);
+        // Unified text editor for all formats
+        textEditor = new TextTimeUnitEditor();
+        JPanel editorWrapper = new JPanel(new BorderLayout());
+        editorWrapper.setBorder(new EmptyBorder(3, 0, 3, 0));
+        editorWrapper.add(textEditor, BorderLayout.CENTER);
+        add(editorWrapper, BorderLayout.CENTER);
 
         // Listen for TimeBase changes
         timeBaseSelector.addActionListener(e -> {
@@ -105,17 +73,11 @@ public class SoundObjectTimePanel extends JPanel {
         });
 
         // Listen for editor changes
-        ChangeListener editorChangeListener = e -> {
+        textEditor.addChangeListener(e -> {
             if (!updating) {
                 updateTimeUnitFromEditor();
             }
-        };
-
-        beatTimeEditor.addChangeListener(editorChangeListener);
-        measureTimeEditor.addChangeListener(editorChangeListener);
-        secondTimeEditor.addChangeListener(editorChangeListener);
-        smpteTimeEditor.addChangeListener(editorChangeListener);
-        sampleTimeEditor.addChangeListener(editorChangeListener);
+        });
     }
 
     public void setTimeBaseSelectionEnabled(boolean enabled) {
@@ -123,11 +85,7 @@ public class SoundObjectTimePanel extends JPanel {
     }
 
     public void setPositionEditingEnabled(boolean enabled) {
-        beatTimeEditor.setEnabled(enabled);
-        measureTimeEditor.setEnabled(enabled);
-        secondTimeEditor.setEnabled(enabled);
-        smpteTimeEditor.setEnabled(enabled);
-        sampleTimeEditor.setEnabled(enabled);
+        textEditor.setEnabled(enabled);
     }
 
     /**
@@ -184,18 +142,13 @@ public class SoundObjectTimePanel extends JPanel {
             return;
         }
 
-        // Determine TimeBase from TimeUnit type
+        // Determine TimeBase from TimeUnit type and update selector
         TimeBase timeBase = currentTimeUnit.getTimeBase();
         timeBaseSelector.setSelectedTimeBase(timeBase);
 
-        // Show appropriate editor
-        showEditorForTimeBase(timeBase);
-
-        // Update the editor with the current value
-        TimeUnitEditor editor = getEditorForTimeBase(timeBase);
-        if (editor != null) {
-            editor.setTimeUnit(currentTimeUnit);
-        }
+        // Update the text editor with TimeBase and value
+        textEditor.setTimeBase(timeBase);
+        textEditor.setTimeUnit(currentTimeUnit);
     }
 
     /**
@@ -203,25 +156,20 @@ public class SoundObjectTimePanel extends JPanel {
      */
     private void handleTimeBaseChange() {
         TimeBase newTimeBase = timeBaseSelector.getSelectedTimeBase();
-        showEditorForTimeBase(newTimeBase);
+        textEditor.setTimeBase(newTimeBase);
 
         // Convert current TimeUnit to new TimeBase using TimeContext
         if (currentTimeUnit != null) {
             TimeUnit oldValue = currentTimeUnit;
             
-            // Use project's TimeContext for proper conversion with meter, tempo, and sample rate
-            // Get the current project's TimeContext
+            // Use project's TimeContext for proper conversion
             TimeContext context = BlueProjectManager.getInstance().getCurrentProject().getData().getScore().getTimeContext();
             TimeContext previousContext = TimeContextManager.hasContext() ? TimeContextManager.getContext() : null;
             TimeContextManager.setContext(context);
 
             try {
                 currentTimeUnit = TimeUtilities.convertTimeUnit(oldValue, newTimeBase, context);
-
-                TimeUnitEditor editor = getEditorForTimeBase(newTimeBase);
-                if (editor != null) {
-                    editor.setTimeUnit(currentTimeUnit);
-                }
+                textEditor.setTimeUnit(currentTimeUnit);
 
                 // Fire property change so parent component is notified
                 propertyChangeSupport.firePropertyChange("timeUnit", oldValue, currentTimeUnit);
@@ -236,53 +184,27 @@ public class SoundObjectTimePanel extends JPanel {
     }
 
     /**
-     * Updates the TimeUnit from the current editor.
+     * Updates the TimeUnit from the text editor.
      */
     private void updateTimeUnitFromEditor() {
-        TimeBase timeBase = timeBaseSelector.getSelectedTimeBase();
-        TimeUnitEditor editor = getEditorForTimeBase(timeBase);
-        if (editor != null) {
-            TimeUnit oldValue = currentTimeUnit;
-            currentTimeUnit = editor.getTimeUnit();
-            
-            // Fire property change within TimeContext since listeners may need it
-            TimeContext context = BlueProjectManager.getInstance().getCurrentProject().getData().getScore().getTimeContext();
-            TimeContext previousContext = TimeContextManager.hasContext() ? TimeContextManager.getContext() : null;
-            TimeContextManager.setContext(context);
+        TimeUnit oldValue = currentTimeUnit;
+        currentTimeUnit = textEditor.getTimeUnit();
+        
+        // Fire property change within TimeContext since listeners may need it
+        TimeContext context = BlueProjectManager.getInstance().getCurrentProject().getData().getScore().getTimeContext();
+        TimeContext previousContext = TimeContextManager.hasContext() ? TimeContextManager.getContext() : null;
+        TimeContextManager.setContext(context);
 
-            try {
-                propertyChangeSupport.firePropertyChange("timeUnit", oldValue, currentTimeUnit);
-            } finally {
-                if (previousContext != null) {
-                    TimeContextManager.setContext(previousContext);
-                } else {
-                    TimeContextManager.clearContext();
-                }
+        try {
+            propertyChangeSupport.firePropertyChange("timeUnit", oldValue, currentTimeUnit);
+        } finally {
+            if (previousContext != null) {
+                TimeContextManager.setContext(previousContext);
+            } else {
+                TimeContextManager.clearContext();
             }
         }
     }
-
-    /**
-     * Shows the appropriate editor for the given TimeBase.
-     */
-    private void showEditorForTimeBase(TimeBase timeBase) {
-        editorCardLayout.show(editorPanel, timeBase.name());
-    }
-
-    /**
-     * Gets the editor for the given TimeBase.
-     */
-    private TimeUnitEditor getEditorForTimeBase(TimeBase timeBase) {
-        return switch (timeBase) {
-            case CSOUND_BEATS -> beatTimeEditor;
-            case BBT, BBST, BBF -> measureTimeEditor;
-            case TIME -> secondTimeEditor;
-            case SMPTE -> smpteTimeEditor;
-            case FRAME -> sampleTimeEditor;
-            case PROJECT_DEFAULT -> null;
-        };
-    }
-
 
     /**
      * Adds a PropertyChangeListener to listen for TimeUnit changes.
