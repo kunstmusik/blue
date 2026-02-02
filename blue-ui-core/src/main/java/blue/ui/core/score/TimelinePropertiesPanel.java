@@ -21,7 +21,7 @@ package blue.ui.core.score;
 
 import blue.BlueSystem;
 import blue.score.TimeState;
-import blue.soundObject.PolyObject;
+import blue.time.TimeBase;
 import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
@@ -31,7 +31,9 @@ import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
+import javax.swing.DefaultComboBoxModel;
 import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
@@ -48,6 +50,12 @@ class TimelinePropertiesPanel extends JComponent {
             .getString("scoreGUI.timeline.time"));
 
     JRadioButton timeDisplayBeats = new JRadioButton("Beats");
+
+    JCheckBox secondaryRulerEnabled = new JCheckBox("Show Secondary Ruler");
+    
+    // Use plain JComboBox instead of TimeFormatSelector to avoid binding to primary timeDisplay
+    JComboBox<TimeDisplayFormat> secondaryFormatSelector = new JComboBox<>(
+            new DefaultComboBoxModel<>(TimeDisplayFormat.values()));
 
     boolean isUpdating = false;
 
@@ -85,19 +93,58 @@ class TimelinePropertiesPanel extends JComponent {
         ActionListener timeActionListener = (ActionEvent e) -> {
             if (!isUpdating) {
                 if (e.getSource() == timeDisplayTime) {
-                    timeState.setTimeDisplay(PolyObject.DISPLAY_TIME);
+                    timeState.setTimeDisplay(TimeBase.TIME);
                 } else if (e.getSource() == timeDisplayBeats) {
-                    timeState.setTimeDisplay(PolyObject.DISPLAY_NUMBER);
-                    
+                    timeState.setTimeDisplay(TimeBase.CSOUND_BEATS);
                 }
             }
         };
         
         pcl = pce -> {
-           if("snapEnabled".equals(pce.getPropertyName())) {
-               snapEnabledBox.setSelected((boolean) pce.getNewValue());
-           }
+            if (isUpdating) return;
+            isUpdating = true;
+            try {
+                switch (pce.getPropertyName()) {
+                    case "snapEnabled" -> snapEnabledBox.setSelected((boolean) pce.getNewValue());
+                    case "timeDisplay" -> {
+                        TimeBase newTimeBase = (TimeBase) pce.getNewValue();
+                        if (newTimeBase == TimeBase.TIME) {
+                            timeDisplayTime.setSelected(true);
+                        } else {
+                            timeDisplayBeats.setSelected(true);
+                        }
+                    }
+                    case "secondaryRulerEnabled" -> {
+                        secondaryRulerEnabled.setSelected((boolean) pce.getNewValue());
+                        secondaryFormatSelector.setEnabled((boolean) pce.getNewValue());
+                    }
+                    case "secondaryTimeDisplay" -> {
+                        TimeDisplayFormat format = TimeDisplayFormat.fromTimeBase((TimeBase) pce.getNewValue());
+                        secondaryFormatSelector.setSelectedItem(format);
+                    }
+                }
+            } finally {
+                isUpdating = false;
+            }
         };
+        
+        // Secondary ruler controls
+        secondaryRulerEnabled.addActionListener((ActionEvent e) -> {
+            if (timeState != null && !isUpdating) {
+                timeState.setSecondaryRulerEnabled(secondaryRulerEnabled.isSelected());
+                secondaryFormatSelector.setEnabled(secondaryRulerEnabled.isSelected());
+            }
+        });
+        
+        secondaryFormatSelector.addActionListener(evt -> {
+            if (timeState != null && !isUpdating) {
+                TimeDisplayFormat format = (TimeDisplayFormat) secondaryFormatSelector.getSelectedItem();
+                if (format != null) {
+                    timeState.setSecondaryTimeDisplay(format.getTimeBase());
+                }
+            }
+        });
+        secondaryFormatSelector.setEnabled(false);
 
         timeDisplayTime.addActionListener(timeActionListener);
         timeDisplayBeats.addActionListener(timeActionListener);
@@ -127,9 +174,17 @@ class TimelinePropertiesPanel extends JComponent {
         timeDisplayPanel.setMaximumSize(new Dimension(150, 200));
         timeDisplayPanel.add(timeDisplayTime);
         timeDisplayPanel.add(timeDisplayBeats);
+        
+        JPanel secondaryRulerPanel = new JPanel();
+        secondaryRulerPanel.setBorder(BorderFactory.createTitledBorder("Secondary Ruler"));
+        secondaryRulerPanel.setLayout(new GridLayout(2, 1));
+        secondaryRulerPanel.setMaximumSize(new Dimension(150, 100));
+        secondaryRulerPanel.add(secondaryRulerEnabled);
+        secondaryRulerPanel.add(secondaryFormatSelector);
 
         this.add(snapPanel);
         this.add(timeDisplayPanel);
+        this.add(secondaryRulerPanel);
 
         this.add(Box.createVerticalGlue());
 
@@ -147,11 +202,18 @@ class TimelinePropertiesPanel extends JComponent {
         snapEnabledBox.setSelected(timeState.isSnapEnabled());
         snapValue.setText(Double.toString(timeState.getSnapValue()));
 
-        if (timeState.getTimeDisplay() == TimeState.DISPLAY_TIME) {
+        if (timeState.getTimeDisplay() == TimeBase.TIME) {
             timeDisplayTime.setSelected(true);
         } else {
             timeDisplayBeats.setSelected(true);
         }
+        
+        // Secondary ruler state
+        secondaryRulerEnabled.setSelected(timeState.isSecondaryRulerEnabled());
+        secondaryFormatSelector.setEnabled(timeState.isSecondaryRulerEnabled());
+        TimeDisplayFormat secondaryFormat = TimeDisplayFormat.fromTimeBase(
+                timeState.getSecondaryTimeDisplay());
+        secondaryFormatSelector.setSelectedItem(secondaryFormat);
         
         timeState.addPropertyChangeListener(pcl);
 

@@ -115,8 +115,8 @@ public class TimeFormatSelector extends JComboBox<TimeDisplayFormat>
         if (selected != null) {
             isUpdating = true;
             try {
-                // Update TimeState with the legacy value for backward compatibility
-                timeState.setTimeDisplay(selected.toTimeStateValue());
+                // Update TimeState with the TimeBase
+                timeState.setTimeDisplay(selected.getTimeBase());
                 
                 // Fire property change for the new format enum
                 // This allows components to react to the specific format change
@@ -163,7 +163,7 @@ public class TimeFormatSelector extends JComboBox<TimeDisplayFormat>
         if (timeState != null && !isUpdating) {
             isUpdating = true;
             try {
-                TimeDisplayFormat format = TimeDisplayFormat.fromTimeStateValue(
+                TimeDisplayFormat format = TimeDisplayFormat.fromTimeBase(
                         timeState.getTimeDisplay());
                 setSelectedItem(format);
             } finally {

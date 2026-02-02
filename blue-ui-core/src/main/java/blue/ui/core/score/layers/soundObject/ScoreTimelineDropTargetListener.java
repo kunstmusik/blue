@@ -24,7 +24,10 @@ import blue.score.TimeState;
 import blue.soundObject.AudioFile;
 import blue.soundObject.PolyObject;
 import blue.soundObject.SoundObject;
-import blue.time.TimeUnit;
+import blue.time.TimeBase;
+import blue.time.TimeContext;
+import blue.time.TimeContextManager;
+import blue.time.TimeUtilities;
 import blue.ui.core.score.ScoreObjectCopy;
 import blue.utility.FileUtilities;
 import blue.utility.SoundFileUtilities;
@@ -167,8 +170,11 @@ public class ScoreTimelineDropTargetListener implements DropTargetListener {
                 double startTime = p.x / timeState.getPixelSecond();
                 float dur = SoundFileUtilities.getDurationInSeconds(s);
 
-                af.setStartTime(TimeUnit.beats(startTime));
-                af.setSubjectiveDuration(TimeUnit.beats(dur));
+                // Use the primary ruler's TimeBase for the default TimeUnit type
+                TimeBase timeBase = timeState.getTimeDisplay();
+                TimeContext context = TimeContextManager.getContext();
+                af.setStartTime(TimeUtilities.beatsToTimeUnit(startTime, timeBase, context));
+                af.setSubjectiveDuration(TimeUtilities.beatsToTimeUnit(dur, timeBase, context));
 
                 pObj.addSoundObject(index, af);
 
@@ -231,8 +237,11 @@ public class ScoreTimelineDropTargetListener implements DropTargetListener {
                 double startTime = p.x / timeState.getPixelSecond();
                 float dur = SoundFileUtilities.getDurationInSeconds(str);
 
-                af.setStartTime(TimeUnit.beats(startTime));
-                af.setSubjectiveDuration(TimeUnit.beats(dur));
+                // Use the primary ruler's TimeBase for the default TimeUnit type
+                TimeBase timeBase = timeState.getTimeDisplay();
+                TimeContext context = TimeContextManager.getContext();
+                af.setStartTime(TimeUtilities.beatsToTimeUnit(startTime, timeBase, context));
+                af.setSubjectiveDuration(TimeUtilities.beatsToTimeUnit(dur, timeBase, context));
 
                 pObj.addSoundObject(index, af);
 
@@ -247,7 +256,10 @@ public class ScoreTimelineDropTargetListener implements DropTargetListener {
                     int index = sTimeCanvas.pObj.getLayerNumForY(p.y);
                     var sObjCopy = (SoundObject) scoreObjectCopy.scoreObjects.get(0).deepCopy();
                     double startTime = p.x / timeState.getPixelSecond();
-                    sObjCopy.setStartTime(TimeUnit.beats(startTime));
+                    // Use the primary ruler's TimeBase for the default TimeUnit type
+                    TimeBase timeBase = timeState.getTimeDisplay();
+                    TimeContext context = TimeContextManager.getContext();
+                    sObjCopy.setStartTime(TimeUtilities.beatsToTimeUnit(startTime, timeBase, context));
                     pObj.addSoundObject(index, sObjCopy);
                     dtde.dropComplete(true);
                     

@@ -102,6 +102,7 @@ import blue.services.render.RenderTimeManager;
 import blue.services.render.RenderTimeManagerListener;
 import blue.settings.PlaybackSettings;
 import blue.soundObject.PolyObject;
+import blue.time.TimeBase;
 import blue.time.TimeContext;
 import blue.time.TimeContextManager;
 import blue.ui.components.IconFactory;
@@ -159,9 +160,13 @@ public final class ScoreTopComponent extends TopComponent
     BlueData data;
     ScoreObjectBar scoreObjectBar = new ScoreObjectBar();
 
-    // Timeline bars are now added directly to bottomBarsPanel in initComponents()
+    // Timeline bars added directly to columnHeaderPanel
     MarkersBar markersBar = new MarkersBar();
-    TimeBar timeBar = new TimeBar();
+    TimeBar primaryRuler = new TimeBar();
+    TimeBar secondaryRuler = new TimeBar();
+    
+    // Spacer label for left header when secondary ruler is visible
+    JLabel secondaryRulerSpacer = new JLabel();
     
     // Column header panel for tempo, time sig, markers, and time bars
     JPanel columnHeaderPanel = new JPanel();
@@ -446,7 +451,7 @@ public final class ScoreTopComponent extends TopComponent
                 }
 
                 // Also resize column header panel to match content width for scrolling
-                updateColumnHeaderSize(width);
+                scheduleColumnHeaderResize();
 
                 scrollPane.validate();
             }
@@ -454,39 +459,67 @@ public final class ScoreTopComponent extends TopComponent
         }
     }
     
+    private boolean isUpdatingColumnHeader = false;
+    private boolean pendingColumnHeaderResize = false;
+    private int lastColumnHeaderWidth = -1;
+    private int lastColumnHeaderHeight = -1;
+
+    private void scheduleColumnHeaderResize() {
+        if (pendingColumnHeaderResize) {
+            return;
+        }
+
+        pendingColumnHeaderResize = true;
+        SwingUtilities.invokeLater(() -> {
+            try {
+                int contentWidth = Math.max(layerPanel.getWidth(), scrollPane.getViewport().getWidth());
+                if (contentWidth > 0) {
+                    updateColumnHeaderSize(contentWidth);
+                    columnHeaderPanel.repaint();
+                }
+            } finally {
+                pendingColumnHeaderResize = false;
+            }
+        });
+    }
+    
     /**
      * Updates the column header panel and its children to match the given content width.
      * This is necessary for proper horizontal scrolling of the time bar, markers bar, etc.
      */
     private void updateColumnHeaderSize(int contentWidth) {
-        // Calculate total height from children's preferred sizes
-        int totalHeight = 0;
-        for (Component child : columnHeaderPanel.getComponents()) {
-            totalHeight += child.getPreferredSize().height;
+        // Guard against re-entry from resize events triggered by setPreferredSize
+        if (isUpdatingColumnHeader) {
+            return;
         }
-        
-        Dimension headerSize = new Dimension(contentWidth, totalHeight);
-        columnHeaderPanel.setPreferredSize(headerSize);
-        columnHeaderPanel.setSize(headerSize);
-        
-        // Resize child components to match width and do proper layout
-        for (Component child : columnHeaderPanel.getComponents()) {
-            Dimension childPref = child.getPreferredSize();
-            child.setSize(contentWidth, childPref.height);
-            child.setPreferredSize(new Dimension(contentWidth, childPref.height));
-            
-            // For panels with their own layout, recursively resize and validate
-            if (child instanceof JPanel childPanel) {
-                for (Component grandChild : childPanel.getComponents()) {
-                    Dimension gcPref = grandChild.getPreferredSize();
-                    grandChild.setSize(contentWidth, gcPref.height);
-                    grandChild.setPreferredSize(new Dimension(contentWidth, gcPref.height));
+        isUpdatingColumnHeader = true;
+        try {
+            int totalHeight = 0;
+            for (Component child : columnHeaderPanel.getComponents()) {
+                if (child.isVisible()) {
+                    totalHeight += child.getPreferredSize().height;
                 }
-                childPanel.doLayout();
             }
+
+            if (contentWidth == lastColumnHeaderWidth && totalHeight == lastColumnHeaderHeight) {
+                return;
+            }
+
+            lastColumnHeaderWidth = contentWidth;
+            lastColumnHeaderHeight = totalHeight;
+
+            Dimension headerSize = new Dimension(contentWidth, totalHeight);
+            if (!headerSize.equals(columnHeaderPanel.getPreferredSize())) {
+                columnHeaderPanel.setPreferredSize(headerSize);
+            }
+            if (!headerSize.equals(columnHeaderPanel.getSize())) {
+                columnHeaderPanel.setSize(headerSize);
+            }
+
+            columnHeaderPanel.revalidate();
+        } finally {
+            isUpdatingColumnHeader = false;
         }
-        columnHeaderPanel.doLayout();
-        columnHeaderPanel.revalidate();
     }
 
     public synchronized void reinitialize() {
@@ -523,7 +556,8 @@ public final class ScoreTopComponent extends TopComponent
             tempoEditorPanel.setData(data);
             meterRegionBar.setData(data);
 
-            timeBar.setData(data);
+            primaryRuler.setData(data);
+            secondaryRuler.setData(data);
             markersBar.setData(data);
             timeFormatSelector.setTimeState(timeState);
 
@@ -690,6 +724,11 @@ public final class ScoreTopComponent extends TopComponent
         markersLabel.setPreferredSize(new Dimension(100, 20));
         markersLabel.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
 
+        // Configure secondary ruler spacer (hidden by default, shown when secondary ruler is visible)
+        secondaryRulerSpacer.setPreferredSize(new Dimension(100, 20));
+        secondaryRulerSpacer.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
+        secondaryRulerSpacer.setVisible(false);
+
         var gbc = new GridBagConstraints();
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.gridx = 0;
@@ -703,6 +742,8 @@ public final class ScoreTopComponent extends TopComponent
         leftHeaderView.add(markersLabel, gbc);
         gbc.gridy = 3;
         leftHeaderView.add(manageButton, gbc);
+        gbc.gridy = 4;
+        leftHeaderView.add(secondaryRulerSpacer, gbc);
 
         leftPanel.add(leftHeaderView, BorderLayout.NORTH);
         leftPanel.add(layerHeaderViewPort, BorderLayout.CENTER);
@@ -718,56 +759,55 @@ public final class ScoreTopComponent extends TopComponent
 
         columnHeaderPanel.setLayout(new BoxLayout(columnHeaderPanel, BoxLayout.Y_AXIS));
         columnHeaderPanel.setBackground(Color.BLACK);
+        columnHeaderPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         tempoEditorPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 100));
+        tempoEditorPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
         columnHeaderPanel.add(tempoEditorPanel);
 
-        // TIME SIG, MARKERS, AND TIME BARS
-        JPanel bottomBarsPanel = new JPanel();
-        bottomBarsPanel.setLayout(new BoxLayout(bottomBarsPanel, BoxLayout.Y_AXIS));
-        bottomBarsPanel.setBackground(Color.BLACK);
-        
         // Time Signature bar
         meterRegionBar.setPreferredSize(new Dimension(100, 20));
         meterRegionBar.setMaximumSize(new Dimension(Integer.MAX_VALUE, 20));
         meterRegionBar.setMinimumSize(new Dimension(1, 20));
-        bottomBarsPanel.add(meterRegionBar);
+        meterRegionBar.setAlignmentX(Component.LEFT_ALIGNMENT);
+        columnHeaderPanel.add(meterRegionBar);
         
         // Markers bar
         markersBar.setPreferredSize(new Dimension(100, 20));
         markersBar.setMaximumSize(new Dimension(Integer.MAX_VALUE, 20));
         markersBar.setMinimumSize(new Dimension(1, 20));
-        bottomBarsPanel.add(markersBar);
+        markersBar.setAlignmentX(Component.LEFT_ALIGNMENT);
+        columnHeaderPanel.add(markersBar);
         
-        // Time bar
-        timeBar.setPreferredSize(new Dimension(100, 20));
-        timeBar.setMaximumSize(new Dimension(Integer.MAX_VALUE, 20));
-        timeBar.setMinimumSize(new Dimension(1, 20));
-        bottomBarsPanel.add(timeBar);
-
-        bottomBarsPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 60));
-        columnHeaderPanel.add(bottomBarsPanel);
+        // Primary ruler
+        primaryRuler.setPreferredSize(new Dimension(100, 20));
+        primaryRuler.setMaximumSize(new Dimension(Integer.MAX_VALUE, 20));
+        primaryRuler.setMinimumSize(new Dimension(1, 20));
+        primaryRuler.setAlignmentX(Component.LEFT_ALIGNMENT);
+        columnHeaderPanel.add(primaryRuler);
+        
+        // Secondary ruler (hidden by default)
+        secondaryRuler.setPreferredSize(new Dimension(100, 20));
+        secondaryRuler.setMaximumSize(new Dimension(Integer.MAX_VALUE, 20));
+        secondaryRuler.setMinimumSize(new Dimension(1, 20));
+        secondaryRuler.setVisible(false);
+        secondaryRuler.setAlignmentX(Component.LEFT_ALIGNMENT);
+        columnHeaderPanel.add(secondaryRuler);
 
         tempoEditorPanel.addComponentListener(new ComponentAdapter() {
             @Override
             public void componentResized(ComponentEvent e) {
                 // When tempo editor expands/collapses, update the column header size
-                int contentWidth = layerPanel.getWidth();
-                if (contentWidth > 0) {
-                    updateColumnHeaderSize(contentWidth);
-                }
+                scheduleColumnHeaderResize();
             }
         });
         
         // Listen for expanded property change to update column header
         tempoEditorPanel.addPropertyChangeListener("expanded", evt -> {
             SwingUtilities.invokeLater(() -> {
-                int contentWidth = layerPanel.getWidth();
-                if (contentWidth > 0) {
-                    updateColumnHeaderSize(contentWidth);
-                    scrollPane.revalidate();
-                    scrollPane.repaint();
-                }
+                scheduleColumnHeaderResize();
+                scrollPane.revalidate();
+                scrollPane.repaint();
             });
         });
 
@@ -818,13 +858,7 @@ public final class ScoreTopComponent extends TopComponent
         topPanel.add(timeFormatSelector);
         topPanel.add(Box.createHorizontalStrut(10));
         
-        // Connect format selector to timeline bar
-        timeFormatSelector.addActionListener((e) -> {
-            TimeDisplayFormat format = timeFormatSelector.getSelectedFormat();
-            if (format != null) {
-                timeBar.setDisplayFormat(format);
-            }
-        });
+        // Note: Primary ruler format is updated via propertyChange() when timeDisplay changes
 
         this.add(timeProperties, BorderLayout.EAST);
 
@@ -874,8 +908,7 @@ public final class ScoreTopComponent extends TopComponent
                 int contentWidth = layerPanel.getWidth();
 
                 // Resize column header panel for proper scrolling
-                updateColumnHeaderSize(contentWidth);
-                columnHeaderPanel.repaint();
+                scheduleColumnHeaderResize();
 
                 scorePanel.setSize(layerPanel.getSize());
                 scorePanel.setPreferredSize(layerPanel.getSize());
@@ -1121,7 +1154,22 @@ public final class ScoreTopComponent extends TopComponent
 //            }
 
         } else if (evt.getSource() == currentTimeState) {
-            if (evt.getPropertyName().equals("pixelSecond")) {
+            String prop = evt.getPropertyName();
+            if (prop.equals("secondaryRulerEnabled")) {
+                boolean enabled = (Boolean) evt.getNewValue();
+                secondaryRuler.setVisible(enabled);
+                secondaryRulerSpacer.setVisible(enabled);
+                scheduleColumnHeaderResize();
+                columnHeaderPanel.revalidate();
+                leftPanel.revalidate();
+                scrollPane.revalidate();
+            } else if (prop.equals("secondaryTimeDisplay")) {
+                TimeDisplayFormat format = TimeDisplayFormat.fromTimeBase((TimeBase) evt.getNewValue());
+                secondaryRuler.setDisplayFormat(format);
+            } else if (prop.equals("timeDisplay")) {
+                TimeDisplayFormat format = TimeDisplayFormat.fromTimeBase((TimeBase) evt.getNewValue());
+                primaryRuler.setDisplayFormat(format);
+            } else if (prop.equals("pixelSecond")) {
                 double pixelSecond = currentTimeState.getPixelSecond();
                 double val = data.getRenderStartTime();
 
@@ -1207,8 +1255,11 @@ public final class ScoreTopComponent extends TopComponent
             tempoControlPanel.setVisible(true);
             meterRegionBar.setTimeState(timeState);
             meterRegionBar.setVisible(true);
-            timeBar.setRootTimeline(true);
-            timeBar.setTimeState(timeState);
+            primaryRuler.setRootTimeline(true);
+            primaryRuler.setTimeState(timeState);
+            secondaryRuler.setRootTimeline(true);
+            secondaryRuler.setTimeState(timeState);
+            syncRulerFormatsFromTimeState(timeState);
             markersBar.setRootTimeline(true);
             markersBar.setTimeState(timeState);
             timeProperties.setTimeState(timeState);
@@ -1282,8 +1333,11 @@ public final class ScoreTopComponent extends TopComponent
 
             TimeState timeState = pObj.getTimeState();
 
-            timeBar.setRootTimeline(false);
-            timeBar.setTimeState(timeState);
+            primaryRuler.setRootTimeline(false);
+            primaryRuler.setTimeState(timeState);
+            secondaryRuler.setRootTimeline(false);
+            secondaryRuler.setTimeState(timeState);
+            syncRulerFormatsFromTimeState(timeState);
             markersBar.setRootTimeline(false);
             markersBar.setTimeState(timeState);
             timeProperties.setTimeState(timeState);
@@ -1416,6 +1470,29 @@ public final class ScoreTopComponent extends TopComponent
 
     public TimeState getTimeState() {
         return this.currentTimeState;
+    }
+    
+    /**
+     * Syncs ruler display formats and visibility from TimeState.
+     */
+    private void syncRulerFormatsFromTimeState(TimeState timeState) {
+        if (timeState == null) return;
+        
+        // Sync primary format
+        TimeDisplayFormat primaryFormat = TimeDisplayFormat.fromTimeBase(
+                timeState.getTimeDisplay());
+        primaryRuler.setDisplayFormat(primaryFormat);
+        
+        // Sync secondary format and visibility
+        TimeDisplayFormat secondaryFormat = TimeDisplayFormat.fromTimeBase(
+                timeState.getSecondaryTimeDisplay());
+        secondaryRuler.setDisplayFormat(secondaryFormat);
+        boolean secondaryEnabled = timeState.isSecondaryRulerEnabled();
+        secondaryRuler.setVisible(secondaryEnabled);
+        secondaryRulerSpacer.setVisible(secondaryEnabled);
+
+        scheduleColumnHeaderResize();
+        leftPanel.revalidate();
     }
 
     public List<LayerGroupPanel> getLayerGroupPanels() {

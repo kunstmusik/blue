@@ -26,9 +26,6 @@ package blue.time;
  * @author Steven Yi
  */
 public enum TimeBase {
-    /** Delegate to project default timebase */
-    PROJECT_DEFAULT,
-    
     /** Classic Blue timebase using global number of Csound beats. Does not take 
      * into account measures.
      */

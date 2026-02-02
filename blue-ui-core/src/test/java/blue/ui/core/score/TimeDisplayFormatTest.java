@@ -21,6 +21,7 @@ package blue.ui.core.score;
 
 import blue.time.MeterMap;
 import blue.time.TempoMap;
+import blue.time.TimeBase;
 import blue.time.TimeContext;
 import org.junit.Before;
 import org.junit.Test;
@@ -68,6 +69,26 @@ public class TimeDisplayFormatTest {
         assertEquals("4", TimeDisplayFormat.BEATS.formatCompact(4.0, null));
     }
 
+    // ========== BBT format tests ==========
+
+    @Test
+    public void testBBTFormat() {
+        // In 4/4 time, beat 0 = bar 1, beat 1, ticks 0
+        String formatted = TimeDisplayFormat.BBT.format(0.0, context);
+        assertTrue("Expected BBT format starting with 1.1, got: " + formatted, 
+                formatted.startsWith("1.1"));
+        // Beat 4 = bar 2, beat 1
+        formatted = TimeDisplayFormat.BBT.format(4.0, context);
+        assertTrue("Expected BBT format starting with 2.1, got: " + formatted, 
+                formatted.startsWith("2.1"));
+    }
+
+    @Test
+    public void testBBTFormatFallsBackToBeatsWithNullContext() {
+        assertEquals("4.00", TimeDisplayFormat.BBT.format(4.0, null));
+        assertEquals("4", TimeDisplayFormat.BBT.formatCompact(4.0, null));
+    }
+
     // ========== BBST format tests ==========
 
     @Test
@@ -93,6 +114,26 @@ public class TimeDisplayFormatTest {
     public void testBBSTFormatFallsBackToBeatsWithNullContext() {
         assertEquals("4.00", TimeDisplayFormat.BBST.format(4.0, null));
         assertEquals("4", TimeDisplayFormat.BBST.formatCompact(4.0, null));
+    }
+
+    // ========== BBF format tests ==========
+
+    @Test
+    public void testBBFFormat() {
+        // In 4/4 time, beat 0 = bar 1, beat 1, fraction 0
+        String formatted = TimeDisplayFormat.BBF.format(0.0, context);
+        assertTrue("Expected BBF format starting with 1.1, got: " + formatted, 
+                formatted.startsWith("1.1"));
+        // Beat 4 = bar 2, beat 1
+        formatted = TimeDisplayFormat.BBF.format(4.0, context);
+        assertTrue("Expected BBF format starting with 2.1, got: " + formatted, 
+                formatted.startsWith("2.1"));
+    }
+
+    @Test
+    public void testBBFFormatFallsBackToBeatsWithNullContext() {
+        assertEquals("4.00", TimeDisplayFormat.BBF.format(4.0, null));
+        assertEquals("4", TimeDisplayFormat.BBF.formatCompact(4.0, null));
     }
 
     // ========== TIME format tests ==========
@@ -136,7 +177,9 @@ public class TimeDisplayFormatTest {
     @Test
     public void testDisplayNames() {
         assertEquals("Beats", TimeDisplayFormat.BEATS.getDisplayName());
+        assertEquals("BBT", TimeDisplayFormat.BBT.getDisplayName());
         assertEquals("BBST", TimeDisplayFormat.BBST.getDisplayName());
+        assertEquals("BBF", TimeDisplayFormat.BBF.getDisplayName());
         assertEquals("Time", TimeDisplayFormat.TIME.getDisplayName());
         assertEquals("SMPTE", TimeDisplayFormat.SMPTE.getDisplayName());
         assertEquals("Samples", TimeDisplayFormat.SAMPLES.getDisplayName());
@@ -145,7 +188,9 @@ public class TimeDisplayFormatTest {
     @Test
     public void testExamples() {
         assertEquals("0.0, 4.0, 8.0", TimeDisplayFormat.BEATS.getExample());
+        assertEquals("1.1.0, 2.1.0", TimeDisplayFormat.BBT.getExample());
         assertEquals("1.1.1.0, 2.1.1.0", TimeDisplayFormat.BBST.getExample());
+        assertEquals("1.1.00, 2.1.50", TimeDisplayFormat.BBF.getExample());
         assertEquals("0:00.000", TimeDisplayFormat.TIME.getExample());
         assertEquals("00:00:00:00", TimeDisplayFormat.SMPTE.getExample());
         assertEquals("0, 44100", TimeDisplayFormat.SAMPLES.getExample());
@@ -157,40 +202,44 @@ public class TimeDisplayFormatTest {
         assertTrue(TimeDisplayFormat.BEATS.getMenuLabel().contains("0.0, 4.0"));
     }
 
-    // ========== TimeState compatibility tests ==========
+    // ========== TimeBase mapping tests ==========
 
     @Test
-    public void testFromTimeStateValue() {
-        // DISPLAY_TIME = 0 maps to TIME
-        assertEquals(TimeDisplayFormat.TIME, TimeDisplayFormat.fromTimeStateValue(0));
-        // DISPLAY_BEATS = 1 maps to BEATS
-        assertEquals(TimeDisplayFormat.BEATS, TimeDisplayFormat.fromTimeStateValue(1));
-        // Unknown values default to BEATS
-        assertEquals(TimeDisplayFormat.BEATS, TimeDisplayFormat.fromTimeStateValue(99));
-    }
-
-    @Test
-    public void testToTimeStateValue() {
-        // TIME and SMPTE map to DISPLAY_TIME = 0
-        assertEquals(0, TimeDisplayFormat.TIME.toTimeStateValue());
-        assertEquals(0, TimeDisplayFormat.SMPTE.toTimeStateValue());
-        
-        // BEATS and BBST map to DISPLAY_BEATS = 1
-        assertEquals(1, TimeDisplayFormat.BEATS.toTimeStateValue());
-        assertEquals(1, TimeDisplayFormat.BBST.toTimeStateValue());
-        assertEquals(1, TimeDisplayFormat.SAMPLES.toTimeStateValue());
+    public void testFromTimeBase() {
+        assertEquals(TimeDisplayFormat.BEATS, TimeDisplayFormat.fromTimeBase(TimeBase.CSOUND_BEATS));
+        assertEquals(TimeDisplayFormat.BBT, TimeDisplayFormat.fromTimeBase(TimeBase.BBT));
+        assertEquals(TimeDisplayFormat.BBST, TimeDisplayFormat.fromTimeBase(TimeBase.BBST));
+        assertEquals(TimeDisplayFormat.BBF, TimeDisplayFormat.fromTimeBase(TimeBase.BBF));
+        assertEquals(TimeDisplayFormat.TIME, TimeDisplayFormat.fromTimeBase(TimeBase.TIME));
+        assertEquals(TimeDisplayFormat.SMPTE, TimeDisplayFormat.fromTimeBase(TimeBase.SMPTE));
+        assertEquals(TimeDisplayFormat.SAMPLES, TimeDisplayFormat.fromTimeBase(TimeBase.FRAME));
+        // null should default to BEATS
+        assertEquals(TimeDisplayFormat.BEATS, TimeDisplayFormat.fromTimeBase(null));
     }
 
     @Test
     public void testAllValuesPresent() {
         TimeDisplayFormat[] values = TimeDisplayFormat.values();
-        assertEquals(5, values.length);
+        assertEquals(7, values.length);
         
         // Verify all expected formats are present
         assertNotNull(TimeDisplayFormat.valueOf("BEATS"));
+        assertNotNull(TimeDisplayFormat.valueOf("BBT"));
         assertNotNull(TimeDisplayFormat.valueOf("BBST"));
+        assertNotNull(TimeDisplayFormat.valueOf("BBF"));
         assertNotNull(TimeDisplayFormat.valueOf("TIME"));
         assertNotNull(TimeDisplayFormat.valueOf("SMPTE"));
         assertNotNull(TimeDisplayFormat.valueOf("SAMPLES"));
+    }
+
+    @Test
+    public void testGetTimeBase() {
+        assertEquals(TimeBase.CSOUND_BEATS, TimeDisplayFormat.BEATS.getTimeBase());
+        assertEquals(TimeBase.BBT, TimeDisplayFormat.BBT.getTimeBase());
+        assertEquals(TimeBase.BBST, TimeDisplayFormat.BBST.getTimeBase());
+        assertEquals(TimeBase.BBF, TimeDisplayFormat.BBF.getTimeBase());
+        assertEquals(TimeBase.TIME, TimeDisplayFormat.TIME.getTimeBase());
+        assertEquals(TimeBase.SMPTE, TimeDisplayFormat.SMPTE.getTimeBase());
+        assertEquals(TimeBase.FRAME, TimeDisplayFormat.SAMPLES.getTimeBase());
     }
 }

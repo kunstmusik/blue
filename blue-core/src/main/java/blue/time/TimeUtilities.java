@@ -106,8 +106,6 @@ public class TimeUtilities {
                 double seconds = fv.toTotalSeconds(context.getSampleRate());
                 yield context.getTempoMap().secondsToBeats(seconds);
             }
-            case PROJECT_DEFAULT -> throw new IllegalArgumentException(
-                "Cannot convert PROJECT_DEFAULT TimeBase - must be resolved to concrete TimeBase first");
         };
     }
     
@@ -122,10 +120,6 @@ public class TimeUtilities {
     public static TimeUnit beatsToTimeUnit(double beats, TimeBase targetTimeBase, TimeContext context) {
         if (context == null) {
             throw new IllegalArgumentException("TimeContext cannot be null");
-        }
-        if (targetTimeBase == TimeBase.PROJECT_DEFAULT) {
-            throw new IllegalArgumentException(
-                "Cannot convert to PROJECT_DEFAULT TimeBase - must specify concrete TimeBase");
         }
         
         return switch (targetTimeBase) {
@@ -156,7 +150,6 @@ public class TimeUtilities {
                 long frameNumber = Math.round(seconds * context.getSampleRate());
                 yield TimeUnit.frames(frameNumber);
             }
-            case PROJECT_DEFAULT -> throw new IllegalStateException("Should not reach here");
         };
     }
     

@@ -19,6 +19,7 @@
  */
 package blue.ui.core.score;
 
+import blue.time.TimeBase;
 import blue.time.TimeContext;
 
 /**
@@ -38,7 +39,7 @@ public enum TimeDisplayFormat {
      * Classic Blue format using Csound beats (e.g., "0.0", "4.0", "8.0").
      * Does not account for measures, only absolute beat position.
      */
-    BEATS("Beats", "0.0, 4.0, 8.0") {
+    BEATS("Beats", "0.0, 4.0, 8.0", TimeBase.CSOUND_BEATS) {
         @Override
         public String format(double beatPosition, TimeContext context) {
             return String.format("%.2f", beatPosition);
@@ -54,10 +55,40 @@ public enum TimeDisplayFormat {
     },
     
     /**
-     * BBST format showing Bar.Beat.Sixteenth.Ticks (e.g., "1.1.1.0", "2.3.2.60").
-     * Requires MeterMap context for proper calculation.
+     * BBT format showing Bar.Beat.Ticks (e.g., "1.1.0", "2.3.120").
+     * Ardour/Qtractor style. Requires MeterMap context for proper calculation.
      */
-    BBST("BBST", "1.1.1.0, 2.1.1.0") {
+    BBT("BBT", "1.1.0, 2.1.0", TimeBase.BBT) {
+        @Override
+        public String format(double beatPosition, TimeContext context) {
+            if (context == null || context.getMeterMap() == null) {
+                return BEATS.format(beatPosition, context);
+            }
+            var meterMap = context.getMeterMap();
+            var bbt = meterMap.beatsToBBT(beatPosition, context.getPPQ());
+            return bbt.toString();
+        }
+        
+        @Override
+        public String formatCompact(double beatPosition, TimeContext context) {
+            if (context == null || context.getMeterMap() == null) {
+                return BEATS.formatCompact(beatPosition, context);
+            }
+            var meterMap = context.getMeterMap();
+            var bbt = meterMap.beatsToBBT(beatPosition, context.getPPQ());
+            // Compact: show bar.beat (omit ticks if 0)
+            if (bbt.getTicks() == 0) {
+                return String.format("%d.%d", bbt.getBar(), bbt.getBeat());
+            }
+            return bbt.toString();
+        }
+    },
+    
+    /**
+     * BBST format showing Bar.Beat.Sixteenth.Ticks (e.g., "1.1.1.0", "2.3.2.60").
+     * Cubase/Reason style. Requires MeterMap context for proper calculation.
+     */
+    BBST("BBST", "1.1.1.0, 2.1.1.0", TimeBase.BBST) {
         @Override
         public String format(double beatPosition, TimeContext context) {
             if (context == null || context.getMeterMap() == null) {
@@ -84,10 +115,40 @@ public enum TimeDisplayFormat {
     },
     
     /**
+     * BBF format showing Bar.Beat.Fraction (e.g., "1.1.00", "2.3.50").
+     * REAPER style. Uses percentage-based fraction (0-99) for sub-beat precision.
+     */
+    BBF("BBF", "1.1.00, 2.1.50", TimeBase.BBF) {
+        @Override
+        public String format(double beatPosition, TimeContext context) {
+            if (context == null || context.getMeterMap() == null) {
+                return BEATS.format(beatPosition, context);
+            }
+            var meterMap = context.getMeterMap();
+            var bbf = meterMap.beatsToBBF(beatPosition);
+            return bbf.toString();
+        }
+        
+        @Override
+        public String formatCompact(double beatPosition, TimeContext context) {
+            if (context == null || context.getMeterMap() == null) {
+                return BEATS.formatCompact(beatPosition, context);
+            }
+            var meterMap = context.getMeterMap();
+            var bbf = meterMap.beatsToBBF(beatPosition);
+            // Compact: show bar.beat (omit fraction if 0)
+            if (bbf.getFraction() == 0) {
+                return String.format("%d.%d", bbf.getBar(), bbf.getBeat());
+            }
+            return bbf.toString();
+        }
+    },
+    
+    /**
      * Clock time format in hours:minutes:seconds.milliseconds (e.g., "0:00.000").
      * Requires TempoMap context for conversion from beats to time.
      */
-    TIME("Time", "0:00.000") {
+    TIME("Time", "0:00.000", TimeBase.TIME) {
         @Override
         public String format(double beatPosition, TimeContext context) {
             double seconds = beatsToSeconds(beatPosition, context);
@@ -132,7 +193,7 @@ public enum TimeDisplayFormat {
      * SMPTE timecode format (e.g., "00:00:00:00" for HH:MM:SS:FF).
      * Standard frame rates: 24, 25, 29.97, 30 fps.
      */
-    SMPTE("SMPTE", "00:00:00:00") {
+    SMPTE("SMPTE", "00:00:00:00", TimeBase.SMPTE) {
         private static final double DEFAULT_FRAME_RATE = 30.0;
         
         @Override
@@ -168,7 +229,7 @@ public enum TimeDisplayFormat {
      * Audio sample frame number format (e.g., "0", "44100", "88200").
      * Based on project sample rate (default 44100 Hz).
      */
-    SAMPLES("Samples", "0, 44100") {
+    SAMPLES("Samples", "0, 44100", TimeBase.FRAME) {
         private static final int DEFAULT_SAMPLE_RATE = 44100;
         
         @Override
@@ -201,10 +262,12 @@ public enum TimeDisplayFormat {
     
     private final String displayName;
     private final String example;
+    private final TimeBase timeBase;
     
-    TimeDisplayFormat(String displayName, String example) {
+    TimeDisplayFormat(String displayName, String example, TimeBase timeBase) {
         this.displayName = displayName;
         this.example = example;
+        this.timeBase = timeBase;
     }
     
     /**
@@ -286,30 +349,30 @@ public enum TimeDisplayFormat {
     }
     
     /**
-     * Maps a legacy TimeState display constant to a TimeDisplayFormat.
+     * Returns the TimeBase associated with this display format.
      * 
-     * @param timeStateValue the TimeState.DISPLAY_* constant
-     * @return the corresponding TimeDisplayFormat
+     * @return the corresponding TimeBase
      */
-    public static TimeDisplayFormat fromTimeStateValue(int timeStateValue) {
-        return switch (timeStateValue) {
-            case 0 -> TIME;  // DISPLAY_TIME
-            case 1 -> BEATS; // DISPLAY_BEATS
-            default -> BEATS;
-        };
+    public TimeBase getTimeBase() {
+        return timeBase;
     }
     
     /**
-     * Maps this format to a legacy TimeState display constant.
-     * Note: Not all formats have legacy equivalents.
+     * Finds the TimeDisplayFormat for a given TimeBase.
      * 
-     * @return the TimeState.DISPLAY_* constant, or -1 if no equivalent
+     * @param timeBase the TimeBase to find a format for
+     * @return the corresponding TimeDisplayFormat, or BEATS if not found
      */
-    public int toTimeStateValue() {
-        return switch (this) {
-            case TIME, SMPTE -> 0;     // Maps to DISPLAY_TIME
-            case BEATS, BBST, SAMPLES -> 1; // Maps to DISPLAY_BEATS
-        };
+    public static TimeDisplayFormat fromTimeBase(TimeBase timeBase) {
+        if (timeBase == null) {
+            return BEATS;
+        }
+        for (TimeDisplayFormat format : values()) {
+            if (format.timeBase == timeBase) {
+                return format;
+            }
+        }
+        return BEATS;
     }
     
     @Override

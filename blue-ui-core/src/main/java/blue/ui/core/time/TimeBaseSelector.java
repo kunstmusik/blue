@@ -38,44 +38,10 @@ public class TimeBaseSelector extends JComboBox<TimeBase> {
      * Creates a new TimeBaseSelector with all available TimeBases.
      */
     public TimeBaseSelector() {
-        this(true);
-    }
-    
-    /**
-     * Creates a new TimeBaseSelector.
-     * 
-     * @param includeProjectDefault if true, includes PROJECT_DEFAULT option;
-     *                              if false, only shows concrete TimeBases
-     */
-    public TimeBaseSelector(boolean includeProjectDefault) {
-        super(getTimeBases(includeProjectDefault));
+        super(TimeBase.values());
         setRenderer(new TimeBaseRenderer());
         // Prevent overly wide preferred/min sizes driven by long display strings
-        // (e.g., previously including full formatting hints in the label).
         setPrototypeDisplayValue(TimeBase.BBST);
-    }
-    
-    /**
-     * Gets the array of TimeBases to display.
-     * 
-     * @param includeProjectDefault whether to include PROJECT_DEFAULT
-     * @return array of TimeBases
-     */
-    private static TimeBase[] getTimeBases(boolean includeProjectDefault) {
-        if (includeProjectDefault) {
-            return TimeBase.values();
-        } else {
-            // Exclude PROJECT_DEFAULT - only show concrete time bases
-            return new TimeBase[] {
-                TimeBase.CSOUND_BEATS,
-                TimeBase.BBT,
-                TimeBase.BBST,
-                TimeBase.BBF,
-                TimeBase.TIME,
-                TimeBase.SMPTE,
-                TimeBase.FRAME
-            };
-        }
     }
     
     /**
@@ -124,7 +90,6 @@ public class TimeBaseSelector extends JComboBox<TimeBase> {
          */
         private String getDisplayName(TimeBase timeBase) {
             return switch (timeBase) {
-                case PROJECT_DEFAULT -> "Project Default";
                 case CSOUND_BEATS -> "Csound Beats";
                 case BBT -> "BBT (Bar.Beat.Ticks)";
                 case BBST -> "BBST (Bar.Beat.16th.Ticks)";

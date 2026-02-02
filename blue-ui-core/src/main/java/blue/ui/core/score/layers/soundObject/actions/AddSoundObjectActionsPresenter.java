@@ -24,9 +24,11 @@ import blue.SoundLayer;
 import blue.score.TimeState;
 import blue.soundObject.PolyObject;
 import blue.soundObject.SoundObject;
-import blue.time.TimeUnit;
+import blue.time.TimeBase;
+import blue.time.TimeContext;
+import blue.time.TimeContextManager;
+import blue.time.TimeUtilities;
 import blue.ui.core.score.ScoreController;
-import blue.ui.core.score.ScorePath;
 import blue.ui.core.score.ScoreTopComponent;
 import blue.ui.core.score.layers.soundObject.ScoreTimeCanvas;
 import blue.ui.core.score.undo.AddScoreObjectEdit;
@@ -108,7 +110,11 @@ public final class AddSoundObjectActionsPresenter extends AbstractAction impleme
                     start = ScoreUtilities.getSnapValueStart(start,
                             timeState.getSnapValue());
                 }
-                sObj.setStartTime(TimeUnit.beats(start));
+                
+                // Use the primary ruler's TimeBase for the default TimeUnit type
+                TimeBase timeBase = timeState.getTimeDisplay();
+                TimeContext context = TimeContextManager.getContext();
+                sObj.setStartTime(TimeUtilities.beatsToTimeUnit(start, timeBase, context));
 
                 sLayer.add(sObj);
                 BlueUndoManager.setUndoManager("score");

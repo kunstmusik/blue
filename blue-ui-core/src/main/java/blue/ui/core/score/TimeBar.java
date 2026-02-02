@@ -79,6 +79,8 @@ public final class TimeBar extends JPanel implements
     private boolean rootTimeline = true;
     
     private TimeDisplayFormat displayFormat = TimeDisplayFormat.BEATS;
+    
+    private static final java.text.DecimalFormat BEAT_FORMAT = new java.text.DecimalFormat();
 
     MemoizedFunction<Double, Double> getMajorTimeUnit = new MemoizedFunction<>(
             this::calcMajorTimeUnit);
@@ -274,7 +276,7 @@ public final class TimeBar extends JPanel implements
         switch (displayFormat) {
             case TIME, SMPTE -> drawTimeBasedRuler(g, bounds, h, pixelTime, startTime, endTime, duration, context);
             case SAMPLES -> drawSamplesRuler(g, bounds, h, pixelTime, startTime, endTime, duration, context);
-            case BBST -> drawMeasureBeatsRuler(g, bounds, h, pixelTime, startTime, endTime, duration, context);
+            case BBT, BBST, BBF -> drawMeasureBeatsRuler(g, bounds, h, pixelTime, startTime, endTime, duration, context);
             default -> drawBeatsRuler(g, bounds, h, pixelTime, startTime, endTime, duration);
         }
 
@@ -346,19 +348,22 @@ public final class TimeBar extends JPanel implements
     }
     
     /**
-     * Draws ruler using beats format (0, 1, 2, 3...)
+     * Draws ruler using Csound beats format (0, 1, 2, 3...)
+     * Csound beats are 0-indexed.
      */
     private void drawBeatsRuler(Graphics g, Rectangle bounds, int h, 
             double pixelTime, double startTime, double endTime, double duration) {
         double majorBeatUnit = getMajorBeatUnit.invoke(pixelTime);
-        var startVal = ((int) (startTime / majorBeatUnit) * majorBeatUnit);
-        var df = new java.text.DecimalFormat();
+        var startVal = Math.floor(startTime / majorBeatUnit) * majorBeatUnit;
 
         for (double i = startVal; i < endTime; i += majorBeatUnit) {
-            String txt = df.format(i);
-            int x = (int) (bounds.width * (i - startTime) / duration) + bounds.x;
-            g.drawLine(x, 10, x, h);
-            g.drawString(txt, x + 2, 16);
+            // Calculate x position directly: beat position * pixels per beat
+            int x = (int) (i * pixelTime);
+            if (x >= bounds.x && x <= bounds.x + bounds.width) {
+                String txt = BEAT_FORMAT.format(i);
+                g.drawLine(x, 10, x, h);
+                g.drawString(txt, x + 2, 16);
+            }
         }
     }
     
@@ -496,7 +501,8 @@ public final class TimeBar extends JPanel implements
             
             if (measureStartBeat >= 0) {
                 // Draw measure label with full-height line
-                int x = (int) ((measureStartBeat - startTime) * pixelTime) + bounds.x;
+                // Calculate x position directly: beat position * pixels per beat
+                int x = (int) (measureStartBeat * pixelTime);
                 if (x >= bounds.x - 50 && x <= bounds.x + bounds.width + 50) {
                     String txt = String.valueOf(currentMeasure);
                     g.setColor(normalColor);
@@ -514,7 +520,8 @@ public final class TimeBar extends JPanel implements
                         double beatPos = measureStartBeat + (beat - 1) * beatDuration;
                         if (beatPos > endTime) break;
                         
-                        int beatX = (int) ((beatPos - startTime) * pixelTime) + bounds.x;
+                        // Calculate x position directly: beat position * pixels per beat
+                        int beatX = (int) (beatPos * pixelTime);
                         if (beatX >= bounds.x - 50 && beatX <= bounds.x + bounds.width + 50) {
                             // Draw partial line for beats (not full height)
                             g.setColor(normalColor);

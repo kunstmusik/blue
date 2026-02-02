@@ -199,7 +199,6 @@ public class TimeUnitTextField extends JTextField {
             case TIME -> "Format: H:MM:SS.mmm (e.g., 0:00:00.000)";
             case SMPTE -> "Format: HH:MM:SS:FF (e.g., 00:00:00:00)";
             case FRAME -> "Format: sample frames (e.g., 44100)";
-            case PROJECT_DEFAULT -> "Format: depends on project settings";
         };
     }
 
@@ -217,7 +216,6 @@ public class TimeUnitTextField extends JTextField {
             case TIME -> formatTime(timeUnit);
             case SMPTE -> formatSMPTE(timeUnit);
             case FRAME -> formatFrames(timeUnit);
-            case PROJECT_DEFAULT -> formatBeats(timeUnit); // Fallback
         };
     }
 
@@ -305,7 +303,6 @@ public class TimeUnitTextField extends JTextField {
             case TIME -> parseTime(trimmed);
             case SMPTE -> parseSMPTE(trimmed);
             case FRAME -> parseFrames(trimmed);
-            case PROJECT_DEFAULT -> parseBeats(trimmed); // Fallback
         };
     }
 

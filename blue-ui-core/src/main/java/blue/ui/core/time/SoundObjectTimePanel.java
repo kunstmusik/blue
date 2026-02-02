@@ -55,7 +55,7 @@ public class SoundObjectTimePanel extends JPanel {
         setLayout(new BorderLayout());
 
         // TimeBase selector in NORTH
-        timeBaseSelector = new TimeBaseSelector(false);
+        timeBaseSelector = new TimeBaseSelector();
         add(timeBaseSelector, BorderLayout.NORTH);
 
         // Unified text editor for all formats

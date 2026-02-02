@@ -83,14 +83,6 @@ public class TempoEditor extends JComponent implements PropertyChangeListener {
         this.timeState = timeState;
     }
 
-    /**
-     * @deprecated Use TempoEditorPanel.setExpanded() instead
-     */
-    @Deprecated
-    public void setTempoVisible(boolean tempoVisible) {
-        // Height is now managed by TempoEditorPanel
-    }
-
     @Override
     public void paintComponent(Graphics g) {
         super.paintComponent(g);

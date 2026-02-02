@@ -19,6 +19,7 @@
  */
 package blue.score;
 
+import blue.time.TimeBase;
 import blue.utility.XMLUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
@@ -38,14 +39,24 @@ import java.util.Vector;
  */
 public class TimeState {
 
+    // Legacy constants - kept for reference but no longer used for storage
+    @Deprecated
     public static final int DISPLAY_TIME = 0;
+    @Deprecated
     public static final int DISPLAY_BEATS = 1;
+    
+    // Format version for migration support
+    // Version 1 (or no attribute): Legacy format (timeDisplay: 0=TIME, 1=BEATS)
+    // Version 2: Uses TimeBase enum names for storage
+    private static final int CURRENT_FORMAT_VERSION = 2;
 
     private transient Vector<PropertyChangeListener> listeners = null;
 
     private boolean snapEnabled = false;
     private double snapValue = 1.0f;
-    private int timeDisplay = DISPLAY_TIME;
+    private TimeBase timeDisplay = TimeBase.CSOUND_BEATS;
+    private TimeBase secondaryTimeDisplay = TimeBase.TIME;
+    private boolean secondaryRulerEnabled = false;
 
     private int zoomIterations = 0;
 
@@ -56,6 +67,8 @@ public class TimeState {
         snapEnabled = timeState.snapEnabled;
         snapValue = timeState.snapValue;
         timeDisplay = timeState.timeDisplay;
+        secondaryTimeDisplay = timeState.secondaryTimeDisplay;
+        secondaryRulerEnabled = timeState.secondaryRulerEnabled;
         zoomIterations = timeState.zoomIterations;
     }
 
@@ -109,15 +122,47 @@ public class TimeState {
         firePropertyChangeEvent(pce);
     }
 
-    public int getTimeDisplay() {
+    public TimeBase getTimeDisplay() {
         return timeDisplay;
     }
 
-    public void setTimeDisplay(int timeDisplay) {
+    public void setTimeDisplay(TimeBase timeDisplay) {
+        if (timeDisplay == null) {
+            throw new IllegalArgumentException("timeDisplay cannot be null");
+        }
         PropertyChangeEvent pce = new PropertyChangeEvent(this, "timeDisplay",
                 this.timeDisplay, timeDisplay);
 
         this.timeDisplay = timeDisplay;
+
+        firePropertyChangeEvent(pce);
+    }
+
+    public TimeBase getSecondaryTimeDisplay() {
+        return secondaryTimeDisplay;
+    }
+
+    public void setSecondaryTimeDisplay(TimeBase secondaryTimeDisplay) {
+        if (secondaryTimeDisplay == null) {
+            throw new IllegalArgumentException("secondaryTimeDisplay cannot be null");
+        }
+        PropertyChangeEvent pce = new PropertyChangeEvent(this, "secondaryTimeDisplay",
+                this.secondaryTimeDisplay, secondaryTimeDisplay);
+
+        this.secondaryTimeDisplay = secondaryTimeDisplay;
+
+        firePropertyChangeEvent(pce);
+    }
+
+    public boolean isSecondaryRulerEnabled() {
+        return secondaryRulerEnabled;
+    }
+
+    public void setSecondaryRulerEnabled(boolean secondaryRulerEnabled) {
+        PropertyChangeEvent pce = new PropertyChangeEvent(this, "secondaryRulerEnabled",
+                this.secondaryRulerEnabled, secondaryRulerEnabled);
+
+        this.secondaryRulerEnabled = secondaryRulerEnabled;
 
         firePropertyChangeEvent(pce);
     }
@@ -167,6 +212,9 @@ public class TimeState {
 
         Elements nodes = data.getElements();
 
+        String versionStr = data.getAttributeValue("version");
+        int version = (versionStr == null) ? 1 : Integer.parseInt(versionStr);
+        
         while (nodes.hasMoreElements()) {
             Element e = nodes.next();
 
@@ -184,22 +232,74 @@ public class TimeState {
                 case "snapValue" ->
                     timeState.snapValue = Double.parseDouble(nodeText);
                 case "timeDisplay" ->
-                    timeState.timeDisplay = Integer.parseInt(nodeText);
+                    timeState.timeDisplay = parseTimeBase(nodeText, TimeBase.CSOUND_BEATS);
+                case "secondaryTimeDisplay" ->
+                    timeState.secondaryTimeDisplay = parseTimeBase(nodeText, TimeBase.TIME);
+                case "secondaryRulerEnabled" ->
+                    timeState.secondaryRulerEnabled = Boolean.parseBoolean(nodeText);
             }
+        }
+        
+        // Migrate legacy format values (version 1 or no version attribute)
+        if (version < 2) {
+            // Secondary ruler did not exist in legacy format
+            timeState.secondaryRulerEnabled = false;
         }
 
         return timeState;
     }
+    
+    /**
+     * Parses a TimeBase from XML text. Handles both enum names (v2+) and legacy int values (v1).
+     * Legacy: 0=TIME, 1=BEATS
+     */
+    private static TimeBase parseTimeBase(String text, TimeBase defaultValue) {
+        if (text == null || text.isEmpty()) {
+            return defaultValue;
+        }
+        // Try parsing as enum name first (v2 format)
+        try {
+            return TimeBase.valueOf(text);
+        } catch (IllegalArgumentException e) {
+            // Fall back to legacy int parsing
+            try {
+                int legacyValue = Integer.parseInt(text);
+                return migrateLegacyDisplayValue(legacyValue);
+            } catch (NumberFormatException nfe) {
+                return defaultValue;
+            }
+        }
+    }
+    
+    /**
+     * Converts a legacy display int value to TimeBase.
+     * Legacy: 0=DISPLAY_TIME, 1=DISPLAY_BEATS
+     */
+    private static TimeBase migrateLegacyDisplayValue(int legacyValue) {
+        return switch (legacyValue) {
+            case 0 -> TimeBase.TIME;         // Legacy DISPLAY_TIME
+            case 1 -> TimeBase.CSOUND_BEATS; // Legacy DISPLAY_BEATS
+            default -> TimeBase.CSOUND_BEATS;
+        };
+    }
 
     public Element saveAsXML() {
         Element retVal = new Element("timeState");
+        retVal.setAttribute("version", Integer.toString(CURRENT_FORMAT_VERSION));
 
         retVal.addElement(XMLUtilities.writeInt("zoomIterations",
                 this.zoomIterations));
         retVal.addElement(XMLUtilities.writeBoolean("snapEnabled",
                 this.snapEnabled));
         retVal.addElement(XMLUtilities.writeDouble("snapValue", this.snapValue));
-        retVal.addElement(XMLUtilities.writeInt("timeDisplay", this.timeDisplay));
+        Element timeDisplayElem = new Element("timeDisplay");
+        timeDisplayElem.setText(this.timeDisplay.name());
+        retVal.addElement(timeDisplayElem);
+        Element secondaryTimeDisplayElem = new Element("secondaryTimeDisplay");
+        secondaryTimeDisplayElem.setText(this.secondaryTimeDisplay.name());
+        retVal.addElement(secondaryTimeDisplayElem);
+        retVal.addElement(XMLUtilities.writeBoolean("secondaryRulerEnabled",
+                this.secondaryRulerEnabled));
 
         return retVal;
     }

@@ -119,11 +119,6 @@ public class TimeUtilitiesTest {
         assertEquals(44100, ((TimeUnit.FrameValue) result).getFrameNumber());
     }
     
-    @Test(expected = IllegalArgumentException.class)
-    public void testBeatsToTimeUnitProjectDefault() {
-        TimeUtilities.beatsToTimeUnit(1.0, TimeBase.PROJECT_DEFAULT, context);
-    }
-    
     // ========== convertTimeUnit Tests ==========
     
     @Test
