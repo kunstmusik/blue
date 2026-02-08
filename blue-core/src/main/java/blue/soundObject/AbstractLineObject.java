@@ -13,7 +13,7 @@ import blue.components.lines.LinePoint;
 import blue.noteProcessor.NoteProcessorChain;
 import blue.orchestra.GenericInstrument;
 import blue.time.TimeContext;
-import blue.time.TimeUnit;
+import blue.time.TimeDuration;
 import blue.utility.NumberUtilities;
 import blue.utility.ScoreUtilities;
 import electric.xml.Element;
@@ -222,7 +222,7 @@ public abstract class AbstractLineObject extends AbstractSoundObject {
     /* GENERIC SOUND OBJECT METHODS */
 
     @Override
-    public TimeUnit getObjectiveDuration(TimeContext context) {
+    public TimeDuration getObjectiveDuration(TimeContext context) {
         return getSubjectiveDuration();
     }
 

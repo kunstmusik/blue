@@ -20,6 +20,7 @@
 package blue.soundObject;
 
 import blue.noteProcessor.NoteProcessorChain;
+import blue.time.TimeDuration;
 import blue.time.TimeUnit;
 import electric.xml.Element;
 import java.awt.Color;
@@ -35,9 +36,9 @@ public class SoundObjectUtilities {
         Element retVal = new Element("soundObject");
         retVal.setAttribute("type", sObj.getClass().getName());
 
-        // Save as TimeUnit (new format) - directly rename to save space
+        // Save start time as TimeUnit and duration as TimeDuration
         retVal.addElement(sObj.getStartTime().saveAsXML().setName("startTimeUnit"));
-        retVal.addElement(sObj.getSubjectiveDuration().saveAsXML().setName("subjectiveDurationUnit"));
+        retVal.addElement(sObj.getSubjectiveDuration().saveAsXML().setName("subjectiveDurationTD"));
         
         retVal.addElement("name").setText(sObj.getName());
 
@@ -79,15 +80,26 @@ public class SoundObjectUtilities {
         }
         
         // Load duration
-        if (durationUnitElement != null) {
-            // New format: TimeUnit (element is directly the timeUnit)
-            sObj.setSubjectiveDuration(TimeUnit.loadFromXML(durationUnitElement));
+        Element durationTDElement = data.getElement("subjectiveDurationTD");
+        if (durationTDElement != null) {
+            // New format: TimeDuration
+            sObj.setSubjectiveDuration(TimeDuration.loadFromXML(durationTDElement));
+        } else if (durationUnitElement != null) {
+            // Legacy format: TimeUnit (migrate to TimeDuration via beats)
+            TimeUnit legacyDur = TimeUnit.loadFromXML(durationUnitElement);
+            if (legacyDur instanceof TimeUnit.BeatTime bt) {
+                sObj.setSubjectiveDuration(TimeDuration.beats(bt.getCsoundBeats()));
+            } else {
+                // For non-BeatTime legacy durations, store as beats using a default context
+                // This is a best-effort migration - precise conversion requires TimeContext
+                sObj.setSubjectiveDuration(TimeDuration.beats(4.0));
+            }
         } else if (data.getElement("subjectiveDuration") != null) {
-            // Old format: double (migrate to BeatTime)
+            // Old format: double (migrate to DurationBeats)
             double duration = Double.parseDouble(data.getTextString("subjectiveDuration"));
-            sObj.setSubjectiveDuration(TimeUnit.beats(duration));
+            sObj.setSubjectiveDuration(TimeDuration.beats(duration));
         } else {
-            throw new Exception("Missing both subjectiveDurationUnit and subjectiveDuration elements");
+            throw new Exception("Missing subjectiveDurationTD, subjectiveDurationUnit, and subjectiveDuration elements");
         }
 
         String name = data.getTextString("name");

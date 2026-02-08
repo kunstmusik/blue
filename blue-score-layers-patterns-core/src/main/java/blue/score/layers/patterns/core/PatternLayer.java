@@ -29,6 +29,7 @@ import blue.soundObject.SoundObject;
 import blue.soundObject.SoundObjectException;
 import blue.soundObject.TimeBehavior;
 import blue.time.TimeContext;
+import blue.time.TimeDuration;
 import blue.time.TimeUnit;
 import blue.utility.ObjectUtilities;
 import blue.utility.ScoreUtilities;
@@ -58,7 +59,7 @@ public class PatternLayer implements Layer {
     public PatternLayer() {
         soundObject = new GenericScore();
         soundObject.setStartTime(TimeUnit.beats(0));
-        soundObject.setSubjectiveDuration(TimeUnit.beats(4.0f));
+        soundObject.setSubjectiveDuration(TimeDuration.beats(4.0f));
         soundObject.setTimeBehavior(TimeBehavior.NONE);
         patternData = new PatternData();
     }

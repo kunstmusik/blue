@@ -21,6 +21,7 @@ package blue.score;
 
 import blue.DeepCopyable;
 import blue.time.TimeContext;
+import blue.time.TimeDuration;
 import blue.time.TimeUnit;
 import java.awt.Color;
 
@@ -59,26 +60,27 @@ public interface ScoreObject extends DeepCopyable<ScoreObject> {
     void setStartTime(TimeUnit startTime);
     
     /**
-     * Gets the subjective duration of the ScoreObject as a TimeUnit.
+     * Gets the subjective duration of the ScoreObject as a TimeDuration.
      * 
      * The subjective duration of the ScoreObject is the amount of time a
      * ScoreObject is assigned to last, regardless of its contents.
-     * The TimeUnit type determines how the duration is represented.
+     * The TimeDuration type determines how the duration is represented
+     * (0-based bars/beats for measure formats).
      * 
-     * @return the subjective duration as a TimeUnit
+     * @return the subjective duration as a TimeDuration
      */
-    TimeUnit getSubjectiveDuration();
+    TimeDuration getSubjectiveDuration();
 
     /**
-     * Sets the subjective duration of the ScoreObject using a TimeUnit.
+     * Sets the subjective duration of the ScoreObject using a TimeDuration.
      * 
      * The subjective duration of the ScoreObject is the amount of time a
      * ScoreObject is assigned to last, regardless of its contents.
-     * The TimeUnit's type determines how the duration is stored and interpreted.
+     * The TimeDuration's type determines how the duration is stored and interpreted.
      * 
-     * @param duration the subjective duration as a TimeUnit
+     * @param duration the subjective duration as a TimeDuration
      */
-    void setSubjectiveDuration(TimeUnit duration);
+    void setSubjectiveDuration(TimeDuration duration);
 
 //    boolean isLayerTransferrable();
     // maybe use interface of Resizable?

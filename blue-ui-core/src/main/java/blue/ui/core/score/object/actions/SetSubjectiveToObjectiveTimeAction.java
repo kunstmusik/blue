@@ -24,7 +24,7 @@ import blue.score.ScoreObject;
 import blue.soundObject.SoundObject;
 import blue.time.TimeContext;
 import blue.time.TimeContextManager;
-import blue.time.TimeUnit;
+import blue.time.TimeDuration;
 import blue.ui.core.score.undo.DurationScoreObjectEdit;
 import blue.undo.BlueUndoManager;
 import java.awt.event.ActionEvent;
@@ -74,7 +74,7 @@ public final class SetSubjectiveToObjectiveTimeAction extends AbstractAction
             DurationScoreObjectEdit top = null;
             for (SoundObject soundObject : soundObjects) {
 
-                TimeUnit objDuration = soundObject.getObjectiveDuration(context);
+                TimeDuration objDuration = soundObject.getObjectiveDuration(context);
                 if (objDuration.toBeats(context) <= 0) {
                     JOptionPane.showMessageDialog(
                             null,
@@ -85,7 +85,7 @@ public final class SetSubjectiveToObjectiveTimeAction extends AbstractAction
                             JOptionPane.ERROR_MESSAGE);
                     return;
                 }
-                TimeUnit oldTime = soundObject.getSubjectiveDuration();
+                TimeDuration oldTime = soundObject.getSubjectiveDuration();
 
                 if (oldTime.toBeats(context) != objDuration.toBeats(context)) {
                     soundObject.setSubjectiveDuration(objDuration);

@@ -24,7 +24,11 @@ import blue.score.TimeState;
 import blue.score.layers.Layer;
 import blue.score.layers.ScoreObjectLayer;
 import blue.soundObject.SoundObject;
-import blue.time.TimeUnit;
+import blue.time.TimeBase;
+import blue.time.TimeContext;
+import blue.time.TimeContextManager;
+import blue.time.TimeUnitMath;
+import blue.time.TimeUtilities;
 import blue.ui.core.score.ScorePath;
 import blue.ui.core.score.layers.LayerGroupPanel;
 import blue.ui.core.score.layers.soundObject.ScoreTimeCanvas;
@@ -112,7 +116,13 @@ public final class ImportSoundObjectAction extends AbstractAction
                     }
 
                     double startTime = start / timeState.getPixelSecond();
-                    tempSobj.setStartTime(TimeUnit.beats(startTime));
+
+                    // Use the primary ruler's TimeBase
+                    TimeBase timeBase = timeState.getTimeDisplay();
+                    TimeContext context = TimeContextManager.getContext();
+                    tempSobj.setStartTime(TimeUtilities.beatsToTimeUnit(startTime, timeBase, context));
+                    tempSobj.setSubjectiveDuration(TimeUnitMath.beatsToDuration(
+                            tempSobj.getSubjectiveDuration().toBeats(context), timeBase, context));
 
                     ((SoundLayer) layer).add(tempSobj);
 

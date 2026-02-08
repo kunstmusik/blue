@@ -27,6 +27,8 @@ import blue.soundObject.SoundObject;
 import blue.time.TimeBase;
 import blue.time.TimeContext;
 import blue.time.TimeContextManager;
+import blue.time.TimeUnit;
+import blue.time.TimeUnitMath;
 import blue.time.TimeUtilities;
 import blue.ui.core.score.ScoreObjectCopy;
 import blue.utility.FileUtilities;
@@ -174,7 +176,7 @@ public class ScoreTimelineDropTargetListener implements DropTargetListener {
                 TimeBase timeBase = timeState.getTimeDisplay();
                 TimeContext context = TimeContextManager.getContext();
                 af.setStartTime(TimeUtilities.beatsToTimeUnit(startTime, timeBase, context));
-                af.setSubjectiveDuration(TimeUtilities.beatsToTimeUnit(dur, timeBase, context));
+                af.setSubjectiveDuration(TimeUnitMath.beatsToDuration(dur, timeBase, context));
 
                 pObj.addSoundObject(index, af);
 
@@ -241,7 +243,7 @@ public class ScoreTimelineDropTargetListener implements DropTargetListener {
                 TimeBase timeBase = timeState.getTimeDisplay();
                 TimeContext context = TimeContextManager.getContext();
                 af.setStartTime(TimeUtilities.beatsToTimeUnit(startTime, timeBase, context));
-                af.setSubjectiveDuration(TimeUtilities.beatsToTimeUnit(dur, timeBase, context));
+                af.setSubjectiveDuration(TimeUnitMath.beatsToDuration(dur, timeBase, context));
 
                 pObj.addSoundObject(index, af);
 

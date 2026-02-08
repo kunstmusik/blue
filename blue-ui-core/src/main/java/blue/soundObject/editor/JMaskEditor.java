@@ -32,7 +32,7 @@ import blue.soundObject.jmask.Field;
 import blue.soundObject.jmask.Parameter;
 import blue.time.TimeContext;
 import blue.time.TimeContextManager;
-import blue.time.TimeUnit;
+import blue.time.TimeDuration;
 import blue.ui.components.IconFactory;
 import blue.utility.GUI;
 import java.awt.BorderLayout;
@@ -191,7 +191,7 @@ public class JMaskEditor extends ScoreObjectEditor implements ActionListener {
         JMaskEditor editor = new JMaskEditor();
 
         JMask jmask = new JMask();
-        jmask.setSubjectiveDuration(TimeUnit.beats(5.0));
+        jmask.setSubjectiveDuration(TimeDuration.beats(5.0));
 
         editor.editScoreObject(jmask);
         GUI.showComponentAsStandalone(editor, "JMask Editor", true);

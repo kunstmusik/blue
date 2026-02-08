@@ -28,7 +28,9 @@ import blue.score.ScoreObjectListener;
 import blue.soundObject.TimeBehavior;
 import blue.time.TimeContext;
 import blue.time.TimeContextManager;
+import blue.time.TimeDuration;
 import blue.time.TimeUnit;
+import blue.ui.core.score.TimeDisplayFormat;
 import blue.ui.core.score.NoteProcessorChainEditor;
 import blue.ui.core.score.layers.SoundObjectProvider;
 import blue.ui.core.score.undo.DurationScoreObjectEdit;
@@ -139,6 +141,8 @@ public final class SoundObjectPropertiesTopComponent extends TopComponent implem
                 updateSubjectiveDuration();
             }
         });
+
+        durationPanel.setDurationMode(true);
     }
 
     private void setScoreObject(ScoreObject scoreObj) {
@@ -215,7 +219,7 @@ public final class SoundObjectPropertiesTopComponent extends TopComponent implem
         if (sObj != null) {
             startTimePanel.setTimeUnit(sObj.getStartTime());
             nameText.setText(sObj.getName());
-            durationPanel.setTimeUnit(sObj.getSubjectiveDuration());
+            durationPanel.setTimeDuration(sObj.getSubjectiveDuration());
 
             if (sObj instanceof SoundObject soundObject) {
                 double repeatPoint = soundObject.getRepeatPoint();
@@ -231,7 +235,8 @@ public final class SoundObjectPropertiesTopComponent extends TopComponent implem
         double startBeats = sObj.getStartTime().toBeats(context);
         double durationBeats = sObj.getSubjectiveDuration().toBeats(context);
         double endTime = startBeats + durationBeats;
-        endTimeText.setText(Double.toString(endTime));
+        TimeDisplayFormat format = TimeDisplayFormat.fromTimeBase(sObj.getStartTime().getTimeBase());
+        endTimeText.setText(format.format(endTime, context));
     }
 
     protected void updateName() {
@@ -258,15 +263,15 @@ public final class SoundObjectPropertiesTopComponent extends TopComponent implem
     }
 
     protected void updateSubjectiveDuration() {
-        TimeUnit initialDuration = sObj.getSubjectiveDuration();
-        var newTimeUnit = durationPanel.getTimeUnit();
+        TimeDuration initialDuration = sObj.getSubjectiveDuration();
+        var newDuration = durationPanel.getTimeDuration();
         
-        if (newTimeUnit == null) {
-            durationPanel.setTimeUnit(sObj.getSubjectiveDuration());
+        if (newDuration == null) {
+            durationPanel.setTimeDuration(sObj.getSubjectiveDuration());
             return;
         }
         
-        sObj.setSubjectiveDuration(newTimeUnit);
+        sObj.setSubjectiveDuration(newDuration);
         
         BlueUndoManager.setUndoManager("score");
         BlueUndoManager.addEdit(new DurationScoreObjectEdit(this.sObj,
@@ -420,7 +425,7 @@ public final class SoundObjectPropertiesTopComponent extends TopComponent implem
                 break;
             case ScoreObjectEvent.DURATION:
                 if (!isUpdating) {
-                    durationPanel.setTimeUnit(sObj.getSubjectiveDuration());
+                    durationPanel.setTimeDuration(sObj.getSubjectiveDuration());
                 }
                 updateEndTime();
                 break;

@@ -20,6 +20,7 @@
 
 package blue.soundObject;
 
+import blue.time.TimeDuration;
 import blue.time.TimeUnit;
 import junit.framework.TestCase;
 
@@ -36,7 +37,7 @@ public class GenericScoreTest extends TestCase {
         GenericScore genScore = new GenericScore();
         genScore.setName("test");
         genScore.setStartTime(TimeUnit.beats(30.0));
-        genScore.setSubjectiveDuration(TimeUnit.beats(40.0));
+        genScore.setSubjectiveDuration(TimeDuration.beats(40.0));
         genScore.setText("Test");
 
         GenericScore clone = new GenericScore(genScore);

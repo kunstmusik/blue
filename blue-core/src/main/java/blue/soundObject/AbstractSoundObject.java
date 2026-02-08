@@ -6,7 +6,9 @@ import java.util.Vector;
 import blue.score.ScoreObjectEvent;
 import blue.score.ScoreObjectListener;
 import blue.time.TimeContext;
+import blue.time.TimeDuration;
 import blue.time.TimeUnit;
+import blue.time.TimeUnitMath;
 import blue.time.TimeUtilities;
 
 /**
@@ -26,9 +28,8 @@ public abstract class AbstractSoundObject implements SoundObject {
 
     /**
      * Internal storage for subjective duration. Single source of truth.
-     * Always stored as BeatTime for backward compatibility.
      */
-    protected TimeUnit durationUnit = TimeUnit.beats(4.0);
+    protected TimeDuration durationUnit = TimeDuration.beats(4.0);
 
     protected String name = "";
 
@@ -84,7 +85,7 @@ public abstract class AbstractSoundObject implements SoundObject {
     }
 
     @Override
-    public void setSubjectiveDuration(TimeUnit duration) {
+    public void setSubjectiveDuration(TimeDuration duration) {
         if (duration == null) {
             throw new IllegalArgumentException("Duration cannot be null");
         }
@@ -98,7 +99,7 @@ public abstract class AbstractSoundObject implements SoundObject {
     }
 
     @Override
-    public TimeUnit getSubjectiveDuration() {
+    public TimeDuration getSubjectiveDuration() {
         return durationUnit;
     }
 
@@ -122,14 +123,14 @@ public abstract class AbstractSoundObject implements SoundObject {
         double diff = currentStart - newStartTime;
         // Preserve the original TimeUnit type
         setStartTime(TimeUtilities.beatsToTimeUnit(newStartTime, startTimeUnit.getTimeBase(), context));
-        setSubjectiveDuration(TimeUtilities.beatsToTimeUnit(currentDuration + diff, durationUnit.getTimeBase(), context));
+        setSubjectiveDuration(TimeUnitMath.beatsToDuration(currentDuration + diff, durationUnit.getTimeBase(), context));
     }
 
     @Override
     public void resizeRight(TimeContext context, double newEndTime) {
         double currentStart = startTimeUnit.toBeats(context);
         // Preserve the original TimeUnit type
-        setSubjectiveDuration(TimeUtilities.beatsToTimeUnit(newEndTime - currentStart, durationUnit.getTimeBase(), context));
+        setSubjectiveDuration(TimeUnitMath.beatsToDuration(newEndTime - currentStart, durationUnit.getTimeBase(), context));
     }
 
     @Override

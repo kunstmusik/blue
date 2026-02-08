@@ -35,7 +35,7 @@ import blue.soundObject.SoundObjectException;
 import blue.soundObject.SoundObjectUtilities;
 import blue.soundObject.TimeBehavior;
 import blue.time.TimeContext;
-import blue.time.TimeUnit;
+import blue.time.TimeDuration;
 import blue.utility.ScoreUtilities;
 import electric.xml.Element;
 import java.io.File;
@@ -150,7 +150,7 @@ public class ClojureObject extends AbstractSoundObject implements
     }
 
     @Override
-    public TimeUnit getObjectiveDuration(TimeContext context) {
+    public TimeDuration getObjectiveDuration(TimeContext context) {
         return getSubjectiveDuration();
     }
 

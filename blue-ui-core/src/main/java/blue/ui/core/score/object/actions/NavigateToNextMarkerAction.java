@@ -27,6 +27,7 @@ import blue.score.ScoreObject;
 import blue.score.layers.ScoreObjectLayer;
 import blue.time.TimeContext;
 import blue.time.TimeContextManager;
+import blue.time.TimeUnitMath;
 import blue.ui.core.score.ScoreTopComponent;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -95,7 +96,7 @@ public final class NavigateToNextMarkerAction implements ActionListener {
                 final var sLayer = (ScoreObjectLayer<ScoreObject>) layer;
 
                 var layerMax = sLayer.stream()
-                        .mapToDouble(sObj -> sObj.getStartTime().add(context, sObj.getSubjectiveDuration()).toBeats(context))
+                        .mapToDouble(sObj -> TimeUnitMath.add(context, sObj.getStartTime(), sObj.getSubjectiveDuration()).toBeats(context))
                         .max();
 
                 if (layerMax.isPresent()) {

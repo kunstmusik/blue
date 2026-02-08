@@ -29,6 +29,7 @@ import blue.score.ScoreObjectListener;
 import blue.soundObject.Sound;
 import blue.time.TimeContext;
 import blue.time.TimeContextManager;
+import blue.time.TimeUnitMath;
 import blue.ui.utilities.UiUtilities;
 import java.awt.BorderLayout;
 import java.awt.event.ItemEvent;
@@ -121,7 +122,7 @@ public class AutomationPanel extends JPanel {
         timeBar.setStartTime(sound.getStartTime().toBeats(context));
         timeBar.setDuration(sound.getSubjectiveDuration().toBeats(context));
         lineView.setDataProjectionX(sound.getStartTime().toBeats(context), 
-                                     sound.getStartTime().add(context, sound.getSubjectiveDuration()).toBeats(context));
+                                     TimeUnitMath.add(context, sound.getStartTime(), sound.getSubjectiveDuration()).toBeats(context));
     }
 
     public void editSound(Sound sound) {

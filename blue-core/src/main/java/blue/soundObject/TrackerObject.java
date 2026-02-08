@@ -26,7 +26,7 @@ import blue.noteProcessor.NoteProcessorException;
 import blue.plugin.SoundObjectPlugin;
 import blue.soundObject.tracker.TrackList;
 import blue.time.TimeContext;
-import blue.time.TimeUnit;
+import blue.time.TimeDuration;
 import blue.utility.ScoreUtilities;
 import blue.utility.XMLUtilities;
 import electric.xml.Element;
@@ -88,7 +88,7 @@ public class TrackerObject extends AbstractSoundObject {
     }
 
     @Override
-    public TimeUnit getObjectiveDuration(TimeContext context) {
+    public TimeDuration getObjectiveDuration(TimeContext context) {
         // FIXME: May need to recalculate this in the future...
         return getSubjectiveDuration();
     }

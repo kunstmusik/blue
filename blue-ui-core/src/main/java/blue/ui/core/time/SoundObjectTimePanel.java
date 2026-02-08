@@ -23,7 +23,9 @@ import blue.projects.BlueProjectManager;
 import blue.time.TimeBase;
 import blue.time.TimeContext;
 import blue.time.TimeContextManager;
+import blue.time.TimeDuration;
 import blue.time.TimeUnit;
+import blue.time.TimeUnitMath;
 import blue.time.TimeUtilities;
 import java.awt.BorderLayout;
 import java.beans.PropertyChangeListener;
@@ -220,6 +222,46 @@ public class SoundObjectTimePanel extends JPanel {
     @Override
     public void removePropertyChangeListener(String propertyName, PropertyChangeListener listener) {
         propertyChangeSupport.removePropertyChangeListener(propertyName, listener);
+    }
+
+    /**
+     * Sets a TimeDuration value to edit.
+     * Converts the TimeDuration to an equivalent TimeUnit for internal storage.
+     * 
+     * @param duration the TimeDuration to edit
+     */
+    public void setTimeDuration(TimeDuration duration) {
+        if (duration == null) {
+            return;
+        }
+        TimeContext context = BlueProjectManager.getInstance().getCurrentProject().getData().getScore().getTimeContext();
+        setTimeUnit(TimeUtilities.beatsToTimeUnit(duration.toBeats(context), duration.getTimeBase(), context));
+    }
+
+    /**
+     * Gets the current value as a TimeDuration.
+     * Converts the internal TimeUnit to a TimeDuration.
+     * 
+     * @return the current value as a TimeDuration, or null if no value is set
+     */
+    public TimeDuration getTimeDuration() {
+        TimeUnit tu = getTimeUnit();
+        if (tu == null) {
+            return null;
+        }
+        TimeContext context = BlueProjectManager.getInstance().getCurrentProject().getData().getScore().getTimeContext();
+        return TimeUnitMath.beatsToDuration(tu.toBeats(context), tu.getTimeBase(), context);
+    }
+
+    /**
+     * Sets duration mode for 0-based measure display on this panel.
+     * When enabled, BBT/BBST/BBF formats display and parse as durations (0-based bars/beats).
+     */
+    public void setDurationMode(boolean durationMode) {
+        textEditor.setDurationMode(durationMode);
+        textEditor.setTimeContextSupplier(() -> {
+            return BlueProjectManager.getInstance().getCurrentProject().getData().getScore().getTimeContext();
+        });
     }
 
     @Override

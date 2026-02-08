@@ -27,6 +27,8 @@ import blue.soundObject.SoundObject;
 import blue.time.TimeBase;
 import blue.time.TimeContext;
 import blue.time.TimeContextManager;
+import blue.time.TimeUnit;
+import blue.time.TimeUnitMath;
 import blue.time.TimeUtilities;
 import blue.ui.core.score.ScoreController;
 import blue.ui.core.score.ScoreTopComponent;
@@ -115,6 +117,8 @@ public final class AddSoundObjectActionsPresenter extends AbstractAction impleme
                 TimeBase timeBase = timeState.getTimeDisplay();
                 TimeContext context = TimeContextManager.getContext();
                 sObj.setStartTime(TimeUtilities.beatsToTimeUnit(start, timeBase, context));
+                sObj.setSubjectiveDuration(TimeUnitMath.beatsToDuration(
+                        sObj.getSubjectiveDuration().toBeats(context), timeBase, context));
 
                 sLayer.add(sObj);
                 BlueUndoManager.setUndoManager("score");

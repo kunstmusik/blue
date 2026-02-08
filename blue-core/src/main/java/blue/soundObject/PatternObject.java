@@ -26,7 +26,7 @@ import blue.plugin.SoundObjectPlugin;
 import blue.score.ScoreObjectEvent;
 import blue.soundObject.pattern.Pattern;
 import blue.time.TimeContext;
-import blue.time.TimeUnit;
+import blue.time.TimeDuration;
 import blue.utility.ScoreUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
@@ -217,7 +217,7 @@ public class PatternObject extends AbstractSoundObject implements TableModel,
     }
 
     @Override
-    public TimeUnit getObjectiveDuration(TimeContext context) {
+    public TimeDuration getObjectiveDuration(TimeContext context) {
         return getSubjectiveDuration();
     }
 

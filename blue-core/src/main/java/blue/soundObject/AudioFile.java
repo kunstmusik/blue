@@ -25,7 +25,7 @@ import blue.orchestra.GenericInstrument;
 import blue.orchestra.Instrument;
 import blue.plugin.SoundObjectPlugin;
 import blue.time.TimeContext;
-import blue.time.TimeUnit;
+import blue.time.TimeDuration;
 import blue.utility.SoundFileUtilities;
 import electric.xml.Element;
 import java.io.IOException;
@@ -178,7 +178,7 @@ public class AudioFile extends AbstractSoundObject {
     }
 
     @Override
-    public TimeUnit getObjectiveDuration(TimeContext context) {
+    public TimeDuration getObjectiveDuration(TimeContext context) {
         return getSubjectiveDuration();
     }
 

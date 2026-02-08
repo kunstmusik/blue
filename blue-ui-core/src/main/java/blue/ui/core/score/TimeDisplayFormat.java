@@ -82,6 +82,28 @@ public enum TimeDisplayFormat {
             }
             return bbt.toString();
         }
+        
+        @Override
+        public String formatDuration(double durationBeats, TimeContext context) {
+            if (context == null || context.getMeterMap() == null) {
+                return BEATS.format(durationBeats, context);
+            }
+            var meter = context.getMeterMap().get(0).getMeter();
+            int ppq = context.getPPQ();
+            double beatsPerBar = meter.getMeasureBeatDuration();
+            double beatScale = 4.0 / meter.beatLength;
+            long bars = (long) (durationBeats / beatsPerBar);
+            double remainingBeats = durationBeats - (bars * beatsPerBar);
+            double scaledBeat = remainingBeats / beatScale;
+            int wholeBeat = (int) scaledBeat;
+            double fractionalBeat = scaledBeat - wholeBeat;
+            int ticks = (int) Math.round(fractionalBeat * ppq);
+            if (ticks >= ppq) {
+                ticks = 0;
+                wholeBeat++;
+            }
+            return String.format("%d.%d.%d", bars, wholeBeat, ticks);
+        }
     },
     
     /**
@@ -112,6 +134,30 @@ public enum TimeDisplayFormat {
             }
             return bbst.toString();
         }
+        
+        @Override
+        public String formatDuration(double durationBeats, TimeContext context) {
+            if (context == null || context.getMeterMap() == null) {
+                return BEATS.format(durationBeats, context);
+            }
+            var meter = context.getMeterMap().get(0).getMeter();
+            int ppq = context.getPPQ();
+            double beatsPerBar = meter.getMeasureBeatDuration();
+            double beatScale = 4.0 / meter.beatLength;
+            long bars = (long) (durationBeats / beatsPerBar);
+            double remainingBeats = durationBeats - (bars * beatsPerBar);
+            double scaledBeat = remainingBeats / beatScale;
+            int wholeBeat = (int) scaledBeat;
+            double fractionalBeat = scaledBeat - wholeBeat;
+            int ticks = (int) Math.round(fractionalBeat * ppq);
+            int sixteenthsPerBeat = ppq / 4;
+            int sixteenth = 0;
+            if (sixteenthsPerBeat > 0) {
+                sixteenth = ticks / sixteenthsPerBeat;
+                ticks = ticks % sixteenthsPerBeat;
+            }
+            return String.format("%d.%d.%d.%d", bars, wholeBeat, sixteenth, ticks);
+        }
     },
     
     /**
@@ -141,6 +187,27 @@ public enum TimeDisplayFormat {
                 return String.format("%d.%d", bbf.getBar(), bbf.getBeat());
             }
             return bbf.toString();
+        }
+        
+        @Override
+        public String formatDuration(double durationBeats, TimeContext context) {
+            if (context == null || context.getMeterMap() == null) {
+                return BEATS.format(durationBeats, context);
+            }
+            var meter = context.getMeterMap().get(0).getMeter();
+            double beatsPerBar = meter.getMeasureBeatDuration();
+            double beatScale = 4.0 / meter.beatLength;
+            long bars = (long) (durationBeats / beatsPerBar);
+            double remainingBeats = durationBeats - (bars * beatsPerBar);
+            double scaledBeat = remainingBeats / beatScale;
+            int wholeBeat = (int) scaledBeat;
+            double fractionalBeat = scaledBeat - wholeBeat;
+            int fraction = (int) Math.round(fractionalBeat * 100);
+            if (fraction >= 100) {
+                fraction = 0;
+                wholeBeat++;
+            }
+            return String.format("%d.%d.%02d", bars, wholeBeat, fraction);
         }
     },
     
@@ -315,6 +382,20 @@ public enum TimeDisplayFormat {
      * @return compact formatted string
      */
     public abstract String formatCompact(double beatPosition, TimeContext context);
+    
+    /**
+     * Formats a duration in beats using this format.
+     * For measure-based formats (BBT, BBST, BBF), uses 0-based bars and beats
+     * (e.g., 6 beats in 4/4 = "1.2.00" meaning 1 bar + 2 beats).
+     * For other formats, delegates to {@link #format}.
+     * 
+     * @param durationBeats the duration in beats to format
+     * @param context the time context for conversion (may be null)
+     * @return formatted duration string
+     */
+    public String formatDuration(double durationBeats, TimeContext context) {
+        return format(durationBeats, context);
+    }
     
     /**
      * Converts a beat position to seconds using the TimeContext.

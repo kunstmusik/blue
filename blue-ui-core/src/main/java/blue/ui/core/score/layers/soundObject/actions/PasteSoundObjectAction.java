@@ -30,9 +30,12 @@ import blue.score.layers.ScoreObjectLayer;
 import blue.soundObject.Instance;
 import blue.soundObject.PolyObject;
 import blue.soundObject.SoundObject;
+import blue.time.TimeBase;
 import blue.time.TimeContext;
 import blue.time.TimeContextManager;
 import blue.time.TimeUnit;
+import blue.time.TimeUnitMath;
+import blue.time.TimeUtilities;
 import blue.ui.core.clipboard.BlueClipboardUtils;
 import blue.ui.core.score.ScoreController;
 import blue.ui.core.score.ScorePath;
@@ -183,6 +186,11 @@ public final class PasteSoundObjectAction extends AbstractAction implements Cont
             }
 
             sObj.setStartTime(sObj.getStartTime().add(context, startTranslation));
+
+            // Convert to primary ruler's TimeBase
+            TimeBase timeBase = timeState.getTimeDisplay();
+            sObj.setStartTime(TimeUtilities.convertTimeUnit(sObj.getStartTime(), timeBase, context));
+            sObj.setSubjectiveDuration(TimeUnitMath.beatsToDuration(sObj.getSubjectiveDuration().toBeats(context), timeBase, context));
 
             ScoreObjectLayer<ScoreObject> layer
                     = (ScoreObjectLayer<ScoreObject>) allLayers.get(newLayerIndex);

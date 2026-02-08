@@ -30,7 +30,7 @@ import blue.score.ScoreObjectEvent;
 import blue.scripting.ScoreScriptEngine;
 import blue.scripting.ScoreScriptEngineManager;
 import blue.time.TimeContext;
-import blue.time.TimeUnit;
+import blue.time.TimeDuration;
 import blue.utility.ScoreUtilities;
 import blue.utility.XMLUtilities;
 import electric.xml.Element;
@@ -154,7 +154,7 @@ public class ObjectBuilder extends AbstractSoundObject {
 
     // END GENERATION METHODS
     @Override
-    public TimeUnit getObjectiveDuration(TimeContext context) {
+    public TimeDuration getObjectiveDuration(TimeContext context) {
         return getSubjectiveDuration();
     }
 

@@ -25,6 +25,7 @@ import blue.soundObject.Note;
 import blue.soundObject.NoteList;
 import blue.soundObject.NoteParseException;
 import blue.soundObject.PolyObject;
+import blue.time.TimeDuration;
 import blue.time.TimeUnit;
 import blue.utilities.MidiUtilities;
 import blue.utility.*;
@@ -123,7 +124,7 @@ public class MidiImportUtilities {
                 genSco.setStartTime(TimeUnit.beats(0.0));
             }
 
-            genSco.setSubjectiveDuration(TimeUnit.beats(ScoreUtilities.getTotalDuration(nl)));
+            genSco.setSubjectiveDuration(TimeDuration.beats(ScoreUtilities.getTotalDuration(nl)));
             genSco.setText(nl.toString());
 
             genSco.setName("Track " + i);

@@ -20,10 +20,15 @@
 package blue.ui.core.time;
 
 import blue.time.TimeBase;
+import blue.time.TimeContext;
+import blue.time.TimeDuration;
 import blue.time.TimeUnit;
+import blue.time.TimeUnitMath;
+import blue.time.TimeUtilities;
 import java.awt.Toolkit;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
+import java.util.function.Supplier;
 import javax.swing.JTextField;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -51,6 +56,8 @@ public class TimeUnitTextField extends JTextField {
     private String lastValidText = "";
     private boolean updating = false;
     private int ppq = 480; // Default PPQ for BBT/BBST conversions
+    private boolean durationMode = false;
+    private Supplier<TimeContext> timeContextSupplier;
     
     protected EventListenerList listenerList = new EventListenerList();
 
@@ -134,12 +141,44 @@ public class TimeUnitTextField extends JTextField {
             return;
         }
         
-        lastValidText = format(timeUnit, timeBase, ppq);
+        if (durationMode && timeContextSupplier != null) {
+            lastValidText = formatDuration(timeUnit, timeBase, ppq, timeContextSupplier.get());
+        } else {
+            lastValidText = format(timeUnit, timeBase, ppq);
+        }
         setText(lastValidText);
     }
 
+    /**
+     * Sets duration mode. In duration mode, measure-based formats (BBT, BBST, BBF)
+     * use 0-based bars/beats for display and parsing.
+     */
+    public void setDurationMode(boolean durationMode) {
+        this.durationMode = durationMode;
+        updatePlaceholder();
+        if (timeUnit != null) {
+            updating = true;
+            try {
+                updateDisplay();
+            } finally {
+                updating = false;
+            }
+        }
+    }
+
+    public boolean isDurationMode() {
+        return durationMode;
+    }
+
+    /**
+     * Sets the TimeContext supplier for duration mode conversions.
+     */
+    public void setTimeContextSupplier(Supplier<TimeContext> supplier) {
+        this.timeContextSupplier = supplier;
+    }
+
     private void updatePlaceholder() {
-        setToolTipText(getFormatHint(timeBase));
+        setToolTipText(durationMode ? getDurationFormatHint(timeBase) : getFormatHint(timeBase));
     }
 
     private void commit() {
@@ -154,7 +193,11 @@ public class TimeUnitTextField extends JTextField {
 
         TimeUnit parsed;
         try {
-            parsed = parse(text, timeBase, ppq);
+            if (durationMode && timeContextSupplier != null) {
+                parsed = parseDuration(text, timeBase, ppq, timeContextSupplier.get());
+            } else {
+                parsed = parse(text, timeBase, ppq);
+            }
         } catch (RuntimeException ex) {
             Toolkit.getDefaultToolkit().beep();
             setText(lastValidText);
@@ -162,7 +205,11 @@ public class TimeUnitTextField extends JTextField {
         }
 
         timeUnit = parsed;
-        lastValidText = format(parsed, timeBase, ppq);
+        if (durationMode && timeContextSupplier != null) {
+            lastValidText = formatDuration(parsed, timeBase, ppq, timeContextSupplier.get());
+        } else {
+            lastValidText = format(parsed, timeBase, ppq);
+        }
         setText(lastValidText);
         fireStateChanged();
     }
@@ -199,6 +246,18 @@ public class TimeUnitTextField extends JTextField {
             case TIME -> "Format: H:MM:SS.mmm (e.g., 0:00:00.000)";
             case SMPTE -> "Format: HH:MM:SS:FF (e.g., 00:00:00:00)";
             case FRAME -> "Format: sample frames (e.g., 44100)";
+        };
+    }
+
+    private static String getDurationFormatHint(TimeBase timeBase) {
+        return switch (timeBase) {
+            case CSOUND_BEATS -> "Duration: decimal beats (e.g., 4.0, 0.5)";
+            case BBT -> "Duration: bars.beats.ticks (0-based, e.g., 0.0.0, 1.2.240)";
+            case BBST -> "Duration: bars.beats.16th.ticks (0-based, e.g., 0.0.0.0, 1.2.1.60)";
+            case BBF -> "Duration: bars.beats.fraction (0-based, e.g., 0.0.00, 1.2.50)";
+            case TIME -> "Duration: H:MM:SS.mmm (e.g., 0:00:04.000)";
+            case SMPTE -> "Duration: HH:MM:SS:FF (e.g., 00:00:04:00)";
+            case FRAME -> "Duration: sample frames (e.g., 44100)";
         };
     }
 
@@ -444,6 +503,96 @@ public class TimeUnitTextField extends JTextField {
             throw new IllegalArgumentException("Frames cannot be negative");
         }
         return TimeUnit.frames(frames);
+    }
+
+    // ========== Duration Formatting ==========
+
+    /**
+     * Formats a TimeUnit as a duration string. For measure-based formats (BBT, BBST, BBF),
+     * uses 0-based bars/beats. For other formats, delegates to regular format.
+     */
+    public static String formatDuration(TimeUnit timeUnit, TimeBase timeBase, int ppq, TimeContext context) {
+        return switch (timeBase) {
+            case CSOUND_BEATS -> formatBeats(timeUnit);
+            case BBT -> {
+                TimeDuration dur = TimeUnitMath.fromTimeUnit(timeUnit, TimeBase.BBT, context);
+                if (dur instanceof TimeDuration.DurationBBT d) {
+                    yield String.format("%d.%d.%d", d.getBars(), d.getBeats(), d.getTicks());
+                }
+                yield "0.0.0";
+            }
+            case BBST -> {
+                TimeDuration dur = TimeUnitMath.fromTimeUnit(timeUnit, TimeBase.BBST, context);
+                if (dur instanceof TimeDuration.DurationBBST d) {
+                    yield String.format("%d.%d.%d.%d", d.getBars(), d.getBeats(), d.getSixteenth(), d.getTicks());
+                }
+                yield "0.0.0.0";
+            }
+            case BBF -> {
+                TimeDuration dur = TimeUnitMath.fromTimeUnit(timeUnit, TimeBase.BBF, context);
+                if (dur instanceof TimeDuration.DurationBBF d) {
+                    yield String.format("%d.%d.%02d", d.getBars(), d.getBeats(), d.getFraction());
+                }
+                yield "0.0.00";
+            }
+            case TIME -> formatTime(timeUnit);
+            case SMPTE -> formatSMPTE(timeUnit);
+            case FRAME -> formatFrames(timeUnit);
+        };
+    }
+
+    // ========== Duration Parsing ==========
+
+    /**
+     * Parses a duration string to a TimeUnit. For measure-based formats (BBT, BBST, BBF),
+     * interprets values as 0-based and converts through beats to the target TimeBase.
+     */
+    public static TimeUnit parseDuration(String text, TimeBase timeBase, int ppq, TimeContext context) {
+        String trimmed = text == null ? "" : text.trim();
+
+        return switch (timeBase) {
+            case CSOUND_BEATS -> parseBeats(trimmed);
+            case BBT -> {
+                if (trimmed.isEmpty()) yield TimeUnit.beats(0.0);
+                String[] parts = trimmed.split("\\.");
+                if (parts.length < 2 || parts.length > 3)
+                    throw new IllegalArgumentException("Duration BBT format: bars.beats.ticks");
+                long bars = Long.parseLong(parts[0].trim());
+                int beats = Integer.parseInt(parts[1].trim());
+                int ticks = parts.length == 3 ? Integer.parseInt(parts[2].trim()) : 0;
+                TimeDuration dur = TimeDuration.bbt(bars, beats, ticks);
+                double totalBeats = dur.toBeats(context);
+                yield TimeUtilities.beatsToTimeUnit(totalBeats, TimeBase.BBT, context);
+            }
+            case BBST -> {
+                if (trimmed.isEmpty()) yield TimeUnit.beats(0.0);
+                String[] parts = trimmed.split("\\.");
+                if (parts.length < 3 || parts.length > 4)
+                    throw new IllegalArgumentException("Duration BBST format: bars.beats.16th.ticks");
+                long bars = Long.parseLong(parts[0].trim());
+                int beats = Integer.parseInt(parts[1].trim());
+                int sixteenth = Integer.parseInt(parts[2].trim());
+                int ticks = parts.length == 4 ? Integer.parseInt(parts[3].trim()) : 0;
+                TimeDuration dur = TimeDuration.bbst(bars, beats, sixteenth, ticks);
+                double totalBeats = dur.toBeats(context);
+                yield TimeUtilities.beatsToTimeUnit(totalBeats, TimeBase.BBST, context);
+            }
+            case BBF -> {
+                if (trimmed.isEmpty()) yield TimeUnit.beats(0.0);
+                String[] parts = trimmed.split("\\.");
+                if (parts.length < 2 || parts.length > 3)
+                    throw new IllegalArgumentException("Duration BBF format: bars.beats.fraction");
+                long bars = Long.parseLong(parts[0].trim());
+                int beats = Integer.parseInt(parts[1].trim());
+                int fraction = parts.length == 3 ? Integer.parseInt(parts[2].trim()) : 0;
+                TimeDuration dur = TimeDuration.bbf(bars, beats, fraction);
+                double totalBeats = dur.toBeats(context);
+                yield TimeUtilities.beatsToTimeUnit(totalBeats, TimeBase.BBF, context);
+            }
+            case TIME -> parseTime(trimmed);
+            case SMPTE -> parseSMPTE(trimmed);
+            case FRAME -> parseFrames(trimmed);
+        };
     }
 
     // ========== Parse Helpers ==========

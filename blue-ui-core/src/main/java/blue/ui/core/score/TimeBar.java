@@ -80,6 +80,13 @@ public final class TimeBar extends JPanel implements
     
     private TimeDisplayFormat displayFormat = TimeDisplayFormat.BEATS;
     
+    // Selection state for drag-to-select
+    private boolean isDragging = false;
+    private double dragStartTime = -1;
+    private int dragStartX = -1;
+    private static final int DRAG_THRESHOLD = 5; // pixels before drag is recognized
+    private static final Color SELECTION_COLOR = new Color(100, 150, 255, 80);
+    
     private static final java.text.DecimalFormat BEAT_FORMAT = new java.text.DecimalFormat();
 
     MemoizedFunction<Double, Double> getMajorTimeUnit = new MemoizedFunction<>(
@@ -98,65 +105,84 @@ public final class TimeBar extends JPanel implements
         // this.add(playMarker);
         this.addMouseListener(new MouseAdapter() {
 
-            int start;
-
             @Override
             public void mousePressed(MouseEvent e) {
-                if (!rootTimeline) {
+                if (!rootTimeline || data == null || timeState == null) {
                     return;
                 }
 
-                start = e.getX();
-
-                if (start < 0) {
-                    start = 0;
-                }
-
-                double time = (double) start / timeState.getPixelSecond();
+                int x = Math.max(0, e.getX());
+                double time = (double) x / timeState.getPixelSecond();
 
                 if (timeState.isSnapEnabled() && !e.isShiftDown()) {
                     time = Math.round(time / timeState.getSnapValue()) * timeState.getSnapValue();
                 }
 
                 if (SwingUtilities.isLeftMouseButton(e)) {
-
-                    data.setRenderStartTime(time);
-
+                    // Start potential drag operation
+                    isDragging = false;
+                    dragStartX = x;
+                    dragStartTime = time;
                 } else if (UiUtilities.isRightMouseButton(e)) {
+                    // Right-click sets render end immediately
                     data.setRenderEndTime(time);
                 }
-
             }
 
+            @Override
+            public void mouseReleased(MouseEvent e) {
+                if (!rootTimeline || data == null || timeState == null) {
+                    return;
+                }
+
+                if (SwingUtilities.isLeftMouseButton(e)) {
+                    if (!isDragging && dragStartTime >= 0) {
+                        // Click without drag - set render start and clear selection
+                        data.setRenderStartTime(dragStartTime);
+                        data.setRenderEndTime(-1.0);
+                    }
+                    // Reset drag state
+                    isDragging = false;
+                    dragStartX = -1;
+                    dragStartTime = -1;
+                }
+            }
         });
 
         this.addMouseMotionListener(new MouseMotionAdapter() {
 
             @Override
             public void mouseDragged(MouseEvent e) {
-                if (!rootTimeline) {
+                if (!rootTimeline || data == null || timeState == null) {
                     return;
                 }
 
-                int start = e.getX();
-
-                if (start < 0) {
-                    start = 0;
-                }
-
-                double time = (double) start / timeState.getPixelSecond();
+                int x = Math.max(0, e.getX());
+                double time = (double) x / timeState.getPixelSecond();
 
                 if (timeState.isSnapEnabled() && !e.isShiftDown()) {
                     time = Math.round(time / timeState.getSnapValue()) * timeState.getSnapValue();
                 }
 
                 if (SwingUtilities.isLeftMouseButton(e)) {
-                    data.setRenderStartTime(time);
+                    // Check if we've exceeded drag threshold
+                    if (!isDragging && dragStartX >= 0 && Math.abs(x - dragStartX) > DRAG_THRESHOLD) {
+                        isDragging = true;
+                    }
+                    
+                    if (isDragging) {
+                        // Handle selection - ensure start < end regardless of drag direction
+                        double selStart = Math.min(dragStartTime, time);
+                        double selEnd = Math.max(dragStartTime, time);
+                        data.setRenderStartTime(selStart);
+                        data.setRenderEndTime(selEnd);
+                        checkScroll(e.getPoint());
+                        repaint();
+                    }
                 } else if (UiUtilities.isRightMouseButton(e)) {
                     data.setRenderEndTime(time);
                     checkScroll(e.getPoint());
                 }
-
             }
         });
 
@@ -182,22 +208,35 @@ public final class TimeBar extends JPanel implements
 
         drawLinesAndNumbers(g);
 
-        if (rootTimeline) {
+        if (rootTimeline && data != null) {
             // Get clip bounds to account for scroll offset
             Rectangle clipBounds = g.getClipBounds();
             double pixelTime = timeState.getPixelSecond();
             double startTime = clipBounds.x / pixelTime;
             
+            // Draw selection range highlight (between render start and end)
+            double renderStartTime = data.getRenderStartTime();
+            double renderLoopTime = data.getRenderEndTime();
+            if (renderLoopTime >= 0.0f && renderLoopTime > renderStartTime) {
+                int selStartX = (int) ((renderStartTime - startTime) * pixelTime) + clipBounds.x;
+                int selEndX = (int) ((renderLoopTime - startTime) * pixelTime) + clipBounds.x;
+                // Clamp to visible bounds
+                selStartX = Math.max(clipBounds.x, selStartX);
+                selEndX = Math.min(clipBounds.x + clipBounds.width, selEndX);
+                if (selEndX > selStartX) {
+                    g.setColor(SELECTION_COLOR);
+                    g.fillRect(selStartX, 0, selEndX - selStartX, this.getHeight());
+                }
+            }
+            
             // Draw render start marker (green)
             g.setColor(Color.GREEN);
-            double renderStartTime = data.getRenderStartTime();
             int x = (int) ((renderStartTime - startTime) * pixelTime) + clipBounds.x;
             if (x >= clipBounds.x - 1 && x <= clipBounds.x + clipBounds.width + 1) {
                 g.drawLine(x, 0, x, this.getHeight());
             }
 
             // Draw render end marker (yellow)
-            double renderLoopTime = data.getRenderEndTime();
             if (renderLoopTime >= 0.0f) {
                 g.setColor(Color.YELLOW);
                 x = (int) ((renderLoopTime - startTime) * pixelTime) + clipBounds.x;

@@ -42,7 +42,9 @@ import javax.swing.SwingConstants;
  *
  * @author Steven Yi
  * @since 3.0
+ * @deprecated Replaced by {@link RulerConfigDialog}. This class will be removed in a future release.
  */
+@Deprecated
 public class TimeFormatSelector extends JComboBox<TimeDisplayFormat> 
         implements PropertyChangeListener {
     

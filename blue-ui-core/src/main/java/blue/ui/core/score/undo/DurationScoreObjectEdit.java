@@ -6,7 +6,7 @@ package blue.ui.core.score.undo;
 
 import blue.BlueSystem;
 import blue.score.ScoreObject;
-import blue.time.TimeUnit;
+import blue.time.TimeDuration;
 import javax.swing.undo.AbstractUndoableEdit;
 import javax.swing.undo.CannotRedoException;
 import javax.swing.undo.CannotUndoException;
@@ -20,13 +20,13 @@ import javax.swing.undo.UndoableEdit;
 public class DurationScoreObjectEdit extends AbstractUndoableEdit {
     private final ScoreObject sObj;
 
-    private final TimeUnit initialDuration;
-    private final TimeUnit endingDuration;
+    private final TimeDuration initialDuration;
+    private final TimeDuration endingDuration;
 
     private DurationScoreObjectEdit nextEdit = null;
 
-    public DurationScoreObjectEdit(ScoreObject sObj, TimeUnit initialDuration,
-            TimeUnit endingDuration) {
+    public DurationScoreObjectEdit(ScoreObject sObj, TimeDuration initialDuration,
+            TimeDuration endingDuration) {
 
         this.initialDuration = initialDuration;
         this.endingDuration = endingDuration;

@@ -23,6 +23,7 @@ import blue.score.ScoreObject;
 import blue.score.ScoreObjectEvent;
 import blue.score.ScoreObjectListener;
 import blue.time.TimeContext;
+import blue.time.TimeDuration;
 import blue.time.TimeUnit;
 import blue.utility.XMLUtilities;
 import electric.xml.Element;
@@ -206,8 +207,8 @@ public final class AudioClip implements ScoreObject, Comparable<AudioClip> {
         if(!looping) {
             var durLimit = getAudioDuration() - getFileStartTime();
             var subjDur = getSubjectiveDuration();
-            if(subjDur.gt(context, TimeUnit.beats(durLimit))) {
-                setSubjectiveDuration(TimeUnit.beats(durLimit));
+            if(subjDur.toBeats(context) > durLimit) {
+                setSubjectiveDuration(TimeDuration.beats(durLimit));
             }
         }
     }
@@ -263,16 +264,16 @@ public final class AudioClip implements ScoreObject, Comparable<AudioClip> {
     }
 
     @Override
-    public TimeUnit getSubjectiveDuration() {
-        return TimeUnit.beats(getDuration());
+    public TimeDuration getSubjectiveDuration() {
+        return TimeDuration.beats(getDuration());
     }
 
     @Override
-    public void setSubjectiveDuration(TimeUnit timeUnit) {
-        if (timeUnit instanceof TimeUnit.BeatTime bt) {
-            setDuration(bt.getCsoundBeats());
+    public void setSubjectiveDuration(TimeDuration duration) {
+        if (duration instanceof TimeDuration.DurationBeats db) {
+            setDuration(db.getCsoundBeats());
         } else {
-            throw new IllegalArgumentException("AudioClip only supports BeatTime. Use resizeLeft/resizeRight with TimeContext for conversion.");
+            throw new IllegalArgumentException("AudioClip only supports DurationBeats. Use resizeLeft/resizeRight with TimeContext for conversion.");
         }
     }
 
@@ -317,12 +318,12 @@ public final class AudioClip implements ScoreObject, Comparable<AudioClip> {
 
         setStartTime(TimeUnit.beats(newStartTime));
         setFileStartTime(fileStart);
-        setSubjectiveDuration(TimeUnit.beats(getDuration() + diff));
+        setSubjectiveDuration(TimeDuration.beats(getDuration() + diff));
     }
 
     @Override
     public void resizeRight(TimeContext context, double newEndTime) {
-        setSubjectiveDuration(TimeUnit.beats(newEndTime - getStart()));
+        setSubjectiveDuration(TimeDuration.beats(newEndTime - getStart()));
 
 //        if (newEndTime <= getStart()) {
 //            return;

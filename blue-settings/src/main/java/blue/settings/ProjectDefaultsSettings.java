@@ -34,9 +34,11 @@ public class ProjectDefaultsSettings {
     private static final String DEFAULT_AUTHOR = "defaultAuthor";
     private static final String MIXER_ENABLED = "mixerEnabled";
     private static final String LAYER_HEIGHT_DEFAULT = "layerHeightDefault";
+    private static final String DEFAULT_SMPTE_FRAME_RATE = "defaultSmpteFrameRate";
     public String defaultAuthor;
     public boolean mixerEnabled;
     public int layerHeightDefault;
+    public double defaultSmpteFrameRate;
     private static ProjectDefaultsSettings instance = null;
 
     private ProjectDefaultsSettings() {
@@ -53,6 +55,7 @@ public class ProjectDefaultsSettings {
             instance.mixerEnabled = prefs.getBoolean(PREFIX + MIXER_ENABLED,
                     true);
             instance.layerHeightDefault = prefs.getInt(PREFIX + LAYER_HEIGHT_DEFAULT, 0);
+            instance.defaultSmpteFrameRate = prefs.getDouble(PREFIX + DEFAULT_SMPTE_FRAME_RATE, 24.0);
         }
         return instance;
     }
@@ -64,6 +67,7 @@ public class ProjectDefaultsSettings {
         prefs.put(PREFIX + DEFAULT_AUTHOR, defaultAuthor);
         prefs.putBoolean(PREFIX + MIXER_ENABLED, mixerEnabled);
         prefs.putInt(PREFIX + LAYER_HEIGHT_DEFAULT, layerHeightDefault);
+        prefs.putDouble(PREFIX + DEFAULT_SMPTE_FRAME_RATE, defaultSmpteFrameRate);
         try {
             prefs.sync();
         } catch (BackingStoreException ex) {

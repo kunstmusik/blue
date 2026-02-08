@@ -20,8 +20,10 @@
 package blue.ui.core.time;
 
 import blue.time.TimeBase;
+import blue.time.TimeContext;
 import blue.time.TimeUnit;
 import java.awt.BorderLayout;
+import java.util.function.Supplier;
 
 /**
  * A unified text-based TimeUnit editor that works with all TimeBase formats.
@@ -75,6 +77,20 @@ public class TextTimeUnitEditor extends TimeUnitEditor {
      */
     public void setPPQ(int ppq) {
         textField.setPPQ(ppq);
+    }
+
+    /**
+     * Sets duration mode for 0-based measure display.
+     */
+    public void setDurationMode(boolean durationMode) {
+        textField.setDurationMode(durationMode);
+    }
+
+    /**
+     * Sets the TimeContext supplier for duration mode conversions.
+     */
+    public void setTimeContextSupplier(Supplier<TimeContext> supplier) {
+        textField.setTimeContextSupplier(supplier);
     }
 
     @Override

@@ -57,6 +57,7 @@ public class TimeState {
     private TimeBase timeDisplay = TimeBase.CSOUND_BEATS;
     private TimeBase secondaryTimeDisplay = TimeBase.TIME;
     private boolean secondaryRulerEnabled = false;
+    private double smpteFrameRate = 24.0;
 
     private int zoomIterations = 0;
 
@@ -69,6 +70,7 @@ public class TimeState {
         timeDisplay = timeState.timeDisplay;
         secondaryTimeDisplay = timeState.secondaryTimeDisplay;
         secondaryRulerEnabled = timeState.secondaryRulerEnabled;
+        smpteFrameRate = timeState.smpteFrameRate;
         zoomIterations = timeState.zoomIterations;
     }
 
@@ -167,6 +169,22 @@ public class TimeState {
         firePropertyChangeEvent(pce);
     }
 
+    public double getSmpteFrameRate() {
+        return smpteFrameRate;
+    }
+
+    public void setSmpteFrameRate(double smpteFrameRate) {
+        if (smpteFrameRate <= 0) {
+            throw new IllegalArgumentException("smpteFrameRate must be positive");
+        }
+        PropertyChangeEvent pce = new PropertyChangeEvent(this, "smpteFrameRate",
+                this.smpteFrameRate, smpteFrameRate);
+
+        this.smpteFrameRate = smpteFrameRate;
+
+        firePropertyChangeEvent(pce);
+    }
+
     /* PROPERTY CHANGE LISTENER CODE */
     private void firePropertyChangeEvent(PropertyChangeEvent pce) {
         if (listeners == null) {
@@ -237,6 +255,8 @@ public class TimeState {
                     timeState.secondaryTimeDisplay = parseTimeBase(nodeText, TimeBase.TIME);
                 case "secondaryRulerEnabled" ->
                     timeState.secondaryRulerEnabled = Boolean.parseBoolean(nodeText);
+                case "smpteFrameRate" ->
+                    timeState.smpteFrameRate = Double.parseDouble(nodeText);
             }
         }
         
@@ -300,6 +320,8 @@ public class TimeState {
         retVal.addElement(secondaryTimeDisplayElem);
         retVal.addElement(XMLUtilities.writeBoolean("secondaryRulerEnabled",
                 this.secondaryRulerEnabled));
+        retVal.addElement(XMLUtilities.writeDouble("smpteFrameRate",
+                this.smpteFrameRate));
 
         return retVal;
     }

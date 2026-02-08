@@ -36,7 +36,7 @@ import blue.soundObject.PolyObject;
 import blue.soundObject.SoundObject;
 import blue.time.TimeContext;
 import blue.time.TimeContextManager;
-import blue.time.TimeUnit;
+import blue.time.TimeDuration;
 import blue.ui.core.render.DiskRenderManager;
 import blue.ui.core.score.ScoreController;
 import blue.ui.core.score.ScorePath;
@@ -264,7 +264,7 @@ public final class FreezeUnfreezeAction extends AbstractAction
                 double soundFileDuration = SoundFileUtilities.getDurationInSeconds(
                         fullTempFileName);
 
-                fso.setSubjectiveDuration(TimeUnit.beats(soundFileDuration));
+                fso.setSubjectiveDuration(TimeDuration.beats(soundFileDuration));
 
                 int numChannels = SoundFileUtilities.getNumberOfChannels(
                         fullTempFileName);

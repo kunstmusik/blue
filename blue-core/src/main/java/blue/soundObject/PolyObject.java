@@ -29,7 +29,7 @@ import blue.score.ScoreObjectListener;
 import blue.score.TimeState;
 import blue.score.layers.AutomatableLayerGroup;
 import blue.time.TimeContext;
-import blue.time.TimeUnit;
+import blue.time.TimeDuration;
 import blue.score.layers.Layer;
 import blue.score.layers.LayerGroupDataEvent;
 import blue.score.layers.LayerGroupListener;
@@ -64,7 +64,7 @@ public class PolyObject extends ArrayList<SoundLayer> implements SoundObject,
     
     // TimeUnit fields - PolyObject doesn't extend AbstractSoundObject, so needs its own
     protected blue.time.TimeUnit startTimeUnit = blue.time.TimeUnit.beats(0.0);
-    protected blue.time.TimeUnit durationUnit = blue.time.TimeUnit.beats(4.0);
+    protected TimeDuration durationUnit = TimeDuration.beats(4.0);
     
     protected String name = "";
     protected Color backgroundColor = Color.DARK_GRAY;
@@ -154,7 +154,7 @@ public class PolyObject extends ArrayList<SoundLayer> implements SoundObject,
     // public accessor methods
     //FIXME
     @Override
-    public TimeUnit getObjectiveDuration(TimeContext context) {
+    public TimeDuration getObjectiveDuration(TimeContext context) {
         double totalDuration;
         try {
             totalDuration = ScoreUtilities.getTotalDuration(this.
@@ -163,7 +163,7 @@ public class PolyObject extends ArrayList<SoundLayer> implements SoundObject,
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-        return TimeUnit.beats(totalDuration);
+        return TimeDuration.beats(totalDuration);
     }
 
     @Override
@@ -217,7 +217,7 @@ public class PolyObject extends ArrayList<SoundLayer> implements SoundObject,
             temp.setStartTime(blue.time.TimeUnit.beats(currentStart - min));
         }
 
-        this.setSubjectiveDuration(blue.time.TimeUnit.beats(ScoreUtilities.getMaxTime(context, sObjects.toArray(new SoundObject[0]))));
+        this.setSubjectiveDuration(TimeDuration.beats(ScoreUtilities.getMaxTime(context, sObjects.toArray(new SoundObject[0]))));
 
     }
 
@@ -791,13 +791,13 @@ public class PolyObject extends ArrayList<SoundLayer> implements SoundObject,
     }
     
     @Override
-    public blue.time.TimeUnit getSubjectiveDuration() {
+    public TimeDuration getSubjectiveDuration() {
         return durationUnit;
     }
     
     @Override
-    public void setSubjectiveDuration(blue.time.TimeUnit timeUnit) {
-        this.durationUnit = timeUnit;
+    public void setSubjectiveDuration(TimeDuration duration) {
+        this.durationUnit = duration;
         ScoreObjectEvent event = new ScoreObjectEvent(this, ScoreObjectEvent.DURATION);
         fireSoundObjectEvent(event);
     }
@@ -821,13 +821,13 @@ public class PolyObject extends ArrayList<SoundLayer> implements SoundObject,
         final double currentDuration = getSubjectiveDuration().toBeats(context);
         double diff = currentStartTime - newStartTime;
         setStartTime(blue.time.TimeUnit.beats(newStartTime));
-        setSubjectiveDuration(blue.time.TimeUnit.beats(currentDuration + diff));
+        setSubjectiveDuration(TimeDuration.beats(currentDuration + diff));
     }
 
     @Override
     public void resizeRight(TimeContext context, double newEndTime) {
         double startTime = getStartTime().toBeats(context);
-        setSubjectiveDuration(blue.time.TimeUnit.beats(newEndTime - startTime));
+        setSubjectiveDuration(TimeDuration.beats(newEndTime - startTime));
     }
 
     @Override

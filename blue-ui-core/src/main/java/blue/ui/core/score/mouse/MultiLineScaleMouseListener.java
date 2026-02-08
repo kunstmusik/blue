@@ -28,7 +28,9 @@ import blue.score.TimeState;
 import blue.score.layers.AutomatableLayer;
 import blue.time.TimeContext;
 import blue.time.TimeContextManager;
+import blue.time.TimeDuration;
 import blue.time.TimeUnit;
+import blue.time.TimeUnitMath;
 import blue.time.TimeUtilities;
 import blue.ui.core.render.RealtimeRenderManager;
 import blue.ui.core.score.ModeManager;
@@ -63,7 +65,7 @@ class MultiLineScaleMouseListener extends BlueMouseAdapter {
     private final Map<ScoreObject, ScoreObjectRecord> scoreObjectRecords = new HashMap<>();
     
     // Record to store original TimeUnits and beat values for scaling
-    private record ScoreObjectRecord(TimeUnit startUnit, TimeUnit durationUnit, double startBeats, double endBeats) {}
+    private record ScoreObjectRecord(TimeUnit startUnit, TimeDuration durationUnit, double startBeats, double endBeats) {}
     private final Map<Line, Line> lineSourceCopyMap = new HashMap<>();
 
     TimeState timeState = null;
@@ -119,7 +121,7 @@ class MultiLineScaleMouseListener extends BlueMouseAdapter {
 
         for (var sObj : selectedObjects) {
             TimeUnit startUnit = sObj.getStartTime();
-            TimeUnit durationUnit = sObj.getSubjectiveDuration();
+            TimeDuration durationUnit = sObj.getSubjectiveDuration();
             double t1 = startUnit.toBeats(context);
             double t2 = t1 + durationUnit.toBeats(context);
 
@@ -187,7 +189,7 @@ class MultiLineScaleMouseListener extends BlueMouseAdapter {
 //                System.out.printf("%g : %g\n", start, end);
                 // Preserve the original TimeUnit types
                 sObj.setStartTime(TimeUtilities.beatsToTimeUnit(start, record.startUnit().getTimeBase(), ctx));
-                sObj.setSubjectiveDuration(TimeUtilities.beatsToTimeUnit(end - start, record.durationUnit().getTimeBase(), ctx));
+                sObj.setSubjectiveDuration(TimeUnitMath.beatsToDuration(end - start, record.durationUnit().getTimeBase(), ctx));
             });
 
             lineSourceCopyMap

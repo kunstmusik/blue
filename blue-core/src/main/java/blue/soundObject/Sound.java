@@ -28,7 +28,7 @@ import blue.noteProcessor.NoteProcessorChain;
 import blue.orchestra.BlueSynthBuilder;
 import blue.plugin.SoundObjectPlugin;
 import blue.time.TimeContext;
-import blue.time.TimeUnit;
+import blue.time.TimeDuration;
 import electric.xml.Element;
 import electric.xml.Elements;
 import java.util.Map;
@@ -80,7 +80,7 @@ public class Sound extends AbstractSoundObject {
     }
 
     @Override
-    public TimeUnit getObjectiveDuration(TimeContext context) {
+    public TimeDuration getObjectiveDuration(TimeContext context) {
         return getSubjectiveDuration();
     }
 

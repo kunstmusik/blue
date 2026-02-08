@@ -24,7 +24,7 @@ import blue.*;
 import blue.noteProcessor.NoteProcessorChain;
 import blue.orchestra.GenericInstrument;
 import blue.time.TimeContext;
-import blue.time.TimeUnit;
+import blue.time.TimeDuration;
 import blue.utility.ObjectUtilities;
 import electric.xml.Element;
 import java.util.Map;
@@ -58,7 +58,7 @@ public class FrozenSoundObject extends AbstractSoundObject {
     }
 
     @Override
-    public TimeUnit getObjectiveDuration(TimeContext context) {
+    public TimeDuration getObjectiveDuration(TimeContext context) {
         return this.getSubjectiveDuration();
     }
 

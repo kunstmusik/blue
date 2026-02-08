@@ -39,6 +39,11 @@ import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.JTextField;
 
+/**
+ * @deprecated Replaced by {@link SnapButton} and {@link RulerConfigDialog}.
+ * This class will be removed in a future release.
+ */
+@Deprecated
 class TimelinePropertiesPanel extends JComponent {
 
     JCheckBox snapEnabledBox = new JCheckBox(BlueSystem

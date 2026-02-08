@@ -33,6 +33,7 @@ import blue.plugin.SoundObjectPlugin;
 import blue.score.ScoreObjectEvent;
 import blue.time.TimeContext;
 import blue.time.TimeContextManager;
+import blue.time.TimeDuration;
 import blue.time.TimeUnit;
 import blue.utility.ScoreUtilities;
 import electric.xml.Element;
@@ -74,7 +75,7 @@ public class GenericScore extends AbstractSoundObject implements
     }
 
     @Override
-    public TimeUnit getObjectiveDuration(TimeContext context) {
+    public TimeDuration getObjectiveDuration(TimeContext context) {
         NoteList notes = null;
 
         try {
@@ -84,9 +85,9 @@ public class GenericScore extends AbstractSoundObject implements
             e.printStackTrace();
         }
         if (notes == null) {
-            return TimeUnit.beats(0.0);
+            return TimeDuration.beats(0.0);
         } else {
-            return TimeUnit.beats(ScoreUtilities.getTotalDuration(notes));
+            return TimeDuration.beats(ScoreUtilities.getTotalDuration(notes));
         }
     }
 

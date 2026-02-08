@@ -58,7 +58,6 @@ import javax.swing.JLayeredPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
-import javax.swing.JToggleButton;
 import javax.swing.JViewport;
 import javax.swing.KeyStroke;
 import javax.swing.SwingConstants;
@@ -105,7 +104,6 @@ import blue.soundObject.PolyObject;
 import blue.time.TimeBase;
 import blue.time.TimeContext;
 import blue.time.TimeContextManager;
-import blue.ui.components.IconFactory;
 import blue.ui.core.score.layers.LayerGroupPanel;
 import blue.ui.core.score.layers.LayerGroupUIProviderManager;
 import blue.ui.core.score.layers.SoundObjectProvider;
@@ -188,9 +186,9 @@ public final class ScoreTopComponent extends TopComponent
 
     double renderStart = -1.0f;
     double timePointer = -1.0f;
-    JToggleButton snapButton = new JToggleButton();
-    TimeFormatSelector timeFormatSelector = new TimeFormatSelector();
-    TimelinePropertiesPanel timeProperties = new TimelinePropertiesPanel();
+    SnapButton snapButton = new SnapButton();
+    JButton rulerConfigButton = new JButton("Ruler");
+    RulerConfigDialog rulerConfigDialog = null;
     TempoEditorControl tempoControlPanel = new TempoEditorControl();
     TempoEditorPanel tempoEditorPanel = new TempoEditorPanel();
     MeterRegionBar meterRegionBar = new MeterRegionBar();
@@ -559,7 +557,7 @@ public final class ScoreTopComponent extends TopComponent
             primaryRuler.setData(data);
             secondaryRuler.setData(data);
             markersBar.setData(data);
-            timeFormatSelector.setTimeState(timeState);
+            snapButton.setTimeState(timeState);
 
             this.data.addPropertyChangeListener(this);
 
@@ -842,12 +840,6 @@ public final class ScoreTopComponent extends TopComponent
 
         topSplitPane.setDividerLocation(175);
 
-        timeProperties.setVisible(false);
-        timeProperties.setPreferredSize(new Dimension(150, 40));
-
-        timeProperties.setVisible(false);
-        timeProperties.setPreferredSize(new Dimension(150, 40));
-
         var topLayout = new BoxLayout(topPanel, BoxLayout.X_AXIS);
         var modeSelectionPanel = new ModeSelectionPanel();
         modeSelectionPanel.setBorder(new EmptyBorder(5,5,5,5));
@@ -855,19 +847,23 @@ public final class ScoreTopComponent extends TopComponent
         topPanel.add(modeSelectionPanel);
         topPanel.add(scoreObjectBar);
         topPanel.add(Box.createHorizontalGlue());
-        topPanel.add(timeFormatSelector);
+        topPanel.add(snapButton);
+        topPanel.add(Box.createHorizontalStrut(5));
+        topPanel.add(rulerConfigButton);
         topPanel.add(Box.createHorizontalStrut(10));
         
-        // Note: Primary ruler format is updated via propertyChange() when timeDisplay changes
-
-        this.add(timeProperties, BorderLayout.EAST);
-
-        snapButton.addActionListener(
-                (ActionEvent e) -> {
-                    // showSnapPopup();
-                    timeProperties.setVisible(!timeProperties.isVisible());
+        // Ruler config button opens dialog
+        rulerConfigButton.setToolTipText("Configure ruler display settings");
+        rulerConfigButton.addActionListener((ActionEvent e) -> {
+            if (currentTimeState != null) {
+                if (rulerConfigDialog == null) {
+                    rulerConfigDialog = new RulerConfigDialog(
+                            WindowManager.getDefault().getMainWindow());
                 }
-        );
+                rulerConfigDialog.setTimeState(currentTimeState);
+                rulerConfigDialog.showDialog();
+            }
+        });
 
         scorePanel.add(renderStartPointer, JLayeredPane.DRAG_LAYER);
 
@@ -895,8 +891,6 @@ public final class ScoreTopComponent extends TopComponent
     }
 
     private void init() {
-        snapButton.setIcon(IconFactory.getLeftArrowIcon());
-        snapButton.setSelectedIcon(IconFactory.getRightArrowIcon());
         snapButton.setFocusable(false);
 
         Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
@@ -1262,7 +1256,7 @@ public final class ScoreTopComponent extends TopComponent
             syncRulerFormatsFromTimeState(timeState);
             markersBar.setRootTimeline(true);
             markersBar.setTimeState(timeState);
-            timeProperties.setTimeState(timeState);
+            snapButton.setTimeState(timeState);
             mouseWheelListener.setTimeState(timeState);
 
             timeState.addPropertyChangeListener(0, this);
@@ -1340,7 +1334,7 @@ public final class ScoreTopComponent extends TopComponent
             syncRulerFormatsFromTimeState(timeState);
             markersBar.setRootTimeline(false);
             markersBar.setTimeState(timeState);
-            timeProperties.setTimeState(timeState);
+            snapButton.setTimeState(timeState);
             mouseWheelListener.setTimeState(timeState);
 
             this.currentTimeState = timeState;
