@@ -45,7 +45,6 @@ import blue.BlueData;
 import blue.score.TimeState;
 import blue.services.render.RenderTimeManager;
 import blue.services.render.RenderTimeManagerListener;
-import blue.settings.PlaybackSettings;
 import blue.time.TimeContext;
 import blue.time.TimeContextManager;
 import blue.ui.utilities.BlueGradientFactory;
@@ -252,11 +251,9 @@ public final class TimeBar extends JPanel implements
 
             // Draw playback position marker (orange)
             if (renderTimeManager.isCurrentProjectRendering()) {
-                double latency = PlaybackSettings.getInstance().getPlaybackLatencyCorrection();
-
-                if (timePointer > latency && renderStart >= 0.0f) {
+                if (timePointer >= 0.0f && renderStart >= 0.0f) {
                     g.setColor(Color.ORANGE);
-                    double playbackTime = timePointer + renderStart - latency;
+                    double playbackTime = timePointer;
                     x = (int) ((playbackTime - startTime) * pixelTime) + clipBounds.x;
                     if (x >= clipBounds.x - 1 && x <= clipBounds.x + clipBounds.width + 1) {
                         g.drawLine(x, 0, x, this.getHeight());
@@ -888,8 +885,8 @@ public final class TimeBar extends JPanel implements
     }
 
     @Override
-    public void renderTimeUpdated(double timePointer) {
-        this.timePointer = timePointer;
+    public void renderTimeUpdated(double beatTime, double secondsTime) {
+        this.timePointer = beatTime;
         repaint();
     }
 

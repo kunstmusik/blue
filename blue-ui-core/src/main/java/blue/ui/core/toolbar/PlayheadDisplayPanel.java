@@ -23,7 +23,7 @@ import blue.BlueData;
 import blue.score.TimeState;
 import blue.services.render.RenderTimeManager;
 import blue.services.render.RenderTimeManagerListener;
-import blue.settings.PlaybackSettings;
+
 import blue.time.TimeBase;
 import blue.time.TimeContext;
 import blue.ui.core.score.TimeDisplayFormat;
@@ -141,16 +141,16 @@ public class PlayheadDisplayPanel extends JPanel {
 
             @Override
             public void renderEnded() {
+                if (data != null) {
+                    playheadTimeValue = data.getRenderStartTime();
+                }
                 updateDisplay();
             }
 
             @Override
-            public void renderTimeUpdated(double timePointer) {
-                if (timePointer >= 0) {
-                    double latency = PlaybackSettings.getInstance().getPlaybackLatencyCorrection();
-                    playheadTimeValue = timePointer + renderTimeManager.getRenderStartTime() - latency;
-                    updateDisplay();
-                }
+            public void renderTimeUpdated(double beatTime, double secondsTime) {
+                playheadTimeValue = beatTime;
+                updateDisplay();
             }
         });
 

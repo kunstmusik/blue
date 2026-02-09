@@ -1080,13 +1080,11 @@ public final class ScoreTopComponent extends TopComponent
             return;
         }
 
-        double latency = PlaybackSettings.getInstance().getPlaybackLatencyCorrection();
-
-        if (renderStart < 0.0f || timePointer < latency) {
+        if (renderStart < 0.0f || timePointer < 0.0f) {
             renderTimePointer.setLocation(-1, 0);
         } else {
             int oldX = renderTimePointer.getX();
-            int newX = Math.max(0, (int) ((renderStart + timePointer - latency) * data.getScore().getTimeState().getPixelSecond()));
+            int newX = Math.max(0, (int) (timePointer * data.getScore().getTimeState().getPixelSecond()));
             renderTimePointer.setLocation(newX, 0);
 
             if (playbackSettings.isFollowPlayback()) {
@@ -1102,8 +1100,7 @@ public final class ScoreTopComponent extends TopComponent
     private void scrollToRenderTime() {
         var rect = scrollPane.getViewport().getViewRect();
 
-        double latency = PlaybackSettings.getInstance().getPlaybackLatencyCorrection();
-        int newX = Math.max(0, (int) ((renderStart + timePointer - latency) * data.getScore().getTimeState().getPixelSecond()));
+        int newX = Math.max(0, (int) (timePointer * data.getScore().getTimeState().getPixelSecond()));
         scrollPane.getViewport().setViewPosition(new Point(newX, rect.y));
     }
 
@@ -1123,8 +1120,8 @@ public final class ScoreTopComponent extends TopComponent
     }
 
     @Override
-    public void renderTimeUpdated(double timePointer) {
-        this.timePointer = timePointer;
+    public void renderTimeUpdated(double beatTime, double secondsTime) {
+        this.timePointer = beatTime;
         updateRenderTimePointer();
     }
 

@@ -82,15 +82,25 @@ public class RenderTimeManagerImpl implements RenderTimeManager {
                 double elapsedTime = (nanoTime - initialTime) / 1000000000.0f;
                 double adjustedTime = elapsedTime - timeAdjust;
                 setTimePointer(elapsedTime);
-                
+
+                double absoluteBeatTime;
+                double absoluteSecondsTime;
+
+                // Apply latency correction in seconds domain
+                double latency = PlaybackSettings.getInstance().getPlaybackLatencyCorrection();
+
                 if (tempoMapper != null) {
                     double renderStartSeconds = tempoMapper.beatsToSeconds(getRenderStartTime());
-                    adjustedTime = tempoMapper.secondsToBeats(adjustedTime + renderStartSeconds);
-                    adjustedTime -= getRenderStartTime();
+                    absoluteSecondsTime = adjustedTime + renderStartSeconds - latency;
+                    absoluteBeatTime = tempoMapper.secondsToBeats(absoluteSecondsTime);
+                } else {
+                    // No tempo map: beats == seconds (implicit 60 BPM)
+                    absoluteSecondsTime = adjustedTime + getRenderStartTime() - latency;
+                    absoluteBeatTime = absoluteSecondsTime;
                 }
 
                 for (RenderTimeManagerListener renderListener : renderListeners) {
-                    renderListener.renderTimeUpdated(adjustedTime);
+                    renderListener.renderTimeUpdated(absoluteBeatTime, absoluteSecondsTime);
                 }
             }
         });
