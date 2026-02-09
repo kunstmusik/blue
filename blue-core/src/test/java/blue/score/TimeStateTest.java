@@ -19,7 +19,11 @@
  */
 package blue.score;
 
+import blue.time.TempoMap;
 import blue.time.TimeBase;
+import electric.xml.Document;
+import electric.xml.Element;
+import electric.xml.ParseException;
 import org.junit.Before;
 import org.junit.Test;
 import static org.junit.Assert.*;
@@ -98,7 +102,7 @@ public class TimeStateTest {
         timeState.setSecondaryTimeDisplay(TimeBase.SMPTE);
         timeState.setSecondaryRulerEnabled(true);
         timeState.setSnapEnabled(true);
-        timeState.setSnapValue(0.5);
+        timeState.setSnapValue(SnapValue.EIGHTH);
 
         TimeState copy = new TimeState(timeState);
 
@@ -106,7 +110,7 @@ public class TimeStateTest {
         assertEquals(TimeBase.SMPTE, copy.getSecondaryTimeDisplay());
         assertTrue(copy.isSecondaryRulerEnabled());
         assertTrue(copy.isSnapEnabled());
-        assertEquals(0.5, copy.getSnapValue(), 0.001);
+        assertEquals(SnapValue.EIGHTH, copy.getSnapValue());
     }
 
     // ========== Property Change Listener Tests ==========
@@ -145,6 +149,132 @@ public class TimeStateTest {
         timeState.setSecondaryTimeDisplay(TimeBase.FRAME);
 
         assertTrue(listenerCalled[0]);
+    }
+
+    // ========== SnapValue Tests ==========
+
+    @Test
+    public void testDefaultSnapValue() {
+        assertEquals(SnapValue.BEAT, timeState.getSnapValue());
+    }
+
+    @Test
+    public void testSetSnapValueMusical() {
+        timeState.setSnapValue(SnapValue.HALF);
+        assertEquals(SnapValue.HALF, timeState.getSnapValue());
+    }
+
+    @Test
+    public void testSetSnapValueTriplet() {
+        timeState.setSnapValue(SnapValue.EIGHTH_TRIPLET);
+        assertEquals(SnapValue.EIGHTH_TRIPLET, timeState.getSnapValue());
+    }
+
+    @Test
+    public void testSetSnapValueTimeBased() {
+        timeState.setSnapValue(SnapValue.ONE_SECOND);
+        assertEquals(SnapValue.ONE_SECOND, timeState.getSnapValue());
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testSetSnapValueNullThrowsException() {
+        timeState.setSnapValue(null);
+    }
+
+    @Test
+    public void testSnapValuePropertyChangeEvent() {
+        final boolean[] listenerCalled = {false};
+        final SnapValue[] oldVal = {null};
+        final SnapValue[] newVal = {null};
+
+        timeState.addPropertyChangeListener(evt -> {
+            if ("snapValue".equals(evt.getPropertyName())) {
+                listenerCalled[0] = true;
+                oldVal[0] = (SnapValue) evt.getOldValue();
+                newVal[0] = (SnapValue) evt.getNewValue();
+            }
+        });
+
+        timeState.setSnapValue(SnapValue.SIXTEENTH);
+
+        assertTrue(listenerCalled[0]);
+        assertEquals(SnapValue.BEAT, oldVal[0]);
+        assertEquals(SnapValue.SIXTEENTH, newVal[0]);
+    }
+
+    // ========== getSnapValueInBeats Tests ==========
+
+    @Test
+    public void testGetSnapValueInBeatsMusical() {
+        timeState.setSnapValue(SnapValue.BEAT);
+        // Musical values are tempo-independent
+        double sv60 = timeState.getSnapValueInBeats(0.0, null, 44100);
+        assertEquals(1.0, sv60, 0.001);
+
+        TempoMap tempoMap = new TempoMap();
+        double sv120 = timeState.getSnapValueInBeats(0.0, tempoMap, 44100);
+        assertEquals(1.0, sv120, 0.001);
+    }
+
+    @Test
+    public void testGetSnapValueInBeatsTimeBased() {
+        timeState.setSnapValue(SnapValue.ONE_SECOND);
+        // 1 second at 60 BPM = 1 beat
+        double sv = timeState.getSnapValueInBeats(0.0, null, 44100);
+        assertEquals(1.0, sv, 0.001);
+
+        // 1 second at 120 BPM = 2 beats
+        TempoMap tempoMap = new TempoMap();
+        tempoMap.setEnabled(true);
+        tempoMap.setTempoPoint(0, 0.0, 120.0);
+        double sv120 = timeState.getSnapValueInBeats(0.0, tempoMap, 44100);
+        assertEquals(2.0, sv120, 0.001);
+    }
+
+    // ========== XML Serialization Tests ==========
+
+    @Test
+    public void testSnapValueXmlRoundTrip() {
+        timeState.setSnapValue(SnapValue.QUARTER_TRIPLET);
+        timeState.setSnapEnabled(true);
+
+        Element xml = timeState.saveAsXML();
+        TimeState loaded = TimeState.loadFromXML(xml);
+
+        assertEquals(SnapValue.QUARTER_TRIPLET, loaded.getSnapValue());
+        assertTrue(loaded.isSnapEnabled());
+    }
+
+    @Test
+    public void testSnapValueXmlBackwardCompatibilityLegacyDouble() throws ParseException {
+        // Simulate legacy XML with double snapValue (old format)
+        String xmlStr = "<timeState version=\"2\">" +
+                "<zoomIterations>0</zoomIterations>" +
+                "<snapEnabled>true</snapEnabled>" +
+                "<snapValue>0.5</snapValue>" +
+                "<timeDisplay>CSOUND_BEATS</timeDisplay>" +
+                "<secondaryTimeDisplay>TIME</secondaryTimeDisplay>" +
+                "<secondaryRulerEnabled>false</secondaryRulerEnabled>" +
+                "<smpteFrameRate>24.0</smpteFrameRate>" +
+                "</timeState>";
+        Document doc = new Document(xmlStr);
+        TimeState loaded = TimeState.loadFromXML(doc.getRoot());
+
+        // 0.5 should map to HALF via closestMatch
+        assertEquals(SnapValue.HALF, loaded.getSnapValue());
+        assertTrue(loaded.isSnapEnabled());
+    }
+
+    @Test
+    public void testSnapValueClosestMatch() {
+        assertEquals(SnapValue.BEAT, SnapValue.closestMatch(1.0));
+        assertEquals(SnapValue.HALF, SnapValue.closestMatch(0.5));
+        assertEquals(SnapValue.QUARTER, SnapValue.closestMatch(0.25));
+        assertEquals(SnapValue.EIGHTH, SnapValue.closestMatch(0.125));
+        assertEquals(SnapValue.BAR, SnapValue.closestMatch(4.0));
+        // Arbitrary value should find closest
+        assertEquals(SnapValue.BEAT, SnapValue.closestMatch(0.9));
+        assertEquals(SnapValue.HALF, SnapValue.closestMatch(0.45));
     }
 
     @Test

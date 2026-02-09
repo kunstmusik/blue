@@ -19,6 +19,7 @@
  */
 package blue.score;
 
+import blue.time.TempoMap;
 import blue.time.TimeBase;
 import blue.utility.XMLUtilities;
 import electric.xml.Element;
@@ -53,7 +54,7 @@ public class TimeState {
     private transient Vector<PropertyChangeListener> listeners = null;
 
     private boolean snapEnabled = false;
-    private double snapValue = 1.0f;
+    private SnapValue snapValue = SnapValue.BEAT;
     private TimeBase timeDisplay = TimeBase.CSOUND_BEATS;
     private TimeBase secondaryTimeDisplay = TimeBase.TIME;
     private boolean secondaryRulerEnabled = false;
@@ -111,17 +112,35 @@ public class TimeState {
         firePropertyChangeEvent(pce);
     }
 
-    public double getSnapValue() {
+    public SnapValue getSnapValue() {
         return this.snapValue;
     }
 
-    public void setSnapValue(double snapValue) {
-        PropertyChangeEvent pce = new PropertyChangeEvent(this, "snapValue",
-                this.snapValue, snapValue);
-
+    public void setSnapValue(SnapValue snapValue) {
+        if (snapValue == null) {
+            throw new IllegalArgumentException("snapValue cannot be null");
+        }
+        SnapValue oldVal = this.snapValue;
         this.snapValue = snapValue;
 
+        PropertyChangeEvent pce = new PropertyChangeEvent(this, "snapValue",
+                oldVal, snapValue);
         firePropertyChangeEvent(pce);
+    }
+
+    /**
+     * Calculates the snap value in beats for the given beat position,
+     * using the tempo at that position for time/SMPTE/sample-based snap values.
+     *
+     * @param beatPosition the beat position on the timeline (for tempo lookup)
+     * @param tempoMap the tempo map (may be null for constant tempo)
+     * @param sampleRate the audio sample rate
+     * @return snap value in beats
+     */
+    public double getSnapValueInBeats(double beatPosition,
+            TempoMap tempoMap, long sampleRate) {
+        double tempo = (tempoMap != null) ? tempoMap.getTempoAt(beatPosition) : 60.0;
+        return snapValue.toBeats(tempo, smpteFrameRate, sampleRate, getPixelSecond());
     }
 
     public TimeBase getTimeDisplay() {
@@ -247,8 +266,20 @@ public class TimeState {
                     timeState.zoomIterations = Integer.parseInt(nodeText);
                 case "snapEnabled" ->
                     timeState.snapEnabled = Boolean.parseBoolean(nodeText);
-                case "snapValue" ->
-                    timeState.snapValue = Double.parseDouble(nodeText);
+                case "snapValue" -> {
+                    // Try enum name first (current format), then legacy double
+                    try {
+                        timeState.snapValue = SnapValue.valueOf(nodeText);
+                    } catch (IllegalArgumentException e1) {
+                        // Legacy format: double value — find closest match
+                        try {
+                            double legacyVal = Double.parseDouble(nodeText);
+                            timeState.snapValue = SnapValue.closestMatch(legacyVal);
+                        } catch (NumberFormatException nfe) {
+                            timeState.snapValue = SnapValue.BEAT;
+                        }
+                    }
+                }
                 case "timeDisplay" ->
                     timeState.timeDisplay = parseTimeBase(nodeText, TimeBase.CSOUND_BEATS);
                 case "secondaryTimeDisplay" ->
@@ -311,7 +342,9 @@ public class TimeState {
                 this.zoomIterations));
         retVal.addElement(XMLUtilities.writeBoolean("snapEnabled",
                 this.snapEnabled));
-        retVal.addElement(XMLUtilities.writeDouble("snapValue", this.snapValue));
+        Element snapValueElem = new Element("snapValue");
+        snapValueElem.setText(this.snapValue.name());
+        retVal.addElement(snapValueElem);
         Element timeDisplayElem = new Element("timeDisplay");
         timeDisplayElem.setText(this.timeDisplay.name());
         retVal.addElement(timeDisplayElem);

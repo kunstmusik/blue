@@ -111,8 +111,9 @@ public final class PasteSoundObjectAction extends AbstractAction implements Cont
         double start = (double) p.x / timeState.getPixelSecond();
 
         if (timeState.isSnapEnabled()) {
+            TimeContext ctx = TimeContextManager.getContext();
             start = ScoreUtilities.getSnapValueStart(start,
-                    timeState.getSnapValue());
+                    timeState.getSnapValueInBeats(start, ctx.getTempoMap(), ctx.getSampleRate()));
         }
 
         List<Layer> allLayers = scorePath.getAllLayers();

@@ -21,6 +21,8 @@ package blue.score.layers.audio.ui;
 
 import blue.score.TimeState;
 import blue.score.layers.Layer;
+import blue.time.TimeContext;
+import blue.time.TimeContextManager;
 import blue.score.layers.LayerGroupDataEvent;
 import blue.score.layers.LayerGroupListener;
 import blue.score.layers.audio.core.AudioClip;
@@ -342,7 +344,9 @@ public class AudioLayersPanel extends JLayeredPane implements LayerGroupListener
         g.drawLine(0, getHeight() - 1, width, height - 1);
 
         if (timeState.isSnapEnabled()) {
-            int snapPixels = (int) (timeState.getSnapValue() * timeState.getPixelSecond());
+            TimeContext ctx = TimeContextManager.getContext();
+            double snapValue = timeState.getSnapValueInBeats(0.0, ctx.getTempoMap(), ctx.getSampleRate());
+            int snapPixels = (int) (snapValue * timeState.getPixelSecond());
             int x = 0;
             if (snapPixels <= 0) {
                 return;
@@ -350,7 +354,6 @@ public class AudioLayersPanel extends JLayeredPane implements LayerGroupListener
 
             g.setColor(VLINE_COLOR);
             
-            double snapValue = timeState.getSnapValue();
             double pixelSecond = timeState.getPixelSecond();
 
             for (int i = 0; x < getWidth(); i++) {

@@ -189,8 +189,9 @@ public class MoveScoreObjectsListener extends BlueMouseAdapter {
         if (timeState.isSnapEnabled()) {
 
             double tempStart = -minDiffTime + diffTime;
+            TimeContext ctx = TimeContextManager.getContext();
             double snappedStart = ScoreUtilities.getSnapValueMove(tempStart,
-                    timeState.getSnapValue());
+                    timeState.getSnapValueInBeats(tempStart, ctx.getTempoMap(), ctx.getSampleRate()));
 
             diffTime = snappedStart + minDiffTime;
 

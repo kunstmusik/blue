@@ -8,6 +8,8 @@ import blue.components.DragDirection;
 import blue.score.Score;
 import blue.score.TimeState;
 import blue.time.TempoMap;
+import blue.time.TimeContext;
+import blue.time.TimeContextManager;
 import blue.ui.utilities.UiUtilities;
 import blue.utility.ScoreUtilities;
 import java.awt.BasicStroke;
@@ -105,11 +107,12 @@ public class TempoEditor extends JComponent implements PropertyChangeListener {
         // Draw snap grid if enabled
         if (score != null && timeState != null && timeState.isSnapEnabled()) {
             g2d.setColor(Color.DARK_GRAY);
-            int snapPixels = (int) (timeState.getSnapValue() * timeState.getPixelSecond());
+            TimeContext ctx = TimeContextManager.getContext();
+            double snapValue = timeState.getSnapValueInBeats(0.0, ctx.getTempoMap(), ctx.getSampleRate());
+            int snapPixels = (int) (snapValue * timeState.getPixelSecond());
             if (snapPixels > 0) {
                 int height = getHeight();
                 int width = getWidth();
-                double snapValue = timeState.getSnapValue();
                 double pixelSecond = timeState.getPixelSecond();
                 int x = 0;
                 for (int i = 0; x < width; i++) {
@@ -436,7 +439,9 @@ public class TempoEditor extends JComponent implements PropertyChangeListener {
                     // Apply snap if enabled
                     if (timeState != null && timeState.isSnapEnabled() && 
                             !(e.isControlDown() && e.isShiftDown())) {
-                        beat = ScoreUtilities.getSnapValueStart(beat, timeState.getSnapValue());
+                        TimeContext ctx = TimeContextManager.getContext();
+                        beat = ScoreUtilities.getSnapValueStart(beat,
+                                timeState.getSnapValueInBeats(beat, ctx.getTempoMap(), ctx.getSampleRate()));
                     }
                     
                     double tempo = screenToDoubleTempo(y);
@@ -504,7 +509,10 @@ public class TempoEditor extends JComponent implements PropertyChangeListener {
                 
                 // Apply snap if enabled
                 if (timeState != null && timeState.isSnapEnabled() && !e.isShiftDown()) {
-                    int snapPixels = (int) (timeState.getSnapValue() * timeState.getPixelSecond());
+                    double beatPos = screenToDoubleBeat(x);
+                    TimeContext ctx = TimeContextManager.getContext();
+                    double sv = timeState.getSnapValueInBeats(beatPos, ctx.getTempoMap(), ctx.getSampleRate());
+                    int snapPixels = (int) (sv * timeState.getPixelSecond());
                     if (snapPixels > 0) {
                         int fraction = x % snapPixels;
                         x = x - fraction;

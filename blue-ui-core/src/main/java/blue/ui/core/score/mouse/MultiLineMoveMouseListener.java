@@ -140,8 +140,10 @@ class MultiLineMoveMouseListener extends BlueMouseAdapter {
             double translation = diffX / (double) timeState.getPixelSecond();
 
             if (timeState.isSnapEnabled() && !e.isControlDown()) {
+                double snapPos = -minTranslation + translation;
+                TimeContext ctx = TimeContextManager.getContext();
                 double newTime = ScoreUtilities.getSnapValueMove(
-                        -minTranslation + translation, timeState.getSnapValue());
+                        snapPos, timeState.getSnapValueInBeats(snapPos, ctx.getTempoMap(), ctx.getSampleRate()));
 
                 translation = newTime + minTranslation;
             }

@@ -130,6 +130,26 @@ public enum SnapValue {
     }
     
     /**
+     * Finds the SnapValue whose baseValue is closest to the given legacy double value.
+     * Only considers MUSICAL and TRIPLET categories (the ones historically stored as doubles).
+     * Falls back to BEAT if no close match is found.
+     */
+    public static SnapValue closestMatch(double legacyValue) {
+        SnapValue best = BEAT;
+        double bestDiff = Double.MAX_VALUE;
+        for (SnapValue sv : values()) {
+            if (sv.category == SnapCategory.MUSICAL || sv.category == SnapCategory.TRIPLET) {
+                double diff = Math.abs(sv.baseValue - legacyValue);
+                if (diff < bestDiff) {
+                    bestDiff = diff;
+                    best = sv;
+                }
+            }
+        }
+        return best;
+    }
+
+    /**
      * Rounds a raw snap value to the nearest musical subdivision.
      */
     private static double roundToNearestSnapValue(double rawValue) {

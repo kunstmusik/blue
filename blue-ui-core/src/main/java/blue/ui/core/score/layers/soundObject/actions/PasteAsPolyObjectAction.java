@@ -99,8 +99,9 @@ public final class PasteAsPolyObjectAction extends AbstractAction implements Con
         
 
         if (timeState.isSnapEnabled()) {
+            TimeContext ctx = TimeContextManager.getContext();
             start = ScoreUtilities.getSnapValueStart(start,
-                    timeState.getSnapValue());
+                    timeState.getSnapValueInBeats(start, ctx.getTempoMap(), ctx.getSampleRate()));
         }
 
         int minLayer = Integer.MAX_VALUE;

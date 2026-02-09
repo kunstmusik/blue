@@ -67,19 +67,8 @@ public class SnapButton extends JToggleButton implements PropertyChangeListener 
     }
     
     private void onSnapValueSelected(SnapValue snapValue) {
-        this.currentSnapValue = snapValue;
-        updateButtonText();
-        
         if (timeState != null) {
-            // For now, convert to simple beat value for backward compatibility
-            // In the future, TimeState could store SnapValue directly
-            double beatValue = snapValue.getBaseValue();
-            if (snapValue.getCategory() == SnapValue.SnapCategory.MUSICAL ||
-                snapValue.getCategory() == SnapValue.SnapCategory.TRIPLET) {
-                timeState.setSnapValue(beatValue);
-            }
-            // For time-based, SMPTE, and sample values, we'd need tempo context
-            // For now, just use the base value
+            timeState.setSnapValue(snapValue);
         }
     }
     
@@ -110,32 +99,11 @@ public class SnapButton extends JToggleButton implements PropertyChangeListener 
         isUpdating = true;
         try {
             setSelected(timeState.isSnapEnabled());
-            
-            // Try to match current snap value to a SnapValue enum
-            double snapValue = timeState.getSnapValue();
-            currentSnapValue = findClosestSnapValue(snapValue);
+            currentSnapValue = timeState.getSnapValue();
             updateButtonText();
         } finally {
             isUpdating = false;
         }
-    }
-    
-    private SnapValue findClosestSnapValue(double value) {
-        SnapValue closest = SnapValue.BEAT;
-        double closestDiff = Math.abs(SnapValue.BEAT.getBaseValue() - value);
-        
-        for (SnapValue sv : SnapValue.values()) {
-            if (sv.getCategory() == SnapValue.SnapCategory.MUSICAL ||
-                sv.getCategory() == SnapValue.SnapCategory.TRIPLET) {
-                double diff = Math.abs(sv.getBaseValue() - value);
-                if (diff < closestDiff) {
-                    closestDiff = diff;
-                    closest = sv;
-                }
-            }
-        }
-        
-        return closest;
     }
 
     @Override
@@ -152,8 +120,7 @@ public class SnapButton extends JToggleButton implements PropertyChangeListener 
                 }
             }
             case "snapValue" -> {
-                double value = (double) evt.getNewValue();
-                currentSnapValue = findClosestSnapValue(value);
+                currentSnapValue = (SnapValue) evt.getNewValue();
                 updateButtonText();
             }
         }

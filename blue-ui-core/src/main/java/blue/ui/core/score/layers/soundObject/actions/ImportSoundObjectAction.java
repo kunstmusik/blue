@@ -110,9 +110,13 @@ public final class ImportSoundObjectAction extends AbstractAction
                     Layer layer = scorePath.getGlobalLayerForY(p.y);
 
                     if (timeState.isSnapEnabled()) {
-                        int snapPixels = (int) (timeState.getSnapValue() * timeState.getPixelSecond());
-
-                        start = start - (start % snapPixels);
+                        double beatPos = start / timeState.getPixelSecond();
+                        TimeContext ctx = TimeContextManager.getContext();
+                        double sv = timeState.getSnapValueInBeats(beatPos, ctx.getTempoMap(), ctx.getSampleRate());
+                        int snapPixels = (int) (sv * timeState.getPixelSecond());
+                        if (snapPixels > 0) {
+                            start = start - (start % snapPixels);
+                        }
                     }
 
                     double startTime = start / timeState.getPixelSecond();

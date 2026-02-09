@@ -109,8 +109,9 @@ public final class AddSoundObjectActionsPresenter extends AbstractAction impleme
                 double start = p.getX() / timeState.getPixelSecond();
 
                 if (timeState.isSnapEnabled()) {
+                    TimeContext context = TimeContextManager.getContext();
                     start = ScoreUtilities.getSnapValueStart(start,
-                            timeState.getSnapValue());
+                            timeState.getSnapValueInBeats(start, context.getTempoMap(), context.getSampleRate()));
                 }
                 
                 // Use the primary ruler's TimeBase for the default TimeUnit type

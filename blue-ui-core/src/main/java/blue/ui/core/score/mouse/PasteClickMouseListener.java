@@ -23,6 +23,8 @@ import blue.plugin.ScoreMouseListenerPlugin;
 import blue.BlueSystem;
 import blue.components.AlphaMarquee;
 import blue.score.TimeState;
+import blue.time.TimeContext;
+import blue.time.TimeContextManager;
 import blue.ui.core.score.ModeManager;
 import blue.ui.core.score.ScoreController;
 import blue.ui.core.score.ScoreMode;
@@ -67,8 +69,9 @@ public class PasteClickMouseListener extends BlueMouseAdapter {
             double start = (double) p.x / timeState.getPixelSecond();
 
             if (timeState.isSnapEnabled()) {
+                TimeContext ctx = TimeContextManager.getContext();
                 start = ScoreUtilities.getSnapValueStart(start,
-                        timeState.getSnapValue());
+                        timeState.getSnapValueInBeats(start, ctx.getTempoMap(), ctx.getSampleRate()));
             }
 
             switch (ModeManager.getInstance().getMode()) {

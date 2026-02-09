@@ -456,7 +456,9 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
         g.drawLine(0, getHeight() - 1, width, getHeight() - 1);
 
         if (timeState.isSnapEnabled()) {
-            int snapPixels = (int) (timeState.getSnapValue() * timeState.getPixelSecond());
+            TimeContext ctx = TimeContextManager.getContext();
+            double snapValue = timeState.getSnapValueInBeats(0.0, ctx.getTempoMap(), ctx.getSampleRate());
+            int snapPixels = (int) (snapValue * timeState.getPixelSecond());
 
             int x = 0;
             if (snapPixels <= 0) {
@@ -466,9 +468,7 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
             g.setColor(VLINE_COLOR);
 
             int height = getPolyObject().getTotalHeight();
-            double snapValue = timeState.getSnapValue();
             double pixelSecond = timeState.getPixelSecond();
-            double time;
             for (int i = 0; x < width; i++) {
                 x = (int) ((i * snapValue) * pixelSecond);
                 g.drawLine(x, 0, x, height);

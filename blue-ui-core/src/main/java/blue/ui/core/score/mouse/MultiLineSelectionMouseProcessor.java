@@ -24,6 +24,8 @@ import blue.ui.core.score.layers.soundObject.*;
 import blue.components.AlphaMarquee;
 import blue.plugin.ScoreMouseListenerPlugin;
 import blue.score.TimeState;
+import blue.time.TimeContext;
+import blue.time.TimeContextManager;
 import blue.score.layers.Layer;
 import blue.score.layers.ScoreObjectLayer;
 import blue.ui.core.render.RealtimeRenderManager;
@@ -113,8 +115,9 @@ class MultiLineSelectionMouseProcessor extends BlueMouseAdapter {
 
             double startTime = startX / (double) timeState.getPixelSecond();
             if (timeState.isSnapEnabled()) {
+                TimeContext ctx = TimeContextManager.getContext();
                 startTime = ScoreUtilities.getSnapValueStart(startTime,
-                        timeState.getSnapValue());
+                        timeState.getSnapValueInBeats(startTime, ctx.getTempoMap(), ctx.getSampleRate()));
                 startX = (int) (startTime * timeState.getPixelSecond());
             }
 
@@ -140,8 +143,9 @@ class MultiLineSelectionMouseProcessor extends BlueMouseAdapter {
             double mouseDragTime = x / (double) timeState.getPixelSecond();
 
             if (timeState.isSnapEnabled()) {
+                TimeContext ctx = TimeContextManager.getContext();
                 mouseDragTime = ScoreUtilities.getSnapValueMove(mouseDragTime,
-                        timeState.getSnapValue());
+                        timeState.getSnapValueInBeats(mouseDragTime, ctx.getTempoMap(), ctx.getSampleRate()));
                 x = (int) (mouseDragTime * timeState.getPixelSecond());
             }
 

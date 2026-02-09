@@ -47,6 +47,7 @@ import blue.services.render.RenderTimeManager;
 import blue.services.render.RenderTimeManagerListener;
 import blue.settings.PlaybackSettings;
 import blue.time.TimeContext;
+import blue.time.TimeContextManager;
 import blue.ui.utilities.BlueGradientFactory;
 import blue.ui.utilities.UiUtilities;
 import blue.utilities.MemoizedFunction;
@@ -115,7 +116,9 @@ public final class TimeBar extends JPanel implements
                 double time = (double) x / timeState.getPixelSecond();
 
                 if (timeState.isSnapEnabled() && !e.isShiftDown()) {
-                    time = Math.round(time / timeState.getSnapValue()) * timeState.getSnapValue();
+                    TimeContext ctx = TimeContextManager.getContext();
+                    double sv = timeState.getSnapValueInBeats(time, ctx.getTempoMap(), ctx.getSampleRate());
+                    time = Math.round(time / sv) * sv;
                 }
 
                 if (SwingUtilities.isLeftMouseButton(e)) {
@@ -161,7 +164,9 @@ public final class TimeBar extends JPanel implements
                 double time = (double) x / timeState.getPixelSecond();
 
                 if (timeState.isSnapEnabled() && !e.isShiftDown()) {
-                    time = Math.round(time / timeState.getSnapValue()) * timeState.getSnapValue();
+                    TimeContext ctx = TimeContextManager.getContext();
+                    double sv = timeState.getSnapValueInBeats(time, ctx.getTempoMap(), ctx.getSampleRate());
+                    time = Math.round(time / sv) * sv;
                 }
 
                 if (SwingUtilities.isLeftMouseButton(e)) {

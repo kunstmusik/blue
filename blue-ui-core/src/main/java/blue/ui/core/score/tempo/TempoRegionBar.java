@@ -448,7 +448,9 @@ public class TempoRegionBar extends JComponent implements PropertyChangeListener
                 
                 // Apply snap if enabled
                 if (timeState != null && timeState.isSnapEnabled()) {
-                    beat = ScoreUtilities.getSnapValueStart(beat, timeState.getSnapValue());
+                    TimeContext ctx = TimeContextManager.getContext();
+                    beat = ScoreUtilities.getSnapValueStart(beat,
+                            timeState.getSnapValueInBeats(beat, ctx.getTempoMap(), ctx.getSampleRate()));
                 }
                 
                 // Check if there's already a tempo point at this beat (with small tolerance)

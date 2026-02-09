@@ -23,6 +23,8 @@ import blue.BlueData;
 import blue.Marker;
 import blue.MarkersList;
 import blue.score.TimeState;
+import blue.time.TimeContext;
+import blue.time.TimeContextManager;
 import blue.ui.utilities.UiUtilities;
 import java.awt.BasicStroke;
 import java.awt.Color;
@@ -89,7 +91,9 @@ public class MarkersBar extends JPanel implements PropertyChangeListener, TableM
                 double time = (double) start / timeState.getPixelSecond();
 
                 if (timeState.isSnapEnabled() && !e.isShiftDown()) {
-                    time = Math.round(time / timeState.getSnapValue()) * timeState.getSnapValue();
+                    TimeContext ctx = TimeContextManager.getContext();
+                    double sv = timeState.getSnapValueInBeats(time, ctx.getTempoMap(), ctx.getSampleRate());
+                    time = Math.round(time / sv) * sv;
                 }
 
                 if (SwingUtilities.isLeftMouseButton(e)) {
@@ -128,7 +132,9 @@ public class MarkersBar extends JPanel implements PropertyChangeListener, TableM
                 double time = (double) start / timeState.getPixelSecond();
 
                 if (timeState.isSnapEnabled() && !e.isShiftDown()) {
-                    time = Math.round(time / timeState.getSnapValue()) * timeState.getSnapValue();
+                    TimeContext ctx = TimeContextManager.getContext();
+                    double sv = timeState.getSnapValueInBeats(time, ctx.getTempoMap(), ctx.getSampleRate());
+                    time = Math.round(time / sv) * sv;
                 }
 
                 if (SwingUtilities.isLeftMouseButton(e)) {
@@ -400,7 +406,9 @@ public class MarkersBar extends JPanel implements PropertyChangeListener, TableM
                     double time = markerStart + diffTime;
 
                     if (timeState.isSnapEnabled() && !e.isShiftDown()) {
-                        time = Math.round(time / timeState.getSnapValue()) * timeState.getSnapValue();
+                        TimeContext ctx = TimeContextManager.getContext();
+                        double sv = timeState.getSnapValueInBeats(time, ctx.getTempoMap(), ctx.getSampleRate());
+                        time = Math.round(time / sv) * sv;
                     }
 
                     time = Math.max(0.0, time);

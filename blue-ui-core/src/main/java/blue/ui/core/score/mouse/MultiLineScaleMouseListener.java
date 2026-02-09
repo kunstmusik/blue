@@ -167,8 +167,9 @@ class MultiLineScaleMouseListener extends BlueMouseAdapter {
             double newTime = x / pixelSecond;
 
             if (timeState.isSnapEnabled() && !e.isControlDown()) {
+                TimeContext ctx = TimeContextManager.getContext();
                 newTime = ScoreUtilities.getSnapValueMove(
-                        newTime, timeState.getSnapValue());
+                        newTime, timeState.getSnapValueInBeats(newTime, ctx.getTempoMap(), ctx.getSampleRate()));
             }
 
             ScaleLinear scale = selection.getScale();

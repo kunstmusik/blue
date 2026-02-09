@@ -29,6 +29,8 @@ import blue.projects.BlueProjectManager;
 import blue.score.ScoreObject;
 import blue.score.TimeState;
 import blue.score.layers.Layer;
+import blue.time.TimeContext;
+import blue.time.TimeContextManager;
 import blue.soundObject.Sound;
 import blue.time.TimeUnit;
 import blue.ui.core.score.ScorePath;
@@ -91,8 +93,9 @@ public final class PasteBSBAsSoundAction extends AbstractAction implements Conte
         double start = (double) p.x / timeState.getPixelSecond();
         
         if (timeState.isSnapEnabled()) {
+            TimeContext ctx = TimeContextManager.getContext();
             start = ScoreUtilities.getSnapValueStart(start,
-                    timeState.getSnapValue());
+                    timeState.getSnapValueInBeats(start, ctx.getTempoMap(), ctx.getSampleRate()));
         }
         
         Object obj = CopyBuffer.getBufferedObject(CopyBuffer.INSTRUMENT);

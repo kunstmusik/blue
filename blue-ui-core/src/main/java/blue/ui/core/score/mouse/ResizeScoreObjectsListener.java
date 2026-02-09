@@ -190,10 +190,10 @@ public class ResizeScoreObjectsListener extends BlueMouseAdapter {
 //        var currentSobj = currentScoreObjectView.getScoreObject();
 
         if (timeState.isSnapEnabled()) {
-            final double snapValue = timeState.getSnapValue();
+            double beatPos = xVal / (double) timeState.getPixelSecond();
+            final double snapValue = timeState.getSnapValueInBeats(beatPos, context.getTempoMap(), context.getSampleRate());
 
-            double endTime = ScoreUtilities.getSnapValueMove(
-                    xVal / (double) timeState.getPixelSecond(), snapValue);
+            double endTime = ScoreUtilities.getSnapValueMove(beatPos, snapValue);
 
             double minTime = ScoreUtilities.getSnapValueMove(
                     currentSObjTimes.start().toBeats(context) + snapValue / 2, snapValue);
@@ -235,13 +235,12 @@ public class ResizeScoreObjectsListener extends BlueMouseAdapter {
         double newStart;
 
         if (timeState.isSnapEnabled()) {
-            double snapValue = timeState.getSnapValue();
+            double beatPos = xVal / (double) timeState.getPixelSecond();
+            double snapValue = timeState.getSnapValueInBeats(beatPos, context.getTempoMap(), context.getSampleRate());
             double endTime = ScoreUtilities.getSnapValueMove(
                     currentSObjTimes.end(context).toBeats(context) - (snapValue * .5001f), snapValue);
 
-            newStart = ScoreUtilities.getSnapValueMove(
-                    xVal / (double) timeState.getPixelSecond(),
-                    snapValue);
+            newStart = ScoreUtilities.getSnapValueMove(beatPos, snapValue);
 
             newStart = (newStart < 0.0f) ? 0.0f : newStart;
 
