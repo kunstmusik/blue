@@ -96,6 +96,7 @@ import blue.score.ScoreObjectListener;
 import blue.score.TimeState;
 import blue.score.layers.Layer;
 import blue.score.layers.LayerGroup;
+import blue.score.layers.ScoreObjectLayer;
 import blue.services.render.RenderState;
 import blue.services.render.RenderTimeManager;
 import blue.services.render.RenderTimeManagerListener;
@@ -104,6 +105,9 @@ import blue.soundObject.PolyObject;
 import blue.time.TimeBase;
 import blue.time.TimeContext;
 import blue.time.TimeContextManager;
+import blue.time.TimeUnitMath;
+import blue.time.TimeUtilities;
+import blue.ui.core.score.RulerConfigDialog.TimebaseUpdateMode;
 import blue.ui.core.score.layers.LayerGroupPanel;
 import blue.ui.core.score.layers.LayerGroupUIProviderManager;
 import blue.ui.core.score.layers.SoundObjectProvider;
@@ -860,8 +864,15 @@ public final class ScoreTopComponent extends TopComponent
                     rulerConfigDialog = new RulerConfigDialog(
                             WindowManager.getDefault().getMainWindow());
                 }
+                TimeBase oldPrimaryTimeBase = currentTimeState.getTimeDisplay();
                 rulerConfigDialog.setTimeState(currentTimeState);
-                rulerConfigDialog.showDialog();
+                if (rulerConfigDialog.showDialog()) {
+                    TimeBase newTimeBase = currentTimeState.getTimeDisplay();
+                    TimebaseUpdateMode mode = rulerConfigDialog.getTimebaseUpdateMode();
+                    if (oldPrimaryTimeBase != newTimeBase && mode != TimebaseUpdateMode.DO_NOT_UPDATE) {
+                        applyTimebaseUpdate(oldPrimaryTimeBase, newTimeBase, mode);
+                    }
+                }
             }
         });
 
@@ -1486,6 +1497,44 @@ public final class ScoreTopComponent extends TopComponent
         leftPanel.revalidate();
     }
 
+    private void applyTimebaseUpdate(TimeBase oldTimeBase, TimeBase newTimeBase,
+            TimebaseUpdateMode mode) {
+        if (data == null) return;
+        
+        TimeContext ctx = TimeContextManager.getContext();
+        Score score = data.getScore();
+        
+        for (LayerGroup<? extends Layer> layerGroup : score) {
+            for (Layer layer : layerGroup) {
+                if (layer instanceof ScoreObjectLayer<?> scoreLayer) {
+                    for (ScoreObject sObj : scoreLayer) {
+                        boolean updateStart;
+                        boolean updateDuration;
+                        
+                        if (mode == TimebaseUpdateMode.UPDATE_ALL) {
+                            updateStart = true;
+                            updateDuration = true;
+                        } else {
+                            // UPDATE_MATCHING: per-field check
+                            updateStart = sObj.getStartTime().getTimeBase() == oldTimeBase;
+                            updateDuration = sObj.getSubjectiveDuration().getTimeBase() == oldTimeBase;
+                        }
+                        
+                        if (updateStart) {
+                            sObj.setStartTime(
+                                    TimeUtilities.convertTimeUnit(sObj.getStartTime(), newTimeBase, ctx));
+                        }
+                        if (updateDuration) {
+                            double durBeats = sObj.getSubjectiveDuration().toBeats(ctx);
+                            sObj.setSubjectiveDuration(
+                                    TimeUnitMath.beatsToDuration(durBeats, newTimeBase, ctx));
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
     public List<LayerGroupPanel> getLayerGroupPanels() {
         List<LayerGroupPanel> lgPanels = new ArrayList<>();
 

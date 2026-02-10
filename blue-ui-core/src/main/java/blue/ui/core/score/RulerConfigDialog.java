@@ -26,7 +26,10 @@ import java.awt.Frame;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.util.EnumMap;
+import java.util.Map;
 import javax.swing.BorderFactory;
+import javax.swing.ButtonGroup;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -34,6 +37,7 @@ import javax.swing.JComboBox;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JRadioButton;
 
 /**
  * Modal dialog for configuring ruler display settings.
@@ -42,6 +46,12 @@ import javax.swing.JPanel;
  * @author Steven Yi
  */
 public class RulerConfigDialog extends JDialog {
+
+    public enum TimebaseUpdateMode {
+        UPDATE_ALL,
+        UPDATE_MATCHING,
+        DO_NOT_UPDATE
+    }
 
     private static final double[] SMPTE_FRAME_RATES = {
         23.976, 24.0, 25.0, 29.97, 30.0, 50.0, 59.94, 60.0
@@ -56,6 +66,8 @@ public class RulerConfigDialog extends JDialog {
     private final JCheckBox secondaryEnabledCheck;
     private final JComboBox<TimeDisplayFormat> secondaryFormatCombo;
     private final JComboBox<String> smpteFrameRateCombo;
+    private final ButtonGroup updateModeGroup;
+    private final Map<TimebaseUpdateMode, JRadioButton> updateModeRadios;
     
     private TimeState timeState;
     private boolean confirmed = false;
@@ -67,6 +79,18 @@ public class RulerConfigDialog extends JDialog {
         secondaryEnabledCheck = new JCheckBox("Enabled");
         secondaryFormatCombo = new JComboBox<>(new DefaultComboBoxModel<>(TimeDisplayFormat.values()));
         smpteFrameRateCombo = new JComboBox<>(SMPTE_FRAME_RATE_LABELS);
+        
+        updateModeRadios = new EnumMap<>(TimebaseUpdateMode.class);
+        updateModeRadios.put(TimebaseUpdateMode.UPDATE_ALL,
+                new JRadioButton("Update all ScoreObject Timebases"));
+        updateModeRadios.put(TimebaseUpdateMode.UPDATE_MATCHING,
+                new JRadioButton("Update TimeBases that matched previous Timebase"));
+        updateModeRadios.put(TimebaseUpdateMode.DO_NOT_UPDATE,
+                new JRadioButton("Do not update ScoreObjects"));
+        updateModeRadios.get(TimebaseUpdateMode.UPDATE_ALL).setSelected(true);
+        
+        updateModeGroup = new ButtonGroup();
+        updateModeRadios.values().forEach(updateModeGroup::add);
         
         initComponents();
         pack();
@@ -98,9 +122,25 @@ public class RulerConfigDialog extends JDialog {
         gbc.weightx = 1.0;
         mainPanel.add(primaryFormatCombo, gbc);
         
-        // Secondary Ruler section
+        // ScoreObject Timebase Update options
         gbc.gridx = 0;
         gbc.gridy = 2;
+        gbc.gridwidth = 2;
+        gbc.weightx = 0;
+        gbc.insets = new Insets(10, 20, 2, 5);
+        mainPanel.add(updateModeRadios.get(TimebaseUpdateMode.UPDATE_ALL), gbc);
+        
+        gbc.gridy = 3;
+        gbc.insets = new Insets(2, 20, 2, 5);
+        mainPanel.add(updateModeRadios.get(TimebaseUpdateMode.UPDATE_MATCHING), gbc);
+        
+        gbc.gridy = 4;
+        gbc.insets = new Insets(2, 20, 5, 5);
+        mainPanel.add(updateModeRadios.get(TimebaseUpdateMode.DO_NOT_UPDATE), gbc);
+        
+        // Secondary Ruler section
+        gbc.gridx = 0;
+        gbc.gridy = 5;
         gbc.gridwidth = 2;
         gbc.weightx = 0;
         gbc.insets = new Insets(15, 5, 5, 5);
@@ -108,11 +148,11 @@ public class RulerConfigDialog extends JDialog {
         secondaryLabel.setFont(secondaryLabel.getFont().deriveFont(java.awt.Font.BOLD));
         mainPanel.add(secondaryLabel, gbc);
         
-        gbc.gridy = 3;
+        gbc.gridy = 6;
         gbc.insets = new Insets(5, 5, 5, 5);
         mainPanel.add(secondaryEnabledCheck, gbc);
         
-        gbc.gridy = 4;
+        gbc.gridy = 7;
         gbc.gridwidth = 1;
         mainPanel.add(new JLabel("Format:"), gbc);
         
@@ -122,7 +162,7 @@ public class RulerConfigDialog extends JDialog {
         
         // SMPTE Settings section
         gbc.gridx = 0;
-        gbc.gridy = 5;
+        gbc.gridy = 8;
         gbc.gridwidth = 2;
         gbc.weightx = 0;
         gbc.insets = new Insets(15, 5, 5, 5);
@@ -130,7 +170,7 @@ public class RulerConfigDialog extends JDialog {
         smpteLabel.setFont(smpteLabel.getFont().deriveFont(java.awt.Font.BOLD));
         mainPanel.add(smpteLabel, gbc);
         
-        gbc.gridy = 6;
+        gbc.gridy = 9;
         gbc.gridwidth = 1;
         gbc.insets = new Insets(5, 5, 5, 5);
         mainPanel.add(new JLabel("Frame Rate:"), gbc);
@@ -238,6 +278,18 @@ public class RulerConfigDialog extends JDialog {
     }
     
     /**
+     * Returns the selected ScoreObject timebase update mode.
+     */
+    public TimebaseUpdateMode getTimebaseUpdateMode() {
+        for (var entry : updateModeRadios.entrySet()) {
+            if (entry.getValue().isSelected()) {
+                return entry.getKey();
+            }
+        }
+        return TimebaseUpdateMode.UPDATE_ALL;
+    }
+    
+    /**
      * Returns true if the user clicked OK.
      */
     public boolean isConfirmed() {
@@ -249,6 +301,7 @@ public class RulerConfigDialog extends JDialog {
      */
     public boolean showDialog() {
         confirmed = false;
+        updateModeRadios.get(TimebaseUpdateMode.UPDATE_ALL).setSelected(true);
         setVisible(true);
         return confirmed;
     }
