@@ -50,7 +50,7 @@ public class MarkersList implements TableModel, PropertyChangeListener {
         return markers.contains(m);
     }
 
-    public void addMarker(double time) {
+    public Marker addMarker(double time) {
         String name = "Marker" + (markers.size() + 1);
 
         Marker m = new Marker();
@@ -58,6 +58,7 @@ public class MarkersList implements TableModel, PropertyChangeListener {
         m.setName(name);
 
         addMarker(m);
+        return m;
     }
 
     public void addMarker(Marker marker) {

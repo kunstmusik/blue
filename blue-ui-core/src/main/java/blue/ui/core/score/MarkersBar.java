@@ -74,6 +74,7 @@ public class MarkersBar extends JPanel implements PropertyChangeListener, TableM
         var mouseListener = new MouseInputAdapter() {
 
             int start;
+            Marker dragMarker = null;
 
             @Override
             public void mousePressed(MouseEvent e) {
@@ -83,6 +84,7 @@ public class MarkersBar extends JPanel implements PropertyChangeListener, TableM
                 }
 
                 start = e.getX();
+                dragMarker = null;
 
                 if (start < 0) {
                     start = 0;
@@ -98,8 +100,7 @@ public class MarkersBar extends JPanel implements PropertyChangeListener, TableM
 
                 if (SwingUtilities.isLeftMouseButton(e)) {
                     if (e.isShiftDown() && rootTimeline) {
-                        data.getMarkersList().addMarker(time);
-
+                        dragMarker = data.getMarkersList().addMarker(time);
                     } else {
                         data.setRenderStartTime(time);
                     }
@@ -108,10 +109,7 @@ public class MarkersBar extends JPanel implements PropertyChangeListener, TableM
 
             @Override
             public void mouseReleased(MouseEvent e) {
-                // int end = e.getX();
-                // System.out.println("[for time rescaling]");
-                // System.out.println("start: " + start + " end: " + end);
-                //
+                dragMarker = null;
             }
 
             @Override
@@ -120,13 +118,13 @@ public class MarkersBar extends JPanel implements PropertyChangeListener, TableM
                     return;
                 }
 
-                int start = e.getX();
+                int x = e.getX();
 
-                if (start < 0) {
-                    start = 0;
+                if (x < 0) {
+                    x = 0;
                 }
 
-                double time = (double) start / timeState.getPixelSecond();
+                double time = (double) x / timeState.getPixelSecond();
 
                 if (timeState.isSnapEnabled() && !e.isShiftDown()) {
                     TimeContext ctx = TimeContextManager.getContext();
@@ -134,8 +132,15 @@ public class MarkersBar extends JPanel implements PropertyChangeListener, TableM
                     time = Math.round(time / sv) * sv;
                 }
 
+                time = Math.max(0.0, time);
+
                 if (SwingUtilities.isLeftMouseButton(e)) {
-                    data.setRenderStartTime(time);
+                    if (dragMarker != null) {
+                        dragMarker.setTime(time);
+                        checkScroll(e.getPoint());
+                    } else {
+                        data.setRenderStartTime(time);
+                    }
                 } 
             }
         };
@@ -328,8 +333,7 @@ public class MarkersBar extends JPanel implements PropertyChangeListener, TableM
 
             var mouseListener = new MouseInputAdapter() {
 
-                int start;
-                double markerStart = -1.0;
+                boolean isDragging = false;
 
                 @Override
                 public void mousePressed(MouseEvent e) {
@@ -368,35 +372,24 @@ public class MarkersBar extends JPanel implements PropertyChangeListener, TableM
                             }
                         }
                     } else {
-                        Point p = SwingUtilities.convertPoint(PlayMarker.this, e.getPoint(), getParent());
-                        start = p.x;
-
-                        if (start < 0) {
-                            start = 0;
-                        }
-
-                        markerStart = marker.getTime();
+                        isDragging = true;
                     }
                 }
 
                 @Override
-
                 public void mouseReleased(MouseEvent e) {
-                    // TODO - add undoability?
-                    start = -1;
+                    isDragging = false;
                 }
 
                 @Override
                 public void mouseDragged(MouseEvent e) {
-                    if (start < 0) {
+                    if (!isDragging) {
                         return;
                     }
                     Point p = SwingUtilities.convertPoint(PlayMarker.this, e.getPoint(), getParent());
-                    int diffX = p.x - start;
+                    int x = Math.max(0, p.x);
 
-                    double diffTime = (double) diffX / timeState.getPixelSecond();
-
-                    double time = markerStart + diffTime;
+                    double time = (double) x / timeState.getPixelSecond();
 
                     if (timeState.isSnapEnabled() && !e.isShiftDown()) {
                         TimeContext ctx = TimeContextManager.getContext();
@@ -421,7 +414,9 @@ public class MarkersBar extends JPanel implements PropertyChangeListener, TableM
 
         @Override
         public String getToolTipText() {
-            return marker.getName() + " [" + marker.getTime() + "]";
+            TimeContext ctx = TimeContextManager.getContext();
+            var format = TimeDisplayFormat.fromTimeBase(timeState.getTimeDisplay());
+            return marker.getName() + " [" + format.format(marker.getTime(), ctx) + "]";
         }
 
         @Override
