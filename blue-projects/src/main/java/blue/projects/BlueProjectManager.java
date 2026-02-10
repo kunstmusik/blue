@@ -118,9 +118,15 @@ public class BlueProjectManager {
         ProjectProperties proj = blueData.getProjectProperties();
         proj.author = ProjectDefaultsSettings.getInstance().defaultAuthor;
         
-        // Set default SMPTE frame rate for new projects
-        blueData.getScore().getTimeState().setSmpteFrameRate(
-                ProjectDefaultsSettings.getInstance().defaultSmpteFrameRate);
+        // Set default timeline settings for new projects
+        var timeState = blueData.getScore().getTimeState();
+        var defaults = ProjectDefaultsSettings.getInstance();
+        timeState.setTimeDisplay(defaults.defaultPrimaryTimeBase);
+        timeState.setSecondaryTimeDisplay(defaults.defaultSecondaryTimeBase);
+        timeState.setSecondaryRulerEnabled(defaults.defaultSecondaryRulerEnabled);
+        timeState.setSnapEnabled(defaults.defaultSnapEnabled);
+        timeState.setSnapValue(defaults.defaultSnapValue);
+        timeState.setSmpteFrameRate(defaults.defaultSmpteFrameRate);
 
         RealtimeRenderSettings rtSettings = RealtimeRenderSettings.getInstance();
 
