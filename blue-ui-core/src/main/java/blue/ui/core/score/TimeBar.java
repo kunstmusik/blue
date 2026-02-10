@@ -125,10 +125,7 @@ public final class TimeBar extends JPanel implements
                     isDragging = false;
                     dragStartX = x;
                     dragStartTime = time;
-                } else if (UiUtilities.isRightMouseButton(e)) {
-                    // Right-click sets render end immediately
-                    data.setRenderEndTime(time);
-                }
+                } 
             }
 
             @Override
@@ -183,10 +180,7 @@ public final class TimeBar extends JPanel implements
                         checkScroll(e.getPoint());
                         repaint();
                     }
-                } else if (UiUtilities.isRightMouseButton(e)) {
-                    data.setRenderEndTime(time);
-                    checkScroll(e.getPoint());
-                }
+                } 
             }
         });
 

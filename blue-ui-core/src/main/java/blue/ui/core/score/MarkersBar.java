@@ -103,10 +103,7 @@ public class MarkersBar extends JPanel implements PropertyChangeListener, TableM
                     } else {
                         data.setRenderStartTime(time);
                     }
-                } else if (UiUtilities.isRightMouseButton(e)) {
-                    data.setRenderEndTime(time);
-                }
-
+                } 
             }
 
             @Override
@@ -139,11 +136,7 @@ public class MarkersBar extends JPanel implements PropertyChangeListener, TableM
 
                 if (SwingUtilities.isLeftMouseButton(e)) {
                     data.setRenderStartTime(time);
-                } else if (UiUtilities.isRightMouseButton(e)) {
-                    data.setRenderEndTime(time);
-                    checkScroll(e.getPoint());
-                }
-
+                } 
             }
         };
 
