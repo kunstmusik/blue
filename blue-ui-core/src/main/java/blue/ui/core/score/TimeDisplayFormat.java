@@ -65,7 +65,7 @@ public enum TimeDisplayFormat {
                 return BEATS.format(beatPosition, context);
             }
             var meterMap = context.getMeterMap();
-            var bbt = meterMap.beatsToBBT(beatPosition, context.getPPQ());
+            var bbt = meterMap.beatsToBBT(beatPosition, TimeContext.DEFAULT_PPQ);
             return bbt.toString();
         }
         
@@ -75,7 +75,7 @@ public enum TimeDisplayFormat {
                 return BEATS.formatCompact(beatPosition, context);
             }
             var meterMap = context.getMeterMap();
-            var bbt = meterMap.beatsToBBT(beatPosition, context.getPPQ());
+            var bbt = meterMap.beatsToBBT(beatPosition, TimeContext.DEFAULT_PPQ);
             // Compact: show bar.beat (omit ticks if 0)
             if (bbt.getTicks() == 0) {
                 return String.format("%d.%d", bbt.getBar(), bbt.getBeat());
@@ -89,7 +89,7 @@ public enum TimeDisplayFormat {
                 return BEATS.format(durationBeats, context);
             }
             var meter = context.getMeterMap().get(0).getMeter();
-            int ppq = context.getPPQ();
+            int ppq = TimeContext.DEFAULT_PPQ;
             double beatsPerBar = meter.getMeasureBeatDuration();
             double beatScale = 4.0 / meter.beatLength;
             long bars = (long) (durationBeats / beatsPerBar);
@@ -117,7 +117,7 @@ public enum TimeDisplayFormat {
                 return BEATS.format(beatPosition, context);
             }
             var meterMap = context.getMeterMap();
-            var bbst = meterMap.beatsToBBST(beatPosition, context.getPPQ());
+            var bbst = meterMap.beatsToBBST(beatPosition, TimeContext.DEFAULT_PPQ);
             return bbst.toString();
         }
         
@@ -127,7 +127,7 @@ public enum TimeDisplayFormat {
                 return BEATS.formatCompact(beatPosition, context);
             }
             var meterMap = context.getMeterMap();
-            var bbst = meterMap.beatsToBBST(beatPosition, context.getPPQ());
+            var bbst = meterMap.beatsToBBST(beatPosition, TimeContext.DEFAULT_PPQ);
             // Compact: show bar.beat.sixteenth (omit ticks if 0)
             if (bbst.getTicks() == 0) {
                 return String.format("%d.%d.%d", bbst.getBar(), bbst.getBeat(), bbst.getSixteenth());
@@ -141,7 +141,7 @@ public enum TimeDisplayFormat {
                 return BEATS.format(durationBeats, context);
             }
             var meter = context.getMeterMap().get(0).getMeter();
-            int ppq = context.getPPQ();
+            int ppq = TimeContext.DEFAULT_PPQ;
             double beatsPerBar = meter.getMeasureBeatDuration();
             double beatScale = 4.0 / meter.beatLength;
             long bars = (long) (durationBeats / beatsPerBar);
@@ -261,8 +261,6 @@ public enum TimeDisplayFormat {
      * Standard frame rates: 24, 25, 29.97, 30 fps.
      */
     SMPTE("SMPTE", "00:00:00:00", TimeBase.SMPTE) {
-        private static final double DEFAULT_FRAME_RATE = 30.0;
-        
         @Override
         public String format(double beatPosition, TimeContext context) {
             double seconds = beatsToSeconds(beatPosition, context);
@@ -276,17 +274,21 @@ public enum TimeDisplayFormat {
         }
         
         private double getFrameRate(TimeContext context) {
-            // TODO: Get frame rate from project settings when available
-            return DEFAULT_FRAME_RATE;
+            if (context != null) {
+                return context.getSmpteFrameRate();
+            }
+            return TimeContext.DEFAULT_SMPTE_FRAME_RATE;
         }
         
         private String formatSMPTE(double seconds, double frameRate) {
-            int totalFrames = (int) (seconds * frameRate);
-            int frames = (int) (totalFrames % frameRate);
-            int totalSecs = totalFrames / (int) frameRate;
-            int secs = totalSecs % 60;
-            int mins = (totalSecs / 60) % 60;
-            int hours = totalSecs / 3600;
+            int hours = (int) (seconds / 3600);
+            int mins = (int) ((seconds % 3600) / 60);
+            int secs = (int) (seconds % 60);
+            int frames = (int) ((seconds - (int) seconds) * frameRate);
+            // Clamp frames to valid range
+            int maxFrames = (int) frameRate - 1;
+            if (frames > maxFrames) frames = maxFrames;
+            if (frames < 0) frames = 0;
             
             return String.format("%02d:%02d:%02d:%02d", hours, mins, secs, frames);
         }

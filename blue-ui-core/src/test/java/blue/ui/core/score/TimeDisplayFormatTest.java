@@ -161,6 +161,25 @@ public class TimeDisplayFormatTest {
         assertEquals("00:00:00:00", TimeDisplayFormat.SMPTE.format(0.0, context));
     }
 
+    @Test
+    public void testSmpteFormatUsesContextFrameRate() {
+        // Default context has 24 fps SMPTE frame rate
+        // At 60 BPM, 1 beat = 1 second → 1.5 seconds = 1 second + 12 frames at 24fps
+        assertEquals("00:00:01:12", TimeDisplayFormat.SMPTE.format(1.5, context));
+
+        // Change frame rate to 30 fps
+        context.setSmpteFrameRate(30.0);
+        // 1.5 seconds = 1 second + 15 frames at 30fps
+        assertEquals("00:00:01:15", TimeDisplayFormat.SMPTE.format(1.5, context));
+    }
+
+    @Test
+    public void testSmpteFormatWithNullContext() {
+        // Should fall back to DEFAULT_SMPTE_FRAME_RATE (24 fps)
+        String formatted = TimeDisplayFormat.SMPTE.format(0.0, null);
+        assertEquals("00:00:00:00", formatted);
+    }
+
     // ========== SAMPLES format tests ==========
 
     @Test

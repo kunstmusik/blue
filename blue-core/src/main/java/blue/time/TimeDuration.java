@@ -94,10 +94,6 @@ public abstract class TimeDuration {
         return new DurationTime(hours, minutes, seconds, milliseconds);
     }
     
-    public static DurationSMPTE smpte(long hours, long minutes, long seconds, long frames) {
-        return new DurationSMPTE(hours, minutes, seconds, frames);
-    }
-    
     public static DurationFrames frames(long frameNumber) {
         return new DurationFrames(frameNumber);
     }
@@ -221,7 +217,7 @@ public abstract class TimeDuration {
             var meter = context.getMeterMap().get(0).getMeter();
             double beatsPerBar = meter.getMeasureBeatDuration();
             double beatScale = 4.0 / meter.beatLength;
-            return (bars * beatsPerBar) + (beats * beatScale) + (ticks / (double) context.getPPQ());
+            return (bars * beatsPerBar) + (beats * beatScale) + (ticks / (double) TimeContext.DEFAULT_PPQ);
         }
         
         @Override
@@ -331,8 +327,8 @@ public abstract class TimeDuration {
             var meter = context.getMeterMap().get(0).getMeter();
             double beatsPerBar = meter.getMeasureBeatDuration();
             double beatScale = 4.0 / meter.beatLength;
-            int totalTicks = toTotalTicks(context.getPPQ());
-            return (bars * beatsPerBar) + (beats * beatScale) + (totalTicks / (double) context.getPPQ());
+            int totalTicks = toTotalTicks(TimeContext.DEFAULT_PPQ);
+            return (bars * beatsPerBar) + (beats * beatScale) + (totalTicks / (double) TimeContext.DEFAULT_PPQ);
         }
         
         @Override
@@ -563,113 +559,6 @@ public abstract class TimeDuration {
     }
 
     /**
-     * Duration in SMPTE timecode (hours, minutes, seconds, frames).
-     * Frame rate must be provided by TimeContext for conversion to absolute time.
-     * 
-     * This is an immutable value object.
-     */
-    public static final class DurationSMPTE extends TimeDuration {
-        
-        public static final DurationSMPTE ZERO = new DurationSMPTE(0, 0, 0, 0);
-        
-        private final long hours;
-        private final long minutes;
-        private final long seconds;
-        private final long frames;
-        
-        public DurationSMPTE(long hours, long minutes, long seconds, long frames) {
-            if (hours < 0) {
-                throw new IllegalArgumentException("Hours cannot be negative: " + hours);
-            }
-            if (minutes < 0 || minutes >= 60) {
-                throw new IllegalArgumentException("Minutes must be 0-59, got: " + minutes);
-            }
-            if (seconds < 0 || seconds >= 60) {
-                throw new IllegalArgumentException("Seconds must be 0-59, got: " + seconds);
-            }
-            if (frames < 0) {
-                throw new IllegalArgumentException("Frames cannot be negative: " + frames);
-            }
-            this.hours = hours;
-            this.minutes = minutes;
-            this.seconds = seconds;
-            this.frames = frames;
-        }
-        
-        @Override
-        public TimeBase getTimeBase() {
-            return TimeBase.SMPTE;
-        }
-        
-        public long getHours() {
-            return hours;
-        }
-        
-        public long getMinutes() {
-            return minutes;
-        }
-        
-        public long getSeconds() {
-            return seconds;
-        }
-        
-        public long getFrames() {
-            return frames;
-        }
-        
-        public double toTotalSeconds(double frameRate) {
-            if (frameRate <= 0) {
-                throw new IllegalArgumentException("Frame rate must be positive: " + frameRate);
-            }
-            return hours * 3600.0 + minutes * 60.0 + seconds + frames / frameRate;
-        }
-        
-        @Override
-        public double toBeats(TimeContext context) {
-            // TODO: SMPTE frame rate should come from TimeContext
-            double frameRate = 30.0;
-            double secs = toTotalSeconds(frameRate);
-            return context.getTempoMap().secondsToBeats(secs);
-        }
-        
-        @Override
-        public double toSeconds(TimeContext context) {
-            // TODO: SMPTE frame rate should come from TimeContext
-            double frameRate = 30.0;
-            return toTotalSeconds(frameRate);
-        }
-        
-        @Override
-        public long toFrames(TimeContext context) {
-            double secs = toSeconds(context);
-            return Math.round(secs * context.getSampleRate());
-        }
-        
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (!(o instanceof DurationSMPTE)) return false;
-            DurationSMPTE that = (DurationSMPTE) o;
-            return hours == that.hours && minutes == that.minutes && 
-                   seconds == that.seconds && frames == that.frames;
-        }
-        
-        @Override
-        public int hashCode() {
-            int result = Long.hashCode(hours);
-            result = 31 * result + Long.hashCode(minutes);
-            result = 31 * result + Long.hashCode(seconds);
-            result = 31 * result + Long.hashCode(frames);
-            return result;
-        }
-        
-        @Override
-        public String toString() {
-            return String.format("DurationSMPTE[%02d:%02d:%02d:%02d]", hours, minutes, seconds, frames);
-        }
-    }
-
-    /**
      * Duration in audio sample frames.
      * Requires sample rate from TimeContext for conversion to time.
      * 
@@ -770,11 +659,6 @@ public abstract class TimeDuration {
             element.addElement("minutes").setText(Long.toString(d.getMinutes()));
             element.addElement("seconds").setText(Long.toString(d.getSeconds()));
             element.addElement("milliseconds").setText(Long.toString(d.getMilliseconds()));
-        } else if (this instanceof DurationSMPTE d) {
-            element.addElement("hours").setText(Long.toString(d.getHours()));
-            element.addElement("minutes").setText(Long.toString(d.getMinutes()));
-            element.addElement("seconds").setText(Long.toString(d.getSeconds()));
-            element.addElement("frames").setText(Long.toString(d.getFrames()));
         } else if (this instanceof DurationFrames d) {
             element.addElement("frameCount").setText(Long.toString(d.getFrameCount()));
         }
@@ -826,13 +710,6 @@ public abstract class TimeDuration {
                 long seconds = Long.parseLong(element.getTextString("seconds"));
                 long milliseconds = Long.parseLong(element.getTextString("milliseconds"));
                 yield new DurationTime(hours, minutes, seconds, milliseconds);
-            }
-            case "DurationSMPTE" -> {
-                long hours = Long.parseLong(element.getTextString("hours"));
-                long minutes = Long.parseLong(element.getTextString("minutes"));
-                long seconds = Long.parseLong(element.getTextString("seconds"));
-                long frames = Long.parseLong(element.getTextString("frames"));
-                yield new DurationSMPTE(hours, minutes, seconds, frames);
             }
             case "DurationFrames" -> {
                 long frameCount = Long.parseLong(element.getTextString("frameCount"));

@@ -32,7 +32,7 @@ package blue.time;
  * - BeatTime → direct (already in Csound beats)
  * - Csound beats → TempoMap → seconds
  * - Seconds → sample rate → frames
- * - Seconds → TimeValue/SMPTEValue
+ * - Seconds → TimeValue
  *
  * @author Steven Yi
  */
@@ -55,15 +55,20 @@ public class TimeUtilities {
         return hours * 3600 + minutes * 60 + seconds + milliseconds / 1000.0;
     }
     
-    // FIXME: need to review if this is correct
+    /**
+     * Converts seconds to SMPTE timecode string (HH:MM:SS:FF).
+     * Uses truncation (not rounding) for frame number to prevent overflow.
+     */
     public static String convertSecondsToSMPTE(double timeSeconds, double smpteFrameRate) {
         int hours = (int) (timeSeconds / 3600);
         int minutes = (int) ((timeSeconds % 3600) / 60);
         int seconds = (int) (timeSeconds % 60);
-        int frameNumber = (int) Math.round((timeSeconds - (int) timeSeconds) * smpteFrameRate);
-
-        String timeString = String.format("%02d:%02d:%02d.%02d", hours, minutes, seconds, frameNumber);
-        return timeString;
+        int frameNumber = (int) ((timeSeconds - (int) timeSeconds) * smpteFrameRate);
+        // Clamp to valid range
+        int maxFrames = (int) smpteFrameRate - 1;
+        if (frameNumber > maxFrames) frameNumber = maxFrames;
+        if (frameNumber < 0) frameNumber = 0;
+        return String.format("%02d:%02d:%02d:%02d", hours, minutes, seconds, frameNumber);
     }
     
     // ========== TimeUnit Conversion Methods ==========
@@ -95,11 +100,10 @@ public class TimeUtilities {
                 yield context.getTempoMap().secondsToBeats(seconds);
             }
             case SMPTE -> {
-                TimeUnit.SMPTEValue sv = (TimeUnit.SMPTEValue) timeUnit;
-                // TODO: SMPTE frame rate should come from TimeContext
-                double frameRate = 30.0; // Default, should be configurable
-                double seconds = sv.toTotalSeconds(frameRate);
-                yield context.getTempoMap().secondsToBeats(seconds);
+                // SMPTE is display-only — should not appear as a stored TimeUnit.
+                // Fall through to TIME handling.
+                throw new IllegalArgumentException(
+                        "SMPTE is display-only and cannot be stored as a TimeUnit");
             }
             case FRAME -> {
                 TimeUnit.FrameValue fv = (TimeUnit.FrameValue) timeUnit;
@@ -124,8 +128,8 @@ public class TimeUtilities {
         
         return switch (targetTimeBase) {
             case CSOUND_BEATS -> TimeUnit.beats(beats);
-            case BBT -> context.getMeterMap().beatsToBBT(beats, context.getPPQ());
-            case BBST -> context.getMeterMap().beatsToBBST(beats, context.getPPQ());
+            case BBT -> context.getMeterMap().beatsToBBT(beats, TimeContext.DEFAULT_PPQ);
+            case BBST -> context.getMeterMap().beatsToBBST(beats, TimeContext.DEFAULT_PPQ);
             case BBF -> context.getMeterMap().beatsToBBF(beats);
             case TIME -> {
                 double seconds = context.getTempoMap().beatsToSeconds(beats);
@@ -136,14 +140,13 @@ public class TimeUtilities {
                 yield TimeUnit.time(hours, minutes, secs, millis);
             }
             case SMPTE -> {
+                // SMPTE is display-only — produce a TimeValue instead
                 double seconds = context.getTempoMap().beatsToSeconds(beats);
-                // TODO: SMPTE frame rate should come from TimeContext
-                double frameRate = 30.0; // Default, should be configurable
                 int hours = (int) (seconds / 3600);
                 int minutes = (int) ((seconds % 3600) / 60);
                 int secs = (int) (seconds % 60);
-                int frames = (int) Math.round((seconds - (int) seconds) * frameRate);
-                yield TimeUnit.smpte(hours, minutes, secs, frames);
+                int millis = (int) Math.round((seconds - (int) seconds) * 1000);
+                yield TimeUnit.time(hours, minutes, secs, millis);
             }
             case FRAME -> {
                 double seconds = context.getTempoMap().beatsToSeconds(beats);

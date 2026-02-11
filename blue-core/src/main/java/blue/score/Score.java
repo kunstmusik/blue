@@ -35,6 +35,8 @@ import blue.util.ObservableArrayList;
 import blue.utility.ScoreUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -66,6 +68,8 @@ public class Score extends ObservableArrayList<LayerGroup<? extends Layer>> {
         }
         npc = new NoteProcessorChain();
         timeContext = new TimeContext();
+        syncSmpteFrameRate();
+        wireTimeStateListener();
     }
 
     public Score(Score score) {
@@ -76,6 +80,8 @@ public class Score extends ObservableArrayList<LayerGroup<? extends Layer>> {
         for (LayerGroup<? extends Layer> lg : score) {
             add(lg.deepCopyLG());
         }
+        syncSmpteFrameRate();
+        wireTimeStateListener();
     }
 
     public TimeContext getTimeContext() {
@@ -98,7 +104,33 @@ public class Score extends ObservableArrayList<LayerGroup<? extends Layer>> {
     }
 
     public void setTimeState(TimeState timeState) {
+        if (this.timeState != null) {
+            this.timeState.removePropertyChangeListener(smpteFrameRateListener);
+        }
         this.timeState = timeState;
+        syncSmpteFrameRate();
+        wireTimeStateListener();
+    }
+    
+    /**
+     * Copies smpteFrameRate from TimeState to TimeContext.
+     */
+    private void syncSmpteFrameRate() {
+        if (timeState != null && timeContext != null) {
+            timeContext.setSmpteFrameRate(timeState.getSmpteFrameRate());
+        }
+    }
+    
+    private final PropertyChangeListener smpteFrameRateListener = (PropertyChangeEvent evt) -> {
+        if ("smpteFrameRate".equals(evt.getPropertyName())) {
+            syncSmpteFrameRate();
+        }
+    };
+    
+    private void wireTimeStateListener() {
+        if (timeState != null) {
+            timeState.addPropertyChangeListener(smpteFrameRateListener);
+        }
     }
 
     public NoteProcessorChain getNoteProcessorChain() {
@@ -168,6 +200,10 @@ public class Score extends ObservableArrayList<LayerGroup<? extends Layer>> {
         if (score.timeContext == null) {
             score.timeContext = new TimeContext();
         }
+
+        // Sync smpteFrameRate from TimeState to TimeContext after load
+        score.syncSmpteFrameRate();
+        score.wireTimeStateListener();
 
         return score;
     }

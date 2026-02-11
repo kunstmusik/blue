@@ -116,8 +116,8 @@ public class TimeDurationTest {
     
     @Test
     public void testDurationBBTWithTicks() {
-        // 0 bars, 0 beats, 240 ticks at PPQ=480 = 0.5 beats
-        TimeDuration.DurationBBT d = TimeDuration.bbt(0, 0, 240);
+        // 0 bars, 0 beats, 480 ticks at PPQ=960 = 0.5 beats
+        TimeDuration.DurationBBT d = TimeDuration.bbt(0, 0, 480);
         assertEquals(0.5, d.toBeats(context), 0.001);
     }
     
@@ -189,10 +189,10 @@ public class TimeDurationTest {
     
     @Test
     public void testDurationBBSTTotalTicks() {
-        // sixteenth=2, ticks=60 at PPQ=480 → ticksPerSixteenth=120
-        // totalTicks = 2*120 + 60 = 300
+        // sixteenth=2, ticks=60 at PPQ=960 → ticksPerSixteenth=240
+        // totalTicks = 2*240 + 60 = 540
         TimeDuration.DurationBBST d = TimeDuration.bbst(0, 0, 2, 60);
-        assertEquals(300, d.toTotalTicks(480));
+        assertEquals(540, d.toTotalTicks(960));
     }
     
     @Test
@@ -334,55 +334,6 @@ public class TimeDurationTest {
         TimeDuration.time(0, 0, 0, 1000);
     }
     
-    // ========== DurationSMPTE Tests ==========
-    
-    @Test
-    public void testDurationSMPTEGetTimeBase() {
-        TimeDuration.DurationSMPTE d = TimeDuration.smpte(0, 0, 2, 0);
-        assertEquals(TimeBase.SMPTE, d.getTimeBase());
-    }
-    
-    @Test
-    public void testDurationSMPTETotalSeconds() {
-        // At 30 fps: 0:00:01:15 = 1 + 15/30 = 1.5 seconds
-        TimeDuration.DurationSMPTE d = TimeDuration.smpte(0, 0, 1, 15);
-        assertEquals(1.5, d.toTotalSeconds(30.0), 0.001);
-    }
-    
-    @Test
-    public void testDurationSMPTEConversions() {
-        // 0:00:02:00 at 30fps = 2 seconds
-        TimeDuration.DurationSMPTE d = TimeDuration.smpte(0, 0, 2, 0);
-        assertEquals(2.0, d.toSeconds(context), 0.001);
-        assertEquals(2.0, d.toBeats(context), 0.001); // 60 BPM
-        assertEquals(88200, d.toFrames(context));
-    }
-    
-    @Test
-    public void testDurationSMPTEEquality() {
-        TimeDuration.DurationSMPTE a = TimeDuration.smpte(0, 1, 30, 15);
-        TimeDuration.DurationSMPTE b = TimeDuration.smpte(0, 1, 30, 15);
-        TimeDuration.DurationSMPTE c = TimeDuration.smpte(0, 1, 30, 16);
-        
-        assertEquals(a, b);
-        assertNotEquals(a, c);
-    }
-    
-    @Test(expected = IllegalArgumentException.class)
-    public void testDurationSMPTENegativeHours() {
-        TimeDuration.smpte(-1, 0, 0, 0);
-    }
-    
-    @Test(expected = IllegalArgumentException.class)
-    public void testDurationSMPTENegativeFrames() {
-        TimeDuration.smpte(0, 0, 0, -1);
-    }
-    
-    @Test(expected = IllegalArgumentException.class)
-    public void testDurationSMPTEInvalidFrameRate() {
-        TimeDuration.smpte(0, 0, 1, 0).toTotalSeconds(0.0);
-    }
-    
     // ========== DurationFrames Tests ==========
     
     @Test
@@ -463,14 +414,6 @@ public class TimeDurationTest {
     @Test
     public void testDurationTimeXMLRoundTrip() throws Exception {
         TimeDuration original = TimeDuration.time(1, 30, 45, 500);
-        var xml = original.saveAsXML();
-        TimeDuration loaded = TimeDuration.loadFromXML(xml);
-        assertEquals(original, loaded);
-    }
-    
-    @Test
-    public void testDurationSMPTEXMLRoundTrip() throws Exception {
-        TimeDuration original = TimeDuration.smpte(0, 5, 30, 15);
         var xml = original.saveAsXML();
         TimeDuration loaded = TimeDuration.loadFromXML(xml);
         assertEquals(original, loaded);

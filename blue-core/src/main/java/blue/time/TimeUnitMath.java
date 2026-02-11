@@ -196,7 +196,7 @@ public final class TimeUnitMath {
                 double scaledBeat = remainingBeats / beatScale;
                 int wholeBeat = (int) scaledBeat;
                 double fractionalBeat = scaledBeat - wholeBeat;
-                int ticks = (int) Math.round(fractionalBeat * context.getPPQ());
+                int ticks = (int) Math.round(fractionalBeat * TimeContext.DEFAULT_PPQ);
                 yield TimeDuration.bbt(bars, wholeBeat, ticks);
             }
             case BBST -> {
@@ -208,8 +208,8 @@ public final class TimeUnitMath {
                 double scaledBeat = remainingBeats / beatScale;
                 int wholeBeat = (int) scaledBeat;
                 double fractionalBeat = scaledBeat - wholeBeat;
-                int totalTicks = (int) Math.round(fractionalBeat * context.getPPQ());
-                int ticksPerSixteenth = context.getPPQ() / 4;
+                int totalTicks = (int) Math.round(fractionalBeat * TimeContext.DEFAULT_PPQ);
+                int ticksPerSixteenth = TimeContext.DEFAULT_PPQ / 4;
                 int sixteenth = totalTicks / ticksPerSixteenth;
                 int subTicks = totalTicks % ticksPerSixteenth;
                 yield TimeDuration.bbst(bars, wholeBeat, sixteenth, subTicks);
@@ -239,16 +239,14 @@ public final class TimeUnitMath {
                 yield TimeDuration.time(h, m, s, ms);
             }
             case SMPTE -> {
+                // SMPTE is display-only — store as DurationTime instead
                 double seconds = context.getTempoMap().beatsToSeconds(beats);
-                // TODO: SMPTE frame rate should come from TimeContext
-                double frameRate = 30.0;
-                long totalFrames = Math.round(seconds * frameRate);
-                long framesPerSecond = (long) frameRate;
-                long h = totalFrames / (3600 * framesPerSecond);
-                long m = (totalFrames % (3600 * framesPerSecond)) / (60 * framesPerSecond);
-                long s = (totalFrames % (60 * framesPerSecond)) / framesPerSecond;
-                long f = totalFrames % framesPerSecond;
-                yield TimeDuration.smpte(h, m, s, f);
+                long totalMs = Math.round(seconds * 1000);
+                long h = totalMs / 3600000;
+                long m = (totalMs % 3600000) / 60000;
+                long s = (totalMs % 60000) / 1000;
+                long ms = totalMs % 1000;
+                yield TimeDuration.time(h, m, s, ms);
             }
             case FRAME -> {
                 double seconds = context.getTempoMap().beatsToSeconds(beats);

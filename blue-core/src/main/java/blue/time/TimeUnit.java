@@ -25,8 +25,11 @@ import electric.xml.Element;
  * Abstract base class for time value representations.
  * 
  * TimeUnits can represent time in different formats (beats, measure/beats, 
- * clock time, SMPTE, frames) and are converted between formats using a 
+ * clock time, frames) and are converted between formats using a 
  * TimeContext that provides meter, tempo, and sample rate information.
+ * 
+ * SMPTE timecode is display-only and is not a storage format.
+ * See {@link blue.ui.core.score.TimeDisplayFormat#SMPTE}.
  * 
  * All TimeUnit subclasses are immutable value objects.
  *
@@ -245,7 +248,8 @@ public abstract class TimeUnit {
      * Matches Ardour/Qtractor style.
      * 
      * Bar and beat numbers are 1-based.
-     * Ticks range from 0 to PPQ-1 (e.g., 0-479 at PPQ=480).
+     * Ticks range from 0 to PPQ-1 (0-959 at PPQ=960).
+     * PPQ is hardcoded at 960 via {@link TimeContext#DEFAULT_PPQ}.
      * 
      * This is an immutable value object.
      */
@@ -302,7 +306,7 @@ public abstract class TimeUnit {
             // Get the absolute beat position for bar:beat from MeterMap
             double absoluteBeats = context.getMeterMap().barBeatToBeats(bar, beat);
             // Add tick fraction
-            return absoluteBeats + (ticks / (double) context.getPPQ());
+            return absoluteBeats + (ticks / (double) TimeContext.DEFAULT_PPQ);
         }
         
         @Override
@@ -324,7 +328,7 @@ public abstract class TimeUnit {
             double thisBeats = this.toBeats(context);
             double otherBeats = other.toBeats(context);
             double resultBeats = thisBeats + otherBeats;
-            return context.getMeterMap().beatsToBBT(resultBeats, context.getPPQ());
+            return context.getMeterMap().beatsToBBT(resultBeats, TimeContext.DEFAULT_PPQ);
         }
         
         @Override
@@ -332,7 +336,7 @@ public abstract class TimeUnit {
             double thisBeats = this.toBeats(context);
             double otherBeats = other.toBeats(context);
             double resultBeats = Math.max(0, thisBeats - otherBeats);
-            return context.getMeterMap().beatsToBBT(resultBeats, context.getPPQ());
+            return context.getMeterMap().beatsToBBT(resultBeats, TimeContext.DEFAULT_PPQ);
         }
         
         /**
@@ -386,7 +390,8 @@ public abstract class TimeUnit {
      * 
      * Bar and beat numbers are 1-based.
      * Sixteenth is 1-4 (which 16th note within the beat).
-     * Ticks range from 0 to (PPQ/4)-1 (e.g., 0-119 at PPQ=480).
+     * Ticks range from 0 to (PPQ/4)-1 (0-239 at PPQ=960).
+     * PPQ is hardcoded at 960 via {@link TimeContext#DEFAULT_PPQ}.
      * 
      * This is an immutable value object.
      */
@@ -460,7 +465,7 @@ public abstract class TimeUnit {
         
         @Override
         public double toBeats(TimeContext context) {
-            int ppq = context.getPPQ();
+            int ppq = TimeContext.DEFAULT_PPQ;
             int totalTicks = toTotalTicks(ppq);
             double absoluteBeats = context.getMeterMap().barBeatToBeats(bar, beat);
             return absoluteBeats + (totalTicks / (double) ppq);
@@ -485,7 +490,7 @@ public abstract class TimeUnit {
             double thisBeats = this.toBeats(context);
             double otherBeats = other.toBeats(context);
             double resultBeats = thisBeats + otherBeats;
-            return context.getMeterMap().beatsToBBST(resultBeats, context.getPPQ());
+            return context.getMeterMap().beatsToBBST(resultBeats, TimeContext.DEFAULT_PPQ);
         }
         
         @Override
@@ -493,7 +498,7 @@ public abstract class TimeUnit {
             double thisBeats = this.toBeats(context);
             double otherBeats = other.toBeats(context);
             double resultBeats = Math.max(0, thisBeats - otherBeats);
-            return context.getMeterMap().beatsToBBST(resultBeats, context.getPPQ());
+            return context.getMeterMap().beatsToBBST(resultBeats, TimeContext.DEFAULT_PPQ);
         }
         
         /**
@@ -800,160 +805,6 @@ public abstract class TimeUnit {
     }
 
     /**
-     * SMPTE timecode representation using hours, minutes, seconds, and frames.
-     * Frame rate must be provided by TimeContext for conversion to absolute time.
-     * 
-     * This is an immutable value object.
-     */
-    public static final class SMPTEValue extends TimeUnit {
-        
-        public static final SMPTEValue ZERO = new SMPTEValue(0, 0, 0, 0);
-        
-        private final long hours;
-        private final long minutes;
-        private final long seconds;
-        private final long frames;
-        
-        public SMPTEValue(long hours, long minutes, long seconds, long frames) {
-            if (hours < 0) {
-                throw new IllegalArgumentException("Hours cannot be negative: " + hours);
-            }
-            if (minutes < 0 || minutes >= 60) {
-                throw new IllegalArgumentException("Minutes must be 0-59, got: " + minutes);
-            }
-            if (seconds < 0 || seconds >= 60) {
-                throw new IllegalArgumentException("Seconds must be 0-59, got: " + seconds);
-            }
-            if (frames < 0) {
-                throw new IllegalArgumentException("Frames cannot be negative: " + frames);
-            }
-            this.hours = hours;
-            this.minutes = minutes;
-            this.seconds = seconds;
-            this.frames = frames;
-        }
-        
-        public SMPTEValue(SMPTEValue smpteValue) {
-            this.hours = smpteValue.hours;
-            this.minutes = smpteValue.minutes;
-            this.seconds = smpteValue.seconds;
-            this.frames = smpteValue.frames;
-        }
-        
-        @Override
-        public TimeBase getTimeBase() {
-            return TimeBase.SMPTE;
-        }
-        
-        public long getHours() {
-            return hours;
-        }
-        
-        public long getMinutes() {
-            return minutes;
-        }
-        
-        public long getSeconds() {
-            return seconds;
-        }
-        
-        public long getFrames() {
-            return frames;
-        }
-        
-        /**
-         * Converts this SMPTE value to total seconds using the given frame rate.
-         * @param frameRate the SMPTE frame rate (e.g., 24, 25, 29.97, 30, 60)
-         * @return total seconds as a double
-         */
-        public double toTotalSeconds(double frameRate) {
-            if (frameRate <= 0) {
-                throw new IllegalArgumentException("Frame rate must be positive: " + frameRate);
-            }
-            return hours * 3600.0 + minutes * 60.0 + seconds + frames / frameRate;
-        }
-        
-        // Conversion methods
-        
-        @Override
-        public double toBeats(TimeContext context) {
-            // TODO: SMPTE frame rate should come from TimeContext
-            double frameRate = 30.0; // Default
-            double seconds = toTotalSeconds(frameRate);
-            return context.getTempoMap().secondsToBeats(seconds);
-        }
-        
-        @Override
-        public double toSeconds(TimeContext context) {
-            // TODO: SMPTE frame rate should come from TimeContext
-            double frameRate = 30.0; // Default
-            return toTotalSeconds(frameRate);
-        }
-        
-        @Override
-        public long toFrames(TimeContext context) {
-            double seconds = toSeconds(context);
-            return Math.round(seconds * context.getSampleRate());
-        }
-        
-        // Arithmetic methods
-        
-        @Override
-        public TimeUnit add(TimeContext context, TimeUnit other) {
-            double frameRate = 30.0; // TODO: from TimeContext
-            double thisSeconds = this.toTotalSeconds(frameRate);
-            double otherSeconds = other.toSeconds(context);
-            double resultSeconds = thisSeconds + otherSeconds;
-            // Convert back to SMPTE
-            long totalFrames = Math.round(resultSeconds * frameRate);
-            long h = totalFrames / (long)(frameRate * 3600);
-            long m = (totalFrames % (long)(frameRate * 3600)) / (long)(frameRate * 60);
-            long s = (totalFrames % (long)(frameRate * 60)) / (long)frameRate;
-            long f = totalFrames % (long)frameRate;
-            return new SMPTEValue(h, m, s, f);
-        }
-        
-        @Override
-        public TimeUnit subtract(TimeContext context, TimeUnit other) {
-            double frameRate = 30.0; // TODO: from TimeContext
-            double thisSeconds = this.toTotalSeconds(frameRate);
-            double otherSeconds = other.toSeconds(context);
-            double resultSeconds = Math.max(0, thisSeconds - otherSeconds);
-            long totalFrames = Math.round(resultSeconds * frameRate);
-            long h = totalFrames / (long)(frameRate * 3600);
-            long m = (totalFrames % (long)(frameRate * 3600)) / (long)(frameRate * 60);
-            long s = (totalFrames % (long)(frameRate * 60)) / (long)frameRate;
-            long f = totalFrames % (long)frameRate;
-            return new SMPTEValue(h, m, s, f);
-        }
-        
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (!(o instanceof SMPTEValue)) return false;
-            SMPTEValue that = (SMPTEValue) o;
-            return hours == that.hours &&
-                   minutes == that.minutes &&
-                   seconds == that.seconds &&
-                   frames == that.frames;
-        }
-        
-        @Override
-        public int hashCode() {
-            int result = Long.hashCode(hours);
-            result = 31 * result + Long.hashCode(minutes);
-            result = 31 * result + Long.hashCode(seconds);
-            result = 31 * result + Long.hashCode(frames);
-            return result;
-        }
-        
-        @Override
-        public String toString() {
-            return String.format("SMPTEValue[%02d:%02d:%02d:%02d]", hours, minutes, seconds, frames);
-        }
-    }
-
-    /**
      * Audio sample frame number representation.
      * Requires sample rate from TimeContext for conversion to time.
      * 
@@ -1054,10 +905,6 @@ public abstract class TimeUnit {
         return new TimeValue(hours, minutes, seconds, milliseconds);
     }
     
-    public static SMPTEValue smpte(long hours, long minutes, long seconds, long frames) {
-        return new SMPTEValue(hours, minutes, seconds, frames);
-    }
-    
     public static FrameValue frames(long frameNumber) {
         return new FrameValue(frameNumber);
     }
@@ -1098,12 +945,6 @@ public abstract class TimeUnit {
             element.addElement("minutes").setText(Long.toString(tv.getMinutes()));
             element.addElement("seconds").setText(Long.toString(tv.getSeconds()));
             element.addElement("milliseconds").setText(Long.toString(tv.getMilliseconds()));
-        } else if (this instanceof SMPTEValue) {
-            SMPTEValue sv = (SMPTEValue) this;
-            element.addElement("hours").setText(Long.toString(sv.getHours()));
-            element.addElement("minutes").setText(Long.toString(sv.getMinutes()));
-            element.addElement("seconds").setText(Long.toString(sv.getSeconds()));
-            element.addElement("frames").setText(Long.toString(sv.getFrames()));
         } else if (this instanceof FrameValue) {
             FrameValue fv = (FrameValue) this;
             element.addElement("frameNumber").setText(Long.toString(fv.getFrameNumber()));
@@ -1156,13 +997,6 @@ public abstract class TimeUnit {
                 long seconds = Long.parseLong(element.getTextString("seconds"));
                 long milliseconds = Long.parseLong(element.getTextString("milliseconds"));
                 yield new TimeValue(hours, minutes, seconds, milliseconds);
-            }
-            case "SMPTEValue" -> {
-                long hours = Long.parseLong(element.getTextString("hours"));
-                long minutes = Long.parseLong(element.getTextString("minutes"));
-                long seconds = Long.parseLong(element.getTextString("seconds"));
-                long frames = Long.parseLong(element.getTextString("frames"));
-                yield new SMPTEValue(hours, minutes, seconds, frames);
             }
             case "FrameValue" -> {
                 long frameNumber = Long.parseLong(element.getTextString("frameNumber"));

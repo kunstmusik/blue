@@ -55,7 +55,6 @@ public class TimeUnitTextField extends JTextField {
     private TimeUnit timeUnit;
     private String lastValidText = "";
     private boolean updating = false;
-    private int ppq = 480; // Default PPQ for BBT/BBST conversions
     private boolean durationMode = false;
     private Supplier<TimeContext> timeContextSupplier;
     
@@ -101,20 +100,6 @@ public class TimeUnitTextField extends JTextField {
     }
 
     /**
-     * Gets the PPQ (Pulses Per Quarter note) for BBT/BBST conversions.
-     */
-    public int getPPQ() {
-        return ppq;
-    }
-
-    /**
-     * Sets the PPQ for BBT/BBST conversions.
-     */
-    public void setPPQ(int ppq) {
-        this.ppq = ppq;
-    }
-
-    /**
      * Gets the current TimeUnit value.
      */
     public TimeUnit getTimeUnit() {
@@ -142,9 +127,9 @@ public class TimeUnitTextField extends JTextField {
         }
         
         if (durationMode && timeContextSupplier != null) {
-            lastValidText = formatDuration(timeUnit, timeBase, ppq, timeContextSupplier.get());
+            lastValidText = formatDuration(timeUnit, timeBase, timeContextSupplier.get());
         } else {
-            lastValidText = format(timeUnit, timeBase, ppq);
+            lastValidText = format(timeUnit, timeBase);
         }
         setText(lastValidText);
     }
@@ -194,9 +179,9 @@ public class TimeUnitTextField extends JTextField {
         TimeUnit parsed;
         try {
             if (durationMode && timeContextSupplier != null) {
-                parsed = parseDuration(text, timeBase, ppq, timeContextSupplier.get());
+                parsed = parseDuration(text, timeBase, timeContextSupplier.get());
             } else {
-                parsed = parse(text, timeBase, ppq);
+                parsed = parse(text, timeBase);
             }
         } catch (RuntimeException ex) {
             Toolkit.getDefaultToolkit().beep();
@@ -206,9 +191,9 @@ public class TimeUnitTextField extends JTextField {
 
         timeUnit = parsed;
         if (durationMode && timeContextSupplier != null) {
-            lastValidText = formatDuration(parsed, timeBase, ppq, timeContextSupplier.get());
+            lastValidText = formatDuration(parsed, timeBase, timeContextSupplier.get());
         } else {
-            lastValidText = format(parsed, timeBase, ppq);
+            lastValidText = format(parsed, timeBase);
         }
         setText(lastValidText);
         fireStateChanged();
@@ -265,8 +250,10 @@ public class TimeUnitTextField extends JTextField {
 
     /**
      * Formats a TimeUnit to a string representation for the given TimeBase.
+     * PPQ is fixed at {@link TimeContext#DEFAULT_PPQ} (960).
      */
-    public static String format(TimeUnit timeUnit, TimeBase timeBase, int ppq) {
+    public static String format(TimeUnit timeUnit, TimeBase timeBase) {
+        int ppq = TimeContext.DEFAULT_PPQ;
         return switch (timeBase) {
             case CSOUND_BEATS -> formatBeats(timeUnit);
             case BBT -> formatBBT(timeUnit, ppq);
@@ -331,12 +318,34 @@ public class TimeUnitTextField extends JTextField {
         return "0:00:00.000";
     }
 
+    /**
+     * Formats a TimeUnit as SMPTE timecode (HH:MM:SS:FF).
+     * SMPTE is display-only — the TimeUnit is converted to seconds first,
+     * then formatted using a default frame rate. For accurate display with
+     * project frame rate, use TimeDisplayFormat.SMPTE instead.
+     */
     private static String formatSMPTE(TimeUnit timeUnit) {
-        if (timeUnit instanceof TimeUnit.SMPTEValue smpte) {
-            return String.format("%02d:%02d:%02d:%02d", 
-                    smpte.getHours(), smpte.getMinutes(), smpte.getSeconds(), smpte.getFrames());
+        if (timeUnit instanceof TimeUnit.TimeValue tv) {
+            double totalSeconds = tv.getHours() * 3600.0 + tv.getMinutes() * 60.0
+                    + tv.getSeconds() + tv.getMilliseconds() / 1000.0;
+            return formatSecondsAsSMPTE(totalSeconds, TimeContext.DEFAULT_SMPTE_FRAME_RATE);
         }
         return "00:00:00:00";
+    }
+
+    /**
+     * Formats seconds as SMPTE timecode string (HH:MM:SS:FF).
+     */
+    static String formatSecondsAsSMPTE(double totalSeconds, double frameRate) {
+        int hours = (int) (totalSeconds / 3600);
+        int minutes = (int) ((totalSeconds % 3600) / 60);
+        int seconds = (int) (totalSeconds % 60);
+        int frames = (int) ((totalSeconds - (int) totalSeconds) * frameRate);
+        // Clamp frames to valid range
+        int maxFrames = (int) frameRate - 1;
+        if (frames > maxFrames) frames = maxFrames;
+        if (frames < 0) frames = 0;
+        return String.format("%02d:%02d:%02d:%02d", hours, minutes, seconds, frames);
     }
 
     private static String formatFrames(TimeUnit timeUnit) {
@@ -351,7 +360,7 @@ public class TimeUnitTextField extends JTextField {
     /**
      * Parses a string to a TimeUnit for the given TimeBase.
      */
-    public static TimeUnit parse(String text, TimeBase timeBase, int ppq) {
+    public static TimeUnit parse(String text, TimeBase timeBase) {
         String trimmed = text == null ? "" : text.trim();
         
         return switch (timeBase) {
@@ -463,12 +472,17 @@ public class TimeUnitTextField extends JTextField {
         return TimeUnit.time(hours, minutes, seconds, milliseconds);
     }
 
+    /**
+     * Parses SMPTE timecode text (HH:MM:SS:FF) into a TimeValue.
+     * SMPTE is display-only — parsed frames are converted to milliseconds
+     * using the default SMPTE frame rate.
+     */
     private static TimeUnit parseSMPTE(String text) {
         if (text.isEmpty()) {
-            return TimeUnit.SMPTEValue.ZERO;
+            return TimeUnit.TimeValue.ZERO;
         }
         
-        long frameRate = 30;
+        long frameRate = (long) TimeContext.DEFAULT_SMPTE_FRAME_RATE;
         String[] parts = text.split(":");
 
         long hours = 0;
@@ -491,7 +505,9 @@ public class TimeUnitTextField extends JTextField {
             throw new IllegalArgumentException("SMPTE format: HH:MM:SS:FF");
         }
 
-        return TimeUnit.smpte(hours, minutes, seconds, frames);
+        // Convert frames to milliseconds and produce a TimeValue
+        long milliseconds = (long) (frames * 1000.0 / frameRate);
+        return TimeUnit.time(hours, minutes, seconds, milliseconds);
     }
 
     private static TimeUnit parseFrames(String text) {
@@ -510,8 +526,9 @@ public class TimeUnitTextField extends JTextField {
     /**
      * Formats a TimeUnit as a duration string. For measure-based formats (BBT, BBST, BBF),
      * uses 0-based bars/beats. For other formats, delegates to regular format.
+     * PPQ is fixed at {@link TimeContext#DEFAULT_PPQ} (960).
      */
-    public static String formatDuration(TimeUnit timeUnit, TimeBase timeBase, int ppq, TimeContext context) {
+    public static String formatDuration(TimeUnit timeUnit, TimeBase timeBase, TimeContext context) {
         return switch (timeBase) {
             case CSOUND_BEATS -> formatBeats(timeUnit);
             case BBT -> {
@@ -547,7 +564,7 @@ public class TimeUnitTextField extends JTextField {
      * Parses a duration string to a TimeUnit. For measure-based formats (BBT, BBST, BBF),
      * interprets values as 0-based and converts through beats to the target TimeBase.
      */
-    public static TimeUnit parseDuration(String text, TimeBase timeBase, int ppq, TimeContext context) {
+    public static TimeUnit parseDuration(String text, TimeBase timeBase, TimeContext context) {
         String trimmed = text == null ? "" : text.trim();
 
         return switch (timeBase) {

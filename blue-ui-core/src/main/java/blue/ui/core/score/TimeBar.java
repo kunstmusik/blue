@@ -309,7 +309,8 @@ public final class TimeBar extends JPanel implements
         
         // Choose rendering based on display format
         switch (displayFormat) {
-            case TIME, SMPTE -> drawTimeBasedRuler(g, bounds, h, pixelTime, startTime, endTime, duration, context);
+            case TIME -> drawTimeBasedRuler(g, bounds, h, pixelTime, startTime, endTime, duration, context);
+            case SMPTE -> drawSmpteRuler(g, bounds, h, pixelTime, startTime, endTime, duration, context);
             case SAMPLES -> drawSamplesRuler(g, bounds, h, pixelTime, startTime, endTime, duration, context);
             case BBT, BBST, BBF -> drawMeasureBeatsRuler(g, bounds, h, pixelTime, startTime, endTime, duration, context);
             default -> drawBeatsRuler(g, bounds, h, pixelTime, startTime, endTime, duration);
@@ -466,6 +467,94 @@ public final class TimeBar extends JPanel implements
     }
     
     /**
+     * Draws ruler using SMPTE timecode format (HH:MM:SS:FF).
+     * Ticks are aligned to frame boundaries based on the project's SMPTE frame rate.
+     * Adaptively groups by frames, seconds, or minutes depending on zoom level.
+     */
+    private void drawSmpteRuler(Graphics g, Rectangle bounds, int h,
+            double pixelTime, double startBeat, double endBeat, double beatDuration,
+            TimeContext context) {
+        double frameRate = (context != null) ? context.getSmpteFrameRate() : TimeContext.DEFAULT_SMPTE_FRAME_RATE;
+        double frameDuration = 1.0 / frameRate; // duration of one frame in seconds
+        
+        // Convert beat range to seconds
+        double startSeconds = TimeDisplayFormat.beatsToSeconds(startBeat, context);
+        double endSeconds = TimeDisplayFormat.beatsToSeconds(endBeat, context);
+        double secondsRange = endSeconds - startSeconds;
+        
+        // Determine tick increment in seconds, aligned to frame boundaries
+        // We want roughly 80-100 pixels between labels
+        int minLabelSpacing = 80;
+        double pixelsPerSecond = (secondsRange > 0) ? bounds.width / secondsRange : 1;
+        double minSecondsPerLabel = minLabelSpacing / pixelsPerSecond;
+        
+        // Choose a frame-aligned increment:
+        // 1 frame, 2 frames, 5 frames, 10 frames, 0.5s, 1s, 2s, 5s, 10s, 30s, 1m, 2m, 5m, 10m...
+        double increment;
+        if (minSecondsPerLabel <= frameDuration) {
+            increment = frameDuration;
+        } else if (minSecondsPerLabel <= 2 * frameDuration) {
+            increment = 2 * frameDuration;
+        } else if (minSecondsPerLabel <= 5 * frameDuration) {
+            increment = 5 * frameDuration;
+        } else if (minSecondsPerLabel <= 10 * frameDuration) {
+            increment = 10 * frameDuration;
+        } else if (minSecondsPerLabel <= 0.5) {
+            increment = 0.5;
+        } else if (minSecondsPerLabel <= 1) {
+            increment = 1;
+        } else if (minSecondsPerLabel <= 2) {
+            increment = 2;
+        } else if (minSecondsPerLabel <= 5) {
+            increment = 5;
+        } else if (minSecondsPerLabel <= 10) {
+            increment = 10;
+        } else if (minSecondsPerLabel <= 30) {
+            increment = 30;
+        } else if (minSecondsPerLabel <= 60) {
+            increment = 60;
+        } else if (minSecondsPerLabel <= 120) {
+            increment = 120;
+        } else if (minSecondsPerLabel <= 300) {
+            increment = 300;
+        } else {
+            increment = 600;
+        }
+        
+        // Align start to increment boundary
+        double alignedStart = Math.floor(startSeconds / increment) * increment;
+        
+        for (double seconds = alignedStart; seconds <= endSeconds + increment * 0.5; seconds += increment) {
+            if (seconds < 0) continue;
+            
+            // Convert seconds back to beat position for x calculation
+            double beatPos = TimeDisplayFormat.secondsToBeats(seconds, context);
+            int x = (int) (bounds.width * (beatPos - startBeat) / beatDuration) + bounds.x;
+            
+            if (x >= bounds.x && x <= bounds.x + bounds.width) {
+                String txt = formatSmpteLabel(seconds, frameRate);
+                g.drawLine(x, 10, x, h);
+                g.drawString(txt, x + 2, 16);
+            }
+        }
+    }
+    
+    /**
+     * Format seconds as SMPTE timecode (HH:MM:SS:FF).
+     */
+    private String formatSmpteLabel(double seconds, double frameRate) {
+        int totalSecs = (int) seconds;
+        int hours = totalSecs / 3600;
+        int mins = (totalSecs % 3600) / 60;
+        int secs = totalSecs % 60;
+        int frames = (int) ((seconds - totalSecs) * frameRate);
+        int maxFrames = (int) frameRate - 1;
+        if (frames > maxFrames) frames = maxFrames;
+        if (frames < 0) frames = 0;
+        return String.format("%02d:%02d:%02d:%02d", hours, mins, secs, frames);
+    }
+    
+    /**
      * Draws ruler using measure:beats format with musical powers-of-2 grouping.
      * Properly handles time signature changes by iterating through actual measure boundaries.
      * - Zoomed out: labels every 32, 16, 8, 4, 2 measures
@@ -513,7 +602,7 @@ public final class TimeBar extends JPanel implements
         // else: show every measure (measureGrouping = 1, showBeats = false)
         
         // Find the starting measure from the start beat position
-        var startBBST = meterMap.beatsToBBST(Math.max(0, startTime), context.getPPQ());
+        var startBBST = meterMap.beatsToBBST(Math.max(0, startTime), TimeContext.DEFAULT_PPQ);
         long startMeasure = startBBST.getBar();
         
         // Align to measure grouping

@@ -1171,6 +1171,9 @@ public final class ScoreTopComponent extends TopComponent
             } else if (prop.equals("timeDisplay")) {
                 TimeDisplayFormat format = TimeDisplayFormat.fromTimeBase((TimeBase) evt.getNewValue());
                 primaryRuler.setDisplayFormat(format);
+            } else if (prop.equals("smpteFrameRate")) {
+                primaryRuler.repaint();
+                secondaryRuler.repaint();
             } else if (prop.equals("pixelSecond")) {
                 double pixelSecond = currentTimeState.getPixelSecond();
                 double val = data.getRenderStartTime();

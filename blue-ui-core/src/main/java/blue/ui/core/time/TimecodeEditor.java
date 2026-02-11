@@ -1,5 +1,6 @@
 package blue.ui.core.time;
 
+import blue.time.TimeContext;
 import blue.time.TimeUnit;
 import java.awt.BorderLayout;
 import java.awt.Toolkit;
@@ -72,8 +73,12 @@ public class TimecodeEditor extends TimeUnitEditor {
                 lastValidText = formatTime(0, 0, 0, 0);
             }
         } else {
-            if (timeUnit instanceof TimeUnit.SMPTEValue smpteValue) {
-                lastValidText = formatSmpte(smpteValue.getHours(), smpteValue.getMinutes(), smpteValue.getSeconds(), smpteValue.getFrames());
+            // SMPTE is display-only — internally stored as TimeValue
+            if (timeUnit instanceof TimeUnit.TimeValue tv) {
+                double totalSeconds = tv.getHours() * 3600.0 + tv.getMinutes() * 60.0
+                        + tv.getSeconds() + tv.getMilliseconds() / 1000.0;
+                lastValidText = TimeUnitTextField.formatSecondsAsSMPTE(
+                        totalSeconds, TimeContext.DEFAULT_SMPTE_FRAME_RATE);
             } else {
                 lastValidText = formatSmpte(0, 0, 0, 0);
             }
@@ -102,7 +107,7 @@ public class TimecodeEditor extends TimeUnitEditor {
     private TimeUnit parse(String text) {
         String trimmed = text == null ? "" : text.trim();
         if (trimmed.isEmpty()) {
-            return mode == Mode.TIME ? TimeUnit.TimeValue.ZERO : TimeUnit.SMPTEValue.ZERO;
+            return TimeUnit.TimeValue.ZERO;
         }
 
         if (mode == Mode.TIME) {
@@ -112,12 +117,15 @@ public class TimecodeEditor extends TimeUnitEditor {
         return parseSmpte(trimmed);
     }
 
-    private static String format(TimeUnit timeUnit) {
+    private String format(TimeUnit timeUnit) {
         if (timeUnit instanceof TimeUnit.TimeValue tv) {
+            if (mode == Mode.SMPTE) {
+                double totalSeconds = tv.getHours() * 3600.0 + tv.getMinutes() * 60.0
+                        + tv.getSeconds() + tv.getMilliseconds() / 1000.0;
+                return TimeUnitTextField.formatSecondsAsSMPTE(
+                        totalSeconds, TimeContext.DEFAULT_SMPTE_FRAME_RATE);
+            }
             return formatTime(tv.getHours(), tv.getMinutes(), tv.getSeconds(), tv.getMilliseconds());
-        }
-        if (timeUnit instanceof TimeUnit.SMPTEValue smpte) {
-            return formatSmpte(smpte.getHours(), smpte.getMinutes(), smpte.getSeconds(), smpte.getFrames());
         }
         return "";
     }
@@ -162,10 +170,12 @@ public class TimecodeEditor extends TimeUnitEditor {
         return TimeUnit.time(hours, minutes, seconds, milliseconds);
     }
 
+    /**
+     * Parses SMPTE timecode text (HH:MM:SS:FF) into a TimeValue.
+     * SMPTE is display-only — frames are converted to milliseconds.
+     */
     private static TimeUnit parseSmpte(String text) {
-        // NOTE: TimeUnit.SMPTEValue currently uses a default 30fps for conversions;
-        // keep editor validation aligned with that.
-        long frameRate = 30;
+        long frameRate = (long) TimeContext.DEFAULT_SMPTE_FRAME_RATE;
 
         String[] parts = text.split(":");
 
@@ -189,7 +199,9 @@ public class TimecodeEditor extends TimeUnitEditor {
             throw new IllegalArgumentException();
         }
 
-        return TimeUnit.smpte(hours, minutes, seconds, frames);
+        // Convert frames to milliseconds and produce a TimeValue
+        long milliseconds = (long) (frames * 1000.0 / frameRate);
+        return TimeUnit.time(hours, minutes, seconds, milliseconds);
     }
 
     private static long parseNonNegativeLong(String text) {

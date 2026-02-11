@@ -213,18 +213,18 @@ public class TimeUnitTest {
         TimeUnit.BBTTime bbt = TimeUnit.bbt(1, 1, 0);
         assertEquals(0.0, bbt.toBeats(context), 0.001);
         
-        // Bar 1, beat 1, ticks 240 = 0.5 beats (half a beat at PPQ=480)
-        bbt = TimeUnit.bbt(1, 1, 240);
+        // Bar 1, beat 1, ticks 480 = 0.5 beats (half a beat at PPQ=960)
+        bbt = TimeUnit.bbt(1, 1, 480);
         assertEquals(0.5, bbt.toBeats(context), 0.001);
     }
     
     @Test
     public void testBBTToBBSTConversion() {
-        TimeUnit.BBTTime bbt = TimeUnit.bbt(1, 2, 240); // 240 ticks = sixteenth 3
-        TimeUnit.BBSTTime bbst = bbt.toBBST(480);
+        TimeUnit.BBTTime bbt = TimeUnit.bbt(1, 2, 480); // 480 ticks at PPQ=960
+        TimeUnit.BBSTTime bbst = bbt.toBBST(960);
         assertEquals(1, bbst.getBar());
         assertEquals(2, bbst.getBeat());
-        assertEquals(3, bbst.getSixteenth()); // 240/120 = 2, so sixteenth 3
+        assertEquals(3, bbst.getSixteenth()); // 480/240 = 2, so sixteenth 3
         assertEquals(0, bbst.getTicks());
     }
     
@@ -324,70 +324,6 @@ public class TimeUnitTest {
     @Test(expected = IllegalArgumentException.class)
     public void testTimeValueInvalidMilliseconds() {
         TimeUnit.time(0, 0, 0, 1000);
-    }
-    
-    // ========== SMPTEValue Tests ==========
-    
-    @Test
-    public void testSMPTEValueGetTimeBase() {
-        TimeUnit.SMPTEValue sv = TimeUnit.smpte(1, 30, 45, 15);
-        assertEquals(TimeBase.SMPTE, sv.getTimeBase());
-    }
-    
-    @Test
-    public void testSMPTEValueImmutability() {
-        TimeUnit.SMPTEValue sv = TimeUnit.smpte(2, 15, 30, 20);
-        assertEquals(2, sv.getHours());
-        assertEquals(15, sv.getMinutes());
-        assertEquals(30, sv.getSeconds());
-        assertEquals(20, sv.getFrames());
-    }
-    
-    @Test
-    public void testSMPTEValueToTotalSeconds() {
-        // At 30 fps: 1:30:45.15 = 3600 + 1800 + 45 + 15/30 = 5445.5
-        TimeUnit.SMPTEValue sv = TimeUnit.smpte(1, 30, 45, 15);
-        assertEquals(5445.5, sv.toTotalSeconds(30.0), 0.001);
-        
-        // At 24 fps
-        sv = TimeUnit.smpte(0, 0, 1, 12);
-        assertEquals(1.5, sv.toTotalSeconds(24.0), 0.001);
-    }
-    
-    @Test
-    public void testSMPTEValueConversions() {
-        // 0:00:02:00 at 30fps = 2 seconds
-        TimeUnit.SMPTEValue sv = TimeUnit.smpte(0, 0, 2, 0);
-        
-        assertEquals(2.0, sv.toSeconds(context), 0.001);
-        assertEquals(2.0, sv.toBeats(context), 0.001); // 2 sec at 60 BPM
-        assertEquals(88200, sv.toFrames(context)); // 2 * 44100
-    }
-    
-    @Test(expected = IllegalArgumentException.class)
-    public void testSMPTEValueInvalidHours() {
-        TimeUnit.smpte(-1, 0, 0, 0);
-    }
-    
-    @Test(expected = IllegalArgumentException.class)
-    public void testSMPTEValueInvalidMinutes() {
-        TimeUnit.smpte(0, 60, 0, 0);
-    }
-    
-    @Test(expected = IllegalArgumentException.class)
-    public void testSMPTEValueInvalidSeconds() {
-        TimeUnit.smpte(0, 0, 60, 0);
-    }
-    
-    @Test(expected = IllegalArgumentException.class)
-    public void testSMPTEValueInvalidFrames() {
-        TimeUnit.smpte(0, 0, 0, -1);
-    }
-    
-    @Test(expected = IllegalArgumentException.class)
-    public void testSMPTEValueToTotalSecondsInvalidFrameRate() {
-        TimeUnit.SMPTEValue sv = TimeUnit.smpte(0, 0, 1, 0);
-        sv.toTotalSeconds(0.0);
     }
     
     // ========== FrameValue Tests ==========

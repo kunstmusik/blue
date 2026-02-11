@@ -75,7 +75,7 @@ public class MeterMapTest {
     @Test 
     public void testBeatsToBBT() {
         MeterMap meterMap = new MeterMap();
-        int ppq = 480;
+        int ppq = 960;
         
         // Test basic conversion in 4/4
         TimeUnit.BBTTime result = meterMap.beatsToBBT(0.0, ppq);
@@ -91,14 +91,14 @@ public class MeterMapTest {
         result = meterMap.beatsToBBT(6.5, ppq);
         assertEquals(2, result.getBar());
         assertEquals(3, result.getBeat());
-        assertEquals(240, result.getTicks()); // 0.5 beat = 240 ticks at PPQ=480
+        assertEquals(480, result.getTicks()); // 0.5 beat = 480 ticks at PPQ=960
     }
     
     @Test
     public void testBeatsToBBTWithMeterChanges() {
         MeterMap meterMap = new MeterMap();
         meterMap.add(new MeasureMeterPair(9, new Meter(3, 4)));
-        int ppq = 480;
+        int ppq = 960;
         
         // Before meter change (4/4)
         TimeUnit.BBTTime result = meterMap.beatsToBBT(0.0, ppq);
@@ -121,7 +121,7 @@ public class MeterMapTest {
         result = meterMap.beatsToBBT(36.5, ppq);
         assertEquals(10, result.getBar());
         assertEquals(2, result.getBeat());
-        assertEquals(240, result.getTicks());
+        assertEquals(480, result.getTicks());
     }
     
     @Test
@@ -129,7 +129,7 @@ public class MeterMapTest {
         MeterMap meterMap = new MeterMap();
         meterMap.add(new MeasureMeterPair(9, new Meter(3, 4)));
         meterMap.add(new MeasureMeterPair(17, new Meter(7, 8)));
-        int ppq = 480;
+        int ppq = 960;
         
         // Test round-trip: BBT → Beats → BBT
         TimeUnit.BBTTime original = TimeUnit.bbt(1, 1, 0);
@@ -176,12 +176,12 @@ public class MeterMapTest {
     public void testBeatsToBBTEmptyMeterMap() {
         MeterMap meterMap = new MeterMap();
         meterMap.clear();
-        meterMap.beatsToBBT(0.0, 480);
+        meterMap.beatsToBBT(0.0, 960);
     }
     
     @Test(expected = IllegalArgumentException.class)
     public void testBeatsToBBTNegativeBeats() {
         MeterMap meterMap = new MeterMap();
-        meterMap.beatsToBBT(-1.0, 480);
+        meterMap.beatsToBBT(-1.0, 960);
     }
 }

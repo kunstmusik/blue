@@ -50,7 +50,6 @@ public enum SnapValue {
     
     // SMPTE (frame-based, converted at runtime using frame rate)
     FRAME("Frame", 1.0, SnapCategory.SMPTE),
-    HALF_FRAME("1/2 Frame", 0.5, SnapCategory.SMPTE),
     
     // Sample-based (converted at runtime using sample rate)
     SAMPLE("Sample", 1.0, SnapCategory.SAMPLE),

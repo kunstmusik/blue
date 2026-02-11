@@ -28,31 +28,39 @@ import electric.xml.Element;
  */
 public class TimeContext {
     
-    /** Default PPQ (Pulses Per Quarter note) - industry standard */
-    public static final int DEFAULT_PPQ = 480;
+    /**
+     * Fixed PPQ (Pulses Per Quarter note) for all Blue projects.
+     * Blue uses 960 PPQ — matches Logic Pro, Ableton, Reaper.
+     * This is not user-configurable; PPQ only matters for MIDI import/export
+     * resolution, which can be handled per-file if added later.
+     */
+    public static final int DEFAULT_PPQ = 960;
+    
+    /** Default SMPTE frame rate (24 fps) used when no project context is available. */
+    public static final double DEFAULT_SMPTE_FRAME_RATE = 24.0;
     
     private long sampleRate;
-    private int ppq;
+    private double smpteFrameRate;
     private MeterMap meterMap;
     private TempoMap tempoMap;
     
     public TimeContext() {
         sampleRate = 44100;
-        ppq = DEFAULT_PPQ;
+        smpteFrameRate = 24.0;
         meterMap = new MeterMap();
         tempoMap = new TempoMap();
     }
     
     public TimeContext(long sampleRate, MeterMap meterMap, TempoMap tempoMap) {
         this.sampleRate = sampleRate;
-        this.ppq = DEFAULT_PPQ;
+        this.smpteFrameRate = 24.0;
         this.meterMap = meterMap;
         this.tempoMap = tempoMap;
     }
     
     public TimeContext(TimeContext tc) {
         this.sampleRate = tc.sampleRate;
-        this.ppq = tc.ppq;
+        this.smpteFrameRate = tc.smpteFrameRate;
         this.meterMap = new MeterMap(tc.meterMap);
         this.tempoMap = new TempoMap(tc.tempoMap);
     }
@@ -66,26 +74,23 @@ public class TimeContext {
     }
     
     /**
-     * Get the PPQ (Pulses Per Quarter note) for this context.
-     * Used for tick-based musical time representations (BBT, BBST).
-     * @return PPQ value (default 480)
+     * Get the SMPTE frame rate for this context.
+     * Used for SMPTE timecode display and snap calculations.
+     * @return SMPTE frame rate (e.g., 24.0, 25.0, 29.97, 30.0)
      */
-    public int getPPQ() {
-        return ppq;
+    public double getSmpteFrameRate() {
+        return smpteFrameRate;
     }
     
     /**
-     * Set the PPQ (Pulses Per Quarter note) for this context.
-     * @param ppq PPQ value, must be positive and divisible by 4
+     * Set the SMPTE frame rate for this context.
+     * @param smpteFrameRate frame rate, must be positive
      */
-    public void setPPQ(int ppq) {
-        if (ppq <= 0) {
-            throw new IllegalArgumentException("PPQ must be positive: " + ppq);
+    public void setSmpteFrameRate(double smpteFrameRate) {
+        if (smpteFrameRate <= 0) {
+            throw new IllegalArgumentException("SMPTE frame rate must be positive: " + smpteFrameRate);
         }
-        if (ppq % 4 != 0) {
-            throw new IllegalArgumentException("PPQ must be divisible by 4: " + ppq);
-        }
-        this.ppq = ppq;
+        this.smpteFrameRate = smpteFrameRate;
     }
     
     public MeterMap getMeterMap() {
@@ -110,7 +115,7 @@ public class TimeContext {
     public Element saveAsXML() {
         Element retVal = new Element("timeContext");
         retVal.addElement("sampleRate").setText(Long.toString(sampleRate));
-        retVal.addElement("ppq").setText(Integer.toString(ppq));
+        retVal.addElement("smpteFrameRate").setText(Double.toString(smpteFrameRate));
         retVal.addElement(meterMap.saveAsXML());
         retVal.addElement(tempoMap.saveAsXML());
         return retVal;
@@ -127,9 +132,9 @@ public class TimeContext {
             tc.setSampleRate(Long.parseLong(sampleRateElem.getTextString()));
         }
         
-        Element ppqElem = data.getElement("ppq");
-        if (ppqElem != null) {
-            tc.setPPQ(Integer.parseInt(ppqElem.getTextString()));
+        Element smpteFrameRateElem = data.getElement("smpteFrameRate");
+        if (smpteFrameRateElem != null) {
+            tc.setSmpteFrameRate(Double.parseDouble(smpteFrameRateElem.getTextString()));
         }
         
         Element meterMapElem = data.getElement("meterMap");

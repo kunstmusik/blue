@@ -66,20 +66,6 @@ public class TextTimeUnitEditor extends TimeUnitEditor {
     }
 
     /**
-     * Gets the PPQ (Pulses Per Quarter note) for BBT/BBST conversions.
-     */
-    public int getPPQ() {
-        return textField.getPPQ();
-    }
-
-    /**
-     * Sets the PPQ for BBT/BBST conversions.
-     */
-    public void setPPQ(int ppq) {
-        textField.setPPQ(ppq);
-    }
-
-    /**
      * Sets duration mode for 0-based measure display.
      */
     public void setDurationMode(boolean durationMode) {
