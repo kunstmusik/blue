@@ -131,8 +131,6 @@ public class ResizeScoreObjectsListener extends BlueMouseAdapter {
                 var rightMaxDiff = (limits[1] != Double.MAX_VALUE)
                         ? limits[1] - (EDGE / pixelSeconds) : limits[1];
                 
-                System.out.println("rmd: " + rightMaxDiff);
-
                 minDiffTime = Math.max(leftMaxDiff, minDiffTime);
                 maxDiffTime = Math.min(rightMaxDiff, maxDiffTime);
 
