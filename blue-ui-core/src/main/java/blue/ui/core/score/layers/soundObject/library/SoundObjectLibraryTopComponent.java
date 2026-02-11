@@ -27,7 +27,7 @@ import blue.soundObject.Instance;
 import blue.soundObject.SoundObject;
 import blue.time.TimeContext;
 import blue.time.TimeContextManager;
-import blue.time.TimeUnit;
+import blue.time.TimePosition;
 import blue.ui.core.clipboard.BlueClipboardUtils;
 import blue.ui.core.score.ScoreController;
 import blue.ui.core.score.ScoreObjectCopy;
@@ -301,7 +301,7 @@ public final class SoundObjectLibraryTopComponent extends TopComponent
             TimeContext context = TimeContextManager.getContext();
             SoundObject originalSObj = sObjLib.getSoundObject(index);
             Instance tempSObj = new Instance(originalSObj);
-            tempSObj.setStartTime(TimeUnit.beats(0.0));
+            tempSObj.setStartTime(TimePosition.beats(0.0));
             tempSObj.setSubjectiveDuration(tempSObj.getObjectiveDuration(context));
             ScoreController.getInstance().setSelectedScoreObjects(
                     Collections.singleton(tempSObj));

@@ -22,20 +22,20 @@ package blue.ui.core.score.undo;
 import blue.score.ScoreObject;
 import blue.time.TimeContext;
 import blue.time.TimeDuration;
-import blue.time.TimeUnit;
+import blue.time.TimePosition;
 import blue.time.TimeUnitMath;
 
 /**
  * Represents a unit of time information for a {@link ScoreObject}. Contains a start
- * {@link TimeUnit} and a duration {@link TimeUnit}.
+ * {@link TimePosition} and a duration {@link TimePosition}.
  * 
  * @see ScoreObject
- * @see TimeUnit
+ * @see TimePosition
  * @see TimeContext
  * 
  * @author stevenyi
  */
-public record StartDurationUnit(TimeUnit start, TimeDuration duration) {
+public record StartDurationUnit(TimePosition start, TimeDuration duration) {
 
     /**
      * Creates a new instance of StartDurationUnit from a {@link ScoreObject}.
@@ -53,7 +53,7 @@ public record StartDurationUnit(TimeUnit start, TimeDuration duration) {
      * @param context the {@link TimeContext} to use for the calculation
      * @return the end time of the {@link ScoreObject}
      */
-    public TimeUnit end(TimeContext context) {
+    public TimePosition end(TimeContext context) {
         return TimeUnitMath.add(context, start(), duration());
     }
 }

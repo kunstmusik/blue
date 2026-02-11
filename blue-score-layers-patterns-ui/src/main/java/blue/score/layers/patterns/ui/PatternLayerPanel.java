@@ -25,7 +25,7 @@ import blue.score.layers.patterns.core.PatternLayer;
 import blue.soundObject.SoundObject;
 import blue.soundObject.TimeBehavior;
 import blue.time.TimeDuration;
-import blue.time.TimeUnit;
+import blue.time.TimePosition;
 import blue.ui.components.IconFactory;
 import blue.ui.core.clipboard.BlueClipboardUtils;
 import blue.ui.core.score.ScoreController;
@@ -378,7 +378,7 @@ public class PatternLayerPanel extends javax.swing.JPanel
             }
             SoundObject sObj = (SoundObject) scoreObj;
             SoundObject copy = sObj.deepCopy();
-            copy.setStartTime(TimeUnit.beats(0.0f));
+            copy.setStartTime(TimePosition.beats(0.0f));
             copy.setSubjectiveDuration(TimeDuration.beats(4));
             copy.setTimeBehavior(TimeBehavior.NONE);
             patternLayer.setSoundObject(copy);

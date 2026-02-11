@@ -38,7 +38,7 @@ public final class SoundObjectLibrary extends ArrayList<SoundObject> {
     }
 
     public void addSoundObject(SoundObject sObj) {
-        sObj.setStartTime(blue.time.TimeUnit.beats(0.0));
+        sObj.setStartTime(blue.time.TimePosition.beats(0.0));
         this.add(sObj);
         fireChangeEvent();
     }

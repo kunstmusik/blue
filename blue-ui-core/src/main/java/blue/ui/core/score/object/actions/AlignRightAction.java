@@ -22,7 +22,7 @@ package blue.ui.core.score.object.actions;
 import blue.score.ScoreObject;
 import blue.time.TimeContext;
 import blue.time.TimeContextManager;
-import blue.time.TimeUnit;
+import blue.time.TimePosition;
 import blue.ui.core.score.undo.AlignEdit;
 import blue.undo.BlueUndoManager;
 import java.awt.event.ActionEvent;
@@ -62,8 +62,8 @@ public final class AlignRightAction extends AbstractAction implements ContextAwa
 
         TimeContext context = TimeContextManager.getContext();
         
-        TimeUnit[] initialStartTimes = new TimeUnit[selected.size()];
-        TimeUnit[] endingStartTimes = new TimeUnit[selected.size()];
+        TimePosition[] initialStartTimes = new TimePosition[selected.size()];
+        TimePosition[] endingStartTimes = new TimePosition[selected.size()];
 
         double farRight = Double.MIN_VALUE;
         int i = 0;
@@ -83,8 +83,8 @@ public final class AlignRightAction extends AbstractAction implements ContextAwa
 
         for (ScoreObject scoreObj : selected) {
             double newTime = farRight - scoreObj.getSubjectiveDuration().toBeats(context);
-            scoreObj.setStartTime(TimeUnit.beats(newTime));
-            endingStartTimes[i] = TimeUnit.beats(newTime);
+            scoreObj.setStartTime(TimePosition.beats(newTime));
+            endingStartTimes[i] = TimePosition.beats(newTime);
             i++;
         }
 

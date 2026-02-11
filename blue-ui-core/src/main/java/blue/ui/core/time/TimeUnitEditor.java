@@ -19,28 +19,28 @@
  */
 package blue.ui.core.time;
 
-import blue.time.TimeUnit;
+import blue.time.TimePosition;
 import javax.swing.JPanel;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.EventListenerList;
 
 /**
- * Abstract base class for TimeUnit editor components. Provides a common
- * interface for editing different TimeUnit types (BeatTime, MeasureTime, etc.)
+ * Abstract base class for TimePosition editor components. Provides a common
+ * interface for editing different TimePosition types (BeatTime, MeasureTime, etc.)
  * in Swing.
  * 
  * Subclasses should:
  * 1. Create appropriate UI controls in their constructor
- * 2. Implement updateDisplay() to show the current TimeUnit value
- * 3. Implement updateModel() to create a new TimeUnit from UI values
+ * 2. Implement updateDisplay() to show the current TimePosition value
+ * 3. Implement updateModel() to create a new TimePosition from UI values
  * 4. Call fireStateChanged() when the user modifies values
  * 
  * @author steven yi
  */
 public abstract class TimeUnitEditor extends JPanel {
     
-    private TimeUnit timeUnit;
+    private TimePosition timePosition;
     private boolean updating = false;
     protected EventListenerList listenerList = new EventListenerList();
     
@@ -52,25 +52,25 @@ public abstract class TimeUnitEditor extends JPanel {
     }
     
     /**
-     * Gets the current TimeUnit value.
+     * Gets the current TimePosition value.
      * 
-     * @return the current TimeUnit, or null if not set
+     * @return the current TimePosition, or null if not set
      */
-    public TimeUnit getTimeUnit() {
-        return timeUnit;
+    public TimePosition getTimePosition() {
+        return timePosition;
     }
     
     /**
-     * Sets the TimeUnit value to edit. This will update the UI display.
+     * Sets the TimePosition value to edit. This will update the UI display.
      * 
-     * @param timeUnit the TimeUnit to edit
+     * @param timePosition the TimePosition to edit
      */
-    public void setTimeUnit(TimeUnit timeUnit) {
-        if (this.timeUnit == timeUnit) {
+    public void setTimePosition(TimePosition timePosition) {
+        if (this.timePosition == timePosition) {
             return;
         }
         
-        this.timeUnit = timeUnit;
+        this.timePosition = timePosition;
         updating = true;
         try {
             updateDisplay();
@@ -80,7 +80,7 @@ public abstract class TimeUnitEditor extends JPanel {
     }
     
     /**
-     * Checks if the editor is currently updating from a setTimeUnit() call.
+     * Checks if the editor is currently updating from a setTimePosition() call.
      * Subclasses can use this to avoid firing change events during updates.
      * 
      * @return true if currently updating from external source
@@ -90,26 +90,26 @@ public abstract class TimeUnitEditor extends JPanel {
     }
     
     /**
-     * Updates the UI display to reflect the current TimeUnit value.
-     * Called automatically when setTimeUnit() is called.
+     * Updates the UI display to reflect the current TimePosition value.
+     * Called automatically when setTimePosition() is called.
      * 
      * Subclasses should override this to update their UI controls.
      */
     protected abstract void updateDisplay();
     
     /**
-     * Creates a new TimeUnit from the current UI values.
+     * Creates a new TimePosition from the current UI values.
      * Called when the UI values change.
      * 
-     * Subclasses should override this to create the appropriate TimeUnit
+     * Subclasses should override this to create the appropriate TimePosition
      * from their UI control values.
      * 
-     * @return a new TimeUnit representing the current UI state
+     * @return a new TimePosition representing the current UI state
      */
-    protected abstract TimeUnit updateModel();
+    protected abstract TimePosition updateModel();
     
     /**
-     * Notifies listeners that the TimeUnit value has changed.
+     * Notifies listeners that the TimePosition value has changed.
      * Subclasses should call this when the user modifies UI values.
      */
     protected void fireStateChanged() {
@@ -118,7 +118,7 @@ public abstract class TimeUnitEditor extends JPanel {
         }
         
         // Update the model
-        timeUnit = updateModel();
+        timePosition = updateModel();
         
         // Notify listeners
         ChangeEvent event = new ChangeEvent(this);
@@ -128,7 +128,7 @@ public abstract class TimeUnitEditor extends JPanel {
     }
     
     /**
-     * Adds a ChangeListener to be notified when the TimeUnit value changes.
+     * Adds a ChangeListener to be notified when the TimePosition value changes.
      * 
      * @param listener the listener to add
      */

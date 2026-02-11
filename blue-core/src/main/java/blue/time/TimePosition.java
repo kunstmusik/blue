@@ -31,23 +31,23 @@ import electric.xml.Element;
  * SMPTE timecode is display-only and is not a storage format.
  * See {@link blue.ui.core.score.TimeDisplayFormat#SMPTE}.
  * 
- * All TimeUnit subclasses are immutable value objects.
+ * All TimePosition subclasses are immutable value objects.
  *
  * @author Steven Yi
  */
-public abstract class TimeUnit {
+public abstract class TimePosition {
     
     /**
-     * Returns the TimeBase type of this TimeUnit.
+     * Returns the TimeBase type of this TimePosition.
      * 
-     * @return the TimeBase enum value corresponding to this TimeUnit type
+     * @return the TimeBase enum value corresponding to this TimePosition type
      */
     public abstract TimeBase getTimeBase();
     
     // ========== Conversion Methods ==========
     
     /**
-     * Converts this TimeUnit to Csound beats using the provided TimeContext.
+     * Converts this TimePosition to Csound beats using the provided TimeContext.
      * TimeContext is the first parameter for consistency across all context-dependent methods.
      * 
      * @param context the TimeContext providing meter, tempo, and sample rate information
@@ -56,7 +56,7 @@ public abstract class TimeUnit {
     public abstract double toBeats(TimeContext context);
     
     /**
-     * Converts this TimeUnit to seconds using the provided TimeContext.
+     * Converts this TimePosition to seconds using the provided TimeContext.
      * TimeContext is the first parameter for consistency across all context-dependent methods.
      * 
      * @param context the TimeContext providing meter, tempo, and sample rate information
@@ -65,7 +65,7 @@ public abstract class TimeUnit {
     public abstract double toSeconds(TimeContext context);
     
     /**
-     * Converts this TimeUnit to audio sample frames using the provided TimeContext.
+     * Converts this TimePosition to audio sample frames using the provided TimeContext.
      * TimeContext is the first parameter for consistency across all context-dependent methods.
      * 
      * @param context the TimeContext providing meter, tempo, and sample rate information
@@ -76,74 +76,53 @@ public abstract class TimeUnit {
     // ========== Comparison Methods ==========
     
     /**
-     * Returns true if this TimeUnit is less than the other TimeUnit.
+     * Returns true if this TimePosition is less than the other TimePosition.
      * TimeContext is the first parameter for consistency.
      * 
      * @param context the TimeContext for conversion
-     * @param other the TimeUnit to compare against
+     * @param other the TimePosition to compare against
      * @return true if this < other
      */
-    public boolean lt(TimeContext context, TimeUnit other) {
+    public boolean lt(TimeContext context, TimePosition other) {
         return this.toBeats(context) < other.toBeats(context);
     }
     
     /**
-     * Returns true if this TimeUnit is greater than the other TimeUnit.
+     * Returns true if this TimePosition is greater than the other TimePosition.
      * TimeContext is the first parameter for consistency.
      * 
      * @param context the TimeContext for conversion
-     * @param other the TimeUnit to compare against
+     * @param other the TimePosition to compare against
      * @return true if this > other
      */
-    public boolean gt(TimeContext context, TimeUnit other) {
+    public boolean gt(TimeContext context, TimePosition other) {
         return this.toBeats(context) > other.toBeats(context);
     }
     
     /**
-     * Returns true if this TimeUnit is less than or equal to the other TimeUnit.
+     * Returns true if this TimePosition is less than or equal to the other TimePosition.
      * TimeContext is the first parameter for consistency.
      * 
      * @param context the TimeContext for conversion
-     * @param other the TimeUnit to compare against
+     * @param other the TimePosition to compare against
      * @return true if this <= other
      */
-    public boolean lte(TimeContext context, TimeUnit other) {
+    public boolean lte(TimeContext context, TimePosition other) {
         return this.toBeats(context) <= other.toBeats(context);
     }
     
     /**
-     * Returns true if this TimeUnit is greater than or equal to the other TimeUnit.
+     * Returns true if this TimePosition is greater than or equal to the other TimePosition.
      * TimeContext is the first parameter for consistency.
      * 
      * @param context the TimeContext for conversion
-     * @param other the TimeUnit to compare against
+     * @param other the TimePosition to compare against
      * @return true if this >= other
      */
-    public boolean gte(TimeContext context, TimeUnit other) {
+    public boolean gte(TimeContext context, TimePosition other) {
         return this.toBeats(context) >= other.toBeats(context);
     }
     
-    // ========== Arithmetic Methods ==========
-    
-    /**
-     * Adds another TimeUnit to this TimeUnit, returning a new TimeUnit of the same type.
-     * TimeContext is the first parameter for consistency.
-     * 
-     * @param context the TimeContext for conversion
-     * @param other the TimeUnit to add
-     * @return a new TimeUnit of the same type as this, representing the sum
-     */
-    public abstract TimeUnit add(TimeContext context, TimeUnit other);
-    
-    /**
-     * Subtracts another TimeUnit from this TimeUnit, returning a new TimeUnit of the same type.
-     * TimeContext is the first parameter for consistency.
-     * 
-     * @param context the TimeContext for conversion
-     * @param other the TimeUnit to subtract
-     * @return a new TimeUnit of the same type as this, representing the difference
-     */
-    public abstract TimeUnit subtract(TimeContext context, TimeUnit other);
 
     public static BeatTime beats(double csoundBeats) {
         return new BeatTime(csoundBeats);
@@ -167,7 +146,7 @@ public abstract class TimeUnit {
      * 
      * This is an immutable value object.
      */
-    public static final class BeatTime extends TimeUnit {
+    public static final class BeatTime extends TimePosition {
         
         public static final BeatTime ZERO = new BeatTime(0.0);
         
@@ -208,20 +187,6 @@ public abstract class TimeUnit {
             return Math.round(seconds * context.getSampleRate());
         }
         
-        // Arithmetic methods
-        
-        @Override
-        public TimeUnit add(TimeContext context, TimeUnit other) {
-            double otherBeats = other.toBeats(context);
-            return new BeatTime(this.csoundBeats + otherBeats);
-        }
-        
-        @Override
-        public TimeUnit subtract(TimeContext context, TimeUnit other) {
-            double otherBeats = other.toBeats(context);
-            return new BeatTime(this.csoundBeats - otherBeats);
-        }
-        
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
@@ -253,7 +218,7 @@ public abstract class TimeUnit {
      * 
      * This is an immutable value object.
      */
-    public static final class BBTTime extends TimeUnit {
+    public static final class BBTTime extends TimePosition {
         
         public static final BBTTime ZERO = new BBTTime(1, 1, 0);
         
@@ -321,24 +286,6 @@ public abstract class TimeUnit {
             return Math.round(seconds * context.getSampleRate());
         }
         
-        // Arithmetic methods
-        
-        @Override
-        public TimeUnit add(TimeContext context, TimeUnit other) {
-            double thisBeats = this.toBeats(context);
-            double otherBeats = other.toBeats(context);
-            double resultBeats = thisBeats + otherBeats;
-            return context.getMeterMap().beatsToBBT(resultBeats, TimeContext.DEFAULT_PPQ);
-        }
-        
-        @Override
-        public TimeUnit subtract(TimeContext context, TimeUnit other) {
-            double thisBeats = this.toBeats(context);
-            double otherBeats = other.toBeats(context);
-            double resultBeats = Math.max(0, thisBeats - otherBeats);
-            return context.getMeterMap().beatsToBBT(resultBeats, TimeContext.DEFAULT_PPQ);
-        }
-        
         /**
          * Convert to BBST format.
          * @param ppq the PPQ value for tick calculation
@@ -395,7 +342,7 @@ public abstract class TimeUnit {
      * 
      * This is an immutable value object.
      */
-    public static final class BBSTTime extends TimeUnit {
+    public static final class BBSTTime extends TimePosition {
         
         public static final BBSTTime ZERO = new BBSTTime(1, 1, 1, 0);
         
@@ -483,24 +430,6 @@ public abstract class TimeUnit {
             return Math.round(seconds * context.getSampleRate());
         }
         
-        // Arithmetic methods
-        
-        @Override
-        public TimeUnit add(TimeContext context, TimeUnit other) {
-            double thisBeats = this.toBeats(context);
-            double otherBeats = other.toBeats(context);
-            double resultBeats = thisBeats + otherBeats;
-            return context.getMeterMap().beatsToBBST(resultBeats, TimeContext.DEFAULT_PPQ);
-        }
-        
-        @Override
-        public TimeUnit subtract(TimeContext context, TimeUnit other) {
-            double thisBeats = this.toBeats(context);
-            double otherBeats = other.toBeats(context);
-            double resultBeats = Math.max(0, thisBeats - otherBeats);
-            return context.getMeterMap().beatsToBBST(resultBeats, TimeContext.DEFAULT_PPQ);
-        }
-        
         /**
          * Convert to BBT format.
          * @param ppq the PPQ value for tick calculation
@@ -556,7 +485,7 @@ public abstract class TimeUnit {
      * 
      * This is an immutable value object.
      */
-    public static final class BBFTime extends TimeUnit {
+    public static final class BBFTime extends TimePosition {
         
         public static final BBFTime ZERO = new BBFTime(1, 1, 0);
         
@@ -622,24 +551,6 @@ public abstract class TimeUnit {
             return Math.round(seconds * context.getSampleRate());
         }
         
-        // Arithmetic methods
-        
-        @Override
-        public TimeUnit add(TimeContext context, TimeUnit other) {
-            double thisBeats = this.toBeats(context);
-            double otherBeats = other.toBeats(context);
-            double resultBeats = thisBeats + otherBeats;
-            return context.getMeterMap().beatsToBBF(resultBeats);
-        }
-        
-        @Override
-        public TimeUnit subtract(TimeContext context, TimeUnit other) {
-            double thisBeats = this.toBeats(context);
-            double otherBeats = other.toBeats(context);
-            double resultBeats = Math.max(0, thisBeats - otherBeats);
-            return context.getMeterMap().beatsToBBF(resultBeats);
-        }
-        
         /**
          * Convert to BBT format.
          * @param ppq the PPQ value for tick calculation
@@ -691,7 +602,7 @@ public abstract class TimeUnit {
      * 
      * This is an immutable value object.
      */
-    public static final class TimeValue extends TimeUnit {
+    public static final class TimeValue extends TimePosition {
         
         public static final TimeValue ZERO = new TimeValue(0, 0, 0, 0);
         
@@ -774,34 +685,6 @@ public abstract class TimeUnit {
             return Math.round(seconds * context.getSampleRate());
         }
         
-        // Arithmetic methods
-        
-        @Override
-        public TimeUnit add(TimeContext context, TimeUnit other) {
-            double thisSeconds = this.toTotalSeconds();
-            double otherSeconds = other.toSeconds(context);
-            double resultSeconds = thisSeconds + otherSeconds;
-            // Convert back to hours:minutes:seconds:milliseconds
-            long totalMs = Math.round(resultSeconds * 1000);
-            long h = totalMs / 3600000;
-            long m = (totalMs % 3600000) / 60000;
-            long s = (totalMs % 60000) / 1000;
-            long ms = totalMs % 1000;
-            return new TimeValue(h, m, s, ms);
-        }
-        
-        @Override
-        public TimeUnit subtract(TimeContext context, TimeUnit other) {
-            double thisSeconds = this.toTotalSeconds();
-            double otherSeconds = other.toSeconds(context);
-            double resultSeconds = Math.max(0, thisSeconds - otherSeconds);
-            long totalMs = Math.round(resultSeconds * 1000);
-            long h = totalMs / 3600000;
-            long m = (totalMs % 3600000) / 60000;
-            long s = (totalMs % 60000) / 1000;
-            long ms = totalMs % 1000;
-            return new TimeValue(h, m, s, ms);
-        }
     }
 
     /**
@@ -810,7 +693,7 @@ public abstract class TimeUnit {
      * 
      * This is an immutable value object.
      */
-    public static final class FrameValue extends TimeUnit {
+    public static final class FrameValue extends TimePosition {
         
         public static final FrameValue ZERO = new FrameValue(0);
         
@@ -866,20 +749,6 @@ public abstract class TimeUnit {
             return frameNumber;
         }
         
-        // Arithmetic methods
-        
-        @Override
-        public TimeUnit add(TimeContext context, TimeUnit other) {
-            long otherFrames = other.toFrames(context);
-            return new FrameValue(this.frameNumber + otherFrames);
-        }
-        
-        @Override
-        public TimeUnit subtract(TimeContext context, TimeUnit other) {
-            long otherFrames = other.toFrames(context);
-            return new FrameValue(Math.max(0, this.frameNumber - otherFrames));
-        }
-        
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
@@ -899,7 +768,7 @@ public abstract class TimeUnit {
         }
     }
 
-    // Static factory methods for new TimeUnit types
+    // Static factory methods for new TimePosition types
     
     public static TimeValue time(long hours, long minutes, long seconds, long milliseconds) {
         return new TimeValue(hours, minutes, seconds, milliseconds);
@@ -912,12 +781,12 @@ public abstract class TimeUnit {
     // ========== XML Serialization ==========
     
     /**
-     * Saves this TimeUnit as an XML Element.
+     * Saves this TimePosition as an XML Element.
      * 
-     * @return XML Element representing this TimeUnit
+     * @return XML Element representing this TimePosition
      */
     public Element saveAsXML() {
-        Element element = new Element("timeUnit");
+        Element element = new Element("timePosition");
         element.setAttribute("type", this.getClass().getSimpleName());
         
         if (this instanceof BeatTime) {
@@ -954,17 +823,17 @@ public abstract class TimeUnit {
     }
     
     /**
-     * Loads a TimeUnit from an XML Element.
+     * Loads a TimePosition from an XML Element.
      * 
-     * @param element XML Element containing TimeUnit data
-     * @return the loaded TimeUnit
+     * @param element XML Element containing TimePosition data
+     * @return the loaded TimePosition
      * @throws Exception if the XML is invalid or type is unknown
      */
-    public static TimeUnit loadFromXML(Element element) throws Exception {
+    public static TimePosition loadFromXML(Element element) throws Exception {
         String type = element.getAttributeValue("type");
         
         if (type == null) {
-            throw new Exception("TimeUnit XML missing 'type' attribute");
+            throw new Exception("TimePosition XML missing 'type' attribute");
         }
         
         return switch (type) {
@@ -1002,7 +871,7 @@ public abstract class TimeUnit {
                 long frameNumber = Long.parseLong(element.getTextString("frameNumber"));
                 yield new FrameValue(frameNumber);
             }
-            default -> throw new Exception("Unknown TimeUnit type: " + type);
+            default -> throw new Exception("Unknown TimePosition type: " + type);
         };
     }
 

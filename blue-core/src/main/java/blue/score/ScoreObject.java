@@ -22,7 +22,7 @@ package blue.score;
 import blue.DeepCopyable;
 import blue.time.TimeContext;
 import blue.time.TimeDuration;
-import blue.time.TimeUnit;
+import blue.time.TimePosition;
 import java.awt.Color;
 
 /**
@@ -44,20 +44,20 @@ public interface ScoreObject extends DeepCopyable<ScoreObject> {
     String getName();
     
     /**
-     * Gets the start time of the ScoreObject as a TimeUnit.
-     * The TimeUnit type determines how the time is represented (beats, measure/beats, time, SMPTE, frames).
+     * Gets the start time of the ScoreObject as a TimePosition.
+     * The TimePosition type determines how the time is represented (beats, measure/beats, time, SMPTE, frames).
      * 
-     * @return the start time as a TimeUnit
+     * @return the start time as a TimePosition
      */
-    TimeUnit getStartTime();
+    TimePosition getStartTime();
 
     /**
-     * Sets the start time of the ScoreObject using a TimeUnit.
-     * The TimeUnit's type determines how the time is stored and interpreted.
+     * Sets the start time of the ScoreObject using a TimePosition.
+     * The TimePosition's type determines how the time is stored and interpreted.
      * 
-     * @param startTime the start time as a TimeUnit
+     * @param startTime the start time as a TimePosition
      */
-    void setStartTime(TimeUnit startTime);
+    void setStartTime(TimePosition startTime);
     
     /**
      * Gets the subjective duration of the ScoreObject as a TimeDuration.

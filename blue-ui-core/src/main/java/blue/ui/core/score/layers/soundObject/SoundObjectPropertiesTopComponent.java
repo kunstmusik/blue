@@ -29,7 +29,7 @@ import blue.soundObject.TimeBehavior;
 import blue.time.TimeContext;
 import blue.time.TimeContextManager;
 import blue.time.TimeDuration;
-import blue.time.TimeUnit;
+import blue.time.TimePosition;
 import blue.ui.core.score.TimeDisplayFormat;
 import blue.ui.core.score.NoteProcessorChainEditor;
 import blue.ui.core.score.layers.SoundObjectProvider;
@@ -129,14 +129,14 @@ public final class SoundObjectPropertiesTopComponent extends TopComponent implem
             }
         });
 
-        // Listen for TimeUnit changes from the panels
-        startTimePanel.addPropertyChangeListener("timeUnit", evt -> {
+        // Listen for TimePosition changes from the panels
+        startTimePanel.addPropertyChangeListener("timePosition", evt -> {
             if (!isUpdating && sObj != null) {
                 updateStartTime();
             }
         });
 
-        durationPanel.addPropertyChangeListener("timeUnit", evt -> {
+        durationPanel.addPropertyChangeListener("timePosition", evt -> {
             if (!isUpdating && sObj != null) {
                 updateSubjectiveDuration();
             }
@@ -217,7 +217,7 @@ public final class SoundObjectPropertiesTopComponent extends TopComponent implem
 
     private void updateProperties() {
         if (sObj != null) {
-            startTimePanel.setTimeUnit(sObj.getStartTime());
+            startTimePanel.setTimePosition(sObj.getStartTime());
             nameText.setText(sObj.getName());
             durationPanel.setTimeDuration(sObj.getSubjectiveDuration());
 
@@ -248,15 +248,15 @@ public final class SoundObjectPropertiesTopComponent extends TopComponent implem
     }
 
     protected void updateStartTime() {
-        TimeUnit initialStart = sObj.getStartTime();
-        var newTimeUnit = startTimePanel.getTimeUnit();
+        TimePosition initialStart = sObj.getStartTime();
+        var newTimePosition = startTimePanel.getTimePosition();
         
-        if (newTimeUnit == null) {
-            startTimePanel.setTimeUnit(sObj.getStartTime());
+        if (newTimePosition == null) {
+            startTimePanel.setTimePosition(sObj.getStartTime());
             return;
         }
         
-        sObj.setStartTime(newTimeUnit);
+        sObj.setStartTime(newTimePosition);
         
         BlueUndoManager.setUndoManager("score");
         BlueUndoManager.addEdit(new StartTimeEdit(initialStart, sObj.getStartTime(), sObj));
@@ -419,7 +419,7 @@ public final class SoundObjectPropertiesTopComponent extends TopComponent implem
                 break;
             case ScoreObjectEvent.START_TIME:
                 if (!isUpdating) {
-                    startTimePanel.setTimeUnit(sObj.getStartTime());
+                    startTimePanel.setTimePosition(sObj.getStartTime());
                 }
                 updateEndTime();
                 break;

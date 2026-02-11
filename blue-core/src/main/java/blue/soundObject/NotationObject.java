@@ -5,7 +5,7 @@ import blue.noteProcessor.NoteProcessorChain;
 import blue.soundObject.notation.NotationStaff;
 import blue.time.TimeContext;
 import blue.time.TimeDuration;
-import blue.time.TimeUnit;
+import blue.time.TimePosition;
 import electric.xml.Element;
 import java.util.Map;
 
@@ -39,7 +39,7 @@ public class NotationObject extends AbstractSoundObject implements
     public NotationObject() {
         setName("Notation Object");
         setSubjectiveDuration(TimeDuration.beats(2.0));
-        setStartTime(TimeUnit.beats(0.0));
+        setStartTime(TimePosition.beats(0.0));
         timeBehavior = TimeBehavior.SCALE;
         staff = new NotationStaff();
     }

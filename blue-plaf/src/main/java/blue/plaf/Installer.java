@@ -162,7 +162,7 @@ public class Installer extends ModuleInstall {
     public void restored() {
 //        System.setProperty("awt.useSystemAAFontSettings","lcd");
         // Initiate TimingFramework
-//        TimingSource source = new SwingTimerTimingSource(30, TimeUnit.MILLISECONDS);
+//        TimingSource source = new SwingTimerTimingSource(30, TimePosition.MILLISECONDS);
 //        Animator.setDefaultTimingSource(source); // shared timing source
 //        source.init(); // starts the timer
         //RepaintManager.setCurrentManager(new CheckThreadViolationRepaintManager()); 

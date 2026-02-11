@@ -24,7 +24,7 @@ import electric.xml.Element;
 /**
  * Abstract base class for time duration representations.
  * 
- * Unlike {@link TimeUnit} which represents absolute timeline positions (1-based
+ * Unlike {@link TimePosition} which represents absolute timeline positions (1-based
  * bars/beats for measure formats), TimeDuration represents time distances or
  * offsets (0-based bars/beats for measure formats).
  * 

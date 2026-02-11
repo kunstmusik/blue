@@ -31,21 +31,15 @@ import java.util.Vector;
 /**
  * UI/editing state for the score timeline.
  * 
- * TODO: Future enhancement - consider integrating with TimeUnit system:
- * - snapValue could be a TimeUnit (snap to beat, measure, etc.)
- * - timeDisplay could support DISPLAY_MEASURES mode
- * - formatTime() method could use TimeContext for conversions
+ * Stores ruler display format (primary/secondary via {@link TimeBase}),
+ * snap settings (via {@link SnapValue}), zoom level, and SMPTE frame rate.
+ * Property change events are fired for all state changes so UI components
+ * can update accordingly.
  *
  * @author stevenyi
  */
 public class TimeState {
 
-    // Legacy constants - kept for reference but no longer used for storage
-    @Deprecated
-    public static final int DISPLAY_TIME = 0;
-    @Deprecated
-    public static final int DISPLAY_BEATS = 1;
-    
     // Format version for migration support
     // Version 1 (or no attribute): Legacy format (timeDisplay: 0=TIME, 1=BEATS)
     // Version 2: Uses TimeBase enum names for storage

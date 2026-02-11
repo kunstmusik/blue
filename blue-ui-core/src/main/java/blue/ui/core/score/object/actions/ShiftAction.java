@@ -23,7 +23,7 @@ import blue.BlueSystem;
 import blue.score.ScoreObject;
 import blue.time.TimeContext;
 import blue.time.TimeContextManager;
-import blue.time.TimeUnit;
+import blue.time.TimePosition;
 import blue.ui.core.score.undo.AlignEdit;
 import blue.undo.BlueUndoManager;
 import java.awt.event.ActionEvent;
@@ -86,13 +86,13 @@ public final class ShiftAction extends AbstractAction implements ContextAwareAct
             int len = selected.size();
             ScoreObject[] objects = selected.toArray(
                     new ScoreObject[selected.size()]);
-            TimeUnit[] startTimes = new TimeUnit[len];
-            TimeUnit[] endTimes = new TimeUnit[len];
+            TimePosition[] startTimes = new TimePosition[len];
+            TimePosition[] endTimes = new TimePosition[len];
 
             for (int i = 0; i < len; i++) {
                 ScoreObject scoreObj = objects[i];
                 startTimes[i] = scoreObj.getStartTime();
-                endTimes[i] = TimeUnit.beats(startTimes[i].toBeats(context) + val);
+                endTimes[i] = TimePosition.beats(startTimes[i].toBeats(context) + val);
                 scoreObj.setStartTime(endTimes[i]);
             }
 

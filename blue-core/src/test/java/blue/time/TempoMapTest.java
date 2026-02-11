@@ -312,11 +312,11 @@ public class TempoMapTest {
     @Test
     public void testTempoPointWithBBSTTime() {
         // Create a tempo point at bar 2, beat 1
-        TempoPoint point = new TempoPoint(TimeUnit.bbst(2, 1, 1, 0), 120.0, CurveType.LINEAR);
+        TempoPoint point = new TempoPoint(TimePosition.bbst(2, 1, 1, 0), 120.0, CurveType.LINEAR);
         
         assertEquals(120.0, point.getTempo(), EPSILON);
         assertEquals(CurveType.LINEAR, point.getCurveType());
-        assertTrue(point.getPosition() instanceof TimeUnit.BBSTTime);
+        assertTrue(point.getPosition() instanceof TimePosition.BBSTTime);
     }
     
     @Test
@@ -325,7 +325,7 @@ public class TempoMapTest {
         tm.setEnabled(true);
         
         // Add a tempo point at bar 2, beat 1 (in 4/4, this is beat 4)
-        tm.addTempoPoint(new TempoPoint(TimeUnit.bbst(2, 1, 1, 0), 120.0, CurveType.LINEAR));
+        tm.addTempoPoint(new TempoPoint(TimePosition.bbst(2, 1, 1, 0), 120.0, CurveType.LINEAR));
         
         // Create a TimeContext with default 4/4 meter map
         TimeContext context = new TimeContext();

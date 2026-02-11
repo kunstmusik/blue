@@ -21,12 +21,12 @@ package blue.ui.core.time;
 
 import blue.time.TimeBase;
 import blue.time.TimeContext;
-import blue.time.TimeUnit;
+import blue.time.TimePosition;
 import java.awt.BorderLayout;
 import java.util.function.Supplier;
 
 /**
- * A unified text-based TimeUnit editor that works with all TimeBase formats.
+ * A unified text-based TimePosition editor that works with all TimeBase formats.
  * Uses TimeUnitTextField for text input with format-specific parsing and display.
  * 
  * @author steven yi
@@ -81,12 +81,12 @@ public class TextTimeUnitEditor extends TimeUnitEditor {
 
     @Override
     protected void updateDisplay() {
-        textField.setTimeUnit(getTimeUnit());
+        textField.setTimePosition(getTimePosition());
     }
 
     @Override
-    protected TimeUnit updateModel() {
-        return textField.getTimeUnit();
+    protected TimePosition updateModel() {
+        return textField.getTimePosition();
     }
 
     @Override

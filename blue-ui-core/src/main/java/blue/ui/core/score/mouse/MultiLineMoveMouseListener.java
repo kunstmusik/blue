@@ -28,7 +28,7 @@ import blue.score.TimeState;
 import blue.score.layers.AutomatableLayer;
 import blue.time.TimeContext;
 import blue.time.TimeContextManager;
-import blue.time.TimeUnit;
+import blue.time.TimePosition;
 import blue.time.TimeUtilities;
 import blue.ui.core.render.RealtimeRenderManager;
 import blue.ui.core.score.ModeManager;
@@ -59,7 +59,7 @@ class MultiLineMoveMouseListener extends BlueMouseAdapter {
     int startX = -1;
     double minTranslation = 0.0f;
     private ScoreObject[] selectedScoreObjects = null;
-    private TimeUnit[] startTimes = null;
+    private TimePosition[] startTimes = null;
     Map<Line, Line> lineSourceCopyMap = new HashMap<>();
 
     TimeState timeState = null;
@@ -98,7 +98,7 @@ class MultiLineMoveMouseListener extends BlueMouseAdapter {
                 .getSelectedScoreObjects();
 
         selectedScoreObjects = selectedObjects.toArray(new ScoreObject[0]);
-        startTimes = new TimeUnit[selectedScoreObjects.length];
+        startTimes = new TimePosition[selectedScoreObjects.length];
 
         for (int i = 0; i < selectedScoreObjects.length; i++) {
             ScoreObject sObj = selectedScoreObjects[i];
@@ -161,9 +161,9 @@ class MultiLineMoveMouseListener extends BlueMouseAdapter {
             for (int i = 0; i < selectedScoreObjects.length; i++) {
                 ScoreObject sObj = selectedScoreObjects[i];
                 TimeContext context = TimeContextManager.getContext();
-                // Preserve the original TimeUnit type
+                // Preserve the original TimePosition type
                 double newBeats = startTimes[i].toBeats(context) + trans;
-                sObj.setStartTime(TimeUtilities.beatsToTimeUnit(newBeats, startTimes[i].getTimeBase(), context));
+                sObj.setStartTime(TimeUtilities.beatsToTimePosition(newBeats, startTimes[i].getTimeBase(), context));
             }
 
             selection.updateTranslation(translation);

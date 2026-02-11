@@ -6,7 +6,7 @@ import blue.score.ScoreObject;
 import blue.time.TimeContext;
 import blue.time.TimeContextManager;
 import blue.time.TimeDuration;
-import blue.time.TimeUnit;
+import blue.time.TimePosition;
 import blue.ui.core.score.undo.DurationScoreObjectEdit;
 import blue.ui.core.score.undo.StartTimeEdit;
 import blue.undo.BlueUndoManager;
@@ -98,7 +98,7 @@ public class QuickTimeDialog extends JDialog {
             try {
                 TimeContext context = TimeContextManager.getContext();
                 
-                TimeUnit initialStart = scoreObj.getStartTime();
+                TimePosition initialStart = scoreObj.getStartTime();
                 TimeDuration initialSubjectiveDuration = scoreObj
                         .getSubjectiveDuration();
 
@@ -110,9 +110,9 @@ public class QuickTimeDialog extends JDialog {
 
                 StartTimeEdit edit = null;
                 if (initialStart.toBeats(context) != newStart) {
-                    scoreObj.setStartTime(TimeUnit.beats(newStart));
+                    scoreObj.setStartTime(TimePosition.beats(newStart));
                     edit = new StartTimeEdit(initialStart,
-                            TimeUnit.beats(newStart), scoreObj);
+                            TimePosition.beats(newStart), scoreObj);
                     BlueUndoManager.addEdit(edit);
                 }
 

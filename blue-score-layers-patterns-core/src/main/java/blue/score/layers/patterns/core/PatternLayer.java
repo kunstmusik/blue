@@ -30,7 +30,7 @@ import blue.soundObject.SoundObjectException;
 import blue.soundObject.TimeBehavior;
 import blue.time.TimeContext;
 import blue.time.TimeDuration;
-import blue.time.TimeUnit;
+import blue.time.TimePosition;
 import blue.utility.ObjectUtilities;
 import blue.utility.ScoreUtilities;
 import electric.xml.Element;
@@ -58,7 +58,7 @@ public class PatternLayer implements Layer {
 
     public PatternLayer() {
         soundObject = new GenericScore();
-        soundObject.setStartTime(TimeUnit.beats(0));
+        soundObject.setStartTime(TimePosition.beats(0));
         soundObject.setSubjectiveDuration(TimeDuration.beats(4.0f));
         soundObject.setTimeBehavior(TimeBehavior.NONE);
         patternData = new PatternData();
@@ -173,7 +173,7 @@ public class PatternLayer implements Layer {
     NoteList generateForCSD(TimeContext context, CompileData compileData, double startTime, double endTime, int patternBeatsLength) throws SoundObjectException {
         NoteList notes = new NoteList();
 
-        this.soundObject.setStartTime(TimeUnit.beats(0));
+        this.soundObject.setStartTime(TimePosition.beats(0));
         //this.soundObject.setSubjectiveDuration(patternBeatsLength);
         //this.soundObject.setTimeBehavior(SoundObject.TIME_BEHAVIOR_NONE);
         NoteList tempNotes = this.soundObject.generateForCSD(context, compileData, -1, -1);

@@ -89,8 +89,8 @@ public final class TimeBar extends JPanel implements
     
     private static final java.text.DecimalFormat BEAT_FORMAT = new java.text.DecimalFormat();
 
-    MemoizedFunction<Double, Double> getMajorTimeUnit = new MemoizedFunction<>(
-            this::calcMajorTimeUnit);
+    MemoizedFunction<Double, Double> getMajorTimePosition = new MemoizedFunction<>(
+            this::calcMajorTimePosition);
 
     MemoizedFunction<Double, Double> getMajorBeatUnit = new MemoizedFunction<>(
             this::calcMajorBeatUnit);
@@ -266,24 +266,24 @@ public final class TimeBar extends JPanel implements
         return majorBeatUnit;
     }
 
-    private double calcMajorTimeUnit(double pixelTime) {
+    private double calcMajorTimePosition(double pixelTime) {
         int minMajorWidth = 100;
 
-        double majorTimeUnit = 0;
+        double majorTimePosition = 0;
         double[] units = {1, 2, 4, 10, 15, 20, 30, 60, 150, 300, 600, 900, 1200, 1800, 3600, 7200, 14400};
         var width = 0.0;
 
         if (pixelTime < minMajorWidth) {
             for (int i = 0; i < units.length && width < minMajorWidth; i++) {
                 width = units[i] * pixelTime;
-                majorTimeUnit = units[i];
+                majorTimePosition = units[i];
             }
 
         } else {
             var v = Math.log(pixelTime / minMajorWidth) / Math.log(2);
-            majorTimeUnit = 1.0 / Math.pow(2, (int) v);
+            majorTimePosition = 1.0 / Math.pow(2, (int) v);
         }
-        return majorTimeUnit;
+        return majorTimePosition;
     }
 
     private void drawLinesAndNumbers(Graphics g) {
@@ -345,7 +345,7 @@ public final class TimeBar extends JPanel implements
         //        for (int i = start; i < end; i++) {
         //            int lineX = i * pixelTime;
         //
-        //            if (i % timeUnit == 0) {
+        //            if (i % timePosition == 0) {
         //                if (lineX == 0 || lineX - lastVal > textWidth) {
         //                    g.drawLine(lineX, h, lineX, longHeight);
         //                    lastVal = lineX;
@@ -361,7 +361,7 @@ public final class TimeBar extends JPanel implements
         //        g.setFont(LABEL_FONT);
         //        lastVal = 0;
         //        for (int i = start; i < end; i++) {
-        //            if (i % timeUnit == 0) {
+        //            if (i % timePosition == 0) {
         //                String time = "";
         //
         //                if (timeDisplay == PolyObject.DISPLAY_TIME) {
@@ -944,8 +944,7 @@ public final class TimeBar extends JPanel implements
                 equals("renderLoopTime"))) {
             repaint();
         } else if (evt.getSource() == this.timeState) {
-            if (prop.equals("timeDisplay") || prop.equals("timeUnit") || prop.
-                    equals("pixelSecond")) {
+            if (prop.equals("timeDisplay") || prop.equals("pixelSecond")) {
                 // updateBuffer();
 
                 repaint();

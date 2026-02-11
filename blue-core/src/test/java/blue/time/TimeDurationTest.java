@@ -445,7 +445,7 @@ public class TimeDurationTest {
     @Test
     public void testDurationBBTVsPositionBBT() {
         // Position: bar 1, beat 1, ticks 0 = 0 beats (1-based origin)
-        TimeUnit.BBTTime position = TimeUnit.bbt(1, 1, 0);
+        TimePosition.BBTTime position = TimePosition.bbt(1, 1, 0);
         assertEquals(0.0, position.toBeats(context), 0.001);
         
         // Duration: 0 bars, 0 beats, 0 ticks = 0 beats (0-based zero)
@@ -453,7 +453,7 @@ public class TimeDurationTest {
         assertEquals(0.0, duration.toBeats(context), 0.001);
         
         // Position: bar 2, beat 1, ticks 0 = 4 beats (start of second measure)
-        position = TimeUnit.bbt(2, 1, 0);
+        position = TimePosition.bbt(2, 1, 0);
         assertEquals(4.0, position.toBeats(context), 0.001);
         
         // Duration: 1 bar, 0 beats, 0 ticks = 4 beats (one measure duration)
@@ -464,7 +464,7 @@ public class TimeDurationTest {
     @Test
     public void testDurationBBFVsPositionBBF() {
         // Position: bar 1, beat 1, fraction 0 = 0 beats
-        TimeUnit.BBFTime position = TimeUnit.bbf(1, 1, 0);
+        TimePosition.BBFTime position = TimePosition.bbf(1, 1, 0);
         assertEquals(0.0, position.toBeats(context), 0.001);
         
         // Duration: 0 bars, 0 beats, fraction 0 = 0 beats
@@ -473,7 +473,7 @@ public class TimeDurationTest {
         
         // The key difference: 4 beats of duration
         // Position: bar 2, beat 1, fraction 0 → displays as "2.1.00"
-        position = TimeUnit.bbf(2, 1, 0);
+        position = TimePosition.bbf(2, 1, 0);
         assertEquals(4.0, position.toBeats(context), 0.001);
         
         // Duration: 1 bar, 0 beats, fraction 0 → displays as "1.0.00"

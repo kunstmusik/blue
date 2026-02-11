@@ -210,7 +210,7 @@ public class MeterMap {
      * @param beatTime the beat time value
      * @return the Csound beats value
      */
-    double toBeats(TimeUnit.BeatTime beatTime) {
+    double toBeats(TimePosition.BeatTime beatTime) {
         return beatTime.getCsoundBeats();
     }
 
@@ -223,7 +223,7 @@ public class MeterMap {
      * @throws IllegalStateException if MeterMap is empty
      * @throws IllegalArgumentException if beats is negative
      */
-    public TimeUnit.BBTTime beatsToBBT(double csoundBeats, int ppq) {
+    public TimePosition.BBTTime beatsToBBT(double csoundBeats, int ppq) {
         if (this.isEmpty()) {
             throw new IllegalStateException("MeterMap is empty");
         }
@@ -273,7 +273,7 @@ public class MeterMap {
         
         long bar = baseMeasure + additionalMeasures;
         
-        return TimeUnit.bbt(bar, wholeBeat, ticks);
+        return TimePosition.bbt(bar, wholeBeat, ticks);
     }
     
     /**
@@ -285,8 +285,8 @@ public class MeterMap {
      * @throws IllegalStateException if MeterMap is empty
      * @throws IllegalArgumentException if beats is negative
      */
-    public TimeUnit.BBSTTime beatsToBBST(double csoundBeats, int ppq) {
-        TimeUnit.BBTTime bbt = beatsToBBT(csoundBeats, ppq);
+    public TimePosition.BBSTTime beatsToBBST(double csoundBeats, int ppq) {
+        TimePosition.BBTTime bbt = beatsToBBT(csoundBeats, ppq);
         return bbt.toBBST(ppq);
     }
     
@@ -298,7 +298,7 @@ public class MeterMap {
      * @throws IllegalStateException if MeterMap is empty
      * @throws IllegalArgumentException if beats is negative
      */
-    public TimeUnit.BBFTime beatsToBBF(double csoundBeats) {
+    public TimePosition.BBFTime beatsToBBF(double csoundBeats) {
         if (this.isEmpty()) {
             throw new IllegalStateException("MeterMap is empty");
         }
@@ -347,7 +347,7 @@ public class MeterMap {
         
         long bar = baseMeasure + additionalMeasures;
         
-        return TimeUnit.bbf(bar, wholeBeat, fraction);
+        return TimePosition.bbf(bar, wholeBeat, fraction);
     }
     
     /**

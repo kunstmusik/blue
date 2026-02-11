@@ -33,7 +33,7 @@ import blue.soundObject.SoundObject;
 import blue.soundObject.TimeBehavior;
 import blue.time.TimeContext;
 import blue.time.TimeContextManager;
-import blue.time.TimeUnit;
+import blue.time.TimePosition;
 import blue.ui.core.clipboard.BlueClipboardUtils;
 import blue.ui.core.render.RealtimeRenderManager;
 import blue.ui.core.score.ScoreObjectCopy;
@@ -415,7 +415,7 @@ public final class BlueLiveTopComponent extends TopComponent
                 }
 
                 SoundObject copy = sObj.deepCopy();
-                copy.setStartTime(TimeUnit.beats(0.0f));
+                copy.setStartTime(TimePosition.beats(0.0f));
 
                 addSoundObject(column, row, copy);
             }
@@ -1361,7 +1361,7 @@ public final class BlueLiveTopComponent extends TopComponent
                 }
 
                 SoundObject copy = sObj.deepCopy();
-                copy.setStartTime(TimeUnit.beats(0.0f));
+                copy.setStartTime(TimePosition.beats(0.0f));
                 addSoundObject(mouseColumn, mouseRow, copy);
             });
 

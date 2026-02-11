@@ -15,7 +15,7 @@ import blue.orchestra.GenericInstrument;
 import blue.soundObject.*;
 import blue.time.TempoPoint;
 import blue.time.TimeContext;
-import blue.time.TimeUnit;
+import blue.time.TimePosition;
 import blue.udo.OpcodeList;
 import blue.udo.UserDefinedOpcode;
 import java.io.BufferedReader;
@@ -262,7 +262,7 @@ public class CSDUtility {
         GenericScore genScore = createSizedGenericScore(section.scoreText,
                 BlueSystem.getString("csd.importedScore"), context);
 
-        genScore.setStartTime(TimeUnit.beats(section.sectionStartTime));
+        genScore.setStartTime(TimePosition.beats(section.sectionStartTime));
 
         PolyObject pObj = (PolyObject) data.getScore().get(0);
 
@@ -345,7 +345,7 @@ public class CSDUtility {
             GenericScore genScore = createSizedGenericScore(notes.toString(),
                     "Instrument " + iNum.toString(), context);
 
-            genScore.setStartTime(TimeUnit.beats(minStart + section.sectionStartTime));
+            genScore.setStartTime(TimePosition.beats(minStart + section.sectionStartTime));
 
             sLayer.add(genScore);
 

@@ -24,7 +24,7 @@ import blue.time.TimeBase;
 import blue.time.TimeContext;
 import blue.time.TimeContextManager;
 import blue.time.TimeDuration;
-import blue.time.TimeUnit;
+import blue.time.TimePosition;
 import blue.time.TimeUnitMath;
 import blue.time.TimeUtilities;
 import java.awt.BorderLayout;
@@ -34,7 +34,7 @@ import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
 
 /**
- * Composite panel for editing TimeUnit values with TimeBase selection.
+ * Composite panel for editing TimePosition values with TimeBase selection.
  * Combines a TimeBaseSelector with a unified TextTimeUnitEditor that handles
  * all TimeBase formats via text input.
  * 
@@ -45,7 +45,7 @@ public class SoundObjectTimePanel extends JPanel {
     private final TimeBaseSelector timeBaseSelector;
     private final TextTimeUnitEditor textEditor;
 
-    private TimeUnit currentTimeUnit;
+    private TimePosition currentTimePosition;
     private boolean updating = false;
     private final PropertyChangeSupport propertyChangeSupport;
 
@@ -91,25 +91,25 @@ public class SoundObjectTimePanel extends JPanel {
     }
 
     /**
-     * Gets the current TimeUnit value.
+     * Gets the current TimePosition value.
      * 
-     * @return the current TimeUnit
+     * @return the current TimePosition
      */
-    public TimeUnit getTimeUnit() {
-        return currentTimeUnit;
+    public TimePosition getTimePosition() {
+        return currentTimePosition;
     }
 
     /**
-     * Sets the TimeUnit value to edit.
+     * Sets the TimePosition value to edit.
      * 
-     * @param timeUnit the TimeUnit to edit
+     * @param timePosition the TimePosition to edit
      */
-    public void setTimeUnit(TimeUnit timeUnit) {
-        if (this.currentTimeUnit == timeUnit) {
+    public void setTimePosition(TimePosition timePosition) {
+        if (this.currentTimePosition == timePosition) {
             return;
         }
 
-        this.currentTimeUnit = timeUnit;
+        this.currentTimePosition = timePosition;
         updating = true;
         try {
             updateDisplay();
@@ -137,20 +137,20 @@ public class SoundObjectTimePanel extends JPanel {
     }
 
     /**
-     * Updates the display to show the current TimeUnit.
+     * Updates the display to show the current TimePosition.
      */
     private void updateDisplay() {
-        if (currentTimeUnit == null) {
+        if (currentTimePosition == null) {
             return;
         }
 
-        // Determine TimeBase from TimeUnit type and update selector
-        TimeBase timeBase = currentTimeUnit.getTimeBase();
+        // Determine TimeBase from TimePosition type and update selector
+        TimeBase timeBase = currentTimePosition.getTimeBase();
         timeBaseSelector.setSelectedTimeBase(timeBase);
 
         // Update the text editor with TimeBase and value
         textEditor.setTimeBase(timeBase);
-        textEditor.setTimeUnit(currentTimeUnit);
+        textEditor.setTimePosition(currentTimePosition);
     }
 
     /**
@@ -160,9 +160,9 @@ public class SoundObjectTimePanel extends JPanel {
         TimeBase newTimeBase = timeBaseSelector.getSelectedTimeBase();
         textEditor.setTimeBase(newTimeBase);
 
-        // Convert current TimeUnit to new TimeBase using TimeContext
-        if (currentTimeUnit != null) {
-            TimeUnit oldValue = currentTimeUnit;
+        // Convert current TimePosition to new TimeBase using TimeContext
+        if (currentTimePosition != null) {
+            TimePosition oldValue = currentTimePosition;
             
             // Use project's TimeContext for proper conversion
             TimeContext context = BlueProjectManager.getInstance().getCurrentProject().getData().getScore().getTimeContext();
@@ -170,11 +170,11 @@ public class SoundObjectTimePanel extends JPanel {
             TimeContextManager.setContext(context);
 
             try {
-                currentTimeUnit = TimeUtilities.convertTimeUnit(oldValue, newTimeBase, context);
-                textEditor.setTimeUnit(currentTimeUnit);
+                currentTimePosition = TimeUtilities.convertTimePosition(oldValue, newTimeBase, context);
+                textEditor.setTimePosition(currentTimePosition);
 
                 // Fire property change so parent component is notified
-                propertyChangeSupport.firePropertyChange("timeUnit", oldValue, currentTimeUnit);
+                propertyChangeSupport.firePropertyChange("timePosition", oldValue, currentTimePosition);
             } finally {
                 if (previousContext != null) {
                     TimeContextManager.setContext(previousContext);
@@ -186,11 +186,11 @@ public class SoundObjectTimePanel extends JPanel {
     }
 
     /**
-     * Updates the TimeUnit from the text editor.
+     * Updates the TimePosition from the text editor.
      */
     private void updateTimeUnitFromEditor() {
-        TimeUnit oldValue = currentTimeUnit;
-        currentTimeUnit = textEditor.getTimeUnit();
+        TimePosition oldValue = currentTimePosition;
+        currentTimePosition = textEditor.getTimePosition();
         
         // Fire property change within TimeContext since listeners may need it
         TimeContext context = BlueProjectManager.getInstance().getCurrentProject().getData().getScore().getTimeContext();
@@ -198,7 +198,7 @@ public class SoundObjectTimePanel extends JPanel {
         TimeContextManager.setContext(context);
 
         try {
-            propertyChangeSupport.firePropertyChange("timeUnit", oldValue, currentTimeUnit);
+            propertyChangeSupport.firePropertyChange("timePosition", oldValue, currentTimePosition);
         } finally {
             if (previousContext != null) {
                 TimeContextManager.setContext(previousContext);
@@ -209,7 +209,7 @@ public class SoundObjectTimePanel extends JPanel {
     }
 
     /**
-     * Adds a PropertyChangeListener to listen for TimeUnit changes.
+     * Adds a PropertyChangeListener to listen for TimePosition changes.
      */
     @Override
     public void addPropertyChangeListener(String propertyName, PropertyChangeListener listener) {
@@ -226,7 +226,7 @@ public class SoundObjectTimePanel extends JPanel {
 
     /**
      * Sets a TimeDuration value to edit.
-     * Converts the TimeDuration to an equivalent TimeUnit for internal storage.
+     * Converts the TimeDuration to an equivalent TimePosition for internal storage.
      * 
      * @param duration the TimeDuration to edit
      */
@@ -235,17 +235,17 @@ public class SoundObjectTimePanel extends JPanel {
             return;
         }
         TimeContext context = BlueProjectManager.getInstance().getCurrentProject().getData().getScore().getTimeContext();
-        setTimeUnit(TimeUtilities.beatsToTimeUnit(duration.toBeats(context), duration.getTimeBase(), context));
+        setTimePosition(TimeUtilities.beatsToTimePosition(duration.toBeats(context), duration.getTimeBase(), context));
     }
 
     /**
      * Gets the current value as a TimeDuration.
-     * Converts the internal TimeUnit to a TimeDuration.
+     * Converts the internal TimePosition to a TimeDuration.
      * 
      * @return the current value as a TimeDuration, or null if no value is set
      */
     public TimeDuration getTimeDuration() {
-        TimeUnit tu = getTimeUnit();
+        TimePosition tu = getTimePosition();
         if (tu == null) {
             return null;
         }

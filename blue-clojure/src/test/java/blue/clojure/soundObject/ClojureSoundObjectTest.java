@@ -65,7 +65,7 @@ public class ClojureSoundObjectTest {
 
         Element result = instance.saveAsXML(objRefMap);
         ClojureObject instance2 = (ClojureObject)ClojureObject.loadFromXML(result, null);
-        // Verify the important fields match (TimeUnit fields are internal representation)
+        // Verify the important fields match (TimePosition fields are internal representation)
         assertEquals(instance.getClojureCode(), instance2.getClojureCode());
         assertEquals(instance.getStartTime().toBeats(context), instance2.getStartTime().toBeats(context), 0.001);
         assertEquals(instance.getSubjectiveDuration().toBeats(context), instance2.getSubjectiveDuration().toBeats(context), 0.001);

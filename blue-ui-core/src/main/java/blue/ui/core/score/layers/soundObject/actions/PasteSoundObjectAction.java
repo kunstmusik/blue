@@ -33,7 +33,8 @@ import blue.soundObject.SoundObject;
 import blue.time.TimeBase;
 import blue.time.TimeContext;
 import blue.time.TimeContextManager;
-import blue.time.TimeUnit;
+import blue.time.TimeDuration;
+import blue.time.TimePosition;
 import blue.time.TimeUnitMath;
 import blue.time.TimeUtilities;
 import blue.ui.core.clipboard.BlueClipboardUtils;
@@ -121,7 +122,7 @@ public final class PasteSoundObjectAction extends AbstractAction implements Cont
 
         int minLayer = Integer.MAX_VALUE;
         int maxLayer = Integer.MIN_VALUE;
-        TimeUnit bufferStart = null;
+        TimePosition bufferStart = null;
 
         TimeContext context = TimeContextManager.getContext();
         
@@ -141,7 +142,7 @@ public final class PasteSoundObjectAction extends AbstractAction implements Cont
         }
 
         int layerTranslation = selectedLayerIndex - minLayer;
-        TimeUnit startTranslation = TimeUnit.beats(start).subtract(context, bufferStart);
+        TimeDuration startTranslation = TimeUnitMath.forwardDistance(context, bufferStart, TimePosition.beats(start));
 
         if ((maxLayer + layerTranslation) >= allLayers.size()) {
             JOptionPane.showMessageDialog(null, "Not Enough Layers to Paste");
@@ -186,11 +187,11 @@ public final class PasteSoundObjectAction extends AbstractAction implements Cont
                 getInstancesFromPolyObject(instanceSoundObjects, pObj);
             }
 
-            sObj.setStartTime(sObj.getStartTime().add(context, startTranslation));
+            sObj.setStartTime(TimeUnitMath.add(context, sObj.getStartTime(), startTranslation));
 
             // Convert to primary ruler's TimeBase
             TimeBase timeBase = timeState.getTimeDisplay();
-            sObj.setStartTime(TimeUtilities.convertTimeUnit(sObj.getStartTime(), timeBase, context));
+            sObj.setStartTime(TimeUtilities.convertTimePosition(sObj.getStartTime(), timeBase, context));
             sObj.setSubjectiveDuration(TimeUnitMath.beatsToDuration(sObj.getSubjectiveDuration().toBeats(context), timeBase, context));
 
             ScoreObjectLayer<ScoreObject> layer

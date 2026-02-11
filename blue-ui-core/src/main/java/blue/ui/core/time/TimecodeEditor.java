@@ -1,7 +1,7 @@
 package blue.ui.core.time;
 
 import blue.time.TimeContext;
-import blue.time.TimeUnit;
+import blue.time.TimePosition;
 import java.awt.BorderLayout;
 import java.awt.Toolkit;
 import java.awt.event.FocusAdapter;
@@ -19,7 +19,7 @@ public class TimecodeEditor extends TimeUnitEditor {
     private final JTextField textField;
 
     private String lastValidText = "";
-    private TimeUnit pendingTimeUnit = null;
+    private TimePosition pendingTimePosition = null;
 
     public TimecodeEditor(Mode mode) {
         super();
@@ -45,7 +45,7 @@ public class TimecodeEditor extends TimeUnitEditor {
             return;
         }
 
-        TimeUnit parsed;
+        TimePosition parsed;
         try {
             parsed = parse(textField.getText());
         } catch (RuntimeException ex) {
@@ -54,27 +54,27 @@ public class TimecodeEditor extends TimeUnitEditor {
             return;
         }
 
-        pendingTimeUnit = parsed;
+        pendingTimePosition = parsed;
         try {
             fireStateChanged();
         } finally {
-            pendingTimeUnit = null;
+            pendingTimePosition = null;
         }
     }
 
     @Override
     protected void updateDisplay() {
-        TimeUnit timeUnit = getTimeUnit();
+        TimePosition timePosition = getTimePosition();
 
         if (mode == Mode.TIME) {
-            if (timeUnit instanceof TimeUnit.TimeValue timeValue) {
+            if (timePosition instanceof TimePosition.TimeValue timeValue) {
                 lastValidText = formatTime(timeValue.getHours(), timeValue.getMinutes(), timeValue.getSeconds(), timeValue.getMilliseconds());
             } else {
                 lastValidText = formatTime(0, 0, 0, 0);
             }
         } else {
             // SMPTE is display-only — internally stored as TimeValue
-            if (timeUnit instanceof TimeUnit.TimeValue tv) {
+            if (timePosition instanceof TimePosition.TimeValue tv) {
                 double totalSeconds = tv.getHours() * 3600.0 + tv.getMinutes() * 60.0
                         + tv.getSeconds() + tv.getMilliseconds() / 1000.0;
                 lastValidText = TimeUnitTextField.formatSecondsAsSMPTE(
@@ -88,13 +88,13 @@ public class TimecodeEditor extends TimeUnitEditor {
     }
 
     @Override
-    protected TimeUnit updateModel() {
-        if (pendingTimeUnit != null) {
-            lastValidText = format(pendingTimeUnit);
-            return pendingTimeUnit;
+    protected TimePosition updateModel() {
+        if (pendingTimePosition != null) {
+            lastValidText = format(pendingTimePosition);
+            return pendingTimePosition;
         }
 
-        TimeUnit parsed = parse(textField.getText());
+        TimePosition parsed = parse(textField.getText());
         lastValidText = format(parsed);
         return parsed;
     }
@@ -104,10 +104,10 @@ public class TimecodeEditor extends TimeUnitEditor {
         textField.setEnabled(enabled);
     }
 
-    private TimeUnit parse(String text) {
+    private TimePosition parse(String text) {
         String trimmed = text == null ? "" : text.trim();
         if (trimmed.isEmpty()) {
-            return TimeUnit.TimeValue.ZERO;
+            return TimePosition.TimeValue.ZERO;
         }
 
         if (mode == Mode.TIME) {
@@ -117,8 +117,8 @@ public class TimecodeEditor extends TimeUnitEditor {
         return parseSmpte(trimmed);
     }
 
-    private String format(TimeUnit timeUnit) {
-        if (timeUnit instanceof TimeUnit.TimeValue tv) {
+    private String format(TimePosition timePosition) {
+        if (timePosition instanceof TimePosition.TimeValue tv) {
             if (mode == Mode.SMPTE) {
                 double totalSeconds = tv.getHours() * 3600.0 + tv.getMinutes() * 60.0
                         + tv.getSeconds() + tv.getMilliseconds() / 1000.0;
@@ -138,7 +138,7 @@ public class TimecodeEditor extends TimeUnitEditor {
         return String.format("%d:%02d:%02d:%02d", hours, minutes, seconds, frames);
     }
 
-    private static TimeUnit parseTime(String text) {
+    private static TimePosition parseTime(String text) {
         String[] parts = text.split(":");
 
         long hours = 0;
@@ -167,14 +167,14 @@ public class TimecodeEditor extends TimeUnitEditor {
             throw new IllegalArgumentException();
         }
 
-        return TimeUnit.time(hours, minutes, seconds, milliseconds);
+        return TimePosition.time(hours, minutes, seconds, milliseconds);
     }
 
     /**
      * Parses SMPTE timecode text (HH:MM:SS:FF) into a TimeValue.
      * SMPTE is display-only — frames are converted to milliseconds.
      */
-    private static TimeUnit parseSmpte(String text) {
+    private static TimePosition parseSmpte(String text) {
         long frameRate = (long) TimeContext.DEFAULT_SMPTE_FRAME_RATE;
 
         String[] parts = text.split(":");
@@ -201,7 +201,7 @@ public class TimecodeEditor extends TimeUnitEditor {
 
         // Convert frames to milliseconds and produce a TimeValue
         long milliseconds = (long) (frames * 1000.0 / frameRate);
-        return TimeUnit.time(hours, minutes, seconds, milliseconds);
+        return TimePosition.time(hours, minutes, seconds, milliseconds);
     }
 
     private static long parseNonNegativeLong(String text) {

@@ -22,7 +22,7 @@ package blue.ui.core.time;
 import blue.time.TimeBase;
 import blue.time.TimeContext;
 import blue.time.TimeDuration;
-import blue.time.TimeUnit;
+import blue.time.TimePosition;
 import blue.time.TimeUnitMath;
 import blue.time.TimeUtilities;
 import java.awt.Toolkit;
@@ -35,7 +35,7 @@ import javax.swing.event.ChangeListener;
 import javax.swing.event.EventListenerList;
 
 /**
- * A unified text field for editing TimeUnit values in various formats.
+ * A unified text field for editing TimePosition values in various formats.
  * Supports parsing and formatting for all TimeBase types:
  * <ul>
  *   <li>CSOUND_BEATS: decimal number (e.g., "4.5", "12.25")</li>
@@ -52,7 +52,7 @@ import javax.swing.event.EventListenerList;
 public class TimeUnitTextField extends JTextField {
 
     private TimeBase timeBase = TimeBase.CSOUND_BEATS;
-    private TimeUnit timeUnit;
+    private TimePosition timePosition;
     private String lastValidText = "";
     private boolean updating = false;
     private boolean durationMode = false;
@@ -94,23 +94,23 @@ public class TimeUnitTextField extends JTextField {
         updatePlaceholder();
         
         // Reformat current value if set
-        if (timeUnit != null) {
+        if (timePosition != null) {
             updateDisplay();
         }
     }
 
     /**
-     * Gets the current TimeUnit value.
+     * Gets the current TimePosition value.
      */
-    public TimeUnit getTimeUnit() {
-        return timeUnit;
+    public TimePosition getTimePosition() {
+        return timePosition;
     }
 
     /**
-     * Sets the TimeUnit value to display.
+     * Sets the TimePosition value to display.
      */
-    public void setTimeUnit(TimeUnit timeUnit) {
-        this.timeUnit = timeUnit;
+    public void setTimePosition(TimePosition timePosition) {
+        this.timePosition = timePosition;
         updating = true;
         try {
             updateDisplay();
@@ -120,16 +120,16 @@ public class TimeUnitTextField extends JTextField {
     }
 
     private void updateDisplay() {
-        if (timeUnit == null) {
+        if (timePosition == null) {
             lastValidText = "";
             setText("");
             return;
         }
         
         if (durationMode && timeContextSupplier != null) {
-            lastValidText = formatDuration(timeUnit, timeBase, timeContextSupplier.get());
+            lastValidText = formatDuration(timePosition, timeBase, timeContextSupplier.get());
         } else {
-            lastValidText = format(timeUnit, timeBase);
+            lastValidText = format(timePosition, timeBase);
         }
         setText(lastValidText);
     }
@@ -141,7 +141,7 @@ public class TimeUnitTextField extends JTextField {
     public void setDurationMode(boolean durationMode) {
         this.durationMode = durationMode;
         updatePlaceholder();
-        if (timeUnit != null) {
+        if (timePosition != null) {
             updating = true;
             try {
                 updateDisplay();
@@ -176,7 +176,7 @@ public class TimeUnitTextField extends JTextField {
             return; // No change
         }
 
-        TimeUnit parsed;
+        TimePosition parsed;
         try {
             if (durationMode && timeContextSupplier != null) {
                 parsed = parseDuration(text, timeBase, timeContextSupplier.get());
@@ -189,7 +189,7 @@ public class TimeUnitTextField extends JTextField {
             return;
         }
 
-        timeUnit = parsed;
+        timePosition = parsed;
         if (durationMode && timeContextSupplier != null) {
             lastValidText = formatDuration(parsed, timeBase, timeContextSupplier.get());
         } else {
@@ -200,7 +200,7 @@ public class TimeUnitTextField extends JTextField {
     }
 
     /**
-     * Adds a ChangeListener to be notified when the TimeUnit value changes.
+     * Adds a ChangeListener to be notified when the TimePosition value changes.
      */
     public void addChangeListener(ChangeListener listener) {
         listenerList.add(ChangeListener.class, listener);
@@ -249,24 +249,24 @@ public class TimeUnitTextField extends JTextField {
     // ========== Formatting ==========
 
     /**
-     * Formats a TimeUnit to a string representation for the given TimeBase.
+     * Formats a TimePosition to a string representation for the given TimeBase.
      * PPQ is fixed at {@link TimeContext#DEFAULT_PPQ} (960).
      */
-    public static String format(TimeUnit timeUnit, TimeBase timeBase) {
+    public static String format(TimePosition timePosition, TimeBase timeBase) {
         int ppq = TimeContext.DEFAULT_PPQ;
         return switch (timeBase) {
-            case CSOUND_BEATS -> formatBeats(timeUnit);
-            case BBT -> formatBBT(timeUnit, ppq);
-            case BBST -> formatBBST(timeUnit, ppq);
-            case BBF -> formatBBF(timeUnit);
-            case TIME -> formatTime(timeUnit);
-            case SMPTE -> formatSMPTE(timeUnit);
-            case FRAME -> formatFrames(timeUnit);
+            case CSOUND_BEATS -> formatBeats(timePosition);
+            case BBT -> formatBBT(timePosition, ppq);
+            case BBST -> formatBBST(timePosition, ppq);
+            case BBF -> formatBBF(timePosition);
+            case TIME -> formatTime(timePosition);
+            case SMPTE -> formatSMPTE(timePosition);
+            case FRAME -> formatFrames(timePosition);
         };
     }
 
-    private static String formatBeats(TimeUnit timeUnit) {
-        if (timeUnit instanceof TimeUnit.BeatTime bt) {
+    private static String formatBeats(TimePosition timePosition) {
+        if (timePosition instanceof TimePosition.BeatTime bt) {
             double beats = bt.getCsoundBeats();
             if (beats == Math.floor(beats)) {
                 return String.format("%.1f", beats);
@@ -276,11 +276,11 @@ public class TimeUnitTextField extends JTextField {
         return "0.0";
     }
 
-    private static String formatBBT(TimeUnit timeUnit, int ppq) {
-        if (timeUnit instanceof TimeUnit.BBTTime bbt) {
+    private static String formatBBT(TimePosition timePosition, int ppq) {
+        if (timePosition instanceof TimePosition.BBTTime bbt) {
             return String.format("%d.%d.%d", bbt.getBar(), bbt.getBeat(), bbt.getTicks());
         }
-        if (timeUnit instanceof TimeUnit.BBSTTime bbst) {
+        if (timePosition instanceof TimePosition.BBSTTime bbst) {
             // Convert BBST to BBT
             int totalTicks = (bbst.getSixteenth() - 1) * (ppq / 4) + bbst.getTicks();
             return String.format("%d.%d.%d", bbst.getBar(), bbst.getBeat(), totalTicks);
@@ -288,12 +288,12 @@ public class TimeUnitTextField extends JTextField {
         return "1.1.0";
     }
 
-    private static String formatBBST(TimeUnit timeUnit, int ppq) {
-        if (timeUnit instanceof TimeUnit.BBSTTime bbst) {
+    private static String formatBBST(TimePosition timePosition, int ppq) {
+        if (timePosition instanceof TimePosition.BBSTTime bbst) {
             return String.format("%d.%d.%d.%d", bbst.getBar(), bbst.getBeat(), 
                     bbst.getSixteenth(), bbst.getTicks());
         }
-        if (timeUnit instanceof TimeUnit.BBTTime bbt) {
+        if (timePosition instanceof TimePosition.BBTTime bbt) {
             // Convert BBT to BBST
             int ticksPerSixteenth = ppq / 4;
             int sixteenth = (bbt.getTicks() / ticksPerSixteenth) + 1;
@@ -303,15 +303,15 @@ public class TimeUnitTextField extends JTextField {
         return "1.1.1.0";
     }
 
-    private static String formatBBF(TimeUnit timeUnit) {
-        if (timeUnit instanceof TimeUnit.BBFTime bbf) {
+    private static String formatBBF(TimePosition timePosition) {
+        if (timePosition instanceof TimePosition.BBFTime bbf) {
             return String.format("%d.%d.%d", bbf.getBar(), bbf.getBeat(), bbf.getFraction());
         }
         return "1.1.0";
     }
 
-    private static String formatTime(TimeUnit timeUnit) {
-        if (timeUnit instanceof TimeUnit.TimeValue tv) {
+    private static String formatTime(TimePosition timePosition) {
+        if (timePosition instanceof TimePosition.TimeValue tv) {
             return String.format("%d:%02d:%02d.%03d", 
                     tv.getHours(), tv.getMinutes(), tv.getSeconds(), tv.getMilliseconds());
         }
@@ -319,13 +319,13 @@ public class TimeUnitTextField extends JTextField {
     }
 
     /**
-     * Formats a TimeUnit as SMPTE timecode (HH:MM:SS:FF).
-     * SMPTE is display-only — the TimeUnit is converted to seconds first,
+     * Formats a TimePosition as SMPTE timecode (HH:MM:SS:FF).
+     * SMPTE is display-only — the TimePosition is converted to seconds first,
      * then formatted using a default frame rate. For accurate display with
      * project frame rate, use TimeDisplayFormat.SMPTE instead.
      */
-    private static String formatSMPTE(TimeUnit timeUnit) {
-        if (timeUnit instanceof TimeUnit.TimeValue tv) {
+    private static String formatSMPTE(TimePosition timePosition) {
+        if (timePosition instanceof TimePosition.TimeValue tv) {
             double totalSeconds = tv.getHours() * 3600.0 + tv.getMinutes() * 60.0
                     + tv.getSeconds() + tv.getMilliseconds() / 1000.0;
             return formatSecondsAsSMPTE(totalSeconds, TimeContext.DEFAULT_SMPTE_FRAME_RATE);
@@ -348,8 +348,8 @@ public class TimeUnitTextField extends JTextField {
         return String.format("%02d:%02d:%02d:%02d", hours, minutes, seconds, frames);
     }
 
-    private static String formatFrames(TimeUnit timeUnit) {
-        if (timeUnit instanceof TimeUnit.FrameValue fv) {
+    private static String formatFrames(TimePosition timePosition) {
+        if (timePosition instanceof TimePosition.FrameValue fv) {
             return String.valueOf(fv.getFrameNumber());
         }
         return "0";
@@ -358,9 +358,9 @@ public class TimeUnitTextField extends JTextField {
     // ========== Parsing ==========
 
     /**
-     * Parses a string to a TimeUnit for the given TimeBase.
+     * Parses a string to a TimePosition for the given TimeBase.
      */
-    public static TimeUnit parse(String text, TimeBase timeBase) {
+    public static TimePosition parse(String text, TimeBase timeBase) {
         String trimmed = text == null ? "" : text.trim();
         
         return switch (timeBase) {
@@ -374,20 +374,20 @@ public class TimeUnitTextField extends JTextField {
         };
     }
 
-    private static TimeUnit parseBeats(String text) {
+    private static TimePosition parseBeats(String text) {
         if (text.isEmpty()) {
-            return TimeUnit.beats(0.0);
+            return TimePosition.beats(0.0);
         }
         double beats = Double.parseDouble(text);
         if (beats < 0) {
             throw new IllegalArgumentException("Beats cannot be negative");
         }
-        return TimeUnit.beats(beats);
+        return TimePosition.beats(beats);
     }
 
-    private static TimeUnit parseBBT(String text) {
+    private static TimePosition parseBBT(String text) {
         if (text.isEmpty()) {
-            return TimeUnit.bbt(1, 1, 0);
+            return TimePosition.bbt(1, 1, 0);
         }
         
         String[] parts = text.split("\\.");
@@ -399,12 +399,12 @@ public class TimeUnitTextField extends JTextField {
         int beat = Integer.parseInt(parts[1].trim());
         int ticks = parts.length == 3 ? Integer.parseInt(parts[2].trim()) : 0;
         
-        return TimeUnit.bbt(bar, beat, ticks);
+        return TimePosition.bbt(bar, beat, ticks);
     }
 
-    private static TimeUnit parseBBST(String text) {
+    private static TimePosition parseBBST(String text) {
         if (text.isEmpty()) {
-            return TimeUnit.bbst(1, 1, 1, 0);
+            return TimePosition.bbst(1, 1, 1, 0);
         }
         
         String[] parts = text.split("\\.");
@@ -417,12 +417,12 @@ public class TimeUnitTextField extends JTextField {
         int sixteenth = Integer.parseInt(parts[2].trim());
         int ticks = parts.length == 4 ? Integer.parseInt(parts[3].trim()) : 0;
         
-        return TimeUnit.bbst(bar, beat, sixteenth, ticks);
+        return TimePosition.bbst(bar, beat, sixteenth, ticks);
     }
 
-    private static TimeUnit parseBBF(String text) {
+    private static TimePosition parseBBF(String text) {
         if (text.isEmpty()) {
-            return TimeUnit.bbf(1, 1, 0);
+            return TimePosition.bbf(1, 1, 0);
         }
         
         String[] parts = text.split("\\.");
@@ -434,12 +434,12 @@ public class TimeUnitTextField extends JTextField {
         int beat = Integer.parseInt(parts[1].trim());
         int fraction = parts.length == 3 ? Integer.parseInt(parts[2].trim()) : 0;
         
-        return TimeUnit.bbf(bar, beat, fraction);
+        return TimePosition.bbf(bar, beat, fraction);
     }
 
-    private static TimeUnit parseTime(String text) {
+    private static TimePosition parseTime(String text) {
         if (text.isEmpty()) {
-            return TimeUnit.TimeValue.ZERO;
+            return TimePosition.TimeValue.ZERO;
         }
         
         String[] parts = text.split(":");
@@ -469,7 +469,7 @@ public class TimeUnitTextField extends JTextField {
             throw new IllegalArgumentException();
         }
 
-        return TimeUnit.time(hours, minutes, seconds, milliseconds);
+        return TimePosition.time(hours, minutes, seconds, milliseconds);
     }
 
     /**
@@ -477,9 +477,9 @@ public class TimeUnitTextField extends JTextField {
      * SMPTE is display-only — parsed frames are converted to milliseconds
      * using the default SMPTE frame rate.
      */
-    private static TimeUnit parseSMPTE(String text) {
+    private static TimePosition parseSMPTE(String text) {
         if (text.isEmpty()) {
-            return TimeUnit.TimeValue.ZERO;
+            return TimePosition.TimeValue.ZERO;
         }
         
         long frameRate = (long) TimeContext.DEFAULT_SMPTE_FRAME_RATE;
@@ -507,70 +507,70 @@ public class TimeUnitTextField extends JTextField {
 
         // Convert frames to milliseconds and produce a TimeValue
         long milliseconds = (long) (frames * 1000.0 / frameRate);
-        return TimeUnit.time(hours, minutes, seconds, milliseconds);
+        return TimePosition.time(hours, minutes, seconds, milliseconds);
     }
 
-    private static TimeUnit parseFrames(String text) {
+    private static TimePosition parseFrames(String text) {
         if (text.isEmpty()) {
-            return TimeUnit.frames(0);
+            return TimePosition.frames(0);
         }
         long frames = Long.parseLong(text);
         if (frames < 0) {
             throw new IllegalArgumentException("Frames cannot be negative");
         }
-        return TimeUnit.frames(frames);
+        return TimePosition.frames(frames);
     }
 
     // ========== Duration Formatting ==========
 
     /**
-     * Formats a TimeUnit as a duration string. For measure-based formats (BBT, BBST, BBF),
+     * Formats a TimePosition as a duration string. For measure-based formats (BBT, BBST, BBF),
      * uses 0-based bars/beats. For other formats, delegates to regular format.
      * PPQ is fixed at {@link TimeContext#DEFAULT_PPQ} (960).
      */
-    public static String formatDuration(TimeUnit timeUnit, TimeBase timeBase, TimeContext context) {
+    public static String formatDuration(TimePosition timePosition, TimeBase timeBase, TimeContext context) {
         return switch (timeBase) {
-            case CSOUND_BEATS -> formatBeats(timeUnit);
+            case CSOUND_BEATS -> formatBeats(timePosition);
             case BBT -> {
-                TimeDuration dur = TimeUnitMath.fromTimeUnit(timeUnit, TimeBase.BBT, context);
+                TimeDuration dur = TimeUnitMath.fromTimePosition(timePosition, TimeBase.BBT, context);
                 if (dur instanceof TimeDuration.DurationBBT d) {
                     yield String.format("%d.%d.%d", d.getBars(), d.getBeats(), d.getTicks());
                 }
                 yield "0.0.0";
             }
             case BBST -> {
-                TimeDuration dur = TimeUnitMath.fromTimeUnit(timeUnit, TimeBase.BBST, context);
+                TimeDuration dur = TimeUnitMath.fromTimePosition(timePosition, TimeBase.BBST, context);
                 if (dur instanceof TimeDuration.DurationBBST d) {
                     yield String.format("%d.%d.%d.%d", d.getBars(), d.getBeats(), d.getSixteenth(), d.getTicks());
                 }
                 yield "0.0.0.0";
             }
             case BBF -> {
-                TimeDuration dur = TimeUnitMath.fromTimeUnit(timeUnit, TimeBase.BBF, context);
+                TimeDuration dur = TimeUnitMath.fromTimePosition(timePosition, TimeBase.BBF, context);
                 if (dur instanceof TimeDuration.DurationBBF d) {
                     yield String.format("%d.%d.%02d", d.getBars(), d.getBeats(), d.getFraction());
                 }
                 yield "0.0.00";
             }
-            case TIME -> formatTime(timeUnit);
-            case SMPTE -> formatSMPTE(timeUnit);
-            case FRAME -> formatFrames(timeUnit);
+            case TIME -> formatTime(timePosition);
+            case SMPTE -> formatSMPTE(timePosition);
+            case FRAME -> formatFrames(timePosition);
         };
     }
 
     // ========== Duration Parsing ==========
 
     /**
-     * Parses a duration string to a TimeUnit. For measure-based formats (BBT, BBST, BBF),
+     * Parses a duration string to a TimePosition. For measure-based formats (BBT, BBST, BBF),
      * interprets values as 0-based and converts through beats to the target TimeBase.
      */
-    public static TimeUnit parseDuration(String text, TimeBase timeBase, TimeContext context) {
+    public static TimePosition parseDuration(String text, TimeBase timeBase, TimeContext context) {
         String trimmed = text == null ? "" : text.trim();
 
         return switch (timeBase) {
             case CSOUND_BEATS -> parseBeats(trimmed);
             case BBT -> {
-                if (trimmed.isEmpty()) yield TimeUnit.beats(0.0);
+                if (trimmed.isEmpty()) yield TimePosition.beats(0.0);
                 String[] parts = trimmed.split("\\.");
                 if (parts.length < 2 || parts.length > 3)
                     throw new IllegalArgumentException("Duration BBT format: bars.beats.ticks");
@@ -579,10 +579,10 @@ public class TimeUnitTextField extends JTextField {
                 int ticks = parts.length == 3 ? Integer.parseInt(parts[2].trim()) : 0;
                 TimeDuration dur = TimeDuration.bbt(bars, beats, ticks);
                 double totalBeats = dur.toBeats(context);
-                yield TimeUtilities.beatsToTimeUnit(totalBeats, TimeBase.BBT, context);
+                yield TimeUtilities.beatsToTimePosition(totalBeats, TimeBase.BBT, context);
             }
             case BBST -> {
-                if (trimmed.isEmpty()) yield TimeUnit.beats(0.0);
+                if (trimmed.isEmpty()) yield TimePosition.beats(0.0);
                 String[] parts = trimmed.split("\\.");
                 if (parts.length < 3 || parts.length > 4)
                     throw new IllegalArgumentException("Duration BBST format: bars.beats.16th.ticks");
@@ -592,10 +592,10 @@ public class TimeUnitTextField extends JTextField {
                 int ticks = parts.length == 4 ? Integer.parseInt(parts[3].trim()) : 0;
                 TimeDuration dur = TimeDuration.bbst(bars, beats, sixteenth, ticks);
                 double totalBeats = dur.toBeats(context);
-                yield TimeUtilities.beatsToTimeUnit(totalBeats, TimeBase.BBST, context);
+                yield TimeUtilities.beatsToTimePosition(totalBeats, TimeBase.BBST, context);
             }
             case BBF -> {
-                if (trimmed.isEmpty()) yield TimeUnit.beats(0.0);
+                if (trimmed.isEmpty()) yield TimePosition.beats(0.0);
                 String[] parts = trimmed.split("\\.");
                 if (parts.length < 2 || parts.length > 3)
                     throw new IllegalArgumentException("Duration BBF format: bars.beats.fraction");
@@ -604,7 +604,7 @@ public class TimeUnitTextField extends JTextField {
                 int fraction = parts.length == 3 ? Integer.parseInt(parts[2].trim()) : 0;
                 TimeDuration dur = TimeDuration.bbf(bars, beats, fraction);
                 double totalBeats = dur.toBeats(context);
-                yield TimeUtilities.beatsToTimeUnit(totalBeats, TimeBase.BBF, context);
+                yield TimeUtilities.beatsToTimePosition(totalBeats, TimeBase.BBF, context);
             }
             case TIME -> parseTime(trimmed);
             case SMPTE -> parseSMPTE(trimmed);

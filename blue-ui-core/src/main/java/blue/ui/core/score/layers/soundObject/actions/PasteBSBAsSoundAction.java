@@ -32,7 +32,7 @@ import blue.score.layers.Layer;
 import blue.time.TimeContext;
 import blue.time.TimeContextManager;
 import blue.soundObject.Sound;
-import blue.time.TimeUnit;
+import blue.time.TimePosition;
 import blue.ui.core.score.ScorePath;
 import blue.ui.core.score.undo.AddScoreObjectEdit;
 import blue.undo.BlueUndoManager;
@@ -101,7 +101,7 @@ public final class PasteBSBAsSoundAction extends AbstractAction implements Conte
         Object obj = CopyBuffer.getBufferedObject(CopyBuffer.INSTRUMENT);
 
         Sound sound = new Sound();
-        sound.setStartTime(TimeUnit.beats(start));
+        sound.setStartTime(TimePosition.beats(start));
 
         BlueSynthBuilder bsbCopy = ((BlueSynthBuilder)obj).deepCopy();
         // clear out any existing automations

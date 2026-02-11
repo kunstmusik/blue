@@ -124,7 +124,7 @@ public final class ImportSoundObjectAction extends AbstractAction
                     // Use the primary ruler's TimeBase
                     TimeBase timeBase = timeState.getTimeDisplay();
                     TimeContext context = TimeContextManager.getContext();
-                    tempSobj.setStartTime(TimeUtilities.beatsToTimeUnit(startTime, timeBase, context));
+                    tempSobj.setStartTime(TimeUtilities.beatsToTimePosition(startTime, timeBase, context));
                     tempSobj.setSubjectiveDuration(TimeUnitMath.beatsToDuration(
                             tempSobj.getSubjectiveDuration().toBeats(context), timeBase, context));
 

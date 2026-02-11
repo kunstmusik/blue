@@ -19,7 +19,7 @@
  */
 package blue.ui.core.time;
 
-import blue.time.TimeUnit;
+import blue.time.TimePosition;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
@@ -143,8 +143,8 @@ public class SecondTimeEditor extends TimeUnitEditor {
     
     @Override
     protected void updateDisplay() {
-        TimeUnit timeUnit = getTimeUnit();
-        if (timeUnit instanceof TimeUnit.TimeValue timeValue) {
+        TimePosition timePosition = getTimePosition();
+        if (timePosition instanceof TimePosition.TimeValue timeValue) {
             hoursSpinner.setValue(timeValue.getHours());
             minutesSpinner.setValue(timeValue.getMinutes());
             secondsSpinner.setValue(timeValue.getSeconds());
@@ -158,12 +158,12 @@ public class SecondTimeEditor extends TimeUnitEditor {
     }
     
     @Override
-    protected TimeUnit updateModel() {
+    protected TimePosition updateModel() {
         long hours = ((Number) hoursSpinner.getValue()).longValue();
         long minutes = ((Number) minutesSpinner.getValue()).longValue();
         long seconds = ((Number) secondsSpinner.getValue()).longValue();
         long milliseconds = ((Number) millisecondsSpinner.getValue()).longValue();
-        return TimeUnit.time(hours, minutes, seconds, milliseconds);
+        return TimePosition.time(hours, minutes, seconds, milliseconds);
     }
     
     @Override

@@ -22,7 +22,7 @@ package blue.time;
 import electric.xml.Element;
 
 /**
- * Context of time for a project. Used to resolve TimeUnit values according to meter, tempo, and sample rate.
+ * Context of time for a project. Used to resolve TimePosition values according to meter, tempo, and sample rate.
  *
  * @author stevenyi
  */

@@ -1525,7 +1525,7 @@ public final class ScoreTopComponent extends TopComponent
                         
                         if (updateStart) {
                             sObj.setStartTime(
-                                    TimeUtilities.convertTimeUnit(sObj.getStartTime(), newTimeBase, ctx));
+                                    TimeUtilities.convertTimePosition(sObj.getStartTime(), newTimeBase, ctx));
                         }
                         if (updateDuration) {
                             double durBeats = sObj.getSubjectiveDuration().toBeats(ctx);

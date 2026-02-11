@@ -21,7 +21,7 @@ package blue.soundObject;
 
 import blue.noteProcessor.NoteProcessorChain;
 import blue.time.TimeDuration;
-import blue.time.TimeUnit;
+import blue.time.TimePosition;
 import electric.xml.Element;
 import java.awt.Color;
 
@@ -36,8 +36,8 @@ public class SoundObjectUtilities {
         Element retVal = new Element("soundObject");
         retVal.setAttribute("type", sObj.getClass().getName());
 
-        // Save start time as TimeUnit and duration as TimeDuration
-        retVal.addElement(sObj.getStartTime().saveAsXML().setName("startTimeUnit"));
+        // Save start time as TimePosition and duration as TimeDuration
+        retVal.addElement(sObj.getStartTime().saveAsXML().setName("startTimePosition"));
         retVal.addElement(sObj.getSubjectiveDuration().saveAsXML().setName("subjectiveDurationTD"));
         
         retVal.addElement("name").setText(sObj.getName());
@@ -63,20 +63,20 @@ public class SoundObjectUtilities {
     public static void initBasicFromXML(Element data, SoundObject sObj)
             throws Exception {
         
-        // Migration: Try new TimeUnit format first, fall back to old double format
-        Element startTimeUnitElement = data.getElement("startTimeUnit");
+        // Migration: Try new TimePosition format first, fall back to old double format
+        Element startTimeUnitElement = data.getElement("startTimePosition");
         Element durationUnitElement = data.getElement("subjectiveDurationUnit");
         
         // Load start time
         if (startTimeUnitElement != null) {
-            // New format: TimeUnit (element is directly the timeUnit)
-            sObj.setStartTime(TimeUnit.loadFromXML(startTimeUnitElement));
+            // New format: TimePosition (element is directly the timePosition)
+            sObj.setStartTime(TimePosition.loadFromXML(startTimeUnitElement));
         } else if (data.getElement("startTime") != null) {
             // Old format: double (migrate to BeatTime)
             double startTime = Double.parseDouble(data.getTextString("startTime"));
-            sObj.setStartTime(TimeUnit.beats(startTime));
+            sObj.setStartTime(TimePosition.beats(startTime));
         } else {
-            throw new Exception("Missing both startTimeUnit and startTime elements");
+            throw new Exception("Missing both startTimePosition and startTime elements");
         }
         
         // Load duration
@@ -85,9 +85,9 @@ public class SoundObjectUtilities {
             // New format: TimeDuration
             sObj.setSubjectiveDuration(TimeDuration.loadFromXML(durationTDElement));
         } else if (durationUnitElement != null) {
-            // Legacy format: TimeUnit (migrate to TimeDuration via beats)
-            TimeUnit legacyDur = TimeUnit.loadFromXML(durationUnitElement);
-            if (legacyDur instanceof TimeUnit.BeatTime bt) {
+            // Legacy format: TimePosition (migrate to TimeDuration via beats)
+            TimePosition legacyDur = TimePosition.loadFromXML(durationUnitElement);
+            if (legacyDur instanceof TimePosition.BeatTime bt) {
                 sObj.setSubjectiveDuration(TimeDuration.beats(bt.getCsoundBeats()));
             } else {
                 // For non-BeatTime legacy durations, store as beats using a default context

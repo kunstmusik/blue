@@ -20,7 +20,7 @@
 package blue.time;
 
 /**
- * Type-safe arithmetic operations between {@link TimeUnit} (position) and
+ * Type-safe arithmetic operations between {@link TimePosition} (position) and
  * {@link TimeDuration} (duration).
  * 
  * Method signatures enforce valid operations at compile time:
@@ -52,13 +52,13 @@ public final class TimeUnitMath {
      * @param context the TimeContext for conversion
      * @param position the starting position
      * @param duration the duration to add
-     * @return a new TimeUnit representing position + duration
+     * @return a new TimePosition representing position + duration
      */
-    public static TimeUnit add(TimeContext context, TimeUnit position, TimeDuration duration) {
+    public static TimePosition add(TimeContext context, TimePosition position, TimeDuration duration) {
         double posBeats = position.toBeats(context);
         double durBeats = duration.toBeats(context);
         double resultBeats = posBeats + durBeats;
-        return TimeUtilities.beatsToTimeUnit(resultBeats, position.getTimeBase(), context);
+        return TimeUtilities.beatsToTimePosition(resultBeats, position.getTimeBase(), context);
     }
     
     // ========== Position − Position → Duration ==========
@@ -73,7 +73,7 @@ public final class TimeUnitMath {
      * @param to the ending position
      * @return a TimeDuration representing the distance between the positions
      */
-    public static TimeDuration distance(TimeContext context, TimeUnit from, TimeUnit to) {
+    public static TimeDuration distance(TimeContext context, TimePosition from, TimePosition to) {
         double fromBeats = from.toBeats(context);
         double toBeats = to.toBeats(context);
         return TimeDuration.beats(Math.abs(toBeats - fromBeats));
@@ -90,7 +90,7 @@ public final class TimeUnitMath {
      * @param to the ending position
      * @return a TimeDuration representing max(0, to - from)
      */
-    public static TimeDuration forwardDistance(TimeContext context, TimeUnit from, TimeUnit to) {
+    public static TimeDuration forwardDistance(TimeContext context, TimePosition from, TimePosition to) {
         double fromBeats = from.toBeats(context);
         double toBeats = to.toBeats(context);
         return TimeDuration.beats(Math.max(0, toBeats - fromBeats));
@@ -141,13 +141,13 @@ public final class TimeUnitMath {
      * @param context the TimeContext for conversion
      * @param position the starting position
      * @param duration the duration to subtract
-     * @return a new TimeUnit representing max(0, position - duration)
+     * @return a new TimePosition representing max(0, position - duration)
      */
-    public static TimeUnit subtract(TimeContext context, TimeUnit position, TimeDuration duration) {
+    public static TimePosition subtract(TimeContext context, TimePosition position, TimeDuration duration) {
         double posBeats = position.toBeats(context);
         double durBeats = duration.toBeats(context);
         double resultBeats = Math.max(0, posBeats - durBeats);
-        return TimeUtilities.beatsToTimeUnit(resultBeats, position.getTimeBase(), context);
+        return TimeUtilities.beatsToTimePosition(resultBeats, position.getTimeBase(), context);
     }
     
     // ========== Conversion Bridges ==========
@@ -257,32 +257,32 @@ public final class TimeUnitMath {
     }
     
     /**
-     * Creates a TimeDuration from a TimeUnit value, interpreting the TimeUnit's
+     * Creates a TimeDuration from a TimePosition value, interpreting the TimePosition's
      * beat value as a duration rather than a position.
      * 
-     * This is useful for bridging existing code that stores durations as TimeUnit.
+     * This is useful for bridging existing code that stores durations as TimePosition.
      * The resulting TimeDuration will be in DurationBeats format.
      * 
-     * @param timeUnit the TimeUnit whose beat value represents a duration
+     * @param timePosition the TimePosition whose beat value represents a duration
      * @param context the TimeContext for conversion
      * @return a TimeDuration equivalent
      */
-    public static TimeDuration fromTimeUnit(TimeUnit timeUnit, TimeContext context) {
-        double beats = timeUnit.toBeats(context);
+    public static TimeDuration fromTimePosition(TimePosition timePosition, TimeContext context) {
+        double beats = timePosition.toBeats(context);
         return TimeDuration.beats(Math.max(0, beats));
     }
     
     /**
-     * Creates a TimeDuration from a TimeUnit value, converting to the specified
+     * Creates a TimeDuration from a TimePosition value, converting to the specified
      * TimeBase with proper duration semantics (0-based for measure formats).
      * 
-     * @param timeUnit the TimeUnit whose beat value represents a duration
+     * @param timePosition the TimePosition whose beat value represents a duration
      * @param targetTimeBase the desired TimeBase for the result
      * @param context the TimeContext for conversion
      * @return a TimeDuration in the target TimeBase
      */
-    public static TimeDuration fromTimeUnit(TimeUnit timeUnit, TimeBase targetTimeBase, TimeContext context) {
-        double beats = timeUnit.toBeats(context);
+    public static TimeDuration fromTimePosition(TimePosition timePosition, TimeBase targetTimeBase, TimeContext context) {
+        double beats = timePosition.toBeats(context);
         return beatsToDuration(Math.max(0, beats), targetTimeBase, context);
     }
 }

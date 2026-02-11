@@ -245,26 +245,26 @@ public class TempoMap {
     }
     
     /**
-     * Updates the tempo point at the given index with a new position (as TimeUnit) and tempo.
+     * Updates the tempo point at the given index with a new position (as TimePosition) and tempo.
      * Preserves the existing curve type.
      * 
      * @param index the index of the tempo point to update
-     * @param position the new position as a TimeUnit (BeatTime, BBTTime, BBSTTime, or BBFTime)
+     * @param position the new position as a TimePosition (BeatTime, BBTTime, BBSTTime, or BBFTime)
      * @param tempo the new tempo in BPM (must be > 0)
      */
-    public void setTempoPoint(int index, TimeUnit position, double tempo) {
+    public void setTempoPoint(int index, TimePosition position, double tempo) {
         setTempoPoint(index, position, tempo, points.get(index).getCurveType());
     }
     
     /**
-     * Updates the tempo point at the given index with a new position (as TimeUnit), tempo, and curve type.
+     * Updates the tempo point at the given index with a new position (as TimePosition), tempo, and curve type.
      * 
      * @param index the index of the tempo point to update
-     * @param position the new position as a TimeUnit (BeatTime, BBTTime, BBSTTime, or BBFTime)
+     * @param position the new position as a TimePosition (BeatTime, BBTTime, BBSTTime, or BBFTime)
      * @param tempo the new tempo in BPM (must be > 0)
      * @param curveType the curve type for transition to next point
      */
-    public void setTempoPoint(int index, TimeUnit position, double tempo, CurveType curveType) {
+    public void setTempoPoint(int index, TimePosition position, double tempo, CurveType curveType) {
         TempoPoint point = points.get(index);
         point.setPosition(position);
         point.setTempo(tempo);

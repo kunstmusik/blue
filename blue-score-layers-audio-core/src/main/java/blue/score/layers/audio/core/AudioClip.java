@@ -24,7 +24,7 @@ import blue.score.ScoreObjectEvent;
 import blue.score.ScoreObjectListener;
 import blue.time.TimeContext;
 import blue.time.TimeDuration;
-import blue.time.TimeUnit;
+import blue.time.TimePosition;
 import blue.utility.XMLUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
@@ -250,13 +250,13 @@ public final class AudioClip implements ScoreObject, Comparable<AudioClip> {
     }
 
     @Override
-    public TimeUnit getStartTime() {
-        return TimeUnit.beats(getStart());
+    public TimePosition getStartTime() {
+        return TimePosition.beats(getStart());
     }
 
     @Override
-    public void setStartTime(TimeUnit timeUnit) {
-        if (timeUnit instanceof TimeUnit.BeatTime bt) {
+    public void setStartTime(TimePosition timePosition) {
+        if (timePosition instanceof TimePosition.BeatTime bt) {
             setStart(bt.getCsoundBeats());
         } else {
             throw new IllegalArgumentException("AudioClip only supports BeatTime. Use resizeLeft/resizeRight with TimeContext for conversion.");
@@ -316,7 +316,7 @@ public final class AudioClip implements ScoreObject, Comparable<AudioClip> {
 
         }
 
-        setStartTime(TimeUnit.beats(newStartTime));
+        setStartTime(TimePosition.beats(newStartTime));
         setFileStartTime(fileStart);
         setSubjectiveDuration(TimeDuration.beats(getDuration() + diff));
     }

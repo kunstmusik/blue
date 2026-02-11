@@ -27,7 +27,7 @@ import blue.soundObject.SoundObject;
 import blue.time.TimeBase;
 import blue.time.TimeContext;
 import blue.time.TimeContextManager;
-import blue.time.TimeUnit;
+import blue.time.TimePosition;
 import blue.time.TimeUnitMath;
 import blue.time.TimeUtilities;
 import blue.ui.core.score.ScoreController;
@@ -114,10 +114,10 @@ public final class AddSoundObjectActionsPresenter extends AbstractAction impleme
                             timeState.getSnapValueInBeats(start, context.getTempoMap(), context.getSampleRate()));
                 }
                 
-                // Use the primary ruler's TimeBase for the default TimeUnit type
+                // Use the primary ruler's TimeBase for the default TimePosition type
                 TimeBase timeBase = timeState.getTimeDisplay();
                 TimeContext context = TimeContextManager.getContext();
-                sObj.setStartTime(TimeUtilities.beatsToTimeUnit(start, timeBase, context));
+                sObj.setStartTime(TimeUtilities.beatsToTimePosition(start, timeBase, context));
                 sObj.setSubjectiveDuration(TimeUnitMath.beatsToDuration(
                         sObj.getSubjectiveDuration().toBeats(context), timeBase, context));
 

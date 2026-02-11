@@ -5,7 +5,7 @@ package blue.ui.core.score.undo;
 
 import blue.BlueSystem;
 import blue.score.ScoreObject;
-import blue.time.TimeUnit;
+import blue.time.TimePosition;
 import javax.swing.undo.AbstractUndoableEdit;
 import javax.swing.undo.CannotRedoException;
 import javax.swing.undo.CannotUndoException;
@@ -18,14 +18,14 @@ import javax.swing.undo.CannotUndoException;
 public class AlignEdit extends AbstractUndoableEdit {
     private final ScoreObject[] soundObjects;
 
-    private final TimeUnit[] initalStartTimes;
+    private final TimePosition[] initalStartTimes;
 
-    private final TimeUnit[] endingStartTimes;
+    private final TimePosition[] endingStartTimes;
 
     private String presentationName;
 
-    public AlignEdit(ScoreObject[] soundObjects, TimeUnit[] initialStartTimes,
-            TimeUnit[] endingStartTimes) {
+    public AlignEdit(ScoreObject[] soundObjects, TimePosition[] initialStartTimes,
+            TimePosition[] endingStartTimes) {
         this.soundObjects = soundObjects;
         this.initalStartTimes = initialStartTimes;
         this.endingStartTimes = endingStartTimes;

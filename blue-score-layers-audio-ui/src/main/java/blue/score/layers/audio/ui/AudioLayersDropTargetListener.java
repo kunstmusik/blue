@@ -159,7 +159,7 @@ public class AudioLayersDropTargetListener implements DropTargetListener {
 
             TimeBase timeBase = audioLayersPanel.getTimeState().getTimeDisplay();
             TimeContext context = TimeContextManager.getContext();
-            af.setStartTime(TimeUtilities.beatsToTimeUnit(startTime, timeBase, context));
+            af.setStartTime(TimeUtilities.beatsToTimePosition(startTime, timeBase, context));
             af.setSubjectiveDuration(TimeUnitMath.beatsToDuration(af.getAudioDuration(), timeBase, context));
 
             AudioLayer layer = audioLayerGroup.get(index);
@@ -220,7 +220,7 @@ public class AudioLayersDropTargetListener implements DropTargetListener {
 
                 TimeBase timeBase = audioLayersPanel.getTimeState().getTimeDisplay();
                 TimeContext context = TimeContextManager.getContext();
-                af.setStartTime(TimeUtilities.beatsToTimeUnit(startTime, timeBase, context));
+                af.setStartTime(TimeUtilities.beatsToTimePosition(startTime, timeBase, context));
                 af.setSubjectiveDuration(TimeUnitMath.beatsToDuration(af.getAudioDuration(), timeBase, context));
 
                 AudioLayer layer = audioLayerGroup.get(index);
@@ -286,7 +286,7 @@ public class AudioLayersDropTargetListener implements DropTargetListener {
 
                 TimeBase timeBase = audioLayersPanel.getTimeState().getTimeDisplay();
                 TimeContext context = TimeContextManager.getContext();
-                af.setStartTime(TimeUtilities.beatsToTimeUnit(startTime, timeBase, context));
+                af.setStartTime(TimeUtilities.beatsToTimePosition(startTime, timeBase, context));
                 af.setSubjectiveDuration(TimeUnitMath.beatsToDuration(af.getAudioDuration(), timeBase, context));
 
                 AudioLayer layer = audioLayerGroup.get(index);

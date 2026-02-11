@@ -78,7 +78,7 @@ public class MeterMapTest {
         int ppq = 960;
         
         // Test basic conversion in 4/4
-        TimeUnit.BBTTime result = meterMap.beatsToBBT(0.0, ppq);
+        TimePosition.BBTTime result = meterMap.beatsToBBT(0.0, ppq);
         assertEquals(1, result.getBar());
         assertEquals(1, result.getBeat());
         assertEquals(0, result.getTicks());
@@ -101,7 +101,7 @@ public class MeterMapTest {
         int ppq = 960;
         
         // Before meter change (4/4)
-        TimeUnit.BBTTime result = meterMap.beatsToBBT(0.0, ppq);
+        TimePosition.BBTTime result = meterMap.beatsToBBT(0.0, ppq);
         assertEquals(1, result.getBar());
         assertEquals(1, result.getBeat());
         
@@ -132,19 +132,19 @@ public class MeterMapTest {
         int ppq = 960;
         
         // Test round-trip: BBT → Beats → BBT
-        TimeUnit.BBTTime original = TimeUnit.bbt(1, 1, 0);
+        TimePosition.BBTTime original = TimePosition.bbt(1, 1, 0);
         double beats = meterMap.barBeatToBeats(original.getBar(), original.getBeat());
-        TimeUnit.BBTTime roundTrip = meterMap.beatsToBBT(beats, ppq);
+        TimePosition.BBTTime roundTrip = meterMap.beatsToBBT(beats, ppq);
         assertEquals(original.getBar(), roundTrip.getBar());
         assertEquals(original.getBeat(), roundTrip.getBeat());
         
-        original = TimeUnit.bbt(5, 3, 0);
+        original = TimePosition.bbt(5, 3, 0);
         beats = meterMap.barBeatToBeats(original.getBar(), original.getBeat());
         roundTrip = meterMap.beatsToBBT(beats, ppq);
         assertEquals(original.getBar(), roundTrip.getBar());
         assertEquals(original.getBeat(), roundTrip.getBeat());
         
-        original = TimeUnit.bbt(10, 2, 0);
+        original = TimePosition.bbt(10, 2, 0);
         beats = meterMap.barBeatToBeats(original.getBar(), original.getBeat());
         roundTrip = meterMap.beatsToBBT(beats, ppq);
         assertEquals(original.getBar(), roundTrip.getBar());

@@ -29,7 +29,7 @@ import blue.time.TempoPoint;
 import blue.time.TimeBase;
 import blue.time.TimeContext;
 import blue.time.TimeContextManager;
-import blue.time.TimeUnit;
+import blue.time.TimePosition;
 import blue.time.TimeUtilities;
 import blue.ui.core.time.SoundObjectTimePanel;
 import blue.ui.utilities.UiUtilities;
@@ -323,7 +323,7 @@ public class TempoRegionBar extends JComponent implements PropertyChangeListener
     private void showEditTempoDialog(int regionIndex) {
         TempoPoint tempoPoint = tempoMap.getPoint(regionIndex);
         double currentTempo = tempoPoint.getTempo();
-        TimeUnit currentPosition = tempoPoint.getPosition();
+        TimePosition currentPosition = tempoPoint.getPosition();
         
         // Calculate valid beat range to avoid duplicates
         final double minBeat;
@@ -350,8 +350,8 @@ public class TempoRegionBar extends JComponent implements PropertyChangeListener
         positionSection.setBorder(BorderFactory.createTitledBorder("Position"));
 
         SoundObjectTimePanel timePanel = new SoundObjectTimePanel();
-        // Use the actual TimeUnit from the tempo point (preserves Measure:Beats if that's how it was entered)
-        timePanel.setTimeUnit(currentPosition);
+        // Use the actual TimePosition from the tempo point (preserves Measure:Beats if that's how it was entered)
+        timePanel.setTimePosition(currentPosition);
         timePanel.setTimeBaseSelectionEnabled(true);
         timePanel.setPositionEditingEnabled(regionIndex > 0); // First point must stay at beat 0
 
@@ -382,29 +382,29 @@ public class TempoRegionBar extends JComponent implements PropertyChangeListener
         if (result == JOptionPane.OK_OPTION) {
             int newTempo = (Integer) tempoSpinner.getValue();
             
-            // Get the TimeUnit directly from the panel
-            TimeUnit timeUnit = timePanel.getTimeUnit();
+            // Get the TimePosition directly from the panel
+            TimePosition timePosition = timePanel.getTimePosition();
             
             // Convert to beats for range validation
-            double newBeat = convertTimeUnitToBeats(timeUnit);
+            double newBeat = convertTimePositionToBeats(timePosition);
             
             // Validate range - if out of range, clamp and use beats
             if (newBeat < minBeat || newBeat > maxBeat) {
                 newBeat = Math.max(minBeat, Math.min(maxBeat, newBeat));
-                timeUnit = TimeUnit.beats(newBeat);
+                timePosition = TimePosition.beats(newBeat);
             }
             
-            // Update the tempo point with the TimeUnit directly
-            tempoMap.setTempoPoint(regionIndex, timeUnit, newTempo);
+            // Update the tempo point with the TimePosition directly
+            tempoMap.setTempoPoint(regionIndex, timePosition, newTempo);
             repaint();
         }
     }
     
     /**
-     * Converts a TimeUnit to Csound beats using the current TimeContext.
+     * Converts a TimePosition to Csound beats using the current TimeContext.
      */
-    private double convertTimeUnitToBeats(TimeUnit timeUnit) {
-        if (timeUnit instanceof TimeUnit.BeatTime beatTime) {
+    private double convertTimePositionToBeats(TimePosition timePosition) {
+        if (timePosition instanceof TimePosition.BeatTime beatTime) {
             return beatTime.getCsoundBeats();
         }
         
@@ -415,8 +415,8 @@ public class TempoRegionBar extends JComponent implements PropertyChangeListener
         TimeContextManager.setContext(context);
         
         try {
-            TimeUnit beatsUnit = TimeUtilities.convertTimeUnit(timeUnit, TimeBase.CSOUND_BEATS, context);
-            if (beatsUnit instanceof TimeUnit.BeatTime beatTime) {
+            TimePosition beatsUnit = TimeUtilities.convertTimePosition(timePosition, TimeBase.CSOUND_BEATS, context);
+            if (beatsUnit instanceof TimePosition.BeatTime beatTime) {
                 return beatTime.getCsoundBeats();
             }
             return 0.0;

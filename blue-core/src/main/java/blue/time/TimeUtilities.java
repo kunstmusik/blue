@@ -22,10 +22,10 @@ package blue.time;
 
 /**
  * Utility class for converting time values according to meter and tempo. 
- * Supports conversions between all TimeUnit types using TimeContext.
+ * Supports conversions between all TimePosition types using TimeContext.
  * 
  * All conversions route through Csound beats as the canonical intermediate:
- * TimeUnit → Csound beats → TimeUnit
+ * TimePosition → Csound beats → TimePosition
  * 
  * Conversion flow:
  * - BBTTime/BBSTTime/BBFTime → MeterMap → Csound beats
@@ -71,42 +71,42 @@ public class TimeUtilities {
         return String.format("%02d:%02d:%02d:%02d", hours, minutes, seconds, frameNumber);
     }
     
-    // ========== TimeUnit Conversion Methods ==========
+    // ========== TimePosition Conversion Methods ==========
     
     /**
-     * Converts any TimeUnit to Csound beats using the provided TimeContext.
+     * Converts any TimePosition to Csound beats using the provided TimeContext.
      * This is the core conversion that all other conversions route through.
      * 
-     * @param timeUnit the TimeUnit to convert
+     * @param timePosition the TimePosition to convert
      * @param context the TimeContext providing meter, tempo, and sample rate
      * @return the equivalent time in Csound beats
      */
-    public static double timeUnitToBeats(TimeUnit timeUnit, TimeContext context) {
-        if (timeUnit == null) {
-            throw new IllegalArgumentException("TimeUnit cannot be null");
+    public static double timePositionToBeats(TimePosition timePosition, TimeContext context) {
+        if (timePosition == null) {
+            throw new IllegalArgumentException("TimePosition cannot be null");
         }
         if (context == null) {
             throw new IllegalArgumentException("TimeContext cannot be null");
         }
         
-        return switch (timeUnit.getTimeBase()) {
-            case CSOUND_BEATS -> ((TimeUnit.BeatTime) timeUnit).getCsoundBeats();
-            case BBT -> timeUnit.toBeats(context);
-            case BBST -> timeUnit.toBeats(context);
-            case BBF -> timeUnit.toBeats(context);
+        return switch (timePosition.getTimeBase()) {
+            case CSOUND_BEATS -> ((TimePosition.BeatTime) timePosition).getCsoundBeats();
+            case BBT -> timePosition.toBeats(context);
+            case BBST -> timePosition.toBeats(context);
+            case BBF -> timePosition.toBeats(context);
             case TIME -> {
-                TimeUnit.TimeValue tv = (TimeUnit.TimeValue) timeUnit;
+                TimePosition.TimeValue tv = (TimePosition.TimeValue) timePosition;
                 double seconds = tv.toTotalSeconds();
                 yield context.getTempoMap().secondsToBeats(seconds);
             }
             case SMPTE -> {
-                // SMPTE is display-only — should not appear as a stored TimeUnit.
+                // SMPTE is display-only — should not appear as a stored TimePosition.
                 // Fall through to TIME handling.
                 throw new IllegalArgumentException(
-                        "SMPTE is display-only and cannot be stored as a TimeUnit");
+                        "SMPTE is display-only and cannot be stored as a TimePosition");
             }
             case FRAME -> {
-                TimeUnit.FrameValue fv = (TimeUnit.FrameValue) timeUnit;
+                TimePosition.FrameValue fv = (TimePosition.FrameValue) timePosition;
                 double seconds = fv.toTotalSeconds(context.getSampleRate());
                 yield context.getTempoMap().secondsToBeats(seconds);
             }
@@ -114,20 +114,20 @@ public class TimeUtilities {
     }
     
     /**
-     * Converts Csound beats to a TimeUnit of the specified TimeBase.
+     * Converts Csound beats to a TimePosition of the specified TimeBase.
      * 
      * @param beats the time in Csound beats
      * @param targetTimeBase the desired TimeBase for the result
      * @param context the TimeContext providing meter, tempo, and sample rate
-     * @return a new TimeUnit of the specified type
+     * @return a new TimePosition of the specified type
      */
-    public static TimeUnit beatsToTimeUnit(double beats, TimeBase targetTimeBase, TimeContext context) {
+    public static TimePosition beatsToTimePosition(double beats, TimeBase targetTimeBase, TimeContext context) {
         if (context == null) {
             throw new IllegalArgumentException("TimeContext cannot be null");
         }
         
         return switch (targetTimeBase) {
-            case CSOUND_BEATS -> TimeUnit.beats(beats);
+            case CSOUND_BEATS -> TimePosition.beats(beats);
             case BBT -> context.getMeterMap().beatsToBBT(beats, TimeContext.DEFAULT_PPQ);
             case BBST -> context.getMeterMap().beatsToBBST(beats, TimeContext.DEFAULT_PPQ);
             case BBF -> context.getMeterMap().beatsToBBF(beats);
@@ -137,7 +137,7 @@ public class TimeUtilities {
                 int minutes = (int) ((seconds % 3600) / 60);
                 int secs = (int) (seconds % 60);
                 int millis = (int) Math.round((seconds - (int) seconds) * 1000);
-                yield TimeUnit.time(hours, minutes, secs, millis);
+                yield TimePosition.time(hours, minutes, secs, millis);
             }
             case SMPTE -> {
                 // SMPTE is display-only — produce a TimeValue instead
@@ -146,82 +146,82 @@ public class TimeUtilities {
                 int minutes = (int) ((seconds % 3600) / 60);
                 int secs = (int) (seconds % 60);
                 int millis = (int) Math.round((seconds - (int) seconds) * 1000);
-                yield TimeUnit.time(hours, minutes, secs, millis);
+                yield TimePosition.time(hours, minutes, secs, millis);
             }
             case FRAME -> {
                 double seconds = context.getTempoMap().beatsToSeconds(beats);
                 long frameNumber = Math.round(seconds * context.getSampleRate());
-                yield TimeUnit.frames(frameNumber);
+                yield TimePosition.frames(frameNumber);
             }
         };
     }
     
     /**
-     * Converts a TimeUnit from one TimeBase to another.
+     * Converts a TimePosition from one TimeBase to another.
      * 
-     * @param timeUnit the source TimeUnit
+     * @param timePosition the source TimePosition
      * @param targetTimeBase the desired target TimeBase
      * @param context the TimeContext for conversion
-     * @return a new TimeUnit in the target TimeBase
+     * @return a new TimePosition in the target TimeBase
      */
-    public static TimeUnit convertTimeUnit(TimeUnit timeUnit, TimeBase targetTimeBase, TimeContext context) {
+    public static TimePosition convertTimePosition(TimePosition timePosition, TimeBase targetTimeBase, TimeContext context) {
         // Short circuit if already in target TimeBase
-        if (timeUnit.getTimeBase() == targetTimeBase) {
-            return timeUnit;
+        if (timePosition.getTimeBase() == targetTimeBase) {
+            return timePosition;
         }
         
         // Convert through Csound beats as intermediate
-        double beats = timeUnitToBeats(timeUnit, context);
-        return beatsToTimeUnit(beats, targetTimeBase, context);
+        double beats = timePositionToBeats(timePosition, context);
+        return beatsToTimePosition(beats, targetTimeBase, context);
     }
     
     /**
-     * Converts seconds to a TimeUnit of the specified TimeBase.
+     * Converts seconds to a TimePosition of the specified TimeBase.
      * 
      * @param seconds the time in seconds
      * @param targetTimeBase the desired TimeBase
      * @param context the TimeContext for conversion
-     * @return a new TimeUnit of the specified type
+     * @return a new TimePosition of the specified type
      */
-    public static TimeUnit secondsToTimeUnit(double seconds, TimeBase targetTimeBase, TimeContext context) {
+    public static TimePosition secondsToTimePosition(double seconds, TimeBase targetTimeBase, TimeContext context) {
         double beats = context.getTempoMap().secondsToBeats(seconds);
-        return beatsToTimeUnit(beats, targetTimeBase, context);
+        return beatsToTimePosition(beats, targetTimeBase, context);
     }
     
     /**
-     * Converts a TimeUnit to seconds.
+     * Converts a TimePosition to seconds.
      * 
-     * @param timeUnit the TimeUnit to convert
+     * @param timePosition the TimePosition to convert
      * @param context the TimeContext for conversion
      * @return the time in seconds
      */
-    public static double timeUnitToSeconds(TimeUnit timeUnit, TimeContext context) {
-        double beats = timeUnitToBeats(timeUnit, context);
+    public static double timePositionToSeconds(TimePosition timePosition, TimeContext context) {
+        double beats = timePositionToBeats(timePosition, context);
         return context.getTempoMap().beatsToSeconds(beats);
     }
     
     /**
-     * Converts a sample frame number to a TimeUnit.
+     * Converts a sample frame number to a TimePosition.
      * 
      * @param frameNumber the audio sample frame number
      * @param targetTimeBase the desired TimeBase
      * @param context the TimeContext for conversion
-     * @return a new TimeUnit of the specified type
+     * @return a new TimePosition of the specified type
      */
-    public static TimeUnit framesToTimeUnit(long frameNumber, TimeBase targetTimeBase, TimeContext context) {
+    public static TimePosition framesToTimePosition(long frameNumber, TimeBase targetTimeBase, TimeContext context) {
         double seconds = frameNumber / (double) context.getSampleRate();
-        return secondsToTimeUnit(seconds, targetTimeBase, context);
+        return secondsToTimePosition(seconds, targetTimeBase, context);
     }
     
     /**
-     * Converts a TimeUnit to a sample frame number.
+     * Converts a TimePosition to a sample frame number.
      * 
-     * @param timeUnit the TimeUnit to convert
+     * @param timePosition the TimePosition to convert
      * @param context the TimeContext for conversion
      * @return the audio sample frame number
      */
-    public static long timeUnitToFrames(TimeUnit timeUnit, TimeContext context) {
-        double seconds = timeUnitToSeconds(timeUnit, context);
+    public static long timePositionToFrames(TimePosition timePosition, TimeContext context) {
+        double seconds = timePositionToSeconds(timePosition, context);
         return Math.round(seconds * context.getSampleRate());
     }
 }

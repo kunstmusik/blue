@@ -7,7 +7,7 @@ import blue.score.ScoreObjectEvent;
 import blue.score.ScoreObjectListener;
 import blue.time.TimeContext;
 import blue.time.TimeDuration;
-import blue.time.TimeUnit;
+import blue.time.TimePosition;
 import blue.time.TimeUnitMath;
 import blue.time.TimeUtilities;
 
@@ -24,7 +24,7 @@ public abstract class AbstractSoundObject implements SoundObject {
      * Internal storage for start time. Single source of truth.
      * Always stored as BeatTime for backward compatibility.
      */
-    protected TimeUnit startTimeUnit = TimeUnit.beats(0.0);
+    protected TimePosition startTimePosition = TimePosition.beats(0.0);
 
     /**
      * Internal storage for subjective duration. Single source of truth.
@@ -43,7 +43,7 @@ public abstract class AbstractSoundObject implements SoundObject {
     }
 
     public AbstractSoundObject(AbstractSoundObject aso) {
-        startTimeUnit = aso.startTimeUnit;
+        startTimePosition = aso.startTimePosition;
         durationUnit = aso.durationUnit;
         name = aso.name;
         backgroundColor = aso.backgroundColor;
@@ -66,12 +66,12 @@ public abstract class AbstractSoundObject implements SoundObject {
     }
 
     @Override
-    public void setStartTime(TimeUnit startTime) {
+    public void setStartTime(TimePosition startTime) {
         if (startTime == null) {
             throw new IllegalArgumentException("Start time cannot be null");
         }
         
-        this.startTimeUnit = startTime;
+        this.startTimePosition = startTime;
 
         ScoreObjectEvent event = new ScoreObjectEvent(this,
                 ScoreObjectEvent.START_TIME);
@@ -80,8 +80,8 @@ public abstract class AbstractSoundObject implements SoundObject {
     }
 
     @Override
-    public TimeUnit getStartTime() {
-        return startTimeUnit;
+    public TimePosition getStartTime() {
+        return startTimePosition;
     }
 
     @Override
@@ -111,25 +111,25 @@ public abstract class AbstractSoundObject implements SoundObject {
 
     @Override
     public double[] getResizeLeftLimits(TimeContext context) {
-        double start = startTimeUnit.toBeats(context);
+        double start = startTimePosition.toBeats(context);
         double duration = durationUnit.toBeats(context);
         return new double[] { -start, duration };
     }
 
     @Override
     public void resizeLeft(TimeContext context, double newStartTime) {
-        double currentStart = startTimeUnit.toBeats(context);
+        double currentStart = startTimePosition.toBeats(context);
         double currentDuration = durationUnit.toBeats(context);
         double diff = currentStart - newStartTime;
-        // Preserve the original TimeUnit type
-        setStartTime(TimeUtilities.beatsToTimeUnit(newStartTime, startTimeUnit.getTimeBase(), context));
+        // Preserve the original TimePosition type
+        setStartTime(TimeUtilities.beatsToTimePosition(newStartTime, startTimePosition.getTimeBase(), context));
         setSubjectiveDuration(TimeUnitMath.beatsToDuration(currentDuration + diff, durationUnit.getTimeBase(), context));
     }
 
     @Override
     public void resizeRight(TimeContext context, double newEndTime) {
-        double currentStart = startTimeUnit.toBeats(context);
-        // Preserve the original TimeUnit type
+        double currentStart = startTimePosition.toBeats(context);
+        // Preserve the original TimePosition type
         setSubjectiveDuration(TimeUnitMath.beatsToDuration(newEndTime - currentStart, durationUnit.getTimeBase(), context));
     }
 

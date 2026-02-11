@@ -34,7 +34,7 @@ import blue.score.ScoreObjectEvent;
 import blue.time.TimeContext;
 import blue.time.TimeContextManager;
 import blue.time.TimeDuration;
-import blue.time.TimeUnit;
+import blue.time.TimePosition;
 import blue.utility.ScoreUtilities;
 import electric.xml.Element;
 import java.util.Map;
@@ -125,7 +125,7 @@ public class GenericScore extends AbstractSoundObject implements
         buffer.setSubjectiveDuration(sObj.getSubjectiveDuration());
         buffer.setName("GEN: " + sObj.getName());
 
-        sObj.setStartTime(TimeUnit.beats(0.0));
+        sObj.setStartTime(TimePosition.beats(0.0));
         // This static utility should be called from UI layer with TimeContext set
         TimeContext context = TimeContextManager.getContext();
         buffer.setText(sObj.generateForCSD(context, null, 0.0f, -1.0f).toString());

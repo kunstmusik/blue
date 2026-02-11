@@ -23,7 +23,7 @@ import blue.score.ScoreObject;
 import blue.score.layers.ScoreObjectLayer;
 import blue.time.TimeContext;
 import blue.time.TimeContextManager;
-import blue.time.TimeUnit;
+import blue.time.TimePosition;
 import blue.ui.core.score.ScoreController;
 import blue.ui.core.score.ScorePath;
 import blue.ui.core.score.undo.AddScoreObjectEdit;
@@ -98,7 +98,7 @@ public final class RepeatScoreObjectsAction implements ActionListener {
 
                     start += sObj.getSubjectiveDuration().toBeats(context);
 
-                    temp.setStartTime(TimeUnit.beats(start));
+                    temp.setStartTime(TimePosition.beats(start));
 
                     if (layer == null) {
                         JOptionPane.showMessageDialog(

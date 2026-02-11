@@ -27,7 +27,7 @@ import blue.score.layers.Layer;
 import blue.score.layers.ScoreObjectLayer;
 import blue.time.TimeContext;
 import blue.time.TimeContextManager;
-import blue.time.TimeUnit;
+import blue.time.TimePosition;
 import blue.time.TimeUnitMath;
 import blue.ui.core.score.ScoreController;
 import blue.ui.core.score.ScorePath;
@@ -92,7 +92,7 @@ public final class SelectAllBeforeAction extends AbstractAction implements
             if (layer instanceof ScoreObjectLayer sLayer) {
 
                 for (ScoreObject scoreObject : (ScoreObjectLayer<ScoreObject>)sLayer) {
-                    if (TimeUnitMath.add(context, scoreObject.getStartTime(), scoreObject.getSubjectiveDuration()).lte(context, TimeUnit.beats(pointTime))) {
+                    if (TimeUnitMath.add(context, scoreObject.getStartTime(), scoreObject.getSubjectiveDuration()).lte(context, TimePosition.beats(pointTime))) {
                         newSelected.add(scoreObject);
                     }
                 }

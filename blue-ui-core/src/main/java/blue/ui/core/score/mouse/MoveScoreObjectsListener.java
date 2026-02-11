@@ -27,7 +27,7 @@ import blue.score.layers.Layer;
 import blue.score.layers.ScoreObjectLayer;
 import blue.time.TimeContext;
 import blue.time.TimeContextManager;
-import blue.time.TimeUnit;
+import blue.time.TimePosition;
 import blue.time.TimeUtilities;
 import blue.ui.core.score.ScoreController;
 import blue.ui.core.score.ScoreMode;
@@ -58,7 +58,7 @@ public class MoveScoreObjectsListener extends BlueMouseAdapter {
     boolean initialDrag = true;
 
     private ScoreObject[] selectedScoreObjects = null;
-    private TimeUnit[] startTimes = null;
+    private TimePosition[] startTimes = null;
     private double minDiffTime = Double.MIN_VALUE;
     private int[] startLayerIndices = null;
     private int[] currentLayerIndices = null;
@@ -117,7 +117,7 @@ public class MoveScoreObjectsListener extends BlueMouseAdapter {
 
         startPoint = e.getPoint();
         selectedScoreObjects = temp.toArray(new ScoreObject[0]);
-        startTimes = new TimeUnit[selectedScoreObjects.length];
+        startTimes = new TimePosition[selectedScoreObjects.length];
         startLayerIndices = new int[selectedScoreObjects.length];
         currentLayerIndices = new int[selectedScoreObjects.length];
 
@@ -207,9 +207,9 @@ public class MoveScoreObjectsListener extends BlueMouseAdapter {
         }
 
         for (int i = 0; i < selectedScoreObjects.length; i++) {
-            // Preserve the original TimeUnit type
+            // Preserve the original TimePosition type
             double newBeats = startTimes[i].toBeats(context) + diffTime;
-            selectedScoreObjects[i].setStartTime(TimeUtilities.beatsToTimeUnit(newBeats, startTimes[i].getTimeBase(), context));
+            selectedScoreObjects[i].setStartTime(TimeUtilities.beatsToTimePosition(newBeats, startTimes[i].getTimeBase(), context));
             if (layerAdjusted) {
                 ScoreObject scoreObj = selectedScoreObjects[i];
                 int startIndex = startLayerIndices[i];
@@ -243,7 +243,7 @@ public class MoveScoreObjectsListener extends BlueMouseAdapter {
             List<Layer> allLayers = ScoreController.getInstance().getScorePath().getAllLayers();
 
             int len = startTimes.length;
-            TimeUnit[] endTimes = new TimeUnit[len];
+            TimePosition[] endTimes = new TimePosition[len];
             ScoreObjectLayer[] startLayers = new ScoreObjectLayer[len];
             ScoreObjectLayer[] endLayers = new ScoreObjectLayer[len];
 

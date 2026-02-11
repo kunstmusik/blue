@@ -22,7 +22,7 @@ package blue.ui.core.score.object.actions;
 import blue.score.ScoreObject;
 import blue.time.TimeContext;
 import blue.time.TimeContextManager;
-import blue.time.TimeUnit;
+import blue.time.TimePosition;
 import blue.ui.core.score.undo.AlignEdit;
 import blue.undo.BlueUndoManager;
 import java.awt.event.ActionEvent;
@@ -67,10 +67,10 @@ public final class AlignLeftAction extends AbstractAction implements ContextAwar
         }
 
         TimeContext context = TimeContextManager.getContext();
-        TimeUnit[] initialStartTimes = new TimeUnit[selected.size()];
-        TimeUnit[] endingStartTimes = new TimeUnit[selected.size()];
+        TimePosition[] initialStartTimes = new TimePosition[selected.size()];
+        TimePosition[] endingStartTimes = new TimePosition[selected.size()];
 
-        TimeUnit farLeft = null;
+        TimePosition farLeft = null;
         int i = 0;
 
         for (ScoreObject scoreObj : selected) {
