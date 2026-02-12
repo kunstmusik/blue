@@ -580,7 +580,7 @@ public class PianoRoll extends AbstractSoundObject implements ListChangeListener
     public void setTimeUnit(int timeUnit) {
         var oldVal = this.timeUnit;
         this.timeUnit = timeUnit;
-        pcs.firePropertyChange("timeUnity", oldVal, timeUnit);
+        pcs.firePropertyChange("timeUnit", oldVal, timeUnit);
     }
 
     /**
