@@ -77,21 +77,21 @@ public final class EditMeterMapAction implements ActionListener {
         );
         
         if (editedMap != null) {
-            // Create undoable edit
-            MeterMap oldMap = new MeterMap(currentMap);
-            timeContext.setMeterMap(editedMap);
+            // Snapshot for undo before mutating
+            MeterMap oldSnapshot = new MeterMap(currentMap);
+            currentMap.replaceAll(editedMap);
             
             BlueUndoManager.addEdit("Edit Meter Map", new AbstractUndoableEdit() {
                 @Override
                 public void undo() {
                     super.undo();
-                    timeContext.setMeterMap(oldMap);
+                    currentMap.replaceAll(oldSnapshot);
                 }
                 
                 @Override
                 public void redo() {
                     super.redo();
-                    timeContext.setMeterMap(editedMap);
+                    currentMap.replaceAll(editedMap);
                 }
             });
         }

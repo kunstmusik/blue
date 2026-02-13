@@ -123,6 +123,21 @@ public class MeterMap {
         fireChanged();
     }
     
+    /**
+     * Replaces all entries in this MeterMap with copies from the source.
+     * Preserves listeners registered on this object.
+     * 
+     * @param source the MeterMap to copy entries from
+     */
+    public void replaceAll(MeterMap source) {
+        entries.clear();
+        for (MeasureMeterPair pair : source.entries) {
+            entries.add(new MeasureMeterPair(pair));
+        }
+        sortEntries();
+        fireChanged();
+    }
+    
     public Stream<MeasureMeterPair> stream() {
         return entries.stream();
     }

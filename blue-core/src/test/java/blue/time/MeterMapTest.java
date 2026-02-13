@@ -184,4 +184,54 @@ public class MeterMapTest {
         MeterMap meterMap = new MeterMap();
         meterMap.beatsToBBT(-1.0, 960);
     }
+    
+    @Test
+    public void testReplaceAllCopiesEntries() {
+        MeterMap original = new MeterMap();
+        MeterMap source = new MeterMap();
+        source.add(new MeasureMeterPair(5, new Meter(3, 4)));
+        source.add(new MeasureMeterPair(13, new Meter(6, 8)));
+        
+        original.replaceAll(source);
+        
+        assertEquals(3, original.size());
+        assertEquals(1, original.get(0).getMeasureNumber());
+        assertEquals(5, original.get(1).getMeasureNumber());
+        assertEquals(3, original.get(1).getMeter().numBeats);
+        assertEquals(13, original.get(2).getMeasureNumber());
+        assertEquals(6, original.get(2).getMeter().numBeats);
+    }
+    
+    @Test
+    public void testReplaceAllFiresListener() {
+        MeterMap meterMap = new MeterMap();
+        final var notificationCount = new AtomicInteger(0);
+        meterMap.addListener(() -> notificationCount.incrementAndGet());
+        
+        MeterMap source = new MeterMap();
+        source.add(new MeasureMeterPair(9, new Meter(3, 4)));
+        
+        meterMap.replaceAll(source);
+        
+        assertEquals(1, notificationCount.get());
+    }
+    
+    @Test
+    public void testReplaceAllPreservesListeners() {
+        MeterMap meterMap = new MeterMap();
+        final var notificationCount = new AtomicInteger(0);
+        meterMap.addListener(() -> notificationCount.incrementAndGet());
+        
+        // First replaceAll
+        MeterMap source1 = new MeterMap();
+        source1.add(new MeasureMeterPair(5, new Meter(3, 4)));
+        meterMap.replaceAll(source1);
+        
+        // Second replaceAll — listener should still be active
+        MeterMap source2 = new MeterMap();
+        source2.add(new MeasureMeterPair(9, new Meter(7, 8)));
+        meterMap.replaceAll(source2);
+        
+        assertEquals(2, notificationCount.get());
+    }
 }

@@ -25,9 +25,11 @@ import blue.score.TimeState;
 import blue.time.MeasureMeterPair;
 import blue.time.Meter;
 import blue.time.MeterMap;
+import blue.undo.BlueUndoManager;
 import blue.ui.utilities.UiUtilities;
 
 import javax.swing.*;
+import javax.swing.undo.AbstractUndoableEdit;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -260,7 +262,21 @@ public class MeterRegionBar extends JComponent implements PropertyChangeListener
             popup.addSeparator();
             JMenuItem deleteItem = new JMenuItem("Delete Time Signature Change");
             deleteItem.addActionListener(evt -> {
+                MeterMap snapshot = new MeterMap(meterMap);
                 meterMap.remove(regionIndex);
+                MeterMap afterSnapshot = new MeterMap(meterMap);
+                BlueUndoManager.addEdit("Delete Time Signature", new AbstractUndoableEdit() {
+                    @Override
+                    public void undo() {
+                        super.undo();
+                        meterMap.replaceAll(snapshot);
+                    }
+                    @Override
+                    public void redo() {
+                        super.redo();
+                        meterMap.replaceAll(afterSnapshot);
+                    }
+                });
             });
             popup.add(deleteItem);
         }
@@ -317,8 +333,22 @@ public class MeterRegionBar extends JComponent implements PropertyChangeListener
                     int numBeats = Integer.parseInt(parts[0].trim());
                     int beatLength = Integer.parseInt(parts[1].trim());
                     if (numBeats > 0 && beatLength > 0) {
+                        MeterMap snapshot = new MeterMap(meterMap);
                         Meter newMeter = new Meter(numBeats, beatLength);
                         meterMap.set(regionIndex, new MeasureMeterPair(newMeasure, newMeter));
+                        MeterMap afterSnapshot = new MeterMap(meterMap);
+                        BlueUndoManager.addEdit("Edit Time Signature", new AbstractUndoableEdit() {
+                            @Override
+                            public void undo() {
+                                super.undo();
+                                meterMap.replaceAll(snapshot);
+                            }
+                            @Override
+                            public void redo() {
+                                super.redo();
+                                meterMap.replaceAll(afterSnapshot);
+                            }
+                        });
                     }
                 }
             } catch (NumberFormatException ex) {
@@ -359,8 +389,22 @@ public class MeterRegionBar extends JComponent implements PropertyChangeListener
         }
         
         // No existing meter at this measure - add new one with default 4/4
+        MeterMap snapshot = new MeterMap(meterMap);
         Meter defaultMeter = new Meter(4, 4);
         meterMap.add(new MeasureMeterPair(measureNumber, defaultMeter));
+        MeterMap afterSnapshot = new MeterMap(meterMap);
+        BlueUndoManager.addEdit("Add Time Signature", new AbstractUndoableEdit() {
+            @Override
+            public void undo() {
+                super.undo();
+                meterMap.replaceAll(snapshot);
+            }
+            @Override
+            public void redo() {
+                super.redo();
+                meterMap.replaceAll(afterSnapshot);
+            }
+        });
     }
 
     private class MeterRegionMouseListener extends MouseAdapter {
