@@ -80,6 +80,9 @@ public final class TimeBar extends JPanel implements
     
     private TimeDisplayFormat displayFormat = TimeDisplayFormat.BEATS;
     
+    private java.beans.PropertyChangeListener tempoMapListener;
+    private blue.time.TempoMap currentTempoMap;
+    
     // Selection state for drag-to-select
     private boolean isDragging = false;
     private double dragStartTime = -1;
@@ -884,10 +887,22 @@ public final class TimeBar extends JPanel implements
         if (this.data != null) {
             this.data.removePropertyChangeListener(this);
         }
+        if (currentTempoMap != null && tempoMapListener != null) {
+            currentTempoMap.removePropertyChangeListener(tempoMapListener);
+        }
 
         this.data = data;
 
         data.addPropertyChangeListener(this);
+
+        currentTempoMap = data.getScore().getTimeContext().getTempoMap();
+        tempoMapListener = evt -> {
+            String prop = evt.getPropertyName();
+            if ("enabled".equals(prop) || "data".equals(prop)) {
+                repaint();
+            }
+        };
+        currentTempoMap.addPropertyChangeListener(tempoMapListener);
 
         // FIXME - should be using Score object
         //setPolyObject(data.getPolyObject());
