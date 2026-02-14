@@ -261,11 +261,16 @@ public final class ScoreTopComponent extends TopComponent
         InputMap inputMap = scorePanel.getInputMap(
                 WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
         ActionMap actionMap = scorePanel.getActionMap();
+        InputMap headerInputMap = columnHeaderPanel.getInputMap(
+                WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+        ActionMap headerActionMap = columnHeaderPanel.getActionMap();
         for (FileObject fObj : files) {
             Action a = FileUtil.getConfigObject(fObj.getPath(), Action.class);
             KeyStroke ks = Utilities.stringToKey(fObj.getName());
             inputMap.put(ks, a.getValue(Action.NAME));
             actionMap.put(a.getValue(Action.NAME), a);
+            headerInputMap.put(ks, a.getValue(Action.NAME));
+            headerActionMap.put(a.getValue(Action.NAME), a);
         }
 
         SingleLineScoreSelection.getInstance().addListener(new SingleLineScoreSelection.SingleLineScoreSelectionListener() {
