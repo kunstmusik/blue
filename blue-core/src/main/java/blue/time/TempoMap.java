@@ -297,6 +297,36 @@ public class TempoMap {
     }
     
     /**
+     * Replaces all data in this TempoMap with copies from the source.
+     * Preserves listeners registered on this object.
+     * 
+     * @param source the TempoMap to copy data from
+     */
+    public void replaceAll(TempoMap source) {
+        points.clear();
+        for (TempoPoint point : source.points) {
+            points.add(new TempoPoint(point));
+        }
+        sortEntries();
+        
+        boolean oldEnabled = this.enabled;
+        boolean oldVisible = this.visible;
+        this.enabled = source.enabled;
+        this.visible = source.visible;
+        
+        recalculateAccumulatedTimes();
+        
+        if (oldEnabled != this.enabled) {
+            firePropertyChange("enabled", oldEnabled, this.enabled);
+        }
+        if (oldVisible != this.visible) {
+            firePropertyChange("visible", oldVisible, this.visible);
+        }
+        
+        fireChanged();
+    }
+    
+    /**
      * Clears all tempo points and resets to default (beat 0, tempo 60, LINEAR).
      */
     public void reset() {

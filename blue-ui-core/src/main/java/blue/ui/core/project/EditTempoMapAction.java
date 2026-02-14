@@ -77,21 +77,21 @@ public final class EditTempoMapAction implements ActionListener {
         );
         
         if (editedMap != null) {
-            // Create undoable edit
-            TempoMap oldMap = new TempoMap(currentMap);
-            timeContext.setTempoMap(editedMap);
+            // Snapshot for undo before mutating
+            TempoMap oldSnapshot = new TempoMap(currentMap);
+            currentMap.replaceAll(editedMap);
             
             BlueUndoManager.addEdit("Edit Tempo Map", new AbstractUndoableEdit() {
                 @Override
                 public void undo() {
                     super.undo();
-                    timeContext.setTempoMap(oldMap);
+                    currentMap.replaceAll(oldSnapshot);
                 }
                 
                 @Override
                 public void redo() {
                     super.redo();
-                    timeContext.setTempoMap(editedMap);
+                    currentMap.replaceAll(editedMap);
                 }
             });
         }

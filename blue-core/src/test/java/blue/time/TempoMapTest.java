@@ -449,4 +449,66 @@ public class TempoMapTest {
         assertEquals(0.0, tm.getBeat(0), EPSILON);
         assertEquals(60.0, tm.getTempo(0), EPSILON);
     }
+    
+    // ========== replaceAll Tests ==========
+    
+    @Test
+    public void testReplaceAllCopiesData() {
+        TempoMap original = new TempoMap();
+        
+        TempoMap source = new TempoMap();
+        source.setEnabled(true);
+        source.setVisible(true);
+        source.addTempoPoint(new TempoPoint(4.0, 120.0, CurveType.CONSTANT));
+        source.addTempoPoint(new TempoPoint(8.0, 90.0, CurveType.LINEAR));
+        
+        original.replaceAll(source);
+        
+        assertEquals(3, original.size());
+        assertTrue(original.isEnabled());
+        assertTrue(original.isVisible());
+        assertEquals(120.0, original.getTempo(1), EPSILON);
+        assertEquals(CurveType.CONSTANT, original.getCurveType(1));
+        assertEquals(90.0, original.getTempo(2), EPSILON);
+        assertEquals(CurveType.LINEAR, original.getCurveType(2));
+    }
+    
+    @Test
+    public void testReplaceAllFiresListeners() {
+        TempoMap tm = new TempoMap();
+        int[] tempoListenerCount = {0};
+        java.util.List<String> propertyNames = new java.util.ArrayList<>();
+        
+        tm.addListener(() -> tempoListenerCount[0]++);
+        tm.addPropertyChangeListener(evt -> propertyNames.add(evt.getPropertyName()));
+        
+        TempoMap source = new TempoMap();
+        source.setEnabled(true);
+        source.addTempoPoint(new TempoPoint(4.0, 120.0));
+        
+        tm.replaceAll(source);
+        
+        // TempoMapListener should fire
+        assertEquals(1, tempoListenerCount[0]);
+        // PropertyChangeListener should fire for "enabled" and "data"
+        assertTrue(propertyNames.contains("enabled"));
+        assertTrue(propertyNames.contains("data"));
+    }
+    
+    @Test
+    public void testReplaceAllPreservesListeners() {
+        TempoMap tm = new TempoMap();
+        int[] callCount = {0};
+        tm.addListener(() -> callCount[0]++);
+        
+        TempoMap source1 = new TempoMap();
+        source1.addTempoPoint(new TempoPoint(4.0, 120.0));
+        tm.replaceAll(source1);
+        
+        TempoMap source2 = new TempoMap();
+        source2.addTempoPoint(new TempoPoint(8.0, 90.0));
+        tm.replaceAll(source2);
+        
+        assertEquals(2, callCount[0]);
+    }
 }
