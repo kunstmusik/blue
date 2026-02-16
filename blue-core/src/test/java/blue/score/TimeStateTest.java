@@ -94,6 +94,13 @@ public class TimeStateTest {
         assertFalse(timeState.isSecondaryRulerEnabled());
     }
 
+    @Test
+    public void testDefaultRowVisibility() {
+        assertTrue(timeState.isTempoRowVisible());
+        assertTrue(timeState.isMeterRowVisible());
+        assertTrue(timeState.isMarkersRowVisible());
+    }
+
     // ========== Copy Constructor Tests ==========
 
     @Test
@@ -101,6 +108,9 @@ public class TimeStateTest {
         timeState.setTimeDisplay(TimeBase.BBT);
         timeState.setSecondaryTimeDisplay(TimeBase.SMPTE);
         timeState.setSecondaryRulerEnabled(true);
+        timeState.setTempoRowVisible(false);
+        timeState.setMeterRowVisible(false);
+        timeState.setMarkersRowVisible(false);
         timeState.setSnapEnabled(true);
         timeState.setSnapValue(SnapValue.EIGHTH);
 
@@ -109,6 +119,9 @@ public class TimeStateTest {
         assertEquals(TimeBase.BBT, copy.getTimeDisplay());
         assertEquals(TimeBase.SMPTE, copy.getSecondaryTimeDisplay());
         assertTrue(copy.isSecondaryRulerEnabled());
+        assertFalse(copy.isTempoRowVisible());
+        assertFalse(copy.isMeterRowVisible());
+        assertFalse(copy.isMarkersRowVisible());
         assertTrue(copy.isSnapEnabled());
         assertEquals(SnapValue.EIGHTH, copy.getSnapValue());
     }
@@ -263,6 +276,9 @@ public class TimeStateTest {
         // 0.5 should map to HALF via closestMatch
         assertEquals(SnapValue.HALF, loaded.getSnapValue());
         assertTrue(loaded.isSnapEnabled());
+        assertTrue(loaded.isTempoRowVisible());
+        assertTrue(loaded.isMeterRowVisible());
+        assertTrue(loaded.isMarkersRowVisible());
     }
 
     @Test
@@ -290,5 +306,64 @@ public class TimeStateTest {
         timeState.setSecondaryRulerEnabled(true);
 
         assertTrue(listenerCalled[0]);
+    }
+
+    @Test
+    public void testTempoRowVisiblePropertyChangeEvent() {
+        final boolean[] listenerCalled = {false};
+
+        timeState.addPropertyChangeListener(evt -> {
+            if ("tempoRowVisible".equals(evt.getPropertyName())) {
+                listenerCalled[0] = true;
+            }
+        });
+
+        timeState.setTempoRowVisible(false);
+
+        assertTrue(listenerCalled[0]);
+    }
+
+    @Test
+    public void testMeterRowVisiblePropertyChangeEvent() {
+        final boolean[] listenerCalled = {false};
+
+        timeState.addPropertyChangeListener(evt -> {
+            if ("meterRowVisible".equals(evt.getPropertyName())) {
+                listenerCalled[0] = true;
+            }
+        });
+
+        timeState.setMeterRowVisible(false);
+
+        assertTrue(listenerCalled[0]);
+    }
+
+    @Test
+    public void testMarkersRowVisiblePropertyChangeEvent() {
+        final boolean[] listenerCalled = {false};
+
+        timeState.addPropertyChangeListener(evt -> {
+            if ("markersRowVisible".equals(evt.getPropertyName())) {
+                listenerCalled[0] = true;
+            }
+        });
+
+        timeState.setMarkersRowVisible(false);
+
+        assertTrue(listenerCalled[0]);
+    }
+
+    @Test
+    public void testRowVisibilityXmlRoundTrip() {
+        timeState.setTempoRowVisible(false);
+        timeState.setMeterRowVisible(false);
+        timeState.setMarkersRowVisible(false);
+
+        Element xml = timeState.saveAsXML();
+        TimeState loaded = TimeState.loadFromXML(xml);
+
+        assertFalse(loaded.isTempoRowVisible());
+        assertFalse(loaded.isMeterRowVisible());
+        assertFalse(loaded.isMarkersRowVisible());
     }
 }

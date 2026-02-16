@@ -43,7 +43,9 @@ public class TimeState {
     // Format version for migration support
     // Version 1 (or no attribute): Legacy format (timeDisplay: 0=TIME, 1=BEATS)
     // Version 2: Uses TimeBase enum names for storage
-    private static final int CURRENT_FORMAT_VERSION = 2;
+    // Version 3: Adds row visibility flags (tempo/meter/markers)
+    // Version 4: Renames row visibility XML tags to *RowVisible
+    private static final int CURRENT_FORMAT_VERSION = 4;
 
     private transient Vector<PropertyChangeListener> listeners = null;
 
@@ -52,6 +54,9 @@ public class TimeState {
     private TimeBase timeDisplay = TimeBase.CSOUND_BEATS;
     private TimeBase secondaryTimeDisplay = TimeBase.TIME;
     private boolean secondaryRulerEnabled = false;
+    private boolean tempoRowVisible = true;
+    private boolean meterRowVisible = true;
+    private boolean markersRowVisible = true;
     private double smpteFrameRate = 24.0;
 
     private int zoomIterations = 0;
@@ -65,6 +70,9 @@ public class TimeState {
         timeDisplay = timeState.timeDisplay;
         secondaryTimeDisplay = timeState.secondaryTimeDisplay;
         secondaryRulerEnabled = timeState.secondaryRulerEnabled;
+        tempoRowVisible = timeState.tempoRowVisible;
+        meterRowVisible = timeState.meterRowVisible;
+        markersRowVisible = timeState.markersRowVisible;
         smpteFrameRate = timeState.smpteFrameRate;
         zoomIterations = timeState.zoomIterations;
     }
@@ -182,6 +190,45 @@ public class TimeState {
         firePropertyChangeEvent(pce);
     }
 
+    public boolean isTempoRowVisible() {
+        return tempoRowVisible;
+    }
+
+    public void setTempoRowVisible(boolean tempoRowVisible) {
+        PropertyChangeEvent pce = new PropertyChangeEvent(this, "tempoRowVisible",
+                this.tempoRowVisible, tempoRowVisible);
+
+        this.tempoRowVisible = tempoRowVisible;
+
+        firePropertyChangeEvent(pce);
+    }
+
+    public boolean isMeterRowVisible() {
+        return meterRowVisible;
+    }
+
+    public void setMeterRowVisible(boolean meterRowVisible) {
+        PropertyChangeEvent pce = new PropertyChangeEvent(this, "meterRowVisible",
+                this.meterRowVisible, meterRowVisible);
+
+        this.meterRowVisible = meterRowVisible;
+
+        firePropertyChangeEvent(pce);
+    }
+
+    public boolean isMarkersRowVisible() {
+        return markersRowVisible;
+    }
+
+    public void setMarkersRowVisible(boolean markersRowVisible) {
+        PropertyChangeEvent pce = new PropertyChangeEvent(this, "markersRowVisible",
+                this.markersRowVisible, markersRowVisible);
+
+        this.markersRowVisible = markersRowVisible;
+
+        firePropertyChangeEvent(pce);
+    }
+
     public double getSmpteFrameRate() {
         return smpteFrameRate;
     }
@@ -280,6 +327,12 @@ public class TimeState {
                     timeState.secondaryTimeDisplay = parseTimeBase(nodeText, TimeBase.TIME);
                 case "secondaryRulerEnabled" ->
                     timeState.secondaryRulerEnabled = Boolean.parseBoolean(nodeText);
+                case "tempoRowVisible" ->
+                    timeState.tempoRowVisible = Boolean.parseBoolean(nodeText);
+                case "meterRowVisible" ->
+                    timeState.meterRowVisible = Boolean.parseBoolean(nodeText);
+                case "markersRowVisible" ->
+                    timeState.markersRowVisible = Boolean.parseBoolean(nodeText);
                 case "smpteFrameRate" ->
                     timeState.smpteFrameRate = Double.parseDouble(nodeText);
             }
@@ -347,6 +400,12 @@ public class TimeState {
         retVal.addElement(secondaryTimeDisplayElem);
         retVal.addElement(XMLUtilities.writeBoolean("secondaryRulerEnabled",
                 this.secondaryRulerEnabled));
+        retVal.addElement(XMLUtilities.writeBoolean("tempoRowVisible",
+                this.tempoRowVisible));
+        retVal.addElement(XMLUtilities.writeBoolean("meterRowVisible",
+                this.meterRowVisible));
+        retVal.addElement(XMLUtilities.writeBoolean("markersRowVisible",
+                this.markersRowVisible));
         retVal.addElement(XMLUtilities.writeDouble("smpteFrameRate",
                 this.smpteFrameRate));
 

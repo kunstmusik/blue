@@ -56,6 +56,8 @@ import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JLayeredPane;
 import javax.swing.JPanel;
+import javax.swing.JCheckBoxMenuItem;
+import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JViewport;
@@ -169,6 +171,8 @@ public final class ScoreTopComponent extends TopComponent
     
     // Spacer label for left header when secondary ruler is visible
     JLabel secondaryRulerSpacer = new JLabel();
+    JLabel timeSigLabel = new JLabel("Time Signature");
+    JLabel markersLabel = new JLabel("Markers");
     
     // Column header panel for tempo, time sig, markers, and time bars
     JPanel columnHeaderPanel = new JPanel();
@@ -212,6 +216,7 @@ public final class ScoreTopComponent extends TopComponent
     private final Lookup.Result<ScoreObject> selectedScoreObjectsResults;
     private ScoreObject selectionStartObject = null;
     private ScoreObject selectionEndObject = null;
+    private boolean rootTimelineSelected = true;
 
     private ScoreTopComponent() {
         initComponents();
@@ -529,6 +534,91 @@ public final class ScoreTopComponent extends TopComponent
         }
     }
 
+    private void installRowHeaderPopupMenu() {
+        var popupListener = new MouseAdapter() {
+            @Override
+            public void mousePressed(MouseEvent e) {
+                maybeShowPopup(e);
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent e) {
+                maybeShowPopup(e);
+            }
+
+            private void maybeShowPopup(MouseEvent e) {
+                if (e.isPopupTrigger()) {
+                    showRowVisibilityPopup(e);
+                }
+            }
+        };
+
+        // Only attach to the left-side row header controls.
+        // Right-side timeline bars keep their existing custom context menus.
+        tempoControlPanel.addMouseListener(popupListener);
+        timeSigLabel.addMouseListener(popupListener);
+        markersLabel.addMouseListener(popupListener);
+        secondaryRulerSpacer.addMouseListener(popupListener);
+    }
+
+    private void showRowVisibilityPopup(MouseEvent e) {
+        if (currentTimeState == null) {
+            return;
+        }
+
+        JPopupMenu menu = new JPopupMenu();
+
+        JCheckBoxMenuItem showTempoItem = new JCheckBoxMenuItem(
+                "Show Tempo Row", currentTimeState.isTempoRowVisible());
+        showTempoItem.addActionListener(evt ->
+                currentTimeState.setTempoRowVisible(showTempoItem.isSelected()));
+        menu.add(showTempoItem);
+
+        JCheckBoxMenuItem showMeterItem = new JCheckBoxMenuItem(
+                "Show Meter Row", currentTimeState.isMeterRowVisible());
+        showMeterItem.addActionListener(evt ->
+                currentTimeState.setMeterRowVisible(showMeterItem.isSelected()));
+        menu.add(showMeterItem);
+
+        JCheckBoxMenuItem showMarkersItem = new JCheckBoxMenuItem(
+                "Show Markers Row", currentTimeState.isMarkersRowVisible());
+        showMarkersItem.addActionListener(evt ->
+                currentTimeState.setMarkersRowVisible(showMarkersItem.isSelected()));
+        menu.add(showMarkersItem);
+
+        if (e.getComponent() instanceof JComponent source) {
+            menu.show(source, e.getX(), e.getY());
+            return;
+        }
+
+        Point p = SwingUtilities.convertPoint(e.getComponent(), e.getPoint(), columnHeaderPanel);
+        menu.show(columnHeaderPanel, p.x, p.y);
+    }
+
+    private void syncRowVisibilityFromTimeState(TimeState timeState) {
+        if (timeState == null) {
+            return;
+        }
+
+        boolean showTempoRow = rootTimelineSelected && timeState.isTempoRowVisible();
+        boolean showMeterRow = rootTimelineSelected && timeState.isMeterRowVisible();
+        boolean showMarkersRow = timeState.isMarkersRowVisible();
+
+        tempoEditorPanel.setVisible(showTempoRow);
+        tempoControlPanel.setVisible(showTempoRow);
+
+        meterRegionBar.setVisible(showMeterRow);
+        timeSigLabel.setVisible(showMeterRow);
+
+        markersBar.setVisible(showMarkersRow);
+        markersLabel.setVisible(showMarkersRow);
+
+        scheduleColumnHeaderResize();
+        columnHeaderPanel.revalidate();
+        leftPanel.revalidate();
+        scrollPane.revalidate();
+    }
+
     public synchronized void reinitialize() {
         BlueProject project = BlueProjectManager.getInstance().getCurrentProject();
         BlueData currentData = null;
@@ -719,13 +809,11 @@ public final class ScoreTopComponent extends TopComponent
 
         JPanel leftHeaderView = new JPanel(new GridBagLayout());
         
-        JLabel timeSigLabel = new JLabel("Time Signature");
         timeSigLabel.setHorizontalAlignment(SwingConstants.RIGHT);
         timeSigLabel.setFont(new Font("Dialog", Font.PLAIN, 10));
         timeSigLabel.setPreferredSize(new Dimension(100, 20));
         timeSigLabel.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
         
-        JLabel markersLabel = new JLabel("Markers");
         markersLabel.setHorizontalAlignment(SwingConstants.RIGHT);
         markersLabel.setFont(new Font("Dialog", Font.PLAIN, 10));
         markersLabel.setPreferredSize(new Dimension(100, 20));
@@ -800,6 +888,8 @@ public final class ScoreTopComponent extends TopComponent
         secondaryRuler.setVisible(false);
         secondaryRuler.setAlignmentX(Component.LEFT_ALIGNMENT);
         columnHeaderPanel.add(secondaryRuler);
+
+        installRowHeaderPopupMenu();
 
         tempoEditorPanel.addComponentListener(new ComponentAdapter() {
             @Override
@@ -1179,6 +1269,10 @@ public final class ScoreTopComponent extends TopComponent
             } else if (prop.equals("smpteFrameRate")) {
                 primaryRuler.repaint();
                 secondaryRuler.repaint();
+            } else if (prop.equals("tempoRowVisible")
+                    || prop.equals("meterRowVisible")
+                    || prop.equals("markersRowVisible")) {
+                syncRowVisibilityFromTimeState(currentTimeState);
             } else if (prop.equals("pixelSecond")) {
                 double pixelSecond = currentTimeState.getPixelSecond();
                 double val = data.getRenderStartTime();
@@ -1238,6 +1332,8 @@ public final class ScoreTopComponent extends TopComponent
             this.currentTimeState.removePropertyChangeListener(this);
         }
 
+        rootTimelineSelected = true;
+
         scoreController.setSelectedScoreObjects(null);
 
         this.clearAll();
@@ -1261,10 +1357,7 @@ public final class ScoreTopComponent extends TopComponent
             layerHeaderPanel.validate();
 
             tempoEditorPanel.setTimeState(timeState);
-            tempoEditorPanel.setVisible(true);
-            tempoControlPanel.setVisible(true);
             meterRegionBar.setTimeState(timeState);
-            meterRegionBar.setVisible(true);
             primaryRuler.setRootTimeline(true);
             primaryRuler.setTimeState(timeState);
             secondaryRuler.setRootTimeline(true);
@@ -1318,10 +1411,7 @@ public final class ScoreTopComponent extends TopComponent
         scoreController.setSelectedScoreObjects(null);
 
         PolyObject pObj = (PolyObject) layerGroup;
-
-        tempoEditorPanel.setVisible(false);
-        tempoControlPanel.setVisible(false);
-        meterRegionBar.setVisible(false);
+        rootTimelineSelected = false;
 
         if (this.currentTimeState != null) {
             this.currentTimeState.removePropertyChangeListener(this);
@@ -1501,6 +1591,7 @@ public final class ScoreTopComponent extends TopComponent
         secondaryRuler.setVisible(secondaryEnabled);
         secondaryRulerSpacer.setVisible(secondaryEnabled);
 
+        syncRowVisibilityFromTimeState(timeState);
         scheduleColumnHeaderResize();
         leftPanel.revalidate();
     }
