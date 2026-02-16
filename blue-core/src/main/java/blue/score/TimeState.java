@@ -42,10 +42,8 @@ public class TimeState {
 
     // Format version for migration support
     // Version 1 (or no attribute): Legacy format (timeDisplay: 0=TIME, 1=BEATS)
-    // Version 2: Uses TimeBase enum names for storage
-    // Version 3: Adds row visibility flags (tempo/meter/markers)
-    // Version 4: Renames row visibility XML tags to *RowVisible
-    private static final int CURRENT_FORMAT_VERSION = 4;
+    // Version 2: Uses TimeBase enum names for storage, adds row visibility flags (tempo/meter/markers)
+    private static final int CURRENT_FORMAT_VERSION = 2;
 
     private transient Vector<PropertyChangeListener> listeners = null;
 
