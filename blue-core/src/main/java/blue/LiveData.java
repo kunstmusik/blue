@@ -64,7 +64,7 @@ public class LiveData {
     }
 
     public void setCommandLine(String string) {
-        commandLine = (string == null) ? "" : string;
+        commandLine = java.util.Objects.requireNonNullElse(string, "");
     }
 
     public LiveObjectBins getLiveObjectBins() {
@@ -96,7 +96,7 @@ public class LiveData {
     }
 
     public void setLiveCodeText(String liveCodeText) {
-        this.liveCodeText = (liveCodeText == null) ? "" : liveCodeText;
+        this.liveCodeText = java.util.Objects.requireNonNullElse(liveCodeText, "");
     }
 
     public static LiveData loadFromXML(Element data,

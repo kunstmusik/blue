@@ -43,7 +43,7 @@ public abstract class AbstractInstrument implements Instrument {
 
     @Override
     public void setName(String name) {
-        this.name = (name == null) ? "" : name;
+        this.name = java.util.Objects.requireNonNullElse(name, "");
     }
 
     @Override
@@ -53,7 +53,7 @@ public abstract class AbstractInstrument implements Instrument {
 
     @Override
     public void setComment(String comment) {
-        this.comment = (comment == null) ? "" : comment;
+        this.comment = java.util.Objects.requireNonNullElse(comment, "");
     }
 
     @Override

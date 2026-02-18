@@ -279,7 +279,7 @@ public class BlueSynthBuilder extends AbstractInstrument implements
      * @param instrumentText The instrumentText to set.
      */
     public void setInstrumentText(String instrumentText) {
-        this.instrumentText = (instrumentText == null) ? "" : instrumentText;
+        this.instrumentText = java.util.Objects.requireNonNullElse(instrumentText, "");
     }
 
     /**
@@ -293,7 +293,7 @@ public class BlueSynthBuilder extends AbstractInstrument implements
      * @param alwaysOnInstrumentText the alwaysOnInstrumentText to set
      */
     public void setAlwaysOnInstrumentText(String alwaysOnInstrumentText) {
-        this.alwaysOnInstrumentText = (alwaysOnInstrumentText == null) ? "" : alwaysOnInstrumentText;
+        this.alwaysOnInstrumentText = java.util.Objects.requireNonNullElse(alwaysOnInstrumentText, "");
     }
 
     /**

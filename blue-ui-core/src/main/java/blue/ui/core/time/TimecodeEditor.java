@@ -105,7 +105,7 @@ public class TimecodeEditor extends TimeUnitEditor {
     }
 
     private TimePosition parse(String text) {
-        String trimmed = text == null ? "" : text.trim();
+        String trimmed = java.util.Objects.requireNonNullElse(text, "").trim();
         if (trimmed.isEmpty()) {
             return TimePosition.TimeValue.ZERO;
         }

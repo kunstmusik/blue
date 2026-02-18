@@ -132,7 +132,7 @@ public class Tables {
 
         String tableText = data.getTextString();
 
-        tables.setTables(tableText == null ? "" : tableText);
+        tables.setTables(java.util.Objects.requireNonNullElse(tableText, ""));
 
         return tables;
     }

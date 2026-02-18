@@ -117,7 +117,7 @@ public final class SoundLayer extends ArrayList<SoundObject>
     @Override
     public void setName(String name) {
         String oldName = this.name;
-        this.name = (name == null) ? "" : name;
+        this.name = java.util.Objects.requireNonNullElse(name, "");
         
         if(!this.name.equals(oldName)) {
             firePropertyChangeEvent(new PropertyChangeEvent(this, "name",

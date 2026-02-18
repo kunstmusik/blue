@@ -30,7 +30,7 @@ public class WaveformCacheKey {
     private final double pixelSeconds;
 
     public WaveformCacheKey(String fileName, long checksum, double pixelSeconds) {
-        this.fileName = (fileName == null) ? "" : fileName;
+        this.fileName = java.util.Objects.requireNonNullElse(fileName, "");
         this.checksum = checksum;
         this.pixelSeconds = pixelSeconds;
     }

@@ -29,6 +29,6 @@ public class Message {
 
     public void setMessage(int messageType, String payload) {
         this.messageType = messageType;
-        this.payload = (payload == null) ? "" : payload;
+        this.payload = java.util.Objects.requireNonNullElse(payload, "");
     }
 }

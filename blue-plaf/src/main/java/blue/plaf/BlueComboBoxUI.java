@@ -61,7 +61,7 @@ public class BlueComboBoxUI extends MetalComboBoxUI {
             setIcon((Icon)value);
         }
         else {
-            setText((value == null) ? "" : value.toString());
+            setText(java.util.Objects.toString(value, ""));
         }
         return this;
     }

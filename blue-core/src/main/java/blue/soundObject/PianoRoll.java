@@ -473,7 +473,7 @@ public class PianoRoll extends AbstractSoundObject implements ListChangeListener
      * @param noteTemplate The noteTemplate to set.
      */
     public void setNoteTemplate(String noteTemplate) {
-        final var newVal = (noteTemplate == null) ? "" : noteTemplate;
+        final var newVal = java.util.Objects.requireNonNullElse(noteTemplate, "");
 
         if (!newVal.equals(this.noteTemplate)) {
             var oldVal = this.noteTemplate;

@@ -41,11 +41,11 @@ public class GlobalOrcSco {
     }
 
     public void setGlobalOrc(String globalOrc) {
-        this.globalOrc = globalOrc == null ? "" : globalOrc;
+        this.globalOrc = java.util.Objects.requireNonNullElse(globalOrc, "");
     }
 
     public void setGlobalSco(String globalSco) {
-        this.globalSco = globalSco == null ? "" : globalSco;
+        this.globalSco = java.util.Objects.requireNonNullElse(globalSco, "");
     }
 
     public String getGlobalSco() {

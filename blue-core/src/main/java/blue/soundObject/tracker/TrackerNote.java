@@ -150,19 +150,19 @@ public class TrackerNote {
                     retVal.off = Boolean.valueOf(nodeVal).booleanValue();
                     break;
                 case "pitch": {
-                    String val = (nodeVal == null) ? "" : nodeVal;
+                    String val = java.util.Objects.requireNonNullElse(nodeVal, "");
                     retVal.fields.add(val);
                     break;
                 }
                 case "amp": {
-                    String val = (nodeVal == null) ? "" : nodeVal;
+                    String val = java.util.Objects.requireNonNullElse(nodeVal, "");
                     retVal.fields.add(val);
                     break;
                 }
                 case "field":
                 case "otherField":
                     String atVal = node.getAttributeValue("val");
-                    atVal = (atVal == null) ? "" : atVal;
+                    atVal = java.util.Objects.requireNonNullElse(atVal, "");
                     retVal.fields.add(atVal);
                     break;
             }

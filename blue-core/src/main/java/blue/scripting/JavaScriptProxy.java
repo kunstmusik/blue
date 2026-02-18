@@ -99,7 +99,7 @@ public class JavaScriptProxy {
         engine.eval(init);
         engine.eval(script);
         var res = engine.get("instrument");
-        return res == null ? (String) res : res.toString();
+        return java.util.Objects.toString(res, null);
 
     }
 

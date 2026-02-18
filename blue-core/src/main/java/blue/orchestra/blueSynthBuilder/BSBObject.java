@@ -178,8 +178,8 @@ public abstract class BSBObject implements DeepCopyable<BSBObject> {
         String name = data.getTextString("objectName");
         String comment = data.getTextString("comment");
 
-        name = (name == null) ? "" : name;
-        comment = (comment == null) ? "" : comment;
+        name = java.util.Objects.requireNonNullElse(name, "");
+        comment = java.util.Objects.requireNonNullElse(comment, "");
 
         bsbObj.objectName.set(name);
         bsbObj.setX(Integer.parseInt(data.getTextString("x")));

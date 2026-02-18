@@ -106,7 +106,7 @@ public class TempoPoint implements Comparable<TempoPoint> {
         }
         this.position = position;
         this.tempo = tempo;
-        this.curveType = curveType != null ? curveType : CurveType.LINEAR;
+        this.curveType = java.util.Objects.requireNonNullElse(curveType, CurveType.LINEAR);
         
         // Initialize cached beat (will be recalculated by TempoMap if bar/beat time)
         if (position instanceof TimePosition.BeatTime beatTime) {
@@ -203,7 +203,7 @@ public class TempoPoint implements Comparable<TempoPoint> {
     }
     
     public void setCurveType(CurveType curveType) {
-        this.curveType = curveType != null ? curveType : CurveType.LINEAR;
+        this.curveType = java.util.Objects.requireNonNullElse(curveType, CurveType.LINEAR);
     }
     
     // ========== Beat Calculation ==========

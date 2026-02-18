@@ -361,7 +361,7 @@ public class TimeUnitTextField extends JTextField {
      * Parses a string to a TimePosition for the given TimeBase.
      */
     public static TimePosition parse(String text, TimeBase timeBase) {
-        String trimmed = text == null ? "" : text.trim();
+        String trimmed = java.util.Objects.requireNonNullElse(text, "").trim();
         
         return switch (timeBase) {
             case CSOUND_BEATS -> parseBeats(trimmed);
@@ -565,7 +565,7 @@ public class TimeUnitTextField extends JTextField {
      * interprets values as 0-based and converts through beats to the target TimeBase.
      */
     public static TimePosition parseDuration(String text, TimeBase timeBase, TimeContext context) {
-        String trimmed = text == null ? "" : text.trim();
+        String trimmed = java.util.Objects.requireNonNullElse(text, "").trim();
 
         return switch (timeBase) {
             case CSOUND_BEATS -> parseBeats(trimmed);

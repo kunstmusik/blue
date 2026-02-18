@@ -300,13 +300,13 @@ public class Channel implements Comparable<Channel>, ParameterListener {
     }
 
     public String getName() {
-        return (name == null) ? "" : name;
+        return java.util.Objects.requireNonNullElse(name, "");
     }
 
     public void setName(String name) {
         String oldVal = getName();
 
-        this.name = (name == null) ? "" : name;
+        this.name = java.util.Objects.requireNonNullElse(name, "");
 
         firePropertyChange(NAME, oldVal, this.name);
     }
