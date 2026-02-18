@@ -90,9 +90,8 @@ public class SoundObjectUtilities {
             if (legacyDur instanceof TimePosition.BeatTime bt) {
                 sObj.setSubjectiveDuration(TimeDuration.beats(bt.getCsoundBeats()));
             } else {
-                // For non-BeatTime legacy durations, store as beats using a default context
-                // This is a best-effort migration - precise conversion requires TimeContext
-                sObj.setSubjectiveDuration(TimeDuration.beats(4.0));
+                throw new Exception("Unsupported legacy subjectiveDurationUnit type: "
+                        + legacyDur.getClass().getSimpleName());
             }
         } else if (data.getElement("subjectiveDuration") != null) {
             // Old format: double (migrate to DurationBeats)

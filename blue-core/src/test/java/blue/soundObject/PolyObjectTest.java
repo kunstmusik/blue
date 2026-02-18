@@ -20,6 +20,9 @@
 package blue.soundObject;
 
 import blue.SoundLayer;
+import blue.time.TimeContext;
+import blue.time.TimeDuration;
+import blue.time.TimePosition;
 import junit.framework.TestCase;
 
 public class PolyObjectTest extends TestCase {
@@ -62,6 +65,39 @@ public class PolyObjectTest extends TestCase {
         sLayer2.add(genScore);
         assertFalse(pObj.isScoreGenerationEmpty());
         assertFalse(pObj2.isScoreGenerationEmpty());
+    }
+    
+    public final void testResizeLeftPreservesTimeAndDurationTypes() {
+        PolyObject pObj = new PolyObject();
+        TimeContext context = new TimeContext();
+        blue.ProjectProperties polyProps = new blue.ProjectProperties();
+        polyProps.setSampleRate("48000");
+        context.setProjectProperties(polyProps);
+        pObj.setStartTime(TimePosition.frames(48000));
+        pObj.setSubjectiveDuration(TimeDuration.frames(96000));
+        
+        pObj.resizeLeft(context, 0.5);
+        
+        assertTrue(pObj.getStartTime() instanceof TimePosition.FrameValue);
+        assertTrue(pObj.getSubjectiveDuration() instanceof TimeDuration.DurationFrames);
+        assertEquals(24000, ((TimePosition.FrameValue) pObj.getStartTime()).getFrameNumber());
+        assertEquals(120000, ((TimeDuration.DurationFrames) pObj.getSubjectiveDuration()).getFrameCount());
+    }
+    
+    public final void testResizeRightPreservesDurationType() {
+        PolyObject pObj = new PolyObject();
+        TimeContext context = new TimeContext();
+        pObj.setStartTime(TimePosition.time(0, 0, 1, 0));
+        pObj.setSubjectiveDuration(TimeDuration.time(0, 0, 2, 0));
+        
+        pObj.resizeRight(context, 4.0);
+        
+        assertTrue(pObj.getSubjectiveDuration() instanceof TimeDuration.DurationTime);
+        TimeDuration.DurationTime duration = (TimeDuration.DurationTime) pObj.getSubjectiveDuration();
+        assertEquals(0, duration.getHours());
+        assertEquals(0, duration.getMinutes());
+        assertEquals(3, duration.getSeconds());
+        assertEquals(0, duration.getMilliseconds());
     }
 
 //    public void testGetAdjustedRenderStart() {

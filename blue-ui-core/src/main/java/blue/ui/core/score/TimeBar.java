@@ -787,7 +787,9 @@ public final class TimeBar extends JPanel implements
      * Get sample rate from context or use default.
      */
     private int getSampleRate(TimeContext context) {
-        // TODO: Get from project settings when available
+        if (context != null && context.getSampleRate() > 0) {
+            return (int) context.getSampleRate();
+        }
         return 44100;
     }
     

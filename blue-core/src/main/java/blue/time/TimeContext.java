@@ -19,7 +19,9 @@
  */
 package blue.time;
 
+import blue.ProjectProperties;
 import electric.xml.Element;
+import java.beans.PropertyChangeListener;
 
 /**
  * Context of time for a project. Used to resolve TimePosition values according to meter, tempo, and sample rate.
@@ -39,38 +41,70 @@ public class TimeContext {
     /** Default SMPTE frame rate (24 fps) used when no project context is available. */
     public static final double DEFAULT_SMPTE_FRAME_RATE = 24.0;
     
-    private long sampleRate;
+    private static final long DEFAULT_SAMPLE_RATE = 44100L;
+
+    private ProjectProperties projectProperties;
+    private long cachedSampleRate = DEFAULT_SAMPLE_RATE;
+    private final PropertyChangeListener sampleRateListener = evt -> invalidateSampleRateCache();
     private double smpteFrameRate;
     private MeterMap meterMap;
     private TempoMap tempoMap;
     
     public TimeContext() {
-        sampleRate = 44100;
         smpteFrameRate = 24.0;
         meterMap = new MeterMap();
         tempoMap = new TempoMap();
     }
     
     public TimeContext(long sampleRate, MeterMap meterMap, TempoMap tempoMap) {
-        this.sampleRate = sampleRate;
+        this.cachedSampleRate = sampleRate;
         this.smpteFrameRate = 24.0;
         this.meterMap = meterMap;
         this.tempoMap = tempoMap;
     }
     
     public TimeContext(TimeContext tc) {
-        this.sampleRate = tc.sampleRate;
+        this.cachedSampleRate = tc.cachedSampleRate;
         this.smpteFrameRate = tc.smpteFrameRate;
         this.meterMap = new MeterMap(tc.meterMap);
         this.tempoMap = new TempoMap(tc.tempoMap);
+        if (tc.projectProperties != null) {
+            this.projectProperties = tc.projectProperties;
+            this.projectProperties.addPropertyChangeListener(sampleRateListener);
+        }
     }
-    
+
+    /**
+     * Sets the ProjectProperties reference and refreshes the cached sample rate.
+     * Subscribes to sampleRate property changes so the cache stays current.
+     * ProjectProperties is the single source of truth for sample rate.
+     */
+    public void setProjectProperties(ProjectProperties projectProperties) {
+        if (this.projectProperties != null) {
+            this.projectProperties.removePropertyChangeListener(sampleRateListener);
+        }
+        this.projectProperties = projectProperties;
+        if (this.projectProperties != null) {
+            this.projectProperties.addPropertyChangeListener(sampleRateListener);
+        }
+        invalidateSampleRateCache();
+    }
+
+    private void invalidateSampleRateCache() {
+        if (projectProperties != null) {
+            try {
+                long sr = Long.parseLong(projectProperties.getSampleRate().trim());
+                if (sr > 0) {
+                    cachedSampleRate = sr;
+                    return;
+                }
+            } catch (NumberFormatException ignored) {}
+        }
+        cachedSampleRate = DEFAULT_SAMPLE_RATE;
+    }
+
     public long getSampleRate() {
-        return sampleRate;
-    }
-    
-    public void setSampleRate(long sampleRate) {
-        this.sampleRate = sampleRate;
+        return cachedSampleRate;
     }
     
     /**
@@ -114,7 +148,6 @@ public class TimeContext {
      */
     public Element saveAsXML() {
         Element retVal = new Element("timeContext");
-        retVal.addElement("sampleRate").setText(Long.toString(sampleRate));
         retVal.addElement("smpteFrameRate").setText(Double.toString(smpteFrameRate));
         retVal.addElement(meterMap.saveAsXML());
         retVal.addElement(tempoMap.saveAsXML());
@@ -127,10 +160,8 @@ public class TimeContext {
     public static TimeContext loadFromXML(Element data) throws Exception {
         TimeContext tc = new TimeContext();
         
-        Element sampleRateElem = data.getElement("sampleRate");
-        if (sampleRateElem != null) {
-            tc.setSampleRate(Long.parseLong(sampleRateElem.getTextString()));
-        }
+        // sampleRate is no longer stored in TimeContext XML (ProjectProperties is the source of truth).
+        // Old project files may contain <sampleRate> — silently ignored for backward compat.
         
         Element smpteFrameRateElem = data.getElement("smpteFrameRate");
         if (smpteFrameRateElem != null) {

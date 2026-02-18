@@ -324,7 +324,9 @@ public enum TimeDisplayFormat {
         }
         
         private int getSampleRate(TimeContext context) {
-            // TODO: Get sample rate from project settings when available
+            if (context != null && context.getSampleRate() > 0) {
+                return (int) context.getSampleRate();
+            }
             return DEFAULT_SAMPLE_RATE;
         }
     };

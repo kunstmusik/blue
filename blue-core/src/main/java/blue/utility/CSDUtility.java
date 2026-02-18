@@ -505,7 +505,7 @@ public class CSDUtility {
         }
 
         if (sr != null) {
-            data.getProjectProperties().sampleRate = sr;
+            data.getProjectProperties().setSampleRate(sr);
         }
 
         if (ksmps != null) {

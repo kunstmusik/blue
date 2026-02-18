@@ -97,7 +97,9 @@ public class TimeContextSerializationTest {
     @Test
     public void testTimeContextSerialization() throws Exception {
         TimeContext original = new TimeContext();
-        original.setSampleRate(48000);
+        blue.ProjectProperties props = new blue.ProjectProperties();
+        props.setSampleRate("48000");
+        original.setProjectProperties(props);
         
         // Set up custom meter map
         MeterMap meterMap = new MeterMap();
@@ -114,8 +116,8 @@ public class TimeContextSerializationTest {
         Element xml = original.saveAsXML();
         TimeContext loaded = TimeContext.loadFromXML(xml);
         
-        // Verify sample rate
-        assertEquals(original.getSampleRate(), loaded.getSampleRate());
+        // Verify sampleRate is NOT serialized in TimeContext XML (ProjectProperties is the source of truth)
+        assertNull(xml.getElement("sampleRate"));
         
         // Verify meter map
         assertEquals(original.getMeterMap().size(), loaded.getMeterMap().size());
@@ -138,14 +140,26 @@ public class TimeContextSerializationTest {
     }
     
     @Test
+    public void testLegacyXmlWithSampleRateIsIgnored() throws Exception {
+        // Old project files contain <sampleRate> in <timeContext> — must load silently
+        TimeContext original = new TimeContext();
+        Element xml = original.saveAsXML();
+        xml.addElement("sampleRate").setText("48000"); // inject legacy element
+
+        TimeContext loaded = TimeContext.loadFromXML(xml);
+
+        // sampleRate from XML is ignored; loaded context has no ProjectProperties wired
+        // so it falls back to the default 44100
+        assertEquals(44100L, loaded.getSampleRate());
+    }
+
+    @Test
     public void testTimeContextDefaultSerialization() throws Exception {
         // Test that default TimeContext serializes and loads correctly
         TimeContext original = new TimeContext();
         
         Element xml = original.saveAsXML();
         TimeContext loaded = TimeContext.loadFromXML(xml);
-        
-        assertEquals(original.getSampleRate(), loaded.getSampleRate());
         
         // Test functional equivalence rather than exact structure
         // Both should convert beats to seconds the same way

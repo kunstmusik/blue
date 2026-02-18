@@ -107,6 +107,7 @@ public class BlueData implements BlueDataObject {
 
         score = new Score();
         // score.addLayerGroup(new PolyObject());
+        score.getTimeContext().setProjectProperties(projectProperties);
         liveData = new LiveData();
         midiInputProcessor = new MidiInputProcessor();
         pluginData = new ArrayList<>();
@@ -136,6 +137,7 @@ public class BlueData implements BlueDataObject {
         loopRendering = data.isLoopRendering();
 
         score = new Score(data.getScore());
+        score.getTimeContext().setProjectProperties(projectProperties);
         liveData = new LiveData(data.getLiveData());
         midiInputProcessor = new MidiInputProcessor(data.getMidiInputProcessor());
         pluginData = new ArrayList<>();
@@ -189,6 +191,9 @@ public class BlueData implements BlueDataObject {
 
     public void setProjectProperties(ProjectProperties projectProperties) {
         this.projectProperties = projectProperties;
+        if (score != null && score.getTimeContext() != null) {
+            score.getTimeContext().setProjectProperties(projectProperties);
+        }
     }
 
     public GlobalOrcSco getGlobalOrcSco() {
@@ -387,7 +392,11 @@ public class BlueData implements BlueDataObject {
         } else {
             blueData.mixer.setEnabled(false);
         }
-        
+
+        if (blueData.score != null && blueData.score.getTimeContext() != null) {
+            blueData.score.getTimeContext().setProjectProperties(blueData.projectProperties);
+        }
+
         return blueData;
     }
 

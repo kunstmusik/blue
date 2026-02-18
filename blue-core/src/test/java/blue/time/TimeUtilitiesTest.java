@@ -210,6 +210,35 @@ public class TimeUtilitiesTest {
         assertEquals(88200, result);
     }
     
+    @Test
+    public void testFramesToTimePositionNormalizesMillisecondCarry() {
+        // 44099 / 44100 = 0.999977... seconds, rounds to exactly 1.000 second
+        TimePosition result = TimeUtilities.framesToTimePosition(44099, TimeBase.TIME, context);
+        assertTrue(result instanceof TimePosition.TimeValue);
+        TimePosition.TimeValue timeValue = (TimePosition.TimeValue) result;
+        assertEquals(0, timeValue.getHours());
+        assertEquals(0, timeValue.getMinutes());
+        assertEquals(1, timeValue.getSeconds());
+        assertEquals(0, timeValue.getMilliseconds());
+    }
+    
+    @Test
+    public void testDefaultContextSampleRateIs44100() {
+        // TimeContext with no ProjectProperties wired must default to 44100
+        TimeContext ctx = new TimeContext();
+        assertEquals(44100L, ctx.getSampleRate());
+    }
+
+    @Test
+    public void testDefaultContextSampleRateUsedForFrameConversion() {
+        // Verify frame conversions use the default 44100 when no ProjectProperties is set
+        TimeContext ctx = new TimeContext();
+        // 44100 frames at 44100 Hz = 1 second = 1 beat at 60 BPM
+        TimePosition result = TimeUtilities.beatsToTimePosition(1.0, TimeBase.FRAME, ctx);
+        assertTrue(result instanceof TimePosition.FrameValue);
+        assertEquals(44100, ((TimePosition.FrameValue) result).getFrameNumber());
+    }
+
     // ========== Meter Change Tests ==========
     
     @Test

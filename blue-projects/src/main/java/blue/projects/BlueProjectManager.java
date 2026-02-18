@@ -130,7 +130,7 @@ public class BlueProjectManager {
 
         RealtimeRenderSettings rtSettings = RealtimeRenderSettings.getInstance();
 
-        proj.sampleRate = rtSettings.defaultSr;
+        proj.setSampleRate(rtSettings.defaultSr);
         proj.ksmps = rtSettings.defaultKsmps;
         proj.channels = rtSettings.defaultNchnls;
         proj.useZeroDbFS = rtSettings.useZeroDbFS;

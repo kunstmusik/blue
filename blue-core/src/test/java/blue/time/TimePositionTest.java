@@ -41,8 +41,12 @@ public class TimePositionTest {
         // Sample rate: 44100 Hz
         MeterMap meterMap = new MeterMap();
         TempoMap tempoMap = new TempoMap();
-        
-        context = new TimeContext(44100, meterMap, tempoMap);
+        context = new TimeContext();
+        context.setMeterMap(meterMap);
+        context.setTempoMap(tempoMap);
+        blue.ProjectProperties props = new blue.ProjectProperties();
+        props.setSampleRate("44100");
+        context.setProjectProperties(props);
     }
 
     // ========== BeatTime Tests ==========

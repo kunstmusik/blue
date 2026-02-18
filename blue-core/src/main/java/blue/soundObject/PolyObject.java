@@ -30,6 +30,8 @@ import blue.score.TimeState;
 import blue.score.layers.AutomatableLayerGroup;
 import blue.time.TimeContext;
 import blue.time.TimeDuration;
+import blue.time.TimeUnitMath;
+import blue.time.TimeUtilities;
 import blue.score.layers.Layer;
 import blue.score.layers.LayerGroupDataEvent;
 import blue.score.layers.LayerGroupListener;
@@ -820,14 +822,14 @@ public class PolyObject extends ArrayList<SoundLayer> implements SoundObject,
         final double currentStartTime = getStartTime().toBeats(context);
         final double currentDuration = getSubjectiveDuration().toBeats(context);
         double diff = currentStartTime - newStartTime;
-        setStartTime(blue.time.TimePosition.beats(newStartTime));
-        setSubjectiveDuration(TimeDuration.beats(currentDuration + diff));
+        setStartTime(TimeUtilities.beatsToTimePosition(newStartTime, startTimePosition.getTimeBase(), context));
+        setSubjectiveDuration(TimeUnitMath.beatsToDuration(currentDuration + diff, durationUnit.getTimeBase(), context));
     }
 
     @Override
     public void resizeRight(TimeContext context, double newEndTime) {
-        double startTime = getStartTime().toBeats(context);
-        setSubjectiveDuration(TimeDuration.beats(newEndTime - startTime));
+        double currentStart = getStartTime().toBeats(context);
+        setSubjectiveDuration(TimeUnitMath.beatsToDuration(newEndTime - currentStart, durationUnit.getTimeBase(), context));
     }
 
     @Override

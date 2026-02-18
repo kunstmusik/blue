@@ -190,6 +190,13 @@ public class TimeDisplayFormatTest {
         assertTrue("Expected sample count around 176400, got: " + formatted,
                 formatted.contains("176"));
     }
+    
+    @Test
+    public void testSamplesFormatUsesContextSampleRate() {
+        TimeContext customContext = new TimeContext(48000, new MeterMap(), new TempoMap());
+        // At 60 BPM default, 1 beat = 1 second -> 48000 samples
+        assertEquals("48000", TimeDisplayFormat.SAMPLES.format(1.0, customContext));
+    }
 
     // ========== Metadata tests ==========
 

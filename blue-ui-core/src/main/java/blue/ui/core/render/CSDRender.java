@@ -37,6 +37,7 @@ import blue.soundObject.Note;
 import blue.soundObject.NoteList;
 import blue.soundObject.NoteParseException;
 import blue.soundObject.SoundObjectException;
+import blue.time.CurveType;
 import blue.time.TempoMap;
 import blue.udo.OpcodeList;
 import blue.ui.core.project.ProjectPluginManager;
@@ -638,7 +639,7 @@ public class CSDRender extends CSDRenderService {
                 System.err.println("Could not parse nchnls: defaulting to 2");
             }
 
-            score.append("sr=").append(projProps.sampleRate).append("\n");
+            score.append("sr=").append(projProps.getSampleRate()).append("\n");
             score.append("ksmps=").append(projProps.getKsmps()).append("\n");
             score.append("nchnls=").append(nchnls).append("\n");
 
@@ -939,8 +940,7 @@ public class CSDRender extends CSDRenderService {
             double pointBeat = tempoMap.getBeat(i);
             if (pointBeat > renderStart) {
                 if (renderEnd < 0 || pointBeat < renderEnd) {
-                    buffer.append(" ").append(pointBeat - renderStart);
-                    buffer.append(" ").append(tempoMap.getTempo(i));
+                    appendTempoPoint(buffer, tempoMap, i, renderStart);
                 } else {
                     break;
                 }
@@ -949,12 +949,39 @@ public class CSDRender extends CSDRenderService {
 
         if (renderEnd > 0) {
             buffer.append(" ").append(renderEnd - renderStart);
-            buffer.append(" ").append(tempoMap.getTempoAt(renderEnd));
+            buffer.append(" ").append(getTempoAtSegmentEnd(tempoMap, renderEnd));
         }
 
         buffer.append("\n");
 
         return buffer.toString();
+    }
+    
+    private void appendTempoPoint(StringBuilder buffer, TempoMap tempoMap, int pointIndex, double renderStart) {
+        double pointBeat = tempoMap.getBeat(pointIndex);
+        double relativeBeat = pointBeat - renderStart;
+        
+        if (pointIndex > 0 && tempoMap.getCurveType(pointIndex - 1) == CurveType.CONSTANT) {
+            double previousTempo = tempoMap.getTempo(pointIndex - 1);
+            double currentTempo = tempoMap.getTempo(pointIndex);
+            if (Double.compare(previousTempo, currentTempo) != 0) {
+                buffer.append(" ").append(relativeBeat);
+                buffer.append(" ").append(previousTempo);
+            }
+        }
+        
+        buffer.append(" ").append(relativeBeat);
+        buffer.append(" ").append(tempoMap.getTempo(pointIndex));
+    }
+    
+    private double getTempoAtSegmentEnd(TempoMap tempoMap, double beat) {
+        for (int i = 1; i < tempoMap.size(); i++) {
+            if (Double.compare(tempoMap.getBeat(i), beat) == 0
+                    && tempoMap.getCurveType(i - 1) == CurveType.CONSTANT) {
+                return tempoMap.getTempo(i - 1);
+            }
+        }
+        return tempoMap.getTempoAt(beat);
     }
 
     private void assignParameterNames(ArrayList parameters, ParameterNameManager pnm) {

@@ -42,13 +42,12 @@ public class TimeUtilities {
     }
     
     public static String convertSecondsToTimeString(double timeSeconds) {        
-        int hours = (int) (timeSeconds / 3600);
-        int minutes = (int) ((timeSeconds % 3600) / 60);
-        int seconds = (int) (timeSeconds % 60);
-        int milliseconds = (int) Math.round((timeSeconds - (int) timeSeconds) * 1000);
-
-        String timeString = String.format("%02d:%02d:%02d.%03d", hours, minutes, seconds, milliseconds);
-        return timeString;
+        long totalMillis = Math.round(timeSeconds * 1000.0);
+        long hours = totalMillis / 3_600_000;
+        long minutes = (totalMillis % 3_600_000) / 60_000;
+        long seconds = (totalMillis % 60_000) / 1_000;
+        long milliseconds = totalMillis % 1_000;
+        return String.format("%02d:%02d:%02d.%03d", hours, minutes, seconds, milliseconds);
     }
     
     public static double convertTimeToSeconds(int hours, int minutes, int seconds, int milliseconds) {
@@ -133,20 +132,12 @@ public class TimeUtilities {
             case BBF -> context.getMeterMap().beatsToBBF(beats);
             case TIME -> {
                 double seconds = context.getTempoMap().beatsToSeconds(beats);
-                int hours = (int) (seconds / 3600);
-                int minutes = (int) ((seconds % 3600) / 60);
-                int secs = (int) (seconds % 60);
-                int millis = (int) Math.round((seconds - (int) seconds) * 1000);
-                yield TimePosition.time(hours, minutes, secs, millis);
+                yield secondsToTimeValue(seconds);
             }
             case SMPTE -> {
                 // SMPTE is display-only — produce a TimeValue instead
                 double seconds = context.getTempoMap().beatsToSeconds(beats);
-                int hours = (int) (seconds / 3600);
-                int minutes = (int) ((seconds % 3600) / 60);
-                int secs = (int) (seconds % 60);
-                int millis = (int) Math.round((seconds - (int) seconds) * 1000);
-                yield TimePosition.time(hours, minutes, secs, millis);
+                yield secondsToTimeValue(seconds);
             }
             case FRAME -> {
                 double seconds = context.getTempoMap().beatsToSeconds(beats);
@@ -223,5 +214,14 @@ public class TimeUtilities {
     public static long timePositionToFrames(TimePosition timePosition, TimeContext context) {
         double seconds = timePositionToSeconds(timePosition, context);
         return Math.round(seconds * context.getSampleRate());
+    }
+    
+    private static TimePosition.TimeValue secondsToTimeValue(double seconds) {
+        long totalMillis = Math.round(seconds * 1000.0);
+        long hours = totalMillis / 3_600_000;
+        long minutes = (totalMillis % 3_600_000) / 60_000;
+        long secs = (totalMillis % 60_000) / 1_000;
+        long millis = totalMillis % 1_000;
+        return TimePosition.time(hours, minutes, secs, millis);
     }
 }

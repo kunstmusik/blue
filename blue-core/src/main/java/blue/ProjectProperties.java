@@ -1,9 +1,11 @@
 package blue;
 
-import blue.utility.ValuesUtility;
 import blue.utility.XMLUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
+import java.util.Objects;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
 /**
@@ -15,11 +17,13 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
  */
 public final class ProjectProperties {
 
+    private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
+
     public String title = "";
     public String author = "";
     public String notes = "";
 
-    public String sampleRate = "44100";
+    private String sampleRate = "44100";
     public String ksmps = "1";
     public String channels = "2";
     public boolean useZeroDbFS = false; // set false by default for legacy projects
@@ -74,6 +78,24 @@ public final class ProjectProperties {
     /* MEDIA FOLDER */
     public String mediaFolder = "";
     public boolean copyToMediaFileOnImport = true;
+
+    public void addPropertyChangeListener(PropertyChangeListener listener) {
+        pcs.addPropertyChangeListener(listener);
+    }
+
+    public void removePropertyChangeListener(PropertyChangeListener listener) {
+        pcs.removePropertyChangeListener(listener);
+    }
+
+    public String getSampleRate() {
+        return sampleRate;
+    }
+
+    public void setSampleRate(String sampleRate) {
+        String old = this.sampleRate;
+        this.sampleRate = sampleRate;
+        pcs.firePropertyChange("sampleRate", old, sampleRate);
+    }
 
     public ProjectProperties() {
     }
@@ -146,7 +168,7 @@ public final class ProjectProperties {
         while (nodes.hasMoreElements()) {
             Element node = nodes.next();
             String nodeName = node.getName();
-            String nodeVal = node.getTextString();
+            String nodeVal = Objects.requireNonNullElse(node.getTextString(), "");
             switch (nodeName) {
                 case "title" ->
                     retVal.title = nodeVal;
@@ -155,7 +177,7 @@ public final class ProjectProperties {
                 case "notes" ->
                     retVal.notes = nodeVal;
                 case "sampleRate" ->
-                    retVal.sampleRate = nodeVal;
+                    retVal.setSampleRate(nodeVal);
                 case "controlRate" ->
                     kr = nodeVal;
                 case "ksmps" ->
@@ -230,7 +252,7 @@ public final class ProjectProperties {
         if (kr != null && kr.length() > 0 && retVal.ksmps != null
                 && retVal.ksmps.length() == 0) {
             try {
-                int ksmpsNum = Integer.parseInt(retVal.sampleRate)
+                int ksmpsNum = Integer.parseInt(retVal.getSampleRate())
                         / Integer.parseInt(kr);
                 retVal.ksmps = Integer.toString(ksmpsNum);
             } catch (NumberFormatException nfe) {
@@ -248,8 +270,6 @@ public final class ProjectProperties {
             retVal.diskCompleteOverride = true;
         }
 
-        ValuesUtility.checkNullString(retVal);
-
         return retVal;
     }
 
@@ -263,7 +283,7 @@ public final class ProjectProperties {
         retVal.addElement("author").setText(author);
         retVal.addElement("notes").setText(notes);
 
-        retVal.addElement("sampleRate").setText(sampleRate);
+        retVal.addElement("sampleRate").setText(getSampleRate());
         retVal.addElement("ksmps").setText(ksmps);
         retVal.addElement("channels").setText(channels);
         retVal.addElement(XMLUtilities.writeBoolean("useZeroDbFS", useZeroDbFS));

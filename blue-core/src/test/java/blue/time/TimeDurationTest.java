@@ -40,7 +40,12 @@ public class TimeDurationTest {
         // Sample rate: 44100 Hz
         MeterMap meterMap = new MeterMap();
         TempoMap tempoMap = new TempoMap();
-        context = new TimeContext(44100, meterMap, tempoMap);
+        context = new TimeContext();
+        context.setMeterMap(meterMap);
+        context.setTempoMap(tempoMap);
+        blue.ProjectProperties props = new blue.ProjectProperties();
+        props.setSampleRate("44100");
+        context.setProjectProperties(props);
     }
 
     // ========== DurationBeats Tests ==========
@@ -489,7 +494,12 @@ public class TimeDurationTest {
         MeterMap meterMap = new MeterMap();
         meterMap.set(0, new MeasureMeterPair(1, new Meter(3, 4)));
         TempoMap tempoMap = new TempoMap();
-        TimeContext ctx34 = new TimeContext(44100, meterMap, tempoMap);
+        TimeContext ctx34 = new TimeContext();
+        ctx34.setMeterMap(meterMap);
+        ctx34.setTempoMap(tempoMap);
+        blue.ProjectProperties props34 = new blue.ProjectProperties();
+        props34.setSampleRate("44100");
+        ctx34.setProjectProperties(props34);
         
         // 1 bar in 3/4 = 3 beats
         TimeDuration.DurationBBT d = TimeDuration.bbt(1, 0, 0);
@@ -510,7 +520,12 @@ public class TimeDurationTest {
         MeterMap meterMap = new MeterMap();
         meterMap.set(0, new MeasureMeterPair(1, new Meter(6, 8)));
         TempoMap tempoMap = new TempoMap();
-        TimeContext ctx68 = new TimeContext(44100, meterMap, tempoMap);
+        TimeContext ctx68 = new TimeContext();
+        ctx68.setMeterMap(meterMap);
+        ctx68.setTempoMap(tempoMap);
+        blue.ProjectProperties props68 = new blue.ProjectProperties();
+        props68.setSampleRate("44100");
+        ctx68.setProjectProperties(props68);
         
         // 1 bar in 6/8 = 3 beats (6 * 4/8 = 3)
         TimeDuration.DurationBBF d = TimeDuration.bbf(1, 0, 0);
