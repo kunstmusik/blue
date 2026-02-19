@@ -1,13 +1,13 @@
 package blue.midi;
 
 import javax.sound.midi.MidiDevice;
-import org.junit.Test;
-import static org.junit.Assert.*;
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
 
-public class BlueMidiDeviceTest {
+class BlueMidiDeviceTest {
 
     @Test
-    public void testEqualsAndHashCodeForMatchingDeviceMetadata() {
+    void testEqualsAndHashCodeForMatchingDeviceMetadata() {
         BlueMidiDevice first = new BlueMidiDevice(new TestInfo("name", "vendor",
                 "description", "1.0"));
         BlueMidiDevice second = new BlueMidiDevice(new TestInfo("name", "vendor",
@@ -21,7 +21,7 @@ public class BlueMidiDeviceTest {
     }
 
     @Test
-    public void testNotEqualsForDifferentDeviceMetadata() {
+    void testNotEqualsForDifferentDeviceMetadata() {
         BlueMidiDevice first = new BlueMidiDevice(new TestInfo("name", "vendor",
                 "description", "1.0"));
         BlueMidiDevice second = new BlueMidiDevice(new TestInfo("name", "vendor",
@@ -31,7 +31,7 @@ public class BlueMidiDeviceTest {
     }
 
     @Test
-    public void testNullDeviceInfoHandling() {
+    void testNullDeviceInfoHandling() {
         BlueMidiDevice first = new BlueMidiDevice(null);
         BlueMidiDevice second = new BlueMidiDevice(null);
         BlueMidiDevice withInfo = new BlueMidiDevice(new TestInfo("name",

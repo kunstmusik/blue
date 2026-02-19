@@ -20,14 +20,14 @@ package blue.orchestra.blueSynthBuilder;
 
 import electric.xml.Element;
 import java.math.BigDecimal;
-import static org.junit.Assert.*;
-import org.junit.Test;
+import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.Test;
 
 /**
  *
  * @author stevenyi
  */
-public class BSBHSliderBankTest {
+class BSBHSliderBankTest {
     
     public BSBHSliderBankTest() {
     }
@@ -36,7 +36,7 @@ public class BSBHSliderBankTest {
      * Test that when setting values on bank, child slider values are updated.
      */
     @Test
-    public void testChildSlidersPropertiesLinked() {
+    void testChildSlidersPropertiesLinked() {
         
         // fuzzy test
         for(int i = 0; i < 10; i++) {

@@ -20,13 +20,16 @@
 
 package blue.soundObject;
 
-import junit.framework.TestCase;
+import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
 
 /**
  * @author steven
  * 
  */
-public class InstanceTest extends TestCase {
+class InstanceTest {
     private GenericScore genScore;
 
     private Instance inst;
@@ -34,9 +37,8 @@ public class InstanceTest extends TestCase {
     /*
      * @see TestCase#setUp()
      */
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
+    @BeforeEach
+    void setUp() throws Exception {
         this.genScore = new GenericScore();
         this.genScore.setName("Testing Object");
         this.inst = new Instance(genScore);
@@ -46,9 +48,8 @@ public class InstanceTest extends TestCase {
     /*
      * @see TestCase#tearDown()
      */
-    @Override
-    protected void tearDown() throws Exception {
-        super.tearDown();
+    @AfterEach
+    void tearDown() throws Exception {
         this.inst = null;
         this.genScore = null;
     }
@@ -56,7 +57,8 @@ public class InstanceTest extends TestCase {
     /*
      * Test for Object clone()
      */
-    public void testClone() {
+    @Test
+    void testClone() {
         Instance newInst = this.inst.deepCopy();
         assertSame(newInst.getSoundObject(), this.inst.getSoundObject());
     }

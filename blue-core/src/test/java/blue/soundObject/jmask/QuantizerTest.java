@@ -5,15 +5,17 @@
 
 package blue.soundObject.jmask;
 
-import junit.framework.TestCase;
+import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.Test;
 
 /**
  *
  * @author syi
  */
-public class QuantizerTest extends TestCase {
+class QuantizerTest {
     
-    public void testGetValue() {
+    @Test
+    void testGetValue() {
         Quantizer quantizer = new Quantizer();
         quantizer.setEnabled(true);
         quantizer.setGridSize(30.0);

@@ -19,46 +19,50 @@
  */
 package blue.upgrades;
 
-import org.junit.*;
-import static org.junit.Assert.*;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  *
  * @author stevenyi
  */
-public class ProjectVersionTest {
+class ProjectVersionTest {
     
     public ProjectVersionTest() {
     }
 
-    @BeforeClass
+    @BeforeAll
     public static void setUpClass() throws Exception {
     }
 
-    @AfterClass
+    @AfterAll
     public static void tearDownClass() throws Exception {
     }
     
-    @Before
-    public void setUp() {
+    @BeforeEach
+    void setUp() {
     }
     
-    @After
-    public void tearDown() {
+    @AfterEach
+    void tearDown() {
     }
 
     /**
      * Test of parseVersion method, of class ProjectVersion.
      */
     @Test
-    public void testParseVersion() {
+    void testParseVersion() {
         String versionString = "0.129.2_beta";
         ProjectVersion result = ProjectVersion.parseVersion(versionString);
         assertEquals("Version: 0 129 2 BETA", result.toString());
     }
     
     @Test
-    public void testParseVersion_EmptyOrNull() {
+    void testParseVersion_EmptyOrNull() {
         ProjectVersion result = ProjectVersion.parseVersion("");
         assertEquals("Version: Empty", result.toString());
         result = ProjectVersion.parseVersion(null);
@@ -66,7 +70,7 @@ public class ProjectVersionTest {
     }
     
     @Test
-    public void testParseVersion_Illformatted() {
+    void testParseVersion_Illformatted() {
         ProjectVersion result = ProjectVersion.parseVersion("x.54.-345_beta_beta");
         assertEquals("Version: -1 54 -345 BETA", result.toString());
         result = ProjectVersion.parseVersion("a.b.c.d");
@@ -74,7 +78,7 @@ public class ProjectVersionTest {
     }
     
     @Test
-    public void testLessThan() {
+    void testLessThan() {
         ProjectVersion version1 = ProjectVersion.parseVersion("0.0.0");
         ProjectVersion version2 = ProjectVersion.parseVersion("0.0.1");
         assertTrue(version1.lessThan(version2));

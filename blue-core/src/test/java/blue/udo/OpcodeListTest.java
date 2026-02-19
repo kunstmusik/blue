@@ -19,11 +19,13 @@
  */
 package blue.udo;
 
-import junit.framework.TestCase;
+import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.Test;
 
-public class OpcodeListTest extends TestCase {
+class OpcodeListTest {
 
-    public final void testGetNameOfExistingCopy() {
+    @Test
+    void testGetNameOfExistingCopy() {
         OpcodeList list = new OpcodeList();
 
         UserDefinedOpcode udo1 = new UserDefinedOpcode();

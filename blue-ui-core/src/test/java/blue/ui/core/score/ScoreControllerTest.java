@@ -28,11 +28,12 @@ import blue.time.TimePosition;
 import blue.undo.BlueUndoManager;
 import java.util.HashMap;
 import javax.swing.JScrollPane;
-import javax.swing.undo.UndoManager;
-import org.junit.After;
-import org.junit.Test;
-import static org.junit.Assert.*;
-import org.junit.Before;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.openide.util.Lookup;
 import org.openide.util.lookup.AbstractLookup;
 import org.openide.util.lookup.InstanceContent;
@@ -41,15 +42,16 @@ import org.openide.util.lookup.InstanceContent;
  *
  * @author stevenyi
  */
-public class ScoreControllerTest {
+@Execution(ExecutionMode.SAME_THREAD)
+class ScoreControllerTest {
     private ScoreController scoreController;
         
     public ScoreControllerTest() {
         BlueUndoManager.setUndoGroup(new HashMap<>());
     }
 
-    @Before
-    public void setUp() {
+    @BeforeEach
+    void setUp() {
         System.out.println("@Before setUp");
 
         this.scoreController = ScoreController.getInstance();
@@ -81,15 +83,15 @@ public class ScoreControllerTest {
 
     }
 
-    @After
-    public void tearDown() {
+    @AfterEach
+    void tearDown() {
         System.out.println("tear down");
     }
     /**
      * Test of getInstance method, of class ScoreController.
      */
     @Test
-    public void testGetInstance() {
+    void testGetInstance() {
         ScoreController expResult = ScoreController.getInstance();
         ScoreController result = ScoreController.getInstance();
         assertEquals(expResult, result);
@@ -113,7 +115,7 @@ public class ScoreControllerTest {
      * Test of deleteScoreObjects method, of class ScoreController.
      */
     @Test
-    public void testDeleteScoreObjects() {
+    void testDeleteScoreObjects() {
        
         Score score = scoreController.getScore();
         PolyObject pObj = (PolyObject) score.get(0);

@@ -111,8 +111,7 @@
         
         <dependency>
             <groupId>org.netbeans.api</groupId>
-            <artifactId>org-netbeans-libs-junit4</artifactId>
-            <version>${netbeans.version}</version>
+            <artifactId>org-netbeans-libs-junit5</artifactId>
             <scope>test</scope>
         </dependency>
         

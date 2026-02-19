@@ -7,17 +7,14 @@
 
 package blue.soundObject.tracker;
 
-import junit.framework.TestCase;
+import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.Test;
 
 /**
  * 
  * @author steven
  */
-public class ColumnTest extends TestCase {
-
-    public ColumnTest(String testName) {
-        super(testName);
-    }
+class ColumnTest {
 
     /**
      * Test of getDefaultValue method, of class blue.soundObject.tracker.Column.
@@ -39,7 +36,8 @@ public class ColumnTest extends TestCase {
      * Test of getIncrementValue method, of class
      * blue.soundObject.tracker.Column.
      */
-    public void testGetIncrementValue() {
+    @Test
+    void testGetIncrementValue() {
 
         Column col = new Column();
         String result;
@@ -90,7 +88,8 @@ public class ColumnTest extends TestCase {
      * Test of getDecrementValue method, of class
      * blue.soundObject.tracker.Column.
      */
-    public void testGetDecrementValue() {
+    @Test
+    void testGetDecrementValue() {
 
         Column col = new Column();
         String result;

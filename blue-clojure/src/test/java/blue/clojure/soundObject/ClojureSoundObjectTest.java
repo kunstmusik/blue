@@ -24,14 +24,14 @@ import blue.soundObject.NoteList;
 import blue.time.TimeContext;
 import electric.xml.Element;
 import java.util.Map;
-import static org.junit.Assert.*;
-import org.junit.Test;
+import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.Test;
 
 /**
  *
  * @author stevenyi
  */
-public class ClojureSoundObjectTest {
+class ClojureSoundObjectTest {
     
     public ClojureSoundObjectTest() {
     }
@@ -40,7 +40,7 @@ public class ClojureSoundObjectTest {
      * Test of generateForCSD method, of class ClojureObject.
      */
     @Test
-    public void testGenerateForCSD() throws Exception {
+    void testGenerateForCSD() throws Exception {
         CompileData compileData = null;
         float startTime = 0.0F;
         float endTime = 2.0F;
@@ -56,7 +56,7 @@ public class ClojureSoundObjectTest {
      * Test of saveAsXML method, of class ClojureObject.
      */
     @Test
-    public void testSaveAsXML() throws Exception {
+    void testSaveAsXML() throws Exception {
         System.out.println("saveAsXML");
         Map<Object, String> objRefMap = null;
         TimeContext context = new TimeContext();

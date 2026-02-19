@@ -19,40 +19,36 @@
  */
 package blue.clojure.project;
 
-import electric.xml.Element;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import javafx.collections.ObservableList;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import static org.junit.Assert.*;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  *
  * @author stevenyi
  */
-public class ClojureProjectDataTest {
+class ClojureProjectDataTest {
 
     public ClojureProjectDataTest() {
     }
 
-    @BeforeClass
+    @BeforeAll
     public static void setUpClass() {
     }
 
-    @AfterClass
+    @AfterAll
     public static void tearDownClass() {
     }
 
-    @Before
-    public void setUp() {
+    @BeforeEach
+    void setUp() {
     }
 
-    @After
-    public void tearDown() {
+    @AfterEach
+    void tearDown() {
     }
 
     /**
@@ -72,7 +68,7 @@ public class ClojureProjectDataTest {
      * Test of getPomegranateString method, of class ClojureProjectData.
      */
     @Test
-    public void testGetPomegranateString() {
+    void testGetPomegranateString() {
         ClojureProjectData instance = new ClojureProjectData();
 
         assertEquals(null, instance.getPomegranateString());

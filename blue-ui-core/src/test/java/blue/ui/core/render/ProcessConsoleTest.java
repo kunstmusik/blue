@@ -19,13 +19,14 @@
  */
 package blue.ui.core.render;
 
-import org.junit.Test;
+import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.Test;
 
 /**
  *
  * @author stevenyi
  */
-public class ProcessConsoleTest {
+class ProcessConsoleTest {
     
     public ProcessConsoleTest() {
     }
@@ -267,7 +268,7 @@ public class ProcessConsoleTest {
 //    }
 
     @Test
-    public void testGetCsoundVersion() {
+    void testGetCsoundVersion() {
         
     }
 }

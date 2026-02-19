@@ -23,11 +23,13 @@ import blue.SoundLayer;
 import blue.time.TimeContext;
 import blue.time.TimeDuration;
 import blue.time.TimePosition;
-import junit.framework.TestCase;
+import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.Test;
 
-public class PolyObjectTest extends TestCase {
+class PolyObjectTest {
 
-    public final void testIsScoreGenerationEmpty() {
+    @Test
+    void testIsScoreGenerationEmpty() {
         PolyObject pObj = new PolyObject();
         PolyObject pObj2 = new PolyObject();
 
@@ -49,7 +51,6 @@ public class PolyObjectTest extends TestCase {
         assertTrue(pObj.isScoreGenerationEmpty());
         assertTrue(pObj2.isScoreGenerationEmpty());
 
-
         sLayer.remove(comment);
         sLayer2.add(comment);
         assertTrue(pObj.isScoreGenerationEmpty());
@@ -60,14 +61,14 @@ public class PolyObjectTest extends TestCase {
         assertFalse(pObj.isScoreGenerationEmpty());
         assertTrue(pObj2.isScoreGenerationEmpty());
 
-
         sLayer.remove(genScore);
         sLayer2.add(genScore);
         assertFalse(pObj.isScoreGenerationEmpty());
         assertFalse(pObj2.isScoreGenerationEmpty());
     }
     
-    public final void testResizeLeftPreservesTimeAndDurationTypes() {
+    @Test
+    void testResizeLeftPreservesTimeAndDurationTypes() {
         PolyObject pObj = new PolyObject();
         TimeContext context = new TimeContext();
         blue.ProjectProperties polyProps = new blue.ProjectProperties();
@@ -84,7 +85,8 @@ public class PolyObjectTest extends TestCase {
         assertEquals(120000, ((TimeDuration.DurationFrames) pObj.getSubjectiveDuration()).getFrameCount());
     }
     
-    public final void testResizeRightPreservesDurationType() {
+    @Test
+    void testResizeRightPreservesDurationType() {
         PolyObject pObj = new PolyObject();
         TimeContext context = new TimeContext();
         pObj.setStartTime(TimePosition.time(0, 0, 1, 0));

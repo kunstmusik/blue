@@ -10,19 +10,17 @@ import blue.blueLive.LiveObject;
 import blue.blueLive.LiveObjectBins;
 import blue.soundObject.GenericScore;
 import electric.xml.Element;
-import junit.framework.TestCase;
+import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.Test;
 
 /**
  *
  * @author steven
  */
-public class LiveDataTest extends TestCase {
+class LiveDataTest {
 
-    public LiveDataTest(String testName) {
-        super(testName);
-    }
-
-    public void testSerialization() {
+    @Test
+    void testSerialization() {
         LiveData liveData = new LiveData();
         final LiveObjectBins liveObjectBins = liveData.getLiveObjectBins();
 

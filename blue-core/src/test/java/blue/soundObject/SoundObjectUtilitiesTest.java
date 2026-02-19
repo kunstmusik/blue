@@ -3,14 +3,15 @@ package blue.soundObject;
 import blue.time.TimeDuration;
 import blue.time.TimePosition;
 import electric.xml.Element;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import org.junit.Test;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.junit.jupiter.api.Test;
 
-public class SoundObjectUtilitiesTest {
+class SoundObjectUtilitiesTest {
 
     @Test
-    public void testInitBasicFromXMLLegacyBeatDurationUnitMigratesToDurationBeats() throws Exception {
+    void testInitBasicFromXMLLegacyBeatDurationUnitMigratesToDurationBeats() throws Exception {
         Element data = createBaseSoundObjectElement();
         Element legacyDuration = TimePosition.beats(3.5).saveAsXML();
         legacyDuration.setName("subjectiveDurationUnit");
@@ -25,15 +26,17 @@ public class SoundObjectUtilitiesTest {
                 0.0001);
     }
 
-    @Test(expected = Exception.class)
-    public void testInitBasicFromXMLLegacyNonBeatDurationUnitThrows() throws Exception {
-        Element data = createBaseSoundObjectElement();
-        Element legacyDuration = TimePosition.time(0, 0, 1, 0).saveAsXML();
-        legacyDuration.setName("subjectiveDurationUnit");
-        data.addElement(legacyDuration);
+    @Test
+    void testInitBasicFromXMLLegacyNonBeatDurationUnitThrows() throws Exception {
+        assertThrows(Exception.class, () -> {
+            Element data = createBaseSoundObjectElement();
+            Element legacyDuration = TimePosition.time(0, 0, 1, 0).saveAsXML();
+            legacyDuration.setName("subjectiveDurationUnit");
+            data.addElement(legacyDuration);
 
-        GenericScore score = new GenericScore();
-        SoundObjectUtilities.initBasicFromXML(data, score);
+            GenericScore score = new GenericScore();
+            SoundObjectUtilities.initBasicFromXML(data, score);
+        });
     }
 
     private Element createBaseSoundObjectElement() {

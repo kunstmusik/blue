@@ -20,18 +20,18 @@
 package blue.time;
 
 import electric.xml.Element;
-import org.junit.Test;
-import static org.junit.Assert.*;
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Test XML serialization for TimeContext, MeterMap, and TempoMap.
  * 
  * @author stevenyi
  */
-public class TimeContextSerializationTest {
+class TimeContextSerializationTest {
     
     @Test
-    public void testMeterSerialization() {
+    void testMeterSerialization() {
         Meter original = new Meter(3, 4);
         Element xml = original.saveAsXML();
         Meter loaded = Meter.loadFromXML(xml);
@@ -42,7 +42,7 @@ public class TimeContextSerializationTest {
     }
     
     @Test
-    public void testMeasureMeterPairSerialization() {
+    void testMeasureMeterPairSerialization() {
         MeasureMeterPair original = new MeasureMeterPair(5, new Meter(6, 8));
         Element xml = original.saveAsXML();
         MeasureMeterPair loaded = MeasureMeterPair.loadFromXML(xml);
@@ -52,7 +52,7 @@ public class TimeContextSerializationTest {
     }
     
     @Test
-    public void testMeterMapSerialization() {
+    void testMeterMapSerialization() {
         MeterMap original = new MeterMap();
         original.clear();
         original.add(new MeasureMeterPair(1, new Meter(4, 4)));
@@ -70,7 +70,7 @@ public class TimeContextSerializationTest {
     }
     
     @Test
-    public void testTempoMapSerialization() throws Exception {
+    void testTempoMapSerialization() throws Exception {
         TempoMap original = TempoMap.createTempoMap("0 60 4 120 8 90");
         assertNotNull(original);
         
@@ -83,19 +83,19 @@ public class TimeContextSerializationTest {
         for (double testBeat : new double[]{0.0, 2.0, 4.0, 6.0, 8.0, 10.0}) {
             double originalSeconds = original.beatsToSeconds(testBeat);
             double loadedSeconds = loaded.beatsToSeconds(testBeat);
-            assertEquals("Beat " + testBeat, originalSeconds, loadedSeconds, 0.0001);
+            assertEquals(originalSeconds, loadedSeconds, 0.0001, "Beat " + testBeat);
         }
         
         // Test reverse conversion
         for (double testSeconds : new double[]{0.0, 1.0, 2.0, 3.0, 4.0}) {
             double originalBeats = original.secondsToBeats(testSeconds);
             double loadedBeats = loaded.secondsToBeats(testSeconds);
-            assertEquals("Seconds " + testSeconds, originalBeats, loadedBeats, 0.0001);
+            assertEquals(originalBeats, loadedBeats, 0.0001, "Seconds " + testSeconds);
         }
     }
     
     @Test
-    public void testTimeContextSerialization() throws Exception {
+    void testTimeContextSerialization() throws Exception {
         TimeContext original = new TimeContext();
         blue.ProjectProperties props = new blue.ProjectProperties();
         props.setSampleRate("48000");
@@ -140,7 +140,7 @@ public class TimeContextSerializationTest {
     }
     
     @Test
-    public void testLegacyXmlWithSampleRateIsIgnored() throws Exception {
+    void testLegacyXmlWithSampleRateIsIgnored() throws Exception {
         // Old project files contain <sampleRate> in <timeContext> — must load silently
         TimeContext original = new TimeContext();
         Element xml = original.saveAsXML();
@@ -154,7 +154,7 @@ public class TimeContextSerializationTest {
     }
 
     @Test
-    public void testTimeContextDefaultSerialization() throws Exception {
+    void testTimeContextDefaultSerialization() throws Exception {
         // Test that default TimeContext serializes and loads correctly
         TimeContext original = new TimeContext();
         

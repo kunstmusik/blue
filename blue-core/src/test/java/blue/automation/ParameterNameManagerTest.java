@@ -18,20 +18,20 @@
  */
 package blue.automation;
 
-import static org.junit.Assert.*;
-import org.junit.Test;
+import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.Test;
 
 /**
  *
  * @author stevenyi
  */
-public class ParameterNameManagerTest {
+class ParameterNameManagerTest {
     
     /**
      * Test of getUniqueParamName method, of class ParameterNameManager.
      */
     @Test
-    public void testGetUniqueParamName() {
+    void testGetUniqueParamName() {
         assertEquals("gk_blue_auto1", 
                 new ParameterNameManager(1).getUniqueParamName());
         assertEquals("gk_blue_auto10", 

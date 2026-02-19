@@ -37,7 +37,8 @@ import org.openide.util.NbBundle.Messages;
 @MIMEResolver.ExtensionRegistration(
     displayName = "#LBL_Clojure_LOADER",
 mimeType = "text/x-clojure",
-extension = {"clj"})
+extension = {"clj"},
+position = 10010)
 @DataObject.Registration(
     mimeType = "text/x-clojure",
 displayName = "#LBL_Clojure_LOADER",

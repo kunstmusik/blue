@@ -19,11 +19,13 @@
  */
 package blue.mixer;
 
-import junit.framework.TestCase;
+import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.Test;
 
-public class EffectsChainTest extends TestCase {
+class EffectsChainTest {
 
-    public final void testGetSends() {
+    @Test
+    void testGetSends() {
         EffectsChain chain = new EffectsChain();
 
         Send send1 = new Send();

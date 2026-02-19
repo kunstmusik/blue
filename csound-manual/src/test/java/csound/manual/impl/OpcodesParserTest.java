@@ -20,26 +20,26 @@
 package csound.manual.impl;
 
 import csound.manual.OpcodeDocCategory;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import static org.junit.Assert.*;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  *
  * @author stevenyi
  */
-public class OpcodesParserTest {
+class OpcodesParserTest {
     
     public OpcodesParserTest() {
     }
     
-    @Before
-    public void setUp() {
+    @BeforeEach
+    void setUp() {
     }
     
-    @After
-    public void tearDown() {
+    @AfterEach
+    void tearDown() {
     }
     // TODO add test methods here.
     // The methods must be annotated with annotation @Test. For example:
@@ -47,7 +47,7 @@ public class OpcodesParserTest {
     // @Test
     // public void hello() {}
     @Test
-    public void testParseOpcodesXML() {
+    void testParseOpcodesXML() {
         OpcodeDocCategory cat = OpcodesParser.loadOpcodesXML();
         System.out.println(cat.toString());
         assertTrue(cat.subGroups.size() > 0);   

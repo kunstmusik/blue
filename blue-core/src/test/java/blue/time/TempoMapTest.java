@@ -21,21 +21,21 @@ package blue.time;
 
 import electric.xml.Document;
 import electric.xml.Element;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Tests for the unified TempoMap with CurveType support.
  */
-public class TempoMapTest {
+class TempoMapTest {
     
     private static final double EPSILON = 0.0001;
     
     // ========== Basic Construction Tests ==========
     
     @Test
-    public void testDefaultConstruction() {
+    void testDefaultConstruction() {
         TempoMap tm = new TempoMap();
         
         assertEquals(1, tm.size());
@@ -47,7 +47,7 @@ public class TempoMapTest {
     }
     
     @Test
-    public void testCopyConstruction() {
+    void testCopyConstruction() {
         TempoMap original = new TempoMap();
         original.setEnabled(true);
         original.setVisible(true);
@@ -64,7 +64,7 @@ public class TempoMapTest {
     // ========== Enabled/Disabled Behavior Tests ==========
     
     @Test
-    public void testDisabledUsesConstantTempo() {
+    void testDisabledUsesConstantTempo() {
         TempoMap tm = new TempoMap();
         tm.addTempoPoint(new TempoPoint(4.0, 120.0)); // Add accelerando
         tm.setEnabled(false);
@@ -76,7 +76,7 @@ public class TempoMapTest {
     }
     
     @Test
-    public void testEnabledUsesTempoMap() {
+    void testEnabledUsesTempoMap() {
         TempoMap tm = new TempoMap();
         tm.setTempoPoint(0, 0.0, 120.0); // 120 BPM at beat 0
         tm.setEnabled(true);
@@ -89,7 +89,7 @@ public class TempoMapTest {
     // ========== CurveType.LINEAR Tests ==========
     
     @Test
-    public void testLinearInterpolation() {
+    void testLinearInterpolation() {
         TempoMap tm = new TempoMap();
         tm.setTempoPoint(0, 0.0, 60.0, CurveType.LINEAR);
         tm.addTempoPoint(new TempoPoint(4.0, 120.0, CurveType.LINEAR));
@@ -106,7 +106,7 @@ public class TempoMapTest {
     }
     
     @Test
-    public void testLinearBeatsToSeconds() {
+    void testLinearBeatsToSeconds() {
         TempoMap tm = TempoMap.createTempoMap("0 60 4 120");
         tm.setEnabled(true);
         
@@ -121,7 +121,7 @@ public class TempoMapTest {
     }
     
     @Test
-    public void testLinearSecondsToBeats() {
+    void testLinearSecondsToBeats() {
         TempoMap tm = TempoMap.createTempoMap("0 60 4 120");
         tm.setEnabled(true);
         
@@ -136,7 +136,7 @@ public class TempoMapTest {
     // ========== CurveType.CONSTANT Tests ==========
     
     @Test
-    public void testConstantCurve() {
+    void testConstantCurve() {
         TempoMap tm = new TempoMap();
         tm.setTempoPoint(0, 0.0, 60.0, CurveType.CONSTANT);
         tm.addTempoPoint(new TempoPoint(4.0, 120.0, CurveType.CONSTANT));
@@ -150,7 +150,7 @@ public class TempoMapTest {
     }
     
     @Test
-    public void testConstantBeatsToSeconds() {
+    void testConstantBeatsToSeconds() {
         TempoMap tm = new TempoMap();
         tm.setTempoPoint(0, 0.0, 60.0, CurveType.CONSTANT);
         tm.addTempoPoint(new TempoPoint(4.0, 120.0, CurveType.CONSTANT));
@@ -164,7 +164,7 @@ public class TempoMapTest {
     }
     
     @Test
-    public void testConstantSecondsToBeats() {
+    void testConstantSecondsToBeats() {
         TempoMap tm = new TempoMap();
         tm.setTempoPoint(0, 0.0, 60.0, CurveType.CONSTANT);
         tm.addTempoPoint(new TempoPoint(4.0, 120.0, CurveType.CONSTANT));
@@ -180,7 +180,7 @@ public class TempoMapTest {
     // ========== createTempoMap (Legacy Format) Tests ==========
     
     @Test
-    public void testCreateTempoMapSimple() {
+    void testCreateTempoMapSimple() {
         TempoMap tm = TempoMap.createTempoMap("0 60");
         
         assertNotNull(tm);
@@ -192,7 +192,7 @@ public class TempoMapTest {
     }
     
     @Test
-    public void testCreateTempoMapMultiplePoints() {
+    void testCreateTempoMapMultiplePoints() {
         TempoMap tm = TempoMap.createTempoMap("0 60 4 120 8 90");
         
         assertNotNull(tm);
@@ -202,19 +202,19 @@ public class TempoMapTest {
     }
     
     @Test
-    public void testCreateTempoMapInvalidOddTokens() {
+    void testCreateTempoMapInvalidOddTokens() {
         TempoMap tm = TempoMap.createTempoMap("0 60 4");
         assertNull(tm);
     }
     
     @Test
-    public void testCreateTempoMapInvalidNegativeBeat() {
+    void testCreateTempoMapInvalidNegativeBeat() {
         TempoMap tm = TempoMap.createTempoMap("-1 60");
         assertNull(tm);
     }
     
     @Test
-    public void testCreateTempoMapInvalidZeroTempo() {
+    void testCreateTempoMapInvalidZeroTempo() {
         TempoMap tm = TempoMap.createTempoMap("0 0");
         assertNull(tm);
     }
@@ -222,7 +222,7 @@ public class TempoMapTest {
     // ========== XML Serialization Tests ==========
     
     @Test
-    public void testSaveAndLoadXML() throws Exception {
+    void testSaveAndLoadXML() throws Exception {
         TempoMap original = new TempoMap();
         original.setEnabled(true);
         original.setVisible(true);
@@ -242,7 +242,7 @@ public class TempoMapTest {
     }
     
     @Test
-    public void testLoadLegacyXML() throws Exception {
+    void testLoadLegacyXML() throws Exception {
         // Simulate old beatTempoPair format
         String xmlStr = """
             <tempoMap>
@@ -272,7 +272,7 @@ public class TempoMapTest {
     // ========== Listener Tests ==========
     
     @Test
-    public void testTempoMapListener() {
+    void testTempoMapListener() {
         TempoMap tm = new TempoMap();
         int[] callCount = {0};
         
@@ -289,7 +289,7 @@ public class TempoMapTest {
     }
     
     @Test
-    public void testPropertyChangeListener() {
+    void testPropertyChangeListener() {
         TempoMap tm = new TempoMap();
         java.util.List<String> properties = new java.util.ArrayList<>();
         
@@ -310,7 +310,7 @@ public class TempoMapTest {
     // ========== BBSTTime Position Tests ==========
     
     @Test
-    public void testTempoPointWithBBSTTime() {
+    void testTempoPointWithBBSTTime() {
         // Create a tempo point at bar 2, beat 1
         TempoPoint point = new TempoPoint(TimePosition.bbst(2, 1, 1, 0), 120.0, CurveType.LINEAR);
         
@@ -320,7 +320,7 @@ public class TempoMapTest {
     }
     
     @Test
-    public void testRecalculateBeatPositions() {
+    void testRecalculateBeatPositions() {
         TempoMap tm = new TempoMap();
         tm.setEnabled(true);
         
@@ -344,7 +344,7 @@ public class TempoMapTest {
     // ========== Edge Cases ==========
     
     @Test
-    public void testBeyondLastPoint() {
+    void testBeyondLastPoint() {
         TempoMap tm = new TempoMap();
         tm.setTempoPoint(0, 0.0, 120.0, CurveType.LINEAR);
         tm.setEnabled(true);
@@ -357,7 +357,7 @@ public class TempoMapTest {
     }
     
     @Test
-    public void testCannotRemoveLastPoint() {
+    void testCannotRemoveLastPoint() {
         TempoMap tm = new TempoMap();
         
         assertThrows(IllegalStateException.class, () -> tm.removeTempoPoint(0));
@@ -366,7 +366,7 @@ public class TempoMapTest {
     // ========== Legacy Migration Tests ==========
     
     @Test
-    public void testMigrationFromLegacyTempoXML() throws Exception {
+    void testMigrationFromLegacyTempoXML() throws Exception {
         // Create legacy <tempo> XML with multiple points
         String legacyXml = """
             <tempo>
@@ -406,7 +406,7 @@ public class TempoMapTest {
     }
     
     @Test
-    public void testMigrationPreservesTempoCalculations() throws Exception {
+    void testMigrationPreservesTempoCalculations() throws Exception {
         // Create legacy <tempo> XML with accelerando
         String legacyXml = """
             <tempo>
@@ -437,7 +437,7 @@ public class TempoMapTest {
     }
     
     @Test
-    public void testReset() {
+    void testReset() {
         TempoMap tm = new TempoMap();
         tm.setEnabled(true);
         tm.addTempoPoint(new TempoPoint(4.0, 120.0));
@@ -453,7 +453,7 @@ public class TempoMapTest {
     // ========== replaceAll Tests ==========
     
     @Test
-    public void testReplaceAllCopiesData() {
+    void testReplaceAllCopiesData() {
         TempoMap original = new TempoMap();
         
         TempoMap source = new TempoMap();
@@ -474,7 +474,7 @@ public class TempoMapTest {
     }
     
     @Test
-    public void testReplaceAllFiresListeners() {
+    void testReplaceAllFiresListeners() {
         TempoMap tm = new TempoMap();
         int[] tempoListenerCount = {0};
         java.util.List<String> propertyNames = new java.util.ArrayList<>();
@@ -496,7 +496,7 @@ public class TempoMapTest {
     }
     
     @Test
-    public void testReplaceAllPreservesListeners() {
+    void testReplaceAllPreservesListeners() {
         TempoMap tm = new TempoMap();
         int[] callCount = {0};
         tm.addListener(() -> callCount[0]++);

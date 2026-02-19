@@ -19,13 +19,15 @@
  */
 package blue.soundObject;
 
-import junit.framework.TestCase;
+import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.Test;
 
-public class NoteTest extends TestCase {
+class NoteTest {
     /*
      * Test for Object clone()
      */
-    public void testNoteInit() {
+    @Test
+    void testNoteInit() {
         Note testNote;
         try {
             testNote = Note.createNote("i1 [4 + 23] 5 4");

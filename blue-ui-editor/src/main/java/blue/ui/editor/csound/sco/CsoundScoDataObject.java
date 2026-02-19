@@ -37,7 +37,8 @@ import org.openide.util.NbBundle.Messages;
 @MIMEResolver.ExtensionRegistration(
     displayName = "#LBL_CsoundSco_LOADER",
 mimeType = "text/x-csound-sco",
-extension = {"sco"})
+extension = {"sco"},
+position = 10030)
 @DataObject.Registration(
     mimeType = "text/x-csound-sco",
 displayName = "#LBL_CsoundSco_LOADER",

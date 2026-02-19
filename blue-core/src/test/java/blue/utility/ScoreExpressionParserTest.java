@@ -19,14 +19,16 @@
  */
 package blue.utility;
 
-import junit.framework.TestCase;
+import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.Test;
 
-public class ScoreExpressionParserTest extends TestCase {
+class ScoreExpressionParserTest {
 
     /*
      * Test method for 'blue.utility.ScoreExpressionParser.eval(String)'
      */
-    public void testEval() {             
+    @Test
+    void testEval() {
         assertEquals(2.0f, ScoreExpressionParser.eval("1 + 1"), .0001);
         assertEquals(2.0f, ScoreExpressionParser.eval("1+1+2-2"), .0001);
         assertEquals(2.0f, ScoreExpressionParser.eval("1+ 1+2 -2"), .0001);

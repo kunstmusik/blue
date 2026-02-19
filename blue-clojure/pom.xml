@@ -31,6 +31,15 @@
                     </archive>
                 </configuration>
             </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <systemPropertyVariables>
+                        <java.util.logging.config.file>${project.basedir}/src/test/resources/logging.properties</java.util.logging.config.file>
+                    </systemPropertyVariables>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
     <dependencies>
@@ -187,8 +196,7 @@
         </dependency>-->
         <dependency>
             <groupId>org.netbeans.api</groupId>
-            <artifactId>org-netbeans-libs-junit4</artifactId>
-            <version>${netbeans.version}</version>
+            <artifactId>org-netbeans-libs-junit5</artifactId>
             <scope>test</scope>
         </dependency>
 

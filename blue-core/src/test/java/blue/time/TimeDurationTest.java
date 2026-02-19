@@ -19,9 +19,9 @@
  */
 package blue.time;
 
-import static org.junit.Assert.*;
-import org.junit.Before;
-import org.junit.Test;
+import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 /**
  * Tests for TimeDuration and its subclasses, including conversion,
@@ -29,12 +29,12 @@ import org.junit.Test;
  *
  * @author stevenyi
  */
-public class TimeDurationTest {
+class TimeDurationTest {
     
     private TimeContext context;
     
-    @Before
-    public void setUp() {
+    @BeforeEach
+    void setUp() {
         // Tempo: 60 BPM (1 beat per second) - default
         // Meter: 4/4 - default
         // Sample rate: 44100 Hz
@@ -51,18 +51,18 @@ public class TimeDurationTest {
     // ========== DurationBeats Tests ==========
     
     @Test
-    public void testDurationBeatsGetTimeBase() {
+    void testDurationBeatsGetTimeBase() {
         TimeDuration.DurationBeats db = TimeDuration.beats(4.0);
         assertEquals(TimeBase.CSOUND_BEATS, db.getTimeBase());
     }
     
     @Test
-    public void testDurationBeatsZero() {
+    void testDurationBeatsZero() {
         assertEquals(0.0, TimeDuration.DurationBeats.ZERO.getCsoundBeats(), 0.001);
     }
     
     @Test
-    public void testDurationBeatsConversions() {
+    void testDurationBeatsConversions() {
         TimeDuration.DurationBeats db = TimeDuration.beats(4.0);
         
         assertEquals(4.0, db.toBeats(context), 0.001);
@@ -73,7 +73,7 @@ public class TimeDurationTest {
     }
     
     @Test
-    public void testDurationBeatsEquality() {
+    void testDurationBeatsEquality() {
         TimeDuration.DurationBeats a = TimeDuration.beats(4.0);
         TimeDuration.DurationBeats b = TimeDuration.beats(4.0);
         TimeDuration.DurationBeats c = TimeDuration.beats(5.0);
@@ -83,21 +83,23 @@ public class TimeDurationTest {
         assertEquals(a.hashCode(), b.hashCode());
     }
     
-    @Test(expected = IllegalArgumentException.class)
-    public void testDurationBeatsNegative() {
-        TimeDuration.beats(-1.0);
+    @Test
+    void testDurationBeatsNegative() {
+        assertThrows(IllegalArgumentException.class, () -> {
+            TimeDuration.beats(-1.0);
+        });
     }
     
     // ========== DurationBBT Tests ==========
     
     @Test
-    public void testDurationBBTGetTimeBase() {
+    void testDurationBBTGetTimeBase() {
         TimeDuration.DurationBBT d = TimeDuration.bbt(0, 0, 0);
         assertEquals(TimeBase.BBT, d.getTimeBase());
     }
     
     @Test
-    public void testDurationBBTZero() {
+    void testDurationBBTZero() {
         TimeDuration.DurationBBT zero = TimeDuration.DurationBBT.ZERO;
         assertEquals(0, zero.getBars());
         assertEquals(0, zero.getBeats());
@@ -106,28 +108,28 @@ public class TimeDurationTest {
     }
     
     @Test
-    public void testDurationBBTOneMeasureIn44() {
+    void testDurationBBTOneMeasureIn44() {
         // 1 bar in 4/4 = 4 beats
         TimeDuration.DurationBBT d = TimeDuration.bbt(1, 0, 0);
         assertEquals(4.0, d.toBeats(context), 0.001);
     }
     
     @Test
-    public void testDurationBBTOneBarTwoBeatsIn44() {
+    void testDurationBBTOneBarTwoBeatsIn44() {
         // 1 bar + 2 beats in 4/4 = 6 beats
         TimeDuration.DurationBBT d = TimeDuration.bbt(1, 2, 0);
         assertEquals(6.0, d.toBeats(context), 0.001);
     }
     
     @Test
-    public void testDurationBBTWithTicks() {
+    void testDurationBBTWithTicks() {
         // 0 bars, 0 beats, 480 ticks at PPQ=960 = 0.5 beats
         TimeDuration.DurationBBT d = TimeDuration.bbt(0, 0, 480);
         assertEquals(0.5, d.toBeats(context), 0.001);
     }
     
     @Test
-    public void testDurationBBTSecondsAndFrames() {
+    void testDurationBBTSecondsAndFrames() {
         // 1 bar in 4/4 = 4 beats = 4 seconds at 60 BPM
         TimeDuration.DurationBBT d = TimeDuration.bbt(1, 0, 0);
         assertEquals(4.0, d.toSeconds(context), 0.001);
@@ -135,7 +137,7 @@ public class TimeDurationTest {
     }
     
     @Test
-    public void testDurationBBTEquality() {
+    void testDurationBBTEquality() {
         TimeDuration.DurationBBT a = TimeDuration.bbt(1, 2, 100);
         TimeDuration.DurationBBT b = TimeDuration.bbt(1, 2, 100);
         TimeDuration.DurationBBT c = TimeDuration.bbt(1, 3, 100);
@@ -145,31 +147,37 @@ public class TimeDurationTest {
         assertEquals(a.hashCode(), b.hashCode());
     }
     
-    @Test(expected = IllegalArgumentException.class)
-    public void testDurationBBTNegativeBars() {
-        TimeDuration.bbt(-1, 0, 0);
+    @Test
+    void testDurationBBTNegativeBars() {
+        assertThrows(IllegalArgumentException.class, () -> {
+            TimeDuration.bbt(-1, 0, 0);
+        });
     }
     
-    @Test(expected = IllegalArgumentException.class)
-    public void testDurationBBTNegativeBeats() {
-        TimeDuration.bbt(0, -1, 0);
+    @Test
+    void testDurationBBTNegativeBeats() {
+        assertThrows(IllegalArgumentException.class, () -> {
+            TimeDuration.bbt(0, -1, 0);
+        });
     }
     
-    @Test(expected = IllegalArgumentException.class)
-    public void testDurationBBTNegativeTicks() {
-        TimeDuration.bbt(0, 0, -1);
+    @Test
+    void testDurationBBTNegativeTicks() {
+        assertThrows(IllegalArgumentException.class, () -> {
+            TimeDuration.bbt(0, 0, -1);
+        });
     }
     
     // ========== DurationBBST Tests ==========
     
     @Test
-    public void testDurationBBSTGetTimeBase() {
+    void testDurationBBSTGetTimeBase() {
         TimeDuration.DurationBBST d = TimeDuration.bbst(0, 0, 0, 0);
         assertEquals(TimeBase.BBST, d.getTimeBase());
     }
     
     @Test
-    public void testDurationBBSTZero() {
+    void testDurationBBSTZero() {
         TimeDuration.DurationBBST zero = TimeDuration.DurationBBST.ZERO;
         assertEquals(0, zero.getBars());
         assertEquals(0, zero.getBeats());
@@ -179,21 +187,21 @@ public class TimeDurationTest {
     }
     
     @Test
-    public void testDurationBBSTOneMeasureIn44() {
+    void testDurationBBSTOneMeasureIn44() {
         // 1 bar in 4/4 = 4 beats
         TimeDuration.DurationBBST d = TimeDuration.bbst(1, 0, 0, 0);
         assertEquals(4.0, d.toBeats(context), 0.001);
     }
     
     @Test
-    public void testDurationBBSTWithSixteenth() {
+    void testDurationBBSTWithSixteenth() {
         // 0 bars, 0 beats, 2 sixteenths = 0.5 beats (each sixteenth = 0.25 beats)
         TimeDuration.DurationBBST d = TimeDuration.bbst(0, 0, 2, 0);
         assertEquals(0.5, d.toBeats(context), 0.001);
     }
     
     @Test
-    public void testDurationBBSTTotalTicks() {
+    void testDurationBBSTTotalTicks() {
         // sixteenth=2, ticks=60 at PPQ=960 → ticksPerSixteenth=240
         // totalTicks = 2*240 + 60 = 540
         TimeDuration.DurationBBST d = TimeDuration.bbst(0, 0, 2, 60);
@@ -201,7 +209,7 @@ public class TimeDurationTest {
     }
     
     @Test
-    public void testDurationBBSTEquality() {
+    void testDurationBBSTEquality() {
         TimeDuration.DurationBBST a = TimeDuration.bbst(1, 2, 1, 30);
         TimeDuration.DurationBBST b = TimeDuration.bbst(1, 2, 1, 30);
         TimeDuration.DurationBBST c = TimeDuration.bbst(1, 2, 2, 30);
@@ -211,26 +219,30 @@ public class TimeDurationTest {
         assertEquals(a.hashCode(), b.hashCode());
     }
     
-    @Test(expected = IllegalArgumentException.class)
-    public void testDurationBBSTNegativeBars() {
-        TimeDuration.bbst(-1, 0, 0, 0);
+    @Test
+    void testDurationBBSTNegativeBars() {
+        assertThrows(IllegalArgumentException.class, () -> {
+            TimeDuration.bbst(-1, 0, 0, 0);
+        });
     }
     
-    @Test(expected = IllegalArgumentException.class)
-    public void testDurationBBSTInvalidSixteenth() {
-        TimeDuration.bbst(0, 0, 4, 0); // must be 0-3
+    @Test
+    void testDurationBBSTInvalidSixteenth() {
+        assertThrows(IllegalArgumentException.class, () -> {
+            TimeDuration.bbst(0, 0, 4, 0); // must be 0-3
+        });
     }
     
     // ========== DurationBBF Tests ==========
     
     @Test
-    public void testDurationBBFGetTimeBase() {
+    void testDurationBBFGetTimeBase() {
         TimeDuration.DurationBBF d = TimeDuration.bbf(0, 0, 0);
         assertEquals(TimeBase.BBF, d.getTimeBase());
     }
     
     @Test
-    public void testDurationBBFZero() {
+    void testDurationBBFZero() {
         TimeDuration.DurationBBF zero = TimeDuration.DurationBBF.ZERO;
         assertEquals(0, zero.getBars());
         assertEquals(0, zero.getBeats());
@@ -239,28 +251,28 @@ public class TimeDurationTest {
     }
     
     @Test
-    public void testDurationBBFOneMeasureIn44() {
+    void testDurationBBFOneMeasureIn44() {
         // 1 bar in 4/4 = 4 beats
         TimeDuration.DurationBBF d = TimeDuration.bbf(1, 0, 0);
         assertEquals(4.0, d.toBeats(context), 0.001);
     }
     
     @Test
-    public void testDurationBBFWithFraction() {
+    void testDurationBBFWithFraction() {
         // 0 bars, 0 beats, fraction 50 = 0.5 beats
         TimeDuration.DurationBBF d = TimeDuration.bbf(0, 0, 50);
         assertEquals(0.5, d.toBeats(context), 0.001);
     }
     
     @Test
-    public void testDurationBBFOneBarTwoBeats() {
+    void testDurationBBFOneBarTwoBeats() {
         // 1 bar + 2 beats in 4/4 = 6 beats
         TimeDuration.DurationBBF d = TimeDuration.bbf(1, 2, 0);
         assertEquals(6.0, d.toBeats(context), 0.001);
     }
     
     @Test
-    public void testDurationBBFEquality() {
+    void testDurationBBFEquality() {
         TimeDuration.DurationBBF a = TimeDuration.bbf(1, 2, 50);
         TimeDuration.DurationBBF b = TimeDuration.bbf(1, 2, 50);
         TimeDuration.DurationBBF c = TimeDuration.bbf(1, 2, 75);
@@ -270,32 +282,36 @@ public class TimeDurationTest {
         assertEquals(a.hashCode(), b.hashCode());
     }
     
-    @Test(expected = IllegalArgumentException.class)
-    public void testDurationBBFNegativeBars() {
-        TimeDuration.bbf(-1, 0, 0);
+    @Test
+    void testDurationBBFNegativeBars() {
+        assertThrows(IllegalArgumentException.class, () -> {
+            TimeDuration.bbf(-1, 0, 0);
+        });
     }
     
-    @Test(expected = IllegalArgumentException.class)
-    public void testDurationBBFInvalidFraction() {
-        TimeDuration.bbf(0, 0, 100); // must be 0-99
+    @Test
+    void testDurationBBFInvalidFraction() {
+        assertThrows(IllegalArgumentException.class, () -> {
+            TimeDuration.bbf(0, 0, 100); // must be 0-99
+        });
     }
     
     // ========== DurationTime Tests ==========
     
     @Test
-    public void testDurationTimeGetTimeBase() {
+    void testDurationTimeGetTimeBase() {
         TimeDuration.DurationTime d = TimeDuration.time(0, 0, 2, 0);
         assertEquals(TimeBase.TIME, d.getTimeBase());
     }
     
     @Test
-    public void testDurationTimeZero() {
+    void testDurationTimeZero() {
         TimeDuration.DurationTime zero = TimeDuration.DurationTime.ZERO;
         assertEquals(0.0, zero.toTotalSeconds(), 0.001);
     }
     
     @Test
-    public void testDurationTimeConversions() {
+    void testDurationTimeConversions() {
         TimeDuration.DurationTime d = TimeDuration.time(0, 0, 2, 0); // 2 seconds
         
         assertEquals(2.0, d.toBeats(context), 0.001); // 60 BPM
@@ -304,13 +320,13 @@ public class TimeDurationTest {
     }
     
     @Test
-    public void testDurationTimeTotalSeconds() {
+    void testDurationTimeTotalSeconds() {
         TimeDuration.DurationTime d = TimeDuration.time(1, 30, 45, 500);
         assertEquals(5445.5, d.toTotalSeconds(), 0.001);
     }
     
     @Test
-    public void testDurationTimeEquality() {
+    void testDurationTimeEquality() {
         TimeDuration.DurationTime a = TimeDuration.time(0, 1, 30, 500);
         TimeDuration.DurationTime b = TimeDuration.time(0, 1, 30, 500);
         TimeDuration.DurationTime c = TimeDuration.time(0, 1, 30, 501);
@@ -319,36 +335,44 @@ public class TimeDurationTest {
         assertNotEquals(a, c);
     }
     
-    @Test(expected = IllegalArgumentException.class)
-    public void testDurationTimeNegativeHours() {
-        TimeDuration.time(-1, 0, 0, 0);
+    @Test
+    void testDurationTimeNegativeHours() {
+        assertThrows(IllegalArgumentException.class, () -> {
+            TimeDuration.time(-1, 0, 0, 0);
+        });
     }
     
-    @Test(expected = IllegalArgumentException.class)
-    public void testDurationTimeInvalidMinutes() {
-        TimeDuration.time(0, 60, 0, 0);
+    @Test
+    void testDurationTimeInvalidMinutes() {
+        assertThrows(IllegalArgumentException.class, () -> {
+            TimeDuration.time(0, 60, 0, 0);
+        });
     }
     
-    @Test(expected = IllegalArgumentException.class)
-    public void testDurationTimeInvalidSeconds() {
-        TimeDuration.time(0, 0, 60, 0);
+    @Test
+    void testDurationTimeInvalidSeconds() {
+        assertThrows(IllegalArgumentException.class, () -> {
+            TimeDuration.time(0, 0, 60, 0);
+        });
     }
     
-    @Test(expected = IllegalArgumentException.class)
-    public void testDurationTimeInvalidMilliseconds() {
-        TimeDuration.time(0, 0, 0, 1000);
+    @Test
+    void testDurationTimeInvalidMilliseconds() {
+        assertThrows(IllegalArgumentException.class, () -> {
+            TimeDuration.time(0, 0, 0, 1000);
+        });
     }
     
     // ========== DurationFrames Tests ==========
     
     @Test
-    public void testDurationFramesGetTimeBase() {
+    void testDurationFramesGetTimeBase() {
         TimeDuration.DurationFrames d = TimeDuration.frames(44100);
         assertEquals(TimeBase.FRAME, d.getTimeBase());
     }
     
     @Test
-    public void testDurationFramesConversions() {
+    void testDurationFramesConversions() {
         TimeDuration.DurationFrames d = TimeDuration.frames(88200); // 2 seconds at 44100 Hz
         
         assertEquals(88200, d.toFrames(context));
@@ -357,13 +381,13 @@ public class TimeDurationTest {
     }
     
     @Test
-    public void testDurationFramesTotalSeconds() {
+    void testDurationFramesTotalSeconds() {
         TimeDuration.DurationFrames d = TimeDuration.frames(44100);
         assertEquals(1.0, d.toTotalSeconds(44100), 0.001);
     }
     
     @Test
-    public void testDurationFramesEquality() {
+    void testDurationFramesEquality() {
         TimeDuration.DurationFrames a = TimeDuration.frames(44100);
         TimeDuration.DurationFrames b = TimeDuration.frames(44100);
         TimeDuration.DurationFrames c = TimeDuration.frames(88200);
@@ -372,20 +396,24 @@ public class TimeDurationTest {
         assertNotEquals(a, c);
     }
     
-    @Test(expected = IllegalArgumentException.class)
-    public void testDurationFramesNegative() {
-        TimeDuration.frames(-1);
+    @Test
+    void testDurationFramesNegative() {
+        assertThrows(IllegalArgumentException.class, () -> {
+            TimeDuration.frames(-1);
+        });
     }
     
-    @Test(expected = IllegalArgumentException.class)
-    public void testDurationFramesInvalidSampleRate() {
-        TimeDuration.frames(44100).toTotalSeconds(0);
+    @Test
+    void testDurationFramesInvalidSampleRate() {
+        assertThrows(IllegalArgumentException.class, () -> {
+            TimeDuration.frames(44100).toTotalSeconds(0);
+        });
     }
     
     // ========== XML Serialization Tests ==========
     
     @Test
-    public void testDurationBeatsXMLRoundTrip() throws Exception {
+    void testDurationBeatsXMLRoundTrip() throws Exception {
         TimeDuration original = TimeDuration.beats(4.5);
         var xml = original.saveAsXML();
         TimeDuration loaded = TimeDuration.loadFromXML(xml);
@@ -393,7 +421,7 @@ public class TimeDurationTest {
     }
     
     @Test
-    public void testDurationBBTXMLRoundTrip() throws Exception {
+    void testDurationBBTXMLRoundTrip() throws Exception {
         TimeDuration original = TimeDuration.bbt(2, 3, 120);
         var xml = original.saveAsXML();
         TimeDuration loaded = TimeDuration.loadFromXML(xml);
@@ -401,7 +429,7 @@ public class TimeDurationTest {
     }
     
     @Test
-    public void testDurationBBSTXMLRoundTrip() throws Exception {
+    void testDurationBBSTXMLRoundTrip() throws Exception {
         TimeDuration original = TimeDuration.bbst(1, 2, 3, 60);
         var xml = original.saveAsXML();
         TimeDuration loaded = TimeDuration.loadFromXML(xml);
@@ -409,7 +437,7 @@ public class TimeDurationTest {
     }
     
     @Test
-    public void testDurationBBFXMLRoundTrip() throws Exception {
+    void testDurationBBFXMLRoundTrip() throws Exception {
         TimeDuration original = TimeDuration.bbf(3, 2, 75);
         var xml = original.saveAsXML();
         TimeDuration loaded = TimeDuration.loadFromXML(xml);
@@ -417,7 +445,7 @@ public class TimeDurationTest {
     }
     
     @Test
-    public void testDurationTimeXMLRoundTrip() throws Exception {
+    void testDurationTimeXMLRoundTrip() throws Exception {
         TimeDuration original = TimeDuration.time(1, 30, 45, 500);
         var xml = original.saveAsXML();
         TimeDuration loaded = TimeDuration.loadFromXML(xml);
@@ -425,30 +453,34 @@ public class TimeDurationTest {
     }
     
     @Test
-    public void testDurationFramesXMLRoundTrip() throws Exception {
+    void testDurationFramesXMLRoundTrip() throws Exception {
         TimeDuration original = TimeDuration.frames(88200);
         var xml = original.saveAsXML();
         TimeDuration loaded = TimeDuration.loadFromXML(xml);
         assertEquals(original, loaded);
     }
     
-    @Test(expected = Exception.class)
-    public void testLoadFromXMLMissingType() throws Exception {
-        var element = new electric.xml.Element("timeDuration");
-        TimeDuration.loadFromXML(element);
+    @Test
+    void testLoadFromXMLMissingType() throws Exception {
+        assertThrows(Exception.class, () -> {
+            var element = new electric.xml.Element("timeDuration");
+            TimeDuration.loadFromXML(element);
+        });
     }
     
-    @Test(expected = Exception.class)
-    public void testLoadFromXMLUnknownType() throws Exception {
-        var element = new electric.xml.Element("timeDuration");
-        element.setAttribute("type", "UnknownType");
-        TimeDuration.loadFromXML(element);
+    @Test
+    void testLoadFromXMLUnknownType() throws Exception {
+        assertThrows(Exception.class, () -> {
+            var element = new electric.xml.Element("timeDuration");
+            element.setAttribute("type", "UnknownType");
+            TimeDuration.loadFromXML(element);
+        });
     }
     
     // ========== Comparison with Position Types ==========
     
     @Test
-    public void testDurationBBTVsPositionBBT() {
+    void testDurationBBTVsPositionBBT() {
         // Position: bar 1, beat 1, ticks 0 = 0 beats (1-based origin)
         TimePosition.BBTTime position = TimePosition.bbt(1, 1, 0);
         assertEquals(0.0, position.toBeats(context), 0.001);
@@ -467,7 +499,7 @@ public class TimeDurationTest {
     }
     
     @Test
-    public void testDurationBBFVsPositionBBF() {
+    void testDurationBBFVsPositionBBF() {
         // Position: bar 1, beat 1, fraction 0 = 0 beats
         TimePosition.BBFTime position = TimePosition.bbf(1, 1, 0);
         assertEquals(0.0, position.toBeats(context), 0.001);
@@ -489,7 +521,7 @@ public class TimeDurationTest {
     // ========== Non-4/4 Meter Tests ==========
     
     @Test
-    public void testDurationBBTIn34() {
+    void testDurationBBTIn34() {
         // 3/4 meter: 3 beats per bar
         MeterMap meterMap = new MeterMap();
         meterMap.set(0, new MeasureMeterPair(1, new Meter(3, 4)));
@@ -515,7 +547,7 @@ public class TimeDurationTest {
     }
     
     @Test
-    public void testDurationBBFIn68() {
+    void testDurationBBFIn68() {
         // 6/8 meter: 6 eighth notes = 3 quarter note beats per bar
         MeterMap meterMap = new MeterMap();
         meterMap.set(0, new MeasureMeterPair(1, new Meter(6, 8)));

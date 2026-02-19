@@ -19,9 +19,9 @@
  */
 package blue.time;
 
-import static org.junit.Assert.*;
-import org.junit.Before;
-import org.junit.Test;
+import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 /**
  * Tests for TimePosition and its subclasses, including conversion, comparison,
@@ -29,12 +29,12 @@ import org.junit.Test;
  *
  * @author stevenyi
  */
-public class TimePositionTest {
+class TimePositionTest {
     
     private TimeContext context;
     
-    @Before
-    public void setUp() {
+    @BeforeEach
+    void setUp() {
         // Create a simple TimeContext for testing
         // Tempo: 60 BPM (1 beat per second) - default
         // Meter: 4/4 - default
@@ -52,26 +52,26 @@ public class TimePositionTest {
     // ========== BeatTime Tests ==========
     
     @Test
-    public void testBeatTimeGetTimeBase() {
+    void testBeatTimeGetTimeBase() {
         TimePosition.BeatTime bt = TimePosition.beats(10.0);
         assertEquals(TimeBase.CSOUND_BEATS, bt.getTimeBase());
     }
     
     @Test
-    public void testBeatTimeImmutability() {
+    void testBeatTimeImmutability() {
         TimePosition.BeatTime bt = TimePosition.beats(5.5);
         assertEquals(5.5, bt.getCsoundBeats(), 0.001);
     }
     
     @Test
-    public void testBeatTimeCopyConstructor() {
+    void testBeatTimeCopyConstructor() {
         TimePosition.BeatTime original = TimePosition.beats(7.5);
         TimePosition.BeatTime copy = new TimePosition.BeatTime(original);
         assertEquals(original.getCsoundBeats(), copy.getCsoundBeats(), 0.001);
     }
     
     @Test
-    public void testBeatTimeConversions() {
+    void testBeatTimeConversions() {
         TimePosition.BeatTime bt = TimePosition.beats(4.0);
         
         // toBeats should return the same value
@@ -85,7 +85,7 @@ public class TimePositionTest {
     }
     
     @Test
-    public void testBeatTimeComparison() {
+    void testBeatTimeComparison() {
         TimePosition.BeatTime bt1 = TimePosition.beats(4.0);
         TimePosition.BeatTime bt2 = TimePosition.beats(6.0);
         TimePosition.BeatTime bt3 = TimePosition.beats(4.0);
@@ -108,7 +108,7 @@ public class TimePositionTest {
     }
     
     @Test
-    public void testBeatTimeEqualsAndHashCode() {
+    void testBeatTimeEqualsAndHashCode() {
         TimePosition.BeatTime bt1 = TimePosition.beats(4.0);
         TimePosition.BeatTime bt2 = TimePosition.beats(4.0);
         TimePosition.BeatTime bt3 = TimePosition.beats(5.0);
@@ -121,13 +121,13 @@ public class TimePositionTest {
     // ========== BBSTTime Tests ==========
     
     @Test
-    public void testBBSTTimeGetTimeBase() {
+    void testBBSTTimeGetTimeBase() {
         TimePosition.BBSTTime bbst = TimePosition.bbst(1, 1, 1, 0);
         assertEquals(TimeBase.BBST, bbst.getTimeBase());
     }
     
     @Test
-    public void testBBSTTimeImmutability() {
+    void testBBSTTimeImmutability() {
         TimePosition.BBSTTime bbst = TimePosition.bbst(5, 3, 2, 60);
         assertEquals(5, bbst.getBar());
         assertEquals(3, bbst.getBeat());
@@ -136,7 +136,7 @@ public class TimePositionTest {
     }
     
     @Test
-    public void testBBSTTimeCopyConstructor() {
+    void testBBSTTimeCopyConstructor() {
         TimePosition.BBSTTime original = TimePosition.bbst(10, 2, 3, 30);
         TimePosition.BBSTTime copy = new TimePosition.BBSTTime(original);
         assertEquals(original.getBar(), copy.getBar());
@@ -146,7 +146,7 @@ public class TimePositionTest {
     }
     
     @Test
-    public void testBBSTTimeConversions() {
+    void testBBSTTimeConversions() {
         // Bar 1, beat 1, sixteenth 1, ticks 0 = 0 beats (start of first measure)
         TimePosition.BBSTTime bbst = TimePosition.bbst(1, 1, 1, 0);
         assertEquals(0.0, bbst.toBeats(context), 0.001);
@@ -161,31 +161,37 @@ public class TimePositionTest {
         assertEquals(2.0, bbst.toSeconds(context), 0.001); // 2 beats at 60 BPM = 2 seconds
     }
     
-    @Test(expected = IllegalArgumentException.class)
-    public void testBBSTTimeInvalidBar() {
-        TimePosition.bbst(0, 1, 1, 0);
+    @Test
+    void testBBSTTimeInvalidBar() {
+        assertThrows(IllegalArgumentException.class, () -> {
+            TimePosition.bbst(0, 1, 1, 0);
+        });
     }
     
-    @Test(expected = IllegalArgumentException.class)
-    public void testBBSTTimeInvalidBeat() {
-        TimePosition.bbst(1, 0, 1, 0);
+    @Test
+    void testBBSTTimeInvalidBeat() {
+        assertThrows(IllegalArgumentException.class, () -> {
+            TimePosition.bbst(1, 0, 1, 0);
+        });
     }
     
-    @Test(expected = IllegalArgumentException.class)
-    public void testBBSTTimeInvalidSixteenth() {
-        TimePosition.bbst(1, 1, 5, 0);
+    @Test
+    void testBBSTTimeInvalidSixteenth() {
+        assertThrows(IllegalArgumentException.class, () -> {
+            TimePosition.bbst(1, 1, 5, 0);
+        });
     }
     
     // ========== BBTTime Tests ==========
     
     @Test
-    public void testBBTTimeGetTimeBase() {
+    void testBBTTimeGetTimeBase() {
         TimePosition.BBTTime bbt = TimePosition.bbt(1, 1, 0);
         assertEquals(TimeBase.BBT, bbt.getTimeBase());
     }
     
     @Test
-    public void testBBTTimeConversions() {
+    void testBBTTimeConversions() {
         // Bar 1, beat 1, ticks 0 = 0 beats
         TimePosition.BBTTime bbt = TimePosition.bbt(1, 1, 0);
         assertEquals(0.0, bbt.toBeats(context), 0.001);
@@ -196,7 +202,7 @@ public class TimePositionTest {
     }
     
     @Test
-    public void testBBTToBBSTConversion() {
+    void testBBTToBBSTConversion() {
         TimePosition.BBTTime bbt = TimePosition.bbt(1, 2, 480); // 480 ticks at PPQ=960
         TimePosition.BBSTTime bbst = bbt.toBBST(960);
         assertEquals(1, bbst.getBar());
@@ -208,13 +214,13 @@ public class TimePositionTest {
     // ========== BBFTime Tests ==========
     
     @Test
-    public void testBBFTimeGetTimeBase() {
+    void testBBFTimeGetTimeBase() {
         TimePosition.BBFTime bbf = TimePosition.bbf(1, 1, 0);
         assertEquals(TimeBase.BBF, bbf.getTimeBase());
     }
     
     @Test
-    public void testBBFTimeConversions() {
+    void testBBFTimeConversions() {
         // Bar 1, beat 1, fraction 0 = 0 beats
         TimePosition.BBFTime bbf = TimePosition.bbf(1, 1, 0);
         assertEquals(0.0, bbf.toBeats(context), 0.001);
@@ -224,21 +230,23 @@ public class TimePositionTest {
         assertEquals(0.5, bbf.toBeats(context), 0.001);
     }
     
-    @Test(expected = IllegalArgumentException.class)
-    public void testBBFTimeInvalidFraction() {
-        TimePosition.bbf(1, 1, 100); // fraction must be 0-99
+    @Test
+    void testBBFTimeInvalidFraction() {
+        assertThrows(IllegalArgumentException.class, () -> {
+            TimePosition.bbf(1, 1, 100); // fraction must be 0-99
+        });
     }
     
     // ========== TimeValue Tests ==========
     
     @Test
-    public void testTimeValueGetTimeBase() {
+    void testTimeValueGetTimeBase() {
         TimePosition.TimeValue tv = TimePosition.time(1, 30, 45, 500);
         assertEquals(TimeBase.TIME, tv.getTimeBase());
     }
     
     @Test
-    public void testTimeValueImmutability() {
+    void testTimeValueImmutability() {
         TimePosition.TimeValue tv = TimePosition.time(2, 15, 30, 250);
         assertEquals(2, tv.getHours());
         assertEquals(15, tv.getMinutes());
@@ -247,7 +255,7 @@ public class TimePositionTest {
     }
     
     @Test
-    public void testTimeValueToTotalSeconds() {
+    void testTimeValueToTotalSeconds() {
         TimePosition.TimeValue tv = TimePosition.time(1, 30, 45, 500);
         // 1*3600 + 30*60 + 45 + 0.5 = 3600 + 1800 + 45 + 0.5 = 5445.5
         assertEquals(5445.5, tv.toTotalSeconds(), 0.001);
@@ -260,7 +268,7 @@ public class TimePositionTest {
     }
     
     @Test
-    public void testTimeValueConversions() {
+    void testTimeValueConversions() {
         TimePosition.TimeValue tv = TimePosition.time(0, 0, 2, 0); // 2 seconds
         
         // 2 seconds at 60 BPM (1 beat/sec) = 2 beats
@@ -269,42 +277,50 @@ public class TimePositionTest {
         assertEquals(88200, tv.toFrames(context)); // 2 * 44100
     }
     
-    @Test(expected = IllegalArgumentException.class)
-    public void testTimeValueInvalidHours() {
-        TimePosition.time(-1, 0, 0, 0);
+    @Test
+    void testTimeValueInvalidHours() {
+        assertThrows(IllegalArgumentException.class, () -> {
+            TimePosition.time(-1, 0, 0, 0);
+        });
     }
     
-    @Test(expected = IllegalArgumentException.class)
-    public void testTimeValueInvalidMinutes() {
-        TimePosition.time(0, 60, 0, 0);
+    @Test
+    void testTimeValueInvalidMinutes() {
+        assertThrows(IllegalArgumentException.class, () -> {
+            TimePosition.time(0, 60, 0, 0);
+        });
     }
     
-    @Test(expected = IllegalArgumentException.class)
-    public void testTimeValueInvalidSeconds() {
-        TimePosition.time(0, 0, 60, 0);
+    @Test
+    void testTimeValueInvalidSeconds() {
+        assertThrows(IllegalArgumentException.class, () -> {
+            TimePosition.time(0, 0, 60, 0);
+        });
     }
     
-    @Test(expected = IllegalArgumentException.class)
-    public void testTimeValueInvalidMilliseconds() {
-        TimePosition.time(0, 0, 0, 1000);
+    @Test
+    void testTimeValueInvalidMilliseconds() {
+        assertThrows(IllegalArgumentException.class, () -> {
+            TimePosition.time(0, 0, 0, 1000);
+        });
     }
     
     // ========== FrameValue Tests ==========
     
     @Test
-    public void testFrameValueGetTimeBase() {
+    void testFrameValueGetTimeBase() {
         TimePosition.FrameValue fv = TimePosition.frames(44100);
         assertEquals(TimeBase.FRAME, fv.getTimeBase());
     }
     
     @Test
-    public void testFrameValueImmutability() {
+    void testFrameValueImmutability() {
         TimePosition.FrameValue fv = TimePosition.frames(88200);
         assertEquals(88200, fv.getFrameNumber());
     }
     
     @Test
-    public void testFrameValueToTotalSeconds() {
+    void testFrameValueToTotalSeconds() {
         TimePosition.FrameValue fv = TimePosition.frames(44100);
         assertEquals(1.0, fv.toTotalSeconds(44100), 0.001);
         
@@ -316,7 +332,7 @@ public class TimePositionTest {
     }
     
     @Test
-    public void testFrameValueConversions() {
+    void testFrameValueConversions() {
         TimePosition.FrameValue fv = TimePosition.frames(88200); // 2 seconds at 44100 Hz
         
         assertEquals(88200, fv.toFrames(context));
@@ -324,14 +340,18 @@ public class TimePositionTest {
         assertEquals(2.0, fv.toBeats(context), 0.001); // 2 sec at 60 BPM
     }
     
-    @Test(expected = IllegalArgumentException.class)
-    public void testFrameValueInvalidFrameNumber() {
-        TimePosition.frames(-1);
+    @Test
+    void testFrameValueInvalidFrameNumber() {
+        assertThrows(IllegalArgumentException.class, () -> {
+            TimePosition.frames(-1);
+        });
     }
     
-    @Test(expected = IllegalArgumentException.class)
-    public void testFrameValueToTotalSecondsInvalidSampleRate() {
-        TimePosition.FrameValue fv = TimePosition.frames(44100);
-        fv.toTotalSeconds(0);
+    @Test
+    void testFrameValueToTotalSecondsInvalidSampleRate() {
+        assertThrows(IllegalArgumentException.class, () -> {
+            TimePosition.FrameValue fv = TimePosition.frames(44100);
+            fv.toTotalSeconds(0);
+        });
     }
 }

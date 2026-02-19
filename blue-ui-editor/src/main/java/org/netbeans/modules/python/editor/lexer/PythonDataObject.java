@@ -37,7 +37,8 @@ import org.openide.util.NbBundle.Messages;
 @MIMEResolver.ExtensionRegistration(
     displayName = "#LBL_Python_LOADER",
 mimeType = "text/x-python",
-extension = {"py"})
+extension = {"py"},
+position = 10060)
 @DataObject.Registration(
     mimeType = "text/x-python",
 displayName = "#LBL_Python_LOADER",

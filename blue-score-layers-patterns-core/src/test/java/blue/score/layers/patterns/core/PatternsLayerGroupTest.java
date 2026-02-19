@@ -25,14 +25,14 @@ import blue.soundObject.GenericScore;
 import blue.soundObject.NoteList;
 import blue.soundObject.TimeBehavior;
 import blue.time.TimeContext;
-import org.junit.*;
-import static org.junit.Assert.*;
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  *
  * @author stevenyi
  */
-public class PatternsLayerGroupTest {
+class PatternsLayerGroupTest {
     
     public PatternsLayerGroupTest() {
     }
@@ -41,7 +41,7 @@ public class PatternsLayerGroupTest {
      * Test of generateForCSD method, of class PatternsLayerGroup.
      */
     @Test
-    public void testGenerateForCSD() throws ScoreGenerationException {
+    void testGenerateForCSD() throws ScoreGenerationException {
         CompileData compileData = null;
         float startTime = 4.0F;
         float endTime = 0.0F;

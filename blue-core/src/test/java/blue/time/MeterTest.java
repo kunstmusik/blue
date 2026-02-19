@@ -17,14 +17,14 @@
  */
 package blue.time;
 
-import static org.junit.Assert.*;
-import org.junit.Test;
+import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.Test;
 
 /**
  *
  * @author stevenyi
  */
-public class MeterTest {
+class MeterTest {
 
     public MeterTest() {
     }
@@ -33,7 +33,7 @@ public class MeterTest {
      * Test of getMeasureBeatDuration method, of class Meter.
      */
     @Test
-    public void testGetMeasureBeatDuration() {
+    void testGetMeasureBeatDuration() {
         assertEquals(4.0, new Meter(4, 4).getMeasureBeatDuration(), 0.001);
         assertEquals(1.0, new Meter(4, 16).getMeasureBeatDuration(), 0.001);
 
@@ -44,7 +44,7 @@ public class MeterTest {
     }
     
     @Test
-    public void testEquals() {
+    void testEquals() {
         Meter m1 = new Meter(4, 4);
         Meter m2 = new Meter(4, 4);
         Meter m3 = new Meter(3, 4);
@@ -71,7 +71,7 @@ public class MeterTest {
     }
     
     @Test
-    public void testHashCode() {
+    void testHashCode() {
         Meter m1 = new Meter(4, 4);
         Meter m2 = new Meter(4, 4);
         Meter m3 = new Meter(3, 4);
@@ -84,7 +84,7 @@ public class MeterTest {
     }
     
     @Test
-    public void testToString() {
+    void testToString() {
         assertEquals("4/4", new Meter(4, 4).toString());
         assertEquals("3/4", new Meter(3, 4).toString());
         assertEquals("6/8", new Meter(6, 8).toString());

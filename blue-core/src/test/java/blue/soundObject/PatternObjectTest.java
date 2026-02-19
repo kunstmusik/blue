@@ -20,10 +20,12 @@
 package blue.soundObject;
 
 import blue.soundObject.pattern.Pattern;
-import junit.framework.TestCase;
+import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.Test;
 
-public class PatternObjectTest extends TestCase {
-    public void testClone() {
+class PatternObjectTest {
+    @Test
+    void testClone() {
         PatternObject p = new PatternObject();
         p.addPattern(0);
         p.addPattern(0);

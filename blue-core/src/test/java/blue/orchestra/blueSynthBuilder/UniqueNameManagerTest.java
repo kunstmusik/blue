@@ -21,32 +21,36 @@
 package blue.orchestra.blueSynthBuilder;
 
 import java.util.Set;
-import org.junit.*;
-import static org.junit.Assert.*;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  *
  * @author syi
  */
-public class UniqueNameManagerTest {
+class UniqueNameManagerTest {
 
     public UniqueNameManagerTest() {
     }
 
-    @BeforeClass
+    @BeforeAll
     public static void setUpClass() throws Exception {
     }
 
-    @AfterClass
+    @AfterAll
     public static void tearDownClass() throws Exception {
     }
 
-    @Before
-    public void setUp() {
+    @BeforeEach
+    void setUp() {
     }
 
-    @After
-    public void tearDown() {
+    @AfterEach
+    void tearDown() {
     }
 
  
@@ -83,7 +87,7 @@ public class UniqueNameManagerTest {
      * Test of getPrefix method, of class UniqueNameManager.
      */
     @Test
-    public void testGetPrefix() {
+    void testGetPrefix() {
         UniqueNameManager instance = new UniqueNameManager();
 
         assertEquals("test", instance.getPrefix("test"));
@@ -96,7 +100,7 @@ public class UniqueNameManagerTest {
     }
 
     @Test
-    public void testEqualsAndHashCodeWithNullDefaultPrefix() {
+    void testEqualsAndHashCodeWithNullDefaultPrefix() {
         UniqueNameManager first = new UniqueNameManager();
         UniqueNameManager second = new UniqueNameManager();
 
@@ -105,7 +109,7 @@ public class UniqueNameManagerTest {
     }
 
     @Test
-    public void testEqualsAndHashCodeWithConfiguredDefaultPrefix() {
+    void testEqualsAndHashCodeWithConfiguredDefaultPrefix() {
         UniqueNameManager first = new UniqueNameManager();
         first.setDefaultPrefix("prefix");
         first.setUniqueNameCollection(() -> Set.of("a"));

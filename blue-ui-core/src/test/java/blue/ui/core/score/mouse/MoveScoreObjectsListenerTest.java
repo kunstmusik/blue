@@ -26,14 +26,14 @@ import blue.soundObject.GenericScore;
 import blue.soundObject.SoundObject;
 import java.util.ArrayList;
 import java.util.List;
-import org.junit.Test;
-import static org.junit.Assert.*;
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  *
  * @author stevenyi
  */
-public class MoveScoreObjectsListenerTest {
+class MoveScoreObjectsListenerTest {
     
     public MoveScoreObjectsListenerTest() {
     }
@@ -43,7 +43,7 @@ public class MoveScoreObjectsListenerTest {
      * Test of getMinYAdjust method, of class MoveScoreObjectsListener.
      */
     @Test
-    public void testGetMinYAdjust() {
+    void testGetMinYAdjust() {
         System.out.println("getMinYAdjust");
         List<Layer> layers = new ArrayList<>();
         final SoundLayer soundLayer = new SoundLayer();
@@ -71,7 +71,7 @@ public class MoveScoreObjectsListenerTest {
      * Test of getMaxYAdjust method, of class MoveScoreObjectsListener.
      */
     @Test
-    public void testGetMaxYAdjust() {
+    void testGetMaxYAdjust() {
         System.out.println("getMaxYAdjust");
         List<Layer> layers = new ArrayList<>();
         final SoundLayer soundLayer = new SoundLayer();

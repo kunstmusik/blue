@@ -19,14 +19,14 @@
 package blue.library;
 
 import blue.soundObject.SoundObject;
-import static org.junit.Assert.*;
-import org.junit.Test;
+import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.Test;
 
 /**
  *
  * @author stevenyi
  */
-public class LibraryTest {
+class LibraryTest {
     
     public LibraryTest() {
     }
@@ -35,7 +35,7 @@ public class LibraryTest {
      * Test of createLibrary method, of class Library.
      */
     @Test
-    public void testCreateLibrary() {
+    void testCreateLibrary() {
         System.out.println("createLibrary");
         Library<SoundObject> result = Library.createLibrary("SoundObjects");
 

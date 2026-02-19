@@ -5,39 +5,46 @@
 package blue.scripting;
 
 import javax.script.ScriptException;
-import org.junit.*;
-import static org.junit.Assert.assertEquals;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 
 /**
  *
  * @author stevenyi
  */
-public class JavaScriptProxyTest {
+@Execution(ExecutionMode.SAME_THREAD)
+class JavaScriptProxyTest {
 
     public JavaScriptProxyTest() {
     }
 
-    @BeforeClass
+    @BeforeAll
     public static void setUpClass() throws Exception {
     }
 
-    @AfterClass
+    @AfterAll
     public static void tearDownClass() throws Exception {
     }
 
-    @Before
-    public void setUp() {
+    @BeforeEach
+    void setUp() {
     }
 
-    @After
-    public void tearDown() {
+    @AfterEach
+    void tearDown() {
     }
 
     /**
      * Test of processJavascriptScore method, of class JavaScriptProxy.
      */
     @Test
-    public void testProcessJavascriptScore() throws ScriptException {
+    void testProcessJavascriptScore() throws ScriptException {
         String script = "function f(num) {\n";
         script += "  returnText = '';\n";
         script += "for(var i = 0; i < num; i++) {\n";

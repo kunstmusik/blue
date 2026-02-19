@@ -8,17 +8,14 @@
 package blue.soundObject.jmask;
 
 import blue.soundObject.NoteList;
-import junit.framework.TestCase;
+import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.Test;
 
 /**
  * 
  * @author steven
  */
-public class FieldTest extends TestCase {
-
-    public FieldTest(String testName) {
-        super(testName);
-    }
+class FieldTest {
 
     /**
      * Test of loadFromXML method, of class blue.soundObject.jmask.Field.
@@ -56,7 +53,8 @@ public class FieldTest extends TestCase {
     /**
      * Test of generateNotes method, of class blue.soundObject.jmask.Field.
      */
-    public void testGenerateNotesConstant() {
+    @Test
+    void testGenerateNotesConstant() {
         double duration = 5.0;
         Field field = new Field();
         java.util.Random r = new java.util.Random(0L);

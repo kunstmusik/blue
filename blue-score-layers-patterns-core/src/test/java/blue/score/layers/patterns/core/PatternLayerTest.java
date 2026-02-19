@@ -25,24 +25,23 @@ import blue.soundObject.NoteList;
 import blue.soundObject.SoundObjectException;
 import blue.soundObject.TimeBehavior;
 import blue.time.TimeContext;
-import org.junit.*;
-import static org.junit.Assert.*;
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  *
  * @author stevenyi
  */
-public class PatternLayerTest {
+class PatternLayerTest {
     
     public PatternLayerTest() {
     }
-
 
     /**
      * Test of generateForCSD method, of class PatternLayer.
      */
     @Test
-    public void testGenerateForCSD() throws SoundObjectException {
+    void testGenerateForCSD() throws SoundObjectException {
         CompileData compileData = null;
         float startTime = 0.0F;
         float endTime = 0.0F;

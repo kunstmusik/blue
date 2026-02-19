@@ -7,39 +7,43 @@ package blue.blueLive;
 import blue.soundObject.GenericScore;
 import electric.xml.Element;
 import java.util.Map;
-import org.junit.*;
-import static org.junit.Assert.*;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  *
  * @author stevenyi
  */
-public class LiveObjectBinsTest {
+class LiveObjectBinsTest {
     
     public LiveObjectBinsTest() {
     }
 
-    @BeforeClass
+    @BeforeAll
     public static void setUpClass() throws Exception {
     }
 
-    @AfterClass
+    @AfterAll
     public static void tearDownClass() throws Exception {
     }
     
-    @Before
-    public void setUp() {
+    @BeforeEach
+    void setUp() {
     }
     
-    @After
-    public void tearDown() {
+    @AfterEach
+    void tearDown() {
     }
 
     /**
      * Test of loadFromXML method, of class LiveObjectBins.
      */
     @Test
-    public void testLoadFromXML() throws Exception {
+    void testLoadFromXML() throws Exception {
         Map<Object, String> objRefMap = null;
         Map<String, Object> objRefMap2 = null;
         LiveObjectBins expResult = new LiveObjectBins();
@@ -52,7 +56,7 @@ public class LiveObjectBinsTest {
      * Test of setLiveObject method, of class LiveObjectBins.
      */
     @Test
-    public void testSetLiveObject() {
+    void testSetLiveObject() {
         System.out.println("setLiveObject");
         int column = 0;
         int row = 2;
@@ -66,7 +70,7 @@ public class LiveObjectBinsTest {
      * Test of insertRow method, of class LiveObjectBins.
      */
     @Test
-    public void testInsertRow() {
+    void testInsertRow() {
         LiveObjectBins instance = new LiveObjectBins();
         LiveObject liveObject = new LiveObject(new GenericScore());
         instance.setLiveObject(0, 2, liveObject);
@@ -84,7 +88,7 @@ public class LiveObjectBinsTest {
      * Test of insertColumn method, of class LiveObjectBins.
      */
     @Test
-    public void testInsertColumn() {
+    void testInsertColumn() {
         LiveObjectBins instance = new LiveObjectBins();
         LiveObject liveObject = new LiveObject(new GenericScore());
         instance.setLiveObject(0, 2, liveObject);
@@ -99,7 +103,7 @@ public class LiveObjectBinsTest {
     }
     
     @Test 
-    public void testGetRow_Column_Index() {
+    void testGetRow_Column_Index() {
         LiveObjectBins instance = new LiveObjectBins();
         LiveObject liveObject = new LiveObject(new GenericScore());
         instance.setLiveObject(0, 2, liveObject);
@@ -111,7 +115,7 @@ public class LiveObjectBinsTest {
     }
     
     @Test 
-    public void testRemoveRow_Column() {
+    void testRemoveRow_Column() {
         LiveObjectBins instance = new LiveObjectBins();
         LiveObject liveObject = new LiveObject(new GenericScore());
         instance.setLiveObject(0, 2, liveObject);

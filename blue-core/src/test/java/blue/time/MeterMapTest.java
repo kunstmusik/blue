@@ -19,17 +19,17 @@ package blue.time;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static org.junit.Assert.*;
-import org.junit.Test;
+import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.Test;
 
 /**
  *
  * @author stevenyi
  */
-public class MeterMapTest {
+class MeterMapTest {
 
     @Test
-    public void testListenerNotifications() {
+    void testListenerNotifications() {
         MeterMap meterMap = new MeterMap();
 
         final var notificationCount = new AtomicInteger(0);
@@ -46,7 +46,7 @@ public class MeterMapTest {
     }
 
     @Test
-    public void testUpdateMeasureStartBeats() {
+    void testUpdateMeasureStartBeats() {
         MeterMap meterMap = new MeterMap();
         
         meterMap.add(new MeasureMeterPair(9, new Meter(7, 8)));
@@ -61,7 +61,7 @@ public class MeterMapTest {
     }
     
     @Test
-    public void testBarBeatToBeats() {
+    void testBarBeatToBeats() {
         MeterMap meterMap = new MeterMap();
         meterMap.add(new MeasureMeterPair(9, new Meter(3, 4)));
 
@@ -73,7 +73,7 @@ public class MeterMapTest {
     }
     
     @Test 
-    public void testBeatsToBBT() {
+    void testBeatsToBBT() {
         MeterMap meterMap = new MeterMap();
         int ppq = 960;
         
@@ -95,7 +95,7 @@ public class MeterMapTest {
     }
     
     @Test
-    public void testBeatsToBBTWithMeterChanges() {
+    void testBeatsToBBTWithMeterChanges() {
         MeterMap meterMap = new MeterMap();
         meterMap.add(new MeasureMeterPair(9, new Meter(3, 4)));
         int ppq = 960;
@@ -125,7 +125,7 @@ public class MeterMapTest {
     }
     
     @Test
-    public void testRoundTripConversion() {
+    void testRoundTripConversion() {
         MeterMap meterMap = new MeterMap();
         meterMap.add(new MeasureMeterPair(9, new Meter(3, 4)));
         meterMap.add(new MeasureMeterPair(17, new Meter(7, 8)));
@@ -151,42 +151,52 @@ public class MeterMapTest {
         assertEquals(original.getBeat(), roundTrip.getBeat());
     }
     
-    @Test(expected = IllegalStateException.class)
-    public void testBarBeatToBeatsEmptyMeterMap() {
-        MeterMap meterMap = new MeterMap();
-        meterMap.clear();
-        meterMap.barBeatToBeats(1, 1);
-    }
-    
-    @Test(expected = IllegalArgumentException.class)
-    public void testBarBeatToBeatsBarBeforeFirstEntry() {
-        MeterMap meterMap = new MeterMap();
-        // MeterMap starts at measure 1, try bar 0
-        meterMap.barBeatToBeats(0, 1);
-    }
-    
-    @Test(expected = IllegalArgumentException.class)
-    public void testBarBeatToBeatsBeatExceedsMeter() {
-        MeterMap meterMap = new MeterMap();
-        // 4/4 meter, try beat 5
-        meterMap.barBeatToBeats(1, 5);
-    }
-    
-    @Test(expected = IllegalStateException.class)
-    public void testBeatsToBBTEmptyMeterMap() {
-        MeterMap meterMap = new MeterMap();
-        meterMap.clear();
-        meterMap.beatsToBBT(0.0, 960);
-    }
-    
-    @Test(expected = IllegalArgumentException.class)
-    public void testBeatsToBBTNegativeBeats() {
-        MeterMap meterMap = new MeterMap();
-        meterMap.beatsToBBT(-1.0, 960);
+    @Test
+    void testBarBeatToBeatsEmptyMeterMap() {
+        assertThrows(IllegalStateException.class, () -> {
+            MeterMap meterMap = new MeterMap();
+            meterMap.clear();
+            meterMap.barBeatToBeats(1, 1);
+        });
     }
     
     @Test
-    public void testReplaceAllCopiesEntries() {
+    void testBarBeatToBeatsBarBeforeFirstEntry() {
+        assertThrows(IllegalArgumentException.class, () -> {
+            MeterMap meterMap = new MeterMap();
+            // MeterMap starts at measure 1, try bar 0
+            meterMap.barBeatToBeats(0, 1);
+        });
+    }
+    
+    @Test
+    void testBarBeatToBeatsBeatExceedsMeter() {
+        assertThrows(IllegalArgumentException.class, () -> {
+            MeterMap meterMap = new MeterMap();
+            // 4/4 meter, try beat 5
+            meterMap.barBeatToBeats(1, 5);
+        });
+    }
+    
+    @Test
+    void testBeatsToBBTEmptyMeterMap() {
+        assertThrows(IllegalStateException.class, () -> {
+            MeterMap meterMap = new MeterMap();
+            meterMap.clear();
+            meterMap.beatsToBBT(0.0, 960);
+        });
+    }
+    
+    @Test
+    void testBeatsToBBTNegativeBeats() {
+        assertThrows(IllegalArgumentException.class, () -> {
+            MeterMap meterMap = new MeterMap();
+            meterMap.beatsToBBT(-1.0, 960);
+        });
+    }
+    
+    @Test
+    void testReplaceAllCopiesEntries() {
         MeterMap original = new MeterMap();
         MeterMap source = new MeterMap();
         source.add(new MeasureMeterPair(5, new Meter(3, 4)));
@@ -203,7 +213,7 @@ public class MeterMapTest {
     }
     
     @Test
-    public void testReplaceAllFiresListener() {
+    void testReplaceAllFiresListener() {
         MeterMap meterMap = new MeterMap();
         final var notificationCount = new AtomicInteger(0);
         meterMap.addListener(() -> notificationCount.incrementAndGet());
@@ -217,7 +227,7 @@ public class MeterMapTest {
     }
     
     @Test
-    public void testReplaceAllPreservesListeners() {
+    void testReplaceAllPreservesListeners() {
         MeterMap meterMap = new MeterMap();
         final var notificationCount = new AtomicInteger(0);
         meterMap.addListener(() -> notificationCount.incrementAndGet());

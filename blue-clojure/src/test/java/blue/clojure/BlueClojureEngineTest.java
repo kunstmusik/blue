@@ -22,14 +22,17 @@ package blue.clojure;
 import blue.projects.BlueProjectManager;
 import java.util.HashMap;
 import javax.script.ScriptException;
-import static org.junit.Assert.*;
-import org.junit.Test;
+import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 
 /**
  *
  * @author stevenyi
  */
-public class BlueClojureEngineTest {
+@Execution(ExecutionMode.SAME_THREAD)
+class BlueClojureEngineTest {
     
     public BlueClojureEngineTest() {
     }
@@ -50,7 +53,7 @@ public class BlueClojureEngineTest {
      * Test of getInstance method, of class BlueClojureEngine.
      */
     @Test
-    public void testGetInstance() {
+    void testGetInstance() {
         BlueClojureEngine expResult = BlueClojureEngine.getInstance();
         BlueClojureEngine result = BlueClojureEngine.getInstance();
         assertEquals(expResult, result);
@@ -71,7 +74,7 @@ public class BlueClojureEngineTest {
      * Test of processScript method, of class BlueClojureEngine.
      */
     @Test
-    public void testProcessScript() {
+    void testProcessScript() {
         System.out.println("processScript");
         String code = "(def score \"i1 0 2\")";
         HashMap<String, ? extends Object> values = null;

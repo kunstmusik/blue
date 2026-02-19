@@ -23,23 +23,23 @@ import blue.soundObject.pianoRoll.Field;
 import blue.soundObject.pianoRoll.FieldDef;
 import blue.soundObject.pianoRoll.PianoNote;
 import blue.time.TimeContext;
-import static org.junit.Assert.*;
-import org.junit.Before;
-import org.junit.Test;
+import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 /**
  *
  * @author stevenyi
  */
-public class PianoRollTest {
+class PianoRollTest {
 
     PianoRoll instance;
 
     public PianoRollTest() {
     }
 
-    @Before
-    public void init() {
+    @BeforeEach
+    void init() {
         instance = new PianoRoll();
         var fieldDefinitions = instance.getFieldDefinitions();
         var fieldDef = new FieldDef();
@@ -62,14 +62,14 @@ public class PianoRollTest {
     }
 
     @Test
-    public void testSerialization() {
+    void testSerialization() {
         PianoRoll p2 = instance.deepCopy();
 
 //        assertTrue(instance.equals(p2));
     }
 
     @Test
-    public void testSaveLoad() throws Exception {
+    void testSaveLoad() throws Exception {
         var xml = instance.saveAsXML(null);
 //        System.out.println(xml.toString());
         PianoRoll p2 = (PianoRoll) PianoRoll.loadFromXML(
@@ -82,7 +82,7 @@ public class PianoRollTest {
     }
 
     @Test
-    public void testIsCompatible() {
+    void testIsCompatible() {
         var target = new PianoRoll(instance);
 
         assertTrue(instance.isCompatible(target));
@@ -99,13 +99,13 @@ public class PianoRollTest {
     }
 
     @Test
-    public void testSpaceInNoteTemplate() throws SoundObjectException {
+    void testSpaceInNoteTemplate() throws SoundObjectException {
         var note = instance.getNotes().get(0);
         note.setNoteTemplate(" i <INSTR_ID> <START> <DUR> <FREQ> <AMP>");
 
         TimeContext context = new TimeContext();
         var notes = instance.generateNotes(context, 0.0, -1.0);
 
-        assertTrue("Exception was not thrown", true);
+        assertTrue(true, "Exception was not thrown");
     }
 }

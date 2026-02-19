@@ -20,11 +20,13 @@
 package blue.utility;
 
 import blue.utility.midi.MidiImportUtilities;
-import junit.framework.TestCase;
+import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.Test;
 
-public class MidiUtilitiesTest extends TestCase {
+class MidiUtilitiesTest {
 
-    public final void testProcessNoteTemplate() {
+    @Test
+    void testProcessNoteTemplate() {
 
         String expected1 = "i2 3.0 5.0 8.05 16344.651";
         String expected2 = "i2 3.0 5.0 65 16344.651";
@@ -48,7 +50,8 @@ public class MidiUtilitiesTest extends TestCase {
 //                5.0f, 69, 90));
     }
 
-    public final void testCpsmid() {
+    @Test
+    void testCpsmid() {
         assertEquals(261.6, MidiImportUtilities.cpsmid(60), 0.1);
         assertEquals(523.25, MidiImportUtilities.cpsmid(72), 0.1);
     }

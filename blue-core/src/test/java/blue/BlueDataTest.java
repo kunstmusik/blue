@@ -1,13 +1,13 @@
 package blue;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertSame;
-import org.junit.Test;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import org.junit.jupiter.api.Test;
 
-public class BlueDataTest {
+class BlueDataTest {
 
     @Test
-    public void testTimeContextReflectsProjectPropertiesSampleRate() {
+    void testTimeContextReflectsProjectPropertiesSampleRate() {
         BlueData data = new BlueData();
         data.getProjectProperties().setSampleRate("48000");
 
@@ -15,7 +15,7 @@ public class BlueDataTest {
     }
 
     @Test
-    public void testSetProjectPropertiesWiresTimeContext() {
+    void testSetProjectPropertiesWiresTimeContext() {
         BlueData data = new BlueData();
         ProjectProperties properties = new ProjectProperties();
         properties.setSampleRate("96000");
@@ -27,13 +27,13 @@ public class BlueDataTest {
     }
 
     @Test
-    public void testTimeContextDefaultSampleRate() {
+    void testTimeContextDefaultSampleRate() {
         BlueData data = new BlueData();
         assertEquals(44100L, data.getScore().getTimeContext().getSampleRate());
     }
 
     @Test
-    public void testOldProjectPropertiesNoLongerDrivesTimeContextAfterReplacement() {
+    void testOldProjectPropertiesNoLongerDrivesTimeContextAfterReplacement() {
         BlueData data = new BlueData();
         ProjectProperties oldProps = data.getProjectProperties();
 

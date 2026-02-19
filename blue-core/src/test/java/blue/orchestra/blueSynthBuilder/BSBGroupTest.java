@@ -23,14 +23,14 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableSet;
-import static org.junit.Assert.*;
-import org.junit.Test;
+import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.Test;
 
 /**
  *
  * @author stevenyi
  */
-public class BSBGroupTest {
+class BSBGroupTest {
     
 //    /**
 //     * Test of getNames method, of class BSBGroup.
@@ -106,7 +106,7 @@ public class BSBGroupTest {
      * Test of setUniqueNameManager method, of class BSBGroup.
      */
     @Test
-    public void testSetUniqueNameManager() {
+    void testSetUniqueNameManager() {
         BSBGroup root = new BSBGroup();
         BSBGroup subNode = new BSBGroup();
         BSBFileSelector fs = new BSBFileSelector();
@@ -144,7 +144,7 @@ public class BSBGroupTest {
      * Test of resetSubChannels method, of class BSBGroup.
      */
     @Test
-    public void testResetSubChannels() {
+    void testResetSubChannels() {
         BSBGroup root = new BSBGroup();
         BSBGroup subNode = new BSBGroup();
         BSBSubChannelDropdown sub1 = new BSBSubChannelDropdown();
@@ -164,7 +164,7 @@ public class BSBGroupTest {
      * Test of getStringChannels method, of class BSBGroup.
      */
     @Test
-    public void testGetStringChannels() {
+    void testGetStringChannels() {
         BSBGroup root = new BSBGroup();
         BSBGroup subNode = new BSBGroup();
         BSBFileSelector fs = new BSBFileSelector();
@@ -185,7 +185,7 @@ public class BSBGroupTest {
      * Test of setParameterList method, of class BSBGroup.
      */
     @Test
-    public void testSetParameterList() {
+    void testSetParameterList() {
         System.out.println("setParameterList");
         ParameterList paramList = new ParameterList();
         BSBGroup instance = new BSBGroup();
@@ -223,7 +223,7 @@ public class BSBGroupTest {
      * Test of setAllSet method, of class BSBGroup.
      */
     @Test
-    public void testSetAllSet() {
+    void testSetAllSet() {
         BSBGroup root = new BSBGroup();
         BSBGroup subNode = new BSBGroup();
         BSBFileSelector fs = new BSBFileSelector();

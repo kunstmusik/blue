@@ -37,7 +37,8 @@ import org.openide.util.NbBundle.Messages;
 @MIMEResolver.ExtensionRegistration(
     displayName = "#LBL_ObjectBuilder_LOADER",
 mimeType = "text/x-object-builder",
-extension = {"ob"})
+extension = {"ob"},
+position = 10040)
 @DataObject.Registration(
     mimeType = "text/x-object-builder",
 displayName = "#LBL_ObjectBuilder_LOADER",

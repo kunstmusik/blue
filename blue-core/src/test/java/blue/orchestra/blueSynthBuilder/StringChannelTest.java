@@ -1,13 +1,13 @@
 package blue.orchestra.blueSynthBuilder;
 
 import java.beans.PropertyChangeEvent;
-import org.junit.Test;
-import static org.junit.Assert.*;
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
 
-public class StringChannelTest {
+class StringChannelTest {
 
     @Test
-    public void testSetValueMarksDirtyOnlyWhenValueChanges() {
+    void testSetValueMarksDirtyOnlyWhenValueChanges() {
         StringChannel channel = new StringChannel();
         channel.setDirty(false);
 
@@ -25,7 +25,7 @@ public class StringChannelTest {
     }
 
     @Test
-    public void testPropertyChangeOnlyRespondsToStringChannelValueProperty() {
+    void testPropertyChangeOnlyRespondsToStringChannelValueProperty() {
         StringChannel channel = new StringChannel();
         channel.setValue("initial");
         channel.getValue();
@@ -41,7 +41,7 @@ public class StringChannelTest {
     }
 
     @Test
-    public void testEqualsAndHashCodeIncludeDirtyAndFieldValues() {
+    void testEqualsAndHashCodeIncludeDirtyAndFieldValues() {
         StringChannel first = createChannel("chan", "value", false);
         StringChannel second = createChannel("chan", "value", false);
         StringChannel differentDirty = createChannel("chan", "value", true);
@@ -56,7 +56,7 @@ public class StringChannelTest {
     }
 
     @Test
-    public void testCopyConstructorPreservesState() {
+    void testCopyConstructorPreservesState() {
         StringChannel original = createChannel("copyTarget", "copyValue", false);
         StringChannel copy = new StringChannel(original);
 

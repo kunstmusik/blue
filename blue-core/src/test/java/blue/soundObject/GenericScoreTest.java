@@ -22,18 +22,20 @@ package blue.soundObject;
 
 import blue.time.TimeDuration;
 import blue.time.TimePosition;
-import junit.framework.TestCase;
+import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.Test;
 
 /**
  * @author steven
  * 
  */
-public class GenericScoreTest extends TestCase {
+class GenericScoreTest {
 
     /*
      * Test for Object clone()
      */
-    public void testClone() {
+    @Test
+    void testClone() {
         GenericScore genScore = new GenericScore();
         genScore.setName("test");
         genScore.setStartTime(TimePosition.beats(30.0));
@@ -48,7 +50,8 @@ public class GenericScoreTest extends TestCase {
         assertTrue(clone.getText().equals(genScore.getText()));
     }
 
-    public void testTransformSoundObject() {
+    @Test
+    void testTransformSoundObject() {
         // TODO Implement transformSoundObject().
     }
 

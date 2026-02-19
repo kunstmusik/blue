@@ -20,19 +20,23 @@
 package blue.components.lines;
 
 import java.math.BigDecimal;
-import junit.framework.TestCase;
+import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.Test;
 
-public class LineUtilsTest extends TestCase {
+class LineUtilsTest {
 
-    public final void testRescale() {
+    @Test
+    void testRescale() {
         // fail("Not yet implemented"); // TODO
     }
 
-    public final void testTruncate() {
+    @Test
+    void testTruncate() {
         // fail("Not yet implemented"); // TODO
     }
 
-    public final void testSnapToResolution() {
+    @Test
+    void testSnapToResolution() {
         BigDecimal bd1 = new BigDecimal(1);
         // condition beyond maximum
         assertEquals(6.0, LineUtils.snapToResolution(7.0f, .2f, 6.0f, bd1),

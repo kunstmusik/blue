@@ -19,21 +19,21 @@
  */
 package blue.time;
 
-import static org.junit.Assert.*;
-import org.junit.Before;
-import org.junit.Test;
+import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 /**
  * Tests for TimeUtilities conversion methods.
  *
  * @author stevenyi
  */
-public class TimeUtilitiesTest {
+class TimeUtilitiesTest {
 
     private TimeContext context;
     
-    @Before
-    public void setUp() {
+    @BeforeEach
+    void setUp() {
         context = new TimeContext();
         // Default: 44100 sample rate, 4/4 meter, 60 BPM tempo
     }
@@ -41,14 +41,14 @@ public class TimeUtilitiesTest {
     // ========== timePositionToBeats Tests ==========
     
     @Test
-    public void testTimeUnitToBeatsWithBeatTime() {
+    void testTimeUnitToBeatsWithBeatTime() {
         TimePosition.BeatTime bt = TimePosition.beats(10.5);
         double result = TimeUtilities.timePositionToBeats(bt, context);
         assertEquals(10.5, result, 0.001);
     }
     
     @Test
-    public void testTimeUnitToBeatsWithBBSTTime() {
+    void testTimeUnitToBeatsWithBBSTTime() {
         TimePosition.BBSTTime bbst = TimePosition.bbst(2, 3, 1, 0);
         double result = TimeUtilities.timePositionToBeats(bbst, context);
         // Bar 2, beat 3 in 4/4 = 4 + 2 = 6 beats
@@ -56,7 +56,7 @@ public class TimeUtilitiesTest {
     }
     
     @Test
-    public void testTimeUnitToBeatsWithTimeValue() {
+    void testTimeUnitToBeatsWithTimeValue() {
         // At 60 BPM: 1 beat = 1 second
         TimePosition.TimeValue tv = TimePosition.time(0, 0, 10, 0);
         double result = TimeUtilities.timePositionToBeats(tv, context);
@@ -64,34 +64,38 @@ public class TimeUtilitiesTest {
     }
     
     @Test
-    public void testTimeUnitToBeatsWithFrameValue() {
+    void testTimeUnitToBeatsWithFrameValue() {
         // At 44100 Hz and 60 BPM: 44100 frames = 1 second = 1 beat
         TimePosition.FrameValue fv = TimePosition.frames(44100);
         double result = TimeUtilities.timePositionToBeats(fv, context);
         assertEquals(1.0, result, 0.001);
     }
     
-    @Test(expected = IllegalArgumentException.class)
-    public void testTimeUnitToBeatsNullTimePosition() {
-        TimeUtilities.timePositionToBeats(null, context);
+    @Test
+    void testTimeUnitToBeatsNullTimePosition() {
+        assertThrows(IllegalArgumentException.class, () -> {
+            TimeUtilities.timePositionToBeats(null, context);
+        });
     }
     
-    @Test(expected = IllegalArgumentException.class)
-    public void testTimeUnitToBeatsNullContext() {
-        TimeUtilities.timePositionToBeats(TimePosition.beats(1.0), null);
+    @Test
+    void testTimeUnitToBeatsNullContext() {
+        assertThrows(IllegalArgumentException.class, () -> {
+            TimeUtilities.timePositionToBeats(TimePosition.beats(1.0), null);
+        });
     }
     
     // ========== beatsToTimePosition Tests ==========
     
     @Test
-    public void testBeatsToTimeUnitBeatTime() {
+    void testBeatsToTimeUnitBeatTime() {
         TimePosition result = TimeUtilities.beatsToTimePosition(10.5, TimeBase.CSOUND_BEATS, context);
         assertTrue(result instanceof TimePosition.BeatTime);
         assertEquals(10.5, ((TimePosition.BeatTime) result).getCsoundBeats(), 0.001);
     }
     
     @Test
-    public void testBeatsToTimeUnitBBSTTime() {
+    void testBeatsToTimeUnitBBSTTime() {
         // 6 beats in 4/4 = bar 2, beat 3
         TimePosition result = TimeUtilities.beatsToTimePosition(6.0, TimeBase.BBST, context);
         assertTrue(result instanceof TimePosition.BBSTTime);
@@ -101,7 +105,7 @@ public class TimeUtilitiesTest {
     }
     
     @Test
-    public void testBeatsToTimeUnitTimeValue() {
+    void testBeatsToTimeUnitTimeValue() {
         // At 60 BPM: 10 beats = 10 seconds
         TimePosition result = TimeUtilities.beatsToTimePosition(10.0, TimeBase.TIME, context);
         assertTrue(result instanceof TimePosition.TimeValue);
@@ -112,7 +116,7 @@ public class TimeUtilitiesTest {
     }
     
     @Test
-    public void testBeatsToTimeUnitFrameValue() {
+    void testBeatsToTimeUnitFrameValue() {
         // At 60 BPM and 44100 Hz: 1 beat = 1 second = 44100 frames
         TimePosition result = TimeUtilities.beatsToTimePosition(1.0, TimeBase.FRAME, context);
         assertTrue(result instanceof TimePosition.FrameValue);
@@ -122,14 +126,14 @@ public class TimeUtilitiesTest {
     // ========== convertTimePosition Tests ==========
     
     @Test
-    public void testConvertTimeUnitSameTimeBase() {
+    void testConvertTimeUnitSameTimeBase() {
         TimePosition.BeatTime original = TimePosition.beats(5.0);
         TimePosition result = TimeUtilities.convertTimePosition(original, TimeBase.CSOUND_BEATS, context);
         assertSame(original, result);
     }
     
     @Test
-    public void testConvertTimeUnitBeatTimeToBBST() {
+    void testConvertTimeUnitBeatTimeToBBST() {
         TimePosition.BeatTime bt = TimePosition.beats(8.0);
         TimePosition result = TimeUtilities.convertTimePosition(bt, TimeBase.BBST, context);
         assertTrue(result instanceof TimePosition.BBSTTime);
@@ -140,7 +144,7 @@ public class TimeUtilitiesTest {
     }
     
     @Test
-    public void testConvertTimeUnitBBSTToTime() {
+    void testConvertTimeUnitBBSTToTime() {
         TimePosition.BBSTTime bbst = TimePosition.bbst(3, 2, 1, 0);
         TimePosition result = TimeUtilities.convertTimePosition(bbst, TimeBase.TIME, context);
         assertTrue(result instanceof TimePosition.TimeValue);
@@ -152,7 +156,7 @@ public class TimeUtilitiesTest {
     // ========== Round-trip Conversion Tests ==========
     
     @Test
-    public void testRoundTripBeatTimeToBBST() {
+    void testRoundTripBeatTimeToBBST() {
         TimePosition.BeatTime original = TimePosition.beats(12.0); // Use whole number to avoid tick rounding
         TimePosition intermediate = TimeUtilities.convertTimePosition(original, TimeBase.BBST, context);
         TimePosition result = TimeUtilities.convertTimePosition(intermediate, TimeBase.CSOUND_BEATS, context);
@@ -160,7 +164,7 @@ public class TimeUtilitiesTest {
     }
     
     @Test
-    public void testRoundTripBBSTToTime() {
+    void testRoundTripBBSTToTime() {
         TimePosition.BBSTTime original = TimePosition.bbst(5, 3, 1, 0);
         TimePosition intermediate = TimeUtilities.convertTimePosition(original, TimeBase.TIME, context);
         TimePosition result = TimeUtilities.convertTimePosition(intermediate, TimeBase.BBST, context);
@@ -170,7 +174,7 @@ public class TimeUtilitiesTest {
     }
     
     @Test
-    public void testRoundTripTimeToFrames() {
+    void testRoundTripTimeToFrames() {
         TimePosition.TimeValue original = TimePosition.time(0, 1, 30, 0);
         TimePosition intermediate = TimeUtilities.convertTimePosition(original, TimeBase.FRAME, context);
         TimePosition result = TimeUtilities.convertTimePosition(intermediate, TimeBase.TIME, context);
@@ -181,14 +185,14 @@ public class TimeUtilitiesTest {
     // ========== Helper Method Tests ==========
     
     @Test
-    public void testSecondsToTimePosition() {
+    void testSecondsToTimePosition() {
         TimePosition result = TimeUtilities.secondsToTimePosition(10.0, TimeBase.CSOUND_BEATS, context);
         // At 60 BPM: 10 seconds = 10 beats
         assertEquals(10.0, ((TimePosition.BeatTime) result).getCsoundBeats(), 0.001);
     }
     
     @Test
-    public void testTimeUnitToSeconds() {
+    void testTimeUnitToSeconds() {
         TimePosition.BeatTime bt = TimePosition.beats(5.0);
         double result = TimeUtilities.timePositionToSeconds(bt, context);
         // At 60 BPM: 5 beats = 5 seconds
@@ -196,14 +200,14 @@ public class TimeUtilitiesTest {
     }
     
     @Test
-    public void testFramesToTimePosition() {
+    void testFramesToTimePosition() {
         TimePosition result = TimeUtilities.framesToTimePosition(88200, TimeBase.CSOUND_BEATS, context);
         // At 44100 Hz and 60 BPM: 88200 frames = 2 seconds = 2 beats
         assertEquals(2.0, ((TimePosition.BeatTime) result).getCsoundBeats(), 0.001);
     }
     
     @Test
-    public void testTimeUnitToFrames() {
+    void testTimeUnitToFrames() {
         TimePosition.BeatTime bt = TimePosition.beats(2.0);
         long result = TimeUtilities.timePositionToFrames(bt, context);
         // At 60 BPM and 44100 Hz: 2 beats = 2 seconds = 88200 frames
@@ -211,7 +215,7 @@ public class TimeUtilitiesTest {
     }
     
     @Test
-    public void testFramesToTimePositionNormalizesMillisecondCarry() {
+    void testFramesToTimePositionNormalizesMillisecondCarry() {
         // 44099 / 44100 = 0.999977... seconds, rounds to exactly 1.000 second
         TimePosition result = TimeUtilities.framesToTimePosition(44099, TimeBase.TIME, context);
         assertTrue(result instanceof TimePosition.TimeValue);
@@ -223,14 +227,14 @@ public class TimeUtilitiesTest {
     }
     
     @Test
-    public void testDefaultContextSampleRateIs44100() {
+    void testDefaultContextSampleRateIs44100() {
         // TimeContext with no ProjectProperties wired must default to 44100
         TimeContext ctx = new TimeContext();
         assertEquals(44100L, ctx.getSampleRate());
     }
 
     @Test
-    public void testDefaultContextSampleRateUsedForFrameConversion() {
+    void testDefaultContextSampleRateUsedForFrameConversion() {
         // Verify frame conversions use the default 44100 when no ProjectProperties is set
         TimeContext ctx = new TimeContext();
         // 44100 frames at 44100 Hz = 1 second = 1 beat at 60 BPM
@@ -242,7 +246,7 @@ public class TimeUtilitiesTest {
     // ========== Meter Change Tests ==========
     
     @Test
-    public void testConversionWithMeterChanges() {
+    void testConversionWithMeterChanges() {
         // Add meter change: 3/4 starting at measure 5
         context.getMeterMap().add(new MeasureMeterPair(5, new Meter(3, 4)));
         

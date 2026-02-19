@@ -24,11 +24,13 @@ import blue.soundObject.tracker.Track;
 import blue.soundObject.tracker.TrackList;
 import blue.soundObject.tracker.TrackerNote;
 import blue.time.TimeContext;
-import junit.framework.TestCase;
+import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.Test;
 
-public class TrackerObjectTest extends TestCase {
+class TrackerObjectTest {
 
-    public final void testGenerateNotes() {
+    @Test
+    void testGenerateNotes() {
         TrackerObject tracker = new TrackerObject();
 
         tracker.setTimeBehavior(TimeBehavior.NONE);
@@ -68,7 +70,7 @@ public class TrackerObjectTest extends TestCase {
             exceptionThrown = true;
         }
 
-        assertTrue("Index Out of Bounds not thrown", exceptionThrown);
+        assertTrue(exceptionThrown, "Index Out of Bounds not thrown");
 
         track1.addColumn(new Column());
 
@@ -81,7 +83,7 @@ public class TrackerObjectTest extends TestCase {
 
         track1.setNoteTemplate(track1.getNoteTemplate() + " <col>");
 
-        assertFalse("Index Out of Bounds should not be thrown", exceptionThrown);
+        assertFalse(exceptionThrown, "Index Out of Bounds should not be thrown");
 
         String expectedScore = "i1\t0.0\t-64\t8.00\t80\t1";
 
@@ -127,7 +129,8 @@ public class TrackerObjectTest extends TestCase {
      * Test setting tracker steps sets steps on the individual tracks
      *
      */
-    public final void testSetSteps() {
+    @Test
+    void testSetSteps() {
         TrackerObject tracker = new TrackerObject();
         TrackList tracks = tracker.getTracks();
 

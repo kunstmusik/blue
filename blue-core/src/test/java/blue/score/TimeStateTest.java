@@ -24,28 +24,28 @@ import blue.time.TimeBase;
 import electric.xml.Document;
 import electric.xml.Element;
 import electric.xml.ParseException;
-import org.junit.Before;
-import org.junit.Test;
-import static org.junit.Assert.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Tests for TimeState class.
  *
  * @author Steven Yi
  */
-public class TimeStateTest {
+class TimeStateTest {
 
     private TimeState timeState;
 
-    @Before
-    public void setUp() {
+    @BeforeEach
+    void setUp() {
         timeState = new TimeState();
     }
 
     // ========== setTimeDisplay Tests ==========
 
     @Test
-    public void testSetTimeDisplayValid() {
+    void testSetTimeDisplayValid() {
         timeState.setTimeDisplay(TimeBase.TIME);
         assertEquals(TimeBase.TIME, timeState.getTimeDisplay());
         
@@ -56,15 +56,17 @@ public class TimeStateTest {
         assertEquals(TimeBase.BBT, timeState.getTimeDisplay());
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void testSetTimeDisplayNullThrowsException() {
-        timeState.setTimeDisplay(null);
+    @Test
+    void testSetTimeDisplayNullThrowsException() {
+        assertThrows(IllegalArgumentException.class, () -> {
+            timeState.setTimeDisplay(null);
+        });
     }
 
     // ========== setSecondaryTimeDisplay Tests ==========
 
     @Test
-    public void testSetSecondaryTimeDisplayValid() {
+    void testSetSecondaryTimeDisplayValid() {
         timeState.setSecondaryTimeDisplay(TimeBase.CSOUND_BEATS);
         assertEquals(TimeBase.CSOUND_BEATS, timeState.getSecondaryTimeDisplay());
         
@@ -72,30 +74,32 @@ public class TimeStateTest {
         assertEquals(TimeBase.SMPTE, timeState.getSecondaryTimeDisplay());
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void testSetSecondaryTimeDisplayNullThrowsException() {
-        timeState.setSecondaryTimeDisplay(null);
+    @Test
+    void testSetSecondaryTimeDisplayNullThrowsException() {
+        assertThrows(IllegalArgumentException.class, () -> {
+            timeState.setSecondaryTimeDisplay(null);
+        });
     }
 
     // ========== Default Values Tests ==========
 
     @Test
-    public void testDefaultTimeDisplay() {
+    void testDefaultTimeDisplay() {
         assertEquals(TimeBase.CSOUND_BEATS, timeState.getTimeDisplay());
     }
 
     @Test
-    public void testDefaultSecondaryTimeDisplay() {
+    void testDefaultSecondaryTimeDisplay() {
         assertEquals(TimeBase.TIME, timeState.getSecondaryTimeDisplay());
     }
 
     @Test
-    public void testDefaultSecondaryRulerEnabled() {
+    void testDefaultSecondaryRulerEnabled() {
         assertFalse(timeState.isSecondaryRulerEnabled());
     }
 
     @Test
-    public void testDefaultRowVisibility() {
+    void testDefaultRowVisibility() {
         assertTrue(timeState.isTempoRowVisible());
         assertTrue(timeState.isMeterRowVisible());
         assertTrue(timeState.isMarkersRowVisible());
@@ -104,7 +108,7 @@ public class TimeStateTest {
     // ========== Copy Constructor Tests ==========
 
     @Test
-    public void testCopyConstructor() {
+    void testCopyConstructor() {
         timeState.setTimeDisplay(TimeBase.BBT);
         timeState.setSecondaryTimeDisplay(TimeBase.SMPTE);
         timeState.setSecondaryRulerEnabled(true);
@@ -129,7 +133,7 @@ public class TimeStateTest {
     // ========== Property Change Listener Tests ==========
 
     @Test
-    public void testTimeDisplayPropertyChangeEvent() {
+    void testTimeDisplayPropertyChangeEvent() {
         final boolean[] listenerCalled = {false};
         final TimeBase[] oldValue = {null};
         final TimeBase[] newValue = {null};
@@ -150,7 +154,7 @@ public class TimeStateTest {
     }
 
     @Test
-    public void testSecondaryTimeDisplayPropertyChangeEvent() {
+    void testSecondaryTimeDisplayPropertyChangeEvent() {
         final boolean[] listenerCalled = {false};
 
         timeState.addPropertyChangeListener(evt -> {
@@ -167,35 +171,37 @@ public class TimeStateTest {
     // ========== SnapValue Tests ==========
 
     @Test
-    public void testDefaultSnapValue() {
+    void testDefaultSnapValue() {
         assertEquals(SnapValue.BEAT, timeState.getSnapValue());
     }
 
     @Test
-    public void testSetSnapValueMusical() {
+    void testSetSnapValueMusical() {
         timeState.setSnapValue(SnapValue.HALF);
         assertEquals(SnapValue.HALF, timeState.getSnapValue());
     }
 
     @Test
-    public void testSetSnapValueTriplet() {
+    void testSetSnapValueTriplet() {
         timeState.setSnapValue(SnapValue.EIGHTH_TRIPLET);
         assertEquals(SnapValue.EIGHTH_TRIPLET, timeState.getSnapValue());
     }
 
     @Test
-    public void testSetSnapValueTimeBased() {
+    void testSetSnapValueTimeBased() {
         timeState.setSnapValue(SnapValue.ONE_SECOND);
         assertEquals(SnapValue.ONE_SECOND, timeState.getSnapValue());
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void testSetSnapValueNullThrowsException() {
-        timeState.setSnapValue(null);
+    @Test
+    void testSetSnapValueNullThrowsException() {
+        assertThrows(IllegalArgumentException.class, () -> {
+            timeState.setSnapValue(null);
+        });
     }
 
     @Test
-    public void testSnapValuePropertyChangeEvent() {
+    void testSnapValuePropertyChangeEvent() {
         final boolean[] listenerCalled = {false};
         final SnapValue[] oldVal = {null};
         final SnapValue[] newVal = {null};
@@ -218,7 +224,7 @@ public class TimeStateTest {
     // ========== getSnapValueInBeats Tests ==========
 
     @Test
-    public void testGetSnapValueInBeatsMusical() {
+    void testGetSnapValueInBeatsMusical() {
         timeState.setSnapValue(SnapValue.BEAT);
         // Musical values are tempo-independent
         double sv60 = timeState.getSnapValueInBeats(0.0, null, 44100);
@@ -230,7 +236,7 @@ public class TimeStateTest {
     }
 
     @Test
-    public void testGetSnapValueInBeatsTimeBased() {
+    void testGetSnapValueInBeatsTimeBased() {
         timeState.setSnapValue(SnapValue.ONE_SECOND);
         // 1 second at 60 BPM = 1 beat
         double sv = timeState.getSnapValueInBeats(0.0, null, 44100);
@@ -247,7 +253,7 @@ public class TimeStateTest {
     // ========== XML Serialization Tests ==========
 
     @Test
-    public void testSnapValueXmlRoundTrip() {
+    void testSnapValueXmlRoundTrip() {
         timeState.setSnapValue(SnapValue.QUARTER_TRIPLET);
         timeState.setSnapEnabled(true);
 
@@ -259,7 +265,7 @@ public class TimeStateTest {
     }
 
     @Test
-    public void testSnapValueXmlBackwardCompatibilityLegacyDouble() throws ParseException {
+    void testSnapValueXmlBackwardCompatibilityLegacyDouble() throws ParseException {
         // Simulate legacy XML with double snapValue (old format)
         String xmlStr = "<timeState version=\"2\">" +
                 "<zoomIterations>0</zoomIterations>" +
@@ -282,7 +288,7 @@ public class TimeStateTest {
     }
 
     @Test
-    public void testSnapValueClosestMatch() {
+    void testSnapValueClosestMatch() {
         assertEquals(SnapValue.BEAT, SnapValue.closestMatch(1.0));
         assertEquals(SnapValue.HALF, SnapValue.closestMatch(0.5));
         assertEquals(SnapValue.QUARTER, SnapValue.closestMatch(0.25));
@@ -294,7 +300,7 @@ public class TimeStateTest {
     }
 
     @Test
-    public void testSecondaryRulerEnabledPropertyChangeEvent() {
+    void testSecondaryRulerEnabledPropertyChangeEvent() {
         final boolean[] listenerCalled = {false};
 
         timeState.addPropertyChangeListener(evt -> {
@@ -309,7 +315,7 @@ public class TimeStateTest {
     }
 
     @Test
-    public void testTempoRowVisiblePropertyChangeEvent() {
+    void testTempoRowVisiblePropertyChangeEvent() {
         final boolean[] listenerCalled = {false};
 
         timeState.addPropertyChangeListener(evt -> {
@@ -324,7 +330,7 @@ public class TimeStateTest {
     }
 
     @Test
-    public void testMeterRowVisiblePropertyChangeEvent() {
+    void testMeterRowVisiblePropertyChangeEvent() {
         final boolean[] listenerCalled = {false};
 
         timeState.addPropertyChangeListener(evt -> {
@@ -339,7 +345,7 @@ public class TimeStateTest {
     }
 
     @Test
-    public void testMarkersRowVisiblePropertyChangeEvent() {
+    void testMarkersRowVisiblePropertyChangeEvent() {
         final boolean[] listenerCalled = {false};
 
         timeState.addPropertyChangeListener(evt -> {
@@ -354,7 +360,7 @@ public class TimeStateTest {
     }
 
     @Test
-    public void testRowVisibilityXmlRoundTrip() {
+    void testRowVisibilityXmlRoundTrip() {
         timeState.setTempoRowVisible(false);
         timeState.setMeterRowVisible(false);
         timeState.setMarkersRowVisible(false);

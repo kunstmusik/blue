@@ -23,10 +23,12 @@ import blue.CompileData;
 import blue.udo.OpcodeList;
 import java.util.ArrayList;
 import java.util.Map;
-import junit.framework.TestCase;
+import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.Test;
 
-public class MixerNodeTest extends TestCase {
-    public void testGetMixerGraph1() {
+class MixerNodeTest {
+    @Test
+    void testGetMixerGraph1() {
         Mixer mixer = new Mixer();
 
         Channel channel = new Channel();
@@ -42,7 +44,8 @@ public class MixerNodeTest extends TestCase {
         assertEquals("1", mixerNode.channel.getName());
     }
 
-    public void testGetMixerGraphSubChannel() {
+    @Test
+    void testGetMixerGraphSubChannel() {
         Mixer mixer = new Mixer();
 
         Channel channel = new Channel();
@@ -67,7 +70,8 @@ public class MixerNodeTest extends TestCase {
         assertEquals("subChannel1", mixerNode2.channel.getName());
     }
 
-    public void testGetMixerGraphChildStructure() {
+    @Test
+    void testGetMixerGraphChildStructure() {
         Mixer mixer = new Mixer();
 
         Channel channel = new Channel();
@@ -110,7 +114,8 @@ public class MixerNodeTest extends TestCase {
         assertEquals(channel, node.channel);
     }
 
-    public void testGetMixerGraphChildStructure2() {
+    @Test
+    void testGetMixerGraphChildStructure2() {
         Mixer mixer = new Mixer();
 
         // setup channels
@@ -166,7 +171,8 @@ public class MixerNodeTest extends TestCase {
         assertEquals(channel, node.channel);
     }
 
-    public void testGetMixerGraphSubChannelOrderFromSend() {
+    @Test
+    void testGetMixerGraphSubChannelOrderFromSend() {
         Mixer mixer = new Mixer();
 
         Channel channel = new Channel();
@@ -202,7 +208,8 @@ public class MixerNodeTest extends TestCase {
         assertEquals("subChannel1", mixerNode3.channel.getName());
     }
 
-    public void testIsValidOut() {
+    @Test
+    void testIsValidOut() {
         Mixer mixer = getTestMixer(2, 2);
 
         MixerNode node = MixerNode.getMixerGraph(mixer);
@@ -215,7 +222,8 @@ public class MixerNodeTest extends TestCase {
         assertTrue(MixerNode.isValidOut("subChannel2", subChannelCache));
     }
 
-    public void testIsValidOut2() {
+    @Test
+    void testIsValidOut2() {
         Mixer mixer = getTestMixer(2, 2);
 
         mixer.getSubChannel(0).setLevel(-96.0f);
@@ -230,7 +238,8 @@ public class MixerNodeTest extends TestCase {
         assertTrue(MixerNode.isValidOut("subChannel2", subChannelCache));
     }
 
-    public void testIsValidOut3() {
+    @Test
+    void testIsValidOut3() {
         Mixer mixer = getTestMixer(2, 2);
 
         mixer.getSubChannel(0).getPreEffects().addSend(new Send());
@@ -246,7 +255,8 @@ public class MixerNodeTest extends TestCase {
         assertTrue(MixerNode.isValidOut("subChannel2", subChannelCache));
     }
 
-    public void testIsValidOut4() {
+    @Test
+    void testIsValidOut4() {
         Mixer mixer = getTestMixer(2, 2);
 
         mixer.getSubChannel(0).setOutChannel("subChannel2");
@@ -262,7 +272,8 @@ public class MixerNodeTest extends TestCase {
         assertTrue(MixerNode.isValidOut("subChannel2", subChannelCache));
     }
 
-    public void testIsValidOut5() {
+    @Test
+    void testIsValidOut5() {
         Mixer mixer = getTestMixer(2, 3);
 
         Send send = new Send();
@@ -369,7 +380,8 @@ public class MixerNodeTest extends TestCase {
 //        assertEquals(expected, out);
 //    }
 
-    public void testGetMixerCode4() {
+    @Test
+    void testGetMixerCode4() {
         CompileData data = CompileData.createEmptyCompileData();
         Mixer mixer = getTestMixer(3, 2);
 
@@ -398,7 +410,8 @@ public class MixerNodeTest extends TestCase {
         assertEquals(expected, out);
     }
 
-    public void testFlatten() {
+    @Test
+    void testFlatten() {
         Mixer mixer = getTestMixer(2, 2);
 
         MixerNode node = MixerNode.getMixerGraph(mixer);
@@ -410,7 +423,8 @@ public class MixerNodeTest extends TestCase {
         assertEquals(node, list.get(4));
     }
 
-    public void testFlatten2() {
+    @Test
+    void testFlatten2() {
         Send send = new Send();
         send.setSendChannel("subChannel1");
 
@@ -430,7 +444,8 @@ public class MixerNodeTest extends TestCase {
         assertEquals("subChannel2", ((MixerNode) list.get(2)).channel.getName());
     }
 
-    public void testFlatten3() {
+    @Test
+    void testFlatten3() {
         Send send2 = new Send();
         send2.setSendChannel("subChannel2");
 

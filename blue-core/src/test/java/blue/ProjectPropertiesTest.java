@@ -1,29 +1,29 @@
 package blue;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.List;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-public class ProjectPropertiesTest {
+class ProjectPropertiesTest {
 
     @Test
-    public void testDefaultSampleRate() {
+    void testDefaultSampleRate() {
         ProjectProperties props = new ProjectProperties();
         assertEquals("44100", props.getSampleRate());
     }
 
     @Test
-    public void testSetSampleRateUpdatesValue() {
+    void testSetSampleRateUpdatesValue() {
         ProjectProperties props = new ProjectProperties();
         props.setSampleRate("48000");
         assertEquals("48000", props.getSampleRate());
     }
 
     @Test
-    public void testSetSampleRateFiresPropertyChangeEvent() {
+    void testSetSampleRateFiresPropertyChangeEvent() {
         ProjectProperties props = new ProjectProperties();
         List<PropertyChangeEvent> events = new ArrayList<>();
         props.addPropertyChangeListener(events::add);
@@ -38,7 +38,7 @@ public class ProjectPropertiesTest {
     }
 
     @Test
-    public void testSetSampleRateDoesNotFireEventWhenValueUnchanged() {
+    void testSetSampleRateDoesNotFireEventWhenValueUnchanged() {
         // PropertyChangeSupport suppresses events when old value equals new value
         ProjectProperties props = new ProjectProperties();
         List<PropertyChangeEvent> events = new ArrayList<>();
@@ -50,7 +50,7 @@ public class ProjectPropertiesTest {
     }
 
     @Test
-    public void testRemovePropertyChangeListenerStopsEvents() {
+    void testRemovePropertyChangeListenerStopsEvents() {
         ProjectProperties props = new ProjectProperties();
         List<PropertyChangeEvent> events = new ArrayList<>();
         PropertyChangeListener listener = events::add;
@@ -65,7 +65,7 @@ public class ProjectPropertiesTest {
     }
 
     @Test
-    public void testCopyConstructorCopiesSampleRate() {
+    void testCopyConstructorCopiesSampleRate() {
         ProjectProperties original = new ProjectProperties();
         original.setSampleRate("88200");
 
@@ -74,7 +74,7 @@ public class ProjectPropertiesTest {
     }
 
     @Test
-    public void testCopyConstructorListenersAreIndependent() {
+    void testCopyConstructorListenersAreIndependent() {
         ProjectProperties original = new ProjectProperties();
         original.setSampleRate("48000");
 

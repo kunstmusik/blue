@@ -19,21 +19,21 @@
  */
 package blue.time;
 
-import static org.junit.Assert.*;
-import org.junit.Before;
-import org.junit.Test;
+import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 /**
  * Tests for TimeUnitMath type-safe arithmetic operations.
  *
  * @author stevenyi
  */
-public class TimeUnitMathTest {
+class TimeUnitMathTest {
     
     private TimeContext context;
     
-    @Before
-    public void setUp() {
+    @BeforeEach
+    void setUp() {
         // Tempo: 60 BPM (1 beat per second)
         // Meter: 4/4
         // Sample rate: 44100 Hz
@@ -50,7 +50,7 @@ public class TimeUnitMathTest {
     // ========== Position + Duration → Position ==========
     
     @Test
-    public void testAddDurationToPosition_Beats() {
+    void testAddDurationToPosition_Beats() {
         TimePosition position = TimePosition.beats(4.0);
         TimeDuration duration = TimeDuration.beats(2.0);
         
@@ -60,7 +60,7 @@ public class TimeUnitMathTest {
     }
     
     @Test
-    public void testAddDurationToPosition_BBF() {
+    void testAddDurationToPosition_BBF() {
         // Position at bar 1, beat 1 (= 0 beats)
         TimePosition position = TimePosition.bbf(1, 1, 0);
         // Duration of 1 bar (= 4 beats in 4/4)
@@ -78,7 +78,7 @@ public class TimeUnitMathTest {
     }
     
     @Test
-    public void testAddDurationToPosition_BBT() {
+    void testAddDurationToPosition_BBT() {
         TimePosition position = TimePosition.bbt(1, 1, 0); // 0 beats
         TimeDuration duration = TimeDuration.beats(2.5);
         
@@ -88,7 +88,7 @@ public class TimeUnitMathTest {
     }
     
     @Test
-    public void testAddDurationToPosition_ZeroDuration() {
+    void testAddDurationToPosition_ZeroDuration() {
         TimePosition position = TimePosition.beats(10.0);
         TimeDuration duration = TimeDuration.beats(0.0);
         
@@ -97,7 +97,7 @@ public class TimeUnitMathTest {
     }
     
     @Test
-    public void testAddDurationBBTToPositionBBF() {
+    void testAddDurationBBTToPositionBBF() {
         // Position at bar 2, beat 1 (= 4 beats)
         TimePosition position = TimePosition.bbf(2, 1, 0);
         // Duration of 1 bar, 2 beats (= 6 beats in 4/4)
@@ -112,7 +112,7 @@ public class TimeUnitMathTest {
     // ========== Position − Position → Duration ==========
     
     @Test
-    public void testDistance_Basic() {
+    void testDistance_Basic() {
         TimePosition from = TimePosition.beats(2.0);
         TimePosition to = TimePosition.beats(6.0);
         
@@ -121,7 +121,7 @@ public class TimeUnitMathTest {
     }
     
     @Test
-    public void testDistance_Reversed() {
+    void testDistance_Reversed() {
         // distance() returns absolute value
         TimePosition from = TimePosition.beats(6.0);
         TimePosition to = TimePosition.beats(2.0);
@@ -131,7 +131,7 @@ public class TimeUnitMathTest {
     }
     
     @Test
-    public void testDistance_SamePosition() {
+    void testDistance_SamePosition() {
         TimePosition pos = TimePosition.beats(5.0);
         
         TimeDuration result = TimeUnitMath.distance(context, pos, pos);
@@ -139,7 +139,7 @@ public class TimeUnitMathTest {
     }
     
     @Test
-    public void testDistance_MixedTypes() {
+    void testDistance_MixedTypes() {
         TimePosition from = TimePosition.bbf(1, 1, 0); // 0 beats
         TimePosition to = TimePosition.beats(4.0);
         
@@ -148,7 +148,7 @@ public class TimeUnitMathTest {
     }
     
     @Test
-    public void testForwardDistance_Normal() {
+    void testForwardDistance_Normal() {
         TimePosition from = TimePosition.beats(2.0);
         TimePosition to = TimePosition.beats(6.0);
         
@@ -157,7 +157,7 @@ public class TimeUnitMathTest {
     }
     
     @Test
-    public void testForwardDistance_Reversed_ClampedToZero() {
+    void testForwardDistance_Reversed_ClampedToZero() {
         TimePosition from = TimePosition.beats(6.0);
         TimePosition to = TimePosition.beats(2.0);
         
@@ -168,7 +168,7 @@ public class TimeUnitMathTest {
     // ========== Duration + Duration → Duration ==========
     
     @Test
-    public void testAddDurations() {
+    void testAddDurations() {
         TimeDuration a = TimeDuration.beats(3.0);
         TimeDuration b = TimeDuration.beats(2.0);
         
@@ -177,7 +177,7 @@ public class TimeUnitMathTest {
     }
     
     @Test
-    public void testAddDurations_MixedTypes() {
+    void testAddDurations_MixedTypes() {
         TimeDuration a = TimeDuration.beats(4.0);
         TimeDuration b = TimeDuration.bbt(0, 2, 0); // 2 beats in 4/4
         
@@ -186,7 +186,7 @@ public class TimeUnitMathTest {
     }
     
     @Test
-    public void testAddDurations_Zero() {
+    void testAddDurations_Zero() {
         TimeDuration a = TimeDuration.beats(4.0);
         TimeDuration b = TimeDuration.beats(0.0);
         
@@ -197,7 +197,7 @@ public class TimeUnitMathTest {
     // ========== Duration − Duration → Duration ==========
     
     @Test
-    public void testSubtractDurations() {
+    void testSubtractDurations() {
         TimeDuration a = TimeDuration.beats(5.0);
         TimeDuration b = TimeDuration.beats(2.0);
         
@@ -206,7 +206,7 @@ public class TimeUnitMathTest {
     }
     
     @Test
-    public void testSubtractDurations_ClampedToZero() {
+    void testSubtractDurations_ClampedToZero() {
         TimeDuration a = TimeDuration.beats(2.0);
         TimeDuration b = TimeDuration.beats(5.0);
         
@@ -217,7 +217,7 @@ public class TimeUnitMathTest {
     // ========== Position − Duration → Position ==========
     
     @Test
-    public void testSubtractDurationFromPosition() {
+    void testSubtractDurationFromPosition() {
         TimePosition position = TimePosition.beats(6.0);
         TimeDuration duration = TimeDuration.beats(2.0);
         
@@ -227,7 +227,7 @@ public class TimeUnitMathTest {
     }
     
     @Test
-    public void testSubtractDurationFromPosition_ClampedToZero() {
+    void testSubtractDurationFromPosition_ClampedToZero() {
         TimePosition position = TimePosition.beats(2.0);
         TimeDuration duration = TimeDuration.beats(5.0);
         
@@ -236,7 +236,7 @@ public class TimeUnitMathTest {
     }
     
     @Test
-    public void testSubtractDurationFromPosition_PreservesTimeBase() {
+    void testSubtractDurationFromPosition_PreservesTimeBase() {
         TimePosition position = TimePosition.bbf(3, 1, 0); // 8 beats
         TimeDuration duration = TimeDuration.beats(4.0);
         
@@ -248,7 +248,7 @@ public class TimeUnitMathTest {
     // ========== convertDuration ==========
     
     @Test
-    public void testConvertDuration_BeatsToBBF() {
+    void testConvertDuration_BeatsToBBF() {
         TimeDuration dur = TimeDuration.beats(4.0); // 1 bar in 4/4
         
         TimeDuration result = TimeUnitMath.convertDuration(dur, TimeBase.BBF, context);
@@ -260,7 +260,7 @@ public class TimeUnitMathTest {
     }
     
     @Test
-    public void testConvertDuration_BeatsToBBT() {
+    void testConvertDuration_BeatsToBBT() {
         TimeDuration dur = TimeDuration.beats(6.0); // 1 bar + 2 beats in 4/4
         
         TimeDuration result = TimeUnitMath.convertDuration(dur, TimeBase.BBT, context);
@@ -272,7 +272,7 @@ public class TimeUnitMathTest {
     }
     
     @Test
-    public void testConvertDuration_BeatsToBBST() {
+    void testConvertDuration_BeatsToBBST() {
         TimeDuration dur = TimeDuration.beats(4.5); // 1 bar + 0.5 beats in 4/4
         
         TimeDuration result = TimeUnitMath.convertDuration(dur, TimeBase.BBST, context);
@@ -286,7 +286,7 @@ public class TimeUnitMathTest {
     }
     
     @Test
-    public void testConvertDuration_BeatsToTime() {
+    void testConvertDuration_BeatsToTime() {
         TimeDuration dur = TimeDuration.beats(2.0); // 2 seconds at 60 BPM
         
         TimeDuration result = TimeUnitMath.convertDuration(dur, TimeBase.TIME, context);
@@ -299,7 +299,7 @@ public class TimeUnitMathTest {
     }
     
     @Test
-    public void testConvertDuration_BeatsToFrames() {
+    void testConvertDuration_BeatsToFrames() {
         TimeDuration dur = TimeDuration.beats(1.0); // 1 second at 60 BPM
         
         TimeDuration result = TimeUnitMath.convertDuration(dur, TimeBase.FRAME, context);
@@ -308,7 +308,7 @@ public class TimeUnitMathTest {
     }
     
     @Test
-    public void testConvertDuration_SameTimeBase_ReturnsSame() {
+    void testConvertDuration_SameTimeBase_ReturnsSame() {
         TimeDuration dur = TimeDuration.beats(4.0);
         
         TimeDuration result = TimeUnitMath.convertDuration(dur, TimeBase.CSOUND_BEATS, context);
@@ -318,7 +318,7 @@ public class TimeUnitMathTest {
     // ========== beatsToDuration ==========
     
     @Test
-    public void testBeatsToDuration_Zero() {
+    void testBeatsToDuration_Zero() {
         TimeDuration result = TimeUnitMath.beatsToDuration(0.0, TimeBase.BBF, context);
         assertTrue(result instanceof TimeDuration.DurationBBF);
         TimeDuration.DurationBBF bbf = (TimeDuration.DurationBBF) result;
@@ -328,13 +328,13 @@ public class TimeUnitMathTest {
     }
     
     @Test
-    public void testBeatsToDuration_NegativeClamped() {
+    void testBeatsToDuration_NegativeClamped() {
         TimeDuration result = TimeUnitMath.beatsToDuration(-5.0, TimeBase.CSOUND_BEATS, context);
         assertEquals(0.0, result.toBeats(context), 0.001);
     }
     
     @Test
-    public void testBeatsToDuration_BBF_FourBeats() {
+    void testBeatsToDuration_BBF_FourBeats() {
         // 4 beats in 4/4 = 1 bar, 0 beats, 0 fraction
         TimeDuration result = TimeUnitMath.beatsToDuration(4.0, TimeBase.BBF, context);
         assertTrue(result instanceof TimeDuration.DurationBBF);
@@ -345,7 +345,7 @@ public class TimeUnitMathTest {
     }
     
     @Test
-    public void testBeatsToDuration_BBF_FiveAndHalfBeats() {
+    void testBeatsToDuration_BBF_FiveAndHalfBeats() {
         // 5.5 beats in 4/4 = 1 bar, 1 beat, fraction 50
         TimeDuration result = TimeUnitMath.beatsToDuration(5.5, TimeBase.BBF, context);
         assertTrue(result instanceof TimeDuration.DurationBBF);
@@ -358,14 +358,14 @@ public class TimeUnitMathTest {
     // ========== fromTimePosition Bridge ==========
     
     @Test
-    public void testFromTimePosition_BeatTime() {
+    void testFromTimePosition_BeatTime() {
         TimePosition tu = TimePosition.beats(4.0);
         TimeDuration result = TimeUnitMath.fromTimePosition(tu, context);
         assertEquals(4.0, result.toBeats(context), 0.001);
     }
     
     @Test
-    public void testFromTimePosition_BBFPosition() {
+    void testFromTimePosition_BBFPosition() {
         // BBF position bar 2, beat 1 = 4 beats
         TimePosition tu = TimePosition.bbf(2, 1, 0);
         TimeDuration result = TimeUnitMath.fromTimePosition(tu, context);
@@ -374,7 +374,7 @@ public class TimeUnitMathTest {
     }
     
     @Test
-    public void testFromTimePosition_WithTargetTimeBase() {
+    void testFromTimePosition_WithTargetTimeBase() {
         TimePosition tu = TimePosition.beats(4.0);
         TimeDuration result = TimeUnitMath.fromTimePosition(tu, TimeBase.BBF, context);
         assertTrue(result instanceof TimeDuration.DurationBBF);
@@ -387,7 +387,7 @@ public class TimeUnitMathTest {
     // ========== Non-4/4 Meter Tests ==========
     
     @Test
-    public void testConvertDuration_BBF_In34() {
+    void testConvertDuration_BBF_In34() {
         MeterMap meterMap = new MeterMap();
         meterMap.set(0, new MeasureMeterPair(1, new Meter(3, 4)));
         TempoMap tempoMap = new TempoMap();
@@ -408,7 +408,7 @@ public class TimeUnitMathTest {
     }
     
     @Test
-    public void testAddPositionDuration_In34() {
+    void testAddPositionDuration_In34() {
         MeterMap meterMap = new MeterMap();
         meterMap.set(0, new MeasureMeterPair(1, new Meter(3, 4)));
         TempoMap tempoMap = new TempoMap();
