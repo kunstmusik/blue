@@ -144,6 +144,9 @@ public class LinePoint implements Comparable<LinePoint> {
 
     @Override
     public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
         if(!(obj instanceof LinePoint)) {
             return false;
         }
@@ -151,5 +154,20 @@ public class LinePoint implements Comparable<LinePoint> {
 
         return this.getX() == b.getX() &&
                 this.getY() == b.getY();
+    }
+
+    @Override
+    public int hashCode() {
+        long xBits = hashableBits(getX());
+        long yBits = hashableBits(getY());
+        int result = Long.hashCode(xBits);
+        result = 31 * result + Long.hashCode(yBits);
+        return result;
+    }
+
+    private static long hashableBits(double value) {
+        // Keep hash behavior consistent with equals(), which treats -0.0 and 0.0 as equal.
+        double normalized = value == 0.0d ? 0.0d : value;
+        return Double.doubleToLongBits(normalized);
     }
 }

@@ -22,6 +22,7 @@ package blue.orchestra.blueSynthBuilder;
 
 import java.text.MessageFormat;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 
@@ -142,10 +143,17 @@ public class UniqueNameManager  {
 
     @Override
     public boolean equals(Object obj) {
-        if (obj instanceof UniqueNameManager unm) {
-
-            return defaultPrefix.equals(unm.defaultPrefix);
+        if (this == obj) {
+            return true;
         }
-        return false;
+        if (!(obj instanceof UniqueNameManager unm)) {
+            return false;
+        }
+        return Objects.equals(defaultPrefix, unm.defaultPrefix);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(defaultPrefix);
     }
 }

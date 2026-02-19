@@ -20,8 +20,9 @@
 
 package blue.orchestra.blueSynthBuilder;
 
+import java.util.Set;
 import org.junit.*;
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 /**
  *
@@ -92,6 +93,33 @@ public class UniqueNameManagerTest {
         assertEquals("t", instance.getPrefix("t4"));
         assertEquals("t", instance.getPrefix("t"));
         
+    }
+
+    @Test
+    public void testEqualsAndHashCodeWithNullDefaultPrefix() {
+        UniqueNameManager first = new UniqueNameManager();
+        UniqueNameManager second = new UniqueNameManager();
+
+        assertEquals(first, second);
+        assertEquals(first.hashCode(), second.hashCode());
+    }
+
+    @Test
+    public void testEqualsAndHashCodeWithConfiguredDefaultPrefix() {
+        UniqueNameManager first = new UniqueNameManager();
+        first.setDefaultPrefix("prefix");
+        first.setUniqueNameCollection(() -> Set.of("a"));
+
+        UniqueNameManager second = new UniqueNameManager();
+        second.setDefaultPrefix("prefix");
+        second.setUniqueNameCollection(() -> Set.of("b"));
+
+        UniqueNameManager different = new UniqueNameManager();
+        different.setDefaultPrefix("other");
+
+        assertEquals(first, second);
+        assertEquals(first.hashCode(), second.hashCode());
+        assertFalse(first.equals(different));
     }
 //
 //    /**

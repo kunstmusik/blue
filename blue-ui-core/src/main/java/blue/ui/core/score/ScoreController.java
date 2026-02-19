@@ -399,7 +399,7 @@ public class ScoreController {
                     Parameter param = manager.getParameter(paramId);
                     Line line = param.getLine();
                     List<LinePoint> autoData = line.copy(start, end);
-                    multiLineBuffer.automationData.put(autoData, line);
+                    multiLineBuffer.automationData.put(line, autoData);
                 }
             }
         }
@@ -490,10 +490,10 @@ public class ScoreController {
 
         for (var entry : multiLineBuffer.automationData.entrySet()) {
 
-            final Line line = entry.getValue();
+            final Line line = entry.getKey();
             final var sourceCopy = new Line(line);
             List<LinePoint> points
-                    = entry.getKey().stream().map(lp -> {
+                    = entry.getValue().stream().map(lp -> {
                         LinePoint p = new LinePoint(lp);
                         p.setX(p.getX() + adjust);
                         return p;
@@ -572,10 +572,12 @@ public class ScoreController {
 
     public static class MultiLineBuffer {
 
-        // use maps here as Blue only allows pasting back into the source layers
-        // and lines for multiline copy/paste
+        // Maps are used as Blue only allows pasting back into the source
+        // layers and lines for multiline copy/paste.
         public final Map<ScoreObject, ScoreObjectLayer> scoreObjects = new HashMap<>();
-        public final Map<List<LinePoint>, Line> automationData = new HashMap<>();
+        // Key by source Line identity. Using List<LinePoint> as the key can
+        // collide for different lines when copied point values are equal.
+        public final Map<Line, List<LinePoint>> automationData = new HashMap<>();
         public final Set<Layer> selectedLayers = new HashSet<>();
 
         public Score sourceScore = null;
