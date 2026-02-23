@@ -31,6 +31,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.Set;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.IntegerProperty;
@@ -66,7 +67,7 @@ public class BSBGroup extends BSBObject implements Iterable<BSBObject>, UniqueNa
     
     ObjectProperty<Font> font = new SimpleObjectProperty<>(new Font("Roboto", Font.PLAIN, 12));
 
-    private final Set<BSBObject> backingSet = new HashSet<BSBObject>() {
+    private final Set<BSBObject> backingSet = new LinkedHashSet<BSBObject>() {
         @Override
         public boolean add(BSBObject bsbObj) {
             String objName = bsbObj.getObjectName();
