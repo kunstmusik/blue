@@ -54,7 +54,7 @@ final class ProjectDefaultsPanel extends JPanel {
     private static final Map<TimeBase, String> TIMEBASE_LABELS = new LinkedHashMap<>();
 
     static {
-        TIMEBASE_LABELS.put(TimeBase.CSOUND_BEATS, "Beats");
+        TIMEBASE_LABELS.put(TimeBase.BEATS, "Beats");
         TIMEBASE_LABELS.put(TimeBase.BBT, "Bars.Beats.Ticks (BBT)");
         TIMEBASE_LABELS.put(TimeBase.BBST, "Bars.Beats.Sixteenths.Ticks (BBST)");
         TIMEBASE_LABELS.put(TimeBase.BBF, "Bars.Beats.Fraction (BBF)");

@@ -39,7 +39,7 @@ public enum TimeDisplayFormat {
      * Classic Blue format using Csound beats (e.g., "0.0", "4.0", "8.0").
      * Does not account for measures, only absolute beat position.
      */
-    BEATS("Beats", "0.0, 4.0, 8.0", TimeBase.CSOUND_BEATS) {
+    BEATS("Beats", "0.0, 4.0, 8.0", TimeBase.BEATS) {
         @Override
         public String format(double beatPosition, TimeContext context) {
             return String.format("%.2f", beatPosition);

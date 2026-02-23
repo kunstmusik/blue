@@ -34,7 +34,7 @@ import java.util.function.Supplier;
 public class TextTimeUnitEditor extends TimeUnitEditor {
 
     private final TimeUnitTextField textField;
-    private TimeBase timeBase = TimeBase.CSOUND_BEATS;
+    private TimeBase timeBase = TimeBase.BEATS;
 
     public TextTimeUnitEditor() {
         super();

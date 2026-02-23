@@ -186,7 +186,7 @@ public final class TimeUnitMath {
         }
         
         return switch (targetTimeBase) {
-            case CSOUND_BEATS -> TimeDuration.beats(beats);
+            case BEATS -> TimeDuration.beats(beats);
             case BBT -> {
                 var meter = context.getMeterMap().get(0).getMeter();
                 double beatsPerBar = meter.getMeasureBeatDuration();

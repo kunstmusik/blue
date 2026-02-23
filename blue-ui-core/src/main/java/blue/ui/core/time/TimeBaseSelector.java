@@ -90,7 +90,7 @@ public class TimeBaseSelector extends JComboBox<TimeBase> {
          */
         private String getDisplayName(TimeBase timeBase) {
             return switch (timeBase) {
-                case CSOUND_BEATS -> "Csound Beats";
+                case BEATS -> "Csound Beats";
                 case BBT -> "BBT (Bar.Beat.Ticks)";
                 case BBST -> "BBST (Bar.Beat.16th.Ticks)";
                 case BBF -> "BBF (Bar.Beat.Fraction)";

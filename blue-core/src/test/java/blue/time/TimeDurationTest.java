@@ -53,7 +53,7 @@ class TimeDurationTest {
     @Test
     void testDurationBeatsGetTimeBase() {
         TimeDuration.DurationBeats db = TimeDuration.beats(4.0);
-        assertEquals(TimeBase.CSOUND_BEATS, db.getTimeBase());
+        assertEquals(TimeBase.BEATS, db.getTimeBase());
     }
     
     @Test

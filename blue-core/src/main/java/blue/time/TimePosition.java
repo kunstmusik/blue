@@ -162,7 +162,7 @@ public abstract class TimePosition {
         
         @Override
         public TimeBase getTimeBase() {
-            return TimeBase.CSOUND_BEATS;
+            return TimeBase.BEATS;
         }
 
         public double getCsoundBeats() {
@@ -787,35 +787,29 @@ public abstract class TimePosition {
      */
     public Element saveAsXML() {
         Element element = new Element("timePosition");
-        element.setAttribute("type", this.getClass().getSimpleName());
+        element.setAttribute("type", getTimeBase().name());
         
-        if (this instanceof BeatTime) {
-            BeatTime bt = (BeatTime) this;
+        if (this instanceof BeatTime bt) {
             element.addElement("csoundBeats").setText(Double.toString(bt.getCsoundBeats()));
-        } else if (this instanceof BBTTime) {
-            BBTTime bbt = (BBTTime) this;
+        } else if (this instanceof BBTTime bbt) {
             element.addElement("bar").setText(Long.toString(bbt.getBar()));
             element.addElement("beat").setText(Integer.toString(bbt.getBeat()));
             element.addElement("ticks").setText(Integer.toString(bbt.getTicks()));
-        } else if (this instanceof BBSTTime) {
-            BBSTTime bbst = (BBSTTime) this;
+        } else if (this instanceof BBSTTime bbst) {
             element.addElement("bar").setText(Long.toString(bbst.getBar()));
             element.addElement("beat").setText(Integer.toString(bbst.getBeat()));
             element.addElement("sixteenth").setText(Integer.toString(bbst.getSixteenth()));
             element.addElement("ticks").setText(Integer.toString(bbst.getTicks()));
-        } else if (this instanceof BBFTime) {
-            BBFTime bbf = (BBFTime) this;
+        } else if (this instanceof BBFTime bbf) {
             element.addElement("bar").setText(Long.toString(bbf.getBar()));
             element.addElement("beat").setText(Integer.toString(bbf.getBeat()));
             element.addElement("fraction").setText(Integer.toString(bbf.getFraction()));
-        } else if (this instanceof TimeValue) {
-            TimeValue tv = (TimeValue) this;
+        } else if (this instanceof TimeValue tv) {
             element.addElement("hours").setText(Long.toString(tv.getHours()));
             element.addElement("minutes").setText(Long.toString(tv.getMinutes()));
             element.addElement("seconds").setText(Long.toString(tv.getSeconds()));
             element.addElement("milliseconds").setText(Long.toString(tv.getMilliseconds()));
-        } else if (this instanceof FrameValue) {
-            FrameValue fv = (FrameValue) this;
+        } else if (this instanceof FrameValue fv) {
             element.addElement("frameNumber").setText(Long.toString(fv.getFrameNumber()));
         }
         
@@ -837,37 +831,37 @@ public abstract class TimePosition {
         }
         
         return switch (type) {
-            case "BeatTime" -> {
+            case "BEATS", "CSOUND_BEATS", "BeatTime" -> {
                 double csoundBeats = Double.parseDouble(element.getTextString("csoundBeats"));
                 yield new BeatTime(csoundBeats);
             }
-            case "BBTTime" -> {
+            case "BBT", "BBTTime" -> {
                 long bar = Long.parseLong(element.getTextString("bar"));
                 int beat = Integer.parseInt(element.getTextString("beat"));
                 int ticks = Integer.parseInt(element.getTextString("ticks"));
                 yield new BBTTime(bar, beat, ticks);
             }
-            case "BBSTTime" -> {
+            case "BBST", "BBSTTime" -> {
                 long bar = Long.parseLong(element.getTextString("bar"));
                 int beat = Integer.parseInt(element.getTextString("beat"));
                 int sixteenth = Integer.parseInt(element.getTextString("sixteenth"));
                 int ticks = Integer.parseInt(element.getTextString("ticks"));
                 yield new BBSTTime(bar, beat, sixteenth, ticks);
             }
-            case "BBFTime" -> {
+            case "BBF", "BBFTime" -> {
                 long bar = Long.parseLong(element.getTextString("bar"));
                 int beat = Integer.parseInt(element.getTextString("beat"));
                 int fraction = Integer.parseInt(element.getTextString("fraction"));
                 yield new BBFTime(bar, beat, fraction);
             }
-            case "TimeValue" -> {
+            case "TIME", "TimeValue" -> {
                 long hours = Long.parseLong(element.getTextString("hours"));
                 long minutes = Long.parseLong(element.getTextString("minutes"));
                 long seconds = Long.parseLong(element.getTextString("seconds"));
                 long milliseconds = Long.parseLong(element.getTextString("milliseconds"));
                 yield new TimeValue(hours, minutes, seconds, milliseconds);
             }
-            case "FrameValue" -> {
+            case "FRAME", "FrameValue" -> {
                 long frameNumber = Long.parseLong(element.getTextString("frameNumber"));
                 yield new FrameValue(frameNumber);
             }

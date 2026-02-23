@@ -54,7 +54,7 @@ class TimePositionTest {
     @Test
     void testBeatTimeGetTimeBase() {
         TimePosition.BeatTime bt = TimePosition.beats(10.0);
-        assertEquals(TimeBase.CSOUND_BEATS, bt.getTimeBase());
+        assertEquals(TimeBase.BEATS, bt.getTimeBase());
     }
     
     @Test

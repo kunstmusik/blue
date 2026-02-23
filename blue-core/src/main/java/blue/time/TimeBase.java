@@ -29,7 +29,7 @@ public enum TimeBase {
     /** Classic Blue timebase using global number of Csound beats. Does not take 
      * into account measures.
      */
-    CSOUND_BEATS, 
+    BEATS, 
     
     /** BBT (Bars.Beats.Ticks) - Ardour/Qtractor style.
      * Uses PPQ-based ticks for sub-beat precision.

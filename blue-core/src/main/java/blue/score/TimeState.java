@@ -49,7 +49,7 @@ public class TimeState {
 
     private boolean snapEnabled = false;
     private SnapValue snapValue = SnapValue.BEAT;
-    private TimeBase timeDisplay = TimeBase.CSOUND_BEATS;
+    private TimeBase timeDisplay = TimeBase.BEATS;
     private TimeBase secondaryTimeDisplay = TimeBase.TIME;
     private boolean secondaryRulerEnabled = false;
     private boolean tempoRowVisible = true;
@@ -320,7 +320,7 @@ public class TimeState {
                     }
                 }
                 case "timeDisplay" ->
-                    timeState.timeDisplay = parseTimeBase(nodeText, TimeBase.CSOUND_BEATS);
+                    timeState.timeDisplay = parseTimeBase(nodeText, TimeBase.BEATS);
                 case "secondaryTimeDisplay" ->
                     timeState.secondaryTimeDisplay = parseTimeBase(nodeText, TimeBase.TIME);
                 case "secondaryRulerEnabled" ->
@@ -374,8 +374,8 @@ public class TimeState {
     private static TimeBase migrateLegacyDisplayValue(int legacyValue) {
         return switch (legacyValue) {
             case 0 -> TimeBase.TIME;         // Legacy DISPLAY_TIME
-            case 1 -> TimeBase.CSOUND_BEATS; // Legacy DISPLAY_BEATS
-            default -> TimeBase.CSOUND_BEATS;
+            case 1 -> TimeBase.BEATS; // Legacy DISPLAY_BEATS
+            default -> TimeBase.BEATS;
         };
     }
 

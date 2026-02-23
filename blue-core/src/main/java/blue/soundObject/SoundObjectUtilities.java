@@ -37,8 +37,8 @@ public class SoundObjectUtilities {
         retVal.setAttribute("type", sObj.getClass().getName());
 
         // Save start time as TimePosition and duration as TimeDuration
-        retVal.addElement(sObj.getStartTime().saveAsXML().setName("startTimePosition"));
-        retVal.addElement(sObj.getSubjectiveDuration().saveAsXML().setName("subjectiveDurationTD"));
+        retVal.addElement(sObj.getStartTime().saveAsXML().setName("startTime"));
+        retVal.addElement(sObj.getSubjectiveDuration().saveAsXML().setName("subjectiveDuration"));
         
         retVal.addElement("name").setText(sObj.getName());
 
@@ -63,30 +63,33 @@ public class SoundObjectUtilities {
     public static void initBasicFromXML(Element data, SoundObject sObj)
             throws Exception {
         
-        // Migration: Try new TimePosition format first, fall back to old double format
-        Element startTimeUnitElement = data.getElement("startTimePosition");
-        Element durationUnitElement = data.getElement("subjectiveDurationUnit");
-        
         // Load start time
-        if (startTimeUnitElement != null) {
-            // New format: TimePosition (element is directly the timePosition)
-            sObj.setStartTime(TimePosition.loadFromXML(startTimeUnitElement));
+        Element startTimeElement = data.getElement("startTime");
+        if (startTimeElement != null && startTimeElement.getAttributeValue("type") != null) {
+            // New format: TimePosition (element has type attribute)
+            sObj.setStartTime(TimePosition.loadFromXML(startTimeElement));
+        } else if (data.getElement("startTimePosition") != null) {
+            // Legacy format: TimePosition with old tag name
+            sObj.setStartTime(TimePosition.loadFromXML(data.getElement("startTimePosition")));
         } else if (data.getElement("startTime") != null) {
             // Old format: double (migrate to BeatTime)
             double startTime = Double.parseDouble(data.getTextString("startTime"));
             sObj.setStartTime(TimePosition.beats(startTime));
         } else {
-            throw new Exception("Missing both startTimePosition and startTime elements");
+            throw new Exception("Missing startTime element");
         }
         
         // Load duration
-        Element durationTDElement = data.getElement("subjectiveDurationTD");
-        if (durationTDElement != null) {
-            // New format: TimeDuration
-            sObj.setSubjectiveDuration(TimeDuration.loadFromXML(durationTDElement));
-        } else if (durationUnitElement != null) {
+        Element durationElement = data.getElement("subjectiveDuration");
+        if (durationElement != null && durationElement.getAttributeValue("type") != null) {
+            // New format: TimeDuration (element has type attribute)
+            sObj.setSubjectiveDuration(TimeDuration.loadFromXML(durationElement));
+        } else if (data.getElement("subjectiveDurationTD") != null) {
+            // Legacy format: TimeDuration with old tag name
+            sObj.setSubjectiveDuration(TimeDuration.loadFromXML(data.getElement("subjectiveDurationTD")));
+        } else if (data.getElement("subjectiveDurationUnit") != null) {
             // Legacy format: TimePosition (migrate to TimeDuration via beats)
-            TimePosition legacyDur = TimePosition.loadFromXML(durationUnitElement);
+            TimePosition legacyDur = TimePosition.loadFromXML(data.getElement("subjectiveDurationUnit"));
             if (legacyDur instanceof TimePosition.BeatTime bt) {
                 sObj.setSubjectiveDuration(TimeDuration.beats(bt.getCsoundBeats()));
             } else {
@@ -98,7 +101,7 @@ public class SoundObjectUtilities {
             double duration = Double.parseDouble(data.getTextString("subjectiveDuration"));
             sObj.setSubjectiveDuration(TimeDuration.beats(duration));
         } else {
-            throw new Exception("Missing subjectiveDurationTD, subjectiveDurationUnit, and subjectiveDuration elements");
+            throw new Exception("Missing subjectiveDuration element");
         }
 
         String name = data.getTextString("name");

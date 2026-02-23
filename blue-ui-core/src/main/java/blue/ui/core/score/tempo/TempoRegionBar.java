@@ -415,7 +415,7 @@ public class TempoRegionBar extends JComponent implements PropertyChangeListener
         TimeContextManager.setContext(context);
         
         try {
-            TimePosition beatsUnit = TimeUtilities.convertTimePosition(timePosition, TimeBase.CSOUND_BEATS, context);
+            TimePosition beatsUnit = TimeUtilities.convertTimePosition(timePosition, TimeBase.BEATS, context);
             if (beatsUnit instanceof TimePosition.BeatTime beatTime) {
                 return beatTime.getCsoundBeats();
             }

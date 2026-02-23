@@ -121,7 +121,7 @@ public abstract class TimeDuration {
         
         @Override
         public TimeBase getTimeBase() {
-            return TimeBase.CSOUND_BEATS;
+            return TimeBase.BEATS;
         }
 
         public double getCsoundBeats() {
@@ -637,7 +637,7 @@ public abstract class TimeDuration {
      */
     public Element saveAsXML() {
         Element element = new Element("timeDuration");
-        element.setAttribute("type", this.getClass().getSimpleName());
+        element.setAttribute("type", getTimeBase().name());
         
         if (this instanceof DurationBeats db) {
             element.addElement("csoundBeats").setText(Double.toString(db.getCsoundBeats()));
@@ -681,37 +681,37 @@ public abstract class TimeDuration {
         }
         
         return switch (type) {
-            case "DurationBeats" -> {
+            case "BEATS", "CSOUND_BEATS", "DurationBeats" -> {
                 double csoundBeats = Double.parseDouble(element.getTextString("csoundBeats"));
                 yield new DurationBeats(csoundBeats);
             }
-            case "DurationBBT" -> {
+            case "BBT", "DurationBBT" -> {
                 long bars = Long.parseLong(element.getTextString("bars"));
                 int beats = Integer.parseInt(element.getTextString("beats"));
                 int ticks = Integer.parseInt(element.getTextString("ticks"));
                 yield new DurationBBT(bars, beats, ticks);
             }
-            case "DurationBBST" -> {
+            case "BBST", "DurationBBST" -> {
                 long bars = Long.parseLong(element.getTextString("bars"));
                 int beats = Integer.parseInt(element.getTextString("beats"));
                 int sixteenth = Integer.parseInt(element.getTextString("sixteenth"));
                 int ticks = Integer.parseInt(element.getTextString("ticks"));
                 yield new DurationBBST(bars, beats, sixteenth, ticks);
             }
-            case "DurationBBF" -> {
+            case "BBF", "DurationBBF" -> {
                 long bars = Long.parseLong(element.getTextString("bars"));
                 int beats = Integer.parseInt(element.getTextString("beats"));
                 int fraction = Integer.parseInt(element.getTextString("fraction"));
                 yield new DurationBBF(bars, beats, fraction);
             }
-            case "DurationTime" -> {
+            case "TIME", "DurationTime" -> {
                 long hours = Long.parseLong(element.getTextString("hours"));
                 long minutes = Long.parseLong(element.getTextString("minutes"));
                 long seconds = Long.parseLong(element.getTextString("seconds"));
                 long milliseconds = Long.parseLong(element.getTextString("milliseconds"));
                 yield new DurationTime(hours, minutes, seconds, milliseconds);
             }
-            case "DurationFrames" -> {
+            case "FRAME", "DurationFrames" -> {
                 long frameCount = Long.parseLong(element.getTextString("frameCount"));
                 yield new DurationFrames(frameCount);
             }

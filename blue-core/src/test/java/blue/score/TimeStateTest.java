@@ -49,8 +49,8 @@ class TimeStateTest {
         timeState.setTimeDisplay(TimeBase.TIME);
         assertEquals(TimeBase.TIME, timeState.getTimeDisplay());
         
-        timeState.setTimeDisplay(TimeBase.CSOUND_BEATS);
-        assertEquals(TimeBase.CSOUND_BEATS, timeState.getTimeDisplay());
+        timeState.setTimeDisplay(TimeBase.BEATS);
+        assertEquals(TimeBase.BEATS, timeState.getTimeDisplay());
         
         timeState.setTimeDisplay(TimeBase.BBT);
         assertEquals(TimeBase.BBT, timeState.getTimeDisplay());
@@ -67,8 +67,8 @@ class TimeStateTest {
 
     @Test
     void testSetSecondaryTimeDisplayValid() {
-        timeState.setSecondaryTimeDisplay(TimeBase.CSOUND_BEATS);
-        assertEquals(TimeBase.CSOUND_BEATS, timeState.getSecondaryTimeDisplay());
+        timeState.setSecondaryTimeDisplay(TimeBase.BEATS);
+        assertEquals(TimeBase.BEATS, timeState.getSecondaryTimeDisplay());
         
         timeState.setSecondaryTimeDisplay(TimeBase.SMPTE);
         assertEquals(TimeBase.SMPTE, timeState.getSecondaryTimeDisplay());
@@ -85,7 +85,7 @@ class TimeStateTest {
 
     @Test
     void testDefaultTimeDisplay() {
-        assertEquals(TimeBase.CSOUND_BEATS, timeState.getTimeDisplay());
+        assertEquals(TimeBase.BEATS, timeState.getTimeDisplay());
     }
 
     @Test
@@ -149,7 +149,7 @@ class TimeStateTest {
         timeState.setTimeDisplay(TimeBase.TIME);
 
         assertTrue(listenerCalled[0]);
-        assertEquals(TimeBase.CSOUND_BEATS, oldValue[0]);
+        assertEquals(TimeBase.BEATS, oldValue[0]);
         assertEquals(TimeBase.TIME, newValue[0]);
     }
 
@@ -271,7 +271,7 @@ class TimeStateTest {
                 "<zoomIterations>0</zoomIterations>" +
                 "<snapEnabled>true</snapEnabled>" +
                 "<snapValue>0.5</snapValue>" +
-                "<timeDisplay>CSOUND_BEATS</timeDisplay>" +
+                "<timeDisplay>BEATS</timeDisplay>" +
                 "<secondaryTimeDisplay>TIME</secondaryTimeDisplay>" +
                 "<secondaryRulerEnabled>false</secondaryRulerEnabled>" +
                 "<smpteFrameRate>24.0</smpteFrameRate>" +

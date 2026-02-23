@@ -232,7 +232,7 @@ class TimeDisplayFormatTest {
 
     @Test
     void testFromTimeBase() {
-        assertEquals(TimeDisplayFormat.BEATS, TimeDisplayFormat.fromTimeBase(TimeBase.CSOUND_BEATS));
+        assertEquals(TimeDisplayFormat.BEATS, TimeDisplayFormat.fromTimeBase(TimeBase.BEATS));
         assertEquals(TimeDisplayFormat.BBT, TimeDisplayFormat.fromTimeBase(TimeBase.BBT));
         assertEquals(TimeDisplayFormat.BBST, TimeDisplayFormat.fromTimeBase(TimeBase.BBST));
         assertEquals(TimeDisplayFormat.BBF, TimeDisplayFormat.fromTimeBase(TimeBase.BBF));
@@ -260,7 +260,7 @@ class TimeDisplayFormatTest {
 
     @Test
     void testGetTimeBase() {
-        assertEquals(TimeBase.CSOUND_BEATS, TimeDisplayFormat.BEATS.getTimeBase());
+        assertEquals(TimeBase.BEATS, TimeDisplayFormat.BEATS.getTimeBase());
         assertEquals(TimeBase.BBT, TimeDisplayFormat.BBT.getTimeBase());
         assertEquals(TimeBase.BBST, TimeDisplayFormat.BBST.getTimeBase());
         assertEquals(TimeBase.BBF, TimeDisplayFormat.BBF.getTimeBase());

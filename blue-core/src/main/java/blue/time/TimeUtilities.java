@@ -89,7 +89,7 @@ public class TimeUtilities {
         }
         
         return switch (timePosition.getTimeBase()) {
-            case CSOUND_BEATS -> ((TimePosition.BeatTime) timePosition).getCsoundBeats();
+            case BEATS -> ((TimePosition.BeatTime) timePosition).getCsoundBeats();
             case BBT -> timePosition.toBeats(context);
             case BBST -> timePosition.toBeats(context);
             case BBF -> timePosition.toBeats(context);
@@ -126,7 +126,7 @@ public class TimeUtilities {
         }
         
         return switch (targetTimeBase) {
-            case CSOUND_BEATS -> TimePosition.beats(beats);
+            case BEATS -> TimePosition.beats(beats);
             case BBT -> context.getMeterMap().beatsToBBT(beats, TimeContext.DEFAULT_PPQ);
             case BBST -> context.getMeterMap().beatsToBBST(beats, TimeContext.DEFAULT_PPQ);
             case BBF -> context.getMeterMap().beatsToBBF(beats);

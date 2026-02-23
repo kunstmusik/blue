@@ -38,7 +38,7 @@ import javax.swing.event.EventListenerList;
  * A unified text field for editing TimePosition values in various formats.
  * Supports parsing and formatting for all TimeBase types:
  * <ul>
- *   <li>CSOUND_BEATS: decimal number (e.g., "4.5", "12.25")</li>
+ *   <li>BEATS: decimal number (e.g., "4.5", "12.25")</li>
  *   <li>BBT: bar.beat.ticks (e.g., "1.1.0", "2.3.240")</li>
  *   <li>BBST: bar.beat.sixteenth.ticks (e.g., "1.1.1.0", "2.3.2.60")</li>
  *   <li>BBF: bar.beat.fraction (e.g., "1.1.0", "2.3.50")</li>
@@ -51,7 +51,7 @@ import javax.swing.event.EventListenerList;
  */
 public class TimeUnitTextField extends JTextField {
 
-    private TimeBase timeBase = TimeBase.CSOUND_BEATS;
+    private TimeBase timeBase = TimeBase.BEATS;
     private TimePosition timePosition;
     private String lastValidText = "";
     private boolean updating = false;
@@ -224,7 +224,7 @@ public class TimeUnitTextField extends JTextField {
 
     private static String getFormatHint(TimeBase timeBase) {
         return switch (timeBase) {
-            case CSOUND_BEATS -> "Format: decimal beats (e.g., 4.5, 12.25)";
+            case BEATS -> "Format: decimal beats (e.g., 4.5, 12.25)";
             case BBT -> "Format: bar.beat.ticks (e.g., 1.1.0, 2.3.240)";
             case BBST -> "Format: bar.beat.16th.ticks (e.g., 1.1.1.0, 2.3.2.60)";
             case BBF -> "Format: bar.beat.fraction (e.g., 1.1.0, 2.3.50)";
@@ -236,7 +236,7 @@ public class TimeUnitTextField extends JTextField {
 
     private static String getDurationFormatHint(TimeBase timeBase) {
         return switch (timeBase) {
-            case CSOUND_BEATS -> "Duration: decimal beats (e.g., 4.0, 0.5)";
+            case BEATS -> "Duration: decimal beats (e.g., 4.0, 0.5)";
             case BBT -> "Duration: bars.beats.ticks (0-based, e.g., 0.0.0, 1.2.240)";
             case BBST -> "Duration: bars.beats.16th.ticks (0-based, e.g., 0.0.0.0, 1.2.1.60)";
             case BBF -> "Duration: bars.beats.fraction (0-based, e.g., 0.0.00, 1.2.50)";
@@ -255,7 +255,7 @@ public class TimeUnitTextField extends JTextField {
     public static String format(TimePosition timePosition, TimeBase timeBase) {
         int ppq = TimeContext.DEFAULT_PPQ;
         return switch (timeBase) {
-            case CSOUND_BEATS -> formatBeats(timePosition);
+            case BEATS -> formatBeats(timePosition);
             case BBT -> formatBBT(timePosition, ppq);
             case BBST -> formatBBST(timePosition, ppq);
             case BBF -> formatBBF(timePosition);
@@ -364,7 +364,7 @@ public class TimeUnitTextField extends JTextField {
         String trimmed = java.util.Objects.requireNonNullElse(text, "").trim();
         
         return switch (timeBase) {
-            case CSOUND_BEATS -> parseBeats(trimmed);
+            case BEATS -> parseBeats(trimmed);
             case BBT -> parseBBT(trimmed);
             case BBST -> parseBBST(trimmed);
             case BBF -> parseBBF(trimmed);
@@ -530,7 +530,7 @@ public class TimeUnitTextField extends JTextField {
      */
     public static String formatDuration(TimePosition timePosition, TimeBase timeBase, TimeContext context) {
         return switch (timeBase) {
-            case CSOUND_BEATS -> formatBeats(timePosition);
+            case BEATS -> formatBeats(timePosition);
             case BBT -> {
                 TimeDuration dur = TimeUnitMath.fromTimePosition(timePosition, TimeBase.BBT, context);
                 if (dur instanceof TimeDuration.DurationBBT d) {
@@ -568,7 +568,7 @@ public class TimeUnitTextField extends JTextField {
         String trimmed = java.util.Objects.requireNonNullElse(text, "").trim();
 
         return switch (timeBase) {
-            case CSOUND_BEATS -> parseBeats(trimmed);
+            case BEATS -> parseBeats(trimmed);
             case BBT -> {
                 if (trimmed.isEmpty()) yield TimePosition.beats(0.0);
                 String[] parts = trimmed.split("\\.");

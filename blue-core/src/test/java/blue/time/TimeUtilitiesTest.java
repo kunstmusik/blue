@@ -89,7 +89,7 @@ class TimeUtilitiesTest {
     
     @Test
     void testBeatsToTimeUnitBeatTime() {
-        TimePosition result = TimeUtilities.beatsToTimePosition(10.5, TimeBase.CSOUND_BEATS, context);
+        TimePosition result = TimeUtilities.beatsToTimePosition(10.5, TimeBase.BEATS, context);
         assertTrue(result instanceof TimePosition.BeatTime);
         assertEquals(10.5, ((TimePosition.BeatTime) result).getCsoundBeats(), 0.001);
     }
@@ -128,7 +128,7 @@ class TimeUtilitiesTest {
     @Test
     void testConvertTimeUnitSameTimeBase() {
         TimePosition.BeatTime original = TimePosition.beats(5.0);
-        TimePosition result = TimeUtilities.convertTimePosition(original, TimeBase.CSOUND_BEATS, context);
+        TimePosition result = TimeUtilities.convertTimePosition(original, TimeBase.BEATS, context);
         assertSame(original, result);
     }
     
@@ -159,7 +159,7 @@ class TimeUtilitiesTest {
     void testRoundTripBeatTimeToBBST() {
         TimePosition.BeatTime original = TimePosition.beats(12.0); // Use whole number to avoid tick rounding
         TimePosition intermediate = TimeUtilities.convertTimePosition(original, TimeBase.BBST, context);
-        TimePosition result = TimeUtilities.convertTimePosition(intermediate, TimeBase.CSOUND_BEATS, context);
+        TimePosition result = TimeUtilities.convertTimePosition(intermediate, TimeBase.BEATS, context);
         assertEquals(original.getCsoundBeats(), ((TimePosition.BeatTime) result).getCsoundBeats(), 0.001);
     }
     
@@ -186,7 +186,7 @@ class TimeUtilitiesTest {
     
     @Test
     void testSecondsToTimePosition() {
-        TimePosition result = TimeUtilities.secondsToTimePosition(10.0, TimeBase.CSOUND_BEATS, context);
+        TimePosition result = TimeUtilities.secondsToTimePosition(10.0, TimeBase.BEATS, context);
         // At 60 BPM: 10 seconds = 10 beats
         assertEquals(10.0, ((TimePosition.BeatTime) result).getCsoundBeats(), 0.001);
     }
@@ -201,7 +201,7 @@ class TimeUtilitiesTest {
     
     @Test
     void testFramesToTimePosition() {
-        TimePosition result = TimeUtilities.framesToTimePosition(88200, TimeBase.CSOUND_BEATS, context);
+        TimePosition result = TimeUtilities.framesToTimePosition(88200, TimeBase.BEATS, context);
         // At 44100 Hz and 60 BPM: 88200 frames = 2 seconds = 2 beats
         assertEquals(2.0, ((TimePosition.BeatTime) result).getCsoundBeats(), 0.001);
     }

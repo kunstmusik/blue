@@ -311,7 +311,7 @@ class TimeUnitMathTest {
     void testConvertDuration_SameTimeBase_ReturnsSame() {
         TimeDuration dur = TimeDuration.beats(4.0);
         
-        TimeDuration result = TimeUnitMath.convertDuration(dur, TimeBase.CSOUND_BEATS, context);
+        TimeDuration result = TimeUnitMath.convertDuration(dur, TimeBase.BEATS, context);
         assertSame(dur, result);
     }
     
@@ -329,7 +329,7 @@ class TimeUnitMathTest {
     
     @Test
     void testBeatsToDuration_NegativeClamped() {
-        TimeDuration result = TimeUnitMath.beatsToDuration(-5.0, TimeBase.CSOUND_BEATS, context);
+        TimeDuration result = TimeUnitMath.beatsToDuration(-5.0, TimeBase.BEATS, context);
         assertEquals(0.0, result.toBeats(context), 0.001);
     }
     

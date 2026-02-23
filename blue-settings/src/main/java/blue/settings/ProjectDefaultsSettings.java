@@ -71,7 +71,7 @@ public class ProjectDefaultsSettings {
             instance.defaultSmpteFrameRate = prefs.getDouble(PREFIX + DEFAULT_SMPTE_FRAME_RATE, 24.0);
             
             instance.defaultPrimaryTimeBase = parseEnum(TimeBase.class,
-                    prefs.get(PREFIX + DEFAULT_PRIMARY_TIMEBASE, null), TimeBase.CSOUND_BEATS);
+                    prefs.get(PREFIX + DEFAULT_PRIMARY_TIMEBASE, null), TimeBase.BEATS);
             instance.defaultSecondaryTimeBase = parseEnum(TimeBase.class,
                     prefs.get(PREFIX + DEFAULT_SECONDARY_TIMEBASE, null), TimeBase.TIME);
             instance.defaultSecondaryRulerEnabled = prefs.getBoolean(
