@@ -151,15 +151,16 @@ public interface SoundObject extends ScoreObject {
     void setTimeBehavior(TimeBehavior timeBehavior);
 
     /**
-     * Gets the point at which, in the score, a repeat of this score should
+     * Gets the duration at which, in the score, a repeat of this score should
      * occur if the time behavior for this sound object is repeatable.
+     * Returns null if no repeat point is set.
      */
-    double getRepeatPoint();
+    TimeDuration getRepeatPoint();
 
     /**
      * See getRepeatPoint
      */
-    void setRepeatPoint(double repeatPoint);
+    void setRepeatPoint(TimeDuration repeatPoint);
 
     /**
      * Returns and XML Element representation of this SoundObject

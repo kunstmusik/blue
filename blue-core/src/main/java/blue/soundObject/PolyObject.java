@@ -73,7 +73,7 @@ public class PolyObject extends ArrayList<SoundLayer> implements SoundObject,
     transient Vector<ScoreObjectListener> soundObjectListeners = null;
     private NoteProcessorChain npc = new NoteProcessorChain();
     private TimeBehavior timeBehavior;
-    double repeatPoint = -1.0f;
+    TimeDuration repeatPoint = null;
     private int defaultHeightIndex = 0;
     private TimeState timeState = new TimeState();
     transient int cloneSourceHashCode = 0;
@@ -364,7 +364,8 @@ public class PolyObject extends ArrayList<SoundLayer> implements SoundObject,
         }
 
         double duration = this.getSubjectiveDuration().toBeats(context);
-        ScoreUtilities.applyTimeBehavior(nl, getTimeBehavior(), duration, this.getRepeatPoint());
+        double rpBeats = this.getRepeatPoint() != null ? this.getRepeatPoint().toBeats(context) : -1.0;
+        ScoreUtilities.applyTimeBehavior(nl, getTimeBehavior(), duration, rpBeats);
 
         ScoreUtilities.setScoreStart(nl, start);
 
@@ -417,12 +418,12 @@ public class PolyObject extends ArrayList<SoundLayer> implements SoundObject,
     }
 
     @Override
-    public double getRepeatPoint() {
+    public TimeDuration getRepeatPoint() {
         return this.repeatPoint;
     }
 
     @Override
-    public void setRepeatPoint(double repeatPoint) {
+    public void setRepeatPoint(TimeDuration repeatPoint) {
         this.repeatPoint = repeatPoint;
 
         ScoreObjectEvent event = new ScoreObjectEvent(this,

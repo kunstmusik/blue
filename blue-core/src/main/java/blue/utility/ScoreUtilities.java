@@ -472,15 +472,15 @@ public class ScoreUtilities {
     }
 
     public static void applyTimeBehavior(NoteList notes, TimeBehavior timeBehavior,
-            double subjectiveDuration, double repeatPoint) {
+            double subjectiveDuration, double repeatPointBeats) {
 
-        applyTimeBehavior(notes, timeBehavior, subjectiveDuration, repeatPoint,
+        applyTimeBehavior(notes, timeBehavior, subjectiveDuration, repeatPointBeats,
                 -1.0f);
 
     }
 
     public static void applyTimeBehavior(NoteList notes, TimeBehavior timeBehavior,
-            double subjectiveDuration, double repeatPoint, double durationForScale) {
+            double subjectiveDuration, double repeatPointBeats, double durationForScale) {
 
         if (notes.size() == 0) {
             return;
@@ -510,8 +510,8 @@ public class ScoreUtilities {
 
             double repeatDur = objDur;
 
-            if (objDur > 0 && repeatPoint > 0.0f) {
-                repeatDur = repeatPoint;
+            if (objDur > 0 && repeatPointBeats > 0.0f) {
+                repeatDur = repeatPointBeats;
             }
 
             NoteList tempNL = null;
@@ -556,8 +556,8 @@ public class ScoreUtilities {
 
             double repeatDur = objDur;
 
-            if (objDur > 0 && repeatPoint > 0.0f) {
-                repeatDur = repeatPoint;
+            if (objDur > 0 && repeatPointBeats > 0.0f) {
+                repeatDur = repeatPointBeats;
             }
 
             double startVal = 0.0f;

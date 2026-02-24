@@ -201,12 +201,12 @@ public class AudioFile extends AbstractSoundObject {
     }
 
     @Override
-    public double getRepeatPoint() {
-        return -1.0f;
+    public TimeDuration getRepeatPoint() {
+        return null;
     }
 
     @Override
-    public void setRepeatPoint(double repeatPoint) {
+    public void setRepeatPoint(TimeDuration repeatPoint) {
     }
 
     // METHODS SPECIFIC FOR THIS SOUNDOBJECT

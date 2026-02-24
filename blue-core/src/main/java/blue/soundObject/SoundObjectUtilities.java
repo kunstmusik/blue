@@ -49,8 +49,13 @@ public class SoundObjectUtilities {
         if (sObj.getTimeBehavior() != TimeBehavior.NOT_SUPPORTED) {
             retVal.addElement("timeBehavior").setText(
                     Integer.toString(sObj.getTimeBehavior().getType()));
-            retVal.addElement("repeatPoint").setText(
-                    Double.toString(sObj.getRepeatPoint()));
+            TimeDuration rp = sObj.getRepeatPoint();
+            if (rp != null) {
+                retVal.addElement(rp.saveAsXML().setName("repeatPoint"));
+            } else {
+                retVal.addElement("repeatPoint").setText(
+                        Double.toString(-1.0));
+            }
         }
 
         if (sObj.getNoteProcessorChain() != null) {
@@ -125,8 +130,19 @@ public class SoundObjectUtilities {
         }
 
         if (data.getElement("repeatPoint") != null) {
-            sObj.setRepeatPoint(Double.parseDouble(data
-                    .getTextString("repeatPoint")));
+            Element rpElement = data.getElement("repeatPoint");
+            if (rpElement.getAttributeValue("type") != null) {
+                // New format: TimeDuration XML
+                sObj.setRepeatPoint(TimeDuration.loadFromXML(rpElement));
+            } else {
+                // Legacy format: plain double text
+                double rpVal = Double.parseDouble(rpElement.getTextString());
+                if (rpVal > 0.0) {
+                    sObj.setRepeatPoint(TimeDuration.beats(rpVal));
+                } else {
+                    sObj.setRepeatPoint(null);
+                }
+            }
         }
 
         if (data.getElement("noteProcessorChain") != null) {

@@ -10,6 +10,10 @@ import blue.projects.BlueProject;
 import blue.projects.BlueProjectManager;
 import blue.services.render.RenderTimeManager;
 import blue.ui.core.render.RealtimeRenderManager;
+import blue.time.TimeBase;
+import blue.time.TimeContext;
+import blue.time.TimeContextManager;
+import blue.time.TimeUtilities;
 import blue.ui.core.score.ScoreController;
 import blue.ui.core.score.ScorePath;
 import java.awt.event.ActionEvent;
@@ -40,7 +44,10 @@ public final class AddMarkerAction implements ActionListener {
             double markerTime = RealtimeRenderManager.getInstance().isRendering()
                     ? timeManager.getRenderTime() + timeManager.getRenderStartTime()
                     : data.getRenderStartTime();
-            data.getMarkersList().addMarker(markerTime);
+            TimeBase timeBase = data.getScore().getTimeState().getTimeDisplay();
+            TimeContext ctx = TimeContextManager.getContext();
+            data.getMarkersList().addMarker(
+                    TimeUtilities.beatsToTimePosition(markerTime, timeBase, ctx));
         }
 
     }

@@ -22,14 +22,32 @@ package blue.ui.core.score;
 
 import blue.BlueData;
 import blue.Marker;
+import blue.MarkersList;
 import blue.projects.BlueProject;
 import blue.projects.BlueProjectManager;
+import blue.time.TimeBase;
+import blue.time.TimeContext;
+import blue.time.TimeContextManager;
+import blue.time.TimePosition;
+import blue.time.TimeUtilities;
+import blue.ui.core.time.TimeUnitTextField;
 import blue.ui.utilities.UiUtilities;
 import java.awt.Component;
 import java.awt.event.ActionEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
+import javax.swing.AbstractCellEditor;
 import javax.swing.AbstractAction;
+import javax.swing.DefaultCellEditor;
+import javax.swing.DefaultComboBoxModel;
+import javax.swing.JComboBox;
+import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
+import javax.swing.JTable;
+import javax.swing.JTextField;
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.TableCellEditor;
 import org.netbeans.api.settings.ConvertAsProperties;
 import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
@@ -95,7 +113,33 @@ public final class MarkersTopComponent extends TopComponent {
         this.data = currentData;
 
         markersTable.setModel(currentData.getMarkersList());
-        markersTable.getColumnModel().getColumn(0).setPreferredWidth(100);
+        
+        // Column 0: TimeBase - combo box editor
+        JComboBox<TimeBase> timeBaseCombo = new JComboBox<>(
+                new DefaultComboBoxModel<>(TimeBase.values()));
+        markersTable.getColumnModel().getColumn(0).setCellEditor(
+                new DefaultCellEditor(timeBaseCombo));
+        
+        // Column 1: Time - custom editor and renderer
+        markersTable.getColumnModel().getColumn(1).setCellEditor(new MarkerTimeCellEditor());
+        markersTable.getColumnModel().getColumn(1).setCellRenderer(new MarkerTimeRenderer());
+        
+        markersTable.getColumnModel().getColumn(0).setPreferredWidth(70);
+        markersTable.getColumnModel().getColumn(1).setPreferredWidth(100);
+        markersTable.getColumnModel().getColumn(2).setPreferredWidth(120);
+        
+        // Right-click popup on TimeBase column header
+        markersTable.getTableHeader().addMouseListener(new MouseAdapter() {
+            @Override
+            public void mousePressed(MouseEvent e) {
+                if (UiUtilities.isRightMouseButton(e)) {
+                    int col = markersTable.columnAtPoint(e.getPoint());
+                    if (col == 0) {
+                        showTimeBaseHeaderPopup(e);
+                    }
+                }
+            }
+        });
     }
 
     /** This method is called from within the constructor to
@@ -201,7 +245,8 @@ public final class MarkersTopComponent extends TopComponent {
             public void actionPerformed(ActionEvent e) {
                 int index = markersTable.getSelectedRow();
                 Marker m = data.getMarkersList().getMarker(index);
-                data.setRenderStartTime(m.getTime());
+                TimeContext ctx = TimeContextManager.getContext();
+                data.setRenderStartTime(m.getTime().toBeats(ctx));
             }
         }
 
@@ -218,5 +263,68 @@ public final class MarkersTopComponent extends TopComponent {
             }
         }
 
+    }
+
+    private void showTimeBaseHeaderPopup(MouseEvent e) {
+        if (data == null) return;
+        JPopupMenu headerPopup = new JPopupMenu();
+        for (TimeBase tb : TimeBase.values()) {
+            JMenuItem item = new JMenuItem("Set All to " + tb.name());
+            item.addActionListener(evt -> {
+                MarkersList markers = data.getMarkersList();
+                TimeContext ctx = TimeContextManager.hasContext()
+                        ? TimeContextManager.getContext()
+                        : new TimeContext();
+                for (int i = 0; i < markers.size(); i++) {
+                    Marker m = markers.getMarker(i);
+                    if (m.getTime().getTimeBase() != tb) {
+                        m.setTime(TimeUtilities.convertTimePosition(
+                                m.getTime(), tb, ctx));
+                    }
+                }
+            });
+            headerPopup.add(item);
+        }
+        headerPopup.show(e.getComponent(), e.getX(), e.getY());
+    }
+
+    private static final class MarkerTimeRenderer extends DefaultTableCellRenderer {
+
+        @Override
+        public Component getTableCellRendererComponent(JTable table, Object value,
+                boolean isSelected, boolean hasFocus, int row, int column) {
+            super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+            if (value instanceof TimePosition tp) {
+                setText(TimeUnitTextField.format(tp, tp.getTimeBase()));
+            }
+            return this;
+        }
+    }
+
+    private final class MarkerTimeCellEditor extends AbstractCellEditor implements TableCellEditor {
+
+        private final JTextField textField = new JTextField();
+        private TimePosition previousValue = TimePosition.beats(0.0);
+        private TimeBase timeBase = TimeBase.BEATS;
+
+        @Override
+        public Object getCellEditorValue() {
+            try {
+                return TimeUnitTextField.parse(textField.getText(), timeBase);
+            } catch (RuntimeException ex) {
+                return previousValue;
+            }
+        }
+
+        @Override
+        public Component getTableCellEditorComponent(JTable table, Object value,
+                boolean isSelected, int row, int column) {
+            int modelRow = table.convertRowIndexToModel(row);
+            Marker marker = data.getMarkersList().getMarker(modelRow);
+            previousValue = marker.getTime();
+            timeBase = previousValue.getTimeBase();
+            textField.setText(TimeUnitTextField.format(previousValue, timeBase));
+            return textField;
+        }
     }
 }

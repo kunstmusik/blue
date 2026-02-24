@@ -176,7 +176,7 @@ public final class SoundObjectPropertiesTopComponent extends TopComponent implem
                 if (timeBehavior == TimeBehavior.NOT_SUPPORTED) {
                     timeBehaviorBox.setEnabled(false);
                     useRepeatPoint.setEnabled(false);
-                    repeatePointText.setEnabled(false);
+                    repeatPointPanel.setEnabled(false);
                 } else {
                     timeBehaviorBox.setEnabled(true);
 
@@ -190,20 +190,20 @@ public final class SoundObjectPropertiesTopComponent extends TopComponent implem
 
                         useRepeatPoint.setEnabled(true);
 
-                        double repeatPoint = soundObj.getRepeatPoint();
+                        TimeDuration repeatPoint = soundObj.getRepeatPoint();
 
-                        if (repeatPoint <= 0.0f) {
+                        if (repeatPoint == null) {
                             useRepeatPoint.setSelected(false);
-                            repeatePointText.setEnabled(false);
+                            repeatPointPanel.setEnabled(false);
                         } else {
                             useRepeatPoint.setSelected(true);
-                            repeatePointText.setEnabled(true);
-                            repeatePointText.setText(Double.toString(repeatPoint));
+                            repeatPointPanel.setEnabled(true);
+                            repeatPointPanel.setTimeDuration(repeatPoint);
                         }
 
                     } else {
                         useRepeatPoint.setEnabled(false);
-                        repeatePointText.setEnabled(false);
+                        repeatPointPanel.setEnabled(false);
                     }
                 }
             }
@@ -222,8 +222,10 @@ public final class SoundObjectPropertiesTopComponent extends TopComponent implem
             durationPanel.setTimeDuration(sObj.getSubjectiveDuration());
 
             if (sObj instanceof SoundObject soundObject) {
-                double repeatPoint = soundObject.getRepeatPoint();
-                repeatePointText.setText(Double.toString(repeatPoint));
+                TimeDuration repeatPoint = soundObject.getRepeatPoint();
+                if (repeatPoint != null) {
+                    repeatPointPanel.setTimeDuration(repeatPoint);
+                }
             }
 
             updateEndTime();
@@ -292,21 +294,21 @@ public final class SoundObjectPropertiesTopComponent extends TopComponent implem
 
         if (tb == TimeBehavior.REPEAT || tb == TimeBehavior.REPEAT_CLASSIC) {
 
-            boolean repeatPointUsed = soundObj.getRepeatPoint() > 0.0f;
+            boolean repeatPointUsed = soundObj.getRepeatPoint() != null;
 
             useRepeatPoint.setSelected(repeatPointUsed);
             useRepeatPoint.setEnabled(true);
 
-            repeatePointText.setEnabled(repeatPointUsed);
+            repeatPointPanel.setEnabled(repeatPointUsed);
 
         } else {
             useRepeatPoint.setSelected(false);
             useRepeatPoint.setEnabled(false);
 
-            repeatePointText.setEnabled(false);
+            repeatPointPanel.setEnabled(false);
 
             if (!isUpdating) {
-                soundObj.setRepeatPoint(-1.0f);
+                soundObj.setRepeatPoint(null);
             }
 
         }
@@ -318,18 +320,16 @@ public final class SoundObjectPropertiesTopComponent extends TopComponent implem
         }
 
         SoundObject soundObj = (SoundObject) sObj;
-        repeatePointText.setEnabled(useRepeatPoint.isSelected());
+        repeatPointPanel.setEnabled(useRepeatPoint.isSelected());
 
         if (!isUpdating) {
-            double dur = -1.0f;
-
             if (useRepeatPoint.isSelected()) {
-                TimeContext context = TimeContextManager.getContext();
-                dur = soundObj.getSubjectiveDuration().toBeats(context);
+                TimeDuration dur = soundObj.getSubjectiveDuration();
+                soundObj.setRepeatPoint(dur);
+                repeatPointPanel.setTimeDuration(dur);
+            } else {
+                soundObj.setRepeatPoint(null);
             }
-
-            soundObj.setRepeatPoint(dur);
-            repeatePointText.setText(Double.toString(dur));
         }
 
     }
@@ -340,31 +340,25 @@ public final class SoundObjectPropertiesTopComponent extends TopComponent implem
         }
 
         SoundObject soundObj = (SoundObject) sObj;
-        double initialRepeatPoint = soundObj.getRepeatPoint();
-        double newValue;
+        TimeDuration newValue = repeatPointPanel.getTimeDuration();
 
-        try {
-            newValue = Double.parseDouble(repeatePointText.getText());
-        } catch (NumberFormatException nfe) {
-            repeatePointText.setText(Double.toString(initialRepeatPoint));
+        if (newValue == null) {
+            // Revert to current value
+            TimeDuration current = soundObj.getRepeatPoint();
+            if (current != null) {
+                repeatPointPanel.setTimeDuration(current);
+            }
             return;
         }
 
-        if (newValue <= 0.0f) {
-            repeatePointText.setText(Double.toString(initialRepeatPoint));
-            return;
-        } else {
-            soundObj.setRepeatPoint(newValue);
-            repeatePointText.setText(Double.toString(newValue));
-        }
-
+        soundObj.setRepeatPoint(newValue);
     }
 
     // utility methods
     private void setFieldsVisible(boolean isSoundObject) {
         timeBehaviorBox.setVisible(isSoundObject);
         useRepeatPoint.setVisible(isSoundObject);
-        repeatePointText.setVisible(isSoundObject);
+        repeatPointPanel.setVisible(isSoundObject);
         npcEditorPanel.setVisible(isSoundObject);
         timeBehaviorLabel.setVisible(isSoundObject);
         repeatPointLabel.setVisible(isSoundObject);
@@ -376,7 +370,7 @@ public final class SoundObjectPropertiesTopComponent extends TopComponent implem
         startTimePanel.setEnabled(true);
         durationPanel.setEnabled(true);
         timeBehaviorBox.setEnabled(true);
-        repeatePointText.setEnabled(true);
+        repeatPointPanel.setEnabled(true);
         colorPanel.setVisible(true);
     }
 
@@ -388,8 +382,7 @@ public final class SoundObjectPropertiesTopComponent extends TopComponent implem
         endTimeText.setText("");
         timeBehaviorBox.setEnabled(false);
         useRepeatPoint.setEnabled(false);
-        repeatePointText.setText("");
-        repeatePointText.setEnabled(false);
+        repeatPointPanel.setEnabled(false);
         colorPanel.setVisible(false);
     }
 
@@ -445,7 +438,7 @@ public final class SoundObjectPropertiesTopComponent extends TopComponent implem
         jLabel1 = new javax.swing.JLabel();
         jLabel3 = new javax.swing.JLabel();
         nameText = new javax.swing.JTextField();
-        repeatePointText = new javax.swing.JTextField();
+        repeatPointPanel = new blue.ui.core.time.SoundObjectTimePanel();
         timeBehaviorBox = new javax.swing.JComboBox();
         useRepeatLabel = new javax.swing.JLabel();
         timeBehaviorLabel = new javax.swing.JLabel();
@@ -488,12 +481,12 @@ public final class SoundObjectPropertiesTopComponent extends TopComponent implem
             }
         });
 
-        repeatePointText.addFocusListener(new java.awt.event.FocusAdapter() {
-            public void focusLost(java.awt.event.FocusEvent evt) {
-                repeatePointTextFocusLost(evt);
+        repeatPointPanel.setDurationMode(true);
+        repeatPointPanel.addPropertyChangeListener("timePosition", evt -> {
+            if (!isUpdating && sObj != null) {
+                updateRepeatPoint();
             }
         });
-        repeatePointText.addActionListener(evt -> repeatePointTextActionPerformed(evt));
 
         timeBehaviorBox.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Scale", "Repeat", "Repeat (Classic)", "None" }));
         timeBehaviorBox.addActionListener(evt -> timeBehaviorBoxActionPerformed(evt));
@@ -532,7 +525,7 @@ public final class SoundObjectPropertiesTopComponent extends TopComponent implem
                             .addComponent(colorPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addComponent(timeBehaviorBox, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addComponent(useRepeatPoint)
-                            .addComponent(repeatePointText)))
+                            .addComponent(repeatPointPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)))
                     .addComponent(npcEditorPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
@@ -568,9 +561,9 @@ public final class SoundObjectPropertiesTopComponent extends TopComponent implem
                     .addComponent(useRepeatLabel)
                     .addComponent(useRepeatPoint))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(repeatPointLabel)
-                    .addComponent(repeatePointText, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(repeatPointPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(7, 7, 7)
                 .addComponent(npcEditorPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 266, Short.MAX_VALUE)
                 .addContainerGap())
@@ -594,17 +587,6 @@ public final class SoundObjectPropertiesTopComponent extends TopComponent implem
         updateTimeBehavior();
     }
 
-    private void repeatePointTextActionPerformed(java.awt.event.ActionEvent evt) {
-        if (repeatePointText.getText() != null && sObj != null) {
-            updateRepeatPoint();
-        }
-    }
-
-    private void repeatePointTextFocusLost(java.awt.event.FocusEvent evt) {
-        if (repeatePointText.getText() != null && sObj != null) {
-            updateRepeatPoint();
-        }
-    }
 
     private void nameTextFocusLost(java.awt.event.FocusEvent evt) {
         if (nameText.getText() != null && sObj != null) {
@@ -641,7 +623,7 @@ public final class SoundObjectPropertiesTopComponent extends TopComponent implem
     private javax.swing.JTextField nameText;
     private javax.swing.JPanel npcEditorPanel;
     private javax.swing.JLabel repeatPointLabel;
-    private javax.swing.JTextField repeatePointText;
+    private blue.ui.core.time.SoundObjectTimePanel repeatPointPanel;
     private blue.ui.core.time.SoundObjectTimePanel startTimePanel;
     private javax.swing.JComboBox timeBehaviorBox;
     private javax.swing.JLabel timeBehaviorLabel;

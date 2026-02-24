@@ -47,7 +47,7 @@ public class GenericScore extends AbstractSoundObject implements
 
     private TimeBehavior timeBehavior;
 
-    double repeatPoint = -1.0f;
+    TimeDuration repeatPoint = null;
 
     private String score;
 
@@ -112,7 +112,8 @@ public class GenericScore extends AbstractSoundObject implements
         double duration = this.getSubjectiveDuration().toBeats(context);
         double startTime = this.getStartTime().toBeats(context);
         
-        ScoreUtilities.applyTimeBehavior(nl, this.getTimeBehavior(), duration, this.getRepeatPoint());
+        double rpBeats = this.getRepeatPoint() != null ? this.getRepeatPoint().toBeats(context) : -1.0;
+        ScoreUtilities.applyTimeBehavior(nl, this.getTimeBehavior(), duration, rpBeats);
         ScoreUtilities.setScoreStart(nl, startTime);
 
         return nl;
@@ -151,12 +152,12 @@ public class GenericScore extends AbstractSoundObject implements
     }
 
     @Override
-    public double getRepeatPoint() {
+    public TimeDuration getRepeatPoint() {
         return this.repeatPoint;
     }
 
     @Override
-    public void setRepeatPoint(double repeatPoint) {
+    public void setRepeatPoint(TimeDuration repeatPoint) {
         this.repeatPoint = repeatPoint;
 
         ScoreObjectEvent event = new ScoreObjectEvent(this,

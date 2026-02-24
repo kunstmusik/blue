@@ -51,7 +51,7 @@ public class PatternObject extends AbstractSoundObject implements TableModel,
 
     private TimeBehavior timeBehavior;
 
-    double repeatPoint = -1.0f;
+    TimeDuration repeatPoint = null;
 
     private int beats = 4;
 
@@ -208,8 +208,9 @@ public class PatternObject extends AbstractSoundObject implements TableModel,
         double duration = this.getSubjectiveDuration().toBeats(context);
         double startTime = getStartTime().toBeats(context);
         
+        double rpBeats = this.getRepeatPoint() != null ? this.getRepeatPoint().toBeats(context) : -1.0;
         ScoreUtilities.applyTimeBehavior(tempNoteList, this.getTimeBehavior(),
-                duration, this.getRepeatPoint(), beats);
+                duration, rpBeats, beats);
 
         ScoreUtilities.setScoreStart(tempNoteList, startTime);
 
@@ -237,12 +238,12 @@ public class PatternObject extends AbstractSoundObject implements TableModel,
     }
 
     @Override
-    public double getRepeatPoint() {
+    public TimeDuration getRepeatPoint() {
         return this.repeatPoint;
     }
 
     @Override
-    public void setRepeatPoint(double repeatPoint) {
+    public void setRepeatPoint(TimeDuration repeatPoint) {
         this.repeatPoint = repeatPoint;
 
         ScoreObjectEvent event = new ScoreObjectEvent(this,

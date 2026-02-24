@@ -22,6 +22,8 @@ package blue.ui.core.score.object.actions;
 import blue.Marker;
 import blue.MarkersList;
 import blue.projects.BlueProjectManager;
+import blue.time.TimeContext;
+import blue.time.TimeContextManager;
 import blue.ui.core.score.ScoreTopComponent;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -52,6 +54,7 @@ public final class NavigateToPreviousMarkerAction implements ActionListener {
         var data = BlueProjectManager.getInstance().getCurrentBlueData();
         double startTime = data.getRenderStartTime();
         double newStartTime = 0.0;
+        TimeContext context = TimeContextManager.getContext();
 
         MarkersList markers = data.getMarkersList();
 
@@ -60,14 +63,14 @@ public final class NavigateToPreviousMarkerAction implements ActionListener {
         for (int i = markers.size() - 1; i >= 0; i--) {
             Marker a = markers.getMarker(i);
 
-            if (a.getTime() < startTime) {
+            if (a.getTime().toBeats(context) < startTime) {
                 selected = a;
                 break;
             }
         }
 
         if (selected != null) {
-            newStartTime = selected.getTime();
+            newStartTime = selected.getTime().toBeats(context);
         }
 
         data.setRenderStartTime(newStartTime);

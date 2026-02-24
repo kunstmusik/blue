@@ -25,6 +25,7 @@ import blue.MarkersList;
 import blue.score.TimeState;
 import blue.time.TimeContext;
 import blue.time.TimeContextManager;
+import blue.time.TimeUtilities;
 import blue.ui.utilities.UiUtilities;
 import java.awt.BasicStroke;
 import java.awt.Color;
@@ -100,7 +101,9 @@ public class MarkersBar extends JPanel implements PropertyChangeListener, TableM
 
                 if (SwingUtilities.isLeftMouseButton(e)) {
                     if (e.isShiftDown() && rootTimeline) {
-                        dragMarker = data.getMarkersList().addMarker(time);
+                        TimeContext ctx = TimeContextManager.getContext();
+                        dragMarker = data.getMarkersList().addMarker(
+                                TimeUtilities.beatsToTimePosition(time, timeState.getTimeDisplay(), ctx));
                     } else {
                         data.setRenderStartTime(time);
                     }
@@ -136,7 +139,8 @@ public class MarkersBar extends JPanel implements PropertyChangeListener, TableM
 
                 if (SwingUtilities.isLeftMouseButton(e)) {
                     if (dragMarker != null) {
-                        dragMarker.setTime(time);
+                        TimeContext ctx = TimeContextManager.getContext();
+                        dragMarker.setTime(TimeUtilities.beatsToTimePosition(time, timeState.getTimeDisplay(), ctx));
                         checkScroll(e.getPoint());
                     } else {
                         data.setRenderStartTime(time);
@@ -211,7 +215,8 @@ public class MarkersBar extends JPanel implements PropertyChangeListener, TableM
     private void addPlayMarker(Marker m) {
         PlayMarker pm = new PlayMarker(m);
 
-        int x = (int) (m.getTime() * timeState.getPixelSecond());
+        TimeContext ctx = TimeContextManager.getContext();
+        int x = (int) (m.getTime().toBeats(ctx) * timeState.getPixelSecond());
 
         pm.setLocation(x, 0);
 
@@ -248,7 +253,8 @@ public class MarkersBar extends JPanel implements PropertyChangeListener, TableM
 
                     for (var c : getComponents()) {
                         if (c instanceof PlayMarker pMarker) {
-                            var x = pMarker.marker.getTime() * timeState.getPixelSecond();
+                            TimeContext ctx = TimeContextManager.getContext();
+                            var x = pMarker.marker.getTime().toBeats(ctx) * timeState.getPixelSecond();
                             pMarker.setLocation((int) x, 0);
                         }
                     }
@@ -399,7 +405,8 @@ public class MarkersBar extends JPanel implements PropertyChangeListener, TableM
 
                     time = Math.max(0.0, time);
 
-                    marker.setTime(time);
+                    marker.setTime(TimeUtilities.beatsToTimePosition(
+                            time, timeState.getTimeDisplay(), TimeContextManager.getContext()));
                     checkScroll(p);
                     repaint();
                 }
@@ -416,7 +423,7 @@ public class MarkersBar extends JPanel implements PropertyChangeListener, TableM
         public String getToolTipText() {
             TimeContext ctx = TimeContextManager.getContext();
             var format = TimeDisplayFormat.fromTimeBase(timeState.getTimeDisplay());
-            return marker.getName() + " [" + format.format(marker.getTime(), ctx) + "]";
+            return marker.getName() + " [" + format.format(marker.getTime().toBeats(ctx), ctx) + "]";
         }
 
         @Override
@@ -442,7 +449,8 @@ public class MarkersBar extends JPanel implements PropertyChangeListener, TableM
             if (evt.getSource() == marker) {
                 switch (evt.getPropertyName()) {
                     case "time":
-                        double time = ((Double) evt.getNewValue()).doubleValue();
+                        TimeContext ctx = TimeContextManager.getContext();
+                        double time = marker.getTime().toBeats(ctx);
                         int x = (int) (timeState.getPixelSecond() * time);
                         this.setLocation(x, 0);
                         repaint();

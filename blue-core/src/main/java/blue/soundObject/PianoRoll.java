@@ -44,7 +44,7 @@ public class PianoRoll extends AbstractSoundObject implements ListChangeListener
 
     private TimeBehavior timeBehavior;
 
-    double repeatPoint = 4.0;
+    TimeDuration repeatPoint = TimeDuration.beats(4.0);
 
     private NoteProcessorChain npc = new NoteProcessorChain();
 
@@ -303,7 +303,8 @@ public class PianoRoll extends AbstractSoundObject implements ListChangeListener
         double duration = this.getSubjectiveDuration().toBeats(context);
         double startTime = getStartTime().toBeats(context);
         
-        ScoreUtilities.applyTimeBehavior(nl, this.getTimeBehavior(), duration, this.getRepeatPoint());
+        double rpBeats = this.getRepeatPoint() != null ? this.getRepeatPoint().toBeats(context) : -1.0;
+        ScoreUtilities.applyTimeBehavior(nl, this.getTimeBehavior(), duration, rpBeats);
         ScoreUtilities.setScoreStart(nl, startTime);
 
         return nl;
@@ -323,12 +324,12 @@ public class PianoRoll extends AbstractSoundObject implements ListChangeListener
     }
 
     @Override
-    public double getRepeatPoint() {
+    public TimeDuration getRepeatPoint() {
         return this.repeatPoint;
     }
 
     @Override
-    public void setRepeatPoint(double repeatPoint) {
+    public void setRepeatPoint(TimeDuration repeatPoint) {
         this.repeatPoint = repeatPoint;
 
         ScoreObjectEvent event = new ScoreObjectEvent(this,

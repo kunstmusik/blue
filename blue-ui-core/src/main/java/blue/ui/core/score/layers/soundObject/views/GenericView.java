@@ -96,13 +96,14 @@ public class GenericView extends SoundObjectView {
 //            g.drawRect(1, 3, w - 3, h - 6);
 //        }
         // paint repeat
-        double repeatPoint = sObj.getRepeatPoint();
+        var rpDuration = sObj.getRepeatPoint();
         var tb = sObj.getTimeBehavior();
 
         if ((tb == TimeBehavior.REPEAT_CLASSIC || tb == TimeBehavior.REPEAT)
-                && repeatPoint > 0.0f) {
+                && rpDuration != null) {
 
             TimeContext context = TimeContextManager.getContext();
+            double repeatPoint = rpDuration.toBeats(context);
             double lineTime = repeatPoint;
             double dur = sObj.getSubjectiveDuration().toBeats(context);
 

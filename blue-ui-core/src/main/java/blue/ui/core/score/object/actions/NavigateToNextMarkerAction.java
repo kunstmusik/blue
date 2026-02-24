@@ -58,6 +58,7 @@ public final class NavigateToNextMarkerAction implements ActionListener {
 
         final var data = BlueProjectManager.getInstance().getCurrentBlueData();
         final double currentStartTime = data.getRenderStartTime();
+        TimeContext context = TimeContextManager.getContext();
 
         MarkersList markers = data.getMarkersList();
 
@@ -67,7 +68,7 @@ public final class NavigateToNextMarkerAction implements ActionListener {
             for (int i = 0; i < markers.size(); i++) {
                 Marker a = markers.getMarker(i);
 
-                if (a.getTime() > currentStartTime) {
+                if (a.getTime().toBeats(context) > currentStartTime) {
                     selected = a;
                     break;
                 }
@@ -76,7 +77,7 @@ public final class NavigateToNextMarkerAction implements ActionListener {
 
         final double newStartTime = (selected == null)
                 ? getEndTimeOfScore(data.getScore())
-                : selected.getTime();
+                : selected.getTime().toBeats(context);
 
         if (newStartTime > currentStartTime) {
 

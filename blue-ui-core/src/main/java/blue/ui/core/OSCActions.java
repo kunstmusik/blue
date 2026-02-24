@@ -99,7 +99,7 @@ public class OSCActions {
                         for (int i = 0; i < markers.size(); i++) {
                             Marker a = markers.getMarker(i);
 
-                            if (a.getTime() > currentStartTime) {
+                            if (a.getTime().toBeats(context) > currentStartTime) {
                                 selected = a;
                                 break;
                             }
@@ -108,7 +108,7 @@ public class OSCActions {
 
                     final double newStartTime = (selected == null)
                             ? getEndTimeOfScore(data.getScore(), context)
-                            : selected.getTime();
+                            : selected.getTime().toBeats(context);
 
                     if (newStartTime > currentStartTime) {
                         data.setRenderStartTime(newStartTime);
@@ -136,17 +136,19 @@ public class OSCActions {
                     MarkersList markers = data.getMarkersList();
                     Marker selected = null;
 
+                    TimeContext context = data.getScore().getTimeContext();
+
                     for (int i = markers.size() - 1; i >= 0; i--) {
                         Marker a = markers.getMarker(i);
 
-                        if (a.getTime() < startTime) {
+                        if (a.getTime().toBeats(context) < startTime) {
                             selected = a;
                             break;
                         }
                     }
 
                     if (selected != null) {
-                        newStartTime = selected.getTime();
+                        newStartTime = selected.getTime().toBeats(context);
                     }
 
                     data.setRenderStartTime(newStartTime);

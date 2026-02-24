@@ -515,10 +515,10 @@ public class PianoRollCanvas extends JLayeredPane implements Scrollable,
             var endTime = maxNote.getStart() + maxNote.getDuration();
             end = (int) (endTime * pixelSecond);
 
-        } else if (p.getRepeatPoint() > 0
+        } else if (p.getRepeatPoint() != null
                 && (timeBehavior == TimeBehavior.REPEAT
                 || timeBehavior == TimeBehavior.REPEAT_CLASSIC)) {
-            end = (int) (p.getRepeatPoint() * pixelSecond);
+            end = (int) (p.getRepeatPoint().toBeats(context) * pixelSecond);
 
         } else {
             end = (int) (p.getSubjectiveDuration().toBeats(context) * pixelSecond);

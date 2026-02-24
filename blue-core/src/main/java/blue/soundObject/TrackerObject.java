@@ -43,7 +43,7 @@ public class TrackerObject extends AbstractSoundObject {
 
     private TimeBehavior timeBehavior = TimeBehavior.REPEAT;
 
-    double repeatPoint = 16.0f;
+    TimeDuration repeatPoint = TimeDuration.beats(16.0);
 
     private NoteProcessorChain npc = new NoteProcessorChain();
 
@@ -81,7 +81,8 @@ public class TrackerObject extends AbstractSoundObject {
         double duration = this.getSubjectiveDuration().toBeats(context);
         double startTime = getStartTime().toBeats(context);
         
-        ScoreUtilities.applyTimeBehavior(nl, this.getTimeBehavior(), duration, this.getRepeatPoint(), getSteps());
+        double rpBeats = this.getRepeatPoint() != null ? this.getRepeatPoint().toBeats(context) : -1.0;
+        ScoreUtilities.applyTimeBehavior(nl, this.getTimeBehavior(), duration, rpBeats, getSteps());
         ScoreUtilities.setScoreStart(nl, startTime);
 
         return nl;
@@ -109,12 +110,12 @@ public class TrackerObject extends AbstractSoundObject {
     }
 
     @Override
-    public double getRepeatPoint() {
+    public TimeDuration getRepeatPoint() {
         return repeatPoint;
     }
 
     @Override
-    public void setRepeatPoint(double repeatPoint) {
+    public void setRepeatPoint(TimeDuration repeatPoint) {
         this.repeatPoint = repeatPoint;
     }
 

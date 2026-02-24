@@ -49,8 +49,7 @@ public class RulerConfigDialog extends JDialog {
 
     public enum TimebaseUpdateMode {
         UPDATE_ALL,
-        UPDATE_MATCHING,
-        DO_NOT_UPDATE
+        UPDATE_MATCHING
     }
 
     private static final double[] SMPTE_FRAME_RATES = {
@@ -66,8 +65,14 @@ public class RulerConfigDialog extends JDialog {
     private final JCheckBox secondaryEnabledCheck;
     private final JComboBox<TimeDisplayFormat> secondaryFormatCombo;
     private final JComboBox<String> smpteFrameRateCombo;
-    private final ButtonGroup updateModeGroup;
-    private final Map<TimebaseUpdateMode, JRadioButton> updateModeRadios;
+    
+    private final JCheckBox updateScoreObjectsCheck;
+    private final Map<TimebaseUpdateMode, JRadioButton> scoreObjectModeRadios;
+    private final ButtonGroup scoreObjectModeGroup;
+    
+    private final JCheckBox updateMarkersCheck;
+    private final Map<TimebaseUpdateMode, JRadioButton> markerModeRadios;
+    private final ButtonGroup markerModeGroup;
     
     private TimeState timeState;
     private boolean confirmed = false;
@@ -80,17 +85,27 @@ public class RulerConfigDialog extends JDialog {
         secondaryFormatCombo = new JComboBox<>(new DefaultComboBoxModel<>(TimeDisplayFormat.values()));
         smpteFrameRateCombo = new JComboBox<>(SMPTE_FRAME_RATE_LABELS);
         
-        updateModeRadios = new EnumMap<>(TimebaseUpdateMode.class);
-        updateModeRadios.put(TimebaseUpdateMode.UPDATE_ALL,
-                new JRadioButton("Update all ScoreObject Timebases"));
-        updateModeRadios.put(TimebaseUpdateMode.UPDATE_MATCHING,
-                new JRadioButton("Update TimeBases that matched previous Timebase"));
-        updateModeRadios.put(TimebaseUpdateMode.DO_NOT_UPDATE,
-                new JRadioButton("Do not update ScoreObjects"));
-        updateModeRadios.get(TimebaseUpdateMode.UPDATE_ALL).setSelected(true);
+        // ScoreObject update group
+        updateScoreObjectsCheck = new JCheckBox("Update ScoreObjects");
+        updateScoreObjectsCheck.setSelected(true);
+        scoreObjectModeRadios = createModeRadios("Update All TimeBases", "Update Matching TimeBases");
+        scoreObjectModeGroup = new ButtonGroup();
+        scoreObjectModeRadios.values().forEach(scoreObjectModeGroup::add);
+        updateScoreObjectsCheck.addActionListener(e -> {
+            boolean enabled = updateScoreObjectsCheck.isSelected();
+            scoreObjectModeRadios.values().forEach(r -> r.setEnabled(enabled));
+        });
         
-        updateModeGroup = new ButtonGroup();
-        updateModeRadios.values().forEach(updateModeGroup::add);
+        // Marker update group
+        updateMarkersCheck = new JCheckBox("Update Markers");
+        updateMarkersCheck.setSelected(true);
+        markerModeRadios = createModeRadios("Update All TimeBases", "Update Matching TimeBases");
+        markerModeGroup = new ButtonGroup();
+        markerModeRadios.values().forEach(markerModeGroup::add);
+        updateMarkersCheck.addActionListener(e -> {
+            boolean enabled = updateMarkersCheck.isSelected();
+            markerModeRadios.values().forEach(r -> r.setEnabled(enabled));
+        });
         
         initComponents();
         pack();
@@ -127,20 +142,33 @@ public class RulerConfigDialog extends JDialog {
         gbc.gridy = 2;
         gbc.gridwidth = 2;
         gbc.weightx = 0;
-        gbc.insets = new Insets(10, 20, 2, 5);
-        mainPanel.add(updateModeRadios.get(TimebaseUpdateMode.UPDATE_ALL), gbc);
+        gbc.insets = new Insets(10, 10, 2, 5);
+        mainPanel.add(updateScoreObjectsCheck, gbc);
         
         gbc.gridy = 3;
-        gbc.insets = new Insets(2, 20, 2, 5);
-        mainPanel.add(updateModeRadios.get(TimebaseUpdateMode.UPDATE_MATCHING), gbc);
+        gbc.insets = new Insets(2, 30, 2, 5);
+        mainPanel.add(scoreObjectModeRadios.get(TimebaseUpdateMode.UPDATE_ALL), gbc);
         
         gbc.gridy = 4;
-        gbc.insets = new Insets(2, 20, 5, 5);
-        mainPanel.add(updateModeRadios.get(TimebaseUpdateMode.DO_NOT_UPDATE), gbc);
+        gbc.insets = new Insets(2, 30, 2, 5);
+        mainPanel.add(scoreObjectModeRadios.get(TimebaseUpdateMode.UPDATE_MATCHING), gbc);
+        
+        // Marker Timebase Update options
+        gbc.gridy = 5;
+        gbc.insets = new Insets(10, 10, 2, 5);
+        mainPanel.add(updateMarkersCheck, gbc);
+        
+        gbc.gridy = 6;
+        gbc.insets = new Insets(2, 30, 2, 5);
+        mainPanel.add(markerModeRadios.get(TimebaseUpdateMode.UPDATE_ALL), gbc);
+        
+        gbc.gridy = 7;
+        gbc.insets = new Insets(2, 30, 5, 5);
+        mainPanel.add(markerModeRadios.get(TimebaseUpdateMode.UPDATE_MATCHING), gbc);
         
         // Secondary Ruler section
         gbc.gridx = 0;
-        gbc.gridy = 5;
+        gbc.gridy = 8;
         gbc.gridwidth = 2;
         gbc.weightx = 0;
         gbc.insets = new Insets(15, 5, 5, 5);
@@ -148,11 +176,11 @@ public class RulerConfigDialog extends JDialog {
         secondaryLabel.setFont(secondaryLabel.getFont().deriveFont(java.awt.Font.BOLD));
         mainPanel.add(secondaryLabel, gbc);
         
-        gbc.gridy = 6;
+        gbc.gridy = 9;
         gbc.insets = new Insets(5, 5, 5, 5);
         mainPanel.add(secondaryEnabledCheck, gbc);
         
-        gbc.gridy = 7;
+        gbc.gridy = 10;
         gbc.gridwidth = 1;
         mainPanel.add(new JLabel("Format:"), gbc);
         
@@ -162,7 +190,7 @@ public class RulerConfigDialog extends JDialog {
         
         // SMPTE Settings section
         gbc.gridx = 0;
-        gbc.gridy = 8;
+        gbc.gridy = 11;
         gbc.gridwidth = 2;
         gbc.weightx = 0;
         gbc.insets = new Insets(15, 5, 5, 5);
@@ -170,7 +198,7 @@ public class RulerConfigDialog extends JDialog {
         smpteLabel.setFont(smpteLabel.getFont().deriveFont(java.awt.Font.BOLD));
         mainPanel.add(smpteLabel, gbc);
         
-        gbc.gridy = 9;
+        gbc.gridy = 12;
         gbc.gridwidth = 1;
         gbc.insets = new Insets(5, 5, 5, 5);
         mainPanel.add(new JLabel("Frame Rate:"), gbc);
@@ -278,15 +306,41 @@ public class RulerConfigDialog extends JDialog {
     }
     
     /**
-     * Returns the selected ScoreObject timebase update mode.
+     * Returns the ScoreObject update mode, or null if ScoreObjects should not be updated.
      */
-    public TimebaseUpdateMode getTimebaseUpdateMode() {
-        for (var entry : updateModeRadios.entrySet()) {
+    public TimebaseUpdateMode getScoreObjectUpdateMode() {
+        if (!updateScoreObjectsCheck.isSelected()) {
+            return null;
+        }
+        return getSelectedMode(scoreObjectModeRadios);
+    }
+    
+    /**
+     * Returns the Marker update mode, or null if markers should not be updated.
+     */
+    public TimebaseUpdateMode getMarkerUpdateMode() {
+        if (!updateMarkersCheck.isSelected()) {
+            return null;
+        }
+        return getSelectedMode(markerModeRadios);
+    }
+    
+    private TimebaseUpdateMode getSelectedMode(Map<TimebaseUpdateMode, JRadioButton> radios) {
+        for (var entry : radios.entrySet()) {
             if (entry.getValue().isSelected()) {
                 return entry.getKey();
             }
         }
         return TimebaseUpdateMode.UPDATE_ALL;
+    }
+    
+    private static Map<TimebaseUpdateMode, JRadioButton> createModeRadios(
+            String allLabel, String matchingLabel) {
+        Map<TimebaseUpdateMode, JRadioButton> radios = new EnumMap<>(TimebaseUpdateMode.class);
+        radios.put(TimebaseUpdateMode.UPDATE_ALL, new JRadioButton(allLabel));
+        radios.put(TimebaseUpdateMode.UPDATE_MATCHING, new JRadioButton(matchingLabel));
+        radios.get(TimebaseUpdateMode.UPDATE_ALL).setSelected(true);
+        return radios;
     }
     
     /**
@@ -301,7 +355,12 @@ public class RulerConfigDialog extends JDialog {
      */
     public boolean showDialog() {
         confirmed = false;
-        updateModeRadios.get(TimebaseUpdateMode.UPDATE_ALL).setSelected(true);
+        updateScoreObjectsCheck.setSelected(true);
+        scoreObjectModeRadios.get(TimebaseUpdateMode.UPDATE_ALL).setSelected(true);
+        scoreObjectModeRadios.values().forEach(r -> r.setEnabled(true));
+        updateMarkersCheck.setSelected(true);
+        markerModeRadios.get(TimebaseUpdateMode.UPDATE_ALL).setSelected(true);
+        markerModeRadios.values().forEach(r -> r.setEnabled(true));
         setVisible(true);
         return confirmed;
     }

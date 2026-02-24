@@ -143,7 +143,7 @@ public class PianoRollView extends GenericView {
         } else if (pianoRoll.getTimeBehavior() == TimeBehavior.REPEAT) {
             TimeContext context = TimeContextManager.getContext();
             var duration = pianoRoll.getSubjectiveDuration();
-            var repeat = pianoRoll.getRepeatPoint() > 0.0 ? pianoRoll.getRepeatPoint() : cache.notesDuration;
+            var repeat = pianoRoll.getRepeatPoint() != null ? pianoRoll.getRepeatPoint().toBeats(context) : cache.notesDuration;
 
             var curTime = 0.0;
             var xStart = 0;
@@ -175,7 +175,7 @@ public class PianoRollView extends GenericView {
         } else if (pianoRoll.getTimeBehavior() == TimeBehavior.REPEAT_CLASSIC) {
             TimeContext context = TimeContextManager.getContext();
             var duration = pianoRoll.getSubjectiveDuration();
-            var repeat = pianoRoll.getRepeatPoint() > 0.0 ? pianoRoll.getRepeatPoint() : cache.notesDuration;
+            var repeat = pianoRoll.getRepeatPoint() != null ? pianoRoll.getRepeatPoint().toBeats(context) : cache.notesDuration;
 
             var curTime = 0.0;
             var xStart = 0;

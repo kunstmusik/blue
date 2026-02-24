@@ -83,6 +83,8 @@ import org.openide.windows.TopComponent;
 import org.openide.windows.WindowManager;
 
 import blue.BlueData;
+import blue.Marker;
+import blue.MarkersList;
 import blue.WindowSettingManager;
 import blue.automation.AutomationManager;
 import blue.automation.ParameterLinePanel;
@@ -104,9 +106,12 @@ import blue.services.render.RenderTimeManager;
 import blue.services.render.RenderTimeManagerListener;
 import blue.settings.PlaybackSettings;
 import blue.soundObject.PolyObject;
+import blue.soundObject.SoundObject;
 import blue.time.TimeBase;
 import blue.time.TimeContext;
 import blue.time.TimeContextManager;
+import blue.time.TimeDuration;
+import blue.time.TimePosition;
 import blue.time.TimeUnitMath;
 import blue.time.TimeUtilities;
 import blue.ui.core.score.RulerConfigDialog.TimebaseUpdateMode;
@@ -963,9 +968,12 @@ public final class ScoreTopComponent extends TopComponent
                 rulerConfigDialog.setTimeState(currentTimeState);
                 if (rulerConfigDialog.showDialog()) {
                     TimeBase newTimeBase = currentTimeState.getTimeDisplay();
-                    TimebaseUpdateMode mode = rulerConfigDialog.getTimebaseUpdateMode();
-                    if (oldPrimaryTimeBase != newTimeBase && mode != TimebaseUpdateMode.DO_NOT_UPDATE) {
-                        applyTimebaseUpdate(oldPrimaryTimeBase, newTimeBase, mode);
+                    TimebaseUpdateMode scoreObjectMode = rulerConfigDialog.getScoreObjectUpdateMode();
+                    TimebaseUpdateMode markerMode = rulerConfigDialog.getMarkerUpdateMode();
+                    if (oldPrimaryTimeBase != newTimeBase
+                            && (scoreObjectMode != null || markerMode != null)) {
+                        applyTimebaseUpdate(oldPrimaryTimeBase, newTimeBase,
+                                scoreObjectMode, markerMode);
                     }
                 }
             }
@@ -1597,38 +1605,69 @@ public final class ScoreTopComponent extends TopComponent
     }
 
     private void applyTimebaseUpdate(TimeBase oldTimeBase, TimeBase newTimeBase,
-            TimebaseUpdateMode mode) {
+            TimebaseUpdateMode scoreObjectMode, TimebaseUpdateMode markerMode) {
         if (data == null) return;
         
         TimeContext ctx = TimeContextManager.getContext();
         Score score = data.getScore();
         
-        for (LayerGroup<? extends Layer> layerGroup : score) {
-            for (Layer layer : layerGroup) {
-                if (layer instanceof ScoreObjectLayer<?> scoreLayer) {
-                    for (ScoreObject sObj : scoreLayer) {
-                        boolean updateStart;
-                        boolean updateDuration;
-                        
-                        if (mode == TimebaseUpdateMode.UPDATE_ALL) {
-                            updateStart = true;
-                            updateDuration = true;
-                        } else {
-                            // UPDATE_MATCHING: per-field check
-                            updateStart = sObj.getStartTime().getTimeBase() == oldTimeBase;
-                            updateDuration = sObj.getSubjectiveDuration().getTimeBase() == oldTimeBase;
-                        }
-                        
-                        if (updateStart) {
-                            sObj.setStartTime(
-                                    TimeUtilities.convertTimePosition(sObj.getStartTime(), newTimeBase, ctx));
-                        }
-                        if (updateDuration) {
-                            double durBeats = sObj.getSubjectiveDuration().toBeats(ctx);
-                            sObj.setSubjectiveDuration(
-                                    TimeUnitMath.beatsToDuration(durBeats, newTimeBase, ctx));
+        // Update ScoreObject times (start, duration, repeat point)
+        if (scoreObjectMode != null) {
+            for (LayerGroup<? extends Layer> layerGroup : score) {
+                for (Layer layer : layerGroup) {
+                    if (layer instanceof ScoreObjectLayer<?> scoreLayer) {
+                        for (ScoreObject sObj : scoreLayer) {
+                            boolean updateStart;
+                            boolean updateDuration;
+                            
+                            if (scoreObjectMode == TimebaseUpdateMode.UPDATE_ALL) {
+                                updateStart = true;
+                                updateDuration = true;
+                            } else {
+                                // UPDATE_MATCHING: per-field check
+                                updateStart = sObj.getStartTime().getTimeBase() == oldTimeBase;
+                                updateDuration = sObj.getSubjectiveDuration().getTimeBase() == oldTimeBase;
+                            }
+                            
+                            if (updateStart) {
+                                sObj.setStartTime(
+                                        TimeUtilities.convertTimePosition(sObj.getStartTime(), newTimeBase, ctx));
+                            }
+                            if (updateDuration) {
+                                double durBeats = sObj.getSubjectiveDuration().toBeats(ctx);
+                                sObj.setSubjectiveDuration(
+                                        TimeUnitMath.beatsToDuration(durBeats, newTimeBase, ctx));
+                            }
+                            
+                            // Update repeat point along with other SoundObject times
+                            if (sObj instanceof SoundObject soundObj) {
+                                TimeDuration rp = soundObj.getRepeatPoint();
+                                if (rp != null) {
+                                    boolean shouldUpdate = (scoreObjectMode == TimebaseUpdateMode.UPDATE_ALL)
+                                            || rp.getTimeBase() == oldTimeBase;
+                                    if (shouldUpdate) {
+                                        double rpBeats = rp.toBeats(ctx);
+                                        soundObj.setRepeatPoint(
+                                                TimeUnitMath.beatsToDuration(rpBeats, newTimeBase, ctx));
+                                    }
+                                }
+                            }
                         }
                     }
+                }
+            }
+        }
+        
+        // Update markers
+        if (markerMode != null) {
+            MarkersList markers = data.getMarkersList();
+            for (int i = 0; i < markers.size(); i++) {
+                Marker m = markers.getMarker(i);
+                TimePosition mTime = m.getTime();
+                boolean shouldUpdate = (markerMode == TimebaseUpdateMode.UPDATE_ALL)
+                        || mTime.getTimeBase() == oldTimeBase;
+                if (shouldUpdate) {
+                    m.setTime(TimeUtilities.convertTimePosition(mTime, newTimeBase, ctx));
                 }
             }
         }

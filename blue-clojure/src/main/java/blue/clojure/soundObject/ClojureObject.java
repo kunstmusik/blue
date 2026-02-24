@@ -55,7 +55,7 @@ public class ClojureObject extends AbstractSoundObject implements
 
     private TimeBehavior timeBehavior;
 
-    double repeatPoint = -1.0;
+    TimeDuration repeatPoint = null;
 
     private String clojureCode;
 
@@ -139,7 +139,8 @@ public class ClojureObject extends AbstractSoundObject implements
 
         double startTime = getStartTime().toBeats(context);
 
-        ScoreUtilities.applyTimeBehavior(nl, this.getTimeBehavior(), duration, this.getRepeatPoint());
+        double rpBeats = this.getRepeatPoint() != null ? this.getRepeatPoint().toBeats(context) : -1.0;
+        ScoreUtilities.applyTimeBehavior(nl, this.getTimeBehavior(), duration, rpBeats);
         ScoreUtilities.setScoreStart(nl, startTime);
         return nl;
     }
@@ -170,12 +171,12 @@ public class ClojureObject extends AbstractSoundObject implements
     }
 
     @Override
-    public double getRepeatPoint() {
+    public TimeDuration getRepeatPoint() {
         return repeatPoint;
     }
 
     @Override
-    public void setRepeatPoint(double repeatPoint) {
+    public void setRepeatPoint(TimeDuration repeatPoint) {
         this.repeatPoint = repeatPoint;
 
         ScoreObjectEvent event = new ScoreObjectEvent(this,
