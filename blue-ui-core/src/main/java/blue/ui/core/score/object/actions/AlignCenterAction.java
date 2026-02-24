@@ -23,6 +23,7 @@ import blue.score.ScoreObject;
 import blue.time.TimeContext;
 import blue.time.TimeContextManager;
 import blue.time.TimePosition;
+import blue.time.TimeUtilities;
 import blue.ui.core.score.undo.AlignEdit;
 import blue.undo.BlueUndoManager;
 import java.awt.event.ActionEvent;
@@ -94,8 +95,10 @@ public final class AlignCenterAction extends AbstractAction implements ContextAw
 
         for (ScoreObject scoreObj : selected) {
             newEndTime = centerTime - (scoreObj.getSubjectiveDuration().toBeats(context) / 2);
-            scoreObj.setStartTime(TimePosition.beats(newEndTime));
-            endingStartTimes[i] = TimePosition.beats(newEndTime);
+            TimePosition newStartTime = TimeUtilities.beatsToTimePosition(
+                    newEndTime, scoreObj.getStartTime().getTimeBase(), context);
+            scoreObj.setStartTime(newStartTime);
+            endingStartTimes[i] = newStartTime;
             i++;
         }
 

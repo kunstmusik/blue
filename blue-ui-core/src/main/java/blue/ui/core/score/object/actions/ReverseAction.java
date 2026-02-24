@@ -23,6 +23,7 @@ import blue.score.ScoreObject;
 import blue.time.TimeContext;
 import blue.time.TimeContextManager;
 import blue.time.TimePosition;
+import blue.time.TimeUtilities;
 import blue.ui.core.score.ScoreController;
 import blue.ui.core.score.undo.MoveScoreObjectsEdit;
 import blue.undo.BlueUndoManager;
@@ -94,15 +95,18 @@ public final class ReverseAction extends AbstractAction
         
         for (int i = 0; i < len; i++) {
             ScoreObject scoreObj = objects[i];
-            double tempStart = scoreObj.getStartTime().toBeats(context);
+            TimePosition currentStart = scoreObj.getStartTime();
+            double tempStart = currentStart.toBeats(context);
             double tempEnd = tempStart + scoreObj.getSubjectiveDuration().toBeats(context);
 
             double newStart = start + (end - tempEnd);
+            TimePosition newStartTime = TimeUtilities.beatsToTimePosition(
+                    newStart, currentStart.getTimeBase(), context);
 
-            scoreObj.setStartTime(TimePosition.beats(newStart));
+            scoreObj.setStartTime(newStartTime);
 
-            startTimes[i] = TimePosition.beats(tempStart);
-            endTimes[i] = TimePosition.beats(newStart);
+            startTimes[i] = currentStart;
+            endTimes[i] = newStartTime;
         }
 
         BlueUndoManager.setUndoManager("score");

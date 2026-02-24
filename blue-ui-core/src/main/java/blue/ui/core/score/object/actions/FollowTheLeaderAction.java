@@ -23,6 +23,7 @@ import blue.score.ScoreObject;
 import blue.time.TimeContext;
 import blue.time.TimeContextManager;
 import blue.time.TimePosition;
+import blue.time.TimeUtilities;
 import blue.ui.core.score.undo.AlignEdit;
 import blue.undo.BlueUndoManager;
 import java.awt.event.ActionEvent;
@@ -92,8 +93,10 @@ public final class FollowTheLeaderAction extends AbstractAction implements Conte
 
         for (int i = 1; i < scoreObjs.size(); i++) {
             ScoreObject current = scoreObjs.get(i);
-            endStartTimes[i] = TimePosition.beats(runningTotal);
-            current.setStartTime(TimePosition.beats(runningTotal));
+            TimePosition newStartTime = TimeUtilities.beatsToTimePosition(
+                    runningTotal, current.getStartTime().getTimeBase(), context);
+            endStartTimes[i] = newStartTime;
+            current.setStartTime(newStartTime);
             runningTotal += current.getSubjectiveDuration().toBeats(context);
         }
 

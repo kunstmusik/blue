@@ -23,6 +23,7 @@ import blue.score.ScoreObject;
 import blue.time.TimeContext;
 import blue.time.TimeContextManager;
 import blue.time.TimePosition;
+import blue.time.TimeUtilities;
 import blue.ui.core.score.undo.AlignEdit;
 import blue.undo.BlueUndoManager;
 import java.awt.event.ActionEvent;
@@ -83,8 +84,10 @@ public final class AlignRightAction extends AbstractAction implements ContextAwa
 
         for (ScoreObject scoreObj : selected) {
             double newTime = farRight - scoreObj.getSubjectiveDuration().toBeats(context);
-            scoreObj.setStartTime(TimePosition.beats(newTime));
-            endingStartTimes[i] = TimePosition.beats(newTime);
+            TimePosition newStartTime = TimeUtilities.beatsToTimePosition(
+                    newTime, scoreObj.getStartTime().getTimeBase(), context);
+            scoreObj.setStartTime(newStartTime);
+            endingStartTimes[i] = newStartTime;
             i++;
         }
 
