@@ -140,7 +140,8 @@ public class MarkersBar extends JPanel implements PropertyChangeListener, TableM
                 if (SwingUtilities.isLeftMouseButton(e)) {
                     if (dragMarker != null) {
                         TimeContext ctx = TimeContextManager.getContext();
-                        dragMarker.setTime(TimeUtilities.beatsToTimePosition(time, timeState.getTimeDisplay(), ctx));
+                        var targetTimeBase = dragMarker.getTime().getTimeBase();
+                        dragMarker.setTime(TimeUtilities.beatsToTimePosition(time, targetTimeBase, ctx));
                         checkScroll(e.getPoint());
                     } else {
                         data.setRenderStartTime(time);
@@ -405,8 +406,9 @@ public class MarkersBar extends JPanel implements PropertyChangeListener, TableM
 
                     time = Math.max(0.0, time);
 
-                    marker.setTime(TimeUtilities.beatsToTimePosition(
-                            time, timeState.getTimeDisplay(), TimeContextManager.getContext()));
+                    TimeContext ctx = TimeContextManager.getContext();
+                    var targetTimeBase = marker.getTime().getTimeBase();
+                    marker.setTime(TimeUtilities.beatsToTimePosition(time, targetTimeBase, ctx));
                     checkScroll(p);
                     repaint();
                 }
