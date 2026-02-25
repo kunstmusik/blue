@@ -24,9 +24,10 @@ import blue.score.ScoreObject;
 import blue.score.layers.Layer;
 import blue.soundObject.PolyObject;
 import blue.soundObject.SoundObject;
+import blue.time.TimeBase;
 import blue.time.TimeContext;
 import blue.time.TimeContextManager;
-import blue.time.TimePosition;
+import blue.time.TimeUtilities;
 import blue.ui.core.score.ScoreController;
 import blue.ui.core.score.ScorePath;
 import java.awt.Point;
@@ -136,7 +137,9 @@ public final class ConvertToPolyObjectAction extends AbstractAction
         }
 
         pObj.normalizeSoundObjects(context);
-        pObj.setStartTime(TimePosition.beats(start));
+        TimeBase timeBase = ScoreController.getInstance().getScore()
+                .getTimeState().getTimeDisplay();
+        pObj.setStartTime(TimeUtilities.beatsToTimePosition(start, timeBase, context));
 
         ((SoundLayer)scorePath.getGlobalLayerForY(p.y)).add(pObj);
         ScoreController.getInstance().setSelectedScoreObjects(

@@ -19,27 +19,24 @@
  */
 package blue.ui.core.score.layers.soundObject.actions;
 
-import blue.BlueData;
 import blue.CopyBuffer;
 import blue.SoundLayer;
 import blue.automation.Parameter;
 import blue.components.lines.LinePoint;
 import blue.orchestra.BlueSynthBuilder;
-import blue.projects.BlueProjectManager;
-import blue.score.ScoreObject;
 import blue.score.TimeState;
 import blue.score.layers.Layer;
+import blue.time.TimeBase;
 import blue.time.TimeContext;
 import blue.time.TimeContextManager;
 import blue.soundObject.Sound;
-import blue.time.TimePosition;
+import blue.time.TimeUtilities;
 import blue.ui.core.score.ScorePath;
 import blue.ui.core.score.undo.AddScoreObjectEdit;
 import blue.undo.BlueUndoManager;
 import blue.utility.ScoreUtilities;
 import java.awt.Point;
 import java.awt.event.ActionEvent;
-import java.util.Collection;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.JOptionPane;
@@ -62,7 +59,6 @@ import org.openide.util.Utilities;
         position = 63)
 public final class PasteBSBAsSoundAction extends AbstractAction implements ContextAwareAction {
     
-    private Collection<? extends ScoreObject> scoreObjects;
     private final Point p;
     private final TimeState timeState;
     private final ScorePath scorePath;
@@ -101,7 +97,9 @@ public final class PasteBSBAsSoundAction extends AbstractAction implements Conte
         Object obj = CopyBuffer.getBufferedObject(CopyBuffer.INSTRUMENT);
 
         Sound sound = new Sound();
-        sound.setStartTime(TimePosition.beats(start));
+        TimeContext context = TimeContextManager.getContext();
+        TimeBase timeBase = timeState.getTimeDisplay();
+        sound.setStartTime(TimeUtilities.beatsToTimePosition(start, timeBase, context));
 
         BlueSynthBuilder bsbCopy = ((BlueSynthBuilder)obj).deepCopy();
         // clear out any existing automations
@@ -126,8 +124,6 @@ public final class PasteBSBAsSoundAction extends AbstractAction implements Conte
         
         SoundLayer sLayer = (SoundLayer) layer;
         sLayer.add(sound);
-
-        BlueData data = BlueProjectManager.getInstance().getCurrentBlueData();
         
         AddScoreObjectEdit undoEdit = new AddScoreObjectEdit(sLayer, sound);
 
