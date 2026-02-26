@@ -26,7 +26,6 @@ import blue.score.layers.audio.core.AudioLayerGroup;
 import blue.time.TimeBase;
 import blue.time.TimeContext;
 import blue.time.TimeContextManager;
-import blue.time.TimeUnitMath;
 import blue.time.TimeUtilities;
 import blue.utility.FileUtilities;
 import java.awt.Point;
@@ -160,7 +159,6 @@ public class AudioLayersDropTargetListener implements DropTargetListener {
             TimeBase timeBase = audioLayersPanel.getTimeState().getTimeDisplay();
             TimeContext context = TimeContextManager.getContext();
             af.setStartTime(TimeUtilities.beatsToTimePosition(startTime, timeBase, context));
-            af.setSubjectiveDuration(TimeUnitMath.beatsToDuration(af.getAudioDuration(), timeBase, context));
 
             AudioLayer layer = audioLayerGroup.get(index);
             layer.add(af);
@@ -221,7 +219,6 @@ public class AudioLayersDropTargetListener implements DropTargetListener {
                 TimeBase timeBase = audioLayersPanel.getTimeState().getTimeDisplay();
                 TimeContext context = TimeContextManager.getContext();
                 af.setStartTime(TimeUtilities.beatsToTimePosition(startTime, timeBase, context));
-                af.setSubjectiveDuration(TimeUnitMath.beatsToDuration(af.getAudioDuration(), timeBase, context));
 
                 AudioLayer layer = audioLayerGroup.get(index);
                 layer.add(af);
@@ -287,7 +284,6 @@ public class AudioLayersDropTargetListener implements DropTargetListener {
                 TimeBase timeBase = audioLayersPanel.getTimeState().getTimeDisplay();
                 TimeContext context = TimeContextManager.getContext();
                 af.setStartTime(TimeUtilities.beatsToTimePosition(startTime, timeBase, context));
-                af.setSubjectiveDuration(TimeUnitMath.beatsToDuration(af.getAudioDuration(), timeBase, context));
 
                 AudioLayer layer = audioLayerGroup.get(index);
                 layer.add(af);

@@ -25,9 +25,24 @@ import blue.score.ScoreObject;
 import blue.score.layers.audio.core.AudioClip;
 import blue.score.layers.audio.core.FadeType;
 import blue.soundObject.editor.ScoreObjectEditor;
+import blue.time.TimeContext;
 import blue.time.TimeContextManager;
-import javafx.beans.value.ChangeListener;
+import blue.time.TimeDuration;
+import blue.time.TimePosition;
+import blue.time.TimeUnitMath;
+import blue.ui.core.time.SoundObjectTimePanel;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
+import java.beans.PropertyChangeListener;
+import javax.swing.BorderFactory;
 import javax.swing.DefaultComboBoxModel;
+import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTextField;
 
 /**
  *
@@ -40,416 +55,359 @@ public class AudioClipEditor extends ScoreObjectEditor {
 
     volatile boolean isUpdating = false;
 
-    @SuppressWarnings("rawtypes")
-    private ChangeListener cl;
+    private final PropertyChangeListener cl;
+
+    // Top-level fields
+    private final JTextField audioFileNameTextField;
+    private final SoundObjectTimePanel startTimePanel;
+    private final SoundObjectTimePanel durationPanel;
+
+    // File Properties panel
+    private final JTextField fileStartTextField;
+    private final JTextField fileDurationTextField;
+    private final JTextField fadeInTextField;
+    private final JComboBox<FadeType> fadeInTypeComboBox;
+    private final JTextField fadeOutTextField;
+    private final JComboBox<FadeType> fadeOutTypeComboBox;
+    private final JCheckBox loopingCheckbox;
 
     /**
      * Creates new form AudioClipEditor
      */
     public AudioClipEditor() {
-        initComponents();
+        // Create components
+        audioFileNameTextField = new JTextField();
+        audioFileNameTextField.setEnabled(false);
 
-        cl = (obs, old, newVal) -> {
+        startTimePanel = new SoundObjectTimePanel();
+        durationPanel = new SoundObjectTimePanel();
+        durationPanel.setDurationMode(true);
+
+        fileStartTextField = new JTextField();
+        fileStartTextField.setToolTipText("File start offset (H:MM:SS.mmm)");
+        fileDurationTextField = new JTextField();
+        fileDurationTextField.setEnabled(false);
+        fileDurationTextField.setToolTipText("Total audio file duration");
+
+        fadeInTextField = new JTextField();
+        fadeInTextField.setToolTipText("Fade in time in seconds");
+        fadeOutTextField = new JTextField();
+        fadeOutTextField.setToolTipText("Fade out time in seconds");
+
+        fadeInTypeComboBox = new JComboBox<>(new DefaultComboBoxModel<>(FadeType.values()));
+        fadeOutTypeComboBox = new JComboBox<>(new DefaultComboBoxModel<>(FadeType.values()));
+
+        loopingCheckbox = new JCheckBox();
+
+        initLayout();
+        initListeners();
+
+        cl = evt -> {
             if (clip == null || isUpdating) {
                 return;
             }
 
-            if (obs == clip.startProperty()) {
-                startTimeTextField.setText(newVal.toString());
-            } else if (obs == clip.durationProperty()) {
-                durationTextField.setText(newVal.toString());
-            } else if (obs == clip.fileStartTimeProperty()) {
-                fileStartTextField.setText(newVal.toString());
-            } else if (obs == clip.fadeInProperty()) {
-                fadeInTextField.setText(newVal.toString());
-            } else if (obs == clip.fadeInTypeProperty()) {
-                fadeInTypeComboBox.setSelectedItem(newVal);
-            } else if (obs == clip.fadeOutProperty()) {
-                fadeOutTextField.setText(newVal.toString());
-            } else if (obs == clip.fadeOutTypeProperty()) {
-                fadeOutTypeComboBox.setSelectedItem(newVal);
+            switch (evt.getPropertyName()) {
+                case AudioClip.START_TIME:
+                    startTimePanel.setTimePosition(clip.getStartTime());
+                    break;
+                case AudioClip.DURATION:
+                    durationPanel.setTimeDuration(clip.getSubjectiveDuration());
+                    break;
+                case AudioClip.FILE_START_TIME:
+                    fileStartTextField.setText(
+                            formatSecondsAsTime((Double) evt.getNewValue()));
+                    break;
+                case AudioClip.FADE_IN:
+                    fadeInTextField.setText(
+                            formatSecondsAsTime((Double) evt.getNewValue()));
+                    break;
+                case AudioClip.FADE_IN_TYPE:
+                    fadeInTypeComboBox.setSelectedItem(evt.getNewValue());
+                    break;
+                case AudioClip.FADE_OUT:
+                    fadeOutTextField.setText(
+                            formatSecondsAsTime((Double) evt.getNewValue()));
+                    break;
+                case AudioClip.FADE_OUT_TYPE:
+                    fadeOutTypeComboBox.setSelectedItem(evt.getNewValue());
+                    break;
             }
         };
     }
 
-    /**
-     * This method is called from within the constructor to initialize the form.
-     * WARNING: Do NOT modify this code. The content of this method is always
-     * regenerated by the Form Editor.
-     */
-    @SuppressWarnings("unchecked")
-    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
-    private void initComponents() {
+    private void initLayout() {
+        // Main content panel with GridBagLayout
+        JPanel contentPanel = new JPanel(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(3, 6, 3, 6);
+        gbc.anchor = GridBagConstraints.WEST;
 
-        jScrollPane1 = new javax.swing.JScrollPane();
-        jPanel2 = new javax.swing.JPanel();
-        jLabel1 = new javax.swing.JLabel();
-        audioFileNameTextField = new javax.swing.JTextField();
-        jLabel2 = new javax.swing.JLabel();
-        jLabel3 = new javax.swing.JLabel();
-        jPanel1 = new javax.swing.JPanel();
-        jLabel4 = new javax.swing.JLabel();
-        fileStartTextField = new javax.swing.JTextField();
-        fileDurationTextField = new javax.swing.JTextField();
-        jLabel5 = new javax.swing.JLabel();
-        fadeInTextField = new javax.swing.JTextField();
-        jLabel6 = new javax.swing.JLabel();
-        jLabel7 = new javax.swing.JLabel();
-        jLabel8 = new javax.swing.JLabel();
-        jLabel9 = new javax.swing.JLabel();
-        fadeOutTypeComboBox = new javax.swing.JComboBox<>();
-        fadeOutTextField = new javax.swing.JTextField();
-        fadeInTypeComboBox = new javax.swing.JComboBox<>();
-        jLabel10 = new javax.swing.JLabel();
-        loopingCheckbox = new javax.swing.JCheckBox();
-        startTimeTextField = new javax.swing.JTextField();
-        durationTextField = new javax.swing.JTextField();
+        int row = 0;
 
-        org.openide.awt.Mnemonics.setLocalizedText(jLabel1, org.openide.util.NbBundle.getMessage(AudioClipEditor.class, "AudioClipEditor.jLabel1.text")); // NOI18N
+        // Audio File
+        gbc.gridx = 0; gbc.gridy = row;
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.weightx = 0;
+        contentPanel.add(new JLabel("Audio File"), gbc);
+        gbc.gridx = 1; gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.weightx = 1.0;
+        contentPanel.add(audioFileNameTextField, gbc);
 
-        audioFileNameTextField.setText(org.openide.util.NbBundle.getMessage(AudioClipEditor.class, "AudioClipEditor.audioFileNameTextField.text")); // NOI18N
-        audioFileNameTextField.setEnabled(false);
+        // Start Time
+        row++;
+        gbc.gridx = 0; gbc.gridy = row;
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.weightx = 0;
+        contentPanel.add(new JLabel("Start Time"), gbc);
+        gbc.gridx = 1; gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.weightx = 1.0;
+        contentPanel.add(startTimePanel, gbc);
 
-        org.openide.awt.Mnemonics.setLocalizedText(jLabel2, org.openide.util.NbBundle.getMessage(AudioClipEditor.class, "AudioClipEditor.jLabel2.text")); // NOI18N
+        // Duration
+        row++;
+        gbc.gridx = 0; gbc.gridy = row;
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.weightx = 0;
+        contentPanel.add(new JLabel("Duration"), gbc);
+        gbc.gridx = 1; gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.weightx = 1.0;
+        contentPanel.add(durationPanel, gbc);
 
-        org.openide.awt.Mnemonics.setLocalizedText(jLabel3, org.openide.util.NbBundle.getMessage(AudioClipEditor.class, "AudioClipEditor.jLabel3.text")); // NOI18N
+        // File Properties panel
+        JPanel filePropsPanel = new JPanel(new GridBagLayout());
+        filePropsPanel.setBorder(BorderFactory.createTitledBorder("File Properties"));
+        GridBagConstraints fgbc = new GridBagConstraints();
+        fgbc.insets = new Insets(3, 6, 3, 6);
+        fgbc.anchor = GridBagConstraints.WEST;
 
-        jPanel1.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(AudioClipEditor.class, "AudioClipEditor.jPanel1.border.title"))); // NOI18N
+        int frow = 0;
 
-        org.openide.awt.Mnemonics.setLocalizedText(jLabel4, org.openide.util.NbBundle.getMessage(AudioClipEditor.class, "AudioClipEditor.jLabel4.text")); // NOI18N
+        // File Start
+        fgbc.gridx = 0; fgbc.gridy = frow;
+        fgbc.fill = GridBagConstraints.NONE;
+        fgbc.weightx = 0;
+        filePropsPanel.add(new JLabel("File Start"), fgbc);
+        fgbc.gridx = 1; fgbc.fill = GridBagConstraints.HORIZONTAL;
+        fgbc.weightx = 1.0;
+        filePropsPanel.add(fileStartTextField, fgbc);
 
-        fileStartTextField.setText(org.openide.util.NbBundle.getMessage(AudioClipEditor.class, "AudioClipEditor.fileStartTextField.text")); // NOI18N
-        fileStartTextField.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                fileStartTextFieldActionPerformed(evt);
+        // File Duration
+        frow++;
+        fgbc.gridx = 0; fgbc.gridy = frow;
+        fgbc.fill = GridBagConstraints.NONE;
+        fgbc.weightx = 0;
+        filePropsPanel.add(new JLabel("Duration"), fgbc);
+        fgbc.gridx = 1; fgbc.fill = GridBagConstraints.HORIZONTAL;
+        fgbc.weightx = 1.0;
+        filePropsPanel.add(fileDurationTextField, fgbc);
+
+        // Fade In (seconds)
+        frow++;
+        fgbc.gridx = 0; fgbc.gridy = frow;
+        fgbc.fill = GridBagConstraints.NONE;
+        fgbc.weightx = 0;
+        filePropsPanel.add(new JLabel("Fade In (s)"), fgbc);
+        fgbc.gridx = 1; fgbc.fill = GridBagConstraints.HORIZONTAL;
+        fgbc.weightx = 1.0;
+        filePropsPanel.add(fadeInTextField, fgbc);
+
+        // Fade In Type
+        frow++;
+        fgbc.gridx = 0; fgbc.gridy = frow;
+        fgbc.fill = GridBagConstraints.NONE;
+        fgbc.weightx = 0;
+        filePropsPanel.add(new JLabel("Fade In Type"), fgbc);
+        fgbc.gridx = 1; fgbc.fill = GridBagConstraints.HORIZONTAL;
+        fgbc.weightx = 1.0;
+        filePropsPanel.add(fadeInTypeComboBox, fgbc);
+
+        // Fade Out (seconds)
+        frow++;
+        fgbc.gridx = 0; fgbc.gridy = frow;
+        fgbc.fill = GridBagConstraints.NONE;
+        fgbc.weightx = 0;
+        filePropsPanel.add(new JLabel("Fade Out (s)"), fgbc);
+        fgbc.gridx = 1; fgbc.fill = GridBagConstraints.HORIZONTAL;
+        fgbc.weightx = 1.0;
+        filePropsPanel.add(fadeOutTextField, fgbc);
+
+        // Fade Out Type
+        frow++;
+        fgbc.gridx = 0; fgbc.gridy = frow;
+        fgbc.fill = GridBagConstraints.NONE;
+        fgbc.weightx = 0;
+        filePropsPanel.add(new JLabel("Fade Out Type"), fgbc);
+        fgbc.gridx = 1; fgbc.fill = GridBagConstraints.HORIZONTAL;
+        fgbc.weightx = 1.0;
+        filePropsPanel.add(fadeOutTypeComboBox, fgbc);
+
+        // Looping
+        frow++;
+        fgbc.gridx = 0; fgbc.gridy = frow;
+        fgbc.fill = GridBagConstraints.NONE;
+        fgbc.weightx = 0;
+        filePropsPanel.add(new JLabel("Looping"), fgbc);
+        fgbc.gridx = 1; fgbc.fill = GridBagConstraints.HORIZONTAL;
+        fgbc.weightx = 1.0;
+        filePropsPanel.add(loopingCheckbox, fgbc);
+
+        // Add File Properties panel to content
+        row++;
+        gbc.gridx = 0; gbc.gridy = row;
+        gbc.gridwidth = 2;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.weightx = 1.0;
+        contentPanel.add(filePropsPanel, gbc);
+
+        // Spacer to push everything to top
+        row++;
+        gbc.gridx = 0; gbc.gridy = row;
+        gbc.gridwidth = 2;
+        gbc.fill = GridBagConstraints.BOTH;
+        gbc.weighty = 1.0;
+        contentPanel.add(new JPanel(), gbc);
+
+        // Wrap in scroll pane
+        JScrollPane scrollPane = new JScrollPane(contentPanel);
+        setLayout(new java.awt.BorderLayout());
+        add(scrollPane, java.awt.BorderLayout.CENTER);
+    }
+
+    private void initListeners() {
+        // Start Time panel changes
+        startTimePanel.addPropertyChangeListener("timePosition", evt -> {
+            if (this.clip == null || isUpdating) {
+                return;
             }
-        });
-
-        fileDurationTextField.setText(org.openide.util.NbBundle.getMessage(AudioClipEditor.class, "AudioClipEditor.fileDurationTextField.text")); // NOI18N
-        fileDurationTextField.setEnabled(false);
-
-        org.openide.awt.Mnemonics.setLocalizedText(jLabel5, org.openide.util.NbBundle.getMessage(AudioClipEditor.class, "AudioClipEditor.jLabel5.text")); // NOI18N
-
-        fadeInTextField.setText(org.openide.util.NbBundle.getMessage(AudioClipEditor.class, "AudioClipEditor.fadeInTextField.text")); // NOI18N
-        fadeInTextField.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                fadeInTextFieldActionPerformed(evt);
-            }
-        });
-
-        org.openide.awt.Mnemonics.setLocalizedText(jLabel6, org.openide.util.NbBundle.getMessage(AudioClipEditor.class, "AudioClipEditor.jLabel6.text")); // NOI18N
-
-        org.openide.awt.Mnemonics.setLocalizedText(jLabel7, org.openide.util.NbBundle.getMessage(AudioClipEditor.class, "AudioClipEditor.jLabel7.text")); // NOI18N
-
-        org.openide.awt.Mnemonics.setLocalizedText(jLabel8, org.openide.util.NbBundle.getMessage(AudioClipEditor.class, "AudioClipEditor.jLabel8.text")); // NOI18N
-
-        org.openide.awt.Mnemonics.setLocalizedText(jLabel9, org.openide.util.NbBundle.getMessage(AudioClipEditor.class, "AudioClipEditor.jLabel9.text")); // NOI18N
-
-        fadeOutTypeComboBox.setModel(new DefaultComboBoxModel(FadeType.values()));
-        fadeOutTypeComboBox.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                fadeOutTypeComboBoxActionPerformed(evt);
-            }
-        });
-
-        fadeOutTextField.setText(org.openide.util.NbBundle.getMessage(AudioClipEditor.class, "AudioClipEditor.fadeOutTextField.text")); // NOI18N
-        fadeOutTextField.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                fadeOutTextFieldActionPerformed(evt);
-            }
-        });
-
-        fadeInTypeComboBox.setModel(new DefaultComboBoxModel(FadeType.values()));
-        fadeInTypeComboBox.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                fadeInTypeComboBoxActionPerformed(evt);
-            }
-        });
-
-        org.openide.awt.Mnemonics.setLocalizedText(jLabel10, org.openide.util.NbBundle.getMessage(AudioClipEditor.class, "AudioClipEditor.jLabel10.text")); // NOI18N
-
-        org.openide.awt.Mnemonics.setLocalizedText(loopingCheckbox, org.openide.util.NbBundle.getMessage(AudioClipEditor.class, "AudioClipEditor.loopingCheckbox.text")); // NOI18N
-        loopingCheckbox.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                loopingCheckboxActionPerformed(evt);
-            }
-        });
-
-        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
-        jPanel1.setLayout(jPanel1Layout);
-        jPanel1Layout.setHorizontalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel1Layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jLabel5)
-                            .addComponent(jLabel4))
-                        .addGap(44, 44, 44)
-                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(fileDurationTextField, javax.swing.GroupLayout.DEFAULT_SIZE, 389, Short.MAX_VALUE)
-                            .addComponent(fileStartTextField)))
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jLabel9)
-                            .addComponent(jLabel10))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(jPanel1Layout.createSequentialGroup()
-                                .addComponent(loopingCheckbox)
-                                .addGap(0, 0, Short.MAX_VALUE))
-                            .addComponent(fadeOutTypeComboBox, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jLabel7)
-                            .addComponent(jLabel6)
-                            .addComponent(jLabel8))
-                        .addGap(18, 18, 18)
-                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(fadeOutTextField)
-                            .addComponent(fadeInTextField)
-                            .addComponent(fadeInTypeComboBox, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
-                .addContainerGap())
-        );
-        jPanel1Layout.setVerticalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel1Layout.createSequentialGroup()
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel4)
-                    .addComponent(fileStartTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel5)
-                    .addComponent(fileDurationTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel6)
-                    .addComponent(fadeInTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel7)
-                    .addComponent(fadeInTypeComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel8)
-                    .addComponent(fadeOutTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel9)
-                    .addComponent(fadeOutTypeComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel10)
-                    .addComponent(loopingCheckbox))
-                .addContainerGap(46, Short.MAX_VALUE))
-        );
-
-        startTimeTextField.setText(org.openide.util.NbBundle.getMessage(AudioClipEditor.class, "AudioClipEditor.startTimeTextField.text")); // NOI18N
-        startTimeTextField.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                startTimeTextFieldActionPerformed(evt);
-            }
-        });
-
-        durationTextField.setText(org.openide.util.NbBundle.getMessage(AudioClipEditor.class, "AudioClipEditor.durationTextField.text")); // NOI18N
-        durationTextField.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                durationTextFieldActionPerformed(evt);
-            }
-        });
-
-        javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
-        jPanel2.setLayout(jPanel2Layout);
-        jPanel2Layout.setHorizontalGroup(
-            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel2Layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addGroup(jPanel2Layout.createSequentialGroup()
-                        .addComponent(jLabel3)
-                        .addGap(19, 19, 19)
-                        .addComponent(durationTextField, javax.swing.GroupLayout.DEFAULT_SIZE, 439, Short.MAX_VALUE))
-                    .addGroup(jPanel2Layout.createSequentialGroup()
-                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jLabel2)
-                            .addComponent(jLabel1))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(audioFileNameTextField)
-                            .addComponent(startTimeTextField))))
-                .addContainerGap())
-        );
-        jPanel2Layout.setVerticalGroup(
-            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel2Layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel1)
-                    .addComponent(audioFileNameTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel2)
-                    .addComponent(startTimeTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel3)
-                    .addComponent(durationTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addContainerGap())
-        );
-
-        jScrollPane1.setViewportView(jPanel2);
-
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
-        this.setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(jScrollPane1)
-                .addContainerGap())
-        );
-        layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 362, Short.MAX_VALUE)
-                .addContainerGap())
-        );
-    }// </editor-fold>//GEN-END:initComponents
-
-    private void durationTextFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_durationTextFieldActionPerformed
-        if (this.clip == null || isUpdating) {
-            return;
-        }
-
-        try {
             isUpdating = true;
-            var val = Double.parseDouble(durationTextField.getText());
-            val = Math.min(0.0001, Math.max(val, clip.getAudioDuration()));
-            this.clip.setDuration(val);
-        } catch (NumberFormatException nfe) {
-            durationTextField.setText(Double.toString(this.clip.getDuration()));
-        } finally {
-            isUpdating = false;
-        }
-    }//GEN-LAST:event_durationTextFieldActionPerformed
+            try {
+                TimePosition newPos = startTimePanel.getTimePosition();
+                if (newPos != null) {
+                    this.clip.setStartTime(newPos);
+                }
+            } finally {
+                isUpdating = false;
+            }
+        });
 
-    private void startTimeTextFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_startTimeTextFieldActionPerformed
-        if (this.clip == null || isUpdating) {
-            return;
-        }
-
-        try {
+        // Duration panel changes
+        durationPanel.addPropertyChangeListener("timePosition", evt -> {
+            if (this.clip == null || isUpdating) {
+                return;
+            }
             isUpdating = true;
-            var val = Double.parseDouble(startTimeTextField.getText());
-            val = Math.max(0, val);
-            this.clip.setStart(val);
-        } catch (NumberFormatException nfe) {
-            startTimeTextField.setText(Double.toString(this.clip.getStart()));
-        } finally {
-            isUpdating = false;
-        }
-    }//GEN-LAST:event_startTimeTextFieldActionPerformed
+            try {
+                TimeDuration newDur = durationPanel.getTimeDuration();
+                if (newDur != null) {
+                    TimeContext context = TimeContextManager.getContext();
+                    double beats = newDur.toBeats(context);
+                    beats = Math.max(0.0001, Math.min(beats, clip.getAudioDuration()));
+                    this.clip.setSubjectiveDuration(
+                            TimeUnitMath.beatsToDuration(beats,
+                                    newDur.getTimeBase(), context));
+                }
+            } finally {
+                isUpdating = false;
+            }
+        });
 
-    private void fadeOutTextFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_fadeOutTextFieldActionPerformed
-        if (this.clip == null || isUpdating) {
-            return;
-        }
+        // File Start
+        fileStartTextField.addActionListener(evt -> {
+            if (this.clip == null || isUpdating) {
+                return;
+            }
+            try {
+                isUpdating = true;
+                double val = parseTimeToSeconds(fileStartTextField.getText());
+                val = Math.max(0.0, Math.min(val, clip.getAudioDuration()));
+                this.clip.setFileStartTime(val);
+            } catch (RuntimeException ex) {
+                fileStartTextField.setText(
+                        formatSecondsAsTime(this.clip.getFileStartTime()));
+            } finally {
+                isUpdating = false;
+            }
+        });
 
-        try {
+        // Fade In
+        fadeInTextField.addActionListener(evt -> {
+            if (this.clip == null || isUpdating) {
+                return;
+            }
+            try {
+                isUpdating = true;
+                double val = parseTimeToSeconds(fadeInTextField.getText());
+                val = Math.max(0, Math.min(val,
+                        clip.getSubjectiveDuration().toBeats(
+                                TimeContextManager.getContext()) - clip.getFadeOut()));
+                this.clip.setFadeIn(val);
+            } catch (RuntimeException ex) {
+                fadeInTextField.setText(
+                        formatSecondsAsTime(this.clip.getFadeIn()));
+            } finally {
+                isUpdating = false;
+            }
+        });
+
+        // Fade Out
+        fadeOutTextField.addActionListener(evt -> {
+            if (this.clip == null || isUpdating) {
+                return;
+            }
+            try {
+                isUpdating = true;
+                double val = parseTimeToSeconds(fadeOutTextField.getText());
+                val = Math.max(0, Math.min(val,
+                        clip.getSubjectiveDuration().toBeats(
+                                TimeContextManager.getContext()) - clip.getFadeIn()));
+                this.clip.setFadeOut(val);
+            } catch (RuntimeException ex) {
+                fadeOutTextField.setText(
+                        formatSecondsAsTime(this.clip.getFadeOut()));
+            } finally {
+                isUpdating = false;
+            }
+        });
+
+        // Fade In Type
+        fadeInTypeComboBox.addActionListener(evt -> {
+            if (this.clip == null || isUpdating) {
+                return;
+            }
             isUpdating = true;
-            var val = Double.parseDouble(fadeOutTextField.getText());
-            val = Math.max(0, Math.min(val, clip.getDuration() - clip.getFadeIn()));
-            this.clip.setFadeOut(val);
-        } catch (NumberFormatException nfe) {
-            fadeOutTextField.setText(Double.toString(this.clip.getFadeOut()));
-        } finally {
+            this.clip.setFadeInType((FadeType) fadeInTypeComboBox.getSelectedItem());
             isUpdating = false;
-        }
-    }//GEN-LAST:event_fadeOutTextFieldActionPerformed
+        });
 
-    private void fadeInTextFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_fadeInTextFieldActionPerformed
-        if (this.clip == null || isUpdating) {
-            return;
-        }
-
-        try {
+        // Fade Out Type
+        fadeOutTypeComboBox.addActionListener(evt -> {
+            if (this.clip == null || isUpdating) {
+                return;
+            }
             isUpdating = true;
-            var val = Double.parseDouble(fadeInTextField.getText());
-            val = Math.max(0, Math.min(val, clip.getDuration() - clip.getFadeOut()));
-            this.clip.setFadeIn(val);
-        } catch (NumberFormatException nfe) {
-            fadeInTextField.setText(Double.toString(this.clip.getFadeIn()));
-        } finally {
+            this.clip.setFadeOutType((FadeType) fadeOutTypeComboBox.getSelectedItem());
             isUpdating = false;
-        }
-    }//GEN-LAST:event_fadeInTextFieldActionPerformed
+        });
 
-    private void fileStartTextFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_fileStartTextFieldActionPerformed
-        if (this.clip == null || isUpdating) {
-            return;
-        }
-
-        try {
+        // Looping
+        loopingCheckbox.addActionListener(evt -> {
+            if (this.clip == null || isUpdating) {
+                return;
+            }
             isUpdating = true;
-            var val = Double.parseDouble(fileStartTextField.getText());
-            val = Math.min(0.0, Math.max(val, clip.getAudioDuration()));
-            this.clip.setFileStartTime(val);
-        } catch (NumberFormatException nfe) {
-            fileStartTextField.setText(Double.toString(this.clip.getFileStartTime()));
-        } finally {
+            this.clip.setLooping(TimeContextManager.getContext(),
+                    loopingCheckbox.isSelected());
             isUpdating = false;
-        }
-    }//GEN-LAST:event_fileStartTextFieldActionPerformed
-
-    private void fadeInTypeComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_fadeInTypeComboBoxActionPerformed
-        if (this.clip == null || isUpdating) {
-            return;
-        }
-
-        isUpdating = true;
-        this.clip.setFadeInType((FadeType) fadeInTypeComboBox.getSelectedItem());
-        isUpdating = false;
-    }//GEN-LAST:event_fadeInTypeComboBoxActionPerformed
-
-    private void fadeOutTypeComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_fadeOutTypeComboBoxActionPerformed
-        if (this.clip == null || isUpdating) {
-            return;
-        }
-
-        isUpdating = true;
-        this.clip.setFadeOutType((FadeType) fadeOutTypeComboBox.getSelectedItem());
-        isUpdating = false;
-    }//GEN-LAST:event_fadeOutTypeComboBoxActionPerformed
-
-    private void loopingCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_loopingCheckboxActionPerformed
-        if (this.clip == null || isUpdating) {
-            return;
-        }
-
-        isUpdating = true;
-        this.clip.setLooping(TimeContextManager.getContext(), loopingCheckbox.isSelected());
-        isUpdating = false;
-    }//GEN-LAST:event_loopingCheckboxActionPerformed
+        });
+    }
 
     @Override
-    @SuppressWarnings("unchecked")
     public void editScoreObject(ScoreObject sObj) {
         final AudioClip newClip = (AudioClip) sObj;
 
         if (this.clip != null) {
-            this.clip.startProperty().removeListener(cl);
-            this.clip.durationProperty().removeListener(cl);
-            this.clip.fileStartTimeProperty().removeListener(cl);
-            this.clip.fadeInProperty().removeListener(cl);
-            this.clip.fadeInTypeProperty().removeListener(cl);
-            this.clip.fadeOutProperty().removeListener(cl);
-            this.clip.fadeOutTypeProperty().removeListener(cl);
-            this.clip.loopingProperty().removeListener(cl);
+            this.clip.removePropertyChangeListener(cl);
         }
 
         this.clip = newClip;
@@ -460,57 +418,81 @@ public class AudioClipEditor extends ScoreObjectEditor {
                 clip.getAudioFile().getAbsolutePath());
         audioFileNameTextField.setText(path);
 
-        var context = TimeContextManager.getContext();
-        startTimeTextField.setText(Double.toString(clip.getStartTime().toBeats(context)));
-        durationTextField.setText(Double.toString(clip.getSubjectiveDuration().toBeats(context)));
+        startTimePanel.setTimePosition(clip.getStartTime());
+        durationPanel.setTimeDuration(clip.getSubjectiveDuration());
 
-        fileStartTextField.setText(Double.toString(clip.getFileStartTime()));
-        fileDurationTextField.setText(Double.toString(clip.getDuration()));
-        fadeInTextField.setText(Double.toString(clip.getFadeIn()));
-        fadeOutTextField.setText(Double.toString(clip.getFadeOut()));
+        fileStartTextField.setText(formatSecondsAsTime(clip.getFileStartTime()));
+        fileDurationTextField.setText(formatSecondsAsTime(clip.getAudioDuration()));
+        fadeInTextField.setText(formatSecondsAsTime(clip.getFadeIn()));
+        fadeOutTextField.setText(formatSecondsAsTime(clip.getFadeOut()));
 
-        fadeOutTypeComboBox.setSelectedItem(clip.getFadeInType());
-        fadeInTypeComboBox.setSelectedItem(clip.getFadeOutType());
-        
+        fadeInTypeComboBox.setSelectedItem(clip.getFadeInType());
+        fadeOutTypeComboBox.setSelectedItem(clip.getFadeOutType());
+
         loopingCheckbox.setSelected(clip.isLooping());
 
         isUpdating = false;
 
-        this.clip.startProperty().addListener(cl);
-        this.clip.durationProperty().addListener(cl);
-        this.clip.fileStartTimeProperty().addListener(cl);
-        this.clip.fadeInProperty().addListener(cl);
-        this.clip.fadeInTypeProperty().addListener(cl);
-        this.clip.fadeOutProperty().addListener(cl);
-        this.clip.fadeOutTypeProperty().addListener(cl);
-        this.clip.loopingProperty().addListener(cl);
-
+        this.clip.addPropertyChangeListener(cl);
     }
 
+    /**
+     * Formats a seconds value as H:MM:SS.mmm time string.
+     */
+    static String formatSecondsAsTime(double totalSeconds) {
+        if (totalSeconds < 0) {
+            totalSeconds = 0;
+        }
+        long totalMs = Math.round(totalSeconds * 1000.0);
+        long hours = totalMs / 3_600_000;
+        long minutes = (totalMs % 3_600_000) / 60_000;
+        long seconds = (totalMs % 60_000) / 1_000;
+        long ms = totalMs % 1_000;
+        return String.format("%d:%02d:%02d.%03d", hours, minutes, seconds, ms);
+    }
 
-    // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JTextField audioFileNameTextField;
-    private javax.swing.JTextField durationTextField;
-    private javax.swing.JTextField fadeInTextField;
-    private javax.swing.JComboBox<FadeType> fadeInTypeComboBox;
-    private javax.swing.JTextField fadeOutTextField;
-    private javax.swing.JComboBox<FadeType> fadeOutTypeComboBox;
-    private javax.swing.JTextField fileDurationTextField;
-    private javax.swing.JTextField fileStartTextField;
-    private javax.swing.JLabel jLabel1;
-    private javax.swing.JLabel jLabel10;
-    private javax.swing.JLabel jLabel2;
-    private javax.swing.JLabel jLabel3;
-    private javax.swing.JLabel jLabel4;
-    private javax.swing.JLabel jLabel5;
-    private javax.swing.JLabel jLabel6;
-    private javax.swing.JLabel jLabel7;
-    private javax.swing.JLabel jLabel8;
-    private javax.swing.JLabel jLabel9;
-    private javax.swing.JPanel jPanel1;
-    private javax.swing.JPanel jPanel2;
-    private javax.swing.JScrollPane jScrollPane1;
-    private javax.swing.JCheckBox loopingCheckbox;
-    private javax.swing.JTextField startTimeTextField;
-    // End of variables declaration//GEN-END:variables
+    /**
+     * Parses a time string (H:MM:SS.mmm or plain seconds) to seconds.
+     */
+    static double parseTimeToSeconds(String text) {
+        String trimmed = text.trim();
+        if (trimmed.isEmpty()) {
+            return 0.0;
+        }
+
+        // Try plain number first
+        if (!trimmed.contains(":")) {
+            return Double.parseDouble(trimmed);
+        }
+
+        // Parse H:MM:SS.mmm or MM:SS.mmm
+        String[] parts = trimmed.split(":");
+        long hours = 0;
+        long minutes;
+        String secPart;
+
+        if (parts.length == 3) {
+            hours = Long.parseLong(parts[0].trim());
+            minutes = Long.parseLong(parts[1].trim());
+            secPart = parts[2];
+        } else if (parts.length == 2) {
+            minutes = Long.parseLong(parts[0].trim());
+            secPart = parts[1];
+        } else {
+            throw new IllegalArgumentException("Time format: H:MM:SS.mmm");
+        }
+
+        String[] secParts = secPart.split("\\.");
+        long seconds = Long.parseLong(secParts[0].trim());
+        long milliseconds = 0;
+        if (secParts.length == 2) {
+            String msStr = secParts[1].trim();
+            // Pad or truncate to 3 digits
+            while (msStr.length() < 3) msStr += "0";
+            if (msStr.length() > 3) msStr = msStr.substring(0, 3);
+            milliseconds = Long.parseLong(msStr);
+        }
+
+        return hours * 3600.0 + minutes * 60.0 + seconds + milliseconds / 1000.0;
+    }
 }

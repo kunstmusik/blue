@@ -26,6 +26,7 @@
                         <publicPackage>blue.ui.core.score.layers.soundObject</publicPackage>
                         <publicPackage>blue.ui.core.score.layers.soundObject.views</publicPackage>
                         <publicPackage>blue.ui.core.soundObject.renderer</publicPackage>
+                        <publicPackage>blue.ui.core.time</publicPackage>
                     </publicPackages>
                     <verifyRuntime>false</verifyRuntime>
                 </configuration>

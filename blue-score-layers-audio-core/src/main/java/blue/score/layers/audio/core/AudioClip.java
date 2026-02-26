@@ -22,25 +22,22 @@ package blue.score.layers.audio.core;
 import blue.score.ScoreObject;
 import blue.score.ScoreObjectEvent;
 import blue.score.ScoreObjectListener;
+import blue.time.TimeBase;
 import blue.time.TimeContext;
 import blue.time.TimeDuration;
 import blue.time.TimePosition;
+import blue.time.TimeUnitMath;
+import blue.time.TimeUtilities;
 import blue.utility.XMLUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
 import java.awt.Color;
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import javafx.beans.property.BooleanProperty;
-import javafx.beans.property.DoubleProperty;
-import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.SimpleBooleanProperty;
-import javafx.beans.property.SimpleDoubleProperty;
-import javafx.beans.property.SimpleObjectProperty;
-import javafx.beans.property.SimpleStringProperty;
-import javafx.beans.property.StringProperty;
 import javax.sound.sampled.AudioFileFormat;
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioSystem;
@@ -53,68 +50,63 @@ import org.openide.util.Exceptions;
  */
 public final class AudioClip implements ScoreObject, Comparable<AudioClip> {
 
-    private StringProperty name = new SimpleStringProperty();
-    private DoubleProperty start = new SimpleDoubleProperty();
-    private DoubleProperty duration = new SimpleDoubleProperty();
-    private ObjectProperty<Color> color = new SimpleObjectProperty<>(
-            Color.DARK_GRAY);
+    public static final String NAME = "name";
+    public static final String START_TIME = "startTime";
+    public static final String DURATION = "duration";
+    public static final String COLOR = "color";
+    public static final String FILE_START_TIME = "fileStartTime";
+    public static final String FADE_IN = "fadeIn";
+    public static final String FADE_IN_TYPE = "fadeInType";
+    public static final String FADE_OUT = "fadeOut";
+    public static final String FADE_OUT_TYPE = "fadeOutType";
+    public static final String LOOPING = "looping";
+    public static final String AUDIO_FILE = "audioFile";
 
-    private ObjectProperty<File> audioFile = new SimpleObjectProperty<>();
+    private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
+
+    private String name = "";
+    private TimePosition startTimePosition = TimePosition.beats(0.0);
+    private TimeDuration durationUnit = TimeDuration.beats(0.0);
+    private Color color = Color.DARK_GRAY;
+
+    private File audioFile = null;
     int numChannels = 0;
     double audioDuration = 0.0f;
 
-    private DoubleProperty fileStartTime = new SimpleDoubleProperty(0.0f);
-    private DoubleProperty fadeIn = new SimpleDoubleProperty(0.0f);
-    private ObjectProperty<FadeType> fadeInType = new SimpleObjectProperty<>(
-            FadeType.LINEAR);
-    private DoubleProperty fadeOut = new SimpleDoubleProperty(0.0f);
-    private ObjectProperty<FadeType> fadeOutType = new SimpleObjectProperty<>(
-            FadeType.LINEAR);
-    private BooleanProperty looping = new SimpleBooleanProperty(true);
+    private double fileStartTime = 0.0;
+    private double fadeIn = 0.0;
+    private FadeType fadeInType = FadeType.LINEAR;
+    private double fadeOut = 0.0;
+    private FadeType fadeOutType = FadeType.LINEAR;
+    private boolean looping = true;
 
     transient List<ScoreObjectListener> scoreObjListeners = null;
     transient int cloneSourceHashCode = 0;
-//    transient List<PropertyChangeListener> propListeners = null;
 
     public AudioClip() {
-        name.addListener((obs, old, newVal) -> {
-            fireScoreObjectEvent(new ScoreObjectEvent(this,
-                    ScoreObjectEvent.NAME));
-        });
-        start.addListener((obs, old, newVal) -> {
-            fireScoreObjectEvent(new ScoreObjectEvent(this,
-                    ScoreObjectEvent.START_TIME));
-        });
-        duration.addListener((obs, old, newVal) -> {
-            fireScoreObjectEvent(new ScoreObjectEvent(this,
-                    ScoreObjectEvent.DURATION));
-        });
-        color.addListener((obs, old, newVal) -> {
-            fireScoreObjectEvent(new ScoreObjectEvent(this,
-                    ScoreObjectEvent.COLOR));
-        });
     }
 
     public AudioClip(AudioClip ac) {
-        this();
-        setName(ac.getName());
-        setStart(ac.getStart());
-        setBackgroundColor(ac.getBackgroundColor());
-        setAudioFile(ac.getAudioFile());
-        setDuration(ac.getDuration());
-        setFileStartTime(ac.getFileStartTime());
-        setFadeIn(ac.getFadeIn());
-        setFadeInType(ac.getFadeInType());
-        setFadeOut(ac.getFadeOut());
-        setFadeOutType(ac.getFadeOutType());
-        setLooping(ac.isLooping());
+        this.name = ac.name;
+        this.startTimePosition = ac.startTimePosition;
+        this.durationUnit = ac.durationUnit;
+        this.color = ac.color;
+        this.audioFile = ac.audioFile;
+        this.numChannels = ac.numChannels;
+        this.audioDuration = ac.audioDuration;
+        this.fileStartTime = ac.fileStartTime;
+        this.fadeIn = ac.fadeIn;
+        this.fadeInType = ac.fadeInType;
+        this.fadeOut = ac.fadeOut;
+        this.fadeOutType = ac.fadeOutType;
+        this.looping = ac.looping;
         this.cloneSourceHashCode = ac.hashCode();
     }
 
     protected void readAudioFileProperties() {
         AudioFileFormat aFormat;
         try {
-            aFormat = AudioSystem.getAudioFileFormat(audioFile.get());
+            aFormat = AudioSystem.getAudioFileFormat(audioFile);
             AudioFormat format = aFormat.getFormat();
 
             numChannels = format.getChannels();
@@ -127,118 +119,142 @@ public final class AudioClip implements ScoreObject, Comparable<AudioClip> {
         }
     }
 
+    // PropertyChangeListener support
+
+    public void addPropertyChangeListener(PropertyChangeListener listener) {
+        pcs.addPropertyChangeListener(listener);
+    }
+
+    public void removePropertyChangeListener(PropertyChangeListener listener) {
+        pcs.removePropertyChangeListener(listener);
+    }
+
+    // Name
+
     @Override
     public void setName(String value) {
-        name.set(value);
+        String old = this.name;
+        this.name = value;
+        pcs.firePropertyChange(NAME, old, value);
+        fireScoreObjectEvent(new ScoreObjectEvent(this, ScoreObjectEvent.NAME));
     }
 
     @Override
     public String getName() {
-        return name.get();
-    }
-
-    public StringProperty nameProperty() {
         return name;
     }
 
-    public void setStart(double value) {
-        start.set(value);
+    // Start time
+
+    @Override
+    public void setStartTime(TimePosition startTime) {
+        if (startTime == null) {
+            throw new IllegalArgumentException("Start time cannot be null");
+        }
+        TimePosition old = this.startTimePosition;
+        this.startTimePosition = startTime;
+        pcs.firePropertyChange(START_TIME, old, startTime);
+        fireScoreObjectEvent(new ScoreObjectEvent(this, ScoreObjectEvent.START_TIME));
     }
 
-    public double getStart() {
-        return start.get();
+    @Override
+    public TimePosition getStartTime() {
+        return startTimePosition;
     }
 
-    public DoubleProperty startProperty() {
-        return start;
+    // Subjective duration
+
+    @Override
+    public void setSubjectiveDuration(TimeDuration duration) {
+        if (duration == null) {
+            throw new IllegalArgumentException("Duration cannot be null");
+        }
+        TimeDuration old = this.durationUnit;
+        this.durationUnit = duration;
+        pcs.firePropertyChange(DURATION, old, duration);
+        fireScoreObjectEvent(new ScoreObjectEvent(this, ScoreObjectEvent.DURATION));
     }
 
-    public void setDuration(double value) {
-        duration.set(value);
+    @Override
+    public TimeDuration getSubjectiveDuration() {
+        return durationUnit;
     }
 
-    public double getDuration() {
-        return duration.get();
-    }
-
-    public DoubleProperty durationProperty() {
-        return duration;
-    }
+    // File start time
 
     public void setFileStartTime(double value) {
-        fileStartTime.set(value);
+        double old = this.fileStartTime;
+        this.fileStartTime = value;
+        pcs.firePropertyChange(FILE_START_TIME, old, value);
     }
 
     public double getFileStartTime() {
-        return fileStartTime.get();
-    }
-
-    public DoubleProperty fileStartTimeProperty() {
         return fileStartTime;
     }
 
+    // Fade in
+
     public void setFadeIn(double value) {
-        fadeIn.set(value);
+        double old = this.fadeIn;
+        this.fadeIn = value;
+        pcs.firePropertyChange(FADE_IN, old, value);
     }
 
     public double getFadeIn() {
-        return fadeIn.get();
-    }
-
-    public DoubleProperty fadeInProperty() {
         return fadeIn;
     }
 
+    // Fade out
+
     public void setFadeOut(double value) {
-        fadeOut.set(value);
+        double old = this.fadeOut;
+        this.fadeOut = value;
+        pcs.firePropertyChange(FADE_OUT, old, value);
     }
 
     public double getFadeOut() {
-        return fadeOut.get();
-    }
-
-    public DoubleProperty fadeOutProperty() {
         return fadeOut;
     }
 
+    // Looping
+
     public void setLooping(TimeContext context, boolean looping) {
-        this.looping.set(looping);
-        
-        if(!looping) {
+        boolean old = this.looping;
+        this.looping = looping;
+
+        if (!looping) {
             var durLimit = getAudioDuration() - getFileStartTime();
-            var subjDur = getSubjectiveDuration();
-            if(subjDur.toBeats(context) > durLimit) {
-                setSubjectiveDuration(TimeDuration.beats(durLimit));
+            double durBeats = durationUnit.toBeats(context);
+            if (durBeats > durLimit) {
+                setSubjectiveDuration(TimeUnitMath.beatsToDuration(
+                        durLimit, durationUnit.getTimeBase(), context));
             }
         }
+
+        pcs.firePropertyChange(LOOPING, old, looping);
     }
 
     // Simple setter for copy constructor and deserialization - no validation
     private void setLooping(boolean looping) {
-        this.looping.set(looping);
+        this.looping = looping;
     }
 
     public boolean isLooping() {
-        return looping.get();
-    }
-
-    public BooleanProperty loopingProperty() {
         return looping;
     }
 
-    // GETTERS/SETTERS 
+    // Audio file
+
     public File getAudioFile() {
-        return audioFile.get();
+        return audioFile;
     }
 
     public void setAudioFile(File audioFile) {
-        this.audioFile.set(audioFile);
+        File old = this.audioFile;
+        this.audioFile = audioFile;
         readAudioFileProperties();
-        duration.set(audioDuration);
-    }
-
-    public ObjectProperty<File> audioFileProperty() {
-        return this.audioFile;
+        setSubjectiveDuration(TimeDuration.fromSeconds(audioDuration));
+        pcs.firePropertyChange(AUDIO_FILE, old, audioFile);
     }
 
     public double getAudioDuration() {
@@ -249,60 +265,73 @@ public final class AudioClip implements ScoreObject, Comparable<AudioClip> {
         audioDuration = originalDuration;
     }
 
+    // Color
+
     @Override
-    public TimePosition getStartTime() {
-        return TimePosition.beats(getStart());
+    public Color getBackgroundColor() {
+        return this.color;
     }
 
     @Override
-    public void setStartTime(TimePosition timePosition) {
-        if (timePosition instanceof TimePosition.BeatTime bt) {
-            setStart(bt.getCsoundBeats());
-        } else {
-            throw new IllegalArgumentException("AudioClip only supports BeatTime. Use resizeLeft/resizeRight with TimeContext for conversion.");
-        }
+    public void setBackgroundColor(Color color) {
+        Color old = this.color;
+        this.color = color;
+        pcs.firePropertyChange(COLOR, old, color);
+        fireScoreObjectEvent(new ScoreObjectEvent(this, ScoreObjectEvent.COLOR));
     }
 
-    @Override
-    public TimeDuration getSubjectiveDuration() {
-        return TimeDuration.beats(getDuration());
+    public int getNumChannels() {
+        return numChannels;
     }
 
-    @Override
-    public void setSubjectiveDuration(TimeDuration duration) {
-        if (duration instanceof TimeDuration.DurationBeats db) {
-            setDuration(db.getCsoundBeats());
-        } else {
-            throw new IllegalArgumentException("AudioClip only supports DurationBeats. Use resizeLeft/resizeRight with TimeContext for conversion.");
-        }
+    // Fade types
+
+    public FadeType getFadeInType() {
+        return this.fadeInType;
     }
+
+    public void setFadeInType(FadeType fadeType) {
+        FadeType old = this.fadeInType;
+        this.fadeInType = fadeType;
+        pcs.firePropertyChange(FADE_IN_TYPE, old, fadeType);
+    }
+
+    public FadeType getFadeOutType() {
+        return this.fadeOutType;
+    }
+
+    public void setFadeOutType(FadeType fadeType) {
+        FadeType old = this.fadeOutType;
+        this.fadeOutType = fadeType;
+        pcs.firePropertyChange(FADE_OUT_TYPE, old, fadeType);
+    }
+
+    // Resize
 
     @Override
     public double[] getResizeRightLimits(TimeContext context) {
-        final double subjectiveDuration = getSubjectiveDuration().toBeats(context);
-        
+        double durBeats = durationUnit.toBeats(context);
         return isLooping()
-                ? new double[]{-subjectiveDuration, Double.MAX_VALUE}
-                : new double[]{-subjectiveDuration, (getAudioDuration() - (subjectiveDuration + getFileStartTime()))};
+                ? new double[]{-durBeats, Double.MAX_VALUE}
+                : new double[]{-durBeats, (getAudioDuration() - (durBeats + getFileStartTime()))};
     }
 
     @Override
     public double[] getResizeLeftLimits(TimeContext context) {
-        final double startTime = getStartTime().toBeats(context);
-        final double subjectiveDuration = getSubjectiveDuration().toBeats(context);
-
+        double startBeats = startTimePosition.toBeats(context);
+        double durBeats = durationUnit.toBeats(context);
         var leftLimit = isLooping()
-                ? -startTime
-                : Math.max(-getStart(), -getFileStartTime());
+                ? -startBeats
+                : Math.max(-startBeats, -getFileStartTime());
 
-        return new double[]{leftLimit, subjectiveDuration};
+        return new double[]{leftLimit, durBeats};
     }
 
     @Override
     public void resizeLeft(TimeContext context, double newStartTime) {
-
-        final var start = getStartTime().toBeats(context);
-        double diff = start - newStartTime;
+        double currentStart = startTimePosition.toBeats(context);
+        double currentDuration = durationUnit.toBeats(context);
+        double diff = currentStart - newStartTime;
         double fileStart = getFileStartTime() - diff;
         double audioDur = getAudioDuration();
 
@@ -313,87 +342,39 @@ public final class AudioClip implements ScoreObject, Comparable<AudioClip> {
             while (fileStart > audioDur) {
                 fileStart -= audioDur;
             }
-
         }
 
-        setStartTime(TimePosition.beats(newStartTime));
+        setStartTime(TimeUtilities.beatsToTimePosition(
+                newStartTime, startTimePosition.getTimeBase(), context));
         setFileStartTime(fileStart);
-        setSubjectiveDuration(TimeDuration.beats(getDuration() + diff));
+        setSubjectiveDuration(TimeUnitMath.beatsToDuration(
+                currentDuration + diff, durationUnit.getTimeBase(), context));
     }
 
     @Override
     public void resizeRight(TimeContext context, double newEndTime) {
-        setSubjectiveDuration(TimeDuration.beats(newEndTime - getStart()));
-
-//        if (newEndTime <= getStart()) {
-//            return;
-//        }
-//
-//        double newDur = newEndTime - getStart();
-//
-//        newDur = (newDur > getAudioDuration()) ? getAudioDuration() : newDur;
-//
-//        setSubjectiveDuration(newDur);
+        double currentStart = startTimePosition.toBeats(context);
+        setSubjectiveDuration(TimeUnitMath.beatsToDuration(
+                newEndTime - currentStart, durationUnit.getTimeBase(), context));
     }
 
     @Override
     public int compareTo(AudioClip o) {
-        double diff = o.getStart() - this.getStart();
-        if (diff != 0) {
-            return (int) diff;
+        // Compare using beat values with a default TimeContext
+        var context = new TimeContext();
+        int cmp = Double.compare(
+                this.startTimePosition.toBeats(context),
+                o.startTimePosition.toBeats(context));
+        if (cmp != 0) {
+            return cmp;
         }
-
-        return (int) (o.getDuration() - this.getDuration());
+        return Double.compare(
+                this.durationUnit.toBeats(context),
+                o.durationUnit.toBeats(context));
     }
 
-    @Override
-    public Color getBackgroundColor() {
-        return this.color.get();
-    }
+    // XML Methods
 
-    @Override
-    public void setBackgroundColor(Color color) {
-        this.color.set(color);
-
-        ScoreObjectEvent event = new ScoreObjectEvent(this,
-                ScoreObjectEvent.COLOR);
-
-        fireScoreObjectEvent(event);
-    }
-
-    public ObjectProperty<Color> backgroundColorProperty() {
-        return color;
-    }
-
-    public int getNumChannels() {
-        return numChannels;
-    }
-
-    public FadeType getFadeInType() {
-        return this.fadeInType.getValue();
-    }
-
-    public void setFadeInType(FadeType fadeType) {
-        this.fadeInType.setValue(fadeType);
-    }
-
-    public ObjectProperty<FadeType> fadeInTypeProperty() {
-        return fadeInType;
-    }
-
-    public FadeType getFadeOutType() {
-        return this.fadeOutType.getValue();
-    }
-
-    public void setFadeOutType(FadeType fadeType) {
-        this.fadeOutType.setValue(fadeType);
-    }
-
-    public ObjectProperty<FadeType> fadeOutTypeProperty() {
-        return fadeOutType;
-    }
-
-    //XML Methods 
     public Element saveAsXML() {
         Element root = new Element("audioClip");
 
@@ -403,8 +384,8 @@ public final class AudioClip implements ScoreObject, Comparable<AudioClip> {
         root.addElement(XMLUtilities.writeDouble("audioDuration",
                 getAudioDuration()));
         root.addElement(XMLUtilities.writeDouble("fileStart", getFileStartTime()));
-        root.addElement(XMLUtilities.writeDouble("start", getStart()));
-        root.addElement(XMLUtilities.writeDouble("duration", getDuration()));
+        root.addElement(getStartTime().saveAsXML().setName("startTime"));
+        root.addElement(getSubjectiveDuration().saveAsXML().setName("subjectiveDuration"));
         root.addElement(XMLUtilities.writeDouble("fadeIn", getFadeIn()));
         root.addElement("fadeInType").setText(getFadeInType().toString());
         root.addElement(XMLUtilities.writeDouble("fadeOut", getFadeOut()));
@@ -442,11 +423,37 @@ public final class AudioClip implements ScoreObject, Comparable<AudioClip> {
                 case "fileStart":
                     clip.setFileStartTime(XMLUtilities.readDouble(node));
                     break;
+                case "startTime":
+                    if (node.getAttributeValue("type") != null) {
+                        try {
+                            clip.setStartTime(TimePosition.loadFromXML(node));
+                        } catch (Exception ex) {
+                            Exceptions.printStackTrace(ex);
+                        }
+                    } else {
+                        clip.setStartTime(TimePosition.beats(
+                                Double.parseDouble(node.getTextString())));
+                    }
+                    break;
                 case "start":
-                    clip.setStart(XMLUtilities.readDouble(node));
+                    // Legacy format: plain double (beats)
+                    clip.setStartTime(TimePosition.beats(XMLUtilities.readDouble(node)));
+                    break;
+                case "subjectiveDuration":
+                    if (node.getAttributeValue("type") != null) {
+                        try {
+                            clip.setSubjectiveDuration(TimeDuration.loadFromXML(node));
+                        } catch (Exception ex) {
+                            Exceptions.printStackTrace(ex);
+                        }
+                    } else {
+                        clip.setSubjectiveDuration(TimeDuration.beats(
+                                Double.parseDouble(node.getTextString())));
+                    }
                     break;
                 case "duration":
-                    clip.setDuration(XMLUtilities.readDouble(node));
+                    // Legacy format: plain double (beats)
+                    clip.setSubjectiveDuration(TimeDuration.beats(XMLUtilities.readDouble(node)));
                     break;
                 case "backgroundColor":
                     String colorStr = data.getTextString("backgroundColor");
@@ -473,6 +480,8 @@ public final class AudioClip implements ScoreObject, Comparable<AudioClip> {
 
         return clip;
     }
+
+    // ScoreObject listener support
 
     @Override
     public void addScoreObjectListener(ScoreObjectListener listener) {

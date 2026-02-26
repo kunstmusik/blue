@@ -93,7 +93,26 @@ public abstract class TimeDuration {
     public static DurationTime time(long hours, long minutes, long seconds, long milliseconds) {
         return new DurationTime(hours, minutes, seconds, milliseconds);
     }
-    
+
+    /**
+     * Creates a DurationTime from a total seconds value.
+     * Converts the seconds into hours, minutes, seconds, and milliseconds components.
+     *
+     * @param totalSeconds the duration in seconds (must be >= 0)
+     * @return a DurationTime representing the given seconds
+     */
+    public static DurationTime fromSeconds(double totalSeconds) {
+        if (totalSeconds < 0) {
+            totalSeconds = 0;
+        }
+        long totalMs = Math.round(totalSeconds * 1000.0);
+        long hours = totalMs / 3_600_000;
+        long minutes = (totalMs % 3_600_000) / 60_000;
+        long seconds = (totalMs % 60_000) / 1_000;
+        long ms = totalMs % 1_000;
+        return new DurationTime(hours, minutes, seconds, ms);
+    }
+
     public static DurationFrames frames(long frameNumber) {
         return new DurationFrames(frameNumber);
     }

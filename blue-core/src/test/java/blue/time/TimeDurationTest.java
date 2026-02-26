@@ -567,4 +567,61 @@ class TimeDurationTest {
         d = TimeDuration.bbf(0, 1, 0);
         assertEquals(0.5, d.toBeats(ctx68), 0.001);
     }
+
+    // ========== fromSeconds factory method tests ==========
+
+    @Test
+    void testFromSecondsZero() {
+        var dur = TimeDuration.fromSeconds(0.0);
+        assertInstanceOf(TimeDuration.DurationTime.class, dur);
+        assertEquals(TimeBase.TIME, dur.getTimeBase());
+        assertEquals(0, dur.getHours());
+        assertEquals(0, dur.getMinutes());
+        assertEquals(0, dur.getSeconds());
+        assertEquals(0, dur.getMilliseconds());
+    }
+
+    @Test
+    void testFromSecondsSimple() {
+        // 3.5 seconds
+        var dur = TimeDuration.fromSeconds(3.5);
+        assertEquals(0, dur.getHours());
+        assertEquals(0, dur.getMinutes());
+        assertEquals(3, dur.getSeconds());
+        assertEquals(500, dur.getMilliseconds());
+        assertEquals(3.5, dur.toTotalSeconds(), 0.001);
+    }
+
+    @Test
+    void testFromSecondsMinutes() {
+        // 90.25 seconds = 1 min 30 sec 250 ms
+        var dur = TimeDuration.fromSeconds(90.25);
+        assertEquals(0, dur.getHours());
+        assertEquals(1, dur.getMinutes());
+        assertEquals(30, dur.getSeconds());
+        assertEquals(250, dur.getMilliseconds());
+    }
+
+    @Test
+    void testFromSecondsHours() {
+        // 3661.123 seconds = 1h 1m 1s 123ms
+        var dur = TimeDuration.fromSeconds(3661.123);
+        assertEquals(1, dur.getHours());
+        assertEquals(1, dur.getMinutes());
+        assertEquals(1, dur.getSeconds());
+        assertEquals(123, dur.getMilliseconds());
+    }
+
+    @Test
+    void testFromSecondsNegativeClampsToZero() {
+        var dur = TimeDuration.fromSeconds(-5.0);
+        assertEquals(0.0, dur.toTotalSeconds(), 0.001);
+    }
+
+    @Test
+    void testFromSecondsToBeatsAt60BPM() {
+        // At 60 BPM (default context), 1 second = 1 beat
+        var dur = TimeDuration.fromSeconds(5.0);
+        assertEquals(5.0, dur.toBeats(context), 0.001);
+    }
 }

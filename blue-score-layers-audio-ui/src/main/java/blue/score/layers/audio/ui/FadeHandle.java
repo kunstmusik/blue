@@ -21,6 +21,7 @@ package blue.score.layers.audio.ui;
 
 import blue.score.TimeState;
 import blue.score.layers.audio.core.AudioClip;
+import blue.time.TimeContextManager;
 import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.event.MouseAdapter;
@@ -75,8 +76,9 @@ public class FadeHandle extends JPanel {
 
         @Override
         public void mousePressed(MouseEvent e) {
-            max = fadeIn ? audioClip.getDuration() - audioClip.getFadeOut()
-                    : audioClip.getDuration() - audioClip.getFadeIn();
+            double dur = audioClip.getSubjectiveDuration().toBeats(TimeContextManager.getContext());
+            max = fadeIn ? dur - audioClip.getFadeOut()
+                    : dur - audioClip.getFadeIn();
             startFade = fadeIn ? audioClip.getFadeIn() : audioClip.getFadeOut();
 
             startX = e.getXOnScreen();
