@@ -31,7 +31,6 @@ import blue.settings.GeneralSettings;
 import blue.settings.ProjectDefaultsSettings;
 import blue.settings.RealtimeRenderSettings;
 import blue.soundObject.PolyObject;
-import blue.time.TimeContext;
 import blue.time.TimeContextManager;
 import blue.ui.utilities.FileChooserManager;
 import blue.undo.BlueUndoManager;
@@ -206,20 +205,7 @@ public class BlueProjectManager {
 
             new Thread(() -> {
                 try {
-                    // Set TimeContext for this thread's operation
-                    TimeContext context = project.getData().getScore().getTimeContext();
-                    TimeContext previousContext = TimeContextManager.hasContext() ? TimeContextManager.getContext() : null;
-                    TimeContextManager.setContext(context);
-
-                    try {
-                        score.processOnLoad();
-                    } finally {
-                        if (previousContext != null) {
-                            TimeContextManager.setContext(previousContext);
-                        } else {
-                            TimeContextManager.clearContext();
-                        }
-                    }
+                    score.processOnLoad();
                 } catch (Exception ex) {
                     Exceptions.printStackTrace(ex);
                 }

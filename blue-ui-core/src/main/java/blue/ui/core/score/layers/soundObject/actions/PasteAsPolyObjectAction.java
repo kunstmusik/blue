@@ -33,6 +33,8 @@ import blue.soundObject.SoundObject;
 import blue.time.TimeBase;
 import blue.time.TimeContext;
 import blue.time.TimeContextManager;
+import blue.time.TimeDuration;
+import blue.time.TimeUnitMath;
 import blue.time.TimeUtilities;
 import blue.ui.core.clipboard.BlueClipboardUtils;
 import blue.ui.core.score.ScoreObjectCopy;
@@ -129,6 +131,18 @@ public final class PasteAsPolyObjectAction extends AbstractAction implements Con
             SoundLayer layer = pObj.get(layerIndex - minLayer);
 
             SoundObject clone = (SoundObject)scoreObj.deepCopy();
+
+            // Cross-context paste: preserve beat count for beat-based durations.
+            // The beat count is semantically meaningful regardless of tempo differences.
+            TimeContext context = TimeContextManager.getContext();
+            if (scoreObjectCopy.sourceContext != null && !context.hasSameMusicalContext(scoreObjectCopy.sourceContext)) {
+                TimeDuration dur = clone.getSubjectiveDuration();
+                if (dur.getTimeBase().isBeatBased()) {
+                    double beats = dur.toBeats(scoreObjectCopy.sourceContext);
+                    clone.setSubjectiveDuration(TimeUnitMath.beatsToDuration(beats, dur.getTimeBase(), context));
+                }
+            }
+
             layer.add(clone);
 
             if (clone instanceof Instance instance) {

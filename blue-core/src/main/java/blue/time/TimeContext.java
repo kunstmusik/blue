@@ -68,10 +68,6 @@ public class TimeContext {
         this.smpteFrameRate = tc.smpteFrameRate;
         this.meterMap = new MeterMap(tc.meterMap);
         this.tempoMap = new TempoMap(tc.tempoMap);
-        if (tc.projectProperties != null) {
-            this.projectProperties = tc.projectProperties;
-            this.projectProperties.addPropertyChangeListener(sampleRateListener);
-        }
     }
 
     /**
@@ -143,6 +139,20 @@ public class TimeContext {
         this.tempoMap = tempoMap;
     }
     
+    /**
+     * Returns true if this context has the same musical context
+     * (tempo map and meter map) as the other context. Used to determine
+     * whether beat-based values need conversion when pasting between contexts.
+     * 
+     * @param other the other TimeContext to compare
+     * @return true if tempo and meter maps are equal
+     */
+    public boolean hasSameMusicalContext(TimeContext other) {
+        if (other == null) return false;
+        if (this == other) return true;
+        return tempoMap.equals(other.tempoMap) && meterMap.equals(other.meterMap);
+    }
+
     /**
      * Save TimeContext to XML.
      */

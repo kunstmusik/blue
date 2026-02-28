@@ -36,7 +36,6 @@ import blue.time.TimeContextManager;
 import blue.time.TimeDuration;
 import blue.time.TimePosition;
 import blue.time.TimeUnitMath;
-import blue.time.TimeUtilities;
 import blue.ui.core.clipboard.BlueClipboardUtils;
 import blue.ui.core.score.ScoreController;
 import blue.ui.core.score.ScorePath;
@@ -189,10 +188,16 @@ public final class PasteSoundObjectAction extends AbstractAction implements Cont
 
             sObj.setStartTime(TimeUnitMath.add(context, sObj.getStartTime(), startTranslation));
 
-            // Convert to primary ruler's TimeBase
-            TimeBase timeBase = timeState.getTimeDisplay();
-            sObj.setStartTime(TimeUtilities.convertTimePosition(sObj.getStartTime(), timeBase, context));
-            sObj.setSubjectiveDuration(TimeUnitMath.beatsToDuration(sObj.getSubjectiveDuration().toBeats(context), timeBase, context));
+            // Cross-context paste: preserve beat count for beat-based durations.
+            // The beat count is semantically meaningful regardless of tempo differences.
+            // Time-based durations (TIME, SMPTE, FRAME) are absolute and need no conversion.
+            if (buffer.sourceContext != null && !context.hasSameMusicalContext(buffer.sourceContext)) {
+                TimeDuration dur = sObj.getSubjectiveDuration();
+                if (dur.getTimeBase().isBeatBased()) {
+                    double beats = dur.toBeats(buffer.sourceContext);
+                    sObj.setSubjectiveDuration(TimeUnitMath.beatsToDuration(beats, dur.getTimeBase(), context));
+                }
+            }
 
             ScoreObjectLayer<ScoreObject> layer
                     = (ScoreObjectLayer<ScoreObject>) allLayers.get(newLayerIndex);

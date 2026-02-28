@@ -68,6 +68,18 @@ public final class MeasureMeterPair {
         return new MeasureMeterPair(this.measureNumber, newMeter);
     }
     
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (!(obj instanceof MeasureMeterPair other)) return false;
+        return measureNumber == other.measureNumber && meter.equals(other.meter);
+    }
+
+    @Override
+    public int hashCode() {
+        return Long.hashCode(measureNumber) * 31 + meter.hashCode();
+    }
+
     /**
      * Save MeasureMeterPair to XML.
      */

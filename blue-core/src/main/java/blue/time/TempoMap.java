@@ -603,6 +603,18 @@ public class TempoMap {
         return buffer.toString();
     }
     
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (!(obj instanceof TempoMap other)) return false;
+        return enabled == other.enabled && points.equals(other.points);
+    }
+
+    @Override
+    public int hashCode() {
+        return 31 * points.hashCode() + Boolean.hashCode(enabled);
+    }
+
     // ========== XML Serialization ==========
     
     /**

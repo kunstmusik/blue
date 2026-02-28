@@ -365,6 +365,18 @@ public class MeterMap {
         return TimePosition.bbf(bar, wholeBeat, fraction);
     }
     
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (!(obj instanceof MeterMap other)) return false;
+        return entries.equals(other.entries);
+    }
+
+    @Override
+    public int hashCode() {
+        return entries.hashCode();
+    }
+
     /**
      * Save MeterMap to XML.
      */

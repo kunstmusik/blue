@@ -53,5 +53,13 @@ public enum TimeBase {
     SMPTE,
     
     /** Audio Sample Frame Number **/
-    FRAME, 
+    FRAME;
+
+    /**
+     * Returns true if this TimeBase is beat-based (BEATS, BBT, BBST, BBF).
+     * Beat-based values depend on tempo/meter context for wall-clock conversion.
+     */
+    public boolean isBeatBased() {
+        return this == BEATS || this == BBT || this == BBST || this == BBF;
+    }
 }

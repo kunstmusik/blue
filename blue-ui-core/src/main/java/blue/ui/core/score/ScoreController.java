@@ -30,12 +30,10 @@ import blue.score.layers.AutomatableLayer;
 import blue.score.layers.Layer;
 import blue.score.layers.LayerGroup;
 import blue.score.layers.ScoreObjectLayer;
-import blue.time.TimeBase;
 import blue.time.TimeContext;
 import blue.time.TimeContextManager;
 import blue.time.TimeDuration;
 import blue.time.TimeUnitMath;
-import blue.time.TimeUtilities;
 import blue.ui.core.clipboard.BlueClipboardUtils;
 import blue.ui.core.score.undo.AddScoreObjectEdit;
 import blue.ui.core.score.undo.AppendableEdit;
@@ -218,7 +216,7 @@ public class ScoreController {
             }
         }
 
-        var copy = new ScoreObjectCopy(copyScoreObjects, copyIndices);
+        var copy = new ScoreObjectCopy(copyScoreObjects, copyIndices, TimeContextManager.getContext());
         var clipboard = BlueClipboardUtils.getClipboard();
         clipboard.setContents(copy, new StringSelection(""));
     }
@@ -475,11 +473,6 @@ public class ScoreController {
             final var layer = entry.getValue();
 
             sObj.setStartTime(TimeUnitMath.add(context, sObj.getStartTime(), TimeDuration.beats(adjust)));
-
-            // Convert to primary ruler's TimeBase
-            TimeBase timeBase = getScore().getTimeState().getTimeDisplay();
-            sObj.setStartTime(TimeUtilities.convertTimePosition(sObj.getStartTime(), timeBase, context));
-            sObj.setSubjectiveDuration(TimeUnitMath.beatsToDuration(sObj.getSubjectiveDuration().toBeats(context), timeBase, context));
 
             layer.add(sObj);
             selected.add(sObj);
