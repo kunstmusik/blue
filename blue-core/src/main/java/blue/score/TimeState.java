@@ -306,9 +306,11 @@ public class TimeState {
                 case "snapEnabled" ->
                     timeState.snapEnabled = Boolean.parseBoolean(nodeText);
                 case "snapValue" -> {
+                    // Migrate removed enum constants
+                    String svText = "QUARTER".equals(nodeText) ? "SIXTEENTH" : nodeText;
                     // Try enum name first (current format), then legacy double
                     try {
-                        timeState.snapValue = SnapValue.valueOf(nodeText);
+                        timeState.snapValue = SnapValue.valueOf(svText);
                     } catch (IllegalArgumentException e1) {
                         // Legacy format: double value — find closest match
                         try {

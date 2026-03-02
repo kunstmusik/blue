@@ -279,8 +279,8 @@ class TimeStateTest {
         Document doc = new Document(xmlStr);
         TimeState loaded = TimeState.loadFromXML(doc.getRoot());
 
-        // 0.5 should map to HALF via closestMatch
-        assertEquals(SnapValue.HALF, loaded.getSnapValue());
+        // 0.5 should map to EIGHTH via closestMatch
+        assertEquals(SnapValue.EIGHTH, loaded.getSnapValue());
         assertTrue(loaded.isSnapEnabled());
         assertTrue(loaded.isTempoRowVisible());
         assertTrue(loaded.isMeterRowVisible());
@@ -290,13 +290,14 @@ class TimeStateTest {
     @Test
     void testSnapValueClosestMatch() {
         assertEquals(SnapValue.BEAT, SnapValue.closestMatch(1.0));
-        assertEquals(SnapValue.HALF, SnapValue.closestMatch(0.5));
-        assertEquals(SnapValue.QUARTER, SnapValue.closestMatch(0.25));
-        assertEquals(SnapValue.EIGHTH, SnapValue.closestMatch(0.125));
+        assertEquals(SnapValue.EIGHTH, SnapValue.closestMatch(0.5));
+        assertEquals(SnapValue.SIXTEENTH, SnapValue.closestMatch(0.25));
+        assertEquals(SnapValue.THIRTY_SECOND, SnapValue.closestMatch(0.125));
         assertEquals(SnapValue.BAR, SnapValue.closestMatch(4.0));
+        assertEquals(SnapValue.HALF, SnapValue.closestMatch(2.0));
         // Arbitrary value should find closest
         assertEquals(SnapValue.BEAT, SnapValue.closestMatch(0.9));
-        assertEquals(SnapValue.HALF, SnapValue.closestMatch(0.45));
+        assertEquals(SnapValue.EIGHTH, SnapValue.closestMatch(0.45));
     }
 
     @Test

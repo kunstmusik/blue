@@ -5,11 +5,14 @@ import blue.noteProcessor.NoteProcessorChain;
 import blue.noteProcessor.NoteProcessorException;
 import blue.plugin.SoundObjectPlugin;
 import blue.score.ScoreObjectEvent;
+import blue.score.SnapValue;
+import blue.score.TimeState;
 import blue.soundObject.pianoRoll.Field;
 import blue.soundObject.pianoRoll.FieldDef;
 import blue.soundObject.pianoRoll.FieldType;
 import blue.soundObject.pianoRoll.PianoNote;
 import blue.soundObject.pianoRoll.Scale;
+import blue.time.TimeBase;
 import blue.time.TimeContext;
 import blue.time.TimeDuration;
 import blue.utility.ScoreUtilities;
@@ -62,13 +65,17 @@ public class PianoRoll extends AbstractSoundObject implements ListChangeListener
 
     private boolean snapEnabled = true;
 
-    private double snapValue = 0.25;
+    private SnapValue snapValueEnum = SnapValue.SIXTEENTH;
 
-    private int timeDisplay = DISPLAY_NUMBER;
+    private boolean useGlobalRuler = false;
+
+    private TimeBase primaryTimeDisplay = TimeBase.BBF;
+
+    private TimeBase secondaryTimeDisplay = TimeBase.TIME;
+
+    private boolean secondaryRulerEnabled = false;
 
     private int pchGenerationMethod = GENERATE_FREQUENCY;
-
-    private int timeUnit = 4;
 
     private int transposition = 0;
 
@@ -169,10 +176,12 @@ public class PianoRoll extends AbstractSoundObject implements ListChangeListener
         pixelSecond = pr.pixelSecond;
         noteHeight = pr.noteHeight;
         snapEnabled = pr.snapEnabled;
-        snapValue = pr.snapValue;
-        timeDisplay = pr.timeDisplay;
+        snapValueEnum = pr.snapValueEnum;
+        useGlobalRuler = pr.useGlobalRuler;
+        primaryTimeDisplay = pr.primaryTimeDisplay;
+        secondaryTimeDisplay = pr.secondaryTimeDisplay;
+        secondaryRulerEnabled = pr.secondaryRulerEnabled;
         pchGenerationMethod = pr.pchGenerationMethod;
-        timeUnit = pr.timeUnit;
         transposition = pr.transposition;
 
     }
@@ -374,13 +383,39 @@ public class PianoRoll extends AbstractSoundObject implements ListChangeListener
                     p.setSnapEnabled(Boolean.parseBoolean(e.getTextString()));
                     break;
                 case "snapValue":
-                    p.setSnapValue(Double.parseDouble(e.getTextString()));
+                    // Legacy: migrate double snap value to SnapValue enum
+                    p.setSnapValueEnum(SnapValue.closestMatch(
+                            Double.parseDouble(e.getTextString())));
                     break;
+                case "snapValueEnum": {
+                    String svText = e.getTextString();
+                    // Migrate removed enum constants
+                    if ("QUARTER".equals(svText)) {
+                        svText = "SIXTEENTH";
+                    }
+                    p.setSnapValueEnum(SnapValue.valueOf(svText));
+                    break;
+                }
                 case "timeDisplay":
-                    p.setTimeDisplay(Integer.parseInt(e.getTextString()));
+                    // Legacy: migrate int timeDisplay to TimeBase
+                    int td = Integer.parseInt(e.getTextString());
+                    p.setPrimaryTimeDisplay(
+                            td == DISPLAY_TIME ? TimeBase.TIME : TimeBase.BEATS);
                     break;
                 case "timeUnit":
-                    p.setTimeUnit(Integer.parseInt(e.getTextString()));
+                    // Legacy field, no longer used — ignore
+                    break;
+                case "useGlobalRuler":
+                    p.setUseGlobalRuler(Boolean.parseBoolean(e.getTextString()));
+                    break;
+                case "primaryTimeDisplay":
+                    p.setPrimaryTimeDisplay(TimeBase.valueOf(e.getTextString()));
+                    break;
+                case "secondaryTimeDisplay":
+                    p.setSecondaryTimeDisplay(TimeBase.valueOf(e.getTextString()));
+                    break;
+                case "secondaryRulerEnabled":
+                    p.setSecondaryRulerEnabled(Boolean.parseBoolean(e.getTextString()));
                     break;
                 case "fieldDef": {
                     var fd = FieldDef.loadFromXML(e);
@@ -428,12 +463,16 @@ public class PianoRoll extends AbstractSoundObject implements ListChangeListener
 
         retVal.addElement("snapEnabled").setText(
                 Boolean.toString(this.isSnapEnabled()));
-        retVal.addElement("snapValue").setText(
-                Double.toString(this.getSnapValue()));
-        retVal.addElement("timeDisplay").setText(
-                Integer.toString(this.getTimeDisplay()));
-        retVal.addElement("timeUnit").setText(
-                Integer.toString(this.getTimeUnit()));
+        retVal.addElement("snapValueEnum").setText(
+                this.getSnapValueEnum().name());
+        retVal.addElement("useGlobalRuler").setText(
+                Boolean.toString(this.isUseGlobalRuler()));
+        retVal.addElement("primaryTimeDisplay").setText(
+                this.getPrimaryTimeDisplay().name());
+        retVal.addElement("secondaryTimeDisplay").setText(
+                this.getSecondaryTimeDisplay().name());
+        retVal.addElement("secondaryRulerEnabled").setText(
+                Boolean.toString(this.isSecondaryRulerEnabled()));
 
         retVal.addElement("pchGenerationMethod").setText(
                 Integer.toString(this.getPchGenerationMethod()));
@@ -553,35 +592,91 @@ public class PianoRoll extends AbstractSoundObject implements ListChangeListener
         pcs.firePropertyChange("snapEnabled", oldVal, snapEnabled);
     }
 
-    public double getSnapValue() {
-        return this.snapValue;
+    public SnapValue getSnapValueEnum() {
+        return this.snapValueEnum;
     }
 
-    public void setSnapValue(double snapValue) {
-        var oldVal = this.snapValue;
-        this.snapValue = snapValue;
-
-        pcs.firePropertyChange("snapValue", oldVal, snapValue);
+    public void setSnapValueEnum(SnapValue snapValueEnum) {
+        var oldVal = this.snapValueEnum;
+        this.snapValueEnum = snapValueEnum;
+        pcs.firePropertyChange("snapValueEnum", oldVal, snapValueEnum);
     }
 
-    public int getTimeDisplay() {
-        return timeDisplay;
+    public boolean isUseGlobalRuler() {
+        return useGlobalRuler;
     }
 
-    public void setTimeDisplay(int timeDisplay) {
-        var oldVal = this.timeDisplay;
-        this.timeDisplay = timeDisplay;
-        pcs.firePropertyChange("timeDisplay", oldVal, timeDisplay);
+    public void setUseGlobalRuler(boolean useGlobalRuler) {
+        var oldVal = this.useGlobalRuler;
+        this.useGlobalRuler = useGlobalRuler;
+        pcs.firePropertyChange("useGlobalRuler", oldVal, useGlobalRuler);
     }
 
-    public int getTimeUnit() {
-        return timeUnit;
+    public TimeBase getPrimaryTimeDisplay() {
+        return primaryTimeDisplay;
     }
 
-    public void setTimeUnit(int timeUnit) {
-        var oldVal = this.timeUnit;
-        this.timeUnit = timeUnit;
-        pcs.firePropertyChange("timeUnit", oldVal, timeUnit);
+    public void setPrimaryTimeDisplay(TimeBase primaryTimeDisplay) {
+        var oldVal = this.primaryTimeDisplay;
+        this.primaryTimeDisplay = primaryTimeDisplay;
+        pcs.firePropertyChange("primaryTimeDisplay", oldVal, primaryTimeDisplay);
+    }
+
+    public TimeBase getSecondaryTimeDisplay() {
+        return secondaryTimeDisplay;
+    }
+
+    public void setSecondaryTimeDisplay(TimeBase secondaryTimeDisplay) {
+        var oldVal = this.secondaryTimeDisplay;
+        this.secondaryTimeDisplay = secondaryTimeDisplay;
+        pcs.firePropertyChange("secondaryTimeDisplay", oldVal, secondaryTimeDisplay);
+    }
+
+    public boolean isSecondaryRulerEnabled() {
+        return secondaryRulerEnabled;
+    }
+
+    public void setSecondaryRulerEnabled(boolean secondaryRulerEnabled) {
+        var oldVal = this.secondaryRulerEnabled;
+        this.secondaryRulerEnabled = secondaryRulerEnabled;
+        pcs.firePropertyChange("secondaryRulerEnabled", oldVal, secondaryRulerEnabled);
+    }
+
+    public TimeBase getEffectivePrimaryTimeDisplay(TimeState scoreTimeState) {
+        if (useGlobalRuler && scoreTimeState != null) {
+            return scoreTimeState.getTimeDisplay();
+        }
+        return primaryTimeDisplay;
+    }
+
+    public TimeBase getEffectiveSecondaryTimeDisplay(TimeState scoreTimeState) {
+        if (useGlobalRuler && scoreTimeState != null) {
+            return scoreTimeState.getSecondaryTimeDisplay();
+        }
+        return secondaryTimeDisplay;
+    }
+
+    public SnapValue getEffectiveSnapValue(TimeState scoreTimeState) {
+        if (useGlobalRuler && scoreTimeState != null) {
+            return scoreTimeState.getSnapValue();
+        }
+        return snapValueEnum;
+    }
+
+    /**
+     * Returns the current snap value as beats. Uses 60 BPM for time-based
+     * snap conversions since the PianoRoll operates purely in beats.
+     */
+    public double getSnapValueAsBeats(TimeState scoreTimeState) {
+        SnapValue sv = getEffectiveSnapValue(scoreTimeState);
+        return sv.toBeats(60.0, TimeContext.DEFAULT_SMPTE_FRAME_RATE, 44100, pixelSecond);
+    }
+
+    public double getRulerBeatOffset(TimeContext context) {
+        if (useGlobalRuler && context != null) {
+            return getStartTime().toBeats(context);
+        }
+        return 0.0;
     }
 
     /**

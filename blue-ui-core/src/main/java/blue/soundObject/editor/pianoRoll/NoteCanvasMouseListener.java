@@ -260,10 +260,10 @@ public class NoteCanvasMouseListener extends MouseAdapter {
                 double duration = 5.0f / p.getPixelSecond();
 
                 if (p.isSnapEnabled()) {
-                    double snapValue = p.getSnapValue();
+                    double snapValue = p.getSnapValueAsBeats(null);
                     startTime = ScoreUtilities.getSnapValueStart(startTime, snapValue);
 
-                    duration = p.getSnapValue();
+                    duration = snapValue;
                 }
 
                 var note = canvas.addNote(startTime, y);
@@ -327,7 +327,7 @@ public class NoteCanvasMouseListener extends MouseAdapter {
         int scaleDegrees = pianoRoll.getScale().getNumScaleDegrees();
 
         if (pianoRoll.isSnapEnabled()) {
-            double snapValue = pianoRoll.getSnapValue();
+            double snapValue = pianoRoll.getSnapValueAsBeats(null);
             startTime = ScoreUtilities.getSnapValueStart(startTime, snapValue);
         }
 
@@ -495,7 +495,7 @@ public class NoteCanvasMouseListener extends MouseAdapter {
                 || e.isShiftDown() && !snapEnabled) {
             double snappedStart = ScoreUtilities.getSnapValueMove(
                     noteSourceData.noteSourceStart + baseAdjust,
-                    pianoRoll.getSnapValue());
+                    pianoRoll.getSnapValueAsBeats(null));
 
             timeAdjust = snappedStart - noteSourceData.noteSourceStart;
         } else {
@@ -538,7 +538,7 @@ public class NoteCanvasMouseListener extends MouseAdapter {
 
         if (snapEnabled && !e.isShiftDown()
                 || e.isShiftDown() && !snapEnabled) {
-            double snapValue = p.getSnapValue();
+            double snapValue = p.getSnapValueAsBeats(null);
             var mouseNsd = noteSourceData.noteSourceData.stream()
                     .filter(nsd -> nsd.pianoNote == mouseNote).findFirst();
             var nsd = mouseNsd.get();
@@ -581,7 +581,7 @@ public class NoteCanvasMouseListener extends MouseAdapter {
                 : (snapEnabled && !e.isShiftDown() || e.isShiftDown() && !snapEnabled);
 
         if (processSnap) {
-            double snapValue = p.getSnapValue();
+            double snapValue = p.getSnapValueAsBeats(null);
             var mouseNsd = noteSourceData.noteSourceData.stream()
                     .filter(nsd -> nsd.pianoNote == mouseNote).findFirst();
             var nsd = mouseNsd.get();

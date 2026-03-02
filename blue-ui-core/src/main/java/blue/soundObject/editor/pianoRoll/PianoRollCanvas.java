@@ -468,14 +468,13 @@ public class PianoRollCanvas extends JLayeredPane implements Scrollable,
         // Draw vertical lines
         g.setColor(LINE_COLOR);
         if (p.isSnapEnabled()) {
-            int snapPixels = (int) (p.getSnapValue() * pixelSecond);
+            double snapValue = p.getSnapValueAsBeats(null);
+            int snapPixels = (int) (snapValue * pixelSecond);
 
             int x = 0;
             if (snapPixels <= 0) {
                 return;
             }
-
-            double snapValue = p.getSnapValue();
 
             for (int i = 0; x < w; i++) {
                 x = (int) ((i * snapValue) * pixelSecond);

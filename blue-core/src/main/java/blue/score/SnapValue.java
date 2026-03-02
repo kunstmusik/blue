@@ -27,20 +27,19 @@ package blue.score;
  */
 public enum SnapValue {
     
-    // Musical values (in beats, assuming 4/4 time signature)
+    // Musical note values (in beats; 1 beat = quarter note in 4/4)
     BAR("Bar", 4.0, SnapCategory.MUSICAL),
+    HALF("1/2", 2.0, SnapCategory.MUSICAL),
     BEAT("Beat", 1.0, SnapCategory.MUSICAL),
-    HALF("1/2", 0.5, SnapCategory.MUSICAL),
-    QUARTER("1/4", 0.25, SnapCategory.MUSICAL),
-    EIGHTH("1/8", 0.125, SnapCategory.MUSICAL),
-    SIXTEENTH("1/16", 0.0625, SnapCategory.MUSICAL),
-    THIRTY_SECOND("1/32", 0.03125, SnapCategory.MUSICAL),
-    SIXTY_FOURTH("1/64", 0.015625, SnapCategory.MUSICAL),
+    EIGHTH("1/8", 0.5, SnapCategory.MUSICAL),
+    SIXTEENTH("1/16", 0.25, SnapCategory.MUSICAL),
+    THIRTY_SECOND("1/32", 0.125, SnapCategory.MUSICAL),
+    SIXTY_FOURTH("1/64", 0.0625, SnapCategory.MUSICAL),
     
-    // Triplets
+    // Triplets (note value divided by 3)
     QUARTER_TRIPLET("1/4T", 1.0 / 3.0, SnapCategory.TRIPLET),
-    EIGHTH_TRIPLET("1/8T", 0.5 / 3.0, SnapCategory.TRIPLET),
-    SIXTEENTH_TRIPLET("1/16T", 0.25 / 3.0, SnapCategory.TRIPLET),
+    EIGHTH_TRIPLET("1/8T", 1.0 / 6.0, SnapCategory.TRIPLET),
+    SIXTEENTH_TRIPLET("1/16T", 1.0 / 12.0, SnapCategory.TRIPLET),
     
     // Time-based (in seconds, converted to beats at runtime)
     ONE_SECOND("1 sec", 1.0, SnapCategory.TIME),
@@ -153,13 +152,13 @@ public enum SnapValue {
      */
     private static double roundToNearestSnapValue(double rawValue) {
         // Find the nearest power of 2 that's >= rawValue
-        double[] musicalValues = {4.0, 2.0, 1.0, 0.5, 0.25, 0.125, 0.0625, 0.03125, 0.015625};
+        double[] musicalValues = {4.0, 2.0, 1.0, 0.5, 0.25, 0.125, 0.0625};
         for (double val : musicalValues) {
             if (rawValue >= val) {
                 return val;
             }
         }
-        return 0.015625; // Minimum: 1/64
+        return 0.0625; // Minimum: 1/64
     }
     
     /**

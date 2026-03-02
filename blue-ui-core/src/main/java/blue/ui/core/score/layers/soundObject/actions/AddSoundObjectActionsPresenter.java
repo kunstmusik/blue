@@ -22,6 +22,7 @@ package blue.ui.core.score.layers.soundObject.actions;
 import blue.BlueSystem;
 import blue.SoundLayer;
 import blue.score.TimeState;
+import blue.soundObject.PianoRoll;
 import blue.soundObject.PolyObject;
 import blue.soundObject.SoundObject;
 import blue.time.TimeBase;
@@ -102,6 +103,17 @@ public final class AddSoundObjectActionsPresenter extends AbstractAction impleme
 
                 if (sObj instanceof PolyObject polyObject) {
                     polyObject.newLayerAt(0);
+                }
+
+                if (sObj instanceof PianoRoll pr) {
+                    TimeState ts = stc.getTimeState();
+                    if (ts != null) {
+                        pr.setPrimaryTimeDisplay(ts.getTimeDisplay());
+                        pr.setSecondaryTimeDisplay(ts.getSecondaryTimeDisplay());
+                        pr.setSecondaryRulerEnabled(ts.isSecondaryRulerEnabled());
+                        pr.setSnapValueEnum(ts.getSnapValue());
+                        pr.setUseGlobalRuler(ts.getTimeDisplay().isBeatBased());                     
+                    }
                 }
 
                 TimeState timeState = stc.getTimeState();
