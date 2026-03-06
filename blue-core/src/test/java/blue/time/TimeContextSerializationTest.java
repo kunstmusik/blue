@@ -174,4 +174,43 @@ class TimeContextSerializationTest {
             loaded.getMeterMap().get(0).getMeter()
         );
     }
+
+    @Test
+    void testTimeContextSerializationRehydratesBarBasedTempoPoints() throws Exception {
+        TimeContext original = new TimeContext();
+
+        MeterMap meterMap = new MeterMap();
+        meterMap.clear();
+        meterMap.add(new MeasureMeterPair(1, new Meter(3, 4)));
+        original.setMeterMap(meterMap);
+
+        TempoMap tempoMap = new TempoMap();
+        tempoMap.addTempoPoint(
+                new TempoPoint(TimePosition.bbt(3, 1, 0), 90.0, CurveType.CONSTANT),
+                original);
+        original.setTempoMap(tempoMap);
+
+        Element xml = original.saveAsXML();
+        TimeContext loaded = TimeContext.loadFromXML(xml);
+
+        assertEquals(2, loaded.getTempoMap().size());
+        assertTrue(loaded.getTempoMap().getPoint(1).getPosition() instanceof TimePosition.BBTTime);
+        assertEquals(6.0, loaded.getTempoMap().getBeat(1), 0.0001);
+    }
+
+    @Test
+    void testMeterMapChangesRecalculateTempoBeatPositions() {
+        TimeContext context = new TimeContext();
+        TempoMap tempoMap = new TempoMap();
+        tempoMap.addTempoPoint(
+                new TempoPoint(TimePosition.bbt(3, 1, 0), 90.0, CurveType.CONSTANT),
+                context);
+        context.setTempoMap(tempoMap);
+
+        assertEquals(8.0, context.getTempoMap().getBeat(1), 0.0001);
+
+        context.getMeterMap().set(0, new MeasureMeterPair(1, new Meter(3, 4)));
+
+        assertEquals(6.0, context.getTempoMap().getBeat(1), 0.0001);
+    }
 }

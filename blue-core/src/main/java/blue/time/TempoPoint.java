@@ -180,6 +180,8 @@ public class TempoPoint implements Comparable<TempoPoint> {
         // Update cached beat for BeatTime
         if (position instanceof TimePosition.BeatTime beatTime) {
             this.cachedBeat = beatTime.getCsoundBeats();
+        } else {
+            this.cachedBeat = 0.0;
         }
     }
     

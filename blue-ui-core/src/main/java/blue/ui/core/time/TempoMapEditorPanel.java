@@ -19,8 +19,13 @@
  */
 package blue.ui.core.time;
 
+import blue.time.CurveType;
 import blue.time.TempoMap;
 import blue.time.TempoPoint;
+import blue.time.TimeBase;
+import blue.time.TimeContext;
+import blue.time.TimePosition;
+import blue.time.TimeUtilities;
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
@@ -36,12 +41,16 @@ import java.awt.*;
 public class TempoMapEditorPanel extends JPanel {
     
     private final TempoMap tempoMap;
+    private final TimeContext timeContext;
+    private final TimeBase defaultTimeBase;
     private final TempoMapTableModel tableModel;
     private final JTable table;
     
-    public TempoMapEditorPanel(TempoMap sourceMap) {
+    public TempoMapEditorPanel(TempoMap sourceMap, TimeContext timeContext, TimeBase defaultTimeBase) {
         // Work on a copy
         this.tempoMap = new TempoMap(sourceMap);
+        this.timeContext = timeContext;
+        this.defaultTimeBase = defaultTimeBase == null ? TimeBase.BEATS : defaultTimeBase;
         this.tableModel = new TempoMapTableModel();
         this.table = new JTable(tableModel);
         
@@ -85,7 +94,8 @@ public class TempoMapEditorPanel extends JPanel {
         double newBeat = lastBeat + 4.0;
         double defaultTempo = tempoMap.size() > 0 ? tempoMap.getTempo(tempoMap.size() - 1) : 60.0;
         
-        tempoMap.addTempoPoint(new TempoPoint(newBeat, defaultTempo));
+        TimePosition position = TimeUtilities.beatsToTimePosition(newBeat, defaultTimeBase, timeContext);
+        tempoMap.addTempoPoint(new TempoPoint(position, defaultTempo, CurveType.CONSTANT), timeContext);
         tableModel.fireTableDataChanged();
     }
     
@@ -108,10 +118,13 @@ public class TempoMapEditorPanel extends JPanel {
      * 
      * @param parent the parent component for the dialog
      * @param sourceMap the TempoMap to edit
+     * @param timeContext the time context
+     * @param defaultTimeBase the default time base
      * @return the edited TempoMap, or null if cancelled
      */
-    public static TempoMap showDialog(Component parent, TempoMap sourceMap) {
-        TempoMapEditorPanel panel = new TempoMapEditorPanel(sourceMap);
+    public static TempoMap showDialog(Component parent, TempoMap sourceMap, TimeContext timeContext,
+            TimeBase defaultTimeBase) {
+        TempoMapEditorPanel panel = new TempoMapEditorPanel(sourceMap, timeContext, defaultTimeBase);
         
         int result = JOptionPane.showConfirmDialog(
             parent,
@@ -125,6 +138,14 @@ public class TempoMapEditorPanel extends JPanel {
             return panel.getTempoMap();
         }
         return null;
+    }
+
+    static TimePosition getEditedPosition(TempoPoint point, double beat, TimeContext context) {
+        TimePosition position = point.getPosition();
+        if (position instanceof TimePosition.BeatTime || context == null) {
+            return TimePosition.beats(beat);
+        }
+        return TimeUtilities.beatsToTimePosition(beat, position.getTimeBase(), context);
     }
     
     /**
@@ -201,7 +222,9 @@ public class TempoMapEditorPanel extends JPanel {
                     tempo = Math.max(1, newValue);
                 }
                 
-                tempoMap.setTempoPoint(rowIndex, beat, tempo);
+                TempoPoint point = tempoMap.getPoint(rowIndex);
+                TimePosition position = getEditedPosition(point, beat, timeContext);
+                tempoMap.setTempoPoint(rowIndex, position, tempo, point.getCurveType(), timeContext);
                 fireTableDataChanged();
             } catch (NumberFormatException e) {
                 // Ignore invalid input

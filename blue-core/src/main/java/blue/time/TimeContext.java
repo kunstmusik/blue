@@ -46,28 +46,29 @@ public class TimeContext {
     private ProjectProperties projectProperties;
     private long cachedSampleRate = DEFAULT_SAMPLE_RATE;
     private final PropertyChangeListener sampleRateListener = evt -> invalidateSampleRateCache();
+    private final MeterMap.MeterMapListener meterMapListener = this::syncTempoMapBeatPositions;
     private double smpteFrameRate;
     private MeterMap meterMap;
     private TempoMap tempoMap;
     
     public TimeContext() {
         smpteFrameRate = 24.0;
-        meterMap = new MeterMap();
-        tempoMap = new TempoMap();
+        setMeterMap(new MeterMap());
+        setTempoMap(new TempoMap());
     }
     
     public TimeContext(long sampleRate, MeterMap meterMap, TempoMap tempoMap) {
         this.cachedSampleRate = sampleRate;
         this.smpteFrameRate = 24.0;
-        this.meterMap = meterMap;
-        this.tempoMap = tempoMap;
+        setMeterMap(meterMap);
+        setTempoMap(tempoMap);
     }
     
     public TimeContext(TimeContext tc) {
         this.cachedSampleRate = tc.cachedSampleRate;
         this.smpteFrameRate = tc.smpteFrameRate;
-        this.meterMap = new MeterMap(tc.meterMap);
-        this.tempoMap = new TempoMap(tc.tempoMap);
+        setMeterMap(new MeterMap(tc.meterMap));
+        setTempoMap(new TempoMap(tc.tempoMap));
     }
 
     /**
@@ -128,7 +129,12 @@ public class TimeContext {
     }
     
     public void setMeterMap(MeterMap meterMap) {
-        this.meterMap = meterMap;
+        if (this.meterMap != null) {
+            this.meterMap.removeListener(meterMapListener);
+        }
+        this.meterMap = meterMap == null ? new MeterMap() : meterMap;
+        this.meterMap.addListener(meterMapListener);
+        syncTempoMapBeatPositions();
     }
     
     public TempoMap getTempoMap() {
@@ -136,7 +142,15 @@ public class TimeContext {
     }
     
     public void setTempoMap(TempoMap tempoMap) {
-        this.tempoMap = tempoMap;
+        this.tempoMap = tempoMap == null ? new TempoMap() : tempoMap;
+        syncTempoMapBeatPositions();
+    }
+
+    private void syncTempoMapBeatPositions() {
+        if (tempoMap == null || tempoMap.isEmpty() || meterMap == null || meterMap.isEmpty()) {
+            return;
+        }
+        tempoMap.recalculateBeatPositions(this);
     }
     
     /**

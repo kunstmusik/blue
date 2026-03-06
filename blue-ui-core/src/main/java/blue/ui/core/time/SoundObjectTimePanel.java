@@ -62,6 +62,7 @@ public class SoundObjectTimePanel extends JPanel {
 
         // Unified text editor for all formats
         textEditor = new TextTimeUnitEditor();
+        textEditor.setTimeContextSupplier(this::getTimeContext);
         JPanel editorWrapper = new JPanel(new BorderLayout());
         editorWrapper.setBorder(new EmptyBorder(3, 0, 3, 0));
         editorWrapper.add(textEditor, BorderLayout.CENTER);
@@ -165,7 +166,10 @@ public class SoundObjectTimePanel extends JPanel {
             TimePosition oldValue = currentTimePosition;
             
             // Use project's TimeContext for proper conversion
-            TimeContext context = BlueProjectManager.getInstance().getCurrentProject().getData().getScore().getTimeContext();
+            TimeContext context = getTimeContext();
+            if (context == null) {
+                return;
+            }
             TimeContext previousContext = TimeContextManager.hasContext() ? TimeContextManager.getContext() : null;
             TimeContextManager.setContext(context);
 
@@ -193,7 +197,11 @@ public class SoundObjectTimePanel extends JPanel {
         currentTimePosition = textEditor.getTimePosition();
         
         // Fire property change within TimeContext since listeners may need it
-        TimeContext context = BlueProjectManager.getInstance().getCurrentProject().getData().getScore().getTimeContext();
+        TimeContext context = getTimeContext();
+        if (context == null) {
+            propertyChangeSupport.firePropertyChange("timePosition", oldValue, currentTimePosition);
+            return;
+        }
         TimeContext previousContext = TimeContextManager.hasContext() ? TimeContextManager.getContext() : null;
         TimeContextManager.setContext(context);
 
@@ -234,7 +242,10 @@ public class SoundObjectTimePanel extends JPanel {
         if (duration == null) {
             return;
         }
-        TimeContext context = BlueProjectManager.getInstance().getCurrentProject().getData().getScore().getTimeContext();
+        TimeContext context = getTimeContext();
+        if (context == null) {
+            return;
+        }
         setTimePosition(TimeUtilities.beatsToTimePosition(duration.toBeats(context), duration.getTimeBase(), context));
     }
 
@@ -249,7 +260,10 @@ public class SoundObjectTimePanel extends JPanel {
         if (tu == null) {
             return null;
         }
-        TimeContext context = BlueProjectManager.getInstance().getCurrentProject().getData().getScore().getTimeContext();
+        TimeContext context = getTimeContext();
+        if (context == null) {
+            return null;
+        }
         return TimeUnitMath.beatsToDuration(tu.toBeats(context), tu.getTimeBase(), context);
     }
 
@@ -259,9 +273,14 @@ public class SoundObjectTimePanel extends JPanel {
      */
     public void setDurationMode(boolean durationMode) {
         textEditor.setDurationMode(durationMode);
-        textEditor.setTimeContextSupplier(() -> {
-            return BlueProjectManager.getInstance().getCurrentProject().getData().getScore().getTimeContext();
-        });
+    }
+
+    private TimeContext getTimeContext() {
+        var currentProject = BlueProjectManager.getInstance().getCurrentProject();
+        if (currentProject == null || currentProject.getData() == null) {
+            return null;
+        }
+        return currentProject.getData().getScore().getTimeContext();
     }
 
     @Override

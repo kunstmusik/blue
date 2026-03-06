@@ -339,6 +339,52 @@ class TempoMapTest {
         assertEquals(2, tm.size());
         // First point is at beat 0
         assertEquals(0.0, tm.getBeat(0), EPSILON);
+        assertEquals(4.0, tm.getBeat(1), EPSILON);
+    }
+
+    @Test
+    void testSetTempoPointWithBarBasedPositionUsesContext() {
+        TempoMap tm = new TempoMap();
+        TimeContext context = new TimeContext();
+
+        tm.setTempoPoint(0, TimePosition.bbt(2, 1, 0), 120.0, CurveType.CONSTANT, context);
+
+        assertTrue(tm.getPoint(0).getPosition() instanceof TimePosition.BBTTime);
+        assertEquals(4.0, tm.getBeat(0), EPSILON);
+        assertEquals(120.0, tm.getTempo(0), EPSILON);
+    }
+
+    @Test
+    void testSetTempoPointWithContextPreservesBarBasedPositionType() {
+        TempoMap tm = new TempoMap();
+        TimeContext context = new TimeContext();
+        tm.addTempoPoint(new TempoPoint(TimePosition.bbt(3, 1, 0), 90.0, CurveType.CONSTANT), context);
+
+        TempoPoint original = tm.getPoint(1);
+        TimePosition moved = TimeUtilities.beatsToTimePosition(9.0, original.getPosition().getTimeBase(), context);
+
+        tm.setTempoPoint(1, moved, 100.0, original.getCurveType(), context);
+
+        assertTrue(tm.getPoint(1).getPosition() instanceof TimePosition.BBTTime);
+        assertEquals(9.0, tm.getBeat(1), EPSILON);
+        assertEquals(100.0, tm.getTempo(1), EPSILON);
+    }
+
+    @Test
+    void testCopiedMapEditCanRetainBarBasedPosition() {
+        TimeContext context = new TimeContext();
+        TempoMap original = new TempoMap();
+        original.addTempoPoint(new TempoPoint(TimePosition.bbt(3, 1, 0), 90.0, CurveType.CONSTANT), context);
+
+        TempoMap edited = new TempoMap(original);
+        TempoPoint point = edited.getPoint(1);
+        TimePosition moved = TimeUtilities.beatsToTimePosition(9.0, point.getPosition().getTimeBase(), context);
+
+        edited.setTempoPoint(1, moved, 105.0, point.getCurveType(), context);
+
+        assertTrue(edited.getPoint(1).getPosition() instanceof TimePosition.BBTTime);
+        assertEquals(9.0, edited.getBeat(1), EPSILON);
+        assertEquals(105.0, edited.getTempo(1), EPSILON);
     }
     
     // ========== Edge Cases ==========

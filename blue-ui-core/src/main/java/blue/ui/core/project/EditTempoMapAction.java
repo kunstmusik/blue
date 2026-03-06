@@ -23,6 +23,7 @@ import blue.BlueData;
 import blue.projects.BlueProject;
 import blue.projects.BlueProjectManager;
 import blue.time.TempoMap;
+import blue.time.TimeBase;
 import blue.time.TimeContext;
 import blue.ui.core.time.TempoMapEditorPanel;
 import blue.undo.BlueUndoManager;
@@ -69,11 +70,14 @@ public final class EditTempoMapAction implements ActionListener {
         }
         
         TimeContext timeContext = data.getScore().getTimeContext();
+        TimeBase defaultTimeBase = data.getScore().getTimeState().getTimeDisplay();
         TempoMap currentMap = timeContext.getTempoMap();
         
         TempoMap editedMap = TempoMapEditorPanel.showDialog(
             WindowManager.getDefault().getMainWindow(),
-            currentMap
+            currentMap,
+            timeContext,
+            defaultTimeBase
         );
         
         if (editedMap != null) {

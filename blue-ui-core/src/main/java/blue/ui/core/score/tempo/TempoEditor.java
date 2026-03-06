@@ -7,9 +7,13 @@ import blue.BlueData;
 import blue.components.DragDirection;
 import blue.score.Score;
 import blue.score.TimeState;
+import blue.time.CurveType;
 import blue.time.TempoMap;
+import blue.time.TempoPoint;
 import blue.time.TimeContext;
 import blue.time.TimeContextManager;
+import blue.time.TimePosition;
+import blue.time.TimeUtilities;
 import blue.ui.utilities.UiUtilities;
 import blue.utility.ScoreUtilities;
 import java.awt.BasicStroke;
@@ -28,8 +32,6 @@ import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
 import javax.swing.SwingUtilities;
 import javax.swing.ToolTipManager;
-import blue.time.CurveType;
-import blue.time.TempoPoint;
 
 /**
  * Graphical editor for tempo curves.
@@ -339,6 +341,18 @@ public class TempoEditor extends JComponent implements PropertyChangeListener {
         }
         return tempoMap.size() - 1;
     }
+
+    private TimeContext getCurrentTimeContext() {
+        return score == null ? null : score.getTimeContext();
+    }
+
+    private TimePosition getDraggedPosition(TempoPoint point, double beat, TimeContext context) {
+        TimePosition originalPosition = point.getPosition();
+        if (originalPosition instanceof TimePosition.BeatTime || context == null) {
+            return TimePosition.beats(beat);
+        }
+        return TimeUtilities.beatsToTimePosition(beat, originalPosition.getTimeBase(), context);
+    }
     
     // ========== Popup Menu ==========
     
@@ -526,7 +540,11 @@ public class TempoEditor extends JComponent implements PropertyChangeListener {
                 double tempo = screenToDoubleTempo(y);
                 
                 // Update the point
-                tempoMap.setTempoPoint(selectedPointIndex, beat, tempo);
+                TimeContext context = getCurrentTimeContext();
+                TempoPoint point = tempoMap.getPoint(selectedPointIndex);
+                TimePosition position = getDraggedPosition(point, beat, context);
+                tempoMap.setTempoPoint(selectedPointIndex, position, tempo,
+                        point.getCurveType(), context);
                 updateTooltip();
                 repaint();
             }

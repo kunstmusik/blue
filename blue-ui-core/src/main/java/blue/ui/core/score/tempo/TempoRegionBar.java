@@ -384,9 +384,10 @@ public class TempoRegionBar extends JComponent implements PropertyChangeListener
             
             // Get the TimePosition directly from the panel
             TimePosition timePosition = timePanel.getTimePosition();
+            TimeContext context = getCurrentTimeContext();
             
             // Convert to beats for range validation
-            double newBeat = convertTimePositionToBeats(timePosition);
+            double newBeat = convertTimePositionToBeats(timePosition, context);
             
             // Validate range - if out of range, clamp and use beats
             if (newBeat < minBeat || newBeat > maxBeat) {
@@ -395,7 +396,8 @@ public class TempoRegionBar extends JComponent implements PropertyChangeListener
             }
             
             // Update the tempo point with the TimePosition directly
-            tempoMap.setTempoPoint(regionIndex, timePosition, newTempo);
+            tempoMap.setTempoPoint(regionIndex, timePosition, newTempo,
+                    tempoMap.getCurveType(regionIndex), context);
             repaint();
         }
     }
@@ -403,14 +405,15 @@ public class TempoRegionBar extends JComponent implements PropertyChangeListener
     /**
      * Converts a TimePosition to Csound beats using the current TimeContext.
      */
-    private double convertTimePositionToBeats(TimePosition timePosition) {
+    private double convertTimePositionToBeats(TimePosition timePosition, TimeContext context) {
         if (timePosition instanceof TimePosition.BeatTime beatTime) {
             return beatTime.getCsoundBeats();
         }
+        if (context == null) {
+            return 0.0;
+        }
         
         // For other time units, use TimeContext to convert
-        TimeContext context = BlueProjectManager.getInstance()
-            .getCurrentProject().getData().getScore().getTimeContext();
         TimeContext previousContext = TimeContextManager.hasContext() ? TimeContextManager.getContext() : null;
         TimeContextManager.setContext(context);
         
@@ -427,6 +430,14 @@ public class TempoRegionBar extends JComponent implements PropertyChangeListener
                 TimeContextManager.clearContext();
             }
         }
+    }
+
+    private TimeContext getCurrentTimeContext() {
+        var currentProject = BlueProjectManager.getInstance().getCurrentProject();
+        if (currentProject == null || currentProject.getData() == null) {
+            return null;
+        }
+        return currentProject.getData().getScore().getTimeContext();
     }
 
     private class TempoRegionMouseListener extends MouseAdapter {

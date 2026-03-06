@@ -209,7 +209,18 @@ public class TempoMap {
      * Adds a tempo point. The list is automatically sorted by beat.
      */
     public void addTempoPoint(TempoPoint point) {
-        points.add(new TempoPoint(point));
+        addTempoPoint(point, null);
+    }
+
+    /**
+     * Adds a tempo point using the provided TimeContext to resolve bar-based positions.
+     */
+    public void addTempoPoint(TempoPoint point, TimeContext context) {
+        TempoPoint copy = new TempoPoint(point);
+        if (context != null) {
+            copy.recalculateBeat(context);
+        }
+        points.add(copy);
         sortEntries();
         fireChanged();
     }
@@ -265,8 +276,20 @@ public class TempoMap {
      * @param curveType the curve type for transition to next point
      */
     public void setTempoPoint(int index, TimePosition position, double tempo, CurveType curveType) {
+        setTempoPoint(index, position, tempo, curveType, null);
+    }
+
+    /**
+     * Updates the tempo point at the given index with a new position (as TimePosition), tempo, and curve type.
+     * Uses the provided TimeContext to resolve bar-based positions.
+     */
+    public void setTempoPoint(int index, TimePosition position, double tempo, CurveType curveType,
+            TimeContext context) {
         TempoPoint point = points.get(index);
         point.setPosition(position);
+        if (context != null) {
+            point.recalculateBeat(context);
+        }
         point.setTempo(tempo);
         point.setCurveType(curveType);
         sortEntries();
@@ -351,7 +374,6 @@ public class TempoMap {
             point.recalculateBeat(context);
         }
         sortEntries();
-        recalculateAccumulatedTimes();
         fireChanged();
     }
     

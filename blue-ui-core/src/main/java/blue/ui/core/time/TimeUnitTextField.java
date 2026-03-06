@@ -126,10 +126,11 @@ public class TimeUnitTextField extends JTextField {
             return;
         }
         
-        if (durationMode && timeContextSupplier != null) {
-            lastValidText = formatDuration(timePosition, timeBase, timeContextSupplier.get());
+        TimeContext context = getTimeContext();
+        if (durationMode && context != null) {
+            lastValidText = formatDuration(timePosition, timeBase, context);
         } else {
-            lastValidText = format(timePosition, timeBase);
+            lastValidText = format(timePosition, timeBase, context);
         }
         setText(lastValidText);
     }
@@ -156,10 +157,14 @@ public class TimeUnitTextField extends JTextField {
     }
 
     /**
-     * Sets the TimeContext supplier for duration mode conversions.
+     * Sets the TimeContext supplier for context-dependent parsing and formatting.
      */
     public void setTimeContextSupplier(Supplier<TimeContext> supplier) {
         this.timeContextSupplier = supplier;
+    }
+
+    private TimeContext getTimeContext() {
+        return timeContextSupplier == null ? null : timeContextSupplier.get();
     }
 
     private void updatePlaceholder() {
@@ -176,12 +181,13 @@ public class TimeUnitTextField extends JTextField {
             return; // No change
         }
 
+        TimeContext context = getTimeContext();
         TimePosition parsed;
         try {
-            if (durationMode && timeContextSupplier != null) {
-                parsed = parseDuration(text, timeBase, timeContextSupplier.get());
+            if (durationMode && context != null) {
+                parsed = parseDuration(text, timeBase, context);
             } else {
-                parsed = parse(text, timeBase);
+                parsed = parse(text, timeBase, context);
             }
         } catch (RuntimeException ex) {
             Toolkit.getDefaultToolkit().beep();
@@ -190,10 +196,10 @@ public class TimeUnitTextField extends JTextField {
         }
 
         timePosition = parsed;
-        if (durationMode && timeContextSupplier != null) {
-            lastValidText = formatDuration(parsed, timeBase, timeContextSupplier.get());
+        if (durationMode && context != null) {
+            lastValidText = formatDuration(parsed, timeBase, context);
         } else {
-            lastValidText = format(parsed, timeBase);
+            lastValidText = format(parsed, timeBase, context);
         }
         setText(lastValidText);
         fireStateChanged();
@@ -253,6 +259,14 @@ public class TimeUnitTextField extends JTextField {
      * PPQ is fixed at {@link TimeContext#DEFAULT_PPQ} (960).
      */
     public static String format(TimePosition timePosition, TimeBase timeBase) {
+        return format(timePosition, timeBase, null);
+    }
+
+    /**
+     * Formats a TimePosition to a string representation for the given TimeBase.
+     * Uses the supplied TimeContext for context-dependent formats such as SMPTE.
+     */
+    public static String format(TimePosition timePosition, TimeBase timeBase, TimeContext context) {
         int ppq = TimeContext.DEFAULT_PPQ;
         return switch (timeBase) {
             case BEATS -> formatBeats(timePosition);
@@ -260,7 +274,7 @@ public class TimeUnitTextField extends JTextField {
             case BBST -> formatBBST(timePosition, ppq);
             case BBF -> formatBBF(timePosition);
             case TIME -> formatTime(timePosition);
-            case SMPTE -> formatSMPTE(timePosition);
+            case SMPTE -> formatSMPTE(timePosition, context);
             case FRAME -> formatFrames(timePosition);
         };
     }
@@ -320,15 +334,13 @@ public class TimeUnitTextField extends JTextField {
 
     /**
      * Formats a TimePosition as SMPTE timecode (HH:MM:SS:FF).
-     * SMPTE is display-only — the TimePosition is converted to seconds first,
-     * then formatted using a default frame rate. For accurate display with
-     * project frame rate, use TimeDisplayFormat.SMPTE instead.
+     * SMPTE is display-only, so the TimePosition is converted to seconds first.
      */
-    private static String formatSMPTE(TimePosition timePosition) {
+    private static String formatSMPTE(TimePosition timePosition, TimeContext context) {
         if (timePosition instanceof TimePosition.TimeValue tv) {
             double totalSeconds = tv.getHours() * 3600.0 + tv.getMinutes() * 60.0
                     + tv.getSeconds() + tv.getMilliseconds() / 1000.0;
-            return formatSecondsAsSMPTE(totalSeconds, TimeContext.DEFAULT_SMPTE_FRAME_RATE);
+            return formatSecondsAsSMPTE(totalSeconds, getSmpteFrameRate(context));
         }
         return "00:00:00:00";
     }
@@ -342,7 +354,7 @@ public class TimeUnitTextField extends JTextField {
         int seconds = (int) (totalSeconds % 60);
         int frames = (int) ((totalSeconds - (int) totalSeconds) * frameRate);
         // Clamp frames to valid range
-        int maxFrames = (int) frameRate - 1;
+        int maxFrames = (int) Math.ceil(frameRate) - 1;
         if (frames > maxFrames) frames = maxFrames;
         if (frames < 0) frames = 0;
         return String.format("%02d:%02d:%02d:%02d", hours, minutes, seconds, frames);
@@ -361,6 +373,14 @@ public class TimeUnitTextField extends JTextField {
      * Parses a string to a TimePosition for the given TimeBase.
      */
     public static TimePosition parse(String text, TimeBase timeBase) {
+        return parse(text, timeBase, null);
+    }
+
+    /**
+     * Parses a string to a TimePosition for the given TimeBase.
+     * Uses the supplied TimeContext for context-dependent formats such as SMPTE.
+     */
+    public static TimePosition parse(String text, TimeBase timeBase, TimeContext context) {
         String trimmed = java.util.Objects.requireNonNullElse(text, "").trim();
         
         return switch (timeBase) {
@@ -369,7 +389,7 @@ public class TimeUnitTextField extends JTextField {
             case BBST -> parseBBST(trimmed);
             case BBF -> parseBBF(trimmed);
             case TIME -> parseTime(trimmed);
-            case SMPTE -> parseSMPTE(trimmed);
+            case SMPTE -> parseSMPTE(trimmed, context);
             case FRAME -> parseFrames(trimmed);
         };
     }
@@ -474,15 +494,14 @@ public class TimeUnitTextField extends JTextField {
 
     /**
      * Parses SMPTE timecode text (HH:MM:SS:FF) into a TimeValue.
-     * SMPTE is display-only — parsed frames are converted to milliseconds
-     * using the default SMPTE frame rate.
+     * SMPTE is display-only, so parsed frames are converted to milliseconds.
      */
-    private static TimePosition parseSMPTE(String text) {
+    private static TimePosition parseSMPTE(String text, TimeContext context) {
         if (text.isEmpty()) {
             return TimePosition.TimeValue.ZERO;
         }
         
-        long frameRate = (long) TimeContext.DEFAULT_SMPTE_FRAME_RATE;
+        double frameRate = getSmpteFrameRate(context);
         String[] parts = text.split(":");
 
         long hours = 0;
@@ -506,7 +525,7 @@ public class TimeUnitTextField extends JTextField {
         }
 
         // Convert frames to milliseconds and produce a TimeValue
-        long milliseconds = (long) (frames * 1000.0 / frameRate);
+        long milliseconds = Math.round(frames * 1000.0 / frameRate);
         return TimePosition.time(hours, minutes, seconds, milliseconds);
     }
 
@@ -553,7 +572,7 @@ public class TimeUnitTextField extends JTextField {
                 yield "0.0.00";
             }
             case TIME -> formatTime(timePosition);
-            case SMPTE -> formatSMPTE(timePosition);
+            case SMPTE -> formatSMPTE(timePosition, context);
             case FRAME -> formatFrames(timePosition);
         };
     }
@@ -607,7 +626,7 @@ public class TimeUnitTextField extends JTextField {
                 yield TimeUtilities.beatsToTimePosition(totalBeats, TimeBase.BBF, context);
             }
             case TIME -> parseTime(trimmed);
-            case SMPTE -> parseSMPTE(trimmed);
+            case SMPTE -> parseSMPTE(trimmed, context);
             case FRAME -> parseFrames(trimmed);
         };
     }
@@ -642,11 +661,15 @@ public class TimeUnitTextField extends JTextField {
         return val;
     }
 
-    private static long parseFrameNumber(String text, long frameRate) {
+    private static long parseFrameNumber(String text, double frameRate) {
         long val = Long.parseLong(text.trim());
-        if (val < 0 || val >= frameRate) {
+        if (val < 0 || val >= Math.ceil(frameRate)) {
             throw new IllegalArgumentException();
         }
         return val;
+    }
+
+    private static double getSmpteFrameRate(TimeContext context) {
+        return context == null ? TimeContext.DEFAULT_SMPTE_FRAME_RATE : context.getSmpteFrameRate();
     }
 }
