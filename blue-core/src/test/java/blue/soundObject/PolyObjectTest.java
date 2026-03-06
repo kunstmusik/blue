@@ -19,6 +19,7 @@
  */
 package blue.soundObject;
 
+import blue.CompileData;
 import blue.SoundLayer;
 import blue.time.TimeContext;
 import blue.time.TimeDuration;
@@ -100,6 +101,63 @@ class PolyObjectTest {
         assertEquals(0, duration.getMinutes());
         assertEquals(3, duration.getSeconds());
         assertEquals(0, duration.getMilliseconds());
+    }
+
+    @Test
+    void testPartialRenderPianoRollRebasesToZeroForBeatStart() throws Exception {
+        TimeContext context = new TimeContext();
+        PolyObject pObj = new PolyObject();
+        pObj.setTimeBehavior(TimeBehavior.NONE);
+        pObj.setStartTime(TimePosition.beats(0.0));
+        pObj.setSubjectiveDuration(TimeDuration.beats(16.0));
+
+        SoundLayer layer = new SoundLayer();
+        PianoRoll pianoRoll = new PianoRoll();
+        pianoRoll.setStartTime(TimePosition.beats(4.0));
+        pianoRoll.setSubjectiveDuration(TimeDuration.beats(8.0));
+
+        var note = new blue.soundObject.pianoRoll.PianoNote();
+        note.setStart(0.0);
+        note.setDuration(1.0);
+        pianoRoll.getNotes().add(note);
+
+        layer.add(pianoRoll);
+        pObj.add(layer);
+
+        NoteList notes = pObj.generateForCSD(context, CompileData.createEmptyCompileData(), 4.0, -1.0);
+
+        assertEquals(2, notes.size());
+        assertEquals(0.0, notes.get(0).getStartTime(), 0.0001);
+        assertEquals(4.0, notes.get(1).getStartTime(), 0.0001);
+    }
+
+    @Test
+    void testPartialRenderPatternObjectRebasesToZeroForBeatStart() throws Exception {
+        TimeContext context = new TimeContext();
+        PolyObject pObj = new PolyObject();
+        pObj.setTimeBehavior(TimeBehavior.NONE);
+        pObj.setStartTime(TimePosition.beats(0.0));
+        pObj.setSubjectiveDuration(TimeDuration.beats(16.0));
+
+        SoundLayer layer = new SoundLayer();
+        PatternObject patternObject = new PatternObject();
+        patternObject.setStartTime(TimePosition.beats(4.0));
+        patternObject.setSubjectiveDuration(TimeDuration.beats(8.0));
+
+        patternObject.setTime(4, 1);
+        patternObject.addPattern(0);
+        var pattern = patternObject.getPattern(0);
+        pattern.values[0] = true;
+        pattern.setPatternScore("i1 0 1 8.00");
+
+        layer.add(patternObject);
+        pObj.add(layer);
+
+        NoteList notes = pObj.generateForCSD(context, CompileData.createEmptyCompileData(), 4.0, -1.0);
+
+        assertEquals(2, notes.size());
+        assertEquals(0.0, notes.get(0).getStartTime(), 0.0001);
+        assertEquals(4.0, notes.get(1).getStartTime(), 0.0001);
     }
 
 //    public void testGetAdjustedRenderStart() {

@@ -112,7 +112,7 @@ public final class AddSoundObjectActionsPresenter extends AbstractAction impleme
                         pr.setSecondaryTimeDisplay(ts.getSecondaryTimeDisplay());
                         pr.setSecondaryRulerEnabled(ts.isSecondaryRulerEnabled());
                         pr.setSnapValueEnum(ts.getSnapValue());
-                        pr.setUseGlobalRuler(ts.getTimeDisplay().isBeatBased());                     
+                        pr.setUseGlobalRuler(ts.getTimeDisplay().isBeatBased());
                     }
                 }
 

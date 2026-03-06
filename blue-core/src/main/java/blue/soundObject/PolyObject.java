@@ -367,7 +367,8 @@ public class PolyObject extends ArrayList<SoundLayer> implements SoundObject,
         double rpBeats = this.getRepeatPoint() != null ? this.getRepeatPoint().toBeats(context) : -1.0;
         ScoreUtilities.applyTimeBehavior(nl, getTimeBehavior(), duration, rpBeats);
 
-        ScoreUtilities.setScoreStart(nl, start);
+        double startTime = getStartTime().toBeats(context);
+        ScoreUtilities.setScoreStart(nl, startTime);
 
         if (start == 0.0f) {
             retVal = nl;
