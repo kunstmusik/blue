@@ -178,16 +178,10 @@ public class CSDRender extends CSDRenderService {
 
         score.append("</CsoundSynthesizer>");
 
-//        Tempo tempo = data.getScore().getTempo();
-        TempoMap tempoMap = null;
-
-//        if (tempo.isEnabled()) {
-//            tempoMapper = CSDRender.getTempoMap(tempo);
-//        } else {
-//            tempoMapper = CSDRender.getTempoMap(globalSco);
-//        }
+        // BlueLive does not use tempo mapping — tempoMap is null.
+        // Tempo-aware rendering is handled by generateCSDImpl.
         CsdRenderResult renderResult
-                = new CsdRenderResult(score.toString(), tempoMap,
+                = new CsdRenderResult(score.toString(), null,
                         originalParameters, stringChannels);
 
         return renderResult;
