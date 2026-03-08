@@ -339,17 +339,6 @@ public class JConsole extends JTextArea implements KeyListener {
         }
     }
 
-    @SuppressWarnings("deprecation")
-    @Override
-    public void finalize() {
-        if (running) {
-            // I know it's depracated, but since this object is being destroyed,
-            // this thread should go, too
-            //pythonThread.stop();
-            //pythonThread.destroy();
-        }
-    }
-
     @Override
     public void keyReleased(KeyEvent e) {
         // don't need to use this for anything
