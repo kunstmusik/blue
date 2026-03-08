@@ -83,12 +83,13 @@ public class InstrumentAssignment implements Comparable<InstrumentAssignment> {
     /**
      * Used by old pre 0.95.0 code before instrument libraries removed from
      * project and user instrument library was implemented.
-     * 
+     *
      * This code is here to maintain compatibility with projects that still
      * contain InstrumentLibraries and is used when migrating to new format.
-     * 
+     *
      * @deprecated
      */
+    @Deprecated
     public static InstrumentAssignment loadFromXML(Element data,
             InstrumentLibrary iLibrary) {
         InstrumentAssignment retVal = new InstrumentAssignment();
