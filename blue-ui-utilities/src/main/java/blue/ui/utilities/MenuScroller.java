@@ -6,6 +6,7 @@ import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.lang.ref.Cleaner;
 import javax.swing.Icon;
 import javax.swing.JComponent;
 import javax.swing.JMenu;
@@ -35,6 +36,8 @@ import javax.swing.event.PopupMenuListener;
  */
 public class MenuScroller {
 
+    private static final Cleaner cleaner = Cleaner.create();
+
     //private JMenu menu;
     private JPopupMenu menu;
     private Component[] menuItems;
@@ -47,6 +50,7 @@ public class MenuScroller {
     private int bottomFixedCount;
     private int firstIndex = 0;
     private int keepVisibleIndex = -1;
+    private final Cleaner.Cleanable cleanable;
 
     /**
      * Registers a menu to be scrolled with the default number of items to
@@ -305,10 +309,33 @@ public class MenuScroller {
         this.menu = menu;
         menu.addPopupMenuListener(menuListener);
 
+        // Register with Cleaner for backup cleanup if dispose() is not called
+        this.cleanable = cleaner.register(this, new MenuScrollerCleanup(menu, menuListener));
+
         SwingUtilities.invokeLater(() -> {
             menuListener.popupMenuWillBecomeVisible(null);
             menuListener.popupMenuWillBecomeInvisible(null);
         });
+    }
+
+    /**
+     * Cleanup action for Cleaner to run when MenuScroller is garbage collected
+     */
+    private static class MenuScrollerCleanup implements Runnable {
+        private final JPopupMenu menu;
+        private final MenuScrollListener menuListener;
+
+        MenuScrollerCleanup(JPopupMenu menu, MenuScrollListener menuListener) {
+            this.menu = menu;
+            this.menuListener = menuListener;
+        }
+
+        @Override
+        public void run() {
+            if (menu != null && menuListener != null) {
+                menu.removePopupMenuListener(menuListener);
+            }
+        }
     }
 
     /**
@@ -438,18 +465,8 @@ public class MenuScroller {
             menu.removePopupMenuListener(menuListener);
             menu = null;
         }
-    }
-
-    /**
-     * Ensures that the <code>dispose</code> method of this MenuScroller is
-     * called when there are no more refrences to it.
-     *
-     * @exception Throwable if an error occurs.
-     * @see MenuScroller#dispose()
-     */
-    @Override
-    public void finalize() throws Throwable {
-        dispose();
+        // Clean the cleanable so it won't run again when GC'd
+        cleanable.clean();
     }
 
     private void refreshMenu() {
