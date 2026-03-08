@@ -369,9 +369,65 @@ public class PianoRollEditor extends ScoreObjectEditor implements
     }
     
     private void centerNoteScrollPane() {
-        JScrollBar scrollbar = noteScrollPane.getVerticalScrollBar();
-        int max = scrollbar.getMaximum();
-        scrollbar.setValue((max / 32) * 13);
+        // Capture values at call time to avoid race conditions if currentPianoRoll changes
+        final var pianoRoll = currentPianoRoll.get();
+        if (pianoRoll == null) {
+            return;
+        }
+        
+        // Defer until after layout is validated so scrollbar maximum is accurate
+        SwingUtilities.invokeLater(() -> {
+            // Verify the editor is still showing the same PianoRoll
+            if (currentPianoRoll.get() != pianoRoll) {
+                return;
+            }
+
+            int noteHeight = pianoRoll.getNoteHeight();
+            int canvasHeight = noteCanvas.getHeight();
+            int viewportHeight = noteScrollPane.getViewport().getHeight();
+            var notes = pianoRoll.getNotes();
+
+            int targetNoteIndex;
+
+            if (notes.size() > 0) {
+                // Find the lowest note to ensure it's visible
+                int minNoteIndex = Integer.MAX_VALUE;
+                for (var note : notes) {
+                    int noteIndex;
+                    if (pianoRoll.getPchGenerationMethod() == PianoRoll.GENERATE_MIDI) {
+                        noteIndex = note.getOctave() * 12 + note.getScaleDegree();
+                    } else {
+                        noteIndex = note.getOctave() * pianoRoll.getScale().getNumScaleDegrees() + note.getScaleDegree();
+                    }
+                    if (noteIndex < minNoteIndex) {
+                        minNoteIndex = noteIndex;
+                    }
+                }
+                // Position lowest note near bottom of viewport with small margin
+                int notesVisible = viewportHeight / noteHeight;
+                targetNoteIndex = minNoteIndex + (notesVisible / 4); // Show lowest notes with a bit of margin below
+            } else {
+                // Default: center on octave 8 (8.00)
+                if (pianoRoll.getPchGenerationMethod() == PianoRoll.GENERATE_MIDI) {
+                    targetNoteIndex = 8 * 12; // MIDI note 96 is octave 8.00
+                } else {
+                    targetNoteIndex = 8 * pianoRoll.getScale().getNumScaleDegrees();
+                }
+            }
+
+            // Calculate Y position from top (canvas grows upward from bottom)
+            int targetY = canvasHeight - (targetNoteIndex * noteHeight);
+
+            // Center the target note in the viewport
+            int scrollValue = targetY - (viewportHeight / 2);
+
+            // Clamp to valid scroll range
+            JScrollBar scrollbar = noteScrollPane.getVerticalScrollBar();
+            int max = scrollbar.getMaximum() - scrollbar.getVisibleAmount();
+            scrollValue = Math.max(0, Math.min(max, scrollValue));
+
+            scrollbar.setValue(scrollValue);
+        });
     }
     
     @Override
