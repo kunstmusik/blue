@@ -10,7 +10,6 @@ package blue;
 import blue.library.Library;
 import blue.soundObject.SoundObject;
 import blue.udo.UDOLibrary;
-import blue.utility.EnvironmentVars;
 import blue.utility.FileUtilities;
 import blue.utility.ObjectUtilities;
 import electric.xml.Document;
@@ -662,7 +661,7 @@ public class BlueSystem {
         }
 
         if (!path.contains(File.separator)) {
-            String sfDir = EnvironmentVars.getProperty("SFDIR");
+            String sfDir = System.getenv("SFDIR");
 
             if (sfDir != null) {
                 f = new File(sfDir + File.separator + path);
