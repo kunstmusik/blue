@@ -1,7 +1,6 @@
 package blue.utility;
 
 import java.util.Calendar;
-import java.util.Date;
 
 public class BlueSystemTimer {
 
@@ -27,11 +26,10 @@ public class BlueSystemTimer {
         if (this.calendar == null) {
             return "";
         }
-        Date time = this.calendar.getTime();
 
-        int h = time.getHours();
-        int m = time.getMinutes();
-        int s = time.getSeconds();
+        int h = calendar.get(Calendar.HOUR);
+        int m = calendar.get(Calendar.MINUTE);
+        int s = calendar.get(Calendar.SECOND);
 
         String meridian;
 

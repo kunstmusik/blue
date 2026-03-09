@@ -840,7 +840,7 @@ final class RealtimeRenderSettingsPanel extends javax.swing.JPanel {
         File index = new File(manualDir, "CommandFlags.html");
 
         try {
-            URLDisplayer.getDefault().showURL(index.toURL());
+            URLDisplayer.getDefault().showURL(index.toURI().toURL());
         } catch (Exception ex) {
             Exceptions.printStackTrace(ex);
         }

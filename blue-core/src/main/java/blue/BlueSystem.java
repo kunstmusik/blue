@@ -81,7 +81,7 @@ public class BlueSystem {
 
     public static void setLocale() {
 
-        Locale currentLocale = new Locale("en", "");
+        Locale currentLocale = Locale.of("en");
 
         try {
             systemMessages = ResourceBundle.getBundle(
