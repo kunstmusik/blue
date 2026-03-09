@@ -39,7 +39,7 @@ public class UndoAction extends AbstractAction {
         super(actionName);
 
         putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_Z,
-                BlueSystem.getMenuShortcutKey()));
+                BlueSystem.getMenuShortcutKeyEx()));
 
         this.manager = manager;
     }

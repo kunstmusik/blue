@@ -6,6 +6,7 @@ import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Insets;
 import java.awt.Toolkit;
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import javax.swing.BorderFactory;
 import javax.swing.InputMap;
@@ -249,6 +250,7 @@ public class BlueLookAndFeel extends MetalLookAndFeel {
         // }
     }
 
+    @SuppressWarnings("deprecation")
     private void setupForOSX(InputMap inputMap) {
         KeyStroke[] keys = inputMap.allKeys();
 
@@ -257,7 +259,7 @@ public class BlueLookAndFeel extends MetalLookAndFeel {
         }
 
         int menuShortcutKey = Toolkit.getDefaultToolkit()
-                .getMenuShortcutKeyMask();
+                .getMenuShortcutKeyMaskEx();
 
         for (KeyStroke key : keys) {
 
@@ -270,8 +272,9 @@ public class BlueLookAndFeel extends MetalLookAndFeel {
                 found = true;
             }
 
-            if ((key.getModifiers() & KeyEvent.CTRL_MASK) == KeyEvent.CTRL_MASK) {
-                modifiers = modifiers - KeyEvent.CTRL_MASK;
+            // KeyStroke.getModifiers() may return legacy mask values
+            if ((key.getModifiers() & InputEvent.CTRL_MASK) == InputEvent.CTRL_MASK) {
+                modifiers = modifiers - InputEvent.CTRL_MASK;
                 found = true;
             }
 

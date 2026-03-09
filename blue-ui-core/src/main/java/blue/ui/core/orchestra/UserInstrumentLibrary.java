@@ -174,13 +174,13 @@ public class UserInstrumentLibrary extends JComponent {
         ActionMap actionMap = libraryTree.getActionMap();
 
         inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_X,
-                BlueSystem.getMenuShortcutKey()), "cutNode");
+                BlueSystem.getMenuShortcutKeyEx()), "cutNode");
 
         inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_C,
-                BlueSystem.getMenuShortcutKey()), "copyNode");
+                BlueSystem.getMenuShortcutKeyEx()), "copyNode");
 
         inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_V,
-                BlueSystem.getMenuShortcutKey()), "pasteNode");
+                BlueSystem.getMenuShortcutKeyEx()), "pasteNode");
 
         inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0),
                 "deleteNode");

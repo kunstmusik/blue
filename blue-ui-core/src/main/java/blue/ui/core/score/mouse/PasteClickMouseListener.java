@@ -43,12 +43,12 @@ import javax.swing.SwingUtilities;
         position = 20)
 public class PasteClickMouseListener extends BlueMouseAdapter {
 
-    private static final int OS_CTRL_KEY = BlueSystem.getMenuShortcutKey();
+    private static final int OS_CTRL_KEY = BlueSystem.getMenuShortcutKeyEx();
     PasteSoundObjectAction pasteActionFactory = new PasteSoundObjectAction();
 
     @Override
     public void mousePressed(MouseEvent e) {
-        if ((e.getModifiers() & OS_CTRL_KEY) != OS_CTRL_KEY) {
+        if ((e.getModifiersEx() & OS_CTRL_KEY) != OS_CTRL_KEY) {
             return;
         }
 

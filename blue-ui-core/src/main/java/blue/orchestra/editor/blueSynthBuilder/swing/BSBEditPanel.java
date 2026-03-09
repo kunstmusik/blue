@@ -149,8 +149,8 @@ public class BSBEditPanel extends JLayeredPane implements
                 if (isEditing()) {
                     if (UiUtilities.isRightMouseButton(e)) {
                         popup.show(BSBEditPanel.this, e.getX(), e.getY());
-                    } else if ((e.getModifiers() & BlueSystem.getMenuShortcutKey())
-                            == BlueSystem.getMenuShortcutKey()
+                    } else if ((e.getModifiersEx() & BlueSystem.getMenuShortcutKeyEx())
+                            == BlueSystem.getMenuShortcutKeyEx()
                             && copyBuffer.size() > 0) {
                         int itemX = e.getX();
                         int itemY = e.getY();
@@ -233,9 +233,9 @@ public class BSBEditPanel extends JLayeredPane implements
         ActionMap actionMap = this.getActionMap();
 
         inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_X,
-                BlueSystem.getMenuShortcutKey()), "cut");
+                BlueSystem.getMenuShortcutKeyEx()), "cut");
         inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_C,
-                BlueSystem.getMenuShortcutKey()), "copy");
+                BlueSystem.getMenuShortcutKeyEx()), "copy");
         inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0), "delete");
         inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_BACK_SPACE, 0), "delete");
         inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_UP, 0), "up");

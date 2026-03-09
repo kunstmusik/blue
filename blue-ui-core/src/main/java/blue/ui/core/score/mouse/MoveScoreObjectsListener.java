@@ -49,7 +49,7 @@ import javax.swing.SwingUtilities;
         position = 50)
 public class MoveScoreObjectsListener extends BlueMouseAdapter {
 
-    private static final int OS_CTRL_KEY = BlueSystem.getMenuShortcutKey();
+    private static final int OS_CTRL_KEY = BlueSystem.getMenuShortcutKeyEx();
 
     private Point startPoint;
 
@@ -164,7 +164,7 @@ public class MoveScoreObjectsListener extends BlueMouseAdapter {
 
         if (initialDrag) {
             initialDrag = false;
-            if ((e.getModifiers() & OS_CTRL_KEY) == OS_CTRL_KEY) {
+            if ((e.getModifiersEx() & OS_CTRL_KEY) == OS_CTRL_KEY) {
                 for (int i = 0; i < selectedScoreObjects.length; i++) {
                     ScoreObject original = selectedScoreObjects[i];
                     ScoreObject clone = original.deepCopy();

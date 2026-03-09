@@ -22,6 +22,7 @@ package blue.plaf;
 import blue.plaf.fonts.Fonts;
 import com.formdev.flatlaf.FlatLaf;
 import java.awt.Color;
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.logging.Logger;
 import java.util.prefs.Preferences;
@@ -273,6 +274,7 @@ public class Installer extends ModuleInstall {
     /**
      * Replaces ctrl- shortcuts with command- shortcuts for OSX
      */
+    @SuppressWarnings("deprecation")
     protected void replaceCtrlShortcutsWithMacShortcuts() {
 
         for (Object keyObj : UIManager.getLookAndFeelDefaults().keySet()) {
@@ -292,10 +294,12 @@ public class Installer extends ModuleInstall {
 
                         int modifiers = keyStroke.getModifiers();
 
-                        if ((modifiers & KeyEvent.CTRL_MASK) > 0) {
+                        if ((modifiers & KeyEvent.CTRL_DOWN_MASK) > 0
+                                || (modifiers & InputEvent.CTRL_MASK) > 0) {
                             modifiers -= KeyEvent.CTRL_DOWN_MASK;
-                            modifiers -= KeyEvent.CTRL_MASK;
-                            modifiers += KeyEvent.META_DOWN_MASK + KeyEvent.META_MASK;
+                            // KeyStroke.getModifiers() may return legacy mask values
+                            modifiers -= (modifiers & InputEvent.CTRL_MASK);
+                            modifiers += KeyEvent.META_DOWN_MASK;
 
                             KeyStroke k = KeyStroke.getKeyStroke(
                                     keyStroke.getKeyCode(), modifiers);

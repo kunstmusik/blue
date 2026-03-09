@@ -152,13 +152,13 @@ public class UDOLibraryPanel extends JComponent {
         ActionMap actionMap = libraryTree.getActionMap();
 
         inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_X, BlueSystem
-                .getMenuShortcutKey()), "cutNode");
+                .getMenuShortcutKeyEx()), "cutNode");
 
         inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_C, BlueSystem
-                .getMenuShortcutKey()), "copyNode");
+                .getMenuShortcutKeyEx()), "copyNode");
 
         inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_V, BlueSystem
-                .getMenuShortcutKey()), "pasteNode");
+                .getMenuShortcutKeyEx()), "pasteNode");
 
         inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0),
                 "deleteNode");

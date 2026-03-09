@@ -132,10 +132,10 @@ public class UDOEditor extends javax.swing.JPanel {
       private void setUndoActions(JComponent field, Action undoAction,
             Action redoAction) {
         KeyStroke undoKeyStroke = KeyStroke.getKeyStroke(KeyEvent.VK_Z,
-                BlueSystem.getMenuShortcutKey());
+                BlueSystem.getMenuShortcutKeyEx());
 
         KeyStroke redoKeyStroke = KeyStroke.getKeyStroke(KeyEvent.VK_Z,
-                BlueSystem.getMenuShortcutKey() | KeyEvent.SHIFT_DOWN_MASK);
+                BlueSystem.getMenuShortcutKeyEx() | KeyEvent.SHIFT_DOWN_MASK);
 
         field.getInputMap().put(undoKeyStroke, "undo");
         field.getInputMap().put(redoKeyStroke, "redo");

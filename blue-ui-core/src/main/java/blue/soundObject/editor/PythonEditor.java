@@ -86,7 +86,7 @@ public class PythonEditor extends ScoreObjectEditor {
         ActionMap actions = codeEditor.getJEditorPane().getActionMap();
 
         inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_T, BlueSystem.
-                getMenuShortcutKey()), "testSoundObject");
+                getMenuShortcutKeyEx()), "testSoundObject");
 
         actions.put("testSoundObject", new AbstractAction() {
 

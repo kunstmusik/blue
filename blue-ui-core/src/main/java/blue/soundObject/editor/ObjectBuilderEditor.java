@@ -105,7 +105,7 @@ public class ObjectBuilderEditor extends ScoreObjectEditor {
         ActionMap actions = this.getActionMap();
 
         inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_T, BlueSystem
-                .getMenuShortcutKey()), "testSoundObject");
+                .getMenuShortcutKeyEx()), "testSoundObject");
 
         actions.put("testSoundObject", new AbstractAction() {
 

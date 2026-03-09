@@ -65,10 +65,10 @@ public class FieldDefinitionsEditor extends javax.swing.JPanel {
                     @Override
                     public boolean isCellEditable(EventObject anEvent) {
                         if (anEvent instanceof KeyEvent keyEvent) {
-                            int shortcutKey = BlueSystem.getMenuShortcutKey();
+                            int shortcutKey = BlueSystem.getMenuShortcutKeyEx();
                             KeyEvent ke = keyEvent;
                             if ((ke.getKeyCode() == KeyEvent.VK_Z || ke.getKeyCode() == KeyEvent.VK_Y)
-                                    && (ke.getModifiers() & shortcutKey) == shortcutKey) {
+                                    && (ke.getModifiersEx() & shortcutKey) == shortcutKey) {
                                 return false;
                             }
                         }
@@ -107,10 +107,10 @@ public class FieldDefinitionsEditor extends javax.swing.JPanel {
             @Override
             public boolean isCellEditable(EventObject anEvent) {
                 if (anEvent instanceof KeyEvent keyEvent) {
-                    int shortcutKey = BlueSystem.getMenuShortcutKey();
+                    int shortcutKey = BlueSystem.getMenuShortcutKeyEx();
                     KeyEvent ke = keyEvent;
                     if ((ke.getKeyCode() == KeyEvent.VK_Z || ke.getKeyCode() == KeyEvent.VK_Y)
-                            && (ke.getModifiers() & shortcutKey) == shortcutKey) {
+                            && (ke.getModifiersEx() & shortcutKey) == shortcutKey) {
                         return false;
                     }
                 }

@@ -106,7 +106,7 @@ public class KeyboardKeyCaptureDialog extends javax.swing.JDialog {
 
     private void formKeyPressed(java.awt.event.KeyEvent evt) {// GEN-FIRST:event_formKeyPressed
         keyCode = evt.getKeyCode();
-        modifiers = evt.getModifiers();
+        modifiers = evt.getModifiersEx();
 
         if (keyCode == KeyEvent.VK_CONTROL) {
 

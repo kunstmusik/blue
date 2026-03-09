@@ -102,7 +102,7 @@ public class JConsole extends JTextArea implements KeyListener {
         };
         clearAction.putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(
                 KeyEvent.VK_L, Toolkit.getDefaultToolkit()
-                .getMenuShortcutKeyMask()));
+                .getMenuShortcutKeyMaskEx()));
 
         menu.add(clearAction);
 
@@ -220,8 +220,8 @@ public class JConsole extends JTextArea implements KeyListener {
 
     @Override
     public void keyPressed(KeyEvent e) {
-        int shortcutKey = Toolkit.getDefaultToolkit().getMenuShortcutKeyMask();
-        if ((e.getModifiers() & shortcutKey) == shortcutKey) {
+        int shortcutKey = Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx();
+        if ((e.getModifiersEx() & shortcutKey) == shortcutKey) {
             if (e.getKeyCode() == KeyEvent.VK_L && !e.isShiftDown() && !e.isAltDown()) {
                 this.setText(">>>");
                 e.consume();

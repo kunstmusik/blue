@@ -145,7 +145,7 @@ public class ExternalEditor extends ScoreObjectEditor {
         ActionMap actions = score1EditPane.getActionMap();
 
         inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_T, BlueSystem
-                .getMenuShortcutKey()), "testSoundObject");
+                .getMenuShortcutKeyEx()), "testSoundObject");
 
         actions.put("testSoundObject", new AbstractAction() {
 

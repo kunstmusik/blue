@@ -12,6 +12,7 @@ import blue.BlueSystem;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Toolkit;
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
@@ -102,6 +103,7 @@ public class GUI {
 
     }
 
+    @SuppressWarnings("deprecation")
     public static void setupForOSX(InputMap inputMap) {
         KeyStroke[] keys = inputMap.allKeys();
 
@@ -120,13 +122,14 @@ public class GUI {
                 found = true;
             }
 
-            if ((key.getModifiers() & KeyEvent.CTRL_MASK) == KeyEvent.CTRL_MASK) {
-                modifiers = modifiers - KeyEvent.CTRL_MASK;
+            // KeyStroke.getModifiers() may return legacy mask values
+            if ((key.getModifiers() & InputEvent.CTRL_MASK) == InputEvent.CTRL_MASK) {
+                modifiers = modifiers - InputEvent.CTRL_MASK;
                 found = true;
             }
 
             if (found) {
-                modifiers = modifiers | BlueSystem.getMenuShortcutKey();
+                modifiers = modifiers | BlueSystem.getMenuShortcutKeyEx();
                 KeyStroke keystroke = KeyStroke.getKeyStroke(key
                         .getKeyCode(), modifiers, key.isOnKeyRelease());
 

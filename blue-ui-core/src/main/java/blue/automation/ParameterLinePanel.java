@@ -1030,9 +1030,9 @@ public class ParameterLinePanel extends JComponent implements
                             timeState.getSnapValueInBeats(startTime, ctx.getTempoMap(), ctx.getSampleRate()));
                 }
 
-                final int OS_CTRL_KEY = BlueSystem.getMenuShortcutKey();
+                final int OS_CTRL_KEY = BlueSystem.getMenuShortcutKeyEx();
 
-                if ((e.getModifiers() & OS_CTRL_KEY) == OS_CTRL_KEY) {
+                if ((e.getModifiersEx() & OS_CTRL_KEY) == OS_CTRL_KEY) {
                     // PASTING POINTS
                     ScoreController.getInstance().pasteSingleLine(startTime);
                     justPasted = true;

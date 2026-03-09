@@ -47,7 +47,7 @@ public class BlueSystem {
 
     private static BlueData blueData = null;
 
-    private static int menuShortcutKey = -1;
+    private static int menuShortcutKeyEx = -1;
 
 //    private static BlueMainFrame blueMainFrame = null;
     static {
@@ -713,12 +713,12 @@ public class BlueSystem {
 //    public static void setBlueMainFrame(BlueMainFrame blueMainFrame) {
 //        BlueSystem.blueMainFrame = blueMainFrame;
 //    }
-    public static synchronized int getMenuShortcutKey() {
-        if (menuShortcutKey == -1) {
-            menuShortcutKey = Toolkit.getDefaultToolkit()
-                    .getMenuShortcutKeyMask();
+    public static synchronized int getMenuShortcutKeyEx() {
+        if (menuShortcutKeyEx == -1) {
+            menuShortcutKeyEx = Toolkit.getDefaultToolkit()
+                    .getMenuShortcutKeyMaskEx();
         }
-        return menuShortcutKey;
+        return menuShortcutKeyEx;
     }
 
 }

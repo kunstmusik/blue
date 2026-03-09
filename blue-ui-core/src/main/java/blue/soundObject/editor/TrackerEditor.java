@@ -277,7 +277,7 @@ public class TrackerEditor extends ScoreObjectEditor {
             super("test-button");
             putValue(Action.SHORT_DESCRIPTION, "Test Button");
             putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(
-                    KeyEvent.VK_T, BlueSystem.getMenuShortcutKey()));
+                    KeyEvent.VK_T, BlueSystem.getMenuShortcutKeyEx()));
         }
 
         @Override
@@ -292,7 +292,7 @@ public class TrackerEditor extends ScoreObjectEditor {
             super("useKeyboardNotesAction");
             putValue(Action.SHORT_DESCRIPTION, "useKeyboardNotesAction");
             putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(
-                    KeyEvent.VK_K, BlueSystem.getMenuShortcutKey()));
+                    KeyEvent.VK_K, BlueSystem.getMenuShortcutKeyEx()));
         }
 
         @Override
@@ -307,7 +307,7 @@ public class TrackerEditor extends ScoreObjectEditor {
             super("increment-octave");
             putValue(Action.SHORT_DESCRIPTION, "increment-octave");
             putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(
-                    KeyEvent.VK_UP, BlueSystem.getMenuShortcutKey()
+                    KeyEvent.VK_UP, BlueSystem.getMenuShortcutKeyEx()
                             | InputEvent.SHIFT_DOWN_MASK));
         }
 
@@ -326,7 +326,7 @@ public class TrackerEditor extends ScoreObjectEditor {
             super("decrement-octave");
             putValue(Action.SHORT_DESCRIPTION, "decrement-octave");
             putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(
-                    KeyEvent.VK_DOWN, BlueSystem.getMenuShortcutKey()
+                    KeyEvent.VK_DOWN, BlueSystem.getMenuShortcutKeyEx()
                             | InputEvent.SHIFT_DOWN_MASK));
         }
 

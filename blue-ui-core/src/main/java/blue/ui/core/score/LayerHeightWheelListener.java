@@ -44,9 +44,9 @@ public class LayerHeightWheelListener implements MouseWheelListener {
     @Override
     public void mouseWheelMoved(MouseWheelEvent e) {
 
-        int shortcutKey = BlueSystem.getMenuShortcutKey();
+        int shortcutKey = BlueSystem.getMenuShortcutKeyEx();
         
-        if ((e.getModifiers() & shortcutKey) == shortcutKey) {
+        if ((e.getModifiersEx() & shortcutKey) == shortcutKey) {
 
             double rotation = e.getPreciseWheelRotation();
 

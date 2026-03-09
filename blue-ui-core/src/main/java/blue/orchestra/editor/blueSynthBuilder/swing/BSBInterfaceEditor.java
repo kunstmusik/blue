@@ -160,7 +160,7 @@ public class BSBInterfaceEditor extends JComponent implements PresetListener {
     private void initActions() {
         this.getInputMap(WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(
                 KeyStroke.getKeyStroke(KeyEvent.VK_E, BlueSystem
-                        .getMenuShortcutKey()), "switchEditMode");
+                        .getMenuShortcutKeyEx()), "switchEditMode");
         this.getActionMap().put("switchEditMode", new AbstractAction() {
 
             @Override

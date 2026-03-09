@@ -136,7 +136,7 @@ public class JMaskEditor extends ScoreObjectEditor implements ActionListener {
             }
         };
         testAction.putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(
-                KeyEvent.VK_T, BlueSystem.getMenuShortcutKey()));
+                KeyEvent.VK_T, BlueSystem.getMenuShortcutKeyEx()));
 
         SwingUtil.installActions(this, new Action[]{testAction},
                 WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);

@@ -356,7 +356,7 @@ public final class BlueLiveTopComponent extends TopComponent
             }
         };
         singleTrigger.putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(
-                KeyEvent.VK_T, BlueSystem.getMenuShortcutKey()));
+                KeyEvent.VK_T, BlueSystem.getMenuShortcutKeyEx()));
 
         Action multiTrigger = new AbstractAction("trigger-multi") {
 
@@ -367,7 +367,7 @@ public final class BlueLiveTopComponent extends TopComponent
         };
         multiTrigger.putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(
                 KeyEvent.VK_T,
-                BlueSystem.getMenuShortcutKey() | KeyEvent.SHIFT_DOWN_MASK));
+                BlueSystem.getMenuShortcutKeyEx() | KeyEvent.SHIFT_DOWN_MASK));
 
         Action copyObj = new AbstractAction("copy-obj") {
 
@@ -387,7 +387,7 @@ public final class BlueLiveTopComponent extends TopComponent
             }
         };
         copyObj.putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(
-                KeyEvent.VK_C, BlueSystem.getMenuShortcutKey()));
+                KeyEvent.VK_C, BlueSystem.getMenuShortcutKeyEx()));
 
         Action pasteObj = new AbstractAction("paste-obj") {
 
@@ -422,7 +422,7 @@ public final class BlueLiveTopComponent extends TopComponent
         };
 
         pasteObj.putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(
-                KeyEvent.VK_V, BlueSystem.getMenuShortcutKey()));
+                KeyEvent.VK_V, BlueSystem.getMenuShortcutKeyEx()));
 
         SwingUtil.installActions(liveObjectsTable,
                 new Action[]{singleTrigger, multiTrigger, copyObj, pasteObj});
@@ -435,7 +435,7 @@ public final class BlueLiveTopComponent extends TopComponent
                 }
             }
         });
-        liveCodeEditor.getJEditorPane().getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_E, BlueSystem.getMenuShortcutKey()), "eval-live-orc");
+        liveCodeEditor.getJEditorPane().getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_E, BlueSystem.getMenuShortcutKeyEx()), "eval-live-orc");
         liveCodeEditor.getJEditorPane().getActionMap().put("eval-live-orc",
                 new AbstractAction() {
             @Override
@@ -916,7 +916,7 @@ public final class BlueLiveTopComponent extends TopComponent
         double time = 0;
         String txt;
 
-        if ((evt.getModifiers() & BlueSystem.getMenuShortcutKey()) == BlueSystem.getMenuShortcutKey()) {
+        if ((evt.getModifiersEx() & BlueSystem.getMenuShortcutKeyEx()) == BlueSystem.getMenuShortcutKeyEx()) {
             switch (key) {
                 case KeyEvent.VK_PERIOD:
 

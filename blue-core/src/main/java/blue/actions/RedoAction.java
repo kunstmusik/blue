@@ -39,7 +39,7 @@ public class RedoAction extends AbstractAction {
         super(actionName);
 
         putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_Z,
-                BlueSystem.getMenuShortcutKey() | KeyEvent.SHIFT_DOWN_MASK));
+                BlueSystem.getMenuShortcutKeyEx() | KeyEvent.SHIFT_DOWN_MASK));
 
         this.manager = manager;
     }

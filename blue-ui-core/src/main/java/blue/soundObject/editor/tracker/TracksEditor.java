@@ -847,7 +847,7 @@ public class TracksEditor extends JPanel {
             super("increment-column-value");
             putValue(Action.SHORT_DESCRIPTION, "Increment Value");
             putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(
-                    KeyEvent.VK_UP, BlueSystem.getMenuShortcutKey()));
+                    KeyEvent.VK_UP, BlueSystem.getMenuShortcutKeyEx()));
         }
 
         @Override
@@ -880,7 +880,7 @@ public class TracksEditor extends JPanel {
             super("decrement-column-value");
             putValue(Action.SHORT_DESCRIPTION, "Decrement Value");
             putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(
-                    KeyEvent.VK_DOWN, BlueSystem.getMenuShortcutKey()));
+                    KeyEvent.VK_DOWN, BlueSystem.getMenuShortcutKeyEx()));
         }
 
         @Override
@@ -913,7 +913,7 @@ public class TracksEditor extends JPanel {
             super("set-tied");
             putValue(Action.SHORT_DESCRIPTION, "Toggle Tied-Note");
             putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(
-                    KeyEvent.VK_T, BlueSystem.getMenuShortcutKey()));
+                    KeyEvent.VK_T, BlueSystem.getMenuShortcutKeyEx()));
         }
 
         @Override
@@ -1020,7 +1020,7 @@ public class TracksEditor extends JPanel {
             super("Cut");
             putValue(Action.SHORT_DESCRIPTION, "Cut");
             putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(
-                    KeyEvent.VK_X, BlueSystem.getMenuShortcutKey()));
+                    KeyEvent.VK_X, BlueSystem.getMenuShortcutKeyEx()));
         }
 
         @Override
@@ -1059,7 +1059,7 @@ public class TracksEditor extends JPanel {
             super("Copy");
             putValue(Action.SHORT_DESCRIPTION, "Copy");
             putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(
-                    KeyEvent.VK_C, BlueSystem.getMenuShortcutKey()));
+                    KeyEvent.VK_C, BlueSystem.getMenuShortcutKeyEx()));
         }
 
         @Override
@@ -1094,7 +1094,7 @@ public class TracksEditor extends JPanel {
             super("Paste");
             putValue(Action.SHORT_DESCRIPTION, "Paste");
             putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(
-                    KeyEvent.VK_V, BlueSystem.getMenuShortcutKey()));
+                    KeyEvent.VK_V, BlueSystem.getMenuShortcutKeyEx()));
         }
 
         @Override
