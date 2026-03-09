@@ -11,9 +11,14 @@ information.
 
 # CHANGE LOG
 
-## [2.9.2] - 2023-xx-xx
+## [2.10.0] - 2026-03-xx
 
 ### Updated
+
+* Introduced new Time Unit system encompassing time signatures, measures, new tempo ruler, and new time units:
+  * Beat Time Units: bars.beats.fraction (BBF), bars.beats.ticks (BBT), bars.beats.sixteenths.ticks (BBST), and Csound Beats
+  * Clock Time Units: time, SMPTE, samples
+  * Objects may have different time units for start and end times
 
 * Updated Jython interpreter to 2.7.3
 
