@@ -99,11 +99,11 @@ public final class ProcessRunner  {
         }
     }
 
-    private static String[] splitCommandString(String in) {
+    protected static String[] splitCommandString(String in) {
         int mode = 0;
 
         ArrayList<String> parts = new ArrayList<>();
-        StringBuffer buffer = new StringBuffer();
+        StringBuilder buffer = new StringBuilder();
 
         for (int i = 0; i < in.length(); i++) {
             char c = in.charAt(i);
@@ -124,7 +124,7 @@ public final class ProcessRunner  {
                 case 1:
                     if (c == '\n' || c == '\t' || c == ' ') {
                         parts.add(buffer.toString());
-                        buffer = new StringBuffer();
+                        buffer = new StringBuilder();
                         mode = 0;
                     } else {
                         buffer.append(c);
@@ -134,7 +134,7 @@ public final class ProcessRunner  {
 
                     if (c == '\"') {
                         parts.add(buffer.toString());
-                        buffer = new StringBuffer();
+                        buffer = new StringBuilder();
                         mode = 0;
                     } else {
                         buffer.append(c);
@@ -171,13 +171,15 @@ public final class ProcessRunner  {
         this.commandLine = commandLine;
 
         if (System.getProperty("os.name").contains("Windows")) {
-            process = Runtime.getRuntime().exec(commandLine, null,
-                    currentWorkingdirectory);
+            String[] cmdArray = splitCommandString(this.commandLine);
+            ProcessBuilder pb = new ProcessBuilder(cmdArray);
+            pb.directory(currentWorkingdirectory);
+            process = pb.start();
         } else {
             String[] cmdArray = splitCommandString(this.commandLine);
-
-            process = Runtime.getRuntime().exec(cmdArray, null,
-                    currentWorkingdirectory);
+            ProcessBuilder pb = new ProcessBuilder(cmdArray);
+            pb.directory(currentWorkingdirectory);
+            process = pb.start();
         }
 
         bufferedReaderStderr = new BufferedReader(new InputStreamReader(process
@@ -204,13 +206,15 @@ public final class ProcessRunner  {
         this.commandLine = commandLine;
 
         if (System.getProperty("os.name").contains("Windows")) {
-            process = Runtime.getRuntime().exec(commandLine, null,
-                    currentWorkingdirectory);
+            String[] cmdArray = splitCommandString(this.commandLine);
+            ProcessBuilder pb = new ProcessBuilder(cmdArray);
+            pb.directory(currentWorkingdirectory);
+            process = pb.start();
         } else {
             String[] cmdArray = splitCommandString(this.commandLine);
-
-            process = Runtime.getRuntime().exec(cmdArray, null,
-                    currentWorkingdirectory);
+            ProcessBuilder pb = new ProcessBuilder(cmdArray);
+            pb.directory(currentWorkingdirectory);
+            process = pb.start();
         }
 
         bufferedReaderStderr = new BufferedReader(new InputStreamReader(process
