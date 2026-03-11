@@ -55,6 +55,11 @@
             <version>${project.version}</version>
         </dependency>    
         <dependency>
+            <groupId>com.kunstmusik</groupId>
+            <artifactId>blue-ext-commons-text</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
             <groupId>org.netbeans.api</groupId>
             <artifactId>org-netbeans-api-templates</artifactId>
             <version>${netbeans.version}</version>
