@@ -686,12 +686,18 @@ public final class ScoreTopComponent extends TopComponent
 
             comp.putClientProperty("layerGroup", layerGroup);
 
+            final LayerGroupSpacerPanel spacer = new LayerGroupSpacerPanel(
+                    layerGroup, data.getScore());
+
             if (index < 0 || index > layerPanel.getComponentCount() - 1) {
                 layerPanel.add(comp);
                 layerHeaderPanel.add(comp2);
+                layerHeaderPanel.add(spacer);
             } else {
+                int headerIndex = index * 2;
                 layerPanel.add(comp, index);
-                layerHeaderPanel.add(comp2, index);
+                layerHeaderPanel.add(comp2, headerIndex);
+                layerHeaderPanel.add(spacer, headerIndex + 1);
             }
 
             final Dimension d = new Dimension(comp2.getWidth(), comp.getHeight());
@@ -717,10 +723,12 @@ public final class ScoreTopComponent extends TopComponent
     }
 
     private void removePanelsForLayerGroups(int startIndex, int endIndex) {
+        int headerStart = startIndex * 2;
         for (int i = 0; i <= endIndex - startIndex; i++) {
-            Component comp = layerPanel.getComponent(startIndex);
             layerPanel.remove(startIndex);
-            layerHeaderPanel.remove(startIndex);
+            // Remove spacer first (at headerStart+1), then header (at headerStart)
+            layerHeaderPanel.remove(headerStart + 1);
+            layerHeaderPanel.remove(headerStart);
         }
         layerPanel.revalidate();
         layerPanel.repaint();
@@ -927,7 +935,7 @@ public final class ScoreTopComponent extends TopComponent
 
         layerPanel.setOpaque(true);
         layerPanel.setLayout(new LinearLayout(Score.SPACER));
-        layerHeaderPanel.setLayout(new LinearLayout(Score.SPACER));
+        layerHeaderPanel.setLayout(new LinearLayout(0));
 
         scorePanel.add(layerPanel, JLayeredPane.DEFAULT_LAYER);
 
@@ -1515,15 +1523,20 @@ public final class ScoreTopComponent extends TopComponent
             LayerGroup lGroup = (LayerGroup) c.getClientProperty("layerGroup");
 
             if (layerGroups.get(1) == lGroup) {
-                // handle push down
+                // handle push down — move end item to start position
                 Component comp = layerPanel.getComponent(evt.getEndIndex());
                 layerPanel.remove(comp);
                 layerPanel.add(comp, evt.getStartIndex());
 
-                Component comp2 = layerHeaderPanel.getComponent(
-                        evt.getEndIndex());
-                layerHeaderPanel.remove(comp2);
-                layerHeaderPanel.add(comp2, evt.getStartIndex());
+                // Move header+spacer pair from end to start
+                int srcHeader = evt.getEndIndex() * 2;
+                int dstHeader = evt.getStartIndex() * 2;
+                Component header = layerHeaderPanel.getComponent(srcHeader);
+                Component spacer = layerHeaderPanel.getComponent(srcHeader + 1);
+                layerHeaderPanel.remove(spacer);
+                layerHeaderPanel.remove(header);
+                layerHeaderPanel.add(header, dstHeader);
+                layerHeaderPanel.add(spacer, dstHeader + 1);
 
                 layerPanel.revalidate();
                 layerHeaderPanel.revalidate();
@@ -1531,15 +1544,21 @@ public final class ScoreTopComponent extends TopComponent
                 layerPanel.repaint();
                 layerHeaderPanel.repaint();
             } else {
-                // handle push up
+                // handle push up — move start item to end position
                 Component comp = layerPanel.getComponent(evt.getStartIndex());
                 layerPanel.remove(comp);
                 layerPanel.add(comp, evt.getEndIndex());
 
-                Component comp2 = layerHeaderPanel.getComponent(
-                        evt.getStartIndex());
-                layerHeaderPanel.remove(comp2);
-                layerHeaderPanel.add(comp2, evt.getEndIndex());
+                // Move header+spacer pair from start to end
+                int srcHeader = evt.getStartIndex() * 2;
+                int dstHeader = evt.getEndIndex() * 2;
+                Component header = layerHeaderPanel.getComponent(srcHeader);
+                Component spacer = layerHeaderPanel.getComponent(srcHeader + 1);
+                layerHeaderPanel.remove(spacer);
+                layerHeaderPanel.remove(header);
+                // After removing 2 components, destination shifts down by 2
+                layerHeaderPanel.add(header, dstHeader - 2);
+                layerHeaderPanel.add(spacer, dstHeader - 1);
 
                 layerPanel.revalidate();
                 layerHeaderPanel.revalidate();
