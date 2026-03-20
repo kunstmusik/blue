@@ -28,6 +28,7 @@ import blue.noteProcessor.NoteProcessorChainMap;
 import blue.ui.components.IconFactory;
 import blue.ui.core.score.NoteProcessorDialog;
 import blue.ui.core.score.ScoreController;
+import blue.ui.utilities.UiUtilities;
 import java.awt.CardLayout;
 import java.awt.Color;
 import java.awt.event.ActionEvent;
@@ -56,12 +57,13 @@ public class SoundLayerPanel extends javax.swing.JPanel implements
     private static final Border NORMAL_BORDER = BorderFactory
             .createBevelBorder(BevelBorder.RAISED);
 
-    private static final Border SELECTED_BORDER = BorderFactory.createBevelBorder(
-            BevelBorder.RAISED, Color.GREEN, Color.GREEN.darker());
+    private static final int SELECTION_BRIGHTEN = 30;
 
     private static SoundLayerPanelMenu OTHER_MENU = null;
 
     private final SoundLayer sLayer;
+
+    private boolean selected = false;
 
     private boolean automatable = true;
 
@@ -78,7 +80,7 @@ public class SoundLayerPanel extends javax.swing.JPanel implements
      */
     public SoundLayerPanel(SoundLayer soundLayer, NoteProcessorChainMap npcMap) {
         initComponents();
-        setSelected(false);
+        setBorder(NORMAL_BORDER);
 
         boolean automatable = ScoreController.getInstance().getScorePath().getLastLayerGroup() == null;
 
@@ -123,7 +125,10 @@ public class SoundLayerPanel extends javax.swing.JPanel implements
     }
 
     public void setSelected(boolean val) {
-        setBorder(val ? SELECTED_BORDER : NORMAL_BORDER);
+        if (this.selected != val) {
+            this.selected = val;
+            UiUtilities.brightenTree(this, val ? SELECTION_BRIGHTEN : -SELECTION_BRIGHTEN);
+        }
     }
 
     public void editName() {

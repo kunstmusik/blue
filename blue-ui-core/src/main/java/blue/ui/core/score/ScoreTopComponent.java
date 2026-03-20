@@ -118,11 +118,14 @@ import blue.ui.core.score.RulerConfigDialog.TimebaseUpdateMode;
 import blue.ui.core.score.layers.LayerGroupPanel;
 import blue.ui.core.score.layers.LayerGroupUIProviderManager;
 import blue.ui.core.score.layers.SoundObjectProvider;
+import blue.ui.core.score.layers.soundObject.ScoreObjectEditorTopComponent;
 import blue.ui.core.score.manager.LayerGroupManagerDialog;
 import blue.ui.core.score.manager.ScoreManagerDialog;
 import blue.ui.core.score.meter.MeterRegionBar;
 import blue.ui.core.score.tempo.TempoEditorControl;
 import blue.ui.core.score.tempo.TempoEditorPanel;
+import blue.ui.utilities.LayerSelectionCoordinator;
+import blue.ui.utilities.LayerSelectionProvider;
 import blue.ui.utilities.LinearLayout;
 import blue.ui.utilities.UiUtilities;
 import blue.util.ObservableListEvent;
@@ -211,6 +214,7 @@ public final class ScoreTopComponent extends TopComponent
     ScoreMouseWheelListener mouseWheelListener;
     LayerHeightWheelListener layerHeightWheelListener;
     ScoreMouseListener listener = new ScoreMouseListener(this, content);
+    LayerSelectionCoordinator layerSelectionCoordinator = new LayerSelectionCoordinator();
     TimeState currentTimeState = null;
     RenderTimeManager renderTimeManager
             = Lookup.getDefault().lookup(RenderTimeManager.class);
@@ -252,6 +256,21 @@ public final class ScoreTopComponent extends TopComponent
 
         renderTimeManager.addPropertyChangeListener(this);
         renderTimeManager.addRenderTimeManagerListener(this);
+
+        TopComponent.getRegistry().addPropertyChangeListener((PropertyChangeEvent evt) -> {
+            if (!TopComponent.Registry.PROP_ACTIVATED.equals(evt.getPropertyName())) {
+                return;
+            }
+
+            TopComponent active = TopComponent.getRegistry().getActivated();
+            if (active == null || active == this
+                    || active instanceof ScoreObjectEditorTopComponent
+                    || active instanceof SoundObjectProvider) {
+                return;
+            }
+
+            clearLayerSelections();
+        });
 
         reinitialize();
 
@@ -719,13 +738,40 @@ public final class ScoreTopComponent extends TopComponent
             });
             comp.addPropertyChangeListener("preferredSize",
                     layerPanelWidthListener);
+
+            LayerSelectionProvider provider = findLayerSelectionProvider(comp2);
+            if (provider != null) {
+                provider.setCoordinator(layerSelectionCoordinator);
+                layerSelectionCoordinator.addProvider(provider);
+            }
         }
+    }
+
+    private LayerSelectionProvider findLayerSelectionProvider(java.awt.Component comp) {
+        if (comp instanceof LayerSelectionProvider provider) {
+            return provider;
+        }
+        if (comp instanceof java.awt.Container container) {
+            for (java.awt.Component child : container.getComponents()) {
+                LayerSelectionProvider found = findLayerSelectionProvider(child);
+                if (found != null) {
+                    return found;
+                }
+            }
+        }
+        return null;
     }
 
     private void removePanelsForLayerGroups(int startIndex, int endIndex) {
         int headerStart = startIndex * 2;
         for (int i = 0; i <= endIndex - startIndex; i++) {
             layerPanel.remove(startIndex);
+            // Remove provider from coordinator before removing component
+            Component header = layerHeaderPanel.getComponent(headerStart);
+            LayerSelectionProvider provider = findLayerSelectionProvider(header);
+            if (provider != null) {
+                layerSelectionCoordinator.removeProvider(provider);
+            }
             // Remove spacer first (at headerStart+1), then header (at headerStart)
             layerHeaderPanel.remove(headerStart + 1);
             layerHeaderPanel.remove(headerStart);
@@ -1358,6 +1404,7 @@ public final class ScoreTopComponent extends TopComponent
 
             layerPanel.removeAll();
             layerHeaderPanel.removeAll();
+            layerSelectionCoordinator.clearProviders();
 
             
             TimeState timeState = score.getTimeState();
@@ -1439,6 +1486,7 @@ public final class ScoreTopComponent extends TopComponent
 
             layerPanel.removeAll();
             layerHeaderPanel.removeAll();
+            layerSelectionCoordinator.clearProviders();
 
             addPanelsForLayerGroup(-1, layerGroup, pObj.getTimeState());
 
@@ -1492,6 +1540,10 @@ public final class ScoreTopComponent extends TopComponent
 
     public JPanel getLayerPanel() {
         return layerPanel;
+    }
+
+    void clearLayerSelections() {
+        layerSelectionCoordinator.clearSelections();
     }
 
     @Override

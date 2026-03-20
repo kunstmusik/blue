@@ -23,10 +23,13 @@ import blue.event.SelectionEvent;
 import blue.event.SelectionListener;
 import blue.mixer.Channel;
 import blue.mixer.Mixer;
+import blue.score.Score;
 import blue.score.layers.LayerGroupDataEvent;
 import blue.score.layers.LayerGroupListener;
 import blue.score.layers.audio.core.AudioLayer;
 import blue.score.layers.audio.core.AudioLayerGroup;
+import blue.ui.utilities.LayerSelectionCoordinator;
+import blue.ui.utilities.LayerSelectionProvider;
 import blue.ui.utilities.SelectionModel;
 import java.awt.Component;
 import java.awt.Dimension;
@@ -37,6 +40,8 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
+import javax.swing.BoxLayout;
+import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -52,11 +57,12 @@ import skt.swing.SwingUtil;
  * @author stevenyi
  */
 public class AudioHeaderListPanel extends JPanel implements
-        LayerGroupListener, SelectionListener {
+        LayerGroupListener, SelectionListener, LayerSelectionProvider {
     
     private final AudioLayerGroup layerGroup;
     
     private SelectionModel selection = new SelectionModel();
+    private LayerSelectionCoordinator coordinator;
     
     JPopupMenu menu;
     
@@ -78,7 +84,8 @@ public class AudioHeaderListPanel extends JPanel implements
             updateSelection();
         });
         
-        final LayerAddAction layerAddAction = new LayerAddAction();
+        final LayerAddAboveAction layerAddAboveAction = new LayerAddAboveAction();
+        final LayerAddBelowAction layerAddBelowAction = new LayerAddBelowAction();
         final LayerRemoveAction layerRemoveAction = new LayerRemoveAction();
         final PushUpAction pushUpAction = new PushUpAction();
         final PushDownAction pushDownAction = new PushDownAction();
@@ -90,8 +97,27 @@ public class AudioHeaderListPanel extends JPanel implements
                 if (layerGroup == null) {
                     return;
                 }
-                
-                layerRemoveAction.setEnabled(layerGroup.size() >= 2);
+
+                boolean multiGroup = coordinator != null
+                        && coordinator.isMultiGroupSelected();
+                int selCount = selection.getEndIndex() - selection.getStartIndex() + 1;
+                boolean singleSel = !multiGroup && selCount == 1;
+
+                for (int i = 0; i < getComponentCount(); i++) {
+                    Component c = getComponent(i);
+                    if (c instanceof javax.swing.JMenuItem mi) {
+                        Action a = mi.getAction();
+                        if (a instanceof LayerAddAboveAction
+                                || a instanceof LayerAddBelowAction) {
+                            mi.setVisible(singleSel);
+                        } else if (a instanceof PushUpAction
+                                || a instanceof PushDownAction) {
+                            mi.setVisible(!multiGroup);
+                        }
+                    }
+                }
+
+                layerRemoveAction.setEnabled(selection.getStartIndex() >= 0);
                 pushUpAction.setEnabled(selection.getStartIndex() >= 1);
                 pushDownAction.setEnabled(
                         selection.getEndIndex() < layerGroup.size() - 1);
@@ -101,7 +127,8 @@ public class AudioHeaderListPanel extends JPanel implements
             
         };
         
-        menu.add(layerAddAction);
+        menu.add(layerAddAboveAction);
+        menu.add(layerAddBelowAction);
         menu.add(layerRemoveAction);
         menu.add(pushUpAction);
         menu.add(pushDownAction);
@@ -128,17 +155,25 @@ public class AudioHeaderListPanel extends JPanel implements
                         int index = getIndexOfComponent(c);
                         
                         if (index < 0) {
+                            if (coordinator != null) {
+                                coordinator.clearSelections();
+                            } else {
+                                selection.clear();
+                            }
                             return;
                         }
                         
                         if (me.isShiftDown()) {
-                            selection.setEnd(index);
-//                            SoundObjectSelectionBus.getInstance().selectionPerformed(
-//                                    new SelectionEvent(null,
-//                                    SelectionEvent.SELECTION_CLEAR));
+                            if (coordinator != null
+                                    && coordinator.getAnchorProvider() != null
+                                    && coordinator.getAnchorProvider() != AudioHeaderListPanel.this) {
+                                coordinator.handleCrossGroupShiftClick(
+                                        AudioHeaderListPanel.this, index);
+                            } else {
+                                selection.setEnd(index);
+                            }
                         } else {
                             selection.setAnchor(index);
-//                            ((AudioHeaderLayerPanel) c).setSelected(true);
                         }
                         
                     } else if (me.getClickCount() == 2) {
@@ -155,10 +190,6 @@ public class AudioHeaderListPanel extends JPanel implements
                     }
                 }
             }
-        });
-        
-        selection.addChangeListener((ChangeEvent e) -> {
-            updateSelection();
         });
         
         initActions();
@@ -182,17 +213,56 @@ public class AudioHeaderListPanel extends JPanel implements
     }
     
     private void updateSelection() {
-//        int start = selection.getStartIndex();
-//        int end = selection.getEndIndex();
-//        
-//        Component[] comps = getComponents();
-//        
-//        for (int i = 0; i < comps.length; i++) {
-//            AudioHeaderLayerPanel panel = (AudioHeaderLayerPanel) comps[i];
-//            panel.setSelected(i >= start && i <= end);
-//        }
+        int start = selection.getStartIndex();
+        int end = selection.getEndIndex();
+
+        Component[] comps = getComponents();
+
+        for (int i = 0; i < comps.length; i++) {
+            AudioHeaderLayerPanel panel = (AudioHeaderLayerPanel) comps[i];
+            panel.setSelected(i >= start && i <= end);
+        }
     }
     
+    @Override
+    public SelectionModel getSelectionModel() {
+        return selection;
+    }
+
+    @Override
+    public int getLayerCount() {
+        return layerGroup == null ? 0 : layerGroup.size();
+    }
+
+    @Override
+    public void setCoordinator(LayerSelectionCoordinator coordinator) {
+        this.coordinator = coordinator;
+    }
+
+    @Override
+    public LayerSelectionCoordinator getCoordinator() {
+        return coordinator;
+    }
+
+    @Override
+    public void removeSelectedLayers(boolean deleteEmptyGroup) {
+        int start = selection.getStartIndex();
+        int end = selection.getEndIndex();
+        if (end < 0 || layerGroup == null) {
+            return;
+        }
+        boolean removingAll = ((end - start) + 1 >= layerGroup.size());
+        layerGroup.removeLayers(start, end);
+        selection.setAnchor(-1);
+        if (removingAll && deleteEmptyGroup) {
+            Score score = blue.ui.core.score.ScoreController.getInstance().getScore();
+            int groupIndex = score.indexOf(layerGroup);
+            if (groupIndex >= 0) {
+                score.remove(groupIndex);
+            }
+        }
+    }
+
     public void checkSize() {
         if (layerGroup == null || getParent() == null) {
             setSize(0, 0);
@@ -270,6 +340,8 @@ public class AudioHeaderListPanel extends JPanel implements
     public void contentsChanged(LayerGroupDataEvent e) {
         final int start = e.getStartIndex();
         final int end = e.getEndIndex();
+        final int anchorIndex = selection.getAnchorIndex();
+        final int leadIndex = selection.getLeadIndex();
 
         // This is a hack to determine what direction the layers were
         // pushed
@@ -282,12 +354,9 @@ public class AudioHeaderListPanel extends JPanel implements
                 AudioHeaderLayerPanel panel = (AudioHeaderLayerPanel) c;
                 remove(start);
                 add(c, end);
-                
-                int i1 = selection.getStartIndex() - 1;
-                int i2 = selection.getEndIndex() - 1;
-                
-                selection.setAnchor(i1);
-                selection.setEnd(i2);
+
+                selection.setAnchor(anchorIndex - 1);
+                selection.setEnd(leadIndex - 1);
                 
             } else {
                 // have to flip because listDataEvent stores as min and max
@@ -296,12 +365,9 @@ public class AudioHeaderListPanel extends JPanel implements
                 AudioHeaderLayerPanel panel = (AudioHeaderLayerPanel) c;
                 remove(-start);
                 add(c, -end);
-                
-                int i1 = selection.getStartIndex() + 1;
-                int i2 = selection.getEndIndex() + 1;
-                
-                selection.setAnchor(i1);
-                selection.setEnd(i2);
+
+                selection.setAnchor(anchorIndex + 1);
+                selection.setEnd(leadIndex + 1);
             }
             
             revalidate();
@@ -440,6 +506,8 @@ public class AudioHeaderListPanel extends JPanel implements
         public void actionPerformed(ActionEvent e) {
             int start = selection.getStartIndex();
             int end = selection.getEndIndex();
+            int anchorIndex = selection.getAnchorIndex();
+            int leadIndex = selection.getLeadIndex();
             
             if (end < 0 || start == 0) {
                 return;
@@ -447,7 +515,8 @@ public class AudioHeaderListPanel extends JPanel implements
             
             layerGroup.pushUpLayers(start, end);
             
-            selection.setAnchor(start - 1);
+            selection.setAnchor(anchorIndex - 1);
+            selection.setEnd(leadIndex - 1);
         }
         
     }
@@ -462,6 +531,8 @@ public class AudioHeaderListPanel extends JPanel implements
         public void actionPerformed(ActionEvent e) {
             int start = selection.getStartIndex();
             int end = selection.getEndIndex();
+            int anchorIndex = selection.getAnchorIndex();
+            int leadIndex = selection.getLeadIndex();
             
             if (end < 0 || end >= layerGroup.size() - 1) {
                 return;
@@ -469,30 +540,43 @@ public class AudioHeaderListPanel extends JPanel implements
             
             layerGroup.pushDownLayers(start, end);
             
-            selection.setAnchor(start + 1);
+            selection.setAnchor(anchorIndex + 1);
+            selection.setEnd(leadIndex + 1);
         }
         
     }
     
-    class LayerAddAction extends AbstractAction {
+    class LayerAddAboveAction extends AbstractAction {
         
-        public LayerAddAction() {
-            super("Add Layer");
+        public LayerAddAboveAction() {
+            super("Add Layer Above");
+        }
+        
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            int start = selection.getStartIndex();
+            if (start < 0) {
+                return;
+            }
+            layerGroup.newLayerAt(start);
+        }
+    }
+
+    class LayerAddBelowAction extends AbstractAction {
+        
+        public LayerAddBelowAction() {
+            super("Add Layer Below");
         }
         
         @Override
         public void actionPerformed(ActionEvent e) {
             int end = selection.getEndIndex();
-            
             if (end < 0) {
                 return;
             }
             end++;
-            
             layerGroup.newLayerAt(end);
-            
         }
-        
     }
     
     class LayerRemoveAction extends AbstractAction {
@@ -503,21 +587,90 @@ public class AudioHeaderListPanel extends JPanel implements
         
         @Override
         public void actionPerformed(ActionEvent e) {
+            boolean multiGroup = coordinator != null
+                    && coordinator.isMultiGroupSelected();
+
+            if (multiGroup) {
+                performCrossGroupRemove();
+                return;
+            }
+
             int start = selection.getStartIndex();
             int end = selection.getEndIndex();
             
-            if (end < 0 || layerGroup.size() < 2) {
+            if (end < 0) {
                 return;
             }
             
             int len = (end - start) + 1;
+            boolean removingAll = (len >= layerGroup.size());
             
             String message = "Please confirm deleting these "
                     + len
                     + " layers.";
-            if (JOptionPane.showConfirmDialog(null, message) == JOptionPane.OK_OPTION) {
+
+            JCheckBox deleteGroupCb = null;
+            Object dialogMessage;
+            if (removingAll) {
+                deleteGroupCb = new JCheckBox("Delete empty Layer Group", true);
+                JPanel panel = new JPanel();
+                panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+                panel.add(new JLabel(message));
+                panel.add(deleteGroupCb);
+                dialogMessage = panel;
+            } else {
+                dialogMessage = message;
+            }
+
+            if (JOptionPane.showConfirmDialog(null, dialogMessage) == JOptionPane.OK_OPTION) {
                 layerGroup.removeLayers(start, end);
                 selection.setAnchor(-1);
+
+                if (removingAll && deleteGroupCb.isSelected()) {
+                    Score score = blue.ui.core.score.ScoreController.getInstance().getScore();
+                    int groupIndex = score.indexOf(layerGroup);
+                    if (groupIndex >= 0) {
+                        score.remove(groupIndex);
+                    }
+                }
+            }
+        }
+
+        private void performCrossGroupRemove() {
+            var selected = coordinator.getSelectedProviders();
+            int totalLayers = 0;
+            boolean anyRemovingAll = false;
+            for (var p : selected) {
+                var sm = p.getSelectionModel();
+                int len = sm.getEndIndex() - sm.getStartIndex() + 1;
+                totalLayers += len;
+                if (len >= p.getLayerCount()) {
+                    anyRemovingAll = true;
+                }
+            }
+
+            String message = "Please confirm deleting these "
+                    + totalLayers
+                    + " layers.";
+
+            JCheckBox deleteGroupCb = null;
+            Object dialogMessage;
+            if (anyRemovingAll) {
+                deleteGroupCb = new JCheckBox("Delete empty Layer Groups", true);
+                JPanel panel = new JPanel();
+                panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+                panel.add(new JLabel(message));
+                panel.add(deleteGroupCb);
+                dialogMessage = panel;
+            } else {
+                dialogMessage = message;
+            }
+
+            if (JOptionPane.showConfirmDialog(null, dialogMessage) == JOptionPane.OK_OPTION) {
+                boolean deleteEmpty = deleteGroupCb != null && deleteGroupCb.isSelected();
+                for (var p : selected) {
+                    p.removeSelectedLayers(deleteEmpty);
+                }
             }
         }
         

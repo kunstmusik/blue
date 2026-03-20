@@ -77,6 +77,14 @@ public class SelectionModel {
         return anchor > end ? anchor : end;
     }
 
+    public int getAnchorIndex() {
+        return anchor;
+    }
+
+    public int getLeadIndex() {
+        return end;
+    }
+
     public int getLastIndexSet() {
         return lastIndexSet;
     }

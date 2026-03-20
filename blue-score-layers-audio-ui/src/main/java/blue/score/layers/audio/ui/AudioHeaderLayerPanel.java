@@ -25,6 +25,7 @@ import blue.automation.ParameterIdList;
 import blue.mixer.Channel;
 import blue.score.layers.audio.core.AudioLayer;
 import blue.ui.components.IconFactory;
+import blue.ui.utilities.UiUtilities;
 import java.awt.CardLayout;
 import java.awt.Color;
 import java.awt.event.*;
@@ -50,11 +51,12 @@ public class AudioHeaderLayerPanel extends javax.swing.JPanel
     private final AudioLayer audioLayer;
     private static final Border border = BorderFactory.createBevelBorder(
             BevelBorder.RAISED);
-    private static final Border selectionBorder = BorderFactory.createBevelBorder(
-            BevelBorder.RAISED, Color.GREEN, Color.GREEN.darker());
+    private static final int SELECTION_BRIGHTEN = 30;
     private final Channel channel;
 
     private final ParameterIdList paramIdList;
+
+    private boolean selected = false;
 
     boolean updating = false;
 
@@ -443,7 +445,10 @@ public class AudioHeaderLayerPanel extends javax.swing.JPanel
     }
 
     public void setSelected(boolean val) {
-        setBorder(val ? selectionBorder : border);
+        if (this.selected != val) {
+            this.selected = val;
+            UiUtilities.brightenTree(this, val ? SELECTION_BRIGHTEN : -SELECTION_BRIGHTEN);
+        }
     }
 
     private void updateParameterPanel() {

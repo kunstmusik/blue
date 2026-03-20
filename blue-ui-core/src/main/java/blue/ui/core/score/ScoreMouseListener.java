@@ -91,6 +91,10 @@ public class ScoreMouseListener extends MouseAdapter {
                             (JComponent) lGroupPanel));
         }
 
+        if (lGroupPanel != null) {
+            scoreTC.clearLayerSelections();
+        }
+
         BlueMouseAdapter.currentLayerGroupPanel = lGroupPanel;
         BlueMouseAdapter.currentScoreObjectView = scoreObjView;
 

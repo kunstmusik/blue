@@ -22,15 +22,17 @@ package blue.ui.core.score.soundLayer;
 import blue.BlueSystem;
 import blue.SoundLayer;
 import blue.noteProcessor.NoteProcessorChainMap;
+import blue.score.Score;
 import blue.score.layers.LayerGroupDataEvent;
 import blue.score.layers.LayerGroupListener;
 import blue.soundObject.PolyObject;
+import blue.ui.core.score.ScoreController;
+import blue.ui.utilities.LayerSelectionCoordinator;
+import blue.ui.utilities.LayerSelectionProvider;
 import blue.ui.utilities.SelectionModel;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
-import java.awt.event.FocusEvent;
-import java.awt.event.FocusListener;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
@@ -38,8 +40,11 @@ import java.awt.event.MouseEvent;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.JComponent;
+import javax.swing.BoxLayout;
+import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
+import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
@@ -47,7 +52,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import skt.swing.SwingUtil;
 
-public class LayersPanel extends JComponent implements LayerGroupListener {
+public class LayersPanel extends JComponent implements LayerGroupListener, LayerSelectionProvider {
 
     private final SoundLayerLayout layout = new SoundLayerLayout();
 
@@ -56,6 +61,7 @@ public class LayersPanel extends JComponent implements LayerGroupListener {
     private NoteProcessorChainMap npcMap = null;
 
     private final SelectionModel selection = new SelectionModel();
+    private LayerSelectionCoordinator coordinator;
     
     JPopupMenu menu;
 
@@ -65,7 +71,8 @@ public class LayersPanel extends JComponent implements LayerGroupListener {
 
         this.setMinimumSize(new Dimension(0, 0));
  
-        final LayerAddAction layerAddAction = new LayerAddAction();
+        final LayerAddAboveAction layerAddAboveAction = new LayerAddAboveAction();
+        final LayerAddBelowAction layerAddBelowAction = new LayerAddBelowAction();
         final LayerRemoveAction layerRemoveAction = new LayerRemoveAction();
         final PushUpAction pushUpAction = new PushUpAction();
         final PushDownAction pushDownAction = new PushDownAction();
@@ -77,8 +84,27 @@ public class LayersPanel extends JComponent implements LayerGroupListener {
                 if(pObj == null) {
                     return;
                 }
-                        
-                layerRemoveAction.setEnabled(pObj.size() >= 2);
+
+                boolean multiGroup = coordinator != null
+                        && coordinator.isMultiGroupSelected();
+                int selCount = selection.getEndIndex() - selection.getStartIndex() + 1;
+                boolean singleSel = !multiGroup && selCount == 1;
+
+                for (int i = 0; i < getComponentCount(); i++) {
+                    Component c = getComponent(i);
+                    if (c instanceof javax.swing.JMenuItem mi) {
+                        Action a = mi.getAction();
+                        if (a instanceof LayerAddAboveAction
+                                || a instanceof LayerAddBelowAction) {
+                            mi.setVisible(singleSel);
+                        } else if (a instanceof PushUpAction
+                                || a instanceof PushDownAction) {
+                            mi.setVisible(!multiGroup);
+                        }
+                    }
+                }
+
+                layerRemoveAction.setEnabled(selection.getStartIndex() >= 0);
                 pushUpAction.setEnabled(selection.getStartIndex() >= 1);
                 pushDownAction.setEnabled(selection.getEndIndex() < pObj.size() - 1);
                 
@@ -87,7 +113,8 @@ public class LayersPanel extends JComponent implements LayerGroupListener {
             
         };
         
-        menu.add(layerAddAction);
+        menu.add(layerAddAboveAction);
+        menu.add(layerAddBelowAction);
         menu.add(layerRemoveAction);
         menu.add(pushUpAction);
         menu.add(pushDownAction);
@@ -114,11 +141,23 @@ public class LayersPanel extends JComponent implements LayerGroupListener {
                         int index = getIndexOfComponent(c);
 
                         if (index < 0) {
+                            if (coordinator != null) {
+                                coordinator.clearSelections();
+                            } else {
+                                selection.clear();
+                            }
                             return;
                         }
 
                         if (me.isShiftDown()) {
-                            selection.setEnd(index);
+                            if (coordinator != null
+                                    && coordinator.getAnchorProvider() != null
+                                    && coordinator.getAnchorProvider() != LayersPanel.this) {
+                                coordinator.handleCrossGroupShiftClick(
+                                        LayersPanel.this, index);
+                            } else {
+                                selection.setEnd(index);
+                            }
                         } else {
                             selection.setAnchor(index);
                         }
@@ -141,19 +180,6 @@ public class LayersPanel extends JComponent implements LayerGroupListener {
 
         selection.addChangeListener((ChangeEvent e) -> {
             updateSelection();
-        });
-
-        this.addFocusListener(new FocusListener() {
-            @Override
-            public void focusGained(FocusEvent e) {
-            }
-
-            @Override
-            public void focusLost(FocusEvent e) {
-                if (!e.isTemporary()) {
-                    selection.setAnchor(-1);
-                }
-            }
         });
 
         initActions();
@@ -220,19 +246,54 @@ public class LayersPanel extends JComponent implements LayerGroupListener {
     /* SELECTION */
 
     private void updateSelection() {
-//        int start = selection.getStartIndex();
-//        int end = selection.getEndIndex();
+        int start = selection.getStartIndex();
+        int end = selection.getEndIndex();
 
-//        Component[] comps = getComponents();
+        Component[] comps = getComponents();
 
-//        for (int i = 0; i < comps.length; i++) {
-//            SoundLayerPanel panel = (SoundLayerPanel) comps[i];
-//            panel.setSelected(i >= start && i <= end);
-//        }
+        for (int i = 0; i < comps.length; i++) {
+            SoundLayerPanel panel = (SoundLayerPanel) comps[i];
+            panel.setSelected(i >= start && i <= end);
+        }
     }
 
+    @Override
     public SelectionModel getSelectionModel() {
         return selection;
+    }
+
+    @Override
+    public int getLayerCount() {
+        return pObj == null ? 0 : pObj.size();
+    }
+
+    @Override
+    public void setCoordinator(LayerSelectionCoordinator coordinator) {
+        this.coordinator = coordinator;
+    }
+
+    @Override
+    public LayerSelectionCoordinator getCoordinator() {
+        return coordinator;
+    }
+
+    @Override
+    public void removeSelectedLayers(boolean deleteEmptyGroup) {
+        int start = selection.getStartIndex();
+        int end = selection.getEndIndex();
+        if (end < 0 || pObj == null) {
+            return;
+        }
+        boolean removingAll = ((end - start) + 1 >= pObj.size());
+        pObj.removeLayers(start, end);
+        selection.setAnchor(-1);
+        if (removingAll && deleteEmptyGroup) {
+            Score score = ScoreController.getInstance().getScore();
+            int groupIndex = score.indexOf(pObj);
+            if (groupIndex >= 0) {
+                score.remove(groupIndex);
+            }
+        }
     }
 
     public void setNoteProcessorChainMap(NoteProcessorChainMap npcMap) {
@@ -303,6 +364,8 @@ public class LayersPanel extends JComponent implements LayerGroupListener {
     public void contentsChanged(LayerGroupDataEvent e) {
         int start = e.getStartIndex();
         int end = e.getEndIndex();
+        int anchorIndex = selection.getAnchorIndex();
+        int leadIndex = selection.getLeadIndex();
 
         // This is a hack to determine what direction the layers were
         // pushed
@@ -314,12 +377,9 @@ public class LayersPanel extends JComponent implements LayerGroupListener {
             SoundLayerPanel panel = (SoundLayerPanel) c;
             remove(start);
             add(c, end);
-            
-            int i1 = selection.getStartIndex() - 1;
-            int i2 = selection.getEndIndex() - 1;
 
-            selection.setAnchor(i1);
-            selection.setEnd(i2);
+            selection.setAnchor(anchorIndex - 1);
+            selection.setEnd(leadIndex - 1);
 
         } else {
             // have to flip because listDataEvent stores as min and max
@@ -329,11 +389,8 @@ public class LayersPanel extends JComponent implements LayerGroupListener {
             remove(-start);
             add(c, -end);
 
-            int i1 = selection.getStartIndex() + 1;
-            int i2 = selection.getEndIndex() + 1;
-
-            selection.setAnchor(i1);
-            selection.setEnd(i2);
+            selection.setAnchor(anchorIndex + 1);
+            selection.setEnd(leadIndex + 1);
         }
 
         revalidate();
@@ -434,6 +491,8 @@ public class LayersPanel extends JComponent implements LayerGroupListener {
         public void actionPerformed(ActionEvent e) {
             int start = selection.getStartIndex();
             int end = selection.getEndIndex();
+            int anchorIndex = selection.getAnchorIndex();
+            int leadIndex = selection.getLeadIndex();
 
             if (end < 0 || start == 0) {
                 return;
@@ -441,7 +500,8 @@ public class LayersPanel extends JComponent implements LayerGroupListener {
 
             pObj.pushUpLayers(start, end);
 
-            selection.setAnchor(start - 1);
+            selection.setAnchor(anchorIndex - 1);
+            selection.setEnd(leadIndex - 1);
         }
 
     }
@@ -453,9 +513,11 @@ public class LayersPanel extends JComponent implements LayerGroupListener {
         }
         
         @Override
-        public void actionPerformed(ActionEvent e) {     
+        public void actionPerformed(ActionEvent e) {
             int start = selection.getStartIndex();
             int end = selection.getEndIndex();
+            int anchorIndex = selection.getAnchorIndex();
+            int leadIndex = selection.getLeadIndex();
 
             if (end < 0 || end >= pObj.size() - 1) {
                 return;
@@ -463,30 +525,43 @@ public class LayersPanel extends JComponent implements LayerGroupListener {
 
             pObj.pushDownLayers(start, end);
 
-            selection.setAnchor(start + 1);
+            selection.setAnchor(anchorIndex + 1);
+            selection.setEnd(leadIndex + 1);
         }
 
     }
     
-    class LayerAddAction extends AbstractAction {
+    class LayerAddAboveAction extends AbstractAction {
 
-        public LayerAddAction() {
-            super("Add Layer");
+        public LayerAddAboveAction() {
+            super("Add Layer Above");
         }
-        
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            int start = selection.getStartIndex();
+            if (start < 0) {
+                return;
+            }
+            pObj.newLayerAt(start);
+        }
+    }
+
+    class LayerAddBelowAction extends AbstractAction {
+
+        public LayerAddBelowAction() {
+            super("Add Layer Below");
+        }
+
         @Override
         public void actionPerformed(ActionEvent e) {
             int end = selection.getEndIndex();
-
             if (end < 0) {
                 return;
-            } 
+            }
             end++;
-            
             pObj.newLayerAt(end);
-
         }
-
     }
     
     class LayerRemoveAction extends AbstractAction {
@@ -497,14 +572,23 @@ public class LayersPanel extends JComponent implements LayerGroupListener {
         
         @Override
         public void actionPerformed(ActionEvent e) {
+            boolean multiGroup = coordinator != null
+                    && coordinator.isMultiGroupSelected();
+
+            if (multiGroup) {
+                performCrossGroupRemove();
+                return;
+            }
+
             int start = selection.getStartIndex();
             int end = selection.getEndIndex();
 
-            if (end < 0 || pObj.size() < 2) {
+            if (end < 0) {
                 return;
             }
 
             int len = (end - start) + 1;
+            boolean removingAll = (len >= pObj.size());
 
             String message = BlueSystem
                     .getString("soundLayerEditPanel.delete.message1")
@@ -512,9 +596,72 @@ public class LayersPanel extends JComponent implements LayerGroupListener {
                     + len
                     + " "
                     + BlueSystem.getString("soundLayerEditPanel.delete.message2");
-            if (JOptionPane.showConfirmDialog(null, message) == JOptionPane.OK_OPTION) {
+
+            JCheckBox deleteGroupCb = null;
+            Object dialogMessage;
+            if (removingAll) {
+                deleteGroupCb = new JCheckBox("Delete empty Layer Group", true);
+                JPanel panel = new JPanel();
+                panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+                panel.add(new JLabel(message));
+                panel.add(deleteGroupCb);
+                dialogMessage = panel;
+            } else {
+                dialogMessage = message;
+            }
+
+            if (JOptionPane.showConfirmDialog(null, dialogMessage) == JOptionPane.OK_OPTION) {
                 pObj.removeLayers(start, end);
                 selection.setAnchor(-1);
+
+                if (removingAll && deleteGroupCb.isSelected()) {
+                    Score score = ScoreController.getInstance().getScore();
+                    int groupIndex = score.indexOf(pObj);
+                    if (groupIndex >= 0) {
+                        score.remove(groupIndex);
+                    }
+                }
+            }
+        }
+
+        private void performCrossGroupRemove() {
+            var selected = coordinator.getSelectedProviders();
+            int totalLayers = 0;
+            boolean anyRemovingAll = false;
+            for (var p : selected) {
+                var sm = p.getSelectionModel();
+                int len = sm.getEndIndex() - sm.getStartIndex() + 1;
+                totalLayers += len;
+                if (len >= p.getLayerCount()) {
+                    anyRemovingAll = true;
+                }
+            }
+
+            String message = BlueSystem
+                    .getString("soundLayerEditPanel.delete.message1")
+                    + " "
+                    + totalLayers
+                    + " "
+                    + BlueSystem.getString("soundLayerEditPanel.delete.message2");
+
+            JCheckBox deleteGroupCb = null;
+            Object dialogMessage;
+            if (anyRemovingAll) {
+                deleteGroupCb = new JCheckBox("Delete empty Layer Groups", true);
+                JPanel panel = new JPanel();
+                panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+                panel.add(new JLabel(message));
+                panel.add(deleteGroupCb);
+                dialogMessage = panel;
+            } else {
+                dialogMessage = message;
+            }
+
+            if (JOptionPane.showConfirmDialog(null, dialogMessage) == JOptionPane.OK_OPTION) {
+                boolean deleteEmpty = deleteGroupCb != null && deleteGroupCb.isSelected();
+                for (var p : selected) {
+                    p.removeSelectedLayers(deleteEmpty);
+                }
             }
         }
         
