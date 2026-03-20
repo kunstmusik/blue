@@ -13,6 +13,12 @@ information.
 
 ## [2.10.0] - 2026-03-xx
 
+### NEW
+
+* Added interactive spacer panels between layer groups with add-above/add-below actions and popup options to move groups up or down.
+
+* Added cross-group layer selection and deletion support for audio and pattern layer panels, including coordinated shift-click selection and cleanup of empty groups.
+
 ### Updated
 
 * Introduced new Time Unit system encompassing time signatures, measures, new tempo ruler, and new time units:
