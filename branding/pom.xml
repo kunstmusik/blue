@@ -28,9 +28,74 @@
   <build>
       <plugins>
             <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>properties-maven-plugin</artifactId>
+                <version>1.0.0</version>
+                <executions>
+                    <execution>
+                        <phase>initialize</phase>
+                        <goals>
+                            <goal>read-project-properties</goal>
+                        </goals>
+                        <configuration>
+                            <files>
+                                <file>${basedir}/../blue-core/src/main/resources/blue/blueConstants.properties</file>
+                            </files>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-resources-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>filter-nbm-branding</id>
+                        <phase>generate-resources</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${project.build.directory}/filtered-nbm-branding</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>src/main/nbm-branding</directory>
+                                    <filtering>false</filtering>
+                                    <excludes>
+                                        <exclude>modules/org-netbeans-core.jar/org/netbeans/core/ui/Bundle.properties</exclude>
+                                        <exclude>core/core.jar/org/netbeans/core/startup/Bundle.properties</exclude>
+                                    </excludes>
+                                </resource>
+                                <resource>
+                                    <directory>src/main/nbm-branding/modules/org-netbeans-core.jar/org/netbeans/core/ui</directory>
+                                    <filtering>true</filtering>
+                                    <includes>
+                                        <include>Bundle.properties</include>
+                                    </includes>
+                                    <targetPath>modules/org-netbeans-core.jar/org/netbeans/core/ui</targetPath>
+                                </resource>
+                                <resource>
+                                    <directory>src/main/nbm-branding/core/core.jar/org/netbeans/core/startup</directory>
+                                    <filtering>true</filtering>
+                                    <includes>
+                                        <include>Bundle.properties</include>
+                                    </includes>
+                                    <targetPath>core/core.jar/org/netbeans/core/startup</targetPath>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
                 <groupId>org.apache.netbeans.utilities</groupId>
                 <artifactId>nbm-maven-plugin</artifactId>
                 <configuration>
+                    <brandingSources>${project.build.directory}/filtered-nbm-branding</brandingSources>
                     <publicPackages>
                         <publicPackage>blue.branding</publicPackage>
                         <publicPackage>blue.branding.*</publicPackage>

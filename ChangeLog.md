@@ -28,6 +28,8 @@ information.
 
 * Updated Jython interpreter to 2.7.3
 
+* Product Version information now includes commit hash and build date/time
+
 ### FIX
 
 * Redid filechooser manager to hold on to Filechoosers so that they will

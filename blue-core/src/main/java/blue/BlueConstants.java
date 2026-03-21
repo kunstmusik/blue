@@ -37,6 +37,10 @@ public final class BlueConstants {
 
     private static String versionDate = "VERSION_DATE";
 
+    private static String buildCommit = "";
+
+    private static String buildDate = "";
+
     static {
         InputStream constants = BlueConstants.class
                 .getResourceAsStream("blueConstants.properties");
@@ -45,6 +49,8 @@ public final class BlueConstants {
             props.load(constants);
             version = props.getProperty("blueVersion");
             versionDate = props.getProperty("blueReleaseDate");
+            buildCommit = props.getProperty("blueBuildCommit", "");
+            buildDate = props.getProperty("blueBuildDate", "");
         } catch (IOException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
@@ -80,6 +86,20 @@ public final class BlueConstants {
      */
     public static String getVersionDate() {
         return versionDate;
+    }
+
+    /**
+     * @return Returns the git commit hash (abbreviated) at build time, or empty if unavailable.
+     */
+    public static String getBuildCommit() {
+        return buildCommit != null ? buildCommit : "";
+    }
+
+    /**
+     * @return Returns the build date/time at build time, or empty if unavailable.
+     */
+    public static String getBuildDate() {
+        return buildDate != null ? buildDate : "";
     }
 
 }
