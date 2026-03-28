@@ -510,6 +510,9 @@ public class TimeUnitTextField extends JTextField {
             return TimePosition.SecondsValue.ZERO;
         }
         double seconds = Double.parseDouble(text);
+        if (!Double.isFinite(seconds)) {
+            throw new IllegalArgumentException("Seconds must be finite");
+        }
         if (seconds < 0) {
             throw new IllegalArgumentException("Seconds cannot be negative");
         }

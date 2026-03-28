@@ -694,6 +694,9 @@ public abstract class TimePosition {
         private final double totalSeconds;
 
         public SecondsValue(double totalSeconds) {
+            if (!Double.isFinite(totalSeconds)) {
+                throw new IllegalArgumentException("Seconds must be finite: " + totalSeconds);
+            }
             if (totalSeconds < 0) {
                 throw new IllegalArgumentException("Seconds cannot be negative: " + totalSeconds);
             }

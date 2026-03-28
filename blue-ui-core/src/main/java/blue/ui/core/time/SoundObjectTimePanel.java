@@ -53,11 +53,15 @@ public class SoundObjectTimePanel extends JPanel {
      * Creates a new SoundObjectTimePanel.
      */
     public SoundObjectTimePanel() {
+        this(TimeBase.values());
+    }
+
+    public SoundObjectTimePanel(TimeBase... timeBases) {
         propertyChangeSupport = new PropertyChangeSupport(this);
         setLayout(new BorderLayout());
 
         // TimeBase selector in NORTH
-        timeBaseSelector = new TimeBaseSelector();
+        timeBaseSelector = new TimeBaseSelector(timeBases);
         add(timeBaseSelector, BorderLayout.NORTH);
 
         // Unified text editor for all formats

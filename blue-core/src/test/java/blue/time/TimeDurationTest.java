@@ -384,6 +384,19 @@ class TimeDurationTest {
             TimeDuration.seconds(-0.001);
         });
     }
+
+    @Test
+    void testDurationSecondsNonFiniteRejected() {
+        assertThrows(IllegalArgumentException.class, () -> {
+            TimeDuration.seconds(Double.NaN);
+        });
+        assertThrows(IllegalArgumentException.class, () -> {
+            TimeDuration.seconds(Double.POSITIVE_INFINITY);
+        });
+        assertThrows(IllegalArgumentException.class, () -> {
+            TimeDuration.seconds(Double.NEGATIVE_INFINITY);
+        });
+    }
     
     // ========== DurationFrames Tests ==========
     

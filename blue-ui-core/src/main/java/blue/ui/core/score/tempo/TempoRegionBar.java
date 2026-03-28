@@ -349,7 +349,8 @@ public class TempoRegionBar extends JComponent implements PropertyChangeListener
         JPanel positionSection = new JPanel(new BorderLayout(5, 5));
         positionSection.setBorder(BorderFactory.createTitledBorder("Position"));
 
-        SoundObjectTimePanel timePanel = new SoundObjectTimePanel();
+        SoundObjectTimePanel timePanel = new SoundObjectTimePanel(
+                TimeBase.BEATS, TimeBase.BBT, TimeBase.BBST, TimeBase.BBF);
         // Use the actual TimePosition from the tempo point (preserves Measure:Beats if that's how it was entered)
         timePanel.setTimePosition(currentPosition);
         timePanel.setTimeBaseSelectionEnabled(true);

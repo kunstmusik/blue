@@ -90,6 +90,21 @@ class TimeUnitTextFieldTest {
     }
 
     @Test
+    void testParseSecondsRejectsNonFiniteValue() {
+        TimeUnitTextField field = new TimeUnitTextField();
+        field.setTimeBase(TimeBase.SECONDS);
+        field.setTimePosition(TimePosition.seconds(1.5));
+        field.setText("NaN");
+
+        field.postActionEvent();
+
+        TimePosition.SecondsValue parsed = assertInstanceOf(TimePosition.SecondsValue.class,
+                field.getTimePosition());
+        assertEquals(1.5, parsed.getTotalSeconds(), 0.0001);
+        assertEquals("1.5", field.getText());
+    }
+
+    @Test
     void testFormatDurationSeconds() {
         TimeUnitTextField field = new TimeUnitTextField();
         field.setTimeBase(TimeBase.SECONDS);

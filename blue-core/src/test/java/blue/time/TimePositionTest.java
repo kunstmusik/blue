@@ -328,6 +328,19 @@ class TimePositionTest {
     }
 
     @Test
+    void testSecondsValueNonFiniteRejected() {
+        assertThrows(IllegalArgumentException.class, () -> {
+            TimePosition.seconds(Double.NaN);
+        });
+        assertThrows(IllegalArgumentException.class, () -> {
+            TimePosition.seconds(Double.POSITIVE_INFINITY);
+        });
+        assertThrows(IllegalArgumentException.class, () -> {
+            TimePosition.seconds(Double.NEGATIVE_INFINITY);
+        });
+    }
+
+    @Test
     void testSecondsValueXMLRoundTrip() throws Exception {
         TimePosition original = TimePosition.seconds(12.345678);
         var xml = original.saveAsXML();

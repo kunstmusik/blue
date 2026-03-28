@@ -588,6 +588,9 @@ public abstract class TimeDuration {
         private final double totalSeconds;
 
         public DurationSeconds(double totalSeconds) {
+            if (!Double.isFinite(totalSeconds)) {
+                throw new IllegalArgumentException("Duration seconds must be finite: " + totalSeconds);
+            }
             if (totalSeconds < 0) {
                 throw new IllegalArgumentException("Duration seconds cannot be negative: " + totalSeconds);
             }

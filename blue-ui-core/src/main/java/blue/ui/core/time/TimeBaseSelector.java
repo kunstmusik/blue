@@ -38,7 +38,11 @@ public class TimeBaseSelector extends JComboBox<TimeBase> {
      * Creates a new TimeBaseSelector with all available TimeBases.
      */
     public TimeBaseSelector() {
-        super(TimeBase.values());
+        this(TimeBase.values());
+    }
+
+    public TimeBaseSelector(TimeBase... timeBases) {
+        super(timeBases);
         setRenderer(new TimeBaseRenderer());
         // Prevent overly wide preferred/min sizes driven by long display strings
         setPrototypeDisplayValue(TimeBase.BBST);
