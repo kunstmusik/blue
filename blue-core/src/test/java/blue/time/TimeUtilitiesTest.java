@@ -62,6 +62,13 @@ class TimeUtilitiesTest {
         double result = TimeUtilities.timePositionToBeats(tv, context);
         assertEquals(10.0, result, 0.001);
     }
+
+    @Test
+    void testTimeUnitToBeatsWithSecondsValue() {
+        TimePosition.SecondsValue sv = TimePosition.seconds(3.25);
+        double result = TimeUtilities.timePositionToBeats(sv, context);
+        assertEquals(3.25, result, 0.001);
+    }
     
     @Test
     void testTimeUnitToBeatsWithFrameValue() {
@@ -114,6 +121,13 @@ class TimeUtilitiesTest {
         assertEquals(0, tv.getMinutes());
         assertEquals(10, tv.getSeconds());
     }
+
+    @Test
+    void testBeatsToTimeUnitSecondsValue() {
+        TimePosition result = TimeUtilities.beatsToTimePosition(10.0, TimeBase.SECONDS, context);
+        assertTrue(result instanceof TimePosition.SecondsValue);
+        assertEquals(10.0, ((TimePosition.SecondsValue) result).getTotalSeconds(), 0.001);
+    }
     
     @Test
     void testBeatsToTimeUnitFrameValue() {
@@ -151,6 +165,22 @@ class TimeUtilitiesTest {
         // Bar 3, beat 2 = 9 beats at 60 BPM = 9 seconds
         TimePosition.TimeValue tv = (TimePosition.TimeValue) result;
         assertEquals(9, tv.toTotalSeconds(), 0.001);
+    }
+
+    @Test
+    void testConvertTimeUnitSecondsToTime() {
+        TimePosition.SecondsValue sv = TimePosition.seconds(9.5);
+        TimePosition result = TimeUtilities.convertTimePosition(sv, TimeBase.TIME, context);
+        assertTrue(result instanceof TimePosition.TimeValue);
+        assertEquals(9.5, ((TimePosition.TimeValue) result).toTotalSeconds(), 0.001);
+    }
+
+    @Test
+    void testConvertTimeUnitTimeToSeconds() {
+        TimePosition.TimeValue tv = TimePosition.time(0, 0, 9, 500);
+        TimePosition result = TimeUtilities.convertTimePosition(tv, TimeBase.SECONDS, context);
+        assertTrue(result instanceof TimePosition.SecondsValue);
+        assertEquals(9.5, ((TimePosition.SecondsValue) result).getTotalSeconds(), 0.001);
     }
     
     // ========== Round-trip Conversion Tests ==========

@@ -32,6 +32,8 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 
 import javax.swing.JComponent;
 import javax.swing.JPanel;
@@ -312,7 +314,7 @@ public final class TimeBar extends JPanel implements
         
         // Choose rendering based on display format
         switch (displayFormat) {
-            case TIME -> drawTimeBasedRuler(g, bounds, h, pixelTime, startTime, endTime, duration, context);
+            case TIME, SECONDS -> drawTimeBasedRuler(g, bounds, h, pixelTime, startTime, endTime, duration, context, displayFormat);
             case SMPTE -> drawSmpteRuler(g, bounds, h, pixelTime, startTime, endTime, duration, context);
             case SAMPLES -> drawSamplesRuler(g, bounds, h, pixelTime, startTime, endTime, duration, context);
             case BBT, BBST, BBF -> drawMeasureBeatsRuler(g, bounds, h, pixelTime, startTime, endTime, duration, context);
@@ -413,7 +415,7 @@ public final class TimeBar extends JPanel implements
      */
     private void drawTimeBasedRuler(Graphics g, Rectangle bounds, int h,
             double pixelTime, double startBeat, double endBeat, double beatDuration,
-            TimeContext context) {
+            TimeContext context, TimeDisplayFormat format) {
         // Convert beat range to seconds for calculating time increments
         double startSeconds = TimeDisplayFormat.beatsToSeconds(startBeat, context);
         double endSeconds = TimeDisplayFormat.beatsToSeconds(endBeat, context);
@@ -432,7 +434,9 @@ public final class TimeBar extends JPanel implements
             int x = (int) (bounds.width * (beatPos - startBeat) / beatDuration) + bounds.x;
             
             if (x >= bounds.x && x <= bounds.x + bounds.width) {
-                String txt = formatTimeWithPrecision(seconds, nfrac);
+                String txt = format == TimeDisplayFormat.SECONDS
+                        ? formatSecondsWithPrecision(seconds, nfrac)
+                        : formatTimeWithPrecision(seconds, nfrac);
                 g.drawLine(x, 10, x, h);
                 g.drawString(txt, x + 2, 16);
             }
@@ -467,6 +471,15 @@ public final class TimeBar extends JPanel implements
             return String.format("%d:%02d." + fracFormat, minutes, secs, millis);
         }
         return String.format("%d:%02d", minutes, secs);
+    }
+
+    private String formatSecondsWithPrecision(double seconds, int nfrac) {
+        int scale = Math.max(1, Math.min(nfrac, 6));
+        String text = BigDecimal.valueOf(seconds)
+                .setScale(scale, RoundingMode.HALF_UP)
+                .stripTrailingZeros()
+                .toPlainString();
+        return text.contains(".") ? text : text + ".0";
     }
     
     /**

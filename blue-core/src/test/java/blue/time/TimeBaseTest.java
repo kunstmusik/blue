@@ -35,7 +35,25 @@ class TimeBaseTest {
     @Test
     void shouldIdentifyNonBeatBasedTimeBases() {
         assertFalse(TimeBase.TIME.isBeatBased());
+        assertFalse(TimeBase.SECONDS.isBeatBased());
         assertFalse(TimeBase.SMPTE.isBeatBased());
         assertFalse(TimeBase.FRAME.isBeatBased());
+    }
+
+    @Test
+    void shouldKeepUiOrderingForClockBasedTimeBases() {
+        TimeBase[] values = TimeBase.values();
+
+        assertTrue(indexOf(values, TimeBase.TIME) < indexOf(values, TimeBase.SMPTE));
+        assertTrue(indexOf(values, TimeBase.SMPTE) < indexOf(values, TimeBase.SECONDS));
+    }
+
+    private static int indexOf(TimeBase[] values, TimeBase target) {
+        for (int i = 0; i < values.length; i++) {
+            if (values[i] == target) {
+                return i;
+            }
+        }
+        return -1;
     }
 }

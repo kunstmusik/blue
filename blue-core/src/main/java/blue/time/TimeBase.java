@@ -51,6 +51,8 @@ public enum TimeBase {
     
     /** Hours:Minutes:Seconds.Frames **/
     SMPTE,
+
+    SECONDS,
     
     /** Audio Sample Frame Number **/
     FRAME;

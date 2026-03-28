@@ -36,6 +36,8 @@ import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import javax.swing.JComponent;
 import javax.swing.UIManager;
 
@@ -106,7 +108,7 @@ public final class TimeBar extends JComponent implements PropertyChangeListener,
         g.setFont(LABEL_FONT);
 
         switch (format) {
-            case TIME -> drawTimeRuler(g, bounds, h, pixelTime, startBeat, endBeat, beatOffset, context);
+            case TIME, SECONDS -> drawTimeRuler(g, bounds, h, pixelTime, startBeat, endBeat, beatOffset, context, format);
             case BBT, BBST, BBF -> drawMeasureBeatsRuler(g, bounds, h, pixelTime, startBeat, endBeat, beatOffset, context);
             default -> drawBeatsRuler(g, bounds, h, pixelTime, startBeat, endBeat, beatOffset);
         }
@@ -129,7 +131,7 @@ public final class TimeBar extends JComponent implements PropertyChangeListener,
 
     private void drawTimeRuler(Graphics g, Rectangle bounds, int h,
             double pixelTime, double startBeat, double endBeat, double beatOffset,
-            TimeContext context) {
+            TimeContext context, TimeDisplayFormat format) {
         double startSeconds = TimeDisplayFormat.beatsToSeconds(startBeat, context);
         double endSeconds = TimeDisplayFormat.beatsToSeconds(endBeat, context);
 
@@ -145,11 +147,22 @@ public final class TimeBar extends JComponent implements PropertyChangeListener,
             int x = (int) ((beatPos - beatOffset) * pixelTime);
 
             if (x >= bounds.x && x <= bounds.x + bounds.width) {
-                String txt = formatTime(seconds, nfrac);
+                String txt = format == TimeDisplayFormat.SECONDS
+                        ? formatSeconds(seconds, nfrac)
+                        : formatTime(seconds, nfrac);
                 g.drawLine(x, 10, x, h);
                 g.drawString(txt, x + 2, 14);
             }
         }
+    }
+
+    private String formatSeconds(double seconds, int nfrac) {
+        int scale = Math.max(1, Math.min(nfrac, 6));
+        String text = BigDecimal.valueOf(seconds)
+                .setScale(scale, RoundingMode.HALF_UP)
+                .stripTrailingZeros()
+                .toPlainString();
+        return text.contains(".") ? text : text + ".0";
     }
 
     private void drawMeasureBeatsRuler(Graphics g, Rectangle bounds, int h,

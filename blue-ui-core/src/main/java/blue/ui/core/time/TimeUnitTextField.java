@@ -28,6 +28,8 @@ import blue.time.TimeUtilities;
 import java.awt.Toolkit;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.function.Supplier;
 import javax.swing.JTextField;
 import javax.swing.event.ChangeEvent;
@@ -235,6 +237,7 @@ public class TimeUnitTextField extends JTextField {
             case BBST -> "Format: bar.beat.16th.ticks (e.g., 1.1.1.0, 2.3.2.60)";
             case BBF -> "Format: bar.beat.fraction (e.g., 1.1.0, 2.3.50)";
             case TIME -> "Format: H:MM:SS.mmm (e.g., 0:00:00.000)";
+            case SECONDS -> "Format: decimal seconds (e.g., 12.345, 0.5)";
             case SMPTE -> "Format: HH:MM:SS:FF (e.g., 00:00:00:00)";
             case FRAME -> "Format: sample frames (e.g., 44100)";
         };
@@ -247,6 +250,7 @@ public class TimeUnitTextField extends JTextField {
             case BBST -> "Duration: bars.beats.16th.ticks (0-based, e.g., 0.0.0.0, 1.2.1.60)";
             case BBF -> "Duration: bars.beats.fraction (0-based, e.g., 0.0.00, 1.2.50)";
             case TIME -> "Duration: H:MM:SS.mmm (e.g., 0:00:04.000)";
+            case SECONDS -> "Duration: decimal seconds (e.g., 4.0, 0.5)";
             case SMPTE -> "Duration: HH:MM:SS:FF (e.g., 00:00:04:00)";
             case FRAME -> "Duration: sample frames (e.g., 44100)";
         };
@@ -274,6 +278,7 @@ public class TimeUnitTextField extends JTextField {
             case BBST -> formatBBST(timePosition, ppq);
             case BBF -> formatBBF(timePosition);
             case TIME -> formatTime(timePosition);
+            case SECONDS -> formatSeconds(timePosition, context);
             case SMPTE -> formatSMPTE(timePosition, context);
             case FRAME -> formatFrames(timePosition);
         };
@@ -332,14 +337,21 @@ public class TimeUnitTextField extends JTextField {
         return "0:00:00.000";
     }
 
+    private static String formatSeconds(TimePosition timePosition, TimeContext context) {
+        Double totalSeconds = extractTotalSeconds(timePosition, context);
+        if (totalSeconds == null) {
+            return "0.0";
+        }
+        return formatDecimalSeconds(totalSeconds, 6, true);
+    }
+
     /**
      * Formats a TimePosition as SMPTE timecode (HH:MM:SS:FF).
      * SMPTE is display-only, so the TimePosition is converted to seconds first.
      */
     private static String formatSMPTE(TimePosition timePosition, TimeContext context) {
-        if (timePosition instanceof TimePosition.TimeValue tv) {
-            double totalSeconds = tv.getHours() * 3600.0 + tv.getMinutes() * 60.0
-                    + tv.getSeconds() + tv.getMilliseconds() / 1000.0;
+        Double totalSeconds = extractTotalSeconds(timePosition, context);
+        if (totalSeconds != null) {
             return formatSecondsAsSMPTE(totalSeconds, getSmpteFrameRate(context));
         }
         return "00:00:00:00";
@@ -389,6 +401,7 @@ public class TimeUnitTextField extends JTextField {
             case BBST -> parseBBST(trimmed);
             case BBF -> parseBBF(trimmed);
             case TIME -> parseTime(trimmed);
+            case SECONDS -> parseSeconds(trimmed);
             case SMPTE -> parseSMPTE(trimmed, context);
             case FRAME -> parseFrames(trimmed);
         };
@@ -492,6 +505,17 @@ public class TimeUnitTextField extends JTextField {
         return TimePosition.time(hours, minutes, seconds, milliseconds);
     }
 
+    private static TimePosition parseSeconds(String text) {
+        if (text.isEmpty()) {
+            return TimePosition.SecondsValue.ZERO;
+        }
+        double seconds = Double.parseDouble(text);
+        if (seconds < 0) {
+            throw new IllegalArgumentException("Seconds cannot be negative");
+        }
+        return TimePosition.seconds(seconds);
+    }
+
     /**
      * Parses SMPTE timecode text (HH:MM:SS:FF) into a TimeValue.
      * SMPTE is display-only, so parsed frames are converted to milliseconds.
@@ -572,6 +596,7 @@ public class TimeUnitTextField extends JTextField {
                 yield "0.0.00";
             }
             case TIME -> formatTime(timePosition);
+            case SECONDS -> formatSeconds(timePosition, context);
             case SMPTE -> formatSMPTE(timePosition, context);
             case FRAME -> formatFrames(timePosition);
         };
@@ -626,6 +651,7 @@ public class TimeUnitTextField extends JTextField {
                 yield TimeUtilities.beatsToTimePosition(totalBeats, TimeBase.BBF, context);
             }
             case TIME -> parseTime(trimmed);
+            case SECONDS -> parseSeconds(trimmed);
             case SMPTE -> parseSMPTE(trimmed, context);
             case FRAME -> parseFrames(trimmed);
         };
@@ -667,6 +693,36 @@ public class TimeUnitTextField extends JTextField {
             throw new IllegalArgumentException();
         }
         return val;
+    }
+
+    private static Double extractTotalSeconds(TimePosition timePosition, TimeContext context) {
+        if (timePosition instanceof TimePosition.SecondsValue sv) {
+            return sv.getTotalSeconds();
+        }
+        if (timePosition instanceof TimePosition.TimeValue tv) {
+            return tv.toTotalSeconds();
+        }
+        if (timePosition instanceof TimePosition.FrameValue fv) {
+            if (context == null) {
+                return null;
+            }
+            return fv.toTotalSeconds(context.getSampleRate());
+        }
+        if (timePosition != null && context != null) {
+            return timePosition.toSeconds(context);
+        }
+        return null;
+    }
+
+    private static String formatDecimalSeconds(double value, int maxFractionDigits, boolean forceFractionDigit) {
+        String text = BigDecimal.valueOf(value)
+                .setScale(maxFractionDigits, RoundingMode.HALF_UP)
+                .stripTrailingZeros()
+                .toPlainString();
+        if (forceFractionDigit && !text.contains(".")) {
+            return text + ".0";
+        }
+        return text;
     }
 
     private static double getSmpteFrameRate(TimeContext context) {

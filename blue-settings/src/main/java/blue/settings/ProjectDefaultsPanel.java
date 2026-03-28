@@ -59,6 +59,7 @@ final class ProjectDefaultsPanel extends JPanel {
         TIMEBASE_LABELS.put(TimeBase.BBST, "Bars.Beats.Sixteenths.Ticks (BBST)");
         TIMEBASE_LABELS.put(TimeBase.BBF, "Bars.Beats.Fraction (BBF)");
         TIMEBASE_LABELS.put(TimeBase.TIME, "Time (H:M:S.ms)");
+        TIMEBASE_LABELS.put(TimeBase.SECONDS, "Seconds (decimal)");
         TIMEBASE_LABELS.put(TimeBase.SMPTE, "SMPTE (H:M:S:F)");
         TIMEBASE_LABELS.put(TimeBase.FRAME, "Samples");
     }

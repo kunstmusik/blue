@@ -21,6 +21,8 @@ package blue.ui.core.score;
 
 import blue.time.TimeBase;
 import blue.time.TimeContext;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 
 /**
  * Enum defining the available time display formats for the timeline ruler
@@ -242,6 +244,12 @@ public enum TimeDisplayFormat {
             return String.format("%d:%02d.%03d", minutes, secs, millis);
         }
         
+        @Override
+        public String formatDuration(double durationBeats, TimeContext context) {
+            double seconds = beatsToSeconds(durationBeats, context);
+            return formatTime(seconds);
+        }
+        
         private String formatTimeCompact(double seconds) {
             int totalSeconds = (int) seconds;
             int minutes = totalSeconds / 60;
@@ -291,6 +299,37 @@ public enum TimeDisplayFormat {
             if (frames < 0) frames = 0;
             
             return String.format("%02d:%02d:%02d:%02d", hours, mins, secs, frames);
+        }
+        
+        @Override
+        public String formatDuration(double durationBeats, TimeContext context) {
+            double seconds = beatsToSeconds(durationBeats, context);
+            double frameRate = getFrameRate(context);
+            return formatSMPTE(seconds, frameRate);
+        }
+    },
+    
+    /**
+     * Seconds format showing seconds with fractional part (e.g., "0.0", "1.5").
+     * Requires TempoMap context for conversion from beats to time.
+     */
+    SECONDS("Seconds", "0.0, 1.5", TimeBase.SECONDS) {
+        @Override
+        public String format(double beatPosition, TimeContext context) {
+            double seconds = beatsToSeconds(beatPosition, context);
+            return formatDecimalSeconds(seconds, 3, true);
+        }
+
+        @Override
+        public String formatCompact(double beatPosition, TimeContext context) {
+            double seconds = beatsToSeconds(beatPosition, context);
+            return formatDecimalSeconds(seconds, 3, false);
+        }
+        
+        @Override
+        public String formatDuration(double durationBeats, TimeContext context) {
+            double seconds = beatsToSeconds(durationBeats, context);
+            return formatDecimalSeconds(seconds, 3, true);
         }
     },
     
@@ -431,6 +470,17 @@ public enum TimeDisplayFormat {
         }
         // Fallback: assume 60 BPM (1 beat per second)
         return seconds;
+    }
+
+    private static String formatDecimalSeconds(double seconds, int maxFractionDigits, boolean forceFractionDigit) {
+        String text = BigDecimal.valueOf(seconds)
+                .setScale(maxFractionDigits, RoundingMode.HALF_UP)
+                .stripTrailingZeros()
+                .toPlainString();
+        if (forceFractionDigit && !text.contains(".")) {
+            return text + ".0";
+        }
+        return text;
     }
     
     /**

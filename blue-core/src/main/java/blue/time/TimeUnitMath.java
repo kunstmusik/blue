@@ -238,6 +238,10 @@ public final class TimeUnitMath {
                 long ms = totalMs % 1000;
                 yield TimeDuration.time(h, m, s, ms);
             }
+            case SECONDS -> {
+                double seconds = context.getTempoMap().beatsToSeconds(beats);
+                yield TimeDuration.seconds(seconds);
+            }
             case SMPTE -> {
                 // SMPTE is display-only — store as DurationTime instead
                 double seconds = context.getTempoMap().beatsToSeconds(beats);

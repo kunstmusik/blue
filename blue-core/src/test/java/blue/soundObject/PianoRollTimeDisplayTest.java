@@ -157,6 +157,19 @@ class PianoRollTimeDisplayTest {
         assertEquals(SnapValue.BAR, copy.getSnapValueEnum());
     }
 
+    @Test
+    void shouldRoundTripSecondsDisplay() throws Exception {
+        PianoRoll original = new PianoRoll();
+        original.setPrimaryTimeDisplay(TimeBase.SECONDS);
+        original.setSecondaryTimeDisplay(TimeBase.TIME);
+
+        Element xml = original.saveAsXML(null);
+        PianoRoll loaded = (PianoRoll) PianoRoll.loadFromXML(xml, null);
+
+        assertEquals(TimeBase.SECONDS, loaded.getPrimaryTimeDisplay());
+        assertEquals(TimeBase.TIME, loaded.getSecondaryTimeDisplay());
+    }
+
     private void removeElement(Element parent, String name) {
         var child = parent.getElement(name);
         if (child != null) {

@@ -95,6 +95,7 @@ public class TimeBaseSelector extends JComboBox<TimeBase> {
                 case BBST -> "BBST (Bar.Beat.16th.Ticks)";
                 case BBF -> "BBF (Bar.Beat.Fraction)";
                 case TIME -> "Time (HH:MM:SS.mmm)";
+                case SECONDS -> "Seconds (decimal)";
                 case SMPTE -> "SMPTE (HH:MM:SS:FF)";
                 case FRAME -> "Sample Frames";
             };

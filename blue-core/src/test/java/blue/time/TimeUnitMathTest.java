@@ -76,6 +76,14 @@ class TimeUnitMathTest {
         assertEquals(1, bbf.getBeat());
         assertEquals(0, bbf.getFraction());
     }
+
+    @Test
+    void testFromTimePosition_WithTargetSecondsTimeBase() {
+        TimePosition tu = TimePosition.time(0, 0, 4, 500);
+        TimeDuration result = TimeUnitMath.fromTimePosition(tu, TimeBase.SECONDS, context);
+        assertTrue(result instanceof TimeDuration.DurationSeconds);
+        assertEquals(4.5, ((TimeDuration.DurationSeconds) result).getTotalSeconds(), 0.001);
+    }
     
     @Test
     void testAddDurationToPosition_BBT() {
@@ -94,6 +102,16 @@ class TimeUnitMathTest {
         
         TimePosition result = TimeUnitMath.add(context, position, duration);
         assertEquals(10.0, result.toBeats(context), 0.001);
+    }
+
+    @Test
+    void testAddDurationToPosition_SecondsPreservesTimeBase() {
+        TimePosition position = TimePosition.seconds(2.0);
+        TimeDuration duration = TimeDuration.beats(1.5);
+
+        TimePosition result = TimeUnitMath.add(context, position, duration);
+        assertTrue(result instanceof TimePosition.SecondsValue);
+        assertEquals(3.5, ((TimePosition.SecondsValue) result).getTotalSeconds(), 0.001);
     }
     
     @Test
@@ -296,6 +314,15 @@ class TimeUnitMathTest {
         assertEquals(0, time.getMinutes());
         assertEquals(2, time.getSeconds());
         assertEquals(0, time.getMilliseconds());
+    }
+
+    @Test
+    void testConvertDuration_BeatsToSeconds() {
+        TimeDuration dur = TimeDuration.beats(2.5);
+
+        TimeDuration result = TimeUnitMath.convertDuration(dur, TimeBase.SECONDS, context);
+        assertTrue(result instanceof TimeDuration.DurationSeconds);
+        assertEquals(2.5, ((TimeDuration.DurationSeconds) result).getTotalSeconds(), 0.001);
     }
     
     @Test

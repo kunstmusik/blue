@@ -94,6 +94,10 @@ public abstract class TimeDuration {
         return new DurationTime(hours, minutes, seconds, milliseconds);
     }
 
+    public static DurationSeconds seconds(double totalSeconds) {
+        return new DurationSeconds(totalSeconds);
+    }
+
     /**
      * Creates a DurationTime from a total seconds value.
      * Converts the seconds into hours, minutes, seconds, and milliseconds components.
@@ -577,6 +581,62 @@ public abstract class TimeDuration {
         }
     }
 
+    public static final class DurationSeconds extends TimeDuration {
+
+        public static final DurationSeconds ZERO = new DurationSeconds(0.0);
+
+        private final double totalSeconds;
+
+        public DurationSeconds(double totalSeconds) {
+            if (totalSeconds < 0) {
+                throw new IllegalArgumentException("Duration seconds cannot be negative: " + totalSeconds);
+            }
+            this.totalSeconds = totalSeconds;
+        }
+
+        @Override
+        public TimeBase getTimeBase() {
+            return TimeBase.SECONDS;
+        }
+
+        public double getTotalSeconds() {
+            return totalSeconds;
+        }
+
+        @Override
+        public double toBeats(TimeContext context) {
+            return context.getTempoMap().secondsToBeats(totalSeconds);
+        }
+
+        @Override
+        public double toSeconds(TimeContext context) {
+            return totalSeconds;
+        }
+
+        @Override
+        public long toFrames(TimeContext context) {
+            return Math.round(totalSeconds * context.getSampleRate());
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (!(o instanceof DurationSeconds)) return false;
+            DurationSeconds that = (DurationSeconds) o;
+            return Double.compare(that.totalSeconds, totalSeconds) == 0;
+        }
+
+        @Override
+        public int hashCode() {
+            return Double.hashCode(totalSeconds);
+        }
+
+        @Override
+        public String toString() {
+            return String.format("DurationSeconds[%.6f seconds]", totalSeconds);
+        }
+    }
+
     /**
      * Duration in audio sample frames.
      * Requires sample rate from TimeContext for conversion to time.
@@ -678,6 +738,8 @@ public abstract class TimeDuration {
             element.addElement("minutes").setText(Long.toString(d.getMinutes()));
             element.addElement("seconds").setText(Long.toString(d.getSeconds()));
             element.addElement("milliseconds").setText(Long.toString(d.getMilliseconds()));
+        } else if (this instanceof DurationSeconds d) {
+            element.addElement("totalSeconds").setText(Double.toString(d.getTotalSeconds()));
         } else if (this instanceof DurationFrames d) {
             element.addElement("frameCount").setText(Long.toString(d.getFrameCount()));
         }
@@ -729,6 +791,10 @@ public abstract class TimeDuration {
                 long seconds = Long.parseLong(element.getTextString("seconds"));
                 long milliseconds = Long.parseLong(element.getTextString("milliseconds"));
                 yield new DurationTime(hours, minutes, seconds, milliseconds);
+            }
+            case "SECONDS", "DurationSeconds" -> {
+                double totalSeconds = Double.parseDouble(element.getTextString("totalSeconds"));
+                yield new DurationSeconds(totalSeconds);
             }
             case "FRAME", "DurationFrames" -> {
                 long frameCount = Long.parseLong(element.getTextString("frameCount"));

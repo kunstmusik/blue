@@ -67,6 +67,38 @@ class TimeUnitTextFieldTest {
         assertEquals("00:00:01:15", field.getText());
     }
 
+    @Test
+    void testFormatSeconds() {
+        TimeUnitTextField field = new TimeUnitTextField();
+        field.setTimeBase(TimeBase.SECONDS);
+        field.setTimePosition(TimePosition.seconds(1.5));
+
+        assertEquals("1.5", field.getText());
+    }
+
+    @Test
+    void testParseSeconds() {
+        TimeUnitTextField field = new TimeUnitTextField();
+        field.setTimeBase(TimeBase.SECONDS);
+        field.setText("1.5");
+
+        field.postActionEvent();
+
+        TimePosition.SecondsValue parsed = assertInstanceOf(TimePosition.SecondsValue.class,
+                field.getTimePosition());
+        assertEquals(1.5, parsed.getTotalSeconds(), 0.0001);
+    }
+
+    @Test
+    void testFormatDurationSeconds() {
+        TimeUnitTextField field = new TimeUnitTextField();
+        field.setTimeBase(TimeBase.SECONDS);
+        field.setDurationMode(true);
+        field.setTimePosition(TimePosition.seconds(2.25));
+
+        assertEquals("2.25", field.getText());
+    }
+
     private static TimeContext createContext(double frameRate) {
         TimeContext context = new TimeContext(44100, new MeterMap(), new TempoMap());
         context.setSmpteFrameRate(frameRate);

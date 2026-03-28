@@ -362,6 +362,28 @@ class TimeDurationTest {
             TimeDuration.time(0, 0, 0, 1000);
         });
     }
+
+    @Test
+    void testDurationSecondsGetTimeBase() {
+        TimeDuration.DurationSeconds d = TimeDuration.seconds(2.5);
+        assertEquals(TimeBase.SECONDS, d.getTimeBase());
+    }
+
+    @Test
+    void testDurationSecondsConversions() {
+        TimeDuration.DurationSeconds d = TimeDuration.seconds(2.5);
+        assertEquals(2.5, d.getTotalSeconds(), 0.001);
+        assertEquals(2.5, d.toSeconds(context), 0.001);
+        assertEquals(2.5, d.toBeats(context), 0.001);
+        assertEquals(110250, d.toFrames(context));
+    }
+
+    @Test
+    void testDurationSecondsNegativeRejected() {
+        assertThrows(IllegalArgumentException.class, () -> {
+            TimeDuration.seconds(-0.001);
+        });
+    }
     
     // ========== DurationFrames Tests ==========
     
@@ -450,6 +472,15 @@ class TimeDurationTest {
         var xml = original.saveAsXML();
         TimeDuration loaded = TimeDuration.loadFromXML(xml);
         assertEquals(original, loaded);
+    }
+
+    @Test
+    void testDurationSecondsXMLRoundTrip() throws Exception {
+        TimeDuration original = TimeDuration.seconds(12.345678);
+        var xml = original.saveAsXML();
+        TimeDuration loaded = TimeDuration.loadFromXML(xml);
+        assertEquals(original, loaded);
+        assertInstanceOf(TimeDuration.DurationSeconds.class, loaded);
     }
     
     @Test

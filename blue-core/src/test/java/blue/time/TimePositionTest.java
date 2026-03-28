@@ -304,6 +304,37 @@ class TimePositionTest {
             TimePosition.time(0, 0, 0, 1000);
         });
     }
+
+    @Test
+    void testSecondsValueGetTimeBase() {
+        TimePosition.SecondsValue sv = TimePosition.seconds(1.25);
+        assertEquals(TimeBase.SECONDS, sv.getTimeBase());
+    }
+
+    @Test
+    void testSecondsValueConversions() {
+        TimePosition.SecondsValue sv = TimePosition.seconds(2.5);
+        assertEquals(2.5, sv.getTotalSeconds(), 0.001);
+        assertEquals(2.5, sv.toSeconds(context), 0.001);
+        assertEquals(2.5, sv.toBeats(context), 0.001);
+        assertEquals(110250, sv.toFrames(context));
+    }
+
+    @Test
+    void testSecondsValueNegativeRejected() {
+        assertThrows(IllegalArgumentException.class, () -> {
+            TimePosition.seconds(-0.001);
+        });
+    }
+
+    @Test
+    void testSecondsValueXMLRoundTrip() throws Exception {
+        TimePosition original = TimePosition.seconds(12.345678);
+        var xml = original.saveAsXML();
+        TimePosition loaded = TimePosition.loadFromXML(xml);
+        assertEquals(original, loaded);
+        assertInstanceOf(TimePosition.SecondsValue.class, loaded);
+    }
     
     // ========== FrameValue Tests ==========
     

@@ -69,6 +69,9 @@ class TimeStateTest {
     void testSetSecondaryTimeDisplayValid() {
         timeState.setSecondaryTimeDisplay(TimeBase.BEATS);
         assertEquals(TimeBase.BEATS, timeState.getSecondaryTimeDisplay());
+
+        timeState.setSecondaryTimeDisplay(TimeBase.SECONDS);
+        assertEquals(TimeBase.SECONDS, timeState.getSecondaryTimeDisplay());
         
         timeState.setSecondaryTimeDisplay(TimeBase.SMPTE);
         assertEquals(TimeBase.SMPTE, timeState.getSecondaryTimeDisplay());
@@ -256,12 +259,14 @@ class TimeStateTest {
     void testSnapValueXmlRoundTrip() {
         timeState.setSnapValue(SnapValue.QUARTER_TRIPLET);
         timeState.setSnapEnabled(true);
+        timeState.setSecondaryTimeDisplay(TimeBase.SECONDS);
 
         Element xml = timeState.saveAsXML();
         TimeState loaded = TimeState.loadFromXML(xml);
 
         assertEquals(SnapValue.QUARTER_TRIPLET, loaded.getSnapValue());
         assertTrue(loaded.isSnapEnabled());
+        assertEquals(TimeBase.SECONDS, loaded.getSecondaryTimeDisplay());
     }
 
     @Test

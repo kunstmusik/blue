@@ -98,6 +98,10 @@ public class TimeUtilities {
                 double seconds = tv.toTotalSeconds();
                 yield context.getTempoMap().secondsToBeats(seconds);
             }
+            case SECONDS -> {
+                TimePosition.SecondsValue sv = (TimePosition.SecondsValue) timePosition;
+                yield context.getTempoMap().secondsToBeats(sv.getTotalSeconds());
+            }
             case SMPTE -> {
                 // SMPTE is display-only — should not appear as a stored TimePosition.
                 // Fall through to TIME handling.
@@ -133,6 +137,10 @@ public class TimeUtilities {
             case TIME -> {
                 double seconds = context.getTempoMap().beatsToSeconds(beats);
                 yield secondsToTimeValue(seconds);
+            }
+            case SECONDS -> {
+                double seconds = context.getTempoMap().beatsToSeconds(beats);
+                yield TimePosition.seconds(seconds);
             }
             case SMPTE -> {
                 // SMPTE is display-only — produce a TimeValue instead

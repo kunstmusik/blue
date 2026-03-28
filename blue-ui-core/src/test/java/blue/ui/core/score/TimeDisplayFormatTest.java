@@ -154,6 +154,18 @@ class TimeDisplayFormatTest {
         assertEquals("0:00", TimeDisplayFormat.TIME.formatCompact(0.0, context));
     }
 
+    @Test
+    void testSecondsFormat() {
+        assertEquals("0.0", TimeDisplayFormat.SECONDS.format(0.0, context));
+        assertEquals("1.5", TimeDisplayFormat.SECONDS.format(1.5, context));
+    }
+
+    @Test
+    void testSecondsFormatCompact() {
+        assertEquals("0", TimeDisplayFormat.SECONDS.formatCompact(0.0, context));
+        assertEquals("1.5", TimeDisplayFormat.SECONDS.formatCompact(1.5, context));
+    }
+
     // ========== SMPTE format tests ==========
 
     @Test
@@ -207,6 +219,7 @@ class TimeDisplayFormatTest {
         assertEquals("BBST", TimeDisplayFormat.BBST.getDisplayName());
         assertEquals("BBF", TimeDisplayFormat.BBF.getDisplayName());
         assertEquals("Time", TimeDisplayFormat.TIME.getDisplayName());
+        assertEquals("Seconds", TimeDisplayFormat.SECONDS.getDisplayName());
         assertEquals("SMPTE", TimeDisplayFormat.SMPTE.getDisplayName());
         assertEquals("Samples", TimeDisplayFormat.SAMPLES.getDisplayName());
     }
@@ -218,6 +231,7 @@ class TimeDisplayFormatTest {
         assertEquals("1.1.1.0, 2.1.1.0", TimeDisplayFormat.BBST.getExample());
         assertEquals("1.1.00, 2.1.50", TimeDisplayFormat.BBF.getExample());
         assertEquals("0:00.000", TimeDisplayFormat.TIME.getExample());
+        assertEquals("0.0, 1.5", TimeDisplayFormat.SECONDS.getExample());
         assertEquals("00:00:00:00", TimeDisplayFormat.SMPTE.getExample());
         assertEquals("0, 44100", TimeDisplayFormat.SAMPLES.getExample());
     }
@@ -237,6 +251,7 @@ class TimeDisplayFormatTest {
         assertEquals(TimeDisplayFormat.BBST, TimeDisplayFormat.fromTimeBase(TimeBase.BBST));
         assertEquals(TimeDisplayFormat.BBF, TimeDisplayFormat.fromTimeBase(TimeBase.BBF));
         assertEquals(TimeDisplayFormat.TIME, TimeDisplayFormat.fromTimeBase(TimeBase.TIME));
+        assertEquals(TimeDisplayFormat.SECONDS, TimeDisplayFormat.fromTimeBase(TimeBase.SECONDS));
         assertEquals(TimeDisplayFormat.SMPTE, TimeDisplayFormat.fromTimeBase(TimeBase.SMPTE));
         assertEquals(TimeDisplayFormat.SAMPLES, TimeDisplayFormat.fromTimeBase(TimeBase.FRAME));
         // null should default to BEATS
@@ -246,7 +261,7 @@ class TimeDisplayFormatTest {
     @Test
     void testAllValuesPresent() {
         TimeDisplayFormat[] values = TimeDisplayFormat.values();
-        assertEquals(7, values.length);
+        assertEquals(8, values.length);
         
         // Verify all expected formats are present
         assertNotNull(TimeDisplayFormat.valueOf("BEATS"));
@@ -254,8 +269,17 @@ class TimeDisplayFormatTest {
         assertNotNull(TimeDisplayFormat.valueOf("BBST"));
         assertNotNull(TimeDisplayFormat.valueOf("BBF"));
         assertNotNull(TimeDisplayFormat.valueOf("TIME"));
+        assertNotNull(TimeDisplayFormat.valueOf("SECONDS"));
         assertNotNull(TimeDisplayFormat.valueOf("SMPTE"));
         assertNotNull(TimeDisplayFormat.valueOf("SAMPLES"));
+    }
+
+    @Test
+    void testClockBasedFormatsStayGroupedAsTimeThenSmpteThenSeconds() {
+        TimeDisplayFormat[] values = TimeDisplayFormat.values();
+
+        assertTrue(indexOf(values, TimeDisplayFormat.TIME) < indexOf(values, TimeDisplayFormat.SMPTE));
+        assertTrue(indexOf(values, TimeDisplayFormat.SMPTE) < indexOf(values, TimeDisplayFormat.SECONDS));
     }
 
     @Test
@@ -265,7 +289,17 @@ class TimeDisplayFormatTest {
         assertEquals(TimeBase.BBST, TimeDisplayFormat.BBST.getTimeBase());
         assertEquals(TimeBase.BBF, TimeDisplayFormat.BBF.getTimeBase());
         assertEquals(TimeBase.TIME, TimeDisplayFormat.TIME.getTimeBase());
+        assertEquals(TimeBase.SECONDS, TimeDisplayFormat.SECONDS.getTimeBase());
         assertEquals(TimeBase.SMPTE, TimeDisplayFormat.SMPTE.getTimeBase());
         assertEquals(TimeBase.FRAME, TimeDisplayFormat.SAMPLES.getTimeBase());
+    }
+
+    private static int indexOf(TimeDisplayFormat[] values, TimeDisplayFormat target) {
+        for (int i = 0; i < values.length; i++) {
+            if (values[i] == target) {
+                return i;
+            }
+        }
+        return -1;
     }
 }

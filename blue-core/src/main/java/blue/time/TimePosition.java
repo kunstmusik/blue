@@ -687,6 +687,66 @@ public abstract class TimePosition {
         
     }
 
+    public static final class SecondsValue extends TimePosition {
+
+        public static final SecondsValue ZERO = new SecondsValue(0.0);
+
+        private final double totalSeconds;
+
+        public SecondsValue(double totalSeconds) {
+            if (totalSeconds < 0) {
+                throw new IllegalArgumentException("Seconds cannot be negative: " + totalSeconds);
+            }
+            this.totalSeconds = totalSeconds;
+        }
+
+        public SecondsValue(SecondsValue secondsValue) {
+            this.totalSeconds = secondsValue.totalSeconds;
+        }
+
+        @Override
+        public TimeBase getTimeBase() {
+            return TimeBase.SECONDS;
+        }
+
+        public double getTotalSeconds() {
+            return totalSeconds;
+        }
+
+        @Override
+        public double toBeats(TimeContext context) {
+            return context.getTempoMap().secondsToBeats(totalSeconds);
+        }
+
+        @Override
+        public double toSeconds(TimeContext context) {
+            return totalSeconds;
+        }
+
+        @Override
+        public long toFrames(TimeContext context) {
+            return Math.round(totalSeconds * context.getSampleRate());
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (!(o instanceof SecondsValue)) return false;
+            SecondsValue that = (SecondsValue) o;
+            return Double.compare(that.totalSeconds, totalSeconds) == 0;
+        }
+
+        @Override
+        public int hashCode() {
+            return Double.hashCode(totalSeconds);
+        }
+
+        @Override
+        public String toString() {
+            return String.format("SecondsValue[%.6f seconds]", totalSeconds);
+        }
+    }
+
     /**
      * Audio sample frame number representation.
      * Requires sample rate from TimeContext for conversion to time.
@@ -773,6 +833,10 @@ public abstract class TimePosition {
     public static TimeValue time(long hours, long minutes, long seconds, long milliseconds) {
         return new TimeValue(hours, minutes, seconds, milliseconds);
     }
+
+    public static SecondsValue seconds(double totalSeconds) {
+        return new SecondsValue(totalSeconds);
+    }
     
     public static FrameValue frames(long frameNumber) {
         return new FrameValue(frameNumber);
@@ -809,6 +873,8 @@ public abstract class TimePosition {
             element.addElement("minutes").setText(Long.toString(tv.getMinutes()));
             element.addElement("seconds").setText(Long.toString(tv.getSeconds()));
             element.addElement("milliseconds").setText(Long.toString(tv.getMilliseconds()));
+        } else if (this instanceof SecondsValue sv) {
+            element.addElement("totalSeconds").setText(Double.toString(sv.getTotalSeconds()));
         } else if (this instanceof FrameValue fv) {
             element.addElement("frameNumber").setText(Long.toString(fv.getFrameNumber()));
         }
@@ -860,6 +926,10 @@ public abstract class TimePosition {
                 long seconds = Long.parseLong(element.getTextString("seconds"));
                 long milliseconds = Long.parseLong(element.getTextString("milliseconds"));
                 yield new TimeValue(hours, minutes, seconds, milliseconds);
+            }
+            case "SECONDS", "SecondsValue" -> {
+                double totalSeconds = Double.parseDouble(element.getTextString("totalSeconds"));
+                yield new SecondsValue(totalSeconds);
             }
             case "FRAME", "FrameValue" -> {
                 long frameNumber = Long.parseLong(element.getTextString("frameNumber"));
