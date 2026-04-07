@@ -92,14 +92,9 @@ public class ObjectBuilder extends AbstractSoundObject {
         String tempScore = null;
         NoteList nl;
 
-        Map<String, Object> initVals = new HashMap<>();
-
         File currentDirFile = BlueSystem.getCurrentProjectDirectory();
-
-        initVals.put("score", "");
-        initVals.put("blueDuration", getSubjectiveDuration());
-        initVals.put("commandline", this.commandLine);
-        initVals.put("blueProjectDir", currentDirFile);
+        Map<String, Object> initVals = createScoreScriptInitValues(context,
+                currentDirFile);
 
         ScoreScriptEngine engine
                 = ScoreScriptEngineManager.getInstance().getEngine(
@@ -135,6 +130,16 @@ public class ObjectBuilder extends AbstractSoundObject {
         ScoreUtilities.setScoreStart(nl, startTime);
 
         return nl;
+    }
+
+    Map<String, Object> createScoreScriptInitValues(TimeContext context,
+            File currentDirFile) {
+        Map<String, Object> initVals = new HashMap<>();
+        initVals.put("score", "");
+        initVals.put("blueDuration", getSubjectiveDuration().toBeats(context));
+        initVals.put("commandline", this.commandLine);
+        initVals.put("blueProjectDir", currentDirFile);
+        return initVals;
     }
 
     private String getIOExceptionMessage() {

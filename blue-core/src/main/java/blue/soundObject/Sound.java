@@ -124,11 +124,22 @@ public class Sound extends AbstractSoundObject {
         return comment;
     }
 
-    public NoteList generateNotes(int instrumentNumber, double renderStart, double renderEnd) throws SoundObjectException {
+    public NoteList generateNotes(TimeContext context, int instrumentNumber,
+            double renderStart, double renderEnd) throws SoundObjectException {
         NoteList n = new NoteList();
 
-        String noteText = "i" + instrumentNumber + "\t" + getStartTime() + "\t"
-                + getSubjectiveDuration();
+        final double subjectiveDuration = getSubjectiveDuration().toBeats(context);
+        double newDur = subjectiveDuration;
+
+        if (renderEnd > 0 && renderEnd < subjectiveDuration) {
+            newDur = renderEnd;
+        }
+
+        newDur = newDur - renderStart;
+
+        String noteText = "i" + instrumentNumber + "\t"
+                + (getStartTime().toBeats(context) + renderStart) + "\t"
+                + newDur;
 
         Note tempNote = null;
 
@@ -217,7 +228,7 @@ public class Sound extends AbstractSoundObject {
         bsbObj.getParameterList().clearCompilationVarNames();
         int instrNum = compileData.addInstrument(bsbObj);
 
-        return generateNotes(instrNum, startTime, endTime);
+        return generateNotes(context, instrNum, startTime, endTime);
 
     }
 
