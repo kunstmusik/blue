@@ -19,6 +19,14 @@ information.
 
 * Added cross-group layer selection and deletion support for audio and pattern layer panels, including coordinated shift-click selection and cleanup of empty groups.
 
+* User-Defined Opcodes and Effects now support Csound 7 modern syntax alongside classic syntax:
+  * UDOs and Effects have an explicit Classic/Modern style selector
+  * Modern style uses `opcode name(inputArgs):outputSig` declaration and function-call invocation
+  * Classic style retains traditional `opcode name, outTypes, inTypes` declaration with `xin`/`xout`
+  * Bidirectional conversion between styles preserves input argument names and type annotations
+  * Parsing and CSD import handle both single-line and multi-line modern declarations
+  * Newly created UDOs and Effects default to application setting default (new setting in Program Settings for "Default UDO/Effects Style"); existing projects load as classic for backward compatibility
+
 ### Updated
 
 * Introduced new Time Unit system encompassing time signatures, measures, new tempo ruler, and new time units:

@@ -21,12 +21,16 @@
 package blue.utility;
 
 import blue.BlueData;
+import blue.orchestra.GenericInstrument;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 /**
  *
@@ -116,6 +120,42 @@ class CSDUtilityTest {
         assertEquals(score1, data.getGlobalOrcSco().getGlobalSco());
         assertEquals(score2, data.getTableSet().getTables());
 
+    }
+
+    @Test
+    void convertCSDtoBlueRecoversAfterBrokenModernUDOHeader() throws Exception {
+        String csd = """
+                <CsoundSynthesizer>
+                <CsInstruments>
+                opcode broken(aSig)
+                instr 1
+                aOut oscili 0.1, 440
+                endin
+                </CsInstruments>
+                <CsScore>
+                i1 0 1
+                </CsScore>
+                </CsoundSynthesizer>
+                """;
+
+        Path csdFile = Files.createTempFile("blue-csd-utility", ".csd");
+
+        try {
+            Files.writeString(csdFile, csd);
+
+            BlueData data = CSDUtility.convertCSDtoBlue(csdFile.toFile(),
+                    CSDUtility.IMPORT_GLOBAL);
+
+            assertEquals(0, data.getOpcodeList().size());
+            assertEquals(1, data.getArrangement().size());
+
+            GenericInstrument instr = (GenericInstrument) data.getArrangement()
+                    .getInstrument("1");
+            assertNotNull(instr);
+            assertEquals("aOut oscili 0.1, 440\n", instr.getText());
+        } finally {
+            Files.deleteIfExists(csdFile);
+        }
     }
 
     /**

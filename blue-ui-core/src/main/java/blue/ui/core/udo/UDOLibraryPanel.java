@@ -22,6 +22,7 @@ package blue.ui.core.udo;
 import blue.BlueSystem;
 import blue.event.SelectionEvent;
 import blue.event.SelectionListener;
+import blue.settings.ProjectDefaultsSettings;
 import blue.udo.UDOCategory;
 import blue.udo.UDOLibrary;
 import blue.udo.UserDefinedOpcode;
@@ -69,7 +70,7 @@ public class UDOLibraryPanel extends JComponent {
 
     JTree libraryTree = new JTree();
 
-    ArrayList<SelectionListener> listeners = new ArrayList<>();
+    ArrayList<SelectionListener<Object>> listeners = new ArrayList<>();
 
     public UDOLibraryPanel() {
         this.setLayout(new BorderLayout());
@@ -138,7 +139,7 @@ public class UDOLibraryPanel extends JComponent {
                             UDOLibraryPanel.this);
                     showPopup(userObject, p.x, p.y);
                 } else {
-                    SelectionEvent se = new SelectionEvent(userObject,
+                    SelectionEvent<Object> se = new SelectionEvent<>(userObject,
                             SelectionEvent.SELECTION_SINGLE);
 
                     fireSelected(se);
@@ -203,16 +204,16 @@ public class UDOLibraryPanel extends JComponent {
         libraryTree.setModel(iLibrary);
     }
 
-    public void addSelectionListener(SelectionListener listener) {
+    public void addSelectionListener(SelectionListener<Object> listener) {
         listeners.add(listener);
     }
 
-    public void removeSelectionListener(SelectionListener listener) {
+    public void removeSelectionListener(SelectionListener<Object> listener) {
         listeners.remove(listener);
     }
 
-    public void fireSelected(SelectionEvent se) {
-        for (SelectionListener listener : listeners) {
+    public void fireSelected(SelectionEvent<Object> se) {
+        for (SelectionListener<Object> listener : listeners) {
             listener.selectionPerformed(se);
         }
     }
@@ -462,6 +463,7 @@ class UDOTreePopup extends JPopupMenu {
 
     private void addUDO() {
         UserDefinedOpcode newUDO = new UserDefinedOpcode();
+        newUDO.style = ProjectDefaultsSettings.getInstance().defaultUDOStyle;
 
         UDOCategory currentCategory = (UDOCategory) userObj;
 

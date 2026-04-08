@@ -9,6 +9,7 @@ import blue.BlueSystem;
 import blue.WindowSettingManager;
 import blue.WindowSettingsSavable;
 import blue.mixer.*;
+import blue.settings.ProjectDefaultsSettings;
 import blue.ui.utilities.UiUtilities;
 import blue.utility.GUI;
 import blue.utility.ObjectUtilities;
@@ -295,7 +296,9 @@ public class EffectsLibraryDialog extends javax.swing.JDialog implements
                         return;
                     }
 
-                    EffectsLibrary.getInstance().addEffect(cat, new Effect());
+                    Effect effect = new Effect();
+                    effect.setStyle(ProjectDefaultsSettings.getInstance().defaultUDOStyle);
+                    EffectsLibrary.getInstance().addEffect(cat, effect);
                 }
             };
 

@@ -376,6 +376,7 @@ public class CSDUtility {
         String instrIds = "";
 
         StringBuffer iBody = new StringBuffer();
+        StringBuilder udoDeclaration = null;
 
         UserDefinedOpcode udo = null;
         GenericInstrument instr = null;
@@ -385,8 +386,14 @@ public class CSDUtility {
 
         int state = 0;
 
-        while (st.hasMoreTokens()) {
-            line = st.nextToken();
+        boolean reprocessCurrentLine = false;
+
+        while (reprocessCurrentLine || st.hasMoreTokens()) {
+            if (!reprocessCurrentLine) {
+                line = st.nextToken();
+            } else {
+                reprocessCurrentLine = false;
+            }
             String trimLine = line.trim();
 
             switch (state) {
@@ -412,22 +419,14 @@ public class CSDUtility {
                         if (index != -1) {
                             line = line.substring(0, index);
                         }
-                        line = line.substring(line.indexOf("opcode") + 6)
-                                .trim();
+                        udo = UDOUtilities.parseUDODeclaration(line);
 
-                        String[] parts = line.split(",");
-
-                        if (parts.length != 3) {
-                            System.err.println("Error parsing UDO: 3 args "
-                                    + "not found for definition");
+                        if (udo != null) {
+                            state = 2;
                         } else {
-                            udo = new UserDefinedOpcode();
-                            udo.setOpcodeName(parts[0].trim());
-                            udo.outTypes = parts[1].trim();
-                            udo.inTypes = parts[2].trim();
+                            udoDeclaration = new StringBuilder(line.trim());
+                            state = 3;
                         }
-
-                        state = 2;
                     } else {
                         if (trimLine.startsWith("kr")) {
                             kr = line.substring(line.indexOf('=') + 1).trim();
@@ -477,7 +476,7 @@ public class CSDUtility {
                 case 2:
                     if (trimLine.startsWith("endop")) {
                         if (udo != null) {
-                            udo.codeBody = iBody.toString();
+                            UDOUtilities.finalizeParsedUDO(udo, iBody.toString());
                             opcodeList.addOpcode(udo);
                             iBody = new StringBuffer();
 
@@ -488,6 +487,24 @@ public class CSDUtility {
                         if (udo != null) {
                             iBody.append(line).append("\n");
                         }
+                    }
+                    break;
+                case 3:
+                    if (UDOUtilities.isInstrOrUDODeclarationBoundary(trimLine)) {
+                        udoDeclaration = null;
+                        state = 0;
+                        reprocessCurrentLine = true;
+                        break;
+                    }
+
+                    if (!trimLine.isBlank()) {
+                        udoDeclaration.append("\n").append(trimLine);
+                    }
+
+                    udo = UDOUtilities.parseUDODeclaration(udoDeclaration.toString());
+                    if (udo != null) {
+                        udoDeclaration = null;
+                        state = 2;
                     }
                     break;
             }
@@ -518,8 +535,7 @@ public class CSDUtility {
     public static void main(String[] args) {
         File test = new File("/work/blue/trappedInConvert/01-Trapped.csd");
 
-        try {
-            BufferedReader in = new BufferedReader(new FileReader(test));
+        try (BufferedReader in = new BufferedReader(new FileReader(test))) {
             String line = "";
             StringBuilder buffer = new StringBuilder();
             while ((line = in.readLine()) != null) {

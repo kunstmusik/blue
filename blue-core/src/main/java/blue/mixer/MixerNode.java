@@ -3,6 +3,7 @@ package blue.mixer;
 import blue.CompileData;
 import blue.automation.Parameter;
 import blue.udo.OpcodeList;
+import blue.udo.UDOStyle;
 import blue.udo.UserDefinedOpcode;
 import blue.utility.MusicFunctions;
 import blue.utility.NumberUtilities;
@@ -380,9 +381,15 @@ class MixerNode {
                         udos.addOpcode(udo);
                     }
 
-                    buffer.append(signalChannels).append("\t");
-                    buffer.append(effectName).append("\t");
-                    buffer.append(signalChannels).append("\n");
+                    if (effect.getStyle() == UDOStyle.MODERN) {
+                        buffer.append(signalChannels).append(" = ");
+                        buffer.append(effectName).append("(");
+                        buffer.append(signalChannels).append(")\n");
+                    } else {
+                        buffer.append(signalChannels).append("\t");
+                        buffer.append(effectName).append("\t");
+                        buffer.append(signalChannels).append("\n");
+                    }
                 }
             } else if (obj instanceof Send send) {
 

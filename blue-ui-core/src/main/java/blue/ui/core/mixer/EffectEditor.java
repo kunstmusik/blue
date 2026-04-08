@@ -23,12 +23,15 @@ import blue.BlueSystem;
 import blue.mixer.*;
 import blue.orchestra.editor.blueSynthBuilder.BSBCompletionProvider;
 import blue.orchestra.editor.blueSynthBuilder.swing.BSBInterfaceEditor;
+import blue.udo.UDOStyle;
 import blue.ui.core.udo.EmbeddedOpcodeListPanel;
+import blue.ui.core.udo.UDOStyleComboBoxSupport;
 import blue.ui.nbutilities.MimeTypeEditorComponent;
 import blue.ui.utilities.SimpleDocumentListener;
 import blue.undo.TabWatchingUndoableEditGenerator;
 import blue.utility.GUI;
 import java.awt.BorderLayout;
+import java.awt.event.ActionEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import javax.swing.JLabel;
@@ -57,6 +60,7 @@ public class EffectEditor extends javax.swing.JPanel implements
     JLabel xInLabel = new JLabel();
     JLabel xOutLabel = new JLabel();
     EmbeddedOpcodeListPanel udoPanel = new EmbeddedOpcodeListPanel();
+    javax.swing.JComboBox<UDOStyle> styleComboBox = new javax.swing.JComboBox<>();
 
     private Effect effect = null;
     UndoManager undo = new UndoRedo.Manager();
@@ -73,6 +77,16 @@ public class EffectEditor extends javax.swing.JPanel implements
         codePanel.add(xInLabel, BorderLayout.NORTH);
         codePanel.add(code1, BorderLayout.CENTER);
         codePanel.add(xOutLabel, BorderLayout.SOUTH);
+
+        UDOStyleComboBoxSupport.configure(styleComboBox);
+        styleComboBox.addActionListener((ActionEvent e) -> {
+            if (effect != null) {
+                UDOStyle selected = (UDOStyle) styleComboBox.getSelectedItem();
+                if (selected != null && selected != effect.getStyle()) {
+                    effect.setStyle(selected);
+                }
+            }
+        });
 
         inSpinner.setModel(new SpinnerNumberModel(1, 1, 100, 1));
         inSpinner.addChangeListener((ChangeEvent e) -> {
@@ -145,11 +159,13 @@ public class EffectEditor extends javax.swing.JPanel implements
             completionProvider.setBSBGraphicInterface(null);
             code1.setText(null);
             commentsText.setText("");
+            styleComboBox.setSelectedItem(UDOStyle.MODERN);
             inSpinner.setValue(1);
             outSpinner.setValue(1);
 
             code1.getJEditorPane().setEnabled(false);
             commentsText.getJEditorPane().setEnabled(false);
+            styleComboBox.setEnabled(false);
             inSpinner.setEnabled(false);
             outSpinner.setEnabled(false);
 
@@ -163,11 +179,13 @@ public class EffectEditor extends javax.swing.JPanel implements
             commentsText.getJEditorPane().setCaretPosition(0);
             commentsText.resetUndoManager();
 
+            styleComboBox.setSelectedItem(effect.getStyle());
             inSpinner.setValue(effect.getNumIns());
             outSpinner.setValue(effect.getNumOuts());
 
             code1.getJEditorPane().setEnabled(true);
             commentsText.getJEditorPane().setEnabled(true);
+            styleComboBox.setEnabled(true);
             inSpinner.setEnabled(true);
             outSpinner.setEnabled(true);
 
@@ -195,19 +213,28 @@ public class EffectEditor extends javax.swing.JPanel implements
         int numIns = effect.getNumIns();
         int numOuts = effect.getNumOuts();
 
-        StringBuffer inText = new StringBuffer();
-        StringBuffer outText = new StringBuffer();
+        StringBuilder inText = new StringBuilder();
+        StringBuilder outText = new StringBuilder();
 
-        inText.append("<html>");
-
-        for (int i = 0; i < numIns; i++) {
-            if (i > 0) {
-                inText.append(",");
+        if (effect.getStyle() == UDOStyle.MODERN) {
+            inText.append("<html><i>; inputs passed by reference: ");
+            for (int i = 0; i < numIns; i++) {
+                if (i > 0) {
+                    inText.append(", ");
+                }
+                inText.append("ain").append(i + 1);
             }
-            inText.append("ain").append(i + 1);
+            inText.append("</i></html>");
+        } else {
+            inText.append("<html>");
+            for (int i = 0; i < numIns; i++) {
+                if (i > 0) {
+                    inText.append(",");
+                }
+                inText.append("ain").append(i + 1);
+            }
+            inText.append(" <b>xin</b></html>");
         }
-
-        inText.append(" <b>xin</b></html>");
 
         outText.append("<html><b>xout</b> ");
         for (int i = 0; i < numOuts; i++) {
@@ -232,11 +259,14 @@ public class EffectEditor extends javax.swing.JPanel implements
     // Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        styleLabel = new javax.swing.JLabel();
         inputLabel = new javax.swing.JLabel();
         outputLabel = new javax.swing.JLabel();
         inSpinner = new javax.swing.JSpinner();
         outSpinner = new javax.swing.JSpinner();
         tabs = new javax.swing.JTabbedPane();
+
+        styleLabel.setText("Style:");
 
         inputLabel.setText("Inputs:");
 
@@ -251,6 +281,12 @@ public class EffectEditor extends javax.swing.JPanel implements
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                         .addComponent(tabs, javax.swing.GroupLayout.DEFAULT_SIZE, 479, Short.MAX_VALUE)
                                         .addGroup(layout.createSequentialGroup()
+                                                .addComponent(styleLabel)
+                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                                .addComponent(styleComboBox, javax.swing.GroupLayout.PREFERRED_SIZE,
+                                                        javax.swing.GroupLayout.DEFAULT_SIZE,
+                                                        javax.swing.GroupLayout.PREFERRED_SIZE)
+                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                                                 .addComponent(inputLabel)
                                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                                 .addComponent(inSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, 42,
@@ -266,6 +302,10 @@ public class EffectEditor extends javax.swing.JPanel implements
                         .addGroup(layout.createSequentialGroup()
                                 .addContainerGap()
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                        .addComponent(styleLabel)
+                                        .addComponent(styleComboBox, javax.swing.GroupLayout.PREFERRED_SIZE,
+                                                javax.swing.GroupLayout.DEFAULT_SIZE,
+                                                javax.swing.GroupLayout.PREFERRED_SIZE)
                                         .addComponent(inputLabel)
                                         .addComponent(inSpinner, javax.swing.GroupLayout.PREFERRED_SIZE,
                                                 javax.swing.GroupLayout.DEFAULT_SIZE,
@@ -293,7 +333,8 @@ public class EffectEditor extends javax.swing.JPanel implements
         if (evt.getSource() == this.effect) {
             String prop = evt.getPropertyName();
 
-            if (prop.equals("numIns") || prop.equals("numOuts")) {
+            if (prop.equals("numIns") || prop.equals("numOuts")
+                    || prop.equals("style")) {
                 updateXLabels();
             }
         }
@@ -304,6 +345,7 @@ public class EffectEditor extends javax.swing.JPanel implements
     private javax.swing.JLabel inputLabel;
     private javax.swing.JSpinner outSpinner;
     private javax.swing.JLabel outputLabel;
+    private javax.swing.JLabel styleLabel;
     private javax.swing.JTabbedPane tabs;
     // End of variables declaration//GEN-END:variables
 }

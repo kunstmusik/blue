@@ -21,6 +21,7 @@ package blue.settings;
 
 import blue.score.SnapValue;
 import blue.time.TimeBase;
+import blue.udo.UDOStyle;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 import org.openide.util.Exceptions;
@@ -42,6 +43,7 @@ public class ProjectDefaultsSettings {
     private static final String DEFAULT_SECONDARY_RULER_ENABLED = "defaultSecondaryRulerEnabled";
     private static final String DEFAULT_SNAP_ENABLED = "defaultSnapEnabled";
     private static final String DEFAULT_SNAP_VALUE = "defaultSnapValue";
+    private static final String DEFAULT_UDO_STYLE = "defaultUDOStyle";
     
     public String defaultAuthor;
     public boolean mixerEnabled;
@@ -52,6 +54,7 @@ public class ProjectDefaultsSettings {
     public boolean defaultSecondaryRulerEnabled;
     public boolean defaultSnapEnabled;
     public SnapValue defaultSnapValue;
+    public UDOStyle defaultUDOStyle;
     private static ProjectDefaultsSettings instance = null;
 
     private ProjectDefaultsSettings() {
@@ -80,6 +83,8 @@ public class ProjectDefaultsSettings {
                     PREFIX + DEFAULT_SNAP_ENABLED, false);
             instance.defaultSnapValue = parseEnum(SnapValue.class,
                     prefs.get(PREFIX + DEFAULT_SNAP_VALUE, null), SnapValue.BEAT);
+            instance.defaultUDOStyle = parseEnum(UDOStyle.class,
+                    prefs.get(PREFIX + DEFAULT_UDO_STYLE, null), UDOStyle.MODERN);
         }
         return instance;
     }
@@ -97,6 +102,7 @@ public class ProjectDefaultsSettings {
         prefs.putBoolean(PREFIX + DEFAULT_SECONDARY_RULER_ENABLED, defaultSecondaryRulerEnabled);
         prefs.putBoolean(PREFIX + DEFAULT_SNAP_ENABLED, defaultSnapEnabled);
         prefs.put(PREFIX + DEFAULT_SNAP_VALUE, defaultSnapValue.name());
+        prefs.put(PREFIX + DEFAULT_UDO_STYLE, defaultUDOStyle.name());
         try {
             prefs.sync();
         } catch (BackingStoreException ex) {

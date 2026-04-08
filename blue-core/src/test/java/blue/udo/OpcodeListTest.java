@@ -19,6 +19,7 @@
  */
 package blue.udo;
 
+import electric.xml.Element;
 import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.Test;
 
@@ -59,6 +60,49 @@ class OpcodeListTest {
         udo2.outTypes = "k";
 
         assertNull(list.getNameOfEquivalentCopy(udo2));
+    }
+
+    @Test
+    void testGetNameOfExistingModernCopy() {
+        OpcodeList list = new OpcodeList();
+
+        UserDefinedOpcode udo1 = new UserDefinedOpcode();
+        udo1.style = UDOStyle.MODERN;
+        udo1.setOpcodeName("testModern1");
+        udo1.inputArguments = "aSig, kDrive";
+        udo1.outTypes = "a";
+        udo1.codeBody = "aOut = tanh(aSig * kDrive)\nxout aOut";
+
+        list.addOpcode(udo1);
+
+        UserDefinedOpcode udo2 = new UserDefinedOpcode();
+        udo2.style = UDOStyle.MODERN;
+        udo2.setOpcodeName("testModern2");
+        udo2.inputArguments = "aSig, kDrive";
+        udo2.outTypes = "a";
+        udo2.codeBody = "aOut = tanh(aSig * kDrive)\nxout aOut";
+
+        assertEquals("testModern1", list.getNameOfEquivalentCopy(udo2));
+
+        udo2.inputArguments = "aSig, kOther";
+        assertNull(list.getNameOfEquivalentCopy(udo2));
+    }
+
+    @Test
+    void testLegacyXmlDefaultsToClassicStyle() {
+        Element xml = new Element("udo");
+        xml.addElement("opcodeName").setText("legacyOpcode");
+        xml.addElement("outTypes").setText("a");
+        xml.addElement("inTypes").setText("ak");
+        xml.addElement("codeBody").setText("aOut = aSig\nxout aOut");
+        xml.addElement("comments").setText("legacy");
+
+        UserDefinedOpcode udo = UserDefinedOpcode.loadFromXML(xml);
+
+        assertEquals(UDOStyle.CLASSIC, udo.style);
+        assertEquals("legacyOpcode", udo.getOpcodeName());
+        assertEquals("ak", udo.inTypes);
+        assertEquals("a", udo.outTypes);
     }
 
 }

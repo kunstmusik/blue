@@ -25,6 +25,7 @@ import blue.orchestra.blueSynthBuilder.BSBCompilationUnit;
 import blue.orchestra.blueSynthBuilder.BSBGraphicInterface;
 import blue.orchestra.blueSynthBuilder.StringChannel;
 import blue.udo.OpcodeList;
+import blue.udo.UDOStyle;
 import blue.udo.UserDefinedOpcode;
 import blue.utility.TextUtilities;
 import blue.utility.UDOUtilities;
@@ -39,6 +40,7 @@ import java.util.Vector;
 
 public class Effect implements Automatable {
 
+    private UDOStyle style = UDOStyle.MODERN;
     private int numIns = 2;
     private int numOuts = 2;
     private BSBGraphicInterface graphicInterface;
@@ -64,6 +66,7 @@ public class Effect implements Automatable {
     }
 
     public Effect(Effect effect) {
+        style = effect.style;
         numIns = effect.numIns;
         numOuts = effect.numOuts;
         code = effect.code;
@@ -82,12 +85,16 @@ public class Effect implements Automatable {
                 opcodeList, udoList);
 
         UserDefinedOpcode udo = new UserDefinedOpcode();
+        udo.style = style;
 
         BSBCompilationUnit bsbUnit = new BSBCompilationUnit();
         graphicInterface.setupForCompilation(bsbUnit);
 
         StringBuilder buffer = new StringBuilder();
-        buffer.append(getXinText()).append("\n");
+
+        if (style == UDOStyle.CLASSIC) {
+            buffer.append(getXinText()).append("\n");
+        }
 
         buffer.append(bsbUnit.replaceBSBValues(code)).append("\n");
 
@@ -102,14 +109,22 @@ public class Effect implements Automatable {
 
         udo.codeBody = udoCode;
 
-        udo.inTypes = getSigTypes(numIns);
-        udo.outTypes = getSigTypes(numOuts);
+        if (style == UDOStyle.MODERN) {
+            udo.inputArguments = getInputArguments();
+            udo.outTypes = getCommaSeparatedSigTypes(numOuts);
+            udo.inTypes = "";
+        } else {
+            udo.inputArguments = "";
+            udo.outTypes = getSigTypes(numOuts);
+            udo.inTypes = getSigTypes(numIns);
+        }
 
         return udo;
     }
 
     public static Effect loadFromXML(Element data) throws Exception {
         Effect effect = new Effect(false);
+        effect.style = UDOStyle.CLASSIC;
 
         Elements nodes = data.getElements();
 
@@ -117,6 +132,13 @@ public class Effect implements Automatable {
             Element node = nodes.next();
             String nodeName = node.getName();
             switch (nodeName) {
+                case "style" -> {
+                    try {
+                        effect.style = UDOStyle.valueOf(node.getTextString());
+                    } catch (IllegalArgumentException e) {
+                        effect.style = UDOStyle.CLASSIC;
+                    }
+                }
                 case "name" ->
                     effect.setName(node.getTextString());
                 case "enabled" ->
@@ -161,6 +183,7 @@ public class Effect implements Automatable {
     public Element saveAsXML() {
         Element retVal = new Element("effect");
 
+        retVal.addElement("style").setText(style.name());
         retVal.addElement("name").setText(name);
         retVal.addElement(XMLUtilities.writeBoolean("enabled", enabled));
         retVal.addElement(XMLUtilities.writeInt("numIns", numIns));
@@ -172,6 +195,17 @@ public class Effect implements Automatable {
         retVal.addElement(parameterList.saveAsXML());
 
         return retVal;
+    }
+
+    public UDOStyle getStyle() {
+        return style;
+    }
+
+    public void setStyle(UDOStyle style) {
+        UDOStyle oldVal = this.style;
+        this.style = style;
+        firePropertyChangeEvent(new PropertyChangeEvent(this, "style",
+                oldVal, style));
     }
 
     public boolean isEnabled() {
@@ -290,6 +324,31 @@ public class Effect implements Automatable {
     //
     // return editPanel;
     // }
+
+    private String getCommaSeparatedSigTypes(int num) {
+        if (num == 0) {
+            return "";
+        }
+        StringBuilder buffer = new StringBuilder();
+        for (int i = 0; i < num; i++) {
+            if (i > 0) {
+                buffer.append(", ");
+            }
+            buffer.append("a");
+        }
+        return buffer.toString();
+    }
+
+    private String getInputArguments() {
+        StringBuilder buffer = new StringBuilder();
+        for (int i = 0; i < numIns; i++) {
+            if (i > 0) {
+                buffer.append(", ");
+            }
+            buffer.append("ain").append(i + 1);
+        }
+        return buffer.toString();
+    }
 
     private String getXinText() {
         StringBuilder buffer = new StringBuilder();

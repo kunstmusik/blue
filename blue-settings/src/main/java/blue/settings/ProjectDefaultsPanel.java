@@ -21,6 +21,7 @@ package blue.settings;
 
 import blue.score.SnapValue;
 import blue.time.TimeBase;
+import blue.udo.UDOStyle;
 import blue.ui.utilities.SimpleDocumentListener;
 import java.awt.Font;
 import java.awt.GridBagConstraints;
@@ -71,6 +72,7 @@ final class ProjectDefaultsPanel extends JPanel {
     private final JTextField defaultAuthorText;
     private final JCheckBox mixerEnabledCheckBox;
     private final JComboBox<String> layerHeightDefaultComboBox;
+    private final JComboBox<UDOStyle> defaultUDOStyleComboBox;
 
     // Timeline defaults
     private final JComboBox<TimeBase> primaryRulerCombo;
@@ -87,6 +89,8 @@ final class ProjectDefaultsPanel extends JPanel {
         mixerEnabledCheckBox = new JCheckBox("Mixer Enabled");
         layerHeightDefaultComboBox = new JComboBox<>(
                 new String[]{"1", "2", "3", "4", "5", "6", "7", "8", "9"});
+        defaultUDOStyleComboBox = new JComboBox<>(new DefaultComboBoxModel<>(
+                UDOStyle.values()));
 
         primaryRulerCombo = new JComboBox<>(new DefaultComboBoxModel<>(TimeBase.values()));
         secondaryRulerEnabledCheck = new JCheckBox("Enabled");
@@ -120,6 +124,20 @@ final class ProjectDefaultsPanel extends JPanel {
         };
         snapValueCombo.setRenderer(snapRenderer);
 
+        var udoStyleRenderer = new DefaultListCellRenderer() {
+            @Override
+            public java.awt.Component getListCellRendererComponent(
+                    javax.swing.JList<?> list, Object value, int index,
+                    boolean isSelected, boolean cellHasFocus) {
+                String label = value instanceof UDOStyle style
+                        ? getUDOStyleLabel(style)
+                        : String.valueOf(value);
+                return super.getListCellRendererComponent(list, label, index,
+                        isSelected, cellHasFocus);
+            }
+        };
+        defaultUDOStyleComboBox.setRenderer(udoStyleRenderer);
+
         initComponents();
 
         // Change listeners
@@ -139,6 +157,11 @@ final class ProjectDefaultsPanel extends JPanel {
             }
         });
         layerHeightDefaultComboBox.addActionListener(e -> {
+            if (!loading) {
+                controller.changed();
+            }
+        });
+        defaultUDOStyleComboBox.addActionListener(e -> {
             if (!loading) {
                 controller.changed();
             }
@@ -216,6 +239,18 @@ final class ProjectDefaultsPanel extends JPanel {
         gbc.gridx = 1;
         gbc.weightx = 1.0;
         add(layerHeightDefaultComboBox, gbc);
+        row++;
+
+        // === User-Defined Opcodes section ===
+        row = addSectionHeader("User-Defined Opcodes", row, gbc);
+
+        gbc.gridy = row;
+        gbc.gridx = 0;
+        gbc.weightx = 0;
+        add(new JLabel("Default UDO/Effect Style:"), gbc);
+        gbc.gridx = 1;
+        gbc.weightx = 1.0;
+        add(defaultUDOStyleComboBox, gbc);
         row++;
 
         // === Timeline Defaults section ===
@@ -309,6 +344,7 @@ final class ProjectDefaultsPanel extends JPanel {
         defaultAuthorText.setText(settings.defaultAuthor);
         mixerEnabledCheckBox.setSelected(settings.mixerEnabled);
         layerHeightDefaultComboBox.setSelectedIndex(settings.layerHeightDefault);
+        defaultUDOStyleComboBox.setSelectedItem(settings.defaultUDOStyle);
 
         primaryRulerCombo.setSelectedItem(settings.defaultPrimaryTimeBase);
         secondaryRulerEnabledCheck.setSelected(settings.defaultSecondaryRulerEnabled);
@@ -328,6 +364,8 @@ final class ProjectDefaultsPanel extends JPanel {
         settings.defaultAuthor = defaultAuthorText.getText();
         settings.mixerEnabled = mixerEnabledCheckBox.isSelected();
         settings.layerHeightDefault = layerHeightDefaultComboBox.getSelectedIndex();
+        settings.defaultUDOStyle = (UDOStyle) defaultUDOStyleComboBox
+                .getSelectedItem();
 
         settings.defaultPrimaryTimeBase = (TimeBase) primaryRulerCombo.getSelectedItem();
         settings.defaultSecondaryRulerEnabled = secondaryRulerEnabledCheck.isSelected();
@@ -358,5 +396,12 @@ final class ProjectDefaultsPanel extends JPanel {
             }
         }
         return closestIndex;
+    }
+
+    private static String getUDOStyleLabel(UDOStyle style) {
+        return switch (style) {
+            case CLASSIC -> "Classic";
+            case MODERN -> "Modern";
+        };
     }
 }

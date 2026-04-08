@@ -22,6 +22,7 @@ package blue.ui.core.udo;
 import blue.BlueSystem;
 import blue.gui.DragManager;
 import blue.settings.GeneralSettings;
+import blue.settings.ProjectDefaultsSettings;
 import blue.udo.OpcodeList;
 import blue.udo.UDOCategory;
 import blue.udo.UserDefinedOpcode;
@@ -284,6 +285,7 @@ public class OpcodeListEditPanel extends JComponent {
     protected void addUDO() {
         if (opcodeList != null) {
             UserDefinedOpcode udo = new UserDefinedOpcode();
+            udo.style = ProjectDefaultsSettings.getInstance().defaultUDOStyle;
             udo.opcodeName += opcodeList.size();
 
             opcodeList.addOpcode(udo);
@@ -293,12 +295,6 @@ public class OpcodeListEditPanel extends JComponent {
     public void addUDO(UserDefinedOpcode udo) {
         if (opcodeList != null) {
             opcodeList.addOpcode(udo);
-        }
-    }
-
-    private void addUDO(UserDefinedOpcode udo, int row) {
-        if (opcodeList != null) {
-            opcodeList.addOpcode(row, udo);
         }
     }
 
@@ -485,7 +481,6 @@ public class OpcodeListEditPanel extends JComponent {
 
             if (f.exists()) {
                 try {
-                    String text = TextUtilities.getTextFromFile(f);
                     Document d = new Document(f);
                     UserDefinedOpcode udo = UserDefinedOpcode.loadFromXML(d.getRoot());
                     opcodeList.addOpcode(udo);
@@ -692,8 +687,6 @@ public class OpcodeListEditPanel extends JComponent {
 
         @Override
         public void drop(DropTargetDropEvent dtde) {
-            Point pt = dtde.getLocation();
-
             if (!(dtde.isDataFlavorSupported(TransferableUDO.UDO_FLAVOR)
                     || dtde.isDataFlavorSupported(TransferableUDO.UDO_CAT_FLAVOR))
                     || ((dtde.getSourceActions() & DnDConstants.ACTION_COPY) != DnDConstants.ACTION_COPY)) {

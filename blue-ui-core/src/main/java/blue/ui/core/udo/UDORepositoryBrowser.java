@@ -25,7 +25,7 @@ import blue.udo.OpcodeList;
 import blue.udo.UserDefinedOpcode;
 import blue.ui.nbutilities.MimeTypeEditorComponent;
 import blue.utility.GUI;
-import blue.utility.TextUtilities;
+import blue.utility.UDOUtilities;
 import electric.xml.Document;
 import electric.xml.Element;
 import electric.xml.Elements;
@@ -33,7 +33,6 @@ import electric.xml.ParseException;
 import java.awt.BorderLayout;
 import java.awt.Window;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.util.Vector;
@@ -47,9 +46,7 @@ import javax.swing.JSplitPane;
 import javax.swing.JTree;
 import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import javax.swing.event.TreeSelectionEvent;
-import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
@@ -200,41 +197,14 @@ public class UDORepositoryBrowser extends JDialog {
         commentBuffer.append("\n\nPERFORMANCE\n").append(performance);
         commentBuffer.append("\n\nCREDITS\n").append(credits);
 
-        UserDefinedOpcode udo = new UserDefinedOpcode();
+        OpcodeList parsedUdos = UDOUtilities.parseUDOText(codeText);
+        UserDefinedOpcode udo = parsedUdos.isEmpty()
+                ? new UserDefinedOpcode()
+                : new UserDefinedOpcode(parsedUdos.get(0));
 
         udo.opcodeName = opcodeName;
         udo.comments = commentBuffer.toString();
 
-        StringBuffer cleanedCode = new StringBuffer();
-        int mode = 0;
-
-        String[] lines = codeText.split("\n");
-
-        for (String s : lines) {
-            if (mode == 0) {
-                String line = s.trim();
-                line = TextUtilities.stripSingleLineComments(line);
-
-                if (line.startsWith("opcode")) {
-                    String[] parts = line.substring(6).split(",");
-
-                    if (parts.length == 3) {
-                        udo.outTypes = parts[1].trim();
-                        udo.inTypes = parts[2].trim();
-                    }
-                    mode = 1;
-                }
-            } else if (mode == 1) {
-                String line = s;
-                if (line.contains("endop")) {
-                    break;
-                }
-                cleanedCode.append(line).append("\n");
-            }
-
-        }
-
-        udo.codeBody = cleanedCode.toString();
         return udo;
     }
 
