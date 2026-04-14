@@ -213,11 +213,6 @@ public class Knob extends JComponent {
     }
 
     @Override
-    public boolean isManagingFocus() {
-        return true;
-    }
-
-    @Override
     public boolean isFocusable() {
         return true;
     }

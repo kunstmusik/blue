@@ -1,9 +1,11 @@
 package blue.soundObject;
 
-import blue.score.ScoreObjectEvent;
 import blue.*;
 import blue.noteProcessor.NoteProcessorChain;
 import blue.noteProcessor.NoteProcessorException;
+import blue.score.ScoreObjectEvent;
+import blue.time.TimeContext;
+import blue.time.TimeDuration;
 import blue.utility.ScoreUtilities;
 import electric.xml.Element;
 import java.util.Map;
@@ -24,7 +26,7 @@ public class Instance extends AbstractSoundObject {
 
     private TimeBehavior timeBehavior;
 
-    double repeatPoint = -1.0f;
+    TimeDuration repeatPoint = null;
 
     /*
      * cache library id when loading up the SoundObjectLibrary, to be resolved
@@ -59,7 +61,7 @@ public class Instance extends AbstractSoundObject {
         repeatPoint = instance.repeatPoint;
     }
 
-    public void processNotes(NoteList nl) throws SoundObjectException {
+    public void processNotes(TimeContext context, NoteList nl) throws SoundObjectException {
 
         ScoreUtilities.normalizeNoteList(nl);
 
@@ -69,14 +71,17 @@ public class Instance extends AbstractSoundObject {
             throw new SoundObjectException(this, e);
         }
 
-        ScoreUtilities.applyTimeBehavior(nl, this.getTimeBehavior(), this
-                .getSubjectiveDuration(), this.getRepeatPoint());
+        double duration = this.getSubjectiveDuration().toBeats(context);
+        double startTime = getStartTime().toBeats(context);
+        
+        double rpBeats = this.getRepeatPoint() != null ? this.getRepeatPoint().toBeats(context) : -1.0;
+        ScoreUtilities.applyTimeBehavior(nl, this.getTimeBehavior(), duration, rpBeats);
         ScoreUtilities.setScoreStart(nl, startTime);
 
     }
 
     @Override
-    public double getObjectiveDuration() {
+    public TimeDuration getObjectiveDuration(TimeContext context) {
         return sObj.getSubjectiveDuration();
     }
 
@@ -101,12 +106,12 @@ public class Instance extends AbstractSoundObject {
     }
 
     @Override
-    public double getRepeatPoint() {
+    public TimeDuration getRepeatPoint() {
         return this.repeatPoint;
     }
 
     @Override
-    public void setRepeatPoint(double repeatPoint) {
+    public void setRepeatPoint(TimeDuration repeatPoint) {
         this.repeatPoint = repeatPoint;
 
         ScoreObjectEvent event = new ScoreObjectEvent(this,
@@ -176,10 +181,10 @@ public class Instance extends AbstractSoundObject {
     }
 
     @Override
-    public NoteList generateForCSD(CompileData compileData, double startTime, double endTime)
+    public NoteList generateForCSD(TimeContext context, CompileData compileData, double startTime, double endTime)
             throws SoundObjectException {
-        NoteList nl = sObj.generateForCSD(compileData, startTime, endTime);
-        processNotes(nl);
+        NoteList nl = sObj.generateForCSD(context, compileData, startTime, endTime);
+        processNotes(context, nl);
 
         return nl;
     }

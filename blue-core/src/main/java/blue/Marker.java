@@ -19,20 +19,22 @@
  */
 package blue;
 
+import blue.time.TimeContext;
+import blue.time.TimeContextManager;
+import blue.time.TimePosition;
 import electric.xml.Element;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.Iterator;
 import java.util.Vector;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
 public class Marker implements Comparable<Marker> {
 
-    private double time = 0.0f;
+    private TimePosition time = TimePosition.beats(0.0);
 
     private String name;
 
-    transient Vector listeners = null;
+    transient Vector<PropertyChangeListener> listeners = null;
 
     public Marker() {
     }
@@ -40,6 +42,11 @@ public class Marker implements Comparable<Marker> {
     public Marker(Marker marker) {
         time = marker.time;
         name = marker.name;
+    }
+
+    public Marker(TimePosition time, String name) {
+        this.time = time;
+        this.name = name;
     }
 
     public String getName() {
@@ -57,12 +64,12 @@ public class Marker implements Comparable<Marker> {
         firePropertyChangeEvent(pce);
     }
 
-    public double getTime() {
+    public TimePosition getTime() {
         return time;
     }
 
-    public void setTime(double time) {
-        double oldVal = this.time;
+    public void setTime(TimePosition time) {
+        TimePosition oldVal = this.time;
 
         this.time = time;
 
@@ -71,10 +78,21 @@ public class Marker implements Comparable<Marker> {
         firePropertyChangeEvent(pce);
     }
 
-    public static Marker loadFromXML(Element data) {
+    public static Marker loadFromXML(Element data) throws Exception {
         Marker m = new Marker();
 
-        m.setTime(Double.parseDouble(data.getAttributeValue("time")));
+        Element timeElement = data.getElement("timePosition");
+        if (timeElement == null) {
+            timeElement = data.getElement("time");
+        }
+        if (timeElement != null && timeElement.getAttributeValue("type") != null) {
+            // New format: TimePosition XML element
+            m.setTime(TimePosition.loadFromXML(timeElement));
+        } else {
+            // Legacy format: double attribute
+            m.setTime(TimePosition.beats(
+                    Double.parseDouble(data.getAttributeValue("time"))));
+        }
         m.setName(data.getAttributeValue("name"));
 
         return m;
@@ -83,7 +101,7 @@ public class Marker implements Comparable<Marker> {
     public Element saveAsXML() {
         Element retVal = new Element("marker");
 
-        retVal.setAttribute("time", Double.toString(getTime()));
+        retVal.addElement(getTime().saveAsXML().setName("time"));
         retVal.setAttribute("name", getName());
 
         return retVal;
@@ -94,17 +112,14 @@ public class Marker implements Comparable<Marker> {
             return;
         }
 
-        for (Iterator iter = listeners.iterator(); iter.hasNext();) {
-            PropertyChangeListener listener = (PropertyChangeListener) iter
-                    .next();
-
+        for (PropertyChangeListener listener : listeners) {
             listener.propertyChange(pce);
         }
     }
 
     public void addPropertyChangeListener(PropertyChangeListener pcl) {
         if (listeners == null) {
-            listeners = new Vector();
+            listeners = new Vector<>();
         }
 
         listeners.add(pcl);
@@ -119,12 +134,12 @@ public class Marker implements Comparable<Marker> {
 
     @Override
     public int compareTo(Marker b) {
-        if (this.time > b.time) {
-            return 1;
-        } else if (this.time < b.time) {
-            return -1;
-        }
-        return 0;
+        TimeContext ctx = TimeContextManager.hasContext()
+                ? TimeContextManager.getContext()
+                : new TimeContext();
+        double thisBeats = this.time.toBeats(ctx);
+        double otherBeats = b.time.toBeats(ctx);
+        return Double.compare(thisBeats, otherBeats);
     }
 
     @Override

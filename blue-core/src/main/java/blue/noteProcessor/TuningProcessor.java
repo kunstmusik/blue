@@ -56,22 +56,19 @@ public class TuningProcessor implements NoteProcessor {
     @Override
     public NoteList processNotes(NoteList in) throws NoteProcessorException {
 
-        Note temp;
         int pcount = 0;
         double freq = 0f;
-        for (int i = 0; i < in.size(); i++) {
-            temp = in.get(i);
+        for (Note note : in) {
 
             // verify pfield
-            pcount = temp.getPCount();
+            pcount = note.getPCount();
             if (pfield < 1 || pfield > pcount) {
                 throw new NoteProcessorException(this, BlueSystem
                         .getString("noteProcessorException.missingPfield"),
                         pfield);
             }
 
-            String val = temp.getPField(pfield).trim();
-
+            String val = note.getPField(pfield).trim();
             try {
                 freq = convert(val, scale);
             } catch (Exception ex) {
@@ -80,7 +77,7 @@ public class TuningProcessor implements NoteProcessor {
                         pfield);
             }
 
-            temp.setPField(Double.toString(freq), pfield);
+            note.setPField(Double.toString(freq), pfield);
         }
         return in;
     }

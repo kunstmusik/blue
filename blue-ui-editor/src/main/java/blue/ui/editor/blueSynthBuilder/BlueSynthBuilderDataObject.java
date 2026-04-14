@@ -37,7 +37,8 @@ import org.openide.util.NbBundle.Messages;
 @MIMEResolver.ExtensionRegistration(
     displayName = "#LBL_BlueSynthBuilder_LOADER",
 mimeType = "text/x-blue-synth-builder",
-extension = {"bsb"})
+extension = {"bsb"},
+position = 10000)
 @DataObject.Registration(
     mimeType = "text/x-blue-synth-builder",
 displayName = "#LBL_BlueSynthBuilder_LOADER",

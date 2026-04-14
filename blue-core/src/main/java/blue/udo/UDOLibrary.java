@@ -41,7 +41,7 @@ public class UDOLibrary implements TreeModel {
 
     UDOCategory rootUDOCategory = new UDOCategory();
 
-    transient Vector listeners = new Vector();
+    transient Vector<TreeModelListener> listeners = new Vector<>();
 
     public UDOLibrary() {
         this.rootUDOCategory.setRoot(true);
@@ -84,7 +84,7 @@ public class UDOLibrary implements TreeModel {
     }
 
     private Object[] getPathForObject(Object obj) {
-        Vector v = new Vector();
+        Vector<Object> v = new Vector<>();
         getPathForObject(getRootUDOCategory(), obj, v);
 
         Collections.reverse(v);
@@ -92,7 +92,7 @@ public class UDOLibrary implements TreeModel {
         return v.toArray();
     }
 
-    private Object getPathForObject(UDOCategory current, Object obj, Vector v) {
+    private Object getPathForObject(UDOCategory current, Object obj, Vector<Object> v) {
 
         if (current == obj) {
             return v;
@@ -103,9 +103,7 @@ public class UDOLibrary implements TreeModel {
             return v;
         }
 
-        for (Iterator iter = current.getSubCategories().iterator(); iter
-                .hasNext();) {
-            UDOCategory cat = (UDOCategory) iter.next();
+        for (UDOCategory cat : current.getSubCategories()) {
             Object pathObj = getPathForObject(cat, obj, v);
             if (pathObj != null) {
                 v.add(current);
@@ -223,8 +221,7 @@ public class UDOLibrary implements TreeModel {
     public int getChildCount(Object parent) {
         if (parent instanceof UserDefinedOpcode) {
             return 0;
-        } else if (parent instanceof UDOCategory) {
-            UDOCategory cat = (UDOCategory) parent;
+        } else if (parent instanceof UDOCategory cat) {
             return cat.getSubCategories().size()
                     + cat.getUserDefinedOpcodes().size();
         }
@@ -272,10 +269,10 @@ public class UDOLibrary implements TreeModel {
     public void valueForPathChanged(TreePath path, Object newValue) {
         Object obj = path.getLastPathComponent();
 
-        if (obj instanceof UDOCategory) {
-            ((UDOCategory) obj).setCategoryName(newValue.toString());
-        } else if (obj instanceof UserDefinedOpcode) {
-            ((UserDefinedOpcode) obj).setOpcodeName(newValue.toString());
+        if (obj instanceof UDOCategory uDOCategory) {
+            uDOCategory.setCategoryName(newValue.toString());
+        } else if (obj instanceof UserDefinedOpcode userDefinedOpcode) {
+            userDefinedOpcode.setOpcodeName(newValue.toString());
         }
 
         TreeModelEvent e = new TreeModelEvent(this, path);
@@ -286,26 +283,26 @@ public class UDOLibrary implements TreeModel {
     // UTILITY METHODS FOR FIRING EVENTS
 
     private void fireNodesChanged(TreeModelEvent e) {
-        for (int i = 0; i < listeners.size(); i++) {
-            ((TreeModelListener) listeners.get(i)).treeNodesChanged(e);
+        for (TreeModelListener listener : listeners) {
+            listener.treeNodesChanged(e);
         }
     }
 
     private void fireNodesInserted(TreeModelEvent e) {
-        for (int i = 0; i < listeners.size(); i++) {
-            ((TreeModelListener) listeners.get(i)).treeNodesInserted(e);
+        for (TreeModelListener listener : listeners) {
+            listener.treeNodesInserted(e);
         }
     }
 
     private void fireNodesRemoved(TreeModelEvent e) {
-        for (int i = 0; i < listeners.size(); i++) {
-            ((TreeModelListener) listeners.get(i)).treeNodesRemoved(e);
+        for (TreeModelListener listener : listeners) {
+            listener.treeNodesRemoved(e);
         }
     }
 
     private void fireTreeStructureChanged(TreeModelEvent e) {
-        for (int i = 0; i < listeners.size(); i++) {
-            ((TreeModelListener) listeners.get(i)).treeStructureChanged(e);
+        for (TreeModelListener listener : listeners) {
+            listener.treeStructureChanged(e);
         }
     }
 
@@ -356,9 +353,7 @@ public class UDOLibrary implements TreeModel {
             return cat;
         }
 
-        for (Iterator iter = cat.getSubCategories().iterator(); iter.hasNext();) {
-            UDOCategory c = (UDOCategory) iter.next();
-
+        for (UDOCategory c : cat.getSubCategories()) {
             UDOCategory temp = findParent(c, obj);
 
             if (temp != null) {

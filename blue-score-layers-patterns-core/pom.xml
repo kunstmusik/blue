@@ -23,7 +23,11 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
                 <configuration>
-                    <useDefaultManifestFile>true</useDefaultManifestFile>
+                    <archive>
+                        <manifestFile>
+                    ${project.build.outputDirectory}/META-INF/MANIFEST.MF
+                        </manifestFile>
+                    </archive>
                 </configuration>
             </plugin>
         </plugins>
@@ -51,8 +55,7 @@
         </dependency>
         <dependency>
             <groupId>org.netbeans.api</groupId>
-            <artifactId>org-netbeans-libs-junit4</artifactId>
-            <version>${netbeans.version}</version>
+            <artifactId>org-netbeans-libs-junit5</artifactId>
             <scope>test</scope>
         </dependency>
     </dependencies>

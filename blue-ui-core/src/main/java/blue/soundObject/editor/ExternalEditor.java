@@ -8,6 +8,8 @@ import blue.score.ScoreObject;
 import blue.soundObject.External;
 import blue.soundObject.NoteList;
 import blue.soundObject.SoundObjectException;
+import blue.time.TimeContext;
+import blue.time.TimeContextManager;
 import blue.ui.nbutilities.MimeTypeEditorComponent;
 import blue.ui.utilities.SimpleDocumentListener;
 import java.awt.BorderLayout;
@@ -143,7 +145,7 @@ public class ExternalEditor extends ScoreObjectEditor {
         ActionMap actions = score1EditPane.getActionMap();
 
         inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_T, BlueSystem
-                .getMenuShortcutKey()), "testSoundObject");
+                .getMenuShortcutKeyEx()), "testSoundObject");
 
         actions.put("testSoundObject", new AbstractAction() {
 
@@ -192,7 +194,8 @@ public class ExternalEditor extends ScoreObjectEditor {
         NoteList notes = null;
 
         try {
-            notes = this.external.generateNotes(0.0f, -1.0f);
+            TimeContext context = TimeContextManager.getContext();
+            notes = this.external.generateNotes(context, 0.0f, -1.0f);
         } catch (SoundObjectException e) {
             ExceptionDialog
                     .showExceptionDialog(SwingUtilities.getRoot(this), e);

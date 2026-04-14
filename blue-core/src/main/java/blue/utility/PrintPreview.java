@@ -108,11 +108,11 @@ public class PrintPreview extends JFrame {
                         int h = (m_hPage * m_scale / 100);
 
                         Component[] comps = m_preview.getComponents();
-                        for (int k = 0; k < comps.length; k++) {
-                            if (!(comps[k] instanceof PagePreview)) {
+                        for (Component comp : comps) {
+                            if (!(comp instanceof PagePreview)) {
                                 continue;
                             }
-                            PagePreview pp = (PagePreview) comps[k];
+                            PagePreview pp = (PagePreview) comp;
                             pp.setScaledSize(w, h);
                         }
                         m_preview.doLayout();

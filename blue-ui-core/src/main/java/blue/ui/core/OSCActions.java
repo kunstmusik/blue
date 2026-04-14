@@ -19,13 +19,20 @@
  */
 package blue.ui.core;
 
-import blue.ui.core.toolbar.MainToolBar;
+import blue.Marker;
+import blue.MarkersList;
+import blue.midi.MidiInputManager;
 import blue.osc.OSCAction;
 import blue.osc.OSCManager;
 import blue.projects.BlueProjectManager;
-import blue.services.render.RealtimeRenderService;
+import blue.score.Score;
+import blue.score.ScoreObject;
+import blue.score.layers.ScoreObjectLayer;
+import blue.time.TimeContext;
 import blue.ui.core.render.RealtimeRenderManager;
+import blue.ui.core.score.ScoreTopComponent;
 import de.sciss.net.OSCMessage;
+import org.openide.windows.WindowManager;
 
 /**
  *
@@ -80,6 +87,39 @@ public class OSCActions {
 
             @Override
             public void actionPerformed(OSCMessage message) {
+                var data = BlueProjectManager.getInstance().getCurrentBlueData();
+
+                if (data != null) {
+                    final double currentStartTime = data.getRenderStartTime();
+                    TimeContext context = data.getScore().getTimeContext();
+                    MarkersList markers = data.getMarkersList();
+                    Marker selected = null;
+
+                    if (markers.size() > 0) {
+                        for (int i = 0; i < markers.size(); i++) {
+                            Marker a = markers.getMarker(i);
+
+                            if (a.getTime().toBeats(context) > currentStartTime) {
+                                selected = a;
+                                break;
+                            }
+                        }
+                    }
+
+                    final double newStartTime = (selected == null)
+                            ? getEndTimeOfScore(data.getScore(), context)
+                            : selected.getTime().toBeats(context);
+
+                    if (newStartTime > currentStartTime) {
+                        data.setRenderStartTime(newStartTime);
+
+                        ScoreTopComponent scoreTopComponent = (ScoreTopComponent) WindowManager.getDefault().findTopComponent(
+                                "ScoreTopComponent");
+                        if (scoreTopComponent != null) {
+                            scoreTopComponent.scrollToTime(newStartTime);
+                        }
+                    }
+                }
             }
         });
 
@@ -87,6 +127,38 @@ public class OSCActions {
 
             @Override
             public void actionPerformed(OSCMessage message) {
+                var data = BlueProjectManager.getInstance().getCurrentBlueData();
+                
+                if (data != null) {
+                    double startTime = data.getRenderStartTime();
+                    double newStartTime = 0.0;
+
+                    MarkersList markers = data.getMarkersList();
+                    Marker selected = null;
+
+                    TimeContext context = data.getScore().getTimeContext();
+
+                    for (int i = markers.size() - 1; i >= 0; i--) {
+                        Marker a = markers.getMarker(i);
+
+                        if (a.getTime().toBeats(context) < startTime) {
+                            selected = a;
+                            break;
+                        }
+                    }
+
+                    if (selected != null) {
+                        newStartTime = selected.getTime().toBeats(context);
+                    }
+
+                    data.setRenderStartTime(newStartTime);
+
+                    ScoreTopComponent scoreTopComponent = (ScoreTopComponent) WindowManager.getDefault().findTopComponent(
+                            "ScoreTopComponent");
+                    if (scoreTopComponent != null) {
+                        scoreTopComponent.scrollToTime(newStartTime);
+                    }
+                }
             }
         });
 
@@ -95,6 +167,16 @@ public class OSCActions {
 
             @Override
             public void actionPerformed(OSCMessage message) {
+                var data = BlueProjectManager.getInstance().getCurrentBlueData();
+                var manager = RealtimeRenderManager.getInstance();
+
+                if (data != null) {
+                    if (manager.isBlueLiveRendering()) {
+                        manager.stopBlueLiveRendering();
+                    } else {
+                        manager.renderForBlueLive(data);
+                    }
+                }
             }
 
         });
@@ -103,6 +185,11 @@ public class OSCActions {
 
             @Override
             public void actionPerformed(OSCMessage message) {
+                var data = BlueProjectManager.getInstance().getCurrentBlueData();
+
+                if (data != null) {
+                    RealtimeRenderManager.getInstance().renderForBlueLive(data);
+                }
             }
 
         });
@@ -111,6 +198,7 @@ public class OSCActions {
 
             @Override
             public void actionPerformed(OSCMessage message) {
+                RealtimeRenderManager.getInstance().passToStdin("i \"blueAllNotesOff\" 0 1");
             }
 
         });
@@ -119,9 +207,38 @@ public class OSCActions {
 
             @Override
             public void actionPerformed(OSCMessage message) {
+                var midiManager = MidiInputManager.getInstance();
+                
+                // Toggle MIDI input state by checking if it's currently running
+                if (midiManager.isRunning()) {
+                    midiManager.stop();
+                } else {
+                    midiManager.start();
+                }
             }
 
         });
 
+    }
+
+    /**
+     * Helper method to calculate end time of score
+     */
+    private static double getEndTimeOfScore(Score score, TimeContext context) {
+        double max = 0.0;
+        for (var layer : score.getAllLayers()) {
+            if (layer instanceof ScoreObjectLayer) {
+                final var sLayer = (ScoreObjectLayer<ScoreObject>) layer;
+
+                var layerMax = sLayer.stream()
+                        .mapToDouble(sObj -> sObj.getStartTime().toBeats(context) + sObj.getSubjectiveDuration().toBeats(context))
+                        .max();
+
+                if (layerMax.isPresent()) {
+                    max = Math.max(max, layerMax.getAsDouble());
+                }
+            }
+        }
+        return max;
     }
 }

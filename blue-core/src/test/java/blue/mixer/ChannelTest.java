@@ -18,23 +18,20 @@
  */
 package blue.mixer;
 
-import blue.automation.Parameter;
-import electric.xml.Element;
-import java.beans.PropertyChangeListener;
-import org.junit.Test;
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.Test;
 
 /**
  *
  * @author stevenyi
  */
-public class ChannelTest {
+class ChannelTest {
     
     /**
      * Test of getName method, of class Channel.
      */
     @Test
-    public void testNameNotNull() {
+    void testNameNotNull() {
         Channel chan = new Channel();
         assertEquals("Channel", chan.getName());
         chan.setName(null);

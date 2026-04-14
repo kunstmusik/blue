@@ -19,21 +19,14 @@
  */
 package blue.ui.core.render;
 
-import blue.automation.Parameter;
-import blue.event.PlayModeListener;
-import blue.noteProcessor.TempoMapper;
-import blue.services.render.DiskRenderJob;
-import blue.services.render.RenderTimeManager;
-import java.io.File;
-import java.util.ArrayList;
-import org.junit.Test;
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.Test;
 
 /**
  *
  * @author stevenyi
  */
-public class ProcessConsoleTest {
+class ProcessConsoleTest {
     
     public ProcessConsoleTest() {
     }
@@ -275,7 +268,7 @@ public class ProcessConsoleTest {
 //    }
 
     @Test
-    public void testGetCsoundVersion() {
+    void testGetCsoundVersion() {
         
     }
 }

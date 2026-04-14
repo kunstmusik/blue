@@ -33,13 +33,12 @@ public class PresetsUtilities {
         }
 
         ArrayList<PresetGroup> subGroups = presetGroup.getSubGroups();
-        for (int i = 0; i < subGroups.size(); i++) {
-            synchronizePresets(subGroups.get(i), gInterface);
+        for (PresetGroup subGroup : subGroups) {
+            synchronizePresets(subGroup, gInterface);
         }
 
         ArrayList<Preset> presets = presetGroup.getPresets();
-        for (int i = 0; i < presets.size(); i++) {
-            Preset preset = presets.get(i);
+        for (Preset preset : presets) {
             preset.synchronizeWithInterface(gInterface);
         }
     }

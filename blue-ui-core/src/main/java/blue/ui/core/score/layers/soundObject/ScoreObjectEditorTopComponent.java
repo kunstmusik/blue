@@ -109,6 +109,7 @@ final public class ScoreObjectEditorTopComponent extends TopComponent
     Lookup.Result<ScoreObject> result = null;
 
     PropertyChangeListener projectListener;
+    PropertyChangeListener activationListener;
 
     private ScoreObjectEditorTopComponent() {
         initComponents();
@@ -139,6 +140,21 @@ final public class ScoreObjectEditorTopComponent extends TopComponent
         projectListener = (PropertyChangeEvent evt) -> {
             editScoreObject(null);
         };
+
+        activationListener = (PropertyChangeEvent evt) -> {
+            if (!TopComponent.Registry.PROP_ACTIVATED.equals(evt.getPropertyName())) {
+                return;
+            }
+
+            TopComponent active = TopComponent.getRegistry().getActivated();
+            if (active == null || active == this || active instanceof SoundObjectProvider) {
+                return;
+            }
+
+            SwingUtilities.invokeLater(() -> {
+                editScoreObject(null);
+            });
+        };
     }
 
     /**
@@ -159,6 +175,7 @@ final public class ScoreObjectEditorTopComponent extends TopComponent
     public void componentOpened() {
         BlueProjectManager.getInstance().addPropertyChangeListener(
                 projectListener);
+        TopComponent.getRegistry().addPropertyChangeListener(activationListener);
         result = Utilities.actionsGlobalContext().lookupResult(ScoreObject.class);
         result.addLookupListener(this);
         resultChanged(null);
@@ -168,6 +185,7 @@ final public class ScoreObjectEditorTopComponent extends TopComponent
     public void componentClosed() {
         BlueProjectManager.getInstance().removePropertyChangeListener(
                 projectListener);
+        TopComponent.getRegistry().removePropertyChangeListener(activationListener);
         result.removeLookupListener(this);
     }
 
@@ -244,8 +262,8 @@ final public class ScoreObjectEditorTopComponent extends TopComponent
                 BlueData data = BlueProjectManager.getInstance()
                         .getCurrentBlueData();
 
-        if (sObj instanceof Instance) {
-            sObjToEdit = ((Instance) sObj).getSoundObject();
+        if (sObj instanceof Instance instance1) {
+            sObjToEdit = instance1.getSoundObject();
             this.setEditingLibraryObject(SelectionEvent.SELECTION_LIBRARY);
         } else if (data.getSoundObjectLibrary().contains(sObjToEdit)){
             this.setEditingLibraryObject(SelectionEvent.SELECTION_LIBRARY);

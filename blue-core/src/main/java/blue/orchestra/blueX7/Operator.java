@@ -3,7 +3,6 @@ package blue.orchestra.blueX7;
 import blue.utility.XMLUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
-import org.apache.commons.lang3.text.StrBuilder;
 
 /**
  * <p>
@@ -86,7 +85,7 @@ public class Operator {
 
     @Override
     public String toString() {
-        StrBuilder buffer = new StrBuilder();
+        StringBuilder buffer = new StringBuilder();
         buffer.append("[operator]\n");
         buffer.append("mode: " + mode + "\n");
         buffer.append("sync: " + sync + "\n");
@@ -158,8 +157,8 @@ public class Operator {
         retVal.addElement(XMLUtilities.writeInt("modulationPitch",
                 modulationPitch));
 
-        for (int i = 0; i < envelopePoints.length; i++) {
-            retVal.addElement(envelopePoints[i].saveAsXML());
+        for (EnvelopePoint envelopePoint : envelopePoints) {
+            retVal.addElement(envelopePoint.saveAsXML());
         }
 
         return retVal;

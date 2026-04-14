@@ -34,6 +34,9 @@ import blue.settings.UtilitySettings;
 import blue.soundObject.FrozenSoundObject;
 import blue.soundObject.PolyObject;
 import blue.soundObject.SoundObject;
+import blue.time.TimeContext;
+import blue.time.TimeContextManager;
+import blue.time.TimeUnitMath;
 import blue.ui.core.render.DiskRenderManager;
 import blue.ui.core.score.ScoreController;
 import blue.ui.core.score.ScorePath;
@@ -143,9 +146,9 @@ public final class FreezeUnfreezeAction extends AbstractAction
                 SoundObject sObj = soundObjects.get(i);
                 SoundLayer layer = (SoundLayer) layers.get(i);
 
-                if (sObj instanceof FrozenSoundObject) {
+                if (sObj instanceof FrozenSoundObject frozenSoundObject) {
                     handle.progress("Unfreezing SoundObject...", i);
-                    FrozenSoundObject frozenObj = (FrozenSoundObject) sObj;
+                    FrozenSoundObject frozenObj = frozenSoundObject;
 
                     layer.remove(sObj);
                     
@@ -193,9 +196,10 @@ public final class FreezeUnfreezeAction extends AbstractAction
             SoundLayer sLayer = tempPObj.newLayerAt(-1);
 
             SoundObject tempSObj = sObj.deepCopy();
-            tempData.setRenderStartTime(tempSObj.getStartTime());
+            TimeContext context = TimeContextManager.getContext();
+            tempData.setRenderStartTime(tempSObj.getStartTime().toBeats(context));
 
-            double renderEndTime = tempSObj.getStartTime() + tempSObj.getSubjectiveDuration();
+            double renderEndTime = tempSObj.getStartTime().toBeats(context) + tempSObj.getSubjectiveDuration().toBeats(context);
             Mixer m = data.getMixer();
 
             if (m.isEnabled()) {
@@ -214,7 +218,7 @@ public final class FreezeUnfreezeAction extends AbstractAction
 
             try {
                 result = CSDRenderService.getDefault().generateCSD(tempData,
-                        tempSObj.getStartTime(), renderEndTime, false, false);
+                        tempSObj.getStartTime().toBeats(context), renderEndTime, false, false);
                 tempCSD = result.getCsdText();
             } catch (Exception e) {
 //                ExceptionDialog.showExceptionDialog(SwingUtilities.getRoot(this),
@@ -260,7 +264,11 @@ public final class FreezeUnfreezeAction extends AbstractAction
                 double soundFileDuration = SoundFileUtilities.getDurationInSeconds(
                         fullTempFileName);
 
-                fso.setSubjectiveDuration(soundFileDuration);
+                double soundFileDurationBeats = context.getTempoMap().secondsToBeats(soundFileDuration);
+                fso.setSubjectiveDuration(TimeUnitMath.beatsToDuration(
+                        soundFileDurationBeats,
+                        sObj.getSubjectiveDuration().getTimeBase(),
+                        context));
 
                 int numChannels = SoundFileUtilities.getNumberOfChannels(
                         fullTempFileName);
@@ -284,11 +292,11 @@ public final class FreezeUnfreezeAction extends AbstractAction
 
             int counter = -1;
 
-            for (int i = 0; i < files.length; i++) {
-                if (files[i].startsWith("freeze")) {
+            for (String file : files) {
+                if (file.startsWith("freeze")) {
                     try {
-                        int num = Integer.parseInt(files[i].substring(6,
-                                files[i].indexOf(".")));
+                        int num = Integer.parseInt(file.substring(6,
+                                file.indexOf(".")));
                         if (counter < num) {
                             counter = num;
                         }
@@ -341,9 +349,8 @@ public final class FreezeUnfreezeAction extends AbstractAction
 
             for (LayerGroup lGroup : score) {
 
-                if (lGroup instanceof PolyObject) {
+                if (lGroup instanceof PolyObject pObj) {
 
-                    PolyObject pObj = (PolyObject) lGroup;
                     retVal += freezeReferenceCount(pObj, waveFileName);
                 }
             }
@@ -356,11 +363,10 @@ public final class FreezeUnfreezeAction extends AbstractAction
             List<SoundObject> sObjects = pObj.getSoundObjects(true);
 
             for (SoundObject sObj : sObjects) {
-                if (sObj instanceof PolyObject) {
-                    retVal += freezeReferenceCount((PolyObject)sObj,
+                if (sObj instanceof PolyObject polyObject) {
+                    retVal += freezeReferenceCount(polyObject,
                             waveFileName);
-                } else if (sObj instanceof FrozenSoundObject) {
-                    FrozenSoundObject fso = (FrozenSoundObject) sObj;
+                } else if (sObj instanceof FrozenSoundObject fso) {
                     if (fso.getFrozenWaveFileName().equals(waveFileName)) {
                         retVal += 1;
                     }

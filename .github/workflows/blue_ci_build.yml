@@ -5,55 +5,58 @@ jobs:
   macos: 
     runs-on: macos-latest 
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 1
-      - uses: actions/setup-java@v1
+      - uses: actions/setup-java@v4
         with:
-          java-version: '11' 
+          distribution: 'temurin' # See 'Supported distributions' for available options
+          java-version: '25'
 
       - name: Build Blue 
         run: mvn -Pgenerate-manual,macOS clean install
 
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v4
         with:
           name: Blue (macOS arm64 .app)  
-          path: application/target/blue-macOS-arm64-2.9.1-SNAPSHOT.zip 
+          path: application/target/blue-macOS-arm64-2.9.2.zip 
   macos_x86_64: 
     runs-on: macos-latest 
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 1
-      - uses: actions/setup-java@v1
+      - uses: actions/setup-java@v4
         with:
-          java-version: '11' 
+          distribution: 'temurin' # See 'Supported distributions' for available options
+          java-version: '25'
 
       - name: Build Blue 
         env: 
           BUILD_X86_64: 1 
         run: mvn -Pgenerate-manual,macOS clean install
 
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v4
         with:
           name: Blue (macOS x86_64 .app)  
-          path: application/target/blue-macOS-x86_64-2.9.1-SNAPSHOT.zip 
+          path: application/target/blue-macOS-x86_64-2.9.2.zip 
   linux:
     runs-on: ubuntu-latest 
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 1
-      - uses: actions/setup-java@v1
+      - uses: actions/setup-java@v4
         with:
-          java-version: '11' 
+          distribution: 'temurin' # See 'Supported distributions' for available options
+          java-version: '25'
 
       - name: Build Blue 
         run: mvn -Dmaven.test.skip=true -Pgenerate-manual clean install
 
       - run: mv application/target/blue-2.9.1-SNAPSHOT.zip blue-linux-2.9.1-SNAPSHOT.zip
 
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v4
         with:
           name: Blue Linux Zip
           path: blue-linux-2.9.1-SNAPSHOT.zip 
@@ -61,19 +64,20 @@ jobs:
   windows:
     runs-on: windows-latest 
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 1
-      - uses: actions/setup-java@v1
+      - uses: actions/setup-java@v4
         with:
-          java-version: '11' 
+          distribution: 'temurin' # See 'Supported distributions' for available options
+          java-version: '25'
 
       - name: Build Blue 
         run: mvn -Pgenerate-manual clean install
 
       - run: mv application/target/blue-2.9.1-SNAPSHOT.zip blue-windows-2.9.1-SNAPSHOT.zip
 
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v4
         with:
           name: Blue Windows Zip
           path: blue-windows-2.9.1-SNAPSHOT.zip 

@@ -44,9 +44,9 @@ public class LayerHeightWheelListener implements MouseWheelListener {
     @Override
     public void mouseWheelMoved(MouseWheelEvent e) {
 
-        int shortcutKey = BlueSystem.getMenuShortcutKey();
+        int shortcutKey = BlueSystem.getMenuShortcutKeyEx();
         
-        if ((e.getModifiers() & shortcutKey) == shortcutKey) {
+        if ((e.getModifiersEx() & shortcutKey) == shortcutKey) {
 
             double rotation = e.getPreciseWheelRotation();
 
@@ -56,8 +56,7 @@ public class LayerHeightWheelListener implements MouseWheelListener {
             Layer layer = ScoreController.getInstance().getScorePath().getGlobalLayerForY(
                     p.y);
 
-            if(layer instanceof ScoreObjectLayer) {
-                ScoreObjectLayer sLayer = (ScoreObjectLayer)layer;
+            if(layer instanceof ScoreObjectLayer sLayer) {
                 int index = sLayer.getHeightIndex();
                 int newIndex = index + value;
     

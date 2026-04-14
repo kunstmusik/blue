@@ -120,7 +120,7 @@ public class PresetGroup implements Comparable<PresetGroup> {
 
         val = data.getAttributeValue("currentPresetModified");
         if (val != null && val.length() > 0) {
-            group.setCurrentPresetModified(Boolean.valueOf(val).booleanValue());
+            group.setCurrentPresetModified(Boolean.parseBoolean(val));
         }
 
         Elements nodes = data.getElements();
@@ -151,15 +151,11 @@ public class PresetGroup implements Comparable<PresetGroup> {
             retVal.setAttribute("currentPresetModified", Boolean.toString(currentPresetModified));
         }
 
-        for (Iterator<PresetGroup> iter = subGroups.iterator(); iter.hasNext();) {
-            PresetGroup subGroup = iter.next();
-
+        for (PresetGroup subGroup : subGroups) {
             retVal.addElement(subGroup.saveAsXML());
         }
 
-        for (Iterator<Preset> iter = presets.iterator(); iter.hasNext();) {
-            Preset preset = iter.next();
-
+        for (Preset preset : presets) {
             retVal.addElement(preset.saveAsXML());
         }
 
@@ -201,8 +197,7 @@ public class PresetGroup implements Comparable<PresetGroup> {
             return true;
         }
 
-        for (Iterator iter = subGroups.iterator(); iter.hasNext();) {
-            PresetGroup tempGroup = (PresetGroup) iter.next();
+        for (PresetGroup tempGroup : subGroups) {
             if (tempGroup.removePreset(preset)) {
                 return true;
             }
@@ -221,9 +216,7 @@ public class PresetGroup implements Comparable<PresetGroup> {
             return true;
         }
 
-        for (Iterator<PresetGroup> iter = subGroups.iterator(); iter.hasNext();) {
-            PresetGroup tempGroup = iter.next();
-
+        for (PresetGroup tempGroup : subGroups) {
             if (tempGroup.removePresetGroup(presetGroup)) {
                 return true;
             }

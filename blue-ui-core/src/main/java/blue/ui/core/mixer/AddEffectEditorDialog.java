@@ -22,6 +22,7 @@ package blue.ui.core.mixer;
 import blue.WindowSettingManager;
 import blue.WindowSettingsSavable;
 import blue.mixer.*;
+import blue.settings.ProjectDefaultsSettings;
 import blue.ui.utilities.SimpleDocumentListener;
 import blue.utility.ObjectUtilities;
 import com.l2fprod.common.swing.BaseDialog;
@@ -109,6 +110,7 @@ public class AddEffectEditorDialog extends BaseDialog implements
             setTitle("Add Effect");
 
             this.effect = new Effect();
+            this.effect.setStyle(ProjectDefaultsSettings.getInstance().defaultUDOStyle);
             this.copy = null;
 
             this.nameText.setText(this.effect.getName());
@@ -131,6 +133,7 @@ public class AddEffectEditorDialog extends BaseDialog implements
         this.effect.setName(copy.getName());
         this.effect.setNumIns(copy.getNumIns());
         this.effect.setNumOuts(copy.getNumOuts());
+        this.effect.setStyle(copy.getStyle());
     }
 
     public Effect getEffect() {

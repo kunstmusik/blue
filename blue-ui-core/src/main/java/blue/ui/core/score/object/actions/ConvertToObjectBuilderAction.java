@@ -87,8 +87,7 @@ public final class ConvertToObjectBuilderAction extends AbstractAction
 
         ObjectBuilder objBuilder = new ObjectBuilder();
 
-        if (temp instanceof PythonObject) {
-            PythonObject tempPython = (PythonObject) temp;
+        if (temp instanceof PythonObject tempPython) {
             objBuilder.setName(tempPython.getName());
             objBuilder.setNoteProcessorChain(tempPython.getNoteProcessorChain());
             objBuilder.setTimeBehavior(tempPython.getTimeBehavior());
@@ -97,8 +96,7 @@ public final class ConvertToObjectBuilderAction extends AbstractAction
             objBuilder.setCode(tempPython.getText());
             objBuilder.setBackgroundColor(tempPython.getBackgroundColor());
 
-        } else if (temp instanceof External) {
-            External tempExt = (External) temp;
+        } else if (temp instanceof External tempExt) {
             objBuilder.setName(tempExt.getName());
             objBuilder.setNoteProcessorChain(tempExt.getNoteProcessorChain());
             objBuilder.setTimeBehavior(tempExt.getTimeBehavior());

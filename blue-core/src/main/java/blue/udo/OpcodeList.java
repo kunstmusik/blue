@@ -225,9 +225,7 @@ public class OpcodeList extends ArrayList<UserDefinedOpcode> implements TableMod
 
         TableModelEvent tme = new TableModelEvent(this);
 
-        for (Iterator<TableModelListener> iter = listeners.iterator(); iter.hasNext();) {
-            TableModelListener listener = iter.next();
-
+        for (TableModelListener listener : listeners) {
             listener.tableChanged(tme);
         }
     }
@@ -252,8 +250,7 @@ public class OpcodeList extends ArrayList<UserDefinedOpcode> implements TableMod
     public Element saveAsXML() {
         Element retVal = new Element("opcodeList");
 
-        for (Iterator iter = this.iterator(); iter.hasNext();) {
-            UserDefinedOpcode udo = (UserDefinedOpcode) iter.next();
+        for (UserDefinedOpcode udo : this) {
             retVal.addElement(udo.saveAsXML());
         }
 
@@ -264,8 +261,7 @@ public class OpcodeList extends ArrayList<UserDefinedOpcode> implements TableMod
     public String toString() {
         StringBuilder buffer = new StringBuilder();
 
-        for (Iterator iter = this.iterator(); iter.hasNext();) {
-            UserDefinedOpcode udo = (UserDefinedOpcode) iter.next();
+        for (UserDefinedOpcode udo : this) {
             buffer.append(udo.generateCode()).append("\n");
         }
 
@@ -273,8 +269,7 @@ public class OpcodeList extends ArrayList<UserDefinedOpcode> implements TableMod
     }
 
     public boolean isNameUnique(String name) {
-        for (Iterator iter = this.iterator(); iter.hasNext();) {
-            UserDefinedOpcode udo = (UserDefinedOpcode) iter.next();
+        for (UserDefinedOpcode udo : this) {
             if (udo.getOpcodeName().equals(name)) {
                 return false;
             }
@@ -284,12 +279,12 @@ public class OpcodeList extends ArrayList<UserDefinedOpcode> implements TableMod
     }
 
     public String getUniqueName() {
-        Object[] obj = new Object[]{new Integer(counter++)};
+        Object[] obj = new Object[]{counter++};
 
         String uniqueName = fmt.format(obj);
 
         while (!isNameUnique(uniqueName)) {
-            obj[0] = new Integer(counter++);
+            obj[0] = counter++;
             uniqueName = fmt.format(obj);
         }
 

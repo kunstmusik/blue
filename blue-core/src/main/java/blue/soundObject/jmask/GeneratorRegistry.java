@@ -45,9 +45,9 @@ public class GeneratorRegistry {
     public static class GeneratorEntry {
         public final String generatorName;
 
-        public final Class generatorClass;
+        public final Class<? extends Generator> generatorClass;
 
-        public GeneratorEntry(String name, Class clazz) {
+        public GeneratorEntry(String name, Class<? extends Generator> clazz) {
             generatorName = name;
             generatorClass = clazz;
         }
@@ -61,8 +61,8 @@ public class GeneratorRegistry {
             Generator retVal = null;
 
             try {
-                retVal = (Generator) generatorClass.newInstance();
-            } catch (    IllegalAccessException | InstantiationException ex) {
+                retVal = (Generator) generatorClass.getDeclaredConstructor().newInstance();
+            } catch (IllegalAccessException | InstantiationException | NoSuchMethodException | java.lang.reflect.InvocationTargetException ex) {
                 ex.printStackTrace();
             }
 

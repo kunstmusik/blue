@@ -72,8 +72,8 @@ public class UDOTreeDragSource implements DragSourceListener,
             oldNode = path.getLastPathComponent();
 
             Object cloneNode;
-            if(oldNode instanceof UserDefinedOpcode) {
-                cloneNode = new UserDefinedOpcode((UserDefinedOpcode) oldNode);
+            if(oldNode instanceof UserDefinedOpcode userDefinedOpcode) {
+                cloneNode = new UserDefinedOpcode(userDefinedOpcode);
             } else {
                 cloneNode = new UDOCategory((UDOCategory) oldNode);
             }
@@ -92,15 +92,15 @@ public class UDOTreeDragSource implements DragSourceListener,
 
             if (dsde.getDropAction() == DnDConstants.ACTION_MOVE) {
 
-                if (oldNode instanceof UserDefinedOpcode) {
+                if (oldNode instanceof UserDefinedOpcode userDefinedOpcode) {
 
                     ((UDOLibrary) sourceTree.getModel())
-                            .removeUDO((UserDefinedOpcode) oldNode);
+                            .removeUDO(userDefinedOpcode);
 
-                } else if (oldNode instanceof UDOCategory) {
+                } else if (oldNode instanceof UDOCategory uDOCategory) {
 
                     ((UDOLibrary) sourceTree.getModel())
-                            .removeCategory((UDOCategory) oldNode);
+                            .removeCategory(uDOCategory);
 
                 }
             }

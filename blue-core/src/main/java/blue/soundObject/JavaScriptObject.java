@@ -19,11 +19,12 @@
  */
 package blue.soundObject;
 
-import blue.score.ScoreObjectEvent;
 import blue.*;
 import blue.noteProcessor.NoteProcessorChain;
-import blue.noteProcessor.NoteProcessorException;
 import blue.plugin.SoundObjectPlugin;
+import blue.score.ScoreObjectEvent;
+import blue.time.TimeContext;
+import blue.time.TimeDuration;
 import blue.utility.ScoreUtilities;
 import electric.xml.Element;
 import java.util.Map;
@@ -45,7 +46,7 @@ public class JavaScriptObject extends AbstractSoundObject
 
     private TimeBehavior timeBehavior;
 
-    double repeatPoint = -1.0f;
+    TimeDuration repeatPoint = null;
 
     private boolean onLoadProcessable = false;
 
@@ -74,8 +75,8 @@ public class JavaScriptObject extends AbstractSoundObject
     }
 
     @Override
-    public double getObjectiveDuration() {
-        return subjectiveDuration;
+    public TimeDuration getObjectiveDuration(TimeContext context) {
+        return getSubjectiveDuration();
     }
 
     @Override
@@ -88,19 +89,21 @@ public class JavaScriptObject extends AbstractSoundObject
         this.npc = chain;
     }
 
-    public NoteList generateNotes(double renderStart, double renderEnd) throws SoundObjectException {
+    public NoteList generateNotes(TimeContext context, double renderStart, double renderEnd) throws SoundObjectException {
         // System.out.println("[JavaScriptObject] attempting to generate score for
         // object " + this.name + " at time " + this.startTime);
-        String soundObjectId = "[ " + this.name + " : " + this.startTime
-                + " ] ";
+        double duration = getSubjectiveDuration().toBeats(context);
+        double startTime = getStartTime().toBeats(context);
+        
+        String soundObjectId = "[ " + this.name + " : " + startTime + " ] ";
         try {
             String tempScore = blue.scripting.JavaScriptProxy.processJavascriptScore(
-                    javaScriptCode, subjectiveDuration, soundObjectId);
+                    javaScriptCode, duration, soundObjectId);
 
             NoteList nl = ScoreUtilities.getNotes(tempScore);
             nl = ScoreUtilities.applyNoteProcessorChain(nl, this.npc);
-            ScoreUtilities.applyTimeBehavior(nl, this.getTimeBehavior(), this
-                    .getSubjectiveDuration(), this.getRepeatPoint());
+            double rpBeats = this.getRepeatPoint() != null ? this.getRepeatPoint().toBeats(context) : -1.0;
+            ScoreUtilities.applyTimeBehavior(nl, this.getTimeBehavior(), duration, rpBeats);
             ScoreUtilities.setScoreStart(nl, startTime);
             return nl;
         } catch (Exception e) {
@@ -123,12 +126,12 @@ public class JavaScriptObject extends AbstractSoundObject
     }
 
     @Override
-    public double getRepeatPoint() {
+    public TimeDuration getRepeatPoint() {
         return this.repeatPoint;
     }
 
     @Override
-    public void setRepeatPoint(double repeatPoint) {
+    public void setRepeatPoint(TimeDuration repeatPoint) {
         this.repeatPoint = repeatPoint;
 
         ScoreObjectEvent event = new ScoreObjectEvent(this,
@@ -153,8 +156,7 @@ public class JavaScriptObject extends AbstractSoundObject
         String olpString = data.getAttributeValue("onLoadProcessable");
 
         if (olpString != null) {
-            sObj.setOnLoadProcessable(
-                    Boolean.valueOf(olpString).booleanValue());
+            sObj.setOnLoadProcessable(Boolean.parseBoolean(olpString));
         }
 
         return sObj;
@@ -177,10 +179,10 @@ public class JavaScriptObject extends AbstractSoundObject
     }
 
     @Override
-    public NoteList generateForCSD(CompileData compileData, double startTime,
+    public NoteList generateForCSD(TimeContext context, CompileData compileData, double startTime,
             double endTime) throws SoundObjectException {
 
-        return generateNotes(startTime, endTime);
+        return generateNotes(context, startTime, endTime);
 
     }
 
@@ -200,9 +202,9 @@ public class JavaScriptObject extends AbstractSoundObject
     }
 
     @Override
-    public void processOnLoad() throws SoundObjectException {
+    public void processOnLoad(TimeContext context) throws SoundObjectException {
         if (onLoadProcessable) {
-            this.generateNotes(0.0f, -1.0f);
+            this.generateNotes(context, 0.0f, -1.0f);
         }
     }
 }

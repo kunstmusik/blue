@@ -1,9 +1,11 @@
 package blue;
 
-import blue.utility.ValuesUtility;
 import blue.utility.XMLUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
+import java.util.Objects;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
 /**
@@ -15,11 +17,13 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
  */
 public final class ProjectProperties {
 
+    private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
+
     public String title = "";
     public String author = "";
     public String notes = "";
 
-    public String sampleRate = "44100";
+    private String sampleRate = "44100";
     public String ksmps = "1";
     public String channels = "2";
     public boolean useZeroDbFS = false; // set false by default for legacy projects
@@ -74,6 +78,24 @@ public final class ProjectProperties {
     /* MEDIA FOLDER */
     public String mediaFolder = "";
     public boolean copyToMediaFileOnImport = true;
+
+    public void addPropertyChangeListener(PropertyChangeListener listener) {
+        pcs.addPropertyChangeListener(listener);
+    }
+
+    public void removePropertyChangeListener(PropertyChangeListener listener) {
+        pcs.removePropertyChangeListener(listener);
+    }
+
+    public String getSampleRate() {
+        return sampleRate;
+    }
+
+    public void setSampleRate(String sampleRate) {
+        String old = this.sampleRate;
+        this.sampleRate = sampleRate;
+        pcs.firePropertyChange("sampleRate", old, sampleRate);
+    }
 
     public ProjectProperties() {
     }
@@ -146,132 +168,82 @@ public final class ProjectProperties {
         while (nodes.hasMoreElements()) {
             Element node = nodes.next();
             String nodeName = node.getName();
-            String nodeVal = node.getTextString();
+            String nodeVal = Objects.requireNonNullElse(node.getTextString(), "");
             switch (nodeName) {
-                case "title":
+                case "title" ->
                     retVal.title = nodeVal;
-                    break;
-                case "author":
+                case "author" ->
                     retVal.author = nodeVal;
-                    break;
-                case "notes":
+                case "notes" ->
                     retVal.notes = nodeVal;
-                    break;
-                case "sampleRate":
-                    retVal.sampleRate = nodeVal;
-                    break;
-                case "controlRate":
+                case "sampleRate" ->
+                    retVal.setSampleRate(nodeVal);
+                case "controlRate" ->
                     kr = nodeVal;
-                    break;
-                case "ksmps":
+                case "ksmps" ->
                     retVal.ksmps = nodeVal;
-                    break;
-                case "useZeroDbFS":
-                    retVal.useZeroDbFS = Boolean.valueOf(nodeVal).booleanValue();
-                    break;
-                case "zeroDbFS":
+                case "useZeroDbFS" ->
+                    retVal.useZeroDbFS = Boolean.parseBoolean(nodeVal);
+                case "zeroDbFS" ->
                     retVal.zeroDbFS = nodeVal;
-                    break;
-                case "channels":
+                case "channels" ->
                     retVal.channels = nodeVal;
-                    break;
-                case "commandLine":
+                case "commandLine" ->
                     commandLine = nodeVal;
-                    break;
-                case "diskSampleRate":
+                case "diskSampleRate" ->
                     retVal.diskSampleRate = nodeVal;
-                    break;
-                case "diskKsmps":
+                case "diskKsmps" ->
                     retVal.diskKsmps = nodeVal;
-                    break;
-                case "diskChannels":
+                case "diskChannels" ->
                     retVal.diskChannels = nodeVal;
-                    break;
-                case "diskCommandLine":
+                case "diskCommandLine" ->
                     diskCommandLine = nodeVal;
-                    break;
-                case "diskUseZeroDbFS":
-                    retVal.diskUseZeroDbFS = Boolean.valueOf(nodeVal).booleanValue();
-                    break;
-                case "diskZeroDbFS":
+                case "diskUseZeroDbFS" ->
+                    retVal.diskUseZeroDbFS = Boolean.parseBoolean(nodeVal);
+                case "diskZeroDbFS" ->
                     retVal.diskZeroDbFS = nodeVal;
-                    break;
-                case "useAudioOut":
-                    retVal.useAudioOut = Boolean.valueOf(nodeVal).booleanValue();
-                    break;
-                case "useAudioIn":
-                    retVal.useAudioIn = Boolean.valueOf(nodeVal).booleanValue();
-                    break;
-                case "useMidiIn":
-                    retVal.useMidiIn = Boolean.valueOf(nodeVal).booleanValue();
-                    break;
-                case "useMidiOut":
-                    retVal.useMidiOut = Boolean.valueOf(nodeVal).booleanValue();
-                    break;
-                case "noteAmpsEnabled":
-                    retVal.noteAmpsEnabled = Boolean.valueOf(nodeVal)
-                            .booleanValue();
-                    break;
-                case "outOfRangeEnabled":
-                    retVal.outOfRangeEnabled = Boolean.valueOf(nodeVal)
-                            .booleanValue();
-                    break;
-                case "warningsEnabled":
-                    retVal.warningsEnabled = Boolean.valueOf(nodeVal)
-                            .booleanValue();
-                    break;
-                case "benchmarkEnabled":
-                    retVal.benchmarkEnabled = Boolean.valueOf(nodeVal)
-                            .booleanValue();
-                    break;
-                case "advancedSettings":
+                case "useAudioOut" ->
+                    retVal.useAudioOut = Boolean.parseBoolean(nodeVal);
+                case "useAudioIn" ->
+                    retVal.useAudioIn = Boolean.parseBoolean(nodeVal);
+                case "useMidiIn" ->
+                    retVal.useMidiIn = Boolean.parseBoolean(nodeVal);
+                case "useMidiOut" ->
+                    retVal.useMidiOut = Boolean.parseBoolean(nodeVal);
+                case "noteAmpsEnabled" ->
+                    retVal.noteAmpsEnabled = Boolean.parseBoolean(nodeVal);
+                case "outOfRangeEnabled" ->
+                    retVal.outOfRangeEnabled = Boolean.parseBoolean(nodeVal);
+                case "warningsEnabled" ->
+                    retVal.warningsEnabled = Boolean.parseBoolean(nodeVal);
+                case "benchmarkEnabled" ->
+                    retVal.benchmarkEnabled = Boolean.parseBoolean(nodeVal);
+                case "advancedSettings" ->
                     retVal.advancedSettings = nodeVal;
-                    break;
-                case "completeOverride":
-                    retVal.completeOverride = Boolean.valueOf(nodeVal)
-                            .booleanValue();
-                    break;
-                case "fileName":
+                case "completeOverride" ->
+                    retVal.completeOverride = Boolean.parseBoolean(nodeVal);
+                case "fileName" ->
                     retVal.fileName = nodeVal;
-                    break;
-                case "askOnRender":
-                    retVal.askOnRender = Boolean.valueOf(nodeVal).booleanValue();
-                    break;
-                case "diskNoteAmpsEnabled":
-                    retVal.diskNoteAmpsEnabled = Boolean.valueOf(nodeVal)
-                            .booleanValue();
-                    break;
-                case "diskOutOfRangeEnabled":
-                    retVal.diskOutOfRangeEnabled = Boolean.valueOf(nodeVal)
-                            .booleanValue();
-                    break;
-                case "diskWarningsEnabled":
-                    retVal.diskWarningsEnabled = Boolean.valueOf(nodeVal)
-                            .booleanValue();
-                    break;
-                case "diskBenchmarkEnabled":
-                    retVal.diskBenchmarkEnabled = Boolean.valueOf(nodeVal)
-                            .booleanValue();
-                    break;
-                case "diskAdvancedSettings":
+                case "askOnRender" ->
+                    retVal.askOnRender = Boolean.parseBoolean(nodeVal);
+                case "diskNoteAmpsEnabled" ->
+                    retVal.diskNoteAmpsEnabled = Boolean.parseBoolean(nodeVal);
+                case "diskOutOfRangeEnabled" ->
+                    retVal.diskOutOfRangeEnabled = Boolean.parseBoolean(nodeVal);
+                case "diskWarningsEnabled" ->
+                    retVal.diskWarningsEnabled = Boolean.parseBoolean(nodeVal);
+                case "diskBenchmarkEnabled" ->
+                    retVal.diskBenchmarkEnabled = Boolean.parseBoolean(nodeVal);
+                case "diskAdvancedSettings" ->
                     retVal.diskAdvancedSettings = nodeVal;
-                    break;
-                case "diskCompleteOverride":
-                    retVal.diskCompleteOverride = Boolean.valueOf(nodeVal)
-                            .booleanValue();
-                    break;
-                case "diskAlwaysRenderEntireProject":
-                    retVal.diskAlwaysRenderEntireProject = Boolean.valueOf(nodeVal)
-                            .booleanValue();
-                    break;
-
-                case "mediaFolder":
+                case "diskCompleteOverride" ->
+                    retVal.diskCompleteOverride = Boolean.parseBoolean(nodeVal);
+                case "diskAlwaysRenderEntireProject" ->
+                    retVal.diskAlwaysRenderEntireProject = Boolean.parseBoolean(nodeVal);
+                case "mediaFolder" ->
                     retVal.mediaFolder = nodeVal;
-                    break;
-                case "copyToMediaFolderOnImport":
-                    retVal.copyToMediaFileOnImport = Boolean.valueOf(nodeVal)
-                            .booleanValue();
-                    break;
+                case "copyToMediaFolderOnImport" ->
+                    retVal.copyToMediaFileOnImport = Boolean.parseBoolean(nodeVal);
             }
 
         }
@@ -280,7 +252,7 @@ public final class ProjectProperties {
         if (kr != null && kr.length() > 0 && retVal.ksmps != null
                 && retVal.ksmps.length() == 0) {
             try {
-                int ksmpsNum = Integer.parseInt(retVal.sampleRate)
+                int ksmpsNum = Integer.parseInt(retVal.getSampleRate())
                         / Integer.parseInt(kr);
                 retVal.ksmps = Integer.toString(ksmpsNum);
             } catch (NumberFormatException nfe) {
@@ -298,8 +270,6 @@ public final class ProjectProperties {
             retVal.diskCompleteOverride = true;
         }
 
-        ValuesUtility.checkNullString(retVal);
-
         return retVal;
     }
 
@@ -313,7 +283,7 @@ public final class ProjectProperties {
         retVal.addElement("author").setText(author);
         retVal.addElement("notes").setText(notes);
 
-        retVal.addElement("sampleRate").setText(sampleRate);
+        retVal.addElement("sampleRate").setText(getSampleRate());
         retVal.addElement("ksmps").setText(ksmps);
         retVal.addElement("channels").setText(channels);
         retVal.addElement(XMLUtilities.writeBoolean("useZeroDbFS", useZeroDbFS));

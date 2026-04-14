@@ -19,7 +19,6 @@
  */
 package blue.ui.core.score.layers.soundObject.library;
 
-import blue.ui.core.score.layers.soundObject.library.SoundObjectLibraryUtils;
 import blue.BlueData;
 import blue.SoundLayer;
 import blue.SoundObjectLibrary;
@@ -28,14 +27,14 @@ import blue.soundObject.GenericScore;
 import blue.soundObject.Instance;
 import blue.soundObject.PolyObject;
 import blue.soundObject.SoundObject;
-import static org.junit.Assert.*;
-import org.junit.Test;
+import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.Test;
 
 /**
  *
  * @author stevenyi
  */
-public class SoundObjectLibraryUtilsTest {
+class SoundObjectLibraryUtilsTest {
     
     public SoundObjectLibraryUtilsTest() {
     }
@@ -44,7 +43,7 @@ public class SoundObjectLibraryUtilsTest {
      * Test of removeLibrarySoundObject method, of class SoundObjectLibraryUtils.
      */
     @Test
-    public void testRemoveLibrarySoundObject() {
+    void testRemoveLibrarySoundObject() {
         BlueData data = new BlueData();
         Score score = data.getScore();
         PolyObject polyObj = new PolyObject(true);

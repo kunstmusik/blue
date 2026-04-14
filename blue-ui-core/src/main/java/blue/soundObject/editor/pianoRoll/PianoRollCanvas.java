@@ -26,6 +26,8 @@ import blue.score.ScoreObjectListener;
 import blue.soundObject.PianoRoll;
 import blue.soundObject.TimeBehavior;
 import blue.soundObject.editor.pianoRoll.undo.RemoveNotesEdit;
+import blue.time.TimeContext;
+import blue.time.TimeContextManager;
 import blue.soundObject.pianoRoll.Field;
 import blue.soundObject.pianoRoll.FieldDef;
 import blue.soundObject.pianoRoll.FieldType;
@@ -158,7 +160,7 @@ public class PianoRollCanvas extends JLayeredPane implements Scrollable,
                 "deleteNotes");
         inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0),
                 "deleteNotes");
-        final int osCtrlKey = BlueSystem.getMenuShortcutKey();
+        final int osCtrlKey = BlueSystem.getMenuShortcutKeyEx();
 
         inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_X, osCtrlKey), "cut");
         inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_C, osCtrlKey), "copy");
@@ -309,8 +311,7 @@ public class PianoRollCanvas extends JLayeredPane implements Scrollable,
         String tip = null;
 
         Object obj = this.getComponentAt(e.getPoint());
-        if (obj instanceof PianoNoteView) {
-            var pnv = (PianoNoteView) obj;
+        if (obj instanceof PianoNoteView pnv) {
             var note = pnv.getPianoNote();
 
             var p = currentPianoRoll.get();
@@ -467,14 +468,13 @@ public class PianoRollCanvas extends JLayeredPane implements Scrollable,
         // Draw vertical lines
         g.setColor(LINE_COLOR);
         if (p.isSnapEnabled()) {
-            int snapPixels = (int) (p.getSnapValue() * pixelSecond);
+            double snapValue = p.getSnapValueAsBeats(null);
+            int snapPixels = (int) (snapValue * pixelSecond);
 
             int x = 0;
             if (snapPixels <= 0) {
                 return;
             }
-
-            double snapValue = p.getSnapValue();
 
             for (int i = 0; x < w; i++) {
                 x = (int) ((i * snapValue) * pixelSecond);
@@ -502,6 +502,7 @@ public class PianoRollCanvas extends JLayeredPane implements Scrollable,
         // Draw boundary area
         g.setColor(new Color(0, 0, 0, 128));
 
+        TimeContext context = TimeContextManager.getContext();
         int end;
         var notes = p.getNotes();
         final var timeBehavior = p.getTimeBehavior();
@@ -513,13 +514,13 @@ public class PianoRollCanvas extends JLayeredPane implements Scrollable,
             var endTime = maxNote.getStart() + maxNote.getDuration();
             end = (int) (endTime * pixelSecond);
 
-        } else if (p.getRepeatPoint() > 0
+        } else if (p.getRepeatPoint() != null
                 && (timeBehavior == TimeBehavior.REPEAT
                 || timeBehavior == TimeBehavior.REPEAT_CLASSIC)) {
-            end = (int) (p.getRepeatPoint() * pixelSecond);
+            end = (int) (p.getRepeatPoint().toBeats(context) * pixelSecond);
 
         } else {
-            end = (int) (p.getSubjectiveDuration() * pixelSecond);
+            end = (int) (p.getSubjectiveDuration().toBeats(context) * pixelSecond);
         }
         g.fillRect(end, 0, w - end, height);
     }
@@ -750,8 +751,7 @@ public class PianoRollCanvas extends JLayeredPane implements Scrollable,
                 // TODO - Improve algorithm as this performance is not good
                 for (var note : change.getRemoved()) {
                     for (var c : getComponents()) {
-                        if (c instanceof PianoNoteView) {
-                            var pnv = (PianoNoteView) c;
+                        if (c instanceof PianoNoteView pnv) {
 
                             if (pnv.getPianoNote() == note) {
                                 remove(pnv);

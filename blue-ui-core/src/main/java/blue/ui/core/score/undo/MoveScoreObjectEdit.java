@@ -22,6 +22,8 @@ package blue.ui.core.score.undo;
 
 import blue.score.ScoreObject;
 import blue.score.layers.ScoreObjectLayer;
+import blue.time.TimeDuration;
+import blue.time.TimePosition;
 import javax.swing.undo.CannotRedoException;
 import javax.swing.undo.CannotUndoException;
 
@@ -36,14 +38,14 @@ public class MoveScoreObjectEdit extends AppendableEdit {
     private final ScoreObject sObj;
     private final ScoreObjectLayer sourceLayer;
     private final ScoreObjectLayer targetLayer;
-    private final double sourceStart;
-    private final double sourceDuration;
-    private final double targetStart;
-    private final double targetDuration;
+    private final TimePosition sourceStart;
+    private final TimeDuration sourceDuration;
+    private final TimePosition targetStart;
+    private final TimeDuration targetDuration;
 
     public MoveScoreObjectEdit(ScoreObject sObj, ScoreObjectLayer sourceLayer,
-            ScoreObjectLayer targetLayer, double sourceStart, double sourceDuration,
-            double targetStart, double targetDuration) {
+            ScoreObjectLayer targetLayer, TimePosition sourceStart, TimeDuration sourceDuration,
+            TimePosition targetStart, TimeDuration targetDuration) {
         this.sObj = sObj;
         this.sourceLayer = sourceLayer;
         this.targetLayer = targetLayer;

@@ -30,6 +30,12 @@ import blue.score.layers.ScoreObjectLayer;
 import blue.soundObject.Instance;
 import blue.soundObject.PolyObject;
 import blue.soundObject.SoundObject;
+import blue.time.TimeBase;
+import blue.time.TimeContext;
+import blue.time.TimeContextManager;
+import blue.time.TimeDuration;
+import blue.time.TimePosition;
+import blue.time.TimeUnitMath;
 import blue.ui.core.clipboard.BlueClipboardUtils;
 import blue.ui.core.score.ScoreController;
 import blue.ui.core.score.ScorePath;
@@ -105,8 +111,9 @@ public final class PasteSoundObjectAction extends AbstractAction implements Cont
         double start = (double) p.x / timeState.getPixelSecond();
 
         if (timeState.isSnapEnabled()) {
+            TimeContext ctx = TimeContextManager.getContext();
             start = ScoreUtilities.getSnapValueStart(start,
-                    timeState.getSnapValue());
+                    timeState.getSnapValueInBeats(start, ctx.getTempoMap(), ctx.getSampleRate()));
         }
 
         List<Layer> allLayers = scorePath.getAllLayers();
@@ -114,13 +121,15 @@ public final class PasteSoundObjectAction extends AbstractAction implements Cont
 
         int minLayer = Integer.MAX_VALUE;
         int maxLayer = Integer.MIN_VALUE;
-        double bufferStart = Double.POSITIVE_INFINITY;
+        TimePosition bufferStart = null;
 
+        TimeContext context = TimeContextManager.getContext();
+        
         for (int i = 0; i < buffer.scoreObjects.size(); i++) {
             ScoreObject scoreObj = buffer.scoreObjects.get(i);
             int layer = buffer.layerIndices.get(i);
 
-            if (scoreObj.getStartTime() < bufferStart) {
+            if (bufferStart == null || scoreObj.getStartTime().lt(context, bufferStart)) {
                 bufferStart = scoreObj.getStartTime();
             }
             if (layer < minLayer) {
@@ -132,7 +141,7 @@ public final class PasteSoundObjectAction extends AbstractAction implements Cont
         }
 
         int layerTranslation = selectedLayerIndex - minLayer;
-        double startTranslation = start - bufferStart;
+        TimeDuration startTranslation = TimeUnitMath.forwardDistance(context, bufferStart, TimePosition.beats(start));
 
         if ((maxLayer + layerTranslation) >= allLayers.size()) {
             JOptionPane.showMessageDialog(null, "Not Enough Layers to Paste");
@@ -171,14 +180,24 @@ public final class PasteSoundObjectAction extends AbstractAction implements Cont
 
             int newLayerIndex = buffer.layerIndices.get(i) + layerTranslation;
 
-            if (sObj instanceof Instance) {
-                instanceSoundObjects.add((Instance) sObj);
-            } else if (sObj instanceof PolyObject) {
-                PolyObject pObj = (PolyObject) sObj;
+            if (sObj instanceof Instance instance) {
+                instanceSoundObjects.add(instance);
+            } else if (sObj instanceof PolyObject pObj) {
                 getInstancesFromPolyObject(instanceSoundObjects, pObj);
             }
 
-            sObj.setStartTime(sObj.getStartTime() + startTranslation);
+            sObj.setStartTime(TimeUnitMath.add(context, sObj.getStartTime(), startTranslation));
+
+            // Cross-context paste: preserve beat count for beat-based durations.
+            // The beat count is semantically meaningful regardless of tempo differences.
+            // Time-based durations (TIME, SMPTE, FRAME) are absolute and need no conversion.
+            if (buffer.sourceContext != null && !context.hasSameMusicalContext(buffer.sourceContext)) {
+                TimeDuration dur = sObj.getSubjectiveDuration();
+                if (dur.getTimeBase().isBeatBased()) {
+                    double beats = dur.toBeats(buffer.sourceContext);
+                    sObj.setSubjectiveDuration(TimeUnitMath.beatsToDuration(beats, dur.getTimeBase(), context));
+                }
+            }
 
             ScoreObjectLayer<ScoreObject> layer
                     = (ScoreObjectLayer<ScoreObject>) allLayers.get(newLayerIndex);
@@ -209,12 +228,10 @@ public final class PasteSoundObjectAction extends AbstractAction implements Cont
             PolyObject pObj) {
         for (SoundLayer layer : pObj) {
             for (SoundObject sObj : layer) {
-                if (sObj instanceof Instance) {
-                    Instance instance = (Instance) sObj;
+                if (sObj instanceof Instance instance) {
                     instanceSoundObjects.add(instance);
-                } else if (sObj instanceof PolyObject) {
-                    getInstancesFromPolyObject(instanceSoundObjects,
-                            (PolyObject) sObj);
+                } else if (sObj instanceof PolyObject polyObject) {
+                    getInstancesFromPolyObject(instanceSoundObjects, polyObject);
                 }
             }
         }

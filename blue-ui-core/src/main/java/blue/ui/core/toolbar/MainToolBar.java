@@ -20,30 +20,19 @@
 package blue.ui.core.toolbar;
 
 import blue.BlueData;
-import blue.BlueSystem;
+import blue.score.TimeState;
 import blue.orchestra.editor.blueSynthBuilder.BSBPreferences;
 import blue.projects.BlueProject;
 import blue.projects.BlueProjectManager;
-import blue.services.render.RenderTimeManager;
-import blue.services.render.RenderTimeManagerListener;
-import blue.settings.PlaybackSettings;
-import blue.ui.core.render.RealtimeRenderManager;
 import blue.ui.utilities.UiUtilities;
-import blue.utility.NumberUtilities;
 import java.awt.Color;
-import java.awt.Dimension;
 import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.JButton;
-import javax.swing.JLabel;
-import javax.swing.JTextField;
 import javax.swing.JToolBar;
-import javax.swing.border.EmptyBorder;
 import jiconfont.icons.font_awesome.FontAwesome;
 import jiconfont.swing.IconFontSwing;
-import org.openide.util.Lookup;
 
 /**
  * @author steven
@@ -56,7 +45,8 @@ public class MainToolBar extends JToolBar {
 
     private final TransportControls transportControls;
 
-    private final TimeDisplayPanel timePanel;
+    private final PlayheadDisplayPanel playheadPanel;
+    private final SelectionDisplayPanel selectionPanel;
 
     JButton widgetInfoButton = new JButton();
 
@@ -71,8 +61,10 @@ public class MainToolBar extends JToolBar {
         setFloatable(false);
 
         transportControls = new TransportControls();
-        timePanel = new TimeDisplayPanel();
-        timePanel.setBorder(BorderFactory.createEmptyBorder(5, 0, 0, 0));
+        playheadPanel = new PlayheadDisplayPanel();
+        playheadPanel.setBorder(BorderFactory.createEmptyBorder(5, 0, 0, 0));
+        selectionPanel = new SelectionDisplayPanel();
+        selectionPanel.setBorder(BorderFactory.createEmptyBorder(5, 0, 0, 0));
 
         final var widgetInfoShowingIcon = IconFontSwing.buildIcon(FontAwesome.INFO_CIRCLE, 16, ICON_COLOR);
         final var widgetInfoNotShowingIcon = IconFontSwing.buildIcon(FontAwesome.INFO_CIRCLE, 16, Color.LIGHT_GRAY);
@@ -103,12 +95,13 @@ public class MainToolBar extends JToolBar {
 
         this.add(Box.createHorizontalGlue());
 
-        this.add(timePanel);
+        this.add(playheadPanel);
+        this.add(Box.createHorizontalStrut(20));
+        this.add(selectionPanel);
         this.add(Box.createHorizontalGlue());
 
         BlueProjectManager.getInstance().addPropertyChangeListener((PropertyChangeEvent evt) -> {
-            if (BlueProjectManager.CURRENT_PROJECT.equals(evt.
-                    getPropertyName())) {
+            if (BlueProjectManager.CURRENT_PROJECT.equals(evt.getPropertyName())) {
                 reinitialize();
             }
         });
@@ -128,7 +121,13 @@ public class MainToolBar extends JToolBar {
      */
     public void setData(BlueData data) {
         transportControls.setData(data);
-        timePanel.setData(data);
+        playheadPanel.setData(data);
+        selectionPanel.setData(data);
+
+        TimeState timeState = (data != null && data.getScore() != null) ? data.getScore().getTimeState() : null;
+
+        playheadPanel.setTimeState(timeState);
+        selectionPanel.setTimeState(timeState);
     }
 
 }

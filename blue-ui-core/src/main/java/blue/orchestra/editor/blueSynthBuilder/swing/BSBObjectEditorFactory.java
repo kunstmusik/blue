@@ -70,40 +70,40 @@ public class BSBObjectEditorFactory {
 //    }
 
     public static BSBObjectView getView(BSBObject bsbObject) {
-        if (bsbObject instanceof BSBGroup) {
-            return new BSBGroupPanel((BSBGroup)bsbObject);
-        } else if (bsbObject instanceof BSBCheckBox) {
-            return new BSBCheckBoxView((BSBCheckBox) bsbObject);
-        } else if (bsbObject instanceof BSBDropdown) {
-            return new BSBDropdownView((BSBDropdown) bsbObject);
+        if (bsbObject instanceof BSBGroup bSBGroup) {
+            return new BSBGroupPanel(bSBGroup);
+        } else if (bsbObject instanceof BSBCheckBox bSBCheckBox) {
+            return new BSBCheckBoxView(bSBCheckBox);
+        } else if (bsbObject instanceof BSBDropdown bSBDropdown) {
+            return new BSBDropdownView(bSBDropdown);
 //        } else if (bsbObject instanceof BSBEnvelopeGenerator) {
 //            return new BSBEnvelopeGenerator((BSBEnvelopeGenerator)bsbObject);
-        } else if (bsbObject instanceof BSBFileSelector) {
-            return new BSBFileSelectorView((BSBFileSelector)bsbObject);
-        } else if (bsbObject instanceof BSBHSlider) {
-            return new BSBHSliderView((BSBHSlider)bsbObject);
-        } else if (bsbObject instanceof BSBHSliderBank) {
-            return new BSBHSliderBankView((BSBHSliderBank)bsbObject);
-        } else if (bsbObject instanceof BSBKnob) {
-            return new BSBKnobView((BSBKnob)bsbObject);
-        } else if (bsbObject instanceof BSBLabel) {
-            return new BSBLabelView((BSBLabel)bsbObject);
-        } else if (bsbObject instanceof BSBLineObject) {
-            return new BSBLineObjectView((BSBLineObject)bsbObject);
-        } else if (bsbObject instanceof BSBSubChannelDropdown) {
-            return new BSBSubChannelDropdownView((BSBSubChannelDropdown)bsbObject);
+        } else if (bsbObject instanceof BSBFileSelector bSBFileSelector) {
+            return new BSBFileSelectorView(bSBFileSelector);
+        } else if (bsbObject instanceof BSBHSlider bSBHSlider) {
+            return new BSBHSliderView(bSBHSlider);
+        } else if (bsbObject instanceof BSBHSliderBank bSBHSliderBank) {
+            return new BSBHSliderBankView(bSBHSliderBank);
+        } else if (bsbObject instanceof BSBKnob bSBKnob) {
+            return new BSBKnobView(bSBKnob);
+        } else if (bsbObject instanceof BSBLabel bSBLabel) {
+            return new BSBLabelView(bSBLabel);
+        } else if (bsbObject instanceof BSBLineObject bSBLineObject) {
+            return new BSBLineObjectView(bSBLineObject);
+        } else if (bsbObject instanceof BSBSubChannelDropdown bSBSubChannelDropdown) {
+            return new BSBSubChannelDropdownView(bSBSubChannelDropdown);
 //        } else if (bsbObject instanceof BSBTabbedPane) {
 //            return new BSBTabbedPaneView((BSBTabbedPane)bsbObject);
-        } else if (bsbObject instanceof BSBTextField) {
-            return new BSBTextFieldView((BSBTextField)bsbObject);
-        } else if (bsbObject instanceof BSBVSlider) {
-            return new BSBVSliderView((BSBVSlider)bsbObject);
-        } else if (bsbObject instanceof BSBVSliderBank) {
-            return new BSBVSliderBankView((BSBVSliderBank)bsbObject);
-        } else if (bsbObject instanceof BSBXYController) {
-            return new BSBXYControllerView((BSBXYController)bsbObject);
-        } else if (bsbObject instanceof BSBValue) {
-            return new BSBValueView((BSBValue)bsbObject);
+        } else if (bsbObject instanceof BSBTextField bSBTextField) {
+            return new BSBTextFieldView(bSBTextField);
+        } else if (bsbObject instanceof BSBVSlider bSBVSlider) {
+            return new BSBVSliderView(bSBVSlider);
+        } else if (bsbObject instanceof BSBVSliderBank bSBVSliderBank) {
+            return new BSBVSliderBankView(bSBVSliderBank);
+        } else if (bsbObject instanceof BSBXYController bSBXYController) {
+            return new BSBXYControllerView(bSBXYController);
+        } else if (bsbObject instanceof BSBValue bSBValue) {
+            return new BSBValueView(bSBValue);
         } else {
             Exceptions.printStackTrace(new Exception("Unknown BSBObject: " + bsbObject.getClass()));
         }

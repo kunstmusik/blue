@@ -396,9 +396,9 @@ public class ScoreNavigatorDialog extends JDialog implements ComponentListener,
                 Component[] comps = layerPanel.getComponents();
 
                 for (Component c : comps) {
-                    if (c instanceof LayerGroupPanel) {
+                    if (c instanceof LayerGroupPanel layerGroupPanel) {
                         g2d.translate(c.getX(), c.getY());
-                        ((LayerGroupPanel) c).paintNavigatorView(g2d);
+                        layerGroupPanel.paintNavigatorView(g2d);
                         g2d.translate(-c.getX(), -c.getY());
                     }
                 }

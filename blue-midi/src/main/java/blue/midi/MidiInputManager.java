@@ -65,16 +65,16 @@ public class MidiInputManager implements Receiver, ChangeListener {
     }
 
     public void rescan() {
-        MidiDevice.Info[] info = MidiSystem.getMidiDeviceInfo();
+        MidiDevice.Info[] infoList = MidiSystem.getMidiDeviceInfo();
 
-        Vector<BlueMidiDevice> newItems = new Vector<>();
+        Vector<BlueMidiDevice> newItems = new Vector<>();;
 
-        for (int i = 0; i < info.length; i++) {
+        for (MidiDevice.Info info : infoList) {
             try {
-                if (MidiSystem.getMidiDevice(info[i]).getMaxTransmitters() != 0) {
+                if (MidiSystem.getMidiDevice(info).getMaxTransmitters() != 0) {
 
                     final BlueMidiDevice blueMidiDevice = new BlueMidiDevice(
-                                info[i]);
+                            info);
                     BlueMidiDevice old = getDeviceByInfo(blueMidiDevice);
 
                     if (old == null) {
@@ -183,7 +183,7 @@ public class MidiInputManager implements Receiver, ChangeListener {
     @Override
     public void send(MidiMessage message, long timeStamp) {
         broadcastMessage(message, timeStamp);
-        //System.out.println(timeStamp + " : " + message);
+        // System.out.println(timeStamp + " : " + message);
     }
 
     @Override

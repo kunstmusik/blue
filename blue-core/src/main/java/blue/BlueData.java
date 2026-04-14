@@ -28,7 +28,6 @@ import blue.udo.OpcodeList;
 import blue.upgrades.UpgradeManager;
 import blue.utility.TextUtilities;
 import blue.utility.UDOUtilities;
-import electric.xml.Attribute;
 import electric.xml.Document;
 import electric.xml.Element;
 import electric.xml.Elements;
@@ -43,7 +42,7 @@ import org.openide.util.Lookup;
  */
 public class BlueData implements BlueDataObject {
 
-    private final transient Vector listeners = new Vector();
+    private final transient Vector<PropertyChangeListener> listeners = new Vector<>();
 
     private String version;
 
@@ -107,7 +106,8 @@ public class BlueData implements BlueDataObject {
         loopRendering = false;
 
         score = new Score();
-//        score.addLayerGroup(new PolyObject());
+        // score.addLayerGroup(new PolyObject());
+        score.getTimeContext().setProjectProperties(projectProperties);
         liveData = new LiveData();
         midiInputProcessor = new MidiInputProcessor();
         pluginData = new ArrayList<>();
@@ -137,6 +137,7 @@ public class BlueData implements BlueDataObject {
         loopRendering = data.isLoopRendering();
 
         score = new Score(data.getScore());
+        score.getTimeContext().setProjectProperties(projectProperties);
         liveData = new LiveData(data.getLiveData());
         midiInputProcessor = new MidiInputProcessor(data.getMidiInputProcessor());
         pluginData = new ArrayList<>();
@@ -190,6 +191,9 @@ public class BlueData implements BlueDataObject {
 
     public void setProjectProperties(ProjectProperties projectProperties) {
         this.projectProperties = projectProperties;
+        if (score != null && score.getTimeContext() != null) {
+            score.getTimeContext().setProjectProperties(projectProperties);
+        }
     }
 
     public GlobalOrcSco getGlobalOrcSco() {
@@ -243,14 +247,14 @@ public class BlueData implements BlueDataObject {
             Document d = new Document(text);
             tempData = BlueData.loadFromXML(d.getElement("blueData"));
         }
-// FIXME - Dead Code
-//        else {
-//            XMLSerializer xmlSer = new XMLSerializer();
-//            try (BufferedReader xmlIn = new BufferedReader(new StringReader(text))) {
-//                tempData = (BlueData) xmlSer.read(xmlIn);
-//            }
-//            tempData.upgradeData();
-//        }
+        // FIXME - Dead Code
+        // else {
+        // XMLSerializer xmlSer = new XMLSerializer();
+        // try (BufferedReader xmlIn = new BufferedReader(new StringReader(text))) {
+        // tempData = (BlueData) xmlSer.read(xmlIn);
+        // }
+        // tempData.upgradeData();
+        // }
 
         return tempData;
     }
@@ -275,8 +279,7 @@ public class BlueData implements BlueDataObject {
             blueData.setVersion(versionAttribute);
         }
 
-        BlueDataObjectManager bdoManager = Lookup.getDefault().
-                lookup(BlueDataObjectManager.class);
+        BlueDataObjectManager bdoManager = Lookup.getDefault().lookup(BlueDataObjectManager.class);
 
         while (nodes.hasMoreElements()) {
             Element node = nodes.next();
@@ -352,6 +355,18 @@ public class BlueData implements BlueDataObject {
                     blueData.midiInputProcessor = MidiInputProcessor.loadFromXML(
                             node);
                     break;
+                case "timeContext":
+                    // Legacy: timeContext used to be stored in BlueData,
+                    // now it's part of Score. Migrate if Score doesn't have one yet.
+                    if (blueData.score != null && blueData.score.getTimeContext() != null) {
+                        try {
+                            blueData.score.setTimeContext(
+                                blue.time.TimeContext.loadFromXML(node));
+                        } catch (Exception e) {
+                            throw new RuntimeException("Failed to load timeContext", e);
+                        }
+                    }
+                    break;
                 case "pluginData":
                     Elements pluginElems = node.getElements();
                     while (pluginElems.hasMoreElements()) {
@@ -376,6 +391,10 @@ public class BlueData implements BlueDataObject {
             blueData.mixer = m;
         } else {
             blueData.mixer.setEnabled(false);
+        }
+
+        if (blueData.score != null && blueData.score.getTimeContext() != null) {
+            blueData.score.getTimeContext().setProjectProperties(blueData.projectProperties);
         }
 
         return blueData;
@@ -416,6 +435,7 @@ public class BlueData implements BlueDataObject {
                 Boolean.toString(loopRendering));
 
         retVal.addElement(midiInputProcessor.saveAsXML());
+        // Note: timeContext is now saved as part of Score
 
         Element pluginElems = retVal.addElement("pluginData");
 
@@ -452,8 +472,7 @@ public class BlueData implements BlueDataObject {
         }
 
         PropertyChangeEvent pce = new PropertyChangeEvent(this,
-                "renderStartTime", new Double(this.renderStartTime), new Double(
-                        renderStartTime));
+                "renderStartTime", this.renderStartTime, renderStartTime);
 
         this.renderStartTime = renderStartTime;
 
@@ -461,8 +480,7 @@ public class BlueData implements BlueDataObject {
 
         if (renderStartTime >= this.renderEndTime) {
             PropertyChangeEvent pce2 = new PropertyChangeEvent(this,
-                    "renderLoopTime", new Double(this.renderEndTime), new Double(
-                            -1.0f));
+                    "renderLoopTime", this.renderEndTime, -1.0f);
 
             this.renderEndTime = -1.0f;
 
@@ -487,8 +505,7 @@ public class BlueData implements BlueDataObject {
         }
 
         PropertyChangeEvent pce = new PropertyChangeEvent(this,
-                "renderLoopTime", new Double(this.renderEndTime), new Double(
-                        newRenderLoopTime));
+                "renderLoopTime", this.renderEndTime, newRenderLoopTime);
 
         this.renderEndTime = newRenderLoopTime;
 
@@ -500,10 +517,7 @@ public class BlueData implements BlueDataObject {
             return;
         }
 
-        for (Iterator iter = listeners.iterator(); iter.hasNext();) {
-            PropertyChangeListener listener = (PropertyChangeListener) iter
-                    .next();
-
+        for (var listener : listeners) {
             listener.propertyChange(pce);
         }
     }
@@ -526,7 +540,7 @@ public class BlueData implements BlueDataObject {
 
         PropertyChangeEvent pce = new PropertyChangeEvent(this,
                 "loopRendering", Boolean.valueOf(oldVal), Boolean
-                .valueOf(loopRendering));
+                        .valueOf(loopRendering));
 
         this.loopRendering = loopRendering;
 
@@ -568,125 +582,125 @@ public class BlueData implements BlueDataObject {
 
     // FIXME - ensure upgradeData info is taken into account when developing
     // upgrader after 2.7.0
-//    public void upgradeData() {
-//        if (commandLine != null || title != null || author != null
-//                || notes != null || CsOptions != null || sampleRate != null
-//                || controlRate != null || channels != null
-//                || commandLine != null) {
-//
-//            projectProperties.title = title;
-//            projectProperties.author = author;
-//            projectProperties.notes = notes;
-//            projectProperties.sampleRate = sampleRate;
-//
-//            String ksmps = "1";
-//
-//            try {
-//                int ksmpsNum = Integer.parseInt(sampleRate)
-//                        / Integer.parseInt(controlRate);
-//                ksmps = Integer.toString(ksmpsNum);
-//            } catch (NumberFormatException nfe) {
-//
-//            }
-//
-//            projectProperties.ksmps = ksmps;
-//
-//            projectProperties.channels = channels;
-//
-//            projectProperties.advancedSettings = commandLine;
-//            projectProperties.completeOverride = true;
-//        }
-//
-//        projectProperties.upgradeData();
-//
-//        commandLine = null;
-//        title = null;
-//        author = null;
-//        notes = null;
-//        CsOptions = null;
-//        sampleRate = null;
-//        controlRate = null;
-//        channels = null;
-//        commandLine = null;
-//
-//        // for version 0.89.5, moving data to globalOrcSco
-//        if (this.globalScore != null) {
-//            this.globalOrcSco.setGlobalSco(this.globalScore);
-//        }
-//        this.globalScore = null;
-//
-//        if (this.orchestra != null && this.orchestra.globals != null) {
-//            this.globalOrcSco.setGlobalOrc(this.orchestra.globals);
-//            this.orchestra.globals = null;
-//        }
-//
-//        if (this.tables != null) {
-//            System.out.println("tables not null");
-//            this.tableSet.setTables(this.tables);
-//        }
-//        this.tables = null;
-//
-//        // for 0.91.5, converting all repetitionObjects to genericScore
-////        convertRepetitionObjects(this.pObj);
-//        convertOrchestra();
-//
-//    }
-//    /**
-//     * Added in 0.95.0 for converting Arrangement to not depend on references to
-//     * instrument in project Instrument
-//     */
-//    public void normalizeArrangement() {
-//        arrangement.normalize();
-//    }
-//
-//    /**
-//     * Added in 0.94.0 for converting Orchestra to InstrumentLibrary/Arrangement
-//     */
-//    private void convertOrchestra() {
-//        if (this.orchestra == null) {
-//            return;
-//        }
-//
-//        TreeMap tree = orchestra.orch;
-//
-//        for (Iterator iter = tree.entrySet().iterator(); iter.hasNext();) {
-//            Map.Entry entry = (Entry) iter.next();
-//
-//            Integer key = (Integer) entry.getKey();
-//            Instrument instr = (Instrument) entry.getValue();
-//            // instrumentLibrary.getRootInstrumentCategory().addInstrument(instr);
-//
-//            if (instr.isEnabled()) {
-//                arrangement.insertInstrument(key.toString(), instr);
-//            }
-//        }
-//
-//        this.orchestra = null;
-//    }
-//
-//    // ADDED IN 0.91.5 FOR CONVERTING REPETITION OBJECTS TO GENERIC SCORE
-//    private void convertRepetitionObjects(PolyObject pObj) {
-//        RepetitionObject repObj;
-//        GenericScore genScore;
-//
-//        for (SoundLayer sLayer : pObj) {
-//
-//            for (SoundObject tempSObj : sLayer) {
-//                if (tempSObj instanceof PolyObject) {
-//                    convertRepetitionObjects((PolyObject) tempSObj);
-//                } else if (tempSObj instanceof RepetitionObject) {
-//                    repObj = (RepetitionObject) tempSObj;
-//                    genScore = new GenericScore();
-//                    genScore.setText(repObj.getText());
-//                    genScore.setTimeBehavior(SoundObject.TIME_BEHAVIOR_REPEAT);
-//                    genScore.setStartTime(repObj.getStartTime());
-//                    genScore.setSubjectiveDuration(repObj
-//                            .getSubjectiveDuration());
-//                    genScore.setName(repObj.getName());
-//
-//                    sLayer.set(sLayer.indexOf(repObj), genScore);
-//                }
-//            }
-//        }
-//    }
+    // public void upgradeData() {
+    // if (commandLine != null || title != null || author != null
+    // || notes != null || CsOptions != null || sampleRate != null
+    // || controlRate != null || channels != null
+    // || commandLine != null) {
+    //
+    // projectProperties.title = title;
+    // projectProperties.author = author;
+    // projectProperties.notes = notes;
+    // projectProperties.sampleRate = sampleRate;
+    //
+    // String ksmps = "1";
+    //
+    // try {
+    // int ksmpsNum = Integer.parseInt(sampleRate)
+    // / Integer.parseInt(controlRate);
+    // ksmps = Integer.toString(ksmpsNum);
+    // } catch (NumberFormatException nfe) {
+    //
+    // }
+    //
+    // projectProperties.ksmps = ksmps;
+    //
+    // projectProperties.channels = channels;
+    //
+    // projectProperties.advancedSettings = commandLine;
+    // projectProperties.completeOverride = true;
+    // }
+    //
+    // projectProperties.upgradeData();
+    //
+    // commandLine = null;
+    // title = null;
+    // author = null;
+    // notes = null;
+    // CsOptions = null;
+    // sampleRate = null;
+    // controlRate = null;
+    // channels = null;
+    // commandLine = null;
+    //
+    // // for version 0.89.5, moving data to globalOrcSco
+    // if (this.globalScore != null) {
+    // this.globalOrcSco.setGlobalSco(this.globalScore);
+    // }
+    // this.globalScore = null;
+    //
+    // if (this.orchestra != null && this.orchestra.globals != null) {
+    // this.globalOrcSco.setGlobalOrc(this.orchestra.globals);
+    // this.orchestra.globals = null;
+    // }
+    //
+    // if (this.tables != null) {
+    // System.out.println("tables not null");
+    // this.tableSet.setTables(this.tables);
+    // }
+    // this.tables = null;
+    //
+    // // for 0.91.5, converting all repetitionObjects to genericScore
+    //// convertRepetitionObjects(this.pObj);
+    // convertOrchestra();
+    //
+    // }
+    // /**
+    // * Added in 0.95.0 for converting Arrangement to not depend on references to
+    // * instrument in project Instrument
+    // */
+    // public void normalizeArrangement() {
+    // arrangement.normalize();
+    // }
+    //
+    // /**
+    // * Added in 0.94.0 for converting Orchestra to InstrumentLibrary/Arrangement
+    // */
+    // private void convertOrchestra() {
+    // if (this.orchestra == null) {
+    // return;
+    // }
+    //
+    // TreeMap tree = orchestra.orch;
+    //
+    // for (Iterator iter = tree.entrySet().iterator(); iter.hasNext();) {
+    // Map.Entry entry = (Entry) iter.next();
+    //
+    // Integer key = (Integer) entry.getKey();
+    // Instrument instr = (Instrument) entry.getValue();
+    // // instrumentLibrary.getRootInstrumentCategory().addInstrument(instr);
+    //
+    // if (instr.isEnabled()) {
+    // arrangement.insertInstrument(key.toString(), instr);
+    // }
+    // }
+    //
+    // this.orchestra = null;
+    // }
+    //
+    // // ADDED IN 0.91.5 FOR CONVERTING REPETITION OBJECTS TO GENERIC SCORE
+    // private void convertRepetitionObjects(PolyObject pObj) {
+    // RepetitionObject repObj;
+    // GenericScore genScore;
+    //
+    // for (SoundLayer sLayer : pObj) {
+    //
+    // for (SoundObject tempSObj : sLayer) {
+    // if (tempSObj instanceof PolyObject) {
+    // convertRepetitionObjects((PolyObject) tempSObj);
+    // } else if (tempSObj instanceof RepetitionObject) {
+    // repObj = (RepetitionObject) tempSObj;
+    // genScore = new GenericScore();
+    // genScore.setText(repObj.getText());
+    // genScore.setTimeBehavior(SoundObject.TIME_BEHAVIOR_REPEAT);
+    // genScore.setStartTime(repObj.getStartTime());
+    // genScore.setSubjectiveDuration(repObj
+    // .getSubjectiveDuration());
+    // genScore.setName(repObj.getName());
+    //
+    // sLayer.set(sLayer.indexOf(repObj), genScore);
+    // }
+    // }
+    // }
+    // }
 }

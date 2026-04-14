@@ -20,35 +20,39 @@
 package blue.score.layers.patterns.core;
 
 import electric.xml.Element;
-import org.junit.*;
-import static org.junit.Assert.*;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  *
  * @author stevenyi
  */
-public class PatternDataTest {
+class PatternDataTest {
     
     private PatternData patternData = null;
     
     public PatternDataTest() {
     }
 
-    @BeforeClass
+    @BeforeAll
     public static void setUpClass() throws Exception {
     }
 
-    @AfterClass
+    @AfterAll
     public static void tearDownClass() throws Exception {
     }
     
-    @Before
-    public void setUp() {
+    @BeforeEach
+    void setUp() {
         patternData = new PatternData();
     }
     
-    @After
-    public void tearDown() {
+    @AfterEach
+    void tearDown() {
         patternData = null;
     }
 
@@ -56,7 +60,7 @@ public class PatternDataTest {
      * Test of isPatternSet method, of class PatternData.
      */
     @Test
-    public void testIsPatternSet() {
+    void testIsPatternSet() {
         assertFalse(patternData.isPatternSet(1));
         patternData.setPattern(1, true);
         assertTrue(patternData.isPatternSet(1));
@@ -70,7 +74,7 @@ public class PatternDataTest {
      * Test of setPattern method, of class PatternData.
      */
     @Test
-    public void testSetPattern() {
+    void testSetPattern() {
         assertFalse(patternData.isPatternSet(1));
         patternData.setPattern(1, true);
         assertTrue(patternData.isPatternSet(1));
@@ -86,7 +90,7 @@ public class PatternDataTest {
      * Test of calculateMaxSelected method, of class PatternData.
      */
     @Test
-    public void testCalculateMaxSelected() {
+    void testCalculateMaxSelected() {
         assertEquals(-1, patternData.getMaxSelected());
         patternData.setPattern(2, true);
         assertEquals(2, patternData.getMaxSelected());
@@ -104,7 +108,7 @@ public class PatternDataTest {
      * Test of resizePatterns method, of class PatternData.
      */
     @Test
-    public void testResizePatterns() {
+    void testResizePatterns() {
         assertEquals(16, patternData.getSize());
         patternData.resizePatterns(35);
         assertEquals(48, patternData.getSize());
@@ -113,7 +117,7 @@ public class PatternDataTest {
     }
     
     @Test
-    public void testSaveAsXML() {
+    void testSaveAsXML() {
         Element data = patternData.saveAsXML();
         assertEquals("0000000000000000", data.getTextString());
         
@@ -133,7 +137,7 @@ public class PatternDataTest {
     }
     
     @Test
-    public void testLoadFromXML() {
+    void testLoadFromXML() {
         patternData.setPattern(0, true);
         patternData.setPattern(4, true);
         patternData.setPattern(15, true);

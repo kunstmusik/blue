@@ -29,6 +29,8 @@ import blue.plugin.SoundObjectPlugin;
 import blue.score.ScoreObjectEvent;
 import blue.scripting.ScoreScriptEngine;
 import blue.scripting.ScoreScriptEngineManager;
+import blue.time.TimeContext;
+import blue.time.TimeDuration;
 import blue.utility.ScoreUtilities;
 import blue.utility.XMLUtilities;
 import electric.xml.Element;
@@ -52,7 +54,7 @@ public class ObjectBuilder extends AbstractSoundObject {
     private boolean editEnabled = true;
     private NoteProcessorChain npc = new NoteProcessorChain();
     private TimeBehavior timeBehavior;
-    double repeatPoint = -1.0f;
+    TimeDuration repeatPoint = null;
     StringProperty comment;
 
     ObjectProperty<LanguageType> languageType;
@@ -84,20 +86,15 @@ public class ObjectBuilder extends AbstractSoundObject {
     }
 
     // GENERATION METHODS
-    public NoteList generateNotes(BSBCompilationUnit bsbCompilationUnit, double renderStart, double renderEnd) throws SoundObjectException {
+    public NoteList generateNotes(TimeContext context, BSBCompilationUnit bsbCompilationUnit, double renderStart, double renderEnd) throws SoundObjectException {
         String codeToRun = bsbCompilationUnit.replaceBSBValues(code);
 
         String tempScore = null;
         NoteList nl;
 
-        Map<String, Object> initVals = new HashMap<>();
-
         File currentDirFile = BlueSystem.getCurrentProjectDirectory();
-
-        initVals.put("score", "");
-        initVals.put("blueDuration", getSubjectiveDuration());
-        initVals.put("commandline", this.commandLine);
-        initVals.put("blueProjectDir", currentDirFile);
+        Map<String, Object> initVals = createScoreScriptInitValues(context,
+                currentDirFile);
 
         ScoreScriptEngine engine
                 = ScoreScriptEngineManager.getInstance().getEngine(
@@ -125,11 +122,24 @@ public class ObjectBuilder extends AbstractSoundObject {
             throw new SoundObjectException(this, e);
         }
 
-        ScoreUtilities.applyTimeBehavior(nl, this.getTimeBehavior(), this
-                .getSubjectiveDuration(), this.getRepeatPoint());
+        double duration = this.getSubjectiveDuration().toBeats(context);
+        double startTime = getStartTime().toBeats(context);
+        
+        double rpBeats = this.getRepeatPoint() != null ? this.getRepeatPoint().toBeats(context) : -1.0;
+        ScoreUtilities.applyTimeBehavior(nl, this.getTimeBehavior(), duration, rpBeats);
         ScoreUtilities.setScoreStart(nl, startTime);
 
         return nl;
+    }
+
+    Map<String, Object> createScoreScriptInitValues(TimeContext context,
+            File currentDirFile) {
+        Map<String, Object> initVals = new HashMap<>();
+        initVals.put("score", "");
+        initVals.put("blueDuration", getSubjectiveDuration().toBeats(context));
+        initVals.put("commandline", this.commandLine);
+        initVals.put("blueProjectDir", currentDirFile);
+        return initVals;
     }
 
     private String getIOExceptionMessage() {
@@ -150,7 +160,7 @@ public class ObjectBuilder extends AbstractSoundObject {
 
     // END GENERATION METHODS
     @Override
-    public double getObjectiveDuration() {
+    public TimeDuration getObjectiveDuration(TimeContext context) {
         return getSubjectiveDuration();
     }
 
@@ -178,12 +188,12 @@ public class ObjectBuilder extends AbstractSoundObject {
     }
 
     @Override
-    public double getRepeatPoint() {
+    public TimeDuration getRepeatPoint() {
         return this.repeatPoint;
     }
 
     @Override
-    public void setRepeatPoint(double repeatPoint) {
+    public void setRepeatPoint(TimeDuration repeatPoint) {
         this.repeatPoint = repeatPoint;
 
         ScoreObjectEvent event = new ScoreObjectEvent(this,
@@ -300,7 +310,7 @@ public class ObjectBuilder extends AbstractSoundObject {
     }
 
     public void setCode(String code) {
-        this.code = (code == null) ? "" : code;
+        this.code = java.util.Objects.requireNonNullElse(code, "");
     }
 
     public String getCommandLine() {
@@ -336,12 +346,12 @@ public class ObjectBuilder extends AbstractSoundObject {
     }
 
     @Override
-    public NoteList generateForCSD(CompileData compileData, double startTime,
+    public NoteList generateForCSD(TimeContext context, CompileData compileData, double startTime,
             double endTime) throws SoundObjectException {
         BSBCompilationUnit bsbCompilationUnit = new BSBCompilationUnit();
         graphicInterface.setupForCompilation(bsbCompilationUnit);
 
-        NoteList nl = generateNotes(bsbCompilationUnit, startTime, endTime);
+        NoteList nl = generateNotes(context, bsbCompilationUnit, startTime, endTime);
         return nl;
 
     }

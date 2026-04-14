@@ -7,7 +7,6 @@ package blue.ui.core.toolbar;
 import blue.BlueData;
 import blue.services.render.RenderTimeManager;
 import blue.services.render.RenderTimeManagerListener;
-import blue.settings.PlaybackSettings;
 import blue.time.TimeUtilities;
 import blue.utility.NumberUtilities;
 import java.awt.Color;
@@ -71,20 +70,16 @@ public class TimeDisplayPanel extends javax.swing.JPanel {
 
             @Override
             public void renderEnded() {
+                if (data != null) {
+                    playheadTimeValue = data.getRenderStartTime();
+                }
                 updatePlayheadTime();
             }
 
             @Override
-            public void renderTimeUpdated(double timePointer) {
-
-                if (timePointer >= 0) {
-                    double latency = PlaybackSettings.getInstance().
-                            getPlaybackLatencyCorrection();
-
-                    playheadTimeValue = timePointer + renderTimeManager.getRenderStartTime() - latency;
-
-                    updatePlayheadTime();
-                }
+            public void renderTimeUpdated(double beatTime, double secondsTime) {
+                playheadTimeValue = beatTime;
+                updatePlayheadTime();
             }
 
         });
@@ -148,8 +143,6 @@ public class TimeDisplayPanel extends javax.swing.JPanel {
         
         var insets = getInsets();
         
-        System.out.println(insets);
-
         g.setColor(Color.BLACK);
         g.fillRoundRect(insets.left, insets.top, w - insets.right - insets.left, h - insets.top - insets.bottom, 16, 16);
     }

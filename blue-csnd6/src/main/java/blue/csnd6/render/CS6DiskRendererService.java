@@ -9,7 +9,8 @@ import java.util.Vector;
 
 import blue.automation.Parameter;
 import blue.event.PlayModeListener;
-import blue.noteProcessor.TempoMapper;
+import blue.time.TempoMap;
+
 import blue.score.ScoreGenerationException;
 import blue.services.render.CSDRenderService;
 import blue.services.render.CsdRenderResult;
@@ -18,8 +19,7 @@ import blue.services.render.DiskRenderService;
 import blue.services.render.RenderTimeManager;
 import blue.settings.PlaybackSettings;
 import blue.utility.FileUtilities;
-import com.kunstmusik.csoundjni.Csound;
-
+import com.kunstmusik.csoundffm.Csound;
 import java.awt.Color;
 import java.io.IOException;
 import org.openide.util.Exceptions;
@@ -30,7 +30,7 @@ import org.openide.windows.InputOutput;
 
 public class CS6DiskRendererService implements DiskRenderService {
 
-    Vector listeners = new Vector();
+    private Vector<PlayModeListener> listeners = new Vector<>();
     RenderTimeManager renderTimeManager = null;
     private volatile boolean keepRunning = false;
     // NOTE: Must store at class level to prevent pre-mature garbage collection
@@ -44,7 +44,7 @@ public class CS6DiskRendererService implements DiskRenderService {
 
     @Override
     public String toString() {
-        return "Csound 6 API";
+        return "Csound 7 API";
     }
 
     @Override
@@ -63,7 +63,7 @@ public class CS6DiskRendererService implements DiskRenderService {
     private void exec(String[] args,
             File currentWorkingDirectory,
             double startTime,
-            TempoMapper mapper,
+            TempoMap tempoMap,
             ArrayList<Parameter> parameters) {
 
         //csnd.csoundInitialize(null, null, csnd.CSOUNDINIT_NO_SIGNAL_HANDLER);
@@ -108,12 +108,11 @@ public class CS6DiskRendererService implements DiskRenderService {
 
         if (retVal != 0) {
             notifyPlayModeListeners(PlayModeListener.PLAY_MODE_STOP);
-            csound.stop();
-            csound.cleanup();
             csound.setMessageCallback(null);
             csound.reset();
             return;
         }
+        csound.start();
 
         int updateRate = (int) (csound.getKr()
                 / PlaybackSettings.getInstance().getPlaybackFPS());
@@ -139,9 +138,9 @@ public class CS6DiskRendererService implements DiskRenderService {
             double currentTime = 0.0f;
 
             if (startTime >= 0.0f) {
-                if (mapper != null) {
-                    double renderStartSeconds = mapper.beatsToSeconds(startTime);
-                    currentTime = mapper.secondsToBeats(
+                if (tempoMap != null) {
+                    double renderStartSeconds = tempoMap.beatsToSeconds(startTime);
+                    currentTime = tempoMap.secondsToBeats(
                             scoreTime + renderStartSeconds);
                     currentTime -= startTime;
                 } else {
@@ -151,8 +150,8 @@ public class CS6DiskRendererService implements DiskRenderService {
 
 
             if (parameters != null) {
-                for (int i = 0; i < parameters.size(); i++) {
-                    param = parameters.get(i);
+                for (Parameter parameter : parameters) {
+                    param = parameter;
                     String varName = param.getCompilationVarName();
 
                     double value = param.getValue(currentTime);
@@ -161,10 +160,9 @@ public class CS6DiskRendererService implements DiskRenderService {
                 }
             }
         } while (csound.performKsmps() == 0 && keepRunning);
-        csound.stop();
-        csound.cleanup();
-        csound.setMessageCallback(null);
+
         csound.reset();
+        csound.setMessageCallback(null);
 
 
         manager.endRender();
@@ -179,7 +177,7 @@ public class CS6DiskRendererService implements DiskRenderService {
     public void execWait(String[] args,
             File currentWorkingDirectory,
             double startTime,
-            TempoMapper mapper,
+            TempoMap mapper,
             ArrayList<Parameter> parameters) {
         initialize();
         exec(args, currentWorkingDirectory, startTime, mapper, parameters);
@@ -215,19 +213,18 @@ public class CS6DiskRendererService implements DiskRenderService {
 
         if (retVal != 0) {
             blueCallbackWrapper.setStringBuffer(null);
-            csound.stop();
-            csound.cleanup();
-            csound.setMessageCallback(null);
             csound.reset();
+            csound.setMessageCallback(null);
+
             return buffer.toString();
         }
+        
+        csound.start();
 
 
         while (csound.performKsmps() == 0 && keepRunning) {
             // empty
         }
-        csound.stop();
-        csound.cleanup();
         csound.setMessageCallback(null);
         csound.reset();
 
@@ -252,8 +249,7 @@ public class CS6DiskRendererService implements DiskRenderService {
     }
 
     public void notifyPlayModeListeners(int playMode) {
-        for (Iterator iter = listeners.iterator(); iter.hasNext();) {
-            PlayModeListener listener = (PlayModeListener) iter.next();
+        for (PlayModeListener listener : listeners) {
             listener.playModeChanged(playMode);
         }
     }
@@ -347,21 +343,20 @@ public class CS6DiskRendererService implements DiskRenderService {
 
         if (retVal != 0) {
             notifyPlayModeListeners(PlayModeListener.PLAY_MODE_STOP);
-            csound.stop();
-            csound.cleanup();
             csound.setMessageCallback(null);
             csound.reset();
             return;
         }
+        
+        csound.start();
 
         while (csound.performKsmps() == 0 && keepRunning) {
             
         }
-        csound.stop();
-        csound.cleanup();
+        
         csound.setMessageCallback(null);
         csound.reset();
-
+        
         keepRunning = false;
 
         notifyPlayModeListeners(PlayModeListener.PLAY_MODE_STOP);
@@ -371,6 +366,6 @@ public class CS6DiskRendererService implements DiskRenderService {
 
     @Override
     public int getCsoundVersion(String csoundCommand) {
-        return 6;
+        return 7;
     }
 }

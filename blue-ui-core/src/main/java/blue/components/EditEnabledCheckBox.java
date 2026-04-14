@@ -55,8 +55,8 @@ public class EditEnabledCheckBox extends JCheckBox implements ActionListener {
         EventListener[] listeners = listenerList
                 .getListeners(EditModeListener.class);
 
-        for (int i = 0; i < listeners.length; i++) {
-            EditModeListener listener = (EditModeListener) listeners[i];
+        for (EventListener eventListener : listeners) {
+            EditModeListener listener = (EditModeListener) eventListener;
             listener.setEditing(val);
         }
 

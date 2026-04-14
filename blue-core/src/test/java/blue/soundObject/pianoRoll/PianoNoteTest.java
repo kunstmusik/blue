@@ -21,36 +21,36 @@ package blue.soundObject.pianoRoll;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import org.junit.After;
-import org.junit.AfterClass;
-import static org.junit.Assert.*;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.AfterAll;
+import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 /**
  *
  * @author stevenyi
  */
-public class PianoNoteTest {
+class PianoNoteTest {
     
     public PianoNoteTest() {
     }
     
-    @BeforeClass
+    @BeforeAll
     public static void setUpClass() {
     }
     
-    @AfterClass
+    @AfterAll
     public static void tearDownClass() {
     }
     
-    @Before
-    public void setUp() {
+    @BeforeEach
+    void setUp() {
     }
     
-    @After
-    public void tearDown() {
+    @AfterEach
+    void tearDown() {
     }
 
     
@@ -58,7 +58,7 @@ public class PianoNoteTest {
      * Test of compareTo method, of class PianoNote.
      */
     @Test
-    public void testCompareTo() {
+    void testCompareTo() {
         
         ArrayList<PianoNote> list = new ArrayList<>();
         

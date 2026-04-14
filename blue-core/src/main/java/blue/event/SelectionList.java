@@ -28,25 +28,17 @@ public class SelectionList<T> extends ArrayList<T> implements SelectionListener<
 
     @Override
     public void selectionPerformed(SelectionEvent<T> e) {
-        switch (e.getSelectionType()) {
-            case SelectionEvent.SELECTION_CLEAR:
-                this.clear();
-                break;
-            case SelectionEvent.SELECTION_SINGLE:
-                T selectedItem = e.getSelectedItem();
-                if (this.contains(selectedItem)) {
-                    return;
+        switch (e.selectionType()) {
+            case SelectionEvent.SELECTION_CLEAR -> this.clear();
+            case SelectionEvent.SELECTION_SINGLE -> {
+                T selectedItem = e.selectedItem();
+                if (!this.contains(selectedItem)) {
+                    this.clear();
+                    this.add(selectedItem);
                 }
-                this.clear();
-                this.add(selectedItem);
-
-                break;
-            case SelectionEvent.SELECTION_ADD:
-                this.add(e.getSelectedItem());
-                break;
-            case SelectionEvent.SELECTION_REMOVE:
-                this.remove(e.getSelectedItem());
-                break;
+            }
+            case SelectionEvent.SELECTION_ADD -> this.add(e.selectedItem());
+            case SelectionEvent.SELECTION_REMOVE -> this.remove(e.selectedItem());
         }
 
     }

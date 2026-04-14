@@ -154,8 +154,7 @@ public class PresetsTreeModel implements TreeModel {
     public int getChildCount(Object parent) {
         if (parent instanceof Preset) {
             return 0;
-        } else if (parent instanceof PresetGroup) {
-            PresetGroup presetGroup = (PresetGroup) parent;
+        } else if (parent instanceof PresetGroup presetGroup) {
             return presetGroup.getSubGroups().size()
                     + presetGroup.getPresets().size();
         }
@@ -184,10 +183,10 @@ public class PresetsTreeModel implements TreeModel {
     public void valueForPathChanged(TreePath path, Object newValue) {
         Object obj = path.getLastPathComponent();
 
-        if (obj instanceof PresetGroup) {
-            ((PresetGroup) obj).setPresetGroupName(newValue.toString());
-        } else if (obj instanceof Preset) {
-            ((Preset) obj).setPresetName(newValue.toString());
+        if (obj instanceof PresetGroup presetGroup) {
+            presetGroup.setPresetGroupName(newValue.toString());
+        } else if (obj instanceof Preset preset) {
+            preset.setPresetName(newValue.toString());
         }
 
         TreeModelEvent e = new TreeModelEvent(this, path);

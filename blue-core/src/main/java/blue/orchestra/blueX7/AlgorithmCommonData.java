@@ -4,6 +4,8 @@ import blue.utility.XMLUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
 
+import java.util.Arrays;
+
 /**
  * <p>
  * Title: blue
@@ -32,9 +34,7 @@ public class AlgorithmCommonData {
     public boolean[] operators = new boolean[6];
 
     public AlgorithmCommonData() {
-        for (int i = 0; i < operators.length; i++) {
-            operators[i] = true;
-        }
+        Arrays.fill(operators, true);
     }
 
     public AlgorithmCommonData(AlgorithmCommonData acd) {
@@ -75,8 +75,8 @@ public class AlgorithmCommonData {
         retVal.addElement(XMLUtilities.writeInt("algorithm", algorithm));
         retVal.addElement(XMLUtilities.writeInt("feedback", feedback));
 
-        for (int i = 0; i < operators.length; i++) {
-            Element elem = XMLUtilities.writeBoolean("operator", operators[i]);
+        for (boolean operator : operators) {
+            Element elem = XMLUtilities.writeBoolean("operator", operator);
             retVal.addElement(elem);
         }
 

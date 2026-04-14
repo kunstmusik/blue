@@ -66,13 +66,13 @@ public class ObjectUtilities {
         System.out.println(obj.toString());
         Method[] methods = obj.getClass().getMethods();
 
-        for (int i = 0; i < methods.length; i++) {
+        for (Method method : methods) {
 
             try {
-                if (methods[i].getName().startsWith("get")
-                        || methods[i].getName().startsWith("is")) {
-                    System.out.println(methods[i].getName() + " : "
-                            + methods[i].invoke(obj));
+                if (method.getName().startsWith("get")
+                        || method.getName().startsWith("is")) {
+                    System.out.println(method.getName() + " : "
+                            + method.invoke(obj));
                 }
 
             } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {

@@ -25,6 +25,7 @@ import blue.score.ScoreObjectListener;
 import blue.score.TimeState;
 import blue.score.layers.audio.core.AudioClip;
 import blue.score.layers.audio.core.FadeType;
+import blue.time.TimeContextManager;
 import blue.ui.core.score.ScoreObjectView;
 import blue.ui.core.score.ScoreTopComponent;
 import blue.ui.utilities.BlueGradientFactory;
@@ -44,8 +45,6 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.Collection;
 import java.util.function.BiConsumer;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 import org.openide.util.Lookup;
@@ -59,8 +58,7 @@ import org.openide.windows.WindowManager;
  */
 public class AudioClipPanel extends JPanel
         implements PropertyChangeListener, ScoreObjectListener,
-        ScoreObjectView<AudioClip>, LookupListener,
-        ChangeListener<Number> {
+        ScoreObjectView<AudioClip>, LookupListener {
 
     protected static final AudioWaveformCache waveformCache
             = AudioWaveformCache.getInstance();
@@ -91,17 +89,22 @@ public class AudioClipPanel extends JPanel
 
     private final BiConsumer<AudioClip, Double> splitHandler;
 
-    ChangeListener<Number> fadeListener = (obs, o, n) -> {
-        updateFadeHandleLocations();
-        repaint();
-    };
-
-    ChangeListener<FadeType> fadeTypeListener = (obs, o, n) -> {
-        repaint();
-    };
-
-    ChangeListener<Boolean> loopingListener = (obs, o, n) -> {
-        repaint();
+    private final PropertyChangeListener clipPropertyListener = evt -> {
+        switch (evt.getPropertyName()) {
+            case AudioClip.FILE_START_TIME:
+                repaint();
+                break;
+            case AudioClip.FADE_IN:
+            case AudioClip.FADE_OUT:
+                updateFadeHandleLocations();
+                repaint();
+                break;
+            case AudioClip.FADE_IN_TYPE:
+            case AudioClip.FADE_OUT_TYPE:
+            case AudioClip.LOOPING:
+                repaint();
+                break;
+        }
     };
 
     MouseAdapter releaseOutsideAdapter = new MouseAdapter() {
@@ -199,7 +202,8 @@ public class AudioClipPanel extends JPanel
 
                     } else {
                         newTime = Math.max(0.0f, newTime);
-                        newTime = Math.min(audioDuration - audioClip.getDuration(), newTime);
+                        newTime = Math.min(audioDuration
+                                - audioClip.getSubjectiveDuration().toBeats(TimeContextManager.getContext()), newTime);
                     }
                     System.out.println("new time: " + newTime);
                     audioClip.setFileStartTime(newTime);
@@ -305,12 +309,7 @@ public class AudioClipPanel extends JPanel
         super.addNotify();
 
         audioClip.addScoreObjectListener(this);
-        audioClip.fileStartTimeProperty().addListener(this);
-        audioClip.fadeInProperty().addListener(fadeListener);
-        audioClip.fadeInTypeProperty().addListener(fadeTypeListener);
-        audioClip.fadeOutProperty().addListener(fadeListener);
-        audioClip.fadeOutTypeProperty().addListener(fadeTypeListener);
-        audioClip.loopingProperty().addListener(loopingListener);
+        audioClip.addPropertyChangeListener(clipPropertyListener);
         timeState.addPropertyChangeListener(this);
 
         ScoreTopComponent scoreTopComponent = (ScoreTopComponent) WindowManager.getDefault().findTopComponent(
@@ -332,12 +331,7 @@ public class AudioClipPanel extends JPanel
     @Override
     public void removeNotify() {
         audioClip.removeScoreObjectListener(this);
-        audioClip.fileStartTimeProperty().removeListener(this);
-        audioClip.fadeInProperty().removeListener(fadeListener);
-        audioClip.fadeInTypeProperty().removeListener(fadeTypeListener);
-        audioClip.fadeOutProperty().removeListener(fadeListener);
-        audioClip.fadeOutTypeProperty().removeListener(fadeTypeListener);
-        audioClip.loopingProperty().removeListener(loopingListener);
+        audioClip.removePropertyChangeListener(clipPropertyListener);
 
         timeState.removePropertyChangeListener(this);
         result.removeLookupListener(this);
@@ -531,9 +525,10 @@ public class AudioClipPanel extends JPanel
     }
 
     protected void reset() {
-        int pixelSecond = timeState.getPixelSecond();
-        double x = audioClip.getStartTime() * pixelSecond;
-        double width = audioClip.getSubjectiveDuration() * pixelSecond;
+        double pixelSecond = timeState.getPixelSecond();
+        var context = TimeContextManager.getContext();
+        double x = audioClip.getStartTime().toBeats(context) * pixelSecond;
+        double width = audioClip.getSubjectiveDuration().toBeats(context) * pixelSecond;
         setBounds((int) x, getY(), (int) width, getHeight());
         updateFadeHandleLocations();
     }
@@ -563,8 +558,4 @@ public class AudioClipPanel extends JPanel
         }
     }
 
-    @Override
-    public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
-        repaint();
-    }
 }

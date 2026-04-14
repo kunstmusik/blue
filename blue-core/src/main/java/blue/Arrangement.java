@@ -26,7 +26,6 @@ import blue.mixer.Mixer;
 import blue.orchestra.GenericInstrument;
 import blue.orchestra.Instrument;
 import blue.udo.OpcodeList;
-import blue.utility.ObjectUtilities;
 import blue.utility.TextUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
@@ -35,8 +34,6 @@ import java.util.regex.Pattern;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.TableModel;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.text.StrBuilder;
 
 /**
  * @author steven
@@ -56,9 +53,9 @@ public class Arrangement implements TableModel {
 
     private transient Vector<AutomatableCollectionListener> automatableCollectionListeners = null;
 
-    private transient HashMap compilationVariables;
+    private transient HashMap<String, Object> compilationVariables;
 
-    private transient StrBuilder preGenerationCache = null;
+    private transient StringBuilder preGenerationCache = null;
 
     private transient ArrayList<InstrumentAssignment> preGenList = new ArrayList<>();
 
@@ -87,8 +84,7 @@ public class Arrangement implements TableModel {
 
         int max = 0;
 
-        for (int i = 0; i < arrangement.size(); i++) {
-            InstrumentAssignment ia = arrangement.get(i);
+        for (InstrumentAssignment ia : arrangement) {
             try {
                 int instrNum = Integer.parseInt(ia.arrangementId);
                 if (instrNum > max) {
@@ -107,8 +103,8 @@ public class Arrangement implements TableModel {
 
         arrangement.add(ia);
 
-        if (instrument instanceof Automatable) {
-            fireAutomatableAdded((Automatable) ia.instr);
+        if (ia.instr instanceof Automatable automatable) {
+            fireAutomatableAdded(automatable);
         }
 
         return max + 1;
@@ -124,8 +120,7 @@ public class Arrangement implements TableModel {
 
             int counter = currentInstrumentNum + 1;
 
-            for (int i = 0; i < arrangement.size(); i++) {
-                InstrumentAssignment ia = arrangement.get(i);
+            for (InstrumentAssignment ia : arrangement) {
                 try {
                     if (counter == Integer.parseInt(ia.arrangementId)) {
                         counter++;
@@ -170,8 +165,8 @@ public class Arrangement implements TableModel {
 
         fireTableDataChanged();
 
-        if (instrument instanceof Automatable) {
-            fireAutomatableAdded((Automatable) instrument);
+        if (instrument instanceof Automatable automatable) {
+            fireAutomatableAdded(automatable);
         }
 
         return retVal;
@@ -192,8 +187,8 @@ public class Arrangement implements TableModel {
             Collections.sort(arrangement);
         }
 
-        if (instr instanceof Automatable) {
-            fireAutomatableAdded((Automatable) instr);
+        if (instr instanceof Automatable automatable) {
+            fireAutomatableAdded(automatable);
         }
 
         fireTableDataChanged();
@@ -201,8 +196,7 @@ public class Arrangement implements TableModel {
     }
 
     public boolean containsInstrumentId(String instrId) {
-        for (int i = 0; i < arrangement.size(); i++) {
-            InstrumentAssignment ia = arrangement.get(i);
+        for (InstrumentAssignment ia : arrangement) {
             if (ia.arrangementId.equals(instrId)) {
                 return true;
             }
@@ -221,18 +215,15 @@ public class Arrangement implements TableModel {
     }
 
     public void replaceInstrument(String instrumentId, Instrument instr) {
-        for (Iterator<InstrumentAssignment> iter = arrangement.iterator(); iter.
-                hasNext();) {
-            InstrumentAssignment ia = iter.next();
-
+        for (InstrumentAssignment ia : arrangement) {
             if (ia.arrangementId.equals(instrumentId)) {
                 ia.instr = instr;
             }
         }
         fireTableDataChanged();
 
-        if (instr instanceof Automatable) {
-            fireAutomatableAdded((Automatable) instr);
+        if (instr instanceof Automatable automatable) {
+            fireAutomatableAdded(automatable);
         }
     }
 
@@ -258,9 +249,7 @@ public class Arrangement implements TableModel {
     }
 
     public String getInstrumentId(Instrument instr) {
-        for (Iterator<InstrumentAssignment> iter = arrangement.iterator(); iter.
-                hasNext();) {
-            InstrumentAssignment ia = iter.next();
+        for (InstrumentAssignment ia : arrangement) {
             if (ia.instr == instr) {
                 return ia.arrangementId;
             }
@@ -285,9 +274,7 @@ public class Arrangement implements TableModel {
     }
 
     public Instrument getInstrument(String arrangementId) {
-        for (Iterator<InstrumentAssignment> iter = arrangement.iterator(); iter.
-                hasNext();) {
-            InstrumentAssignment ia = iter.next();
+        for (InstrumentAssignment ia : arrangement) {
             if (ia.arrangementId.equals(arrangementId)) {
                 return ia.instr;
             }
@@ -306,9 +293,7 @@ public class Arrangement implements TableModel {
     }
 
     public void changeInstrumentId(Instrument instr, String newId) {
-        for (Iterator<InstrumentAssignment> iter = arrangement.iterator(); iter.
-                hasNext();) {
-            InstrumentAssignment ia = iter.next();
+        for (InstrumentAssignment ia : arrangement) {
             if (ia.instr == instr) {
                 String oldId = ia.arrangementId;
 
@@ -330,19 +315,20 @@ public class Arrangement implements TableModel {
         return arrangement;
     }
 
-    public void setArrangement(ArrayList arrangement) {
+    /**
+     * @deprecated This method appears to be unused legacy code.
+     */
+    @Deprecated
+    public void setArrangement(ArrayList<InstrumentAssignment> arrangement) {
         this.arrangement = arrangement;
     }
 
     public String generateGlobalOrc(CompileData data) {
-        StrBuilder retVal = new StrBuilder();
+        StringBuilder retVal = new StringBuilder();
 
         ArrayList<Instrument> instruments = new ArrayList<>();
 
-        for (Iterator<InstrumentAssignment> iter = arrangement.iterator(); iter.
-                hasNext();) {
-            InstrumentAssignment ia = iter.next();
-
+        for (InstrumentAssignment ia : arrangement) {
             if (!ia.enabled) {
                 continue;
             }
@@ -374,12 +360,9 @@ public class Arrangement implements TableModel {
     }
 
     public String generateGlobalSco(CompileData data) {
-        StrBuilder retVal = new StrBuilder();
+        StringBuilder retVal = new StringBuilder();
 
-        for (Iterator<InstrumentAssignment> iter = arrangement.iterator(); iter.
-                hasNext();) {
-            InstrumentAssignment ia = iter.next();
-
+        for (InstrumentAssignment ia : arrangement) {
             if (!ia.enabled) {
                 continue;
             }
@@ -419,14 +402,11 @@ public class Arrangement implements TableModel {
     public void preGenerateOrchestra(CompileData data, Mixer mixer, int nchnls,
             ArrayList<Instrument> alwaysOnInstruments) {
         if (preGenerationCache == null) {
-            preGenerationCache = new StrBuilder();
+            preGenerationCache = new StringBuilder();
             preGenList = new ArrayList<>();
         }
 
-        for (Iterator<InstrumentAssignment> iter = arrangement.iterator(); iter.
-                hasNext();) {
-            InstrumentAssignment ia = iter.next();
-
+        for (InstrumentAssignment ia : arrangement) {
             preGenList.add(ia);
 
             if (!ia.enabled) {
@@ -446,18 +426,15 @@ public class Arrangement implements TableModel {
     }
 
     public String generateOrchestra(CompileData data, Mixer mixer, int nchnls) {
-        StrBuilder buffer;
+        StringBuilder buffer;
 
         if (preGenerationCache == null) {
-            buffer = new StrBuilder();
+            buffer = new StringBuilder();
         } else {
             buffer = preGenerationCache;
         }
 
-        for (Iterator<InstrumentAssignment> iter = arrangement.iterator(); iter.
-                hasNext();) {
-            InstrumentAssignment ia = iter.next();
-
+        for (InstrumentAssignment ia : arrangement) {
             if (!preGenList.contains(ia)) {
 
                 if (!ia.enabled) {
@@ -477,7 +454,7 @@ public class Arrangement implements TableModel {
         return retVal;
     }
 
-    private void appendInstrumentText(CompileData data, StrBuilder buffer,
+    private void appendInstrumentText(CompileData data, StringBuilder buffer,
             InstrumentAssignment ia, Mixer mixer, int nchnls) {
         Instrument instr = ia.instr;
 
@@ -600,7 +577,7 @@ public class Arrangement implements TableModel {
             return input;
         }
 
-        StrBuilder buffer = new StrBuilder();
+        StringBuilder buffer = new StringBuilder();
         String[] lines = NEW_LINES.split(input);
 
         boolean blueMixerInFound = false;
@@ -806,8 +783,8 @@ public class Arrangement implements TableModel {
 
         fireTableDataChanged();
 
-        if (ia.instr instanceof Automatable) {
-            fireAutomatableRemoved((Automatable) ia.instr);
+        if (ia.instr instanceof Automatable automatable) {
+            fireAutomatableRemoved(automatable);
         }
 
         return ia.instr;
@@ -849,7 +826,7 @@ public class Arrangement implements TableModel {
     }
 
     @Override
-    public Class getColumnClass(int columnIndex) {
+    public Class<?> getColumnClass(int columnIndex) {
         if (columnIndex == 0) {
             return Boolean.class;
         }
@@ -924,8 +901,7 @@ public class Arrangement implements TableModel {
 
         TableModelEvent tme = new TableModelEvent(this);
 
-        for (Iterator iter = listeners.iterator(); iter.hasNext();) {
-            TableModelListener listener = (TableModelListener) iter.next();
+        for (TableModelListener listener : listeners) {
             listener.tableChanged(tme);
         }
 
@@ -954,8 +930,7 @@ public class Arrangement implements TableModel {
             return;
         }
 
-        for (Iterator iter = arrangementListeners.iterator(); iter.hasNext();) {
-            ArrangementListener listener = (ArrangementListener) iter.next();
+        for (ArrangementListener listener : arrangementListeners) {
             listener.arrangementChanged(arrEvt);
         }
     }
@@ -977,11 +952,7 @@ public class Arrangement implements TableModel {
 
     private void fireAutomatableAdded(Automatable automatable) {
         if (automatableCollectionListeners != null) {
-            Iterator iter = new Vector(automatableCollectionListeners).iterator();
-
-            while (iter.hasNext()) {
-                AutomatableCollectionListener listener = (AutomatableCollectionListener) iter.
-                        next();
+            for (AutomatableCollectionListener listener : new Vector<>(automatableCollectionListeners)) {
                 listener.automatableAdded(automatable);
             }
         }
@@ -989,10 +960,7 @@ public class Arrangement implements TableModel {
 
     private void fireAutomatableRemoved(Automatable automatable) {
         if (automatableCollectionListeners != null) {
-            Iterator iter = new Vector(automatableCollectionListeners).iterator();
-            while (iter.hasNext()) {
-                AutomatableCollectionListener listener = (AutomatableCollectionListener) iter.
-                        next();
+            for (AutomatableCollectionListener listener : new Vector<>(automatableCollectionListeners)) {
                 listener.automatableRemoved(automatable);
             }
         }

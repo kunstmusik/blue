@@ -159,7 +159,6 @@ public enum PythonTokenId implements TokenId {
                                     return null;
                                 }
                                 while (input.read() != LexerInput.EOF) {
-                                    ;
                                 }
                                 return tokenFactory.createToken(PythonTokenId.STRING_LITERAL, input.readLength());
                             }

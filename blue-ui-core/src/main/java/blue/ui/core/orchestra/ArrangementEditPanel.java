@@ -312,8 +312,7 @@ public class ArrangementEditPanel extends JComponent
 
         Instrument instr = arrangement.getInstrument(selectedRow);
 
-        if (instr instanceof GenericInstrument) {
-            GenericInstrument genInstr = (GenericInstrument) instr;
+        if (instr instanceof GenericInstrument genInstr) {
 
             BlueSynthBuilder bsb = new BlueSynthBuilder();
 
@@ -368,7 +367,7 @@ public class ArrangementEditPanel extends JComponent
     public void pasteInstrument() {
         Object obj = CopyBuffer.getBufferedObject(CopyBuffer.INSTRUMENT);
 
-        if (obj == null || !(obj instanceof Instrument)) {
+        if (!(obj instanceof Instrument)) {
             return;
         }
 
@@ -376,8 +375,8 @@ public class ArrangementEditPanel extends JComponent
 
         Instrument clone = instr.deepCopy();
 
-        if (clone instanceof BlueSynthBuilder) {
-            ((BlueSynthBuilder) clone).clearParameters();
+        if (clone instanceof BlueSynthBuilder blueSynthBuilder) {
+            blueSynthBuilder.clearParameters();
         }
 
         addInstrument(clone);
@@ -443,8 +442,8 @@ public class ArrangementEditPanel extends JComponent
             }
         }
 
-        for (int i = 0; i < idList.size(); i++) {
-            channels.checkOrCreate(idList.get(i));
+        for (String s : idList) {
+            channels.checkOrCreate(s);
         }
     }
 
@@ -576,8 +575,8 @@ public class ArrangementEditPanel extends JComponent
 
                 dtde.acceptDrop(DnDConstants.ACTION_COPY);
 
-                if (instrument instanceof BlueSynthBuilder) {
-                    ((BlueSynthBuilder) instrument).clearParameters();
+                if (instrument instanceof BlueSynthBuilder blueSynthBuilder) {
+                    blueSynthBuilder.clearParameters();
                 }
 
                 addInstrument(instrument, listIndex);
@@ -760,8 +759,7 @@ public class ArrangementEditPanel extends JComponent
                     }
 
                     Object bufferedObj = CopyBuffer.getBufferedObject(CopyBuffer.INSTRUMENT);
-                    boolean bufferFull = bufferedObj != null
-                            && (bufferedObj instanceof Instrument);
+                    boolean bufferFull = (bufferedObj instanceof Instrument);
                     pasteMenuItem.setEnabled(bufferFull);
                 }
 

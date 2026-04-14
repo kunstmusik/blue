@@ -169,7 +169,7 @@ public class BlueSynthBuilder extends AbstractInstrument implements
 
         String editEnabledStr = data.getAttributeValue("editEnabled");
         if (editEnabledStr != null) {
-            bsb.setEditEnabled(Boolean.valueOf(editEnabledStr).booleanValue());
+            bsb.setEditEnabled(Boolean.parseBoolean(editEnabledStr));
         }
 
         Elements nodes = data.getElements();
@@ -279,7 +279,7 @@ public class BlueSynthBuilder extends AbstractInstrument implements
      * @param instrumentText The instrumentText to set.
      */
     public void setInstrumentText(String instrumentText) {
-        this.instrumentText = (instrumentText == null) ? "" : instrumentText;
+        this.instrumentText = java.util.Objects.requireNonNullElse(instrumentText, "");
     }
 
     /**
@@ -293,7 +293,7 @@ public class BlueSynthBuilder extends AbstractInstrument implements
      * @param alwaysOnInstrumentText the alwaysOnInstrumentText to set
      */
     public void setAlwaysOnInstrumentText(String alwaysOnInstrumentText) {
-        this.alwaysOnInstrumentText = (alwaysOnInstrumentText == null) ? "" : alwaysOnInstrumentText;
+        this.alwaysOnInstrumentText = java.util.Objects.requireNonNullElse(alwaysOnInstrumentText, "");
     }
 
     /**

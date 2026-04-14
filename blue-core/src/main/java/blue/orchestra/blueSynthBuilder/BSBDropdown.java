@@ -412,15 +412,6 @@ public class BSBDropdown extends AutomatableBSBObject implements
     public void parameterChanged(Parameter param) {
     }
 
-//    private void updateSelectedIndex(int index) {
-//        int oldValue = getSelectedIndex();
-//        setSelectedIndex(index);
-//
-//        if (propListeners != null) {
-//            propListeners.firePropertyChange("updateValue",
-//                    new Integer(oldValue), new Integer(index));
-//        }
-//    }
     @Override
     public void lineDataChanged(Parameter param) {
         Parameter parameter = parameters.getParameter(this.getObjectName());

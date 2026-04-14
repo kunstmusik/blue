@@ -35,7 +35,7 @@ public class RealtimeRenderSettingsPanel extends javax.swing.JPanel {
             @Override
             public void documentChanged(DocumentEvent e) {
                 if (projectProperties != null) {
-                    projectProperties.sampleRate = srText.getText();
+                    projectProperties.setSampleRate(srText.getText());
                 }
             }
         });
@@ -89,7 +89,7 @@ public class RealtimeRenderSettingsPanel extends javax.swing.JPanel {
         this.projectProperties = null;
 
         if (projectProperties != null) {
-            srText.setText(projectProperties.sampleRate);
+            srText.setText(projectProperties.getSampleRate());
             ksmpsText.setText(projectProperties.ksmps);
             nchnlsText.setText(projectProperties.channels);
             audioOutCBox.setSelected(projectProperties.useAudioOut);

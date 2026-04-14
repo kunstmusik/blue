@@ -41,7 +41,7 @@ public class NumberUtilities {
      */
     
     public static String formatDouble(double val) {
-        return FLOAT_FMT.format(new Object[] { new Double(val) });
+        return FLOAT_FMT.format(new Object[] { val });
     }
 
     /**

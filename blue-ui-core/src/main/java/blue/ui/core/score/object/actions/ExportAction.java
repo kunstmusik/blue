@@ -128,11 +128,9 @@ public final class ExportAction extends AbstractAction
     protected boolean containsInstance(PolyObject pObj) {
         List<SoundObject> soundObjects = pObj.getSoundObjects(true);
 
-        for (Iterator<SoundObject> iter = soundObjects.iterator(); iter.hasNext();) {
-            SoundObject sObj = iter.next();
-
-            if (sObj instanceof PolyObject) {
-                if (containsInstance((PolyObject) sObj)) {
+        for (SoundObject sObj : soundObjects) {
+            if (sObj instanceof PolyObject polyObject) {
+                if (containsInstance(polyObject)) {
                     return true;
                 }
             } else if (sObj instanceof Instance) {

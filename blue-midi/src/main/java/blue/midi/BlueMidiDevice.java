@@ -19,6 +19,7 @@
  */
 package blue.midi;
 
+import java.util.Objects;
 import javax.sound.midi.MidiDevice;
 import javax.sound.midi.MidiSystem;
 import javax.sound.midi.MidiUnavailableException;
@@ -109,16 +110,32 @@ public class BlueMidiDevice {
 
     @Override
     public final boolean equals(Object obj) {
-        if (obj instanceof BlueMidiDevice) {
-            BlueMidiDevice dev2 = (BlueMidiDevice) obj;
-            MidiDevice.Info info2 = dev2.info;
-
-            return (info.getDescription().equals(info2.getDescription())
-                    && info.getName().equals(info2.getName())
-                    && info.getVendor().equals(info2.getVendor())
-                    && info.getVersion().equals(info2.getVersion()));
+        if (this == obj) {
+            return true;
         }
-        return false;
+        if (!(obj instanceof BlueMidiDevice dev2)) {
+            return false;
+        }
+        MidiDevice.Info info2 = dev2.info;
+        if (info == info2) {
+            return true;
+        }
+        if (info == null || info2 == null) {
+            return false;
+        }
+        return Objects.equals(info.getDescription(), info2.getDescription())
+                && Objects.equals(info.getName(), info2.getName())
+                && Objects.equals(info.getVendor(), info2.getVendor())
+                && Objects.equals(info.getVersion(), info2.getVersion());
+    }
+
+    @Override
+    public int hashCode() {
+        if (info == null) {
+            return 0;
+        }
+        return Objects.hash(info.getDescription(), info.getName(),
+                info.getVendor(), info.getVersion());
     }
 
     public String getSaveName() {

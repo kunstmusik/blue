@@ -30,6 +30,12 @@ import blue.score.layers.ScoreObjectLayer;
 import blue.soundObject.Instance;
 import blue.soundObject.PolyObject;
 import blue.soundObject.SoundObject;
+import blue.time.TimeBase;
+import blue.time.TimeContext;
+import blue.time.TimeContextManager;
+import blue.time.TimeDuration;
+import blue.time.TimeUnitMath;
+import blue.time.TimeUtilities;
 import blue.ui.core.clipboard.BlueClipboardUtils;
 import blue.ui.core.score.ScoreObjectCopy;
 import blue.ui.core.score.ScorePath;
@@ -96,8 +102,9 @@ public final class PasteAsPolyObjectAction extends AbstractAction implements Con
         
 
         if (timeState.isSnapEnabled()) {
+            TimeContext ctx = TimeContextManager.getContext();
             start = ScoreUtilities.getSnapValueStart(start,
-                    timeState.getSnapValue());
+                    timeState.getSnapValueInBeats(start, ctx.getTempoMap(), ctx.getSampleRate()));
         }
 
         int minLayer = Integer.MAX_VALUE;
@@ -124,19 +131,33 @@ public final class PasteAsPolyObjectAction extends AbstractAction implements Con
             SoundLayer layer = pObj.get(layerIndex - minLayer);
 
             SoundObject clone = (SoundObject)scoreObj.deepCopy();
+
+            // Cross-context paste: preserve beat count for beat-based durations.
+            // The beat count is semantically meaningful regardless of tempo differences.
+            TimeContext context = TimeContextManager.getContext();
+            if (scoreObjectCopy.sourceContext != null && !context.hasSameMusicalContext(scoreObjectCopy.sourceContext)) {
+                TimeDuration dur = clone.getSubjectiveDuration();
+                if (dur.getTimeBase().isBeatBased()) {
+                    double beats = dur.toBeats(scoreObjectCopy.sourceContext);
+                    clone.setSubjectiveDuration(TimeUnitMath.beatsToDuration(beats, dur.getTimeBase(), context));
+                }
+            }
+
             layer.add(clone);
 
-            if (clone instanceof Instance) {
-                instanceSoundObjects.add((Instance) clone);
+            if (clone instanceof Instance instance) {
+                instanceSoundObjects.add(instance);
             }
 
         }
 
         sObjLib.checkAndAddInstanceSoundObjects(instanceSoundObjects);
 
-        pObj.normalizeSoundObjects();
+        TimeContext context = TimeContextManager.getContext();
+        pObj.normalizeSoundObjects(context);
 
-        pObj.setStartTime(start);
+        TimeBase timeBase = timeState.getTimeDisplay();
+        pObj.setStartTime(TimeUtilities.beatsToTimePosition(start, timeBase, context));
         final ScoreObjectLayer layer = (ScoreObjectLayer) scorePath.getGlobalLayerForY(
                 p.y);
         layer.add(pObj);

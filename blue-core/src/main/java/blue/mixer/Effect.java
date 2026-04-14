@@ -17,7 +17,6 @@
  * Software Foundation Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307
  * USA
  */
-
 package blue.mixer;
 
 import blue.automation.Automatable;
@@ -26,6 +25,7 @@ import blue.orchestra.blueSynthBuilder.BSBCompilationUnit;
 import blue.orchestra.blueSynthBuilder.BSBGraphicInterface;
 import blue.orchestra.blueSynthBuilder.StringChannel;
 import blue.udo.OpcodeList;
+import blue.udo.UDOStyle;
 import blue.udo.UserDefinedOpcode;
 import blue.utility.TextUtilities;
 import blue.utility.UDOUtilities;
@@ -36,12 +36,11 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Vector;
-import org.apache.commons.lang3.text.StrBuilder;
 
 public class Effect implements Automatable {
 
+    private UDOStyle style = UDOStyle.MODERN;
     private int numIns = 2;
     private int numOuts = 2;
     private BSBGraphicInterface graphicInterface;
@@ -50,7 +49,7 @@ public class Effect implements Automatable {
     private String comments = "";
     private OpcodeList opcodeList;
     private boolean enabled = true;
-    private transient Vector listeners = null;
+    private transient Vector<PropertyChangeListener> listeners = null;
     private ParameterList parameterList = null;
 
     public Effect() {
@@ -67,6 +66,7 @@ public class Effect implements Automatable {
     }
 
     public Effect(Effect effect) {
+        style = effect.style;
         numIns = effect.numIns;
         numOuts = effect.numOuts;
         code = effect.code;
@@ -85,12 +85,16 @@ public class Effect implements Automatable {
                 opcodeList, udoList);
 
         UserDefinedOpcode udo = new UserDefinedOpcode();
+        udo.style = style;
 
         BSBCompilationUnit bsbUnit = new BSBCompilationUnit();
         graphicInterface.setupForCompilation(bsbUnit);
 
-        StrBuilder buffer = new StrBuilder();
-        buffer.append(getXinText()).append("\n");
+        StringBuilder buffer = new StringBuilder();
+
+        if (style == UDOStyle.CLASSIC) {
+            buffer.append(getXinText()).append("\n");
+        }
 
         buffer.append(bsbUnit.replaceBSBValues(code)).append("\n");
 
@@ -105,14 +109,22 @@ public class Effect implements Automatable {
 
         udo.codeBody = udoCode;
 
-        udo.inTypes = getSigTypes(numIns);
-        udo.outTypes = getSigTypes(numOuts);
+        if (style == UDOStyle.MODERN) {
+            udo.inputArguments = getInputArguments();
+            udo.outTypes = getCommaSeparatedSigTypes(numOuts);
+            udo.inTypes = "";
+        } else {
+            udo.inputArguments = "";
+            udo.outTypes = getSigTypes(numOuts);
+            udo.inTypes = getSigTypes(numIns);
+        }
 
         return udo;
     }
 
     public static Effect loadFromXML(Element data) throws Exception {
         Effect effect = new Effect(false);
+        effect.style = UDOStyle.CLASSIC;
 
         Elements nodes = data.getElements();
 
@@ -120,36 +132,33 @@ public class Effect implements Automatable {
             Element node = nodes.next();
             String nodeName = node.getName();
             switch (nodeName) {
-                case "name":
+                case "style" -> {
+                    try {
+                        effect.style = UDOStyle.valueOf(node.getTextString());
+                    } catch (IllegalArgumentException e) {
+                        effect.style = UDOStyle.CLASSIC;
+                    }
+                }
+                case "name" ->
                     effect.setName(node.getTextString());
-                    break;
-                case "enabled":
+                case "enabled" ->
                     effect.setEnabled(XMLUtilities.readBoolean(node));
-                    break;
-                case "numIns":
+                case "numIns" ->
                     effect.setNumIns(XMLUtilities.readInt(node));
-                    break;
-                case "numOuts":
+                case "numOuts" ->
                     effect.setNumOuts(XMLUtilities.readInt(node));
-                    break;
-                case "code":
+                case "code" ->
                     effect.setCode(node.getTextString());
-                    break;
-                case "comments":
+                case "comments" ->
                     effect.setComments(node.getTextString());
-                    break;
-                case "opcodeList":
+                case "opcodeList" ->
                     effect.opcodeList = OpcodeList.loadFromXML(node);
-                    break;
-                case "graphicInterface":
+                case "graphicInterface" ->
                     effect.setGraphicInterface(BSBGraphicInterface
                             .loadFromXML(node));
-                    break;
-                case "bsbParameterList":
-                case "parameterList":
+                case "bsbParameterList", "parameterList" ->
                     effect.parameterList = ParameterList
                             .loadFromXML(node);
-                    break;
             }
         }
 
@@ -174,6 +183,7 @@ public class Effect implements Automatable {
     public Element saveAsXML() {
         Element retVal = new Element("effect");
 
+        retVal.addElement("style").setText(style.name());
         retVal.addElement("name").setText(name);
         retVal.addElement(XMLUtilities.writeBoolean("enabled", enabled));
         retVal.addElement(XMLUtilities.writeInt("numIns", numIns));
@@ -185,6 +195,17 @@ public class Effect implements Automatable {
         retVal.addElement(parameterList.saveAsXML());
 
         return retVal;
+    }
+
+    public UDOStyle getStyle() {
+        return style;
+    }
+
+    public void setStyle(UDOStyle style) {
+        UDOStyle oldVal = this.style;
+        this.style = style;
+        firePropertyChangeEvent(new PropertyChangeEvent(this, "style",
+                oldVal, style));
     }
 
     public boolean isEnabled() {
@@ -200,8 +221,8 @@ public class Effect implements Automatable {
     }
 
     public void setNumIns(int numIns) {
-        Integer oldVal = new Integer(this.numIns);
-        Integer newVal = new Integer(numIns);
+        int oldVal = this.numIns;
+        int newVal = numIns;
 
         PropertyChangeEvent pce = new PropertyChangeEvent(this, "numIns",
                 oldVal, newVal);
@@ -217,8 +238,8 @@ public class Effect implements Automatable {
 
     public void setNumOuts(int numOuts) {
 
-        Integer oldVal = new Integer(this.numOuts);
-        Integer newVal = new Integer(numOuts);
+        int oldVal = this.numOuts;
+        int newVal = numOuts;
 
         PropertyChangeEvent pce = new PropertyChangeEvent(this, "numOuts",
                 oldVal, newVal);
@@ -253,17 +274,14 @@ public class Effect implements Automatable {
             return;
         }
 
-        for (Iterator iter = listeners.iterator(); iter.hasNext();) {
-            PropertyChangeListener listener = (PropertyChangeListener) iter
-                    .next();
-
+        for (PropertyChangeListener listener : listeners) {
             listener.propertyChange(pce);
         }
     }
 
     public void addPropertyChangeListener(PropertyChangeListener pcl) {
         if (listeners == null) {
-            listeners = new Vector();
+            listeners = new Vector<>();
         }
 
         listeners.add(pcl);
@@ -297,15 +315,40 @@ public class Effect implements Automatable {
         return getName();
     }
 
-//    public JComponent getEditor() {
-//        // TODO - fix this!
-////        return null;
-//        BSBEditPanel editPanel = new BSBEditPanel(BSBObjectRegistry
-//                .getBSBObjects());
-//        editPanel.editBSBGraphicInterface(graphicInterface);
-//
-//        return editPanel;
-//    }
+    // public JComponent getEditor() {
+    // // TODO - fix this!
+    //// return null;
+    // BSBEditPanel editPanel = new BSBEditPanel(BSBObjectRegistry
+    // .getBSBObjects());
+    // editPanel.editBSBGraphicInterface(graphicInterface);
+    //
+    // return editPanel;
+    // }
+
+    private String getCommaSeparatedSigTypes(int num) {
+        if (num == 0) {
+            return "";
+        }
+        StringBuilder buffer = new StringBuilder();
+        for (int i = 0; i < num; i++) {
+            if (i > 0) {
+                buffer.append(", ");
+            }
+            buffer.append("a");
+        }
+        return buffer.toString();
+    }
+
+    private String getInputArguments() {
+        StringBuilder buffer = new StringBuilder();
+        for (int i = 0; i < numIns; i++) {
+            if (i > 0) {
+                buffer.append(", ");
+            }
+            buffer.append("ain").append(i + 1);
+        }
+        return buffer.toString();
+    }
 
     private String getXinText() {
         StringBuilder buffer = new StringBuilder();

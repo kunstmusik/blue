@@ -22,17 +22,17 @@ public class SwingUtil{
 
     /*-------------------------------------------------[ Actions ]---------------------------------------------------*/
 
-    public static void installActions(JComponent comp, Action actions[], int condition){
+    public static void installActions(JComponent comp, Action[] actions, int condition){
         ActionMap actionMap = comp.getActionMap();
         InputMap inputMap = comp.getInputMap(condition);
-        for(int i = 0; i<actions.length; i++){
-            String name = (String)actions[i].getValue(Action.NAME);
-            actionMap.put(name, actions[i]);
-            inputMap.put((KeyStroke)actions[i].getValue(Action.ACCELERATOR_KEY), name);
+        for (Action action : actions) {
+            String name = (String) action.getValue(Action.NAME);
+            actionMap.put(name, action);
+            inputMap.put((KeyStroke) action.getValue(Action.ACCELERATOR_KEY), name);
         }
     }
 
-    public static void installActions(JComponent comp, Action actions[]){
+    public static void installActions(JComponent comp, Action[] actions){
         installActions(comp, actions, JComponent.WHEN_FOCUSED);
     }
 

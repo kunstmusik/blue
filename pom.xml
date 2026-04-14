@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.kunstmusik</groupId>
@@ -16,7 +16,7 @@
                 <plugin>
                     <groupId>org.apache.netbeans.utilities</groupId>
                     <artifactId>nbm-maven-plugin</artifactId>
-                    <version>4.8</version>
+                    <version>14.4</version>
                     <extensions>true</extensions>
                     <configuration>
                         <brandingToken>${brandingToken}</brandingToken>
@@ -43,26 +43,87 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-compiler-plugin</artifactId>
-                    <version>2.5.1</version>
+                    <version>3.13.0</version>
                     <configuration>
-                        <source>11</source>
-                        <target>11</target>
+                        <proc>full</proc>
+                        <release>25</release>
                     </configuration>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-jar-plugin</artifactId>
-                    <version>2.4</version>
+                    <version>3.4.2</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-surefire-plugin</artifactId>
+                    <version>3.5.2</version>
+                    <configuration>
+                        <argLine>--add-opens java.base/java.net=ALL-UNNAMED</argLine>
+                        <forkCount>1C</forkCount>
+                        <reuseForks>true</reuseForks>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-antrun-plugin</artifactId>
+                    <version>3.2.0</version>
+                    <executions>
+                        <execution>
+                            <id>blue-git-short-hash</id>
+                            <phase>initialize</phase>
+                            <goals>
+                                <goal>run</goal>
+                            </goals>
+                            <configuration>
+                                <target>
+                                    <tstamp>
+                                        <format property="blue.build.date" pattern="yyyy-MM-dd HH:mm" locale="en,UK"/>
+                                    </tstamp>
+                                    <mkdir dir="${project.build.directory}"/>
+                                    <touch file="${project.build.directory}/blue-git-head.txt"/>
+                                    <exec executable="git" dir="${maven.multiModuleProjectDirectory}" failonerror="false" output="${project.build.directory}/blue-git-head.txt">
+                                        <arg value="rev-parse"/>
+                                        <arg value="--short"/>
+                                        <arg value="HEAD"/>
+                                    </exec>
+                                    <loadfile property="blue.git.head.trim" srcFile="${project.build.directory}/blue-git-head.txt">
+                                        <filterchain>
+                                            <striplinebreaks/>
+                                        </filterchain>
+                                    </loadfile>
+                                    <condition property="blue.build.commit" value="${blue.git.head.trim}" else="unknown">
+                                        <not>
+                                            <equals arg1="${blue.git.head.trim}" arg2=""/>
+                                        </not>
+                                    </condition>
+                                </target>
+                                <exportAntProperties>true</exportAntProperties>
+                            </configuration>
+                        </execution>
+                    </executions>
                 </plugin>
             </plugins>
         </pluginManagement>
     </build>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.netbeans.api</groupId>
+                <artifactId>org-netbeans-libs-junit5</artifactId>
+                <version>${netbeans.version}</version>
+                <scope>test</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 
     <modules>
         <module>branding</module>
         <module>blue-ext-exml</module>
         <module>blue-ext-jython</module>
         <module>blue-ext-commons-lang3</module>
+        <module>blue-ext-commons-text</module>
         <module>blue-ext-commons-io</module>
         <module>blue-ext-openjfx</module>
         <module>blue-utilities</module>
@@ -87,13 +148,12 @@
         <module>blue-score-layers-patterns-ui</module>
         <module>blue-clojure</module>
         <module>blue-application</module>
-        <module>cecilia</module>
         <module>application</module>
         <module>blue-csnd6</module>
     </modules>
 
     <properties>
-        <netbeans.version>RELEASE180</netbeans.version>
+        <netbeans.version>RELEASE270</netbeans.version>
         <brandingToken>blue</brandingToken>
     </properties>
 </project>

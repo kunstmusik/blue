@@ -19,10 +19,16 @@
  */
 package blue.ui.core.score.layers.soundObject.actions;
 
+import blue.components.lines.Line;
+import blue.components.lines.LinePoint;
 import blue.score.ScoreObject;
 import blue.score.TimeState;
 import blue.score.layers.Layer;
 import blue.score.layers.ScoreObjectLayer;
+import blue.time.TimeContext;
+import blue.time.TimeContextManager;
+import blue.time.TimePosition;
+import blue.time.TimeUnitMath;
 import blue.ui.core.score.ScoreController;
 import blue.ui.core.score.ScorePath;
 import java.awt.Point;
@@ -76,19 +82,17 @@ public final class SelectAllBeforeAction extends AbstractAction implements
 //            return;
 //        }
 
-        float pointTime = (float) p.x
-                / timeState.getPixelSecond();
+        double pointTime = p.x / timeState.getPixelSecond();
         List<ScoreObject> newSelected = new ArrayList<>();
 
+        TimeContext context = TimeContextManager.getContext();
         List<Layer> allLayers = scorePath.getAllLayers();
 
         for (Layer layer : allLayers) {
-            if (layer instanceof ScoreObjectLayer) {
-                ScoreObjectLayer<ScoreObject> sLayer = (ScoreObjectLayer) layer;
+            if (layer instanceof ScoreObjectLayer sLayer) {
 
-                for (ScoreObject scoreObject : sLayer) {
-                    if (scoreObject.getStartTime() + scoreObject.getSubjectiveDuration()
-                            <= pointTime) {
+                for (ScoreObject scoreObject : (ScoreObjectLayer<ScoreObject>)sLayer) {
+                    if (TimeUnitMath.add(context, scoreObject.getStartTime(), scoreObject.getSubjectiveDuration()).lte(context, TimePosition.beats(pointTime))) {
                         newSelected.add(scoreObject);
                     }
                 }

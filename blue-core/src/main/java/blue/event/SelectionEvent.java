@@ -20,45 +20,27 @@
 package blue.event;
 
 /**
+ * Selection event record that holds selection information.
+ * 
+ * @param selectedItem the item that was selected
+ * @param selectionType the type of selection (SELECTION_CLEAR, SELECTION_SINGLE, etc.)
+ * @param selectionSubType optional sub-type for the selection
  * @author steven
  */
-public class SelectionEvent<T> {
+public record SelectionEvent<T>(T selectedItem, int selectionType, Object selectionSubType) {
+    
     public static final int SELECTION_CLEAR = -1;
-
     public static final int SELECTION_SINGLE = 0;
-
     public static final int SELECTION_ADD = 1;
-
     public static final int SELECTION_REMOVE = 2;
 
     public static final Object SELECTION_LIBRARY = new Object();
-
     public static final Object SELECTION_BLUE_LIVE = new Object();
-    
-    private final T itemSelected;
 
-    private final int selectionType;
-    private Object selectionSubType = null;
-
-    public SelectionEvent(T itemSelected, int selectionType) {
-        this(itemSelected, selectionType, null);
-    }
-
-    public SelectionEvent(T itemSelected, int selectionType, Object selectionSubType) {
-        this.itemSelected = itemSelected;
-        this.selectionType = selectionType;
-        this.selectionSubType = selectionSubType;
-    }
-
-    public T getSelectedItem() {
-        return itemSelected;
-    }
-
-    public int getSelectionType() {
-        return this.selectionType;
-    }
-
-    public Object getSelectionSubType() {
-        return selectionSubType;
+    /**
+     * Convenience constructor for selections without a sub-type.
+     */
+    public SelectionEvent(T selectedItem, int selectionType) {
+        this(selectedItem, selectionType, null);
     }
 }

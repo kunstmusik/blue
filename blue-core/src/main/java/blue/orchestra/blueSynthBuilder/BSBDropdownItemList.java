@@ -21,7 +21,6 @@ package blue.orchestra.blueSynthBuilder;
 
 import electric.xml.Element;
 import electric.xml.Elements;
-import java.util.ArrayList;
 import java.util.Iterator;
 import javafx.beans.property.SimpleListProperty;
 import javafx.collections.FXCollections;
@@ -62,8 +61,7 @@ public class BSBDropdownItemList extends SimpleListProperty<BSBDropdownItem> {
     public Element saveAsXML() {
         Element retVal = new Element("bsbDropdownItemList");
 
-        for (Iterator iter = this.iterator(); iter.hasNext();) {
-            BSBDropdownItem item = (BSBDropdownItem) iter.next();
+        for (BSBDropdownItem item : this) {
             retVal.addElement(item.saveAsXML());
         }
 

@@ -1,121 +1,99 @@
 /*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
+ * TempoEditor - Graphical editor for TempoMap
  */
 package blue.ui.core.score.tempo;
 
 import blue.BlueData;
 import blue.components.DragDirection;
-import blue.components.lines.Line;
-import blue.components.lines.LineEditorDialog;
-import blue.components.lines.LinePoint;
 import blue.score.Score;
 import blue.score.TimeState;
-import blue.score.tempo.Tempo;
-import blue.ui.core.score.ModeManager;
+import blue.time.CurveType;
+import blue.time.TempoMap;
+import blue.time.TempoPoint;
+import blue.time.TimeContext;
+import blue.time.TimeContextManager;
+import blue.time.TimePosition;
+import blue.time.TimeUtilities;
 import blue.ui.utilities.UiUtilities;
-import blue.utility.GUI;
-import blue.utility.NumberUtilities;
 import blue.utility.ScoreUtilities;
 import java.awt.BasicStroke;
 import java.awt.Color;
-import java.awt.Component;
-import java.awt.Dimension;
-import java.awt.Frame;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Point;
-import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.Stroke;
-import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import javax.swing.AbstractAction;
-import javax.swing.Action;
 import javax.swing.JComponent;
+import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
 import javax.swing.SwingUtilities;
-import javax.swing.event.TableModelEvent;
-import javax.swing.event.TableModelListener;
+import javax.swing.ToolTipManager;
 
 /**
- *
+ * Graphical editor for tempo curves.
+ * 
  * @author syi
  */
 public class TempoEditor extends JComponent implements PropertyChangeListener {
 
     private static final Stroke STROKE1 = new BasicStroke(1);
-
     private static final Stroke STROKE2 = new BasicStroke(2);
+    private static final double MIN_TEMPO = 30.0;
+    private static final double MAX_TEMPO = 240.0;
 
-    EditPointsPopup popup;
-    TempoMinMaxDialog tempoMinMaxDialog;
-
-    TableModelListener lineListener;
-    Tempo tempo = null;
+    TempoMap tempoMap = null;
     Score score = null;
     private TimeState timeState;
-
-    LinePoint selectedPoint = null;
-
-    int leftBoundaryX = -1, rightBoundaryX = -1;
+    
+    // Editing state
+    private int selectedPointIndex = -1;
+    private int leftBoundaryX = -1;
+    private int rightBoundaryX = -1;
 
     public TempoEditor() {
-        lineListener = (TableModelEvent e) -> {
-            repaint();
-        };
-
-        final var tempoEditorMouseListener = new TempoEditorMouseListener();
-
-        this.addMouseListener(tempoEditorMouseListener);
-        this.addMouseMotionListener(tempoEditorMouseListener);
+        TempoEditorMouseListener mouseListener = new TempoEditorMouseListener();
+        this.addMouseListener(mouseListener);
+        this.addMouseMotionListener(mouseListener);
+        
+        // Configure tooltips: show immediately, never dismiss
+        ToolTipManager.sharedInstance().registerComponent(this);
+        ToolTipManager.sharedInstance().setInitialDelay(0);
+        ToolTipManager.sharedInstance().setDismissDelay(Integer.MAX_VALUE);
     }
 
     public void setData(BlueData data) {
         var score = data.getScore();
-        Tempo tempo = score.getTempo();
+        TempoMap tempoMap = score.getTempoMap();
 
-        if (this.tempo != null) {
-            this.tempo.getLine().removeTableModelListener(lineListener);
-            this.tempo.removePropertyChangeListener(this);
+        if (this.tempoMap != null) {
+            this.tempoMap.removePropertyChangeListener(this);
         }
 
         if (this.score != null) {
-            score.getTimeState().removePropertyChangeListener(this);
+            this.score.getTimeState().removePropertyChangeListener(this);
         }
 
-        this.tempo = tempo;
-        this.tempo.getLine().addTableModelListener(lineListener);
-        this.tempo.addPropertyChangeListener(this);
+        this.tempoMap = tempoMap;
+        this.tempoMap.addPropertyChangeListener(this);
         this.score = score;
         this.score.getTimeState().addPropertyChangeListener(this);
-        this.setTempoVisible(tempo.isVisible());
     }
 
     public void setTimeState(TimeState timeState) {
         this.timeState = timeState;
-        //FIXME - setVisible should be called by container class and in context
-        //setVisible(this.timeState.isRoot());
-    }
-
-    public void setTempoVisible(boolean tempoVisible) {
-        if (tempoVisible) {
-            this.setPreferredSize(new Dimension(1, 100));
-            this.setSize(this.getWidth(), 100);
-        } else {
-            this.setPreferredSize(new Dimension(1, 20));
-            this.setSize(this.getWidth(), 20);
-        }
     }
 
     @Override
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
 
-        if (this.tempo == null) {
+        var bounds = g.getClipBounds();
+        
+        if (this.tempoMap == null) {
             return;
         }
 
@@ -126,592 +104,486 @@ public class TempoEditor extends JComponent implements PropertyChangeListener {
                 RenderingHints.VALUE_ANTIALIAS_ON);
         g2d.setRenderingHints(hints);
 
-        Color currentColor = null;
+        boolean enabled = this.tempoMap.isEnabled();
 
-        ModeManager modeManager = ModeManager.getInstance();
-
-        Line tempoLine = this.tempo.getLine();
-        boolean enabled = this.tempo.isEnabled();
-
-        if (score.getTimeState().isSnapEnabled()) {
-            if (timeState.isSnapEnabled()) {
-                g2d.setColor(Color.DARK_GRAY);
-
-                int snapPixels = (int) (timeState.getSnapValue() * timeState.getPixelSecond());
-
-                int x = 0;
-                if (snapPixels <= 0) {
-                    return;
-                }
-
+        // Draw snap grid if enabled
+        if (score != null && timeState != null && timeState.isSnapEnabled()) {
+            g2d.setColor(Color.DARK_GRAY);
+            TimeContext ctx = TimeContextManager.getContext();
+            double snapValue = timeState.getSnapValueInBeats(0.0, ctx.getTempoMap(), ctx.getSampleRate());
+            int snapPixels = (int) (snapValue * timeState.getPixelSecond());
+            if (snapPixels > 0) {
                 int height = getHeight();
                 int width = getWidth();
-                double snapValue = timeState.getSnapValue();
-                int pixelSecond = timeState.getPixelSecond();
-
+                double pixelSecond = timeState.getPixelSecond();
+                int x = 0;
                 for (int i = 0; x < width; i++) {
                     x = (int) ((i * snapValue) * pixelSecond);
                     g.drawLine(x, 0, x, height);
                 }
-
             }
         }
 
         g2d.setStroke(STROKE2);
 
         if (enabled) {
-            if (tempo.isVisible()) {
+            if (tempoMap.isVisible()) {
                 g2d.setColor(Color.GREEN);
             } else {
                 g2d.setColor(Color.GREEN.darker().darker());
             }
-            drawLine(g2d, tempoLine, this.tempo.isVisible());
         } else {
             g2d.setColor(Color.DARK_GRAY);
-            drawLine(g2d, tempoLine, false);
-            g2d.setColor(Color.WHITE);
-            g2d.drawLine(0, getHeight() - 1, getWidth(), getHeight() - 1);
-            return;
         }
 
-        if (enabled && selectedPoint != null) {
-            double min = tempoLine.getMin();
-            double max = tempoLine.getMax();
-
-            int x = doubleToScreenX(selectedPoint.getX());
-            int y = doubleToScreenY(selectedPoint.getY(), min, max);
-
-            g2d.setColor(Color.red);
+        // Draw the tempo curve
+        drawTempoMap(g2d, tempoMap, tempoMap.isVisible() && enabled);
+        
+        // Draw selected point highlight
+        if (enabled && selectedPointIndex >= 0 && selectedPointIndex < tempoMap.size()) {
+            int height = getHeight() - 10;
+            double range = MAX_TEMPO - MIN_TEMPO;
+            
+            double beat = tempoMap.getBeat(selectedPointIndex);
+            double tempo = tempoMap.getTempo(selectedPointIndex);
+            int x = beatToScreenX(beat);
+            int y = tempoToScreenY(tempo, height, range);
+            
+            g2d.setColor(Color.RED);
             paintPoint(g2d, x, y);
-
-            drawPointInformation(g2d, x, y);
-
         }
-
+        
+        // Draw bottom border
         g2d.setColor(Color.WHITE);
-        g2d.drawLine(0, getHeight() - 1, getWidth(), getHeight() - 1);
+        g2d.setStroke(STROKE1);
+        g2d.drawLine(bounds.x, bounds.y + bounds.height - 1, bounds.x + bounds.width, bounds.y + bounds.height - 1);
     }
 
-    /**
-     * @param g2d
-     * @param x
-     * @param y
-     */
-    private void drawPointInformation(Graphics2D g2d, int x, int y) {
-        g2d.setColor(Color.white);
-
-        // Line currentLine = currentParameter.getLine();
-        double yVal = selectedPoint.getY();
-        double xVal = selectedPoint.getX();
-
-        String xText = "x: " + NumberUtilities.formatDouble(xVal);
-        String yText = "y: " + NumberUtilities.formatDouble(yVal) + " bpm";
-
-        int width = 95;
-        int height = 28;
-
-        int xLoc = x + 5;
-        int yLoc = y + 5;
-
-        if (x + width > this.getWidth()) {
-            xLoc = x - width - 5;
-        }
-
-        if (y + height > this.getHeight()) {
-            yLoc = y - 14 - 5;
-        }
-
-        g2d.drawString(xText, xLoc, yLoc);
-        g2d.drawString(yText, xLoc, yLoc + 14);
-    }
-
-    private final void drawLine(Graphics g, Line line, boolean drawPoints) {
-        Rectangle clipBounds = g.getClipBounds();
-
-        if (line.size() == 0) {
+    private void drawTempoMap(Graphics2D g2d, TempoMap map, boolean drawPoints) {
+        if (map.size() == 0 || timeState == null) {
             return;
         }
 
-        if (line.size() == 1) {
-            LinePoint lp = line.getLinePoint(0);
+        int height = getHeight() - 10;
+        double range = MAX_TEMPO - MIN_TEMPO;
 
-            double min = line.getMin();
-            double max = line.getMax();
-
-            int x = doubleToScreenX(lp.getX());
-            int y = doubleToScreenY(lp.getY(), min, max);
-
-            g.drawLine(0, y, getWidth(), y);
-
-            if (drawPoints) {
-                paintPoint(g, x, y);
-            }
-            return;
-        }
-
+        // Draw all lines first
         int prevX = -1;
         int prevY = -1;
-        int x, y;
+        CurveType prevCurveType = null;
 
-        double min = line.getMin();
-        double max = line.getMax();
+        for (int i = 0; i < map.size(); i++) {
+            double beat = map.getBeat(i);
+            double tempo = map.getTempo(i);
+            CurveType curveType = map.getCurveType(i);
 
-        int[] xValues = new int[line.size()];
-        int[] yValues = new int[line.size()];
-
-        for (int i = 0; i < line.size(); i++) {
-            LinePoint point = line.getLinePoint(i);
-
-            x = doubleToScreenX(point.getX());
-            y = doubleToScreenY(point.getY(), min, max);
-            xValues[i] = x;
-            yValues[i] = y;
+            int x = beatToScreenX(beat);
+            int y = tempoToScreenY(tempo, height, range);
 
             if (prevX != -1) {
-
-                if ((prevX <= (clipBounds.x + clipBounds.width))
-                        && (x >= clipBounds.x)) {
-                    g.drawLine(prevX, prevY, x, y);
+                if (prevCurveType == CurveType.CONSTANT) {
+                    // Step function: horizontal then vertical
+                    g2d.drawLine(prevX, prevY, x, prevY);
+                    g2d.drawLine(x, prevY, x, y);
+                } else {
+                    // Linear interpolation
+                    g2d.drawLine(prevX, prevY, x, y);
                 }
             }
 
             prevX = x;
             prevY = y;
+            prevCurveType = curveType;
         }
 
-        if (prevX < this.getWidth()) {
-            g.drawLine(prevX, prevY, getWidth(), prevY);
+        // Extend line to end of view
+        if (prevX != -1 && prevX < getWidth()) {
+            g2d.drawLine(prevX, prevY, getWidth(), prevY);
         }
-
+        
+        // Draw all points on top of lines
         if (drawPoints) {
-            for (int i = 0; i < xValues.length; i++) {
-                paintPoint(g, xValues[i], yValues[i]);
+            for (int i = 0; i < map.size(); i++) {
+                double beat = map.getBeat(i);
+                double tempo = map.getTempo(i);
+                int x = beatToScreenX(beat);
+                int y = tempoToScreenY(tempo, height, range);
+                paintPoint(g2d, x, y);
             }
         }
-
     }
 
-    private final void paintPoint(Graphics g, int x, int y) {
-        Graphics2D g2d = (Graphics2D) g;
+    private int beatToScreenX(double beat) {
+        return (int) Math.round(beat * timeState.getPixelSecond());
+    }
 
-        Color c = g.getColor();
+    private int tempoToScreenY(double tempo, int height, double range) {
+        double adjustedTempo = tempo - MIN_TEMPO;
+        double percent = adjustedTempo / range;
+        return (int) Math.round(height * (1.0 - percent)) + 5;
+    }
+
+    private void paintPoint(Graphics2D g2d, int x, int y) {
+        Color c = g2d.getColor();
         Stroke s = g2d.getStroke();
 
         g2d.setStroke(STROKE1);
-        g.setColor(Color.BLACK);
-        g.fillOval(x - 3, y - 3, 7, 7);
-        g.setColor(c);
-        g.drawOval(x - 3, y - 3, 7, 7);
+        g2d.setColor(Color.BLACK);
+        g2d.fillOval(x - 3, y - 3, 7, 7);
+        g2d.setColor(c);
+        g2d.drawOval(x - 3, y - 3, 7, 7);
 
         g2d.setStroke(s);
-    }
-
-    private int doubleToScreenX(double val) {
-        if (timeState == null) {
-            return -1;
-        }
-        return (int) Math.round(val * timeState.getPixelSecond());
-    }
-
-    private int doubleToScreenY(double yVal, double min, double max) {
-        return doubleToScreenY(yVal, min, max, -1.0f);
-    }
-
-    private int doubleToScreenY(double yVal, double min, double max,
-            double resolution) {
-        int height = this.getHeight() - 10;
-
-        double range = max - min;
-
-        double adjustedY = yVal - min;
-
-        if (resolution > 0.0f) {
-
-            double tempY = 0.0f;
-
-            while (tempY <= adjustedY) {
-                tempY += resolution;
-            }
-
-            tempY -= resolution;
-
-            // adjustedY = (double) (adjustedY - Math.IEEEremainder(adjustedY,
-            // resolution));
-            adjustedY = (tempY > range) ? range : tempY;
-
-        }
-
-        double percent = adjustedY / range;
-
-        int y = (int) Math.round(height * (1.0f - percent)) + 5;
-
-        return y;
-    }
-
-    private double screenToDoubleX(int val) {
-        if (timeState == null) {
-            return -1;
-        }
-
-        return (double) val / timeState.getPixelSecond();
-    }
-
-    private double screenToDoubleY(int val, double min, double max, double resolution) {
-        double height = this.getHeight() - 10;
-        double percent = 1 - ((val - 5) / height);
-        double range = max - min;
-
-        double value = percent * range;
-
-        if (resolution > 0.0f) {
-            value = value - Math.IEEEremainder(value, resolution);
-        }
-
-        if (value > range) {
-            value = range;
-        }
-
-        if (value < 0) {
-            value = 0;
-        }
-
-        return value + min;
-    }
-
-    public void setBoundaryXValues() {
-
-        Line currentLine = tempo.getLine();
-
-        if (selectedPoint == currentLine.getLinePoint(0)) {
-            leftBoundaryX = 0;
-            rightBoundaryX = 0;
-            return;
-        } else if (selectedPoint == currentLine
-                .getLinePoint(currentLine.size() - 1)) {
-            LinePoint p1 = currentLine.getLinePoint(currentLine.size() - 2);
-
-            leftBoundaryX = doubleToScreenX(p1.getX());
-            rightBoundaryX = this.getWidth();
-            return;
-        }
-
-        for (int i = 0; i < currentLine.size(); i++) {
-            if (currentLine.getLinePoint(i) == selectedPoint) {
-                LinePoint p1 = currentLine.getLinePoint(i - 1);
-                LinePoint p2 = currentLine.getLinePoint(i + 1);
-                leftBoundaryX = doubleToScreenX(p1.getX());
-                rightBoundaryX = doubleToScreenX(p2.getX());
-                return;
-            }
-        }
-
-    }
-
-    /**
-     * Use by the MouseListener to add points
-     *
-     * @param x
-     * @param y
-     * @return
-     */
-    protected LinePoint insertGraphPoint(double time, double value) {
-        LinePoint point = new LinePoint(time, value);
-
-        int index = 1;
-
-        Line currentLine = tempo.getLine();
-
-        LinePoint last = currentLine.getLinePoint(currentLine.size() - 1);
-
-        if (point.getX() > last.getX()) {
-            currentLine.addLinePoint(point);
-            return point;
-        }
-
-        for (int i = 0; i < currentLine.size(); i++) {
-            LinePoint p1 = currentLine.getLinePoint(i);
-            LinePoint p2 = currentLine.getLinePoint(i + 1);
-
-            if (point.getX() >= p1.getX() && point.getX() <= p2.getX()) {
-                index = i + 1;
-                break;
-            }
-        }
-
-        currentLine.addLinePoint(index, point);
-
-        return point;
-    }
-
-    public LinePoint findGraphPoint(int x, int y) {
-        Line currentLine = tempo.getLine();
-
-        double min = currentLine.getMin();
-        double max = currentLine.getMax();
-
-        for (int i = 0; i < currentLine.size(); i++) {
-            LinePoint point = currentLine.getLinePoint(i);
-
-            int tempX = doubleToScreenX(point.getX());
-            int tempY = doubleToScreenY(point.getY(), min, max);
-
-            if (tempX >= x - 2 && tempX <= x + 2 && tempY >= y - 2
-                    && tempY <= y + 2) {
-                return point;
-            }
-
-        }
-
-        return null;
-    }
-
-    public LinePoint findGraphPoint(int x) {
-        Line currentLine = tempo.getLine();
-
-        for (int i = 0; i < currentLine.size(); i++) {
-            LinePoint point = currentLine.getLinePoint(i);
-
-            int tempX = doubleToScreenX(point.getX());
-
-            if (tempX >= x - 2 && tempX <= x + 2) {
-                return point;
-            }
-
-        }
-
-        return null;
-    }
-
-    public class TempoEditorMouseListener extends MouseAdapter {
-
-        DragDirection direction = DragDirection.NOT_SET;
-        Point pressPoint = null;
-
-        @Override
-        public void mousePressed(MouseEvent e) {
-            if (tempo == null || !tempo.isEnabled() || !tempo.isVisible()) {
-                return;
-            }
-
-            pressPoint = e.getPoint();
-
-            if (selectedPoint != null) {
-                if (UiUtilities.isRightMouseButton(e)) {
-                    LinePoint first = tempo.getLine().getLinePoint(0);
-
-                    if (selectedPoint != first) {
-                        tempo.getLine().removeLinePoint(selectedPoint);
-                        selectedPoint = null;
-                    }
-                } else {
-                    setBoundaryXValues();
-                }
-            } else {
-                if (SwingUtilities.isLeftMouseButton(e)) {
-
-                    int start = e.getX();
-
-                    double startTime = start / timeState.getPixelSecond();
-
-                    if (timeState.isSnapEnabled() && !(e.isControlDown() && e.isShiftDown())) {
-                        startTime = ScoreUtilities.getSnapValueStart(startTime, timeState.getSnapValue());
-                    }
-
-                    final var line = tempo.getLine();
-                    // INSERTING NEW LINE POINT
-                    if ((e.getModifiersEx() & MouseEvent.ALT_DOWN_MASK) == MouseEvent.ALT_DOWN_MASK) {
-                        // ...ON THE EXISTING LINE 
-                        final var time = screenToDoubleX(start);
-                        final var value = line.getValue(time);
-                        selectedPoint = insertGraphPoint(time, value);
-                    } else {
-                        // .. AT THE LOCATION OF THE MOUSE CLICK
-                        double min = line.getMin();
-                        double max = line.getMax();
-
-                        double time = screenToDoubleX(start);
-                        double value = screenToDoubleY(e.getY(), min, max, -1.0);
-                        selectedPoint = insertGraphPoint(time, value);
-                    }
-
-                    setBoundaryXValues();
-                } else if (UiUtilities.isRightMouseButton(e)) {
-                    if (popup == null) {
-                        popup = new EditPointsPopup();
-                    }
-                    popup.show((Component) e.getSource(), e.getX(), e.getY());
-                }
-            }
-
-        }
-
-        @Override
-        public void mouseReleased(MouseEvent e) {
-            direction = DragDirection.NOT_SET;
-            if (tempo == null || !tempo.isEnabled() || !tempo.isVisible()) {
-                return;
-            }
-
-            repaint();
-
-        }
-
-        @Override
-        public void mouseDragged(MouseEvent e) {
-            if (tempo == null || !tempo.isEnabled() || !tempo.isVisible()) {
-                return;
-            }
-
-            if (selectedPoint != null) {
-
-                int x = e.getX();
-                int y = e.getY();
-
-                if (direction == DragDirection.NOT_SET) {
-                    int magx = Math.abs(x - (int) pressPoint.getX());
-                    int magy = Math.abs(y - (int) pressPoint.getY());
-
-                    direction = (magx > magy) ? DragDirection.LEFT_RIGHT
-                            : DragDirection.UP_DOWN;
-                }
-
-                if (e.isControlDown()) {
-                    if (direction == DragDirection.LEFT_RIGHT) {
-                        y = (int) pressPoint.getY();
-                    } else {
-                        x = (int) pressPoint.getX();
-                    }
-                }
-
-                int topY = 5;
-                int bottomY = getHeight() - 5;
-
-                if (x < leftBoundaryX) {
-                    x = leftBoundaryX;
-                } else if (x > rightBoundaryX) {
-                    x = rightBoundaryX;
-                }
-
-                if (y < topY) {
-                    y = topY;
-                } else if (y > bottomY) {
-                    y = bottomY;
-                }
-
-                if (timeState.isSnapEnabled() && !e.isShiftDown()) {
-                    int snapPixels = (int) (timeState.getSnapValue() * timeState.getPixelSecond());
-                    int fraction = x % snapPixels;
-
-                    x = x - fraction;
-
-                    if (fraction > snapPixels / 2) {
-                        x += snapPixels;
-                    }
-                }
-
-                double min = tempo.getLine().getMin();
-                double max = tempo.getLine().getMax();
-
-                if (selectedPoint != null) {
-                    selectedPoint.setLocation(screenToDoubleX(x),
-                            screenToDoubleY(y, min, max, -1));
-                    repaint();
-                }
-            }
-        }
-
-        @Override
-        public void mouseMoved(MouseEvent e) {
-            if (tempo == null || !tempo.isEnabled() || !tempo.isVisible()) {
-                return;
-            }
-
-            int x = e.getX();
-            int y = e.getY();
-
-            LinePoint foundPoint = findGraphPoint(x, y);
-
-            if (foundPoint != null) {
-                if (selectedPoint != foundPoint) {
-                    selectedPoint = foundPoint;
-                    repaint();
-                }
-            } else if (selectedPoint != null) {
-                selectedPoint = null;
-                repaint();
-            }
-        }
     }
 
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
         String prop = evt.getPropertyName();
-        if (evt.getSource() == this.tempo) {
+        if (evt.getSource() == this.tempoMap) {
             switch (prop) {
                 case "enabled":
+                case "data":
                     repaint();
                     break;
                 case "visible":
-                    this.setTempoVisible(((Boolean) evt.getNewValue()).booleanValue());
+                    // Visibility is now managed by TempoEditorPanel
                     break;
             }
-        } else if (evt.getSource() == this.score.getTimeState()) {
+        } else if (this.score != null && evt.getSource() == this.score.getTimeState()) {
             repaint();
         }
     }
-
-    class EditPointsPopup extends JPopupMenu {
-
-        Action editPointsAction;
-        Action editBoundariesAction;
-
-        public EditPointsPopup() {
-
-            editPointsAction = new AbstractAction("Edit Points") {
-
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    if (tempo != null) {
-                        Component root = SwingUtilities.getRoot(getInvoker());
-
-                        LineEditorDialog dialog = LineEditorDialog
-                                .getInstance(root);
-
-                        dialog.setLine(tempo.getLine());
-                        dialog.ask();
-                    }
-                }
-
-            };
-
-            editBoundariesAction = new AbstractAction("Edit Min/Max") {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    if (tempo != null) {
-                        if (tempoMinMaxDialog == null) {
-                            Component root = SwingUtilities.getRoot(getInvoker());
-                            tempoMinMaxDialog = new TempoMinMaxDialog((Frame) root, true);
-                            GUI.centerOnScreen(tempoMinMaxDialog);
-                        }
-                        Line line = tempo.getLine();
-                        tempoMinMaxDialog.setValues(line.getMin(), line.getMax());
-                        tempoMinMaxDialog.setVisible(true);
-
-                        if (tempoMinMaxDialog.getReturnStatus() == TempoMinMaxDialog.RET_OK) {
-                            double min = tempoMinMaxDialog.getMin();
-                            double max = tempoMinMaxDialog.getMax();
-                            boolean truncate = tempoMinMaxDialog.isTruncate();
-
-                            line.setMinMax(min, max, truncate);
-                        }
-                    }
-                }
-            };
-
-            this.add(editPointsAction);
-            this.add(editBoundariesAction);
+    
+    // ========== Coordinate Conversion ==========
+    
+    private double screenToDoubleBeat(int x) {
+        if (timeState == null) {
+            return -1;
         }
-
+        return (double) x / timeState.getPixelSecond();
+    }
+    
+    private double screenToDoubleTempo(int y) {
+        int height = getHeight() - 10;
+        double range = MAX_TEMPO - MIN_TEMPO;
+        double percent = 1.0 - ((y - 5) / (double) height);
+        double tempo = (percent * range) + MIN_TEMPO;
+        return Math.max(MIN_TEMPO, Math.min(MAX_TEMPO, tempo));
+    }
+    
+    // ========== Point Finding ==========
+    
+    private int findPointAt(int x, int y) {
+        if (tempoMap == null || timeState == null) {
+            return -1;
+        }
+        
+        int height = getHeight() - 10;
+        double range = MAX_TEMPO - MIN_TEMPO;
+        
+        for (int i = 0; i < tempoMap.size(); i++) {
+            int px = beatToScreenX(tempoMap.getBeat(i));
+            int py = tempoToScreenY(tempoMap.getTempo(i), height, range);
+            
+            if (Math.abs(px - x) <= 4 && Math.abs(py - y) <= 4) {
+                return i;
+            }
+        }
+        return -1;
+    }
+    
+    // ========== Boundary Calculation ==========
+    
+    private void setBoundaryXValues() {
+        if (selectedPointIndex < 0 || tempoMap == null) {
+            leftBoundaryX = 0;
+            rightBoundaryX = getWidth();
+            return;
+        }
+        
+        // First point is fixed at x=0
+        if (selectedPointIndex == 0) {
+            leftBoundaryX = 0;
+            rightBoundaryX = 0;
+            return;
+        }
+        
+        // Last point can go to end of view
+        if (selectedPointIndex == tempoMap.size() - 1) {
+            leftBoundaryX = beatToScreenX(tempoMap.getBeat(selectedPointIndex - 1)) + 1;
+            rightBoundaryX = getWidth();
+            return;
+        }
+        
+        // Middle points are bounded by neighbors
+        leftBoundaryX = beatToScreenX(tempoMap.getBeat(selectedPointIndex - 1)) + 1;
+        rightBoundaryX = beatToScreenX(tempoMap.getBeat(selectedPointIndex + 1)) - 1;
+    }
+    
+    // ========== Point Insertion ==========
+    
+    private int insertPoint(double beat, double tempo) {
+        if (tempoMap == null) {
+            return -1;
+        }
+        
+        // Clamp tempo to valid range
+        tempo = Math.max(MIN_TEMPO, Math.min(MAX_TEMPO, tempo));
+        
+        // Add the point (TempoMap will sort it)
+        tempoMap.addTempoPoint(new TempoPoint(beat, tempo, CurveType.CONSTANT));
+        
+        // Find the index of the newly added point
+        for (int i = 0; i < tempoMap.size(); i++) {
+            if (Math.abs(tempoMap.getBeat(i) - beat) < 0.0001) {
+                return i;
+            }
+        }
+        return tempoMap.size() - 1;
     }
 
+    private TimeContext getCurrentTimeContext() {
+        return score == null ? null : score.getTimeContext();
+    }
+
+    private TimePosition getDraggedPosition(TempoPoint point, double beat, TimeContext context) {
+        TimePosition originalPosition = point.getPosition();
+        if (originalPosition instanceof TimePosition.BeatTime || context == null) {
+            return TimePosition.beats(beat);
+        }
+        return TimeUtilities.beatsToTimePosition(beat, originalPosition.getTimeBase(), context);
+    }
+    
+    // ========== Popup Menu ==========
+    
+    private void showSegmentPopupMenu(MouseEvent e, int segmentIndex) {
+        JPopupMenu popup = new JPopupMenu();
+        
+        CurveType currentType = tempoMap.getCurveType(segmentIndex);
+        
+        JMenuItem constantItem = new JMenuItem("Constant");
+        constantItem.setEnabled(currentType != CurveType.CONSTANT);
+        constantItem.addActionListener(evt -> {
+            tempoMap.setCurveType(segmentIndex, CurveType.CONSTANT);
+            repaint();
+        });
+        popup.add(constantItem);
+        
+        JMenuItem linearItem = new JMenuItem("Linear");
+        linearItem.setEnabled(currentType != CurveType.LINEAR);
+        linearItem.addActionListener(evt -> {
+            tempoMap.setCurveType(segmentIndex, CurveType.LINEAR);
+            repaint();
+        });
+        popup.add(linearItem);
+        
+        popup.show(this, e.getX(), e.getY());
+    }
+    
+    /**
+     * Find the segment index for a given x position.
+     * Returns the index of the point that starts the segment, or -1 if not found.
+     */
+    private int findSegmentAt(int x) {
+        if (tempoMap == null || tempoMap.size() < 2) {
+            return -1;
+        }
+        
+        double beat = screenToDoubleBeat(x);
+        
+        for (int i = 0; i < tempoMap.size() - 1; i++) {
+            double startBeat = tempoMap.getBeat(i);
+            double endBeat = tempoMap.getBeat(i + 1);
+            if (beat >= startBeat && beat < endBeat) {
+                return i;
+            }
+        }
+        
+        // Check if we're past the last point (on the extension line)
+        if (beat >= tempoMap.getBeat(tempoMap.size() - 1)) {
+            return tempoMap.size() - 1;
+        }
+        
+        return -1;
+    }
+    
+    // ========== Mouse Listener ==========
+    
+    private class TempoEditorMouseListener extends MouseAdapter {
+        
+        private DragDirection direction = DragDirection.NOT_SET;
+        private Point pressPoint = null;
+        
+        @Override
+        public void mousePressed(MouseEvent e) {
+            if (tempoMap == null || !tempoMap.isEnabled() || !tempoMap.isVisible()) {
+                return;
+            }
+            
+            pressPoint = e.getPoint();
+            
+            if (selectedPointIndex >= 0) {
+                // A point is already selected (mouse is over a point)
+                if (UiUtilities.isRightMouseButton(e)) {
+                    // Right-click on selected point: remove it (if not first point)
+                    if (selectedPointIndex > 0) {
+                        tempoMap.removeTempoPoint(selectedPointIndex);
+                        selectedPointIndex = -1;
+                        setToolTipText(null);
+                        repaint();
+                    }
+                } else {
+                    // Left-click: prepare for dragging
+                    setBoundaryXValues();
+                }
+            } else {
+                // No point selected (mouse is not over a point)
+                if (UiUtilities.isRightMouseButton(e)) {
+                    // Right-click on segment: show curve type popup
+                    int segmentIndex = findSegmentAt(e.getX());
+                    if (segmentIndex >= 0) {
+                        showSegmentPopupMenu(e, segmentIndex);
+                    }
+                } else if (SwingUtilities.isLeftMouseButton(e)) {
+                    int x = e.getX();
+                    int y = e.getY();
+                    
+                    double beat = screenToDoubleBeat(x);
+                    
+                    // Apply snap if enabled
+                    if (timeState != null && timeState.isSnapEnabled() && 
+                            !(e.isControlDown() && e.isShiftDown())) {
+                        TimeContext ctx = TimeContextManager.getContext();
+                        beat = ScoreUtilities.getSnapValueStart(beat,
+                                timeState.getSnapValueInBeats(beat, ctx.getTempoMap(), ctx.getSampleRate()));
+                    }
+                    
+                    double tempo = screenToDoubleTempo(y);
+                    
+                    // Insert new point
+                    selectedPointIndex = insertPoint(beat, tempo);
+                    setBoundaryXValues();
+                    repaint();
+                }
+            }
+        }
+        
+        @Override
+        public void mouseReleased(MouseEvent e) {
+            direction = DragDirection.NOT_SET;
+            if (tempoMap == null || !tempoMap.isEnabled() || !tempoMap.isVisible()) {
+                return;
+            }
+            repaint();
+        }
+        
+        @Override
+        public void mouseDragged(MouseEvent e) {
+            if (tempoMap == null || !tempoMap.isEnabled() || !tempoMap.isVisible()) {
+                return;
+            }
+            
+            if (selectedPointIndex >= 0 && selectedPointIndex < tempoMap.size()) {
+                int x = e.getX();
+                int y = e.getY();
+                
+                // Determine drag direction for constrained movement
+                if (direction == DragDirection.NOT_SET && pressPoint != null) {
+                    int magx = Math.abs(x - pressPoint.x);
+                    int magy = Math.abs(y - pressPoint.y);
+                    direction = (magx > magy) ? DragDirection.LEFT_RIGHT : DragDirection.UP_DOWN;
+                }
+                
+                // Constrain to one axis if Ctrl is held
+                if (e.isControlDown() && pressPoint != null) {
+                    if (direction == DragDirection.LEFT_RIGHT) {
+                        y = pressPoint.y;
+                    } else {
+                        x = pressPoint.x;
+                    }
+                }
+                
+                // First point is fixed at beat 0
+                if (selectedPointIndex == 0) {
+                    x = 0;
+                }
+                
+                // Apply boundaries
+                if (x < leftBoundaryX) {
+                    x = leftBoundaryX;
+                } else if (x > rightBoundaryX) {
+                    x = rightBoundaryX;
+                }
+                
+                // Clamp Y to valid range
+                int topY = 5;
+                int bottomY = getHeight() - 5;
+                if (y < topY) y = topY;
+                if (y > bottomY) y = bottomY;
+                
+                // Apply snap if enabled
+                if (timeState != null && timeState.isSnapEnabled() && !e.isShiftDown()) {
+                    double beatPos = screenToDoubleBeat(x);
+                    TimeContext ctx = TimeContextManager.getContext();
+                    double sv = timeState.getSnapValueInBeats(beatPos, ctx.getTempoMap(), ctx.getSampleRate());
+                    int snapPixels = (int) (sv * timeState.getPixelSecond());
+                    if (snapPixels > 0) {
+                        int fraction = x % snapPixels;
+                        x = x - fraction;
+                        if (fraction > snapPixels / 2) {
+                            x += snapPixels;
+                        }
+                    }
+                }
+                
+                double beat = screenToDoubleBeat(x);
+                double tempo = screenToDoubleTempo(y);
+                
+                // Update the point
+                TimeContext context = getCurrentTimeContext();
+                TempoPoint point = tempoMap.getPoint(selectedPointIndex);
+                TimePosition position = getDraggedPosition(point, beat, context);
+                tempoMap.setTempoPoint(selectedPointIndex, position, tempo,
+                        point.getCurveType(), context);
+                updateTooltip();
+                repaint();
+            }
+        }
+        
+        @Override
+        public void mouseMoved(MouseEvent e) {
+            if (tempoMap == null || !tempoMap.isEnabled() || !tempoMap.isVisible()) {
+                return;
+            }
+            
+            int x = e.getX();
+            int y = e.getY();
+            
+            int foundIndex = findPointAt(x, y);
+            
+            if (foundIndex >= 0) {
+                if (selectedPointIndex != foundIndex) {
+                    selectedPointIndex = foundIndex;
+                    updateTooltip();
+                    repaint();
+                }
+            } else if (selectedPointIndex >= 0) {
+                selectedPointIndex = -1;
+                setToolTipText(null);
+                repaint();
+            }
+        }
+    }
+    
+    private void updateTooltip() {
+        if (selectedPointIndex >= 0 && selectedPointIndex < tempoMap.size()) {
+            double beat = tempoMap.getBeat(selectedPointIndex);
+            double tempo = tempoMap.getTempo(selectedPointIndex);
+            CurveType curveType = tempoMap.getCurveType(selectedPointIndex);
+            String curveStr = curveType == CurveType.CONSTANT ? "constant" : "linear";
+            setToolTipText(String.format("<html>beat: %.2f<br>tempo: %.2f bpm<br>curve: %s</html>", beat, tempo, curveStr));
+        } else {
+            setToolTipText(null);
+        }
+    }
 }

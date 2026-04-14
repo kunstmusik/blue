@@ -1,22 +1,19 @@
 package blue.orchestra.flowGraph;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Iterator;
+import java.util.*;
 
 public class FlowGraph{ 
 
-    private final ArrayList units;
+    private final ArrayList<GraphUnit> units;
 
-    private final ArrayList cables;
+    private final ArrayList<Cable> cables;
 
     private String name;
 
     public FlowGraph() {
 
-        units = new ArrayList();
-        cables = new ArrayList();
+        units = new ArrayList<>();
+        cables = new ArrayList<>();
     }
 
     public String generateInstrument() {
@@ -28,8 +25,7 @@ public class FlowGraph{
 
         varManager.setupOutPorts(units);
 
-        for (Iterator it = units.iterator(); it.hasNext();) {
-            GraphUnit graphUnit = (GraphUnit) it.next();
+        for (GraphUnit graphUnit : units) {
 
             if (!(graphUnit.getInputs().size() == 0 && graphUnit.getOutputs()
                     .size() == 0)) {
@@ -74,10 +70,9 @@ public class FlowGraph{
     }
 
     private Cable[] getInConnections(GraphUnit graphUnit, int portNum) {
-        ArrayList temp = new ArrayList();
+        ArrayList<Cable> temp = new ArrayList<>();
 
-        for (int i = 0; i < cables.size(); i++) {
-            Cable cable = (Cable) cables.get(i);
+        for (Cable cable : cables) {
 
             if (cable.getToUnit() == graphUnit
                     && cable.receivePortIndex == portNum) {
@@ -85,13 +80,7 @@ public class FlowGraph{
             }
         }
 
-        Cable[] conn = new Cable[temp.size()];
-
-        for (int i = 0; i < temp.size(); i++) {
-            conn[i] = (Cable) temp.get(i);
-        }
-
-        return conn;
+        return temp.toArray(new Cable[0]);
     }
 
     public void addGraphUnit(GraphUnit newUnit) {
@@ -158,13 +147,11 @@ public class FlowGraph{
 
         int[] portCounters;
 
-        private final HashMap portMappings = new HashMap();
+        private final HashMap<GraphUnit, PortMapping> portMappings = new HashMap<>();
 
         public VariableManager() {
             portCounters = new int[VAR_PREFIXES.length];
-            for (int i = 0; i < portCounters.length; i++) {
-                portCounters[i] = 0;
-            }
+            Arrays.fill(portCounters, 0);
         }
 
         public String getCodeWithReplacedOutputs(GraphUnit graphUnit) {
@@ -188,9 +175,8 @@ public class FlowGraph{
             return code;
         }
 
-        public void setupOutPorts(ArrayList units) {
-            for (Iterator iter = units.iterator(); iter.hasNext();) {
-                GraphUnit graphUnit = (GraphUnit) iter.next();
+        public void setupOutPorts(ArrayList<GraphUnit> units) {
+            for (GraphUnit graphUnit : units) {
 
                 PortList outs = graphUnit.getOutputs();
 

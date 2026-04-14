@@ -39,7 +39,7 @@ public class AudioWaveformCache {
     }
 
     public synchronized AudioWaveformData getAudioWaveformData(
-            String audioFilename, int pixelSeconds) {
+            String audioFilename, double pixelSeconds) {
 
         if (audioFilename == null || audioFilename.length() == 0) {
             return EMPTY_AUDIO_FILENAME;

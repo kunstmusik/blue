@@ -25,6 +25,10 @@ import blue.projects.BlueProjectManager;
 import blue.score.ScoreObject;
 import blue.soundObject.Instance;
 import blue.soundObject.SoundObject;
+import blue.time.TimeBase;
+import blue.time.TimeContext;
+import blue.time.TimeContextManager;
+import blue.time.TimeDuration;
 import blue.ui.core.score.ScoreController;
 import blue.ui.core.score.ScorePath;
 import blue.ui.core.score.undo.ReplaceScoreObjectEdit;
@@ -77,6 +81,15 @@ public final class AddToSoundObjectLibraryAction extends AbstractAction
 
         if (sObj instanceof Instance) {
             return;
+        }
+
+        // Normalize beat-based durations (BBT/BBST/BBF) to plain BEATS
+        // so library objects are stored in a context-independent format.
+        TimeDuration dur = sObj.getSubjectiveDuration();
+        if (dur.getTimeBase().isBeatBased() && dur.getTimeBase() != TimeBase.BEATS) {
+            TimeContext context = TimeContextManager.getContext();
+            double beats = dur.toBeats(context);
+            sObj.setSubjectiveDuration(TimeDuration.beats(beats));
         }
 
         BlueData data = BlueProjectManager.getInstance().getCurrentBlueData();

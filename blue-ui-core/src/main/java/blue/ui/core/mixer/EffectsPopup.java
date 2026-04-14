@@ -104,8 +104,7 @@ public class EffectsPopup extends JPopupMenu implements ChangeListener {
                 if (selectedIndex >= 0 && chain != null) {
                     Object obj = chain.removeElementAt(selectedIndex);
 
-                    if (obj instanceof Effect) {
-                        Effect effect = (Effect) obj;
+                    if (obj instanceof Effect effect) {
 
                         EffectEditorManager.getInstance().removeEffect(effect);
                     }
@@ -120,10 +119,9 @@ public class EffectsPopup extends JPopupMenu implements ChangeListener {
 
                     Object obj = chain.removeElementAt(selectedIndex);
 
-                    if (obj instanceof Effect) {
-                        bufferedEffect = new Effect((Effect) obj);
-                        EffectEditorManager.getInstance().removeEffect(
-                                (Effect) obj);
+                    if (obj instanceof Effect effect) {
+                        bufferedEffect = new Effect(effect);
+                        EffectEditorManager.getInstance().removeEffect(effect);
                     }
 
                 }
@@ -137,8 +135,8 @@ public class EffectsPopup extends JPopupMenu implements ChangeListener {
 
                     Object obj = chain.getElementAt(selectedIndex);
 
-                    if (obj instanceof Effect) {
-                        bufferedEffect = new Effect((Effect) obj);
+                    if (obj instanceof Effect effect) {
+                        bufferedEffect = new Effect(effect);
                     }
 
                 }
@@ -180,8 +178,8 @@ public class EffectsPopup extends JPopupMenu implements ChangeListener {
                 if (selectedIndex >= 0 && chain != null) {
                     Object obj = chain.getElementAt(selectedIndex);
 
-                    if (obj instanceof Effect) {
-                        EffectsUtil.exportEffect((Effect) obj);
+                    if (obj instanceof Effect effect) {
+                        EffectsUtil.exportEffect(effect);
                     }
                 }
             }
@@ -208,8 +206,7 @@ public class EffectsPopup extends JPopupMenu implements ChangeListener {
                 if (itemSelected) {
                     Object obj = chain.getElementAt(selectedIndex);
 
-                    if (obj instanceof Effect) {
-                        Effect effect = (Effect) obj;
+                    if (obj instanceof Effect effect) {
 
                         if (effect.isEnabled()) {
                             enableDisableEffect.putValue(Action.NAME,
@@ -329,8 +326,8 @@ public class EffectsPopup extends JPopupMenu implements ChangeListener {
         ArrayList categories = category.getSubCategories();
         ArrayList effects = category.getEffects();
 
-        for (int i = 0; i < categories.size(); i++) {
-            EffectCategory cat = (EffectCategory) categories.get(i);
+        for (Object object : categories) {
+            EffectCategory cat = (EffectCategory) object;
 
             JMenu catMenu = new JMenu(cat.getCategoryName());
 
@@ -340,8 +337,8 @@ public class EffectsPopup extends JPopupMenu implements ChangeListener {
 
         int counter = 0;
 
-        for (int i = 0; i < effects.size(); i++) {
-            Effect effect = (Effect) effects.get(i);
+        for (Object o : effects) {
+            Effect effect = (Effect) o;
 
             AddEffectAction action = new AddEffectAction(effect);
 
@@ -435,8 +432,7 @@ public class EffectsPopup extends JPopupMenu implements ChangeListener {
             if (chain != null && selectedIndex >= 0) {
                 Object obj = chain.getElementAt(selectedIndex);
 
-                if (obj instanceof Effect) {
-                    Effect effect = (Effect) obj;
+                if (obj instanceof Effect effect) {
 
                     Effect copy = new Effect(effect);
 
@@ -462,23 +458,18 @@ public class EffectsPopup extends JPopupMenu implements ChangeListener {
 
                 Frame root = WindowManager.getDefault().getMainWindow();
 
-                if (obj instanceof Effect) {
-                    Effect effect = (Effect) obj;
+                if (obj instanceof Effect effect) {
 
                     EffectEditorManager.getInstance().openEffectEditor(root,
                             effect);
-                } else if (obj instanceof Send) {
-                    // JOptionPane.showMessageDialog(null, "Show editor for
-                    // Send!");
-
-                    Send send = (Send) obj;
+                } else if (obj instanceof Send send) {
 
                     ComboBoxModel temp = null;
 
-                    if (model instanceof ChannelOutComboBoxModel) {
-                        temp = ((ChannelOutComboBoxModel) model).getCopy();
-                    } else if (model instanceof SubChannelOutComboBoxModel) {
-                        temp = ((SubChannelOutComboBoxModel) model).getCopy();
+                    if (model instanceof ChannelOutComboBoxModel channelOutComboBoxModel) {
+                        temp = channelOutComboBoxModel.getCopy();
+                    } else if (model instanceof SubChannelOutComboBoxModel subChannelOutComboBoxModel) {
+                        temp = subChannelOutComboBoxModel.getCopy();
                     }
 
                     SendEditorManager.getInstance().openSendEditor(root, send,
@@ -501,8 +492,7 @@ public class EffectsPopup extends JPopupMenu implements ChangeListener {
             if (chain != null && selectedIndex >= 0) {
                 Object obj = chain.getElementAt(selectedIndex);
 
-                if (obj instanceof Effect) {
-                    Effect effect = (Effect) obj;
+                if (obj instanceof Effect effect) {
 
                     if (effectDialog == null) {
 //                        Frame root = WindowManager.getDefault().getMainWindow();
@@ -532,11 +522,9 @@ public class EffectsPopup extends JPopupMenu implements ChangeListener {
             if (chain != null && selectedIndex >= 0) {
                 Object obj = chain.getElementAt(selectedIndex);
 
-                if (obj instanceof Effect) {
-                    Effect effect = (Effect) obj;
+                if (obj instanceof Effect effect) {
                     effect.setEnabled(!effect.isEnabled());
-                } else if (obj instanceof Send) {
-                    Send send = (Send) obj;
+                } else if (obj instanceof Send send) {
                     send.setEnabled(!send.isEnabled());
                 }
             }
@@ -586,10 +574,10 @@ public class EffectsPopup extends JPopupMenu implements ChangeListener {
 
                 ComboBoxModel temp = null;
 
-                if (model instanceof ChannelOutComboBoxModel) {
-                    temp = ((ChannelOutComboBoxModel) model).getCopy();
-                } else if (model instanceof SubChannelOutComboBoxModel) {
-                    temp = ((SubChannelOutComboBoxModel) model).getCopy();
+                if (model instanceof ChannelOutComboBoxModel channelOutComboBoxModel) {
+                    temp = channelOutComboBoxModel.getCopy();
+                } else if (model instanceof SubChannelOutComboBoxModel subChannelOutComboBoxModel) {
+                    temp = subChannelOutComboBoxModel.getCopy();
                 }
 
                 Frame root = WindowManager.getDefault().getMainWindow();

@@ -24,6 +24,10 @@ import blue.score.ScoreObject;
 import blue.score.layers.Layer;
 import blue.soundObject.PolyObject;
 import blue.soundObject.SoundObject;
+import blue.time.TimeBase;
+import blue.time.TimeContext;
+import blue.time.TimeContextManager;
+import blue.time.TimeUtilities;
 import blue.ui.core.score.ScoreController;
 import blue.ui.core.score.ScorePath;
 import java.awt.Point;
@@ -89,14 +93,16 @@ public final class ConvertToPolyObjectAction extends AbstractAction
         int layerMin = Integer.MAX_VALUE;
         int layerMax = Integer.MIN_VALUE;
 
+        TimeContext context = TimeContextManager.getContext();
+        
         double start = Double.POSITIVE_INFINITY;
 
         for (SoundObject sObj : soundObjects) {
             sObjList.add(sObj);
-            double sObjStart = sObj.getStartTime();
+            double sObjStart = sObj.getStartTime().toBeats(context);
 
-            if (sObj.getStartTime() < start) {
-                start = sObj.getStartTime();
+            if (sObjStart < start) {
+                start = sObjStart;
             }
 
             for (int i = 0; i < allLayers.size(); i++) {
@@ -130,8 +136,10 @@ public final class ConvertToPolyObjectAction extends AbstractAction
             pObj.get(layerNum - layerMin).add(sObj); // don't need to clone here...
         }
 
-        pObj.normalizeSoundObjects();
-        pObj.setStartTime(start);
+        pObj.normalizeSoundObjects(context);
+        TimeBase timeBase = ScoreController.getInstance().getScore()
+                .getTimeState().getTimeDisplay();
+        pObj.setStartTime(TimeUtilities.beatsToTimePosition(start, timeBase, context));
 
         ((SoundLayer)scorePath.getGlobalLayerForY(p.y)).add(pObj);
         ScoreController.getInstance().setSelectedScoreObjects(

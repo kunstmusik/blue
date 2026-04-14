@@ -21,8 +21,8 @@ import java.util.ArrayList;
  */
 public class OrchestraUtilities {
 
-    public static ArrayList parseInstruments(File csoundTextFile) {
-        ArrayList foundInstruments = null;
+    public static ArrayList<GenericInstrument> parseInstruments(File csoundTextFile) {
+        ArrayList<GenericInstrument> foundInstruments = null;
         BufferedReader in = null;
 
         try {
@@ -31,7 +31,7 @@ public class OrchestraUtilities {
             String iName = "";
             StringBuffer iBody = new StringBuffer();
 
-            foundInstruments = new ArrayList();
+            foundInstruments = new ArrayList<>();
 
             int state = 1;
 

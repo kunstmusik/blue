@@ -65,9 +65,9 @@ public class SubChannelListPanel extends JComponent implements Scrollable,
 
     private final MouseListener removePanelListener;
 
-    private final ArrayList models = new ArrayList();
+    private final ArrayList<SubChannelOutComboBoxModel> models = new ArrayList<>();
 
-    private final Vector listeners = new Vector();
+    private final Vector<PropertyChangeListener> listeners = new Vector<>();
 
     /** Creates a new instance of ChanelListPanel */
     public SubChannelListPanel() {
@@ -168,8 +168,7 @@ public class SubChannelListPanel extends JComponent implements Scrollable,
 
     private void rebuildChannelsUI(final ChannelList channels) {
 
-        for (int i = 0; i < channels.size(); i++) {
-            Channel channel = channels.get(i);
+        for (Channel channel : channels) {
             ChannelPanel cPanel = createChannelPanel(channel);
 
             this.add(cPanel);
@@ -280,9 +279,7 @@ public class SubChannelListPanel extends JComponent implements Scrollable,
 
     // fire off event so that ChannelListPanel can receive the name change
     public void firePropertyChangeEvent(PropertyChangeEvent pce) {
-        for (Iterator iter = listeners.iterator(); iter.hasNext();) {
-            PropertyChangeListener listener = (PropertyChangeListener) iter
-                    .next();
+        for (PropertyChangeListener listener : listeners) {
             listener.propertyChange(pce);
         }
     }
@@ -294,11 +291,8 @@ public class SubChannelListPanel extends JComponent implements Scrollable,
             String oldName = (String) pce.getOldValue();
             String newName = (String) pce.getNewValue();
 
-            for (Iterator iter = models.iterator(); iter.hasNext();) {
-                SubChannelOutComboBoxModel model = (SubChannelOutComboBoxModel) iter
-                        .next();
+            for (SubChannelOutComboBoxModel model : models) {
                 model.reconcile(oldName, newName);
-
             }
             firePropertyChangeEvent(pce);
 
@@ -327,14 +321,12 @@ public class SubChannelListPanel extends JComponent implements Scrollable,
         for (int i = 0; i < arr.size(); i++) {
             Instrument instr = arr.getInstrument(i);
 
-            if (instr instanceof BlueSynthBuilder) {
-                BlueSynthBuilder bsb = (BlueSynthBuilder) instr;
+            if (instr instanceof BlueSynthBuilder bsb) {
 
                 BSBGraphicInterface bsbInterface = bsb.getGraphicInterface();
 
                 for (BSBObject bsbObj : bsbInterface.getAllSet()) {
-                    if (bsbObj instanceof BSBSubChannelDropdown) {
-                        BSBSubChannelDropdown bsbSubDrop = (BSBSubChannelDropdown) bsbObj;
+                    if (bsbObj instanceof BSBSubChannelDropdown bsbSubDrop) {
                         if (bsbSubDrop.getChannelOutput().equals(oldName)) {
                             bsbSubDrop.setChannelOutput(newName);
                         }
@@ -367,14 +359,12 @@ public class SubChannelListPanel extends JComponent implements Scrollable,
         for (int i = 0; i < arr.size(); i++) {
             Instrument instr = arr.getInstrument(i);
 
-            if (instr instanceof BlueSynthBuilder) {
-                BlueSynthBuilder bsb = (BlueSynthBuilder) instr;
+            if (instr instanceof BlueSynthBuilder bsb) {
 
                 BSBGraphicInterface bsbInterface = bsb.getGraphicInterface();
 
                 for (BSBObject bsbObj : bsbInterface.getAllSet()) {
-                    if (bsbObj instanceof BSBSubChannelDropdown) {
-                        BSBSubChannelDropdown bsbSubDrop = (BSBSubChannelDropdown) bsbObj;
+                    if (bsbObj instanceof BSBSubChannelDropdown bsbSubDrop) {
                         if (bsbSubDrop.getChannelOutput()
                                 .equals(removedChannel)) {
                             bsbSubDrop.setChannelOutput(Channel.MASTER);

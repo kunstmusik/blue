@@ -2,7 +2,6 @@ package blue.soundObject;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import org.apache.commons.lang3.text.StrBuilder;
 
 /**
  * Title: blue Description: an object composition environment for csound
@@ -42,29 +41,16 @@ public class NoteList extends ArrayList<Note> {
             return "";
         }
 
-        StrBuilder tempScore = new StrBuilder();
-
-        String firstNote = this.get(0).toString();
-
         if (this.size() == 1) {
-            return firstNote + "\n";
+            return this.get(0).toString() + "\n";
         }
 
         String[] str = new String[this.size()];
-        str[0] = firstNote;
-
-        int strSize = str[0].length();
-
-        for (int i = 1; i < this.size(); i++) {
+        for (int i = 0; i < this.size(); i++) {
             str[i] = this.get(i).toString();
-            strSize += str[i].length() + 1;
         }
 
-        tempScore.ensureCapacity(strSize);
-
-        tempScore.appendWithSeparators(str, "\n");
-        // return "";
-        return tempScore.toString();
+        return String.join("\n", str);
     }
 
 }

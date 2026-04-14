@@ -28,6 +28,9 @@ import blue.soundObject.NoteList;
 import blue.soundObject.SoundObject;
 import blue.soundObject.SoundObjectException;
 import blue.soundObject.TimeBehavior;
+import blue.time.TimeContext;
+import blue.time.TimeDuration;
+import blue.time.TimePosition;
 import blue.utility.ObjectUtilities;
 import blue.utility.ScoreUtilities;
 import electric.xml.Element;
@@ -55,8 +58,8 @@ public class PatternLayer implements Layer {
 
     public PatternLayer() {
         soundObject = new GenericScore();
-        soundObject.setStartTime(0);
-        soundObject.setSubjectiveDuration(4.0f);
+        soundObject.setStartTime(TimePosition.beats(0));
+        soundObject.setSubjectiveDuration(TimeDuration.beats(4.0f));
         soundObject.setTimeBehavior(TimeBehavior.NONE);
         patternData = new PatternData();
     }
@@ -85,7 +88,7 @@ public class PatternLayer implements Layer {
     @Override
     public void setName(String name) {
         String oldName = this.name;
-        this.name = (name == null) ? "" : name;
+        this.name = java.util.Objects.requireNonNullElse(name, "");
 
         if (!this.name.equals(oldName)) {
             firePropertyChangeEvent(new PropertyChangeEvent(this, "name",
@@ -132,9 +135,9 @@ public class PatternLayer implements Layer {
 
         layer.setName(data.getAttributeValue("name"));
         layer.setMuted(
-                Boolean.valueOf(data.getAttributeValue("muted")).booleanValue());
+                Boolean.parseBoolean(data.getAttributeValue("muted")));
         layer.setSolo(
-                Boolean.valueOf(data.getAttributeValue("solo")).booleanValue());
+                Boolean.parseBoolean(data.getAttributeValue("solo")));
 
         Elements nodes = data.getElements();
 
@@ -167,13 +170,13 @@ public class PatternLayer implements Layer {
         //
     }
 
-    NoteList generateForCSD(CompileData compileData, double startTime, double endTime, int patternBeatsLength) throws SoundObjectException {
+    NoteList generateForCSD(TimeContext context, CompileData compileData, double startTime, double endTime, int patternBeatsLength) throws SoundObjectException {
         NoteList notes = new NoteList();
 
-        this.soundObject.setStartTime(0);
+        this.soundObject.setStartTime(TimePosition.beats(0));
         //this.soundObject.setSubjectiveDuration(patternBeatsLength);
         //this.soundObject.setTimeBehavior(SoundObject.TIME_BEHAVIOR_NONE);
-        NoteList tempNotes = this.soundObject.generateForCSD(compileData, -1, -1);
+        NoteList tempNotes = this.soundObject.generateForCSD(context, compileData, -1, -1);
 
         int currentIndex = (int) (startTime / patternBeatsLength);
         while (currentIndex < this.patternData.getSize()) {

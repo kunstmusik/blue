@@ -37,7 +37,8 @@ import org.openide.util.NbBundle.Messages;
 @MIMEResolver.ExtensionRegistration(
     displayName = "#LBL_JavaScript_LOADER",
 mimeType = "text/javascript",
-extension = {"js"})
+extension = {"js"},
+position = 10050)
 @DataObject.Registration(
     mimeType = "text/javascript",
 displayName = "#LBL_JavaScript_LOADER",

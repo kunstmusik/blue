@@ -196,7 +196,7 @@ public class Preset implements Comparable<Preset> {
     }
 
     public void synchronizeWithInterface(BSBGraphicInterface graphicInterface) {
-        HashMap nameMap = new HashMap();
+        HashMap<String, String> nameMap = new HashMap<>();
 
         for (BSBObject bsbObj : graphicInterface.getAllSet()) {
             String objName = bsbObj.getObjectName();

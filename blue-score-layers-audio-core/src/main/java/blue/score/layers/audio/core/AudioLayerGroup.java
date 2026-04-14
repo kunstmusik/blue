@@ -29,6 +29,7 @@ import blue.score.layers.LayerGroupDataEvent;
 import blue.score.layers.LayerGroupListener;
 import blue.score.layers.ScoreObjectLayerGroup;
 import blue.soundObject.*;
+import blue.time.TimeContext;
 import blue.utility.XMLUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
@@ -76,7 +77,7 @@ public class AudioLayerGroup extends ArrayList<AudioLayer> implements ScoreObjec
     @Override
     public void setName(String name) {
         String oldName = this.name;
-        this.name = (name == null) ? "" : name;
+        this.name = java.util.Objects.requireNonNullElse(name, "");
 
         if (!this.name.equals(oldName)) {
             firePropertyChangeEvent(new PropertyChangeEvent(this, "name",
@@ -103,14 +104,14 @@ public class AudioLayerGroup extends ArrayList<AudioLayer> implements ScoreObjec
     }
 
     @Override
-    public NoteList generateForCSD(CompileData compileData, double startTime, double endTime, boolean processWithSolo) throws ScoreGenerationException {
+    public NoteList generateForCSD(TimeContext context, CompileData compileData, double startTime, double endTime, boolean processWithSolo) throws ScoreGenerationException {
 
         NoteList noteList = new NoteList();
 
         for (AudioLayer layer : this) {
             if (!processWithSolo || layer.isSolo()) {
                 if (!layer.isMuted()) {
-                    noteList.merge(layer.generateForCSD(compileData, startTime,
+                    noteList.merge(layer.generateForCSD(context, compileData, startTime,
                             endTime));
                 }
             }
@@ -243,7 +244,7 @@ public class AudioLayerGroup extends ArrayList<AudioLayer> implements ScoreObjec
     }
 
     @Override
-    public void onLoadComplete() {
+    public void onLoadComplete(TimeContext context) {
 //        for (AudioLayer layer : audioLayers) {
         //
 //        }

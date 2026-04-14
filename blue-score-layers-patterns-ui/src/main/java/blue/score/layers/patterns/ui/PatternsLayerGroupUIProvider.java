@@ -37,8 +37,8 @@ public class PatternsLayerGroupUIProvider implements LayerGroupUIProvider {
     public JComponent getLayerGroupPanel(LayerGroup layerGroup,
             TimeState timeState, BlueData data, InstanceContent ic) {
         
-        if (layerGroup instanceof PatternsLayerGroup) {
-            return new PatternsLayerPanel((PatternsLayerGroup) layerGroup,
+        if (layerGroup instanceof PatternsLayerGroup plg) {
+            return new PatternsLayerPanel(plg,
                     timeState);
         }
         return null;
@@ -46,8 +46,8 @@ public class PatternsLayerGroupUIProvider implements LayerGroupUIProvider {
 
         @Override
     public JComponent getLayerGroupHeaderPanel(LayerGroup layerGroup, TimeState timeState, BlueData data, InstanceContent ic) {
-          if(layerGroup instanceof PatternsLayerGroup) {
-            return new PatternsHeaderListPanel((PatternsLayerGroup)layerGroup, ic);
+          if(layerGroup instanceof PatternsLayerGroup plg) {
+            return new PatternsHeaderListPanel(plg, ic);
         } 
         return null;
     }

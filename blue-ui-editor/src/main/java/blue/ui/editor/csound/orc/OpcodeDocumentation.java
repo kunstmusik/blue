@@ -27,7 +27,7 @@ public class OpcodeDocumentation {
         
         if(docFile.exists()) {
             try {
-                return docFile.toURL();
+                return docFile.toURI().toURL();
             } catch (MalformedURLException ex) {
                 return null;
             }

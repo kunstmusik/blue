@@ -30,6 +30,7 @@ import blue.soundObject.NoteList;
 import blue.soundObject.SoundObject;
 import blue.soundObject.SoundObjectException;
 import blue.soundObject.editor.ScoreObjectEditor;
+import blue.time.TimeContextManager;
 import blue.ui.nbutilities.MimeTypeEditorComponent;
 import blue.ui.utilities.SimpleDocumentListener;
 import java.awt.BorderLayout;
@@ -84,7 +85,7 @@ public class ClojureObjectEditor extends ScoreObjectEditor {
         ActionMap actions = codeEditor.getJEditorPane().getActionMap();
 
         inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_T, BlueSystem.
-                getMenuShortcutKey()), "testSoundObject");
+                getMenuShortcutKeyEx()), "testSoundObject");
 
         actions.put("testSoundObject", new AbstractAction() {
 
@@ -107,16 +108,14 @@ public class ClojureObjectEditor extends ScoreObjectEditor {
             return;
         }
 
-        if (!(sObj instanceof ClojureObject)) {            
+        if (!(sObj instanceof ClojureObject tempPObj)) {            
             codeEditor.setText(
                     "[ERROR] not instance " +
-                    "of ClojoureSOundObject");
+                    "of ClojureSoundObject");
             codeEditor.getJEditorPane().setEnabled(false);
             processOnLoadCheckBox.setEnabled(false);
             return;
         }
-
-        ClojureObject tempPObj = (ClojureObject) sObj;
 
         codeEditor.setText(tempPObj.getClojureCode());
         codeEditor.getJEditorPane().setEnabled(true);
@@ -139,7 +138,8 @@ public class ClojureObjectEditor extends ScoreObjectEditor {
         NoteList notes = null;
 
         try {
-            notes = ((SoundObject) this.clojureObj).generateForCSD(CompileData.createEmptyCompileData(),
+            var context = TimeContextManager.getContext();
+            notes = ((SoundObject) this.clojureObj).generateForCSD(context, CompileData.createEmptyCompileData(),
                     0.0f, -1.0f);
         } catch (SoundObjectException e) {
             ExceptionDialog.showExceptionDialog(SwingUtilities.getRoot(this), e);

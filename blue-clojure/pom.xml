@@ -31,6 +31,15 @@
                     </archive>
                 </configuration>
             </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <systemPropertyVariables>
+                        <java.util.logging.config.file>${project.basedir}/src/test/resources/logging.properties</java.util.logging.config.file>
+                    </systemPropertyVariables>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
     <dependencies>
@@ -92,7 +101,7 @@
         <dependency>
             <groupId>org.clojure</groupId>
             <artifactId>clojure</artifactId>
-            <version>1.10.1</version>
+            <version>1.12.0</version>
          </dependency>
         <dependency>
             <groupId>com.cemerick</groupId>
@@ -187,8 +196,27 @@
         </dependency>-->
         <dependency>
             <groupId>org.netbeans.api</groupId>
-            <artifactId>org-netbeans-libs-junit4</artifactId>
-            <version>${netbeans.version}</version>
+            <artifactId>org-netbeans-libs-junit5</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- Test dependencies for DiskRenderServiceFactory implementations -->
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>blue-csnd6</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>blue-settings</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>blue-services</artifactId>
+            <version>${project.version}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>

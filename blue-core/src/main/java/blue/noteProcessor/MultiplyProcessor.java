@@ -54,8 +54,8 @@ public class MultiplyProcessor implements NoteProcessor {
     public final NoteList processNotes(NoteList in) throws NoteProcessorException {
         Note temp;
         double fieldVal = 0;
-        for (int i = 0; i < in.size(); i++) {
-            temp = in.get(i);
+        for (Note note : in) {
+            temp = note;
             try {
                 fieldVal = Double.parseDouble(temp.getPField(pfield));
             } catch (NumberFormatException ex) {

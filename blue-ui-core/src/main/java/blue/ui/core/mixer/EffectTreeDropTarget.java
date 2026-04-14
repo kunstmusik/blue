@@ -130,9 +130,8 @@ public class EffectTreeDropTarget implements DropTargetListener {
                 effect.clearParameters();
 
                 // iLibrary.removeInstrument(instrument);
-                if (node instanceof EffectCategory) {
+                if (node instanceof EffectCategory parentNode) {
 
-                    EffectCategory parentNode = (EffectCategory) node;
                     eLibrary.addEffect(parentNode, effect);
 
                 } else if (node instanceof Effect) {

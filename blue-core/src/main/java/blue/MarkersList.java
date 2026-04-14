@@ -19,13 +19,17 @@
  */
 package blue;
 
+import blue.time.TimeBase;
+import blue.time.TimeContext;
+import blue.time.TimeContextManager;
+import blue.time.TimePosition;
+import blue.time.TimeUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.Vector;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
@@ -35,7 +39,7 @@ public class MarkersList implements TableModel, PropertyChangeListener {
 
     ArrayList<Marker> markers = new ArrayList<>();
 
-    private transient Vector listeners = null;
+    private transient Vector<TableModelListener> listeners = null;
 
     public MarkersList() {
     }
@@ -50,14 +54,13 @@ public class MarkersList implements TableModel, PropertyChangeListener {
         return markers.contains(m);
     }
 
-    public void addMarker(double time) {
+    public Marker addMarker(TimePosition time) {
         String name = "Marker" + (markers.size() + 1);
 
-        Marker m = new Marker();
-        m.setTime(time);
-        m.setName(name);
+        Marker m = new Marker(time, name);
 
         addMarker(m);
+        return m;
     }
 
     public void addMarker(Marker marker) {
@@ -75,8 +78,7 @@ public class MarkersList implements TableModel, PropertyChangeListener {
         TableModelEvent tme = new TableModelEvent(this, index, index,
                 TableModelEvent.ALL_COLUMNS, TableModelEvent.INSERT);
 
-        for (Iterator iter = listeners.iterator(); iter.hasNext();) {
-            TableModelListener listener = (TableModelListener) iter.next();
+        for (TableModelListener listener : listeners) {
             listener.tableChanged(tme);
         }
 
@@ -102,8 +104,7 @@ public class MarkersList implements TableModel, PropertyChangeListener {
         TableModelEvent tme = new TableModelEvent(this, index, index,
                 TableModelEvent.ALL_COLUMNS, TableModelEvent.DELETE);
 
-        for (Iterator iter = listeners.iterator(); iter.hasNext();) {
-            TableModelListener listener = (TableModelListener) iter.next();
+        for (TableModelListener listener : listeners) {
             listener.tableChanged(tme);
         }
     }
@@ -120,34 +121,32 @@ public class MarkersList implements TableModel, PropertyChangeListener {
 
     @Override
     public int getColumnCount() {
-        return 2;
+        return 3;
     }
 
     @Override
     public String getColumnName(int columnIndex) {
-        switch (columnIndex) {
-            case 0:
-                return "Time";
-            case 1:
-                return "Label";
-        }
-        return null;
+        return switch (columnIndex) {
+            case 0 -> "TimeBase";
+            case 1 -> "Time";
+            case 2 -> "Label";
+            default -> null;
+        };
     }
 
     @Override
-    public Class getColumnClass(int columnIndex) {
-        switch (columnIndex) {
-            case 0:
-                return Double.class;
-            case 1:
-                return String.class;
-        }
-        return null;
+    public Class<?> getColumnClass(int columnIndex) {
+        return switch (columnIndex) {
+            case 0 -> TimeBase.class;
+            case 1 -> TimePosition.class;
+            case 2 -> String.class;
+            default -> null;
+        };
     }
 
     @Override
     public boolean isCellEditable(int rowIndex, int columnIndex) {
-        return true;
+        return columnIndex >= 0;
     }
 
     @Override
@@ -158,14 +157,12 @@ public class MarkersList implements TableModel, PropertyChangeListener {
             return null;
         }
 
-        switch (columnIndex) {
-            case 0:
-                return new Double(m.getTime());
-            case 1:
-                return m.getName();
-        }
-
-        return null;
+        return switch (columnIndex) {
+            case 0 -> m.getTime().getTimeBase();
+            case 1 -> m.getTime();
+            case 2 -> m.getName();
+            default -> null;
+        };
     }
 
     @Override
@@ -178,25 +175,34 @@ public class MarkersList implements TableModel, PropertyChangeListener {
 
         switch (columnIndex) {
             case 0:
-                Double f = (Double) aValue;
-                m.setTime(f.doubleValue());
-
+                if (aValue instanceof TimeBase newTimeBase) {
+                    TimePosition currentTime = m.getTime();
+                    if (currentTime.getTimeBase() != newTimeBase) {
+                        TimeContext ctx = TimeContextManager.hasContext()
+                                ? TimeContextManager.getContext()
+                                : new TimeContext();
+                        m.setTime(TimeUtilities.convertTimePosition(
+                                currentTime, newTimeBase, ctx));
+                    }
+                }
                 break;
             case 1:
+                if (aValue instanceof TimePosition tp) {
+                    m.setTime(tp);
+                }
+                break;
+            case 2:
                 String title = (String) aValue;
-
                 if (title.trim().length() > 0) {
                     m.setName(title);
                 }
-
                 break;
         }
 
         fireTableDataChanged();
-
     }
 
-    public static MarkersList loadFromXML(Element data) {
+    public static MarkersList loadFromXML(Element data) throws Exception {
         MarkersList markers = new MarkersList();
 
         Elements nodes = data.getElements();
@@ -223,7 +229,7 @@ public class MarkersList implements TableModel, PropertyChangeListener {
     @Override
     public void addTableModelListener(TableModelListener l) {
         if (listeners == null) {
-            listeners = new Vector();
+            listeners = new Vector<TableModelListener>();
         }
         listeners.add(l);
     }
@@ -243,8 +249,7 @@ public class MarkersList implements TableModel, PropertyChangeListener {
 
         TableModelEvent tme = new TableModelEvent(this);
 
-        for (Iterator iter = listeners.iterator(); iter.hasNext();) {
-            TableModelListener listener = (TableModelListener) iter.next();
+        for (TableModelListener listener : listeners) {
             listener.tableChanged(tme);
         }
     }

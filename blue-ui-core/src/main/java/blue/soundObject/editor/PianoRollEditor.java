@@ -25,6 +25,7 @@ import blue.gui.InfoDialog;
 import blue.gui.ScrollerButton;
 import blue.plugin.ScoreObjectEditorPlugin;
 import blue.score.ScoreObject;
+import blue.score.TimeState;
 import blue.soundObject.NoteList;
 import blue.soundObject.PianoRoll;
 import blue.soundObject.editor.pianoRoll.FieldEditor;
@@ -33,16 +34,19 @@ import blue.soundObject.editor.pianoRoll.NotePropertiesEditor;
 import blue.soundObject.editor.pianoRoll.PianoRollCanvas;
 import blue.soundObject.editor.pianoRoll.PianoRollCanvasHeader;
 import blue.soundObject.editor.pianoRoll.PianoRollPropertiesEditor;
+import blue.soundObject.editor.pianoRoll.PianoRollRulerConfigDialog;
 import blue.soundObject.editor.pianoRoll.PianoRollScrollPaneLayout;
+import blue.soundObject.editor.pianoRoll.PianoRollSnapButton;
 import blue.soundObject.editor.pianoRoll.TimeBar;
-import blue.soundObject.editor.pianoRoll.TimelinePropertiesPanel;
 import blue.soundObject.editor.pianoRoll.actions.RedoAction;
 import blue.soundObject.editor.pianoRoll.actions.SelectAllAction;
 import blue.soundObject.editor.pianoRoll.actions.ToggleSnapAction;
 import blue.soundObject.editor.pianoRoll.actions.UndoAction;
 import blue.soundObject.pianoRoll.FieldDef;
 import blue.soundObject.pianoRoll.PianoNote;
-import blue.ui.components.IconFactory;
+import blue.time.TimeContext;
+import blue.time.TimeContextManager;
+import blue.ui.core.score.ScoreTopComponent;
 import blue.utilities.scales.ScaleLinear;
 import blue.utility.GUI;
 import java.awt.BorderLayout;
@@ -67,12 +71,10 @@ import javax.swing.ActionMap;
 import javax.swing.BorderFactory;
 import javax.swing.InputMap;
 import javax.swing.JButton;
-import static javax.swing.JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT;
 import javax.swing.JPanel;
 import javax.swing.JScrollBar;
 import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
-import javax.swing.JToggleButton;
 import javax.swing.JViewport;
 import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
@@ -82,6 +84,7 @@ import org.openide.awt.UndoRedo;
 import org.openide.util.Lookup;
 import org.openide.util.lookup.AbstractLookup;
 import org.openide.util.lookup.InstanceContent;
+import org.openide.windows.WindowManager;
 
 /**
  * Title: blue Description: an object composition environment for csound
@@ -113,13 +116,13 @@ public class PianoRollEditor extends ScoreObjectEditor implements
     
     TimeBar timeBar = new TimeBar();
     
-    TimelinePropertiesPanel timeProperties = new TimelinePropertiesPanel();
+    PianoRollSnapButton snapButton = new PianoRollSnapButton();
+    JButton rulerButton = new JButton("Ruler");
+    PianoRollRulerConfigDialog rulerConfigDialog;
     
     NotePropertiesEditor noteTemplateEditor = new NotePropertiesEditor(selectedNotes, undo);
     
     JScrollPane noteScrollPane;
-    
-    JToggleButton snapButton = new JToggleButton();
     
     FieldSelectorView fieldSelectorView = new FieldSelectorView(selectedFieldDef);
     
@@ -135,9 +138,18 @@ public class PianoRollEditor extends ScoreObjectEditor implements
         instanceContent.add(selectedNotes);
         instanceContent.add(currentPianoRoll);
         
-        snapButton.setIcon(IconFactory.getLeftArrowIcon());
-        snapButton.setSelectedIcon(IconFactory.getRightArrowIcon());
-        snapButton.setFocusable(false);
+        rulerButton.setFocusable(false);
+        rulerButton.setToolTipText("Configure ruler display settings");
+        rulerButton.addActionListener((ActionEvent e) -> {
+            var p = currentPianoRoll.get();
+            if (p == null) return;
+            if (rulerConfigDialog == null) {
+                rulerConfigDialog = new PianoRollRulerConfigDialog(
+                        (java.awt.Frame) SwingUtilities.getWindowAncestor(this));
+            }
+            rulerConfigDialog.setPianoRoll(p);
+            rulerConfigDialog.showDialog();
+        });
         
         this.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
         this.setLayout(new BorderLayout());
@@ -146,14 +158,10 @@ public class PianoRollEditor extends ScoreObjectEditor implements
         noteScrollPane.setViewportView(noteCanvas);
         noteScrollPane.setRowHeaderView(noteHeader);
         noteScrollPane.setColumnHeaderView(timeBar);
-        noteScrollPane.setCorner(JScrollPane.UPPER_RIGHT_CORNER, snapButton);
         
         noteScrollPane.setAutoscrolls(true);
         
         setupNoteScrollBars(noteScrollPane);
-        
-        timeProperties.setVisible(false);
-        timeProperties.setPreferredSize(new Dimension(150, 40));
         
         JButton testButton = new JButton("Test");
         testButton.addActionListener(evt -> generateTest());
@@ -164,20 +172,23 @@ public class PianoRollEditor extends ScoreObjectEditor implements
         
         JPanel topPanel = new JPanel(new BorderLayout());
         topPanel.add(noteTemplateEditor, BorderLayout.CENTER);
-        topPanel.add(testButton, BorderLayout.EAST);
+        
+        JPanel topRightPanel = new JPanel();
+        topRightPanel.setBorder(BorderFactory.createEmptyBorder(5, 0, 5, 0));
+
+        topRightPanel.setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.RIGHT, 5, 0));
+        topRightPanel.add(snapButton);
+        topRightPanel.add(rulerButton);
+        topRightPanel.add(testButton);
+        topPanel.add(topRightPanel, BorderLayout.EAST);
         
         notesPanel.add(topPanel, BorderLayout.NORTH);
         notesPanel.add(noteScrollPane, BorderLayout.CENTER);
-        notesPanel.add(timeProperties, BorderLayout.EAST);
         
         tabs.add(BlueSystem.getString("pianoRoll.notes"), notesPanel);
         tabs.add(BlueSystem.getString("common.properties"), props);
         
         this.add(tabs, BorderLayout.CENTER);
-        
-        snapButton.addActionListener((ActionEvent e) -> {
-            timeProperties.setVisible(!timeProperties.isVisible());
-        });
         
         noteCanvas.addComponentListener(new ComponentAdapter() {
             
@@ -232,7 +243,8 @@ public class PianoRollEditor extends ScoreObjectEditor implements
         NoteList notes = null;
         
         try {
-            notes = p.generateForCSD(null, 0.0f, -1.0f);
+            TimeContext context = TimeContextManager.getContext();
+            notes = p.generateForCSD(context, null, 0.0f, -1.0f);
         } catch (Exception e) {
             ExceptionDialog.showExceptionDialog(SwingUtilities.getRoot(this), e);
         }
@@ -357,9 +369,65 @@ public class PianoRollEditor extends ScoreObjectEditor implements
     }
     
     private void centerNoteScrollPane() {
-        JScrollBar scrollbar = noteScrollPane.getVerticalScrollBar();
-        int max = scrollbar.getMaximum();
-        scrollbar.setValue((max / 32) * 13);
+        // Capture values at call time to avoid race conditions if currentPianoRoll changes
+        final var pianoRoll = currentPianoRoll.get();
+        if (pianoRoll == null) {
+            return;
+        }
+        
+        // Defer until after layout is validated so scrollbar maximum is accurate
+        SwingUtilities.invokeLater(() -> {
+            // Verify the editor is still showing the same PianoRoll
+            if (currentPianoRoll.get() != pianoRoll) {
+                return;
+            }
+
+            int noteHeight = pianoRoll.getNoteHeight();
+            int canvasHeight = noteCanvas.getHeight();
+            int viewportHeight = noteScrollPane.getViewport().getHeight();
+            var notes = pianoRoll.getNotes();
+
+            int targetNoteIndex;
+
+            if (notes.size() > 0) {
+                // Find the lowest note to ensure it's visible
+                int minNoteIndex = Integer.MAX_VALUE;
+                for (var note : notes) {
+                    int noteIndex;
+                    if (pianoRoll.getPchGenerationMethod() == PianoRoll.GENERATE_MIDI) {
+                        noteIndex = note.getOctave() * 12 + note.getScaleDegree();
+                    } else {
+                        noteIndex = note.getOctave() * pianoRoll.getScale().getNumScaleDegrees() + note.getScaleDegree();
+                    }
+                    if (noteIndex < minNoteIndex) {
+                        minNoteIndex = noteIndex;
+                    }
+                }
+                // Position lowest note near bottom of viewport with small margin
+                int notesVisible = viewportHeight / noteHeight;
+                targetNoteIndex = minNoteIndex + (notesVisible / 4); // Show lowest notes with a bit of margin below
+            } else {
+                // Default: center on octave 8 (8.00)
+                if (pianoRoll.getPchGenerationMethod() == PianoRoll.GENERATE_MIDI) {
+                    targetNoteIndex = 8 * 12; // MIDI note 96 is octave 8.00
+                } else {
+                    targetNoteIndex = 8 * pianoRoll.getScale().getNumScaleDegrees();
+                }
+            }
+
+            // Calculate Y position from top (canvas grows upward from bottom)
+            int targetY = canvasHeight - (targetNoteIndex * noteHeight);
+
+            // Center the target note in the viewport
+            int scrollValue = targetY - (viewportHeight / 2);
+
+            // Clamp to valid scroll range
+            JScrollBar scrollbar = noteScrollPane.getVerticalScrollBar();
+            int max = scrollbar.getMaximum() - scrollbar.getVisibleAmount();
+            scrollValue = Math.max(0, Math.min(max, scrollValue));
+
+            scrollbar.setValue(scrollValue);
+        });
     }
     
     @Override
@@ -387,13 +455,17 @@ public class PianoRollEditor extends ScoreObjectEditor implements
         
         p.addPropertyChangeListener(this);
 
+        // Wire Score's TimeState for global ruler mode
+        TimeState scoreTimeState = getScoreTimeState();
+        timeBar.setScoreTimeState(scoreTimeState);
+        
         // FIXME: Replace with passing currentPianoRoll property to 
         // sub-components in their constructors
         noteHeader.editPianoRoll(p);
         timeBar.editPianoRoll(p);
         props.editPianoRoll(p);
         noteTemplateEditor.editPianoRoll(p);
-        timeProperties.setPianoRoll(p);
+        snapButton.setPianoRoll(p);
         fieldSelectorView.setFields(p.getFieldDefinitions());
         
         centerNoteScrollPane();
@@ -467,6 +539,15 @@ public class PianoRollEditor extends ScoreObjectEditor implements
         pixelSecond -= 2;
         
         p.setPixelSecond(pixelSecond);
+    }
+    
+    private TimeState getScoreTimeState() {
+        var tc = WindowManager.getDefault()
+                .findTopComponent("ScoreTopComponent");
+        if (tc instanceof ScoreTopComponent stc) {
+            return stc.getTimeState();
+        }
+        return null;
     }
     
     private void raisePixelSecond() {

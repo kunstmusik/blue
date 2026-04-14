@@ -23,10 +23,11 @@ import blue.plugin.SoundObjectViewPlugin;
 import blue.score.layers.Layer;
 import blue.soundObject.GenericViewable;
 import blue.soundObject.TimeBehavior;
+import blue.time.TimeContext;
+import blue.time.TimeContextManager;
 import blue.ui.utilities.BlueGradientFactory;
 import java.awt.AlphaComposite;
 import java.awt.Color;
-import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
@@ -95,14 +96,16 @@ public class GenericView extends SoundObjectView {
 //            g.drawRect(1, 3, w - 3, h - 6);
 //        }
         // paint repeat
-        double repeatPoint = sObj.getRepeatPoint();
+        var rpDuration = sObj.getRepeatPoint();
         var tb = sObj.getTimeBehavior();
 
         if ((tb == TimeBehavior.REPEAT_CLASSIC || tb == TimeBehavior.REPEAT)
-                && repeatPoint > 0.0f) {
+                && rpDuration != null) {
 
+            TimeContext context = TimeContextManager.getContext();
+            double repeatPoint = rpDuration.toBeats(context);
             double lineTime = repeatPoint;
-            double dur = sObj.getSubjectiveDuration();
+            double dur = sObj.getSubjectiveDuration().toBeats(context);
 
             int[] x = new int[3];
             int[] y = new int[3];

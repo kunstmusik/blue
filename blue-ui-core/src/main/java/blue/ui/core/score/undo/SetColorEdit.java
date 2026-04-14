@@ -71,9 +71,9 @@ public class SetColorEdit extends AbstractUndoableEdit {
 
     @Override
     public boolean addEdit(UndoableEdit anEdit) {
-        if (anEdit instanceof SetColorEdit) {
+        if (anEdit instanceof SetColorEdit setColorEdit) {
             if (nextEdit == null) {
-                nextEdit = (SetColorEdit) anEdit;
+                nextEdit = setColorEdit;
                 return true;
             } else {
                 return nextEdit.addEdit(anEdit);

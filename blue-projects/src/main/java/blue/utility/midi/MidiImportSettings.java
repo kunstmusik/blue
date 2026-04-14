@@ -43,15 +43,11 @@ public class MidiImportSettings extends AbstractTableModel {
 
     @Override
     public Class<?> getColumnClass(int columnIndex) {
-        switch (columnIndex) {
-            case 0:
-            case 1:
-            case 2:
-                return String.class;
-            case 3:
-                return Boolean.class;
-        }
-        return null;
+        return switch (columnIndex) {
+            case 0, 1, 2 -> String.class;
+            case 3 -> Boolean.class;
+            default -> null;
+        };
     }
 
     public List<TrackImportSettings> getSettings() {
@@ -65,18 +61,13 @@ public class MidiImportSettings extends AbstractTableModel {
 
     @Override
     public String getColumnName(int columnIndex) {
-        switch (columnIndex) {
-            case 0:
-                return "Track";
-            case 1:
-                return "Instrument ID";
-            case 2:
-                return "Note Template";
-            case 3:
-                return "Trim Time";
-        }
-
-        return null;
+        return switch (columnIndex) {
+            case 0 -> "Track";
+            case 1 -> "Instrument ID";
+            case 2 -> "Note Template";
+            case 3 -> "Trim Time";
+            default -> null;
+        };
     }
 
     @Override
@@ -86,38 +77,26 @@ public class MidiImportSettings extends AbstractTableModel {
 
     @Override
     public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
-
         TrackImportSettings trSetting = settings.get(rowIndex);
 
         switch (columnIndex) {
-            case 1:
-                trSetting.setInstrId(((String) aValue).trim());
-                break;
-            case 2:
-                trSetting.setNoteTemplate(((String) aValue).trim());
-                break;
-            case 3:
-                trSetting.setTrim(((Boolean) aValue).booleanValue());
+            case 1 -> trSetting.setInstrId(((String) aValue).trim());
+            case 2 -> trSetting.setNoteTemplate(((String) aValue).trim());
+            case 3 -> trSetting.setTrim((Boolean) aValue);
         }
-
     }
 
     @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
         TrackImportSettings trSetting = settings.get(rowIndex);
 
-        switch (columnIndex) {
-            case 0:
-                return Integer.toString(trSetting.getTrackNumber());
-            case 1:
-                return trSetting.getInstrId();
-            case 2:
-                return trSetting.getNoteTemplate();
-            case 3:
-                return Boolean.valueOf(trSetting.isTrim());
-        }
-
-        return null;
+        return switch (columnIndex) {
+            case 0 -> Integer.toString(trSetting.getTrackNumber());
+            case 1 -> trSetting.getInstrId();
+            case 2 -> trSetting.getNoteTemplate();
+            case 3 -> trSetting.isTrim();
+            default -> null;
+        };
     }
 
     @Override

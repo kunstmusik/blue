@@ -6,6 +6,7 @@ import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Insets;
 import java.awt.Toolkit;
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import javax.swing.BorderFactory;
 import javax.swing.InputMap;
@@ -17,7 +18,6 @@ import javax.swing.border.LineBorder;
 import javax.swing.plaf.ColorUIResource;
 import javax.swing.plaf.FontUIResource;
 import javax.swing.plaf.metal.MetalLookAndFeel;
-
 
 /**
  * Title: blue Description: an object composition environment for csound
@@ -63,7 +63,7 @@ public class BlueLookAndFeel extends MetalLookAndFeel {
     @Override
     protected void initClassDefaults(UIDefaults table) {
         super.initClassDefaults(table);
-        
+
         putDefault(table, "ButtonUI");
         putDefault(table, "ComboBoxUI");
         putDefault(table, "ToggleButtonUI");
@@ -119,98 +119,99 @@ public class BlueLookAndFeel extends MetalLookAndFeel {
 
     @Override
     public UIDefaults getDefaults() {
-//        blueTheme = new BlueTheme();
-//        setCurrentTheme(blueTheme);
+        // blueTheme = new BlueTheme();
+        // setCurrentTheme(blueTheme);
         return super.getDefaults();
     }
 
     @Override
     protected void initComponentDefaults(UIDefaults table) {
         super.initComponentDefaults(table);
-        
-        Font controlFont = new Font("Roboto", Font.PLAIN, 12); //NOI18N
-        
+
+        Font controlFont = new Font("Roboto", Font.PLAIN, 12); // NOI18N
+
         Object[] defaults = {
-        
-            "CheckBox.icon", BlueIconFactory.getCheckBoxIcon(),
-            "RadioButton.icon", BlueIconFactory.getRadioButtonIcon(),
-          
-            
-            "Table.gridColor", new javax.swing.plaf.ColorUIResource(
-                getCurrentTheme().getControl()),
-            
-            "SplitPane.highlight", table.getColor("controlShadow"),
-            "SplitPane.darkShadow", table.getColor("window"),
-            "SplitPane.dividerSize", new Integer(5),
 
-            "Table.cellNoFocusBorder", new EmptyBorder(7,3,7,3),
+                "CheckBox.icon", BlueIconFactory.getCheckBoxIcon(),
+                "RadioButton.icon", BlueIconFactory.getRadioButtonIcon(),
 
-            "Table.focusSelectedCellHighlightBorder", BorderFactory.createCompoundBorder(
-            new LineBorder(getCurrentTheme().getFocusColor()),new EmptyBorder(6,2,6,2)),
-            "Table.focusCellHighlightBorder", new EmptyBorder(7,3,7,3),
-//            "Table.rowHeight", 28,
+                "Table.gridColor", new javax.swing.plaf.ColorUIResource(
+                        getCurrentTheme().getControl()),
 
-            "TableHeader.cellBorder", new BlueTableBorder(),
+                "SplitPane.highlight", table.getColor("controlShadow"),
+                "SplitPane.darkShadow", table.getColor("window"),
+                "SplitPane.dividerSize", 5,
 
-            "ToolTip.foreground", new ColorUIResource(Color.black),
+                "Table.cellNoFocusBorder", new EmptyBorder(7, 3, 7, 3),
 
-            "Button.border", BlueBorderUtilities.getButtonBorder(),
-//            "Button.border", new BorderUIResource.CompoundBorderUIResource(BorderFactory.createEtchedBorder(EtchedBorder.LOWERED), new BasicBorders.MarginBorder()),
-            "ToggleButton.border", BlueBorderUtilities
-                    .getToggleButtonBorder(),
-            "TextField.border", BlueBorderUtilities.getTextFieldBorder(),
-            "TableHeader.cellBorder", new BlueTableHeaderBorder(),
+                "Table.focusSelectedCellHighlightBorder", BorderFactory.createCompoundBorder(
+                        new LineBorder(getCurrentTheme().getFocusColor()), new EmptyBorder(6, 2, 6, 2)),
+                "Table.focusCellHighlightBorder", new EmptyBorder(7, 3, 7, 3),
+                // "Table.rowHeight", 28,
 
-            "SplitPane.dividerSize", new Integer(6),
+                "TableHeader.cellBorder", new BlueTableBorder(),
 
-            "ScrollPane.border", BorderFactory.createLineBorder(getCurrentTheme().getControl()),
-            "ScrollPane.viewportBorder", null,
-            
-            "ScrollBar.width", 14,
-            "ScrollBar.background", getCurrentTheme().getControl().darker(),
-            "ScrollBar.shadow", getCurrentTheme().getControl().darker(),
-            "ScrollBar.darkShadow", getCurrentTheme().getControl().darker(),
-            
-            "Slider.horizontalThumbIcon", BlueIconFactory.getHorizontalSliderThumbIcon(),
-            "Slider.verticalThumbIcon", BlueIconFactory.getVerticalSliderThumbIcon(),
-            
-            "Spinner.border", BlueBorderUtilities.getTextFieldBorder(),
-            "Spinner.arrowButtonBorder", BlueBorderUtilities.getButtonBorder(),
-            "Spinner.background", Color.BLACK,
-            
-            // FONTS
-            
-            "Button.font", controlFont,
-            "ToggleButton.font", controlFont,
-            "RadioButton.font", controlFont,
-            "CheckBox.font", controlFont,
-            "ColorChooser.font", controlFont,
-            "ComboBox.font", controlFont,
-            "Label.font", controlFont,
-            "List.font", controlFont,
-            "MenuBar.font", controlFont,
-            "MenuItem.font", controlFont,
-            "RadioButtonMenuItem.font", controlFont,
-            "CheckBoxMenuItem.font", controlFont,
-            "Menu.font", controlFont,
-            "PopupMenu.font", controlFont,
-            "OptionPane.font", controlFont,
-            "Panel.font", controlFont,
-            "ProgressBar.font", controlFont,
-            "ScrollPane.font", controlFont,
-            "Viewport.font", controlFont,
-            "TabbedPane.font", controlFont,
-            "Table.font", controlFont,
-            "TableHeader.font", controlFont,
-            "TextField.font", controlFont,
-            "PasswordField.font", controlFont,
-            "TextArea.font", controlFont,
-            "TextPane.font", controlFont,
-            "EditorPane.font", controlFont,
-            "TitledBorder.font", controlFont,
-            "ToolBar.font", controlFont,
-            "ToolTip.font", controlFont,
-            "Tree.font", controlFont,
+                "ToolTip.foreground", new ColorUIResource(Color.black),
+
+                "Button.border", BlueBorderUtilities.getButtonBorder(),
+                // "Button.border", new
+                // BorderUIResource.CompoundBorderUIResource(BorderFactory.createEtchedBorder(EtchedBorder.LOWERED),
+                // new BasicBorders.MarginBorder()),
+                "ToggleButton.border", BlueBorderUtilities
+                        .getToggleButtonBorder(),
+                "TextField.border", BlueBorderUtilities.getTextFieldBorder(),
+                "TableHeader.cellBorder", new BlueTableHeaderBorder(),
+
+                "SplitPane.dividerSize", 6,
+
+                "ScrollPane.border", BorderFactory.createLineBorder(getCurrentTheme().getControl()),
+                "ScrollPane.viewportBorder", null,
+
+                "ScrollBar.width", 14,
+                "ScrollBar.background", getCurrentTheme().getControl().darker(),
+                "ScrollBar.shadow", getCurrentTheme().getControl().darker(),
+                "ScrollBar.darkShadow", getCurrentTheme().getControl().darker(),
+
+                "Slider.horizontalThumbIcon", BlueIconFactory.getHorizontalSliderThumbIcon(),
+                "Slider.verticalThumbIcon", BlueIconFactory.getVerticalSliderThumbIcon(),
+
+                "Spinner.border", BlueBorderUtilities.getTextFieldBorder(),
+                "Spinner.arrowButtonBorder", BlueBorderUtilities.getButtonBorder(),
+                "Spinner.background", Color.BLACK,
+
+                // FONTS
+
+                "Button.font", controlFont,
+                "ToggleButton.font", controlFont,
+                "RadioButton.font", controlFont,
+                "CheckBox.font", controlFont,
+                "ColorChooser.font", controlFont,
+                "ComboBox.font", controlFont,
+                "Label.font", controlFont,
+                "List.font", controlFont,
+                "MenuBar.font", controlFont,
+                "MenuItem.font", controlFont,
+                "RadioButtonMenuItem.font", controlFont,
+                "CheckBoxMenuItem.font", controlFont,
+                "Menu.font", controlFont,
+                "PopupMenu.font", controlFont,
+                "OptionPane.font", controlFont,
+                "Panel.font", controlFont,
+                "ProgressBar.font", controlFont,
+                "ScrollPane.font", controlFont,
+                "Viewport.font", controlFont,
+                "TabbedPane.font", controlFont,
+                "Table.font", controlFont,
+                "TableHeader.font", controlFont,
+                "TextField.font", controlFont,
+                "PasswordField.font", controlFont,
+                "TextArea.font", controlFont,
+                "TextPane.font", controlFont,
+                "EditorPane.font", controlFont,
+                "TitledBorder.font", controlFont,
+                "ToolBar.font", controlFont,
+                "ToolTip.font", controlFont,
+                "Tree.font", controlFont,
 
         };
 
@@ -220,35 +221,36 @@ public class BlueLookAndFeel extends MetalLookAndFeel {
         // table.put("MenuItem.font", new FontUIResource("Dialog", Font.PLAIN,
         // 12));
 
-//        String osName = System.getProperty("os.name");
-//
-//        if (osName.toLowerCase().indexOf("mac") >= 0) {
-//
-//            Enumeration keys = table.keys();
-//
-//            ArrayList inputMapKeys = new ArrayList();
-//
-//            while (keys.hasMoreElements()) {
-//                String key = keys.nextElement().toString();
-//
-//                if (key.indexOf("InputMap") >= 0) {
-//                    inputMapKeys.add(key);
-//                }
-//            }
-//
-//            for (int i = 0; i < inputMapKeys.size(); i++) {
-//                Object obj = table.get(inputMapKeys.get(i));
-//
-//                if (obj instanceof InputMapUIResource) {
-//                    InputMapUIResource inputMap = (InputMapUIResource) obj;
-//
-//                    setupForOSX(inputMap);
-//                }
-//            }
-//
-//        }
+        // String osName = System.getProperty("os.name");
+        //
+        // if (osName.toLowerCase().indexOf("mac") >= 0) {
+        //
+        // Enumeration keys = table.keys();
+        //
+        // ArrayList inputMapKeys = new ArrayList();
+        //
+        // while (keys.hasMoreElements()) {
+        // String key = keys.nextElement().toString();
+        //
+        // if (key.indexOf("InputMap") >= 0) {
+        // inputMapKeys.add(key);
+        // }
+        // }
+        //
+        // for (int i = 0; i < inputMapKeys.size(); i++) {
+        // Object obj = table.get(inputMapKeys.get(i));
+        //
+        // if (obj instanceof InputMapUIResource) {
+        // InputMapUIResource inputMap = (InputMapUIResource) obj;
+        //
+        // setupForOSX(inputMap);
+        // }
+        // }
+        //
+        // }
     }
 
+    @SuppressWarnings("deprecation")
     private void setupForOSX(InputMap inputMap) {
         KeyStroke[] keys = inputMap.allKeys();
 
@@ -257,31 +259,32 @@ public class BlueLookAndFeel extends MetalLookAndFeel {
         }
 
         int menuShortcutKey = Toolkit.getDefaultToolkit()
-                    .getMenuShortcutKeyMask();
+                .getMenuShortcutKeyMaskEx();
 
-        for (int i = 0; i < keys.length; i++) {
+        for (KeyStroke key : keys) {
 
             boolean found = false;
 
-            int modifiers = keys[i].getModifiers();
+            int modifiers = key.getModifiers();
 
-            if ((keys[i].getModifiers() & KeyEvent.CTRL_DOWN_MASK) == KeyEvent.CTRL_DOWN_MASK) {
+            if ((key.getModifiers() & KeyEvent.CTRL_DOWN_MASK) == KeyEvent.CTRL_DOWN_MASK) {
                 modifiers = modifiers - KeyEvent.CTRL_DOWN_MASK;
                 found = true;
             }
 
-            if ((keys[i].getModifiers() & KeyEvent.CTRL_MASK) == KeyEvent.CTRL_MASK) {
-                modifiers = modifiers - KeyEvent.CTRL_MASK;
+            // KeyStroke.getModifiers() may return legacy mask values
+            if ((key.getModifiers() & InputEvent.CTRL_MASK) == InputEvent.CTRL_MASK) {
+                modifiers = modifiers - InputEvent.CTRL_MASK;
                 found = true;
             }
 
             if (found) {
                 modifiers = modifiers | menuShortcutKey;
-                KeyStroke keystroke = KeyStroke.getKeyStroke(keys[i]
-                        .getKeyCode(), modifiers, keys[i].isOnKeyRelease());
+                KeyStroke keystroke = KeyStroke.getKeyStroke(key
+                        .getKeyCode(), modifiers, key.isOnKeyRelease());
 
-                Object obj = inputMap.get(keys[i]);
-                inputMap.remove(keys[i]);
+                Object obj = inputMap.get(key);
+                inputMap.remove(key);
                 inputMap.put(keystroke, obj);
 
                 // System.out.println("Old Key: " + keys[i]);

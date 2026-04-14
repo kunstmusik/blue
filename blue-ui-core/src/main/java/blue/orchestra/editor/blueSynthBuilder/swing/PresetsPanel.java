@@ -69,8 +69,8 @@ public class PresetsPanel extends javax.swing.JPanel {
 
         addPresetListener = (ActionEvent e) -> {
             Object obj = e.getSource();
-            if (obj instanceof AddPresetMenuItem) {
-                PresetGroup presetGroup1 = ((AddPresetMenuItem) obj).
+            if (obj instanceof AddPresetMenuItem addPresetMenuItem) {
+                PresetGroup presetGroup1 = addPresetMenuItem.
                         getPresetGroup();
                 addPreset(presetGroup1);
             }
@@ -78,8 +78,8 @@ public class PresetsPanel extends javax.swing.JPanel {
 
         addFolderListener = (ActionEvent e) -> {
             Object obj = e.getSource();
-            if (obj instanceof AddFolderMenuItem) {
-                PresetGroup presetGroup1 = ((AddFolderMenuItem) obj).
+            if (obj instanceof AddFolderMenuItem addFolderMenuItem) {
+                PresetGroup presetGroup1 = addFolderMenuItem.
                         getPresetGroup();
                 addFolder(presetGroup1);
             }
@@ -154,8 +154,7 @@ public class PresetsPanel extends javax.swing.JPanel {
 
     private void setPresetsMenu(PresetGroup pGroup, JMenu menu) {
 
-        for (Iterator<PresetGroup> iter = pGroup.getSubGroups().iterator(); iter.hasNext();) {
-            PresetGroup subGroup = iter.next();
+        for (PresetGroup subGroup : pGroup.getSubGroups()) {
             JMenu subMenu = new JMenu(subGroup.getPresetGroupName());
             setPresetsMenu(subGroup, subMenu);
 
@@ -166,8 +165,7 @@ public class PresetsPanel extends javax.swing.JPanel {
             }
         }
 
-        for (Iterator<Preset> iter = pGroup.getPresets().iterator(); iter.hasNext();) {
-            Preset preset = iter.next();
+        for (Preset preset : pGroup.getPresets()) {
             SetPresetAction presetAction = new SetPresetAction(preset, this);
 
             if (menu == null) {

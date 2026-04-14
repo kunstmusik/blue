@@ -31,8 +31,7 @@ public class ScoreNavigatorContainerListener implements ContainerListener, Compo
     public void install(Component c) {
         c.addComponentListener(this);
 
-        if (c instanceof Container) {
-            Container container = (Container) c;
+        if (c instanceof Container container) {
             container.addContainerListener(this);
             for (var comp : container.getComponents()) {
 
@@ -45,8 +44,7 @@ public class ScoreNavigatorContainerListener implements ContainerListener, Compo
     public void uninstall(Component c) {
         c.removeComponentListener(this);
 
-        if (c instanceof Container) {
-            Container container = (Container) c;
+        if (c instanceof Container container) {
             container.removeContainerListener(this);
             for (var comp : container.getComponents()) {
                 uninstall(comp);

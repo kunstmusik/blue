@@ -25,6 +25,8 @@ import blue.score.ScoreObjectListener;
 import blue.soundObject.jmask.Field;
 import blue.soundObject.jmask.Generator;
 import blue.soundObject.jmask.Parameter;
+import blue.time.TimeContext;
+import blue.time.TimeContextManager;
 import java.awt.Dimension;
 import java.awt.Rectangle;
 import java.awt.event.ContainerEvent;
@@ -76,7 +78,8 @@ public class EditorListPanel extends JComponent implements
             pEditor.setParameter(p, i + 1);
             this.add(pEditor);
 
-            pEditor.setDuration(jMask.getSubjectiveDuration());
+            TimeContext context = TimeContextManager.getContext();
+            pEditor.setDuration(jMask.getSubjectiveDuration().toBeats(context));
 
             pEditor.addParameterEditListener(this);
         }
@@ -133,7 +136,8 @@ public class EditorListPanel extends JComponent implements
 
         this.add(pEditor, index);
         
-        pEditor.setDuration(jMask.getSubjectiveDuration());
+        TimeContext context = TimeContextManager.getContext();
+        pEditor.setDuration(jMask.getSubjectiveDuration().toBeats(context));
 
         renumberParameterPanels();
         revalidate();
@@ -169,7 +173,8 @@ public class EditorListPanel extends JComponent implements
 
             this.add(pEditor, index);
 
-            pEditor.setDuration(jMask.getSubjectiveDuration());
+            TimeContext context = TimeContextManager.getContext();
+            pEditor.setDuration(jMask.getSubjectiveDuration().toBeats(context));
         }
         
         renumberParameterPanels();
@@ -208,9 +213,10 @@ public class EditorListPanel extends JComponent implements
     @Override
     public void scoreObjectChanged(ScoreObjectEvent event) {
         if(event.getPropertyChanged() == ScoreObjectEvent.DURATION) {            
+            TimeContext context = TimeContextManager.getContext();
             for (int i = 0; i < getComponentCount(); i++) {
                 ParameterEditor pEditor = (ParameterEditor) getComponent(i);
-                pEditor.setDuration(this.jMask.getSubjectiveDuration());
+                pEditor.setDuration(this.jMask.getSubjectiveDuration().toBeats(context));
             }
         }
     }

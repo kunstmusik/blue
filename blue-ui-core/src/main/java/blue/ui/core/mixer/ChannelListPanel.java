@@ -103,8 +103,7 @@ public class ChannelListPanel extends JComponent implements ObservableListListen
 
     private void rebuildChannelsUI(final ChannelList channels) {
         clearChannels();
-        for (int i = 0; i < channels.size(); i++) {
-            Channel channel = channels.get(i);
+        for (Channel channel : channels) {
             ChannelPanel cPanel = createChannelPanel(channel);
 
             this.add(cPanel);
@@ -129,18 +128,18 @@ public class ChannelListPanel extends JComponent implements ObservableListListen
     }
 
     void sort() {
-        ArrayList list = new ArrayList();
+        ArrayList<ChannelPanel> list = new ArrayList<>();
 
         for (int i = 0; i < this.getComponentCount(); i++) {
-            list.add(getComponent(i));
+            list.add((ChannelPanel) getComponent(i));
         }
 
         this.removeAll();
 
         Collections.sort(list);
 
-        for (Iterator it = list.iterator(); it.hasNext();) {
-            this.add((Component) it.next());
+        for (ChannelPanel cPanel : list) {
+            this.add(cPanel);
         }
     }
 

@@ -22,6 +22,7 @@ package blue.ui.core.udo;
 import blue.BlueSystem;
 import blue.event.SelectionEvent;
 import blue.event.SelectionListener;
+import blue.settings.ProjectDefaultsSettings;
 import blue.udo.UDOCategory;
 import blue.udo.UDOLibrary;
 import blue.udo.UserDefinedOpcode;
@@ -69,7 +70,7 @@ public class UDOLibraryPanel extends JComponent {
 
     JTree libraryTree = new JTree();
 
-    ArrayList<SelectionListener> listeners = new ArrayList<>();
+    ArrayList<SelectionListener<Object>> listeners = new ArrayList<>();
 
     public UDOLibraryPanel() {
         this.setLayout(new BorderLayout());
@@ -138,7 +139,7 @@ public class UDOLibraryPanel extends JComponent {
                             UDOLibraryPanel.this);
                     showPopup(userObject, p.x, p.y);
                 } else {
-                    SelectionEvent se = new SelectionEvent(userObject,
+                    SelectionEvent<Object> se = new SelectionEvent<>(userObject,
                             SelectionEvent.SELECTION_SINGLE);
 
                     fireSelected(se);
@@ -152,13 +153,13 @@ public class UDOLibraryPanel extends JComponent {
         ActionMap actionMap = libraryTree.getActionMap();
 
         inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_X, BlueSystem
-                .getMenuShortcutKey()), "cutNode");
+                .getMenuShortcutKeyEx()), "cutNode");
 
         inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_C, BlueSystem
-                .getMenuShortcutKey()), "copyNode");
+                .getMenuShortcutKeyEx()), "copyNode");
 
         inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_V, BlueSystem
-                .getMenuShortcutKey()), "pasteNode");
+                .getMenuShortcutKeyEx()), "pasteNode");
 
         inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0),
                 "deleteNode");
@@ -203,16 +204,16 @@ public class UDOLibraryPanel extends JComponent {
         libraryTree.setModel(iLibrary);
     }
 
-    public void addSelectionListener(SelectionListener listener) {
+    public void addSelectionListener(SelectionListener<Object> listener) {
         listeners.add(listener);
     }
 
-    public void removeSelectionListener(SelectionListener listener) {
+    public void removeSelectionListener(SelectionListener<Object> listener) {
         listeners.remove(listener);
     }
 
-    public void fireSelected(SelectionEvent se) {
-        for (SelectionListener listener : listeners) {
+    public void fireSelected(SelectionEvent<Object> se) {
+        for (SelectionListener<Object> listener : listeners) {
             listener.selectionPerformed(se);
         }
     }
@@ -292,8 +293,8 @@ public class UDOLibraryPanel extends JComponent {
         }
 
         Object obj = selectionPath.getLastPathComponent();
-        if (obj instanceof UserDefinedOpcode) {
-            return (UserDefinedOpcode) obj;
+        if (obj instanceof UserDefinedOpcode userDefinedOpcode) {
+            return userDefinedOpcode;
         }
         return null;
     }
@@ -412,8 +413,8 @@ class UDOTreePopup extends JPopupMenu {
         }
 
         Object bufObj;
-        if (userObj instanceof UserDefinedOpcode) {
-            bufObj = new UserDefinedOpcode((UserDefinedOpcode) userObj);
+        if (userObj instanceof UserDefinedOpcode userDefinedOpcode) {
+            bufObj = new UserDefinedOpcode(userDefinedOpcode);
         } else {
             bufObj = new UDOCategory((UDOCategory) userObj); 
         }
@@ -428,10 +429,10 @@ class UDOTreePopup extends JPopupMenu {
             return;
         }
 
-        if (bufferedObj instanceof UserDefinedOpcode) {
-            addUDO((UserDefinedOpcode) bufferedObj);
-        } else if(bufferedObj instanceof UserDefinedOpcode[]) {
-            for(UserDefinedOpcode udo : (UserDefinedOpcode[])bufferedObj) {
+        if (bufferedObj instanceof UserDefinedOpcode userDefinedOpcode) {
+            addUDO(userDefinedOpcode);
+        } else if(bufferedObj instanceof UserDefinedOpcode[] userDefinedOpcodes) {
+            for(UserDefinedOpcode udo : userDefinedOpcodes) {
                 addUDO(udo);
             }
         } else {
@@ -462,6 +463,7 @@ class UDOTreePopup extends JPopupMenu {
 
     private void addUDO() {
         UserDefinedOpcode newUDO = new UserDefinedOpcode();
+        newUDO.style = ProjectDefaultsSettings.getInstance().defaultUDOStyle;
 
         UDOCategory currentCategory = (UDOCategory) userObj;
 
@@ -495,10 +497,10 @@ class UDOTreePopup extends JPopupMenu {
         this.instrGUI = instrGui;
         this.userObj = userObj;
 
-        if (userObj instanceof UDOCategory) {
+        if (userObj instanceof UDOCategory uDOCategory) {
             addCategoryMenuItem.setVisible(true);
 
-            removeCategoryMenuItem.setVisible(!((UDOCategory) userObj).isRoot());
+            removeCategoryMenuItem.setVisible(!uDOCategory.isRoot());
 
             addInstrumentMenu.setVisible(true);
             removeInstrumentMenuItem.setVisible(false);

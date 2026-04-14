@@ -208,10 +208,10 @@ public class PresetsManagerDialog extends JDialog implements
                     return;
                 }
 
-                if (userObj instanceof Preset) {
-                    model.removePreset((Preset) userObj);
-                } else if (userObj instanceof PresetGroup) {
-                    model.removePresetGroup((PresetGroup) userObj);
+                if (userObj instanceof Preset preset) {
+                    model.removePreset(preset);
+                } else if (userObj instanceof PresetGroup presetGroup) {
+                    model.removePresetGroup(presetGroup);
                 }
             });
 
@@ -220,9 +220,9 @@ public class PresetsManagerDialog extends JDialog implements
                     return;
                 }
 
-                if (userObj instanceof Preset) {
-                    buffer.setBufferedItem(new Preset((Preset)userObj));
-                    model.removePreset((Preset) userObj);
+                if (userObj instanceof Preset preset) {
+                    buffer.setBufferedItem(new Preset(preset));
+                    model.removePreset(preset);
                 } else {
                     buffer.setBufferedItem(new PresetGroup((PresetGroup)userObj));
                     model.removePresetGroup((PresetGroup) userObj);
@@ -234,8 +234,8 @@ public class PresetsManagerDialog extends JDialog implements
                     return;
                 }
 
-                if (userObj instanceof Preset) {
-                    buffer.setBufferedItem(new Preset((Preset)userObj));
+                if (userObj instanceof Preset preset) {
+                    buffer.setBufferedItem(new Preset(preset));
                 } else {
                     buffer.setBufferedItem(new PresetGroup((PresetGroup)userObj));
                 }
@@ -250,8 +250,8 @@ public class PresetsManagerDialog extends JDialog implements
                 
                 Object item = buffer.getBufferedItem();
                 
-                if (item instanceof Preset) {
-                    model.addPreset(group, new Preset((Preset)item));
+                if (item instanceof Preset preset) {
+                    model.addPreset(group, new Preset(preset));
                 } else {
                     model.addPresetGroup(group,
                             new PresetGroup((PresetGroup) item));
@@ -318,10 +318,10 @@ public class PresetsManagerDialog extends JDialog implements
                         }
                     }
                     Element node;
-                    if (userObj instanceof PresetGroup) {
-                        node = ((PresetGroup) userObj).saveAsXML();
-                    } else if (userObj instanceof Preset) {
-                        node = ((Preset) userObj).saveAsXML();
+                    if (userObj instanceof PresetGroup presetGroup) {
+                        node = presetGroup.saveAsXML();
+                    } else if (userObj instanceof Preset preset) {
+                        node = preset.saveAsXML();
                     } else {
                         return;
                     }

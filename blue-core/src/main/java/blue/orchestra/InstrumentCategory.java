@@ -72,8 +72,7 @@ public class InstrumentCategory {
             return true;
         }
 
-        for (Iterator iter = subCategories.iterator(); iter.hasNext();) {
-            InstrumentCategory category = (InstrumentCategory) iter.next();
+        for (InstrumentCategory category : subCategories) {
             if (category.removeInstrument(instr)) {
                 return true;
             }
@@ -91,9 +90,7 @@ public class InstrumentCategory {
             return true;
         }
 
-        for (Iterator iter = subCategories.iterator(); iter.hasNext();) {
-            InstrumentCategory tempCategory = (InstrumentCategory) iter.next();
-
+        for (InstrumentCategory tempCategory : subCategories) {
             if (tempCategory.removeInstrumentCategory(category)) {
                 return true;
             }
@@ -149,7 +146,7 @@ public class InstrumentCategory {
     /**
      * @return Returns the subCategories.
      */
-    public List getSubCategories() {
+    public List<InstrumentCategory> getSubCategories() {
         return subCategories;
     }
 
@@ -206,13 +203,11 @@ public class InstrumentCategory {
         retVal.setAttribute("categoryName", this.getCategoryName());
         retVal.setAttribute("isRoot", Boolean.toString(this.isRoot()));
 
-        for (Iterator iter = subCategories.iterator(); iter.hasNext();) {
-            InstrumentCategory tempCat = (InstrumentCategory) iter.next();
+        for (InstrumentCategory tempCat : subCategories) {
             retVal.addElement(tempCat.saveAsXML());
         }
 
-        for (Iterator iter = instruments.iterator(); iter.hasNext();) {
-            Instrument instr = (Instrument) iter.next();
+        for (Instrument instr : instruments) {
             retVal.addElement(instr.saveAsXML());
         }
 
@@ -237,8 +232,7 @@ public class InstrumentCategory {
 
         int counter = 0;
 
-        for (Iterator iter = subCategories.iterator(); iter.hasNext();) {
-            InstrumentCategory cat = (InstrumentCategory) iter.next();
+        for (InstrumentCategory cat : subCategories) {
             String instrId = cat.getInstrumentId(instr);
 
             if (instrId != null) {

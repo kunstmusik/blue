@@ -84,7 +84,7 @@ public class InstrumentLibrary implements TreeModel {
     }
 
     private Object[] getPathForObject(Object obj) {
-        Vector v = new Vector();
+        Vector<Object> v = new Vector<>();
         getPathForObject(getRootInstrumentCategory(), obj, v);
 
         Collections.reverse(v);
@@ -93,7 +93,7 @@ public class InstrumentLibrary implements TreeModel {
     }
 
     private Object getPathForObject(InstrumentCategory current, Object obj,
-            Vector v) {
+            Vector<Object> v) {
 
         if (current == obj) {
             return v;
@@ -104,9 +104,7 @@ public class InstrumentLibrary implements TreeModel {
             return v;
         }
 
-        for (Iterator iter = current.getSubCategories().iterator(); iter
-                .hasNext();) {
-            InstrumentCategory cat = (InstrumentCategory) iter.next();
+        for (InstrumentCategory cat : current.getSubCategories()) {
             Object pathObj = getPathForObject(cat, obj, v);
             if (pathObj != null) {
                 v.add(current);
@@ -224,8 +222,7 @@ public class InstrumentLibrary implements TreeModel {
     public int getChildCount(Object parent) {
         if (parent instanceof Instrument) {
             return 0;
-        } else if (parent instanceof InstrumentCategory) {
-            InstrumentCategory cat = (InstrumentCategory) parent;
+        } else if (parent instanceof InstrumentCategory cat) {
             return cat.getSubCategories().size() + cat.getInstruments().size();
         }
 
@@ -272,10 +269,10 @@ public class InstrumentLibrary implements TreeModel {
     public void valueForPathChanged(TreePath path, Object newValue) {
         Object obj = path.getLastPathComponent();
 
-        if (obj instanceof InstrumentCategory) {
-            ((InstrumentCategory) obj).setCategoryName(newValue.toString());
-        } else if (obj instanceof Instrument) {
-            ((Instrument) obj).setName(newValue.toString());
+        if (obj instanceof InstrumentCategory instrumentCategory) {
+            instrumentCategory.setCategoryName(newValue.toString());
+        } else if (obj instanceof Instrument instrument) {
+            instrument.setName(newValue.toString());
         }
 
         TreeModelEvent e = new TreeModelEvent(this, path);
@@ -286,26 +283,26 @@ public class InstrumentLibrary implements TreeModel {
     // UTILITY METHODS FOR FIRING EVENTS
 
     private void fireNodesChanged(TreeModelEvent e) {
-        for (int i = 0; i < listeners.size(); i++) {
-            listeners.get(i).treeNodesChanged(e);
+        for (TreeModelListener listener : listeners) {
+            listener.treeNodesChanged(e);
         }
     }
 
     private void fireNodesInserted(TreeModelEvent e) {
-        for (int i = 0; i < listeners.size(); i++) {
-            listeners.get(i).treeNodesInserted(e);
+        for (TreeModelListener listener : listeners) {
+            listener.treeNodesInserted(e);
         }
     }
 
     private void fireNodesRemoved(TreeModelEvent e) {
-        for (int i = 0; i < listeners.size(); i++) {
-            listeners.get(i).treeNodesRemoved(e);
+        for (TreeModelListener listener : listeners) {
+            listener.treeNodesRemoved(e);
         }
     }
 
     private void fireTreeStructureChanged(TreeModelEvent e) {
-        for (int i = 0; i < listeners.size(); i++) {
-            listeners.get(i).treeStructureChanged(e);
+        for (TreeModelListener listener : listeners) {
+            listener.treeStructureChanged(e);
         }
     }
 
@@ -361,8 +358,7 @@ public class InstrumentLibrary implements TreeModel {
         // return cat;
         // }
 
-        for (Iterator iter = cat.getSubCategories().iterator(); iter.hasNext();) {
-            InstrumentCategory c = (InstrumentCategory) iter.next();
+        for (InstrumentCategory c : cat.getSubCategories()) {
 
             InstrumentCategory temp = findParent(c, obj);
 
@@ -388,12 +384,11 @@ public class InstrumentLibrary implements TreeModel {
     }
 
     public void importInstrument(Instrument instr) {
-        List categories = rootInstrumentCategory.getSubCategories();
+        List<InstrumentCategory> categories = rootInstrumentCategory.getSubCategories();
 
-        for (Iterator iter = categories.iterator(); iter.hasNext();) {
-            InstrumentCategory cat = (InstrumentCategory) iter.next();
-            if (cat.getCategoryName().equals("Imported Instruments")) {
-                addInstrument(cat, instr);
+        for (InstrumentCategory category : categories) {
+            if (category.getCategoryName().equals("Imported Instruments")) {
+                addInstrument(category, instr);
                 return;
             }
         }

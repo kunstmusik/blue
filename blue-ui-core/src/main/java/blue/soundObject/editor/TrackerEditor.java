@@ -31,6 +31,8 @@ import blue.soundObject.TrackerObject;
 import blue.soundObject.editor.tracker.TracksEditor;
 import blue.soundObject.tracker.Track;
 import blue.soundObject.tracker.TrackList;
+import blue.time.TimeContext;
+import blue.time.TimeContextManager;
 import blue.ui.utilities.BlueCommonIcons;
 import blue.utility.GUI;
 import java.awt.BorderLayout;
@@ -230,8 +232,8 @@ public class TrackerEditor extends ScoreObjectEditor {
 
         TrackerObject newTracker = (TrackerObject) sObj;
 
-        stepsSpinner.setValue(new Integer(newTracker.getSteps()));
-        stepsPerBeatSpinner.setValue(new Integer(newTracker.getStepsPerBeat()));        
+        stepsSpinner.setValue(newTracker.getSteps());
+        stepsPerBeatSpinner.setValue(newTracker.getStepsPerBeat());        
 
         this.tracker = newTracker;
 
@@ -247,7 +249,8 @@ public class TrackerEditor extends ScoreObjectEditor {
         NoteList notes = null;
 
         try {
-            notes = tracker.generateNotes(0.0f, -1.0f);
+            TimeContext context = TimeContextManager.getContext();
+            notes = tracker.generateNotes(context, 0.0f, -1.0f);
         } catch (SoundObjectException e) {
             ExceptionDialog
                     .showExceptionDialog(SwingUtilities.getRoot(this), e);
@@ -274,7 +277,7 @@ public class TrackerEditor extends ScoreObjectEditor {
             super("test-button");
             putValue(Action.SHORT_DESCRIPTION, "Test Button");
             putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(
-                    KeyEvent.VK_T, BlueSystem.getMenuShortcutKey()));
+                    KeyEvent.VK_T, BlueSystem.getMenuShortcutKeyEx()));
         }
 
         @Override
@@ -289,7 +292,7 @@ public class TrackerEditor extends ScoreObjectEditor {
             super("useKeyboardNotesAction");
             putValue(Action.SHORT_DESCRIPTION, "useKeyboardNotesAction");
             putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(
-                    KeyEvent.VK_K, BlueSystem.getMenuShortcutKey()));
+                    KeyEvent.VK_K, BlueSystem.getMenuShortcutKeyEx()));
         }
 
         @Override
@@ -304,7 +307,7 @@ public class TrackerEditor extends ScoreObjectEditor {
             super("increment-octave");
             putValue(Action.SHORT_DESCRIPTION, "increment-octave");
             putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(
-                    KeyEvent.VK_UP, BlueSystem.getMenuShortcutKey()
+                    KeyEvent.VK_UP, BlueSystem.getMenuShortcutKeyEx()
                             | InputEvent.SHIFT_DOWN_MASK));
         }
 
@@ -323,7 +326,7 @@ public class TrackerEditor extends ScoreObjectEditor {
             super("decrement-octave");
             putValue(Action.SHORT_DESCRIPTION, "decrement-octave");
             putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(
-                    KeyEvent.VK_DOWN, BlueSystem.getMenuShortcutKey()
+                    KeyEvent.VK_DOWN, BlueSystem.getMenuShortcutKeyEx()
                             | InputEvent.SHIFT_DOWN_MASK));
         }
 

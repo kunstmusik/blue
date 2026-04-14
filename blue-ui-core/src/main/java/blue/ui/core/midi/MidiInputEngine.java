@@ -73,9 +73,8 @@ public final class MidiInputEngine implements Receiver {
     @Override
     public void send(MidiMessage message, long timeStamp) {
 
-        if (message instanceof ShortMessage) {
+        if (message instanceof ShortMessage shortMsg) {
 
-            ShortMessage shortMsg = (ShortMessage) message;
             int channel = shortMsg.getChannel();
             int noteNum = shortMsg.getData1();
             int velocity = shortMsg.getData2();

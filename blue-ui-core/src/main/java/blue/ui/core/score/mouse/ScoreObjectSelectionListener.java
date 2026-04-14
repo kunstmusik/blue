@@ -79,8 +79,7 @@ public class ScoreObjectSelectionListener extends BlueMouseAdapter {
 
     protected void editScoreObject(Collection<? extends ScoreObject> selectedScoreObjects,
             ScoreObject scoreObj) {
-        if (scoreObj instanceof PolyObject) {
-            PolyObject pObj = (PolyObject) scoreObj;
+        if (scoreObj instanceof PolyObject pObj) {
             ScoreController.getInstance().editLayerGroup(pObj);
         } else {
             if (selectedScoreObjects.size() == 1) {

@@ -19,17 +19,20 @@
  */
 package blue.soundObject;
 
-import blue.score.ScoreObjectEvent;
-import blue.score.ScoreObjectListener;
 import blue.*;
 import blue.noteProcessor.NoteProcessorChain;
 import blue.noteProcessor.NoteProcessorException;
 import blue.plugin.SoundObjectPlugin;
 import blue.score.ScoreObject;
+import blue.score.ScoreObjectEvent;
+import blue.score.ScoreObjectListener;
 import blue.score.TimeState;
 import blue.score.layers.AutomatableLayerGroup;
+import blue.time.TimeContext;
+import blue.time.TimeDuration;
+import blue.time.TimeUnitMath;
+import blue.time.TimeUtilities;
 import blue.score.layers.Layer;
-import blue.score.layers.LayerGroup;
 import blue.score.layers.LayerGroupDataEvent;
 import blue.score.layers.LayerGroupListener;
 import blue.score.layers.ScoreObjectLayerGroup;
@@ -60,14 +63,17 @@ public class PolyObject extends ArrayList<SoundLayer> implements SoundObject,
     private transient Vector<LayerGroupListener> layerGroupListeners = null;
     public static final int DISPLAY_TIME = 0;
     public static final int DISPLAY_NUMBER = 1;
-    protected double subjectiveDuration = 4.0f;
-    protected double startTime = 0.0f;
+    
+    // TimePosition fields - PolyObject doesn't extend AbstractSoundObject, so needs its own
+    protected blue.time.TimePosition startTimePosition = blue.time.TimePosition.beats(0.0);
+    protected TimeDuration durationUnit = TimeDuration.beats(4.0);
+    
     protected String name = "";
     protected Color backgroundColor = Color.DARK_GRAY;
     transient Vector<ScoreObjectListener> soundObjectListeners = null;
     private NoteProcessorChain npc = new NoteProcessorChain();
     private TimeBehavior timeBehavior;
-    double repeatPoint = -1.0f;
+    TimeDuration repeatPoint = null;
     private int defaultHeightIndex = 0;
     private TimeState timeState = new TimeState();
     transient int cloneSourceHashCode = 0;
@@ -87,8 +93,8 @@ public class PolyObject extends ArrayList<SoundLayer> implements SoundObject,
     public PolyObject(PolyObject pObj) {
         super(pObj.size());
         name = pObj.name;
-        startTime = pObj.startTime;
-        subjectiveDuration = pObj.subjectiveDuration;
+        setStartTime(pObj.getStartTime());
+        setSubjectiveDuration(pObj.getSubjectiveDuration());
         timeBehavior = pObj.timeBehavior;
         repeatPoint = pObj.repeatPoint;
         npc = new NoteProcessorChain(pObj.npc);
@@ -150,16 +156,16 @@ public class PolyObject extends ArrayList<SoundLayer> implements SoundObject,
     // public accessor methods
     //FIXME
     @Override
-    public double getObjectiveDuration() {
+    public TimeDuration getObjectiveDuration(TimeContext context) {
         double totalDuration;
         try {
             totalDuration = ScoreUtilities.getTotalDuration(this.
-                    generateForCSD(
+                    generateForCSD(context,
                     null, -1.0f, -1.0f, false));
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-        return totalDuration;
+        return TimeDuration.beats(totalDuration);
     }
 
     @Override
@@ -188,30 +194,32 @@ public class PolyObject extends ArrayList<SoundLayer> implements SoundObject,
      * SoundObjectBuffer when creating a new PolyObject from a group of
      * SoundObjects
      */
-    public final void normalizeSoundObjects() {
-        List<SoundObject> sObjects = this.getSoundObjects(true);
+    public final void normalizeSoundObjects(TimeContext context) {
+        List<SoundObject> sObjects = getSoundObjects(false);
         int size = sObjects.size();
 
         if (size == 0) {
             return;
         }
 
-        double min = sObjects.get(0).getStartTime();
+        double min = sObjects.get(0).getStartTime().toBeats(context);
         SoundObject temp;
 
         for (int i = 1; i < size; i++) {
             temp = sObjects.get(i);
-            if (temp.getStartTime() < min) {
-                min = temp.getStartTime();
+            double tempStartTime = temp.getStartTime().toBeats(context);
+            if (tempStartTime < min) {
+                min = tempStartTime;
             }
         }
 
         for (int i = 0; i < size; i++) {
             temp = sObjects.get(i);
-            temp.setStartTime(temp.getStartTime() - min);
+            double currentStart = temp.getStartTime().toBeats(context);
+            temp.setStartTime(blue.time.TimePosition.beats(currentStart - min));
         }
 
-        this.setSubjectiveDuration(ScoreUtilities.getMaxTime(sObjects));
+        this.setSubjectiveDuration(TimeDuration.beats(ScoreUtilities.getMaxTime(context, sObjects.toArray(new SoundObject[0]))));
 
     }
 
@@ -222,16 +230,17 @@ public class PolyObject extends ArrayList<SoundLayer> implements SoundObject,
      *
      * @return The maxTime value
      */
-    public final double getMaxTime() {
+    public final double getMaxTime(TimeContext context) {
         double max = 0.0f;
         double temp;
 
         for (SoundLayer tempSLayer : this) {
-            temp = tempSLayer.getMaxTime();
+            temp = tempSLayer.getMaxTime(context);
             if (temp > max) {
                 max = temp;
             }
         }
+
         return max;
     }
 
@@ -292,7 +301,7 @@ public class PolyObject extends ArrayList<SoundLayer> implements SoundObject,
     }
 
     @Override
-    public NoteList generateForCSD(CompileData compileData, double startTime,
+    public NoteList generateForCSD(TimeContext context, CompileData compileData, double startTime,
             double endTime) throws SoundObjectException {
 
         boolean soloFound = false;
@@ -303,11 +312,11 @@ public class PolyObject extends ArrayList<SoundLayer> implements SoundObject,
             }
         }
 
-        return generateForCSD(compileData, startTime, endTime, soloFound);
+        return generateForCSD(context, compileData, startTime, endTime, soloFound);
     }
 
     @Override
-    public NoteList generateForCSD(CompileData compileData, double startTime, double endTime, boolean processWithSolo) throws SoundObjectException {
+    public NoteList generateForCSD(TimeContext context, CompileData compileData, double startTime, double endTime, boolean processWithSolo) throws SoundObjectException {
 
         NoteList noteList = new NoteList();
 
@@ -317,7 +326,7 @@ public class PolyObject extends ArrayList<SoundLayer> implements SoundObject,
                     if (!soundLayer.isMuted()) {
                         try {
                             noteList.merge(
-                                    soundLayer.generateForCSD(compileData,
+                                    soundLayer.generateForCSD(context, compileData,
                                     startTime, endTime));
                         } catch (SoundLayerException ex) {
                             throw new SoundObjectException(this, ex);
@@ -329,7 +338,7 @@ public class PolyObject extends ArrayList<SoundLayer> implements SoundObject,
             for (SoundLayer soundLayer : this) {
                 if (!soundLayer.isMuted()) {
                     try {
-                        noteList.merge(soundLayer.generateForCSD(compileData,
+                        noteList.merge(soundLayer.generateForCSD(context, compileData,
                                 startTime, endTime));
                     } catch (SoundLayerException ex) {
                         throw new SoundObjectException(this, ex);
@@ -338,13 +347,13 @@ public class PolyObject extends ArrayList<SoundLayer> implements SoundObject,
             }
         }
 
-        noteList = processNotes(compileData, noteList, startTime, endTime);
+        noteList = processNotes(context, compileData, noteList, startTime, endTime);
 
         return noteList;
 
     }
 
-    private NoteList processNotes(CompileData compileData, NoteList nl, double start, double endTime) throws SoundObjectException {
+    private NoteList processNotes(TimeContext context, CompileData compileData, NoteList nl, double start, double endTime) throws SoundObjectException {
 
         NoteList retVal = null;
 
@@ -354,9 +363,11 @@ public class PolyObject extends ArrayList<SoundLayer> implements SoundObject,
             throw new SoundObjectException(this, e);
         }
 
-        ScoreUtilities.applyTimeBehavior(nl, getTimeBehavior(), this.
-                getSubjectiveDuration(), this.getRepeatPoint());
+        double duration = this.getSubjectiveDuration().toBeats(context);
+        double rpBeats = this.getRepeatPoint() != null ? this.getRepeatPoint().toBeats(context) : -1.0;
+        ScoreUtilities.applyTimeBehavior(nl, getTimeBehavior(), duration, rpBeats);
 
+        double startTime = getStartTime().toBeats(context);
         ScoreUtilities.setScoreStart(nl, startTime);
 
         if (start == 0.0f) {
@@ -367,8 +378,8 @@ public class PolyObject extends ArrayList<SoundLayer> implements SoundObject,
             NoteList buffer = new NoteList();
             Note tempNote;
 
-            for (int i = 0; i < nl.size(); i++) {
-                tempNote = nl.get(i);
+            for (Note note : nl) {
+                tempNote = note;
 
                 if (tempNote.getStartTime() >= 0) {
                     buffer.add(tempNote);
@@ -383,8 +394,8 @@ public class PolyObject extends ArrayList<SoundLayer> implements SoundObject,
             NoteList buffer = new NoteList();
             Note tempNote;
 
-            for (int i = 0; i < retVal.size(); i++) {
-                tempNote = retVal.get(i);
+            for (Note note : retVal) {
+                tempNote = note;
 
                 if (tempNote.getStartTime() <= endTime) {
                     buffer.add(tempNote);
@@ -408,12 +419,12 @@ public class PolyObject extends ArrayList<SoundLayer> implements SoundObject,
     }
 
     @Override
-    public double getRepeatPoint() {
+    public TimeDuration getRepeatPoint() {
         return this.repeatPoint;
     }
 
     @Override
-    public void setRepeatPoint(double repeatPoint) {
+    public void setRepeatPoint(TimeDuration repeatPoint) {
         this.repeatPoint = repeatPoint;
 
         ScoreObjectEvent event = new ScoreObjectEvent(this,
@@ -478,8 +489,7 @@ public class PolyObject extends ArrayList<SoundLayer> implements SoundObject,
         }
 
         if (heightIndex >= 0) {
-            for (int i = 0; i < pObj.size(); i++) {
-                SoundLayer layer = pObj.get(i);
+            for (SoundLayer layer : pObj) {
                 layer.setHeightIndex(heightIndex);
             }
 
@@ -697,12 +707,10 @@ public class PolyObject extends ArrayList<SoundLayer> implements SoundObject,
         for (SoundObject element : sObjects) {
             if (element instanceof Comment) {
                 continue;
-            } else if (element instanceof PolyObject) {
-                PolyObject pObj = (PolyObject) element;
+            } else if (element instanceof PolyObject pObj) {
                 if (!pObj.isScoreGenerationEmpty()) {
                     return false;
                 }
-
                 continue;
             }
 
@@ -720,8 +728,7 @@ public class PolyObject extends ArrayList<SoundLayer> implements SoundObject,
                 return false;
             }
 
-            if (element instanceof PolyObject) {
-                PolyObject pObj = (PolyObject) element;
+            if (element instanceof PolyObject pObj) {
                 if (!pObj.isAdjustedTimeCalculateable()) {
                     return false;
                 }
@@ -734,20 +741,19 @@ public class PolyObject extends ArrayList<SoundLayer> implements SoundObject,
     }
 
     @Override
-    public void onLoadComplete() {
+    public void onLoadComplete(TimeContext context) {
         SoundObject sObj;
 
         for (SoundLayer sLayer : this) {
 
-            for (int j = 0; j < sLayer.size(); j++) {
-                sObj = sLayer.get(j);
-                if (sObj instanceof PolyObject) {
-                    ((PolyObject) sObj).onLoadComplete();
-                } else if (sObj instanceof OnLoadProcessable) {
-                    OnLoadProcessable olp = (OnLoadProcessable) sObj;
+            for (SoundObject soundObject : sLayer) {
+                sObj = soundObject;
+                if (sObj instanceof PolyObject polyObject) {
+                    polyObject.onLoadComplete(context);
+                } else if (sObj instanceof OnLoadProcessable olp) {
                     if (olp.isOnLoadProcessable()) {
                         try {
-                            olp.processOnLoad();
+                            olp.processOnLoad(context);
                         } catch (SoundObjectException soe) {
                             throw new RuntimeException(new SoundObjectException(
                                     this,
@@ -775,56 +781,57 @@ public class PolyObject extends ArrayList<SoundLayer> implements SoundObject,
         return name;
     }
 
+    // TimePosition accessor methods - PolyObject implements SoundObject directly
     @Override
-    public void setStartTime(double startTime) {
-        this.startTime = startTime;
-
-        ScoreObjectEvent event = new ScoreObjectEvent(this,
-                ScoreObjectEvent.START_TIME);
-
-        fireSoundObjectEvent(event);
-    }
-
-    @Override
-    public double getStartTime() {
-        return startTime;
-    }
-
-    @Override
-    public void setSubjectiveDuration(double subjectiveDuration) {
-        this.subjectiveDuration = subjectiveDuration;
-
-        ScoreObjectEvent event = new ScoreObjectEvent(this,
-                ScoreObjectEvent.DURATION);
-
-        fireSoundObjectEvent(event);
-    }
-
-    @Override
-    public double getSubjectiveDuration() {
-        return subjectiveDuration;
-    }
-
-    @Override
-    public double[] getResizeRightLimits() {
-        return new double[]{-getSubjectiveDuration(), Double.MAX_VALUE};
-    }
-
-    @Override
-    public double[] getResizeLeftLimits() {
-        return new double[] { -getStartTime(), getSubjectiveDuration() };
+    public blue.time.TimePosition getStartTime() {
+        return startTimePosition;
     }
     
     @Override
-    public void resizeLeft(double newStartTime) {
-        double diff = startTime - newStartTime;
-        setStartTime(newStartTime);
-        setSubjectiveDuration(subjectiveDuration + diff);
+    public void setStartTime(blue.time.TimePosition timePosition) {
+        this.startTimePosition = timePosition;
+        ScoreObjectEvent event = new ScoreObjectEvent(this, ScoreObjectEvent.START_TIME);
+        fireSoundObjectEvent(event);
+    }
+    
+    @Override
+    public TimeDuration getSubjectiveDuration() {
+        return durationUnit;
+    }
+    
+    @Override
+    public void setSubjectiveDuration(TimeDuration duration) {
+        this.durationUnit = duration;
+        ScoreObjectEvent event = new ScoreObjectEvent(this, ScoreObjectEvent.DURATION);
+        fireSoundObjectEvent(event);
     }
 
     @Override
-    public void resizeRight(double newEndTime) {
-        setSubjectiveDuration(newEndTime - startTime);
+    public double[] getResizeRightLimits(TimeContext context) {
+        final double subjectiveDuration = getSubjectiveDuration().toBeats(context);
+        return new double[]{-subjectiveDuration, Double.MAX_VALUE};
+    }
+
+    @Override
+    public double[] getResizeLeftLimits(TimeContext context) {
+        final double startTime = getStartTime().toBeats(context);
+        final double subjectiveDuration = getSubjectiveDuration().toBeats(context);
+        return new double[] { -startTime, subjectiveDuration };
+    }
+    
+    @Override
+    public void resizeLeft(TimeContext context, double newStartTime) {
+        final double currentStartTime = getStartTime().toBeats(context);
+        final double currentDuration = getSubjectiveDuration().toBeats(context);
+        double diff = currentStartTime - newStartTime;
+        setStartTime(TimeUtilities.beatsToTimePosition(newStartTime, startTimePosition.getTimeBase(), context));
+        setSubjectiveDuration(TimeUnitMath.beatsToDuration(currentDuration + diff, durationUnit.getTimeBase(), context));
+    }
+
+    @Override
+    public void resizeRight(TimeContext context, double newEndTime) {
+        double currentStart = getStartTime().toBeats(context);
+        setSubjectiveDuration(TimeUnitMath.beatsToDuration(newEndTime - currentStart, durationUnit.getTimeBase(), context));
     }
 
     @Override

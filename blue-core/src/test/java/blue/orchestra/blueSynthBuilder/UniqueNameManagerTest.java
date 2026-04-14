@@ -20,32 +20,37 @@
 
 package blue.orchestra.blueSynthBuilder;
 
-import org.junit.*;
-import static org.junit.Assert.assertEquals;
+import java.util.Set;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  *
  * @author syi
  */
-public class UniqueNameManagerTest {
+class UniqueNameManagerTest {
 
     public UniqueNameManagerTest() {
     }
 
-    @BeforeClass
+    @BeforeAll
     public static void setUpClass() throws Exception {
     }
 
-    @AfterClass
+    @AfterAll
     public static void tearDownClass() throws Exception {
     }
 
-    @Before
-    public void setUp() {
+    @BeforeEach
+    void setUp() {
     }
 
-    @After
-    public void tearDown() {
+    @AfterEach
+    void tearDown() {
     }
 
  
@@ -82,7 +87,7 @@ public class UniqueNameManagerTest {
      * Test of getPrefix method, of class UniqueNameManager.
      */
     @Test
-    public void testGetPrefix() {
+    void testGetPrefix() {
         UniqueNameManager instance = new UniqueNameManager();
 
         assertEquals("test", instance.getPrefix("test"));
@@ -92,6 +97,33 @@ public class UniqueNameManagerTest {
         assertEquals("t", instance.getPrefix("t4"));
         assertEquals("t", instance.getPrefix("t"));
         
+    }
+
+    @Test
+    void testEqualsAndHashCodeWithNullDefaultPrefix() {
+        UniqueNameManager first = new UniqueNameManager();
+        UniqueNameManager second = new UniqueNameManager();
+
+        assertEquals(first, second);
+        assertEquals(first.hashCode(), second.hashCode());
+    }
+
+    @Test
+    void testEqualsAndHashCodeWithConfiguredDefaultPrefix() {
+        UniqueNameManager first = new UniqueNameManager();
+        first.setDefaultPrefix("prefix");
+        first.setUniqueNameCollection(() -> Set.of("a"));
+
+        UniqueNameManager second = new UniqueNameManager();
+        second.setDefaultPrefix("prefix");
+        second.setUniqueNameCollection(() -> Set.of("b"));
+
+        UniqueNameManager different = new UniqueNameManager();
+        different.setDefaultPrefix("other");
+
+        assertEquals(first, second);
+        assertEquals(first.hashCode(), second.hashCode());
+        assertFalse(first.equals(different));
     }
 //
 //    /**

@@ -123,8 +123,8 @@ public class CompileProcessor extends OptionProcessor {
                 out.close();
             }
             
-            if(e instanceof CommandException) {
-                throw (CommandException)e;
+            if(e instanceof CommandException commandException) {
+                throw commandException;
             }
             throw new CommandException(1, BlueSystem.getString("message.errorLabel") + " "
                     + BlueSystem.getString("blue.csdCompileError") + e.getMessage());

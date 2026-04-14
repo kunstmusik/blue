@@ -251,45 +251,45 @@ public class TextUtilities {
         ArrayList<String> wordList = new ArrayList<>();
         StringBuffer buffer = new StringBuffer();
 
-        for (int i = 0; i < chars.length; i++) {
+        for (char c : chars) {
             switch (state) {
                 case 0:
-                    if (chars[i] == '\t' || chars[i] == ' ') {
+                    if (c == '\t' || c == ' ') {
                         continue;
-                    } else if (chars[i] == '\"') {
+                    } else if (c == '\"') {
                         state = 2;
-                    } else if (chars[i] == '{') {
+                    } else if (c == '{') {
                         state = 3;
                     } else {
-                        buffer.append(chars[i]);
+                        buffer.append(c);
                         state = 1;
                     }
                     break;
                 case 1:
-                    if (chars[i] == ' ' || chars[i] == '\t') {
+                    if (c == ' ' || c == '\t') {
                         wordList.add(buffer.toString());
                         buffer = new StringBuffer();
                         state = 0;
                     } else {
-                        buffer.append(chars[i]);
+                        buffer.append(c);
                     }
                     break;
                 case 2:
-                    if (chars[i] == '\"') {
+                    if (c == '\"') {
                         wordList.add(buffer.toString());
                         buffer = new StringBuffer();
                         state = 0;
                     } else {
-                        buffer.append(chars[i]);
+                        buffer.append(c);
                     }
                     break;
                 case 3:
-                    if (chars[i] == '}') {
+                    if (c == '}') {
                         wordList.add(buffer.toString());
                         buffer = new StringBuffer();
                         state = 0;
                     } else {
-                        buffer.append(chars[i]);
+                        buffer.append(c);
                     }
                     break;
             }

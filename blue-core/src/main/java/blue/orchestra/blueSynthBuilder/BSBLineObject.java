@@ -26,7 +26,6 @@ import blue.utility.NumberUtilities;
 import blue.utility.XMLUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
-import java.util.Iterator;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.IntegerProperty;
@@ -35,7 +34,6 @@ import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleObjectProperty;
-import org.apache.commons.lang3.text.StrBuilder;
 
 public class BSBLineObject extends BSBObject {
 
@@ -160,7 +158,7 @@ public class BSBLineObject extends BSBObject {
     }
 
     private String getLineString(Line line) {
-        StrBuilder buffer = new StrBuilder();
+        StringBuilder buffer = new StringBuilder();
 
         double[] xVals = new double[line.size()];
         double[] yVals = new double[line.size()];

@@ -36,7 +36,7 @@ public class LinePoint implements Comparable<LinePoint> {
     private final DoubleProperty x = new SimpleDoubleProperty(0.0);
     private final DoubleProperty y = new SimpleDoubleProperty(0.0);
 
-    private transient Vector listeners = null;
+    private transient Vector<ChangeListener> listeners = null;
     private final transient ChangeEvent changeEvent = new ChangeEvent(this);
 
 
@@ -123,7 +123,7 @@ public class LinePoint implements Comparable<LinePoint> {
 
     public void addChangeListener(ChangeListener pcl) {
         if (listeners == null) {
-            listeners = new Vector();
+            listeners = new Vector<ChangeListener>();
         }
         listeners.add(pcl);
     }
@@ -136,15 +136,17 @@ public class LinePoint implements Comparable<LinePoint> {
 
     public void fireChangeEvent(ChangeEvent pce) {
         if (listeners != null) {
-            for (Iterator iter = listeners.iterator(); iter.hasNext();) {
-                ChangeListener pcl = (ChangeListener) iter.next();
-                pcl.stateChanged(pce);
+            for (ChangeListener listener : listeners) {
+                listener.stateChanged(pce);
             }
         }
     }
 
     @Override
     public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
         if(!(obj instanceof LinePoint)) {
             return false;
         }
@@ -152,5 +154,20 @@ public class LinePoint implements Comparable<LinePoint> {
 
         return this.getX() == b.getX() &&
                 this.getY() == b.getY();
+    }
+
+    @Override
+    public int hashCode() {
+        long xBits = hashableBits(getX());
+        long yBits = hashableBits(getY());
+        int result = Long.hashCode(xBits);
+        result = 31 * result + Long.hashCode(yBits);
+        return result;
+    }
+
+    private static long hashableBits(double value) {
+        // Keep hash behavior consistent with equals(), which treats -0.0 and 0.0 as equal.
+        double normalized = value == 0.0d ? 0.0d : value;
+        return Double.doubleToLongBits(normalized);
     }
 }

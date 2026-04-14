@@ -23,22 +23,26 @@ import java.math.BigDecimal;
 import java.math.MathContext;
 
 /**
- * 
+ *
  * @author steven
  */
 public class MathUtils {
 
-	public static double remainder(double f1, double f2) {
-		MathContext mc = new MathContext(0);
+    public static double remainder(double f1, double f2) {
+        MathContext mc = new MathContext(0);
 
-		BigDecimal a = new BigDecimal(f1,mc);
-		BigDecimal b = new BigDecimal(f2, mc);
+        BigDecimal a = new BigDecimal(f1, mc);
+        BigDecimal b = new BigDecimal(f2, mc);
 
-		return a.remainder(b, mc).doubleValue();
-	}
+        return a.remainder(b, mc).doubleValue();
+    }
+    
+    public static double clamp(double min, double value, double max) {
+        return Math.min(max, Math.max(min, value));
+    }
 
-	public static void main(String[] args) {
-		System.out.println(MathUtils.remainder(5.2, 5));
-		System.out.println(MathUtils.remainder(5.2, 1));
-	}
+    public static void main(String[] args) {
+        System.out.println(MathUtils.remainder(5.2, 5));
+        System.out.println(MathUtils.remainder(5.2, 1));
+    }
 }

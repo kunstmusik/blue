@@ -72,8 +72,8 @@ public class PatternsLayerPanel extends JPanel implements LayerGroupListener,
             }
         });
 
-        PatternsLayerPanelMouseListener listener =
-                new PatternsLayerPanelMouseListener(this, layerGroup, timeState);
+        PatternsLayerPanelMouseListener listener
+                = new PatternsLayerPanelMouseListener(this, layerGroup, timeState);
         this.addMouseListener(listener);
         this.addMouseMotionListener(listener);
     }
@@ -92,9 +92,9 @@ public class PatternsLayerPanel extends JPanel implements LayerGroupListener,
     }
 
     protected Dimension checkSize() {
-        int w = (layerGroup.getMaxPattern() + 16) * 
-                layerGroup.getPatternBeatsLength() * 
-                timeState.getPixelSecond();
+        int w = (layerGroup.getMaxPattern() + 16)
+                * (int) (layerGroup.getPatternBeatsLength()
+                * timeState.getPixelSecond());
         int h = layerGroup.size() * Layer.LAYER_HEIGHT;
         final Dimension d = new Dimension(w, h);
         this.setPreferredSize(d);
@@ -127,15 +127,14 @@ public class PatternsLayerPanel extends JPanel implements LayerGroupListener,
         int maxX = (int) bounds.getMaxX();
         int maxY = (int) bounds.getMaxY();
         int x = 0;
-        int pixelSecond = timeState.getPixelSecond();
+        double pixelSecond = timeState.getPixelSecond();
 
         int patternBeatsLength = layerGroup.getPatternBeatsLength();
-        int patternWidth = patternBeatsLength * pixelSecond;
+        int patternWidth = (int) (patternBeatsLength * pixelSecond);
         int startLayerIndex = (bounds.y / Layer.LAYER_HEIGHT);
         int startPatternIndex = (int) (bounds.x / (float) (patternBeatsLength * pixelSecond));
 
         //Draw lines and pattern states
-
         g.setColor(Color.DARK_GRAY);
 
         for (int i = startLayerIndex; i < layerGroup.size(); i++) {
@@ -150,9 +149,9 @@ public class PatternsLayerPanel extends JPanel implements LayerGroupListener,
 
             g.setColor(PATTERN_COLOR);
 
-            x = (startPatternIndex * patternBeatsLength) * pixelSecond;
+            x = (int)((startPatternIndex * patternBeatsLength) * pixelSecond);
             for (int j = startPatternIndex; x < maxX; j++) {
-                x = (j * patternBeatsLength) * pixelSecond;
+                x = (int)((j * patternBeatsLength) * pixelSecond);
                 if (data.isPatternSet(j)) {
                     //System.out.println("pattern set: " + j);
                     g.fillRect(x, y, patternWidth, Layer.LAYER_HEIGHT);
@@ -170,10 +169,10 @@ public class PatternsLayerPanel extends JPanel implements LayerGroupListener,
             g.drawLine(bounds.x, bottom, maxX, bottom);
         }
 
-        x = (startPatternIndex * patternBeatsLength) * pixelSecond;
+        x = (int)((startPatternIndex * patternBeatsLength) * pixelSecond);
 
         for (int i = startPatternIndex; x < maxX; i++) {
-            x = (i * patternBeatsLength) * pixelSecond;
+            x = (int)((i * patternBeatsLength) * pixelSecond);
             g.drawLine(x, bounds.y, x, maxY);
         }
 
@@ -186,21 +185,21 @@ public class PatternsLayerPanel extends JPanel implements LayerGroupListener,
 
     @Override
     public void paintNavigatorView(Graphics2D g2d) {
-        int pixelSecond = timeState.getPixelSecond();
+        double pixelSecond = timeState.getPixelSecond();
 
         int patternBeatsLength = layerGroup.getPatternBeatsLength();
-        int patternWidth = patternBeatsLength * pixelSecond;
-        
+        int patternWidth = (int)(patternBeatsLength * pixelSecond);
+
         for (int i = 0; i < layerGroup.size(); i++) {
             int y = i * Layer.LAYER_HEIGHT;
-            int x = 0; 
+            int x = 0;
             PatternLayer layer = layerGroup.get(i);
             PatternData data = layer.getPatternData();
 
             g2d.setColor(PATTERN_COLOR);
 
             for (int j = 0; x < getBounds().getMaxX(); j++) {
-                x = (j * patternBeatsLength) * pixelSecond;
+                x = (int)((j * patternBeatsLength) * pixelSecond);
                 if (data.isPatternSet(j)) {
                     //System.out.println("pattern set: " + j);
                     g2d.fillRect(x, y, patternWidth, Layer.LAYER_HEIGHT);

@@ -572,7 +572,7 @@ final class DiskRenderSettingsPanel extends javax.swing.JPanel {
 
                 if (f.exists() && f.isFile()) {
                     csoundExecText.setText(path);
-                    fireUpdate();
+                    // No change here, but the change is applied below
                 }
             } catch (IOException ioe) {
                 // ignore
@@ -616,7 +616,7 @@ final class DiskRenderSettingsPanel extends javax.swing.JPanel {
         File index = new File(manualDir, "CommandFlags.html");
 
         try {
-            URLDisplayer.getDefault().showURL(index.toURL());
+            URLDisplayer.getDefault().showURL(index.toURI().toURL());
         } catch (Exception ex) {
             Exceptions.printStackTrace(ex);
         }

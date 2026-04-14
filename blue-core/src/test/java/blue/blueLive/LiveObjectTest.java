@@ -9,22 +9,20 @@ package blue.blueLive;
 
 import blue.soundObject.GenericScore;
 import electric.xml.Element;
-import junit.framework.TestCase;
+import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.Test;
 
 /**
  * 
  * @author steven
  */
-public class LiveObjectTest extends TestCase {
-
-    public LiveObjectTest(String testName) {
-        super(testName);
-    }
+class LiveObjectTest {
 
     /**
      * Test of getSoundObject method, of class blue.blueLive.LiveObject.
      */
-    public void testSerialization() {
+    @Test
+    void testSerialization() {
         LiveObject liveObj = new LiveObject();
 
         liveObj.setSObj(new GenericScore());

@@ -78,9 +78,8 @@ public class FieldEditorMouseListener extends MouseAdapter {
 
         var comp = fEditor.getComponentAt(e.getPoint());
 
-        if (comp instanceof Pin) {
+        if (comp instanceof Pin src) {
 
-            var src = (Pin) comp;
             currentPin = src;
 
             if (selectedNotes.contains(src.note)) {

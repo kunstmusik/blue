@@ -67,10 +67,10 @@ class BlueScrollPaneBorder extends AbstractBorder {
         g.translate(x, y);
 
         Color color = UIManager.getColor("controlShadow");
-        g.setColor(color == null ? Color.darkGray : color);
+        g.setColor(java.util.Objects.requireNonNullElse(color, Color.darkGray));
         g.drawRect(0, 0, w-2, h-2);
         color = UIManager.getColor("controlHighlight");
-        g.setColor(color == null ? Color.white : color);
+        g.setColor(java.util.Objects.requireNonNullElse(color, Color.white));
         g.drawLine(w-1, 1, w-1, h-1);
         g.drawLine(1, h-1, w-1, h-1);
 

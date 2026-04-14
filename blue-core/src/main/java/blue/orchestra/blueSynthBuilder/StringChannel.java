@@ -21,6 +21,7 @@ package blue.orchestra.blueSynthBuilder;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.Objects;
 
 /**
  *
@@ -58,7 +59,7 @@ public class StringChannel implements PropertyChangeListener {
     }
 
     public synchronized void setValue(String value) {
-        if (value != null && !this.value.equals(value)) {
+        if (value != null && !Objects.equals(this.value, value)) {
             this.value = value;
             dirty = true;
         }
@@ -71,27 +72,27 @@ public class StringChannel implements PropertyChangeListener {
 
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
-        if (evt.getPropertyName().equals("stringChannelValue")) {
+        if (Objects.equals(evt.getPropertyName(), "stringChannelValue")) {
             setValue((String) evt.getNewValue());
         }
     }
 
     @Override
     public boolean equals(Object obj) {
-        if (obj == null) {
+        if (this == obj) {
+            return true;
+        }
+        if (!(obj instanceof StringChannel other)) {
             return false;
         }
-        if (getClass() != obj.getClass()) {
-            return false;
-        }
-        final StringChannel other = (StringChannel) obj;
-        if (this.dirty != other.dirty) {
-            return false;
-        }
-        if ((this.value == null) ? (other.value != null) : !this.value.equals(other.value)) {
-            return false;
-        }
-        return (this.channelName == null) ? (other.channelName == null) : this.channelName.equals(other.channelName);
+        return this.dirty == other.dirty
+                && Objects.equals(this.value, other.value)
+                && Objects.equals(this.channelName, other.channelName);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(dirty, value, channelName);
     }
 
 }

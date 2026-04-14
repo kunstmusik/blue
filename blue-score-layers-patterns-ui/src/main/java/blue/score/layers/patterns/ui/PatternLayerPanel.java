@@ -24,12 +24,14 @@ import blue.score.layers.Layer;
 import blue.score.layers.patterns.core.PatternLayer;
 import blue.soundObject.SoundObject;
 import blue.soundObject.TimeBehavior;
+import blue.time.TimeDuration;
+import blue.time.TimePosition;
 import blue.ui.components.IconFactory;
 import blue.ui.core.clipboard.BlueClipboardUtils;
 import blue.ui.core.score.ScoreController;
 import blue.ui.core.score.layers.soundObject.ScoreObjectEditorTopComponent;
+import blue.ui.utilities.UiUtilities;
 import java.awt.CardLayout;
-import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.event.*;
@@ -62,14 +64,16 @@ public class PatternLayerPanel extends javax.swing.JPanel
 
     private static final Border border = BorderFactory.createBevelBorder(
             BevelBorder.RAISED);
-    private static final Border selectionBorder = BorderFactory.createBevelBorder(
-            BevelBorder.RAISED, Color.GREEN, Color.GREEN.darker());
+    private static final int SELECTION_BRIGHTEN = 30;
+
+    private boolean selected = false;
 
     /**
      * Creates new form PatternLayerPanel
      */
     public PatternLayerPanel(PatternLayer layer, InstanceContent ic) {
         initComponents();
+        setBorder(border);
         Dimension d = new Dimension(100, Layer.LAYER_HEIGHT);
         this.setSize(d);
         this.setPreferredSize(d);
@@ -111,7 +115,7 @@ public class PatternLayerPanel extends javax.swing.JPanel
 
         };
 
-        FileObject sObjFiles[] = FileUtil.getConfigFile(
+        FileObject[] sObjFiles = FileUtil.getConfigFile(
                 "blue/score/layers/patterns/soundObjects").getChildren();
         List<FileObject> orderedSObjFiles = FileUtil.getOrder(
                 Arrays.asList(sObjFiles), true);
@@ -161,9 +165,11 @@ public class PatternLayerPanel extends javax.swing.JPanel
         soloToggleButton.setFont(muteToggleButton.getFont().deriveFont(10.0f));
     }
 
-    protected void editSoundObject() {
+    void selectSoundObject() {
         content.set(Collections.singleton(patternLayer.getSoundObject()), null);
+    }
 
+    void openSoundObjectEditor() {
         ScoreObjectEditorTopComponent editor
                 = (ScoreObjectEditorTopComponent) WindowManager
                 .getDefault()
@@ -172,8 +178,11 @@ public class PatternLayerPanel extends javax.swing.JPanel
         if (!editor.isOpened()) {
             editor.open();
         }
+    }
 
-        editor.requestActive();
+    protected void editSoundObject() {
+        selectSoundObject();
+        openSoundObjectEditor();
     }
 
     /**
@@ -376,8 +385,8 @@ public class PatternLayerPanel extends javax.swing.JPanel
             }
             SoundObject sObj = (SoundObject) scoreObj;
             SoundObject copy = sObj.deepCopy();
-            copy.setStartTime(0.0f);
-            copy.setSubjectiveDuration(4);
+            copy.setStartTime(TimePosition.beats(0.0f));
+            copy.setSubjectiveDuration(TimeDuration.beats(4));
             copy.setTimeBehavior(TimeBehavior.NONE);
             patternLayer.setSoundObject(copy);
             editSoundObject();
@@ -432,7 +441,10 @@ public class PatternLayerPanel extends javax.swing.JPanel
     }
 
     public void setSelected(boolean val) {
-        setBorder(val ? selectionBorder : border);
+        if (this.selected != val) {
+            this.selected = val;
+            UiUtilities.brightenTree(this, val ? SELECTION_BRIGHTEN : -SELECTION_BRIGHTEN);
+        }
     }
 
     @Override

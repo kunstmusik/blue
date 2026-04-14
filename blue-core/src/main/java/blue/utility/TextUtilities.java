@@ -202,9 +202,9 @@ public class TextUtilities {
      * @return ArrayList containing all lines in the file (including empty
      *         lines).
      */
-    public static ArrayList getLinesFromFile(File textFile, boolean trim)
+    public static ArrayList<String> getLinesFromFile(File textFile, boolean trim)
             throws IOException {
-        ArrayList lines = new ArrayList();
+        ArrayList<String> lines = new ArrayList<>();
         try (BufferedReader br = new BufferedReader(new FileReader(textFile))) {
             String line;
             while ((line = br.readLine()) != null) {
@@ -251,7 +251,7 @@ public class TextUtilities {
         char[] chars = in.trim().toCharArray();
         int state = 0;
 
-        ArrayList wordList = new ArrayList();
+        ArrayList<String> wordList = new ArrayList<>();
         StringBuffer buffer = new StringBuffer();
 
         for (int i = 0; i < chars.length; i++) {
@@ -303,7 +303,7 @@ public class TextUtilities {
         String[] retVal = new String[wordList.size()];
 
         int i = 0;
-        for (Iterator iter = wordList.iterator(); iter.hasNext();) {
+        for (Iterator<String> iter = wordList.iterator(); iter.hasNext();) {
             String element = (String) iter.next();
             retVal[i] = element;
             i++;

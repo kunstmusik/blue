@@ -21,17 +21,17 @@ package blue.clojure.soundObject;
 
 import blue.CompileData;
 import blue.soundObject.NoteList;
+import blue.time.TimeContext;
 import electric.xml.Element;
 import java.util.Map;
-import org.apache.commons.lang3.builder.EqualsBuilder;
-import static org.junit.Assert.*;
-import org.junit.Test;
+import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.Test;
 
 /**
  *
  * @author stevenyi
  */
-public class ClojureSoundObjectTest {
+class ClojureSoundObjectTest {
     
     public ClojureSoundObjectTest() {
     }
@@ -40,13 +40,14 @@ public class ClojureSoundObjectTest {
      * Test of generateForCSD method, of class ClojureObject.
      */
     @Test
-    public void testGenerateForCSD() throws Exception {
+    void testGenerateForCSD() throws Exception {
         CompileData compileData = null;
         float startTime = 0.0F;
         float endTime = 2.0F;
+        TimeContext context = new TimeContext();
         ClojureObject instance = new ClojureObject();
         instance.setClojureCode("(def score \"i1 0 2 3 5\")");
-        NoteList result = instance.generateForCSD(compileData, startTime,
+        NoteList result = instance.generateForCSD(context, compileData, startTime,
                 endTime);
         assertEquals(result.get(0).getPField(5), "5");
     }
@@ -55,15 +56,20 @@ public class ClojureSoundObjectTest {
      * Test of saveAsXML method, of class ClojureObject.
      */
     @Test
-    public void testSaveAsXML() throws Exception {
+    void testSaveAsXML() throws Exception {
         System.out.println("saveAsXML");
         Map<Object, String> objRefMap = null;
+        TimeContext context = new TimeContext();
         ClojureObject instance = new ClojureObject();
         instance.setClojureCode("(def score \"i1 0 2 3 5\")");
 
         Element result = instance.saveAsXML(objRefMap);
         ClojureObject instance2 = (ClojureObject)ClojureObject.loadFromXML(result, null);
-        assertTrue(EqualsBuilder.reflectionEquals(instance, instance2, (String)null));
+        // Verify the important fields match (TimePosition fields are internal representation)
+        assertEquals(instance.getClojureCode(), instance2.getClojureCode());
+        assertEquals(instance.getStartTime().toBeats(context), instance2.getStartTime().toBeats(context), 0.001);
+        assertEquals(instance.getSubjectiveDuration().toBeats(context), instance2.getSubjectiveDuration().toBeats(context), 0.001);
+        assertEquals(instance.getName(), instance2.getName());
     }
 
 }

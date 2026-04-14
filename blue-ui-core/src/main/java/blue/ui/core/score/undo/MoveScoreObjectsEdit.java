@@ -7,6 +7,7 @@ package blue.ui.core.score.undo;
 import blue.BlueSystem;
 import blue.score.ScoreObject;
 import blue.score.layers.ScoreObjectLayer;
+import blue.time.TimePosition;
 import javax.swing.undo.AbstractUndoableEdit;
 import javax.swing.undo.CannotRedoException;
 import javax.swing.undo.CannotUndoException;
@@ -23,15 +24,15 @@ public class MoveScoreObjectsEdit extends AbstractUndoableEdit {
 
     private final ScoreObjectLayer[] endLayers;
 
-    private final double[] initialStartTimes;
+    private final TimePosition[] initialStartTimes;
 
-    private final double[] endingStartTimes;
+    private final TimePosition[] endingStartTimes;
 
     private String presentationName = null;
 
     public MoveScoreObjectsEdit(ScoreObject[] soundObjects,
             ScoreObjectLayer[] startLayers, ScoreObjectLayer[] endLayers,
-            double[] initialStartTimes, double[] endingStarttimes) {
+            TimePosition[] initialStartTimes, TimePosition[] endingStarttimes) {
 
         this.scoreObjects = soundObjects;
         this.startLayers = startLayers;

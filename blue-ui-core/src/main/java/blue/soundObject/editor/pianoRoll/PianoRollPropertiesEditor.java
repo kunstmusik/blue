@@ -386,7 +386,7 @@ public class PianoRollPropertiesEditor extends JScrollPane {
             midiOption.setSelected(true);
         }
 
-        transposition.setValue(new Integer(p.getTransposition()));
+        transposition.setValue(p.getTransposition());
 
         fieldDefinitionsEditor.editPianoRoll(p);
 

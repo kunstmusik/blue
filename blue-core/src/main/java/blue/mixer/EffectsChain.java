@@ -37,7 +37,7 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 
 public class EffectsChain implements ListModel, PropertyChangeListener {
 
-    private final ArrayList effects = new ArrayList();
+    private final ArrayList<Object> effects = new ArrayList<>();
 
     private transient List<ListDataListener> listeners = null;
 
@@ -47,26 +47,22 @@ public class EffectsChain implements ListModel, PropertyChangeListener {
     }
 
     public EffectsChain(EffectsChain chain) {
-        for(Object item : chain.effects) {
-            if(item instanceof Effect) {
-                addEffect(new Effect((Effect)item));
-            } else if (item instanceof Send){
-                addSend(new Send((Send)item));
-            } 
+        for (Object item : chain.effects) {
+            if (item instanceof Effect effect) {
+                addEffect(new Effect(effect));
+            } else if (item instanceof Send send) {
+                addSend(new Send(send));
+            }
         }
     }
 
     public Element saveAsXML() {
         Element retVal = new Element("effectsChain");
 
-        for (Iterator it = effects.iterator(); it.hasNext();) {
-            Object obj = it.next();
-
-            if (obj instanceof Effect) {
-                Effect elem = (Effect) obj;
+        for (Object obj : effects) {
+            if (obj instanceof Effect elem) {
                 retVal.addElement(elem.saveAsXML());
-            } else if (obj instanceof Send) {
-                Send send = (Send) obj;
+            } else if (obj instanceof Send send) {
                 retVal.addElement(send.saveAsXML());
             }
         }
@@ -83,12 +79,10 @@ public class EffectsChain implements ListModel, PropertyChangeListener {
             Element node = nodes.next();
             String nodeName = node.getName();
             switch (nodeName) {
-                case "effect":
+                case "effect" ->
                     chain.addEffect(Effect.loadFromXML(node));
-                    break;
-                case "send":
+                case "send" ->
                     chain.addSend(Send.loadFromXML(node));
-                    break;
             }
         }
 
@@ -124,8 +118,8 @@ public class EffectsChain implements ListModel, PropertyChangeListener {
     public Object removeElementAt(int index) {
         Object obj = effects.remove(index);
 
-        if (obj instanceof Send) {
-            ((Send) obj).removePropertyChangeListener(this);
+        if (obj instanceof Send send) {
+            send.removePropertyChangeListener(this);
         }
 
         ListDataEvent lde = new ListDataEvent(this,
@@ -172,8 +166,8 @@ public class EffectsChain implements ListModel, PropertyChangeListener {
         for (int i = 0; i < this.size(); i++) {
             Object obj = this.getElementAt(i);
 
-            if (obj instanceof Send) {
-                temp.add((Send) obj);
+            if (obj instanceof Send send) {
+                temp.add(send);
             }
         }
 
@@ -182,7 +176,7 @@ public class EffectsChain implements ListModel, PropertyChangeListener {
 
         return sends;
     }
-    
+
     public boolean contains(Effect effect) {
         return effects.contains(effect);
     }

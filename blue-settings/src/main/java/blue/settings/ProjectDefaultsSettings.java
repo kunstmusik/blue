@@ -19,6 +19,9 @@
  */
 package blue.settings;
 
+import blue.score.SnapValue;
+import blue.time.TimeBase;
+import blue.udo.UDOStyle;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 import org.openide.util.Exceptions;
@@ -34,9 +37,24 @@ public class ProjectDefaultsSettings {
     private static final String DEFAULT_AUTHOR = "defaultAuthor";
     private static final String MIXER_ENABLED = "mixerEnabled";
     private static final String LAYER_HEIGHT_DEFAULT = "layerHeightDefault";
+    private static final String DEFAULT_SMPTE_FRAME_RATE = "defaultSmpteFrameRate";
+    private static final String DEFAULT_PRIMARY_TIMEBASE = "defaultPrimaryTimeBase";
+    private static final String DEFAULT_SECONDARY_TIMEBASE = "defaultSecondaryTimeBase";
+    private static final String DEFAULT_SECONDARY_RULER_ENABLED = "defaultSecondaryRulerEnabled";
+    private static final String DEFAULT_SNAP_ENABLED = "defaultSnapEnabled";
+    private static final String DEFAULT_SNAP_VALUE = "defaultSnapValue";
+    private static final String DEFAULT_UDO_STYLE = "defaultUDOStyle";
+    
     public String defaultAuthor;
     public boolean mixerEnabled;
     public int layerHeightDefault;
+    public double defaultSmpteFrameRate;
+    public TimeBase defaultPrimaryTimeBase;
+    public TimeBase defaultSecondaryTimeBase;
+    public boolean defaultSecondaryRulerEnabled;
+    public boolean defaultSnapEnabled;
+    public SnapValue defaultSnapValue;
+    public UDOStyle defaultUDOStyle;
     private static ProjectDefaultsSettings instance = null;
 
     private ProjectDefaultsSettings() {
@@ -53,6 +71,20 @@ public class ProjectDefaultsSettings {
             instance.mixerEnabled = prefs.getBoolean(PREFIX + MIXER_ENABLED,
                     true);
             instance.layerHeightDefault = prefs.getInt(PREFIX + LAYER_HEIGHT_DEFAULT, 0);
+            instance.defaultSmpteFrameRate = prefs.getDouble(PREFIX + DEFAULT_SMPTE_FRAME_RATE, 24.0);
+            
+            instance.defaultPrimaryTimeBase = parseEnum(TimeBase.class,
+                    prefs.get(PREFIX + DEFAULT_PRIMARY_TIMEBASE, null), TimeBase.BEATS);
+            instance.defaultSecondaryTimeBase = parseEnum(TimeBase.class,
+                    prefs.get(PREFIX + DEFAULT_SECONDARY_TIMEBASE, null), TimeBase.TIME);
+            instance.defaultSecondaryRulerEnabled = prefs.getBoolean(
+                    PREFIX + DEFAULT_SECONDARY_RULER_ENABLED, false);
+            instance.defaultSnapEnabled = prefs.getBoolean(
+                    PREFIX + DEFAULT_SNAP_ENABLED, false);
+            instance.defaultSnapValue = parseEnum(SnapValue.class,
+                    prefs.get(PREFIX + DEFAULT_SNAP_VALUE, null), SnapValue.BEAT);
+            instance.defaultUDOStyle = parseEnum(UDOStyle.class,
+                    prefs.get(PREFIX + DEFAULT_UDO_STYLE, null), UDOStyle.MODERN);
         }
         return instance;
     }
@@ -64,10 +96,26 @@ public class ProjectDefaultsSettings {
         prefs.put(PREFIX + DEFAULT_AUTHOR, defaultAuthor);
         prefs.putBoolean(PREFIX + MIXER_ENABLED, mixerEnabled);
         prefs.putInt(PREFIX + LAYER_HEIGHT_DEFAULT, layerHeightDefault);
+        prefs.putDouble(PREFIX + DEFAULT_SMPTE_FRAME_RATE, defaultSmpteFrameRate);
+        prefs.put(PREFIX + DEFAULT_PRIMARY_TIMEBASE, defaultPrimaryTimeBase.name());
+        prefs.put(PREFIX + DEFAULT_SECONDARY_TIMEBASE, defaultSecondaryTimeBase.name());
+        prefs.putBoolean(PREFIX + DEFAULT_SECONDARY_RULER_ENABLED, defaultSecondaryRulerEnabled);
+        prefs.putBoolean(PREFIX + DEFAULT_SNAP_ENABLED, defaultSnapEnabled);
+        prefs.put(PREFIX + DEFAULT_SNAP_VALUE, defaultSnapValue.name());
+        prefs.put(PREFIX + DEFAULT_UDO_STYLE, defaultUDOStyle.name());
         try {
             prefs.sync();
         } catch (BackingStoreException ex) {
             Exceptions.printStackTrace(ex);
+        }
+    }
+    
+    private static <E extends Enum<E>> E parseEnum(Class<E> enumClass, String name, E defaultValue) {
+        if (name == null) return defaultValue;
+        try {
+            return Enum.valueOf(enumClass, name);
+        } catch (IllegalArgumentException e) {
+            return defaultValue;
         }
     }
 }

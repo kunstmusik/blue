@@ -19,6 +19,8 @@
  */
 package blue.score;
 
+import blue.time.TempoMap;
+import blue.time.TimeBase;
 import blue.utility.XMLUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
@@ -27,61 +29,74 @@ import java.beans.PropertyChangeListener;
 import java.util.Vector;
 
 /**
+ * UI/editing state for the score timeline.
+ * 
+ * Stores ruler display format (primary/secondary via {@link TimeBase}),
+ * snap settings (via {@link SnapValue}), zoom level, and SMPTE frame rate.
+ * Property change events are fired for all state changes so UI components
+ * can update accordingly.
  *
  * @author stevenyi
  */
 public class TimeState {
 
-    public static final int DISPLAY_TIME = 0;
-    public static final int DISPLAY_NUMBER = 1;
+    // Format version for migration support
+    // Version 1 (or no attribute): Legacy format (timeDisplay: 0=TIME, 1=BEATS)
+    // Version 2: Uses TimeBase enum names for storage, adds row visibility flags (tempo/meter/markers)
+    private static final int CURRENT_FORMAT_VERSION = 2;
 
     private transient Vector<PropertyChangeListener> listeners = null;
 
-    private int pixelSecond = 64;
     private boolean snapEnabled = false;
-    private double snapValue = 1.0f;
-    private int timeDisplay = DISPLAY_TIME;
-    private int timeUnit = 5;
+    private SnapValue snapValue = SnapValue.BEAT;
+    private TimeBase timeDisplay = TimeBase.BEATS;
+    private TimeBase secondaryTimeDisplay = TimeBase.TIME;
+    private boolean secondaryRulerEnabled = false;
+    private boolean tempoRowVisible = true;
+    private boolean meterRowVisible = true;
+    private boolean markersRowVisible = true;
+    private double smpteFrameRate = 24.0;
+
+    private int zoomIterations = 0;
 
     public TimeState() {
     }
 
     public TimeState(TimeState timeState) {
-        pixelSecond = timeState.pixelSecond;
         snapEnabled = timeState.snapEnabled;
         snapValue = timeState.snapValue;
         timeDisplay = timeState.timeDisplay;
-        timeUnit = timeState.timeUnit;
+        secondaryTimeDisplay = timeState.secondaryTimeDisplay;
+        secondaryRulerEnabled = timeState.secondaryRulerEnabled;
+        tempoRowVisible = timeState.tempoRowVisible;
+        meterRowVisible = timeState.meterRowVisible;
+        markersRowVisible = timeState.markersRowVisible;
+        smpteFrameRate = timeState.smpteFrameRate;
+        zoomIterations = timeState.zoomIterations;
     }
 
-    public int getPixelSecond() {
-        return this.pixelSecond;
+    public double getPixelSecond() {
+        return 100 * Math.exp(Math.log(2) * (zoomIterations / 32.0));
     }
 
-    public void setPixelSecond(int pixelSecond) {
+    public void lowerPixelSecond() {
+        var oldPs = getPixelSecond();
+        zoomIterations--;
+        var newPs = getPixelSecond();
         PropertyChangeEvent pce = new PropertyChangeEvent(this, "pixelSecond",
-                new Integer(this.pixelSecond), new Integer(pixelSecond));
-
-        this.pixelSecond = pixelSecond;
+                oldPs, newPs);
 
         firePropertyChangeEvent(pce);
     }
 
-    public void lowerPixelSecond() {
-        int temp = getPixelSecond();
-
-        if (temp <= 2) {
-            return;
-        }
-
-        temp -= 2;
-
-        setPixelSecond(temp);
-    }
-
     public void raisePixelSecond() {
-        int temp = getPixelSecond() + 2;
-        setPixelSecond(temp);
+        var oldPs = getPixelSecond();
+        zoomIterations++;
+        var newPs = getPixelSecond();
+        PropertyChangeEvent pce = new PropertyChangeEvent(this, "pixelSecond",
+                oldPs, newPs);
+
+        firePropertyChangeEvent(pce);
     }
 
     public boolean isSnapEnabled() {
@@ -97,41 +112,133 @@ public class TimeState {
         firePropertyChangeEvent(pce);
     }
 
-    public double getSnapValue() {
+    public SnapValue getSnapValue() {
         return this.snapValue;
     }
 
-    public void setSnapValue(double snapValue) {
-        PropertyChangeEvent pce = new PropertyChangeEvent(this, "snapValue",
-                new Double(this.snapValue), new Double(snapValue));
-
+    public void setSnapValue(SnapValue snapValue) {
+        if (snapValue == null) {
+            throw new IllegalArgumentException("snapValue cannot be null");
+        }
+        SnapValue oldVal = this.snapValue;
         this.snapValue = snapValue;
 
+        PropertyChangeEvent pce = new PropertyChangeEvent(this, "snapValue",
+                oldVal, snapValue);
         firePropertyChangeEvent(pce);
     }
 
-    public int getTimeDisplay() {
+    /**
+     * Calculates the snap value in beats for the given beat position,
+     * using the tempo at that position for time/SMPTE/sample-based snap values.
+     *
+     * @param beatPosition the beat position on the timeline (for tempo lookup)
+     * @param tempoMap the tempo map (may be null for constant tempo)
+     * @param sampleRate the audio sample rate
+     * @return snap value in beats
+     */
+    public double getSnapValueInBeats(double beatPosition,
+            TempoMap tempoMap, long sampleRate) {
+        double tempo = (tempoMap != null) ? tempoMap.getTempoAt(beatPosition) : 60.0;
+        return snapValue.toBeats(tempo, smpteFrameRate, sampleRate, getPixelSecond());
+    }
+
+    public TimeBase getTimeDisplay() {
         return timeDisplay;
     }
 
-    public void setTimeDisplay(int timeDisplay) {
+    public void setTimeDisplay(TimeBase timeDisplay) {
+        if (timeDisplay == null) {
+            throw new IllegalArgumentException("timeDisplay cannot be null");
+        }
         PropertyChangeEvent pce = new PropertyChangeEvent(this, "timeDisplay",
-                new Integer(this.timeDisplay), new Integer(timeDisplay));
+                this.timeDisplay, timeDisplay);
 
         this.timeDisplay = timeDisplay;
 
         firePropertyChangeEvent(pce);
     }
 
-    public int getTimeUnit() {
-        return timeUnit;
+    public TimeBase getSecondaryTimeDisplay() {
+        return secondaryTimeDisplay;
     }
 
-    public void setTimeUnit(int timeUnit) {
-        PropertyChangeEvent pce = new PropertyChangeEvent(this, "timeUnit",
-                new Integer(this.timeUnit), new Integer(timeUnit));
+    public void setSecondaryTimeDisplay(TimeBase secondaryTimeDisplay) {
+        if (secondaryTimeDisplay == null) {
+            throw new IllegalArgumentException("secondaryTimeDisplay cannot be null");
+        }
+        PropertyChangeEvent pce = new PropertyChangeEvent(this, "secondaryTimeDisplay",
+                this.secondaryTimeDisplay, secondaryTimeDisplay);
 
-        this.timeUnit = timeUnit;
+        this.secondaryTimeDisplay = secondaryTimeDisplay;
+
+        firePropertyChangeEvent(pce);
+    }
+
+    public boolean isSecondaryRulerEnabled() {
+        return secondaryRulerEnabled;
+    }
+
+    public void setSecondaryRulerEnabled(boolean secondaryRulerEnabled) {
+        PropertyChangeEvent pce = new PropertyChangeEvent(this, "secondaryRulerEnabled",
+                this.secondaryRulerEnabled, secondaryRulerEnabled);
+
+        this.secondaryRulerEnabled = secondaryRulerEnabled;
+
+        firePropertyChangeEvent(pce);
+    }
+
+    public boolean isTempoRowVisible() {
+        return tempoRowVisible;
+    }
+
+    public void setTempoRowVisible(boolean tempoRowVisible) {
+        PropertyChangeEvent pce = new PropertyChangeEvent(this, "tempoRowVisible",
+                this.tempoRowVisible, tempoRowVisible);
+
+        this.tempoRowVisible = tempoRowVisible;
+
+        firePropertyChangeEvent(pce);
+    }
+
+    public boolean isMeterRowVisible() {
+        return meterRowVisible;
+    }
+
+    public void setMeterRowVisible(boolean meterRowVisible) {
+        PropertyChangeEvent pce = new PropertyChangeEvent(this, "meterRowVisible",
+                this.meterRowVisible, meterRowVisible);
+
+        this.meterRowVisible = meterRowVisible;
+
+        firePropertyChangeEvent(pce);
+    }
+
+    public boolean isMarkersRowVisible() {
+        return markersRowVisible;
+    }
+
+    public void setMarkersRowVisible(boolean markersRowVisible) {
+        PropertyChangeEvent pce = new PropertyChangeEvent(this, "markersRowVisible",
+                this.markersRowVisible, markersRowVisible);
+
+        this.markersRowVisible = markersRowVisible;
+
+        firePropertyChangeEvent(pce);
+    }
+
+    public double getSmpteFrameRate() {
+        return smpteFrameRate;
+    }
+
+    public void setSmpteFrameRate(double smpteFrameRate) {
+        if (smpteFrameRate <= 0) {
+            throw new IllegalArgumentException("smpteFrameRate must be positive");
+        }
+        PropertyChangeEvent pce = new PropertyChangeEvent(this, "smpteFrameRate",
+                this.smpteFrameRate, smpteFrameRate);
+
+        this.smpteFrameRate = smpteFrameRate;
 
         firePropertyChangeEvent(pce);
     }
@@ -181,43 +288,126 @@ public class TimeState {
 
         Elements nodes = data.getElements();
 
+        String versionStr = data.getAttributeValue("version");
+        int version = (versionStr == null) ? 1 : Integer.parseInt(versionStr);
+        
         while (nodes.hasMoreElements()) {
             Element e = nodes.next();
 
             String nodeName = e.getName();
             final String nodeText = e.getTextString();
             switch (nodeName) {
-                case "pixelSecond":
-                    timeState.pixelSecond = Integer.parseInt(nodeText);
-                    break;
-                case "snapEnabled":
+                case "pixelSecond" -> {
+                    var pixelSecond = Integer.parseInt(nodeText);
+                    timeState.zoomIterations = (int) ((Math.log(pixelSecond / 100.0) / Math.log(2)) * 32.0);
+                }
+                case "zoomIterations" ->
+                    timeState.zoomIterations = Integer.parseInt(nodeText);
+                case "snapEnabled" ->
                     timeState.snapEnabled = Boolean.parseBoolean(nodeText);
-                    break;
-                case "snapValue":
-                    timeState.snapValue = Double.parseDouble(nodeText);
-                    break;
-                case "timeDisplay":
-                    timeState.timeDisplay = Integer.parseInt(nodeText);
-                    break;
-                case "timeUnit":
-                    timeState.timeUnit = Integer.parseInt(nodeText);
-                    break;
+                case "snapValue" -> {
+                    // Migrate removed enum constants
+                    String svText = "QUARTER".equals(nodeText) ? "SIXTEENTH" : nodeText;
+                    // Try enum name first (current format), then legacy double
+                    try {
+                        timeState.snapValue = SnapValue.valueOf(svText);
+                    } catch (IllegalArgumentException e1) {
+                        // Legacy format: double value — find closest match
+                        try {
+                            double legacyVal = Double.parseDouble(nodeText);
+                            timeState.snapValue = SnapValue.closestMatch(legacyVal);
+                        } catch (NumberFormatException nfe) {
+                            timeState.snapValue = SnapValue.BEAT;
+                        }
+                    }
+                }
+                case "timeDisplay" ->
+                    timeState.timeDisplay = parseTimeBase(nodeText, TimeBase.BEATS);
+                case "secondaryTimeDisplay" ->
+                    timeState.secondaryTimeDisplay = parseTimeBase(nodeText, TimeBase.TIME);
+                case "secondaryRulerEnabled" ->
+                    timeState.secondaryRulerEnabled = Boolean.parseBoolean(nodeText);
+                case "tempoRowVisible" ->
+                    timeState.tempoRowVisible = Boolean.parseBoolean(nodeText);
+                case "meterRowVisible" ->
+                    timeState.meterRowVisible = Boolean.parseBoolean(nodeText);
+                case "markersRowVisible" ->
+                    timeState.markersRowVisible = Boolean.parseBoolean(nodeText);
+                case "smpteFrameRate" ->
+                    timeState.smpteFrameRate = Double.parseDouble(nodeText);
             }
+        }
+        
+        // Migrate legacy format values (version 1 or no version attribute)
+        if (version < 2) {
+            // Secondary ruler did not exist in legacy format
+            timeState.secondaryRulerEnabled = false;
         }
 
         return timeState;
     }
+    
+    /**
+     * Parses a TimeBase from XML text. Handles both enum names (v2+) and legacy int values (v1).
+     * Legacy: 0=TIME, 1=BEATS
+     */
+    private static TimeBase parseTimeBase(String text, TimeBase defaultValue) {
+        if (text == null || text.isEmpty()) {
+            return defaultValue;
+        }
+        // Try parsing as enum name first (v2 format)
+        try {
+            return TimeBase.valueOf(text);
+        } catch (IllegalArgumentException e) {
+            // Fall back to legacy int parsing
+            try {
+                int legacyValue = Integer.parseInt(text);
+                return migrateLegacyDisplayValue(legacyValue);
+            } catch (NumberFormatException nfe) {
+                return defaultValue;
+            }
+        }
+    }
+    
+    /**
+     * Converts a legacy display int value to TimeBase.
+     * Legacy: 0=DISPLAY_TIME, 1=DISPLAY_BEATS
+     */
+    private static TimeBase migrateLegacyDisplayValue(int legacyValue) {
+        return switch (legacyValue) {
+            case 0 -> TimeBase.TIME;         // Legacy DISPLAY_TIME
+            case 1 -> TimeBase.BEATS; // Legacy DISPLAY_BEATS
+            default -> TimeBase.BEATS;
+        };
+    }
 
     public Element saveAsXML() {
         Element retVal = new Element("timeState");
+        retVal.setAttribute("version", Integer.toString(CURRENT_FORMAT_VERSION));
 
-        retVal.addElement(XMLUtilities.writeInt("pixelSecond",
-                this.pixelSecond));
+        retVal.addElement(XMLUtilities.writeInt("zoomIterations",
+                this.zoomIterations));
         retVal.addElement(XMLUtilities.writeBoolean("snapEnabled",
                 this.snapEnabled));
-        retVal.addElement(XMLUtilities.writeDouble("snapValue", this.snapValue));
-        retVal.addElement(XMLUtilities.writeInt("timeDisplay", this.timeDisplay));
-        retVal.addElement(XMLUtilities.writeInt("timeUnit", this.timeUnit));
+        Element snapValueElem = new Element("snapValue");
+        snapValueElem.setText(this.snapValue.name());
+        retVal.addElement(snapValueElem);
+        Element timeDisplayElem = new Element("timeDisplay");
+        timeDisplayElem.setText(this.timeDisplay.name());
+        retVal.addElement(timeDisplayElem);
+        Element secondaryTimeDisplayElem = new Element("secondaryTimeDisplay");
+        secondaryTimeDisplayElem.setText(this.secondaryTimeDisplay.name());
+        retVal.addElement(secondaryTimeDisplayElem);
+        retVal.addElement(XMLUtilities.writeBoolean("secondaryRulerEnabled",
+                this.secondaryRulerEnabled));
+        retVal.addElement(XMLUtilities.writeBoolean("tempoRowVisible",
+                this.tempoRowVisible));
+        retVal.addElement(XMLUtilities.writeBoolean("meterRowVisible",
+                this.meterRowVisible));
+        retVal.addElement(XMLUtilities.writeBoolean("markersRowVisible",
+                this.markersRowVisible));
+        retVal.addElement(XMLUtilities.writeDouble("smpteFrameRate",
+                this.smpteFrameRate));
 
         return retVal;
     }

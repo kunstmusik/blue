@@ -3,6 +3,9 @@ package blue.soundObject;
 import blue.*;
 import blue.noteProcessor.NoteProcessorChain;
 import blue.soundObject.notation.NotationStaff;
+import blue.time.TimeContext;
+import blue.time.TimeDuration;
+import blue.time.TimePosition;
 import electric.xml.Element;
 import java.util.Map;
 
@@ -34,9 +37,9 @@ public class NotationObject extends AbstractSoundObject implements
     private final NotationStaff staff;
 
     public NotationObject() {
-        name = "Notation Object";
-        subjectiveDuration = 2.0f;
-        startTime = 0.0f;
+        setName("Notation Object");
+        setSubjectiveDuration(TimeDuration.beats(2.0));
+        setStartTime(TimePosition.beats(0.0));
         timeBehavior = TimeBehavior.SCALE;
         staff = new NotationStaff();
     }
@@ -61,7 +64,7 @@ public class NotationObject extends AbstractSoundObject implements
     }
 
     @Override
-    public double getObjectiveDuration() {
+    public TimeDuration getObjectiveDuration(TimeContext context) {
         return this.getSubjectiveDuration();
     }
 
@@ -103,12 +106,12 @@ public class NotationObject extends AbstractSoundObject implements
     }
 
     @Override
-    public double getRepeatPoint() {
-        return -1.0f;
+    public TimeDuration getRepeatPoint() {
+        return null;
     }
 
     @Override
-    public void setRepeatPoint(double repeatPoint) {
+    public void setRepeatPoint(TimeDuration repeatPoint) {
     }
 
     /*
@@ -133,7 +136,7 @@ public class NotationObject extends AbstractSoundObject implements
     }
 
     @Override
-    public NoteList generateForCSD(CompileData compileData, double startTime, double endTime) {
+    public NoteList generateForCSD(TimeContext context, CompileData compileData, double startTime, double endTime) {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 

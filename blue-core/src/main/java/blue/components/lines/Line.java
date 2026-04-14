@@ -36,7 +36,6 @@ import javax.swing.event.ChangeListener;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.TableModel;
-import org.apache.commons.lang3.text.StrBuilder;
 
 /**
  * This Line class is used in a number of places in blue. For situations like
@@ -141,14 +140,14 @@ public class Line implements TableModel, ChangeListener, Iterable<LinePoint> {
     public static Line loadFromXML(Element data) {
         Line line = new Line(false, false);
         switch (data.getName()) {
-            case "line":
+            case "line" -> {
                 line.varName = data.getAttributeValue("name");
                 line.setZak(false);
-                break;
-            case "zakline":
+            }
+            case "zakline" -> {
                 line.channel = Integer.parseInt(data.getAttributeValue("channel"));
                 line.setZak(true);
-                break;
+            }
         }
 
         int version = 1;
@@ -188,13 +187,13 @@ public class Line implements TableModel, ChangeListener, Iterable<LinePoint> {
         String rBound = data.getAttributeValue("rightBound");
 
         if (rBound != null && rBound.length() > 0) {
-            line.rightBound = Boolean.valueOf(rBound).booleanValue();
+            line.rightBound = Boolean.parseBoolean(rBound);
         }
 
         String endLinked = data.getAttributeValue("endPointsLinked");
 
         if (endLinked != null && endLinked.length() > 0) {
-            line.endPointsLinked = Boolean.valueOf(endLinked).booleanValue();
+            line.endPointsLinked = Boolean.parseBoolean(endLinked);
         }
 
         Elements nodes = data.getElements();
@@ -403,8 +402,7 @@ public class Line implements TableModel, ChangeListener, Iterable<LinePoint> {
      */
     public LinePoint getLinePoint(double time, boolean fromLeft) {
         if (fromLeft) {
-            for (int i = 0; i < points.size(); i++) {
-                LinePoint lp = points.get(i);
+            for (LinePoint lp : points) {
                 if (lp.getX() == time) {
                     return lp;
                 } else if (lp.getX() > time) {
@@ -522,10 +520,10 @@ public class Line implements TableModel, ChangeListener, Iterable<LinePoint> {
         LinePoint p = points.get(rowIndex);
 
         if (columnIndex == 0) {
-            return new Double(p.getX());
+            return p.getX();
         }
 
-        return new Double(p.getY());
+        return p.getY();
     }
 
     /*
@@ -632,8 +630,7 @@ public class Line implements TableModel, ChangeListener, Iterable<LinePoint> {
 
     public void fireTableChanged(TableModelEvent e) {
         if (listeners != null) {
-            for (Iterator iter = listeners.iterator(); iter.hasNext();) {
-                TableModelListener listener = (TableModelListener) iter.next();
+            for (TableModelListener listener : listeners) {
                 listener.tableChanged(e);
             }
         }
@@ -770,9 +767,7 @@ public class Line implements TableModel, ChangeListener, Iterable<LinePoint> {
 
     public void setResolution(BigDecimal resolution) {
         this.resolution = resolution;
-        for (Iterator iter = points.iterator(); iter.hasNext();) {
-            LinePoint point = (LinePoint) iter.next();
-
+        for (LinePoint point : points) {
             double newVal = LineUtils.snapToResolution(point.getY(), this.min,
                     this.max, this.resolution);
 
@@ -799,11 +794,9 @@ public class Line implements TableModel, ChangeListener, Iterable<LinePoint> {
             return null;
         }
 
-        StrBuilder builder = new StrBuilder();
+        StringBuilder builder = new StringBuilder();
 
-        for (Iterator iter = points.iterator(); iter.hasNext();) {
-            LinePoint point = (LinePoint) iter.next();
-
+        for (LinePoint point : points) {
             builder.append(point.getX()).append("\t").append(point.getY())
                     .append("\n");
         }
@@ -827,7 +820,7 @@ public class Line implements TableModel, ChangeListener, Iterable<LinePoint> {
             return false;
         }
 
-        ArrayList temp = new ArrayList();
+        ArrayList<LinePoint> temp = new ArrayList<>();
 
         StringTokenizer lines = new StringTokenizer(text, "\n");
 
@@ -1242,9 +1235,7 @@ public class Line implements TableModel, ChangeListener, Iterable<LinePoint> {
 
         List<LinePoint> retVal = new ArrayList<>();
 
-        for (Iterator<LinePoint> iter = iterator(); iter.hasNext();) {
-
-            LinePoint lp = iter.next();
+        for (LinePoint lp : this) {
 
             double pointTime = lp.getX();
 

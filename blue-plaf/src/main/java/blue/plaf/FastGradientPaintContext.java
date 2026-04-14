@@ -123,7 +123,7 @@ class Gradient {
             createRaster(perpendicularLength);
         }
 
-        Integer key = new Integer(parallelPos);
+        Integer key = parallelPos;
         Object o = childRasterCache.get(key);
         if (o != null) {
             return (Raster) o;

@@ -6,12 +6,10 @@ package blue.csnd6.render;
 
 import blue.services.render.CsdRenderResult;
 import blue.BlueData;
-//import blue.BlueMainFrame;
 import blue.BlueSystem;
 import blue.LiveData;
 import blue.automation.Parameter;
 import blue.event.PlayModeListener;
-import blue.noteProcessor.TempoMapper;
 import blue.orchestra.blueSynthBuilder.StringChannel;
 import blue.services.render.CSDRenderService;
 import blue.services.render.CsoundBinding;
@@ -21,14 +19,17 @@ import blue.settings.GeneralSettings;
 import blue.settings.PlaybackSettings;
 import blue.settings.ProjectPropertiesUtil;
 import blue.soundObject.SoundObjectException;
+import blue.time.TempoMap;
 import blue.utility.FileUtilities;
 import blue.utility.TextUtilities;
-import com.kunstmusik.csoundjni.Csound;
+import com.kunstmusik.csoundffm.Csound;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.io.File;
 import java.io.IOException;
-import java.nio.DoubleBuffer;
+import java.lang.foreign.MemorySegment;
+import java.lang.foreign.ValueLayout;
+import static java.lang.foreign.ValueLayout.JAVA_DOUBLE;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -66,13 +67,11 @@ public class CS6RealtimeRenderService implements RealtimeRenderService, PlayMode
     private Csound csound;
 
     public CS6RealtimeRenderService() {
-//        csnd6.csoundInitialize(csnd6.CSOUNDINIT_NO_ATEXIT
-//                | csnd6.CSOUNDINIT_NO_SIGNAL_HANDLER);
     }
 
     @Override
     public String toString() {
-        return "Csound 6 API";
+        return "Csound 7 API";
     }
 
     @Override
@@ -107,11 +106,11 @@ public class CS6RealtimeRenderService implements RealtimeRenderService, PlayMode
 
         io.getOut().append("Render Command (");
 
-        List<String> argsList = new ArrayList<String>(
+        List<String> argsList = new ArrayList<>(
                 Arrays.asList(args));
 
-        for (int i = 0; i < args.length; i++) {
-            io.getOut().append(" ").append(args[i]);
+        for (String arg : args) {
+            io.getOut().append(" ").append(arg);
         }
 
         if (currentWorkingDirectory != null) {
@@ -153,19 +152,19 @@ public class CS6RealtimeRenderService implements RealtimeRenderService, PlayMode
 
             }
             notifyPlayModeListeners(PlayModeListener.PLAY_MODE_STOP);
-            csound.stop();
-            csound.cleanup();
+            csound.reset();
             csound.setMessageCallback(null);
-            csound.delete();
             csound = null;
             blueCallbackWrapper = null;
             return;
 
         }
+        
+        csound.start();
 
         runnerThread = new APIRunnerThread(blueData, csound, this,
                 result.getParameters(), result.getStringChannels(),
-                result.getTempoMapper(), renderStart, bindings);
+                result.getTempoMap(), renderStart, bindings);
 
         notifyPlayModeListeners(PlayModeListener.PLAY_MODE_PLAY);
         Thread t = new Thread(runnerThread);
@@ -201,7 +200,7 @@ public class CS6RealtimeRenderService implements RealtimeRenderService, PlayMode
 
             RenderTimeManager timeManager = Lookup.getDefault().lookup(
                     RenderTimeManager.class);
-            timeManager.setTempoMapper(result.getTempoMapper());
+            timeManager.setTempoMap(result.getTempoMap());
 
             String csd = result.getCsdText();
 
@@ -313,7 +312,7 @@ public class CS6RealtimeRenderService implements RealtimeRenderService, PlayMode
     @Override
     public void addPlayModeListener(PlayModeListener listener) {
         if (listeners == null) {
-            listeners = new Vector<PlayModeListener>();
+            listeners = new Vector<>();
         }
 
         listeners.add(listener);
@@ -331,8 +330,7 @@ public class CS6RealtimeRenderService implements RealtimeRenderService, PlayMode
             return;
         }
 
-        for (Iterator<PlayModeListener> iter = listeners.iterator(); iter.hasNext();) {
-            PlayModeListener listener = iter.next();
+        for (PlayModeListener listener : listeners) {
             listener.playModeChanged(playMode);
         }
     }
@@ -397,13 +395,13 @@ public class CS6RealtimeRenderService implements RealtimeRenderService, PlayMode
         private final Csound csound;
         private boolean keepRunning = true;
         private PlayModeListener playModeListener;
-        private ArrayList parameters;
+        private ArrayList<Parameter> parameters;
         private ArrayList<StringChannel> stringChannels;
-        private TempoMapper mapper;
+        private TempoMap tempoMap;
         private double startTime;
         private BlueData blueData;
         private double[] valuesCache;
-        private DoubleBuffer[] channelPtrCache;
+        private MemorySegment[] channelPtrCache;
         public boolean isRunning = true;
         CountDownLatch latch = new CountDownLatch(1);
         private final List<CsoundBinding> bindings;
@@ -412,9 +410,9 @@ public class CS6RealtimeRenderService implements RealtimeRenderService, PlayMode
         public APIRunnerThread(BlueData blueData,
                 Csound csound,
                 PlayModeListener playModeListener,
-                ArrayList parameters,
+                ArrayList<Parameter> parameters,
                 ArrayList<StringChannel> stringChannels,
-                TempoMapper mapper,
+                TempoMap tempoMap,
                 double startTime,
                 List<CsoundBinding> bindings) {
             this.blueData = blueData;
@@ -422,7 +420,7 @@ public class CS6RealtimeRenderService implements RealtimeRenderService, PlayMode
             this.playModeListener = playModeListener;
             this.parameters = parameters;
             this.stringChannels = stringChannels;
-            this.mapper = mapper;
+            this.tempoMap = tempoMap;
             this.startTime = startTime;
             this.bindings = bindings;
         }
@@ -468,9 +466,9 @@ public class CS6RealtimeRenderService implements RealtimeRenderService, PlayMode
             double renderStartSeconds = 0.0f;
 
             if (renderUpdatesTime) {
-                if (mapper != null) {
-                    renderStartSeconds = mapper.beatsToSeconds(startTime);
-                    currentTime = mapper.secondsToBeats(
+                if (tempoMap != null) {
+                    renderStartSeconds = tempoMap.beatsToSeconds(startTime);
+                    currentTime = tempoMap.secondsToBeats(
                             scoreTime + renderStartSeconds);
                 } else {
                     currentTime = startTime + scoreTime;
@@ -484,8 +482,8 @@ public class CS6RealtimeRenderService implements RealtimeRenderService, PlayMode
                         strChannel.getValue());
             }
 
-            for (int i = 0; i < bindings.size(); i++) {
-                bindings.get(i).setup(csound.getSr(), csound.getKsmps());
+            for (CsoundBinding item : bindings) {
+                item.setup(csound.getSr(), csound.getKsmps());
             }
 
             currentTime = (blueData == null) ? 0.0f : blueData.getRenderStartTime();
@@ -502,12 +500,8 @@ public class CS6RealtimeRenderService implements RealtimeRenderService, PlayMode
                 for (int i = buffer.getReadStart(); i < last; i++) {
                     Message m = buffer.getMessage(i % capacity);
                     switch (m.messageType) {
-                        case 0:
-                            csound.readScore(m.payload);
-                            break;
-                        case 1:
-                            csound.compileOrc(m.payload);
-                            break;
+                        case 0 -> csound.eventString(m.payload, 0);
+                        case 1 -> csound.compileOrc(m.payload, 0);
                     }
 
                 }
@@ -524,8 +518,8 @@ public class CS6RealtimeRenderService implements RealtimeRenderService, PlayMode
 
                 if (blueData == null) {
                     if (renderUpdatesTime) {
-                        if (mapper != null) {
-                            currentTime = mapper.secondsToBeats(
+                        if (tempoMap != null) {
+                            currentTime = tempoMap.secondsToBeats(
                                     scoreTime + renderStartSeconds);
                         } else {
                             currentTime = startTime + scoreTime;
@@ -547,12 +541,11 @@ public class CS6RealtimeRenderService implements RealtimeRenderService, PlayMode
 
                     if (value != valuesCache[i]) {
                         valuesCache[i] = value;
-                        channelPtrCache[i].put(0, value);
+                        channelPtrCache[i].set(ValueLayout.JAVA_DOUBLE, 0, value);
                     }
                 }
 
-                for (int i = 0, size = stringChannels.size(); i < size; i++) {
-                    StringChannel strChannel = stringChannels.get(i);
+                for (StringChannel strChannel : stringChannels) {
                     if (strChannel.isDirty()) {
 //                        System.out.println(
 //                                "Setting Channel: " + strChannel.getChannelName() + " : " + strChannel.getValue());
@@ -561,27 +554,25 @@ public class CS6RealtimeRenderService implements RealtimeRenderService, PlayMode
                     }
                 }
 
-                for (int i = 0, size = bindings.size(); i < size; i++) {
-                    bindings.get(i).updateValueToCsound();
+                for (CsoundBinding csoundBinding : bindings) {
+                    csoundBinding.updateValueToCsound();
                 }
 
                 keepRunning = csound.performKsmps() == 0 && keepRunning;
 
-                for (int i = 0, size = bindings.size(); i < size; i++) {
-                    bindings.get(i).updateValueFromCsound();
+                for (CsoundBinding binding : bindings) {
+                    binding.updateValueFromCsound();
                 }
             }
 
-            for (int i = 0; i < bindings.size(); i++) {
-                bindings.get(i).cleanup();
+            for (CsoundBinding binding : bindings) {
+                binding.cleanup();
             }
 
             bindings.clear();
 
-            csound.stop();
-            csound.cleanup();
+            csound.reset();
             csound.setMessageCallback(null);
-            csound.delete();
 
             if (renderUpdatesTime) {
                 manager.endRender();
@@ -598,7 +589,7 @@ public class CS6RealtimeRenderService implements RealtimeRenderService, PlayMode
             final int size = parameters.size();
 
             valuesCache = new double[size];
-            channelPtrCache = new DoubleBuffer[size];
+            channelPtrCache = new MemorySegment[size];
 
             for (int i = 0; i < size; i++) {
                 param = (Parameter) parameters.get(i);
@@ -612,7 +603,7 @@ public class CS6RealtimeRenderService implements RealtimeRenderService, PlayMode
                 }
 
                 channelPtrCache[i] = csound.getControlChannelPtr(varName);
-                channelPtrCache[i].put(0, valuesCache[i]);
+                channelPtrCache[i].set(JAVA_DOUBLE, 0, valuesCache[i]);
             }
         }
     }

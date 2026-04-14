@@ -362,8 +362,7 @@ public class NoteProcessorChainEditor extends JComponent {
 
             npc = new NoteProcessorChain(npc);
 
-            for (Iterator iter = npc.iterator(); iter.hasNext();) {
-                NoteProcessor np = (NoteProcessor) iter.next();
+            for (NoteProcessor np : npc) {
                 npcEditor.addNoteProcessor(np);
             }
 
@@ -384,9 +383,7 @@ public class NoteProcessorChainEditor extends JComponent {
 
             insertChain.removeAll();
 
-            for (Iterator iter = npcMap.keySet().iterator(); iter.hasNext();) {
-                String name = (String) iter.next();
-
+            for (String name : npcMap.keySet()) {
                 JMenuItem item = new JMenuItem();
                 item.setText(name);
                 item.setActionCommand(name);

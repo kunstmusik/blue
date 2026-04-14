@@ -11,10 +11,47 @@ information.
 
 # CHANGE LOG
 
-## [2.9.2] - 2023-xx-xx
+## [2.10.0] - 2026-03-xx
+
+### NEW
+
+* Added interactive spacer panels between layer groups with add-above/add-below actions and popup options to move groups up or down.
+
+* Added cross-group layer selection and deletion support for audio and pattern layer panels, including coordinated shift-click selection and cleanup of empty groups.
+
+* User-Defined Opcodes and Effects now support Csound 7 modern syntax alongside classic syntax:
+  * UDOs and Effects have an explicit Classic/Modern style selector
+  * Modern style uses `opcode name(inputArgs):outputSig` declaration and function-call invocation
+  * Classic style retains traditional `opcode name, outTypes, inTypes` declaration with `xin`/`xout`
+  * Bidirectional conversion between styles preserves input argument names and type annotations
+  * Parsing and CSD import handle both single-line and multi-line modern declarations
+  * Newly created UDOs and Effects default to application setting default (new setting in Program Settings for "Default UDO/Effects Style"); existing projects load as classic for backward compatibility
+
+### Updated
+
+* Introduced new Time Unit system encompassing time signatures, measures, new tempo ruler, and new time units:
+  * Beat Time Units: bars.beats.fraction (BBF), bars.beats.ticks (BBT), bars.beats.sixteenths.ticks (BBST), and Csound Beats
+  * Clock Time Units: time, SMPTE, samples
+  * Objects may have different time units for start and end times
 
 * Updated Jython interpreter to 2.7.3
 
+* Product Version information now includes commit hash and build date/time
+
+### FIX
+
+* Redid filechooser manager to hold on to Filechoosers so that they will
+  maintain last state (i.e., last file or folder selected) between uses
+
+* JMask:
+
+  * Maintain name of parameter when changing parameter type
+ 
+  * Show parameter name in the popup for setting visibility of parameters
+
+* BlueLive:
+
+  * Do not generate e-statement when generating CSD for BlueLive
 
 ## [2.9.1] - 2023-09-10
 

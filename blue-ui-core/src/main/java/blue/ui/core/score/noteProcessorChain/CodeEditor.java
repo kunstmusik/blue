@@ -42,7 +42,7 @@ import org.openide.windows.WindowManager;
  * @author steven
  */
 public class CodeEditor extends JComponent {
-    Vector listeners = new Vector();
+    private Vector<ActionListener> listeners = new Vector<>();
 
     private static CodeEditDialog codeDialog = null;
 
@@ -77,9 +77,8 @@ public class CodeEditor extends JComponent {
     public void fireActionPerformed() {
         ActionEvent ae = new ActionEvent(this, ActionEvent.ACTION_PERFORMED,
                 "scale");
-        for (Iterator iter = listeners.iterator(); iter.hasNext();) {
-            ActionListener al = (ActionListener) iter.next();
-            al.actionPerformed(ae);
+        for (var listener : listeners) {
+            listener.actionPerformed(ae);
         }
     }
 

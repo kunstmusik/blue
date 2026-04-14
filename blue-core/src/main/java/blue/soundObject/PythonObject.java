@@ -19,12 +19,14 @@
  */
 package blue.soundObject;
 
-import blue.score.ScoreObjectEvent;
 import blue.*;
 import blue.noteProcessor.NoteProcessorChain;
 import blue.noteProcessor.NoteProcessorException;
 import blue.plugin.SoundObjectPlugin;
+import blue.score.ScoreObjectEvent;
 import blue.scripting.PythonProxy;
+import blue.time.TimeContext;
+import blue.time.TimeDuration;
 import blue.utility.ScoreUtilities;
 import electric.xml.Element;
 import java.util.Map;
@@ -48,7 +50,7 @@ public class PythonObject extends AbstractSoundObject implements
 
     private TimeBehavior timeBehavior;
 
-    double repeatPoint = -1.0f;
+    TimeDuration repeatPoint = null;
 
     private String pythonCode;
 
@@ -79,8 +81,8 @@ public class PythonObject extends AbstractSoundObject implements
     }
 
     @Override
-    public double getObjectiveDuration() {
-        return subjectiveDuration;
+    public TimeDuration getObjectiveDuration(TimeContext context) {
+        return getSubjectiveDuration();
     }
 
     @Override
@@ -93,7 +95,7 @@ public class PythonObject extends AbstractSoundObject implements
         this.npc = chain;
     }
 
-    public final NoteList generateNotes(double renderStart, double renderEnd) throws
+    public final NoteList generateNotes(TimeContext context, double renderStart, double renderEnd) throws
             SoundObjectException {
         /*
          * System.out.println( "[pythonObject] attempting to generate score for
@@ -102,9 +104,10 @@ public class PythonObject extends AbstractSoundObject implements
 
         String tempScore = null;
 
+        double duration = getSubjectiveDuration().toBeats(context);
+        
         try {
-            tempScore = PythonProxy.processPythonScore(pythonCode,
-                    subjectiveDuration);
+            tempScore = PythonProxy.processPythonScore(pythonCode, duration);
         } catch (PyException pyEx) {
             String msg = "Jython Error:\n" + pyEx.toString();
             throw new SoundObjectException(this, msg);
@@ -124,8 +127,10 @@ public class PythonObject extends AbstractSoundObject implements
             throw new SoundObjectException(this, e);
         }
 
-        ScoreUtilities.applyTimeBehavior(nl, this.getTimeBehavior(), this.
-                getSubjectiveDuration(), this.getRepeatPoint());
+        double startTime = getStartTime().toBeats(context);
+        
+        double rpBeats = this.getRepeatPoint() != null ? this.getRepeatPoint().toBeats(context) : -1.0;
+        ScoreUtilities.applyTimeBehavior(nl, this.getTimeBehavior(), duration, rpBeats);
         ScoreUtilities.setScoreStart(nl, startTime);
         return nl;
     }
@@ -141,12 +146,12 @@ public class PythonObject extends AbstractSoundObject implements
     }
 
     @Override
-    public double getRepeatPoint() {
+    public TimeDuration getRepeatPoint() {
         return this.repeatPoint;
     }
 
     @Override
-    public void setRepeatPoint(double repeatPoint) {
+    public void setRepeatPoint(TimeDuration repeatPoint) {
         this.repeatPoint = repeatPoint;
 
         ScoreObjectEvent event = new ScoreObjectEvent(this,
@@ -171,8 +176,7 @@ public class PythonObject extends AbstractSoundObject implements
         String olpString = data.getAttributeValue("onLoadProcessable");
 
         if (olpString != null) {
-            pObj.setOnLoadProcessable(
-                    Boolean.valueOf(olpString).booleanValue());
+            pObj.setOnLoadProcessable(Boolean.parseBoolean(olpString));
         }
 
 
@@ -207,17 +211,17 @@ public class PythonObject extends AbstractSoundObject implements
     }
 
     @Override
-    public void processOnLoad() throws SoundObjectException {
+    public void processOnLoad(TimeContext context) throws SoundObjectException {
         if (onLoadProcessable) {
-            this.generateNotes(0.0f, -1.0f);
+            this.generateNotes(context, 0.0f, -1.0f);
         }
     }
 
     @Override
-    public NoteList generateForCSD(CompileData compileData, double startTime, 
+    public NoteList generateForCSD(TimeContext context, CompileData compileData, double startTime, 
             double endTime) throws SoundObjectException {
         
-        return generateNotes(startTime, endTime);
+        return generateNotes(context, startTime, endTime);
         
     }
 

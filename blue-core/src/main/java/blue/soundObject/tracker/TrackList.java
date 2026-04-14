@@ -25,7 +25,6 @@ import blue.utility.XMLUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.Vector;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
@@ -36,7 +35,7 @@ public class TrackList implements TableModel {
 
     private final ArrayList<Track> tracks = new ArrayList<>();
 
-    private transient Vector listeners;
+    private transient Vector<TableModelListener> listeners;
 
     private int steps = 64;
 
@@ -159,8 +158,7 @@ public class TrackList implements TableModel {
 
     private void fireTableModelEvent(TableModelEvent tme) {
         if (listeners != null) {
-            for (Iterator iter = listeners.iterator(); iter.hasNext();) {
-                TableModelListener listener = (TableModelListener) iter.next();
+            for (TableModelListener listener : listeners) {
                 listener.tableChanged(tme);
             }
         }
@@ -228,7 +226,7 @@ public class TrackList implements TableModel {
     @Override
     public void addTableModelListener(TableModelListener l) {
         if (listeners == null) {
-            listeners = new Vector();
+            listeners = new Vector<TableModelListener>();
         }
         listeners.add(l);
     }
@@ -242,8 +240,7 @@ public class TrackList implements TableModel {
     public int getColumnCount() {
         int count = 0;
 
-        for (Iterator iter = tracks.iterator(); iter.hasNext();) {
-            Track track = (Track) iter.next();
+        for (Track track : tracks) {
             count += track.getNumColumns();
         }
 

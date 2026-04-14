@@ -22,7 +22,12 @@ package blue.ui.core.score.layers.soundObject.library;
 import blue.library.LibraryItem;
 import blue.library.TransferableLibraryItem;
 import blue.soundObject.SoundObject;
-import blue.ui.core.clipboard.BlueClipboardUtils;
+import blue.time.TimeBase;
+import blue.time.TimeContext;
+import blue.time.TimeContextManager;
+import blue.time.TimeDuration;
+import blue.time.TimeUnitMath;
+import blue.ui.core.score.ScoreController;
 import blue.ui.core.score.ScoreObjectCopy;
 import blue.ui.core.score.layers.soundObject.library.actions.AddFolderAction;
 import java.awt.Image;
@@ -199,7 +204,9 @@ public class UserSoundObjectLibraryNode extends AbstractNode {
             added.put(new ExTransferable.Single(ScoreObjectCopy.DATA_FLAVOR) {
                 @Override
                 protected ScoreObjectCopy getData() {
-                    return new ScoreObjectCopy(List.of(item.getValue().deepCopy()), List.of(0));
+                    var copy = item.getValue().deepCopy();
+                    convertLibraryObjectToRulerTimeBase(copy);
+                    return new ScoreObjectCopy(List.of(copy), List.of(0), TimeContextManager.getContext());
                 }
             });
         } else {
@@ -222,7 +229,9 @@ public class UserSoundObjectLibraryNode extends AbstractNode {
             added.put(new ExTransferable.Single(ScoreObjectCopy.DATA_FLAVOR) {
                 @Override
                 protected ScoreObjectCopy getData() {
-                    return new ScoreObjectCopy(List.of(item.getValue()), List.of(0));
+                    var copy = item.getValue().deepCopy();
+                    convertLibraryObjectToRulerTimeBase(copy);
+                    return new ScoreObjectCopy(List.of(copy), List.of(0), TimeContextManager.getContext());
                 }
             });
         } else {
@@ -252,6 +261,15 @@ public class UserSoundObjectLibraryNode extends AbstractNode {
 
                 final var sObj = (SoundObject) buffer.scoreObjects.get(0);
                 final var copy = sObj.deepCopy();
+
+                // Normalize beat-based durations (BBT/BBST/BBF) to plain BEATS
+                // so library objects are stored in a context-independent format.
+                TimeDuration dur = copy.getSubjectiveDuration();
+                if (dur.getTimeBase().isBeatBased() && dur.getTimeBase() != TimeBase.BEATS) {
+                    TimeContext context = TimeContextManager.getContext();
+                    double beats = dur.toBeats(context);
+                    copy.setSubjectiveDuration(TimeDuration.beats(beats));
+                }
 
                 return new PasteType() {
                     @Override
@@ -309,6 +327,25 @@ public class UserSoundObjectLibraryNode extends AbstractNode {
     public Image getIcon(int type) {
         return super.getIcon(type); //To change body of generated methods, choose Tools | Templates.
 
+    }
+
+    /**
+     * Converts a library object's BEATS duration to the project's primary
+     * ruler TimeBase. Library objects are stored normalized to BEATS;
+     * this re-formats them when copying out.
+     */
+    private static void convertLibraryObjectToRulerTimeBase(SoundObject sObj) {
+        var score = ScoreController.getInstance().getScore();
+        if (score == null) return;
+        TimeBase rulerTimeBase = score.getTimeState().getTimeDisplay();
+        if (rulerTimeBase == TimeBase.BEATS) return;
+
+        TimeDuration dur = sObj.getSubjectiveDuration();
+        if (dur.getTimeBase() == TimeBase.BEATS && rulerTimeBase.isBeatBased()) {
+            TimeContext context = TimeContextManager.getContext();
+            sObj.setSubjectiveDuration(
+                    TimeUnitMath.beatsToDuration(dur.toBeats(context), rulerTimeBase, context));
+        }
     }
 
     static class UserSoundObjectLibraryChildFactory extends ChildFactory<LibraryItem<SoundObject>> {

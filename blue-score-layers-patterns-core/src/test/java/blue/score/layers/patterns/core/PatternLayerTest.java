@@ -24,28 +24,29 @@ import blue.soundObject.GenericScore;
 import blue.soundObject.NoteList;
 import blue.soundObject.SoundObjectException;
 import blue.soundObject.TimeBehavior;
-import org.junit.*;
-import static org.junit.Assert.*;
+import blue.time.TimeContext;
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  *
  * @author stevenyi
  */
-public class PatternLayerTest {
+class PatternLayerTest {
     
     public PatternLayerTest() {
     }
-
 
     /**
      * Test of generateForCSD method, of class PatternLayer.
      */
     @Test
-    public void testGenerateForCSD() throws SoundObjectException {
+    void testGenerateForCSD() throws SoundObjectException {
         CompileData compileData = null;
         float startTime = 0.0F;
         float endTime = 0.0F;
         int patternBeatsLength = 4;
+        TimeContext context = new TimeContext();
         PatternLayer instance = new PatternLayer();
         GenericScore score = new GenericScore();
         score.setTimeBehavior(TimeBehavior.NONE);
@@ -54,14 +55,14 @@ public class PatternLayerTest {
         instance.getPatternData().setPattern(0, true);
         instance.getPatternData().setPattern(1, true);
         instance.getPatternData().setPattern(2, true);
-        NoteList result = instance.generateForCSD(compileData, startTime,
+        NoteList result = instance.generateForCSD(context, compileData, startTime,
                 endTime, patternBeatsLength);
         System.out.println(result.toString());
         assertEquals(6, result.size());
         assertEquals("1.0", result.get(1).getPField(2));
         assertEquals("8.0", result.get(4).getPField(2));
         
-        result = instance.generateForCSD(compileData, 4.0f,
+        result = instance.generateForCSD(context, compileData, 4.0f,
                 endTime, patternBeatsLength);
         assertEquals(4, result.size());
         

@@ -12,12 +12,10 @@ import blue.BlueSystem;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Toolkit;
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
 import javax.swing.*;
 
 public class GUI {
@@ -87,7 +85,7 @@ public class GUI {
 
     public static void setAllEnabled(Component c, boolean enabled,
             boolean recurse) {
-        if (c == null || !(c instanceof JComponent)) {
+        if (!(c instanceof JComponent)) {
             return;
         }
 
@@ -95,16 +93,17 @@ public class GUI {
 
         Component[] comp = ((JComponent) c).getComponents();
 
-        for (int i = 0; i < comp.length; i++) {
-            comp[i].setEnabled(enabled);
+        for (Component component : comp) {
+            component.setEnabled(enabled);
 
             if (recurse) {
-                setAllEnabled(comp[i], enabled, true);
+                setAllEnabled(component, enabled, true);
             }
         }
 
     }
 
+    @SuppressWarnings("deprecation")
     public static void setupForOSX(InputMap inputMap) {
         KeyStroke[] keys = inputMap.allKeys();
 
@@ -112,29 +111,30 @@ public class GUI {
             return;
         }
 
-        for (int i = 0; i < keys.length; i++) {
+        for (KeyStroke key : keys) {
 
             boolean found = false;
 
-            int modifiers = keys[i].getModifiers();
+            int modifiers = key.getModifiers();
 
-            if ((keys[i].getModifiers() & KeyEvent.CTRL_DOWN_MASK) == KeyEvent.CTRL_DOWN_MASK) {
+            if ((key.getModifiers() & KeyEvent.CTRL_DOWN_MASK) == KeyEvent.CTRL_DOWN_MASK) {
                 modifiers = modifiers - KeyEvent.CTRL_DOWN_MASK;
                 found = true;
             }
 
-            if ((keys[i].getModifiers() & KeyEvent.CTRL_MASK) == KeyEvent.CTRL_MASK) {
-                modifiers = modifiers - KeyEvent.CTRL_MASK;
+            // KeyStroke.getModifiers() may return legacy mask values
+            if ((key.getModifiers() & InputEvent.CTRL_MASK) == InputEvent.CTRL_MASK) {
+                modifiers = modifiers - InputEvent.CTRL_MASK;
                 found = true;
             }
 
             if (found) {
-                modifiers = modifiers | BlueSystem.getMenuShortcutKey();
-                KeyStroke keystroke = KeyStroke.getKeyStroke(keys[i]
-                        .getKeyCode(), modifiers, keys[i].isOnKeyRelease());
+                modifiers = modifiers | BlueSystem.getMenuShortcutKeyEx();
+                KeyStroke keystroke = KeyStroke.getKeyStroke(key
+                        .getKeyCode(), modifiers, key.isOnKeyRelease());
 
-                Object obj = inputMap.get(keys[i]);
-                inputMap.remove(keys[i]);
+                Object obj = inputMap.get(key);
+                inputMap.remove(key);
                 inputMap.put(keystroke, obj);
 
                 // System.out.println("Old Key: " + keys[i]);

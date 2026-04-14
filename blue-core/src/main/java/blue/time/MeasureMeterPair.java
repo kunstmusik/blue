@@ -1,0 +1,101 @@
+/*
+ * Copyright (C) 2023 stevenyi
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ */
+
+package blue.time;
+
+import electric.xml.Element;
+
+/**
+ * Represents a meter (time signature) change at a specific measure number.
+ * This is an immutable value object.
+ *
+ * @author stevenyi
+ */
+public final class MeasureMeterPair {
+
+    private final long measureNumber;
+    private final Meter meter;
+
+    public MeasureMeterPair(long measureNumber, Meter meter) {
+        if (measureNumber < 1) {
+            throw new IllegalArgumentException("Measure number must be >= 1, got: " + measureNumber);
+        }
+        if (meter == null) {
+            throw new IllegalArgumentException("Meter cannot be null");
+        }
+        this.measureNumber = measureNumber;
+        this.meter = meter;
+    }
+
+    public MeasureMeterPair(MeasureMeterPair pair) {
+        this(pair.measureNumber, new Meter(pair.meter));
+    }
+
+    public long getMeasureNumber() {
+        return measureNumber;
+    }
+
+    public Meter getMeter() {
+        return meter;
+    }
+    
+    /**
+     * Creates a new MeasureMeterPair with a different measure number.
+     */
+    public MeasureMeterPair withMeasureNumber(long newMeasureNumber) {
+        return new MeasureMeterPair(newMeasureNumber, this.meter);
+    }
+    
+    /**
+     * Creates a new MeasureMeterPair with a different meter.
+     */
+    public MeasureMeterPair withMeter(Meter newMeter) {
+        return new MeasureMeterPair(this.measureNumber, newMeter);
+    }
+    
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (!(obj instanceof MeasureMeterPair other)) return false;
+        return measureNumber == other.measureNumber && meter.equals(other.meter);
+    }
+
+    @Override
+    public int hashCode() {
+        return Long.hashCode(measureNumber) * 31 + meter.hashCode();
+    }
+
+    /**
+     * Save MeasureMeterPair to XML.
+     */
+    public Element saveAsXML() {
+        Element retVal = new Element("measureMeterPair");
+        retVal.addElement("measureNumber").setText(Long.toString(getMeasureNumber()));
+        retVal.addElement(getMeter().saveAsXML());
+        return retVal;
+    }
+    
+    /**
+     * Load MeasureMeterPair from XML.
+     */
+    public static MeasureMeterPair loadFromXML(Element data) {
+        long measureNumber = Long.parseLong(data.getElement("measureNumber").getTextString());
+        Meter meter = Meter.loadFromXML(data.getElement("meter"));
+        return new MeasureMeterPair(measureNumber, meter);
+    }
+}

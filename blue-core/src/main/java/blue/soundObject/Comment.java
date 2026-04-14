@@ -3,6 +3,8 @@ package blue.soundObject;
 import blue.*;
 import blue.noteProcessor.NoteProcessorChain;
 import blue.plugin.SoundObjectPlugin;
+import blue.time.TimeContext;
+import blue.time.TimeDuration;
 import electric.xml.Element;
 import java.util.Map;
 
@@ -47,7 +49,7 @@ public class Comment extends AbstractSoundObject {
     }
 
     @Override
-    public double getObjectiveDuration() {
+    public TimeDuration getObjectiveDuration(TimeContext context) {
         return this.getSubjectiveDuration();
     }
 
@@ -61,12 +63,12 @@ public class Comment extends AbstractSoundObject {
     }
 
     @Override
-    public double getRepeatPoint() {
-        return -1.0f;
+    public TimeDuration getRepeatPoint() {
+        return null;
     }
 
     @Override
-    public void setRepeatPoint(double repeatPoint) {
+    public void setRepeatPoint(TimeDuration repeatPoint) {
     }
 
     /*
@@ -101,7 +103,7 @@ public class Comment extends AbstractSoundObject {
     }
 
     @Override
-    public NoteList generateForCSD(CompileData compileData, double startTime, double endTime) {
+    public NoteList generateForCSD(TimeContext context, CompileData compileData, double startTime, double endTime) {
         return null;
     }
 

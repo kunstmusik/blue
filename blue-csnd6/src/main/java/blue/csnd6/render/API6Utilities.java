@@ -4,7 +4,7 @@
  */
 package blue.csnd6.render;
 
-import com.kunstmusik.csoundjni.CsoundJNI;
+import com.kunstmusik.csoundffm.Csound;
 
 /**
  *
@@ -24,8 +24,9 @@ public class API6Utilities {
                 apiAvailable = false;
             } else {
                 try {
-                    CsoundJNI.csoundInitialize(CsoundJNI.CSOUNDINIT_NO_ATEXIT | 
-                            CsoundJNI.CSOUNDINIT_NO_SIGNAL_HANDLER);
+                    System.out.println("Csound Version Found: " + Csound.getVersion());
+//                    CsoundJNI.csoundInitialize(CsoundJNI.CSOUNDINIT_NO_ATEXIT | 
+//                            CsoundJNI.CSOUNDINIT_NO_SIGNAL_HANDLER);
 //                    System.loadLibrary("_jcsound6");
 //                     csnd6.csoundInitialize(csnd6.CSOUNDINIT_NO_ATEXIT | 
 //                csnd6.CSOUNDINIT_NO_SIGNAL_HANDLER);

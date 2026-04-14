@@ -37,7 +37,7 @@ public abstract class BlueAction extends AbstractAction {
             if (index >= 0) {
                 AWTKeyStroke ks = KeyStroke.getAWTKeyStroke(mnemonic.charAt(0),
                         0);
-                putValue(Action.MNEMONIC_KEY, new Integer(ks.getKeyCode()));
+                putValue(Action.MNEMONIC_KEY, ks.getKeyCode());
             }
         }
 

@@ -42,7 +42,7 @@ import java.util.Map;
  */
 public class CompileData {
     
-    private final HashMap compileMap = new HashMap();
+    private final HashMap<Object, Object> compileMap = new HashMap<>();
     private final Arrangement arrangement;
     private final Tables tables;
     private final Map<Channel, Integer> channelIdAssignments;
@@ -58,7 +58,7 @@ public class CompileData {
     }
     
     private ArrayList<StringChannel> stringChannels = null;
-    private ArrayList originalParameters = null;
+    private ArrayList<Parameter> originalParameters = null;
     private StringChannelNameManager scnm = null;
     private ParameterNameManager pnm;
 
@@ -74,7 +74,7 @@ public class CompileData {
 
     public CompileData(Arrangement arrangement, Tables tables, 
             ArrayList<StringChannel> stringChannels, 
-            ArrayList originalParameters, StringChannelNameManager scnm,
+            ArrayList<Parameter> originalParameters, StringChannelNameManager scnm,
             ParameterNameManager pnm) {
         this.arrangement = arrangement;
         this.tables = tables;
@@ -102,8 +102,7 @@ public class CompileData {
     
     public int addInstrument(Instrument instrument) {
         if(handleParametersAndChannels && stringChannels != null && originalParameters != null) {
-            if(instrument instanceof Automatable) {
-                Automatable auto = (Automatable) instrument;
+            if(instrument instanceof Automatable auto) {
                 ArrayList<StringChannel> tempStringChannels = auto.getStringChannels();
                 if(tempStringChannels != null) {
                     stringChannels.addAll(tempStringChannels);

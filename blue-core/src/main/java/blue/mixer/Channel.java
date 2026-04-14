@@ -17,7 +17,6 @@
  * the Free Software Foundation Inc., 59 Temple Place - Suite 330,
  * Boston, MA  02111-1307 USA
  */
-
 package blue.mixer;
 
 import blue.automation.Parameter;
@@ -39,10 +38,9 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 
 /**
  * Design Notes:
- * 
+ *
  * @author Steven Yi
  */
-
 public class Channel implements Comparable<Channel>, ParameterListener {
 
     public static final String MASTER = "Master";
@@ -73,12 +71,11 @@ public class Channel implements Comparable<Channel>, ParameterListener {
 
     private double level = 0.0f;
 
-    Parameter levelParameter; 
+    Parameter levelParameter;
 
     private String association = null;
 
     private transient boolean updatingLine = false;
-
 
     public Channel() {
         preEffects = new EffectsChain();
@@ -95,7 +92,7 @@ public class Channel implements Comparable<Channel>, ParameterListener {
         levelParameter.addParameterListener(this);
     }
 
-    public Channel(Channel channel){
+    public Channel(Channel channel) {
 
         preEffects = new EffectsChain(channel.preEffects);
         postEffects = new EffectsChain(channel.postEffects);
@@ -116,48 +113,43 @@ public class Channel implements Comparable<Channel>, ParameterListener {
         Channel channel = new Channel();
 
         String associationVal = data.getAttributeValue("association");
-        if(associationVal != null && !"null".equals(associationVal)) {
+        if (associationVal != null && !"null".equals(associationVal)) {
             channel.setAssociation(data.getAttributeValue("association"));
         }
-        
+
         Elements nodes = data.getElements();
 
         while (nodes.hasMoreElements()) {
             Element node = nodes.next();
             String nodeName = node.getName();
             switch (nodeName) {
-                case "name":
+                case "name" ->
                     channel.setName(node.getTextString());
-                    break;
-                case "outChannel":
+                case "outChannel" ->
                     channel.setOutChannel(node.getTextString());
-                    break;
-                case "level":
+                case "level" ->
                     channel.setLevel(XMLUtilities.readDouble(node));
-                    break;
-                case "muted":
+                case "muted" ->
                     channel.setMuted(XMLUtilities.readBoolean(node));
-                    break;
-                case "solo":
+                case "solo" ->
                     channel.setSolo(XMLUtilities.readBoolean(node));
-                    break;
-                case "effectsChain":
+                case "effectsChain" -> {
                     if (node.getAttributeValue("bin").equals("pre")) {
                         channel.setPreEffects(EffectsChain.loadFromXML(node));
                     } else {
                         channel.setPostEffects(EffectsChain.loadFromXML(node));
                     }
-                    break;
-                case "parameter":
+                }
+                case "parameter" -> {
                     channel.levelParameter.removeParameterListener(channel);
                     channel.levelParameter = Parameter.loadFromXML(node);
                     channel.levelParameter.addParameterListener(channel);
-                    break;
+                }
             }
 
         }
-        
-        if(!channel.levelParameter.isAutomationEnabled()) {
+
+        if (!channel.levelParameter.isAutomationEnabled()) {
             channel.levelParameter.setValue(channel.getLevel());
         }
 
@@ -167,10 +159,10 @@ public class Channel implements Comparable<Channel>, ParameterListener {
     public Element saveAsXML() {
         Element retVal = new Element("channel");
 
-        if(association != null) {
+        if (association != null) {
             retVal.setAttribute("association", association);
         }
-        
+
         retVal.addElement(new Element("name").setText(name));
         retVal.addElement(new Element("outChannel").setText(outChannel));
         retVal.addElement(XMLUtilities.writeDouble("level", level));
@@ -296,7 +288,7 @@ public class Channel implements Comparable<Channel>, ParameterListener {
 
         this.level = level;
 
-        firePropertyChange(LEVEL, new Double(oldVal), new Double(level));
+        firePropertyChange(LEVEL, oldVal, level);
     }
 
     public Parameter getLevelParameter() {
@@ -308,13 +300,13 @@ public class Channel implements Comparable<Channel>, ParameterListener {
     }
 
     public String getName() {
-        return (name == null) ? "" : name;
+        return java.util.Objects.requireNonNullElse(name, "");
     }
 
     public void setName(String name) {
         String oldVal = getName();
 
-        this.name = (name == null) ? "" : name;
+        this.name = java.util.Objects.requireNonNullElse(name, "");
 
         firePropertyChange(NAME, oldVal, this.name);
     }
@@ -333,17 +325,6 @@ public class Channel implements Comparable<Channel>, ParameterListener {
         listeners.remove(pcl);
     }
 
-    public void firePropertyChange(String propertyName, double oldVal,
-            double newVal) {
-        firePropertyChange(propertyName, new Double(oldVal), new Double(newVal));
-    }
-
-    public void firePropertyChange(String propertyName, boolean oldVal,
-            boolean newVal) {
-        firePropertyChange(propertyName, Boolean.valueOf(oldVal), Boolean
-                .valueOf(newVal));
-    }
-
     public void firePropertyChange(String propertyName, Object oldVal,
             Object newVal) {
         if (listeners == null || listeners.size() == 0) {
@@ -353,9 +334,7 @@ public class Channel implements Comparable<Channel>, ParameterListener {
         PropertyChangeEvent pce = new PropertyChangeEvent(this, propertyName,
                 oldVal, newVal);
 
-        for (Iterator<PropertyChangeListener> it = listeners.iterator(); it.hasNext();) {
-            PropertyChangeListener pcl = it.next();
-
+        for (PropertyChangeListener pcl : listeners) {
             pcl.propertyChange(pce);
 
         }
@@ -388,7 +367,7 @@ public class Channel implements Comparable<Channel>, ParameterListener {
             double oldVal = this.level;
             this.level = level;
 
-            firePropertyChange(LEVEL, new Double(oldVal), new Double(level));
+            firePropertyChange(LEVEL, oldVal, level);
         }
     }
 
@@ -412,16 +391,16 @@ public class Channel implements Comparable<Channel>, ParameterListener {
         for (int i = 0; i < preEffects.size(); i++) {
             Object obj = preEffects.getElementAt(i);
 
-            if (obj instanceof Send) {
-                temp.add((Send)obj);
+            if (obj instanceof Send send) {
+                temp.add(send);
             }
         }
 
         for (int i = 0; i < postEffects.size(); i++) {
             Object obj = postEffects.getElementAt(i);
 
-            if (obj instanceof Send) {
-                temp.add((Send)obj);
+            if (obj instanceof Send send) {
+                temp.add(send);
             }
         }
 

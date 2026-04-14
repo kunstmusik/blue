@@ -7,16 +7,16 @@
 
     <property environment="env"/>
 
-    <property name="jdk.src.root" value="https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.7%2B7/"/>
+    <property name="jdk.src.root" value="https://github.com/adoptium/temurin25-binaries/releases/download/jdk-25%2B36/"/>
 
     <property name="jdk.windows" 
-              value="OpenJDK17U-jdk_x64_windows_hotspot_17.0.7_7.zip"/>
+              value="OpenJDK25U-jdk_x64_windows_hotspot_25_36.zip"/>
 
     <property name="jdk.mac.arm64"
-              value="OpenJDK17U-jdk_aarch64_mac_hotspot_17.0.7_7.tar.gz"/>
+              value="OpenJDK25U-jdk_aarch64_mac_hotspot_25_36.tar.gz"/>
         
     <property name="jdk.mac.x86_64"
-              value="OpenJDK17U-jdk_x64_mac_hotspot_17.0.7_7.tar.gz"/> 
+              value="OpenJDK25U-jdk_x64_mac_hotspot_25_36.tar.gz"/> 
     
     <condition property="isMac">
         <os family="mac" />
@@ -62,7 +62,7 @@
         <mkdir dir="target"/>
         <get src="${jdk.src.root}/${jdk.zip}" dest="target"/>
         <unzip if:set="isWindows" src="target/${jdk.windows}" dest="target"/>
-        <move if:set="isWindows" file="./target/jdk-17.0.7+7" toFile="./src/jdk"/>
+        <move if:set="isWindows" file="./target/jdk-25+36" toFile="./src/jdk"/>
         
         <exec if:set="isMac" executable="tar">
             <arg value="xzvf"/>
@@ -70,7 +70,7 @@
             <arg value="-Ctarget"/>
         </exec>
         <exec if:set="isMac" executable="mv">
-            <arg value="./target/jdk-17.0.7+7/Contents/Home"/>
+            <arg value="./target/jdk-25+36/Contents/Home"/>
             <arg value="./src/jdk"/>
         </exec>
         
@@ -91,5 +91,3 @@
         <replace if:set="isMac" dir="target/blue/etc" includes="*.conf" token='#jdkhome="/path/to/jdk"' value='jdkhome="jdk"'/>
     </target>
 </project>
-
-

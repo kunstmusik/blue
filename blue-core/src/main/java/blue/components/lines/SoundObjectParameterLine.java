@@ -19,6 +19,8 @@
 package blue.components.lines;
 
 import blue.soundObject.SoundObject;
+import blue.time.TimeContext;
+import blue.time.TimeContextManager;
 
 /** Used to replace Lines within Parameters by Sound SoundObject.
  *
@@ -49,13 +51,15 @@ public class SoundObjectParameterLine extends Line {
 
     @Override
     public double getValue(double time) {
-        double start = source.getStartTime();
+        TimeContext context = TimeContextManager.getContext();
+        double start = source.getStartTime().toBeats(context);
+        double duration = source.getSubjectiveDuration().toBeats(context);
         if (time < start) {
             return points.get(0).getY();
-        } else if (time > start + source.getSubjectiveDuration()) {
+        } else if (time > start + duration) {
             return points.get(points.size() - 1).getY();
         }
-        double t = (time - start) / source.getSubjectiveDuration();
+        double t = (time - start) / duration;
         return super.getValue(t);
     }
     
@@ -64,11 +68,13 @@ public class SoundObjectParameterLine extends Line {
     }
    
     public double getSourceStart() {
-        return source.getStartTime();
+        TimeContext context = TimeContextManager.getContext();
+        return source.getStartTime().toBeats(context);
     }
 
     public double getSourceDuration(){
-        return source.getSubjectiveDuration();
+        TimeContext context = TimeContextManager.getContext();
+        return source.getSubjectiveDuration().toBeats(context);
     }
 
     @Override

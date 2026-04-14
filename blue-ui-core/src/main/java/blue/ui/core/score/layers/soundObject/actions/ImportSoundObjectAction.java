@@ -24,6 +24,11 @@ import blue.score.TimeState;
 import blue.score.layers.Layer;
 import blue.score.layers.ScoreObjectLayer;
 import blue.soundObject.SoundObject;
+import blue.time.TimeBase;
+import blue.time.TimeContext;
+import blue.time.TimeContextManager;
+import blue.time.TimeUnitMath;
+import blue.time.TimeUtilities;
 import blue.ui.core.score.ScorePath;
 import blue.ui.core.score.layers.LayerGroupPanel;
 import blue.ui.core.score.layers.soundObject.ScoreTimeCanvas;
@@ -105,13 +110,23 @@ public final class ImportSoundObjectAction extends AbstractAction
                     Layer layer = scorePath.getGlobalLayerForY(p.y);
 
                     if (timeState.isSnapEnabled()) {
-                        int snapPixels = (int) (timeState.getSnapValue() * timeState.getPixelSecond());
-
-                        start = start - (start % snapPixels);
+                        double beatPos = start / timeState.getPixelSecond();
+                        TimeContext ctx = TimeContextManager.getContext();
+                        double sv = timeState.getSnapValueInBeats(beatPos, ctx.getTempoMap(), ctx.getSampleRate());
+                        int snapPixels = (int) (sv * timeState.getPixelSecond());
+                        if (snapPixels > 0) {
+                            start = start - (start % snapPixels);
+                        }
                     }
 
-                    float startTime = (float) start / timeState.getPixelSecond();
-                    tempSobj.setStartTime(startTime);
+                    double startTime = start / timeState.getPixelSecond();
+
+                    // Use the primary ruler's TimeBase
+                    TimeBase timeBase = timeState.getTimeDisplay();
+                    TimeContext context = TimeContextManager.getContext();
+                    tempSobj.setStartTime(TimeUtilities.beatsToTimePosition(startTime, timeBase, context));
+                    tempSobj.setSubjectiveDuration(TimeUnitMath.beatsToDuration(
+                            tempSobj.getSubjectiveDuration().toBeats(context), timeBase, context));
 
                     ((SoundLayer) layer).add(tempSobj);
 

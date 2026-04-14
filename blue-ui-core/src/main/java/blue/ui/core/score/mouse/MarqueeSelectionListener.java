@@ -81,8 +81,8 @@ public class MarqueeSelectionListener extends BlueMouseAdapter {
         Component[] comps = scoreTC.getLayerPanel().getComponents();
 
         for (Component c : comps) {
-            if (c instanceof LayerGroupPanel) {
-                ((LayerGroupPanel) c).marqueeSelectionPerformed(
+            if (c instanceof LayerGroupPanel layerGroupPanel) {
+                layerGroupPanel.marqueeSelectionPerformed(
                         scoreTC.getMarquee());
             }
         }

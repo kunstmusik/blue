@@ -23,15 +23,14 @@ import blue.services.render.DeviceInfo;
 import blue.utilities.TextUtilities;
 import java.util.ArrayList;
 import java.util.List;
-import org.junit.Test;
-import static org.junit.Assert.*;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  *
  * @author stevenyi
  */
-public class DriverUtilitiesTest {
+class DriverUtilitiesTest {
     
     private static String TEST_JACK_LSP_OUTPUT = "system:capture_1\n"
             + "    properties: output,can-monitor,physical,terminal,\n"
@@ -128,7 +127,7 @@ public class DriverUtilitiesTest {
     }
 
     @Test
-    public void testParseJackLspOutput() {
+    void testParseJackLspOutput() {
         List<DeviceInfo> v = new ArrayList<>();
         DriverUtilities.parseJackLspOutput(TEST_JACK_LSP_OUTPUT,
                 "audio", "input", "adc:", v);
@@ -150,7 +149,7 @@ public class DriverUtilitiesTest {
     }
 
     @Test
-    public void testParseAlsaMidiDevices() {
+    void testParseAlsaMidiDevices() {
         assertEquals(null, DriverUtilities.parseAlsaMidiDevices("", "R", "hw:%d,%d"));
         assertEquals(null, DriverUtilities.parseAlsaMidiDevices("a", "", "hw:%d,%d"));
 

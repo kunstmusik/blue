@@ -20,6 +20,10 @@
 package blue.ui.core.score.object.actions;
 
 import blue.score.ScoreObject;
+import blue.time.TimeContext;
+import blue.time.TimeContextManager;
+import blue.time.TimePosition;
+import blue.time.TimeUtilities;
 import blue.ui.core.score.ScoreController;
 import blue.ui.core.score.undo.MoveScoreObjectsEdit;
 import blue.undo.BlueUndoManager;
@@ -65,12 +69,14 @@ public final class ReverseAction extends AbstractAction
             return;
         }
 
+        TimeContext context = TimeContextManager.getContext();
+        
         double start = Double.MAX_VALUE;
         double end = Double.MIN_VALUE;
 
         for (ScoreObject scoreObject : scoreObjects) {
-            double tempStart = scoreObject.getStartTime();
-            double tempEnd = tempStart + scoreObject.getSubjectiveDuration();
+            double tempStart = scoreObject.getStartTime().toBeats(context);
+            double tempEnd = tempStart + scoreObject.getSubjectiveDuration().toBeats(context);
 
             if (tempStart < start) {
                 start = tempStart;
@@ -84,20 +90,23 @@ public final class ReverseAction extends AbstractAction
         int len = scoreObjects.size();
         ScoreObject[] objects = scoreObjects.toArray(
                 new ScoreObject[scoreObjects.size()]);
-        double[] startTimes = new double[len];
-        double[] endTimes = new double[len];
+        TimePosition[] startTimes = new TimePosition[len];
+        TimePosition[] endTimes = new TimePosition[len];
         
         for (int i = 0; i < len; i++) {
             ScoreObject scoreObj = objects[i];
-            double tempStart = scoreObj.getStartTime();
-            double tempEnd = tempStart + scoreObj.getSubjectiveDuration();
+            TimePosition currentStart = scoreObj.getStartTime();
+            double tempStart = currentStart.toBeats(context);
+            double tempEnd = tempStart + scoreObj.getSubjectiveDuration().toBeats(context);
 
             double newStart = start + (end - tempEnd);
+            TimePosition newStartTime = TimeUtilities.beatsToTimePosition(
+                    newStart, currentStart.getTimeBase(), context);
 
-            scoreObj.setStartTime(newStart);
+            scoreObj.setStartTime(newStartTime);
 
-            startTimes[i] = tempStart;
-            endTimes[i] = newStart;
+            startTimes[i] = currentStart;
+            endTimes[i] = newStartTime;
         }
 
         BlueUndoManager.setUndoManager("score");

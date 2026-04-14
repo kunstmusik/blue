@@ -19,7 +19,7 @@
  */
 package blue.services.render;
 
-import blue.noteProcessor.TempoMapper;
+import blue.time.TempoMap;
 import java.beans.PropertyChangeListener;
 
 /**
@@ -44,7 +44,7 @@ public interface RenderTimeManager {
 
     double getRenderTime();
 
-    TempoMapper getTempoMapper();
+    TempoMap getTempoMap();
 
     void initiateRender(double renderStart);
 
@@ -54,7 +54,7 @@ public interface RenderTimeManager {
 
     void removeRenderTimeManagerListener(RenderTimeManagerListener listener);
 
-    void setTempoMapper(TempoMapper tempoMapper);
+    void setTempoMap(TempoMap tempoMap);
 
     void updateTimePointer(double timePointer);
     

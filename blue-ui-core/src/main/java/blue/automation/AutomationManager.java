@@ -168,11 +168,9 @@ public class AutomationManager implements
 
                 for (LayerGroup<? extends Layer> layerGroup : score) {
 
-                    if (!(layerGroup instanceof PolyObject)) {
+                    if (!(layerGroup instanceof PolyObject pObj)) {
                         continue;
                     }
-
-                    PolyObject pObj = (PolyObject) layerGroup;
 
                     for (SoundLayer layer : pObj) {
                         if (layer.getAutomationParameters() == paramIdList) {
@@ -205,8 +203,7 @@ public class AutomationManager implements
             for (int i = 0; i < arrangement.size(); i++) {
                 Instrument instr = arrangement.getInstrument(i);
 
-                if (instr instanceof Automatable) {
-                    Automatable temp = (Automatable) instr;
+                if (instr instanceof Automatable temp) {
                     ParameterList parameters = temp.getParameterList();
 
                     // parameterMap.put(temp, parameters);
@@ -231,8 +228,8 @@ public class AutomationManager implements
 
             ChannelList subChannels = mixer.getSubChannels();
             subChannels.removeListener(this);
-            for (int i = 0; i < subChannels.size(); i++) {
-                removeListenerFromChannel(subChannels.get(i));
+            for (Channel subChannel : subChannels) {
+                removeListenerFromChannel(subChannel);
             }
 
             removeListenerFromChannel(mixer.getMaster());
@@ -260,8 +257,7 @@ public class AutomationManager implements
         for (int i = 0; i < arrangement.size(); i++) {
             Instrument instr = arrangement.getInstrument(i);
 
-            if (instr instanceof Automatable) {
-                Automatable temp = (Automatable) instr;
+            if (instr instanceof Automatable temp) {
                 ParameterList parameters = temp.getParameterList();
 
                 allParameters.addAll(parameters);
@@ -289,8 +285,8 @@ public class AutomationManager implements
 
         ChannelList subChannels = mixer.getSubChannels();
         subChannels.addListener(this);
-        for (int i = 0; i < subChannels.size(); i++) {
-            addListenerToChannel(subChannels.get(i));
+        for (Channel subChannel : subChannels) {
+            addListenerToChannel(subChannel);
         }
 
         addListenerToChannel(mixer.getMaster());
@@ -410,8 +406,8 @@ public class AutomationManager implements
             if (channels.size() > 0) {
                 JMenu channelsMenu = new JMenu("Channels");
 
-                for (int i = 0; i < channels.size(); i++) {
-                    channelsMenu.add(buildChannelMenu(channels.get(i),
+                for (Channel channel : channels) {
+                    channelsMenu.add(buildChannelMenu(channel,
                             paramIdList));
                 }
 
@@ -423,9 +419,8 @@ public class AutomationManager implements
 
             if (subChannels.size() > 0) {
                 JMenu subChannelsMenu = new JMenu("Sub-Channels");
-                for (int i = 0; i < subChannels.size(); i++) {
-                    subChannelsMenu.add(buildChannelMenu(subChannels.get(
-                            i), paramIdList));
+                for (Channel subChannel : subChannels) {
+                    subChannelsMenu.add(buildChannelMenu(subChannel, paramIdList));
                 }
 
                 mixerRoot.add(subChannelsMenu);
@@ -450,8 +445,9 @@ public class AutomationManager implements
             if (retVal == NotifyDescriptor.YES_OPTION) {
 
                 ParameterIdList idList = selectedParamIdList;
+                var copy = new ArrayList<String>(idList.getParameters());
 
-                for (String paramId : idList.getParameters()) {
+                for (String paramId : copy) {
                     Parameter param = getParameter(paramId);
 
                     param.setAutomationEnabled(false);
@@ -493,11 +489,11 @@ public class AutomationManager implements
                     JMenu effectMenu = new JMenu();
                     MenuScroller.setScrollerFor(effectMenu);
 
-                    if (automatable instanceof Effect) {
-                        effectMenu.setText(((Effect) automatable).getName());
-                    } else if (automatable instanceof Send) {
+                    if (automatable instanceof Effect effect) {
+                        effectMenu.setText(effect.getName());
+                    } else if (automatable instanceof Send send) {
                         effectMenu.setText("Send: "
-                                + ((Send) automatable).getSendChannel());
+                                + send.getSendChannel());
                     } else {
                         effectMenu.setText("ERROR");
                     }
@@ -561,11 +557,11 @@ public class AutomationManager implements
                     JMenu effectMenu = new JMenu();
                     MenuScroller.setScrollerFor(effectMenu);
 
-                    if (automatable instanceof Effect) {
-                        effectMenu.setText(((Effect) automatable).getName());
-                    } else if (automatable instanceof Send) {
+                    if (automatable instanceof Effect effect) {
+                        effectMenu.setText(effect.getName());
+                    } else if (automatable instanceof Send send) {
                         effectMenu.setText("Send: "
-                                + ((Send) automatable).getSendChannel());
+                                + send.getSendChannel());
                     } else {
                         effectMenu.setText("ERROR");
                     }
@@ -606,8 +602,7 @@ public class AutomationManager implements
 
         for (LayerGroup<? extends Layer> layerGroup : score) {
 
-            if (layerGroup instanceof PolyObject) {
-                PolyObject pObj = (PolyObject) layerGroup;
+            if (layerGroup instanceof PolyObject pObj) {
 
                 for (SoundLayer layer : pObj) {
                     ParameterIdList automationParameters = layer.getAutomationParameters();
@@ -647,8 +642,7 @@ public class AutomationManager implements
 
         allParameters.removeAll(params);
 
-        for (int i = 0; i < params.size(); i++) {
-            Parameter param = params.get(i);
+        for (Parameter param : params) {
             removedParamIds.add(param.getUniqueId());
         }
 
@@ -704,8 +698,7 @@ public class AutomationManager implements
             parameterList.removeListener(parameterListListener);
             allParameters.removeAll(parameterList);
 
-            for (int j = 0; j < parameterList.size(); j++) {
-                Parameter parameter = parameterList.get(j);
+            for (Parameter parameter : parameterList) {
                 if (parameter.isAutomationEnabled()) {
                     removedParamIds.add(parameter.getUniqueId());
                 }
@@ -719,8 +712,7 @@ public class AutomationManager implements
             parameterList.removeListener(parameterListListener);
             allParameters.removeAll(parameterList);
 
-            for (int j = 0; j < parameterList.size(); j++) {
-                Parameter parameter = parameterList.get(j);
+            for (Parameter parameter : parameterList) {
                 if (parameter.isAutomationEnabled()) {
                     removedParamIds.add(parameter.getUniqueId());
                 }
@@ -746,8 +738,7 @@ public class AutomationManager implements
 
         for (LayerGroup<? extends Layer> layerGroup : score) {
 
-            if (layerGroup instanceof PolyObject) {
-                PolyObject pObj = (PolyObject) layerGroup;
+            if (layerGroup instanceof PolyObject pObj) {
 
                 for (SoundLayer layer : pObj) {
                     ParameterIdList automationParameters = layer.getAutomationParameters();

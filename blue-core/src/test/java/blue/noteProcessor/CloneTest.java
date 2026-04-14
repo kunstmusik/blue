@@ -23,8 +23,7 @@
 //import java.lang.reflect.InvocationTargetException;
 //import java.lang.reflect.Method;
 //
-//import junit.framework.TestCase;
-//
+////
 //import org.apache.commons.lang.builder.EqualsBuilder;
 //import org.apache.commons.lang.builder.ToStringBuilder;
 //
@@ -35,7 +34,7 @@
 ///**
 // * @author Steven Yi
 // */
-//public class CloneTest extends TestCase {
+//public class CloneTest {
 //
 //    public void testSerialize() {
 //        Class[] noteProcessors = BlueSystem.getNoteProcessorClasses();

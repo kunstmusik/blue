@@ -30,6 +30,8 @@ import blue.soundObject.NoteList;
 import blue.soundObject.PythonObject;
 import blue.soundObject.SoundObject;
 import blue.soundObject.SoundObjectException;
+import blue.time.TimeContext;
+import blue.time.TimeContextManager;
 import blue.ui.nbutilities.MimeTypeEditorComponent;
 import blue.ui.utilities.SimpleDocumentListener;
 import java.awt.BorderLayout;
@@ -84,7 +86,7 @@ public class PythonEditor extends ScoreObjectEditor {
         ActionMap actions = codeEditor.getJEditorPane().getActionMap();
 
         inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_T, BlueSystem.
-                getMenuShortcutKey()), "testSoundObject");
+                getMenuShortcutKeyEx()), "testSoundObject");
 
         actions.put("testSoundObject", new AbstractAction() {
 
@@ -139,7 +141,8 @@ public class PythonEditor extends ScoreObjectEditor {
         NoteList notes = null;
 
         try {
-            notes = ((SoundObject) this.pObj).generateForCSD(CompileData.createEmptyCompileData(),
+            TimeContext context = TimeContextManager.getContext();
+            notes = ((SoundObject) this.pObj).generateForCSD(context, CompileData.createEmptyCompileData(),
                     0.0f, -1.0f);
         } catch (SoundObjectException e) {
             ExceptionDialog.showExceptionDialog(SwingUtilities.getRoot(this), e);

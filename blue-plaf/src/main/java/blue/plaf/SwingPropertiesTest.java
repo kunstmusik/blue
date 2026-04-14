@@ -43,13 +43,13 @@ public class SwingPropertiesTest extends JComponent {
 
         UIDefaults ui = UIManager.getLookAndFeelDefaults();
 
-        Set a = ui.keySet();
-        java.util.List b = Arrays.asList(a.stream().map(Object::toString).toArray());
+        Set<?> a = ui.keySet();
+        java.util.List<Object> b = Arrays.asList(a.stream().map(Object::toString).toArray());
         
 
-        Collections.sort(b);
+        Collections.sort(b, (o1, o2) -> o1.toString().compareTo(o2.toString()));
 
-        Iterator it = b.iterator();
+        Iterator<Object> it = b.iterator();
 
         StringBuffer buffer = new StringBuffer();
 

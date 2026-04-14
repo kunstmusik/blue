@@ -42,8 +42,8 @@ public class ScoreMouseWheelListener implements MouseWheelListener {
 
         listeners = scrollPane.getMouseWheelListeners();
 
-        for (int i = 0; i < listeners.length; i++) {
-            scrollPane.removeMouseWheelListener(listeners[i]);
+        for (MouseWheelListener listener : listeners) {
+            scrollPane.removeMouseWheelListener(listener);
         }
 
         scrollPane.addMouseWheelListener(this);
@@ -56,7 +56,6 @@ public class ScoreMouseWheelListener implements MouseWheelListener {
     @Override
     public void mouseWheelMoved(MouseWheelEvent e) {
         e.getComponent().requestFocus();
-        //int shortcutKey = BlueSystem.getMenuShortcutKey();
         if (e.isAltDown()) {
 
             if (timeState == null) {

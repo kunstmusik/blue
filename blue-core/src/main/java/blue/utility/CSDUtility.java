@@ -11,9 +11,11 @@ import blue.Arrangement;
 import blue.BlueData;
 import blue.BlueSystem;
 import blue.SoundLayer;
-import blue.components.lines.LinePoint;
 import blue.orchestra.GenericInstrument;
 import blue.soundObject.*;
+import blue.time.TempoPoint;
+import blue.time.TimeContext;
+import blue.time.TimePosition;
 import blue.udo.OpcodeList;
 import blue.udo.UserDefinedOpcode;
 import java.io.BufferedReader;
@@ -147,19 +149,23 @@ public class CSDUtility {
             } else if (line.startsWith("t")) {
                 if (line.length() > 1) {
                     line = line.substring(1).trim();
-                    var tempo = data.getScore().getTempo();
-                    var tLine = tempo.getLine();
+                    var tempoMap = data.getScore().getTempoMap();
                     var parts = line.split("\\s+");
 
                     if (parts.length % 2 == 0) {
                         try {
-                            tLine.getObservableList().clear();
+                            tempoMap.reset();
                             for (int j = 0; j < parts.length; j += 2) {
-                                double time = Double.parseDouble(parts[j]);
-                                double t = Double.parseDouble(parts[j + 1]);
-                                tLine.addLinePoint(new LinePoint(time, t));
+                                double beat = Double.parseDouble(parts[j]);
+                                double tempo = Double.parseDouble(parts[j + 1]);
+                                if (j == 0) {
+                                    // First point - set it (reset already created one at beat 0)
+                                    tempoMap.setTempoPoint(0, beat, tempo);
+                                } else {
+                                    tempoMap.addTempoPoint(new TempoPoint(beat, tempo));
+                                }
                             }
-                            tempo.setEnabled(true);
+                            tempoMap.setEnabled(true);
                         } catch (Exception e) {
                             throw new RuntimeException("Invalid tempo statement found");
                         }
@@ -183,15 +189,15 @@ public class CSDUtility {
 
             case IMPORT_SINGLE_SOUNDOBJECT:
                 sections = getScoreSections(noteText);
-                for (int i = 0; i < sections.length; i++) {
-                    setSoundObjectPerSection(data, sections[i]);
+                for (ScoreSection scoreSection : sections) {
+                    setSoundObjectPerSection(data, scoreSection);
                 }
                 break;
 
             case IMPORT_SOUNDOBJECT_PER_INSTRUMENT:
                 sections = getScoreSections(noteText);
-                for (int i = 0; i < sections.length; i++) {
-                    setSoundObjectsPerInstrument(data, sections[i]);
+                for (ScoreSection section : sections) {
+                    setSoundObjectsPerInstrument(data, section);
                 }
 
                 break;
@@ -202,7 +208,7 @@ public class CSDUtility {
     }
 
     private static ScoreSection[] getScoreSections(String scoreText) {
-        ArrayList scoreSections = new ArrayList();
+        ArrayList<ScoreSection> scoreSections = new ArrayList<>();
         StringTokenizer st = new StringTokenizer(scoreText, "\n");
         String line = "";
 
@@ -252,10 +258,11 @@ public class CSDUtility {
 
     private static void setSoundObjectPerSection(BlueData data,
             ScoreSection section) {
+        TimeContext context = data.getScore().getTimeContext();
         GenericScore genScore = createSizedGenericScore(section.scoreText,
-                BlueSystem.getString("csd.importedScore"));
+                BlueSystem.getString("csd.importedScore"), context);
 
-        genScore.setStartTime(section.sectionStartTime);
+        genScore.setStartTime(TimePosition.beats(section.sectionStartTime));
 
         PolyObject pObj = (PolyObject) data.getScore().get(0);
 
@@ -268,7 +275,8 @@ public class CSDUtility {
     // ramp's, etc.
     private static void setSoundObjectsPerInstrument(BlueData data,
             ScoreSection section) {
-        TreeMap map = new TreeMap();
+        TimeContext context = data.getScore().getTimeContext();
+        TreeMap<Integer, StringBuffer> map = new TreeMap<>();
 
         StringTokenizer st = new StringTokenizer(section.scoreText, "\n");
         String line = "";
@@ -294,7 +302,7 @@ public class CSDUtility {
                 continue;
             }
 
-            iNum = new Integer(Integer.parseInt(note.getPField(1)));
+            iNum = Integer.parseInt(note.getPField(1));
 
             if (map.containsKey(iNum)) {
                 buffer = (StringBuffer) map.get(iNum);
@@ -309,11 +317,9 @@ public class CSDUtility {
 
         SoundLayer sLayer;
 
-        for (Iterator iter = map.entrySet().iterator(); iter.hasNext();) {
-            Map.Entry entry = (Entry) iter.next();
-
-            iNum = (Integer) entry.getKey();
-            buffer = (StringBuffer) entry.getValue();
+        for (Entry<Integer, StringBuffer> entry : map.entrySet()) {
+            iNum = entry.getKey();
+            buffer = entry.getValue();
 
             if (buffer == null) {
                 continue;
@@ -337,9 +343,9 @@ public class CSDUtility {
             ScoreUtilities.normalizeNoteList(notes);
 
             GenericScore genScore = createSizedGenericScore(notes.toString(),
-                    "Instrument " + iNum.toString());
+                    "Instrument " + iNum.toString(), context);
 
-            genScore.setStartTime(minStart + section.sectionStartTime);
+            genScore.setStartTime(TimePosition.beats(minStart + section.sectionStartTime));
 
             sLayer.add(genScore);
 
@@ -347,11 +353,11 @@ public class CSDUtility {
     }
 
     private static GenericScore createSizedGenericScore(String noteText,
-            String name) {
+            String name, TimeContext context) {
 
         GenericScore genScore = new GenericScore();
         genScore.setText(noteText);
-        genScore.setSubjectiveDuration(genScore.getObjectiveDuration());
+        genScore.setSubjectiveDuration(genScore.getObjectiveDuration(context));
         genScore.setName(name);
         return genScore;
     }
@@ -370,6 +376,7 @@ public class CSDUtility {
         String instrIds = "";
 
         StringBuffer iBody = new StringBuffer();
+        StringBuilder udoDeclaration = null;
 
         UserDefinedOpcode udo = null;
         GenericInstrument instr = null;
@@ -379,8 +386,14 @@ public class CSDUtility {
 
         int state = 0;
 
-        while (st.hasMoreTokens()) {
-            line = st.nextToken();
+        boolean reprocessCurrentLine = false;
+
+        while (reprocessCurrentLine || st.hasMoreTokens()) {
+            if (!reprocessCurrentLine) {
+                line = st.nextToken();
+            } else {
+                reprocessCurrentLine = false;
+            }
             String trimLine = line.trim();
 
             switch (state) {
@@ -406,22 +419,14 @@ public class CSDUtility {
                         if (index != -1) {
                             line = line.substring(0, index);
                         }
-                        line = line.substring(line.indexOf("opcode") + 6)
-                                .trim();
+                        udo = UDOUtilities.parseUDODeclaration(line);
 
-                        String[] parts = line.split(",");
-
-                        if (parts.length != 3) {
-                            System.err.println("Error parsing UDO: 3 args "
-                                    + "not found for definition");
+                        if (udo != null) {
+                            state = 2;
                         } else {
-                            udo = new UserDefinedOpcode();
-                            udo.setOpcodeName(parts[0].trim());
-                            udo.outTypes = parts[1].trim();
-                            udo.inTypes = parts[2].trim();
+                            udoDeclaration = new StringBuilder(line.trim());
+                            state = 3;
                         }
-
-                        state = 2;
                     } else {
                         if (trimLine.startsWith("kr")) {
                             kr = line.substring(line.indexOf('=') + 1).trim();
@@ -447,8 +452,8 @@ public class CSDUtility {
                             if (instrIds.indexOf(',') > -1) {
                                 String[] ids = instrIds.split(",");
 
-                                for (int i = 0; i < ids.length; i++) {
-                                    arrangement.insertInstrument(ids[i], instr);
+                                for (String id : ids) {
+                                    arrangement.insertInstrument(id, instr);
                                 }
 
                             } else {
@@ -471,7 +476,7 @@ public class CSDUtility {
                 case 2:
                     if (trimLine.startsWith("endop")) {
                         if (udo != null) {
-                            udo.codeBody = iBody.toString();
+                            UDOUtilities.finalizeParsedUDO(udo, iBody.toString());
                             opcodeList.addOpcode(udo);
                             iBody = new StringBuffer();
 
@@ -482,6 +487,24 @@ public class CSDUtility {
                         if (udo != null) {
                             iBody.append(line).append("\n");
                         }
+                    }
+                    break;
+                case 3:
+                    if (UDOUtilities.isInstrOrUDODeclarationBoundary(trimLine)) {
+                        udoDeclaration = null;
+                        state = 0;
+                        reprocessCurrentLine = true;
+                        break;
+                    }
+
+                    if (!trimLine.isBlank()) {
+                        udoDeclaration.append("\n").append(trimLine);
+                    }
+
+                    udo = UDOUtilities.parseUDODeclaration(udoDeclaration.toString());
+                    if (udo != null) {
+                        udoDeclaration = null;
+                        state = 2;
                     }
                     break;
             }
@@ -499,7 +522,7 @@ public class CSDUtility {
         }
 
         if (sr != null) {
-            data.getProjectProperties().sampleRate = sr;
+            data.getProjectProperties().setSampleRate(sr);
         }
 
         if (ksmps != null) {
@@ -512,8 +535,7 @@ public class CSDUtility {
     public static void main(String[] args) {
         File test = new File("/work/blue/trappedInConvert/01-Trapped.csd");
 
-        try {
-            BufferedReader in = new BufferedReader(new FileReader(test));
+        try (BufferedReader in = new BufferedReader(new FileReader(test))) {
             String line = "";
             StringBuilder buffer = new StringBuilder();
             while ((line = in.readLine()) != null) {

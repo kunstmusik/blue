@@ -26,6 +26,10 @@ import blue.plugin.ScoreMouseListenerPlugin;
 import blue.score.ScoreObject;
 import blue.score.TimeState;
 import blue.score.layers.AutomatableLayer;
+import blue.time.TimeContext;
+import blue.time.TimeContextManager;
+import blue.time.TimePosition;
+import blue.time.TimeUtilities;
 import blue.ui.core.render.RealtimeRenderManager;
 import blue.ui.core.score.ModeManager;
 import blue.ui.core.score.MultiLineScoreSelection;
@@ -55,7 +59,7 @@ class MultiLineMoveMouseListener extends BlueMouseAdapter {
     int startX = -1;
     double minTranslation = 0.0f;
     private ScoreObject[] selectedScoreObjects = null;
-    private double[] startTimes = null;
+    private TimePosition[] startTimes = null;
     Map<Line, Line> lineSourceCopyMap = new HashMap<>();
 
     TimeState timeState = null;
@@ -84,6 +88,8 @@ class MultiLineMoveMouseListener extends BlueMouseAdapter {
         e.consume();
         RealtimeRenderManager.getInstance().stopAuditioning();
         timeState = scoreTC.getTimeState();
+        
+        TimeContext context = TimeContextManager.getContext();
 
         startX = e.getX();
         minTranslation = -selection.getStartTime();
@@ -92,18 +98,17 @@ class MultiLineMoveMouseListener extends BlueMouseAdapter {
                 .getSelectedScoreObjects();
 
         selectedScoreObjects = selectedObjects.toArray(new ScoreObject[0]);
-        startTimes = new double[selectedScoreObjects.length];
+        startTimes = new TimePosition[selectedScoreObjects.length];
 
         for (int i = 0; i < selectedScoreObjects.length; i++) {
             ScoreObject sObj = selectedScoreObjects[i];
             startTimes[i] = sObj.getStartTime();
-            minTranslation = Math.max(minTranslation, -startTimes[i]);
+            minTranslation = Math.max(minTranslation, -startTimes[i].toBeats(context));
         }
 
         lineSourceCopyMap.clear();
         for (var layer : selection.getSelectedLayers()) {
-            if (layer instanceof AutomatableLayer) {
-                var autoLayer = (AutomatableLayer) layer;
+            if (layer instanceof AutomatableLayer autoLayer) {
                 var paramIds = autoLayer.getAutomationParameters();
                 var autoManager = AutomationManager.getInstance();
                 for (var paramId : paramIds) {
@@ -135,8 +140,10 @@ class MultiLineMoveMouseListener extends BlueMouseAdapter {
             double translation = diffX / (double) timeState.getPixelSecond();
 
             if (timeState.isSnapEnabled() && !e.isControlDown()) {
+                double snapPos = -minTranslation + translation;
+                TimeContext ctx = TimeContextManager.getContext();
                 double newTime = ScoreUtilities.getSnapValueMove(
-                        -minTranslation + translation, timeState.getSnapValue());
+                        snapPos, timeState.getSnapValueInBeats(snapPos, ctx.getTempoMap(), ctx.getSampleRate()));
 
                 translation = newTime + minTranslation;
             }
@@ -153,7 +160,10 @@ class MultiLineMoveMouseListener extends BlueMouseAdapter {
 
             for (int i = 0; i < selectedScoreObjects.length; i++) {
                 ScoreObject sObj = selectedScoreObjects[i];
-                sObj.setStartTime(startTimes[i] + trans);
+                TimeContext context = TimeContextManager.getContext();
+                // Preserve the original TimePosition type
+                double newBeats = startTimes[i].toBeats(context) + trans;
+                sObj.setStartTime(TimeUtilities.beatsToTimePosition(newBeats, startTimes[i].getTimeBase(), context));
             }
 
             selection.updateTranslation(translation);

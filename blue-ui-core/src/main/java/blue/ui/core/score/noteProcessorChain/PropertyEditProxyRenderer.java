@@ -37,8 +37,8 @@ public class PropertyEditProxyRenderer implements TableCellRenderer {
     
     @Override
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-        if(value instanceof Boolean) {
-            checkbox.setSelected((Boolean)value);
+        if(value instanceof Boolean aBoolean) {
+            checkbox.setSelected(aBoolean);
             return checkbox;
         }
         return defaultRenderer.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);

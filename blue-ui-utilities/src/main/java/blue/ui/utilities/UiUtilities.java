@@ -20,6 +20,8 @@
 package blue.ui.utilities;
 
 import java.awt.Component;
+import java.awt.Container;
+import java.awt.Color;
 import java.awt.Point;
 import java.awt.event.MouseEvent;
 import javax.swing.JScrollPane;
@@ -33,6 +35,19 @@ public class UiUtilities {
 
     
     public static final int EDGE = 5;
+
+    public static void brightenTree(Container parent, int amount) {
+        Color bg = parent.getBackground();
+        parent.setBackground(new Color(
+                Math.min(255, Math.max(0, bg.getRed() + amount)),
+                Math.min(255, Math.max(0, bg.getGreen() + amount)),
+                Math.min(255, Math.max(0, bg.getBlue() + amount))));
+        for (Component child : parent.getComponents()) {
+            if (child instanceof javax.swing.JPanel) {
+                brightenTree((Container) child, amount);
+            }
+        }
+    }
 
     public static boolean isRightMouseButton(MouseEvent e) {
         return SwingUtilities.isRightMouseButton(e) && !SwingUtilities.isLeftMouseButton(e);

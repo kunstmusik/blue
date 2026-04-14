@@ -19,15 +19,14 @@
  */
 package blue.mixer;
 
-import blue.automation.Parameter;
-import electric.xml.Element;
-import junit.framework.TestCase;
-import org.apache.commons.lang3.builder.ToStringBuilder;
+import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.Test;
 
-public class MixerTest extends TestCase {
+class MixerTest {
     
     // FIXME: Check if equals needs to be overridden...
-    public void testSaveParam() {
+    @Test
+    void testSaveParam() {
 //        Parameter p = new Parameter();
 //        Parameter clone = new Parameter(p);
 //        System.out.println(p +":"+clone);

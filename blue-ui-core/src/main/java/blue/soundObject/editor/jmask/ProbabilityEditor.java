@@ -17,6 +17,7 @@ import javax.swing.JComponent;
  * 
  * @author steven
  */
+@SuppressWarnings({"unchecked", "rawtypes"})
 public class ProbabilityEditor extends javax.swing.JPanel implements DurationSettable {
 
     Probability probability = null;

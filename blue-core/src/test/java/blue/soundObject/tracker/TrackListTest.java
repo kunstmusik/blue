@@ -19,26 +19,29 @@
  */
 package blue.soundObject.tracker;
 
-import junit.framework.TestCase;
+import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-public class TrackListTest extends TestCase {
+class TrackListTest {
 
     private TrackList list;
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
+    @BeforeEach
+    void setUp() throws Exception {
         list = new TrackList();
         list.addTrack(new Track());
         list.addTrack(new Track());
         list.addTrack(new Track());
     }
 
-    public final void testGetColumnCount() {
+    @Test
+    void testGetColumnCount() {
         assertEquals(9, list.getColumnCount());
     }
 
-    public final void testGetColumnName() {
+    @Test
+    void testGetColumnName() {
         for (int i = 0; i < list.getColumnCount(); i++) {
             boolean success = true;
             try {
@@ -47,7 +50,7 @@ public class TrackListTest extends TestCase {
                 success = false;
             }
 
-            assertTrue("Could not find value for index: " + i, success);
+            assertTrue(success, "Could not find value for index: " + i);
         }
     }
 

@@ -21,6 +21,9 @@ package blue.ui.core.score.object.actions;
 
 import blue.score.ScoreObject;
 import blue.score.layers.ScoreObjectLayer;
+import blue.time.TimeContext;
+import blue.time.TimeContextManager;
+import blue.time.TimeUnitMath;
 import blue.ui.core.score.ScoreController;
 import blue.ui.core.score.ScorePath;
 import blue.ui.core.score.undo.AddScoreObjectEdit;
@@ -55,12 +58,13 @@ public final class DuplicateScoreObjectsAction implements ActionListener {
                 = ScoreController.getInstance().getSelectedScoreObjects();
         if (!scoreObjects.isEmpty()) {
 
+            TimeContext context = TimeContextManager.getContext();
             ScorePath path = ScoreController.getInstance().getScorePath();
             CompoundAppendable compoundEdit = new CompoundAppendable();
 
             for (ScoreObject sObj : scoreObjects) {
                 ScoreObject clone = sObj.deepCopy();
-                clone.setStartTime(clone.getStartTime() + clone.getSubjectiveDuration());
+                clone.setStartTime(TimeUnitMath.add(context, clone.getStartTime(), clone.getSubjectiveDuration()));
 
                 ScoreObjectLayer layer = (ScoreObjectLayer) path.getLayerForScoreObject(sObj);
 

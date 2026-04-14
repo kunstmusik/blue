@@ -40,9 +40,7 @@ public class BSBEditPanelPopup extends JPopupMenu implements ActionListener {
     private final JMenuItem paste = new JMenuItem("Paste");
 
     public BSBEditPanelPopup(BSBObjectEntry[] bsbObjectEntries) {
-        for (int i = 0; i < bsbObjectEntries.length; i++) {
-            BSBObjectEntry entry = bsbObjectEntries[i];
-
+        for (BSBObjectEntry entry : bsbObjectEntries) {
             JMenuItem item = new JMenuItem("Add " + entry.label);
             item.setActionCommand(entry.bsbObjectClass.getName());
             item.addActionListener(this);

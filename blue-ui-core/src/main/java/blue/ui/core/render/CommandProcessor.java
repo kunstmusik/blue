@@ -119,7 +119,7 @@ public class CommandProcessor {
             switch (mode) {
                 case STRIP_READ:
                     if (line.startsWith(";[i") && line.endsWith("]{")) {
-                        Integer iNum = new Integer(line.substring(3, line
+                        int iNum = Integer.parseInt(line.substring(3, line
                                 .length() - 2));
                         if (instrumentNumbers.contains(iNum)) {
                             mode = STRIP_ICONDITION_TRUE;

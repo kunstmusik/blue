@@ -31,9 +31,11 @@ import blue.score.ScoreObject;
 import blue.soundObject.NoteList;
 import blue.soundObject.SoundObject;
 import blue.soundObject.TimeBehavior;
+import blue.time.TimeContext;
+import blue.time.TimeContextManager;
+import blue.time.TimePosition;
 import blue.ui.core.clipboard.BlueClipboardUtils;
 import blue.ui.core.render.RealtimeRenderManager;
-import blue.ui.core.score.ScoreController;
 import blue.ui.core.score.ScoreObjectCopy;
 import blue.ui.core.score.layers.SoundObjectProvider;
 import blue.ui.nbutilities.MimeTypeEditorComponent;
@@ -354,7 +356,7 @@ public final class BlueLiveTopComponent extends TopComponent
             }
         };
         singleTrigger.putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(
-                KeyEvent.VK_T, BlueSystem.getMenuShortcutKey()));
+                KeyEvent.VK_T, BlueSystem.getMenuShortcutKeyEx()));
 
         Action multiTrigger = new AbstractAction("trigger-multi") {
 
@@ -365,7 +367,7 @@ public final class BlueLiveTopComponent extends TopComponent
         };
         multiTrigger.putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(
                 KeyEvent.VK_T,
-                BlueSystem.getMenuShortcutKey() | KeyEvent.SHIFT_DOWN_MASK));
+                BlueSystem.getMenuShortcutKeyEx() | KeyEvent.SHIFT_DOWN_MASK));
 
         Action copyObj = new AbstractAction("copy-obj") {
 
@@ -378,14 +380,14 @@ public final class BlueLiveTopComponent extends TopComponent
 
                 if (lObj != null) {
                     ScoreObject sObj = lObj.getSoundObject().deepCopy();
-                    var copy = new ScoreObjectCopy(List.of(sObj), List.of(0));
+                    var copy = new ScoreObjectCopy(List.of(sObj), List.of(0), TimeContextManager.getContext());
                     var clipboard = BlueClipboardUtils.getClipboard();
                     clipboard.setContents(copy, new StringSelection(""));
                 }
             }
         };
         copyObj.putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(
-                KeyEvent.VK_C, BlueSystem.getMenuShortcutKey()));
+                KeyEvent.VK_C, BlueSystem.getMenuShortcutKeyEx()));
 
         Action pasteObj = new AbstractAction("paste-obj") {
 
@@ -413,14 +415,14 @@ public final class BlueLiveTopComponent extends TopComponent
                 }
 
                 SoundObject copy = sObj.deepCopy();
-                copy.setStartTime(0.0f);
+                copy.setStartTime(TimePosition.beats(0.0f));
 
                 addSoundObject(column, row, copy);
             }
         };
 
         pasteObj.putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(
-                KeyEvent.VK_V, BlueSystem.getMenuShortcutKey()));
+                KeyEvent.VK_V, BlueSystem.getMenuShortcutKeyEx()));
 
         SwingUtil.installActions(liveObjectsTable,
                 new Action[]{singleTrigger, multiTrigger, copyObj, pasteObj});
@@ -433,7 +435,7 @@ public final class BlueLiveTopComponent extends TopComponent
                 }
             }
         });
-        liveCodeEditor.getJEditorPane().getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_E, BlueSystem.getMenuShortcutKey()), "eval-live-orc");
+        liveCodeEditor.getJEditorPane().getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_E, BlueSystem.getMenuShortcutKeyEx()), "eval-live-orc");
         liveCodeEditor.getJEditorPane().getActionMap().put("eval-live-orc",
                 new AbstractAction() {
             @Override
@@ -513,7 +515,8 @@ public final class BlueLiveTopComponent extends TopComponent
                 sObj.setTimeBehavior(TimeBehavior.NONE);
             }
 
-            nl = sObj.generateForCSD(compileData, 0.0f, -1.0f);
+            TimeContext context = TimeContextManager.getContext();
+            nl = sObj.generateForCSD(context, compileData, 0.0f, -1.0f);
         } catch (Exception e) {
             Exceptions.printStackTrace(e);
         }
@@ -913,7 +916,7 @@ public final class BlueLiveTopComponent extends TopComponent
         double time = 0;
         String txt;
 
-        if ((evt.getModifiers() & BlueSystem.getMenuShortcutKey()) == BlueSystem.getMenuShortcutKey()) {
+        if ((evt.getModifiersEx() & BlueSystem.getMenuShortcutKeyEx()) == BlueSystem.getMenuShortcutKeyEx()) {
             switch (key) {
                 case KeyEvent.VK_PERIOD:
 
@@ -969,7 +972,7 @@ public final class BlueLiveTopComponent extends TopComponent
                 outputTextArea.getText() + scoPadReceiver.getNotes(
                 template, instrId, start, dur));
 
-        startSpinner.setValue(new Double(start + dur));
+        startSpinner.setValue(start + dur);
     }//GEN-LAST:event_outputTextAreaKeyPressed
 
     private void noteTemplateTextMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_noteTemplateTextMousePressed
@@ -999,7 +1002,8 @@ public final class BlueLiveTopComponent extends TopComponent
                         sObj.setTimeBehavior(TimeBehavior.NONE);
                     }
 
-                    nl.addAll(sObj.generateForCSD(compileData, 0.0f, -1.0f));
+                    TimeContext context = TimeContextManager.getContext();
+                    nl.addAll(sObj.generateForCSD(context, compileData, 0.0f, -1.0f));
                 }
             } catch (Exception e) {
                 Exceptions.printStackTrace(e);
@@ -1182,8 +1186,8 @@ public final class BlueLiveTopComponent extends TopComponent
             }
         };
 
-        for (int i = 0; i < items.length; i++) {
-            JMenuItem item = new JMenuItem(items[i]);
+        for (String s : items) {
+            JMenuItem item = new JMenuItem(s);
             item.addActionListener(al);
             noteTemplatePopup.add(item);
         }
@@ -1316,7 +1320,7 @@ public final class BlueLiveTopComponent extends TopComponent
 
                     SoundObject sObj = lObj.getSoundObject().deepCopy();
 
-                    var copy = new ScoreObjectCopy(List.of(sObj), List.of(0));
+                    var copy = new ScoreObjectCopy(List.of(sObj), List.of(0), TimeContextManager.getContext());
                     var clipboard = BlueClipboardUtils.getClipboard();
                     clipboard.setContents(copy, new StringSelection(""));
 
@@ -1332,7 +1336,7 @@ public final class BlueLiveTopComponent extends TopComponent
 
                     SoundObject sObj = lObj.getSoundObject().deepCopy();
 
-                    var copy = new ScoreObjectCopy(List.of(sObj), List.of(0));
+                    var copy = new ScoreObjectCopy(List.of(sObj), List.of(0), TimeContextManager.getContext());
                     var clipboard = BlueClipboardUtils.getClipboard();
                     clipboard.setContents(copy, new StringSelection(""));
 
@@ -1357,7 +1361,7 @@ public final class BlueLiveTopComponent extends TopComponent
                 }
 
                 SoundObject copy = sObj.deepCopy();
-                copy.setStartTime(0.0f);
+                copy.setStartTime(TimePosition.beats(0.0f));
                 addSoundObject(mouseColumn, mouseRow, copy);
             });
 

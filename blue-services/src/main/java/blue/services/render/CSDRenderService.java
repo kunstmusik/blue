@@ -26,25 +26,27 @@ import org.openide.util.Lookup;
 /**
  * Injectable Singleton Service for transforming a BlueData class into a
  * CsdRenderResult
+ *
  * @author stevenyi
  */
 public abstract class CSDRenderService {
+
     public static CSDRenderService getDefault() {
         return Lookup.getDefault().lookup(CSDRenderService.class);
     }
-    
+
     public synchronized CsdRenderResult generateCSDForBlueLive(BlueData data, boolean useAPI) {
         return generateCSDForBlueLiveImpl(data, useAPI);
     }
-    
+
     protected abstract CsdRenderResult generateCSDForBlueLiveImpl(BlueData data, boolean useAPI);
-    
+
     public final synchronized CsdRenderResult generateCSD(BlueData data,
             double startTime, double endTime, boolean isRealTime, boolean useAPI) throws ScoreGenerationException {
         return generateCSDImpl(data, startTime, endTime, isRealTime, useAPI);
     }
 
     protected abstract CsdRenderResult generateCSDImpl(BlueData data,
-            double startTime, double endTime, boolean isRealTime, boolean useAPI); 
-            
-    }
+            double startTime, double endTime, boolean isRealTime, boolean useAPI);
+
+}

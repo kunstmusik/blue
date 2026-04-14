@@ -91,7 +91,7 @@ public class TrackEditor extends javax.swing.JPanel {
 
             @Override
             public void setValue(Object value) {
-                if ((value == null) || !(value instanceof Number)) {
+                if (!(value instanceof Number)) {
                     throw new IllegalArgumentException("illegal value");
                 }
 
@@ -117,7 +117,7 @@ public class TrackEditor extends javax.swing.JPanel {
 
             @Override
             public void setValue(Object value) {
-                if ((value == null) || !(value instanceof Number)) {
+                if (!(value instanceof Number)) {
                     throw new IllegalArgumentException("illegal value");
                 }
 
@@ -143,7 +143,7 @@ public class TrackEditor extends javax.swing.JPanel {
 
             @Override
             public void setValue(Object value) {
-                if ((value == null) || !(value instanceof Number)) {
+                if (!(value instanceof Number)) {
                     throw new IllegalArgumentException("illegal value");
                 }
 
@@ -169,7 +169,7 @@ public class TrackEditor extends javax.swing.JPanel {
 
             @Override
             public void setValue(Object value) {
-                if ((value == null) || !(value instanceof Number)) {
+                if (!(value instanceof Number)) {
                     throw new IllegalArgumentException("illegal value");
                 }
 
@@ -434,16 +434,16 @@ public class TrackEditor extends javax.swing.JPanel {
         changingNumberModels = true;
         if (col.isRestrictedToInteger()) {
             numberMinSpinner.setModel(MIN_INT_MODEL);
-            numberMinSpinner.setValue(new Integer((int) col.getRangeMin()));
+            numberMinSpinner.setValue((int) col.getRangeMin());
 
             numberMaxSpinner.setModel(MAX_INT_MODEL);
-            numberMaxSpinner.setValue(new Integer((int) col.getRangeMax()));
+            numberMaxSpinner.setValue((int) col.getRangeMax());
         } else {
             numberMinSpinner.setModel(MIN_DOUBLE_MODEL);
-            numberMinSpinner.setValue(new Double(col.getRangeMin()));
+            numberMinSpinner.setValue(col.getRangeMin());
 
             numberMaxSpinner.setModel(MAX_DOUBLE_MODEL);
-            numberMaxSpinner.setValue(new Double(col.getRangeMax()));
+            numberMaxSpinner.setValue(col.getRangeMax());
         }
 
         changingNumberModels = false;

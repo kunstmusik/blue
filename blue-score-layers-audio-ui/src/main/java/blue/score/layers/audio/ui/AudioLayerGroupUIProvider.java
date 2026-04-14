@@ -39,8 +39,8 @@ public class AudioLayerGroupUIProvider implements LayerGroupUIProvider {
     public JComponent getLayerGroupPanel(LayerGroup<?> layerGroup,
             TimeState timeState, BlueData data, InstanceContent ic) {
 
-        if (layerGroup instanceof AudioLayerGroup) {
-            return new AudioLayersPanel((AudioLayerGroup) layerGroup,
+        if (layerGroup instanceof AudioLayerGroup alg) {
+            return new AudioLayersPanel(alg,
                     timeState, ic);
         }
         return null;
@@ -49,8 +49,8 @@ public class AudioLayerGroupUIProvider implements LayerGroupUIProvider {
     @Override
     public JComponent getLayerGroupHeaderPanel(LayerGroup<?> layerGroup,
             TimeState timeState, BlueData data, InstanceContent ic) {
-        if (layerGroup instanceof AudioLayerGroup) {
-            return new AudioHeaderListPanel((AudioLayerGroup) layerGroup,
+        if (layerGroup instanceof AudioLayerGroup alg) {
+            return new AudioHeaderListPanel(alg,
                     data.getMixer());
         }
         return null;
@@ -58,13 +58,13 @@ public class AudioLayerGroupUIProvider implements LayerGroupUIProvider {
 
     @Override
     public JComponent getLayerGroupPropertiesPanel(LayerGroup layerGroup) {
-        if (!(layerGroup instanceof AudioLayerGroup)) {
+        if (!(layerGroup instanceof AudioLayerGroup alg)) {
             return null;
         }
         if (propsPanel == null) {
             propsPanel = new AudioLayerGroupPropertiesPanel();
         }
-        propsPanel.setAudioLayerGroup((AudioLayerGroup) layerGroup);
+        propsPanel.setAudioLayerGroup(alg);
         return propsPanel;
     }
 }

@@ -20,13 +20,16 @@
 package blue.ui.editor.csound.orc.actions;
 
 import java.awt.event.ActionEvent;
+import java.util.ArrayList;
+import java.util.List;
 import javax.swing.Action;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Caret;
 import javax.swing.text.JTextComponent;
+import org.netbeans.api.editor.document.LineDocument;
+import org.netbeans.api.editor.document.LineDocumentUtils;
 import org.netbeans.editor.BaseAction;
 import org.netbeans.editor.BaseDocument;
-import org.netbeans.editor.Utilities;
 import org.netbeans.lib.editor.util.CharSequenceUtilities;
 import org.netbeans.lib.editor.util.swing.DocumentUtilities;
 
@@ -63,23 +66,22 @@ public class RemoveSemiColonLineCommentAction extends BaseAction {
                     int startPos;
                     int endPos;
                     
-                    if (Utilities.isSelectionShowing(caret)) {
-                        startPos = Utilities.getRowStart(doc,
+                    LineDocument lineDoc = (LineDocument) doc;
+
+                    if (target.getSelectionStart() != target.getSelectionEnd()) {
+                        startPos = LineDocumentUtils.getLineStart(lineDoc,
                                 target.getSelectionStart());
                         endPos = target.getSelectionEnd();
-                        if (endPos > 0 && Utilities.getRowStart(doc, endPos) == endPos) {
+                        if (endPos > 0 && LineDocumentUtils.getLineStart(lineDoc, endPos) == endPos) {
                             endPos--;
                         }
-                        endPos = Utilities.getRowEnd(doc, endPos);
+                        endPos = LineDocumentUtils.getLineEnd(lineDoc, endPos);
                     } else { // selection not visible
-                        startPos = Utilities.getRowStart(doc, caret.getDot());
-                        endPos = Utilities.getRowEnd(doc, caret.getDot());
+                        startPos = LineDocumentUtils.getLineStart(lineDoc, caret.getDot());
+                        endPos = LineDocumentUtils.getLineEnd(lineDoc, caret.getDot());
                     }
-                    
-                    int lineCount = Utilities.getRowCount(doc, startPos,
-                            endPos);
-                    
-                    uncomment(doc, startPos, lineCount);
+
+                    uncomment(doc, startPos, endPos);
                     
                     
                 } catch (BadLocationException e) {
@@ -91,16 +93,16 @@ public class RemoveSemiColonLineCommentAction extends BaseAction {
 
     }
 
-    private void uncomment(BaseDocument doc, int startOffset, int lineCount) throws BadLocationException {
-
+    private void uncomment(BaseDocument doc, int startOffset, int endOffset) throws BadLocationException {
+        LineDocument lineDoc = (LineDocument) doc;
+        List<Integer> lineStarts = getLineStarts(lineDoc, startOffset, endOffset);
         int lineCommentStringLen = 1;
 
-        for (int offset = startOffset; lineCount > 0; lineCount--) {
-
-            int rowStart = Utilities.getRowStart(doc, offset);
+        for (int i = lineStarts.size() - 1; i >= 0; i--) {
+            int rowStart = lineStarts.get(i);
 
             if (rowStart != -1) {
-                if (Utilities.getRowEnd(doc, rowStart) - rowStart >= lineCommentStringLen) {
+                if (LineDocumentUtils.getLineEnd(lineDoc, rowStart) - rowStart >= lineCommentStringLen) {
                     CharSequence maybeLineComment = DocumentUtilities.getText(
                             doc, rowStart, lineCommentStringLen);
                     if (CharSequenceUtilities.textEquals(maybeLineComment,
@@ -109,9 +111,20 @@ public class RemoveSemiColonLineCommentAction extends BaseAction {
                     }
                 }
             }
-
-            offset = Utilities.getRowStart(doc, offset, +1);
         }
     }
-}
 
+    private List<Integer> getLineStarts(LineDocument lineDoc, int startOffset,
+            int endOffset) throws BadLocationException {
+        int startLine = LineDocumentUtils.getLineIndex(lineDoc, startOffset);
+        int endLine = LineDocumentUtils.getLineIndex(lineDoc, endOffset);
+        List<Integer> lineStarts = new ArrayList<>(endLine - startLine + 1);
+
+        for (int line = startLine; line <= endLine; line++) {
+            lineStarts.add(LineDocumentUtils.getLineStartFromIndex(lineDoc,
+                    line));
+        }
+
+        return lineStarts;
+    }
+}

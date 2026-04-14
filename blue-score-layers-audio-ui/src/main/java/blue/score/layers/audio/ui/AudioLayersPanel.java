@@ -21,6 +21,8 @@ package blue.score.layers.audio.ui;
 
 import blue.score.TimeState;
 import blue.score.layers.Layer;
+import blue.time.TimeContext;
+import blue.time.TimeContextManager;
 import blue.score.layers.LayerGroupDataEvent;
 import blue.score.layers.LayerGroupListener;
 import blue.score.layers.audio.core.AudioClip;
@@ -78,8 +80,8 @@ public class AudioLayersPanel extends JLayeredPane implements LayerGroupListener
     AffineTransform transform = new AffineTransform();
     // transforms from screen to virtual time
     AffineTransform reverseTransform = new AffineTransform();
-    double srcPts[] = new double[4];
-    double destPts[] = new double[4];
+    double[] srcPts = new double[4];
+    double[] destPts = new double[4];
     Map<AudioClip, AudioClipPanel> clipPanelMap = new HashMap<>();
     private final InstanceContent content;
     AutomationLayerPanel automationPanel = new AutomationLayerPanel();
@@ -258,8 +260,8 @@ public class AudioLayersPanel extends JLayeredPane implements LayerGroupListener
     protected Dimension checkSize() {
         int h = layerGroup.getTotalHeight();
         int tempTime = (int) (layerGroup.getMaxTime() / 60) + 2;
-        int width = tempTime * timeState.getPixelSecond() * 60;
-        final Dimension d = new Dimension(width, h);
+        double width = tempTime * timeState.getPixelSecond() * 60;
+        final Dimension d = new Dimension((int)width, h);
         this.setPreferredSize(d);
         return d;
     }
@@ -295,13 +297,13 @@ public class AudioLayersPanel extends JLayeredPane implements LayerGroupListener
     @Override
     public void marqueeSelectionPerformed(SelectionMarquee marquee) {
         Component[] comps = getComponents();
-        for (int i = 0; i < comps.length; i++) {
-            if (!(comps[i] instanceof AudioClipPanel)) {
+        for (Component comp : comps) {
+            if (!(comp instanceof AudioClipPanel)) {
                 continue;
             }
 
-            if (marquee.intersects((JComponent) comps[i])) {
-                content.add(((AudioClipPanel) comps[i]).getScoreObject());
+            if (marquee.intersects((JComponent) comp)) {
+                content.add(((AudioClipPanel) comp).getScoreObject());
             }
 
         }
@@ -342,7 +344,9 @@ public class AudioLayersPanel extends JLayeredPane implements LayerGroupListener
         g.drawLine(0, getHeight() - 1, width, height - 1);
 
         if (timeState.isSnapEnabled()) {
-            int snapPixels = (int) (timeState.getSnapValue() * timeState.getPixelSecond());
+            TimeContext ctx = TimeContextManager.getContext();
+            double snapValue = timeState.getSnapValueInBeats(0.0, ctx.getTempoMap(), ctx.getSampleRate());
+            int snapPixels = (int) (snapValue * timeState.getPixelSecond());
             int x = 0;
             if (snapPixels <= 0) {
                 return;
@@ -350,8 +354,7 @@ public class AudioLayersPanel extends JLayeredPane implements LayerGroupListener
 
             g.setColor(VLINE_COLOR);
             
-            double snapValue = timeState.getSnapValue();
-            int pixelSecond = timeState.getPixelSecond();
+            double pixelSecond = timeState.getPixelSecond();
 
             for (int i = 0; x < getWidth(); i++) {
                 x = (int) ((i * snapValue) * pixelSecond);

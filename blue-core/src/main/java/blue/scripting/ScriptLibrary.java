@@ -28,7 +28,6 @@ import electric.xml.ParseException;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.Vector;
 import javax.swing.JOptionPane;
 import javax.swing.event.ChangeEvent;
@@ -48,9 +47,9 @@ public class ScriptLibrary implements TreeModel {
 
     ScriptCategory rootScriptCategory = new ScriptCategory();
 
-    transient Vector listeners = new Vector();
+    transient Vector<TreeModelListener> listeners = new Vector<>();
 
-    transient Vector changeListeners = new Vector();
+    transient Vector<ChangeListener> changeListeners = new Vector<>();
 
     private ScriptLibrary() {
         this.rootScriptCategory.setRoot(true);
@@ -154,9 +153,7 @@ public class ScriptLibrary implements TreeModel {
             return v;
         }
 
-        for (Iterator iter = current.getSubCategories().iterator(); iter
-                .hasNext();) {
-            ScriptCategory cat = (ScriptCategory) iter.next();
+        for (ScriptCategory cat : current.getSubCategories()) {
             Object pathObj = getPathForObject(cat, obj, v);
             if (pathObj != null) {
                 v.add(current);
@@ -299,8 +296,7 @@ public class ScriptLibrary implements TreeModel {
     public int getChildCount(Object parent) {
         if (parent instanceof Script) {
             return 0;
-        } else if (parent instanceof ScriptCategory) {
-            ScriptCategory cat = (ScriptCategory) parent;
+        } else if (parent instanceof ScriptCategory cat) {
             return cat.getSubCategories().size() + cat.getScripts().size();
         }
 
@@ -347,10 +343,10 @@ public class ScriptLibrary implements TreeModel {
     public void valueForPathChanged(TreePath path, Object newValue) {
         Object obj = path.getLastPathComponent();
 
-        if (obj instanceof ScriptCategory) {
-            ((ScriptCategory) obj).setCategoryName(newValue.toString());
-        } else if (obj instanceof Script) {
-            ((Script) obj).setName(newValue.toString());
+        if (obj instanceof ScriptCategory scriptCategory) {
+            scriptCategory.setCategoryName(newValue.toString());
+        } else if (obj instanceof Script script) {
+            script.setName(newValue.toString());
         }
 
         TreeModelEvent e = new TreeModelEvent(this, path);
@@ -361,26 +357,26 @@ public class ScriptLibrary implements TreeModel {
     // UTILITY METHODS FOR FIRING EVENTS
 
     private void fireNodesChanged(TreeModelEvent e) {
-        for (int i = 0; i < listeners.size(); i++) {
-            ((TreeModelListener) listeners.get(i)).treeNodesChanged(e);
+        for (TreeModelListener listener : listeners) {
+            listener.treeNodesChanged(e);
         }
     }
 
     private void fireNodesInserted(TreeModelEvent e) {
-        for (int i = 0; i < listeners.size(); i++) {
-            ((TreeModelListener) listeners.get(i)).treeNodesInserted(e);
+        for (TreeModelListener listener : listeners) {
+            listener.treeNodesInserted(e);
         }
     }
 
     private void fireNodesRemoved(TreeModelEvent e) {
-        for (int i = 0; i < listeners.size(); i++) {
-            ((TreeModelListener) listeners.get(i)).treeNodesRemoved(e);
+        for (TreeModelListener listener : listeners) {
+            listener.treeNodesRemoved(e);
         }
     }
 
     private void fireTreeStructureChanged(TreeModelEvent e) {
-        for (int i = 0; i < listeners.size(); i++) {
-            ((TreeModelListener) listeners.get(i)).treeStructureChanged(e);
+        for (TreeModelListener listener : listeners) {
+            listener.treeStructureChanged(e);
         }
     }
 
@@ -431,9 +427,7 @@ public class ScriptLibrary implements TreeModel {
             return cat;
         }
 
-        for (Iterator iter = cat.getSubCategories().iterator(); iter.hasNext();) {
-            ScriptCategory c = (ScriptCategory) iter.next();
-
+        for (ScriptCategory c : cat.getSubCategories()) {
             ScriptCategory temp = findParent(c, obj);
 
             if (temp != null) {
@@ -458,17 +452,15 @@ public class ScriptLibrary implements TreeModel {
     public void fireChangeEvent() {
         ChangeEvent evt = new ChangeEvent(this);
 
-        for (Iterator it = changeListeners.iterator(); it.hasNext();) {
-            ChangeListener listener = (ChangeListener) it.next();
+        for (ChangeListener listener : changeListeners) {
             listener.stateChanged(evt);
         }
     }
 
     public void importScript(Script script) {
-        ArrayList categories = rootScriptCategory.getSubCategories();
+        ArrayList<ScriptCategory> categories = rootScriptCategory.getSubCategories();
 
-        for (Iterator iter = categories.iterator(); iter.hasNext();) {
-            ScriptCategory cat = (ScriptCategory) iter.next();
+        for (ScriptCategory cat : categories) {
             if (cat.getCategoryName().equals("Imported Scripts")) {
                 addScript(cat, script);
                 save();

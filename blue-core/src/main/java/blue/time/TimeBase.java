@@ -1,7 +1,21 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * blue - object composition environment for csound
+ * Copyright (c) 2023 Steven Yi (stevenyi@gmail.com)
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published
+ * by  the Free Software Foundation; either version 2 of the License or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; see the file COPYING.LIB.  If not, write to
+ * the Free Software Foundation Inc., 59 Temple Place - Suite 330,
+ * Boston, MA  02111-1307 USA
  */
 package blue.time;
 
@@ -12,21 +26,42 @@ package blue.time;
  * @author Steven Yi
  */
 public enum TimeBase {
-    /** Delegate to project default timebase */
-    PROJECT_DEFAULT,
-    
-    /** Class Blue timebase using global number of Csound beats. Does not take 
+    /** Classic Blue timebase using global number of Csound beats. Does not take 
      * into account measures.
      */
+    BEATS, 
     
-    CSOUND_BEATS, 
+    /** BBT (Bars.Beats.Ticks) - Ardour/Qtractor style.
+     * Uses PPQ-based ticks for sub-beat precision.
+     */
+    BBT,
+    
+    /** BBST (Bars.Beats.Sixteenths.Ticks) - Cubase/Reason style.
+     * Uses sixteenth-note subdivisions with PPQ-based sub-ticks.
+     */
+    BBST,
+    
+    /** BBF (Bars.Beats.Fraction) - REAPER style.
+     * Uses percentage-based fraction (0-99) for sub-beat precision.
+     */
+    BBF,
     
     /** Hours:Minutes:Seconds.MS **/
     TIME, 
     
     /** Hours:Minutes:Seconds.Frames **/
     SMPTE,
+
+    SECONDS,
     
     /** Audio Sample Frame Number **/
-    FRAME, 
+    FRAME;
+
+    /**
+     * Returns true if this TimeBase is beat-based (BEATS, BBT, BBST, BBF).
+     * Beat-based values depend on tempo/meter context for wall-clock conversion.
+     */
+    public boolean isBeatBased() {
+        return this == BEATS || this == BBT || this == BBST || this == BBF;
+    }
 }

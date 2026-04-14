@@ -43,7 +43,7 @@ public class LiveObjectsTableModel implements TableModel, ScoreObjectListener,
 
     LiveObjectBins bins = null;
 
-    Vector tableListeners = null;
+    Vector<TableModelListener> tableListeners = null;
 
     public void setLiveObjectBins(LiveObjectBins bins) {
         
@@ -141,7 +141,7 @@ public class LiveObjectsTableModel implements TableModel, ScoreObjectListener,
     @Override
     public void addTableModelListener(TableModelListener l) {
         if (tableListeners == null) {
-            tableListeners = new Vector();
+            tableListeners = new Vector<TableModelListener>();
         }
         tableListeners.add(l);
     }
@@ -163,8 +163,7 @@ public class LiveObjectsTableModel implements TableModel, ScoreObjectListener,
             return;
         }
 
-        for (Iterator iter = tableListeners.iterator(); iter.hasNext();) {
-            TableModelListener listener = (TableModelListener) iter.next();
+        for (TableModelListener listener : tableListeners) {
             listener.tableChanged(tme);
         }
     }

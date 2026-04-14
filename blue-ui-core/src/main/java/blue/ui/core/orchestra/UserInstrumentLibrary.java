@@ -88,7 +88,7 @@ public class UserInstrumentLibrary extends JComponent {
 
     JTree libraryTree = new JTree();
 
-    ArrayList listeners = new ArrayList();
+    ArrayList<SelectionListener<Object>> listeners = new ArrayList<>();
 
     public UserInstrumentLibrary() {
         this.setLayout(new BorderLayout());
@@ -161,7 +161,7 @@ public class UserInstrumentLibrary extends JComponent {
 
                     showPopup(userObject, (int) p.getX(), (int) p.getY());
                 } else {
-                    SelectionEvent se = new SelectionEvent(userObject,
+                    SelectionEvent<Object> se = new SelectionEvent<>(userObject,
                             SelectionEvent.SELECTION_SINGLE);
 
                     fireSelected(se);
@@ -174,13 +174,13 @@ public class UserInstrumentLibrary extends JComponent {
         ActionMap actionMap = libraryTree.getActionMap();
 
         inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_X,
-                BlueSystem.getMenuShortcutKey()), "cutNode");
+                BlueSystem.getMenuShortcutKeyEx()), "cutNode");
 
         inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_C,
-                BlueSystem.getMenuShortcutKey()), "copyNode");
+                BlueSystem.getMenuShortcutKeyEx()), "copyNode");
 
         inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_V,
-                BlueSystem.getMenuShortcutKey()), "pasteNode");
+                BlueSystem.getMenuShortcutKeyEx()), "pasteNode");
 
         inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0),
                 "deleteNode");
@@ -225,21 +225,18 @@ public class UserInstrumentLibrary extends JComponent {
         libraryTree.setModel(iLibrary);
     }
 
-    public void addSelectionListener(SelectionListener listener) {
+    public void addSelectionListener(SelectionListener<Object> listener) {
         listeners.add(listener);
     }
 
-    public void removeSelectionListener(SelectionListener listener) {
+    public void removeSelectionListener(SelectionListener<Object> listener) {
         listeners.remove(listener);
     }
 
-    public void fireSelected(SelectionEvent se) {
-
-        for (int i = 0; i < listeners.size(); i++) {
-            SelectionListener listener = (SelectionListener) listeners.get(i);
+    public void fireSelected(SelectionEvent<Object> se) {
+        for (SelectionListener<Object> listener : listeners) {
             listener.selectionPerformed(se);
         }
-
     }
 
     protected void cutNode() {
@@ -317,8 +314,8 @@ public class UserInstrumentLibrary extends JComponent {
         }
 
         Object obj = selectionPath.getLastPathComponent();
-        if (obj instanceof Instrument) {
-            return (Instrument) obj;
+        if (obj instanceof Instrument instrument) {
+            return instrument;
         }
         return null;
     }
@@ -530,8 +527,8 @@ class UserInstrumentTreePopup extends JPopupMenu {
 
         Object bufferedObj;
 
-        if (userObj instanceof Instrument) {
-            bufferedObj = ((Instrument) userObj).deepCopy();
+        if (userObj instanceof Instrument instrument) {
+            bufferedObj = instrument.deepCopy();
         } else {
             bufferedObj = new InstrumentCategory((InstrumentCategory)userObj);
         }
@@ -545,8 +542,8 @@ class UserInstrumentTreePopup extends JPopupMenu {
         }
 
         Object bufferedObj = CopyBuffer.getBufferedObject(CopyBuffer.INSTRUMENT);
-        if (bufferedObj instanceof Instrument) {
-            addInstrument((Instrument) bufferedObj);
+        if (bufferedObj instanceof Instrument instrument) {
+            addInstrument(instrument);
         } else {
             addInstrumentCategory(
                     new InstrumentCategory((InstrumentCategory)bufferedObj));
@@ -603,10 +600,10 @@ class UserInstrumentTreePopup extends JPopupMenu {
         this.instrGUI = instrGui;
         this.userObj = userObj;
 
-        if (userObj instanceof InstrumentCategory) {
+        if (userObj instanceof InstrumentCategory instrumentCategory) {
             addCategoryMenuItem.setVisible(true);
 
-            removeCategoryMenuItem.setVisible(!((InstrumentCategory) userObj).isRoot());
+            removeCategoryMenuItem.setVisible(!instrumentCategory.isRoot());
 
             addInstrumentMenu.setVisible(true);
             removeInstrumentMenuItem.setVisible(false);

@@ -98,10 +98,9 @@ public class RecentProjectsAction extends CallableSystemAction {
             removeAll();
             RecentProjectsList opts = RecentProjectsList.getInstance();
             List<String> list = opts.getRecentProjectsList();
-            for (int i=0; i<list.size(); i++ ) {
-                String name = list.get(i);
+            for (String name : list) {
                 Action action = createAction(name);
-                action.putValue(Action.NAME,name);
+                action.putValue(Action.NAME, name);
                 JMenuItem menuItem = new JMenuItem(action);
                 add(menuItem);
             }

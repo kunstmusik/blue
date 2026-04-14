@@ -36,20 +36,20 @@ import javax.swing.JComponent;
 public class GeneratorEditorFactory {
 
     public static JComponent getView(Generator generator) {
-        if(generator instanceof Probability) {
-            return new ProbabilityEditor((Probability)generator);
-        } else if(generator instanceof Segment) {
+        if(generator instanceof Probability probability) {
+            return new ProbabilityEditor(probability);
+        } else if(generator instanceof Segment segment) {
             SegmentEditor editor = new SegmentEditor();
-            editor.setSegment((Segment)generator);
+            editor.setSegment(segment);
             return editor;
-        } else if(generator instanceof ItemList) {
-            return new ItemListEditor((ItemList)generator);
-        } else if(generator instanceof Oscillator) {
-            return new OscillatorEditor((Oscillator)generator);
-        } else if(generator instanceof Random) {
-            return new RandomEditor((Random)generator);
-        } else if(generator instanceof Constant) {
-            return new ConstantEditor((Constant)generator);
+        } else if(generator instanceof ItemList itemList) {
+            return new ItemListEditor(itemList);
+        } else if(generator instanceof Oscillator oscillator) {
+            return new OscillatorEditor(oscillator);
+        } else if(generator instanceof Random random) {
+            return new RandomEditor(random);
+        } else if(generator instanceof Constant constant) {
+            return new ConstantEditor(constant);
         }
 
         return null;

@@ -26,6 +26,8 @@ import blue.score.ScoreObject;
 import blue.soundObject.JavaScriptObject;
 import blue.soundObject.NoteList;
 import blue.soundObject.SoundObject;
+import blue.time.TimeContext;
+import blue.time.TimeContextManager;
 import blue.ui.nbutilities.MimeTypeEditorComponent;
 import blue.ui.utilities.SimpleDocumentListener;
 import java.awt.BorderLayout;
@@ -84,7 +86,7 @@ public class JavaScriptObjectEditor extends ScoreObjectEditor {
         ActionMap actions = codeEditor.getJEditorPane().getActionMap();
 
         inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_T, BlueSystem.
-                getMenuShortcutKey()), "testSoundObject");
+                getMenuShortcutKeyEx()), "testSoundObject");
 
         actions.put("testSoundObject", new AbstractAction() {
 
@@ -134,7 +136,8 @@ public class JavaScriptObjectEditor extends ScoreObjectEditor {
         NoteList notes = null;
 
         try {
-            notes = ((SoundObject) this.sObj).generateForCSD(null, 0.0f, -1.0f);
+            TimeContext context = TimeContextManager.getContext();
+            notes = ((SoundObject) this.sObj).generateForCSD(context, null, 0.0f, -1.0f);
         } catch (Exception e) {
             ExceptionDialog.showExceptionDialog(SwingUtilities.getRoot(this), e);
         }

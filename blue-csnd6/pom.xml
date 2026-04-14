@@ -88,10 +88,17 @@
         </dependency>
         <dependency>
             <groupId>com.kunstmusik</groupId>
-            <artifactId>CsoundJNI</artifactId>
-            <version>1.0.6</version>
+            <artifactId>csoundffm</artifactId>
+            <version>1.0.2</version>
         </dependency>
     </dependencies>
+    <distributionManagement>
+        <repository>
+            <id>github</id>
+            <name>GitHub kunstmusik Apache Maven Packages</name>
+            <url>https://maven.pkg.github.com/kunstmusik/CsoundFFM</url>
+        </repository>
+    </distributionManagement>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>

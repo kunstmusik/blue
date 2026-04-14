@@ -19,18 +19,21 @@
  */
 package blue.utility;
 
-import junit.framework.TestCase;
+import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.Test;
 
-public class NumberUtilitiesTest extends TestCase {
+class NumberUtilitiesTest {
 
-    public final void testFormatDouble() {
+    @Test
+    void testFormatDouble() {
         double f = 0.00000001;
 
         assertEquals("1.0E-8", Double.toString(f));
         assertEquals("0.00000001", NumberUtilities.formatDouble(f));
     }
 
-    public final void testFormatTime() {
+    @Test
+    void testFormatTime() {
         float time1 = 1.4350f;
         float time2 = 11.4350f;
         float time3 = 111.4350f;

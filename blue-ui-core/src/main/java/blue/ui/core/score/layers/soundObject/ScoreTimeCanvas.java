@@ -28,7 +28,11 @@ import blue.score.layers.LayerGroupDataEvent;
 import blue.score.layers.LayerGroupListener;
 import blue.soundObject.PolyObject;
 import blue.soundObject.SoundObject;
+import blue.soundObject.TimeBehavior;
+import blue.time.TimeContext;
+import blue.time.TimeContextManager;
 import blue.ui.core.score.ScoreObjectView;
+import blue.ui.core.score.TimeDisplayFormat;
 import blue.ui.core.score.layers.LayerGroupPanel;
 import blue.ui.core.score.layers.SelectionMarquee;
 import blue.ui.core.score.layers.soundObject.views.SoundObjectViewFactory;
@@ -49,7 +53,6 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.text.MessageFormat;
 import java.util.HashMap;
 import java.util.List;
 import javax.swing.*;
@@ -67,8 +70,6 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
         implements PropertyChangeListener, LayerGroupListener, SoundLayerListener,
         LayerGroupPanel<PolyObject> {
 
-    private static final MessageFormat toolTipFormat = new MessageFormat(
-            "<html><b>Name:</b> {0}<br>" + "<b>Type:</b> {1}<br>" + "<b>Start Time:</b> {2}<br>" + "<b>Duration:</b> {3}<br>" + "<b>End Time:</b> {4}</html>");
     private final HashMap<SoundObject, SoundObjectView> soundObjectToViewMap
             = new HashMap<>();
     
@@ -138,7 +139,10 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
 
         dropTargetListener = new ScoreTimelineDropTargetListener(this);
 
+        // Configure tooltips: show immediately, never dismiss
         ToolTipManager.sharedInstance().registerComponent(this);
+        ToolTipManager.sharedInstance().setInitialDelay(0);
+        ToolTipManager.sharedInstance().setDismissDelay(Integer.MAX_VALUE);
 
         this.setFocusable(true);
 
@@ -159,21 +163,64 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
 
         String tip = null;
 
-        Object obj = this.getComponentAt(e.getPoint());
-        if (obj instanceof SoundObjectView) {
-            SoundObject sObj = ((SoundObjectView) obj).getSoundObject();
+        // Need to find the deepest component at the point since SoundObjectViews
+        // are children of sObjPanel, not direct children of this JLayeredPane
+        Component comp = sObjPanel.getComponentAt(e.getPoint());
+        if (comp instanceof SoundObjectView soundObjectView) {
+            SoundObject sObj = soundObjectView.getSoundObject();
 
-            double subjectiveDuration = sObj.getSubjectiveDuration();
-            double startTime = sObj.getStartTime();
+            TimeContext context = TimeContextManager.getContext();
+            
+            double startBeats = sObj.getStartTime().toBeats(context);
+            double durationBeats = sObj.getSubjectiveDuration().toBeats(context);
+            double endBeats = startBeats + durationBeats;
+            
+            // Format in both beats and time
+            String startTimeStr = TimeDisplayFormat.TIME.formatCompact(startBeats, context);
+            String durationTimeStr = TimeDisplayFormat.TIME.formatCompact(durationBeats, context);
+            String endTimeStr = TimeDisplayFormat.TIME.formatCompact(endBeats, context);
+            
+            // Get time behavior
+            TimeBehavior tb = sObj.getTimeBehavior();
+            String timeBehaviorStr = switch (tb) {
+                case NONE -> "None";
+                case SCALE -> "Scale";
+                case REPEAT -> "Repeat";
+                case REPEAT_CLASSIC -> "Repeat (Classic)";
+                default -> tb.toString();
+            };
 
-            Object[] args = {sObj.getName(),
-                ObjectUtilities.getShortClassName(sObj), startTime,
-                subjectiveDuration, startTime + subjectiveDuration};
-
-            tip = toolTipFormat.format(args);
+            tip = String.format(
+                """
+                <html><b>%s</b><br>
+                <b>Type:</b> %s<br>
+                <b>Start:</b> %.2f beats (%s)<br>
+                <b>Duration:</b> %.2f beats (%s)<br>
+                <b>End:</b> %.2f beats (%s)<br>
+                <b>Time Behavior:</b> %s</html>""",
+                escapeHtml(sObj.getName()),
+                ObjectUtilities.getShortClassName(sObj),
+                startBeats, startTimeStr,
+                durationBeats, durationTimeStr,
+                endBeats, endTimeStr,
+                timeBehaviorStr
+            );
         }
 
         return tip;
+    }
+    
+    /**
+     * Escapes HTML special characters in a string.
+     */
+    private String escapeHtml(String text) {
+        if (text == null) {
+            return "";
+        }
+        return text.replace("&", "&amp;")
+                   .replace("<", "&lt;")
+                   .replace(">", "&gt;")
+                   .replace("\"", "&quot;");
     }
 
     public void setSelectionDragRegions() {
@@ -194,11 +241,8 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
     public void reset() {
         UiUtilities.invokeOnSwingThread(() -> {
             Component[] components = sObjPanel.getComponents();
-            for (int i = 0; i < components.length; i++) {
-                Component c = components[i];
-
-                if (c instanceof SoundObjectView) {
-                    SoundObjectView sObjView = (SoundObjectView) c;
+            for (Component c : components) {
+                if (c instanceof SoundObjectView sObjView) {
 
                     int index = getPolyObject().getSoundLayerIndex(
                             sObjView.getSoundObject());
@@ -244,8 +288,8 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
 
             SoundLayer tempLayer;
 
-            for (int i = 0; i < pObj.size(); i++) {
-                tempLayer = pObj.get(i);
+            for (SoundLayer soundObjects : pObj) {
+                tempLayer = soundObjects;
                 tempLayer.removePropertyChangeListener(heightListener);
                 tempLayer.removeSoundLayerListener(this);
             }
@@ -302,10 +346,12 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
             return;
         }
 
-        int tempTime = (int) (getPolyObject().getMaxTime() / 60) + 2;
+        TimeContext context = TimeContextManager.getContext();
+        
+        int tempTime = (int) (getPolyObject().getMaxTime(context) / 60) + 2;
         int height = getPolyObject().getTotalHeight();
 
-        int width = tempTime * timeState.getPixelSecond() * 60;
+        int width = (int)(tempTime * timeState.getPixelSecond() * 60);
 //
 //        if (getParent() != null) {
 //
@@ -340,17 +386,18 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
     }
 
     private void addSoundObjectView(int soundLayerIndex, SoundObject sObj) {
-
+        TimeContext context = TimeContextManager.getContext();
+        
         var factory = SoundObjectViewFactory.getInstance();
         SoundObjectView temp = factory.createView(sObj, timeState);
 
         temp.addComponentListener(sObjViewListener);
         sObjPanel.add(temp, 0);
         temp.setLocation(
-                (int) (sObj.getStartTime() * timeState.getPixelSecond()),
+                (int) (sObj.getStartTime().toBeats(context) * timeState.getPixelSecond()),
                 getPolyObject().getYForLayerNum(soundLayerIndex));
         temp.setSize(
-                (int) (sObj.getSubjectiveDuration() * timeState.getPixelSecond()),
+                (int) (sObj.getSubjectiveDuration().toBeats(context) * timeState.getPixelSecond()),
                 getPolyObject().getSoundLayerHeight(soundLayerIndex));
 
         // add to map of soundObjects and views
@@ -409,7 +456,9 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
         g.drawLine(0, getHeight() - 1, width, getHeight() - 1);
 
         if (timeState.isSnapEnabled()) {
-            int snapPixels = (int) (timeState.getSnapValue() * timeState.getPixelSecond());
+            TimeContext ctx = TimeContextManager.getContext();
+            double snapValue = timeState.getSnapValueInBeats(0.0, ctx.getTempoMap(), ctx.getSampleRate());
+            int snapPixels = (int) (snapValue * timeState.getPixelSecond());
 
             int x = 0;
             if (snapPixels <= 0) {
@@ -419,9 +468,7 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
             g.setColor(VLINE_COLOR);
 
             int height = getPolyObject().getTotalHeight();
-            double snapValue = timeState.getSnapValue();
-            int pixelSecond = timeState.getPixelSecond();
-            double time;
+            double pixelSecond = timeState.getPixelSecond();
             for (int i = 0; x < width; i++) {
                 x = (int) ((i * snapValue) * pixelSecond);
                 g.drawLine(x, 0, x, height);
@@ -591,13 +638,13 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
     @Override
     public void marqueeSelectionPerformed(SelectionMarquee marquee) {
         Component[] comps = sObjPanel.getComponents();
-        for (int i = 0; i < comps.length; i++) {
-            if (!(comps[i] instanceof SoundObjectView)) {
+        for (Component comp : comps) {
+            if (!(comp instanceof SoundObjectView)) {
                 continue;
             }
 
-            if (marquee.intersects((JComponent) comps[i])) {
-                content.add(((SoundObjectView) comps[i]).getSoundObject());
+            if (marquee.intersects((JComponent) comp)) {
+                content.add(((SoundObjectView) comp).getSoundObject());
             }
 
         }
@@ -606,8 +653,8 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
     @Override
     public ScoreObjectView getScoreObjectViewAtPoint(Point p) {
         Component c = sObjPanel.getComponentAt(p);
-        if (c instanceof ScoreObjectView) {
-            return (ScoreObjectView) c;
+        if (c instanceof ScoreObjectView scoreObjectView) {
+            return scoreObjectView;
         }
         return null;
     }

@@ -19,34 +19,36 @@
  */
 package blue.noteProcessor;
 
-import junit.framework.TestCase;
+import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
 
 /**
  * @author steven
  */
-public class AddProcessorTest extends TestCase {
+class AddProcessorTest {
 
     private AddProcessor addProcessor;
 
     /*
      * @see TestCase#setUp()
      */
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
+    @BeforeEach
+    void setUp() throws Exception {
         this.addProcessor = new AddProcessor();
     }
 
     /*
      * @see TestCase#tearDown()
      */
-    @Override
-    protected void tearDown() throws Exception {
-        super.tearDown();
+    @AfterEach
+    void tearDown() throws Exception {
         this.addProcessor = null;
     }
 
-    public final void testSetPfield() {
+    @Test
+    void testSetPfield() {
         String value = "4";
         this.addProcessor.setPfield(value);
 
@@ -70,7 +72,8 @@ public class AddProcessorTest extends TestCase {
 
     }
 
-    public final void testSetVal() {
+    @Test
+    void testSetVal() {
         String value = "4.1";
         this.addProcessor.setVal(value);
 
@@ -91,15 +94,18 @@ public class AddProcessorTest extends TestCase {
 
     }
 
-    public final void testProcessNotes() {
+    @Test
+    void testProcessNotes() {
         // TODO Implement processNotes().
     }
 
-    public final void testLoadFromXML() {
+    @Test
+    void testLoadFromXML() {
         // TODO Implement loadFromXML().
     }
 
-    public final void testSaveAsXML() {
+    @Test
+    void testSaveAsXML() {
         // TODO Implement saveAsXML().
     }
 

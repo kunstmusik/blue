@@ -23,6 +23,10 @@ import blue.BlueSystem;
 import blue.score.layers.audio.core.AudioClip;
 import blue.score.layers.audio.core.AudioLayer;
 import blue.score.layers.audio.core.AudioLayerGroup;
+import blue.time.TimeBase;
+import blue.time.TimeContext;
+import blue.time.TimeContextManager;
+import blue.time.TimeUtilities;
 import blue.utility.FileUtilities;
 import java.awt.Point;
 import java.awt.datatransfer.DataFlavor;
@@ -150,10 +154,11 @@ public class AudioLayersDropTargetListener implements DropTargetListener {
             af.setName(f.getName());
             af.setAudioFile(f);
 
-            float startTime = (float) p.x / audioLayersPanel.getTimeState().getPixelSecond();
+            double startTime = p.x / audioLayersPanel.getTimeState().getPixelSecond();
 
-            af.setStartTime(startTime);
-            af.setSubjectiveDuration(af.getAudioDuration());
+            TimeBase timeBase = audioLayersPanel.getTimeState().getTimeDisplay();
+            TimeContext context = TimeContextManager.getContext();
+            af.setStartTime(TimeUtilities.beatsToTimePosition(startTime, timeBase, context));
 
             AudioLayer layer = audioLayerGroup.get(index);
             layer.add(af);
@@ -209,10 +214,11 @@ public class AudioLayersDropTargetListener implements DropTargetListener {
                 af.setName(sObjName);
                 af.setAudioFile(f);
 
-                float startTime = (float) p.x / audioLayersPanel.getTimeState().getPixelSecond();
+                double startTime = p.x / audioLayersPanel.getTimeState().getPixelSecond();
 
-                af.setStartTime(startTime);
-                af.setSubjectiveDuration(af.getAudioDuration());
+                TimeBase timeBase = audioLayersPanel.getTimeState().getTimeDisplay();
+                TimeContext context = TimeContextManager.getContext();
+                af.setStartTime(TimeUtilities.beatsToTimePosition(startTime, timeBase, context));
 
                 AudioLayer layer = audioLayerGroup.get(index);
                 layer.add(af);
@@ -273,10 +279,11 @@ public class AudioLayersDropTargetListener implements DropTargetListener {
                 af.setName(sObjName);
                 af.setAudioFile(f);
 
-                float startTime = (float) p.x / audioLayersPanel.getTimeState().getPixelSecond();
+                double startTime = p.x / audioLayersPanel.getTimeState().getPixelSecond();
 
-                af.setStartTime(startTime);
-                af.setSubjectiveDuration(af.getAudioDuration());
+                TimeBase timeBase = audioLayersPanel.getTimeState().getTimeDisplay();
+                TimeContext context = TimeContextManager.getContext();
+                af.setStartTime(TimeUtilities.beatsToTimePosition(startTime, timeBase, context));
 
                 AudioLayer layer = audioLayerGroup.get(index);
                 layer.add(af);

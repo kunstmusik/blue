@@ -25,6 +25,9 @@ import blue.projects.BlueProjectManager;
 import blue.score.Score;
 import blue.score.ScoreObject;
 import blue.score.layers.ScoreObjectLayer;
+import blue.time.TimeContext;
+import blue.time.TimeContextManager;
+import blue.time.TimeUnitMath;
 import blue.ui.core.score.ScoreTopComponent;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -55,6 +58,7 @@ public final class NavigateToNextMarkerAction implements ActionListener {
 
         final var data = BlueProjectManager.getInstance().getCurrentBlueData();
         final double currentStartTime = data.getRenderStartTime();
+        TimeContext context = TimeContextManager.getContext();
 
         MarkersList markers = data.getMarkersList();
 
@@ -64,7 +68,7 @@ public final class NavigateToNextMarkerAction implements ActionListener {
             for (int i = 0; i < markers.size(); i++) {
                 Marker a = markers.getMarker(i);
 
-                if (a.getTime() > currentStartTime) {
+                if (a.getTime().toBeats(context) > currentStartTime) {
                     selected = a;
                     break;
                 }
@@ -73,7 +77,7 @@ public final class NavigateToNextMarkerAction implements ActionListener {
 
         final double newStartTime = (selected == null)
                 ? getEndTimeOfScore(data.getScore())
-                : selected.getTime();
+                : selected.getTime().toBeats(context);
 
         if (newStartTime > currentStartTime) {
 
@@ -86,13 +90,14 @@ public final class NavigateToNextMarkerAction implements ActionListener {
     }
 
     private double getEndTimeOfScore(Score score) {
+        TimeContext context = TimeContextManager.getContext();
         double max = 0.0;
         for (var layer : score.getAllLayers()) {
             if (layer instanceof ScoreObjectLayer) {
                 final var sLayer = (ScoreObjectLayer<ScoreObject>) layer;
 
                 var layerMax = sLayer.stream()
-                        .mapToDouble(sObj -> sObj.getStartTime() + sObj.getSubjectiveDuration())
+                        .mapToDouble(sObj -> TimeUnitMath.add(context, sObj.getStartTime(), sObj.getSubjectiveDuration()).toBeats(context))
                         .max();
 
                 if (layerMax.isPresent()) {

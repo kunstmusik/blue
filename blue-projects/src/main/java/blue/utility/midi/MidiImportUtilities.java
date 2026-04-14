@@ -25,6 +25,8 @@ import blue.soundObject.Note;
 import blue.soundObject.NoteList;
 import blue.soundObject.NoteParseException;
 import blue.soundObject.PolyObject;
+import blue.time.TimeDuration;
+import blue.time.TimePosition;
 import blue.utilities.MidiUtilities;
 import blue.utility.*;
 import java.awt.Frame;
@@ -116,13 +118,13 @@ public class MidiImportUtilities {
             if (trSettings.isTrim()) {
                 // Assumes NoteList is already sorted
                 double start = nl.get(0).getStartTime();
-                genSco.setStartTime(start);
+                genSco.setStartTime(TimePosition.beats(start));
                 ScoreUtilities.normalizeNoteList(nl);
             } else {
-                genSco.setStartTime(0.0f);
+                genSco.setStartTime(TimePosition.beats(0.0));
             }
 
-            genSco.setSubjectiveDuration(ScoreUtilities.getTotalDuration(nl));
+            genSco.setSubjectiveDuration(TimeDuration.beats(ScoreUtilities.getTotalDuration(nl)));
             genSco.setText(nl.toString());
 
             genSco.setName("Track " + i);
@@ -153,14 +155,11 @@ public class MidiImportUtilities {
             MidiEvent me = track.get(j);
             MidiMessage message = me.getMessage();
 
-            if (message instanceof ShortMessage) {
-
-                ShortMessage shortMsg = (ShortMessage) message;
+            if (message instanceof ShortMessage shortMsg) {
                 int noteNum, velocity;
                 MNote n;
 
                 double time = (me.getTick() / ticksLength) * divType;
-
 
                 switch (shortMsg.getCommand()) {
                     case ShortMessage.NOTE_ON:
@@ -214,7 +213,6 @@ public class MidiImportUtilities {
         return nl;
     }
 
-
     private static MidiImportSettings getMidiImportSettings(Track[] tracks) {
         MidiImportSettings settings = new MidiImportSettings();
 
@@ -228,11 +226,8 @@ public class MidiImportUtilities {
                 MidiEvent me = track.get(j);
                 MidiMessage message = me.getMessage();
 
-                if (message instanceof ShortMessage) {
-
-                    ShortMessage shortMsg = (ShortMessage) message;
+                if (message instanceof ShortMessage shortMsg) {
                     int velocity;
-                    MNote n;
 
                     switch (shortMsg.getCommand()) {
                         case ShortMessage.NOTE_ON:
@@ -286,8 +281,8 @@ public class MidiImportUtilities {
 //            e.printStackTrace();
 //        }
 //    }
-
     private static class MNote {
+
         public int velocity = -1;
 
         public double start = -1.0f;

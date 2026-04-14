@@ -17,9 +17,9 @@
  * the Free Software Foundation Inc., 59 Temple Place - Suite 330,
  * Boston, MA  02111-1307 USA
  */
-
 package blue.udo;
 
+import blue.utility.UDOUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
 
@@ -32,24 +32,30 @@ public class UserDefinedOpcode {
 
     public transient String commentText = null;
 
+    public UDOStyle style = UDOStyle.CLASSIC;
+
     public String outTypes = "";
 
     public String inTypes = "";
+
+    public String inputArguments = "";
 
     public String codeBody = "";
 
     public String comments = "";
 
-    public UserDefinedOpcode() {}
+    public UserDefinedOpcode() {
+    }
 
     public UserDefinedOpcode(UserDefinedOpcode udo) {
         opcodeName = udo.opcodeName;
+        style = udo.style;
         outTypes = udo.outTypes;
         inTypes = udo.inTypes;
+        inputArguments = udo.inputArguments;
         codeBody = udo.codeBody;
         comments = udo.comments;
     }
-
 
     public static UserDefinedOpcode loadFromXML(Element data) {
         UserDefinedOpcode retVal = new UserDefinedOpcode();
@@ -65,22 +71,34 @@ public class UserDefinedOpcode {
                 val = "";
             }
             switch (node.getName()) {
-                case "opcodeName":
+                case "style" -> {
+                    try {
+                        retVal.style = UDOStyle.valueOf(val);
+                    } catch (IllegalArgumentException e) {
+                        retVal.style = UDOStyle.CLASSIC;
+                    }
+                }
+                case "opcodeName" ->
                     retVal.opcodeName = val;
-                    break;
-                case "outTypes":
+                case "outTypes" ->
                     retVal.outTypes = val;
-                    break;
-                case "inTypes":
+                case "inTypes" ->
                     retVal.inTypes = val;
-                    break;
-                case "codeBody":
+                case "inputArguments" ->
+                    retVal.inputArguments = val;
+                case "codeBody" ->
                     retVal.codeBody = val;
-                    break;
-                case "comments":
+                case "comments" ->
                     retVal.comments = val;
-                    break;
             }
+        }
+
+        if (retVal.style == UDOStyle.MODERN) {
+            retVal.inTypes = "";
+            retVal.outTypes = UDOUtilities.normalizeModernOutTypes(retVal.outTypes);
+        } else {
+            retVal.inputArguments = "";
+            retVal.outTypes = UDOUtilities.normalizeClassicOutTypes(retVal.outTypes);
         }
 
         return retVal;
@@ -89,9 +107,16 @@ public class UserDefinedOpcode {
     public electric.xml.Element saveAsXML() {
         Element retVal = new Element("udo");
 
+        retVal.addElement("style").setText(style.name());
         retVal.addElement("opcodeName").setText(opcodeName);
-        retVal.addElement("outTypes").setText(outTypes);
-        retVal.addElement("inTypes").setText(inTypes);
+        retVal.addElement("outTypes").setText(style == UDOStyle.MODERN
+                ? UDOUtilities.getModernOutTypesDisplay(outTypes)
+                : outTypes);
+        if (style == UDOStyle.MODERN) {
+            retVal.addElement("inputArguments").setText(inputArguments);
+        } else {
+            retVal.addElement("inTypes").setText(inTypes);
+        }
         retVal.addElement("codeBody").setText(codeBody);
         retVal.addElement("comments").setText(comments);
 
@@ -99,16 +124,20 @@ public class UserDefinedOpcode {
     }
 
     public String generateCode() {
+        if (style == UDOStyle.MODERN) {
+            return generateModernCode();
+        }
+
         StringBuilder buffer = new StringBuilder();
 
         buffer.append("\topcode ").append(opcodeName);
         buffer.append(",").append(outTypes);
         buffer.append(",").append(inTypes);
-       
-        if(commentText != null) {
+
+        if (commentText != null) {
             buffer.append(" ; ").append(commentText);
         }
-        
+
         buffer.append("\n");
 
         // if(inArgs.trim().length() > 0) {
@@ -118,17 +147,76 @@ public class UserDefinedOpcode {
         // if(useLocalKsmps) {
         // buffer.append("setksmps ").append(localKsmps).append("\n");
         // }
-
         buffer.append("\n").append(codeBody).append("\n\n");
 
         // if(outArgs.trim().length() > 0) {
         // buffer.append("xout ").append(outArgs).append("\n");
         // }
-
         buffer.append("\tendop");
 
         return buffer.toString();
 
+    }
+
+    private String generateModernCode() {
+        StringBuilder buffer = new StringBuilder();
+
+        buffer.append("opcode ").append(opcodeName);
+        buffer.append("(").append(inputArguments).append(")");
+        buffer.append(":").append(UDOUtilities.getModernOutputSignature(outTypes));
+
+        if (commentText != null) {
+            buffer.append(" ; ").append(commentText);
+        }
+
+        String formattedCodeBody = indentModernCodeBody(codeBody);
+        if (!formattedCodeBody.isEmpty()) {
+            buffer.append("\n").append(formattedCodeBody);
+        }
+
+        buffer.append("\nendop");
+
+        return buffer.toString();
+    }
+
+    private String indentModernCodeBody(String source) {
+        if (source == null || source.isEmpty()) {
+            return "";
+        }
+
+        String trimmedSource = trimTrailingLineBreaks(source);
+        if (trimmedSource.isEmpty()) {
+            return "";
+        }
+
+        String[] lines = trimmedSource.split("\n", -1);
+        StringBuilder buffer = new StringBuilder();
+
+        for (int i = 0; i < lines.length; i++) {
+            if (i > 0) {
+                buffer.append("\n");
+            }
+
+            if (!lines[i].isEmpty()) {
+                buffer.append("    ");
+            }
+            buffer.append(lines[i]);
+        }
+
+        return buffer.toString();
+    }
+
+    private String trimTrailingLineBreaks(String source) {
+        int endIndex = source.length();
+        while (endIndex > 0) {
+            char currentChar = source.charAt(endIndex - 1);
+            if (currentChar != '\n' && currentChar != '\r') {
+                break;
+            }
+            endIndex--;
+        }
+
+        return source.substring(0, endIndex);
     }
 
     @Override
@@ -156,7 +244,6 @@ public class UserDefinedOpcode {
         //
         // udo.inArgs = "ipch";
         // udo.outArgs = "iout";
-
         udo.codeBody = "ipch\t xin\niout	= (ipch < 15 ? cpspch(ipch) : ipch)\n\txout iout	";
 
         System.out.println(udo.toString());
@@ -167,8 +254,23 @@ public class UserDefinedOpcode {
         if (udo == null) {
             return false;
         }
-        return (this.inTypes.equals(udo.inTypes)
-                && this.outTypes.equals(udo.outTypes) && this.codeBody
-                .equals(udo.codeBody));
+        String thisOutTypes = this.style == UDOStyle.MODERN
+                ? UDOUtilities.normalizeModernOutTypesForComparison(
+                        this.outTypes)
+                : UDOUtilities.normalizeClassicOutTypes(this.outTypes);
+        String otherOutTypes = udo.style == UDOStyle.MODERN
+                ? UDOUtilities.normalizeModernOutTypesForComparison(
+                        udo.outTypes)
+                : UDOUtilities.normalizeClassicOutTypes(udo.outTypes);
+
+        if (this.style != udo.style || !thisOutTypes.equals(otherOutTypes)
+                || !this.codeBody.equals(udo.codeBody)) {
+            return false;
+        }
+
+        return switch (this.style) {
+            case MODERN -> this.inputArguments.equals(udo.inputArguments);
+            case CLASSIC -> this.inTypes.equals(udo.inTypes);
+        };
     }
 }

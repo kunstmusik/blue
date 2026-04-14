@@ -19,19 +19,20 @@
  */
 package blue.soundObject;
 
-import blue.score.ScoreObjectEvent;
 import blue.*;
 import blue.noteProcessor.NoteProcessorChain;
 import blue.noteProcessor.NoteProcessorException;
 import blue.plugin.SoundObjectPlugin;
+import blue.score.ScoreObjectEvent;
 import blue.soundObject.pattern.Pattern;
+import blue.time.TimeContext;
+import blue.time.TimeDuration;
 import blue.utility.ScoreUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Vector;
 import javax.swing.event.TableModelEvent;
@@ -50,15 +51,15 @@ public class PatternObject extends AbstractSoundObject implements TableModel,
 
     private TimeBehavior timeBehavior;
 
-    double repeatPoint = -1.0f;
+    TimeDuration repeatPoint = null;
 
     private int beats = 4;
 
     private int subDivisions = 4;
 
-    private transient Vector listeners = null;
+    private transient Vector<TableModelListener> listeners = null;
 
-    private transient Vector pListeners = null;
+    private transient Vector<PropertyChangeListener> pListeners = null;
 
     private final ArrayList<Pattern> patterns = new ArrayList<>();
 
@@ -126,7 +127,7 @@ public class PatternObject extends AbstractSoundObject implements TableModel,
     }
 
     /* COMPILATION METHODS */
-    public NoteList generateNotes(double renderStart, double renderEnd) throws SoundObjectException {
+    public NoteList generateNotes(TimeContext context, double renderStart, double renderEnd) throws SoundObjectException {
         NoteList tempNoteList = new NoteList();
 
         // check if solo is selected, if so, return only that layer's notes if
@@ -204,8 +205,12 @@ public class PatternObject extends AbstractSoundObject implements TableModel,
             throw new SoundObjectException(this, e);
         }
 
+        double duration = this.getSubjectiveDuration().toBeats(context);
+        double startTime = getStartTime().toBeats(context);
+        
+        double rpBeats = this.getRepeatPoint() != null ? this.getRepeatPoint().toBeats(context) : -1.0;
         ScoreUtilities.applyTimeBehavior(tempNoteList, this.getTimeBehavior(),
-                this.getSubjectiveDuration(), this.getRepeatPoint(), beats);
+                duration, rpBeats, beats);
 
         ScoreUtilities.setScoreStart(tempNoteList, startTime);
 
@@ -213,7 +218,7 @@ public class PatternObject extends AbstractSoundObject implements TableModel,
     }
 
     @Override
-    public double getObjectiveDuration() {
+    public TimeDuration getObjectiveDuration(TimeContext context) {
         return getSubjectiveDuration();
     }
 
@@ -233,12 +238,12 @@ public class PatternObject extends AbstractSoundObject implements TableModel,
     }
 
     @Override
-    public double getRepeatPoint() {
+    public TimeDuration getRepeatPoint() {
         return this.repeatPoint;
     }
 
     @Override
-    public void setRepeatPoint(double repeatPoint) {
+    public void setRepeatPoint(TimeDuration repeatPoint) {
         this.repeatPoint = repeatPoint;
 
         ScoreObjectEvent event = new ScoreObjectEvent(this,
@@ -298,8 +303,7 @@ public class PatternObject extends AbstractSoundObject implements TableModel,
 
         retVal.addElement(patternsNode);
 
-        for (Iterator iter = patterns.iterator(); iter.hasNext();) {
-            Pattern element = (Pattern) iter.next();
+        for (Pattern element : patterns) {
             patternsNode.addElement(element.saveAsXML());
         }
 
@@ -337,13 +341,11 @@ public class PatternObject extends AbstractSoundObject implements TableModel,
 
         int numBeats = beats * subDivisions;
 
-        for (Iterator iter = patterns.iterator(); iter.hasNext();) {
-            Pattern p = (Pattern) iter.next();
-
+        for (Pattern p : patterns) {
             var oldValues = p.values;
             p.values = new boolean[numBeats];
-            
-            if(oldSubDivisions == subDivisions) {
+
+            if (oldSubDivisions == subDivisions) {
                 System.arraycopy(oldValues, 0, p.values, 0, Math.min(oldBeats, numBeats));
             }
         }
@@ -428,7 +430,7 @@ public class PatternObject extends AbstractSoundObject implements TableModel,
     @Override
     public void addTableModelListener(TableModelListener l) {
         if (listeners == null) {
-            listeners = new Vector();
+            listeners = new Vector<>();
         }
         listeners.add(l);
     }
@@ -448,8 +450,7 @@ public class PatternObject extends AbstractSoundObject implements TableModel,
 
         TableModelEvent tme = new TableModelEvent(this);
 
-        for (Iterator iter = listeners.iterator(); iter.hasNext();) {
-            TableModelListener listener = (TableModelListener) iter.next();
+        for (TableModelListener listener : listeners) {
             listener.tableChanged(tme);
         }
     }
@@ -460,17 +461,14 @@ public class PatternObject extends AbstractSoundObject implements TableModel,
             return;
         }
 
-        for (Iterator iter = pListeners.iterator(); iter.hasNext();) {
-            PropertyChangeListener listener = (PropertyChangeListener) iter
-                    .next();
-
+        for (PropertyChangeListener listener : pListeners) {
             listener.propertyChange(pce);
         }
     }
 
     public void addPropertyChangeListener(PropertyChangeListener pcl) {
         if (pListeners == null) {
-            pListeners = new Vector();
+            pListeners = new Vector<>();
         }
         pListeners.add(pcl);
     }
@@ -483,10 +481,10 @@ public class PatternObject extends AbstractSoundObject implements TableModel,
     }
 
     @Override
-    public NoteList generateForCSD(CompileData compileData, double startTime,
+    public NoteList generateForCSD(TimeContext context, CompileData compileData, double startTime,
             double endTime) throws SoundObjectException {
 
-        return generateNotes(startTime, endTime);
+        return generateNotes(context, startTime, endTime);
 
     }
 

@@ -109,19 +109,14 @@ public class LineListTableModel extends AbstractTableModel {
 
         Line line = lines.get(rowIndex);
 
-        switch (columnIndex) {
-            case 0:
-                return line.getColor();
-            case 1:
-                return line.getVarName();
-            case 2:
-                return new Double(line.getMin());
-            case 3:
-                return new Double(line.getMax());
-            case 4:
-                return Boolean.valueOf(line.isEndPointsLinked());
-        }
-        return null;
+        return switch (columnIndex) {
+            case 0 -> line.getColor();
+            case 1 -> line.getVarName();
+            case 2 -> line.getMin();
+            case 3 -> line.getMax();
+            case 4 -> line.isEndPointsLinked();
+            default -> null;
+        };
     }
 
     @Override
@@ -132,18 +127,13 @@ public class LineListTableModel extends AbstractTableModel {
 
     @Override
     public Class<? extends Object> getColumnClass(int c) {
-        switch (c) {
-            case 0:
-                return Color.class;
-            case 1:
-                return String.class;
-            case 2:
-            case 3:
-                return Double.class;
-            case 4:
-                return Boolean.class;
-        }
-        return null;
+        return switch (c) {
+            case 0 -> Color.class;
+            case 1 -> String.class;
+            case 2, 3 -> Double.class;
+            case 4 -> Boolean.class;
+            default -> null;
+        };
     }
 
     @Override
@@ -197,7 +187,7 @@ public class LineListTableModel extends AbstractTableModel {
                 line.setMax(dval, retVal.equals(LineBoundaryDialog.TRUNCATE));
                 break;
             case 4:
-                boolean linked = ((Boolean)value).booleanValue();
+                boolean linked = (Boolean) value;
                 line.setEndPointsLinked(linked);
                 
                 if(linked) {
@@ -224,29 +214,14 @@ public class LineListTableModel extends AbstractTableModel {
 
     @Override
     public String getColumnName(int column) {
-        String retVal;
-
-        switch (column) {
-            case 0:
-                retVal = "[x]";
-                break;
-            case 1:
-                retVal = BlueSystem.getString("lineObject.lineName");
-                break;
-            case 2:
-                retVal = BlueSystem.getString("common.min");
-                break;
-            case 3:
-                retVal = BlueSystem.getString("common.max");
-                break;
-            case 4:
-                retVal = "Link First/Last";
-                break;                
-            default:
-                retVal = "";
-        }
-
-        return retVal;
+        return switch (column) {
+            case 0 -> "[x]";
+            case 1 -> BlueSystem.getString("lineObject.lineName");
+            case 2 -> BlueSystem.getString("common.min");
+            case 3 -> BlueSystem.getString("common.max");
+            case 4 -> "Link First/Last";
+            default -> "";
+        };
     }
 
 }

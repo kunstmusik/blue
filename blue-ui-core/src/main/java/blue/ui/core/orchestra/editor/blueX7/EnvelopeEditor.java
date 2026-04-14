@@ -72,10 +72,10 @@ public class EnvelopeEditor extends JComponent {
             int runningX = 0;
             int lastY = yMaxHeight;
 
-            for (int i = 0; i < points.length; i++) {
+            for (EnvelopePoint point : points) {
                 int targetX = runningX
-                        + (int) ((points[i].x / 99.0f) * xMaxWidth);
-                int targetY = (int) (((1.0f - points[i].y / 99.0f)) * yMaxHeight);
+                        + (int) ((point.x / 99.0f) * xMaxWidth);
+                int targetY = (int) (((1.0f - point.y / 99.0f)) * yMaxHeight);
 
                 g.drawLine(runningX, lastY, targetX, targetY);
 

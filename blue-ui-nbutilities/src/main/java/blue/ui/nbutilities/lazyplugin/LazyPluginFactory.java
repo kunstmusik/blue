@@ -53,7 +53,7 @@ public class LazyPluginFactory {
                 folder);
 
         if (configFile != null) {
-            FileObject files[] = configFile.getChildren();
+            FileObject[] files = configFile.getChildren();
 
             List<FileObject> orderedFiles = FileUtil.getOrder(
                     Arrays.asList(files), true);

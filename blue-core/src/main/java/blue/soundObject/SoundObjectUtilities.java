@@ -20,9 +20,10 @@
 package blue.soundObject;
 
 import blue.noteProcessor.NoteProcessorChain;
+import blue.time.TimeDuration;
+import blue.time.TimePosition;
 import electric.xml.Element;
 import java.awt.Color;
-import java.util.List;
 
 /**
  * @author steven
@@ -35,10 +36,10 @@ public class SoundObjectUtilities {
         Element retVal = new Element("soundObject");
         retVal.setAttribute("type", sObj.getClass().getName());
 
-        retVal.addElement("subjectiveDuration").setText(
-                Double.toString(sObj.getSubjectiveDuration()));
-        retVal.addElement("startTime").setText(
-                Double.toString(sObj.getStartTime()));
+        // Save start time as TimePosition and duration as TimeDuration
+        retVal.addElement(sObj.getStartTime().saveAsXML().setName("startTime"));
+        retVal.addElement(sObj.getSubjectiveDuration().saveAsXML().setName("subjectiveDuration"));
+        
         retVal.addElement("name").setText(sObj.getName());
 
         String colorStr = Integer.toString(sObj.getBackgroundColor().getRGB());
@@ -48,8 +49,13 @@ public class SoundObjectUtilities {
         if (sObj.getTimeBehavior() != TimeBehavior.NOT_SUPPORTED) {
             retVal.addElement("timeBehavior").setText(
                     Integer.toString(sObj.getTimeBehavior().getType()));
-            retVal.addElement("repeatPoint").setText(
-                    Double.toString(sObj.getRepeatPoint()));
+            TimeDuration rp = sObj.getRepeatPoint();
+            if (rp != null) {
+                retVal.addElement(rp.saveAsXML().setName("repeatPoint"));
+            } else {
+                retVal.addElement("repeatPoint").setText(
+                        Double.toString(-1.0));
+            }
         }
 
         if (sObj.getNoteProcessorChain() != null) {
@@ -61,9 +67,47 @@ public class SoundObjectUtilities {
 
     public static void initBasicFromXML(Element data, SoundObject sObj)
             throws Exception {
-        sObj.setSubjectiveDuration(Double.parseDouble(data
-                .getTextString("subjectiveDuration")));
-        sObj.setStartTime(Double.parseDouble(data.getTextString("startTime")));
+        
+        // Load start time
+        Element startTimeElement = data.getElement("startTime");
+        if (startTimeElement != null && startTimeElement.getAttributeValue("type") != null) {
+            // New format: TimePosition (element has type attribute)
+            sObj.setStartTime(TimePosition.loadFromXML(startTimeElement));
+        } else if (data.getElement("startTimePosition") != null) {
+            // Legacy format: TimePosition with old tag name
+            sObj.setStartTime(TimePosition.loadFromXML(data.getElement("startTimePosition")));
+        } else if (data.getElement("startTime") != null) {
+            // Old format: double (migrate to BeatTime)
+            double startTime = Double.parseDouble(data.getTextString("startTime"));
+            sObj.setStartTime(TimePosition.beats(startTime));
+        } else {
+            throw new Exception("Missing startTime element");
+        }
+        
+        // Load duration
+        Element durationElement = data.getElement("subjectiveDuration");
+        if (durationElement != null && durationElement.getAttributeValue("type") != null) {
+            // New format: TimeDuration (element has type attribute)
+            sObj.setSubjectiveDuration(TimeDuration.loadFromXML(durationElement));
+        } else if (data.getElement("subjectiveDurationTD") != null) {
+            // Legacy format: TimeDuration with old tag name
+            sObj.setSubjectiveDuration(TimeDuration.loadFromXML(data.getElement("subjectiveDurationTD")));
+        } else if (data.getElement("subjectiveDurationUnit") != null) {
+            // Legacy format: TimePosition (migrate to TimeDuration via beats)
+            TimePosition legacyDur = TimePosition.loadFromXML(data.getElement("subjectiveDurationUnit"));
+            if (legacyDur instanceof TimePosition.BeatTime bt) {
+                sObj.setSubjectiveDuration(TimeDuration.beats(bt.getCsoundBeats()));
+            } else {
+                throw new Exception("Unsupported legacy subjectiveDurationUnit type: "
+                        + legacyDur.getClass().getSimpleName());
+            }
+        } else if (data.getElement("subjectiveDuration") != null) {
+            // Old format: double (migrate to DurationBeats)
+            double duration = Double.parseDouble(data.getTextString("subjectiveDuration"));
+            sObj.setSubjectiveDuration(TimeDuration.beats(duration));
+        } else {
+            throw new Exception("Missing subjectiveDuration element");
+        }
 
         String name = data.getTextString("name");
 
@@ -86,8 +130,19 @@ public class SoundObjectUtilities {
         }
 
         if (data.getElement("repeatPoint") != null) {
-            sObj.setRepeatPoint(Double.parseDouble(data
-                    .getTextString("repeatPoint")));
+            Element rpElement = data.getElement("repeatPoint");
+            if (rpElement.getAttributeValue("type") != null) {
+                // New format: TimeDuration XML
+                sObj.setRepeatPoint(TimeDuration.loadFromXML(rpElement));
+            } else {
+                // Legacy format: plain double text
+                double rpVal = Double.parseDouble(rpElement.getTextString());
+                if (rpVal > 0.0) {
+                    sObj.setRepeatPoint(TimeDuration.beats(rpVal));
+                } else {
+                    sObj.setRepeatPoint(null);
+                }
+            }
         }
 
         if (data.getElement("noteProcessorChain") != null) {
@@ -101,8 +156,7 @@ public class SoundObjectUtilities {
             return true;
         }
 
-        if (sObj instanceof PolyObject) {
-            PolyObject pObj = (PolyObject) sObj;
+        if (sObj instanceof PolyObject pObj) {
             for (SoundObject soundObject : pObj.getSoundObjects(true)) {
                 if (isOrContainsInstance(soundObject)) {
                     return true;

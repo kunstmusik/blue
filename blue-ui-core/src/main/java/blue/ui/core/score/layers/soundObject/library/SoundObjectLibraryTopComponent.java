@@ -25,6 +25,12 @@ import blue.projects.BlueProject;
 import blue.projects.BlueProjectManager;
 import blue.soundObject.Instance;
 import blue.soundObject.SoundObject;
+import blue.time.TimeBase;
+import blue.time.TimeContext;
+import blue.time.TimeContextManager;
+import blue.time.TimeDuration;
+import blue.time.TimePosition;
+import blue.time.TimeUnitMath;
 import blue.ui.core.clipboard.BlueClipboardUtils;
 import blue.ui.core.score.ScoreController;
 import blue.ui.core.score.ScoreObjectCopy;
@@ -283,10 +289,11 @@ public final class SoundObjectLibraryTopComponent extends TopComponent
         if (index != -1) {
             SoundObject sObj = sObjLib.getSoundObject(index);
             SoundObject tempSObj = sObj.deepCopy();
+            convertLibraryObjectToRulerTimeBase(tempSObj);
             ScoreController.getInstance().setSelectedScoreObjects(
                     Collections.singleton(tempSObj));
 
-            var copy = new ScoreObjectCopy(List.of(tempSObj), List.of(0));
+            var copy = new ScoreObjectCopy(List.of(tempSObj), List.of(0), TimeContextManager.getContext());
             var clipboard = BlueClipboardUtils.getClipboard();
             clipboard.setContents(copy, new StringSelection(""));
         }
@@ -295,14 +302,15 @@ public final class SoundObjectLibraryTopComponent extends TopComponent
     private void copyInstanceButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_copyInstanceButtonActionPerformed
         int index = sObjLibTable.getSelectedRow();
         if (index != -1) {
+            TimeContext context = TimeContextManager.getContext();
             SoundObject originalSObj = sObjLib.getSoundObject(index);
             Instance tempSObj = new Instance(originalSObj);
-            tempSObj.setStartTime(0.0f);
-            tempSObj.setSubjectiveDuration(tempSObj.getObjectiveDuration());
+            tempSObj.setStartTime(TimePosition.beats(0.0));
+            tempSObj.setSubjectiveDuration(tempSObj.getObjectiveDuration(context));
             ScoreController.getInstance().setSelectedScoreObjects(
                     Collections.singleton(tempSObj));
 
-            var copy = new ScoreObjectCopy(List.of(tempSObj), List.of(0));
+            var copy = new ScoreObjectCopy(List.of(tempSObj), List.of(0), TimeContextManager.getContext());
             var clipboard = BlueClipboardUtils.getClipboard();
             clipboard.setContents(copy, new StringSelection(""));
         }
@@ -368,5 +376,24 @@ public final class SoundObjectLibraryTopComponent extends TopComponent
     @Override
     public void stateChanged(ChangeEvent ce) {
         this.sObjLibTable.revalidate();
+    }
+
+    /**
+     * Converts a library object's BEATS duration to the project's primary
+     * ruler TimeBase. Library objects are stored normalized to BEATS;
+     * this re-formats them when copying out.
+     */
+    private void convertLibraryObjectToRulerTimeBase(SoundObject sObj) {
+        var score = ScoreController.getInstance().getScore();
+        if (score == null) return;
+        TimeBase rulerTimeBase = score.getTimeState().getTimeDisplay();
+        if (rulerTimeBase == TimeBase.BEATS) return;
+
+        TimeDuration dur = sObj.getSubjectiveDuration();
+        if (dur.getTimeBase() == TimeBase.BEATS && rulerTimeBase.isBeatBased()) {
+            TimeContext context = TimeContextManager.getContext();
+            sObj.setSubjectiveDuration(
+                    TimeUnitMath.beatsToDuration(dur.toBeats(context), rulerTimeBase, context));
+        }
     }
 }

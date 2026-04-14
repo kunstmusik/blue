@@ -70,8 +70,7 @@ public class EffectCategory {
             return true;
         }
 
-        for (Iterator iter = subCategories.iterator(); iter.hasNext();) {
-            EffectCategory category = (EffectCategory) iter.next();
+        for (EffectCategory category : subCategories) {
             if (category.removeEffect(effect)) {
                 return true;
             }
@@ -89,9 +88,7 @@ public class EffectCategory {
             return true;
         }
 
-        for (Iterator iter = subCategories.iterator(); iter.hasNext();) {
-            EffectCategory tempCategory = (EffectCategory) iter.next();
-
+        for (EffectCategory tempCategory : subCategories) {
             if (tempCategory.removeEffectCategory(category)) {
                 return true;
             }
@@ -203,13 +200,11 @@ public class EffectCategory {
         retVal.setAttribute("categoryName", this.getCategoryName());
         retVal.setAttribute("isRoot", Boolean.toString(this.isRoot()));
 
-        for (Iterator iter = subCategories.iterator(); iter.hasNext();) {
-            EffectCategory tempCat = (EffectCategory) iter.next();
+        for (EffectCategory tempCat : subCategories) {
             retVal.addElement(tempCat.saveAsXML());
         }
 
-        for (Iterator iter = effects.iterator(); iter.hasNext();) {
-            Effect effect = (Effect) iter.next();
+        for (Effect effect : effects) {
             retVal.addElement(effect.saveAsXML());
         }
 

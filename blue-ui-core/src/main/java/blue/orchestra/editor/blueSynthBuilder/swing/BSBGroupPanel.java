@@ -219,8 +219,8 @@ public class BSBGroupPanel extends BSBObjectView<BSBGroup> implements Resizeable
 
         BSBObjectView objectView = BSBObjectEditorFactory.getView(bsbObj);
 
-        if (objectView instanceof EditModeConditional) {
-            ((EditModeConditional) objectView).setEditEnabledProperty(editEnabledProperty);
+        if (objectView instanceof EditModeConditional editModeConditional) {
+            editModeConditional.setEditEnabledProperty(editEnabledProperty);
         }
 
         objectView.setLocation(bsbObj.getX(), bsbObj.getY());
@@ -310,8 +310,8 @@ public class BSBGroupPanel extends BSBObjectView<BSBGroup> implements Resizeable
         this.editEnabledProperty = editEnabled;
 
         for (var c : editorPanel.getComponents()) {
-            if (c instanceof EditModeConditional) {
-                ((EditModeConditional) c).setEditEnabledProperty(editEnabled);
+            if (c instanceof EditModeConditional editModeConditional) {
+                editModeConditional.setEditEnabledProperty(editEnabled);
             }
         }
     }

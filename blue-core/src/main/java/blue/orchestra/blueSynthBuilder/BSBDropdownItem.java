@@ -105,7 +105,7 @@ public class BSBDropdownItem  {
      * @return Returns the value.
      */
     public String getValue() {
-        return value == null ? "" : value;
+        return java.util.Objects.requireNonNullElse(value, "");
     }
 
     /**
@@ -113,7 +113,7 @@ public class BSBDropdownItem  {
      *            The value to set.
      */
     public void setValue(String value) {
-        this.value = value == null ? "" : value;
+        this.value = java.util.Objects.requireNonNullElse(value, "");
     }
 
     @Override

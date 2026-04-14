@@ -32,6 +32,8 @@ import blue.score.layers.ScoreObjectLayer;
 import blue.soundObject.Note;
 import blue.soundObject.NoteList;
 import blue.soundObject.SoundObjectException;
+import blue.time.TimeContext;
+import blue.time.TimeContextManager;
 import electric.xml.Element;
 import electric.xml.Elements;
 import java.beans.PropertyChangeEvent;
@@ -65,7 +67,7 @@ public class AudioLayer extends ArrayList<AudioClip>
     private String uniqueId;
 
     private int heightIndex = 0;
-    private ParameterIdList automationParameters; 
+    private ParameterIdList automationParameters;
 
     private transient List<PropertyChangeListener> propListeners = null;
     private transient List<AudioLayerListener> layerListeners = null;
@@ -84,7 +86,7 @@ public class AudioLayer extends ArrayList<AudioClip>
         solo = al.solo;
         heightIndex = al.heightIndex;
 
-        for(AudioClip ac : al) {
+        for (AudioClip ac : al) {
             add(ac.deepCopy());
         }
     }
@@ -98,12 +100,12 @@ public class AudioLayer extends ArrayList<AudioClip>
 
     @Override
     public boolean remove(ScoreObject o) {
-        if (!(o instanceof AudioClip)) {
+        if (!(o instanceof AudioClip audioClip)) {
             return false;
         }
         boolean retVal = super.remove(o);
         if (retVal) {
-            fireAudioClipRemoved((AudioClip) o);
+            fireAudioClipRemoved(audioClip);
         }
         return retVal;
     }
@@ -116,7 +118,7 @@ public class AudioLayer extends ArrayList<AudioClip>
     @Override
     public void setName(String name) {
         String oldName = this.name;
-        this.name = (name == null) ? "" : name;
+        this.name = java.util.Objects.requireNonNullElse(name, "");
 
         if (!this.name.equals(oldName)) {
             firePropertyChangeEvent(new PropertyChangeEvent(this, "name",
@@ -155,7 +157,7 @@ public class AudioLayer extends ArrayList<AudioClip>
         this.heightIndex = heightIndex;
 
         PropertyChangeEvent pce = new PropertyChangeEvent(this, "heightIndex",
-                new Integer(oldHeight), new Integer(heightIndex));
+                oldHeight, heightIndex);
 
         firePropertyChangeEvent(pce);
     }
@@ -187,7 +189,7 @@ public class AudioLayer extends ArrayList<AudioClip>
             retVal.addElement(clip.saveAsXML());
         }
 
-        for (String id : automationParameters ) {
+        for (String id : automationParameters) {
             retVal.addElement("parameterId").setText(id);
         }
 
@@ -199,9 +201,9 @@ public class AudioLayer extends ArrayList<AudioClip>
 
         layer.setName(data.getAttributeValue("name"));
         layer.setMuted(
-                Boolean.valueOf(data.getAttributeValue("muted")).booleanValue());
+                Boolean.parseBoolean(data.getAttributeValue("muted")));
         layer.setSolo(
-                Boolean.valueOf(data.getAttributeValue("solo")).booleanValue());
+                Boolean.parseBoolean(data.getAttributeValue("solo")));
 
         if (data.getAttribute("uniqueId") != null) {
             layer.uniqueId = data.getAttributeValue("uniqueId");
@@ -264,7 +266,7 @@ public class AudioLayer extends ArrayList<AudioClip>
             INSTR_TEXT = new MessageFormat(str.toString());
         }
 
-        return INSTR_TEXT.format(new Object[]{var1, var2});
+        return INSTR_TEXT.format(new Object[] { var1, var2 });
 
     }
 
@@ -308,10 +310,10 @@ public class AudioLayer extends ArrayList<AudioClip>
             String var2 = Mixer.getChannelVar(channelId, 1);
 
             instr.setText(getInstrumentText(var1, var2));
-//            System.out.println("Instr Text: " + instr.getText());
+            // System.out.println("Instr Text: " + instr.getText());
         } else {
             throw new RuntimeException("Error: could not find Mixer Channels for Audio layer");
-//            instr.setText(getInstrumentText("a1", "a2") + "\noutc a1, a2\n");
+            // instr.setText(getInstrumentText("a1", "a2") + "\noutc a1, a2\n");
         }
 
         int instrId = compileData.addInstrument(instr);
@@ -320,9 +322,9 @@ public class AudioLayer extends ArrayList<AudioClip>
         return instrId;
     }
 
-    NoteList generateForCSD(CompileData compileData, double startTime, double endTime) throws SoundObjectException {
-        
-        if(compileData.getCompilationVariable("BLUE_FADE_UDO") == null) {
+    NoteList generateForCSD(TimeContext context, CompileData compileData, double startTime, double endTime) throws SoundObjectException {
+
+        if (compileData.getCompilationVariable("BLUE_FADE_UDO") == null) {
             StringBuilder str = new StringBuilder();
             try {
                 try (BufferedReader br = new BufferedReader(
@@ -339,10 +341,10 @@ public class AudioLayer extends ArrayList<AudioClip>
                 throw new RuntimeException(
                         "[error] AudioLayer could not load blue_fade.udo");
             }
-            
+
             compileData.setCompilationVariable("BLUE_FADE_UDO", new Object());
         }
-        
+
         NoteList notes = new NoteList();
 
         int instrId = generateInstrumentForAudioLayer(compileData);
@@ -351,9 +353,9 @@ public class AudioLayer extends ArrayList<AudioClip>
 
         for (AudioClip clip : this) {
 
-            double clipStart = clip.getStartTime();
+            double clipStart = clip.getStartTime().toBeats(context);
             double clipFileStart = clip.getFileStartTime();
-            double clipDur = clip.getSubjectiveDuration();
+            double clipDur = clip.getSubjectiveDuration().toBeats(context);
             double clipEnd = clipStart + clipDur;
 
             if (clipEnd <= startTime
@@ -370,13 +372,12 @@ public class AudioLayer extends ArrayList<AudioClip>
             double newStart = Math.max(adjustedStart, 0.0f);
             double newEnd = clipEnd - startTime;
 
-            double newDuration
-                    = (usesEndTime && newEnd > adjustedEndTime)
-                            ? adjustedEndTime - newStart
-                            : (newEnd - newStart);
+            double newDuration = (usesEndTime && newEnd > adjustedEndTime)
+                    ? adjustedEndTime - newStart
+                    : (newEnd - newStart);
 
             var f = clip.getAudioFile();
-            
+
             String path;
             try {
                 path = BlueSystem.getRelativePath(f.getCanonicalPath());
@@ -385,7 +386,6 @@ public class AudioLayer extends ArrayList<AudioClip>
                 Exceptions.printStackTrace(ex);
                 path = f.getAbsolutePath();
             }
-            
 
             n.setPField(Integer.toString(instrId), 1);
             n.setStartTime(newStart);
@@ -394,19 +394,18 @@ public class AudioLayer extends ArrayList<AudioClip>
                     "\"" + path + "\"",
                     4);
             n.setPField(Double.toString(clipFileStart), 5);
-            
+
             n.setPField(Double.toString(startOffset), 6);
             n.setPField(Double.toString(clipDur), 7);
 
-            
             int fadeType = clip.getFadeInType().ordinal();
             n.setPField(Integer.toString(fadeType), 8);
             n.setPField(Double.toString(clip.getFadeIn()), 9);
-            
+
             fadeType = clip.getFadeOutType().ordinal();
             n.setPField(Integer.toString(fadeType), 10);
             n.setPField(Double.toString(clip.getFadeOut()), 11);
-            
+
             n.setPField(clip.isLooping() ? "1" : "0", 12);
 
             notes.add(n);
@@ -414,7 +413,6 @@ public class AudioLayer extends ArrayList<AudioClip>
         }
         return notes;
     }
-
 
     /* Property Change Event Code */
     private void firePropertyChangeEvent(PropertyChangeEvent pce) {
@@ -506,8 +504,10 @@ public class AudioLayer extends ArrayList<AudioClip>
     public double getMaxTime() {
         double max = 0.0f;
 
+        var context = TimeContextManager.getContext();
+
         for (AudioClip clip : this) {
-            double end = clip.getStartTime() + clip.getSubjectiveDuration();
+            double end = clip.getStartTime().toBeats(context) + clip.getSubjectiveDuration().toBeats(context);
             if (end > max) {
                 max = end;
             }

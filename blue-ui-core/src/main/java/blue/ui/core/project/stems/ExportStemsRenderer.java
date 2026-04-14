@@ -58,9 +58,7 @@ public class ExportStemsRenderer {
 
             InstrumentAssignment ia = instrumentAssignments.get(i);
 
-            for (int j = 0; j < instrumentAssignments.size(); j++) {
-
-                InstrumentAssignment temp = instrumentAssignments.get(j);
+            for (InstrumentAssignment temp : instrumentAssignments) {
 
                 temp.enabled = (temp == ia);
 

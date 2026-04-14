@@ -22,7 +22,7 @@ package blue.orchestra.flowGraph;
 import java.util.ArrayList;
 
 public class PortList {
-    private final ArrayList ports = new ArrayList();
+    private final ArrayList<Port> ports = new ArrayList<>();
 
     public boolean addPort(Port p) {
         return ports.add(p);
@@ -33,7 +33,7 @@ public class PortList {
     }
 
     public Port getPort(int index) {
-        return (Port) ports.get(index);
+        return ports.get(index);
     }
 
     public int size() {

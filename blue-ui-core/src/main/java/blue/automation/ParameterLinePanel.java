@@ -24,6 +24,8 @@ import blue.components.DragDirection;
 import blue.components.lines.Line;
 import blue.components.lines.LinePoint;
 import blue.score.TimeState;
+import blue.time.TimeContext;
+import blue.time.TimeContextManager;
 import blue.ui.core.score.ModeListener;
 import blue.ui.core.score.ModeManager;
 import blue.ui.core.score.ScoreController;
@@ -36,6 +38,7 @@ import blue.ui.utilities.ResizeMode;
 import blue.ui.utilities.UiUtilities;
 import blue.undo.BlueUndoManager;
 import blue.utilities.scales.ScaleLinear;
+import blue.utility.MathUtils;
 import blue.utility.NumberUtilities;
 import blue.utility.ScoreUtilities;
 import java.awt.BasicStroke;
@@ -67,7 +70,6 @@ import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
-import org.controlsfx.tools.Utils;
 import org.openide.windows.WindowManager;
 
 /**
@@ -1023,12 +1025,14 @@ public class ParameterLinePanel extends JComponent implements
                 double startTime = start / pixelSecond;
 
                 if (timeState.isSnapEnabled() && !(e.isControlDown() && e.isShiftDown())) {
-                    startTime = ScoreUtilities.getSnapValueStart(startTime, timeState.getSnapValue());
+                    TimeContext ctx = TimeContextManager.getContext();
+                    startTime = ScoreUtilities.getSnapValueStart(startTime,
+                            timeState.getSnapValueInBeats(startTime, ctx.getTempoMap(), ctx.getSampleRate()));
                 }
 
-                final int OS_CTRL_KEY = BlueSystem.getMenuShortcutKey();
+                final int OS_CTRL_KEY = BlueSystem.getMenuShortcutKeyEx();
 
-                if ((e.getModifiers() & OS_CTRL_KEY) == OS_CTRL_KEY) {
+                if ((e.getModifiersEx() & OS_CTRL_KEY) == OS_CTRL_KEY) {
                     // PASTING POINTS
                     ScoreController.getInstance().pasteSingleLine(startTime);
                     justPasted = true;
@@ -1168,13 +1172,14 @@ public class ParameterLinePanel extends JComponent implements
                             double newTime = x / pixelSecond;
 
                             if (timeState.isSnapEnabled() && !e.isControlDown()) {
+                                TimeContext ctx = TimeContextManager.getContext();
                                 newTime = ScoreUtilities.getSnapValueMove(
-                                        newTime, timeState.getSnapValue());
+                                        newTime, timeState.getSnapValueInBeats(newTime, ctx.getTempoMap(), ctx.getSampleRate()));
                             }
 
                             ScaleLinear scale = selection.getScale();
                             if (selection.getScaleDirection() == ResizeMode.LEFT) {
-                                newTime = Utils.clamp(0.0, newTime, scale.getRangeEnd() - edgeTime);
+                                newTime = MathUtils.clamp(0.0, newTime, scale.getRangeEnd() - edgeTime);
                             } else {
                                 newTime = Math.max(scale.getRangeStart() + edgeTime, newTime);
                             }
@@ -1191,8 +1196,9 @@ public class ParameterLinePanel extends JComponent implements
                             double newTime = initialStartTime + transTime;
 
                             if (timeState.isSnapEnabled() && !e.isControlDown()) {
+                                TimeContext ctx = TimeContextManager.getContext();
                                 newTime = ScoreUtilities.getSnapValueMove(newTime,
-                                        timeState.getSnapValue());
+                                        timeState.getSnapValueInBeats(newTime, ctx.getTempoMap(), ctx.getSampleRate()));
                                 transTime = newTime - selection.getStartTime();
                             }
 
@@ -1217,8 +1223,9 @@ public class ParameterLinePanel extends JComponent implements
                     double endTime = x / pixelSecond;
 
                     if (timeState.isSnapEnabled() && !e.isControlDown()) {
+                        TimeContext ctx = TimeContextManager.getContext();
                         endTime = ScoreUtilities.getSnapValueMove(endTime,
-                                timeState.getSnapValue());
+                                timeState.getSnapValueInBeats(endTime, ctx.getTempoMap(), ctx.getSampleRate()));
                     }
 
                     if (endTime < startTime) {
@@ -1270,11 +1277,12 @@ public class ParameterLinePanel extends JComponent implements
                 double dragTime = newX / pixelSecond;
 
                 if (timeState.isSnapEnabled() && !e.isControlDown()) {
+                    TimeContext ctx = TimeContextManager.getContext();
                     dragTime = ScoreUtilities.getSnapValueMove(dragTime,
-                            timeState.getSnapValue());
+                            timeState.getSnapValueInBeats(dragTime, ctx.getTempoMap(), ctx.getSampleRate()));
                 }
 
-                dragTime = Utils.clamp(leftBoundaryTime, dragTime, rightBoundaryTime);
+                dragTime = MathUtils.clamp(leftBoundaryTime, dragTime, rightBoundaryTime);
 
                 selectedPoint.setLocation(dragTime,
                         screenToDoubleY(newY, min, max, currentParameter

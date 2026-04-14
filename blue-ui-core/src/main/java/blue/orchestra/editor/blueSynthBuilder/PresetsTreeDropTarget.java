@@ -86,28 +86,26 @@ public class PresetsTreeDropTarget implements DropTargetListener {
             Transferable tr = dtde.getTransferable();
             DataFlavor[] flavors = tr.getTransferDataFlavors();
 
-            for (int i = 0; i < flavors.length; i++) {
-                if (tr.isDataFlavorSupported(flavors[i])) {
+            for (DataFlavor flavor : flavors) {
+                if (tr.isDataFlavorSupported(flavor)) {
                     dtde.acceptDrop(dtde.getDropAction());
 
-                    Object transferNode = tr.getTransferData(flavors[i]);
+                    Object transferNode = tr.getTransferData(flavor);
 
                     PresetsTreeModel presetsTreeModel = (PresetsTreeModel) tree
                             .getModel();
 
                     PresetGroup parentNode = (PresetGroup) node;
 
-                    if (transferNode instanceof Preset) {
-                        Preset preset = (Preset) transferNode;
+                    if (transferNode instanceof Preset preset) {
 
                         presetsTreeModel.removePreset(preset);
                         presetsTreeModel.addPreset(parentNode, new Preset(preset));
 
                         dtde.dropComplete(true);
 
-                    } else if (transferNode instanceof PresetGroup) {
+                    } else if (transferNode instanceof PresetGroup presetGroup) {
 
-                        PresetGroup presetGroup = (PresetGroup) transferNode;
 
                         presetsTreeModel.removePresetGroup(presetGroup);
                         presetsTreeModel

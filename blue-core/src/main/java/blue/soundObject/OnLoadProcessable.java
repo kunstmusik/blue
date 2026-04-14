@@ -20,7 +20,21 @@
 
 package blue.soundObject;
 
+import blue.time.TimeContext;
+
 /**
+ * <p>
+ * Title: blue
+ * </p>
+ * <p>
+ * Description: an object composition environment for csound
+ * </p>
+ * <p>
+ * Copyright: Copyright (c) 2001
+ * </p>
+ * <p>
+ * Company: steven yi music
+ * </p>
  *
  * @author steven
  */
@@ -30,5 +44,5 @@ public interface OnLoadProcessable {
 
     boolean isOnLoadProcessable();
 
-    void processOnLoad() throws SoundObjectException;
+    void processOnLoad(TimeContext context) throws SoundObjectException;
 }

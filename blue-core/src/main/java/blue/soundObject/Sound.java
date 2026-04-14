@@ -19,14 +19,16 @@
  */
 package blue.soundObject;
 
-import blue.components.lines.SoundObjectParameterLine;
 import blue.*;
 import blue.automation.Parameter;
 import blue.automation.ParameterList;
 import blue.components.lines.Line;
+import blue.components.lines.SoundObjectParameterLine;
 import blue.noteProcessor.NoteProcessorChain;
 import blue.orchestra.BlueSynthBuilder;
 import blue.plugin.SoundObjectPlugin;
+import blue.time.TimeContext;
+import blue.time.TimeDuration;
 import electric.xml.Element;
 import electric.xml.Elements;
 import java.util.Map;
@@ -78,8 +80,8 @@ public class Sound extends AbstractSoundObject {
     }
 
     @Override
-    public double getObjectiveDuration() {
-        return subjectiveDuration;
+    public TimeDuration getObjectiveDuration(TimeContext context) {
+        return getSubjectiveDuration();
     }
 
     @Override
@@ -122,11 +124,22 @@ public class Sound extends AbstractSoundObject {
         return comment;
     }
 
-    public NoteList generateNotes(int instrumentNumber, double renderStart, double renderEnd) throws SoundObjectException {
+    public NoteList generateNotes(TimeContext context, int instrumentNumber,
+            double renderStart, double renderEnd) throws SoundObjectException {
         NoteList n = new NoteList();
 
-        String noteText = "i" + instrumentNumber + "\t" + startTime + "\t"
-                + subjectiveDuration;
+        final double subjectiveDuration = getSubjectiveDuration().toBeats(context);
+        double newDur = subjectiveDuration;
+
+        if (renderEnd > 0 && renderEnd < subjectiveDuration) {
+            newDur = renderEnd;
+        }
+
+        newDur = newDur - renderStart;
+
+        String noteText = "i" + instrumentNumber + "\t"
+                + (getStartTime().toBeats(context) + renderStart) + "\t"
+                + newDur;
 
         Note tempNote = null;
 
@@ -153,12 +166,12 @@ public class Sound extends AbstractSoundObject {
     }
 
     @Override
-    public double getRepeatPoint() {
-        return -1.0f;
+    public TimeDuration getRepeatPoint() {
+        return null;
     }
 
     @Override
-    public void setRepeatPoint(double repeatPoint) {
+    public void setRepeatPoint(TimeDuration repeatPoint) {
     }
 
     /*
@@ -209,13 +222,13 @@ public class Sound extends AbstractSoundObject {
     }
 
     @Override
-    public NoteList generateForCSD(CompileData compileData, double startTime,
+    public NoteList generateForCSD(TimeContext context, CompileData compileData, double startTime,
             double endTime) throws SoundObjectException {
 
         bsbObj.getParameterList().clearCompilationVarNames();
         int instrNum = compileData.addInstrument(bsbObj);
 
-        return generateNotes(instrNum, startTime, endTime);
+        return generateNotes(context, instrNum, startTime, endTime);
 
     }
 

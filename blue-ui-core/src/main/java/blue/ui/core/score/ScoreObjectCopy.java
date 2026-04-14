@@ -21,6 +21,7 @@ package blue.ui.core.score;
 
 import blue.score.ScoreObject;
 import blue.soundObject.SoundObject;
+import blue.time.TimeContext;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
@@ -39,11 +40,13 @@ public class ScoreObjectCopy implements Transferable {
     
     public final List<Integer> layerIndices;
     public final List<ScoreObject> scoreObjects;
-    
+    /** The TimeContext at the time of copy, used to detect cross-project paste. May be null for legacy copies. */
+    public final TimeContext sourceContext;
 
-    public ScoreObjectCopy(List<ScoreObject> scoreObjects, List<Integer> layerIndices) {
+    public ScoreObjectCopy(List<ScoreObject> scoreObjects, List<Integer> layerIndices, TimeContext sourceContext) {
         this.scoreObjects = scoreObjects;
         this.layerIndices = layerIndices;
+        this.sourceContext = sourceContext != null ? new TimeContext(sourceContext) : null;
     }
     
     public boolean isOnlySoundObjects() {

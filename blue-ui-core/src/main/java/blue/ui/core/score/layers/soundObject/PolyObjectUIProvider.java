@@ -40,9 +40,9 @@ public class PolyObjectUIProvider implements LayerGroupUIProvider {
     public JComponent getLayerGroupPanel(LayerGroup layerGroup,
             TimeState timeState, BlueData data, InstanceContent ic) {
         
-        if (layerGroup instanceof PolyObject) {
+        if (layerGroup instanceof PolyObject polyObject) {
             ScoreTimeCanvas sTimeCanvas = new ScoreTimeCanvas(data, ic);
-            sTimeCanvas.setPolyObject((PolyObject) layerGroup, timeState);
+            sTimeCanvas.setPolyObject(polyObject, timeState);
             return sTimeCanvas;
         }
         return null;
@@ -53,9 +53,9 @@ public class PolyObjectUIProvider implements LayerGroupUIProvider {
             TimeState timeState, BlueData data, InstanceContent ic) {
         JComponent returnValue = null;
         
-        if(layerGroup instanceof PolyObject) {
+        if(layerGroup instanceof PolyObject polyObject) {
             SoundLayerListPanel panel = new SoundLayerListPanel();
-            panel.setPolyObject((PolyObject)layerGroup);
+            panel.setPolyObject(polyObject);
             
             returnValue = panel;
         }

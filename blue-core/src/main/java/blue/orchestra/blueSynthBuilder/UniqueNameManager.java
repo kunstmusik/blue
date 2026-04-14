@@ -22,6 +22,7 @@ package blue.orchestra.blueSynthBuilder;
 
 import java.text.MessageFormat;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 
@@ -58,8 +59,8 @@ public class UniqueNameManager  {
     private boolean isUniquelyNamed(BSBObject bsbObj, Set<String> names) {
         String[] keys = bsbObj.getReplacementKeys();
 
-        for (int i = 0; i < keys.length; i++) {
-            if (!isUnique(keys[i], names)) {
+        for (String key : keys) {
+            if (!isUnique(key, names)) {
                 return false;
             }
         }
@@ -77,7 +78,7 @@ public class UniqueNameManager  {
 
         Object[] vals = new Object[2];
         vals[0] = getPrefix(currentName);
-        vals[1] = new Integer(nameIndex);
+        vals[1] = nameIndex;
 
         Set<String> names = collection.getNames();
 
@@ -86,7 +87,7 @@ public class UniqueNameManager  {
         clone.setObjectName(NAME_FMT.format(vals));
 
         while (!isUniquelyNamed(clone, names)) {
-            vals[1] = new Integer(++nameIndex);
+            vals[1] = ++nameIndex;
             clone.setObjectName(NAME_FMT.format(vals));
         }
 
@@ -142,11 +143,17 @@ public class UniqueNameManager  {
 
     @Override
     public boolean equals(Object obj) {
-        if (obj instanceof UniqueNameManager) {
-            UniqueNameManager unm = (UniqueNameManager) obj;
-
-            return defaultPrefix.equals(unm.defaultPrefix);
+        if (this == obj) {
+            return true;
         }
-        return false;
+        if (!(obj instanceof UniqueNameManager unm)) {
+            return false;
+        }
+        return Objects.equals(defaultPrefix, unm.defaultPrefix);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(defaultPrefix);
     }
 }

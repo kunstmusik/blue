@@ -22,18 +22,17 @@ package blue.orchestra.blueSynthBuilder;
 import electric.xml.Element;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import junit.framework.TestCase;
-import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
+import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.Test;
 
-public class BSBCloneTest extends TestCase {
+class BSBCloneTest {
 
-    public void testSerialize() {
+    @Test
+    void testSerialize() {
         BSBObjectEntry[] bsbObjects = BSBObjectRegistry.getBSBObjects();
 
-        for (int i = 0; i < bsbObjects.length; i++) {
-            BSBObjectEntry entry = bsbObjects[i];
-
+        for (BSBObjectEntry entry : bsbObjects) {
             Class class1 = entry.bsbObjectClass;
 
             BSBObject bsbObj = null;
@@ -56,12 +55,11 @@ public class BSBCloneTest extends TestCase {
 
     }
 
-    public void testClone() {
+    @Test
+    void testClone() {
         BSBObjectEntry[] bsbObjects = BSBObjectRegistry.getBSBObjects();
 
-        for (int i = 0; i < bsbObjects.length; i++) {
-            BSBObjectEntry entry = bsbObjects[i];
-
+        for (BSBObjectEntry entry : bsbObjects) {
             Class class1 = entry.bsbObjectClass;
 
             BSBObject bsbObj = null;
@@ -104,12 +102,11 @@ public class BSBCloneTest extends TestCase {
 
     }
 
-    public void testLoadSave() {
+    @Test
+    void testLoadSave() {
         BSBObjectEntry[] bsbObjects = BSBObjectRegistry.getBSBObjects();
 
-        for (int i = 0; i < bsbObjects.length; i++) {
-            BSBObjectEntry entry = bsbObjects[i];
-
+        for (BSBObjectEntry entry : bsbObjects) {
             Class class1 = entry.bsbObjectClass;
 
             BSBObject bsbObj = null;

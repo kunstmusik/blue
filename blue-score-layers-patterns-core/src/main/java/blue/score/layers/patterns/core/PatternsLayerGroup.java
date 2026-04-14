@@ -28,6 +28,7 @@ import blue.score.layers.LayerGroup;
 import blue.score.layers.LayerGroupDataEvent;
 import blue.score.layers.LayerGroupListener;
 import blue.soundObject.*;
+import blue.time.TimeContext;
 import blue.utility.ScoreUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
@@ -100,7 +101,7 @@ public class PatternsLayerGroup extends ArrayList<PatternLayer>
     }
 
     @Override
-    public NoteList generateForCSD(CompileData compileData, double startTime, double endTime, boolean processWithSolo) throws ScoreGenerationException {
+    public NoteList generateForCSD(TimeContext context, CompileData compileData, double startTime, double endTime, boolean processWithSolo) throws ScoreGenerationException {
 
         NoteList noteList = new NoteList();
 
@@ -108,7 +109,7 @@ public class PatternsLayerGroup extends ArrayList<PatternLayer>
             for (PatternLayer patternLayer : this) {
                 if (patternLayer.isSolo()) {
                     if (!patternLayer.isMuted()) {
-                        noteList.merge(patternLayer.generateForCSD(compileData,
+                        noteList.merge(patternLayer.generateForCSD(context, compileData,
                                 startTime, endTime,
                                 patternBeatsLength));
                     }
@@ -117,7 +118,7 @@ public class PatternsLayerGroup extends ArrayList<PatternLayer>
         } else {
             for (PatternLayer patternLayer : this) {
                 if (!patternLayer.isMuted()) {
-                    noteList.merge(patternLayer.generateForCSD(compileData,
+                    noteList.merge(patternLayer.generateForCSD(context, compileData,
                             startTime, endTime,
                             patternBeatsLength));
                 }
@@ -146,8 +147,8 @@ public class PatternsLayerGroup extends ArrayList<PatternLayer>
             NoteList buffer = new NoteList();
             Note tempNote;
 
-            for (int i = 0; i < nl.size(); i++) {
-                tempNote = nl.get(i);
+            for (Note note : nl) {
+                tempNote = note;
 
                 if (tempNote.getStartTime() >= 0) {
                     buffer.add(tempNote);
@@ -162,8 +163,8 @@ public class PatternsLayerGroup extends ArrayList<PatternLayer>
             NoteList buffer = new NoteList();
             Note tempNote;
 
-            for (int i = 0; i < retVal.size(); i++) {
-                tempNote = retVal.get(i);
+            for (Note note : retVal) {
+                tempNote = note;
 
                 if (tempNote.getStartTime() <= endTime) {
                     buffer.add(tempNote);
@@ -293,7 +294,7 @@ public class PatternsLayerGroup extends ArrayList<PatternLayer>
     }
 
     @Override
-    public void onLoadComplete() {
+    public void onLoadComplete(TimeContext context) {
         for (PatternLayer layer : this) {
             SoundObject sObj = layer.getSoundObject();
 
@@ -301,7 +302,7 @@ public class PatternsLayerGroup extends ArrayList<PatternLayer>
                 OnLoadProcessable olp = (OnLoadProcessable) sObj;
                 if (olp.isOnLoadProcessable()) {
                     try {
-                        olp.processOnLoad();
+                        olp.processOnLoad(context);
                     } catch (SoundObjectException soe) {
                         throw new RuntimeException(new SoundObjectException(sObj,
                                 "Error during on load processing:", soe));

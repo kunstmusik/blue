@@ -19,7 +19,6 @@
  */
 package blue.ui.core.render;
 
-import blue.noteProcessor.TempoMapper;
 import blue.projects.BlueProject;
 import blue.projects.BlueProjectManager;
 import blue.services.render.RenderState;
@@ -27,6 +26,7 @@ import blue.services.render.RenderTimeManager;
 import blue.services.render.RenderTimeManagerListener;
 import blue.settings.PlaybackSettings;
 import blue.soundObject.PolyObject;
+import blue.time.TempoMap;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.util.ArrayList;
@@ -50,7 +50,7 @@ public class RenderTimeManagerImpl implements RenderTimeManager {
     private double timePointer = 0.0f;
     private int timeAdjustCounter = 0;
     private double timeAdjust = Double.NEGATIVE_INFINITY;
-    private TempoMapper tempoMapper;
+    private TempoMap tempoMapper;
     private PolyObject polyObject;
     private final BlueProjectManager blueProjectManager;
     
@@ -82,15 +82,25 @@ public class RenderTimeManagerImpl implements RenderTimeManager {
                 double elapsedTime = (nanoTime - initialTime) / 1000000000.0f;
                 double adjustedTime = elapsedTime - timeAdjust;
                 setTimePointer(elapsedTime);
-                
+
+                double absoluteBeatTime;
+                double absoluteSecondsTime;
+
+                // Apply latency correction in seconds domain
+                double latency = PlaybackSettings.getInstance().getPlaybackLatencyCorrection();
+
                 if (tempoMapper != null) {
                     double renderStartSeconds = tempoMapper.beatsToSeconds(getRenderStartTime());
-                    adjustedTime = tempoMapper.secondsToBeats(adjustedTime + renderStartSeconds);
-                    adjustedTime -= getRenderStartTime();
+                    absoluteSecondsTime = adjustedTime + renderStartSeconds - latency;
+                    absoluteBeatTime = tempoMapper.secondsToBeats(absoluteSecondsTime);
+                } else {
+                    // No tempo map: beats == seconds (implicit 60 BPM)
+                    absoluteSecondsTime = adjustedTime + getRenderStartTime() - latency;
+                    absoluteBeatTime = absoluteSecondsTime;
                 }
-                
-                for (int i = 0, size = renderListeners.size(); i < size; i++) {
-                    renderListeners.get(i).renderTimeUpdated(adjustedTime);
+
+                for (RenderTimeManagerListener renderListener : renderListeners) {
+                    renderListener.renderTimeUpdated(absoluteBeatTime, absoluteSecondsTime);
                 }
             }
         });
@@ -139,8 +149,7 @@ public class RenderTimeManagerImpl implements RenderTimeManager {
         double oldVal = this.renderStart;
         this.renderStart = renderStart;
 
-        listeners.firePropertyChange(RENDER_START, new Double(oldVal),
-                new Double(renderStart));
+        listeners.firePropertyChange(RENDER_START, oldVal, renderStart);
     }
 
     private void setTimePointer(double timePointer) {
@@ -176,12 +185,12 @@ public class RenderTimeManagerImpl implements RenderTimeManager {
     }
 
     @Override
-    public void setTempoMapper(TempoMapper tempoMapper) {
+    public void setTempoMap(TempoMap tempoMapper) {
         this.tempoMapper = tempoMapper;
     }
 
     @Override
-    public TempoMapper getTempoMapper() {
+    public TempoMap getTempoMap() {
         return this.tempoMapper;
     }
 

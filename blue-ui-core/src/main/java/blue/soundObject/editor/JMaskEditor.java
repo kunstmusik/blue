@@ -30,6 +30,9 @@ import blue.soundObject.SoundObjectException;
 import blue.soundObject.editor.jmask.EditorListPanel;
 import blue.soundObject.jmask.Field;
 import blue.soundObject.jmask.Parameter;
+import blue.time.TimeContext;
+import blue.time.TimeContextManager;
+import blue.time.TimeDuration;
 import blue.ui.components.IconFactory;
 import blue.utility.GUI;
 import java.awt.BorderLayout;
@@ -79,7 +82,7 @@ public class JMaskEditor extends ScoreObjectEditor implements ActionListener {
         final Box topPanel = new Box(BoxLayout.X_AXIS);
         topPanel.setBorder(BorderFactory.createCompoundBorder(BorderFactory.
                 createBevelBorder(BevelBorder.RAISED), new EmptyBorder(3, 3,
-                        3, 3)));
+                3, 3)));
         topPanel.add(new JLabel("JMask"));
         topPanel.add(Box.createHorizontalStrut(5));
         final JButton optionsButton = new JButton(IconFactory.getDownArrowIcon());
@@ -97,20 +100,20 @@ public class JMaskEditor extends ScoreObjectEditor implements ActionListener {
         });
 
         useSeedCheckBox.addActionListener((ActionEvent e) -> {
-            if(jmask != null) {
+            if (jmask != null) {
                 jmask.setSeedUsed(useSeedCheckBox.isSelected());
             }
         });
-        
+
         seedSpinner.addChangeListener((ChangeEvent e) -> {
-            if(jmask != null) {
-                jmask.setSeed(((Number)seedSpinner.getValue()).longValue());
+            if (jmask != null) {
+                jmask.setSeed(((Number) seedSpinner.getValue()).longValue());
             }
         });
-        
-        seedSpinner.setMaximumSize(new Dimension(140,200));
-        seedSpinner.setPreferredSize(new Dimension(140,22));
-        
+
+        seedSpinner.setMaximumSize(new Dimension(140, 200));
+        seedSpinner.setPreferredSize(new Dimension(140, 22));
+
         topPanel.add(useSeedCheckBox);
         topPanel.add(seedSpinner);
         topPanel.add(Box.createHorizontalStrut(5));
@@ -133,7 +136,7 @@ public class JMaskEditor extends ScoreObjectEditor implements ActionListener {
             }
         };
         testAction.putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(
-                KeyEvent.VK_T, BlueSystem.getMenuShortcutKey()));
+                KeyEvent.VK_T, BlueSystem.getMenuShortcutKeyEx()));
 
         SwingUtil.installActions(this, new Action[]{testAction},
                 WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
@@ -151,10 +154,10 @@ public class JMaskEditor extends ScoreObjectEditor implements ActionListener {
 
         JMask jmask = (JMask) sObj;
         this.jmask = null;
-        
+
         useSeedCheckBox.setSelected(jmask.isSeedUsed());
         seedSpinner.setValue(jmask.getSeed());
-        
+
         editorListPanel.setJMask(jmask);
 
         this.jmask = jmask;
@@ -170,7 +173,8 @@ public class JMaskEditor extends ScoreObjectEditor implements ActionListener {
         NoteList notes = null;
 
         try {
-            notes = new JMask(jmask).generateNotes(0.0f, -1.0f);
+            TimeContext context = TimeContextManager.getContext();
+            notes = new JMask(jmask).generateNotes(context, 0.0f, -1.0f);
         } catch (SoundObjectException e) {
             ExceptionDialog.showExceptionDialog(SwingUtilities.getRoot(this), e);
         }
@@ -178,7 +182,7 @@ public class JMaskEditor extends ScoreObjectEditor implements ActionListener {
         if (notes != null) {
             InfoDialog.showInformationDialog(SwingUtilities.getRoot(this),
                     notes.toString(), BlueSystem.getString(
-                            "soundObject.generatedScore"));
+                    "soundObject.generatedScore"));
         }
     }
 
@@ -187,7 +191,7 @@ public class JMaskEditor extends ScoreObjectEditor implements ActionListener {
         JMaskEditor editor = new JMaskEditor();
 
         JMask jmask = new JMask();
-        jmask.setSubjectiveDuration(5.0f);
+        jmask.setSubjectiveDuration(TimeDuration.beats(5.0));
 
         editor.editScoreObject(jmask);
         GUI.showComponentAsStandalone(editor, "JMask Editor", true);
@@ -198,8 +202,13 @@ public class JMaskEditor extends ScoreObjectEditor implements ActionListener {
 
         for (int i = 0; i < this.field.getSize(); i++) {
             Parameter param = this.field.getParameter(i);
+            var paramName = param.getName();
+            String itemName = paramName != null && !paramName.isEmpty()
+                    ? String.format("Parameter %d - %s", (i + 1), paramName)
+                    : String.format("Parameter %d", (i + 1));
+
             JCheckBoxMenuItem menuItem = new JCheckBoxMenuItem(
-                    "Parameter " + (i + 1));
+                    itemName);
             menuItem.setSelected(param.isVisible());
             menuItem.putClientProperty("parameter", param);
             popup.add(menuItem);

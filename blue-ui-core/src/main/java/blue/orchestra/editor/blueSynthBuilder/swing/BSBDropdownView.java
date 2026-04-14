@@ -23,6 +23,7 @@ import blue.orchestra.blueSynthBuilder.BSBDropdown;
 import blue.orchestra.blueSynthBuilder.BSBDropdownItem;
 import blue.ui.utilities.UiUtilities;
 import java.awt.BorderLayout;
+import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
@@ -50,6 +51,8 @@ public class BSBDropdownView extends BSBObjectView<BSBDropdown> implements Prope
     private final ActionListener updateIndexListener;
 
     private final ChangeListener<? super Number> indexListener;
+    
+    private final ChangeListener<? super Number> fontSizeListener;
 
     private boolean updating = false;
 
@@ -71,13 +74,12 @@ public class BSBDropdownView extends BSBObjectView<BSBDropdown> implements Prope
 
         this.add(comboBox, BorderLayout.CENTER);
 
-//        comboBox.setSize(comboBox.getPreferredSize());
-        this.setSize(comboBox.getPreferredSize());
-
         int index = dropdown.getSelectedIndex();
         if (index < dropdown.dropdownItemsProperty().size()) {
             comboBox.setSelectedIndex(index);
         }
+        
+        updateFontAndSize();
 
         this.updateIndexListener = (ActionEvent e) -> {
             if (!updating) {
@@ -99,6 +101,10 @@ public class BSBDropdownView extends BSBObjectView<BSBDropdown> implements Prope
 
             }
         };
+        
+        this.fontSizeListener = (obs, old, newVal) -> {
+            UiUtilities.invokeOnSwingThread(this::updateFontAndSize);
+        };
 
         comboBox.addActionListener(updateIndexListener);
 
@@ -112,7 +118,9 @@ public class BSBDropdownView extends BSBObjectView<BSBDropdown> implements Prope
     public void addNotify() {
         super.addNotify();
         bsbObj.selectedIndexProperty().addListener(indexListener);
+        bsbObj.fontSizeProperty().addListener(fontSizeListener);
         bsbObj.addPropertyChangeListener(this);
+        SwingUtilities.invokeLater(this::updateFontAndSize);
         
         ToolTipManager.sharedInstance().registerComponent(comboBox);
     }
@@ -122,6 +130,7 @@ public class BSBDropdownView extends BSBObjectView<BSBDropdown> implements Prope
     public void removeNotify() {
         super.removeNotify();
         bsbObj.selectedIndexProperty().removeListener(indexListener);
+        bsbObj.fontSizeProperty().removeListener(fontSizeListener);
         bsbObj.removePropertyChangeListener(this);
         
         ToolTipManager.sharedInstance().unregisterComponent(comboBox);
@@ -135,8 +144,7 @@ public class BSBDropdownView extends BSBObjectView<BSBDropdown> implements Prope
                 model.refresh();
                 comboBox.setModel(model);
                 SwingUtilities.invokeLater(() -> {
-                    setSize(comboBox.getPreferredSize());
-                    revalidate();
+                    updateFontAndSize();
                 });
 
                 bsbObj.setSelectedIndex(comboBox.getSelectedIndex());
@@ -144,6 +152,33 @@ public class BSBDropdownView extends BSBObjectView<BSBDropdown> implements Prope
             });
 
         }
+    }
+    
+    private void updateFontAndSize() {
+        comboBox.setFont(comboBox.getFont().deriveFont((float) bsbObj.getFontSize()));
+        comboBox.setPrototypeDisplayValue(getPrototypeItem());
+        Dimension preferredSize = comboBox.getPreferredSize();
+        comboBox.setSize(preferredSize);
+        setSize(preferredSize);
+        revalidate();
+    }
+    
+    private BSBDropdownItem getPrototypeItem() {
+        BSBDropdownItem prototype = null;
+        int maxWidth = -1;
+        var fontMetrics = comboBox.getFontMetrics(comboBox.getFont());
+        
+        for (BSBDropdownItem item : bsbObj.dropdownItemsProperty()) {
+            String text = item == null || item.getName() == null ? "" : item.getName();
+            int width = fontMetrics.stringWidth(text);
+            if (width > maxWidth) {
+                maxWidth = width;
+                prototype = new BSBDropdownItem();
+                prototype.setName(text);
+            }
+        }
+        
+        return prototype;
     }
 
 }
@@ -190,8 +225,8 @@ class DropdownComboBoxModel implements ComboBoxModel<BSBDropdownItem> {
                 ListDataEvent.CONTENTS_CHANGED, 0, dropdown.dropdownItemsProperty()
                         .size());
 
-        for (int i = 0; i < eventListeners.length; i++) {
-            ((ListDataListener) eventListeners[i]).contentsChanged(e);
+        for (EventListener eventListener : eventListeners) {
+            ((ListDataListener) eventListener).contentsChanged(e);
         }
     }
 
@@ -208,8 +243,8 @@ class DropdownComboBoxModel implements ComboBoxModel<BSBDropdownItem> {
                 ListDataEvent.CONTENTS_CHANGED, 0, dropdown.dropdownItemsProperty()
                         .size());
 
-        for (int i = 0; i < eventListeners.length; i++) {
-            ((ListDataListener) eventListeners[i]).contentsChanged(e);
+        for (EventListener eventListener : eventListeners) {
+            ((ListDataListener) eventListener).contentsChanged(e);
         }
     }
 

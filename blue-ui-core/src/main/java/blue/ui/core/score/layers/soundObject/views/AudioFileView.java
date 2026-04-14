@@ -129,7 +129,7 @@ public class AudioFileView extends SoundObjectView {
     }
 
     private void paintWaveform(Graphics2D g, SoundObjectView sObjView,
-            int pixelSeconds) {
+            double pixelSeconds) {
 
         AudioFile audioFile = (AudioFile) sObj;
 

@@ -22,14 +22,14 @@ package blue.orchestra.editor.blueSynthBuilder;
 import blue.orchestra.blueSynthBuilder.BSBKnob;
 import javax.swing.JEditorPane;
 import javax.swing.text.JTextComponent;
-import static org.junit.Assert.*;
-import org.junit.Test;
+import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.Test;
 
 /**
  *
  * @author stevenyi
  */
-public class BSBCompletionItemTest {
+class BSBCompletionItemTest {
     
     public BSBCompletionItemTest() {
     }
@@ -38,7 +38,7 @@ public class BSBCompletionItemTest {
      * Test of replaceWordBeforeCaret method, of class BSBCompletionItem.
      */
     @Test
-    public void testReplaceWordBeforeCaret() {
+    void testReplaceWordBeforeCaret() {
         
         String replacementText = "<test>";
         JTextComponent jtc = new JEditorPane();

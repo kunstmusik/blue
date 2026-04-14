@@ -10,7 +10,6 @@ package blue;
 import blue.library.Library;
 import blue.soundObject.SoundObject;
 import blue.udo.UDOLibrary;
-import blue.utility.EnvironmentVars;
 import blue.utility.FileUtilities;
 import blue.utility.ObjectUtilities;
 import electric.xml.Document;
@@ -48,7 +47,7 @@ public class BlueSystem {
 
     private static BlueData blueData = null;
 
-    private static int menuShortcutKey = -1;
+    private static int menuShortcutKeyEx = -1;
 
 //    private static BlueMainFrame blueMainFrame = null;
     static {
@@ -82,7 +81,7 @@ public class BlueSystem {
 
     public static void setLocale() {
 
-        Locale currentLocale = new Locale("en", "");
+        Locale currentLocale = Locale.of("en");
 
         try {
             systemMessages = ResourceBundle.getBundle(
@@ -662,7 +661,7 @@ public class BlueSystem {
         }
 
         if (!path.contains(File.separator)) {
-            String sfDir = EnvironmentVars.getProperty("SFDIR");
+            String sfDir = System.getenv("SFDIR");
 
             if (sfDir != null) {
                 f = new File(sfDir + File.separator + path);
@@ -714,12 +713,12 @@ public class BlueSystem {
 //    public static void setBlueMainFrame(BlueMainFrame blueMainFrame) {
 //        BlueSystem.blueMainFrame = blueMainFrame;
 //    }
-    public static synchronized int getMenuShortcutKey() {
-        if (menuShortcutKey == -1) {
-            menuShortcutKey = Toolkit.getDefaultToolkit()
-                    .getMenuShortcutKeyMask();
+    public static synchronized int getMenuShortcutKeyEx() {
+        if (menuShortcutKeyEx == -1) {
+            menuShortcutKeyEx = Toolkit.getDefaultToolkit()
+                    .getMenuShortcutKeyMaskEx();
         }
-        return menuShortcutKey;
+        return menuShortcutKeyEx;
     }
 
 }

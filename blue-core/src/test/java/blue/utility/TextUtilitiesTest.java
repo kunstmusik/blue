@@ -20,10 +20,12 @@
 package blue.utility;
 
 import java.util.HashMap;
-import junit.framework.TestCase;
+import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.Test;
 
-public class TextUtilitiesTest extends TestCase {
-    public final void testReplaceOpcodeNames() {
+class TextUtilitiesTest {
+    @Test
+    void testReplaceOpcodeNames() {
         HashMap map = new HashMap();
         map.put("test1", "uniqueUDO1");
 
@@ -56,7 +58,8 @@ public class TextUtilitiesTest extends TestCase {
                 testVal));
     }
 
-    public void testStripSingleLineComments() {
+    @Test
+    void testStripSingleLineComments() {
         String testVal = "i1 2 3 4 \"test\"";
         String testVal2 = "i1 2 3 4 \"tes/t\"";
 

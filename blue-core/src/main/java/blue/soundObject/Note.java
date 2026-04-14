@@ -27,7 +27,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import org.apache.commons.lang3.text.StrBuilder;
 
 /**
  * Title: blue (Object Composition Environment) Description: Copyright:
@@ -168,12 +167,12 @@ public class Note implements Comparable<Note> {
 
     @Override
     public String toString() {
-        StrBuilder temp = new StrBuilder();
+        StringBuilder temp = new StringBuilder();
 
         int strSize = 1;
 
-        for (int i = 0; i < fields.length; i++) {
-            strSize += fields[i].length() + 1;
+        for (String field : fields) {
+            strSize += field.length() + 1;
         }
 
         temp.ensureCapacity(strSize);

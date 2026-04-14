@@ -33,6 +33,8 @@ import blue.soundObject.ObjectBuilder;
 import blue.soundObject.ObjectBuilderRegistry;
 import blue.soundObject.SoundObjectException;
 import blue.soundObject.editor.objectBuilder.ObjectBuilderCodeEditor;
+import blue.time.TimeContext;
+import blue.time.TimeContextManager;
 import blue.ui.nbutilities.MimeTypeEditorComponent;
 import blue.ui.utilities.SimpleDocumentListener;
 import blue.utility.GUI;
@@ -103,7 +105,7 @@ public class ObjectBuilderEditor extends ScoreObjectEditor {
         ActionMap actions = this.getActionMap();
 
         inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_T, BlueSystem
-                .getMenuShortcutKey()), "testSoundObject");
+                .getMenuShortcutKeyEx()), "testSoundObject");
 
         actions.put("testSoundObject", new AbstractAction() {
 
@@ -118,7 +120,7 @@ public class ObjectBuilderEditor extends ScoreObjectEditor {
 
     @Override
     public void editScoreObject(ScoreObject sObj) {
-        if (sObj == null || !(sObj instanceof ObjectBuilder)) {
+        if (!(sObj instanceof ObjectBuilder)) {
             this.objectBuilder = null;
             System.err.println("[ERROR] ObjectBuilder::editSoundObject - "
                     + "not instance of ObjectBuilder");
@@ -148,7 +150,8 @@ public class ObjectBuilderEditor extends ScoreObjectEditor {
         NoteList notes = null;
 
         try {
-            notes = this.objectBuilder.generateForCSD(CompileData.createEmptyCompileData(),
+            TimeContext context = TimeContextManager.getContext();
+            notes = this.objectBuilder.generateForCSD(context, CompileData.createEmptyCompileData(),
                     0.0f, -1.0f);
         } catch (SoundObjectException e) {
             ExceptionDialog.showExceptionDialog(SwingUtilities.getRoot(this), e);

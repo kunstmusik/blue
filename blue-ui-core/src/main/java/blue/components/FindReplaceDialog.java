@@ -54,10 +54,10 @@ public class FindReplaceDialog extends javax.swing.JDialog implements
         if (!map.containsKey(root)) {
             FindReplaceDialog dialog;
 
-            if (root instanceof Frame) {
-                dialog = new FindReplaceDialog((Frame) root);
-            } else if (root instanceof Dialog) {
-                dialog = new FindReplaceDialog((Dialog) root);
+            if (root instanceof Frame frame) {
+                dialog = new FindReplaceDialog(frame);
+            } else if (root instanceof Dialog dialog1) {
+                dialog = new FindReplaceDialog(dialog1);
             } else {
                 return;
             }

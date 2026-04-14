@@ -27,18 +27,17 @@ public class WaveformCacheKey {
 
     private final String fileName;
     private long checksum;
-    private final int pixelSeconds;
+    private final double pixelSeconds;
 
-    public WaveformCacheKey(String fileName, long checksum, int pixelSeconds) {
-        this.fileName = (fileName == null) ? "" : fileName;
+    public WaveformCacheKey(String fileName, long checksum, double pixelSeconds) {
+        this.fileName = java.util.Objects.requireNonNullElse(fileName, "");
         this.checksum = checksum;
         this.pixelSeconds = pixelSeconds;
     }
 
     @Override
     public boolean equals(Object obj) {
-        if(obj instanceof WaveformCacheKey) {
-            WaveformCacheKey that = (WaveformCacheKey)obj;
+        if(obj instanceof WaveformCacheKey that) {
             return  this.fileName.equals(that.fileName) && 
                     this.checksum == that.checksum &&
                     this.pixelSeconds == that.pixelSeconds;
@@ -48,7 +47,7 @@ public class WaveformCacheKey {
 
     @Override
     public int hashCode() {
-        return fileName.hashCode() + pixelSeconds + Long.hashCode(checksum); 
+        return fileName.hashCode() + Double.hashCode(pixelSeconds) + Long.hashCode(checksum); 
     }
 
     

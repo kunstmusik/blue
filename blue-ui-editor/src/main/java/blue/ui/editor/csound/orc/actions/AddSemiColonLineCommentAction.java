@@ -20,6 +20,8 @@
 package blue.ui.editor.csound.orc.actions;
 
 import java.awt.event.ActionEvent;
+import java.util.ArrayList;
+import java.util.List;
 import javax.swing.Action;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Caret;
@@ -27,6 +29,7 @@ import javax.swing.text.JTextComponent;
 import org.netbeans.api.editor.document.LineDocumentUtils;
 import org.netbeans.editor.BaseAction;
 import org.netbeans.editor.BaseDocument;
+import org.netbeans.api.editor.document.LineDocument;
 
 /**
  *
@@ -60,31 +63,28 @@ public class AddSemiColonLineCommentAction extends BaseAction {
                     int startPos;
                     int endPos;
                     
-                    if (org.netbeans.editor.Utilities.isSelectionShowing(
-                            caret)) {
-                        
-                        startPos = org.netbeans.editor.Utilities.getRowStart(
-                                doc,
+                    LineDocument lineDoc = (LineDocument) doc;
+
+                    if (target.getSelectionStart() != target.getSelectionEnd()) {
+
+                        startPos = LineDocumentUtils.getLineStart(
+                                lineDoc,
                                 target.getSelectionStart());
                         endPos = target.getSelectionEnd();
-                        if (endPos > 0 && org.netbeans.editor.Utilities.getRowStart(
-                                doc, endPos) == endPos) {
+                        if (endPos > 0 && LineDocumentUtils.getLineStart(
+                                lineDoc, endPos) == endPos) {
                             endPos--;
                         }
-                        endPos = org.netbeans.editor.Utilities.getRowEnd(doc,
+                        endPos = LineDocumentUtils.getLineEnd(lineDoc,
                                 endPos);
                     } else { // selection not visible
-                        startPos = org.netbeans.editor.Utilities.getRowStart(
-                                doc, caret.getDot());
-                        endPos = org.netbeans.editor.Utilities.getRowEnd(doc,
+                        startPos = LineDocumentUtils.getLineStart(
+                                lineDoc, caret.getDot());
+                        endPos = LineDocumentUtils.getLineEnd(lineDoc,
                                 caret.getDot());
                     }
-                    
-                    int lineCount = org.netbeans.editor.Utilities.getRowCount(
-                            doc, startPos,
-                            endPos);
-                    
-                    comment(doc, startPos, lineCount);
+
+                    comment(doc, startPos, endPos);
                     
                     
                 } catch (BadLocationException e) {
@@ -94,10 +94,25 @@ public class AddSemiColonLineCommentAction extends BaseAction {
         }
     }
 
-    private void comment(BaseDocument doc, int startOffset, int lineCount) throws BadLocationException {
-        for (int offset = startOffset; lineCount > 0; lineCount--) {
-            doc.insertString(offset, COMMENT_STRING, null); // NOI18N
-            offset = org.netbeans.editor.Utilities.getRowStart(doc, offset, +1);;
+    private void comment(BaseDocument doc, int startOffset, int endOffset) throws BadLocationException {
+        List<Integer> lineStarts = getLineStarts((LineDocument) doc, startOffset,
+                endOffset);
+        for (int i = lineStarts.size() - 1; i >= 0; i--) {
+            doc.insertString(lineStarts.get(i), COMMENT_STRING, null); // NOI18N
         }
+    }
+
+    private List<Integer> getLineStarts(LineDocument lineDoc, int startOffset,
+            int endOffset) throws BadLocationException {
+        int startLine = LineDocumentUtils.getLineIndex(lineDoc, startOffset);
+        int endLine = LineDocumentUtils.getLineIndex(lineDoc, endOffset);
+        List<Integer> lineStarts = new ArrayList<>(endLine - startLine + 1);
+
+        for (int line = startLine; line <= endLine; line++) {
+            lineStarts.add(LineDocumentUtils.getLineStartFromIndex(lineDoc,
+                    line));
+        }
+
+        return lineStarts;
     }
 }

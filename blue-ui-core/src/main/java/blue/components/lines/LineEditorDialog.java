@@ -72,10 +72,10 @@ public class LineEditorDialog extends BaseDialog {
         if (!map.containsKey(root)) {
             LineEditorDialog dialog;
 
-            if (root instanceof Frame) {
-                dialog = new LineEditorDialog((Frame) root);
-            } else if (root instanceof Dialog) {
-                dialog = new LineEditorDialog((Dialog) root);
+            if (root instanceof Frame frame) {
+                dialog = new LineEditorDialog(frame);
+            } else if (root instanceof Dialog dialog1) {
+                dialog = new LineEditorDialog(dialog1);
             } else {
                 return null;
             }

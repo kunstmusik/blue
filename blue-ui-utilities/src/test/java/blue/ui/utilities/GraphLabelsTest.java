@@ -18,26 +18,24 @@
  */
 package blue.ui.utilities;
 
-import org.junit.Test;
-import static org.junit.Assert.*;
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  *
  * @author stevenyi
  */
-public class GraphLabelsTest {
+class GraphLabelsTest {
     
     public GraphLabelsTest() {
 
     }
 
-
-
     /**
      * Test of niceNum method, of class GraphLabels.
      */
     @Test
-    public void testNiceNum() {
+    void testNiceNum() {
         assertEquals(1.0, GraphLabels.niceNum(1.01, true), 0.0);
         assertEquals(1.0, GraphLabels.niceNum(1.02, true), 0.0);
         assertEquals(1.0, GraphLabels.niceNum(1.2, true), 0.0);

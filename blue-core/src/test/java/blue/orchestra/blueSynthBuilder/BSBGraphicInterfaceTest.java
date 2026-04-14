@@ -19,12 +19,14 @@
  */
 package blue.orchestra.blueSynthBuilder;
 
-import junit.framework.TestCase;
+import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.Test;
 
-public class BSBGraphicInterfaceTest extends TestCase {
+class BSBGraphicInterfaceTest {
 
     // TODO - should probably split this into multiple tests...
-    public void testUniqueNames() {
+    @Test
+    void testUniqueNames() {
         BSBGraphicInterface bsbInterface = new BSBGraphicInterface();
         BSBGroup bsbGroup = bsbInterface.getRootGroup();
 

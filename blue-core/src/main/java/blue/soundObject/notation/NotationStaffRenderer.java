@@ -222,7 +222,7 @@ public class NotationStaffRenderer extends JComponent {
 
         mFrame.getContentPane().add(notationStaff1);
 
-        mFrame.show();
+        mFrame.setVisible(true);
         mFrame.addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {

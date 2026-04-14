@@ -19,7 +19,72 @@
  */
 package blue.ui.core.score;
 
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.GridLayout;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.Toolkit;
+import java.awt.event.ActionEvent;
+import java.awt.event.AdjustmentEvent;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseWheelEvent;
+import java.awt.event.MouseWheelListener;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import java.lang.ref.WeakReference;
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.swing.Action;
+import javax.swing.ActionMap;
+import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.InputMap;
+import javax.swing.JButton;
+import javax.swing.JComponent;
+import javax.swing.JDialog;
+import javax.swing.JLabel;
+import javax.swing.JLayeredPane;
+import javax.swing.JPanel;
+import javax.swing.JCheckBoxMenuItem;
+import javax.swing.JPopupMenu;
+import javax.swing.JScrollPane;
+import javax.swing.JSplitPane;
+import javax.swing.JViewport;
+import javax.swing.KeyStroke;
+import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
+import javax.swing.Timer;
+import javax.swing.border.BevelBorder;
+import javax.swing.border.EmptyBorder;
+
+import org.netbeans.api.settings.ConvertAsProperties;
+import org.openide.awt.ActionID;
+import org.openide.awt.ActionReference;
+import org.openide.awt.ActionReferences;
+import org.openide.filesystems.FileObject;
+import org.openide.filesystems.FileUtil;
+import org.openide.util.Lookup;
+import org.openide.util.NbBundle;
+import org.openide.util.Utilities;
+import org.openide.util.lookup.AbstractLookup;
+import org.openide.util.lookup.InstanceContent;
+import org.openide.windows.TopComponent;
+import org.openide.windows.WindowManager;
+
 import blue.BlueData;
+import blue.Marker;
+import blue.MarkersList;
 import blue.WindowSettingManager;
 import blue.automation.AutomationManager;
 import blue.automation.ParameterLinePanel;
@@ -35,54 +100,39 @@ import blue.score.ScoreObjectListener;
 import blue.score.TimeState;
 import blue.score.layers.Layer;
 import blue.score.layers.LayerGroup;
-import blue.score.tempo.Tempo;
+import blue.score.layers.ScoreObjectLayer;
 import blue.services.render.RenderState;
 import blue.services.render.RenderTimeManager;
 import blue.services.render.RenderTimeManagerListener;
 import blue.settings.PlaybackSettings;
 import blue.soundObject.PolyObject;
 import blue.soundObject.SoundObject;
-import blue.ui.components.IconFactory;
+import blue.time.TimeBase;
+import blue.time.TimeContext;
+import blue.time.TimeContextManager;
+import blue.time.TimeDuration;
+import blue.time.TimePosition;
+import blue.time.TimeUnitMath;
+import blue.time.TimeUtilities;
+import blue.ui.core.score.RulerConfigDialog.TimebaseUpdateMode;
 import blue.ui.core.score.layers.LayerGroupPanel;
 import blue.ui.core.score.layers.LayerGroupUIProviderManager;
 import blue.ui.core.score.layers.SoundObjectProvider;
+import blue.ui.core.score.layers.soundObject.ScoreObjectEditorTopComponent;
 import blue.ui.core.score.manager.LayerGroupManagerDialog;
 import blue.ui.core.score.manager.ScoreManagerDialog;
-import blue.ui.core.score.tempo.TempoEditor;
+import blue.ui.core.score.meter.MeterRegionBar;
 import blue.ui.core.score.tempo.TempoEditorControl;
+import blue.ui.core.score.tempo.TempoEditorPanel;
+import blue.ui.utilities.LayerSelectionCoordinator;
+import blue.ui.utilities.LayerSelectionProvider;
 import blue.ui.utilities.LinearLayout;
 import blue.ui.utilities.UiUtilities;
 import blue.util.ObservableListEvent;
 import blue.util.ObservableListListener;
 import blue.utility.GUI;
-import java.awt.*;
-import java.awt.event.*;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
-import java.lang.ref.WeakReference;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.WeakHashMap;
-import javax.swing.*;
-import javax.swing.border.BevelBorder;
-import javax.swing.border.Border;
-import javax.swing.border.EmptyBorder;
-import javax.swing.border.LineBorder;
 import jiconfont.icons.elusive.Elusive;
 import jiconfont.swing.IconFontSwing;
-import org.netbeans.api.settings.ConvertAsProperties;
-import org.openide.awt.ActionID;
-import org.openide.awt.ActionReference;
-import org.openide.awt.ActionReferences;
-import org.openide.filesystems.FileObject;
-import org.openide.filesystems.FileUtil;
-import org.openide.util.Lookup;
-import org.openide.util.NbBundle;
-import org.openide.util.Utilities;
-import org.openide.util.lookup.AbstractLookup;
-import org.openide.util.lookup.InstanceContent;
-import org.openide.windows.TopComponent;
-import org.openide.windows.WindowManager;
 
 /**
  * TopComponent for Score Timeline.
@@ -122,10 +172,18 @@ public final class ScoreTopComponent extends TopComponent
     BlueData data;
     ScoreObjectBar scoreObjectBar = new ScoreObjectBar();
 
-    // TODO - consider separate component for all bars
-    JPanel timelineBars = new JPanel();
+    // Timeline bars added directly to columnHeaderPanel
     MarkersBar markersBar = new MarkersBar();
-    TimeBar timeBar = new TimeBar();
+    TimeBar primaryRuler = new TimeBar();
+    TimeBar secondaryRuler = new TimeBar();
+    
+    // Spacer label for left header when secondary ruler is visible
+    JLabel secondaryRulerSpacer = new JLabel();
+    JLabel timeSigLabel = new JLabel("Time Signature");
+    JLabel markersLabel = new JLabel("Markers");
+    
+    // Column header panel for tempo, time sig, markers, and time bars
+    JPanel columnHeaderPanel = new JPanel();
 
     JPanel leftPanel = new JPanel(new BorderLayout());
     JViewport layerHeaderViewPort = new JViewport();
@@ -140,20 +198,23 @@ public final class ScoreTopComponent extends TopComponent
 
     TimePointer guideLineStart = new TimePointer(Color.WHITE);
     TimePointer guideLineEnd = new TimePointer(Color.WHITE);
-    TimePointer guideLines[] = new TimePointer[]{guideLineStart, guideLineEnd};
+    TimePointer[] guideLines = new TimePointer[]{guideLineStart, guideLineEnd};
 
     double renderStart = -1.0f;
     double timePointer = -1.0f;
-    JToggleButton snapButton = new JToggleButton();
-    TimelinePropertiesPanel timeProperties = new TimelinePropertiesPanel();
+    SnapButton snapButton = new SnapButton();
+    JButton rulerConfigButton = new JButton("Ruler");
+    RulerConfigDialog rulerConfigDialog = null;
     TempoEditorControl tempoControlPanel = new TempoEditorControl();
-    TempoEditor tempoEditor = new TempoEditor();
+    TempoEditorPanel tempoEditorPanel = new TempoEditorPanel();
+    MeterRegionBar meterRegionBar = new MeterRegionBar();
     ScoreNavigatorDialog navigator = null;
     volatile boolean checkingSize = false;
     AlphaMarquee marquee = new AlphaMarquee();
     ScoreMouseWheelListener mouseWheelListener;
     LayerHeightWheelListener layerHeightWheelListener;
     ScoreMouseListener listener = new ScoreMouseListener(this, content);
+    LayerSelectionCoordinator layerSelectionCoordinator = new LayerSelectionCoordinator();
     TimeState currentTimeState = null;
     RenderTimeManager renderTimeManager
             = Lookup.getDefault().lookup(RenderTimeManager.class);
@@ -164,6 +225,7 @@ public final class ScoreTopComponent extends TopComponent
     private final Lookup.Result<ScoreObject> selectedScoreObjectsResults;
     private ScoreObject selectionStartObject = null;
     private ScoreObject selectionEndObject = null;
+    private boolean rootTimelineSelected = true;
 
     private ScoreTopComponent() {
         initComponents();
@@ -195,6 +257,21 @@ public final class ScoreTopComponent extends TopComponent
         renderTimeManager.addPropertyChangeListener(this);
         renderTimeManager.addRenderTimeManagerListener(this);
 
+        TopComponent.getRegistry().addPropertyChangeListener((PropertyChangeEvent evt) -> {
+            if (!TopComponent.Registry.PROP_ACTIVATED.equals(evt.getPropertyName())) {
+                return;
+            }
+
+            TopComponent active = TopComponent.getRegistry().getActivated();
+            if (active == null || active == this
+                    || active instanceof ScoreObjectEditorTopComponent
+                    || active instanceof SoundObjectProvider) {
+                return;
+            }
+
+            clearLayerSelections();
+        });
+
         reinitialize();
 
         layerPanel.addMouseListener(listener);
@@ -213,11 +290,16 @@ public final class ScoreTopComponent extends TopComponent
         InputMap inputMap = scorePanel.getInputMap(
                 WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
         ActionMap actionMap = scorePanel.getActionMap();
+        InputMap headerInputMap = columnHeaderPanel.getInputMap(
+                WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+        ActionMap headerActionMap = columnHeaderPanel.getActionMap();
         for (FileObject fObj : files) {
             Action a = FileUtil.getConfigObject(fObj.getPath(), Action.class);
             KeyStroke ks = Utilities.stringToKey(fObj.getName());
             inputMap.put(ks, a.getValue(Action.NAME));
             actionMap.put(a.getValue(Action.NAME), a);
+            headerInputMap.put(ks, a.getValue(Action.NAME));
+            headerActionMap.put(a.getValue(Action.NAME), a);
         }
 
         SingleLineScoreSelection.getInstance().addListener(new SingleLineScoreSelection.SingleLineScoreSelectionListener() {
@@ -321,12 +403,13 @@ public final class ScoreTopComponent extends TopComponent
             }
 
             if (!sObj.isEmpty()) {
-
+                TimeContext context = TimeContextManager.getContext();
+                
                 double min = Double.POSITIVE_INFINITY;
                 double max = Double.NEGATIVE_INFINITY;
                 for (var obj : sObj) {
-                    var start = obj.getStartTime();
-                    var end = start + obj.getSubjectiveDuration();
+                    var start = obj.getStartTime().toBeats(context);
+                    var end = start + obj.getSubjectiveDuration().toBeats(context);
 
                     if (start < min) {
                         selectionStartObject = obj;
@@ -366,9 +449,11 @@ public final class ScoreTopComponent extends TopComponent
         var selectionAvailable = selectionStartObject != null;
 
         if (selectionAvailable) {
-
-            double start = selectionStartObject.getStartTime();
-            double end = selectionEndObject.getStartTime() + selectionEndObject.getSubjectiveDuration();
+            TimeContext context = TimeContextManager.getContext();
+            
+            double start = selectionStartObject.getStartTime().toBeats(context);
+            double end = selectionEndObject.getStartTime().toBeats(context) + 
+                         selectionEndObject.getSubjectiveDuration().toBeats(context);
             double pixelSecond = currentTimeState.getPixelSecond();
             guideLineStart.setLocation((int) (pixelSecond * start), 0);
             guideLineEnd.setLocation((int) (pixelSecond * end), 0);
@@ -401,10 +486,161 @@ public final class ScoreTopComponent extends TopComponent
                     c.setSize(width, d2.height);
                 }
 
+                // Also resize column header panel to match content width for scrolling
+                scheduleColumnHeaderResize();
+
                 scrollPane.validate();
             }
             checkingSize = false;
         }
+    }
+    
+    private boolean isUpdatingColumnHeader = false;
+    private boolean pendingColumnHeaderResize = false;
+    private int lastColumnHeaderWidth = -1;
+    private int lastColumnHeaderHeight = -1;
+
+    private void scheduleColumnHeaderResize() {
+        if (pendingColumnHeaderResize) {
+            return;
+        }
+
+        pendingColumnHeaderResize = true;
+        SwingUtilities.invokeLater(() -> {
+            try {
+                int contentWidth = Math.max(layerPanel.getWidth(), scrollPane.getViewport().getWidth());
+                if (contentWidth > 0) {
+                    updateColumnHeaderSize(contentWidth);
+                    columnHeaderPanel.repaint();
+                }
+            } finally {
+                pendingColumnHeaderResize = false;
+            }
+        });
+    }
+    
+    /**
+     * Updates the column header panel and its children to match the given content width.
+     * This is necessary for proper horizontal scrolling of the time bar, markers bar, etc.
+     */
+    private void updateColumnHeaderSize(int contentWidth) {
+        // Guard against re-entry from resize events triggered by setPreferredSize
+        if (isUpdatingColumnHeader) {
+            return;
+        }
+        isUpdatingColumnHeader = true;
+        try {
+            int totalHeight = 0;
+            for (Component child : columnHeaderPanel.getComponents()) {
+                if (child.isVisible()) {
+                    totalHeight += child.getPreferredSize().height;
+                }
+            }
+
+            if (contentWidth == lastColumnHeaderWidth && totalHeight == lastColumnHeaderHeight) {
+                return;
+            }
+
+            lastColumnHeaderWidth = contentWidth;
+            lastColumnHeaderHeight = totalHeight;
+
+            Dimension headerSize = new Dimension(contentWidth, totalHeight);
+            if (!headerSize.equals(columnHeaderPanel.getPreferredSize())) {
+                columnHeaderPanel.setPreferredSize(headerSize);
+            }
+            if (!headerSize.equals(columnHeaderPanel.getSize())) {
+                columnHeaderPanel.setSize(headerSize);
+            }
+
+            columnHeaderPanel.revalidate();
+        } finally {
+            isUpdatingColumnHeader = false;
+        }
+    }
+
+    private void installRowHeaderPopupMenu() {
+        var popupListener = new MouseAdapter() {
+            @Override
+            public void mousePressed(MouseEvent e) {
+                maybeShowPopup(e);
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent e) {
+                maybeShowPopup(e);
+            }
+
+            private void maybeShowPopup(MouseEvent e) {
+                if (e.isPopupTrigger()) {
+                    showRowVisibilityPopup(e);
+                }
+            }
+        };
+
+        // Only attach to the left-side row header controls.
+        // Right-side timeline bars keep their existing custom context menus.
+        tempoControlPanel.addMouseListener(popupListener);
+        timeSigLabel.addMouseListener(popupListener);
+        markersLabel.addMouseListener(popupListener);
+        secondaryRulerSpacer.addMouseListener(popupListener);
+    }
+
+    private void showRowVisibilityPopup(MouseEvent e) {
+        if (currentTimeState == null) {
+            return;
+        }
+
+        JPopupMenu menu = new JPopupMenu();
+
+        JCheckBoxMenuItem showTempoItem = new JCheckBoxMenuItem(
+                "Show Tempo Row", currentTimeState.isTempoRowVisible());
+        showTempoItem.addActionListener(evt ->
+                currentTimeState.setTempoRowVisible(showTempoItem.isSelected()));
+        menu.add(showTempoItem);
+
+        JCheckBoxMenuItem showMeterItem = new JCheckBoxMenuItem(
+                "Show Meter Row", currentTimeState.isMeterRowVisible());
+        showMeterItem.addActionListener(evt ->
+                currentTimeState.setMeterRowVisible(showMeterItem.isSelected()));
+        menu.add(showMeterItem);
+
+        JCheckBoxMenuItem showMarkersItem = new JCheckBoxMenuItem(
+                "Show Markers Row", currentTimeState.isMarkersRowVisible());
+        showMarkersItem.addActionListener(evt ->
+                currentTimeState.setMarkersRowVisible(showMarkersItem.isSelected()));
+        menu.add(showMarkersItem);
+
+        if (e.getComponent() instanceof JComponent source) {
+            menu.show(source, e.getX(), e.getY());
+            return;
+        }
+
+        Point p = SwingUtilities.convertPoint(e.getComponent(), e.getPoint(), columnHeaderPanel);
+        menu.show(columnHeaderPanel, p.x, p.y);
+    }
+
+    private void syncRowVisibilityFromTimeState(TimeState timeState) {
+        if (timeState == null) {
+            return;
+        }
+
+        boolean showTempoRow = rootTimelineSelected && timeState.isTempoRowVisible();
+        boolean showMeterRow = rootTimelineSelected && timeState.isMeterRowVisible();
+        boolean showMarkersRow = timeState.isMarkersRowVisible();
+
+        tempoEditorPanel.setVisible(showTempoRow);
+        tempoControlPanel.setVisible(showTempoRow);
+
+        meterRegionBar.setVisible(showMeterRow);
+        timeSigLabel.setVisible(showMeterRow);
+
+        markersBar.setVisible(showMarkersRow);
+        markersLabel.setVisible(showMarkersRow);
+
+        scheduleColumnHeaderResize();
+        columnHeaderPanel.revalidate();
+        leftPanel.revalidate();
+        scrollPane.revalidate();
     }
 
     public synchronized void reinitialize() {
@@ -437,12 +673,14 @@ public final class ScoreTopComponent extends TopComponent
             TimeState timeState = data.getScore().getTimeState();
             currentTimeState = timeState;
 
-            Tempo tempo = data.getScore().getTempo();
-            tempoControlPanel.setTempo(tempo);
-            tempoEditor.setData(data);
+            tempoControlPanel.setTempoMap(data.getScore().getTempoMap());
+            tempoEditorPanel.setData(data);
+            meterRegionBar.setData(data);
 
-            timeBar.setData(data);
+            primaryRuler.setData(data);
+            secondaryRuler.setData(data);
             markersBar.setData(data);
+            snapButton.setTimeState(timeState);
 
             this.data.addPropertyChangeListener(this);
 
@@ -467,12 +705,18 @@ public final class ScoreTopComponent extends TopComponent
 
             comp.putClientProperty("layerGroup", layerGroup);
 
+            final LayerGroupSpacerPanel spacer = new LayerGroupSpacerPanel(
+                    layerGroup, data.getScore());
+
             if (index < 0 || index > layerPanel.getComponentCount() - 1) {
                 layerPanel.add(comp);
                 layerHeaderPanel.add(comp2);
+                layerHeaderPanel.add(spacer);
             } else {
+                int headerIndex = index * 2;
                 layerPanel.add(comp, index);
-                layerHeaderPanel.add(comp2, index);
+                layerHeaderPanel.add(comp2, headerIndex);
+                layerHeaderPanel.add(spacer, headerIndex + 1);
             }
 
             final Dimension d = new Dimension(comp2.getWidth(), comp.getHeight());
@@ -494,14 +738,43 @@ public final class ScoreTopComponent extends TopComponent
             });
             comp.addPropertyChangeListener("preferredSize",
                     layerPanelWidthListener);
+
+            LayerSelectionProvider provider = findLayerSelectionProvider(comp2);
+            if (provider != null) {
+                provider.setCoordinator(layerSelectionCoordinator);
+                layerSelectionCoordinator.addProvider(provider);
+            }
         }
     }
 
+    private LayerSelectionProvider findLayerSelectionProvider(java.awt.Component comp) {
+        if (comp instanceof LayerSelectionProvider provider) {
+            return provider;
+        }
+        if (comp instanceof java.awt.Container container) {
+            for (java.awt.Component child : container.getComponents()) {
+                LayerSelectionProvider found = findLayerSelectionProvider(child);
+                if (found != null) {
+                    return found;
+                }
+            }
+        }
+        return null;
+    }
+
     private void removePanelsForLayerGroups(int startIndex, int endIndex) {
+        int headerStart = startIndex * 2;
         for (int i = 0; i <= endIndex - startIndex; i++) {
-            Component comp = layerPanel.getComponent(startIndex);
             layerPanel.remove(startIndex);
-            layerHeaderPanel.remove(startIndex);
+            // Remove provider from coordinator before removing component
+            Component header = layerHeaderPanel.getComponent(headerStart);
+            LayerSelectionProvider provider = findLayerSelectionProvider(header);
+            if (provider != null) {
+                layerSelectionCoordinator.removeProvider(provider);
+            }
+            // Remove spacer first (at headerStart+1), then header (at headerStart)
+            layerHeaderPanel.remove(headerStart + 1);
+            layerHeaderPanel.remove(headerStart);
         }
         layerPanel.revalidate();
         layerPanel.repaint();
@@ -594,11 +867,21 @@ public final class ScoreTopComponent extends TopComponent
         layerHeaderViewPort.setView(layerHeaderPanel);
 
         JPanel leftHeaderView = new JPanel(new GridBagLayout());
-        JLabel markersLabel = new JLabel("Markers");
+        
+        timeSigLabel.setHorizontalAlignment(SwingConstants.RIGHT);
+        timeSigLabel.setFont(new Font("Dialog", Font.PLAIN, 10));
+        timeSigLabel.setPreferredSize(new Dimension(100, 20));
+        timeSigLabel.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
+        
         markersLabel.setHorizontalAlignment(SwingConstants.RIGHT);
         markersLabel.setFont(new Font("Dialog", Font.PLAIN, 10));
         markersLabel.setPreferredSize(new Dimension(100, 20));
         markersLabel.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
+
+        // Configure secondary ruler spacer (hidden by default, shown when secondary ruler is visible)
+        secondaryRulerSpacer.setPreferredSize(new Dimension(100, 20));
+        secondaryRulerSpacer.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
+        secondaryRulerSpacer.setVisible(false);
 
         var gbc = new GridBagConstraints();
         gbc.fill = GridBagConstraints.HORIZONTAL;
@@ -608,9 +891,13 @@ public final class ScoreTopComponent extends TopComponent
 
         leftHeaderView.add(tempoControlPanel, gbc);
         gbc.gridy = 1;
-        leftHeaderView.add(markersLabel, gbc);
+        leftHeaderView.add(timeSigLabel, gbc);
         gbc.gridy = 2;
+        leftHeaderView.add(markersLabel, gbc);
+        gbc.gridy = 3;
         leftHeaderView.add(manageButton, gbc);
+        gbc.gridy = 4;
+        leftHeaderView.add(secondaryRulerSpacer, gbc);
 
         leftPanel.add(leftHeaderView, BorderLayout.NORTH);
         leftPanel.add(layerHeaderViewPort, BorderLayout.CENTER);
@@ -624,36 +911,67 @@ public final class ScoreTopComponent extends TopComponent
             }
         });
 
-        final JPanel headerPanel = new JPanel(new BorderLayout());
-        headerPanel.setBackground(Color.BLACK);
+        columnHeaderPanel.setLayout(new BoxLayout(columnHeaderPanel, BoxLayout.Y_AXIS));
+        columnHeaderPanel.setBackground(Color.BLACK);
+        columnHeaderPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        headerPanel.add(tempoEditor, BorderLayout.CENTER);
+        tempoEditorPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 100));
+        tempoEditorPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        columnHeaderPanel.add(tempoEditorPanel);
 
-        // TIMELINE BARS
-//        timelineBars.setLayout(new BoxLayout(timelineBars, BoxLayout.Y_AXIS));
-//        timelineBars.add(markersBar);
-//        timelineBars.add(timeBar);
-        timelineBars.setLayout(new BorderLayout());
-        timelineBars.add(markersBar, BorderLayout.NORTH);
-        timelineBars.add(timeBar, BorderLayout.SOUTH);
-
+        // Time Signature bar
+        meterRegionBar.setPreferredSize(new Dimension(100, 20));
+        meterRegionBar.setMaximumSize(new Dimension(Integer.MAX_VALUE, 20));
+        meterRegionBar.setMinimumSize(new Dimension(1, 20));
+        meterRegionBar.setAlignmentX(Component.LEFT_ALIGNMENT);
+        columnHeaderPanel.add(meterRegionBar);
+        
+        // Markers bar
         markersBar.setPreferredSize(new Dimension(100, 20));
-        timeBar.setPreferredSize(new Dimension(100, 20));
+        markersBar.setMaximumSize(new Dimension(Integer.MAX_VALUE, 20));
+        markersBar.setMinimumSize(new Dimension(1, 20));
+        markersBar.setAlignmentX(Component.LEFT_ALIGNMENT);
+        columnHeaderPanel.add(markersBar);
+        
+        // Primary ruler
+        primaryRuler.setPreferredSize(new Dimension(100, 20));
+        primaryRuler.setMaximumSize(new Dimension(Integer.MAX_VALUE, 20));
+        primaryRuler.setMinimumSize(new Dimension(1, 20));
+        primaryRuler.setAlignmentX(Component.LEFT_ALIGNMENT);
+        columnHeaderPanel.add(primaryRuler);
+        
+        // Secondary ruler (hidden by default)
+        secondaryRuler.setPreferredSize(new Dimension(100, 20));
+        secondaryRuler.setMaximumSize(new Dimension(Integer.MAX_VALUE, 20));
+        secondaryRuler.setMinimumSize(new Dimension(1, 20));
+        secondaryRuler.setVisible(false);
+        secondaryRuler.setAlignmentX(Component.LEFT_ALIGNMENT);
+        columnHeaderPanel.add(secondaryRuler);
 
-        headerPanel.add(timelineBars, BorderLayout.SOUTH);
+        installRowHeaderPopupMenu();
 
-        tempoEditor.addComponentListener(new ComponentAdapter() {
+        tempoEditorPanel.addComponentListener(new ComponentAdapter() {
             @Override
             public void componentResized(ComponentEvent e) {
-                headerPanel.revalidate();
+                // When tempo editor expands/collapses, update the column header size
+                scheduleColumnHeaderResize();
             }
+        });
+        
+        // Listen for expanded property change to update column header
+        tempoEditorPanel.addPropertyChangeListener("expanded", evt -> {
+            SwingUtilities.invokeLater(() -> {
+                scheduleColumnHeaderResize();
+                scrollPane.revalidate();
+                scrollPane.repaint();
+            });
         });
 
         Color ICON_COLOR = new Color(230, 230, 255);
 
         JButton zoomButton = new JButton(IconFontSwing.buildIcon(Elusive.ZOOM_IN, 12, ICON_COLOR));
 
-        scrollPane.setColumnHeaderView(headerPanel);
+        scrollPane.setColumnHeaderView(columnHeaderPanel);
 
         scrollPane.setCorner(JScrollPane.LOWER_RIGHT_CORNER, zoomButton);
 
@@ -663,7 +981,7 @@ public final class ScoreTopComponent extends TopComponent
 
         layerPanel.setOpaque(true);
         layerPanel.setLayout(new LinearLayout(Score.SPACER));
-        layerHeaderPanel.setLayout(new LinearLayout(Score.SPACER));
+        layerHeaderPanel.setLayout(new LinearLayout(0));
 
         scorePanel.add(layerPanel, JLayeredPane.DEFAULT_LAYER);
 
@@ -680,27 +998,40 @@ public final class ScoreTopComponent extends TopComponent
 
         topSplitPane.setDividerLocation(175);
 
-        timeProperties.setVisible(false);
-        timeProperties.setPreferredSize(new Dimension(150, 40));
-
-        timeProperties.setVisible(false);
-        timeProperties.setPreferredSize(new Dimension(150, 40));
-
         var topLayout = new BoxLayout(topPanel, BoxLayout.X_AXIS);
         var modeSelectionPanel = new ModeSelectionPanel();
         modeSelectionPanel.setBorder(new EmptyBorder(5,5,5,5));
         topPanel.setLayout(topLayout);
         topPanel.add(modeSelectionPanel);
         topPanel.add(scoreObjectBar);
-
-        this.add(timeProperties, BorderLayout.EAST);
-
-        snapButton.addActionListener(
-                (ActionEvent e) -> {
-                    // showSnapPopup();
-                    timeProperties.setVisible(!timeProperties.isVisible());
+        topPanel.add(Box.createHorizontalGlue());
+        topPanel.add(snapButton);
+        topPanel.add(Box.createHorizontalStrut(5));
+        topPanel.add(rulerConfigButton);
+        topPanel.add(Box.createHorizontalStrut(10));
+        
+        // Ruler config button opens dialog
+        rulerConfigButton.setToolTipText("Configure ruler display settings");
+        rulerConfigButton.addActionListener((ActionEvent e) -> {
+            if (currentTimeState != null) {
+                if (rulerConfigDialog == null) {
+                    rulerConfigDialog = new RulerConfigDialog(
+                            WindowManager.getDefault().getMainWindow());
                 }
-        );
+                TimeBase oldPrimaryTimeBase = currentTimeState.getTimeDisplay();
+                rulerConfigDialog.setTimeState(currentTimeState);
+                if (rulerConfigDialog.showDialog()) {
+                    TimeBase newTimeBase = currentTimeState.getTimeDisplay();
+                    TimebaseUpdateMode scoreObjectMode = rulerConfigDialog.getScoreObjectUpdateMode();
+                    TimebaseUpdateMode markerMode = rulerConfigDialog.getMarkerUpdateMode();
+                    if (oldPrimaryTimeBase != newTimeBase
+                            && (scoreObjectMode != null || markerMode != null)) {
+                        applyTimebaseUpdate(oldPrimaryTimeBase, newTimeBase,
+                                scoreObjectMode, markerMode);
+                    }
+                }
+            }
+        });
 
         scorePanel.add(renderStartPointer, JLayeredPane.DRAG_LAYER);
 
@@ -728,8 +1059,6 @@ public final class ScoreTopComponent extends TopComponent
     }
 
     private void init() {
-        snapButton.setIcon(IconFactory.getLeftArrowIcon());
-        snapButton.setSelectedIcon(IconFactory.getRightArrowIcon());
         snapButton.setFocusable(false);
 
         Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
@@ -738,12 +1067,10 @@ public final class ScoreTopComponent extends TopComponent
             @Override
             public void componentResized(ComponentEvent e) {
                 int newHeight = Math.max(layerPanel.getHeight(), scrollPane.getViewport().getHeight());
+                int contentWidth = layerPanel.getWidth();
 
-                Dimension d = new Dimension(layerPanel.getWidth(), 40);
-                timelineBars.setMinimumSize(d);
-                timelineBars.setPreferredSize(d);
-                timelineBars.setSize(d);
-                timelineBars.repaint();
+                // Resize column header panel for proper scrolling
+                scheduleColumnHeaderResize();
 
                 scorePanel.setSize(layerPanel.getSize());
                 scorePanel.setPreferredSize(layerPanel.getSize());
@@ -921,13 +1248,11 @@ public final class ScoreTopComponent extends TopComponent
             return;
         }
 
-        double latency = PlaybackSettings.getInstance().getPlaybackLatencyCorrection();
-
-        if (renderStart < 0.0f || timePointer < latency) {
+        if (renderStart < 0.0f || timePointer < 0.0f) {
             renderTimePointer.setLocation(-1, 0);
         } else {
             int oldX = renderTimePointer.getX();
-            int newX = Math.max(0, (int) ((renderStart + timePointer - latency) * data.getScore().getTimeState().getPixelSecond()));
+            int newX = Math.max(0, (int) (timePointer * data.getScore().getTimeState().getPixelSecond()));
             renderTimePointer.setLocation(newX, 0);
 
             if (playbackSettings.isFollowPlayback()) {
@@ -943,8 +1268,7 @@ public final class ScoreTopComponent extends TopComponent
     private void scrollToRenderTime() {
         var rect = scrollPane.getViewport().getViewRect();
 
-        double latency = PlaybackSettings.getInstance().getPlaybackLatencyCorrection();
-        int newX = Math.max(0, (int) ((renderStart + timePointer - latency) * data.getScore().getTimeState().getPixelSecond()));
+        int newX = Math.max(0, (int) (timePointer * data.getScore().getTimeState().getPixelSecond()));
         scrollPane.getViewport().setViewPosition(new Point(newX, rect.y));
     }
 
@@ -964,8 +1288,8 @@ public final class ScoreTopComponent extends TopComponent
     }
 
     @Override
-    public void renderTimeUpdated(double timePointer) {
-        this.timePointer = timePointer;
+    public void renderTimeUpdated(double beatTime, double secondsTime) {
+        this.timePointer = beatTime;
         updateRenderTimePointer();
     }
 
@@ -989,8 +1313,30 @@ public final class ScoreTopComponent extends TopComponent
 //            }
 
         } else if (evt.getSource() == currentTimeState) {
-            if (evt.getPropertyName().equals("pixelSecond")) {
-                int pixelSecond = currentTimeState.getPixelSecond();
+            String prop = evt.getPropertyName();
+            if (prop.equals("secondaryRulerEnabled")) {
+                boolean enabled = (Boolean) evt.getNewValue();
+                secondaryRuler.setVisible(enabled);
+                secondaryRulerSpacer.setVisible(enabled);
+                scheduleColumnHeaderResize();
+                columnHeaderPanel.revalidate();
+                leftPanel.revalidate();
+                scrollPane.revalidate();
+            } else if (prop.equals("secondaryTimeDisplay")) {
+                TimeDisplayFormat format = TimeDisplayFormat.fromTimeBase((TimeBase) evt.getNewValue());
+                secondaryRuler.setDisplayFormat(format);
+            } else if (prop.equals("timeDisplay")) {
+                TimeDisplayFormat format = TimeDisplayFormat.fromTimeBase((TimeBase) evt.getNewValue());
+                primaryRuler.setDisplayFormat(format);
+            } else if (prop.equals("smpteFrameRate")) {
+                primaryRuler.repaint();
+                secondaryRuler.repaint();
+            } else if (prop.equals("tempoRowVisible")
+                    || prop.equals("meterRowVisible")
+                    || prop.equals("markersRowVisible")) {
+                syncRowVisibilityFromTimeState(currentTimeState);
+            } else if (prop.equals("pixelSecond")) {
+                double pixelSecond = currentTimeState.getPixelSecond();
                 double val = data.getRenderStartTime();
 
                 int newX = (int) (val * pixelSecond);
@@ -1022,10 +1368,12 @@ public final class ScoreTopComponent extends TopComponent
                     return;
                 }
 
-                double val = ((Double) evt.getNewValue());
+                double val = ((Number) evt.getNewValue()).doubleValue();
 
-                //FIXME
-                TimeState timeState = data.getScore().getTimeState();
+                // Use currentTimeState if available (handles both root and layer views)
+                TimeState timeState = (currentTimeState != null) 
+                        ? currentTimeState 
+                        : data.getScore().getTimeState();
                 int newX = (int) (val * timeState.getPixelSecond());
 
                 if (isRenderStartTime) {
@@ -1046,6 +1394,8 @@ public final class ScoreTopComponent extends TopComponent
             this.currentTimeState.removePropertyChangeListener(this);
         }
 
+        rootTimelineSelected = true;
+
         scoreController.setSelectedScoreObjects(null);
 
         this.clearAll();
@@ -1054,6 +1404,7 @@ public final class ScoreTopComponent extends TopComponent
 
             layerPanel.removeAll();
             layerHeaderPanel.removeAll();
+            layerSelectionCoordinator.clearProviders();
 
             
             TimeState timeState = score.getTimeState();
@@ -1068,14 +1419,16 @@ public final class ScoreTopComponent extends TopComponent
             layerPanel.validate();
             layerHeaderPanel.validate();
 
-            tempoEditor.setTimeState(timeState);
-            tempoEditor.setVisible(true);
-            tempoControlPanel.setVisible(true);
-            timeBar.setRootTimeline(true);
-            timeBar.setTimeState(timeState);
+            tempoEditorPanel.setTimeState(timeState);
+            meterRegionBar.setTimeState(timeState);
+            primaryRuler.setRootTimeline(true);
+            primaryRuler.setTimeState(timeState);
+            secondaryRuler.setRootTimeline(true);
+            secondaryRuler.setTimeState(timeState);
+            syncRulerFormatsFromTimeState(timeState);
             markersBar.setRootTimeline(true);
             markersBar.setTimeState(timeState);
-            timeProperties.setTimeState(timeState);
+            snapButton.setTimeState(timeState);
             mouseWheelListener.setTimeState(timeState);
 
             timeState.addPropertyChangeListener(0, this);
@@ -1092,7 +1445,7 @@ public final class ScoreTopComponent extends TopComponent
             renderLoopPointer.setVisible(true);
             renderTimePointer.setVisible(true);
 
-            scorePanel.add(marquee, new Integer(500));
+            scorePanel.add(marquee, Integer.valueOf(500));
             marquee.setVisible(false);
 
             updateRenderStartPointerX(startTime, false);
@@ -1121,9 +1474,7 @@ public final class ScoreTopComponent extends TopComponent
         scoreController.setSelectedScoreObjects(null);
 
         PolyObject pObj = (PolyObject) layerGroup;
-
-        tempoEditor.setVisible(false);
-        tempoControlPanel.setVisible(false);
+        rootTimelineSelected = false;
 
         if (this.currentTimeState != null) {
             this.currentTimeState.removePropertyChangeListener(this);
@@ -1135,6 +1486,7 @@ public final class ScoreTopComponent extends TopComponent
 
             layerPanel.removeAll();
             layerHeaderPanel.removeAll();
+            layerSelectionCoordinator.clearProviders();
 
             addPanelsForLayerGroup(-1, layerGroup, pObj.getTimeState());
 
@@ -1145,11 +1497,14 @@ public final class ScoreTopComponent extends TopComponent
 
             TimeState timeState = pObj.getTimeState();
 
-            timeBar.setRootTimeline(false);
-            timeBar.setTimeState(timeState);
+            primaryRuler.setRootTimeline(false);
+            primaryRuler.setTimeState(timeState);
+            secondaryRuler.setRootTimeline(false);
+            secondaryRuler.setTimeState(timeState);
+            syncRulerFormatsFromTimeState(timeState);
             markersBar.setRootTimeline(false);
             markersBar.setTimeState(timeState);
-            timeProperties.setTimeState(timeState);
+            snapButton.setTimeState(timeState);
             mouseWheelListener.setTimeState(timeState);
 
             this.currentTimeState = timeState;
@@ -1187,6 +1542,10 @@ public final class ScoreTopComponent extends TopComponent
         return layerPanel;
     }
 
+    void clearLayerSelections() {
+        layerSelectionCoordinator.clearSelections();
+    }
+
     @Override
     public void scorePathChanged(ScorePath path) {
         LayerGroup layerGroup = path.getLastLayerGroup();
@@ -1216,15 +1575,20 @@ public final class ScoreTopComponent extends TopComponent
             LayerGroup lGroup = (LayerGroup) c.getClientProperty("layerGroup");
 
             if (layerGroups.get(1) == lGroup) {
-                // handle push down
+                // handle push down — move end item to start position
                 Component comp = layerPanel.getComponent(evt.getEndIndex());
                 layerPanel.remove(comp);
                 layerPanel.add(comp, evt.getStartIndex());
 
-                Component comp2 = layerHeaderPanel.getComponent(
-                        evt.getEndIndex());
-                layerHeaderPanel.remove(comp2);
-                layerHeaderPanel.add(comp2, evt.getStartIndex());
+                // Move header+spacer pair from end to start
+                int srcHeader = evt.getEndIndex() * 2;
+                int dstHeader = evt.getStartIndex() * 2;
+                Component header = layerHeaderPanel.getComponent(srcHeader);
+                Component spacer = layerHeaderPanel.getComponent(srcHeader + 1);
+                layerHeaderPanel.remove(spacer);
+                layerHeaderPanel.remove(header);
+                layerHeaderPanel.add(header, dstHeader);
+                layerHeaderPanel.add(spacer, dstHeader + 1);
 
                 layerPanel.revalidate();
                 layerHeaderPanel.revalidate();
@@ -1232,15 +1596,21 @@ public final class ScoreTopComponent extends TopComponent
                 layerPanel.repaint();
                 layerHeaderPanel.repaint();
             } else {
-                // handle push up
+                // handle push up — move start item to end position
                 Component comp = layerPanel.getComponent(evt.getStartIndex());
                 layerPanel.remove(comp);
                 layerPanel.add(comp, evt.getEndIndex());
 
-                Component comp2 = layerHeaderPanel.getComponent(
-                        evt.getStartIndex());
-                layerHeaderPanel.remove(comp2);
-                layerHeaderPanel.add(comp2, evt.getEndIndex());
+                // Move header+spacer pair from start to end
+                int srcHeader = evt.getStartIndex() * 2;
+                int dstHeader = evt.getEndIndex() * 2;
+                Component header = layerHeaderPanel.getComponent(srcHeader);
+                Component spacer = layerHeaderPanel.getComponent(srcHeader + 1);
+                layerHeaderPanel.remove(spacer);
+                layerHeaderPanel.remove(header);
+                // After removing 2 components, destination shifts down by 2
+                layerHeaderPanel.add(header, dstHeader - 2);
+                layerHeaderPanel.add(spacer, dstHeader - 1);
 
                 layerPanel.revalidate();
                 layerHeaderPanel.revalidate();
@@ -1259,8 +1629,8 @@ public final class ScoreTopComponent extends TopComponent
                 layerPanel);
 
         Component c = layerPanel.getComponentAt(p);
-        if (c instanceof LayerGroupPanel) {
-            retVal = (LayerGroupPanel) c;
+        if (c instanceof LayerGroupPanel layerGroupPanel) {
+            retVal = layerGroupPanel;
         }
         return retVal;
     }
@@ -1280,7 +1650,100 @@ public final class ScoreTopComponent extends TopComponent
     public TimeState getTimeState() {
         return this.currentTimeState;
     }
+    
+    /**
+     * Syncs ruler display formats and visibility from TimeState.
+     */
+    private void syncRulerFormatsFromTimeState(TimeState timeState) {
+        if (timeState == null) return;
+        
+        // Sync primary format
+        TimeDisplayFormat primaryFormat = TimeDisplayFormat.fromTimeBase(
+                timeState.getTimeDisplay());
+        primaryRuler.setDisplayFormat(primaryFormat);
+        
+        // Sync secondary format and visibility
+        TimeDisplayFormat secondaryFormat = TimeDisplayFormat.fromTimeBase(
+                timeState.getSecondaryTimeDisplay());
+        secondaryRuler.setDisplayFormat(secondaryFormat);
+        boolean secondaryEnabled = timeState.isSecondaryRulerEnabled();
+        secondaryRuler.setVisible(secondaryEnabled);
+        secondaryRulerSpacer.setVisible(secondaryEnabled);
 
+        syncRowVisibilityFromTimeState(timeState);
+        scheduleColumnHeaderResize();
+        leftPanel.revalidate();
+    }
+
+    private void applyTimebaseUpdate(TimeBase oldTimeBase, TimeBase newTimeBase,
+            TimebaseUpdateMode scoreObjectMode, TimebaseUpdateMode markerMode) {
+        if (data == null) return;
+        
+        TimeContext ctx = TimeContextManager.getContext();
+        Score score = data.getScore();
+        
+        // Update ScoreObject times (start, duration, repeat point)
+        if (scoreObjectMode != null) {
+            for (LayerGroup<? extends Layer> layerGroup : score) {
+                for (Layer layer : layerGroup) {
+                    if (layer instanceof ScoreObjectLayer<?> scoreLayer) {
+                        for (ScoreObject sObj : scoreLayer) {
+                            boolean updateStart;
+                            boolean updateDuration;
+                            
+                            if (scoreObjectMode == TimebaseUpdateMode.UPDATE_ALL) {
+                                updateStart = true;
+                                updateDuration = true;
+                            } else {
+                                // UPDATE_MATCHING: per-field check
+                                updateStart = sObj.getStartTime().getTimeBase() == oldTimeBase;
+                                updateDuration = sObj.getSubjectiveDuration().getTimeBase() == oldTimeBase;
+                            }
+                            
+                            if (updateStart) {
+                                sObj.setStartTime(
+                                        TimeUtilities.convertTimePosition(sObj.getStartTime(), newTimeBase, ctx));
+                            }
+                            if (updateDuration) {
+                                double durBeats = sObj.getSubjectiveDuration().toBeats(ctx);
+                                sObj.setSubjectiveDuration(
+                                        TimeUnitMath.beatsToDuration(durBeats, newTimeBase, ctx));
+                            }
+                            
+                            // Update repeat point along with other SoundObject times
+                            if (sObj instanceof SoundObject soundObj) {
+                                TimeDuration rp = soundObj.getRepeatPoint();
+                                if (rp != null) {
+                                    boolean shouldUpdate = (scoreObjectMode == TimebaseUpdateMode.UPDATE_ALL)
+                                            || rp.getTimeBase() == oldTimeBase;
+                                    if (shouldUpdate) {
+                                        double rpBeats = rp.toBeats(ctx);
+                                        soundObj.setRepeatPoint(
+                                                TimeUnitMath.beatsToDuration(rpBeats, newTimeBase, ctx));
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        // Update markers
+        if (markerMode != null) {
+            MarkersList markers = data.getMarkersList();
+            for (int i = 0; i < markers.size(); i++) {
+                Marker m = markers.getMarker(i);
+                TimePosition mTime = m.getTime();
+                boolean shouldUpdate = (markerMode == TimebaseUpdateMode.UPDATE_ALL)
+                        || mTime.getTimeBase() == oldTimeBase;
+                if (shouldUpdate) {
+                    m.setTime(TimeUtilities.convertTimePosition(mTime, newTimeBase, ctx));
+                }
+            }
+        }
+    }
+    
     public List<LayerGroupPanel> getLayerGroupPanels() {
         List<LayerGroupPanel> lgPanels = new ArrayList<>();
 

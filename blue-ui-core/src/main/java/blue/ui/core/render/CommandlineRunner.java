@@ -72,8 +72,7 @@ public class CommandlineRunner implements PlayModeListener, RealtimeRenderServic
     }
 
     protected void notifyPlayModeListeners(int playMode) {
-        for (Iterator iter = listeners.iterator(); iter.hasNext();) {
-            PlayModeListener listener = (PlayModeListener) iter.next();
+        for (PlayModeListener listener : listeners) {
             listener.playModeChanged(playMode);
         }
     }
@@ -122,7 +121,7 @@ public class CommandlineRunner implements PlayModeListener, RealtimeRenderServic
 
             RenderTimeManager timeManager = Lookup.getDefault().lookup(
                     RenderTimeManager.class);
-            timeManager.setTempoMapper(result.getTempoMapper());
+            timeManager.setTempoMap(result.getTempoMap());
 
             String csd = result.getCsdText();
 
@@ -233,8 +232,7 @@ public class CommandlineRunner implements PlayModeListener, RealtimeRenderServic
             return;
         }
 
-        for (Iterator iter = nl.iterator(); iter.hasNext();) {
-            Note note = (Note) iter.next();
+        for (Note note : nl) {
             console.passToStdin(note.toString());
         }
     }

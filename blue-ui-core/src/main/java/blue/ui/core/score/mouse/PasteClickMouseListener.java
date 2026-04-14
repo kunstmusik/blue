@@ -23,6 +23,8 @@ import blue.plugin.ScoreMouseListenerPlugin;
 import blue.BlueSystem;
 import blue.components.AlphaMarquee;
 import blue.score.TimeState;
+import blue.time.TimeContext;
+import blue.time.TimeContextManager;
 import blue.ui.core.score.ModeManager;
 import blue.ui.core.score.ScoreController;
 import blue.ui.core.score.ScoreMode;
@@ -41,12 +43,12 @@ import javax.swing.SwingUtilities;
         position = 20)
 public class PasteClickMouseListener extends BlueMouseAdapter {
 
-    private static final int OS_CTRL_KEY = BlueSystem.getMenuShortcutKey();
+    private static final int OS_CTRL_KEY = BlueSystem.getMenuShortcutKeyEx();
     PasteSoundObjectAction pasteActionFactory = new PasteSoundObjectAction();
 
     @Override
     public void mousePressed(MouseEvent e) {
-        if ((e.getModifiers() & OS_CTRL_KEY) != OS_CTRL_KEY) {
+        if ((e.getModifiersEx() & OS_CTRL_KEY) != OS_CTRL_KEY) {
             return;
         }
 
@@ -67,8 +69,9 @@ public class PasteClickMouseListener extends BlueMouseAdapter {
             double start = (double) p.x / timeState.getPixelSecond();
 
             if (timeState.isSnapEnabled()) {
+                TimeContext ctx = TimeContextManager.getContext();
                 start = ScoreUtilities.getSnapValueStart(start,
-                        timeState.getSnapValue());
+                        timeState.getSnapValueInBeats(start, ctx.getTempoMap(), ctx.getSampleRate()));
             }
 
             switch (ModeManager.getInstance().getMode()) {

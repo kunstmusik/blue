@@ -78,8 +78,8 @@ public class ScaleEditor extends JComponent {
     public void fireActionPerformed() {
         ActionEvent ae = new ActionEvent(this, ActionEvent.ACTION_PERFORMED,
                 "scale");
-        for (Iterator iter = listeners.iterator(); iter.hasNext();) {
-            ActionListener al = (ActionListener) iter.next();
+        for (Object listener : listeners) {
+            ActionListener al = (ActionListener) listener;
             al.actionPerformed(ae);
         }
     }

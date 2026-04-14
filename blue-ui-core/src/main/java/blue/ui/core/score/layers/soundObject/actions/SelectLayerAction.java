@@ -69,7 +69,7 @@ public final class SelectLayerAction extends AbstractAction
 
         Layer layer = scorePath.getGlobalLayerForY(p.y);
 
-        if(layer != null && layer instanceof ScoreObjectLayer) {
+        if(layer instanceof ScoreObjectLayer) {
             ArrayList<ScoreObject> newSelected = new ArrayList<>((ScoreObjectLayer)layer);
 
             ScoreController.getInstance().setSelectedScoreObjects(newSelected);

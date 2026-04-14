@@ -26,6 +26,7 @@
                         <publicPackage>blue.ui.core.score.layers.soundObject</publicPackage>
                         <publicPackage>blue.ui.core.score.layers.soundObject.views</publicPackage>
                         <publicPackage>blue.ui.core.soundObject.renderer</publicPackage>
+                        <publicPackage>blue.ui.core.time</publicPackage>
                     </publicPackages>
                     <verifyRuntime>false</verifyRuntime>
                 </configuration>
@@ -101,11 +102,6 @@
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
-            <artifactId>blue-ui-nbutilities</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>${project.groupId}</groupId>
             <artifactId>blue-ui-utilities</artifactId>
             <version>${project.version}</version>
         </dependency>
@@ -142,6 +138,11 @@
         <dependency>
             <groupId>com.kunstmusik</groupId>
             <artifactId>blue-ext-commons-lang3</artifactId>
+            <version>${project.version}</version>
+        </dependency>    
+        <dependency>
+            <groupId>com.kunstmusik</groupId>
+            <artifactId>blue-ext-commons-text</artifactId>
             <version>${project.version}</version>
         </dependency>    
         <dependency>
@@ -284,8 +285,7 @@
         </dependency>            
         <dependency>
             <groupId>org.netbeans.api</groupId>
-            <artifactId>org-netbeans-libs-junit4</artifactId>
-            <version>${netbeans.version}</version>
+            <artifactId>org-netbeans-libs-junit5</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -300,38 +300,10 @@
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.controlsfx</groupId>
-            <artifactId>controlsfx</artifactId>
-            <version>11.0.0</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.openjfx</groupId>
-                    <artifactId>javafx-base</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.openjfx</groupId>
-                    <artifactId>javafx-controls</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.openjfx</groupId>
-                    <artifactId>javafx-media</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.openjfx</groupId>
-                    <artifactId>javafx-web</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.openjfx</groupId>
-                    <artifactId>javafx-graphics</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
             <groupId>net.java.timingframework</groupId>
             <artifactId>timingframework-swing</artifactId>
             <version>7.3.1</version>
         </dependency>
-        
         <dependency>
             <groupId>com.github.jiconfont</groupId>
             <artifactId>jiconfont-swing</artifactId>

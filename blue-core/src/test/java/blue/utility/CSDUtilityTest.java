@@ -21,32 +21,40 @@
 package blue.utility;
 
 import blue.BlueData;
-import org.junit.*;
-import static org.junit.Assert.assertEquals;
+import blue.orchestra.GenericInstrument;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 /**
  *
  * @author syi
  */
-public class CSDUtilityTest {
+class CSDUtilityTest {
 
     public CSDUtilityTest() {
     }
 
-    @BeforeClass
+    @BeforeAll
     public static void setUpClass() throws Exception {
     }
 
-    @AfterClass
+    @AfterAll
     public static void tearDownClass() throws Exception {
     }
 
-    @Before
-    public void setUp() {
+    @BeforeEach
+    void setUp() {
     }
 
-    @After
-    public void tearDown() {
+    @AfterEach
+    void tearDown() {
     }
 
     /**
@@ -85,7 +93,7 @@ public class CSDUtilityTest {
      * Test of parseCsScore method, of class CSDUtility.
      */
     @Test
-    public void testParseCsScore() {
+    void testParseCsScore() {
         BlueData data = new BlueData();
         String score = "f1 0 10 1\n f2 0 10 .5 .3 .1\ni1 0 2 3 4 5\ni2 0 2 3 4 5";
         int importMode = CSDUtility.IMPORT_GLOBAL;
@@ -95,7 +103,7 @@ public class CSDUtilityTest {
     }
 
     @Test
-    public void testParseCsScore_multiLine() {
+    void testParseCsScore_multiLine() {
         BlueData data = new BlueData();
         String score1 = "i1 0 2 3 4 5\n6 7 8 9\n8.8 8\n";
         score1 += "i1 2 3 4 5\n";
@@ -114,7 +122,41 @@ public class CSDUtilityTest {
 
     }
 
+    @Test
+    void convertCSDtoBlueRecoversAfterBrokenModernUDOHeader() throws Exception {
+        String csd = """
+                <CsoundSynthesizer>
+                <CsInstruments>
+                opcode broken(aSig)
+                instr 1
+                aOut oscili 0.1, 440
+                endin
+                </CsInstruments>
+                <CsScore>
+                i1 0 1
+                </CsScore>
+                </CsoundSynthesizer>
+                """;
 
+        Path csdFile = Files.createTempFile("blue-csd-utility", ".csd");
+
+        try {
+            Files.writeString(csdFile, csd);
+
+            BlueData data = CSDUtility.convertCSDtoBlue(csdFile.toFile(),
+                    CSDUtility.IMPORT_GLOBAL);
+
+            assertEquals(0, data.getOpcodeList().size());
+            assertEquals(1, data.getArrangement().size());
+
+            GenericInstrument instr = (GenericInstrument) data.getArrangement()
+                    .getInstrument("1");
+            assertNotNull(instr);
+            assertEquals("aOut oscili 0.1, 440\n", instr.getText());
+        } finally {
+            Files.deleteIfExists(csdFile);
+        }
+    }
 
     /**
      * Test of main method, of class CSDUtility.

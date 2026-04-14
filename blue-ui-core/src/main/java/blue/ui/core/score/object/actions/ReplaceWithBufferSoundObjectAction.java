@@ -135,8 +135,8 @@ public final class ReplaceWithBufferSoundObjectAction extends AbstractAction
         
         if (buffer.scoreObjects.size() == 1) {
             SoundObject sObj = (SoundObject) buffer.scoreObjects.get(0).deepCopy();
-            if (sObj instanceof Instance) {
-                instances.add((Instance) sObj);
+            if (sObj instanceof Instance instance) {
+                instances.add(instance);
             }
             return sObj;
         }
@@ -169,8 +169,8 @@ public final class ReplaceWithBufferSoundObjectAction extends AbstractAction
             SoundObject clone = (SoundObject) scoreObj.deepCopy();
             layer.add(clone);
 
-            if (clone instanceof Instance) {
-                instances.add((Instance) clone);
+            if (clone instanceof Instance instance) {
+                instances.add(instance);
             }
 
         }

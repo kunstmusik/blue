@@ -43,15 +43,12 @@ public class MidiInputTableModel extends AbstractTableModel {
 
     @Override
     public String getColumnName(int column) {
-        switch (column) {
-            case 0:
-                return "Enabled";
-            case 1:
-                return "Device Name";
-            case 2:
-                return "Description";
-        }
-        return "";
+        return switch (column) {
+            case 0 -> "Enabled";
+            case 1 -> "Device Name";
+            case 2 -> "Description";
+            default -> "";
+        };
     }
 
     @Override
@@ -63,15 +60,12 @@ public class MidiInputTableModel extends AbstractTableModel {
     public Object getValueAt(int row, int column) {
         BlueMidiDevice device = devices.get(row);
 
-        switch (column) {
-            case 0:
-                return device.isEnabled();
-            case 1:
-                return device.toString();
-            case 2:
-                return device.getDeviceInfo().getDescription();
-        }
-        return null;
+        return switch (column) {
+            case 0 -> device.isEnabled();
+            case 1 -> device.toString();
+            case 2 -> device.getDeviceInfo().getDescription();
+            default -> null;
+        };
     }
 
     @Override
@@ -83,7 +77,7 @@ public class MidiInputTableModel extends AbstractTableModel {
     public void setValueAt(Object aValue, int row, int column) {
         if (column == 0) {
             BlueMidiDevice device = devices.get(row);
-            boolean enabled = ((Boolean) aValue).booleanValue();
+            boolean enabled = (Boolean) aValue;
 
             device.setEnabled(enabled);
 

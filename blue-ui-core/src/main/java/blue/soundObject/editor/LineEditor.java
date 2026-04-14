@@ -57,7 +57,7 @@ public class LineEditor extends ScoreObjectEditor {
         lineTable.addTableModelListener(lineCanvas);
 
         lineTable.addSelectionListener((SelectionEvent<Line> e) -> {
-            lineCanvas.setSelectedLine(e.getSelectedItem());
+            lineCanvas.setSelectedLine(e.selectedItem());
         });
 
         this.add(splitPane, BorderLayout.CENTER);

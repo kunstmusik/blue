@@ -30,7 +30,7 @@ public class SendEditorManager {
 
     private static SendEditorManager manager = null;
 
-    private final HashMap map = new HashMap();
+    private final HashMap<Send, JDialog> map = new HashMap<>();
 
     private SendEditorManager() {
 
@@ -38,8 +38,7 @@ public class SendEditorManager {
 
     public void clear() {
 
-        for (Iterator iter = map.values().iterator(); iter.hasNext();) {
-            JDialog dialog = (JDialog) iter.next();
+        for (JDialog dialog : map.values()) {
             dialog.setVisible(false);
             dialog.dispose();
         }
@@ -61,10 +60,10 @@ public class SendEditorManager {
 
     public void openSendEditor(Frame root, Send send,
             ComboBoxModel comboBoxModel) {
-        Object val = map.get(send);
+        JDialog dialog = map.get(send);
 
-        if (val == null) {
-            JDialog dialog = new JDialog(root);
+        if (dialog == null) {
+            dialog = new JDialog(root);
             // dialog.getContentPane().add(.getEditor());
 
             SendEditPanel panel = new SendEditPanel();
@@ -85,7 +84,7 @@ public class SendEditorManager {
 
             map.put(send, dialog);
         } else {
-            ((JDialog) val).setVisible(true);
+            dialog.setVisible(true);
         }
 
     }

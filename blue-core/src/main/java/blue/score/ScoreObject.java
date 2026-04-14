@@ -20,6 +20,9 @@
 package blue.score;
 
 import blue.DeepCopyable;
+import blue.time.TimeContext;
+import blue.time.TimeDuration;
+import blue.time.TimePosition;
 import java.awt.Color;
 
 /**
@@ -41,33 +44,43 @@ public interface ScoreObject extends DeepCopyable<ScoreObject> {
     String getName();
     
     /**
-     * Gets the start time of the ScoreObject.
+     * Gets the start time of the ScoreObject as a TimePosition.
+     * The TimePosition type determines how the time is represented (beats, measure/beats, time, SMPTE, frames).
+     * 
+     * @return the start time as a TimePosition
      */
-    //FIXME -  change this to use double
-    double getStartTime();
+    TimePosition getStartTime();
 
     /**
-     * Sets the start time of the ScoreObject.
+     * Sets the start time of the ScoreObject using a TimePosition.
+     * The TimePosition's type determines how the time is stored and interpreted.
+     * 
+     * @param startTime the start time as a TimePosition
      */
-    //FIXME -  change this to use double
-    void setStartTime(double startTime);
+    void setStartTime(TimePosition startTime);
     
     /**
-     * Gets the subjective duration of the ScoreObject.
+     * Gets the subjective duration of the ScoreObject as a TimeDuration.
      * 
      * The subjective duration of the ScoreObject is the amount of time a
      * ScoreObject is assigned to last, regardless of its contents.
+     * The TimeDuration type determines how the duration is represented
+     * (0-based bars/beats for measure formats).
+     * 
+     * @return the subjective duration as a TimeDuration
      */
-    //FIXME -  change this to use double
-    double getSubjectiveDuration();
+    TimeDuration getSubjectiveDuration();
 
     /**
-     * Sets the subjective duration of the ScoreObject.
+     * Sets the subjective duration of the ScoreObject using a TimeDuration.
      * 
      * The subjective duration of the ScoreObject is the amount of time a
      * ScoreObject is assigned to last, regardless of its contents.
+     * The TimeDuration's type determines how the duration is stored and interpreted.
+     * 
+     * @param duration the subjective duration as a TimeDuration
      */
-    void setSubjectiveDuration(double duration);
+    void setSubjectiveDuration(TimeDuration duration);
 
 //    boolean isLayerTransferrable();
     // maybe use interface of Resizable?
@@ -76,17 +89,35 @@ public interface ScoreObject extends DeepCopyable<ScoreObject> {
 
     /** Return double array of limits of left diff and right diff when doing 
      * a resize from the right side of objects.
-     * @return 
+     * 
+     * @param context the TimeContext for time conversions
+     * @return array of [minDiff, maxDiff]
      */
-    double[] getResizeRightLimits();
+    double[] getResizeRightLimits(TimeContext context);
     
     /** Return double array of limits of left diff and right diff when doing 
      * a resize from the left side of objects.
-     * @return 
+     * 
+     * @param context the TimeContext for time conversions
+     * @return array of [minDiff, maxDiff]
      */
-    double[] getResizeLeftLimits();
-    void resizeLeft(double newStartTime);
-    void resizeRight(double newEndTime);
+    double[] getResizeLeftLimits(TimeContext context);
+    
+    /**
+     * Resizes the object from the left side.
+     * 
+     * @param context the TimeContext for time conversions
+     * @param newStartTime the new start time in beats
+     */
+    void resizeLeft(TimeContext context, double newStartTime);
+    
+    /**
+     * Resizes the object from the right side.
+     * 
+     * @param context the TimeContext for time conversions
+     * @param newEndTime the new end time in beats
+     */
+    void resizeRight(TimeContext context, double newEndTime);
 
     /**
      * Adds a ScoreObjectListener to this ScoreObject
@@ -117,4 +148,5 @@ public interface ScoreObject extends DeepCopyable<ScoreObject> {
     void setBackgroundColor(Color color);
 
     int getCloneSourceHashCode();
+    
 }

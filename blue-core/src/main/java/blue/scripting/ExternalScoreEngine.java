@@ -19,11 +19,9 @@
 package blue.scripting;
 
 import blue.BlueSystem;
-import blue.soundObject.SoundObjectException;
 import blue.utilities.ProcessRunner;
 import blue.utility.FileUtilities;
 import java.io.File;
-import java.io.IOException;
 import java.util.Map;
 import javax.script.ScriptException;
 import org.openide.util.lookup.ServiceProvider;

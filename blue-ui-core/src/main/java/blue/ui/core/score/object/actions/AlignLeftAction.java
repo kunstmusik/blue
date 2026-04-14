@@ -20,10 +20,15 @@
 package blue.ui.core.score.object.actions;
 
 import blue.score.ScoreObject;
+import blue.time.TimeContext;
+import blue.time.TimeContextManager;
+import blue.time.TimePosition;
+import blue.time.TimeUtilities;
 import blue.ui.core.score.undo.AlignEdit;
 import blue.undo.BlueUndoManager;
 import java.awt.event.ActionEvent;
 import java.util.Collection;
+
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import org.openide.awt.ActionID;
@@ -60,27 +65,29 @@ public final class AlignLeftAction extends AbstractAction implements ContextAwar
             return;
         }
 
-
-        double[] initialStartTimes = new double[selected.size()];
-        double[] endingStartTimes = new double[selected.size()];
+        TimeContext context = TimeContextManager.getContext();
+        TimePosition[] initialStartTimes = new TimePosition[selected.size()];
+        TimePosition[] endingStartTimes = new TimePosition[selected.size()];
 
         double farLeft = Double.MAX_VALUE;
         int i = 0;
 
         for (ScoreObject scoreObj : selected) {
             initialStartTimes[i] = scoreObj.getStartTime();
+            double startBeats = initialStartTimes[i].toBeats(context);
 
-            if(initialStartTimes[i] < farLeft) {
-                farLeft = initialStartTimes[i];
+            if(startBeats < farLeft) {
+                farLeft = startBeats;
             } 
             i++;
         }
 
         i = 0;
-
         for (ScoreObject scoreObj : selected) {
-            scoreObj.setStartTime(farLeft);
-            endingStartTimes[i] = farLeft;
+            TimePosition newStartTime = TimeUtilities.beatsToTimePosition(
+                    farLeft, scoreObj.getStartTime().getTimeBase(), context);
+            scoreObj.setStartTime(newStartTime);
+            endingStartTimes[i] = newStartTime;
             i++;
         }
 

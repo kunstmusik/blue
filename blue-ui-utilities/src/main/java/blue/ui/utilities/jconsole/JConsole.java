@@ -102,7 +102,7 @@ public class JConsole extends JTextArea implements KeyListener {
         };
         clearAction.putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(
                 KeyEvent.VK_L, Toolkit.getDefaultToolkit()
-                .getMenuShortcutKeyMask()));
+                .getMenuShortcutKeyMaskEx()));
 
         menu.add(clearAction);
 
@@ -220,8 +220,8 @@ public class JConsole extends JTextArea implements KeyListener {
 
     @Override
     public void keyPressed(KeyEvent e) {
-        int shortcutKey = Toolkit.getDefaultToolkit().getMenuShortcutKeyMask();
-        if ((e.getModifiers() & shortcutKey) == shortcutKey) {
+        int shortcutKey = Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx();
+        if ((e.getModifiersEx() & shortcutKey) == shortcutKey) {
             if (e.getKeyCode() == KeyEvent.VK_L && !e.isShiftDown() && !e.isAltDown()) {
                 this.setText(">>>");
                 e.consume();
@@ -262,7 +262,7 @@ public class JConsole extends JTextArea implements KeyListener {
                 if (running) {
                     // we need to put text into the input stream
                     StringBuilder text = new StringBuilder(this.getText());
-                    text.append(System.getProperty("line.separator"));
+                    text.append(System.lineSeparator());
                     String command = text.substring(editStart);
                     setText(text.toString());
                     ((ConsoleInputStream) in).addText(command);
@@ -270,7 +270,7 @@ public class JConsole extends JTextArea implements KeyListener {
                     // run the engine
                     StringBuilder text = new StringBuilder(this.getText());
                     String command = text.substring(editStart);
-                    text.append(System.getProperty("line.separator"));
+                    text.append(System.lineSeparator());
                     setText(text.toString());
                     // add to the history
                     history.add(command);
@@ -288,7 +288,7 @@ public class JConsole extends JTextArea implements KeyListener {
                     // replace text
                     text.delete(getSelectionStart(), getSelectionEnd());
                 }
-                text.insert(getSelectionStart(), System.getProperty("line.separator"));
+                text.insert(getSelectionStart(), System.lineSeparator());
                 setText(text.toString(), false);
             }
         } else if (e.getKeyCode() == KeyEvent.VK_HOME) {
@@ -336,17 +336,6 @@ public class JConsole extends JTextArea implements KeyListener {
             text.append(delegate.getPrompt());
             setText(text.toString());
             running = false;
-        }
-    }
-
-    @SuppressWarnings("deprecation")
-    @Override
-    public void finalize() {
-        if (running) {
-            // I know it's depracated, but since this object is being destroyed,
-            // this thread should go, too
-            //pythonThread.stop();
-            //pythonThread.destroy();
         }
     }
 

@@ -26,14 +26,17 @@ import blue.score.layers.Layer;
 import blue.score.layers.LayerGroup;
 import blue.score.layers.LayerGroupProviderManager;
 import blue.score.layers.ScoreObjectLayer;
-import blue.score.tempo.Tempo;
 import blue.soundObject.NoteList;
 import blue.soundObject.PolyObject;
 import blue.soundObject.TimeBehavior;
+import blue.time.TempoMap;
+import blue.time.TimeContext;
 import blue.util.ObservableArrayList;
 import blue.utility.ScoreUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -47,9 +50,9 @@ import java.util.Objects;
  */
 public class Score extends ObservableArrayList<LayerGroup<? extends Layer>> {
 
-    Tempo tempo = null;
-    TimeState timeState = null;
-    private NoteProcessorChain npc; 
+    private TimeContext timeContext = null;
+    private TimeState timeState = null;
+    private NoteProcessorChain npc;
 
     public static final int SPACER = 36;
 
@@ -64,26 +67,36 @@ public class Score extends ObservableArrayList<LayerGroup<? extends Layer>> {
             timeState = new TimeState();
         }
         npc = new NoteProcessorChain();
-        tempo = new Tempo();
+        timeContext = new TimeContext();
+        syncSmpteFrameRate();
+        wireTimeStateListener();
     }
 
     public Score(Score score) {
+        timeContext = new TimeContext(score.timeContext);
         timeState = new TimeState(score.timeState);
         npc = new NoteProcessorChain(score.npc);
-        tempo = new Tempo(score.tempo);
 
-        for(LayerGroup<? extends Layer> lg :score) {
-            add(lg.deepCopyLG());    
+        for (LayerGroup<? extends Layer> lg : score) {
+            add(lg.deepCopyLG());
         }
+        syncSmpteFrameRate();
+        wireTimeStateListener();
     }
 
-
-    public Tempo getTempo() {
-        return tempo;
+    public TimeContext getTimeContext() {
+        return timeContext;
     }
 
-    public void setTempo(Tempo tempo) {
-        this.tempo = tempo;
+    public void setTimeContext(TimeContext timeContext) {
+        this.timeContext = timeContext;
+    }
+    
+    /**
+     * Convenience method to get the TempoMap from the TimeContext.
+     */
+    public TempoMap getTempoMap() {
+        return timeContext.getTempoMap();
     }
 
     public TimeState getTimeState() {
@@ -91,7 +104,33 @@ public class Score extends ObservableArrayList<LayerGroup<? extends Layer>> {
     }
 
     public void setTimeState(TimeState timeState) {
+        if (this.timeState != null) {
+            this.timeState.removePropertyChangeListener(smpteFrameRateListener);
+        }
         this.timeState = timeState;
+        syncSmpteFrameRate();
+        wireTimeStateListener();
+    }
+    
+    /**
+     * Copies smpteFrameRate from TimeState to TimeContext.
+     */
+    private void syncSmpteFrameRate() {
+        if (timeState != null && timeContext != null) {
+            timeContext.setSmpteFrameRate(timeState.getSmpteFrameRate());
+        }
+    }
+    
+    private final PropertyChangeListener smpteFrameRateListener = (PropertyChangeEvent evt) -> {
+        if ("smpteFrameRate".equals(evt.getPropertyName())) {
+            syncSmpteFrameRate();
+        }
+    };
+    
+    private void wireTimeStateListener() {
+        if (timeState != null) {
+            timeState.addPropertyChangeListener(smpteFrameRateListener);
+        }
     }
 
     public NoteProcessorChain getNoteProcessorChain() {
@@ -104,11 +143,11 @@ public class Score extends ObservableArrayList<LayerGroup<? extends Layer>> {
 
     public Element saveAsXML(Map<Object, String> objRefMap) {
         Element retVal = new Element("score");
-        retVal.addElement(tempo.saveAsXML());
+        retVal.addElement(timeContext.saveAsXML());
         retVal.addElement(timeState.saveAsXML());
         retVal.addElement(npc.saveAsXML());
 
-        for (LayerGroup layerGroup : this) {
+        for (LayerGroup<? extends Layer> layerGroup : this) {
             retVal.addElement(layerGroup.saveAsXML(objRefMap));
         }
 
@@ -125,26 +164,30 @@ public class Score extends ObservableArrayList<LayerGroup<? extends Layer>> {
         while (nodes.hasMoreElements()) {
             Element node = nodes.next();
             switch (node.getName()) {
-                case "tempo":
-                    score.tempo = Tempo.loadFromXML(node);
-                    break;
-                case "timeState":
+                case "tempo" -> {
+                    // Legacy: migrate old <tempo> XML to TimeContext
+                    score.timeContext = new TimeContext();
+                    score.timeContext.setTempoMap(
+                        TempoMap.loadFromLegacyTempoXML(node));
+                }
+                case "timeContext" ->
+                    score.timeContext = TimeContext.loadFromXML(node);
+                case "timeState" ->
                     score.timeState = TimeState.loadFromXML(node);
-                    break;
-                case "noteProcessorChain":
+                case "noteProcessorChain" ->
                     score.npc = NoteProcessorChain.loadFromXML(node);
-                    break;
-                default:
-                    LayerGroup layerGroup = manager.loadFromXML(node, objRefMap);
+                default -> {
+                    LayerGroup<? extends Layer> layerGroup = manager.loadFromXML(node, objRefMap);
                     if (layerGroup == null) {
                         throw new RuntimeException(
                                 "Unable to load Score LayerGroup of type: " + node.getName());
                     }
                     score.add(layerGroup);
-                    if(layerGroup instanceof PolyObject) {
-                        ((PolyObject)layerGroup).setTimeBehavior(TimeBehavior.NONE);
+                    if (layerGroup instanceof PolyObject polyObject) {
+                        polyObject.setTimeBehavior(TimeBehavior.NONE);
                     }
-                    break;
+                }
+
             }
         }
 
@@ -152,13 +195,22 @@ public class Score extends ObservableArrayList<LayerGroup<? extends Layer>> {
             PolyObject pObj = new PolyObject(true);
             score.add(pObj);
         }
+        
+        // Ensure timeContext is never null
+        if (score.timeContext == null) {
+            score.timeContext = new TimeContext();
+        }
+
+        // Sync smpteFrameRate from TimeState to TimeContext after load
+        score.syncSmpteFrameRate();
+        score.wireTimeStateListener();
 
         return score;
     }
 
     public void processOnLoad() {
-        for (LayerGroup layerGroup : this) {
-            layerGroup.onLoadComplete();
+        for (LayerGroup<? extends Layer> layerGroup : this) {
+            layerGroup.onLoadComplete(timeContext);
         }
     }
 
@@ -174,8 +226,8 @@ public class Score extends ObservableArrayList<LayerGroup<? extends Layer>> {
             }
         }
 
-        for (LayerGroup layerGroup : this) {
-            NoteList nl = layerGroup.generateForCSD(compileData, startTime,
+        for (LayerGroup<? extends Layer> layerGroup : this) {
+            NoteList nl = layerGroup.generateForCSD(timeContext, compileData, startTime,
                     endTime, soloFound);
             noteList.merge(nl);
         }
@@ -195,8 +247,7 @@ public class Score extends ObservableArrayList<LayerGroup<? extends Layer>> {
         for (LayerGroup<? extends Layer> layerGroup : this) {
             for (Layer layer : layerGroup) {
                 boolean found = false;
-                if (layer instanceof ScoreObjectLayer) {
-                    ScoreObjectLayer scoreLayer = (ScoreObjectLayer) layer;
+                if (layer instanceof ScoreObjectLayer scoreLayer) {
                     if (!Collections.disjoint(scoreLayer, scoreObjects)) {
                         retVal.add(layerGroup);
                         found = true;
@@ -265,16 +316,14 @@ public class Score extends ObservableArrayList<LayerGroup<? extends Layer>> {
     @Override
     public int hashCode() {
         int hash = 7;
-        hash = 79 * hash + Objects.hashCode(this.tempo);
+        hash = 79 * hash + Objects.hashCode(this.timeContext);
         hash = 79 * hash + Objects.hashCode(this.timeState);
         return hash;
     }
-
 
     @Override
     public boolean equals(Object obj) {
         return obj == this;
     }
 
-     
 }

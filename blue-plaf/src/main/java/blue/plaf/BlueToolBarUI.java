@@ -95,8 +95,7 @@ public class BlueToolBarUI extends MetalToolBarUI {
      */
     @Override
     protected void setBorderToRollover(Component c) {
-        if (c instanceof AbstractButton) {
-            AbstractButton button = (AbstractButton) c;
+        if (c instanceof AbstractButton button) {
 
             if (!button.isRolloverEnabled()) {
                 button.setRolloverEnabled(true);

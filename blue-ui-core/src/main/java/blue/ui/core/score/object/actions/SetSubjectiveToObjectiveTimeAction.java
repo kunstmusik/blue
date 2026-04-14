@@ -22,6 +22,9 @@ package blue.ui.core.score.object.actions;
 import blue.BlueSystem;
 import blue.score.ScoreObject;
 import blue.soundObject.SoundObject;
+import blue.time.TimeContext;
+import blue.time.TimeContextManager;
+import blue.time.TimeDuration;
 import blue.ui.core.score.undo.DurationScoreObjectEdit;
 import blue.undo.BlueUndoManager;
 import java.awt.event.ActionEvent;
@@ -66,10 +69,13 @@ public final class SetSubjectiveToObjectiveTimeAction extends AbstractAction
     public void actionPerformed(ActionEvent e) {
 
         if (soundObjects.size() > 0 && scoreObjects.size() == soundObjects.size()) {
+            TimeContext context = TimeContextManager.getContext();
+            
             DurationScoreObjectEdit top = null;
             for (SoundObject soundObject : soundObjects) {
 
-                if (soundObject.getObjectiveDuration() <= 0) {
+                TimeDuration objDuration = soundObject.getObjectiveDuration(context);
+                if (objDuration.toBeats(context) <= 0) {
                     JOptionPane.showMessageDialog(
                             null,
                             BlueSystem.getString(
@@ -79,14 +85,12 @@ public final class SetSubjectiveToObjectiveTimeAction extends AbstractAction
                             JOptionPane.ERROR_MESSAGE);
                     return;
                 }
-                double oldTime = soundObject.getSubjectiveDuration();
-                double newTime = soundObject.getObjectiveDuration();
+                TimeDuration oldTime = soundObject.getSubjectiveDuration();
 
-                if (oldTime != newTime) {
-                    soundObject.setSubjectiveDuration(
-                            newTime);
+                if (oldTime.toBeats(context) != objDuration.toBeats(context)) {
+                    soundObject.setSubjectiveDuration(objDuration);
                     DurationScoreObjectEdit edit = new DurationScoreObjectEdit(
-                            soundObject, oldTime, newTime);
+                            soundObject, oldTime, objDuration);
 
                     if(top == null) {
                         top = edit;

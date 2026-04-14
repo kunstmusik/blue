@@ -19,7 +19,6 @@
  */
 package blue.upgrades;
 
-import electric.xml.Attribute;
 import electric.xml.Element;
 import java.util.ArrayList;
 import java.util.logging.Logger;

@@ -92,7 +92,7 @@ public class TableEditor extends javax.swing.JPanel implements PropertyChangeLis
         this.table = null;
 
         interpolationComboBox.setSelectedIndex(table.getInterpolationType());
-        interpolationSpinner.setValue(new Double(table.getInterpolation()));
+        interpolationSpinner.setValue(table.getInterpolation());
         minTextField.setText(NumberUtilities.formatDouble(table.getMin()));
         maxTextField.setText(NumberUtilities.formatDouble(table.getMax()));
 
@@ -143,8 +143,8 @@ public class TableEditor extends javax.swing.JPanel implements PropertyChangeLis
         });
 
         interpolationSpinner.setModel(new javax.swing.SpinnerNumberModel(
-            new Double(0.0d), null,
-            null, new Double(0.1d)));
+            0.0d, null,
+            null, 0.1d));
     interpolationSpinner.addChangeListener(new javax.swing.event.ChangeListener() {
         public void stateChanged(javax.swing.event.ChangeEvent evt) {
             interpolationSpinnerStateChanged(evt);

@@ -2,8 +2,9 @@ import string
 import copy
 import math
 
-#Java classes
-from blue.noteProcessor import TempoMapper
+# Java classes
+from blue.time import TempoMap
+    
 
 """Utility functions for score related operations"""
 
@@ -89,7 +90,7 @@ def makeMirror(intervalList):
 def timeWarp(noteList, tempoString):
     """Applies TimeWarp to notes in a notelist, given a string with
     beat-tempo pairs of values"""
-    tm = TempoMapper.createTempoMapper(tempoString)
+    tm = TempoMap.createTempoMap(tempoString)
     assert tm != None
 
     for note in noteList:

@@ -22,10 +22,16 @@ package blue.ui.core.score.layers.soundObject.actions;
 import blue.BlueSystem;
 import blue.SoundLayer;
 import blue.score.TimeState;
+import blue.soundObject.PianoRoll;
 import blue.soundObject.PolyObject;
 import blue.soundObject.SoundObject;
+import blue.time.TimeBase;
+import blue.time.TimeContext;
+import blue.time.TimeContextManager;
+import blue.time.TimePosition;
+import blue.time.TimeUnitMath;
+import blue.time.TimeUtilities;
 import blue.ui.core.score.ScoreController;
-import blue.ui.core.score.ScorePath;
 import blue.ui.core.score.ScoreTopComponent;
 import blue.ui.core.score.layers.soundObject.ScoreTimeCanvas;
 import blue.ui.core.score.undo.AddScoreObjectEdit;
@@ -91,13 +97,23 @@ public final class AddSoundObjectActionsPresenter extends AbstractAction impleme
 
             var l = scorePath.getGlobalLayerForY(p.y);
 
-            if (l instanceof SoundLayer) {
-                var sLayer = (SoundLayer) l;
+            if (l instanceof SoundLayer sLayer) {
                 SoundObject sObj = plugin.getInstance().
                         getClass().getDeclaredConstructor().newInstance();
 
-                if (sObj instanceof PolyObject) {
-                    ((PolyObject) sObj).newLayerAt(0);
+                if (sObj instanceof PolyObject polyObject) {
+                    polyObject.newLayerAt(0);
+                }
+
+                if (sObj instanceof PianoRoll pr) {
+                    TimeState ts = stc.getTimeState();
+                    if (ts != null) {
+                        pr.setPrimaryTimeDisplay(ts.getTimeDisplay());
+                        pr.setSecondaryTimeDisplay(ts.getSecondaryTimeDisplay());
+                        pr.setSecondaryRulerEnabled(ts.isSecondaryRulerEnabled());
+                        pr.setSnapValueEnum(ts.getSnapValue());
+                        pr.setUseGlobalRuler(ts.getTimeDisplay().isBeatBased());
+                    }
                 }
 
                 TimeState timeState = stc.getTimeState();
@@ -105,10 +121,17 @@ public final class AddSoundObjectActionsPresenter extends AbstractAction impleme
                 double start = p.getX() / timeState.getPixelSecond();
 
                 if (timeState.isSnapEnabled()) {
+                    TimeContext context = TimeContextManager.getContext();
                     start = ScoreUtilities.getSnapValueStart(start,
-                            timeState.getSnapValue());
+                            timeState.getSnapValueInBeats(start, context.getTempoMap(), context.getSampleRate()));
                 }
-                sObj.setStartTime(start);
+                
+                // Use the primary ruler's TimeBase for the default TimePosition type
+                TimeBase timeBase = timeState.getTimeDisplay();
+                TimeContext context = TimeContextManager.getContext();
+                sObj.setStartTime(TimeUtilities.beatsToTimePosition(start, timeBase, context));
+                sObj.setSubjectiveDuration(TimeUnitMath.beatsToDuration(
+                        sObj.getSubjectiveDuration().toBeats(context), timeBase, context));
 
                 sLayer.add(sObj);
                 BlueUndoManager.setUndoManager("score");

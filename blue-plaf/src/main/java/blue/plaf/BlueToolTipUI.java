@@ -96,6 +96,7 @@ public class BlueToolTipUI extends MetalToolTipUI {
     // that subclasses that randomly invoke this method will see varying
     // results. If this becomes an issue, MetalToolTipUI should no longer be
     // shared.
+    @SuppressWarnings("deprecation")
     @Override
     public String getAcceleratorString() {
         if (tip == null || isAcceleratorHidden()) {
@@ -108,17 +109,23 @@ public class BlueToolTipUI extends MetalToolTipUI {
         KeyStroke[] keys = comp.getRegisteredKeyStrokes();
         String controlKeyStr = "";
 
-        for (int i = 0; i < keys.length; i++) {
-            int mod = keys[i].getModifiers();
-            int condition = comp.getConditionForKeyStroke(keys[i]);
+        for (KeyStroke key : keys) {
+            int mod = key.getModifiers();
+            int condition = comp.getConditionForKeyStroke(key);
 
-            if (condition == JComponent.WHEN_IN_FOCUSED_WINDOW
-                    && ((mod & InputEvent.ALT_MASK) != 0
-                            || (mod & InputEvent.CTRL_MASK) != 0
-                            || (mod & InputEvent.SHIFT_MASK) != 0 || (mod & InputEvent.META_MASK) != 0)) {
-                controlKeyStr = KeyEvent.getKeyModifiersText(mod)
+            // KeyStroke.getModifiers() may return legacy or extended masks;
+            // check both to detect any modifier presence
+            boolean hasModifier = (mod & InputEvent.ALT_DOWN_MASK) != 0
+                    || (mod & InputEvent.CTRL_DOWN_MASK) != 0
+                    || (mod & InputEvent.SHIFT_DOWN_MASK) != 0
+                    || (mod & InputEvent.META_DOWN_MASK) != 0
+                    || (mod & (InputEvent.SHIFT_MASK | InputEvent.CTRL_MASK | InputEvent.META_MASK | InputEvent.ALT_MASK)) != 0;
+
+            if (condition == JComponent.WHEN_IN_FOCUSED_WINDOW && hasModifier) {
+                controlKeyStr = InputEvent.getModifiersExText(
+                                KeyStroke.getKeyStroke(key.getKeyCode(), mod).getModifiers())
                         + acceleratorDelimiter
-                        + KeyEvent.getKeyText(keys[i].getKeyCode());
+                        + KeyEvent.getKeyText(key.getKeyCode());
                 break;
             }
         }
@@ -130,7 +137,7 @@ public class BlueToolTipUI extends MetalToolTipUI {
         if (controlKeyStr.equals("") && comp instanceof JMenuItem) {
             int mnemonic = ((JMenuItem) comp).getMnemonic();
             if (mnemonic != 0) {
-                controlKeyStr = KeyEvent.getKeyModifiersText(KeyEvent.ALT_MASK)
+                controlKeyStr = InputEvent.getModifiersExText(InputEvent.ALT_DOWN_MASK)
                         + acceleratorDelimiter + (char) mnemonic;
             }
         }

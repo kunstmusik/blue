@@ -22,6 +22,8 @@ package blue.ui.core.score.layers.soundObject.views;
 import blue.BlueSystem;
 import blue.plugin.SoundObjectViewPlugin;
 import blue.score.layers.Layer;
+import blue.time.TimeContext;
+import blue.time.TimeContextManager;
 import blue.soundObject.FrozenSoundObject;
 import blue.ui.utilities.audio.AudioWaveformCache;
 import blue.ui.utilities.audio.AudioWaveformData;
@@ -78,10 +80,11 @@ public class FrozenSoundObjectView extends SoundObjectView {
         int w = getWidth();
         int h = getHeight();
 
+        TimeContext context = TimeContextManager.getContext();
         FrozenSoundObject fso = (FrozenSoundObject) sObj;
         double percentOriginal = fso.getFrozenSoundObject()
-                .getSubjectiveDuration()
-                / fso.getSubjectiveDuration();
+                .getSubjectiveDuration().toBeats(context)
+                / fso.getSubjectiveDuration().toBeats(context);
 
         Color bgColor;
         Color border1;
@@ -157,7 +160,7 @@ public class FrozenSoundObjectView extends SoundObjectView {
     }
 
     private void paintWaveform(Graphics2D g, SoundObjectView sObjView,
-            int pixelSeconds) {
+            double pixelSeconds) {
 
         FrozenSoundObject fso = (FrozenSoundObject) sObj;
 

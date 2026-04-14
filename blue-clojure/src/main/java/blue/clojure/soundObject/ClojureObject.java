@@ -34,6 +34,8 @@ import blue.score.ScoreObjectEvent;
 import blue.soundObject.SoundObjectException;
 import blue.soundObject.SoundObjectUtilities;
 import blue.soundObject.TimeBehavior;
+import blue.time.TimeContext;
+import blue.time.TimeDuration;
 import blue.utility.ScoreUtilities;
 import electric.xml.Element;
 import java.io.File;
@@ -53,7 +55,7 @@ public class ClojureObject extends AbstractSoundObject implements
 
     private TimeBehavior timeBehavior;
 
-    double repeatPoint = -1.0;
+    TimeDuration repeatPoint = null;
 
     private String clojureCode;
 
@@ -97,16 +99,18 @@ public class ClojureObject extends AbstractSoundObject implements
         return root.getCause();
     }
 
-    protected final NoteList generateNotes(double renderStart, double renderEnd) throws
+    protected final NoteList generateNotes(TimeContext context, double renderStart, double renderEnd) throws
             SoundObjectException {
 
         String tempScore = null;
 
         File currentDirFile = BlueSystem.getCurrentProjectDirectory();
 
+        double duration = getSubjectiveDuration().toBeats(context);
+
         HashMap<String, Object> initObjects = new HashMap<>();
         initObjects.put("score", "");
-        initObjects.put("blueDuration", getSubjectiveDuration());
+        initObjects.put("blueDuration", duration);
         initObjects.put("blueProjectDir", currentDirFile);
 
         try {
@@ -133,20 +137,22 @@ public class ClojureObject extends AbstractSoundObject implements
             throw new SoundObjectException(this, e);
         }
 
-        ScoreUtilities.applyTimeBehavior(nl, this.getTimeBehavior(), this.
-                getSubjectiveDuration(), this.getRepeatPoint());
+        double startTime = getStartTime().toBeats(context);
+
+        double rpBeats = this.getRepeatPoint() != null ? this.getRepeatPoint().toBeats(context) : -1.0;
+        ScoreUtilities.applyTimeBehavior(nl, this.getTimeBehavior(), duration, rpBeats);
         ScoreUtilities.setScoreStart(nl, startTime);
         return nl;
     }
 
     @Override
-    public NoteList generateForCSD(CompileData compileData, double startTime, double endTime) throws SoundObjectException {
-        return generateNotes(startTime, endTime);
+    public NoteList generateForCSD(TimeContext context, CompileData compileData, double startTime, double endTime) throws SoundObjectException {
+        return generateNotes(context, startTime, endTime);
     }
 
     @Override
-    public double getObjectiveDuration() {
-        return subjectiveDuration;
+    public TimeDuration getObjectiveDuration(TimeContext context) {
+        return getSubjectiveDuration();
     }
 
     @Override
@@ -165,12 +171,12 @@ public class ClojureObject extends AbstractSoundObject implements
     }
 
     @Override
-    public double getRepeatPoint() {
+    public TimeDuration getRepeatPoint() {
         return repeatPoint;
     }
 
     @Override
-    public void setRepeatPoint(double repeatPoint) {
+    public void setRepeatPoint(TimeDuration repeatPoint) {
         this.repeatPoint = repeatPoint;
 
         ScoreObjectEvent event = new ScoreObjectEvent(this,
@@ -195,8 +201,7 @@ public class ClojureObject extends AbstractSoundObject implements
         String olpString = data.getAttributeValue("onLoadProcessable");
 
         if (olpString != null) {
-            clojureObj.setOnLoadProcessable(
-                    Boolean.valueOf(olpString).booleanValue());
+            clojureObj.setOnLoadProcessable(Boolean.parseBoolean(olpString));
         }
 
         return clojureObj;
@@ -230,9 +235,9 @@ public class ClojureObject extends AbstractSoundObject implements
     }
 
     @Override
-    public void processOnLoad() throws SoundObjectException {
+    public void processOnLoad(TimeContext context) throws SoundObjectException {
         if (onLoadProcessable) {
-            this.generateNotes(0.0f, -1.0f);
+            this.generateNotes(context, 0.0f, -1.0f);
         }
     }
 

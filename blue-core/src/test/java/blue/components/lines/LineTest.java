@@ -22,11 +22,13 @@ package blue.components.lines;
 import java.util.ArrayList;
 import java.util.List;
 import javafx.collections.ObservableList;
-import junit.framework.TestCase;
+import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.Test;
 
-public class LineTest extends TestCase {
+class LineTest {
 
-    public void testLine() {
+    @Test
+    void testLine() {
         Line line = new Line(false);
 
         // LinePoint lp = new LinePoint();
@@ -35,7 +37,8 @@ public class LineTest extends TestCase {
         // line.addLinePoint(lp);
     }
 
-    public void testMinMax() {
+    @Test
+    void testMinMax() {
         Line line = new Line(false);
         line.setMax(2.0f, false);
 
@@ -56,7 +59,8 @@ public class LineTest extends TestCase {
         assertEquals(0.25f, line.getLinePoint(0).getY(), 0.001f);
     }
 
-    public void testGetValueLeftRight() {
+    @Test
+    void testGetValueLeftRight() {
         Line line = new Line(false);
         Line copy;
 
@@ -69,7 +73,8 @@ public class LineTest extends TestCase {
         assertEquals(1.0, line.getValue(1.0, false), 0.0001);
     }
 
-    public void testStripOuterPoints() {
+    @Test
+    void testStripOuterPoints() {
         List<LinePoint> points = new ArrayList<>();
 
         points.add(new LinePoint(1.0, 0.0));
@@ -83,7 +88,8 @@ public class LineTest extends TestCase {
         assertEquals(1.0, points.get(1).getY(), 0.0001);
     }
 
-    public void testProcessLineForSelectionDragNoChange() {
+    @Test
+    void testProcessLineForSelectionDragNoChange() {
         Line line = new Line(false);
         Line copy;
 
@@ -109,7 +115,8 @@ public class LineTest extends TestCase {
 
     }
 
-    public void testStripTimeDeadPoints() {
+    @Test
+    void testStripTimeDeadPoints() {
         Line line = new Line(false);
         line.points.add(new LinePoint(0.25, 4.0));
         line.points.add(new LinePoint(0.25, 5.0));

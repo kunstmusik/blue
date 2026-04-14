@@ -41,11 +41,11 @@ public class SubChannelOutComboBoxModel implements ComboBoxModel,
 
     String selectedItem = null;
 
-    Vector listeners = null;
+    Vector<ListDataListener> listeners = null;
 
     private Channel channel;
 
-    private Vector copies = null;
+    private Vector<SubChannelOutComboBoxModel> copies = null;
 
     /** Creates a new instance of ChannelOutComboBox */
     public SubChannelOutComboBoxModel() {
@@ -102,24 +102,22 @@ public class SubChannelOutComboBoxModel implements ComboBoxModel,
     @Override
     public Object getElementAt(int index) {
 
-        ArrayList choices = getReducedList();
+        ArrayList<String> choices = getReducedList();
 
         return choices.get(index);
     }
 
-    private ArrayList getReducedList() {
+    private ArrayList<String> getReducedList() {
 
         if (channels == null) {
             return null;
         }
 
-        ArrayList retVal = new ArrayList();
+        ArrayList<String> retVal = new ArrayList<>();
 
         retVal.add(Channel.MASTER);
 
-        for (int i = 0; i < channels.size(); i++) {
-            Channel c = channels.get(i);
-
+        for (Channel c : channels) {
             if (c == this.channel) {
                 continue;
             }
@@ -136,8 +134,7 @@ public class SubChannelOutComboBoxModel implements ComboBoxModel,
     }
 
     private Channel getChannelByName(String name) {
-        for (int i = 0; i < channels.size(); i++) {
-            Channel c = channels.get(i);
+        for (Channel c : channels) {
             if (c.getName().equals(name)) {
                 return c;
             }
@@ -152,12 +149,12 @@ public class SubChannelOutComboBoxModel implements ComboBoxModel,
 
         Send[] sends = c.getSends();
 
-        for (int i = 0; i < sends.length; i++) {
-            if (sends[i].getSendChannel().equals(name)) {
+        for (Send send : sends) {
+            if (send.getSendChannel().equals(name)) {
                 return false;
             }
 
-            String sendChannelName = sends[i].getSendChannel();
+            String sendChannelName = send.getSendChannel();
 
             if (!sendChannelName.equals(Channel.MASTER)) {
                 Channel next = getChannelByName(sendChannelName);
@@ -185,7 +182,7 @@ public class SubChannelOutComboBoxModel implements ComboBoxModel,
     @Override
     public void addListDataListener(ListDataListener l) {
         if (listeners == null) {
-            listeners = new Vector();
+            listeners = new Vector<>();
         }
         listeners.add(l);
     }
@@ -203,8 +200,7 @@ public class SubChannelOutComboBoxModel implements ComboBoxModel,
             return;
         }
 
-        for (Iterator it = listeners.iterator(); it.hasNext();) {
-            ListDataListener listener = (ListDataListener) it.next();
+        for (ListDataListener listener : listeners) {
 
             switch (lde.getType()) {
                 case ListDataEvent.INTERVAL_ADDED:
@@ -228,9 +224,8 @@ public class SubChannelOutComboBoxModel implements ComboBoxModel,
         }
 
         if (copies != null) {
-            for (int i = 0; i < copies.size(); i++) {
-                ((SubChannelOutComboBoxModel) copies.get(i)).reconcile(oldName,
-                        newName);
+            for (SubChannelOutComboBoxModel copy : copies) {
+                copy.reconcile(oldName, newName);
             }
         }
     }
@@ -244,7 +239,7 @@ public class SubChannelOutComboBoxModel implements ComboBoxModel,
         copy.setData(this.channels, this.channel);
 
         if (copies == null) {
-            copies = new Vector();
+            copies = new Vector<>();
         }
 
         copies.add(copy);
@@ -275,8 +270,8 @@ public class SubChannelOutComboBoxModel implements ComboBoxModel,
         fireListEvent(lde);
 
         if (copies != null) {
-            for (int i = 0; i < copies.size(); i++) {
-                ((SubChannelOutComboBoxModel) copies.get(i)).intervalAdded(e);
+            for (SubChannelOutComboBoxModel copy : copies) {
+                copy.intervalAdded(e);
             }
         }
     }
@@ -286,8 +281,8 @@ public class SubChannelOutComboBoxModel implements ComboBoxModel,
             setSelectedItem(Channel.MASTER);
         }
         if (copies != null) {
-            for (int i = 0; i < copies.size(); i++) {
-                ((SubChannelOutComboBoxModel) copies.get(i)).intervalRemoved(e);
+            for (SubChannelOutComboBoxModel copy : copies) {
+                copy.intervalRemoved(e);
             }
         }
     }

@@ -21,14 +21,16 @@ package blue.utility;
 
 import blue.soundObject.NoteList;
 import blue.soundObject.NoteParseException;
-import junit.framework.TestCase;
+import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.Test;
 
-public class ScoreUtilitiesTest extends TestCase {
+class ScoreUtilitiesTest {
 
     /*
      * Test method for 'blue.utility.ScoreUtilities.gets(String)'
      */
-    public void testGetNotes() {
+    @Test
+    void testGetNotes() {
         StringBuilder testScore = new StringBuilder();
 
         testScore.append("/*\n" + "idur    =       p3\n"
@@ -56,7 +58,8 @@ public class ScoreUtilitiesTest extends TestCase {
         System.out.println("getNotes(): time " + (System.currentTimeMillis() - startTime));
     }
 
-    public void testMultiLineNotes() {
+    @Test
+    void testMultiLineNotes() {
         String testScore = "i 1 0 2 3 4 5\n6 7 8 9\n8.8 8\n";
         testScore += "i1 2 3 4 5 ;comment\n";
         testScore += "i1 2 3 4 5\n";
@@ -79,7 +82,8 @@ public class ScoreUtilitiesTest extends TestCase {
 //        System.out.println(nl.toString());
     }
 
-    public void testCommentAtEnd() {
+    @Test
+    void testCommentAtEnd() {
         String testScore = "i1 0 2 3 4 5 ; comment";
 
         String testScore2 = "i1 0 2 3 4 5 /* comment \n test test */i";
@@ -109,7 +113,8 @@ public class ScoreUtilitiesTest extends TestCase {
         assertEquals("5", nl.get(0).getPField(6));
     }
 
-    public void testScoreCarry() {
+    @Test
+    void testScoreCarry() {
 
         String testScore = "i1 0 2 3 4 5\n"
                 + "i1.1 0 .\n"
@@ -130,7 +135,8 @@ public class ScoreUtilitiesTest extends TestCase {
 
     }
 
-    public void testNGenScore() {
+    @Test
+    void testNGenScore() {
         String testScore = ";I-block #1 (i1):\n"
                 + "i1    0.000  0.010     0.000   100.000\n"
                 + "i1    0.010  0.010     0.111   100.000\n"
@@ -144,7 +150,6 @@ public class ScoreUtilitiesTest extends TestCase {
                 + "i1    0.090  0.010     1.000   100.000\n"
                 + "\n"
                 + "e\n";
-
 
         NoteList nl = null;
 

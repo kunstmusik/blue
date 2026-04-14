@@ -1,12 +1,14 @@
 package blue.soundObject;
 
-import blue.score.ScoreObjectEvent;
 import blue.*;
 import blue.noteProcessor.NoteProcessorChain;
 import blue.noteProcessor.NoteProcessorException;
 import blue.plugin.SoundObjectPlugin;
+import blue.score.ScoreObjectEvent;
 import blue.scripting.ScoreScriptEngine;
 import blue.scripting.ScoreScriptEngineManager;
+import blue.time.TimeContext;
+import blue.time.TimeDuration;
 import blue.utility.ScoreUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
@@ -39,7 +41,7 @@ public class External extends AbstractSoundObject {
 
     private TimeBehavior timeBehavior;
 
-    double repeatPoint = -1.0f;
+    TimeDuration repeatPoint = null;
 
     private String commandLine = "";
 
@@ -74,7 +76,7 @@ public class External extends AbstractSoundObject {
     }
 
     @Override
-    public double getObjectiveDuration() {
+    public TimeDuration getObjectiveDuration(TimeContext context) {
         return this.getSubjectiveDuration();
     }
 
@@ -86,7 +88,7 @@ public class External extends AbstractSoundObject {
         this.text = text;
     }
 
-    public final NoteList generateNotes(double renderStart, double renderEnd) throws SoundObjectException {
+    public final NoteList generateNotes(TimeContext context, double renderStart, double renderEnd) throws SoundObjectException {
 
         if (commandLine.trim().length() == 0 && getText().trim().length() == 0) {
             return null;
@@ -113,10 +115,12 @@ public class External extends AbstractSoundObject {
             throw new SoundObjectException(this, npe);
         }
 
-        ScoreUtilities.applyTimeBehavior(nl, this.getTimeBehavior(), this
-                .getSubjectiveDuration(), this.getRepeatPoint());
-
-        ScoreUtilities.setScoreStart(nl, this.getStartTime());
+        double duration = this.getSubjectiveDuration().toBeats(context);
+        double startTime = this.getStartTime().toBeats(context);
+        
+        double rpBeats = this.getRepeatPoint() != null ? this.getRepeatPoint().toBeats(context) : -1.0;
+        ScoreUtilities.applyTimeBehavior(nl, this.getTimeBehavior(), duration, rpBeats);
+        ScoreUtilities.setScoreStart(nl, startTime);
 
         return nl;
     }
@@ -167,12 +171,12 @@ public class External extends AbstractSoundObject {
     }
 
     @Override
-    public double getRepeatPoint() {
+    public TimeDuration getRepeatPoint() {
         return this.repeatPoint;
     }
 
     @Override
-    public void setRepeatPoint(double repeatPoint) {
+    public void setRepeatPoint(TimeDuration repeatPoint) {
         this.repeatPoint = repeatPoint;
 
         ScoreObjectEvent event = new ScoreObjectEvent(this,
@@ -239,10 +243,10 @@ public class External extends AbstractSoundObject {
     }
 
     @Override
-    public NoteList generateForCSD(CompileData compileData, double startTime, 
+    public NoteList generateForCSD(TimeContext context, CompileData compileData, double startTime, 
             double endTime) throws SoundObjectException {
         
-        NoteList retVal = generateNotes(startTime, endTime);
+        NoteList retVal = generateNotes(context, startTime, endTime);
         return retVal;
         
     }

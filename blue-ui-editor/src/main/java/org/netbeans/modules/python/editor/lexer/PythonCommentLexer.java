@@ -69,7 +69,8 @@ public class PythonCommentLexer implements Lexer<PythonCommentTokenId> {
         SEEN_NAME,
         /** We've just seen @type varname< > */
         SEEN_NAME_WS
-    };
+    }
+
     private State state;
 
     /**

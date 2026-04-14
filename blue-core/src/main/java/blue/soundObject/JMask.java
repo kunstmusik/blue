@@ -20,10 +20,12 @@
 package blue.soundObject;
 
 import blue.CompileData;
-import blue.score.ScoreObjectEvent;
 import blue.noteProcessor.NoteProcessorChain;
 import blue.plugin.SoundObjectPlugin;
+import blue.score.ScoreObjectEvent;
 import blue.soundObject.jmask.Field;
+import blue.time.TimeContext;
+import blue.time.TimeDuration;
 import blue.utility.ScoreUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
@@ -40,7 +42,7 @@ public class JMask extends AbstractSoundObject {
 
     private TimeBehavior timeBehavior;
 
-    double repeatPoint = -1.0f;
+    TimeDuration repeatPoint = null;
 
     boolean seedUsed = false;
 
@@ -61,7 +63,7 @@ public class JMask extends AbstractSoundObject {
         seed = jmask.seed;
     }
 
-    public NoteList generateNotes(double renderStart, double renderEnd) throws SoundObjectException {
+    public NoteList generateNotes(TimeContext context, double renderStart, double renderEnd) throws SoundObjectException {
 
         Field temp = new Field(field);
 
@@ -69,16 +71,19 @@ public class JMask extends AbstractSoundObject {
 
         NoteList nl;
 
+        double duration = this.getSubjectiveDuration().toBeats(context);
+        
         try {
-            nl = temp.generateNotes(this.getSubjectiveDuration(), rnd);
+            nl = temp.generateNotes(duration, rnd);
             nl = ScoreUtilities.applyNoteProcessorChain(nl, this.npc);
         } catch (Exception e) {
             throw new SoundObjectException(this, e);
         }
 
-        ScoreUtilities.applyTimeBehavior(nl, this.getTimeBehavior(), this
-                .getSubjectiveDuration(), this.getRepeatPoint());
-
+        double startTime = getStartTime().toBeats(context);
+        
+        double rpBeats = this.getRepeatPoint() != null ? this.getRepeatPoint().toBeats(context) : -1.0;
+        ScoreUtilities.applyTimeBehavior(nl, this.getTimeBehavior(), duration, rpBeats);
         ScoreUtilities.setScoreStart(nl, startTime);
 
         return nl;
@@ -90,15 +95,15 @@ public class JMask extends AbstractSoundObject {
     }
 
     @Override
-    public double getObjectiveDuration() {
-        return subjectiveDuration;
+    public TimeDuration getObjectiveDuration(TimeContext context) {
+        return getSubjectiveDuration();
     }
 
 //    public BarRenderer getRenderer() {
 //        return renderer;
 //    }
     @Override
-    public double getRepeatPoint() {
+    public TimeDuration getRepeatPoint() {
         return repeatPoint;
     }
 
@@ -163,7 +168,7 @@ public class JMask extends AbstractSoundObject {
     }
 
     @Override
-    public void setRepeatPoint(double repeatPoint) {
+    public void setRepeatPoint(TimeDuration repeatPoint) {
         this.repeatPoint = repeatPoint;
 
         ScoreObjectEvent event = new ScoreObjectEvent(this,
@@ -202,10 +207,10 @@ public class JMask extends AbstractSoundObject {
     }
 
     @Override
-    public NoteList generateForCSD(CompileData compileData, double startTime,
+    public NoteList generateForCSD(TimeContext context, CompileData compileData, double startTime,
             double endTime) throws SoundObjectException {
 
-        NoteList nl = generateNotes(startTime, endTime);
+        NoteList nl = generateNotes(context, startTime, endTime);
         return nl;
 
     }

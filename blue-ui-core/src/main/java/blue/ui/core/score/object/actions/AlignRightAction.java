@@ -20,6 +20,10 @@
 package blue.ui.core.score.object.actions;
 
 import blue.score.ScoreObject;
+import blue.time.TimeContext;
+import blue.time.TimeContextManager;
+import blue.time.TimePosition;
+import blue.time.TimeUtilities;
 import blue.ui.core.score.undo.AlignEdit;
 import blue.undo.BlueUndoManager;
 import java.awt.event.ActionEvent;
@@ -57,8 +61,10 @@ public final class AlignRightAction extends AbstractAction implements ContextAwa
             return;
         }
 
-        double[] initialStartTimes = new double[selected.size()];
-        double[] endingStartTimes = new double[selected.size()];
+        TimeContext context = TimeContextManager.getContext();
+        
+        TimePosition[] initialStartTimes = new TimePosition[selected.size()];
+        TimePosition[] endingStartTimes = new TimePosition[selected.size()];
 
         double farRight = Double.MIN_VALUE;
         int i = 0;
@@ -66,7 +72,7 @@ public final class AlignRightAction extends AbstractAction implements ContextAwa
         for (ScoreObject scoreObj : selected) {
             initialStartTimes[i] = scoreObj.getStartTime();
 
-            double end = initialStartTimes[i] + scoreObj.getSubjectiveDuration();
+            double end = initialStartTimes[i].toBeats(context) + scoreObj.getSubjectiveDuration().toBeats(context);
 
             if (end > farRight) {
                 farRight = end;
@@ -77,9 +83,11 @@ public final class AlignRightAction extends AbstractAction implements ContextAwa
         i = 0;
 
         for (ScoreObject scoreObj : selected) {
-            double newTime = farRight - scoreObj.getSubjectiveDuration();
-            scoreObj.setStartTime(newTime);
-            endingStartTimes[i] = newTime;
+            double newTime = farRight - scoreObj.getSubjectiveDuration().toBeats(context);
+            TimePosition newStartTime = TimeUtilities.beatsToTimePosition(
+                    newTime, scoreObj.getStartTime().getTimeBase(), context);
+            scoreObj.setStartTime(newStartTime);
+            endingStartTimes[i] = newStartTime;
             i++;
         }
 

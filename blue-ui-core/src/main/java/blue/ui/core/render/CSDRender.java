@@ -24,13 +24,11 @@ import blue.components.lines.SoundObjectParameterLine;
 import blue.mixer.Channel;
 import blue.mixer.ChannelList;
 import blue.mixer.Mixer;
-import blue.noteProcessor.TempoMapper;
 import blue.orchestra.GenericInstrument;
 import blue.orchestra.Instrument;
 import blue.orchestra.blueSynthBuilder.StringChannel;
 import blue.orchestra.blueSynthBuilder.StringChannelNameManager;
 import blue.score.ScoreGenerationException;
-import blue.score.tempo.Tempo;
 import blue.services.render.CSDRenderService;
 import blue.services.render.CsdRenderResult;
 import blue.settings.PlaybackSettings;
@@ -39,6 +37,8 @@ import blue.soundObject.Note;
 import blue.soundObject.NoteList;
 import blue.soundObject.NoteParseException;
 import blue.soundObject.SoundObjectException;
+import blue.time.CurveType;
+import blue.time.TempoMap;
 import blue.udo.OpcodeList;
 import blue.ui.core.project.ProjectPluginManager;
 import blue.utility.NumberUtilities;
@@ -50,7 +50,6 @@ import java.util.StringTokenizer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.text.StrBuilder;
 import org.openide.util.lookup.ServiceProvider;
 
 @ServiceProvider(service = CSDRenderService.class)
@@ -170,25 +169,19 @@ public class CSDRender extends CSDRenderService {
 
         String ftables = tables.getTables();
 
-        StrBuilder score = new StrBuilder();
+        StringBuilder score = new StringBuilder();
         score.append("<CsoundSynthesizer>\n\n");
 
         appendCsInstruments(compileData, data, udos, arrangement, globalOrcSco, score,
                 mixer, true);
-        appendCsScore(globalSco, ftables, generatedNotes, totalDur, score);
+        appendCsScore(score, globalSco, ftables, generatedNotes, totalDur, false);
 
         score.append("</CsoundSynthesizer>");
 
-//        Tempo tempo = data.getScore().getTempo();
-        TempoMapper tempoMapper = null;
-
-//        if (tempo.isEnabled()) {
-//            tempoMapper = CSDRender.getTempoMapper(tempo);
-//        } else {
-//            tempoMapper = CSDRender.getTempoMapper(globalSco);
-//        }
+        // BlueLive does not use tempo mapping — tempoMap is null.
+        // Tempo-aware rendering is handled by generateCSDImpl.
         CsdRenderResult renderResult
-                = new CsdRenderResult(score.toString(), tempoMapper,
+                = new CsdRenderResult(score.toString(), null,
                         originalParameters, stringChannels);
 
         return renderResult;
@@ -215,7 +208,7 @@ public class CSDRender extends CSDRenderService {
         // making copies to use for adding compileTime tables and instruments
         Tables tables = new Tables(data.getTableSet());
 
-        ArrayList originalParameters;
+        ArrayList<Parameter> originalParameters;
 
 //        if (usingAPI) {
         originalParameters = ParameterHelper.getAllParameters(
@@ -228,7 +221,6 @@ public class CSDRender extends CSDRenderService {
 
         Arrangement arrangement = new Arrangement(data.getArrangement());
         arrangement.clearUnusedInstrAssignments();
-        boolean hasInstruments = arrangement.size() > 0;
 
         CompileData compileData = new CompileData(arrangement, tables,
                 stringChannels, originalParameters, scnm, pnm);
@@ -291,15 +283,15 @@ public class CSDRender extends CSDRenderService {
             }
         }
 
-        Tempo tempo = data.getScore().getTempo();
-        TempoMapper tempoMapper = null;
+        TempoMap scoreTempoMap = data.getScore().getTempoMap();
+        TempoMap tempoMap = null;
 
-        if (tempo.isEnabled()) {
-            tempoMapper = getTempoMapper(tempo);
+        if (scoreTempoMap.isEnabled()) {
+            tempoMap = scoreTempoMap;
             globalOrcSco.appendGlobalSco(
-                    getTempoScore(tempo, renderStartTime, endTime));
+                    getTempoScore(scoreTempoMap, renderStartTime, endTime));
         } else {
-            tempoMapper = getTempoMapper(globalOrcSco.getGlobalSco());
+            tempoMap = getTempoMap(globalOrcSco.getGlobalSco());
         }
 
         double totalDur = blue.utility.ScoreUtilities.getTotalDuration(
@@ -325,7 +317,7 @@ public class CSDRender extends CSDRenderService {
         String globalSco = globalOrcSco.getGlobalSco() + "\n";
         globalSco += arrangement.generateGlobalSco(compileData) + "\n";
         globalSco = preprocessSco(globalSco, totalDur, renderStartTime,
-                processingStart, tempoMapper);
+                processingStart, tempoMap);
 
         double globalDur;
         try {
@@ -411,19 +403,19 @@ public class CSDRender extends CSDRenderService {
             globalOrcSco.appendGlobalOrc(tempGlobalOrc);
         }
 
-        StrBuilder csd = new StrBuilder();
+        StringBuilder csd = new StringBuilder();
         appendProjectInfo(data, csd);
 
         csd.append("<CsoundSynthesizer>\n\n");
 
         appendCsInstruments(compileData, data, udos, arrangement, globalOrcSco, csd, mixer,
                 isRealTime);
-        appendCsScore(globalSco, ftables, generatedNotes, totalDur, csd);
+        appendCsScore(csd, globalSco, ftables, generatedNotes, totalDur, true);
 
         csd.append("</CsoundSynthesizer>");
 
         CsdRenderResult renderResult
-                = new CsdRenderResult(csd.toString(), tempoMapper,
+                = new CsdRenderResult(csd.toString(), tempoMap,
                         originalParameters, stringChannels);
 
         return renderResult;
@@ -438,8 +430,7 @@ public class CSDRender extends CSDRenderService {
             if (ia.enabled) {
                 Instrument instr = ia.instr;
 
-                if (instr instanceof Automatable) {
-                    Automatable auto = (Automatable) instr;
+                if (instr instanceof Automatable auto) {
                     ArrayList<StringChannel> stringChannels = auto.getStringChannels();
 
                     if (stringChannels != null) {
@@ -484,7 +475,7 @@ public class CSDRender extends CSDRenderService {
         }
     }
 
-    private void createParamNote(StrBuilder paramScore, int instrId,
+    private void createParamNote(StringBuilder paramScore, int instrId,
             double startTime, double dur, double startVal, double endVal) {
         paramScore.append("i");
         paramScore.append(instrId).append("\t");
@@ -559,7 +550,7 @@ public class CSDRender extends CSDRenderService {
 
     protected Instrument createAllNotesOffInstrument(String[] instrIds) {
         GenericInstrument instr = new GenericInstrument();
-        StrBuilder buffer = new StrBuilder();
+        StringBuilder buffer = new StringBuilder();
 
         buffer.append("koff init 0\n"
                 + "if (koff == 0) then\n");
@@ -590,7 +581,7 @@ public class CSDRender extends CSDRenderService {
         return instr;
     }
 
-    private void appendProjectInfo(BlueData data, StrBuilder score) {
+    private void appendProjectInfo(BlueData data, StringBuilder score) {
         ProjectProperties props = data.getProjectProperties();
         String notes = props.notes.replaceAll("\n", "\n; ");
 
@@ -605,8 +596,8 @@ public class CSDRender extends CSDRenderService {
         score.append(";\n\n");
     }
 
-    private void appendCsScore(String globalSco, String ftables,
-            NoteList generatedNotes, double totalDur, StrBuilder score) {
+    private void appendCsScore(StringBuilder score, String globalSco, String ftables,
+            NoteList generatedNotes, double totalDur, boolean useEStatement) {
 
         score.append("<CsScore>\n\n");
         score.append(ftables).append("\n");
@@ -619,13 +610,15 @@ public class CSDRender extends CSDRenderService {
         } else {
             score.append("f0 ").append(totalDur).append("\n");
         }
-        score.append("e\n\n");
+        if(useEStatement) {
+            score.append("e\n\n");
+        }
         score.append("</CsScore>\n\n");
     }
 
     private void appendCsInstruments(CompileData compileData, BlueData data,
             OpcodeList udos, Arrangement arrangement, GlobalOrcSco globalOrcSco,
-            StrBuilder score, Mixer mixer, boolean isRealTime) {
+            StringBuilder score, Mixer mixer, boolean isRealTime) {
 
         ProjectProperties projProps = data.getProjectProperties();
 
@@ -640,7 +633,7 @@ public class CSDRender extends CSDRenderService {
                 System.err.println("Could not parse nchnls: defaulting to 2");
             }
 
-            score.append("sr=").append(projProps.sampleRate).append("\n");
+            score.append("sr=").append(projProps.getSampleRate()).append("\n");
             score.append("ksmps=").append(projProps.getKsmps()).append("\n");
             score.append("nchnls=").append(nchnls).append("\n");
 
@@ -682,7 +675,7 @@ public class CSDRender extends CSDRenderService {
 
     private String preprocessSco(String in, double totalDur,
             double renderStartTime, double processingStart,
-            TempoMapper tempoMapper) {
+            TempoMap tempoMapper) {
         String temp = blue.utility.TextUtilities.replaceAll(in, "<TOTAL_DUR>",
                 Double.toString(totalDur));
 
@@ -692,10 +685,10 @@ public class CSDRender extends CSDRenderService {
         temp = blue.utility.TextUtilities.replaceAll(temp, "<RENDER_START>",
                 Double.toString(renderStartTime));
 
-        TempoMapper localTempoMapper = tempoMapper;
+        TempoMap localTempoMap = tempoMapper;
 
-        if (localTempoMapper == null) {
-            localTempoMapper = getTempoMapper(in);
+        if (localTempoMap == null) {
+            localTempoMap = getTempoMap(in);
         }
 
         if (tempoMapper != null) {
@@ -715,7 +708,7 @@ public class CSDRender extends CSDRenderService {
         GenericInstrument instr = new GenericInstrument();
         instr.setName("Param: " + param.getName());
 
-        StrBuilder buffer = new StrBuilder();
+        StringBuilder buffer = new StringBuilder();
         String compilationVarName = param.getCompilationVarName();
 
         if (param.getResolution().doubleValue() > 0.0f) {
@@ -735,7 +728,7 @@ public class CSDRender extends CSDRenderService {
     }
 
     private void appendParameterScore(Parameter param, int instrId,
-            StrBuilder paramScore, double renderStart, double renderEnd) {
+            StringBuilder paramScore, double renderStart, double renderEnd) {
 
         Line line = param.getLine();
 
@@ -923,29 +916,25 @@ public class CSDRender extends CSDRenderService {
 
     }
 
-    protected String getTempoScore(Tempo tempo, double renderStart,
+    protected String getTempoScore(TempoMap tempoMap, double renderStart,
             double renderEnd) {
 
-        Line line = tempo.getLine();
-
-        if (line.size() == 1) {
-            return "t 0 " + line.getLinePoint(0).getY();
+        if (tempoMap.size() == 1) {
+            return "t 0 " + tempoMap.getTempo(0);
         }
 
-        if (renderStart > line.getLinePoint(line.size() - 1).getX()) {
-            return "t 0 " + line.getLinePoint(line.size() - 1).getY();
+        if (renderStart > tempoMap.getBeat(tempoMap.size() - 1)) {
+            return "t 0 " + tempoMap.getTempo(tempoMap.size() - 1);
         }
 
-        StrBuilder buffer = new StrBuilder();
-        buffer.append("t 0 ").append(line.getValue(renderStart));
+        StringBuilder buffer = new StringBuilder();
+        buffer.append("t 0 ").append(tempoMap.getTempoAt(renderStart));
 
-        for (int i = 0; i < line.size(); i++) {
-            LinePoint lp = line.getLinePoint(i);
-            double pointBeat = lp.getX();
+        for (int i = 0; i < tempoMap.size(); i++) {
+            double pointBeat = tempoMap.getBeat(i);
             if (pointBeat > renderStart) {
                 if (renderEnd < 0 || pointBeat < renderEnd) {
-                    buffer.append(" ").append(pointBeat - renderStart);
-                    buffer.append(" ").append(lp.getY());
+                    appendTempoPoint(buffer, tempoMap, i, renderStart);
                 } else {
                     break;
                 }
@@ -954,17 +943,44 @@ public class CSDRender extends CSDRenderService {
 
         if (renderEnd > 0) {
             buffer.append(" ").append(renderEnd - renderStart);
-            buffer.append(" ").append(line.getValue(renderEnd));
+            buffer.append(" ").append(getTempoAtSegmentEnd(tempoMap, renderEnd));
         }
 
         buffer.append("\n");
 
         return buffer.toString();
     }
+    
+    private void appendTempoPoint(StringBuilder buffer, TempoMap tempoMap, int pointIndex, double renderStart) {
+        double pointBeat = tempoMap.getBeat(pointIndex);
+        double relativeBeat = pointBeat - renderStart;
+        
+        if (pointIndex > 0 && tempoMap.getCurveType(pointIndex - 1) == CurveType.CONSTANT) {
+            double previousTempo = tempoMap.getTempo(pointIndex - 1);
+            double currentTempo = tempoMap.getTempo(pointIndex);
+            if (Double.compare(previousTempo, currentTempo) != 0) {
+                buffer.append(" ").append(relativeBeat);
+                buffer.append(" ").append(previousTempo);
+            }
+        }
+        
+        buffer.append(" ").append(relativeBeat);
+        buffer.append(" ").append(tempoMap.getTempo(pointIndex));
+    }
+    
+    private double getTempoAtSegmentEnd(TempoMap tempoMap, double beat) {
+        for (int i = 1; i < tempoMap.size(); i++) {
+            if (Double.compare(tempoMap.getBeat(i), beat) == 0
+                    && tempoMap.getCurveType(i - 1) == CurveType.CONSTANT) {
+                return tempoMap.getTempo(i - 1);
+            }
+        }
+        return tempoMap.getTempoAt(beat);
+    }
 
     private void assignParameterNames(ArrayList parameters, ParameterNameManager pnm) {
-        for (int i = 0; i < parameters.size(); i++) {
-            Parameter param = (Parameter) parameters.get(i);
+        for (Object parameter : parameters) {
+            Parameter param = (Parameter) parameter;
             param.setCompilationVarName(pnm.getUniqueParamName());
         }
     }
@@ -976,8 +992,8 @@ public class CSDRender extends CSDRenderService {
 
         Object[] varNum = new Object[1];
 
-        StrBuilder initStatements = new StrBuilder();
-        StrBuilder paramScore = new StrBuilder();
+        StringBuilder initStatements = new StringBuilder();
+        StringBuilder paramScore = new StringBuilder();
 
         boolean useAPI = isRealTime && _usingAPI;
 
@@ -997,7 +1013,7 @@ public class CSDRender extends CSDRenderService {
 
         for (int i = 0; i < parameters.size(); i++) {
             Parameter param = (Parameter) parameters.get(i);
-            varNum[0] = new Integer(i);
+            varNum[0] = i;
             String varName = param.getCompilationVarName();
 
             //param.setCompilationVarName(varName);
@@ -1048,8 +1064,8 @@ public class CSDRender extends CSDRenderService {
 
         Object[] varNum = new Object[1];
 
-        StrBuilder initStatements = new StrBuilder();
-        StrBuilder paramScore = new StrBuilder();
+        StringBuilder initStatements = new StringBuilder();
+        StringBuilder paramScore = new StringBuilder();
 
         for (StringChannel strChannel : stringChannels) {
             String varName = strChannel.getChannelName();
@@ -1067,7 +1083,7 @@ public class CSDRender extends CSDRenderService {
 
         for (int i = 0; i < parameters.size(); i++) {
             Parameter param = (Parameter) parameters.get(i);
-            varNum[0] = new Integer(i);
+            varNum[0] = i;
             String varName = param.getCompilationVarName();
 
             //param.setCompilationVarName(varName);
@@ -1095,21 +1111,8 @@ public class CSDRender extends CSDRenderService {
 //        globalOrcSco.appendGlobalSco(paramScore.toString());
     }
 
-    protected TempoMapper getTempoMapper(Tempo tempo) {
-        StrBuilder buffer = new StrBuilder();
-        Line line = tempo.getLine();
-        for (int i = 0; i < line.size(); i++) {
-            LinePoint lp = line.getLinePoint(i);
-
-            buffer.append(" ").append(lp.getX());
-            buffer.append(" ").append(lp.getY());
-        }
-
-        return TempoMapper.createTempoMapper(buffer.toString());
-    }
-
-    private TempoMapper getTempoMapper(String globalSco) {
-        TempoMapper mapper = null;
+    private TempoMap getTempoMap(String globalSco) {
+        TempoMap mapper = null;
 
         StringTokenizer st = new StringTokenizer(globalSco, "\n");
 
@@ -1117,7 +1120,7 @@ public class CSDRender extends CSDRenderService {
             String temp = st.nextToken().trim();
 
             if (temp.startsWith("t")) {
-                mapper = TempoMapper.createTempoMapper(temp.substring(1));
+                mapper = TempoMap.createTempoMap(temp.substring(1));
             }
 
         }
