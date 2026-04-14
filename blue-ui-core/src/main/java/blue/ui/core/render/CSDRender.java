@@ -342,11 +342,11 @@ public class CSDRender extends CSDRenderService {
             String noteStr;
             if (StringUtils.isNumeric(sourceId)) {
                 int instrId = arrangement.addInstrumentAtEnd(instrument);
-                noteStr = "i" + instrId + " 0 " + totalDur;
+                noteStr = "i" + instrId + " 0 " + globalDur;
             } else {
                 String instrId = sourceId + "_alwaysOn";
                 arrangement.addInstrumentWithId(instrument, instrId, false);
-                noteStr = "i \"" + instrId + "\" 0 " + totalDur;
+                noteStr = "i \"" + instrId + "\" 0 " + globalDur;
             }
             try {
                 Note n = Note.createNote(noteStr);

@@ -40,6 +40,8 @@ information.
 
 ### FIX
 
+* Fixed always-on instruments to play for the full global duration including mixer extra render time, preventing premature cutoff of reverb tails and other effect decay
+
 * Redid filechooser manager to hold on to Filechoosers so that they will
   maintain last state (i.e., last file or folder selected) between uses
 
