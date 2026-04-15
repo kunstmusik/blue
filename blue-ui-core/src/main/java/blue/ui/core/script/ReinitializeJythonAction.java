@@ -22,7 +22,18 @@ package blue.ui.core.script;
 import blue.scripting.PythonProxy;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import org.openide.awt.ActionID;
+import org.openide.awt.ActionReference;
+import org.openide.awt.ActionRegistration;
+import org.openide.util.NbBundle.Messages;
 
+@ActionID(
+    category = "Script",
+    id = "blue.ui.core.script.ReinitializeJythonAction")
+@ActionRegistration(
+    displayName = "#CTL_ReinitializeJythonAction")
+@ActionReference(path = "Menu/Script", position = 110)
+@Messages("CTL_ReinitializeJythonAction=Reinitialize &Jython Interpreter")
 public final class ReinitializeJythonAction implements ActionListener {
 
     @Override

@@ -51,7 +51,7 @@ import org.python.util.InteractiveInterpreter;
         preferredID = "JythonConsoleTopComponent")
 @Messages({
     "CTL_JythonConsoleAction=Python Console",
-    "CTL_JythonConsoleTopComponent=Python Console Window",
+    "CTL_JythonConsoleTopComponent=Python Console",
     "HINT_JythonConsoleTopComponent=This is a PythonConsole window"
 })
 public final class JythonConsoleTopComponent extends TopComponent {
