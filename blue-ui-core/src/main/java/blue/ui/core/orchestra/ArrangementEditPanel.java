@@ -365,13 +365,46 @@ public class ArrangementEditPanel extends JComponent
     }
 
     public void pasteInstrument() {
-        Object obj = CopyBuffer.getBufferedObject(CopyBuffer.INSTRUMENT);
+        Instrument clone = getBufferedInstrumentClone();
 
-        if (!(obj instanceof Instrument)) {
+        if (clone == null) {
             return;
         }
 
-        Instrument instr = (Instrument) obj;
+        addInstrument(clone);
+    }
+
+    public void replaceInstrument() {
+        int selectedRow = arrangementTable.getSelectedRow();
+        if (arrangement == null || selectedRow < 0) {
+            return;
+        }
+
+        Instrument replacement = getBufferedInstrumentClone();
+
+        if (replacement == null) {
+            return;
+        }
+
+        String instrumentId = (String) arrangement.getValueAt(selectedRow, 1);
+        Instrument currentInstrument = arrangement.getInstrument(selectedRow);
+
+        arrangement.replaceInstrument(instrumentId, replacement);
+
+        OrchestraEdit edit = new OrchestraEdit(arrangement, currentInstrument,
+                replacement, instrumentId, OrchestraEdit.REPLACE);
+        BlueUndoManager.setUndoManager("orchestra");
+        BlueUndoManager.addEdit(edit);
+
+        arrangementTable.getSelectionModel().setSelectionInterval(selectedRow, selectedRow);
+    }
+
+    private Instrument getBufferedInstrumentClone() {
+        Object obj = CopyBuffer.getBufferedObject(CopyBuffer.INSTRUMENT);
+
+        if (!(obj instanceof Instrument instr)) {
+            return null;
+        }
 
         Instrument clone = instr.deepCopy();
 
@@ -379,7 +412,7 @@ public class ArrangementEditPanel extends JComponent
             blueSynthBuilder.clearParameters();
         }
 
-        addInstrument(clone);
+        return clone;
     }
 
     // public void instrumentRemoved(Instrument instr) {
@@ -603,6 +636,9 @@ public class ArrangementEditPanel extends JComponent
         JMenuItem pasteMenuItem = new JMenuItem(BlueSystem
                 .getString("instrument.paste"));
 
+        JMenuItem replaceMenuItem = new JMenuItem(BlueSystem
+            .getString("instrument.replace"));
+
         JMenuItem convertToBSB = new JMenuItem();
 
         Action exportItem;
@@ -619,6 +655,9 @@ public class ArrangementEditPanel extends JComponent
             });
             pasteMenuItem.addActionListener((ActionEvent e) -> {
                 pasteInstrument();
+            });
+            replaceMenuItem.addActionListener((ActionEvent e) -> {
+                replaceInstrument();
             });
 
             convertToBSB.setText("Convert to BlueSynthBuilder");
@@ -727,6 +766,7 @@ public class ArrangementEditPanel extends JComponent
             this.add(cutMenuItem);
             this.add(copyMenuItem);
             this.add(pasteMenuItem);
+            this.add(replaceMenuItem);
             this.addSeparator();
             this.add(convertToBSB);
             this.addSeparator();
@@ -761,6 +801,7 @@ public class ArrangementEditPanel extends JComponent
                     Object bufferedObj = CopyBuffer.getBufferedObject(CopyBuffer.INSTRUMENT);
                     boolean bufferFull = (bufferedObj instanceof Instrument);
                     pasteMenuItem.setEnabled(bufferFull);
+                    replaceMenuItem.setEnabled(selected && bufferFull);
                 }
 
                 @Override
@@ -829,19 +870,30 @@ public class ArrangementEditPanel extends JComponent
 
         public static final int REMOVE = 1;
 
+        public static final int REPLACE = 2;
+
         private final Arrangement arrangement;
 
         private final int type;
 
         private final Instrument instr;
 
+        private final Instrument replacementInstr;
+
         private final String instrId;
 
         public OrchestraEdit(Arrangement arrangement, Instrument instr,
                 String instrId, int type) {
 
+            this(arrangement, instr, null, instrId, type);
+        }
+
+        public OrchestraEdit(Arrangement arrangement, Instrument instr,
+                Instrument replacementInstr, String instrId, int type) {
+
             this.arrangement = arrangement;
             this.instr = instr;
+            this.replacementInstr = replacementInstr;
             this.instrId = instrId;
             this.type = type;
         }
@@ -852,8 +904,10 @@ public class ArrangementEditPanel extends JComponent
 
             if (this.type == ADD) {
                 arrangement.addInstrumentWithId(instr, instrId);
-            } else {
+            } else if (this.type == REMOVE) {
                 arrangement.removeInstrument(instrId);
+            } else {
+                arrangement.replaceInstrument(instrId, replacementInstr);
             }
         }
 
@@ -863,8 +917,10 @@ public class ArrangementEditPanel extends JComponent
 
             if (this.type == ADD) {
                 arrangement.removeInstrument(instrId);
-            } else {
+            } else if (this.type == REMOVE) {
                 arrangement.addInstrumentWithId(instr, instrId);
+            } else {
+                arrangement.replaceInstrument(instrId, instr);
             }
         }
 
@@ -872,8 +928,10 @@ public class ArrangementEditPanel extends JComponent
         public String getPresentationName() {
             if (this.type == ADD) {
                 return "Add Instrument";
+            } else if (this.type == REMOVE) {
+                return "Remove Instrument";
             }
-            return "Remove Instrument";
+            return "Replace Instrument";
         }
     }
 }
