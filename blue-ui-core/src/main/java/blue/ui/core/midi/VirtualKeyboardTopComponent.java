@@ -42,7 +42,7 @@ persistenceType = TopComponent.PERSISTENCE_ALWAYS)
 preferredID = "VirtualKeyboardTopComponent")
 @Messages({
     "CTL_VirtualKeyboardAction=Virtual Keyboard",
-"CTL_VirtualKeyboardTopComponent=Virtual Keyboard Window",
+"CTL_VirtualKeyboardTopComponent=Virtual Keyboard",
 "HINT_VirtualKeyboardTopComponent=This is a VirtualKeyboard window",
 
 })
