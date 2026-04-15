@@ -4,6 +4,10 @@
  */
 package blue.scripting;
 
+import blue.BlueData;
+import blue.BlueSystem;
+import java.io.StringReader;
+import java.io.StringWriter;
 import javax.script.ScriptException;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
@@ -34,10 +38,14 @@ class JavaScriptProxyTest {
 
     @BeforeEach
     void setUp() {
+                BlueSystem.setCurrentBlueData(new BlueData());
+                BlueSystem.setCurrentProjectDirectory(null);
     }
 
     @AfterEach
     void tearDown() {
+                BlueSystem.setCurrentBlueData(null);
+                BlueSystem.setCurrentProjectDirectory(null);
     }
 
     /**
@@ -74,6 +82,53 @@ class JavaScriptProxyTest {
 
         System.out.println(JavaScriptProxy.processJavascriptScore(
                 "score += '\\nhi\\n'", 0.0f, "unit test 3"));
+    }
+
+    @Test
+        void testProcessScriptPreservesSharedEngineState() throws Exception {
+        JavaScriptProxy.reinitialize();
+
+        StringWriter stdout = new StringWriter();
+        StringWriter stderr = new StringWriter();
+
+        Object result = JavaScriptProxy.processScript("var counter = 2; counter;",
+                new StringReader(""), stdout, stderr);
+
+        assertEquals("2", String.valueOf(result));
+        assertEquals("", stderr.toString());
+
+        stdout.getBuffer().setLength(0);
+        result = JavaScriptProxy.processScript("counter += 5; counter;",
+                new StringReader(""), stdout, stderr);
+
+        assertEquals("7", String.valueOf(result));
+        assertEquals("", stderr.toString());
+    }
+
+    @Test
+    void testProcessScriptUsesPerProjectEngineState() throws Exception {
+        BlueData projectOne = new BlueData();
+        BlueData projectTwo = new BlueData();
+
+        BlueSystem.setCurrentBlueData(projectOne);
+        JavaScriptProxy.reinitialize();
+        assertEquals("p1", String.valueOf(JavaScriptProxy.processScript(
+                "var projectValue = 'p1'; projectValue;",
+                new StringReader(""), new StringWriter(), new StringWriter())));
+
+        BlueSystem.setCurrentBlueData(projectTwo);
+        JavaScriptProxy.reinitialize();
+        assertEquals("undefined", String.valueOf(JavaScriptProxy.processScript(
+                "typeof projectValue;",
+                new StringReader(""), new StringWriter(), new StringWriter())));
+        assertEquals("p2", String.valueOf(JavaScriptProxy.processScript(
+                "var projectValue = 'p2'; projectValue;",
+                new StringReader(""), new StringWriter(), new StringWriter())));
+
+        BlueSystem.setCurrentBlueData(projectOne);
+        assertEquals("p1", String.valueOf(JavaScriptProxy.processScript(
+                "projectValue;",
+                new StringReader(""), new StringWriter(), new StringWriter())));
     }
 
     /**

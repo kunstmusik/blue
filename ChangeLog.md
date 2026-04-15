@@ -27,6 +27,8 @@ information.
   * Parsing and CSD import handle both single-line and multi-line modern declarations
   * Newly created UDOs and Effects default to application setting default (new setting in Program Settings for "Default UDO/Effects Style"); existing projects load as classic for backward compatibility
 
+* Orchestra: added "Replace Instrument" action to context menu
+
 ### Updated
 
 * Introduced new Time Unit system encompassing time signatures, measures, new tempo ruler, and new time units:
