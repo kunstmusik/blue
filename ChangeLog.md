@@ -1,5 +1,5 @@
 # Blue
-Copyright (c) 2001-2023 Steven Yi - All Rights Reserved
+Copyright (c) 2000-2026 Steven Yi - All Rights Reserved
 
 Email: stevenyi@gmail.com
 Web: https://blue.kunstmusik.com
@@ -11,7 +11,7 @@ information.
 
 # CHANGE LOG
 
-## [2.10.0] - 2026-03-xx
+## [2.10.0] - 2026-04-28
 
 ### NEW
 
