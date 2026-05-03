@@ -11,6 +11,12 @@ information.
 
 # CHANGE LOG
 
+## [2.10.1] - 2026-05-03
+
+### FIX
+
+* Fixed arrangement synchronization so orchestra arrangement changes now stay in sync with related UI state and mixer/channel mappings when instruments are added, removed, reordered, or replaced.
+
 ## [2.10.0] - 2026-04-28
 
 ### NEW
