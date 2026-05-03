@@ -23,7 +23,6 @@ import blue.Arrangement;
 import blue.ArrangementEvent;
 import blue.ArrangementListener;
 import blue.BlueData;
-import blue.mixer.Channel;
 import blue.mixer.ChannelList;
 import blue.mixer.Mixer;
 import blue.projects.BlueProject;
@@ -31,6 +30,7 @@ import blue.projects.BlueProjectManager;
 import blue.util.ObservableListEvent;
 import blue.util.ObservableListListener;
 import java.beans.PropertyChangeEvent;
+import java.lang.reflect.InvocationTargetException;
 import javax.swing.SwingUtilities;
 import org.netbeans.api.settings.ConvertAsProperties;
 import org.openide.awt.ActionID;
@@ -211,7 +211,7 @@ public final class MixerTopComponent extends TopComponent
 
     public void setArrangement(Arrangement arrangement) {
         if (this.arrangement != null) {
-            arrangement.removeArrangementListener(this);
+            this.arrangement.removeArrangementListener(this);
             this.arrangement = null;
         }
 
@@ -224,15 +224,38 @@ public final class MixerTopComponent extends TopComponent
 
     @Override
     public void arrangementChanged(ArrangementEvent arrEvt) {
-        switch (arrEvt.getType()) {
-            case ArrangementEvent.UPDATE:
-                reconcileWithArrangement();
-                break;
-            case ArrangementEvent.INSTRUMENT_ID_CHANGED:
-                switchMixerId(arrEvt.getOldId(), arrEvt.getNewId());
-                // reconcileWithArrangement();
-                break;
+        Runnable update = switch (arrEvt.getType()) {
+            case ArrangementEvent.UPDATE ->
+                this::reconcileWithArrangement;
+            case ArrangementEvent.INSTRUMENT_ID_CHANGED ->
+                () -> switchMixerId(arrEvt.getOldId(), arrEvt.getNewId());
+            default ->
+                null;
+        };
 
+        if (update == null) {
+            return;
+        }
+
+        // Arrangement edits can arrive from non-EDT callers during undo,
+        // project reloads, or other model-level operations. Keep the Swing
+        // channel panel mutations on the EDT so queued list updates stay
+        // consistent.
+        if (SwingUtilities.isEventDispatchThread()) {
+            update.run();
+        } else {
+            try {
+                SwingUtilities.invokeAndWait(update);
+            } catch (InterruptedException ex) {
+                Thread.currentThread().interrupt();
+                throw new IllegalStateException(
+                        "Interrupted while synchronizing the mixer with the arrangement",
+                        ex);
+            } catch (InvocationTargetException ex) {
+                throw new IllegalStateException(
+                        "Failed to synchronize the mixer with the arrangement",
+                        ex.getCause());
+            }
         }
     }
 
@@ -242,75 +265,13 @@ public final class MixerTopComponent extends TopComponent
      * creating or destroying channels
      */
     private void switchMixerId(String oldId, String newId) {
-        ChannelList channels = mixer.getChannels();
-
-        int oldIdCount = 0;
-        int newIdCount = 0;
-
-        for (int i = 0; i < arrangement.size(); i++) {
-            String instrId = arrangement.getInstrumentAssignment(i).arrangementId;
-
-            if (instrId.equals(oldId)) {
-                oldIdCount++;
-            } else if (instrId.equals(newId)) {
-                newIdCount++;
-            }
-        }
-
-        if (oldIdCount == 0 && newIdCount == 1) {
-            // rename old channel
-            for (Channel channel : channels) {
-                if (channel.getName().equals(oldId)) {
-                    channel.setName(newId);
-                    break;
-                }
-            }
-        } else if (oldIdCount == 0 && newIdCount > 1) {
-            // remove old channel, use current channel for newId
-            for (int i = 0; i < channels.size(); i++) {
-                Channel channel = channels.get(i);
-
-                if (channel.getName().equals(oldId)) {
-                    channels.remove(channel);
-                    break;
-                }
-            }
-        } else if (oldIdCount > 0 && newIdCount == 1) {
-            // create new channel
-            Channel channel = new Channel();
-            channel.setName(newId);
-            channels.add(channel);
-        } // else if(oldIdCount > 0 && newIdCount > 1) {
-        // do neither, as channels exist for both before and after
-        // }
-
+        ArrangementMixerSynchronizer.synchronizeInstrumentIdChange(
+                mixer, arrangement, oldId, newId);
+        channelsPanel.sort();
     }
 
     private void reconcileWithArrangement() {
-//        ChannelList channels = mixer.getChannels();
-//
-//        ArrayList<String> idList = new ArrayList<String>();
-//
-//        for (int i = 0; i < arrangement.size(); i++) {
-//            String instrId = arrangement.getInstrumentAssignment(i).arrangementId;
-//
-//            if (!idList.contains(instrId)) {
-//                idList.add(instrId);
-//            }
-//        }
-//
-//        for (int i = channels.size() - 1; i >= 0; i--) {
-//            Channel channel = channels.getChannel(i);
-//            if (!idList.contains(channel.getName())) {
-//                channels.removeChannel(channel);
-//            }
-//        }
-//
-//        for (int i = 0; i < idList.size(); i++) {
-//            channels.checkOrCreate(idList.get(i));
-//        }
-//
-//        channels.sort();
+        ArrangementMixerSynchronizer.synchronize(mixer, arrangement);
         channelsPanel.sort();
     }
 

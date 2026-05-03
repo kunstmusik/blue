@@ -205,7 +205,7 @@ public class ChannelListPanel extends JComponent implements ObservableListListen
         final int index0 = e.getStartIndex();
         final int index1 = e.getEndIndex();
 
-        SwingUtilities.invokeLater(() -> {
+        Runnable update = () -> {
             for (int i = index0; i <= index1; i++) {
                 Channel channel = channels.get(i);
                 ChannelPanel cPanel = createChannelPanel(channel);
@@ -213,7 +213,13 @@ public class ChannelListPanel extends JComponent implements ObservableListListen
                 add(cPanel, i);
             }
             revalidate();
-        });
+        };
+
+        if (SwingUtilities.isEventDispatchThread()) {
+            update.run();
+        } else {
+            SwingUtilities.invokeLater(update);
+        }
 
     }
 
@@ -221,7 +227,7 @@ public class ChannelListPanel extends JComponent implements ObservableListListen
         final int index0 = e.getStartIndex();
         final int index1 = e.getEndIndex();
 
-        SwingUtilities.invokeLater(() -> {
+        Runnable update = () -> {
             for (int i = index1; i >= index0; i--) {
                 ChannelPanel cPanel = (ChannelPanel) getComponent(i);
                 cPanel.clear();
@@ -230,12 +236,24 @@ public class ChannelListPanel extends JComponent implements ObservableListListen
             }
             
             revalidate();
-        });
+        };
+
+        if (SwingUtilities.isEventDispatchThread()) {
+            update.run();
+        } else {
+            SwingUtilities.invokeLater(update);
+        }
     }
 
     public void contentsChanged() {
-        SwingUtilities.invokeLater(() -> {
+        Runnable update = () -> {
             rebuildChannelsUI(channels);
-        });
+        };
+
+        if (SwingUtilities.isEventDispatchThread()) {
+            update.run();
+        } else {
+            SwingUtilities.invokeLater(update);
+        }
     }
 }

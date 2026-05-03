@@ -895,14 +895,12 @@ public class Arrangement implements TableModel {
     }
 
     private void fireTableDataChanged() {
-        if (listeners == null) {
-            return;
-        }
+        if (listeners != null) {
+            TableModelEvent tme = new TableModelEvent(this);
 
-        TableModelEvent tme = new TableModelEvent(this);
-
-        for (TableModelListener listener : listeners) {
-            listener.tableChanged(tme);
+            for (TableModelListener listener : listeners) {
+                listener.tableChanged(tme);
+            }
         }
 
         if (arrangementListeners != null) {

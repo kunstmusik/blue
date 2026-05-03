@@ -72,6 +72,7 @@ public class Installer extends ModuleInstall {
 
     private PropertyChangeListener windowTitlePropertyChangeListener;
     private final TempFileCleaner tempFileCleaner = new TempFileCleaner();
+    private final ArrangementProjectListener arrangementProjectListener = new ArrangementProjectListener();
     private static final Logger logger = Logger.getLogger(
             Installer.class.getName());
 
@@ -101,6 +102,10 @@ public class Installer extends ModuleInstall {
                 windowTitlePropertyChangeListener);
         BlueProjectManager.getInstance().addPropertyChangeListener(
                 tempFileCleaner);
+        BlueProjectManager.getInstance().addPropertyChangeListener(
+            arrangementProjectListener);
+        arrangementProjectListener.setCurrentProject(
+            BlueProjectManager.getInstance().getCurrentProject());
 
         WindowManager.getDefault().invokeWhenUIReady(() -> {
             setWindowTitle();
@@ -206,6 +211,9 @@ public class Installer extends ModuleInstall {
                 windowTitlePropertyChangeListener);
         BlueProjectManager.getInstance().removePropertyChangeListener(
                 tempFileCleaner);
+        BlueProjectManager.getInstance().removePropertyChangeListener(
+            arrangementProjectListener);
+        arrangementProjectListener.detach();
         MidiInputManager.getInstance().removeReceiver(
                 MidiInputEngine.getInstance());
 

@@ -26,13 +26,12 @@ import blue.BlueSystem;
 import blue.CopyBuffer;
 import blue.TransferableInstrument;
 import blue.gui.DragManager;
-import blue.mixer.Channel;
-import blue.mixer.ChannelList;
 import blue.mixer.Mixer;
 import blue.orchestra.BlueSynthBuilder;
 import blue.orchestra.GenericInstrument;
 import blue.orchestra.Instrument;
 import blue.settings.GeneralSettings;
+import blue.ui.core.mixer.ArrangementMixerSynchronizer;
 import blue.ui.nbutilities.lazyplugin.LazyPlugin;
 import blue.ui.nbutilities.lazyplugin.LazyPluginFactory;
 import blue.ui.utilities.BlueCommonIcons;
@@ -67,8 +66,8 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.lang.reflect.InvocationTargetException;
 import java.text.MessageFormat;
-import java.util.ArrayList;
 import java.util.List;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
@@ -443,40 +442,39 @@ public class ArrangementEditPanel extends JComponent
             arrangementTable.setModel(new DefaultTableModel(new Object[]{}, 0));
         }
 
-        reconcileWithArrangement();
+        reconcileWithArrangementOnEdt();
     }
 
     @Override
     public void arrangementChanged(ArrangementEvent arrEvt) {
         switch (arrEvt.getType()) {
             case ArrangementEvent.UPDATE:
-                reconcileWithArrangement();
+                reconcileWithArrangementOnEdt();
                 break;
         }
     }
 
     private void reconcileWithArrangement() {
-        ChannelList channels = mixer.getChannels();
+        ArrangementMixerSynchronizer.synchronize(mixer, arrangement);
+    }
 
-        ArrayList<String> idList = new ArrayList<>();
-
-        for (int i = 0; i < arrangement.size(); i++) {
-            String instrId = arrangement.getInstrumentAssignment(i).arrangementId;
-
-            if (!idList.contains(instrId)) {
-                idList.add(instrId);
-            }
+    private void reconcileWithArrangementOnEdt() {
+        if (SwingUtilities.isEventDispatchThread()) {
+            reconcileWithArrangement();
+            return;
         }
 
-        for (int i = channels.size() - 1; i >= 0; i--) {
-            Channel channel = channels.get(i);
-            if (!idList.contains(channel.getName())) {
-                channels.remove(channel);
-            }
-        }
-
-        for (String s : idList) {
-            channels.checkOrCreate(s);
+        try {
+            SwingUtilities.invokeAndWait(this::reconcileWithArrangement);
+        } catch (InterruptedException ex) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException(
+                    "Interrupted while synchronizing the mixer with the arrangement",
+                    ex);
+        } catch (InvocationTargetException ex) {
+            throw new IllegalStateException(
+                    "Failed to synchronize the mixer with the arrangement",
+                    ex.getCause());
         }
     }
 
