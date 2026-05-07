@@ -299,13 +299,19 @@ public abstract class TimePosition {
         }
         
         /**
-         * Convert to BBF format.
+         * Convert to BBF format using nearest-hundredth rounding.
          * @param ppq the PPQ value for fraction calculation
          * @return equivalent BBFTime
          */
         public BBFTime toBBF(int ppq) {
-            int fraction = (ticks * 100) / ppq;
-            return new BBFTime(bar, beat, fraction);
+            int fraction = (int) Math.round((ticks * 100.0) / ppq);
+            int normalizedBeat = beat;
+            long normalizedBar = bar;
+            if (fraction >= 100) {
+                fraction = 0;
+                normalizedBeat++;
+            }
+            return new BBFTime(normalizedBar, normalizedBeat, fraction);
         }
         
         @Override
@@ -447,8 +453,14 @@ public abstract class TimePosition {
          */
         public BBFTime toBBF(int ppq) {
             int totalTicks = toTotalTicks(ppq);
-            int fraction = (totalTicks * 100) / ppq;
-            return new BBFTime(bar, beat, fraction);
+            int fraction = (int) Math.round((totalTicks * 100.0) / ppq);
+            int normalizedBeat = beat;
+            long normalizedBar = bar;
+            if (fraction >= 100) {
+                fraction = 0;
+                normalizedBeat++;
+            }
+            return new BBFTime(normalizedBar, normalizedBeat, fraction);
         }
         
         @Override
@@ -477,11 +489,11 @@ public abstract class TimePosition {
 
     /**
      * BBF (Bars.Beats.Fraction) time representation.
-     * Uses percentage-based fraction for sub-beat precision.
+     * Uses canonical two-digit hundredths for sub-beat precision.
      * Matches REAPER style.
      * 
      * Bar and beat numbers are 1-based.
-     * Fraction is 0-99 (percentage of beat).
+     * Fraction is 0-99 (hundredths of a beat).
      * 
      * This is an immutable value object.
      */
@@ -560,7 +572,7 @@ public abstract class TimePosition {
             int ticks = (fraction * ppq) / 100;
             return new BBTTime(bar, beat, ticks);
         }
-        
+
         /**
          * Convert to BBST format.
          * @param ppq the PPQ value for tick calculation

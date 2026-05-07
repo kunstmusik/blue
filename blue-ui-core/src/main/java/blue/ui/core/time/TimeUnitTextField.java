@@ -43,7 +43,7 @@ import javax.swing.event.EventListenerList;
  *   <li>BEATS: decimal number (e.g., "4.5", "12.25")</li>
  *   <li>BBT: bar.beat.ticks (e.g., "1.1.0", "2.3.240")</li>
  *   <li>BBST: bar.beat.sixteenth.ticks (e.g., "1.1.1.0", "2.3.2.60")</li>
- *   <li>BBF: bar.beat.fraction (e.g., "1.1.0", "2.3.50")</li>
+ *   <li>BBF: bar.beat.fraction, normalized to two digits (e.g., "1.1.00", "2.3.50")</li>
  *   <li>TIME: H:MM:SS.mmm (e.g., "0:00:00.000", "1:30:45.500")</li>
  *   <li>SMPTE: HH:MM:SS:FF (e.g., "00:00:00:00", "01:30:45:15")</li>
  *   <li>FRAME: integer sample number (e.g., "0", "44100", "88200")</li>
@@ -235,7 +235,7 @@ public class TimeUnitTextField extends JTextField {
             case BEATS -> "Format: decimal beats (e.g., 4.5, 12.25)";
             case BBT -> "Format: bar.beat.ticks (e.g., 1.1.0, 2.3.240)";
             case BBST -> "Format: bar.beat.16th.ticks (e.g., 1.1.1.0, 2.3.2.60)";
-            case BBF -> "Format: bar.beat.fraction (e.g., 1.1.0, 2.3.50)";
+            case BBF -> "Format: bar.beat.fraction (normalized to two digits, e.g., 1.1.00, 2.3.50)";
             case TIME -> "Format: H:MM:SS.mmm (e.g., 0:00:00.000)";
             case SECONDS -> "Format: decimal seconds (e.g., 12.345, 0.5)";
             case SMPTE -> "Format: HH:MM:SS:FF (e.g., 00:00:00:00)";
@@ -248,7 +248,7 @@ public class TimeUnitTextField extends JTextField {
             case BEATS -> "Duration: decimal beats (e.g., 4.0, 0.5)";
             case BBT -> "Duration: bars.beats.ticks (0-based, e.g., 0.0.0, 1.2.240)";
             case BBST -> "Duration: bars.beats.16th.ticks (0-based, e.g., 0.0.0.0, 1.2.1.60)";
-            case BBF -> "Duration: bars.beats.fraction (0-based, e.g., 0.0.00, 1.2.50)";
+            case BBF -> "Duration: bars.beats.fraction (0-based, normalized to two digits, e.g., 0.0.00, 1.2.50)";
             case TIME -> "Duration: H:MM:SS.mmm (e.g., 0:00:04.000)";
             case SECONDS -> "Duration: decimal seconds (e.g., 4.0, 0.5)";
             case SMPTE -> "Duration: HH:MM:SS:FF (e.g., 00:00:04:00)";
@@ -324,9 +324,9 @@ public class TimeUnitTextField extends JTextField {
 
     private static String formatBBF(TimePosition timePosition) {
         if (timePosition instanceof TimePosition.BBFTime bbf) {
-            return String.format("%d.%d.%d", bbf.getBar(), bbf.getBeat(), bbf.getFraction());
+            return bbf.toString();
         }
-        return "1.1.0";
+        return "1.1.00";
     }
 
     private static String formatTime(TimePosition timePosition) {
@@ -465,7 +465,11 @@ public class TimeUnitTextField extends JTextField {
         
         long bar = Long.parseLong(parts[0].trim());
         int beat = Integer.parseInt(parts[1].trim());
-        int fraction = parts.length == 3 ? Integer.parseInt(parts[2].trim()) : 0;
+        int fraction = parts.length == 3 ? parseBbfFraction(parts[2]) : 0;
+        if (fraction >= 100) {
+            fraction = 0;
+            beat++;
+        }
         
         return TimePosition.bbf(bar, beat, fraction);
     }
@@ -648,7 +652,11 @@ public class TimeUnitTextField extends JTextField {
                     throw new IllegalArgumentException("Duration BBF format: bars.beats.fraction");
                 long bars = Long.parseLong(parts[0].trim());
                 int beats = Integer.parseInt(parts[1].trim());
-                int fraction = parts.length == 3 ? Integer.parseInt(parts[2].trim()) : 0;
+                int fraction = parts.length == 3 ? parseBbfFraction(parts[2]) : 0;
+                if (fraction >= 100) {
+                    fraction = 0;
+                    beats++;
+                }
                 TimeDuration dur = TimeDuration.bbf(bars, beats, fraction);
                 double totalBeats = dur.toBeats(context);
                 yield TimeUtilities.beatsToTimePosition(totalBeats, TimeBase.BBF, context);
@@ -696,6 +704,21 @@ public class TimeUnitTextField extends JTextField {
             throw new IllegalArgumentException();
         }
         return val;
+    }
+
+    private static int parseBbfFraction(String text) {
+        String fractionText = text.trim();
+        if (fractionText.isEmpty()) {
+            return 0;
+        }
+        if (!fractionText.chars().allMatch(Character::isDigit)) {
+            throw new IllegalArgumentException("BBF fraction must contain digits only");
+        }
+
+        BigDecimal fraction = new BigDecimal("0." + fractionText);
+        return fraction.movePointRight(2)
+                .setScale(0, RoundingMode.HALF_UP)
+                .intValueExact();
     }
 
     private static Double extractTotalSeconds(TimePosition timePosition, TimeContext context) {

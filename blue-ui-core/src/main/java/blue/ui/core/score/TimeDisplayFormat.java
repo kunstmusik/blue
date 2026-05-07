@@ -164,7 +164,7 @@ public enum TimeDisplayFormat {
     
     /**
      * BBF format showing Bar.Beat.Fraction (e.g., "1.1.00", "2.3.50").
-     * REAPER style. Uses percentage-based fraction (0-99) for sub-beat precision.
+     * REAPER style. Uses canonical two-digit hundredths (0-99) for sub-beat precision.
      */
     BBF("BBF", "1.1.00, 2.1.50", TimeBase.BBF) {
         @Override

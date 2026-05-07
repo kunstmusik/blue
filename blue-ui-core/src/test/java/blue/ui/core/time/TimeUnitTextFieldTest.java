@@ -114,6 +114,81 @@ class TimeUnitTextFieldTest {
         assertEquals("2.25", field.getText());
     }
 
+    @Test
+    void testFormatBbfUsesTwoDigits() {
+        TimeUnitTextField field = new TimeUnitTextField();
+        field.setTimeBase(TimeBase.BBF);
+        field.setTimePosition(TimePosition.bbf(1, 1, 1));
+
+        assertEquals("1.1.01", field.getText());
+    }
+
+    @Test
+    void testParseBbfNormalizesSingleDigitFraction() {
+        TimeUnitTextField field = new TimeUnitTextField();
+        field.setTimeBase(TimeBase.BBF);
+        field.setText("1.1.5");
+
+        field.postActionEvent();
+
+        TimePosition.BBFTime parsed = assertInstanceOf(TimePosition.BBFTime.class,
+                field.getTimePosition());
+        assertEquals(1, parsed.getBar());
+        assertEquals(1, parsed.getBeat());
+        assertEquals(50, parsed.getFraction());
+        assertEquals("1.1.50", field.getText());
+    }
+
+    @Test
+    void testParseBbfRoundsAndAcceptsLongFraction() {
+        TimeUnitTextField field = new TimeUnitTextField();
+        field.setTimeBase(TimeBase.BBF);
+        field.setText("1.1.3497");
+
+        field.postActionEvent();
+
+        TimePosition.BBFTime parsed = assertInstanceOf(TimePosition.BBFTime.class,
+                field.getTimePosition());
+        assertEquals(1, parsed.getBar());
+        assertEquals(1, parsed.getBeat());
+        assertEquals(35, parsed.getFraction());
+        assertEquals("1.1.35", field.getText());
+    }
+
+    @Test
+    void testParseDurationBbfNormalizesAndConverts() {
+        TimeContext context = createContext(60.0);
+        TimeUnitTextField field = new TimeUnitTextField();
+        field.setTimeContextSupplier(() -> context);
+        field.setTimeBase(TimeBase.BBF);
+        field.setDurationMode(true);
+        field.setText("1.0.5");
+
+        field.postActionEvent();
+
+        TimePosition.BBFTime parsed = assertInstanceOf(TimePosition.BBFTime.class,
+                field.getTimePosition());
+        assertEquals(4.5, parsed.toBeats(context), 0.0001);
+        assertEquals("1.0.50", field.getText());
+    }
+
+    @Test
+    void testParseDurationBbfUsesRoundOnApply() {
+        TimeContext context = createContext(60.0);
+        TimeUnitTextField field = new TimeUnitTextField();
+        field.setTimeContextSupplier(() -> context);
+        field.setTimeBase(TimeBase.BBF);
+        field.setDurationMode(true);
+        field.setText("1.1.349");
+
+        field.postActionEvent();
+
+        TimePosition.BBFTime parsed = assertInstanceOf(TimePosition.BBFTime.class,
+                field.getTimePosition());
+        assertEquals(5.35, parsed.toBeats(context), 0.0001);
+        assertEquals("1.1.35", field.getText());
+    }
+
     private static TimeContext createContext(double frameRate) {
         TimeContext context = new TimeContext(44100, new MeterMap(), new TempoMap());
         context.setSmpteFrameRate(frameRate);

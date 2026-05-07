@@ -395,7 +395,7 @@ public abstract class TimeDuration {
      * 0-based: bars >= 0, beats >= 0. Zero duration is 0.0.00.
      * 
      * Unlike position BBFTime (1-based), this represents a time distance.
-     * Fraction is 0-99 (percentage of beat).
+     * Fraction is 0-99 (hundredths of a beat).
      * 
      * This is an immutable value object.
      */

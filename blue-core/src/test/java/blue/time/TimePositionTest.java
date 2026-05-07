@@ -210,6 +210,28 @@ class TimePositionTest {
         assertEquals(3, bbst.getSixteenth()); // 480/240 = 2, so sixteenth 3
         assertEquals(0, bbst.getTicks());
     }
+
+    @Test
+    void testBBTToBBFRoundsFraction() {
+        TimePosition.BBTTime bbt = TimePosition.bbt(1, 1, 479);
+
+        TimePosition.BBFTime bbf = bbt.toBBF(960);
+
+        assertEquals(1, bbf.getBar());
+        assertEquals(1, bbf.getBeat());
+        assertEquals(50, bbf.getFraction());
+    }
+
+    @Test
+    void testBBSTToBBFCarriesOnRoundingOverflow() {
+        TimePosition.BBSTTime bbst = TimePosition.bbst(1, 1, 4, 239);
+
+        TimePosition.BBFTime bbf = bbst.toBBF(960);
+
+        assertEquals(1, bbf.getBar());
+        assertEquals(2, bbf.getBeat());
+        assertEquals(0, bbf.getFraction());
+    }
     
     // ========== BBFTime Tests ==========
     

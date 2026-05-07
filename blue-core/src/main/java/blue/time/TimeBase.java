@@ -42,7 +42,7 @@ public enum TimeBase {
     BBST,
     
     /** BBF (Bars.Beats.Fraction) - REAPER style.
-     * Uses percentage-based fraction (0-99) for sub-beat precision.
+     * Uses canonical two-digit hundredths (0-99) for sub-beat precision.
      */
     BBF,
     

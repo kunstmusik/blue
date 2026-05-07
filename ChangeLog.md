@@ -11,6 +11,12 @@ information.
 
 # CHANGE LOG
 
+## [2.10.2] - 2026-05-07
+
+### FIX
+
+* Fixed BBF (bars.beats.fraction) time unit handling so fractional input is interpreted as decimal beat digits and normalized on apply to REAPER-style two-digit hundredths in both position and duration editors (for example, 1.1.5 becomes 1.1.50 and 1.1.349 becomes 1.1.35).
+
 ## [2.10.1] - 2026-05-03
 
 ### FIX
