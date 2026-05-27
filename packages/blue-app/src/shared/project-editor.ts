@@ -50,6 +50,9 @@ import {
   TimeContext,
   GenericScore,
   PythonObject,
+  ClojureLibraryEntry,
+  ClojureProjectData,
+  ClojureObject,
   JavaScriptObject,
   Comment,
   External,
@@ -757,6 +760,16 @@ export interface ProjectPropertiesSnapshot {
   copyToMediaFileOnImport: boolean;
 }
 
+export interface ClojureLibraryEntrySnapshot {
+  entryId: string;
+  dependencyCoordinates: string;
+  version: string;
+}
+
+export interface ClojureProjectSnapshot {
+  libraryEntries: ClojureLibraryEntrySnapshot[];
+}
+
 export interface LiveObjectCellSnapshot {
   uniqueId: string;
   enabled: boolean;
@@ -1041,6 +1054,7 @@ export interface ProjectEditorSnapshot {
   orchestra: OrchestraSnapshot;
   mixer?: MixerSnapshot;
   projectProperties: ProjectPropertiesSnapshot;
+  clojureProject: ClojureProjectSnapshot;
   transport: ToolbarProjectTransportSnapshot;
   tablesText: string;
   projectUdos: UdoDefinitionSnapshot[];
@@ -1065,6 +1079,7 @@ export interface ProjectDocumentPatch {
   orchestra?: OrchestraPatch;
   mixer?: MixerPatch;
   projectProperties?: Partial<ProjectPropertiesSnapshot>;
+  clojureProject?: ClojureProjectSnapshot;
   transport?: Partial<Pick<ToolbarProjectTransportSnapshot, 'renderStartTime' | 'renderEndTime' | 'loopRendering'>> & {
     tempoMap?: Partial<TempoMapSnapshot>;
     tempoMapPatch?: TempoMapPatch;
@@ -1386,6 +1401,7 @@ export type ProjectLoadedPayload = ProjectSummarySnapshot &
       | 'orchestra'
       | 'mixer'
       | 'projectProperties'
+      | 'clojureProject'
       | 'transport'
       | 'tablesText'
       | 'projectUdos'
@@ -1435,8 +1451,18 @@ function createDefaultProjectPropertiesSnapshot(): ProjectPropertiesSnapshot {
   };
 }
 
+function createDefaultClojureProjectSnapshot(): ClojureProjectSnapshot {
+  return {
+    libraryEntries: [],
+  };
+}
+
 export function createEmptyProjectPropertiesSnapshot(): ProjectPropertiesSnapshot {
   return createDefaultProjectPropertiesSnapshot();
+}
+
+export function createEmptyClojureProjectSnapshot(): ClojureProjectSnapshot {
+  return createDefaultClojureProjectSnapshot();
 }
 
 export function createEmptyProjectEditorSnapshot(): ProjectEditorSnapshot {
@@ -1449,6 +1475,7 @@ export function createEmptyProjectEditorSnapshot(): ProjectEditorSnapshot {
     orchestra: createEmptyOrchestraSnapshot(false),
     mixer: createEmptyMixerSnapshot(),
     projectProperties: createDefaultProjectPropertiesSnapshot(),
+    clojureProject: createDefaultClojureProjectSnapshot(),
     transport: createEmptyToolbarProjectTransportSnapshot(),
     tablesText: '',
     projectUdos: [],
@@ -1461,6 +1488,7 @@ export function createEmptyProjectEditorSnapshot(): ProjectEditorSnapshot {
 const MIXER_CHANNEL_IDS = new WeakMap<object, string>();
 const MIXER_ENTRY_IDS = new WeakMap<object, string>();
 let nextMixerSnapshotId = 1;
+let nextClojureLibraryEntrySnapshotId = 1;
 
 function assignMixerSnapshotId(
   map: WeakMap<object, string>,
@@ -2128,6 +2156,30 @@ export function createProjectPropertiesSnapshot(
   };
 }
 
+function createClojureLibraryEntrySnapshot(
+  entry: ClojureLibraryEntry,
+): ClojureLibraryEntrySnapshot {
+  return {
+    entryId: `clj-lib-${nextClojureLibraryEntrySnapshotId++}`,
+    dependencyCoordinates: entry.getDependencyCoordinates(),
+    version: entry.getVersion(),
+  };
+}
+
+export function createClojureProjectSnapshot(
+  projectData: ClojureProjectData | null | undefined,
+): ClojureProjectSnapshot {
+  if (!projectData) {
+    return createDefaultClojureProjectSnapshot();
+  }
+
+  return {
+    libraryEntries: projectData
+      .getLibraryEntries()
+      .map((entry) => createClojureLibraryEntrySnapshot(entry)),
+  };
+}
+
 // ─── Bar Renderer Snapshot Helpers ───
 
 const JAVA_NEWLINE_RE = /\\n/g;
@@ -2604,6 +2656,7 @@ function buildEditorTargetSnapshot(
 function getCodeText(sObj: SoundObject): string {
   if (sObj instanceof GenericScore) return sObj.getScoreText();
   if (sObj instanceof PythonObject) return sObj.getPythonCode();
+  if (sObj instanceof ClojureObject) return sObj.getClojureCode();
   if (sObj instanceof JavaScriptObject) return sObj.getJavaScriptCode();
   if (sObj instanceof Comment) return sObj.getText();
   if (sObj instanceof External) return sObj.getText();
@@ -2613,6 +2666,7 @@ function getCodeText(sObj: SoundObject): string {
 export function setCodeText(sObj: SoundObject, text: string): boolean {
   if (sObj instanceof GenericScore) { sObj.setScoreText(text); return true; }
   if (sObj instanceof PythonObject) { sObj.setPythonCode(text); return true; }
+  if (sObj instanceof ClojureObject) { sObj.setClojureCode(text); return true; }
   if (sObj instanceof JavaScriptObject) { sObj.setJavaScriptCode(text); return true; }
   if (sObj instanceof Comment) { sObj.setText(text); return true; }
   if (sObj instanceof External) { sObj.setText(text); return true; }
@@ -2631,6 +2685,7 @@ function getEditorFamily(objectType: string): TypeSpecificScoreObjectEditorSnaps
       return 'tracker';
     case 'GenericScore':
     case 'PythonObject':
+    case 'ClojureObject':
     case 'JavaScriptObject':
     case 'Comment':
       return 'code';
@@ -2833,6 +2888,8 @@ export function createScoreObjectEditorDocument(
       const auxiliaryFlags: Record<string, string | number | boolean> | undefined =
         sObj instanceof JavaScriptObject
           ? { onLoadProcessable: sObj.isOnLoadProcessable() }
+          : sObj instanceof ClojureObject
+            ? { onLoadProcessable: sObj.isOnLoadProcessable() }
           : sObj instanceof PythonObject
             ? { onLoadProcessable: sObj.isOnLoadProcessable() }
             : undefined;
@@ -3414,6 +3471,7 @@ export function createProjectEditorSnapshot(
     projectProperties: createProjectPropertiesSnapshot(
       data.getProjectProperties(),
     ),
+    clojureProject: createClojureProjectSnapshot(data.getClojureProjectData()),
     transport: createToolbarProjectTransportSnapshot(data),
     tablesText: data.getTableSet().getTables(),
     projectUdos: createProjectUdoListSnapshot(data),
@@ -4455,6 +4513,45 @@ export function applyProjectPropertiesPatch(
   return changed;
 }
 
+function areClojureProjectSnapshotsEqual(
+  left: ClojureProjectSnapshot,
+  right: ClojureProjectSnapshot,
+): boolean {
+  if (left.libraryEntries.length !== right.libraryEntries.length) {
+    return false;
+  }
+
+  return left.libraryEntries.every((entry, index) => {
+    const other = right.libraryEntries[index];
+    return (
+      entry.dependencyCoordinates === other?.dependencyCoordinates &&
+      entry.version === other?.version
+    );
+  });
+}
+
+export function applyClojureProjectPatch(
+  data: BlueData,
+  patch: ClojureProjectSnapshot,
+): boolean {
+  const currentSnapshot = createClojureProjectSnapshot(data.getClojureProjectData());
+  if (areClojureProjectSnapshotsEqual(currentSnapshot, patch)) {
+    return false;
+  }
+
+  const nextProjectData = new ClojureProjectData();
+  nextProjectData.setLibraryEntries(
+    patch.libraryEntries.map((entrySnapshot) => {
+      const entry = new ClojureLibraryEntry();
+      entry.setDependencyCoordinates(entrySnapshot.dependencyCoordinates);
+      entry.setVersion(entrySnapshot.version);
+      return entry;
+    }),
+  );
+  data.setClojureProjectData(nextProjectData);
+  return true;
+}
+
 export function createBlueLiveProjectSnapshot(liveData: LiveData): BlueLiveProjectSnapshot {
   const bins = liveData.getLiveObjectBins();
   const cells: Array<Array<LiveObjectCellSnapshot | null>> = [];
@@ -5427,6 +5524,13 @@ function applyScoreObjectPatch(data: BlueData, patch: ScorePatch): boolean {
         }
       }
       if (sObj instanceof PythonObject) {
+        const p = patch.patch;
+        if (p.onLoadProcessable !== undefined) {
+          sObj.setOnLoadProcessable(p.onLoadProcessable as boolean);
+          return true;
+        }
+      }
+      if (sObj instanceof ClojureObject) {
         const p = patch.patch;
         if (p.onLoadProcessable !== undefined) {
           sObj.setOnLoadProcessable(p.onLoadProcessable as boolean);
@@ -6655,6 +6759,10 @@ export function applyProjectDocumentPatch(
         data.getProjectProperties(),
         patch.projectProperties,
       ) || changed;
+  }
+
+  if (patch.clojureProject) {
+    changed = applyClojureProjectPatch(data, patch.clojureProject) || changed;
   }
 
   if (patch.orchestra) {

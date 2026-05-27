@@ -17,9 +17,11 @@ import { ScoreGenerationException } from './score-generation-exception';
 import { CompileData } from '../compile-data';
 import { NoteList } from '../sound-objects/note-list';
 import { PolyObject } from '../sound-objects/poly-object';
+import { TimeBehavior } from '../sound-objects/time-behavior';
 import { AudioLayerGroup } from './audio/audio-layer-group';
 import { PatternsLayerGroup } from './patterns/patterns-layer-group';
 import type { JavaScriptSession } from '../javascript-runtime';
+import type { JavaRuntimeClientContract } from '../java-runtime';
 
 export class Score extends Array<LayerGroup<Layer>> {
   private timeContext = new TimeContext();
@@ -90,11 +92,54 @@ export class Score extends Array<LayerGroup<Layer>> {
     return this.npc.apply(noteList);
   }
 
+  async generateForCSDAsync(
+    compileData: CompileData,
+    startTime: number,
+    endTime: number,
+  ): Promise<NoteList> {
+    const noteList = new NoteList();
+    const context = this.timeContext;
+    const hasSolo = this.some((lg) => lg.hasSoloLayers());
+
+    for (let i = 0; i < this.length; i++) {
+      const layerGroup = this[i];
+
+      if (layerGroup instanceof PolyObject) {
+        const nl = await layerGroup.generateForCSDAsync(
+          context,
+          compileData,
+          startTime,
+          endTime,
+          hasSolo,
+        );
+        noteList.merge(nl);
+        continue;
+      }
+
+      const nl = layerGroup.generateForCSD(context, compileData, startTime, endTime, hasSolo);
+      noteList.merge(nl);
+    }
+
+    return this.npc.apply(noteList);
+  }
+
   processOnLoad(session?: JavaScriptSession): void {
     const context = this.timeContext;
     for (const lg of this) {
       if (lg instanceof PolyObject) {
         lg.processOnLoad(context, session);
+      }
+    }
+  }
+
+  async processOnLoadAsync(
+    session?: JavaScriptSession,
+    runtimeClient?: JavaRuntimeClientContract | null,
+  ): Promise<void> {
+    const context = this.timeContext;
+    for (const lg of this) {
+      if (lg instanceof PolyObject) {
+        await lg.processOnLoadAsync(context, session, runtimeClient);
       }
     }
   }
@@ -139,12 +184,18 @@ export class Score extends Array<LayerGroup<Layer>> {
         case 'soundObject': {
           const type = node.getAttribute('type');
           if (type === 'blue.soundObject.PolyObject' || type === 'PolyObject' || node.hasElement('soundLayer')) {
-            score.push(PolyObject.loadFromXML(node, objRefMap));
+            const polyObject = PolyObject.loadFromXML(node, objRefMap);
+            polyObject.setTimeBehavior(TimeBehavior.NONE);
+            score.push(polyObject);
           }
           break;
         }
         case 'polyObject':
-          score.push(PolyObject.loadFromXML(node, objRefMap));
+          {
+            const polyObject = PolyObject.loadFromXML(node, objRefMap);
+            polyObject.setTimeBehavior(TimeBehavior.NONE);
+            score.push(polyObject);
+          }
           break;
         case 'audioLayerGroup':
           score.push(AudioLayerGroup.loadFromXML(node));

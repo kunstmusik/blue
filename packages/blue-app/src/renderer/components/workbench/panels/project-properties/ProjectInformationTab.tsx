@@ -1,5 +1,5 @@
 import React from 'react';
-import { FieldRow, InputBase, SectionCard, TextAreaBase } from './ProjectPropertyFields';
+import { FieldRow, InputBase, TextAreaBase } from './ProjectPropertyFields';
 import type { ProjectPropertiesTabProps } from './types';
 
 export default function ProjectInformationTab({
@@ -8,11 +8,8 @@ export default function ProjectInformationTab({
   updateProjectProperties,
 }: ProjectPropertiesTabProps): React.ReactElement {
   return (
-    <div className="space-y-4">
-      <SectionCard
-        title="Project Information"
-        description="Basic metadata for the current project."
-      >
+    <div className="flex h-full flex-col">
+      <div className="space-y-4">
         <FieldRow label="Title">
           <InputBase
             disabled={disabled}
@@ -27,15 +24,19 @@ export default function ProjectInformationTab({
             onChange={(author) => updateProjectProperties({ author })}
           />
         </FieldRow>
-        <FieldRow label="Notes">
-          <TextAreaBase
-            disabled={disabled}
-            value={properties.notes}
-            onChange={(notes) => updateProjectProperties({ notes })}
-            placeholder="Project notes"
-          />
-        </FieldRow>
-      </SectionCard>
+      </div>
+      <div className="mt-4 flex min-h-0 flex-1 flex-col">
+        <span className="mb-2 text-xs font-medium uppercase tracking-[0.18em] text-blue-muted">
+          Notes
+        </span>
+        <TextAreaBase
+          value={properties.notes}
+          placeholder="Project notes"
+          disabled={disabled}
+          className="min-h-0 flex-1 resize-none"
+          onChange={(notes) => updateProjectProperties({ notes })}
+        />
+      </div>
     </div>
   );
 }

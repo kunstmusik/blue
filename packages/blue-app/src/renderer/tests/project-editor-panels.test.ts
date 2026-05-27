@@ -3,10 +3,14 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { CompletionContext } from '@codemirror/autocomplete';
 import { EditorState } from '@codemirror/state';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { ProjectPropertiesSnapshot } from '../../shared/project-editor';
+import type {
+  ClojureProjectSnapshot,
+  ProjectPropertiesSnapshot,
+} from '../../shared/project-editor';
 import GlobalOrchestraPanel from '../components/workbench/panels/GlobalOrchestraPanel';
 import GlobalScorePanel from '../components/workbench/panels/GlobalScorePanel';
 import ProjectPropertiesPanel from '../components/workbench/panels/ProjectPropertiesPanel';
+import ClojureProjectTab from '../components/workbench/panels/project-properties/ClojureProjectTab';
 import { createDynamicCsoundCompletionSource } from '../components/workbench/panels/editors/csound-completions';
 import { createJavaBlueCsoundCompletionSource } from '../components/workbench/panels/editors/csound-java-blue-completions';
 
@@ -16,14 +20,18 @@ interface MockProjectState {
   globalOrc: string;
   globalSco: string;
   projectProperties: ProjectPropertiesSnapshot;
+  clojureProject: ClojureProjectSnapshot;
   updateGlobalOrc: (value: string) => void | Promise<void>;
   updateGlobalSco: (value: string) => void | Promise<void>;
   updateProjectProperties: (
     patch: Partial<ProjectPropertiesSnapshot>,
   ) => void | Promise<void>;
+  updateClojureProject: (
+    clojureProject: ClojureProjectSnapshot,
+  ) => void | Promise<void>;
 }
 
-const { BASE_PROJECT_PROPERTIES, mockProjectState } = vi.hoisted(() => {
+const { BASE_PROJECT_PROPERTIES, BASE_CLOJURE_PROJECT, mockProjectState } = vi.hoisted(() => {
   const BASE_PROJECT_PROPERTIES: ProjectPropertiesSnapshot = {
     title: '',
     author: '',
@@ -61,17 +69,24 @@ const { BASE_PROJECT_PROPERTIES, mockProjectState } = vi.hoisted(() => {
     copyToMediaFileOnImport: true,
   };
 
+  const BASE_CLOJURE_PROJECT: ClojureProjectSnapshot = {
+    libraryEntries: [],
+  };
+
   return {
     BASE_PROJECT_PROPERTIES,
+    BASE_CLOJURE_PROJECT,
     mockProjectState: {
       loaded: false,
       title: '',
       globalOrc: '',
       globalSco: '',
       projectProperties: { ...BASE_PROJECT_PROPERTIES },
+      clojureProject: { ...BASE_CLOJURE_PROJECT },
       updateGlobalOrc: vi.fn(),
       updateGlobalSco: vi.fn(),
       updateProjectProperties: vi.fn(),
+      updateClojureProject: vi.fn(),
     } satisfies MockProjectState,
   };
 });
@@ -82,6 +97,7 @@ interface ProjectEditorPanelFixture {
   globalOrc?: string;
   globalSco?: string;
   projectProperties?: Partial<ProjectPropertiesSnapshot>;
+  clojureProject?: ClojureProjectSnapshot;
 }
 
 function applyProjectFixture(fixture: ProjectEditorPanelFixture = {}): void {
@@ -89,6 +105,7 @@ function applyProjectFixture(fixture: ProjectEditorPanelFixture = {}): void {
     ...BASE_PROJECT_PROPERTIES,
     ...fixture.projectProperties,
   };
+  const clojureProject = fixture.clojureProject ?? BASE_CLOJURE_PROJECT;
 
   if (fixture.title !== undefined) {
     projectProperties.title = fixture.title;
@@ -99,6 +116,9 @@ function applyProjectFixture(fixture: ProjectEditorPanelFixture = {}): void {
   mockProjectState.globalOrc = fixture.globalOrc ?? '';
   mockProjectState.globalSco = fixture.globalSco ?? '';
   mockProjectState.projectProperties = projectProperties;
+  mockProjectState.clojureProject = {
+    libraryEntries: clojureProject.libraryEntries.map((entry) => ({ ...entry })),
+  };
 }
 
 function renderProjectPanelMarkup(
@@ -232,11 +252,37 @@ describe('Project editor panels', () => {
       },
     });
 
-    expect(html).toContain('Project Information');
+    expect(html).toContain('Information');
     expect(html).toContain('Realtime');
     expect(html).toContain('Disk Render');
     expect(html).toContain('Media');
-    expect(html).not.toContain('Project Properties');
+    expect(html).toContain('Clojure');
+    expect(html).toContain('Project Information');
+    expect(html).toContain('Loaded Project');
+  });
+
+  it('renders the clojure project dependency editor with library rows', () => {
+    const html = renderToStaticMarkup(
+      createElement(ClojureProjectTab, {
+        disabled: false,
+        clojureProject: {
+          libraryEntries: [
+            {
+              entryId: 'clj-lib-1',
+              dependencyCoordinates: 'org.clojure/data.json',
+              version: '2.5.1',
+            },
+          ],
+        },
+        updateClojureProject: vi.fn(),
+      }),
+    );
+
+    expect(html).toContain('Project Libraries');
+    expect(html).toContain('Library Coordinates');
+    expect(html).toContain('org.clojure/data.json');
+    expect(html).toContain('2.5.1');
+    expect(html).toContain('Move Up');
   });
 
   it('renders the global score editor when loaded', () => {

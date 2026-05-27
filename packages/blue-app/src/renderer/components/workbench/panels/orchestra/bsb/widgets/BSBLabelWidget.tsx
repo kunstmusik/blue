@@ -2,6 +2,7 @@ import React from 'react';
 import WidgetWrapper from './WidgetWrapper';
 import { getWidgetDisplaySize } from './utils';
 import type { BSBWidgetComponentProps } from './widget-component-props';
+import BsbTextLabel from './BsbTextLabel';
 
 type BSBLabelWidgetProps = BSBWidgetComponentProps;
 
@@ -30,7 +31,7 @@ function BSBLabelWidget({
   return (
     <WidgetWrapper node={node} isSelected={isSelected} editEnabled={editEnabled} onWidgetSelect={onWidgetSelect} autoSize displayWidth={displaySize.width} displayHeight={displaySize.height} resizeMeta={resizeMeta} gridSnapEnabled={gridSnapEnabled} gridSnapWidth={gridSnapWidth} gridSnapHeight={gridSnapHeight} onBsbInterfacePatch={onBsbInterfacePatch} selectedWidgetIds={selectedWidgetIds} getWidgetPosition={getWidgetPosition} onWidgetAction={onWidgetAction}>
       <div
-        className="flex h-full w-full items-center whitespace-nowrap"
+        className="flex h-full w-full items-center"
         style={{
           fontFamily: `'${fontName}', Roboto, sans-serif`,
           fontSize: `${fontSize}px`,
@@ -39,7 +40,7 @@ function BSBLabelWidget({
           color: 'rgb(240,240,255)',
         }}
       >
-        <span className="truncate">{labelText}</span>
+        <BsbTextLabel text={labelText} plainClassName="truncate" htmlClassName="inline-block max-w-full" />
       </div>
     </WidgetWrapper>
   );

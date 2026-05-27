@@ -3,6 +3,7 @@ import type { Extension } from '@codemirror/state';
 import { csound } from '@kunstmusik/codemirror-lang-csound';
 import { javascript } from '@codemirror/lang-javascript';
 import { python } from '@codemirror/lang-python';
+import { clojure } from '@nextjournal/lang-clojure';
 
 import { createDynamicCsoundCompletionSource } from './csound-completions';
 import { createJavaBlueCsoundCompletionSource } from './csound-java-blue-completions';
@@ -18,7 +19,7 @@ export const SELECTED_CSOUND_EDITOR: SelectedEditorMetadata = {
   mode: 'orc',
 };
 
-export type CsoundDocumentMode = 'orc' | 'sco' | 'csd' | 'text' | 'javascript' | 'python';
+export type CsoundDocumentMode = 'orc' | 'sco' | 'csd' | 'text' | 'javascript' | 'python' | 'clojure';
 
 export function getSelectedEditorMetadata(
   mode: CsoundDocumentMode,
@@ -32,11 +33,13 @@ export function getSelectedEditorMetadata(
           ? 'javascript'
           : mode === 'python'
             ? 'python'
-            : mode === 'sco'
-              ? 'csound-sco'
-              : mode === 'csd'
-                ? 'csound-csd'
-                : 'csound-orc',
+            : mode === 'clojure'
+              ? 'clojure'
+              : mode === 'sco'
+                ? 'csound-sco'
+                : mode === 'csd'
+                  ? 'csound-csd'
+                  : 'csound-orc',
     mode,
   };
 }
@@ -51,16 +54,18 @@ export function createCsoundEditorExtensions(
     extensions.push(javascript());
   } else if (mode === 'python') {
     extensions.push(python());
+  } else if (mode === 'clojure') {
+    extensions.push(clojure());
   } else if (mode !== 'text') {
     extensions.push(csound({ mode }));
   }
   const completionSources = [createJavaBlueCsoundCompletionSource(javaBlueCompletionOptions)];
 
-  if (mode !== 'text' && mode !== 'javascript' && mode !== 'python' && dynamicCompletionProviders.length > 0) {
+  if (mode !== 'text' && mode !== 'javascript' && mode !== 'python' && mode !== 'clojure' && dynamicCompletionProviders.length > 0) {
     completionSources.push(createDynamicCsoundCompletionSource(dynamicCompletionProviders));
   }
 
-  if (mode !== 'text' && mode !== 'javascript' && mode !== 'python') {
+  if (mode !== 'text' && mode !== 'javascript' && mode !== 'python' && mode !== 'clojure') {
     extensions.push(
       autocompletion({
         override: completionSources,

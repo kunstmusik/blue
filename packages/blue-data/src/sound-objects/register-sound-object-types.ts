@@ -6,6 +6,7 @@ import { registerSoundObjectType, registerSoundObjectFactory } from './sound-obj
 import { GenericScore } from './generic-score';
 import { PolyObject } from './poly-object';
 import { PythonObject } from './python-object';
+import { ClojureObject } from './clojure-object';
 import { JavaScriptObject } from './javascript-object';
 import { CSDSoundObject } from './csd-sound-object';
 import { Comment } from './comment';
@@ -26,6 +27,7 @@ import { FrozenSoundObject } from './frozen-sound-object';
 registerSoundObjectType('GenericScore', GenericScore.loadFromXML);
 registerSoundObjectType('PolyObject', PolyObject.loadFromXML);
 registerSoundObjectType('PythonObject', PythonObject.loadFromXML);
+registerSoundObjectType('ClojureObject', ClojureObject.loadFromXML);
 registerSoundObjectType('JavaScriptObject', JavaScriptObject.loadFromXML);
 registerSoundObjectType('CSDSoundObject', CSDSoundObject.loadFromXML);
 registerSoundObjectType('Comment', Comment.loadFromXML);
@@ -49,6 +51,7 @@ registerSoundObjectFactory('PolyObject', () => {
   return pObj;
 });
 registerSoundObjectFactory('PythonObject', () => new PythonObject());
+registerSoundObjectFactory('ClojureObject', () => new ClojureObject());
 registerSoundObjectFactory('JavaScriptObject', () => new JavaScriptObject());
 registerSoundObjectFactory('CSDSoundObject', () => new CSDSoundObject());
 registerSoundObjectFactory('Comment', () => new Comment());

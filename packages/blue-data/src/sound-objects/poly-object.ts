@@ -29,6 +29,7 @@ import { GenericScore } from './generic-score';
 import { Comment } from './comment';
 import { CSDSoundObject } from './csd-sound-object';
 import { PythonObject } from './python-object';
+import { ClojureObject } from './clojure-object';
 import { JavaScriptObject } from './javascript-object';
 import { PianoRoll } from './piano-roll';
 import { PatternObject } from './pattern-object';
@@ -43,6 +44,27 @@ import { TrackerObject } from './tracker-object';
 import { NotationObject } from './notation-object';
 import { FrozenSoundObject } from './frozen-sound-object';
 import type { JavaScriptSession } from '../javascript-runtime';
+import type { JavaRuntimeClientContract } from '../java-runtime';
+
+type OnLoadTarget = PolyObject | JavaScriptObject | ClojureObject | PythonObject;
+
+function resolveOnLoadTarget(sObj: SoundObject): OnLoadTarget | null {
+  if (sObj instanceof Instance) {
+    const target = sObj.getSoundObject();
+    return target ? resolveOnLoadTarget(target) : null;
+  }
+
+  if (
+    sObj instanceof PolyObject ||
+    sObj instanceof JavaScriptObject ||
+    sObj instanceof ClojureObject ||
+    sObj instanceof PythonObject
+  ) {
+    return sObj;
+  }
+
+  return null;
+}
 
 /**
  * Normalize a Java class name type to a short name.
@@ -76,6 +98,8 @@ function loadNestedSoundObject(
       return CSDSoundObject.loadFromXML(data);
     case 'PythonObject':
       return PythonObject.loadFromXML(data);
+    case 'ClojureObject':
+      return ClojureObject.loadFromXML(data);
     case 'JavaScriptObject':
       return JavaScriptObject.loadFromXML(data);
     case 'PianoRoll':
@@ -220,6 +244,39 @@ export class PolyObject extends Array<SoundLayer>
     return this.processGeneratedNotes(context, noteList, startTime, endTime);
   }
 
+  async generateForCSDAsync(
+    context: TimeContext,
+    compileData: CompileData,
+    startTime: number,
+    endTime: number,
+    processWithSolo?: boolean,
+  ): Promise<NoteList> {
+    const noteList = new NoteList();
+    const shouldProcessWithSolo = processWithSolo ?? this.hasSoloLayers();
+
+    if (shouldProcessWithSolo) {
+      for (const layer of this) {
+        if (!layer.isSolo() || layer.isMuted()) {
+          continue;
+        }
+
+        const nl = await layer.generateForCSDAsync(context, compileData, startTime, endTime);
+        noteList.merge(nl);
+      }
+    } else {
+      for (const layer of this) {
+        if (layer.isMuted()) {
+          continue;
+        }
+
+        const nl = await layer.generateForCSDAsync(context, compileData, startTime, endTime);
+        noteList.merge(nl);
+      }
+    }
+
+    return this.processGeneratedNotes(context, noteList, startTime, endTime);
+  }
+
   private processGeneratedNotes(
     context: TimeContext,
     noteList: NoteList,
@@ -302,15 +359,47 @@ export class PolyObject extends Array<SoundLayer>
   processOnLoad(context: TimeContext, session?: JavaScriptSession): void {
     for (const layer of this) {
       for (const sObj of layer) {
-        if (sObj instanceof PolyObject) {
-          sObj.processOnLoad(context, session);
-        } else if (sObj instanceof JavaScriptObject) {
-          if (sObj.isOnLoadProcessable()) {
-            sObj.processOnLoad(context, session);
+        const target = resolveOnLoadTarget(sObj);
+        if (target instanceof PolyObject) {
+          target.processOnLoad(context, session);
+        } else if (target instanceof JavaScriptObject) {
+          if (target.isOnLoadProcessable()) {
+            target.processOnLoad(context, session);
           }
-        } else if (sObj instanceof PythonObject) {
-          if (sObj.isOnLoadProcessable()) {
-            sObj.processOnLoad(context);
+        } else if (target instanceof ClojureObject) {
+          if (target.isOnLoadProcessable()) {
+            target.processOnLoad(context);
+          }
+        } else if (target instanceof PythonObject) {
+          if (target.isOnLoadProcessable()) {
+            target.processOnLoad(context);
+          }
+        }
+      }
+    }
+  }
+
+  async processOnLoadAsync(
+    context: TimeContext,
+    session?: JavaScriptSession,
+    runtimeClient?: JavaRuntimeClientContract | null,
+  ): Promise<void> {
+    for (const layer of this) {
+      for (const sObj of layer) {
+        const target = resolveOnLoadTarget(sObj);
+        if (target instanceof PolyObject) {
+          await target.processOnLoadAsync(context, session, runtimeClient);
+        } else if (target instanceof JavaScriptObject) {
+          if (target.isOnLoadProcessable()) {
+            target.processOnLoad(context, session);
+          }
+        } else if (target instanceof ClojureObject) {
+          if (target.isOnLoadProcessable()) {
+            await target.processOnLoadAsync(context, runtimeClient);
+          }
+        } else if (target instanceof PythonObject) {
+          if (target.isOnLoadProcessable()) {
+            target.processOnLoad(context);
           }
         }
       }

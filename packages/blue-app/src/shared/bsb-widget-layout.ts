@@ -1,4 +1,9 @@
 import type { BsbWidgetNodeSnapshot } from './project-editor';
+import {
+  getBsbSwingHtmlMaxFontSizePx,
+  isBsbSwingHtmlText,
+  stripBsbSwingHtmlText,
+} from './bsb-swing-html';
 
 export const BSB_VALUE_PANEL_WIDTH = 50;
 export const BSB_VALUE_PANEL_HEIGHT = 30;
@@ -12,9 +17,26 @@ function getTextFontSize(font: string): number {
 }
 
 export function estimateTextWidth(text: string, fontSize = 12): number {
-  if (!text) return 0;
+  const displayText = isBsbSwingHtmlText(text) ? stripBsbSwingHtmlText(text) : text;
+  if (!displayText) return 0;
   const averageCharWidth = fontSize * 0.58;
-  return Math.max(0, Math.ceil(text.length * averageCharWidth) + 2);
+  return Math.max(0, Math.ceil(displayText.length * averageCharWidth) + 2);
+}
+
+function estimateTextContentSize(text: string, fontSize = 12): { width: number; height: number } {
+  const effectiveFontSize = getBsbSwingHtmlMaxFontSizePx(text, fontSize);
+  const lines = (isBsbSwingHtmlText(text) ? stripBsbSwingHtmlText(text) : text)
+    .split('\n')
+    .map((line) => line.trim());
+
+  const width = lines.reduce((maxWidth, line) => Math.max(maxWidth, estimateTextWidth(line, effectiveFontSize)), 0);
+  const lineCount = Math.max(1, lines.length);
+  const lineHeight = Math.max(16, Math.ceil(effectiveFontSize * 1.25));
+
+  return {
+    width,
+    height: Math.max(lineHeight, lineHeight * lineCount),
+  };
 }
 
 export function getHSliderBankDisplaySize(
@@ -115,7 +137,7 @@ export function getBsbWidgetDisplaySize(node: BsbWidgetNodeSnapshot): { width: n
         ? node.properties['labelFont.size']
         : 12;
       const labelWidth = labelEnabled
-        ? estimateTextWidth(labelText, labelFontSize)
+        ? estimateTextContentSize(labelText, labelFontSize).width
         : 0;
       return {
         width: Math.max(knobWidth, labelWidth),
@@ -141,11 +163,12 @@ export function getBsbWidgetDisplaySize(node: BsbWidgetNodeSnapshot): { width: n
     case 'BSBGroup': {
       const titleEnabled = node.properties.titleEnabled !== false;
       const groupName = typeof node.properties.groupName === 'string' ? node.properties.groupName : '';
-      const labelHeight = titleEnabled && groupName ? 20 : 0;
       const fontSize = typeof node.properties['font.size'] === 'number' ? node.properties['font.size'] : 12;
-      const titleWidth = titleEnabled && groupName
-        ? estimateTextWidth(groupName, fontSize)
-        : 0;
+      const titleMetrics = titleEnabled && groupName
+        ? estimateTextContentSize(groupName, fontSize)
+        : { width: 0, height: 0 };
+      const labelHeight = titleEnabled && groupName ? Math.max(20, Math.ceil(titleMetrics.height)) : 0;
+      const titleWidth = titleEnabled && groupName ? Math.ceil(titleMetrics.width) : 0;
 
       let childrenWidth = 10;
       let childrenHeight = 10;
@@ -165,17 +188,19 @@ export function getBsbWidgetDisplaySize(node: BsbWidgetNodeSnapshot): { width: n
     case 'BSBLabel': {
       const labelText = typeof node.properties.label === 'string' ? node.properties.label : '';
       const fontSize = typeof node.properties['font.size'] === 'number' ? node.properties['font.size'] : 12;
+      const labelMetrics = estimateTextContentSize(labelText, fontSize);
       return {
-        width: Math.max(1, estimateTextWidth(labelText, fontSize) + 1),
-        height: Math.max(16, Math.ceil(fontSize * 1.25)) + 1,
+        width: Math.max(1, Math.ceil(labelMetrics.width) + 1),
+        height: Math.max(16, Math.ceil(labelMetrics.height)) + 1,
       };
     }
     case 'BSBCheckBox': {
       const labelText = typeof node.properties.label === 'string' ? node.properties.label : '';
       const fontSize = 12;
+      const labelMetrics = estimateTextContentSize(labelText, fontSize);
       return {
-        width: Math.max(1, estimateTextWidth(labelText, fontSize) + 20),
-        height: Math.max(20, Math.ceil(fontSize * 1.4)),
+        width: Math.max(1, Math.ceil(labelMetrics.width) + 20),
+        height: Math.max(20, Math.ceil(labelMetrics.height)),
       };
     }
     case 'BSBDropdown':

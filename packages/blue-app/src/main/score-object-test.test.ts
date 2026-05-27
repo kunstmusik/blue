@@ -1,6 +1,7 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import {
   BlueData,
+  ClojureObject,
   GenericScore,
   PolyObject,
   SoundLayer,
@@ -73,5 +74,64 @@ describe('testScoreObject', () => {
 
     expect(result.ok).toBe(true);
     expect(result.output).toContain('i2\t0.0\t4\t880');
+  });
+
+  it('delegates ClojureObject testing through the async Java runtime path', async () => {
+    const data = new BlueData();
+    const root = data.getScore()[0] as PolyObject;
+    const layer = root[0];
+    const clojure = new ClojureObject();
+    clojure.setClojureCode('(def score "i3 0 4 330")');
+    layer.push(clojure);
+
+    const evaluateClojureScoreObject = vi.fn(async () => ({
+      ok: true,
+      result: {
+        scoreText: 'i3 0 4 330',
+        namespace: 'user0',
+      },
+    }));
+
+    const result = await testScoreObject(data, {
+      target: makeTarget('ClojureObject', {
+        rootGroupIndex: 0,
+        containerPath: [],
+        layerIndex: 0,
+        objectIndex: layer.length - 1,
+      }),
+    }, {
+      javaRuntimeClient: {
+        evaluateClojureScoreObject,
+      } as any,
+    });
+
+    expect(result.ok).toBe(true);
+    expect(result.output).toContain('i3');
+    expect(evaluateClojureScoreObject).toHaveBeenCalledWith({
+      code: '(def score "i3 0 4 330")',
+      blueDuration: 4,
+    });
+  });
+
+  it('returns a friendly error when a ClojureObject is tested without a Java runtime', async () => {
+    const data = new BlueData();
+    const root = data.getScore()[0] as PolyObject;
+    const layer = root[0];
+    const clojure = new ClojureObject();
+    layer.push(clojure);
+
+    const result = await testScoreObject(data, {
+      target: makeTarget('ClojureObject', {
+        rootGroupIndex: 0,
+        containerPath: [],
+        layerIndex: 0,
+        objectIndex: layer.length - 1,
+      }),
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.error).toBe(
+      'Java runtime is unavailable. Install Java 17 or newer to test Clojure objects.',
+    );
   });
 });

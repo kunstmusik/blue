@@ -1,6 +1,8 @@
 import React, { useEffect, useRef, useCallback } from 'react';
 import { basicSetup, EditorView } from 'codemirror';
 import { EditorState, type Extension } from '@codemirror/state';
+import { syntaxHighlighting, HighlightStyle, type TagStyle } from '@codemirror/language';
+import { tags as t } from '@lezer/highlight';
 import { placeholder as editorPlaceholder } from '@codemirror/view';
 
 import CsoundEditorContextMenu from './CsoundEditorContextMenu';
@@ -74,6 +76,40 @@ const blueCodeMirrorTheme = EditorView.theme(
   { dark: true },
 );
 
+const blueSyntaxHighlight = syntaxHighlighting(HighlightStyle.define([
+  { tag: t.keyword, color: '#c792ea' },
+  { tag: t.name, color: '#82aaff' },
+  { tag: t.deleted, color: '#82aaff' },
+  { tag: t.character, color: '#82aaff' },
+  { tag: t.propertyName, color: '#d6deeb' },
+  { tag: t.variableName, color: '#d6deeb' },
+  { tag: t.function(t.variableName), color: '#82aaff' },
+  { tag: t.function(t.propertyName), color: '#82aaff' },
+  { tag: t.literal, color: '#f78c6c' },
+  { tag: t.inserted, color: '#f78c6c' },
+  { tag: t.string, color: '#c3e88d' },
+  { tag: t.special(t.string), color: '#c3e88d' },
+  { tag: t.number, color: '#f78c6c' },
+  { tag: t.bool, color: '#f78c6c' },
+  { tag: t.null, color: '#f78c6c' },
+  { tag: t.operator, color: '#89ddff' },
+  { tag: t.paren, color: '#89ddff' },
+  { tag: t.angleBracket, color: '#89ddff' },
+  { tag: t.bracket, color: '#89ddff' },
+  { tag: t.regexp, color: '#89ddff' },
+  { tag: t.escape, color: '#89ddff' },
+  { tag: t.comment, color: '#637777', fontStyle: 'italic' },
+  { tag: t.meta, color: '#ffcb6b' },
+  { tag: t.tagName, color: '#f07178' },
+  { tag: t.attributeName, color: '#c792ea' },
+  { tag: t.attributeValue, color: '#c3e88d' },
+  { tag: t.typeName, color: '#ffcb6b' },
+  { tag: t.className, color: '#ffcb6b' },
+  { tag: t.definition(t.variableName), color: '#82aaff' },
+  { tag: t.separator, color: '#89ddff' },
+  { tag: t.special(t.variableName), color: '#ffcb6b' },
+]));
+
 export default function SelectedCodeEditor({
   value,
   placeholder,
@@ -126,6 +162,7 @@ export default function SelectedCodeEditor({
     const extensions: Extension[] = [
       basicSetup,
       blueCodeMirrorTheme,
+      blueSyntaxHighlight,
       EditorView.lineWrapping,
       evaluationFlashPlugin,
       editorPlaceholder(placeholder ?? ''),

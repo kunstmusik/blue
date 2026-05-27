@@ -1,26 +1,6 @@
 import React from 'react';
 import type { ReactNode } from 'react';
 
-function SectionCard({
-  title,
-  description,
-  children,
-}: {
-  title: string;
-  description?: string;
-  children: ReactNode;
-}): React.ReactElement {
-  return (
-    <section className="rounded-lg border border-blue-border bg-blue-surface/70 p-4">
-      <div className="mb-4">
-        <h3 className="text-sm font-semibold text-gray-100">{title}</h3>
-        {description ? <p className="mt-1 text-xs text-blue-muted">{description}</p> : null}
-      </div>
-      <div className="space-y-3">{children}</div>
-    </section>
-  );
-}
-
 function FieldRow({
   label,
   children,
@@ -29,8 +9,10 @@ function FieldRow({
   children: ReactNode;
 }): React.ReactElement {
   return (
-    <label className="grid grid-cols-[180px_minmax(0,1fr)] items-center gap-4">
-      <span className="text-sm text-blue-muted">{label}</span>
+    <label className="grid gap-2 md:grid-cols-[200px_minmax(0,1fr)] md:items-start md:gap-5">
+      <span className="pt-2 text-xs font-medium uppercase tracking-[0.18em] text-blue-muted">
+        {label}
+      </span>
       {children}
     </label>
   );
@@ -42,17 +24,24 @@ function InputBase({
   onChange,
   placeholder,
   type = 'text',
+  className,
 }: {
   value: string;
   disabled: boolean;
   onChange: (value: string) => void | Promise<void>;
   placeholder?: string;
   type?: string;
+  className?: string;
 }): React.ReactElement {
   return (
     <input
       type={type}
-      className="w-full rounded-md border border-blue-border bg-[#0d1524] px-3 py-2 text-sm text-gray-100 outline-none transition-colors placeholder:text-blue-muted focus:border-blue-accent disabled:cursor-not-allowed disabled:opacity-60"
+      className={[
+        'w-full rounded-lg border border-blue-border bg-[#0d1524] px-3 py-2 text-sm text-gray-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] outline-none transition-colors placeholder:text-blue-muted focus:border-blue-accent disabled:cursor-not-allowed disabled:opacity-60',
+        className,
+      ]
+        .filter(Boolean)
+        .join(' ')}
       value={value}
       placeholder={placeholder}
       disabled={disabled}
@@ -66,15 +55,22 @@ function TextAreaBase({
   disabled,
   onChange,
   placeholder,
+  className,
 }: {
   value: string;
   disabled: boolean;
   onChange: (value: string) => void | Promise<void>;
   placeholder?: string;
+  className?: string;
 }): React.ReactElement {
   return (
     <textarea
-      className="min-h-24 w-full rounded-md border border-blue-border bg-[#0d1524] px-3 py-2 text-sm text-gray-100 outline-none transition-colors placeholder:text-blue-muted focus:border-blue-accent disabled:cursor-not-allowed disabled:opacity-60"
+      className={[
+        'min-h-28 w-full rounded-lg border border-blue-border bg-[#0d1524] px-3 py-2 text-sm text-gray-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] outline-none transition-colors placeholder:text-blue-muted focus:border-blue-accent disabled:cursor-not-allowed disabled:opacity-60',
+        className,
+      ]
+        .filter(Boolean)
+        .join(' ')}
       value={value}
       placeholder={placeholder}
       disabled={disabled}
@@ -95,7 +91,7 @@ function CheckboxBase({
   return (
     <input
       type="checkbox"
-      className="h-4 w-4 rounded border-blue-border bg-[#0d1524] text-blue-accent focus:ring-blue-accent disabled:cursor-not-allowed disabled:opacity-60"
+      className="mt-2 h-4 w-4 rounded border-blue-border bg-[#0d1524] text-blue-accent focus:ring-blue-accent disabled:cursor-not-allowed disabled:opacity-60"
       checked={checked}
       disabled={disabled}
       onChange={(event) => onChange(event.target.checked)}
@@ -104,7 +100,6 @@ function CheckboxBase({
 }
 
 export {
-  SectionCard,
   FieldRow,
   InputBase,
   TextAreaBase,

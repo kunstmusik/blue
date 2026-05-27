@@ -6,6 +6,7 @@ import { Element } from '../../serialization/xml-reader';
 import { BSBWidget } from './bsb-widget';
 import { BSBCompilationUnit } from './bsb-compilation-unit';
 import { loadFontFromXML, type BSBFont } from './bsb-knob';
+import { parseLegacySwingHtmlFont, stripLegacySwingHtml } from './legacy-swing-html';
 
 export class BSBLabel extends BSBWidget {
   label = 'label';
@@ -23,8 +24,18 @@ export class BSBLabel extends BSBWidget {
 
   loadFromXML(data: Element): void {
     this.loadFromXMLCommon(data);
-    const text = data.getTextString('label');
-    this.label = text !== null ? text : '';
+    const versionAttr = data.getAttribute('version');
+    const parsedVersion = versionAttr ? Number.parseInt(versionAttr, 10) : 1;
+    const version = Number.isFinite(parsedVersion) ? parsedVersion : 1;
+    const text = data.getTextString('label') ?? '';
+
+    if (version < 2) {
+      this.font = parseLegacySwingHtmlFont(text);
+      this.label = stripLegacySwingHtml(text);
+      return;
+    }
+
+    this.label = text;
     const fontElem = data.getElement('font');
     if (fontElem) this.font = loadFontFromXML(fontElem);
   }

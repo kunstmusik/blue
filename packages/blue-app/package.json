@@ -8,7 +8,7 @@
     "build:main": "tsc -p tsconfig.main.json",
     "build:preload": "tsc -p tsconfig.preload.json",
     "build:renderer": "vite build",
-    "build": "pnpm --filter @blue/data build && pnpm build:main && pnpm build:preload && pnpm build:renderer",
+    "build": "pnpm --filter @blue/java-runtime build && pnpm --filter @blue/data build && pnpm build:main && pnpm build:preload && pnpm build:renderer",
     "dev": "APP_ENV=dev vite",
     "start": "electron .",
     "test": "vitest run --config vitest.config.ts"
@@ -16,13 +16,17 @@
   "dependencies": {
     "@blue/data": "workspace:*",
     "@blue/engine-client": "workspace:*",
+    "@blue/java-runtime": "workspace:*",
     "@codemirror/autocomplete": "^6.20.1",
     "@codemirror/lang-javascript": "^6.2.5",
     "@codemirror/lang-python": "^6.2.1",
+    "@codemirror/language": "^6.12.3",
     "@codemirror/state": "^6.6.0",
     "@codemirror/view": "^6.41.1",
     "@fontsource/roboto": "^5.2.10",
     "@kunstmusik/codemirror-lang-csound": "^1.0.2",
+    "@lezer/highlight": "^1.2.3",
+    "@nextjournal/lang-clojure": "^1.0.0",
     "@radix-ui/react-context-menu": "^2.2.16",
     "@radix-ui/react-dropdown-menu": "^2.1.16",
     "@radix-ui/react-tooltip": "^1.2.8",
@@ -36,6 +40,7 @@
     "react-dom": "^19.2.4",
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.4.0",
+    "zeromq": "^6.1.0",
     "zustand": "^5.0.10"
   },
   "devDependencies": {

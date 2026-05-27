@@ -28,4 +28,33 @@ describe('saveGeneratedCsdToDisk', () => {
     });
     expect(filePath).toBe('/tmp/project.csd');
   });
+
+  it('prefers toDiskCSDAsync when a runtime client is available', async () => {
+    const toDiskCSD = vi.fn(() => 'sync-csd');
+    const toDiskCSDAsync = vi.fn(async () => 'async-csd');
+    const send = vi.fn();
+    const showSaveDialog = vi.fn(async () => ({
+      canceled: false,
+      filePath: '/tmp/async-project.csd',
+    }));
+    const writeFile = vi.fn(async () => undefined);
+    const session = { kind: 'js-session' } as any;
+    const runtimeClient = { kind: 'java-runtime' } as any;
+
+    const filePath = await saveGeneratedCsdToDisk({
+      currentData: { toDiskCSD, toDiskCSDAsync },
+      currentFilePath: '/Users/stevenyi/work/blue-electron/project.blue',
+      mainWindow: { webContents: { send } } as any,
+      dialogApi: { showSaveDialog } as any,
+      writeFile: writeFile as any,
+      session,
+      runtimeClient,
+    });
+
+    expect(toDiskCSDAsync).toHaveBeenCalledTimes(1);
+    expect(toDiskCSDAsync).toHaveBeenCalledWith(session, runtimeClient);
+    expect(toDiskCSD).not.toHaveBeenCalled();
+    expect(writeFile).toHaveBeenCalledWith('/tmp/async-project.csd', 'async-csd', 'utf-8');
+    expect(filePath).toBe('/tmp/async-project.csd');
+  });
 });

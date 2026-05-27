@@ -1,7 +1,8 @@
 import React from 'react';
 import type { BsbWidgetNodeSnapshot } from '../../../../../../../shared/project-editor';
 import WidgetWrapper from './WidgetWrapper';
-import { getWidgetDisplaySize } from './utils';
+import BsbTextLabel from './BsbTextLabel';
+import { getFontString, getWidgetDisplaySize, measureTextContent } from './utils';
 import type { BSBWidgetPatchComponentProps } from './widget-component-props';
 
 interface BSBGroupWidgetProps extends BSBWidgetPatchComponentProps {
@@ -33,6 +34,13 @@ export default function BSBGroupWidget({
 
   const fontName = typeof node.properties['font.name'] === 'string' ? node.properties['font.name'] : 'Roboto';
   const fontSize = typeof node.properties['font.size'] === 'number' ? node.properties['font.size'] : 12;
+  const fontStyle = typeof node.properties['font.style'] === 'number' ? node.properties['font.style'] : 0;
+  const fontWeight = (fontStyle & 1) !== 0 ? 'bold' : 'normal';
+  const fontItalic = (fontStyle & 2) !== 0 ? 'italic' : 'normal';
+  const titleMetrics = titleEnabled && groupName
+    ? measureTextContent(groupName, getFontString(fontName, fontSize, fontStyle))
+    : { width: 0, height: 0 };
+  const titleHeight = titleEnabled && groupName ? Math.max(20, Math.ceil(titleMetrics.height)) : 0;
 
   const displaySize = getWidgetDisplaySize(node);
 
@@ -60,17 +68,18 @@ export default function BSBGroupWidget({
       >
         {titleEnabled && groupName && (
           <div
-            className="flex w-full items-center justify-center truncate shrink-0"
+            className="flex w-full items-center justify-center shrink-0 px-1"
             style={{
               backgroundColor: borderColor,
               color: labelTextColor,
               fontFamily: `'${fontName}', Roboto, sans-serif`,
               fontSize,
-              height: 20,
-              lineHeight: '20px',
+              fontWeight,
+              fontStyle: fontItalic,
+              minHeight: titleHeight,
             }}
           >
-            {groupName}
+            <BsbTextLabel text={groupName} plainClassName="block truncate text-center" htmlClassName="inline-block max-w-full text-center" />
           </div>
         )}
         <div

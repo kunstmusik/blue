@@ -175,6 +175,21 @@ describe('BSB Widget XML Round-Trip', () => {
       expect(w.dropdownItems[0].name).toBe('Sine');
       expect(w.dropdownItems[1].value).toBe('1');
     });
+
+    it('migrates legacy Swing HTML dropdown labels into plain text plus fontSize', () => {
+      const w = parseAndLoad(BSBDropdown, `
+        <objectName>waveform</objectName><x>0</x><y>0</y>
+        <selectedIndex>0</selectedIndex>
+        <bsbDropdownItemList>
+          <bsbDropdownItem uniqueId="abc"><name>&lt;html&gt;&lt;font size=&quot;+1&quot;&gt;Mode A&lt;/font&gt;&lt;/html&gt;</name><value>0</value></bsbDropdownItem>
+          <bsbDropdownItem uniqueId="def"><name>Mode B</name><value>1</value></bsbDropdownItem>
+        </bsbDropdownItemList>
+      `);
+
+      expect(w.fontSize).toBe(18);
+      expect(w.dropdownItems[0].name).toBe('Mode A');
+      expect(w.dropdownItems[1].name).toBe('Mode B');
+    });
   });
 
   describe('BSBValue', () => {
@@ -223,16 +238,29 @@ describe('BSB Widget XML Round-Trip', () => {
 
   describe('BSBLabel', () => {
     it('reads "label" element (not "labelText")', () => {
-      const w = parseAndLoad(BSBLabel, `
-        <objectName></objectName><x>10</x><y>20</y>
-        <comment>a label</comment>
-        <label>Hello World</label>
-        <font><name>Monospace</name><size>10</size><style>0</style></font>
-      `);
+      const w = new BSBLabel();
+      w.loadFromXML(Element.parse(`
+        <bsbObject type="placeholder" version="2">
+          <objectName></objectName><x>10</x><y>20</y>
+          <comment>a label</comment>
+          <label>Hello World</label>
+          <font><name>Monospace</name><size>10</size><style>0</style></font>
+        </bsbObject>
+      `));
       expect(w.label).toBe('Hello World');
       expect(w.font.name).toBe('Monospace');
       expect(w.comment).toBe('a label');
       expect((w as any).labelText).toBeUndefined();
+    });
+
+    it('migrates legacy Swing HTML labels into plain text and bold Roboto font metadata', () => {
+      const w = parseAndLoad(BSBLabel, `
+        <objectName></objectName><x>10</x><y>20</y>
+        <label>&lt;html&gt;&lt;font size=&quot;+1&quot;&gt;Amp Env&lt;/font&gt;&lt;/html&gt;</label>
+      `);
+
+      expect(w.label).toBe('Amp Env');
+      expect(w.font).toEqual({ name: 'Roboto', size: 18, style: 1 });
     });
   });
 

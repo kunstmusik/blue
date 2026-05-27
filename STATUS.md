@@ -1,46 +1,46 @@
 # Project Status — blue-electron
 
-**Date**: 2026-05-26
-**Branch**: `048-note-processor-parity`
+**Date**: 2026-05-27
+**Branch**: `049-blue-java-runtime`
 **Note**: Historical spec sections below preserve their closeout-time branch and feature-context notes; only the topmost spec package reflects the current active handoff state.
 
-## Current Focus: Spec 048 Closed
+## Current Focus: Spec 049 Implemented
 
-**Branch**: `048-note-processor-parity`
+**Branch**: `049-blue-java-runtime`
 
 ### Summary
-Spec 048 is closed. The app now has Java Blue note-processor parity for the 16 in-scope non-Python processor types, editable chain workflows for score objects plus sound-layer, layer-group, and root-score scopes, named-chain import/save/delete flows, and canonical scoped patch handling through the shared project document path.
+Spec 049 is implemented and validated. The app now builds and packages an optional Java helper, starts a per-project Clojure runtime with project-directory CWD semantics, preserves first-class `ClojureObject` and Clojure dependency metadata in `@blue/data`, and routes Clojure on-load, test, playback, and CSD generation through async Java-aware app paths.
 
-PythonProcessor/Jython execution remains intentionally deferred. Existing PythonProcessor XML and other unsupported legacy processor payloads are preserved and labeled as deferred or unsupported instead of being exposed as executable processors.
+The closeout scope covers the shipped Clojure bridge end to end, including the dedicated Clojure editor's Reinitialize control. The original task plan still retains a small follow-up set for extra hardening coverage and future Jython abstraction work; those items stay documented in `specs/049-blue-java-runtime/tasks.md` instead of being silently dropped.
 
 ### Handoff State
-- `.specify/feature.json` points to `specs/048-note-processor-parity`.
-- Current branch is `048-note-processor-parity`.
-- `spec.md` status is `Closed`.
-- `quickstart.md` and `status.md` are updated for closeout.
-- `tasks.md` is fully checked off.
-- Manual testing was performed by the user before closeout on 2026-05-26, with no remaining functional blockers reported.
+- `.specify/feature.json` points to `specs/049-blue-java-runtime`.
+- Current branch is `049-blue-java-runtime`.
+- `spec.md` status is `Implemented`.
+- `quickstart.md`, `STATUS.md`, and `tasks.md` are updated to reflect shipped scope plus remaining follow-up hardening items.
+- Automated package validation is complete.
+- A manual saved-project relative-file parity smoke test is still worth running on a local Java install if the user wants one more end-to-end confirmation.
 
 ### Delivered Scope
-- Centralized addable metadata for Add, PchAdd, Multiply, RandomAdd, RandomMultiply, SubList, Rotate, Retrograde, Inversion, PchInversion, Equals, Switch, TimeWarp, LineAdd, LineMultiply, and Tuning.
-- Java-compatible processing, XML serialization, invalid-parameter, and seeded random behavior coverage for all in-scope processors.
-- Preservation-only handling for PythonProcessor plus legacy/unknown processor XML, with PythonProcessor and Java helper `Code` excluded from the addable processor catalog.
-- Processor snapshot/reification helpers that let renderer edits become canonical `NoteProcessorChain` instances without losing unsupported entries.
-- ScoreObject Properties editing and shared chain dialog workflows for add, remove, reorder, clear, cut/copy/paste, named-chain import, named-chain save, and named-chain delete.
-- Score panel affordances and non-empty indicators for sound-layer, layer-group, and root-score chains.
-- Object, sound-layer, layer-group, and root-score chain application in the expected generation order, with root-score processing after layer groups merge.
-- Manual fixture generation via `packages/blue-data/scripts/generate-note-processor-fixture.ts` and `fixtures/noteprocessor_test.blue`.
-- Canonical score-object testing support so score-object editors can preview generated score through the same `generateForCSD` path used by the app.
+- Maven-owned `packages/blue-java` helper package builds a shaded `blue-java.jar` and copies it into `packages/blue-app/assets/java/blue-java.jar`.
+- Electron main resolves the helper in development builds, probes user-installed Java 17+, launches one helper per active project, and tears it down on project replacement or app quit.
+- The helper protocol now covers health, session init, Clojure eval, score-object eval, reinitialize, and shutdown over JeroMQ/ZeroMQ TCP loopback with auth tokens and structured error envelopes.
+- `@blue/data` now has first-class `ClojureObject` and `ClojureProjectData` support plus async Java-runtime hooks for on-load processing and CSD generation.
+- Playback, generated CSD, disk export, and score-object test flows use async Java-aware rendering when the active project needs the Java runtime.
+- The score-object editor surface now includes a dedicated `ClojureObjectEditor` with Process on Load, Test, and Reinitialize controls plus runtime error messaging.
+- Helper/package documentation now includes explicit future Jython extension-point guidance while leaving Jython execution deferred.
 
 ### Validation
-- `pnpm --filter @blue/data test` - pass (`110` files, `1135` tests)
-- `pnpm --filter @blue/app test` - pass (`118` files, `1288` passed, `2` skipped)
+- `pnpm --filter @blue/java-runtime test` - pass
+- `pnpm --filter @blue/java-runtime build` - pass
+- `pnpm --filter @blue/data test -- --maxWorkers=1` - pass (`113` files, `1150` tests)
+- `pnpm --filter @blue/app test` - pass (`124` files, `1307` passed, `2` skipped)
 - `pnpm --filter @blue/app build` - pass
-- `./.specify/scripts/bash/check-prerequisites.sh --json --include-tasks --require-tasks` - pass
+- `pnpm --filter @blue/app exec vitest run src/renderer/tests/clojure-object-editor.test.tsx --browser.enabled=false` - pass
 - `git diff --check` - pass
 
 ### Next Recommended Step
-Spec 048 can be treated as closed. The next useful step is selecting the next score, editor, live, or render parity slice.
+Spec 049 can be treated as implemented and validated for the Clojure bridge. The next useful step is either closing the remaining Java-runtime hardening items or starting the next Java-runtime consumer slice, such as Blue Live parity.
 
 ## Previous Focus: Spec 047 Closed
 

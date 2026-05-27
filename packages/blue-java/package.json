@@ -1,0 +1,11 @@
+{
+  "name": "@blue/java-runtime",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Java helper runtime for Blue Electron",
+  "scripts": {
+    "build": "mvn -q -DskipTests package",
+    "test": "mvn -q test",
+    "lint": "mvn -q -DskipTests validate"
+  }
+}

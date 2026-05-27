@@ -1,0 +1,42 @@
+import * as fs from 'fs';
+import * as path from 'path';
+
+export interface JavaRuntimePathContext {
+  isPackaged: boolean;
+  mainModuleDir: string;
+  resourcesPath?: string;
+  existsSync?: (filePath: string) => boolean;
+}
+
+export interface JavaRuntimeArtifactResolution {
+  artifactPath: string;
+  candidatePaths: string[];
+  exists: boolean;
+}
+
+export function getJavaRuntimeArtifactCandidates(context: JavaRuntimePathContext): string[] {
+  if (!context.isPackaged) {
+    return [path.resolve(context.mainModuleDir, '../../assets/java/blue-java.jar')];
+  }
+
+  const resourcesPath = context.resourcesPath ?? '';
+  return [
+    path.join(resourcesPath, 'assets', 'java', 'blue-java.jar'),
+    path.join(resourcesPath, 'app.asar.unpacked', 'assets', 'java', 'blue-java.jar'),
+    path.join(resourcesPath, 'app.asar.unpacked', 'packages', 'blue-app', 'assets', 'java', 'blue-java.jar'),
+  ];
+}
+
+export function resolveJavaRuntimeArtifactPath(
+  context: JavaRuntimePathContext,
+): JavaRuntimeArtifactResolution {
+  const existsSync = context.existsSync ?? fs.existsSync;
+  const candidatePaths = getJavaRuntimeArtifactCandidates(context);
+  const artifactPath = candidatePaths.find((candidate) => existsSync(candidate)) ?? candidatePaths[0];
+
+  return {
+    artifactPath,
+    candidatePaths,
+    exists: existsSync(artifactPath),
+  };
+}

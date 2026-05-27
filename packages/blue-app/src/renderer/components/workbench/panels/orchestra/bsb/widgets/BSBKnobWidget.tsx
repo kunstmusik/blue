@@ -1,7 +1,8 @@
 import React, { useCallback, useRef } from 'react';
 import WidgetWrapper from './WidgetWrapper';
 import { formatValue } from './ValuePanel';
-import { getWidgetDisplaySize } from './utils';
+import BsbTextLabel from './BsbTextLabel';
+import { getFontString, getWidgetDisplaySize, measureTextContent } from './utils';
 import type { BSBWidgetPatchComponentProps } from './widget-component-props';
 
 type BSBKnobWidgetProps = BSBWidgetPatchComponentProps;
@@ -35,6 +36,10 @@ function BSBKnobWidget({
 
   const labelFontName = typeof node.properties['labelFont.name'] === 'string' ? node.properties['labelFont.name'] : 'Roboto';
   const labelFontSize = typeof node.properties['labelFont.size'] === 'number' ? node.properties['labelFont.size'] : 12;
+  const labelFontStyle = typeof node.properties['labelFont.style'] === 'number' ? node.properties['labelFont.style'] : 0;
+  const labelMetrics = showLabel
+    ? measureTextContent(labelText, getFontString(labelFontName, labelFontSize, labelFontStyle))
+    : { width: 0, height: 0 };
 
   const range = maximum - minimum || 1;
   const knobVal = Math.max(0, Math.min(1, (value - minimum) / range));
@@ -43,7 +48,7 @@ function BSBKnobWidget({
   const displayVal = strVal.length > 7 ? strVal.substring(0, 7) : strVal;
 
   const displaySize = getWidgetDisplaySize(node);
-  const labelH = showLabel ? Math.max(16, Math.ceil(labelFontSize * 1.25)) : 0;
+  const labelH = showLabel ? Math.max(16, Math.ceil(labelMetrics.height)) : 0;
   const valueH = showValue ? VALUE_HEIGHT : 0;
   const knobSize = typeof node.properties.knobWidth === 'number'
     ? node.properties.knobWidth
@@ -116,7 +121,7 @@ function BSBKnobWidget({
             className="flex w-full items-center justify-center overflow-hidden"
             style={{ height: labelH, fontFamily: `'${labelFontName}', Roboto, sans-serif`, fontSize: labelFontSize, color: 'rgb(240,240,255)' }}
           >
-            <span className="truncate">{labelText}</span>
+            <BsbTextLabel text={labelText} plainClassName="truncate" htmlClassName="inline-block max-w-full text-center" />
           </div>
         )}
         <KnobSVG ref={svgRef} size={knobSize} value={knobVal} interactive={!editEnabled} onMouseDown={handleMouseDown} />

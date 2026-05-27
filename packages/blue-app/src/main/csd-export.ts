@@ -1,15 +1,16 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { dialog, type BrowserWindow } from 'electron';
-import type { BlueData, JavaScriptSession } from '@blue/data';
+import type { BlueData, JavaRuntimeClientContract, JavaScriptSession } from '@blue/data';
 
 export interface SaveGeneratedCsdToDiskRequest {
-  currentData: Pick<BlueData, 'toDiskCSD'>;
+  currentData: Pick<BlueData, 'toDiskCSD'> & Partial<Pick<BlueData, 'toDiskCSDAsync'>>;
   currentFilePath?: string | null;
   mainWindow: Pick<BrowserWindow, 'webContents'>;
   dialogApi?: Pick<typeof dialog, 'showSaveDialog'>;
   writeFile?: typeof fs.writeFile;
   session?: JavaScriptSession;
+  runtimeClient?: JavaRuntimeClientContract | null;
 }
 
 export async function saveGeneratedCsdToDisk(
@@ -43,7 +44,9 @@ export async function saveGeneratedCsdToDisk(
     filePath += '.csd';
   }
 
-  const csdText = request.currentData.toDiskCSD(request.session);
+  const csdText = request.runtimeClient && request.currentData.toDiskCSDAsync
+    ? await request.currentData.toDiskCSDAsync(request.session, request.runtimeClient)
+    : request.currentData.toDiskCSD(request.session);
   await writeFile(filePath, csdText, 'utf-8');
   request.mainWindow.webContents.send('save-complete', { filePath });
 

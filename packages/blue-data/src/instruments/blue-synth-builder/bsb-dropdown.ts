@@ -6,6 +6,7 @@ import { Element } from '../../serialization/xml-reader';
 import { BSBWidget } from './bsb-widget';
 import { BSBCompilationUnit } from './bsb-compilation-unit';
 import { Parameter } from '../../automation/parameter';
+import { parseLegacySwingHtmlFont, stripLegacySwingHtml } from './legacy-swing-html';
 
 export interface BSBDropdownItem {
   name: string;
@@ -85,6 +86,9 @@ export class BSBDropdown extends BSBWidget {
 
   loadFromXML(data: Element): void {
     this.loadFromXMLCommon(data);
+    const versionAttr = data.getAttribute('version');
+    const parsedVersion = versionAttr ? Number.parseInt(versionAttr, 10) : 1;
+    const version = Number.isFinite(parsedVersion) ? parsedVersion : 1;
     const idx = data.getTextString('selectedIndex');
     if (idx) {
       const parsed = parseInt(idx, 10);
@@ -111,6 +115,20 @@ export class BSBDropdown extends BSBWidget {
           value: itemElem.getTextString('value') ?? 'value',
           uniqueId: itemElem.getAttribute('uniqueId') ?? '',
         });
+      }
+    }
+
+    if (version < 2) {
+      let legacyFontSize = 12;
+      for (const item of this.dropdownItems) {
+        const font = parseLegacySwingHtmlFont(item.name);
+        if (font.size !== 12) {
+          legacyFontSize = font.size;
+        }
+        item.name = stripLegacySwingHtml(item.name);
+      }
+      if (legacyFontSize !== 12) {
+        this.setFontSize(legacyFontSize);
       }
     }
   }

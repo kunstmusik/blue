@@ -2,6 +2,7 @@ import React from 'react';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import { ChevronDown } from 'lucide-react';
 import { getWidgetDisplaySize } from './utils';
+import BsbTextLabel from './BsbTextLabel';
 import WidgetWrapper from './WidgetWrapper';
 import type { BSBWidgetComponentProps } from './widget-component-props';
 
@@ -53,7 +54,7 @@ function BSBDropdownWidget({
             className="flex h-full w-full items-center justify-between gap-1 rounded border border-blue-border bg-[#111a2d] px-2 py-1 text-xs text-gray-100 hover:bg-blue-accent/20 outline-none disabled:cursor-default disabled:hover:bg-[#111a2d]"
             style={{ fontFamily: 'Roboto, sans-serif', fontSize, pointerEvents: editEnabled ? 'none' : undefined }}
           >
-            <span className="truncate">{displayText}</span>
+            <BsbTextLabel text={displayText} plainClassName="truncate" htmlClassName="inline-block max-w-full" />
             <ChevronDown size={12} className="shrink-0" />
           </button>
         </DropdownMenu.Trigger>
@@ -66,7 +67,7 @@ function BSBDropdownWidget({
                 onClick={() => handleItemSelect(i)}
                 style={{ fontFamily: 'Roboto, sans-serif', fontSize }}
               >
-                {item.name || item.value || `Item ${i}`}
+                <BsbTextLabel text={item.name || item.value || `Item ${i}`} plainClassName="block" htmlClassName="inline-block max-w-full" />
               </DropdownMenu.Item>
             ))}
           </DropdownMenu.Content>

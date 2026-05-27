@@ -5,6 +5,20 @@ export type { DeepCopyable } from './deep-copyable';
 export { BLUE_VERSION } from './blue-constants';
 export { CompileData } from './compile-data';
 export {
+	getJavaRuntimeClient,
+	setJavaRuntimeClient,
+} from './java-runtime';
+export type {
+	ClojureEvalRequest,
+	ClojureScoreObjectEvalRequest,
+	JavaRuntimeClientContract,
+	JavaRuntimeError,
+	JavaRuntimeHealthResult,
+	JavaRuntimeResponse,
+	JavaRuntimeSessionInitRequest,
+	JavaRuntimeStatus,
+} from './java-runtime';
+export {
 	disposeJavaScriptCompileState,
 	initializeJavaScriptRuntime,
 	isJavaScriptRuntimeInitialized,
@@ -120,6 +134,7 @@ export { SoundLayer } from './sound-objects/sound-layer';
 export { PolyObjectLayerGroupProvider } from './sound-objects/poly-object-layer-group-provider';
 export { SoundObjectLibrary } from './sound-objects/sound-object-library';
 export { PythonObject } from './sound-objects/python-object';
+export { ClojureObject } from './sound-objects/clojure-object';
 export { JavaScriptObject } from './sound-objects/javascript-object';
 export { CSDSoundObject } from './sound-objects/csd-sound-object';
 export { Comment } from './sound-objects/comment';
@@ -224,6 +239,14 @@ export { convertToModern, convertToClassic, parseUDOText } from './opcodes/udo-u
 // ─── Serialization ───
 export { Element, Elements } from './serialization/xml-reader';
 export { ObjRefSaveMap, ObjRefLoadMap } from './serialization/obj-ref-map';
+export {
+	CLOJURE_PROJECT_DATA_BDO_TYPE,
+	ClojureLibraryEntry,
+	ClojureProjectData,
+	findClojureProjectDataElement,
+	loadClojureProjectDataFromPluginData,
+	replaceClojureProjectDataInPluginData,
+} from './plugins/clojure-project-data';
 
 // ─── Migration ───
 export { ProjectVersion } from './migration/project-version';

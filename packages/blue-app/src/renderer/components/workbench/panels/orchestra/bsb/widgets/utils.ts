@@ -9,23 +9,109 @@ import {
   getHSliderBankDisplaySize,
   getVSliderBankDisplaySize,
 } from '../../../../../../../shared/bsb-widget-layout';
+import {
+  getBsbSwingHtmlMaxFontSizePx,
+  isBsbSwingHtmlText,
+  resolveBsbSwingHtmlFontSizePx,
+  stripBsbSwingHtmlText,
+} from '../../../../../../../shared/bsb-swing-html';
 
 let sharedCanvas: HTMLCanvasElement | null = null;
+let sharedHtmlMeasureEl: HTMLDivElement | null = null;
+
+const htmlMarkupCache = new Map<string, string>();
+const htmlMeasurementCache = new Map<string, { width: number; height: number }>();
 
 export const BSB_CANVAS_MIN_WIDTH = 600;
 export const BSB_CANVAS_MIN_HEIGHT = 400;
 
 export function measureTextWidth(text: string, font: string): number {
+  const displayText = isBsbSwingHtmlText(text) ? stripBsbSwingHtmlText(text) : text;
   const fontSize = getTextFontSize(font);
 
-  if (typeof document === 'undefined') return estimateTextWidth(text, fontSize);
+  if (!displayText) return 0;
+  if (typeof document === 'undefined') return estimateTextWidth(displayText, fontSize);
   if (!sharedCanvas) {
     sharedCanvas = document.createElement('canvas');
   }
   const ctx = sharedCanvas.getContext('2d');
-  if (!ctx) return estimateTextWidth(text, fontSize);
+  if (!ctx) return estimateTextWidth(displayText, fontSize);
   ctx.font = font;
-  return ctx.measureText(text).width;
+  return ctx.measureText(displayText).width;
+}
+
+export function measureTextContent(text: string, font: string): { width: number; height: number } {
+  const fontSize = getTextFontSize(font);
+  const displayText = isBsbSwingHtmlText(text) ? stripBsbSwingHtmlText(text) : text;
+  const baseHeight = Math.max(16, Math.ceil(fontSize * 1.25));
+
+  if (!displayText) {
+    return { width: 0, height: baseHeight };
+  }
+
+  if (!isBsbSwingHtmlText(text)) {
+    return { width: measureTextWidth(displayText, font), height: baseHeight };
+  }
+
+  const cacheKey = `${font}\u0000${text}`;
+  const cached = htmlMeasurementCache.get(cacheKey);
+  if (cached) {
+    return cached;
+  }
+
+  const fallback = estimateSwingHtmlTextContent(text, fontSize);
+  if (typeof document === 'undefined' || !document.body) {
+    cacheMeasurement(cacheKey, fallback);
+    return fallback;
+  }
+
+  const markup = getSanitizedBsbSwingHtml(text);
+  if (!markup) {
+    cacheMeasurement(cacheKey, fallback);
+    return fallback;
+  }
+
+  const measureEl = ensureSharedHtmlMeasureEl();
+  measureEl.style.font = font;
+  measureEl.innerHTML = markup;
+  const rect = measureEl.getBoundingClientRect();
+
+  const measured = {
+    width: Math.ceil(rect.width),
+    height: Math.ceil(rect.height),
+  };
+
+  const metrics = measured.width > 0 && measured.height > 0
+    ? measured
+    : fallback;
+
+  cacheMeasurement(cacheKey, metrics);
+  return metrics;
+}
+
+export function getSanitizedBsbSwingHtml(text: string): string | null {
+  if (!isBsbSwingHtmlText(text)) {
+    return null;
+  }
+
+  const cached = htmlMarkupCache.get(text);
+  if (cached !== undefined) {
+    return cached;
+  }
+
+  let markup = `${escapeHtml(stripBsbSwingHtmlText(text)).replace(/\n/g, '<br>')}`;
+
+  if (typeof DOMParser !== 'undefined') {
+    const parser = new DOMParser();
+    const documentFragment = parser.parseFromString(text, 'text/html');
+    markup = sanitizeHtmlNodes(Array.from(documentFragment.body.childNodes));
+    if (!markup) {
+      markup = `${escapeHtml(stripBsbSwingHtmlText(text)).replace(/\n/g, '<br>')}`;
+    }
+  }
+
+  cacheMarkup(text, markup);
+  return markup;
 }
 
 export function getDropdownDisplayWidth(node: BsbWidgetNodeSnapshot): number {
@@ -58,7 +144,7 @@ function getTextFontSize(font: string): number {
   return match ? Number.parseFloat(match[1]!) : 12;
 }
 
-function getFontString(name: string, size: number, style = 0): string {
+export function getFontString(name: string, size: number, style = 0): string {
   const parts: string[] = [];
   if ((style & 1) !== 0) parts.push('bold');
   if ((style & 2) !== 0) parts.push('italic');
@@ -141,15 +227,15 @@ export function getWidgetDisplaySize(node: BsbWidgetNodeSnapshot): { width: numb
       const labelFontName = typeof node.properties['labelFont.name'] === 'string' ? node.properties['labelFont.name'] : 'Roboto';
       const labelFontSize = typeof node.properties['labelFont.size'] === 'number' ? node.properties['labelFont.size'] : 12;
       const labelFontStyle = typeof node.properties['labelFont.style'] === 'number' ? node.properties['labelFont.style'] : 0;
-      const labelWidth = labelEnabled
-        ? measureTextWidth(labelText, getFontString(labelFontName, labelFontSize, labelFontStyle))
-        : 0;
+      const labelMetrics = labelEnabled
+        ? measureTextContent(labelText, getFontString(labelFontName, labelFontSize, labelFontStyle))
+        : { width: 0, height: 0 };
       const labelHeight = labelEnabled
-        ? Math.max(16, Math.ceil(labelFontSize * 1.25))
+        ? Math.max(16, Math.ceil(labelMetrics.height))
         : 0;
       const valueHeight = node.properties.valueDisplayEnabled === true ? 14 : 0;
       return {
-        width: Math.max(knobWidth, Math.ceil(labelWidth)),
+        width: Math.max(knobWidth, Math.ceil(labelMetrics.width)),
         height: knobWidth + labelHeight + valueHeight,
       };
     }
@@ -172,13 +258,14 @@ export function getWidgetDisplaySize(node: BsbWidgetNodeSnapshot): { width: numb
     case 'BSBGroup': {
       const titleEnabled = node.properties.titleEnabled !== false;
       const groupName = typeof node.properties.groupName === 'string' ? node.properties.groupName : '';
-      const labelHeight = titleEnabled && groupName ? 20 : 0;
       const fontName = typeof node.properties['font.name'] === 'string' ? node.properties['font.name'] : 'Roboto';
       const fontSize = typeof node.properties['font.size'] === 'number' ? node.properties['font.size'] : 12;
       const fontStyle = typeof node.properties['font.style'] === 'number' ? node.properties['font.style'] : 0;
-      const titleWidth = titleEnabled && groupName
-        ? Math.ceil(measureTextWidth(groupName, getFontString(fontName, fontSize, fontStyle))) + 2
-        : 0;
+      const titleMetrics = titleEnabled && groupName
+        ? measureTextContent(groupName, getFontString(fontName, fontSize, fontStyle))
+        : { width: 0, height: 0 };
+      const labelHeight = titleEnabled && groupName ? Math.max(20, Math.ceil(titleMetrics.height)) : 0;
+      const titleWidth = titleEnabled && groupName ? Math.ceil(titleMetrics.width) + 2 : 0;
 
       let childrenWidth = 10;
       let childrenHeight = 10;
@@ -200,17 +287,19 @@ export function getWidgetDisplaySize(node: BsbWidgetNodeSnapshot): { width: numb
       const fontName = typeof node.properties['font.name'] === 'string' ? node.properties['font.name'] : 'Roboto';
       const fontSize = typeof node.properties['font.size'] === 'number' ? node.properties['font.size'] : 12;
       const fontStyle = typeof node.properties['font.style'] === 'number' ? node.properties['font.style'] : 0;
+      const labelMetrics = measureTextContent(labelText, getFontString(fontName, fontSize, fontStyle));
       return {
-        width: Math.max(1, Math.ceil(measureTextWidth(labelText, getFontString(fontName, fontSize, fontStyle))) + 1),
-        height: Math.max(16, Math.ceil(fontSize * 1.25)) + 1,
+        width: Math.max(1, Math.ceil(labelMetrics.width) + 1),
+        height: Math.max(16, Math.ceil(labelMetrics.height)) + 1,
       };
     }
     case 'BSBCheckBox': {
       const labelText = typeof node.properties.label === 'string' ? node.properties.label : '';
       const fontSize = 12;
+      const labelMetrics = measureTextContent(labelText, `${fontSize}px Roboto, sans-serif`);
       return {
-        width: Math.max(1, Math.ceil(measureTextWidth(labelText, `${fontSize}px Roboto, sans-serif`)) + 20),
-        height: Math.max(20, Math.ceil(fontSize * 1.4)),
+        width: Math.max(1, Math.ceil(labelMetrics.width) + 20),
+        height: Math.max(20, Math.ceil(labelMetrics.height)),
       };
     }
     case 'BSBDropdown':
@@ -305,4 +394,163 @@ export function getCanvasDisplaySize(
     width: Math.max(minW, Math.ceil(viewportWidth), contentWidth),
     height: Math.max(minH, Math.ceil(viewportHeight), contentHeight),
   };
+}
+
+function ensureSharedHtmlMeasureEl(): HTMLDivElement {
+  if (!sharedHtmlMeasureEl) {
+    sharedHtmlMeasureEl = document.createElement('div');
+    sharedHtmlMeasureEl.setAttribute('aria-hidden', 'true');
+    sharedHtmlMeasureEl.style.position = 'fixed';
+    sharedHtmlMeasureEl.style.left = '-10000px';
+    sharedHtmlMeasureEl.style.top = '-10000px';
+    sharedHtmlMeasureEl.style.visibility = 'hidden';
+    sharedHtmlMeasureEl.style.pointerEvents = 'none';
+    sharedHtmlMeasureEl.style.display = 'inline-block';
+    sharedHtmlMeasureEl.style.whiteSpace = 'pre-wrap';
+    sharedHtmlMeasureEl.style.boxSizing = 'border-box';
+    sharedHtmlMeasureEl.style.padding = '0';
+    sharedHtmlMeasureEl.style.margin = '0';
+    sharedHtmlMeasureEl.style.lineHeight = 'normal';
+    document.body.appendChild(sharedHtmlMeasureEl);
+  }
+
+  return sharedHtmlMeasureEl;
+}
+
+function estimateSwingHtmlTextContent(text: string, fontSize: number): { width: number; height: number } {
+  const plainText = stripBsbSwingHtmlText(text);
+  const lines = plainText ? plainText.split('\n') : [''];
+  const effectiveFontSize = getBsbSwingHtmlMaxFontSizePx(text, fontSize);
+  const width = lines.reduce((maxWidth, line) => Math.max(maxWidth, estimateTextWidth(line, effectiveFontSize)), 0);
+  const lineHeight = Math.max(16, Math.ceil(effectiveFontSize * 1.25));
+  return {
+    width,
+    height: Math.max(lineHeight, lineHeight * Math.max(1, lines.length)),
+  };
+}
+
+function sanitizeHtmlNodes(nodes: Node[]): string {
+  return nodes.map((node) => sanitizeHtmlNode(node)).join('');
+}
+
+function sanitizeHtmlNode(node: Node): string {
+  if (node.nodeType === Node.TEXT_NODE) {
+    return escapeHtml(node.textContent ?? '');
+  }
+  if (node.nodeType !== Node.ELEMENT_NODE) {
+    return '';
+  }
+
+  const element = node as Element;
+  const tag = element.tagName.toLowerCase();
+  const children = sanitizeHtmlNodes(Array.from(element.childNodes));
+
+  switch (tag) {
+    case 'html':
+    case 'body':
+      return children;
+    case 'br':
+      return '<br>';
+    case 'b':
+    case 'strong':
+      return children ? `<strong>${children}</strong>` : '';
+    case 'i':
+    case 'em':
+      return children ? `<em>${children}</em>` : '';
+    case 'u':
+      return children ? `<u>${children}</u>` : '';
+    case 's':
+    case 'strike':
+      return children ? `<s>${children}</s>` : '';
+    case 'sup':
+      return children ? `<sup>${children}</sup>` : '';
+    case 'sub':
+      return children ? `<sub>${children}</sub>` : '';
+    case 'center':
+      return children ? `<span style="display:block;text-align:center">${children}</span>` : '';
+    case 'div':
+    case 'p':
+      return children ? `<span style="display:block">${children}</span>` : '<br>';
+    case 'font': {
+      const style = getSanitizedFontStyle(element);
+      return style ? `<span style="${style}">${children}</span>` : children;
+    }
+    default:
+      return children;
+  }
+}
+
+function getSanitizedFontStyle(element: Element): string {
+  const styles: string[] = [];
+  const size = element.getAttribute('size');
+  if (size) {
+    const fontSizePx = resolveBsbSwingHtmlFontSizePx(size);
+    if (fontSizePx !== null) {
+      styles.push(`font-size:${fontSizePx}px`);
+    }
+  }
+
+  const color = sanitizeColorValue(element.getAttribute('color'));
+  if (color) {
+    styles.push(`color:${color}`);
+  }
+
+  const fontFace = sanitizeFontFaceValue(element.getAttribute('face'));
+  if (fontFace) {
+    styles.push(`font-family:${fontFace}`);
+  }
+
+  return styles.join(';');
+}
+
+function sanitizeColorValue(rawValue: string | null): string | null {
+  if (!rawValue) return null;
+  const value = rawValue.trim();
+  if (/^#[0-9a-f]{3,8}$/i.test(value)) return value;
+  if (/^[a-z]+$/i.test(value)) return value;
+  if (/^rgba?\([-\d\s.,%]+\)$/i.test(value)) return value;
+  return null;
+}
+
+function sanitizeFontFaceValue(rawValue: string | null): string | null {
+  if (!rawValue) return null;
+  const fonts = rawValue
+    .split(',')
+    .map((part) => part.trim().replace(/["'<>]/g, ''))
+    .filter((part) => /^[\w -]+$/.test(part));
+
+  if (fonts.length === 0) {
+    return null;
+  }
+
+  return fonts
+    .map((font) => (font.includes(' ') ? `'${font}'` : font))
+    .join(',');
+}
+
+function escapeHtml(text: string): string {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function escapeHtmlAttribute(text: string): string {
+  return escapeHtml(text).replace(/`/g, '&#96;');
+}
+
+function cacheMarkup(key: string, value: string): void {
+  if (htmlMarkupCache.size > 500) {
+    htmlMarkupCache.clear();
+  }
+  htmlMarkupCache.set(key, value);
+}
+
+function cacheMeasurement(key: string, value: { width: number; height: number }): void {
+  if (htmlMeasurementCache.size > 500) {
+    htmlMeasurementCache.clear();
+  }
+  htmlMeasurementCache.set(key, value);
 }

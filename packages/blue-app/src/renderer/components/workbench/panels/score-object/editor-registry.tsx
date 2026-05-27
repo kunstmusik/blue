@@ -4,6 +4,7 @@ import type {
   ScorePatch,
   TypeSpecificScoreObjectEditorSnapshot,
 } from '../../../../../shared/project-editor';
+import ClojureObjectEditor from './editors/ClojureObjectEditor';
 import CodeBackedScoreObjectEditor from './editors/CodeBackedScoreObjectEditor';
 import JavaScriptObjectEditor from './editors/JavaScriptObjectEditor';
 import ExternalScoreObjectEditor from './editors/ExternalScoreObjectEditor';
@@ -50,6 +51,7 @@ export function resolveEditorComponent(
   switch (editor.kind) {
     case 'code':
       if (editor.syntax === 'javascript') return JavaScriptObjectEditor;
+      if (editor.target.editorObjectType === 'ClojureObject') return ClojureObjectEditor;
       return CodeBackedScoreObjectEditor;
     case 'external':
       return ExternalScoreObjectEditor;

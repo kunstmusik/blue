@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   BlueData,
+  ClojureObject,
   PolyObject,
   SoundLayer,
   GenericScore,
@@ -107,6 +108,23 @@ describe('createScoreObjectEditorDocument — code-backed types', () => {
     if (doc!.editor.kind === 'code') {
       expect(doc!.editor.syntax).toBe('javascript');
       expect(doc!.editor.text).toBe('console.log("hi")');
+    }
+  });
+
+  it('returns code editor for ClojureObject with on-load flags', () => {
+    const clj = new ClojureObject();
+    clj.setName('CljObj');
+    clj.setClojureCode('(def score "i1 0 1 330")');
+    clj.setOnLoadProcessable(true);
+    const data = makeDataWithObject(clj);
+
+    const doc = createScoreObjectEditorDocument(data, { target: makeTimelineTarget('ClojureObject') });
+    expect(doc).not.toBeNull();
+    expect(doc!.editor.kind).toBe('code');
+    if (doc!.editor.kind === 'code') {
+      expect(doc!.editor.syntax).toBe('text');
+      expect(doc!.editor.text).toBe('(def score "i1 0 1 330")');
+      expect(doc!.editor.auxiliaryFlags).toEqual({ onLoadProcessable: true });
     }
   });
 

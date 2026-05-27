@@ -47,9 +47,19 @@ import { UDOStyle } from "./opcodes/udo-style";
 import { formatBlueNumber, formatJavaDouble } from "./utilities/number-format";
 import { disposeJavaScriptCompileState, setJavaScriptSession } from './javascript-runtime';
 import type { JavaScriptSession } from './javascript-runtime';
+import { setJavaRuntimeClient, type JavaRuntimeClientContract } from './java-runtime';
+import {
+  ClojureProjectData,
+  loadClojureProjectDataFromPluginData,
+  replaceClojureProjectDataInPluginData,
+} from './plugins/clojure-project-data';
 import { parseUDOText } from "./opcodes/udo-utilities";
 import { TimeContext } from "./time/time-context";
 import { TempoMap } from "./time/tempo-map";
+import { ClojureObject } from './sound-objects/clojure-object';
+import { Instance } from './sound-objects/instance';
+import { PolyObject } from './sound-objects/poly-object';
+import type { SoundObject } from './sound-objects/sound-object';
 import {
   processCommandBlocks,
   preprocessSco,
@@ -235,6 +245,17 @@ export class BlueData implements BlueDataObject {
 
   getPluginDataXml(): Element[] {
     return this.pluginDataXml;
+  }
+
+  getClojureProjectData(): ClojureProjectData | null {
+    return loadClojureProjectDataFromPluginData(this.pluginDataXml);
+  }
+
+  setClojureProjectData(projectData: ClojureProjectData | null): void {
+    this.pluginDataXml = replaceClojureProjectDataInPluginData(
+      this.pluginDataXml,
+      projectData,
+    );
   }
 
   // ─── Loading ───
@@ -470,16 +491,84 @@ export class BlueData implements BlueDataObject {
     return this.buildStandardCSD("realtime", session).csdText;
   }
 
+  async toCSDAsync(
+    session?: JavaScriptSession,
+    runtimeClient?: JavaRuntimeClientContract | null,
+  ): Promise<string> {
+    return (await this.buildStandardCSDAsync("realtime", session, runtimeClient)).csdText;
+  }
+
   toDiskCSD(session?: JavaScriptSession): string {
     return this.buildStandardCSD("disk", session).csdText;
+  }
+
+  async toDiskCSDAsync(
+    session?: JavaScriptSession,
+    runtimeClient?: JavaRuntimeClientContract | null,
+  ): Promise<string> {
+    return (await this.buildStandardCSDAsync("disk", session, runtimeClient)).csdText;
   }
 
   toRealtimePlaybackCSD(session?: JavaScriptSession): RenderCsdResult {
     return this.buildStandardCSD("realtime", session);
   }
 
+  async toRealtimePlaybackCSDAsync(
+    session?: JavaScriptSession,
+    runtimeClient?: JavaRuntimeClientContract | null,
+  ): Promise<RenderCsdResult> {
+    return this.buildStandardCSDAsync("realtime", session, runtimeClient);
+  }
+
   processOnLoad(session?: JavaScriptSession): void {
     this.score.processOnLoad(session);
+  }
+
+  async processOnLoadAsync(
+    session?: JavaScriptSession,
+    runtimeClient?: JavaRuntimeClientContract | null,
+  ): Promise<void> {
+    await this.score.processOnLoadAsync(session, runtimeClient);
+  }
+
+  usesJavaRuntime(): boolean {
+    const seen = new Set<SoundObject>();
+
+    const visit = (soundObject: SoundObject | null | undefined): boolean => {
+      if (!soundObject || seen.has(soundObject)) {
+        return false;
+      }
+
+      seen.add(soundObject);
+
+      if (soundObject instanceof ClojureObject) {
+        return true;
+      }
+
+      if (soundObject instanceof Instance) {
+        return visit(soundObject.getSoundObject());
+      }
+
+      if (soundObject instanceof PolyObject) {
+        for (const layer of soundObject) {
+          for (const nested of layer) {
+            if (visit(nested)) {
+              return true;
+            }
+          }
+        }
+      }
+
+      return false;
+    };
+
+    for (const layerGroup of this.score) {
+      if (layerGroup instanceof PolyObject && visit(layerGroup)) {
+        return true;
+      }
+    }
+
+    return false;
   }
 
   private buildStandardCSD(profile: CsdRenderProfile, session?: JavaScriptSession): RenderCsdResult {
@@ -685,6 +774,245 @@ export class BlueData implements BlueDataObject {
       const projectInfo = this.buildProjectInfo();
 
       // Assemble CSD
+      const csdText = (
+        projectInfo +
+        "<CsoundSynthesizer>\n\n" +
+        "<CsInstruments>\n" +
+        orchestraHeader +
+        "\n\n" +
+        globalOrc +
+        "\n\n" +
+        arrangementGlobalOrc +
+        "\n\n" +
+        udoText +
+        "\n\n" +
+        orc +
+        mixerInstruments +
+        "\n\n</CsInstruments>\n\n" +
+        "<CsScore>\n\n" +
+        scoreText +
+        "</CsScore>\n\n" +
+        "</CsoundSynthesizer>"
+      );
+
+      return {
+        csdText,
+        parameters: allParameters,
+        stringChannels: allStringChannels,
+      };
+    } catch (error) {
+      generationError = error;
+      throw error;
+    } finally {
+      try {
+        disposeJavaScriptCompileState(compileData);
+      } catch (cleanupError) {
+        if (generationError === null) {
+          throw cleanupError;
+        }
+        console.warn(`${logPrefix} Failed to dispose JavaScript runtime state:`, cleanupError);
+      }
+    }
+  }
+
+  private async buildStandardCSDAsync(
+    profile: CsdRenderProfile,
+    session?: JavaScriptSession,
+    runtimeClient?: JavaRuntimeClientContract | null,
+  ): Promise<RenderCsdResult> {
+    const { arrangement: clonedArrangement, tables: clonedTables, mixer: clonedMixer, compileData } =
+      this.createRenderSnapshot(session, runtimeClient);
+    let generationError: unknown = null;
+    const logPrefix =
+      profile === "disk" ? "[BlueData.toDiskCSDAsync]" : "[BlueData.toCSDAsync]";
+
+    try {
+      const channelIdAssignments = this.assignChannelIds(clonedMixer);
+      for (const [channel, id] of channelIdAssignments) {
+        compileData.getChannelIdAssignments().set(channel, id);
+      }
+
+      const orchestraHeader = this.buildOrchestraHeader(profile);
+      const nchnls = this.getNchnls(profile);
+
+      let globalOrc = this.globalOrcSco.getGlobalOrc() || "";
+      const baseGlobalSco = this.globalOrcSco.getGlobalSco() || "";
+
+      const appendGlobalOrc = (section: string) => {
+        if (!section) {
+          return;
+        }
+        if (globalOrc.length > 0 && !globalOrc.endsWith("\n")) {
+          globalOrc += "\n";
+        }
+        globalOrc += section;
+      };
+
+      if (clonedMixer.isEnabled()) {
+        const mixerInits = clonedMixer.getInitStatements(
+          channelIdAssignments,
+          nchnls,
+        );
+        if (mixerInits) {
+          appendGlobalOrc(`${mixerInits}\n\n`);
+        }
+      }
+
+      const udos = new OpcodeList(this.opcodeList);
+      clonedArrangement.generateUserDefinedOpcodes(udos);
+
+      const parameters = getAllParameters(clonedArrangement, clonedMixer);
+      assignParameterNames(parameters);
+      const stringChannels = this.collectStringChannels(clonedArrangement);
+      compileData.registerExistingAutomationState(parameters, stringChannels);
+
+      appendFtgenTableNumbers(globalOrc, clonedTables);
+      clonedArrangement.generateFTables(clonedTables);
+
+      const ftables = clonedTables.getAllTables();
+
+      const { startTime, endTime } = this.getRenderWindow(profile);
+      const noteList = await this.score.generateForCSDAsync(compileData, startTime, endTime);
+      const allParameters = compileData.getOriginalParameters();
+      const allStringChannels = compileData.getStringChannels();
+      compileData.setHandleParametersAndChannels(false);
+
+      if (endTime > 0 && endTime > startTime) {
+        const renderEndInstrument = this.createRenderEndInstrument();
+        const renderEndInstrumentId = clonedArrangement.addInstrumentAtEnd(
+          renderEndInstrument,
+        );
+
+        const renderEndNote = Note.createNoteFromText(
+          `i${renderEndInstrumentId} ${endTime - startTime} 0.1`,
+        );
+        if (renderEndNote) {
+          noteList.add(renderEndNote);
+        }
+      }
+
+      const parameterMap = this.buildParameterMap(clonedArrangement);
+
+      const scoreTempoMap = this.score.getTimeContext().getTempoMap();
+      let tempoMap: TempoMap | null = null;
+      let scoreGlobalPrefix = baseGlobalSco;
+
+      if (scoreTempoMap.isEnabled()) {
+        tempoMap = scoreTempoMap;
+        const tempoStatement = getTempoScore(scoreTempoMap, startTime, endTime);
+        scoreGlobalPrefix = [baseGlobalSco, tempoStatement]
+          .filter((section) => section.length > 0)
+          .join("\n");
+      } else {
+        tempoMap = getTempoMapFromScoreText(baseGlobalSco);
+      }
+
+      const arrangementGlobalSco = clonedArrangement.generateGlobalSco(compileData);
+      const totalDur = this.getNoteListDuration(noteList);
+      const processingStart = startTime;
+      const globalSco = preprocessSco(
+        [scoreGlobalPrefix, arrangementGlobalSco].filter(Boolean).join("\n"),
+        totalDur,
+        startTime,
+        processingStart,
+        tempoMap,
+      );
+      let globalDur = this.getNoteListDurationFromText(globalSco);
+      if (globalDur < totalDur) {
+        globalDur = totalDur;
+      }
+      if (clonedMixer.isEnabled()) {
+        globalDur += clonedMixer.getExtraRenderTime();
+      }
+
+      const alwaysOnInstruments = this.collectAlwaysOnInstruments(
+        clonedArrangement,
+        clonedMixer,
+        channelIdAssignments,
+        parameterMap,
+        compileData,
+      );
+
+      for (const instrument of alwaysOnInstruments) {
+        const sourceId = compileData.getInstrSourceId(instrument);
+        if (sourceId && /^\d+$/.test(sourceId)) {
+          const instrId = clonedArrangement.addInstrumentAtEnd(instrument);
+          this.addScoreNote(noteList, `i${instrId} 0 ${globalDur}`);
+        } else {
+          const alwaysOnId = `${sourceId ?? "unknown"}_alwaysOn`;
+          clonedArrangement.addInstrumentWithId(instrument, alwaysOnId, false);
+          this.addScoreNote(noteList, `i"${alwaysOnId}" 0 ${globalDur}`);
+        }
+      }
+
+      let mixerEffectUDOs: string[] = [];
+      let mixerInstruments = "";
+      if (clonedMixer.isEnabled()) {
+        const mixerOutput = this.generateMixerOrchestra(
+          channelIdAssignments,
+          nchnls,
+          udos,
+          clonedMixer,
+        );
+        mixerEffectUDOs = mixerOutput.effectUDOs;
+        mixerInstruments = mixerOutput.instrumentsText;
+        this.addScoreNote(noteList, `i"BlueMixer" 0 ${globalDur}`);
+      }
+
+      if (profile === "disk") {
+        this.appendParameterAutomationNotes(
+          allParameters,
+          noteList,
+          clonedArrangement,
+          startTime,
+          startTime + globalDur,
+        );
+      }
+
+      const arrangementGlobalOrc = processCommandBlocks(
+        clonedArrangement.generateGlobalOrc(compileData),
+      );
+
+      const initStatements = this.buildRuntimeInitStatements(
+        allParameters,
+        allStringChannels,
+        profile,
+        startTime,
+      );
+      if (initStatements.length > 0) {
+        appendGlobalOrc(`${initStatements}\n`);
+      }
+
+      const compileGlobalOrc = compileData.getGlobalOrc();
+      if (compileGlobalOrc.trim().length > 0) {
+        appendGlobalOrc(compileGlobalOrc);
+      }
+
+      const allUDOText: string[] = [];
+      const masterUDOText = udos.toString().trim();
+      if (masterUDOText.length > 0) {
+        allUDOText.push(masterUDOText);
+      }
+      if (mixerEffectUDOs.length > 0) {
+        allUDOText.push(...mixerEffectUDOs);
+      }
+      const udoText = allUDOText.length > 0 ? `${allUDOText.join("\n")}\n` : "";
+
+      const orc = clonedArrangement.generateOrchestra(
+        compileData,
+        clonedMixer,
+        nchnls,
+        parameterMap,
+      );
+
+      const scoreText = this.buildScoreText(
+        ftables,
+        globalSco,
+        noteList,
+      );
+
+      const projectInfo = this.buildProjectInfo();
+
       const csdText = (
         projectInfo +
         "<CsoundSynthesizer>\n\n" +
@@ -1310,7 +1638,10 @@ export class BlueData implements BlueDataObject {
     );
   }
 
-  private createRenderSnapshot(session?: JavaScriptSession): {
+  private createRenderSnapshot(
+    session?: JavaScriptSession,
+    runtimeClient?: JavaRuntimeClientContract | null,
+  ): {
     arrangement: Arrangement;
     tables: Tables;
     mixer: Mixer;
@@ -1324,6 +1655,10 @@ export class BlueData implements BlueDataObject {
 
     if (session) {
       setJavaScriptSession(compileData, session);
+    }
+
+    if (runtimeClient) {
+      setJavaRuntimeClient(compileData, runtimeClient);
     }
 
     return {

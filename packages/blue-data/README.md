@@ -93,6 +93,19 @@ console.log(csd);
 // </CsoundSynthesizer>
 ```
 
+### Generating a CSD with Java-backed Clojure
+
+```typescript
+import type { JavaRuntimeClientContract } from '@blue/data';
+
+const runtimeClient: JavaRuntimeClientContract = /* provided by the host app */;
+
+await data.processOnLoadAsync(undefined, runtimeClient);
+const csd = await data.toCSDAsync(undefined, runtimeClient);
+```
+
+`@blue/data` stays browser-safe and does not launch Java itself. Hosts such as Electron main inject a `JavaRuntimeClientContract` when they want `ClojureObject` evaluation to participate in on-load processing and score generation.
+
 ### Creating a Project Programmatically
 
 ```typescript
@@ -173,6 +186,7 @@ const xml = data.saveToString();
 | Type | Description |
 |------|-------------|
 | `GenericScore` | Raw Csound score text |
+| `ClojureObject` | Clojure code -> score (requires injected Java runtime for execution) |
 | `JavaScriptObject` | JS code → score (uses QuickJS after runtime initialization) |
 | `PythonObject` | Python code → score (data only, JVM needed for generation) |
 | `CSDSoundObject` | Embedded CSD |
@@ -202,9 +216,11 @@ const xml = data.saveToString();
 `@blue/data` works in **both Node.js and browsers**:
 
 - ✅ No Node.js built-in dependency for `JavaScriptObject` execution
+- ✅ `ClojureObject` XML and project dependency metadata load/save remain available without Java
 - ✅ QuickJS-backed JavaScript evaluation works in both Node.js and browser bundles
 - ✅ Loading/saving `.blue` XML files remains synchronous
 - ⚠️ `JavaScriptObject` execution requires a one-time async runtime preload
+- ⚠️ `ClojureObject` execution uses the async Java runtime contract and host-provided `toCSDAsync()` / `processOnLoadAsync()` flows
 
 ### Initializing the JavaScript runtime
 

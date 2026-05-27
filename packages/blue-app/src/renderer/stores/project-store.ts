@@ -19,6 +19,7 @@ import {
   reconcileMixerSnapshotWithArrangement,
   type BlueLiveProjectSnapshot,
   type BlueLivePatch,
+  type ClojureProjectSnapshot,
   type BlueSynthBuilderInstrumentSnapshot,
   type BsbInterfacePatch,
   type BsbRealtimeControlUpdate,
@@ -91,6 +92,7 @@ interface ProjectState {
   orchestra: OrchestraSnapshot;
   mixer: MixerSnapshot;
   projectProperties: ProjectPropertiesSnapshot;
+  clojureProject: ClojureProjectSnapshot;
   transport: ToolbarProjectTransportSnapshot;
   tablesText: string;
   projectUdos: UdoDefinitionSnapshot[];
@@ -123,6 +125,9 @@ interface ProjectActions {
   updateOrchestra: (orchestra: OrchestraPatch) => Promise<void>;
   updateProjectProperties: (
     patch: Partial<ProjectPropertiesSnapshot>,
+  ) => Promise<void>;
+  updateClojureProject: (
+    clojureProject: ClojureProjectSnapshot,
   ) => Promise<void>;
   setLoopRendering: (loopRendering: boolean) => Promise<void>;
   addMarkerAtTime: (timeBeats: number) => void;
@@ -618,6 +623,9 @@ function applyProjectInfoToState(
           ? reconcileMixerSnapshotWithArrangement(state.mixer, nextOrchestra)
           : state.mixer,
       projectProperties: nextProjectProperties,
+      clojureProject: info.clojureProject
+        ? cloneClojureProjectSnapshot(info.clojureProject)
+        : state.clojureProject,
       transport: nextTransport,
       tablesText: info.tablesText ?? state.tablesText,
       projectUdos: info.projectUdos ?? state.projectUdos,
@@ -635,6 +643,14 @@ function mergeProjectProperties(
   return {
     ...current,
     ...patch,
+  };
+}
+
+function cloneClojureProjectSnapshot(
+  clojureProject: ClojureProjectSnapshot,
+): ClojureProjectSnapshot {
+  return {
+    libraryEntries: clojureProject.libraryEntries.map((entry) => ({ ...entry })),
   };
 }
 
@@ -656,6 +672,7 @@ function buildInitialState(): ProjectState {
     orchestra: snapshot.orchestra,
     mixer: snapshot.mixer ?? createEmptyMixerSnapshot(),
     projectProperties: snapshot.projectProperties,
+    clojureProject: snapshot.clojureProject,
     transport: snapshot.transport,
     tablesText: snapshot.tablesText,
     projectUdos: snapshot.projectUdos,
@@ -3504,6 +3521,7 @@ export const useProjectStore = create<ProjectState & ProjectActions>()((set, get
       normalizedPatch.globalSco === undefined &&
       normalizedPatch.orchestra === undefined &&
       normalizedPatch.mixer === undefined &&
+      normalizedPatch.clojureProject === undefined &&
       normalizedPatch.tablesText === undefined &&
       normalizedPatch.projectUdo === undefined &&
       normalizedPatch.blueLive === undefined &&
@@ -3564,6 +3582,12 @@ export const useProjectStore = create<ProjectState & ProjectActions>()((set, get
         if (normalizedPatch.projectProperties.sampleRate !== undefined) {
           next.sampleRate = normalizedPatch.projectProperties.sampleRate;
         }
+      }
+
+      if (normalizedPatch.clojureProject !== undefined) {
+        next.clojureProject = cloneClojureProjectSnapshot(
+          normalizedPatch.clojureProject,
+        );
       }
 
       if (normalizedPatch.transport) {
@@ -3664,6 +3688,10 @@ export const useProjectStore = create<ProjectState & ProjectActions>()((set, get
 
   updateProjectProperties: async (patch) => {
     await get().applyProjectDocumentPatch({ projectProperties: patch });
+  },
+
+  updateClojureProject: async (clojureProject) => {
+    await get().applyProjectDocumentPatch({ clojureProject });
   },
 
   setLoopRendering: async (loopRendering) => {

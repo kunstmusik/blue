@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { BlueData } from './blue-data';
 import { PolyObject } from './sound-objects/poly-object';
 import { Element } from './serialization/xml-reader';
+import { ClojureProjectData } from './plugins/clojure-project-data';
 
 describe('BlueData root XML compatibility', () => {
   describe('loadFromString - root section preservation', () => {
@@ -84,6 +85,47 @@ describe('BlueData root XML compatibility', () => {
         count++;
       }
       expect(count).toBe(1);
+    });
+
+    it('extracts typed clojure project data from pluginData', () => {
+      const xml = `<blueData version="5.0.0">
+        <pluginData>
+          <blueDataObject bdoType="blue.clojure.project.ClojureProjectData">
+            <clojureLibraryEntry>
+              <coordinates>kunstmusik/score</coordinates>
+              <version>0.3.0</version>
+            </clojureLibraryEntry>
+          </blueDataObject>
+        </pluginData>
+      </blueData>`;
+
+      const data = BlueData.loadFromString(xml);
+      const clojureProjectData = data.getClojureProjectData();
+
+      expect(clojureProjectData).not.toBeNull();
+      expect(clojureProjectData?.getLibraryEntries()[0].getDependencyCoordinates()).toBe(
+        'kunstmusik/score',
+      );
+    });
+
+    it('replaces typed clojure project data without dropping other plugin data', () => {
+      const xml = `<blueData version="5.0.0">
+        <pluginData>
+          <customPlugin name="test"/>
+        </pluginData>
+      </blueData>`;
+      const data = BlueData.loadFromString(xml);
+      const clojureProjectData = new ClojureProjectData();
+      const saved = data.saveAsXML();
+
+      expect(saved.getElement('pluginData')?.getElements().size).toBe(1);
+
+      data.setClojureProjectData(clojureProjectData);
+
+      const updated = data.saveAsXML();
+      const pluginData = updated.getElement('pluginData');
+      expect(pluginData?.getElements().size).toBe(2);
+      expect(data.getClojureProjectData()).not.toBeNull();
     });
 
     it('loads legacy root udo into opcodeList', () => {

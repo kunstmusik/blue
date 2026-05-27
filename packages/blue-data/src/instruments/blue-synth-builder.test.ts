@@ -1021,6 +1021,55 @@ xout aOut</codeBody>
     expect(savedXml).toContain('<fontSize>36</fontSize>');
   });
 
+  it('migrates every legacy Java stripHTML path during builder loads', () => {
+    const xml = `<instrument type="blue.orchestra.BlueSynthBuilder">
+      <name>Legacy HTML</name>
+      <instrumentText>code</instrumentText>
+      <graphicInterface>
+        <bsbObject type="blue.orchestra.blueSynthBuilder.BSBLabel">
+          <objectName></objectName>
+          <x>0</x><y>0</y>
+          <label>&lt;html&gt;&lt;font size=&quot;+1&quot;&gt;Amp&amp;nbsp;Env&lt;/font&gt;&lt;/html&gt;</label>
+        </bsbObject>
+        <bsbObject type="blue.orchestra.blueSynthBuilder.BSBDropdown">
+          <objectName>choice</objectName>
+          <x>0</x><y>24</y>
+          <selectedIndex>0</selectedIndex>
+          <bsbDropdownItemList>
+            <bsbDropdownItem uniqueId="item-a">
+              <name>&lt;html&gt;&lt;font size=&quot;+1&quot;&gt;Mode A&lt;/font&gt;&lt;/html&gt;</name>
+              <value>a</value>
+            </bsbDropdownItem>
+            <bsbDropdownItem uniqueId="item-b">
+              <name>&lt;html&gt;&lt;b&gt;Mode B&lt;/b&gt;&lt;/html&gt;</name>
+              <value>b</value>
+            </bsbDropdownItem>
+          </bsbDropdownItemList>
+        </bsbObject>
+      </graphicInterface>
+      <opcodeList/>
+    </instrument>`;
+
+    const instrument = BlueSynthBuilder.loadFromXML(Element.parse(xml));
+    const widgets = instrument.getGraphicInterface().getRootGroup().getChildren();
+    const label = widgets[0] as BSBLabel;
+    const dropdown = widgets[1] as BSBDropdown;
+
+    expect(label.label).toBe('Amp Env');
+    expect(label.font).toEqual({ name: 'Roboto', size: 18, style: 1 });
+    expect(dropdown.fontSize).toBe(18);
+    expect(dropdown.dropdownItems.map((item) => item.name)).toEqual(['Mode A', 'Mode B']);
+
+    const savedXml = instrument.saveAsXML().toXml();
+    expect(savedXml).toContain('<label>Amp Env</label>');
+    expect(savedXml).toContain('<name>Roboto</name>');
+    expect(savedXml).toContain('<size>18.0</size>');
+    expect(savedXml).toContain('<style>1</style>');
+    expect(savedXml).toContain('<name>Mode A</name>');
+    expect(savedXml).toContain('<name>Mode B</name>');
+    expect(savedXml).not.toContain('&lt;html&gt;');
+  });
+
   it('keeps label font patches durable across later widget updates', () => {
     const xml = `<instrument type="blue.orchestra.BlueSynthBuilder">
       <name>Font Test</name>

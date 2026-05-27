@@ -16,6 +16,15 @@ import { NoteList } from './note-list';
 import { NoteProcessorChain } from '../note-processors/note-processor-chain';
 import { applyNoteProcessorChain } from '../utilities/score';
 
+type AsyncSoundLayerObject = SoundObject & {
+  generateForCSDAsync?: (
+    context: TimeContext,
+    compileData: CompileData,
+    startTime: number,
+    endTime: number,
+  ) => Promise<NoteList>;
+};
+
 export class SoundLayer extends Array<SoundObject> implements Layer {
   private _name = '';
   private _muted = false;
@@ -161,6 +170,51 @@ export class SoundLayer extends Array<SoundObject> implements Layer {
       }
 
       const nl = sObj.generateForCSD(context, compileData, adjustedStart, adjustedEnd);
+      noteList.merge(nl);
+    }
+
+    return applyNoteProcessorChain(noteList, this._npc);
+  }
+
+  async generateForCSDAsync(
+    context: TimeContext,
+    compileData: CompileData,
+    startTime: number,
+    endTime: number,
+  ): Promise<NoteList> {
+    const noteList = new NoteList();
+
+    const sorted = [...this].sort((a, b) =>
+      a.getStartTime().toBeats(context) - b.getStartTime().toBeats(context),
+    );
+
+    for (const sObj of sorted) {
+      const sObjStart = sObj.getStartTime().toBeats(context);
+      const sObjDur = sObj.getSubjectiveDuration().toBeats(context);
+      const sObjEnd = sObjStart + sObjDur;
+
+      if (sObjEnd <= startTime) continue;
+
+      let adjustedStart: number;
+      let adjustedEnd: number;
+
+      if (endTime <= startTime) {
+        adjustedStart = startTime - sObjStart;
+        if (adjustedStart < 0) adjustedStart = 0;
+        adjustedEnd = -1;
+      } else if (sObjStart < endTime) {
+        adjustedStart = startTime - sObjStart;
+        adjustedEnd = endTime - sObjStart;
+        if (adjustedStart < 0) adjustedStart = 0;
+        if (adjustedEnd >= sObjDur) adjustedEnd = -1;
+      } else {
+        continue;
+      }
+
+      const asyncSoundObject = sObj as AsyncSoundLayerObject;
+      const nl = asyncSoundObject.generateForCSDAsync
+        ? await asyncSoundObject.generateForCSDAsync(context, compileData, adjustedStart, adjustedEnd)
+        : sObj.generateForCSD(context, compileData, adjustedStart, adjustedEnd);
       noteList.merge(nl);
     }
 

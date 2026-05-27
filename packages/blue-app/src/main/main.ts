@@ -44,6 +44,8 @@ import { cleanupTempCsdSnapshots } from './render-command';
 import { saveGeneratedCsdToDisk } from './csd-export';
 import { executeExternalTest } from './external-executor';
 import { createMainExternalExecutor } from './external-command-executor';
+import type { JavaRuntimeClient } from './java-runtime/java-runtime-client';
+import { JavaRuntimeSessionManager } from './java-runtime/java-runtime-session';
 import { testScoreObject } from './score-object-test';
 import { syncCompiledRuntimeParameterNames } from './runtime-parameter-sync';
 import { getWindowTitle } from '../shared/window-title';
@@ -70,6 +72,7 @@ import {
   type NoteProcessorChainSnapshot,
   type ScoreObjectEditorRequest,
   type ScoreObjectEditorDocumentSnapshot,
+  type ScoreObjectTestResult,
   type ScoreObjectLocationRef,
   type PolyObjectLayerGroupSnapshot,
 } from '../shared/project-editor';
@@ -87,6 +90,7 @@ let shutdownPromise: Promise<void> | null = null;
 let playbackStartPromise: Promise<boolean> | null = null;
 let javaScriptRuntimeReady: Promise<void> | null = null;
 let javaScriptSession: JavaScriptSession | null = null;
+let javaRuntimeSessionManager: JavaRuntimeSessionManager | null = null;
 let recentProjectFiles: string[] = [];
 let currentProjectSessionId = 0;
 let currentFollowPlaybackEnabled = true;
@@ -534,6 +538,11 @@ function createWindow(): void {
 
   // Initialize Blue Live engine session on separate port
   blueLiveSession = new BlueLiveEngineSession(mainWindow, undefined, 5560, 5561);
+  javaRuntimeSessionManager = new JavaRuntimeSessionManager({
+    isPackaged: app.isPackaged,
+    mainModuleDir: __dirname,
+    resourcesPath: process.resourcesPath,
+  });
   let blueLiveOutputBatch: { text: string; type: 'stdout' | 'stderr' }[] = [];
   let blueLiveOutputTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -614,6 +623,9 @@ async function doQuit(): Promise<void> {
     }
 
     blueLiveSession = null;
+  await javaRuntimeSessionManager?.dispose();
+  javaRuntimeSessionManager = null;
+  disposeJavaScriptSession();
 
     closeEffectEditorWindowsForOwner('project');
     closeEffectEditorWindowsForOwner('library');
@@ -664,6 +676,7 @@ async function openFile(): Promise<void> {
     if (blueLiveSession && blueLiveSession.isRunning()) {
       await blueLiveSession.stop();
     }
+    await disposeJavaRuntimeSession();
     closeEffectEditorWindowsForOwner('project');
 
     currentData = data;
@@ -676,9 +689,14 @@ async function openFile(): Promise<void> {
     disposeJavaScriptSession();
     try {
       javaScriptSession = await createJavaScriptSession();
-      data.processOnLoad(javaScriptSession);
     } catch (sessionErr: unknown) {
-      console.warn('[App] Failed to create JavaScript session or run processOnLoad:', sessionErr);
+      console.warn('[App] Failed to create JavaScript session:', sessionErr);
+    }
+
+    try {
+      await runProjectOnLoad(data);
+    } catch (sessionErr: unknown) {
+      console.warn('[App] Failed to run processOnLoad:', sessionErr);
     }
 
     // Debug: log arrangement IDs and UDOs
@@ -721,6 +739,7 @@ async function openFilePath(filePath: string): Promise<void> {
     if (blueLiveSession && blueLiveSession.isRunning()) {
       await blueLiveSession.stop();
     }
+    await disposeJavaRuntimeSession();
     closeEffectEditorWindowsForOwner('project');
 
     currentData = data;
@@ -733,9 +752,14 @@ async function openFilePath(filePath: string): Promise<void> {
     disposeJavaScriptSession();
     try {
       javaScriptSession = await createJavaScriptSession();
-      data.processOnLoad(javaScriptSession);
     } catch (sessionErr: unknown) {
-      console.warn('[App] Failed to create JavaScript session or run processOnLoad:', sessionErr);
+      console.warn('[App] Failed to create JavaScript session:', sessionErr);
+    }
+
+    try {
+      await runProjectOnLoad(data);
+    } catch (sessionErr: unknown) {
+      console.warn('[App] Failed to run processOnLoad:', sessionErr);
     }
 
     mainWindow.webContents.send('project-loaded', {
@@ -758,6 +782,7 @@ async function newFile(): Promise<void> {
   if (blueLiveSession && blueLiveSession.isRunning()) {
     await blueLiveSession.stop();
   }
+  await disposeJavaRuntimeSession();
   closeEffectEditorWindowsForOwner('project');
 
   const data = new BlueData();
@@ -777,6 +802,12 @@ async function newFile(): Promise<void> {
     console.warn('[App] Failed to create JavaScript session for new project:', sessionErr);
   }
 
+  try {
+    await runProjectOnLoad(data);
+  } catch (sessionErr: unknown) {
+    console.warn('[App] Failed to run processOnLoad for new project:', sessionErr);
+  }
+
   mainWindow.webContents.send('project-loaded', {
     ...createProjectEditorSnapshot(data, null, currentProjectSessionId),
     title: 'Untitled',
@@ -791,6 +822,7 @@ async function closeProject(): Promise<void> {
   if (!(await confirmSaveBeforeReplace())) return;
 
   disposeJavaScriptSession();
+  await disposeJavaRuntimeSession();
   currentData = null;
   currentFilePath = null;
   currentProjectRevision = 0;
@@ -822,6 +854,8 @@ async function saveFile(): Promise<void> {
 async function saveFileAs(): Promise<void> {
   if (!mainWindow || !currentData) return;
 
+  const previousProjectDir = currentFilePath ? path.dirname(currentFilePath) : null;
+
   const result = await dialog.showSaveDialog(mainWindow, {
     title: 'Save Blue Project',
     defaultPath: currentFilePath ?? 'project.blue',
@@ -832,6 +866,11 @@ async function saveFileAs(): Promise<void> {
 
   currentFilePath = result.filePath;
   doSave(currentFilePath);
+
+  const nextProjectDir = path.dirname(currentFilePath);
+  if (previousProjectDir !== nextProjectDir) {
+    await disposeJavaRuntimeSession();
+  }
 }
 
 function normalizeBsbSelectedPath(filePath: string): string {
@@ -992,6 +1031,25 @@ function disposeJavaScriptSession(): void {
   }
 }
 
+async function disposeJavaRuntimeSession(): Promise<void> {
+  if (javaRuntimeSessionManager) {
+    await javaRuntimeSessionManager.dispose();
+  }
+}
+
+async function ensureJavaRuntimeSession(data: BlueData | null): Promise<JavaRuntimeClient | null> {
+  if (!data || !javaRuntimeSessionManager || !data.usesJavaRuntime()) {
+    return null;
+  }
+
+  return javaRuntimeSessionManager.ensureReady(data, currentProjectSessionId, currentFilePath);
+}
+
+async function runProjectOnLoad(data: BlueData): Promise<void> {
+  const javaRuntimeClient = await ensureJavaRuntimeSession(data);
+  await data.processOnLoadAsync(javaScriptSession ?? undefined, javaRuntimeClient ?? undefined);
+}
+
 // ─── Playback ───
 
 async function togglePlay(): Promise<boolean> {
@@ -1031,7 +1089,10 @@ async function startPlayback(): Promise<boolean> {
 
     await ensureJavaScriptEngine();
 
-    const render = currentData.toRealtimePlaybackCSD(javaScriptSession ?? undefined);
+    const javaRuntimeClient = await ensureJavaRuntimeSession(currentData);
+    const render = javaRuntimeClient
+      ? await currentData.toRealtimePlaybackCSDAsync(javaScriptSession ?? undefined, javaRuntimeClient)
+      : currentData.toRealtimePlaybackCSD(javaScriptSession ?? undefined);
     const csd = render.csdText;
     const parameters = render.parameters;
     const runtimeParameterSync = syncCompiledRuntimeParameterNames(
@@ -1121,7 +1182,10 @@ async function generateCsdToScreen(): Promise<void> {
   }
   try {
     await ensureJavaScriptEngine();
-    const csdText = currentData.toCSD(javaScriptSession ?? undefined);
+    const javaRuntimeClient = await ensureJavaRuntimeSession(currentData);
+    const csdText = javaRuntimeClient
+      ? await currentData.toCSDAsync(javaScriptSession ?? undefined, javaRuntimeClient)
+      : currentData.toCSD(javaScriptSession ?? undefined);
     mainWindow.webContents.send('generated-csd', csdText);
   } catch (err) {
     mainWindow?.webContents.send('generated-csd-error', err instanceof Error ? err.message : String(err));
@@ -1136,11 +1200,13 @@ async function generateCsdToDisk(): Promise<void> {
   }
   try {
     await ensureJavaScriptEngine();
+    const javaRuntimeClient = await ensureJavaRuntimeSession(currentData);
     await saveGeneratedCsdToDisk({
       currentData,
       currentFilePath,
       mainWindow,
       session: javaScriptSession ?? undefined,
+      runtimeClient: javaRuntimeClient ?? undefined,
     });
   } catch (err) {
     mainWindow?.webContents.send('generated-csd-error', err instanceof Error ? err.message : String(err));
@@ -1728,25 +1794,62 @@ ipcMain.handle('get-nested-poly-object-snapshot', (_event, location: ScoreObject
   return createNestedPolyObjectSnapshot(currentData, location);
 });
 
-ipcMain.handle('test-score-object', async (_event, request: ScoreObjectEditorRequest) => {
-  return testScoreObject(currentData, request, {
-    ensureJavaScriptEngine,
-    javaScriptSession,
-  });
-});
+async function runScoreObjectTestRequest(
+  request: ScoreObjectEditorRequest,
+): Promise<ScoreObjectTestResult> {
+  let javaRuntimeClient: JavaRuntimeClient | null = null;
 
-ipcMain.handle('test-external-sound-object', async (_event, request: ScoreObjectEditorRequest) => {
-  return testScoreObject(currentData, request, {
-    ensureJavaScriptEngine,
-    javaScriptSession,
-  });
-});
+  try {
+    javaRuntimeClient = await ensureJavaRuntimeSession(currentData);
+  } catch (error) {
+    return {
+      ok: false,
+      output: '',
+      error: error instanceof Error ? error.message : String(error),
+    };
+  }
 
-ipcMain.handle('test-javascript-sound-object', async (_event, request: ScoreObjectEditorRequest) => {
   return testScoreObject(currentData, request, {
     ensureJavaScriptEngine,
     javaScriptSession,
+    javaRuntimeClient,
   });
+}
+
+for (const channel of [
+  'test-score-object',
+  'test-external-sound-object',
+  'test-javascript-sound-object',
+] as const) {
+  ipcMain.handle(channel, (_event, request: ScoreObjectEditorRequest) => (
+    runScoreObjectTestRequest(request)
+  ));
+}
+
+ipcMain.handle('java-runtime:reinitialize', async () => {
+  if (!currentData) {
+    return { ok: false, error: 'No project loaded.' };
+  }
+
+  if (!currentData.usesJavaRuntime()) {
+    return { ok: false, error: 'Active project does not use the Java runtime.' };
+  }
+
+  if (!javaRuntimeSessionManager) {
+    return { ok: false, error: 'Java runtime manager is unavailable.' };
+  }
+
+  try {
+    const javaRuntimeClient = await javaRuntimeSessionManager.reinitialize(
+      currentData,
+      currentProjectSessionId,
+      currentFilePath,
+    );
+    await currentData.processOnLoadAsync(javaScriptSession ?? undefined, javaRuntimeClient);
+    return { ok: true };
+  } catch (error) {
+    return { ok: false, error: error instanceof Error ? error.message : String(error) };
+  }
 });
 
 ipcMain.handle('send-bsb-realtime-control-update', (_event, update: BsbRealtimeControlUpdate) => {

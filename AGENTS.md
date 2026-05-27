@@ -1,6 +1,6 @@
 # blue-electron Development Guidelines
 
-Auto-generated from all feature plans. Last updated: 2026-05-23
+Auto-generated from all feature plans. Last updated: 2026-05-26
 
 ## Active Technologies
 - React 19.x, Electron, dockview 5.2.0 + collapsed auxiliary-group planning for the workbench shell (013-collapsed-sidebar-research)
@@ -48,6 +48,8 @@ Auto-generated from all feature plans. Last updated: 2026-05-23
 - Existing in-memory `BlueData` project model and `.blue` XML; waveform cache data is derived app state only and is not persisted (047-score-object-bar-renderers)
 - TypeScript 5.8.x, React 19.x, Electron 35.x, strict monorepo packages + `@blue/data` note processors and score model, Electron main/preload IPC bridge, Zustand 5.x project store, React renderer components, Radix Context Menu, Vitest 4.x (048-note-processor-parity)
 - Main-process in-memory `BlueData` remains canonical; `.blue` XML remains canonical persistence; renderer edits are transient snapshots and explicit project document patches (048-note-processor-parity)
+- TypeScript 5.8.x, React 19.x, Electron 35.x, Java 17+ helper runtime target, Maven 3.x build + `@blue/data`, `@blue/app` Electron main/preload/renderer IPC, Node `zeromq` in Electron main, Java JeroMQ, Clojure 1.12.x, Pomegranate for Java Blue Clojure dependency metadata, Jackson or equivalent JSON binding inside the helper, Vitest 4.x, JUnit 5 (049-blue-java-runtime)
+- `.blue` XML remains canonical project persistence; `BlueData` remains main-process canonical project document; Clojure project dependency metadata remains in `pluginData`; helper JAR is a build artifact copied into `packages/blue-app/assets/java/` (049-blue-java-runtime)
 
 - TypeScript 5.8.x, React 19.x, Electron 35.x, strict renderer/main/preload packages, pure TypeScript `@blue/data` + `PresetGroup`/`Preset` BSB preset model, Zustand 5.x project store with BSB interface/opcode-list patch support, Dockview 5.2.0, CodeMirror 6, `BsbInterfacePatch` union type for structured BSB mutations (022-bsb-interface-parity)
 - BSB Interface tab now renders an editable widget canvas with selection, property-sheet editing, grid settings, preset application, and Java-style split-view UDO editor (UDOTable + UDOEditor); snapshot contract extended with `widgetTree`, `gridSettings`, `editEnabled`, `presetGroup`, `opcodeListText`; widget-specific rendering (Slider, Knob, Toggle, etc.) deferred to SPEC 023 (022-bsb-interface-parity)
@@ -84,6 +86,6 @@ TypeScript 5.x, strict mode: Follow standard conventions
 <!-- MANUAL ADDITIONS END -->
 
 ## Recent Changes
+- 049-blue-java-runtime: Added TypeScript 5.8.x, React 19.x, Electron 35.x, Java 17+ helper runtime target, Maven 3.x build + `@blue/data`, `@blue/app` Electron main/preload/renderer IPC, Node `zeromq` in Electron main, Java JeroMQ, Clojure 1.12.x, Pomegranate for Java Blue Clojure dependency metadata, Jackson or equivalent JSON binding inside the helper, Vitest 4.x, JUnit 5
 - 048-note-processor-parity: Added TypeScript 5.8.x, React 19.x, Electron 35.x, strict monorepo packages + `@blue/data` note processors and score model, Electron main/preload IPC bridge, Zustand 5.x project store, React renderer components, Radix Context Menu, Vitest 4.x
 - 047-score-object-bar-renderers: Added TypeScript 5.8.x, React 19.x, Electron 35.x + `@blue/data`, React 19 renderer components, Zustand 5.x project store, Dockview 5.2.0 score workbench shell, Vitest 4.x, existing Electron main/preload IPC only if waveform file access requires app-side file reads
-- 044-program-settings-parity: Added TypeScript 5.8.x, React 19.x, Electron 35.x, strict renderer/main/preload packages, pure TypeScript `@blue/data` for project mutation helpers + Electron `app`/`BrowserWindow`/IPC/settings window, existing `settings-window.ts`, preload `blueAPI`, Zustand 5.x where still useful for renderer-local app preferences, `@blue/data` `BlueData`/`ProjectProperties`/`TimeState`/`Mixer`/`UDOStyle`/`TimeBase`/`SnapValueName`, existing playback store and `EngineBridge`, existing CSD export/render-command helpers, Vitest 4.x

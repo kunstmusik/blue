@@ -2,6 +2,7 @@ import React, { useCallback } from 'react';
 import WidgetWrapper from './WidgetWrapper';
 import { getWidgetDisplaySize } from './utils';
 import type { BSBWidgetPatchComponentProps } from './widget-component-props';
+import BsbTextLabel from './BsbTextLabel';
 
 type BSBCheckBoxWidgetProps = BSBWidgetPatchComponentProps;
 
@@ -39,8 +40,8 @@ function BSBCheckBoxWidget({
   return (
     <WidgetWrapper node={node} isSelected={isSelected} editEnabled={editEnabled} onWidgetSelect={onWidgetSelect} autoSize displayWidth={displaySize.width} displayHeight={displaySize.height} resizeMeta={resizeMeta} gridSnapEnabled={gridSnapEnabled} gridSnapWidth={gridSnapWidth} gridSnapHeight={gridSnapHeight} onBsbInterfacePatch={onBsbInterfacePatch} selectedWidgetIds={selectedWidgetIds} getWidgetPosition={getWidgetPosition} onWidgetAction={onWidgetAction}>
       <div
-        className="flex h-full w-full items-center gap-1.5 whitespace-nowrap"
-        style={{ fontFamily: 'Roboto, sans-serif', fontSize: 12, cursor: editEnabled ? 'default' : 'pointer' }}
+        className="flex h-full w-full items-center gap-1.5"
+        style={{ fontFamily: 'Roboto, sans-serif', fontSize: 12, cursor: editEnabled ? 'default' : 'pointer', color: 'rgb(240,240,255)' }}
         onClick={handleToggle}
       >
         <svg width={13} height={13} className="shrink-0">
@@ -49,7 +50,7 @@ function BSBCheckBoxWidget({
             <path d="M2 6l3 3 5-5" fill="none" stroke="rgb(240,240,255)" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
           )}
         </svg>
-        <span className="text-[12px]" style={{ color: 'rgb(240,240,255)' }}>{labelText}</span>
+        <BsbTextLabel text={labelText} plainClassName="block text-[12px]" htmlClassName="inline-block max-w-full text-[12px]" />
       </div>
     </WidgetWrapper>
   );

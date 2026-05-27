@@ -93,6 +93,36 @@ describe('Score model compatibility', () => {
       expect((score[0] as PolyObject).getName()).toBe('Java Poly');
     });
 
+    it('forces top-level PolyObject layer groups to TimeBehavior.NONE when loading legacy score XML', () => {
+      const xml = `<score>
+        <soundObject type="blue.soundObject.PolyObject" name="Legacy Root">
+          <startTime type="BEATS"><csoundBeats>0.0</csoundBeats></startTime>
+          <subjectiveDuration type="BEATS"><csoundBeats>2.0</csoundBeats></subjectiveDuration>
+          <name>Legacy Root</name>
+          <backgroundColor>-16777216</backgroundColor>
+          <timeBehavior>0</timeBehavior>
+          <soundLayer name="Layer 1">
+            <soundObject type="blue.soundObject.GenericScore">
+              <startTime type="BEATS"><csoundBeats>0.0</csoundBeats></startTime>
+              <subjectiveDuration type="BEATS"><csoundBeats>4.0</csoundBeats></subjectiveDuration>
+              <name>Score 1</name>
+              <backgroundColor>-16777216</backgroundColor>
+              <timeBehavior>2</timeBehavior>
+              <scoreText>i1 0 1 440
+i1 2 1 440</scoreText>
+            </soundObject>
+          </soundLayer>
+        </soundObject>
+      </score>`;
+      const elem = Element.parse(xml);
+      const score = Score.loadFromXML(elem);
+
+      expect((score[0] as PolyObject).getTimeBehavior()).toBe(TimeBehavior.NONE);
+
+      const notes = score.generateForCSD(new CompileData(), 0, -1);
+      expect([...notes].map((note) => note.getStartTime())).toEqual([0, 2]);
+    });
+
     it('loads nested GenericScore with Java full class name', () => {
       const xml = `<score>
         <polyObject type="PolyObject" name="Test">

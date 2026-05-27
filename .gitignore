@@ -29,3 +29,5 @@ npm-debug.log*
 
 .pnpm-store
 *.blue~
+packages/blue-java/target
+temp*.csd

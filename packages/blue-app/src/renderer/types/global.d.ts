@@ -100,6 +100,7 @@ declare global {
       testJavascriptSoundObject: (
         request: ScoreObjectEditorRequest,
       ) => Promise<ScoreObjectTestResult>;
+      reinitializeClojureRuntime: () => Promise<{ ok: boolean; error?: string }>;
       getNestedPolyObjectSnapshot: (
         location: ScoreObjectLocationRef,
       ) => Promise<PolyObjectLayerGroupSnapshot | null>;

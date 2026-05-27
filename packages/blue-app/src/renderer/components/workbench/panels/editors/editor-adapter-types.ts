@@ -2,7 +2,7 @@ import type { Completion } from '@codemirror/autocomplete';
 
 export type SelectedEditorKind = 'codemirror';
 
-export type CsoundDocumentMode = 'orc' | 'sco' | 'csd' | 'text' | 'javascript' | 'python';
+export type CsoundDocumentMode = 'orc' | 'sco' | 'csd' | 'text' | 'javascript' | 'python' | 'clojure';
 
 export interface CsoundCompletionContext {
   text: string;

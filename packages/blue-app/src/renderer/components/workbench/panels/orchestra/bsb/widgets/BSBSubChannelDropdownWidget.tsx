@@ -1,6 +1,7 @@
 import React from 'react';
 import { ChevronDown } from 'lucide-react';
 import { getWidgetDisplaySize } from './utils';
+import BsbTextLabel from './BsbTextLabel';
 import WidgetWrapper from './WidgetWrapper';
 import type { BSBWidgetComponentProps } from './widget-component-props';
 
@@ -32,7 +33,7 @@ function BSBSubChannelDropdownWidget({
         className="flex h-full w-full items-center justify-between gap-1 rounded border border-blue-border bg-[#111a2d] px-2 py-1 text-[11px] text-gray-200 outline-none"
         style={{ pointerEvents: editEnabled ? 'none' : undefined }}
       >
-        <span className="truncate">{displayText}</span>
+        <BsbTextLabel text={displayText} plainClassName="truncate" htmlClassName="inline-block max-w-full" />
         <ChevronDown size={12} className="shrink-0" />
       </button>
     </WidgetWrapper>
