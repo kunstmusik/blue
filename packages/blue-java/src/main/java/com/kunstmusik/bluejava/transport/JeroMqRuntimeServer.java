@@ -16,6 +16,8 @@ import org.zeromq.ZContext;
 import org.zeromq.ZMQ;
 
 import java.io.File;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -105,14 +107,22 @@ public final class JeroMqRuntimeServer {
                         request.id,
                         initializeSession(request),
                         elapsedMs(startedAt));
-                case CLOJURE_EVAL -> RuntimeResponseEnvelope.success(
-                        request.id,
-                        evaluateClojure(request),
-                        elapsedMs(startedAt));
-                case CLOJURE_EVAL_SCORE_OBJECT -> RuntimeResponseEnvelope.success(
-                        request.id,
-                        evaluateClojureScoreObject(request),
-                        elapsedMs(startedAt));
+                case CLOJURE_EVAL -> {
+                    RequestResult result = evaluateClojure(request);
+                    yield RuntimeResponseEnvelope.success(
+                                    request.id,
+                                    result.result(),
+                                    elapsedMs(startedAt))
+                            .withOutput(result.stdout(), result.stderr());
+                }
+                case CLOJURE_EVAL_SCORE_OBJECT -> {
+                    RequestResult result = evaluateClojureScoreObject(request);
+                    yield RuntimeResponseEnvelope.success(
+                                    request.id,
+                                    result.result(),
+                                    elapsedMs(startedAt))
+                            .withOutput(result.stdout(), result.stderr());
+                }
                 case CLOJURE_REINITIALIZE -> RuntimeResponseEnvelope.success(
                         request.id,
                         reinitializeClojure(),
@@ -124,15 +134,22 @@ public final class JeroMqRuntimeServer {
             };
         } catch (ClojureEvaluationException ex) {
             RuntimeErrorEnvelope error = new RuntimeErrorEnvelope("CLOJURE_EVALUATION_ERROR", ex.getMessage());
-            error.stack = ex.getCause() != null ? ex.getCause().toString() : ex.toString();
+            error.stack = stackTraceToString(ex.getCause() != null ? ex.getCause() : ex);
             error.line = ex.getLine();
             error.column = ex.getColumn();
-            return RuntimeResponseEnvelope.error(request.id, error, elapsedMs(startedAt));
+            return RuntimeResponseEnvelope.error(request.id, error, elapsedMs(startedAt))
+                    .withOutput(ex.getStdout(), ex.getStderr());
         } catch (IllegalArgumentException ex) {
             return RuntimeResponseEnvelope.error(
                     request.id,
                     new RuntimeErrorEnvelope("PROTOCOL_ERROR", ex.getMessage()),
                     elapsedMs(startedAt));
+        } catch (Throwable ex) {
+            RuntimeErrorEnvelope error = new RuntimeErrorEnvelope(
+                    "INTERNAL_SERVER_ERROR",
+                    ex.getMessage() != null ? ex.getMessage() : "Unexpected Java runtime helper error");
+            error.stack = stackTraceToString(ex);
+            return RuntimeResponseEnvelope.error(request.id, error, elapsedMs(startedAt));
         }
     }
 
@@ -152,32 +169,32 @@ public final class JeroMqRuntimeServer {
         return result;
     }
 
-    private Map<String, Object> evaluateClojure(RuntimeRequestEnvelope request) {
+    private RequestResult evaluateClojure(RuntimeRequestEnvelope request) {
         ensureProjectSession();
         ClojureEvalParams params = objectMapper.convertValue(request.params, ClojureEvalParams.class);
-        String value = projectSession.getClojureSession().eval(
+        ClojureSession.ClojureEvaluationResult evaluation = projectSession.getClojureSession().evalWithOutput(
                 params.code,
                 params.bindings != null ? params.bindings : Map.of(),
                 params.returnVariableName);
 
         Map<String, Object> result = new LinkedHashMap<>();
-        result.put("value", value);
+        result.put("value", evaluation.value());
         result.put("namespace", projectSession.getClojureSession().getNamespace());
-        return result;
+        return new RequestResult(result, evaluation.stdout(), evaluation.stderr());
     }
 
-    private Map<String, Object> evaluateClojureScoreObject(RuntimeRequestEnvelope request) {
+    private RequestResult evaluateClojureScoreObject(RuntimeRequestEnvelope request) {
         ensureProjectSession();
         ClojureEvalScoreObjectParams params = objectMapper.convertValue(request.params, ClojureEvalScoreObjectParams.class);
-        String scoreText = projectSession.getClojureSession().evaluateScoreObject(
+        ClojureSession.ClojureEvaluationResult evaluation = projectSession.getClojureSession().evaluateScoreObjectWithOutput(
                 params.code,
                 params.blueDuration,
                 params.blueProjectDir != null ? params.blueProjectDir : projectSession.getProjectDir());
 
         Map<String, Object> result = new LinkedHashMap<>();
-        result.put("scoreText", scoreText);
+        result.put("scoreText", evaluation.value());
         result.put("namespace", projectSession.getClojureSession().getNamespace());
-        return result;
+        return new RequestResult(result, evaluation.stdout(), evaluation.stderr());
     }
 
     private Map<String, Object> reinitializeClojure() {
@@ -214,6 +231,15 @@ public final class JeroMqRuntimeServer {
 
     private static long elapsedMs(long startedAt) {
         return (System.nanoTime() - startedAt) / 1_000_000L;
+    }
+
+    private static String stackTraceToString(Throwable throwable) {
+        StringWriter writer = new StringWriter();
+        throwable.printStackTrace(new PrintWriter(writer));
+        return writer.toString();
+    }
+
+    private record RequestResult(Map<String, Object> result, String stdout, String stderr) {
     }
 
     public static final class SessionInitParams {

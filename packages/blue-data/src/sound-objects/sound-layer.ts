@@ -16,15 +16,6 @@ import { NoteList } from './note-list';
 import { NoteProcessorChain } from '../note-processors/note-processor-chain';
 import { applyNoteProcessorChain } from '../utilities/score';
 
-type AsyncSoundLayerObject = SoundObject & {
-  generateForCSDAsync?: (
-    context: TimeContext,
-    compileData: CompileData,
-    startTime: number,
-    endTime: number,
-  ) => Promise<NoteList>;
-};
-
 export class SoundLayer extends Array<SoundObject> implements Layer {
   private _name = '';
   private _muted = false;
@@ -211,9 +202,8 @@ export class SoundLayer extends Array<SoundObject> implements Layer {
         continue;
       }
 
-      const asyncSoundObject = sObj as AsyncSoundLayerObject;
-      const nl = asyncSoundObject.generateForCSDAsync
-        ? await asyncSoundObject.generateForCSDAsync(context, compileData, adjustedStart, adjustedEnd)
+      const nl = sObj.generateForCSDAsync
+        ? await sObj.generateForCSDAsync(context, compileData, adjustedStart, adjustedEnd)
         : sObj.generateForCSD(context, compileData, adjustedStart, adjustedEnd);
       noteList.merge(nl);
     }

@@ -4,27 +4,28 @@
 **Branch**: `049-blue-java-runtime`
 **Note**: Historical spec sections below preserve their closeout-time branch and feature-context notes; only the topmost spec package reflects the current active handoff state.
 
-## Current Focus: Spec 049 Implemented
+## Current Focus: Spec 049 Closed
 
 **Branch**: `049-blue-java-runtime`
 
 ### Summary
-Spec 049 is implemented and validated. The app now builds and packages an optional Java helper, starts a per-project Clojure runtime with project-directory CWD semantics, preserves first-class `ClojureObject` and Clojure dependency metadata in `@blue/data`, and routes Clojure on-load, test, playback, and CSD generation through async Java-aware app paths.
+Spec 049 is closed and validated. The app now builds and packages an optional Java helper, starts a per-project Clojure runtime with project-directory CWD semantics, preserves first-class `ClojureObject` and Clojure dependency metadata in `@blue/data`, and routes Clojure on-load, test, playback, and CSD generation through async Java-aware app paths.
 
-The closeout scope covers the shipped Clojure bridge end to end, including the dedicated Clojure editor's Reinitialize control. The original task plan still retains a small follow-up set for extra hardening coverage and future Jython abstraction work; those items stay documented in `specs/049-blue-java-runtime/tasks.md` instead of being silently dropped.
+The closeout scope covers the shipped Clojure bridge end to end, including the dedicated Clojure editor's Reinitialize control, helper auth validation, dependency-input validation, and transport-failure recovery that invalidates suspect helper sessions before the next Java-dependent action. The original task plan still retains a small post-close follow-up set for deeper error-path coverage and future Jython abstraction work; those items stay documented in `specs/049-blue-java-runtime/tasks.md` instead of being silently dropped.
 
 ### Handoff State
 - `.specify/feature.json` points to `specs/049-blue-java-runtime`.
 - Current branch is `049-blue-java-runtime`.
-- `spec.md` status is `Implemented`.
+- `spec.md` status is `Closed`.
 - `quickstart.md`, `STATUS.md`, and `tasks.md` are updated to reflect shipped scope plus remaining follow-up hardening items.
-- Automated package validation is complete.
+- Automated package validation and the spec-kit prerequisite check are complete.
 - A manual saved-project relative-file parity smoke test is still worth running on a local Java install if the user wants one more end-to-end confirmation.
 
 ### Delivered Scope
 - Maven-owned `packages/blue-java` helper package builds a shaded `blue-java.jar` and copies it into `packages/blue-app/assets/java/blue-java.jar`.
 - Electron main resolves the helper in development builds, probes user-installed Java 17+, launches one helper per active project, and tears it down on project replacement or app quit.
 - The helper protocol now covers health, session init, Clojure eval, score-object eval, reinitialize, and shutdown over JeroMQ/ZeroMQ TCP loopback with auth tokens and structured error envelopes.
+- The helper rejects unsafe dependency coordinates or versions before evaluation, and the TS bridge now resets broken REQ sockets, invalidates suspect helper sessions, and restarts on the next Java-dependent action after a transport failure.
 - `@blue/data` now has first-class `ClojureObject` and `ClojureProjectData` support plus async Java-runtime hooks for on-load processing and CSD generation.
 - Playback, generated CSD, disk export, and score-object test flows use async Java-aware rendering when the active project needs the Java runtime.
 - The score-object editor surface now includes a dedicated `ClojureObjectEditor` with Process on Load, Test, and Reinitialize controls plus runtime error messaging.
@@ -33,14 +34,15 @@ The closeout scope covers the shipped Clojure bridge end to end, including the d
 ### Validation
 - `pnpm --filter @blue/java-runtime test` - pass
 - `pnpm --filter @blue/java-runtime build` - pass
-- `pnpm --filter @blue/data test -- --maxWorkers=1` - pass (`113` files, `1150` tests)
-- `pnpm --filter @blue/app test` - pass (`124` files, `1307` passed, `2` skipped)
+- `pnpm --filter @blue/data test -- --maxWorkers=1` - pass (`113` files, `1154` tests)
+- `pnpm --filter @blue/app test` - pass (`125` files, `1317` passed, `2` skipped)
 - `pnpm --filter @blue/app build` - pass
 - `pnpm --filter @blue/app exec vitest run src/renderer/tests/clojure-object-editor.test.tsx --browser.enabled=false` - pass
+- `./.specify/scripts/bash/check-prerequisites.sh --json --include-tasks --require-tasks` - pass
 - `git diff --check` - pass
 
 ### Next Recommended Step
-Spec 049 can be treated as implemented and validated for the Clojure bridge. The next useful step is either closing the remaining Java-runtime hardening items or starting the next Java-runtime consumer slice, such as Blue Live parity.
+Spec 049 is closed for the Clojure bridge. The next useful step is either scheduling the remaining Java-runtime hardening items or starting the next Java-runtime consumer slice, such as Blue Live parity.
 
 ## Previous Focus: Spec 047 Closed
 

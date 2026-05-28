@@ -32,6 +32,14 @@ export interface SoundObject extends ScoreObject, DeepCopyable<SoundObject> {
     endTime: number,
   ): NoteList;
 
+  /** Generate notes for CSD output when an environment-backed runtime is required. */
+  generateForCSDAsync?(
+    context: TimeContext,
+    compileData: CompileData,
+    startTime: number,
+    endTime: number,
+  ): Promise<NoteList>;
+
   /** Get the note processor chain for this sound object. */
   getNoteProcessorChain(): NoteProcessorChain;
   /** Set the note processor chain for this sound object. */

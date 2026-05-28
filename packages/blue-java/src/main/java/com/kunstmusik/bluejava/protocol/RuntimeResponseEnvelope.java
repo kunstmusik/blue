@@ -26,4 +26,10 @@ public final class RuntimeResponseEnvelope<T> {
         response.elapsedMs = elapsedMs;
         return response;
     }
+
+    public RuntimeResponseEnvelope<T> withOutput(String stdout, String stderr) {
+        this.stdout = stdout != null ? stdout : "";
+        this.stderr = stderr != null ? stderr : "";
+        return this;
+    }
 }

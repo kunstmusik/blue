@@ -79,6 +79,30 @@ describe('java-runtime-process', () => {
     expect(handle.stderrText).toBe('warn');
   });
 
+  it('caps retained helper stdout and stderr text', async () => {
+    const child = new MockChildProcess();
+    const handle = await createJavaRuntimeProcess(
+      '/helper.jar',
+      null,
+      'java',
+      {
+        spawnProcess: vi.fn(() => child as any) as any,
+        reservePort: vi.fn()
+          .mockResolvedValueOnce(5555)
+          .mockResolvedValueOnce(5556),
+        createAuthToken: () => 'secret',
+      },
+    );
+
+    child.stdout.emit('data', 'a'.repeat(1024 * 1024 + 100));
+    child.stderr.emit('data', 'b'.repeat(1024 * 1024 + 100));
+
+    expect(handle.stdoutText.startsWith('[truncated]\n')).toBe(true);
+    expect(handle.stderrText.startsWith('[truncated]\n')).toBe(true);
+    expect(handle.stdoutText.length).toBeLessThan(1024 * 1024 + 20);
+    expect(handle.stderrText.length).toBeLessThan(1024 * 1024 + 20);
+  });
+
   it('terminates a running helper process', async () => {
     const child = new MockChildProcess();
     const handle = {
@@ -95,5 +119,39 @@ describe('java-runtime-process', () => {
     terminateJavaRuntimeProcess(handle as any);
 
     expect(child.kill).toHaveBeenCalledWith('SIGTERM');
+  });
+
+  it('escalates termination to SIGKILL when a process does not exit', async () => {
+    vi.useFakeTimers();
+    try {
+      const child = new MockChildProcess();
+      child.kill = vi.fn((signal?: NodeJS.Signals) => {
+        if (signal === 'SIGKILL') {
+          child.killed = true;
+        }
+        return true;
+      });
+      const handle = {
+        process: child as any,
+        javaExecutable: 'java',
+        artifactPath: '/helper.jar',
+        controlEndpoint: 'tcp://127.0.0.1:5555',
+        eventEndpoint: 'tcp://127.0.0.1:5556',
+        authToken: 'token',
+        stdoutText: '',
+        stderrText: '',
+        exited: false,
+        exitCode: null,
+        exitSignal: null,
+      };
+
+      terminateJavaRuntimeProcess(handle as any, 'SIGTERM', 50);
+      await vi.advanceTimersByTimeAsync(50);
+
+      expect(child.kill).toHaveBeenCalledWith('SIGTERM');
+      expect(child.kill).toHaveBeenCalledWith('SIGKILL');
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

@@ -192,6 +192,7 @@ function patchesRequireCanonicalProjectRefresh(
     (patch) => (
       (patch.score !== undefined && scorePatchRequiresCanonicalProjectRefresh(patch.score))
       || patch.mixer?.type === 'renameChannelListGroup'
+      || patch.clojureProject !== undefined
     ),
   );
 }

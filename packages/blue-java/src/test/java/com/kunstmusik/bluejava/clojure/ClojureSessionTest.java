@@ -16,4 +16,18 @@ class ClojureSessionTest {
 
         assertEquals("i1 2 1 440", scoreText);
     }
+
+    @Test
+    void capturesClojureStdoutAndStderr() {
+        ClojureSession session = new ClojureSession("user0");
+
+        ClojureSession.ClojureEvaluationResult result = session.evalWithOutput(
+                "(println \"hello\") (binding [*out* *err*] (println \"warn\")) \"done\"",
+                Map.of(),
+                null);
+
+        assertEquals("done", result.value());
+        assertEquals("hello\n", result.stdout());
+        assertEquals("warn\n", result.stderr());
+    }
 }

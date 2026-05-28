@@ -15,15 +15,6 @@ import { SoundObject } from './sound-object';
 import { initBasicFromXML, getBasicXML } from './sound-object-utilities';
 import { setScoreStart } from '../utilities/score';
 
-type AsyncSoundObject = SoundObject & {
-  generateForCSDAsync?: (
-    context: TimeContext,
-    compileData: CompileData,
-    startTime: number,
-    endTime: number,
-  ) => Promise<NoteList>;
-};
-
 export class Instance extends AbstractSoundObject {
   private _soundObject: SoundObject | null = null;
   private _libraryId = '';
@@ -85,9 +76,8 @@ export class Instance extends AbstractSoundObject {
       return new NoteList();
     }
 
-    const target = this._soundObject as AsyncSoundObject;
-    const nl = target.generateForCSDAsync
-      ? await target.generateForCSDAsync(context, compileData, startTime, endTime)
+    const nl = this._soundObject.generateForCSDAsync
+      ? await this._soundObject.generateForCSDAsync(context, compileData, startTime, endTime)
       : this._soundObject.generateForCSD(context, compileData, startTime, endTime);
 
     const npc = this.getNoteProcessorChain();

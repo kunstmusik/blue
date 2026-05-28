@@ -2,7 +2,7 @@
 
 **Feature Branch**: `049-blue-java-runtime`  
 **Created**: 2026-05-26  
-**Status**: Implemented  
+**Status**: Closed
 **Input**: User description: "For parity, Java processing should be optionally available for Clojure first and later Jython. Create a Maven Java library under packages/blue-java that builds a fat JAR including Clojure and JeroMQ, copies it into blue-app for packaging, runs with user-installed Java, starts a per-project runtime process with the project folder as CWD, and exposes persistent Clojure evaluation to TS Blue."
 
 ## User Scenarios & Testing *(mandatory)*

@@ -568,6 +568,12 @@ export class BlueData implements BlueDataObject {
       }
     }
 
+    for (const soundObject of this.sObjLib.getAllObjects()) {
+      if (visit(soundObject)) {
+        return true;
+      }
+    }
+
     return false;
   }
 

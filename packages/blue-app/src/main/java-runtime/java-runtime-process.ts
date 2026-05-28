@@ -1,11 +1,12 @@
 import { execFile, spawn } from 'child_process';
-import type { ChildProcessWithoutNullStreams } from 'child_process';
+import type { ChildProcess } from 'child_process';
 import { promisify } from 'util';
 import * as crypto from 'crypto';
 import * as fs from 'fs';
 import * as net from 'net';
 
 const execFileAsync = promisify(execFile);
+const MAX_PROCESS_OUTPUT_CHARS = 1024 * 1024;
 
 export interface JavaExecutableProbe {
   available: boolean;
@@ -16,7 +17,7 @@ export interface JavaExecutableProbe {
 }
 
 export interface JavaRuntimeProcessHandle {
-  process: ChildProcessWithoutNullStreams;
+  process: ChildProcess;
   javaExecutable: string;
   artifactPath: string;
   controlEndpoint: string;
@@ -25,6 +26,10 @@ export interface JavaRuntimeProcessHandle {
   workingDirectory?: string;
   stdoutText: string;
   stderrText: string;
+  exited: boolean;
+  exitCode: number | null;
+  exitSignal: NodeJS.Signals | null;
+  spawnError?: string;
 }
 
 interface JavaRuntimeProcessDependencies {
@@ -118,7 +123,7 @@ export async function createJavaRuntimeProcess(
       cwd: workingDirectory,
       stdio: ['ignore', 'pipe', 'pipe'],
     },
-  ) as unknown as ChildProcessWithoutNullStreams;
+  );
 
   const handle: JavaRuntimeProcessHandle = {
     process: child,
@@ -130,14 +135,27 @@ export async function createJavaRuntimeProcess(
     workingDirectory,
     stdoutText: '',
     stderrText: '',
+    exited: false,
+    exitCode: null,
+    exitSignal: null,
   };
 
-  child.stdout.on('data', (chunk: Buffer | string) => {
-    handle.stdoutText += chunk.toString();
+  child.stdout?.on('data', (chunk: Buffer | string) => {
+    handle.stdoutText = appendProcessOutput(handle.stdoutText, chunk.toString());
   });
 
-  child.stderr.on('data', (chunk: Buffer | string) => {
-    handle.stderrText += chunk.toString();
+  child.stderr?.on('data', (chunk: Buffer | string) => {
+    handle.stderrText = appendProcessOutput(handle.stderrText, chunk.toString());
+  });
+
+  child.on('exit', (code, signal) => {
+    handle.exited = true;
+    handle.exitCode = code;
+    handle.exitSignal = signal;
+  });
+
+  child.on('error', (error) => {
+    handle.spawnError = error instanceof Error ? error.message : String(error);
   });
 
   return handle;
@@ -146,10 +164,35 @@ export async function createJavaRuntimeProcess(
 export function terminateJavaRuntimeProcess(
   handle: JavaRuntimeProcessHandle,
   signal: NodeJS.Signals = 'SIGTERM',
+  graceMs = 2000,
 ): void {
-  if (handle.process.exitCode === null && !handle.process.killed) {
+  if (isJavaRuntimeProcessRunning(handle)) {
     handle.process.kill(signal);
   }
+
+  if (signal !== 'SIGTERM') {
+    return;
+  }
+
+  const timer = setTimeout(() => {
+    if (isJavaRuntimeProcessRunning(handle)) {
+      handle.process.kill('SIGKILL');
+    }
+  }, graceMs);
+  timer.unref?.();
+}
+
+export function isJavaRuntimeProcessRunning(handle: JavaRuntimeProcessHandle): boolean {
+  return !handle.exited && handle.process.exitCode === null && !handle.process.killed;
+}
+
+function appendProcessOutput(current: string, next: string): string {
+  const combined = current + next;
+  if (combined.length <= MAX_PROCESS_OUTPUT_CHARS) {
+    return combined;
+  }
+
+  return `[truncated]\n${combined.slice(combined.length - MAX_PROCESS_OUTPUT_CHARS)}`;
 }
 
 function resolveWorkingDirectory(

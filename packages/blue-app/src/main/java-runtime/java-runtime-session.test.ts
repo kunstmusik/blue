@@ -17,6 +17,16 @@ function createDataWithDependencies() {
   } as any;
 }
 
+function deferred<T>() {
+  let resolve!: (value: T) => void;
+  let reject!: (reason?: unknown) => void;
+  const promise = new Promise<T>((res, rej) => {
+    resolve = res;
+    reject = rej;
+  });
+  return { promise, resolve, reject };
+}
+
 describe('java-runtime-session', () => {
   it('starts the helper and initializes a project session with dependencies', async () => {
     const data = createDataWithDependencies();
@@ -184,5 +194,51 @@ describe('java-runtime-session', () => {
       projectDir: '/tmp/project-b',
       clojureDependencies: [],
     });
+  });
+
+  it('shares one startup when ensureReady is called concurrently for the same project', async () => {
+    const data = { getClojureProjectData: () => null } as any;
+    const startup = deferred<any>();
+    const client = {
+      connect: vi.fn(async () => undefined),
+      disconnect: vi.fn(async () => undefined),
+      health: vi.fn(async () => ({ ok: true, result: { version: '0.0.1', capabilities: ['clojure'], cwd: '/tmp/project', methods: ['runtime.health'] } })),
+      initSession: vi.fn(async () => ({ ok: true, result: { projectSessionId: 4, clojureNamespace: 'user0', dependenciesLoaded: [] } })),
+      reinitializeClojure: vi.fn(async () => ({ ok: true, result: { clojureNamespace: 'user1' } })),
+      evaluateClojure: vi.fn(),
+      evaluateClojureScoreObject: vi.fn(),
+      shutdown: vi.fn(async () => ({ ok: true, result: { accepted: true } })),
+    } as any;
+    const createProcess = vi.fn(() => startup.promise);
+
+    const manager = new JavaRuntimeSessionManager(
+      { isPackaged: false, mainModuleDir: '/repo/packages/blue-app/dist/main' },
+      {
+        resolveArtifactPath: () => ({ artifactPath: '/assets/blue-java.jar', candidatePaths: ['/assets/blue-java.jar'], exists: true }),
+        probeJavaExecutable: async () => ({ available: true, executable: 'java', versionMajor: 21, rawOutput: 'openjdk version "21.0.2"' }),
+        createJavaRuntimeProcess: createProcess,
+        createClient: () => client,
+      },
+    );
+
+    const first = manager.ensureReady(data, 4, '/tmp/project/demo.blue');
+    const second = manager.ensureReady(data, 4, '/tmp/project/demo.blue');
+
+    startup.resolve({
+      process: { exitCode: null, killed: false, kill: vi.fn() },
+      javaExecutable: 'java',
+      artifactPath: '/assets/blue-java.jar',
+      controlEndpoint: 'tcp://127.0.0.1:5555',
+      eventEndpoint: 'tcp://127.0.0.1:5556',
+      authToken: 'secret',
+      workingDirectory: '/tmp/project',
+      stdoutText: '',
+      stderrText: '',
+    });
+
+    await expect(first).resolves.toBe(client);
+    await expect(second).resolves.toBe(client);
+    expect(createProcess).toHaveBeenCalledTimes(1);
+    expect(client.initSession).toHaveBeenCalledTimes(1);
   });
 });

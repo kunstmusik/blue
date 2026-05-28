@@ -1,4 +1,4 @@
-import { Request, Subscriber } from 'zeromq';
+import { Request } from 'zeromq';
 import {
   JAVA_RUNTIME_METHODS,
   type ClojureEvalParams,
@@ -22,6 +22,7 @@ export interface JavaRuntimeClientOptions {
   eventEndpoint?: string;
   timeout?: number;
   authToken: string;
+  onTransportFailure?: () => void;
 }
 
 class JavaRuntimeRequestError extends Error {
@@ -59,37 +60,25 @@ function createFailureEnvelope<TResult>(
 
 export class JavaRuntimeClient {
   private socket: Request | null = null;
-  private subscriber: Subscriber | null = null;
   private readonly endpoint: string;
-  private readonly eventEndpoint?: string;
   private readonly timeout: number;
   private readonly authToken: string;
+  private readonly onTransportFailure?: () => void;
   private requestQueue: Promise<unknown> = Promise.resolve();
   private requestIndex = 0;
 
   constructor(options: JavaRuntimeClientOptions) {
     this.endpoint = options.endpoint;
-    this.eventEndpoint = options.eventEndpoint;
     this.timeout = options.timeout ?? 5000;
     this.authToken = options.authToken;
+    this.onTransportFailure = options.onTransportFailure;
   }
 
   async connect(): Promise<void> {
     this.ensureRequestSocket();
-
-    if (!this.subscriber && this.eventEndpoint) {
-      this.subscriber = new Subscriber();
-      this.subscriber.linger = 0;
-      this.subscriber.connect(this.eventEndpoint);
-    }
   }
 
   async disconnect(): Promise<void> {
-    if (this.subscriber) {
-      this.subscriber.close();
-      this.subscriber = null;
-    }
-
     this.resetRequestSocket();
   }
 
@@ -183,6 +172,9 @@ export class JavaRuntimeClient {
       // A REQ socket that hits a transport/state failure can no longer be reused safely.
       this.resetRequestSocket();
       if (error instanceof JavaRuntimeRequestError) {
+        if (error.code === 'TRANSPORT_ERROR') {
+          this.onTransportFailure?.();
+        }
         return createFailureEnvelope<TResult>(error);
       }
       throw error;

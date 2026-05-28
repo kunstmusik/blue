@@ -34,13 +34,15 @@ export function useScoreObjectTest(target: ScoreObjectEditorTargetSnapshot): Sco
       setTesting(false);
     }
   }, [flushPendingPatches, target]);
+  const clearTestOutput = useCallback(() => setTestOutput(null), []);
+  const clearTestError = useCallback(() => setTestError(null), []);
 
   return {
     testing,
     testOutput,
     testError,
     runTest,
-    clearTestOutput: () => setTestOutput(null),
-    clearTestError: () => setTestError(null),
+    clearTestOutput,
+    clearTestError,
   };
 }

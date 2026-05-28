@@ -7,7 +7,7 @@
 
 **Organization**: Tasks are grouped by user story so the Java helper artifact, Clojure runtime behavior, project CWD parity, diagnostics, and future Jython extensibility can be implemented and validated incrementally.
 
-**Closeout Note (2026-05-27)**: Core Clojure bridge scope is implemented and validated. Remaining unchecked tasks are explicit hardening or future-Jython follow-ups that stayed outside the accepted closeout slice.
+**Closeout Note (2026-05-27)**: The shipped Clojure bridge scope plus the late transport-recovery and dependency-input hardening are implemented and validated. Remaining unchecked tasks are explicit post-close follow-ups: saved-project relative-file fixture coverage, dedicated runtime error-mapping and helper error-path tests, and future-Jython abstraction work.
 
 ## Format: `[ID] [P?] [Story] Description`
 
@@ -155,13 +155,13 @@
 - [ ] T059 [P] [US4] Add helper-side malformed request, auth failure, and evaluation failure tests in `/Users/stevenyi/work/blue-electron/packages/blue-java/src/test/java/com/kunstmusik/bluejava/protocol/RuntimeErrorTest.java`
 - [ ] T060 [P] [US4] Add Java runtime timeout and unexpected-exit tests in `/Users/stevenyi/work/blue-electron/packages/blue-app/src/main/java-runtime/java-runtime-process.test.ts`
 - [x] T061 [P] [US4] Add renderer/main status display tests for unavailable Java processing in `/Users/stevenyi/work/blue-electron/packages/blue-app/src/renderer/tests/clojure-object-editor.test.tsx`
-- [ ] T062 [P] [US4] Add Clojure dependency metadata loading failure tests in `/Users/stevenyi/work/blue-electron/packages/blue-java/src/test/java/com/kunstmusik/bluejava/clojure/ClojureLibraryLoaderTest.java`
+- [x] T062 [P] [US4] Add Clojure dependency metadata loading failure tests in `/Users/stevenyi/work/blue-electron/packages/blue-java/src/test/java/com/kunstmusik/bluejava/clojure/ClojureLibraryLoaderTest.java`
 
 ### Implementation for User Story 4
 
 - [ ] T063 [US4] Implement stable runtime error codes and mapping in `/Users/stevenyi/work/blue-electron/packages/blue-app/src/main/java-runtime/java-runtime-errors.ts`
 - [x] T064 [US4] Implement helper auth validation, malformed-request responses, and structured error envelopes in `/Users/stevenyi/work/blue-electron/packages/blue-java/src/main/java/com/kunstmusik/bluejava/transport/JeroMqRuntimeServer.java`
-- [ ] T065 [US4] Implement process timeout handling, suspect-process invalidation, and restart path in `/Users/stevenyi/work/blue-electron/packages/blue-app/src/main/java-runtime/java-runtime-process.ts`
+- [x] T065 [US4] Implement request-timeout recovery, suspect-process invalidation, and helper restart path in `/Users/stevenyi/work/blue-electron/packages/blue-app/src/main/java-runtime/java-runtime-client.ts` and `/Users/stevenyi/work/blue-electron/packages/blue-app/src/main/java-runtime/java-runtime-session.ts`
 - [x] T066 [US4] Implement ClojureProjectData dependency extraction in `/Users/stevenyi/work/blue-electron/packages/blue-data/src/plugins/clojure-project-data.ts`
 - [x] T067 [US4] Implement helper-side dependency loading with Pomegranate in `/Users/stevenyi/work/blue-electron/packages/blue-java/src/main/java/com/kunstmusik/bluejava/clojure/ClojureLibraryLoader.java`
 - [x] T068 [US4] Surface Java runtime status and errors through preload/main IPC in `/Users/stevenyi/work/blue-electron/packages/blue-app/src/preload/preload.ts` and `/Users/stevenyi/work/blue-electron/packages/blue-app/src/main/main.ts`

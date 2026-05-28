@@ -6,8 +6,14 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 public final class ClojureLibraryLoader {
+    private static final Pattern SAFE_COORDINATES =
+            Pattern.compile("[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+");
+    private static final Pattern SAFE_VERSION =
+            Pattern.compile("[A-Za-z0-9_.-]+");
+
     public List<Map<String, Object>> loadDependencies(ClojureSession session, List<DependencySpec> dependencies) {
         List<Map<String, Object>> results = new ArrayList<>();
 
@@ -35,12 +41,21 @@ public final class ClojureLibraryLoader {
     }
 
     private String buildScript(DependencySpec dependency) {
+        String coordinates = dependency.coordinates.trim();
+        String version = dependency.version.trim();
+        if (!SAFE_COORDINATES.matcher(coordinates).matches()) {
+            throw new IllegalArgumentException("Invalid Clojure dependency coordinates: " + coordinates);
+        }
+        if (!SAFE_VERSION.matcher(version).matches()) {
+            throw new IllegalArgumentException("Invalid Clojure dependency version: " + version);
+        }
+
         return String.join("\n",
                 "(use '[cemerick.pomegranate :only (add-dependencies)])",
                 String.format(
                         "(add-dependencies :coordinates '[[%s \"%s\" :exclusions [org.clojure/clojure]]] :repositories (merge cemerick.pomegranate.aether/maven-central {\"clojars\" \"https://repo.clojars.org\"}))",
-                        dependency.coordinates,
-                        dependency.version));
+                        coordinates,
+                        version));
     }
 
     private boolean isBlank(String value) {

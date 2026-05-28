@@ -39,4 +39,17 @@ class RuntimeOptionsTest {
 
         assertTrue(error.getMessage().contains("--auth-token"));
     }
+
+    @Test
+    void rejectsNonTcpEndpoints() {
+        IllegalArgumentException error = assertThrows(
+                IllegalArgumentException.class,
+                () -> RuntimeOptions.parse(new String[]{
+                        "--control-endpoint", "ipc://runtime",
+                        "--auth-token", "secret"
+                })
+        );
+
+        assertTrue(error.getMessage().contains("tcp://"));
+    }
 }

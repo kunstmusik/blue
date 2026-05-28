@@ -21,6 +21,13 @@ export default function ClojureObjectEditor({ document, onPatch }: ScoreObjectEd
     clearTestError,
   } = useScoreObjectTest(document.target);
 
+  useEffect(() => {
+    setRuntimeError(null);
+    setReinitializing(false);
+    clearTestError();
+    clearTestOutput();
+  }, [document.target.selectionId, clearTestError, clearTestOutput]);
+
   const patch = useCallback((p: Record<string, unknown>) => {
     onPatch({
       type: 'updateTypeSpecificEditor',

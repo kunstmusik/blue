@@ -57,8 +57,10 @@ Expected coverage:
 
 - Protocol request/response serialization.
 - Helper health command.
+- Auth-token option parsing and request validation.
 - Clojure session persistence.
 - Clojure reinitialize semantics.
+- Dependency metadata input validation before helper-side evaluation.
 - Clojure output/error capture.
 
 ## Test App Integration
@@ -74,7 +76,7 @@ Expected coverage:
 - ClojureProjectData plugin XML preservation/parsing.
 - Java runtime path resolution.
 - Java runtime process launch with project folder CWD.
-- Java runtime client protocol and timeout handling.
+- Java runtime client protocol, timeout handling, and REQ-socket recovery after transport failures.
 - Clojure score-object test/render flow through Electron main.
 
 Focused closeout checks used for the shipped editor and app-bridge slice:

@@ -11,15 +11,8 @@ type RequestLike = {
   close: ReturnType<typeof vi.fn>;
 };
 
-type SubscriberLike = {
-  linger: number;
-  connect: ReturnType<typeof vi.fn>;
-  close: ReturnType<typeof vi.fn>;
-};
-
 const mockState = vi.hoisted(() => ({
   requestInstances: [] as RequestLike[],
-  subscriberInstances: [] as SubscriberLike[],
   onRequestCreated: null as ((request: RequestLike) => void) | null,
 }));
 
@@ -51,19 +44,8 @@ vi.mock('zeromq', () => {
     });
   }
 
-  class MockSubscriber {
-    linger = -1;
-    connect = vi.fn();
-    close = vi.fn();
-
-    constructor() {
-      mockState.subscriberInstances.push(this);
-    }
-  }
-
   return {
     Request: MockRequest,
-    Subscriber: MockSubscriber,
   };
 });
 
@@ -72,7 +54,6 @@ import { JavaRuntimeClient } from './java-runtime-client';
 describe('java-runtime-client', () => {
   beforeEach(() => {
     mockState.requestInstances.length = 0;
-    mockState.subscriberInstances.length = 0;
     mockState.onRequestCreated = null;
   });
 
@@ -90,7 +71,6 @@ describe('java-runtime-client', () => {
     expect(request.sendTimeout).toBe(4321);
     expect(request.receiveTimeout).toBe(4321);
     expect(request.connect).toHaveBeenCalledWith('tcp://127.0.0.1:5555');
-    expect(mockState.subscriberInstances[0].connect).toHaveBeenCalledWith('tcp://127.0.0.1:5556');
   });
 
   it('sends health requests and decodes the response', async () => {

@@ -69,6 +69,7 @@ import {
   type BsbRealtimeControlUpdate,
   type ProjectDocumentCommitReceipt,
   type ProjectDocumentPatch,
+  type ClojureProjectSnapshot,
   type NoteProcessorChainSnapshot,
   type ScoreObjectEditorRequest,
   type ScoreObjectEditorDocumentSnapshot,
@@ -1037,6 +1038,24 @@ async function disposeJavaRuntimeSession(): Promise<void> {
   }
 }
 
+function clojureProjectPatchChangesRuntimeDependencies(
+  data: BlueData,
+  patch: ClojureProjectSnapshot,
+): boolean {
+  const currentEntries = data.getClojureProjectData()?.getLibraryEntries() ?? [];
+  if (currentEntries.length !== patch.libraryEntries.length) {
+    return true;
+  }
+
+  return patch.libraryEntries.some((entry, index) => {
+    const current = currentEntries[index];
+    return (
+      current?.getDependencyCoordinates() !== entry.dependencyCoordinates ||
+      current?.getVersion() !== entry.version
+    );
+  });
+}
+
 async function ensureJavaRuntimeSession(data: BlueData | null): Promise<JavaRuntimeClient | null> {
   if (!data || !javaRuntimeSessionManager || !data.usesJavaRuntime()) {
     return null;
@@ -1734,7 +1753,7 @@ ipcMain.handle('get-project-document', () => {
   return getCurrentProjectDocument();
 });
 
-ipcMain.handle('commit-project-document-patches', (_event, patches: ProjectDocumentPatch[]) => {
+ipcMain.handle('commit-project-document-patches', async (_event, patches: ProjectDocumentPatch[]) => {
   if (!currentData) {
     throw new Error('No project loaded');
   }
@@ -1743,9 +1762,15 @@ ipcMain.handle('commit-project-document-patches', (_event, patches: ProjectDocum
     throw new Error('Empty project document patch batch');
   }
 
+  let javaRuntimeDependenciesChanged = false;
+
   for (const patch of patches) {
+    const clojureDependenciesChanged = patch.clojureProject
+      ? clojureProjectPatchChangesRuntimeDependencies(currentData, patch.clojureProject)
+      : false;
     maybeCloseRemovedProjectEffectEditors(patch);
-    applyProjectDocumentPatch(currentData, patch);
+    const changed = applyProjectDocumentPatch(currentData, patch);
+    javaRuntimeDependenciesChanged = javaRuntimeDependenciesChanged || (changed && clojureDependenciesChanged);
     if (engineBridge && engineBridge.isCurrentlyPlaying()) {
       void syncEngineWithProjectPatch(currentData, patch).catch((error) => {
         console.error('[main] Failed to sync engine with project patch:', error);
@@ -1754,6 +1779,10 @@ ipcMain.handle('commit-project-document-patches', (_event, patches: ProjectDocum
   }
 
   currentProjectRevision += 1;
+  if (javaRuntimeDependenciesChanged) {
+    currentProjectSessionId += 1;
+    await disposeJavaRuntimeSession();
+  }
   const receipt: ProjectDocumentCommitReceipt = { revision: currentProjectRevision, sessionId: currentProjectSessionId };
   return receipt;
 });
