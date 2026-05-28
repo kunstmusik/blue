@@ -10,6 +10,7 @@ import { NoteProcessorChain } from '../../src/note-processors/note-processor-cha
 import { NoteProcessorChainMap } from '../../src/note-processors/note-processor-chain-map';
 import { AddProcessor } from '../../src/note-processors/add-processor';
 import { MultiplyProcessor } from '../../src/note-processors/multiply-processor';
+import { PythonProcessor } from '../../src/note-processors/python-processor';
 import { RotateProcessor } from '../../src/note-processors/rotate-processor';
 import { RetrogradeProcessor } from '../../src/note-processors/retrograde-processor';
 import { UnsupportedProcessor } from '../../src/note-processors/unsupported-processor';
@@ -132,7 +133,7 @@ describe('Note processor chain round-trip', () => {
     expect(proc.getVal()).toBe('42');
   });
 
-  it('preserves unsupported processor through round-trip', async () => {
+  it('upgrades deferred PythonProcessor XML to an executable processor through round-trip', async () => {
     const original = buildProjectWithChainsAtAllScopes();
 
     const unsupportedChain = new NoteProcessorChain();
@@ -150,10 +151,8 @@ describe('Note processor chain round-trip', () => {
 
     const chain = loaded.getNoteProcessorChainMap().getNoteProcessorChain('unsupportedChain')!;
     expect(chain.getProcessors().length).toBe(1);
-    expect(chain.getProcessors()[0]).toBeInstanceOf(UnsupportedProcessor);
-    expect((chain.getProcessors()[0] as UnsupportedProcessor).getOriginalType()).toBe(
-      'blue.noteProcessor.PythonProcessor',
-    );
+    expect(chain.getProcessors()[0]).toBeInstanceOf(PythonProcessor);
+    expect((chain.getProcessors()[0] as PythonProcessor).getCode()).toContain('print("hello")');
   });
 
   it('double round-trip is stable', async () => {

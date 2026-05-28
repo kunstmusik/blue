@@ -82,6 +82,7 @@ import {
   MeasureMeterPair,
   Meter,
   FadeType,
+  ObjectBuilder,
   createNoteProcessorChainSnapshot as createNoteProcessorChainSnapshotFromData,
   reifyChainFromSnapshot,
 } from '@blue/data';
@@ -2656,6 +2657,7 @@ function buildEditorTargetSnapshot(
 function getCodeText(sObj: SoundObject): string {
   if (sObj instanceof GenericScore) return sObj.getScoreText();
   if (sObj instanceof PythonObject) return sObj.getPythonCode();
+  if (sObj instanceof ObjectBuilder) return sObj.getCode();
   if (sObj instanceof ClojureObject) return sObj.getClojureCode();
   if (sObj instanceof JavaScriptObject) return sObj.getJavaScriptCode();
   if (sObj instanceof Comment) return sObj.getText();
@@ -2666,6 +2668,7 @@ function getCodeText(sObj: SoundObject): string {
 export function setCodeText(sObj: SoundObject, text: string): boolean {
   if (sObj instanceof GenericScore) { sObj.setScoreText(text); return true; }
   if (sObj instanceof PythonObject) { sObj.setPythonCode(text); return true; }
+  if (sObj instanceof ObjectBuilder) { sObj.setCode(text); return true; }
   if (sObj instanceof ClojureObject) { sObj.setClojureCode(text); return true; }
   if (sObj instanceof JavaScriptObject) { sObj.setJavaScriptCode(text); return true; }
   if (sObj instanceof Comment) { sObj.setText(text); return true; }
@@ -2685,6 +2688,7 @@ function getEditorFamily(objectType: string): TypeSpecificScoreObjectEditorSnaps
       return 'tracker';
     case 'GenericScore':
     case 'PythonObject':
+    case 'ObjectBuilder':
     case 'ClojureObject':
     case 'JavaScriptObject':
     case 'Comment':
@@ -2705,10 +2709,25 @@ function getEditorFamily(objectType: string): TypeSpecificScoreObjectEditorSnaps
   }
 }
 
-function getSyntaxForType(objectType: string): 'text' | 'csound-score' | 'python' | 'javascript' {
+function getSyntaxForType(
+  objectType: string,
+  sObj?: SoundObject | AudioClip,
+): 'text' | 'csound-score' | 'python' | 'javascript' {
   switch (objectType) {
     case 'PythonObject': return 'python';
     case 'JavaScriptObject': return 'javascript';
+    case 'ObjectBuilder':
+      if (sObj instanceof ObjectBuilder) {
+        switch (sObj.getLanguageType()) {
+          case 'PYTHON':
+            return 'python';
+          case 'JAVASCRIPT':
+            return 'javascript';
+          default:
+            return 'text';
+        }
+      }
+      return 'text';
     case 'GenericScore': return 'csound-score';
     default: return 'text';
   }
@@ -2892,11 +2911,17 @@ export function createScoreObjectEditorDocument(
             ? { onLoadProcessable: sObj.isOnLoadProcessable() }
           : sObj instanceof PythonObject
             ? { onLoadProcessable: sObj.isOnLoadProcessable() }
+            : sObj instanceof ObjectBuilder
+              ? {
+                commandLine: sObj.getCommandLine(),
+                languageType: sObj.getLanguageType(),
+                editEnabled: sObj.isEditEnabled(),
+              }
             : undefined;
       editor = {
         kind: 'code',
         target,
-        syntax: getSyntaxForType(objectType),
+        syntax: getSyntaxForType(objectType, sObj as SoundObject),
         text: getCodeText(sObj as SoundObject),
         ...(auxiliaryFlags ? { auxiliaryFlags } : {}),
       };
@@ -5527,6 +5552,25 @@ function applyScoreObjectPatch(data: BlueData, patch: ScorePatch): boolean {
         const p = patch.patch;
         if (p.onLoadProcessable !== undefined) {
           sObj.setOnLoadProcessable(p.onLoadProcessable as boolean);
+          return true;
+        }
+      }
+      if (sObj instanceof ObjectBuilder) {
+        const p = patch.patch;
+        let changed = false;
+        if (p.commandLine !== undefined) {
+          sObj.setCommandLine(p.commandLine as string);
+          changed = true;
+        }
+        if (p.languageType !== undefined) {
+          sObj.setLanguageType(p.languageType as string);
+          changed = true;
+        }
+        if (p.editEnabled !== undefined) {
+          sObj.setEditEnabled(p.editEnabled as boolean);
+          changed = true;
+        }
+        if (changed) {
           return true;
         }
       }

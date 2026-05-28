@@ -107,6 +107,38 @@ describe('java-runtime-client', () => {
     }
   });
 
+  it('sends Jython import checks and decodes the response', async () => {
+    const client = new JavaRuntimeClient({
+      endpoint: 'tcp://127.0.0.1:5555',
+      authToken: 'secret',
+    });
+    await client.connect();
+
+    const request = mockState.requestInstances[0];
+    request.responses.push(Buffer.from(JSON.stringify({
+      id: 'req-1',
+      ok: true,
+      result: {
+        importedModules: ['orchestra', 'pmask'],
+        libraryPaths: ['/app/pythonLib/blue', '/Users/test/pythonLib'],
+      },
+      stdout: '',
+      stderr: '',
+      elapsedMs: 2,
+    })));
+
+    const response = await client.jythonImportCheck({ modules: ['orchestra', 'pmask'] });
+
+    expect(JSON.parse(request.sent[0].toString('utf-8'))).toMatchObject({
+      method: 'jython.importCheck',
+      params: { modules: ['orchestra', 'pmask'] },
+    });
+    expect(response.ok).toBe(true);
+    if (response.ok) {
+      expect(response.result.importedModules).toEqual(['orchestra', 'pmask']);
+    }
+  });
+
   it('returns a specific envelope when the response id does not match', async () => {
     const client = new JavaRuntimeClient({
       endpoint: 'tcp://127.0.0.1:5555',

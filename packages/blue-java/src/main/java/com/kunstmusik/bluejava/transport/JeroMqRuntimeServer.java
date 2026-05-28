@@ -5,6 +5,10 @@ import com.kunstmusik.bluejava.cli.RuntimeOptions;
 import com.kunstmusik.bluejava.clojure.ClojureLibraryLoader;
 import com.kunstmusik.bluejava.clojure.ClojureSession;
 import com.kunstmusik.bluejava.errors.ClojureEvaluationException;
+import com.kunstmusik.bluejava.jython.JythonEvaluationException;
+import com.kunstmusik.bluejava.jython.JythonNote;
+import com.kunstmusik.bluejava.jython.JythonNoteList;
+import com.kunstmusik.bluejava.jython.JythonSession;
 import com.kunstmusik.bluejava.protocol.RuntimeErrorEnvelope;
 import com.kunstmusik.bluejava.protocol.RuntimeMethod;
 import com.kunstmusik.bluejava.protocol.RuntimeRequestEnvelope;
@@ -107,6 +111,54 @@ public final class JeroMqRuntimeServer {
                         request.id,
                         initializeSession(request),
                         elapsedMs(startedAt));
+                case JYTHON_IMPORT_CHECK -> {
+                    RequestResult result = importCheck(request);
+                    yield RuntimeResponseEnvelope.success(
+                            request.id,
+                            result.result(),
+                            elapsedMs(startedAt))
+                        .withOutput(result.stdout(), result.stderr());
+                }
+                case JYTHON_EVAL_SCRIPT -> {
+                    RequestResult result = evaluateJythonScript(request);
+                    yield RuntimeResponseEnvelope.success(
+                            request.id,
+                            result.result(),
+                            elapsedMs(startedAt))
+                        .withOutput(result.stdout(), result.stderr());
+                }
+                case JYTHON_EVAL_SCORE_OBJECT -> {
+                    RequestResult result = evaluateJythonScoreObject(request);
+                    yield RuntimeResponseEnvelope.success(
+                            request.id,
+                            result.result(),
+                            elapsedMs(startedAt))
+                        .withOutput(result.stdout(), result.stderr());
+                }
+                case JYTHON_EVAL_OBJECT_BUILDER -> {
+                    RequestResult result = evaluateJythonObjectBuilder(request);
+                    yield RuntimeResponseEnvelope.success(
+                            request.id,
+                            result.result(),
+                            elapsedMs(startedAt))
+                        .withOutput(result.stdout(), result.stderr());
+                }
+                case JYTHON_EVAL_INSTRUMENT -> {
+                    RequestResult result = evaluateJythonInstrument(request);
+                    yield RuntimeResponseEnvelope.success(
+                            request.id,
+                            result.result(),
+                            elapsedMs(startedAt))
+                        .withOutput(result.stdout(), result.stderr());
+                }
+                case JYTHON_PROCESS_NOTE_LIST -> {
+                    RequestResult result = processJythonNoteList(request);
+                    yield RuntimeResponseEnvelope.success(
+                            request.id,
+                            result.result(),
+                            elapsedMs(startedAt))
+                        .withOutput(result.stdout(), result.stderr());
+                }
                 case CLOJURE_EVAL -> {
                     RequestResult result = evaluateClojure(request);
                     yield RuntimeResponseEnvelope.success(
@@ -127,6 +179,10 @@ public final class JeroMqRuntimeServer {
                         request.id,
                         reinitializeClojure(),
                         elapsedMs(startedAt));
+                case JYTHON_REINITIALIZE -> RuntimeResponseEnvelope.success(
+                    request.id,
+                    reinitializeJython(),
+                    elapsedMs(startedAt));
                 default -> RuntimeResponseEnvelope.error(
                         request.id,
                         new RuntimeErrorEnvelope("METHOD_NOT_IMPLEMENTED", "Method not implemented in this helper phase: " + request.method),
@@ -138,6 +194,13 @@ public final class JeroMqRuntimeServer {
             error.line = ex.getLine();
             error.column = ex.getColumn();
             return RuntimeResponseEnvelope.error(request.id, error, elapsedMs(startedAt))
+                    .withOutput(ex.getStdout(), ex.getStderr());
+            } catch (JythonEvaluationException ex) {
+                RuntimeErrorEnvelope error = new RuntimeErrorEnvelope(ex.getCode(), ex.getMessage());
+                error.stack = stackTraceToString(ex.getCause() != null ? ex.getCause() : ex);
+                error.line = ex.getLine();
+                error.column = ex.getColumn();
+                return RuntimeResponseEnvelope.error(request.id, error, elapsedMs(startedAt))
                     .withOutput(ex.getStdout(), ex.getStderr());
         } catch (IllegalArgumentException ex) {
             return RuntimeResponseEnvelope.error(
@@ -159,14 +222,122 @@ public final class JeroMqRuntimeServer {
                 ? params.clojureDependencies
                 : Collections.emptyList();
         ClojureSession session = new ClojureSession(nextNamespace());
-        projectSession = new ProjectSession(params.projectSessionId, params.projectDir, dependencies, session);
+        JythonSession jythonSession = new JythonSession(params.jythonPythonLibRoot, params.jythonUserPythonLibRoot);
+        projectSession = new ProjectSession(params.projectSessionId, params.projectDir, dependencies, session, jythonSession);
         List<Map<String, Object>> dependencyResults = clojureLibraryLoader.loadDependencies(session, dependencies);
+
+        boolean jythonReady = false;
+        List<String> jythonLibraryPaths = Collections.emptyList();
+        try {
+            jythonLibraryPaths = jythonSession.initialize();
+            jythonReady = true;
+        } catch (JythonEvaluationException ignored) {
+            // Preserve the Clojure session even when Jython assets are unavailable.
+        }
 
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("projectSessionId", params.projectSessionId);
         result.put("clojureNamespace", session.getNamespace());
         result.put("dependenciesLoaded", dependencyResults);
+        result.put("jythonReady", jythonReady);
+        result.put("jythonLibraryPaths", jythonLibraryPaths);
         return result;
+    }
+
+    private RequestResult importCheck(RuntimeRequestEnvelope request) {
+        ensureProjectSession();
+        JythonImportCheckParams params = objectMapper.convertValue(request.params, JythonImportCheckParams.class);
+        JythonSession.JythonImportCheckResult evaluation = projectSession.getJythonSession().importCheckWithOutput(
+                params.modules != null ? params.modules : Collections.emptyList());
+
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("importedModules", evaluation.importedModules());
+        result.put("libraryPaths", evaluation.libraryPaths());
+        return new RequestResult(result, evaluation.stdout(), evaluation.stderr());
+    }
+
+    private RequestResult evaluateJythonScript(RuntimeRequestEnvelope request) {
+        ensureProjectSession();
+        JythonEvalParams params = objectMapper.convertValue(request.params, JythonEvalParams.class);
+        JythonSession.JythonScriptResult evaluation = projectSession.getJythonSession().evalWithOutput(
+                params.code,
+                params.bindings != null ? params.bindings : Map.of(),
+                params.returnVariableName);
+
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("value", evaluation.value());
+        return new RequestResult(result, evaluation.stdout(), evaluation.stderr());
+    }
+
+    private RequestResult evaluateJythonScoreObject(RuntimeRequestEnvelope request) {
+        ensureProjectSession();
+        JythonEvalScoreObjectParams params = objectMapper.convertValue(request.params, JythonEvalScoreObjectParams.class);
+        JythonSession.JythonScriptResult evaluation = projectSession.getJythonSession().evaluateScoreObjectWithOutput(
+                params.code,
+                params.blueDuration,
+                params.blueProjectDir != null ? params.blueProjectDir : projectSession.getProjectDir());
+
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("scoreText", evaluation.value());
+        return new RequestResult(result, evaluation.stdout(), evaluation.stderr());
+    }
+
+    private RequestResult evaluateJythonObjectBuilder(RuntimeRequestEnvelope request) {
+        ensureProjectSession();
+        JythonEvalObjectBuilderParams params = objectMapper.convertValue(request.params, JythonEvalObjectBuilderParams.class);
+        JythonSession.JythonScriptResult evaluation = projectSession.getJythonSession().evaluateObjectBuilderWithOutput(
+                params.code,
+                params.blueDuration,
+                params.commandline,
+                params.blueProjectDir != null ? params.blueProjectDir : projectSession.getProjectDir());
+
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("scoreText", evaluation.value());
+        return new RequestResult(result, evaluation.stdout(), evaluation.stderr());
+    }
+
+    private RequestResult evaluateJythonInstrument(RuntimeRequestEnvelope request) {
+        ensureProjectSession();
+        JythonEvalInstrumentParams params = objectMapper.convertValue(request.params, JythonEvalInstrumentParams.class);
+        JythonSession.JythonScriptResult evaluation = projectSession.getJythonSession().evaluateInstrumentWithOutput(
+                params.code);
+
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("instrumentText", evaluation.value());
+        return new RequestResult(result, evaluation.stdout(), evaluation.stderr());
+    }
+
+    private RequestResult processJythonNoteList(RuntimeRequestEnvelope request) {
+        ensureProjectSession();
+        JythonProcessNoteListParams params = objectMapper.convertValue(request.params, JythonProcessNoteListParams.class);
+        JythonNoteList noteList = new JythonNoteList();
+
+        if (params.notes != null) {
+            for (JythonSerializedNote serializedNote : params.notes) {
+                noteList.add(new JythonNote(
+                        serializedNote.pfields != null ? serializedNote.pfields : Collections.emptyList(),
+                        serializedNote.subjectiveDuration,
+                        serializedNote.tied));
+            }
+        }
+
+        JythonSession.JythonNoteListResult evaluation = projectSession.getJythonSession().processNoteListWithOutput(
+                params.code,
+                noteList);
+
+        List<Map<String, Object>> serializedNotes = evaluation.notes().stream()
+                .map(note -> {
+                    Map<String, Object> serialized = new LinkedHashMap<>();
+                    serialized.put("pfields", note.getPfields());
+                    serialized.put("subjectiveDuration", note.getSubjectiveDuration());
+                    serialized.put("tied", note.isTied());
+                    return serialized;
+                })
+                .toList();
+
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("notes", serializedNotes);
+        return new RequestResult(result, evaluation.stdout(), evaluation.stderr());
     }
 
     private RequestResult evaluateClojure(RuntimeRequestEnvelope request) {
@@ -208,6 +379,15 @@ public final class JeroMqRuntimeServer {
         return result;
     }
 
+    private Map<String, Object> reinitializeJython() {
+        ensureProjectSession();
+        List<String> libraryPaths = projectSession.getJythonSession().reinitialize();
+
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("libraryPaths", libraryPaths);
+        return result;
+    }
+
     private void ensureProjectSession() {
         if (projectSession == null) {
             throw new IllegalArgumentException("Project session has not been initialized");
@@ -223,7 +403,7 @@ public final class JeroMqRuntimeServer {
     private Map<String, Object> createHealthResult() {
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("version", "0.0.1");
-        result.put("capabilities", Arrays.asList("clojure"));
+        result.put("capabilities", Arrays.asList("clojure", "jython"));
         result.put("cwd", new File(".").getAbsoluteFile().toPath().normalize().toString());
         result.put("methods", Arrays.stream(RuntimeMethod.values()).map(RuntimeMethod::getValue).toList());
         return result;
@@ -246,6 +426,46 @@ public final class JeroMqRuntimeServer {
         public int projectSessionId;
         public String projectDir;
         public List<DependencySpec> clojureDependencies = Collections.emptyList();
+        public String jythonPythonLibRoot;
+        public String jythonUserPythonLibRoot;
+    }
+
+    public static final class JythonImportCheckParams {
+        public List<String> modules = Collections.emptyList();
+    }
+
+    public static final class JythonEvalParams {
+        public String code;
+        public Map<String, Object> bindings = Collections.emptyMap();
+        public String returnVariableName;
+    }
+
+    public static final class JythonEvalScoreObjectParams {
+        public String code;
+        public double blueDuration;
+        public String blueProjectDir;
+    }
+
+    public static final class JythonEvalObjectBuilderParams {
+        public String code;
+        public double blueDuration;
+        public String commandline;
+        public String blueProjectDir;
+    }
+
+    public static final class JythonEvalInstrumentParams {
+        public String code;
+    }
+
+    public static final class JythonProcessNoteListParams {
+        public String code;
+        public List<JythonSerializedNote> notes = Collections.emptyList();
+    }
+
+    public static final class JythonSerializedNote {
+        public List<String> pfields = Collections.emptyList();
+        public double subjectiveDuration;
+        public boolean tied;
     }
 
     public static final class ClojureEvalParams {

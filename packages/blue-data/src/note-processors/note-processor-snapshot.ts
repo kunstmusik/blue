@@ -19,6 +19,7 @@ import { TimeWarpProcessor } from './time-warp-processor';
 import { LineAddProcessor } from './line-add-processor';
 import { LineMultiplyProcessor } from './line-multiply-processor';
 import { TuningProcessor } from './tuning-processor';
+import { PythonProcessor } from './python-processor';
 
 export interface NoteProcessorEntrySnapshot {
   id: string;
@@ -101,6 +102,8 @@ function getProcessorParameters(proc: NoteProcessor): Record<string, string | nu
     params.pfield = proc.getPfield();
     params.baseFrequency = proc.getBaseFrequency();
     params.ratios = proc.getRatios().map((ratio) => ratio.toString()).join('\n');
+  } else if (proc instanceof PythonProcessor) {
+    params.code = proc.getCode();
   }
 
   return params;
@@ -118,15 +121,14 @@ function generateId(): string {
 export function createNoteProcessorEntrySnapshot(proc: NoteProcessor): NoteProcessorEntrySnapshot {
   if (proc instanceof UnsupportedProcessor) {
     const originalType = proc.getOriginalType();
-    const isDeferred = isPythonProcessorType(originalType);
     const xmlStr = proc.saveAsXML().toXml();
     return {
       id: generateId(),
       processorType: originalType,
-      displayName: isDeferred ? 'PythonProcessor (deferred)' : `[unsupported: ${originalType}]`,
+      displayName: `[unsupported: ${originalType}]`,
       supported: false,
-      deferred: isDeferred,
-      summary: isDeferred ? 'PythonProcessor (deferred)' : `[unsupported: ${originalType}]`,
+      deferred: false,
+      summary: `[unsupported: ${originalType}]`,
       parameters: {},
       serializedXml: xmlStr,
     };
@@ -148,6 +150,10 @@ export function createNoteProcessorEntrySnapshot(proc: NoteProcessor): NoteProce
 }
 
 function buildSummary(proc: NoteProcessor, params: Record<string, string | number | boolean>): string {
+  if (proc instanceof PythonProcessor) {
+    return proc.getDisplayName();
+  }
+
   const entries = Object.entries(params);
   if (entries.length === 0) return proc.getDisplayName();
   const parts = entries.map(([k, v]) => {
@@ -180,6 +186,22 @@ export function createNoteProcessorChainSnapshot(chain: NoteProcessorChain): Not
 }
 
 export function reifyProcessorFromSnapshot(entry: NoteProcessorEntrySnapshot): NoteProcessor | null {
+  if (isPythonProcessorType(entry.processorType)) {
+    if (entry.serializedXml) {
+      try {
+        return PythonProcessor.loadFromXML(Element.parse(entry.serializedXml));
+      } catch {
+        return null;
+      }
+    }
+
+    const processor = new PythonProcessor();
+    if (entry.parameters.code !== undefined) {
+      processor.setCode(String(entry.parameters.code));
+    }
+    return processor;
+  }
+
   if (!entry.supported) {
     if (entry.serializedXml) {
       try {
@@ -275,5 +297,7 @@ function applyParametersToProcessor(
         proc.setRatios(ratios);
       }
     }
+  } else if (proc instanceof PythonProcessor) {
+    if (params.code !== undefined) proc.setCode(String(params.code));
   }
 }

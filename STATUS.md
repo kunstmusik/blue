@@ -1,10 +1,49 @@
 # Project Status — blue-electron
 
-**Date**: 2026-05-27
-**Branch**: `049-blue-java-runtime`
+**Date**: 2026-05-28
+**Branch**: `050-jython-support`
 **Note**: Historical spec sections below preserve their closeout-time branch and feature-context notes; only the topmost spec package reflects the current active handoff state.
 
-## Current Focus: Spec 049 Closed
+## Current Focus: Spec 050 Closed
+
+**Branch**: `050-jython-support`
+
+### Summary
+Spec 050 is closed and validated. The app now ships the Java helper with Jython support alongside the existing Clojure bridge, packages Java Blue's Python libraries, and routes PythonObject, Python-language ObjectBuilder, PythonInstrument, and PythonProcessor through async Java-aware rendering paths without violating `@blue/data`'s browser-safe constraints.
+
+Closeout also finished the app-side runtime error mapping that the plan called for. Electron main now formats stable Jython, transport, and protocol errors into consistent user-facing messages, while Python-backed score-object editors expose a dedicated `Reinitialize Jython` recovery control.
+
+### Handoff State
+- `.specify/feature.json` points to `specs/050-jython-support`.
+- Current branch is `050-jython-support`.
+- `spec.md` status is `Closed`.
+- `quickstart.md`, `tasks.md`, `status.md`, package READMEs, and `STATUS.md` are updated for closeout.
+- All Spec 050 tasks are checked off.
+- Manual quickstart smoke scenarios are still available if the user wants one more local UI/runtime pass.
+
+### Delivered Scope
+- Package Jython 2.7.4 and Java Blue `pythonLib` assets with dev and packaged path resolution for helper startup.
+- Extend the helper/runtime protocol with Jython import checks, score-object evaluation, Python ObjectBuilder evaluation, PythonInstrument generation, PythonProcessor note-list mutation, and independent Jython reinitialize.
+- Add first-class `ObjectBuilder` and executable `PythonProcessor` support in `@blue/data`, and thread async Java runtime execution through PythonObject, Python ObjectBuilder, PythonInstrument, and note-processor chains.
+- Keep generated CSD, playback/export, score-object test, and on-load flows Java-aware when a project needs Jython.
+- Add renderer-facing Jython runtime recovery controls and stable main-process error formatting for mapped helper failures.
+
+### Validation
+- `pnpm --filter @blue/java-runtime test` - pass
+- `pnpm --filter @blue/java-runtime build` - pass
+- `pnpm --filter @blue/data build` - pass
+- `pnpm --filter @blue/data test` - pass (`123` files, `1173` tests)
+- `pnpm --filter @blue/data exec vitest run src/instruments/python-instrument.test.ts src/instruments/python-instrument-runtime.test.ts src/blue-data-python-instrument-runtime.test.ts src/blue-data-java-runtime.test.ts src/note-processors/deferred-python-processor.test.ts src/note-processors/processor-serialization-parity.test.ts src/note-processors/note-processor-snapshot.test.ts src/note-processors/python-processor-runtime.test.ts src/note-processors/note-processor-chain-runtime.test.ts src/blue-data-python-processor-runtime.test.ts src/sound-objects/python-object-runtime.test.ts src/sound-objects/object-builder-runtime.test.ts src/sound-objects/clojure-object-runtime.test.ts tests/integration/note-processor-chain-roundtrip.test.ts --maxWorkers=1` - pass (`14` files, `87` tests)
+- `pnpm --filter @blue/app test` - pass (`126` files, `1329` passed, `2` skipped)
+- `pnpm --filter @blue/app build` - pass
+- `pnpm --filter @blue/app exec vitest run src/main/java-runtime/java-runtime-errors.test.ts src/main/java-runtime/java-runtime-session.test.ts --browser.enabled=false --maxWorkers=1` - pass (`2` files, `10` tests)
+- `./.specify/scripts/bash/check-prerequisites.sh --json --include-tasks --require-tasks` - pass
+- `git diff --check` - pass
+
+### Next Recommended Step
+Spec 050 is closed for the Jython bridge. The next useful step is selecting the next Java-backed parity consumer or running the optional Spec 050 manual smoke scenarios if one more local UI/runtime pass is wanted.
+
+## Previous Focus: Spec 049 Closed
 
 **Branch**: `049-blue-java-runtime`
 

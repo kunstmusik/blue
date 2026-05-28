@@ -61,6 +61,7 @@ describe('java-runtime-session', () => {
       {
         isPackaged: false,
         mainModuleDir: '/repo/packages/blue-app/dist/main',
+        userDataPath: '/Users/test/Library/Application Support/Blue',
       },
       {
         resolveArtifactPath: () => ({ artifactPath: '/assets/blue-java.jar', candidatePaths: ['/assets/blue-java.jar'], exists: true }),
@@ -73,11 +74,14 @@ describe('java-runtime-session', () => {
     const readyClient = await manager.ensureReady(data, 7, '/tmp/project/demo.blue');
 
     expect(readyClient).toBe(client);
+    expect(manager.getJythonStateRevision()).toBe(1);
     expect(createProcess).toHaveBeenCalledWith('/assets/blue-java.jar', '/tmp/project', 'java');
     expect(initSession).toHaveBeenCalledWith({
       projectSessionId: 7,
       projectDir: '/tmp/project',
       clojureDependencies: [{ coordinates: 'org.clojure/data.json', version: '2.5.1' }],
+      jythonPythonLibRoot: '/repo/packages/blue-app/assets/java/pythonLib',
+      jythonUserPythonLibRoot: '/Users/test/Library/Application Support/Blue/pythonLib',
     });
   });
 
@@ -106,7 +110,11 @@ describe('java-runtime-session', () => {
     } as any));
 
     const manager = new JavaRuntimeSessionManager(
-      { isPackaged: false, mainModuleDir: '/repo/packages/blue-app/dist/main' },
+      {
+        isPackaged: false,
+        mainModuleDir: '/repo/packages/blue-app/dist/main',
+        userDataPath: '/Users/test/Library/Application Support/Blue',
+      },
       {
         resolveArtifactPath: () => ({ artifactPath: '/assets/blue-java.jar', candidatePaths: ['/assets/blue-java.jar'], exists: true }),
         probeJavaExecutable: async () => ({ available: true, executable: 'java', versionMajor: 21, rawOutput: 'openjdk version "21.0.2"' }),
@@ -118,6 +126,7 @@ describe('java-runtime-session', () => {
     await manager.ensureReady(data, 2, '/tmp/project/demo.blue');
     await manager.ensureReady(data, 2, '/tmp/project/demo.blue');
 
+    expect(manager.getJythonStateRevision()).toBe(1);
     expect(createProcess).toHaveBeenCalledTimes(1);
     expect(client.initSession).toHaveBeenCalledTimes(1);
   });
@@ -169,7 +178,11 @@ describe('java-runtime-session', () => {
     } as any;
 
     const manager = new JavaRuntimeSessionManager(
-      { isPackaged: false, mainModuleDir: '/repo/packages/blue-app/dist/main' },
+      {
+        isPackaged: false,
+        mainModuleDir: '/repo/packages/blue-app/dist/main',
+        userDataPath: '/Users/test/Library/Application Support/Blue',
+      },
       {
         resolveArtifactPath: () => ({ artifactPath: '/assets/blue-java.jar', candidatePaths: ['/assets/blue-java.jar'], exists: true }),
         probeJavaExecutable: async () => ({ available: true, executable: 'java', versionMajor: 21, rawOutput: 'openjdk version "21.0.2"' }),
@@ -193,6 +206,8 @@ describe('java-runtime-session', () => {
       projectSessionId: 2,
       projectDir: '/tmp/project-b',
       clojureDependencies: [],
+      jythonPythonLibRoot: '/repo/packages/blue-app/assets/java/pythonLib',
+      jythonUserPythonLibRoot: '/Users/test/Library/Application Support/Blue/pythonLib',
     });
   });
 
@@ -212,7 +227,11 @@ describe('java-runtime-session', () => {
     const createProcess = vi.fn(() => startup.promise);
 
     const manager = new JavaRuntimeSessionManager(
-      { isPackaged: false, mainModuleDir: '/repo/packages/blue-app/dist/main' },
+      {
+        isPackaged: false,
+        mainModuleDir: '/repo/packages/blue-app/dist/main',
+        userDataPath: '/Users/test/Library/Application Support/Blue',
+      },
       {
         resolveArtifactPath: () => ({ artifactPath: '/assets/blue-java.jar', candidatePaths: ['/assets/blue-java.jar'], exists: true }),
         probeJavaExecutable: async () => ({ available: true, executable: 'java', versionMajor: 21, rawOutput: 'openjdk version "21.0.2"' }),
@@ -240,5 +259,102 @@ describe('java-runtime-session', () => {
     await expect(second).resolves.toBe(client);
     expect(createProcess).toHaveBeenCalledTimes(1);
     expect(client.initSession).toHaveBeenCalledTimes(1);
+  });
+
+  it('reinitializes Jython independently of Clojure reinitialization', async () => {
+    const data = { getClojureProjectData: () => null } as any;
+    const client = {
+      connect: vi.fn(async () => undefined),
+      disconnect: vi.fn(async () => undefined),
+      health: vi.fn(async () => ({ ok: true, result: { version: '0.0.1', capabilities: ['clojure', 'jython'], cwd: '/tmp/project', methods: ['runtime.health'] } })),
+      initSession: vi.fn(async () => ({ ok: true, result: { projectSessionId: 9, clojureNamespace: 'user0', dependenciesLoaded: [], jythonReady: true, jythonLibraryPaths: ['/tmp/pythonLib'] } })),
+      reinitializeClojure: vi.fn(async () => ({ ok: true, result: { clojureNamespace: 'user1' } })),
+      reinitializeJython: vi.fn(async () => ({ ok: true, result: { libraryPaths: ['/tmp/pythonLib'] } })),
+      evaluateClojure: vi.fn(),
+      evaluateClojureScoreObject: vi.fn(),
+      shutdown: vi.fn(async () => ({ ok: true, result: { accepted: true } })),
+    } as any;
+
+    const manager = new JavaRuntimeSessionManager(
+      {
+        isPackaged: false,
+        mainModuleDir: '/repo/packages/blue-app/dist/main',
+        userDataPath: '/Users/test/Library/Application Support/Blue',
+      },
+      {
+        resolveArtifactPath: () => ({ artifactPath: '/assets/blue-java.jar', candidatePaths: ['/assets/blue-java.jar'], exists: true }),
+        probeJavaExecutable: async () => ({ available: true, executable: 'java', versionMajor: 21, rawOutput: 'openjdk version "21.0.2"' }),
+        createJavaRuntimeProcess: async () => ({
+          process: { exitCode: null, killed: false, kill: vi.fn() },
+          javaExecutable: 'java',
+          artifactPath: '/assets/blue-java.jar',
+          controlEndpoint: 'tcp://127.0.0.1:5555',
+          eventEndpoint: 'tcp://127.0.0.1:5556',
+          authToken: 'secret',
+          workingDirectory: '/tmp/project',
+          stdoutText: '',
+          stderrText: '',
+        } as any),
+        createClient: () => client,
+      },
+    );
+
+    const readyClient = await manager.reinitializeJython(data, 9, '/tmp/project/demo.blue');
+
+    expect(readyClient).toBe(client);
+    expect(manager.getJythonStateRevision()).toBe(2);
+    expect(client.reinitializeJython).toHaveBeenCalledTimes(1);
+    expect(client.reinitializeClojure).not.toHaveBeenCalled();
+  });
+
+  it('formats mapped Jython errors when reinitialization fails', async () => {
+    const data = { getClojureProjectData: () => null } as any;
+    const client = {
+      connect: vi.fn(async () => undefined),
+      disconnect: vi.fn(async () => undefined),
+      health: vi.fn(async () => ({ ok: true, result: { version: '0.0.1', capabilities: ['clojure', 'jython'], cwd: '/tmp/project', methods: ['runtime.health'] } })),
+      initSession: vi.fn(async () => ({ ok: true, result: { projectSessionId: 9, clojureNamespace: 'user0', dependenciesLoaded: [], jythonReady: true, jythonLibraryPaths: ['/tmp/pythonLib'] } })),
+      reinitializeClojure: vi.fn(async () => ({ ok: true, result: { clojureNamespace: 'user1' } })),
+      reinitializeJython: vi.fn(async () => ({
+        ok: false,
+        error: {
+          code: 'JYTHON_IMPORT_ERROR',
+          message: 'ImportError: No module named orchestra',
+          line: 2,
+          column: 4,
+        },
+      })),
+      evaluateClojure: vi.fn(),
+      evaluateClojureScoreObject: vi.fn(),
+      shutdown: vi.fn(async () => ({ ok: true, result: { accepted: true } })),
+    } as any;
+
+    const manager = new JavaRuntimeSessionManager(
+      {
+        isPackaged: false,
+        mainModuleDir: '/repo/packages/blue-app/dist/main',
+        userDataPath: '/Users/test/Library/Application Support/Blue',
+      },
+      {
+        resolveArtifactPath: () => ({ artifactPath: '/assets/blue-java.jar', candidatePaths: ['/assets/blue-java.jar'], exists: true }),
+        probeJavaExecutable: async () => ({ available: true, executable: 'java', versionMajor: 21, rawOutput: 'openjdk version "21.0.2"' }),
+        createJavaRuntimeProcess: async () => ({
+          process: { exitCode: null, killed: false, kill: vi.fn() },
+          javaExecutable: 'java',
+          artifactPath: '/assets/blue-java.jar',
+          controlEndpoint: 'tcp://127.0.0.1:5555',
+          eventEndpoint: 'tcp://127.0.0.1:5556',
+          authToken: 'secret',
+          workingDirectory: '/tmp/project',
+          stdoutText: '',
+          stderrText: '',
+        } as any),
+        createClient: () => client,
+      },
+    );
+
+    await expect(manager.reinitializeJython(data, 9, '/tmp/project/demo.blue')).rejects.toThrow(
+      'Unable to import Jython modules: ImportError: No module named orchestra (line 2, column 4)',
+    );
   });
 });

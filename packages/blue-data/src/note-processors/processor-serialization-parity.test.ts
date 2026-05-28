@@ -17,6 +17,7 @@ import { TimeWarpProcessor } from './time-warp-processor';
 import { LineAddProcessor } from './line-add-processor';
 import { LineMultiplyProcessor } from './line-multiply-processor';
 import { TuningProcessor } from './tuning-processor';
+import { PythonProcessor } from './python-processor';
 import { UnsupportedProcessor } from './unsupported-processor';
 import { getNoteProcessorCatalog } from './note-processor-catalog';
 
@@ -84,7 +85,7 @@ describe('Processor serialization parity', () => {
     }
   });
 
-  it('preserves PythonProcessor as UnsupportedProcessor', () => {
+  it('loads PythonProcessor as a supported runtime-backed processor', () => {
     const xml = Element.parse(`
       <noteProcessorChain>
         <noteProcessor type="blue.noteProcessor.PythonProcessor">
@@ -95,8 +96,7 @@ describe('Processor serialization parity', () => {
     const chain = NoteProcessorChain.loadFromXML(xml);
     expect(chain.getProcessors()).toHaveLength(1);
     const proc = chain.getProcessors()[0];
-    expect(proc).toBeInstanceOf(UnsupportedProcessor);
-    expect((proc as UnsupportedProcessor).getOriginalType()).toBe('blue.noteProcessor.PythonProcessor');
+    expect(proc).toBeInstanceOf(PythonProcessor);
     expect(chain.saveAsXML().toXml()).toBe(xml.toXml());
   });
 

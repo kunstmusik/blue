@@ -14,6 +14,18 @@ export type {
 	JavaRuntimeClientContract,
 	JavaRuntimeError,
 	JavaRuntimeHealthResult,
+	JythonImportCheckRequest,
+	JythonImportCheckResult,
+	JythonInstrumentEvalRequest,
+	JythonInstrumentEvalResult,
+	JythonObjectBuilderEvalRequest,
+	JythonObjectBuilderEvalResult,
+	JythonProcessNoteListRequest,
+	JythonProcessNoteListResult,
+	JythonReinitializeResult,
+	JythonScoreObjectEvalRequest,
+	JythonScoreObjectEvalResult,
+	JythonSerializedNote,
 	JavaRuntimeResponse,
 	JavaRuntimeSessionInitRequest,
 	JavaRuntimeStatus,
@@ -134,6 +146,8 @@ export { SoundLayer } from './sound-objects/sound-layer';
 export { PolyObjectLayerGroupProvider } from './sound-objects/poly-object-layer-group-provider';
 export { SoundObjectLibrary } from './sound-objects/sound-object-library';
 export { PythonObject } from './sound-objects/python-object';
+export { ObjectBuilder } from './sound-objects/object-builder';
+export type { ObjectBuilderLanguageType } from './sound-objects/object-builder';
 export { ClojureObject } from './sound-objects/clojure-object';
 export { JavaScriptObject } from './sound-objects/javascript-object';
 export { CSDSoundObject } from './sound-objects/csd-sound-object';
@@ -173,6 +187,7 @@ export { NoteProcessorException } from './note-processors/note-processor-excepti
 export { AddProcessor } from './note-processors/add-processor';
 export { MultiplyProcessor } from './note-processors/multiply-processor';
 export { Code } from './note-processors/code';
+export { PythonProcessor } from './note-processors/python-processor';
 export { RandomAddProcessor } from './note-processors/random-add-processor';
 export { RandomMultiplyProcessor } from './note-processors/random-multiply-processor';
 export { LineAddProcessor } from './note-processors/line-add-processor';

@@ -18,7 +18,7 @@ import { TimeContext } from '../time/time-context';
 import { CompileData } from '../compile-data';
 import { NoteList } from './note-list';
 import { Element } from '../serialization/xml-reader';
-import { applyNoteProcessorChain, applyTimeBehavior, setScoreStart } from '../utilities/score';
+import { applyNoteProcessorChain, applyNoteProcessorChainAsync, applyTimeBehavior, setScoreStart } from '../utilities/score';
 import { ObjRefSaveMap, ObjRefLoadMap } from '../serialization/obj-ref-map';
 import { LayerGroupDataEvent, LayerGroupDataEventType } from '../score/layers/layer-group-data-event';
 import { LayerGroupListener } from '../score/layers/layer-group-listener';
@@ -43,6 +43,7 @@ import { JMask } from './j-mask';
 import { TrackerObject } from './tracker-object';
 import { NotationObject } from './notation-object';
 import { FrozenSoundObject } from './frozen-sound-object';
+import { ObjectBuilder } from './object-builder';
 import type { JavaScriptSession } from '../javascript-runtime';
 import type { JavaRuntimeClientContract } from '../java-runtime';
 
@@ -98,6 +99,8 @@ function loadNestedSoundObject(
       return CSDSoundObject.loadFromXML(data);
     case 'PythonObject':
       return PythonObject.loadFromXML(data);
+    case 'ObjectBuilder':
+      return ObjectBuilder.loadFromXML(data);
     case 'ClojureObject':
       return ClojureObject.loadFromXML(data);
     case 'JavaScriptObject':
@@ -274,7 +277,7 @@ export class PolyObject extends Array<SoundLayer>
       }
     }
 
-    return this.processGeneratedNotes(context, noteList, startTime, endTime);
+    return this.processGeneratedNotesAsync(context, noteList, startTime, endTime, compileData);
   }
 
   private processGeneratedNotes(
@@ -284,6 +287,52 @@ export class PolyObject extends Array<SoundLayer>
     endTime: number,
   ): NoteList {
     const processed = applyNoteProcessorChain(noteList, this._npc);
+    const duration = this._subjectiveDuration.toBeats(context);
+    const repeatPointBeats = this._repeatPoint ? this._repeatPoint.toBeats(context) : -1;
+
+    applyTimeBehavior(
+      processed,
+      this._timeBehavior,
+      duration,
+      repeatPointBeats,
+    );
+
+    setScoreStart(processed, this._startTime.toBeats(context));
+
+    let retVal = processed;
+
+    if (startTime > 0) {
+      setScoreStart(processed, -startTime);
+      const filtered = new NoteList();
+      for (const note of processed) {
+        if (note.getStartTime() >= 0) {
+          filtered.add(note);
+        }
+      }
+      retVal = filtered;
+    }
+
+    if (endTime > startTime) {
+      const filtered = new NoteList();
+      for (const note of retVal) {
+        if (note.getStartTime() <= endTime) {
+          filtered.add(note);
+        }
+      }
+      return filtered;
+    }
+
+    return retVal;
+  }
+
+  private async processGeneratedNotesAsync(
+    context: TimeContext,
+    noteList: NoteList,
+    startTime: number,
+    endTime: number,
+    compileData: CompileData,
+  ): Promise<NoteList> {
+    const processed = await applyNoteProcessorChainAsync(noteList, this._npc, compileData);
     const duration = this._subjectiveDuration.toBeats(context);
     const repeatPointBeats = this._repeatPoint ? this._repeatPoint.toBeats(context) : -1;
 
@@ -399,7 +448,7 @@ export class PolyObject extends Array<SoundLayer>
           }
         } else if (target instanceof PythonObject) {
           if (target.isOnLoadProcessable()) {
-            target.processOnLoad(context);
+            await target.processOnLoadAsync(context, runtimeClient);
           }
         }
       }

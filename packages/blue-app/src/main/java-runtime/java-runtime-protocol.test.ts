@@ -15,6 +15,19 @@ describe('java-runtime-protocol', () => {
     expect(encoded).toContain('"authToken":"secret"');
   });
 
+  it('includes Jython method names in requests', () => {
+    const request = createJavaRuntimeRequest(
+      'req-jython',
+      JAVA_RUNTIME_METHODS.JYTHON_IMPORT_CHECK,
+      'secret',
+      { modules: ['orchestra', 'pmask'] },
+    );
+    const encoded = encodeJavaRuntimeRequest(request).toString('utf-8');
+
+    expect(encoded).toContain('"method":"jython.importCheck"');
+    expect(encoded).toContain('"modules":["orchestra","pmask"]');
+  });
+
   it('decodes success responses', () => {
     const response = decodeJavaRuntimeResponse<{ accepted: boolean }>(JSON.stringify({
       id: 'req-2',

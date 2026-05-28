@@ -96,6 +96,13 @@ let recentProjectFiles: string[] = [];
 let currentProjectSessionId = 0;
 let currentFollowPlaybackEnabled = true;
 let currentFollowPlaybackOnStartEnabled = true;
+let lastProjectOnLoadState: ProjectOnLoadState | null = null;
+
+interface ProjectOnLoadState {
+  projectSessionId: number;
+  javaScriptSession: JavaScriptSession | null;
+  jythonStateRevision: number | null;
+}
 
 // Set application name early (before ready) so macOS menu bar shows "Blue".
 // NOTE: In dev mode (running `electron` CLI directly), macOS may still show
@@ -543,6 +550,7 @@ function createWindow(): void {
     isPackaged: app.isPackaged,
     mainModuleDir: __dirname,
     resourcesPath: process.resourcesPath,
+    userDataPath: app.getPath('userData'),
   });
   let blueLiveOutputBatch: { text: string; type: 'stdout' | 'stderr' }[] = [];
   let blueLiveOutputTimer: ReturnType<typeof setTimeout> | null = null;
@@ -1030,9 +1038,11 @@ function disposeJavaScriptSession(): void {
     javaScriptSession.dispose();
     javaScriptSession = null;
   }
+  lastProjectOnLoadState = null;
 }
 
 async function disposeJavaRuntimeSession(): Promise<void> {
+  lastProjectOnLoadState = null;
   if (javaRuntimeSessionManager) {
     await javaRuntimeSessionManager.dispose();
   }
@@ -1064,9 +1074,42 @@ async function ensureJavaRuntimeSession(data: BlueData | null): Promise<JavaRunt
   return javaRuntimeSessionManager.ensureReady(data, currentProjectSessionId, currentFilePath);
 }
 
-async function runProjectOnLoad(data: BlueData): Promise<void> {
+function getProjectOnLoadState(
+  data: BlueData,
+  javaRuntimeClient: JavaRuntimeClient | null,
+): ProjectOnLoadState {
+  const jythonStateRevision =
+    data.usesJavaRuntime() && javaRuntimeClient && javaRuntimeSessionManager
+      ? javaRuntimeSessionManager.getJythonStateRevision()
+      : null;
+
+  return {
+    projectSessionId: currentProjectSessionId,
+    javaScriptSession,
+    jythonStateRevision,
+  };
+}
+
+function projectOnLoadStateMatches(
+  current: ProjectOnLoadState | null,
+  next: ProjectOnLoadState,
+): boolean {
+  return current !== null
+    && current.projectSessionId === next.projectSessionId
+    && current.javaScriptSession === next.javaScriptSession
+    && current.jythonStateRevision === next.jythonStateRevision;
+}
+
+async function runProjectOnLoad(data: BlueData): Promise<JavaRuntimeClient | null> {
   const javaRuntimeClient = await ensureJavaRuntimeSession(data);
-  await data.processOnLoadAsync(javaScriptSession ?? undefined, javaRuntimeClient ?? undefined);
+  const nextState = getProjectOnLoadState(data, javaRuntimeClient);
+
+  if (!projectOnLoadStateMatches(lastProjectOnLoadState, nextState)) {
+    await data.processOnLoadAsync(javaScriptSession ?? undefined, javaRuntimeClient ?? undefined);
+    lastProjectOnLoadState = nextState;
+  }
+
+  return javaRuntimeClient;
 }
 
 // ─── Playback ───
@@ -1108,7 +1151,7 @@ async function startPlayback(): Promise<boolean> {
 
     await ensureJavaScriptEngine();
 
-    const javaRuntimeClient = await ensureJavaRuntimeSession(currentData);
+    const javaRuntimeClient = await runProjectOnLoad(currentData);
     const render = javaRuntimeClient
       ? await currentData.toRealtimePlaybackCSDAsync(javaScriptSession ?? undefined, javaRuntimeClient)
       : currentData.toRealtimePlaybackCSD(javaScriptSession ?? undefined);
@@ -1201,7 +1244,7 @@ async function generateCsdToScreen(): Promise<void> {
   }
   try {
     await ensureJavaScriptEngine();
-    const javaRuntimeClient = await ensureJavaRuntimeSession(currentData);
+    const javaRuntimeClient = await runProjectOnLoad(currentData);
     const csdText = javaRuntimeClient
       ? await currentData.toCSDAsync(javaScriptSession ?? undefined, javaRuntimeClient)
       : currentData.toCSD(javaScriptSession ?? undefined);
@@ -1219,7 +1262,7 @@ async function generateCsdToDisk(): Promise<void> {
   }
   try {
     await ensureJavaScriptEngine();
-    const javaRuntimeClient = await ensureJavaRuntimeSession(currentData);
+    const javaRuntimeClient = await runProjectOnLoad(currentData);
     await saveGeneratedCsdToDisk({
       currentData,
       currentFilePath,
@@ -1829,7 +1872,9 @@ async function runScoreObjectTestRequest(
   let javaRuntimeClient: JavaRuntimeClient | null = null;
 
   try {
-    javaRuntimeClient = await ensureJavaRuntimeSession(currentData);
+    if (currentData) {
+      javaRuntimeClient = await runProjectOnLoad(currentData);
+    }
   } catch (error) {
     return {
       ok: false,
@@ -1869,12 +1914,39 @@ ipcMain.handle('java-runtime:reinitialize', async () => {
   }
 
   try {
-    const javaRuntimeClient = await javaRuntimeSessionManager.reinitialize(
+    const javaRuntimeClient = await javaRuntimeSessionManager.reinitializeClojure(
       currentData,
       currentProjectSessionId,
       currentFilePath,
     );
     await currentData.processOnLoadAsync(javaScriptSession ?? undefined, javaRuntimeClient);
+    lastProjectOnLoadState = getProjectOnLoadState(currentData, javaRuntimeClient);
+    return { ok: true };
+  } catch (error) {
+    return { ok: false, error: error instanceof Error ? error.message : String(error) };
+  }
+});
+
+ipcMain.handle('java-runtime:reinitialize-jython', async () => {
+  if (!currentData) {
+    return { ok: false, error: 'No project loaded.' };
+  }
+
+  if (!currentData.usesJavaRuntime()) {
+    return { ok: false, error: 'Active project does not use the Java runtime.' };
+  }
+
+  if (!javaRuntimeSessionManager) {
+    return { ok: false, error: 'Java runtime manager is unavailable.' };
+  }
+
+  try {
+    await javaRuntimeSessionManager.reinitializeJython(
+      currentData,
+      currentProjectSessionId,
+      currentFilePath,
+    );
+    await runProjectOnLoad(currentData);
     return { ok: true };
   } catch (error) {
     return { ok: false, error: error instanceof Error ? error.message : String(error) };

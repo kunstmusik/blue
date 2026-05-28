@@ -22,6 +22,7 @@ import { JMask } from './j-mask';
 import { TrackerObject } from './tracker-object';
 import { NotationObject } from './notation-object';
 import { FrozenSoundObject } from './frozen-sound-object';
+import { ObjectBuilder } from './object-builder';
 
 // Register all built-in SoundObject types
 registerSoundObjectType('GenericScore', GenericScore.loadFromXML);
@@ -43,6 +44,7 @@ registerSoundObjectType('JMask', JMask.loadFromXML);
 registerSoundObjectType('TrackerObject', TrackerObject.loadFromXML);
 registerSoundObjectType('NotationObject', NotationObject.loadFromXML);
 registerSoundObjectType('FrozenSoundObject', FrozenSoundObject.loadFromXML);
+registerSoundObjectType('ObjectBuilder', ObjectBuilder.loadFromXML);
 
 registerSoundObjectFactory('GenericScore', () => new GenericScore());
 registerSoundObjectFactory('PolyObject', () => {
@@ -67,3 +69,4 @@ registerSoundObjectFactory('JMask', () => new JMask());
 registerSoundObjectFactory('TrackerObject', () => new TrackerObject());
 registerSoundObjectFactory('NotationObject', () => new NotationObject());
 registerSoundObjectFactory('FrozenSoundObject', () => new FrozenSoundObject());
+registerSoundObjectFactory('ObjectBuilder', () => new ObjectBuilder());

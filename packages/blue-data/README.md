@@ -93,7 +93,7 @@ console.log(csd);
 // </CsoundSynthesizer>
 ```
 
-### Generating a CSD with Java-backed Clojure
+### Generating a CSD with Java-backed Clojure or Jython
 
 ```typescript
 import type { JavaRuntimeClientContract } from '@blue/data';
@@ -104,7 +104,7 @@ await data.processOnLoadAsync(undefined, runtimeClient);
 const csd = await data.toCSDAsync(undefined, runtimeClient);
 ```
 
-`@blue/data` stays browser-safe and does not launch Java itself. Hosts such as Electron main inject a `JavaRuntimeClientContract` when they want `ClojureObject` evaluation to participate in on-load processing and score generation.
+`@blue/data` stays browser-safe and does not launch Java itself. Hosts such as Electron main inject a `JavaRuntimeClientContract` when they want `ClojureObject`, `PythonObject`, Python `ObjectBuilder`, `PythonInstrument`, or `PythonProcessor` execution to participate in on-load processing, note processing, orchestra generation, and score generation.
 
 ### Creating a Project Programmatically
 
@@ -188,7 +188,8 @@ const xml = data.saveToString();
 | `GenericScore` | Raw Csound score text |
 | `ClojureObject` | Clojure code -> score (requires injected Java runtime for execution) |
 | `JavaScriptObject` | JS code → score (uses QuickJS after runtime initialization) |
-| `PythonObject` | Python code → score (data only, JVM needed for generation) |
+| `PythonObject` | Python code → score (requires injected Java runtime for execution) |
+| `ObjectBuilder` | Builder-based score object; Python execution requires injected Java runtime |
 | `CSDSoundObject` | Embedded CSD |
 | `Comment` | Score annotation |
 
@@ -198,7 +199,7 @@ const xml = data.saveToString();
 |----------|-------|
 | Mixer | `Mixer`, `Channel`, `Effect`, `EffectsChain`, `Send` |
 | Automation | `Parameter`, `ParameterList`, `ParameterTimeManager` |
-| Note Processors | `AddProcessor`, `MultiplyProcessor`, `Code` |
+| Note Processors | `AddProcessor`, `MultiplyProcessor`, `Code`, `PythonProcessor` |
 | Live | `LiveObject`, `LiveObjectSet`, `LiveObjectSetList` |
 | MIDI | `MidiKeyMapping`, `MidiVelocityMapping` |
 | Opcodes | `OpcodeDefinition`, `OpcodeList` |
@@ -216,11 +217,11 @@ const xml = data.saveToString();
 `@blue/data` works in **both Node.js and browsers**:
 
 - ✅ No Node.js built-in dependency for `JavaScriptObject` execution
-- ✅ `ClojureObject` XML and project dependency metadata load/save remain available without Java
+- ✅ `ClojureObject`, `PythonObject`, `ObjectBuilder`, `PythonInstrument`, and `PythonProcessor` XML/project metadata remain available without Java
 - ✅ QuickJS-backed JavaScript evaluation works in both Node.js and browser bundles
 - ✅ Loading/saving `.blue` XML files remains synchronous
 - ⚠️ `JavaScriptObject` execution requires a one-time async runtime preload
-- ⚠️ `ClojureObject` execution uses the async Java runtime contract and host-provided `toCSDAsync()` / `processOnLoadAsync()` flows
+- ⚠️ Clojure and Python-backed execution uses the async Java runtime contract and host-provided `toCSDAsync()` / `processOnLoadAsync()` flows
 
 ### Initializing the JavaScript runtime
 
@@ -263,11 +264,13 @@ try {
 - Loading/saving `.blue` XML files
 - All data class manipulation
 - `JavaScriptObject` score generation after `await initializeJavaScriptRuntime()`
-- CSD generation
+- CSD generation for projects that do not require host-injected Java evaluation
 
-### What requires Node.js (or a Java subprocess)
+### What requires a host-injected Java runtime
 
-- `PythonObject` score generation — returns empty notes in browser
+- `ClojureObject` score generation and on-load execution
+- `PythonObject` and Python `ObjectBuilder` score generation
+- `PythonInstrument` orchestra generation and `PythonProcessor` note-chain execution
 - `Mixer` CSD variable generation — needs channel routing info
 
 ## Browser Usage

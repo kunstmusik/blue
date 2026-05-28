@@ -7,12 +7,15 @@ import { Element } from '../serialization/xml-reader';
 import { ObjRefSaveMap } from '../serialization/obj-ref-map';
 import { DeepCopyable } from '../deep-copyable';
 import { OpcodeList } from '../opcodes/opcode-list';
+import { appendUserDefinedOpcodes } from '../opcodes/udo-utilities';
+import { replaceOpcodeNames } from '../utilities/text';
 
 export class GenericInstrument extends Instrument implements DeepCopyable<GenericInstrument> {
   private _text = '';
   private _globalOrc = '';
   private _globalSco = '';
   private _opcodeList = new OpcodeList();
+  private _udoReplacementValues: Map<string, string> | null = null;
 
   constructor() {
     super();
@@ -51,6 +54,14 @@ export class GenericInstrument extends Instrument implements DeepCopyable<Generi
     this._opcodeList = opcodeList;
   }
 
+  override generateUserDefinedOpcodes(udoList: unknown): void {
+    if (!(udoList instanceof OpcodeList)) {
+      return;
+    }
+
+    this._udoReplacementValues = appendUserDefinedOpcodes(this._opcodeList, udoList);
+  }
+
   override generateGlobalOrc(): string | null {
     return this._globalOrc || null;
   }
@@ -60,7 +71,13 @@ export class GenericInstrument extends Instrument implements DeepCopyable<Generi
   }
 
   override generateInstrument(): string {
-    return this._text;
+    let instrumentText = this._text;
+    if (this._udoReplacementValues && this._udoReplacementValues.size > 0) {
+      instrumentText = replaceOpcodeNames(this._udoReplacementValues, instrumentText);
+      this._udoReplacementValues = null;
+    }
+
+    return instrumentText;
   }
 
   // ─── XML ───

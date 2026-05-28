@@ -14,7 +14,7 @@ import { TimeContext } from '../time/time-context';
 import { CompileData } from '../compile-data';
 import { NoteList } from './note-list';
 import { NoteProcessorChain } from '../note-processors/note-processor-chain';
-import { applyNoteProcessorChain } from '../utilities/score';
+import { applyNoteProcessorChain, applyNoteProcessorChainAsync } from '../utilities/score';
 
 export class SoundLayer extends Array<SoundObject> implements Layer {
   private _name = '';
@@ -208,7 +208,7 @@ export class SoundLayer extends Array<SoundObject> implements Layer {
       noteList.merge(nl);
     }
 
-    return applyNoteProcessorChain(noteList, this._npc);
+    return applyNoteProcessorChainAsync(noteList, this._npc, compileData);
   }
 
   deepCopy(): SoundLayer {

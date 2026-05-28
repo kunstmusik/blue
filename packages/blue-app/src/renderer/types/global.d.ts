@@ -101,6 +101,7 @@ declare global {
         request: ScoreObjectEditorRequest,
       ) => Promise<ScoreObjectTestResult>;
       reinitializeClojureRuntime: () => Promise<{ ok: boolean; error?: string }>;
+      reinitializeJythonRuntime: () => Promise<{ ok: boolean; error?: string }>;
       getNestedPolyObjectSnapshot: (
         location: ScoreObjectLocationRef,
       ) => Promise<PolyObjectLayerGroupSnapshot | null>;

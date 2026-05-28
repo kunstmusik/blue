@@ -79,6 +79,29 @@ function createBsbInstrumentWithUdo(
   return instrument;
 }
 
+function createGenericInstrumentWithUdo(name: string): GenericInstrument {
+  const instrument = new GenericInstrument();
+  instrument.setName(name);
+  instrument.setText(
+    'ain oscili 0.1, 440\n'
+      + 'aout declick ain\n'
+      + 'blueMixerOut aout, aout',
+  );
+
+  const opcode = new OpcodeDefinition();
+  opcode.setName('declick');
+  opcode.setStyle(UDOStyle.CLASSIC);
+  opcode.setOutTypes('a');
+  opcode.setInTypes('a');
+  opcode.setCode('ain xin\nxout ain * 0.5');
+
+  const opcodes = new OpcodeList();
+  opcodes.addOpcode(opcode);
+  instrument.setOpcodeList(opcodes);
+
+  return instrument;
+}
+
 describe('CSD render helpers', () => {
   it('processes pre and once command blocks like Java', () => {
     const output = processCommandBlocks([
@@ -125,6 +148,20 @@ describe('CSD render helpers', () => {
 });
 
 describe('BlueData UDO/table parity', () => {
+  it('includes generic instrument UDOs in generated csd', () => {
+    const data = new BlueData();
+    const arrangement = new Arrangement();
+
+    arrangement.addInstrument(createGenericInstrumentWithUdo('Generic'), '1');
+    data.setArrangement(arrangement);
+
+    const csd = data.toCSD();
+
+    expect(csd).toContain('opcode declick,a,a');
+    expect(csd).toContain('aout declick ain');
+    expect(csd).toContain('xout ain * 0.5');
+  });
+
   it('renames colliding UDOs and rewrites instrument references', () => {
     const data = new BlueData();
     const arrangement = new Arrangement();

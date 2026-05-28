@@ -1,3 +1,4 @@
+import type { CompileData } from '../compile-data';
 import { NoteList } from '../sound-objects/note-list';
 import { NoteProcessorChain } from '../note-processors/note-processor-chain';
 import { Note } from '../sound-objects/note';
@@ -5,6 +6,14 @@ import { TimeBehavior } from '../sound-objects/time-behavior';
 
 export function applyNoteProcessorChain(nl: NoteList, npc: NoteProcessorChain): NoteList {
   return npc.apply(nl);
+}
+
+export async function applyNoteProcessorChainAsync(
+  nl: NoteList,
+  npc: NoteProcessorChain,
+  compileData?: CompileData,
+): Promise<NoteList> {
+  return npc.applyAsync(nl, compileData);
 }
 
 export function setScoreStart(nl: NoteList, offset: number): void {

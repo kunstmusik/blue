@@ -1,4 +1,7 @@
 import { describe, expect, it } from 'vitest';
+import { OpcodeDefinition } from '../opcodes/opcode-definition';
+import { OpcodeList } from '../opcodes/opcode-list';
+import { UDOStyle } from '../opcodes/udo-style';
 import { Element } from '../serialization/xml-reader';
 import { JavaScriptInstrument } from './javascript-instrument';
 
@@ -22,5 +25,23 @@ describe('JavaScriptInstrument', () => {
     expect(saved.getAttribute('type')).toBe('blue.orchestra.JavaScriptInstrument');
     expect(saved.getTextString('globalOrc')).toBe('gkJS init 1');
     expect(saved.getTextString('instrumentText')).toContain('oscili');
+  });
+
+  it('appends its opcode list into the shared compile UDO list', () => {
+    const instr = new JavaScriptInstrument();
+
+    const opcode = new OpcodeDefinition();
+    opcode.setName('jsFx');
+    opcode.setStyle(UDOStyle.CLASSIC);
+    opcode.setOutTypes('a');
+    opcode.setInTypes('a');
+    opcode.setCode('ain xin\nxout ain * 0.5');
+    instr.getOpcodeList().addOpcode(opcode);
+
+    const masterList = new OpcodeList();
+    instr.generateUserDefinedOpcodes(masterList);
+
+    expect(masterList.size()).toBe(1);
+    expect(masterList.getOpcode(0)?.getName()).toBe('jsFx');
   });
 });

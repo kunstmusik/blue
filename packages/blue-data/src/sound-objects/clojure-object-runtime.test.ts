@@ -17,6 +17,13 @@ function createRuntimeClient(): JavaRuntimeClientContract {
         namespace: 'user0',
       },
     })),
+    jythonImportCheck: vi.fn(async () => ({ ok: true, result: { importedModules: [], libraryPaths: [] } })),
+    evaluateJythonScript: vi.fn(async () => ({ ok: true, result: { value: '' } })),
+    evaluateJythonScoreObject: vi.fn(async () => ({ ok: true, result: { scoreText: '' } })),
+    evaluateJythonObjectBuilder: vi.fn(async () => ({ ok: true, result: { scoreText: '' } })),
+    evaluateJythonInstrument: vi.fn(async () => ({ ok: true, result: { instrumentText: '' } })),
+    processJythonNoteList: vi.fn(async () => ({ ok: true, result: { notes: [] } })),
+    reinitializeJython: vi.fn(async () => ({ ok: true, result: { libraryPaths: [] } })),
   };
 }
 

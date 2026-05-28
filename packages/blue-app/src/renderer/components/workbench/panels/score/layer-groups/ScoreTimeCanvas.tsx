@@ -21,6 +21,7 @@ import {
 
 interface Props {
   group: PolyObjectLayerGroupSnapshot;
+  totalBeats: number;
   pixelsPerBeat: number;
   snapEnabled: boolean;
   snapValue: SnapValueName;
@@ -219,6 +220,7 @@ const MIN_SCORE_OBJECT_DURATION = 0.25;
 
 export default function ScoreTimeCanvas({
   group,
+  totalBeats,
   pixelsPerBeat,
   snapEnabled,
   snapValue,
@@ -334,6 +336,15 @@ export default function ScoreTimeCanvas({
     ? snapValueToBeats(snapValue, tempo, smpteFrameRate, 44100, pixelsPerBeat)
     : 0;
   const pixelsPerSecond = tempo > 0 ? pixelsPerBeat * (tempo / 60) : pixelsPerBeat;
+  const contentWidth = totalBeats * pixelsPerBeat;
+  const snapLineXPositions = useMemo(() => {
+    if (!snapEnabled || snapBeats <= 0) {
+      return [] as number[];
+    }
+
+    return deriveSnapLineBeats(snapValue, snapBeats, meterMap, totalBeats)
+      .map((beat) => Math.round(beat * pixelsPerBeat) + 0.5);
+  }, [meterMap, pixelsPerBeat, snapBeats, snapEnabled, snapValue, totalBeats]);
 
   const snapBeatValueMove = useCallback((beats: number): number => {
     if (!snapEnabled || snapBeats <= 0) return beats;
@@ -1129,11 +1140,9 @@ export default function ScoreTimeCanvas({
               }}
             >
               <SnapLinesLayer
-                snapEnabled={snapEnabled}
-                snapValue={snapValue}
-                snapBeats={snapBeats}
-                meterMap={meterMap}
-                pixelsPerBeat={pixelsPerBeat}
+                layerId={layer.layerId}
+                contentWidth={contentWidth}
+                lineXPositions={snapLineXPositions}
                 height={layer.height || DEFAULT_ROW_HEIGHT}
               />
               {layer.items.map((item: ScoreRowObjectSnapshot) => {
@@ -1387,56 +1396,41 @@ function EmptyAreaContextMenu({ menuItemClass, sepClass, clipboard, contextMenuP
   );
 }
 
-function SnapLinesLayer({ snapEnabled, snapValue, snapBeats, meterMap, pixelsPerBeat, height }: {
-  snapEnabled: boolean;
-  snapValue: SnapValueName;
-  snapBeats: number;
-  meterMap: MeterMapSnapshot;
-  pixelsPerBeat: number;
+function SnapLinesLayer({ layerId, contentWidth, lineXPositions, height }: {
+  layerId: string;
+  contentWidth: number;
+  lineXPositions: number[];
   height: number;
 }) {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const parent = canvas.parentElement;
-    if (!parent) return;
-
-    const width = parent.scrollWidth || 2000;
-    const dpr = window.devicePixelRatio || 1;
-    canvas.width = width * dpr;
-    canvas.height = height * dpr;
-    canvas.style.width = `${width}px`;
-    canvas.style.height = `${height}px`;
-
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    ctx.scale(dpr, dpr);
-    ctx.clearRect(0, 0, width, height);
-
-    if (!snapEnabled || snapBeats <= 0) return;
-
-    ctx.strokeStyle = 'rgba(64, 64, 64, 1)';
-    ctx.lineWidth = 1;
-
-    const maxBeat = width / pixelsPerBeat;
-    for (const beat of deriveSnapLineBeats(snapValue, snapBeats, meterMap, maxBeat)) {
-      const x = Math.round(beat * pixelsPerBeat) + 0.5;
-      ctx.beginPath();
-      ctx.moveTo(x, 0);
-      ctx.lineTo(x, height);
-      ctx.stroke();
+  const pathData = useMemo(() => {
+    if (lineXPositions.length === 0 || contentWidth <= 0 || height <= 0) {
+      return '';
     }
-  }, [meterMap, snapBeats, snapEnabled, snapValue, pixelsPerBeat, height]);
+
+    return lineXPositions.map((x) => `M ${x} 0 V ${height}`).join(' ');
+  }, [contentWidth, height, lineXPositions]);
+
+  if (!pathData) {
+    return null;
+  }
 
   return (
-    <canvas
-      ref={canvasRef}
-      className="absolute top-0 left-0 pointer-events-none"
-      style={{ width: '100%', height }}
-    />
+    <svg
+      aria-hidden="true"
+      data-snap-lines-layer={layerId}
+      className="absolute top-0 left-0 pointer-events-none overflow-hidden"
+      width={contentWidth}
+      height={height}
+      viewBox={`0 0 ${contentWidth} ${height}`}
+    >
+      <path
+        d={pathData}
+        fill="none"
+        shapeRendering="crispEdges"
+        stroke="rgba(64, 64, 64, 1)"
+        strokeWidth="1"
+        vectorEffect="non-scaling-stroke"
+      />
+    </svg>
   );
 }

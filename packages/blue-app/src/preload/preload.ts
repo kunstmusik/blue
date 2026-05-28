@@ -88,6 +88,8 @@ contextBridge.exposeInMainWorld('blueAPI', {
     ipcRenderer.invoke('test-javascript-sound-object', request) as Promise<ScoreObjectTestResult>,
   reinitializeClojureRuntime: () =>
     ipcRenderer.invoke('java-runtime:reinitialize') as Promise<{ ok: boolean; error?: string }>,
+  reinitializeJythonRuntime: () =>
+    ipcRenderer.invoke('java-runtime:reinitialize-jython') as Promise<{ ok: boolean; error?: string }>,
   getNestedPolyObjectSnapshot: (location: ScoreObjectLocationRef) =>
     ipcRenderer.invoke('get-nested-poly-object-snapshot', location) as Promise<PolyObjectLayerGroupSnapshot | null>,
   sendBsbRealtimeControlUpdate: (update: BsbRealtimeControlUpdate) =>

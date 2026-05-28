@@ -1,3 +1,4 @@
+import type { CompileData } from '../compile-data';
 import { NoteProcessor } from './note-processor';
 import { NoteProcessorException } from './note-processor-exception';
 import { NoteList } from '../sound-objects/note-list';
@@ -18,6 +19,7 @@ import { TuningProcessor } from './tuning-processor';
 import { SwitchProcessor } from './switch-processor';
 import { SubListProcessor } from './sublist-processor';
 import { EqualsProcessor } from './equals-processor';
+import { PythonProcessor } from './python-processor';
 import { UnsupportedProcessor } from './unsupported-processor';
 
 const PROCESSOR_MAP: Record<string, { loadFromXML: (data: Element) => NoteProcessor }> = {
@@ -37,6 +39,7 @@ const PROCESSOR_MAP: Record<string, { loadFromXML: (data: Element) => NoteProces
   SwitchProcessor,
   SubListProcessor,
   EqualsProcessor,
+  PythonProcessor,
 };
 
 const FULL_CLASS_NAME_MAP: Record<string, string> = {
@@ -89,6 +92,25 @@ export class NoteProcessorChain {
     for (const proc of this._processors) {
       try {
         result = proc.process(result);
+      } catch (e: unknown) {
+        if (e instanceof NoteProcessorException) {
+          throw e;
+        }
+        throw new NoteProcessorException(
+          `Error in ${proc.getDisplayName()}: ${e instanceof Error ? e.message : String(e)}`,
+          -1,
+          e as Error,
+        );
+      }
+    }
+    return result;
+  }
+
+  async applyAsync(notes: NoteList, compileData?: CompileData): Promise<NoteList> {
+    let result = notes;
+    for (const proc of this._processors) {
+      try {
+        result = await proc.processAsync(result, compileData);
       } catch (e: unknown) {
         if (e instanceof NoteProcessorException) {
           throw e;

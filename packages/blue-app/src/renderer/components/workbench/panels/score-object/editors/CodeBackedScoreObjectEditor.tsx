@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useRef } from 'react';
 import type { ScoreObjectEditorComponentProps } from '../editor-registry';
 import SelectedCodeEditor from '../../editors/SelectedCodeEditor';
 import GeneratedScoreModal from './GeneratedScoreModal';
+import JythonRuntimeStatusIndicator from './JythonRuntimeStatusIndicator';
 import { useScoreObjectTest } from './useScoreObjectTest';
 
 export default function CodeBackedScoreObjectEditor({ document, onPatch }: ScoreObjectEditorComponentProps): React.ReactElement {
@@ -16,6 +17,9 @@ export default function CodeBackedScoreObjectEditor({ document, onPatch }: Score
   };
 
   const isCsoundScore = editor.syntax === 'csound-score';
+  const isJythonBacked = editor.syntax === 'python';
+  const supportsOnLoadProcessable = document.target.editorObjectType === 'PythonObject';
+  const onLoadProcessable = editor.auxiliaryFlags?.onLoadProcessable === true;
   const {
     testing,
     testOutput,
@@ -31,6 +35,14 @@ export default function CodeBackedScoreObjectEditor({ document, onPatch }: Score
       type: 'updateTypeSpecificEditor',
       target: document.target,
       patch: { text },
+    });
+  }, [document.target, onPatch]);
+
+  const handleProcessOnLoadChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    onPatch({
+      type: 'updateTypeSpecificEditor',
+      target: document.target,
+      patch: { onLoadProcessable: event.target.checked },
     });
   }, [document.target, onPatch]);
 
@@ -53,8 +65,20 @@ export default function CodeBackedScoreObjectEditor({ document, onPatch }: Score
 
   return (
     <div ref={containerRef} className="h-full flex flex-col" tabIndex={-1}>
-      {isCsoundScore && (
-        <div className="flex items-center justify-end border-b border-blue-border/30 bg-[#1a2540] px-2 py-1 shrink-0">
+      {(isCsoundScore || isJythonBacked) && (
+        <div className="flex flex-wrap items-center justify-end gap-2 border-b border-blue-border/30 bg-[#1a2540] px-2 py-1 shrink-0">
+          {supportsOnLoadProcessable && (
+            <label className="mr-auto flex items-center gap-1 text-[11px] text-gray-300">
+              <input
+                type="checkbox"
+                checked={onLoadProcessable}
+                onChange={handleProcessOnLoadChange}
+                className="rounded border border-blue-border"
+              />
+              Process on Load
+            </label>
+          )}
+          {isJythonBacked && <JythonRuntimeStatusIndicator />}
           <button
             type="button"
             className="rounded border border-blue-border px-2 py-0.5 text-[11px] text-gray-300 hover:border-blue-accent"

@@ -220,6 +220,50 @@ export class Arrangement {
     return buffer.join("");
   }
 
+  async generateOrchestraAsync(
+    compileData: CompileData,
+    mixer?: Mixer,
+    nchnls = 2,
+    parameterMap?: Map<Instrument, Parameter[]>,
+  ): Promise<string> {
+    const buffer: string[] = [];
+
+    for (const ia of this.arrangement) {
+      if (!ia.enabled) continue;
+      if (!ia.instr) continue;
+
+      const instrParams = parameterMap?.get(ia.instr);
+      let instrumentText = await ia.instr.generateInstrumentAsync(compileData, instrParams);
+      if (!instrumentText) continue;
+
+      let transformed = this.replaceInstrumentId(
+        ia.arrangementId,
+        instrumentText,
+      );
+
+      transformed = this.convertBlueMixerOut(
+        compileData,
+        mixer,
+        ia.arrangementId,
+        transformed,
+        nchnls,
+      );
+
+      if (!transformed.endsWith("\n")) {
+        transformed += "\n";
+      }
+      if (!transformed.endsWith("\n\n")) {
+        transformed += "\n";
+      }
+
+      buffer.push(`\tinstr ${ia.arrangementId}\t;${ia.instr.getName()}\n`);
+      buffer.push(transformed);
+      buffer.push("\tendin\n\n");
+    }
+
+    return buffer.join("");
+  }
+
   /**
    * Generate global orchestra code from all instruments.
    */

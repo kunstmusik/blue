@@ -3,7 +3,14 @@ export const JAVA_RUNTIME_METHODS = {
   INIT_SESSION: 'session.init',
   EVAL_CLOJURE: 'clojure.eval',
   EVAL_CLOJURE_SCORE_OBJECT: 'clojure.evalScoreObject',
+  JYTHON_IMPORT_CHECK: 'jython.importCheck',
+  JYTHON_EVAL_SCRIPT: 'jython.evalScript',
+  JYTHON_EVAL_SCORE_OBJECT: 'jython.evalScoreObject',
+  JYTHON_EVAL_OBJECT_BUILDER: 'jython.evalObjectBuilder',
+  JYTHON_EVAL_INSTRUMENT: 'jython.evalInstrument',
+  JYTHON_PROCESS_NOTE_LIST: 'jython.processNoteList',
   REINITIALIZE_CLOJURE: 'clojure.reinitialize',
+  REINITIALIZE_JYTHON: 'jython.reinitialize',
   SHUTDOWN: 'runtime.shutdown',
 } as const;
 
@@ -31,12 +38,16 @@ export interface JavaRuntimeSessionInitParams extends Record<string, unknown> {
   projectSessionId: number;
   projectDir: string | null;
   clojureDependencies?: JavaRuntimeDependencySpec[];
+  jythonPythonLibRoot?: string | null;
+  jythonUserPythonLibRoot?: string | null;
 }
 
 export interface JavaRuntimeSessionInitResult {
   projectSessionId: number;
   clojureNamespace: string;
   dependenciesLoaded: JavaRuntimeDependencyLoadResult[];
+  jythonReady?: boolean;
+  jythonLibraryPaths?: string[];
 }
 
 export interface ClojureEvalParams extends Record<string, unknown> {
@@ -63,6 +74,73 @@ export interface ClojureEvalScoreObjectResult {
 
 export interface ClojureReinitializeResult {
   clojureNamespace: string;
+}
+
+export interface JythonImportCheckParams extends Record<string, unknown> {
+  modules: string[];
+}
+
+export interface JythonImportCheckResult {
+  importedModules: string[];
+  libraryPaths: string[];
+}
+
+export interface JythonEvalScriptParams extends Record<string, unknown> {
+  code: string;
+  bindings?: Record<string, unknown>;
+  returnVariableName?: string | null;
+}
+
+export interface JythonEvalScriptResult {
+  value: string;
+}
+
+export interface JythonEvalScoreObjectParams extends Record<string, unknown> {
+  code: string;
+  blueDuration: number;
+  blueProjectDir?: string | null;
+}
+
+export interface JythonEvalScoreObjectResult {
+  scoreText: string;
+}
+
+export interface JythonEvalObjectBuilderParams extends Record<string, unknown> {
+  code: string;
+  blueDuration: number;
+  commandline: string;
+  blueProjectDir?: string | null;
+}
+
+export interface JythonEvalObjectBuilderResult {
+  scoreText: string;
+}
+
+export interface JythonEvalInstrumentParams extends Record<string, unknown> {
+  code: string;
+}
+
+export interface JythonEvalInstrumentResult {
+  instrumentText: string;
+}
+
+export interface JythonSerializedNote {
+  pfields: string[];
+  subjectiveDuration: number;
+  tied: boolean;
+}
+
+export interface JythonProcessNoteListParams extends Record<string, unknown> {
+  code: string;
+  notes: JythonSerializedNote[];
+}
+
+export interface JythonProcessNoteListResult {
+  notes: JythonSerializedNote[];
+}
+
+export interface JythonReinitializeResult {
+  libraryPaths: string[];
 }
 
 export interface JavaRuntimeShutdownResult {

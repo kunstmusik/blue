@@ -30,6 +30,22 @@ class ProtocolEnvelopeTest {
     }
 
     @Test
+    void serializesJythonMethodRequestEnvelope() throws Exception {
+        RuntimeRequestEnvelope request = new RuntimeRequestEnvelope();
+        request.id = "req-jython";
+        request.method = RuntimeMethod.JYTHON_IMPORT_CHECK.getValue();
+        request.authToken = "secret";
+        request.params = objectMapper.valueToTree(Map.of("modules", new String[]{"orchestra", "pmask"}));
+
+        String json = objectMapper.writeValueAsString(request);
+        JsonNode node = objectMapper.readTree(json);
+
+        assertEquals("req-jython", node.get("id").asText());
+        assertEquals("jython.importCheck", node.get("method").asText());
+        assertEquals(2, node.get("params").get("modules").size());
+    }
+
+    @Test
     void serializesSuccessResponse() throws Exception {
         RuntimeResponseEnvelope<Map<String, Object>> response = RuntimeResponseEnvelope.success(
                 "req-2",

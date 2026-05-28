@@ -115,10 +115,12 @@ export class Note {
       }
     }
 
-    const dur = parseFloat(buffer[2] ?? '0');
-    this._startTime = parseFloat(buffer[1] ?? '0');
-    this.setSubjectiveDuration(dur);
-    this.setTied(dur < 0);
+    const startTimeStr = this._pFields.get(2) ?? '0';
+    const durStr = this._pFields.get(3) ?? '0';
+    const rawDur = parseFloat(durStr);
+    this._startTime = parseFloat(startTimeStr);
+    this.setSubjectiveDuration(rawDur);
+    this.setTied(rawDur < 0);
   }
 
   getStartTime(): number { return this._startTime; }

@@ -62,6 +62,7 @@ export default function LayerPanel({
               <div key={group.groupId} className="not-last:border-b border-[#2a2a2a]">
                 <ScoreTimeCanvas
                   group={group}
+                  totalBeats={totalBeats}
                   pixelsPerBeat={pixelsPerBeat}
                   snapEnabled={snapEnabled}
                   snapValue={snapValue}

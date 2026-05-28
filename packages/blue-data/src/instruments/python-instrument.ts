@@ -1,6 +1,24 @@
 import { Element } from '../serialization/xml-reader';
+import { appendUserDefinedOpcodes } from '../opcodes/udo-utilities';
+import type { Parameter } from '../automation/parameter';
+import { replaceOpcodeNames } from '../utilities/text';
+import type { CompileData } from '../compile-data';
+import { getJavaRuntimeClient, type JavaRuntimeError } from '../java-runtime';
 import { OpcodeList } from '../opcodes/opcode-list';
 import { Instrument } from './instrument';
+
+function formatRuntimeError(message: string, error?: JavaRuntimeError): string {
+  const baseMessage = error?.message?.trim().length ? error.message : message;
+  if (error?.line == null) {
+    return baseMessage;
+  }
+
+  if (error.column == null) {
+    return `${baseMessage} (line ${error.line})`;
+  }
+
+  return `${baseMessage} (line ${error.line}, column ${error.column})`;
+}
 
 export class PythonInstrument extends Instrument {
   private _text =
@@ -9,6 +27,7 @@ export class PythonInstrument extends Instrument {
   private _globalOrc = '';
   private _globalSco = '';
   private _opcodeList = new OpcodeList();
+  private _udoReplacementValues: Map<string, string> | null = null;
 
   constructor(other?: PythonInstrument) {
     super();
@@ -52,6 +71,14 @@ export class PythonInstrument extends Instrument {
     return this._opcodeList;
   }
 
+  override generateUserDefinedOpcodes(udoList: unknown): void {
+    if (!(udoList instanceof OpcodeList)) {
+      return;
+    }
+
+    this._udoReplacementValues = appendUserDefinedOpcodes(this._opcodeList, udoList);
+  }
+
   override generateGlobalOrc(): string | null {
     return this._globalOrc || null;
   }
@@ -62,6 +89,32 @@ export class PythonInstrument extends Instrument {
 
   override generateInstrument(): string {
     return '';
+  }
+
+  override async generateInstrumentAsync(
+    compileData?: CompileData,
+    _parameters?: Parameter[],
+  ): Promise<string> {
+    const runtimeClient = compileData ? getJavaRuntimeClient(compileData) : null;
+    if (!runtimeClient) {
+      throw new Error('PythonInstrument.generateInstrumentAsync requires a Java runtime session');
+    }
+
+    const response = await runtimeClient.evaluateJythonInstrument({
+      code: this._text,
+    });
+
+    if (!response.ok) {
+      throw new Error(formatRuntimeError('Failed to evaluate PythonInstrument', response.error));
+    }
+
+    let instrumentText = response.result?.instrumentText ?? '';
+    if (this._udoReplacementValues && this._udoReplacementValues.size > 0) {
+      instrumentText = replaceOpcodeNames(this._udoReplacementValues, instrumentText);
+      this._udoReplacementValues = null;
+    }
+
+    return instrumentText;
   }
 
   saveAsXML(): Element {

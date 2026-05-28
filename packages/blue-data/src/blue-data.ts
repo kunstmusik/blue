@@ -58,8 +58,13 @@ import { TimeContext } from "./time/time-context";
 import { TempoMap } from "./time/tempo-map";
 import { ClojureObject } from './sound-objects/clojure-object';
 import { Instance } from './sound-objects/instance';
+import { ObjectBuilder } from './sound-objects/object-builder';
 import { PolyObject } from './sound-objects/poly-object';
+import { PythonObject } from './sound-objects/python-object';
 import type { SoundObject } from './sound-objects/sound-object';
+import { PythonInstrument } from './instruments/python-instrument';
+import { PythonProcessor } from './note-processors/python-processor';
+import type { NoteProcessorChain } from './note-processors/note-processor-chain';
 import {
   processCommandBlocks,
   preprocessSco,
@@ -534,6 +539,14 @@ export class BlueData implements BlueDataObject {
   usesJavaRuntime(): boolean {
     const seen = new Set<SoundObject>();
 
+    const chainUsesJavaRuntime = (chain: NoteProcessorChain | null | undefined): boolean => {
+      if (!chain) {
+        return false;
+      }
+
+      return chain.getProcessors().some((processor) => processor instanceof PythonProcessor);
+    };
+
     const visit = (soundObject: SoundObject | null | undefined): boolean => {
       if (!soundObject || seen.has(soundObject)) {
         return false;
@@ -541,7 +554,15 @@ export class BlueData implements BlueDataObject {
 
       seen.add(soundObject);
 
-      if (soundObject instanceof ClojureObject) {
+      if (chainUsesJavaRuntime(soundObject.getNoteProcessorChain())) {
+        return true;
+      }
+
+      if (soundObject instanceof ClojureObject || soundObject instanceof PythonObject) {
+        return true;
+      }
+
+      if (soundObject instanceof ObjectBuilder && soundObject.isPythonLanguage()) {
         return true;
       }
 
@@ -551,6 +572,10 @@ export class BlueData implements BlueDataObject {
 
       if (soundObject instanceof PolyObject) {
         for (const layer of soundObject) {
+          if (chainUsesJavaRuntime(layer.getNoteProcessorChain())) {
+            return true;
+          }
+
           for (const nested of layer) {
             if (visit(nested)) {
               return true;
@@ -562,6 +587,10 @@ export class BlueData implements BlueDataObject {
       return false;
     };
 
+    if (chainUsesJavaRuntime(this.score.getNoteProcessorChain())) {
+      return true;
+    }
+
     for (const layerGroup of this.score) {
       if (layerGroup instanceof PolyObject && visit(layerGroup)) {
         return true;
@@ -570,6 +599,12 @@ export class BlueData implements BlueDataObject {
 
     for (const soundObject of this.sObjLib.getAllObjects()) {
       if (visit(soundObject)) {
+        return true;
+      }
+    }
+
+    for (const assignment of this.arrangement.getArrangement()) {
+      if (assignment.instr instanceof PythonInstrument) {
         return true;
       }
     }
@@ -1004,7 +1039,7 @@ export class BlueData implements BlueDataObject {
       }
       const udoText = allUDOText.length > 0 ? `${allUDOText.join("\n")}\n` : "";
 
-      const orc = clonedArrangement.generateOrchestra(
+      const orc = await clonedArrangement.generateOrchestraAsync(
         compileData,
         clonedMixer,
         nchnls,

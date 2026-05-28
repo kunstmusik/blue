@@ -1,10 +1,8 @@
 import path from 'node:path';
 import type { BlueData } from '@blue/data';
-import {
-  type JavaRuntimeDependencySpec,
-  type JavaRuntimeErrorEnvelope,
-} from './java-runtime-protocol';
+import { type JavaRuntimeDependencySpec } from './java-runtime-protocol';
 import { JavaRuntimeClient, type JavaRuntimeClientOptions } from './java-runtime-client';
+import { formatJavaRuntimeProtocolError } from './java-runtime-errors';
 import {
   createJavaRuntimeProcess,
   isJavaRuntimeProcessRunning,
@@ -15,6 +13,7 @@ import {
 } from './java-runtime-process';
 import {
   resolveJavaRuntimeArtifactPath,
+  resolveJavaRuntimePythonLibraryPaths,
   type JavaRuntimeArtifactResolution,
   type JavaRuntimePathContext,
 } from './java-runtime-path';
@@ -33,23 +32,6 @@ interface JavaRuntimeSessionDependencies {
 
 export interface JavaRuntimeSessionManagerOptions extends JavaRuntimePathContext {
   javaExecutable?: string;
-}
-
-function formatRuntimeProtocolError(action: string, error?: JavaRuntimeErrorEnvelope): string {
-  if (!error) {
-    return `${action} failed`;
-  }
-
-  const message = error.message?.trim().length ? error.message : `${action} failed`;
-  if (error.line == null) {
-    return message;
-  }
-
-  if (error.column == null) {
-    return `${message} (line ${error.line})`;
-  }
-
-  return `${message} (line ${error.line}, column ${error.column})`;
 }
 
 function resolveProjectDirectory(currentFilePath: string | null): string | null {
@@ -80,6 +62,7 @@ export class JavaRuntimeSessionManager {
   private activeProjectDir: string | null = null;
   private pendingReady: Promise<JavaRuntimeClient> | null = null;
   private lifecycleEpoch = 0;
+  private jythonStateRevision = 0;
 
   constructor(
     options: JavaRuntimeSessionManagerOptions,
@@ -92,6 +75,10 @@ export class JavaRuntimeSessionManager {
 
   getClient(): JavaRuntimeClient | null {
     return this.client;
+  }
+
+  getJythonStateRevision(): number {
+    return this.jythonStateRevision;
   }
 
   async ensureReady(
@@ -139,20 +126,24 @@ export class JavaRuntimeSessionManager {
     epoch: number,
   ): Promise<JavaRuntimeClient> {
     const client = await this.ensureProcess(projectDir, epoch);
+    const pythonLibraryPaths = resolveJavaRuntimePythonLibraryPaths(this.options);
     const response = await client.initSession({
       projectSessionId,
       projectDir,
       clojureDependencies: extractClojureDependencies(data),
+      jythonPythonLibRoot: pythonLibraryPaths.packagedLibraryRoot,
+      jythonUserPythonLibRoot: pythonLibraryPaths.userLibraryRoot,
     });
 
     if (!response.ok) {
-      throw new Error(formatRuntimeProtocolError('Failed to initialize Java runtime session', response.error));
+      throw new Error(formatJavaRuntimeProtocolError('Failed to initialize Java runtime session', response.error));
     }
 
     if (this.lifecycleEpoch !== epoch) {
       throw new Error('Java runtime session was disposed during startup');
     }
 
+    this.jythonStateRevision += 1;
     this.activeProjectSessionId = projectSessionId;
     this.activeProjectDir = projectDir;
     return client;
@@ -163,11 +154,33 @@ export class JavaRuntimeSessionManager {
     projectSessionId: number,
     currentFilePath: string | null,
   ): Promise<JavaRuntimeClient> {
+    return this.reinitializeClojure(data, projectSessionId, currentFilePath);
+  }
+
+  async reinitializeClojure(
+    data: BlueData,
+    projectSessionId: number,
+    currentFilePath: string | null,
+  ): Promise<JavaRuntimeClient> {
     const client = await this.ensureReady(data, projectSessionId, currentFilePath);
     const response = await client.reinitializeClojure();
     if (!response.ok) {
-      throw new Error(formatRuntimeProtocolError('Failed to reinitialize Clojure runtime', response.error));
+      throw new Error(formatJavaRuntimeProtocolError('Failed to reinitialize Clojure runtime', response.error));
     }
+    return client;
+  }
+
+  async reinitializeJython(
+    data: BlueData,
+    projectSessionId: number,
+    currentFilePath: string | null,
+  ): Promise<JavaRuntimeClient> {
+    const client = await this.ensureReady(data, projectSessionId, currentFilePath);
+    const response = await client.reinitializeJython();
+    if (!response.ok) {
+      throw new Error(formatJavaRuntimeProtocolError('Failed to reinitialize Jython runtime', response.error));
+    }
+    this.jythonStateRevision += 1;
     return client;
   }
 
@@ -267,7 +280,7 @@ export class JavaRuntimeSessionManager {
     if (!health.ok) {
       await client.disconnect();
       (this.dependencies.terminateProcess ?? terminateJavaRuntimeProcess)(processHandle);
-      throw new Error(formatRuntimeProtocolError('Failed to health-check Java runtime', health.error));
+      throw new Error(formatJavaRuntimeProtocolError('Failed to health-check Java runtime', health.error));
     }
 
     if (this.lifecycleEpoch !== epoch) {

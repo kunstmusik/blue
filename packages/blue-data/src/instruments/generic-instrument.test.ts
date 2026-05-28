@@ -1,4 +1,7 @@
 import { describe, expect, it } from 'vitest';
+import { OpcodeDefinition } from '../opcodes/opcode-definition';
+import { OpcodeList } from '../opcodes/opcode-list';
+import { UDOStyle } from '../opcodes/udo-style';
 import { Element } from '../serialization/xml-reader';
 import { GenericInstrument } from './generic-instrument';
 
@@ -26,5 +29,37 @@ describe('GenericInstrument', () => {
     expect(saved.getTextString('comment')).toBe('lead comment');
     expect(saved.getTextString('instrumentText')).toContain('oscili');
     expect(saved.getElement('opcodeList')).not.toBeNull();
+  });
+
+  it('rewrites instrument opcode names after appending UDOs', () => {
+    const instr = new GenericInstrument();
+    instr.setText('aout declick ain');
+
+    const opcode = new OpcodeDefinition();
+    opcode.setName('declick');
+    opcode.setStyle(UDOStyle.CLASSIC);
+    opcode.setOutTypes('a');
+    opcode.setInTypes('a');
+    opcode.setCode('ain xin\nxout ain * 0.5');
+
+    const opcodeList = new OpcodeList();
+    opcodeList.addOpcode(opcode);
+    instr.setOpcodeList(opcodeList);
+
+    const masterList = new OpcodeList();
+    const existing = new OpcodeDefinition();
+    existing.setName('declick');
+    existing.setStyle(UDOStyle.CLASSIC);
+    existing.setOutTypes('a');
+    existing.setInTypes('a');
+    existing.setCode('ain xin\nxout ain');
+    masterList.addOpcode(existing);
+
+    instr.generateUserDefinedOpcodes(masterList);
+    const output = instr.generateInstrument();
+
+    expect(output).toMatch(/aout uniqueUDO\d+ ain/);
+    expect(masterList.size()).toBe(2);
+    expect(masterList.getOpcode(1)?.getName()).toMatch(/^uniqueUDO\d+$/);
   });
 });

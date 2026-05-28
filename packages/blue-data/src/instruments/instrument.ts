@@ -4,6 +4,8 @@
  */
 import { DeepCopyable } from '../deep-copyable';
 import { Element } from '../serialization/xml-reader';
+import type { CompileData } from '../compile-data';
+import type { Parameter } from '../automation/parameter';
 
 export abstract class Instrument implements DeepCopyable<Instrument> {
   protected _name = '';
@@ -46,6 +48,17 @@ export abstract class Instrument implements DeepCopyable<Instrument> {
 
   /** Generate the instrument's orchestra code. */
   abstract generateInstrument(): string;
+
+  async generateInstrumentAsync(
+    _compileData?: CompileData,
+    parameters?: Parameter[],
+  ): Promise<string> {
+    if (parameters && typeof (this as { generateInstrument?: unknown }).generateInstrument === 'function') {
+      return (this as unknown as { generateInstrument: (parameters: Parameter[]) => string }).generateInstrument(parameters);
+    }
+
+    return this.generateInstrument();
+  }
 
   /** Generate always-on instrument code (if needed). */
   generateAlwaysOnInstrument(): string | null {

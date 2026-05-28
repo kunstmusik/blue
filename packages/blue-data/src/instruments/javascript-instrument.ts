@@ -1,5 +1,6 @@
 import { Element } from '../serialization/xml-reader';
 import { OpcodeList } from '../opcodes/opcode-list';
+import { appendUserDefinedOpcodes } from '../opcodes/udo-utilities';
 import { Instrument } from './instrument';
 
 export class JavaScriptInstrument extends Instrument {
@@ -50,6 +51,14 @@ export class JavaScriptInstrument extends Instrument {
 
   getOpcodeList(): OpcodeList {
     return this._opcodeList;
+  }
+
+  override generateUserDefinedOpcodes(udoList: unknown): void {
+    if (!(udoList instanceof OpcodeList)) {
+      return;
+    }
+
+    appendUserDefinedOpcodes(this._opcodeList, udoList);
   }
 
   override generateGlobalOrc(): string | null {

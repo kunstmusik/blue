@@ -147,10 +147,17 @@ function createAudioGroup(itemsByLayer: ScoreRowObjectSnapshot[][]): AudioLayerG
   };
 }
 
-function renderCanvas(group: PolyObjectLayerGroupSnapshot, allLayerGroups: ScoreLayerGroupSnapshot[]): {
+function renderCanvas(
+  group: PolyObjectLayerGroupSnapshot,
+  allLayerGroups: ScoreLayerGroupSnapshot[],
+  options?: { pixelsPerBeat?: number; totalBeats?: number },
+): {
   root: Root;
   surface: HTMLDivElement;
 } {
+  const pixelsPerBeat = options?.pixelsPerBeat ?? 25;
+  const totalBeats = options?.totalBeats ?? 16;
+
   useProjectStore.setState({
     score: {
       ...useProjectStore.getState().score,
@@ -166,7 +173,8 @@ function renderCanvas(group: PolyObjectLayerGroupSnapshot, allLayerGroups: Score
     root.render(
       <ScoreTimeCanvas
         group={group}
-        pixelsPerBeat={25}
+        totalBeats={totalBeats}
+        pixelsPerBeat={pixelsPerBeat}
         snapEnabled
         snapValue="BEAT"
         tempo={120}
@@ -306,6 +314,27 @@ describe('ScoreTimeCanvas cross-group gestures', () => {
         targetDurationBeats: 3,
       }),
     ]);
+
+    act(() => {
+      root.unmount();
+    });
+  });
+
+  it('renders snap lines without using an oversized row canvas on long scores', () => {
+    const soundGroup = createSoundGroup([
+      [createSoundItem('sound-1', 'Sine', 0, 0, 0, 2)],
+    ]);
+
+    const { root, surface } = renderCanvas(soundGroup, [soundGroup], {
+      pixelsPerBeat: 25,
+      totalBeats: 1400,
+    });
+
+    expect(surface.querySelector('canvas')).toBeNull();
+
+    const snapLines = surface.querySelector('[data-snap-lines-layer="sound-group-layer-0"]');
+    expect(snapLines).not.toBeNull();
+    expect(snapLines?.getAttribute('width')).toBe('35000');
 
     act(() => {
       root.unmount();

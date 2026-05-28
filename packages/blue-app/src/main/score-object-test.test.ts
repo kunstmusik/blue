@@ -3,7 +3,9 @@ import {
   BlueData,
   ClojureObject,
   GenericScore,
+  ObjectBuilder,
   PolyObject,
+  PythonObject,
   SoundLayer,
   TimePosition,
 } from '@blue/data';
@@ -132,6 +134,123 @@ describe('testScoreObject', () => {
     expect(result.ok).toBe(false);
     expect(result.error).toBe(
       'Java runtime is unavailable. Install Java 17 or newer to test Clojure objects.',
+    );
+  });
+
+  it('delegates PythonObject testing through the async Java runtime path', async () => {
+    const data = new BlueData();
+    const root = data.getScore()[0] as PolyObject;
+    const layer = root[0];
+    const pythonObject = new PythonObject();
+    pythonObject.setPythonCode('score = "i4 0 4 220"');
+    layer.push(pythonObject);
+
+    const evaluateJythonScoreObject = vi.fn(async () => ({
+      ok: true,
+      result: {
+        scoreText: 'i4 0 4 220',
+      },
+    }));
+
+    const result = await testScoreObject(data, {
+      target: makeTarget('PythonObject', {
+        rootGroupIndex: 0,
+        containerPath: [],
+        layerIndex: 0,
+        objectIndex: layer.length - 1,
+      }),
+    }, {
+      javaRuntimeClient: {
+        evaluateJythonScoreObject,
+      } as any,
+    });
+
+    expect(result.ok).toBe(true);
+    expect(result.output).toContain('i4');
+    expect(evaluateJythonScoreObject).toHaveBeenCalledWith({
+      code: 'score = "i4 0 4 220"',
+      blueDuration: 4,
+    });
+  });
+
+  it('returns a friendly error when a PythonObject is tested without a Java runtime', async () => {
+    const data = new BlueData();
+    const root = data.getScore()[0] as PolyObject;
+    const layer = root[0];
+    const pythonObject = new PythonObject();
+    layer.push(pythonObject);
+
+    const result = await testScoreObject(data, {
+      target: makeTarget('PythonObject', {
+        rootGroupIndex: 0,
+        containerPath: [],
+        layerIndex: 0,
+        objectIndex: layer.length - 1,
+      }),
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.error).toBe(
+      'Java runtime is unavailable. Install Java 17 or newer to test Python objects.',
+    );
+  });
+
+  it('delegates Python ObjectBuilder testing through the async Java runtime path', async () => {
+    const data = new BlueData();
+    const root = data.getScore()[0] as PolyObject;
+    const layer = root[0];
+    const objectBuilder = new ObjectBuilder();
+    objectBuilder.setCode('score = "i5 0 4 110"');
+    layer.push(objectBuilder);
+
+    const evaluateJythonObjectBuilder = vi.fn(async () => ({
+      ok: true,
+      result: {
+        scoreText: 'i5 0 4 110',
+      },
+    }));
+
+    const result = await testScoreObject(data, {
+      target: makeTarget('ObjectBuilder', {
+        rootGroupIndex: 0,
+        containerPath: [],
+        layerIndex: 0,
+        objectIndex: layer.length - 1,
+      }),
+    }, {
+      javaRuntimeClient: {
+        evaluateJythonObjectBuilder,
+      } as any,
+    });
+
+    expect(result.ok).toBe(true);
+    expect(result.output).toContain('i5');
+    expect(evaluateJythonObjectBuilder).toHaveBeenCalledWith({
+      code: 'score = "i5 0 4 110"',
+      blueDuration: 4,
+      commandline: '',
+    });
+  });
+
+  it('returns a friendly error when a Python ObjectBuilder is tested without a Java runtime', async () => {
+    const data = new BlueData();
+    const root = data.getScore()[0] as PolyObject;
+    const layer = root[0];
+    const objectBuilder = new ObjectBuilder();
+    layer.push(objectBuilder);
+
+    const result = await testScoreObject(data, {
+      target: makeTarget('ObjectBuilder', {
+        rootGroupIndex: 0,
+        containerPath: [],
+        layerIndex: 0,
+        objectIndex: layer.length - 1,
+      }),
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.error).toBe(
+      'Java runtime is unavailable. Install Java 17 or newer to test Python ObjectBuilder objects.',
     );
   });
 });

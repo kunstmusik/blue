@@ -7,7 +7,7 @@ import { ObjRefSaveMap, ObjRefLoadMap } from '../serialization/obj-ref-map';
 import { SoundObject } from './sound-object';
 import { initBasicFromXML, getBasicXML } from './sound-object-utilities';
 import { getJavaRuntimeClient, type JavaRuntimeClientContract, type JavaRuntimeError } from '../java-runtime';
-import { applyNoteProcessorChain, applyTimeBehavior, getNotes, setScoreStart } from '../utilities/score';
+import { applyNoteProcessorChainAsync, applyTimeBehavior, getNotes, setScoreStart } from '../utilities/score';
 
 function formatRuntimeError(message: string, error?: JavaRuntimeError): string {
   const baseMessage = error?.message?.trim().length ? error.message : message;
@@ -111,7 +111,7 @@ export class ClojureObject extends AbstractSoundObject {
     }
 
     const noteList = getNotes(response.result?.scoreText ?? '');
-    const processed = applyNoteProcessorChain(noteList, this.getNoteProcessorChain());
+    const processed = await applyNoteProcessorChainAsync(noteList, this.getNoteProcessorChain(), compileData);
     const duration = this.getSubjectiveDuration().toBeats(context);
     const startTime = this.getStartTime().toBeats(context);
     const repeatPoint = this.getRepeatPoint();

@@ -7,6 +7,19 @@ import {
   type ClojureEvalScoreObjectResult,
   type ClojureReinitializeResult,
   type JavaRuntimeHealthResult,
+  type JythonEvalInstrumentParams,
+  type JythonEvalInstrumentResult,
+  type JythonEvalObjectBuilderParams,
+  type JythonEvalObjectBuilderResult,
+  type JythonEvalScoreObjectParams,
+  type JythonEvalScoreObjectResult,
+  type JythonEvalScriptParams,
+  type JythonEvalScriptResult,
+  type JythonImportCheckParams,
+  type JythonImportCheckResult,
+  type JythonProcessNoteListParams,
+  type JythonProcessNoteListResult,
+  type JythonReinitializeResult,
   type JavaRuntimeRequestEnvelope,
   type JavaRuntimeResponseEnvelope,
   type JavaRuntimeSessionInitParams,
@@ -106,6 +119,46 @@ export class JavaRuntimeClient {
 
   reinitializeClojure(): Promise<JavaRuntimeResponseEnvelope<ClojureReinitializeResult>> {
     return this.sendRequest(JAVA_RUNTIME_METHODS.REINITIALIZE_CLOJURE, {});
+  }
+
+  jythonImportCheck(
+    params: JythonImportCheckParams,
+  ): Promise<JavaRuntimeResponseEnvelope<JythonImportCheckResult>> {
+    return this.sendRequest(JAVA_RUNTIME_METHODS.JYTHON_IMPORT_CHECK, params);
+  }
+
+  evaluateJythonScript(
+    params: JythonEvalScriptParams,
+  ): Promise<JavaRuntimeResponseEnvelope<JythonEvalScriptResult>> {
+    return this.sendRequest(JAVA_RUNTIME_METHODS.JYTHON_EVAL_SCRIPT, params);
+  }
+
+  evaluateJythonScoreObject(
+    params: JythonEvalScoreObjectParams,
+  ): Promise<JavaRuntimeResponseEnvelope<JythonEvalScoreObjectResult>> {
+    return this.sendRequest(JAVA_RUNTIME_METHODS.JYTHON_EVAL_SCORE_OBJECT, params);
+  }
+
+  evaluateJythonObjectBuilder(
+    params: JythonEvalObjectBuilderParams,
+  ): Promise<JavaRuntimeResponseEnvelope<JythonEvalObjectBuilderResult>> {
+    return this.sendRequest(JAVA_RUNTIME_METHODS.JYTHON_EVAL_OBJECT_BUILDER, params);
+  }
+
+  evaluateJythonInstrument(
+    params: JythonEvalInstrumentParams,
+  ): Promise<JavaRuntimeResponseEnvelope<JythonEvalInstrumentResult>> {
+    return this.sendRequest(JAVA_RUNTIME_METHODS.JYTHON_EVAL_INSTRUMENT, params);
+  }
+
+  processJythonNoteList(
+    params: JythonProcessNoteListParams,
+  ): Promise<JavaRuntimeResponseEnvelope<JythonProcessNoteListResult>> {
+    return this.sendRequest(JAVA_RUNTIME_METHODS.JYTHON_PROCESS_NOTE_LIST, params);
+  }
+
+  reinitializeJython(): Promise<JavaRuntimeResponseEnvelope<JythonReinitializeResult>> {
+    return this.sendRequest(JAVA_RUNTIME_METHODS.REINITIALIZE_JYTHON, {});
   }
 
   shutdown(): Promise<JavaRuntimeResponseEnvelope<JavaRuntimeShutdownResult>> {

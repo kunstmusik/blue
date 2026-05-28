@@ -15,6 +15,7 @@
     <junit.version>5.13.4</junit.version>
     <jackson.version>2.20.1</jackson.version>
     <jeromq.version>0.6.0</jeromq.version>
+    <jython.version>2.7.4</jython.version>
   </properties>
 
   <dependencies>
@@ -37,6 +38,11 @@
       <groupId>org.zeromq</groupId>
       <artifactId>jeromq</artifactId>
       <version>${jeromq.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.python</groupId>
+      <artifactId>jython-standalone</artifactId>
+      <version>${jython.version}</version>
     </dependency>
     <dependency>
       <groupId>org.junit.jupiter</groupId>
@@ -101,6 +107,11 @@
                 <copy file="${project.build.directory}/${project.build.finalName}.jar"
                       tofile="${project.basedir}/../blue-app/assets/java/${project.build.finalName}.jar"
                       overwrite="true" />
+                <mkdir dir="${project.basedir}/../blue-app/assets/java/pythonLib" />
+                <copy todir="${project.basedir}/../blue-app/assets/java/pythonLib"
+                      overwrite="true">
+                  <fileset dir="${project.basedir}/src/main/resources/jython/pythonLib" />
+                </copy>
               </target>
             </configuration>
             <goals>

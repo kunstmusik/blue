@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   BlueData,
   ClojureObject,
+  ObjectBuilder,
   PolyObject,
   SoundLayer,
   GenericScore,
@@ -125,6 +126,29 @@ describe('createScoreObjectEditorDocument — code-backed types', () => {
       expect(doc!.editor.syntax).toBe('text');
       expect(doc!.editor.text).toBe('(def score "i1 0 1 330")');
       expect(doc!.editor.auxiliaryFlags).toEqual({ onLoadProcessable: true });
+    }
+  });
+
+  it('returns code editor for ObjectBuilder with python syntax and builder metadata', () => {
+    const objectBuilder = new ObjectBuilder();
+    objectBuilder.setName('Builder');
+    objectBuilder.setCode('score = "i1 0 1 220"');
+    objectBuilder.setCommandLine('render --fast');
+    objectBuilder.setLanguageType('PYTHON');
+    objectBuilder.setEditEnabled(false);
+    const data = makeDataWithObject(objectBuilder);
+
+    const doc = createScoreObjectEditorDocument(data, { target: makeTimelineTarget('ObjectBuilder') });
+    expect(doc).not.toBeNull();
+    expect(doc!.editor.kind).toBe('code');
+    if (doc!.editor.kind === 'code') {
+      expect(doc!.editor.syntax).toBe('python');
+      expect(doc!.editor.text).toBe('score = "i1 0 1 220"');
+      expect(doc!.editor.auxiliaryFlags).toEqual({
+        commandLine: 'render --fast',
+        languageType: 'PYTHON',
+        editEnabled: false,
+      });
     }
   });
 

@@ -22,6 +22,7 @@ import { AudioLayerGroup } from './audio/audio-layer-group';
 import { PatternsLayerGroup } from './patterns/patterns-layer-group';
 import type { JavaScriptSession } from '../javascript-runtime';
 import type { JavaRuntimeClientContract } from '../java-runtime';
+import { applyNoteProcessorChainAsync } from '../utilities/score';
 
 export class Score extends Array<LayerGroup<Layer>> {
   private timeContext = new TimeContext();
@@ -120,7 +121,7 @@ export class Score extends Array<LayerGroup<Layer>> {
       noteList.merge(nl);
     }
 
-    return this.npc.apply(noteList);
+    return applyNoteProcessorChainAsync(noteList, this.npc, compileData);
   }
 
   processOnLoad(session?: JavaScriptSession): void {

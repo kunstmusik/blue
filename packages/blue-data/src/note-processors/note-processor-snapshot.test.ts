@@ -5,6 +5,7 @@ import { AddProcessor } from './add-processor';
 import { MultiplyProcessor } from './multiply-processor';
 import { TuningProcessor } from './tuning-processor';
 import { createNoteProcessorChainSnapshot, reifyChainFromSnapshot, resetSnapshotIdCounter } from './note-processor-snapshot';
+import { PythonProcessor } from './python-processor';
 import { UnsupportedProcessor } from './unsupported-processor';
 
 describe('Note processor snapshot', () => {
@@ -30,7 +31,7 @@ describe('Note processor snapshot', () => {
     expect(snapshot.hasDeferredProcessors).toBe(false);
   });
 
-  it('creates snapshot marking PythonProcessor as deferred', () => {
+  it('creates snapshot marking PythonProcessor as supported', () => {
     const xml = Element.parse(`
       <noteProcessorChain>
         <noteProcessor type="blue.noteProcessor.PythonProcessor">
@@ -41,11 +42,12 @@ describe('Note processor snapshot', () => {
     const chain = NoteProcessorChain.loadFromXML(xml);
     const snapshot = createNoteProcessorChainSnapshot(chain);
     expect(snapshot.processors).toHaveLength(1);
-    expect(snapshot.processors[0].supported).toBe(false);
-    expect(snapshot.processors[0].deferred).toBe(true);
-    expect(snapshot.processors[0].displayName).toContain('deferred');
-    expect(snapshot.hasDeferredProcessors).toBe(true);
-    expect(snapshot.hasUnsupportedProcessors).toBe(true);
+    expect(snapshot.processors[0].supported).toBe(true);
+    expect(snapshot.processors[0].deferred).toBe(false);
+    expect(snapshot.processors[0].displayName).toBe('PythonProcessor');
+    expect(snapshot.processors[0].parameters.code).toContain('print');
+    expect(snapshot.hasDeferredProcessors).toBe(false);
+    expect(snapshot.hasUnsupportedProcessors).toBe(false);
   });
 
   it('creates snapshot marking unknown processors as unsupported', () => {
@@ -66,14 +68,14 @@ describe('Note processor snapshot', () => {
   it('preserves serializedXml for unsupported processors', () => {
     const xml = Element.parse(`
       <noteProcessorChain>
-        <noteProcessor type="blue.noteProcessor.PythonProcessor">
+        <noteProcessor type="blue.noteProcessor.SomeFutureProcessor">
           <code>print("hello")</code>
         </noteProcessor>
       </noteProcessorChain>
     `);
     const chain = NoteProcessorChain.loadFromXML(xml);
     const snapshot = createNoteProcessorChainSnapshot(chain);
-    expect(snapshot.processors[0].serializedXml).toContain('PythonProcessor');
+    expect(snapshot.processors[0].serializedXml).toContain('SomeFutureProcessor');
     expect(snapshot.processors[0].serializedXml).toContain('print');
   });
 
@@ -111,7 +113,7 @@ describe('Note processor snapshot', () => {
     expect(reifiedTuning.saveAsXML().toXml()).toContain('1.875');
   });
 
-  it('reifies unsupported processors preserving XML', () => {
+  it('reifies supported PythonProcessor from snapshot', () => {
     const xml = Element.parse(`
       <noteProcessorChain>
         <noteProcessor type="blue.noteProcessor.PythonProcessor">
@@ -123,8 +125,8 @@ describe('Note processor snapshot', () => {
     const snapshot = createNoteProcessorChainSnapshot(chain);
     const reified = reifyChainFromSnapshot(snapshot);
     expect(reified.getProcessors()).toHaveLength(1);
-    expect(reified.getProcessors()[0]).toBeInstanceOf(UnsupportedProcessor);
-    expect((reified.getProcessors()[0] as UnsupportedProcessor).getOriginalType()).toContain('PythonProcessor');
+    expect(reified.getProcessors()[0]).toBeInstanceOf(PythonProcessor);
+    expect((reified.getProcessors()[0] as PythonProcessor).getCode()).toContain('print');
   });
 
   it('round-trips a mixed chain through snapshot and reification', () => {
@@ -149,7 +151,30 @@ describe('Note processor snapshot', () => {
 
     expect(reified.getProcessors()).toHaveLength(3);
     expect(reified.getProcessors()[0]).toBeInstanceOf(AddProcessor);
-    expect(reified.getProcessors()[1]).toBeInstanceOf(UnsupportedProcessor);
+    expect(reified.getProcessors()[1]).toBeInstanceOf(PythonProcessor);
     expect(reified.getProcessors()[2]).toBeInstanceOf(MultiplyProcessor);
+  });
+
+  it('reifies older deferred PythonProcessor snapshots into supported processors', () => {
+    const reified = reifyChainFromSnapshot({
+      processors: [
+        {
+          id: 'np-legacy',
+          processorType: 'blue.noteProcessor.PythonProcessor',
+          displayName: 'PythonProcessor (deferred)',
+          supported: false,
+          deferred: true,
+          summary: 'PythonProcessor (deferred)',
+          parameters: {},
+          serializedXml: '<noteProcessor type="blue.noteProcessor.PythonProcessor"><code>x = 1</code></noteProcessor>',
+        },
+      ],
+      hasUnsupportedProcessors: true,
+      hasDeferredProcessors: true,
+    });
+
+    expect(reified.getProcessors()).toHaveLength(1);
+    expect(reified.getProcessors()[0]).toBeInstanceOf(PythonProcessor);
+    expect((reified.getProcessors()[0] as PythonProcessor).getCode()).toBe('x = 1');
   });
 });

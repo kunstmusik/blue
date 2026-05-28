@@ -3,6 +3,8 @@ import {
   CompileData,
   ClojureObject,
   JavaScriptObject,
+  ObjectBuilder,
+  PythonObject,
   setJavaRuntimeClient,
   setJavaScriptSession,
   type JavaRuntimeClientContract,
@@ -72,6 +74,22 @@ export async function testScoreObject(
       ok: false,
       output: '',
       error: 'Java runtime is unavailable. Install Java 17 or newer to test Clojure objects.',
+    };
+  }
+
+  if (sObj instanceof PythonObject && !options.javaRuntimeClient) {
+    return {
+      ok: false,
+      output: '',
+      error: 'Java runtime is unavailable. Install Java 17 or newer to test Python objects.',
+    };
+  }
+
+  if (sObj instanceof ObjectBuilder && sObj.isPythonLanguage() && !options.javaRuntimeClient) {
+    return {
+      ok: false,
+      output: '',
+      error: 'Java runtime is unavailable. Install Java 17 or newer to test Python ObjectBuilder objects.',
     };
   }
 

@@ -5,12 +5,20 @@ export interface JavaRuntimePathContext {
   isPackaged: boolean;
   mainModuleDir: string;
   resourcesPath?: string;
+  userDataPath?: string;
   existsSync?: (filePath: string) => boolean;
 }
 
 export interface JavaRuntimeArtifactResolution {
   artifactPath: string;
   candidatePaths: string[];
+  exists: boolean;
+}
+
+export interface JavaRuntimePythonLibraryResolution {
+  packagedLibraryRoot: string;
+  packagedCandidateRoots: string[];
+  userLibraryRoot: string | null;
   exists: boolean;
 }
 
@@ -38,5 +46,36 @@ export function resolveJavaRuntimeArtifactPath(
     artifactPath,
     candidatePaths,
     exists: existsSync(artifactPath),
+  };
+}
+
+export function getJavaRuntimePythonLibraryCandidates(
+  context: JavaRuntimePathContext,
+): string[] {
+  if (!context.isPackaged) {
+    return [path.resolve(context.mainModuleDir, '../../assets/java/pythonLib')];
+  }
+
+  const resourcesPath = context.resourcesPath ?? '';
+  return [
+    path.join(resourcesPath, 'assets', 'java', 'pythonLib'),
+    path.join(resourcesPath, 'app.asar.unpacked', 'assets', 'java', 'pythonLib'),
+    path.join(resourcesPath, 'app.asar.unpacked', 'packages', 'blue-app', 'assets', 'java', 'pythonLib'),
+  ];
+}
+
+export function resolveJavaRuntimePythonLibraryPaths(
+  context: JavaRuntimePathContext,
+): JavaRuntimePythonLibraryResolution {
+  const existsSync = context.existsSync ?? fs.existsSync;
+  const packagedCandidateRoots = getJavaRuntimePythonLibraryCandidates(context);
+  const packagedLibraryRoot =
+    packagedCandidateRoots.find((candidate) => existsSync(candidate)) ?? packagedCandidateRoots[0];
+
+  return {
+    packagedLibraryRoot,
+    packagedCandidateRoots,
+    userLibraryRoot: context.userDataPath ? path.join(context.userDataPath, 'pythonLib') : null,
+    exists: existsSync(packagedLibraryRoot),
   };
 }

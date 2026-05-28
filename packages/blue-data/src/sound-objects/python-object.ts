@@ -13,6 +13,21 @@ import { Element } from '../serialization/xml-reader';
 import { ObjRefSaveMap, ObjRefLoadMap } from '../serialization/obj-ref-map';
 import { SoundObject } from './sound-object';
 import { initBasicFromXML, getBasicXML } from './sound-object-utilities';
+import { getJavaRuntimeClient, type JavaRuntimeClientContract, type JavaRuntimeError } from '../java-runtime';
+import { applyNoteProcessorChainAsync, applyTimeBehavior, getNotes, setScoreStart } from '../utilities/score';
+
+function formatRuntimeError(message: string, error?: JavaRuntimeError): string {
+  const baseMessage = error?.message?.trim().length ? error.message : message;
+  if (error?.line == null) {
+    return baseMessage;
+  }
+
+  if (error.column == null) {
+    return `${baseMessage} (line ${error.line})`;
+  }
+
+  return `${baseMessage} (line ${error.line}, column ${error.column})`;
+}
 
 export class PythonObject extends AbstractSoundObject {
   private _pythonCode = '';
@@ -33,7 +48,29 @@ export class PythonObject extends AbstractSoundObject {
 
   processOnLoad(_context: TimeContext): void {
     if (!this._onLoadProcessable) return;
-    console.warn('PythonObject.processOnLoad skipped: requires Java subprocess');
+    console.warn('PythonObject.processOnLoad skipped: requires Java runtime');
+  }
+
+  async processOnLoadAsync(
+    context: TimeContext,
+    runtimeClient?: JavaRuntimeClientContract | null,
+  ): Promise<void> {
+    if (!this._onLoadProcessable) {
+      return;
+    }
+
+    if (!runtimeClient) {
+      throw new Error('PythonObject.processOnLoad requires a Java runtime session');
+    }
+
+    const response = await runtimeClient.evaluateJythonScoreObject({
+      code: this._pythonCode,
+      blueDuration: this.getSubjectiveDuration().toBeats(context),
+    });
+
+    if (!response.ok) {
+      throw new Error(formatRuntimeError('Failed to evaluate Python on-load code', response.error));
+    }
   }
 
   override generateForCSD(
@@ -42,10 +79,46 @@ export class PythonObject extends AbstractSoundObject {
     _startTime: number,
     _endTime: number,
   ): NoteList {
-    // JVM-dependent — skip in pure TS environment.
-    // In Node.js, a Java subprocess would be used (Phase 8+).
-    console.warn('PythonObject.generateForCSD skipped: requires Java subprocess');
+    console.warn('PythonObject.generateForCSD skipped: requires Java runtime');
     return new NoteList();
+  }
+
+  async generateForCSDAsync(
+    context: TimeContext,
+    compileData: CompileData,
+    _startTime: number,
+    _endTime: number,
+  ): Promise<NoteList> {
+    const runtimeClient = getJavaRuntimeClient(compileData);
+    if (!runtimeClient) {
+      throw new Error('PythonObject.generateForCSD requires a Java runtime session');
+    }
+
+    const response = await runtimeClient.evaluateJythonScoreObject({
+      code: this._pythonCode,
+      blueDuration: this.getSubjectiveDuration().toBeats(context),
+    });
+
+    if (!response.ok) {
+      throw new Error(formatRuntimeError('Failed to evaluate Python score object', response.error));
+    }
+
+    const noteList = getNotes(response.result?.scoreText ?? '');
+    const processed = await applyNoteProcessorChainAsync(noteList, this.getNoteProcessorChain(), compileData);
+    const duration = this.getSubjectiveDuration().toBeats(context);
+    const startTime = this.getStartTime().toBeats(context);
+    const repeatPoint = this.getRepeatPoint();
+    const repeatPointBeats = repeatPoint ? repeatPoint.toBeats(context) : -1;
+
+    applyTimeBehavior(
+      processed,
+      this.getTimeBehavior(),
+      duration,
+      repeatPointBeats,
+    );
+    setScoreStart(processed, startTime);
+
+    return processed;
   }
 
   // ─── XML ───
