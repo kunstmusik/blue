@@ -30,4 +30,5 @@ npm-debug.log*
 .pnpm-store
 *.blue~
 packages/blue-java/target
+packages/blue-app/assets/java/blue-java.jar
 temp*.csd
