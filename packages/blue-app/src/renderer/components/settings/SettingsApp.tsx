@@ -6,6 +6,7 @@ import type {
   SettingsValidationIssue,
 } from '../../../shared/program-settings';
 import { PROGRAM_SETTINGS_PANEL_ORDER } from '../../../shared/program-settings';
+import { cn } from '../../lib/cn';
 import GeneralSettings from './GeneralSettings';
 import ProjectDefaultsSettings from './ProjectDefaultsSettings';
 import PlaybackSettings from './PlaybackSettings';
@@ -75,11 +76,14 @@ export default function SettingsApp(): React.ReactElement {
 
   if (loading || !draft) {
     return (
-      <div style={{ padding: '24px', color: '#888', fontSize: '13px' }}>
+      <div className="px-6 py-6 text-[13px] text-app-text-muted">
         Loading settings...
       </div>
     );
   }
+
+  const secondaryButtonClass =
+    'inline-flex items-center rounded-md border border-app-border bg-transparent px-4 py-1.5 text-[13px] transition-colors enabled:hover:border-app-accent/60 enabled:hover:text-app-text-strong disabled:cursor-default disabled:opacity-40';
 
   const renderPanel = () => {
     switch (active) {
@@ -129,83 +133,38 @@ export default function SettingsApp(): React.ReactElement {
   };
 
   return (
-    <div style={{
-      display: 'flex',
-      height: '100vh',
-      background: 'var(--color-blue-bg, #1a1a2e)',
-      color: '#c8c8d8',
-      fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
-      fontSize: '13px',
-    }}>
-      <nav style={{
-        width: '180px',
-        flexShrink: 0,
-        background: 'var(--color-blue-surface, #16213e)',
-        borderRight: '1px solid var(--color-blue-border, #0f3460)',
-        padding: '12px 0',
-        display: 'flex',
-        flexDirection: 'column',
-      }}>
+    <div className="flex h-screen bg-app-bg text-app-text text-[13px]">
+      <nav className="flex w-[180px] shrink-0 flex-col border-r border-app-border bg-app-surface py-3">
         {PROGRAM_SETTINGS_PANEL_ORDER.map((cat) => (
           <button
             key={cat.id}
             type="button"
             onClick={() => setActive(cat.id)}
-            style={{
-              display: 'block',
-              width: '100%',
-              padding: '8px 16px',
-              border: 'none',
-              borderLeft: active === cat.id ? '2px solid var(--color-blue-accent, #e94560)' : '2px solid transparent',
-              background: active === cat.id ? 'rgba(233,69,96,0.08)' : 'transparent',
-              color: active === cat.id ? '#fff' : 'var(--color-blue-muted, #888)',
-              cursor: 'pointer',
-              textAlign: 'left',
-              fontSize: '13px',
-              fontFamily: 'inherit',
-            }}
+            className={cn(
+              'w-full border-l-2 border-transparent px-4 py-2 text-left text-app-text-muted transition-colors hover:bg-app-accent/6 hover:text-app-text-strong',
+              active === cat.id && 'border-app-accent bg-app-accent/10 text-app-text-strong',
+            )}
           >
             {cat.label}
           </button>
         ))}
       </nav>
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-        <div style={{ flex: 1, padding: '24px', overflow: 'auto' }}>
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+        <div className="min-h-0 flex-1 overflow-auto px-6 py-6">
           {renderPanel()}
         </div>
         {validationIssues.length > 0 && (
-          <div style={{
-            padding: '8px 16px',
-            background: 'rgba(255, 0, 0, 0.1)',
-            borderTop: '1px solid rgba(255, 0, 0, 0.3)',
-            fontSize: '12px',
-            color: '#ff6666',
-          }}>
+          <div className="border-t border-app-danger/30 bg-app-danger/10 px-4 py-2 text-xs text-app-danger">
             {validationIssues.map((issue, i) => (
               <div key={i}>{issue.path}: {issue.message}</div>
             ))}
           </div>
         )}
-        <div style={{
-          padding: '12px 24px',
-          borderTop: '1px solid var(--color-blue-border, #0f3460)',
-          display: 'flex',
-          gap: '8px',
-          justifyContent: 'flex-end',
-        }}>
+        <div className="flex justify-end gap-2 border-t border-app-border px-6 py-3">
           <button
             type="button"
             onClick={handleResetPanel}
-            style={{
-              padding: '6px 16px',
-              background: 'transparent',
-              color: '#888',
-              border: '1px solid #0f3460',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              fontSize: '13px',
-              fontFamily: 'inherit',
-            }}
+            className={cn(secondaryButtonClass, 'text-app-text-muted')}
           >
             Reset Panel
           </button>
@@ -213,16 +172,10 @@ export default function SettingsApp(): React.ReactElement {
             type="button"
             onClick={handleCancel}
             disabled={!dirty}
-            style={{
-              padding: '6px 16px',
-              background: 'transparent',
-              color: dirty ? '#c8c8d8' : '#555',
-              border: '1px solid #0f3460',
-              borderRadius: '4px',
-              cursor: dirty ? 'pointer' : 'default',
-              fontSize: '13px',
-              fontFamily: 'inherit',
-            }}
+            className={cn(
+              secondaryButtonClass,
+              dirty ? 'text-app-text' : 'text-app-text-subtle',
+            )}
           >
             Cancel
           </button>
@@ -230,16 +183,7 @@ export default function SettingsApp(): React.ReactElement {
             type="button"
             onClick={handleApply}
             disabled={!dirty}
-            style={{
-              padding: '6px 16px',
-              background: dirty ? '#e94560' : '#333',
-              color: dirty ? '#fff' : '#666',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: dirty ? 'pointer' : 'default',
-              fontSize: '13px',
-              fontFamily: 'inherit',
-            }}
+            className="inline-flex items-center rounded-md bg-app-accent px-4 py-1.5 text-[13px] text-white transition-colors enabled:hover:bg-app-accent-hover disabled:cursor-default disabled:bg-app-surface-strong disabled:text-app-text-subtle"
           >
             Apply
           </button>

@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import type { MeterMapSnapshot, MeterMapPatch } from '../../../../../shared/project-editor';
 import { parseMeterSignature, isPowerOfTwo } from './meter-map-utils';
 
-const SECONDARY_BUTTON_CLASS = 'text-[11px] text-blue-text bg-blue-surface/40 hover:bg-blue-surface/70 px-3 py-1 rounded border border-blue-border/40 transition-colors';
+const SECONDARY_BUTTON_CLASS = 'rounded border border-app-border/40 bg-app-surface px-3 py-1 text-[11px] text-app-text transition-colors hover:bg-app-hover';
 
 interface MeterEntryDialogProps {
   entryIndex: number;
@@ -82,20 +82,20 @@ export default function MeterEntryDialog({
       onClick={onClose}
     >
       <div
-        className="bg-[#1e1e3a] border border-blue-border/40 rounded-lg p-4 min-w-[240px] shadow-xl"
+        className="min-w-60 rounded-lg border border-app-border/40 bg-app-menu p-4 shadow-xl"
         onClick={(e) => e.stopPropagation()}
         onKeyDown={handleKeyDown}
       >
-        <h3 className="text-blue-text text-sm font-medium mb-3">
+        <h3 className="mb-3 text-sm font-medium text-app-text">
           {isFirst ? 'Edit Initial Time Signature' : `Edit Time Signature at Measure ${entry.measure}`}
         </h3>
 
         <div className="space-y-2">
           <div className="flex items-center gap-2">
-            <label className="text-[11px] text-blue-muted w-20">Measure</label>
+            <label className="w-20 text-[11px] text-app-text-muted">Measure</label>
             <input
               type="number"
-              className="flex-1 bg-[#12122a] border border-blue-border/30 rounded px-2 py-1 text-[11px] text-blue-text outline-none focus:border-blue-border/60"
+              className="flex-1 rounded border border-app-border/30 bg-app-field px-2 py-1 text-[11px] text-app-text outline-none focus:border-app-border/60"
               value={measure}
               onChange={(e) => setMeasure(e.target.value)}
               disabled={isFirst}
@@ -105,17 +105,17 @@ export default function MeterEntryDialog({
             />
           </div>
           <div className="flex items-center gap-2">
-            <label className="text-[11px] text-blue-muted w-20">Time Signature</label>
+            <label className="w-20 text-[11px] text-app-text-muted">Time Signature</label>
             <input
               type="text"
-              className="flex-1 bg-[#12122a] border border-blue-border/30 rounded px-2 py-1 text-[11px] text-blue-text outline-none focus:border-blue-border/60"
+              className="flex-1 rounded border border-app-border/30 bg-app-field px-2 py-1 text-[11px] text-app-text outline-none focus:border-app-border/60"
               value={signatureText}
               onChange={(e) => setSignatureText(e.target.value)}
               placeholder="e.g. 4/4 or 7/8"
             />
           </div>
           {error && (
-            <p className="text-[10px] text-red-400">{error}</p>
+            <p className="text-[10px] text-app-danger">{error}</p>
           )}
         </div>
 
@@ -127,7 +127,7 @@ export default function MeterEntryDialog({
             Cancel
           </button>
           <button
-            className="text-[11px] text-blue-text bg-blue-surface/80 hover:bg-blue-surface px-3 py-1 rounded border border-blue-border/30"
+            className="rounded border border-app-border/30 bg-app-surface px-3 py-1 text-[11px] text-app-text hover:bg-app-hover"
             onClick={handleOk}
           >
             OK

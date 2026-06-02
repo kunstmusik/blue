@@ -50,7 +50,7 @@ export default function TimeBar({
 
   return (
     <div
-      className="relative bg-[#10192a] overflow-hidden"
+      className="relative overflow-hidden bg-app-surface-strong"
       style={{ width: canvasWidth, height: getPianoRollRulerHeight(secondaryRulerEnabled) }}
     >
       <RulerRow
@@ -100,7 +100,7 @@ function RulerRow({
 
   return (
     <div
-      className={`relative overflow-hidden border-b border-blue-border/20 ${secondary ? 'bg-[#0d1626]' : 'bg-[#10192a]'}`}
+      className={`relative overflow-hidden border-b border-blue-border/20 ${secondary ? 'bg-app-input' : 'bg-app-surface-strong'}`}
       style={{ width: totalBeats * pixelSecond, height: PIANO_ROLL_RULER_ROW_HEIGHT }}
     >
       {marks.map((mark, i) => (

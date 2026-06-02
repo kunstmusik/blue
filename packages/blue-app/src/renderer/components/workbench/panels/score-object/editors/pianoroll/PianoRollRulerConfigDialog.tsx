@@ -56,7 +56,7 @@ export default function PianoRollRulerConfigDialog({
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
       <div
-        className="bg-[#1a1a2e] border border-blue-border/50 rounded-lg text-blue-text shadow-2xl max-w-sm w-full"
+        className="w-full max-w-sm rounded-lg border border-blue-border/50 bg-app-menu text-blue-text shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="p-4 space-y-4">

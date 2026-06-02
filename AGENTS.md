@@ -1,6 +1,6 @@
 # blue-electron Development Guidelines
 
-Auto-generated from all feature plans. Last updated: 2026-05-28
+Auto-generated from all feature plans. Last updated: 2026-05-29
 
 ## Active Technologies
 - React 19.x, Electron, dockview 5.2.0 + collapsed auxiliary-group planning for the workbench shell (013-collapsed-sidebar-research)
@@ -52,6 +52,8 @@ Auto-generated from all feature plans. Last updated: 2026-05-28
 - `.blue` XML remains canonical project persistence; `BlueData` remains main-process canonical project document; Clojure project dependency metadata remains in `pluginData`; helper JAR is a build artifact copied into `packages/blue-app/assets/java/` (049-blue-java-runtime)
 - TypeScript 5.8.x, React 19.x, Electron 35.x, Java 17+ helper runtime target, Maven 3.x, Jython 2.7.4 + Existing `@blue/data`, `@blue/app`, `@blue/java-runtime`, Node `zeromq`, Java JeroMQ, Jackson, Clojure 1.12.x from SPEC 049, `org.python:jython-standalone:2.7.4`, Java Blue `blue-ext-jython/src/main/release/pythonLib`, Vitest 4.x, JUnit 5 (050-jython-support)
 - `.blue` XML remains canonical project persistence; helper runtime assets live under `packages/blue-app/assets/java/` as `blue-java.jar` plus packaged `pythonLib`; Jython interpreter state is transient project-session state; user Python library remains outside project XML (050-jython-support)
+- TypeScript 5.8.x, React 19.x, Electron 35.x, strict renderer code + Tailwind CSS v4 CSS-first theme tokens, `@tailwindcss/postcss`, `clsx`, `tailwind-merge`, Dockview 5.2.0, CodeMirror 6, Radix Context Menu, existing Vite/Vitest renderer tooling (051-theme-token-cleanup)
+- N/A - renderer styling only; no project XML, localStorage, or settings persistence changes (051-theme-token-cleanup)
 
 - TypeScript 5.8.x, React 19.x, Electron 35.x, strict renderer/main/preload packages, pure TypeScript `@blue/data` + `PresetGroup`/`Preset` BSB preset model, Zustand 5.x project store with BSB interface/opcode-list patch support, Dockview 5.2.0, CodeMirror 6, `BsbInterfacePatch` union type for structured BSB mutations (022-bsb-interface-parity)
 - BSB Interface tab now renders an editable widget canvas with selection, property-sheet editing, grid settings, preset application, and Java-style split-view UDO editor (UDOTable + UDOEditor); snapshot contract extended with `widgetTree`, `gridSettings`, `editEnabled`, `presetGroup`, `opcodeListText`; widget-specific rendering (Slider, Knob, Toggle, etc.) deferred to SPEC 023 (022-bsb-interface-parity)
@@ -88,6 +90,6 @@ TypeScript 5.x, strict mode: Follow standard conventions
 <!-- MANUAL ADDITIONS END -->
 
 ## Recent Changes
+- 051-theme-token-cleanup: Added TypeScript 5.8.x, React 19.x, Electron 35.x, strict renderer code + Tailwind CSS v4 CSS-first theme tokens, `@tailwindcss/postcss`, `clsx`, `tailwind-merge`, Dockview 5.2.0, CodeMirror 6, Radix Context Menu, existing Vite/Vitest renderer tooling
 - 050-jython-support: Added TypeScript 5.8.x, React 19.x, Electron 35.x, Java 17+ helper runtime target, Maven 3.x, Jython 2.7.4 + Existing `@blue/data`, `@blue/app`, `@blue/java-runtime`, Node `zeromq`, Java JeroMQ, Jackson, Clojure 1.12.x from SPEC 049, `org.python:jython-standalone:2.7.4`, Java Blue `blue-ext-jython/src/main/release/pythonLib`, Vitest 4.x, JUnit 5
 - 049-blue-java-runtime: Added TypeScript 5.8.x, React 19.x, Electron 35.x, Java 17+ helper runtime target, Maven 3.x build + `@blue/data`, `@blue/app` Electron main/preload/renderer IPC, Node `zeromq` in Electron main, Java JeroMQ, Clojure 1.12.x, Pomegranate for Java Blue Clojure dependency metadata, Jackson or equivalent JSON binding inside the helper, Vitest 4.x, JUnit 5
-- 048-note-processor-parity: Added TypeScript 5.8.x, React 19.x, Electron 35.x, strict monorepo packages + `@blue/data` note processors and score model, Electron main/preload IPC bridge, Zustand 5.x project store, React renderer components, Radix Context Menu, Vitest 4.x

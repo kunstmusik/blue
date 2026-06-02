@@ -87,8 +87,8 @@ export default function SoundEditor({ document, onPatch }: ScoreObjectEditorComp
   const visibleTabs = SOUND_TABS.filter((t) => availableTabs.includes(t.key as SoundEditorTab));
 
   return (
-    <div className="flex h-full min-h-0 flex-col bg-blue-bg">
-      <div className="border-b border-blue-border bg-[#10192a] px-2">
+    <div className="flex h-full min-h-0 flex-col bg-app-bg text-app-text">
+      <div className="border-b border-app-border bg-app-surface-strong px-2">
         <div className="flex items-end justify-between">
           <div className="flex items-end gap-1">
             {visibleTabs.map((tab) => (
@@ -99,8 +99,8 @@ export default function SoundEditor({ document, onPatch }: ScoreObjectEditorComp
                 className={[
                   'border-b-2 px-3 py-2 text-xs',
                   activeTab === tab.key
-                    ? 'border-blue-accent text-gray-100'
-                    : 'border-transparent text-blue-muted hover:text-gray-100',
+                    ? 'border-app-accent text-app-text-strong'
+                    : 'border-transparent text-app-text-muted hover:text-app-text-strong',
                 ].join(' ')}
                 onClick={() => setActiveTab(tab.key)}
               >
@@ -110,7 +110,7 @@ export default function SoundEditor({ document, onPatch }: ScoreObjectEditorComp
           </div>
           <button
             type="button"
-            className="mb-1 rounded border border-blue-border px-2 py-0.5 text-[11px] text-gray-300 hover:border-blue-accent disabled:opacity-50"
+            className="mb-1 rounded border border-app-border bg-app-surface px-2 py-0.5 text-[11px] text-app-text hover:border-app-accent disabled:opacity-50"
             disabled={testing}
             onClick={() => { void runTest(); }}
             title="Test generated score"
@@ -120,9 +120,9 @@ export default function SoundEditor({ document, onPatch }: ScoreObjectEditorComp
         </div>
       </div>
       {testError && (
-        <div className="px-3 py-1.5 text-xs border-b shrink-0 bg-red-900/20 text-red-300 flex items-center gap-2">
+        <div className="flex shrink-0 items-center gap-2 border-b border-app-danger/30 bg-app-danger/10 px-3 py-1.5 text-xs text-app-danger">
           <span>Error: {testError}</span>
-          <button className="underline text-blue-muted hover:text-gray-200" onClick={clearTestError}>dismiss</button>
+          <button className="underline text-app-text-muted hover:text-app-text" onClick={clearTestError}>dismiss</button>
         </div>
       )}
       <div className="min-h-0 flex-1 overflow-hidden">
@@ -163,9 +163,9 @@ export default function SoundEditor({ document, onPatch }: ScoreObjectEditorComp
         )}
         {activeTab === 'comments' && (
           <div className="flex flex-col h-full p-3">
-            <label className="text-xs text-blue-muted mb-1">Comment</label>
+            <label className="mb-1 text-xs text-app-text-muted">Comment</label>
             <textarea
-              className="flex-1 rounded border border-blue-border bg-blue-bg px-2 py-1 text-xs text-gray-100 font-mono focus:border-blue-accent focus:outline-none resize-none"
+              className="flex-1 resize-none rounded border border-app-border bg-app-canvas px-2 py-1 font-mono text-xs text-app-text-strong focus:border-app-accent focus:outline-none"
               value={comment}
               onChange={(e) => handleCommentChange(e.target.value)}
               placeholder="Instrument comment..."
@@ -332,14 +332,14 @@ function SoundAutomationPanel({
 
   if (parameters.length === 0) {
     return (
-      <div className="flex h-full items-center justify-center text-blue-muted text-sm">
+      <div className="flex h-full items-center justify-center text-sm text-app-text-muted">
         No automatable parameters available.
       </div>
     );
   }
 
   return (
-    <div className="flex h-full min-h-0 flex-col bg-[#05090f]">
+    <div className="flex h-full min-h-0 flex-col bg-app-input text-app-text">
       <div className="min-h-0 flex-1">
         <SoundAutomationCanvas
           lines={lines}
@@ -349,10 +349,10 @@ function SoundAutomationPanel({
           onLinesChange={handleLinesChange}
         />
       </div>
-      <div className="flex items-center gap-2 border-t border-blue-border bg-[#1d2c45] px-2 py-1 text-xs text-gray-100">
-        <span className="text-gray-200">Automations</span>
+      <div className="flex items-center gap-2 border-t border-app-border bg-app-hover px-2 py-1 text-xs text-app-text">
+        <span className="text-app-text-soft">Automations</span>
         <select
-          className="min-w-0 flex-1 rounded border border-blue-border bg-[#22324d] px-2 py-1 text-xs text-gray-100 focus:border-blue-accent focus:outline-none"
+          className="min-w-0 flex-1 rounded border border-app-border bg-app-surface px-2 py-1 text-xs text-app-text-strong focus:border-app-accent focus:outline-none"
           value={selectedParamId ?? ''}
           onChange={(event) => setSelectedParamId(event.target.value)}
           disabled={lines.length === 0}
@@ -369,7 +369,7 @@ function SoundAutomationPanel({
         </select>
         <button
           type="button"
-          className="rounded border border-blue-border bg-[#22324d] px-3 py-1 text-xs text-gray-100 hover:border-blue-accent"
+          className="rounded border border-app-border bg-app-surface px-3 py-1 text-xs text-app-text-strong hover:border-app-accent"
           onClick={openEditDialog}
         >
           Edit
@@ -378,21 +378,21 @@ function SoundAutomationPanel({
 
       {showEditDialog && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowEditDialog(false)}>
-          <div className="w-160 max-h-[70vh] overflow-hidden rounded border border-blue-border bg-[#1d2c45] shadow-xl" onClick={(event) => event.stopPropagation()}>
-            <div className="border-b border-blue-border px-4 py-3 text-lg font-semibold text-gray-100">
+          <div className="w-160 max-h-[70vh] overflow-hidden rounded border border-app-border bg-app-hover shadow-xl" onClick={(event) => event.stopPropagation()}>
+            <div className="border-b border-app-border px-4 py-3 text-lg font-semibold text-app-text-strong">
               Choose Parameters to Automate
             </div>
             <div className="max-h-[50vh] overflow-auto">
-              <table className="w-full border-collapse text-sm text-gray-100">
+              <table className="w-full border-collapse text-sm text-app-text">
                 <thead>
-                  <tr className="border-b border-blue-border bg-[#233550]">
+                  <tr className="border-b border-app-border bg-app-menu">
                     <th className="px-3 py-2 text-left font-medium">Enabled</th>
                     <th className="px-3 py-2 text-left font-medium">Parameter Name</th>
                   </tr>
                 </thead>
                 <tbody>
                   {sortedParameters.map((parameter) => (
-                    <tr key={parameter.parameterId} className="border-b border-blue-border/40">
+                    <tr key={parameter.parameterId} className="border-b border-app-border/40">
                       <td className="px-3 py-2">
                         <input
                           type="checkbox"
@@ -403,7 +403,7 @@ function SoundAutomationPanel({
                               [parameter.parameterId]: event.target.checked,
                             }));
                           }}
-                          className="accent-blue-accent"
+                          className="accent-app-accent"
                         />
                       </td>
                       <td className="px-3 py-2">{parameter.name || parameter.label || parameter.parameterId}</td>
@@ -412,17 +412,17 @@ function SoundAutomationPanel({
                 </tbody>
               </table>
             </div>
-            <div className="flex justify-end gap-2 border-t border-blue-border px-4 py-3">
+            <div className="flex justify-end gap-2 border-t border-app-border px-4 py-3">
               <button
                 type="button"
-                className="rounded border border-blue-border bg-[#22324d] px-4 py-1.5 text-sm text-gray-200 hover:border-blue-accent"
+                className="rounded border border-app-border bg-app-surface px-4 py-1.5 text-sm text-app-text-soft hover:border-app-accent"
                 onClick={() => setShowEditDialog(false)}
               >
                 Cancel
               </button>
               <button
                 type="button"
-                className="rounded border border-blue-accent bg-[#3d5f89] px-4 py-1.5 text-sm font-semibold text-gray-100 hover:bg-[#4b73a6]"
+                className="rounded border border-app-accent bg-app-accent px-4 py-1.5 text-sm font-semibold text-app-text-strong hover:bg-app-accent-hover"
                 onClick={applyEditDialogChanges}
               >
                 OK
@@ -464,20 +464,20 @@ function SoundAutomationCanvas({
   }), [effectiveDuration, startTimeBeats]);
 
   return (
-    <div className="flex h-full min-h-0 flex-col bg-black">
-      <div className="relative h-6 border-b border-blue-border bg-[#1f2432] text-[10px] text-gray-200">
+    <div className="flex h-full min-h-0 flex-col bg-app-canvas">
+      <div className="relative h-6 border-b border-app-border bg-app-menu text-[10px] text-app-text-soft">
         {Array.from({ length: 7 }, (_, index) => {
           const ratio = index / 6;
           const time = startTimeBeats + (ratio * effectiveDuration);
           return (
             <div key={index} className="absolute top-0 h-full" style={{ left: `${ratio * 100}%` }}>
-              <div className="h-3 border-l border-blue-border/70" />
+              <div className="h-3 border-l border-app-border/70" />
               <div className="-translate-x-1/2 pl-1">{time.toFixed(2)}</div>
             </div>
           );
         })}
       </div>
-      <div ref={canvasHostRef} className="min-h-0 flex-1 bg-black">
+      <div ref={canvasHostRef} className="min-h-0 flex-1 bg-app-canvas">
         <EditableLineCanvas
           lines={lines}
           selectedLineIndex={selectedLineIndex}
@@ -486,9 +486,9 @@ function SoundAutomationCanvas({
           canvasHeight={canvasSize.height}
           interactive
           className="h-full w-full"
-          backgroundColor="#000000"
-          plotBackgroundColor="#000000"
-          plotBorderColor="#d3d3d3"
+          backgroundColor="var(--color-app-canvas)"
+          plotBackgroundColor="var(--color-app-canvas)"
+          plotBorderColor="var(--color-app-text-soft)"
           tooltipFormatter={tooltipFormatter}
         />
       </div>

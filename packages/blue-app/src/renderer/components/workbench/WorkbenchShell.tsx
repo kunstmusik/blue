@@ -436,7 +436,7 @@ export default function WorkbenchShell() {
       <div
         className="workbench-shell__main dv-dockview-theme-abyss"
         style={{
-          backgroundColor: 'var(--dv-paneview-active-border-color, #1a1a2e)',
+          backgroundColor: 'var(--dv-paneview-active-border-color)',
         }}
       >
         <div className="workbench-shell__dockview">

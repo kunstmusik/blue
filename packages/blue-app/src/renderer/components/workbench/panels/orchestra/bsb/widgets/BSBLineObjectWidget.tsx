@@ -95,7 +95,7 @@ function BSBLineObjectWidget({
       getWidgetPosition={getWidgetPosition}
       onWidgetAction={onWidgetAction}
     >
-      <div className="flex h-full w-full flex-col overflow-hidden rounded border border-blue-border/40 bg-[#0a0f1a]">
+      <div className="flex h-full w-full flex-col overflow-hidden rounded border border-blue-border/40 bg-app-bsb-input">
         <EditableLineCanvas
           lines={lines}
           selectedLineIndex={selectedLineIndex}

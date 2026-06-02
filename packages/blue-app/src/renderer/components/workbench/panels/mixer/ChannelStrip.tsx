@@ -435,18 +435,18 @@ function MixerEffectEditorDialog({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60" onClick={onCancel}>
       <div
-        className="flex h-[82vh] w-[88vw] max-w-7xl flex-col overflow-hidden rounded-md border border-blue-border bg-[#0d1524] shadow-2xl"
+        className="flex h-[82vh] w-[88vw] max-w-7xl flex-col overflow-hidden rounded-md border border-blue-border bg-app-input shadow-2xl"
         onClick={(event) => event.stopPropagation()}
       >
-        <div className="flex flex-none items-center border-b border-blue-border bg-[#10192a] px-4 py-3">
-          <div className="text-sm font-medium text-gray-100">{title}</div>
+        <div className="flex flex-none items-center border-b border-blue-border bg-app-surface-strong px-4 py-3">
+          <div className="text-sm font-medium text-app-text-strong">{title}</div>
         </div>
 
         <div className="min-h-0 flex-1 overflow-hidden">
           <EffectEditorPanel snapshot={snapshot} onPatch={onPatch} />
         </div>
 
-        <div className="flex flex-none items-center justify-end gap-2 border-t border-blue-border bg-[#10192a] px-4 py-3">
+        <div className="flex flex-none items-center justify-end gap-2 border-t border-blue-border bg-app-surface-strong px-4 py-3">
           <button type="button" className="toolbar-text-button" onClick={onCancel}>
             Cancel
           </button>

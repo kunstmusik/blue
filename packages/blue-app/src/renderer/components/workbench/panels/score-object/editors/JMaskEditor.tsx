@@ -88,25 +88,25 @@ export default function JMaskEditor({ document, onPatch }: ScoreObjectEditorComp
 
   return (
     <div ref={testRef} className="flex h-full flex-col bg-blue-bg" tabIndex={-1}>
-      <div className="flex items-center gap-2 border-b border-gray-600 bg-[#1a2540] px-2 py-1 shrink-0">
-        <span className="text-[11px] font-semibold text-gray-200">JMask</span>
+      <div className="flex shrink-0 items-center gap-2 border-b border-app-border bg-app-surface-strong px-2 py-1">
+        <span className="text-[11px] font-semibold text-app-text">JMask</span>
         <div className="relative">
           <button
             type="button"
-            className="flex h-4 w-4 items-center justify-center rounded text-[10px] text-gray-300 hover:bg-blue-border"
+            className="flex h-4 w-4 items-center justify-center rounded text-[10px] text-app-text-muted hover:bg-blue-border"
             onClick={() => setShowVisibilityPopup(p => !p)}
             title="Parameter Visibility"
           >
             &#9662;
           </button>
           {showVisibilityPopup && (
-            <div className="absolute left-0 top-full z-50 mt-1 min-w-[200px] rounded border border-blue-border bg-[#1d2c45] py-1 shadow-xl">
+            <div className="absolute left-0 top-full z-50 mt-1 min-w-[200px] rounded border border-blue-border bg-app-menu py-1 shadow-xl">
               {parameters.map((p, i) => {
                 const pName = typeof p.name === 'string' && p.name ? p.name : '';
                 const itemLabel = pName ? `Parameter ${i + 1} - ${pName}` : `Parameter ${i + 1}`;
                 const isVisible = p.visible !== false;
                 return (
-                  <label key={i} className="flex cursor-pointer items-center gap-2 px-3 py-0.5 text-xs text-gray-200 hover:bg-blue-accent/20">
+                  <label key={i} className="flex cursor-pointer items-center gap-2 px-3 py-0.5 text-xs text-app-text hover:bg-blue-accent/20">
                     <input
                       type="checkbox"
                       checked={isVisible}

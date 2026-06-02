@@ -190,7 +190,7 @@ export default function FieldEditor({
   if (!fieldDef) {
     return (
       <div
-        className="h-full bg-[#0a0f1a]"
+        className="h-full bg-app-bg"
         style={{ width }}
       />
     );
@@ -203,7 +203,7 @@ export default function FieldEditor({
   return (
     <div
       ref={rootRef}
-      className="relative bg-[#0a0f1a] h-full overflow-hidden"
+      className="relative h-full overflow-hidden bg-app-bg"
       style={{ width: width + HORIZONTAL_PADDING }}
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}

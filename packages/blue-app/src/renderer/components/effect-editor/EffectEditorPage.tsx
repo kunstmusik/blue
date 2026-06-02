@@ -98,12 +98,12 @@ export default function EffectEditorPage(): React.ReactElement {
 
   if (error) {
     return (
-      <div className="flex h-screen items-center justify-center bg-blue-bg px-6 text-sm text-blue-muted">
-        <div className="flex max-w-md flex-col items-center gap-4 rounded border border-blue-border bg-[#10192a] px-6 py-5 text-center shadow-xl">
+      <div className="flex h-screen items-center justify-center bg-app-bg px-6 text-sm text-app-text-muted">
+        <div className="flex max-w-md flex-col items-center gap-4 rounded border border-app-border bg-app-surface-strong px-6 py-5 text-center shadow-xl">
           <div>{error}</div>
           <button
             type="button"
-            className="rounded border border-blue-border bg-[#0a0f1a] px-3 py-1.5 text-xs text-gray-100 hover:border-blue-accent"
+            className="rounded border border-app-border bg-app-input px-3 py-1.5 text-xs text-app-text-strong hover:border-app-accent"
             onClick={closeWindow}
           >
             Close Window
@@ -115,7 +115,7 @@ export default function EffectEditorPage(): React.ReactElement {
 
   if (!snapshot || !request) {
     return (
-      <div className="flex h-screen items-center justify-center bg-blue-bg text-sm text-blue-muted">
+      <div className="flex h-screen items-center justify-center bg-app-bg text-sm text-app-text-muted">
         Loading effect editor...
       </div>
     );
@@ -123,7 +123,7 @@ export default function EffectEditorPage(): React.ReactElement {
 
   if (mode === 'interface') {
     return (
-      <div className="flex h-screen min-h-0 flex-col overflow-hidden bg-blue-bg text-gray-100">
+      <div className="flex h-screen min-h-0 flex-col overflow-hidden bg-app-bg text-app-text-strong">
         <EffectEditorPanel
           snapshot={snapshot}
           onPatch={applyPatch}
@@ -135,7 +135,7 @@ export default function EffectEditorPage(): React.ReactElement {
   }
 
   return (
-    <div className="flex h-screen min-h-0 flex-col overflow-hidden bg-blue-bg text-gray-100">
+    <div className="flex h-screen min-h-0 flex-col overflow-hidden bg-app-bg text-app-text-strong">
       <EffectEditorPanel snapshot={snapshot} onPatch={applyPatch} />
     </div>
   );

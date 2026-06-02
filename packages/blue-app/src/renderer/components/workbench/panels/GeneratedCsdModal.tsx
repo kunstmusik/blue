@@ -24,11 +24,11 @@ export default function GeneratedCsdModal(): React.ReactElement | null {
         }
       }}
     >
-      <div className="flex h-[80vh] w-[80vw] flex-col rounded-lg border border-[#1e2d44] bg-[#0d1524] shadow-2xl">
-        <div className="flex items-center justify-between border-b border-[#1e2d44] px-4 py-3">
-          <h2 className="text-sm font-medium text-[#dbe7ff]">{generatedCsd.title}</h2>
+      <div className="flex h-[80vh] w-[80vw] flex-col rounded-lg border border-app-hover bg-app-overlay shadow-2xl">
+        <div className="flex items-center justify-between border-b border-app-hover px-4 py-3">
+          <h2 className="text-sm font-medium text-app-text-bright">{generatedCsd.title}</h2>
           <button
-            className="px-2 text-lg leading-none text-[#5a7299] hover:text-[#dbe7ff]"
+            className="px-2 text-lg leading-none text-app-text-muted hover:text-app-text-bright"
             onClick={closeModal}
             aria-label="Close"
           >

@@ -18,7 +18,7 @@ function BlueSynthBuilderEditor({
 
   return (
     <div className="flex h-full min-h-0 flex-col bg-blue-bg">
-      <div className="border-b border-blue-border bg-[#10192a] px-2">
+      <div className="border-b border-blue-border bg-app-surface-strong px-2">
         <div className="flex items-end gap-1">
           <button
             type="button"
@@ -26,8 +26,8 @@ function BlueSynthBuilderEditor({
             className={[
               'border-b-2 px-3 py-2 text-xs',
               activeTab === 'interface'
-                ? 'border-blue-accent text-gray-100'
-                : 'border-transparent text-blue-muted hover:text-gray-100',
+                ? 'border-blue-accent text-app-text-strong'
+                : 'border-transparent text-blue-muted hover:text-app-text-strong',
             ].join(' ')}
             onClick={() => setActiveTab('interface')}
           >

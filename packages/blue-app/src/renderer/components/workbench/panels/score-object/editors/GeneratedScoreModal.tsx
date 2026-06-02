@@ -13,11 +13,11 @@ export default function GeneratedScoreModal({
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
-      <div className="flex h-[400px] w-[760px] max-w-[calc(100vw-32px)] flex-col rounded-lg border border-[#1e2d44] bg-[#0d1524] shadow-2xl">
-        <div className="flex items-center justify-between border-b border-[#1e2d44] px-4 py-3">
-          <h2 className="text-sm font-medium text-[#dbe7ff]">Generated Score</h2>
+      <div className="flex h-[400px] w-[760px] max-w-[calc(100vw-32px)] flex-col rounded-lg border border-app-border bg-app-overlay shadow-2xl">
+        <div className="flex items-center justify-between border-b border-app-border px-4 py-3">
+          <h2 className="text-sm font-medium text-app-text-bright">Generated Score</h2>
           <button
-            className="px-2 text-lg leading-none text-[#5a7299] hover:text-[#dbe7ff]"
+            className="px-2 text-lg leading-none text-app-text-muted hover:text-app-text-bright"
             onClick={onClose}
             aria-label="Close"
           >

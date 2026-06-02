@@ -25,7 +25,7 @@ export default function EmbeddedUdoPanel({
   const callbacks = useUdoCallbacks('embedded', dispatch);
 
   return (
-    <div className="flex h-full flex-col bg-[#0a0f1a]">
+    <div className="flex h-full flex-col bg-app-bg">
       <UdoWorkspacePanel
         udos={udolist}
         resetKey={resetKey}

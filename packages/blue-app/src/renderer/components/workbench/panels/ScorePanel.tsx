@@ -354,14 +354,14 @@ export default function ScorePanel() {
 
   if (!loaded) {
     return (
-      <div className="h-full flex items-center justify-center text-blue-muted text-sm">
+      <div className="h-full flex items-center justify-center text-app-text-muted text-sm">
         No project loaded
       </div>
     );
   }
 
   return (
-    <div className="h-full min-h-0 flex flex-col bg-[#1a1a2e] text-blue-text">
+    <div className="h-full min-h-0 flex flex-col bg-app-bg text-app-text">
       <ScoreToolbar
         mode={mode}
         onModeChange={setMode}
@@ -389,7 +389,7 @@ export default function ScorePanel() {
 
       <SplitPane
         ariaLabel="Resize score layer headers and timeline"
-        className="flex-1 min-h-0 bg-black"
+        className="flex-1 min-h-0 bg-app-canvas"
         firstClassName="min-h-0"
         secondClassName="min-w-0"
         initialSplit={0.19}
@@ -416,7 +416,7 @@ export default function ScorePanel() {
           <div className="h-full w-full flex flex-col">
             <div
               ref={timelineHeaderRef}
-              className="flex-shrink-0 overflow-x-auto overflow-y-hidden [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+              className="shrink-0 overflow-x-auto overflow-y-hidden [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
               onScroll={handleTimelineHeaderScroll}
             >
               <ColumnHeader
@@ -660,7 +660,7 @@ function RowHeader({
   rowVisibility: { tempoRowVisible: boolean; meterRowVisible: boolean; markersRowVisible: boolean };
 }) {
   const ctxItemClass =
-    "px-3 py-1 text-[12px] text-blue-text outline-none cursor-pointer rounded-sm data-[highlighted]:bg-[rgba(86,119,182,0.46)] flex items-center gap-2";
+    'flex cursor-pointer items-center gap-2 rounded-sm px-3 py-1 text-[12px] text-blue-text outline-none data-[highlighted]:bg-app-highlight';
 
   return (
     <ContextMenu.Root>
@@ -672,7 +672,7 @@ function RowHeader({
         </div>
       </ContextMenu.Trigger>
       <ContextMenu.Portal>
-        <ContextMenu.Content className="min-w-[180px] bg-[#1e293b] border border-blue-border/50 rounded-md p-1 shadow-xl z-50">
+        <ContextMenu.Content className="z-50 min-w-45 rounded-md border border-blue-border/50 bg-app-menu p-1 shadow-xl">
           <ContextMenu.CheckboxItem
             className={ctxItemClass}
             checked={rowVisibility.tempoRowVisible}
@@ -729,7 +729,7 @@ function SpacerPanel({
 }) {
   const addLayer = useProjectStore((s) => s.addLayer);
   const ctxItemClass =
-    "px-3 py-1 text-[12px] text-blue-text outline-none cursor-pointer rounded-sm data-[highlighted]:bg-[rgba(86,119,182,0.46)]";
+    'cursor-pointer rounded-sm px-3 py-1 text-[12px] text-blue-text outline-none data-[highlighted]:bg-app-highlight';
 
   return (
     <ContextMenu.Root>
@@ -760,7 +760,7 @@ function SpacerPanel({
         </div>
       </ContextMenu.Trigger>
       <ContextMenu.Portal>
-        <ContextMenu.Content className="min-w-[180px] bg-[#1e1e3a] border border-blue-border/50 rounded shadow-lg py-1 z-50">
+        <ContextMenu.Content className="z-50 min-w-45 rounded border border-blue-border/50 bg-app-menu py-1 shadow-lg">
           <ContextMenu.Item
             className={ctxItemClass}
             onSelect={() => addLayer(groupId, layerCount - 1)}
@@ -842,16 +842,16 @@ function SoundLayerHeader({
   );
 
   const btnClass = (active: boolean, activeBg: string) =>
-    `w-5 h-4 text-[10px] font-bold rounded-sm border border-blue-border/30 flex items-center justify-center ${active ? activeBg + " text-black" : "bg-transparent text-blue-muted hover:text-blue-text"}`;
+    `w-5 h-4 text-[10px] font-bold rounded-sm border border-app-border/30 flex items-center justify-center ${active ? activeBg + " text-black" : "bg-transparent text-app-text-muted hover:text-app-text"}`;
 
   const ctxItemClass =
-    "px-3 py-1 text-[12px] text-blue-text outline-none cursor-pointer rounded-sm data-[highlighted]:bg-[rgba(86,119,182,0.46)]";
+    "rounded-sm px-3 py-1 text-[12px] text-app-text outline-none cursor-pointer data-[highlighted]:bg-app-highlight";
 
   return (
     <ContextMenu.Root>
       <ContextMenu.Trigger asChild>
         <div
-          className="flex items-start border-b border-[#2a2a2a] overflow-hidden select-none"
+          className="flex items-start overflow-hidden border-b border-app-border/20 select-none"
           style={{ height }}
           onDoubleClick={startEdit}
         >
@@ -874,7 +874,7 @@ function SoundLayerHeader({
           )}
           <div className="shrink-0 flex items-start gap-px mr-1 pt-0.5">
             <button
-              className={btnClass(!!layer.muted, "bg-[#b28c00]")}
+              className={btnClass(!!layer.muted, 'bg-app-warning')}
               title="Mute"
               onClick={(e) => {
                 e.stopPropagation();
@@ -884,9 +884,9 @@ function SoundLayerHeader({
               M
             </button>
             <button
-              className={btnClass(!!layer.solo, "bg-[#00b200]")}
+              className={btnClass(!!layer.solo, 'bg-app-success')}
               title="Solo"
-              style={layer.solo ? { color: "#fff" } : {}}
+              style={layer.solo ? { color: 'var(--color-app-text-strong)' } : {}}
               onClick={(e) => {
                 e.stopPropagation();
                 setLayerSolo(groupId, layerIndex, !(layer.solo ?? false));
@@ -899,7 +899,7 @@ function SoundLayerHeader({
                 className={`relative w-5 h-4 text-[10px] font-bold rounded-sm border flex items-center justify-center ${
                   noteProcessorChain && noteProcessorChain.processors.length > 0
                     ? 'bg-red-600 border-red-500 text-white'
-                    : 'bg-transparent border-blue-border/30 text-blue-muted hover:text-blue-text'
+                    : 'bg-transparent border-app-border/30 text-app-text-muted hover:text-app-text'
                 }`}
                 title="Note Processors"
                 onClick={(e) => {
@@ -926,7 +926,7 @@ function SoundLayerHeader({
         </div>
       </ContextMenu.Trigger>
       <ContextMenu.Portal>
-        <ContextMenu.Content className="min-w-[180px] bg-[#1e1e3a] border border-blue-border/50 rounded shadow-lg py-1 z-50">
+        <ContextMenu.Content className="z-50 min-w-45 rounded border border-app-border/50 bg-app-menu py-1 shadow-lg">
           <ContextMenu.Item
             className={ctxItemClass}
             onSelect={() => addLayer(groupId, layerIndex - 1)}
@@ -939,7 +939,7 @@ function SoundLayerHeader({
           >
             Add Layer Below
           </ContextMenu.Item>
-          <ContextMenu.Separator className="h-px bg-blue-border/30 my-1" />
+          <ContextMenu.Separator className="my-1 h-px bg-app-border/30" />
           <ContextMenu.Item
             className={ctxItemClass}
             onSelect={() => removeLayer(groupId, layerIndex)}
@@ -960,7 +960,7 @@ function SoundLayerHeader({
           </ContextMenu.Item>
           {showLayerHeightMenu && (
             <>
-              <ContextMenu.Separator className="h-px bg-blue-border/30 my-1" />
+              <ContextMenu.Separator className="my-1 h-px bg-app-border/30" />
               <ContextMenu.Sub>
                 <ContextMenu.SubTrigger
                   className={`flex items-center justify-between ${ctxItemClass}`}
@@ -969,11 +969,11 @@ function SoundLayerHeader({
                   <span className="text-[10px] opacity-60 ml-2">▸</span>
                 </ContextMenu.SubTrigger>
                 <ContextMenu.Portal>
-                  <ContextMenu.SubContent className="min-w-[120px] bg-[#1e1e3a] border border-blue-border/50 rounded shadow-lg py-1 z-50">
+                  <ContextMenu.SubContent className="z-50 min-w-30 rounded border border-app-border/50 bg-app-menu py-1 shadow-lg">
                     {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((idx) => (
                       <ContextMenu.Item
                         key={idx}
-                        className={`${ctxItemClass} ${heightIndex === idx - 1 ? "bg-blue-accent/20 font-medium" : ""}`}
+                        className={`${ctxItemClass} ${heightIndex === idx - 1 ? 'bg-app-accent/20 font-medium' : ''}`}
                         onSelect={() => setLayerHeight(groupId, layerIndex, idx - 1)}
                       >
                         {idx}

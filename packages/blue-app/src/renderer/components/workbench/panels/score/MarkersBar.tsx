@@ -181,7 +181,7 @@ export default function MarkersBar({ markers, totalBeats, pixelsPerBeat, rowVisi
   return (
     <div
       ref={rowRef}
-      className="relative h-5 border-b border-[#3a3a3a] bg-black overflow-visible cursor-crosshair select-none"
+      className="relative h-5 overflow-visible border-b border-app-border/50 bg-app-canvas cursor-crosshair select-none"
       style={{ minWidth: totalBeats * pixelsPerBeat }}
       onMouseDown={handleMouseDown}
     >
@@ -247,7 +247,7 @@ function MarkerWidget({ marker, sourceIndex, pixelsPerBeat, onStartDrag, isDragg
   }, [sourceIndex, applyPatch]);
 
   const ctxItemClass =
-    "px-3 py-1 text-[12px] text-blue-text outline-none cursor-pointer rounded-sm data-[highlighted]:bg-[rgba(86,119,182,0.46)]";
+    'cursor-pointer rounded-sm px-3 py-1 text-[12px] text-app-text outline-none data-[highlighted]:bg-app-highlight';
 
   return (
     <ContextMenu.Root>
@@ -259,7 +259,7 @@ function MarkerWidget({ marker, sourceIndex, pixelsPerBeat, onStartDrag, isDragg
           onDoubleClick={handleDoubleClick}
         >
           <div
-            className="inline-flex w-max max-w-none items-center h-5 border border-[rgba(253,190,11,1.0)] bg-[rgba(255,200,0,0.7)] pr-[3px] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.05)]"
+            className="inline-flex h-5 w-max max-w-none items-center border border-app-warning/80 bg-app-warning/70 pr-[3px] shadow-inner"
           >
             <svg width="10" height="10" viewBox="0 0 10 10" className="shrink-0 left-0 top-0 absolute">
               <polygon
@@ -273,7 +273,7 @@ function MarkerWidget({ marker, sourceIndex, pixelsPerBeat, onStartDrag, isDragg
             {renaming ? (
               <input
                 ref={inputRef}
-                className="ml-1 h-4 rounded-sm border border-orange-500/60 bg-white/40 px-1 text-[12px] leading-none text-black outline-none"
+                className="ml-1 h-4 rounded-sm border border-app-warning/60 bg-app-text-strong/40 px-1 text-[12px] leading-none text-black outline-none"
                 style={{ width: Math.max(72, renameValue.length * 8) }}
                 value={renameValue}
                 onChange={(e) => setRenameValue(e.target.value)}
@@ -297,7 +297,7 @@ function MarkerWidget({ marker, sourceIndex, pixelsPerBeat, onStartDrag, isDragg
         </div>
       </ContextMenu.Trigger>
       <ContextMenu.Portal>
-        <ContextMenu.Content className="min-w-40 bg-[#1e1e3a] border border-blue-border/50 rounded shadow-lg py-1 z-50">
+        <ContextMenu.Content className="z-50 min-w-40 rounded border border-app-border/50 bg-app-menu py-1 shadow-lg">
           <ContextMenu.Item className={ctxItemClass} onSelect={handleRemove}>
             Remove
           </ContextMenu.Item>

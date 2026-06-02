@@ -36,7 +36,7 @@ export default function GenericInstrumentEditor({
 
   return (
     <div className="flex h-full min-h-0 flex-col bg-blue-bg">
-      <div className="flex items-center gap-1 border-b border-blue-border bg-[#10192a] px-2">
+      <div className="flex items-center gap-1 border-b border-blue-border bg-app-surface-strong px-2">
         {GENERIC_TABS.map((tab) => (
           <button
             key={tab.key}

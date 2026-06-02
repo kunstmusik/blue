@@ -19,7 +19,7 @@ interface TableRow {
 }
 
 const BEAT_EPSILON = 0.001;
-const SECONDARY_BUTTON_CLASS = 'text-[11px] text-blue-text bg-blue-surface/40 hover:bg-blue-surface/70 px-3 py-1 rounded border border-blue-border/40 transition-colors';
+const SECONDARY_BUTTON_CLASS = 'rounded border border-app-border/40 bg-app-surface px-3 py-1 text-[11px] text-app-text transition-colors hover:bg-app-hover';
 
 function formatNumber(value: number): string {
   return value.toString();
@@ -272,17 +272,17 @@ export default function TempoMapEditorDialog({
       onClick={onClose}
     >
       <div
-        className="bg-[#1e1e3a] border border-blue-border/40 rounded-lg shadow-xl"
+        className="rounded-lg border border-app-border/40 bg-app-menu shadow-xl"
         style={{ minWidth: 440 }}
         onClick={(e) => e.stopPropagation()}
         onKeyDown={handleKeyDown}
       >
-        <h3 className="text-blue-text text-sm font-medium px-4 pt-3 pb-2">Edit Tempo Map</h3>
+        <h3 className="px-4 pb-2 pt-3 text-sm font-medium text-app-text">Edit Tempo Map</h3>
 
         <div className="px-4 pb-2 max-h-[200px] overflow-y-auto">
           <table className="w-full text-[11px]">
             <thead>
-              <tr className="text-blue-muted">
+              <tr className="text-app-text-muted">
                 <th className="text-left py-1 pr-2 font-normal">Time Unit</th>
                 <th className="text-left py-1 pr-2 font-normal">Start</th>
                 <th className="text-left py-1 pr-2 font-normal">Tempo (BPM)</th>
@@ -296,10 +296,10 @@ export default function TempoMapEditorDialog({
                 const canDeleteRow = canDelete && !isTimeZero;
 
                 return (
-                  <tr key={i} className="border-t border-blue-border/10">
+                  <tr key={i} className="border-t border-app-border/10">
                     <td className="py-1 pr-2">
                       <select
-                        className="w-full bg-[#12122a] border border-blue-border/30 rounded px-1.5 py-0.5 text-[11px] text-blue-text outline-none focus:border-blue-border/60"
+                        className="w-full rounded border border-app-border/30 bg-app-field px-1.5 py-0.5 text-[11px] text-app-text outline-none focus:border-app-border/60"
                         value={row.timeBase}
                         onChange={(e) => handleTimeBaseChange(i, e.target.value)}
                       >
@@ -311,7 +311,7 @@ export default function TempoMapEditorDialog({
                     <td className="py-1 pr-2">
                       <input
                         type="text"
-                        className="w-full bg-[#12122a] border border-blue-border/30 rounded px-1.5 py-0.5 text-[11px] text-blue-text outline-none focus:border-blue-border/60"
+                        className="w-full rounded border border-app-border/30 bg-app-field px-1.5 py-0.5 text-[11px] text-app-text outline-none focus:border-app-border/60"
                         value={row.beatText}
                         onChange={(e) => handleBeatChange(i, e.target.value)}
                         onBlur={(e) => commitBeat(i, e.currentTarget.value)}
@@ -327,7 +327,7 @@ export default function TempoMapEditorDialog({
                     <td className="py-1 pr-2">
                       <input
                         type="number"
-                        className="w-full bg-[#12122a] border border-blue-border/30 rounded px-1.5 py-0.5 text-[11px] text-blue-text outline-none focus:border-blue-border/60"
+                        className="w-full rounded border border-app-border/30 bg-app-field px-1.5 py-0.5 text-[11px] text-app-text outline-none focus:border-app-border/60"
                         value={row.tempoText}
                         onChange={(e) => handleTempoChange(i, e.target.value)}
                         onBlur={(e) => commitTempo(i, e.currentTarget.value)}
@@ -344,7 +344,7 @@ export default function TempoMapEditorDialog({
                     </td>
                     <td className="py-1 text-center">
                       <button
-                        className={`text-[10px] px-1.5 py-0.5 rounded ${canDeleteRow ? 'text-red-400 hover:bg-white/10' : 'text-blue-muted cursor-not-allowed'}`}
+                        className={`rounded px-1.5 py-0.5 text-[10px] ${canDeleteRow ? 'text-app-danger hover:bg-app-outline-strong' : 'cursor-not-allowed text-app-text-muted'}`}
                         disabled={!canDeleteRow}
                         onClick={() => handleRemove(i)}
                       >
@@ -357,13 +357,13 @@ export default function TempoMapEditorDialog({
             </tbody>
           </table>
           {error && (
-            <p className="mt-2 text-[10px] text-red-400">{error}</p>
+            <p className="mt-2 text-[10px] text-app-danger">{error}</p>
           )}
         </div>
 
-        <div className="flex items-center justify-between px-4 py-2 border-t border-blue-border/20">
+        <div className="flex items-center justify-between border-t border-app-border/20 px-4 py-2">
           <button
-            className="text-[11px] text-blue-text bg-blue-surface/80 hover:bg-blue-surface px-3 py-1 rounded border border-blue-border/30"
+            className="rounded border border-app-border/30 bg-app-surface px-3 py-1 text-[11px] text-app-text hover:bg-app-hover"
             onClick={handleAdd}
           >
             Add
@@ -376,7 +376,7 @@ export default function TempoMapEditorDialog({
               Cancel
             </button>
             <button
-              className="text-[11px] text-blue-text bg-blue-surface/80 hover:bg-blue-surface px-3 py-1 rounded border border-blue-border/30"
+              className="rounded border border-app-border/30 bg-app-surface px-3 py-1 text-[11px] text-app-text hover:bg-app-hover"
               onClick={handleOk}
             >
               OK

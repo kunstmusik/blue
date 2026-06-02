@@ -75,7 +75,7 @@ export default function FrozenSoundObjectBar({
             left: width - shadeWidth,
             width: shadeWidth,
             bottom: 0,
-            backgroundColor: 'rgba(0,0,0,0.25)',
+            backgroundColor: 'var(--color-app-shadow)',
             pointerEvents: 'none',
           }}
         />

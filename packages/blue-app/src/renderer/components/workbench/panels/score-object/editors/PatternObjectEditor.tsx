@@ -578,7 +578,7 @@ export default function PatternObjectEditor({
 
             </div>
             <textarea
-              className="flex-1 w-full bg-[#0a0a1a] px-3 py-1.5 text-[12px] text-gray-100 font-mono focus:outline-none resize-none"
+              className="flex-1 w-full resize-none bg-app-bg px-3 py-1.5 font-mono text-[12px] text-app-text focus:outline-none"
               value={selectedPattern.patternScore}
               onChange={(e) =>
                 handlePatternScoreChange(selectedIdx, e.target.value)

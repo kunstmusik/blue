@@ -154,42 +154,42 @@ export default function EffectEditorPanel({
 
   return (
     <div className={['flex h-full min-h-0 flex-col overflow-hidden', className].filter(Boolean).join(' ')}>
-      <div className="flex flex-none flex-wrap items-center gap-3 border-b border-blue-border bg-[#10192a] px-3 py-2">
+      <div className="flex flex-none flex-wrap items-center gap-3 border-b border-app-border bg-app-surface-strong px-3 py-2">
         {showNameField && (
           <input
             type="text"
             value={snapshot.name}
             onChange={(event) => handleNameChange(event.target.value)}
-            className="min-w-0 flex-1 rounded border border-blue-border bg-[#0a0f1a] px-2 py-1 text-sm text-gray-100 outline-none focus:border-blue-accent"
+            className="min-w-0 flex-1 rounded border border-app-border bg-app-input px-2 py-1 text-sm text-app-text-strong outline-none focus:border-app-accent"
             aria-label="Effect name"
           />
         )}
-        <label className="flex items-center gap-1 text-xs text-blue-muted">
+        <label className="flex items-center gap-1 text-xs text-app-text-muted">
           In
           <input
             type="number"
             min={0}
             value={snapshot.numIns}
             onChange={(event) => handleNumInsChange(Number.parseInt(event.target.value, 10) || 0)}
-            className="w-14 rounded border border-blue-border bg-[#0a0f1a] px-1.5 py-1 text-xs text-gray-100 outline-none focus:border-blue-accent"
+            className="w-14 rounded border border-app-border bg-app-input px-1.5 py-1 text-xs text-app-text-strong outline-none focus:border-app-accent"
           />
         </label>
-        <label className="flex items-center gap-1 text-xs text-blue-muted">
+        <label className="flex items-center gap-1 text-xs text-app-text-muted">
           Out
           <input
             type="number"
             min={0}
             value={snapshot.numOuts}
             onChange={(event) => handleNumOutsChange(Number.parseInt(event.target.value, 10) || 0)}
-            className="w-14 rounded border border-blue-border bg-[#0a0f1a] px-1.5 py-1 text-xs text-gray-100 outline-none focus:border-blue-accent"
+            className="w-14 rounded border border-app-border bg-app-input px-1.5 py-1 text-xs text-app-text-strong outline-none focus:border-app-accent"
           />
         </label>
-        <label className="flex items-center gap-1 text-xs text-blue-muted">
+        <label className="flex items-center gap-1 text-xs text-app-text-muted">
           Style
           <select
             value={snapshot.style}
             onChange={(event) => handleStyleChange(event.target.value as 'CLASSIC' | 'MODERN')}
-            className="rounded border border-blue-border bg-[#0a0f1a] px-1.5 py-1 text-xs text-gray-100 outline-none focus:border-blue-accent"
+            className="rounded border border-app-border bg-app-input px-1.5 py-1 text-xs text-app-text-strong outline-none focus:border-app-accent"
           >
             <option value="CLASSIC">Classic</option>
             <option value="MODERN">Modern</option>
@@ -197,7 +197,7 @@ export default function EffectEditorPanel({
         </label>
       </div>
 
-      <div className="flex-none border-b border-blue-border bg-[#10192a] px-2">
+      <div className="flex-none border-b border-app-border bg-app-surface-strong px-2">
         <div className="flex items-end gap-1">
           {([
             ['interface', 'Interface'],
@@ -211,8 +211,8 @@ export default function EffectEditorPanel({
               className={[
                 'border-b-2 px-3 py-2 text-xs',
                 activeTab === tab
-                  ? 'border-blue-accent text-gray-100'
-                  : 'border-transparent text-blue-muted hover:text-gray-100',
+                  ? 'border-app-accent text-app-text-strong'
+                  : 'border-transparent text-app-text-muted hover:text-app-text-strong',
               ].join(' ')}
               onClick={() => setActiveTab(tab)}
             >
@@ -225,7 +225,7 @@ export default function EffectEditorPanel({
       <div className="min-h-0 flex-1 overflow-hidden">
         {activeTab === 'code' && (
           <div className="flex h-full flex-col">
-            <div className="flex-none border-b border-blue-border/40 bg-[#0a0f1a] px-3 py-1 font-mono text-[11px] italic text-blue-muted">
+            <div className="flex-none border-b border-app-border/40 bg-app-input px-3 py-1 font-mono text-[11px] italic text-app-text-muted">
               {xinLabel}
             </div>
             <div className="min-h-0 flex-1">
@@ -237,7 +237,7 @@ export default function EffectEditorPanel({
                 javaBlueCompletionOptions={javaBlueCompletionOptions}
               />
             </div>
-            <div className="flex-none border-t border-blue-border/40 bg-[#0a0f1a] px-3 py-1 font-mono text-[11px] font-bold text-blue-muted">
+            <div className="flex-none border-t border-app-border/40 bg-app-input px-3 py-1 font-mono text-[11px] font-bold text-app-text-muted">
               {xoutLabel}
             </div>
           </div>

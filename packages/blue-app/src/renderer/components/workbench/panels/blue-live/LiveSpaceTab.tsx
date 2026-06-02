@@ -29,7 +29,7 @@ export default function LiveSpaceTab(): React.ReactElement {
   }, [hoveredSetIndex, blueLive]);
 
   if (!loaded || !blueLive) {
-    return <div style={{ color: '#888', padding: '12px' }}>No project loaded.</div>;
+    return <div style={{ color: 'var(--color-app-text-muted)', padding: '12px' }}>No project loaded.</div>;
   }
 
   const { bins, sets, tempo, repeat, repeatEnabled } = blueLive;
@@ -42,8 +42,8 @@ export default function LiveSpaceTab(): React.ReactElement {
         alignItems: 'center',
         gap: '12px',
         padding: '6px 8px',
-        borderBottom: '1px solid var(--color-blue-border, #0f3460)',
-        background: 'var(--color-blue-surface, #16213e)',
+        borderBottom: '1px solid var(--color-app-border)',
+        background: 'var(--color-app-surface)',
         flexShrink: 0,
         flexWrap: 'wrap',
       }}>
@@ -72,8 +72,8 @@ export default function LiveSpaceTab(): React.ReactElement {
           onClick={() => applyBlueLivePatch({ type: 'updateTempoRepeat', patch: { repeatEnabled: !repeatEnabled } })}
           style={{
             ...toolbarBtnStyle,
-            background: repeatEnabled ? 'var(--color-blue-accent, #e94560)' : '#222',
-            color: repeatEnabled ? '#fff' : '#aaa',
+            background: repeatEnabled ? 'var(--color-app-accent)' : 'var(--color-app-surface-strong)',
+            color: repeatEnabled ? 'var(--color-app-text-strong)' : 'var(--color-app-text-muted)',
           }}
         >
           Repeat
@@ -98,21 +98,21 @@ export default function LiveSpaceTab(): React.ReactElement {
           flexShrink: 0,
           display: 'flex',
           flexDirection: 'column',
-          borderRight: '1px solid var(--color-blue-border, #0f3460)',
-          background: 'var(--color-blue-surface, #16213e)',
+          borderRight: '1px solid var(--color-app-border)',
+          background: 'var(--color-app-surface)',
         }}>
           <div style={{
             padding: '4px 8px',
             fontSize: '11px',
-            color: '#888',
-            borderBottom: '1px solid #333',
+            color: 'var(--color-app-text-muted)',
+            borderBottom: '1px solid var(--color-app-border)',
             fontWeight: 500,
           }}>
             Saved Sets
           </div>
           <div style={{ flex: 1, overflow: 'auto' }}>
             {sets.length === 0 && (
-              <div style={{ padding: '8px', fontSize: '11px', color: '#555' }}>No saved sets</div>
+              <div style={{ padding: '8px', fontSize: '11px', color: 'var(--color-app-text-subtle)' }}>No saved sets</div>
             )}
             {sets.map((set, i) => (
               <div
@@ -124,9 +124,9 @@ export default function LiveSpaceTab(): React.ReactElement {
                   padding: '4px 8px',
                   fontSize: '12px',
                   cursor: 'pointer',
-                  background: selectedSetIndex === i ? 'rgba(233,69,96,0.15)' : 'transparent',
-                  color: selectedSetIndex === i ? '#fff' : '#aaa',
-                  borderLeft: selectedSetIndex === i ? '2px solid var(--color-blue-accent, #e94560)' : '2px solid transparent',
+                  background: selectedSetIndex === i ? 'var(--color-app-accent-muted)' : undefined,
+                  color: selectedSetIndex === i ? 'var(--color-app-text-strong)' : 'var(--color-app-text-muted)',
+                  borderLeft: selectedSetIndex === i ? '2px solid var(--color-app-accent)' : '2px solid var(--color-app-surface)',
                 }}
                 title={set.name}
               >
@@ -138,7 +138,7 @@ export default function LiveSpaceTab(): React.ReactElement {
             display: 'flex',
             gap: '2px',
             padding: '4px',
-            borderTop: '1px solid #333',
+            borderTop: '1px solid var(--color-app-border)',
           }}>
             <button type="button" onClick={() => {
               if (selectedSetIndex > 0) applyBlueLivePatch({ type: 'moveSet', from: selectedSetIndex, to: selectedSetIndex - 1 });
@@ -161,8 +161,8 @@ export default function LiveSpaceTab(): React.ReactElement {
             gridTemplateColumns: `32px repeat(${bins.columns}, 1fr)`,
             gap: '1px',
             padding: '0 4px',
-            borderBottom: '1px solid #333',
-            background: 'var(--color-blue-surface, #16213e)',
+            borderBottom: '1px solid var(--color-app-border)',
+            background: 'var(--color-app-surface)',
             flexShrink: 0,
           }}>
             <div style={{ width: '32px' }} />
@@ -170,7 +170,7 @@ export default function LiveSpaceTab(): React.ReactElement {
               <div key={ci} style={{
                 textAlign: 'center',
                 fontSize: '11px',
-                color: '#666',
+                color: 'var(--color-app-text-subtle)',
                 padding: '2px 0',
                 fontWeight: 500,
               }}>
@@ -192,7 +192,7 @@ export default function LiveSpaceTab(): React.ReactElement {
                   {/* Row label */}
                   <div style={{
                     fontSize: '10px',
-                    color: '#555',
+                    color: 'var(--color-app-text-subtle)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -218,13 +218,13 @@ export default function LiveSpaceTab(): React.ReactElement {
                           fontSize: '11px',
                           cursor: 'pointer',
                           borderRadius: '2px',
-                          border: isSelected ? '1px solid #fff' : '1px solid #333',
+                          border: isSelected ? '1px solid var(--color-app-text-strong)' : '1px solid var(--color-app-border)',
                           background: cell?.enabled
-                            ? '#e07020'
+                            ? 'var(--color-app-warning)'
                             : isHoveredSet
-                              ? 'rgba(255,255,255,0.12)'
-                              : '#1a1a2e',
-                          color: cell?.enabled ? '#000' : '#555',
+                              ? 'var(--color-app-outline-strong)'
+                              : 'var(--color-app-bg)',
+                          color: cell?.enabled ? 'var(--color-app-canvas)' : 'var(--color-app-text-subtle)',
                           fontWeight: cell?.enabled ? 500 : 400,
                           overflow: 'hidden',
                           textOverflow: 'ellipsis',
@@ -248,7 +248,7 @@ export default function LiveSpaceTab(): React.ReactElement {
             display: 'flex',
             gap: '4px',
             padding: '4px 8px',
-            borderTop: '1px solid #333',
+            borderTop: '1px solid var(--color-app-border)',
             flexShrink: 0,
           }}>
             <button type="button" onClick={() => applyBlueLivePatch({ type: 'insertRow', index: 0 })} style={gridBtnStyle}>+Row Top</button>
@@ -270,16 +270,16 @@ const toolbarLabelStyle: React.CSSProperties = {
   alignItems: 'center',
   gap: '4px',
   fontSize: '12px',
-  color: '#aaa',
+  color: 'var(--color-app-text-muted)',
 };
 
 const spinnerStyle: React.CSSProperties = {
   width: '52px',
   padding: '2px 4px',
   fontSize: '12px',
-  background: '#0d0d1a',
-  color: '#e0e0e0',
-  border: '1px solid #444',
+  background: 'var(--color-app-canvas)',
+  color: 'var(--color-app-text)',
+  border: '1px solid var(--color-app-border)',
   borderRadius: '3px',
   textAlign: 'center',
 };
@@ -287,9 +287,9 @@ const spinnerStyle: React.CSSProperties = {
 const toolbarBtnStyle: React.CSSProperties = {
   padding: '3px 10px',
   fontSize: '12px',
-  background: '#222',
-  color: '#aaa',
-  border: '1px solid #444',
+  background: 'var(--color-app-surface-strong)',
+  color: 'var(--color-app-text-muted)',
+  border: '1px solid var(--color-app-border)',
   borderRadius: '3px',
   cursor: 'pointer',
 };
@@ -298,9 +298,9 @@ const setBtnStyle: React.CSSProperties = {
   flex: 1,
   padding: '2px 0',
   fontSize: '12px',
-  background: '#222',
-  color: '#aaa',
-  border: '1px solid #444',
+  background: 'var(--color-app-surface-strong)',
+  color: 'var(--color-app-text-muted)',
+  border: '1px solid var(--color-app-border)',
   borderRadius: '2px',
   cursor: 'pointer',
   textAlign: 'center',
@@ -309,9 +309,9 @@ const setBtnStyle: React.CSSProperties = {
 const gridBtnStyle: React.CSSProperties = {
   padding: '2px 8px',
   fontSize: '11px',
-  background: '#222',
-  color: '#aaa',
-  border: '1px solid #444',
+  background: 'var(--color-app-surface-strong)',
+  color: 'var(--color-app-text-muted)',
+  border: '1px solid var(--color-app-border)',
   borderRadius: '2px',
   cursor: 'pointer',
 };

@@ -113,7 +113,8 @@ describe('settings renderer (044)', () => {
       root.render(<SettingsApp />);
     });
 
-    const input = container.querySelector('input[type="text"]');
+    const input = container.querySelector('input[placeholder="(default user directory)"]');
+    expect(input).toBeInstanceOf(HTMLInputElement);
     await act(() => {
       (input as HTMLInputElement)?.focus();
     });
@@ -125,7 +126,9 @@ describe('settings renderer (044)', () => {
     const applyButton = Array.from(container.querySelectorAll('button')).find(
       (b) => b.textContent === 'Apply',
     );
-    await act(() => { applyButton?.click(); });
+    await act(async () => {
+      applyButton?.click();
+    });
     expect(mockBlueAPI.saveProgramSettings).toHaveBeenCalled();
   });
 

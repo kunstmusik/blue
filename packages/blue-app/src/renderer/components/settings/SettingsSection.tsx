@@ -12,24 +12,14 @@ export default function SettingsSection({
   dependencyNote,
 }: SettingsSectionProps): React.ReactElement {
   return (
-    <div>
-      <h2 style={{ fontSize: '16px', color: '#fff', margin: '0 0 20px 0' }}>
-        {title}
-      </h2>
+    <section className="mx-auto max-w-3xl">
+      <h2 className="mb-5 text-base font-semibold text-app-text-strong">{title}</h2>
       {children}
       {dependencyNote && (
-        <div style={{
-          marginTop: '16px',
-          padding: '8px 12px',
-          background: 'rgba(255, 165, 0, 0.1)',
-          border: '1px solid rgba(255, 165, 0, 0.3)',
-          borderRadius: '4px',
-          fontSize: '11px',
-          color: '#cc8800',
-        }}>
+        <div className="mt-4 rounded-md border border-app-warning/30 bg-app-warning/10 px-3 py-2 text-[11px] leading-4 text-app-warning">
           {dependencyNote}
         </div>
       )}
-    </div>
+    </section>
   );
 }

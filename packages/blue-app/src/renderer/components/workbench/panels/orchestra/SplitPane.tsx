@@ -174,7 +174,7 @@ export default function SplitPane({
       : { height: `${firstSize}px` };
 
   const handleClasses = [
-    'group flex flex-none items-center justify-center border-blue-border bg-[#10192a] transition-colors hover:bg-[#182542]',
+    'group flex flex-none items-center justify-center border-blue-border bg-app-surface-strong transition-colors hover:bg-app-hover',
     orientation === 'horizontal' ? 'h-full w-3 cursor-col-resize' : 'h-3 w-full cursor-row-resize',
   ]
     .filter(Boolean)

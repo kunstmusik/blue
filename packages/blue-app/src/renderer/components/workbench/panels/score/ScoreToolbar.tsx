@@ -52,16 +52,16 @@ export default function ScoreToolbar({
   const snapDef = getSnapValue(snapValue);
 
   return (
-    <div className="flex items-center h-7 px-2 bg-blue-surface border-b border-blue-border/40 text-xs select-none shrink-0">
+    <div className="flex items-center h-7 px-2 bg-app-surface border-b border-app-border/40 text-xs select-none shrink-0">
       {/* Mode selection toggle group */}
-      <div className="flex items-center mr-2 border border-blue-border/40 rounded overflow-hidden">
+      <div className="flex items-center mr-2 border border-app-border/40 rounded overflow-hidden">
         {MODE_OPTIONS.map((opt) => (
           <button
             key={opt.value}
             className={`px-2 py-0.5 text-[11px] transition-colors cursor-pointer ${
               mode === opt.value
-                ? 'bg-blue-accent/20 text-blue-text font-medium'
-                : 'bg-transparent text-blue-muted hover:bg-blue-hover hover:text-blue-text'
+                ? 'bg-app-accent/20 text-app-text font-medium'
+                : 'bg-transparent text-app-text-muted hover:bg-app-hover hover:text-app-text'
             }`}
             onClick={() => onModeChange(opt.value)}
           >
@@ -79,12 +79,12 @@ export default function ScoreToolbar({
 
           return (
             <span key={segment.groupId ?? 'root'} className="flex items-center gap-0 whitespace-nowrap">
-              {i > 0 && <span className="text-blue-muted mr-1">/</span>}
+              {i > 0 && <span className="mr-1 text-app-text-muted">/</span>}
               <button
                 className={`px-1 py-0.5 rounded text-[11px] cursor-pointer ${
                   i === pathSegments.length - 1
-                    ? 'font-medium bg-blue-surface/80 text-blue-text'
-                    : 'text-blue-muted hover:bg-blue-hover hover:text-blue-text'
+                    ? 'font-medium bg-app-surface/80 text-app-text'
+                    : 'text-app-text-muted hover:bg-app-hover hover:text-app-text'
                 }`}
                 onClick={() => (i === 0 ? onNavigateToRoot() : onNavigateToSegment(i))}
               >
@@ -94,7 +94,7 @@ export default function ScoreToolbar({
                 <DropdownMenu.Root>
                   <DropdownMenu.Trigger asChild>
                     <button
-                      className="relative px-0.5 py-0 text-blue-muted hover:text-blue-text cursor-pointer transition-colors"
+                      className="relative px-0.5 py-0 text-app-text-muted hover:text-app-text cursor-pointer transition-colors"
                       title={`Note Processors – ${segment.label}`}
                     >
                       <ChevronDown className="w-3 h-3" />
@@ -105,12 +105,12 @@ export default function ScoreToolbar({
                   </DropdownMenu.Trigger>
                   <DropdownMenu.Portal>
                     <DropdownMenu.Content
-                      className="min-w-[160px] bg-[#1e1e3a] border border-blue-border/50 rounded shadow-lg py-1 z-50"
+                      className="min-w-[160px] rounded border border-app-border/50 bg-app-menu py-1 shadow-lg z-50"
                       sideOffset={4}
                       align="start"
                     >
                       <DropdownMenu.Item
-                        className="flex items-center gap-2 px-3 py-1 text-[11px] text-blue-text rounded-sm outline-none cursor-pointer data-[highlighted]:bg-[rgba(86,119,182,0.46)]"
+                        className="flex items-center gap-2 rounded-sm px-3 py-1 text-[11px] text-app-text outline-none cursor-pointer data-[highlighted]:bg-app-highlight"
                         onSelect={() => {
                           if (i === 0) onOpenNoteProcessorChain('rootScore');
                           else onOpenNoteProcessorChain('layerGroup', segment.groupId ?? undefined);
@@ -138,8 +138,8 @@ export default function ScoreToolbar({
         <button
           className={`px-1.5 text-[11px] border rounded-l transition-colors cursor-pointer flex items-center ${
             snapEnabled
-              ? 'bg-blue-accent/20 text-blue-text border-blue-accent/40'
-              : 'bg-transparent text-blue-muted border-blue-border/40 hover:bg-blue-hover'
+              ? 'bg-app-accent/20 text-app-text border-app-accent/40'
+              : 'bg-transparent text-app-text-muted border-app-border/40 hover:bg-app-hover'
           }`}
           onClick={() => onSnapToggle(!snapEnabled)}
           title="Toggle snap on/off"
@@ -151,8 +151,8 @@ export default function ScoreToolbar({
             <button
               className={`px-1 border border-l-0 rounded-r transition-colors cursor-pointer flex items-center ${
                 snapEnabled
-                  ? 'bg-blue-accent/20 text-blue-text border-blue-accent/40'
-                  : 'bg-transparent text-blue-muted border-blue-border/40 hover:bg-blue-hover'
+                  ? 'bg-app-accent/20 text-app-text border-app-accent/40'
+                  : 'bg-transparent text-app-text-muted border-app-border/40 hover:bg-app-hover'
               }`}
               title="Configure snap value"
             >
@@ -161,19 +161,19 @@ export default function ScoreToolbar({
           </DropdownMenu.Trigger>
           <DropdownMenu.Portal>
             <DropdownMenu.Content
-              className="min-w-[140px] bg-[#1e1e3a] border border-blue-border/50 rounded shadow-lg py-1 z-50"
+              className="min-w-[140px] rounded border border-app-border/50 bg-app-menu py-1 shadow-lg z-50"
               sideOffset={4}
               align="start"
             >
               {SNAP_GROUPS.map((group) => (
                 <DropdownMenu.Sub key={group.label}>
-                  <DropdownMenu.SubTrigger className="flex items-center justify-between px-3 py-1 text-[11px] text-blue-text rounded-sm outline-none cursor-pointer w-full data-[highlighted]:bg-[rgba(86,119,182,0.46)]">
+                  <DropdownMenu.SubTrigger className="flex w-full items-center justify-between rounded-sm px-3 py-1 text-[11px] text-app-text outline-none cursor-pointer data-[highlighted]:bg-app-highlight">
                     {group.label}
                     <ChevronDown className="w-3 h-3 ml-2 rotate-[-90deg]" />
                   </DropdownMenu.SubTrigger>
                   <DropdownMenu.Portal>
                     <DropdownMenu.SubContent
-                      className="min-w-[120px] bg-[#1e1e3a] border border-blue-border/50 rounded shadow-lg py-1 z-50"
+                      className="min-w-[120px] rounded border border-app-border/50 bg-app-menu py-1 shadow-lg z-50"
                       sideOffset={-2}
                       alignOffset={-4}
                     >
@@ -182,10 +182,10 @@ export default function ScoreToolbar({
                         return (
                           <DropdownMenu.Item
                             key={name}
-                            className={`px-3 py-1 text-[11px] outline-none cursor-pointer rounded-sm data-[highlighted]:bg-[rgba(86,119,182,0.46)] ${
+                            className={`rounded-sm px-3 py-1 text-[11px] outline-none cursor-pointer data-[highlighted]:bg-app-highlight ${
                               snapValue === name
-                                ? 'bg-blue-accent/20 text-blue-text font-medium'
-                                : 'text-blue-text'
+                                ? 'bg-app-accent/20 text-app-text font-medium'
+                                : 'text-app-text'
                             }`}
                             onSelect={() => onSnapValueChange(name)}
                           >
@@ -197,12 +197,12 @@ export default function ScoreToolbar({
                   </DropdownMenu.Portal>
                 </DropdownMenu.Sub>
               ))}
-              <DropdownMenu.Separator className="h-px bg-blue-border/30 my-1" />
+              <DropdownMenu.Separator className="my-1 h-px bg-app-border/30" />
               <DropdownMenu.Item
-                className={`px-3 py-1 text-[11px] outline-none cursor-pointer rounded-sm data-[highlighted]:bg-[rgba(86,119,182,0.46)] ${
+                className={`rounded-sm px-3 py-1 text-[11px] outline-none cursor-pointer data-[highlighted]:bg-app-highlight ${
                   snapValue === 'AUTO'
-                    ? 'bg-blue-accent/20 text-blue-text font-medium'
-                    : 'text-blue-text'
+                    ? 'bg-app-accent/20 text-app-text font-medium'
+                    : 'text-app-text'
                 }`}
                 onSelect={() => onSnapValueChange('AUTO')}
               >
@@ -215,7 +215,7 @@ export default function ScoreToolbar({
 
       {/* Ruler config button */}
       <button
-        className="px-2 py-0.5 text-[11px] border border-blue-border/40 rounded bg-blue-surface hover:bg-blue-hover text-blue-text cursor-pointer transition-colors"
+        className="rounded border border-app-border/40 bg-app-surface px-2 py-0.5 text-[11px] text-app-text cursor-pointer transition-colors hover:bg-app-hover"
         onClick={onRulerConfig}
         title="Ruler configuration"
       >

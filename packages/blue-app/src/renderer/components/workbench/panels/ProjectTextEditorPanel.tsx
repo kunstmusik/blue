@@ -31,10 +31,10 @@ export default function ProjectTextEditorPanel({
   }
 
   return (
-    <div className="flex h-full flex-col bg-blue-bg text-gray-100">
+    <div className="flex h-full flex-col bg-blue-bg text-app-text">
       <div className="flex-1 min-h-0 p-4">
         <textarea
-          className="h-full w-full resize-none rounded-lg border border-blue-border bg-[#0d1524] px-4 py-3 font-mono text-sm text-gray-100 outline-none transition-colors placeholder:text-blue-muted focus:border-blue-accent"
+          className="h-full w-full resize-none rounded-lg border border-blue-border bg-app-input px-4 py-3 font-mono text-sm text-app-text outline-none transition-colors placeholder:text-blue-muted focus:border-blue-accent"
           spellCheck={false}
           value={value}
           placeholder={placeholder}

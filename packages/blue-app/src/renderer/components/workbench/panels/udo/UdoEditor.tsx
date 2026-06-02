@@ -87,7 +87,7 @@ export default function UdoEditor({
 
   if (!udo) {
     return (
-      <div className="flex h-full items-center justify-center bg-[#0a0f1a] text-sm text-blue-muted">
+      <div className="flex h-full items-center justify-center bg-app-input text-sm text-app-text-muted">
         Select a single UDO to edit its properties.
       </div>
     );
@@ -96,28 +96,28 @@ export default function UdoEditor({
   const isModern = udo.style === 'MODERN';
 
   return (
-    <div className="flex h-full flex-col bg-[#0a0f1a]">
-      <div className="border-b border-blue-border bg-[#10192a] px-3 py-2">
+    <div className="flex h-full flex-col bg-app-input text-app-text">
+      <div className="border-b border-app-border bg-app-surface-strong px-3 py-2">
         <div className="flex items-end gap-3">
           <div className="flex-1">
-            <label className="mb-1 block text-[10px] uppercase tracking-wider text-gray-400">
+            <label className="mb-1 block text-[10px] uppercase tracking-wider text-app-text-subtle">
               Opcode Name
             </label>
             <input
               type="text"
               value={udo.name}
               onChange={handleNameChange}
-              className="w-full rounded border border-blue-border bg-[#0a0f1a] px-2 py-1 text-sm text-gray-100 focus:border-blue-accent focus:outline-none"
+              className="w-full rounded border border-app-border bg-app-input px-2 py-1 text-sm text-app-text-strong focus:border-app-accent focus:outline-none"
             />
           </div>
           <div className="w-32">
-            <label className="mb-1 block text-[10px] uppercase tracking-wider text-gray-400">
+            <label className="mb-1 block text-[10px] uppercase tracking-wider text-app-text-subtle">
               Style
             </label>
             <select
               value={udo.style}
               onChange={handleStyleChange}
-              className="w-full rounded border border-blue-border bg-[#0a0f1a] px-2 py-1 text-sm text-gray-100 focus:border-blue-accent focus:outline-none"
+              className="w-full rounded border border-app-border bg-app-input px-2 py-1 text-sm text-app-text-strong focus:border-app-accent focus:outline-none"
             >
               <option value="CLASSIC">Classic</option>
               <option value="MODERN">Modern</option>
@@ -126,7 +126,7 @@ export default function UdoEditor({
           <button
             type="button"
             onClick={onTestOpcode}
-            className="flex items-center gap-1 rounded bg-blue-accent px-3 py-1 text-xs font-medium text-gray-100 hover:bg-blue-accent/80"
+            className="flex items-center gap-1 rounded bg-app-accent px-3 py-1 text-xs font-medium text-app-text-strong hover:bg-app-accent-hover"
           >
             <Play size={12} />
             Test Opcode
@@ -135,7 +135,7 @@ export default function UdoEditor({
 
         <div className="mt-3 flex gap-3">
           <div className="flex-1">
-            <label className="mb-1 block text-[10px] uppercase tracking-wider text-gray-400">
+            <label className="mb-1 block text-[10px] uppercase tracking-wider text-app-text-subtle">
               Out Types
             </label>
             <input
@@ -143,12 +143,12 @@ export default function UdoEditor({
               value={udo.outTypes}
               onChange={handleOutTypesChange}
               placeholder="e.g., k, a"
-              className="w-full rounded border border-blue-border bg-[#0a0f1a] px-2 py-1 text-sm text-gray-100 focus:border-blue-accent focus:outline-none"
+              className="w-full rounded border border-app-border bg-app-input px-2 py-1 text-sm text-app-text-strong focus:border-app-accent focus:outline-none"
             />
           </div>
           {isModern ? (
             <div className="flex-1">
-              <label className="mb-1 block text-[10px] uppercase tracking-wider text-gray-400">
+              <label className="mb-1 block text-[10px] uppercase tracking-wider text-app-text-subtle">
                 Input Arguments
               </label>
               <input
@@ -156,12 +156,12 @@ export default function UdoEditor({
                 value={udo.inputArguments}
                 onChange={handleInputArgumentsChange}
                 placeholder="e.g., kfreq, kamp"
-                className="w-full rounded border border-blue-border bg-[#0a0f1a] px-2 py-1 text-sm text-gray-100 focus:border-blue-accent focus:outline-none"
+                className="w-full rounded border border-app-border bg-app-input px-2 py-1 text-sm text-app-text-strong focus:border-app-accent focus:outline-none"
               />
             </div>
           ) : (
             <div className="flex-1">
-              <label className="mb-1 block text-[10px] uppercase tracking-wider text-gray-400">
+              <label className="mb-1 block text-[10px] uppercase tracking-wider text-app-text-subtle">
                 In Types
               </label>
               <input
@@ -169,14 +169,14 @@ export default function UdoEditor({
                 value={udo.inTypes}
                 onChange={handleInTypesChange}
                 placeholder="e.g., k, k"
-                className="w-full rounded border border-blue-border bg-[#0a0f1a] px-2 py-1 text-sm text-gray-100 focus:border-blue-accent focus:outline-none"
+                className="w-full rounded border border-app-border bg-app-input px-2 py-1 text-sm text-app-text-strong focus:border-app-accent focus:outline-none"
               />
             </div>
           )}
         </div>
       </div>
 
-      <div className="border-b border-blue-border bg-[#10192a] px-2">
+      <div className="border-b border-app-border bg-app-surface-strong px-2">
         <div className="flex">
           <button
             type="button"
@@ -184,8 +184,8 @@ export default function UdoEditor({
             className={[
               'border-b-2 px-3 py-2 text-xs',
               activeTab === 'code'
-                ? 'border-blue-accent text-gray-100'
-                : 'border-transparent text-blue-muted hover:text-gray-100',
+                ? 'border-app-accent text-app-text-strong'
+                : 'border-transparent text-app-text-muted hover:text-app-text-strong',
             ].join(' ')}
           >
             Code
@@ -196,8 +196,8 @@ export default function UdoEditor({
             className={[
               'border-b-2 px-3 py-2 text-xs',
               activeTab === 'comments'
-                ? 'border-blue-accent text-gray-100'
-                : 'border-transparent text-blue-muted hover:text-gray-100',
+                ? 'border-app-accent text-app-text-strong'
+                : 'border-transparent text-app-text-muted hover:text-app-text-strong',
             ].join(' ')}
           >
             Comments

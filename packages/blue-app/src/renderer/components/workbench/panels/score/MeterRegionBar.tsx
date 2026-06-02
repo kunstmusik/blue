@@ -96,7 +96,7 @@ export default function MeterRegionBar({
                   width: Math.max(1, width),
                   height: METER_REGION_BAR_HEIGHT,
                   backgroundColor: fillColor,
-                  borderColor: 'rgb(100,100,120)',
+                  borderColor: 'var(--color-app-text-muted)',
                 }}
                 title={formatMeterTooltip(region.entry)}
               >
@@ -110,10 +110,10 @@ export default function MeterRegionBar({
             {rootTimelineOnly && (
               <ContextMenu.Portal>
                 <ContextMenu.Content
-                  className="min-w-40 bg-[#1e1e3a] border border-blue-border/40 rounded-md p-1 shadow-lg z-50"
+                  className="z-50 min-w-40 rounded-md border border-blue-border/40 bg-app-menu p-1 shadow-lg"
                 >
                   <ContextMenu.Item
-                    className="text-[11px] text-blue-text px-2 py-1 rounded-sm cursor-pointer outline-none data-[highlighted]:bg-white/10"
+                    className="cursor-pointer rounded-sm px-2 py-1 text-[11px] text-blue-text outline-none data-[highlighted]:bg-app-highlight"
                     onSelect={() => onOpenEntryDialog(i)}
                   >
                     Edit Time Signature...

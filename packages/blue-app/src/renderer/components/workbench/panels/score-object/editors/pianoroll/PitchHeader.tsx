@@ -69,7 +69,7 @@ export default function PitchHeader({ notes, selectedIndices, scale, noteHeight,
   }, [selectedIndices, notes, noteHeight, isMidi, numDegrees, minOctave]);
 
   return (
-    <div className="relative bg-[#10192a]" style={{ width: PITCH_HEADER_WIDTH, height: totalHeight }}>
+    <div className="relative bg-app-surface-strong" style={{ width: PITCH_HEADER_WIDTH, height: totalHeight }}>
       {rows.map((row, i) => (
         <div key={`ph-${i}`}
           className="absolute left-0 right-0 border-b"
@@ -93,7 +93,7 @@ export default function PitchHeader({ notes, selectedIndices, scale, noteHeight,
             top: h.y,
             width: 4,
             height: noteHeight,
-            backgroundColor: 'rgba(80,200,80,0.7)',
+            backgroundColor: 'color-mix(in srgb, var(--color-app-success) 70%, var(--color-app-clear))',
           }}
         />
       ))}

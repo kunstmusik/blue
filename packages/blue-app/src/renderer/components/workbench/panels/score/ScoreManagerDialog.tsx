@@ -138,23 +138,23 @@ export default function ScoreManagerDialog({ score, onClose }: Props) {
     setSelectedLayerIndex(index);
   }, [selectedGroup, layers]);
 
-  const btnClass = 'px-1.5 py-0.5 text-[11px] rounded border border-blue-border/40 bg-blue-surface/60 text-blue-text hover:bg-blue-surface disabled:opacity-40 min-w-[28px]';
+  const btnClass = 'min-w-[28px] rounded border border-app-border/40 bg-app-surface px-1.5 py-0.5 text-[11px] text-app-text hover:bg-app-hover disabled:opacity-40';
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={onClose}>
       <div
-        className="bg-blue-bg border border-blue-border/50 rounded-lg shadow-2xl flex flex-col"
+        className="flex flex-col rounded-lg border border-app-border/50 bg-app-bg shadow-2xl"
         style={{ width: 760, height: 400 }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between px-4 py-3 border-b border-blue-border/30">
-          <span className="text-sm font-medium text-blue-text">Score Manager</span>
-          <button className="text-blue-muted hover:text-blue-text text-lg leading-none" onClick={onClose}>&times;</button>
+        <div className="flex items-center justify-between border-b border-app-border/30 px-4 py-3">
+          <span className="text-sm font-medium text-app-text">Score Manager</span>
+          <button className="text-lg leading-none text-app-text-muted hover:text-app-text" onClick={onClose}>&times;</button>
         </div>
 
         <div className="flex flex-1 min-h-0">
-          <div className="flex flex-col border-r border-blue-border/30" style={{ width: 200 }}>
-            <div className="flex items-center gap-1 px-2 py-1 border-b border-blue-border/20">
+          <div className="flex flex-col border-r border-app-border/30" style={{ width: 200 }}>
+            <div className="flex items-center gap-1 border-b border-app-border/20 px-2 py-1">
               <button className={btnClass} onClick={handlePushGroupUp} disabled={selectedGroupIndex <= 0} title="Push Up">&#9650;</button>
               <button className={btnClass} onClick={handlePushGroupDown} disabled={selectedGroupIndex >= groups.length - 1} title="Push Down">&#9660;</button>
               <DropdownMenu.Root>
@@ -163,14 +163,14 @@ export default function ScoreManagerDialog({ score, onClose }: Props) {
                 </DropdownMenu.Trigger>
                 <DropdownMenu.Portal>
                   <DropdownMenu.Content
-                    className="min-w-45 bg-[#1e1e3a] border border-blue-border/50 rounded shadow-lg py-1 z-50"
+                    className="z-50 min-w-45 rounded border border-app-border/50 bg-app-menu py-1 shadow-lg"
                     sideOffset={4}
                     align="start"
                   >
                     {ADD_LAYER_GROUP_OPTIONS.map((option) => (
                       <DropdownMenu.Item
                         key={option.groupType}
-                        className="px-3 py-1 text-[11px] text-blue-text outline-none cursor-pointer rounded-sm data-highlighted:bg-[rgba(86,119,182,0.46)]"
+                        className="cursor-pointer rounded-sm px-3 py-1 text-[11px] text-app-text outline-none data-[highlighted]:bg-app-highlight"
                         onSelect={() => handleAddLayerGroup(option.groupType)}
                       >
                         {option.label}
@@ -201,7 +201,7 @@ export default function ScoreManagerDialog({ score, onClose }: Props) {
           </div>
 
           <div className="flex-1 flex flex-col">
-            <div className="flex items-center gap-1 px-2 py-1 border-b border-blue-border/20">
+            <div className="flex items-center gap-1 border-b border-app-border/20 px-2 py-1">
               <button className={btnClass} onClick={handlePushLayerUp} disabled={!selectedGroup || selectedLayerIndex <= 0} title="Push Up">&#9650;</button>
               <button className={btnClass} onClick={handlePushLayerDown} disabled={!selectedGroup || selectedLayerIndex < 0 || selectedLayerIndex >= layers.length - 1} title="Push Down">&#9660;</button>
               <button className={btnClass} onClick={handleAddLayer} disabled={!selectedGroup} title="Add Layer">+</button>
@@ -210,7 +210,7 @@ export default function ScoreManagerDialog({ score, onClose }: Props) {
             <div className="flex-1 min-h-0 overflow-y-auto">
               <table className="w-full border-collapse text-[11px]">
                 <thead>
-                  <tr className="border-b border-blue-border/20 text-blue-muted text-left">
+                  <tr className="border-b border-app-border/20 text-left text-app-text-muted">
                     <th className="px-2 py-1 font-normal" style={{ width: 50 }}>#</th>
                     <th className="px-2 py-1 font-normal">Name</th>
                   </tr>
@@ -264,8 +264,8 @@ function GroupRow({ group, index, selected, editing, editValue, onEditValueChang
 
   return (
     <div
-      className={`px-2 py-1 text-[11px] cursor-pointer truncate border-b border-blue-border/10 ${
-        selected ? 'bg-blue-accent/20 text-blue-text' : 'text-blue-muted hover:bg-blue-surface/40'
+      className={`cursor-pointer truncate border-b border-app-border/10 px-2 py-1 text-[11px] ${
+        selected ? 'bg-app-accent/20 text-app-text' : 'text-app-text-muted hover:bg-app-surface/40'
       }`}
       onClick={onSelect}
       onDoubleClick={onDoubleClick}
@@ -273,7 +273,7 @@ function GroupRow({ group, index, selected, editing, editValue, onEditValueChang
       {editing ? (
         <input
           ref={inputRef}
-          className="w-full bg-blue-surface/60 text-blue-text text-[11px] outline-none border border-blue-accent/40 rounded-sm px-1"
+          className="w-full rounded-sm border border-app-accent/40 bg-app-surface/60 px-1 text-[11px] text-app-text outline-none"
           value={editValue}
           onChange={(e) => onEditValueChange(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter') onCommitEdit(); if (e.key === 'Escape') onCancelEdit(); }}
@@ -311,20 +311,20 @@ function LayerRow({ layer, index, selected, editing, editValue, onEditValueChang
     <tr
       className={`cursor-pointer ${
         selected
-          ? 'bg-blue-accent/25 text-blue-text'
+          ? 'bg-app-accent/25 text-app-text'
           : index % 2 === 0
-            ? 'bg-[#14142a] text-blue-muted hover:bg-blue-surface/40'
-            : 'bg-[#1c1c3a] text-blue-muted hover:bg-blue-surface/40'
+            ? 'bg-app-bg/50 text-app-text-muted hover:bg-app-surface/40'
+            : 'bg-app-surface/40 text-app-text-muted hover:bg-app-surface/60'
       }`}
       onClick={onSelect}
       onDoubleClick={onDoubleClick}
     >
-      <td className="px-2 py-1 border-b border-blue-border/10">{index + 1}</td>
-      <td className="px-2 py-1 border-b border-blue-border/10">
+      <td className="border-b border-app-border/10 px-2 py-1">{index + 1}</td>
+      <td className="border-b border-app-border/10 px-2 py-1">
         {editing ? (
           <input
             ref={inputRef}
-            className="w-full bg-blue-surface/60 text-blue-text text-[11px] outline-none border border-blue-accent/40 rounded-sm px-1"
+            className="w-full rounded-sm border border-app-accent/40 bg-app-surface/60 px-1 text-[11px] text-app-text outline-none"
             value={editValue}
             onChange={(e) => onEditValueChange(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') onCommitEdit(); if (e.key === 'Escape') onCancelEdit(); }}

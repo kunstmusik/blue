@@ -12,7 +12,7 @@ export default function PatternsLayerGroupCanvas({ group, pixelsPerBeat }: Props
       {group.layers.map((layer: ScoreLayerSnapshot) => (
         <div
           key={layer.layerId}
-          className="relative border-b border-[#2a2a2a]"
+          className="relative border-b border-app-border/40"
           style={{ height: layer.height || DEFAULT_ROW_HEIGHT }}
         >
         </div>

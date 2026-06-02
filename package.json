@@ -4,7 +4,8 @@
   "scripts": {
     "build": "pnpm -r run build",
     "test": "pnpm -r run test",
-    "lint": "pnpm -r run lint"
+    "lint": "pnpm -r run lint",
+    "audit:renderer-theme": "node scripts/audit-renderer-theme.mjs"
   },
   "devDependencies": {
     "@types/node": "^25.6.0",

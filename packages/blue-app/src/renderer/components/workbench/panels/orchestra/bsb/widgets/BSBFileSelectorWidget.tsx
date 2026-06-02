@@ -97,7 +97,7 @@ function BSBFileSelectorWidget({
             onDrop={handleDrop}
           >
             <div
-              className="flex h-full items-center overflow-hidden bg-[#0a0f1a] px-1.5 text-[11px] text-gray-200"
+              className="flex h-full items-center overflow-hidden bg-app-bsb-input px-1.5 text-[11px] text-app-text"
               style={{ width: textFieldWidth }}
               title={fileName || '(none)'}
             >

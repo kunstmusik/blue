@@ -18,9 +18,9 @@ const SNAP_GROUPS: { label: string; values: SnapValueName[] }[] = [
   { label: 'SMPTE', values: ['FRAME'] },
 ];
 
-const menuClass = 'min-w-[140px] bg-[#1e1e3a] border border-blue-border/50 rounded shadow-lg py-1 z-50';
-const itemClass = 'px-3 py-1 text-[11px] text-blue-text outline-none cursor-pointer rounded-sm data-[highlighted]:bg-[rgba(86,119,182,0.46)]';
-const subTriggerClass = 'flex items-center justify-between px-3 py-1 text-[11px] text-blue-text rounded-sm outline-none cursor-pointer w-full data-[highlighted]:bg-[rgba(86,119,182,0.46)]';
+const menuClass = 'z-50 min-w-35 rounded border border-blue-border/50 bg-app-menu py-1 shadow-lg';
+const itemClass = 'cursor-pointer rounded-sm px-3 py-1 text-[11px] text-blue-text outline-none data-[highlighted]:bg-app-highlight';
+const subTriggerClass = 'flex w-full cursor-pointer items-center justify-between rounded-sm px-3 py-1 text-[11px] text-blue-text outline-none data-[highlighted]:bg-app-highlight';
 
 export default function PianoRollSnapButton({
   snapEnabled,

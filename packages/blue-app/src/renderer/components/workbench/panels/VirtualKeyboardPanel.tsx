@@ -169,15 +169,15 @@ export default function VirtualKeyboardPanel(): ReactElement {
   const displayChannel = channel + 1;
 
   return (
-    <div className="flex h-full flex-col bg-blue-bg text-gray-100">
-      <div className="flex flex-none items-center gap-2 border-b border-blue-border bg-[#10192a]/90 px-3 py-2 text-sm">
-        <label className="flex items-center gap-1.5 text-gray-100">
+    <div className="flex h-full flex-col bg-blue-bg text-app-text">
+      <div className="flex flex-none items-center gap-2 border-b border-blue-border bg-app-surface-strong/90 px-3 py-2 text-sm">
+        <label className="flex items-center gap-1.5 text-app-text">
           <span className="text-xs text-blue-muted">Channel</span>
           <input
             type="number"
             min={1}
             max={16}
-            className="w-12 rounded border border-blue-border bg-blue-bg px-1.5 py-1 text-center text-sm text-gray-100 outline-none focus:border-blue-accent"
+            className="w-12 rounded border border-blue-border bg-blue-bg px-1.5 py-1 text-center text-sm text-app-text outline-none focus:border-blue-accent"
             value={displayChannel}
             onChange={(e) => setChannel(Number.parseInt(e.target.value, 10) - 1)}
           />

@@ -1,10 +1,55 @@
 # Project Status — blue-electron
 
-**Date**: 2026-05-28
-**Branch**: `050-jython-support`
+**Date**: 2026-05-30
+**Branch**: `051-theme-token-cleanup`
 **Note**: Historical spec sections below preserve their closeout-time branch and feature-context notes; only the topmost spec package reflects the current active handoff state.
 
-## Current Focus: Spec 050 Closed
+## Current Focus: Spec 051 In Progress
+
+**Branch**: `051-theme-token-cleanup`
+
+### Summary
+Spec 051 has moved well past the initial infrastructure phase. The branch now has a working theme audit command, an exception inventory, expanded canonical `app-*` roles, a compatibility bridge for legacy aliases, shared toast styling, and verified renderer migrations across shared chrome, score/orchestra/BSB/editor surfaces, and the Blue Live shell/tabs.
+
+The latest implementation pass closed all unapproved audit buckets: arbitrary utilities, raw CSS, static inline colors, and undefined aliases are now at zero. The remaining work is limited to the manual quickstart probe and visual smoke checklist before final closeout.
+
+### Handoff State
+- `.specify/feature.json` points to `specs/051-theme-token-cleanup`.
+- Current branch is `051-theme-token-cleanup`.
+- `spec.md` status is `Draft`.
+- `plan.md`, `research.md`, `data-model.md`, `contracts/theme-audit-contract.md`, `quickstart.md`, `tasks.md`, `status.md`, `theme-exceptions.md`, and the requirements checklist are present and now partially reflect implemented work.
+- `tasks.md` is updated through the completed automated cleanup and current validation pass.
+- GPT54's earlier settings/theme cleanup remains part of the branch baseline and is preserved by the current implementation.
+
+### Current Delivered Scope
+- Added `pnpm audit:renderer-theme` plus `scripts/audit-renderer-theme.mjs` with arbitrary-utility, raw-CSS, static-inline, alias, and exception loading checks.
+- Added the first approved exception inventory in `specs/051-theme-token-cleanup/theme-exceptions.md`, including explicit `SelectedCodeEditor` syntax-palette approvals.
+- Expanded the canonical theme vocabulary in `packages/blue-app/src/renderer/styles/index.css` and added `blue-text` / `blue-hover` compatibility aliases.
+- Tokenized shared toolbar/context-menu/editor chrome in `index.css` and centralized Sonner toast styling for both renderer entry points.
+- Migrated arbitrary palette usage across effect-editor, score, project-property, tracker, orchestra/BSB, UDO, mixer, and piano-roll surfaces, including the last fifteen one-off arbitrary findings.
+- Converted the remaining Dockview/workbench/output/mixer raw CSS in `index.css` to app-token-backed values and token-mixed gradients.
+- Removed the final static-inline color debt across canvas overlays, marquee shells, BSB widget affordances, and renderer selection handles.
+- Tightened the theme audit matcher so named colors no longer false-positive on CSS property names like `white-space`.
+- Tokenized `SelectedCodeEditor.tsx` app chrome while intentionally keeping syntax colors in the exception ledger.
+- Migrated `BlueLivePanel.tsx`, `blue-live/LiveSpaceTab.tsx`, `blue-live/OptionsTab.tsx`, and `blue-live/LiveCodeTab.tsx` away from hardcoded inline palette values.
+- Repaired the failing `settings-window.test.tsx` selector/`act(...)` flow so the renderer settings suite runs cleanly again.
+
+### Current Audit Snapshot
+- Initial focused baseline: `229` arbitrary utilities, `251` raw CSS colors, `105` static inline colors, `117` undefined theme aliases.
+- Current audit: `0` arbitrary utilities, `0` raw CSS colors, `0` static inline colors, `0` undefined theme aliases, `31` approved exceptions.
+- Remaining styling boundaries are approved exceptions only, led by `SelectedCodeEditor` syntax colors and documented parity/data-driven canvas colors.
+
+### Validation
+- Spec quality checklist is complete.
+- `node scripts/audit-renderer-theme.mjs` - pass with zero unapproved findings.
+- `pnpm --filter @blue/app build:renderer` - pass.
+- `pnpm --filter @blue/app test` - pass (`127` files, `1335` passed, `2` skipped).
+- `pnpm --filter @blue/app build` - pass.
+
+### Next Recommended Step
+Run the remaining manual quickstart probe and visual smoke checklist from `specs/051-theme-token-cleanup/quickstart.md`, then close Spec 051 if those manual checks stay clean.
+
+## Previous Focus: Spec 050 Closed
 
 **Branch**: `050-jython-support`
 

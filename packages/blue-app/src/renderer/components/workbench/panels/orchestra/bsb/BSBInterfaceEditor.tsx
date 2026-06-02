@@ -116,7 +116,7 @@ function BSBInterfaceEditor({
           minFirstSize={200}
           minSecondSize={180}
           firstClassName="flex flex-col"
-          secondClassName="flex flex-col bg-[#0d1524]"
+          secondClassName="flex flex-col bg-app-bsb-panel"
           first={<BSBInterfaceCanvas {...canvasProps} />}
             second={
               <>

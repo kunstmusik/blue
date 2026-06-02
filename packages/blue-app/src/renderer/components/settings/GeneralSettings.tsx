@@ -1,6 +1,10 @@
 import React from 'react';
 import type { GeneralSettingsSnapshot } from '../../../shared/program-settings';
 import SettingsSection from './SettingsSection';
+import SettingsField, {
+  SettingsCheckboxField,
+  SETTINGS_NARROW_FIELD_CLASS,
+} from './SettingsField';
 
 interface GeneralSettingsProps {
   settings: GeneralSettingsSnapshot;
@@ -18,62 +22,46 @@ export default function GeneralSettings({
 
   return (
     <SettingsSection title="General">
-      <div style={{ marginBottom: '16px' }}>
-        <label style={{ display: 'block', fontSize: '12px', fontWeight: 500, color: '#aaa', marginBottom: '4px' }}>
-          Work Directory
-        </label>
-        <div style={{ fontSize: '11px', color: '#666', marginBottom: '6px' }}>
-          Default directory for file choosers and import/export operations.
-        </div>
-        <input
-          type="text"
-          value={settings.workDirectory}
-          onChange={(e) => set('workDirectory', e.target.value)}
-          placeholder="(default user directory)"
-          style={{ width: '100%', maxWidth: '400px', padding: '6px 10px', background: '#0d0d1a', color: '#e0e0e0', border: '1px solid #0f3460', borderRadius: '4px', fontSize: '13px', outline: 'none' }}
-        />
-      </div>
+      <SettingsField
+        label="Work Directory"
+        value={settings.workDirectory}
+        onChange={(value) => set('workDirectory', value)}
+        placeholder="(default user directory)"
+        description="Default directory for file choosers and import/export operations."
+      />
 
-      <div style={{ marginBottom: '12px' }}>
-        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: '#c8c8d8', cursor: 'pointer' }}>
-          <input type="checkbox" checked={settings.newUserDefaultsEnabled} onChange={(e) => set('newUserDefaultsEnabled', e.target.checked)} />
-          New User Defaults Enabled
-        </label>
-      </div>
+      <SettingsCheckboxField
+        label="New User Defaults Enabled"
+        checked={settings.newUserDefaultsEnabled}
+        onChange={(checked) => set('newUserDefaultsEnabled', checked)}
+      />
 
-      <div style={{ marginBottom: '12px' }}>
-        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: '#c8c8d8', cursor: 'pointer' }}>
-          <input type="checkbox" checked={settings.drawAlphaBackgroundOnMarquee} onChange={(e) => set('drawAlphaBackgroundOnMarquee', e.target.checked)} />
-          Draw Alpha Background on Marquee
-        </label>
-      </div>
+      <SettingsCheckboxField
+        label="Draw Alpha Background on Marquee"
+        checked={settings.drawAlphaBackgroundOnMarquee}
+        onChange={(checked) => set('drawAlphaBackgroundOnMarquee', checked)}
+      />
 
-      <div style={{ marginBottom: '12px' }}>
-        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: '#c8c8d8', cursor: 'pointer' }}>
-          <input type="checkbox" checked={settings.messageColorsEnabled} onChange={(e) => set('messageColorsEnabled', e.target.checked)} />
-          Message Colors Enabled
-        </label>
-      </div>
+      <SettingsCheckboxField
+        label="Message Colors Enabled"
+        checked={settings.messageColorsEnabled}
+        onChange={(checked) => set('messageColorsEnabled', checked)}
+      />
 
-      <div style={{ marginBottom: '12px' }}>
-        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: '#c8c8d8', cursor: 'pointer' }}>
-          <input type="checkbox" checked={settings.csoundErrorWarningEnabled} onChange={(e) => set('csoundErrorWarningEnabled', e.target.checked)} />
-          Csound Error Warning Enabled
-        </label>
-      </div>
+      <SettingsCheckboxField
+        label="Csound Error Warning Enabled"
+        checked={settings.csoundErrorWarningEnabled}
+        onChange={(checked) => set('csoundErrorWarningEnabled', checked)}
+      />
 
-      <div style={{ marginBottom: '16px' }}>
-        <label style={{ display: 'block', fontSize: '12px', fontWeight: 500, color: '#aaa', marginBottom: '4px' }}>
-          Max Temp Files per Directory
-        </label>
-        <input
-          type="number"
-          min={1}
-          value={settings.directoryTempFileLimit}
-          onChange={(e) => set('directoryTempFileLimit', parseInt(e.target.value, 10) || 3)}
-          style={{ width: '120px', padding: '6px 10px', background: '#0d0d1a', color: '#e0e0e0', border: '1px solid #0f3460', borderRadius: '4px', fontSize: '13px', outline: 'none' }}
-        />
-      </div>
+      <SettingsField
+        label="Max Temp Files per Directory"
+        type="number"
+        min={1}
+        value={settings.directoryTempFileLimit}
+        onChange={(value) => set('directoryTempFileLimit', Number.parseInt(value, 10) || 3)}
+        inputClassName={SETTINGS_NARROW_FIELD_CLASS}
+      />
     </SettingsSection>
   );
 }

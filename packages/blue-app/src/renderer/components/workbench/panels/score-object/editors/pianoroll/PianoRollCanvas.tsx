@@ -192,7 +192,7 @@ export default function PianoRollCanvas({
             left: boundaryX,
             width: canvasWidth - boundaryX,
             height: canvasHeight,
-            backgroundColor: 'rgba(0,0,0,0.35)',
+            backgroundColor: 'color-mix(in srgb, var(--color-app-canvas) 35%, var(--color-app-clear))',
           }}
         />
       )}
@@ -223,8 +223,8 @@ export default function PianoRollCanvas({
             top: marquee.y1,
             width: marquee.x2 - marquee.x1,
             height: marquee.y2 - marquee.y1,
-            border: '1px solid rgba(100,180,255,0.6)',
-            backgroundColor: 'rgba(100,180,255,0.1)',
+            border: '1px solid color-mix(in srgb, var(--color-app-focus) 60%, var(--color-app-clear))',
+            backgroundColor: 'color-mix(in srgb, var(--color-app-focus) 10%, var(--color-app-clear))',
           }}
         />
       )}

@@ -364,7 +364,7 @@ export default function EffectLibraryModal(): React.ReactElement | null {
       initialSplit={0.28}
       minFirstSize={160}
       minSecondSize={300}
-      firstClassName="h-full bg-[#0a0f1a]"
+      firstClassName="h-full bg-app-bg"
       secondClassName="overflow-hidden"
       first={treeContent}
       second={detailContent}
@@ -377,17 +377,17 @@ export default function EffectLibraryModal(): React.ReactElement | null {
 
   return (
     <div
-      className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60"
+      className="fixed inset-0 z-60 flex items-center justify-center bg-black/60"
       onClick={(event) => {
         if (event.target === event.currentTarget) closeEffectsLibrary();
       }}
     >
-      <div className="flex h-[82vh] w-[88vw] max-w-[1280px] flex-col overflow-hidden rounded-md border border-blue-border bg-[#0d1524] shadow-2xl">
-        <div className="flex flex-none items-center justify-between gap-3 border-b border-blue-border bg-[#10192a] px-4 py-3">
+      <div className="flex h-[82vh] w-[88vw] max-w-7xl flex-col overflow-hidden rounded-md border border-app-border bg-app-overlay shadow-2xl">
+        <div className="flex flex-none items-center justify-between gap-3 border-b border-app-border bg-app-surface-strong px-4 py-3">
           <div className="min-w-0">
-            <div className="text-sm font-medium text-gray-100">Effects Library</div>
+            <div className="text-sm font-medium text-app-text-strong">Effects Library</div>
             {target && (
-              <div className="text-xs text-blue-muted">
+              <div className="text-xs text-app-text-muted">
                 Target: {target.channelId} / {target.chain}
               </div>
             )}
@@ -433,19 +433,19 @@ export default function EffectLibraryModal(): React.ReactElement | null {
 
         <div className="min-h-0 flex-1 overflow-hidden">
           {snapshot && !snapshot.loaded && snapshot.loadError ? (
-            <div className="border-b border-blue-border/60 bg-[#151f33] px-4 py-3 text-sm text-blue-muted">
+            <div className="border-b border-app-border/60 bg-app-surface-raised px-4 py-3 text-sm text-app-text-muted">
               {snapshot.loadError}
             </div>
           ) : null}
           {mainContent}
         </div>
 
-        <div className="flex flex-none items-center justify-between gap-3 border-t border-blue-border bg-[#10192a] px-4 py-2 text-[11px] text-blue-muted">
+        <div className="flex flex-none items-center justify-between gap-3 border-t border-app-border bg-app-surface-strong px-4 py-2 text-[11px] text-app-text-muted">
           <div className="inline-flex items-center gap-2">
             <LibraryBig className="h-3.5 w-3.5" />
             Session-only mutations. No writes to `~/.blue`.
             {hasSessionMutations && (
-              <span className="text-amber-400">Unsaved changes</span>
+              <span className="text-app-warning">Unsaved changes</span>
             )}
           </div>
           <div>{snapshot?.loaded ? 'Loaded' : 'Using fallback empty library'}</div>

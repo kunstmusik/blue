@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import type { TempoMapSnapshot, TempoMapPatch } from '../../../../../shared/project-editor';
 
 const BEAT_EPSILON = 0.001;
-const SECONDARY_BUTTON_CLASS = 'text-[11px] text-blue-text bg-blue-surface/40 hover:bg-blue-surface/70 px-3 py-1 rounded border border-blue-border/40 transition-colors';
+const SECONDARY_BUTTON_CLASS = 'rounded border border-app-border/40 bg-app-surface px-3 py-1 text-[11px] text-app-text transition-colors hover:bg-app-hover';
 
 interface TempoPointDialogProps {
   pointIndex: number;
@@ -63,20 +63,20 @@ export default function TempoPointDialog({
       onClick={onClose}
     >
       <div
-        className="bg-[#1e1e3a] border border-blue-border/40 rounded-lg p-4 min-w-[240px] shadow-xl"
+        className="min-w-60 rounded-lg border border-app-border/40 bg-app-menu p-4 shadow-xl"
         onClick={(e) => e.stopPropagation()}
         onKeyDown={handleKeyDown}
       >
-        <h3 className="text-blue-text text-sm font-medium mb-3">
+        <h3 className="mb-3 text-sm font-medium text-app-text">
           {isTimeZero ? 'Edit Initial Tempo' : `Edit Tempo Point ${pointIndex + 1}`}
         </h3>
 
         <div className="space-y-2">
           <div className="flex items-center gap-2">
-            <label className="text-[11px] text-blue-muted w-14">Beat</label>
+            <label className="w-14 text-[11px] text-app-text-muted">Beat</label>
             <input
               type="number"
-              className="flex-1 bg-[#12122a] border border-blue-border/30 rounded px-2 py-1 text-[11px] text-blue-text outline-none focus:border-blue-border/60"
+              className="flex-1 rounded border border-app-border/30 bg-app-field px-2 py-1 text-[11px] text-app-text outline-none focus:border-app-border/60"
               value={beat}
               onChange={(e) => setBeat(e.target.value)}
               disabled={isTimeZero}
@@ -86,17 +86,17 @@ export default function TempoPointDialog({
             />
           </div>
           <div className="flex items-center gap-2">
-            <label className="text-[11px] text-blue-muted w-14">Tempo</label>
+            <label className="w-14 text-[11px] text-app-text-muted">Tempo</label>
             <input
               type="number"
-              className="flex-1 bg-[#12122a] border border-blue-border/30 rounded px-2 py-1 text-[11px] text-blue-text outline-none focus:border-blue-border/60"
+              className="flex-1 rounded border border-app-border/30 bg-app-field px-2 py-1 text-[11px] text-app-text outline-none focus:border-app-border/60"
               value={tempo}
               onChange={(e) => setTempo(e.target.value)}
               min={1}
               max={999}
               step={1}
             />
-            <span className="text-[10px] text-blue-muted">BPM</span>
+            <span className="text-[10px] text-app-text-muted">BPM</span>
           </div>
         </div>
 
@@ -108,7 +108,7 @@ export default function TempoPointDialog({
             Cancel
           </button>
           <button
-            className="text-[11px] text-blue-text bg-blue-surface/80 hover:bg-blue-surface px-3 py-1 rounded border border-blue-border/30"
+            className="rounded border border-app-border/30 bg-app-surface px-3 py-1 text-[11px] text-app-text hover:bg-app-hover"
             onClick={handleOk}
           >
             OK

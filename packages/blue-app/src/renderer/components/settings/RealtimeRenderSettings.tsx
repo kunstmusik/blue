@@ -2,58 +2,17 @@ import React from 'react';
 import type { RealtimeRenderSettingsSnapshot } from '../../../shared/program-settings';
 import { getAudioDrivers, getMidiDrivers } from '../../../shared/program-settings';
 import SettingsSection from './SettingsSection';
+import SettingsField, {
+  SettingsCheckboxField,
+  SettingsSelectField,
+  SettingsSubsectionTitle,
+  SETTINGS_MEDIUM_FIELD_CLASS,
+  SETTINGS_NARROW_FIELD_CLASS,
+} from './SettingsField';
 
 interface RealtimeRenderSettingsProps {
   settings: RealtimeRenderSettingsSnapshot;
   onChange: (settings: RealtimeRenderSettingsSnapshot) => void;
-}
-
-const inputStyle: React.CSSProperties = {
-  width: '120px',
-  padding: '6px 10px',
-  background: '#0d0d1a',
-  color: '#e0e0e0',
-  border: '1px solid #0f3460',
-  borderRadius: '4px',
-  fontSize: '13px',
-  outline: 'none',
-};
-
-const selectStyle: React.CSSProperties = {
-  padding: '6px 10px',
-  background: '#0d0d1a',
-  color: '#e0e0e0',
-  border: '1px solid #0f3460',
-  borderRadius: '4px',
-  fontSize: '13px',
-  outline: 'none',
-};
-
-const checkboxLabelStyle: React.CSSProperties = {
-  display: 'flex',
-  alignItems: 'center',
-  gap: '8px',
-  fontSize: '13px',
-  color: '#c8c8d8',
-  cursor: 'pointer',
-  marginBottom: '12px',
-};
-
-const fieldLabelStyle: React.CSSProperties = {
-  display: 'block',
-  fontSize: '12px',
-  fontWeight: 500,
-  color: '#aaa',
-  marginBottom: '4px',
-};
-
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div style={{ marginBottom: '16px' }}>
-      <label style={fieldLabelStyle}>{label}</label>
-      {children}
-    </div>
-  );
 }
 
 export default function RealtimeRenderSettings({
@@ -73,157 +32,194 @@ export default function RealtimeRenderSettings({
 
   return (
     <SettingsSection title="Realtime Render">
-      <Field label="Csound Executable">
-        <input
-          type="text"
-          value={settings.csoundExecutable}
-          onChange={(e) => set('csoundExecutable', e.target.value)}
-          placeholder="/usr/local/bin/csound"
-          style={{ ...inputStyle, width: '100%', maxWidth: '400px' }}
-        />
-      </Field>
+      <SettingsField
+        label="Csound Executable"
+        value={settings.csoundExecutable}
+        onChange={(value) => set('csoundExecutable', value)}
+        placeholder="/usr/local/bin/csound"
+      />
 
-      <h3 style={{ fontSize: '14px', color: '#ddd', margin: '20px 0 12px 0', borderBottom: '1px solid #0f3460', paddingBottom: '4px' }}>
-        Project Settings
-      </h3>
+      <SettingsSubsectionTitle>Project Settings</SettingsSubsectionTitle>
 
-      <Field label="Default Sample Rate (sr)">
-        <input type="text" value={settings.defaultSr} onChange={(e) => set('defaultSr', e.target.value)} style={inputStyle} />
-      </Field>
-      <Field label="Default ksmps">
-        <input type="text" value={settings.defaultKsmps} onChange={(e) => set('defaultKsmps', e.target.value)} style={inputStyle} />
-      </Field>
-      <Field label="Default nchnls">
-        <input type="text" value={settings.defaultNchnls} onChange={(e) => set('defaultNchnls', e.target.value)} style={inputStyle} />
-      </Field>
+      <SettingsField
+        label="Default Sample Rate (sr)"
+        value={settings.defaultSr}
+        onChange={(value) => set('defaultSr', value)}
+        inputClassName={SETTINGS_NARROW_FIELD_CLASS}
+      />
+      <SettingsField
+        label="Default ksmps"
+        value={settings.defaultKsmps}
+        onChange={(value) => set('defaultKsmps', value)}
+        inputClassName={SETTINGS_NARROW_FIELD_CLASS}
+      />
+      <SettingsField
+        label="Default nchnls"
+        value={settings.defaultNchnls}
+        onChange={(value) => set('defaultNchnls', value)}
+        inputClassName={SETTINGS_NARROW_FIELD_CLASS}
+      />
 
-      <label style={checkboxLabelStyle}>
-        <input type="checkbox" checked={settings.useZeroDbfs} onChange={(e) => set('useZeroDbfs', e.target.checked)} />
-        Use 0dbfs
-      </label>
-      <Field label="0dbfs Value">
-        <input type="text" value={settings.zeroDbfs} onChange={(e) => set('zeroDbfs', e.target.value)} style={inputStyle} disabled={!settings.useZeroDbfs} />
-      </Field>
+      <SettingsCheckboxField
+        label="Use 0dbfs"
+        checked={settings.useZeroDbfs}
+        onChange={(checked) => set('useZeroDbfs', checked)}
+      />
+      <SettingsField
+        label="0dbfs Value"
+        value={settings.zeroDbfs}
+        onChange={(value) => set('zeroDbfs', value)}
+        disabled={!settings.useZeroDbfs}
+        inputClassName={SETTINGS_NARROW_FIELD_CLASS}
+      />
 
-      <h3 style={{ fontSize: '14px', color: '#ddd', margin: '20px 0 12px 0', borderBottom: '1px solid #0f3460', paddingBottom: '4px' }}>
-        Audio
-      </h3>
+      <SettingsSubsectionTitle>Audio</SettingsSubsectionTitle>
 
-      <label style={checkboxLabelStyle}>
-        <input type="checkbox" checked={settings.audioDriverEnabled} onChange={(e) => set('audioDriverEnabled', e.target.checked)} />
-        Audio Driver Enabled
-      </label>
-      <Field label="Audio Driver">
-        <select value={settings.audioDriver} onChange={(e) => set('audioDriver', e.target.value)} style={selectStyle} disabled={!settings.audioDriverEnabled}>
-          {audioDrivers.map((d) => <option key={d} value={d}>{d}</option>)}
-        </select>
-      </Field>
+      <SettingsCheckboxField
+        label="Audio Driver Enabled"
+        checked={settings.audioDriverEnabled}
+        onChange={(checked) => set('audioDriverEnabled', checked)}
+      />
+      <SettingsSelectField
+        label="Audio Driver"
+        value={settings.audioDriver}
+        onChange={(value) => set('audioDriver', value)}
+        disabled={!settings.audioDriverEnabled}
+      >
+        {audioDrivers.map((driver) => <option key={driver} value={driver}>{driver}</option>)}
+      </SettingsSelectField>
 
-      <label style={checkboxLabelStyle}>
-        <input type="checkbox" checked={settings.audioOutEnabled} onChange={(e) => set('audioOutEnabled', e.target.checked)} />
-        Audio Out Enabled
-      </label>
-      <Field label="Audio Out">
-        <input type="text" value={settings.audioOutText} onChange={(e) => set('audioOutText', e.target.value)} style={{ ...inputStyle, maxWidth: '300px' }} />
-      </Field>
+      <SettingsCheckboxField
+        label="Audio Out Enabled"
+        checked={settings.audioOutEnabled}
+        onChange={(checked) => set('audioOutEnabled', checked)}
+      />
+      <SettingsField
+        label="Audio Out"
+        value={settings.audioOutText}
+        onChange={(value) => set('audioOutText', value)}
+        inputClassName={SETTINGS_MEDIUM_FIELD_CLASS}
+      />
 
-      <label style={checkboxLabelStyle}>
-        <input type="checkbox" checked={settings.audioInEnabled} onChange={(e) => set('audioInEnabled', e.target.checked)} />
-        Audio In Enabled
-      </label>
-      <Field label="Audio In">
-        <input type="text" value={settings.audioInText} onChange={(e) => set('audioInText', e.target.value)} style={{ ...inputStyle, maxWidth: '300px' }} />
-      </Field>
+      <SettingsCheckboxField
+        label="Audio In Enabled"
+        checked={settings.audioInEnabled}
+        onChange={(checked) => set('audioInEnabled', checked)}
+      />
+      <SettingsField
+        label="Audio In"
+        value={settings.audioInText}
+        onChange={(value) => set('audioInText', value)}
+        inputClassName={SETTINGS_MEDIUM_FIELD_CLASS}
+      />
 
-      <h3 style={{ fontSize: '14px', color: '#ddd', margin: '20px 0 12px 0', borderBottom: '1px solid #0f3460', paddingBottom: '4px' }}>
-        MIDI
-      </h3>
+      <SettingsSubsectionTitle>MIDI</SettingsSubsectionTitle>
 
-      <label style={checkboxLabelStyle}>
-        <input type="checkbox" checked={settings.midiDriverEnabled} onChange={(e) => set('midiDriverEnabled', e.target.checked)} />
-        MIDI Driver Enabled
-      </label>
-      <Field label="MIDI Driver">
-        <select value={settings.midiDriver} onChange={(e) => set('midiDriver', e.target.value)} style={selectStyle} disabled={!settings.midiDriverEnabled}>
-          {midiDrivers.map((d) => <option key={d} value={d}>{d}</option>)}
-        </select>
-      </Field>
+      <SettingsCheckboxField
+        label="MIDI Driver Enabled"
+        checked={settings.midiDriverEnabled}
+        onChange={(checked) => set('midiDriverEnabled', checked)}
+      />
+      <SettingsSelectField
+        label="MIDI Driver"
+        value={settings.midiDriver}
+        onChange={(value) => set('midiDriver', value)}
+        disabled={!settings.midiDriverEnabled}
+      >
+        {midiDrivers.map((driver) => <option key={driver} value={driver}>{driver}</option>)}
+      </SettingsSelectField>
 
-      <label style={checkboxLabelStyle}>
-        <input type="checkbox" checked={settings.midiOutEnabled} onChange={(e) => set('midiOutEnabled', e.target.checked)} />
-        MIDI Out Enabled
-      </label>
-      <Field label="MIDI Out">
-        <input type="text" value={settings.midiOutText} onChange={(e) => set('midiOutText', e.target.value)} style={{ ...inputStyle, maxWidth: '300px' }} />
-      </Field>
+      <SettingsCheckboxField
+        label="MIDI Out Enabled"
+        checked={settings.midiOutEnabled}
+        onChange={(checked) => set('midiOutEnabled', checked)}
+      />
+      <SettingsField
+        label="MIDI Out"
+        value={settings.midiOutText}
+        onChange={(value) => set('midiOutText', value)}
+        inputClassName={SETTINGS_MEDIUM_FIELD_CLASS}
+      />
 
-      <label style={checkboxLabelStyle}>
-        <input type="checkbox" checked={settings.midiInEnabled} onChange={(e) => set('midiInEnabled', e.target.checked)} />
-        MIDI In Enabled
-      </label>
-      <Field label="MIDI In">
-        <input type="text" value={settings.midiInText} onChange={(e) => set('midiInText', e.target.value)} style={{ ...inputStyle, maxWidth: '300px' }} />
-      </Field>
+      <SettingsCheckboxField
+        label="MIDI In Enabled"
+        checked={settings.midiInEnabled}
+        onChange={(checked) => set('midiInEnabled', checked)}
+      />
+      <SettingsField
+        label="MIDI In"
+        value={settings.midiInText}
+        onChange={(value) => set('midiInText', value)}
+        inputClassName={SETTINGS_MEDIUM_FIELD_CLASS}
+      />
 
-      <h3 style={{ fontSize: '14px', color: '#ddd', margin: '20px 0 12px 0', borderBottom: '1px solid #0f3460', paddingBottom: '4px' }}>
-        Buffer Settings
-      </h3>
+      <SettingsSubsectionTitle>Buffer Settings</SettingsSubsectionTitle>
 
-      <label style={checkboxLabelStyle}>
-        <input type="checkbox" checked={settings.softwareBufferEnabled} onChange={(e) => set('softwareBufferEnabled', e.target.checked)} />
-        Software Buffer Enabled
-      </label>
-      <Field label="Software Buffer Size">
-        <input type="number" value={settings.softwareBufferSize} onChange={(e) => set('softwareBufferSize', parseInt(e.target.value, 10) || 1024)} style={inputStyle} disabled={!settings.softwareBufferEnabled} />
-      </Field>
+      <SettingsCheckboxField
+        label="Software Buffer Enabled"
+        checked={settings.softwareBufferEnabled}
+        onChange={(checked) => set('softwareBufferEnabled', checked)}
+      />
+      <SettingsField
+        label="Software Buffer Size"
+        type="number"
+        value={settings.softwareBufferSize}
+        onChange={(value) => set('softwareBufferSize', Number.parseInt(value, 10) || 1024)}
+        disabled={!settings.softwareBufferEnabled}
+        inputClassName={SETTINGS_NARROW_FIELD_CLASS}
+      />
 
-      <label style={checkboxLabelStyle}>
-        <input type="checkbox" checked={settings.hardwareBufferEnabled} onChange={(e) => set('hardwareBufferEnabled', e.target.checked)} />
-        Hardware Buffer Enabled
-      </label>
-      <Field label="Hardware Buffer Size">
-        <input type="number" value={settings.hardwareBufferSize} onChange={(e) => set('hardwareBufferSize', parseInt(e.target.value, 10) || 4096)} style={inputStyle} disabled={!settings.hardwareBufferEnabled} />
-      </Field>
+      <SettingsCheckboxField
+        label="Hardware Buffer Enabled"
+        checked={settings.hardwareBufferEnabled}
+        onChange={(checked) => set('hardwareBufferEnabled', checked)}
+      />
+      <SettingsField
+        label="Hardware Buffer Size"
+        type="number"
+        value={settings.hardwareBufferSize}
+        onChange={(value) => set('hardwareBufferSize', Number.parseInt(value, 10) || 4096)}
+        disabled={!settings.hardwareBufferEnabled}
+        inputClassName={SETTINGS_NARROW_FIELD_CLASS}
+      />
 
-      <h3 style={{ fontSize: '14px', color: '#ddd', margin: '20px 0 12px 0', borderBottom: '1px solid #0f3460', paddingBottom: '4px' }}>
-        Message Level
-      </h3>
+      <SettingsSubsectionTitle>Message Level</SettingsSubsectionTitle>
 
-      <label style={checkboxLabelStyle}>
-        <input type="checkbox" checked={settings.noteAmpsEnabled} onChange={(e) => set('noteAmpsEnabled', e.target.checked)} />
-        Note Amplitudes
-      </label>
-      <label style={checkboxLabelStyle}>
-        <input type="checkbox" checked={settings.outOfRangeEnabled} onChange={(e) => set('outOfRangeEnabled', e.target.checked)} />
-        Out-of-Range Messages
-      </label>
-      <label style={checkboxLabelStyle}>
-        <input type="checkbox" checked={settings.warningsEnabled} onChange={(e) => set('warningsEnabled', e.target.checked)} />
-        Warnings
-      </label>
-      <label style={checkboxLabelStyle}>
-        <input type="checkbox" checked={settings.benchmarkEnabled} onChange={(e) => set('benchmarkEnabled', e.target.checked)} />
-        Benchmark Information
-      </label>
+      <SettingsCheckboxField
+        label="Note Amplitudes"
+        checked={settings.noteAmpsEnabled}
+        onChange={(checked) => set('noteAmpsEnabled', checked)}
+      />
+      <SettingsCheckboxField
+        label="Out-of-Range Messages"
+        checked={settings.outOfRangeEnabled}
+        onChange={(checked) => set('outOfRangeEnabled', checked)}
+      />
+      <SettingsCheckboxField
+        label="Warnings"
+        checked={settings.warningsEnabled}
+        onChange={(checked) => set('warningsEnabled', checked)}
+      />
+      <SettingsCheckboxField
+        label="Benchmark Information"
+        checked={settings.benchmarkEnabled}
+        onChange={(checked) => set('benchmarkEnabled', checked)}
+      />
 
-      <h3 style={{ fontSize: '14px', color: '#ddd', margin: '20px 0 12px 0', borderBottom: '1px solid #0f3460', paddingBottom: '4px' }}>
-        Other Settings
-      </h3>
+      <SettingsSubsectionTitle>Other Settings</SettingsSubsectionTitle>
 
-      <label style={checkboxLabelStyle}>
-        <input type="checkbox" checked={settings.displaysDisabled} onChange={(e) => set('displaysDisabled', e.target.checked)} />
-        Disable Displays
-      </label>
+      <SettingsCheckboxField
+        label="Disable Displays"
+        checked={settings.displaysDisabled}
+        onChange={(checked) => set('displaysDisabled', checked)}
+      />
 
-      <Field label="Advanced Settings">
-        <input
-          type="text"
-          value={settings.advancedSettings}
-          onChange={(e) => set('advancedSettings', e.target.value)}
-          placeholder="Additional Csound command-line options"
-          style={{ ...inputStyle, width: '100%', maxWidth: '400px' }}
-        />
-      </Field>
+      <SettingsField
+        label="Advanced Settings"
+        value={settings.advancedSettings}
+        onChange={(value) => set('advancedSettings', value)}
+        placeholder="Additional Csound command-line options"
+      />
     </SettingsSection>
   );
 }

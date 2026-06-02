@@ -208,6 +208,24 @@ describe('BSB Interface Editor', () => {
     expect(html).toContain('height:506px');
   });
 
+  it('uses the Java parity interface background instead of the app canvas surface', () => {
+    const instrument = makeInstrument();
+
+    const html = renderToStaticMarkup(
+      <BSBInterfaceCanvas
+        instrument={instrument}
+        selectedWidgetIds={new Set()}
+        editEnabled
+        onWidgetSelect={vi.fn()}
+        onBsbInterfacePatch={vi.fn()}
+        onInstrumentPatch={vi.fn()}
+      />,
+    );
+
+    expect(html).toContain('bg-app-bsb-canvas');
+    expect(html).not.toContain('bg-app-canvas');
+  });
+
   it('uses expanded group bounds when sizing the canvas', () => {
     const instrument = makeInstrument({
       widgetTree: {

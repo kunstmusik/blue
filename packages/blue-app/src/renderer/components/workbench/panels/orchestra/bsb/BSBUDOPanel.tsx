@@ -28,7 +28,7 @@ export default function BSBUDOPanel({
   const callbacks = useUdoCallbacks('bsb', dispatch);
 
   return (
-    <div className="flex h-full flex-col bg-[#0a0f1a]">
+    <div className="flex h-full flex-col bg-app-bg">
       <UdoWorkspacePanel
         udos={udolist}
         resetKey={instrument.assignmentId}

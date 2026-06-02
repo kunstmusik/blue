@@ -10,7 +10,7 @@ function FieldRow({
 }): React.ReactElement {
   return (
     <label className="grid gap-2 md:grid-cols-[200px_minmax(0,1fr)] md:items-start md:gap-5">
-      <span className="pt-2 text-xs font-medium uppercase tracking-[0.18em] text-blue-muted">
+      <span className="pt-2 text-xs font-medium uppercase tracking-[0.18em] text-app-text-muted">
         {label}
       </span>
       {children}
@@ -37,7 +37,7 @@ function InputBase({
     <input
       type={type}
       className={[
-        'w-full rounded-lg border border-blue-border bg-[#0d1524] px-3 py-2 text-sm text-gray-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] outline-none transition-colors placeholder:text-blue-muted focus:border-blue-accent disabled:cursor-not-allowed disabled:opacity-60',
+        'w-full rounded-lg border border-app-border bg-app-input px-3 py-2 text-sm text-app-text shadow-inner outline-none transition-colors placeholder:text-app-text-muted focus:border-app-accent disabled:cursor-not-allowed disabled:opacity-60',
         className,
       ]
         .filter(Boolean)
@@ -66,7 +66,7 @@ function TextAreaBase({
   return (
     <textarea
       className={[
-        'min-h-28 w-full rounded-lg border border-blue-border bg-[#0d1524] px-3 py-2 text-sm text-gray-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] outline-none transition-colors placeholder:text-blue-muted focus:border-blue-accent disabled:cursor-not-allowed disabled:opacity-60',
+        'min-h-28 w-full rounded-lg border border-app-border bg-app-input px-3 py-2 text-sm text-app-text shadow-inner outline-none transition-colors placeholder:text-app-text-muted focus:border-app-accent disabled:cursor-not-allowed disabled:opacity-60',
         className,
       ]
         .filter(Boolean)
@@ -91,7 +91,7 @@ function CheckboxBase({
   return (
     <input
       type="checkbox"
-      className="mt-2 h-4 w-4 rounded border-blue-border bg-[#0d1524] text-blue-accent focus:ring-blue-accent disabled:cursor-not-allowed disabled:opacity-60"
+      className="mt-2 h-4 w-4 rounded border-app-border bg-app-input accent-app-accent focus:ring-app-accent disabled:cursor-not-allowed disabled:opacity-60"
       checked={checked}
       disabled={disabled}
       onChange={(event) => onChange(event.target.checked)}

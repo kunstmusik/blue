@@ -66,7 +66,7 @@ export default function CodeBackedScoreObjectEditor({ document, onPatch }: Score
   return (
     <div ref={containerRef} className="h-full flex flex-col" tabIndex={-1}>
       {(isCsoundScore || isJythonBacked) && (
-        <div className="flex flex-wrap items-center justify-end gap-2 border-b border-blue-border/30 bg-[#1a2540] px-2 py-1 shrink-0">
+        <div className="flex shrink-0 flex-wrap items-center justify-end gap-2 border-b border-blue-border/30 bg-app-surface-strong px-2 py-1">
           {supportsOnLoadProcessable && (
             <label className="mr-auto flex items-center gap-1 text-[11px] text-gray-300">
               <input

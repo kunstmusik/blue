@@ -59,7 +59,7 @@ function BSBXYControllerWidget({
       <div className="flex h-full w-full flex-col overflow-hidden rounded border border-blue-border/40 bg-blue-surface/30">
         <div
           ref={padRef}
-          className="relative flex-1 min-h-0 bg-[#0a0f1a]"
+          className="relative flex-1 min-h-0 bg-app-bsb-input"
           style={{ cursor: editEnabled ? 'default' : 'crosshair' }}
           onMouseDown={editEnabled ? undefined : (e) => {
             e.stopPropagation();

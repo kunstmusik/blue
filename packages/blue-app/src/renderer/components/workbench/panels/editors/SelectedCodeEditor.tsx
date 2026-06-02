@@ -29,43 +29,43 @@ const blueCodeMirrorTheme = EditorView.theme(
   {
     '&': {
       height: '100%',
-      color: '#dbe7ff',
-      backgroundColor: '#0d1524',
+      color: 'var(--color-app-text-bright)',
+      backgroundColor: 'var(--color-app-overlay)',
       fontSize: '13px',
     },
     '.cm-scroller': {
       fontFamily: '"SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace',
     },
     '.cm-content': {
-      caretColor: '#e94560',
+      caretColor: 'var(--color-app-accent)',
       padding: '14px 16px',
     },
     '.cm-gutters': {
-      backgroundColor: '#111c31',
-      color: '#73819e',
-      borderRight: '1px solid #0f3460',
+      backgroundColor: 'var(--color-app-surface-raised)',
+      color: 'var(--color-app-text-muted)',
+      borderRight: '1px solid var(--color-app-border)',
     },
     '.cm-activeLine': {
-      backgroundColor: 'rgba(233, 69, 96, 0.08)',
+      backgroundColor: 'var(--color-app-accent-soft)',
     },
     '.cm-activeLineGutter': {
-      backgroundColor: 'rgba(233, 69, 96, 0.12)',
-      color: '#dbe7ff',
+      backgroundColor: 'var(--color-app-accent-muted)',
+      color: 'var(--color-app-text-bright)',
     },
     '.cm-selectionBackground, &.cm-focused .cm-selectionBackground': {
-      backgroundColor: 'rgba(93, 135, 210, 0.38)',
+      backgroundColor: 'var(--color-app-selection)',
     },
     '&.cm-focused': {
-      outline: '1px solid rgba(233, 69, 96, 0.78)',
+      outline: '1px solid var(--color-app-accent)',
     },
     '.cm-tooltip': {
-      border: '1px solid #405174',
-      backgroundColor: '#17233f',
-      color: '#edf3ff',
+      border: '1px solid var(--color-app-border-muted)',
+      backgroundColor: 'var(--color-app-surface)',
+      color: 'var(--color-app-text-bright)',
     },
     '.cm-tooltip-autocomplete ul li[aria-selected]': {
-      backgroundColor: '#304872',
-      color: '#ffffff',
+      backgroundColor: 'var(--color-app-hover)',
+      color: 'var(--color-app-text-strong)',
     },
     '.cm-tooltip.cm-completionInfo': {
       maxWidth: 'min(640px, 70vw)',

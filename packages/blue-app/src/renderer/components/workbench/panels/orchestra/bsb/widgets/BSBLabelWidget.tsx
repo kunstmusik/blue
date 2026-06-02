@@ -37,7 +37,7 @@ function BSBLabelWidget({
           fontSize: `${fontSize}px`,
           fontWeight,
           fontStyle: fontItalic,
-          color: 'rgb(240,240,255)',
+          color: 'var(--color-app-text-bright)',
         }}
       >
         <BsbTextLabel text={labelText} plainClassName="truncate" htmlClassName="inline-block max-w-full" />

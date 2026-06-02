@@ -5,6 +5,7 @@ import '@fontsource/roboto/400.css';
 import '@fontsource/roboto/500.css';
 import '@fontsource/roboto/700.css';
 import App from './App';
+import { rendererToastOptions } from './lib/toast-styles';
 import './styles/index.css';
 
 const root = document.getElementById('root');
@@ -16,13 +17,7 @@ createRoot(root).render(
     <Toaster
       position="bottom-right"
       theme="dark"
-      toastOptions={{
-        style: {
-          background: '#16213e',
-          border: '1px solid #0f3460',
-          color: '#e0e0e0',
-        },
-      }}
+      toastOptions={rendererToastOptions}
     />
   </StrictMode>,
 );

@@ -1,6 +1,7 @@
 import React from 'react';
 import { useSettingsStore } from '../../stores/settings-store';
 import SettingsField from './SettingsField';
+import SettingsSection from './SettingsSection';
 
 export default function MidiSettings(): React.ReactElement {
   const midiInputDevice = useSettingsStore((s) => s.midiInputDevice);
@@ -9,10 +10,7 @@ export default function MidiSettings(): React.ReactElement {
   const setMidiOutputDevice = useSettingsStore((s) => s.setMidiOutputDevice);
 
   return (
-    <div>
-      <h2 style={{ fontSize: '16px', color: '#fff', margin: '0 0 20px 0' }}>
-        MIDI
-      </h2>
+    <SettingsSection title="MIDI">
       <SettingsField
         label="MIDI Input Device"
         value={midiInputDevice}
@@ -27,6 +25,6 @@ export default function MidiSettings(): React.ReactElement {
         placeholder="MIDI device name (placeholder)"
         description="MIDI output device. Device enumeration coming in a future update."
       />
-    </div>
+    </SettingsSection>
   );
 }

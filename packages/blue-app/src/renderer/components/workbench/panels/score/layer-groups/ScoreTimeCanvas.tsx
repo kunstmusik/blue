@@ -1100,9 +1100,9 @@ export default function ScoreTimeCanvas({
     height: Math.abs(marquee.endY - marquee.startY),
   } : null;
 
-  const menuItemClass = 'px-3 py-1 text-[12px] text-blue-text outline-none cursor-pointer rounded-sm data-[highlighted]:bg-[rgba(86,119,182,0.46)]';
-  const subMenuClass = 'min-w-[160px] bg-[#1e1e3a] border border-blue-border/50 rounded shadow-lg py-1 z-50';
-  const menuClass = 'min-w-[220px] bg-[#1e1e3a] border border-blue-border/50 rounded shadow-lg py-1 z-50';
+  const menuItemClass = 'cursor-pointer rounded-sm px-3 py-1 text-[12px] text-blue-text outline-none data-[highlighted]:bg-app-highlight';
+  const subMenuClass = 'z-50 min-w-[160px] rounded border border-blue-border/50 bg-app-menu py-1 shadow-lg';
+  const menuClass = 'z-50 min-w-[220px] rounded border border-blue-border/50 bg-app-menu py-1 shadow-lg';
   const sepClass = 'h-px bg-blue-border/30 my-1';
 
   return (
@@ -1135,7 +1135,7 @@ export default function ScoreTimeCanvas({
               className="relative"
               style={{
                 height: layer.height || DEFAULT_ROW_HEIGHT,
-                backgroundColor: '#000000',
+                backgroundColor: 'var(--color-app-canvas)',
                 borderBottom: '1px solid #2a2a2a',
               }}
             >
@@ -1171,8 +1171,8 @@ export default function ScoreTimeCanvas({
               className="absolute pointer-events-none"
               style={{
                 ...marqueeStyle,
-                backgroundColor: 'rgba(255, 255, 255, 0.06)',
-                border: '1px solid rgba(255, 255, 255, 0.5)',
+                backgroundColor: 'color-mix(in srgb, var(--color-app-text-strong) 6%, var(--color-app-clear))',
+                border: '1px solid color-mix(in srgb, var(--color-app-text-strong) 50%, var(--color-app-clear))',
                 zIndex: 10,
               }}
             />
@@ -1351,7 +1351,7 @@ function EmptyAreaContextMenu({ menuItemClass, sepClass, clipboard, contextMenuP
           <span className="text-[10px] opacity-60 ml-2">▸</span>
         </ContextMenu.SubTrigger>
         <ContextMenu.Portal>
-          <ContextMenu.SubContent className="min-w-40 bg-[#1e1e3a] border border-blue-border/50 rounded shadow-lg py-1 z-50">
+          <ContextMenu.SubContent className="z-50 min-w-40 rounded border border-blue-border/50 bg-app-menu py-1 shadow-lg">
             {addSobjTypes.map((t) => (
               <ContextMenu.Item
                 key={t.name}

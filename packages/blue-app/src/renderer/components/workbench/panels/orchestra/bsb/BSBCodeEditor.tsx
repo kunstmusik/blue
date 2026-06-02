@@ -59,7 +59,7 @@ export default function BSBCodeEditor({
           );
         })}
       </div>
-      <div className="border-t border-blue-border bg-[#10192a] px-2">
+      <div className="border-t border-blue-border bg-app-surface-strong px-2">
         <div className="flex items-end gap-1">
           {BSB_CODE_TABS.map((tab) => (
             <button

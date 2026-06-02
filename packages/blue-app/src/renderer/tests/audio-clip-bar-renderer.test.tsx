@@ -366,6 +366,6 @@ describe('AudioClip bar renderer', () => {
 
     expect(html).toContain('>Frozen<');
     expect(html).toContain('>Tail<');
-    expect(html).toContain('background-color:rgba(0,0,0,0.25)');
+    expect(html).toContain('background-color:var(--color-app-shadow)');
   });
 });

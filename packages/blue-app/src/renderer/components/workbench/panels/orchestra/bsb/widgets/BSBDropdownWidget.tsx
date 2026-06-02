@@ -51,7 +51,7 @@ function BSBDropdownWidget({
         <DropdownMenu.Trigger asChild disabled={items.length === 0}>
           <button
             type="button"
-            className="flex h-full w-full items-center justify-between gap-1 rounded border border-blue-border bg-[#111a2d] px-2 py-1 text-xs text-gray-100 hover:bg-blue-accent/20 outline-none disabled:cursor-default disabled:hover:bg-[#111a2d]"
+            className="flex h-full w-full items-center justify-between gap-1 rounded border border-blue-border bg-app-bsb-control px-2 py-1 text-xs text-app-text-strong outline-none hover:bg-blue-accent/20 disabled:cursor-default disabled:hover:bg-app-bsb-control"
             style={{ fontFamily: 'Roboto, sans-serif', fontSize, pointerEvents: editEnabled ? 'none' : undefined }}
           >
             <BsbTextLabel text={displayText} plainClassName="truncate" htmlClassName="inline-block max-w-full" />
@@ -59,11 +59,11 @@ function BSBDropdownWidget({
           </button>
         </DropdownMenu.Trigger>
         <DropdownMenu.Portal>
-          <DropdownMenu.Content className="z-50 min-w-37.5 rounded-md border border-blue-border bg-[#10192a] p-1 shadow-lg">
+          <DropdownMenu.Content className="z-50 min-w-37.5 rounded-md border border-blue-border bg-app-surface-strong p-1 shadow-lg">
             {items.map((item, i) => (
               <DropdownMenu.Item
                 key={i}
-                className="cursor-pointer px-2 py-1 text-xs text-gray-100 hover:bg-blue-accent/20 outline-none"
+                className="cursor-pointer px-2 py-1 text-xs text-app-text-strong outline-none hover:bg-blue-accent/20"
                 onClick={() => handleItemSelect(i)}
                 style={{ fontFamily: 'Roboto, sans-serif', fontSize }}
               >

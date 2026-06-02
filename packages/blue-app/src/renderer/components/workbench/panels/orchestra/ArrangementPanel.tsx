@@ -170,15 +170,15 @@ function ArrangementPanel({
 
   return (
     <section
-      className="flex h-full min-h-0 flex-col bg-[#111a2d]"
+      className="flex h-full min-h-0 flex-col bg-app-surface-raised text-app-text"
       aria-label="Arrangement"
     >
-      <div className="flex items-center justify-between border-b border-blue-border bg-[#10192a] px-3 py-2">
+      <div className="flex items-center justify-between border-b border-app-border bg-app-surface-strong px-3 py-2">
         <div>
-          <div className="text-xs font-semibold uppercase tracking-[0.18em] text-blue-muted">
+          <div className="text-xs font-semibold uppercase tracking-[0.18em] text-app-text-muted">
             Arrangement
           </div>
-          <div className="text-[11px] text-blue-muted">
+          <div className="text-[11px] text-app-text-muted">
             {rows.length} instruments
             {selectedAssignmentId && !selectedRowStillExists ? ' · selection cleared' : ''}
           </div>
@@ -187,7 +187,7 @@ function ArrangementPanel({
           <button
             ref={addBtnRef}
             type="button"
-            className="rounded border border-blue-border bg-[#182542] px-2.5 py-1 text-xs text-gray-100 transition-colors hover:border-blue-accent"
+            className="rounded border border-app-border bg-app-surface px-2.5 py-1 text-xs text-app-text-strong transition-colors hover:border-app-accent"
             onClick={() => setAddMenuOpen(!addMenuOpen)}
           >
             + Add
@@ -195,12 +195,12 @@ function ArrangementPanel({
           {addMenuOpen && (
             <div
               ref={addMenuRef}
-              className="absolute right-0 top-full z-20 mt-1 min-w-45 rounded border border-blue-border bg-[#182542] py-1 shadow-lg"
+              className="absolute right-0 top-full z-20 mt-1 min-w-45 rounded border border-app-border bg-app-menu py-1 shadow-lg"
             >
               {INSTRUMENT_TYPES.map(({ type, label }) => (
                 <button
                   key={type}
-                  className="w-full px-3 py-1.5 text-left text-xs text-gray-100 hover:bg-blue-accent/20"
+                  className="w-full px-3 py-1.5 text-left text-xs text-app-text-strong hover:bg-app-accent/20"
                   onClick={() => addInstrument(type)}
                 >
                   {label}
@@ -217,13 +217,13 @@ function ArrangementPanel({
           className="border-collapse text-left text-xs"
           style={{ width: '100%' }}
         >
-          <thead className="sticky top-0 z-10 bg-[#15223a] text-blue-muted">
+          <thead className="sticky top-0 z-10 bg-app-surface text-app-text-muted">
             {table.getHeaderGroups().map((headerGroup) => (
               <tr key={headerGroup.id}>
                 {headerGroup.headers.map((header, i, arr) => (
                   <th
                     key={header.id}
-                    className="relative border-b border-blue-border px-2 py-1.5 font-medium"
+                    className="relative border-b border-app-border px-2 py-1.5 font-medium"
                     style={{ width: getColumnWidth(header.id) }}
                   >
                     {header.isPlaceholder
@@ -231,7 +231,7 @@ function ArrangementPanel({
                       : flexRender(header.column.columnDef.header, header.getContext())}
                     {i < arr.length - 1 && (
                       <div
-                        className="absolute right-0 top-0 h-full w-1.5 cursor-col-resize hover:bg-blue-accent/30"
+                        className="absolute right-0 top-0 h-full w-1.5 cursor-col-resize hover:bg-app-accent/30"
                         onMouseDown={(e) => startResize(header.id, e)}
                       />
                     )}
@@ -255,8 +255,8 @@ function ArrangementPanel({
                 >
                   <tr
                     className={[
-                      'cursor-default border-b border-blue-border/50 text-gray-200',
-                      selected ? 'bg-[#23416d] text-white' : 'hover:bg-[#162844]',
+                      'cursor-default border-b border-app-border/50 text-app-text-soft',
+                      selected ? 'bg-app-accent/20 text-app-text-strong' : 'hover:bg-app-hover',
                     ].join(' ')}
                     onClick={() => onSelectAssignment(row.original.assignmentId)}
                   >
@@ -277,7 +277,7 @@ function ArrangementPanel({
         </table>
 
         {rows.length === 0 ? (
-          <div className="flex h-full items-center justify-center p-6 text-sm text-blue-muted">
+          <div className="flex h-full items-center justify-center p-6 text-sm text-app-text-muted">
             Add an instrument to start building the project arrangement.
           </div>
         ) : null}

@@ -39,7 +39,7 @@ function BSBValueWidget({
 
   return (
     <WidgetWrapper node={node} isSelected={isSelected} editEnabled={editEnabled} onWidgetSelect={onWidgetSelect} displayWidth={displaySize.width} displayHeight={displaySize.height} resizeMeta={resizeMeta} gridSnapEnabled={gridSnapEnabled} gridSnapWidth={gridSnapWidth} gridSnapHeight={gridSnapHeight} onBsbInterfacePatch={onBsbInterfacePatch} selectedWidgetIds={selectedWidgetIds} getWidgetPosition={getWidgetPosition} onWidgetAction={onWidgetAction}>
-      <div className="flex h-full w-full items-center justify-center overflow-hidden rounded border border-blue-border/40 bg-[#0a0f1a]">
+      <div className="flex h-full w-full items-center justify-center overflow-hidden rounded border border-blue-border/40 bg-app-bsb-input">
         <span className="font-mono text-[12px] text-blue-accent">{value.toFixed(4)}</span>
       </div>
     </WidgetWrapper>

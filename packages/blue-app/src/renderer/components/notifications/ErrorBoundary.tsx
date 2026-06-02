@@ -40,17 +40,17 @@ export default class ErrorBoundary extends Component<Props, State> {
   render(): ReactNode {
     if (this.state.hasError) {
       return (
-        <div className="flex flex-col items-center justify-center h-full bg-blue-bg p-8">
+        <div className="flex h-full flex-col items-center justify-center bg-app-bg p-8">
           <div className="text-center max-w-md">
             <div className="text-4xl mb-4">⚠️</div>
-            <h2 className="text-xl font-bold text-blue-accent mb-2">
+            <h2 className="mb-2 text-xl font-bold text-app-accent">
               Something went wrong
             </h2>
-            <p className="text-blue-muted mb-4 text-sm">
+            <p className="mb-4 text-sm text-app-text-muted">
               {this.state.error?.message || 'An unexpected error occurred'}
             </p>
             <button
-              className="btn btn-primary"
+              className="inline-flex items-center justify-center gap-2 rounded-md border border-app-accent bg-app-accent px-4 py-1.5 text-sm font-medium text-white transition-colors hover:bg-app-accent-hover"
               onClick={this.handleReset}
             >
               Try Again

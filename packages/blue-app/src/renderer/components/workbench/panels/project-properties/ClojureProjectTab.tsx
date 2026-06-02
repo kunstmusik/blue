@@ -4,7 +4,7 @@ import { InputBase } from './ProjectPropertyFields';
 import type { ClojureProjectTabProps } from './types';
 
 const BUTTON_CLASSES =
-  'rounded-md border border-blue-border bg-[#111c2d] px-3 py-2 text-xs font-medium text-gray-100 transition hover:border-blue-accent hover:text-white disabled:cursor-not-allowed disabled:opacity-45';
+  'rounded-md border border-app-border bg-app-surface px-3 py-2 text-xs font-medium text-app-text-strong transition hover:border-app-accent hover:text-app-text-strong disabled:cursor-not-allowed disabled:opacity-45';
 
 let nextDraftClojureLibraryEntryId = 1;
 
@@ -67,10 +67,10 @@ export default function ClojureProjectTab({
 
   return (
     <div className="space-y-5">
-      <div className="flex flex-col gap-3 rounded-xl border border-blue-border bg-[linear-gradient(180deg,rgba(19,31,48,0.94),rgba(13,22,36,0.9))] px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-3 rounded-xl border border-app-border bg-gradient-to-b from-app-surface to-app-overlay px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <div className="text-sm font-medium text-gray-100">Project Libraries</div>
-          <div className="mt-1 text-sm text-blue-muted">
+          <div className="text-sm font-medium text-app-text-strong">Project Libraries</div>
+          <div className="mt-1 text-sm text-app-text-muted">
             Dependencies listed here are loaded by the project-level Clojure plugin before evaluation and render.
           </div>
         </div>
@@ -84,26 +84,26 @@ export default function ClojureProjectTab({
         </button>
       </div>
 
-      <div className="overflow-hidden rounded-xl border border-blue-border bg-[#0e1626]/85">
-        <div className="hidden grid-cols-[minmax(0,1.5fr)_180px_182px] gap-3 border-b border-blue-border/80 bg-[#111c2d] px-4 py-3 text-[11px] font-medium uppercase tracking-[0.18em] text-blue-muted lg:grid">
+      <div className="overflow-hidden rounded-xl border border-app-border bg-app-overlay">
+        <div className="hidden grid-cols-[minmax(0,1.5fr)_180px_182px] gap-3 border-b border-app-border/80 bg-app-surface px-4 py-3 text-[11px] font-medium uppercase tracking-[0.18em] text-app-text-muted lg:grid">
           <span>Library Coordinates</span>
           <span>Version</span>
           <span>Actions</span>
         </div>
 
         {clojureProject.libraryEntries.length === 0 ? (
-          <div className="px-4 py-8 text-sm text-blue-muted">
+          <div className="px-4 py-8 text-sm text-app-text-muted">
             No Clojure libraries configured for this project.
           </div>
         ) : (
-          <div className="divide-y divide-blue-border/70">
+          <div className="divide-y divide-app-border/70">
             {clojureProject.libraryEntries.map((entry, index) => (
               <div
                 key={entry.entryId}
                 className="grid gap-3 px-4 py-4 lg:grid-cols-[minmax(0,1.5fr)_180px_182px] lg:items-start"
               >
                 <div className="space-y-2">
-                  <div className="text-[11px] font-medium uppercase tracking-[0.18em] text-blue-muted lg:hidden">
+                  <div className="text-[11px] font-medium uppercase tracking-[0.18em] text-app-text-muted lg:hidden">
                     Library Coordinates
                   </div>
                   <InputBase
@@ -117,7 +117,7 @@ export default function ClojureProjectTab({
                   />
                 </div>
                 <div className="space-y-2">
-                  <div className="text-[11px] font-medium uppercase tracking-[0.18em] text-blue-muted lg:hidden">
+                  <div className="text-[11px] font-medium uppercase tracking-[0.18em] text-app-text-muted lg:hidden">
                     Version
                   </div>
                   <InputBase

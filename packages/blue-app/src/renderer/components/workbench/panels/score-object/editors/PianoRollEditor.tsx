@@ -535,7 +535,7 @@ export default function PianoRollEditor({ document: scoreDocument, onPatch }: Sc
                 minSecondSize={40}
                 first={
                   <div className="flex flex-col h-full overflow-hidden">
-                    <div className="flex shrink-0 bg-[#10192a] border-b border-blue-border/30" style={{ height: rulerHeight }}>
+                    <div className="flex shrink-0 border-b border-blue-border/30 bg-app-surface-strong" style={{ height: rulerHeight }}>
                       <div className="shrink-0 border-r border-blue-border/25" style={{ width: PITCH_HEADER_WIDTH, height: rulerHeight }} />
                       <div className="relative min-w-0 flex-1 overflow-hidden" style={{ height: rulerHeight }}>
                         <div
@@ -585,7 +585,7 @@ export default function PianoRollEditor({ document: scoreDocument, onPatch }: Sc
                   </div>
                 }
                 second={
-                  <div className="flex h-full min-h-0 bg-[#0a0f1a]">
+                  <div className="flex h-full min-h-0 bg-app-bg">
                     <div className="h-full shrink-0 border-r border-blue-border/25" style={{ width: PITCH_HEADER_WIDTH }}>
                       <FieldSelectorView
                         fieldDefinitions={fieldDefinitions}
@@ -639,13 +639,13 @@ export default function PianoRollEditor({ document: scoreDocument, onPatch }: Sc
         <GeneratedScoreModal text={testOutput} onClose={clearTestOutput} />
       )}
       <ContextMenu.Portal>
-        <ContextMenu.Content className="min-w-40 bg-[#1e293b] border border-blue-border/50 rounded-md p-1 shadow-2xl z-50">
-          <ContextMenu.Item className="px-3 py-1.5 text-xs text-gray-200 rounded hover:bg-blue-accent/20 hover:text-blue-accent cursor-pointer outline-none" onSelect={handleCopySelectedNotes}>Copy</ContextMenu.Item>
-          <ContextMenu.Item className="px-3 py-1.5 text-xs text-gray-200 rounded hover:bg-blue-accent/20 hover:text-blue-accent cursor-pointer outline-none" onSelect={handleCutSelectedNotes}>Cut</ContextMenu.Item>
-          <ContextMenu.Item className="px-3 py-1.5 text-xs text-gray-200 rounded hover:bg-blue-accent/20 hover:text-blue-accent cursor-pointer outline-none" onSelect={handlePasteAtLastTarget}>Paste</ContextMenu.Item>
+        <ContextMenu.Content className="z-50 min-w-40 rounded-md border border-blue-border/50 bg-app-menu p-1 shadow-2xl">
+          <ContextMenu.Item className="cursor-pointer rounded px-3 py-1.5 text-xs text-app-text outline-none hover:bg-blue-accent/20 hover:text-blue-accent" onSelect={handleCopySelectedNotes}>Copy</ContextMenu.Item>
+          <ContextMenu.Item className="cursor-pointer rounded px-3 py-1.5 text-xs text-app-text outline-none hover:bg-blue-accent/20 hover:text-blue-accent" onSelect={handleCutSelectedNotes}>Cut</ContextMenu.Item>
+          <ContextMenu.Item className="cursor-pointer rounded px-3 py-1.5 text-xs text-app-text outline-none hover:bg-blue-accent/20 hover:text-blue-accent" onSelect={handlePasteAtLastTarget}>Paste</ContextMenu.Item>
           <ContextMenu.Separator className="h-px bg-blue-border/30 my-1" />
-          <ContextMenu.Item className="px-3 py-1.5 text-xs text-gray-200 rounded hover:bg-blue-accent/20 hover:text-blue-accent cursor-pointer outline-none" onSelect={handleRemoveSelectedNotes}>Remove</ContextMenu.Item>
-          <ContextMenu.Item className="px-3 py-1.5 text-xs text-gray-200 rounded hover:bg-blue-accent/20 hover:text-blue-accent cursor-pointer outline-none" onSelect={() => setSelectedIndices(new Set(notes.map((_, i) => i)))}>Select All</ContextMenu.Item>
+          <ContextMenu.Item className="cursor-pointer rounded px-3 py-1.5 text-xs text-app-text outline-none hover:bg-blue-accent/20 hover:text-blue-accent" onSelect={handleRemoveSelectedNotes}>Remove</ContextMenu.Item>
+          <ContextMenu.Item className="cursor-pointer rounded px-3 py-1.5 text-xs text-app-text outline-none hover:bg-blue-accent/20 hover:text-blue-accent" onSelect={() => setSelectedIndices(new Set(notes.map((_, i) => i)))}>Select All</ContextMenu.Item>
         </ContextMenu.Content>
       </ContextMenu.Portal>
     </ContextMenu.Root>

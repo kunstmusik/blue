@@ -84,12 +84,12 @@ export default function UdoTable({
   );
 
   return (
-    <div className="flex h-full flex-col bg-[#0a0f1a]">
-      <div className="flex items-center gap-2 border-b border-blue-border bg-[#10192a] px-3 py-2">
+    <div className="flex h-full flex-col bg-app-bg">
+      <div className="flex items-center gap-2 border-b border-app-border bg-app-surface-strong px-3 py-2">
         <button
           type="button"
           onClick={onAddUdo}
-          className="flex items-center gap-1 rounded px-2 py-1 text-xs text-gray-100 hover:bg-blue-accent/20"
+          className="flex items-center gap-1 rounded px-2 py-1 text-xs text-app-text-strong hover:bg-app-accent/20"
           title="Add UDO"
         >
           <Plus size={14} />
@@ -99,7 +99,7 @@ export default function UdoTable({
           <DropdownMenu.Trigger asChild>
             <button
               type="button"
-              className="flex items-center gap-1 rounded px-2 py-1 text-xs text-gray-100 hover:bg-blue-accent/20"
+              className="flex items-center gap-1 rounded px-2 py-1 text-xs text-app-text-strong hover:bg-app-accent/20"
               title="Import UDO"
             >
               <Import size={14} />
@@ -131,17 +131,17 @@ export default function UdoTable({
 
       <div className="flex-1 overflow-auto">
         {!hasUdos ? (
-          <div className="flex h-full items-center justify-center text-sm text-blue-muted">
+          <div className="flex h-full items-center justify-center text-sm text-app-text-muted">
             No UDOs defined. Click &quot;Add&quot; to create one.
           </div>
         ) : (
           <table className="w-full text-left text-xs">
-            <thead className="sticky top-0 bg-[#10192a]">
-              <tr className="border-b border-blue-border">
-                <th className="px-3 py-2 font-medium text-gray-100">Name</th>
-                <th className="px-3 py-2 font-medium text-gray-100">Style</th>
-                <th className="px-3 py-2 font-medium text-gray-100">Out Types</th>
-                <th className="px-3 py-2 font-medium text-gray-100">
+            <thead className="sticky top-0 bg-app-surface-strong">
+              <tr className="border-b border-app-border">
+                <th className="px-3 py-2 font-medium text-app-text-strong">Name</th>
+                <th className="px-3 py-2 font-medium text-app-text-strong">Style</th>
+                <th className="px-3 py-2 font-medium text-app-text-strong">Out Types</th>
+                <th className="px-3 py-2 font-medium text-app-text-strong">
                   In Types / Input Args
                 </th>
               </tr>
@@ -157,25 +157,25 @@ export default function UdoTable({
                         onClick={(event) => handleRowClick(index, event)}
                         onContextMenu={() => onContextSelectIndex(index)}
                         className={[
-                          'border-b border-blue-border cursor-pointer hover:bg-blue-accent/10',
-                          isSelected ? 'bg-blue-accent/20' : '',
+                          'cursor-pointer border-b border-app-border hover:bg-app-accent/10',
+                          isSelected ? 'bg-app-accent/20' : '',
                         ].join(' ')}
                       >
-                        <td className="px-3 py-2 text-gray-100">{udo.name}</td>
+                        <td className="px-3 py-2 text-app-text-strong">{udo.name}</td>
                         <td className="px-3 py-2">
                           <span
                             className={[
                               'rounded px-1.5 py-0.5 text-[10px] font-medium',
                               udo.style === 'CLASSIC'
-                                ? 'bg-blue-500/20 text-blue-300'
-                                : 'bg-purple-500/20 text-purple-300',
+                                ? 'bg-app-accent/20 text-app-accent'
+                                : 'bg-app-surface-raised text-app-text-strong',
                             ].join(' ')}
                           >
                             {udo.style}
                           </span>
                         </td>
-                        <td className="px-3 py-2 text-gray-300">{udo.outTypes || '-'}</td>
-                        <td className="px-3 py-2 text-gray-300">
+                        <td className="px-3 py-2 text-app-text">{udo.outTypes || '-'}</td>
+                        <td className="px-3 py-2 text-app-text">
                           {udo.style === 'CLASSIC'
                             ? udo.inTypes || '-'
                             : udo.inputArguments || '-'}

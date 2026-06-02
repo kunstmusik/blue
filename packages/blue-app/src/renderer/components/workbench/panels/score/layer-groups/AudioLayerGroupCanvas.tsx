@@ -1532,8 +1532,8 @@ export default function AudioLayerGroupCanvas({
     ]);
   }, [addScoreObjects, group.groupId, group.layers, pixelsPerBeat, secondsToBeatValue, tempo, toLocalXY]);
 
-  const menuItemClass = 'px-3 py-1 text-[12px] text-blue-text outline-none cursor-pointer rounded-sm data-[highlighted]:bg-[rgba(86,119,182,0.46)] data-[disabled]:opacity-50 data-[disabled]:pointer-events-none';
-  const menuClass = 'min-w-[220px] bg-[#1e1e3a] border border-blue-border/50 rounded shadow-lg py-1 z-50';
+  const menuItemClass = 'cursor-pointer rounded-sm px-3 py-1 text-[12px] text-blue-text outline-none data-[highlighted]:bg-app-highlight data-[disabled]:pointer-events-none data-[disabled]:opacity-50';
+  const menuClass = 'z-50 min-w-[220px] rounded border border-blue-border/50 bg-app-menu py-1 shadow-lg';
   const sepClass = 'h-px bg-blue-border/30 my-1';
   const marqueeStyle = marquee ? {
     left: Math.min(marquee.startX, marquee.endX),
@@ -1565,7 +1565,7 @@ export default function AudioLayerGroupCanvas({
           {group.layers.map((layer: ScoreLayerSnapshot, layerIndex) => (
             <div
               key={layer.layerId}
-              className="relative border-b border-[#2a2a2a]"
+              className="relative border-b border-app-border/40"
               style={{ height: layer.height || DEFAULT_ROW_HEIGHT }}
             >
               {layer.items.map((item: ScoreRowObjectSnapshot) => {
@@ -1625,7 +1625,7 @@ export default function AudioLayerGroupCanvas({
                             top: handleTop,
                             width: FADE_HANDLE_SIZE,
                             height: FADE_HANDLE_SIZE,
-                            backgroundColor: '#ffffff',
+                            backgroundColor: 'var(--color-app-text-strong)',
                             boxShadow: FADE_HANDLE_OUTLINE,
                             cursor: 'e-resize',
                             zIndex: 3,
@@ -1641,7 +1641,7 @@ export default function AudioLayerGroupCanvas({
                             top: handleTop,
                             width: FADE_HANDLE_SIZE,
                             height: FADE_HANDLE_SIZE,
-                            backgroundColor: '#ffffff',
+                            backgroundColor: 'var(--color-app-text-strong)',
                             boxShadow: FADE_HANDLE_OUTLINE,
                             cursor: 'w-resize',
                             zIndex: 3,
@@ -1660,8 +1660,8 @@ export default function AudioLayerGroupCanvas({
               className="absolute pointer-events-none"
               style={{
                 ...marqueeStyle,
-                backgroundColor: 'rgba(255, 255, 255, 0.06)',
-                border: '1px solid rgba(255, 255, 255, 0.5)',
+                backgroundColor: 'color-mix(in srgb, var(--color-app-text-strong) 6%, var(--color-app-clear))',
+                border: '1px solid color-mix(in srgb, var(--color-app-text-strong) 50%, var(--color-app-clear))',
                 zIndex: 10,
               }}
             />

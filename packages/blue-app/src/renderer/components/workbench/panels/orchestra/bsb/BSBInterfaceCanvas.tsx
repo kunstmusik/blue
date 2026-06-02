@@ -668,8 +668,8 @@ function BSBInterfaceCanvas({
         top: Math.min(marquee.startY, marquee.currentY),
         width: Math.abs(marquee.currentX - marquee.startX),
         height: Math.abs(marquee.currentY - marquee.startY),
-        border: '1px dashed rgba(233, 69, 96, 0.8)',
-        background: 'rgba(233, 69, 96, 0.08)',
+        border: '1px dashed color-mix(in srgb, var(--color-app-accent) 80%, var(--color-app-clear))',
+        background: 'var(--color-app-accent-soft)',
         zIndex: 50,
         pointerEvents: 'none',
       }
@@ -679,7 +679,7 @@ function BSBInterfaceCanvas({
     <div
       ref={canvasRef}
       data-shortcut-scope="bsb-interface-canvas"
-      className="relative flex-1 overflow-auto bg-[#26334c] focus:outline-none"
+      className="relative flex-1 overflow-auto bg-app-bsb-canvas focus:outline-none"
       {...canvasShortcutScope}
       onClick={onCanvasClick}
       onContextMenu={(e) => {
@@ -712,7 +712,7 @@ function BSBInterfaceCanvas({
     <Tooltip.Provider delayDuration={100} skipDelayDuration={0}>
       <div className="flex h-full flex-col">
         {editEnabled && groupStack.length > 0 && (
-          <div className="flex items-center gap-1 border-b border-blue-border bg-[#111a2d] px-2 py-1">
+          <div className="flex items-center gap-1 border-b border-blue-border bg-app-bsb-control px-2 py-1">
             <BreadcrumbItem label="Root" onClick={() => navigateTo(0)} active={groupStack.length === 0} />
             {groupStack.map((entry, i) => (
               <React.Fragment key={entry.id}>

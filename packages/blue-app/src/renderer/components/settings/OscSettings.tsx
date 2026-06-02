@@ -1,6 +1,7 @@
 import React from 'react';
 import { useSettingsStore } from '../../stores/settings-store';
 import SettingsField from './SettingsField';
+import SettingsSection from './SettingsSection';
 
 export default function OscSettings(): React.ReactElement {
   const oscInputPort = useSettingsStore((s) => s.oscInputPort);
@@ -11,10 +12,7 @@ export default function OscSettings(): React.ReactElement {
   const setOscOutputHost = useSettingsStore((s) => s.setOscOutputHost);
 
   return (
-    <div>
-      <h2 style={{ fontSize: '16px', color: '#fff', margin: '0 0 20px 0' }}>
-        OSC
-      </h2>
+    <SettingsSection title="OSC">
       <SettingsField
         label="OSC Input Port"
         value={oscInputPort ? String(oscInputPort) : ''}
@@ -38,6 +36,6 @@ export default function OscSettings(): React.ReactElement {
         placeholder="e.g. 7771"
         description="Port for sending OSC messages."
       />
-    </div>
+    </SettingsSection>
   );
 }

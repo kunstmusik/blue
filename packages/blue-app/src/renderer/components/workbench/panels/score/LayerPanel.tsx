@@ -46,12 +46,12 @@ export default function LayerPanel({
   const contentWidth = totalBeats * pixelsPerBeat;
 
   return (
-    <div style={{ minWidth: contentWidth }} className="bg-black">
+    <div style={{ minWidth: contentWidth }} className="bg-app-canvas">
       {visibleGroups.map((group, gi) => {
         const spacer = (
           <div
             key={`spacer-${group.groupId}`}
-            className="border-t border-[#2a2a2a]"
+            className="border-t border-app-border/40"
             style={{ height: GROUP_SPACER }}
           />
         );
@@ -59,7 +59,7 @@ export default function LayerPanel({
         switch (group.groupType) {
           case "polyObject":
             return (
-              <div key={group.groupId} className="not-last:border-b border-[#2a2a2a]">
+              <div key={group.groupId} className="not-last:border-b border-app-border/40">
                 <ScoreTimeCanvas
                   group={group}
                   totalBeats={totalBeats}

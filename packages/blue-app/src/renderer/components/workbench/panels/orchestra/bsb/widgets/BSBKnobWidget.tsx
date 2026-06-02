@@ -119,7 +119,7 @@ function BSBKnobWidget({
         {showLabel && (
           <div
             className="flex w-full items-center justify-center overflow-hidden"
-            style={{ height: labelH, fontFamily: `'${labelFontName}', Roboto, sans-serif`, fontSize: labelFontSize, color: 'rgb(240,240,255)' }}
+            style={{ height: labelH, fontFamily: `'${labelFontName}', Roboto, sans-serif`, fontSize: labelFontSize, color: 'var(--color-app-text-bright)' }}
           >
             <BsbTextLabel text={labelText} plainClassName="truncate" htmlClassName="inline-block max-w-full text-center" />
           </div>
@@ -133,8 +133,8 @@ function BSBKnobWidget({
               width: displaySize.width,
               fontFamily: "'Roboto', sans-serif",
               fontSize: 11,
-              color: 'rgb(240,240,255)',
-              background: 'rgb(20, 29, 45)',
+              color: 'var(--color-app-text-bright)',
+              background: 'var(--color-app-bsb-value)',
               borderRadius: 3,
             }}
           >

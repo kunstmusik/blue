@@ -154,7 +154,7 @@ export default function ProjectPropertiesPanel(): React.ReactElement {
   }
 
   return (
-    <div className="flex h-full min-h-0 flex-col bg-[radial-gradient(circle_at_top_left,rgba(28,48,73,0.35),transparent_42%),#0b1220] text-gray-100 md:flex-row">
+    <div className="flex h-full min-h-0 flex-col bg-gradient-to-br from-app-surface/30 to-app-bg text-app-text md:flex-row">
       <aside className="flex w-full flex-col border-b border-blue-border/80 bg-blue-surface md:w-48 md:border-b-0 md:border-r md:py-3">
         <nav className="flex-1 overflow-auto">
           {TAB_ORDER.map((tab) => (
@@ -169,11 +169,11 @@ export default function ProjectPropertiesPanel(): React.ReactElement {
       </aside>
 
       <div className="flex min-h-0 flex-1 flex-col">
-        <div className="border-b border-blue-border/80 bg-[linear-gradient(180deg,rgba(16,25,42,0.94),rgba(11,18,32,0.9))] px-5 py-4 md:px-6">
-          <h2 className="text-lg font-semibold text-gray-100">
+        <div className="border-b border-blue-border/80 bg-gradient-to-b from-app-surface-strong to-app-bg px-5 py-4 md:px-6">
+          <h2 className="text-lg font-semibold text-app-text-strong">
             {activeSection.title}
           </h2>
-          <p className="mt-1 max-w-2xl text-sm leading-6 text-blue-muted">
+          <p className="mt-1 max-w-2xl text-sm leading-6 text-app-text-muted">
             {activeSection.description}
           </p>
         </div>

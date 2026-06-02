@@ -310,9 +310,9 @@ export function EditableLineCanvas<TLine extends EditableLineLike>({
   locked = false,
   showAxes = false,
   className,
-  backgroundColor = '#0a0f1a',
-  plotBackgroundColor = '#000000',
-  plotBorderColor = '#d3d3d3',
+  backgroundColor = 'var(--color-app-input)',
+  plotBackgroundColor = 'var(--color-app-canvas)',
+  plotBorderColor = 'var(--color-app-text-soft)',
   tooltipFormatter,
 }: EditableLineCanvasProps<TLine>): React.ReactElement {
   const activeLineIndex = selectedLineIndex >= 0 && selectedLineIndex < lines.length ? selectedLineIndex : 0;
@@ -847,12 +847,12 @@ export function EditableLineCanvas<TLine extends EditableLineLike>({
       {canUseDom && contextMenuPosition && createPortal(
         <div
           ref={contextMenuRef}
-          className="fixed z-50 min-w-36 rounded border border-blue-border bg-[#1a2941] py-1 text-xs text-gray-100 shadow-xl"
+          className="fixed z-50 min-w-36 rounded border border-app-border bg-app-menu py-1 text-xs text-app-text-strong shadow-xl"
           style={{ left: contextMenuPosition.x, top: contextMenuPosition.y }}
         >
           <button
             type="button"
-            className="block w-full px-3 py-1 text-left hover:bg-[#2b3f5f]"
+            className="block w-full px-3 py-1 text-left hover:bg-app-hover"
             onClick={() => {
               setContextMenuPosition(null);
               openPointEditor();
@@ -862,7 +862,7 @@ export function EditableLineCanvas<TLine extends EditableLineLike>({
           </button>
           <button
             type="button"
-            className="block w-full px-3 py-1 text-left hover:bg-[#2b3f5f]"
+            className="block w-full px-3 py-1 text-left hover:bg-app-hover"
             onClick={() => {
               setContextMenuPosition(null);
               resetCurrentLine();
@@ -876,7 +876,7 @@ export function EditableLineCanvas<TLine extends EditableLineLike>({
 
       {canUseDom && hoverTooltip && createPortal(
         <div
-          className="pointer-events-none fixed z-50 min-w-32 rounded border border-[#2b3f5f] bg-[#0a0f1a] px-3 py-2 font-mono text-[10px] text-white shadow-lg"
+          className="pointer-events-none fixed z-50 min-w-32 rounded border border-app-border bg-app-input px-3 py-2 font-mono text-[10px] text-app-text-strong shadow-lg"
           style={{
             left: Math.max(8, Math.min(hoverTooltip.pointX + 10, window.innerWidth - 176)),
             top: Math.max(8, Math.min(hoverTooltip.canvasTop - 44, window.innerHeight - 44)),
@@ -896,17 +896,17 @@ export function EditableLineCanvas<TLine extends EditableLineLike>({
         return (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={closeEditor}>
             <div
-              className="overflow-hidden rounded border border-blue-border bg-[#1d2c45] shadow-xl"
+              className="overflow-hidden rounded border border-app-border bg-app-hover shadow-xl"
               style={{ width: 400, maxHeight: 300 }}
               onClick={(event) => event.stopPropagation()}
             >
-              <div className="border-b border-blue-border px-4 py-2 text-sm font-semibold text-gray-100">
+              <div className="border-b border-app-border px-4 py-2 text-sm font-semibold text-app-text-strong">
                 Line Point Editor
               </div>
               <div className="overflow-auto" style={{ maxHeight: 230 }}>
-                <table className="w-full border-collapse text-xs text-gray-100">
+                <table className="w-full border-collapse text-xs text-app-text">
                   <thead>
-                    <tr className="border-b border-blue-border bg-[#233550]">
+                    <tr className="border-b border-app-border bg-app-menu">
                       <th className="px-2 py-1 text-left font-medium">x</th>
                       <th className="px-2 py-1 text-left font-medium">y</th>
                     </tr>
@@ -919,15 +919,15 @@ export function EditableLineCanvas<TLine extends EditableLineLike>({
                       const xDisplay = pointEdits[xKey] ?? String(entry.point.x);
                       const yDisplay = pointEdits[yKey] ?? String(entry.point.y);
                       return (
-                        <tr key={entry.index} className="border-b border-blue-border/30">
+                        <tr key={entry.index} className="border-b border-app-border/30">
                           <td className="p-0">
                             <input
                               type="number"
                               step="0.001"
-                              className={`w-full border-0 bg-transparent px-2 py-1 text-xs text-gray-100 outline-none ${
+                              className={`w-full border-0 bg-transparent px-2 py-1 text-xs text-app-text-strong outline-none ${
                                 xReadOnly
-                                  ? 'text-blue-muted cursor-default'
-                                  : 'focus:bg-[#111a2d] focus:ring-1 focus:ring-inset focus:ring-blue-accent'
+                                  ? 'cursor-default text-app-text-muted'
+                                  : 'focus:bg-app-surface-raised focus:ring-1 focus:ring-inset focus:ring-app-accent'
                               }`}
                               value={xDisplay}
                               readOnly={xReadOnly}
@@ -943,7 +943,7 @@ export function EditableLineCanvas<TLine extends EditableLineLike>({
                             <input
                               type="number"
                               step="0.001"
-                              className="w-full border-0 bg-transparent px-2 py-1 text-xs text-gray-100 outline-none focus:bg-[#111a2d] focus:ring-1 focus:ring-inset focus:ring-blue-accent"
+                              className="w-full border-0 bg-transparent px-2 py-1 text-xs text-app-text-strong outline-none focus:bg-app-surface-raised focus:ring-1 focus:ring-inset focus:ring-app-accent"
                               value={yDisplay}
                               onChange={(event) => setPointEdits((prev) => ({ ...prev, [yKey]: event.target.value }))}
                               onBlur={() => commitCell(sortedIndex, 'y', yDisplay)}
@@ -959,10 +959,10 @@ export function EditableLineCanvas<TLine extends EditableLineLike>({
                   </tbody>
                 </table>
               </div>
-              <div className="flex justify-end border-t border-blue-border px-4 py-2">
+              <div className="flex justify-end border-t border-app-border px-4 py-2">
                 <button
                   type="button"
-                  className="rounded border border-blue-border bg-[#22324d] px-4 py-1.5 text-xs text-gray-200 hover:border-blue-accent"
+                  className="rounded border border-app-border bg-app-surface px-4 py-1.5 text-xs text-app-text-soft hover:border-app-accent"
                   onClick={closeEditor}
                 >
                   Close
