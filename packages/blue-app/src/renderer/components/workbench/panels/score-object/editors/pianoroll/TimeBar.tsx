@@ -116,7 +116,7 @@ function RulerRow({
         >
           {mark.label && (
             <span
-              className="absolute left-1 text-[10px] leading-none text-blue-muted whitespace-nowrap select-none"
+              className="absolute left-1 text-tiny leading-none text-blue-muted whitespace-nowrap select-none"
               style={{ top: mark.type === 'major' ? 2 : -8 }}
             >
               {mark.label}

@@ -175,10 +175,10 @@ function ArrangementPanel({
     >
       <div className="flex items-center justify-between border-b border-app-border bg-app-surface-strong px-3 py-2">
         <div>
-          <div className="text-xs font-semibold uppercase tracking-[0.18em] text-app-text-muted">
+          <div className="text-body font-semibold uppercase tracking-[0.18em] text-app-text-muted">
             Arrangement
           </div>
-          <div className="text-[11px] text-app-text-muted">
+          <div className="text-ui text-app-text-muted">
             {rows.length} instruments
             {selectedAssignmentId && !selectedRowStillExists ? ' · selection cleared' : ''}
           </div>
@@ -187,7 +187,7 @@ function ArrangementPanel({
           <button
             ref={addBtnRef}
             type="button"
-            className="rounded border border-app-border bg-app-surface px-2.5 py-1 text-xs text-app-text-strong transition-colors hover:border-app-accent"
+            className="rounded border border-app-border bg-app-surface px-2.5 py-1 text-body text-app-text-strong transition-colors hover:border-app-accent"
             onClick={() => setAddMenuOpen(!addMenuOpen)}
           >
             + Add
@@ -200,7 +200,7 @@ function ArrangementPanel({
               {INSTRUMENT_TYPES.map(({ type, label }) => (
                 <button
                   key={type}
-                  className="w-full px-3 py-1.5 text-left text-xs text-app-text-strong hover:bg-app-accent/20"
+                  className="w-full px-3 py-1.5 text-left text-body text-app-text-strong hover:bg-app-accent/20"
                   onClick={() => addInstrument(type)}
                 >
                   {label}
@@ -214,7 +214,7 @@ function ArrangementPanel({
       <div className="min-h-0 flex-1 overflow-auto">
         <table
           ref={tableRef}
-          className="border-collapse text-left text-xs"
+          className="border-collapse text-left text-body"
           style={{ width: '100%' }}
         >
           <thead className="sticky top-0 z-10 bg-app-surface text-app-text-muted">

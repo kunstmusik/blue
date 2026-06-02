@@ -31,7 +31,7 @@ const blueCodeMirrorTheme = EditorView.theme(
       height: '100%',
       color: 'var(--color-app-text-bright)',
       backgroundColor: 'var(--color-app-overlay)',
-      fontSize: '13px',
+      fontSize: 'var(--text-content)',
     },
     '.cm-scroller': {
       fontFamily: '"SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace',

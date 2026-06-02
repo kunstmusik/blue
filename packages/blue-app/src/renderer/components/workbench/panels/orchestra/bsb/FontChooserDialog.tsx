@@ -108,10 +108,10 @@ export default function FontChooserDialog({
 
         <div className="grid grid-cols-[1fr_80px_100px] gap-3">
           <div className="flex flex-col gap-1">
-            <label className="text-[10px] uppercase tracking-wider text-app-text-muted">Font</label>
+            <label className="text-tiny uppercase tracking-wider text-app-text-muted">Font</label>
             <div className="relative">
               <button
-                className="flex w-full items-center justify-between rounded border border-app-border bg-app-surface-raised px-2 py-1.5 text-left text-xs text-app-text-strong outline-none hover:border-app-accent focus:border-app-accent"
+                className="flex w-full items-center justify-between rounded border border-app-border bg-app-surface-raised px-2 py-1.5 text-left text-body text-app-text-strong outline-none hover:border-app-accent focus:border-app-accent"
                 onClick={() => { setDropdownOpen(!dropdownOpen); setFilter(''); }}
               >
                 <span className="truncate" style={{ fontFamily: `'${name}', sans-serif` }}>{name}</span>
@@ -120,7 +120,7 @@ export default function FontChooserDialog({
               {dropdownOpen && (
                 <div className="absolute left-0 top-full z-10 mt-1 flex max-h-48 w-full flex-col rounded border border-app-border bg-app-surface-raised shadow-lg">
                   <input
-                    className="border-b border-app-border bg-transparent px-2 py-1 text-xs text-app-text-strong outline-none placeholder:text-app-text-muted"
+                    className="border-b border-app-border bg-transparent px-2 py-1 text-body text-app-text-strong outline-none placeholder:text-app-text-muted"
                     placeholder="Filter fonts..."
                     value={filter}
                     onChange={(e) => setFilter(e.target.value)}
@@ -144,7 +144,7 @@ export default function FontChooserDialog({
                       <button
                         key={f}
                         className={
-                          'w-full px-2 py-1 text-left text-xs outline-none ' +
+                          'w-full px-2 py-1 text-left text-body outline-none ' +
                           (f === name
                             ? 'bg-app-accent/30 text-app-text-strong'
                             : 'text-app-text-strong hover:bg-app-accent/20')
@@ -156,7 +156,7 @@ export default function FontChooserDialog({
                       </button>
                     ))}
                     {filtered.length === 0 && (
-                      <div className="px-2 py-2 text-xs text-app-text-muted">No matching fonts</div>
+                      <div className="px-2 py-2 text-body text-app-text-muted">No matching fonts</div>
                     )}
                   </div>
                 </div>
@@ -165,9 +165,9 @@ export default function FontChooserDialog({
           </div>
 
           <div className="flex flex-col gap-1">
-            <label className="text-[10px] uppercase tracking-wider text-app-text-muted">Size</label>
+            <label className="text-tiny uppercase tracking-wider text-app-text-muted">Size</label>
             <input
-              className="w-full rounded border border-app-border bg-app-surface-raised px-2 py-1.5 text-xs text-app-text-strong outline-none focus:border-app-accent"
+              className="w-full rounded border border-app-border bg-app-surface-raised px-2 py-1.5 text-body text-app-text-strong outline-none focus:border-app-accent"
               type="number"
               min={1}
               max={200}
@@ -181,9 +181,9 @@ export default function FontChooserDialog({
           </div>
 
           <div className="flex flex-col gap-1">
-            <label className="text-[10px] uppercase tracking-wider text-app-text-muted">Style</label>
+            <label className="text-tiny uppercase tracking-wider text-app-text-muted">Style</label>
             <select
-              className="w-full rounded border border-app-border bg-app-surface-raised px-2 py-1.5 text-xs text-app-text-strong outline-none focus:border-app-accent"
+              className="w-full rounded border border-app-border bg-app-surface-raised px-2 py-1.5 text-body text-app-text-strong outline-none focus:border-app-accent"
               value={style}
               onChange={(e) => setStyle(parseInt(e.target.value, 10))}
             >
@@ -195,7 +195,7 @@ export default function FontChooserDialog({
         </div>
 
         <div className="flex flex-col gap-1">
-          <label className="text-[10px] uppercase tracking-wider text-app-text-muted">Preview</label>
+          <label className="text-tiny uppercase tracking-wider text-app-text-muted">Preview</label>
           <div
             className="flex h-16 items-center justify-center rounded border border-app-border bg-app-surface-raised"
             style={{ fontFamily: `'${name}', sans-serif`, fontSize: `${size}px`, fontWeight, fontStyle: fontStyleStr }}
@@ -205,18 +205,18 @@ export default function FontChooserDialog({
         </div>
 
         <div className="flex items-center justify-between border-t border-app-border pt-3">
-          <span className="text-[10px] text-app-text-muted">
+          <span className="text-tiny text-app-text-muted">
             {name} {size} {displayStyle}
           </span>
           <div className="flex gap-2">
             <button
-              className="rounded border border-app-border bg-app-surface px-3 py-1 text-xs text-app-text transition-colors hover:bg-app-hover"
+              className="rounded border border-app-border bg-app-surface px-3 py-1 text-body text-app-text transition-colors hover:bg-app-hover"
               onClick={onCancel}
             >
               Cancel
             </button>
             <button
-              className="rounded bg-app-accent px-3 py-1 text-xs text-app-text-strong hover:bg-app-accent-hover"
+              className="rounded bg-app-accent px-3 py-1 text-body text-app-text-strong hover:bg-app-accent-hover"
               onClick={handleConfirm}
             >
               OK

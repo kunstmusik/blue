@@ -97,7 +97,7 @@ export default function SoundEditor({ document, onPatch }: ScoreObjectEditorComp
                 type="button"
                 data-sound-editor-tab={tab.key}
                 className={[
-                  'border-b-2 px-3 py-2 text-xs',
+                  'border-b-2 px-3 py-2 text-body',
                   activeTab === tab.key
                     ? 'border-app-accent text-app-text-strong'
                     : 'border-transparent text-app-text-muted hover:text-app-text-strong',
@@ -110,7 +110,7 @@ export default function SoundEditor({ document, onPatch }: ScoreObjectEditorComp
           </div>
           <button
             type="button"
-            className="mb-1 rounded border border-app-border bg-app-surface px-2 py-0.5 text-[11px] text-app-text hover:border-app-accent disabled:opacity-50"
+            className="mb-1 rounded border border-app-border bg-app-surface px-2 py-0.5 text-ui text-app-text hover:border-app-accent disabled:opacity-50"
             disabled={testing}
             onClick={() => { void runTest(); }}
             title="Test generated score"
@@ -120,7 +120,7 @@ export default function SoundEditor({ document, onPatch }: ScoreObjectEditorComp
         </div>
       </div>
       {testError && (
-        <div className="flex shrink-0 items-center gap-2 border-b border-app-danger/30 bg-app-danger/10 px-3 py-1.5 text-xs text-app-danger">
+        <div className="flex shrink-0 items-center gap-2 border-b border-app-danger/30 bg-app-danger/10 px-3 py-1.5 text-body text-app-danger">
           <span>Error: {testError}</span>
           <button className="underline text-app-text-muted hover:text-app-text" onClick={clearTestError}>dismiss</button>
         </div>
@@ -163,9 +163,9 @@ export default function SoundEditor({ document, onPatch }: ScoreObjectEditorComp
         )}
         {activeTab === 'comments' && (
           <div className="flex flex-col h-full p-3">
-            <label className="mb-1 text-xs text-app-text-muted">Comment</label>
+            <label className="mb-1 text-body text-app-text-muted">Comment</label>
             <textarea
-              className="flex-1 resize-none rounded border border-app-border bg-app-canvas px-2 py-1 font-mono text-xs text-app-text-strong focus:border-app-accent focus:outline-none"
+              className="flex-1 resize-none rounded border border-app-border bg-app-canvas px-2 py-1 font-mono text-body text-app-text-strong focus:border-app-accent focus:outline-none"
               value={comment}
               onChange={(e) => handleCommentChange(e.target.value)}
               placeholder="Instrument comment..."
@@ -349,10 +349,10 @@ function SoundAutomationPanel({
           onLinesChange={handleLinesChange}
         />
       </div>
-      <div className="flex items-center gap-2 border-t border-app-border bg-app-hover px-2 py-1 text-xs text-app-text">
+      <div className="flex items-center gap-2 border-t border-app-border bg-app-hover px-2 py-1 text-body text-app-text">
         <span className="text-app-text-soft">Automations</span>
         <select
-          className="min-w-0 flex-1 rounded border border-app-border bg-app-surface px-2 py-1 text-xs text-app-text-strong focus:border-app-accent focus:outline-none"
+          className="min-w-0 flex-1 rounded border border-app-border bg-app-surface px-2 py-1 text-body text-app-text-strong focus:border-app-accent focus:outline-none"
           value={selectedParamId ?? ''}
           onChange={(event) => setSelectedParamId(event.target.value)}
           disabled={lines.length === 0}
@@ -369,7 +369,7 @@ function SoundAutomationPanel({
         </select>
         <button
           type="button"
-          className="rounded border border-app-border bg-app-surface px-3 py-1 text-xs text-app-text-strong hover:border-app-accent"
+          className="rounded border border-app-border bg-app-surface px-3 py-1 text-body text-app-text-strong hover:border-app-accent"
           onClick={openEditDialog}
         >
           Edit
@@ -465,7 +465,7 @@ function SoundAutomationCanvas({
 
   return (
     <div className="flex h-full min-h-0 flex-col bg-app-canvas">
-      <div className="relative h-6 border-b border-app-border bg-app-menu text-[10px] text-app-text-soft">
+      <div className="relative h-6 border-b border-app-border bg-app-menu text-tiny text-app-text-soft">
         {Array.from({ length: 7 }, (_, index) => {
           const ratio = index / 6;
           const time = startTimeBeats + (ratio * effectiveDuration);

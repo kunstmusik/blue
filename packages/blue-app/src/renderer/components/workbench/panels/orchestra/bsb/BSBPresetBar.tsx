@@ -82,7 +82,7 @@ export default function BSBPresetBar({
         <>
           {group.subGroups.map((subGroup) => (
             <DropdownMenu.Sub key={subGroup.name}>
-              <DropdownMenu.SubTrigger className="flex items-center justify-between px-2 py-1 text-xs text-app-text-strong outline-none hover:bg-app-accent/20">
+              <DropdownMenu.SubTrigger className="flex items-center justify-between px-2 py-1 text-body text-app-text-strong outline-none hover:bg-app-accent/20">
                 <span>{subGroup.name}</span>
                 <ChevronDown size={12} className="ml-2" />
               </DropdownMenu.SubTrigger>
@@ -95,7 +95,7 @@ export default function BSBPresetBar({
           {group.presets.map((preset) => (
             <DropdownMenu.Item
               key={preset.uniqueId}
-              className="cursor-pointer px-2 py-1 text-xs text-app-text-strong outline-none hover:bg-app-accent/20"
+              className="cursor-pointer px-2 py-1 text-body text-app-text-strong outline-none hover:bg-app-accent/20"
               onClick={() => {
                 onBsbInterfacePatch({ type: 'applyPreset', presetUniqueId: preset.uniqueId });
                 setMenuOpen(false);
@@ -112,26 +112,26 @@ export default function BSBPresetBar({
           {depth === 0 && (
             <>
               <DropdownMenu.Item
-                className="cursor-pointer px-2 py-1 text-xs text-app-text-strong outline-none hover:bg-app-accent/20"
+                className="cursor-pointer px-2 py-1 text-body text-app-text-strong outline-none hover:bg-app-accent/20"
                 onClick={handleAddFolder}
               >
                 Add Folder
               </DropdownMenu.Item>
               <DropdownMenu.Item
-                className="cursor-pointer px-2 py-1 text-xs text-app-text-strong outline-none hover:bg-app-accent/20"
+                className="cursor-pointer px-2 py-1 text-body text-app-text-strong outline-none hover:bg-app-accent/20"
                 onClick={handleAddPreset}
               >
                 Add Preset
               </DropdownMenu.Item>
               <DropdownMenu.Separator className="my-1 h-px bg-app-border" />
               <DropdownMenu.Item
-                className="cursor-pointer px-2 py-1 text-xs text-app-text-strong outline-none hover:bg-app-accent/20"
+                className="cursor-pointer px-2 py-1 text-body text-app-text-strong outline-none hover:bg-app-accent/20"
                 onClick={handleSynchronizePresets}
               >
                 Synchronize Presets
               </DropdownMenu.Item>
               <DropdownMenu.Item
-                className="cursor-pointer px-2 py-1 text-xs text-app-text-strong outline-none hover:bg-app-accent/20"
+                className="cursor-pointer px-2 py-1 text-body text-app-text-strong outline-none hover:bg-app-accent/20"
                 onClick={handleManagePresets}
               >
                 Manage Presets
@@ -154,7 +154,7 @@ export default function BSBPresetBar({
         <DropdownMenu.Trigger asChild>
           <button
             type="button"
-            className="flex items-center gap-1 rounded border border-app-border bg-app-surface-raised px-2 py-1 text-xs text-app-text-strong outline-none hover:bg-app-accent/20"
+            className="flex items-center gap-1 rounded border border-app-border bg-app-surface-raised px-2 py-1 text-body text-app-text-strong outline-none hover:bg-app-accent/20"
           >
             Presets
             <ChevronDown size={12} />
@@ -162,7 +162,7 @@ export default function BSBPresetBar({
         </DropdownMenu.Trigger>
         <DropdownMenu.Portal>
           <DropdownMenu.Content className="min-w-[150px] rounded-md border border-app-border bg-app-surface-strong p-1 shadow-lg">
-            {presetGroup ? renderPresetMenu(presetGroup) : <div className="px-2 py-1 text-xs text-app-text-muted">No presets</div>}
+            {presetGroup ? renderPresetMenu(presetGroup) : <div className="px-2 py-1 text-body text-app-text-muted">No presets</div>}
           </DropdownMenu.Content>
         </DropdownMenu.Portal>
       </DropdownMenu.Root>
@@ -171,7 +171,7 @@ export default function BSBPresetBar({
         type="text"
         readOnly
         value={currentPresetPath}
-        className="min-w-0 flex-1 border-none bg-transparent text-xs text-app-text-strong outline-none"
+        className="min-w-0 flex-1 border-none bg-transparent text-body text-app-text-strong outline-none"
         style={{ textOverflow: 'ellipsis' }}
       />
 
@@ -179,13 +179,13 @@ export default function BSBPresetBar({
         type="button"
         disabled={!canUpdate}
         onClick={handleUpdatePreset}
-        className="rounded border border-app-border bg-app-surface-raised px-2 py-1 text-xs text-app-text-strong outline-none hover:bg-app-accent/20 disabled:cursor-not-allowed disabled:opacity-50"
+        className="rounded border border-app-border bg-app-surface-raised px-2 py-1 text-body text-app-text-strong outline-none hover:bg-app-accent/20 disabled:cursor-not-allowed disabled:opacity-50"
       >
         Update
       </button>
 
       {presetGroup?.currentPresetModified && (
-        <span className="text-[10px] text-app-warning">modified</span>
+        <span className="text-tiny text-app-warning">modified</span>
       )}
     </div>
   );

@@ -282,7 +282,7 @@ export default function TempoLineView({
           >
             {contextMenuTarget?.type === 'point' && Math.abs(points[contextMenuTarget.index]?.beat ?? 0) >= BEAT_EPSILON ? (
               <ContextMenu.Item
-                className="cursor-pointer rounded-sm px-2 py-1 text-[11px] text-app-danger outline-none data-[highlighted]:bg-app-highlight"
+                className="cursor-pointer rounded-sm px-2 py-1 text-ui text-app-danger outline-none data-[highlighted]:bg-app-highlight"
                 onSelect={() => {
                   onTempoPatch({ type: 'removeTempoPoint', index: contextMenuTarget.index });
                   if (selectedPoint === contextMenuTarget.index) {
@@ -296,7 +296,7 @@ export default function TempoLineView({
             ) : contextMenuTarget?.type === 'segment' ? (
               <>
                 <ContextMenu.Item
-                  className={`text-[11px] px-2 py-1 rounded-sm cursor-pointer outline-none data-[highlighted]:bg-white/10 ${points[contextMenuTarget.index]?.curveType === 'constant' ? 'text-blue-muted' : 'text-blue-text'}`}
+                  className={`text-ui px-2 py-1 rounded-sm cursor-pointer outline-none data-[highlighted]:bg-white/10 ${points[contextMenuTarget.index]?.curveType === 'constant' ? 'text-blue-muted' : 'text-blue-text'}`}
                   disabled={points[contextMenuTarget.index]?.curveType === 'constant'}
                   onSelect={() => {
                     onTempoPatch({ type: 'setTempoCurveType', index: contextMenuTarget.index, curveType: 'constant' });
@@ -306,7 +306,7 @@ export default function TempoLineView({
                   Constant
                 </ContextMenu.Item>
                 <ContextMenu.Item
-                  className={`text-[11px] px-2 py-1 rounded-sm cursor-pointer outline-none data-[highlighted]:bg-white/10 ${points[contextMenuTarget.index]?.curveType === 'linear' ? 'text-blue-muted' : 'text-blue-text'}`}
+                  className={`text-ui px-2 py-1 rounded-sm cursor-pointer outline-none data-[highlighted]:bg-white/10 ${points[contextMenuTarget.index]?.curveType === 'linear' ? 'text-blue-muted' : 'text-blue-text'}`}
                   disabled={points[contextMenuTarget.index]?.curveType === 'linear'}
                   onSelect={() => {
                     onTempoPatch({ type: 'setTempoCurveType', index: contextMenuTarget.index, curveType: 'linear' });

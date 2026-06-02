@@ -221,7 +221,7 @@ function Node({
       ref={dragHandle}
       style={style}
       className={[
-        'flex items-center gap-1.5 pr-2 text-xs select-none cursor-pointer',
+        'flex items-center gap-1.5 pr-2 text-body select-none cursor-pointer',
         isSelected ? 'bg-blue-accent/20 text-gray-100' : 'text-gray-300 hover:bg-white/5',
       ].join(' ')}
       onClick={(e) => {
@@ -247,10 +247,10 @@ function Node({
       {icon}
       <span className="min-w-0 truncate">{node.data.name}</span>
       {isCategory && childCount > 0 && (
-        <span className="ml-auto flex-none text-[10px] text-blue-muted">{childCount}</span>
+        <span className="ml-auto flex-none text-tiny text-blue-muted">{childCount}</span>
       )}
       {effectMeta && (
-        <span className="ml-auto flex-none text-[10px] text-blue-muted">{effectMeta}</span>
+        <span className="ml-auto flex-none text-tiny text-blue-muted">{effectMeta}</span>
       )}
     </div>
   );

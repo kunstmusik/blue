@@ -387,7 +387,7 @@ export default function EffectLibraryModal(): React.ReactElement | null {
           <div className="min-w-0">
             <div className="text-sm font-medium text-app-text-strong">Effects Library</div>
             {target && (
-              <div className="text-xs text-app-text-muted">
+              <div className="text-body text-app-text-muted">
                 Target: {target.channelId} / {target.chain}
               </div>
             )}
@@ -440,7 +440,7 @@ export default function EffectLibraryModal(): React.ReactElement | null {
           {mainContent}
         </div>
 
-        <div className="flex flex-none items-center justify-between gap-3 border-t border-app-border bg-app-surface-strong px-4 py-2 text-[11px] text-app-text-muted">
+        <div className="flex flex-none items-center justify-between gap-3 border-t border-app-border bg-app-surface-strong px-4 py-2 text-ui text-app-text-muted">
           <div className="inline-flex items-center gap-2">
             <LibraryBig className="h-3.5 w-3.5" />
             Session-only mutations. No writes to `~/.blue`.

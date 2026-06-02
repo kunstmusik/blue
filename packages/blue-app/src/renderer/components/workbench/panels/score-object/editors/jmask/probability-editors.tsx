@@ -11,9 +11,9 @@ function SelectInput({ label, value, options, onChange }: {
 }) {
   return (
     <div className="flex items-center gap-2">
-      <label className="shrink-0 text-[11px] text-gray-300">{label}</label>
+      <label className="shrink-0 text-ui text-gray-300">{label}</label>
       <select
-        className="rounded border border-blue-border bg-blue-bg px-1.5 py-0.5 text-xs text-gray-100 focus:border-blue-accent focus:outline-none"
+        className="rounded border border-blue-border bg-blue-bg px-1.5 py-0.5 text-body text-gray-100 focus:border-blue-accent focus:outline-none"
         value={value}
         onChange={e => onChange(parseInt(e.target.value, 10))}
       >
@@ -34,7 +34,7 @@ function ConstantOrTable({ label, constantValue, tableEnabled, table, duration, 
     <div className="flex flex-col gap-1">
       <div className="flex items-center gap-2">
         <select
-          className="rounded border border-blue-border bg-blue-bg px-1.5 py-0.5 text-xs text-gray-100 focus:border-blue-accent focus:outline-none"
+          className="rounded border border-blue-border bg-blue-bg px-1.5 py-0.5 text-body text-gray-100 focus:border-blue-accent focus:outline-none"
           value={tableEnabled ? 1 : 0}
           onChange={e => onTableToggle(e.target.value === '1')}
         >
@@ -51,11 +51,11 @@ function ConstantOrTable({ label, constantValue, tableEnabled, table, duration, 
 }
 
 export function UniformEditor(): React.ReactElement {
-  return <div className="px-2 py-1 text-[11px] text-blue-muted">Uniform — no additional controls</div>;
+  return <div className="px-2 py-1 text-ui text-blue-muted">Uniform — no additional controls</div>;
 }
 
 export function TriangleEditor(): React.ReactElement {
-  return <div className="px-2 py-1 text-[11px] text-blue-muted">Triangle — no additional controls</div>;
+  return <div className="px-2 py-1 text-ui text-blue-muted">Triangle — no additional controls</div>;
 }
 
 export function LinearEditor({ gen, onChange }: { gen: GeneratorSnapshot; onChange: OnChange }): React.ReactElement {
@@ -246,6 +246,6 @@ export function renderProbabilitySubEditor(
     case 'Cauchy': return <CauchyEditor gen={gen} onChange={onChange} duration={duration} />;
     case 'Beta': return <BetaEditor gen={gen} onChange={onChange} duration={duration} />;
     case 'Weibull': return <WeibullEditor gen={gen} onChange={onChange} duration={duration} />;
-    default: return <div className="px-2 py-1 text-[11px] text-blue-muted">Unsupported: {kind}</div>;
+    default: return <div className="px-2 py-1 text-ui text-blue-muted">Unsupported: {kind}</div>;
   }
 }

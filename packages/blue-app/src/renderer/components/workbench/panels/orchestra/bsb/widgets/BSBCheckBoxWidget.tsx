@@ -50,7 +50,7 @@ function BSBCheckBoxWidget({
             <path d="M2 6l3 3 5-5" fill="none" stroke="rgb(240,240,255)" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
           )}
         </svg>
-        <BsbTextLabel text={labelText} plainClassName="block text-[12px]" htmlClassName="inline-block max-w-full text-[12px]" />
+        <BsbTextLabel text={labelText} plainClassName="block text-body" htmlClassName="inline-block max-w-full text-body" />
       </div>
     </WidgetWrapper>
   );

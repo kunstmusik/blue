@@ -136,13 +136,13 @@ export default function ZakLineObjectEditor({
         <div className="space-y-1.5 border-t border-blue-border px-2 py-1.5">
           {selectedLine && (
             <div>
-              <label className="mb-0.5 block text-[9px] uppercase tracking-wider text-blue-muted">
+              <label className="mb-0.5 block text-micro uppercase tracking-wider text-blue-muted">
                 Zak Channel
               </label>
               <input
                 type="number"
                 min={0}
-                className="w-full rounded border border-blue-border bg-blue-bg px-1.5 py-0.5 font-mono text-xs text-gray-100 focus:border-blue-accent focus:outline-none"
+                className="w-full rounded border border-blue-border bg-blue-bg px-1.5 py-0.5 font-mono text-body text-gray-100 focus:border-blue-accent focus:outline-none"
                 value={selectedLine.channel}
                 onChange={(event) => handleChannelChange(parseInt(event.target.value, 10) || 0)}
               />
@@ -150,13 +150,13 @@ export default function ZakLineObjectEditor({
           )}
 
           <div>
-            <label className="mb-0.5 block text-[9px] uppercase tracking-wider text-blue-muted">
+            <label className="mb-0.5 block text-micro uppercase tracking-wider text-blue-muted">
               Zak Space
             </label>
             <input
               type="number"
               min={0}
-              className="w-full rounded border border-blue-border bg-blue-bg px-1.5 py-0.5 font-mono text-xs text-gray-100 focus:border-blue-accent focus:outline-none"
+              className="w-full rounded border border-blue-border bg-blue-bg px-1.5 py-0.5 font-mono text-body text-gray-100 focus:border-blue-accent focus:outline-none"
               value={zakSpace}
               onChange={(event) => patch({ zakSpace: parseInt(event.target.value, 10) || 0 })}
             />
@@ -177,16 +177,16 @@ export default function ZakLineObjectEditor({
                 className="inline-block h-2.5 w-2.5 rounded-full"
                 style={{ backgroundColor: colorSwatch(selectedLine.color) }}
               />
-              <span className="font-mono text-xs text-gray-300">
+              <span className="font-mono text-body text-gray-300">
                 {selectedLineLabel}
               </span>
-              <span className="text-[10px] text-blue-muted">
+              <span className="text-tiny text-blue-muted">
                 channel {selectedLine.channel}
               </span>
-              <span className="text-[10px] text-blue-muted">
+              <span className="text-tiny text-blue-muted">
                 {selectedLine.points.length} points
               </span>
-              <span className="ml-auto text-[10px] text-blue-muted">
+              <span className="ml-auto text-tiny text-blue-muted">
                 Alt-click adds on the line, right-click canvas for options
               </span>
             </div>
@@ -208,7 +208,7 @@ export default function ZakLineObjectEditor({
             </div>
           </>
         ) : (
-          <div className="flex h-full items-center justify-center text-xs text-blue-muted">
+          <div className="flex h-full items-center justify-center text-body text-blue-muted">
             {lines.length === 0
               ? 'No zak lines defined. Click + to add one.'
               : 'Select a zak line to edit.'}

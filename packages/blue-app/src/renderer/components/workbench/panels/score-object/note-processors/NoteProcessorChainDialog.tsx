@@ -77,13 +77,13 @@ export default function NoteProcessorChainDialog({
         </div>
         <div className="flex justify-end gap-2 px-4 py-3 border-t border-blue-border">
           <button
-            className="px-3 py-1.5 text-xs rounded border border-blue-border text-gray-300 hover:bg-blue-border/40"
+            className="px-3 py-1.5 text-body rounded border border-blue-border text-gray-300 hover:bg-blue-border/40"
             onClick={onClose}
           >
             Cancel
           </button>
           <button
-            className="px-3 py-1.5 text-xs rounded bg-blue-accent text-white hover:bg-blue-accent/80"
+            className="px-3 py-1.5 text-body rounded bg-blue-accent text-white hover:bg-blue-accent/80"
             onClick={handleSave}
           >
             Save

@@ -42,7 +42,7 @@ export default function GenericInstrumentEditor({
             key={tab.key}
             type="button"
             className={[
-              'border-b-2 px-3 py-2 text-xs',
+              'border-b-2 px-3 py-2 text-body',
               activeTab === tab.key
                 ? 'border-blue-accent text-gray-100'
                 : 'border-transparent text-blue-muted hover:text-gray-100',

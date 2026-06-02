@@ -76,14 +76,14 @@ export default function SettingsApp(): React.ReactElement {
 
   if (loading || !draft) {
     return (
-      <div className="px-6 py-6 text-[13px] text-app-text-muted">
+      <div className="px-6 py-6 text-content text-app-text-muted">
         Loading settings...
       </div>
     );
   }
 
   const secondaryButtonClass =
-    'inline-flex items-center rounded-md border border-app-border bg-transparent px-4 py-1.5 text-[13px] transition-colors enabled:hover:border-app-accent/60 enabled:hover:text-app-text-strong disabled:cursor-default disabled:opacity-40';
+    'inline-flex items-center rounded-md border border-app-border bg-transparent px-4 py-1.5 text-content transition-colors enabled:hover:border-app-accent/60 enabled:hover:text-app-text-strong disabled:cursor-default disabled:opacity-40';
 
   const renderPanel = () => {
     switch (active) {
@@ -133,7 +133,7 @@ export default function SettingsApp(): React.ReactElement {
   };
 
   return (
-    <div className="flex h-screen bg-app-bg text-app-text text-[13px]">
+    <div className="flex h-screen bg-app-bg text-app-text text-content">
       <nav className="flex w-[180px] shrink-0 flex-col border-r border-app-border bg-app-surface py-3">
         {PROGRAM_SETTINGS_PANEL_ORDER.map((cat) => (
           <button
@@ -154,7 +154,7 @@ export default function SettingsApp(): React.ReactElement {
           {renderPanel()}
         </div>
         {validationIssues.length > 0 && (
-          <div className="border-t border-app-danger/30 bg-app-danger/10 px-4 py-2 text-xs text-app-danger">
+          <div className="border-t border-app-danger/30 bg-app-danger/10 px-4 py-2 text-body text-app-danger">
             {validationIssues.map((issue, i) => (
               <div key={i}>{issue.path}: {issue.message}</div>
             ))}
@@ -183,7 +183,7 @@ export default function SettingsApp(): React.ReactElement {
             type="button"
             onClick={handleApply}
             disabled={!dirty}
-            className="inline-flex items-center rounded-md bg-app-accent px-4 py-1.5 text-[13px] text-white transition-colors enabled:hover:bg-app-accent-hover disabled:cursor-default disabled:bg-app-surface-strong disabled:text-app-text-subtle"
+            className="inline-flex items-center rounded-md bg-app-accent px-4 py-1.5 text-content text-white transition-colors enabled:hover:bg-app-accent-hover disabled:cursor-default disabled:bg-app-surface-strong disabled:text-app-text-subtle"
           >
             Apply
           </button>

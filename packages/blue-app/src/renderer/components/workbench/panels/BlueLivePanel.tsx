@@ -32,7 +32,7 @@ export default function BlueLivePanel(): React.ReactElement {
               background: activeTab === tab.id ? 'var(--color-app-surface-raised)' : undefined,
               color: activeTab === tab.id ? 'var(--color-app-text-strong)' : 'var(--color-app-text-muted)',
               cursor: 'pointer',
-              fontSize: '12px',
+              fontSize: 'var(--text-body)',
               fontWeight: activeTab === tab.id ? 600 : 400,
               borderBottom: activeTab === tab.id ? '2px solid var(--color-app-focus)' : '2px solid var(--color-app-bg)',
             }}

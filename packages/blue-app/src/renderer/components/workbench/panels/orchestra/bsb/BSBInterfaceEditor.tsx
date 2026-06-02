@@ -89,7 +89,7 @@ function BSBInterfaceEditor({
       {showEditModeToggle && (
         <div className="flex items-center justify-between border-b border-blue-border px-3 py-1">
           <BSBPresetBar instrument={instrument} onBsbInterfacePatch={dispatchBsbPatch} />
-          <label className="flex cursor-pointer items-center gap-1.5 whitespace-nowrap text-xs text-gray-100">
+          <label className="flex cursor-pointer items-center gap-1.5 whitespace-nowrap text-body text-gray-100">
             <input
               type="checkbox"
               checked={editEnabled}
@@ -125,7 +125,7 @@ function BSBInterfaceEditor({
                     <button
                       type="button"
                       className={[
-                        'flex-1 border-b-2 px-2 py-1.5 text-[10px] uppercase tracking-[0.12em]',
+                        'flex-1 border-b-2 px-2 py-1.5 text-tiny uppercase tracking-[0.12em]',
                         rightTab === 'properties'
                           ? 'border-blue-accent text-gray-100'
                           : 'border-transparent text-blue-muted hover:text-gray-100',
@@ -137,7 +137,7 @@ function BSBInterfaceEditor({
                     <button
                       type="button"
                       className={[
-                        'flex-1 border-b-2 px-2 py-1.5 text-[10px] uppercase tracking-[0.12em]',
+                        'flex-1 border-b-2 px-2 py-1.5 text-tiny uppercase tracking-[0.12em]',
                         rightTab === 'grid'
                           ? 'border-blue-accent text-gray-100'
                           : 'border-transparent text-blue-muted hover:text-gray-100',

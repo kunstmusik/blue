@@ -8,7 +8,7 @@ interface Props {
 
 export default function ScorePathBar({ segments, onNavigateToSegment, onNavigateToRoot }: Props) {
   return (
-    <div className="flex items-center h-7 px-2 bg-blue-surface border-b border-blue-border/40 text-xs gap-1 overflow-x-auto">
+    <div className="flex items-center h-7 px-2 bg-blue-surface border-b border-blue-border/40 text-body gap-1 overflow-x-auto">
       {segments.map((segment, i) => (
         <span key={segment.groupId ?? 'root'} className="flex items-center gap-1 whitespace-nowrap">
           {i > 0 && <span className="text-blue-muted">/</span>}

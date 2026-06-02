@@ -80,7 +80,7 @@ export default function PitchHeader({ notes, selectedIndices, scale, noteHeight,
           }}
         >
           {row.label && (
-            <span className="absolute right-1 text-[9px] leading-none select-none" style={{ top: Math.max(1, (noteHeight - 10) / 2), color: row.isOctave ? 'rgba(198,226,255,0.9)' : 'rgba(198,226,255,0.45)' }}>
+            <span className="absolute right-1 text-micro leading-none select-none" style={{ top: Math.max(1, (noteHeight - 10) / 2), color: row.isOctave ? 'rgba(198,226,255,0.9)' : 'rgba(198,226,255,0.45)' }}>
               {row.label}
             </span>
           )}

@@ -2,7 +2,7 @@ import { useState, useCallback } from 'react';
 import type { MeterMapSnapshot, MeterMapPatch, MeterEntryInput } from '../../../../../shared/project-editor';
 import { parseMeterSignature, isPowerOfTwo } from './meter-map-utils';
 
-const SECONDARY_BUTTON_CLASS = 'rounded border border-app-border/40 bg-app-surface px-3 py-1 text-[11px] text-app-text transition-colors hover:bg-app-hover';
+const SECONDARY_BUTTON_CLASS = 'rounded border border-app-border/40 bg-app-surface px-3 py-1 text-ui text-app-text transition-colors hover:bg-app-hover';
 
 interface MeterMapEditorDialogProps {
   meterMap: MeterMapSnapshot;
@@ -202,7 +202,7 @@ export default function MeterMapEditorDialog({
         <h3 className="px-4 pb-2 pt-3 text-sm font-medium text-app-text">Edit Time Signature Map</h3>
 
         <div className="px-4 pb-2 max-h-[200px] overflow-y-auto">
-          <table className="w-full text-[11px]">
+          <table className="w-full text-ui">
             <thead>
               <tr className="text-app-text-muted">
                 <th className="text-left py-1 pr-2 font-normal">Measure</th>
@@ -216,7 +216,7 @@ export default function MeterMapEditorDialog({
                   <td className="py-1 pr-2">
                     <input
                       type="number"
-                      className="w-full rounded border border-app-border/30 bg-app-field px-1.5 py-0.5 text-[11px] text-app-text outline-none focus:border-app-border/60"
+                      className="w-full rounded border border-app-border/30 bg-app-field px-1.5 py-0.5 text-ui text-app-text outline-none focus:border-app-border/60"
                       value={row.measure}
                       onChange={(e) => handleMeasureChange(i, e.target.value)}
                       onBlur={(e) => commitMeasure(i, e.currentTarget.value)}
@@ -234,7 +234,7 @@ export default function MeterMapEditorDialog({
                   <td className="py-1 pr-2">
                     <input
                       type="text"
-                      className="w-full rounded border border-app-border/30 bg-app-field px-1.5 py-0.5 text-[11px] text-app-text outline-none focus:border-app-border/60"
+                      className="w-full rounded border border-app-border/30 bg-app-field px-1.5 py-0.5 text-ui text-app-text outline-none focus:border-app-border/60"
                       value={row.signatureText}
                       onChange={(e) => handleSignatureChange(i, e.target.value)}
                       onBlur={(e) => commitSignature(i, e.currentTarget.value)}
@@ -248,7 +248,7 @@ export default function MeterMapEditorDialog({
                   </td>
                   <td className="py-1 text-center">
                     <button
-                      className={`rounded px-1.5 py-0.5 text-[10px] ${canDelete ? 'text-app-danger hover:bg-app-outline-strong' : 'cursor-not-allowed text-app-text-muted'}`}
+                      className={`rounded px-1.5 py-0.5 text-tiny ${canDelete ? 'text-app-danger hover:bg-app-outline-strong' : 'cursor-not-allowed text-app-text-muted'}`}
                       disabled={!canDelete}
                       onClick={() => handleRemove(i)}
                     >
@@ -260,13 +260,13 @@ export default function MeterMapEditorDialog({
             </tbody>
           </table>
           {error && (
-            <p className="mt-2 text-[10px] text-app-danger">{error}</p>
+            <p className="mt-2 text-tiny text-app-danger">{error}</p>
           )}
         </div>
 
         <div className="flex items-center justify-between border-t border-app-border/20 px-4 py-2">
           <button
-            className="rounded border border-app-border/30 bg-app-surface px-3 py-1 text-[11px] text-app-text hover:bg-app-hover"
+            className="rounded border border-app-border/30 bg-app-surface px-3 py-1 text-ui text-app-text hover:bg-app-hover"
             onClick={handleAdd}
           >
             Add
@@ -279,7 +279,7 @@ export default function MeterMapEditorDialog({
               Cancel
             </button>
             <button
-              className="rounded border border-app-border/30 bg-app-surface px-3 py-1 text-[11px] text-app-text hover:bg-app-hover"
+              className="rounded border border-app-border/30 bg-app-surface px-3 py-1 text-ui text-app-text hover:bg-app-hover"
               onClick={handleOk}
             >
               OK

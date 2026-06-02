@@ -58,18 +58,18 @@ export function LineDefinitionTable<TLine extends ScoreEditorLineLike>({
   return (
     <div className="flex h-full flex-col overflow-hidden">
       <div className="flex items-center gap-1 border-b border-app-border bg-app-bg/50 px-2 py-1">
-        <span className="flex-1 text-[10px] uppercase tracking-wider text-app-text-muted">
+        <span className="flex-1 text-tiny uppercase tracking-wider text-app-text-muted">
           {title}
         </span>
         <button
-          className="rounded border border-app-border px-1.5 py-0.5 text-[10px] text-app-text-muted hover:bg-app-hover"
+          className="rounded border border-app-border px-1.5 py-0.5 text-tiny text-app-text-muted hover:bg-app-hover"
           onClick={onAddLine}
           title={addTitle}
         >
           +
         </button>
         <button
-          className="rounded border border-app-border px-1.5 py-0.5 text-[10px] text-app-text-muted hover:bg-app-hover"
+          className="rounded border border-app-border px-1.5 py-0.5 text-tiny text-app-text-muted hover:bg-app-hover"
           onClick={onRemoveSelectedLine}
           title={removeTitle}
         >
@@ -79,7 +79,7 @@ export function LineDefinitionTable<TLine extends ScoreEditorLineLike>({
 
       <div className="flex-1 overflow-auto bg-app-bg">
         <div
-          className="grid min-w-90 items-center border-b border-app-border/60 bg-app-menu text-[10px] text-app-text-soft"
+          className="grid min-w-90 items-center border-b border-app-border/60 bg-app-menu text-tiny text-app-text-soft"
           style={{ gridTemplateColumns: '36px minmax(96px, 1fr) 72px 72px 48px' }}
         >
           <div className="px-1 py-1 text-center">[x]</div>
@@ -103,7 +103,7 @@ export function LineDefinitionTable<TLine extends ScoreEditorLineLike>({
           return (
             <div
               key={`${label}-${index}`}
-              className={`grid min-w-90 items-center border-b border-app-border/30 text-[10px] last:border-b-0 ${
+              className={`grid min-w-90 items-center border-b border-app-border/30 text-tiny last:border-b-0 ${
                 selected ? 'bg-app-accent/15' : 'hover:bg-app-bg/40'
               }`}
               style={{ gridTemplateColumns: '36px minmax(96px, 1fr) 72px 72px 48px' }}
@@ -128,7 +128,7 @@ export function LineDefinitionTable<TLine extends ScoreEditorLineLike>({
 
               {updateLineLabel ? (
                 <input
-                  className="h-8 w-full border-0 border-r border-app-border/30 bg-transparent px-1 font-mono text-[10px] text-app-text-strong outline-none focus:bg-app-surface-raised focus:ring-1 focus:ring-app-accent"
+                  className="h-8 w-full border-0 border-r border-app-border/30 bg-transparent px-1 font-mono text-tiny text-app-text-strong outline-none focus:bg-app-surface-raised focus:ring-1 focus:ring-app-accent"
                   value={label}
                   onChange={(event) => {
                     updateLineAt(index, (currentLine) => updateLineLabel(currentLine, event.target.value, index));
@@ -141,7 +141,7 @@ export function LineDefinitionTable<TLine extends ScoreEditorLineLike>({
               )}
 
               <input
-                className="h-8 w-full border-0 border-r border-app-border/30 bg-transparent px-1 text-right text-[10px] text-app-text-strong outline-none focus:bg-app-surface-raised focus:ring-1 focus:ring-app-accent"
+                className="h-8 w-full border-0 border-r border-app-border/30 bg-transparent px-1 text-right text-tiny text-app-text-strong outline-none focus:bg-app-surface-raised focus:ring-1 focus:ring-app-accent"
                 type="number"
                 step="any"
                 value={lineMinimum(line)}
@@ -157,7 +157,7 @@ export function LineDefinitionTable<TLine extends ScoreEditorLineLike>({
               />
 
               <input
-                className="h-8 w-full border-0 border-r border-app-border/30 bg-transparent px-1 text-right text-[10px] text-app-text-strong outline-none focus:bg-app-surface-raised focus:ring-1 focus:ring-app-accent"
+                className="h-8 w-full border-0 border-r border-app-border/30 bg-transparent px-1 text-right text-tiny text-app-text-strong outline-none focus:bg-app-surface-raised focus:ring-1 focus:ring-app-accent"
                 type="number"
                 step="any"
                 value={lineMaximum(line)}

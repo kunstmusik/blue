@@ -103,7 +103,7 @@ export default function EffectEditorPage(): React.ReactElement {
           <div>{error}</div>
           <button
             type="button"
-            className="rounded border border-app-border bg-app-input px-3 py-1.5 text-xs text-app-text-strong hover:border-app-accent"
+            className="rounded border border-app-border bg-app-input px-3 py-1.5 text-body text-app-text-strong hover:border-app-accent"
             onClick={closeWindow}
           >
             Close Window

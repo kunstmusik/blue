@@ -12,7 +12,7 @@ export default function PolyObjectEditor({ document }: ScoreObjectEditorComponen
         <path d="M3 9h18" />
         <path d="M9 21V9" />
       </svg>
-      <span className="text-xs">PolyObject — double-click in the score to navigate into this group</span>
+      <span className="text-body">PolyObject — double-click in the score to navigate into this group</span>
     </div>
   );
 }

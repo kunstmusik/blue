@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { TimeBase } from '@blue/data';
 import type { ScoreTimeStateSnapshot } from '../../../../../shared/project-editor';
 
-const SECONDARY_BUTTON_CLASS = 'px-3 py-1 text-[11px] text-blue-text bg-blue-surface/40 hover:bg-blue-surface/70 rounded border border-blue-border/40 transition-colors cursor-pointer';
+const SECONDARY_BUTTON_CLASS = 'px-3 py-1 text-ui text-blue-text bg-blue-surface/40 hover:bg-blue-surface/70 rounded border border-blue-border/40 transition-colors cursor-pointer';
 
 export type TimebaseUpdateMode = 'UPDATE_ALL' | 'UPDATE_MATCHING';
 
@@ -88,11 +88,11 @@ export default function RulerConfigDialog({ timeState, onApply, onClose }: Props
 
           {/* Primary Ruler */}
           <fieldset className="space-y-2">
-            <legend className="text-xs font-bold text-blue-text">Primary Ruler</legend>
+            <legend className="text-body font-bold text-blue-text">Primary Ruler</legend>
             <div className="flex items-center gap-2">
-              <label className="text-[11px] text-blue-muted w-16 shrink-0">Format:</label>
+              <label className="text-ui text-blue-muted w-16 shrink-0">Format:</label>
               <select
-                className="flex-1 bg-blue-surface border border-blue-border/40 rounded px-2 py-1 text-[11px] text-blue-text cursor-pointer"
+                className="flex-1 bg-blue-surface border border-blue-border/40 rounded px-2 py-1 text-ui text-blue-text cursor-pointer"
                 value={primaryTimeDisplay}
                 onChange={(e) => setPrimaryTimeDisplay(e.target.value)}
               >
@@ -105,7 +105,7 @@ export default function RulerConfigDialog({ timeState, onApply, onClose }: Props
 
           {/* Update ScoreObjects */}
           <fieldset className="space-y-1">
-            <label className="flex items-center gap-2 text-[11px] text-blue-text cursor-pointer">
+            <label className="flex items-center gap-2 text-ui text-blue-text cursor-pointer">
               <input
                 type="checkbox"
                 className="w-3.5 h-3.5 cursor-pointer"
@@ -115,7 +115,7 @@ export default function RulerConfigDialog({ timeState, onApply, onClose }: Props
               Update ScoreObjects
             </label>
             <div className="ml-6 space-y-0.5">
-              <label className="flex items-center gap-2 text-[11px] text-blue-muted cursor-pointer">
+              <label className="flex items-center gap-2 text-ui text-blue-muted cursor-pointer">
                 <input
                   type="radio"
                   name="scoreObjectMode"
@@ -126,7 +126,7 @@ export default function RulerConfigDialog({ timeState, onApply, onClose }: Props
                 />
                 Update All TimeBases
               </label>
-              <label className="flex items-center gap-2 text-[11px] text-blue-muted cursor-pointer">
+              <label className="flex items-center gap-2 text-ui text-blue-muted cursor-pointer">
                 <input
                   type="radio"
                   name="scoreObjectMode"
@@ -142,7 +142,7 @@ export default function RulerConfigDialog({ timeState, onApply, onClose }: Props
 
           {/* Update Markers */}
           <fieldset className="space-y-1">
-            <label className="flex items-center gap-2 text-[11px] text-blue-text cursor-pointer">
+            <label className="flex items-center gap-2 text-ui text-blue-text cursor-pointer">
               <input
                 type="checkbox"
                 className="w-3.5 h-3.5 cursor-pointer"
@@ -152,7 +152,7 @@ export default function RulerConfigDialog({ timeState, onApply, onClose }: Props
               Update Markers
             </label>
             <div className="ml-6 space-y-0.5">
-              <label className="flex items-center gap-2 text-[11px] text-blue-muted cursor-pointer">
+              <label className="flex items-center gap-2 text-ui text-blue-muted cursor-pointer">
                 <input
                   type="radio"
                   name="markerMode"
@@ -163,7 +163,7 @@ export default function RulerConfigDialog({ timeState, onApply, onClose }: Props
                 />
                 Update All TimeBases
               </label>
-              <label className="flex items-center gap-2 text-[11px] text-blue-muted cursor-pointer">
+              <label className="flex items-center gap-2 text-ui text-blue-muted cursor-pointer">
                 <input
                   type="radio"
                   name="markerMode"
@@ -179,8 +179,8 @@ export default function RulerConfigDialog({ timeState, onApply, onClose }: Props
 
           {/* Secondary Ruler */}
           <fieldset className="space-y-2">
-            <legend className="text-xs font-bold text-blue-text">Secondary Ruler</legend>
-            <label className="flex items-center gap-2 text-[11px] text-blue-text cursor-pointer">
+            <legend className="text-body font-bold text-blue-text">Secondary Ruler</legend>
+            <label className="flex items-center gap-2 text-ui text-blue-text cursor-pointer">
               <input
                 type="checkbox"
                 className="w-3.5 h-3.5 cursor-pointer"
@@ -191,9 +191,9 @@ export default function RulerConfigDialog({ timeState, onApply, onClose }: Props
             </label>
             {secondaryRulerEnabled && (
               <div className="flex items-center gap-2">
-                <label className="text-[11px] text-blue-muted w-16 shrink-0">Format:</label>
+                <label className="text-ui text-blue-muted w-16 shrink-0">Format:</label>
                 <select
-                  className="flex-1 bg-blue-surface border border-blue-border/40 rounded px-2 py-1 text-[11px] text-blue-text cursor-pointer"
+                  className="flex-1 bg-blue-surface border border-blue-border/40 rounded px-2 py-1 text-ui text-blue-text cursor-pointer"
                   value={secondaryTimeDisplay}
                   onChange={(e) => setSecondaryTimeDisplay(e.target.value)}
                 >
@@ -207,11 +207,11 @@ export default function RulerConfigDialog({ timeState, onApply, onClose }: Props
 
           {/* SMPTE Settings */}
           <fieldset className="space-y-2">
-            <legend className="text-xs font-bold text-blue-text">SMPTE Settings</legend>
+            <legend className="text-body font-bold text-blue-text">SMPTE Settings</legend>
             <div className="flex items-center gap-2">
-              <label className="text-[11px] text-blue-muted w-16 shrink-0">Frame Rate:</label>
+              <label className="text-ui text-blue-muted w-16 shrink-0">Frame Rate:</label>
               <select
-                className="flex-1 bg-blue-surface border border-blue-border/40 rounded px-2 py-1 text-[11px] text-blue-text cursor-pointer"
+                className="flex-1 bg-blue-surface border border-blue-border/40 rounded px-2 py-1 text-ui text-blue-text cursor-pointer"
                 value={smpteFrameRate}
                 onChange={(e) => setSmpteFrameRate(Number(e.target.value))}
               >
@@ -231,7 +231,7 @@ export default function RulerConfigDialog({ timeState, onApply, onClose }: Props
               Cancel
             </button>
             <button
-              className="px-3 py-1 text-[11px] text-blue-text bg-blue-accent/20 hover:bg-blue-accent/30 rounded transition-colors font-medium cursor-pointer"
+              className="px-3 py-1 text-ui text-blue-text bg-blue-accent/20 hover:bg-blue-accent/30 rounded transition-colors font-medium cursor-pointer"
               onClick={handleOk}
             >
               OK

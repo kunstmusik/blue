@@ -69,7 +69,7 @@ function SectionButton({
       type="button"
       aria-current={active ? 'page' : undefined}
       className={[
-        'block w-full border-l-2 px-4 py-2 text-left text-[13px] transition-colors',
+        'block w-full border-l-2 px-4 py-2 text-left text-content transition-colors',
         active
           ? 'border-l-blue-accent bg-blue-accent/[0.08] text-gray-100'
           : 'border-l-transparent text-blue-muted hover:text-gray-100',

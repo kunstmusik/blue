@@ -52,6 +52,19 @@
   --color-blue-muted: var(--color-app-text-muted);
   --color-blue-text: var(--color-app-text);
   --color-blue-hover: var(--color-app-hover);
+
+  --text-nano: 0.5rem;
+  --text-nano--line-height: 0.625rem;
+  --text-micro: 0.5625rem;
+  --text-micro--line-height: 0.75rem;
+  --text-tiny: 0.625rem;
+  --text-tiny--line-height: 0.75rem;
+  --text-ui: 0.6875rem;
+  --text-ui--line-height: 0.875rem;
+  --text-body: 0.75rem;
+  --text-body--line-height: 1rem;
+  --text-content: 0.8125rem;
+  --text-content--line-height: 1.125rem;
 }
 
 @layer base {
@@ -83,7 +96,7 @@
 
   .toolbar-text-button {
     @apply inline-flex items-center justify-center gap-2 rounded-lg border border-app-accent/20
-           bg-app-border px-2.5 py-1 text-[11px] font-medium text-app-text-strong transition-colors
+           bg-app-border px-2.5 py-1 text-ui font-medium text-app-text-strong transition-colors
            hover:bg-app-accent/20 hover:text-app-text-strong
            disabled:opacity-40 disabled:cursor-not-allowed;
   }
@@ -97,20 +110,20 @@
   }
 
   .toolbar-display-label {
-    @apply text-[10px] uppercase tracking-[0.2em] text-app-text-muted;
+    @apply text-tiny uppercase tracking-[0.2em] text-app-text-muted;
   }
 
   .toolbar-display-main {
-    @apply font-mono text-[12px] font-medium leading-tight text-app-text-strong;
+    @apply font-mono text-body font-medium leading-tight text-app-text-strong;
   }
 
   .toolbar-display-secondary {
-    @apply font-mono text-[11px] text-app-text leading-tight;
+    @apply font-mono text-ui text-app-text leading-tight;
   }
 
   .toolbar-display-main--playhead,
   .toolbar-display-secondary--playhead {
-    @apply text-[12px] text-app-text-strong;
+    @apply text-body text-app-text-strong;
   }
 
   .toolbar-displays {
@@ -142,7 +155,7 @@
   }
 
   .toolbar-display-secondary--selection {
-    @apply text-[12px] text-app-text-strong;
+    @apply text-body text-app-text-strong;
   }
 
   .toolbar-context-menu {
@@ -167,7 +180,7 @@
     min-height: 32px;
     padding: 0 12px;
     outline: none;
-    font-size: 12px;
+    font-size: var(--text-body);
     color: inherit;
     user-select: none;
     background: var(--color-app-clear);
@@ -188,7 +201,7 @@
 
   .toolbar-context-menu__subtrigger::after {
     content: '▸';
-    font-size: 10px;
+    font-size: var(--text-tiny);
     opacity: 0.6;
     margin-left: 12px;
   }
@@ -230,7 +243,7 @@
     min-height: 32px;
     padding: 0 12px;
     outline: none;
-    font-size: 12px;
+    font-size: var(--text-body);
     color: inherit;
     user-select: none;
     background: var(--color-app-clear);
@@ -248,7 +261,7 @@
 
   .editor-context-menu__shortcut {
     margin-left: auto;
-    font-size: 11px;
+    font-size: var(--text-ui);
     color: var(--color-app-text-soft);
   }
 
@@ -264,7 +277,7 @@
 
   .editor-context-menu__subtrigger::after {
     content: '▸';
-    font-size: 10px;
+    font-size: var(--text-tiny);
     opacity: 0.6;
     margin-left: 12px;
   }
@@ -295,7 +308,7 @@
     background: var(--color-app-canvas);
     box-shadow: 0 4px 12px var(--color-app-shadow);
     color: var(--color-app-text-strong);
-    font-size: 12px;
+    font-size: var(--text-body);
     line-height: 1.4;
     max-width: 240px;
     z-index: 130;
@@ -317,24 +330,14 @@
     fill: var(--color-app-canvas);
   }
 
-  .workbench-context-menu__item-indicator {
-    @apply inline-flex h-3 w-3 items-center justify-center flex-none;
-  }
-
-  /* Responsive utilities */
-  @media (max-width: 768px) {
-    .project-details-grid {
-      grid-template-columns: 1fr !important;
-    }
-  }
 }
 
 /* Dockview theme overrides for Blue dark theme */
 :root {
   --dv-font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  --dv-font-size: 13px;
+  --dv-font-size: var(--text-content);
   --dv-paneview-active-border-color: var(--color-app-border);
-  --dv-tabs-and-actions-container-font-size: 13px;
+  --dv-tabs-and-actions-container-font-size: var(--text-content);
   --dv-tabs-and-actions-container-height: 35px;
   --dv-tab-close-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2'%3E%3Cline x1='18' y1='6' x2='6' y2='18'/%3E%3Cline x1='6' y1='6' x2='18' y2='18'/%3E%3C/svg%3E");
 }
@@ -472,7 +475,7 @@
 }
 
 .workbench-edge-rail__group-action {
-  font-size: 10px;
+  font-size: var(--text-tiny);
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -505,7 +508,7 @@
   writing-mode: vertical-rl;
   text-transform: uppercase;
   letter-spacing: 0.16em;
-  font-size: 10px;
+  font-size: var(--text-tiny);
   font-weight: 700;
 }
 
@@ -524,7 +527,7 @@
   height: 27px;
   padding: 0 12px;
   border-radius: 4px;
-  font-size: 11px;
+  font-size: var(--text-ui);
   font-weight: 600;
   letter-spacing: 0.04em;
 }
@@ -547,7 +550,6 @@
   flex-shrink: 0;
 }
 
-.workbench-edge-rail__group-action-label,
 .workbench-edge-rail__label {
   white-space: nowrap;
 }
@@ -717,7 +719,7 @@
 
 .workbench-aux-slideout__title {
   min-width: 0;
-  font-size: 12px;
+  font-size: var(--text-body);
   font-weight: 500;
   color: var(--color-app-text-bright);
 }
@@ -755,7 +757,7 @@
   padding: 0 10px;
   border-radius: 7px;
   outline: none;
-  font-size: 12px;
+  font-size: var(--text-body);
   color: inherit;
   user-select: none;
 }
@@ -848,7 +850,7 @@
   flex-direction: column;
   height: 100%;
   background: var(--color-app-bg);
-  font-size: 13px;
+  font-size: var(--text-content);
   font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
 }
 
@@ -867,7 +869,7 @@
 
 .output-panel__tab {
   padding: 4px 12px;
-  font-size: 12px;
+  font-size: var(--text-body);
   white-space: nowrap;
   border-right: 1px solid color-mix(in srgb, var(--color-app-border) 28%, var(--color-app-clear));
   border-bottom: 2px solid var(--color-app-clear);
@@ -889,7 +891,7 @@
 .output-panel__toolbar-btn {
   margin-left: auto;
   padding: 4px 8px;
-  font-size: 10px;
+  font-size: var(--text-tiny);
   color: var(--color-app-text-muted);
   flex-shrink: 0;
   transition: color 140ms ease;
@@ -946,7 +948,7 @@
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  font-size: 12px;
+  font-size: var(--text-body);
   color: var(--color-app-text-muted);
   cursor: pointer;
 }
@@ -955,7 +957,7 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 12px;
+  font-size: var(--text-body);
   color: var(--color-app-text-muted);
 }
 
@@ -966,7 +968,7 @@
   border-radius: 3px;
   background: var(--color-app-input);
   color: var(--color-app-text-soft);
-  font-size: 12px;
+  font-size: var(--text-body);
   outline: none;
 }
 
@@ -998,7 +1000,7 @@
 .mixer-channel-group__header {
   min-height: 22px;
   padding: 4px 8px;
-  font-size: 11px;
+  font-size: var(--text-ui);
   font-weight: 600;
   color: var(--color-app-text-soft);
   background: var(--color-app-surface-strong);
@@ -1039,7 +1041,7 @@
 
 .mixer-channel-name {
   text-align: center;
-  font-size: 11px;
+  font-size: var(--text-ui);
   font-weight: 600;
   padding: 4px 2px;
   background: var(--color-app-surface);
@@ -1067,7 +1069,7 @@
   border-radius: 2px;
   background: var(--color-app-input);
   color: var(--color-app-text-soft);
-  font-size: 11px;
+  font-size: var(--text-ui);
   font-weight: 600;
   text-align: center;
   outline: none;
@@ -1083,7 +1085,7 @@
 
 .mixer-chain-label {
   text-align: center;
-  font-size: 9px;
+  font-size: var(--text-micro);
   text-transform: uppercase;
   letter-spacing: 0.15em;
   color: var(--color-app-text-subtle);
@@ -1158,7 +1160,7 @@
   height: 100%;
   min-height: 48px;
   color: var(--color-app-text-subtle);
-  font-size: 11px;
+  font-size: var(--text-ui);
   user-select: none;
 }
 
@@ -1181,7 +1183,7 @@
   display: flex;
   align-items: center;
   gap: 3px;
-  font-size: 10px;
+  font-size: var(--text-tiny);
   color: var(--color-app-text-soft);
   white-space: nowrap;
   overflow: hidden;
@@ -1195,7 +1197,7 @@
 }
 
 .mixer-chain-entry__send-icon {
-  font-size: 8px;
+  font-size: var(--text-nano);
   font-weight: 700;
   color: var(--color-app-warning);
   flex-shrink: 0;
@@ -1220,7 +1222,7 @@
 }
 
 .mixer-level-label {
-  font-size: 9px;
+  font-size: var(--text-micro);
   text-transform: uppercase;
   letter-spacing: 0.15em;
   color: var(--color-app-text-subtle);
@@ -1237,7 +1239,7 @@
 }
 
 .mixer-level-value {
-  font-size: 10px;
+  font-size: var(--text-tiny);
   color: var(--color-app-text-muted);
   text-align: center;
   padding: 1px 0;
@@ -1257,7 +1259,7 @@
   border-radius: 2px;
   background: var(--color-app-input);
   color: var(--color-app-text-soft);
-  font-size: 10px;
+  font-size: var(--text-tiny);
   text-align: center;
   outline: none;
 }
@@ -1274,7 +1276,7 @@
 }
 
 .mixer-output-label {
-  font-size: 9px;
+  font-size: var(--text-micro);
   text-transform: uppercase;
   letter-spacing: 0.15em;
   color: var(--color-app-text-subtle);
@@ -1288,7 +1290,7 @@
   border-radius: 3px;
   background: var(--color-app-input);
   color: var(--color-app-text-soft);
-  font-size: 10px;
+  font-size: var(--text-tiny);
   outline: none;
   cursor: pointer;
 }
@@ -1298,14 +1300,14 @@
 }
 
 .mixer-routing-warning {
-  font-size: 10px;
+  font-size: var(--text-tiny);
   color: var(--color-app-warning);
   margin-top: 1px;
   cursor: help;
 }
 
 .mixer-playback-badge {
-  font-size: 10px;
+  font-size: var(--text-tiny);
   padding: 2px 6px;
   border-radius: 3px;
   background: color-mix(in srgb, var(--color-app-focus) 20%, var(--color-app-clear));
@@ -1336,7 +1338,7 @@
 }
 
 .mixer-send-editor__header {
-  font-size: 13px;
+  font-size: var(--text-content);
   font-weight: 600;
   color: var(--color-app-text-soft);
   margin-bottom: 12px;
@@ -1347,7 +1349,7 @@
   flex-direction: column;
   gap: 4px;
   margin-bottom: 12px;
-  font-size: 11px;
+  font-size: var(--text-ui);
   color: var(--color-app-text-muted);
 }
 
@@ -1357,7 +1359,7 @@
   border-radius: 3px;
   background: var(--color-app-input);
   color: var(--color-app-text-soft);
-  font-size: 12px;
+  font-size: var(--text-body);
   outline: none;
 }
 
@@ -1378,7 +1380,7 @@
 }
 
 .mixer-send-editor__slider-bound {
-  font-size: 10px;
+  font-size: var(--text-tiny);
   color: var(--color-app-text-subtle);
   min-width: 20px;
   text-align: center;
@@ -1386,7 +1388,7 @@
 
 .mixer-send-editor__level-value {
   text-align: center;
-  font-size: 12px;
+  font-size: var(--text-body);
   color: var(--color-app-text-soft);
   margin-top: 4px;
 }

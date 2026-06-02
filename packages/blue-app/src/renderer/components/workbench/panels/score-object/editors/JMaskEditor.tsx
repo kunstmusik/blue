@@ -89,11 +89,11 @@ export default function JMaskEditor({ document, onPatch }: ScoreObjectEditorComp
   return (
     <div ref={testRef} className="flex h-full flex-col bg-blue-bg" tabIndex={-1}>
       <div className="flex shrink-0 items-center gap-2 border-b border-app-border bg-app-surface-strong px-2 py-1">
-        <span className="text-[11px] font-semibold text-app-text">JMask</span>
+        <span className="text-ui font-semibold text-app-text">JMask</span>
         <div className="relative">
           <button
             type="button"
-            className="flex h-4 w-4 items-center justify-center rounded text-[10px] text-app-text-muted hover:bg-blue-border"
+            className="flex h-4 w-4 items-center justify-center rounded text-tiny text-app-text-muted hover:bg-blue-border"
             onClick={() => setShowVisibilityPopup(p => !p)}
             title="Parameter Visibility"
           >
@@ -106,7 +106,7 @@ export default function JMaskEditor({ document, onPatch }: ScoreObjectEditorComp
                 const itemLabel = pName ? `Parameter ${i + 1} - ${pName}` : `Parameter ${i + 1}`;
                 const isVisible = p.visible !== false;
                 return (
-                  <label key={i} className="flex cursor-pointer items-center gap-2 px-3 py-0.5 text-xs text-app-text hover:bg-blue-accent/20">
+                  <label key={i} className="flex cursor-pointer items-center gap-2 px-3 py-0.5 text-body text-app-text hover:bg-blue-accent/20">
                     <input
                       type="checkbox"
                       checked={isVisible}
@@ -121,7 +121,7 @@ export default function JMaskEditor({ document, onPatch }: ScoreObjectEditorComp
           )}
         </div>
         <div className="flex-1" />
-        <label className="flex items-center gap-1 text-[11px] text-gray-300">
+        <label className="flex items-center gap-1 text-ui text-gray-300">
           <input
             type="checkbox"
             checked={payload.seedUsed}
@@ -134,13 +134,13 @@ export default function JMaskEditor({ document, onPatch }: ScoreObjectEditorComp
           <CommitNumberInput
             value={payload.seed}
             step={1}
-            className="w-24 rounded border border-blue-border bg-blue-bg px-1.5 py-0.5 text-xs text-gray-100 focus:border-blue-accent focus:outline-none"
+            className="w-24 rounded border border-blue-border bg-blue-bg px-1.5 py-0.5 text-body text-gray-100 focus:border-blue-accent focus:outline-none"
             onChange={handleSeedCommit}
           />
         )}
         <button
           type="button"
-          className="rounded border border-blue-border px-2 py-0.5 text-[11px] text-gray-300 hover:border-blue-accent"
+          className="rounded border border-blue-border px-2 py-0.5 text-ui text-gray-300 hover:border-blue-accent"
           onClick={handleTest}
           disabled={testing}
           title="Test (Cmd/Ctrl+T)"
@@ -149,7 +149,7 @@ export default function JMaskEditor({ document, onPatch }: ScoreObjectEditorComp
         </button>
       </div>
       {testError && (
-        <div className="px-3 py-1.5 text-xs border-b shrink-0 bg-red-900/20 text-red-300 flex items-center gap-2">
+        <div className="px-3 py-1.5 text-body border-b shrink-0 bg-red-900/20 text-red-300 flex items-center gap-2">
           <span>Error: {testError}</span>
           <button className="underline text-blue-muted hover:text-gray-200" onClick={clearTestError}>dismiss</button>
         </div>

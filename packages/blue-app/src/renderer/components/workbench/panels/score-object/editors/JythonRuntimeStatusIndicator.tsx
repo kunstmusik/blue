@@ -28,7 +28,7 @@ export default function JythonRuntimeStatusIndicator(): React.ReactElement {
     <>
       <button
         type="button"
-        className="rounded border border-blue-border px-2 py-0.5 text-[11px] text-gray-300 hover:border-blue-accent"
+        className="rounded border border-blue-border px-2 py-0.5 text-ui text-gray-300 hover:border-blue-accent"
         disabled={reinitializing}
         onClick={() => { void handleReinitialize(); }}
         title="Reinitialize the project Jython runtime"
@@ -36,7 +36,7 @@ export default function JythonRuntimeStatusIndicator(): React.ReactElement {
         {reinitializing ? 'Reinitializing...' : 'Reinitialize Jython'}
       </button>
       {runtimeError && (
-        <div className="px-3 py-1.5 text-xs border-b shrink-0 bg-red-900/20 text-red-300 flex items-center gap-2 basis-full">
+        <div className="px-3 py-1.5 text-body border-b shrink-0 bg-red-900/20 text-red-300 flex items-center gap-2 basis-full">
           <span>Error: {runtimeError}</span>
           <button
             className="underline text-blue-muted hover:text-gray-200"

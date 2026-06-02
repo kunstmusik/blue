@@ -1,6 +1,10 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import type { TimeConversionContext } from '../../../../../shared/project-editor';
 import { TIME_BASE_OPTIONS, formatForBase, parseForBase } from '../../../../time/time-unit-logic';
+import {
+  BLUE_INSPECTOR_INPUT_CLASS,
+  BLUE_INSPECTOR_TIME_BASE_SELECT_CLASS,
+} from '../shared/compactFieldStyles';
 
 export type { TimeConversionContext };
 
@@ -58,7 +62,7 @@ export default function TimeUnitEditor({ valueBeats, timeBase, timeContext, dura
   return (
     <div className="flex flex-col gap-0.5">
       <select
-        className="w-full rounded border border-blue-border bg-blue-bg px-1.5 py-0.5 text-[10px] text-gray-300 focus:border-blue-accent focus:outline-none"
+        className={BLUE_INSPECTOR_TIME_BASE_SELECT_CLASS}
         value={activeBase}
         disabled={disabled}
         onChange={(e) => handleBaseChange(e.target.value)}
@@ -70,7 +74,7 @@ export default function TimeUnitEditor({ valueBeats, timeBase, timeContext, dura
       <input
         ref={inputRef}
         type="text"
-        className="w-full rounded border border-blue-border bg-blue-bg px-2 py-1 text-xs text-gray-100 focus:border-blue-accent focus:outline-none"
+        className={BLUE_INSPECTOR_INPUT_CLASS}
         value={draft}
         disabled={disabled}
         onChange={(e) => setDraft(e.target.value)}

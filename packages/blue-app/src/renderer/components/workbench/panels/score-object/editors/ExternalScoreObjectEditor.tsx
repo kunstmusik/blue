@@ -3,6 +3,7 @@ import type { ScoreObjectEditorComponentProps } from '../editor-registry';
 import SelectedCodeEditor from '../../editors/SelectedCodeEditor';
 import GeneratedScoreModal from './GeneratedScoreModal';
 import { useScoreObjectTest } from './useScoreObjectTest';
+import { BLUE_INSPECTOR_LABEL_TEXT_CLASS } from '../../shared/compactFieldStyles';
 
 export default function ExternalScoreObjectEditor({ document, onPatch }: ScoreObjectEditorComponentProps): React.ReactElement {
   const editor = document.editor;
@@ -49,15 +50,15 @@ export default function ExternalScoreObjectEditor({ document, onPatch }: ScoreOb
   return (
     <div className="flex flex-col h-full">
       <div className="flex items-center gap-2 px-3 py-2 border-b border-blue-border shrink-0">
-        <label className="shrink-0 text-xs text-blue-muted">Command Line:</label>
+        <label className={`shrink-0 ${BLUE_INSPECTOR_LABEL_TEXT_CLASS}`}>Command Line:</label>
         <input
           type="text"
-          className="flex-1 min-w-0 rounded border border-blue-border bg-blue-bg px-2 py-1 text-xs text-gray-100 font-mono focus:border-blue-accent focus:outline-none"
+          className="flex-1 min-w-0 rounded border border-blue-border bg-blue-bg px-2 py-1 text-body text-gray-100 font-mono focus:border-blue-accent focus:outline-none"
           value={editor.commandLine}
           onChange={handleCommandLineChange}
         />
         <button
-          className="shrink-0 px-3 py-1 text-xs rounded border border-blue-border text-blue-muted hover:bg-blue-border/30 disabled:opacity-50"
+          className="shrink-0 px-3 py-1 text-body rounded border border-blue-border text-blue-muted hover:bg-blue-border/30 disabled:opacity-50"
           disabled={!canTest}
           onClick={handleTest}
           title="Generate score from external command and show results"
@@ -66,7 +67,7 @@ export default function ExternalScoreObjectEditor({ document, onPatch }: ScoreOb
         </button>
       </div>
       {testError && (
-        <div className="px-3 py-1.5 text-xs border-b shrink-0 bg-red-900/20 text-red-300 flex items-center gap-2">
+        <div className="px-3 py-1.5 text-body border-b shrink-0 bg-red-900/20 text-red-300 flex items-center gap-2">
           <span>Error: {testError}</span>
           <button className="underline text-blue-muted hover:text-gray-200" onClick={clearTestError}>dismiss</button>
         </div>

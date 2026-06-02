@@ -269,7 +269,7 @@ export default function MixerPanel(): React.ReactElement {
             <div className="px-4 py-3">
               <input
                 ref={groupRenameInputRef}
-                className="w-full rounded-sm border border-blue-accent/40 bg-blue-surface/60 px-2 py-1 text-sm text-blue-text outline-none"
+                className="w-full rounded-sm border border-blue-accent/40 bg-blue-surface/60 px-2 py-1 text-body text-blue-text outline-none"
                 value={groupRenameDialog.name}
                 onChange={(event) => {
                   setGroupRenameDialog((prev) => (
@@ -291,14 +291,14 @@ export default function MixerPanel(): React.ReactElement {
             <div className="flex justify-end gap-2 border-t border-blue-border/30 px-4 py-3">
               <button
                 type="button"
-                className="rounded border border-blue-border/50 bg-blue-surface/40 px-3 py-1 text-xs text-blue-muted hover:text-blue-text"
+                className="rounded border border-blue-border/50 bg-blue-surface/40 px-3 py-1 text-body text-blue-muted hover:text-blue-text"
                 onClick={closeGroupRenameDialog}
               >
                 Cancel
               </button>
               <button
                 type="button"
-                className="rounded border border-blue-accent/60 bg-blue-accent/30 px-3 py-1 text-xs text-blue-text"
+                className="rounded border border-blue-accent/60 bg-blue-accent/30 px-3 py-1 text-body text-blue-text"
                 onClick={commitGroupRenameDialog}
               >
                 OK

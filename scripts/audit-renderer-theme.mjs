@@ -19,6 +19,8 @@ const arbitraryUtilityRegex = new RegExp(
   'g',
 );
 
+const arbitraryFontSizeUtilityRegex = /\b(?:[A-Za-z0-9_-]+:)*text-\[(?<value>\d+(?:\.\d+)?(?:px|rem|em|pt))\](?:\/\[[^\]]+\])?/g;
+
 const inlineColorRegex = new RegExp(
   String.raw`\b(?:background(?:Color)?|color|border(?:Color)?|outlineColor|fill|stroke|boxShadow)\s*:\s*(?<quote>['"])(?<value>[^'"]*${colorLiteralPattern}[^'"]*)\k<quote>`,
   'g',
@@ -202,6 +204,10 @@ for (const absolutePath of listFiles(rendererRoot)) {
     const lineNumber = index + 1;
 
     for (const match of line.matchAll(arbitraryUtilityRegex)) {
+      pushFinding(findings, exceptionRecords, relativePath, lineNumber, match.groups.value, 'arbitrary-utility');
+    }
+
+    for (const match of line.matchAll(arbitraryFontSizeUtilityRegex)) {
       pushFinding(findings, exceptionRecords, relativePath, lineNumber, match.groups.value, 'arbitrary-utility');
     }
 

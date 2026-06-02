@@ -40,7 +40,7 @@ export function createArrangementColumns({
       minSize: 50,
       cell: (info) => (
         <input
-          className="w-full rounded border border-blue-border bg-app-input px-1 py-0.5 font-mono text-xs text-app-text outline-none focus:border-blue-accent"
+          className="w-full rounded border border-blue-border bg-app-input px-1 py-0.5 font-mono text-body text-app-text outline-none focus:border-blue-accent"
           defaultValue={info.getValue()}
           aria-label="Instrument ID"
           onClick={(event) => event.stopPropagation()}
@@ -62,7 +62,7 @@ export function createArrangementColumns({
       minSize: 80,
       cell: (info) => (
         <input
-          className="w-full rounded border border-blue-border bg-app-input px-1 py-0.5 text-xs text-app-text outline-none focus:border-blue-accent"
+          className="w-full rounded border border-blue-border bg-app-input px-1 py-0.5 text-body text-app-text outline-none focus:border-blue-accent"
           defaultValue={info.getValue() || ''}
           placeholder="(unnamed)"
           aria-label="Instrument Name"

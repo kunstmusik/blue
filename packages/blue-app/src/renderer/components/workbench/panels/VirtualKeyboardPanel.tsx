@@ -170,14 +170,14 @@ export default function VirtualKeyboardPanel(): ReactElement {
 
   return (
     <div className="flex h-full flex-col bg-blue-bg text-app-text">
-      <div className="flex flex-none items-center gap-2 border-b border-blue-border bg-app-surface-strong/90 px-3 py-2 text-sm">
+      <div className="flex flex-none items-center gap-2 border-b border-blue-border bg-app-surface-strong/90 px-3 py-2 text-body">
         <label className="flex items-center gap-1.5 text-app-text">
-          <span className="text-xs text-blue-muted">Channel</span>
+          <span className="text-body text-blue-muted">Channel</span>
           <input
             type="number"
             min={1}
             max={16}
-            className="w-12 rounded border border-blue-border bg-blue-bg px-1.5 py-1 text-center text-sm text-app-text outline-none focus:border-blue-accent"
+            className="w-12 rounded border border-blue-border bg-blue-bg px-1.5 py-1 text-center text-body text-app-text outline-none focus:border-blue-accent"
             value={displayChannel}
             onChange={(e) => setChannel(Number.parseInt(e.target.value, 10) - 1)}
           />
@@ -190,14 +190,14 @@ export default function VirtualKeyboardPanel(): ReactElement {
             onChange={(e) => setVelocityOverride(e.target.checked)}
             title="Enable Velocity Override"
           />
-          <span className="text-xs text-blue-muted">Velocity</span>
+          <span className="text-body text-blue-muted">Velocity</span>
           <input
             type="number"
             min={0}
             max={127}
             disabled={!velocityOverride}
             className={[
-              'w-14 rounded border border-blue-border bg-blue-bg px-1.5 py-1 text-center text-sm outline-none focus:border-blue-accent',
+              'w-14 rounded border border-blue-border bg-blue-bg px-1.5 py-1 text-center text-body outline-none focus:border-blue-accent',
               velocityOverride ? 'text-gray-100' : 'text-blue-muted opacity-50',
             ].join(' ')}
             value={velocity}
@@ -206,12 +206,12 @@ export default function VirtualKeyboardPanel(): ReactElement {
         </label>
 
         <label className="flex items-center gap-1.5 text-gray-100">
-          <span className="text-xs text-blue-muted">Octave</span>
+          <span className="text-body text-blue-muted">Octave</span>
           <input
             type="number"
             min={0}
             max={7}
-            className="w-12 rounded border border-blue-border bg-blue-bg px-1.5 py-1 text-center text-sm text-gray-100 outline-none focus:border-blue-accent"
+            className="w-12 rounded border border-blue-border bg-blue-bg px-1.5 py-1 text-center text-body text-gray-100 outline-none focus:border-blue-accent"
             value={octave}
             onChange={(e) => setOctave(Number.parseInt(e.target.value, 10))}
           />
@@ -219,7 +219,7 @@ export default function VirtualKeyboardPanel(): ReactElement {
 
         <button
           type="button"
-          className="ml-auto rounded border border-blue-border bg-blue-surface px-3 py-1 text-sm text-gray-100 transition hover:border-blue-accent disabled:opacity-50"
+          className="ml-auto rounded border border-blue-border bg-blue-surface px-3 py-1 text-body text-gray-100 transition hover:border-blue-accent disabled:opacity-50"
           onClick={() => void releaseAllPressedNotes()}
           disabled={!loaded}
         >

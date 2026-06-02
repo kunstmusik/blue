@@ -103,7 +103,7 @@ export default function LiveSpaceTab(): React.ReactElement {
         }}>
           <div style={{
             padding: '4px 8px',
-            fontSize: '11px',
+            fontSize: 'var(--text-ui)',
             color: 'var(--color-app-text-muted)',
             borderBottom: '1px solid var(--color-app-border)',
             fontWeight: 500,
@@ -112,7 +112,7 @@ export default function LiveSpaceTab(): React.ReactElement {
           </div>
           <div style={{ flex: 1, overflow: 'auto' }}>
             {sets.length === 0 && (
-              <div style={{ padding: '8px', fontSize: '11px', color: 'var(--color-app-text-subtle)' }}>No saved sets</div>
+              <div style={{ padding: '8px', fontSize: 'var(--text-ui)', color: 'var(--color-app-text-subtle)' }}>No saved sets</div>
             )}
             {sets.map((set, i) => (
               <div
@@ -122,7 +122,7 @@ export default function LiveSpaceTab(): React.ReactElement {
                 onMouseLeave={() => setHoveredSetIndex(-1)}
                 style={{
                   padding: '4px 8px',
-                  fontSize: '12px',
+                  fontSize: 'var(--text-body)',
                   cursor: 'pointer',
                   background: selectedSetIndex === i ? 'var(--color-app-accent-muted)' : undefined,
                   color: selectedSetIndex === i ? 'var(--color-app-text-strong)' : 'var(--color-app-text-muted)',
@@ -169,7 +169,7 @@ export default function LiveSpaceTab(): React.ReactElement {
             {Array.from({ length: bins.columns }, (_, ci) => (
               <div key={ci} style={{
                 textAlign: 'center',
-                fontSize: '11px',
+                fontSize: 'var(--text-ui)',
                 color: 'var(--color-app-text-subtle)',
                 padding: '2px 0',
                 fontWeight: 500,
@@ -191,7 +191,7 @@ export default function LiveSpaceTab(): React.ReactElement {
                 <React.Fragment key={ri}>
                   {/* Row label */}
                   <div style={{
-                    fontSize: '10px',
+                    fontSize: 'var(--text-tiny)',
                     color: 'var(--color-app-text-subtle)',
                     display: 'flex',
                     alignItems: 'center',
@@ -215,7 +215,7 @@ export default function LiveSpaceTab(): React.ReactElement {
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          fontSize: '11px',
+                          fontSize: 'var(--text-ui)',
                           cursor: 'pointer',
                           borderRadius: '2px',
                           border: isSelected ? '1px solid var(--color-app-text-strong)' : '1px solid var(--color-app-border)',
@@ -269,14 +269,14 @@ const toolbarLabelStyle: React.CSSProperties = {
   display: 'flex',
   alignItems: 'center',
   gap: '4px',
-  fontSize: '12px',
+  fontSize: 'var(--text-body)',
   color: 'var(--color-app-text-muted)',
 };
 
 const spinnerStyle: React.CSSProperties = {
   width: '52px',
   padding: '2px 4px',
-  fontSize: '12px',
+  fontSize: 'var(--text-body)',
   background: 'var(--color-app-canvas)',
   color: 'var(--color-app-text)',
   border: '1px solid var(--color-app-border)',
@@ -286,7 +286,7 @@ const spinnerStyle: React.CSSProperties = {
 
 const toolbarBtnStyle: React.CSSProperties = {
   padding: '3px 10px',
-  fontSize: '12px',
+  fontSize: 'var(--text-body)',
   background: 'var(--color-app-surface-strong)',
   color: 'var(--color-app-text-muted)',
   border: '1px solid var(--color-app-border)',
@@ -297,7 +297,7 @@ const toolbarBtnStyle: React.CSSProperties = {
 const setBtnStyle: React.CSSProperties = {
   flex: 1,
   padding: '2px 0',
-  fontSize: '12px',
+  fontSize: 'var(--text-body)',
   background: 'var(--color-app-surface-strong)',
   color: 'var(--color-app-text-muted)',
   border: '1px solid var(--color-app-border)',
@@ -308,7 +308,7 @@ const setBtnStyle: React.CSSProperties = {
 
 const gridBtnStyle: React.CSSProperties = {
   padding: '2px 8px',
-  fontSize: '11px',
+  fontSize: 'var(--text-ui)',
   background: 'var(--color-app-surface-strong)',
   color: 'var(--color-app-text-muted)',
   border: '1px solid var(--color-app-border)',

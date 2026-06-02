@@ -1,10 +1,16 @@
 import React, { useCallback } from 'react';
 import type { ScoreObjectEditorComponentProps } from '../editor-registry';
+import {
+  BLUE_INSPECTOR_CONTROL_CLASS,
+  BLUE_INSPECTOR_FIELD_LABEL_CLASS,
+  BLUE_INSPECTOR_ROW_CLASS,
+  BLUE_INSPECTOR_VALUE_TEXT_CLASS,
+} from '../../shared/compactFieldStyles';
 
 function FieldRow({ label, children }: { label: string; children: React.ReactNode }): React.ReactElement {
   return (
-    <div className="flex items-center gap-2 px-3 py-1.5">
-      <label className="w-28 shrink-0 text-xs text-blue-muted text-right">{label}</label>
+    <div className={BLUE_INSPECTOR_ROW_CLASS}>
+      <label className={BLUE_INSPECTOR_FIELD_LABEL_CLASS}>{label}</label>
       <div className="flex-1 min-w-0">{children}</div>
     </div>
   );
@@ -43,23 +49,23 @@ export default function TrackerObjectEditor({ document, onPatch }: ScoreObjectEd
             type="number"
             min={1}
             max={64}
-            className="w-16 rounded border border-blue-border bg-blue-bg px-2 py-1 text-xs text-gray-100 focus:border-blue-accent focus:outline-none"
+            className={`w-16 ${BLUE_INSPECTOR_CONTROL_CLASS}`}
             value={stepsPerBeat}
             onChange={(e) => patch({ stepsPerBeat: parseInt(e.target.value, 10) || 1 })}
           />
         </FieldRow>
         <FieldRow label="Tracks">
-          <span className="text-xs text-gray-300 py-1">{trackData.length}</span>
+          <span className={BLUE_INSPECTOR_VALUE_TEXT_CLASS}>{trackData.length}</span>
         </FieldRow>
       </div>
 
       <div className="flex-1 overflow-auto">
         {trackData.length === 0 ? (
-          <div className="flex items-center justify-center h-20 text-xs text-blue-muted">
+          <div className="flex items-center justify-center h-20 text-body text-blue-muted">
             No tracks
           </div>
         ) : (
-          <table className="w-full border-collapse text-xs">
+          <table className="w-full border-collapse text-body">
             <thead>
               <tr className="border-b border-blue-border">
                 <th className="px-2 py-1 text-left text-blue-muted font-normal w-16">Track</th>
@@ -76,7 +82,7 @@ export default function TrackerObjectEditor({ document, onPatch }: ScoreObjectEd
                     <td key={si} className="px-0.5 py-0.5">
                       <input
                         type="text"
-                        className="w-full min-w-[3rem] rounded border border-blue-border bg-blue-bg px-1 py-0.5 text-xs text-gray-100 font-mono focus:border-blue-accent focus:outline-none text-center"
+                        className="w-full min-w-[3rem] rounded border border-blue-border bg-blue-bg px-1 py-0.5 text-body text-gray-100 font-mono focus:border-blue-accent focus:outline-none text-center"
                         value={cell}
                         onChange={(e) => handleCellChange(ti, si, e.target.value)}
                       />
@@ -89,7 +95,7 @@ export default function TrackerObjectEditor({ document, onPatch }: ScoreObjectEd
         )}
         <div className="px-3 py-2">
           <button
-            className="px-2 py-1 text-xs rounded border border-blue-border text-blue-muted hover:bg-blue-border/30"
+            className="px-2 py-1 text-body rounded border border-blue-border text-blue-muted hover:bg-blue-border/30"
             onClick={handleAddTrack}
           >+ Add Track</button>
         </div>

@@ -1100,7 +1100,7 @@ export default function ScoreTimeCanvas({
     height: Math.abs(marquee.endY - marquee.startY),
   } : null;
 
-  const menuItemClass = 'cursor-pointer rounded-sm px-3 py-1 text-[12px] text-blue-text outline-none data-[highlighted]:bg-app-highlight';
+  const menuItemClass = 'cursor-pointer rounded-sm px-3 py-1 text-body text-blue-text outline-none data-[highlighted]:bg-app-highlight';
   const subMenuClass = 'z-50 min-w-[160px] rounded border border-blue-border/50 bg-app-menu py-1 shadow-lg';
   const menuClass = 'z-50 min-w-[220px] rounded border border-blue-border/50 bg-app-menu py-1 shadow-lg';
   const sepClass = 'h-px bg-blue-border/30 my-1';
@@ -1259,7 +1259,7 @@ function ObjectContextMenu({ menuItemClass, subMenuClass, sepClass, onAlignLeft,
       <ContextMenu.Sub>
         <ContextMenu.SubTrigger className={`flex items-center justify-between ${menuItemClass}`}>
           Align
-          <span className="text-[10px] opacity-60 ml-2">▸</span>
+          <span className="text-tiny opacity-60 ml-2">▸</span>
         </ContextMenu.SubTrigger>
         <ContextMenu.Portal>
           <ContextMenu.SubContent className={subMenuClass}>
@@ -1277,14 +1277,14 @@ function ObjectContextMenu({ menuItemClass, subMenuClass, sepClass, onAlignLeft,
       </ContextMenu.Item>
       <ContextMenu.Separator className={sepClass} />
       <ContextMenu.Item className={menuItemClass} onSelect={onCut}>
-        Cut<span className="float-right text-blue-muted text-[10px] ml-4">⌘X</span>
+        Cut<span className="float-right text-blue-muted text-tiny ml-4">⌘X</span>
       </ContextMenu.Item>
       <ContextMenu.Item className={menuItemClass} onSelect={onCopy}>
-        Copy<span className="float-right text-blue-muted text-[10px] ml-4">⌘C</span>
+        Copy<span className="float-right text-blue-muted text-tiny ml-4">⌘C</span>
       </ContextMenu.Item>
       <ContextMenu.Separator className={sepClass} />
       <ContextMenu.Item className={menuItemClass} onSelect={onRemove}>
-        Remove<span className="float-right text-blue-muted text-[10px] ml-4">Del</span>
+        Remove<span className="float-right text-blue-muted text-tiny ml-4">Del</span>
       </ContextMenu.Item>
       <ContextMenu.Separator className={sepClass} />
       <ContextMenu.Item className={menuItemClass} onSelect={onSetColor}>
@@ -1348,7 +1348,7 @@ function EmptyAreaContextMenu({ menuItemClass, sepClass, clipboard, contextMenuP
       <ContextMenu.Sub>
         <ContextMenu.SubTrigger className={`flex items-center justify-between ${menuItemClass}`}>
           Add SoundObject
-          <span className="text-[10px] opacity-60 ml-2">▸</span>
+          <span className="text-tiny opacity-60 ml-2">▸</span>
         </ContextMenu.SubTrigger>
         <ContextMenu.Portal>
           <ContextMenu.SubContent className="z-50 min-w-40 rounded border border-blue-border/50 bg-app-menu py-1 shadow-lg">
@@ -1368,7 +1368,7 @@ function EmptyAreaContextMenu({ menuItemClass, sepClass, clipboard, contextMenuP
       {clipboard.length > 0 && (
         <>
           <ContextMenu.Item className={menuItemClass} onSelect={onPaste}>
-            Paste<span className="float-right text-blue-muted text-[10px] ml-4">⌘V</span>
+            Paste<span className="float-right text-blue-muted text-tiny ml-4">⌘V</span>
           </ContextMenu.Item>
           <ContextMenu.Item className={menuItemClass} onSelect={() => ni()}>
             Paste as PolyObject

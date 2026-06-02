@@ -1,5 +1,6 @@
 import React, { useCallback, useRef, useState } from 'react';
 import type { ScaleSnapshot } from './types';
+import { BLUE_INSPECTOR_INLINE_INPUT_CLASS } from '../../../shared/compactFieldStyles';
 
 interface ScaleSelectionPanelProps {
   scale: ScaleSnapshot;
@@ -92,14 +93,14 @@ export default function ScaleSelectionPanel({
     <div className="flex items-center gap-1">
       <input
         type="text"
-        className="flex-1 min-w-0 rounded border border-blue-border bg-blue-bg px-2 py-1 text-xs text-gray-100 focus:border-blue-accent focus:outline-none"
+        className={BLUE_INSPECTOR_INLINE_INPUT_CLASS}
         value={scaleName}
         onChange={(e) => setScaleName(e.target.value)}
         onContextMenu={handleContextMenu}
         readOnly
       />
       <button
-        className="px-2 py-1 text-xs rounded border border-blue-border text-blue-muted hover:bg-blue-border/30"
+        className="px-2 py-1 text-body rounded border border-blue-border text-blue-muted hover:bg-blue-border/30"
         onClick={handleChooseFile}
         title="Load .scl scale file"
       >

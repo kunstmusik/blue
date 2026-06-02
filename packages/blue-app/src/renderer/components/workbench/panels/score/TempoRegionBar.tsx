@@ -118,7 +118,7 @@ export default function TempoRegionBar({
               >
                 {showLabel && (
                   <span
-                    className={`absolute left-1 top-0 leading-5 text-[9px] whitespace-nowrap ${enabled ? 'text-white' : 'text-gray-600'}`}
+                    className={`absolute left-1 top-0 leading-5 text-micro whitespace-nowrap ${enabled ? 'text-white' : 'text-gray-600'}`}
                   >
                     {'\u2669'} {Math.round(region.tempo)}
                   </span>
@@ -148,21 +148,21 @@ export default function TempoRegionBar({
                   className="z-50 min-w-40 rounded-md border border-blue-border/40 bg-app-menu p-1 shadow-lg"
                 >
                   <ContextMenu.Item
-                    className="cursor-pointer rounded-sm px-2 py-1 text-[11px] text-blue-text outline-none data-[highlighted]:bg-app-highlight"
+                    className="cursor-pointer rounded-sm px-2 py-1 text-ui text-blue-text outline-none data-[highlighted]:bg-app-highlight"
                     onSelect={() => onOpenPointDialog(i)}
                   >
                     Edit Tempo...
                   </ContextMenu.Item>
                   <ContextMenu.Separator className="h-px bg-blue-border/20 my-1" />
                   <ContextMenu.Item
-                    className={`text-[11px] px-2 py-1 rounded-sm cursor-pointer outline-none data-highlighted:bg-white/10 ${region.curveType === 'constant' ? 'text-blue-muted' : 'text-blue-text'}`}
+                    className={`text-ui px-2 py-1 rounded-sm cursor-pointer outline-none data-highlighted:bg-white/10 ${region.curveType === 'constant' ? 'text-blue-muted' : 'text-blue-text'}`}
                     disabled={region.curveType === 'constant'}
                     onSelect={() => onTempoPatch({ type: 'setTempoCurveType', index: i, curveType: 'constant' })}
                   >
                     Constant
                   </ContextMenu.Item>
                   <ContextMenu.Item
-                    className={`text-[11px] px-2 py-1 rounded-sm cursor-pointer outline-none data-highlighted:bg-white/10 ${region.curveType === 'linear' ? 'text-blue-muted' : 'text-blue-text'}`}
+                    className={`text-ui px-2 py-1 rounded-sm cursor-pointer outline-none data-highlighted:bg-white/10 ${region.curveType === 'linear' ? 'text-blue-muted' : 'text-blue-text'}`}
                     disabled={region.curveType === 'linear'}
                     onSelect={() => onTempoPatch({ type: 'setTempoCurveType', index: i, curveType: 'linear' })}
                   >
@@ -172,7 +172,7 @@ export default function TempoRegionBar({
                     <>
                       <ContextMenu.Separator className="h-px bg-blue-border/20 my-1" />
                       <ContextMenu.Item
-                        className="text-[11px] text-red-400 px-2 py-1 rounded-sm cursor-pointer outline-none data-highlighted:bg-white/10"
+                        className="text-ui text-red-400 px-2 py-1 rounded-sm cursor-pointer outline-none data-highlighted:bg-white/10"
                         onSelect={() => onTempoPatch({ type: 'removeTempoPoint', index: i })}
                       >
                         Delete Tempo Point

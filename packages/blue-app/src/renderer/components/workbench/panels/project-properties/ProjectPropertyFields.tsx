@@ -1,5 +1,9 @@
 import React from 'react';
 import type { ReactNode } from 'react';
+import {
+  APP_INSPECTOR_LABEL_TEXT_CLASS,
+  COMPACT_FIELD_VALUE_CLASS,
+} from '../shared/compactFieldStyles';
 
 function FieldRow({
   label,
@@ -10,7 +14,7 @@ function FieldRow({
 }): React.ReactElement {
   return (
     <label className="grid gap-2 md:grid-cols-[200px_minmax(0,1fr)] md:items-start md:gap-5">
-      <span className="pt-2 text-xs font-medium uppercase tracking-[0.18em] text-app-text-muted">
+      <span className={`pt-1 ${APP_INSPECTOR_LABEL_TEXT_CLASS}`}>
         {label}
       </span>
       {children}
@@ -37,7 +41,7 @@ function InputBase({
     <input
       type={type}
       className={[
-        'w-full rounded-lg border border-app-border bg-app-input px-3 py-2 text-sm text-app-text shadow-inner outline-none transition-colors placeholder:text-app-text-muted focus:border-app-accent disabled:cursor-not-allowed disabled:opacity-60',
+        `w-full rounded-lg border border-app-border bg-app-input ${COMPACT_FIELD_VALUE_CLASS} text-app-text shadow-inner outline-none transition-colors placeholder:text-app-text-muted focus:border-app-accent disabled:cursor-not-allowed disabled:opacity-60`,
         className,
       ]
         .filter(Boolean)
@@ -66,7 +70,7 @@ function TextAreaBase({
   return (
     <textarea
       className={[
-        'min-h-28 w-full rounded-lg border border-app-border bg-app-input px-3 py-2 text-sm text-app-text shadow-inner outline-none transition-colors placeholder:text-app-text-muted focus:border-app-accent disabled:cursor-not-allowed disabled:opacity-60',
+        `min-h-28 w-full rounded-lg border border-app-border bg-app-input ${COMPACT_FIELD_VALUE_CLASS} text-app-text shadow-inner outline-none transition-colors placeholder:text-app-text-muted focus:border-app-accent disabled:cursor-not-allowed disabled:opacity-60`,
         className,
       ]
         .filter(Boolean)

@@ -188,7 +188,7 @@ export default function ParameterRow({
           <div className="flex select-none items-center justify-between border-b border-app-border/50 bg-app-menu px-2 py-0.5">
             {renaming ? (
               <input
-                className="w-40 border border-app-accent bg-app-bg px-1 py-0 text-xs text-app-text-strong focus:outline-none"
+                className="w-40 border border-app-accent bg-app-bg px-1 py-0 text-body text-app-text-strong focus:outline-none"
                 value={renameDraft}
                 autoFocus
                 onChange={e => setRenameDraft(e.target.value)}
@@ -197,13 +197,13 @@ export default function ParameterRow({
               />
             ) : (
               <span
-                className="cursor-default text-[11px] font-medium text-app-text-soft"
+                className="cursor-default text-ui font-medium text-app-text-soft"
                 onDoubleClick={handleRename}
               >
                 {label}
               </span>
             )}
-            <span className="text-[10px] text-app-text-muted">{genKind}</span>
+            <span className="text-tiny text-app-text-muted">{genKind}</span>
           </div>
           <div className="flex flex-col gap-0.5 p-1">
             <div className="rounded-sm border border-app-border/40 bg-app-bg">
@@ -230,33 +230,33 @@ export default function ParameterRow({
 
       <ContextMenu.Portal>
         <ContextMenu.Content className="z-50 min-w-[180px] rounded border border-app-border bg-app-menu py-1 shadow-lg">
-          <ContextMenu.Item className="flex cursor-pointer px-3 py-1 text-xs text-app-text-soft outline-none hover:bg-app-accent/20" onSelect={() => setGeneratorPickerMode('addBefore')}>
+          <ContextMenu.Item className="flex cursor-pointer px-3 py-1 text-body text-app-text-soft outline-none hover:bg-app-accent/20" onSelect={() => setGeneratorPickerMode('addBefore')}>
             Add Parameter Before
           </ContextMenu.Item>
-          <ContextMenu.Item className="flex cursor-pointer px-3 py-1 text-xs text-app-text-soft outline-none hover:bg-app-accent/20" onSelect={() => setGeneratorPickerMode('addAfter')}>
+          <ContextMenu.Item className="flex cursor-pointer px-3 py-1 text-body text-app-text-soft outline-none hover:bg-app-accent/20" onSelect={() => setGeneratorPickerMode('addAfter')}>
             Add Parameter After
           </ContextMenu.Item>
           <ContextMenu.Item
-            className={`flex cursor-pointer px-3 py-1 text-xs outline-none hover:bg-app-accent/20 ${parameterNum <= 3 ? 'pointer-events-none text-app-text-subtle' : 'text-app-text-soft'}`}
+            className={`flex cursor-pointer px-3 py-1 text-body outline-none hover:bg-app-accent/20 ${parameterNum <= 3 ? 'pointer-events-none text-app-text-subtle' : 'text-app-text-soft'}`}
             disabled={parameterNum <= 3}
             onSelect={removeParameter}
           >
             Remove Parameter
           </ContextMenu.Item>
-          <ContextMenu.Item className="flex cursor-pointer px-3 py-1 text-xs text-app-text-soft outline-none hover:bg-app-accent/20" onSelect={() => setGeneratorPickerMode('changeType')}>
+          <ContextMenu.Item className="flex cursor-pointer px-3 py-1 text-body text-app-text-soft outline-none hover:bg-app-accent/20" onSelect={() => setGeneratorPickerMode('changeType')}>
             Change Parameter Type
           </ContextMenu.Item>
           <ContextMenu.Separator className="my-1 h-px bg-app-border" />
-          <ContextMenu.Item className="flex cursor-pointer px-3 py-1 text-xs text-app-text-soft outline-none hover:bg-app-accent/20" onSelect={pushUp}>
+          <ContextMenu.Item className="flex cursor-pointer px-3 py-1 text-body text-app-text-soft outline-none hover:bg-app-accent/20" onSelect={pushUp}>
             Push Up
           </ContextMenu.Item>
-          <ContextMenu.Item className="flex cursor-pointer px-3 py-1 text-xs text-app-text-soft outline-none hover:bg-app-accent/20" onSelect={pushDown}>
+          <ContextMenu.Item className="flex cursor-pointer px-3 py-1 text-body text-app-text-soft outline-none hover:bg-app-accent/20" onSelect={pushDown}>
             Push Down
           </ContextMenu.Item>
           <ContextMenu.Separator className="my-1 h-px bg-app-border" />
           {canMask && (
             <ContextMenu.CheckboxItem
-              className="flex cursor-pointer px-3 py-1 text-xs text-app-text-soft outline-none hover:bg-app-accent/20"
+              className="flex cursor-pointer px-3 py-1 text-body text-app-text-soft outline-none hover:bg-app-accent/20"
               checked={maskEnabled}
               onCheckedChange={toggleMask}
             >
@@ -265,7 +265,7 @@ export default function ParameterRow({
           )}
           {canQuantize && (
             <ContextMenu.CheckboxItem
-              className="flex cursor-pointer px-3 py-1 text-xs text-app-text-soft outline-none hover:bg-app-accent/20"
+              className="flex cursor-pointer px-3 py-1 text-body text-app-text-soft outline-none hover:bg-app-accent/20"
               checked={quantizerEnabled}
               onCheckedChange={toggleQuantizer}
             >
@@ -274,7 +274,7 @@ export default function ParameterRow({
           )}
           {canAccumulate && (
             <ContextMenu.CheckboxItem
-              className="flex cursor-pointer px-3 py-1 text-xs text-app-text-soft outline-none hover:bg-app-accent/20"
+              className="flex cursor-pointer px-3 py-1 text-body text-app-text-soft outline-none hover:bg-app-accent/20"
               checked={accumulatorEnabled}
               onCheckedChange={toggleAccumulator}
             >
@@ -287,7 +287,7 @@ export default function ParameterRow({
       {generatorPickerMode !== null && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setGeneratorPickerMode(null)}>
           <div className="min-w-[200px] rounded border border-app-border bg-app-hover py-2 shadow-xl" onClick={e => e.stopPropagation()}>
-            <div className="px-3 pb-1 text-xs font-medium text-app-text">
+            <div className="px-3 pb-1 text-body font-medium text-app-text">
               {generatorPickerMode === 'addBefore' && 'Add Parameter Before'}
               {generatorPickerMode === 'addAfter' && 'Add Parameter After'}
               {generatorPickerMode === 'changeType' && 'Change Generator Type'}
@@ -296,7 +296,7 @@ export default function ParameterRow({
               <button
                 key={name}
                 type="button"
-                className="block w-full px-3 py-1 text-left text-xs text-app-text-soft hover:bg-app-accent/20"
+                className="block w-full px-3 py-1 text-left text-body text-app-text-soft hover:bg-app-accent/20"
                 onClick={() => handleGeneratorPick(name)}
               >
                 {name}

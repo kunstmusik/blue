@@ -21,8 +21,8 @@ export default function FieldDefinitionsEditor({
 
   return (
     <div className="flex flex-col gap-1">
-      <div className="text-[10px] font-bold text-blue-muted uppercase tracking-wider">Additional Fields</div>
-      <table className="w-full text-[10px]">
+      <div className="text-tiny font-bold text-blue-muted uppercase tracking-wider">Additional Fields</div>
+      <table className="w-full text-tiny">
         <thead>
           <tr className="text-blue-muted">
             <th className="text-left py-0.5 px-1">Name</th>
@@ -76,7 +76,7 @@ export default function FieldDefinitionsEditor({
           ))}
         </tbody>
       </table>
-      <button className="text-[10px] text-blue-accent hover:text-blue-accent/80 self-start" onClick={handleAdd}>
+      <button className="text-tiny text-blue-accent hover:text-blue-accent/80 self-start" onClick={handleAdd}>
         + Add Field
       </button>
     </div>

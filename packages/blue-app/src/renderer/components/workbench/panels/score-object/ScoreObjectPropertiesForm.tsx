@@ -4,6 +4,12 @@ import type {
   ScoreObjectEditorDocumentSnapshot,
   ScorePatch,
 } from '../../../../../shared/project-editor';
+import {
+  BLUE_INSPECTOR_FIELD_LABEL_CLASS,
+  BLUE_INSPECTOR_INPUT_CLASS,
+  BLUE_INSPECTOR_ROW_CLASS,
+  BLUE_INSPECTOR_VALUE_TEXT_CLASS,
+} from '../shared/compactFieldStyles';
 import TimeUnitEditor from './TimeUnitEditor';
 import NoteProcessorChainEditor from './note-processors/NoteProcessorChainEditor';
 
@@ -14,15 +20,14 @@ interface ScoreObjectPropertiesFormProps {
 
 function FieldRow({ label, children }: { label: string; children: React.ReactNode }): React.ReactElement {
   return (
-    <div className="flex items-center gap-2 px-3 py-1.5">
-      <label className="w-28 shrink-0 text-xs text-blue-muted text-right">{label}</label>
+    <div className={BLUE_INSPECTOR_ROW_CLASS}>
+      <label className={BLUE_INSPECTOR_FIELD_LABEL_CLASS}>{label}</label>
       <div className="flex-1 min-w-0">{children}</div>
     </div>
   );
 }
 
-const INPUT_CLASS =
-  'w-full rounded border border-blue-border bg-blue-bg px-2 py-1 text-xs text-gray-100 focus:border-blue-accent focus:outline-none';
+const INPUT_CLASS = BLUE_INSPECTOR_INPUT_CLASS;
 
 function CommitTextInput({
   value,
@@ -76,7 +81,7 @@ function ColorSwatch({ color, onChange }: { color: number; onChange: (v: number)
         }}
         className="h-6 w-6 cursor-pointer rounded border border-blue-border"
       />
-      <span className="text-xs text-blue-muted">{hex}</span>
+      <span className="text-body text-blue-muted">{hex}</span>
     </div>
   );
 }
@@ -84,7 +89,7 @@ function ColorSwatch({ color, onChange }: { color: number; onChange: (v: number)
 function SelectInput({ value, options, onChange, disabled }: { value: string; options: Array<{ value: string; label: string }>; onChange: (v: string) => void; disabled?: boolean }): React.ReactElement {
   return (
     <select
-      className="w-full rounded border border-blue-border bg-blue-bg px-2 py-1 text-xs text-gray-100 focus:border-blue-accent focus:outline-none"
+      className={BLUE_INSPECTOR_INPUT_CLASS}
       value={value}
       disabled={disabled}
       onChange={(e) => onChange(e.target.value)}
@@ -250,7 +255,7 @@ export default function ScoreObjectPropertiesForm({ document, onPatch }: ScoreOb
       </FieldRow>
 
       <FieldRow label="End Time:">
-        <div className="text-xs text-blue-muted py-1">{shared.endTimeDisplay}</div>
+        <div className={BLUE_INSPECTOR_VALUE_TEXT_CLASS}>{shared.endTimeDisplay}</div>
       </FieldRow>
 
       <FieldRow label="Color:">
@@ -294,7 +299,7 @@ export default function ScoreObjectPropertiesForm({ document, onPatch }: ScoreOb
 
           {target.supportsNoteProcessorChain && shared.noteProcessorChain != null && (
             <div className="px-3 py-2 mt-2 border-t border-blue-border">
-              <div className="text-xs font-medium text-gray-300 mb-1">Note Processors</div>
+              <div className="text-body font-medium text-gray-300 mb-1">Note Processors</div>
               <NoteProcessorChainEditor
                 key={target.selectionId}
                 chain={shared.noteProcessorChain}
@@ -316,7 +321,7 @@ export default function ScoreObjectPropertiesForm({ document, onPatch }: ScoreOb
 
       {target.displayContext === 'instance' && (
         <div className="px-3 py-2 mt-2 border-t border-blue-border">
-          <div className="flex items-center gap-1.5 text-xs text-blue-accent">
+          <div className="flex items-center gap-1.5 text-body text-blue-accent">
             <span>&#9432;</span>
             <span>Editing library object via Instance</span>
           </div>

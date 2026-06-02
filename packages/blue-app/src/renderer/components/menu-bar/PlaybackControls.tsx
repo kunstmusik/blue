@@ -106,7 +106,7 @@ export default function PlaybackControls(): React.ReactElement {
         disabled={!hasProject}
         onClick={toggleFollowPlayback}
       >
-        <span className="font-mono text-sm font-semibold leading-none">F</span>
+        <span className="font-mono text-body font-semibold leading-none">F</span>
       </ToolbarIconButton>
       <ToolbarIconButton
         title={loopRendering ? 'Loop rendering on' : 'Loop rendering off'}

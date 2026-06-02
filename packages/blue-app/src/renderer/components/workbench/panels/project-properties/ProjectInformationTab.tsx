@@ -1,4 +1,5 @@
 import React from 'react';
+import { APP_INSPECTOR_LABEL_TEXT_CLASS } from '../shared/compactFieldStyles';
 import { FieldRow, InputBase, TextAreaBase } from './ProjectPropertyFields';
 import type { ProjectPropertiesTabProps } from './types';
 
@@ -26,7 +27,7 @@ export default function ProjectInformationTab({
         </FieldRow>
       </div>
       <div className="mt-4 flex min-h-0 flex-1 flex-col">
-        <span className="mb-2 text-xs font-medium uppercase tracking-[0.18em] text-blue-muted">
+        <span className={`mb-2 ${APP_INSPECTOR_LABEL_TEXT_CLASS}`}>
           Notes
         </span>
         <TextAreaBase

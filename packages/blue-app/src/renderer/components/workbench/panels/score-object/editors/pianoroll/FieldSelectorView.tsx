@@ -27,7 +27,7 @@ export default function FieldSelectorView({
 
   return (
     <select
-      className="h-full w-full border-t border-blue-border/30 bg-app-surface-strong px-1 text-[10px] text-blue-muted focus:outline-none"
+      className="h-full w-full border-t border-blue-border/30 bg-app-surface-strong px-1 text-tiny text-blue-muted focus:outline-none"
       value={selectedIndex}
       onChange={handleChange}
     >

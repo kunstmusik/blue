@@ -2,8 +2,14 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import type { ScoreObjectEditorComponentProps } from '../editor-registry';
 import TimeUnitEditor from '../TimeUnitEditor';
 import { formatTime, totalSecondsToTime } from '../../../../../time/time-unit-logic';
+import {
+  BLUE_INSPECTOR_FIELD_LABEL_CLASS,
+  BLUE_INSPECTOR_INPUT_CLASS,
+  BLUE_INSPECTOR_ROW_CLASS,
+  BLUE_INSPECTOR_VALUE_TEXT_CLASS,
+} from '../../shared/compactFieldStyles';
 
-const INPUT_CLASS = 'w-full rounded border border-blue-border bg-blue-bg px-2 py-1 text-xs text-gray-100 focus:border-blue-accent focus:outline-none';
+const INPUT_CLASS = BLUE_INSPECTOR_INPUT_CLASS;
 const FADE_TYPE_OPTIONS = [
   { value: 'LINEAR', label: 'Linear' },
   { value: 'CONSTANT_POWER', label: 'Constant Power' },
@@ -14,8 +20,8 @@ const FADE_TYPE_OPTIONS = [
 
 function FieldRow({ label, children }: { label: string; children: React.ReactNode }): React.ReactElement {
   return (
-    <div className="flex items-center gap-2 px-3 py-1.5">
-      <label className="w-28 shrink-0 text-xs text-blue-muted text-right">{label}</label>
+    <div className={BLUE_INSPECTOR_ROW_CLASS}>
+      <label className={BLUE_INSPECTOR_FIELD_LABEL_CLASS}>{label}</label>
       <div className="flex-1 min-w-0">{children}</div>
     </div>
   );
@@ -207,7 +213,7 @@ export default function AudioClipScoreObjectEditor({ document, onPatch }: ScoreO
       </FieldRow>
 
       <div className="mx-3 mt-2 rounded border border-blue-border/60 p-2">
-        <div className="mb-1 text-[11px] text-blue-muted">File Properties</div>
+        <div className="mb-1 text-ui text-blue-muted">File Properties</div>
 
         <FieldRow label="File Start">
           <input
@@ -285,11 +291,11 @@ export default function AudioClipScoreObjectEditor({ document, onPatch }: ScoreO
       </div>
 
       <FieldRow label="Channels">
-        <span className="text-xs text-gray-300 py-1">{editor.numChannels}</span>
+        <span className={BLUE_INSPECTOR_VALUE_TEXT_CLASS}>{editor.numChannels}</span>
       </FieldRow>
 
       <FieldRow label="Audio Duration">
-        <span className="text-xs text-gray-300 py-1">{formattedAudioDuration}</span>
+        <span className={BLUE_INSPECTOR_VALUE_TEXT_CLASS}>{formattedAudioDuration}</span>
       </FieldRow>
     </div>
   );

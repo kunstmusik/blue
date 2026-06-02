@@ -1532,7 +1532,7 @@ export default function AudioLayerGroupCanvas({
     ]);
   }, [addScoreObjects, group.groupId, group.layers, pixelsPerBeat, secondsToBeatValue, tempo, toLocalXY]);
 
-  const menuItemClass = 'cursor-pointer rounded-sm px-3 py-1 text-[12px] text-blue-text outline-none data-[highlighted]:bg-app-highlight data-[disabled]:pointer-events-none data-[disabled]:opacity-50';
+  const menuItemClass = 'cursor-pointer rounded-sm px-3 py-1 text-body text-blue-text outline-none data-[highlighted]:bg-app-highlight data-[disabled]:pointer-events-none data-[disabled]:opacity-50';
   const menuClass = 'z-50 min-w-[220px] rounded border border-blue-border/50 bg-app-menu py-1 shadow-lg';
   const sepClass = 'h-px bg-blue-border/30 my-1';
   const marqueeStyle = marquee ? {

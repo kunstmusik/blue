@@ -563,7 +563,7 @@ function LeftPanel({
         {timeState.tempoRowVisible && (
           <>
             <RowHeader onContextMenu={onRowVisibilityChange} rowVisibility={timeState}>
-              <label className="flex items-center gap-1.5 text-[9px] text-blue-muted cursor-pointer select-none">
+              <label className="flex items-center gap-1.5 text-micro text-blue-muted cursor-pointer select-none">
                 <input type="checkbox" className="w-2.5 h-2.5" checked={tempoMapEnabled} onChange={(e) => onTempoEnabledChange(e.target.checked)} />
                 Use Tempo
               </label>
@@ -582,17 +582,17 @@ function LeftPanel({
         )}
         {timeState.meterRowVisible && (
           <RowHeader onContextMenu={onRowVisibilityChange} borderLeft rowVisibility={timeState}>
-            <span className="text-[9px] text-blue-muted">Time Signature</span>
+            <span className="text-micro text-blue-muted">Time Signature</span>
           </RowHeader>
         )}
         {timeState.markersRowVisible && (
           <RowHeader onContextMenu={onRowVisibilityChange} borderLeft rowVisibility={timeState}>
-            <span className="text-[9px] text-blue-muted">Markers</span>
+            <span className="text-micro text-blue-muted">Markers</span>
           </RowHeader>
         )}
         <RowHeader onContextMenu={onRowVisibilityChange} center rowVisibility={timeState}>
           <button
-            className="text-[9px] text-blue-muted hover:text-blue-text px-2 py-0 border border-blue-border/30 rounded-sm bg-blue-surface/50 hover:bg-blue-surface"
+            className="text-micro text-blue-muted hover:text-blue-text px-2 py-0 border border-blue-border/30 rounded-sm bg-blue-surface/50 hover:bg-blue-surface"
             onClick={onManage}
           >
             Manage
@@ -660,7 +660,7 @@ function RowHeader({
   rowVisibility: { tempoRowVisible: boolean; meterRowVisible: boolean; markersRowVisible: boolean };
 }) {
   const ctxItemClass =
-    'flex cursor-pointer items-center gap-2 rounded-sm px-3 py-1 text-[12px] text-blue-text outline-none data-[highlighted]:bg-app-highlight';
+    'flex cursor-pointer items-center gap-2 rounded-sm px-3 py-1 text-body text-blue-text outline-none data-[highlighted]:bg-app-highlight';
 
   return (
     <ContextMenu.Root>
@@ -729,7 +729,7 @@ function SpacerPanel({
 }) {
   const addLayer = useProjectStore((s) => s.addLayer);
   const ctxItemClass =
-    'cursor-pointer rounded-sm px-3 py-1 text-[12px] text-blue-text outline-none data-[highlighted]:bg-app-highlight';
+    'cursor-pointer rounded-sm px-3 py-1 text-body text-blue-text outline-none data-[highlighted]:bg-app-highlight';
 
   return (
     <ContextMenu.Root>
@@ -739,12 +739,12 @@ function SpacerPanel({
           style={{ height: GROUP_SPACER }}
           onDoubleClick={() => addLayer(groupId, layerCount - 1)}
         >
-          <span className="text-[14px] text-blue-muted opacity-0 group-hover:opacity-60 select-none">
+          <span className="text-sm text-blue-muted opacity-0 group-hover:opacity-60 select-none">
             +
           </span>
           {onNoteProcessorChain && (
             <button
-              className="relative w-4 h-4 text-[10px] font-bold text-blue-muted hover:text-blue-text opacity-0 group-hover:opacity-100"
+              className="relative w-4 h-4 text-tiny font-bold text-blue-muted hover:text-blue-text opacity-0 group-hover:opacity-100"
               title="Layer Group Note Processors"
               onClick={(e) => {
                 e.stopPropagation();
@@ -842,10 +842,10 @@ function SoundLayerHeader({
   );
 
   const btnClass = (active: boolean, activeBg: string) =>
-    `w-5 h-4 text-[10px] font-bold rounded-sm border border-app-border/30 flex items-center justify-center ${active ? activeBg + " text-black" : "bg-transparent text-app-text-muted hover:text-app-text"}`;
+    `w-5 h-4 text-tiny font-bold rounded-sm border border-app-border/30 flex items-center justify-center ${active ? activeBg + " text-black" : "bg-transparent text-app-text-muted hover:text-app-text"}`;
 
   const ctxItemClass =
-    "rounded-sm px-3 py-1 text-[12px] text-app-text outline-none cursor-pointer data-[highlighted]:bg-app-highlight";
+    "rounded-sm px-3 py-1 text-body text-app-text outline-none cursor-pointer data-[highlighted]:bg-app-highlight";
 
   return (
     <ContextMenu.Root>
@@ -858,7 +858,7 @@ function SoundLayerHeader({
           {editing ? (
             <input
               ref={inputRef}
-              className="flex-1 min-w-0 px-1 text-[11px] bg-blue-surface/60 text-blue-text outline-none border border-blue-accent/40 rounded-sm mx-1 mt-0.5"
+              className="flex-1 min-w-0 px-1 text-ui bg-blue-surface/60 text-blue-text outline-none border border-blue-accent/40 rounded-sm mx-1 mt-0.5"
               value={editValue}
               onChange={(e) => setEditValue(e.target.value)}
               onKeyDown={(e) => {
@@ -868,7 +868,7 @@ function SoundLayerHeader({
               onBlur={commitEdit}
             />
           ) : (
-            <span className="flex-1 min-w-0 px-1.5 text-[11px] text-blue-text truncate pointer-events-none leading-4 mt-0.5">
+            <span className="flex-1 min-w-0 px-1.5 text-ui text-blue-text truncate pointer-events-none leading-4 mt-0.5">
               {layer.name}
             </span>
           )}
@@ -896,7 +896,7 @@ function SoundLayerHeader({
             </button>
             {showNoteProcessorButton && (
               <button
-                className={`relative w-5 h-4 text-[10px] font-bold rounded-sm border flex items-center justify-center ${
+                className={`relative w-5 h-4 text-tiny font-bold rounded-sm border flex items-center justify-center ${
                   noteProcessorChain && noteProcessorChain.processors.length > 0
                     ? 'bg-red-600 border-red-500 text-white'
                     : 'bg-transparent border-app-border/30 text-app-text-muted hover:text-app-text'
@@ -966,7 +966,7 @@ function SoundLayerHeader({
                   className={`flex items-center justify-between ${ctxItemClass}`}
                 >
                   Layer Height
-                  <span className="text-[10px] opacity-60 ml-2">▸</span>
+                  <span className="text-tiny opacity-60 ml-2">▸</span>
                 </ContextMenu.SubTrigger>
                 <ContextMenu.Portal>
                   <ContextMenu.SubContent className="z-50 min-w-30 rounded border border-app-border/50 bg-app-menu py-1 shadow-lg">

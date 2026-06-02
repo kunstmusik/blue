@@ -10,10 +10,10 @@ export default function InstrumentNameField({
   onNameChange,
 }: InstrumentNameFieldProps): React.ReactElement {
   return (
-    <label className="flex items-center gap-3 text-xs text-blue-muted">
+    <label className="flex items-center gap-3 text-body text-blue-muted">
       <span className="w-20 shrink-0 text-right">Name</span>
       <input
-        className="min-w-0 flex-1 rounded border border-blue-border bg-app-input px-2 py-1.5 text-sm text-app-text outline-none focus:border-blue-accent"
+        className="min-w-0 flex-1 rounded border border-blue-border bg-app-input px-2 py-1.5 text-body text-app-text outline-none focus:border-blue-accent"
         value={name}
         onChange={(event) => void onNameChange(event.target.value)}
       />

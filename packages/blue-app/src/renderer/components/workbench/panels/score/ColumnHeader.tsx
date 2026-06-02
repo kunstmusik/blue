@@ -214,7 +214,7 @@ function TimeBar({ timeDisplay, totalBeats, pixelsPerBeat, tempoMap, meters, smp
         >
           {mark.label && (
             <span
-              className="absolute left-1 text-[10px] text-blue-muted whitespace-nowrap select-none"
+              className="absolute left-1 text-tiny text-blue-muted whitespace-nowrap select-none"
               style={{ top: mark.type === 'major' ? 1 : -9 }}
             >
               {mark.label}

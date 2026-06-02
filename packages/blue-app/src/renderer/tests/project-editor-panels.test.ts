@@ -261,6 +261,22 @@ describe('Project editor panels', () => {
     expect(html).toContain('Loaded Project');
   });
 
+  it('renders project property fields with the compact inspector-sized input primitive', () => {
+    const html = renderProjectPanelMarkup(ProjectPropertiesPanel, {
+      title: 'Loaded Project',
+      projectProperties: {
+        title: 'Loaded Project',
+        author: 'Composer',
+        notes: 'Project notes',
+      },
+    });
+
+    expect(html).toContain('bg-app-input px-2 py-1 text-body text-app-text shadow-inner');
+    expect(html).not.toContain('bg-app-input px-3 py-2 text-sm text-app-text shadow-inner');
+    expect(html).toContain('text-body text-app-text-muted');
+    expect(html).not.toContain('text-body font-medium uppercase tracking-[0.18em] text-app-text-muted');
+  });
+
   it('renders the clojure project dependency editor with library rows', () => {
     const html = renderToStaticMarkup(
       createElement(ClojureProjectTab, {
@@ -283,6 +299,8 @@ describe('Project editor panels', () => {
     expect(html).toContain('org.clojure/data.json');
     expect(html).toContain('2.5.1');
     expect(html).toContain('Move Up');
+    expect(html).toContain('text-body text-app-text-muted');
+    expect(html).not.toContain('text-ui font-medium uppercase tracking-[0.18em] text-app-text-muted');
   });
 
   it('renders the global score editor when loaded', () => {

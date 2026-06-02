@@ -22,7 +22,7 @@ export default function PolyObjectScoreObjectEditor({ document }: ScoreObjectEdi
         <div className="flex items-center justify-end px-3 py-2 border-b border-blue-border shrink-0">
           <button
             type="button"
-            className="rounded border border-blue-border px-2 py-0.5 text-[11px] text-gray-300 hover:border-blue-accent disabled:opacity-50"
+            className="rounded border border-blue-border px-2 py-0.5 text-ui text-gray-300 hover:border-blue-accent disabled:opacity-50"
             disabled={!editor.canTest || testing}
             onClick={() => { void runTest(); }}
             title="Test generated score"
@@ -31,7 +31,7 @@ export default function PolyObjectScoreObjectEditor({ document }: ScoreObjectEdi
           </button>
         </div>
         {testError && (
-          <div className="px-3 py-1.5 text-xs border-b shrink-0 bg-red-900/20 text-red-300 flex items-center gap-2">
+          <div className="px-3 py-1.5 text-body border-b shrink-0 bg-red-900/20 text-red-300 flex items-center gap-2">
             <span>Error: {testError}</span>
             <button className="underline text-blue-muted hover:text-gray-200" onClick={clearTestError}>dismiss</button>
           </div>
@@ -42,7 +42,7 @@ export default function PolyObjectScoreObjectEditor({ document }: ScoreObjectEdi
             <path d="M3 9h18" />
             <path d="M9 21V9" />
           </svg>
-          <span className="text-xs">PolyObject is empty</span>
+          <span className="text-body">PolyObject is empty</span>
         </div>
         {testOutput !== null && (
           <GeneratedScoreModal text={testOutput} onClose={clearTestOutput} />
@@ -54,12 +54,12 @@ export default function PolyObjectScoreObjectEditor({ document }: ScoreObjectEdi
   return (
     <div className="flex flex-col h-full">
       <div className="flex items-center gap-3 px-3 py-2 border-b border-blue-border shrink-0">
-        <span className="text-xs text-blue-muted">
+        <span className="text-body text-blue-muted">
           {editor.children.length} object{editor.children.length !== 1 ? 's' : ''} across layers
         </span>
         <button
           type="button"
-          className="ml-auto rounded border border-blue-border px-2 py-0.5 text-[11px] text-gray-300 hover:border-blue-accent disabled:opacity-50"
+          className="ml-auto rounded border border-blue-border px-2 py-0.5 text-ui text-gray-300 hover:border-blue-accent disabled:opacity-50"
           disabled={!editor.canTest || testing}
           onClick={() => { void runTest(); }}
           title="Test generated score"
@@ -68,13 +68,13 @@ export default function PolyObjectScoreObjectEditor({ document }: ScoreObjectEdi
         </button>
       </div>
       {testError && (
-        <div className="px-3 py-1.5 text-xs border-b shrink-0 bg-red-900/20 text-red-300 flex items-center gap-2">
+        <div className="px-3 py-1.5 text-body border-b shrink-0 bg-red-900/20 text-red-300 flex items-center gap-2">
           <span>Error: {testError}</span>
           <button className="underline text-blue-muted hover:text-gray-200" onClick={clearTestError}>dismiss</button>
         </div>
       )}
       <div className="flex-1 overflow-auto">
-        <table className="w-full border-collapse text-xs">
+        <table className="w-full border-collapse text-body">
           <thead>
             <tr className="border-b border-blue-border">
               <th className="px-2 py-1 text-left text-blue-muted font-normal">Name</th>
@@ -99,8 +99,8 @@ export default function PolyObjectScoreObjectEditor({ document }: ScoreObjectEdi
       </div>
       {editor.generatedScoreText && (
         <div className="border-t border-blue-border shrink-0">
-          <div className="px-3 py-1 text-xs text-blue-muted">Generated Score Preview</div>
-          <pre className="px-3 py-1 text-xs text-gray-400 font-mono max-h-32 overflow-auto whitespace-pre-wrap">
+          <div className="px-3 py-1 text-body text-blue-muted">Generated Score Preview</div>
+          <pre className="px-3 py-1 text-body text-gray-400 font-mono max-h-32 overflow-auto whitespace-pre-wrap">
             {editor.generatedScoreText}
           </pre>
         </div>

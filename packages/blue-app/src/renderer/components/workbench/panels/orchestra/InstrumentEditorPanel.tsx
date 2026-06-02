@@ -109,7 +109,7 @@ function InstrumentEditorPanel({
   if (!instrument) {
     return (
       <section className="flex h-full flex-col bg-blue-bg" aria-label="Instrument editor">
-        <div className="border-b border-blue-border bg-app-surface-strong px-3 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-blue-muted">
+        <div className="border-b border-blue-border bg-app-surface-strong px-3 py-2 text-body font-semibold uppercase tracking-[0.18em] text-blue-muted">
           Instrument Editor
         </div>
         <div className="flex flex-1 items-center justify-center p-6 text-sm text-blue-muted">
@@ -125,7 +125,7 @@ function InstrumentEditorPanel({
         <button
           type="button"
           className={[
-            'border-b-2 px-3 py-2 text-xs',
+            'border-b-2 px-3 py-2 text-body',
             activeTab === 'editor'
               ? 'border-blue-accent text-app-text-strong'
               : 'border-transparent text-blue-muted hover:text-app-text-strong',
@@ -137,7 +137,7 @@ function InstrumentEditorPanel({
         <button
           type="button"
           className={[
-            'border-b-2 px-3 py-2 text-xs',
+            'border-b-2 px-3 py-2 text-body',
             activeTab === 'comments'
               ? 'border-blue-accent text-app-text-strong'
               : 'border-transparent text-blue-muted hover:text-app-text-strong',

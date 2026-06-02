@@ -3,8 +3,13 @@ import type { PianoRollPayload } from './types';
 import { PCH_LABELS } from './types';
 import ScaleSelectionPanel from './ScaleSelectionPanel';
 import FieldDefinitionsEditor from './FieldDefinitionsEditor';
+import {
+  BLUE_INSPECTOR_FIELD_LABEL_CLASS,
+  BLUE_INSPECTOR_INPUT_CLASS,
+  BLUE_INSPECTOR_ROW_CLASS,
+} from '../../../shared/compactFieldStyles';
 
-const inputCls = 'w-full rounded border border-blue-border bg-blue-bg px-2 py-1 text-xs text-gray-100 focus:border-blue-accent focus:outline-none';
+const inputCls = BLUE_INSPECTOR_INPUT_CLASS;
 
 interface PianoRollPropertiesEditorProps {
   payload: PianoRollPayload;
@@ -13,8 +18,8 @@ interface PianoRollPropertiesEditorProps {
 
 function FieldRow({ label, children }: { label: string; children: React.ReactNode }): React.ReactElement {
   return (
-    <div className="flex items-center gap-2 px-3 py-1.5">
-      <label className="w-28 shrink-0 text-xs text-blue-muted text-right">{label}</label>
+    <div className={BLUE_INSPECTOR_ROW_CLASS}>
+      <label className={BLUE_INSPECTOR_FIELD_LABEL_CLASS}>{label}</label>
       <div className="flex-1 min-w-0">{children}</div>
     </div>
   );
@@ -49,7 +54,7 @@ export default function PianoRollPropertiesEditor({
         <FieldRow label="Pitch Generation">
           <div className="flex gap-2">
             {PCH_LABELS.map((label, i) => (
-              <label key={i} className="flex items-center gap-1 text-xs text-gray-200">
+              <label key={i} className="flex items-center gap-1 text-body text-gray-200">
                 <input
                   type="radio"
                   className="accent-blue-accent"

@@ -29,7 +29,7 @@ export default function JavaScriptInstrumentEditor({
             key={tab.key}
             type="button"
             className={[
-              'border-b-2 px-3 py-2 text-xs',
+              'border-b-2 px-3 py-2 text-body',
               activeTab === tab.key
                 ? 'border-blue-accent text-app-text-strong'
                 : 'border-transparent text-blue-muted hover:text-app-text-strong',

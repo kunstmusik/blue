@@ -248,7 +248,7 @@ export default function BSBPropertySheet({
 }: BSBPropertySheetProps): React.ReactElement {
   if (!widget) {
     return (
-      <div className="p-3 text-xs text-app-text-muted">
+      <div className="p-3 text-body text-app-text-muted">
         {selectedCount && selectedCount > 1
           ? `${selectedCount} widgets selected.`
           : 'Select a widget to edit its properties.'}
@@ -258,7 +258,7 @@ export default function BSBPropertySheet({
 
   if (!editEnabled) {
     return (
-      <div className="p-3 text-xs text-app-text-muted">
+      <div className="p-3 text-body text-app-text-muted">
         Enable edit mode to edit widget properties.
       </div>
     );
@@ -266,7 +266,7 @@ export default function BSBPropertySheet({
 
   if (widget.preservedOnly) {
     return (
-      <div className="p-3 text-xs text-app-warning">
+      <div className="p-3 text-body text-app-warning">
         This widget type ({widget.type}) is preserved but not fully editable in this version.
       </div>
     );
@@ -388,7 +388,7 @@ function EditableBsbPropertySheet({
 
   return (
     <div className="space-y-2 p-3">
-      <div className="mb-2 border-b border-app-border pb-1 text-[10px] uppercase tracking-[0.16em] text-app-text-muted">
+      <div className="mb-2 border-b border-app-border pb-1 text-tiny uppercase tracking-[0.16em] text-app-text-muted">
         {typeName}
       </div>
 
@@ -436,11 +436,11 @@ function EditableBsbPropertySheet({
       {fontGroups.map(g => (
         <PropertyRow key={g.prefix} label={g.label}>
           <div className="flex items-center gap-1">
-            <span className="flex-1 truncate rounded border border-app-border bg-app-surface-raised px-2 py-1 text-xs text-app-text-strong">
+            <span className="flex-1 truncate rounded border border-app-border bg-app-surface-raised px-2 py-1 text-body text-app-text-strong">
               {fontSummary(g.font)}
             </span>
             <button
-              className="rounded border border-app-border px-2 py-1 text-xs text-app-text hover:bg-app-hover"
+              className="rounded border border-app-border px-2 py-1 text-body text-app-text hover:bg-app-hover"
               onClick={() => setFontDialog({ prefix: g.prefix, font: { ...g.font } })}
             >
               ...
@@ -463,7 +463,7 @@ function EditableBsbPropertySheet({
         />
       )}
 
-      <div className="mt-2 border-t border-app-border pt-2 text-[10px] text-app-text-muted">
+      <div className="mt-2 border-t border-app-border pt-2 text-tiny text-app-text-muted">
         Type: {widget.type}
       </div>
 
@@ -480,7 +480,7 @@ function EditableBsbPropertySheet({
 function PropertyRow({ label, children }: { label: string; children: React.ReactNode }): React.ReactElement {
   return (
     <div className="grid grid-cols-[80px_1fr] items-center gap-2">
-      <label className="truncate text-[11px] text-app-text-muted">{label}</label>
+      <label className="truncate text-ui text-app-text-muted">{label}</label>
       {children}
     </div>
   );
@@ -547,7 +547,7 @@ function PropertyInput({
   return (
     <input
       ref={inputRef}
-      className="w-full rounded border border-app-border bg-app-surface-raised px-2 py-1 text-xs text-app-text-strong outline-none focus:border-app-accent"
+      className="w-full rounded border border-app-border bg-app-surface-raised px-2 py-1 text-body text-app-text-strong outline-none focus:border-app-accent"
       type={inputType}
       value={localValue}
       onChange={(e) => setLocalValue(e.target.value)}
@@ -704,9 +704,9 @@ function DropdownItemsEditor({
   return (
     <div className="mt-2 border-t border-app-border pt-2">
       <div className="mb-1 flex items-center justify-between">
-        <span className="text-[10px] uppercase tracking-[0.16em] text-app-text-muted">Dropdown Items</span>
+        <span className="text-tiny uppercase tracking-[0.16em] text-app-text-muted">Dropdown Items</span>
         <button
-          className="rounded bg-app-accent px-2 py-0.5 text-[10px] text-app-text-strong hover:bg-app-accent-hover"
+          className="rounded bg-app-accent px-2 py-0.5 text-tiny text-app-text-strong hover:bg-app-accent-hover"
           onClick={() => onUpdate([...normalizedItems, createDropdownItem('New Item', String(normalizedItems.length))])}
         >
           + Add
@@ -715,7 +715,7 @@ function DropdownItemsEditor({
       {normalizedItems.map((item, i) => (
         <div key={item.uniqueId ?? i} className="mb-1 grid grid-cols-[1fr_1fr_auto] items-center gap-1">
           <input
-            className="w-full rounded border border-app-border bg-app-surface-raised px-1 py-0.5 text-[10px] text-app-text-strong outline-none focus:border-app-accent"
+            className="w-full rounded border border-app-border bg-app-surface-raised px-1 py-0.5 text-tiny text-app-text-strong outline-none focus:border-app-accent"
             value={item.name}
             placeholder="Name"
             onChange={(e) => {
@@ -725,7 +725,7 @@ function DropdownItemsEditor({
             }}
           />
           <input
-            className="w-full rounded border border-app-border bg-app-surface-raised px-1 py-0.5 text-[10px] text-app-text-strong outline-none focus:border-app-accent"
+            className="w-full rounded border border-app-border bg-app-surface-raised px-1 py-0.5 text-tiny text-app-text-strong outline-none focus:border-app-accent"
             value={item.value}
             placeholder="Value"
             onChange={(e) => {
@@ -736,7 +736,7 @@ function DropdownItemsEditor({
           />
           <span className="flex gap-0.5">
             <button
-              className="text-[10px] text-app-text-muted hover:text-app-text-strong"
+              className="text-tiny text-app-text-muted hover:text-app-text-strong"
               onClick={() => {
                 if (i === 0) return;
                 const next = normalizedItems.map(cloneDropdownItem);
@@ -748,7 +748,7 @@ function DropdownItemsEditor({
               &#9650;
             </button>
             <button
-              className="text-[10px] text-app-text-muted hover:text-app-text-strong"
+              className="text-tiny text-app-text-muted hover:text-app-text-strong"
               onClick={() => {
                 if (i >= normalizedItems.length - 1) return;
                 const next = normalizedItems.map(cloneDropdownItem);
@@ -760,7 +760,7 @@ function DropdownItemsEditor({
               &#9660;
             </button>
             <button
-              className="text-[10px] text-app-danger hover:opacity-80"
+              className="text-tiny text-app-danger hover:opacity-80"
               onClick={() => onUpdate(normalizedItems.filter((_, idx) => idx !== i).map(cloneDropdownItem))}
               title="Remove"
             >
@@ -821,16 +821,16 @@ function LineObjectEditor({
   return (
     <div className="mt-2 border-t border-app-border pt-2">
       <div className="mb-1 flex items-center justify-between">
-        <span className="text-[10px] uppercase tracking-[0.16em] text-app-text-muted">Lines</span>
+        <span className="text-tiny uppercase tracking-[0.16em] text-app-text-muted">Lines</span>
         <button
-          className="rounded bg-app-accent px-2 py-0.5 text-[10px] text-app-text-strong hover:bg-app-accent-hover"
+          className="rounded bg-app-accent px-2 py-0.5 text-tiny text-app-text-strong hover:bg-app-accent-hover"
           onClick={() => onUpdate([...normalizedLines, createLineItem(normalizedLines)])}
         >
           + Add
         </button>
       </div>
       <div className="overflow-x-auto rounded border border-app-border/50 bg-app-bg">
-        <div className="grid min-w-[376px] grid-cols-[36px_minmax(82px,1fr)_64px_64px_88px_42px] items-center border-b border-app-border/60 bg-app-menu text-[10px] text-app-text-soft">
+        <div className="grid min-w-[376px] grid-cols-[36px_minmax(82px,1fr)_64px_64px_88px_42px] items-center border-b border-app-border/60 bg-app-menu text-tiny text-app-text-soft">
           <div className="px-1 py-1 text-center">[x]</div>
           <div className="px-1 py-1">Line Name</div>
           <div className="px-1 py-1">Min</div>
@@ -839,7 +839,7 @@ function LineObjectEditor({
           <div className="px-1 py-1" />
         </div>
         {normalizedLines.map((line, i) => (
-          <div key={`line-${i}`} className="grid min-w-[376px] grid-cols-[36px_minmax(82px,1fr)_64px_64px_88px_42px] items-center border-b border-app-border/30 text-[10px] last:border-b-0">
+          <div key={`line-${i}`} className="grid min-w-[376px] grid-cols-[36px_minmax(82px,1fr)_64px_64px_88px_42px] items-center border-b border-app-border/30 text-tiny last:border-b-0">
             <label className="flex h-full min-h-8 items-center justify-center border-r border-app-border/30">
               <span className="sr-only">Color</span>
               <input
@@ -851,20 +851,20 @@ function LineObjectEditor({
               />
             </label>
             <input
-              className="h-8 w-full border-0 border-r border-app-border/30 bg-transparent px-1 text-[10px] text-app-text-strong outline-none focus:bg-app-surface-raised focus:ring-1 focus:ring-app-accent"
+              className="h-8 w-full border-0 border-r border-app-border/30 bg-transparent px-1 text-tiny text-app-text-strong outline-none focus:bg-app-surface-raised focus:ring-1 focus:ring-app-accent"
               value={line.varName}
               placeholder={`line${i}`}
               onChange={(event) => updateLine(i, { varName: event.target.value })}
             />
             <input
-              className="h-8 w-full border-0 border-r border-app-border/30 bg-transparent px-1 text-right text-[10px] text-app-text-strong outline-none focus:bg-app-surface-raised focus:ring-1 focus:ring-app-accent"
+              className="h-8 w-full border-0 border-r border-app-border/30 bg-transparent px-1 text-right text-tiny text-app-text-strong outline-none focus:bg-app-surface-raised focus:ring-1 focus:ring-app-accent"
               type="number"
               step="any"
               value={line.min}
               onChange={(event) => updateLine(i, { min: parseFloatField(event.target.value, line.min) })}
             />
             <input
-              className="h-8 w-full border-0 border-r border-app-border/30 bg-transparent px-1 text-right text-[10px] text-app-text-strong outline-none focus:bg-app-surface-raised focus:ring-1 focus:ring-app-accent"
+              className="h-8 w-full border-0 border-r border-app-border/30 bg-transparent px-1 text-right text-tiny text-app-text-strong outline-none focus:bg-app-surface-raised focus:ring-1 focus:ring-app-accent"
               type="number"
               step="any"
               value={line.max}
@@ -881,7 +881,7 @@ function LineObjectEditor({
             </label>
             <div className="flex h-8 items-center justify-center gap-0.5">
               <button
-                className="text-[10px] text-app-text-muted hover:text-app-text-strong"
+                className="text-tiny text-app-text-muted hover:text-app-text-strong"
                 onClick={() => {
                   if (i === 0) return;
                   const next = normalizedLines.map(cloneLineItem);
@@ -893,7 +893,7 @@ function LineObjectEditor({
                 &#9650;
               </button>
               <button
-                className="text-[10px] text-app-text-muted hover:text-app-text-strong"
+                className="text-tiny text-app-text-muted hover:text-app-text-strong"
                 onClick={() => {
                   if (i >= normalizedLines.length - 1) return;
                   const next = normalizedLines.map(cloneLineItem);
@@ -905,7 +905,7 @@ function LineObjectEditor({
                 &#9660;
               </button>
               <button
-                className="text-[10px] text-app-danger hover:opacity-80"
+                className="text-tiny text-app-danger hover:opacity-80"
                 onClick={() => onUpdate(normalizedLines.filter((_, idx) => idx !== i).map(cloneLineItem))}
                 title="Remove"
               >

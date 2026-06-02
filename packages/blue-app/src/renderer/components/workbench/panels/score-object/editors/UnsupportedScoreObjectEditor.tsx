@@ -12,7 +12,7 @@ export default function UnsupportedScoreObjectEditor({ document }: ScoreObjectEd
       <div className="max-w-sm">
         <div className="text-sm text-blue-muted mb-1">{message}</div>
         {document.target.editorObjectType && (
-          <div className="text-xs text-blue-muted/60">{document.target.editorObjectType}</div>
+          <div className="text-body text-blue-muted/60">{document.target.editorObjectType}</div>
         )}
       </div>
     </div>
