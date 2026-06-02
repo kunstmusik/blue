@@ -55,7 +55,7 @@
 - [x] T017 [P] [US1] Create shared toast styling in `/Users/stevenyi/work/blue-electron/packages/blue-app/src/renderer/lib/toast-styles.ts`
 - [x] T018 [US1] Replace duplicated toast palette objects in `/Users/stevenyi/work/blue-electron/packages/blue-app/src/renderer/main.tsx`
 - [x] T019 [US1] Replace duplicated toast palette objects in `/Users/stevenyi/work/blue-electron/packages/blue-app/src/renderer/effect-editor.tsx`
-- [ ] T020 [US1] Run the single-role change probe from `/Users/stevenyi/work/blue-electron/specs/051-theme-token-cleanup/quickstart.md`
+- [x] T020 [US1] Run the single-role change probe from `/Users/stevenyi/work/blue-electron/specs/051-theme-token-cleanup/quickstart.md`
 
 **Checkpoint**: Core chrome can be themed centrally and legacy aliases resolve.
 
@@ -135,7 +135,7 @@
 - [x] T056 [P] Run `pnpm --filter @blue/app build` using `/Users/stevenyi/work/blue-electron/package.json`
 - [x] T057 [P] Run targeted renderer tests for touched surfaces from `/Users/stevenyi/work/blue-electron/packages/blue-app`
 - [x] T058 Run `pnpm --filter @blue/app test` using `/Users/stevenyi/work/blue-electron/package.json`
-- [ ] T059 Complete the visual smoke checklist in `/Users/stevenyi/work/blue-electron/specs/051-theme-token-cleanup/quickstart.md`
+- [x] T059 Complete the visual smoke checklist in `/Users/stevenyi/work/blue-electron/specs/051-theme-token-cleanup/quickstart.md`
 - [x] T060 Update `/Users/stevenyi/work/blue-electron/specs/051-theme-token-cleanup/status.md` with final audit, validation, and exception results
 - [x] T061 Update `/Users/stevenyi/work/blue-electron/STATUS.md` for Spec 051 handoff
 - [x] T062 Run `git diff --check` from workspace `/Users/stevenyi/work/blue-electron/STATUS.md`

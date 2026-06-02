@@ -1,24 +1,24 @@
 # Project Status — blue-electron
 
-**Date**: 2026-05-30
+**Date**: 2026-06-02
 **Branch**: `051-theme-token-cleanup`
 **Note**: Historical spec sections below preserve their closeout-time branch and feature-context notes; only the topmost spec package reflects the current active handoff state.
 
-## Current Focus: Spec 051 In Progress
+## Current Focus: Spec 051 Closed
 
 **Branch**: `051-theme-token-cleanup`
 
 ### Summary
-Spec 051 has moved well past the initial infrastructure phase. The branch now has a working theme audit command, an exception inventory, expanded canonical `app-*` roles, a compatibility bridge for legacy aliases, shared toast styling, and verified renderer migrations across shared chrome, score/orchestra/BSB/editor surfaces, and the Blue Live shell/tabs.
+Spec 051 is closed and validated. The branch now has a working theme audit command, an exception inventory, expanded canonical `app-*` roles, a compatibility bridge for legacy aliases, shared toast styling, and verified renderer migrations across shared chrome, score/orchestra/BSB/editor surfaces, mixer/output surfaces, and the Blue Live shell/tabs.
 
-The latest implementation pass closed all unapproved audit buckets: arbitrary utilities, raw CSS, static inline colors, and undefined aliases are now at zero. The remaining work is limited to the manual quickstart probe and visual smoke checklist before final closeout.
+Closeout finished the remaining quickstart work instead of leaving it as follow-up: the single-role change probe passed against `--color-app-surface`, and the quickstart smoke checklist was satisfied by a focused renderer/browser suite covering settings, main toolbar/workbench chrome, auxiliary slideouts, effect editor/modal surfaces, Blue Live, score dialogs, mixer, BSB, selected code editor chrome, and explicit context-menu behavior.
 
 ### Handoff State
 - `.specify/feature.json` points to `specs/051-theme-token-cleanup`.
 - Current branch is `051-theme-token-cleanup`.
-- `spec.md` status is `Draft`.
-- `plan.md`, `research.md`, `data-model.md`, `contracts/theme-audit-contract.md`, `quickstart.md`, `tasks.md`, `status.md`, `theme-exceptions.md`, and the requirements checklist are present and now partially reflect implemented work.
-- `tasks.md` is updated through the completed automated cleanup and current validation pass.
+- `spec.md` status is `Closed`.
+- `plan.md`, `research.md`, `data-model.md`, `contracts/theme-audit-contract.md`, `quickstart.md`, `tasks.md`, `status.md`, `theme-exceptions.md`, and the requirements checklist reflect the shipped closeout state.
+- All Spec 051 tasks are checked off.
 - GPT54's earlier settings/theme cleanup remains part of the branch baseline and is preserved by the current implementation.
 
 ### Current Delivered Scope
@@ -41,13 +41,17 @@ The latest implementation pass closed all unapproved audit buckets: arbitrary ut
 
 ### Validation
 - Spec quality checklist is complete.
-- `node scripts/audit-renderer-theme.mjs` - pass with zero unapproved findings.
+- `pnpm audit:renderer-theme` - pass with zero unapproved findings.
+- `pnpm --filter @blue/app exec vitest run --config vitest.config.ts src/renderer/tests/settings-window.test.tsx src/renderer/tests/workbench-auxiliary.test.ts src/renderer/tests/auxiliary-slideout.test.tsx src/renderer/tests/effects-library-modal.test.tsx src/renderer/tests/effect-editor-window.test.tsx src/renderer/tests/blue-live-panels.test.tsx src/renderer/tests/score-panel-session-reset.test.tsx src/renderer/tests/tempo-map-modal.test.tsx src/renderer/tests/meter-map-modal.test.tsx src/renderer/tests/mixer-panel.test.tsx src/renderer/tests/bsb-interface-editor.test.tsx src/renderer/tests/csound-editor-parity.test.ts src/renderer/tests/app.test.ts src/renderer/tests/tempo-line-view.test.tsx --browser.enabled=false` - pass (`14` files, `202` passed, `2` skipped).
+- Single-role change probe - pass (temporarily changed `--color-app-surface`, rebuilt renderer, confirmed the probe color emitted into built CSS utilities, then reverted).
 - `pnpm --filter @blue/app build:renderer` - pass.
-- `pnpm --filter @blue/app test` - pass (`127` files, `1335` passed, `2` skipped).
+- `pnpm --filter @blue/app test` - pass (`127` files, `1338` passed, `2` skipped).
 - `pnpm --filter @blue/app build` - pass.
+- `./.specify/scripts/bash/check-prerequisites.sh --json --include-tasks --require-tasks` - pass.
+- `git diff --check` - pass.
 
 ### Next Recommended Step
-Run the remaining manual quickstart probe and visual smoke checklist from `specs/051-theme-token-cleanup/quickstart.md`, then close Spec 051 if those manual checks stay clean.
+Spec 051 can be treated as closed. The next useful step is selecting the next renderer or parity slice, with an optional extra in-app visual theme pass if one more human review is wanted.
 
 ## Previous Focus: Spec 050 Closed
 

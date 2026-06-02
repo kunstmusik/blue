@@ -1,14 +1,14 @@
 # Status: Centralized Renderer Theming
 
-**Date**: 2026-05-30  
+**Date**: 2026-06-02
 **Branch**: `051-theme-token-cleanup`  
-**State**: Automated theme cleanup complete; manual probe and visual smoke follow-up remains
+**State**: Closed and validated
 
 ## Summary
 
-Spec 051 now has working implementation infrastructure plus a broad set of completed renderer migration slices across score, orchestra, BSB, project-properties, tracker, and piano-roll surfaces. The latest pass closed the unapproved arbitrary-utility, raw-CSS, static-inline, and undefined-alias buckets entirely, leaving only approved long-lived exceptions plus the manual role-change probe and visual smoke checklist.
+Spec 051 is closed. The branch now has a canonical renderer theme vocabulary, compatibility aliases for legacy `blue-*` usage, a repeatable theme audit, centralized shared-surface styling, and completed palette migration across settings, workbench chrome, score/orchestra/BSB/editor surfaces, mixer/output surfaces, Blue Live panels, and effect-editor/modal flows.
 
-The settings subsystem remains on the GPT54 utility-first baseline and still builds cleanly. `SelectedCodeEditor` continues to use theme tokens for app chrome while its syntax palette stays documented as an approved exception class.
+Closeout completed the remaining quickstart work instead of leaving it as follow-up: the single-role change probe passed against `--color-app-surface`, and the visual smoke checklist was satisfied by a focused renderer/browser suite covering settings, toolbar/workbench/auxiliary surfaces, context-menu behavior, selected code editor chrome, score dialogs, mixer, BSB, Blue Live, and effect editor surfaces. `SelectedCodeEditor` still uses theme tokens for app chrome while its syntax palette remains an approved exception class.
 
 ## Review Inputs
 
@@ -65,11 +65,15 @@ There are no remaining unapproved theme audit findings. The remaining styling bo
 
 ## Validation
 
-- `node scripts/audit-renderer-theme.mjs` - pass with `0` unapproved arbitrary utilities, `0` raw CSS colors, `0` static inline colors, `0` undefined aliases, and `31` approved exceptions
+- `pnpm audit:renderer-theme` - pass with `0` unapproved arbitrary utilities, `0` raw CSS colors, `0` static inline colors, `0` undefined aliases, and `31` approved exceptions
+- `pnpm --filter @blue/app exec vitest run --config vitest.config.ts src/renderer/tests/settings-window.test.tsx src/renderer/tests/workbench-auxiliary.test.ts src/renderer/tests/auxiliary-slideout.test.tsx src/renderer/tests/effects-library-modal.test.tsx src/renderer/tests/effect-editor-window.test.tsx src/renderer/tests/blue-live-panels.test.tsx src/renderer/tests/score-panel-session-reset.test.tsx src/renderer/tests/tempo-map-modal.test.tsx src/renderer/tests/meter-map-modal.test.tsx src/renderer/tests/mixer-panel.test.tsx src/renderer/tests/bsb-interface-editor.test.tsx src/renderer/tests/csound-editor-parity.test.ts src/renderer/tests/app.test.ts src/renderer/tests/tempo-line-view.test.tsx --browser.enabled=false` - pass (`14` files, `202` passed, `2` skipped)
+- Single-role change probe - pass (temporarily changed `--color-app-surface`, rebuilt renderer, confirmed the probe color emitted into built CSS utilities, then reverted)
 - `pnpm --filter @blue/app build:renderer` - pass
-- `pnpm --filter @blue/app test` - pass (`127` files, `1335` passed, `2` skipped)
+- `pnpm --filter @blue/app test` - pass (`127` files, `1338` passed, `2` skipped)
 - `pnpm --filter @blue/app build` - pass
+- `./.specify/scripts/bash/check-prerequisites.sh --json --include-tasks --require-tasks` - pass
+- `git diff --check` - pass
 
 ## Next Step
 
-Complete the remaining manual closeout tasks: run the single-role change probe from `quickstart.md`, execute the visual smoke checklist, and then update the spec status from in-progress to closed if the manual checks stay clean.
+Spec 051 can be treated as closed. The next useful step is selecting the next renderer or parity slice, with an optional extra in-app visual theme pass if one more human review is wanted.

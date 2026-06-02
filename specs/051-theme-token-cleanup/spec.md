@@ -2,7 +2,7 @@
 
 **Feature Branch**: `051-theme-token-cleanup`  
 **Created**: 2026-05-29  
-**Status**: Draft  
+**Status**: Closed
 **Input**: User description: "Review the three concurrent STYLING reports, perform an independent current-state review, and create a Spec Kit feature for centralizing the app theme so renderer styling goes through named theme values and project-standard utility styling rather than scattered literal colors and ad hoc class names."
 
 ## User Scenarios & Testing *(mandatory)*

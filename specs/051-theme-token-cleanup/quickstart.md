@@ -55,3 +55,24 @@ Update `/Users/stevenyi/work/blue-electron/STATUS.md` and the feature `status.md
 - Surfaces completed.
 - Approved exceptions.
 - Validation commands and results.
+
+## 7. Closeout Results
+
+Closeout validation on 2026-06-02:
+
+- `pnpm audit:renderer-theme` - pass (`0` unapproved arbitrary utilities, `0` raw CSS colors, `0` static inline colors, `0` undefined aliases, `31` approved exceptions)
+- `pnpm --filter @blue/app exec vitest run --config vitest.config.ts src/renderer/tests/settings-window.test.tsx src/renderer/tests/workbench-auxiliary.test.ts src/renderer/tests/auxiliary-slideout.test.tsx src/renderer/tests/effects-library-modal.test.tsx src/renderer/tests/effect-editor-window.test.tsx src/renderer/tests/blue-live-panels.test.tsx src/renderer/tests/score-panel-session-reset.test.tsx src/renderer/tests/tempo-map-modal.test.tsx src/renderer/tests/meter-map-modal.test.tsx src/renderer/tests/mixer-panel.test.tsx src/renderer/tests/bsb-interface-editor.test.tsx src/renderer/tests/csound-editor-parity.test.ts src/renderer/tests/app.test.ts src/renderer/tests/tempo-line-view.test.tsx --browser.enabled=false` - pass (`14` files, `202` passed, `2` skipped)
+- `pnpm --filter @blue/app build:renderer` - pass
+- `pnpm --filter @blue/app test` - pass (`127` files, `1338` passed, `2` skipped)
+- `pnpm --filter @blue/app build` - pass
+- Single-role change probe - pass (temporarily changed `--color-app-surface`, rebuilt the renderer, confirmed the probe color emitted into built CSS utilities, verified shared-role routing through settings navigation, the main toolbar shell, `SelectedCodeEditor` chrome, Blue Live, and tempo-dialog surfaces, then reverted the probe)
+- `./.specify/scripts/bash/check-prerequisites.sh --json --include-tasks --require-tasks` - pass
+- `git diff --check` - pass
+
+## 8. Completion Criteria
+
+- All `62` tasks in `tasks.md` are checked off.
+- `spec.md` is `Closed`.
+- `status.md`, `theme-exceptions.md`, and top-level `STATUS.md` match the shipped implementation.
+- The validation commands above pass.
+- The quickstart smoke checklist is satisfied by the focused renderer/browser suite plus the completed single-role change probe; an extra in-app visual pass remains optional.
