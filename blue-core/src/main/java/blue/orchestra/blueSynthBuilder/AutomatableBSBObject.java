@@ -20,6 +20,7 @@
 package blue.orchestra.blueSynthBuilder;
 
 import blue.automation.Parameter;
+import blue.automation.ParameterListener;
 import blue.automation.ParameterList;
 import static blue.orchestra.blueSynthBuilder.ClampedValueListener.BoundaryType.TRUNCATE;
 import blue.utility.XMLUtilities;
@@ -137,6 +138,35 @@ public abstract class AutomatableBSBObject extends BSBObject {
     }
 
     public abstract void setAutomationAllowed(boolean allowAutomation);
+
+    /** Delete path: remove timeline Parameters and turn off persisted automation. */
+    final void removeFromParameterList() {
+        if (parameters == null) {
+            return;
+        }
+
+        removeParameterListeners();
+        setAutomationAllowed(false);
+        parameters = null;
+    }
+
+    /** Move path: detach transient listeners but keep existing timeline Parameters. */
+    final void detachFromParameterList() {
+        if (parameters == null) {
+            return;
+        }
+
+        removeParameterListeners();
+        parameters = null;
+    }
+
+    private void removeParameterListeners() {
+        if (this instanceof ParameterListener parameterListener) {
+            for (Parameter parameter : parameters) {
+                parameter.removeParameterListener(parameterListener);
+            }
+        }
+    }
 
     /** Used by sub-classes for ClampedValueListeners to adjust parameters*/
     protected void updateParameter(ClampedValue cv, Parameter param, 

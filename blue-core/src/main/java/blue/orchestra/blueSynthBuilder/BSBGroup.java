@@ -53,6 +53,9 @@ public class BSBGroup extends BSBObject implements Iterable<BSBObject>, UniqueNa
 
     private transient ParameterList parameterList;
     private transient ObservableSet<BSBObject> allSet;
+    // ObservableSet removals do not carry caller intent, so moveBSBObjectTo()
+    // scopes this flag around structural moves.
+    private transient boolean preserveParametersOnRemove = false;
     private final StringProperty groupName = new SimpleStringProperty("Group");
     private final ObjectProperty<Color> backgroundColor =
             new SimpleObjectProperty<>(new Color(0,0,0,.2f));
@@ -124,11 +127,20 @@ public class BSBGroup extends BSBObject implements Iterable<BSBObject>, UniqueNa
             } else if (change.wasRemoved()) {
                 bsbObj = change.getElementRemoved();
                 allSet.remove(bsbObj);
+                // Normal removals are deletes; structural moves opt into detach-only cleanup.
                 if (bsbObj instanceof BSBGroup bSBGroup) {
                     bSBGroup.setAllSet(null);
-                    bSBGroup.removeParameters();
+                    if (preserveParametersOnRemove) {
+                        bSBGroup.detachFromParameterList();
+                    } else {
+                        bSBGroup.removeParameters();
+                    }
                 } else if (bsbObj instanceof AutomatableBSBObject automatableBSBObject) {
-                    automatableBSBObject.setAutomationAllowed(false);
+                    if (preserveParametersOnRemove) {
+                        automatableBSBObject.detachFromParameterList();
+                    } else {
+                        automatableBSBObject.removeFromParameterList();
+                    }
                 }
             }
         }
@@ -229,6 +241,40 @@ public class BSBGroup extends BSBObject implements Iterable<BSBObject>, UniqueNa
     public void addBSBObject(BSBObject bsbObj) {
         if (bsbObj != null) {
             interfaceItems.add(bsbObj);
+        }
+    }
+
+    /**
+     * Reparent an object without deleting its existing timeline Parameters.
+     */
+    public boolean moveBSBObjectTo(BSBObject bsbObj, BSBGroup targetGroup) {
+        if (targetGroup == null || !contains(bsbObj)) {
+            return false;
+        }
+
+        if (targetGroup == this) {
+            return true;
+        }
+
+        if (removeBSBObjectPreservingParameters(bsbObj)) {
+            targetGroup.addBSBObject(bsbObj);
+            return true;
+        }
+
+        return false;
+    }
+
+    private boolean removeBSBObjectPreservingParameters(BSBObject bsbObj) {
+        if (bsbObj == null) {
+            return false;
+        }
+
+        boolean previousPreserveParametersOnRemove = preserveParametersOnRemove;
+        preserveParametersOnRemove = true;
+        try {
+            return interfaceItems.remove(bsbObj);
+        } finally {
+            preserveParametersOnRemove = previousPreserveParametersOnRemove;
         }
     }
 
@@ -463,10 +509,23 @@ public class BSBGroup extends BSBObject implements Iterable<BSBObject>, UniqueNa
             if (bsbObj instanceof BSBGroup bSBGroup) {
                 bSBGroup.removeParameters();
             } else if (bsbObj instanceof AutomatableBSBObject automatableBSBObject) {
-                automatableBSBObject.setAutomationAllowed(false);
+                automatableBSBObject.removeFromParameterList();
             }
         }
 
+        parameterList = null;
+    }
+
+    private void detachFromParameterList() {
+        for (BSBObject bsbObj : interfaceItemsProperty()) {
+            if (bsbObj instanceof BSBGroup bSBGroup) {
+                bSBGroup.detachFromParameterList();
+            } else if (bsbObj instanceof AutomatableBSBObject automatableBSBObject) {
+                automatableBSBObject.detachFromParameterList();
+            }
+        }
+
+        parameterList = null;
     }
 
     public final void setGroupName(String value) {
