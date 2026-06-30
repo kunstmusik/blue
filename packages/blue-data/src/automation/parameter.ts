@@ -61,6 +61,7 @@ export class Parameter implements BlueDataObject {
   private _highPrecision = false;
   private _compilationVarName: string | null = null;
   private _fixedValue = 0;
+  private _lineColor = -8355712;
 
   private static generateUniqueId(): string {
     return generatePrefixedUuid('param');
@@ -164,6 +165,9 @@ export class Parameter implements BlueDataObject {
   getFixedValue(): number { return this._fixedValue; }
   setFixedValue(v: number): void { this._fixedValue = v; }
 
+  getLineColor(): number { return this._lineColor; }
+  setLineColor(c: number): void { this._lineColor = c; }
+
   /**
    * Check if this parameter has automation enabled (has points).
    */
@@ -231,7 +235,7 @@ export class Parameter implements BlueDataObject {
     lineElem.setAttribute('max', Parameter.formatDouble(this._maximum));
     lineElem.setAttribute('min', Parameter.formatDouble(this._minimum));
     lineElem.setAttribute('bdresolution', this._resolution.toString());
-    lineElem.setAttribute('color', '-8355712');
+    lineElem.setAttribute('color', this._lineColor.toString());
     lineElem.setAttribute('rightBound', 'false');
     lineElem.setAttribute('endPointsLinked', 'false');
 
@@ -297,6 +301,11 @@ export class Parameter implements BlueDataObject {
         param._resolution = parseFloat(lineResolution);
       }
 
+      const lineColor = lineNode.getAttribute('color');
+      if (lineColor !== null && lineColor !== undefined) {
+        param._lineColor = parseInt(lineColor, 10);
+      }
+
       const curveType = lineNode.getAttribute('curveType');
       if (curveType === 'CONSTANT') {
         param._curve = AutomationCurve.STEP;
@@ -351,6 +360,7 @@ export class Parameter implements BlueDataObject {
     copy._highPrecision = this._highPrecision;
     copy._compilationVarName = this._compilationVarName;
     copy._fixedValue = this._fixedValue;
+    copy._lineColor = this._lineColor;
     return copy;
   }
 }

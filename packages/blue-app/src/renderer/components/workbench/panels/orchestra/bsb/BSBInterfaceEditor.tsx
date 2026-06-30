@@ -4,8 +4,10 @@ import type {
   BsbInterfacePatch,
   BsbWidgetNodeSnapshot,
   InstrumentPatch,
+  SoundAutomationParameterSnapshot,
 } from '../../../../../../shared/project-editor';
 import { collectBsbReplacementKeysFromSnapshotTree } from '../../../../../../shared/project-editor';
+import { useProjectStore } from '../../../../../stores/project-store';
 import BSBInterfaceCanvas from './BSBInterfaceCanvas';
 import BSBPropertySheet from './BSBPropertySheet';
 import BSBGridSettingsPanel from './BSBGridSettingsPanel';
@@ -28,8 +30,14 @@ function BSBInterfaceEditor({
 }: BSBInterfaceEditorProps) {
   const [selectedWidgetIds, setSelectedWidgetIds] = useState<Set<string>>(new Set());
   const [rightTab, setRightTab] = useState<RightPanelTab>('properties');
+  const renderStartTime = useProjectStore((state) => state.transport.renderStartTime);
 
   const editEnabled = instrument.editEnabled;
+  const previewInstrument = useMemo(
+    () => buildAutomationPreviewInstrument(instrument, renderStartTime),
+    [instrument, renderStartTime],
+  );
+  const canvasInstrument = editEnabled ? instrument : previewInstrument;
 
   const selectedWidget = useMemo(
     () =>
@@ -65,14 +73,14 @@ function BSBInterfaceEditor({
 
   const canvasProps = useMemo(
     () => ({
-      instrument,
+      instrument: canvasInstrument,
       selectedWidgetIds,
       editEnabled,
       onWidgetSelect: handleWidgetSelect,
       onBsbInterfacePatch: dispatchBsbPatch,
       onInstrumentPatch,
     }),
-    [instrument, selectedWidgetIds, editEnabled, handleWidgetSelect, dispatchBsbPatch, onInstrumentPatch],
+    [canvasInstrument, selectedWidgetIds, editEnabled, handleWidgetSelect, dispatchBsbPatch, onInstrumentPatch],
   );
 
   const handleEditorKeyDown = useCallback((e: React.KeyboardEvent<HTMLDivElement>) => {
@@ -202,4 +210,229 @@ function findWidgetInTree(
     }
   }
   return null;
+}
+
+function buildAutomationPreviewInstrument(
+  instrument: BlueSynthBuilderInstrumentSnapshot,
+  time: number,
+): BlueSynthBuilderInstrumentSnapshot {
+  const parameters = instrument.automationParameters;
+  if (!parameters || parameters.length === 0 || !instrument.widgetTree) {
+    return instrument;
+  }
+
+  const values = new Map<string, number>();
+  for (const parameter of parameters) {
+    if (!parameter.automationEnabled) {
+      continue;
+    }
+    values.set(parameter.name, getAutomationPreviewValue(parameter, time));
+  }
+
+  if (values.size === 0) {
+    return instrument;
+  }
+
+  const nextTree = applyAutomationPreviewToNode(instrument.widgetTree, values);
+  if (nextTree === instrument.widgetTree) {
+    return instrument;
+  }
+
+  return {
+    ...instrument,
+    widgetTree: nextTree,
+  };
+}
+
+function applyAutomationPreviewToNode(
+  node: BsbWidgetNodeSnapshot,
+  values: Map<string, number>,
+): BsbWidgetNodeSnapshot {
+  let nextNode = applyAutomationPreviewToWidget(node, values);
+  let childrenChanged = false;
+  const nextChildren = node.children?.map((child) => {
+    const nextChild = applyAutomationPreviewToNode(child, values);
+    if (nextChild !== child) {
+      childrenChanged = true;
+    }
+    return nextChild;
+  });
+
+  if (childrenChanged && nextChildren) {
+    nextNode = {
+      ...nextNode,
+      children: nextChildren,
+    };
+  }
+
+  return nextNode;
+}
+
+function applyAutomationPreviewToWidget(
+  node: BsbWidgetNodeSnapshot,
+  values: Map<string, number>,
+): BsbWidgetNodeSnapshot {
+  const objectName = node.objectName.trim();
+  if (!objectName) {
+    return node;
+  }
+
+  if (node.type === 'BSBXYController') {
+    const xValue = values.get(`${objectName}X`);
+    const yValue = values.get(`${objectName}Y`);
+    if (xValue == null && yValue == null) {
+      return node;
+    }
+    return {
+      ...node,
+      properties: {
+        ...node.properties,
+        ...(xValue != null && { xValue }),
+        ...(yValue != null && { yValue }),
+      },
+    };
+  }
+
+  if (node.type === 'BSBHSliderBank' || node.type === 'BSBVSliderBank') {
+    const sliderCount = typeof node.properties.numberOfSliders === 'number'
+      ? Math.max(1, node.properties.numberOfSliders)
+      : 1;
+    const storedSliders = Array.isArray(node.properties.sliders)
+      ? node.properties.sliders as Array<{ value?: number }>
+      : [];
+    let changed = false;
+    const sliders = Array.from({ length: Math.max(sliderCount, storedSliders.length, 1) }, (_unused, index) => {
+      const current = storedSliders[index] ?? {};
+      const previewValue = values.get(`${objectName}_${index}`);
+      if (previewValue == null) {
+        return current;
+      }
+      changed = true;
+      return { ...current, value: previewValue };
+    });
+
+    if (!changed) {
+      return node;
+    }
+
+    return {
+      ...node,
+      properties: {
+        ...node.properties,
+        sliders,
+      },
+    };
+  }
+
+  const value = values.get(objectName);
+  if (value == null) {
+    return node;
+  }
+
+  if (node.type === 'BSBCheckBox') {
+    return {
+      ...node,
+      value,
+      properties: {
+        ...node.properties,
+        selected: value >= 0.5,
+      },
+    };
+  }
+
+  if (node.type === 'BSBDropdown') {
+    const items = Array.isArray(node.properties.dropdownItems)
+      ? node.properties.dropdownItems
+      : [];
+    const maxIndex = Math.max(0, items.length - 1);
+    const selectedIndex = Math.max(0, Math.min(maxIndex, Math.round(value)));
+    return {
+      ...node,
+      value: selectedIndex,
+      properties: {
+        ...node.properties,
+        selectedIndex,
+      },
+    };
+  }
+
+  if (
+    node.type === 'BSBHSlider'
+    || node.type === 'BSBVSlider'
+    || node.type === 'BSBKnob'
+    || node.type === 'BSBValue'
+  ) {
+    return {
+      ...node,
+      value,
+      properties: {
+        ...node.properties,
+        value,
+        ...(node.type === 'BSBValue' && { defaultValue: value }),
+      },
+    };
+  }
+
+  return node;
+}
+
+function getAutomationPreviewValue(parameter: SoundAutomationParameterSnapshot, time: number): number {
+  const points = parameter.points;
+  if (points.length === 0) {
+    return parameter.value;
+  }
+
+  if (points.length === 1 || time === 0) {
+    return points[0]!.y;
+  }
+
+  let a = points[0]!;
+  let b = points[0]!;
+
+  for (let i = 1; i < points.length; i++) {
+    b = points[i]!;
+
+    if (b.x === time) {
+      if (i === points.length - 1) {
+        return b.y;
+      }
+      while (i < points.length) {
+        const temp = points[i]!;
+        if (temp.x !== time) {
+          break;
+        }
+        b = temp;
+        i++;
+      }
+      return b.y;
+    }
+
+    if (b.x < time) {
+      a = b;
+    } else {
+      break;
+    }
+  }
+
+  if (b === a || b.x === a.x) {
+    return b.y;
+  }
+
+  const slope = (b.y - a.y) / (b.x - a.x);
+  const value = slope * (time - a.x) + a.y;
+  const resolution = parameter.resolution ?? -1;
+  if (resolution <= 0) {
+    return value;
+  }
+
+  return snapJavaLineValue(value, resolution, b.y < a.y);
+}
+
+function snapJavaLineValue(value: number, resolution: number, descending: boolean): number {
+  if (!Number.isFinite(value) || !Number.isFinite(resolution) || resolution <= 0) {
+    return value;
+  }
+
+  const adjusted = descending ? value + resolution * 0.99 : value;
+  return Math.floor(adjusted / resolution) * resolution;
 }

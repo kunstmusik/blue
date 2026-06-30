@@ -34,6 +34,10 @@ export default function SoundEditor({ document, onPatch }: ScoreObjectEditorComp
 
   const payload = editor.payload as unknown as SoundEditorPayload;
   const { comment, bsbInstrument, automationParameters, availableTabs } = payload;
+  const bsbInstrumentWithAutomation = useMemo(
+    () => bsbInstrument ? { ...bsbInstrument, automationParameters } : null,
+    [bsbInstrument, automationParameters],
+  );
   const [activeTab, setActiveTab] = useState<SoundTabId>(availableTabs[0] ?? 'comments');
   const {
     testing,
@@ -126,10 +130,10 @@ export default function SoundEditor({ document, onPatch }: ScoreObjectEditorComp
         </div>
       )}
       <div className="min-h-0 flex-1 overflow-hidden">
-        {activeTab === 'interface' && bsbInstrument && (
+        {activeTab === 'interface' && bsbInstrumentWithAutomation && (
           <div className="h-full" aria-hidden={activeTab !== 'interface'}>
             <BSBInterfaceEditor
-              instrument={bsbInstrument}
+              instrument={bsbInstrumentWithAutomation}
               onInstrumentPatch={handleInstrumentPatch}
             />
           </div>

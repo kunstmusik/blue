@@ -177,6 +177,19 @@ function scorePatchRequiresCanonicalProjectRefresh(patch: ScorePatch): boolean {
     case 'renameLayerGroup':
     case 'moveLayerGroup':
     case 'removeLayerGroup':
+    case 'assignAutomationToLayer':
+    case 'removeAutomationFromLayer':
+    case 'moveAutomationToLayer':
+    case 'clearLayerAutomations':
+    case 'cleanupLayerAutomation':
+    case 'selectLayerAutomation':
+    case 'setAutomationLineColor':
+    case 'setAutomationPoints':
+    case 'insertAutomationPoint':
+    case 'deleteAutomationPoint':
+    case 'moveAutomationPoint':
+    case 'moveAutomationRange':
+    case 'scaleAutomationRange':
       return true;
     case 'addLayerGroup':
       return patch.groupType === 'audio';
@@ -1929,6 +1942,21 @@ function applyScorePatchToSnapshot(
     }));
 
     return { ...score, layerGroups: nextLayerGroups };
+  }
+
+  if (patch.type === 'assignAutomationToLayer'
+    || patch.type === 'removeAutomationFromLayer'
+    || patch.type === 'moveAutomationToLayer'
+    || patch.type === 'clearLayerAutomations'
+    || patch.type === 'cleanupLayerAutomation'
+    || patch.type === 'selectLayerAutomation'
+    || patch.type === 'setAutomationLineColor'
+    || patch.type === 'setAutomationPoints'
+    || patch.type === 'insertAutomationPoint'
+    || patch.type === 'deleteAutomationPoint'
+    || patch.type === 'moveAutomationPoint'
+  ) {
+    return score;
   }
 
   if (patch.type !== 'updateSharedProperties') return score;

@@ -1,4 +1,5 @@
-import { useRef, useCallback, useState, useEffect } from "react";
+import { useRef, useCallback, useState, useEffect, useLayoutEffect } from "react";
+import { createPortal } from "react-dom";
 import * as ContextMenu from "@radix-ui/react-context-menu";
 import { Check, ChevronRight, ChevronDown } from "lucide-react";
 import { useProjectStore } from "../../../stores/project-store";
@@ -6,15 +7,18 @@ import type {
   ScoreDocumentSnapshot,
   ScoreLayerGroupSnapshot,
   ScoreLayerSnapshot,
+  ScoreRowObjectSnapshot,
   PolyObjectLayerGroupSnapshot,
 } from "./score/types";
-import type { TempoMapSnapshot, TempoMapPatch, MeterMapPatch, NoteProcessorChainSnapshot } from "../../../../shared/project-editor";
+import { DEFAULT_ROW_HEIGHT } from "./score/types";
+import type { TempoMapSnapshot, TempoMapPatch, MeterMapPatch, NoteProcessorChainSnapshot, ScoreAutomationPatch } from "../../../../shared/project-editor";
 import type { SnapValueName } from "@blue/data";
 import type { RulerConfigChanges } from "./score/RulerConfigDialog";
 import SplitPane from "./orchestra/SplitPane";
 import ScoreToolbar from "./score/ScoreToolbar";
 import RulerConfigDialog from "./score/RulerConfigDialog";
 import ScoreManagerDialog from "./score/ScoreManagerDialog";
+import AutomationTargetMenu from "./score/automation/AutomationTargetMenu";
 import TempoMapEditorDialog from "./score/TempoMapEditorDialog";
 import MeterMapEditorDialog from "./score/MeterMapEditorDialog";
 import ColumnHeader from "./score/ColumnHeader";
@@ -130,6 +134,24 @@ export default function ScorePanel() {
     setSnapEnabled(score.timeState.snapEnabled);
     setSnapValue(score.timeState.snapValue as SnapValueName);
   }, [score.timeState]);
+
+  // Snap toggle/value are part of the project's TimeState (Java parity). Persist
+  // them through an updateTimeState patch so they survive the canonical project
+  // refresh that follows automation/score edits (otherwise the local toggle is
+  // clobbered back to the document's previous value).
+  const handleSnapToggle = useCallback((enabled: boolean) => {
+    setSnapEnabled(enabled);
+    void useProjectStore.getState().applyProjectDocumentPatch({
+      score: { type: 'updateTimeState', patch: { snapEnabled: enabled } },
+    });
+  }, []);
+
+  const handleSnapValueChange = useCallback((value: SnapValueName) => {
+    setSnapValue(value);
+    void useProjectStore.getState().applyProjectDocumentPatch({
+      score: { type: 'updateTimeState', patch: { snapValue: value } },
+    });
+  }, []);
 
   useEffect(() => {
     resetSession();
@@ -293,6 +315,119 @@ export default function ScorePanel() {
     }
   }, [scrollContainerRef]);
 
+  // Clicking the empty score background (the scroll container showing through
+  // below the last layer row, when there are fewer layers than the viewport)
+  // deselects and starts a marquee selection, mirroring the per-group canvas
+  // marquee but anchored at the scroll-content origin so it can select objects
+  // in any group. Only fires when the click lands directly on the background
+  // (target === currentTarget); clicks on rows/objects hit the child canvases.
+  const [bgMarquee, setBgMarquee] = useState<{
+    startClientX: number;
+    startClientY: number;
+    endClientX: number;
+    endClientY: number;
+    additive: boolean;
+  } | null>(null);
+  const bgMarqueeRef = useRef(bgMarquee);
+  bgMarqueeRef.current = bgMarquee;
+
+  const contentXY = useCallback(
+    (clientX: number, clientY: number) => {
+      const el = scrollContainerRef.current;
+      if (!el) return { x: 0, y: 0 };
+      const rect = el.getBoundingClientRect();
+      return { x: clientX - rect.left + el.scrollLeft, y: clientY - rect.top + el.scrollTop };
+    },
+    [scrollContainerRef],
+  );
+
+  const handleTimelineBackgroundMouseDown = useCallback((e: React.MouseEvent) => {
+    if (e.target !== e.currentTarget) return;
+    if (e.metaKey || e.ctrlKey) return;
+    if (!e.shiftKey) {
+      useScoreSelectionStore.getState().clearSelection();
+    }
+    setBgMarquee({
+      startClientX: e.clientX,
+      startClientY: e.clientY,
+      endClientX: e.clientX,
+      endClientY: e.clientY,
+      additive: e.shiftKey,
+    });
+  }, []);
+
+  const handleBgMarqueeMove = useCallback((clientX: number, clientY: number) => {
+    setBgMarquee((prev) => (prev ? { ...prev, endClientX: clientX, endClientY: clientY } : prev));
+  }, []);
+
+  const handleBgMarqueeUp = useCallback(() => {
+    const m = bgMarqueeRef.current;
+    setBgMarquee(null);
+    if (!m) return;
+    const start = contentXY(m.startClientX, m.startClientY);
+    const end = contentXY(m.endClientX, m.endClientY);
+    const left = Math.min(start.x, end.x);
+    const right = Math.max(start.x, end.x);
+    const top = Math.min(start.y, end.y);
+    const bottom = Math.max(start.y, end.y);
+    // A click without movement (zero-area rect) is just a deselect, already done.
+    if (right - left < 1 && bottom - top < 1) return;
+
+    const startBeats = left / pixelsPerBeat;
+    const endBeats = right / pixelsPerBeat;
+    const hitItems: Array<{ objectId: string; editorTarget: ScoreRowObjectSnapshot["editorTarget"] }> = [];
+    let groupYOff = 0;
+    for (const lg of effectiveLayerGroups) {
+      for (const layer of lg.layers) {
+        const h = layer.height || DEFAULT_ROW_HEIGHT;
+        const layerTop = groupYOff;
+        const layerBottom = groupYOff + h;
+        if (layerBottom > top && layerTop < bottom) {
+          for (const item of layer.items) {
+            const itemEnd = item.startBeats + item.durationBeats;
+            if (item.startBeats < endBeats && itemEnd > startBeats) {
+              hitItems.push({ objectId: item.objectId, editorTarget: item.editorTarget });
+            }
+          }
+        }
+        groupYOff += h;
+      }
+      groupYOff += GROUP_SPACER;
+    }
+
+    if (hitItems.length === 0) return;
+    const store = useScoreSelectionStore.getState();
+    if (m.additive) {
+      // Shift = additive: union with the existing selection.
+      const merged = { ...store.selectedObjectTargets };
+      for (const it of hitItems) merged[it.objectId] = it.editorTarget;
+      store.setSelection(
+        Object.entries(merged).map(([objectId, editorTarget]) => ({ objectId, editorTarget })),
+      );
+    } else {
+      store.setSelection(hitItems);
+    }
+  }, [contentXY, effectiveLayerGroups, pixelsPerBeat]);
+
+  // Capture-phase window listeners keep the marquee alive outside the panel and
+  // are not blocked by child canvases' stopPropagation.
+  const bgMarqueeMoveRef = useRef(handleBgMarqueeMove);
+  const bgMarqueeUpRef = useRef(handleBgMarqueeUp);
+  bgMarqueeMoveRef.current = handleBgMarqueeMove;
+  bgMarqueeUpRef.current = handleBgMarqueeUp;
+  const bgMarqueeActive = bgMarquee !== null;
+  useLayoutEffect(() => {
+    if (!bgMarqueeActive) return;
+    const onMove = (e: MouseEvent) => bgMarqueeMoveRef.current(e.clientX, e.clientY);
+    const onUp = () => bgMarqueeUpRef.current();
+    window.addEventListener("mousemove", onMove, true);
+    window.addEventListener("mouseup", onUp, true);
+    return () => {
+      window.removeEventListener("mousemove", onMove, true);
+      window.removeEventListener("mouseup", onUp, true);
+    };
+  }, [bgMarqueeActive]);
+
   const handleTimelineHeaderScroll = useCallback(() => {
     const timeline = scrollContainerRef.current;
     const header = timelineHeaderRef.current;
@@ -370,8 +505,8 @@ export default function ScorePanel() {
         onNavigateToRoot={navigateToRoot}
         snapEnabled={snapEnabled}
         snapValue={snapValue}
-        onSnapToggle={setSnapEnabled}
-        onSnapValueChange={setSnapValue}
+        onSnapToggle={handleSnapToggle}
+        onSnapValueChange={handleSnapValueChange}
         onRulerConfig={() => setRulerDialogOpen(true)}
         onOpenNoteProcessorChain={(scope, groupId) => {
           if (scope === 'rootScore') {
@@ -446,10 +581,12 @@ export default function ScorePanel() {
                 ref={scrollContainerRef}
                 className="score-timeline-scroll absolute inset-0 overflow-auto"
                 onScroll={handleTimelineScroll}
+                onMouseDown={handleTimelineBackgroundMouseDown}
               >
                 <LayerPanel
                   layerGroups={effectiveLayerGroups}
                   onOpenNested={navigateToGroup}
+                  mode={mode}
                   pixelsPerBeat={pixelsPerBeat}
                   totalBeats={totalBeats}
                   snapEnabled={snapEnabled}
@@ -471,6 +608,27 @@ export default function ScorePanel() {
                 totalBeats={totalBeats}
                 scrollLeft={scrollOverlayLeft}
               />
+              {(() => {
+                if (!bgMarquee) return null;
+                const rect = scrollContainerRef.current?.getBoundingClientRect();
+                if (!rect) return null;
+                return (
+                  <div
+                    className="absolute pointer-events-none"
+                    style={{
+                      left: Math.min(bgMarquee.startClientX, bgMarquee.endClientX) - rect.left,
+                      top: Math.min(bgMarquee.startClientY, bgMarquee.endClientY) - rect.top,
+                      width: Math.abs(bgMarquee.endClientX - bgMarquee.startClientX),
+                      height: Math.abs(bgMarquee.endClientY - bgMarquee.startClientY),
+                      zIndex: 20,
+                      backgroundColor:
+                        "color-mix(in srgb, var(--color-app-text-strong) 6%, var(--color-app-clear))",
+                      border:
+                        "1px solid color-mix(in srgb, var(--color-app-text-strong) 50%, var(--color-app-clear))",
+                    }}
+                  />
+                );
+              })()}
             </div>
           </div>
         }
@@ -630,6 +788,7 @@ function LeftPanel({
                   groupType={group.groupType}
                   groupId={group.groupId}
                   layerIndex={li}
+                  rootGroupIndex={gi}
                   onNoteProcessorChain={onSoundLayerNoteProcessorChain}
                   noteProcessorChain={layer.noteProcessorChain}
                 />
@@ -794,6 +953,7 @@ function SoundLayerHeader({
   groupType,
   groupId,
   layerIndex,
+  rootGroupIndex,
   onNoteProcessorChain,
   noteProcessorChain,
 }: {
@@ -801,6 +961,7 @@ function SoundLayerHeader({
   groupType: ScoreLayerGroupSnapshot['groupType'];
   groupId: string;
   layerIndex: number;
+  rootGroupIndex: number;
   onNoteProcessorChain?: (groupId: string, layerIndex: number) => void;
   noteProcessorChain?: NoteProcessorChainSnapshot;
 }) {
@@ -810,14 +971,27 @@ function SoundLayerHeader({
   const setLayerHeight = useProjectStore((s) => s.setLayerHeight);
   const addLayer = useProjectStore((s) => s.addLayer);
   const removeLayer = useProjectStore((s) => s.removeLayer);
+  const applyProjectDocumentPatch = useProjectStore((s) => s.applyProjectDocumentPatch);
+  const flushPendingPatches = useProjectStore((s) => s.flushPendingPatches);
 
   const [editing, setEditing] = useState(false);
   const [editValue, setEditValue] = useState(layer.name);
+  const [automationMenuOpen, setAutomationMenuOpen] = useState(false);
+  const automationMenuRef = useRef<HTMLDivElement>(null);
+  const automationBtnRef = useRef<HTMLButtonElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const height = layer.height || 44;
   const heightIndex = Math.round(height / 22) - 1;
   const showNoteProcessorButton = groupType !== 'audio';
   const showLayerHeightMenu = groupType === 'audio' || groupType === 'polyObject';
+  const showAutomationButton = (groupType === 'audio' || groupType === 'polyObject') && !!layer.automation;
+  const selectedAutomationParameter = layer.automation?.parameters.find(
+    (parameter) => parameter.parameterId === layer.automation?.selectedParameterId,
+  );
+  const showAutomationFooter = showAutomationButton
+    && height >= 44
+    && !!selectedAutomationParameter
+    && (layer.automation?.parameterIds.length ?? 0) > 0;
 
   const commitEdit = useCallback(() => {
     setEditing(false);
@@ -830,6 +1004,17 @@ function SoundLayerHeader({
     setEditing(false);
     setEditValue(layer.name);
   }, [layer.name]);
+
+  useEffect(() => {
+    if (!automationMenuOpen) return;
+    function handleClickOutside(e: MouseEvent) {
+      if (automationMenuRef.current && !automationMenuRef.current.contains(e.target as Node)) {
+        setAutomationMenuOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [automationMenuOpen]);
 
   const startEdit = useCallback(
     (e: React.MouseEvent) => {
@@ -847,11 +1032,60 @@ function SoundLayerHeader({
   const ctxItemClass =
     "rounded-sm px-3 py-1 text-body text-app-text outline-none cursor-pointer data-[highlighted]:bg-app-highlight";
 
+  const layerRef = {
+    rootGroupIndex,
+    groupId,
+    layerId: layer.layerId,
+    layerIndex,
+    layerKind: groupType === 'audio' ? 'audio' as const : 'soundObject' as const,
+  };
+
+  const dispatchAutomationPatch = (patch: ScoreAutomationPatch) => {
+    void (async () => {
+      await applyProjectDocumentPatch({ score: patch });
+      await flushPendingPatches();
+    })();
+  };
+
+  const handleAutomationPrevNext = (direction: -1 | 1) => {
+    if (!layer.automation || layer.automation.parameterIds.length === 0) {
+      return;
+    }
+    const ids = layer.automation.parameterIds;
+    const currentIndex = Math.max(0, ids.indexOf(layer.automation.selectedParameterId ?? ''));
+    const nextIndex = (currentIndex + direction + ids.length) % ids.length;
+    dispatchAutomationPatch({
+      type: 'selectLayerAutomation',
+      layer: layerRef,
+      parameterId: ids[nextIndex],
+    });
+  };
+
+  const handleAutomationColorChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (!selectedAutomationParameter) {
+      return;
+    }
+    const hex = event.target.value;
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+    const lineColor = (0xff << 24) | (r << 16) | (g << 8) | b;
+    dispatchAutomationPatch({
+      type: 'setAutomationLineColor',
+      parameterId: selectedAutomationParameter.parameterId,
+      lineColor,
+    });
+  };
+
+  const selectedAutomationColor = selectedAutomationParameter
+    ? `#${((selectedAutomationParameter.lineColor >>> 0) & 0x00ffffff).toString(16).padStart(6, '0')}`
+    : '#808080';
+
   return (
     <ContextMenu.Root>
       <ContextMenu.Trigger asChild>
         <div
-          className="flex items-start overflow-hidden border-b border-app-border/20 select-none"
+          className="relative flex items-start overflow-hidden border-b border-app-border/20 select-none"
           style={{ height }}
           onDoubleClick={startEdit}
         >
@@ -912,20 +1146,85 @@ function SoundLayerHeader({
                 N
               </button>
             )}
-            <button
-              className={btnClass(false, "")}
-              title="Automation"
-              onClick={(e) => {
-                e.stopPropagation();
-                alert("Not yet implemented");
-              }}
-            >
-              A
-            </button>
-          </div>
-        </div>
-      </ContextMenu.Trigger>
-      <ContextMenu.Portal>
+            {showAutomationButton && (
+              <button
+                ref={automationBtnRef}
+                className={btnClass(false, "")}
+                title="Automation"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setAutomationMenuOpen(!automationMenuOpen);
+                }}
+              >
+                A
+              </button>
+            )}
+           </div>
+          {showAutomationFooter && (
+            <div className="absolute left-1 right-1 top-[20px] flex h-4 items-center gap-1 text-[10px] text-app-text-muted">
+              <input
+                type="color"
+                value={selectedAutomationColor}
+                className="h-3.5 w-3.5 shrink-0 cursor-pointer border-0 bg-transparent p-0"
+                title="Automation line color"
+                onClick={(event) => event.stopPropagation()}
+                onChange={handleAutomationColorChange}
+              />
+              <span className="min-w-0 flex-1 truncate">
+                {selectedAutomationParameter.displayName}
+              </span>
+              <div className="ml-auto flex shrink-0 items-center gap-px">
+                <button
+                  className="flex h-4 w-4 items-center justify-center rounded-sm border border-app-border/40 bg-app-surface/70 text-[11px] text-app-text-muted hover:bg-app-hover hover:text-app-text"
+                  title="Previous automation"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    handleAutomationPrevNext(-1);
+                  }}
+                >
+                  ‹
+                </button>
+                <button
+                  className="flex h-4 w-4 items-center justify-center rounded-sm border border-app-border/40 bg-app-surface/70 text-[11px] text-app-text-muted hover:bg-app-hover hover:text-app-text"
+                  title="Next automation"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    handleAutomationPrevNext(1);
+                  }}
+                >
+                  ›
+                </button>
+              </div>
+            </div>
+          )}
+         </div>
+       </ContextMenu.Trigger>
+       {automationMenuOpen && createPortal(
+         <div
+           ref={automationMenuRef}
+           className="fixed z-[9999]"
+           style={{
+             top: automationBtnRef.current
+               ? automationBtnRef.current.getBoundingClientRect().bottom + 2
+               : 0,
+             left: automationBtnRef.current
+               ? automationBtnRef.current.getBoundingClientRect().left
+               : 0,
+           }}
+         >
+           <AutomationTargetMenu
+             automation={layer.automation}
+             layerRef={layerRef}
+             onPatch={(patch) => {
+               dispatchAutomationPatch(patch);
+               setAutomationMenuOpen(false);
+             }}
+             onClose={() => setAutomationMenuOpen(false)}
+           />
+         </div>,
+          document.body,
+        )}
+       <ContextMenu.Portal>
         <ContextMenu.Content className="z-50 min-w-45 rounded border border-app-border/50 bg-app-menu py-1 shadow-lg">
           <ContextMenu.Item
             className={ctxItemClass}

@@ -1,10 +1,45 @@
 # Project Status — blue-electron
 
-**Date**: 2026-06-02
-**Branch**: `051-theme-token-cleanup`
+**Date**: 2026-06-30
+**Branch**: `052-score-timeline-automation`
 **Note**: Historical spec sections below preserve their closeout-time branch and feature-context notes; only the topmost spec package reflects the current active handoff state.
 
-## Current Focus: Spec 051 Closed
+## Current Focus: Spec 052 Closed
+
+**Branch**: `052-score-timeline-automation`
+
+### Summary
+Spec 052 is closed and validated. The score timeline now supports Java Blue-style automation assignment and editing for soundObject and audio layers, including A button target menus, selected-line headers, single-line editing, multi-line range move/scale, object and clip alignment, persistence, and playback/export data flow.
+
+Review follow-up fixed the two P1 issues before closeout: selected layer automation now persists through save/reload for both soundObject and audio layers, and canonical `scaleAutomationRange` patches abort before mutating automation lines when selected score objects or audio clips partially cross the scaled range boundary.
+
+### Handoff State
+- `.specify/feature.json` points to `specs/052-score-timeline-automation`.
+- Current branch is `052-score-timeline-automation`.
+- `spec.md` status is `Closed`.
+- `research.md`, `plan.md`, `data-model.md`, `contracts/score-timeline-automation-surface.md`, `quickstart.md`, `tasks.md`, `status.md`, and the requirements checklist reflect the delivered closeout state.
+- All 99 Spec 052 tasks are checked off.
+- The accepted Karpathy coder skill addition remains part of the staged closeout.
+
+### Delivered Scope
+- Added canonical automation assignment persistence for soundObject and audio layers, including selected parameter retention and Java-compatible `parameterId` children.
+- Extended score snapshots and project-editor patches for automation target groups, layer assignments, point edits, line colors, selected parameters, missing-target cleanup, and multi-line range operations.
+- Added reusable score timeline automation UI under the score panel, including A button menus, parameter footers, mode controls, single-line editing, and multi-line overlay behavior.
+- Preserved Java Blue multi-line parity for selected object/clip alignment, duration scaling, partial-overlap aborts, snap bypass, edge clamps, line boundary anchors, auto-scroll, and parameter cycling.
+- Routed edited automation data through existing project persistence and playback/export paths without introducing a second renderer-only automation document.
+
+### Validation
+- `./.specify/scripts/bash/check-prerequisites.sh --json --include-tasks --require-tasks` - pass.
+- `pnpm --filter @blue/data test -- src/sound-objects/sound-layer-automation.test.ts src/score/audio/audio-layer-automation.test.ts` - pass (`127` files, `1213` tests).
+- `pnpm --filter @blue/app exec vitest run --config vitest.config.ts src/shared/score-timeline-automation-patches.test.ts src/renderer/tests/score-timeline-automation-multi-line.test.tsx` - pass (`2` files, `34` tests).
+- `pnpm test` - pass.
+- `pnpm lint` - pass.
+- `git diff --cached --check` - pass.
+
+### Next Recommended Step
+Spec 052 can be treated as closed. Future work should use a follow-up spec for the deferred Java Blue automation conveniences documented in `specs/052-score-timeline-automation/status.md`.
+
+## Previous Focus: Spec 051 Closed
 
 **Branch**: `051-theme-token-cleanup`
 

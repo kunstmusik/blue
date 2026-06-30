@@ -30,13 +30,19 @@ import type {
 } from '../../../../../../shared/project-editor';
 import { useScoreSelectionStore } from '../../../../../stores/score-selection-store';
 import { useProjectStore } from '../../../../../stores/project-store';
+import AutomationLayerOverlay from '../automation/AutomationLayerOverlay';
+import { useScoreAutomationStore } from '../../../../../stores/score-automation-store';
+import type { ScoreAutomationPatch } from '../../../../../../shared/project-editor';
 import { useKeyboardShortcutScope } from '../../../../../hooks/use-keyboard-shortcut-scope';
 import { isTextEditingTarget } from '../../../../../hooks/use-keyboard-shortcuts';
 import { toast } from 'sonner';
 
 interface Props {
   group: AudioLayerGroupSnapshot;
+  rootGroupIndex?: number;
   allLayerGroups: ScoreLayerGroupSnapshot[];
+  mode?: 'score' | 'singleLine' | 'multiLine';
+  totalBeats: number;
   pixelsPerBeat: number;
   snapEnabled: boolean;
   snapValue: import('@blue/data').SnapValueName;
@@ -355,6 +361,8 @@ async function readAudioFileMetadata(file: File): Promise<{ durationSeconds: num
 export default function AudioLayerGroupCanvas({
   group,
   allLayerGroups,
+  mode = 'score',
+  totalBeats,
   pixelsPerBeat,
   snapEnabled,
   snapValue,
@@ -407,6 +415,7 @@ export default function AudioLayerGroupCanvas({
   const [audioPreviewByObjectId, setAudioPreviewByObjectId] = useState<Record<string, AudioClipPreview>>({});
 
   const selectedObjectIds = useScoreSelectionStore((state) => state.selectedObjectIds);
+  const multiLineObjectPreview = useScoreAutomationStore((s) => s.multiLineObjectPreview);
   const selectedObjectTargets = useScoreSelectionStore((state) => state.selectedObjectTargets);
   const clipboard = useScoreSelectionStore((state) => state.clipboard);
   const select = useScoreSelectionStore((state) => state.select);
@@ -415,6 +424,7 @@ export default function AudioLayerGroupCanvas({
   const copySelected = useScoreSelectionStore((state) => state.copySelected);
 
   const applyProjectDocumentPatch = useProjectStore((state) => state.applyProjectDocumentPatch);
+  const flushPendingPatches = useProjectStore((state) => state.flushPendingPatches);
   const addScoreObjects = useProjectStore((state) => state.addScoreObjects);
   const moveScoreObjects = useProjectStore((state) => state.moveScoreObjects);
   const removeScoreObjects = useProjectStore((state) => state.removeScoreObjects);
@@ -1572,8 +1582,11 @@ export default function AudioLayerGroupCanvas({
                 const displayItem = getDisplayItem(item);
                 const isSelected = selectedObjectIds.has(item.objectId);
                 const rowHeight = layer.height || DEFAULT_ROW_HEIGHT;
-                const barWidth = Math.max(displayItem.durationBeats * pixelsPerBeat, 4);
-                const barLeft = displayItem.startBeats * pixelsPerBeat;
+                const objPreview = multiLineObjectPreview?.[item.objectId];
+                const previewStartBeats = objPreview?.startBeats ?? displayItem.startBeats;
+                const previewDurationBeats = objPreview?.durationBeats ?? displayItem.durationBeats;
+                const barWidth = Math.max(previewDurationBeats * pixelsPerBeat, 4);
+                const barLeft = previewStartBeats * pixelsPerBeat;
                 const audioBar = displayItem.barRenderer.kind === 'audioClip'
                   ? displayItem.barRenderer
                   : null;
@@ -1653,6 +1666,24 @@ export default function AudioLayerGroupCanvas({
                   </Fragment>
                 );
               })}
+              {layer.automation && layer.automation.parameters.length > 0 && (
+                <AutomationLayerOverlay
+                  automation={layer.automation}
+                  pixelsPerBeat={pixelsPerBeat}
+                  totalBeats={totalBeats}
+                  snapEnabled={snapEnabled}
+                  snapValue={snapValue}
+                  tempo={tempo}
+                  smpteFrameRate={smpteFrameRate}
+                  mode={mode}
+                  onPatch={(patch: ScoreAutomationPatch) => {
+                    void (async () => {
+                      await applyProjectDocumentPatch({ score: patch });
+                      await flushPendingPatches();
+                    })();
+                  }}
+                />
+              )}
             </div>
           ))}
           {marqueeStyle && (

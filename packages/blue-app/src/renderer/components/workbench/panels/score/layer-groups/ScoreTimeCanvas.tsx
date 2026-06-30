@@ -5,6 +5,9 @@ import { DEFAULT_ROW_HEIGHT, GROUP_SPACER } from '../types';
 import { RenderBar } from '../bar-renderers/renderer-registry';
 import { useScoreSelectionStore, type ScoreObjectClipboardEntry } from '../../../../../stores/score-selection-store';
 import { useProjectStore } from '../../../../../stores/project-store';
+import AutomationLayerOverlay from '../automation/AutomationLayerOverlay';
+import { useScoreAutomationStore } from '../../../../../stores/score-automation-store';
+import type { ScoreAutomationPatch } from '../../../../../../shared/project-editor';
 import { useKeyboardShortcutScope } from '../../../../../hooks/use-keyboard-shortcut-scope';
 import { isTextEditingTarget } from '../../../../../hooks/use-keyboard-shortcuts';
 import { snapValueToBeats } from '@blue/data';
@@ -21,6 +24,8 @@ import {
 
 interface Props {
   group: PolyObjectLayerGroupSnapshot;
+  rootGroupIndex?: number;
+  mode?: 'score' | 'singleLine' | 'multiLine';
   totalBeats: number;
   pixelsPerBeat: number;
   snapEnabled: boolean;
@@ -220,6 +225,7 @@ const MIN_SCORE_OBJECT_DURATION = 0.25;
 
 export default function ScoreTimeCanvas({
   group,
+  mode = 'score',
   totalBeats,
   pixelsPerBeat,
   snapEnabled,
@@ -240,6 +246,7 @@ export default function ScoreTimeCanvas({
   const copySelected = useScoreSelectionStore((s) => s.copySelected);
   const clipboard = useScoreSelectionStore((s) => s.clipboard);
   const applyProjectDocumentPatch = useProjectStore((s) => s.applyProjectDocumentPatch);
+  const flushPendingPatches = useProjectStore((s) => s.flushPendingPatches);
   const moveScoreObjects = useProjectStore((s) => s.moveScoreObjects);
   const addScoreObjects = useProjectStore((s) => s.addScoreObjects);
   const resizeScoreObjects = useProjectStore((s) => s.resizeScoreObjects);
@@ -278,6 +285,14 @@ export default function ScoreTimeCanvas({
   const [cursorOverride, setCursorOverride] = useState<string | null>(null);
   const [tooltip, setTooltip] = useState<string | null>(null);
   const [previewByObjectId, setPreviewByObjectId] = useState<Record<string, { startBeats: number; durationBeats: number }>>({});
+
+  // Merge multi-line object preview from the automation store (set during
+  // multi-line move/scale drags) with the local score-mode drag preview.
+  const multiLineObjectPreview = useScoreAutomationStore((s) => s.multiLineObjectPreview);
+  const effectivePreview = useMemo(() => {
+    if (!multiLineObjectPreview) return previewByObjectId;
+    return { ...multiLineObjectPreview, ...previewByObjectId };
+  }, [multiLineObjectPreview, previewByObjectId]);
 
   const isNestedView = useMemo(() =>
     group.layers.some((layer) =>
@@ -434,7 +449,7 @@ export default function ScoreTimeCanvas({
       select(item.objectId, false, item.editorTarget);
     }
 
-    const itemPreview = previewByObjectId[item.objectId];
+    const itemPreview = effectivePreview[item.objectId];
     const itemStartBeats = itemPreview?.startBeats ?? item.startBeats;
     const itemDurationBeats = itemPreview?.durationBeats ?? item.durationBeats;
     const itemLeft = itemStartBeats * pixelsPerBeat;
@@ -466,7 +481,7 @@ export default function ScoreTimeCanvas({
       for (let li = 0; li < lg.layers.length; li++) {
         for (const obj of lg.layers[li].items) {
           if (selectedIds.has(obj.objectId)) {
-            const preview = previewByObjectId[obj.objectId];
+            const preview = effectivePreview[obj.objectId];
             origPositions.push({
               objectId: obj.objectId,
               startBeats: preview?.startBeats ?? obj.startBeats,
@@ -541,7 +556,7 @@ export default function ScoreTimeCanvas({
       if (hit) {
         const item = findItemOnLayer(hit.layer, xBeats);
         if (item) {
-          const preview = previewByObjectId[item.objectId];
+          const preview = effectivePreview[item.objectId];
           const startBeats = preview?.startBeats ?? item.startBeats;
           const durationBeats = preview?.durationBeats ?? item.durationBeats;
           setTooltip(`${item.name} (${item.objectType}) @ beat ${startBeats.toFixed(2)}, dur ${durationBeats.toFixed(2)}`);
@@ -875,7 +890,7 @@ export default function ScoreTimeCanvas({
       return entries;
     }
     return entries.map((entry) => {
-      const preview = previewByObjectId[entry.objectId];
+      const preview = effectivePreview[entry.objectId];
       return preview
         ? {
           ...entry,
@@ -1113,7 +1128,7 @@ export default function ScoreTimeCanvas({
           data-group-id={group.groupId}
           data-shortcut-scope="score-time-canvas"
           className="relative select-none focus:outline-none"
-          title={tooltip ?? undefined}
+          title={mode === 'score' ? (tooltip ?? undefined) : undefined}
           style={{ cursor: cursorOverride ?? 'default' }}
           {...canvasShortcutScope}
           onMouseDown={handleMouseDown}
@@ -1146,7 +1161,7 @@ export default function ScoreTimeCanvas({
                 height={layer.height || DEFAULT_ROW_HEIGHT}
               />
               {layer.items.map((item: ScoreRowObjectSnapshot) => {
-                const preview = previewByObjectId[item.objectId];
+                const preview = effectivePreview[item.objectId];
                 const startBeats = preview?.startBeats ?? item.startBeats;
                 const durationBeats = preview?.durationBeats ?? item.durationBeats;
                 const isSelected = selectedObjectIds.has(item.objectId);
@@ -1163,6 +1178,24 @@ export default function ScoreTimeCanvas({
                   />
                 );
               })}
+              {layer.automation && layer.automation.parameters.length > 0 && (
+                <AutomationLayerOverlay
+                  automation={layer.automation}
+                  pixelsPerBeat={pixelsPerBeat}
+                  totalBeats={totalBeats}
+                  snapEnabled={snapEnabled}
+                  snapValue={snapValue}
+                  tempo={tempo}
+                  smpteFrameRate={smpteFrameRate}
+                  mode={mode}
+                  onPatch={(patch: ScoreAutomationPatch) => {
+                    void (async () => {
+                      await applyProjectDocumentPatch({ score: patch });
+                      await flushPendingPatches();
+                    })();
+                  }}
+                />
+              )}
             </div>
           ))}
 

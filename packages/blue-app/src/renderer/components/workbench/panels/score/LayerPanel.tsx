@@ -5,11 +5,14 @@ import type { MeterMapSnapshot } from "../../../../../shared/project-editor";
 import ScoreTimeCanvas from "./layer-groups/ScoreTimeCanvas";
 import AudioLayerGroupCanvas from "./layer-groups/AudioLayerGroupCanvas";
 import PatternsLayerGroupCanvas from "./layer-groups/PatternsLayerGroupCanvas";
+import MultiLineOverlay from "./automation/MultiLineOverlay";
 
+type ScoreMode = 'score' | 'singleLine' | 'multiLine';
 
 interface Props {
   layerGroups: ScoreLayerGroupSnapshot[];
   onOpenNested: (groupId: string, label: string, location: ScoreObjectLocationRef) => void;
+  mode?: ScoreMode;
   pixelsPerBeat: number;
   totalBeats: number;
   snapEnabled: boolean;
@@ -22,6 +25,7 @@ interface Props {
 export default function LayerPanel({
   layerGroups,
   onOpenNested,
+  mode = 'score',
   pixelsPerBeat,
   totalBeats,
   snapEnabled,
@@ -46,7 +50,7 @@ export default function LayerPanel({
   const contentWidth = totalBeats * pixelsPerBeat;
 
   return (
-    <div style={{ minWidth: contentWidth }} className="bg-app-canvas">
+    <div style={{ minWidth: contentWidth }} className="relative bg-app-canvas">
       {visibleGroups.map((group, gi) => {
         const spacer = (
           <div
@@ -62,6 +66,8 @@ export default function LayerPanel({
               <div key={group.groupId} className="not-last:border-b border-app-border/40">
                 <ScoreTimeCanvas
                   group={group}
+                  rootGroupIndex={gi}
+                  mode={mode}
                   totalBeats={totalBeats}
                   pixelsPerBeat={pixelsPerBeat}
                   snapEnabled={snapEnabled}
@@ -95,7 +101,10 @@ export default function LayerPanel({
               <div key={group.groupId}>
                 <AudioLayerGroupCanvas
                   group={group}
+                  rootGroupIndex={gi}
                   allLayerGroups={visibleGroups}
+                  mode={mode}
+                  totalBeats={totalBeats}
                   pixelsPerBeat={pixelsPerBeat}
                   snapEnabled={snapEnabled}
                   snapValue={snapValue}
@@ -120,6 +129,16 @@ export default function LayerPanel({
             return null;
         }
       })}
+      {mode === 'multiLine' && (
+        <MultiLineOverlay
+          layerGroups={visibleGroups}
+          pixelsPerBeat={pixelsPerBeat}
+          snapEnabled={snapEnabled}
+          snapValue={snapValue}
+          tempo={tempo}
+          smpteFrameRate={smpteFrameRate}
+        />
+      )}
     </div>
   );
 }

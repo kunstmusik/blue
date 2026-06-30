@@ -44,6 +44,11 @@ import { cleanupTempCsdSnapshots } from './render-command';
 import { saveGeneratedCsdToDisk } from './csd-export';
 import { executeExternalTest } from './external-executor';
 import { createMainExternalExecutor } from './external-command-executor';
+import {
+  buildAutomationRuntimeTimingContext,
+  collectAffectedProjectScoreAutomationParameterIds,
+  syncScoreAutomationParametersToEngine,
+} from './score-automation-runtime-sync';
 import type { JavaRuntimeClient } from './java-runtime/java-runtime-client';
 import { JavaRuntimeSessionManager } from './java-runtime/java-runtime-session';
 import { testScoreObject } from './score-object-test';
@@ -1170,12 +1175,7 @@ async function startPlayback(): Promise<boolean> {
       );
     }
 
-    const automationTiming = {
-      renderStartTime: currentData.getRenderStartTime(),
-      sampleRate: Number(currentData.getProjectProperties().sampleRate) || 44100,
-      ksmps: Number(currentData.getProjectProperties().ksmps) || 64,
-      tempoMap: currentData.getScore().getTimeContext().getTempoMap(),
-    };
+    const automationTiming = buildAutomationRuntimeTimingContext(currentData);
 
     const projectDirectory = getCurrentProjectDirectory();
     const extraRealtimeOptions = buildRealtimeEngineOptions(currentData, projectDirectory);
@@ -1617,8 +1617,21 @@ ipcMain.handle('engine:evaluate-code', async (_event, request: { editorKind: str
 /**
  * Synchronize real-time parameter changes to the running engine.
  */
-async function syncEngineWithProjectPatch(data: BlueData, patch: ProjectDocumentPatch) {
+async function syncEngineWithProjectPatch(
+  data: BlueData,
+  patch: ProjectDocumentPatch,
+  scoreAutomationParameterIds: Set<string> = new Set(),
+) {
   if (!engineBridge || !engineBridge.isCurrentlyPlaying()) return;
+
+  if (scoreAutomationParameterIds.size > 0) {
+    await syncScoreAutomationParametersToEngine(
+      data,
+      scoreAutomationParameterIds,
+      engineBridge,
+      buildAutomationRuntimeTimingContext(data),
+    );
+  }
 
   if (patch.mixer) {
     const mixerPatch = patch.mixer;
@@ -1811,11 +1824,19 @@ ipcMain.handle('commit-project-document-patches', async (_event, patches: Projec
     const clojureDependenciesChanged = patch.clojureProject
       ? clojureProjectPatchChangesRuntimeDependencies(currentData, patch.clojureProject)
       : false;
+    const scoreAutomationParameterIds = collectAffectedProjectScoreAutomationParameterIds(currentData, patch);
     maybeCloseRemovedProjectEffectEditors(patch);
     const changed = applyProjectDocumentPatch(currentData, patch);
+    if (changed) {
+      for (const id of collectAffectedProjectScoreAutomationParameterIds(currentData, patch)) {
+        scoreAutomationParameterIds.add(id);
+      }
+    } else {
+      scoreAutomationParameterIds.clear();
+    }
     javaRuntimeDependenciesChanged = javaRuntimeDependenciesChanged || (changed && clojureDependenciesChanged);
     if (engineBridge && engineBridge.isCurrentlyPlaying()) {
-      void syncEngineWithProjectPatch(currentData, patch).catch((error) => {
+      void syncEngineWithProjectPatch(currentData, patch, scoreAutomationParameterIds).catch((error) => {
         console.error('[main] Failed to sync engine with project patch:', error);
       });
     }
@@ -2008,11 +2029,19 @@ ipcMain.handle('update-project-document', (_event, patch) => {
   }
 
   maybeCloseRemovedProjectEffectEditors(patch);
-  applyProjectDocumentPatch(currentData, patch);
+  const scoreAutomationParameterIds = collectAffectedProjectScoreAutomationParameterIds(currentData, patch);
+  const changed = applyProjectDocumentPatch(currentData, patch);
+  if (changed) {
+    for (const id of collectAffectedProjectScoreAutomationParameterIds(currentData, patch)) {
+      scoreAutomationParameterIds.add(id);
+    }
+  } else {
+    scoreAutomationParameterIds.clear();
+  }
 
   // Sync with engine in real-time if playing
   if (engineBridge && engineBridge.isCurrentlyPlaying()) {
-    void syncEngineWithProjectPatch(currentData, patch);
+    void syncEngineWithProjectPatch(currentData, patch, scoreAutomationParameterIds);
   }
 
   return getCurrentProjectDocument();

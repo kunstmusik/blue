@@ -291,6 +291,21 @@
     display: none;
   }
 
+  .automation-target-submenu {
+    position: relative;
+  }
+
+  .automation-target-submenu__content {
+    display: none;
+    position: fixed;
+    z-index: 60;
+  }
+
+  .automation-target-submenu:hover > .automation-target-submenu__content,
+  .automation-target-submenu:focus-within > .automation-target-submenu__content {
+    display: block;
+  }
+
   .cm-blue-code-eval-flash {
     background: var(--color-app-code-flash);
     animation: blueCodeEvalFlash 450ms ease-out forwards;

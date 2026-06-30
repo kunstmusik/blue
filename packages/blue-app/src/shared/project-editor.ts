@@ -77,6 +77,7 @@ import {
   loadSoundObjectFromXML,
   convertTimePosition,
   beatsToTimePosition,
+  timePositionToBeats,
   beatsToDuration,
   MeterMap,
   MeasureMeterPair,
@@ -86,9 +87,11 @@ import {
   createNoteProcessorChainSnapshot as createNoteProcessorChainSnapshotFromData,
   reifyChainFromSnapshot,
 } from '@blue/data';
-import type { NoteProcessorChainSnapshot as DataNoteProcessorChainSnapshot, Parameter as BlueDataParameter, ScoreObject as BlueDataScoreObject } from '@blue/data';
-import { AutomationCurve as BlueDataAutomationCurve } from '@blue/data';
+import type { NoteProcessorChainSnapshot as DataNoteProcessorChainSnapshot, Parameter as BlueDataParameter, ScoreObject as BlueDataScoreObject, AutomatableLayer as BlueDataAutomatableLayer, Arrangement as BlueDataArrangement, Mixer as BlueDataMixer } from '@blue/data';
+import { AutomationCurve as BlueDataAutomationCurve, LineColors } from '@blue/data';
+import { ParameterHelper } from '@blue/data';
 import type { SnapValueName } from '@blue/data';
+import { moveRangeWithAnchors, scaleRangeWithAnchors } from './automation-range-math';
 import {
   BSB_LINE_SELECTOR_HEIGHT,
   getBsbWidgetDisplaySize,
@@ -272,6 +275,71 @@ export interface ScoreLayerSnapshot {
   solo?: boolean;
   items: ScoreRowObjectSnapshot[];
   noteProcessorChain?: NoteProcessorChainSnapshot;
+  automation?: ScoreLayerAutomationSnapshot;
+}
+
+export type AutomationLayerKind = 'soundObject' | 'audio';
+export type AutomationTargetSourceKind =
+  | 'instrument'
+  | 'mixer'
+  | 'audioChannel'
+  | 'effect'
+  | 'send'
+  | 'unknown';
+
+export interface AutomationPointSnapshot {
+  time: number;
+  value: number;
+}
+
+export interface AutomationParameterSnapshot {
+  parameterId: string;
+  name: string;
+  label: string;
+  displayName: string;
+  minimum: number;
+  maximum: number;
+  resolution: number;
+  curve: string;
+  fixedValue: number;
+  automationEnabled: boolean;
+  lineColor: number;
+  sourceKind: AutomationTargetSourceKind;
+  targetPath: string[];
+  points: AutomationPointSnapshot[];
+}
+
+export type AutomationAssignmentState =
+  | 'available'
+  | 'assignedCurrentLayer'
+  | 'assignedOtherLayer'
+  | 'missing';
+
+export interface AutomationTargetSnapshot {
+  parameterId: string;
+  label: string;
+  sourceKind: AutomationTargetSourceKind;
+  automationEnabled: boolean;
+  assignmentState: AutomationAssignmentState;
+  ownerLayerId?: string;
+  ownerLayerName?: string;
+}
+
+export interface AutomationTargetGroupSnapshot {
+  groupId: string;
+  label: string;
+  subGroups: AutomationTargetGroupSnapshot[];
+  targets: AutomationTargetSnapshot[];
+}
+
+export interface ScoreLayerAutomationSnapshot {
+  layerId: string;
+  layerKind: AutomationLayerKind;
+  parameterIds: string[];
+  selectedParameterId?: string;
+  parameters: AutomationParameterSnapshot[];
+  targetGroups: AutomationTargetGroupSnapshot[];
+  missingParameterIds: string[];
 }
 
 export type ScoreLayerGroupType = 'polyObject' | 'audio' | 'patterns';
@@ -644,7 +712,133 @@ export type ScorePatch =
   | {
       type: 'deleteNamedNoteProcessorChain';
       name: string;
-    };
+    }
+  | ScoreAutomationPatch;
+
+// ─── Score Automation Patch Types ───
+
+export interface ScoreAutomationLayerRef {
+  rootGroupIndex: number;
+  groupId: string;
+  layerId: string;
+  layerIndex: number;
+  layerKind: AutomationLayerKind;
+}
+
+export interface AutomationRangeRef {
+  startBeat: number;
+  endBeat: number;
+  layerIds: string[];
+  parameterIdsByLayer: Record<string, string[]>;
+}
+
+export interface AssignAutomationToLayerPatch {
+  type: 'assignAutomationToLayer';
+  layer: ScoreAutomationLayerRef;
+  parameterId: string;
+  enableAutomation?: boolean;
+}
+
+export interface RemoveAutomationFromLayerPatch {
+  type: 'removeAutomationFromLayer';
+  layer: ScoreAutomationLayerRef;
+  parameterId: string;
+}
+
+export interface MoveAutomationToLayerPatch {
+  type: 'moveAutomationToLayer';
+  fromLayer: ScoreAutomationLayerRef;
+  toLayer: ScoreAutomationLayerRef;
+  parameterId: string;
+}
+
+export interface ClearLayerAutomationsPatch {
+  type: 'clearLayerAutomations';
+  layer: ScoreAutomationLayerRef;
+}
+
+export interface SelectLayerAutomationPatch {
+  type: 'selectLayerAutomation';
+  layer: ScoreAutomationLayerRef;
+  parameterId?: string;
+}
+
+export interface SetAutomationLineColorPatch {
+  type: 'setAutomationLineColor';
+  parameterId: string;
+  lineColor: number;
+}
+
+export interface SetAutomationPointsPatch {
+  type: 'setAutomationPoints';
+  parameterId: string;
+  points: AutomationPointSnapshot[];
+}
+
+export interface InsertAutomationPointPatch {
+  type: 'insertAutomationPoint';
+  parameterId: string;
+  point: AutomationPointSnapshot;
+}
+
+export interface DeleteAutomationPointPatch {
+  type: 'deleteAutomationPoint';
+  parameterId: string;
+  pointIndex: number;
+}
+
+export interface MoveAutomationPointPatch {
+  type: 'moveAutomationPoint';
+  parameterId: string;
+  pointIndex: number;
+  point: AutomationPointSnapshot;
+}
+
+export interface MoveAutomationRangePatch {
+  type: 'moveAutomationRange';
+  range: AutomationRangeRef;
+  beatDelta: number;
+  /** @deprecated Use objectIds for Java-shift-gated parity. */
+  includeScoreObjects?: boolean;
+  /** @deprecated Use objectIds for Java-shift-gated parity. */
+  includeAudioClips?: boolean;
+  /** Explicit object/clip IDs to transform (Java shift-gated selection model). */
+  objectIds?: string[];
+}
+
+export interface ScaleAutomationRangePatch {
+  type: 'scaleAutomationRange';
+  range: AutomationRangeRef;
+  anchorBeat: number;
+  scaleFactor: number;
+  /** @deprecated Use objectIds for Java-shift-gated parity. */
+  includeScoreObjects?: boolean;
+  /** @deprecated Use objectIds for Java-shift-gated parity. */
+  includeAudioClips?: boolean;
+  /** Explicit object/clip IDs to transform (Java shift-gated selection model). */
+  objectIds?: string[];
+}
+
+export interface CleanupLayerAutomationPatch {
+  type: 'cleanupLayerAutomation';
+  layer: ScoreAutomationLayerRef;
+  parameterIds?: string[];
+}
+
+export type ScoreAutomationPatch =
+  | AssignAutomationToLayerPatch
+  | RemoveAutomationFromLayerPatch
+  | MoveAutomationToLayerPatch
+  | ClearLayerAutomationsPatch
+  | SelectLayerAutomationPatch
+  | SetAutomationLineColorPatch
+  | SetAutomationPointsPatch
+  | InsertAutomationPointPatch
+  | DeleteAutomationPointPatch
+  | MoveAutomationPointPatch
+  | MoveAutomationRangePatch
+  | ScaleAutomationRangePatch
+  | CleanupLayerAutomationPatch;
 
 // ─── End Score Snapshot Types ───
 
@@ -1183,6 +1377,7 @@ export interface BlueSynthBuilderInstrumentSnapshot extends InstrumentSnapshotBa
   presetGroup?: PresetGroupSnapshot;
   opcodeListText?: string;
   udolist?: UdoDefinitionSnapshot[];
+  automationParameters?: SoundAutomationParameterSnapshot[];
 }
 
 export interface UdoDefinitionSnapshot {
@@ -1294,6 +1489,7 @@ export interface SoundAutomationParameterSnapshot {
   value: number;
   minimum: number;
   maximum: number;
+  resolution?: number;
   curve: string;
   points: Array<{ x: number; y: number }>;
 }
@@ -2394,6 +2590,11 @@ function assignExplicitScoreObjectId(obj: object, id: string): void {
   SCORE_OBJECT_ID_MAP.set(obj, id);
 }
 
+/** Returns the stable snapshot ID assigned to an object, or undefined. */
+function getScoreObjectId(obj: object): string | undefined {
+  return SCORE_OBJECT_ID_MAP.get(obj);
+}
+
 function createScoreTimeStateSnapshot(data: BlueData): ScoreTimeStateSnapshot {
   const ts = data.getScore().getTimeState();
   return {
@@ -2432,14 +2633,23 @@ function createScoreLayerGroupSnapshots(data: BlueData): ScoreLayerGroupSnapshot
   const context = score.getTimeContext();
   const result: ScoreLayerGroupSnapshot[] = [];
 
+  const arrangement = data.getArrangement();
+  const mixer = data.getMixer();
+
+  const allParameters = ParameterHelper.getAllParameters(
+    arrangement,
+    mixer,
+  );
+  const assignedLayerMap = buildAssignedAutomationLayerMap(score);
+
   for (let i = 0; i < score.length; i++) {
     const lg = score[i];
     if (!lg) continue;
 
     if (lg instanceof PolyObject) {
-      result.push(createPolyObjectGroupSnapshot(lg, context, i));
+      result.push(createPolyObjectGroupSnapshot(lg, context, i, allParameters, arrangement, mixer, assignedLayerMap));
     } else if (lg instanceof AudioLayerGroup) {
-      result.push(createAudioLayerGroupSnapshot(lg, context, i));
+      result.push(createAudioLayerGroupSnapshot(lg, context, i, allParameters, arrangement, mixer, assignedLayerMap));
     } else if (lg instanceof PatternsLayerGroup) {
       result.push(createPatternsLayerGroupSnapshot(lg));
     }
@@ -2448,12 +2658,13 @@ function createScoreLayerGroupSnapshots(data: BlueData): ScoreLayerGroupSnapshot
   return result;
 }
 
-function createPolyObjectGroupSnapshot(lg: PolyObject, context: TimeContext, rootGroupIndex: number): PolyObjectLayerGroupSnapshot {
+function createPolyObjectGroupSnapshot(lg: PolyObject, context: TimeContext, rootGroupIndex: number, allParameters: BlueDataParameter[], arrangement: BlueDataArrangement, mixer: BlueDataMixer, assignedLayerMap: Map<string, { layerId: string; layerName: string }>): PolyObjectLayerGroupSnapshot {
   const groupId = assignLayerGroupId(lg);
   const layers: ScoreLayerSnapshot[] = [];
 
   for (let i = 0; i < lg.length; i++) {
     const layer = lg[i];
+    const layerId = `${groupId}-layer-${i}`;
     const items: ScoreRowObjectSnapshot[] = [];
     for (let j = 0; j < layer.length; j++) {
       const sObj = layer[j];
@@ -2477,14 +2688,26 @@ function createPolyObjectGroupSnapshot(lg: PolyObject, context: TimeContext, roo
       });
     }
     const layerChain = layer.getNoteProcessorChain();
+    const elsewhereMap = buildAssignedElsewhereMapForLayer(layerId, assignedLayerMap);
+    const automation = collectLayerAutomationSnapshot(
+      layerId,
+      'soundObject',
+      layer,
+      allParameters,
+      elsewhereMap,
+      groupId,
+      arrangement,
+      mixer,
+    );
     layers.push({
-      layerId: `${groupId}-layer-${i}`,
+      layerId,
       name: layer.getName(),
       height: layer.getLayerHeight(),
       muted: layer.isMuted(),
       solo: layer.isSolo(),
       items,
       noteProcessorChain: layerChain.getProcessors().length > 0 ? createNoteProcessorChainSnapshot(layerChain) : undefined,
+      automation,
     });
   }
 
@@ -2500,12 +2723,13 @@ function createPolyObjectGroupSnapshot(lg: PolyObject, context: TimeContext, roo
   };
 }
 
-function createAudioLayerGroupSnapshot(lg: AudioLayerGroup, context: TimeContext, rootGroupIndex: number): AudioLayerGroupSnapshot {
+function createAudioLayerGroupSnapshot(lg: AudioLayerGroup, context: TimeContext, rootGroupIndex: number, allParameters: BlueDataParameter[], arrangement: BlueDataArrangement, mixer: BlueDataMixer, assignedLayerMap: Map<string, { layerId: string; layerName: string }>): AudioLayerGroupSnapshot {
   const groupId = assignLayerGroupId(lg);
   const layers: ScoreLayerSnapshot[] = [];
 
   for (let i = 0; i < lg.length; i++) {
     const layer = lg[i];
+    const layerId = `${groupId}-layer-${i}`;
     const items: ScoreRowObjectSnapshot[] = [];
     for (let j = 0; j < layer.length; j++) {
       const clip = layer[j];
@@ -2536,13 +2760,25 @@ function createAudioLayerGroupSnapshot(lg: AudioLayerGroup, context: TimeContext
         barRenderer: createBarRendererForAudioClip(clip, context),
       });
     }
+    const elsewhereMap = buildAssignedElsewhereMapForLayer(layerId, assignedLayerMap);
+    const automation = collectLayerAutomationSnapshot(
+      layerId,
+      'audio',
+      layer,
+      allParameters,
+      elsewhereMap,
+      groupId,
+      arrangement,
+      mixer,
+    );
     layers.push({
-      layerId: `${groupId}-layer-${i}`,
+      layerId,
       name: layer.getName(),
       height: layer.getLayerHeight(),
       muted: layer.isMuted(),
       solo: layer.isSolo(),
       items,
+      automation,
     });
   }
 
@@ -3594,9 +3830,364 @@ function buildSoundAutomationParameters(bsb: BlueSynthBuilder): SoundAutomationP
     value: param.getFixedValue(),
     minimum: param.getMinimum(),
     maximum: param.getMaximum(),
+    resolution: param.getResolution(),
     curve: param.getCurve(),
     points: param.getPoints().map((p) => ({ x: p.time, y: p.value })),
   }));
+}
+
+function buildAutomationParameterSnapshot(param: BlueDataParameter): AutomationParameterSnapshot {
+  const name = param.getName();
+  const label = param.getLabel();
+  return {
+    parameterId: param.getUniqueId(),
+    name,
+    label,
+    displayName: label || name || param.getUniqueId(),
+    minimum: param.getMinimum(),
+    maximum: param.getMaximum(),
+    resolution: param.getResolution(),
+    curve: param.getCurve(),
+    fixedValue: param.getFixedValue(),
+    automationEnabled: param.isAutomationEnabled(),
+    lineColor: param.getLineColor(),
+    sourceKind: 'unknown' as AutomationTargetSourceKind,
+    targetPath: [],
+    points: param.getPoints().map((p) => ({ time: p.time, value: p.value })),
+  };
+}
+
+function collectLayerAutomationSnapshot(
+  layerId: string,
+  layerKind: AutomationLayerKind,
+  automatableLayer: BlueDataAutomatableLayer,
+  allParameters: BlueDataParameter[],
+  assignedElsewhere: Map<string, { layerId: string; layerName: string }>,
+  layerGroupId: string,
+  arrangement: BlueDataArrangement,
+  mixer: BlueDataMixer,
+): ScoreLayerAutomationSnapshot | undefined {
+  const paramIdList = automatableLayer.getAutomationParameters();
+  const assignedIds = paramIdList.getIds();
+
+  const paramMap = new Map<string, BlueDataParameter>();
+  for (const p of allParameters) {
+    paramMap.set(p.getUniqueId(), p);
+  }
+
+  const resolvedParameters: AutomationParameterSnapshot[] = [];
+  const missingParameterIds: string[] = [];
+
+  for (const id of assignedIds) {
+    const param = paramMap.get(id);
+    if (param) {
+      resolvedParameters.push(buildAutomationParameterSnapshot(param));
+    } else {
+      missingParameterIds.push(id);
+    }
+  }
+
+  const selectedIdx = paramIdList.getSelectedIndex();
+  const selectedParameterId = selectedIdx >= 0 && selectedIdx < assignedIds.length
+    ? assignedIds[selectedIdx]
+    : undefined;
+
+  const targetGroups = layerKind === 'audio'
+    ? buildAudioAutomationTargetGroups(
+        automatableLayer,
+        assignedIds,
+        assignedElsewhere,
+        mixer,
+      )
+    : buildAutomationTargetGroups(
+        assignedIds,
+        allParameters,
+        assignedElsewhere,
+        arrangement,
+        mixer,
+      );
+
+  return {
+    layerId,
+    layerKind,
+    parameterIds: assignedIds,
+    selectedParameterId,
+    parameters: resolvedParameters,
+    targetGroups,
+    missingParameterIds,
+  };
+}
+
+function buildAutomationTargetGroups(
+  currentLayerAssignedIds: string[],
+  allParameters: BlueDataParameter[],
+  assignedElsewhere: Map<string, { layerId: string; layerName: string }>,
+  arrangement: BlueDataArrangement,
+  mixer: BlueDataMixer,
+): AutomationTargetGroupSnapshot[] {
+  const rootGroups: AutomationTargetGroupSnapshot[] = [];
+
+  const paramMap = new Map<string, BlueDataParameter>();
+  for (const p of allParameters) {
+    paramMap.set(p.getUniqueId(), p);
+  }
+
+  function getAssignmentState(id: string): {
+    assignmentState: AutomationAssignmentState;
+    ownerLayerId?: string;
+    ownerLayerName?: string;
+  } {
+    if (currentLayerAssignedIds.includes(id)) {
+      return { assignmentState: 'assignedCurrentLayer' };
+    }
+    const elsewhere = assignedElsewhere.get(id);
+    if (elsewhere) {
+      return { assignmentState: 'assignedOtherLayer', ownerLayerId: elsewhere.layerId, ownerLayerName: elsewhere.layerName };
+    }
+    return { assignmentState: 'available' };
+  }
+
+  function makeTarget(param: BlueDataParameter): AutomationTargetSnapshot {
+    const id = param.getUniqueId();
+    const { assignmentState, ownerLayerId, ownerLayerName } = getAssignmentState(id);
+    return {
+      parameterId: id,
+      label: param.getLabel() || param.getName() || id,
+      sourceKind: resolveParameterSourceKind(param),
+      automationEnabled: param.isAutomationEnabled(),
+      assignmentState,
+      ownerLayerId,
+      ownerLayerName,
+    };
+  }
+
+  // ─── Instrument group ───
+  const instrGroup: AutomationTargetGroupSnapshot = { groupId: 'instrument', label: 'Instrument', subGroups: [], targets: [] };
+
+  for (const ia of arrangement.getArrangement()) {
+    if (!ia.enabled || !ia.instr) continue;
+    const instr = ia.instr as any;
+    if (typeof instr.getParameters !== 'function') continue;
+    const instrParams = instr.getParameters();
+    if (!instrParams || !Array.isArray(instrParams) || instrParams.length === 0) continue;
+
+    const instrSubGroup: AutomationTargetGroupSnapshot = {
+      groupId: `instr-${ia.arrangementId}`,
+      label: `${ia.arrangementId}) ${(ia.instr as any).getName?.() ?? 'Instrument'}`,
+      subGroups: [],
+      targets: instrParams
+        .slice()
+        .sort((a: BlueDataParameter, b: BlueDataParameter) => a.getName().localeCompare(b.getName()))
+        .map((p: BlueDataParameter) => makeTarget(p)),
+    };
+    instrGroup.subGroups.push(instrSubGroup);
+  }
+  rootGroups.push(instrGroup);
+
+  // ─── Mixer group ───
+  if (mixer.isEnabled()) {
+    const mixerGroup: AutomationTargetGroupSnapshot = { groupId: 'mixer', label: 'Mixer', subGroups: [], targets: [] };
+
+    // Channels (source channels from channelListGroups + main channels)
+    const sourceChannels = mixer.getAllSourceChannels();
+    if (sourceChannels.length > 0) {
+      const channelsSubGroup: AutomationTargetGroupSnapshot = { groupId: 'mixer-channels', label: 'Channels', subGroups: [], targets: [] };
+      for (const channel of sourceChannels) {
+        channelsSubGroup.subGroups.push(buildChannelSubGroup(channel, 'channel', getAssignmentState, 'mixer'));
+      }
+      mixerGroup.subGroups.push(channelsSubGroup);
+    }
+
+    // Sub-Channels
+    const subChannels = mixer.getSubChannels();
+    if (subChannels.length > 0) {
+      const subChannelsGroup: AutomationTargetGroupSnapshot = { groupId: 'mixer-subchannels', label: 'Sub-Channels', subGroups: [], targets: [] };
+      for (const channel of subChannels) {
+        subChannelsGroup.subGroups.push(buildChannelSubGroup(channel, 'subchannel', getAssignmentState, 'mixer'));
+      }
+      mixerGroup.subGroups.push(subChannelsGroup);
+    }
+
+    // Master (directly, not under a "Channels" wrapper)
+    mixerGroup.subGroups.push(buildChannelSubGroup(mixer.getMaster(), 'master', getAssignmentState, 'mixer'));
+
+    rootGroups.push(mixerGroup);
+  }
+
+  return rootGroups;
+}
+
+function buildAudioAutomationTargetGroups(
+  automatableLayer: BlueDataAutomatableLayer,
+  currentLayerAssignedIds: string[],
+  assignedElsewhere: Map<string, { layerId: string; layerName: string }>,
+  mixer: BlueDataMixer,
+): AutomationTargetGroupSnapshot[] {
+  const getUniqueId = (automatableLayer as unknown as { getUniqueId?: () => string }).getUniqueId;
+  const layerUniqueId = typeof getUniqueId === 'function' ? getUniqueId.call(automatableLayer) : '';
+  if (!layerUniqueId) {
+    return [];
+  }
+
+  const channel = mixer.getAllSourceChannels()
+    .find((candidate) => candidate.getAssociation() === layerUniqueId);
+  if (!channel) {
+    return [];
+  }
+
+  function getAssignmentState(id: string): {
+    assignmentState: AutomationAssignmentState;
+    ownerLayerId?: string;
+    ownerLayerName?: string;
+  } {
+    if (currentLayerAssignedIds.includes(id)) {
+      return { assignmentState: 'assignedCurrentLayer' };
+    }
+    const elsewhere = assignedElsewhere.get(id);
+    if (elsewhere) {
+      return { assignmentState: 'assignedOtherLayer', ownerLayerId: elsewhere.layerId, ownerLayerName: elsewhere.layerName };
+    }
+    return { assignmentState: 'available' };
+  }
+
+  return [{
+    groupId: 'audio-channel',
+    label: 'Channel',
+    subGroups: [buildChannelSubGroup(channel, 'audioChannel', getAssignmentState, 'audioChannel')],
+    targets: [],
+  }];
+}
+
+function buildChannelSubGroup(
+  channel: any,
+  kind: string,
+  getAssignmentState: (id: string) => { assignmentState: AutomationAssignmentState; ownerLayerId?: string; ownerLayerName?: string },
+  sourceKind: AutomationTargetSourceKind,
+): AutomationTargetGroupSnapshot {
+  const channelGroup: AutomationTargetGroupSnapshot = {
+    groupId: `mixer-${kind}-${channel.getName?.() ?? 'unknown'}`,
+    label: kind === 'master' ? 'Master' : (channel.getName?.() ?? 'Channel'),
+    subGroups: [],
+    targets: [],
+  };
+
+  function makeTarget(param: BlueDataParameter): AutomationTargetSnapshot {
+    const id = param.getUniqueId();
+    const { assignmentState, ownerLayerId, ownerLayerName } = getAssignmentState(id);
+    return {
+      parameterId: id,
+      label: param.getLabel() || param.getName() || id,
+      sourceKind,
+      automationEnabled: param.isAutomationEnabled(),
+      assignmentState,
+      ownerLayerId,
+      ownerLayerName,
+    };
+  }
+
+  function buildEffectSubGroup(effect: any): AutomationTargetGroupSnapshot | null {
+    const params = effect.getParameters?.();
+    if (!params || params.length === 0) return null;
+    return {
+      groupId: `effect-${effect.getName?.() ?? 'unknown'}`,
+      label: (effect.constructor as any).name === 'Send' ? `Send: ${(effect as any).getSendChannel?.() ?? 'unknown'}` : (effect.getName?.() ?? 'Effect'),
+      subGroups: [],
+      targets: params
+        .slice()
+        .sort((a: BlueDataParameter, b: BlueDataParameter) => a.getName().localeCompare(b.getName()))
+        .map((p: BlueDataParameter) => makeTarget(p)),
+    };
+  }
+
+  // Pre-Effects
+  const preEffects = channel.getPreEffects?.();
+  if (preEffects && preEffects.length > 0) {
+    const preGroup: AutomationTargetGroupSnapshot = { groupId: `${channelGroup.groupId}-pre`, label: 'Pre-Effects', subGroups: [], targets: [] };
+    for (const effect of preEffects) {
+      const sub = buildEffectSubGroup(effect);
+      if (sub) preGroup.subGroups.push(sub);
+    }
+    if (preGroup.subGroups.length > 0) channelGroup.subGroups.push(preGroup);
+  }
+
+  // Volume (channel level parameter)
+  const levelParam = channel.getLevelParameter?.();
+  if (levelParam) {
+    channelGroup.targets.push(makeTarget(levelParam));
+  }
+
+  // Post-Effects
+  const postEffects = channel.getPostEffects?.();
+  if (postEffects && postEffects.length > 0) {
+    const postGroup: AutomationTargetGroupSnapshot = { groupId: `${channelGroup.groupId}-post`, label: 'Post-Effects', subGroups: [], targets: [] };
+    for (const effect of postEffects) {
+      const sub = buildEffectSubGroup(effect);
+      if (sub) postGroup.subGroups.push(sub);
+    }
+    if (postGroup.subGroups.length > 0) channelGroup.subGroups.push(postGroup);
+  }
+
+  return channelGroup;
+}
+
+function resolveParameterSourceKind(param: BlueDataParameter): AutomationTargetSourceKind {
+  const compilationVar = param.getCompilationVarName();
+  if (compilationVar && compilationVar.includes('mixer')) {
+    return 'mixer';
+  }
+  return 'instrument';
+}
+
+function buildAssignedAutomationLayerMap(
+  score: Score,
+): Map<string, { layerId: string; layerName: string }> {
+  const result = new Map<string, { layerId: string; layerName: string }>();
+
+  function visitGroup(group: unknown): void {
+    if (!(group instanceof PolyObject) && !(group instanceof AudioLayerGroup)) {
+      return;
+    }
+
+    const groupId = assignLayerGroupId(group);
+    for (let li = 0; li < group.length; li++) {
+      const layer = group[li] as BlueDataAutomatableLayer;
+      const layerId = `${groupId}-layer-${li}`;
+      for (const id of layer.getAutomationParameters().getIds()) {
+        result.set(id, { layerId, layerName: layer.getName() });
+      }
+
+      if (group instanceof PolyObject) {
+        const soundLayer = group[li];
+        if (!soundLayer) {
+          continue;
+        }
+        for (const sObj of soundLayer) {
+          if (sObj instanceof PolyObject) {
+            visitGroup(sObj);
+          }
+        }
+      }
+    }
+  }
+
+  for (let gi = 0; gi < score.length; gi++) {
+    visitGroup(score[gi]);
+  }
+
+  return result;
+}
+
+function buildAssignedElsewhereMapForLayer(
+  layerId: string,
+  assignedLayerMap: Map<string, { layerId: string; layerName: string }>,
+): Map<string, { layerId: string; layerName: string }> {
+  const result = new Map<string, { layerId: string; layerName: string }>();
+  for (const [parameterId, owner] of assignedLayerMap) {
+    if (owner.layerId !== layerId) {
+      result.set(parameterId, owner);
+    }
+  }
+  return result;
 }
 
 function buildSoundBSBInstrumentSnapshot(bsb: BlueSynthBuilder): BlueSynthBuilderInstrumentSnapshot {
@@ -3618,6 +4209,7 @@ function buildSoundBSBInstrumentSnapshot(bsb: BlueSynthBuilder): BlueSynthBuilde
     presetGroup: buildPresetGroupSnapshot(bsb),
     opcodeListText: bsb.getOpcodeListText(),
     udolist: buildUdoListSnapshot(bsb),
+    automationParameters: buildSoundAutomationParameters(bsb),
   };
 }
 
@@ -5342,6 +5934,532 @@ function applyScopedNoteProcessorChainPatch(data: BlueData, patch: ScorePatch & 
   return false;
 }
 
+function getAutomationLayerFromGroup(
+  group: unknown,
+  ref: ScoreAutomationLayerRef,
+): BlueDataAutomatableLayer | null {
+  if (
+    ref.layerKind === 'soundObject'
+    && group instanceof PolyObject
+    && ref.layerIndex >= 0
+    && ref.layerIndex < group.length
+  ) {
+    return group[ref.layerIndex] as BlueDataAutomatableLayer;
+  }
+
+  if (
+    ref.layerKind === 'audio'
+    && group instanceof AudioLayerGroup
+    && ref.layerIndex >= 0
+    && ref.layerIndex < group.length
+  ) {
+    return group[ref.layerIndex] as BlueDataAutomatableLayer;
+  }
+
+  return null;
+}
+
+function findAutomationLayerByGroupId(
+  data: BlueData,
+  ref: ScoreAutomationLayerRef,
+): BlueDataAutomatableLayer | null {
+  function visitGroup(group: unknown): BlueDataAutomatableLayer | null {
+    if (!(group instanceof PolyObject) && !(group instanceof AudioLayerGroup)) {
+      return null;
+    }
+
+    if (assignLayerGroupId(group) === ref.groupId) {
+      return getAutomationLayerFromGroup(group, ref);
+    }
+
+    if (group instanceof PolyObject) {
+      for (const layer of group) {
+        for (const sObj of layer) {
+          if (sObj instanceof PolyObject) {
+            const nested = visitGroup(sObj);
+            if (nested) return nested;
+          }
+        }
+      }
+    }
+
+    return null;
+  }
+
+  const score = data.getScore();
+  for (let gi = 0; gi < score.length; gi++) {
+    const layer = visitGroup(score[gi]);
+    if (layer) return layer;
+  }
+
+  return null;
+}
+
+function resolveAutomationLayerRef(data: BlueData, ref: ScoreAutomationLayerRef): BlueDataAutomatableLayer | null {
+  const byGroupId = findAutomationLayerByGroupId(data, ref);
+  if (byGroupId) return byGroupId;
+
+  const score = data.getScore();
+  const group = score[ref.rootGroupIndex];
+  if (!group) return null;
+  const directLayer = getAutomationLayerFromGroup(group, ref);
+  if (directLayer) return directLayer;
+  return null;
+}
+
+function findParameterById(data: BlueData, parameterId: string): BlueDataParameter | null {
+  const allParams = ParameterHelper.getAllParameters(data.getArrangement(), data.getMixer());
+  return allParams.find(p => p.getUniqueId() === parameterId) ?? null;
+}
+
+function removeAutomationParameterFromGroup(
+  group: unknown,
+  parameterId: string,
+): void {
+  if (!(group instanceof PolyObject) && !(group instanceof AudioLayerGroup)) {
+    return;
+  }
+
+  for (const layer of group) {
+    const paramList = layer.getAutomationParameters();
+    if (paramList.contains(parameterId)) {
+      paramList.removeParameterId(parameterId);
+    }
+
+    if (group instanceof PolyObject) {
+      for (const sObj of layer) {
+        if (sObj instanceof PolyObject) {
+          removeAutomationParameterFromGroup(sObj, parameterId);
+        }
+      }
+    }
+  }
+}
+
+function removeAutomationParameterFromAllLayers(
+  data: BlueData,
+  parameterId: string,
+): void {
+  const score = data.getScore();
+  for (let gi = 0; gi < score.length; gi++) {
+    removeAutomationParameterFromGroup(score[gi], parameterId);
+  }
+}
+
+function seedDefaultAutomationPoint(param: BlueDataParameter): void {
+  if (param.getPoints().length > 0) {
+    return;
+  }
+
+  param.setPoints([
+    clampAutomationPoint(param, { time: 0, value: param.getFixedValue() }),
+  ]);
+}
+
+function clampAutomationPoint(
+  param: BlueDataParameter,
+  point: AutomationPointSnapshot,
+): AutomationPointSnapshot {
+  return {
+    time: Math.max(0, Number.isFinite(point.time) ? point.time : 0),
+    value: Math.min(
+      param.getMaximum(),
+      Math.max(param.getMinimum(), Number.isFinite(point.value) ? point.value : param.getFixedValue()),
+    ),
+  };
+}
+
+function normalizeAutomationPoints(
+  param: BlueDataParameter,
+  points: AutomationPointSnapshot[],
+): AutomationPointSnapshot[] {
+  return points
+    .map((point) => clampAutomationPoint(param, point))
+    .sort((a, b) => a.time - b.time);
+}
+
+function findAutomationLayerBySnapshotId(
+  data: BlueData,
+  layerId: string,
+): BlueDataAutomatableLayer | null {
+  function visitGroup(group: unknown): BlueDataAutomatableLayer | null {
+    if (!(group instanceof PolyObject) && !(group instanceof AudioLayerGroup)) {
+      return null;
+    }
+
+    const groupId = assignLayerGroupId(group);
+    for (let li = 0; li < group.length; li++) {
+      if (`${groupId}-layer-${li}` === layerId) {
+        return group[li] as BlueDataAutomatableLayer;
+      }
+
+      if (group instanceof PolyObject) {
+        for (const sObj of group[li]!) {
+          if (sObj instanceof PolyObject) {
+            const nested = visitGroup(sObj);
+            if (nested) return nested;
+          }
+        }
+      }
+    }
+
+    return null;
+  }
+
+  const score = data.getScore();
+  for (let gi = 0; gi < score.length; gi++) {
+    const layer = visitGroup(score[gi]);
+    if (layer) return layer;
+  }
+
+  return null;
+}
+
+function applyAutomationRangePatch(
+  data: BlueData,
+  patch: MoveAutomationRangePatch | ScaleAutomationRangePatch,
+): boolean {
+  const startBeat = Math.min(patch.range.startBeat, patch.range.endBeat);
+  const endBeat = Math.max(patch.range.startBeat, patch.range.endBeat);
+  let changed = false;
+
+  if (shouldAbortAutomationRangeScaleForPartialObjects(data, patch, startBeat, endBeat)) {
+    return false;
+  }
+
+  for (const layerId of patch.range.layerIds) {
+    const layer = findAutomationLayerBySnapshotId(data, layerId);
+    if (!layer) {
+      continue;
+    }
+
+    const assignedIds = new Set(layer.getAutomationParameters().getIds());
+    const parameterIds = patch.range.parameterIdsByLayer[layerId] ?? [];
+
+    for (const parameterId of parameterIds) {
+      if (!assignedIds.has(parameterId)) {
+        continue;
+      }
+
+      const param = findParameterById(data, parameterId);
+      if (!param) {
+        continue;
+      }
+
+      const before = param.getPoints();
+      // Use anchored transforms that insert boundary anchor points at the
+      // selection edges, preserving line shape outside the selection (Java
+      // Line.processLineForSelectionDrag/Scale parity).
+      const after = patch.type === 'moveAutomationRange'
+        ? moveRangeWithAnchors(before, startBeat, endBeat, patch.beatDelta)
+        : scaleRangeWithAnchors(before, startBeat, endBeat, patch.anchorBeat, patch.scaleFactor);
+
+      const normalized = normalizeAutomationPoints(param, after);
+      const same = before.length === normalized.length
+        && before.every((point, index) => {
+          const next = normalized[index];
+          return next && point.time === next.time && point.value === next.value;
+        });
+      if (!same) {
+        param.setPoints(normalized);
+        changed = true;
+      }
+    }
+  }
+
+  // FR-014: keep selected score objects / audio clips aligned with the moved or
+  // scaled automation range by applying the same time transform to objects.
+  // Triggered by explicit objectIds (Java shift-gated model) or by the legacy
+  // includeScoreObjects/includeAudioClips booleans.
+  if (patch.objectIds || patch.includeScoreObjects || patch.includeAudioClips) {
+    if (applyAutomationRangeObjectAlignment(data, patch, startBeat, endBeat)) {
+      changed = true;
+    }
+  }
+
+  return changed;
+}
+
+function shouldAbortAutomationRangeScaleForPartialObjects(
+  data: BlueData,
+  patch: MoveAutomationRangePatch | ScaleAutomationRangePatch,
+  startBeat: number,
+  endBeat: number,
+): boolean {
+  if (patch.type !== 'scaleAutomationRange') return false;
+  if (!patch.objectIds && !patch.includeScoreObjects && !patch.includeAudioClips) return false;
+
+  const context = data.getScore().getTimeContext();
+  const explicitIds = patch.objectIds ? new Set(patch.objectIds) : null;
+  const includeScoreObjects = explicitIds ? true : !!patch.includeScoreObjects;
+  const includeAudioClips = explicitIds ? true : !!patch.includeAudioClips;
+  if (!includeScoreObjects && !includeAudioClips) return false;
+
+  for (const layerId of patch.range.layerIds) {
+    const layer = findAutomationLayerBySnapshotId(data, layerId);
+    if (!layer) continue;
+
+    const objects = layer as unknown as readonly unknown[];
+    for (const obj of objects) {
+      const isClip = obj instanceof AudioClip;
+      const isScoreObject = !isClip && (obj instanceof AbstractSoundObject || obj instanceof PolyObject);
+      if (!isClip && !isScoreObject) continue;
+      if (isClip ? !includeAudioClips : !includeScoreObjects) continue;
+
+      const timed = obj as {
+        getStartTime(): TimePosition;
+        getSubjectiveDuration(): TimeDuration;
+      };
+      const startBeats = timePositionToBeats(timed.getStartTime(), context);
+
+      if (explicitIds) {
+        const objId = getScoreObjectId(obj);
+        if (!objId || !explicitIds.has(objId)) continue;
+      } else if (startBeats < startBeat || startBeats > endBeat) {
+        continue;
+      }
+
+      const endBeats = startBeats + timed.getSubjectiveDuration().toBeats(context);
+      if ((startBeats < startBeat && endBeats > startBeat)
+        || (startBeats < endBeat && endBeats > endBeat)) {
+        return true;
+      }
+    }
+  }
+
+  return false;
+}
+
+/**
+ * Move or scale score objects / audio clips that participate in a multi-line
+ * gesture, applying the same time transform the automation range received.
+ * Used by multi-line move/scale to preserve object / clip alignment with the
+ * automation lines (US3-4 / FR-014).
+ *
+ * Two inclusion modes:
+ * - Explicit IDs (`objectIds`): Java shift-gated model — only objects the user
+ *   explicitly selected via shift-drag move/scale. Object type (score object vs
+ *   audio clip) is determined by instanceof, not by the ID.
+ * - Legacy booleans (`includeScoreObjects`/`includeAudioClips`): objects whose
+ *   start falls within [startBeat, endBeat] on selected layers.
+ *
+ * For scale, both start time AND subjective duration are scaled (matching Java's
+ * MultiLineScaleMouseListener which scales end = start + duration and writes back
+ * both values).
+ */
+function applyAutomationRangeObjectAlignment(
+  data: BlueData,
+  patch: MoveAutomationRangePatch | ScaleAutomationRangePatch,
+  startBeat: number,
+  endBeat: number,
+): boolean {
+  const context = data.getScore().getTimeContext();
+
+  const explicitIds = patch.objectIds ? new Set(patch.objectIds) : null;
+  const includeScoreObjects = explicitIds ? true : !!patch.includeScoreObjects;
+  const includeAudioClips = explicitIds ? true : !!patch.includeAudioClips;
+  if (!includeScoreObjects && !includeAudioClips) return false;
+
+  let changed = false;
+
+  for (const layerId of patch.range.layerIds) {
+    const layer = findAutomationLayerBySnapshotId(data, layerId);
+    if (!layer) continue;
+
+    const objects = layer as unknown as readonly unknown[];
+    for (const obj of objects) {
+      const isClip = obj instanceof AudioClip;
+      const isScoreObject = !isClip && (obj instanceof AbstractSoundObject || obj instanceof PolyObject);
+      if (!isClip && !isScoreObject) continue;
+
+      const timed = obj as {
+        getStartTime(): TimePosition;
+        setStartTime(value: unknown): void;
+        getSubjectiveDuration(): TimeDuration;
+        setSubjectiveDuration(value: unknown): void;
+      };
+      const startTime = timed.getStartTime();
+      const startBeats = timePositionToBeats(startTime, context);
+
+      if (isClip ? !includeAudioClips : !includeScoreObjects) continue;
+
+      // Inclusion test: explicit ID match (preferred) or time-range fallback.
+      if (explicitIds) {
+        const objId = getScoreObjectId(obj);
+        if (!objId || !explicitIds.has(objId)) continue;
+      } else {
+        if (startBeats < startBeat || startBeats > endBeat) continue;
+      }
+
+      if (patch.type === 'moveAutomationRange') {
+        const newBeats = Math.max(0, startBeats + patch.beatDelta);
+        if (newBeats === startBeats) continue;
+        timed.setStartTime(beatsToTimePosition(newBeats, startTime.getTimeBase(), context));
+        changed = true;
+      } else {
+        // Scale: transform both start and end (= start + duration), then write
+        // back the new start and the new (end - start) duration. Matches Java's
+        // MultiLineScaleMouseListener.mouseDragged:185-194.
+        const dur = timed.getSubjectiveDuration();
+        const durBeats = dur.toBeats(context);
+        const endBeats = startBeats + durBeats;
+
+        const newStart = Math.max(0, patch.anchorBeat + (startBeats - patch.anchorBeat) * patch.scaleFactor);
+        const newEnd = Math.max(0, patch.anchorBeat + (endBeats - patch.anchorBeat) * patch.scaleFactor);
+        const newDur = Math.max(0, newEnd - newStart);
+
+        if (newStart === startBeats && newDur === durBeats) continue;
+
+        timed.setStartTime(beatsToTimePosition(newStart, startTime.getTimeBase(), context));
+        timed.setSubjectiveDuration(beatsToDuration(newDur, dur.getTimeBase(), context));
+        changed = true;
+      }
+    }
+  }
+
+  return changed;
+}
+
+function applyScoreAutomationPatch(data: BlueData, patch: ScorePatch): boolean | undefined {
+  switch (patch.type) {
+    case 'assignAutomationToLayer': {
+      const layer = resolveAutomationLayerRef(data, patch.layer);
+      if (!layer) return false;
+      const paramList = layer.getAutomationParameters();
+
+      removeAutomationParameterFromAllLayers(data, patch.parameterId);
+
+      if (!paramList.contains(patch.parameterId)) {
+        paramList.addParameterId(patch.parameterId);
+      }
+      paramList.setSelectedParameter(patch.parameterId);
+
+      const param = findParameterById(data, patch.parameterId);
+      if (param) {
+        if (patch.enableAutomation) {
+          param.setAutomationEnabled(true);
+        }
+        seedDefaultAutomationPoint(param);
+        const lineColors = new LineColors();
+        param.setLineColor(lineColors.getColor(paramList.getIds().indexOf(patch.parameterId)));
+      }
+      return true;
+    }
+
+    case 'removeAutomationFromLayer': {
+      const layer = resolveAutomationLayerRef(data, patch.layer);
+      if (!layer) return false;
+      const paramList = layer.getAutomationParameters();
+      paramList.removeParameterId(patch.parameterId);
+      const param = findParameterById(data, patch.parameterId);
+      if (param) param.setAutomationEnabled(false);
+      return true;
+    }
+
+    case 'moveAutomationToLayer': {
+      const fromLayer = resolveAutomationLayerRef(data, patch.fromLayer);
+      const toLayer = resolveAutomationLayerRef(data, patch.toLayer);
+      if (!fromLayer || !toLayer) return false;
+      fromLayer.getAutomationParameters().removeParameterId(patch.parameterId);
+      if (!toLayer.getAutomationParameters().contains(patch.parameterId)) {
+        toLayer.getAutomationParameters().addParameterId(patch.parameterId);
+      }
+      toLayer.getAutomationParameters().setSelectedParameter(patch.parameterId);
+      return true;
+    }
+
+    case 'clearLayerAutomations': {
+      const layer = resolveAutomationLayerRef(data, patch.layer);
+      if (!layer) return false;
+      const paramIds = layer.getAutomationParameters().getIds();
+      for (const id of paramIds) {
+        const param = findParameterById(data, id);
+        if (param) param.setAutomationEnabled(false);
+      }
+      layer.getAutomationParameters().clear();
+      return true;
+    }
+
+    case 'selectLayerAutomation': {
+      const layer = resolveAutomationLayerRef(data, patch.layer);
+      if (!layer) return false;
+      if (patch.parameterId) {
+        layer.getAutomationParameters().setSelectedParameter(patch.parameterId);
+      }
+      return true;
+    }
+
+    case 'setAutomationLineColor': {
+      const param = findParameterById(data, patch.parameterId);
+      if (!param) return false;
+      param.setLineColor(patch.lineColor);
+      return true;
+    }
+
+    case 'setAutomationPoints': {
+      const param = findParameterById(data, patch.parameterId);
+      if (!param) return false;
+      param.setPoints(normalizeAutomationPoints(param, patch.points));
+      return true;
+    }
+
+    case 'insertAutomationPoint': {
+      const param = findParameterById(data, patch.parameterId);
+      if (!param) return false;
+      const point = clampAutomationPoint(param, patch.point);
+      param.addPoint(point.time, point.value);
+      return true;
+    }
+
+    case 'deleteAutomationPoint': {
+      const param = findParameterById(data, patch.parameterId);
+      if (!param) return false;
+      const pts = param.getPoints();
+      if (patch.pointIndex > 0 && patch.pointIndex < pts.length) {
+        const newPts = pts.filter((_, idx) => idx !== patch.pointIndex);
+        param.setPoints(newPts);
+      }
+      return true;
+    }
+
+    case 'moveAutomationPoint': {
+      const param = findParameterById(data, patch.parameterId);
+      if (!param) return false;
+      const pts = param.getPoints();
+      if (patch.pointIndex >= 0 && patch.pointIndex < pts.length) {
+        const point = clampAutomationPoint(param, patch.point);
+        const newPts = pts.map((p, idx) =>
+          idx === patch.pointIndex ? point : p
+        );
+        param.setPoints(normalizeAutomationPoints(param, newPts));
+      }
+      return true;
+    }
+
+    case 'cleanupLayerAutomation': {
+      const layer = resolveAutomationLayerRef(data, patch.layer);
+      if (!layer) return false;
+      const paramList = layer.getAutomationParameters();
+      const allParams = ParameterHelper.getAllParameters(data.getArrangement(), data.getMixer());
+      const validIds = new Set(allParams.map(p => p.getUniqueId()));
+      const idsToRemove = patch.parameterIds
+        ? patch.parameterIds.filter(id => !validIds.has(id))
+        : paramList.getIds().filter(id => !validIds.has(id));
+      for (const id of idsToRemove) {
+        paramList.removeParameterId(id);
+      }
+      return idsToRemove.length > 0;
+    }
+
+    case 'moveAutomationRange':
+    case 'scaleAutomationRange':
+      return applyAutomationRangePatch(data, patch);
+
+    default:
+      return undefined;
+  }
+}
+
 function applyScoreObjectPatch(data: BlueData, patch: ScorePatch): boolean {
   if (patch.type === 'addScoreObjects') {
     return applyAddScoreObjectsPatch(data, patch);
@@ -5471,6 +6589,9 @@ function applyScoreObjectPatch(data: BlueData, patch: ScorePatch): boolean {
     data.getNoteProcessorChainMap().removeChain(patch.name);
     return true;
   }
+
+  const automationResult = applyScoreAutomationPatch(data, patch);
+  if (automationResult !== undefined) return automationResult;
 
   const target = (patch as { target: ScoreObjectEditorTargetSnapshot }).target;
   const resolved = resolveEditorTarget(data, target);
@@ -7904,6 +9025,13 @@ export function createNestedPolyObjectSnapshot(
 ): PolyObjectLayerGroupSnapshot | null {
   const score = data.getScore();
   const context = score.getTimeContext();
+  const arrangement = data.getArrangement();
+  const mixer = data.getMixer();
+  const allParameters = ParameterHelper.getAllParameters(
+    arrangement,
+    mixer,
+  );
+  const assignedLayerMap = buildAssignedAutomationLayerMap(score);
   const lg = score[location.rootGroupIndex];
   if (!lg || !(lg instanceof PolyObject)) return null;
 
@@ -7934,6 +9062,7 @@ export function createNestedPolyObjectSnapshot(
 
   for (let i = 0; i < sObj.length; i++) {
     const subLayer = sObj[i];
+    const layerId = `${groupId}-layer-${i}`;
     const items: ScoreRowObjectSnapshot[] = [];
     for (let j = 0; j < subLayer.length; j++) {
       const nestedObj = subLayer[j];
@@ -7959,8 +9088,19 @@ export function createNestedPolyObjectSnapshot(
           : { kind: 'fallback' as const, labelLines: splitLabelLines(nestedObj.getName()), reason: 'unknown-type' as const },
       });
     }
+    const elsewhereMap = buildAssignedElsewhereMapForLayer(layerId, assignedLayerMap);
+    const automation = collectLayerAutomationSnapshot(
+      layerId,
+      'soundObject',
+      subLayer,
+      allParameters,
+      elsewhereMap,
+      groupId,
+      arrangement,
+      mixer,
+    );
     layers.push({
-      layerId: `${groupId}-layer-${i}`,
+      layerId,
       name: subLayer.getName(),
       height: subLayer.getLayerHeight(),
       muted: subLayer.isMuted(),
@@ -7969,6 +9109,7 @@ export function createNestedPolyObjectSnapshot(
       noteProcessorChain: subLayer.getNoteProcessorChain().getProcessors().length > 0
         ? createNoteProcessorChainSnapshot(subLayer.getNoteProcessorChain())
         : undefined,
+      automation,
     });
   }
 

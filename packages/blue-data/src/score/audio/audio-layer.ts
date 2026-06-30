@@ -8,6 +8,8 @@
 import { AudioClip } from './audio-clip';
 import { ScoreObject } from '../../score/score-object';
 import { ScoreObjectLayer } from '../../score/layers/score-object-layer';
+import { AutomatableLayer } from '../../score/layers/automatable-layer';
+import { ParameterIdList } from '../../automation/parameter-id-list';
 import { LAYER_HEIGHT } from '../../score/layers/layer';
 import { CompileData } from '../../compile-data';
 import { NoteList } from '../../sound-objects/note-list';
@@ -22,7 +24,7 @@ import { Channel } from '../../mixer/channel';
 import { BLUE_FADE_UDO } from './blue-fade-udo';
 import { PLAYBACK_INSTRUMENT_ORC } from './playback-instrument-orc';
 
-export class AudioLayer extends Array<AudioClip> implements ScoreObjectLayer<AudioClip> {
+export class AudioLayer extends Array<AudioClip> implements ScoreObjectLayer<AudioClip>, AutomatableLayer {
   static HEIGHT_MAX_INDEX = 9;
 
   private _name = '';
@@ -30,6 +32,7 @@ export class AudioLayer extends Array<AudioClip> implements ScoreObjectLayer<Aud
   private _solo = false;
   private _uniqueId = generateUniqueId();
   private _heightIndex = 0;
+  private _automationParameters = new ParameterIdList();
 
   constructor() {
     super();
@@ -43,6 +46,7 @@ export class AudioLayer extends Array<AudioClip> implements ScoreObjectLayer<Aud
     layer._solo = src._solo;
     layer._uniqueId = src._uniqueId;
     layer._heightIndex = src._heightIndex;
+    layer._automationParameters = src._automationParameters.deepCopy();
     for (const clip of src) {
       layer.push(AudioClip.copyFrom(clip));
     }
@@ -94,6 +98,10 @@ export class AudioLayer extends Array<AudioClip> implements ScoreObjectLayer<Aud
 
   isSolo(): boolean { return this._solo; }
   setSolo(s: boolean): void { this._solo = s; }
+
+  getAutomationParameters(): ParameterIdList {
+    return this._automationParameters;
+  }
 
   // ─── CSD Generation ───
 
@@ -230,15 +238,15 @@ export class AudioLayer extends Array<AudioClip> implements ScoreObjectLayer<Aud
     root.setAttribute('solo', this._solo.toString());
     root.setAttribute('heightIndex', this._heightIndex.toString());
     root.setAttribute('uniqueId', this._uniqueId);
+    root.setAttribute('automationSelectedIndex', this._automationParameters.getSelectedIndex().toString());
 
     for (const clip of this) {
       root.addElement(clip.saveAsXML(_objRefMap));
     }
 
-    // Automation parameters (stub for Phase 5)
-    // for (const id of this.automationParameters) {
-    //   root.addElement('parameterId').setText(id);
-    // }
+    for (const id of this._automationParameters.getIds()) {
+      root.addElement('parameterId').setText(id);
+    }
 
     return root;
   }
@@ -252,14 +260,22 @@ export class AudioLayer extends Array<AudioClip> implements ScoreObjectLayer<Aud
     if (uniqueId) layer._uniqueId = uniqueId;
     const heightIndex = data.getAttributeValue('heightIndex');
     if (heightIndex) layer._heightIndex = parseInt(heightIndex, 10);
+    const automationSelectedIndex = data.getAttributeValue('automationSelectedIndex');
 
     const nodes = data.getElements();
     while (nodes.hasMoreElements()) {
       const node = nodes.next();
       if (node.getName() === 'audioClip') {
         layer.push(AudioClip.loadFromXML(node));
+      } else if (node.getName() === 'parameterId') {
+        layer._automationParameters.addParameterId(node.getTextString());
       }
-      // parameterId handled in Phase 9 (automation)
+    }
+    if (automationSelectedIndex) {
+      const parsed = parseInt(automationSelectedIndex, 10);
+      if (!Number.isNaN(parsed)) {
+        layer._automationParameters.setSelectedIndex(parsed);
+      }
     }
 
     return layer;

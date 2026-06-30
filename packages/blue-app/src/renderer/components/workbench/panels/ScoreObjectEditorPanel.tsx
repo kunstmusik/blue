@@ -284,6 +284,7 @@ function buildSoundAutomationParametersFromSnapshot(
         value: spec.value,
         minimum: spec.minimum,
         maximum: spec.maximum,
+        resolution: spec.resolution,
         curve: previousParameter?.curve ?? 'LINEAR',
         points: previousParameter
           ? previousParameter.points.map((point) => ({

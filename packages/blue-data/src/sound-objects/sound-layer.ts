@@ -8,6 +8,8 @@
  * start time internally).
  */
 import { Layer, LAYER_HEIGHT } from '../score/layers/layer';
+import { AutomatableLayer } from '../score/layers/automatable-layer';
+import { ParameterIdList } from '../automation/parameter-id-list';
 import { ScoreObject } from '../score/score-object';
 import { SoundObject } from '../sound-objects/sound-object';
 import { TimeContext } from '../time/time-context';
@@ -16,12 +18,13 @@ import { NoteList } from './note-list';
 import { NoteProcessorChain } from '../note-processors/note-processor-chain';
 import { applyNoteProcessorChain, applyNoteProcessorChainAsync } from '../utilities/score';
 
-export class SoundLayer extends Array<SoundObject> implements Layer {
+export class SoundLayer extends Array<SoundObject> implements Layer, AutomatableLayer {
   private _name = '';
   private _muted = false;
   private _solo = false;
   private _heightIndex = 0;
   private _npc = new NoteProcessorChain();
+  private _automationParameters = new ParameterIdList();
 
   constructor(other?: SoundLayer | number) {
     if (typeof other === 'number') {
@@ -36,6 +39,7 @@ export class SoundLayer extends Array<SoundObject> implements Layer {
       this._solo = other._solo;
       this._heightIndex = other._heightIndex;
       this._npc = new NoteProcessorChain(other._npc);
+      this._automationParameters = other._automationParameters.deepCopy();
 
       for (const sObj of other) {
         this.push(sObj.deepCopy());
@@ -87,6 +91,10 @@ export class SoundLayer extends Array<SoundObject> implements Layer {
 
   setNoteProcessorChain(chain: NoteProcessorChain): void {
     this._npc = chain;
+  }
+
+  getAutomationParameters(): ParameterIdList {
+    return this._automationParameters;
   }
 
   accepts(object: ScoreObject): boolean {

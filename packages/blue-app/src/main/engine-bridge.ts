@@ -22,11 +22,21 @@ import {
   type EngineSessionKind,
 } from './engine-process-registry';
 
-interface AutomationTimingContext {
+export interface AutomationTimingContext {
   renderStartTime: number;
   sampleRate?: number;
   ksmps?: number;
   tempoMap?: TempoMap | null;
+}
+
+interface AutomationSyncOptions {
+  coalesce?: boolean;
+}
+
+interface PendingAutomationSync {
+  parameter: Parameter;
+  automationTiming?: AutomationTimingContext;
+  timer: ReturnType<typeof setTimeout>;
 }
 
 interface PendingTerminalStateCandidate {
@@ -104,6 +114,9 @@ export class EngineBridge {
   private workingDirectory: string | null = null;
   private engineProcessRecordPath: string | null = null;
   private readonly engineSessionKind: EngineSessionKind;
+  private readonly automationSyncIntervalMs = 33;
+  private readonly pendingAutomationSyncs = new Map<string, PendingAutomationSync>();
+  private readonly lastAutomationSyncAt = new Map<string, number>();
 
   constructor(
     mainWindow: BrowserWindow,
@@ -281,6 +294,14 @@ export class EngineBridge {
     }
   }
 
+  private clearPendingAutomationSyncs(): void {
+    for (const pending of this.pendingAutomationSyncs.values()) {
+      clearTimeout(pending.timer);
+    }
+    this.pendingAutomationSyncs.clear();
+    this.lastAutomationSyncAt.clear();
+  }
+
   private killEngineProcess(): void {
     if (this.engineProcess && !this.engineProcess.killed) {
       try {
@@ -299,6 +320,7 @@ export class EngineBridge {
 
   private async resetEngineResources(): Promise<void> {
     this.resetPlaybackTracking();
+    this.clearPendingAutomationSyncs();
     await this.teardownClient();
     this.killEngineProcess();
     this.isPlaying = false;
@@ -497,6 +519,7 @@ export class EngineBridge {
       const exitingClient = this.client;
 
       this.resetPlaybackTracking();
+      this.clearPendingAutomationSyncs();
       this.detachEngineStateListener();
       this.engineProcess = null;
       this.client = null;
@@ -793,7 +816,7 @@ export class EngineBridge {
         // treats createChannel as a compatible "set or stage initial value"
         // command and falls back to setChannel when the channel already exists.
         try {
-          const fixedVal = param.getFixedValue();
+          const fixedVal = getRuntimeFixedChannelValue(param, automationTiming);
           const resp = await client.createChannel(varName, fixedVal);
           if (!resp.ok) {
             // Channel might already exist after orchestra export, try setChannel
@@ -806,6 +829,178 @@ export class EngineBridge {
     }
 
     console.log(`[EngineBridge] Sent ${parameters.length} parameter definitions`);
+  }
+
+  /**
+   * Synchronize one automation parameter to the running engine.
+   *
+   * Default calls are coalesced per Csound channel to approximately 30 Hz so
+   * mouse-drag automation edits do not flood the engine request socket.
+   */
+  async syncAutomationParameter(
+    parameter: Parameter,
+    automationTiming?: AutomationTimingContext,
+    options: AutomationSyncOptions = {},
+  ): Promise<void> {
+    const client = this.client;
+    const varName = parameter.getCompilationVarName();
+    if (!client || !varName) {
+      return;
+    }
+
+    if (options.coalesce === false) {
+      await this.sendAutomationParameterSync(client, parameter, automationTiming);
+      return;
+    }
+
+    this.queueAutomationParameterSync(varName, parameter, automationTiming);
+  }
+
+  private queueAutomationParameterSync(
+    varName: string,
+    parameter: Parameter,
+    automationTiming?: AutomationTimingContext,
+  ): void {
+    const now = Date.now();
+    const lastSentAt = this.lastAutomationSyncAt.get(varName) ?? 0;
+    const elapsed = now - lastSentAt;
+
+    const existing = this.pendingAutomationSyncs.get(varName);
+    if (existing) {
+      clearTimeout(existing.timer);
+      this.pendingAutomationSyncs.delete(varName);
+    }
+
+    if (elapsed >= this.automationSyncIntervalMs) {
+      const client = this.client;
+      if (!client) {
+        return;
+      }
+
+      this.lastAutomationSyncAt.set(varName, now);
+      void this.sendAutomationParameterSync(client, parameter, automationTiming);
+      return;
+    }
+
+    const delayMs = this.automationSyncIntervalMs - elapsed;
+    const timer = setTimeout(() => {
+      const pending = this.pendingAutomationSyncs.get(varName);
+      this.pendingAutomationSyncs.delete(varName);
+      const client = this.client;
+      if (!pending || !client) {
+        return;
+      }
+
+      this.lastAutomationSyncAt.set(varName, Date.now());
+      void this.sendAutomationParameterSync(
+        client,
+        pending.parameter,
+        pending.automationTiming,
+      );
+    }, delayMs);
+
+    this.pendingAutomationSyncs.set(varName, {
+      parameter,
+      automationTiming,
+      timer,
+    });
+  }
+
+  private async sendAutomationParameterSync(
+    client: EngineClient,
+    parameter: Parameter,
+    automationTiming?: AutomationTimingContext,
+  ): Promise<void> {
+    const varName = parameter.getCompilationVarName();
+    if (!varName) {
+      return;
+    }
+
+    const shouldAutomate = parameter.isAutomationEnabled() && parameter.getPoints().length >= 2;
+    if (shouldAutomate) {
+      await this.updateOrCreateAutomation(client, parameter, varName, automationTiming);
+      return;
+    }
+
+    await this.deleteAutomationAndRestoreChannel(client, parameter, varName, automationTiming);
+  }
+
+  private async updateOrCreateAutomation(
+    client: EngineClient,
+    parameter: Parameter,
+    varName: string,
+    automationTiming?: AutomationTimingContext,
+  ): Promise<void> {
+    const curveCode = mapAutomationCurve(parameter.getCurve());
+    const points = getEngineAutomationPoints(
+      parameter,
+      automationTiming?.renderStartTime ?? 0,
+      automationTiming?.tempoMap,
+    );
+
+    try {
+      const updateResp = await client.updateAutomation(
+        varName,
+        curveCode,
+        true,
+        parameter.getResolution(),
+        parameter.getResolutionScale(),
+        parameter.isHighPrecision(),
+        points,
+      );
+      if (updateResp.ok) {
+        return;
+      }
+
+      if (!isAutomationNotFoundMessage(updateResp.message)) {
+        console.warn(`[EngineBridge] updateAutomation(${varName}) failed: ${updateResp.message}`);
+        return;
+      }
+
+      const createResp = await client.createAutomation(
+        varName,
+        curveCode,
+        true,
+        parameter.getResolution(),
+        parameter.getResolutionScale(),
+        parameter.isHighPrecision(),
+        points,
+      );
+      if (!createResp.ok) {
+        console.warn(`[EngineBridge] createAutomation(${varName}) failed after update miss: ${createResp.message}`);
+      }
+    } catch (err) {
+      console.warn(`[EngineBridge] updateAutomation(${varName}) error: ${err instanceof Error ? err.message : String(err)}`);
+    }
+  }
+
+  private async deleteAutomationAndRestoreChannel(
+    client: EngineClient,
+    parameter: Parameter,
+    varName: string,
+    automationTiming?: AutomationTimingContext,
+  ): Promise<void> {
+    try {
+      const deleteResp = await client.deleteAutomation(varName);
+      if (!deleteResp.ok && !isAutomationNotFoundMessage(deleteResp.message)) {
+        console.warn(`[EngineBridge] deleteAutomation(${varName}) failed: ${deleteResp.message}`);
+      }
+    } catch (err) {
+      console.warn(`[EngineBridge] deleteAutomation(${varName}) error: ${err instanceof Error ? err.message : String(err)}`);
+    }
+
+    const value = getRuntimeFixedChannelValue(parameter, automationTiming);
+    try {
+      const setResp = await client.setChannel(varName, value);
+      if (!setResp.ok) {
+        const createResp = await client.createChannel(varName, value);
+        if (!createResp.ok) {
+          console.warn(`[EngineBridge] setChannel(${varName}) failed after automation delete: ${setResp.message}`);
+        }
+      }
+    } catch (err) {
+      console.warn(`[EngineBridge] setChannel(${varName}) error after automation delete: ${err instanceof Error ? err.message : String(err)}`);
+    }
   }
 
   /**
@@ -912,4 +1107,16 @@ function mapAutomationCurve(curve: AutomationCurve): AutomationCurveCode {
     case AutomationCurve.EXPONENTIAL: return AutomationCurveCode.EXPONENTIAL;
     default: return AutomationCurveCode.LINEAR;
   }
+}
+
+function isAutomationNotFoundMessage(message: string): boolean {
+  return /automation\s+not\s+found/i.test(message)
+    || /not\s+found.*automation/i.test(message);
+}
+
+function getRuntimeFixedChannelValue(
+  parameter: Parameter,
+  automationTiming?: AutomationTimingContext,
+): number {
+  return parameter.getValue(automationTiming?.renderStartTime ?? 0);
 }

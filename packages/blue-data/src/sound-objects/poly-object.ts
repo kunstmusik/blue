@@ -478,10 +478,15 @@ export class PolyObject extends Array<SoundLayer>
       layerElem.setAttribute('muted', layer.isMuted().toString());
       layerElem.setAttribute('solo', layer.isSolo().toString());
       layerElem.setAttribute('heightIndex', layer.getHeightIndex().toString());
+      layerElem.setAttribute('automationSelectedIndex', layer.getAutomationParameters().getSelectedIndex().toString());
       layerElem.addElement(layer.getNoteProcessorChain().saveAsXML());
 
       for (const sObj of layer) {
         layerElem.addElement(sObj.saveAsXML(objRefMap));
+      }
+
+      for (const id of layer.getAutomationParameters().getIds()) {
+        layerElem.addElement('parameterId').setText(id);
       }
 
       elem.addElement(layerElem);
@@ -537,6 +542,7 @@ export class PolyObject extends Array<SoundLayer>
         if (heightIndex) {
           layer.setHeightIndex(parseInt(heightIndex, 10));
         }
+        const automationSelectedIndex = node.getAttribute('automationSelectedIndex');
 
         const sObjNodes = node.getElements();
         while (sObjNodes.hasMoreElements()) {
@@ -546,6 +552,14 @@ export class PolyObject extends Array<SoundLayer>
             if (sObj) layer.push(sObj);
           } else if (sObjNode.getName() === 'noteProcessorChain') {
             layer.setNoteProcessorChain(NoteProcessorChain.loadFromXML(sObjNode));
+          } else if (sObjNode.getName() === 'parameterId') {
+            layer.getAutomationParameters().addParameterId(sObjNode.getTextString());
+          }
+        }
+        if (automationSelectedIndex) {
+          const parsed = parseInt(automationSelectedIndex, 10);
+          if (!Number.isNaN(parsed)) {
+            layer.getAutomationParameters().setSelectedIndex(parsed);
           }
         }
 

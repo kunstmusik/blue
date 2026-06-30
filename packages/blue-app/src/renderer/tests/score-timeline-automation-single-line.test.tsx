@@ -1,0 +1,173 @@
+// @vitest-environment jsdom
+
+import { describe, expect, it } from 'vitest';
+import {
+  beatToX,
+  xToBeat,
+  valueToY,
+  yToValue,
+  clampAndSnap,
+  snapBeat,
+  insertPoint,
+  deletePoint,
+  movePoint,
+  moveRange,
+  scaleRange,
+  shiftRangeValues,
+  rangeEdgeNear,
+  findPointNear,
+} from '../components/workbench/panels/score/automation/automation-line-utils';
+
+const PPB = 100;
+const HEIGHT = 100;
+
+describe('single-line coordinate conversion', () => {
+  it('round-trips beat <-> pixel', () => {
+    expect(xToBeat(beatToX(4.5, PPB), PPB)).toBeCloseTo(4.5);
+    expect(beatToX(3, PPB)).toBe(300);
+    expect(xToBeat(300, PPB)).toBeCloseTo(3);
+  });
+
+  it('round-trips value <-> pixel within min/max', () => {
+    const v = yToValue(valueToY(0.4, 0, 1, HEIGHT), 0, 1, HEIGHT, 0);
+    expect(v).toBeCloseTo(0.4, 1);
+  });
+
+  it('clamps and snaps values to resolution within min/max', () => {
+    expect(clampAndSnap(1.5, 0, 1, 0)).toBe(1);
+    expect(clampAndSnap(-1, 0, 1, 0)).toBe(0);
+    expect(clampAndSnap(0.2, 0, 1, 0.25)).toBe(0.25); // rounds up to nearest 0.25
+    expect(clampAndSnap(0.1, 0, 1, 0.25)).toBe(0); // rounds down to 0
+  });
+});
+
+describe('single-line snap', () => {
+  it('does not snap when disabled and never returns negative beats', () => {
+    expect(snapBeat(-3, false, 0)).toBe(0);
+    expect(snapBeat(2.7, false, 0)).toBeCloseTo(2.7);
+  });
+
+  it('snaps to the nearest multiple when enabled', () => {
+    expect(snapBeat(2.7, true, 1)).toBe(3);
+    expect(snapBeat(2.4, true, 1)).toBe(2);
+    expect(snapBeat(-1, true, 1)).toBe(0);
+  });
+});
+
+describe('single-line point edit primitives', () => {
+  it('inserts a point and keeps the line sorted by time', () => {
+    const pts = insertPoint(
+      [
+        { time: 0, value: 0 },
+        { time: 4, value: 1 },
+      ],
+      2,
+      0.5,
+    );
+    expect(pts.map((p) => p.time)).toEqual([0, 2, 4]);
+  });
+
+  it('deletes a point by index', () => {
+    const pts = deletePoint(
+      [
+        { time: 0, value: 0 },
+        { time: 2, value: 0.5 },
+        { time: 4, value: 1 },
+      ],
+      1,
+    );
+    expect(pts.map((p) => p.time)).toEqual([0, 4]);
+  });
+
+  it('moves a point and re-sorts, clamping time to >= 0', () => {
+    const pts = movePoint(
+      [
+        { time: 0, value: 0 },
+        { time: 4, value: 1 },
+      ],
+      0,
+      3,
+      0.5,
+    );
+    expect(pts.map((p) => p.time)).toEqual([3, 4]);
+    const clamped = movePoint([{ time: 2, value: 0 }], 0, -5, 0);
+    expect(clamped[0]!.time).toBe(0);
+  });
+});
+
+describe('single-line range move', () => {
+  it('moves only in-range points and clamps before beat zero', () => {
+    const pts = [
+      { time: 0, value: 0 },
+      { time: 2, value: 0.5 },
+      { time: 6, value: 1 },
+    ];
+    const moved = moveRange(pts, 1, 4, 2);
+    expect(moved.map((p) => p.time)).toEqual([0, 4, 6]);
+
+    // A delta that would push an in-range point below zero clamps it to 0.
+    const clamped = moveRange(pts, 1, 4, -5);
+    expect(clamped.map((p) => p.time)).toEqual([0, 0, 6]);
+  });
+});
+
+describe('single-line range scale', () => {
+  it('scales in-range points around the anchor and leaves others unchanged', () => {
+    const pts = [
+      { time: 0, value: 0 },
+      { time: 2, value: 0.5 },
+      { time: 6, value: 1 },
+    ];
+    const scaled = scaleRange(pts, 1, 4, 1, 2);
+    expect(scaled.map((p) => p.time)).toEqual([0, 3, 6]);
+  });
+});
+
+describe('single-line vertical value shift', () => {
+  it('shifts in-range values, clamping and snapping to bounds/resolution', () => {
+    const pts = [
+      { time: 0, value: 0 },
+      { time: 2, value: 0.5 },
+      { time: 6, value: 1 },
+    ];
+    const shifted = shiftRangeValues(pts, 1, 4, 0.4, 0, 1, 0);
+    expect(shifted[1]!.value).toBeCloseTo(0.9, 5);
+    expect(shifted[0]!.value).toBe(0); // out of range, unchanged
+    expect(shifted[2]!.value).toBe(1); // out of range, unchanged
+
+    const clamped = shiftRangeValues([{ time: 2, value: 0.9 }], 1, 4, 0.5, 0, 1, 0);
+    expect(clamped[0]!.value).toBe(1);
+  });
+});
+
+describe('single-line range edge detection', () => {
+  const range = { startBeat: 2, endBeat: 6 };
+  it('detects the left edge', () => {
+    expect(rangeEdgeNear(range, 2.03, PPB)).toBe('left');
+  });
+  it('detects the right edge', () => {
+    expect(rangeEdgeNear(range, 5.97, PPB)).toBe('right');
+  });
+  it('returns null for the middle of the range', () => {
+    expect(rangeEdgeNear(range, 4, PPB)).toBeNull();
+  });
+  it('returns null for a range too narrow to disambiguate', () => {
+    expect(rangeEdgeNear({ startBeat: 2, endBeat: 2.01 }, 2.005, PPB)).toBeNull();
+  });
+});
+
+describe('single-line point hit testing', () => {
+  it('finds the nearest point within the pixel threshold', () => {
+    const pts = [
+      { time: 0, value: 0 },
+      { time: 2, value: 1 },
+    ];
+    const idx = findPointNear(pts, 2.05, 1, 0, 1, HEIGHT, 8, PPB);
+    expect(idx).toBe(1);
+  });
+
+  it('returns -1 when no point is near', () => {
+    const pts = [{ time: 0, value: 0 }];
+    expect(findPointNear(pts, 5, 0.5, 0, 1, HEIGHT, 8, PPB)).toBe(-1);
+  });
+});
