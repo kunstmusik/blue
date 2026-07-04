@@ -57,6 +57,7 @@ export function useIPCListeners(): void {
       resetPlayback();
       resetBlueLive();
       setProjectInfo(info);
+      useProjectStore.getState().setMissingAudioSession(info.missingAudioAssets ?? null);
       setActivePanel('project');
       if (info.filePath) {
         addRecentFile(info.filePath);

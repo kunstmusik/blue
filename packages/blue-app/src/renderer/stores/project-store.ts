@@ -45,6 +45,7 @@ import {
   type PresetSnapshot,
   type ProjectDocumentPatch,
   type ProjectLoadedPayload,
+  type ProjectEditorSnapshot,
   type ProjectPropertiesSnapshot,
   type MarkerSnapshot,
   type OrchestraPatch,
@@ -63,6 +64,7 @@ import {
   type ToolbarProjectTransportSnapshot,
   type UdoDefinitionSnapshot,
 } from '../../shared/project-editor';
+import type { MissingAudioAssetsSession } from '../../shared/missing-audio-assets';
 import {
   BSB_LINE_SELECTOR_HEIGHT,
   getHSliderBankDisplaySize,
@@ -102,6 +104,7 @@ interface ProjectState {
   score: ScoreDocumentSnapshot;
   scrollToBeatTarget: number | null;
   audioClipEditorPreviewByObjectId: Record<string, AudioClipEditorPreview>;
+  missingAudioSession: MissingAudioAssetsSession | null;
 }
 
 interface AudioClipEditorPreview {
@@ -156,6 +159,8 @@ interface ProjectActions {
   rewindToStart: () => void;
   setAudioClipEditorPreview: (objectId: string, preview: AudioClipEditorPreview) => void;
   clearAudioClipEditorPreview: (objectId: string) => void;
+  setMissingAudioSession: (session: MissingAudioAssetsSession | null) => void;
+  applyMissingAudioResolvedSnapshot: (snapshot: ProjectEditorSnapshot) => void;
 }
 
 let latestProjectPatchRequestId = 0;
@@ -696,6 +701,7 @@ function buildInitialState(): ProjectState {
     score: snapshot.score ?? createEmptyScoreDocumentSnapshot(),
     scrollToBeatTarget: null,
     audioClipEditorPreviewByObjectId: {},
+    missingAudioSession: null,
   };
 }
 
@@ -3778,6 +3784,15 @@ export const useProjectStore = create<ProjectState & ProjectActions>()((set, get
         audioClipEditorPreviewByObjectId: nextPreviewByObjectId,
       };
     });
+  },
+
+  setMissingAudioSession: (session) => {
+    set({ missingAudioSession: session });
+  },
+
+  applyMissingAudioResolvedSnapshot: (snapshot) => {
+    applyProjectInfoToState(snapshot, true);
+    set({ isDirty: true });
   },
 
   navigateToNextMarker: () => {

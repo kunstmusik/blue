@@ -74,6 +74,7 @@ import {
   type BsbRealtimeControlUpdate,
   type ProjectDocumentCommitReceipt,
   type ProjectDocumentPatch,
+  type ProjectLoadedPayload,
   type ClojureProjectSnapshot,
   type NoteProcessorChainSnapshot,
   type ScoreObjectEditorRequest,
@@ -83,6 +84,21 @@ import {
   type PolyObjectLayerGroupSnapshot,
 } from '../shared/project-editor';
 import { BlueSynthBuilder } from '@blue/data';
+import {
+  collectMissingAudioFiles,
+  buildReplacementMappings,
+  applyReplacementMappings,
+  getActiveMissingAudioSession,
+  setActiveMissingAudioSession,
+  clearMissingAudioSession,
+  createMissingAudioSessionId,
+} from './missing-audio-assets';
+import type {
+  MissingAudioAssetsChooseRequest,
+  MissingAudioAssetsResolveRequest,
+  MissingAudioAssetsResolveResult,
+  MissingAudioAssetsSession,
+} from '../shared/missing-audio-assets';
 
 let mainWindow: BrowserWindow | null = null;
 let currentData: BlueData | null = null;
@@ -646,6 +662,7 @@ async function doQuit(): Promise<void> {
     currentData = null;
     currentFilePath = null;
     currentProjectRevision = 0;
+    setActiveMissingAudioSession(null);
     rebuildApplicationMenu();
     await cleanupTempCsdSnapshots();
 
@@ -670,8 +687,62 @@ async function handleNewFile(): Promise<void> {
   await newFile();
 }
 
-async function openFile(): Promise<void> {
+/**
+ * Build the project-loaded payload and run the Java-parity missing-audio scan.
+ * New projects (no filePath) skip the scan, mirroring Java Blue which only
+ * runs checkDependencies for OpenProject/OpenExampleProject actions.
+ */
+function buildAndSendProjectLoaded(data: BlueData, filePath: string | null): void {
   if (!mainWindow) return;
+
+  const projectProperties = data.getProjectProperties();
+  const payload: ProjectLoadedPayload = {
+    ...createProjectEditorSnapshot(data, filePath, currentProjectSessionId),
+    title: filePath
+      ? projectProperties.title || path.basename(filePath)
+      : 'Untitled',
+    author: projectProperties.author,
+    sampleRate: projectProperties.sampleRate,
+  };
+
+  const missingSession = scanMissingAudioAssets(data, filePath);
+  if (missingSession) {
+    payload.missingAudioAssets = missingSession;
+  }
+
+  mainWindow.webContents.send('project-loaded', payload);
+}
+
+function scanMissingAudioAssets(
+  data: BlueData,
+  filePath: string | null,
+): MissingAudioAssetsSession | undefined {
+  if (!filePath) {
+    return undefined;
+  }
+
+  const projectDirectory = path.dirname(filePath);
+  const sfDir = process.env.SFDIR && process.env.SFDIR.length > 0
+    ? process.env.SFDIR
+    : null;
+  const rows = collectMissingAudioFiles(data, { projectDirectory, sfDir });
+
+  if (rows.length === 0) {
+    return undefined;
+  }
+
+  const session: MissingAudioAssetsSession = {
+    sessionId: createMissingAudioSessionId(),
+    projectSessionId: currentProjectSessionId,
+    projectFilePath: filePath,
+    missingFiles: rows,
+  };
+  setActiveMissingAudioSession(session);
+  return session;
+}
+
+async function openFile(): Promise<boolean> {
+  if (!mainWindow) return false;
 
   const result = await dialog.showOpenDialog(mainWindow, {
     title: 'Open Blue Project',
@@ -679,9 +750,38 @@ async function openFile(): Promise<void> {
     properties: ['openFile'],
   });
 
-  if (result.canceled || result.filePaths.length === 0) return;
+  if (result.canceled || result.filePaths.length === 0) return false;
 
   const filePath = result.filePaths[0];
+
+  // FR-018 parity: selecting the already-current project is a no-op (Java Blue
+  // just switches to it without rerunning the dependency check). Revert uses
+  // loadProjectFromDisk directly to bypass this guard.
+  if (filePath === currentFilePath && currentData) {
+    return false;
+  }
+
+  return loadProjectFromDisk(filePath);
+}
+
+async function openFilePath(filePath: string): Promise<boolean> {
+  if (!mainWindow) return false;
+
+  // FR-018 parity: reopening the current project is a no-op. See openFile.
+  if (filePath === currentFilePath && currentData) {
+    return false;
+  }
+
+  return loadProjectFromDisk(filePath);
+}
+
+/**
+ * Reads, parses, and installs a project from disk, then emits project-loaded.
+ * Shared by openFile/openFilePath (which apply the same-file no-op guard) and
+ * revertProject (which intentionally reloads the current path). Returns true on
+ * a successful load, false otherwise.
+ */
+async function loadProjectFromDisk(filePath: string): Promise<boolean> {
   try {
     const xml = fs.readFileSync(filePath, 'utf-8');
     const data = await BlueData.loadFromString(xml);
@@ -697,6 +797,7 @@ async function openFile(): Promise<void> {
     currentFilePath = filePath;
     currentProjectRevision = 0;
     currentProjectSessionId += 1;
+    setActiveMissingAudioSession(null);
     rebuildApplicationMenu();
     updateWindowTitle();
 
@@ -713,80 +814,14 @@ async function openFile(): Promise<void> {
       console.warn('[App] Failed to run processOnLoad:', sessionErr);
     }
 
-    // Debug: log arrangement IDs and UDOs
-    const arr = data.getArrangement();
-    console.log(`[App] Loaded project with ${arr.size()} instrument assignments:`);
-    for (let i = 0; i < arr.size(); i++) {
-      const ia = arr.getArrangement()[i];
-      console.log(`[App]   Instrument ${ia.arrangementId}: enabled=${ia.enabled}, instr=${ia.instr?.constructor.name ?? 'null'}`);
-      if (ia.instr && typeof (ia.instr as any).getOpcodeList === 'function') {
-        const udoCount = (ia.instr as any).getOpcodeList().getOpcodes().length;
-        console.log(`[App]     UDOs in instrument: ${udoCount}`);
-        if (udoCount > 0) {
-          const firstUdo = (ia.instr as any).getOpcodeList().getOpcodes()[0];
-          console.log(`[App]     First UDO: ${firstUdo.getName()} (${firstUdo.getCode()?.length || 0} chars)`);
-        }
-      }
-    }
-
-    mainWindow.webContents.send('project-loaded', {
-      ...createProjectEditorSnapshot(data, filePath, currentProjectSessionId),
-      title: data.getProjectProperties().title || path.basename(filePath),
-      author: data.getProjectProperties().author,
-      sampleRate: data.getProjectProperties().sampleRate,
-    });
+    buildAndSendProjectLoaded(data, filePath);
+    return true;
   } catch (err: unknown) {
     await dialog.showErrorBox(
       'Error Loading File',
       `Failed to load ${path.basename(filePath)}:\n${err instanceof Error ? err.message : String(err)}`,
     );
-  }
-}
-
-async function openFilePath(filePath: string): Promise<void> {
-  if (!mainWindow) return;
-
-  try {
-    const xml = fs.readFileSync(filePath, 'utf-8');
-    const data = await BlueData.loadFromString(xml);
-
-    if (blueLiveSession && blueLiveSession.isRunning()) {
-      await blueLiveSession.stop();
-    }
-    await disposeJavaRuntimeSession();
-    closeEffectEditorWindowsForOwner('project');
-
-    currentData = data;
-    currentFilePath = filePath;
-    currentProjectRevision = 0;
-    currentProjectSessionId += 1;
-    rebuildApplicationMenu();
-    updateWindowTitle();
-
-    disposeJavaScriptSession();
-    try {
-      javaScriptSession = await createJavaScriptSession();
-    } catch (sessionErr: unknown) {
-      console.warn('[App] Failed to create JavaScript session:', sessionErr);
-    }
-
-    try {
-      await runProjectOnLoad(data);
-    } catch (sessionErr: unknown) {
-      console.warn('[App] Failed to run processOnLoad:', sessionErr);
-    }
-
-    mainWindow.webContents.send('project-loaded', {
-      ...createProjectEditorSnapshot(data, filePath, currentProjectSessionId),
-      title: data.getProjectProperties().title || path.basename(filePath),
-      author: data.getProjectProperties().author,
-      sampleRate: data.getProjectProperties().sampleRate,
-    });
-  } catch (err: unknown) {
-    await dialog.showErrorBox(
-      'Error Loading File',
-      `Failed to load ${path.basename(filePath)}:\n${err instanceof Error ? err.message : String(err)}`,
-    );
+    return false;
   }
 }
 
@@ -806,6 +841,7 @@ async function newFile(): Promise<void> {
   currentFilePath = null;
   currentProjectRevision = 0;
   currentProjectSessionId += 1;
+  setActiveMissingAudioSession(null);
   rebuildApplicationMenu();
   updateWindowTitle();
 
@@ -822,12 +858,7 @@ async function newFile(): Promise<void> {
     console.warn('[App] Failed to run processOnLoad for new project:', sessionErr);
   }
 
-  mainWindow.webContents.send('project-loaded', {
-    ...createProjectEditorSnapshot(data, null, currentProjectSessionId),
-    title: 'Untitled',
-    author: '',
-    sampleRate: '44100',
-  });
+  buildAndSendProjectLoaded(data, null);
 }
 
 async function closeProject(): Promise<void> {
@@ -841,6 +872,7 @@ async function closeProject(): Promise<void> {
   currentFilePath = null;
   currentProjectRevision = 0;
   currentProjectSessionId += 1;
+  setActiveMissingAudioSession(null);
   rebuildApplicationMenu();
   updateWindowTitle();
   mainWindow.webContents.send('project-closed');
@@ -849,7 +881,7 @@ async function closeProject(): Promise<void> {
 async function revertProject(): Promise<void> {
   if (!currentFilePath) return;
   if (!(await confirmSaveBeforeReplace())) return;
-  await openFilePath(currentFilePath);
+  await loadProjectFromDisk(currentFilePath);
 }
 
 async function openRecentProject(filePath: string): Promise<void> {
@@ -1277,20 +1309,99 @@ async function generateCsdToDisk(): Promise<void> {
 
 // ─── IPC Handlers ───
 
+async function chooseMissingAudioReplacement(
+  request: MissingAudioAssetsChooseRequest,
+): Promise<string | null> {
+  if (!mainWindow) return null;
+  const session = getActiveMissingAudioSession();
+  if (!session || session.sessionId !== request.sessionId) {
+    return null;
+  }
+
+  const result = await dialog.showOpenDialog(mainWindow, {
+    title: 'Choose Replacement File',
+    defaultPath: request.currentReplacementPath || undefined,
+    properties: ['openFile'],
+  });
+
+  if (result.canceled || result.filePaths.length === 0) {
+    return null;
+  }
+
+  return result.filePaths[0]!;
+}
+
+async function resolveMissingAudioAssets(
+  request: MissingAudioAssetsResolveRequest,
+): Promise<MissingAudioAssetsResolveResult> {
+  const session = getActiveMissingAudioSession();
+
+  if (
+    !session
+    || session.sessionId !== request.sessionId
+    || session.projectSessionId !== currentProjectSessionId
+    || !currentData
+  ) {
+    return { ok: false, changed: false, stale: true };
+  }
+
+  if (!request.replacements || request.replacements.length === 0) {
+    clearMissingAudioSession(session.sessionId);
+    return { ok: true, changed: false };
+  }
+
+  const projectDirectory = currentFilePath ? path.dirname(currentFilePath) : null;
+  const allowedOriginalPaths = new Set(session.missingFiles.map((row) => row.originalPath));
+  const mappings = buildReplacementMappings(
+    request.replacements,
+    projectDirectory,
+    allowedOriginalPaths,
+  );
+
+  if (mappings.size === 0) {
+    clearMissingAudioSession(session.sessionId);
+    return { ok: true, changed: false };
+  }
+
+  const changed = applyReplacementMappings(currentData, mappings);
+  clearMissingAudioSession(session.sessionId);
+
+  if (!changed) {
+    return { ok: true, changed: false };
+  }
+
+  currentProjectRevision += 1;
+  const project = createProjectEditorSnapshot(currentData, currentFilePath, currentProjectSessionId);
+  return { ok: true, changed: true, project };
+}
+
 ipcMain.handle('open-file', async () => {
-  await openFile();
-  return currentFilePath;
+  const loaded = await openFile();
+  return loaded ? currentFilePath : null;
 });
 
 ipcMain.handle('open-file-path', async (_event, filePath: string) => {
-  if (!(await confirmSaveBeforeReplace())) return currentFilePath;
-  await openFilePath(filePath);
-  return currentFilePath;
+  if (!(await confirmSaveBeforeReplace())) return null;
+  const loaded = await openFilePath(filePath);
+  return loaded ? currentFilePath : null;
 });
 
 ipcMain.handle('new-file', async () => {
   await newFile();
   return currentFilePath;
+});
+
+ipcMain.handle('missing-audio-assets:choose-replacement', async (_event, request: MissingAudioAssetsChooseRequest) => {
+  return chooseMissingAudioReplacement(request);
+});
+
+ipcMain.handle('missing-audio-assets:resolve', async (_event, request: MissingAudioAssetsResolveRequest) => {
+  return resolveMissingAudioAssets(request);
+});
+
+ipcMain.handle('missing-audio-assets:dismiss', async (_event, request: { sessionId: string }) => {
+  clearMissingAudioSession(request.sessionId);
+  return { ok: true };
 });
 
 ipcMain.handle('open-bsb-file-selector', async (_event, currentValue?: string) => {

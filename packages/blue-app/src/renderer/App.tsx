@@ -7,6 +7,7 @@ import WelcomeScreen from './components/welcome/WelcomeScreen';
 import WorkbenchShell from './components/workbench/WorkbenchShell';
 import GeneratedCsdModal from './components/workbench/panels/GeneratedCsdModal';
 import EffectLibraryModal from './components/workbench/panels/EffectLibraryModal';
+import MissingAudioAssetsModal from './components/workbench/panels/MissingAudioAssetsModal';
 import ErrorBoundary from './components/notifications/ErrorBoundary';
 
 export default function App(): React.ReactElement {
@@ -37,6 +38,7 @@ export default function App(): React.ReactElement {
 
         <GeneratedCsdModal />
         <EffectLibraryModal />
+        <MissingAudioAssetsModal />
       </div>
     </ErrorBoundary>
   );

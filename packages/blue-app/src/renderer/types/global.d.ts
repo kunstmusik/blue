@@ -23,6 +23,12 @@ import type {
   ScoreObjectTestResult,
   ScoreObjectLocationRef,
 } from '../../shared/project-editor';
+import type {
+  MissingAudioAssetsChooseRequest,
+  MissingAudioAssetsDismissRequest,
+  MissingAudioAssetsResolveRequest,
+  MissingAudioAssetsResolveResult,
+} from '../../shared/missing-audio-assets';
 import type { NativeMenuCommand } from '../../shared/workbench-menu';
 import type { EngineOutputPayload } from '../../shared/io-provider';
 
@@ -160,6 +166,17 @@ declare global {
 
       // Evaluate Code
       evaluateCode: (request: EvaluateCodeRequest) => Promise<EvaluateCodeResult>;
+
+      // Missing Audio Assets
+      chooseMissingAudioReplacement: (
+        request: MissingAudioAssetsChooseRequest,
+      ) => Promise<string | null>;
+      resolveMissingAudioAssets: (
+        request: MissingAudioAssetsResolveRequest,
+      ) => Promise<MissingAudioAssetsResolveResult>;
+      dismissMissingAudioAssets: (
+        request: MissingAudioAssetsDismissRequest,
+      ) => Promise<{ ok: boolean }>;
     };
   }
 }

@@ -26,6 +26,12 @@ import type {
 import type { NativeMenuCommand } from '../shared/workbench-menu';
 import type { EngineOutputPayload } from '../shared/io-provider';
 import type {
+  MissingAudioAssetsChooseRequest,
+  MissingAudioAssetsDismissRequest,
+  MissingAudioAssetsResolveRequest,
+  MissingAudioAssetsResolveResult,
+} from '../shared/missing-audio-assets';
+import type {
   ProgramSettingsSnapshot,
   ProgramSettingsSaveResult,
   ProgramSettingsPanelId,
@@ -223,4 +229,12 @@ contextBridge.exposeInMainWorld('blueAPI', {
   // Evaluate Code
   evaluateCode: (request: { editorKind: string; text: string; sourcePanelId: string }) =>
     ipcRenderer.invoke('engine:evaluate-code', request),
+
+  // Missing Audio Assets
+  chooseMissingAudioReplacement: (request: MissingAudioAssetsChooseRequest) =>
+    ipcRenderer.invoke('missing-audio-assets:choose-replacement', request) as Promise<string | null>,
+  resolveMissingAudioAssets: (request: MissingAudioAssetsResolveRequest) =>
+    ipcRenderer.invoke('missing-audio-assets:resolve', request) as Promise<MissingAudioAssetsResolveResult>,
+  dismissMissingAudioAssets: (request: MissingAudioAssetsDismissRequest) =>
+    ipcRenderer.invoke('missing-audio-assets:dismiss', request) as Promise<{ ok: boolean }>,
 });

@@ -91,6 +91,7 @@ import type { NoteProcessorChainSnapshot as DataNoteProcessorChainSnapshot, Para
 import { AutomationCurve as BlueDataAutomationCurve, LineColors } from '@blue/data';
 import { ParameterHelper } from '@blue/data';
 import type { SnapValueName } from '@blue/data';
+import type { MissingAudioAssetsSession } from './missing-audio-assets';
 import { moveRangeWithAnchors, scaleRangeWithAnchors } from './automation-range-math';
 import {
   BSB_LINE_SELECTOR_HEIGHT,
@@ -1607,7 +1608,9 @@ export type ProjectLoadedPayload = ProjectSummarySnapshot &
       | 'midiInput'
       | 'score'
     >
-  >;
+  > & {
+    missingAudioAssets?: MissingAudioAssetsSession;
+  };
 
 function createDefaultProjectPropertiesSnapshot(): ProjectPropertiesSnapshot {
   return {

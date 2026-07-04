@@ -114,4 +114,63 @@ describe('useIPCListeners', () => {
     expect(getListenerCount(listeners, 'playback-status')).toBe(0);
     expect(getListenerCount(listeners, 'save-complete')).toBe(0);
   });
+
+  it('stores a missing-audio session from project-loaded and clears loading state', () => {
+    act(() => {
+      root.render(<Harness />);
+    });
+
+    const projectLoadedHandler = listeners.get('project-loaded')!.values().next().value as (
+      ...args: unknown[]
+    ) => void;
+    const session = {
+      sessionId: 's1',
+      projectSessionId: 7,
+      projectFilePath: '/p/x.blue',
+      missingFiles: [{ originalPath: 'gone.wav', replacementPath: '' }],
+    };
+
+    act(() => {
+      projectLoadedHandler({
+        sessionId: 7,
+        filePath: '/p/x.blue',
+        title: 'X',
+        author: '',
+        sampleRate: '44100',
+        missingAudioAssets: session,
+      });
+    });
+
+    expect(useProjectStore.getState().isLoading).toBe(false);
+    expect(useProjectStore.getState().missingAudioSession).toEqual(session);
+  });
+
+  it('clears the missing-audio session when project-loaded has no missing assets', () => {
+    useProjectStore.getState().setMissingAudioSession({
+      sessionId: 'stale',
+      projectSessionId: 1,
+      projectFilePath: null,
+      missingFiles: [],
+    });
+
+    act(() => {
+      root.render(<Harness />);
+    });
+
+    const projectLoadedHandler = listeners.get('project-loaded')!.values().next().value as (
+      ...args: unknown[]
+    ) => void;
+
+    act(() => {
+      projectLoadedHandler({
+        sessionId: 2,
+        filePath: '/p/clean.blue',
+        title: 'Clean',
+        author: '',
+        sampleRate: '44100',
+      });
+    });
+
+    expect(useProjectStore.getState().missingAudioSession).toBeNull();
+  });
 });

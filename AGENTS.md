@@ -1,6 +1,6 @@
 # blue-electron Development Guidelines
 
-Auto-generated from all feature plans. Last updated: 2026-06-03
+Auto-generated from all feature plans. Last updated: 2026-07-02
 
 ## Active Technologies
 - React 19.x, Electron, dockview 5.2.0 + collapsed auxiliary-group planning for the workbench shell (013-collapsed-sidebar-research)
@@ -56,6 +56,8 @@ Auto-generated from all feature plans. Last updated: 2026-06-03
 - N/A - renderer styling only; no project XML, localStorage, or settings persistence changes (051-theme-token-cleanup)
 - TypeScript 5.8.x, React 19.x, Electron 35.x, strict monorepo packages + `@blue/data` automation/score/mixer classes, `@blue/app` shared project-editor IPC model, Zustand 5.x stores, Dockview 5.2.0 workbench shell, Radix Context Menu, existing score timeline components, Vitest 4.x (052-score-timeline-automation)
 - Main-process in-memory `BlueData` remains canonical; `.blue` XML remains canonical persistence. Layer automation assignments persist through Java-compatible `parameterId` entries, and line data persists on the underlying `Parameter` XML. Renderer state for current edit mode and active range selection is local UI state. (052-score-timeline-automation)
+- TypeScript 5.8.x, React 19.x, Electron 35.x, strict monorepo packages + `@blue/data`, Electron `dialog`/IPC, React renderer components, Zustand project store, Vitest 4.x, Node `fs`/`path` in Electron main only (053-missing-audio-assets)
+- Main-process in-memory `BlueData` remains canonical; `.blue` XML format is unchanged; AudioFile replacement changes persist only when the user saves the project (053-missing-audio-assets)
 
 - TypeScript 5.8.x, React 19.x, Electron 35.x, strict renderer/main/preload packages, pure TypeScript `@blue/data` + `PresetGroup`/`Preset` BSB preset model, Zustand 5.x project store with BSB interface/opcode-list patch support, Dockview 5.2.0, CodeMirror 6, `BsbInterfacePatch` union type for structured BSB mutations (022-bsb-interface-parity)
 - BSB Interface tab now renders an editable widget canvas with selection, property-sheet editing, grid settings, preset application, and Java-style split-view UDO editor (UDOTable + UDOEditor); snapshot contract extended with `widgetTree`, `gridSettings`, `editEnabled`, `presetGroup`, `opcodeListText`; widget-specific rendering (Slider, Knob, Toggle, etc.) deferred to SPEC 023 (022-bsb-interface-parity)
@@ -92,6 +94,6 @@ TypeScript 5.x, strict mode: Follow standard conventions
 <!-- MANUAL ADDITIONS END -->
 
 ## Recent Changes
+- 053-missing-audio-assets: Added TypeScript 5.8.x, React 19.x, Electron 35.x, strict monorepo packages + `@blue/data`, Electron `dialog`/IPC, React renderer components, Zustand project store, Vitest 4.x, Node `fs`/`path` in Electron main only
 - 052-score-timeline-automation: Added TypeScript 5.8.x, React 19.x, Electron 35.x, strict monorepo packages + `@blue/data` automation/score/mixer classes, `@blue/app` shared project-editor IPC model, Zustand 5.x stores, Dockview 5.2.0 workbench shell, Radix Context Menu, existing score timeline components, Vitest 4.x
 - 051-theme-token-cleanup: Added TypeScript 5.8.x, React 19.x, Electron 35.x, strict renderer code + Tailwind CSS v4 CSS-first theme tokens, `@tailwindcss/postcss`, `clsx`, `tailwind-merge`, Dockview 5.2.0, CodeMirror 6, Radix Context Menu, existing Vite/Vitest renderer tooling
-- 050-jython-support: Added TypeScript 5.8.x, React 19.x, Electron 35.x, Java 17+ helper runtime target, Maven 3.x, Jython 2.7.4 + Existing `@blue/data`, `@blue/app`, `@blue/java-runtime`, Node `zeromq`, Java JeroMQ, Jackson, Clojure 1.12.x from SPEC 049, `org.python:jython-standalone:2.7.4`, Java Blue `blue-ext-jython/src/main/release/pythonLib`, Vitest 4.x, JUnit 5
