@@ -11,6 +11,12 @@ information.
 
 # CHANGE LOG
 
+## [2.10.3] - 2026-06-28
+
+### FIX
+
+* BlueSynthBuilder: fixed grouping and ungrouping widgets to preserve existing timeline automation state and data instead of clearing automation on moved controls
+
 ## [2.10.2] - 2026-05-07
 
 ### FIX

@@ -23,8 +23,8 @@ import blue.orchestra.blueSynthBuilder.BSBGroup;
 import blue.orchestra.blueSynthBuilder.BSBObject;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 import javax.swing.JComponent;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
@@ -62,9 +62,8 @@ public class BSBObjectEditPopup extends JPopupMenu implements ActionListener {
             var groupsList = bsbEditPanel.getGroupsList();
             var curGroup = groupsList.get(groupsList.size() - 1);
 
-            List<BSBObject> bsbObjs = selection.stream()
-                    .map(b -> b.deepCopy())
-                    .collect(Collectors.toList());
+            // Move original widgets so existing timeline automation Parameters survive.
+            List<BSBObject> bsbObjs = new ArrayList<>(selection);
             int x = Integer.MAX_VALUE;
             int y = Integer.MAX_VALUE;
 
@@ -73,20 +72,25 @@ public class BSBObjectEditPopup extends JPopupMenu implements ActionListener {
                 y = Math.min(y, bsbObj.getY());
             }
 
+            BSBGroup group = new BSBGroup();
             for (BSBObject bsbObj : bsbObjs) {
-                bsbObj.setX(bsbObj.getX() - x + 10);
-                bsbObj.setY(bsbObj.getY() - y + 10);
+                int relativeX = bsbObj.getX() - x + 10;
+                int relativeY = bsbObj.getY() - y + 10;
+                boolean moved = curGroup.moveBSBObjectTo(bsbObj, group);
+                assert moved : "Selected object should belong to the current BSB group";
+                if (moved) {
+                    bsbObj.setX(relativeX);
+                    bsbObj.setY(relativeY);
+                }
             }
-
-            curGroup.interfaceItemsProperty().removeAll(selection);
             selection.clear();
 
-            BSBGroup group = new BSBGroup();
-            group.interfaceItemsProperty().addAll(bsbObjs);
-            group.setX(x);
-            group.setY(y);
+            if (group.size() > 0) {
+                group.setX(x);
+                group.setY(y);
 
-            groupsList.get(groupsList.size() - 1).addBSBObject(group);
+                curGroup.addBSBObject(group);
+            }
         });
 
         breakGroup.addActionListener(ae -> {
@@ -98,14 +102,33 @@ public class BSBObjectEditPopup extends JPopupMenu implements ActionListener {
 
             int x = group.getX();
             int y = group.getY();
-
-            curGroup.interfaceItemsProperty().remove(group);
+            List<BSBObject> bsbObjs = new ArrayList<>();
 
             for (BSBObject bsbObj : group) {
-                BSBObject temp = bsbObj.deepCopy();
-                temp.setX(temp.getX() + x);
-                temp.setY(temp.getY() + y);
-                curGroup.addBSBObject(temp);
+                bsbObjs.add(bsbObj);
+            }
+
+            // Move children while the group is still attached, then delete the empty group.
+            boolean allMoved = true;
+            for (BSBObject bsbObj : bsbObjs) {
+                int absoluteX = bsbObj.getX() + x;
+                int absoluteY = bsbObj.getY() + y;
+                boolean moved = group.moveBSBObjectTo(bsbObj, curGroup);
+                assert moved : "Group child should still belong to the selected BSB group";
+                if (moved) {
+                    bsbObj.setX(absoluteX);
+                    bsbObj.setY(absoluteY);
+                } else {
+                    allMoved = false;
+                }
+            }
+
+            if (allMoved) {
+                curGroup.interfaceItemsProperty().remove(group);
+            }
+            selection.clear();
+            if (allMoved) {
+                selection.addAll(bsbObjs);
             }
         });
 

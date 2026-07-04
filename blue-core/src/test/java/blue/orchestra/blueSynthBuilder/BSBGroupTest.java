@@ -18,7 +18,10 @@
  */
 package blue.orchestra.blueSynthBuilder;
 
+import blue.automation.Parameter;
 import blue.automation.ParameterList;
+import blue.automation.ParameterTimeManagerFactory;
+import blue.components.lines.LinePoint;
 import java.util.ArrayList;
 import java.util.HashSet;
 import javafx.collections.FXCollections;
@@ -200,6 +203,7 @@ class BSBGroupTest {
 
         instance.interfaceItemsProperty().remove(knob);
         assertEquals(0, paramList.size());
+        assertFalse(knob.isAutomationAllowed());
 
         BSBGroup subNode = new BSBGroup();
         subNode.addBSBObject(knob);
@@ -210,6 +214,7 @@ class BSBGroupTest {
 
         subNode.interfaceItemsProperty().remove(knob);
         assertEquals(0, paramList.size());
+        assertFalse(knob.isAutomationAllowed());
 
         knob.setAutomationAllowed(true);
         subNode.addBSBObject(knob);
@@ -217,6 +222,195 @@ class BSBGroupTest {
 
         instance.interfaceItemsProperty().remove(subNode);
         assertEquals(0, paramList.size());
+        assertFalse(knob.isAutomationAllowed());
+    }
+
+    @Test
+    void testGroupUngroupPreservesTimelineAutomationParameter() {
+        ParameterList paramList = new ParameterList();
+        BSBGroup root = new BSBGroup();
+        root.setAllSet(FXCollections.observableSet(new HashSet<>()));
+        root.setParameterList(paramList);
+
+        BSBKnob knob = new BSBKnob();
+        knob.setObjectName("test1");
+        knob.setAutomationAllowed(true);
+        root.addBSBObject(knob);
+
+        assertEquals(1, paramList.size());
+
+        Parameter parameter = paramList.getParameter("test1");
+        parameter.setAutomationEnabled(true);
+        LinePoint linePoint = new LinePoint();
+        linePoint.setLocation(1.0, 0.75);
+        parameter.getLine().insertLinePoint(linePoint);
+
+        BSBGroup group = new BSBGroup();
+        assertTrue(root.moveBSBObjectTo(knob, group));
+        root.addBSBObject(group);
+
+        assertSame(parameter, paramList.getParameter("test1"));
+        assertEquals(1, paramList.size());
+        assertTrue(knob.isAutomationAllowed());
+        assertTrue(parameter.isAutomationEnabled());
+        assertEquals(2, parameter.getLine().size());
+
+        assertTrue(group.moveBSBObjectTo(knob, root));
+        assertTrue(root.interfaceItemsProperty().remove(group));
+
+        assertSame(parameter, paramList.getParameter("test1"));
+        assertEquals(1, paramList.size());
+        assertTrue(knob.isAutomationAllowed());
+        assertTrue(parameter.isAutomationEnabled());
+        assertEquals(2, parameter.getLine().size());
+
+        var previousTimeManager = ParameterTimeManagerFactory.getInstance();
+        ParameterTimeManagerFactory.setInstance(() -> -1.0);
+        knob.setValue(0.25);
+        ParameterTimeManagerFactory.setInstance(() -> 1.0);
+        try {
+            parameter.fireUpdateFromTimeChange();
+            assertEquals(0.75, knob.getValue(), 0.0001);
+        } finally {
+            ParameterTimeManagerFactory.setInstance(previousTimeManager);
+        }
+    }
+
+    @Test
+    void testGroupUngroupKeepsAutomationDisabledWithoutCreatingParameter() {
+        ParameterList paramList = new ParameterList();
+        BSBGroup root = new BSBGroup();
+        root.setAllSet(FXCollections.observableSet(new HashSet<>()));
+        root.setParameterList(paramList);
+
+        BSBKnob knob = new BSBKnob();
+        knob.setObjectName("test1");
+        knob.setAutomationAllowed(false);
+        root.addBSBObject(knob);
+
+        assertFalse(knob.isAutomationAllowed());
+        assertEquals(0, paramList.size());
+
+        BSBGroup group = new BSBGroup();
+        assertTrue(root.moveBSBObjectTo(knob, group));
+        root.addBSBObject(group);
+
+        assertFalse(knob.isAutomationAllowed());
+        assertEquals(0, paramList.size());
+
+        assertTrue(group.moveBSBObjectTo(knob, root));
+        assertTrue(root.interfaceItemsProperty().remove(group));
+
+        assertFalse(knob.isAutomationAllowed());
+        assertEquals(0, paramList.size());
+    }
+
+    @Test
+    void testGroupUngroupPreservesMultiParameterWidgetAutomation() {
+        ParameterList paramList = new ParameterList();
+        BSBGroup root = new BSBGroup();
+        root.setAllSet(FXCollections.observableSet(new HashSet<>()));
+        root.setParameterList(paramList);
+
+        BSBXYController xyController = new BSBXYController();
+        xyController.setObjectName("xy");
+        xyController.setAutomationAllowed(true);
+        root.addBSBObject(xyController);
+
+        assertEquals(2, paramList.size());
+
+        Parameter xParameter = paramList.getParameter("xyX");
+        Parameter yParameter = paramList.getParameter("xyY");
+        xParameter.setAutomationEnabled(true);
+        yParameter.setAutomationEnabled(true);
+
+        LinePoint xLinePoint = new LinePoint();
+        xLinePoint.setLocation(1.0, 0.25);
+        xParameter.getLine().insertLinePoint(xLinePoint);
+
+        LinePoint yLinePoint = new LinePoint();
+        yLinePoint.setLocation(1.0, 0.75);
+        yParameter.getLine().insertLinePoint(yLinePoint);
+
+        BSBGroup group = new BSBGroup();
+        assertTrue(root.moveBSBObjectTo(xyController, group));
+        root.addBSBObject(group);
+
+        assertSame(xParameter, paramList.getParameter("xyX"));
+        assertSame(yParameter, paramList.getParameter("xyY"));
+        assertEquals(2, paramList.size());
+        assertTrue(xyController.isAutomationAllowed());
+        assertTrue(xParameter.isAutomationEnabled());
+        assertTrue(yParameter.isAutomationEnabled());
+        assertEquals(2, xParameter.getLine().size());
+        assertEquals(2, yParameter.getLine().size());
+
+        assertTrue(group.moveBSBObjectTo(xyController, root));
+        assertTrue(root.interfaceItemsProperty().remove(group));
+
+        assertSame(xParameter, paramList.getParameter("xyX"));
+        assertSame(yParameter, paramList.getParameter("xyY"));
+        assertEquals(2, paramList.size());
+        assertTrue(xyController.isAutomationAllowed());
+        assertTrue(xParameter.isAutomationEnabled());
+        assertTrue(yParameter.isAutomationEnabled());
+        assertEquals(2, xParameter.getLine().size());
+        assertEquals(2, yParameter.getLine().size());
+
+        var previousTimeManager = ParameterTimeManagerFactory.getInstance();
+        xyController.setXValue(0.5);
+        xyController.setYValue(0.5);
+        ParameterTimeManagerFactory.setInstance(() -> 1.0);
+        try {
+            xParameter.fireUpdateFromTimeChange();
+            yParameter.fireUpdateFromTimeChange();
+            assertEquals(0.25, xyController.getXValue(), 0.0001);
+            assertEquals(0.75, xyController.getYValue(), 0.0001);
+        } finally {
+            ParameterTimeManagerFactory.setInstance(previousTimeManager);
+        }
+    }
+
+    @Test
+    void testNestedGroupMovePreservesTimelineAutomationParameter() {
+        ParameterList paramList = new ParameterList();
+        BSBGroup root = new BSBGroup();
+        root.setAllSet(FXCollections.observableSet(new HashSet<>()));
+        root.setParameterList(paramList);
+
+        BSBGroup childGroup = new BSBGroup();
+        BSBKnob knob = new BSBKnob();
+        knob.setObjectName("test1");
+        knob.setAutomationAllowed(true);
+        childGroup.addBSBObject(knob);
+        root.addBSBObject(childGroup);
+
+        assertEquals(1, paramList.size());
+
+        Parameter parameter = paramList.getParameter("test1");
+        parameter.setAutomationEnabled(true);
+        LinePoint linePoint = new LinePoint();
+        linePoint.setLocation(1.0, 0.75);
+        parameter.getLine().insertLinePoint(linePoint);
+
+        BSBGroup parentGroup = new BSBGroup();
+        assertTrue(root.moveBSBObjectTo(childGroup, parentGroup));
+        root.addBSBObject(parentGroup);
+
+        assertSame(parameter, paramList.getParameter("test1"));
+        assertEquals(1, paramList.size());
+        assertTrue(knob.isAutomationAllowed());
+        assertTrue(parameter.isAutomationEnabled());
+        assertEquals(2, parameter.getLine().size());
+
+        assertTrue(parentGroup.moveBSBObjectTo(childGroup, root));
+        assertTrue(root.interfaceItemsProperty().remove(parentGroup));
+
+        assertSame(parameter, paramList.getParameter("test1"));
+        assertEquals(1, paramList.size());
+        assertTrue(knob.isAutomationAllowed());
+        assertTrue(parameter.isAutomationEnabled());
+        assertEquals(2, parameter.getLine().size());
     }
 
     /**
