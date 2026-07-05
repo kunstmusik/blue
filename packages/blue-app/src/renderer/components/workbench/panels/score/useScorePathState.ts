@@ -55,12 +55,20 @@ export function useScorePathState() {
   }, [session.scrollByGroupId]);
 
   const navigateToGroup = useCallback((groupId: string, label: string, location?: ScoreObjectLocationRef) => {
+    setSession((prev) => {
+      // No-op when the target group is already active: avoids stacking
+      // duplicate breadcrumb segments on repeated double-clicks and keeps the
+      // navigation state stable.
+      if (prev.activeGroupId === groupId) {
+        return prev;
+      }
+      return {
+        ...prev,
+        activeGroupId: groupId,
+        segments: [...prev.segments, { groupId, label, location }],
+      };
+    });
     saveCurrentScroll();
-    setSession((prev) => ({
-      ...prev,
-      activeGroupId: groupId,
-      segments: [...prev.segments, { groupId, label, location }],
-    }));
     restoreScroll(groupId);
   }, [saveCurrentScroll, restoreScroll]);
 

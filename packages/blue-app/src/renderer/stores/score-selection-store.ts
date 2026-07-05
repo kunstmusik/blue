@@ -37,6 +37,7 @@ interface ScoreSelectionState {
   selectAll: (allIds: string[]) => void;
   clearSelection: () => void;
   setSelection: (entries: ScoreSelectionEntry[] | string[]) => void;
+  addToSelection: (entries: ScoreSelectionEntry[] | string[]) => void;
   setLiveSharedProperties: (
     updates: Array<{ objectId: string; startBeats?: number; durationBeats?: number }>,
   ) => void;
@@ -154,6 +155,45 @@ export const useScoreSelectionStore = create<ScoreSelectionState>((set) => ({
       selectedObjectTarget = selectedObjectTargets[onlyId] ?? null;
     }
     set((state) => {
+      const nextLiveSharedProperties: Record<string, { startBeats?: number; durationBeats?: number }> = {};
+      for (const objectId of selectedObjectIds) {
+        const live = state.liveSharedProperties[objectId];
+        if (live) {
+          nextLiveSharedProperties[objectId] = live;
+        }
+      }
+      return {
+        selectedObjectIds,
+        selectedObjectTargets,
+        selectedObjectTarget,
+        liveSharedProperties: nextLiveSharedProperties,
+      };
+    });
+  },
+
+  addToSelection(entries) {
+    const normalized = normalizeSelectionEntries(entries);
+    if (normalized.length === 0) return;
+    set((state) => {
+      const selectedObjectIds = new Set(state.selectedObjectIds);
+      const selectedObjectTargets: Record<string, ScoreObjectEditorTargetSnapshot> = {
+        ...state.selectedObjectTargets,
+      };
+      for (const entry of normalized) {
+        selectedObjectIds.add(entry.objectId);
+        if (entry.editorTarget) {
+          selectedObjectTargets[entry.objectId] = entry.editorTarget;
+        }
+      }
+      let selectedObjectTarget: ScoreObjectEditorTargetSnapshot | null = null;
+      if (selectedObjectIds.size === 1) {
+        const onlyId = [...selectedObjectIds][0];
+        selectedObjectTarget = selectedObjectTargets[onlyId] ?? null;
+      } else if (state.selectedObjectIds.size === 1 && selectedObjectIds.size > 1) {
+        selectedObjectTarget = null;
+      } else {
+        selectedObjectTarget = state.selectedObjectTarget;
+      }
       const nextLiveSharedProperties: Record<string, { startBeats?: number; durationBeats?: number }> = {};
       for (const objectId of selectedObjectIds) {
         const live = state.liveSharedProperties[objectId];

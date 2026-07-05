@@ -5822,6 +5822,13 @@ function applyMoveScoreObjectsPatch(
 
   let changed = false;
   for (const entry of resolvedMoves) {
+    // Re-validate the resolved object is still at its index before splicing.
+    // A prior splice in this same patch (or a duplicate/stale location) can
+    // shift indices; never splice out an object that is not the one we resolved,
+    // as that would silently move or delete the wrong score object.
+    if (entry.sourceResolved.layer[entry.sourceResolved.objectIndex] !== entry.sourceResolved.sObj) {
+      continue;
+    }
     const [sObj] = entry.sourceResolved.layer.splice(entry.sourceResolved.objectIndex, 1);
     if (!sObj) continue;
 

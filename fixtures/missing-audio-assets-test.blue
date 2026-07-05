@@ -1,0 +1,243 @@
+<blueData version="2.10.1">
+  <projectProperties>
+    <title>Missing Audio Assets Test</title>
+    <author>spec 053 fixture</author>
+    <notes></notes>
+    <sampleRate>44100</sampleRate>
+    <ksmps>64</ksmps>
+    <channels>2</channels>
+    <useZeroDbFS>false</useZeroDbFS>
+    <zeroDbFS>1</zeroDbFS>
+    <diskSampleRate>44100</diskSampleRate>
+    <diskKsmps>64</diskKsmps>
+    <diskChannels>2</diskChannels>
+    <diskUseZeroDbFS>false</diskUseZeroDbFS>
+    <diskZeroDbFS>1</diskZeroDbFS>
+    <useAudioOut>true</useAudioOut>
+    <useAudioIn>false</useAudioIn>
+    <useMidiIn>false</useMidiIn>
+    <useMidiOut>false</useMidiOut>
+    <noteAmpsEnabled>true</noteAmpsEnabled>
+    <outOfRangeEnabled>true</outOfRangeEnabled>
+    <warningsEnabled>true</warningsEnabled>
+    <benchmarkEnabled>true</benchmarkEnabled>
+    <advancedSettings></advancedSettings>
+    <completeOverride>false</completeOverride>
+    <fileName></fileName>
+    <askOnRender>false</askOnRender>
+    <diskNoteAmpsEnabled>true</diskNoteAmpsEnabled>
+    <diskOutOfRangeEnabled>true</diskOutOfRangeEnabled>
+    <diskWarningsEnabled>true</diskWarningsEnabled>
+    <diskBenchmarkEnabled>true</diskBenchmarkEnabled>
+    <diskAdvancedSettings></diskAdvancedSettings>
+    <diskCompleteOverride>false</diskCompleteOverride>
+    <diskAlwaysRenderEntireProject>false</diskAlwaysRenderEntireProject>
+    <mediaFolder></mediaFolder>
+    <copyToMediaFileOnImport>true</copyToMediaFileOnImport>
+  </projectProperties>
+  <arrangement/>
+  <mixer>
+    <enabled>true</enabled>
+    <channelList listName="Orchestra" list="channels"/>
+    <channelList listName="SubChannels" list="subChannels"/>
+    <channel>
+      <name>Master</name>
+      <outChannel>Master</outChannel>
+      <level>0.0</level>
+      <muted>false</muted>
+      <solo>false</solo>
+      <effectsChain bin="pre"/>
+      <effectsChain bin="post"/>
+      <parameter uniqueId="param-561492ce-9a49-46d3-8f42-e203b1ce288a" name="Volume" label="dB" min="-96.0" max="12.0" bdresolution="-1" automationEnabled="false" value="0.0">
+        <line name="" version="2" max="12.0" min="-96.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
+      </parameter>
+    </channel>
+    <extraRenderTime>0.0</extraRenderTime>
+  </mixer>
+  <tables></tables>
+  <soundObjectLibrary/>
+  <globalOrcSco>
+    <globalOrc></globalOrc>
+    <globalSco></globalSco>
+  </globalOrcSco>
+  <opcodeList/>
+  <liveData>
+    <commandLine>csound -Wdo devaudio -L stdin</commandLine>
+    <commandLineEnabled>false</commandLineEnabled>
+    <commandLineOverride>false</commandLineOverride>
+    <liveObjectBins columns="1" rows="8">
+      <bin>
+        <null/>
+        <null/>
+        <null/>
+        <null/>
+        <null/>
+        <null/>
+        <null/>
+        <null/>
+      </bin>
+    </liveObjectBins>
+    <liveObjectSetList/>
+    <repeat>4</repeat>
+    <tempo>60</tempo>
+    <repeatEnabled>false</repeatEnabled>
+    <liveCodeText></liveCodeText>
+  </liveData>
+  <score>
+    <timeContext>
+      <tempoMap>
+        <enabled>false</enabled>
+        <visible>false</visible>
+        <tempoPoint tempo="60" curve="CONSTANT">
+          <timePosition type="BEATS">
+            <csoundBeats>0</csoundBeats>
+          </timePosition>
+        </tempoPoint>
+      </tempoMap>
+      <meterMap>
+        <measureMeterPair>
+          <measureNumber>1</measureNumber>
+          <meter>
+            <numBeats>4</numBeats>
+            <beatLength>4</beatLength>
+          </meter>
+        </measureMeterPair>
+      </meterMap>
+      <smpteFrameRate>30</smpteFrameRate>
+    </timeContext>
+    <timeState version="2">
+      <zoomIterations>0</zoomIterations>
+      <snapEnabled>false</snapEnabled>
+      <snapValue>BEAT</snapValue>
+      <timeDisplay>BEATS</timeDisplay>
+      <secondaryTimeDisplay>TIME</secondaryTimeDisplay>
+      <secondaryRulerEnabled>false</secondaryRulerEnabled>
+      <tempoRowVisible>true</tempoRowVisible>
+      <meterRowVisible>true</meterRowVisible>
+      <markersRowVisible>true</markersRowVisible>
+      <smpteFrameRate>24.0</smpteFrameRate>
+    </timeState>
+    <noteProcessorChain/>
+    <soundObject type="blue.soundObject.PolyObject">
+      <startTime type="BEATS">
+        <csoundBeats>0</csoundBeats>
+      </startTime>
+      <subjectiveDuration type="BEATS">
+        <csoundBeats>4</csoundBeats>
+      </subjectiveDuration>
+      <name>SoundObject Layer Group</name>
+      <backgroundColor>6710937</backgroundColor>
+      <timeBehavior>2</timeBehavior>
+      <repeatPoint>-1.0</repeatPoint>
+      <noteProcessorChain/>
+      <defaultHeightIndex>0</defaultHeightIndex>
+      <soundLayer name="SoundObjects" muted="false" solo="false" heightIndex="0" automationSelectedIndex="-1">
+        <noteProcessorChain/>
+        <soundObject type="blue.soundObject.AudioFile">
+          <startTime type="BEATS">
+            <csoundBeats>0</csoundBeats>
+          </startTime>
+          <subjectiveDuration type="BEATS">
+            <csoundBeats>4</csoundBeats>
+          </subjectiveDuration>
+          <name>missing-vocal.wav</name>
+          <backgroundColor>4210752</backgroundColor>
+          <noteProcessorChain/>
+          <soundFileName>missing-vocal.wav</soundFileName>
+          <csoundPostCode>	outs	aChannel1, aChannel1</csoundPostCode>
+        </soundObject>
+        <soundObject type="blue.soundObject.AudioFile">
+          <startTime type="BEATS">
+            <csoundBeats>8</csoundBeats>
+          </startTime>
+          <subjectiveDuration type="BEATS">
+            <csoundBeats>4</csoundBeats>
+          </subjectiveDuration>
+          <name>missing-drone.wav</name>
+          <backgroundColor>4210752</backgroundColor>
+          <noteProcessorChain/>
+          <soundFileName>missing-drone.wav</soundFileName>
+          <csoundPostCode>	outs	aChannel1, aChannel1</csoundPostCode>
+        </soundObject>
+        <soundObject type="blue.soundObject.AudioFile">
+          <startTime type="BEATS">
+            <csoundBeats>16</csoundBeats>
+          </startTime>
+          <subjectiveDuration type="BEATS">
+            <csoundBeats>4</csoundBeats>
+          </subjectiveDuration>
+          <name>missing-vocal.wav</name>
+          <backgroundColor>4210752</backgroundColor>
+          <noteProcessorChain/>
+          <soundFileName>missing-vocal.wav</soundFileName>
+          <csoundPostCode>	outs	aChannel1, aChannel1</csoundPostCode>
+        </soundObject>
+        <soundObject type="blue.soundObject.PolyObject">
+          <startTime type="BEATS">
+            <csoundBeats>24</csoundBeats>
+          </startTime>
+          <subjectiveDuration type="BEATS">
+            <csoundBeats>4</csoundBeats>
+          </subjectiveDuration>
+          <name>Nested PolyObject</name>
+          <backgroundColor>6710937</backgroundColor>
+          <timeBehavior>0</timeBehavior>
+          <repeatPoint>-1.0</repeatPoint>
+          <noteProcessorChain/>
+          <defaultHeightIndex>0</defaultHeightIndex>
+          <soundLayer name="Nested Layer" muted="false" solo="false" heightIndex="0" automationSelectedIndex="-1">
+            <noteProcessorChain/>
+            <soundObject type="blue.soundObject.AudioFile">
+              <startTime type="BEATS">
+                <csoundBeats>0</csoundBeats>
+              </startTime>
+              <subjectiveDuration type="BEATS">
+                <csoundBeats>4</csoundBeats>
+              </subjectiveDuration>
+              <name>Nested Audio File</name>
+              <backgroundColor>4210752</backgroundColor>
+              <noteProcessorChain/>
+              <soundFileName>nested-missing.wav</soundFileName>
+              <csoundPostCode>	outs	aChannel1, aChannel1</csoundPostCode>
+            </soundObject>
+          </soundLayer>
+        </soundObject>
+      </soundLayer>
+    </soundObject>
+  </score>
+  <scratchPadData>
+    <isWordWrapEnabled>true</isWordWrapEnabled>
+    <scratchText></scratchText>
+  </scratchPadData>
+  <noteProcessorChainMap/>
+  <renderStartTime>0</renderStartTime>
+  <renderEndTime>-1</renderEndTime>
+  <markersList/>
+  <loopRendering>false</loopRendering>
+  <midiInputProcessor>
+    <keyMapping>PCH</keyMapping>
+    <velMapping>MIDI</velMapping>
+    <pitchConstant></pitchConstant>
+    <ampConstant></ampConstant>
+    <scale>
+      <scaleName>12TET</scaleName>
+      <baseFrequency>261.625565</baseFrequency>
+      <octave>2</octave>
+      <ratios>
+        <ratio>1</ratio>
+        <ratio>1.0594630943592953</ratio>
+        <ratio>1.122462048309373</ratio>
+        <ratio>1.1892071150027212</ratio>
+        <ratio>1.2599210498948734</ratio>
+        <ratio>1.3348398541700346</ratio>
+        <ratio>1.4142135623730954</ratio>
+        <ratio>1.498307076876682</ratio>
+        <ratio>1.5874010519682</ratio>
+        <ratio>1.6817928305074297</ratio>
+        <ratio>1.7817974362806794</ratio>
+        <ratio>1.887748625363388</ratio>
+      </ratios>
+    </scale>
+  </midiInputProcessor>
+  <pluginData/>
+</blueData>

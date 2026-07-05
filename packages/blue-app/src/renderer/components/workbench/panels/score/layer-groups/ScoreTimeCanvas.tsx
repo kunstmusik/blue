@@ -241,6 +241,7 @@ export default function ScoreTimeCanvas({
   const select = useScoreSelectionStore((s) => s.select);
   const clearSelection = useScoreSelectionStore((s) => s.clearSelection);
   const setSelection = useScoreSelectionStore((s) => s.setSelection);
+  const addToSelection = useScoreSelectionStore((s) => s.addToSelection);
   const setLiveSharedProperties = useScoreSelectionStore((s) => s.setLiveSharedProperties);
   const clearLiveSharedProperties = useScoreSelectionStore((s) => s.clearLiveSharedProperties);
   const copySelected = useScoreSelectionStore((s) => s.copySelected);
@@ -393,12 +394,10 @@ export default function ScoreTimeCanvas({
     const { x, y } = toLocalXY(e.clientX, e.clientY);
     const xBeats = x / pixelsPerBeat;
     const hit = findLayerAtY(group.layers, y);
-    if (!hit) return;
-
-    const item = findItemOnLayer(hit.layer, xBeats);
+    const item = hit ? findItemOnLayer(hit.layer, xBeats) : null;
 
     const isMeta = e.metaKey || e.ctrlKey;
-    if (isMeta && !item && clipboard.length > 0) {
+    if (isMeta && hit && !item && clipboard.length > 0) {
       const paste = translateClipboardEntriesForPaste({
         clipboard,
         layerGroups: interactionLayerGroups,
@@ -417,23 +416,21 @@ export default function ScoreTimeCanvas({
       return;
     }
 
+    // Background click (no score object under the cursor, whether on an empty
+    // part of a layer row or outside any layer row): start a marquee. Java Blue
+    // parity — MarqueeSelectionListener starts on any non-object press, with
+    // shift toggling additive mode. A plain marquee clears the selection first;
+    // shift preserves it so the marquee unions onto it.
     if (!item) {
-      if (e.shiftKey) {
-        gestureRef.current = {
-          mode: 'marquee', startClientX: e.clientX, startClientY: e.clientY,
-          startBeats: 0, startGlobalLayer: 0, startGroupYOffset: 0,
-          minLayerAdjust: 0, maxLayerAdjust: 0,
-          additive: true, globalLayerMap: [], originalPositions: [],
-        };
-      } else {
+      if (!e.shiftKey) {
         clearSelection();
-        gestureRef.current = {
-          mode: 'marquee', startClientX: e.clientX, startClientY: e.clientY,
-          startBeats: 0, startGlobalLayer: 0, startGroupYOffset: 0,
-          minLayerAdjust: 0, maxLayerAdjust: 0,
-          additive: false, globalLayerMap: [], originalPositions: [],
-        };
       }
+      gestureRef.current = {
+        mode: 'marquee', startClientX: e.clientX, startClientY: e.clientY,
+        startBeats: 0, startGlobalLayer: 0, startGroupYOffset: 0,
+        minLayerAdjust: 0, maxLayerAdjust: 0,
+        additive: e.shiftKey, globalLayerMap: [], originalPositions: [],
+      };
       setMarquee(null);
       return;
     }
@@ -443,10 +440,24 @@ export default function ScoreTimeCanvas({
       return;
     }
 
+    // Determine the set of objects this gesture acts on. The closure-captured
+    // selectedObjectIds goes stale the moment `select` mutates the store below,
+    // so the effective selection is derived from the click semantics: an
+    // exclusive select (clicking an unselected object, or re-targeting a single
+    // selection) drags only the clicked object; clicking an already-selected
+    // object drags the whole selection. Deriving here avoids dragging objects
+    // that were just deselected (which previously caused overlapping objects to
+    // move together and could cascade into misplaced/deleted objects).
+    let effectiveSelectedIds: Set<string>;
     if (!selectedObjectIds.has(item.objectId)) {
       select(item.objectId, false, item.editorTarget);
+      effectiveSelectedIds = new Set([item.objectId]);
     } else if (selectedObjectIds.size === 1 && !sameTarget(selectedObjectTarget, item.editorTarget)) {
       select(item.objectId, false, item.editorTarget);
+      effectiveSelectedIds = new Set([item.objectId]);
+    } else {
+      effectiveSelectedIds = new Set(selectedObjectIds);
+      effectiveSelectedIds.add(item.objectId);
     }
 
     const itemPreview = effectivePreview[item.objectId];
@@ -473,14 +484,12 @@ export default function ScoreTimeCanvas({
       globalLayerIndex: number;
       editorTarget?: ScoreObjectEditorTargetSnapshot;
     }> = [];
-    const selectedIds = new Set(selectedObjectIds);
-    selectedIds.add(item.objectId);
 
     for (const lg of interactionLayerGroups) {
       const groupStart = groupStartIndexById.get(lg.groupId) ?? 0;
       for (let li = 0; li < lg.layers.length; li++) {
         for (const obj of lg.layers[li].items) {
-          if (selectedIds.has(obj.objectId)) {
+          if (effectiveSelectedIds.has(obj.objectId)) {
             const preview = effectivePreview[obj.objectId];
             origPositions.push({
               objectId: obj.objectId,
@@ -496,7 +505,7 @@ export default function ScoreTimeCanvas({
       }
     }
 
-    const startGlobalLayer = currentGroupGlobalStart + hit.index;
+    const startGlobalLayer = currentGroupGlobalStart + hit!.index;
     let minLayerAdj = 0;
     let maxLayerAdj = 0;
     if (!onLeftEdge && !onRightEdge && origPositions.length > 0) {
@@ -816,7 +825,13 @@ export default function ScoreTimeCanvas({
       }
 
       if (hitItems.length > 0) {
-        setSelection(hitItems);
+        // Java Blue parity: shift (additive) marquee unions the hit items with
+        // the existing selection; a plain marquee replaces it.
+        if (g.additive) {
+          addToSelection(hitItems);
+        } else {
+          setSelection(hitItems);
+        }
       }
     }
 
@@ -871,7 +886,7 @@ export default function ScoreTimeCanvas({
 
     gestureRef.current = null;
     setMarquee(null);
-  }, [marquee, pixelsPerBeat, group.groupId, interactionLayerGroups, clearSelection, setSelection, applyProjectDocumentPatch, findEditorTarget]);
+  }, [marquee, pixelsPerBeat, group.groupId, interactionLayerGroups, clearSelection, setSelection, addToSelection, applyProjectDocumentPatch, findEditorTarget]);
 
   const handleDoubleClick = useCallback((e: React.MouseEvent) => {
     const { x, y } = toLocalXY(e.clientX, e.clientY);
