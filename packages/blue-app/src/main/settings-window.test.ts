@@ -1,5 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import * as fs from 'fs';
+import * as path from 'path';
+import * as os from 'os';
 import { openSettingsWindow, closeSettingsWindow } from './settings-window';
+import {
+  clearSettingsCache,
+  setSettingsFilePathForTesting,
+} from './program-settings-store';
+import { loadWindowLayoutSettings, saveWindowLayoutSettings } from './window-layout-store';
 
 const electronMock = vi.hoisted(() => {
   const instances: MockBrowserWindow[] = [];
@@ -17,18 +25,24 @@ const electronMock = vi.hoisted(() => {
       }
     });
     on = vi.fn((event: string, handler: () => void) => {
-      if (event === 'closed') {
-        this.closedHandler = handler;
-      }
+      this.eventHandlers[event] = handler;
     });
+    removeListener = vi.fn();
     close = vi.fn(() => {
       this.destroyed = true;
       this.closedHandler?.();
     });
     isDestroyed = vi.fn(() => this.destroyed);
+    isMaximized = vi.fn(() => false);
+    isFullScreen = vi.fn(() => false);
+    isMinimized = vi.fn(() => false);
+    getBounds = vi.fn(() => ({ x: 80, y: 90, width: 800, height: 600 }));
+    getNormalBounds = vi.fn(() => ({ x: 80, y: 90, width: 800, height: 600 }));
+    setBounds = vi.fn();
 
     private readyToShowHandler?: () => void;
     private closedHandler?: () => void;
+    eventHandlers: Record<string, () => void> = {};
 
     constructor(options: Record<string, unknown>) {
       this.options = options;
@@ -38,6 +52,10 @@ const electronMock = vi.hoisted(() => {
     triggerReadyToShow(): void {
       this.readyToShowHandler?.();
     }
+
+    trigger(event: string): void {
+      this.eventHandlers[event]?.();
+    }
   }
 
   return { instances, MockBrowserWindow };
@@ -45,9 +63,19 @@ const electronMock = vi.hoisted(() => {
 
 vi.mock('electron', () => ({
   BrowserWindow: electronMock.MockBrowserWindow,
+  screen: {
+    getAllDisplays: () => [
+      { bounds: { x: 0, y: 0, width: 1920, height: 1080 }, workArea: { x: 0, y: 0, width: 1920, height: 1080 } },
+    ],
+  },
 }));
 
+let tempDir: string;
+
 beforeEach(() => {
+  tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'blue-settings-window-test-'));
+  setSettingsFilePathForTesting(path.join(tempDir, 'program-settings.json'));
+  clearSettingsCache();
   closeSettingsWindow();
   electronMock.instances.length = 0;
   delete process.env.VITE_DEV_SERVER_URL;
@@ -55,6 +83,8 @@ beforeEach(() => {
 
 afterEach(() => {
   closeSettingsWindow();
+  fs.rmSync(tempDir, { recursive: true, force: true });
+  clearSettingsCache();
   vi.clearAllMocks();
 });
 
@@ -95,5 +125,38 @@ describe('settings window lifecycle', () => {
 
     openSettingsWindow(mainWindow);
     expect(electronMock.instances).toHaveLength(2);
+  });
+});
+
+describe('settings window layout persistence', () => {
+  it('persists the settings window bounds on close under the "settings" identity', () => {
+    const mainWindow = {} as never;
+    openSettingsWindow(mainWindow);
+
+    const settingsWindow = electronMock.instances[0]!;
+    settingsWindow.trigger('close');
+
+    const layout = loadWindowLayoutSettings();
+    expect(layout.windows.settings?.normalBounds).toEqual({ x: 80, y: 90, width: 800, height: 600 });
+  });
+
+  it('applies saved settings window bounds before the window is shown', () => {
+    const mainWindow = {} as never;
+
+    // Seed a saved snapshot manually through the canonical store.
+    saveWindowLayoutSettings({
+      ...loadWindowLayoutSettings(),
+      windows: {
+        settings: {
+          normalBounds: { x: 200, y: 150, width: 700, height: 500 },
+          displayState: 'normal',
+        },
+      },
+    });
+
+    openSettingsWindow(mainWindow);
+
+    const settingsWindow = electronMock.instances[0]!;
+    expect(settingsWindow.setBounds).toHaveBeenCalledWith({ x: 200, y: 150, width: 700, height: 500 });
   });
 });

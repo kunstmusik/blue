@@ -1,3 +1,9 @@
+import {
+  createDefaultWindowLayoutSettings,
+  mergeWindowLayoutSettings,
+  type WindowLayoutSettingsSnapshot,
+} from './window-layout-settings';
+
 export type ProgramSettingsPanelId =
   | 'general'
   | 'projectDefaults'
@@ -107,6 +113,7 @@ export interface CurrentAppSettingsSnapshot {
   oscInputPort: number;
   oscOutputHost: string;
   oscOutputPort: number;
+  windowLayout: WindowLayoutSettingsSnapshot;
 }
 
 export interface ProgramSettingsSnapshot {
@@ -344,6 +351,7 @@ export function createDefaultCurrentAppSettings(): CurrentAppSettingsSnapshot {
     oscInputPort: 0,
     oscOutputHost: 'localhost',
     oscOutputPort: 0,
+    windowLayout: createDefaultWindowLayoutSettings(),
   };
 }
 
@@ -531,6 +539,15 @@ export function mergeWithDefaults(
 ): ProgramSettingsSnapshot {
   const defaults = createDefaultProgramSettings(platform);
 
+  const savedAppSpecific = (saved.appSpecific ?? {}) as Partial<CurrentAppSettingsSnapshot>;
+  const mergedAppSpecific: CurrentAppSettingsSnapshot = {
+    ...defaults.appSpecific,
+    ...savedAppSpecific,
+    // Deep-merge the layout envelope so partial/stale layout state still
+    // gets default-filled, and unrelated app-specific values are preserved.
+    windowLayout: mergeWindowLayoutSettings(savedAppSpecific.windowLayout),
+  };
+
   return {
     version: saved.version ?? PROGRAM_SETTINGS_VERSION,
     general: { ...defaults.general, ...saved.general },
@@ -539,7 +556,7 @@ export function mergeWithDefaults(
     utility: { ...defaults.utility, ...saved.utility },
     realtimeRender: { ...defaults.realtimeRender, ...saved.realtimeRender },
     diskRender: { ...defaults.diskRender, ...saved.diskRender },
-    appSpecific: { ...defaults.appSpecific, ...saved.appSpecific },
+    appSpecific: mergedAppSpecific,
     lastSavedAt: saved.lastSavedAt,
   };
 }

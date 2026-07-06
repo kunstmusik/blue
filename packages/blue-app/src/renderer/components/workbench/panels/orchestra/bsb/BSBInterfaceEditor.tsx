@@ -6,6 +6,7 @@ import type {
   InstrumentPatch,
   SoundAutomationParameterSnapshot,
 } from '../../../../../../shared/project-editor';
+import { BSB_PROPERTY_SPLIT_SIZE_PX } from '../../../../../../shared/window-layout-settings';
 import { collectBsbReplacementKeysFromSnapshotTree } from '../../../../../../shared/project-editor';
 import { useProjectStore } from '../../../../../stores/project-store';
 import BSBInterfaceCanvas from './BSBInterfaceCanvas';
@@ -120,62 +121,64 @@ function BSBInterfaceEditor({
         <SplitPane
           orientation="horizontal"
           ariaLabel="BSB Interface and Properties"
-          initialSplit={0.72}
+          splitId="bsb.interface.properties"
+          controlledPane="second"
+          defaultSizePx={BSB_PROPERTY_SPLIT_SIZE_PX}
           minFirstSize={200}
           minSecondSize={180}
           firstClassName="flex flex-col"
           secondClassName="flex flex-col bg-app-bsb-panel"
           first={<BSBInterfaceCanvas {...canvasProps} />}
-            second={
-              <>
-                <div className="border-b border-blue-border">
-                  <div className="flex">
-                    <button
-                      type="button"
-                      className={[
-                        'flex-1 border-b-2 px-2 py-1.5 text-tiny uppercase tracking-[0.12em]',
-                        rightTab === 'properties'
-                          ? 'border-blue-accent text-gray-100'
-                          : 'border-transparent text-blue-muted hover:text-gray-100',
-                      ].join(' ')}
-                      onClick={() => setRightTab('properties')}
-                    >
-                      Properties
-                    </button>
-                    <button
-                      type="button"
-                      className={[
-                        'flex-1 border-b-2 px-2 py-1.5 text-tiny uppercase tracking-[0.12em]',
-                        rightTab === 'grid'
-                          ? 'border-blue-accent text-gray-100'
-                          : 'border-transparent text-blue-muted hover:text-gray-100',
-                      ].join(' ')}
-                      onClick={() => setRightTab('grid')}
-                    >
-                      Grid
-                    </button>
-                  </div>
+          second={
+            <>
+              <div className="border-b border-blue-border">
+                <div className="flex">
+                  <button
+                    type="button"
+                    className={[
+                      'flex-1 border-b-2 px-2 py-1.5 text-tiny uppercase tracking-[0.12em]',
+                      rightTab === 'properties'
+                        ? 'border-blue-accent text-gray-100'
+                        : 'border-transparent text-blue-muted hover:text-gray-100',
+                    ].join(' ')}
+                    onClick={() => setRightTab('properties')}
+                  >
+                    Properties
+                  </button>
+                  <button
+                    type="button"
+                    className={[
+                      'flex-1 border-b-2 px-2 py-1.5 text-tiny uppercase tracking-[0.12em]',
+                      rightTab === 'grid'
+                        ? 'border-blue-accent text-gray-100'
+                        : 'border-transparent text-blue-muted hover:text-gray-100',
+                    ].join(' ')}
+                    onClick={() => setRightTab('grid')}
+                  >
+                    Grid
+                  </button>
                 </div>
-                <div className="min-h-0 flex-1 overflow-y-auto">
-                  {rightTab === 'properties' ? (
-                    <BSBPropertySheet
-                      widget={selectedWidget}
-                      selectedCount={selectedWidgetIds.size}
-                      editEnabled={editEnabled}
-                      allObjectNames={allObjectNames}
-                      onBsbInterfacePatch={dispatchBsbPatch}
-                    />
-                  ) : (
-                    <BSBGridSettingsPanel
-                      gridSettings={instrument.gridSettings}
-                      onBsbInterfacePatch={dispatchBsbPatch}
-                    />
-                  )}
-                </div>
-              </>
-            }
-          />
-        ) : (
+              </div>
+              <div className="min-h-0 flex-1 overflow-y-auto">
+                {rightTab === 'properties' ? (
+                  <BSBPropertySheet
+                    widget={selectedWidget}
+                    selectedCount={selectedWidgetIds.size}
+                    editEnabled={editEnabled}
+                    allObjectNames={allObjectNames}
+                    onBsbInterfacePatch={dispatchBsbPatch}
+                  />
+                ) : (
+                  <BSBGridSettingsPanel
+                    gridSettings={instrument.gridSettings}
+                    onBsbInterfacePatch={dispatchBsbPatch}
+                  />
+                )}
+              </div>
+            </>
+          }
+        />
+      ) : (
           <div className="min-h-0 flex-1">
             <BSBInterfaceCanvas {...canvasProps} />
           </div>

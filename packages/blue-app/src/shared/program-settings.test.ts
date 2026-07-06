@@ -23,6 +23,10 @@ import {
   SAMPLE_FORMAT_CHOICES,
   type ProgramSettingsSnapshot,
 } from './program-settings';
+import {
+  createDefaultWindowLayoutSettings,
+  WINDOW_LAYOUT_SETTINGS_VERSION,
+} from './window-layout-settings';
 
 describe('program-settings defaults', () => {
   it('creates macOS defaults', () => {
@@ -177,5 +181,110 @@ describe('program-settings mergeWithDefaults', () => {
     }, 'darwin');
     expect(merged.general.workDirectory).toBe('/saved');
     expect(merged.general.messageColorsEnabled).toBe(false);
+  });
+});
+
+describe('program-settings appSpecific.windowLayout', () => {
+  it('seeds default window layout settings on createDefaultCurrentAppSettings', () => {
+    const app = createDefaultCurrentAppSettings();
+    expect(app.windowLayout).toEqual(createDefaultWindowLayoutSettings());
+    expect(app.windowLayout?.version).toBe(WINDOW_LAYOUT_SETTINGS_VERSION);
+  });
+
+  it('mergeWithDefaults fills missing windowLayout from defaults', () => {
+    const merged = mergeWithDefaults({} as Partial<ProgramSettingsSnapshot>, 'darwin');
+    expect(merged.appSpecific.windowLayout).toEqual(createDefaultWindowLayoutSettings());
+  });
+
+  it('mergeWithDefaults preserves valid saved window layout entries', () => {
+    const merged = mergeWithDefaults({
+      appSpecific: {
+        enginePath: '/engine',
+        recentFiles: [],
+        windowBounds: null,
+        midiInputDevice: '',
+        midiOutputDevice: '',
+        oscInputPort: 0,
+        oscOutputHost: 'localhost',
+        oscOutputPort: 0,
+        windowLayout: {
+          version: WINDOW_LAYOUT_SETTINGS_VERSION,
+          windows: {
+            main: {
+              normalBounds: { x: 5, y: 5, width: 800, height: 600 },
+              displayState: 'normal',
+            },
+          },
+          splits: {},
+          legacyMigration: {
+            blueSettingsWindowBoundsMigrated: true,
+            workbenchLocalStorageMigrated: false,
+          },
+        },
+      } as any,
+    }, 'darwin');
+
+    expect(merged.appSpecific.windowLayout?.windows.main?.normalBounds.x).toBe(5);
+    expect(merged.appSpecific.windowLayout?.legacyMigration.blueSettingsWindowBoundsMigrated).toBe(true);
+  });
+
+  it('mergeWithDefaults drops malformed windowLayout and falls back to defaults', () => {
+    const merged = mergeWithDefaults({
+      appSpecific: {
+        windowLayout: { version: 'bad', windows: 'nope' } as any,
+      } as any,
+    }, 'darwin');
+
+    expect(merged.appSpecific.windowLayout).toEqual(createDefaultWindowLayoutSettings());
+  });
+
+  it('validateProgramSettings does not flag a default snapshot', () => {
+    const s = createDefaultProgramSettings('darwin');
+    const issues = validateProgramSettings(s);
+    expect(issues.filter((i) => i.severity === 'error')).toHaveLength(0);
+  });
+
+  it('windowLayout round-trip: defaults merge → save → load → reset preserves unrelated fields', () => {
+    const base = createDefaultProgramSettings('darwin');
+    base.appSpecific.windowLayout = {
+      version: WINDOW_LAYOUT_SETTINGS_VERSION,
+      windows: {
+        main: { normalBounds: { x: 10, y: 20, width: 1024, height: 768 }, displayState: 'normal' },
+      },
+      splits: {
+        'orchestra.outer': { orientation: 'horizontal', controlledPane: 'first', sizePx: 250 },
+      },
+      legacyMigration: { blueSettingsWindowBoundsMigrated: true, workbenchLocalStorageMigrated: false },
+    };
+    base.general.workDirectory = '/keep';
+    base.appSpecific.enginePath = '/engine';
+    base.realtimeRender.audioDriver = 'CoreAudio';
+
+    const merged = mergeWithDefaults({
+      general: { workDirectory: '/keep' },
+      appSpecific: { windowLayout: base.appSpecific.windowLayout, enginePath: '/engine' },
+      realtimeRender: { audioDriver: 'CoreAudio' },
+    } as any, 'darwin');
+    expect(merged.appSpecific.windowLayout?.windows.main?.normalBounds.width).toBe(1024);
+    expect(merged.appSpecific.windowLayout?.splits['orchestra.outer']?.sizePx).toBe(250);
+    expect(merged.appSpecific.windowLayout?.legacyMigration.blueSettingsWindowBoundsMigrated).toBe(true);
+    expect(merged.general.workDirectory).toBe('/keep');
+    expect(merged.appSpecific.enginePath).toBe('/engine');
+    expect(merged.realtimeRender.audioDriver).toBe('CoreAudio');
+  });
+
+  it('malformed windowLayout is replaced with defaults while preserving unrelated settings', () => {
+    const base = createDefaultProgramSettings('darwin');
+    base.general.workDirectory = '/keep';
+    base.appSpecific.enginePath = '/engine';
+
+    const merged = mergeWithDefaults({
+      general: { workDirectory: '/keep' },
+      appSpecific: { windowLayout: { version: 'bad', windows: 'nope' } as any, enginePath: '/engine' },
+    } as any, 'darwin');
+
+    expect(merged.appSpecific.windowLayout).toEqual(createDefaultWindowLayoutSettings());
+    expect(merged.general.workDirectory).toBe('/keep');
+    expect(merged.appSpecific.enginePath).toBe('/engine');
   });
 });

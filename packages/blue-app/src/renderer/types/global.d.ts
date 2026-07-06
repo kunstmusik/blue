@@ -31,6 +31,10 @@ import type {
 } from '../../shared/missing-audio-assets';
 import type { NativeMenuCommand } from '../../shared/workbench-menu';
 import type { EngineOutputPayload } from '../../shared/io-provider';
+import type {
+  WindowLayoutSettingsSnapshot,
+  WindowLayoutUpdateRequest,
+} from '../../shared/window-layout-settings';
 
 export type BlueLiveStatus = 'idle' | 'starting' | 'running' | 'stopping' | 'stopped' | 'error';
 
@@ -159,6 +163,25 @@ declare global {
 
       // Settings
       openSettingsWindow: () => Promise<void>;
+      getProgramSettings: () => Promise<import('../../shared/program-settings').ProgramSettingsSnapshot>;
+      saveProgramSettings: (
+        snapshot: import('../../shared/program-settings').ProgramSettingsSnapshot,
+      ) => Promise<import('../../shared/program-settings').ProgramSettingsSaveResult>;
+      resetProgramSettingsPanel: (
+        panel: import('../../shared/program-settings').ProgramSettingsPanelId,
+      ) => Promise<import('../../shared/program-settings').ProgramSettingsSnapshot>;
+      getProgramSettingsUsageMatrix: () => Promise<import('../../shared/program-settings').UsageParityMatrixEntry[]>;
+      syncLegacyRendererSettings: (
+        snapshot: import('../../shared/program-settings').CurrentAppSettingsSnapshot,
+      ) => Promise<import('../../shared/program-settings').ProgramSettingsSnapshot>;
+
+      // Window Layout
+      getWindowLayout: () => Promise<WindowLayoutSettingsSnapshot>;
+      updateWindowLayout: (
+        request: WindowLayoutUpdateRequest,
+      ) => Promise<WindowLayoutSettingsSnapshot>;
+      resetWindows: () => Promise<WindowLayoutSettingsSnapshot>;
+      onWindowLayoutReset: (callback: () => void) => () => void;
 
       // Named Chains
       getNamedChainNames: () => Promise<string[]>;

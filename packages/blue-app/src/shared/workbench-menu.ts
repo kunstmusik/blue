@@ -108,7 +108,7 @@ export const PANEL_MAP = new Map(WORKBENCH_PANEL_REGISTRY.map((panel) => [panel.
 
 export type NativeMenuCommand =
   | { type: 'focus-panel'; panelId: string }
-  | { type: 'reset-layout' }
+  | { type: 'reset-windows' }
   | { type: 'open-effects-library' }
   | { type: 'toggle-follow-playback' }
   | { type: 'toggle-follow-playback-on-render-start' }

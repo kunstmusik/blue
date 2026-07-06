@@ -3,6 +3,10 @@ import * as path from 'path';
 import { pathToFileURL } from 'url';
 
 import type { EffectEditorRequest } from '../shared/project-editor';
+import {
+  attachWindowStateHandlers,
+  restoreWindowState,
+} from './window-state-manager';
 
 type EffectEditorMode = 'interface' | 'edit';
 
@@ -11,7 +15,12 @@ interface EffectEditorKey {
   key: string;
 }
 
-const effectEditorWindows = new Map<string, BrowserWindow>();
+interface EffectEditorWindowState {
+  window: BrowserWindow;
+  disposeStateHandlers: (() => void) | null;
+}
+
+const effectEditorWindows = new Map<string, EffectEditorWindowState>();
 
 function getWindowKey(request: EffectEditorRequest, mode: EffectEditorMode): string {
   return `${mode}:${request.ownerType}:${request.effectId}`;
@@ -58,10 +67,10 @@ export function openEffectInterfaceWindow(
 
   const key = getWindowKey(request, 'interface');
   const existing = effectEditorWindows.get(key);
-  if (existing && !existing.isDestroyed()) {
-    existing.focus();
-    existing.show();
-    return existing;
+  if (existing && !existing.window.isDestroyed()) {
+    existing.window.focus();
+    existing.window.show();
+    return existing.window;
   }
 
   const effectWindow = new BrowserWindow({
@@ -87,7 +96,10 @@ export function openEffectInterfaceWindow(
     effectWindow.setContentSize(460, 560);
   }
 
-  effectEditorWindows.set(key, effectWindow);
+  restoreWindowState(effectWindow, 'effect-interface');
+  const disposeStateHandlers = attachWindowStateHandlers(effectWindow, 'effect-interface');
+
+  effectEditorWindows.set(key, { window: effectWindow, disposeStateHandlers });
 
   effectWindow.once('ready-to-show', () => {
     if (!effectWindow.isDestroyed()) {
@@ -96,6 +108,7 @@ export function openEffectInterfaceWindow(
   });
 
   effectWindow.on('closed', () => {
+    disposeStateHandlers?.();
     effectEditorWindows.delete(key);
   });
 
@@ -113,10 +126,10 @@ export function openEffectEditorWindow(
 
   const key = getWindowKey(request, 'edit');
   const existing = effectEditorWindows.get(key);
-  if (existing && !existing.isDestroyed()) {
-    existing.focus();
-    existing.show();
-    return existing;
+  if (existing && !existing.window.isDestroyed()) {
+    existing.window.focus();
+    existing.window.show();
+    return existing.window;
   }
 
   const effectWindow = new BrowserWindow({
@@ -137,7 +150,10 @@ export function openEffectEditorWindow(
     },
   });
 
-  effectEditorWindows.set(key, effectWindow);
+  restoreWindowState(effectWindow, 'effect-editor');
+  const disposeStateHandlers = attachWindowStateHandlers(effectWindow, 'effect-editor');
+
+  effectEditorWindows.set(key, { window: effectWindow, disposeStateHandlers });
 
   effectWindow.once('ready-to-show', () => {
     if (!effectWindow.isDestroyed()) {
@@ -146,6 +162,7 @@ export function openEffectEditorWindow(
   });
 
   effectWindow.on('closed', () => {
+    disposeStateHandlers?.();
     effectEditorWindows.delete(key);
   });
 
@@ -157,20 +174,20 @@ export function closeEffectEditorWindow(request: EffectEditorRequest): void {
   for (const mode of ['edit', 'interface'] as const) {
     const key = getWindowKey(request, mode);
     const existing = effectEditorWindows.get(key);
-    if (existing && !existing.isDestroyed()) {
-      existing.close();
+    if (existing && !existing.window.isDestroyed()) {
+      existing.window.close();
     }
     effectEditorWindows.delete(key);
   }
 }
 
 export function closeEffectEditorWindowsForOwner(ownerType: 'project' | 'library'): void {
-  for (const [key, window] of effectEditorWindows.entries()) {
+  for (const [key, state] of effectEditorWindows.entries()) {
     if (!key.includes(`:${ownerType}:`)) {
       continue;
     }
-    if (!window.isDestroyed()) {
-      window.close();
+    if (!state.window.isDestroyed()) {
+      state.window.close();
     }
     effectEditorWindows.delete(key);
   }
@@ -180,9 +197,9 @@ export function focusEffectEditorWindow(request: EffectEditorRequest): boolean {
   for (const mode of ['edit', 'interface'] as const) {
     const key = getWindowKey(request, mode);
     const existing = effectEditorWindows.get(key);
-    if (existing && !existing.isDestroyed()) {
-      existing.focus();
-      existing.show();
+    if (existing && !existing.window.isDestroyed()) {
+      existing.window.focus();
+      existing.window.show();
       return true;
     }
   }
@@ -193,12 +210,12 @@ export function closeStaleEffectEditorWindows(
   validEffectIds: Set<string>,
   ownerType: 'project' | 'library',
 ): void {
-  for (const [key, window] of effectEditorWindows.entries()) {
+  for (const [key, state] of effectEditorWindows.entries()) {
     if (!key.includes(`:${ownerType}:`)) continue;
     const effectId = key.split(':').pop();
     if (effectId && !validEffectIds.has(effectId)) {
-      if (!window.isDestroyed()) {
-        window.close();
+      if (!state.window.isDestroyed()) {
+        state.window.close();
       }
       effectEditorWindows.delete(key);
     }

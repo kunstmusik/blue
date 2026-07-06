@@ -21,7 +21,6 @@ import {
   moveGroupToEdge as moveGroupToEdgeLayout,
   movePanelToEdge as movePanelToEdgeLayout,
   parseStoredWorkbenchLayout,
-  resetAuxiliaryLayout,
   resizeAuxiliarySlideout as resizeAuxiliarySlideoutLayout,
   restoreAuxiliaryGroupLayout,
   revealAuxiliaryPanel,
@@ -376,11 +375,10 @@ export const useWorkbenchStore = create<WorkbenchState & WorkbenchActions>()(
     },
 
     resetLayout: () => {
-      const { api } = get();
-      if (!api) return;
-
-      const fresh = resetAuxiliaryLayout();
-      set({ auxiliary: applyAuxiliaryLayout(api, fresh) });
+      // Clear the dockview grid (main editor panels AND auxiliary panels)
+      // and rebuild from defaults so the current session immediately
+      // reflects the default workbench layout after Reset Windows.
+      get().loadLayout(null);
     },
 
     handleNativeMenuCommand: (command) => {
@@ -388,7 +386,7 @@ export const useWorkbenchStore = create<WorkbenchState & WorkbenchActions>()(
         case 'focus-panel':
           get().openPanel(command.panelId);
           return;
-        case 'reset-layout':
+        case 'reset-windows':
           get().resetLayout();
           return;
         case 'open-effects-library':

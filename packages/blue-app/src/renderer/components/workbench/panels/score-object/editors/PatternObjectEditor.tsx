@@ -1,7 +1,13 @@
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import type { ScoreObjectEditorComponentProps } from '../editor-registry';
 import GeneratedScoreModal from './GeneratedScoreModal';
 import { useScoreObjectTest } from './useScoreObjectTest';
+import { useLayoutSettingsStore } from '../../../../../stores/layout-settings-store';
+import { DEFAULT_SPLIT_SIZE_PX } from '../../../../../../shared/window-layout-settings';
+
+const PATTERN_LAYERS_SPLIT_ID = 'pattern-object.layers' as const;
+const PATTERN_SCORE_SPLIT_ID = 'pattern-object.score' as const;
+const SAVE_DEBOUNCE_MS = 150;
 
 interface PatternSnapshot {
   patternName: string;
@@ -194,8 +200,33 @@ export default function PatternObjectEditor({
   };
   const numSteps = beats * subDivisions;
   const [selectedIdx, setSelectedIdx] = useState(0);
-  const [splitY, setSplitY] = useState(200);
-  const [splitX, setSplitX] = useState(140);
+  const savedSplitY = useLayoutSettingsStore((s) =>
+    s.layout?.splits?.[PATTERN_LAYERS_SPLIT_ID]?.sizePx,
+  );
+  const savedSplitX = useLayoutSettingsStore((s) =>
+    s.layout?.splits?.[PATTERN_SCORE_SPLIT_ID]?.sizePx,
+  );
+  const [splitY, setSplitY] = useState<number>(
+    Number.isFinite(savedSplitY) ? (savedSplitY as number) : DEFAULT_SPLIT_SIZE_PX,
+  );
+  const [splitX, setSplitX] = useState<number>(
+    Number.isFinite(savedSplitX) ? (savedSplitX as number) : DEFAULT_SPLIT_SIZE_PX,
+  );
+  const saveYSplitTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const saveXSplitTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    if (Number.isFinite(savedSplitY)) setSplitY(savedSplitY as number);
+  }, [savedSplitY]);
+
+  useEffect(() => {
+    if (Number.isFinite(savedSplitX)) setSplitX(savedSplitX as number);
+  }, [savedSplitX]);
+
+  useEffect(() => () => {
+    if (saveYSplitTimer.current) clearTimeout(saveYSplitTimer.current);
+    if (saveXSplitTimer.current) clearTimeout(saveXSplitTimer.current);
+  }, []);
   const draggingSplitY = useRef(false);
   const draggingSplitX = useRef(false);
   const {
@@ -329,7 +360,18 @@ export default function PatternObjectEditor({
     const onMove = (ev: MouseEvent) => {
       if (!draggingSplitY.current || !parent) return;
       const rect = parent.getBoundingClientRect();
-      setSplitY(Math.max(60, Math.min(rect.height - 60, ev.clientY - rect.top)));
+      const next = Math.max(60, Math.min(rect.height - 60, ev.clientY - rect.top));
+      setSplitY(next);
+
+      if (saveYSplitTimer.current) clearTimeout(saveYSplitTimer.current);
+      saveYSplitTimer.current = setTimeout(() => {
+        void useLayoutSettingsStore.getState().updateSplitLocation(PATTERN_LAYERS_SPLIT_ID, {
+          orientation: 'horizontal',
+          controlledPane: 'first',
+          sizePx: Math.round(next),
+        });
+        saveYSplitTimer.current = null;
+      }, SAVE_DEBOUNCE_MS);
     };
     const onUp = () => {
       draggingSplitY.current = false;
@@ -348,7 +390,18 @@ export default function PatternObjectEditor({
       const parent = (e.target as HTMLElement).closest('.pattern-top') as HTMLElement;
       if (!parent) return;
       const rect = parent.getBoundingClientRect();
-      setSplitX(Math.max(80, Math.min(300, ev.clientX - rect.left)));
+      const next = Math.max(80, Math.min(300, ev.clientX - rect.left));
+      setSplitX(next);
+
+      if (saveXSplitTimer.current) clearTimeout(saveXSplitTimer.current);
+      saveXSplitTimer.current = setTimeout(() => {
+        void useLayoutSettingsStore.getState().updateSplitLocation(PATTERN_SCORE_SPLIT_ID, {
+          orientation: 'horizontal',
+          controlledPane: 'first',
+          sizePx: Math.round(next),
+        });
+        saveXSplitTimer.current = null;
+      }, SAVE_DEBOUNCE_MS);
     };
     const onUp = () => {
       draggingSplitX.current = false;

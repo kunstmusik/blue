@@ -173,8 +173,10 @@ const AUXILIARY_SEED_DEFINITIONS: Record<
       'MidiInputPanelTopComponent',
     ],
     defaultActivePanelId: 'SoundObjectPropertiesTopComponent',
-    defaultDockedSize: 360,
-    defaultSlideoutSize: 360,
+    // 200px controlled-pane default mirrors Java Blue's
+    // `setDividerLocation(200)` split-pane defaults (see SPEC 054 research.md).
+    defaultDockedSize: 200,
+    defaultSlideoutSize: 200,
   },
   'output-main': {
     seedGroupId: 'output-main',
@@ -191,8 +193,10 @@ const AUXILIARY_SEED_DEFINITIONS: Record<
       'ClojureConsoleTopComponent',
     ],
     defaultActivePanelId: 'ScoreObjectEditorTopComponent',
-    defaultDockedSize: 228,
-    defaultSlideoutSize: 228,
+    // 200px controlled-pane default mirrors Java Blue's
+    // `setDividerLocation(200)` split-pane defaults (see SPEC 054 research.md).
+    defaultDockedSize: 200,
+    defaultSlideoutSize: 200,
   },
 };
 

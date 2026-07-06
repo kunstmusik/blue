@@ -58,7 +58,9 @@ export default function OrchestraPanel(): React.ReactElement {
         className="h-full min-h-0"
         firstClassName="min-w-[280px]"
         secondClassName="min-w-0"
-        initialSplit={0.42}
+        splitId="orchestra.outer"
+        controlledPane="first"
+        defaultSizePx={200}
         minFirstSize={300}
         minSecondSize={360}
         orientation="horizontal"
@@ -68,7 +70,9 @@ export default function OrchestraPanel(): React.ReactElement {
             className="h-full min-h-0"
             firstClassName="min-h-0"
             secondClassName="min-h-0"
-            initialSplit={0.78}
+            splitId="orchestra.library"
+            controlledPane="first"
+            defaultSizePx={200}
             minFirstSize={240}
             minSecondSize={120}
             orientation="vertical"

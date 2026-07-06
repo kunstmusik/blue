@@ -7,6 +7,11 @@ import {
   useMeasuredElementSize,
 } from '../../shared/line-editor/EditableLineCanvas';
 import { LineDefinitionTable } from '../../shared/line-editor/LineDefinitionTable';
+import { useLayoutSettingsStore } from '../../../../../stores/layout-settings-store';
+import { DEFAULT_SPLIT_SIZE_PX } from '../../../../../../shared/window-layout-settings';
+
+const LINE_OBJECT_SPLIT_ID = 'line-object.lines' as const;
+const SAVE_DEBOUNCE_MS = 150;
 
 function createNextLineName(lines: LineData[]): string {
   let lineNumber = 0;
@@ -31,9 +36,25 @@ export default function LineObjectEditor({
 
   const { lines } = editor.payload as { lines: LineData[] };
   const [selectedLineIndex, setSelectedLineIndex] = useState(0);
-  const [splitX, setSplitX] = useState(280);
+  const savedSplitPx = useLayoutSettingsStore((s) =>
+    s.layout?.splits?.[LINE_OBJECT_SPLIT_ID]?.sizePx,
+  );
+  const [splitX, setSplitX] = useState<number>(
+    Number.isFinite(savedSplitPx) ? (savedSplitPx as number) : DEFAULT_SPLIT_SIZE_PX,
+  );
   const draggingSplit = useRef(false);
+  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { ref: canvasHostRef, size: canvasSize } = useMeasuredElementSize<HTMLDivElement>({ width: 720, height: 360 });
+
+  useEffect(() => {
+    if (Number.isFinite(savedSplitPx)) {
+      setSplitX(savedSplitPx as number);
+    }
+  }, [savedSplitPx]);
+
+  useEffect(() => () => {
+    if (saveTimer.current) clearTimeout(saveTimer.current);
+  }, []);
 
   useEffect(() => {
     if (selectedLineIndex >= lines.length) {
@@ -90,7 +111,18 @@ export default function LineObjectEditor({
         return;
       }
       const rect = parent.getBoundingClientRect();
-      setSplitX(Math.max(220, Math.min(420, moveEvent.clientX - rect.left)));
+      const next = Math.max(220, Math.min(420, moveEvent.clientX - rect.left));
+      setSplitX(next);
+
+      if (saveTimer.current) clearTimeout(saveTimer.current);
+      saveTimer.current = setTimeout(() => {
+        void useLayoutSettingsStore.getState().updateSplitLocation(LINE_OBJECT_SPLIT_ID, {
+          orientation: 'horizontal',
+          controlledPane: 'first',
+          sizePx: Math.round(next),
+        });
+        saveTimer.current = null;
+      }, SAVE_DEBOUNCE_MS);
     };
 
     const onUp = () => {

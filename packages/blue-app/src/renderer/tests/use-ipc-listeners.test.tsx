@@ -9,6 +9,14 @@ import { useProjectStore } from '../stores/project-store';
 import { usePlaybackStore } from '../stores/playback-store';
 import { useUIStore } from '../stores/ui-store';
 import { useSettingsStore } from '../stores/settings-store';
+import { useLayoutSettingsStore } from '../stores/layout-settings-store';
+import { createDefaultProgramSettings } from '../../shared/program-settings';
+import {
+  applyWindowLayoutUpdate,
+  createDefaultWindowLayoutSettings,
+  type WindowLayoutSettingsSnapshot,
+  type WindowLayoutUpdateRequest,
+} from '../../shared/window-layout-settings';
 
 (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -34,6 +42,38 @@ function getListenerCount(listeners: ListenerMap, channel: string): number {
   return listeners.get(channel)?.size ?? 0;
 }
 
+function ensureLocalStorage(): Storage {
+  if (typeof globalThis.localStorage !== 'undefined') {
+    return globalThis.localStorage;
+  }
+
+  const values = new Map<string, string>();
+  const storage: Storage = {
+    get length() {
+      return values.size;
+    },
+    clear: vi.fn(() => values.clear()),
+    getItem: vi.fn((key: string) => values.get(key) ?? null),
+    key: vi.fn((index: number) => Array.from(values.keys())[index] ?? null),
+    removeItem: vi.fn((key: string) => {
+      values.delete(key);
+    }),
+    setItem: vi.fn((key: string, value: string) => {
+      values.set(key, value);
+    }),
+  };
+
+  Object.defineProperty(globalThis, 'localStorage', {
+    value: storage,
+    configurable: true,
+  });
+  Object.defineProperty(window, 'localStorage', {
+    value: storage,
+    configurable: true,
+  });
+  return storage;
+}
+
 describe('useIPCListeners', () => {
   let container: HTMLDivElement;
   let root: Root;
@@ -53,6 +93,8 @@ describe('useIPCListeners', () => {
     onGeneratedCsd: vi.fn((cb: (...args: unknown[]) => void) => addListener(listeners, 'generated-csd', cb)),
     onGeneratedCsdError: vi.fn((cb: (...args: unknown[]) => void) => addListener(listeners, 'generated-csd-error', cb)),
     onBlueLiveStatus: vi.fn((cb: (...args: unknown[]) => void) => addListener(listeners, 'blue-live-status', cb)),
+    getProgramSettings: vi.fn(),
+    updateWindowLayout: vi.fn(),
   };
 
   function Harness(): React.ReactElement {
@@ -61,6 +103,7 @@ describe('useIPCListeners', () => {
   }
 
   beforeEach(() => {
+    ensureLocalStorage().clear();
     listeners.clear();
     Object.assign(window, { blueAPI });
     container = document.createElement('div');
@@ -79,6 +122,11 @@ describe('useIPCListeners', () => {
       oscOutputPort: 0,
       oscOutputHost: 'localhost',
     });
+    useLayoutSettingsStore.setState({ layout: null });
+    blueAPI.getProgramSettings.mockResolvedValue(createDefaultProgramSettings('darwin'));
+    blueAPI.updateWindowLayout.mockImplementation(async (request: WindowLayoutUpdateRequest) =>
+      applyWindowLayoutUpdate(createDefaultWindowLayoutSettings(), request),
+    );
   });
 
   afterEach(() => {
@@ -87,6 +135,8 @@ describe('useIPCListeners', () => {
     });
     container.remove();
     delete (window as Window & { blueAPI?: typeof blueAPI }).blueAPI;
+    useLayoutSettingsStore.setState({ layout: null });
+    globalThis.localStorage?.clear();
     vi.clearAllMocks();
   });
 
@@ -172,5 +222,48 @@ describe('useIPCListeners', () => {
     });
 
     expect(useProjectStore.getState().missingAudioSession).toBeNull();
+  });
+
+  it('sends legacy layout values through updateWindowLayout during startup migration', async () => {
+    const legacyBounds = { x: 44, y: 55, width: 1111, height: 777 };
+    const legacyWorkbench = '{"version":5,"legacy":true}';
+    let persistedLayout: WindowLayoutSettingsSnapshot = createDefaultWindowLayoutSettings();
+
+    localStorage.setItem('blue-settings', JSON.stringify({ windowBounds: legacyBounds }));
+    localStorage.setItem('blue-workbench-layout', legacyWorkbench);
+    blueAPI.getProgramSettings.mockResolvedValue({
+      ...createDefaultProgramSettings('darwin'),
+      appSpecific: {
+        ...createDefaultProgramSettings('darwin').appSpecific,
+        windowLayout: persistedLayout,
+      },
+    });
+    blueAPI.updateWindowLayout.mockImplementation(async (request: WindowLayoutUpdateRequest) => {
+      persistedLayout = applyWindowLayoutUpdate(
+        persistedLayout,
+        request,
+        () => '2026-07-05T12:00:00.000Z',
+      );
+      return persistedLayout;
+    });
+
+    await act(async () => {
+      root.render(<Harness />);
+    });
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(blueAPI.updateWindowLayout).toHaveBeenCalledWith({
+      type: 'legacy-migration',
+      legacy: {
+        windowBounds: legacyBounds,
+        workbenchSerializedLayout: legacyWorkbench,
+      },
+    });
+    expect(persistedLayout.windows.main?.normalBounds).toEqual(legacyBounds);
+    expect(persistedLayout.workbench?.serializedLayout).toBe(legacyWorkbench);
+    expect(useLayoutSettingsStore.getState().layout?.windows.main?.normalBounds).toEqual(legacyBounds);
   });
 });

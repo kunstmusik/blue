@@ -87,7 +87,12 @@ describe('application menu template', () => {
 
     const windowMenu = getSubmenu(template[5]);
     expect(windowMenu.map((item) => item.label).slice(0, 5)).toEqual(['Editors', 'Properties', 'Output', 'REPL', 'Toggle Dev Tools']);
-    expect(windowMenu.find((item) => item.label === 'Reset Default Layout')).toBeTruthy();
+    expect(windowMenu.find((item) => item.label === 'Reset Default Layout')).toBeFalsy();
+    expect(windowMenu.find((item) => item.label === 'Reset Windows')).toBeTruthy();
+
+    const resetItem = windowMenu.find((item) => item.label === 'Reset Windows');
+    resetItem?.click?.();
+    expect(handlers.onResetLayout).toHaveBeenCalledTimes(1);
 
     const editorsMenu = getSubmenu(windowMenu.find((item) => item.label === 'Editors'));
     expect(editorsMenu.map((item) => item.label).slice(0, 3)).toEqual(['Score', 'Orchestra', 'Global Orchestra']);

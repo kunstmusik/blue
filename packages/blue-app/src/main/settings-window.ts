@@ -1,7 +1,12 @@
 import { BrowserWindow } from 'electron';
 import * as path from 'path';
+import {
+  attachWindowStateHandlers,
+  restoreWindowState,
+} from './window-state-manager';
 
 let settingsWindow: BrowserWindow | null = null;
+let disposeStateHandlers: (() => void) | null = null;
 
 export function openSettingsWindow(mainWindow: BrowserWindow): void {
   if (settingsWindow && !settingsWindow.isDestroyed()) {
@@ -32,11 +37,18 @@ export function openSettingsWindow(mainWindow: BrowserWindow): void {
     },
   });
 
+  restoreWindowState(settingsWindow, 'settings');
+
+  disposeStateHandlers?.();
+  disposeStateHandlers = attachWindowStateHandlers(settingsWindow, 'settings');
+
   settingsWindow.once('ready-to-show', () => {
     settingsWindow?.show();
   });
 
   settingsWindow.on('closed', () => {
+    disposeStateHandlers?.();
+    disposeStateHandlers = null;
     settingsWindow = null;
   });
 
@@ -53,4 +65,6 @@ export function closeSettingsWindow(): void {
     settingsWindow.close();
     settingsWindow = null;
   }
+  disposeStateHandlers?.();
+  disposeStateHandlers = null;
 }

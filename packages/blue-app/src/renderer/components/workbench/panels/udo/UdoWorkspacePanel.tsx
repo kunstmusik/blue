@@ -267,7 +267,9 @@ export default function UdoWorkspacePanel({
   return (
     <SplitPane
       orientation="vertical"
-      initialSplit={0.4}
+      splitId="udo.workspace.outer"
+      controlledPane="first"
+      defaultSizePx={200}
       minFirstSize={200}
       minSecondSize={300}
       ariaLabel="UDO workspace split"

@@ -530,7 +530,9 @@ export default function PianoRollEditor({ document: scoreDocument, onPatch }: Sc
               <SplitPane
                 orientation="vertical"
                 ariaLabel="PianoRoll canvas and field editor splitter"
-                initialSplit={0.72}
+                splitId="piano-roll.field-editor"
+                controlledPane="first"
+                defaultSizePx={200}
                 minFirstSize={100}
                 minSecondSize={40}
                 first={

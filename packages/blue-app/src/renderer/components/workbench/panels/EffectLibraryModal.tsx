@@ -361,7 +361,9 @@ export default function EffectLibraryModal(): React.ReactElement | null {
     <SplitPane
       orientation="horizontal"
       ariaLabel="Effects Library split pane"
-      initialSplit={0.28}
+      splitId="effects-library.main"
+      controlledPane="first"
+      defaultSizePx={200}
       minFirstSize={160}
       minSecondSize={300}
       firstClassName="h-full bg-app-bg"

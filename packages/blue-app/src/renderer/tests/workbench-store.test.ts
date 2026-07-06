@@ -127,20 +127,6 @@ describe('workbench store native menu commands', () => {
     expect(openPanel).toHaveBeenCalledWith('ScoreTopComponent');
   });
 
-  it('routes reset-layout commands through resetLayout', () => {
-    const resetLayout = vi.fn();
-    useWorkbenchStore.setState({
-      openPanel: vi.fn() as never,
-      resetLayout: resetLayout as never,
-    });
-
-    useWorkbenchStore.getState().handleNativeMenuCommand({
-      type: 'reset-layout',
-    });
-
-    expect(resetLayout).toHaveBeenCalledOnce();
-  });
-
   it('routes open-effects-library commands through the UI store', () => {
     useWorkbenchStore.setState({
       openPanel: vi.fn() as never,
@@ -198,5 +184,36 @@ describe('workbench store native menu commands', () => {
     });
 
     expect(addMarkerAtTime).toHaveBeenCalledWith(10);
+  });
+});
+
+describe('workbench-store reset-windows command', () => {
+  it('routes the reset-windows native menu command to resetLayout', () => {
+    const resetLayoutSpy = vi.spyOn(useWorkbenchStore.getState(), 'resetLayout');
+    useWorkbenchStore.getState().handleNativeMenuCommand({
+      type: 'reset-windows',
+    });
+    expect(resetLayoutSpy).toHaveBeenCalledTimes(1);
+    resetLayoutSpy.mockRestore();
+  });
+
+  it('resetLayout delegates to loadLayout(null) to clear and rebuild dockview', () => {
+    // Restore the original store functions (previous tests may have replaced
+    // resetLayout with a vi.fn() mock via setState).
+    useWorkbenchStore.setState({
+      ...useWorkbenchStore.getInitialState(),
+      api: dockviewApiStub,
+    });
+    const loadLayoutSpy = vi.spyOn(useWorkbenchStore.getState(), 'loadLayout');
+
+    try {
+      useWorkbenchStore.getState().resetLayout();
+    } catch {
+      // loadLayout calls buildDefaultWorkbenchLayout which needs a full
+      // dockview API; we only need to verify the delegation, not the rebuild.
+    }
+
+    expect(loadLayoutSpy).toHaveBeenCalledWith(null);
+    loadLayoutSpy.mockRestore();
   });
 });

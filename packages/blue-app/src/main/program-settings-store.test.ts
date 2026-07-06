@@ -79,4 +79,23 @@ describe('program-settings-store', () => {
     expect(settings.general.messageColorsEnabled).toBe(false);
     expect(settings.realtimeRender.audioDriver).toBe('pa_bl');
   });
+
+  it('falls back to defaults when the settings file contains corrupted JSON', () => {
+    const filePath = path.join(tempDir, 'program-settings.json');
+    fs.writeFileSync(filePath, '{ this is not valid JSON !!!');
+    clearSettingsCache();
+
+    const settings = loadProgramSettings('darwin');
+    expect(settings.version).toBe(1);
+    expect(settings.general.workDirectory).toBe('');
+  });
+
+  it('falls back to defaults when the settings file is empty', () => {
+    const filePath = path.join(tempDir, 'program-settings.json');
+    fs.writeFileSync(filePath, '');
+    clearSettingsCache();
+
+    const settings = loadProgramSettings('darwin');
+    expect(settings.version).toBe(1);
+  });
 });

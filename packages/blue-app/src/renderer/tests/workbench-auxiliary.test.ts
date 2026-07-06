@@ -960,3 +960,30 @@ describe('closeAuxiliaryPanelLayout', () => {
     expect(api.getPanel('SoundObjectPropertiesTopComponent')).toBeUndefined();
   });
 });
+
+describe('auxiliary 200px controlled-pane defaults (Java Blue parity)', () => {
+  it('uses 200px for the side (properties) auxiliary default docked size', () => {
+    const state = createDefaultAuxiliaryLayoutState();
+    const properties = state.groups.find((g) => g.seedGroupId === 'properties-main')!;
+    expect(properties.dockedSize).toBe(200);
+    expect(properties.slideoutSize).toBe(200);
+  });
+
+  it('uses 200px for the bottom (output) auxiliary default docked size', () => {
+    const state = createDefaultAuxiliaryLayoutState();
+    const output = state.groups.find((g) => g.seedGroupId === 'output-main')!;
+    expect(output.dockedSize).toBe(200);
+    expect(output.slideoutSize).toBe(200);
+  });
+
+  it('returns 200px for every edge through getDefaultDockedSizeForEdge equivalents', () => {
+    const state = createDefaultAuxiliaryLayoutState();
+    for (const edge of ['left', 'right', 'bottom'] as const) {
+      const sizes = captureAuxiliaryDockedSizesFromApi(
+        createDockviewApiStub(),
+        state,
+      );
+      expect(sizes[edge]).toBe(200);
+    }
+  });
+});

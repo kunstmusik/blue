@@ -38,6 +38,11 @@ import type {
   CurrentAppSettingsSnapshot,
   UsageParityMatrixEntry,
 } from '../shared/program-settings';
+import type {
+  WindowLayoutSettingsSnapshot,
+  WindowLayoutUpdateRequest,
+} from '../shared/window-layout-settings';
+import { WINDOW_LAYOUT_RESET_CHANNEL } from '../shared/window-layout-settings';
 
 contextBridge.exposeInMainWorld('blueAPI', {
   // File operations
@@ -225,6 +230,19 @@ contextBridge.exposeInMainWorld('blueAPI', {
     ipcRenderer.invoke('program-settings:usage-matrix') as Promise<UsageParityMatrixEntry[]>,
   syncLegacyRendererSettings: (snapshot: CurrentAppSettingsSnapshot) =>
     ipcRenderer.invoke('program-settings:sync-legacy-renderer-settings', snapshot) as Promise<ProgramSettingsSnapshot>,
+
+  // Window Layout
+  getWindowLayout: () =>
+    ipcRenderer.invoke('window-layout:get') as Promise<WindowLayoutSettingsSnapshot>,
+  updateWindowLayout: (request: WindowLayoutUpdateRequest) =>
+    ipcRenderer.invoke('window-layout:update', request) as Promise<WindowLayoutSettingsSnapshot>,
+  resetWindows: () =>
+    ipcRenderer.invoke('window-layout:reset') as Promise<WindowLayoutSettingsSnapshot>,
+  onWindowLayoutReset: (callback: () => void) => {
+    const handler = () => callback();
+    ipcRenderer.on(WINDOW_LAYOUT_RESET_CHANNEL, handler);
+    return () => { ipcRenderer.removeListener(WINDOW_LAYOUT_RESET_CHANNEL, handler); };
+  },
 
   // Evaluate Code
   evaluateCode: (request: { editorKind: string; text: string; sourcePanelId: string }) =>

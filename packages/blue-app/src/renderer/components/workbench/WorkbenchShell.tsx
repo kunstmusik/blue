@@ -32,6 +32,7 @@ import {
 } from './auxiliary-drag';
 import { useDocumentMouseDownOutside } from '../../hooks/use-document-mousedown-outside';
 import { useWorkbenchStore } from '../../stores/workbench-store';
+import { useLayoutSettingsStore } from '../../stores/layout-settings-store';
 
 const LAYOUT_STORAGE_KEY = 'blue-workbench-layout';
 const AUXILIARY_DRAG_THRESHOLD = 8;
@@ -95,111 +96,139 @@ export default function WorkbenchShell() {
 
   const persistLayout = useCallback(() => {
     const layout = useWorkbenchStore.getState().saveLayout();
-    if (layout) {
+    if (!layout) return;
+
+    // Keep the legacy localStorage key in sync so existing users do not lose
+    // their layout on the first launch with the new app-wide store. The
+    // canonical source is the app-wide layout settings; this mirror is a
+    // best-effort fallback only.
+    try {
       localStorage.setItem(LAYOUT_STORAGE_KEY, layout);
+    } catch {
+      // localStorage may be unavailable in private mode; ignore.
     }
+
+    // Persist the workbench envelope through the canonical app-wide store.
+    void useLayoutSettingsStore.getState().updateWorkbenchLayout(layout);
   }, []);
 
   const onReady = useCallback(
     (event: DockviewReadyEvent) => {
       disposeListeners();
       setApi(event.api);
-      useWorkbenchStore.getState().loadLayout(
-        localStorage.getItem(LAYOUT_STORAGE_KEY),
-      );
-      useWorkbenchStore.getState().syncAuxiliaryLayout();
 
-      listenersRef.current = [
-        event.api.onWillDragGroup((dragEvent) => {
-          if (
-            dragEvent.group.panels.some((panel) => isAuxiliaryPanelId(panel.id))
-          ) {
-            dragEvent.nativeEvent.preventDefault();
+      void (async () => {
+        const layoutStore = useLayoutSettingsStore.getState();
+        if (!layoutStore.layout) {
+          await layoutStore.load();
+        }
+
+        // Prefer the canonical app-wide workbench layout; fall back to legacy
+        // localStorage so existing users see their saved workspace on first
+        // launch with the new contract.
+        const appWideLayout = useLayoutSettingsStore.getState().layout?.workbench?.serializedLayout ?? null;
+        const fallbackLegacyLayout = (() => {
+          try {
+            return localStorage.getItem(LAYOUT_STORAGE_KEY);
+          } catch {
+            return null;
           }
-        }),
-        event.api.onWillDrop((dropEvent) => {
-          const transfer = dropEvent.getData();
+        })();
+        useWorkbenchStore.getState().loadLayout(appWideLayout ?? fallbackLegacyLayout);
+        useWorkbenchStore.getState().syncAuxiliaryLayout();
 
-          if (transfer?.panelId && isAuxiliaryPanelId(transfer.panelId)) {
-            pendingDockviewSizeSnapshotRef.current =
-              captureAuxiliaryDockedSizesFromApi(
-                event.api,
-                useWorkbenchStore.getState().auxiliary,
-              );
-            logAuxiliaryDockedSizeDebug('shell.onWillDrop snapshot', event.api, {
-              snapshot: pendingDockviewSizeSnapshotRef.current,
+        listenersRef.current = [
+          event.api.onWillDragGroup((dragEvent) => {
+            if (
+              dragEvent.group.panels.some((panel) => isAuxiliaryPanelId(panel.id))
+            ) {
+              dragEvent.nativeEvent.preventDefault();
+            }
+          }),
+          event.api.onWillDrop((dropEvent) => {
+            const transfer = dropEvent.getData();
+
+            if (transfer?.panelId && isAuxiliaryPanelId(transfer.panelId)) {
+              pendingDockviewSizeSnapshotRef.current =
+                captureAuxiliaryDockedSizesFromApi(
+                  event.api,
+                  useWorkbenchStore.getState().auxiliary,
+                );
+              logAuxiliaryDockedSizeDebug('shell.onWillDrop snapshot', event.api, {
+                snapshot: pendingDockviewSizeSnapshotRef.current,
+                state: useWorkbenchStore.getState().auxiliary,
+                meta: {
+                  panelId: transfer.panelId,
+                  dropKind: dropEvent.kind,
+                  targetGroupId: dropEvent.group?.id,
+                },
+              });
+            }
+
+            if (
+              shouldPreventAuxiliaryPanelDrop(
+                transfer?.panelId,
+                dropEvent.group?.id,
+                dropEvent.kind,
+              )
+            ) {
+              dropEvent.preventDefault();
+            }
+          }),
+          event.api.onDidLayoutChange(() => {
+            useWorkbenchStore.getState().syncAuxiliaryLayout();
+            persistLayout();
+          }),
+          event.api.onDidActivePanelChange(() => {
+            useWorkbenchStore.getState().syncAuxiliaryLayout();
+            persistLayout();
+          }),
+          event.api.onDidDrop(() => {
+            pendingDockviewSizeSnapshotRef.current = null;
+          }),
+          event.api.onDidMovePanel(({ panel, from }) => {
+            if (!isAuxiliaryPanelId(panel.id) || panel.group.id === from.id) {
+              return;
+            }
+
+            const shell = shellRef.current;
+            const mainElement = shell?.querySelector<HTMLElement>(
+              '.workbench-shell__main',
+            );
+
+            const targetEdge =
+              getAuxiliaryEdgeFromGroupElement(panel.group.element) ??
+              (mainElement
+                ? getAuxiliaryEdgeFromBounds(
+                    mainElement.getBoundingClientRect(),
+                    panel.group.element.getBoundingClientRect(),
+                  )
+                : undefined);
+
+            if (!targetEdge) {
+              pendingDockviewSizeSnapshotRef.current = null;
+              return;
+            }
+
+            const preservedDockedSizes =
+              pendingDockviewSizeSnapshotRef.current ?? undefined;
+            logAuxiliaryDockedSizeDebug('shell.onDidMovePanel before store move', event.api, {
+              snapshot: preservedDockedSizes,
               state: useWorkbenchStore.getState().auxiliary,
               meta: {
-                panelId: transfer.panelId,
-                dropKind: dropEvent.kind,
-                targetGroupId: dropEvent.group?.id,
+                panelId: panel.id,
+                fromGroupId: from.id,
+                toGroupId: panel.group.id,
+                targetEdge,
               },
             });
-          }
-
-          if (
-            shouldPreventAuxiliaryPanelDrop(
-              transfer?.panelId,
-              dropEvent.group?.id,
-              dropEvent.kind,
-            )
-          ) {
-            dropEvent.preventDefault();
-          }
-        }),
-        event.api.onDidLayoutChange(() => {
-          useWorkbenchStore.getState().syncAuxiliaryLayout();
-          persistLayout();
-        }),
-        event.api.onDidActivePanelChange(() => {
-          useWorkbenchStore.getState().syncAuxiliaryLayout();
-          persistLayout();
-        }),
-        event.api.onDidDrop(() => {
-          pendingDockviewSizeSnapshotRef.current = null;
-        }),
-        event.api.onDidMovePanel(({ panel, from }) => {
-          if (!isAuxiliaryPanelId(panel.id) || panel.group.id === from.id) {
-            return;
-          }
-
-          const shell = shellRef.current;
-          const mainElement = shell?.querySelector<HTMLElement>(
-            '.workbench-shell__main',
-          );
-
-          const targetEdge =
-            getAuxiliaryEdgeFromGroupElement(panel.group.element) ??
-            (mainElement
-              ? getAuxiliaryEdgeFromBounds(
-                  mainElement.getBoundingClientRect(),
-                  panel.group.element.getBoundingClientRect(),
-                )
-              : undefined);
-
-          if (!targetEdge) {
             pendingDockviewSizeSnapshotRef.current = null;
-            return;
-          }
+            movePanelToEdge(panel.id, targetEdge, preservedDockedSizes);
+          }),
+        ];
 
-          const preservedDockedSizes =
-            pendingDockviewSizeSnapshotRef.current ?? undefined;
-          logAuxiliaryDockedSizeDebug('shell.onDidMovePanel before store move', event.api, {
-            snapshot: preservedDockedSizes,
-            state: useWorkbenchStore.getState().auxiliary,
-            meta: {
-              panelId: panel.id,
-              fromGroupId: from.id,
-              toGroupId: panel.group.id,
-              targetEdge,
-            },
-          });
-          pendingDockviewSizeSnapshotRef.current = null;
-          movePanelToEdge(panel.id, targetEdge, preservedDockedSizes);
-        }),
-      ];
-
-      persistLayout();
+        persistLayout();
+      })();
     },
     [disposeListeners, movePanelToEdge, persistLayout, setApi],
   );
@@ -210,7 +239,23 @@ export default function WorkbenchShell() {
     }
 
     window.addEventListener('beforeunload', handleBeforeUnload);
-    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+
+    // Apply optimistic Reset Windows broadcast: clear the local snapshot, ask
+    // the workbench to drop its layout, and let the canonical reset IPC
+    // resolve separately through the layout store.
+    const blueAPI = typeof window !== 'undefined' ? window.blueAPI : undefined;
+    const ipc = blueAPI as unknown as {
+      onWindowLayoutReset?: (cb: () => void) => () => void;
+    } | undefined;
+    const unsubscribeReset = ipc?.onWindowLayoutReset?.(() => {
+      useLayoutSettingsStore.getState().applyReset();
+      useWorkbenchStore.getState().resetLayout();
+    });
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      unsubscribeReset?.();
+    };
   }, [persistLayout]);
 
   useEffect(() => {

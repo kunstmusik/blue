@@ -527,7 +527,9 @@ export default function ScorePanel() {
         className="flex-1 min-h-0 bg-app-canvas"
         firstClassName="min-h-0"
         secondClassName="min-w-0"
-        initialSplit={0.19}
+        splitId="score.main"
+        controlledPane="first"
+        defaultSizePx={200}
         minFirstSize={80}
         minSecondSize={200}
         orientation="horizontal"

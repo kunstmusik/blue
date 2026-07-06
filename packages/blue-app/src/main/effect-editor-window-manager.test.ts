@@ -1,9 +1,18 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import * as fs from 'fs';
+import * as path from 'path';
+import * as os from 'os';
 import {
   closeEffectEditorWindow,
   closeEffectEditorWindowsForOwner,
   openEffectEditorWindow,
+  openEffectInterfaceWindow,
 } from './effect-editor-window-manager';
+import {
+  clearSettingsCache,
+  setSettingsFilePathForTesting,
+} from './program-settings-store';
+import { loadWindowLayoutSettings, saveWindowLayoutSettings } from './window-layout-store';
 
 const electronMock = vi.hoisted(() => {
   const instances: MockBrowserWindow[] = [];
@@ -20,18 +29,25 @@ const electronMock = vi.hoisted(() => {
       }
     });
     on = vi.fn((event: string, handler: () => void) => {
-      if (event === 'closed') {
-        this.closedHandler = handler;
-      }
+      this.eventHandlers[event] = handler;
     });
+    removeListener = vi.fn();
     close = vi.fn(() => {
       this.destroyed = true;
       this.closedHandler?.();
     });
     isDestroyed = vi.fn(() => this.destroyed);
+    isMaximized = vi.fn(() => false);
+    isFullScreen = vi.fn(() => false);
+    isMinimized = vi.fn(() => false);
+    getBounds = vi.fn(() => ({ x: 320, y: 240, width: 900, height: 700 }));
+    getNormalBounds = vi.fn(() => ({ x: 320, y: 240, width: 900, height: 700 }));
+    setBounds = vi.fn();
+    setContentSize = vi.fn();
 
     private readyToShowHandler?: () => void;
     private closedHandler?: () => void;
+    eventHandlers: Record<string, () => void> = {};
 
     constructor(options: Record<string, unknown>) {
       this.options = options;
@@ -41,6 +57,10 @@ const electronMock = vi.hoisted(() => {
     triggerReadyToShow(): void {
       this.readyToShowHandler?.();
     }
+
+    trigger(event: string): void {
+      this.eventHandlers[event]?.();
+    }
   }
 
   return { instances, MockBrowserWindow };
@@ -48,9 +68,19 @@ const electronMock = vi.hoisted(() => {
 
 vi.mock('electron', () => ({
   BrowserWindow: electronMock.MockBrowserWindow,
+  screen: {
+    getAllDisplays: () => [
+      { bounds: { x: 0, y: 0, width: 1920, height: 1080 }, workArea: { x: 0, y: 0, width: 1920, height: 1080 } },
+    ],
+  },
 }));
 
+let tempDir: string;
+
 beforeEach(() => {
+  tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'blue-effect-window-test-'));
+  setSettingsFilePathForTesting(path.join(tempDir, 'program-settings.json'));
+  clearSettingsCache();
   closeEffectEditorWindowsForOwner('project');
   closeEffectEditorWindowsForOwner('library');
   electronMock.instances.length = 0;
@@ -60,6 +90,8 @@ beforeEach(() => {
 afterEach(() => {
   closeEffectEditorWindowsForOwner('project');
   closeEffectEditorWindowsForOwner('library');
+  fs.rmSync(tempDir, { recursive: true, force: true });
+  clearSettingsCache();
   delete process.env.VITE_DEV_SERVER_URL;
   vi.clearAllMocks();
 });
@@ -118,5 +150,61 @@ describe('effect editor window manager', () => {
 
     closeEffectEditorWindow(libraryRequest);
     expect(electronMock.instances[1]?.close).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('effect editor and interface layout persistence', () => {
+  it('persists effect editor bounds on close under the "effect-editor" identity', () => {
+    const mainWindow = { isDestroyed: vi.fn(() => false) } as never;
+    const request = {
+      ownerType: 'project' as const,
+      effectId: 'effect-1',
+      projectRef: { channelId: 'channel-1', chain: 'pre' as const, entryId: 'effect-1' },
+    };
+
+    openEffectEditorWindow(mainWindow, request);
+    const editorWindow = electronMock.instances[0]!;
+    editorWindow.trigger('close');
+
+    const layout = loadWindowLayoutSettings();
+    expect(layout.windows['effect-editor']?.normalBounds).toEqual({ x: 320, y: 240, width: 900, height: 700 });
+  });
+
+  it('persists effect interface bounds on close under the "effect-interface" identity', () => {
+    const mainWindow = { isDestroyed: vi.fn(() => false) } as never;
+    const request = {
+      ownerType: 'project' as const,
+      effectId: 'effect-2',
+      projectRef: { channelId: 'channel-1', chain: 'pre' as const, entryId: 'effect-2' },
+    };
+
+    openEffectInterfaceWindow(mainWindow, request, 460, 560);
+    const interfaceWindow = electronMock.instances[0]!;
+    interfaceWindow.trigger('close');
+
+    const layout = loadWindowLayoutSettings();
+    expect(layout.windows['effect-interface']?.normalBounds).toEqual({ x: 320, y: 240, width: 900, height: 700 });
+  });
+
+  it('restores effect editor bounds from the canonical store before show', () => {
+    saveWindowLayoutSettings({
+      ...loadWindowLayoutSettings(),
+      windows: {
+        'effect-editor': {
+          normalBounds: { x: 200, y: 200, width: 1100, height: 820 },
+          displayState: 'normal',
+        },
+      },
+    });
+
+    const mainWindow = { isDestroyed: vi.fn(() => false) } as never;
+    const request = {
+      ownerType: 'project' as const,
+      effectId: 'effect-3',
+      projectRef: { channelId: 'channel-1', chain: 'pre' as const, entryId: 'effect-3' },
+    };
+
+    openEffectEditorWindow(mainWindow, request);
+    expect(electronMock.instances[0]?.setBounds).toHaveBeenCalledWith({ x: 200, y: 200, width: 1100, height: 820 });
   });
 });

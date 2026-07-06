@@ -1,9 +1,14 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import {
+  clampSplitSizePx,
+  type SplitControlledPane,
+  type SplitId,
+  type SplitOrientation,
+} from '../../../../../shared/window-layout-settings';
+import { useLayoutSettingsStore } from '../../../../stores/layout-settings-store';
 
 const HANDLE_SIZE = 12;
 const KEYBOARD_STEP_PX = 24;
-
-type SplitOrientation = 'horizontal' | 'vertical';
 
 interface SplitPaneProps {
   orientation: SplitOrientation;
@@ -13,16 +18,31 @@ interface SplitPaneProps {
   className?: string;
   firstClassName?: string;
   secondClassName?: string;
+  /**
+   * Legacy ratio-based initial split (0..1). Ignored when `splitId` is set.
+   */
   initialSplit?: number;
   minFirstSize?: number;
   minSecondSize?: number;
+  /**
+   * Stable split identity. When set, the controlled-pane pixel size is
+   * persisted and restored from the app-wide layout settings store instead of
+   * local ratio state.
+   */
+  splitId?: SplitId;
+  /**
+   * Which pane the saved `sizePx` describes. Defaults to `first` to match the
+   * Java Blue `setDividerLocation(200)` convention.
+   */
+  controlledPane?: SplitControlledPane;
+  /**
+   * Pixel size used when no saved value exists. Defaults to 200 to match the
+   * Java Blue side/bottom 200px split defaults.
+   */
+  defaultSizePx?: number;
 }
 
 const useIsomorphicLayoutEffect = typeof window !== 'undefined' ? useLayoutEffect : useEffect;
-
-function clamp(value: number, min: number, max: number): number {
-  return Math.min(Math.max(value, min), max);
-}
 
 function getMainAxisSize(rect: DOMRectReadOnly, orientation: SplitOrientation): number {
   return orientation === 'horizontal' ? rect.width : rect.height;
@@ -47,11 +67,38 @@ export default function SplitPane({
   initialSplit = 0.5,
   minFirstSize = 240,
   minSecondSize = 240,
+  splitId,
+  controlledPane = 'first',
+  defaultSizePx = 200,
 }: SplitPaneProps): React.ReactElement {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const dragCleanupRef = useRef<(() => void) | null>(null);
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [containerSize, setContainerSize] = useState(0);
-  const [splitRatio, setSplitRatio] = useState(() => clamp(initialSplit, 0.1, 0.9));
+
+  const savedSplitLocation = useLayoutSettingsStore((s) =>
+    splitId ? s.layout?.splits?.[splitId] : undefined,
+  );
+
+  const persistedSizePx =
+    savedSplitLocation && Number.isFinite(savedSplitLocation.sizePx)
+      ? savedSplitLocation.sizePx
+      : defaultSizePx;
+
+  const [controlledSizePx, setControlledSizePx] = useState<number>(persistedSizePx);
+  const [splitRatio, setSplitRatio] = useState(() => {
+    const ratio = initialSplit;
+    if (ratio < 0.1) return 0.1;
+    if (ratio > 0.9) return 0.9;
+    return ratio;
+  });
+
+  // When the saved size changes (load/reset), update the local state.
+  useEffect(() => {
+    if (splitId && Number.isFinite(persistedSizePx)) {
+      setControlledSizePx(persistedSizePx);
+    }
+  }, [splitId, persistedSizePx]);
 
   useIsomorphicLayoutEffect(() => {
     const element = containerRef.current;
@@ -77,6 +124,10 @@ export default function SplitPane({
   useEffect(
     () => () => {
       dragCleanupRef.current?.();
+      if (saveTimerRef.current) {
+        clearTimeout(saveTimerRef.current);
+        saveTimerRef.current = null;
+      }
     },
     [],
   );
@@ -84,8 +135,43 @@ export default function SplitPane({
   const availableSize = Math.max(containerSize - HANDLE_SIZE, 0);
   const maxFirstSize = Math.max(0, availableSize - minSecondSize);
   const minFirstBound = Math.max(0, Math.min(minFirstSize, maxFirstSize));
-  const firstSize =
-    availableSize > 0 ? clamp(availableSize * splitRatio, minFirstBound, maxFirstSize) : 0;
+
+  // Choose the rendered first-pane size:
+  //  - When splitId is set, derive from the persisted controlled-pane size and
+  //    clamp for display only. Clamping never rewrites the saved value.
+  //  - Otherwise fall back to the legacy ratio behavior.
+  let firstSize: number;
+  if (splitId) {
+    const isControlledFirst = controlledPane === 'first';
+    const controlledMax = isControlledFirst ? maxFirstSize : Math.max(0, availableSize - minFirstSize);
+    const controlledMin = isControlledFirst ? minFirstBound : Math.max(0, availableSize - maxFirstSize);
+    const clampedControlled = clampSplitSizePx(controlledSizePx, controlledMin, controlledMax);
+    firstSize = isControlledFirst ? clampedControlled : Math.max(0, availableSize - clampedControlled);
+    if (availableSize <= 0) firstSize = 0;
+  } else {
+    firstSize =
+      availableSize > 0
+        ? Math.min(Math.max(availableSize * splitRatio, minFirstBound), maxFirstSize)
+        : 0;
+  }
+
+  const persistControlledSize = (nextControlledSize: number) => {
+    if (!splitId) return;
+    if (!Number.isFinite(nextControlledSize) || nextControlledSize <= 0) return;
+
+    // Debounce so drag updates don't flood the main process.
+    if (saveTimerRef.current) {
+      clearTimeout(saveTimerRef.current);
+    }
+    saveTimerRef.current = setTimeout(() => {
+      void useLayoutSettingsStore.getState().updateSplitLocation(splitId, {
+        orientation,
+        controlledPane,
+        sizePx: Math.round(nextControlledSize),
+      });
+      saveTimerRef.current = null;
+    }, 150);
+  };
 
   const startDrag = (event: React.PointerEvent<HTMLButtonElement>) => {
     if (!containerRef.current || dragCleanupRef.current) return;
@@ -124,9 +210,21 @@ export default function SplitPane({
       const pointerOffset = getPointerOffset(moveEvent, rect, orientation);
       const nextMaxFirstSize = Math.max(0, available - minSecondSize);
       const nextMinFirstSize = Math.max(0, Math.min(minFirstSize, nextMaxFirstSize));
-      const nextFirstSize = clamp(pointerOffset, nextMinFirstSize, nextMaxFirstSize);
+      const nextFirstSize = Math.min(
+        Math.max(pointerOffset, nextMinFirstSize),
+        nextMaxFirstSize,
+      );
 
-      setSplitRatio(nextFirstSize / available);
+      if (splitId) {
+        const nextControlled =
+          controlledPane === 'first'
+            ? nextFirstSize
+            : Math.max(0, available - nextFirstSize);
+        setControlledSizePx(nextControlled);
+        persistControlledSize(nextControlled);
+      } else {
+        setSplitRatio(nextFirstSize / available);
+      }
     };
 
     dragCleanupRef.current = stopDragging;
@@ -138,7 +236,33 @@ export default function SplitPane({
   const handleKeyDown = (event: React.KeyboardEvent<HTMLButtonElement>) => {
     if (availableSize <= 0) return;
 
-    const stepRatio = (event.shiftKey ? KEYBOARD_STEP_PX * 4 : KEYBOARD_STEP_PX) / availableSize;
+    const stepPx = event.shiftKey ? KEYBOARD_STEP_PX * 4 : KEYBOARD_STEP_PX;
+    if (splitId) {
+      let nextFirstSize: number | null = null;
+      if (orientation === 'horizontal') {
+        if (event.key === 'ArrowLeft') nextFirstSize = firstSize - stepPx;
+        else if (event.key === 'ArrowRight') nextFirstSize = firstSize + stepPx;
+      } else {
+        if (event.key === 'ArrowUp') nextFirstSize = firstSize - stepPx;
+        else if (event.key === 'ArrowDown') nextFirstSize = firstSize + stepPx;
+      }
+      if (event.key === 'Home') nextFirstSize = minFirstBound;
+      if (event.key === 'End') nextFirstSize = maxFirstSize;
+      if (nextFirstSize === null || !Number.isFinite(nextFirstSize)) return;
+
+      const clampedFirstSize = clampSplitSizePx(nextFirstSize, minFirstBound, maxFirstSize);
+      const nextControlled =
+        controlledPane === 'first' ? clampedFirstSize : Math.max(0, availableSize - clampedFirstSize);
+      const controlledMax = controlledPane === 'first' ? maxFirstSize : Math.max(0, availableSize - minFirstSize);
+      const controlledMin = controlledPane === 'first' ? minFirstBound : Math.max(0, availableSize - maxFirstSize);
+      const clampedControlledSize = clampSplitSizePx(nextControlled, controlledMin, controlledMax);
+      setControlledSizePx(clampedControlledSize);
+      persistControlledSize(clampedControlledSize);
+      event.preventDefault();
+      return;
+    }
+
+    const stepRatio = stepPx / availableSize;
     const nextRatio = (() => {
       if (orientation === 'horizontal') {
         if (event.key === 'ArrowLeft') return splitRatio - stepRatio;
@@ -156,7 +280,7 @@ export default function SplitPane({
     if (nextRatio === null) return;
 
     event.preventDefault();
-    setSplitRatio(clamp(nextRatio, minFirstBound / availableSize, maxFirstSize / availableSize));
+    setSplitRatio(Math.min(Math.max(nextRatio, minFirstBound / availableSize), maxFirstSize / availableSize));
   };
 
   const containerClasses = [
@@ -187,9 +311,17 @@ export default function SplitPane({
     .filter(Boolean)
     .join(' ');
 
+  const firstPaneDataset = splitId
+    ? { 'data-split-pane': 'first', 'data-split-id': splitId }
+    : { 'data-split-pane': 'first' };
+
   return (
     <div ref={containerRef} className={containerClasses}>
-      <div className={[paneClasses, 'flex-none', firstClassName].filter(Boolean).join(' ')} style={firstPaneStyle}>
+      <div
+        className={[paneClasses, 'flex-none', firstClassName].filter(Boolean).join(' ')}
+        style={firstPaneStyle}
+        {...firstPaneDataset}
+      >
         {first}
       </div>
       <button

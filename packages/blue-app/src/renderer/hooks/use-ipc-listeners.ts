@@ -7,6 +7,13 @@ import { useSettingsStore } from '../stores/settings-store';
 import { useWorkbenchStore } from '../stores/workbench-store';
 import { useOutputStore } from '../stores/output-store';
 import { useBlueLiveStore } from '../stores/blue-live-store';
+import { useLayoutSettingsStore } from '../stores/layout-settings-store';
+import {
+  applyLegacyLayoutMigration,
+  createDefaultWindowLayoutSettings,
+  type LegacyLayoutMigrationPayload,
+  type WindowLayoutSettingsSnapshot,
+} from '../../shared/window-layout-settings';
 import type { EngineOutputPayload } from '../../shared/io-provider';
 import type { ProgramSettingsSnapshot } from '../../shared/program-settings';
 
@@ -32,6 +39,65 @@ export function useIPCListeners(): void {
     if (!window.blueAPI?.getProgramSettings) return;
     window.blueAPI.getProgramSettings().then((settings: ProgramSettingsSnapshot) => {
       hydrateFromProgramSettings(settings);
+      useLayoutSettingsStore.getState().setLayout(
+        settings.appSpecific.windowLayout ?? createDefaultWindowLayoutSettings(),
+      );
+
+      // Drive one-time legacy renderer-only layout migration into the
+      // canonical app-wide layout store. Skipped silently once both markers
+      // are set or when the blueAPI does not expose the layout update method.
+      const api = window.blueAPI as unknown as {
+        updateWindowLayout?: (request: unknown) => Promise<WindowLayoutSettingsSnapshot>;
+      };
+      if (!api?.updateWindowLayout) return;
+
+      const currentLayout =
+        settings.appSpecific.windowLayout ?? createDefaultWindowLayoutSettings();
+      if (
+        currentLayout.legacyMigration.blueSettingsWindowBoundsMigrated &&
+        currentLayout.legacyMigration.workbenchLocalStorageMigrated
+      ) {
+        return;
+      }
+
+      const payload: LegacyLayoutMigrationPayload = {};
+      try {
+        const blueSettingsRaw = localStorage.getItem('blue-settings');
+        if (blueSettingsRaw) {
+          const parsed = JSON.parse(blueSettingsRaw) as { windowBounds?: unknown };
+          if (parsed && parsed.windowBounds) {
+            payload.windowBounds = parsed.windowBounds as LegacyLayoutMigrationPayload['windowBounds'];
+          }
+        }
+      } catch {
+        // Ignore malformed localStorage; migration simply skips the field.
+      }
+
+      try {
+        const workbenchLegacy = localStorage.getItem('blue-workbench-layout');
+        if (typeof workbenchLegacy === 'string' && workbenchLegacy.length > 0) {
+          payload.workbenchSerializedLayout = workbenchLegacy;
+        }
+      } catch {
+        // Ignore unavailable localStorage; migration simply skips the field.
+      }
+
+      // Run the shared helper locally first so the renderer immediately
+      // reflects the migrated state, then persist through the canonical IPC
+      // so the marker is durable.
+      const merged = applyLegacyLayoutMigration(currentLayout, payload);
+      useLayoutSettingsStore.getState().setLayout(merged);
+
+      // Persist the migration payload through main so copied values and markers
+      // land in the app-wide settings file together.
+      void api.updateWindowLayout!({
+        type: 'legacy-migration',
+        legacy: payload,
+      }).then((next) => {
+        useLayoutSettingsStore.getState().setLayout(next);
+      }).catch(() => {
+        // Migration is best-effort; the next launch retries automatically.
+      });
     }).catch(() => {});
   }, [hydrateFromProgramSettings]);
 

@@ -1,6 +1,6 @@
 # blue-electron Development Guidelines
 
-Auto-generated from all feature plans. Last updated: 2026-07-02
+Auto-generated from all feature plans. Last updated: 2026-07-05
 
 ## Active Technologies
 - React 19.x, Electron, dockview 5.2.0 + collapsed auxiliary-group planning for the workbench shell (013-collapsed-sidebar-research)
@@ -58,11 +58,13 @@ Auto-generated from all feature plans. Last updated: 2026-07-02
 - Main-process in-memory `BlueData` remains canonical; `.blue` XML remains canonical persistence. Layer automation assignments persist through Java-compatible `parameterId` entries, and line data persists on the underlying `Parameter` XML. Renderer state for current edit mode and active range selection is local UI state. (052-score-timeline-automation)
 - TypeScript 5.8.x, React 19.x, Electron 35.x, strict monorepo packages + `@blue/data`, Electron `dialog`/IPC, React renderer components, Zustand project store, Vitest 4.x, Node `fs`/`path` in Electron main only (053-missing-audio-assets)
 - Main-process in-memory `BlueData` remains canonical; `.blue` XML format is unchanged; AudioFile replacement changes persist only when the user saves the project (053-missing-audio-assets)
+- TypeScript 5.8.x, React 19.x, Electron 35.x, strict monorepo packages + Existing `@blue/app` program settings store, Electron `BrowserWindow`/`screen`/IPC, preload `blueAPI`, React renderer, Zustand workbench/settings stores, Dockview 5.2.0, reusable `SplitPane`, Vitest 4.x (054-window-layout-persistence)
+- Main-process app-wide `program-settings.json` under Electron user data; layout state lives under app-specific program settings; legacy renderer storage keys `blue-settings.windowBounds` and `blue-workbench-layout` migrate once; `.blue` project XML is unchanged (054-window-layout-persistence)
 
 - TypeScript 5.8.x, React 19.x, Electron 35.x, strict renderer/main/preload packages, pure TypeScript `@blue/data` + `PresetGroup`/`Preset` BSB preset model, Zustand 5.x project store with BSB interface/opcode-list patch support, Dockview 5.2.0, CodeMirror 6, `BsbInterfacePatch` union type for structured BSB mutations (022-bsb-interface-parity)
 - BSB Interface tab now renders an editable widget canvas with selection, property-sheet editing, grid settings, preset application, and Java-style split-view UDO editor (UDOTable + UDOEditor); snapshot contract extended with `widgetTree`, `gridSettings`, `editEnabled`, `presetGroup`, `opcodeListText`; widget-specific rendering (Slider, Knob, Toggle, etc.) deferred to SPEC 023 (022-bsb-interface-parity)
 
-- TypeScript 5.x, strict mode + `@rgrove/parse-xml` (XML parsing), `vitest` (testing), `esbuild` (bundling for Electron) 
+- TypeScript 5.x, strict mode + `@rgrove/parse-xml` (XML parsing), `vitest` (testing), `esbuild` (bundling for Electron)
 
 ## Project Structure
 
@@ -94,6 +96,6 @@ TypeScript 5.x, strict mode: Follow standard conventions
 <!-- MANUAL ADDITIONS END -->
 
 ## Recent Changes
+- 054-window-layout-persistence: Added TypeScript 5.8.x, React 19.x, Electron 35.x, strict monorepo packages + Existing `@blue/app` program settings store, Electron `BrowserWindow`/`screen`/IPC, preload `blueAPI`, React renderer, Zustand workbench/settings stores, Dockview 5.2.0, reusable `SplitPane`, Vitest 4.x
 - 053-missing-audio-assets: Added TypeScript 5.8.x, React 19.x, Electron 35.x, strict monorepo packages + `@blue/data`, Electron `dialog`/IPC, React renderer components, Zustand project store, Vitest 4.x, Node `fs`/`path` in Electron main only
 - 052-score-timeline-automation: Added TypeScript 5.8.x, React 19.x, Electron 35.x, strict monorepo packages + `@blue/data` automation/score/mixer classes, `@blue/app` shared project-editor IPC model, Zustand 5.x stores, Dockview 5.2.0 workbench shell, Radix Context Menu, existing score timeline components, Vitest 4.x
-- 051-theme-token-cleanup: Added TypeScript 5.8.x, React 19.x, Electron 35.x, strict renderer code + Tailwind CSS v4 CSS-first theme tokens, `@tailwindcss/postcss`, `clsx`, `tailwind-merge`, Dockview 5.2.0, CodeMirror 6, Radix Context Menu, existing Vite/Vitest renderer tooling

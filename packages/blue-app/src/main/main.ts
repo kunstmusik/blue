@@ -21,6 +21,18 @@ import {
   syncLegacyRendererSettings,
   clearSettingsCache,
 } from './program-settings-store';
+import {
+  loadWindowLayoutSettings,
+  resetWindowLayout,
+  setCurrentSessionWindowResetHandler,
+  updateWindowLayout,
+  WINDOW_LAYOUT_RESET_CHANNEL,
+} from './window-layout-store';
+import {
+  attachWindowStateHandlers,
+  resetTrackedWindowsToDefaultBounds,
+  restoreWindowState,
+} from './window-state-manager';
 import { applyProgramSettingsToNewProject } from './program-settings-application';
 import { buildRealtimeEngineOptions as buildRealtimeEngineOptionsFromSettings, buildUsageMatrix } from './program-settings-usage';
 import type { ProgramSettingsSnapshot } from '../shared/program-settings';
@@ -132,6 +144,10 @@ interface ProjectOnLoadState {
 // effect because it is read once at process startup.
 app.setName('Blue');
 console.log('[main] App name set to:', app.getName());
+
+setCurrentSessionWindowResetHandler(() => {
+  resetTrackedWindowsToDefaultBounds(BrowserWindow.getAllWindows());
+});
 
 function getCurrentProjectDocument() {
   if (!currentData) {
@@ -454,8 +470,17 @@ function rebuildApplicationMenu(): void {
     },
     onToggleDevTools: () => { mainWindow?.webContents.toggleDevTools(); },
     onResetLayout: () => {
+      try {
+        // Reset Windows: clear app-wide layout state, persist defaults, and
+        // broadcast the reset to every active renderer window so the
+        // workbench store immediately returns to defaults.
+        resetWindowLayout();
+      } catch {
+        // Persistence failure must not strand the user; still notify the
+        // workbench so the in-memory layout returns to defaults.
+      }
       if (mainWindow) {
-        mainWindow.webContents.send('native-menu-command', { type: 'reset-layout' });
+        mainWindow.webContents.send('native-menu-command', { type: 'reset-windows' });
       }
     },
     onToggleFollowPlayback: () => { currentFollowPlaybackEnabled = !currentFollowPlaybackEnabled; mainWindow?.webContents.send('native-menu-command', { type: 'toggle-follow-playback' }); rebuildApplicationMenu(); },
@@ -510,12 +535,22 @@ function createWindow(): void {
     height: 800,
     title: getWindowTitle(currentFilePath),
     icon: getAppIcon(),
+    show: false,
     webPreferences: {
       preload: path.join(__dirname, '..', 'preload', 'preload.js'),
       contextIsolation: true,
       nodeIntegration: false,
       devTools: true,
     },
+  });
+
+  // Restore persisted bounds/display state before the window is shown so the
+  // user sees their saved workspace immediately on launch.
+  restoreWindowState(mainWindow, 'main');
+  attachWindowStateHandlers(mainWindow, 'main');
+
+  mainWindow.once('ready-to-show', () => {
+    mainWindow?.show();
   });
 
   mainWindow.webContents.session.setPermissionCheckHandler(
@@ -1598,6 +1633,20 @@ ipcMain.handle('program-settings:usage-matrix', () => {
 
 ipcMain.handle('program-settings:sync-legacy-renderer-settings', (_event, legacy: any) => {
   return syncLegacyRendererSettings(legacy);
+});
+
+// ─── Window Layout IPC Handlers ───
+
+ipcMain.handle('window-layout:get', () => {
+  return loadWindowLayoutSettings();
+});
+
+ipcMain.handle('window-layout:update', (_event, request: import('../shared/window-layout-settings').WindowLayoutUpdateRequest) => {
+  return updateWindowLayout(request);
+});
+
+ipcMain.handle('window-layout:reset', () => {
+  return resetWindowLayout();
 });
 
 ipcMain.handle('open-effect-editor', async (_event, request: EffectEditorRequest) => {

@@ -173,7 +173,7 @@ function buildWindowMenuTemplate(options: ApplicationMenuTemplateOptions): MenuI
     },
     { type: 'separator' as const },
     {
-      label: 'Reset Default Layout',
+      label: 'Reset Windows',
       click: () => options.onResetLayout(),
     },
   ];
