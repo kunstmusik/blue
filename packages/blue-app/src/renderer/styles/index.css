@@ -19,10 +19,12 @@
   --color-app-border: #0f3460;
   --color-app-border-muted: rgba(84, 108, 155, 0.28);
   --color-app-border-subtle: rgba(94, 119, 168, 0.24);
-  --color-app-accent: #e94560;
-  --color-app-accent-hover: #c73650;
-  --color-app-accent-soft: rgba(233, 69, 96, 0.08);
-  --color-app-accent-muted: rgba(233, 69, 96, 0.12);
+  /* Sampled from Java Blue's active toolbar/tab controls. */
+  --color-app-accent: #5a85c3;
+  --color-app-accent-hover: #4772ad;
+  --color-app-accent-soft: rgba(90, 133, 195, 0.1);
+  --color-app-accent-muted: rgba(90, 133, 195, 0.16);
+  --color-app-tab-active-edge: #6fa6e6;
   --color-app-highlight: rgba(86, 119, 182, 0.46);
   --color-app-selection: rgba(93, 135, 210, 0.38);
   --color-app-success: #00b200;
@@ -354,7 +356,7 @@
   --dv-paneview-active-border-color: var(--color-app-border);
   --dv-tabs-and-actions-container-font-size: var(--text-content);
   --dv-tabs-and-actions-container-height: 35px;
-  --dv-tab-close-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2'%3E%3Cline x1='18' y1='6' x2='6' y2='18'/%3E%3Cline x1='6' y1='6' x2='18' y2='18'/%3E%3C/svg%3E");
+  --dv-tab-close-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%23c8c8d8' stroke-width='2.1'%3E%3Cline x1='18' y1='6' x2='6' y2='18'/%3E%3Cline x1='6' y1='6' x2='18' y2='18'/%3E%3C/svg%3E");
 }
 
 .dv-dockview {
@@ -365,14 +367,58 @@
   --dv-inactivegroup-visiblepanel-tab-background-color: var(--color-app-surface);
   --dv-inactivegroup-hiddenpanel-tab-background-color: var(--color-app-border);
   --dv-tab-divider-color: var(--color-app-border);
-  --dv-activegroup-visiblepanel-tab-color: var(--color-app-accent);
-  --dv-activegroup-hiddenpanel-tab-color: var(--color-app-text-muted);
-  --dv-inactivegroup-visiblepanel-tab-color: var(--color-app-text);
+  --dv-activegroup-visiblepanel-tab-color: var(--color-app-text-bright);
+  --dv-activegroup-hiddenpanel-tab-color: var(--color-app-text);
+  --dv-inactivegroup-visiblepanel-tab-color: var(--color-app-text-soft);
   --dv-inactivegroup-hiddenpanel-tab-color: var(--color-app-text-subtle);
   --dv-separator-border: var(--color-app-border);
   --dv-separator-handle-hover-color: color-mix(in srgb, var(--color-app-accent) 50%, var(--color-app-clear));
   --dv-icon-hover-background-color: var(--color-app-accent-soft);
   --dv-floating-box-shadow: 0 20px 48px color-mix(in srgb, var(--color-app-shadow) 100%, var(--color-app-clear));
+}
+
+.dv-dockview .dv-tab .dv-default-tab .dv-default-tab-action {
+  width: 16px;
+  height: 16px;
+  padding: 2px;
+  color: var(--color-app-text);
+  opacity: 0.82;
+  visibility: visible;
+}
+
+.dv-dockview .dv-tab .dv-default-tab .dv-default-tab-action .dv-svg,
+.dv-dockview .dv-tab .dv-default-tab .dv-default-tab-action svg {
+  width: 10px;
+  height: 10px;
+}
+
+.dv-dockview .dv-tab.dv-inactive-tab .dv-default-tab .dv-default-tab-action {
+  visibility: visible;
+}
+
+.dv-dockview .dv-tab .dv-default-tab .dv-default-tab-action:hover {
+  color: var(--color-app-text-strong);
+  opacity: 1;
+}
+
+.dv-dockview .dv-tab:has(.dv-default-tab[data-workbench-active-tab='true']) {
+  position: relative;
+}
+
+.dv-dockview .dv-tab:has(.dv-default-tab[data-workbench-active-tab='true'])::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  z-index: 1;
+  height: 3px;
+  background: var(--color-app-tab-active-edge);
+  pointer-events: none;
+}
+
+.dv-dockview .dv-tabs-container.dv-vertical .dv-tab:has(.dv-default-tab[data-workbench-active-tab='true'])::before {
+  inset: 0 0 0 auto;
+  width: 3px;
+  height: auto;
 }
 
 .dv-resize-container .dv-resize-handle-top,

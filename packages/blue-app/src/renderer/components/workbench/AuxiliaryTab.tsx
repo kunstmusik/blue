@@ -9,9 +9,6 @@ import {
 import * as ContextMenu from '@radix-ui/react-context-menu';
 import type { IDockviewPanelHeaderProps } from 'dockview';
 import {
-  DockviewDefaultTab,
-} from 'dockview';
-import {
   Maximize2,
   Minimize2,
   PinOff,
@@ -43,6 +40,28 @@ function useTitle(api: IDockviewPanelHeaderProps['api']) {
   return title;
 }
 
+function usePanelActive(api: IDockviewPanelHeaderProps['api']) {
+  const [isActive, setIsActive] = useState(api.isActive && api.isGroupActive);
+
+  useEffect(() => {
+    const updateActiveState = () => {
+      setIsActive(api.isActive && api.isGroupActive);
+    };
+
+    const activeDisposable = api.onDidActiveChange(updateActiveState);
+    const activeGroupDisposable = api.onDidActiveGroupChange(updateActiveState);
+
+    updateActiveState();
+
+    return () => {
+      activeDisposable.dispose();
+      activeGroupDisposable.dispose();
+    };
+  }, [api]);
+
+  return isActive;
+}
+
 function TabContents({
   props,
   closeActionOverride,
@@ -51,6 +70,7 @@ function TabContents({
   closeActionOverride?: () => void;
 }) {
   const title = useTitle(props.api);
+  const isActive = usePanelActive(props.api);
   const isMiddleMouseButton = useRef(false);
 
   const onClose = useCallback(
@@ -90,6 +110,7 @@ function TabContents({
   return (
     <div
       data-testid="dockview-dv-default-tab"
+      data-workbench-active-tab={isActive ? 'true' : undefined}
       className="dv-default-tab"
       onPointerDown={onPointerDown}
       onPointerUp={onPointerUp}
@@ -102,7 +123,7 @@ function TabContents({
         onPointerDown={onBtnPointerDown}
         onClick={onClose}
       >
-        <X size={12} strokeWidth={2} />
+        <X size={10} strokeWidth={2.1} />
       </div>
     </div>
   );
@@ -130,7 +151,7 @@ function AuxiliaryTabMenu({
 
   const instance = getGroupInstanceForPanel(auxiliary, panelId);
   if (!instance) {
-    return <DockviewDefaultTab {...props} />;
+    return <TabContents props={props} />;
   }
 
   const handleClosePanel = () => closeAuxiliaryPanel(panelId);
@@ -234,7 +255,7 @@ function AuxiliaryTabMenu({
 
 export default function AuxiliaryTab(props: IDockviewPanelHeaderProps) {
   if (!isAuxiliaryPanelId(props.api.id)) {
-    return <DockviewDefaultTab {...props} />;
+    return <TabContents props={props} />;
   }
 
   return <AuxiliaryTabMenu props={props} />;
