@@ -7,11 +7,10 @@ import {
   type PointerEvent as ReactPointerEvent,
 } from 'react';
 import * as ContextMenu from '@radix-ui/react-context-menu';
-import type { IDockviewPanelHeaderProps } from 'dockview';
+import type {
+  IDockviewPanelHeaderProps,
+} from 'dockview';
 import {
-  Maximize2,
-  Minimize2,
-  PinOff,
   X,
 } from 'lucide-react';
 import {
@@ -129,7 +128,7 @@ function TabContents({
   );
 }
 
-function AuxiliaryTabMenu({
+function WorkbenchTabMenu({
   props,
 }: {
   props: IDockviewPanelHeaderProps;
@@ -137,9 +136,6 @@ function AuxiliaryTabMenu({
   const panelId = props.api.id;
   const closeAuxiliaryPanel = useWorkbenchStore(
     (state) => state.closeAuxiliaryPanel,
-  );
-  const minimizeAuxiliaryGroup = useWorkbenchStore(
-    (state) => state.minimizeAuxiliaryGroup,
   );
   const maximizeAuxiliaryGroup = useWorkbenchStore(
     (state) => state.maximizeAuxiliaryGroup,
@@ -149,29 +145,116 @@ function AuxiliaryTabMenu({
   );
   const auxiliary = useWorkbenchStore((state) => state.auxiliary);
 
+  const isAuxiliaryPanel = isAuxiliaryPanelId(panelId);
   const instance = getGroupInstanceForPanel(auxiliary, panelId);
-  if (!instance) {
-    return <TabContents props={props} />;
-  }
+  const groupPanels = props.api.group.panels;
+  const currentIndex = groupPanels.findIndex((panel) => panel.id === panelId);
+  const canCloseOther = groupPanels.length > 1;
+  const canShiftLeft = currentIndex > 0;
+  const canShiftRight = currentIndex >= 0 && currentIndex < groupPanels.length - 1;
+  const isMaximized = instance?.isMaximized ?? props.api.isMaximized();
+  const canFloat = !isAuxiliaryPanel && props.api.location.type === 'grid';
 
-  const handleClosePanel = () => closeAuxiliaryPanel(panelId);
-  const handleCloseGroup = () =>
-    minimizeAuxiliaryGroup(instance.groupInstanceId);
-  const handleMaximizeToggle = () => {
-    if (instance.isMaximized) {
-      restoreAuxiliaryGroup(instance.groupInstanceId);
+  const closePanelById = (id: string) => {
+    if (isAuxiliaryPanelId(id)) {
+      closeAuxiliaryPanel(id);
       return;
     }
-    maximizeAuxiliaryGroup(instance.groupInstanceId);
+
+    props.containerApi.getPanel(id)?.api.close();
+  };
+
+  const handleClosePanel = () => closePanelById(panelId);
+
+  const handleCloseAll = () => {
+    const otherPanels = props.api.group.panels.filter(
+      (panel) => panel.id !== panelId,
+    );
+
+    for (const panel of otherPanels) {
+      closePanelById(panel.id);
+    }
+
+    closePanelById(panelId);
+  };
+
+  const handleCloseOther = () => {
+    for (const panel of props.api.group.panels) {
+      if (panel.id !== panelId) {
+        closePanelById(panel.id);
+      }
+    }
+  };
+
+  const handleMaximizeToggle = () => {
+    if (instance) {
+      if (instance.isMaximized) {
+        restoreAuxiliaryGroup(instance.groupInstanceId);
+        return;
+      }
+
+      maximizeAuxiliaryGroup(instance.groupInstanceId);
+      return;
+    }
+
+    if (props.api.isMaximized()) {
+      props.api.exitMaximized();
+      return;
+    }
+
+    props.api.maximize();
+  };
+
+  const handleFloat = () => {
+    if (!canFloat) {
+      return;
+    }
+
+    const panel = props.containerApi.getPanel(panelId);
+    if (!panel) {
+      return;
+    }
+
+    props.containerApi.addFloatingGroup(panel, {
+      width: Math.max(420, Math.min(760, props.api.width)),
+      height: Math.max(280, Math.min(520, props.api.height)),
+      x: 96,
+      y: 96,
+    });
+  };
+
+  const shiftPanel = (delta: -1 | 1) => {
+    const panel = props.containerApi.getPanel(panelId);
+    const nextIndex = props.api.group.panels.findIndex(
+      (candidate) => candidate.id === panelId,
+    ) + delta;
+
+    if (!panel || nextIndex < 0 || nextIndex >= props.api.group.panels.length) {
+      return;
+    }
+
+    panel.api.moveTo({
+      group: props.api.group,
+      index: nextIndex,
+    });
+  };
+
+  const handleOpenChange = (open: boolean) => {
+    if (!open) {
+      return;
+    }
+
+    props.api.setActive();
+    props.api.group.focus();
   };
 
   return (
-    <ContextMenu.Root>
+    <ContextMenu.Root onOpenChange={handleOpenChange}>
       <ContextMenu.Trigger asChild>
-        <div className="workbench-aux-tab-trigger">
+        <div className="workbench-tab-trigger">
           <TabContents
             props={props}
-            closeActionOverride={handleClosePanel}
+            closeActionOverride={isAuxiliaryPanel ? handleClosePanel : undefined}
           />
         </div>
       </ContextMenu.Trigger>
@@ -186,15 +269,20 @@ function AuxiliaryTabMenu({
             className="workbench-context-menu__item"
             onSelect={handleClosePanel}
           >
-            <X size={14} strokeWidth={1.9} />
             Close
           </ContextMenu.Item>
           <ContextMenu.Item
             className="workbench-context-menu__item"
-            onSelect={handleCloseGroup}
+            onSelect={handleCloseAll}
           >
-            <PinOff size={14} strokeWidth={1.9} />
-            Close Group
+            Close All
+          </ContextMenu.Item>
+          <ContextMenu.Item
+            className="workbench-context-menu__item"
+            disabled={!canCloseOther}
+            onSelect={handleCloseOther}
+          >
+            Close Other
           </ContextMenu.Item>
 
           <ContextMenu.Separator className="workbench-context-menu__separator" />
@@ -203,29 +291,12 @@ function AuxiliaryTabMenu({
             className="workbench-context-menu__item"
             onSelect={handleMaximizeToggle}
           >
-            <Maximize2 size={14} strokeWidth={1.9} />
-            {instance.isMaximized ? 'Restore' : 'Maximize'}
+            {isMaximized ? 'Restore' : 'Maximize'}
           </ContextMenu.Item>
           <ContextMenu.Item
             className="workbench-context-menu__item"
-            onSelect={handleClosePanel}
-          >
-            <Minimize2 size={14} strokeWidth={1.9} />
-            Minimize
-          </ContextMenu.Item>
-          <ContextMenu.Item
-            className="workbench-context-menu__item"
-            onSelect={handleCloseGroup}
-          >
-            <PinOff size={14} strokeWidth={1.9} />
-            Minimize Group
-          </ContextMenu.Item>
-
-          <ContextMenu.Separator className="workbench-context-menu__separator" />
-
-          <ContextMenu.Item
-            className="workbench-context-menu__item"
-            disabled
+            disabled={!canFloat}
+            onSelect={handleFloat}
           >
             Float
           </ContextMenu.Item>
@@ -233,19 +304,24 @@ function AuxiliaryTabMenu({
             className="workbench-context-menu__item"
             disabled
           >
-            Float Group
-          </ContextMenu.Item>
-          <ContextMenu.Item
-            className="workbench-context-menu__item"
-            disabled
-          >
             Dock
           </ContextMenu.Item>
+
+          <ContextMenu.Separator className="workbench-context-menu__separator" />
+
           <ContextMenu.Item
             className="workbench-context-menu__item"
-            disabled
+            disabled={!canShiftLeft}
+            onSelect={() => shiftPanel(-1)}
           >
-            Dock Group
+            Shift Left
+          </ContextMenu.Item>
+          <ContextMenu.Item
+            className="workbench-context-menu__item"
+            disabled={!canShiftRight}
+            onSelect={() => shiftPanel(1)}
+          >
+            Shift Right
           </ContextMenu.Item>
         </ContextMenu.Content>
       </ContextMenu.Portal>
@@ -254,9 +330,5 @@ function AuxiliaryTabMenu({
 }
 
 export default function AuxiliaryTab(props: IDockviewPanelHeaderProps) {
-  if (!isAuxiliaryPanelId(props.api.id)) {
-    return <TabContents props={props} />;
-  }
-
-  return <AuxiliaryTabMenu props={props} />;
+  return <WorkbenchTabMenu props={props} />;
 }

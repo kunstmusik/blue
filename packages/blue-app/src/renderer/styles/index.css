@@ -647,6 +647,7 @@
   display: none;
 }
 
+.workbench-tab-trigger,
 .workbench-aux-tab-trigger {
   display: contents;
 }
