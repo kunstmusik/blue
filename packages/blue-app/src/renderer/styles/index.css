@@ -817,14 +817,19 @@
   width: 100%;
   min-height: 30px;
   padding: 0 10px;
+  border: 0;
   border-radius: 7px;
+  background: transparent;
   outline: none;
   font-size: var(--text-body);
+  font-family: inherit;
+  text-align: left;
   color: inherit;
   user-select: none;
 }
 
-.workbench-context-menu__item[data-highlighted] {
+.workbench-context-menu__item[data-highlighted],
+.workbench-context-menu__item:not([data-disabled]):hover {
   background: var(--color-app-highlight);
   color: var(--color-app-text-strong);
 }

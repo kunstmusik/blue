@@ -194,6 +194,21 @@ export function useIPCListeners(): void {
       setBlueLiveStatus(snapshot);
     });
 
+    // Acknowledge project-document-updated broadcasts from the main process.
+    // Dockview popouts share the main renderer's JS context, so mutations are
+    // already applied locally. This subscription handles the case where
+    // floating windows are in a separate context (FR-010, T039).
+    const unsubProjectDocumentUpdated = window.blueAPI.onProjectDocumentUpdated?.((event) => {
+      // Ignore stale sessions.
+      const currentSession = useProjectStore.getState().session;
+      if (event.sessionId !== currentSession) return;
+      // Apply newer revisions idempotently — the snapshot is already the
+      // latest state from the canonical main-process document.
+      if (event.snapshot) {
+        useProjectStore.getState().setProjectInfo(event.snapshot as never);
+      }
+    });
+
     const handleStorage = (e: StorageEvent) => {
       if (e.key === 'blue-settings') {
         useSettingsStore.getState().rehydrate();
@@ -216,6 +231,7 @@ export function useIPCListeners(): void {
       unsubCsd();
       unsubCsdErr();
       unsubBlueLiveStatus();
+      unsubProjectDocumentUpdated?.();
       window.removeEventListener('storage', handleStorage);
     };
   }, [

@@ -21,6 +21,7 @@ import {
   removeEngineProcessRecord,
   type EngineSessionKind,
 } from './engine-process-registry';
+import { broadcastToWorkbenchWindows } from './workbench-window-host';
 
 export interface AutomationTimingContext {
   renderStartTime: number;
@@ -145,11 +146,11 @@ export class EngineBridge {
   }
 
   private sendPlaybackStatus(status: 'starting' | 'playing' | 'stopping' | 'stopped' | 'error', message?: string): void {
-    this.mainWindow.webContents.send('playback-status', message ? { status, message } : { status });
+    broadcastToWorkbenchWindows('playback-status', message ? { status, message } : { status });
   }
 
   private sendPlaybackClock(snapshot: PlaybackClockSnapshot): void {
-    this.mainWindow.webContents.send('playback-clock', snapshot);
+    broadcastToWorkbenchWindows('playback-clock', snapshot);
   }
 
   private clearStatePolling(): void {
@@ -544,7 +545,7 @@ export class EngineBridge {
     this.engineProcess.on('error', (err) => {
       console.error(`[EngineBridge] Spawn error: ${err.message}`);
       this.isPlaying = false;
-      this.mainWindow.webContents.send('playback-error', `Engine error: ${err.message}`);
+      broadcastToWorkbenchWindows('playback-error', `Engine error: ${err.message}`);
     });
 
     await new Promise((resolve) => setTimeout(resolve, 500));
@@ -675,10 +676,7 @@ export class EngineBridge {
       // Check if we have anything to play
       if (!orchestra && !score) {
         console.warn('[EngineBridge] Empty CSD — no orchestra or score to play');
-        this.mainWindow.webContents.send('playback-status', {
-          status: 'error',
-          message: 'No instruments or score events to play',
-        });
+        this.sendPlaybackStatus('error', 'No instruments or score events to play');
         return false;
       }
 
@@ -702,10 +700,7 @@ export class EngineBridge {
         const resp = await this.client.compileOrc(orchestra);
         console.log(`[EngineBridge] compileOrc: ${resp.ok ? 'OK' : 'FAILED'} ${resp.message}`);
         if (!resp.ok) {
-          this.mainWindow.webContents.send('playback-status', {
-            status: 'error',
-            message: `Orchestra compile failed: ${resp.message}`,
-          });
+          this.sendPlaybackStatus('error', `Orchestra compile failed: ${resp.message}`);
           return false;
         }
       }
@@ -721,10 +716,7 @@ export class EngineBridge {
         const resp = await this.client.readScore(score);
         console.log(`[EngineBridge] readScore: ${resp.ok ? 'OK' : 'FAILED'} ${resp.message}`);
         if (!resp.ok) {
-          this.mainWindow.webContents.send('playback-status', {
-            status: 'error',
-            message: `Score read failed: ${resp.message}`,
-          });
+          this.sendPlaybackStatus('error', `Score read failed: ${resp.message}`);
           return false;
         }
       }
@@ -734,10 +726,7 @@ export class EngineBridge {
       const startResp = await this.client.start();
       console.log(`[EngineBridge] start: ${startResp.ok ? 'OK' : 'FAILED'} ${startResp.message}`);
       if (!startResp.ok) {
-        this.mainWindow.webContents.send('playback-status', {
-          status: 'error',
-          message: `Engine start failed: ${startResp.message}`,
-        });
+        this.sendPlaybackStatus('error', `Engine start failed: ${startResp.message}`);
         return false;
       }
 

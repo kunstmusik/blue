@@ -30,6 +30,7 @@ import {
 } from './window-layout-store';
 import {
   attachWindowStateHandlers,
+  getAvailableDisplayWorkAreas,
   resetTrackedWindowsToDefaultBounds,
   restoreWindowState,
 } from './window-state-manager';
@@ -65,7 +66,17 @@ import type { JavaRuntimeClient } from './java-runtime/java-runtime-client';
 import { JavaRuntimeSessionManager } from './java-runtime/java-runtime-session';
 import { testScoreObject } from './score-object-test';
 import { syncCompiledRuntimeParameterNames } from './runtime-parameter-sync';
+import {
+  broadcastToWorkbenchWindows,
+  getWorkbenchWindowManager,
+  initWorkbenchWindowHost,
+  registerFloatingWindow,
+  registerMainWindow,
+  routeFocusPanel,
+} from './workbench-window-host';
 import { getWindowTitle } from '../shared/window-title';
+import { PROJECT_DOCUMENT_UPDATED_CHANNEL } from '../shared/workbench-window-contract';
+import { WINDOW_LAYOUT_DISPLAY_WORK_AREAS_CHANNEL } from '../shared/window-layout-settings';
 import {
   applyEffectEditablePatchToEffect,
   applyProjectDocumentPatch,
@@ -155,6 +166,24 @@ function getCurrentProjectDocument() {
   }
 
   return createProjectEditorSnapshot(currentData, currentFilePath, currentProjectSessionId);
+}
+
+/**
+ * Broadcasts the current project document snapshot to every registered
+ * workbench renderer so floating windows see the same mutations as the main
+ * workbench (SPEC 055 FR-010). Callers are responsible for incrementing
+ * {@link currentProjectRevision} before invoking this so the broadcast carries
+ * a fresh revision. Requires a non-null `currentData`.
+ */
+function broadcastProjectDocumentUpdate(sourceWindowId?: string): void {
+  const snapshot = getCurrentProjectDocument();
+  if (!snapshot) return;
+  broadcastToWorkbenchWindows(PROJECT_DOCUMENT_UPDATED_CHANNEL, {
+    sessionId: currentProjectSessionId,
+    revision: currentProjectRevision,
+    snapshot,
+    ...(sourceWindowId ? { sourceWindowId } : {}),
+  });
 }
 
 function getProjectMixerChannelBySnapshotId(channelId: string) {
@@ -464,9 +493,9 @@ function rebuildApplicationMenu(): void {
       }
     },
     onFocusPanel: (panelId) => {
-      if (mainWindow) {
-        mainWindow.webContents.send('native-menu-command', { type: 'focus-panel', panelId });
-      }
+      // Route through the workbench window registry so an already-floating panel
+      // is focused in its own OS window instead of opening a duplicate (SPEC 055 US6).
+      routeFocusPanel(panelId);
     },
     onToggleDevTools: () => { mainWindow?.webContents.toggleDevTools(); },
     onResetLayout: () => {
@@ -548,6 +577,7 @@ function createWindow(): void {
   // user sees their saved workspace immediately on launch.
   restoreWindowState(mainWindow, 'main');
   attachWindowStateHandlers(mainWindow, 'main');
+  registerMainWindow(mainWindow);
 
   mainWindow.once('ready-to-show', () => {
     mainWindow?.show();
@@ -559,6 +589,28 @@ function createWindow(): void {
   mainWindow.webContents.session.setPermissionRequestHandler(
     (_webContents, permission, callback) => callback((permission as string) === 'local-fonts'),
   );
+
+  // Allow Dockview popout groups (SPEC 055 US1 Float) to open as real,
+  // separately focusable OS windows. Dockview calls window.open('popout.html',
+  // features) and appends its group DOM on `load`; we let Electron attach a
+  // native BrowserWindow (with the app preload) to that call so the popout is a
+  // first-class application window sharing the same project session.
+  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+    const isPopout = /popout\.html([?#]|$)/.test(url);
+    if (!isPopout) {
+      return { action: 'deny' };
+    }
+    return {
+      action: 'allow',
+      overrideBrowserWindowOptions: {
+        preload: path.join(__dirname, '..', 'preload', 'preload.js'),
+        contextIsolation: true,
+        nodeIntegration: false,
+        show: true,
+        title: 'Blue',
+      },
+    };
+  });
 
   // During development, load from Vite dev server for HMR
   if (process.env.VITE_DEV_SERVER_URL) {
@@ -745,7 +797,7 @@ function buildAndSendProjectLoaded(data: BlueData, filePath: string | null): voi
     payload.missingAudioAssets = missingSession;
   }
 
-  mainWindow.webContents.send('project-loaded', payload);
+  broadcastToWorkbenchWindows('project-loaded', payload);
 }
 
 function scanMissingAudioAssets(
@@ -910,7 +962,7 @@ async function closeProject(): Promise<void> {
   setActiveMissingAudioSession(null);
   rebuildApplicationMenu();
   updateWindowTitle();
-  mainWindow.webContents.send('project-closed');
+  broadcastToWorkbenchWindows('project-closed', null);
 }
 
 async function revertProject(): Promise<void> {
@@ -1213,7 +1265,7 @@ async function startPlayback(): Promise<boolean> {
   if (!engineBridge || !currentData || !mainWindow) return false;
 
   try {
-    mainWindow.webContents.send('playback-status', {
+    broadcastToWorkbenchWindows('playback-status', {
       status: 'starting',
       message: 'Preparing playback...',
     });
@@ -1256,7 +1308,7 @@ async function startPlayback(): Promise<boolean> {
     );
 
     if (!success) {
-      mainWindow.webContents.send('playback-status', {
+      broadcastToWorkbenchWindows('playback-status', {
         status: 'error',
         message: 'Failed to start playback',
       });
@@ -1265,7 +1317,7 @@ async function startPlayback(): Promise<boolean> {
 
     return true;
   } catch (err: unknown) {
-    mainWindow.webContents.send('playback-error', err instanceof Error ? err.message : String(err));
+    broadcastToWorkbenchWindows('playback-error', err instanceof Error ? err.message : String(err));
     return false;
   }
 }
@@ -1641,6 +1693,10 @@ ipcMain.handle('window-layout:get', () => {
   return loadWindowLayoutSettings();
 });
 
+ipcMain.handle(WINDOW_LAYOUT_DISPLAY_WORK_AREAS_CHANNEL, () => {
+  return getAvailableDisplayWorkAreas();
+});
+
 ipcMain.handle('window-layout:update', (_event, request: import('../shared/window-layout-settings').WindowLayoutUpdateRequest) => {
   return updateWindowLayout(request);
 });
@@ -2007,6 +2063,7 @@ ipcMain.handle('commit-project-document-patches', async (_event, patches: Projec
     currentProjectSessionId += 1;
     await disposeJavaRuntimeSession();
   }
+  broadcastProjectDocumentUpdate();
   const receipt: ProjectDocumentCommitReceipt = { revision: currentProjectRevision, sessionId: currentProjectSessionId };
   return receipt;
 });
@@ -2195,13 +2252,14 @@ ipcMain.handle('update-project-document', (_event, patch) => {
     for (const id of collectAffectedProjectScoreAutomationParameterIds(currentData, patch)) {
       scoreAutomationParameterIds.add(id);
     }
+    // Sync with engine in real-time if playing
+    if (engineBridge && engineBridge.isCurrentlyPlaying()) {
+      void syncEngineWithProjectPatch(currentData, patch, scoreAutomationParameterIds);
+    }
+    currentProjectRevision += 1;
+    broadcastProjectDocumentUpdate();
   } else {
     scoreAutomationParameterIds.clear();
-  }
-
-  // Sync with engine in real-time if playing
-  if (engineBridge && engineBridge.isCurrentlyPlaying()) {
-    void syncEngineWithProjectPatch(currentData, patch, scoreAutomationParameterIds);
   }
 
   return getCurrentProjectDocument();
@@ -2211,6 +2269,7 @@ ipcMain.handle('update-project-document', (_event, patch) => {
 
 app.whenReady().then(async () => {
   setExternalCommandExecutor(createMainExternalExecutor(() => currentFilePath ? path.dirname(currentFilePath) : null));
+  initWorkbenchWindowHost();
   try {
     const report = await sweepStaleBlueEngineProcesses();
     if (report.inspected > 0 || report.removed > 0 || report.terminated > 0) {
@@ -2230,6 +2289,22 @@ app.whenReady().then(async () => {
   }
 
   createWindow();
+
+  // Capture Dockview popout windows (SPEC 055 US1 Float) as floating workbench
+  // windows so reveal/close/focus routing can target them. Dockview creates the
+  // popout via window.open('popout.html'); Electron realizes it as a new
+  // BrowserWindow which we register here by matching its loaded URL.
+  app.on('browser-window-created', (_event, window) => {
+    window.webContents.once('did-finish-load', () => {
+      const url = window.webContents.getURL();
+      const popoutMatch = /popout\.html\?id=([^&#]+)/.exec(url);
+      if (popoutMatch) {
+        registerFloatingWindow(window, { popoutGroupId: decodeURIComponent(popoutMatch[1]) });
+      } else if (/popout\.html([?#]|$)/.test(url)) {
+        registerFloatingWindow(window);
+      }
+    });
+  });
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {

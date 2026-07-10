@@ -7,6 +7,7 @@ export default defineConfig({
       'src/main/**/*.test.ts',
       'src/shared/**/*.test.ts',
       'src/renderer/tests/**/*.test.{ts,tsx}',
+      'src/renderer/components/**/*.test.{ts,tsx}',
     ],
     globals: true,
   },

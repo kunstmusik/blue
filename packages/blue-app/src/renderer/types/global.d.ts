@@ -32,6 +32,7 @@ import type {
 import type { NativeMenuCommand } from '../../shared/workbench-menu';
 import type { EngineOutputPayload } from '../../shared/io-provider';
 import type {
+  DisplayWorkArea,
   WindowLayoutSettingsSnapshot,
   WindowLayoutUpdateRequest,
 } from '../../shared/window-layout-settings';
@@ -177,6 +178,7 @@ declare global {
 
       // Window Layout
       getWindowLayout: () => Promise<WindowLayoutSettingsSnapshot>;
+      getDisplayWorkAreas: () => Promise<DisplayWorkArea[]>;
       updateWindowLayout: (
         request: WindowLayoutUpdateRequest,
       ) => Promise<WindowLayoutSettingsSnapshot>;

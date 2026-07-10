@@ -1,64 +1,44 @@
 # Project Status - blue-electron
 
-**Date**: 2026-07-06
-**Branch**: `054-window-layout-persistence`
-**Current Focus**: Spec 054 Closed
+**Date**: 2026-07-10
+**Branch**: `055-window-float-dock-parity`
+**Current Focus**: Spec 055 Closed
 
 ## Summary
 
-Spec 054 is closed. Review findings have been fixed, all tasks are complete, and validation is passing. All 1594 tests pass (149 test files, 2 skipped). The full TypeScript build (`main`, `preload`, `renderer`) compiles clean. Window bounds, workbench layout, and every user-adjustable split location are now persisted in the existing `program-settings.json` file under `appSpecific.windowLayout`.
+Spec 055 is closed. The Electron workbench now matches the relevant Java Blue and NetBeans window-system behavior for floating and docking editor and auxiliary panels. The user completed the manual Electron parity pass after the final fixes for startup restore, close/reopen placement restoration, Dockview auxiliary cleanup, and auxiliary re-dock sizing.
 
 Key outcomes:
-- **Window bounds**: `main`, `settings`, `effect-editor`, and `effect-interface` windows persist normal bounds and display state; restore applies before `show()`.
-- **Split persistence**: All user-adjustable splits save controlled-pane pixel sizes with `200px` defaults, plus the documented BSB property-pane Java parity exception at `250px`. `SplitPane` is backward-compatible with legacy ratio-only call sites.
-- **Reset Windows**: Window > Reset Windows clears only layout state, resets tracked live windows and workbench state, suppresses stale legacy re-import, and does not prompt for project save/discard.
-- **Legacy migration**: `blue-settings.windowBounds` and `blue-workbench-layout` are migrated once into app-wide settings; stale localStorage cannot overwrite newer app-wide values.
-- **FR-025**: Round-trip and invalid-value preservation tests confirm all layout persistence flows through `program-settings.json`.
+- **Separate Float windows**: Float and Float Group use Dockview popout groups hosted as Electron windows, preserving the shared renderer session and project state.
+- **Dock back**: Dock and Dock Group restore the recorded editor group, auxiliary edge, ordering, minimized state, and controlled size. Auxiliary docking removes Dockview's hidden popout reference before rebuilding the edge, preventing empty splitters and stale panes.
+- **Context-menu and Window-menu parity**: Context menus expose Java Blue-style enabled and disabled commands, while the Window menu reveals the requested panel or restores its saved placement.
+- **Persistence and reset**: The version-7 workbench envelope persists floating origins and closed-panel origins. Reset Windows returns to the Java Blue-inspired default state without reopening disabled-by-default utilities.
+- **Close and reopen restoration**: Closing a panel retains its valid last placement so reopening it from the menu restores the correct mode and position instead of applying a generic default.
 
 ## Current Artifacts
 
-- `.specify/feature.json` points to `specs/054-window-layout-persistence`.
-- `specs/054-window-layout-persistence/spec.md` is in Closed status.
-- `specs/054-window-layout-persistence/plan.md` captures the implementation plan.
-- `specs/054-window-layout-persistence/research.md` captures Java Blue and current Electron findings.
-- `specs/054-window-layout-persistence/data-model.md` defines the layout settings entities.
-- `specs/054-window-layout-persistence/contracts/window-layout-settings.md` defines the settings, preload, and menu contracts.
-- `specs/054-window-layout-persistence/quickstart.md` lists targeted tests, manual smoke scenarios, and implementation notes.
-- `specs/054-window-layout-persistence/tasks.md` contains all phases marked complete.
-- `specs/054-window-layout-persistence/checklists/requirements.md` remains from the specification quality pass.
-- `AGENTS.md` was refreshed by `.specify/scripts/bash/update-agent-context.sh codex` for Spec 054 technology/storage context.
-
-## Key Decisions
-
-- Store canonical layout state under existing app-wide `program-settings.json`, inside `ProgramSettingsSnapshot.appSpecific.windowLayout`.
-- Keep `.blue` project XML unchanged; this is application layout state, not project data.
-- Persist splits as controlled-pane pixel sizes, not ratios. Side and bottom controlled panes default to `200` px unless a documented Java parity or minimum-size exception is required; the BSB property pane uses Java Blue's `250` px property-side exception.
-- Clamp invalid or too-large split values for display only; do not overwrite the saved value solely because the current window is smaller.
-- In-scope window identities are `main`, `settings`, `effect-editor`, and `effect-interface`.
-- Migrate legacy renderer-only `blue-settings.windowBounds` and `blue-workbench-layout` once, without overwriting newer app-wide layout values.
-- Rename and expand Window > `Reset Default Layout` into Window > `Reset Windows`; do not keep both commands.
-- `Reset Windows` clears only layout state and must not prompt for project save/discard or mutate project data.
-- `window.on`/`removeListener` calls in `window-state-manager.ts` use `.bind()` casts to satisfy Electron's per-event TypeScript overloads while iterating a single event list.
+- `.specify/feature.json` points to `specs/055-window-float-dock-parity`.
+- `specs/055-window-float-dock-parity/spec.md` is complete.
+- `specs/055-window-float-dock-parity/plan.md`, `research.md`, `data-model.md`, and `contracts/` record the design and Java/NetBeans parity decisions.
+- `specs/055-window-float-dock-parity/tasks.md` contains all implementation tasks, including the final auxiliary re-dock regression fix, marked complete.
+- `specs/055-window-float-dock-parity/quickstart.md` and `parity-review.md` record the completed automated and manual verification.
+- `AGENTS.md` has the Spec 055 technology and persistence context.
 
 ## Validation Performed
 
-- `pnpm --filter @blue/app test` — 1594 passed, 2 skipped (149 test files).
-- `pnpm --filter @blue/app build` — clean for Java runtime, `@blue/data`, main, preload, and renderer targets.
-- `pnpm lint` — clean.
-- `git diff --check` — clean, no whitespace errors.
-- Focused layout contract suite — 69 tests passed.
-- Focused BSB editor suite — 44 tests passed.
-- Round-trip tests for all 4 window identities and 12 split identities: pass.
-- Invalid-value preservation tests (bad window-state, bad split, unknown split key): pass.
-- Reset preserves unrelated program settings (enginePath, recentFiles, audioDriver): pass.
-- Legacy migration idempotence and renderer-to-main migration payload persistence: pass.
+- `pnpm --filter @blue/app test` - 1701 passed, 2 skipped (154 test files).
+- `pnpm --filter @blue/app build` - passed for Java runtime, `@blue/data`, main, preload, and renderer targets.
+- `pnpm lint` - clean.
+- `git diff --check` - clean, with no whitespace errors.
+- Focused workbench, floating-origin, menu-command, window-manager, layout-contract, and auxiliary-layout regression suites pass.
+- The user completed the manual Electron parity pass on 2026-07-10, covering Float, Float Group, Dock, Dock Group, close/reopen restoration, restart persistence, Reset Windows, tab content refresh, and auxiliary re-dock cleanup/sizing.
 
-## Follow-Up Considerations
+## Intentional Deferrals
 
-- Multiple effect editor/interface instances currently use type-level identities. If stable per-instance owner keys are needed later, update the data model and tasks.
-- Legacy localStorage migration crosses renderer and main boundaries; the migration is idempotent and now covered through the renderer-to-main payload path, but first-launch smoke testing is still useful.
-- Window bounds validation handles offscreen saved positions before showing windows, but multi-monitor hot-plug scenarios are not explicitly tested.
+- Move, Move Group, Size Group, and Clone remain visible but disabled where Java Blue exposes the commands without an implemented renderer equivalent.
+- New Document Tab Group and Collapse Document Tab Group are implemented for editor groups. Arbitrary Move/Size submenu behavior should be a separate follow-up specification.
+- Java Blue does not expose a separate `Dock to Editor` or `New Window` command in the relevant tab menu, so those commands remain absent.
 
 ## Next Recommended Step
 
-Spec 054 can be treated as closed. Future work should use a follow-up spec for per-instance secondary window layout identities or deeper multi-monitor hot-plug behavior. The manual smoke scenarios in `specs/054-window-layout-persistence/quickstart.md` remain available as optional local UI checks.
+Spec 055 is complete. Any expansion of interactive Move/Size Group behavior or broader multi-window workflows should start as a new specification.

@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   attachWindowStateHandlers,
   captureWindowState,
+  getAvailableDisplayWorkAreas,
   getDefaultWindowBounds,
   restoreWindowState,
   resetTrackedWindowsToDefaultBounds,
@@ -198,6 +199,29 @@ describe('window-state-manager captureWindowState', () => {
 });
 
 describe('window-state-manager restoreWindowState', () => {
+  it('exposes copies of every connected display work area', () => {
+    const displays = [
+      {
+        bounds: { x: 0, y: 0, width: 1920, height: 1080 },
+        workArea: { x: 0, y: 24, width: 1920, height: 1056 },
+      },
+      {
+        bounds: { x: 1920, y: 0, width: 1440, height: 900 },
+        workArea: { x: 1920, y: 24, width: 1440, height: 876 },
+      },
+    ];
+    screenMock.getAllDisplays.mockReturnValue(displays);
+
+    const areas = getAvailableDisplayWorkAreas();
+
+    expect(areas).toEqual([
+      { x: 0, y: 24, width: 1920, height: 1056 },
+      { x: 1920, y: 24, width: 1440, height: 876 },
+    ]);
+    areas[0]!.x = 999;
+    expect(displays[0]!.workArea.x).toBe(0);
+  });
+
   it('applies valid saved bounds before the window is shown', () => {
     const window = createMockWindow({ x: 0, y: 0, width: 1200, height: 800 });
     const state: WindowStateSnapshot = {

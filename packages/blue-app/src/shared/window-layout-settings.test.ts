@@ -372,6 +372,17 @@ describe('window-layout-settings applyWindowLayoutUpdate', () => {
     expect(next.workbench).toEqual({ serializedLayout: '{"version":5}', updatedAt: FIXED_NOW });
   });
 
+  it('clears the reset marker after the rebuilt workbench is saved', () => {
+    const reset = resetWindowLayoutSettings(fixedNow);
+    const next = applyWindowLayoutUpdate(reset, {
+      type: 'workbench-layout',
+      serializedLayout: '{"version":6}',
+    }, fixedNow);
+
+    expect(next.lastResetAt).toBeUndefined();
+    expect(next.workbench?.serializedLayout).toBe('{"version":6}');
+  });
+
   it('applies a split-location update', () => {
     const next = applyWindowLayoutUpdate(createDefaultWindowLayoutSettings(), {
       type: 'split-location',

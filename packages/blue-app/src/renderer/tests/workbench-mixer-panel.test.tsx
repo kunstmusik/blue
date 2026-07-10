@@ -76,6 +76,11 @@ describe('MixerTopComponent workbench routing', () => {
       api,
       auxiliary: createDefaultAuxiliaryLayoutState(),
     });
+    const outputGroup = useWorkbenchStore.getState().auxiliary.groups.find(
+      (group) => group.seedGroupId === 'output-main',
+    )!;
+    outputGroup.panelIds = ['MixerTopComponent'];
+    outputGroup.dockedPanelIds = ['MixerTopComponent'];
 
     useWorkbenchStore.getState().openPanel('MixerTopComponent');
 
@@ -91,6 +96,11 @@ describe('MixerTopComponent workbench routing', () => {
       api,
       auxiliary: createDefaultAuxiliaryLayoutState(),
     });
+    const outputGroup = useWorkbenchStore.getState().auxiliary.groups.find(
+      (group) => group.seedGroupId === 'output-main',
+    )!;
+    outputGroup.panelIds = ['MixerTopComponent'];
+    outputGroup.dockedPanelIds = ['MixerTopComponent'];
 
     useWorkbenchStore.getState().focusPanel('MixerTopComponent');
 

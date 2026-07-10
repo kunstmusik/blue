@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'">
+  <title></title>
+  <style>
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: var(--dv-paneview-background-color, #1e1e1e);
+    }
+  </style>
+</head>
+<body>
+  <!--
+    Dockview popout host (SPEC 055 US1).
+    Dockview opens this minimal page via window.open(), waits for `load`, then
+    appends its own #dv-popout-window container + stylesheets into this
+    document. No React bootstrap here: the popped-out group is the same live
+    panel instance owned by the main workbench, preserving shared session state.
+  -->
+  <div id="root"></div>
+</body>
+</html>

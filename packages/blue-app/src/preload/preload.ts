@@ -39,10 +39,32 @@ import type {
   UsageParityMatrixEntry,
 } from '../shared/program-settings';
 import type {
+  DisplayWorkArea,
   WindowLayoutSettingsSnapshot,
   WindowLayoutUpdateRequest,
 } from '../shared/window-layout-settings';
-import { WINDOW_LAYOUT_RESET_CHANNEL } from '../shared/window-layout-settings';
+import {
+  WINDOW_LAYOUT_DISPLAY_WORK_AREAS_CHANNEL,
+  WINDOW_LAYOUT_RESET_CHANNEL,
+} from '../shared/window-layout-settings';
+import {
+  PROJECT_DOCUMENT_UPDATED_CHANNEL,
+  WORKBENCH_WINDOW_DOCK_GROUP_CHANNEL,
+  WORKBENCH_WINDOW_REGISTER_CHANNEL,
+  WORKBENCH_WINDOW_REQUEST_CLOSE_CHANNEL,
+  WORKBENCH_WINDOW_REVEAL_PANEL_CHANNEL,
+  WORKBENCH_WINDOW_UPDATE_OWNERSHIP_CHANNEL,
+  type DockFloatingGroupRequest,
+  type DockFloatingGroupResult,
+  type ProjectDocumentUpdatedEvent,
+  type WorkbenchRevealPanelRequest,
+  type WorkbenchRevealPanelResult,
+  type WorkbenchWindowCloseRequest,
+  type WorkbenchWindowCloseResult,
+  type WorkbenchWindowOwnershipUpdate,
+  type WorkbenchWindowRegisterRequest,
+  type WorkbenchWindowRegisterResponse,
+} from '../shared/workbench-window-contract';
 
 contextBridge.exposeInMainWorld('blueAPI', {
   // File operations
@@ -238,10 +260,30 @@ contextBridge.exposeInMainWorld('blueAPI', {
     ipcRenderer.invoke('window-layout:update', request) as Promise<WindowLayoutSettingsSnapshot>,
   resetWindows: () =>
     ipcRenderer.invoke('window-layout:reset') as Promise<WindowLayoutSettingsSnapshot>,
+  getDisplayWorkAreas: () =>
+    ipcRenderer.invoke(WINDOW_LAYOUT_DISPLAY_WORK_AREAS_CHANNEL) as Promise<DisplayWorkArea[]>,
   onWindowLayoutReset: (callback: () => void) => {
     const handler = () => callback();
     ipcRenderer.on(WINDOW_LAYOUT_RESET_CHANNEL, handler);
     return () => { ipcRenderer.removeListener(WINDOW_LAYOUT_RESET_CHANNEL, handler); };
+  },
+
+  // Workbench windows (Float/Dock parity, SPEC 055)
+  registerWorkbenchWindow: (request: WorkbenchWindowRegisterRequest) =>
+    ipcRenderer.invoke(WORKBENCH_WINDOW_REGISTER_CHANNEL, request) as Promise<WorkbenchWindowRegisterResponse>,
+  updateWorkbenchOwnership: (update: WorkbenchWindowOwnershipUpdate) =>
+    ipcRenderer.send(WORKBENCH_WINDOW_UPDATE_OWNERSHIP_CHANNEL, update),
+  revealWorkbenchPanel: (request: WorkbenchRevealPanelRequest) =>
+    ipcRenderer.invoke(WORKBENCH_WINDOW_REVEAL_PANEL_CHANNEL, request) as Promise<WorkbenchRevealPanelResult>,
+  requestWorkbenchWindowClose: (request: WorkbenchWindowCloseRequest) =>
+    ipcRenderer.invoke(WORKBENCH_WINDOW_REQUEST_CLOSE_CHANNEL, request) as Promise<WorkbenchWindowCloseResult>,
+  dockFloatingGroup: (request: DockFloatingGroupRequest) =>
+    ipcRenderer.invoke(WORKBENCH_WINDOW_DOCK_GROUP_CHANNEL, request) as Promise<DockFloatingGroupResult>,
+  onProjectDocumentUpdated: (callback: (event: ProjectDocumentUpdatedEvent) => void) => {
+    const handler = (_event: Electron.IpcRendererEvent, payload: unknown) =>
+      callback(payload as ProjectDocumentUpdatedEvent);
+    ipcRenderer.on(PROJECT_DOCUMENT_UPDATED_CHANNEL, handler);
+    return () => { ipcRenderer.removeListener(PROJECT_DOCUMENT_UPDATED_CHANNEL, handler); };
   },
 
   // Evaluate Code

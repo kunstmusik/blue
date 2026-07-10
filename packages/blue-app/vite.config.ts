@@ -49,6 +49,7 @@ export default defineConfig({
         main: resolve(projectRoot, 'src/renderer/index.html'),
         settings: resolve(projectRoot, 'src/renderer/settings.html'),
         effectEditor: resolve(projectRoot, 'src/renderer/effect-editor.html'),
+        popout: resolve(projectRoot, 'src/renderer/popout.html'),
       },
     },
   },

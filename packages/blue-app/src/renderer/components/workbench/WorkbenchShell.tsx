@@ -15,10 +15,19 @@ import AuxiliaryHeaderActions from './AuxiliaryHeaderActions';
 import AuxiliarySlideout from './AuxiliarySlideout';
 import AuxiliaryTab from './AuxiliaryTab';
 import DockviewPanel from './DockviewPanel';
+import { getPanel } from './panel-registry';
+import {
+  computeTabCommandState,
+  type TabCommandContext,
+  type TabCommandKind,
+  type TabLocation,
+} from './tab-command-state';
 import {
   captureAuxiliaryDockedSizesFromApi,
+  getAuxiliaryPanelPresentation,
   getAuxiliarySlideoutForEdge,
   getMinimizedTabsForEdge,
+  getGroupInstanceForPanel,
   isAuxiliaryPanelId,
   logAuxiliaryDockedSizeDebug,
   shouldPreventAuxiliaryPanelDrop,
@@ -33,9 +42,31 @@ import {
 import { useDocumentMouseDownOutside } from '../../hooks/use-document-mousedown-outside';
 import { useWorkbenchStore } from '../../stores/workbench-store';
 import { useLayoutSettingsStore } from '../../stores/layout-settings-store';
+import type {
+  DisplayWorkArea,
+  WindowLayoutSettingsSnapshot,
+} from '../../../shared/window-layout-settings';
 
 const LAYOUT_STORAGE_KEY = 'blue-workbench-layout';
 const AUXILIARY_DRAG_THRESHOLD = 8;
+
+export function selectWorkbenchLayout(
+  layoutSnapshot: Pick<WindowLayoutSettingsSnapshot, 'workbench' | 'lastResetAt'> | null | undefined,
+  legacyLayout: string | null,
+): string | null {
+  // A reset marker means the next workbench must be rebuilt from defaults.
+  // This also repairs layouts written by an older reset race.
+  if (layoutSnapshot?.lastResetAt) {
+    return null;
+  }
+
+  const canonicalLayout = layoutSnapshot?.workbench?.serializedLayout;
+  if (typeof canonicalLayout === 'string') {
+    return canonicalLayout;
+  }
+
+  return layoutSnapshot?.lastResetAt ? null : legacyLayout;
+}
 
 interface PendingAuxiliaryDrag {
   kind: 'edge' | 'panel';
@@ -50,10 +81,74 @@ interface ActiveAuxiliaryDrag extends PendingAuxiliaryDrag {
   targetEdge?: AuxiliaryEdge;
 }
 
+interface HeaderContextMenuState {
+  x: number;
+  y: number;
+  panelId: string;
+}
+
 const AUXILIARY_EDGES: AuxiliaryEdge[] = ['left', 'right', 'bottom'];
 
 function isAuxiliaryEdge(value: string | undefined): value is AuxiliaryEdge {
   return value !== undefined && AUXILIARY_EDGES.includes(value as AuxiliaryEdge);
+}
+
+/**
+ * Reads every Dockview group and reports panel ownership to the main-process
+ * workbench window registry so that Window-menu reveal commands can locate
+ * which window owns a given panel (SPEC 055 US6, FR-024/FR-025).
+ *
+ * Grid panels are reported as owned by the main window. Popout groups are
+ * reported as owned by their floating window (matched by popoutGroupId).
+ */
+export function reportOwnership(api: DockviewApi, windowId?: string) {
+  const blueAPI =
+    typeof window !== 'undefined' ? (window as { blueAPI?: Record<string, (...args: unknown[]) => unknown> }).blueAPI : undefined;
+  if (!blueAPI) return;
+
+  try {
+    // Report grid panels as owned by the main window.
+    const gridPanelIds: string[] = [];
+    let activePanelId: string | undefined;
+
+    for (const group of api.groups) {
+      if (group.api.location.type === 'popout') continue;
+
+      for (const panel of group.panels) {
+        gridPanelIds.push(panel.id);
+      }
+
+      if (!activePanelId && group.activePanel) {
+        activePanelId = group.activePanel.id;
+      }
+    }
+
+    blueAPI['updateWorkbenchOwnership']({
+      windowId: windowId ?? 'main',
+      role: 'main',
+      panelIds: gridPanelIds,
+      activePanelId,
+    });
+
+    // Report each popout group as owned by its floating window. The main
+    // process resolves the windowId from the popoutGroupId via the registry.
+    for (const group of api.groups) {
+      if (group.api.location.type !== 'popout') continue;
+
+      const popoutPanelIds = group.panels.map((p) => p.id);
+      const popoutActiveId = group.activePanel?.id;
+
+      blueAPI['updateWorkbenchOwnership']({
+        windowId: windowId ?? 'main',
+        role: 'floating',
+        popoutGroupId: group.id,
+        panelIds: popoutPanelIds,
+        activePanelId: popoutActiveId,
+      });
+    }
+  } catch {
+    // BlueAPI may not be available in test environments; ignore.
+  }
 }
 
 export default function WorkbenchShell() {
@@ -79,6 +174,9 @@ export default function WorkbenchShell() {
   const bottomSlideout = getAuxiliarySlideoutForEdge(auxiliary, 'bottom');
   const shellRef = useRef<HTMLDivElement | null>(null);
   const listenersRef = useRef<Array<{ dispose: () => void }>>([]);
+  const workbenchWindowIdRef = useRef<string | undefined>(undefined);
+  const layoutHydratedRef = useRef(false);
+  const suppressLayoutPersistenceRef = useRef(false);
   const pendingDockviewSizeSnapshotRef =
     useRef<AuxiliaryDockedSizeSnapshot | null>(null);
   const pendingManualDragSizeSnapshotRef =
@@ -86,6 +184,8 @@ export default function WorkbenchShell() {
   const pendingDragRef = useRef<PendingAuxiliaryDrag | null>(null);
   const activeDragRef = useRef<ActiveAuxiliaryDrag | null>(null);
   const [activeDrag, setActiveDrag] = useState<ActiveAuxiliaryDrag | null>(null);
+  const [headerContextMenu, setHeaderContextMenu] =
+    useState<HeaderContextMenuState | null>(null);
 
   const disposeListeners = useCallback(() => {
     for (const disposable of listenersRef.current) {
@@ -95,6 +195,13 @@ export default function WorkbenchShell() {
   }, []);
 
   const persistLayout = useCallback(() => {
+    if (
+      !layoutHydratedRef.current ||
+      suppressLayoutPersistenceRef.current
+    ) {
+      return;
+    }
+
     const layout = useWorkbenchStore.getState().saveLayout();
     if (!layout) return;
 
@@ -115,6 +222,7 @@ export default function WorkbenchShell() {
   const onReady = useCallback(
     (event: DockviewReadyEvent) => {
       disposeListeners();
+      layoutHydratedRef.current = false;
       setApi(event.api);
 
       void (async () => {
@@ -123,10 +231,26 @@ export default function WorkbenchShell() {
           await layoutStore.load();
         }
 
+        const blueAPI =
+          typeof window !== 'undefined'
+            ? (window as {
+                blueAPI?: Record<string, (...args: unknown[]) => unknown>;
+              }).blueAPI
+            : undefined;
+        let displayWorkAreas: DisplayWorkArea[] | undefined;
+        try {
+          displayWorkAreas = (await blueAPI?.['getDisplayWorkAreas']?.()) as
+            | DisplayWorkArea[]
+            | undefined;
+        } catch {
+          // Keep the renderer viewport fallback when the main process is
+          // unavailable during tests or early startup.
+        }
+
         // Prefer the canonical app-wide workbench layout; fall back to legacy
         // localStorage so existing users see their saved workspace on first
         // launch with the new contract.
-        const appWideLayout = useLayoutSettingsStore.getState().layout?.workbench?.serializedLayout ?? null;
+        const layoutSnapshot = useLayoutSettingsStore.getState().layout;
         const fallbackLegacyLayout = (() => {
           try {
             return localStorage.getItem(LAYOUT_STORAGE_KEY);
@@ -134,8 +258,31 @@ export default function WorkbenchShell() {
             return null;
           }
         })();
-        useWorkbenchStore.getState().loadLayout(appWideLayout ?? fallbackLegacyLayout);
+        useWorkbenchStore
+          .getState()
+          .loadLayout(
+            selectWorkbenchLayout(layoutSnapshot, fallbackLegacyLayout),
+            displayWorkAreas,
+          );
         useWorkbenchStore.getState().syncAuxiliaryLayout();
+
+        reportOwnership(event.api, workbenchWindowIdRef.current);
+
+        // Confirm renderer-side registration with the main-process registry.
+        // The main window is already registered by createWindow() in main.ts;
+        // this call ensures the renderer receives its canonical windowId for
+        // future ownership updates.
+        if (blueAPI) {
+          try {
+            const result = await blueAPI['registerWorkbenchWindow']({ role: 'main' }) as { windowId?: string } | undefined;
+            if (result?.windowId) {
+              workbenchWindowIdRef.current = result.windowId;
+              reportOwnership(event.api, result.windowId);
+            }
+          } catch {
+            // BlueAPI may not be available in test environments; ignore.
+          }
+        }
 
         listenersRef.current = [
           event.api.onWillDragGroup((dragEvent) => {
@@ -178,10 +325,12 @@ export default function WorkbenchShell() {
           event.api.onDidLayoutChange(() => {
             useWorkbenchStore.getState().syncAuxiliaryLayout();
             persistLayout();
+            reportOwnership(event.api, workbenchWindowIdRef.current);
           }),
           event.api.onDidActivePanelChange(() => {
             useWorkbenchStore.getState().syncAuxiliaryLayout();
             persistLayout();
+            reportOwnership(event.api, workbenchWindowIdRef.current);
           }),
           event.api.onDidDrop(() => {
             pendingDockviewSizeSnapshotRef.current = null;
@@ -224,9 +373,11 @@ export default function WorkbenchShell() {
             });
             pendingDockviewSizeSnapshotRef.current = null;
             movePanelToEdge(panel.id, targetEdge, preservedDockedSizes);
+            reportOwnership(event.api, workbenchWindowIdRef.current);
           }),
         ];
 
+        layoutHydratedRef.current = true;
         persistLayout();
       })();
     },
@@ -248,8 +399,19 @@ export default function WorkbenchShell() {
       onWindowLayoutReset?: (cb: () => void) => () => void;
     } | undefined;
     const unsubscribeReset = ipc?.onWindowLayoutReset?.(() => {
-      useLayoutSettingsStore.getState().applyReset();
-      useWorkbenchStore.getState().resetLayout();
+      suppressLayoutPersistenceRef.current = true;
+      try {
+        useLayoutSettingsStore.getState().applyReset();
+        try {
+          localStorage.removeItem(LAYOUT_STORAGE_KEY);
+        } catch {
+          // localStorage may be unavailable in private mode; ignore.
+        }
+        useWorkbenchStore.getState().resetLayout();
+      } finally {
+        suppressLayoutPersistenceRef.current = false;
+        persistLayout();
+      }
     });
 
     return () => {
@@ -358,6 +520,32 @@ export default function WorkbenchShell() {
       }
     }
 
+    function handleContextMenu(event: MouseEvent) {
+      const target = event.target as HTMLElement | null;
+      if (!target || target.closest('.dv-tab')) {
+        return;
+      }
+
+      const header = target.closest<HTMLElement>('.dv-tabs-and-actions-container');
+      if (!header) {
+        return;
+      }
+
+      const { api } = useWorkbenchStore.getState();
+      const group = api?.groups.find((candidate) =>
+        (candidate as { element?: HTMLElement }).element?.contains(header),
+      );
+      const panelId = group?.activePanel?.id ?? group?.panels[0]?.id;
+      if (!group || !panelId) {
+        return;
+      }
+
+      event.preventDefault();
+      group.activePanel?.api.setActive();
+      group.focus();
+      setHeaderContextMenu({ x: event.clientX, y: event.clientY, panelId });
+    }
+
     function handlePointerMove(event: PointerEvent) {
       const pending = pendingDragRef.current;
       if (!pending) {
@@ -443,6 +631,7 @@ export default function WorkbenchShell() {
     }
 
     shell.addEventListener('pointerdown', handlePointerDown, true);
+    shell.addEventListener('contextmenu', handleContextMenu, true);
     window.addEventListener('pointermove', handlePointerMove);
     window.addEventListener('pointerup', handlePointerUp);
     window.addEventListener('pointercancel', clearDragState);
@@ -450,6 +639,7 @@ export default function WorkbenchShell() {
 
     return () => {
       shell.removeEventListener('pointerdown', handlePointerDown, true);
+      shell.removeEventListener('contextmenu', handleContextMenu, true);
       window.removeEventListener('pointermove', handlePointerMove);
       window.removeEventListener('pointerup', handlePointerUp);
       window.removeEventListener('pointercancel', clearDragState);
@@ -459,6 +649,7 @@ export default function WorkbenchShell() {
 
   useEffect(() => {
     return () => {
+      layoutHydratedRef.current = false;
       disposeListeners();
       setApi(null);
     };
@@ -605,6 +796,188 @@ export default function WorkbenchShell() {
       {rightTabs.length > 0 && bottomTabs.length > 0 ? (
         <div className="workbench-shell__corner workbench-shell__corner--right-bottom" aria-hidden="true" />
       ) : null}
+
+      {headerContextMenu ? (
+        <WorkbenchHeaderContextMenu
+          menu={headerContextMenu}
+          onClose={() => setHeaderContextMenu(null)}
+        />
+      ) : null}
     </div>
   );
+}
+
+function WorkbenchHeaderContextMenu({
+  menu,
+  onClose,
+}: {
+  menu: HeaderContextMenuState;
+  onClose: () => void;
+}) {
+  const api = useWorkbenchStore((s) => s.api);
+  const auxiliary = useWorkbenchStore((s) => s.auxiliary);
+  const closeGroup = useWorkbenchStore((s) => s.closeGroup);
+  const floatGroup = useWorkbenchStore((s) => s.floatGroup);
+  const dockGroup = useWorkbenchStore((s) => s.dockGroup);
+  const minimizeAuxiliaryGroup = useWorkbenchStore((s) => s.minimizeAuxiliaryGroup);
+  const newDocumentTabGroup = useWorkbenchStore((s) => s.newDocumentTabGroup);
+  const collapseDocumentTabGroup = useWorkbenchStore((s) => s.collapseDocumentTabGroup);
+
+  useEffect(() => {
+    const close = () => onClose();
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        onClose();
+      }
+    };
+    window.addEventListener('pointerdown', close);
+    window.addEventListener('keydown', closeOnEscape);
+    return () => {
+      window.removeEventListener('pointerdown', close);
+      window.removeEventListener('keydown', closeOnEscape);
+    };
+  }, [onClose]);
+
+  const panel = api?.getPanel(menu.panelId);
+  if (!api || !panel) {
+    return null;
+  }
+
+  const descriptor = getPanel(menu.panelId);
+  const groupPanelIds = panel.group.panels.map((candidate) => candidate.id);
+  const dockviewLocation = panel.api.location.type;
+  const auxiliaryPresentation = isAuxiliaryPanelId(menu.panelId)
+    ? getAuxiliaryPanelPresentation(auxiliary, menu.panelId)
+    : undefined;
+  const location: TabLocation =
+    dockviewLocation === 'popout' || dockviewLocation === 'floating'
+      ? 'floating'
+      : (auxiliaryPresentation ?? 'docked');
+  const dockedEditorGroupCount = api.groups.filter(
+    (group) =>
+      group.api.location.type !== 'popout' &&
+      group.panels.some((candidate) => (getPanel(candidate.id)?.mode ?? 'editor') === 'editor'),
+  ).length;
+  const commandContext: TabCommandContext = {
+    panelId: menu.panelId,
+    groupId: panel.group.id,
+    groupPanelIds,
+    activePanelId: panel.group.activePanel?.id ?? menu.panelId,
+    location,
+    mode: descriptor?.mode ?? 'editor',
+    isAuxiliary: isAuxiliaryPanelId(menu.panelId),
+    isClosable: descriptor?.isClosable ?? true,
+    isFloatable: descriptor?.isFloatable ?? true,
+    isCloneable: false,
+    isMaximized: panel.api.isMaximized(),
+    dockedEditorGroupCount,
+    siblingClosable: (panelId) => getPanel(panelId)?.isClosable ?? true,
+    siblingFloatable: (panelId) => getPanel(panelId)?.isFloatable ?? true,
+  };
+  const commandState = computeTabCommandState(commandContext);
+
+  const groupSurfaceDisabled: ReadonlySet<TabCommandKind> = new Set([
+    'close',
+    'close-other',
+    'maximize',
+    'restore',
+    'minimize',
+    'float',
+    'dock',
+    'shift-left',
+    'shift-right',
+    'move',
+    'clone',
+    'new-document-tab-group',
+  ]);
+
+  const runCommand = (kind: TabCommandKind) => {
+    onClose();
+    switch (kind) {
+      case 'close-all':
+      case 'close-group':
+        return closeGroup(menu.panelId);
+      case 'float-group':
+        return floatGroup(menu.panelId);
+      case 'dock-group':
+        return dockGroup(menu.panelId);
+      case 'minimize-group': {
+        const instance = getGroupInstanceForPanel(auxiliary, menu.panelId);
+        if (instance) {
+          return minimizeAuxiliaryGroup(instance.groupInstanceId);
+        }
+        return;
+      }
+      case 'collapse-document-tab-group':
+        return collapseDocumentTabGroup(menu.panelId);
+      case 'new-document-tab-group':
+        return newDocumentTabGroup(menu.panelId);
+      default:
+        return;
+    }
+  };
+
+  return (
+    <div
+      className="workbench-context-menu"
+      role="menu"
+      style={{ position: 'fixed', left: menu.x, top: menu.y }}
+      onPointerDown={(event) => event.stopPropagation()}
+    >
+      {commandState.commands.map((command, index) => {
+        const previousKind = commandState.commands[index - 1]?.kind;
+        const showSeparator = index > 0 && headerGroupOf(previousKind) !== headerGroupOf(command.kind);
+        const enabled = command.enabled && !groupSurfaceDisabled.has(command.kind);
+        return (
+          <div key={command.kind}>
+            {showSeparator ? (
+              <div className="workbench-context-menu__separator" aria-hidden="true" />
+            ) : null}
+            <button
+              type="button"
+              role="menuitem"
+              className="workbench-context-menu__item"
+              data-disabled={!enabled ? '' : undefined}
+              disabled={!enabled}
+              onClick={() => runCommand(command.kind)}
+            >
+              {command.label}
+            </button>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function headerGroupOf(kind: TabCommandKind | undefined): string {
+  switch (kind) {
+    case 'close':
+    case 'close-all':
+    case 'close-other':
+    case 'close-group':
+      return 'close';
+    case 'maximize':
+    case 'restore':
+    case 'minimize':
+    case 'minimize-group':
+      return 'maximize';
+    case 'float':
+    case 'float-group':
+    case 'dock':
+    case 'dock-group':
+      return 'float';
+    case 'shift-left':
+    case 'shift-right':
+    case 'move':
+    case 'move-group':
+    case 'size-group':
+      return 'shift';
+    case 'clone':
+    case 'new-document-tab-group':
+    case 'collapse-document-tab-group':
+      return 'document';
+    default:
+      return 'other';
+  }
 }

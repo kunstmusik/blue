@@ -16,6 +16,17 @@ export const WINDOW_LAYOUT_SETTINGS_VERSION = 1;
  */
 export const WINDOW_LAYOUT_RESET_CHANNEL = 'window-layout:reset';
 
+/** Current Electron display work areas used to keep restored popouts visible. */
+export const WINDOW_LAYOUT_DISPLAY_WORK_AREAS_CHANNEL =
+  'window-layout:get-display-work-areas';
+
+export interface DisplayWorkArea {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
 export type WindowId = 'main' | 'settings' | 'effect-editor' | 'effect-interface';
 
 export const WINDOW_IDENTITIES: readonly WindowId[] = [
@@ -105,7 +116,7 @@ export interface LegacyLayoutMigrationPayload {
 
 export interface WindowStateValidationOptions {
   minimumSize?: number;
-  workAreas?: Array<{ x: number; y: number; width: number; height: number }>;
+  workAreas?: DisplayWorkArea[];
 }
 
 export const DEFAULT_WINDOW_MINIMUM_SIZE = 100;
@@ -317,6 +328,9 @@ export function applyWindowLayoutUpdate(
       return {
         ...current,
         workbench: { serializedLayout: request.serializedLayout, updatedAt: now() },
+        // The first complete workbench save after Reset Windows acknowledges
+        // the rebuilt baseline and allows normal layout restoration again.
+        lastResetAt: undefined,
       };
     }
     case 'split-location': {

@@ -13,6 +13,7 @@ import {
   type WindowId,
   type WindowBoundsSnapshot,
   type WindowStateSnapshot,
+  type DisplayWorkArea,
 } from '../shared/window-layout-settings';
 import { loadWindowLayoutSettings, updateWindowLayout } from './window-layout-store';
 
@@ -183,6 +184,15 @@ export function getDefaultWindowBounds(windowId: WindowId): WindowBoundsSnapshot
     width,
     height,
   };
+}
+
+/**
+ * Returns copies of the currently connected display work areas for renderer
+ * layout restoration. Keeping the screen query in main is required because a
+ * renderer's viewport only describes its current window, not all displays.
+ */
+export function getAvailableDisplayWorkAreas(): DisplayWorkArea[] {
+  return safeGetAllDisplays().map(({ workArea }) => ({ ...workArea }));
 }
 
 export function resetWindowToDefaultBounds(

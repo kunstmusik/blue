@@ -9,6 +9,10 @@ export interface PanelDescriptor {
   icon?: string;
   auxiliaryGroupId?: 'properties-main' | 'output-main';
   auxiliaryRailLabel?: string;
+  /** Whether the panel may close through tab/window commands. Defaults to true. */
+  isClosable?: boolean;
+  /** Whether the panel may participate in Float. Defaults to true. */
+  isFloatable?: boolean;
 }
 
 export const WORKBENCH_PANEL_REGISTRY: PanelDescriptor[] = [
@@ -108,6 +112,7 @@ export const PANEL_MAP = new Map(WORKBENCH_PANEL_REGISTRY.map((panel) => [panel.
 
 export type NativeMenuCommand =
   | { type: 'focus-panel'; panelId: string }
+  | { type: 'close-floating-group'; panelId: string }
   | { type: 'reset-windows' }
   | { type: 'open-effects-library' }
   | { type: 'toggle-follow-playback' }
