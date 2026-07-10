@@ -5,6 +5,7 @@ import { DEFAULT_ROW_HEIGHT, GROUP_SPACER } from '../types';
 import { RenderBar } from '../bar-renderers/renderer-registry';
 import { useScoreSelectionStore, type ScoreObjectClipboardEntry } from '../../../../../stores/score-selection-store';
 import { useProjectStore } from '../../../../../stores/project-store';
+import { useWorkbenchStore } from '../../../../../stores/workbench-store';
 import AutomationLayerOverlay from '../automation/AutomationLayerOverlay';
 import { useScoreAutomationStore } from '../../../../../stores/score-automation-store';
 import type { ScoreAutomationPatch } from '../../../../../../shared/project-editor';
@@ -248,6 +249,7 @@ export default function ScoreTimeCanvas({
   const clipboard = useScoreSelectionStore((s) => s.clipboard);
   const applyProjectDocumentPatch = useProjectStore((s) => s.applyProjectDocumentPatch);
   const flushPendingPatches = useProjectStore((s) => s.flushPendingPatches);
+  const openPanel = useWorkbenchStore((s) => s.openPanel);
   const moveScoreObjects = useProjectStore((s) => s.moveScoreObjects);
   const addScoreObjects = useProjectStore((s) => s.addScoreObjects);
   const resizeScoreObjects = useProjectStore((s) => s.resizeScoreObjects);
@@ -894,10 +896,23 @@ export default function ScoreTimeCanvas({
     const hit = findLayerAtY(group.layers, y);
     if (!hit) return;
     const item = findItemOnLayer(hit.layer, xBeats);
-    if (item && item.isContainer && onDoubleClickObject) {
-      onDoubleClickObject(item.objectId);
+    if (!item) return;
+    if (item.isContainer) {
+      // Java Blue: double-clicking a PolyObject drills one layer down via
+      // ScoreController.editLayerGroup() instead of opening the object editor.
+      if (onDoubleClickObject) {
+        onDoubleClickObject(item.objectId);
+      }
+      return;
     }
-  }, [toLocalXY, pixelsPerBeat, group.layers, onDoubleClickObject]);
+    // Java Blue: ScoreObjectSelectionListener.editScoreObject() opens (or
+    // reactivates) ScoreObjectEditorTopComponent for a non-PolyObject score
+    // object, but only when exactly one object is selected. openPanel reveals
+    // the panel if minimized/closed and focuses it if already docked/floating.
+    if (selectedObjectIds.size === 1) {
+      openPanel('ScoreObjectEditorTopComponent');
+    }
+  }, [toLocalXY, pixelsPerBeat, group.layers, onDoubleClickObject, openPanel, selectedObjectIds]);
 
   const getSelectedEntries = useCallback((): ScoreObjectClipboardEntry[] => {
     const entries = collectClipboardEntriesForSelection(interactionLayerGroups, selectedObjectIds);
