@@ -11,8 +11,10 @@ import {
   clearWaveformCache,
   setWaveformCacheEntry,
   summarizeWaveformChannels,
+  summarizeAiffPcmBytes,
 } from '../components/workbench/panels/score/bar-renderers/waveform-cache';
 import type { AudioFadeType } from '../../shared/project-editor';
+import { buildAiffBytes } from '@blue/data';
 
 afterEach(() => {
   clearWaveformCache();
@@ -127,6 +129,52 @@ describe('AudioClip bar renderer', () => {
       expect(channels[0]!.max).toEqual([-1, -0.5, 0, 0.5, 1]);
     });
 
+    it('summarizes uncompressed AIFF PCM when Chromium cannot decode it', () => {
+      const comm = buildAiffBytes(1, 4, 16, 4);
+      const bytes = new Uint8Array(comm.length + 24);
+      bytes.set(comm);
+      const writeU32 = (offset: number, value: number) => {
+        bytes[offset] = (value >>> 24) & 0xff;
+        bytes[offset + 1] = (value >>> 16) & 0xff;
+        bytes[offset + 2] = (value >>> 8) & 0xff;
+        bytes[offset + 3] = value & 0xff;
+      };
+      writeU32(4, bytes.length - 8);
+      bytes.set([0x53, 0x53, 0x4e, 0x44], comm.length); // SSND
+      writeU32(comm.length + 4, 16);
+      // offset and block size remain zero; four signed 16-bit samples follow.
+      bytes.set([0x80, 0, 0, 0, 0x7f, 0xff, 0xc0, 0], comm.length + 16);
+
+      const channels = summarizeAiffPcmBytes(bytes, 4);
+
+      expect(channels).toHaveLength(1);
+      expect(channels![0]!.min).toEqual([-1, 0, 32767 / 32768, -0.5]);
+      expect(channels![0]!.max).toEqual([-1, 0, 32767 / 32768, -0.5]);
+    });
+
+    it('keeps stereo AIFF PCM channels separate', () => {
+      const comm = buildAiffBytes(2, 2, 16, 4);
+      const bytes = new Uint8Array(comm.length + 24);
+      bytes.set(comm);
+      const writeU32 = (offset: number, value: number) => {
+        bytes[offset] = (value >>> 24) & 0xff;
+        bytes[offset + 1] = (value >>> 16) & 0xff;
+        bytes[offset + 2] = (value >>> 8) & 0xff;
+        bytes[offset + 3] = value & 0xff;
+      };
+      writeU32(4, bytes.length - 8);
+      bytes.set([0x53, 0x53, 0x4e, 0x44], comm.length); // SSND
+      writeU32(comm.length + 4, 16);
+      // Two stereo frames: left [-1, 0.25], right [0.5, -0.5].
+      bytes.set([0x80, 0, 0x40, 0, 0x20, 0, 0xc0, 0], comm.length + 16);
+
+      const channels = summarizeAiffPcmBytes(bytes, 4);
+
+      expect(channels).toHaveLength(2);
+      expect(channels![0]).toEqual({ min: [-1, 0.25], max: [-1, 0.25] });
+      expect(channels![1]).toEqual({ min: [0.5, -0.5], max: [0.5, -0.5] });
+    });
+
     it('builds looping waveform path data with file-start offsets', () => {
       const paths = buildWaveformPathData(
         {
@@ -154,6 +202,31 @@ describe('AudioClip bar renderer', () => {
       expect(paths[0]).toContain('M0.5');
       expect(paths[0]).toContain('L0.5');
       expect(paths[0]).toContain('M1.5');
+    });
+
+    it('stacks stereo waveform paths into equal-height channel bands', () => {
+      const paths = buildWaveformPathData(
+        {
+          key: buildWaveformCacheKey('fso:frozen5.aif', 1),
+          filePath: 'frozen5.aif',
+          pixelSecond: 1,
+          loading: false,
+          channels: [
+            { min: [-1], max: [1] },
+            { min: [-1], max: [1] },
+          ],
+        },
+        {
+          width: 1,
+          height: 40,
+          pixelsPerBeat: 1,
+        },
+      );
+
+      expect(paths).toEqual([
+        'M0.5 0 L0.5 20',
+        'M0.5 20 L0.5 40',
+      ]);
     });
   });
 
@@ -367,5 +440,51 @@ describe('AudioClip bar renderer', () => {
     expect(html).toContain('>Frozen<');
     expect(html).toContain('>Tail<');
     expect(html).toContain('background-color:var(--color-app-shadow)');
+  });
+
+  it('renders both frozen stereo channels across the Java-style inner height', () => {
+    const cacheKey = buildWaveformCacheKey('fso:frozen5.aif', 100);
+    setWaveformCacheEntry({
+      key: cacheKey,
+      filePath: 'frozen5.aif',
+      pixelSecond: 100,
+      loading: false,
+      channels: [
+        { min: [-1, -0.25], max: [1, 0.25] },
+        { min: [-0.5, -0.1], max: [0.5, 0.1] },
+      ],
+    });
+
+    const html = renderToStaticMarkup(
+      <FrozenSoundObjectBar
+        item={{
+          objectId: 'frozen-stereo',
+          objectType: 'FrozenSoundObject',
+          name: 'Frozen Stereo',
+          startBeats: 0,
+          durationBeats: 4,
+          startTimeBase: 'BEATS',
+          durationTimeBase: 'BEATS',
+          backgroundColor: 0x000000,
+          isContainer: false,
+          barRenderer: {
+            kind: 'frozenSoundObject',
+            labelLines: ['Frozen Stereo'],
+            frozenWaveFileName: 'frozen5.aif',
+            waveformKey: 'fso:frozen5.aif',
+            originalDurationBeats: 4,
+            currentDurationBeats: 4,
+          },
+        }}
+        selected={false}
+        pixelsPerBeat={100}
+        rowHeight={44}
+        durationBeats={4}
+      />,
+    );
+
+    expect(html).toContain('data-waveform-key="fso:frozen5.aif"');
+    expect(html).toContain('height="40"');
+    expect(html.match(/<path/g)).toHaveLength(2);
   });
 });

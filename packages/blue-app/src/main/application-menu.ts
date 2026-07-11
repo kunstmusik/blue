@@ -4,6 +4,8 @@ import { getPanelsByMode, type PanelMode } from '../shared/workbench-menu';
 
 export interface ApplicationMenuTemplateOptions {
   hasLoadedProject: boolean;
+  /** Render/freeze is exclusive, so native render commands must not overlap it. */
+  isRenderOperationActive?: boolean;
   isDarwin: boolean;
   recentProjects: string[];
   canRevertProject: boolean;
@@ -36,6 +38,9 @@ export interface ApplicationMenuTemplateOptions {
   onBlueLiveAllNotesOff: () => void;
   onEditTempoMap: () => void;
   onEditMeterMap: () => void;
+  onRenderToDisk: () => void;
+  onRenderToDiskAndPlay: () => void;
+  onRenderToDiskAndOpen: () => void;
   onNotYetImplemented: () => void;
 }
 
@@ -77,6 +82,7 @@ function buildRecentProjectsMenuTemplate(options: ApplicationMenuTemplateOptions
 
 function buildFileMenuTemplate(options: ApplicationMenuTemplateOptions): MenuItemConstructorOptions[] {
   const hasProject = options.hasLoadedProject;
+  const canRender = hasProject && !options.isRenderOperationActive;
 
   return [
     { label: 'New Project', accelerator: 'CmdOrCtrl+N', click: () => options.onNewFile() },
@@ -94,9 +100,9 @@ function buildFileMenuTemplate(options: ApplicationMenuTemplateOptions): MenuIte
     { label: 'Save', accelerator: 'CmdOrCtrl+S', enabled: hasProject, click: () => options.onSaveFile() },
     { label: 'Save as...', enabled: hasProject, click: () => options.onSaveFileAs() },
     { type: 'separator' },
-    buildPlaceholderItem('Render to Disk', options, { accelerator: options.isDarwin ? 'Shift+Cmd+F9' : 'Shift+Ctrl+F9', enabled: hasProject }),
-    buildPlaceholderItem('Render to Disk and Play', options, { accelerator: 'Shift+F9', enabled: hasProject }),
-    buildPlaceholderItem('Render to Disk and Open', options, { enabled: hasProject }),
+    { label: 'Render to Disk', accelerator: options.isDarwin ? 'Shift+Cmd+F9' : 'Shift+Ctrl+F9', enabled: canRender, click: () => options.onRenderToDisk() },
+    { label: 'Render to Disk and Play', accelerator: 'Shift+F9', enabled: canRender, click: () => options.onRenderToDiskAndPlay() },
+    { label: 'Render to Disk and Open', enabled: canRender, click: () => options.onRenderToDiskAndOpen() },
     { type: 'separator' },
     buildPlaceholderItem('Save Libraries', options, { enabled: hasProject }),
     { type: 'separator' },

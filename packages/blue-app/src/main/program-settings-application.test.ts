@@ -56,9 +56,15 @@ describe('program-settings-application', () => {
     const settings = makeSettings();
     settings.diskRender.defaultSr = '96000';
     settings.diskRender.defaultKsmps = '64';
+    settings.diskRender.defaultNchnls = '6';
+    settings.diskRender.useZeroDbfs = false;
+    settings.diskRender.zeroDbfs = '2';
     applyProgramSettingsToNewProject(data, settings);
     expect(data.getProjectProperties().diskSampleRate).toBe('96000');
     expect(data.getProjectProperties().diskKsmps).toBe('64');
+    expect(data.getProjectProperties().diskChannels).toBe('6');
+    expect(data.getProjectProperties().diskUseZeroDbFS).toBe(false);
+    expect(data.getProjectProperties().diskZeroDbFS).toBe('2');
   });
 
   it('sets score time state snap', () => {

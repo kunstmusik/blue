@@ -26,6 +26,9 @@ function createHandlers() {
     onBlueLiveAllNotesOff: vi.fn(),
     onEditTempoMap: vi.fn(),
     onEditMeterMap: vi.fn(),
+    onRenderToDisk: vi.fn(),
+    onRenderToDiskAndPlay: vi.fn(),
+    onRenderToDiskAndOpen: vi.fn(),
     onNotYetImplemented: vi.fn(),
     onAddMarker: vi.fn(),
     onNavigateNextMarker: vi.fn(),
@@ -43,6 +46,47 @@ function getLabels(items: any[]): Array<string | undefined> {
 }
 
 describe('application menu template', () => {
+  it('disables all native disk-render actions while a render/freeze operation is active', () => {
+    const template = buildApplicationMenuTemplate({
+      hasLoadedProject: true,
+      isRenderOperationActive: true,
+      isDarwin: false,
+      recentProjects: [],
+      canRevertProject: false,
+      followPlaybackEnabled: true,
+      followPlaybackOnStartEnabled: true,
+      ...createHandlers(),
+    });
+    const fileMenu = getSubmenu(template.find((item) => item.label === 'File'));
+
+    for (const label of ['Render to Disk', 'Render to Disk and Play', 'Render to Disk and Open']) {
+      expect(fileMenu.find((item) => item.label === label)?.enabled).toBe(false);
+    }
+  });
+
+  it('routes each native disk-render action to its matching handler', () => {
+    const handlers = createHandlers();
+    const template = buildApplicationMenuTemplate({
+      hasLoadedProject: true,
+      isRenderOperationActive: false,
+      isDarwin: false,
+      recentProjects: [],
+      canRevertProject: false,
+      followPlaybackEnabled: true,
+      followPlaybackOnStartEnabled: true,
+      ...handlers,
+    });
+    const fileMenu = getSubmenu(template.find((item) => item.label === 'File'));
+
+    fileMenu.find((item) => item.label === 'Render to Disk')?.click?.();
+    fileMenu.find((item) => item.label === 'Render to Disk and Play')?.click?.();
+    fileMenu.find((item) => item.label === 'Render to Disk and Open')?.click?.();
+
+    expect(handlers.onRenderToDisk).toHaveBeenCalledOnce();
+    expect(handlers.onRenderToDiskAndPlay).toHaveBeenCalledOnce();
+    expect(handlers.onRenderToDiskAndOpen).toHaveBeenCalledOnce();
+  });
+
   it('builds the macOS Blue menu with the expected order and actions', () => {
     const handlers = createHandlers();
     const template = buildApplicationMenuTemplate({

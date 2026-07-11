@@ -274,3 +274,10 @@ export { ProjectUpgrader_2_3_0 } from './migration/upgrades/upgrade-2.3.0';
 export { replaceAll, stripSingleLineComments, stripBlockComments } from './utilities/text';
 export { writeInt, readInt, writeDouble, readDouble, writeBoolean, readBoolean } from './utilities/xml';
 export { applyNoteProcessorChain, setScoreStart, getNotes } from './utilities/score';
+export { buildFreezeRenderData } from './utilities/freeze-render-data';
+export type { FreezeRenderDataResult } from './utilities/freeze-render-data';
+
+// ─── Audio ───
+export { parseAudioFileMetadata, AudioFileMetadataError } from './audio/audio-file-metadata';
+export type { AudioFileMetadata } from './audio/audio-file-metadata';
+export { buildWavBytes, buildAiffBytes } from './audio/audio-file-metadata';

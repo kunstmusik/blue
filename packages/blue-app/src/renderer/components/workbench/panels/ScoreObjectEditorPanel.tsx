@@ -1229,8 +1229,11 @@ export default function ScoreObjectEditorPanel(): React.ReactElement {
   }, [selectedObjectId, score]);
 
   const editorTarget = useMemo(() => {
-    if (selectedObjectTarget) return selectedObjectTarget;
-    return selectedRow?.editorTarget ?? null;
+    // Timeline replacements (freeze/unfreeze) keep the stable objectId/location
+    // while changing the concrete object type. Prefer the refreshed row target
+    // over the selection store's pre-replacement target.
+    if (selectedRow?.editorTarget) return selectedRow.editorTarget;
+    return selectedObjectTarget;
   }, [selectedObjectTarget, selectedRow]);
 
   const audioClipEditorPreview = useProjectStore((s) => (

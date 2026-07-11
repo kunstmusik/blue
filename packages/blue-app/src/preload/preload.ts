@@ -32,6 +32,15 @@ import type {
   MissingAudioAssetsResolveResult,
 } from '../shared/missing-audio-assets';
 import type {
+  RenderToDiskRequest,
+  FreezeScoreObjectsRequest,
+  CancelRenderOperationRequest,
+  RenderOperationResult,
+  RenderOperationStatus,
+  FreezeOperationResult,
+} from '../shared/render-freeze-contract';
+import { RENDER_OPERATION_STATUS_CHANNEL, isRenderOperationStatus } from '../shared/render-freeze-contract';
+import type {
   ProgramSettingsSnapshot,
   ProgramSettingsSaveResult,
   ProgramSettingsPanelId,
@@ -297,4 +306,19 @@ contextBridge.exposeInMainWorld('blueAPI', {
     ipcRenderer.invoke('missing-audio-assets:resolve', request) as Promise<MissingAudioAssetsResolveResult>,
   dismissMissingAudioAssets: (request: MissingAudioAssetsDismissRequest) =>
     ipcRenderer.invoke('missing-audio-assets:dismiss', request) as Promise<{ ok: boolean }>,
+
+  // Render / Freeze
+  renderToDisk: (request: RenderToDiskRequest) =>
+    ipcRenderer.invoke('render-to-disk', request) as Promise<RenderOperationResult>,
+  freezeScoreObjects: (request: FreezeScoreObjectsRequest) =>
+    ipcRenderer.invoke('freeze-score-objects', request) as Promise<FreezeOperationResult>,
+  cancelRenderOperation: (request: CancelRenderOperationRequest) =>
+    ipcRenderer.invoke('cancel-render-operation', request) as Promise<boolean>,
+  onRenderOperationStatus: (callback: (status: RenderOperationStatus) => void) => {
+    const handler = (_event: Electron.IpcRendererEvent, status: unknown) => {
+      if (isRenderOperationStatus(status)) callback(status);
+    };
+    ipcRenderer.on(RENDER_OPERATION_STATUS_CHANNEL, handler);
+    return () => { ipcRenderer.removeListener(RENDER_OPERATION_STATUS_CHANNEL, handler); };
+  },
 });

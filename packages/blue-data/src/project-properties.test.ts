@@ -24,6 +24,13 @@ describe('ProjectProperties', () => {
       const props = new ProjectProperties();
       expect(props.channels).toBe('2');
     });
+
+    it('uses Java-compatible disk-render defaults', () => {
+      const props = new ProjectProperties();
+      expect(props.diskKsmps).toBe('1');
+      expect(props.diskUseZeroDbFS).toBe(false);
+      expect(props.diskAlwaysRenderEntireProject).toBe(false);
+    });
   });
 
   describe('copy constructor', () => {
@@ -83,6 +90,8 @@ describe('ProjectProperties', () => {
       original.useAudioOut = true;
       original.useAudioIn = true;
       original.noteAmpsEnabled = false;
+      original.diskKsmps = '16';
+      original.diskAlwaysRenderEntireProject = true;
 
       const xml = original.saveAsXML();
       const loaded = ProjectProperties.loadFromXML(xml);
@@ -98,6 +107,8 @@ describe('ProjectProperties', () => {
       expect(loaded.useAudioOut).toBe(true);
       expect(loaded.useAudioIn).toBe(true);
       expect(loaded.noteAmpsEnabled).toBe(false);
+      expect(loaded.diskKsmps).toBe('16');
+      expect(loaded.diskAlwaysRenderEntireProject).toBe(true);
     });
   });
 

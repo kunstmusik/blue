@@ -8,6 +8,7 @@ import {
   dialog,
   Menu,
   nativeImage,
+  shell,
 } from 'electron';
 import * as path from 'path';
 import * as fs from 'fs';
@@ -88,6 +89,7 @@ import {
   getMixerChannelSnapshotId,
   getMixerEntrySnapshotId,
   isEmptyProjectDocumentPatch,
+  resolveTimelineTarget,
   type EffectEditorPatchRequest,
   type EffectEditorRequest,
   type EffectEditablePatch,
@@ -104,8 +106,31 @@ import {
   type ScoreObjectEditorDocumentSnapshot,
   type ScoreObjectTestResult,
   type ScoreObjectLocationRef,
+  type ScoreObjectEditorTargetSnapshot,
   type PolyObjectLayerGroupSnapshot,
 } from '../shared/project-editor';
+import type {
+  RenderToDiskRequest,
+  FreezeScoreObjectsRequest,
+  CancelRenderOperationRequest,
+  RenderOperationResult,
+  RenderOperationStatus,
+  FreezeOperationResult,
+  DiskRenderAction,
+} from '../shared/render-freeze-contract';
+import {
+  RENDER_OPERATION_STATUS_CHANNEL,
+  isCancelRenderOperationRequest,
+  isFreezeScoreObjectsRequest,
+  isRenderToDiskRequest,
+} from '../shared/render-freeze-contract';
+import { executeRenderToDisk, parseCsoundProgressLine, resolveOutputFilePath, resolveRenderWorkingDirectory, type RenderExecutionSeam } from './render-to-disk';
+import { tokenizeCommand } from './disk-render-command';
+import {
+  executeFreezeUnfreeze,
+  type FreezeExecutionSeam,
+} from './freeze-score-objects';
+import { spawn, type ChildProcess } from 'child_process';
 import { BlueSynthBuilder } from '@blue/data';
 import {
   collectMissingAudioFiles,
@@ -127,6 +152,12 @@ let mainWindow: BrowserWindow | null = null;
 let currentData: BlueData | null = null;
 let currentFilePath: string | null = null;
 let currentProjectRevision = 0;
+
+// ─── Render/Freeze operation lifecycle ───
+let activeRenderOperationId: string | null = null;
+let activeRenderProcess: ChildProcess | null = null;
+let activeRenderOperationKind: RenderOperationStatus['kind'] | null = null;
+let activeRenderCancellationSignal: { cancelled: boolean } | null = null;
 let engineBridge: EngineBridge | null = null;
 let blueLiveSession: BlueLiveEngineSession | null = null;
 let isQuitting = false;
@@ -377,6 +408,322 @@ function updateWindowTitle(): void {
   }
 }
 
+// ─── Render/Freeze subprocess seam ───
+
+/** Output tab name used to stream disk-render Csound subprocess output. */
+const DISK_RENDER_OUTPUT_TAB = 'Csound (Disk)';
+
+function createCsoundExecutionSeam(
+  cancellationSignal?: { cancelled: boolean },
+  onOutput?: (text: string, type: 'stdout' | 'stderr') => void,
+): RenderExecutionSeam & FreezeExecutionSeam {
+  return {
+    async runCsound(executable: string, args: string[], cwd: string, onProgress?: (progress: number) => void, totalDuration?: number): Promise<{ exitCode: number; stderr: string }> {
+      return new Promise((resolve, reject) => {
+        const child = spawn(executable, args, { cwd, stdio: ['ignore', 'pipe', 'pipe'] });
+        activeRenderProcess = child;
+
+        let stderr = '';
+        let stderrLineBuffer = '';
+        child.stdout?.on('data', (chunk: Buffer) => {
+          const text = chunk.toString();
+          onOutput?.(text, 'stdout');
+        });
+        child.stderr?.on('data', (chunk: Buffer) => {
+          const text = chunk.toString();
+          stderr += text;
+          onOutput?.(text, 'stderr');
+          stderrLineBuffer += text;
+          const lines = stderrLineBuffer.split('\n');
+          stderrLineBuffer = lines.pop() ?? '';
+          for (const line of lines) {
+            if (!onProgress) continue;
+            const progress = parseCsoundProgressLine(line, totalDuration ?? 0);
+            if (progress !== null) onProgress(progress);
+          }
+        });
+
+        child.on('error', (err) => {
+          activeRenderProcess = null;
+          reject(err);
+        });
+
+        child.on('close', (code) => {
+          activeRenderProcess = null;
+          if (cancellationSignal?.cancelled) {
+            resolve({ exitCode: -1, stderr: 'Operation cancelled.' });
+          } else {
+            resolve({ exitCode: code ?? -1, stderr });
+          }
+        });
+      });
+    },
+  };
+}
+
+function finishRenderOperation(operationId: string): void {
+  if (activeRenderOperationId !== operationId) return;
+  activeRenderOperationId = null;
+  activeRenderOperationKind = null;
+  activeRenderCancellationSignal = null;
+  activeRenderProcess = null;
+  rebuildApplicationMenu();
+}
+
+function launchExternalOutputCommand(
+  template: string,
+  outputPath: string,
+  operationId: string,
+  label: 'Play' | 'Open',
+): void {
+  const command = tokenizeCommand(template).map((token) => token.replaceAll('$outfile', outputPath));
+  const executable = command.shift();
+  if (!executable) {
+    broadcastRenderStatus({
+      operationId,
+      kind: 'diskRender',
+      phase: 'failed',
+      message: `${label} command is empty.`,
+      progress: null,
+      outputPath,
+      error: `${label} command is empty.`,
+    });
+    return;
+  }
+
+  const child = spawn(executable, command, { stdio: 'ignore' });
+  let failedToStart = false;
+  child.once('error', (error) => {
+    failedToStart = true;
+    broadcastRenderStatus({
+      operationId,
+      kind: 'diskRender',
+      phase: 'failed',
+      message: `${label} command failed: ${error.message}`,
+      progress: null,
+      outputPath,
+      error: error.message,
+    });
+  });
+  child.once('close', (code) => {
+    if (failedToStart || code === 0) return;
+    const message = `${label} command exited with code ${code ?? -1}.`;
+    broadcastRenderStatus({
+      operationId,
+      kind: 'diskRender',
+      phase: 'failed',
+      message,
+      progress: null,
+      outputPath,
+      error: message,
+    });
+  });
+}
+
+function broadcastRenderStatus(status: RenderOperationStatus): void {
+  broadcastToWorkbenchWindows(RENDER_OPERATION_STATUS_CHANNEL, status);
+}
+
+// ─── Render to Disk handler ───
+
+async function handleRenderToDisk(action: DiskRenderAction, requestedOperationId?: string): Promise<RenderOperationResult> {
+  if (!currentData) {
+    return { ok: false, operationId: '', cancelled: false, outputPath: null, error: 'No project loaded.' };
+  }
+
+  if (activeRenderOperationId) {
+    return { ok: false, operationId: '', cancelled: false, outputPath: null, error: 'Another render/freeze operation is already running.' };
+  }
+
+  const projectDirectory = resolveRenderWorkingDirectory(currentFilePath, app.getPath('temp'));
+
+  const operationId = requestedOperationId ?? `disk-${Date.now()}`;
+  activeRenderOperationId = operationId;
+  activeRenderOperationKind = 'diskRender';
+  const cancellationSignal = { cancelled: false };
+  activeRenderCancellationSignal = cancellationSignal;
+  rebuildApplicationMenu();
+
+  try {
+    const settings = loadProgramSettings();
+    const props = currentData.getProjectProperties();
+    const javaRuntimeClient = await runProjectOnLoad(currentData);
+
+    // Resolve output file
+    let outputFile = props.diskCompleteOverride
+      ? null
+      : resolveOutputFilePath(currentData, projectDirectory);
+
+    if (!props.diskCompleteOverride && !outputFile) {
+      const defaultName = props.fileName?.trim() || `${currentFilePath ? path.basename(currentFilePath, '.blue') : 'untitled'}.wav`;
+      const result = await dialog.showSaveDialog(mainWindow!, {
+        title: 'Render to Disk',
+        defaultPath: path.join(projectDirectory, defaultName),
+        filters: [
+          { name: 'WAV', extensions: ['wav'] },
+          { name: 'AIFF', extensions: ['aif', 'aiff'] },
+          { name: 'AU', extensions: ['au'] },
+          { name: 'RAW', extensions: ['raw'] },
+          { name: 'IRCAM', extensions: ['ircam'] },
+          { name: 'W64', extensions: ['w64'] },
+          { name: 'WAVEX', extensions: ['wavex'] },
+          { name: 'SD2', extensions: ['sd2'] },
+          { name: 'FLAC', extensions: ['flac'] },
+          { name: 'All Files', extensions: ['*'] },
+        ],
+      });
+
+      if (result.canceled || !result.filePath) {
+        return { ok: false, operationId, cancelled: true, outputPath: null, error: null };
+      }
+
+      outputFile = result.filePath;
+    }
+
+    // Reset and focus the Csound (Disk) output tab before rendering so the
+    // user sees streamed subprocess output and a fresh buffer each run.
+    broadcastToWorkbenchWindows('engine-output-reset', { tabName: DISK_RENDER_OUTPUT_TAB });
+    broadcastToWorkbenchWindows('engine-output-select', { tabName: DISK_RENDER_OUTPUT_TAB });
+
+    const seam = createCsoundExecutionSeam(
+      cancellationSignal,
+      (text, type) => broadcastToWorkbenchWindows('engine-output', {
+        tabName: DISK_RENDER_OUTPUT_TAB,
+        text,
+        type,
+      }),
+    );
+
+    const renderResult = await executeRenderToDisk(
+      {
+        data: currentData,
+        projectDirectory,
+        diskRender: settings.diskRender,
+        general: settings.general,
+        outputFile,
+        isCancelled: () => cancellationSignal.cancelled,
+        javaScriptSession: javaScriptSession ?? undefined,
+        javaRuntimeClient,
+      },
+      action,
+      operationId,
+      broadcastRenderStatus,
+      seam,
+    );
+
+    if (renderResult.ok && renderResult.outputPath) {
+      if (action === 'play') {
+        const playCmd = settings.diskRender.externalPlayCommandEnabled
+          ? settings.diskRender.externalPlayCommand
+          : null;
+        if (playCmd) {
+          launchExternalOutputCommand(playCmd, renderResult.outputPath, operationId, 'Play');
+        } else {
+          const error = await shell.openPath(renderResult.outputPath);
+          if (error) {
+            broadcastRenderStatus({
+              operationId,
+              kind: 'diskRender',
+              phase: 'failed',
+              message: `Could not play rendered file: ${error}`,
+              progress: null,
+              outputPath: renderResult.outputPath,
+              error,
+            });
+          }
+        }
+      } else if (action === 'open') {
+        const openCmd = settings.diskRender.externalOpenCommand.trim();
+        if (openCmd && openCmd !== 'command $outfile') {
+          launchExternalOutputCommand(openCmd, renderResult.outputPath, operationId, 'Open');
+        } else {
+          shell.showItemInFolder(renderResult.outputPath);
+        }
+      }
+    }
+
+    return renderResult;
+  } finally {
+    finishRenderOperation(operationId);
+  }
+}
+
+// ─── Freeze handler ───
+
+async function handleFreezeScoreObjects(request: FreezeScoreObjectsRequest): Promise<FreezeOperationResult> {
+  if (!currentData) {
+    return { ok: false, operationId: '', cancelled: false, frozenCount: 0, unfrozenCount: 0, deletedFiles: [], rejectedTargets: [], error: 'No project loaded.', project: null };
+  }
+
+  if (activeRenderOperationId) {
+    return { ok: false, operationId: '', cancelled: false, frozenCount: 0, unfrozenCount: 0, deletedFiles: [], rejectedTargets: [], error: 'Another render/freeze operation is already running.', project: null };
+  }
+
+  const projectDirectory = currentFilePath ? path.dirname(currentFilePath) : null;
+  if (!projectDirectory) {
+    return { ok: false, operationId: '', cancelled: false, frozenCount: 0, unfrozenCount: 0, deletedFiles: [], rejectedTargets: [{ selectionId: '*', reason: 'Project must be saved before freezing.' }], error: 'Project must be saved before freezing.', project: null };
+  }
+
+  const operationId = request.operationId ?? `freeze-${Date.now()}`;
+  activeRenderOperationId = operationId;
+  activeRenderOperationKind = 'freeze';
+  const cancellationSignal = { cancelled: false };
+  activeRenderCancellationSignal = cancellationSignal;
+  rebuildApplicationMenu();
+
+  try {
+    const settings = loadProgramSettings();
+    const seam = createCsoundExecutionSeam(cancellationSignal);
+    const javaRuntimeClient = await runProjectOnLoad(currentData);
+
+    const result = await executeFreezeUnfreeze(
+      {
+        data: currentData,
+        projectDirectory,
+        utility: settings.utility,
+        platform: process.platform,
+        isCancelled: () => cancellationSignal.cancelled,
+        javaScriptSession: javaScriptSession ?? undefined,
+        javaRuntimeClient,
+      },
+      request.targets,
+      operationId,
+      broadcastRenderStatus,
+      seam,
+    );
+
+    // Broadcast updated project if any mutations occurred
+    if (result.frozenCount > 0 || result.unfrozenCount > 0) {
+      currentProjectRevision++;
+      broadcastProjectDocumentUpdate();
+    }
+
+    return result;
+  } finally {
+    finishRenderOperation(operationId);
+  }
+}
+
+// ─── Cancel render operation ───
+
+async function handleCancelRenderOperation(request: CancelRenderOperationRequest): Promise<boolean> {
+  if (activeRenderOperationId !== request.operationId) {
+    return false;
+  }
+
+  activeRenderCancellationSignal!.cancelled = true;
+
+  if (activeRenderProcess) {
+    try {
+      activeRenderProcess.kill('SIGTERM');
+    } catch {
+      // Process may have already exited
+    }
+  }
+
+  return true;
+}
+
 function syncRecentProjectFiles(files: string[]): void {
   recentProjectFiles = [...files];
   rebuildApplicationMenu();
@@ -420,7 +767,18 @@ function hasLoadedProject(): boolean {
   return Boolean(currentData);
 }
 
+async function canReplaceProjectWhileRenderActive(): Promise<boolean> {
+  if (!activeRenderOperationId) return true;
+  await dialog.showMessageBox(mainWindow!, {
+    type: 'info',
+    title: 'Render in Progress',
+    message: 'Wait for the active render/freeze operation to finish or cancel it before changing projects.',
+  });
+  return false;
+}
+
 async function confirmSaveBeforeReplace(options: { quitAfterSave?: boolean } = {}): Promise<boolean> {
+  if (!(await canReplaceProjectWhileRenderActive())) return false;
   if (!currentData) return true;
 
   const result = await dialog.showMessageBox(mainWindow!, {
@@ -467,6 +825,7 @@ async function confirmSaveBeforeReplace(options: { quitAfterSave?: boolean } = {
 function rebuildApplicationMenu(): void {
   const menu = Menu.buildFromTemplate(buildApplicationMenuTemplate({
     hasLoadedProject: hasLoadedProject(),
+    isRenderOperationActive: activeRenderOperationId !== null,
     isDarwin: process.platform === 'darwin',
     recentProjects: getRecentProjectFilesSnapshot(),
     canRevertProject: Boolean(currentFilePath),
@@ -524,6 +883,9 @@ function rebuildApplicationMenu(): void {
     onBlueLiveAllNotesOff: () => { void blueLiveAllNotesOff(); },
     onEditTempoMap: () => { mainWindow?.webContents.send('native-menu-command', { type: 'edit-tempo-map' }); },
     onEditMeterMap: () => { mainWindow?.webContents.send('native-menu-command', { type: 'edit-meter-map' }); },
+    onRenderToDisk: () => { void handleRenderToDisk('render'); },
+    onRenderToDiskAndPlay: () => { void handleRenderToDisk('play'); },
+    onRenderToDiskAndOpen: () => { void handleRenderToDisk('open'); },
     onNotYetImplemented: () => { mainWindow?.webContents.send('native-menu-command', { type: 'show-not-yet-implemented' }); },
   }));
 
@@ -830,6 +1192,7 @@ function scanMissingAudioAssets(
 
 async function openFile(): Promise<boolean> {
   if (!mainWindow) return false;
+  if (!(await canReplaceProjectWhileRenderActive())) return false;
 
   const result = await dialog.showOpenDialog(mainWindow, {
     title: 'Open Blue Project',
@@ -853,6 +1216,7 @@ async function openFile(): Promise<boolean> {
 
 async function openFilePath(filePath: string): Promise<boolean> {
   if (!mainWindow) return false;
+  if (!(await canReplaceProjectWhileRenderActive())) return false;
 
   // FR-018 parity: reopening the current project is a no-op. See openFile.
   if (filePath === currentFilePath && currentData) {
@@ -869,6 +1233,7 @@ async function openFilePath(filePath: string): Promise<boolean> {
  * a successful load, false otherwise.
  */
 async function loadProjectFromDisk(filePath: string): Promise<boolean> {
+  if (!(await canReplaceProjectWhileRenderActive())) return false;
   try {
     const xml = fs.readFileSync(filePath, 'utf-8');
     const data = await BlueData.loadFromString(xml);
@@ -914,6 +1279,7 @@ async function loadProjectFromDisk(filePath: string): Promise<boolean> {
 
 async function newFile(): Promise<void> {
   if (!mainWindow) return;
+  if (!(await canReplaceProjectWhileRenderActive())) return;
 
   if (blueLiveSession && blueLiveSession.isRunning()) {
     await blueLiveSession.stop();
@@ -2266,6 +2632,37 @@ ipcMain.handle('update-project-document', (_event, patch) => {
 });
 
 // ─── App Lifecycle ───
+
+// ─── Render/Freeze IPC Handlers ───
+
+ipcMain.handle('render-to-disk', (_event, request: unknown) => {
+  if (!isRenderToDiskRequest(request)) {
+    return { ok: false, operationId: '', cancelled: false, outputPath: null, error: 'Invalid render-to-disk request.' } satisfies RenderOperationResult;
+  }
+  return handleRenderToDisk(request.action, request.operationId);
+});
+
+ipcMain.handle('freeze-score-objects', (_event, request: unknown) => {
+  if (!isFreezeScoreObjectsRequest(request)) {
+    return {
+      ok: false,
+      operationId: '',
+      cancelled: false,
+      frozenCount: 0,
+      unfrozenCount: 0,
+      deletedFiles: [],
+      rejectedTargets: [],
+      error: 'Invalid freeze request.',
+      project: null,
+    } satisfies FreezeOperationResult;
+  }
+  return handleFreezeScoreObjects(request);
+});
+
+ipcMain.handle('cancel-render-operation', (_event, request: unknown) => {
+  if (!isCancelRenderOperationRequest(request)) return false;
+  return handleCancelRenderOperation(request);
+});
 
 app.whenReady().then(async () => {
   setExternalCommandExecutor(createMainExternalExecutor(() => currentFilePath ? path.dirname(currentFilePath) : null));

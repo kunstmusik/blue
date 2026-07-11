@@ -19,7 +19,7 @@ export class ProjectProperties {
   zeroDbFS = '1';
 
   diskSampleRate = '44100';
-  diskKsmps = '64';
+  diskKsmps = '1';
   diskChannels = '2';
   diskUseZeroDbFS = false;
   diskZeroDbFS = '1';

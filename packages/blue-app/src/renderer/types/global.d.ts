@@ -29,6 +29,14 @@ import type {
   MissingAudioAssetsResolveRequest,
   MissingAudioAssetsResolveResult,
 } from '../../shared/missing-audio-assets';
+import type {
+  RenderToDiskRequest,
+  FreezeScoreObjectsRequest,
+  CancelRenderOperationRequest,
+  RenderOperationResult,
+  RenderOperationStatus,
+  FreezeOperationResult,
+} from '../../shared/render-freeze-contract';
 import type { NativeMenuCommand } from '../../shared/workbench-menu';
 import type { EngineOutputPayload } from '../../shared/io-provider';
 import type {
@@ -202,6 +210,14 @@ declare global {
       dismissMissingAudioAssets: (
         request: MissingAudioAssetsDismissRequest,
       ) => Promise<{ ok: boolean }>;
+
+      // Render / Freeze
+      renderToDisk: (request: RenderToDiskRequest) => Promise<RenderOperationResult>;
+      freezeScoreObjects: (request: FreezeScoreObjectsRequest) => Promise<FreezeOperationResult>;
+      cancelRenderOperation: (request: CancelRenderOperationRequest) => Promise<boolean>;
+      onRenderOperationStatus: (
+        callback: (status: RenderOperationStatus) => void,
+      ) => () => void;
     };
   }
 }

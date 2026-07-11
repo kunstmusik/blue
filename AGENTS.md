@@ -1,6 +1,6 @@
 # blue-electron Development Guidelines
 
-Auto-generated from all feature plans. Last updated: 2026-07-08
+Auto-generated from all feature plans. Last updated: 2026-07-10
 
 ## Active Technologies
 - React 19.x, Electron, dockview 5.2.0 + collapsed auxiliary-group planning for the workbench shell (013-collapsed-sidebar-research)
@@ -62,6 +62,8 @@ Auto-generated from all feature plans. Last updated: 2026-07-08
 - Main-process app-wide `program-settings.json` under Electron user data; layout state lives under app-specific program settings; legacy renderer storage keys `blue-settings.windowBounds` and `blue-workbench-layout` migrate once; `.blue` project XML is unchanged (054-window-layout-persistence)
 - TypeScript 5.8.x, React 19.x, Electron 35.x + Dockview 5.2.0 / dockview-core 5.2.0, Zustand 5.x, Radix Context Menu, Electron `BrowserWindow`/IPC/Menu, existing `@blue/data` project snapshot IPC (055-window-float-dock-parity)
 - Existing app-wide `program-settings.json` window-layout settings; workbench layout stored as a serialized layout envelope under `appSpecific.windowLayout.workbench`; `.blue` project XML remains unchanged (055-window-float-dock-parity)
+- TypeScript 5.8.x with strict mode; React 19.x; Electron 35.x; Node.js APIs in the Electron main process only + `@blue/data`, `@blue/java-runtime`, Electron `dialog`/`shell`/IPC, Node `child_process`/`fs`/`path`, existing program-settings store, existing project snapshot/patch bridge, Vitest 4.x (056-render-freeze-parity)
+- `.blue` XML remains canonical project persistence; app-wide program settings remain in `program-settings.json`; generated freeze audio is project-relative derived data; temporary CSD files are main-process temporary artifacts (056-render-freeze-parity)
 
 - TypeScript 5.8.x, React 19.x, Electron 35.x, strict renderer/main/preload packages, pure TypeScript `@blue/data` + `PresetGroup`/`Preset` BSB preset model, Zustand 5.x project store with BSB interface/opcode-list patch support, Dockview 5.2.0, CodeMirror 6, `BsbInterfacePatch` union type for structured BSB mutations (022-bsb-interface-parity)
 - BSB Interface tab now renders an editable widget canvas with selection, property-sheet editing, grid settings, preset application, and Java-style split-view UDO editor (UDOTable + UDOEditor); snapshot contract extended with `widgetTree`, `gridSettings`, `editEnabled`, `presetGroup`, `opcodeListText`; widget-specific rendering (Slider, Knob, Toggle, etc.) deferred to SPEC 023 (022-bsb-interface-parity)
@@ -98,6 +100,6 @@ TypeScript 5.x, strict mode: Follow standard conventions
 <!-- MANUAL ADDITIONS END -->
 
 ## Recent Changes
+- 056-render-freeze-parity: Added TypeScript 5.8.x with strict mode; React 19.x; Electron 35.x; Node.js APIs in the Electron main process only + `@blue/data`, `@blue/java-runtime`, Electron `dialog`/`shell`/IPC, Node `child_process`/`fs`/`path`, existing program-settings store, existing project snapshot/patch bridge, Vitest 4.x
 - 055-window-float-dock-parity: Added TypeScript 5.8.x, React 19.x, Electron 35.x + Dockview 5.2.0 / dockview-core 5.2.0, Zustand 5.x, Radix Context Menu, Electron `BrowserWindow`/IPC/Menu, existing `@blue/data` project snapshot IPC
 - 054-window-layout-persistence: Added TypeScript 5.8.x, React 19.x, Electron 35.x, strict monorepo packages + Existing `@blue/app` program settings store, Electron `BrowserWindow`/`screen`/IPC, preload `blueAPI`, React renderer, Zustand workbench/settings stores, Dockview 5.2.0, reusable `SplitPane`, Vitest 4.x
-- 053-missing-audio-assets: Added TypeScript 5.8.x, React 19.x, Electron 35.x, strict monorepo packages + `@blue/data`, Electron `dialog`/IPC, React renderer components, Zustand project store, Vitest 4.x, Node `fs`/`path` in Electron main only

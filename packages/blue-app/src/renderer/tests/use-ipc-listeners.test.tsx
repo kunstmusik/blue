@@ -93,6 +93,8 @@ describe('useIPCListeners', () => {
     onGeneratedCsd: vi.fn((cb: (...args: unknown[]) => void) => addListener(listeners, 'generated-csd', cb)),
     onGeneratedCsdError: vi.fn((cb: (...args: unknown[]) => void) => addListener(listeners, 'generated-csd-error', cb)),
     onBlueLiveStatus: vi.fn((cb: (...args: unknown[]) => void) => addListener(listeners, 'blue-live-status', cb)),
+    onRenderOperationStatus: vi.fn((cb: (...args: unknown[]) => void) => addListener(listeners, 'render-operation-status', cb)),
+    onProjectDocumentUpdated: vi.fn((cb: (...args: unknown[]) => void) => addListener(listeners, 'project-document-updated', cb)),
     getProgramSettings: vi.fn(),
     updateWindowLayout: vi.fn(),
   };
@@ -222,6 +224,46 @@ describe('useIPCListeners', () => {
     });
 
     expect(useProjectStore.getState().missingAudioSession).toBeNull();
+  });
+
+  it('applies canonical project updates for the active project session', () => {
+    useProjectStore.setState({ sessionId: 7, loaded: true, title: 'Before freeze' });
+    act(() => {
+      root.render(<Harness />);
+    });
+
+    const projectUpdatedHandler = listeners.get('project-document-updated')!.values().next().value as (
+      ...args: unknown[]
+    ) => void;
+    act(() => {
+      projectUpdatedHandler({
+        sessionId: 7,
+        revision: 2,
+        snapshot: { sessionId: 7, title: 'After freeze' },
+      });
+    });
+
+    expect(useProjectStore.getState().title).toBe('After freeze');
+  });
+
+  it('ignores canonical project updates from a stale session', () => {
+    useProjectStore.setState({ sessionId: 7, loaded: true, title: 'Current project' });
+    act(() => {
+      root.render(<Harness />);
+    });
+
+    const projectUpdatedHandler = listeners.get('project-document-updated')!.values().next().value as (
+      ...args: unknown[]
+    ) => void;
+    act(() => {
+      projectUpdatedHandler({
+        sessionId: 6,
+        revision: 99,
+        snapshot: { sessionId: 6, title: 'Stale project' },
+      });
+    });
+
+    expect(useProjectStore.getState().title).toBe('Current project');
   });
 
   it('sends legacy layout values through updateWindowLayout during startup migration', async () => {

@@ -207,6 +207,7 @@ function sameTarget(
   b: ScoreObjectEditorTargetSnapshot | null | undefined,
 ): boolean {
   if (!a || !b) return false;
+  if (a.selectedObjectType !== b.selectedObjectType || a.editorObjectType !== b.editorObjectType) return false;
   if (a.ownerKind !== b.ownerKind) return false;
   if (a.displayContext !== b.displayContext) return false;
   if (sameLocation(a.location, b.location)) return true;
@@ -223,6 +224,7 @@ const RESIZE_EDGE_PX = 5;
 const DEFAULT_SOBJ_BG = 0xFF404040;
 const DEFAULT_SOBJ_DURATION = 4.0;
 const MIN_SCORE_OBJECT_DURATION = 0.25;
+const settledFreezeOperationIds = new Set<string>();
 
 export default function ScoreTimeCanvas({
   group,
@@ -288,6 +290,9 @@ export default function ScoreTimeCanvas({
   const [cursorOverride, setCursorOverride] = useState<string | null>(null);
   const [tooltip, setTooltip] = useState<string | null>(null);
   const [previewByObjectId, setPreviewByObjectId] = useState<Record<string, { startBeats: number; durationBeats: number }>>({});
+  const [freezeBusy, setFreezeBusy] = useState(false);
+  const freezeOperationIdRef = useRef<string | null>(null);
+  const [freezeProgress, setFreezeProgress] = useState<number | null>(null);
 
   // Merge multi-line object preview from the automation store (set during
   // multi-line move/scale drags) with the local score-mode drag preview.
@@ -931,6 +936,98 @@ export default function ScoreTimeCanvas({
     });
   }, [interactionLayerGroups, selectedObjectIds, previewByObjectId]);
 
+  useEffect(() => {
+    // Isolated renderer tests and early startup can intentionally expose only
+    // a partial preload bridge; freeze actions still require the full bridge.
+    const subscribe = window.blueAPI?.onRenderOperationStatus;
+    if (!subscribe) return undefined;
+    return subscribe((status) => {
+      if (settledFreezeOperationIds.has(status.operationId)) return;
+      if (status.kind !== 'freeze' || status.operationId !== freezeOperationIdRef.current) return;
+      setFreezeProgress(status.progress);
+      const progressLabel = status.progress === null
+        ? 'Csound is rendering…'
+        : `${Math.round(status.progress)}%`;
+      if (status.phase === 'completed') {
+        toast.success(status.message, { id: status.operationId, description: null });
+      } else if (status.phase === 'cancelled') {
+        toast.message(status.message, { id: status.operationId, description: null });
+      } else if (status.phase === 'failed') {
+        toast.error(status.error ?? status.message, { id: status.operationId, description: null });
+      } else {
+        toast.loading(status.message, { id: status.operationId, description: progressLabel });
+      }
+      if (status.phase === 'completed' || status.phase === 'cancelled' || status.phase === 'failed') {
+        setFreezeBusy(false);
+        freezeOperationIdRef.current = null;
+        setFreezeProgress(null);
+      }
+    });
+  }, []);
+
+  const handleFreezeUnfreeze = useCallback(() => {
+    if (freezeBusy) return;
+    const targets = getSelectedEntries()
+      .map((entry) => entry.editorTarget)
+      .filter((target): target is ScoreObjectEditorTargetSnapshot => target !== undefined);
+    if (targets.length === 0) {
+      toast.error('Select one or more timeline ScoreObjects to freeze or unfreeze.');
+      return;
+    }
+
+    void (async () => {
+      await flushPendingPatches();
+      const operationId = `freeze-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      freezeOperationIdRef.current = operationId;
+      setFreezeBusy(true);
+      setFreezeProgress(0);
+      toast.loading(`Preparing to freeze/unfreeze ${targets.length} object${targets.length === 1 ? '' : 's'}...`, {
+        id: operationId,
+        description: '0%',
+      });
+      const result = await window.blueAPI.freezeScoreObjects({ targets, operationId });
+      // IPC replies and status broadcasts use separate Electron queues. Mark
+      // this result settled before updating the toast so a late preparing or
+      // rendering event cannot turn the completed toast back into a spinner.
+      settledFreezeOperationIds.add(operationId);
+      setFreezeBusy(false);
+      freezeOperationIdRef.current = null;
+      setFreezeProgress(null);
+      if (result.ok) {
+        const changes = [
+          result.frozenCount > 0 ? `${result.frozenCount} frozen` : null,
+          result.unfrozenCount > 0 ? `${result.unfrozenCount} unfrozen` : null,
+        ].filter((message): message is string => message !== null);
+        toast.success(
+          `Freeze/unfreeze complete${changes.length > 0 ? `: ${changes.join(', ')}` : ''}.`,
+          { id: operationId, description: null },
+        );
+      } else if (result.cancelled) {
+        toast.message('Freeze/unfreeze cancelled.', { id: operationId, description: null });
+      } else {
+        const rejectedReasons = result.rejectedTargets.map(({ reason }) => reason).join('\n');
+        toast.error(rejectedReasons || result.error || 'Freeze/unfreeze failed.', {
+          id: operationId,
+          description: null,
+        });
+      }
+    })().catch((error: unknown) => {
+      const operationId = freezeOperationIdRef.current ?? undefined;
+      setFreezeBusy(false);
+      freezeOperationIdRef.current = null;
+      setFreezeProgress(null);
+      toast.error(error instanceof Error ? error.message : String(error), {
+        id: operationId,
+      });
+    });
+  }, [freezeBusy, getSelectedEntries, flushPendingPatches]);
+
+  const handleCancelFreeze = useCallback(() => {
+    const operationId = freezeOperationIdRef.current;
+    if (!operationId) return;
+    void window.blueAPI.cancelRenderOperation({ operationId });
+  }, []);
+
   const handleCopy = useCallback(() => {
     const entries = getSelectedEntries();
     if (entries.length > 0) copySelected(entries);
@@ -1259,6 +1356,10 @@ export default function ScoreTimeCanvas({
               onFollowTheLeader={handleFollowTheLeader}
               onReverse={handleReverse}
               onSetColor={handleSetColor}
+              onFreezeUnfreeze={handleFreezeUnfreeze}
+              onCancelFreeze={handleCancelFreeze}
+              freezeBusy={freezeBusy}
+              freezeProgress={freezeProgress}
             />
           ) : (
             <EmptyAreaContextMenu
@@ -1278,7 +1379,7 @@ export default function ScoreTimeCanvas({
   );
 }
 
-function ObjectContextMenu({ menuItemClass, subMenuClass, sepClass, onAlignLeft, onAlignCenter, onAlignRight, onCopy, onCut, onRemove, onFollowTheLeader, onReverse, onSetColor }: {
+function ObjectContextMenu({ menuItemClass, subMenuClass, sepClass, onAlignLeft, onAlignCenter, onAlignRight, onCopy, onCut, onRemove, onFollowTheLeader, onReverse, onSetColor, onFreezeUnfreeze, onCancelFreeze, freezeBusy, freezeProgress }: {
   menuItemClass: string;
   subMenuClass: string;
   sepClass: string;
@@ -1291,6 +1392,10 @@ function ObjectContextMenu({ menuItemClass, subMenuClass, sepClass, onAlignLeft,
   onFollowTheLeader: () => void;
   onReverse: () => void;
   onSetColor: () => void;
+  onFreezeUnfreeze: () => void;
+  onCancelFreeze: () => void;
+  freezeBusy: boolean;
+  freezeProgress: number | null;
 }) {
   const ni = () => alert('Not yet implemented');
   return (
@@ -1299,8 +1404,10 @@ function ObjectContextMenu({ menuItemClass, subMenuClass, sepClass, onAlignLeft,
         Add to Project SoundObject Library
       </ContextMenu.Item>
       <ContextMenu.Separator className={sepClass} />
-      <ContextMenu.Item className={menuItemClass} onSelect={ni}>
-        Freeze/Unfreeze ScoreObjects
+      <ContextMenu.Item className={menuItemClass} onSelect={freezeBusy ? onCancelFreeze : onFreezeUnfreeze}>
+        {freezeBusy
+          ? `Cancel Freeze/Unfreeze${freezeProgress === null ? '' : ` (${Math.round(freezeProgress)}%)`}`
+          : 'Freeze/Unfreeze ScoreObjects'}
       </ContextMenu.Item>
       <ContextMenu.Separator className={sepClass} />
       <ContextMenu.Item className={menuItemClass} onSelect={ni}>

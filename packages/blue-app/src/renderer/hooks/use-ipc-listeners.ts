@@ -182,6 +182,37 @@ export function useIPCListeners(): void {
       resetTab(payload.tabName);
     });
 
+    // Disk-render status: progress indicator + streamed Csound (Disk) output.
+    // A persistent loading toast (keyed by operationId) is updated as progress
+    // arrives and resolved into a success/error/cancelled toast on completion.
+    let activeDiskOperationId: string | null = null;
+    const DISK_RENDER_OUTPUT_TAB = 'Csound (Disk)';
+
+    const unsubRenderStatus = window.blueAPI.onRenderOperationStatus((status) => {
+      if (status.kind !== 'diskRender') return;
+
+      if (status.phase === 'preparing' || status.phase === 'rendering') {
+        if (activeDiskOperationId !== status.operationId) {
+          activeDiskOperationId = status.operationId;
+          getOrCreateTab(DISK_RENDER_OUTPUT_TAB);
+          selectTab(DISK_RENDER_OUTPUT_TAB);
+        }
+        const pct = status.progress != null ? ` ${Math.round(status.progress)}%` : '';
+        toast.loading(`${status.message}${pct}`, { id: status.operationId });
+        return;
+      }
+
+      activeDiskOperationId = null;
+      if (status.phase === 'completed') {
+        const detail = status.outputPath ? `: ${status.outputPath}` : '';
+        toast.success(`${status.message}${detail}`, { id: status.operationId });
+      } else if (status.phase === 'failed') {
+        toast.error(status.error ?? status.message, { id: status.operationId });
+      } else if (status.phase === 'cancelled') {
+        toast.message(status.message, { id: status.operationId });
+      }
+    });
+
     const unsubCsd = window.blueAPI.onGeneratedCsd((csdText) => {
       useProjectStore.getState().setGeneratedCsd({ text: csdText, title: 'Generated CSD' });
     });
@@ -200,7 +231,7 @@ export function useIPCListeners(): void {
     // floating windows are in a separate context (FR-010, T039).
     const unsubProjectDocumentUpdated = window.blueAPI.onProjectDocumentUpdated?.((event) => {
       // Ignore stale sessions.
-      const currentSession = useProjectStore.getState().session;
+      const currentSession = useProjectStore.getState().sessionId;
       if (event.sessionId !== currentSession) return;
       // Apply newer revisions idempotently — the snapshot is already the
       // latest state from the canonical main-process document.
@@ -228,6 +259,7 @@ export function useIPCListeners(): void {
       unsubOutput();
       unsubSelect();
       unsubReset();
+      unsubRenderStatus();
       unsubCsd();
       unsubCsdErr();
       unsubBlueLiveStatus();

@@ -26,7 +26,7 @@ export default function DiskRenderSettings({
   return (
     <SettingsSection
       title="Disk Render"
-      dependencyNote="Disk render execution, render-and-play, and render-and-open workflows are not yet implemented. File and sample format settings will be used when disk rendering is available."
+      dependencyNote="These settings are used by Render to Disk, Render and Play, and Render and Open. Project settings supply the CSD header and advanced disk options."
     >
       <SettingsField
         label="Csound Executable"

@@ -141,6 +141,7 @@ describe('settings renderer (044)', () => {
     const utilButton = buttons.find((b) => b.textContent === 'Utility');
     await act(() => { utilButton?.click(); });
 
-    expect(container.textContent).toContain('not yet implemented');
+    expect(container.textContent).toContain('freeze/unfreeze');
+    expect(container.textContent).toContain('SoundFont inspection remains unavailable');
   });
 });
