@@ -24,6 +24,7 @@ import MeterMapEditorDialog from "./score/MeterMapEditorDialog";
 import ColumnHeader from "./score/ColumnHeader";
 import LayerPanel from "./score/LayerPanel";
 import { useScorePathState } from "./score/useScorePathState";
+import { useScoreWheelZoom, computePixelsPerBeat } from "./score/useScoreWheelZoom";
 import { useScoreSelectionStore } from "../../../stores/score-selection-store";
 import { useScoreRulerSelection } from "./score/useScoreRulerSelection";
 import { usePlaybackStore } from "../../../stores/playback-store";
@@ -173,6 +174,7 @@ export default function ScorePanel() {
   const timelineHeaderRef = useRef<HTMLDivElement>(null);
   const [nestedSnapshot, setNestedSnapshot] = useState<PolyObjectLayerGroupSnapshot | null>(null);
   const [scrollOverlayLeft, setScrollOverlayLeft] = useState(0);
+  const [containerWidth, setContainerWidth] = useState(0);
 
   const activeSegment = session.segments[session.segments.length - 1];
 
@@ -211,7 +213,24 @@ export default function ScorePanel() {
       : score.layerGroups;
 
   const pixelsPerBeat = computePixelsPerBeat(timeState.zoomIterations);
-  const totalBeats = computeTotalBeats(score);
+
+  useScoreWheelZoom(scrollContainerRef, timelineHeaderRef, timeState.zoomIterations, pixelsPerBeat, loaded, setTimeState, effectiveLayerGroups);
+
+  // Track the scroll container width so totalBeats can fill the visible area when zoomed out.
+  useLayoutEffect(() => {
+    const el = scrollContainerRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(([entry]) => {
+      setContainerWidth(entry.contentBoxSize?.[0]?.inlineSize ?? entry.contentRect.width);
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [scrollContainerRef]);
+
+  const totalBeats = Math.max(
+    computeTotalBeats(score),
+    containerWidth > 0 ? Math.ceil(containerWidth / pixelsPerBeat) + 16 : 0,
+  );
   const initialTempo = transport.tempoMap.points[0]?.tempo ?? 60;
 
   const isRootTimeline = !session.activeGroupId;
@@ -1291,10 +1310,7 @@ function SoundLayerHeader({
   );
 }
 
-function computePixelsPerBeat(zoomIterations: number): number {
-  const pixelSecond = 100 * Math.exp(Math.log(2) * (zoomIterations / 32.0));
-  return Math.max(10, Math.min(pixelSecond, 2000));
-}
+// computePixelsPerBeat is now imported from ./score/useScoreWheelZoom
 
 function computeTotalBeats(score: ScoreDocumentSnapshot): number {
   let maxBeat = 64;
