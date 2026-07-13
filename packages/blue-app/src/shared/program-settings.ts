@@ -3,6 +3,12 @@ import {
   mergeWindowLayoutSettings,
   type WindowLayoutSettingsSnapshot,
 } from './window-layout-settings';
+import {
+  compareMidiInputDevicePreference,
+  createDefaultMidiInputPreferences,
+  normalizeMidiInputPreferences,
+  type MidiInputPreferences,
+} from './midi-input';
 
 export type ProgramSettingsPanelId =
   | 'general'
@@ -10,7 +16,8 @@ export type ProgramSettingsPanelId =
   | 'playback'
   | 'utility'
   | 'realtimeRender'
-  | 'diskRender';
+  | 'diskRender'
+  | 'midi';
 
 export interface GeneralSettingsSnapshot {
   workDirectory: string;
@@ -125,6 +132,13 @@ export interface ProgramSettingsSnapshot {
   realtimeRender: RealtimeRenderSettingsSnapshot;
   diskRender: DiskRenderSettingsSnapshot;
   appSpecific: CurrentAppSettingsSnapshot;
+  /**
+   * App-wide MIDI input device preferences (SPEC 058). Distinct from the
+   * legacy `appSpecific.midiInputDevice` placeholder (preserved for downgrade
+   * safety), realtime-render MIDI driver options, and project-owned MIDI
+   * processing.
+   */
+  midiInput: MidiInputPreferences;
   lastSavedAt?: string;
 }
 
@@ -365,6 +379,7 @@ export function createDefaultProgramSettings(platform: string): ProgramSettingsS
     realtimeRender: createDefaultRealtimeRenderSettings(platform),
     diskRender: createDefaultDiskRenderSettings(platform),
     appSpecific: createDefaultCurrentAppSettings(),
+    midiInput: createDefaultMidiInputPreferences(),
   };
 }
 
@@ -528,6 +543,9 @@ export function resetProgramSettingsPanel(
     case 'diskRender':
       result.diskRender = createDefaultDiskRenderSettings(platform);
       break;
+    case 'midi':
+      result.midiInput = createDefaultMidiInputPreferences();
+      break;
   }
 
   return result;
@@ -548,6 +566,15 @@ export function mergeWithDefaults(
     windowLayout: mergeWindowLayoutSettings(savedAppSpecific.windowLayout),
   };
 
+  // Preserve legacy appSpecific.midiInputDevice / midiOutputDevice placeholder
+  // strings exactly as saved. They are NOT used to seed structured midiInput
+  // preferences in this feature.
+
+  // Normalize and dedupe structured midiInput preferences.
+  const mergedMidiInput = saved.midiInput
+    ? normalizeMidiInputPreferences(saved.midiInput)
+    : createDefaultMidiInputPreferences();
+
   return {
     version: saved.version ?? PROGRAM_SETTINGS_VERSION,
     general: { ...defaults.general, ...saved.general },
@@ -557,6 +584,7 @@ export function mergeWithDefaults(
     realtimeRender: { ...defaults.realtimeRender, ...saved.realtimeRender },
     diskRender: { ...defaults.diskRender, ...saved.diskRender },
     appSpecific: mergedAppSpecific,
+    midiInput: mergedMidiInput,
     lastSavedAt: saved.lastSavedAt,
   };
 }
@@ -568,4 +596,16 @@ export const PROGRAM_SETTINGS_PANEL_ORDER: readonly { id: ProgramSettingsPanelId
   { id: 'utility', label: 'Utility' },
   { id: 'realtimeRender', label: 'Realtime Render' },
   { id: 'diskRender', label: 'Disk Render' },
+  { id: 'midi', label: 'MIDI' },
 ];
+
+/**
+ * Re-export structured MIDI preference helpers so consumers can import a
+ * consistent surface from the program-settings module.
+ */
+export {
+  compareMidiInputDevicePreference,
+  createDefaultMidiInputPreferences,
+  normalizeMidiInputPreferences,
+} from './midi-input';
+export type { MidiInputPreferences, MidiInputDevicePreference } from './midi-input';

@@ -69,7 +69,7 @@ describe('program-settings defaults', () => {
 describe('program-settings choices', () => {
   it('has correct panel order', () => {
     expect(PROGRAM_SETTINGS_PANEL_ORDER.map((p) => p.id)).toEqual([
-      'general', 'projectDefaults', 'playback', 'utility', 'realtimeRender', 'diskRender',
+      'general', 'projectDefaults', 'playback', 'utility', 'realtimeRender', 'diskRender', 'midi',
     ]);
   });
 

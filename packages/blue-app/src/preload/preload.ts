@@ -74,6 +74,19 @@ import {
   type WorkbenchWindowRegisterRequest,
   type WorkbenchWindowRegisterResponse,
 } from '../shared/workbench-window-contract';
+import {
+  MIDI_INPUT_COMMAND_ACK_CHANNEL,
+  MIDI_INPUT_GET_SNAPSHOT_CHANNEL,
+  MIDI_INPUT_INITIALIZE_CHANNEL,
+  MIDI_INPUT_REPORT_SNAPSHOT_CHANNEL,
+  MIDI_INPUT_REQUEST_RESCAN_CHANNEL,
+  MIDI_INPUT_SERVICE_COMMAND_CHANNEL,
+  MIDI_INPUT_SNAPSHOT_CHANGED_CHANNEL,
+  type MidiInputCommandAck,
+  type MidiInputServiceCommand,
+  type MidiInputServiceInitialization,
+  type MidiInputServiceSnapshot,
+} from '../shared/midi-input';
 
 contextBridge.exposeInMainWorld('blueAPI', {
   // File operations
@@ -329,4 +342,28 @@ contextBridge.exposeInMainWorld('blueAPI', {
     ipcRenderer.invoke('open-audio-file') as Promise<string | null>,
   getAudioFileStat: (filePath: string) =>
     ipcRenderer.invoke('get-audio-file-stat', filePath) as Promise<{ size: number; mtime: number } | null>,
+
+  // MIDI Input (SPEC 058)
+  initializeMidiInputService: () =>
+    ipcRenderer.invoke(MIDI_INPUT_INITIALIZE_CHANNEL) as Promise<MidiInputServiceInitialization | null>,
+  reportMidiInputServiceSnapshot: (snapshot: MidiInputServiceSnapshot) =>
+    ipcRenderer.send(MIDI_INPUT_REPORT_SNAPSHOT_CHANNEL, snapshot),
+  acknowledgeMidiInputCommand: (ack: MidiInputCommandAck) =>
+    ipcRenderer.send(MIDI_INPUT_COMMAND_ACK_CHANNEL, ack),
+  onMidiInputServiceCommand: (callback: (command: MidiInputServiceCommand) => void) => {
+    const handler = (_event: Electron.IpcRendererEvent, command: unknown) =>
+      callback(command as MidiInputServiceCommand);
+    ipcRenderer.on(MIDI_INPUT_SERVICE_COMMAND_CHANNEL, handler);
+    return () => { ipcRenderer.removeListener(MIDI_INPUT_SERVICE_COMMAND_CHANNEL, handler); };
+  },
+  getMidiInputServiceSnapshot: () =>
+    ipcRenderer.invoke(MIDI_INPUT_GET_SNAPSHOT_CHANNEL) as Promise<MidiInputServiceSnapshot | null>,
+  requestMidiInputRescan: () =>
+    ipcRenderer.invoke(MIDI_INPUT_REQUEST_RESCAN_CHANNEL) as Promise<{ accepted: boolean; message?: string }>,
+  onMidiInputServiceSnapshot: (callback: (snapshot: MidiInputServiceSnapshot) => void) => {
+    const handler = (_event: Electron.IpcRendererEvent, snapshot: unknown) =>
+      callback(snapshot as MidiInputServiceSnapshot);
+    ipcRenderer.on(MIDI_INPUT_SNAPSHOT_CHANGED_CHANNEL, handler);
+    return () => { ipcRenderer.removeListener(MIDI_INPUT_SNAPSHOT_CHANGED_CHANNEL, handler); };
+  },
 });

@@ -98,4 +98,87 @@ describe('program-settings-store', () => {
     const settings = loadProgramSettings('darwin');
     expect(settings.version).toBe(1);
   });
+
+  it('creates default midiInput preferences when none are saved', () => {
+    const settings = loadProgramSettings('darwin');
+    expect(settings.midiInput).toEqual({ devices: [] });
+  });
+
+  it('normalizes and dedupes structured midiInput preferences on load', () => {
+    const filePath = path.join(tempDir, 'program-settings.json');
+    const base = loadProgramSettings('darwin');
+    fs.writeFileSync(
+      filePath,
+      JSON.stringify({
+        ...base,
+        midiInput: {
+          devices: [
+            { id: 'a', name: 'A', enabled: true },
+            { id: 'a', name: 'A2', enabled: false },
+            { id: 'b', name: 'B', enabled: true },
+            { id: '', name: 'dropped', enabled: false },
+          ],
+        },
+      }),
+    );
+    clearSettingsCache();
+
+    const settings = loadProgramSettings('darwin');
+    // last valid enabled wins (false for 'a'), dedupe, enabled-first order
+    expect(settings.midiInput.devices.map((d) => d.id)).toEqual(['b', 'a']);
+    expect(settings.midiInput.devices.find((d) => d.id === 'a')?.enabled).toBe(false);
+  });
+
+  it('preserves legacy appSpecific.midiInputDevice and midiOutputDevice values', () => {
+    const filePath = path.join(tempDir, 'program-settings.json');
+    const base = loadProgramSettings('darwin');
+    fs.writeFileSync(
+      filePath,
+      JSON.stringify({
+        ...base,
+        appSpecific: {
+          ...base.appSpecific,
+          midiInputDevice: 'Legacy Keyboard',
+          midiOutputDevice: 'Legacy Out',
+        },
+      }),
+    );
+    clearSettingsCache();
+
+    const settings = loadProgramSettings('darwin');
+    expect(settings.appSpecific.midiInputDevice).toBe('Legacy Keyboard');
+    expect(settings.appSpecific.midiOutputDevice).toBe('Legacy Out');
+  });
+
+  it('round-trips structured midiInput preferences through save/load', () => {
+    const settings = loadProgramSettings('darwin');
+    settings.midiInput = {
+      devices: [
+        { id: 'dev-1', name: 'Dev 1', manufacturer: 'M', version: '1', enabled: true },
+      ],
+    };
+    const result = saveProgramSettings(settings, 'darwin');
+    expect(result.ok).toBe(true);
+
+    clearSettingsCache();
+    const reloaded = loadProgramSettings('darwin');
+    expect(reloaded.midiInput.devices).toHaveLength(1);
+    expect(reloaded.midiInput.devices[0]).toMatchObject({ id: 'dev-1', enabled: true });
+  });
+
+  it('does not modify realtimeRender MIDI options when saving midiInput', () => {
+    const settings = loadProgramSettings('darwin');
+    const beforeDriver = settings.realtimeRender.midiDriver;
+    const beforeInText = settings.realtimeRender.midiInText;
+    settings.midiInput = {
+      devices: [{ id: 'x', name: 'X', manufacturer: '', version: '', enabled: true }],
+    };
+    saveProgramSettings(settings, 'darwin');
+    clearSettingsCache();
+
+    const reloaded = loadProgramSettings('darwin');
+    expect(reloaded.realtimeRender.midiDriver).toBe(beforeDriver);
+    expect(reloaded.realtimeRender.midiInText).toBe(beforeInText);
+    expect(reloaded.midiInput.devices[0]?.id).toBe('x');
+  });
 });

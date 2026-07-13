@@ -74,6 +74,7 @@ import type { JavaRuntimeClient } from './java-runtime/java-runtime-client';
 import { JavaRuntimeSessionManager } from './java-runtime/java-runtime-session';
 import { testScoreObject } from './score-object-test';
 import { syncCompiledRuntimeParameterNames } from './runtime-parameter-sync';
+import { syncRuntimeChannel } from './runtime-channel-sync';
 import {
   broadcastToWorkbenchWindows,
   getWorkbenchWindowManager,
@@ -85,6 +86,11 @@ import {
 import { getWindowTitle } from '../shared/window-title';
 import { PROJECT_DOCUMENT_UPDATED_CHANNEL } from '../shared/workbench-window-contract';
 import { WINDOW_LAYOUT_DISPLAY_WORK_AREAS_CHANNEL } from '../shared/window-layout-settings';
+import { MidiInputCoordinator } from './midi-input-coordinator';
+import {
+  decideMidiPermission,
+  isSameApplicationLocation,
+} from './midi-permission';
 import {
   applyEffectEditablePatchToEffect,
   applyProjectDocumentPatch,
@@ -175,6 +181,7 @@ let playbackStartPromise: Promise<boolean> | null = null;
 let javaScriptRuntimeReady: Promise<void> | null = null;
 let javaScriptSession: JavaScriptSession | null = null;
 let javaRuntimeSessionManager: JavaRuntimeSessionManager | null = null;
+let midiInputCoordinator: MidiInputCoordinator | null = null;
 let recentProjectFiles: string[] = [];
 let currentProjectSessionId = 0;
 let currentFollowPlaybackEnabled = true;
@@ -960,11 +967,55 @@ function createWindow(): void {
     mainWindow?.show();
   });
 
+  // MIDI Input coordinator (SPEC 058). Main owns permission policy, cached
+  // snapshots, and command/status relay; raw Web MIDI stays in the primary
+  // renderer. Initialized here so the coordinator's IPC handlers exist before
+  // the primary renderer becomes ready.
+  midiInputCoordinator = new MidiInputCoordinator({
+    getProgramSettings: () => loadProgramSettings(),
+    isPrimaryWebContents: (contents) =>
+      !!mainWindow && !mainWindow.isDestroyed() && contents.id === mainWindow.webContents.id,
+    isApplicationWebContents: (contents) => {
+      // Every BrowserWindow in this app loads our preload and serves
+      // application content (main workbench, Settings, effect editors,
+      // floating popouts). Treat any non-destroyed application window as a
+      // legitimate observer so the Settings child renderer can pull cached
+      // snapshots and request rescans. Raw `midi` access (the actual Web MIDI
+      // transport) stays restricted to the primary webContents above.
+      return BrowserWindow.getAllWindows().some(
+        (window) =>
+          !window.isDestroyed() &&
+          !window.webContents.isDestroyed() &&
+          window.webContents.id === contents.id,
+      );
+    },
+  });
+  midiInputCoordinator.registerIpcHandlers();
+
   mainWindow.webContents.session.setPermissionCheckHandler(
-    (_webContents, permission) => (permission as string) === 'local-fonts',
+    (webContents, permission, _requestingOrigin, details) => {
+      const isPrimary = !!webContents
+        && webContents.id === mainWindow?.webContents.id;
+      const applicationUrl = webContents?.getURL() ?? '';
+      const requestingUrl = details.requestingUrl ?? applicationUrl;
+      return decideMidiPermission({
+        permission,
+        isPrimary,
+        isTrustedLocation: details.isMainFrame
+          && isSameApplicationLocation(requestingUrl, applicationUrl),
+      });
+    },
   );
   mainWindow.webContents.session.setPermissionRequestHandler(
-    (_webContents, permission, callback) => callback((permission as string) === 'local-fonts'),
+    (webContents, permission, callback, details) => {
+      const isPrimary = webContents.id === mainWindow?.webContents.id;
+      callback(decideMidiPermission({
+        permission,
+        isPrimary,
+        isTrustedLocation: details.isMainFrame
+          && isSameApplicationLocation(details.requestingUrl, webContents.getURL()),
+      }));
+    },
   );
 
   // Allow Dockview popout groups (SPEC 055 US1 Float) to open as real,
@@ -1097,6 +1148,8 @@ async function doQuit(): Promise<void> {
 
   const shutdown = (async () => {
     isQuitting = true;
+
+    await midiInputCoordinator?.requestShutdown();
 
     if (blueLiveSession) {
       try {
@@ -2053,11 +2106,19 @@ ipcMain.handle('program-settings:get', () => {
 });
 
 ipcMain.handle('program-settings:save', (_event, snapshot: ProgramSettingsSnapshot) => {
-  return saveProgramSettings(snapshot);
+  const result = saveProgramSettings(snapshot);
+  if (result.ok && result.snapshot && midiInputCoordinator) {
+    midiInputCoordinator.onProgramSettingsSaved(result.snapshot);
+  }
+  return result;
 });
 
 ipcMain.handle('program-settings:reset-panel', (_event, panel: string) => {
-  return resetPanel(panel as any);
+  const snapshot = resetPanel(panel as any);
+  if (panel === 'midi' && midiInputCoordinator) {
+    midiInputCoordinator.onProgramSettingsSaved(snapshot);
+  }
+  return snapshot;
 });
 
 ipcMain.handle('program-settings:usage-matrix', () => {
@@ -2212,16 +2273,18 @@ ipcMain.handle('engine:evaluate-code', async (_event, request: { editorKind: str
 });
 
 /**
- * Synchronize real-time parameter changes to the running engine.
+ * Synchronize real-time parameter changes to active engine sessions.
  */
+function syncActiveRuntimeChannel(name: string, value: number): Promise<void> {
+  return syncRuntimeChannel(name, value, engineBridge, blueLiveSession);
+}
+
 async function syncEngineWithProjectPatch(
   data: BlueData,
   patch: ProjectDocumentPatch,
   scoreAutomationParameterIds: Set<string> = new Set(),
 ) {
-  if (!engineBridge || !engineBridge.isCurrentlyPlaying()) return;
-
-  if (scoreAutomationParameterIds.size > 0) {
+  if (engineBridge?.isCurrentlyPlaying() && scoreAutomationParameterIds.size > 0) {
     await syncScoreAutomationParametersToEngine(
       data,
       scoreAutomationParameterIds,
@@ -2230,7 +2293,7 @@ async function syncEngineWithProjectPatch(
     );
   }
 
-  if (patch.mixer) {
+  if (engineBridge?.isCurrentlyPlaying() && patch.mixer) {
     const mixerPatch = patch.mixer;
 
     if (mixerPatch.type === 'updateChannel') {
@@ -2258,7 +2321,7 @@ async function syncEngineWithProjectPatch(
           for (const [objectName, value] of Object.entries(orchestraPatch.patch.bsbWidgetValues)) {
             const param = params.find((p) => p.getName() === objectName);
             if (param && param.getCompilationVarName()) {
-              await engineBridge.setChannel(param.getCompilationVarName()!, value);
+              await syncActiveRuntimeChannel(param.getCompilationVarName()!, value);
             }
           }
         }
@@ -2272,7 +2335,7 @@ async function syncEngineWithProjectPatch(
             for (const param of params) {
               const varName = param.getCompilationVarName();
               if (varName) {
-                await engineBridge.setChannel(varName, param.getFixedValue());
+                await syncActiveRuntimeChannel(varName, param.getFixedValue());
               }
             }
           } else if (bsbPatch.type === 'updateWidgetProperties') {
@@ -2282,31 +2345,31 @@ async function syncEngineWithProjectPatch(
               if (typeof props.value === 'number') {
                 const param = instrument.getParameters().find(p => p.getName() === widget.objectName);
                 if (param && param.getCompilationVarName()) {
-                  await engineBridge.setChannel(param.getCompilationVarName()!, props.value);
+                  await syncActiveRuntimeChannel(param.getCompilationVarName()!, props.value);
                 }
               }
               if (typeof props.selected === 'boolean') {
                 const param = instrument.getParameters().find(p => p.getName() === widget.objectName);
                 if (param && param.getCompilationVarName()) {
-                  await engineBridge.setChannel(param.getCompilationVarName()!, props.selected ? 1 : 0);
+                  await syncActiveRuntimeChannel(param.getCompilationVarName()!, props.selected ? 1 : 0);
                 }
               }
               if (typeof props.selectedIndex === 'number') {
                 const param = instrument.getParameters().find(p => p.getName() === widget.objectName);
                 if (param && param.getCompilationVarName()) {
-                  await engineBridge.setChannel(param.getCompilationVarName()!, props.selectedIndex);
+                  await syncActiveRuntimeChannel(param.getCompilationVarName()!, props.selectedIndex);
                 }
               }
               if (typeof props.xValue === 'number') {
                 const px = instrument.getParameters().find(p => p.getName() === widget.objectName + 'X');
                 if (px && px.getCompilationVarName()) {
-                  await engineBridge.setChannel(px.getCompilationVarName()!, props.xValue);
+                  await syncActiveRuntimeChannel(px.getCompilationVarName()!, props.xValue);
                 }
               }
               if (typeof props.yValue === 'number') {
                 const py = instrument.getParameters().find(p => p.getName() === widget.objectName + 'Y');
                 if (py && py.getCompilationVarName()) {
-                  await engineBridge.setChannel(py.getCompilationVarName()!, props.yValue);
+                  await syncActiveRuntimeChannel(py.getCompilationVarName()!, props.yValue);
                 }
               }
             }
@@ -2317,7 +2380,7 @@ async function syncEngineWithProjectPatch(
                 (candidate) => candidate.getName() === `${widget.objectName}_${bsbPatch.sliderIndex}`,
               );
               if (param?.getCompilationVarName()) {
-                await engineBridge.setChannel(param.getCompilationVarName()!, bsbPatch.value);
+                await syncActiveRuntimeChannel(param.getCompilationVarName()!, bsbPatch.value);
               }
             }
           }
@@ -2331,8 +2394,6 @@ async function syncEngineWithRealtimeControlUpdate(
   data: BlueData,
   update: BsbRealtimeControlUpdate,
 ) {
-  if (!engineBridge || !engineBridge.isCurrentlyPlaying()) return;
-
   const arrangement = data.getArrangement();
   const instrument = arrangement.getInstrumentById(update.assignmentId);
   if (!(instrument instanceof BlueSynthBuilder)) return;
@@ -2350,7 +2411,7 @@ async function syncEngineWithRealtimeControlUpdate(
       if (value === null) break;
       const param = findParameter(widget.objectName);
       if (param?.getCompilationVarName()) {
-        await engineBridge.setChannel(param.getCompilationVarName()!, value);
+        await syncActiveRuntimeChannel(param.getCompilationVarName()!, value);
       }
       break;
     }
@@ -2359,7 +2420,7 @@ async function syncEngineWithRealtimeControlUpdate(
       if (selected === null) break;
       const param = findParameter(widget.objectName);
       if (param?.getCompilationVarName()) {
-        await engineBridge.setChannel(param.getCompilationVarName()!, selected ? 1 : 0);
+        await syncActiveRuntimeChannel(param.getCompilationVarName()!, selected ? 1 : 0);
       }
       break;
     }
@@ -2368,7 +2429,7 @@ async function syncEngineWithRealtimeControlUpdate(
       if (selectedIndex === null) break;
       const param = findParameter(widget.objectName);
       if (param?.getCompilationVarName()) {
-        await engineBridge.setChannel(param.getCompilationVarName()!, selectedIndex);
+        await syncActiveRuntimeChannel(param.getCompilationVarName()!, selectedIndex);
       }
       break;
     }
@@ -2378,13 +2439,13 @@ async function syncEngineWithRealtimeControlUpdate(
       if (nextX !== null) {
         const px = findParameter(`${widget.objectName}X`);
         if (px?.getCompilationVarName()) {
-          await engineBridge.setChannel(px.getCompilationVarName()!, nextX);
+          await syncActiveRuntimeChannel(px.getCompilationVarName()!, nextX);
         }
       }
       if (nextY !== null) {
         const py = findParameter(`${widget.objectName}Y`);
         if (py?.getCompilationVarName()) {
-          await engineBridge.setChannel(py.getCompilationVarName()!, nextY);
+          await syncActiveRuntimeChannel(py.getCompilationVarName()!, nextY);
         }
       }
       break;
@@ -2395,7 +2456,7 @@ async function syncEngineWithRealtimeControlUpdate(
       if (sliderIndex === null || value === null) break;
       const param = findParameter(`${widget.objectName}_${sliderIndex}`);
       if (param?.getCompilationVarName()) {
-        await engineBridge.setChannel(param.getCompilationVarName()!, value);
+        await syncActiveRuntimeChannel(param.getCompilationVarName()!, value);
       }
       break;
     }
@@ -2432,7 +2493,7 @@ ipcMain.handle('commit-project-document-patches', async (_event, patches: Projec
       scoreAutomationParameterIds.clear();
     }
     javaRuntimeDependenciesChanged = javaRuntimeDependenciesChanged || (changed && clojureDependenciesChanged);
-    if (engineBridge && engineBridge.isCurrentlyPlaying()) {
+    if (engineBridge?.isCurrentlyPlaying() || blueLiveSession?.isRunning()) {
       void syncEngineWithProjectPatch(currentData, patch, scoreAutomationParameterIds).catch((error) => {
         console.error('[main] Failed to sync engine with project patch:', error);
       });
@@ -2676,8 +2737,8 @@ ipcMain.handle('update-project-document', (_event, patch) => {
     for (const id of collectAffectedProjectScoreAutomationParameterIds(currentData, patch)) {
       scoreAutomationParameterIds.add(id);
     }
-    // Sync with engine in real-time if playing
-    if (engineBridge && engineBridge.isCurrentlyPlaying()) {
+    // Sync with each active real-time engine.
+    if (engineBridge?.isCurrentlyPlaying() || blueLiveSession?.isRunning()) {
       void syncEngineWithProjectPatch(currentData, patch, scoreAutomationParameterIds);
     }
     currentProjectRevision += 1;

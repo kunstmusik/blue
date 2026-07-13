@@ -44,6 +44,12 @@ import type {
   WindowLayoutSettingsSnapshot,
   WindowLayoutUpdateRequest,
 } from '../../shared/window-layout-settings';
+import type {
+  MidiInputCommandAck,
+  MidiInputServiceCommand,
+  MidiInputServiceInitialization,
+  MidiInputServiceSnapshot,
+} from '../../shared/midi-input';
 
 export type BlueLiveStatus = 'idle' | 'starting' | 'running' | 'stopping' | 'stopped' | 'error';
 
@@ -227,6 +233,19 @@ declare global {
       getAudioFileStat: (
         filePath: string,
       ) => Promise<{ size: number; mtime: number } | null>;
+
+      // MIDI Input (SPEC 058)
+      initializeMidiInputService: () => Promise<MidiInputServiceInitialization | null>;
+      reportMidiInputServiceSnapshot: (snapshot: MidiInputServiceSnapshot) => void;
+      acknowledgeMidiInputCommand: (ack: MidiInputCommandAck) => void;
+      onMidiInputServiceCommand: (
+        callback: (command: MidiInputServiceCommand) => void,
+      ) => () => void;
+      getMidiInputServiceSnapshot: () => Promise<MidiInputServiceSnapshot | null>;
+      requestMidiInputRescan: () => Promise<{ accepted: boolean; message?: string }>;
+      onMidiInputServiceSnapshot: (
+        callback: (snapshot: MidiInputServiceSnapshot) => void,
+      ) => () => void;
     };
   }
 }

@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import {
+  PROGRAM_SETTINGS_PANEL_ORDER,
+} from '../../../shared/program-settings';
 import type {
   ProgramSettingsSnapshot,
   ProgramSettingsPanelId,
   ProgramSettingsSaveResult,
   SettingsValidationIssue,
 } from '../../../shared/program-settings';
-import { PROGRAM_SETTINGS_PANEL_ORDER } from '../../../shared/program-settings';
 import { cn } from '../../lib/cn';
 import GeneralSettings from './GeneralSettings';
 import ProjectDefaultsSettings from './ProjectDefaultsSettings';
@@ -13,6 +15,9 @@ import PlaybackSettings from './PlaybackSettings';
 import UtilitySettings from './UtilitySettings';
 import RealtimeRenderSettings from './RealtimeRenderSettings';
 import DiskRenderSettings from './DiskRenderSettings';
+import MidiSettings from './MidiSettings';
+import { useMidiInputStore } from '../../stores/midi-input-store';
+import type { MidiInputServiceSnapshot } from '../../../shared/midi-input';
 
 export default function SettingsApp(): React.ReactElement {
   const [active, setActive] = useState<ProgramSettingsPanelId>('general');
@@ -22,6 +27,11 @@ export default function SettingsApp(): React.ReactElement {
   const [validationIssues, setValidationIssues] = useState<SettingsValidationIssue[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const setMidiSavedPreferences = useMidiInputStore((s) => s.setSavedPreferences);
+  const setMidiSnapshot = useMidiInputStore((s) => s.setSnapshot);
+  const midiDraft = useMidiInputStore((s) => s.draftMidiInput);
+  const midiDraftDirty = useMidiInputStore((s) => s.draftDirty);
+
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -30,6 +40,7 @@ export default function SettingsApp(): React.ReactElement {
         if (!cancelled) {
           setSavedSnapshot(snapshot);
           setDraft(snapshot);
+          setMidiSavedPreferences(snapshot.midiInput);
           setLoading(false);
         }
       } catch {
@@ -37,7 +48,24 @@ export default function SettingsApp(): React.ReactElement {
       }
     })();
     return () => { cancelled = true; };
-  }, []);
+  }, [setMidiSavedPreferences]);
+
+  // Subscribe to runtime MIDI snapshot updates from main (if available).
+  useEffect(() => {
+    const api = window.blueAPI as typeof window.blueAPI & {
+      onMidiInputServiceSnapshot?: (cb: (snapshot: MidiInputServiceSnapshot) => void) => () => void;
+      getMidiInputServiceSnapshot?: () => Promise<MidiInputServiceSnapshot | null>;
+    };
+    if (!api?.onMidiInputServiceSnapshot) return;
+    const unsub = api.onMidiInputServiceSnapshot((snapshot) => {
+      setMidiSnapshot(snapshot);
+    });
+    // Pull the initial cached snapshot so the panel renders with current state.
+    void api.getMidiInputServiceSnapshot?.().then((snapshot) => {
+      if (snapshot) setMidiSnapshot(snapshot);
+    });
+    return () => { unsub(); };
+  }, [setMidiSnapshot]);
 
   const handleDraftChange = useCallback((updated: ProgramSettingsSnapshot) => {
     setDraft(updated);
@@ -47,32 +75,43 @@ export default function SettingsApp(): React.ReactElement {
 
   const handleApply = useCallback(async () => {
     if (!draft) return;
-    const result: ProgramSettingsSaveResult = await window.blueAPI.saveProgramSettings(draft);
+    // Merge the latest MIDI draft back into the program settings draft before
+    // saving so the Apply button reflects unsaved Settings edits.
+    const merged: ProgramSettingsSnapshot = {
+      ...draft,
+      midiInput: midiDraft,
+    };
+    const result: ProgramSettingsSaveResult = await window.blueAPI.saveProgramSettings(merged);
     if (result.ok && result.snapshot) {
       setSavedSnapshot(result.snapshot);
       setDraft(result.snapshot);
+      setMidiSavedPreferences(result.snapshot.midiInput);
       setDirty(false);
       setValidationIssues(result.validationIssues ?? []);
     } else {
       setValidationIssues(result.validationIssues ?? []);
     }
-  }, [draft]);
+  }, [draft, midiDraft, setMidiSavedPreferences]);
 
   const handleCancel = useCallback(() => {
     if (savedSnapshot) {
       setDraft(savedSnapshot);
+      setMidiSavedPreferences(savedSnapshot.midiInput);
       setDirty(false);
       setValidationIssues([]);
     }
-  }, [savedSnapshot]);
+  }, [savedSnapshot, setMidiSavedPreferences]);
 
   const handleResetPanel = useCallback(async () => {
     const snapshot = await window.blueAPI.resetProgramSettingsPanel(active);
     setSavedSnapshot(snapshot);
     setDraft(snapshot);
+    if (active === 'midi') {
+      setMidiSavedPreferences(snapshot.midiInput);
+    }
     setDirty(false);
     setValidationIssues([]);
-  }, [active]);
+  }, [active, setMidiSavedPreferences]);
 
   if (loading || !draft) {
     return (
@@ -129,6 +168,8 @@ export default function SettingsApp(): React.ReactElement {
             onChange={(diskRender) => handleDraftChange({ ...draft, diskRender })}
           />
         );
+      case 'midi':
+        return <MidiSettings />;
     }
   };
 
@@ -171,10 +212,10 @@ export default function SettingsApp(): React.ReactElement {
           <button
             type="button"
             onClick={handleCancel}
-            disabled={!dirty}
+            disabled={!dirty && !midiDraftDirty}
             className={cn(
               secondaryButtonClass,
-              dirty ? 'text-app-text' : 'text-app-text-subtle',
+              dirty || midiDraftDirty ? 'text-app-text' : 'text-app-text-subtle',
             )}
           >
             Cancel
@@ -182,7 +223,7 @@ export default function SettingsApp(): React.ReactElement {
           <button
             type="button"
             onClick={handleApply}
-            disabled={!dirty}
+            disabled={!dirty && !midiDraftDirty}
             className="inline-flex items-center rounded-md bg-app-accent px-4 py-1.5 text-content text-white transition-colors enabled:hover:bg-app-accent-hover disabled:cursor-default disabled:bg-app-surface-strong disabled:text-app-text-subtle"
           >
             Apply

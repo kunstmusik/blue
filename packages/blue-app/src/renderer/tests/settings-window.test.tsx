@@ -42,7 +42,7 @@ afterEach(() => {
 });
 
 describe('settings renderer (044)', () => {
-  it('shows all six active Java Blue category panels', async () => {
+  it('shows the active Java Blue category panels plus the SPEC 058 MIDI panel', async () => {
     mockBlueAPI.getProgramSettings.mockResolvedValueOnce({ ...defaultSettings });
 
     await act(async () => {
@@ -55,7 +55,10 @@ describe('settings renderer (044)', () => {
     expect(container.textContent).toContain('Utility');
     expect(container.textContent).toContain('Realtime Render');
     expect(container.textContent).toContain('Disk Render');
-    expect(container.textContent).not.toContain('MIDI');
+    // SPEC 058: MIDI is now an app-wide category (distinct from project MIDI
+    // mapping and realtime-render MIDI options).
+    expect(container.textContent).toContain('MIDI');
+    // Legacy/deferred panels still absent:
     expect(container.textContent).not.toContain('OSC');
   });
 

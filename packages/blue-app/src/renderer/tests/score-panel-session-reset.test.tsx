@@ -10,6 +10,14 @@ import { createEmptyProjectEditorSnapshot } from '../../shared/project-editor';
 
 (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
+class MockResizeObserver {
+  observe(): void {}
+  unobserve(): void {}
+  disconnect(): void {}
+}
+
+(globalThis as unknown as { ResizeObserver: typeof MockResizeObserver }).ResizeObserver = MockResizeObserver;
+
 const { mockResetSession, mockScorePathState } = vi.hoisted(() => {
   const mockResetSession = vi.fn();
 

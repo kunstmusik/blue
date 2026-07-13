@@ -1474,7 +1474,8 @@ describe('Toolbar Shell', () => {
     expect(html).toContain('Playhead');
     expect(html).toContain('Selection');
     expect(html).toContain('Blue Live');
-    expect(html).toContain('MIDI Input');
+    // SPEC 058: the obsolete `MIDI Input` toolbar control is removed.
+    expect(html).not.toContain('MIDI Input');
     expect(html).not.toContain('>Start<');
     expect(html).not.toContain('>End<');
     expect(html).not.toContain('>Duration<');

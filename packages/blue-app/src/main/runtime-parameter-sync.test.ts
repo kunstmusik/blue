@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { AudioLayer, AudioLayerGroup, BlueData, GenericInstrument } from '@blue/data';
+import {
+  AudioLayer,
+  AudioLayerGroup,
+  BlueData,
+  BlueSynthBuilder,
+  BSBKnob,
+  GenericInstrument,
+} from '@blue/data';
 import { createProjectEditorSnapshot } from '../shared/project-editor';
 import { syncCompiledRuntimeParameterNames } from './runtime-parameter-sync';
 
@@ -41,5 +48,36 @@ describe('syncCompiledRuntimeParameterNames', () => {
     expect(sync.liveCount).toBe(sync.compiledCount);
     expect(liveInstrumentChannel?.getLevelParameter().getCompilationVarName()).toMatch(/^gk_blue_auto\d+$/);
     expect(liveAudioChannel?.getLevelParameter().getCompilationVarName()).toMatch(/^gk_blue_auto\d+$/);
+  });
+
+  it('copies Blue Live compiled BSB parameter names back to the live instrument', () => {
+    const data = new BlueData();
+    const instrument = new BlueSynthBuilder();
+    const knob = new BSBKnob();
+    knob.objectName = 'amplitude';
+    instrument.setInstrumentText('aout oscili <amplitude>, 440\nout aout');
+    instrument.getGraphicInterface().getRootGroup().addChild(knob);
+    data.getArrangement().addInstrument(instrument, '1');
+
+    const liveParameter = instrument.getParameters()[0];
+    expect(liveParameter?.getCompilationVarName()).toBeNull();
+
+    const render = data.toBlueLiveCSD();
+    const compiledParameters = render.parameters;
+    expect(compiledParameters).toBeDefined();
+    if (!compiledParameters) {
+      throw new Error('Blue Live render did not return compiled parameters');
+    }
+    const sync = syncCompiledRuntimeParameterNames(
+      data.getArrangement(),
+      data.getMixer(),
+      compiledParameters,
+    );
+
+    expect(sync.liveCount).toBe(sync.compiledCount);
+    expect(liveParameter?.getCompilationVarName()).toBe(
+      compiledParameters[0]?.getCompilationVarName(),
+    );
+    expect(liveParameter?.getCompilationVarName()).toMatch(/^gk_blue_auto\d+$/);
   });
 });

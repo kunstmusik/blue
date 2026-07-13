@@ -11,13 +11,12 @@ import { createEmptyProjectEditorSnapshot } from '../../shared/project-editor';
 
 (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
-const { mockOpenPanel } = vi.hoisted(() => ({
-  mockOpenPanel: vi.fn(),
-}));
-
+// The workbench-store is no longer imported by ToolbarBlueLive (SPEC 058 removed
+// the MIDI Input toolbar button). This mock remains so any unrelated consumer
+// in this test file continues to provide a stub.
 vi.mock('../stores/workbench-store', () => ({
-  useWorkbenchStore: (selector: (state: { openPanel: typeof mockOpenPanel }) => unknown) =>
-    selector({ openPanel: mockOpenPanel }),
+  useWorkbenchStore: (selector: (state: { openPanel: () => void }) => unknown) =>
+    selector({ openPanel: vi.fn() }),
 }));
 
 declare global {
@@ -63,7 +62,6 @@ function renderToolbar(): { container: HTMLDivElement; root: Root } {
 beforeEach(() => {
   useBlueLiveStore.getState().reset();
   useProjectStore.getState().clearProject();
-  mockOpenPanel.mockReset();
   window.blueAPI = {
     toggleBlueLive: vi.fn(),
     recompileBlueLive: vi.fn(),
@@ -90,7 +88,9 @@ describe('Blue Live toolbar behavior', () => {
     expect((blueLiveButton as HTMLButtonElement).disabled).toBe(true);
     expect((recompileButton as HTMLButtonElement).disabled).toBe(true);
     expect((allNotesOffButton as HTMLButtonElement).disabled).toBe(true);
-    expect((midiInputButton as HTMLButtonElement).disabled).toBe(false);
+
+    // SPEC 058 US2: the obsolete `MIDI Input` toolbar button must be removed.
+    expect(midiInputButton).toBeUndefined();
 
     act(() => {
       root.unmount();
@@ -156,27 +156,6 @@ describe('Blue Live toolbar behavior', () => {
 
     expect(recompile).toHaveBeenCalledTimes(1);
     expect(allNotesOff).toHaveBeenCalledTimes(1);
-
-    act(() => {
-      root.unmount();
-    });
-    container.remove();
-  });
-
-  it('opens the MIDI Input panel from the toolbar', () => {
-    seedLoadedProject();
-
-    const { container, root } = renderToolbar();
-    const midiInputButton = Array.from(container.querySelectorAll('button')).find((button) => button.textContent === 'MIDI Input');
-
-    expect(midiInputButton).toBeTruthy();
-    expect((midiInputButton as HTMLButtonElement).disabled).toBe(false);
-
-    act(() => {
-      midiInputButton?.click();
-    });
-
-    expect(mockOpenPanel).toHaveBeenCalledWith('MidiInputPanelTopComponent');
 
     act(() => {
       root.unmount();

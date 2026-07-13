@@ -4,6 +4,7 @@ import type { BlueData, JavaScriptSession } from '@blue/data';
 import { LiveData, mapMidiTrigger } from '@blue/data';
 import type { EngineStateSnapshot } from '@blue/engine-client';
 import { formatRenderCommandLine, writeTempCsdSnapshot } from './render-command';
+import { syncCompiledRuntimeParameterNames } from './runtime-parameter-sync';
 import type {
   BlueLiveNoteTriggerRequest,
   BlueLiveNoteTriggerResult,
@@ -249,6 +250,18 @@ export class BlueLiveEngineSession {
     try {
       const liveData = data.getLiveData();
       const csd = data.toBlueLiveCSD(session);
+      const runtimeParameterSync = syncCompiledRuntimeParameterNames(
+        data.getArrangement(),
+        data.getMixer(),
+        csd.parameters,
+      );
+      if (runtimeParameterSync.liveCount !== runtimeParameterSync.compiledCount) {
+        console.warn(
+          '[BlueLive] Runtime parameter sync count mismatch:',
+          runtimeParameterSync.liveCount,
+          runtimeParameterSync.compiledCount,
+        );
+      }
       const { orchestra, score, options } = parseCSD(csd.csdText);
       this.namedInstrumentNumbers = resolveNamedInstrumentNumbers(orchestra);
       const runtimeScore = normalizeScoreForEngineApi(score, this.namedInstrumentNumbers);
@@ -394,6 +407,14 @@ export class BlueLiveEngineSession {
 
   isRunning(): boolean {
     return this.status === 'running';
+  }
+
+  async setChannel(name: string, value: number): Promise<void> {
+    if (this.status !== 'running' || !this.bridge) {
+      return;
+    }
+
+    await this.bridge.setChannel(name, value);
   }
 
   async triggerNote(

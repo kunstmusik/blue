@@ -2,7 +2,6 @@ import React from 'react';
 import clsx from 'clsx';
 import type { ReactNode } from 'react';
 import { useBlueLiveStore } from '../../stores/blue-live-store';
-import { useWorkbenchStore } from '../../stores/workbench-store';
 import { useProjectStore } from '../../stores/project-store';
 
 function ToolbarTextButton({
@@ -38,7 +37,6 @@ export default function ToolbarBlueLive(): React.ReactElement {
   const status = useBlueLiveStore((s) => s.status);
   const running = useBlueLiveStore((s) => s.running);
   const loaded = useProjectStore((s) => s.loaded);
-  const openPanel = useWorkbenchStore((s) => s.openPanel);
 
   const isStarting = status === 'starting';
   const isStopping = status === 'stopping';
@@ -59,10 +57,6 @@ export default function ToolbarBlueLive(): React.ReactElement {
   const handleAllNotesOff = () => {
     if (!running) return;
     window.blueAPI?.sendBlueLiveAllNotesOff();
-  };
-
-  const handleOpenMidiInput = () => {
-    openPanel('MidiInputPanelTopComponent');
   };
 
   return (
@@ -88,12 +82,6 @@ export default function ToolbarBlueLive(): React.ReactElement {
         onClick={handleAllNotesOff}
       >
         All Notes Off
-      </ToolbarTextButton>
-      <ToolbarTextButton
-        title="Open MIDI Input"
-        onClick={handleOpenMidiInput}
-      >
-        MIDI Input
       </ToolbarTextButton>
     </div>
   );

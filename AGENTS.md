@@ -1,6 +1,6 @@
 # blue-electron Development Guidelines
 
-Auto-generated from all feature plans. Last updated: 2026-07-12
+Auto-generated from all feature plans. Last updated: 2026-07-13
 
 ## Active Technologies
 - React 19.x, Electron, dockview 5.2.0 + collapsed auxiliary-group planning for the workbench shell (013-collapsed-sidebar-research)
@@ -66,6 +66,8 @@ Auto-generated from all feature plans. Last updated: 2026-07-12
 - `.blue` XML remains canonical project persistence; app-wide program settings remain in `program-settings.json`; generated freeze audio is project-relative derived data; temporary CSD files are main-process temporary artifacts (056-render-freeze-parity)
 - TypeScript 5.8.x, strict mode + React 19.x, Electron 35.x, Lucide React, Web Audio API, Vitest 4.x (057-audio-file-player)
 - Transient renderer player state; disk files remain user-selected or render-derived; no project XML changes (057-audio-file-player)
+- TypeScript 5.8.x in strict mode; React 19.x; Electron 35.x + Chromium Web MIDI API, Electron `session`/`BrowserWindow`/IPC, Zustand 5.x, existing `@blue/data` MIDI mapping utilities, existing Blue Live engine bridge (058-midi-live-input)
+- Main-process `program-settings.json` under Electron user data for durable enabled-device identities; transient renderer/main runtime snapshots for availability, connections, and held notes; `.blue` XML unchanged (058-midi-live-input)
 
 - TypeScript 5.8.x, React 19.x, Electron 35.x, strict renderer/main/preload packages, pure TypeScript `@blue/data` + `PresetGroup`/`Preset` BSB preset model, Zustand 5.x project store with BSB interface/opcode-list patch support, Dockview 5.2.0, CodeMirror 6, `BsbInterfacePatch` union type for structured BSB mutations (022-bsb-interface-parity)
 - BSB Interface tab now renders an editable widget canvas with selection, property-sheet editing, grid settings, preset application, and Java-style split-view UDO editor (UDOTable + UDOEditor); snapshot contract extended with `widgetTree`, `gridSettings`, `editEnabled`, `presetGroup`, `opcodeListText`; widget-specific rendering (Slider, Knob, Toggle, etc.) deferred to SPEC 023 (022-bsb-interface-parity)
@@ -102,6 +104,6 @@ TypeScript 5.x, strict mode: Follow standard conventions
 <!-- MANUAL ADDITIONS END -->
 
 ## Recent Changes
+- 058-midi-live-input: Added TypeScript 5.8.x in strict mode; React 19.x; Electron 35.x + Chromium Web MIDI API, Electron `session`/`BrowserWindow`/IPC, Zustand 5.x, existing `@blue/data` MIDI mapping utilities, existing Blue Live engine bridge
 - 057-audio-file-player: Added TypeScript 5.8.x, strict mode + React 19.x, Electron 35.x, Lucide React, Web Audio API, Vitest 4.x
 - 056-render-freeze-parity: Added TypeScript 5.8.x with strict mode; React 19.x; Electron 35.x; Node.js APIs in the Electron main process only + `@blue/data`, `@blue/java-runtime`, Electron `dialog`/`shell`/IPC, Node `child_process`/`fs`/`path`, existing program-settings store, existing project snapshot/patch bridge, Vitest 4.x
-- 055-window-float-dock-parity: Added TypeScript 5.8.x, React 19.x, Electron 35.x + Dockview 5.2.0 / dockview-core 5.2.0, Zustand 5.x, Radix Context Menu, Electron `BrowserWindow`/IPC/Menu, existing `@blue/data` project snapshot IPC

@@ -1,5 +1,6 @@
 import { useIPCListeners } from './hooks/use-ipc-listeners';
 import { useKeyboardShortcuts } from './hooks/use-keyboard-shortcuts';
+import { useMidiInputService } from './hooks/use-midi-input-service';
 import { useProjectStore } from './stores/project-store';
 import { useUIStore } from './stores/ui-store';
 import MainToolbar from './components/menu-bar/MainToolbar';
@@ -13,6 +14,7 @@ import ErrorBoundary from './components/notifications/ErrorBoundary';
 export default function App(): React.ReactElement {
   useIPCListeners();
   useKeyboardShortcuts();
+  useMidiInputService();
 
   const activePanel = useUIStore((s) => s.activePanel);
   const isLoading = useProjectStore((s) => s.isLoading);

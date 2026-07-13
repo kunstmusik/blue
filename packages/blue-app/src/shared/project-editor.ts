@@ -1217,7 +1217,13 @@ export interface BlueLiveNoteTriggerRequest {
   midiNote: number;
   velocity: number;
   channel: number;
-  source: 'mouse' | 'computer';
+  source: 'mouse' | 'computer' | 'hardware';
+  /** Stable runtime source identity for hardware events (e.g. `midi:<port-id>`). */
+  sourceId?: string;
+  /** Hardware device ID, when sourced from a physical MIDI input. */
+  deviceId?: string;
+  /** Source high-resolution timestamp when available. */
+  timestamp?: number;
 }
 
 export interface BlueLiveNoteTriggerResult {

@@ -15,6 +15,10 @@ import {
   KEY_OFFSET,
   isWhiteKey,
 } from './virtual-keyboard/PianoCanvas';
+import {
+  releaseAllVirtualKeyboardSources,
+  routeVirtualKeyboardNote,
+} from '../../../hooks/use-midi-input-service';
 
 function clampMidiNote(note: number): number {
   return Math.min(127, Math.max(0, Math.trunc(note)));
@@ -61,14 +65,18 @@ export default function VirtualKeyboardPanel(): ReactElement {
       if (!loaded || !running) return false;
       const requestVelocity = velocityOverride ? velocity : 127;
       try {
-        const result = await window.blueAPI.triggerBlueLiveNote({
+        // SPEC 058: route through the shared renderer note router so hardware
+        // and Virtual Keyboard inputs follow identical mapping and held-note
+        // cleanup behavior.
+        const result = await routeVirtualKeyboardNote({
           type,
           midiNote: clampMidiNote(midiNote),
           velocity: requestVelocity,
           channel,
           source,
+          timestamp: performance.now(),
         });
-        if (!result.ok) return false;
+        if (!result.accepted) return false;
       } catch {
         return false;
       }
@@ -88,7 +96,12 @@ export default function VirtualKeyboardPanel(): ReactElement {
       return;
     }
     try {
-      await window.blueAPI.sendBlueLiveAllNotesOff();
+      // Release Virtual Keyboard source's held notes through the shared router
+      // so engine-level note-offs are emitted deterministically.
+      const sentByRouter = await releaseAllVirtualKeyboardSources();
+      if (!sentByRouter) {
+        await window.blueAPI?.sendBlueLiveAllNotesOff?.();
+      }
     } finally {
       clearPressedNotes();
     }
