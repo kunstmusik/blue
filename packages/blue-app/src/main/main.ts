@@ -56,6 +56,13 @@ import {
 } from './mixer-effects-library';
 import { cleanupTempCsdSnapshots } from './render-command';
 import { saveGeneratedCsdToDisk } from './csd-export';
+import {
+  authorizeAudioFilePath,
+  readAuthorizedAudioFileBytes,
+  registerBlueAudioScheme,
+  registerBlueAudioProtocolHandler,
+  resolveAuthorizedAudioFilePath,
+} from './audio-stream-protocol';
 import { executeExternalTest } from './external-executor';
 import { createMainExternalExecutor } from './external-command-executor';
 import {
@@ -157,6 +164,7 @@ let currentProjectRevision = 0;
 let activeRenderOperationId: string | null = null;
 let activeRenderProcess: ChildProcess | null = null;
 let activeRenderOperationKind: RenderOperationStatus['kind'] | null = null;
+let activeRenderAction: DiskRenderAction | null = null;
 let activeRenderCancellationSignal: { cancelled: boolean } | null = null;
 let engineBridge: EngineBridge | null = null;
 let blueLiveSession: BlueLiveEngineSession | null = null;
@@ -465,6 +473,7 @@ function finishRenderOperation(operationId: string): void {
   if (activeRenderOperationId !== operationId) return;
   activeRenderOperationId = null;
   activeRenderOperationKind = null;
+  activeRenderAction = null;
   activeRenderCancellationSignal = null;
   activeRenderProcess = null;
   rebuildApplicationMenu();
@@ -474,7 +483,7 @@ function launchExternalOutputCommand(
   template: string,
   outputPath: string,
   operationId: string,
-  label: 'Play' | 'Open',
+  label: 'Open',
 ): void {
   const command = tokenizeCommand(template).map((token) => token.replaceAll('$outfile', outputPath));
   const executable = command.shift();
@@ -521,7 +530,28 @@ function launchExternalOutputCommand(
 }
 
 function broadcastRenderStatus(status: RenderOperationStatus): void {
-  broadcastToWorkbenchWindows(RENDER_OPERATION_STATUS_CHANNEL, status);
+  const withAction: RenderOperationStatus = activeRenderAction !== null
+    && (status.action === undefined || status.action === null)
+    ? { ...status, action: activeRenderAction }
+    : status;
+
+  if (
+    withAction.kind === 'diskRender'
+    && withAction.phase === 'completed'
+    && withAction.action === 'play'
+    && withAction.outputPath
+    && !authorizeAudioFilePath(withAction.outputPath)
+  ) {
+    broadcastToWorkbenchWindows(RENDER_OPERATION_STATUS_CHANNEL, {
+      ...withAction,
+      phase: 'failed',
+      message: 'Could not authorize rendered file for in-app playback.',
+      error: 'Could not authorize rendered file for in-app playback.',
+    });
+    return;
+  }
+
+  broadcastToWorkbenchWindows(RENDER_OPERATION_STATUS_CHANNEL, withAction);
 }
 
 // ─── Render to Disk handler ───
@@ -540,6 +570,7 @@ async function handleRenderToDisk(action: DiskRenderAction, requestedOperationId
   const operationId = requestedOperationId ?? `disk-${Date.now()}`;
   activeRenderOperationId = operationId;
   activeRenderOperationKind = 'diskRender';
+  activeRenderAction = action;
   const cancellationSignal = { cancelled: false };
   activeRenderCancellationSignal = cancellationSignal;
   rebuildApplicationMenu();
@@ -613,25 +644,8 @@ async function handleRenderToDisk(action: DiskRenderAction, requestedOperationId
 
     if (renderResult.ok && renderResult.outputPath) {
       if (action === 'play') {
-        const playCmd = settings.diskRender.externalPlayCommandEnabled
-          ? settings.diskRender.externalPlayCommand
-          : null;
-        if (playCmd) {
-          launchExternalOutputCommand(playCmd, renderResult.outputPath, operationId, 'Play');
-        } else {
-          const error = await shell.openPath(renderResult.outputPath);
-          if (error) {
-            broadcastRenderStatus({
-              operationId,
-              kind: 'diskRender',
-              phase: 'failed',
-              message: `Could not play rendered file: ${error}`,
-              progress: null,
-              outputPath: renderResult.outputPath,
-              error,
-            });
-          }
-        }
+        // The renderer Audio File Player handles in-app playback after the
+        // completed status carries this action and output path.
       } else if (action === 'open') {
         const openCmd = settings.diskRender.externalOpenCommand.trim();
         if (openCmd && openCmd !== 'command $outfile') {
@@ -667,6 +681,7 @@ async function handleFreezeScoreObjects(request: FreezeScoreObjectsRequest): Pro
   const operationId = request.operationId ?? `freeze-${Date.now()}`;
   activeRenderOperationId = operationId;
   activeRenderOperationKind = 'freeze';
+  activeRenderAction = null;
   const cancellationSignal = { cancelled: false };
   activeRenderCancellationSignal = cancellationSignal;
   rebuildApplicationMenu();
@@ -2448,6 +2463,49 @@ ipcMain.handle('read-audio-file-bytes', async (_event, filePath: string): Promis
   }
 });
 
+ipcMain.handle('read-authorized-audio-file-bytes', async (_event, filePath: string): Promise<ArrayBuffer | null> => {
+  const resolvedFilePath = resolveAudioFilePathForRead(filePath);
+  return resolvedFilePath ? readAuthorizedAudioFileBytes(resolvedFilePath) : null;
+});
+
+ipcMain.handle('open-audio-file', async (): Promise<string | null> => {
+  if (!mainWindow) return null;
+  const result = await dialog.showOpenDialog(mainWindow, {
+    title: 'Open Audio File',
+    properties: ['openFile'],
+    filters: [
+      {
+        name: 'Audio Files',
+        extensions: [
+          'wav', 'wave', 'aif', 'aiff', 'mp3', 'ogg', 'oga', 'flac', 'au',
+          'm4a', 'w64', 'opus', 'weba',
+        ],
+      },
+      { name: 'All Files', extensions: ['*'] },
+    ],
+  });
+  if (result.canceled || result.filePaths.length === 0) return null;
+  const filePath = result.filePaths[0];
+  return filePath && authorizeAudioFilePath(filePath) ? filePath : null;
+});
+
+ipcMain.handle('get-audio-file-stat', async (
+  _event,
+  filePath: string,
+): Promise<{ size: number; mtime: number } | null> => {
+  try {
+    const resolvedFilePath = resolveAudioFilePathForRead(filePath);
+    if (!resolvedFilePath) return null;
+    const authorizedFilePath = await resolveAuthorizedAudioFilePath(resolvedFilePath);
+    if (!authorizedFilePath) return null;
+    const stat = await fs.promises.stat(authorizedFilePath);
+    if (!stat.isFile()) return null;
+    return { size: stat.size, mtime: stat.mtimeMs };
+  } catch {
+    return null;
+  }
+});
+
 ipcMain.handle('get-score-object-editor-document', (_event, request: ScoreObjectEditorRequest): ScoreObjectEditorDocumentSnapshot | null => {
   if (!currentData) return null;
   return createScoreObjectEditorDocument(currentData, request);
@@ -2664,7 +2722,10 @@ ipcMain.handle('cancel-render-operation', (_event, request: unknown) => {
   return handleCancelRenderOperation(request);
 });
 
+registerBlueAudioScheme();
+
 app.whenReady().then(async () => {
+  registerBlueAudioProtocolHandler();
   setExternalCommandExecutor(createMainExternalExecutor(() => currentFilePath ? path.dirname(currentFilePath) : null));
   initWorkbenchWindowHost();
   try {

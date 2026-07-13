@@ -75,6 +75,12 @@ export interface RenderOperationStatus {
   progress: number | null;
   outputPath: string | null;
   error: string | null;
+  /**
+   * Originating request action for disk renders (render | play | open).
+   * Absent for freeze operations. Lets the renderer distinguish a
+   * "Render to Disk and Play" completion from a plain render.
+   */
+  action?: DiskRenderAction | null;
 }
 
 const RENDER_OPERATION_KINDS: readonly RenderOperationKind[] = ['diskRender', 'freeze'];
@@ -90,7 +96,10 @@ export function isRenderOperationStatus(value: unknown): value is RenderOperatio
     && typeof value.message === 'string'
     && (value.progress === null || typeof value.progress === 'number')
     && (value.outputPath === null || typeof value.outputPath === 'string')
-    && (value.error === null || typeof value.error === 'string');
+    && (value.error === null || typeof value.error === 'string')
+    && (value.action === undefined || value.action === null
+      || (typeof value.action === 'string'
+        && DISK_RENDER_ACTIONS.includes(value.action as DiskRenderAction)));
 }
 
 // ─── Results ───
@@ -152,5 +161,6 @@ export function createStatus(
     progress: overrides?.progress ?? null,
     outputPath: overrides?.outputPath ?? null,
     error: overrides?.error ?? null,
+    action: overrides?.action ?? null,
   };
 }

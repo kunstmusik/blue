@@ -116,6 +116,8 @@ contextBridge.exposeInMainWorld('blueAPI', {
     ipcRenderer.invoke('commit-project-document-patches', patches) as Promise<ProjectDocumentCommitReceipt>,
   readAudioFileBytes: (filePath: string) =>
     ipcRenderer.invoke('read-audio-file-bytes', filePath) as Promise<ArrayBuffer | null>,
+  readAuthorizedAudioFileBytes: (filePath: string) =>
+    ipcRenderer.invoke('read-authorized-audio-file-bytes', filePath) as Promise<ArrayBuffer | null>,
   getScoreObjectEditorDocument: (request: ScoreObjectEditorRequest) =>
     ipcRenderer.invoke('get-score-object-editor-document', request) as Promise<ScoreObjectEditorDocumentSnapshot | null>,
   getNamedChainNames: () =>
@@ -321,4 +323,10 @@ contextBridge.exposeInMainWorld('blueAPI', {
     ipcRenderer.on(RENDER_OPERATION_STATUS_CHANNEL, handler);
     return () => { ipcRenderer.removeListener(RENDER_OPERATION_STATUS_CHANNEL, handler); };
   },
+
+  // Audio File Player
+  openAudioFile: () =>
+    ipcRenderer.invoke('open-audio-file') as Promise<string | null>,
+  getAudioFileStat: (filePath: string) =>
+    ipcRenderer.invoke('get-audio-file-stat', filePath) as Promise<{ size: number; mtime: number } | null>,
 });

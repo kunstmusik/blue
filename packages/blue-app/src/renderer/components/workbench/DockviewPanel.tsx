@@ -17,6 +17,7 @@ import ScorePanel from './panels/ScorePanel';
 import ScoreObjectPropertiesPanel from './panels/ScoreObjectPropertiesPanel';
 import ScoreObjectEditorPanel from './panels/ScoreObjectEditorPanel';
 import MarkersPanel from './panels/MarkersPanel';
+import AudioPlayerPanel from './panels/audio-player/AudioPlayerPanel';
 
 const DockviewPanel = forwardRef<HTMLDivElement, IDockviewPanelProps>(
   function DockviewPanel(props, ref) {
@@ -63,6 +64,8 @@ const DockviewPanel = forwardRef<HTMLDivElement, IDockviewPanelProps>(
             <ScoreObjectEditorPanel />
           ) : descriptor.id === 'MarkersTopComponent' ? (
             <MarkersPanel />
+          ) : descriptor.id === 'AudioFilePlayerTopComponent' ? (
+            <AudioPlayerPanel />
           ) : (
             <PlaceholderPanel descriptor={descriptor} showHeader={false} />
           )}

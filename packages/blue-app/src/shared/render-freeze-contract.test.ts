@@ -52,6 +52,19 @@ describe('render-freeze-contract', () => {
       expect(status.outputPath).toBe('/tmp/out.wav');
       expect(status.error).toBe('Csound not found');
     });
+
+    it('threads the originating disk render action through overrides', () => {
+      const status = createStatus('op-3', 'diskRender', 'completed', 'Done', {
+        outputPath: '/tmp/out.wav',
+        action: 'play',
+      });
+
+      expect(status.action).toBe('play');
+    });
+
+    it('defaults the action to null when not provided', () => {
+      expect(createStatus('op', 'diskRender', 'rendering', '...').action).toBeNull();
+    });
   });
 
   describe('RenderOperationPhase type coverage', () => {
@@ -94,6 +107,16 @@ describe('render-freeze-contract', () => {
     it('rejects malformed render status payloads', () => {
       expect(isRenderOperationStatus(createStatus('op', 'freeze', 'completed', 'Done'))).toBe(true);
       expect(isRenderOperationStatus({ operationId: 'op', kind: 'freeze', phase: 'unknown' })).toBe(false);
+    });
+
+    it('accepts an optional valid disk render action and rejects invalid ones', () => {
+      const base = createStatus('op', 'diskRender', 'completed', 'Done', { outputPath: '/o.wav' });
+      expect(isRenderOperationStatus({ ...base, action: 'play' })).toBe(true);
+      expect(isRenderOperationStatus({ ...base, action: 'render' })).toBe(true);
+      expect(isRenderOperationStatus({ ...base, action: 'open' })).toBe(true);
+      expect(isRenderOperationStatus({ ...base, action: null })).toBe(true);
+      expect(isRenderOperationStatus({ ...base, action: undefined })).toBe(true);
+      expect(isRenderOperationStatus({ ...base, action: 'delete' })).toBe(false);
     });
   });
 });

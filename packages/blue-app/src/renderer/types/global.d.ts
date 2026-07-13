@@ -107,6 +107,9 @@ declare global {
         patches: ProjectDocumentPatch[],
       ) => Promise<ProjectDocumentCommitReceipt>;
       readAudioFileBytes: (filePath: string) => Promise<ArrayBuffer | null>;
+      readAuthorizedAudioFileBytes: (
+        filePath: string,
+      ) => Promise<ArrayBuffer | null>;
       getScoreObjectEditorDocument: (
         request: ScoreObjectEditorRequest,
       ) => Promise<ScoreObjectEditorDocumentSnapshot | null>;
@@ -218,6 +221,12 @@ declare global {
       onRenderOperationStatus: (
         callback: (status: RenderOperationStatus) => void,
       ) => () => void;
+
+      // Audio File Player
+      openAudioFile: () => Promise<string | null>;
+      getAudioFileStat: (
+        filePath: string,
+      ) => Promise<{ size: number; mtime: number } | null>;
     };
   }
 }

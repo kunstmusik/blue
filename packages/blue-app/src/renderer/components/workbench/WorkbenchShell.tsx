@@ -42,6 +42,7 @@ import {
 import { useDocumentMouseDownOutside } from '../../hooks/use-document-mousedown-outside';
 import { useWorkbenchStore } from '../../stores/workbench-store';
 import { useLayoutSettingsStore } from '../../stores/layout-settings-store';
+import { useRenderAndPlayInterceptor } from './panels/audio-player/use-render-and-play';
 import type {
   DisplayWorkArea,
   WindowLayoutSettingsSnapshot,
@@ -152,6 +153,7 @@ export function reportOwnership(api: DockviewApi, windowId?: string) {
 }
 
 export default function WorkbenchShell() {
+  useRenderAndPlayInterceptor();
   const auxiliary = useWorkbenchStore((s) => s.auxiliary);
   const toggleAuxiliaryPanel = useWorkbenchStore((s) => s.toggleAuxiliaryPanel);
   const dockAuxiliaryPanel = useWorkbenchStore((s) => s.dockAuxiliaryPanel);
