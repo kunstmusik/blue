@@ -10,6 +10,7 @@
     "build:renderer": "vite build",
     "build": "pnpm --filter @blue/java-runtime build && pnpm --filter @blue/data build && pnpm build:main && pnpm build:preload && pnpm build:renderer",
     "dev": "APP_ENV=dev vite",
+    "osc:send": "node --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON ./scripts/send-osc.mjs",
     "start": "electron .",
     "test": "vitest run --config vitest.config.ts"
   },
@@ -35,6 +36,7 @@
     "codemirror": "^6.0.2",
     "dockview": "^5.2.0",
     "lucide-react": "^0.563.0",
+    "node-osc": "^11.6.0",
     "react": "^19.2.4",
     "react-arborist": "^3.5.0",
     "react-dom": "^19.2.4",

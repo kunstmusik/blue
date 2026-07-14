@@ -50,6 +50,10 @@ import type {
   MidiInputServiceInitialization,
   MidiInputServiceSnapshot,
 } from '../../shared/midi-input';
+import type {
+  OscCommandEvent,
+  OscServerRuntimeSnapshot,
+} from '../../shared/osc-control';
 
 export type BlueLiveStatus = 'idle' | 'starting' | 'running' | 'stopping' | 'stopped' | 'error';
 
@@ -145,6 +149,7 @@ declare global {
       readClipboardText: () => Promise<string>;
       writeClipboardText: (text: string) => Promise<void>;
       togglePlay: () => Promise<boolean>;
+      restartPlayback: () => Promise<boolean>;
       stopPlayback: () => Promise<void>;
       syncFollowPlaybackState: (enabled: boolean) => void;
       getProjectInfo: () => Promise<Record<string, string> | null>;
@@ -192,6 +197,13 @@ declare global {
       syncLegacyRendererSettings: (
         snapshot: import('../../shared/program-settings').CurrentAppSettingsSnapshot,
       ) => Promise<import('../../shared/program-settings').ProgramSettingsSnapshot>;
+
+      // OSC Control
+      getOscServerSnapshot: () => Promise<OscServerRuntimeSnapshot>;
+      onOscServerSnapshot: (
+        callback: (snapshot: OscServerRuntimeSnapshot) => void,
+      ) => () => void;
+      onOscCommand: (callback: (event: OscCommandEvent) => void) => () => void;
 
       // Window Layout
       getWindowLayout: () => Promise<WindowLayoutSettingsSnapshot>;

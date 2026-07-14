@@ -91,6 +91,15 @@ import {
   decideMidiPermission,
   isSameApplicationLocation,
 } from './midi-permission';
+import { OscControlService } from './osc-control-service';
+import {
+  OSC_CONTROL_COMMAND_CHANNEL,
+  OSC_CONTROL_GET_SNAPSHOT_CHANNEL,
+  OSC_CONTROL_SNAPSHOT_CHANGED_CHANNEL,
+  createInitialOscServerRuntimeSnapshot,
+  type OscCommandEvent,
+  type OscServerRuntimeSnapshot,
+} from '../shared/osc-control';
 import {
   applyEffectEditablePatchToEffect,
   applyProjectDocumentPatch,
@@ -182,6 +191,7 @@ let javaScriptRuntimeReady: Promise<void> | null = null;
 let javaScriptSession: JavaScriptSession | null = null;
 let javaRuntimeSessionManager: JavaRuntimeSessionManager | null = null;
 let midiInputCoordinator: MidiInputCoordinator | null = null;
+let oscControlService: OscControlService | null = null;
 let recentProjectFiles: string[] = [];
 let currentProjectSessionId = 0;
 let currentFollowPlaybackEnabled = true;
@@ -212,6 +222,31 @@ function getCurrentProjectDocument() {
   }
 
   return createProjectEditorSnapshot(currentData, currentFilePath, currentProjectSessionId);
+}
+
+function broadcastOscSnapshot(snapshot: OscServerRuntimeSnapshot): void {
+  for (const window of BrowserWindow.getAllWindows()) {
+    if (!window.isDestroyed() && !window.webContents.isDestroyed()) {
+      window.webContents.send(OSC_CONTROL_SNAPSHOT_CHANGED_CHANNEL, snapshot);
+    }
+  }
+}
+
+function dispatchOscCommand(event: OscCommandEvent): void {
+  if (!mainWindow || mainWindow.isDestroyed() || mainWindow.webContents.isDestroyed() || isQuitting) {
+    return;
+  }
+  mainWindow.webContents.send(OSC_CONTROL_COMMAND_CHANNEL, event);
+}
+
+function initializeOscControlService(): void {
+  if (oscControlService) return;
+  const preferences = loadProgramSettings().osc;
+  oscControlService = new OscControlService(preferences, {
+    onSnapshot: broadcastOscSnapshot,
+    onCommand: dispatchOscCommand,
+  });
+  void oscControlService.start(preferences);
 }
 
 /**
@@ -1149,6 +1184,9 @@ async function doQuit(): Promise<void> {
   const shutdown = (async () => {
     isQuitting = true;
 
+    await oscControlService?.shutdown();
+    oscControlService = null;
+
     await midiInputCoordinator?.requestShutdown();
 
     if (blueLiveSession) {
@@ -1695,6 +1733,31 @@ async function togglePlay(): Promise<boolean> {
   return playbackStartPromise;
 }
 
+/**
+ * Starts a fresh regular render. Unlike the toolbar toggle, this is never a
+ * request to leave playback stopped and therefore matches Java OSC
+ * `/score/play` semantics.
+ */
+async function restartPlayback(): Promise<boolean> {
+  if (!engineBridge) return false;
+  if (!currentData) {
+    notifyNoProjectLoaded('playback-error');
+    return false;
+  }
+
+  if (playbackStartPromise) {
+    await playbackStartPromise;
+  }
+  if (engineBridge.isCurrentlyPlaying()) {
+    await stopPlayback();
+  }
+
+  playbackStartPromise = startPlayback().finally(() => {
+    playbackStartPromise = null;
+  });
+  return playbackStartPromise;
+}
+
 async function startPlayback(): Promise<boolean> {
   if (!engineBridge || !currentData || !mainWindow) return false;
 
@@ -1951,6 +2014,10 @@ ipcMain.handle('toggle-play', async () => {
   return togglePlay();
 });
 
+ipcMain.handle('restart-playback', async () => {
+  return restartPlayback();
+});
+
 ipcMain.handle('stop-playback', async () => {
   await stopPlayback();
 });
@@ -2106,9 +2173,18 @@ ipcMain.handle('program-settings:get', () => {
 });
 
 ipcMain.handle('program-settings:save', (_event, snapshot: ProgramSettingsSnapshot) => {
+  const previousOscPort = loadProgramSettings().osc.preferredPort;
   const result = saveProgramSettings(snapshot);
   if (result.ok && result.snapshot && midiInputCoordinator) {
     midiInputCoordinator.onProgramSettingsSaved(result.snapshot);
+  }
+  if (
+    result.ok
+    && result.snapshot
+    && oscControlService
+    && previousOscPort !== result.snapshot.osc.preferredPort
+  ) {
+    void oscControlService.restart(result.snapshot.osc);
   }
   return result;
 });
@@ -2118,7 +2194,15 @@ ipcMain.handle('program-settings:reset-panel', (_event, panel: string) => {
   if (panel === 'midi' && midiInputCoordinator) {
     midiInputCoordinator.onProgramSettingsSaved(snapshot);
   }
+  if (panel === 'osc' && oscControlService) {
+    void oscControlService.restart(snapshot.osc);
+  }
   return snapshot;
+});
+
+ipcMain.handle(OSC_CONTROL_GET_SNAPSHOT_CHANNEL, () => {
+  return oscControlService?.getSnapshot()
+    ?? createInitialOscServerRuntimeSnapshot(loadProgramSettings().osc);
 });
 
 ipcMain.handle('program-settings:usage-matrix', () => {
@@ -2808,6 +2892,7 @@ app.whenReady().then(async () => {
   }
 
   createWindow();
+  initializeOscControlService();
 
   // Capture Dockview popout windows (SPEC 055 US1 Float) as floating workbench
   // windows so reveal/close/focus routing can target them. Dockview creates the

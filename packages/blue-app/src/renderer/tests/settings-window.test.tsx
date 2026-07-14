@@ -21,6 +21,17 @@ const mockBlueAPI = {
   getProgramSettingsUsageMatrix: vi.fn(() => Promise.resolve([])),
   syncLegacyRendererSettings: vi.fn(() => Promise.resolve({ ...defaultSettings })),
   openSettingsWindow: vi.fn(() => Promise.resolve()),
+  getOscServerSnapshot: vi.fn(() => Promise.resolve({
+    phase: 'listening',
+    preferredPort: 8000,
+    activePort: 8000,
+    fallbackFrom: null,
+    lastBindError: null,
+    lastPacketError: null,
+    revision: 1,
+    updatedAt: new Date().toISOString(),
+  })),
+  onOscServerSnapshot: vi.fn(() => () => {}),
 };
 
 let container: HTMLDivElement;
@@ -42,7 +53,7 @@ afterEach(() => {
 });
 
 describe('settings renderer (044)', () => {
-  it('shows the active Java Blue category panels plus the SPEC 058 MIDI panel', async () => {
+  it('shows the active Java Blue category panels plus MIDI and OSC panels', async () => {
     mockBlueAPI.getProgramSettings.mockResolvedValueOnce({ ...defaultSettings });
 
     await act(async () => {
@@ -58,8 +69,11 @@ describe('settings renderer (044)', () => {
     // SPEC 058: MIDI is now an app-wide category (distinct from project MIDI
     // mapping and realtime-render MIDI options).
     expect(container.textContent).toContain('MIDI');
-    // Legacy/deferred panels still absent:
-    expect(container.textContent).not.toContain('OSC');
+    expect(container.textContent).toContain('OSC');
+    const navButtons = Array.from(container.querySelectorAll('nav button'));
+    expect(navButtons.map((button) => button.textContent)).toEqual([
+      'General', 'Project Defaults', 'Playback', 'Utility', 'Realtime Render', 'Disk Render', 'MIDI', 'OSC',
+    ]);
   });
 
   it('shows General panel by default', async () => {
@@ -133,6 +147,40 @@ describe('settings renderer (044)', () => {
       applyButton?.click();
     });
     expect(mockBlueAPI.saveProgramSettings).toHaveBeenCalled();
+  });
+
+  it('applies, cancels, and resets the OSC preferred-port draft through Settings', async () => {
+    await act(async () => {
+      root.render(<SettingsApp />);
+    });
+
+    const oscButton = Array.from(container.querySelectorAll('button')).find((b) => b.textContent === 'OSC');
+    await act(() => { oscButton?.click(); });
+    const input = container.querySelector('input[type="number"]') as HTMLInputElement;
+    expect(input.value).toBe('8000');
+
+    await act(() => {
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set?.call(input, '9100');
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    const cancel = Array.from(container.querySelectorAll('button')).find((b) => b.textContent === 'Cancel');
+    await act(() => { cancel?.click(); });
+    expect(mockBlueAPI.saveProgramSettings).not.toHaveBeenCalled();
+
+    const afterCancel = container.querySelector('input[type="number"]') as HTMLInputElement;
+    await act(() => {
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set?.call(afterCancel, '9100');
+      afterCancel.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    const apply = Array.from(container.querySelectorAll('button')).find((b) => b.textContent === 'Apply');
+    await act(async () => { apply?.click(); });
+    expect(mockBlueAPI.saveProgramSettings).toHaveBeenCalledWith(expect.objectContaining({
+      osc: { preferredPort: 9100 },
+    }));
+
+    const reset = Array.from(container.querySelectorAll('button')).find((b) => b.textContent === 'Reset Panel');
+    await act(async () => { reset?.click(); });
+    expect(mockBlueAPI.resetProgramSettingsPanel).toHaveBeenCalledWith('osc');
   });
 
   it('shows dependency notes on Utility panel', async () => {

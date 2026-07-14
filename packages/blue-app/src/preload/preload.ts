@@ -87,6 +87,15 @@ import {
   type MidiInputServiceInitialization,
   type MidiInputServiceSnapshot,
 } from '../shared/midi-input';
+import {
+  OSC_CONTROL_COMMAND_CHANNEL,
+  OSC_CONTROL_GET_SNAPSHOT_CHANNEL,
+  OSC_CONTROL_SNAPSHOT_CHANGED_CHANNEL,
+  isOscCommandEvent,
+  isOscServerRuntimeSnapshot,
+  type OscCommandEvent,
+  type OscServerRuntimeSnapshot,
+} from '../shared/osc-control';
 
 contextBridge.exposeInMainWorld('blueAPI', {
   // File operations
@@ -166,6 +175,7 @@ contextBridge.exposeInMainWorld('blueAPI', {
 
   // Playback
   togglePlay: () => ipcRenderer.invoke('toggle-play'),
+  restartPlayback: () => ipcRenderer.invoke('restart-playback') as Promise<boolean>,
   stopPlayback: () => ipcRenderer.invoke('stop-playback'),
   syncFollowPlaybackState: (enabled: boolean) => ipcRenderer.send('sync-follow-playback-state', enabled),
 
@@ -276,6 +286,24 @@ contextBridge.exposeInMainWorld('blueAPI', {
     ipcRenderer.invoke('program-settings:usage-matrix') as Promise<UsageParityMatrixEntry[]>,
   syncLegacyRendererSettings: (snapshot: CurrentAppSettingsSnapshot) =>
     ipcRenderer.invoke('program-settings:sync-legacy-renderer-settings', snapshot) as Promise<ProgramSettingsSnapshot>,
+
+  // OSC Control
+  getOscServerSnapshot: () =>
+    ipcRenderer.invoke(OSC_CONTROL_GET_SNAPSHOT_CHANNEL) as Promise<OscServerRuntimeSnapshot>,
+  onOscServerSnapshot: (callback: (snapshot: OscServerRuntimeSnapshot) => void) => {
+    const handler = (_event: Electron.IpcRendererEvent, snapshot: unknown) => {
+      if (isOscServerRuntimeSnapshot(snapshot)) callback(snapshot);
+    };
+    ipcRenderer.on(OSC_CONTROL_SNAPSHOT_CHANGED_CHANNEL, handler);
+    return () => { ipcRenderer.removeListener(OSC_CONTROL_SNAPSHOT_CHANGED_CHANNEL, handler); };
+  },
+  onOscCommand: (callback: (event: OscCommandEvent) => void) => {
+    const handler = (_event: Electron.IpcRendererEvent, event: unknown) => {
+      if (isOscCommandEvent(event)) callback(event);
+    };
+    ipcRenderer.on(OSC_CONTROL_COMMAND_CHANNEL, handler);
+    return () => { ipcRenderer.removeListener(OSC_CONTROL_COMMAND_CHANNEL, handler); };
+  },
 
   // Window Layout
   getWindowLayout: () =>

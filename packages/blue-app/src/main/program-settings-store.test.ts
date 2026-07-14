@@ -27,7 +27,7 @@ afterEach(() => {
 describe('program-settings-store', () => {
   it('creates defaults when no file exists', () => {
     const settings = loadProgramSettings('darwin');
-    expect(settings.version).toBe(1);
+    expect(settings.version).toBe(2);
     expect(settings.general.messageColorsEnabled).toBe(false);
     expect(settings.realtimeRender.audioDriver).toBe('pa_bl');
   });
@@ -80,13 +80,32 @@ describe('program-settings-store', () => {
     expect(settings.realtimeRender.audioDriver).toBe('pa_bl');
   });
 
+  it('migrates a valid legacy OSC input port without treating output placeholders as live settings', () => {
+    const filePath = path.join(tempDir, 'program-settings.json');
+    fs.writeFileSync(filePath, JSON.stringify({
+      version: 1,
+      appSpecific: {
+        oscInputPort: 9010,
+        oscOutputHost: 'controller.local',
+        oscOutputPort: 9020,
+      },
+    }));
+    clearSettingsCache();
+
+    const settings = loadProgramSettings('darwin');
+    expect(settings.osc.preferredPort).toBe(9010);
+    expect(settings.appSpecific.oscOutputHost).toBe('controller.local');
+    expect(settings.appSpecific.oscOutputPort).toBe(9020);
+    expect(settings.version).toBe(2);
+  });
+
   it('falls back to defaults when the settings file contains corrupted JSON', () => {
     const filePath = path.join(tempDir, 'program-settings.json');
     fs.writeFileSync(filePath, '{ this is not valid JSON !!!');
     clearSettingsCache();
 
     const settings = loadProgramSettings('darwin');
-    expect(settings.version).toBe(1);
+    expect(settings.version).toBe(2);
     expect(settings.general.workDirectory).toBe('');
   });
 
@@ -96,7 +115,7 @@ describe('program-settings-store', () => {
     clearSettingsCache();
 
     const settings = loadProgramSettings('darwin');
-    expect(settings.version).toBe(1);
+    expect(settings.version).toBe(2);
   });
 
   it('creates default midiInput preferences when none are saved', () => {

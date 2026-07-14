@@ -16,8 +16,10 @@ import UtilitySettings from './UtilitySettings';
 import RealtimeRenderSettings from './RealtimeRenderSettings';
 import DiskRenderSettings from './DiskRenderSettings';
 import MidiSettings from './MidiSettings';
+import OscSettings from './OscSettings';
 import { useMidiInputStore } from '../../stores/midi-input-store';
 import type { MidiInputServiceSnapshot } from '../../../shared/midi-input';
+import { isValidOscPort, type OscServerRuntimeSnapshot } from '../../../shared/osc-control';
 
 export default function SettingsApp(): React.ReactElement {
   const [active, setActive] = useState<ProgramSettingsPanelId>('general');
@@ -26,6 +28,7 @@ export default function SettingsApp(): React.ReactElement {
   const [dirty, setDirty] = useState(false);
   const [validationIssues, setValidationIssues] = useState<SettingsValidationIssue[]>([]);
   const [loading, setLoading] = useState(true);
+  const [oscRuntime, setOscRuntime] = useState<OscServerRuntimeSnapshot | null>(null);
 
   const setMidiSavedPreferences = useMidiInputStore((s) => s.setSavedPreferences);
   const setMidiSnapshot = useMidiInputStore((s) => s.setSnapshot);
@@ -66,6 +69,20 @@ export default function SettingsApp(): React.ReactElement {
     });
     return () => { unsub(); };
   }, [setMidiSnapshot]);
+
+  useEffect(() => {
+    const api = window.blueAPI as typeof window.blueAPI & {
+      getOscServerSnapshot?: () => Promise<OscServerRuntimeSnapshot>;
+      onOscServerSnapshot?: (callback: (snapshot: OscServerRuntimeSnapshot) => void) => () => void;
+    };
+    const unsubscribe = api.onOscServerSnapshot?.((snapshot) => {
+      setOscRuntime((current) => !current || snapshot.revision >= current.revision ? snapshot : current);
+    });
+    void api.getOscServerSnapshot?.().then((snapshot) => {
+      setOscRuntime((current) => !current || snapshot.revision >= current.revision ? snapshot : current);
+    }).catch(() => undefined);
+    return () => { unsubscribe?.(); };
+  }, []);
 
   const handleDraftChange = useCallback((updated: ProgramSettingsSnapshot) => {
     setDraft(updated);
@@ -123,6 +140,7 @@ export default function SettingsApp(): React.ReactElement {
 
   const secondaryButtonClass =
     'inline-flex items-center rounded-md border border-app-border bg-transparent px-4 py-1.5 text-content transition-colors enabled:hover:border-app-accent/60 enabled:hover:text-app-text-strong disabled:cursor-default disabled:opacity-40';
+  const hasInvalidOscDraft = !isValidOscPort(draft.osc.preferredPort);
 
   const renderPanel = () => {
     switch (active) {
@@ -170,6 +188,14 @@ export default function SettingsApp(): React.ReactElement {
         );
       case 'midi':
         return <MidiSettings />;
+      case 'osc':
+        return (
+          <OscSettings
+            settings={draft.osc}
+            runtime={oscRuntime}
+            onChange={(osc) => handleDraftChange({ ...draft, osc })}
+          />
+        );
     }
   };
 
@@ -223,7 +249,7 @@ export default function SettingsApp(): React.ReactElement {
           <button
             type="button"
             onClick={handleApply}
-            disabled={!dirty && !midiDraftDirty}
+            disabled={(!dirty && !midiDraftDirty) || hasInvalidOscDraft}
             className="inline-flex items-center rounded-md bg-app-accent px-4 py-1.5 text-content text-white transition-colors enabled:hover:bg-app-accent-hover disabled:cursor-default disabled:bg-app-surface-strong disabled:text-app-text-subtle"
           >
             Apply

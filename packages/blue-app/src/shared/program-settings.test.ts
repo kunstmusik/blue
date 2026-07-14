@@ -31,7 +31,7 @@ import {
 describe('program-settings defaults', () => {
   it('creates macOS defaults', () => {
     const s = createDefaultProgramSettings('darwin');
-    expect(s.version).toBe(1);
+    expect(s.version).toBe(2);
     expect(s.general.messageColorsEnabled).toBe(false);
     expect(s.general.csoundErrorWarningEnabled).toBe(true);
     expect(s.general.directoryTempFileLimit).toBe(3);
@@ -48,6 +48,7 @@ describe('program-settings defaults', () => {
     expect(s.diskRender.fileFormat).toBe('WAV');
     expect(s.diskRender.sampleFormat).toBe('SHORT');
     expect(s.appSpecific.enginePath).toBe('blue-engine');
+    expect(s.osc.preferredPort).toBe(8000);
   });
 
   it('creates Linux defaults', () => {
@@ -69,7 +70,7 @@ describe('program-settings defaults', () => {
 describe('program-settings choices', () => {
   it('has correct panel order', () => {
     expect(PROGRAM_SETTINGS_PANEL_ORDER.map((p) => p.id)).toEqual([
-      'general', 'projectDefaults', 'playback', 'utility', 'realtimeRender', 'diskRender', 'midi',
+      'general', 'projectDefaults', 'playback', 'utility', 'realtimeRender', 'diskRender', 'midi', 'osc',
     ]);
   });
 
@@ -141,6 +142,12 @@ describe('program-settings validation', () => {
     expect(issues.some((i) => i.path === 'playback.playbackFps')).toBe(true);
   });
 
+  it('rejects an invalid OSC preferred port', () => {
+    const s = createDefaultProgramSettings('darwin');
+    s.osc.preferredPort = 65536;
+    expect(validateProgramSettings(s).some((issue) => issue.path === 'osc.preferredPort')).toBe(true);
+  });
+
   it('rejects invalid realtime sr', () => {
     const s = createDefaultProgramSettings('darwin');
     s.realtimeRender.defaultSr = 'abc';
@@ -165,6 +172,15 @@ describe('program-settings reset', () => {
     expect(reset.general.workDirectory).toBe('');
     expect(reset.playback.playbackFps).toBe(60);
   });
+
+  it('resets OSC without changing other panels', () => {
+    const s = createDefaultProgramSettings('darwin');
+    s.osc.preferredPort = 9000;
+    s.general.workDirectory = '/keep';
+    const reset = resetProgramSettingsPanel(s, 'osc', 'darwin');
+    expect(reset.osc.preferredPort).toBe(8000);
+    expect(reset.general.workDirectory).toBe('/keep');
+  });
 });
 
 describe('program-settings mergeWithDefaults', () => {
@@ -172,7 +188,7 @@ describe('program-settings mergeWithDefaults', () => {
     const merged = mergeWithDefaults({}, 'darwin');
     expect(merged.general.messageColorsEnabled).toBe(false);
     expect(merged.realtimeRender.audioDriver).toBe('pa_bl');
-    expect(merged.version).toBe(1);
+    expect(merged.version).toBe(2);
   });
 
   it('preserves saved values', () => {
@@ -181,6 +197,15 @@ describe('program-settings mergeWithDefaults', () => {
     }, 'darwin');
     expect(merged.general.workDirectory).toBe('/saved');
     expect(merged.general.messageColorsEnabled).toBe(false);
+  });
+
+  it('migrates a valid legacy OSC input port and ignores invalid placeholders', () => {
+    expect(mergeWithDefaults({
+      appSpecific: { oscInputPort: 9020 } as any,
+    }, 'darwin').osc.preferredPort).toBe(9020);
+    expect(mergeWithDefaults({
+      appSpecific: { oscInputPort: 0 } as any,
+    }, 'darwin').osc.preferredPort).toBe(8000);
   });
 });
 

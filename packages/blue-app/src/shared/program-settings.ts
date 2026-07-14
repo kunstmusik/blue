@@ -9,6 +9,12 @@ import {
   normalizeMidiInputPreferences,
   type MidiInputPreferences,
 } from './midi-input';
+import {
+  createDefaultOscServerPreferences,
+  isValidOscPort,
+  normalizeOscServerPreferences,
+  type OscServerPreferences,
+} from './osc-control';
 
 export type ProgramSettingsPanelId =
   | 'general'
@@ -17,7 +23,8 @@ export type ProgramSettingsPanelId =
   | 'utility'
   | 'realtimeRender'
   | 'diskRender'
-  | 'midi';
+  | 'midi'
+  | 'osc';
 
 export interface GeneralSettingsSnapshot {
   workDirectory: string;
@@ -139,6 +146,12 @@ export interface ProgramSettingsSnapshot {
    * processing.
    */
   midiInput: MidiInputPreferences;
+  /**
+   * App-wide inbound OSC server preference. This replaces the historical
+   * appSpecific.oscInputPort placeholder while retaining that value for
+   * downgrade safety.
+   */
+  osc: OscServerPreferences;
   lastSavedAt?: string;
 }
 
@@ -172,7 +185,7 @@ export interface UsageParityMatrixEntry {
   missingFeature?: string;
 }
 
-export const PROGRAM_SETTINGS_VERSION = 1;
+export const PROGRAM_SETTINGS_VERSION = 2;
 
 export const TIME_BASE_CHOICES: readonly string[] = [
   'BEATS', 'BBT', 'BBST', 'BBF', 'TIME', 'SECONDS', 'SMPTE', 'FRAME',
@@ -380,6 +393,7 @@ export function createDefaultProgramSettings(platform: string): ProgramSettingsS
     diskRender: createDefaultDiskRenderSettings(platform),
     appSpecific: createDefaultCurrentAppSettings(),
     midiInput: createDefaultMidiInputPreferences(),
+    osc: createDefaultOscServerPreferences(),
   };
 }
 
@@ -440,6 +454,14 @@ export function validateProgramSettings(
     issues.push({
       path: 'playback.playbackFps',
       message: 'Must be between 1 and 120',
+      severity: 'error',
+    });
+  }
+
+  if (!isValidOscPort(snapshot.osc?.preferredPort)) {
+    issues.push({
+      path: 'osc.preferredPort',
+      message: 'Must be an integer between 1 and 65535',
       severity: 'error',
     });
   }
@@ -546,6 +568,9 @@ export function resetProgramSettingsPanel(
     case 'midi':
       result.midiInput = createDefaultMidiInputPreferences();
       break;
+    case 'osc':
+      result.osc = createDefaultOscServerPreferences();
+      break;
   }
 
   return result;
@@ -575,6 +600,11 @@ export function mergeWithDefaults(
     ? normalizeMidiInputPreferences(saved.midiInput)
     : createDefaultMidiInputPreferences();
 
+  const mergedOsc = normalizeOscServerPreferences(
+    saved.osc,
+    savedAppSpecific.oscInputPort,
+  );
+
   return {
     version: saved.version ?? PROGRAM_SETTINGS_VERSION,
     general: { ...defaults.general, ...saved.general },
@@ -585,6 +615,7 @@ export function mergeWithDefaults(
     diskRender: { ...defaults.diskRender, ...saved.diskRender },
     appSpecific: mergedAppSpecific,
     midiInput: mergedMidiInput,
+    osc: mergedOsc,
     lastSavedAt: saved.lastSavedAt,
   };
 }
@@ -597,6 +628,7 @@ export const PROGRAM_SETTINGS_PANEL_ORDER: readonly { id: ProgramSettingsPanelId
   { id: 'realtimeRender', label: 'Realtime Render' },
   { id: 'diskRender', label: 'Disk Render' },
   { id: 'midi', label: 'MIDI' },
+  { id: 'osc', label: 'OSC' },
 ];
 
 /**

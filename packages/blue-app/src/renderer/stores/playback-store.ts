@@ -41,6 +41,7 @@ interface PlaybackState {
 
 interface PlaybackActions {
   togglePlay: () => Promise<void>;
+  startFresh: () => Promise<void>;
   stop: () => Promise<void>;
   setPlaying: (playing: boolean) => void;
   setStatus: (info: { status: string; message?: string }) => void;
@@ -149,6 +150,42 @@ export const usePlaybackStore = create<PlaybackState & PlaybackActions>()((set, 
 
       const playing = await window.blueAPI.togglePlay();
 
+      if (get().status === 'starting') {
+        set({
+          isPlaying: playing,
+          status: playing ? 'playing' : 'stopped',
+          message: playing ? 'Playing via blue-engine' : '',
+          transportAnchor: playing ? transportAnchor : null,
+        });
+      }
+    } catch (err: unknown) {
+      get().setError(err instanceof Error ? err.message : String(err));
+    }
+  },
+
+  startFresh: async () => {
+    try {
+      set({
+        isPlaying: false,
+        status: 'starting',
+        message: 'Preparing playback...',
+        clock: null,
+        display: createIdlePlaybackDisplayState(),
+      });
+
+      if (get().followPlaybackOnStart) {
+        set({ followPlayback: true });
+        window.blueAPI.syncFollowPlaybackState?.(true);
+      }
+
+      await useProjectStore.getState().flushPendingPatches();
+
+      const transportAnchor = clonePlaybackTransportAnchor(
+        useProjectStore.getState().transport,
+      );
+      set((state) => ({ ...state, transportAnchor }));
+
+      const playing = await window.blueAPI.restartPlayback();
       if (get().status === 'starting') {
         set({
           isPlaying: playing,

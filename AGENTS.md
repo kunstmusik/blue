@@ -68,6 +68,8 @@ Auto-generated from all feature plans. Last updated: 2026-07-13
 - Transient renderer player state; disk files remain user-selected or render-derived; no project XML changes (057-audio-file-player)
 - TypeScript 5.8.x in strict mode; React 19.x; Electron 35.x + Chromium Web MIDI API, Electron `session`/`BrowserWindow`/IPC, Zustand 5.x, existing `@blue/data` MIDI mapping utilities, existing Blue Live engine bridge (058-midi-live-input)
 - Main-process `program-settings.json` under Electron user data for durable enabled-device identities; transient renderer/main runtime snapshots for availability, connections, and held notes; `.blue` XML unchanged (058-midi-live-input)
+- TypeScript 5.8.x in strict mode; React 19.x; Electron 35.x with its Node 22 runtime + Electron `BrowserWindow`/IPC, Node `dgram`, `node-osc` 11.6.x for OSC packet codecs/types, existing program-settings store, Zustand 5.x project/playback stores, existing Blue Live engine bridge (059-osc-control-parity)
+- Main-process `program-settings.json` for the preferred port; transient main-process listener status; `.blue` project XML unchanged (059-osc-control-parity)
 
 - TypeScript 5.8.x, React 19.x, Electron 35.x, strict renderer/main/preload packages, pure TypeScript `@blue/data` + `PresetGroup`/`Preset` BSB preset model, Zustand 5.x project store with BSB interface/opcode-list patch support, Dockview 5.2.0, CodeMirror 6, `BsbInterfacePatch` union type for structured BSB mutations (022-bsb-interface-parity)
 - BSB Interface tab now renders an editable widget canvas with selection, property-sheet editing, grid settings, preset application, and Java-style split-view UDO editor (UDOTable + UDOEditor); snapshot contract extended with `widgetTree`, `gridSettings`, `editEnabled`, `presetGroup`, `opcodeListText`; widget-specific rendering (Slider, Knob, Toggle, etc.) deferred to SPEC 023 (022-bsb-interface-parity)
@@ -104,6 +106,6 @@ TypeScript 5.x, strict mode: Follow standard conventions
 <!-- MANUAL ADDITIONS END -->
 
 ## Recent Changes
+- 059-osc-control-parity: Added TypeScript 5.8.x in strict mode; React 19.x; Electron 35.x with its Node 22 runtime + Electron `BrowserWindow`/IPC, Node `dgram`, `node-osc` 11.6.x for OSC packet codecs/types, existing program-settings store, Zustand 5.x project/playback stores, existing Blue Live engine bridge
 - 058-midi-live-input: Added TypeScript 5.8.x in strict mode; React 19.x; Electron 35.x + Chromium Web MIDI API, Electron `session`/`BrowserWindow`/IPC, Zustand 5.x, existing `@blue/data` MIDI mapping utilities, existing Blue Live engine bridge
 - 057-audio-file-player: Added TypeScript 5.8.x, strict mode + React 19.x, Electron 35.x, Lucide React, Web Audio API, Vitest 4.x
-- 056-render-freeze-parity: Added TypeScript 5.8.x with strict mode; React 19.x; Electron 35.x; Node.js APIs in the Electron main process only + `@blue/data`, `@blue/java-runtime`, Electron `dialog`/`shell`/IPC, Node `child_process`/`fs`/`path`, existing program-settings store, existing project snapshot/patch bridge, Vitest 4.x

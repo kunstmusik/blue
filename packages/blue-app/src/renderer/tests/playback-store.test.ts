@@ -50,6 +50,7 @@ beforeEach(() => {
   useProjectStore.getState().clearProject();
   (window as typeof window & { blueAPI?: unknown }).blueAPI = {
     togglePlay: vi.fn().mockResolvedValue(true),
+    restartPlayback: vi.fn().mockResolvedValue(true),
     stopPlayback: vi.fn().mockResolvedValue(undefined),
   };
 });
@@ -139,5 +140,18 @@ describe('playback store authoritative clock', () => {
 
     expect(usePlaybackStore.getState().transportAnchor?.renderStartTime).toBe(8);
     expect(usePlaybackStore.getState().transportAnchor?.tempoMap.points[0]?.tempo).toBe(120);
+  });
+
+  it('starts fresh playback through the non-toggle restart IPC path', async () => {
+    seedProject(12);
+    await usePlaybackStore.getState().startFresh();
+
+    const api = window.blueAPI as unknown as { restartPlayback: ReturnType<typeof vi.fn> };
+    expect(api.restartPlayback).toHaveBeenCalledOnce();
+    expect(usePlaybackStore.getState()).toMatchObject({
+      status: 'playing',
+      isPlaying: true,
+    });
+    expect(usePlaybackStore.getState().transportAnchor?.renderStartTime).toBe(12);
   });
 });

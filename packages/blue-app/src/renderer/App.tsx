@@ -1,6 +1,7 @@
 import { useIPCListeners } from './hooks/use-ipc-listeners';
 import { useKeyboardShortcuts } from './hooks/use-keyboard-shortcuts';
 import { useMidiInputService } from './hooks/use-midi-input-service';
+import { useOscControlCommands } from './hooks/use-osc-control-commands';
 import { useProjectStore } from './stores/project-store';
 import { useUIStore } from './stores/ui-store';
 import MainToolbar from './components/menu-bar/MainToolbar';
@@ -15,6 +16,7 @@ export default function App(): React.ReactElement {
   useIPCListeners();
   useKeyboardShortcuts();
   useMidiInputService();
+  useOscControlCommands();
 
   const activePanel = useUIStore((s) => s.activePanel);
   const isLoading = useProjectStore((s) => s.isLoading);
