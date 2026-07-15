@@ -11,7 +11,6 @@ import type {
   MixerEffectEntrySnapshot,
   MixerSendEntrySnapshot,
   MixerSnapshot,
-  EffectsLibrarySnapshot,
   ProjectEffectRef,
 } from '../../../../../shared/project-editor';
 import {
@@ -38,7 +37,6 @@ interface ChannelStripProps {
   channel: MixerChannelSnapshot;
   isMaster: boolean;
   isSubChannel: boolean;
-  librarySnapshot: EffectsLibrarySnapshot | null;
   onPatch: (patch: Record<string, unknown>) => void;
   onOpenLibrary: (channelId: string, chain: MixerChainKind, insertIndex: number) => void;
   onOpenEffectInterface: (request: EffectEditorRequest) => void;
@@ -238,7 +236,6 @@ function ChainList({
   channel,
   chain,
   isMaster,
-  librarySnapshot,
   onPatch,
   onAddNewEffect,
   onOpenEffectInterface,
@@ -251,7 +248,6 @@ function ChainList({
   channel: MixerChannelSnapshot;
   chain: MixerChainKind;
   isMaster: boolean;
-  librarySnapshot: EffectsLibrarySnapshot | null;
   onPatch: (patch: Record<string, unknown>) => void;
   onAddNewEffect: (chain: MixerChainKind) => void;
   onOpenEffectInterface: (entry: MixerEffectEntrySnapshot) => void;
@@ -464,7 +460,6 @@ export default function ChannelStrip({
   channel,
   isMaster,
   isSubChannel,
-  librarySnapshot,
   onPatch,
   onOpenLibrary,
   onOpenEffectInterface,
@@ -678,7 +673,6 @@ export default function ChannelStrip({
         channel={channel}
         chain="pre"
         isMaster={isMaster}
-        librarySnapshot={librarySnapshot}
         onPatch={onPatch}
         onAddNewEffect={handleAddNewEffectDialog}
         onOpenEffectInterface={handleOpenInterface}
@@ -727,7 +721,6 @@ export default function ChannelStrip({
         channel={channel}
         chain="post"
         isMaster={isMaster}
-        librarySnapshot={librarySnapshot}
         onPatch={onPatch}
         onAddNewEffect={handleAddNewEffectDialog}
         onOpenEffectInterface={handleOpenInterface}

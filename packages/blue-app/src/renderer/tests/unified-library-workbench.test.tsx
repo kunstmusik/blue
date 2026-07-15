@@ -7,12 +7,13 @@ import {
 } from '../components/workbench/auxiliary-layout';
 
 describe('Unified Libraries workbench integration', () => {
-  it('registers an always-available Libraries panel and a Welcome editor', () => {
+  it('registers Libraries without turning the standalone Welcome screen into an editor', () => {
     expect(PANEL_MAP.get('LibrariesTopComponent')).toMatchObject({
       title: 'Libraries',
       auxiliaryGroupId: 'properties-main',
     });
-    expect(getDefaultEditorPanels().map((panel) => panel.id)).toContain('WelcomeTopComponent');
+    expect(PANEL_MAP.has('WelcomeTopComponent')).toBe(false);
+    expect(getDefaultEditorPanels().map((panel) => panel.id)).not.toContain('WelcomeTopComponent');
   });
 
   it('migrates every legacy SoundObject library layout ID', () => {

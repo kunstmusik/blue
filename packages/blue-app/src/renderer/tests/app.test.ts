@@ -1449,8 +1449,11 @@ describe('Keyboard Shortcuts', () => {
 });
 
 describe('UI Store', () => {
-  it('T341: setActivePanel switches between welcome and project', () => {
+  it('T341: setActivePanel switches between welcome, workspace, and project', () => {
     expect(useUIStore.getState().activePanel).toBe('welcome');
+
+    useUIStore.getState().setActivePanel('workspace');
+    expect(useUIStore.getState().activePanel).toBe('workspace');
 
     useUIStore.getState().setActivePanel('project');
     expect(useUIStore.getState().activePanel).toBe('project');

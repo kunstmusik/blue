@@ -2,7 +2,6 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Plus } from 'lucide-react';
 
 import type {
-  EffectsLibrarySnapshot,
   MixerChainKind,
   MixerPatch,
 } from '../../../../shared/project-editor';
@@ -28,21 +27,12 @@ export default function MixerPanel(): React.ReactElement {
     [playbackStatus, blueLiveStatus],
   );
 
-  const [librarySnapshot, setLibrarySnapshot] = useState<EffectsLibrarySnapshot | null>(null);
   const [groupRenameDialog, setGroupRenameDialog] = useState<{
     association: string;
     name: string;
   } | null>(null);
   const groupRenameInputRef = useRef<HTMLInputElement>(null);
   const isGroupRenameDialogOpen = groupRenameDialog !== null;
-
-  useEffect(() => {
-    let cancelled = false;
-    window.blueAPI.getEffectsLibrary().then((snap) => {
-      if (!cancelled) setLibrarySnapshot(snap);
-    });
-    return () => { cancelled = true; };
-  }, []);
 
   const handleMixerPatch = useCallback(
     (patch: Record<string, unknown>) => {
@@ -193,7 +183,6 @@ export default function MixerPanel(): React.ReactElement {
                         channel={channel}
                         isMaster={false}
                         isSubChannel={false}
-                        librarySnapshot={librarySnapshot}
                         onPatch={handleMixerPatch}
                         onOpenLibrary={handleOpenLibrary}
                         onOpenEffectInterface={handleOpenEffectInterface}
@@ -214,7 +203,6 @@ export default function MixerPanel(): React.ReactElement {
                       channel={channel}
                       isMaster={false}
                       isSubChannel={false}
-                      librarySnapshot={librarySnapshot}
                       onPatch={handleMixerPatch}
                       onOpenLibrary={handleOpenLibrary}
                       onOpenEffectInterface={handleOpenEffectInterface}
@@ -234,7 +222,6 @@ export default function MixerPanel(): React.ReactElement {
                       channel={channel}
                       isMaster={false}
                       isSubChannel
-                      librarySnapshot={librarySnapshot}
                       onPatch={handleMixerPatch}
                       onOpenLibrary={handleOpenLibrary}
                       onOpenEffectInterface={handleOpenEffectInterface}
@@ -252,7 +239,6 @@ export default function MixerPanel(): React.ReactElement {
               channel={mixer.master}
               isMaster
               isSubChannel={false}
-              librarySnapshot={librarySnapshot}
               onPatch={handleMixerPatch}
               onOpenLibrary={handleOpenLibrary}
               onOpenEffectInterface={handleOpenEffectInterface}

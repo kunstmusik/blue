@@ -19,7 +19,6 @@ import ScoreObjectEditorPanel from './panels/ScoreObjectEditorPanel';
 import MarkersPanel from './panels/MarkersPanel';
 import AudioPlayerPanel from './panels/audio-player/AudioPlayerPanel';
 import LibrariesPanel from './panels/LibrariesPanel';
-import WelcomePanel from './panels/WelcomePanel';
 import { LibraryItemEditorPanel } from '../libraries/LibraryItemEditorPanel';
 import { libraryEditorSessionIdFromPanel } from '../../stores/library-editor-store';
 
@@ -83,8 +82,6 @@ const DockviewPanel = forwardRef<HTMLDivElement, IDockviewPanelProps>(
             <AudioPlayerPanel />
           ) : descriptor.id === 'LibrariesTopComponent' ? (
             <LibrariesPanel />
-          ) : descriptor.id === 'WelcomeTopComponent' ? (
-            <WelcomePanel />
           ) : (
             <PlaceholderPanel descriptor={descriptor} showHeader={false} />
           )}

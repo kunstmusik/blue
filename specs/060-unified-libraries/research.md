@@ -191,7 +191,7 @@ Session rules:
 
 ## Decision 9: Make The Workbench App-Wide And Migrate Legacy Layout IDs
 
-**Decision**: Always mount `WorkbenchShell`. When no project is open, show/focus a `WelcomeTopComponent` in the central editor area while user Libraries remains available. Add `LibrariesTopComponent` to the right `properties-main` auxiliary group, normally closed unless user/layout opens it. Bump the workbench envelope and migrate every occurrence of `SoundObjectLibraryTopComponent` to `LibrariesTopComponent`, including Dockview panels, auxiliary lists/active IDs, minimized/slide-out state, floating origins, and closed origins.
+**Decision**: Always mount `WorkbenchShell`, but preserve the standalone full-window Welcome screen over it until a project loads or the user explicitly opens an app-wide workbench panel. Welcome is not a Dockview panel. Add `LibrariesTopComponent` to the right `properties-main` auxiliary group, normally closed unless user/layout opens it. Bump the workbench envelope and migrate every occurrence of `SoundObjectLibraryTopComponent` to `LibrariesTopComponent`, including Dockview panels, auxiliary lists/active IDs, minimized/slide-out state, floating origins, and closed origins.
 
 The old native `open-effects-library` action and all contextual Browse actions become reveal/filter/target commands for the same panel. `effects-library.main` and `orchestra.library` remain accepted during settings/layout migration but are no longer active UI regions after callers move. The valid remainder of a saved layout is preserved.
 

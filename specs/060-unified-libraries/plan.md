@@ -110,7 +110,7 @@ Replace the four disconnected or deferred library experiences with one app-wide 
 └── preload.ts                               # named typed library methods/events
 
 /Users/stevenyi/work/blue-electron/packages/blue-app/src/renderer/
-├── App.tsx                                  # always-mounted workbench and Welcome editor
+├── App.tsx                                  # always-mounted workbench and standalone Welcome surface
 ├── types/global.d.ts
 ├── stores/
 │   ├── library-store.ts                     # browse/search/selection/target view state
@@ -124,7 +124,6 @@ Replace the four disconnected or deferred library experiences with one app-wide 
     ├── auxiliary-layout.ts                  # envelope migration and legacy panel remap
     └── panels/
         ├── LibrariesPanel.tsx
-        ├── WelcomePanel.tsx
         ├── EffectLibraryModal.tsx            # removed after route migration
         ├── orchestra/                        # controlled Instrument editor reuse
         ├── udo/                              # controlled UDO editor reuse

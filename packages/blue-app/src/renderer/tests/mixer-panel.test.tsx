@@ -18,7 +18,6 @@ declare global {
     blueAPI?: {
       openEffectEditor?: (request: unknown) => Promise<unknown> | unknown;
       openEffectInterface?: (request: unknown) => Promise<unknown> | unknown;
-      getEffectsLibrary?: () => Promise<unknown>;
     };
   }
 }
@@ -132,7 +131,6 @@ beforeEach(() => {
   window.blueAPI = {
     openEffectEditor: vi.fn().mockResolvedValue(undefined),
     openEffectInterface: vi.fn().mockResolvedValue(undefined),
-    getEffectsLibrary: vi.fn().mockResolvedValue({ root: { categories: [], effects: [] } }),
     sendMixerRealtimeLevelUpdate: vi.fn().mockResolvedValue(undefined),
   };
 });

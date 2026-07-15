@@ -226,6 +226,22 @@ describe('useIPCListeners', () => {
     expect(useProjectStore.getState().missingAudioSession).toBeNull();
   });
 
+  it('reveals the no-project workbench when a panel is opened from Welcome', () => {
+    act(() => {
+      root.render(<Harness />);
+    });
+
+    const nativeMenuHandler = listeners.get('native-menu-command')!.values().next().value as (
+      ...args: unknown[]
+    ) => void;
+
+    act(() => {
+      nativeMenuHandler({ type: 'focus-panel', panelId: 'MixerTopComponent' });
+    });
+
+    expect(useUIStore.getState().activePanel).toBe('workspace');
+  });
+
   it('applies canonical project updates for the active project session', () => {
     useProjectStore.setState({ sessionId: 7, loaded: true, title: 'Before freeze' });
     act(() => {

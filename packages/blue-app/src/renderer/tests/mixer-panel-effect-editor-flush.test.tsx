@@ -18,7 +18,6 @@ declare global {
       focusEffectEditor?: (request: EffectEditorRequest) => Promise<boolean> | boolean;
       openEffectEditor?: (request: EffectEditorRequest) => Promise<unknown> | unknown;
       openEffectInterface?: (request: EffectEditorRequest) => Promise<unknown> | unknown;
-      getEffectsLibrary?: () => Promise<unknown>;
     };
   }
 }
@@ -150,7 +149,6 @@ beforeEach(() => {
     focusEffectEditor: vi.fn().mockResolvedValue(false),
     openEffectEditor: vi.fn().mockResolvedValue(undefined),
     openEffectInterface: vi.fn().mockResolvedValue(undefined),
-    getEffectsLibrary: vi.fn().mockResolvedValue({ root: { categories: [], effects: [] } }),
   };
 });
 

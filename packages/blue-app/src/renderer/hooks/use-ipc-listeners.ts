@@ -151,6 +151,12 @@ export function useIPCListeners(): void {
     });
 
     const unsubNativeMenuCommand = window.blueAPI.onNativeMenuCommand((command) => {
+      if (
+        !useProjectStore.getState().loaded
+        && (command.type === 'focus-panel' || command.type === 'open-effects-library')
+      ) {
+        setActivePanel('workspace');
+      }
       handleNativeMenuCommand(command);
     });
 

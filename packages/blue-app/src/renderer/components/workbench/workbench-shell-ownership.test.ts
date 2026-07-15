@@ -1,7 +1,7 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 import {
+  removeLegacyWelcomePanel,
   reportOwnership,
-  restoreWelcomeAfterLayoutHydration,
   selectWorkbenchLayout,
 } from './WorkbenchShell';
 
@@ -175,20 +175,16 @@ describe('selectWorkbenchLayout', () => {
   });
 });
 
-describe('restoreWelcomeAfterLayoutHydration', () => {
-  it('reopens Welcome after a saved layout replaces the initial panels', () => {
-    const openPanel = vi.fn();
+describe('removeLegacyWelcomePanel', () => {
+  it('closes a persisted Welcome tab from the temporary workbench design', () => {
+    const close = vi.fn();
+    const api = {
+      getPanel: vi.fn(() => ({ api: { close } })),
+    } as unknown as Parameters<typeof removeLegacyWelcomePanel>[0];
 
-    restoreWelcomeAfterLayoutHydration('welcome', openPanel);
+    removeLegacyWelcomePanel(api);
 
-    expect(openPanel).toHaveBeenCalledWith('WelcomeTopComponent');
-  });
-
-  it('preserves the saved active editor when a project is loaded', () => {
-    const openPanel = vi.fn();
-
-    restoreWelcomeAfterLayoutHydration('project', openPanel);
-
-    expect(openPanel).not.toHaveBeenCalled();
+    expect(api.getPanel).toHaveBeenCalledWith('WelcomeTopComponent');
+    expect(close).toHaveBeenCalledOnce();
   });
 });

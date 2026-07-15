@@ -3,7 +3,9 @@ import { useKeyboardShortcuts } from './hooks/use-keyboard-shortcuts';
 import { useMidiInputService } from './hooks/use-midi-input-service';
 import { useOscControlCommands } from './hooks/use-osc-control-commands';
 import { useProjectStore } from './stores/project-store';
+import { useUIStore } from './stores/ui-store';
 import MainToolbar from './components/menu-bar/MainToolbar';
+import WelcomeScreen from './components/welcome/WelcomeScreen';
 import WorkbenchShell from './components/workbench/WorkbenchShell';
 import GeneratedCsdModal from './components/workbench/panels/GeneratedCsdModal';
 import MissingAudioAssetsModal from './components/workbench/panels/MissingAudioAssetsModal';
@@ -15,6 +17,7 @@ export default function App(): React.ReactElement {
   useMidiInputService();
   useOscControlCommands();
 
+  const activePanel = useUIStore((s) => s.activePanel);
   const isLoading = useProjectStore((s) => s.isLoading);
 
   return (
@@ -24,6 +27,11 @@ export default function App(): React.ReactElement {
 
         <main className="flex-1 overflow-hidden relative">
           <WorkbenchShell />
+          {activePanel === 'welcome' && (
+            <div className="absolute inset-0 z-40 bg-blue-bg">
+              <WelcomeScreen />
+            </div>
+          )}
 
           {isLoading && (
             <div className="absolute inset-0 bg-blue-bg/80 flex items-center justify-center z-50">

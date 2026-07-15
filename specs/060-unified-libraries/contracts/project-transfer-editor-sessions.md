@@ -324,7 +324,8 @@ Legacy `open-effects-library` commands route to the new panel. Legacy split keys
 ## No-Project Workbench Contract
 
 - `WorkbenchShell` remains mounted for the app lifetime.
-- `WelcomeTopComponent` occupies/focuses the central editor area when there is no project.
+- The standalone Welcome screen covers the full main surface when there is no project; it is not a Dockview panel.
+- Explicitly opening Libraries or another workbench panel dismisses Welcome and reveals the no-project workbench.
 - Project-only panels render their existing disabled/empty state or are hidden according to existing rules; they do not block Libraries.
 - User browse/search/edit/import/export/history/recovery works normally.
 - Project scopes, usage claims, and insertion actions are absent/disabled.

@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 
-export type ActivePanel = 'welcome' | 'project';
+export type ActivePanel = 'welcome' | 'workspace' | 'project';
 
 interface UIState {
   activePanel: ActivePanel;

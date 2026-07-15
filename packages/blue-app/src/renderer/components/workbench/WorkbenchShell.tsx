@@ -8,6 +8,7 @@ import {
 import {
   DockviewReact,
   DockviewReadyEvent,
+  type DockviewApi,
 } from 'dockview';
 import 'dockview/dist/styles/dockview.css';
 import AuxiliaryRail from './AuxiliaryRail';
@@ -42,7 +43,6 @@ import {
 import { useDocumentMouseDownOutside } from '../../hooks/use-document-mousedown-outside';
 import { useWorkbenchStore } from '../../stores/workbench-store';
 import { useLayoutSettingsStore } from '../../stores/layout-settings-store';
-import { useUIStore, type ActivePanel } from '../../stores/ui-store';
 import { useRenderAndPlayInterceptor } from './panels/audio-player/use-render-and-play';
 import type {
   DisplayWorkArea,
@@ -70,13 +70,10 @@ export function selectWorkbenchLayout(
   return layoutSnapshot?.lastResetAt ? null : legacyLayout;
 }
 
-export function restoreWelcomeAfterLayoutHydration(
-  activeSurface: ActivePanel,
-  openPanel: (panelId: string) => void,
+export function removeLegacyWelcomePanel(
+  api: Pick<DockviewApi, 'getPanel'>,
 ): void {
-  if (activeSurface === 'welcome') {
-    openPanel('WelcomeTopComponent');
-  }
+  api.getPanel('WelcomeTopComponent')?.api.close();
 }
 
 interface PendingAuxiliaryDrag {
@@ -178,8 +175,6 @@ export default function WorkbenchShell() {
   const moveAuxiliaryEdge = useWorkbenchStore((s) => s.moveAuxiliaryEdge);
   const movePanelToEdge = useWorkbenchStore((s) => s.movePanelToEdge);
   const setApi = useWorkbenchStore((s) => s.setApi);
-  const workbenchApi = useWorkbenchStore((s) => s.api);
-  const activeSurface = useUIStore((s) => s.activePanel);
   const leftTabs = getMinimizedTabsForEdge(auxiliary, 'left');
   const rightTabs = getMinimizedTabsForEdge(auxiliary, 'right');
   const bottomTabs = getMinimizedTabsForEdge(auxiliary, 'bottom');
@@ -200,13 +195,6 @@ export default function WorkbenchShell() {
   const [activeDrag, setActiveDrag] = useState<ActiveAuxiliaryDrag | null>(null);
   const [headerContextMenu, setHeaderContextMenu] =
     useState<HeaderContextMenuState | null>(null);
-
-  useEffect(() => {
-    if (!workbenchApi) return;
-    useWorkbenchStore.getState().openPanel(
-      activeSurface === 'welcome' ? 'WelcomeTopComponent' : 'ScoreTopComponent',
-    );
-  }, [activeSurface, workbenchApi]);
 
   const disposeListeners = useCallback(() => {
     for (const disposable of listenersRef.current) {
@@ -285,11 +273,8 @@ export default function WorkbenchShell() {
             selectWorkbenchLayout(layoutSnapshot, fallbackLegacyLayout),
             displayWorkAreas,
           );
+        removeLegacyWelcomePanel(event.api);
         useWorkbenchStore.getState().syncAuxiliaryLayout();
-        restoreWelcomeAfterLayoutHydration(
-          useUIStore.getState().activePanel,
-          useWorkbenchStore.getState().openPanel,
-        );
 
         reportOwnership(event.api, workbenchWindowIdRef.current);
 
