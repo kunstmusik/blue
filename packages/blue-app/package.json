@@ -54,7 +54,7 @@
     "@vitejs/plugin-react": "^5.1.4",
     "@vitest/browser-playwright": "^4.1.6",
     "autoprefixer": "^10.4.23",
-    "electron": "^35.7.5",
+    "electron": "35.7.5",
     "jsdom": "^29.1.0",
     "playwright": "^1.60.0",
     "postcss": "^8.5.6",

@@ -45,3 +45,6 @@ jobs:
 
       - name: Test
         run: pnpm --filter @blue/data test
+
+      - name: Verify Electron SQLite runtime
+        run: pnpm --filter @blue/app exec vitest run --config vitest.config.ts src/main/unified-library/sqlite-runtime.test.ts

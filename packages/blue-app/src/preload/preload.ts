@@ -9,8 +9,6 @@ import type {
   BsbRealtimeControlUpdate,
   BlueLiveNoteTriggerRequest,
   BlueLiveNoteTriggerResult,
-  EffectsLibraryPatch,
-  EffectsLibrarySnapshot,
   PolyObjectLayerGroupSnapshot,
   ProjectDocumentCommitReceipt,
   ProjectDocumentPatch,
@@ -96,8 +94,176 @@ import {
   type OscCommandEvent,
   type OscServerRuntimeSnapshot,
 } from '../shared/osc-control';
+import {
+  UNIFIED_LIBRARY_BROWSE_CHANNEL,
+  UNIFIED_LIBRARY_APPLY_INSERTION_CHANNEL,
+  UNIFIED_LIBRARY_DRAFT_RESOLVE_CHANNEL,
+  UNIFIED_LIBRARY_DRAFT_SHUTDOWN_CHANNEL,
+  UNIFIED_LIBRARY_EDITOR_CHANGED_CHANNEL,
+  UNIFIED_LIBRARY_EDITOR_CLOSE_CHANNEL,
+  UNIFIED_LIBRARY_EDITOR_GET_CHANNEL,
+  UNIFIED_LIBRARY_EDITOR_OPEN_CHANNEL,
+  UNIFIED_LIBRARY_EDITOR_PATCH_CHANNEL,
+  UNIFIED_LIBRARY_EDITOR_REVERT_CHANNEL,
+  UNIFIED_LIBRARY_EDITOR_RESOLVE_CONFLICT_CHANNEL,
+  UNIFIED_LIBRARY_EDITOR_SAVE_CHANNEL,
+  UNIFIED_LIBRARY_MUTATE_CHANNEL,
+  UNIFIED_LIBRARY_PROJECT_COPY_CHANNEL,
+  UNIFIED_LIBRARY_PROJECT_DELETE_CHANNEL,
+  UNIFIED_LIBRARY_PROJECT_DELETE_PREVIEW_CHANNEL,
+  UNIFIED_LIBRARY_PROJECT_USAGE_CHANNEL,
+  UNIFIED_LIBRARY_GET_MIGRATION_SUMMARY_CHANNEL,
+  UNIFIED_LIBRARY_HISTORY_CHANNEL,
+  UNIFIED_LIBRARY_MIGRATION_SUMMARY_CHANNEL,
+  UNIFIED_LIBRARY_IMPORT_SELECT_CHANNEL,
+  UNIFIED_LIBRARY_IMPORT_EXECUTE_CHANNEL,
+  UNIFIED_LIBRARY_IMPORT_UNDO_CHANNEL,
+  UNIFIED_LIBRARY_EXPORT_CURRENT_CHANNEL,
+  UNIFIED_LIBRARY_EXPORT_ALL_CHANNEL,
+  UNIFIED_LIBRARY_RECOVERY_RETRY_CHANNEL,
+  UNIFIED_LIBRARY_RECOVERY_RESTORE_CHANNEL,
+  UNIFIED_LIBRARY_RECOVERY_FRESH_CHANNEL,
+  UNIFIED_LIBRARY_CLEAR_TARGET_CHANNEL,
+  UNIFIED_LIBRARY_CHANGED_CHANNEL,
+  UNIFIED_LIBRARY_CONTEXT_CHANGED_CHANNEL,
+  UNIFIED_LIBRARY_GET_SNAPSHOT_CHANNEL,
+  UNIFIED_LIBRARY_PREVIEW_CHANNEL,
+  UNIFIED_LIBRARY_PREVIEW_INSERTION_CHANNEL,
+  UNIFIED_LIBRARY_SEARCH_CHANNEL,
+  UNIFIED_LIBRARY_SET_CONTEXT_CHANNEL,
+  UNIFIED_LIBRARY_SNAPSHOT_CHANGED_CHANNEL,
+  isLibraryChangedEvent,
+  isLibraryServiceSnapshot,
+  isLibraryEditorSessionSnapshot,
+  type LibraryChangedEvent,
+  type BrowseLibraryRequest,
+  type BrowseLibraryResult,
+  type LibraryItemKey,
+  type LibraryType,
+  type LibraryItemPreview,
+  type LibraryContextRequest,
+  type LibraryContextSnapshot,
+  type LibraryInsertionPreview,
+  type LibraryInsertionRequest,
+  type LibraryMutationReceipt,
+  type UserLibraryMutation,
+  type OpenLibraryEditorRequest,
+  type LibraryEditorPatchRequest,
+  type LibraryEditorConflictDecision,
+  type LibraryEditorSessionSnapshot,
+  type LibraryEditorSaveResult,
+  type LibraryDraftShutdownPreview,
+  type ProjectLibraryUsage,
+  type ProjectLibraryDeletePreview,
+  type LibraryMigrationSummary,
+  type LibraryImportHistoryEntry,
+  type ManualLibraryImportPreview,
+  type ManualLibraryImportResult,
+  type ProjectMutationReceipt,
+  type LibraryResult,
+  type LibraryServiceSnapshot,
+  type SearchLibrariesRequest,
+  type SearchLibrariesResult,
+} from '../shared/unified-library';
 
 contextBridge.exposeInMainWorld('blueAPI', {
+  // Unified Libraries
+  getLibraryServiceSnapshot: () =>
+    ipcRenderer.invoke(UNIFIED_LIBRARY_GET_SNAPSHOT_CHANNEL) as Promise<LibraryServiceSnapshot>,
+  browseLibraries: (request: BrowseLibraryRequest) =>
+    ipcRenderer.invoke(UNIFIED_LIBRARY_BROWSE_CHANNEL, request) as Promise<LibraryResult<BrowseLibraryResult>>,
+  searchLibraries: (request: SearchLibrariesRequest) =>
+    ipcRenderer.invoke(UNIFIED_LIBRARY_SEARCH_CHANNEL, request) as Promise<LibraryResult<SearchLibrariesResult>>,
+  getLibraryItemPreview: (key: LibraryItemKey) =>
+    ipcRenderer.invoke(UNIFIED_LIBRARY_PREVIEW_CHANNEL, key) as Promise<LibraryResult<LibraryItemPreview>>,
+  setLibraryContext: (request: LibraryContextRequest) =>
+    ipcRenderer.invoke(UNIFIED_LIBRARY_SET_CONTEXT_CHANNEL, request) as Promise<LibraryResult<LibraryContextSnapshot>>,
+  clearLibraryInsertionTarget: () =>
+    ipcRenderer.invoke(UNIFIED_LIBRARY_CLEAR_TARGET_CHANNEL) as Promise<LibraryContextSnapshot>,
+  previewLibraryInsertion: (request: LibraryInsertionRequest) =>
+    ipcRenderer.invoke(UNIFIED_LIBRARY_PREVIEW_INSERTION_CHANNEL, request) as Promise<LibraryResult<LibraryInsertionPreview>>,
+  applyLibraryInsertion: (previewToken: string) =>
+    ipcRenderer.invoke(UNIFIED_LIBRARY_APPLY_INSERTION_CHANNEL, { previewToken }) as Promise<LibraryResult<ProjectMutationReceipt>>,
+  applyLibraryMutation: (request: UserLibraryMutation) =>
+    ipcRenderer.invoke(UNIFIED_LIBRARY_MUTATE_CHANNEL, request) as Promise<LibraryResult<LibraryMutationReceipt>>,
+  openLibraryItemEditor: (request: OpenLibraryEditorRequest) =>
+    ipcRenderer.invoke(UNIFIED_LIBRARY_EDITOR_OPEN_CHANNEL, request) as Promise<LibraryResult<LibraryEditorSessionSnapshot>>,
+  getLibraryEditorSession: (sessionId: string) =>
+    ipcRenderer.invoke(UNIFIED_LIBRARY_EDITOR_GET_CHANNEL, sessionId) as Promise<LibraryResult<LibraryEditorSessionSnapshot>>,
+  patchLibraryEditorSession: (request: LibraryEditorPatchRequest) =>
+    ipcRenderer.invoke(UNIFIED_LIBRARY_EDITOR_PATCH_CHANNEL, request) as Promise<LibraryResult<LibraryEditorSessionSnapshot>>,
+  saveLibraryEditorSession: (sessionId: string) =>
+    ipcRenderer.invoke(UNIFIED_LIBRARY_EDITOR_SAVE_CHANNEL, sessionId) as Promise<LibraryResult<LibraryEditorSaveResult>>,
+  revertLibraryEditorSession: (sessionId: string) =>
+    ipcRenderer.invoke(UNIFIED_LIBRARY_EDITOR_REVERT_CHANNEL, sessionId) as Promise<LibraryResult<LibraryEditorSessionSnapshot>>,
+  resolveLibraryEditorConflict: (sessionId: string, decision: LibraryEditorConflictDecision) =>
+    ipcRenderer.invoke(UNIFIED_LIBRARY_EDITOR_RESOLVE_CONFLICT_CHANNEL, { sessionId, decision }) as Promise<LibraryResult<LibraryEditorSessionSnapshot>>,
+  closeLibraryEditorSession: (sessionId: string, decision?: 'discard' | 'cancel') =>
+    ipcRenderer.invoke(UNIFIED_LIBRARY_EDITOR_CLOSE_CHANNEL, { sessionId, decision }) as Promise<LibraryResult<boolean>>,
+  prepareLibraryDraftShutdown: (reason: LibraryDraftShutdownPreview['reason']) =>
+    ipcRenderer.invoke(UNIFIED_LIBRARY_DRAFT_SHUTDOWN_CHANNEL, reason) as Promise<LibraryDraftShutdownPreview>,
+  resolveLibraryDraftShutdown: (decision: 'save' | 'discard' | 'cancel') =>
+    ipcRenderer.invoke(UNIFIED_LIBRARY_DRAFT_RESOLVE_CHANNEL, decision) as Promise<{ mayContinue: boolean }>,
+  getProjectLibraryUsage: (key: LibraryItemKey) =>
+    ipcRenderer.invoke(UNIFIED_LIBRARY_PROJECT_USAGE_CHANNEL, key) as Promise<LibraryResult<ProjectLibraryUsage>>,
+  previewProjectLibraryDelete: (key: LibraryItemKey) =>
+    ipcRenderer.invoke(UNIFIED_LIBRARY_PROJECT_DELETE_PREVIEW_CHANNEL, key) as Promise<LibraryResult<ProjectLibraryDeletePreview>>,
+  deleteProjectLibraryItem: (key: LibraryItemKey, confirmationToken: string) =>
+    ipcRenderer.invoke(UNIFIED_LIBRARY_PROJECT_DELETE_CHANNEL, { key, confirmationToken }) as Promise<LibraryResult<ProjectMutationReceipt>>,
+  copyProjectLibraryItemToUser: (key: LibraryItemKey, parentId: string) =>
+    ipcRenderer.invoke(UNIFIED_LIBRARY_PROJECT_COPY_CHANNEL, { key, parentId }) as Promise<LibraryResult<LibraryMutationReceipt>>,
+  getLibraryMigrationSummary: () =>
+    ipcRenderer.invoke(UNIFIED_LIBRARY_GET_MIGRATION_SUMMARY_CHANNEL) as Promise<LibraryMigrationSummary | null>,
+  getLibraryImportHistory: (limit = 100) =>
+    ipcRenderer.invoke(UNIFIED_LIBRARY_HISTORY_CHANNEL, limit) as Promise<LibraryResult<LibraryImportHistoryEntry[]>>,
+  onLibraryMigrationSummary: (callback: (summary: LibraryMigrationSummary) => void) => {
+    const handler = (_event: Electron.IpcRendererEvent, summary: LibraryMigrationSummary) => callback(summary);
+    ipcRenderer.on(UNIFIED_LIBRARY_MIGRATION_SUMMARY_CHANNEL, handler);
+    return () => { ipcRenderer.removeListener(UNIFIED_LIBRARY_MIGRATION_SUMMARY_CHANNEL, handler); };
+  },
+  selectLibraryImportFiles: () =>
+    ipcRenderer.invoke(UNIFIED_LIBRARY_IMPORT_SELECT_CHANNEL) as Promise<LibraryResult<ManualLibraryImportPreview> | null>,
+  executeLibraryImport: (previewToken: string) =>
+    ipcRenderer.invoke(UNIFIED_LIBRARY_IMPORT_EXECUTE_CHANNEL, previewToken) as Promise<LibraryResult<ManualLibraryImportResult>>,
+  undoLibraryImport: (batchId: string) =>
+    ipcRenderer.invoke(UNIFIED_LIBRARY_IMPORT_UNDO_CHANNEL, batchId) as Promise<LibraryResult<readonly string[]>>,
+  exportCurrentLibrary: (libraryType: LibraryType) =>
+    ipcRenderer.invoke(UNIFIED_LIBRARY_EXPORT_CURRENT_CHANNEL, libraryType) as Promise<LibraryResult<true> | null>,
+  exportAllLibraries: () =>
+    ipcRenderer.invoke(UNIFIED_LIBRARY_EXPORT_ALL_CHANNEL) as Promise<LibraryResult<true> | null>,
+  retryLibraryRecovery: () =>
+    ipcRenderer.invoke(UNIFIED_LIBRARY_RECOVERY_RETRY_CHANNEL) as Promise<LibraryResult<LibraryServiceSnapshot>>,
+  restoreLibraryBackup: () =>
+    ipcRenderer.invoke(UNIFIED_LIBRARY_RECOVERY_RESTORE_CHANNEL) as Promise<LibraryResult<LibraryServiceSnapshot> | null>,
+  createFreshLibraryDatabase: () =>
+    ipcRenderer.invoke(UNIFIED_LIBRARY_RECOVERY_FRESH_CHANNEL) as Promise<LibraryResult<LibraryServiceSnapshot>>,
+  onLibraryEditorSessionChanged: (callback: (session: LibraryEditorSessionSnapshot) => void) => {
+    const handler = (_event: Electron.IpcRendererEvent, payload: unknown) => {
+      if (isLibraryEditorSessionSnapshot(payload)) callback(payload);
+    };
+    ipcRenderer.on(UNIFIED_LIBRARY_EDITOR_CHANGED_CHANNEL, handler);
+    return () => { ipcRenderer.removeListener(UNIFIED_LIBRARY_EDITOR_CHANGED_CHANNEL, handler); };
+  },
+  onLibraryContextChanged: (callback: (context: LibraryContextSnapshot) => void) => {
+    const handler = (_event: Electron.IpcRendererEvent, context: LibraryContextSnapshot) => callback(context);
+    ipcRenderer.on(UNIFIED_LIBRARY_CONTEXT_CHANGED_CHANNEL, handler);
+    return () => { ipcRenderer.removeListener(UNIFIED_LIBRARY_CONTEXT_CHANGED_CHANNEL, handler); };
+  },
+  onLibraryServiceSnapshot: (callback: (snapshot: LibraryServiceSnapshot) => void) => {
+    const handler = (_event: Electron.IpcRendererEvent, snapshot: unknown) => {
+      if (isLibraryServiceSnapshot(snapshot)) callback(snapshot);
+    };
+    ipcRenderer.on(UNIFIED_LIBRARY_SNAPSHOT_CHANGED_CHANNEL, handler);
+    return () => { ipcRenderer.removeListener(UNIFIED_LIBRARY_SNAPSHOT_CHANGED_CHANNEL, handler); };
+  },
+  onLibraryChanged: (callback: (event: LibraryChangedEvent) => void) => {
+    const handler = (_event: Electron.IpcRendererEvent, payload: unknown) => {
+      if (isLibraryChangedEvent(payload)) callback(payload);
+    };
+    ipcRenderer.on(UNIFIED_LIBRARY_CHANGED_CHANNEL, handler);
+    return () => { ipcRenderer.removeListener(UNIFIED_LIBRARY_CHANGED_CHANNEL, handler); };
+  },
+
   // File operations
   openFile: () => ipcRenderer.invoke('open-file'),
   openFilePath: (filePath: string) => ipcRenderer.invoke('open-file-path', filePath),
@@ -114,16 +280,6 @@ contextBridge.exposeInMainWorld('blueAPI', {
     ipcRenderer.invoke('get-project-document') as Promise<ProjectEditorSnapshot | null>,
   updateProjectDocument: (patch: ProjectDocumentPatch) =>
     ipcRenderer.invoke('update-project-document', patch) as Promise<ProjectEditorSnapshot | null>,
-  getEffectsLibrary: () =>
-    ipcRenderer.invoke('get-effects-library') as Promise<EffectsLibrarySnapshot>,
-  reloadEffectsLibrary: () =>
-    ipcRenderer.invoke('reload-effects-library') as Promise<EffectsLibrarySnapshot>,
-  updateEffectsLibrary: (patch: EffectsLibraryPatch) =>
-    ipcRenderer.invoke('update-effects-library', patch) as Promise<EffectsLibrarySnapshot>,
-  importEffectFile: (parentCategoryId?: string) =>
-    ipcRenderer.invoke('import-effect-file', parentCategoryId) as Promise<EffectsLibrarySnapshot | null>,
-  exportEffectFile: (effectId: string) =>
-    ipcRenderer.invoke('export-effect-file', effectId) as Promise<void>,
   focusEffectEditor: (request: EffectEditorRequest) =>
     ipcRenderer.invoke('focus-effect-editor', request) as Promise<boolean>,
   openEffectEditor: (request: EffectEditorRequest) =>

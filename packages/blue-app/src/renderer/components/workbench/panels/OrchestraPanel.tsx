@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useProjectStore } from '../../../stores/project-store';
 import ArrangementPanel from './orchestra/ArrangementPanel';
 import InstrumentEditorPanel from './orchestra/InstrumentEditorPanel';
 import SplitPane from './orchestra/SplitPane';
-import TemporaryInstrumentLibraryPanel from './orchestra/TemporaryInstrumentLibraryPanel';
+import { openUnifiedLibraries } from '../../../stores/library-routing';
 
 function EmptyOrchestraState(): React.ReactElement {
   return (
@@ -20,8 +20,8 @@ function EmptyOrchestraState(): React.ReactElement {
 
 export default function OrchestraPanel(): React.ReactElement {
   const loaded = useProjectStore((state) => state.loaded);
+  const projectSessionId = useProjectStore((state) => state.sessionId);
   const rows = useProjectStore((state) => state.orchestra.arrangement.rows);
-  const temporaryLibrary = useProjectStore((state) => state.orchestra.temporaryLibrary);
   const updateOrchestra = useProjectStore((state) => state.updateOrchestra);
   const [selectedAssignmentId, setSelectedAssignmentId] = useState<string | null>(null);
 
@@ -46,6 +46,9 @@ export default function OrchestraPanel(): React.ReactElement {
         )
       : undefined,
   );
+  const browseInstruments = useCallback(() => {
+    void openUnifiedLibraries({ type: 'instrumentTarget', projectSessionId });
+  }, [projectSessionId]);
 
   if (!loaded) {
     return <EmptyOrchestraState />;
@@ -64,29 +67,23 @@ export default function OrchestraPanel(): React.ReactElement {
         minFirstSize={300}
         minSecondSize={360}
         orientation="horizontal"
-        first={
-          <SplitPane
-            ariaLabel="Resize arrangement and library panels"
-            className="h-full min-h-0"
-            firstClassName="min-h-0"
-            secondClassName="min-h-0"
-            splitId="orchestra.library"
-            controlledPane="first"
-            defaultSizePx={200}
-            minFirstSize={240}
-            minSecondSize={120}
-            orientation="vertical"
-            first={
-              <ArrangementPanel
-                rows={rows}
-                selectedAssignmentId={selectedAssignmentId}
-                onSelectAssignment={setSelectedAssignmentId}
-                onOrchestraPatch={updateOrchestra}
-              />
-            }
-            second={<TemporaryInstrumentLibraryPanel library={temporaryLibrary} />}
-          />
-        }
+        first={(
+          <div className="relative h-full min-h-0">
+            <ArrangementPanel
+              rows={rows}
+              selectedAssignmentId={selectedAssignmentId}
+              onSelectAssignment={setSelectedAssignmentId}
+              onOrchestraPatch={updateOrchestra}
+            />
+            <button
+              type="button"
+              className="absolute bottom-2 right-2 rounded border border-app-accent bg-app-panel px-2 py-1 text-xs text-app-accent"
+              onClick={browseInstruments}
+            >
+              Browse Instruments
+            </button>
+          </div>
+        )}
         second={
           <InstrumentEditorPanel instrument={selectedInstrument} onOrchestraPatch={updateOrchestra} />
         }
@@ -94,4 +91,3 @@ export default function OrchestraPanel(): React.ReactElement {
     </div>
   );
 }
-

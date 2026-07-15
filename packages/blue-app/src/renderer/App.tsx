@@ -3,12 +3,9 @@ import { useKeyboardShortcuts } from './hooks/use-keyboard-shortcuts';
 import { useMidiInputService } from './hooks/use-midi-input-service';
 import { useOscControlCommands } from './hooks/use-osc-control-commands';
 import { useProjectStore } from './stores/project-store';
-import { useUIStore } from './stores/ui-store';
 import MainToolbar from './components/menu-bar/MainToolbar';
-import WelcomeScreen from './components/welcome/WelcomeScreen';
 import WorkbenchShell from './components/workbench/WorkbenchShell';
 import GeneratedCsdModal from './components/workbench/panels/GeneratedCsdModal';
-import EffectLibraryModal from './components/workbench/panels/EffectLibraryModal';
 import MissingAudioAssetsModal from './components/workbench/panels/MissingAudioAssetsModal';
 import ErrorBoundary from './components/notifications/ErrorBoundary';
 
@@ -18,7 +15,6 @@ export default function App(): React.ReactElement {
   useMidiInputService();
   useOscControlCommands();
 
-  const activePanel = useUIStore((s) => s.activePanel);
   const isLoading = useProjectStore((s) => s.isLoading);
 
   return (
@@ -27,8 +23,7 @@ export default function App(): React.ReactElement {
         <MainToolbar />
 
         <main className="flex-1 overflow-hidden relative">
-          {activePanel === 'welcome' && <WelcomeScreen />}
-          {activePanel === 'project' && <WorkbenchShell />}
+          <WorkbenchShell />
 
           {isLoading && (
             <div className="absolute inset-0 bg-blue-bg/80 flex items-center justify-center z-50">
@@ -41,7 +36,6 @@ export default function App(): React.ReactElement {
         </main>
 
         <GeneratedCsdModal />
-        <EffectLibraryModal />
         <MissingAudioAssetsModal />
       </div>
     </ErrorBoundary>

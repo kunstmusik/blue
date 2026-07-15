@@ -16,6 +16,21 @@ export interface SoundObjectLibraryEntry {
   object: SoundObject;
 }
 
+export interface SoundObjectFingerprint {
+  canonicalHash: string;
+  displayName: string;
+  objectType: string;
+}
+
+function hashText(value: string): string {
+  let hash = 0x811c9dc5;
+  for (const byte of new TextEncoder().encode(value)) {
+    hash ^= byte;
+    hash = Math.imul(hash, 0x01000193) >>> 0;
+  }
+  return hash.toString(16).padStart(8, '0');
+}
+
 export class SoundObjectLibrary implements BlueDataObject {
   private _objects: SoundObject[] = [];
   private _idMap = new Map<SoundObject, string>();
@@ -75,6 +90,21 @@ export class SoundObjectLibrary implements BlueDataObject {
     return true;
   }
 
+  removeObjectById(id: string): boolean {
+    const index = this._objects.findIndex((object) => this._idMap.get(object) === id);
+    return this.removeObject(index);
+  }
+
+  replaceObjectById(id: string, replacement: SoundObject): boolean {
+    const index = this._objects.findIndex((object) => this._idMap.get(object) === id);
+    if (index < 0) return false;
+    const previous = this._objects[index];
+    this._objects[index] = replacement;
+    this._idMap.delete(previous);
+    this._idMap.set(replacement, id);
+    return true;
+  }
+
   getEntries(): SoundObjectLibraryEntry[] {
     return this._objects.map((obj, i) => ({
       libraryId: this._idMap.get(obj) ?? `lib_${i}`,
@@ -90,6 +120,24 @@ export class SoundObjectLibrary implements BlueDataObject {
     return this._idMap.has(object);
   }
 
+  createFingerprint(object: SoundObject): SoundObjectFingerprint {
+    return {
+      canonicalHash: hashText(object.saveAsXML().toXml()),
+      displayName: object.getName(),
+      objectType: object.constructor.name,
+    };
+  }
+
+  findUniqueByFingerprint(fingerprint: SoundObjectFingerprint): SoundObject | undefined {
+    const matches = this._objects.filter((object) => {
+      const candidate = this.createFingerprint(object);
+      return candidate.canonicalHash === fingerprint.canonicalHash
+        && candidate.displayName === fingerprint.displayName
+        && candidate.objectType === fingerprint.objectType;
+    });
+    return matches.length === 1 ? matches[0] : undefined;
+  }
+
   private generateId(): string {
     return `lib_${this._nextId++}`;
   }
@@ -100,10 +148,12 @@ export class SoundObjectLibrary implements BlueDataObject {
     const elem = new Element('soundObjectLibrary');
     for (let i = 0; i < this._objects.length; i++) {
       const obj = this._objects[i];
+      const stableId = this._idMap.get(obj) ?? this.generateId();
+      this._idMap.set(obj, stableId);
+      if (objRefMap) objRefMap.seed(obj, stableId);
       const sObjElem = obj.saveAsXML(objRefMap);
       // Assign stable objRefId for cross-reference resolution
-      const id = objRefMap ? objRefMap.getId(obj) : `lib_${i}`;
-      sObjElem.setAttribute('objRefId', id);
+      sObjElem.setAttribute('objRefId', stableId);
       elem.addElement(sObjElem);
     }
     return elem;
@@ -130,6 +180,8 @@ export class SoundObjectLibrary implements BlueDataObject {
               lib._nextId = numPart + 1;
             }
           } else {
+            const stableId = lib.generateId();
+            lib._idMap.set(sObj, stableId);
             // Legacy files (pre-objRefId): register by insertion index so
             // Instance sound objects that store numeric IDs can still resolve.
             if (objRefMap) {

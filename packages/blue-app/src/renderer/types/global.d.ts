@@ -9,8 +9,6 @@ import type {
   EffectRealtimeUpdate,
   BlueLiveNoteTriggerRequest,
   BlueLiveNoteTriggerResult,
-  EffectsLibraryPatch,
-  EffectsLibrarySnapshot,
   PolyObjectLayerGroupSnapshot,
   ProjectDocumentCommitReceipt,
   ProjectDocumentPatch,
@@ -54,6 +52,36 @@ import type {
   OscCommandEvent,
   OscServerRuntimeSnapshot,
 } from '../../shared/osc-control';
+import type {
+  BrowseLibraryRequest,
+  BrowseLibraryResult,
+  LibraryContextRequest,
+  LibraryContextSnapshot,
+  LibraryChangedEvent,
+  LibraryItemKey,
+  LibraryItemPreview,
+  LibraryInsertionPreview,
+  LibraryInsertionRequest,
+  LibraryResult,
+  LibraryServiceSnapshot,
+  SearchLibrariesRequest,
+  SearchLibrariesResult,
+  ProjectMutationReceipt,
+  LibraryMutationReceipt,
+  UserLibraryMutation,
+  OpenLibraryEditorRequest,
+  LibraryEditorPatchRequest,
+  LibraryEditorConflictDecision,
+  LibraryEditorSessionSnapshot,
+  LibraryEditorSaveResult,
+  LibraryDraftShutdownPreview,
+  ProjectLibraryUsage,
+  ProjectLibraryDeletePreview,
+  LibraryMigrationSummary,
+  LibraryImportHistoryEntry,
+  ManualLibraryImportPreview,
+  ManualLibraryImportResult,
+} from '../../shared/unified-library';
 
 export type BlueLiveStatus = 'idle' | 'starting' | 'running' | 'stopping' | 'stopped' | 'error';
 
@@ -80,6 +108,107 @@ export interface EvaluateCodeResult {
 declare global {
   interface Window {
     blueAPI: {
+      // Unified Libraries
+      getLibraryServiceSnapshot: () => Promise<LibraryServiceSnapshot>;
+      browseLibraries: (
+        request: BrowseLibraryRequest,
+      ) => Promise<LibraryResult<BrowseLibraryResult>>;
+      searchLibraries: (
+        request: SearchLibrariesRequest,
+      ) => Promise<LibraryResult<SearchLibrariesResult>>;
+      getLibraryItemPreview: (
+        key: LibraryItemKey,
+      ) => Promise<LibraryResult<LibraryItemPreview>>;
+      setLibraryContext: (
+        request: LibraryContextRequest,
+      ) => Promise<LibraryResult<LibraryContextSnapshot>>;
+      clearLibraryInsertionTarget: () => Promise<LibraryContextSnapshot>;
+      previewLibraryInsertion: (
+        request: LibraryInsertionRequest,
+      ) => Promise<LibraryResult<LibraryInsertionPreview>>;
+      applyLibraryInsertion: (
+        previewToken: string,
+      ) => Promise<LibraryResult<ProjectMutationReceipt>>;
+      applyLibraryMutation: (
+        request: UserLibraryMutation,
+      ) => Promise<LibraryResult<LibraryMutationReceipt>>;
+      openLibraryItemEditor: (
+        request: OpenLibraryEditorRequest,
+      ) => Promise<LibraryResult<LibraryEditorSessionSnapshot>>;
+      getLibraryEditorSession: (
+        sessionId: string,
+      ) => Promise<LibraryResult<LibraryEditorSessionSnapshot>>;
+      patchLibraryEditorSession: (
+        request: LibraryEditorPatchRequest,
+      ) => Promise<LibraryResult<LibraryEditorSessionSnapshot>>;
+      saveLibraryEditorSession: (
+        sessionId: string,
+      ) => Promise<LibraryResult<LibraryEditorSaveResult>>;
+      revertLibraryEditorSession: (
+        sessionId: string,
+      ) => Promise<LibraryResult<LibraryEditorSessionSnapshot>>;
+      resolveLibraryEditorConflict: (
+        sessionId: string,
+        decision: LibraryEditorConflictDecision,
+      ) => Promise<LibraryResult<LibraryEditorSessionSnapshot>>;
+      closeLibraryEditorSession: (
+        sessionId: string,
+        decision?: 'discard' | 'cancel',
+      ) => Promise<LibraryResult<boolean>>;
+      prepareLibraryDraftShutdown: (
+        reason: LibraryDraftShutdownPreview['reason'],
+      ) => Promise<LibraryDraftShutdownPreview>;
+      resolveLibraryDraftShutdown: (
+        decision: 'save' | 'discard' | 'cancel',
+      ) => Promise<{ mayContinue: boolean }>;
+      getProjectLibraryUsage: (
+        key: LibraryItemKey,
+      ) => Promise<LibraryResult<ProjectLibraryUsage>>;
+      previewProjectLibraryDelete: (
+        key: LibraryItemKey,
+      ) => Promise<LibraryResult<ProjectLibraryDeletePreview>>;
+      deleteProjectLibraryItem: (
+        key: LibraryItemKey,
+        confirmationToken: string,
+      ) => Promise<LibraryResult<ProjectMutationReceipt>>;
+      copyProjectLibraryItemToUser: (
+        key: LibraryItemKey,
+        parentId: string,
+      ) => Promise<LibraryResult<LibraryMutationReceipt>>;
+      getLibraryMigrationSummary: () => Promise<LibraryMigrationSummary | null>;
+      getLibraryImportHistory: (
+        limit?: number,
+      ) => Promise<LibraryResult<LibraryImportHistoryEntry[]>>;
+      onLibraryMigrationSummary: (
+        callback: (summary: LibraryMigrationSummary) => void,
+      ) => () => void;
+      selectLibraryImportFiles: () => Promise<LibraryResult<ManualLibraryImportPreview> | null>;
+      executeLibraryImport: (
+        previewToken: string,
+      ) => Promise<LibraryResult<ManualLibraryImportResult>>;
+      undoLibraryImport: (
+        batchId: string,
+      ) => Promise<LibraryResult<readonly string[]>>;
+      exportCurrentLibrary: (
+        libraryType: LibraryType,
+      ) => Promise<LibraryResult<true> | null>;
+      exportAllLibraries: () => Promise<LibraryResult<true> | null>;
+      retryLibraryRecovery: () => Promise<LibraryResult<LibraryServiceSnapshot>>;
+      restoreLibraryBackup: () => Promise<LibraryResult<LibraryServiceSnapshot> | null>;
+      createFreshLibraryDatabase: () => Promise<LibraryResult<LibraryServiceSnapshot>>;
+      onLibraryEditorSessionChanged: (
+        callback: (session: LibraryEditorSessionSnapshot) => void,
+      ) => () => void;
+      onLibraryContextChanged: (
+        callback: (context: LibraryContextSnapshot) => void,
+      ) => () => void;
+      onLibraryServiceSnapshot: (
+        callback: (snapshot: LibraryServiceSnapshot) => void,
+      ) => () => void;
+      onLibraryChanged: (
+        callback: (event: LibraryChangedEvent) => void,
+      ) => () => void;
+
       openFile: () => Promise<string | null>;
       openFilePath: (filePath: string) => Promise<string | null>;
       newFile: () => Promise<string | null>;
@@ -93,13 +222,6 @@ declare global {
       updateProjectDocument: (
         patch: ProjectDocumentPatch,
       ) => Promise<ProjectEditorSnapshot | null>;
-      getEffectsLibrary: () => Promise<EffectsLibrarySnapshot>;
-      reloadEffectsLibrary: () => Promise<EffectsLibrarySnapshot>;
-      updateEffectsLibrary: (
-        patch: EffectsLibraryPatch,
-      ) => Promise<EffectsLibrarySnapshot>;
-      importEffectFile: (parentCategoryId?: string) => Promise<EffectsLibrarySnapshot | null>;
-      exportEffectFile: (effectId: string) => Promise<void>;
       focusEffectEditor: (request: EffectEditorRequest) => Promise<boolean>;
       openEffectEditor: (
         request: EffectEditorRequest,

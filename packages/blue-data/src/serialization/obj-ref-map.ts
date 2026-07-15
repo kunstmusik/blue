@@ -17,14 +17,34 @@
 /** Save-side: Object → string ID mapping */
 export class ObjRefSaveMap {
   private _map = new Map<object, string>();
+  private _ids = new Set<string>();
   private _counter = 0;
+
+  /** Register a stable ID before serializing the object graph. */
+  seed(obj: object, id: string): void {
+    if (id.length === 0) throw new Error('Object reference ID must not be empty');
+    const existing = this._map.get(obj);
+    if (existing && existing !== id) {
+      throw new Error(`Object reference already seeded as ${existing}`);
+    }
+    if (!existing && this._ids.has(id)) {
+      throw new Error(`Object reference ID already belongs to another object: ${id}`);
+    }
+    this._map.set(obj, id);
+    this._ids.add(id);
+    const generated = /^ref_(\d+)$/.exec(id);
+    if (generated) this._counter = Math.max(this._counter, Number(generated[1]));
+  }
 
   /** Get existing ID or assign a new one. */
   getId(obj: object): string {
     let id = this._map.get(obj);
     if (!id) {
-      id = `ref_${++this._counter}`;
+      do {
+        id = `ref_${++this._counter}`;
+      } while (this._ids.has(id));
       this._map.set(obj, id);
+      this._ids.add(id);
     }
     return id;
   }

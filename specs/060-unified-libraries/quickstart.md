@@ -262,6 +262,43 @@ Use a disposable Electron user-data directory and copied Java fixtures; never po
 11. Corrupt/lock the database; confirm recovery choices and continued project work.
 12. Restore layouts from legacy versions containing the old SoundObject panel in docked, minimized, floating, and closed states; confirm exactly one Libraries panel.
 
+## Verification Record — 2026-07-15
+
+No acceptance expectations changed during implementation.
+
+The full acceptance matrix was executed against disposable temporary databases, copied XML fixtures, and headless DOM workbench fixtures. No real Java Blue configuration or user-data directory was used.
+
+| Matrix coverage | Verification evidence |
+|-----------------|-----------------------|
+| Four valid first-run sources, partial migration with one corrupt source, no-source skip, unchanged source bytes | `automatic-migration.test.ts`, `automatic-migration-recovery.test.ts`, `migration-state-store.test.ts` |
+| No-project browse/search/preview/edit and restart-stable identity | `browse-search.test.ts`, `repository.test.ts`, `library-store.test.ts`, `libraries-panel.test.tsx` |
+| Two pinned editors, one clean preview, and 100 selection changes | `editor-session-service.test.ts` |
+| Reload Latest, reviewed Overwrite, and Cancel conflict choices | `editor-session-service.test.ts`, `library-editing.test.tsx` |
+| Instrument, UDO, Effect, independent SoundObject, and shared SoundObject insertion plus stale-target rejection and reopen portability | `project-transfer.test.ts`, `library-transfer.test.ts`, `library-target-routing.test.tsx` |
+| Shared SoundObject usage counting and guarded definition/instance deletion | `project-item-editing.test.ts` |
+| Four-format Export All, import/reimport, exact duplicate handling, history, and conditional undo | `export-compatibility.test.ts`, `manual-import-preview.test.ts`, `manual-import-execution.test.ts`, `library-interchange.test.tsx` |
+| Atomic export rollback restores every prior destination | `export-transaction.test.ts` |
+| Corrupt, locked, newer-version, backup, fresh-store, and non-library failure isolation choices | `repository-recovery.test.ts`, `schema-upgrade.test.ts`, `service-recovery.test.ts`, `failure-isolation.test.ts`, `library-recovery.test.tsx` |
+| Accessible actions/tree/dialogs and legacy docked/minimized/floating/closed layout convergence | `libraries-panel.test.tsx`, `library-editing.test.tsx`, `unified-library-workbench.test.tsx`, `workbench-auxiliary.test.ts`, `workbench-store.test.ts` |
+
+Commands and results:
+
+```text
+pnpm test
+  PASS — @blue/data 1,266; @blue/app 2,010 passed / 2 skipped;
+         @blue/engine-client 18; blue-cli 5; Java Maven suite passed
+pnpm build
+  PASS — all workspace packages, Electron main/preload, and Vite renderer
+pnpm lint
+  PASS — all configured workspace lint targets
+pnpm --filter @blue/app exec vitest run --config vitest.config.ts src/main/unified-library/performance.test.ts --reporter=verbose
+  PASS — 10,000-item browse/search/preview/pagination test in 575 ms
+git diff --check
+  PASS
+```
+
+The Vite large-chunk notice and Node's experimental `node:sqlite` notice remain informational; the exact Electron/Node/SQLite runtime is pinned and covered by `sqlite-runtime.test.ts` and the CI packaged smoke matrix.
+
 ## Completion Gate
 
 The feature is ready for closeout only when:

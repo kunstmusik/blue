@@ -30,6 +30,7 @@ import { useScoreRulerSelection } from "./score/useScoreRulerSelection";
 import { usePlaybackStore } from "../../../stores/playback-store";
 import ScoreOverlayLines from "./score/ScoreOverlayLines";
 import NoteProcessorChainDialog from "./score-object/note-processors/NoteProcessorChainDialog";
+import { openUnifiedLibraries } from "../../../stores/library-routing";
 
 type ChainDialogTarget =
   | { scope: 'soundLayer'; groupId: string; layerIndex: number }
@@ -540,6 +541,31 @@ export default function ScorePanel() {
           return group?.noteProcessorChain;
         }}
       />
+      <div className="flex justify-end border-b border-app-border px-2 py-1">
+        <button
+          type="button"
+          disabled={!effectiveLayerGroups[0]?.layers[0]}
+          className="rounded border border-app-border px-2 py-1 text-xs disabled:opacity-50"
+          onClick={() => {
+            const group = effectiveLayerGroups[0];
+            const layer = group?.layers[0];
+            if (!group || !layer) return;
+            void openUnifiedLibraries({
+              type: 'soundObjectTarget',
+              projectSessionId: sessionId,
+              location: {
+                rootGroupId: group.groupId,
+                containerPath: [],
+                layerId: layer.layerId,
+                startTime: transport.renderStartTime,
+              },
+              targetRevision: 'current',
+            });
+          }}
+        >
+          Browse SoundObjects
+        </button>
+      </div>
 
       <SplitPane
         ariaLabel="Resize score layer headers and timeline"

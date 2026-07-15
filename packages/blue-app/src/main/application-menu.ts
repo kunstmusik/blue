@@ -48,7 +48,7 @@ function buildWorkbenchMenuItems(
   mode: PanelMode,
   onFocusPanel: (panelId: string) => void,
 ): MenuItemConstructorOptions[] {
-  return getPanelsByMode(mode).map((panel) => ({
+  return getPanelsByMode(mode).filter((panel) => panel.id !== 'WelcomeTopComponent').map((panel) => ({
     label: panel.title,
     click: () => onFocusPanel(panel.id),
   }));

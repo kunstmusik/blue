@@ -1,5 +1,6 @@
 # Build output
 dist/
+build/
 *.tsbuildinfo
 packages/blue-data/tests/integration/*.js
 packages/blue-data/tests/integration/*.js.map
@@ -18,6 +19,7 @@ node_modules/
 # OS
 .DS_Store
 Thumbs.db
+*.tmp
 
 # Logs
 *.log

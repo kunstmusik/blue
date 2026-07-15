@@ -4,7 +4,7 @@ import {
   hasRestoredStartupEditorPanel,
   useWorkbenchStore,
 } from '../stores/workbench-store';
-import { useUIStore } from '../stores/ui-store';
+import { useLibraryStore } from '../stores/library-store';
 import { usePlaybackStore } from '../stores/playback-store';
 import { useProjectStore } from '../stores/project-store';
 
@@ -648,10 +648,7 @@ afterEach(() => {
     api: null,
     auxiliary: createDefaultAuxiliaryLayoutState(),
   });
-  useUIStore.setState({
-    effectsLibraryOpen: false,
-    effectsLibraryTarget: null,
-  });
+  useLibraryStore.getState().reset();
   usePlaybackStore.getState().reset();
   useProjectStore.setState({
     addMarkerAtTime: originalAddMarkerAtTime,
@@ -1028,9 +1025,10 @@ describe('workbench store native menu commands', () => {
     expect(closeGroup).toHaveBeenCalledWith('ScoreTopComponent');
   });
 
-  it('routes open-effects-library commands through the UI store', () => {
+  it('routes open-effects-library commands through the unified Libraries panel', () => {
+    const openPanel = vi.fn();
     useWorkbenchStore.setState({
-      openPanel: vi.fn() as never,
+      openPanel: openPanel as never,
       resetLayout: vi.fn() as never,
     });
 
@@ -1038,7 +1036,8 @@ describe('workbench store native menu commands', () => {
       type: 'open-effects-library',
     });
 
-    expect(useUIStore.getState().effectsLibraryOpen).toBe(true);
+    expect(useLibraryStore.getState().typeFilter).toBe('effect');
+    expect(openPanel).toHaveBeenCalledWith('LibrariesTopComponent');
   });
 
   it('adds menu-created markers at render start when idle', () => {

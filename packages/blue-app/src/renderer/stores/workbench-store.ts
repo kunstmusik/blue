@@ -51,7 +51,9 @@ import {
 } from '../components/workbench/panel-registry';
 import { buildPlayheadDisplayState } from '../components/menu-bar/toolbar-formatters';
 import type { NativeMenuCommand } from '../../shared/workbench-menu';
-import { useUIStore } from './ui-store';
+import { useLibraryStore } from './library-store';
+import type { LibraryEditorSessionSnapshot } from '../../shared/unified-library';
+import { libraryEditorPanelId } from './library-editor-store';
 import { usePlaybackStore } from './playback-store';
 import { useProjectStore } from './project-store';
 
@@ -72,6 +74,7 @@ interface WorkbenchState {
 interface WorkbenchActions {
   setApi: (api: DockviewApi | null) => void;
   openPanel: (panelId: string) => void;
+  openLibraryEditorPanel: (session: LibraryEditorSessionSnapshot) => void;
   focusPanel: (panelId: string) => void;
   toggleAuxiliaryPanel: (panelId: string) => void;
   minimizeAuxiliaryPanel: (panelId: string) => void;
@@ -817,6 +820,24 @@ export const useWorkbenchStore = create<WorkbenchState & WorkbenchActions>()(
         id: panelId,
         component: 'default',
         title: descriptor.title,
+      });
+    },
+
+    openLibraryEditorPanel: (session) => {
+      const { api } = get();
+      if (!api) return;
+      const panelId = libraryEditorPanelId(session.sessionId);
+      const existing = api.getPanel(panelId);
+      if (existing) {
+        existing.api.setTitle(`${session.displayName}${session.dirty ? ' •' : ''}`);
+        existing.api.setActive();
+        existing.group.focus();
+        return;
+      }
+      api.addPanel({
+        id: panelId,
+        component: 'default',
+        title: `${session.displayName}${session.dirty ? ' •' : ''}`,
       });
     },
 
@@ -1662,7 +1683,8 @@ export const useWorkbenchStore = create<WorkbenchState & WorkbenchActions>()(
           get().resetLayout();
           return;
         case 'open-effects-library':
-          useUIStore.getState().openEffectsLibrary();
+          useLibraryStore.getState().setTypeFilter('effect');
+          get().openPanel('LibrariesTopComponent');
           return;
         case 'toggle-follow-playback':
           usePlaybackStore.getState().toggleFollowPlayback();

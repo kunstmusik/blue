@@ -46,6 +46,7 @@ export { Arrangement } from './arrangement';
 // ─── Instruments ───
 export { Instrument } from './instruments/instrument';
 export { GenericInstrument } from './instruments/generic-instrument';
+export { loadInstrumentFromXML, registerInstrumentType } from './instruments/instrument-registry';
 export { JavaScriptInstrument } from './instruments/javascript-instrument';
 export { PythonInstrument } from './instruments/python-instrument';
 export { BlueX7 } from './instruments/blue-x7';
@@ -254,6 +255,7 @@ export { convertToModern, convertToClassic, parseUDOText } from './opcodes/udo-u
 // ─── Serialization ───
 export { Element, Elements } from './serialization/xml-reader';
 export { ObjRefSaveMap, ObjRefLoadMap } from './serialization/obj-ref-map';
+export * from './libraries';
 export {
 	CLOJURE_PROJECT_DATA_BDO_TYPE,
 	ClojureLibraryEntry,

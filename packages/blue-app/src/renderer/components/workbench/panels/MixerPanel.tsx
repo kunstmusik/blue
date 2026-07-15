@@ -10,7 +10,7 @@ import { useProjectStore } from '../../../stores/project-store';
 import { usePlaybackStore } from '../../../stores/playback-store';
 import { useBlueLiveStore } from '../../../stores/blue-live-store';
 import { deriveMixerPlaybackUiState } from '../../../stores/mixer-playback-ui';
-import { useUIStore } from '../../../stores/ui-store';
+import { openUnifiedLibraries } from '../../../stores/library-routing';
 import ChannelStrip from './mixer/ChannelStrip';
 
 export default function MixerPanel(): React.ReactElement {
@@ -18,7 +18,7 @@ export default function MixerPanel(): React.ReactElement {
   const mixer = useProjectStore((state) => state.mixer);
   const applyProjectDocumentPatch = useProjectStore((state) => state.applyProjectDocumentPatch);
   const flushPendingPatches = useProjectStore((state) => state.flushPendingPatches);
-  const openEffectsLibrary = useUIStore((state) => state.openEffectsLibrary);
+  const projectSessionId = useProjectStore((state) => state.sessionId);
 
   const playbackStatus = usePlaybackStore((s) => s.status);
   const blueLiveStatus = useBlueLiveStore((s) => s.status);
@@ -52,10 +52,17 @@ export default function MixerPanel(): React.ReactElement {
   );
 
   const handleOpenLibrary = useCallback(
-    (channelId: string, chain: MixerChainKind) => {
-      openEffectsLibrary({ channelId, chain });
+    (channelId: string, chain: MixerChainKind, insertIndex: number) => {
+      void openUnifiedLibraries({
+        type: 'effectTarget',
+        projectSessionId,
+        channelId,
+        chain,
+        insertIndex,
+        targetRevision: 'current',
+      });
     },
-    [openEffectsLibrary],
+    [projectSessionId],
   );
 
   const handleOpenEffectInterface = useCallback((request: { ownerType: 'project' | 'library'; effectId: string; projectRef?: { channelId: string; chain: 'pre' | 'post'; entryId: string }; libraryRef?: { libraryEffectId: string } }) => {

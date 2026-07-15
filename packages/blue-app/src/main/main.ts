@@ -51,9 +51,6 @@ import {
   openEffectEditorWindow,
   openEffectInterfaceWindow,
 } from './effect-editor-window-manager';
-import {
-  getMixerEffectsLibrarySession,
-} from './mixer-effects-library';
 import { cleanupTempCsdSnapshots } from './render-command';
 import { saveGeneratedCsdToDisk } from './csd-export';
 import {
@@ -115,7 +112,6 @@ import {
   type EffectEditorPatchRequest,
   type EffectEditorRequest,
   type EffectEditablePatch,
-  type EffectsLibraryPatch,
   type BlueLiveNoteTriggerRequest,
   type BlueLiveNoteTriggerResult,
   type BsbRealtimeControlUpdate,
@@ -169,11 +165,16 @@ import type {
   MissingAudioAssetsResolveResult,
   MissingAudioAssetsSession,
 } from '../shared/missing-audio-assets';
+import { UnifiedLibraryService } from './unified-library/service';
+import { registerUnifiedLibraryIpc } from './unified-library/ipc';
+import { UnifiedLibraryProjectAdapter } from './unified-library/project-adapter';
 
 let mainWindow: BrowserWindow | null = null;
 let currentData: BlueData | null = null;
 let currentFilePath: string | null = null;
 let currentProjectRevision = 0;
+let unifiedLibraryService: UnifiedLibraryService | null = null;
+let unregisterUnifiedLibraryIpc: (() => void) | null = null;
 
 // ─── Render/Freeze operation lifecycle ───
 let activeRenderOperationId: string | null = null;
@@ -395,7 +396,7 @@ function applyProjectEffectEditorPatch(request: EffectEditorPatchRequest) {
   }
 
   if (request.ownerType === 'library') {
-    return getMixerEffectsLibrarySession().updateEffect(request.effectId, request.patch);
+    return null;
   }
 
   const effectEntry = getProjectEffectEntryByRequest(request);
@@ -905,6 +906,7 @@ function rebuildApplicationMenu(): void {
     },
     onOpenEffectsLibrary: () => {
       if (mainWindow) {
+        routeFocusPanel('LibrariesTopComponent');
         mainWindow.webContents.send('native-menu-command', { type: 'open-effects-library' });
       }
     },
@@ -1151,11 +1153,37 @@ function createWindow(): void {
   updateWindowTitle();
 }
 
+async function confirmLibraryDraftTransition(
+  reason: 'quit' | 'closeProject' | 'switchProject',
+): Promise<boolean> {
+  const preview = unifiedLibraryService?.prepareLibraryDraftShutdown(reason);
+  if (!preview || preview.mayContinue) return true;
+  if (!mainWindow) return false;
+  const result = await dialog.showMessageBox(mainWindow, {
+    type: 'warning',
+    title: 'Unsaved Library Editors',
+    message: `${preview.dirtySessionIds.length} Library editor${preview.dirtySessionIds.length === 1 ? ' has' : 's have'} unsaved changes.`,
+    detail: 'Save all drafts, discard them, or cancel this operation.',
+    buttons: ['Save All', 'Discard', 'Cancel'],
+    defaultId: 0,
+    cancelId: 2,
+    noLink: true,
+  });
+  const decision = result.response === 0 ? 'save' : result.response === 1 ? 'discard' : 'cancel';
+  const resolved = await unifiedLibraryService?.resolveLibraryDraftShutdown(decision);
+  return resolved?.mayContinue ?? false;
+}
+
 /**
  * Request app exit — shows save prompt if project is dirty.
  */
 async function requestQuit(): Promise<void> {
   isQuitting = true;
+
+  if (!(await confirmLibraryDraftTransition('quit'))) {
+    isQuitting = false;
+    return;
+  }
 
   // Stop engine first
   if (engineBridge && engineBridge.isCurrentlyPlaying()) {
@@ -1186,6 +1214,11 @@ async function doQuit(): Promise<void> {
 
     await oscControlService?.shutdown();
     oscControlService = null;
+
+    unregisterUnifiedLibraryIpc?.();
+    unregisterUnifiedLibraryIpc = null;
+    await unifiedLibraryService?.stop();
+    unifiedLibraryService = null;
 
     await midiInputCoordinator?.requestShutdown();
 
@@ -1340,6 +1373,7 @@ async function openFilePath(filePath: string): Promise<boolean> {
  */
 async function loadProjectFromDisk(filePath: string): Promise<boolean> {
   if (!(await canReplaceProjectWhileRenderActive())) return false;
+  if (!(await confirmLibraryDraftTransition('switchProject'))) return false;
   try {
     const xml = fs.readFileSync(filePath, 'utf-8');
     const data = await BlueData.loadFromString(xml);
@@ -1355,6 +1389,7 @@ async function loadProjectFromDisk(filePath: string): Promise<boolean> {
     currentFilePath = filePath;
     currentProjectRevision = 0;
     currentProjectSessionId += 1;
+    unifiedLibraryService?.publishProjectChanged();
     setActiveMissingAudioSession(null);
     rebuildApplicationMenu();
     updateWindowTitle();
@@ -1386,6 +1421,7 @@ async function loadProjectFromDisk(filePath: string): Promise<boolean> {
 async function newFile(): Promise<void> {
   if (!mainWindow) return;
   if (!(await canReplaceProjectWhileRenderActive())) return;
+  if (!(await confirmLibraryDraftTransition('switchProject'))) return;
 
   if (blueLiveSession && blueLiveSession.isRunning()) {
     await blueLiveSession.stop();
@@ -1400,6 +1436,7 @@ async function newFile(): Promise<void> {
   currentFilePath = null;
   currentProjectRevision = 0;
   currentProjectSessionId += 1;
+  unifiedLibraryService?.publishProjectChanged();
   setActiveMissingAudioSession(null);
   rebuildApplicationMenu();
   updateWindowTitle();
@@ -1424,6 +1461,7 @@ async function closeProject(): Promise<void> {
   if (!mainWindow) return;
 
   if (!(await confirmSaveBeforeReplace())) return;
+  if (!(await confirmLibraryDraftTransition('closeProject'))) return;
 
   disposeJavaScriptSession();
   await disposeJavaRuntimeSession();
@@ -1431,6 +1469,7 @@ async function closeProject(): Promise<void> {
   currentFilePath = null;
   currentProjectRevision = 0;
   currentProjectSessionId += 1;
+  unifiedLibraryService?.publishProjectChanged();
   setActiveMissingAudioSession(null);
   rebuildApplicationMenu();
   updateWindowTitle();
@@ -2255,7 +2294,7 @@ ipcMain.handle('open-effect-interface', async (_event, request: EffectEditorRequ
 
 ipcMain.handle('get-effect-editor-document', (_event, request: EffectEditorRequest) => {
   if (request.ownerType === 'library') {
-    return getMixerEffectsLibrarySession().getEffectEditorSnapshot(request);
+    return null;
   }
 
   return getProjectEffectEditorSnapshot(request);
@@ -2267,56 +2306,6 @@ ipcMain.handle('update-effect-editor-document', (_event, request: EffectEditorPa
 
 ipcMain.handle('focus-effect-editor', (_event, request: EffectEditorRequest) => {
   return focusEffectEditorWindow(request);
-});
-
-ipcMain.handle('get-effects-library', () => {
-  return getMixerEffectsLibrarySession().getSnapshot();
-});
-
-ipcMain.handle('reload-effects-library', () => {
-  return getMixerEffectsLibrarySession().reload();
-});
-
-ipcMain.handle('update-effects-library', (_event, patch: EffectsLibraryPatch) => {
-  const session = getMixerEffectsLibrarySession();
-  const snapshot = session.applyPatch(patch);
-
-  if (patch.type === 'removeEffect') {
-    closeEffectEditorWindow({
-      ownerType: 'library',
-      effectId: patch.effectId,
-      libraryRef: { libraryEffectId: patch.effectId },
-    });
-  }
-
-  return snapshot;
-});
-
-ipcMain.handle('import-effect-file', async (_event, parentCategoryId?: string) => {
-  const result = await dialog.showOpenDialog(mainWindow!, {
-    title: 'Import Effect',
-    filters: [{ name: 'Effect Files', extensions: ['effect', 'xml'] }],
-    properties: ['openFile'],
-  });
-  if (result.canceled || result.filePaths.length === 0) return null;
-  const effectXml = fs.readFileSync(result.filePaths[0], 'utf-8');
-  const session = getMixerEffectsLibrarySession();
-  return session.importEffectFromXml(effectXml, parentCategoryId);
-});
-
-ipcMain.handle('export-effect-file', async (_event, effectId: string) => {
-  const session = getMixerEffectsLibrarySession();
-  const effect = session.findEffectForExport(effectId);
-  if (!effect) return;
-  const effectXml = effect.saveAsXML().toXml();
-  const defaultName = (effect.getName() || 'effect') + '.effect';
-  const result = await dialog.showSaveDialog(mainWindow!, {
-    title: 'Export Effect',
-    defaultPath: defaultName,
-    filters: [{ name: 'Effect Files', extensions: ['effect'] }],
-  });
-  if (result.canceled || !result.filePath) return;
-  fs.writeFileSync(result.filePath, effectXml, 'utf-8');
 });
 
 // ─── Evaluate Code IPC Handler ───
@@ -2590,6 +2579,7 @@ ipcMain.handle('commit-project-document-patches', async (_event, patches: Projec
     await disposeJavaRuntimeSession();
   }
   broadcastProjectDocumentUpdate();
+  unifiedLibraryService?.publishProjectChanged();
   const receipt: ProjectDocumentCommitReceipt = { revision: currentProjectRevision, sessionId: currentProjectSessionId };
   return receipt;
 });
@@ -2892,6 +2882,32 @@ app.whenReady().then(async () => {
   }
 
   createWindow();
+  unifiedLibraryService = new UnifiedLibraryService(
+    path.join(app.getPath('userData'), 'blue_libraries.sqlite'),
+    undefined,
+    new UnifiedLibraryProjectAdapter(() => currentData
+      ? {
+          data: currentData,
+          sessionId: currentProjectSessionId,
+          revision: currentProjectRevision,
+          commit: () => {
+            currentProjectRevision += 1;
+            broadcastProjectDocumentUpdate();
+            return currentProjectRevision;
+          },
+        }
+      : null),
+    {
+      legacyConfigurationDirectory: path.join(app.getPath('home'), '.blue'),
+      migrationStatePath: path.join(app.getPath('userData'), 'blue-libraries-state.json'),
+    },
+  );
+  unregisterUnifiedLibraryIpc = registerUnifiedLibraryIpc({
+    ipcMain,
+    service: unifiedLibraryService,
+    getWindows: () => BrowserWindow.getAllWindows(),
+  });
+  await unifiedLibraryService.start();
   initializeOscControlService();
 
   // Capture Dockview popout windows (SPEC 055 US1 Float) as floating workbench

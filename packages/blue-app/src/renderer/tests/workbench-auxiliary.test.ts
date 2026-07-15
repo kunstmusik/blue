@@ -176,7 +176,7 @@ function findSeeded(
 
 const ALL_PROPERTY_PANEL_IDS = [
   'SoundObjectPropertiesTopComponent',
-  'SoundObjectLibraryTopComponent',
+  'LibrariesTopComponent',
   'AudioFilePlayerTopComponent',
   'MarkersTopComponent',
   'MidiInputPanelTopComponent',
@@ -422,7 +422,7 @@ describe('workbench auxiliary layout helpers', () => {
 
     expect(tabs.map((tab) => tab.panelId)).toEqual([
       'SoundObjectPropertiesTopComponent',
-      'SoundObjectLibraryTopComponent',
+      'LibrariesTopComponent',
       'AudioFilePlayerTopComponent',
       'MarkersTopComponent',
     ]);
@@ -493,7 +493,7 @@ describe('workbench auxiliary layout helpers', () => {
     const initialProps = findSeeded(state, 'properties-main')!;
     initialProps.panelIds = [
       'SoundObjectPropertiesTopComponent',
-      'SoundObjectLibraryTopComponent',
+      'LibrariesTopComponent',
       'AudioFilePlayerTopComponent',
       'MarkersTopComponent',
       'MidiInputPanelTopComponent',
@@ -510,7 +510,7 @@ describe('workbench auxiliary layout helpers', () => {
 
     const propsGroup = findSeeded(next, 'properties-main')!;
     expect(propsGroup.dockedPanelIds).toEqual([
-      'SoundObjectLibraryTopComponent',
+      'LibrariesTopComponent',
       'AudioFilePlayerTopComponent',
       'MarkersTopComponent',
       'MidiInputPanelTopComponent',
@@ -704,7 +704,7 @@ describe('left-edge whole-group moves', () => {
     expect(propsGroup.edge).toBe('left');
     expect(propsGroup.panelIds).toEqual([
       'SoundObjectPropertiesTopComponent',
-      'SoundObjectLibraryTopComponent',
+      'LibrariesTopComponent',
       'AudioFilePlayerTopComponent',
       'MarkersTopComponent',
       'MidiInputPanelTopComponent',
@@ -750,7 +750,7 @@ describe('left-edge single-tool split', () => {
 
     const remaining = findSeeded(moved, 'properties-main')!;
     expect(remaining.panelIds).toEqual([
-      'SoundObjectLibraryTopComponent',
+      'LibrariesTopComponent',
       'AudioFilePlayerTopComponent',
       'MarkersTopComponent',
       'MidiInputPanelTopComponent',
@@ -846,7 +846,7 @@ describe('merge-back to seeded group', () => {
     const propsGroup = findSeeded(merged, 'properties-main')!;
     expect(propsGroup.panelIds).toEqual([
       'SoundObjectPropertiesTopComponent',
-      'SoundObjectLibraryTopComponent',
+      'LibrariesTopComponent',
       'AudioFilePlayerTopComponent',
       'MarkersTopComponent',
       'MidiInputPanelTopComponent',
@@ -864,7 +864,7 @@ describe('merge-back to seeded group', () => {
     const propsGroup = findSeeded(merged, 'properties-main')!;
     expect(propsGroup.panelIds).toEqual([
       'SoundObjectPropertiesTopComponent',
-      'SoundObjectLibraryTopComponent',
+      'LibrariesTopComponent',
       'AudioFilePlayerTopComponent',
       'MarkersTopComponent',
       'MidiInputPanelTopComponent',
@@ -884,7 +884,7 @@ describe('left-edge minimized tabs and slideout', () => {
     expect(tabs).toHaveLength(5);
     expect(tabs.map((t) => t.panelId)).toEqual([
       'SoundObjectPropertiesTopComponent',
-      'SoundObjectLibraryTopComponent',
+      'LibrariesTopComponent',
       'AudioFilePlayerTopComponent',
       'MarkersTopComponent',
       'MidiInputPanelTopComponent',

@@ -16,6 +16,7 @@ export interface PanelDescriptor {
 }
 
 export const WORKBENCH_PANEL_REGISTRY: PanelDescriptor[] = [
+  { id: 'WelcomeTopComponent', title: 'Welcome', mode: 'editor', openAtStartup: true, isClosable: false, isFloatable: false },
   { id: 'ScoreTopComponent', title: 'Score', mode: 'editor', openAtStartup: true, icon: '♪' },
   { id: 'OrchestraTopComponent', title: 'Orchestra', mode: 'editor', openAtStartup: true, position: 200, icon: '🎻' },
   { id: 'GlobalOrchestraTopComponent', title: 'Global Orchestra', mode: 'editor', openAtStartup: true },
@@ -35,12 +36,12 @@ export const WORKBENCH_PANEL_REGISTRY: PanelDescriptor[] = [
     auxiliaryRailLabel: 'Properties',
   },
   {
-    id: 'SoundObjectLibraryTopComponent',
-    title: 'Sound Object Library',
+    id: 'LibrariesTopComponent',
+    title: 'Libraries',
     mode: 'properties',
     openAtStartup: false,
     auxiliaryGroupId: 'properties-main',
-    auxiliaryRailLabel: 'Library',
+    auxiliaryRailLabel: 'Libraries',
   },
   {
     id: 'AudioFilePlayerTopComponent',

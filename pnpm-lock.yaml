@@ -139,7 +139,7 @@ importers:
         specifier: ^10.4.23
         version: 10.4.27(postcss@8.5.9)
       electron:
-        specifier: ^35.7.5
+        specifier: 35.7.5
         version: 35.7.5
       jsdom:
         specifier: ^29.1.0

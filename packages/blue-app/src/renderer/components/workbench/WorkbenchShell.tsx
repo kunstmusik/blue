@@ -42,6 +42,7 @@ import {
 import { useDocumentMouseDownOutside } from '../../hooks/use-document-mousedown-outside';
 import { useWorkbenchStore } from '../../stores/workbench-store';
 import { useLayoutSettingsStore } from '../../stores/layout-settings-store';
+import { useUIStore } from '../../stores/ui-store';
 import { useRenderAndPlayInterceptor } from './panels/audio-player/use-render-and-play';
 import type {
   DisplayWorkArea,
@@ -168,6 +169,8 @@ export default function WorkbenchShell() {
   const moveAuxiliaryEdge = useWorkbenchStore((s) => s.moveAuxiliaryEdge);
   const movePanelToEdge = useWorkbenchStore((s) => s.movePanelToEdge);
   const setApi = useWorkbenchStore((s) => s.setApi);
+  const workbenchApi = useWorkbenchStore((s) => s.api);
+  const activeSurface = useUIStore((s) => s.activePanel);
   const leftTabs = getMinimizedTabsForEdge(auxiliary, 'left');
   const rightTabs = getMinimizedTabsForEdge(auxiliary, 'right');
   const bottomTabs = getMinimizedTabsForEdge(auxiliary, 'bottom');
@@ -188,6 +191,13 @@ export default function WorkbenchShell() {
   const [activeDrag, setActiveDrag] = useState<ActiveAuxiliaryDrag | null>(null);
   const [headerContextMenu, setHeaderContextMenu] =
     useState<HeaderContextMenuState | null>(null);
+
+  useEffect(() => {
+    if (!workbenchApi) return;
+    useWorkbenchStore.getState().openPanel(
+      activeSurface === 'welcome' ? 'WelcomeTopComponent' : 'ScoreTopComponent',
+    );
+  }, [activeSurface, workbenchApi]);
 
   const disposeListeners = useCallback(() => {
     for (const disposable of listenersRef.current) {

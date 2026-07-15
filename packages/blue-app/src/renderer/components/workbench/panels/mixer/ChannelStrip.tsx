@@ -40,7 +40,7 @@ interface ChannelStripProps {
   isSubChannel: boolean;
   librarySnapshot: EffectsLibrarySnapshot | null;
   onPatch: (patch: Record<string, unknown>) => void;
-  onOpenLibrary: (channelId: string, chain: MixerChainKind) => void;
+  onOpenLibrary: (channelId: string, chain: MixerChainKind, insertIndex: number) => void;
   onOpenEffectInterface: (request: EffectEditorRequest) => void;
   onRemoveSubChannel?: (channelId: string) => void;
 }
@@ -307,7 +307,7 @@ function ChainList({
         onOpenEffectEditor={onOpenEffectInterface}
         onOpenSendEditor={onOpenSendEditor}
         onOpenEditEffectDialog={onOpenEditEffectDialog}
-        librarySnapshot={librarySnapshot}
+        onOpenLibrary={onOpenLibrary}
       >
         <div
           className="mixer-chain-list"
@@ -684,7 +684,7 @@ export default function ChannelStrip({
         onOpenEffectInterface={handleOpenInterface}
         onOpenSendEditor={handleOpenSendEditorForEntry}
         onOpenEditEffectDialog={handleOpenEditDialog}
-        onOpenLibrary={() => onOpenLibrary(channel.id, 'pre')}
+        onOpenLibrary={() => onOpenLibrary(channel.id, 'pre', channel.preChain.length)}
       />
 
       <div className="mixer-level-section">
@@ -733,7 +733,7 @@ export default function ChannelStrip({
         onOpenEffectInterface={handleOpenInterface}
         onOpenSendEditor={handleOpenSendEditorForEntry}
         onOpenEditEffectDialog={handleOpenEditDialog}
-        onOpenLibrary={() => onOpenLibrary(channel.id, 'post')}
+        onOpenLibrary={() => onOpenLibrary(channel.id, 'post', channel.postChain.length)}
       />
 
       {!isMaster && (

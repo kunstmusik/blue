@@ -85,6 +85,19 @@ describe('SoundObjectLibrary', () => {
       }
       expect(count).toBe(1);
     });
+
+    it('seeds the save map with the stable library ID before serialization', () => {
+      const lib = new SoundObjectLibrary();
+      const obj = new GenericScore();
+      const stableId = lib.addObject(obj);
+      const objRefMap = new ObjRefSaveMap();
+
+      const xml = lib.saveAsXML(objRefMap);
+      const child = xml.getElements().next();
+
+      expect(child.getAttribute('objRefId')).toBe(stableId);
+      expect(objRefMap.getId(obj)).toBe(stableId);
+    });
   });
 
   describe('round-trip', () => {
@@ -295,6 +308,30 @@ describe('SoundObjectLibrary', () => {
         const loaded = SoundObjectLibrary.loadFromXML(xml);
         const loadedObj = loaded.getObject(0)!;
         expect(loaded.findIdForObject(loadedObj)).toBe(savedId);
+      });
+    });
+
+    describe('fingerprint fallback', () => {
+      it('resolves only one matching definition', () => {
+        const lib = new SoundObjectLibrary();
+        const object = new GenericScore();
+        object.setName('Unique');
+        lib.addObject(object);
+        const fingerprint = lib.createFingerprint(object);
+
+        expect(lib.findUniqueByFingerprint(fingerprint)).toBe(object);
+      });
+
+      it('returns undefined for ambiguous matching definitions', () => {
+        const lib = new SoundObjectLibrary();
+        const first = new GenericScore();
+        first.setName('Duplicate');
+        first.setScoreText('i1 0 1');
+        const second = first.deepCopy();
+        lib.addObject(first);
+        lib.addObject(second);
+
+        expect(lib.findUniqueByFingerprint(lib.createFingerprint(first))).toBeUndefined();
       });
     });
   });

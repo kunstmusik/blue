@@ -5,7 +5,7 @@
  * Each category has a name, optional subcategories, and optional instruments.
  */
 import { Instrument } from './instrument';
-import { GenericInstrument } from './generic-instrument';
+import { loadInstrumentFromXML } from './instrument-registry';
 import { Element } from '../serialization/xml-reader';
 
 export class InstrumentCategory {
@@ -98,7 +98,8 @@ export class InstrumentCategory {
       if (nodeName === 'instrumentCategory') {
         cat._subCategories.push(InstrumentCategory.loadFromXML(node));
       } else if (nodeName === 'instrument' || nodeName === 'genericInstrument') {
-        cat._instruments.push(GenericInstrument.loadFromXML(node));
+        const instrument = loadInstrumentFromXML(node);
+        if (instrument) cat._instruments.push(instrument);
       }
     }
 

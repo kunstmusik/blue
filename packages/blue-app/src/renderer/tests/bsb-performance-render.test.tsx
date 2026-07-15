@@ -17,7 +17,6 @@ import BSBInterfaceCanvas from '../components/workbench/panels/orchestra/bsb/BSB
 const panelRenderCounts = vi.hoisted(() => ({
   arrangement: 0,
   instrument: 0,
-  library: 0,
 }));
 
 const widgetRenderCounts = vi.hoisted(() => ({
@@ -43,16 +42,6 @@ vi.mock('../components/workbench/panels/orchestra/InstrumentEditorPanel', () => 
     return React.createElement('div', {
       'data-testid': 'instrument-panel',
       'data-instrument-id': props.instrument?.assignmentId ?? '',
-    });
-  }),
-}));
-
-vi.mock('../components/workbench/panels/orchestra/TemporaryInstrumentLibraryPanel', () => ({
-  default: React.memo((props: any) => {
-    panelRenderCounts.library += 1;
-    return React.createElement('div', {
-      'data-testid': 'library-panel',
-      'data-library-status': props.library.status,
     });
   }),
 }));
@@ -262,7 +251,6 @@ function renderRoot(element: React.ReactElement): {
 beforeEach(() => {
   panelRenderCounts.arrangement = 0;
   panelRenderCounts.instrument = 0;
-  panelRenderCounts.library = 0;
   widgetRenderCounts.knob = 0;
   widgetRenderCounts.value = 0;
   document.body.innerHTML = '';
@@ -280,7 +268,7 @@ afterEach(() => {
 });
 
 describe('BSB performance render isolation', () => {
-  it('keeps arrangement and library panels stable when editing the selected instrument', async () => {
+  it('keeps the arrangement panel stable when editing the selected instrument', async () => {
     seedProject();
 
     const tree = renderRoot(<OrchestraPanel />);
@@ -288,7 +276,6 @@ describe('BSB performance render isolation', () => {
     const baseline = {
       arrangement: panelRenderCounts.arrangement,
       instrument: panelRenderCounts.instrument,
-      library: panelRenderCounts.library,
     };
 
     await act(async () => {
@@ -308,7 +295,6 @@ describe('BSB performance render isolation', () => {
     });
 
     expect(panelRenderCounts.arrangement).toBe(baseline.arrangement);
-    expect(panelRenderCounts.library).toBe(baseline.library);
     expect(panelRenderCounts.instrument).toBeGreaterThan(baseline.instrument);
 
     tree.unmount();
