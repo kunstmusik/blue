@@ -1,6 +1,6 @@
 # blue-electron Development Guidelines
 
-Auto-generated from all feature plans. Last updated: 2026-07-13
+Auto-generated from all feature plans. Last updated: 2026-07-15
 
 ## Active Technologies
 - React 19.x, Electron, dockview 5.2.0 + collapsed auxiliary-group planning for the workbench shell (013-collapsed-sidebar-research)
@@ -70,6 +70,8 @@ Auto-generated from all feature plans. Last updated: 2026-07-13
 - Main-process `program-settings.json` under Electron user data for durable enabled-device identities; transient renderer/main runtime snapshots for availability, connections, and held notes; `.blue` XML unchanged (058-midi-live-input)
 - TypeScript 5.8.x in strict mode; React 19.x; Electron 35.x with its Node 22 runtime + Electron `BrowserWindow`/IPC, Node `dgram`, `node-osc` 11.6.x for OSC packet codecs/types, existing program-settings store, Zustand 5.x project/playback stores, existing Blue Live engine bridge (059-osc-control-parity)
 - Main-process `program-settings.json` for the preferred port; transient main-process listener status; `.blue` project XML unchanged (059-osc-control-parity)
+- TypeScript 5.8.x in strict mode; React 19.x; Electron pinned to 35.7.5 with embedded Node 22.16.0 and SQLite 3.49.1 + built-in `node:sqlite` (`DatabaseSync` and `backup`) and `node:worker_threads` in Electron main; existing `@rgrove/parse-xml` and `@blue/data` models/codecs; Electron `app`/`dialog`/IPC; Dockview 5.2.0; Zustand 5.x; `react-arborist` 3.5.x; Radix menus; existing type-specific Instrument/UDO/Effect/SoundObject editors (060-unified-libraries)
+- main-owned `${app.getPath('userData')}/blue_libraries.sqlite`; separate atomic `${app.getPath('userData')}/blue-libraries-state.json` for legacy-migration/recovery state; verified pre-upgrade SQLite backups beside the database; `.blue` XML remains the only project persistence (060-unified-libraries)
 
 - TypeScript 5.8.x, React 19.x, Electron 35.x, strict renderer/main/preload packages, pure TypeScript `@blue/data` + `PresetGroup`/`Preset` BSB preset model, Zustand 5.x project store with BSB interface/opcode-list patch support, Dockview 5.2.0, CodeMirror 6, `BsbInterfacePatch` union type for structured BSB mutations (022-bsb-interface-parity)
 - BSB Interface tab now renders an editable widget canvas with selection, property-sheet editing, grid settings, preset application, and Java-style split-view UDO editor (UDOTable + UDOEditor); snapshot contract extended with `widgetTree`, `gridSettings`, `editEnabled`, `presetGroup`, `opcodeListText`; widget-specific rendering (Slider, Knob, Toggle, etc.) deferred to SPEC 023 (022-bsb-interface-parity)
@@ -106,6 +108,6 @@ TypeScript 5.x, strict mode: Follow standard conventions
 <!-- MANUAL ADDITIONS END -->
 
 ## Recent Changes
+- 060-unified-libraries: Added TypeScript 5.8.x in strict mode; React 19.x; Electron pinned to 35.7.5 with embedded Node 22.16.0 and SQLite 3.49.1 + built-in `node:sqlite` (`DatabaseSync` and `backup`) and `node:worker_threads` in Electron main; existing `@rgrove/parse-xml` and `@blue/data` models/codecs; Electron `app`/`dialog`/IPC; Dockview 5.2.0; Zustand 5.x; `react-arborist` 3.5.x; Radix menus; existing type-specific Instrument/UDO/Effect/SoundObject editors
 - 059-osc-control-parity: Added TypeScript 5.8.x in strict mode; React 19.x; Electron 35.x with its Node 22 runtime + Electron `BrowserWindow`/IPC, Node `dgram`, `node-osc` 11.6.x for OSC packet codecs/types, existing program-settings store, Zustand 5.x project/playback stores, existing Blue Live engine bridge
 - 058-midi-live-input: Added TypeScript 5.8.x in strict mode; React 19.x; Electron 35.x + Chromium Web MIDI API, Electron `session`/`BrowserWindow`/IPC, Zustand 5.x, existing `@blue/data` MIDI mapping utilities, existing Blue Live engine bridge
-- 057-audio-file-player: Added TypeScript 5.8.x, strict mode + React 19.x, Electron 35.x, Lucide React, Web Audio API, Vitest 4.x
