@@ -16,7 +16,13 @@ export default defineConfig({
       ? [
           electron({
             main: {
-              entry: resolve(projectRoot, 'src/main/main.ts'),
+              entry: {
+                main: resolve(projectRoot, 'src/main/main.ts'),
+                'repository-worker': resolve(
+                  projectRoot,
+                  'src/main/unified-library/repository-worker.ts',
+                ),
+              },
               vite: {
                 build: {
                   outDir: resolve(projectRoot, 'dist/main'),

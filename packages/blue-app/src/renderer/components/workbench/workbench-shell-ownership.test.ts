@@ -1,5 +1,9 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
-import { reportOwnership, selectWorkbenchLayout } from './WorkbenchShell';
+import {
+  reportOwnership,
+  restoreWelcomeAfterLayoutHydration,
+  selectWorkbenchLayout,
+} from './WorkbenchShell';
 
 function createMockGroup(
   id: string,
@@ -168,5 +172,23 @@ describe('selectWorkbenchLayout', () => {
 
   it('uses legacy layout only before the canonical reset marker exists', () => {
     expect(selectWorkbenchLayout(null, 'legacy')).toBe('legacy');
+  });
+});
+
+describe('restoreWelcomeAfterLayoutHydration', () => {
+  it('reopens Welcome after a saved layout replaces the initial panels', () => {
+    const openPanel = vi.fn();
+
+    restoreWelcomeAfterLayoutHydration('welcome', openPanel);
+
+    expect(openPanel).toHaveBeenCalledWith('WelcomeTopComponent');
+  });
+
+  it('preserves the saved active editor when a project is loaded', () => {
+    const openPanel = vi.fn();
+
+    restoreWelcomeAfterLayoutHydration('project', openPanel);
+
+    expect(openPanel).not.toHaveBeenCalled();
   });
 });

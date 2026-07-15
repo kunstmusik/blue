@@ -42,7 +42,7 @@ import {
 import { useDocumentMouseDownOutside } from '../../hooks/use-document-mousedown-outside';
 import { useWorkbenchStore } from '../../stores/workbench-store';
 import { useLayoutSettingsStore } from '../../stores/layout-settings-store';
-import { useUIStore } from '../../stores/ui-store';
+import { useUIStore, type ActivePanel } from '../../stores/ui-store';
 import { useRenderAndPlayInterceptor } from './panels/audio-player/use-render-and-play';
 import type {
   DisplayWorkArea,
@@ -68,6 +68,15 @@ export function selectWorkbenchLayout(
   }
 
   return layoutSnapshot?.lastResetAt ? null : legacyLayout;
+}
+
+export function restoreWelcomeAfterLayoutHydration(
+  activeSurface: ActivePanel,
+  openPanel: (panelId: string) => void,
+): void {
+  if (activeSurface === 'welcome') {
+    openPanel('WelcomeTopComponent');
+  }
 }
 
 interface PendingAuxiliaryDrag {
@@ -277,6 +286,10 @@ export default function WorkbenchShell() {
             displayWorkAreas,
           );
         useWorkbenchStore.getState().syncAuxiliaryLayout();
+        restoreWelcomeAfterLayoutHydration(
+          useUIStore.getState().activePanel,
+          useWorkbenchStore.getState().openPanel,
+        );
 
         reportOwnership(event.api, workbenchWindowIdRef.current);
 
