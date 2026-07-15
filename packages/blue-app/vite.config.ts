@@ -21,7 +21,7 @@ export default defineConfig({
                 build: {
                   outDir: resolve(projectRoot, 'dist/main'),
                   rollupOptions: {
-                    external: ['zeromq', '@blue/engine-client', '@blue/data'],
+                    external: ['node:sqlite', 'zeromq', '@blue/engine-client', '@blue/data'],
                   },
                 },
               },
