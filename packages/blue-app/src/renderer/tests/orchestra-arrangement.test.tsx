@@ -41,6 +41,8 @@ describe('Orchestra arrangement panel', () => {
         selectedAssignmentId="1"
         onSelectAssignment={vi.fn()}
         onOrchestraPatch={vi.fn()}
+        projectSessionId={1}
+        projectRevision={1}
       />,
     );
 
@@ -52,4 +54,3 @@ describe('Orchestra arrangement panel', () => {
     expect(html).toContain('+ Add');
   });
 });
-

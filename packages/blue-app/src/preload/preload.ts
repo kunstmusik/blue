@@ -108,6 +108,11 @@ import {
   UNIFIED_LIBRARY_EDITOR_RESOLVE_CONFLICT_CHANNEL,
   UNIFIED_LIBRARY_EDITOR_SAVE_CHANNEL,
   UNIFIED_LIBRARY_MUTATE_CHANNEL,
+  UNIFIED_LIBRARY_PREPARE_MUTATION_CHANNEL,
+  UNIFIED_LIBRARY_BEGIN_DRAG_CHANNEL,
+  UNIFIED_LIBRARY_CANCEL_DRAG_CHANNEL,
+  UNIFIED_LIBRARY_PREVIEW_TRANSFER_CHANNEL,
+  UNIFIED_LIBRARY_APPLY_TRANSFER_CHANNEL,
   UNIFIED_LIBRARY_PROJECT_COPY_CHANNEL,
   UNIFIED_LIBRARY_PROJECT_DELETE_CHANNEL,
   UNIFIED_LIBRARY_PROJECT_DELETE_PREVIEW_CHANNEL,
@@ -136,6 +141,10 @@ import {
   isLibraryServiceSnapshot,
   isLibraryEditorSessionSnapshot,
   type LibraryChangedEvent,
+  type BeginLibraryDragRequest,
+  type LibraryDragDescriptor,
+  type LibraryTransferPreview,
+  type LibraryTransferPreviewRequest,
   type BrowseLibraryRequest,
   type BrowseLibraryResult,
   type LibraryItemKey,
@@ -146,6 +155,8 @@ import {
   type LibraryInsertionPreview,
   type LibraryInsertionRequest,
   type LibraryMutationReceipt,
+  type LibraryMutationPreview,
+  type PrepareLibraryMutationRequest,
   type UserLibraryMutation,
   type OpenLibraryEditorRequest,
   type LibraryEditorPatchRequest,
@@ -176,6 +187,14 @@ contextBridge.exposeInMainWorld('blueAPI', {
     ipcRenderer.invoke(UNIFIED_LIBRARY_SEARCH_CHANNEL, request) as Promise<LibraryResult<SearchLibrariesResult>>,
   getLibraryItemPreview: (key: LibraryItemKey) =>
     ipcRenderer.invoke(UNIFIED_LIBRARY_PREVIEW_CHANNEL, key) as Promise<LibraryResult<LibraryItemPreview>>,
+  beginLibraryDrag: (request: BeginLibraryDragRequest) =>
+    ipcRenderer.invoke(UNIFIED_LIBRARY_BEGIN_DRAG_CHANNEL, request) as Promise<LibraryResult<LibraryDragDescriptor>>,
+  cancelLibraryDrag: (dragSessionId: string) =>
+    ipcRenderer.invoke(UNIFIED_LIBRARY_CANCEL_DRAG_CHANNEL, dragSessionId) as Promise<void>,
+  previewLibraryTransfer: (request: LibraryTransferPreviewRequest) =>
+    ipcRenderer.invoke(UNIFIED_LIBRARY_PREVIEW_TRANSFER_CHANNEL, request) as Promise<LibraryResult<LibraryTransferPreview>>,
+  applyLibraryTransfer: (previewToken: string) =>
+    ipcRenderer.invoke(UNIFIED_LIBRARY_APPLY_TRANSFER_CHANNEL, previewToken) as Promise<LibraryResult<ProjectMutationReceipt>>,
   setLibraryContext: (request: LibraryContextRequest) =>
     ipcRenderer.invoke(UNIFIED_LIBRARY_SET_CONTEXT_CHANNEL, request) as Promise<LibraryResult<LibraryContextSnapshot>>,
   clearLibraryInsertionTarget: () =>
@@ -186,6 +205,8 @@ contextBridge.exposeInMainWorld('blueAPI', {
     ipcRenderer.invoke(UNIFIED_LIBRARY_APPLY_INSERTION_CHANNEL, { previewToken }) as Promise<LibraryResult<ProjectMutationReceipt>>,
   applyLibraryMutation: (request: UserLibraryMutation) =>
     ipcRenderer.invoke(UNIFIED_LIBRARY_MUTATE_CHANNEL, request) as Promise<LibraryResult<LibraryMutationReceipt>>,
+  prepareLibraryMutation: (request: PrepareLibraryMutationRequest) =>
+    ipcRenderer.invoke(UNIFIED_LIBRARY_PREPARE_MUTATION_CHANNEL, request) as Promise<LibraryResult<LibraryMutationPreview>>,
   openLibraryItemEditor: (request: OpenLibraryEditorRequest) =>
     ipcRenderer.invoke(UNIFIED_LIBRARY_EDITOR_OPEN_CHANNEL, request) as Promise<LibraryResult<LibraryEditorSessionSnapshot>>,
   getLibraryEditorSession: (sessionId: string) =>

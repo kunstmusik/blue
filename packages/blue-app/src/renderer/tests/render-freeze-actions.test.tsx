@@ -80,6 +80,10 @@ describe('render/freeze renderer actions', () => {
     act(() => {
       root.render(
         <ScoreTimeCanvas
+          projectSessionId={1}
+          projectRevision={1}
+          scoreRootGroupId="group-1"
+          scoreContainerPath={[]}
           group={group}
           totalBeats={16}
           pixelsPerBeat={50}

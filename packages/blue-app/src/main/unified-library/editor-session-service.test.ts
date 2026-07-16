@@ -1,10 +1,17 @@
 import { describe, expect, it } from 'vitest';
 import { UnifiedLibraryEditorSessionService } from './editor-session-service';
 import { UnifiedLibraryRepositoryClient } from './repository-client';
+import { GenericInstrument } from '@blue/data';
+
+function instrumentXml(name: string): string {
+  const instrument = new GenericInstrument();
+  instrument.setName(name);
+  return instrument.saveAsXML().toXml();
+}
 
 const PAYLOAD = {
   embeddedName: 'Pad', objectType: 'GenericInstrument', supportStatus: 'supported' as const,
-  supportReasonCode: null, supportMessage: null, payloadXml: '<instrument><name>Pad</name></instrument>',
+  supportReasonCode: null, supportMessage: null, payloadXml: instrumentXml('Pad'),
   rawHash: 'raw', canonicalContentHash: 'canonical', serializerRevision: '1', preview: {},
   dependencies: {}, metadataRevision: 1,
 };
@@ -15,7 +22,7 @@ async function fixture() {
     const root = repository.getRoot('instrument');
     return ['A', 'B', 'C', 'D'].map((name) => repository.createItem({
       libraryType: 'instrument', parentId: root.id, displayName: name,
-      payload: { ...PAYLOAD, embeddedName: name, payloadXml: `<instrument><name>${name}</name></instrument>` },
+      payload: { ...PAYLOAD, embeddedName: name, payloadXml: instrumentXml(name) },
     }));
   });
   return { client, nodes, sessions: new UnifiedLibraryEditorSessionService(client) };
@@ -29,7 +36,9 @@ describe('main-owned library editor sessions', () => {
       expect((await sessions.open(first.key)).sessionId).toBe(first.sessionId);
       const second = await sessions.open({ scope: 'user', libraryType: 'instrument', nodeId: nodes[1]!.id });
       expect(sessions.get(first.sessionId)).toBeNull();
-      const dirty = sessions.patch(second.sessionId, { payloadXml: '<instrument><name>Edited</name></instrument>' });
+      const dirty = sessions.patch(second.sessionId, {
+        documentPatch: { kind: 'instrument', patch: { type: 'updateInstrument', assignmentId: 'library-item', patch: { name: 'Edited' } } },
+      });
       expect(dirty).toMatchObject({ dirty: true, pinned: true });
       await sessions.open({ scope: 'user', libraryType: 'instrument', nodeId: nodes[0]!.id });
       expect(sessions.get(second.sessionId)?.dirty).toBe(true);
@@ -53,30 +62,30 @@ describe('main-owned library editor sessions', () => {
     const { client, nodes, sessions } = await fixture();
     try {
       const opened = await sessions.open({ scope: 'user', libraryType: 'instrument', nodeId: nodes[0]!.id });
-      sessions.patch(opened.sessionId, { payloadXml: '<instrument><name>Saved</name></instrument>' });
+      sessions.patch(opened.sessionId, { documentPatch: { kind: 'instrument', patch: { type: 'updateInstrument', assignmentId: 'library-item', patch: { name: 'Saved' } } } });
       expect(await sessions.save(opened.sessionId)).toMatchObject({ status: 'saved' });
-      sessions.patch(opened.sessionId, { payloadXml: '<instrument><name>Draft</name></instrument>' });
+      sessions.patch(opened.sessionId, { documentPatch: { kind: 'instrument', patch: { type: 'updateInstrument', assignmentId: 'library-item', patch: { name: 'Draft' } } } });
       const reverted = await sessions.revert(opened.sessionId);
-      expect(reverted.draftXml).toContain('Saved');
+      expect(reverted.document).toMatchObject({ kind: 'instrument', snapshot: { name: 'Saved' } });
 
-      sessions.patch(opened.sessionId, { payloadXml: '<instrument><name>My Draft</name></instrument>' });
+      sessions.patch(opened.sessionId, { documentPatch: { kind: 'instrument', patch: { type: 'updateInstrument', assignmentId: 'library-item', patch: { name: 'My Draft' } } } });
       await client.runForTesting((repository) => {
         const node = repository.getNode(nodes[0]!.id);
         repository.renameNode(node.id, node.revision, 'Externally Renamed');
       });
       expect(await sessions.save(opened.sessionId)).toMatchObject({ status: 'conflict' });
-      expect(sessions.get(opened.sessionId)?.draftXml).toContain('My Draft');
+      expect(sessions.get(opened.sessionId)?.document).toMatchObject({ kind: 'instrument', snapshot: { name: 'My Draft' } });
 
       const cancelled = await sessions.resolveConflict(opened.sessionId, 'cancel');
       expect(cancelled).toMatchObject({ status: 'conflict', dirty: true });
-      expect(cancelled.draftXml).toContain('My Draft');
+      expect(cancelled.document).toMatchObject({ kind: 'instrument', snapshot: { name: 'My Draft' } });
 
       const overwritten = await sessions.resolveConflict(opened.sessionId, 'overwrite');
       expect(overwritten).toMatchObject({ status: 'ready', dirty: false, displayName: 'A' });
       expect((await client.getNode(nodes[0]!.id)).displayName).toBe('A');
       expect((await client.getItemPayload(nodes[0]!.id)).payloadXml).toContain('My Draft');
 
-      sessions.patch(opened.sessionId, { payloadXml: '<instrument><name>Second Draft</name></instrument>' });
+      sessions.patch(opened.sessionId, { documentPatch: { kind: 'instrument', patch: { type: 'updateInstrument', assignmentId: 'library-item', patch: { name: 'Second Draft' } } } });
       await client.runForTesting((repository) => {
         const node = repository.getNode(nodes[0]!.id);
         repository.renameNode(node.id, node.revision, 'Latest Name');
@@ -84,7 +93,32 @@ describe('main-owned library editor sessions', () => {
       expect(await sessions.save(opened.sessionId)).toMatchObject({ status: 'conflict' });
       const reloaded = await sessions.resolveConflict(opened.sessionId, 'reloadLatest');
       expect(reloaded).toMatchObject({ status: 'ready', dirty: false, displayName: 'Latest Name' });
-      expect(reloaded.draftXml).toContain('My Draft');
+      expect(reloaded.document).toMatchObject({ kind: 'instrument', snapshot: { name: 'My Draft' } });
+    } finally { await client.close(); }
+  });
+
+  it('refreshes clean organization metadata and refuses to close dirty deleted-node drafts', async () => {
+    const { client, nodes, sessions } = await fixture();
+    try {
+      const opened = await sessions.open({ scope: 'user', libraryType: 'instrument', nodeId: nodes[0]!.id });
+      const renamed = await client.renameNode(nodes[0]!.id, nodes[0]!.revision, 'Renamed in Tree');
+      await sessions.reconcileUserNode(renamed.id);
+      expect(sessions.get(opened.sessionId)).toMatchObject({
+        displayName: 'Renamed in Tree',
+        baseRevision: renamed.revision,
+        dirty: false,
+      });
+
+      sessions.patch(opened.sessionId, {
+        documentPatch: { kind: 'instrument', patch: { type: 'updateInstrument', assignmentId: 'library-item', patch: { name: 'Protected Draft' } } },
+      });
+      expect(sessions.getUserSessionsForNodeIds([renamed.id])).toHaveLength(1);
+      expect(() => sessions.closeDeletedUserNodes([renamed.id])).toThrow(/dirty/i);
+      expect(sessions.get(opened.sessionId)?.document).toMatchObject({ kind: 'instrument', snapshot: { name: 'Protected Draft' } });
+
+      await sessions.revert(opened.sessionId);
+      expect(sessions.closeDeletedUserNodes([renamed.id])).toEqual([opened.sessionId]);
+      expect(sessions.get(opened.sessionId)).toBeNull();
     } finally { await client.close(); }
   });
 });

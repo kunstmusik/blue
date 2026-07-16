@@ -124,16 +124,20 @@ export class UnifiedLibraryRepositoryClient {
     return this.request<RepositoryNode>('updateItem', nodeId, expectedRevision, displayName, payload);
   }
 
-  moveNode(nodeId: string, expectedRevision: number, parentId: string, targetIndex: number): Promise<RepositoryNode> {
-    return this.request<RepositoryNode>('moveNode', nodeId, expectedRevision, parentId, targetIndex);
+  moveNode(nodeId: string, expectedRevision: number, parentId: string, targetIndex: number, expectedParentRevision?: number): Promise<RepositoryNode> {
+    return this.request<RepositoryNode>('moveNode', nodeId, expectedRevision, parentId, targetIndex, expectedParentRevision);
   }
 
   reorderNode(nodeId: string, expectedRevision: number, targetIndex: number): Promise<RepositoryNode> {
     return this.request<RepositoryNode>('reorderNode', nodeId, expectedRevision, targetIndex);
   }
 
-  duplicateNode(nodeId: string, expectedRevision: number, parentId?: string, targetIndex?: number): Promise<RepositoryNode> {
-    return this.request<RepositoryNode>('duplicateNode', nodeId, expectedRevision, parentId, targetIndex);
+  duplicateNode(nodeId: string, expectedRevision: number, parentId?: string, targetIndex?: number, expectedParentRevision?: number): Promise<RepositoryNode> {
+    return this.request<RepositoryNode>('duplicateNode', nodeId, expectedRevision, parentId, targetIndex, expectedParentRevision);
+  }
+
+  listDescendantNodeIds(nodeId: string): Promise<string[]> {
+    return this.request<string[]>('listDescendantNodeIds', nodeId);
   }
 
   deleteNode(nodeId: string, expectedRevision: number): Promise<string[]> {
@@ -226,14 +230,20 @@ export class UnifiedLibraryRepositoryClient {
               args[3] as import('./repository').RepositoryItemPayloadInput,
             ) as T;
           case 'moveNode':
-            return this.repository.moveNode(String(args[0]), Number(args[1]), String(args[2]), Number(args[3])) as T;
+            return this.repository.moveNode(
+              String(args[0]), Number(args[1]), String(args[2]), Number(args[3]),
+              args[4] === undefined ? undefined : Number(args[4]),
+            ) as T;
           case 'reorderNode':
             return this.repository.reorderNode(String(args[0]), Number(args[1]), Number(args[2])) as T;
           case 'duplicateNode':
             return this.repository.duplicateNode(
               String(args[0]), Number(args[1]), args[2] === undefined ? undefined : String(args[2]),
               args[3] === undefined ? undefined : Number(args[3]),
+              args[4] === undefined ? undefined : Number(args[4]),
             ) as T;
+          case 'listDescendantNodeIds':
+            return this.repository.listDescendantNodeIds(String(args[0])) as T;
           case 'deleteNode': return this.repository.deleteNode(String(args[0]), Number(args[1])) as T;
           case 'createFolder': return this.repository.createFolder(args[0] as Parameters<UnifiedLibraryRepository['createFolder']>[0]) as T;
           case 'createItem': return this.repository.createItem(args[0] as Parameters<UnifiedLibraryRepository['createItem']>[0]) as T;

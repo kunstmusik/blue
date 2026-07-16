@@ -161,9 +161,9 @@ function renderStrip(channel: MixerChannelSnapshot, onPatch: ReturnType<typeof v
         channel={channel}
         isMaster={false}
         isSubChannel
-        librarySnapshot={null}
         onPatch={onPatch}
-        onOpenLibrary={vi.fn()}
+        projectSessionId={1}
+        projectRevision={1}
         onOpenEffectInterface={vi.fn()}
         onRemoveSubChannel={vi.fn()}
       />,

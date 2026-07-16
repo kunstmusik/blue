@@ -191,38 +191,42 @@ Then adapt existing controlled editor bodies. Avoid creating parallel type-speci
 
 ## Phase 7: Workbench And Renderer
 
-Implement the shell/layout migration before contextual routes:
+Implement the shell/layout migration before direct-manipulation routes:
 
-1. Always mount `WorkbenchShell`; render Welcome as a central panel with no project.
+1. Always mount `WorkbenchShell`; render Welcome as the standalone full-window surface outside Dockview when no project is open.
 2. Add one static `LibrariesTopComponent` in the right properties group.
 3. Bump/migrate the workbench envelope across Dockview, auxiliary, minimized, slide-out, floating, and closed-origin state.
-4. Add dynamic `libraryItemEditor` panels with stable persisted parameters and missing-item restore.
-5. Add library/view stores for lazy hierarchy, filters, search, selection, target banner, and actions.
+4. Add dynamic `libraryItemEditor` panels titled `Library Item`, with stable persisted parameters, the existing address/breadcrumb header, native type-specific bodies, preview/pin behavior, and missing-item restore.
+5. Add library/view stores for lazy hierarchy, filters, search, selection, transient typed clipboard state, and one compact vertical-ellipsis action menu.
 6. Reuse/generalize the existing Effects tree behavior rather than maintaining two trees.
-7. Add controlled Instrument/UDO/Effect/SoundObject editor bodies.
+7. Add controlled Instrument/UDO/Effect/SoundObject editor bodies and remove the supported-item raw XML textarea.
+8. Add inline double-click/F2 rename and scoped right-click/keyboard context menus; remove persistent row CRUD and Insert controls.
 
 Renderer acceptance tests:
 
-- no-project browse/search/preview/edit/import/export/history/recovery;
+- no-project browse/search/edit/import/export/history/recovery;
 - All and four type filters; case-insensitive substring search; duplicate-name disambiguation;
-- explicit unavailable preview fields and unsupported warning/read-only behavior;
+- unsupported warning/read-only behavior without default raw XML display;
+- supported selections render the full native type editor under the address header;
 - one clean preview tab may be replaced; dirty/explicitly pinned tabs never are;
 - first edit pins automatically; duplicate open focuses existing tab;
 - closing Libraries leaves editor sessions unchanged;
-- stale target disables Insert and explains why;
+- tree rows have no persistent Rename/Duplicate/Delete/Insert buttons; context menus have mouse/keyboard parity;
+- stale or invalid project targets reject drop/Paste with exact feedback and zero mutation;
 - Save/Revert/conflict/missing states mirror main snapshots;
-- accessible `Library Actions` menu contains all required commands.
+- accessible `Library actions` ellipsis menu contains all panel-level commands and is the only persistent action affordance in the healthy header.
 
-## Phase 8: Contextual Routes And Legacy Retirement
+## Phase 8: Direct Placement And Legacy Retirement
 
-Route all entry points to the same panel:
+Route typed drag/drop and destination Paste through the existing main preview/apply service:
 
-- Orchestra → Instruments + Project Orchestra target;
-- project UDO editor → UDOs + project UDO target;
-- mixer chain → Effects + exact chain position;
-- Score → SoundObjects + explicit path/layer/time;
-- legacy Effects Library menu → Effects with no fabricated target;
-- Window menu → focus/reveal current Libraries placement.
+- Orchestra accepts Instruments at exact table row/end boundaries;
+- project UDO editor accepts UDOs at exact table row/end boundaries;
+- mixer pre/post chains accept Effects at exact insertion gaps;
+- Score accepts SoundObjects at explicit path/layer/time coordinates;
+- shared SoundObjects require the existing explicit instance/independent choice;
+- legacy Effects Library menu reveals Effects with no fabricated target;
+- Window menu focuses/reveals current Libraries placement.
 
 After callers migrate and tests pass:
 
@@ -230,6 +234,7 @@ After callers migrate and tests pass:
 - remove the session-only Effects repository as source of truth;
 - remove `TemporaryInstrumentLibraryPanel` and its active split region;
 - remove embedded mixer category menus that bypass the centralized target workflow;
+- remove `Browse Instruments`, `Browse UDO Library`, `Browse SoundObjects`, and `Add Effect from Library…` controls;
 - retain only intentionally needed project Effect editor windows and reusable editor bodies.
 
 ## Full Verification
@@ -253,49 +258,59 @@ Use a disposable Electron user-data directory and copied Java fixtures; never po
 2. Repeat with one corrupt file and three valid files; confirm partial success and normal app use.
 3. Start with no Java files; confirm empty usable store, `skipped`, and no scan on restart.
 4. Browse/edit a user item with no project; restart and confirm identity/content.
-5. Open two pinned item editors plus a clean preview; change selection 100 times and confirm no pinned/dirty replacement.
+5. Open two pinned native item editors plus a clean preview editor; change selection 100 times and confirm no pinned/dirty replacement and no supported-item raw XML textarea.
 6. Create an external edit conflict and exercise all three choices.
-7. Insert each type into a valid project target, save, hide/remove the user database, reopen the project, and verify independent/shared behavior.
+7. Drop and keyboard-Paste each type into an exact valid project target, save, hide/remove the user database, reopen the project, and verify independent/shared behavior; repeat with stale/invalid targets and verify zero mutation.
 8. Delete a shared SoundObject definition with linked instances and confirm counts/removal.
 9. Export all four formats, import them into an empty disposable store, and compare hierarchy/order/content/reports.
 10. Inject export replacement failure and verify every prior destination file.
 11. Corrupt/lock the database; confirm recovery choices and continued project work.
 12. Restore layouts from legacy versions containing the old SoundObject panel in docked, minimized, floating, and closed states; confirm exactly one Libraries panel.
+13. Verify the healthy Libraries panel has no persistent migration/action banner, row CRUD buttons, Browse buttons, or Insert button; exercise all node operations by right-click and `Shift+F10`/Context Menu key.
 
-## Verification Record — 2026-07-15
+## Verification Record — Corrective UX, 2026-07-16
 
-No acceptance expectations changed during implementation.
+The corrective renderer, direct-placement, organization, editor-session, migration, interchange, and recovery slices were verified against disposable in-memory/on-disk databases and headless DOM workbench fixtures. No real Java Blue configuration or Electron user-data directory was modified.
 
-The full acceptance matrix was executed against disposable temporary databases, copied XML fixtures, and headless DOM workbench fixtures. No real Java Blue configuration or user-data directory was used.
-
-| Matrix coverage | Verification evidence |
-|-----------------|-----------------------|
-| Four valid first-run sources, partial migration with one corrupt source, no-source skip, unchanged source bytes | `automatic-migration.test.ts`, `automatic-migration-recovery.test.ts`, `migration-state-store.test.ts` |
-| No-project browse/search/preview/edit and restart-stable identity | `browse-search.test.ts`, `repository.test.ts`, `library-store.test.ts`, `libraries-panel.test.tsx` |
-| Two pinned editors, one clean preview, and 100 selection changes | `editor-session-service.test.ts` |
-| Reload Latest, reviewed Overwrite, and Cancel conflict choices | `editor-session-service.test.ts`, `library-editing.test.tsx` |
-| Instrument, UDO, Effect, independent SoundObject, and shared SoundObject insertion plus stale-target rejection and reopen portability | `project-transfer.test.ts`, `library-transfer.test.ts`, `library-target-routing.test.tsx` |
-| Shared SoundObject usage counting and guarded definition/instance deletion | `project-item-editing.test.ts` |
-| Four-format Export All, import/reimport, exact duplicate handling, history, and conditional undo | `export-compatibility.test.ts`, `manual-import-preview.test.ts`, `manual-import-execution.test.ts`, `library-interchange.test.tsx` |
-| Atomic export rollback restores every prior destination | `export-transaction.test.ts` |
-| Corrupt, locked, newer-version, backup, fresh-store, and non-library failure isolation choices | `repository-recovery.test.ts`, `schema-upgrade.test.ts`, `service-recovery.test.ts`, `failure-isolation.test.ts`, `library-recovery.test.tsx` |
-| Accessible actions/tree/dialogs and legacy docked/minimized/floating/closed layout convergence | `libraries-panel.test.tsx`, `library-editing.test.tsx`, `unified-library-workbench.test.tsx`, `workbench-auxiliary.test.ts`, `workbench-store.test.ts` |
+| Corrective acceptance coverage | Verification evidence |
+|-------------------------------|-----------------------|
+| Compact healthy Libraries panel, one labeled ellipsis, no persistent banner/action row/embedded preview/row CRUD/Insert controls | `libraries-panel.test.tsx`, `library-migration-summary.test.tsx`, `library-interchange.test.tsx` |
+| Standalone full-window Welcome and explicit no-project Libraries reveal | `unified-library-workbench.test.tsx`, `failure-isolation.test.ts` |
+| Generic `Library Item` workbench title, retained address header, clean-preview reuse, first-edit pinning, and dirty/pinned protection | `library-editor-workbench.test.tsx`, `editor-session-service.test.ts`, `editor-lifecycle.test.ts` |
+| Native controlled Instrument, UDO, Effect, and SoundObject editors; unsupported read-only fallback; no supported-item XML textarea | `editor-adapters.test.ts`, `library-editing.test.tsx`, `library-editor-workbench.test.tsx` |
+| Name-only inline rename, `F2`/Enter/Escape, right-click/`Shift+F10`, capability-scoped commands, revision-bound copy/cut/Paste | `library-editing.test.tsx`, `library-store.test.ts`, `repository-mutations.test.ts` |
+| Affected-count deletion, dirty Save/Discard/Cancel, editor closure, clipboard clearing, and shared-project consequences | `library-mutation-preview.test.ts`, `library-store.test.ts`, `project-item-editing.test.ts` |
+| Opaque expiring drag sessions with no XML, one-time consumption, cancellation, and source revision revalidation | `drag-session-service.test.ts`, `unified-library.test.ts` |
+| Exact Orchestra row/end, UDO row/end, mixer pre/post gap, and nested Score path/layer/time drop and keyboard-Paste placement | `orchestra-library-drop.test.tsx`, `udo-library-drop.test.tsx`, `mixer-library-drop.test.tsx`, `score-library-drop.test.tsx`, `project-transfer.test.ts` |
+| Incompatible/stale transfer feedback and zero mutation; shared SoundObject independent/instance choice | `library-target-routing.test.tsx`, `project-transfer.test.ts`, `libraries-panel.test.tsx`, `library-editing.test.tsx` |
+| Non-blocking migration notice plus durable report/history; compact interchange menu and focused dialogs | `library-migration-summary.test.tsx`, `library-interchange.test.tsx`, `automatic-migration.test.ts` |
+| Recovery-only replacement, preserved originals, no destructive default, continued non-library work, compact restoration | `library-recovery.test.tsx`, `failure-isolation.test.ts`, `service-recovery.test.ts` |
+| Lazy 10,000-item browse/search does not decode payloads or open editor sessions before selection | `performance.test.ts` |
 
 Commands and results:
 
 ```text
+pnpm --filter @blue/app test
+  PASS — 222 files; 2,041 passed / 2 skipped
 pnpm test
-  PASS — @blue/data 1,266; @blue/app 2,010 passed / 2 skipped;
+  PASS — @blue/data 1,266; @blue/app 2,041 passed / 2 skipped;
          @blue/engine-client 18; blue-cli 5; Java Maven suite passed
+pnpm --filter @blue/data build
+pnpm --filter @blue/app build:main
+pnpm --filter @blue/app build:preload
+pnpm --filter @blue/app build:renderer
+  PASS — data, Electron main/preload, repository worker emission, and Vite renderer
 pnpm build
-  PASS — all workspace packages, Electron main/preload, and Vite renderer
+  PASS — all workspace packages
 pnpm lint
   PASS — all configured workspace lint targets
-pnpm --filter @blue/app exec vitest run --config vitest.config.ts src/main/unified-library/performance.test.ts --reporter=verbose
-  PASS — 10,000-item browse/search/preview/pagination test in 575 ms
+pnpm --filter @blue/app exec vitest run --config vitest.config.ts src/main/unified-library/performance.test.ts
+  PASS — 10,000-item lazy browse/search/preview regression; test body 573 ms
 git diff --check
   PASS
 ```
+
+The corrective automated matrix is complete. A live Electron visual/interaction smoke remains required before release for compact and narrow sizing, docked/minimized/floating/restored placement, and OS-level mouse/keyboard behavior. This manual-only release check is intentionally not represented as headless test coverage.
 
 The Vite large-chunk notice and Node's experimental `node:sqlite` notice remain informational; the exact Electron/Node/SQLite runtime is pinned and covered by `sqlite-runtime.test.ts` and the CI packaged smoke matrix.
 

@@ -13,6 +13,7 @@ import { useDocumentMouseDownOutside } from '../../../../hooks/use-document-mous
 import ArrangementContextMenu from './ArrangementContextMenu';
 import { createArrangementColumns } from './arrangement-table/arrangement-columns';
 import type { ArrangementPanelProps } from './types';
+import { LibraryTableDropMarker } from '../../../libraries/LibraryDropMarker';
 
 const INSTRUMENT_TYPES: Array<{ type: SupportedNewInstrumentType; label: string }> = [
   { type: 'generic', label: 'Generic Instrument' },
@@ -27,6 +28,8 @@ function ArrangementPanel({
   selectedAssignmentId,
   onSelectAssignment,
   onOrchestraPatch,
+  projectSessionId,
+  projectRevision,
 }: ArrangementPanelProps): React.ReactElement {
   const [clipboardInstrument, setClipboardInstrument] = useState<InstrumentSnapshot | null>(null);
   const [addMenuOpen, setAddMenuOpen] = useState(false);
@@ -211,7 +214,7 @@ function ArrangementPanel({
         </div>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-auto">
+      <div className="min-h-0 flex-1 overflow-auto" data-library-autoscroll>
         <table
           ref={tableRef}
           className="border-collapse text-left text-body"
@@ -241,11 +244,16 @@ function ArrangementPanel({
             ))}
           </thead>
           <tbody>
-            {table.getRowModel().rows.map((row) => {
+            {table.getRowModel().rows.map((row, index) => {
               const selected = row.original.assignmentId === selectedAssignmentId;
               return (
+                <React.Fragment key={row.id}>
+                <LibraryTableDropMarker
+                  target={{ kind: 'orchestra', projectSessionId, projectRevision, insertIndex: index }}
+                  colSpan={row.getVisibleCells().length}
+                  label={`Insert Instrument before ${row.original.instrumentName}`}
+                />
                 <ArrangementContextMenu
-                  key={row.id}
                   row={row.original}
                   hasClipboard={clipboardInstrument !== null}
                   onCopy={copyAssignment}
@@ -271,8 +279,14 @@ function ArrangementPanel({
                     ))}
                   </tr>
                 </ArrangementContextMenu>
+                </React.Fragment>
               );
             })}
+            <LibraryTableDropMarker
+              target={{ kind: 'orchestra', projectSessionId, projectRevision, insertIndex: rows.length }}
+              colSpan={Math.max(1, table.getAllLeafColumns().length)}
+              label="Insert Instrument at end"
+            />
           </tbody>
         </table>
 

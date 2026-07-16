@@ -26,6 +26,7 @@ import {
 import EffectEditorPanel from '../../../effect-editor/EffectEditorPanel';
 import { createDefaultEffectXml } from '../../../../utils/program-settings-defaults';
 import EffectsChainContextMenu from './EffectsChainContextMenu';
+import { LibraryBlockDropMarker } from '../../../libraries/LibraryDropMarker';
 
 const MIXER_SLIDER_WIDTH = 32;
 const MIXER_TRACK_W = 4;
@@ -38,7 +39,8 @@ interface ChannelStripProps {
   isMaster: boolean;
   isSubChannel: boolean;
   onPatch: (patch: Record<string, unknown>) => void;
-  onOpenLibrary: (channelId: string, chain: MixerChainKind, insertIndex: number) => void;
+  projectSessionId: number;
+  projectRevision: number;
   onOpenEffectInterface: (request: EffectEditorRequest) => void;
   onRemoveSubChannel?: (channelId: string) => void;
 }
@@ -241,7 +243,8 @@ function ChainList({
   onOpenEffectInterface,
   onOpenSendEditor,
   onOpenEditEffectDialog,
-  onOpenLibrary,
+  projectSessionId,
+  projectRevision,
 }: {
   label: string;
   entries: MixerChainEntrySnapshot[];
@@ -253,7 +256,8 @@ function ChainList({
   onOpenEffectInterface: (entry: MixerEffectEntrySnapshot) => void;
   onOpenSendEditor: (entry: MixerSendEntrySnapshot, chain: MixerChainKind) => void;
   onOpenEditEffectDialog: (entry: MixerEffectEntrySnapshot, chain: MixerChainKind) => void;
-  onOpenLibrary: () => void;
+  projectSessionId: number;
+  projectRevision: number;
 }): React.ReactElement {
   const [selectedIndex, setSelectedIndex] = useState(-1);
 
@@ -303,7 +307,6 @@ function ChainList({
         onOpenEffectEditor={onOpenEffectInterface}
         onOpenSendEditor={onOpenSendEditor}
         onOpenEditEffectDialog={onOpenEditEffectDialog}
-        onOpenLibrary={onOpenLibrary}
       >
         <div
           className="mixer-chain-list"
@@ -312,12 +315,21 @@ function ChainList({
           role="listbox"
           aria-label={`${label} chain for ${channel.name}`}
         >
-          {entries.length === 0 ? (
-            <div className="mixer-chain-empty">&nbsp;</div>
-          ) : (
-            entries.map((entry, index) => (
+          {entries.map((entry, index) => (
+              <React.Fragment key={entry.entryId}>
+              <LibraryBlockDropMarker
+                target={{
+                  kind: 'effectChain',
+                  projectSessionId,
+                  projectRevision,
+                  channelId: channel.id,
+                  chain,
+                  insertIndex: index,
+                  chainRevision: entries.map((candidate) => candidate.entryId).join(':'),
+                }}
+                label={`Insert Effect before ${entry.kind === 'effect' ? entry.name : entry.sendChannel}`}
+              />
               <div
-                key={entry.entryId}
                 className={`mixer-chain-entry-wrapper ${index === selectedIndex ? 'mixer-chain-entry-wrapper--selected' : ''}`}
                 onClick={() => handleItemClick(index)}
                 onDoubleClick={() => handleItemDoubleClick(index)}
@@ -326,8 +338,20 @@ function ChainList({
               >
                 <ChainEntry entry={entry} />
               </div>
-            ))
-          )}
+              </React.Fragment>
+            ))}
+          <LibraryBlockDropMarker
+            target={{
+              kind: 'effectChain',
+              projectSessionId,
+              projectRevision,
+              channelId: channel.id,
+              chain,
+              insertIndex: entries.length,
+              chainRevision: entries.map((candidate) => candidate.entryId).join(':'),
+            }}
+            label={`Insert Effect at end of ${label} chain`}
+          />
         </div>
       </EffectsChainContextMenu>
     </div>
@@ -461,7 +485,8 @@ export default function ChannelStrip({
   isMaster,
   isSubChannel,
   onPatch,
-  onOpenLibrary,
+  projectSessionId,
+  projectRevision,
   onOpenEffectInterface,
   onRemoveSubChannel,
 }: ChannelStripProps): React.ReactElement {
@@ -678,7 +703,8 @@ export default function ChannelStrip({
         onOpenEffectInterface={handleOpenInterface}
         onOpenSendEditor={handleOpenSendEditorForEntry}
         onOpenEditEffectDialog={handleOpenEditDialog}
-        onOpenLibrary={() => onOpenLibrary(channel.id, 'pre', channel.preChain.length)}
+        projectSessionId={projectSessionId}
+        projectRevision={projectRevision}
       />
 
       <div className="mixer-level-section">
@@ -726,7 +752,8 @@ export default function ChannelStrip({
         onOpenEffectInterface={handleOpenInterface}
         onOpenSendEditor={handleOpenSendEditorForEntry}
         onOpenEditEffectDialog={handleOpenEditDialog}
-        onOpenLibrary={() => onOpenLibrary(channel.id, 'post', channel.postChain.length)}
+        projectSessionId={projectSessionId}
+        projectRevision={projectRevision}
       />
 
       {!isMaster && (

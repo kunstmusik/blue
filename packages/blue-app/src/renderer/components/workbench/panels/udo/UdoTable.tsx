@@ -4,6 +4,7 @@ import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import { ChevronDown, Import, Plus } from 'lucide-react';
 
 import type { UdoDefinitionSnapshot } from '../../../../../shared/project-editor';
+import { LibraryBlockDropMarker, LibraryTableDropMarker } from '../../../libraries/LibraryDropMarker';
 
 export interface UdoSelectionGesture {
   range: boolean;
@@ -27,6 +28,7 @@ interface UdoTableProps {
   onMoveSelectionUp: () => void;
   onMoveSelectionDown: () => void;
   canPaste: boolean;
+  libraryDropTarget?: { projectSessionId: number; projectRevision: number };
 }
 
 function MenuItem({
@@ -66,6 +68,7 @@ export default function UdoTable({
   onMoveSelectionUp,
   onMoveSelectionDown,
   canPaste,
+  libraryDropTarget,
 }: UdoTableProps): React.ReactElement {
   const hasUdos = udolist.length > 0;
   const hasSelection = selectedIndices.length > 0;
@@ -129,10 +132,16 @@ export default function UdoTable({
         </DropdownMenu.Root>
       </div>
 
-      <div className="flex-1 overflow-auto">
+      <div className="flex-1 overflow-auto" data-library-autoscroll>
         {!hasUdos ? (
-          <div className="flex h-full items-center justify-center text-sm text-app-text-muted">
-            No UDOs defined. Click &quot;Add&quot; to create one.
+          <div className="flex h-full flex-col justify-center gap-2 px-3 text-sm text-app-text-muted">
+            {libraryDropTarget && (
+              <LibraryBlockDropMarker
+                target={{ kind: 'projectUdo', ...libraryDropTarget, insertIndex: 0 }}
+                label="Insert UDO at end"
+              />
+            )}
+            <p className="text-center">No UDOs defined. Click &quot;Add&quot; to create one.</p>
           </div>
         ) : (
           <table className="w-full text-left text-body">
@@ -150,6 +159,14 @@ export default function UdoTable({
               {udolist.map((udo, index) => {
                 const isSelected = selectedIndices.includes(index);
                 return (
+                  <React.Fragment key={`${udo.name}-${index}`}>
+                  {libraryDropTarget && (
+                    <LibraryTableDropMarker
+                      target={{ kind: 'projectUdo', ...libraryDropTarget, insertIndex: index }}
+                      colSpan={4}
+                      label={`Insert UDO before ${udo.name}`}
+                    />
+                  )}
                   <ContextMenu.Root key={`${udo.name}-${index}`}>
                     <ContextMenu.Trigger asChild>
                       <tr
@@ -234,8 +251,16 @@ export default function UdoTable({
                       </ContextMenu.Content>
                     </ContextMenu.Portal>
                   </ContextMenu.Root>
+                  </React.Fragment>
                 );
               })}
+              {libraryDropTarget && (
+                <LibraryTableDropMarker
+                  target={{ kind: 'projectUdo', ...libraryDropTarget, insertIndex: udolist.length }}
+                  colSpan={4}
+                  label="Insert UDO at end"
+                />
+              )}
             </tbody>
           </table>
         )}

@@ -2,6 +2,7 @@ import { GROUP_SPACER } from "./types";
 import type { ScoreLayerGroupSnapshot, ScoreObjectLocationRef } from "./types";
 import type { SnapValueName } from "@blue/data";
 import type { MeterMapSnapshot } from "../../../../../shared/project-editor";
+import type { ScoreInsertionLocation } from "../../../../../shared/unified-library";
 import ScoreTimeCanvas from "./layer-groups/ScoreTimeCanvas";
 import AudioLayerGroupCanvas from "./layer-groups/AudioLayerGroupCanvas";
 import PatternsLayerGroupCanvas from "./layer-groups/PatternsLayerGroupCanvas";
@@ -11,7 +12,16 @@ type ScoreMode = 'score' | 'singleLine' | 'multiLine';
 
 interface Props {
   layerGroups: ScoreLayerGroupSnapshot[];
-  onOpenNested: (groupId: string, label: string, location: ScoreObjectLocationRef) => void;
+  onOpenNested: (
+    groupId: string,
+    label: string,
+    location: ScoreObjectLocationRef,
+    scorePath: Pick<ScoreInsertionLocation, 'rootGroupId' | 'containerPath'>,
+  ) => void;
+  projectSessionId: number;
+  projectRevision: number;
+  scoreRootGroupId?: string;
+  scoreContainerPath?: ScoreInsertionLocation['containerPath'];
   mode?: ScoreMode;
   pixelsPerBeat: number;
   totalBeats: number;
@@ -25,6 +35,10 @@ interface Props {
 export default function LayerPanel({
   layerGroups,
   onOpenNested,
+  projectSessionId,
+  projectRevision,
+  scoreRootGroupId,
+  scoreContainerPath = [],
   mode = 'score',
   pixelsPerBeat,
   totalBeats,
@@ -67,6 +81,10 @@ export default function LayerPanel({
                 <ScoreTimeCanvas
                   group={group}
                   rootGroupIndex={gi}
+                  projectSessionId={projectSessionId}
+                  projectRevision={projectRevision}
+                  scoreRootGroupId={scoreRootGroupId ?? group.groupId}
+                  scoreContainerPath={scoreRootGroupId ? scoreContainerPath : []}
                   mode={mode}
                   totalBeats={totalBeats}
                   pixelsPerBeat={pixelsPerBeat}
@@ -85,11 +103,17 @@ export default function LayerPanel({
                       if (found) {
                         containerName = found.name;
                         itemLocation = found.editorTarget?.location;
+                        if (itemLocation) {
+                          onOpenNested(objectId, containerName, itemLocation, {
+                            rootGroupId: scoreRootGroupId ?? group.groupId,
+                            containerPath: [
+                              ...(scoreRootGroupId ? scoreContainerPath : []),
+                              { layerId: layer.layerId, objectIdentity: found.objectId },
+                            ],
+                          });
+                        }
                         break;
                       }
-                    }
-                    if (itemLocation) {
-                      onOpenNested(objectId, containerName, itemLocation);
                     }
                   }}
                 />

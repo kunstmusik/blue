@@ -16,6 +16,7 @@ interface UdoWorkspacePanelProps {
   onReorder: (from: number, to: number) => void;
   onUpdateUdo: (index: number, patch: Partial<UdoDefinitionSnapshot>) => void;
   onConvertStyle: (index: number, style: 'CLASSIC' | 'MODERN') => void;
+  libraryDropTarget?: { projectSessionId: number; projectRevision: number };
 }
 
 function createRange(start: number, end: number): number[] {
@@ -42,6 +43,7 @@ export default function UdoWorkspacePanel({
   onReorder,
   onUpdateUdo,
   onConvertStyle,
+  libraryDropTarget,
 }: UdoWorkspacePanelProps): React.ReactElement {
   const [selectedIndices, setSelectedIndices] = useState<number[]>([]);
   const [clipboard, setClipboard] = useState<UdoDefinitionSnapshot[]>([]);
@@ -295,6 +297,7 @@ export default function UdoWorkspacePanel({
           onMoveSelectionUp={handleMoveSelectionUp}
           onMoveSelectionDown={handleMoveSelectionDown}
           canPaste={clipboard.length > 0}
+          libraryDropTarget={libraryDropTarget}
         />
       }
       second={

@@ -1,15 +1,11 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Plus } from 'lucide-react';
 
-import type {
-  MixerChainKind,
-  MixerPatch,
-} from '../../../../shared/project-editor';
-import { useProjectStore } from '../../../stores/project-store';
+import type { MixerPatch } from '../../../../shared/project-editor';
+import { getProjectDocumentRevision, useProjectStore } from '../../../stores/project-store';
 import { usePlaybackStore } from '../../../stores/playback-store';
 import { useBlueLiveStore } from '../../../stores/blue-live-store';
 import { deriveMixerPlaybackUiState } from '../../../stores/mixer-playback-ui';
-import { openUnifiedLibraries } from '../../../stores/library-routing';
 import ChannelStrip from './mixer/ChannelStrip';
 
 export default function MixerPanel(): React.ReactElement {
@@ -18,6 +14,7 @@ export default function MixerPanel(): React.ReactElement {
   const applyProjectDocumentPatch = useProjectStore((state) => state.applyProjectDocumentPatch);
   const flushPendingPatches = useProjectStore((state) => state.flushPendingPatches);
   const projectSessionId = useProjectStore((state) => state.sessionId);
+  const projectRevision = getProjectDocumentRevision();
 
   const playbackStatus = usePlaybackStore((s) => s.status);
   const blueLiveStatus = useBlueLiveStore((s) => s.status);
@@ -39,20 +36,6 @@ export default function MixerPanel(): React.ReactElement {
       void applyProjectDocumentPatch({ mixer: patch as MixerPatch });
     },
     [applyProjectDocumentPatch],
-  );
-
-  const handleOpenLibrary = useCallback(
-    (channelId: string, chain: MixerChainKind, insertIndex: number) => {
-      void openUnifiedLibraries({
-        type: 'effectTarget',
-        projectSessionId,
-        channelId,
-        chain,
-        insertIndex,
-        targetRevision: 'current',
-      });
-    },
-    [projectSessionId],
   );
 
   const handleOpenEffectInterface = useCallback((request: { ownerType: 'project' | 'library'; effectId: string; projectRef?: { channelId: string; chain: 'pre' | 'post'; entryId: string }; libraryRef?: { libraryEffectId: string } }) => {
@@ -184,7 +167,8 @@ export default function MixerPanel(): React.ReactElement {
                         isMaster={false}
                         isSubChannel={false}
                         onPatch={handleMixerPatch}
-                        onOpenLibrary={handleOpenLibrary}
+                        projectSessionId={projectSessionId}
+                        projectRevision={projectRevision}
                         onOpenEffectInterface={handleOpenEffectInterface}
                       />
                     ))}
@@ -204,7 +188,8 @@ export default function MixerPanel(): React.ReactElement {
                       isMaster={false}
                       isSubChannel={false}
                       onPatch={handleMixerPatch}
-                      onOpenLibrary={handleOpenLibrary}
+                      projectSessionId={projectSessionId}
+                      projectRevision={projectRevision}
                       onOpenEffectInterface={handleOpenEffectInterface}
                     />
                   ))}
@@ -223,7 +208,8 @@ export default function MixerPanel(): React.ReactElement {
                       isMaster={false}
                       isSubChannel
                       onPatch={handleMixerPatch}
-                      onOpenLibrary={handleOpenLibrary}
+                      projectSessionId={projectSessionId}
+                      projectRevision={projectRevision}
                       onOpenEffectInterface={handleOpenEffectInterface}
                       onRemoveSubChannel={handleRemoveSubChannel}
                     />
@@ -240,7 +226,8 @@ export default function MixerPanel(): React.ReactElement {
               isMaster
               isSubChannel={false}
               onPatch={handleMixerPatch}
-              onOpenLibrary={handleOpenLibrary}
+              projectSessionId={projectSessionId}
+              projectRevision={projectRevision}
               onOpenEffectInterface={handleOpenEffectInterface}
             />
           </div>

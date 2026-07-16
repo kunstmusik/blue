@@ -21,7 +21,6 @@ interface EffectsChainContextMenuProps {
   onOpenEffectEditor: (entry: MixerEffectEntrySnapshot) => void;
   onOpenSendEditor: (entry: MixerSendEntrySnapshot, chain: MixerChainKind) => void;
   onOpenEditEffectDialog: (entry: MixerEffectEntrySnapshot, chain: MixerChainKind) => void;
-  onOpenLibrary: () => void;
 }
 
 let bufferedEntry: MixerChainEntrySnapshot | null = null;
@@ -58,7 +57,6 @@ export default function EffectsChainContextMenu({
   onOpenEffectEditor,
   onOpenSendEditor,
   onOpenEditEffectDialog,
-  onOpenLibrary,
 }: EffectsChainContextMenuProps): React.ReactElement {
   const selected = selectedIndex >= 0 && selectedIndex < entries.length ? entries[selectedIndex] : null;
   const isEffect = selected?.kind === 'effect';
@@ -74,10 +72,6 @@ export default function EffectsChainContextMenu({
           >
             Add New Effect
           </MenuItem>
-
-          <MenuItem onSelect={onOpenLibrary}>Add Effect from Library…</MenuItem>
-
-          <ContextMenu.Separator className="editor-context-menu__separator" />
 
           <MenuItem
             disabled={isMaster}

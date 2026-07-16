@@ -2,7 +2,7 @@ import { useRef, useCallback, useState, useEffect, useLayoutEffect } from "react
 import { createPortal } from "react-dom";
 import * as ContextMenu from "@radix-ui/react-context-menu";
 import { Check, ChevronRight, ChevronDown } from "lucide-react";
-import { useProjectStore } from "../../../stores/project-store";
+import { getProjectDocumentRevision, useProjectStore } from "../../../stores/project-store";
 import type {
   ScoreDocumentSnapshot,
   ScoreLayerGroupSnapshot,
@@ -30,7 +30,6 @@ import { useScoreRulerSelection } from "./score/useScoreRulerSelection";
 import { usePlaybackStore } from "../../../stores/playback-store";
 import ScoreOverlayLines from "./score/ScoreOverlayLines";
 import NoteProcessorChainDialog from "./score-object/note-processors/NoteProcessorChainDialog";
-import { openUnifiedLibraries } from "../../../stores/library-routing";
 
 type ChainDialogTarget =
   | { scope: 'soundLayer'; groupId: string; layerIndex: number }
@@ -541,32 +540,6 @@ export default function ScorePanel() {
           return group?.noteProcessorChain;
         }}
       />
-      <div className="flex justify-end border-b border-app-border px-2 py-1">
-        <button
-          type="button"
-          disabled={!effectiveLayerGroups[0]?.layers[0]}
-          className="rounded border border-app-border px-2 py-1 text-xs disabled:opacity-50"
-          onClick={() => {
-            const group = effectiveLayerGroups[0];
-            const layer = group?.layers[0];
-            if (!group || !layer) return;
-            void openUnifiedLibraries({
-              type: 'soundObjectTarget',
-              projectSessionId: sessionId,
-              location: {
-                rootGroupId: group.groupId,
-                containerPath: [],
-                layerId: layer.layerId,
-                startTime: transport.renderStartTime,
-              },
-              targetRevision: 'current',
-            });
-          }}
-        >
-          Browse SoundObjects
-        </button>
-      </div>
-
       <SplitPane
         ariaLabel="Resize score layer headers and timeline"
         className="flex-1 min-h-0 bg-app-canvas"
@@ -626,6 +599,7 @@ export default function ScorePanel() {
             <div className="relative flex-1 min-h-0">
               <div
                 ref={scrollContainerRef}
+                data-library-autoscroll
                 className="score-timeline-scroll absolute inset-0 overflow-auto"
                 onScroll={handleTimelineScroll}
                 onMouseDown={handleTimelineBackgroundMouseDown}
@@ -633,6 +607,10 @@ export default function ScorePanel() {
                 <LayerPanel
                   layerGroups={effectiveLayerGroups}
                   onOpenNested={navigateToGroup}
+                  projectSessionId={sessionId}
+                  projectRevision={getProjectDocumentRevision()}
+                  scoreRootGroupId={activeSegment?.scorePath?.rootGroupId}
+                  scoreContainerPath={activeSegment?.scorePath?.containerPath}
                   mode={mode}
                   pixelsPerBeat={pixelsPerBeat}
                   totalBeats={totalBeats}

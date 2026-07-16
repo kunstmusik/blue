@@ -1,6 +1,7 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import type { LegacyLibraryDocumentPlan } from '@blue/data';
 import { UnifiedLibraryRepositoryClient } from './repository-client';
+import { UnifiedLibraryService } from './service';
 
 describe('10,000-item library performance', () => {
   it('keeps browse, indexed search, preview lookup, and pagination bounded', async () => {
@@ -45,19 +46,39 @@ describe('10,000-item library performance', () => {
       await client.importLegacyDocument({ batchId: 'benchmark', sourceId: 'benchmark-source', sourcePath: 'memory', sourceKind: 'primary', plan });
 
       const root = await client.getRoot('instrument');
+      const service = new UnifiedLibraryService(':memory:', () => client);
+      await service.start();
+      const payloadSpy = vi.spyOn(client, 'getItemPayload');
+      const editorSpy = vi.spyOn(service, 'openLibraryItemEditor');
       const browseStart = performance.now();
-      const firstPage = await client.listChildrenPage(root.id, 0, 100);
+      const firstPage = await service.browseLibraries({
+        parent: { scope: 'user', libraryType: 'instrument', nodeId: root.id },
+        limit: 100,
+      });
       const browseMs = performance.now() - browseStart;
       const searchStart = performance.now();
-      const search = await client.searchItems('item 09999', 'instrument', 0, 20);
+      const search = await service.searchLibraries({
+        query: 'item 09999',
+        typeFilter: 'instrument',
+        projectSessionId: null,
+        limit: 20,
+      });
       const searchMs = performance.now() - searchStart;
+      expect(firstPage).toMatchObject({ ok: true, value: { children: { length: 100 } } });
+      expect(search).toMatchObject({
+        ok: true,
+        value: { results: [{ displayName: 'Item 09999' }] },
+      });
+      expect(payloadSpy).not.toHaveBeenCalled();
+      expect(editorSpy).not.toHaveBeenCalled();
+      if (!search.ok) throw new Error('Expected indexed search to succeed');
       const previewStart = performance.now();
-      const payload = await client.getItemPayload(search.items[0]!.node.id);
+      const preview = await service.getLibraryItemPreview(search.value.results[0]!.key);
       const previewMs = performance.now() - previewStart;
 
-      expect(firstPage).toMatchObject({ nodes: { length: 100 }, hasMore: true });
-      expect(search.items[0]?.node.displayName).toBe('Item 09999');
-      expect(payload.embeddedName).toBe('Item 09999');
+      expect(preview).toMatchObject({ ok: true, value: { displayName: 'Item 09999' } });
+      expect(payloadSpy).toHaveBeenCalledTimes(1);
+      expect(editorSpy).not.toHaveBeenCalled();
       expect({ browseMs, searchMs, previewMs }).toMatchObject({
         browseMs: expect.any(Number), searchMs: expect.any(Number), previewMs: expect.any(Number),
       });

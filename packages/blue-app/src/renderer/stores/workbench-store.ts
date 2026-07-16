@@ -52,6 +52,7 @@ import {
 import { buildPlayheadDisplayState } from '../components/menu-bar/toolbar-formatters';
 import type { NativeMenuCommand } from '../../shared/workbench-menu';
 import { useLibraryStore } from './library-store';
+import { useUIStore } from './ui-store';
 import type { LibraryEditorSessionSnapshot } from '../../shared/unified-library';
 import { libraryEditorPanelId } from './library-editor-store';
 import { usePlaybackStore } from './playback-store';
@@ -829,15 +830,14 @@ export const useWorkbenchStore = create<WorkbenchState & WorkbenchActions>()(
       const panelId = libraryEditorPanelId(session.sessionId);
       const existing = api.getPanel(panelId);
       if (existing) {
-        existing.api.setTitle(`${session.displayName}${session.dirty ? ' •' : ''}`);
+        existing.api.setTitle(`Library Item${session.dirty ? ' •' : ''}`);
         existing.api.setActive();
-        existing.group.focus();
         return;
       }
       api.addPanel({
         id: panelId,
         component: 'default',
-        title: `${session.displayName}${session.dirty ? ' •' : ''}`,
+        title: `Library Item${session.dirty ? ' •' : ''}`,
       });
     },
 
@@ -1674,6 +1674,9 @@ export const useWorkbenchStore = create<WorkbenchState & WorkbenchActions>()(
     handleNativeMenuCommand: (command) => {
       switch (command.type) {
         case 'focus-panel':
+          if (command.panelId === 'LibrariesTopComponent') {
+            useUIStore.getState().setActivePanel('workspace');
+          }
           get().openPanel(command.panelId);
           return;
         case 'close-floating-group':
@@ -1684,6 +1687,7 @@ export const useWorkbenchStore = create<WorkbenchState & WorkbenchActions>()(
           return;
         case 'open-effects-library':
           useLibraryStore.getState().setTypeFilter('effect');
+          useUIStore.getState().setActivePanel('workspace');
           get().openPanel('LibrariesTopComponent');
           return;
         case 'toggle-follow-playback':

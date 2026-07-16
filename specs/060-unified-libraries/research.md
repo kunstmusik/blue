@@ -167,11 +167,11 @@ Transfer behavior follows Java/current native rules: Instruments and UDOs deep-c
 - **Let the renderer assemble XML and mutate stores optimistically**: rejected because project session/target validity and dependency checks require canonical main state.
 - **Persist project UDO indexes in editor layouts**: rejected because reorder could silently rebind an editor.
 
-## Decision 8: Main Owns Editor Draft Sessions; Dockview Owns Presentation
+## Decision 8: Main Owns Full Type-Specific Editor Sessions; Dockview Owns Preview/Pin Presentation
 
-**Decision**: Main owns one editor session per logical `(scope, stable locator)` with base revision/hash, draft payload, dirty/validation/conflict/missing state, project session, usage/consequence data, and pin eligibility. Dockview renders dynamic `LibraryItemEditorPanel` instances using session IDs and parameters. Renderer owns preview-tab reuse, explicit pin display, focus, and editor widgets, but not the only copy of an unsaved draft.
+**Decision**: Selecting a supported item opens or updates a dynamic main-area `LibraryItemEditorPanel` titled `Library Item`. The panel retains the existing address/breadcrumb header and hosts the full native editor for its type; a generic raw XML textarea is not the supported-item fallback. Main owns one editor session per logical `(scope, stable locator)` with base revision/hash, draft payload, dirty/validation/conflict/missing state, project session, and usage/consequence data. Renderer owns one clean unpinned preview-tab slot, explicit pin display, focus, and editor widgets, but not the only copy of an unsaved draft.
 
-**Rationale**: Native quit, project close/switch, floating windows, and external mutations are coordinated in main. Main-owned drafts let all entry points focus one session, prevent conflicting unaware editors, guard quit/project replacement, and retain a draft when Save discovers a newer base. It also keeps the Libraries panel independent: closing/collapsing the browser does not affect editors.
+**Rationale**: The auxiliary Libraries panel should remain a compact navigator, while full editing needs the width and familiar placement of Blue's main workspace. Preview-tab reuse makes ordinary browsing lightweight without introducing a separate viewer implementation. First-edit auto-pin and main-owned sessions ensure later selections cannot replace dirty work. Main ownership also guards native quit/project replacement and retains a draft when Save discovers a newer base. Closing or collapsing Libraries does not affect open editors.
 
 Session rules:
 
@@ -186,14 +186,14 @@ Session rules:
 **Alternatives considered**:
 
 - **Renderer-only draft state**: rejected because main-driven quit/project lifecycle and multiple application windows could bypass or duplicate it.
-- **One static editor panel for every item**: rejected because the spec requires pinned comparisons and identity-safe focus.
+- **One static editable panel reused regardless of dirty state**: rejected because selection could silently replace a draft and makes side-by-side or identity-safe editing impossible.
 - **Separate full editors inside the Libraries panel**: rejected by the lightweight preview and workspace-editor requirements.
 
 ## Decision 9: Make The Workbench App-Wide And Migrate Legacy Layout IDs
 
 **Decision**: Always mount `WorkbenchShell`, but preserve the standalone full-window Welcome screen over it until a project loads or the user explicitly opens an app-wide workbench panel. Welcome is not a Dockview panel. Add `LibrariesTopComponent` to the right `properties-main` auxiliary group, normally closed unless user/layout opens it. Bump the workbench envelope and migrate every occurrence of `SoundObjectLibraryTopComponent` to `LibrariesTopComponent`, including Dockview panels, auxiliary lists/active IDs, minimized/slide-out state, floating origins, and closed origins.
 
-The old native `open-effects-library` action and all contextual Browse actions become reveal/filter/target commands for the same panel. `effects-library.main` and `orchestra.library` remain accepted during settings/layout migration but are no longer active UI regions after callers move. The valid remainder of a saved layout is preserved.
+The old native `open-effects-library` command may reveal/filter the same panel for compatibility, but destination-side Browse/Add-from-Library controls are removed rather than converted into insertion modes. `effects-library.main` and `orchestra.library` remain accepted during settings/layout migration but are no longer active UI regions after callers move. The valid remainder of a saved layout is preserved.
 
 **Rationale**: A modal or project-only shell cannot satisfy app-wide browse/edit/import/recovery. Identity migration must cover supplemental layout metadata as well as Dockview JSON or the old panel can reappear/duplicate after restart.
 
@@ -202,16 +202,16 @@ The old native `open-effects-library` action and all contextual Browse actions b
 - **Keep Libraries as a global modal when no project is open**: rejected because it would create two logical experiences and break layout persistence.
 - **Force Libraries open on every startup**: rejected because the spec preserves intentional user closure; only reset/default layout establishes the right-side home.
 
-## Decision 10: Lazy Browse/Search And Cached Safe Preview Metadata
+## Decision 10: Lazy Browse/Search And Cached Safe Navigation Metadata
 
-**Decision**: Tree roots and children load on demand. List/search responses contain only node identity, type, scope, breadcrumb context, support status, display name, revision, and small preview metadata. Full `payload_xml` is fetched only by main-owned preview/editor workflows and never returned for general search results. Results are bounded and cursor-paginated; project results are merged by the service using the same sort/result DTOs.
+**Decision**: Tree roots and children load on demand. List/search responses contain only node identity, type, scope, breadcrumb context, support status, display name, revision, and small navigation metadata. Full `payload_xml` is fetched only by the main-owned editor workflow and never returned for general search results. Results are bounded and cursor-paginated; project results are merged by the service using the same sort/result DTOs.
 
-**Rationale**: This keeps 10,000-item open/search behavior predictable, avoids decoding polymorphic objects during navigation, and limits large/raw IPC payloads. Preview metadata is recomputed atomically on supported Save and conservatively reports `Unavailable` for fields that cannot be extracted safely.
+**Rationale**: This keeps 10,000-item open/search behavior predictable, avoids decoding polymorphic objects during navigation, and limits large/raw IPC payloads. Search/navigation projections are recomputed atomically on supported Save; the full native editor loads only the selected item session.
 
 **Alternatives considered**:
 
 - **Load the complete repository into Zustand**: rejected because raw XML and large editor payloads would inflate renderer memory and complicate cross-window consistency.
-- **Decode every visible item for preview fields**: rejected because unsupported/nested-unsupported objects should not enter mutable loaders and because it undermines responsiveness.
+- **Decode every visible item for navigation fields**: rejected because unsupported/nested-unsupported objects should not enter mutable loaders and because it undermines responsiveness.
 
 ## Decision 11: Test A Compatibility And Failure Corpus Before UI Completion
 
@@ -227,7 +227,7 @@ The old native `open-effects-library` action and all contextual Browse actions b
 8. Four project transfer modes, automation reset where required, shared-instance usage/delete behavior, and SoundObject time-base conversions.
 9. Migration-state × database-state combinations, corrupt sibling sources, backup-only discovery, locks, version upgrades, and source immutability.
 10. Export staging/overwrite/rollback interruption and repository transaction failure injection.
-11. Dynamic editor focus/preview/pin/conflict/missing restore, no-project use, and layout identifier migration across docked/minimized/floating/closed states.
+11. Clean preview-editor reuse, first-edit pinning, dynamic editor focus/conflict/missing restore, no-project use, and layout identifier migration across docked/minimized/floating/closed states.
 12. A generated 10,000-item repository benchmark against SC-006.
 
 **Rationale**: The dominant risks are silent data loss, stale-target mutation, and recovery behavior, not basic component rendering. Tests must prove those boundaries before legacy surfaces are retired.
@@ -235,6 +235,30 @@ The old native `open-effects-library` action and all contextual Browse actions b
 **Alternatives considered**:
 
 - **Rely on hand-created UI smoke data**: rejected because it cannot demonstrate lossless unsupported XML, transaction rollback, or deterministic conflict behavior.
+
+## Decision 12: Use A Compact Navigator, Context Commands, And Typed Direct Manipulation
+
+**Decision**: Libraries contains a compact search/filter control row, the hierarchy, and one vertical-ellipsis menu for panel-level Import, Export, History, and migration-report commands. Successful migration uses a non-blocking summary rather than a persistent header; repository recovery may still replace the tree because it is an exceptional blocking state. Tree rows contain no persistent CRUD or Insert buttons. Right-click and `Shift+F10`/Context Menu key expose scoped Duplicate, Cut, Copy, Paste, Delete, and folder commands. Double-clicking the visible name and `F2` enter inline rename; single selection opens or focuses the main type-specific editor.
+
+Project placement uses a typed, opaque drag session from Libraries to exact Orchestra, project UDO, mixer-chain, and Score insertion geometry. The payload carries stable identity/type/scope/revision data, never XML. Valid targets show an insertion marker and invalid targets show rejection feedback. Drop revalidates the project session, item revision, destination revision, dependencies, and copy semantics in main before one atomic mutation. User-library-to-project drag always copies. Shared SoundObjects require an explicit instance-versus-independent choice. Context-menu Copy plus destination Paste is the keyboard-equivalent path and uses the same validation service.
+
+**Rationale**: This matches established desktop tree behavior and keeps the panel focused on finding and selecting content. Direct manipulation makes the destination visible at the moment of placement instead of asking users to manage a hidden insertion mode. A typed internal clipboard and drag token preserve the existing safe project adapter while giving mouse and keyboard users equivalent outcomes. Removing the full-width migration/action header returns scarce vertical space to the hierarchy.
+
+**Interaction details**:
+
+- The ellipsis button has an accessible `Library actions` label, visible focus, and no tooltip-dependent meaning.
+- Tree focus remains stable while the main editor preview updates; opening the editor must not interrupt multi-step keyboard organization.
+- Delete and non-empty-folder delete retain revision-bound confirmation with affected counts; shared-definition delete retains linked-instance consequences.
+- Cut is visually marked until Paste/cancel and is permitted only within the same user-library type/scope. Copy creates new stable identities; cut/move preserves them.
+- Drag hover supports exact insertion markers, invalid cues, edge auto-scroll, and `Escape` cancellation. Drop dialogs appear only for shared-copy choices or unresolved disclosures, not for every valid transfer.
+- Unsupported items remain selectable/viewable/organizable/exportable but are not draggable into project surfaces and cannot open a mutable editor.
+
+**Alternatives considered**:
+
+- **Persistent Insert and destination Browse buttons**: rejected because they duplicate navigation, obscure the actual destination, and create stale hidden target state.
+- **Always-visible row command buttons**: rejected because they reduce scan density and repeat commands that belong to node context.
+- **Raw XML as the supported-item editor**: rejected because it exposes storage representation instead of the existing type-specific musical editing interface.
+- **Drag-and-drop without Paste**: rejected because it would make a core project-placement workflow pointer-only.
 
 ## Resolved Questions
 

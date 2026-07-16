@@ -92,6 +92,7 @@ import { AutomationCurve as BlueDataAutomationCurve, LineColors } from '@blue/da
 import { ParameterHelper } from '@blue/data';
 import type { SnapValueName } from '@blue/data';
 import type { MissingAudioAssetsSession } from './missing-audio-assets';
+import type { ScoreInsertionLocation } from './unified-library';
 import { moveRangeWithAnchors, scaleRangeWithAnchors } from './automation-range-math';
 import {
   BSB_LINE_SELECTOR_HEIGHT,
@@ -2840,6 +2841,32 @@ export function createScoreDocumentSnapshot(data: BlueData): ScoreDocumentSnapsh
     layerGroups: createScoreLayerGroupSnapshots(data),
     rootNoteProcessorChain: rootChain.getProcessors().length > 0 ? createNoteProcessorChainSnapshot(rootChain) : undefined,
   };
+}
+
+export function resolveScoreInsertionLocation(
+  data: BlueData,
+  location: ScoreInsertionLocation,
+): { groupId: string; layerIndex: number } | null {
+  const score = data.getScore();
+  const root = Array.from(score).find((group) => (
+    group instanceof PolyObject && assignLayerGroupId(group) === location.rootGroupId
+  ));
+  if (!(root instanceof PolyObject)) return null;
+
+  let container = root;
+  for (const segment of location.containerPath) {
+    const containerId = assignLayerGroupId(container);
+    const layerIndex = container.findIndex((_, index) => `${containerId}-layer-${index}` === segment.layerId);
+    if (layerIndex < 0) return null;
+    const layer = container[layerIndex];
+    const nested = layer?.find((object) => assignScoreObjectId(object, 'sobj') === segment.objectIdentity);
+    if (!(nested instanceof PolyObject)) return null;
+    container = nested;
+  }
+
+  const groupId = assignLayerGroupId(container);
+  const layerIndex = container.findIndex((_, index) => `${groupId}-layer-${index}` === location.layerId);
+  return layerIndex < 0 ? null : { groupId, layerIndex };
 }
 
 export function createEmptyScoreDocumentSnapshot(): ScoreDocumentSnapshot {

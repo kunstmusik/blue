@@ -174,49 +174,50 @@ applyLibraryMutation(command: UserLibraryMutation):
 
 `prepareLibraryMutation` is required for non-empty folder deletion, dirty-item deletion, or any action needing affected counts. Its confirmation token binds the exact node revision and expires. Invalid names, roots, cycles, cross-type moves, stale revisions, or unsupported project-scope equivalents fail without mutation.
 
-## Context And Insertion Targets
+## Drag, Clipboard, And Project Transfer
+
+Libraries does not retain a persistent insertion context. Every project transfer request carries its source token and exact destination.
 
 ```ts
-type LibraryContextRequest =
-  | { type: 'browseType'; libraryType: LibraryType }
-  | { type: 'instrumentTarget'; projectSessionId: number }
-  | { type: 'udoTarget'; projectSessionId: number }
-  | {
-      type: 'effectTarget';
-      projectSessionId: number;
-      channelId: string;
-      chain: 'pre' | 'post';
-      insertIndex: number;
-      targetRevision: string;
-    }
-  | {
-      type: 'soundObjectTarget';
-      projectSessionId: number;
-      location: ScoreInsertionLocation;
-      targetRevision: string;
-    };
+interface BeginLibraryDragRequest {
+  key: LibraryItemKey;
+  expectedRevision: string;
+}
 
-interface LibraryContextSnapshot {
-  selectedType: LibraryType;
-  target: InsertionTargetSnapshot | null;
+interface LibraryDragDescriptor {
+  dragSessionId: string;
+  libraryType: LibraryType;
+  sourceScope: LibraryScopeKind;
+  expiresAt: string;
+}
+
+type LibraryTransferSource =
+  | { kind: 'drag'; dragSessionId: string }
+  | { kind: 'clipboard'; key: LibraryItemKey; expectedRevision: string };
+
+interface LibraryTransferRequest {
+  source: LibraryTransferSource;
+  target: InsertionTargetSnapshot;
+  sharedCopyMode?: 'instance' | 'independent';
 }
 ```
 
 Methods:
 
 ```ts
-setLibraryContext(request: LibraryContextRequest): Promise<LibraryResult<LibraryContextSnapshot>>
-clearLibraryInsertionTarget(): Promise<LibraryContextSnapshot>
-onLibraryContextChanged(callback): () => void
+beginLibraryDrag(request: BeginLibraryDragRequest):
+  Promise<LibraryResult<LibraryDragDescriptor>>
 
-previewLibraryInsertion(request: LibraryInsertionRequest):
+cancelLibraryDrag(dragSessionId: string): Promise<void>
+
+previewLibraryInsertion(request: LibraryTransferRequest):
   Promise<LibraryResult<LibraryInsertionPreview>>
 
 applyLibraryInsertion(request: ConfirmedLibraryInsertionRequest):
   Promise<LibraryResult<ProjectMutationReceipt>>
 ```
 
-The context event lets Orchestra, UDO, Mixer, Score, menus, and Libraries converge on one target banner. Main revalidates the project session, locator, target revision, dependencies, and destination immediately before apply. A stale, missing, incompatible, or ambiguous target disables insertion and returns no project change.
+The renderer puts only `dragSessionId`, `libraryType`, and `sourceScope` in `DataTransfer`; payload XML remains main-owned. Orchestra, UDO, Mixer, and Score resolve exact target locators from their current insertion geometry or keyboard Paste context. Main revalidates the source revision, support status, project session, locator, target revision, dependencies, and destination immediately before apply. A stale, missing, incompatible, or ambiguous source/target returns no project change. Existing insertion preview/apply internals may remain named as such, but they are invoked only by drop/Paste—not by a Libraries-panel Insert mode.
 
 ## Editor Sessions
 

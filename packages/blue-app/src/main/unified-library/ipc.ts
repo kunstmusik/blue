@@ -1,6 +1,10 @@
 import { dialog, type BrowserWindow, type IpcMain, type OpenDialogOptions, type SaveDialogOptions } from 'electron';
 import {
   UNIFIED_LIBRARY_BROWSE_CHANNEL,
+  UNIFIED_LIBRARY_BEGIN_DRAG_CHANNEL,
+  UNIFIED_LIBRARY_CANCEL_DRAG_CHANNEL,
+  UNIFIED_LIBRARY_PREVIEW_TRANSFER_CHANNEL,
+  UNIFIED_LIBRARY_APPLY_TRANSFER_CHANNEL,
   UNIFIED_LIBRARY_APPLY_INSERTION_CHANNEL,
   UNIFIED_LIBRARY_DRAFT_RESOLVE_CHANNEL,
   UNIFIED_LIBRARY_DRAFT_SHUTDOWN_CHANNEL,
@@ -13,6 +17,7 @@ import {
   UNIFIED_LIBRARY_EDITOR_RESOLVE_CONFLICT_CHANNEL,
   UNIFIED_LIBRARY_EDITOR_SAVE_CHANNEL,
   UNIFIED_LIBRARY_MUTATE_CHANNEL,
+  UNIFIED_LIBRARY_PREPARE_MUTATION_CHANNEL,
   UNIFIED_LIBRARY_PROJECT_COPY_CHANNEL,
   UNIFIED_LIBRARY_PROJECT_DELETE_CHANNEL,
   UNIFIED_LIBRARY_PROJECT_DELETE_PREVIEW_CHANNEL,
@@ -39,6 +44,8 @@ import {
   UNIFIED_LIBRARY_SNAPSHOT_CHANGED_CHANNEL,
   createLibraryServiceError,
   isBrowseLibraryRequest,
+  isBeginLibraryDragRequest,
+  isLibraryTransferPreviewRequest,
   isConfirmedLibraryInsertionRequest,
   isLibraryContextRequest,
   isLibraryInsertionRequest,
@@ -48,6 +55,7 @@ import {
   isOpenLibraryEditorRequest,
   isSearchLibrariesRequest,
   isUserLibraryMutation,
+  isPrepareLibraryMutationRequest,
   isLibraryType,
 } from '../../shared/unified-library';
 import { UnifiedLibraryService } from './service';
@@ -85,6 +93,24 @@ export function registerUnifiedLibraryIpc(options: UnifiedLibraryIpcOptions): ()
           error: createLibraryServiceError('invalid-request', 'Invalid library preview key.', false),
         })
   ));
+  ipcMain.handle(UNIFIED_LIBRARY_BEGIN_DRAG_CHANNEL, (_event, request: unknown) => (
+    isBeginLibraryDragRequest(request)
+      ? service.beginLibraryDrag(request)
+      : Promise.resolve({ ok: false as const, error: createLibraryServiceError('invalid-request', 'Invalid drag request.', false) })
+  ));
+  ipcMain.handle(UNIFIED_LIBRARY_CANCEL_DRAG_CHANNEL, (_event, dragSessionId: unknown) => {
+    if (typeof dragSessionId === 'string') service.cancelLibraryDrag(dragSessionId);
+  });
+  ipcMain.handle(UNIFIED_LIBRARY_PREVIEW_TRANSFER_CHANNEL, (_event, request: unknown) => (
+    isLibraryTransferPreviewRequest(request)
+      ? service.previewLibraryTransfer(request)
+      : Promise.resolve({ ok: false as const, error: createLibraryServiceError('invalid-request', 'Invalid transfer request.', false) })
+  ));
+  ipcMain.handle(UNIFIED_LIBRARY_APPLY_TRANSFER_CHANNEL, (_event, previewToken: unknown) => (
+    typeof previewToken === 'string'
+      ? service.applyLibraryTransfer(previewToken)
+      : Promise.resolve({ ok: false as const, error: createLibraryServiceError('invalid-request', 'Invalid transfer preview.', false) })
+  ));
   ipcMain.handle(UNIFIED_LIBRARY_SET_CONTEXT_CHANNEL, (_event, request: unknown) => (
     isLibraryContextRequest(request)
       ? service.setLibraryContext(request)
@@ -116,6 +142,14 @@ export function registerUnifiedLibraryIpc(options: UnifiedLibraryIpcOptions): ()
       : Promise.resolve({
           ok: false as const,
           error: createLibraryServiceError('invalid-request', 'Invalid library mutation.', false),
+        })
+  ));
+  ipcMain.handle(UNIFIED_LIBRARY_PREPARE_MUTATION_CHANNEL, (_event, request: unknown) => (
+    isPrepareLibraryMutationRequest(request)
+      ? service.prepareLibraryMutation(request)
+      : Promise.resolve({
+          ok: false as const,
+          error: createLibraryServiceError('invalid-request', 'Invalid library mutation preview.', false),
         })
   ));
   ipcMain.handle(UNIFIED_LIBRARY_EDITOR_OPEN_CHANNEL, (_event, request: unknown) => (
@@ -287,11 +321,16 @@ export function registerUnifiedLibraryIpc(options: UnifiedLibraryIpcOptions): ()
     ipcMain.removeHandler(UNIFIED_LIBRARY_BROWSE_CHANNEL);
     ipcMain.removeHandler(UNIFIED_LIBRARY_SEARCH_CHANNEL);
     ipcMain.removeHandler(UNIFIED_LIBRARY_PREVIEW_CHANNEL);
+    ipcMain.removeHandler(UNIFIED_LIBRARY_BEGIN_DRAG_CHANNEL);
+    ipcMain.removeHandler(UNIFIED_LIBRARY_CANCEL_DRAG_CHANNEL);
+    ipcMain.removeHandler(UNIFIED_LIBRARY_PREVIEW_TRANSFER_CHANNEL);
+    ipcMain.removeHandler(UNIFIED_LIBRARY_APPLY_TRANSFER_CHANNEL);
     ipcMain.removeHandler(UNIFIED_LIBRARY_SET_CONTEXT_CHANNEL);
     ipcMain.removeHandler(UNIFIED_LIBRARY_CLEAR_TARGET_CHANNEL);
     ipcMain.removeHandler(UNIFIED_LIBRARY_PREVIEW_INSERTION_CHANNEL);
     ipcMain.removeHandler(UNIFIED_LIBRARY_APPLY_INSERTION_CHANNEL);
     ipcMain.removeHandler(UNIFIED_LIBRARY_MUTATE_CHANNEL);
+    ipcMain.removeHandler(UNIFIED_LIBRARY_PREPARE_MUTATION_CHANNEL);
     ipcMain.removeHandler(UNIFIED_LIBRARY_EDITOR_OPEN_CHANNEL);
     ipcMain.removeHandler(UNIFIED_LIBRARY_EDITOR_GET_CHANNEL);
     ipcMain.removeHandler(UNIFIED_LIBRARY_EDITOR_PATCH_CHANNEL);

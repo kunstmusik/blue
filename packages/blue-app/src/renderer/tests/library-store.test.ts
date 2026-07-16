@@ -5,11 +5,11 @@ import type {
   BrowseLibraryRequest,
   LibraryBrowseNode,
   LibraryChangedEvent,
-  LibraryItemPreview,
   LibraryServiceSnapshot,
   SearchLibrariesRequest,
 } from '../../shared/unified-library';
 import { useLibraryStore } from '../stores/library-store';
+import { useLibraryEditorStore } from '../stores/library-editor-store';
 
 const snapshot: LibraryServiceSnapshot = {
   phase: 'ready',
@@ -64,18 +64,18 @@ const searchLibraries = vi.fn(async (request: SearchLibrariesRequest) => ({
     nextCursor: request.cursor ? null : 'page-2',
   },
 }));
-const preview: LibraryItemPreview = {
+const openLibraryItemEditor = vi.fn(async () => ({ ok: true as const, value: {
+  sessionId: 'session-1',
   key: item.key!,
   displayName: item.displayName,
-  libraryType: 'instrument',
-  scope: 'user',
   objectType: item.objectType!,
-  supportStatus: 'supported',
-  supportMessage: null,
-  fields: { comment: { state: 'unavailable', reason: 'Not provided' } },
-  dependencies: { itemOwned: [], unresolvedExternal: [] },
-};
-const getLibraryItemPreview = vi.fn(async () => ({ ok: true as const, value: preview }));
+  breadcrumb: item.breadcrumb,
+  baseRevision: item.revision,
+  document: { kind: 'unsupported' as const, libraryType: 'instrument' as const, objectType: item.objectType!, message: 'fixture', rawXml: '<instrument />' },
+  dirty: false,
+  pinned: false,
+  status: 'ready' as const,
+} }));
 
 beforeEach(() => {
   vi.useFakeTimers();
@@ -83,13 +83,31 @@ beforeEach(() => {
   changedListener = null;
   browseLibraries.mockClear();
   searchLibraries.mockClear();
-  getLibraryItemPreview.mockClear();
+  openLibraryItemEditor.mockClear();
+  const applyLibraryMutation = vi.fn(async () => ({
+    ok: true as const,
+    value: { contentRevision: 4, affectedNodes: [] },
+  }));
   window.blueAPI = {
     ...window.blueAPI,
     getLibraryServiceSnapshot: vi.fn(async () => snapshot),
     browseLibraries,
     searchLibraries,
-    getLibraryItemPreview,
+    openLibraryItemEditor,
+    onLibraryEditorSessionChanged: vi.fn(() => () => undefined),
+    applyLibraryMutation,
+    prepareLibraryMutation: vi.fn(async (request) => ({
+      ok: true as const,
+      value: {
+        confirmationToken: 'delete-preview',
+        nodeId: request.nodeId,
+        expectedRevision: request.expectedRevision,
+        affectedNodeIds: [request.nodeId, 'child-1'],
+        affectedCount: 2,
+        dirtyEditorSessionIds: [],
+        expiresAt: Date.now() + 60_000,
+      },
+    })),
     onLibraryServiceSnapshot: vi.fn((listener) => {
       snapshotListener = listener;
       return () => { snapshotListener = null; };
@@ -100,6 +118,7 @@ beforeEach(() => {
     }),
   };
   useLibraryStore.getState().reset();
+  useLibraryEditorStore.getState().reset();
 });
 
 describe('library store', () => {
@@ -117,7 +136,7 @@ describe('library store', () => {
     });
   });
 
-  it('debounces search, appends pagination, selects items, and caches previews', async () => {
+  it('debounces search, appends pagination, and opens a reusable editor on selection', async () => {
     await useLibraryStore.getState().initialize();
     useLibraryStore.getState().setQuery('Pad');
     expect(searchLibraries).not.toHaveBeenCalled();
@@ -130,8 +149,8 @@ describe('library store', () => {
 
     await useLibraryStore.getState().selectItem(item.key!);
     await useLibraryStore.getState().selectItem(item.key!);
-    expect(getLibraryItemPreview).toHaveBeenCalledTimes(1);
-    expect(useLibraryStore.getState().selectedPreview).toEqual(preview);
+    expect(openLibraryItemEditor).toHaveBeenCalledTimes(2);
+    expect(useLibraryStore.getState().selectedKey).toEqual(item.key);
   });
 
   it('refreshes on change events and updates no-project state from snapshots', async () => {
@@ -146,5 +165,69 @@ describe('library store', () => {
 
     snapshotListener?.({ ...snapshot, projectSessionId: 9 });
     expect(useLibraryStore.getState().projectAvailable).toBe(true);
+  });
+
+  it('captures revision-bound copy/cut state and cancels without persistent target state', async () => {
+    const state = useLibraryStore.getState();
+    state.captureClipboard(item, 'copy');
+    expect(useLibraryStore.getState().clipboard).toEqual({
+      operation: 'copy',
+      source: { kind: 'userNode', libraryType: 'instrument', nodeId: 'item-1', revision: 1 },
+      capturedAt: expect.any(Number),
+    });
+    state.captureClipboard(item, 'cut');
+    expect(useLibraryStore.getState().clipboard?.operation).toBe('cut');
+    state.cancelClipboard();
+    expect(useLibraryStore.getState().clipboard).toBeNull();
+    expect('context' in useLibraryStore.getState()).toBe(false);
+  });
+
+  it('resolves destination Paste from the captured source and retains stale sources on failure', async () => {
+    await useLibraryStore.getState().initialize();
+    useLibraryStore.getState().captureClipboard(item, 'copy');
+    const parent: LibraryBrowseNode = {
+      ...item,
+      key: null,
+      nodeId: 'target-folder',
+      nodeKind: 'folder',
+      displayName: 'Target',
+      revision: 2,
+      hasChildren: true,
+    };
+    expect(await useLibraryStore.getState().pasteInto(parent)).toBe(true);
+    expect(window.blueAPI.applyLibraryMutation).toHaveBeenCalledWith({
+      type: 'duplicateNode',
+      nodeId: 'item-1',
+      expectedRevision: 1,
+      parentId: 'target-folder',
+      expectedParentRevision: 2,
+    });
+    expect(useLibraryStore.getState().clipboard?.operation).toBe('copy');
+
+    vi.mocked(window.blueAPI.applyLibraryMutation).mockResolvedValueOnce({
+      ok: false,
+      error: { code: 'stale-revision', message: 'Source changed', retryable: true },
+    });
+    expect(await useLibraryStore.getState().pasteInto(parent)).toBe(false);
+    expect(useLibraryStore.getState().clipboard).not.toBeNull();
+  });
+
+  it('previews affected delete counts and clears a clipboard source inside the deleted subtree', async () => {
+    await useLibraryStore.getState().initialize();
+    useLibraryStore.setState({
+      clipboard: {
+        operation: 'copy',
+        source: { kind: 'userNode', libraryType: 'instrument', nodeId: 'child-1', revision: 1 },
+        capturedAt: 1,
+      },
+    });
+    expect(await useLibraryStore.getState().prepareDelete(item)).toBe(true);
+    expect(useLibraryStore.getState().deletePreview).toMatchObject({ affectedCount: 2 });
+    expect(await useLibraryStore.getState().confirmDelete('discard')).toBe(true);
+    expect(window.blueAPI.applyLibraryMutation).toHaveBeenCalledWith({
+      type: 'deleteNode', nodeId: 'item-1', expectedRevision: 1, confirmation: 'delete-preview',
+    });
+    expect(useLibraryStore.getState().clipboard).toBeNull();
+    expect(useLibraryStore.getState().deletePreview).toBeNull();
   });
 });

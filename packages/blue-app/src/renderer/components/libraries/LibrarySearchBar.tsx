@@ -13,21 +13,20 @@ interface LibrarySearchBarProps {
 
 export function LibrarySearchBar(props: LibrarySearchBarProps): React.ReactElement {
   return (
-    <div className="flex flex-col gap-2 border-b border-app-border p-2">
+    <div className="grid min-w-0 flex-1 grid-cols-[minmax(90px,1fr)_auto_auto] gap-1 p-1">
       <input
         aria-label="Search libraries"
-        className="w-full rounded border border-app-border bg-app-bg px-2 py-1.5 text-sm text-app-text outline-none focus:border-app-accent"
+        className="min-w-0 rounded border border-app-border bg-app-bg px-2 py-1 text-xs text-app-text outline-none focus:border-app-accent"
         type="search"
         value={props.query}
         placeholder="Search reusable objects"
         onChange={(event) => props.onQueryChange(event.target.value)}
       />
-      <div className="grid grid-cols-2 gap-2">
-        <label className="text-xs text-app-text-muted">
-          Type
+        <label>
+          <span className="sr-only">Type</span>
           <select
             aria-label="Library type"
-            className="mt-1 w-full rounded border border-app-border bg-app-bg px-1 py-1 text-sm text-app-text"
+            className="h-full max-w-28 rounded border border-app-border bg-app-bg px-1 text-xs text-app-text"
             value={props.typeFilter}
             onChange={(event) => props.onTypeFilterChange(event.target.value as LibraryType | 'all')}
           >
@@ -38,11 +37,11 @@ export function LibrarySearchBar(props: LibrarySearchBarProps): React.ReactEleme
             <option value="effect">Effects</option>
           </select>
         </label>
-        <label className="text-xs text-app-text-muted">
-          Source
+        <label>
+          <span className="sr-only">Source</span>
           <select
             aria-label="Library source"
-            className="mt-1 w-full rounded border border-app-border bg-app-bg px-1 py-1 text-sm text-app-text"
+            className="h-full max-w-28 rounded border border-app-border bg-app-bg px-1 text-xs text-app-text"
             value={props.sourceFilter}
             onChange={(event) => props.onSourceFilterChange(event.target.value as LibrarySourceFilter)}
           >
@@ -51,7 +50,6 @@ export function LibrarySearchBar(props: LibrarySearchBarProps): React.ReactEleme
             <option value="project" disabled={!props.projectAvailable}>Current Project</option>
           </select>
         </label>
-      </div>
     </div>
   );
 }

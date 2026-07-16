@@ -52,6 +52,8 @@ describe('ArrangementPanel', () => {
   it('closes the add menu on outside mouse down', () => {
     const rendered = renderRoot(
       <ArrangementPanel
+        projectSessionId={1}
+        projectRevision={1}
         rows={ROWS}
         selectedAssignmentId={null}
         onSelectAssignment={vi.fn()}

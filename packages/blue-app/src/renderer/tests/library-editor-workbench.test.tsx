@@ -11,7 +11,7 @@ describe('library editor workbench routing', () => {
     expect(libraryEditorSessionIdFromPanel(id)).toBe('session:instrument/42');
     expect(libraryEditorSessionIdFromPanel('LibrariesTopComponent')).toBeNull();
 
-    const serialized = JSON.stringify({ panels: { [id]: { id, title: 'Warm Pad' } } });
+    const serialized = JSON.stringify({ panels: { [id]: { id, title: 'Library Item' } } });
     expect(libraryEditorSessionIdFromPanel(JSON.parse(serialized).panels[id].id))
       .toBe('session:instrument/42');
   });

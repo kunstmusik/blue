@@ -54,8 +54,12 @@ import type {
 } from '../../shared/osc-control';
 import type {
   BrowseLibraryRequest,
+  BeginLibraryDragRequest,
   BrowseLibraryResult,
   LibraryContextRequest,
+  LibraryDragDescriptor,
+  LibraryTransferPreview,
+  LibraryTransferPreviewRequest,
   LibraryContextSnapshot,
   LibraryChangedEvent,
   LibraryItemKey,
@@ -68,6 +72,8 @@ import type {
   SearchLibrariesResult,
   ProjectMutationReceipt,
   LibraryMutationReceipt,
+  LibraryMutationPreview,
+  PrepareLibraryMutationRequest,
   UserLibraryMutation,
   OpenLibraryEditorRequest,
   LibraryEditorPatchRequest,
@@ -119,6 +125,16 @@ declare global {
       getLibraryItemPreview: (
         key: LibraryItemKey,
       ) => Promise<LibraryResult<LibraryItemPreview>>;
+      beginLibraryDrag: (
+        request: BeginLibraryDragRequest,
+      ) => Promise<LibraryResult<LibraryDragDescriptor>>;
+      cancelLibraryDrag: (dragSessionId: string) => Promise<void>;
+      previewLibraryTransfer: (
+        request: LibraryTransferPreviewRequest,
+      ) => Promise<LibraryResult<LibraryTransferPreview>>;
+      applyLibraryTransfer: (
+        previewToken: string,
+      ) => Promise<LibraryResult<ProjectMutationReceipt>>;
       setLibraryContext: (
         request: LibraryContextRequest,
       ) => Promise<LibraryResult<LibraryContextSnapshot>>;
@@ -132,6 +148,9 @@ declare global {
       applyLibraryMutation: (
         request: UserLibraryMutation,
       ) => Promise<LibraryResult<LibraryMutationReceipt>>;
+      prepareLibraryMutation: (
+        request: PrepareLibraryMutationRequest,
+      ) => Promise<LibraryResult<LibraryMutationPreview>>;
       openLibraryItemEditor: (
         request: OpenLibraryEditorRequest,
       ) => Promise<LibraryResult<LibraryEditorSessionSnapshot>>;

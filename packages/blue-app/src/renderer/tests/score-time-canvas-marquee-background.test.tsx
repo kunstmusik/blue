@@ -101,6 +101,10 @@ describe('ScoreTimeCanvas marquee initiation on background', () => {
     act(() => {
       root.render(
         <ScoreTimeCanvas
+          projectSessionId={1}
+          projectRevision={1}
+          scoreRootGroupId="group-1"
+          scoreContainerPath={[]}
           group={makeGroup()}
           totalBeats={16}
           pixelsPerBeat={50}

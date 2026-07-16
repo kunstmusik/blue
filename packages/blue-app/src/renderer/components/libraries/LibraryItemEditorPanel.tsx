@@ -39,7 +39,7 @@ export function LibraryItemEditorPanel({ sessionId }: LibraryItemEditorPanelProp
       />
       <LibraryControlledEditor
         session={session}
-        onChange={(payloadXml) => { void store.patch(sessionId, { payloadXml }); }}
+        onPatch={(documentPatch) => { void store.patch(sessionId, { documentPatch }); }}
       />
       {session.status === 'conflict' && !conflictDialogDismissed && (
         <LibrarySessionDialog

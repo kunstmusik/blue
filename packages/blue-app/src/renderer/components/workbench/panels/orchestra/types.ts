@@ -18,5 +18,6 @@ export interface ArrangementPanelProps extends OrchestraMutationProps {
   rows: ArrangementRowSnapshot[];
   selectedAssignmentId: string | null;
   onSelectAssignment: (assignmentId: string) => void;
+  projectSessionId: number;
+  projectRevision: number;
 }
-

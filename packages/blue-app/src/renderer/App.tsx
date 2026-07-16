@@ -10,6 +10,8 @@ import WorkbenchShell from './components/workbench/WorkbenchShell';
 import GeneratedCsdModal from './components/workbench/panels/GeneratedCsdModal';
 import MissingAudioAssetsModal from './components/workbench/panels/MissingAudioAssetsModal';
 import ErrorBoundary from './components/notifications/ErrorBoundary';
+import { LibraryTransferDialog } from './components/libraries/LibraryTransferDialog';
+import { useLibraryStore } from './stores/library-store';
 
 export default function App(): React.ReactElement {
   useIPCListeners();
@@ -19,6 +21,9 @@ export default function App(): React.ReactElement {
 
   const activePanel = useUIStore((s) => s.activePanel);
   const isLoading = useProjectStore((s) => s.isLoading);
+  const transferPreview = useLibraryStore((s) => s.transferPreview);
+  const applyTransfer = useLibraryStore((s) => s.applyTransfer);
+  const cancelTransfer = useLibraryStore((s) => s.cancelTransfer);
 
   return (
     <ErrorBoundary>
@@ -45,6 +50,13 @@ export default function App(): React.ReactElement {
 
         <GeneratedCsdModal />
         <MissingAudioAssetsModal />
+        {transferPreview && (
+          <LibraryTransferDialog
+            preview={transferPreview}
+            onApply={(mode) => { void applyTransfer(mode); }}
+            onCancel={cancelTransfer}
+          />
+        )}
       </div>
     </ErrorBoundary>
   );

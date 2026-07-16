@@ -1,5 +1,7 @@
-import { useMemo, useState } from 'react';
-import type { LibraryBrowseNode, LibraryItemKey } from '../../../shared/unified-library';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import type { LibraryBrowseNode, LibraryDragDescriptor, LibraryInteractionClipboard, LibraryItemKey } from '../../../shared/unified-library';
+import { LibraryContextMenu } from './LibraryContextMenu';
+import { beginLibraryNodeDrag, cancelLibraryNodeDrag, writeLibraryDragDescriptor } from './library-drag-drop';
 
 interface LibraryTreeProps {
   label: string;
@@ -11,6 +13,13 @@ interface LibraryTreeProps {
   onRename?: (node: LibraryBrowseNode, name: string) => void;
   onDuplicate?: (node: LibraryBrowseNode) => void;
   onDelete?: (node: LibraryBrowseNode) => void;
+  onCreateFolder?: (node: LibraryBrowseNode) => void;
+  onCut?: (node: LibraryBrowseNode) => void;
+  onCopy?: (node: LibraryBrowseNode) => void;
+  onPaste?: (node: LibraryBrowseNode) => void;
+  onCopyToUser?: (node: LibraryBrowseNode) => void;
+  clipboard?: LibraryInteractionClipboard | null;
+  defaultExpandedNodeIds?: readonly string[];
 }
 
 interface VisibleTreeNode {
@@ -36,12 +45,29 @@ export function LibraryTree({
   onRename,
   onDuplicate,
   onDelete,
+  onCreateFolder,
+  onCut,
+  onCopy,
+  onPaste,
+  onCopyToUser,
+  clipboard = null,
+  defaultExpandedNodeIds = [],
 }: LibraryTreeProps): React.ReactElement {
-  const [expanded, setExpanded] = useState<ReadonlySet<string>>(new Set());
+  const [expanded, setExpanded] = useState<ReadonlySet<string>>(new Set(defaultExpandedNodeIds));
+  const treeRef = useRef<HTMLDivElement>(null);
+  const renameInputRef = useRef<HTMLInputElement>(null);
   const [activeIndex, setActiveIndex] = useState(0);
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState('');
   const [renameError, setRenameError] = useState<string | null>(null);
+  const [dragDescriptors, setDragDescriptors] = useState<Record<string, LibraryDragDescriptor>>({});
+  const [dragMessage, setDragMessage] = useState('');
+  useEffect(() => {
+    setExpanded((current) => {
+      if (defaultExpandedNodeIds.every((nodeId) => current.has(nodeId))) return current;
+      return new Set([...current, ...defaultExpandedNodeIds]);
+    });
+  }, [defaultExpandedNodeIds]);
   const visible = useMemo(() => {
     const result: VisibleTreeNode[] = [];
     const append = (items: readonly LibraryBrowseNode[], level: number) => {
@@ -67,10 +93,18 @@ export function LibraryTree({
     });
   };
 
+  const prepareDrag = useCallback((node: LibraryBrowseNode) => {
+    if (!node.key || node.supportStatus === 'unsupported' || dragDescriptors[node.nodeId]) return;
+    void beginLibraryNodeDrag(node).then((descriptor) => {
+      if (descriptor) setDragDescriptors((current) => ({ ...current, [node.nodeId]: descriptor }));
+    });
+  }, [dragDescriptors]);
+
   const activate = (index: number): void => {
     const candidate = visible[index]?.node;
     if (candidate?.key) onSelect(candidate.key);
     else if (candidate) toggle(candidate);
+    queueMicrotask(() => treeRef.current?.focus());
   };
 
   const startRename = (node: LibraryBrowseNode): void => {
@@ -83,11 +117,13 @@ export function LibraryTree({
     const error = validateLibraryNodeName(renameValue);
     if (error) {
       setRenameError(error);
+      requestAnimationFrame(() => renameInputRef.current?.focus());
       return;
     }
     onRename?.(node, renameValue.normalize('NFKC').trim());
     setRenamingId(null);
     setRenameError(null);
+    queueMicrotask(() => treeRef.current?.focus());
   };
 
   if (nodes.length === 0) {
@@ -96,6 +132,7 @@ export function LibraryTree({
 
   return (
     <div
+      ref={treeRef}
       role="tree"
       aria-label={label}
       tabIndex={0}
@@ -122,25 +159,71 @@ export function LibraryTree({
         } else if (event.key === 'F2') {
           const node = visible[activeIndex]?.node;
           if (node && node.nodeKind !== 'root' && onRename) startRename(node);
-        } else if (event.key === 'Delete') {
+        } else if ((event.key === 'F10' && event.shiftKey) || event.key === 'ContextMenu') {
+          event.preventDefault();
           const node = visible[activeIndex]?.node;
-          if (node && node.nodeKind !== 'root') onDelete?.(node);
+          if (node) {
+            const row = document.getElementById(`library-node-${node.nodeId}`);
+            const rect = row?.getBoundingClientRect();
+            row?.dispatchEvent(new MouseEvent('contextmenu', {
+              bubbles: true,
+              cancelable: true,
+              clientX: rect?.left ?? 12,
+              clientY: rect?.bottom ?? 12,
+            }));
+          }
         }
       }}
     >
+      <span className="sr-only" aria-live="polite">{dragMessage}</span>
       {visible.map(({ node, level }, index) => (
-        <div
-          id={`library-node-${node.nodeId}`}
+        <LibraryContextMenu
           key={node.nodeId}
-          role="treeitem"
-          aria-level={level}
-          aria-selected={index === activeIndex}
-          aria-expanded={node.hasChildren ? expanded.has(node.nodeId) : undefined}
-          className={`flex min-h-7 items-center gap-1 rounded px-1 text-sm ${index === activeIndex ? 'bg-app-selection' : 'hover:bg-app-hover'}`}
-          style={{ paddingLeft: `${(level - 1) * 14 + 4}px` }}
-          onMouseDown={() => setActiveIndex(index)}
-          onDoubleClick={() => node.key ? onOpen?.(node.key) : toggle(node)}
+          node={node}
+          clipboard={clipboard}
+          onCreateFolder={onCreateFolder}
+          onDuplicate={onDuplicate}
+          onCut={onCut}
+          onCopy={onCopy}
+          onPaste={onPaste}
+          onDelete={onDelete}
+          onCopyToUser={onCopyToUser}
         >
+          <div
+            id={`library-node-${node.nodeId}`}
+            role="treeitem"
+            aria-level={level}
+            aria-selected={index === activeIndex}
+            aria-expanded={node.hasChildren ? expanded.has(node.nodeId) : undefined}
+            className={`flex min-h-7 items-center gap-1 rounded px-1 text-sm ${index === activeIndex ? 'bg-app-selection' : 'hover:bg-app-hover'}`}
+            style={{ paddingLeft: `${(level - 1) * 14 + 4}px` }}
+            onMouseDown={() => setActiveIndex(index)}
+            onContextMenu={() => setActiveIndex(index)}
+            onPointerDown={() => prepareDrag(node)}
+            onMouseEnter={() => prepareDrag(node)}
+            draggable={node.nodeKind === 'item' && node.supportStatus !== 'unsupported'}
+            onDragStart={(event) => {
+              const descriptor = dragDescriptors[node.nodeId];
+              if (!descriptor) {
+                event.preventDefault();
+                setDragMessage('Preparing library item. Try dragging again.');
+                prepareDrag(node);
+                return;
+              }
+              writeLibraryDragDescriptor(event.dataTransfer, descriptor);
+              setDragMessage(`Dragging ${node.displayName}`);
+            }}
+            onDragEnd={(event) => {
+              const descriptor = dragDescriptors[node.nodeId] ?? null;
+              if (event.dataTransfer.dropEffect === 'none') void cancelLibraryNodeDrag(descriptor);
+              setDragDescriptors((current) => {
+                const next = { ...current };
+                delete next[node.nodeId];
+                return next;
+              });
+              setDragMessage(event.dataTransfer.dropEffect === 'none' ? 'Drag cancelled' : `${node.displayName} added`);
+            }}
+          >
           <button
             type="button"
             tabIndex={-1}
@@ -153,6 +236,7 @@ export function LibraryTree({
           {renamingId === node.nodeId ? (
             <span className="min-w-0 flex-1">
               <input
+                ref={renameInputRef}
                 autoFocus
                 aria-label={`Rename ${node.displayName}`}
                 aria-invalid={Boolean(renameError)}
@@ -175,23 +259,22 @@ export function LibraryTree({
               className="min-w-0 flex-1 truncate text-left"
               title={node.breadcrumb.join(' / ')}
               onClick={() => activate(index)}
+              onDoubleClick={(event) => {
+                event.stopPropagation();
+                if (onRename && node.scope === 'user') startRename(node);
+                else if (node.key) onOpen?.(node.key);
+              }}
             >
               {node.displayName}
             </button>
-          )}
-          {node.nodeKind !== 'root' && index === activeIndex && renamingId !== node.nodeId && (onRename || onDuplicate || onDelete) && (
-            <span className="flex gap-1" aria-label={`${node.displayName} commands`}>
-              {onRename && <button type="button" aria-label={`Rename ${node.displayName}`} onClick={() => startRename(node)}>Rename</button>}
-              {onDuplicate && <button type="button" aria-label={`Duplicate ${node.displayName}`} onClick={() => onDuplicate(node)}>Duplicate</button>}
-              {onDelete && <button type="button" aria-label={`Delete ${node.displayName}`} onClick={() => onDelete(node)}>Delete</button>}
-            </span>
           )}
           {node.supportStatus === 'unsupported' && (
             <span role="status" aria-label={`${node.displayName} is unsupported`} title="Contains unsupported nested data" className="text-amber-400">
               ⚠ unsupported
             </span>
           )}
-        </div>
+          </div>
+        </LibraryContextMenu>
       ))}
     </div>
   );

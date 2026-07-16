@@ -7,7 +7,7 @@
 
 ## Summary
 
-Replace the four disconnected or deferred library experiences with one app-wide Libraries workbench panel and durable user-library repository. Electron main owns a `blue_libraries.sqlite` database through the SQLite runtime bundled with Electron, serializes repository work in a worker thread, performs all file dialogs/import/export/recovery, and composes user content with project-owned sources from canonical `BlueData`. Pure raw-first codecs in `@blue/data` preserve Java Blue XML exactly until a fully supported editor saves an item. Main-owned editor sessions protect drafts and detect revision conflicts, while Dockview supplies the right-side browser plus stable dynamic Library Item editor tabs. The existing `.blue` project format remains authoritative for Project Orchestra, project UDOs, Project Shared SoundObjects, and mixer/score insertions.
+Replace the four disconnected or deferred library experiences with one app-wide Libraries workbench panel and durable user-library repository. Electron main owns a `blue_libraries.sqlite` database through the SQLite runtime bundled with Electron, serializes repository work in a worker thread, performs all file dialogs/import/export/recovery, and composes user content with project-owned sources from canonical `BlueData`. Pure raw-first codecs in `@blue/data` preserve Java Blue XML exactly until a fully supported editor saves an item. Main-owned editor sessions protect drafts and detect revision conflicts, while Dockview supplies a compact right-side navigator plus stable main-area `Library Item` editors that retain the existing address header and native type-specific bodies. Tree organization uses inline rename/context menus; project placement uses typed drag/drop and keyboard-equivalent paste rather than Browse or Insert buttons. The existing `.blue` project format remains authoritative for Project Orchestra, project UDOs, Project Shared SoundObjects, and mixer/score transfers.
 
 ## Technical Context
 
@@ -26,7 +26,7 @@ Replace the four disconnected or deferred library experiences with one app-wide 
 **Performance Goals**: meet SC-006 with 10,000 user items: initial hierarchy within 2 seconds and at least 95% of folder expansions/name searches within 1 second; lazy payload loading; IPC and repository work must not stall playback or visible UI
 
 **Constraints**: no Node built-ins, UI dependencies, dynamic imports, or `require()` in `@blue/data`; Java XML import never executes code or resolves external entities; unsupported or nested-unsupported XML remains byte-preserved and authoritative; all compound writes and each source import are transactional; Export All must roll back earlier destination changes on failure; one user-library database owner; no continuous synchronization with `~/.blue`; no `.blue` schema changes
-**Scale/Scope**: four user-library roots, project sources for Instruments/UDOs/Project Shared SoundObjects, contextual Effect and Score targets, 10,000+ user items, stable UUID nodes, import history and conditional undo, startup migration, compatibility reporting, recovery, one Libraries auxiliary panel, and multiple stable Library Item editor sessions
+**Scale/Scope**: four user-library roots, project sources for Instruments/UDOs/Project Shared SoundObjects, exact drag/drop targets for Orchestra/UDO/Mixer/Score, 10,000+ user items, stable UUID nodes, transient typed clipboard state, import history and conditional undo, startup migration, compatibility reporting, recovery, one Libraries auxiliary panel, and multiple stable Library Item editor sessions
 
 ## Constitution Check
 
@@ -127,13 +127,13 @@ Replace the four disconnected or deferred library experiences with one app-wide 
         ├── EffectLibraryModal.tsx            # removed after route migration
         ├── orchestra/                        # controlled Instrument editor reuse
         ├── udo/                              # controlled UDO editor reuse
-        ├── mixer/                            # Effect target/Browse routing
+        ├── mixer/                            # typed Effect drop targets/insertion markers
         ├── score-object/                     # controlled SoundObject editor reuse
         └── libraries/
             ├── LibraryTree.tsx
-            ├── LibraryPreview.tsx
-            ├── LibraryTargetBanner.tsx
-            ├── LibraryActionsMenu.tsx
+            ├── LibraryContextMenu.tsx         # scoped tree Cut/Copy/Paste/Duplicate/Delete
+            ├── LibraryActionsMenu.tsx         # compact vertical-ellipsis popup only
+            ├── library-drag-drop.ts           # opaque typed drag and clipboard presentation
             ├── LibraryItemEditorPanel.tsx
             └── editor-registry.tsx
 ```
@@ -150,17 +150,18 @@ Research is captured in [research.md](research.md). Resolved decisions include:
 - Keep legacy migration state in an atomic outside-database app-settings file, preventing database loss or Settings snapshot writes from silently resetting migration behavior.
 - Use one transaction per compound repository change and per source file, a serialized operation lease for import/export, staged export plus rollback, and explicit per-source partial results.
 - Compose user and project sources in main without changing ownership. Preserve Project Shared SoundObject IDs through the existing Java-compatible `objRefId` field, add fingerprint/ambiguity fallback for safe restore, reuse native deep-copy/time conversion rules, and reject stale or unresolved project targets before mutation.
-- Keep one main-owned editor session per stable item identity and use dynamic Dockview panels for preview/pin behavior, conflict review, missing-item restore, and no-project editing.
+- Keep one main-owned editor session per stable item identity and use dynamic Dockview panels titled `Library Item` for clean-preview reuse, first-edit pinning, conflict review, missing-item restore, and no-project editing; retain the current address header and replace the raw XML body with native type-specific editors.
 - Always mount the workbench, represent Welcome as a central editor when no project is open, migrate the legacy SoundObject panel and Effects action to `LibrariesTopComponent`, and preserve valid saved layout state.
+- Keep Libraries as a compact navigator: panel-level file/history operations live under one vertical ellipsis, tree mutations live in accessible context menus/inline rename, and typed drag/drop plus destination Paste replace Browse/Insert modes.
 
 ## Phase 1: Design And Contracts
 
 Generated design artifacts:
 
-- [data-model.md](data-model.md) defines durable SQLite entities, outside-DB migration/recovery state, project locators/targets, editor sessions, revisions, ordering, and transactional invariants.
+- [data-model.md](data-model.md) defines durable SQLite entities, outside-DB migration/recovery state, project locators/targets, typed clipboard/drag state, editor sessions, revisions, ordering, and transactional invariants.
 - [contracts/library-service-ipc.md](contracts/library-service-ipc.md) defines the guarded preload/main request, result, event, pagination, error, and lifecycle boundary.
 - [contracts/legacy-library-interchange.md](contracts/legacy-library-interchange.md) defines the four Java envelopes, lossless raw payload handling, support classification, conflict policy, migration/import, and atomic export behavior.
-- [contracts/project-transfer-editor-sessions.md](contracts/project-transfer-editor-sessions.md) defines scope composition, stable project locators, insertion semantics, editor session/save conflict behavior, dirty-close guards, and Dockview/layout rules.
+- [contracts/project-transfer-editor-sessions.md](contracts/project-transfer-editor-sessions.md) defines scope composition, stable project locators, direct-manipulation transfer semantics, tree interaction rules, editor session/save conflict behavior, dirty-close guards, and Dockview/layout rules.
 - [quickstart.md](quickstart.md) defines test-first implementation order and acceptance/failure verification.
 
 ## Implementation Sequence
@@ -171,8 +172,53 @@ Generated design artifacts:
 4. Add the project adapter, stable session-aware project locators, four insertion modes, shared-SoundObject usage/delete rules, and canonical project revision/broadcast integration.
 5. Add main-owned editor sessions, validation/conflict/dirty-close behavior, and controlled type-editor adapters.
 6. Make the workbench available without a project, add the right-side Libraries panel and dynamic editor panels, and migrate legacy layout/menu/panel identifiers.
-7. Build lazy browse/search/preview and unsupported-item organization, then add contextual Orchestra/UDO/Mixer/Score routes and target validation.
-8. Retire the session-only Effects library modal/source, complete import/export/history/recovery UI, and run the full compatibility/performance/failure matrix.
+7. Build lazy browse/search, context-menu organization, native type-specific Library Item editors, and unsupported-item safe states.
+8. Add typed Orchestra/UDO/Mixer/Score drop/Paste placement, retire destination Browse/Insert and session-only legacy library surfaces, complete import/export/history/recovery UI, and run the full compatibility/performance/failure matrix.
+
+## Corrective UX Implementation Slice — 2026-07-15
+
+The persistence, migration, recovery, and project-copy architecture remains valid. The correction replaces the renderer interaction layer and its transfer entry points without changing the SQLite schema or `.blue` format.
+
+### 1. Lock interaction contracts with failing tests
+
+- Update renderer tests to require a compact Libraries navigator with no persistent migration header, action strip, row CRUD controls, destination Browse buttons, or Insert button.
+- Add keyboard/mouse context-menu matrices for root, folder, supported item, unsupported item, user scope, and project scope.
+- Add clean-preview reuse, first-edit pinning, address-header retention, and supported-type native-editor tests; assert the raw XML textarea is absent for supported items.
+- Add typed drag/drop and destination Paste contract tests covering exact insertion geometry, invalid targets, stale revisions, dependencies, shared SoundObject choice, and zero-mutation failures.
+
+### 2. Simplify the Libraries auxiliary panel
+
+- Remove `LibraryMigrationSummary`, the full-width `LibraryActionsMenu` row, the embedded `LibraryPreview`, `LibraryTargetBanner`, and the bottom-right Insert/Confirm Insert controls from the healthy browsing state.
+- Replace panel-level actions with one icon-only vertical-ellipsis popup labeled `Library actions`; include Import XML, Export Current, Export All, Import History, and migration report/status. Successful migration uses a dismissible/non-blocking notification. Only repository recovery may replace normal panel content.
+- Give the hierarchy the full remaining panel height and keep search/type/scope filtering compact. Preserve explicit empty, loading, search-no-result, unsupported, and recovery states.
+
+### 3. Make the tree behave like a desktop library navigator
+
+- Remove visible Rename/Duplicate/Delete row buttons. Double-click only the name label to enter inline rename; retain `F2`, `Enter`, and `Escape` behavior and existing validation.
+- Add Radix context menus reachable by right-click and `Shift+F10`/Context Menu key. Compute commands by node/scope capability and expose applicable Duplicate, Cut, Copy, Paste, Delete, folder creation, and project-to-user copy actions with destructive confirmation/affected counts.
+- Add a transient typed clipboard. Copy resolves an expected revision and creates deep copies with new identities on Paste; Cut visually marks the node and moves only within the same user-library type/scope while preserving identity. Stale references fail without partial mutation.
+
+### 4. Replace the XML editor with native type-specific Library Item editors
+
+- Keep the current `LibraryItemEditorPanel` address/breadcrumb header and session toolbar, but make the Dockview title `Library Item` (dirty state remains visible without using the item name as the tab title).
+- Replace the textarea-only editor registry with controlled adapters for the existing Instrument, UDO, Effect, and SoundObject editor surfaces. Each adapter receives a main-owned session snapshot and emits guarded patches; it does not persist directly.
+- Keep one clean unpinned selection-preview editor slot. First edit auto-pins; explicit pinning remains available; dirty/pinned editors never get replaced; selecting an already-open item focuses its session. Unsupported or missing items use a deliberate read-only compatibility/missing state, not a generic XML editor.
+
+### 5. Implement direct project placement
+
+- Define one opaque `LibraryDragPayload` carrying type, scope, stable key, expected revision, and a drag-session token—never payload XML.
+- Make Orchestra and project UDO tables accept compatible drops at exact row/end boundaries; make mixer pre/post chains expose exact insertion gaps; make Score resolve an explicit group/container/layer/time from pointer position.
+- Show compatible insertion markers, invalid-target feedback, edge auto-scroll, and Escape cancellation. On drop, call the existing preview/apply services to revalidate source, project session, target revision, dependencies, and copy semantics before one atomic change.
+- Remove `Browse Instruments`, `Browse UDO Library`, `Browse SoundObjects`, `Add Effect from Library…`, and their target-mode state. Add destination context-menu/keyboard Paste using the same resolver so drag is never the only path.
+- User-library-to-project drag always copies. Shared SoundObject drop/paste pauses only for the explicit `Copy Instance` versus `Copy Independent` choice; dependency/conflict disclosures remain blocking and revision-bound.
+
+### 6. Verify the UX correction as one vertical slice
+
+- Run focused tree, panel, workbench editor, Orchestra, UDO, mixer, Score, project-transfer, and accessibility tests before the full package suites/build.
+- Manually verify mouse and keyboard flows with Libraries docked, minimized, floating, narrow, and restored from a saved layout; confirm Welcome remains a full-window standalone surface when no project is open.
+- Confirm a valid drop needs no extra confirmation, every invalid/stale drop produces zero mutation, and 100 selection changes cannot replace a dirty/pinned editor.
+
+This slice intentionally does not redesign persistence, import/export compatibility, recovery, native project copy semantics, or the `.blue` model. `/speckit.tasks` should regenerate only the corrective renderer/contract/test work after this plan is approved.
 
 ## Post-Design Constitution Check
 

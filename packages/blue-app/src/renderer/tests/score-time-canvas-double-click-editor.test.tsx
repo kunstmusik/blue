@@ -108,6 +108,10 @@ describe('ScoreTimeCanvas double-click editor parity', () => {
     act(() => {
       root.render(
         <ScoreTimeCanvas
+          projectSessionId={1}
+          projectRevision={1}
+          scoreRootGroupId="group-1"
+          scoreContainerPath={[]}
           group={makeGroup(item)}
           totalBeats={16}
           pixelsPerBeat={50}

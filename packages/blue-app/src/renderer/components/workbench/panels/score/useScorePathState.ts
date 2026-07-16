@@ -1,10 +1,12 @@
 import { useState, useCallback, useRef } from 'react';
 import type { ScoreObjectLocationRef } from './types';
+import type { ScoreInsertionLocation } from '../../../../../shared/unified-library';
 
 export interface ScorePathSegment {
   groupId: string | null;
   label: string;
   location?: ScoreObjectLocationRef;
+  scorePath?: Pick<ScoreInsertionLocation, 'rootGroupId' | 'containerPath'>;
 }
 
 interface ScorePathSession {
@@ -54,7 +56,12 @@ export function useScorePathState() {
     });
   }, [session.scrollByGroupId]);
 
-  const navigateToGroup = useCallback((groupId: string, label: string, location?: ScoreObjectLocationRef) => {
+  const navigateToGroup = useCallback((
+    groupId: string,
+    label: string,
+    location?: ScoreObjectLocationRef,
+    scorePath?: Pick<ScoreInsertionLocation, 'rootGroupId' | 'containerPath'>,
+  ) => {
     setSession((prev) => {
       // No-op when the target group is already active: avoids stacking
       // duplicate breadcrumb segments on repeated double-clicks and keeps the
@@ -65,7 +72,7 @@ export function useScorePathState() {
       return {
         ...prev,
         activeGroupId: groupId,
-        segments: [...prev.segments, { groupId, label, location }],
+        segments: [...prev.segments, { groupId, label, location, scorePath }],
       };
     });
     saveCurrentScroll();

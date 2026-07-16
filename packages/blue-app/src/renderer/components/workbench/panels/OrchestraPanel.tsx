@@ -1,9 +1,8 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { useProjectStore } from '../../../stores/project-store';
+import { getProjectDocumentRevision, useProjectStore } from '../../../stores/project-store';
 import ArrangementPanel from './orchestra/ArrangementPanel';
 import InstrumentEditorPanel from './orchestra/InstrumentEditorPanel';
 import SplitPane from './orchestra/SplitPane';
-import { openUnifiedLibraries } from '../../../stores/library-routing';
 
 function EmptyOrchestraState(): React.ReactElement {
   return (
@@ -46,9 +45,7 @@ export default function OrchestraPanel(): React.ReactElement {
         )
       : undefined,
   );
-  const browseInstruments = useCallback(() => {
-    void openUnifiedLibraries({ type: 'instrumentTarget', projectSessionId });
-  }, [projectSessionId]);
+  const projectRevision = getProjectDocumentRevision();
 
   if (!loaded) {
     return <EmptyOrchestraState />;
@@ -74,14 +71,9 @@ export default function OrchestraPanel(): React.ReactElement {
               selectedAssignmentId={selectedAssignmentId}
               onSelectAssignment={setSelectedAssignmentId}
               onOrchestraPatch={updateOrchestra}
+              projectSessionId={projectSessionId}
+              projectRevision={projectRevision}
             />
-            <button
-              type="button"
-              className="absolute bottom-2 right-2 rounded border border-app-accent bg-app-panel px-2 py-1 text-xs text-app-accent"
-              onClick={browseInstruments}
-            >
-              Browse Instruments
-            </button>
           </div>
         )}
         second={

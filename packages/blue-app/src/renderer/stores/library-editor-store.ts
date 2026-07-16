@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import type {
   LibraryEditorConflictDecision,
+  LibraryEditorPatchRequest,
   LibraryEditorSessionSnapshot,
   LibraryItemKey,
 } from '../../shared/unified-library';
@@ -30,7 +31,7 @@ interface LibraryEditorState {
   dispose: () => void;
   open: (key: LibraryItemKey, pinned?: boolean) => Promise<LibraryEditorSessionSnapshot | null>;
   hydrate: (sessionId: string) => Promise<LibraryEditorSessionSnapshot | null>;
-  patch: (sessionId: string, patch: { payloadXml?: string; displayName?: string; pinned?: boolean }) => Promise<void>;
+  patch: (sessionId: string, patch: Omit<LibraryEditorPatchRequest, 'sessionId'>) => Promise<void>;
   save: (sessionId: string) => Promise<void>;
   revert: (sessionId: string) => Promise<void>;
   resolveConflict: (sessionId: string, decision: LibraryEditorConflictDecision) => Promise<void>;

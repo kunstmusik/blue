@@ -1,27 +1,20 @@
 import { createHash, randomUUID } from 'node:crypto';
 import type {
   LibraryEditorConflictDecision,
+  LibraryEditorPatchRequest,
+  LibraryEditorSessionSnapshot,
   LibraryItemKey,
-  LibraryType,
 } from '../../shared/unified-library';
 import { UnifiedLibraryRepositoryClient } from './repository-client';
 import { UnifiedLibraryProjectAdapter } from './project-adapter';
 import { Element } from '@blue/data';
+import { LibraryEditorAdapterRegistry } from './editor-adapters';
 
 export type LibraryEditorSessionStatus = 'ready' | 'conflict' | 'missing';
 
-export interface LibraryEditorSessionSnapshot {
-  readonly sessionId: string;
-  readonly key: LibraryItemKey;
-  readonly displayName: string;
-  readonly objectType: string;
-  readonly breadcrumb: readonly string[];
-  readonly baseRevision: number | string;
+interface InternalLibraryEditorSession extends LibraryEditorSessionSnapshot {
   readonly draftXml: string;
   readonly savedXml: string;
-  readonly dirty: boolean;
-  readonly pinned: boolean;
-  readonly status: LibraryEditorSessionStatus;
 }
 
 export type LibraryEditorSaveResult =
@@ -44,10 +37,11 @@ function logicalKey(key: LibraryItemKey): string {
 }
 
 export class UnifiedLibraryEditorSessionService {
-  private readonly sessions = new Map<string, LibraryEditorSessionSnapshot>();
+  private readonly sessions = new Map<string, InternalLibraryEditorSession>();
   private readonly byLogicalKey = new Map<string, string>();
 
   private readonly savedNames = new Map<string, string>();
+  private readonly adapters = new LibraryEditorAdapterRegistry();
 
   constructor(
     private readonly repository: UnifiedLibraryRepositoryClient,
@@ -56,7 +50,7 @@ export class UnifiedLibraryEditorSessionService {
 
   async open(key: LibraryItemKey, pinned = false): Promise<LibraryEditorSessionSnapshot> {
     const existingId = this.byLogicalKey.get(logicalKey(key));
-    if (existingId) return this.requireSession(existingId);
+    if (existingId) return this.toSnapshot(this.requireSession(existingId));
     for (const session of this.sessions.values()) {
       if (!session.dirty && !session.pinned) this.remove(session.sessionId);
     }
@@ -66,15 +60,23 @@ export class UnifiedLibraryEditorSessionService {
     if (key.scope !== 'user' && !source) throw new Error('Project library item not found');
     const node = key.scope === 'user' ? await this.repository.getNode(key.nodeId) : null;
     const payload = key.scope === 'user' ? await this.repository.getItemPayload(key.nodeId) : null;
-    const session: LibraryEditorSessionSnapshot = {
+    const payloadXml = payload?.payloadXml ?? source!.payloadXml;
+    const objectType = payload?.objectType ?? source!.objectType;
+    const session: InternalLibraryEditorSession = {
       sessionId: randomUUID(),
       key,
       displayName: node?.displayName ?? source!.displayName,
-      objectType: payload?.objectType ?? source!.objectType,
+      objectType,
       breadcrumb: node ? await this.repository.getBreadcrumb(node.id) : source!.breadcrumb,
       baseRevision: node?.revision ?? source!.revision,
-      draftXml: payload?.payloadXml ?? source!.payloadXml,
-      savedXml: payload?.payloadXml ?? source!.payloadXml,
+      document: this.adapters.hydrate(
+        key.libraryType,
+        payloadXml,
+        objectType,
+        payload?.supportStatus ?? 'supported',
+      ),
+      draftXml: payloadXml,
+      savedXml: payloadXml,
       dirty: false,
       pinned,
       status: 'ready',
@@ -82,27 +84,65 @@ export class UnifiedLibraryEditorSessionService {
     this.sessions.set(session.sessionId, session);
     this.savedNames.set(session.sessionId, session.displayName);
     this.byLogicalKey.set(logicalKey(key), session.sessionId);
-    return { ...session };
+    return this.toSnapshot(session);
   }
 
   get(sessionId: string): LibraryEditorSessionSnapshot | null {
     const session = this.sessions.get(sessionId);
-    return session ? { ...session } : null;
+    return session ? this.toSnapshot(session) : null;
   }
 
   list(): LibraryEditorSessionSnapshot[] {
-    return [...this.sessions.values()].map((session) => ({ ...session }));
+    return [...this.sessions.values()].map((session) => this.toSnapshot(session));
+  }
+
+  getUserSessionsForNodeIds(nodeIds: readonly string[]): LibraryEditorSessionSnapshot[] {
+    const ids = new Set(nodeIds);
+    return [...this.sessions.values()]
+      .filter((session) => session.key.scope === 'user' && ids.has(session.key.nodeId))
+      .map((session) => this.toSnapshot(session));
+  }
+
+  async reconcileUserNode(nodeId: string): Promise<void> {
+    const node = await this.repository.getNode(nodeId);
+    const breadcrumb = await this.repository.getBreadcrumb(nodeId);
+    for (const [sessionId, session] of this.sessions) {
+      if (session.key.scope !== 'user' || session.key.nodeId !== nodeId) continue;
+      const next = {
+        ...session,
+        displayName: node.displayName,
+        breadcrumb,
+        baseRevision: node.revision,
+        dirty: session.draftXml !== session.savedXml,
+        status: 'ready' as const,
+      };
+      this.sessions.set(sessionId, next);
+      this.savedNames.set(sessionId, node.displayName);
+    }
+  }
+
+  closeDeletedUserNodes(nodeIds: readonly string[]): string[] {
+    const sessions = this.getUserSessionsForNodeIds(nodeIds);
+    if (sessions.some((session) => session.dirty)) {
+      throw new Error('Dirty Library Item editors must be saved or discarded before deleting.');
+    }
+    for (const session of sessions) this.remove(session.sessionId);
+    return sessions.map((session) => session.sessionId);
   }
 
   patch(
     sessionId: string,
-    patch: { readonly payloadXml?: string; readonly displayName?: string; readonly pinned?: boolean },
+    patch: Omit<LibraryEditorPatchRequest, 'sessionId'>,
   ): LibraryEditorSessionSnapshot {
     const current = this.requireSession(sessionId);
-    const draftXml = patch.payloadXml ?? current.draftXml;
-    const next: LibraryEditorSessionSnapshot = {
+    const applied = patch.documentPatch
+      ? this.adapters.applyPatch(current.key.libraryType, current.draftXml, patch.documentPatch)
+      : null;
+    const draftXml = applied?.payloadXml ?? current.draftXml;
+    const next: InternalLibraryEditorSession = {
       ...current,
       displayName: patch.displayName ?? current.displayName,
+      document: applied?.document ?? current.document,
       draftXml,
       dirty: draftXml !== current.savedXml
         || (patch.displayName ?? current.displayName) !== this.savedNames.get(sessionId),
@@ -115,7 +155,7 @@ export class UnifiedLibraryEditorSessionService {
       status: 'ready',
     };
     this.sessions.set(sessionId, next);
-    return { ...next };
+    return this.toSnapshot(next);
   }
 
   async save(sessionId: string): Promise<LibraryEditorSaveResult> {
@@ -130,7 +170,7 @@ export class UnifiedLibraryEditorSessionService {
         if (!savedSource) {
           const missing = { ...current, status: 'missing' as const };
           this.sessions.set(sessionId, missing);
-          return { status: 'missing', session: { ...missing } };
+          return { status: 'missing', session: this.toSnapshot(missing) };
         }
         const saved = {
           ...current,
@@ -141,6 +181,12 @@ export class UnifiedLibraryEditorSessionService {
           baseRevision: savedSource.revision,
           savedXml: savedSource.payloadXml,
           draftXml: savedSource.payloadXml,
+          document: this.adapters.hydrate(
+            current.key.libraryType,
+            savedSource.payloadXml,
+            savedSource.objectType,
+            'supported',
+          ),
           dirty: false,
           status: 'ready' as const,
         };
@@ -148,12 +194,12 @@ export class UnifiedLibraryEditorSessionService {
         this.byLogicalKey.set(logicalKey(saved.key), sessionId);
         this.sessions.set(sessionId, saved);
         this.savedNames.set(sessionId, saved.displayName);
-        return { status: 'saved', session: { ...saved } };
+        return { status: 'saved', session: this.toSnapshot(saved) };
       } catch (error) {
         if (!/conflict/i.test(error instanceof Error ? error.message : '')) throw error;
         const conflict = { ...current, status: 'conflict' as const };
         this.sessions.set(sessionId, conflict);
-        return { status: 'conflict', session: { ...conflict } };
+        return { status: 'conflict', session: this.toSnapshot(conflict) };
       }
     }
     try {
@@ -162,7 +208,7 @@ export class UnifiedLibraryEditorSessionService {
       if (node.revision !== current.baseRevision) {
         const conflict = { ...current, status: 'conflict' as const };
         this.sessions.set(sessionId, conflict);
-        return { status: 'conflict', session: { ...conflict } };
+        return { status: 'conflict', session: this.toSnapshot(conflict) };
       }
       const payload = await this.repository.getItemPayload(node.id);
       const savedNode = await this.repository.updateItem(node.id, node.revision, current.displayName, {
@@ -181,12 +227,12 @@ export class UnifiedLibraryEditorSessionService {
       };
       this.sessions.set(sessionId, saved);
       this.savedNames.set(sessionId, saved.displayName);
-      return { status: 'saved', session: { ...saved } };
+      return { status: 'saved', session: this.toSnapshot(saved) };
     } catch (error) {
       if (!/not found/i.test(error instanceof Error ? error.message : '')) throw error;
       const missing = { ...current, status: 'missing' as const };
       this.sessions.set(sessionId, missing);
-      return { status: 'missing', session: { ...missing } };
+      return { status: 'missing', session: this.toSnapshot(missing) };
     }
   }
 
@@ -196,7 +242,7 @@ export class UnifiedLibraryEditorSessionService {
   ): Promise<LibraryEditorSessionSnapshot> {
     const current = this.requireSession(sessionId);
     if (current.status !== 'conflict') throw new Error('Editor session is not in conflict');
-    if (decision === 'cancel') return { ...current };
+    if (decision === 'cancel') return this.toSnapshot(current);
     if (decision === 'reloadLatest') return this.revert(sessionId);
 
     if (current.key.scope === 'user') {
@@ -208,7 +254,7 @@ export class UnifiedLibraryEditorSessionService {
       if (!latest) {
         const missing = { ...current, status: 'missing' as const };
         this.sessions.set(sessionId, missing);
-        return { ...missing };
+        return this.toSnapshot(missing);
       }
       this.savedNames.set(sessionId, latest.displayName);
       this.sessions.set(sessionId, { ...current, baseRevision: latest.revision, status: 'ready' });
@@ -223,7 +269,7 @@ export class UnifiedLibraryEditorSessionService {
       if (!source) {
         const missing = { ...current, status: 'missing' as const };
         this.sessions.set(sessionId, missing);
-        return { ...missing };
+        return this.toSnapshot(missing);
       }
       const reverted = {
         ...current,
@@ -232,13 +278,19 @@ export class UnifiedLibraryEditorSessionService {
         breadcrumb: source.breadcrumb,
         baseRevision: source.revision,
         draftXml: source.payloadXml,
+        document: this.adapters.hydrate(
+          current.key.libraryType,
+          source.payloadXml,
+          source.objectType,
+          'supported',
+        ),
         savedXml: source.payloadXml,
         dirty: false,
         status: 'ready' as const,
       };
       this.sessions.set(sessionId, reverted);
       this.savedNames.set(sessionId, reverted.displayName);
-      return { ...reverted };
+      return this.toSnapshot(reverted);
     }
     const node = await this.repository.getNode(current.key.nodeId);
     const payload = await this.repository.getItemPayload(node.id);
@@ -248,13 +300,19 @@ export class UnifiedLibraryEditorSessionService {
       breadcrumb: await this.repository.getBreadcrumb(node.id),
       baseRevision: node.revision,
       draftXml: payload.payloadXml,
+      document: this.adapters.hydrate(
+        current.key.libraryType,
+        payload.payloadXml,
+        payload.objectType,
+        payload.supportStatus,
+      ),
       savedXml: payload.payloadXml,
       dirty: false,
       status: 'ready' as const,
     };
     this.sessions.set(sessionId, reverted);
     this.savedNames.set(sessionId, reverted.displayName);
-    return { ...reverted };
+    return this.toSnapshot(reverted);
   }
 
   close(sessionId: string, decision?: 'discard' | 'cancel'): boolean {
@@ -280,16 +338,30 @@ export class UnifiedLibraryEditorSessionService {
     }
     for (const [id, session] of this.sessions) {
       if (session.dirty) this.sessions.set(id, {
-        ...session, draftXml: session.savedXml, dirty: false, status: 'ready',
+        ...session,
+        draftXml: session.savedXml,
+        document: this.adapters.hydrate(
+          session.key.libraryType,
+          session.savedXml,
+          session.objectType,
+          session.document.kind === 'unsupported' ? 'unsupported' : 'supported',
+        ),
+        dirty: false,
+        status: 'ready',
       });
     }
     return { mayContinue: true };
   }
 
-  private requireSession(sessionId: string): LibraryEditorSessionSnapshot {
+  private requireSession(sessionId: string): InternalLibraryEditorSession {
     const session = this.sessions.get(sessionId);
     if (!session) throw new Error(`Library editor session not found: ${sessionId}`);
     return session;
+  }
+
+  private toSnapshot(session: InternalLibraryEditorSession): LibraryEditorSessionSnapshot {
+    const { draftXml: _draftXml, savedXml: _savedXml, ...snapshot } = session;
+    return snapshot;
   }
 
   private remove(sessionId: string): void {

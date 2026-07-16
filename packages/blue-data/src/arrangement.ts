@@ -69,6 +69,16 @@ export class Arrangement {
     }
   }
 
+  addInstrumentAtIndex(instrument: Instrument, index: number, instrumentId?: string): string {
+    const assignmentId = instrumentId ?? this.getNextInstrumentId();
+    const assignment = new InstrumentAssignment();
+    assignment.arrangementId = assignmentId;
+    assignment.instr = instrument;
+    const boundedIndex = Math.max(0, Math.min(index, this.arrangement.length));
+    this.arrangement.splice(boundedIndex, 0, assignment);
+    return assignmentId;
+  }
+
   size(): number {
     return this.arrangement.length;
   }

@@ -19,6 +19,7 @@ export interface RepositoryWorkerRequest {
     | 'moveNode'
     | 'reorderNode'
     | 'duplicateNode'
+    | 'listDescendantNodeIds'
     | 'deleteNode'
     | 'createFolder'
     | 'createItem'
@@ -102,6 +103,7 @@ export function startUnifiedLibraryRepositoryWorker(databasePath: string): void 
         case 'moveNode':
           value = repository.moveNode(
             String(request.args[0]), Number(request.args[1]), String(request.args[2]), Number(request.args[3]),
+            request.args[4] === undefined ? undefined : Number(request.args[4]),
           );
           break;
         case 'reorderNode':
@@ -112,7 +114,11 @@ export function startUnifiedLibraryRepositoryWorker(databasePath: string): void 
             String(request.args[0]), Number(request.args[1]),
             request.args[2] === undefined ? undefined : String(request.args[2]),
             request.args[3] === undefined ? undefined : Number(request.args[3]),
+            request.args[4] === undefined ? undefined : Number(request.args[4]),
           );
+          break;
+        case 'listDescendantNodeIds':
+          value = repository.listDescendantNodeIds(String(request.args[0]));
           break;
         case 'deleteNode':
           value = repository.deleteNode(String(request.args[0]), Number(request.args[1]));

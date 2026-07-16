@@ -122,10 +122,20 @@ The required files and roots are:
 - `packages/blue-app/src/main/mixer-effects-library.ts` currently reads `~/.blue/effectsLibrary.xml`, creates runtime-only UUIDs, and loses mutations on restart. Unified Libraries replaces that file as the active user Effect source after migration.
 - The existing `@blue/data` `SoundObjectLibrary` is Project Shared SoundObjects stored in `.blue`; it MUST NOT be reused as the user SoundObject persistence model.
 - The deferred program-wide Instrument and UDO library placeholders from Specs 021 and 026 converge on this feature.
-- Existing Tools/menu/context actions and legacy panel IDs route to one logical Libraries panel.
+- The Window menu and legacy library command IDs route to one logical Libraries panel. Destination-side Browse/Add-from-Library controls are removed rather than creating a persistent insertion mode.
 - Saved workbench layouts containing a legacy library panel require a non-destructive mapping to the unified panel.
 - Project collections that currently use mutable indexes or serialization references need project-session-safe editor identity so reorder, save/reload, or deletion cannot retarget an editor silently.
 - Current type editors remain authoritative inside the common Library Item shell; this feature does not replace them with a generic property editor.
+
+## Required Interaction Model
+
+- The Libraries auxiliary panel is a compact navigator. Healthy state contains compact search/type/scope controls, the hierarchy, and one accessible vertical-ellipsis popup for import/export/history/migration-report commands.
+- Successful migration MUST NOT occupy a persistent full-width header. Repository recovery may replace normal content only while the repository is unusable.
+- Tree rows MUST NOT contain persistent Rename, Duplicate, Delete, or Insert buttons. Double-clicking the visible name and `F2` perform inline rename; scoped right-click and keyboard context menus provide Duplicate, Cut, Copy, Paste, Delete, and folder operations.
+- Selecting a supported item opens or updates a main-workspace panel titled `Library Item`. It retains the existing address/breadcrumb header and hosts the full existing type-specific editor. Supported types MUST NOT use a generic raw XML textarea.
+- One clean unpinned editor may be reused as a selection preview. First edit pins automatically; dirty or pinned sessions MUST NOT be replaced by later selection.
+- Project placement uses a typed opaque drag token and keyboard-equivalent destination Paste. Orchestra/UDO tables, mixer-chain gaps, and Score layer/time positions expose exact transient targets and revalidate through main before atomic mutation.
+- No destination surface retains a Browse/Insert mode, and Libraries has no persistent Insert button. User-library-to-project drag is always a copy; shared SoundObjects retain the explicit instance-versus-independent choice.
 
 ## Deferred Design Inputs
 

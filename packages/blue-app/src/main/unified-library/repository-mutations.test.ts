@@ -43,4 +43,31 @@ describe('repository hierarchy mutations', () => {
       expect(repository.getNode(parent.id).parentId).toBe(root.id);
     } finally { repository.close(); }
   });
+
+  it('deep-copies folder identities and rolls back stale destination Paste atomically', () => {
+    const repository = UnifiedLibraryRepository.open(':memory:');
+    try {
+      const root = repository.getRoot('instrument');
+      const sourceFolder = repository.createFolder({ libraryType: 'instrument', parentId: root.id, displayName: 'Source' });
+      const child = repository.createItem({ libraryType: 'instrument', parentId: sourceFolder.id, displayName: 'Child', payload: PAYLOAD });
+      const target = repository.createFolder({ libraryType: 'instrument', parentId: root.id, displayName: 'Target' });
+      const duplicate = repository.duplicateNode(sourceFolder.id, sourceFolder.revision, target.id, 0, target.revision);
+      const duplicateChild = repository.listChildren(duplicate.id)[0]!;
+      expect(duplicate.id).not.toBe(sourceFolder.id);
+      expect(duplicateChild.id).not.toBe(child.id);
+      expect(repository.getItemPayload(duplicateChild.id).payloadXml).toBe(PAYLOAD.payloadXml);
+
+      const renamedTarget = repository.renameNode(target.id, target.revision, 'Renamed Target');
+      const before = repository.getSnapshot().contentRevision;
+      expect(() => repository.moveNode(
+        child.id,
+        child.revision,
+        renamedTarget.id,
+        0,
+        target.revision,
+      )).toThrow(/stale destination/i);
+      expect(repository.getNode(child.id).parentId).toBe(sourceFolder.id);
+      expect(repository.getSnapshot().contentRevision).toBe(before);
+    } finally { repository.close(); }
+  });
 });

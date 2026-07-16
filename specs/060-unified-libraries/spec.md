@@ -5,6 +5,7 @@
 **Status**: Draft  
 **Input**: User description: "Create a centralized Unified Libraries experience from the supplied design report, covering Instruments, UDOs, Effects, SoundObjects, project and user scopes, contextual insertion, full item editing, durable user-library storage, safe Java Blue migration, lossless unsupported-object preservation, and Java Blue-compatible XML import and export."
 **Design Constraints**: [design-constraints.md](design-constraints.md)
+**UX Correction (2026-07-15)**: The Libraries auxiliary panel is a compact navigator, not an action form. Selection drives a reusable full type-specific editor in the main area titled `Library Item`, retaining the existing address/breadcrumb header; organization uses inline rename and context menus; project placement uses typed drag-and-drop or keyboard-equivalent copy/paste; persistent CRUD, Browse, and Insert buttons are prohibited.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -14,17 +15,18 @@ As a composer, I want one dockable Libraries panel for Blue's reusable object ty
 
 **Why this priority**: A unified, discoverable browsing experience is the central user value of this feature and is useful before any editing or migration workflow is added.
 
-**Independent Test**: Populate project and user sources with Instruments, UDOs, SoundObjects, and Effects; open Libraries directly and from each contextual Browse action; then verify filtering, meaningful scopes, folder browsing, search, preview, source labels, and insertion-target display without opening a full editor.
+**Independent Test**: Populate project and user sources with Instruments, UDOs, SoundObjects, and Effects; open Libraries from the Window menu; then verify compact filtering, meaningful scopes, folder browsing, search, context commands, and reusable native full editors in the main area without persistent CRUD, Browse, or Insert buttons.
 
 **Acceptance Scenarios**:
 
-1. **Given** a project and user libraries contain several supported object types, **When** the user opens Libraries, **Then** one dockable panel offers `All`, `Instruments`, `UDOs`, `SoundObjects`, and `Effects` filters, a search field, meaningful scope sections, and a folder-and-item hierarchy.
-2. **Given** the user selects an Instrument, UDO, Effect, or SoundObject once, **When** the selection changes, **Then** the panel shows a lightweight type-appropriate summary without replacing the panel with a full editor.
+1. **Given** a project and user libraries contain several supported object types, **When** the user opens Libraries, **Then** one compact dockable panel offers `All`, `Instruments`, `UDOs`, `SoundObjects`, and `Effects` filters, a search field, meaningful scope sections, a folder-and-item hierarchy, and one vertically oriented ellipsis menu for panel-level commands.
+2. **Given** the user selects a supported Instrument, UDO, Effect, or SoundObject once, **When** the selection changes, **Then** a reusable main-workspace panel titled `Library Item` hosts the type's full existing editor under the existing address/breadcrumb header while keyboard focus remains in the tree; the Libraries panel does not embed an editor, and supported types do not fall back to a raw XML textarea.
 3. **Given** the user selects a type filter, **When** the panel displays its scopes, **Then** it shows only the project and user sources that actually exist for that type; Effects show a user-library source while a selected project chain appears only as an insertion target, never as a Project Effects Library.
-4. **Given** the user invokes a domain-specific Browse action, **When** Libraries opens, **Then** it selects the requested type and clearly identifies any current insertion target, such as a channel and effect-chain position.
+4. **Given** migration, import, export, and history commands are available, **When** Libraries is healthy, **Then** those commands appear in the ellipsis menu rather than in a persistent banner or full-width button row; completed migration is summarized non-blockingly and detailed history remains available from the menu.
 5. **Given** items with the same name exist in different types or scopes, **When** they appear in browse or search results, **Then** each result remains distinguishable by type, scope, and folder context.
 6. **Given** no project is open, **When** the user opens Libraries, **Then** user-library browse, search, edit, import, export, and recovery remain available while project scopes and insertion are unavailable.
 7. **Given** an existing action or saved layout refers to a legacy library surface, **When** it is invoked or restored, **Then** Blue opens or maps it to the one logical Libraries panel without creating a duplicate panel or discarding unrelated layout state.
+8. **Given** the user browses the tree, **When** no context menu or inline rename is active, **Then** rows show only navigation and identity information; they do not show persistent Rename, Duplicate, Delete, or Insert controls.
 
 ---
 
@@ -34,18 +36,20 @@ As a composer building a project, I want library objects inserted into the corre
 
 **Why this priority**: Reuse is the purpose of a library, and incorrect copy semantics could silently alter existing projects or break project portability.
 
-**Independent Test**: Open Libraries from Orchestra, the project UDO editor, a mixer chain, and Score; insert one item of each type; save and reopen the project; edit the source library items; and verify the destination, identity, independence, and shared SoundObject choices for every insertion.
+**Independent Test**: Open Libraries and drag one item of each type onto Orchestra, the project UDO table, an exact mixer-chain insertion gap, and an explicit Score layer/time; repeat the flow with keyboard copy/paste; save and reopen the project; then verify destination, identity, independence, and shared SoundObject choices.
 
 **Acceptance Scenarios**:
 
-1. **Given** a user-library Instrument and an active project, **When** the user inserts it into Orchestra, **Then** the project receives an independent Instrument copy.
-2. **Given** a user-library UDO and an active project, **When** the user inserts it into the project UDO list, **Then** the project receives an independent UDO copy.
-3. **Given** a user-library Effect and a valid selected mixer-chain target, **When** the user inserts it, **Then** the target chain receives an independent Effect copy at the indicated position.
-4. **Given** a user-library SoundObject and a valid Score destination, **When** the user inserts it, **Then** the project receives an independent SoundObject copy by default.
-5. **Given** a project-shared SoundObject, **When** the user chooses a copy action, **Then** the user can explicitly choose between another shared instance and an independent copy.
+1. **Given** a user-library Instrument and an active project, **When** the user drops or pastes it at an Orchestra insertion position, **Then** the project receives an independent Instrument copy at the indicated position.
+2. **Given** a user-library UDO and an active project, **When** the user drops or pastes it at a project UDO table insertion position, **Then** the project receives an independent UDO copy at the indicated position.
+3. **Given** a user-library Effect, **When** the user drags it across a mixer chain, **Then** only compatible chains expose exact insertion markers, and dropping at a marker creates an independent Effect copy at that position.
+4. **Given** a user-library SoundObject, **When** the user drops it on a valid Score layer and time, **Then** the project receives an independent SoundObject copy at the indicated musical position by default.
+5. **Given** a project-shared SoundObject, **When** the user drops or pastes it into Score, **Then** Blue requires an explicit `Copy Instance` or `Copy Independent` choice with consequences visible before applying the change.
 6. **Given** a user-library item has already been inserted, **When** its user-library definition is edited later, **Then** the existing project copy remains unchanged while future insertions use the saved definition.
-7. **Given** a contextual target is missing, ambiguous, or no longer exists, **When** the user attempts insertion, **Then** Blue prevents insertion into an unintended location and explains how to select a valid target.
-8. **Given** an item owns local data and also declares external project-level dependencies, **When** insertion is requested, **Then** Blue includes the item-owned data, identifies unresolved external dependencies before changing the project, and requires an explicit resolution rather than silently mutating other project collections.
+7. **Given** a destination is missing, ambiguous, stale, or incompatible, **When** the user drags or pastes an item, **Then** Blue shows invalid-target feedback, performs no mutation, and never falls back to a neighboring row, chain, layer, or time.
+8. **Given** an item owns local data and also declares external project-level dependencies, **When** a drop or paste is requested, **Then** Blue includes the item-owned data, identifies unresolved external dependencies before changing the project, and requires an explicit resolution rather than silently mutating other project collections.
+9. **Given** Libraries and a compatible project surface are visible, **When** the user wants to place an item, **Then** direct drag-and-drop is available without first invoking a destination-side Browse command or a Libraries-side Insert button.
+10. **Given** a user cannot or does not use drag-and-drop, **When** the user copies a library item and invokes Paste at a compatible destination selection or context menu, **Then** Blue performs the same validation and copy semantics as a drop.
 
 ---
 
@@ -55,20 +59,21 @@ As a library maintainer, I want full type-specific editing in the main workspace
 
 **Why this priority**: Centralized browsing is incomplete unless users can maintain reusable content without returning to fragmented or modal editing workflows.
 
-**Independent Test**: Open supported user and project items of every type, edit them through the shared Library Item shell, exercise preview-tab reuse and pinning, perform folder and item operations, restart Blue, and verify dirty-state safety, type-specific editors, scope consequences, and stable identity.
+**Independent Test**: Select supported user and project items of every type, edit them through the reusable native `Library Item` editor and existing address header, rename inline, and perform Duplicate/Cut/Copy/Paste/Delete from mouse and keyboard context menus; restart Blue and verify dirty-state safety, scope consequences, ordering, and stable identity.
 
 **Acceptance Scenarios**:
 
-1. **Given** a supported item is selected, **When** the user double-clicks it or chooses Edit, **Then** a Library Item editor opens in the main workspace with common identity, scope, folder, dirty-state, save, revert, organization, applicable current-project usage, and dependency information around the native editor for that type.
-2. **Given** a temporary Library Item tab is unmodified, **When** the user opens another item in preview mode, **Then** Blue may reuse that tab; once the tab is edited or explicitly pinned, selection changes cannot replace it.
+1. **Given** a supported item is selected, **When** its `Library Item` panel appears, **Then** the main workspace shows the existing address/breadcrumb header and the full native type-specific editor with dirty state, Save, Revert, applicable current-project usage, dependency information, and scope consequences.
+2. **Given** the current Library Item editor is clean and unpinned, **When** another supported item is selected, **Then** Blue may reuse that clean preview editor; once the user edits or explicitly pins it, later selections MUST open or reuse a different clean preview slot and MUST NOT replace the pinned session.
 3. **Given** an item has unsaved changes, **When** the user changes library selection, closes the panel, or opens another item, **Then** the unsaved editor remains available and its changes are not silently discarded.
 4. **Given** a user-library, project-owned, or project-shared item is open, **When** the editor renders, **Then** it explains the scope and the consequence of saving, including the shared-instance count when applicable.
-5. **Given** a user-library folder or supported item, **When** the user creates a folder, saves a supported project object as a user-library copy, or renames, duplicates, moves, reorders, or deletes library content, **Then** the hierarchy and ordering persist across restart without changing the originating project object or any already-inserted project copy.
+5. **Given** a user-library folder or supported item, **When** the user creates a folder, saves a supported project object as a user-library copy, renames by double-clicking the visible name, or invokes Duplicate/Cut/Copy/Paste/Delete from a context menu, **Then** the hierarchy and ordering persist across restart without changing the originating project object or any already-inserted project copy.
 6. **Given** a project item is shown through Libraries, **When** an organization or lifecycle command is not meaningful for that project model, **Then** the command is unavailable rather than simulating a user-library folder operation.
 7. **Given** a complex type-specific editor needs more room, **When** the user collapses the Libraries panel, **Then** the workspace editor remains open and usable.
 8. **Given** a dirty editor is closed, the application quits, or its owning project closes or changes, **When** the draft cannot remain safely attached to the same item, **Then** Blue requires a Save, Discard, or Cancel decision and never applies the draft to another project or item.
 9. **Given** a Project Shared SoundObject has linked instances, **When** the user deletes its definition, **Then** Blue shows the affected count, requires confirmation, and applies the native linked-instance deletion rule without leaving broken references.
 10. **Given** another surface changes an item while its Library Item editor has a draft, **When** that draft is saved, **Then** Blue identifies the conflict and does not silently overwrite the newer value.
+11. **Given** a tree row has focus, **When** the user presses the Context Menu key or `Shift+F10`, **Then** the same applicable commands and disabled states available by right-click are keyboard accessible with visible focus.
 
 ---
 
@@ -170,9 +175,9 @@ As a composer relying on libraries during project work, I want compound changes 
 | Instrument | Project Orchestra | Instrument Library |
 | UDO | Project UDO list | UDO Library |
 | SoundObject | Project Shared SoundObjects | SoundObject Library |
-| Effect | None; a selected mixer/effect-chain is an insertion target only | Effect Library |
+| Effect | None; a mixer/effect-chain gap is a transient drop/Paste target only | Effect Library |
 
-Effects MUST show a user-library section only. A selected mixer/effect-chain appears as a target banner and MUST NOT become a browsable or persisted Project Effects Library. Future factory content may use a separate read-only scope, but factory content is outside this feature.
+Effects MUST show a user-library section only. Mixer/effect-chain insertion gaps appear only as destination feedback during drag or Paste and MUST NOT become a browsable or persisted Project Effects Library. Future factory content may use a separate read-only scope, but factory content is outside this feature.
 
 ### Java Blue Interchange Baseline
 
@@ -189,40 +194,42 @@ Effects MUST show a user-library section only. A selected mixer/effect-chain app
 
 - **FR-001**: Blue MUST provide one dockable Libraries panel, normally available at the right side of the workbench, for Instruments, UDOs, SoundObjects, and Effects.
 - **FR-002**: The panel MUST provide one global, case-insensitive item-name search and the filters `All`, `Instruments`, `UDOs`, `SoundObjects`, and `Effects`; search MUST cover the scopes visible to the active type filter, include safely extracted unsupported-item names, and identify no-result state clearly.
-- **FR-003**: Within a selected type, the panel MUST organize content by the meaningful project and user scopes defined in the Required Scope Model, followed by that scope's folder or native hierarchy; an Effect insertion target MUST remain a target banner rather than a scope.
+- **FR-003**: Within a selected type, the panel MUST organize content by the meaningful project and user scopes defined in the Required Scope Model, followed by that scope's folder or native hierarchy; transient destination drop/Paste targets MUST never appear as scopes or persistent panel banners.
 - **FR-004**: Every visible item and search result MUST identify its object type, scope, and enough folder or project context to distinguish same-name results.
-- **FR-005**: Selecting an item once MUST show a lightweight preview in the panel without opening or embedding the full editor.
-- **FR-006**: Instrument previews MUST show type and labeled fields for interface summary, dependencies, and description; UDO previews signature, style, and comments; Effect previews input/output count, interface summary, and description; and SoundObject previews type, duration, and a miniature score summary. When a type-specific value cannot be safely extracted, its labeled field MUST show `Unavailable` and any support warning rather than disappearing or inventing a value.
-- **FR-007**: Existing contextual Browse entry points from Orchestra, project UDOs, mixer chains, and Score MUST route to the centralized panel with the appropriate type selected.
-- **FR-008**: A contextual opening MUST show the active insertion target and keep insertion disabled whenever that target is absent, ambiguous, stale, or incompatible.
+- **FR-005**: Selecting a supported item once MUST open or update a reusable full editor panel in the main workspace titled exactly `Library Item`. The selection MUST NOT embed the editor in the Libraries auxiliary panel or steal keyboard focus from the tree. The panel MUST retain the existing address/breadcrumb header so item name, type, scope, and location remain visible even though the Dockview title is generic.
+- **FR-006**: The `Library Item` panel MUST host the available full native type-specific editor rather than a raw XML textarea: Instrument interface/code/local UDOs/properties; UDO signature/code/style/documentation/validation; Effect interface/code/input-output configuration and existing testing support; and the existing SoundObject editor with its native properties and score/object controls. Unsupported items remain read-only and show preserved-status metadata and compatibility information without presenting raw XML as the default interface.
+- **FR-007**: Orchestra, project UDO, mixer, and Score surfaces MUST NOT expose persistent `Browse …`, `Add from Library …`, or equivalent destination-side library buttons. Legacy commands MAY reveal the centralized Libraries panel for compatibility, but MUST NOT fabricate or retain an insertion mode.
+- **FR-008**: Compatible project surfaces MUST accept typed library drag payloads and keyboard-equivalent paste commands, expose the exact destination only during interaction, and reject absent, ambiguous, stale, or incompatible targets without mutation. The Libraries panel MUST NOT expose a persistent Insert button or confirmation mode.
 - **FR-009**: Existing library actions, panel identifiers, and saved workbench layouts MUST converge on one logical Libraries panel, without restoring a duplicate legacy library panel or losing the user's otherwise valid workbench layout.
-- **FR-010**: User-library browsing, search, editing, import, export, and recovery MUST remain available when no project is open; project scopes and insertion actions MUST then be absent or disabled.
+- **FR-010**: User-library browsing, search, editing, import, export, and recovery MUST remain available when no project is open; project scopes and compatible project drop/Paste targets MUST then be absent.
 
 #### Item Editing And Organization
 
-- **FR-011**: Double-clicking an item or choosing Edit MUST open a Library Item editor in the main workspace rather than a modal dialog or a full editor embedded in the Libraries panel.
-- **FR-012**: The Library Item editor shell MUST show the item name, object type, scope, folder or project breadcrumb, dirty state, Save and Revert actions, applicable Duplicate/Move/Delete commands, insertion or copy actions, dependency information, and usage that is discoverable in the current project; unlinked historical project copies MUST be identified as untracked rather than reported as known usage.
+- **FR-011**: Double-clicking the visible name of a permitted folder or item MUST enter inline rename in place; `F2` MUST provide the keyboard equivalent, `Enter` commits, and `Escape` cancels. Opening or focusing the editor happens through item selection rather than overloading double-click.
+- **FR-012**: The full Library Item editor shell MUST show the item name, object type, scope, folder or project breadcrumb, dirty state, Save and Revert, dependency information, and usage discoverable in the current project; unlinked historical project copies MUST be identified as untracked. Organization and transfer commands MUST live in the tree context menu or an explicitly scoped overflow menu rather than as persistent editor or row button strips.
 - **FR-013**: The editor shell MUST host the available native type-specific capabilities: Instrument interface/code/local UDOs/properties; UDO signature/code/style/documentation/validation; Effect interface/code/input-output configuration and existing testing support; or the existing SoundObject editor with copy/reference controls.
-- **FR-014**: One logical editor session MUST represent a stable item identity at a time, so another entry point focuses that session rather than creating an unaware competing editor. A newly opened item MAY use a reusable temporary tab only while unmodified and unpinned; editing MUST pin it automatically, explicit pinning MUST be available, and an unsaved or pinned tab MUST never be replaced by later library selection. Reordering a project collection MUST NOT rebind an open editor to a different item. If another surface changes the item, Save MUST offer Reload Latest and discard the draft, Cancel and retain the draft, or an explicit reviewed overwrite; no choice may happen silently. Restoring a saved project-item editor MUST resolve the same logical project definition or a safe missing-item state, never whichever item later occupies a saved index or reference.
+- **FR-014**: One logical full editor session MUST represent a stable item identity at a time. At most one clean, unpinned `Library Item` panel MAY act as the reusable selection preview; first edit MUST pin it automatically, explicit pinning MUST be available, and dirty or pinned sessions MUST never be replaced by later selection. Selecting an item that already has a session focuses it rather than creating an unaware competitor. Reordering a project collection MUST NOT rebind an open editor to a different item. If another surface changes the item, Save MUST offer Reload Latest and discard the draft, Cancel and retain the draft, or an explicit reviewed overwrite; no choice may happen silently. Restoring a saved project-item editor MUST resolve the same logical project definition or a safe missing-item state, never whichever item later occupies a saved index or reference.
 - **FR-015**: Save MUST persist the complete edited item and its displayed searchable metadata as one change. When the editor is dirty, Revert MUST ask for confirmation: Cancel retains the draft, while Confirm discards it and restores the last saved version. Closing a dirty editor, quitting, or closing or switching its project MUST require Save, Discard, or Cancel when the draft cannot remain safely open.
 - **FR-016**: The editor header MUST explain the consequence of saving for user-library, project-owned, and project-shared items, including the number of affected shared instances when known. Saving a project item MUST mark the project dirty and persist through the normal project-save lifecycle; saving a user-library item MUST persist independently of any open project.
 - **FR-017**: User-library item editing MUST affect future insertions only and MUST NOT retroactively update project copies.
 - **FR-018**: Editing a project-shared SoundObject MUST update all instances that reference that shared definition, and the editor MUST disclose that consequence before save. Deleting that shared definition MUST show the linked-instance count, require confirmation, and remove the linked project instances according to the native project rule rather than leaving broken references.
 - **FR-019**: Users MUST be able to create user-library folders, duplicate supported user-library items, and explicitly save a supported project object as a new user-library copy. This feature does not add generic blank-item creation; any pre-existing type-specific New command remains unchanged and outside this feature's acceptance scope.
-- **FR-020**: Folder and supported-item names MUST be non-empty after trimming and contain no control characters; duplicate names and Unicode text remain valid. Invalid edits MUST leave the prior name unchanged, keep the edit active, and identify the invalid field. Users MUST be able to rename valid nodes and to move, reorder, and delete permitted user-library nodes, but roots MUST be immovable and undeletable, folders MUST NOT move into themselves or descendants, cross-type and project-to-user moves MUST be prohibited, and deleting a non-empty folder MUST show affected counts and require confirmation. Project-scope commands MUST follow the native project model and be unavailable when no meaningful equivalent exists.
+- **FR-020**: Folder and supported-item names MUST be non-empty after trimming and contain no control characters; duplicate names and Unicode text remain valid. Invalid inline edits MUST leave the prior name unchanged, keep the edit active, and identify the invalid field. Users MUST be able to rename valid nodes and to move, reorder, and delete permitted user-library nodes, but roots MUST be immovable and undeletable, folders MUST NOT move into themselves or descendants, cross-type and project-to-user moves MUST be prohibited, and deleting a non-empty folder MUST show affected counts and require confirmation. Project-scope commands MUST follow the native project model and be unavailable when no meaningful equivalent exists.
+- **FR-020a**: Right-click and keyboard context menus MUST expose only commands valid for the focused node and scope, including applicable Duplicate, Cut, Copy, Paste, and Delete commands. Paste MUST target the focused folder or the focused item's parent; unavailable operations remain disabled with an accessible explanation. No tree row may display persistent Rename, Duplicate, Delete, or Insert buttons.
+- **FR-020b**: The application clipboard MUST store typed stable references and expected revisions, never raw XML. Copy/paste creates deep copies with new stable identities; cut/paste moves permitted user-library nodes while preserving identity; a stale source or destination MUST fail safely and leave the clipboard and repository unchanged.
 - **FR-021**: Collapsing or closing the Libraries panel MUST NOT close an open Library Item editor or discard its unsaved state. Moving or renaming an open item MUST update its breadcrumb by identity. Deleting a dirty item MUST first require Save, Discard, or Cancel; confirmed deletion MUST close its editor, while deletion by another surface MUST leave an explicit read-only missing-item state and MUST NOT rebind the editor to a neighboring item.
 
 #### Project Insertion And Portability
 
-- **FR-022**: Insertion actions MUST be type- and target-sensitive and MUST identify the destination before applying a change. Instruments and UDOs use their fixed current-project collections; Effects require a selected effect-chain position; SoundObjects require an explicit valid Score path, layer, and time rather than an inferred fallback.
-- **FR-023**: Inserting a user-library Instrument MUST add an independent copy to the Project Orchestra using a non-colliding project assignment identity and MUST NOT overwrite an existing Instrument.
-- **FR-024**: Inserting a user-library UDO MUST add an independent entry to the project UDO list and preserve any same-name project UDO rather than replacing or reusing it implicitly.
-- **FR-025**: Inserting a user-library Effect MUST add an independent copy to the selected mixer/effect chain at the selected position.
-- **FR-026**: Inserting a user-library SoundObject MUST add an independent project copy by default and MUST preserve its intended musical duration and time behavior when adapting it to the destination project's time base.
-- **FR-027**: Copying a Project Shared SoundObject MUST offer explicit `Copy Instance` and `Copy Independent` choices with their consequences visible; Copy Instance MUST remain linked to the project-shared definition, while Copy Independent MUST create a deep, unlinked project copy.
+- **FR-022**: Drag/drop and destination paste MUST be type- and target-sensitive and MUST identify the exact destination before applying a change. Instruments and UDOs use explicit table insertion positions; Effects require an exact effect-chain boundary; SoundObjects require an explicit valid Score path, layer, and time rather than an inferred fallback.
+- **FR-023**: Dropping or pasting a user-library Instrument into Project Orchestra MUST add an independent copy using a non-colliding project assignment identity and MUST NOT overwrite an existing Instrument.
+- **FR-024**: Dropping or pasting a user-library UDO into the project UDO list MUST add an independent entry and preserve any same-name project UDO rather than replacing or reusing it implicitly.
+- **FR-025**: Dropping or pasting a user-library Effect at a mixer insertion marker MUST add an independent copy to that exact selected chain position.
+- **FR-026**: Dropping or pasting a user-library SoundObject at a Score destination MUST add an independent project copy by default and MUST preserve its intended musical duration and time behavior when adapting it to the destination project's time base.
+- **FR-027**: Dropping or pasting a Project Shared SoundObject MUST offer explicit `Copy Instance` and `Copy Independent` choices with their consequences visible; Copy Instance MUST remain linked to the project-shared definition, while Copy Independent MUST create a deep, unlinked project copy.
 - **FR-028**: Independent copies MUST receive project-appropriate identity, include all item-owned/local data, mark the project dirty, and remain valid after the project is saved or opened without access to the originating user library. External files continue to follow the project's existing portability rules and MUST be disclosed before insertion.
 - **FR-029**: Deleting or editing a user-library source MUST NOT delete, invalidate, or change any independent project copy previously created from it.
-- **FR-030**: Before insertion, Blue MUST disclose unresolved external project-level dependencies or conflicts. The deterministic default is to block insertion without changing the project; the user resolves the reported problem outside the insertion flow and retries. Insertion MUST otherwise be all-or-nothing and MUST NOT silently mutate unrelated project collections.
+- **FR-030**: Before committing a drop or destination paste, Blue MUST disclose unresolved external project-level dependencies or conflicts. The deterministic default is to block the operation without changing the project; the user resolves the reported problem outside the transfer flow and retries. Transfer MUST otherwise be all-or-nothing and MUST NOT silently mutate unrelated project collections.
 
 #### User-Library Ownership And Identity
 
@@ -235,7 +242,7 @@ Effects MUST show a user-library section only. A selected mixer/effect-chain app
 - **FR-037**: The user library MUST preserve hierarchy, folder and item sibling ordering, name, object type, support status, complete object content, created and updated timestamps, and which import created an imported item.
 - **FR-038**: Imported object content MUST remain lossless and authoritative until a compatible editor successfully saves it; saving MUST leave users with either the complete prior item or the complete updated item, never mismatched content and browse metadata.
 - **FR-039**: User-library changes initiated from different application surfaces MUST follow the same validation, ownership, conflict, and failure rules.
-- **FR-040**: Browse, search, item management, import, export, history, and recovery MUST remain behaviorally consistent whether invoked from Libraries, a contextual entry point, or startup migration.
+- **FR-040**: Browse, search, item management, import, export, history, and recovery MUST remain behaviorally consistent whether invoked from Libraries, a legacy compatibility command, or startup migration. Destination-side Browse/Insert controls are not part of that compatibility surface.
 - **FR-041**: Browsing folders, listing items, and searching item names MUST meet the large-library responsiveness target in SC-006.
 
 #### Unsupported Object Preservation
@@ -306,8 +313,9 @@ Effects MUST show a user-library section only. A selected mixer/effect-chain app
 - **Library Item**: A stably identified reusable definition with a type, folder, name, ordering, complete preserved content, support status, common descriptive information, created/updated timestamps, and an optional link to the import that created it.
 - **Unsupported Library Item**: A Library Item whose original XML is preserved but whose object type cannot currently be edited; it retains organization and interchange capabilities.
 - **Project Source**: A project-owned collection or context exposed through Libraries while remaining embedded in the current `.blue` document.
-- **Insertion Target**: The current project destination, such as Orchestra, project UDOs, a mixer-chain position, or Score, together with the type of insertion it accepts.
-- **Library Item Editor Session**: The open item, its stable identity and scope, preview/pinned state, saved and unsaved versions, validation state, consequences, dependencies, and usage information.
+- **Insertion Target**: A transient exact project destination exposed during drag hover, drop, or destination paste, such as an Orchestra/UDO table insertion boundary, mixer-chain gap, or Score layer/time, together with the type it accepts.
+- **Library Interaction Clipboard**: A transient typed cut/copy reference to a stable node and expected revision, used by tree and destination Paste commands without placing XML in the operating-system clipboard.
+- **Library Item Editor Session**: A full editable item's stable identity and scope, saved and unsaved versions, preview/pinned state, validation state, consequences, dependencies, and usage information, rendered in a main-workspace panel titled `Library Item` with the existing address/breadcrumb header.
 - **Import Batch**: One automatic or manual import attempt with a stable identity, sources, timing, status, counts, warnings, conflicts, created nodes, and whether the exact undo conditions remain satisfied.
 - **Legacy Migration State**: The application-level `never`, `completed`, `skipped`, or `failed` marker that prevents user-library loss or reset from silently repeating Java Blue import.
 - **Compatibility Report**: A before-and-after record describing what can be imported or exported, what was skipped or preserved, conflicts, unsupported items, validation failures, and any explicit compatible-subset decision.
@@ -328,10 +336,10 @@ Effects MUST show a user-library section only. A selected mixer/effect-chain app
 
 ### Measurable Outcomes
 
-- **SC-001**: In a usability test, at least 90% of users can open Libraries, select a type and meaningful scope, find a named item, and view its preview in under 30 seconds without assistance.
-- **SC-002**: From each contextual Browse entry point, users can insert a compatible Instrument, UDO, Effect, or SoundObject with a valid preselected target and no unresolved dependency conflict in no more than three deliberate actions after selecting the item.
+- **SC-001**: In a usability test, at least 90% of users can open Libraries, select a type and meaningful scope, find a named item, and reach its full main-area `Library Item` editor in under 30 seconds without assistance.
+- **SC-002**: With Libraries and a compatible project surface visible, users can place an Instrument, UDO, Effect, or SoundObject with one drag-and-drop gesture; only a shared-copy choice or disclosed dependency/conflict may add a confirmation step. No persistent Browse or Insert button is used.
 - **SC-003**: In 100% of the defined four-type insertion matrix, the result has the specified independent-copy or shared-instance behavior, and every saved project remains usable after the originating user library is unavailable.
-- **SC-004**: Across 100 selection changes, tab reuses, panel closes, and item opens involving dirty or pinned editors, no unsaved editor is replaced and no unsaved change is lost.
+- **SC-004**: Across 100 selection changes, clean preview-tab reuses, panel closes, and editor opens involving dirty or pinned sessions, no protected editor is replaced and no unsaved change is lost.
 - **SC-005**: Scope and save-consequence text correctly identifies user, project, and project-shared items in 100% of type/scope test cases, including the affected instance count for shared objects.
 - **SC-006**: With 10,000 user-library items on a system meeting Blue's published minimum requirements, Libraries shows its initial hierarchy within two seconds of being opened and 95% of folder expansions and case-insensitive item-name searches show useful results within one second.
 - **SC-007**: User-library folder and item identities remain unchanged across 50 application restart, rename, move, edit, and non-duplicating application-upgrade cycles; duplicated nodes always receive distinct identities.
@@ -347,6 +355,8 @@ Effects MUST show a user-library section only. A selected mixer/effect-chain app
 - Initial search is a case-insensitive substring match on item names, including safely extracted unsupported-item names, across the scopes allowed by the active type filter; descriptive metadata, code, full-object-content search, tags, and favorites can be added later without changing the ownership model.
 - Project-owned objects continue to use their existing project editors and mutation rules inside the shared Library Item shell; this feature does not redefine the `.blue` project format.
 - User-library insertions are value copies unless a project-shared SoundObject action explicitly creates another shared instance.
+- Dragging from a library into a project surface is a copy operation, never a move from the source library. Cut is valid only for permitted organization within the same user-library type and scope.
+- Context menus and destination Paste provide the keyboard-equivalent path for every drag-only project placement result.
 - User-library folder organization applies to the user scope. Project scopes expose only the hierarchy and mutations meaningful to Orchestra, the project UDO list, and Project Shared SoundObjects; selected mixer chains are targets rather than scopes.
 - A first-run scan that finds no recognized Java Blue files records `skipped` so startup does not scan repeatedly; users can still run manual import later.
 - An import batch is undoable only under FR-064's exact additive, unchanged-node, and empty-created-folder conditions; all other batches remain reviewable but cannot be automatically reversed.
@@ -358,5 +368,5 @@ Effects MUST show a user-library section only. A selected mixer/effect-chain app
 - Export Current means the selected user-library type only. Import and export parsing never executes embedded object code or resolves external entities.
 - Each library change and each individual source-library import is all-or-nothing; a multi-source batch can be partially successful because preserving valid sibling libraries is intentional, but the batch report must make that partial result explicit.
 - The linked design-constraints artifact preserves the supplied storage and process decisions for planning while this specification defines observable behavior and compatibility outcomes.
-- Existing domain-specific Browse actions remain available as entry points but do not retain separate permanent library interfaces.
+- Existing domain-specific Browse/Add-from-Library controls are removed. The Window menu remains the primary explicit way to reveal Libraries, while legacy command identifiers may map to that one panel for saved-menu/layout compatibility.
 - Libraries follows the persisted workbench layout on normal startup. A reset/default layout places the panel on the right, but Blue does not force it open again after a user intentionally closes it.

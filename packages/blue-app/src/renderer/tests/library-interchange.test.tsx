@@ -14,6 +14,7 @@ describe('library interchange UI', () => {
   it('offers import, Export Current/All, preview warnings, and undo history', () => {
     const actions = { onImport: vi.fn(), onExportCurrent: vi.fn(), onExportAll: vi.fn(), onHistory: vi.fn() };
     const container = document.createElement('div');
+    document.body.appendChild(container);
     const root = createRoot(container);
     act(() => root.render(<>
       <LibraryActionsMenu selectedType="udo" {...actions} />
@@ -27,12 +28,14 @@ describe('library interchange UI', () => {
         completedAt: 'today', sourceCount: 1, counts: { createdNodeCount: 2 }, report: {},
       }]} onUndo={vi.fn()} onClose={vi.fn()} />
     </>));
-    expect(container.textContent).toContain('Export Current');
     expect(container.textContent).toContain('2 items');
     expect(container.textContent).toContain('1 exact duplicate');
     expect(container.textContent).toContain('Undo Import');
-    act(() => [...container.querySelectorAll('button')].find((button) => button.textContent === 'Export All')?.click());
+    act(() => (container.querySelector('button[aria-label="Library actions"]') as HTMLButtonElement).dispatchEvent(new MouseEvent('pointerdown', { bubbles: true, button: 0 })));
+    expect(document.body.textContent).toContain('Export Current');
+    act(() => [...document.body.querySelectorAll('[role="menuitem"]')].find((item) => item.textContent?.startsWith('Export All'))?.dispatchEvent(new Event('click', { bubbles: true })));
     expect(actions.onExportAll).toHaveBeenCalledOnce();
     act(() => root.unmount());
+    container.remove();
   });
 });

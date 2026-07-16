@@ -82,6 +82,10 @@ describe('Libraries panel', () => {
     expect(container.textContent).toContain('User Libraries');
     expect(container.textContent).toContain('No project is open');
     expect(container.querySelector('input[aria-label="Search libraries"]')).toBeTruthy();
+    expect(container.querySelectorAll('button[aria-label="Library actions"]')).toHaveLength(1);
+    expect(container.textContent).not.toContain('Insert');
+    expect(container.textContent).not.toContain('RenameDuplicateDelete');
+    expect(container.querySelector('textarea')).toBeNull();
     const warning = container.querySelector('[role="status"]');
     expect(warning?.textContent).toContain('unsupported');
     act(() => { root.unmount(); });
@@ -99,6 +103,41 @@ describe('Libraries panel', () => {
     act(() => { tree.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true })); });
     act(() => { tree.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true })); });
     expect(onSelect).toHaveBeenCalledWith(second.key);
+    act(() => { root.unmount(); });
+  });
+
+  it('exposes focused ellipsis commands with an accessible disabled reason', async () => {
+    useLibraryStore.setState({ typeFilter: 'all' });
+    const { container, root } = render(<LibrariesPanel />);
+    await act(async () => { await Promise.resolve(); await Promise.resolve(); });
+    const trigger = container.querySelector('button[aria-label="Library actions"]') as HTMLButtonElement;
+    act(() => trigger.dispatchEvent(new MouseEvent('pointerdown', { bubbles: true, button: 0 })));
+    await act(async () => { await Promise.resolve(); });
+    const exportCurrent = document.body.querySelector('[aria-label^="Export Current unavailable"]');
+    expect(exportCurrent?.getAttribute('aria-disabled')).toBe('true');
+    expect(document.activeElement?.getAttribute('role')).toBe('menu');
+    act(() => { root.unmount(); });
+  });
+
+  it('announces affected count and dirty-session choices before destructive deletion', () => {
+    useLibraryStore.setState({
+      deletePreview: {
+        confirmationToken: 'delete-1',
+        nodeId: 'folder-1',
+        expectedRevision: 4,
+        affectedNodeIds: ['folder-1', 'item-1', 'item-2'],
+        affectedCount: 3,
+        dirtyEditorSessionIds: ['editor-1'],
+        expiresAt: Date.now() + 1_000,
+        displayName: 'Pads',
+      },
+    });
+    const { container, root } = render(<LibrariesPanel />);
+    const dialog = container.querySelector('[role="dialog"]');
+    expect(dialog?.textContent).toContain('3 Library nodes');
+    expect(dialog?.textContent).toContain('unsaved changes');
+    expect(dialog?.textContent).toContain('Discard & Delete');
+    expect(dialog?.textContent).toContain('Save & Delete');
     act(() => { root.unmount(); });
   });
 });

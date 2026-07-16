@@ -172,6 +172,10 @@ function renderCanvas(
   act(() => {
     root.render(
       <ScoreTimeCanvas
+        projectSessionId={1}
+        projectRevision={1}
+        scoreRootGroupId="group-1"
+        scoreContainerPath={[]}
         group={group}
         totalBeats={totalBeats}
         pixelsPerBeat={pixelsPerBeat}

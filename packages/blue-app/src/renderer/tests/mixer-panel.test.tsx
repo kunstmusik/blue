@@ -48,6 +48,7 @@ const { mockProjectState, mockUIState } = vi.hoisted(() => ({
 vi.mock('../stores/project-store', () => ({
   useProjectStore: (selector: (state: MockProjectState) => unknown) =>
     selector(mockProjectState),
+  getProjectDocumentRevision: () => 0,
 }));
 
 vi.mock('../stores/ui-store', () => ({

@@ -15,11 +15,12 @@ import {
   loadInstrumentFromXML,
   loadSoundObjectFromXML,
 } from '@blue/data';
-import { applyProjectDocumentPatch } from '../../shared/project-editor';
+import { applyProjectDocumentPatch, createMixerSnapshot, resolveScoreInsertionLocation } from '../../shared/project-editor';
 import { UnifiedLibraryRepositoryClient } from './repository-client';
 import type { RepositoryNode } from './repository';
 import type {
   InsertionTargetSnapshot,
+  LibraryExactTransferTarget,
   LibraryInsertionMode,
   LibraryItemKey,
   LibraryItemPreview,
@@ -81,6 +82,61 @@ export class UnifiedLibraryProjectAdapter {
 
   getProjectSessionId(): number | null {
     return this.getActiveProject()?.sessionId ?? null;
+  }
+
+  validateTransferTarget(target: LibraryExactTransferTarget, libraryType: LibraryType): string | null {
+    const project = this.getActiveProject();
+    if (!project || project.sessionId !== target.projectSessionId) return 'The destination project changed.';
+    if ((project.revision ?? 0) !== target.projectRevision) return 'The destination changed. Choose it again.';
+    const expectedType = target.kind === 'orchestra'
+      ? 'instrument'
+      : target.kind === 'projectUdo'
+        ? 'udo'
+        : target.kind === 'effectChain'
+          ? 'effect'
+          : 'soundObject';
+    if (libraryType !== expectedType) return 'This item type cannot be placed at that destination.';
+
+    if (target.kind === 'orchestra') {
+      return Number.isInteger(target.insertIndex)
+        && target.insertIndex >= 0
+        && target.insertIndex <= project.data.getArrangement().size()
+        ? null
+        : 'The Orchestra insertion position changed.';
+    }
+    if (target.kind === 'projectUdo') {
+      return Number.isInteger(target.insertIndex)
+        && target.insertIndex >= 0
+        && target.insertIndex <= project.data.getOpcodeList().size()
+        ? null
+        : 'The project UDO insertion position changed.';
+    }
+    if (target.kind === 'effectChain') {
+      const mixer = createMixerSnapshot(project.data.getMixer());
+      const channels = [
+        mixer.master,
+        ...mixer.channels,
+        ...mixer.subChannels,
+        ...mixer.channelListGroups.flatMap((group) => group.channels),
+      ];
+      const channel = channels.find((candidate) => (
+        candidate.id === target.channelId || candidate.association === target.channelId
+      ));
+      if (!channel) return 'The mixer channel changed.';
+      const chain = target.chain === 'pre' ? channel.preChain : channel.postChain;
+      if (chain.map((entry) => entry.entryId).join(':') !== target.chainRevision) return 'The Effect chain changed.';
+      return Number.isInteger(target.insertIndex)
+        && target.insertIndex >= 0
+        && target.insertIndex <= chain.length
+        ? null
+        : 'The Effect insertion position changed.';
+    }
+
+    if (target.timeContextRevision !== String(target.projectRevision)) return 'The Score time context changed.';
+    if (!Number.isFinite(target.location.startTime) || target.location.startTime < 0) return 'The Score time position is invalid.';
+    return resolveScoreInsertionLocation(project.data, target.location)
+      ? null
+      : 'The Score path or layer changed.';
   }
 
   list(libraryType: LibraryType): LibrarySearchResult[] {
@@ -556,13 +612,17 @@ export class UnifiedLibraryProjectAdapter {
     switch (input.key.libraryType) {
       case 'instrument': {
         const instrument = copyInstrumentForProject(source.value as Instrument);
-        const id = project.data.getArrangement().getNextInstrumentId();
-        project.data.getArrangement().addInstrument(instrument, id);
+        const arrangement = project.data.getArrangement();
+        const id = arrangement.addInstrumentAtIndex(
+          instrument,
+          input.target.insertIndex ?? arrangement.size(),
+        );
         return id;
       }
       case 'udo': {
         const opcode = copyUdoForProject(source.value as OpcodeDefinition);
-        project.data.getOpcodeList().addOpcode(opcode);
+        const opcodeList = project.data.getOpcodeList();
+        opcodeList.addOpcodeAt(input.target.insertIndex ?? opcodeList.size(), opcode);
         return hashText(opcode.saveAsXML().toXml());
       }
       case 'effect': {
@@ -588,7 +648,8 @@ export class UnifiedLibraryProjectAdapter {
       case 'soundObject': {
         const location = input.target.location;
         if (!location) throw new Error('SoundObject target is incomplete');
-        if (location.containerPath.length > 0) throw new Error('Nested SoundObject target is stale');
+        const resolvedTarget = resolveScoreInsertionLocation(project.data, location);
+        if (!resolvedTarget) throw new Error('SoundObject target path or layer is stale');
         const definition = source.value as SoundObject;
         const soundObject = input.mode === 'sharedInstance'
           ? createSharedSoundObjectInstance(definition, source.libraryId ?? '')
@@ -596,9 +657,6 @@ export class UnifiedLibraryProjectAdapter {
         if (input.mode === 'sharedInstance' && !source.libraryId) {
           throw new Error('Only project shared SoundObjects can create shared instances');
         }
-        const layerMatch = /-layer-(\d+)$/.exec(location.layerId);
-        if (!layerMatch) throw new Error('SoundObject target layer is stale');
-        const layerIndex = Number(layerMatch[1]);
         const selectionId = randomUUID();
         const durationBeats = soundObject.getSubjectiveDuration().toBeats(
           project.data.getScore().getTimeContext(),
@@ -606,10 +664,10 @@ export class UnifiedLibraryProjectAdapter {
         const changed = applyProjectDocumentPatch(project.data, {
           score: {
             type: 'addScoreObjects',
-            groupId: location.rootGroupId,
+            groupId: resolvedTarget.groupId,
             objects: [{
               selectionId,
-              layerIndex,
+              layerIndex: resolvedTarget.layerIndex,
               objectType: soundObject.constructor.name,
               name: soundObject.getName(),
               startBeats: location.startTime,

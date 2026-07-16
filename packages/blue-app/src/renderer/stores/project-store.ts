@@ -165,6 +165,10 @@ interface ProjectActions {
 
 let latestProjectPatchRequestId = 0;
 let latestProjectSessionId = 0;
+
+export function getProjectDocumentRevision(): number {
+  return latestProjectPatchRequestId;
+}
 let pendingPatches: ProjectDocumentPatch[] = [];
 let pendingPatchTimer: ReturnType<typeof setTimeout> | null = null;
 let storeGet: any;

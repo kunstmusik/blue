@@ -1,3 +1,12 @@
+import type {
+  LibraryEditorDocument,
+  LibraryEditorDocumentPatch,
+} from './library-editor-document';
+import {
+  isLibraryEditorDocument,
+  isLibraryEditorDocumentPatch,
+} from './library-editor-document';
+
 export const LIBRARY_TYPES = [
   'instrument',
   'udo',
@@ -212,6 +221,7 @@ export type UserLibraryMutation =
       readonly nodeId: string;
       readonly expectedRevision: number;
       readonly parentId: string;
+      readonly expectedParentRevision?: number;
       readonly targetIndex: number;
     }
   | {
@@ -225,6 +235,7 @@ export type UserLibraryMutation =
       readonly nodeId: string;
       readonly expectedRevision: number;
       readonly parentId?: string;
+      readonly expectedParentRevision?: number;
       readonly targetIndex?: number;
     }
   | {
@@ -238,6 +249,22 @@ export interface LibraryMutationReceipt {
   readonly contentRevision: number;
   readonly affectedNodes: readonly LibraryBrowseNode[];
   readonly closedEditorSessionIds?: readonly string[];
+}
+
+export interface PrepareLibraryMutationRequest {
+  readonly type: 'deleteNode';
+  readonly nodeId: string;
+  readonly expectedRevision: number;
+}
+
+export interface LibraryMutationPreview {
+  readonly confirmationToken: string;
+  readonly nodeId: string;
+  readonly expectedRevision: number;
+  readonly affectedNodeIds: readonly string[];
+  readonly affectedCount: number;
+  readonly dirtyEditorSessionIds: readonly string[];
+  readonly expiresAt: number;
 }
 
 export interface ScoreInsertionLocation {
@@ -291,6 +318,82 @@ export interface LibraryInsertionRequest {
   readonly mode?: LibraryInsertionMode;
 }
 
+export interface LibraryDragDescriptor {
+  readonly dragSessionId: string;
+  readonly libraryType: LibraryType;
+}
+
+export interface BeginLibraryDragRequest {
+  readonly key: LibraryItemKey;
+  readonly revision: number | string;
+}
+
+export type LibraryTransferSourceReference =
+  | { readonly kind: 'drag'; readonly dragSessionId: string }
+  | { readonly kind: 'clipboard'; readonly source: LibraryTransferSource };
+
+export type LibraryTransferSource =
+  | {
+      readonly kind: 'library';
+      readonly key: LibraryItemKey;
+      readonly revision: number | string;
+    }
+  | {
+      readonly kind: 'userNode';
+      readonly libraryType: LibraryType;
+      readonly nodeId: string;
+      readonly revision: number;
+    };
+
+export interface LibraryInteractionClipboard {
+  readonly operation: 'copy' | 'cut';
+  readonly source: LibraryTransferSource;
+  readonly capturedAt: number;
+}
+
+interface ExactProjectTargetBase {
+  readonly projectSessionId: number;
+  readonly projectRevision: number;
+}
+
+export type LibraryExactTransferTarget =
+  | (ExactProjectTargetBase & {
+      readonly kind: 'orchestra';
+      readonly insertIndex: number;
+    })
+  | (ExactProjectTargetBase & {
+      readonly kind: 'projectUdo';
+      readonly insertIndex: number;
+    })
+  | (ExactProjectTargetBase & {
+      readonly kind: 'effectChain';
+      readonly channelId: string;
+      readonly chain: 'pre' | 'post';
+      readonly insertIndex: number;
+      readonly chainRevision: string;
+    })
+  | (ExactProjectTargetBase & {
+      readonly kind: 'score';
+      readonly location: ScoreInsertionLocation;
+      readonly timeContextRevision: string;
+    });
+
+export interface LibraryTransferPreviewRequest {
+  readonly source: LibraryTransferSourceReference;
+  readonly target: LibraryExactTransferTarget;
+  readonly mode?: LibraryInsertionMode;
+}
+
+export interface LibraryTransferPreview {
+  readonly previewToken: string;
+  readonly item: LibraryItemPreview;
+  readonly target: LibraryExactTransferTarget;
+  readonly requestedMode: LibraryInsertionMode;
+  readonly allowedModes: readonly LibraryInsertionMode[];
+  readonly canApply: boolean;
+  readonly blockingReasons: readonly string[];
+}
+
 export interface LibraryInsertionPreview {
   readonly previewToken: string;
   readonly item: LibraryItemPreview;
@@ -322,8 +425,7 @@ export interface LibraryEditorSessionSnapshot {
   readonly objectType: string;
   readonly breadcrumb: readonly string[];
   readonly baseRevision: number | string;
-  readonly draftXml: string;
-  readonly savedXml: string;
+  readonly document: LibraryEditorDocument;
   readonly dirty: boolean;
   readonly pinned: boolean;
   readonly status: LibraryEditorSessionStatus;
@@ -336,7 +438,7 @@ export interface OpenLibraryEditorRequest {
 
 export interface LibraryEditorPatchRequest {
   readonly sessionId: string;
-  readonly payloadXml?: string;
+  readonly documentPatch?: LibraryEditorDocumentPatch;
   readonly displayName?: string;
   readonly pinned?: boolean;
 }
@@ -479,12 +581,17 @@ export const UNIFIED_LIBRARY_GET_SNAPSHOT_CHANNEL = 'unified-library:get-snapsho
 export const UNIFIED_LIBRARY_BROWSE_CHANNEL = 'unified-library:browse';
 export const UNIFIED_LIBRARY_SEARCH_CHANNEL = 'unified-library:search';
 export const UNIFIED_LIBRARY_PREVIEW_CHANNEL = 'unified-library:preview';
+export const UNIFIED_LIBRARY_BEGIN_DRAG_CHANNEL = 'unified-library:begin-drag';
+export const UNIFIED_LIBRARY_CANCEL_DRAG_CHANNEL = 'unified-library:cancel-drag';
+export const UNIFIED_LIBRARY_PREVIEW_TRANSFER_CHANNEL = 'unified-library:preview-transfer';
+export const UNIFIED_LIBRARY_APPLY_TRANSFER_CHANNEL = 'unified-library:apply-transfer';
 export const UNIFIED_LIBRARY_SET_CONTEXT_CHANNEL = 'unified-library:set-context';
 export const UNIFIED_LIBRARY_CLEAR_TARGET_CHANNEL = 'unified-library:clear-target';
 export const UNIFIED_LIBRARY_PREVIEW_INSERTION_CHANNEL = 'unified-library:preview-insertion';
 export const UNIFIED_LIBRARY_APPLY_INSERTION_CHANNEL = 'unified-library:apply-insertion';
 export const UNIFIED_LIBRARY_CONTEXT_CHANGED_CHANNEL = 'unified-library:context-changed';
 export const UNIFIED_LIBRARY_MUTATE_CHANNEL = 'unified-library:mutate';
+export const UNIFIED_LIBRARY_PREPARE_MUTATION_CHANNEL = 'unified-library:prepare-mutation';
 export const UNIFIED_LIBRARY_EDITOR_OPEN_CHANNEL = 'unified-library:editor-open';
 export const UNIFIED_LIBRARY_EDITOR_GET_CHANNEL = 'unified-library:editor-get';
 export const UNIFIED_LIBRARY_EDITOR_PATCH_CHANNEL = 'unified-library:editor-patch';
@@ -540,6 +647,80 @@ function hasOptionalBoundedLimit(value: unknown): boolean {
 
 export function isLibraryType(value: unknown): value is LibraryType {
   return typeof value === 'string' && (LIBRARY_TYPES as readonly string[]).includes(value);
+}
+
+export function isLibraryDragDescriptor(value: unknown): value is LibraryDragDescriptor {
+  if (!isRecord(value)) return false;
+  return Object.keys(value).every((key) => key === 'dragSessionId' || key === 'libraryType')
+    && isNonEmptyString(value.dragSessionId)
+    && isLibraryType(value.libraryType);
+}
+
+export function isBeginLibraryDragRequest(value: unknown): value is BeginLibraryDragRequest {
+  return isRecord(value)
+    && isLibraryItemKey(value.key)
+    && (isNonNegativeInteger(value.revision) || isNonEmptyString(value.revision));
+}
+
+export function isLibraryTransferSource(value: unknown): value is LibraryTransferSource {
+  if (!isRecord(value)) return false;
+  if (value.kind === 'library') {
+    return isLibraryItemKey(value.key)
+      && (isNonNegativeInteger(value.revision) || isNonEmptyString(value.revision));
+  }
+  return value.kind === 'userNode'
+    && isLibraryType(value.libraryType)
+    && isNonEmptyString(value.nodeId)
+    && isNonNegativeInteger(value.revision);
+}
+
+export function isLibraryInteractionClipboard(value: unknown): value is LibraryInteractionClipboard {
+  return isRecord(value)
+    && (value.operation === 'copy' || value.operation === 'cut')
+    && isLibraryTransferSource(value.source)
+    && typeof value.capturedAt === 'number'
+    && Number.isFinite(value.capturedAt)
+    && value.capturedAt >= 0;
+}
+
+export function isLibraryExactTransferTarget(value: unknown): value is LibraryExactTransferTarget {
+  if (!isRecord(value)
+    || !isNonNegativeInteger(value.projectSessionId)
+    || !isNonNegativeInteger(value.projectRevision)
+    || typeof value.kind !== 'string') return false;
+  if (value.kind === 'orchestra' || value.kind === 'projectUdo') {
+    return isNonNegativeInteger(value.insertIndex);
+  }
+  if (value.kind === 'effectChain') {
+    return isNonEmptyString(value.channelId)
+      && (value.chain === 'pre' || value.chain === 'post')
+      && isNonNegativeInteger(value.insertIndex)
+      && isNonEmptyString(value.chainRevision);
+  }
+  if (value.kind === 'score') {
+    return isRecord(value.location)
+      && isNonEmptyString(value.location.rootGroupId)
+      && Array.isArray(value.location.containerPath)
+      && isNonEmptyString(value.location.layerId)
+      && typeof value.location.startTime === 'number'
+      && Number.isFinite(value.location.startTime)
+      && isNonEmptyString(value.timeContextRevision);
+  }
+  return false;
+}
+
+export function isLibraryTransferSourceReference(value: unknown): value is LibraryTransferSourceReference {
+  if (!isRecord(value)) return false;
+  return value.kind === 'drag'
+    ? isNonEmptyString(value.dragSessionId)
+    : value.kind === 'clipboard' && isLibraryTransferSource(value.source);
+}
+
+export function isLibraryTransferPreviewRequest(value: unknown): value is LibraryTransferPreviewRequest {
+  return isRecord(value)
+    && isLibraryTransferSourceReference(value.source)
+    && isLibraryExactTransferTarget(value.target)
+    && (value.mode === undefined || value.mode === 'independent' || value.mode === 'sharedInstance');
 }
 
 export function isLibraryServicePhase(value: unknown): value is LibraryServicePhase {
@@ -688,14 +869,23 @@ export function isUserLibraryMutation(value: unknown): value is UserLibraryMutat
   if (value.type === 'renameNode') return typeof value.name === 'string';
   if (value.type === 'moveNode') {
     return isNonEmptyString(value.parentId)
+      && (value.expectedParentRevision === undefined || isNonNegativeInteger(value.expectedParentRevision))
       && (value.targetIndex === undefined || isNonNegativeInteger(value.targetIndex));
   }
   if (value.type === 'reorderNode') return isNonNegativeInteger(value.targetIndex);
   if (value.type === 'duplicateNode') {
     return (value.parentId === undefined || isNonEmptyString(value.parentId))
+      && (value.expectedParentRevision === undefined || isNonNegativeInteger(value.expectedParentRevision))
       && (value.targetIndex === undefined || isNonNegativeInteger(value.targetIndex));
   }
   return value.type === 'deleteNode' && typeof value.confirmation === 'string';
+}
+
+export function isPrepareLibraryMutationRequest(value: unknown): value is PrepareLibraryMutationRequest {
+  return isRecord(value)
+    && value.type === 'deleteNode'
+    && isNonEmptyString(value.nodeId)
+    && isNonNegativeInteger(value.expectedRevision);
 }
 
 export function isOpenLibraryEditorRequest(value: unknown): value is OpenLibraryEditorRequest {
@@ -705,7 +895,7 @@ export function isOpenLibraryEditorRequest(value: unknown): value is OpenLibrary
 
 export function isLibraryEditorPatchRequest(value: unknown): value is LibraryEditorPatchRequest {
   return isRecord(value) && isNonEmptyString(value.sessionId)
-    && (value.payloadXml === undefined || typeof value.payloadXml === 'string')
+    && (value.documentPatch === undefined || isLibraryEditorDocumentPatch(value.documentPatch))
     && (value.displayName === undefined || typeof value.displayName === 'string')
     && (value.pinned === undefined || typeof value.pinned === 'boolean');
 }
@@ -726,8 +916,7 @@ export function isLibraryEditorSessionSnapshot(
     && Array.isArray(value.breadcrumb)
     && value.breadcrumb.every((part) => typeof part === 'string')
     && (typeof value.baseRevision === 'number' || typeof value.baseRevision === 'string')
-    && typeof value.draftXml === 'string'
-    && typeof value.savedXml === 'string'
+    && isLibraryEditorDocument(value.document)
     && typeof value.dirty === 'boolean'
     && typeof value.pinned === 'boolean'
     && (value.status === 'ready' || value.status === 'conflict' || value.status === 'missing');

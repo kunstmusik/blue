@@ -8,7 +8,9 @@ import { useProjectStore } from '../../../../../stores/project-store';
 import { useWorkbenchStore } from '../../../../../stores/workbench-store';
 import AutomationLayerOverlay from '../automation/AutomationLayerOverlay';
 import { useScoreAutomationStore } from '../../../../../stores/score-automation-store';
+import { useLibraryStore } from '../../../../../stores/library-store';
 import type { ScoreAutomationPatch } from '../../../../../../shared/project-editor';
+import type { LibraryExactTransferTarget, ScoreInsertionLocation } from '../../../../../../shared/unified-library';
 import { useKeyboardShortcutScope } from '../../../../../hooks/use-keyboard-shortcut-scope';
 import { isTextEditingTarget } from '../../../../../hooks/use-keyboard-shortcuts';
 import { snapValueToBeats } from '@blue/data';
@@ -22,10 +24,15 @@ import {
   translateClipboardEntriesForPaste,
   type ScorePasteObject,
 } from './score-clipboard-utils';
+import { BLUE_LIBRARY_DRAG_MIME, readLibraryDragSource } from '../../../../libraries/library-drag-drop';
 
 interface Props {
   group: PolyObjectLayerGroupSnapshot;
   rootGroupIndex?: number;
+  projectSessionId: number;
+  projectRevision: number;
+  scoreRootGroupId: string;
+  scoreContainerPath: ScoreInsertionLocation['containerPath'];
   mode?: 'score' | 'singleLine' | 'multiLine';
   totalBeats: number;
   pixelsPerBeat: number;
@@ -228,6 +235,10 @@ const settledFreezeOperationIds = new Set<string>();
 
 export default function ScoreTimeCanvas({
   group,
+  projectSessionId,
+  projectRevision,
+  scoreRootGroupId,
+  scoreContainerPath,
   mode = 'score',
   totalBeats,
   pixelsPerBeat,
@@ -254,11 +265,20 @@ export default function ScoreTimeCanvas({
   const openPanel = useWorkbenchStore((s) => s.openPanel);
   const moveScoreObjects = useProjectStore((s) => s.moveScoreObjects);
   const addScoreObjects = useProjectStore((s) => s.addScoreObjects);
+  const libraryClipboard = useLibraryStore((s) => s.clipboard);
+  const transferLibraryItem = useLibraryStore((s) => s.transferToProject);
   const resizeScoreObjects = useProjectStore((s) => s.resizeScoreObjects);
   const currentScore = useProjectStore((s) => s.score);
   const containerRef = useRef<HTMLDivElement>(null);
   const [contextMenuPos, setContextMenuPos] = useState<{ xBeats: number; layerIndex: number } | null>(null);
   const [contextMenuOnObject, setContextMenuOnObject] = useState(false);
+  const [libraryDropMarker, setLibraryDropMarker] = useState<{
+    x: number;
+    y: number;
+    height: number;
+    target: LibraryExactTransferTarget;
+  } | null>(null);
+  const lastLibraryTargetRef = useRef<LibraryExactTransferTarget | null>(null);
   const [marquee, setMarquee] = useState<{
     startX: number; startY: number; endX: number; endY: number;
   } | null>(null);
@@ -394,6 +414,47 @@ export default function ScoreTimeCanvas({
     const rect = containerRef.current.getBoundingClientRect();
     return { x: clientX - rect.left, y: clientY - rect.top };
   }, []);
+
+  const buildLibraryTarget = useCallback((
+    layerIndex: number,
+    startBeats: number,
+  ): Extract<LibraryExactTransferTarget, { kind: 'score' }> | null => {
+    const layer = group.layers[layerIndex];
+    if (!layer || mode !== 'score') return null;
+    return {
+      kind: 'score',
+      projectSessionId,
+      projectRevision,
+      location: {
+        rootGroupId: scoreRootGroupId,
+        containerPath: scoreContainerPath,
+        layerId: layer.layerId,
+        startTime: snapBeatValueStart(Math.max(0, Math.min(totalBeats, startBeats))),
+      },
+      timeContextRevision: String(projectRevision),
+    };
+  }, [group.layers, mode, projectRevision, projectSessionId, scoreContainerPath, scoreRootGroupId, snapBeatValueStart, totalBeats]);
+
+  const locateLibraryTarget = useCallback((clientX: number, clientY: number) => {
+    const { x, y } = toLocalXY(clientX, clientY);
+    const hit = findLayerAtY(group.layers, y);
+    if (!hit) return null;
+    const target = buildLibraryTarget(hit.index, x / pixelsPerBeat);
+    if (!target) return null;
+    return {
+      target,
+      x: target.location.startTime * pixelsPerBeat,
+      y: hit.yOffset,
+      height: hit.layer.height || DEFAULT_ROW_HEIGHT,
+    };
+  }, [buildLibraryTarget, group.layers, pixelsPerBeat, toLocalXY]);
+
+  const pasteLibraryAtContext = useCallback(() => {
+    if (!libraryClipboard || !contextMenuPos) return;
+    const target = buildLibraryTarget(contextMenuPos.layerIndex, contextMenuPos.xBeats);
+    if (!target) return;
+    void transferLibraryItem({ kind: 'clipboard', source: libraryClipboard.source }, target);
+  }, [buildLibraryTarget, contextMenuPos, libraryClipboard, transferLibraryItem]);
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     if (e.button === 2) return;
@@ -1195,7 +1256,18 @@ export default function ScoreTimeCanvas({
     if (mod && key === 'v') {
       e.preventDefault();
       e.stopPropagation();
-      handleContextMenuPaste();
+      if (libraryClipboard) {
+        const target = contextMenuPos
+          ? buildLibraryTarget(contextMenuPos.layerIndex, contextMenuPos.xBeats)
+          : lastLibraryTargetRef.current;
+        if (target) {
+          void transferLibraryItem({ kind: 'clipboard', source: libraryClipboard.source }, target);
+        } else {
+          toast.error('Point to an exact Score layer and time before pasting a Library item.');
+        }
+      } else {
+        handleContextMenuPaste();
+      }
       return;
     }
 
@@ -1204,7 +1276,7 @@ export default function ScoreTimeCanvas({
       e.stopPropagation();
       handleRemove();
     }
-  }, [handleCopy, handleContextMenuPaste, handleCut, handleRemove, selectedObjectIds]);
+  }, [buildLibraryTarget, contextMenuPos, handleCopy, handleContextMenuPaste, handleCut, handleRemove, libraryClipboard, selectedObjectIds, transferLibraryItem]);
 
   const canvasShortcutScope = useKeyboardShortcutScope({
     ref: containerRef,
@@ -1259,9 +1331,41 @@ export default function ScoreTimeCanvas({
           style={{ cursor: cursorOverride ?? 'default' }}
           {...canvasShortcutScope}
           onMouseDown={handleMouseDown}
-          onMouseMove={handleMouseMove}
+          onMouseMove={(event) => {
+            handleMouseMove(event);
+            lastLibraryTargetRef.current = locateLibraryTarget(event.clientX, event.clientY)?.target ?? null;
+          }}
           onMouseUp={handleMouseUp}
           onDoubleClick={handleDoubleClick}
+          onDragOver={(event) => {
+            if (!event.dataTransfer.types.includes(BLUE_LIBRARY_DRAG_MIME)) return;
+            const located = locateLibraryTarget(event.clientX, event.clientY);
+            if (!located) return;
+            event.preventDefault();
+            event.dataTransfer.dropEffect = 'copy';
+            lastLibraryTargetRef.current = located.target;
+            setLibraryDropMarker(located);
+            const scroller = event.currentTarget.closest('[data-library-autoscroll]');
+            if (scroller instanceof HTMLElement) {
+              const rect = scroller.getBoundingClientRect();
+              if (event.clientY < rect.top + 24) scroller.scrollTop -= 16;
+              else if (event.clientY > rect.bottom - 24) scroller.scrollTop += 16;
+            }
+          }}
+          onDragLeave={(event) => {
+            if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
+              setLibraryDropMarker(null);
+            }
+          }}
+          onDrop={(event) => {
+            const source = readLibraryDragSource(event.dataTransfer);
+            const located = locateLibraryTarget(event.clientX, event.clientY);
+            setLibraryDropMarker(null);
+            if (!source || !located) return;
+            event.preventDefault();
+            event.dataTransfer.dropEffect = 'copy';
+            void transferLibraryItem(source, located.target);
+          }}
           onContextMenu={(e) => {
             const { x, y } = toLocalXY(e.clientX, e.clientY);
             const xBeats = x / pixelsPerBeat;
@@ -1269,6 +1373,7 @@ export default function ScoreTimeCanvas({
             const item = hit ? findItemOnLayer(hit.layer, xBeats) : null;
             setContextMenuPos(hit ? { xBeats, layerIndex: hit.index } : null);
             setContextMenuOnObject(!!item);
+            lastLibraryTargetRef.current = hit ? buildLibraryTarget(hit.index, xBeats) : null;
           }}
         >
           {group.layers.map((layer: ScoreLayerSnapshot) => (
@@ -1337,6 +1442,24 @@ export default function ScoreTimeCanvas({
               }}
             />
           )}
+
+          {libraryDropMarker && (
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute z-30 border-y border-app-accent bg-app-accent/10"
+              style={{
+                left: 0,
+                right: 0,
+                top: libraryDropMarker.y,
+                height: libraryDropMarker.height,
+              }}
+            >
+              <div
+                className="absolute inset-y-0 w-0.5 bg-app-accent shadow-[0_0_0_1px_var(--color-app-bg)]"
+                style={{ left: libraryDropMarker.x }}
+              />
+            </div>
+          )}
         </div>
       </ContextMenu.Trigger>
 
@@ -1366,9 +1489,11 @@ export default function ScoreTimeCanvas({
               menuItemClass={menuItemClass}
               sepClass={sepClass}
               clipboard={clipboard}
+              libraryClipboardAvailable={libraryClipboard !== null}
               contextMenuPos={contextMenuPos}
               group={group}
               onPaste={handleContextMenuPaste}
+              onLibraryPaste={pasteLibraryAtContext}
               snapBeatValue={snapBeatValueStart}
               addScoreObjects={addScoreObjects}
             />
@@ -1468,13 +1593,15 @@ function ObjectContextMenu({ menuItemClass, subMenuClass, sepClass, onAlignLeft,
   );
 }
 
-function EmptyAreaContextMenu({ menuItemClass, sepClass, clipboard, contextMenuPos, group, onPaste, snapBeatValue, addScoreObjects }: {
+function EmptyAreaContextMenu({ menuItemClass, sepClass, clipboard, libraryClipboardAvailable, contextMenuPos, group, onPaste, onLibraryPaste, snapBeatValue, addScoreObjects }: {
   menuItemClass: string;
   sepClass: string;
   clipboard: ScoreObjectClipboardEntry[];
+  libraryClipboardAvailable: boolean;
   contextMenuPos: { xBeats: number; layerIndex: number } | null;
   group: PolyObjectLayerGroupSnapshot;
   onPaste: () => void;
+  onLibraryPaste: () => void;
   snapBeatValue: (b: number) => number;
   addScoreObjects: (objects: ScorePasteObject[]) => void;
 }) {
@@ -1535,14 +1662,16 @@ function EmptyAreaContextMenu({ menuItemClass, sepClass, clipboard, contextMenuP
         </ContextMenu.Portal>
       </ContextMenu.Sub>
       <ContextMenu.Separator className={sepClass} />
-      {clipboard.length > 0 && (
+      {(libraryClipboardAvailable || clipboard.length > 0) && (
         <>
-          <ContextMenu.Item className={menuItemClass} onSelect={onPaste}>
+          <ContextMenu.Item className={menuItemClass} onSelect={libraryClipboardAvailable ? onLibraryPaste : onPaste}>
             Paste<span className="float-right text-blue-muted text-tiny ml-4">⌘V</span>
           </ContextMenu.Item>
-          <ContextMenu.Item className={menuItemClass} onSelect={() => ni()}>
-            Paste as PolyObject
-          </ContextMenu.Item>
+          {clipboard.length > 0 && (
+            <ContextMenu.Item className={menuItemClass} onSelect={() => ni()}>
+              Paste as PolyObject
+            </ContextMenu.Item>
+          )}
           <ContextMenu.Item className={menuItemClass} onSelect={() => ni()}>
             Paste BSB as Sound
           </ContextMenu.Item>

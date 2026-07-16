@@ -4,6 +4,9 @@ import {
   createLibraryServiceError,
   isBrowseLibraryRequest,
   isLibraryContextRequest,
+  isLibraryDragDescriptor,
+  isLibraryExactTransferTarget,
+  isLibraryInteractionClipboard,
   isLibraryItemKey,
   isLibraryServicePhase,
   isLibraryType,
@@ -72,5 +75,19 @@ describe('Unified Library shared contracts', () => {
       message: 'Select a new target',
       retryable: true,
     });
+  });
+
+  it('guards opaque drag descriptors, exact targets, and revision-bound clipboard entries', () => {
+    expect(isLibraryDragDescriptor({ dragSessionId: 'drag-1', libraryType: 'effect' })).toBe(true);
+    expect(isLibraryDragDescriptor({ dragSessionId: 'drag-1', libraryType: 'effect', payloadXml: '<effect />' })).toBe(false);
+    expect(isLibraryExactTransferTarget({
+      kind: 'effectChain', projectSessionId: 4, projectRevision: 7,
+      channelId: 'master', chain: 'post', insertIndex: 1, chainRevision: 'rev-2',
+    })).toBe(true);
+    expect(isLibraryInteractionClipboard({
+      operation: 'copy',
+      source: { kind: 'library', key: { scope: 'user', libraryType: 'udo', nodeId: 'u-1' }, revision: 3 },
+      capturedAt: 100,
+    })).toBe(true);
   });
 });

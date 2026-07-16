@@ -9,12 +9,20 @@ import type {
   LibraryItemPreview,
   LibraryContextRequest,
   LibraryContextSnapshot,
+  BeginLibraryDragRequest,
+  LibraryDragDescriptor,
+  LibraryExactTransferTarget,
+  LibraryTransferPreview,
+  LibraryTransferPreviewRequest,
+  LibraryTransferSourceReference,
   LibraryInsertionPreview,
   LibraryInsertionRequest,
   ConfirmedLibraryInsertionRequest,
   ProjectMutationReceipt,
   UserLibraryMutation,
   LibraryMutationReceipt,
+  LibraryMutationPreview,
+  PrepareLibraryMutationRequest,
   LibraryEditorPatchRequest,
   LibraryEditorConflictRequest,
   LibraryEditorSessionSnapshot,
@@ -47,6 +55,7 @@ import { UnifiedLibraryImportExportService } from './import-export-service';
 import { LibraryMigrationStateStore } from './migration-state-store';
 import * as fs from 'node:fs';
 import { classifyRepositoryFailure, verifyRepositoryBackup } from './recovery';
+import { LibraryDragSessionService } from './drag-session-service';
 
 type RepositoryClientFactory = (databasePath: string) => UnifiedLibraryRepositoryClient;
 
@@ -75,6 +84,21 @@ export class UnifiedLibraryService {
     readonly input: LibraryInsertionRequest;
     readonly payloadXml?: string;
     readonly targetRevision: string;
+    readonly expiresAt: number;
+  }>();
+  private readonly dragSessions = new LibraryDragSessionService();
+  private readonly transferPreviews = new Map<string, {
+    readonly source: LibraryTransferSourceReference;
+    readonly key: LibraryItemKey;
+    readonly sourceRevision: number | string;
+    readonly payloadXml?: string;
+    readonly target: LibraryExactTransferTarget;
+    readonly mode: 'independent' | 'sharedInstance';
+    readonly expiresAt: number;
+  }>();
+  private readonly mutationPreviews = new Map<string, {
+    readonly request: PrepareLibraryMutationRequest;
+    readonly affectedNodeIds: readonly string[];
     readonly expiresAt: number;
   }>();
   private snapshot: LibraryServiceSnapshot = {
@@ -444,6 +468,7 @@ export class UnifiedLibraryService {
     if (!client || !this.snapshot.writable) return this.notReady();
     try {
       let affected: RepositoryNode[] = [];
+      let closedEditorSessionIds: string[] = [];
       if (command.type === 'createFolder') {
         affected = [await client.createFolder({
           libraryType: command.libraryType,
@@ -456,22 +481,41 @@ export class UnifiedLibraryService {
       } else if (command.type === 'moveNode') {
         affected = [await client.moveNode(
           command.nodeId, command.expectedRevision, command.parentId, command.targetIndex,
+          command.expectedParentRevision,
         )];
       } else if (command.type === 'reorderNode') {
         affected = [await client.reorderNode(command.nodeId, command.expectedRevision, command.targetIndex)];
       } else if (command.type === 'duplicateNode') {
         affected = [await client.duplicateNode(
           command.nodeId, command.expectedRevision, command.parentId, command.targetIndex,
+          command.expectedParentRevision,
         )];
       } else {
-        if (command.confirmation !== 'DELETE') {
+        const preview = this.mutationPreviews.get(command.confirmation);
+        this.mutationPreviews.delete(command.confirmation);
+        if (
+          !preview
+          || preview.expiresAt < Date.now()
+          || preview.request.nodeId !== command.nodeId
+          || preview.request.expectedRevision !== command.expectedRevision
+        ) {
           return {
             ok: false,
-            error: createLibraryServiceError('invalid-request', 'Type DELETE to confirm removal.', false),
+            error: createLibraryServiceError('preview-expired', 'Delete confirmation expired. Review the affected items again.', false),
           };
         }
+        const currentIds = await client.listDescendantNodeIds(command.nodeId);
+        if (JSON.stringify(currentIds) !== JSON.stringify(preview.affectedNodeIds)) {
+          return { ok: false, error: createLibraryServiceError('stale-revision', 'The delete contents changed. Review them again.', false) };
+        }
+        const openSessions = this.editorSessions?.getUserSessionsForNodeIds(currentIds) ?? [];
+        if (openSessions.some((session) => session.dirty)) {
+          return { ok: false, error: createLibraryServiceError('validation-failed', 'Save or discard dirty Library Item editors before deleting.', false) };
+        }
         await client.deleteNode(command.nodeId, command.expectedRevision);
+        closedEditorSessionIds = this.editorSessions?.closeDeletedUserNodes(currentIds) ?? [];
       }
+      for (const node of affected) await this.editorSessions?.reconcileUserNode(node.id);
       const repository = await this.refreshRepositorySnapshot(client);
       const affectedNodes = await Promise.all(affected.map((node) => this.userNodeToBrowseNode(client, node)));
       this.publishChanged({
@@ -481,7 +525,11 @@ export class UnifiedLibraryService {
       });
       return {
         ok: true,
-        value: { contentRevision: repository.contentRevision, affectedNodes },
+        value: {
+          contentRevision: repository.contentRevision,
+          affectedNodes,
+          ...(closedEditorSessionIds.length > 0 ? { closedEditorSessionIds } : {}),
+        },
       };
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Library mutation failed.';
@@ -490,6 +538,40 @@ export class UnifiedLibraryService {
           : /move|descendant|type/i.test(message) ? 'invalid-move'
             : 'storage-failure';
       return { ok: false, error: createLibraryServiceError(code, message, false) };
+    }
+  }
+
+  async prepareLibraryMutation(
+    request: PrepareLibraryMutationRequest,
+  ): Promise<LibraryResult<LibraryMutationPreview>> {
+    const client = this.getReadyClient();
+    if (!client || !this.snapshot.writable) return this.notReady();
+    try {
+      const node = await client.getNode(request.nodeId);
+      if (node.nodeKind === 'root') throw new Error('Library roots cannot be deleted');
+      if (node.revision !== request.expectedRevision) throw new Error('Stale revision');
+      const affectedNodeIds = await client.listDescendantNodeIds(node.id);
+      const dirtyEditorSessionIds = (this.editorSessions?.getUserSessionsForNodeIds(affectedNodeIds) ?? [])
+        .filter((session) => session.dirty)
+        .map((session) => session.sessionId);
+      const confirmationToken = randomUUID();
+      const expiresAt = Date.now() + 60_000;
+      this.mutationPreviews.set(confirmationToken, { request, affectedNodeIds, expiresAt });
+      return {
+        ok: true,
+        value: {
+          confirmationToken,
+          nodeId: node.id,
+          expectedRevision: node.revision,
+          affectedNodeIds,
+          affectedCount: affectedNodeIds.length,
+          dirtyEditorSessionIds,
+          expiresAt,
+        },
+      };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unable to prepare Library deletion.';
+      return { ok: false, error: createLibraryServiceError(/stale/i.test(message) ? 'stale-revision' : 'validation-failed', message, false) };
     }
   }
 
@@ -830,6 +912,107 @@ export class UnifiedLibraryService {
     };
   }
 
+  async beginLibraryDrag(
+    request: BeginLibraryDragRequest,
+  ): Promise<LibraryResult<LibraryDragDescriptor>> {
+    try {
+      const currentRevision = await this.getCurrentSourceRevision(request.key);
+      if (String(currentRevision) !== String(request.revision)) {
+        return { ok: false, error: createLibraryServiceError('source-changed', 'The library item changed before dragging began.', true) };
+      }
+      return { ok: true, value: this.dragSessions.begin(request.key, request.revision) };
+    } catch (error) {
+      return this.failureResult(error);
+    }
+  }
+
+  cancelLibraryDrag(dragSessionId: string): void {
+    this.dragSessions.cancel(dragSessionId);
+  }
+
+  async previewLibraryTransfer(
+    request: LibraryTransferPreviewRequest,
+  ): Promise<LibraryResult<LibraryTransferPreview>> {
+    try {
+      const source = await this.resolveTransferSource(request.source, false);
+      if (source.key.libraryType !== this.targetLibraryType(request.target)) {
+        return { ok: false, error: createLibraryServiceError('unsupported', 'This item type cannot be placed at that destination.', false) };
+      }
+      const targetError = this.projectAdapter.validateTransferTarget(request.target, source.key.libraryType);
+      const preview = await this.getLibraryItemPreview(source.key);
+      if (!preview.ok) return preview;
+      const requestedMode = request.mode ?? 'independent';
+      const allowedModes = source.key.scope === 'projectShared' && source.key.libraryType === 'soundObject'
+        ? ['independent', 'sharedInstance'] as const
+        : ['independent'] as const;
+      const blockingReasons: string[] = [];
+      if (targetError) blockingReasons.push(targetError);
+      if (!allowedModes.includes(requestedMode as never)) blockingReasons.push('The requested copy mode is not available for this item.');
+      if (preview.value.supportStatus === 'unsupported') blockingReasons.push(preview.value.supportMessage ?? 'This payload cannot be transferred safely.');
+      if (preview.value.dependencies.unresolvedExternal.length > 0) blockingReasons.push('Resolve external dependencies before transfer.');
+      const readyClient = source.key.scope === 'user' ? this.getReadyClient() : null;
+      if (source.key.scope === 'user' && !readyClient) return this.notReady();
+      const payloadXml = source.key.scope === 'user'
+        ? (await readyClient!.getItemPayload(source.key.nodeId)).payloadXml
+        : undefined;
+      const previewToken = randomUUID();
+      this.transferPreviews.set(previewToken, {
+        source: request.source,
+        key: source.key,
+        sourceRevision: source.revision,
+        payloadXml,
+        target: request.target,
+        mode: requestedMode,
+        expiresAt: Date.now() + 5 * 60_000,
+      });
+      return {
+        ok: true,
+        value: {
+          previewToken,
+          item: preview.value,
+          target: request.target,
+          requestedMode,
+          allowedModes,
+          canApply: blockingReasons.length === 0,
+          blockingReasons,
+        },
+      };
+    } catch (error) {
+      return this.failureResult(error);
+    }
+  }
+
+  async applyLibraryTransfer(previewToken: string): Promise<LibraryResult<ProjectMutationReceipt>> {
+    const pending = this.transferPreviews.get(previewToken);
+    this.transferPreviews.delete(previewToken);
+    if (!pending || pending.expiresAt < Date.now()) {
+      return { ok: false, error: createLibraryServiceError('preview-expired', 'Transfer preview expired.', true) };
+    }
+    try {
+      const current = await this.resolveTransferSource(pending.source, pending.source.kind === 'drag');
+      if (String(current.revision) !== String(pending.sourceRevision)) throw new Error('Library source changed before transfer');
+      const targetError = this.projectAdapter.validateTransferTarget(pending.target, pending.key.libraryType);
+      if (targetError) throw new Error(targetError);
+      const target = this.toInsertionTarget(pending.target, pending.key.libraryType);
+      const receipt = this.projectAdapter.applyInsertion({
+        key: pending.key,
+        payloadXml: pending.payloadXml,
+        target,
+        mode: pending.mode,
+      });
+      this.publishProjectChanged();
+      return { ok: true, value: receipt };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Transfer failed.';
+      const code = /source|changed/i.test(message) ? 'source-changed'
+        : /session/i.test(message) ? 'stale-project-session'
+          : /target|destination|layer|revision/i.test(message) ? 'stale-target'
+            : /dependency/i.test(message) ? 'dependency-conflict'
+              : 'validation-failed';
+      return { ok: false, error: createLibraryServiceError(code, message, false) };
+    }
+  }
+
   async applyLibraryInsertion(
     request: ConfirmedLibraryInsertionRequest,
   ): Promise<LibraryResult<ProjectMutationReceipt>> {
@@ -888,6 +1071,58 @@ export class UnifiedLibraryService {
     };
   }
 
+  private async getCurrentSourceRevision(key: LibraryItemKey): Promise<number | string> {
+    if (key.scope === 'user') {
+      const client = this.getReadyClient();
+      if (!client) throw new Error('Library service is not ready');
+      return (await client.getNode(key.nodeId)).revision;
+    }
+    if (this.projectAdapter.getProjectSessionId() !== key.projectSessionId) throw new Error('Stale project session');
+    const entry = this.projectAdapter.list(key.libraryType).find((candidate) => JSON.stringify(candidate.key) === JSON.stringify(key));
+    if (!entry) throw new Error('Library source not found');
+    return entry.revision;
+  }
+
+  private async resolveTransferSource(
+    reference: LibraryTransferSourceReference,
+    consume: boolean,
+  ): Promise<{ key: LibraryItemKey; revision: number | string }> {
+    if (reference.kind === 'clipboard') {
+      const source = reference.source;
+      const key: LibraryItemKey = source.kind === 'library'
+        ? source.key
+        : { scope: 'user', libraryType: source.libraryType, nodeId: source.nodeId };
+      const revision = await this.getCurrentSourceRevision(key);
+      if (String(revision) !== String(source.revision)) throw new Error('Library source changed before transfer');
+      return { key, revision };
+    }
+    const session = this.dragSessions.peek(reference.dragSessionId);
+    if (!session) throw new Error('Drag session expired');
+    const currentRevision = await this.getCurrentSourceRevision(session.key);
+    return consume
+      ? this.dragSessions.consume(reference.dragSessionId, currentRevision)
+      : this.dragSessions.resolve(reference.dragSessionId, currentRevision);
+  }
+
+  private targetLibraryType(target: LibraryExactTransferTarget): LibraryType {
+    if (target.kind === 'orchestra') return 'instrument';
+    if (target.kind === 'projectUdo') return 'udo';
+    if (target.kind === 'effectChain') return 'effect';
+    return 'soundObject';
+  }
+
+  private toInsertionTarget(target: LibraryExactTransferTarget, libraryType: LibraryType) {
+    const base = {
+      libraryType,
+      projectSessionId: target.projectSessionId,
+      valid: true,
+      targetRevision: String(target.projectRevision),
+    } as const;
+    if (target.kind === 'effectChain') return { ...base, label: `${target.chain === 'pre' ? 'Pre' : 'Post'} Effects`, channelId: target.channelId, chain: target.chain, insertIndex: target.insertIndex };
+    if (target.kind === 'score') return { ...base, label: 'Score', location: target.location };
+    return { ...base, label: target.kind === 'orchestra' ? 'Orchestra' : 'Project UDOs', insertIndex: target.insertIndex };
+  }
+
   publishChanged(event: LibraryChangedEvent): void {
     if (event.contentRevision >= this.snapshot.contentRevision) {
       this.snapshot = { ...this.snapshot, contentRevision: event.contentRevision };
@@ -916,6 +1151,8 @@ export class UnifiedLibraryService {
     if (client) await client.close();
     this.activeOperation = null;
     this.insertionPreviews.clear();
+    this.transferPreviews.clear();
+    this.mutationPreviews.clear();
     this.updateSnapshot({ phase: 'stopped', writable: false });
     this.events.removeAllListeners();
   }

@@ -419,10 +419,14 @@ export class UnifiedLibraryRepository {
     expectedRevision: number,
     parentId: string,
     targetIndex: number,
+    expectedParentRevision?: number,
   ): RepositoryNode {
     return this.withTransaction(() => {
       const node = this.getMutableNode(nodeId, expectedRevision);
       const parent = this.getNode(parentId);
+      if (expectedParentRevision !== undefined && parent.revision !== expectedParentRevision) {
+        throw new Error('Stale destination revision');
+      }
       if (parent.nodeKind === 'item' || parent.libraryType !== node.libraryType) {
         throw new Error('Invalid cross-type library move');
       }
@@ -463,6 +467,7 @@ export class UnifiedLibraryRepository {
     expectedRevision: number,
     parentId?: string,
     targetIndex?: number,
+    expectedParentRevision?: number,
   ): RepositoryNode {
     return this.withTransaction(() => {
       const node = this.getNode(nodeId);
@@ -470,6 +475,9 @@ export class UnifiedLibraryRepository {
       if (node.revision !== expectedRevision) throw new Error('Stale revision');
       const destinationId = parentId ?? node.parentId;
       const destination = this.getNode(destinationId);
+      if (expectedParentRevision !== undefined && destination.revision !== expectedParentRevision) {
+        throw new Error('Stale destination revision');
+      }
       if (destination.nodeKind === 'item' || destination.libraryType !== node.libraryType) {
         throw new Error('Invalid duplicate destination type');
       }
@@ -484,21 +492,26 @@ export class UnifiedLibraryRepository {
     return this.withTransaction(() => {
       const node = this.getMutableNode(nodeId, expectedRevision);
       const parentId = node.parentId;
-      const rows = this.database.prepare(`
-        WITH RECURSIVE descendants(id, depth) AS (
-          SELECT id, 0 FROM library_nodes WHERE id = ?
-          UNION ALL
-          SELECT child.id, descendants.depth + 1
-          FROM library_nodes child JOIN descendants ON child.parent_id = descendants.id
-        ) SELECT id FROM descendants ORDER BY depth DESC
-      `).all(node.id);
-      const ids = rows.map((row) => String(row.id));
+      const ids = this.listDescendantNodeIds(node.id);
       const remove = this.database.prepare('DELETE FROM library_nodes WHERE id = ?');
       for (const id of ids) remove.run(id);
       if (parentId) this.normalizeSiblingOrder(parentId);
       this.incrementContentRevision();
       return ids;
     });
+  }
+
+  listDescendantNodeIds(nodeId: string): string[] {
+    this.getNode(nodeId);
+    const rows = this.database.prepare(`
+      WITH RECURSIVE descendants(id, depth) AS (
+        SELECT id, 0 FROM library_nodes WHERE id = ?
+        UNION ALL
+        SELECT child.id, descendants.depth + 1
+        FROM library_nodes child JOIN descendants ON child.parent_id = descendants.id
+      ) SELECT id FROM descendants ORDER BY depth DESC
+    `).all(nodeId);
+    return rows.map((row) => String(row.id));
   }
 
   updateItemPayload(

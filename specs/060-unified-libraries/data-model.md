@@ -315,7 +315,7 @@ Project Shared SoundObject identity requires a tested `@blue/data` change: retai
 
 ### Entity: `InsertionTarget`
 
-A transient main-validated destination. Every target includes `projectSessionId`, target revision, display description, accepted type, and validity/invalid reason.
+A transient main-validated destination resolved from current drop geometry or destination Paste context. It is not a persistent Libraries-panel mode or banner. Every target includes `projectSessionId`, target revision, display description, accepted type, and validity/invalid reason.
 
 ```text
 InstrumentTarget
@@ -337,7 +337,54 @@ SoundObjectTarget
   destinationTimeContext revision
 ```
 
-The service never infers a stale Effect chain or Score layer. No project means no active target and no insertion command.
+The service never infers a stale table position, Effect chain, or Score layer/time. No project means no compatible drop or destination Paste target.
+
+### Entity: `LibraryInteractionClipboard`
+
+Transient renderer/main interaction state; it is not persisted and does not place library XML on the operating-system clipboard.
+
+| Field | Type | Meaning |
+|-------|------|---------|
+| `mode` | `copy` \| `cut` | Paste semantics |
+| `sourceKey` | stable scope/type/node key | Resolves the source by identity |
+| `sourceRevision` | integer/text | Rejects a stale copy or move |
+| `libraryType` | `LibraryType` | Capability matching |
+| `sourceScope` | `LibraryScopeKind` | Enforces move/copy ownership rules |
+| `displayName` | text | Clipboard/status presentation only |
+| `createdAt` | timestamp | Session diagnostics and cancellation |
+
+Copy Paste deep-copies the resolved source and allocates new stable identities. Cut Paste is allowed only for permitted user-library organization within the same type/scope and retains identity. A successful cut clears the clipboard; failure leaves source, destination, and clipboard unchanged.
+
+### Entity: `LibraryDragSession`
+
+An opaque transient token used instead of serializing an item payload into `DataTransfer`.
+
+| Field | Type | Meaning |
+|-------|------|---------|
+| `dragSessionId` | random opaque text | Renderer-visible token |
+| `sourceKey` | stable scope/type/node key | Main-owned source lookup |
+| `sourceRevision` | integer/text | Revalidated at drop |
+| `libraryType` | `LibraryType` | Fast target compatibility check |
+| `sourceScope` | `LibraryScopeKind` | Selects copy/shared rules |
+| `supportStatus` | supported/unsupported | Unsupported content cannot enter project drops |
+| `expiresAt` | timestamp | Prevents replay after the gesture |
+
+The browser transfer payload contains only the opaque token plus non-authoritative type information for hover feedback. Main resolves and consumes the session at drop, then validates the current item revision, project session, exact target revision, dependencies, and requested shared-copy mode.
+
+### Entity: `LibraryDropTargetView`
+
+Renderer-only hover state derived from destination geometry.
+
+| Field | Type | Meaning |
+|-------|------|---------|
+| `kind` | orchestra/udo/effect/score | Destination resolver |
+| `acceptedType` | `LibraryType` | Compatibility feedback |
+| `locator` | target-specific stable locator | Exact row/gap/layer/time proposal |
+| `validity` | valid/invalid/stale | Marker/cursor state |
+| `reason` | text or null | Accessible invalid explanation |
+| `markerGeometry` | renderer geometry | Visual insertion marker only |
+
+`markerGeometry` is never trusted by main. It is converted to a stable locator by the destination surface, then re-resolved against current canonical project state before mutation.
 
 ## Transient Editor Entities
 
@@ -347,7 +394,7 @@ Main-owned state for one logical open definition.
 
 | Field | Type | Meaning |
 |-------|------|---------|
-| `sessionId` | UUID text | Dockview/main communication identity |
+| `sessionId` | UUID text | Dockview/main communication identity; the panel title is `Library Item` |
 | `itemKey` | scope + stable locator | Deduplicates entry points |
 | `libraryType` | `LibraryType` | Selects controlled editor body |
 | `scope` | `LibraryScopeKind` | Determines Save consequence |
@@ -367,7 +414,7 @@ Main-owned state for one logical open definition.
 #### State transitions
 
 ```text
-clean preview ──edit──▶ dirty pinned ──valid save──▶ clean pinned
+clean native editor preview ──edit──▶ dirty pinned ──valid save──▶ clean pinned
       │                     │                            │
       │                     ├──revert confirm───────────┘
       │                     ├──external change──▶ conflict
