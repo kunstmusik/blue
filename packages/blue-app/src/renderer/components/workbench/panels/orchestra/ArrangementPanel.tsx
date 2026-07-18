@@ -8,12 +8,15 @@ import type {
   InstrumentSnapshot,
   SupportedNewInstrumentType,
 } from '../../../../../shared/project-editor';
+import { getLibraryTransferSourceType } from '../../../../../shared/unified-library';
 import { useProjectStore } from '../../../../stores/project-store';
 import { useDocumentMouseDownOutside } from '../../../../hooks/use-document-mousedown-outside';
+import { isTextEditingTarget } from '../../../../hooks/use-keyboard-shortcuts';
+import { useLibraryStore } from '../../../../stores/library-store';
 import ArrangementContextMenu from './ArrangementContextMenu';
 import { createArrangementColumns } from './arrangement-table/arrangement-columns';
 import type { ArrangementPanelProps } from './types';
-import { LibraryTableDropMarker } from '../../../libraries/LibraryDropMarker';
+import { LibraryDropZone, LibraryTableDropMarker } from '../../../libraries/LibraryDropMarker';
 
 const INSTRUMENT_TYPES: Array<{ type: SupportedNewInstrumentType; label: string }> = [
   { type: 'generic', label: 'Generic Instrument' },
@@ -32,6 +35,9 @@ function ArrangementPanel({
   projectRevision,
 }: ArrangementPanelProps): React.ReactElement {
   const [clipboardInstrument, setClipboardInstrument] = useState<InstrumentSnapshot | null>(null);
+  const libraryClipboard = useLibraryStore((state) => state.clipboard);
+  const transferLibraryItem = useLibraryStore((state) => state.transferToProject);
+  const clearLibraryClipboard = useLibraryStore((state) => state.cancelClipboard);
   const [addMenuOpen, setAddMenuOpen] = useState(false);
   const addBtnRef = useRef<HTMLButtonElement>(null);
   const addMenuRef = useRef<HTMLDivElement>(null);
@@ -138,6 +144,7 @@ function ArrangementPanel({
     const instrument = useProjectStore.getState().orchestra.instruments.find(
       (candidate) => candidate.assignmentId === assignmentId,
     );
+    clearLibraryClipboard();
     setClipboardInstrument(instrument ?? null);
   };
 
@@ -146,13 +153,30 @@ function ArrangementPanel({
     void onOrchestraPatch({ type: 'removeAssignment', assignmentId });
   };
 
-  const pasteAssignment = () => {
-    if (!clipboardInstrument) return;
-    void onOrchestraPatch({
-      type: 'pasteInstrument',
-      instrument: clipboardInstrument,
-    });
-  };
+  const libraryInstrumentAvailable = libraryClipboard
+    ? getLibraryTransferSourceType(libraryClipboard.source) === 'instrument'
+    : false;
+  const pasteLibraryInstrument = useCallback((insertIndex: number) => {
+    if (
+      !libraryClipboard
+      || getLibraryTransferSourceType(libraryClipboard.source) !== 'instrument'
+    ) return;
+    void transferLibraryItem(
+      { kind: 'clipboard', source: libraryClipboard.source },
+      { kind: 'orchestra', projectSessionId, projectRevision, insertIndex },
+    );
+  }, [libraryClipboard, projectRevision, projectSessionId, transferLibraryItem]);
+
+  const pasteInstrument = useCallback((insertIndex: number) => {
+    if (libraryInstrumentAvailable) {
+      pasteLibraryInstrument(insertIndex);
+    } else if (clipboardInstrument) {
+      void onOrchestraPatch({
+        type: 'pasteInstrument',
+        instrument: clipboardInstrument,
+      });
+    }
+  }, [clipboardInstrument, libraryInstrumentAvailable, onOrchestraPatch, pasteLibraryInstrument]);
 
   const isAddMenuTarget = useCallback((target: EventTarget | null) => {
     if (!(target instanceof Node)) {
@@ -214,7 +238,25 @@ function ArrangementPanel({
         </div>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-auto" data-library-autoscroll>
+      <div
+        className="min-h-0 flex-1 overflow-auto"
+        data-library-autoscroll
+        tabIndex={0}
+        onKeyDown={(event) => {
+          if (
+            (event.metaKey || event.ctrlKey)
+            && event.key.toLocaleLowerCase() === 'v'
+            && (libraryInstrumentAvailable || clipboardInstrument !== null)
+            && !isTextEditingTarget(event.target)
+          ) {
+            event.preventDefault();
+            const selectedIndex = rows.findIndex(
+              (row) => row.assignmentId === selectedAssignmentId,
+            );
+            pasteInstrument(selectedIndex >= 0 ? selectedIndex + 1 : rows.length);
+          }
+        }}
+      >
         <table
           ref={tableRef}
           className="border-collapse text-left text-body"
@@ -253,32 +295,41 @@ function ArrangementPanel({
                   colSpan={row.getVisibleCells().length}
                   label={`Insert Instrument before ${row.original.instrumentName}`}
                 />
-                <ArrangementContextMenu
-                  row={row.original}
-                  hasClipboard={clipboardInstrument !== null}
-                  onCopy={copyAssignment}
-                  onCut={cutAssignment}
-                  onPaste={pasteAssignment}
-                  onOrchestraPatch={onOrchestraPatch}
+                <LibraryDropZone
+                  target={{ kind: 'orchestra', projectSessionId, projectRevision, insertIndex: index + 1 }}
                 >
-                  <tr
-                    className={[
-                      'cursor-default border-b border-app-border/50 text-app-text-soft',
-                      selected ? 'bg-app-accent/20 text-app-text-strong' : 'hover:bg-app-hover',
-                    ].join(' ')}
-                    onClick={() => onSelectAssignment(row.original.assignmentId)}
-                  >
-                    {row.getVisibleCells().map((cell) => (
-                      <td
-                        key={cell.id}
-                        className="truncate px-2 py-1.5"
-                        style={{ width: getColumnWidth(cell.column.id) }}
+                  {({ active, dropProps }) => (
+                    <ArrangementContextMenu
+                      row={row.original}
+                      hasClipboard={clipboardInstrument !== null || libraryInstrumentAvailable}
+                      onCopy={copyAssignment}
+                      onCut={cutAssignment}
+                      onPaste={() => pasteInstrument(index + 1)}
+                      onOrchestraPatch={onOrchestraPatch}
+                    >
+                      <tr
+                        {...dropProps}
+                        data-library-drop-target="orchestra-row"
+                        className={[
+                          'cursor-default border-b border-app-border/50 text-app-text-soft',
+                          active ? 'ring-1 ring-inset ring-app-accent' : '',
+                          selected ? 'bg-app-accent/20 text-app-text-strong' : 'hover:bg-app-hover',
+                        ].join(' ')}
+                        onClick={() => onSelectAssignment(row.original.assignmentId)}
                       >
-                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                      </td>
-                    ))}
-                  </tr>
-                </ArrangementContextMenu>
+                        {row.getVisibleCells().map((cell) => (
+                          <td
+                            key={cell.id}
+                            className="truncate px-2 py-1.5"
+                            style={{ width: getColumnWidth(cell.column.id) }}
+                          >
+                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                          </td>
+                        ))}
+                      </tr>
+                    </ArrangementContextMenu>
+                  )}
+                </LibraryDropZone>
                 </React.Fragment>
               );
             })}

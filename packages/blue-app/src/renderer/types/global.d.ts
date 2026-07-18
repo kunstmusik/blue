@@ -83,8 +83,6 @@ import type {
   LibraryDraftShutdownPreview,
   ProjectLibraryUsage,
   ProjectLibraryDeletePreview,
-  LibraryMigrationSummary,
-  LibraryImportHistoryEntry,
   ManualLibraryImportPreview,
   ManualLibraryImportResult,
 } from '../../shared/unified-library';
@@ -194,20 +192,10 @@ declare global {
         key: LibraryItemKey,
         parentId: string,
       ) => Promise<LibraryResult<LibraryMutationReceipt>>;
-      getLibraryMigrationSummary: () => Promise<LibraryMigrationSummary | null>;
-      getLibraryImportHistory: (
-        limit?: number,
-      ) => Promise<LibraryResult<LibraryImportHistoryEntry[]>>;
-      onLibraryMigrationSummary: (
-        callback: (summary: LibraryMigrationSummary) => void,
-      ) => () => void;
       selectLibraryImportFiles: () => Promise<LibraryResult<ManualLibraryImportPreview> | null>;
       executeLibraryImport: (
         previewToken: string,
       ) => Promise<LibraryResult<ManualLibraryImportResult>>;
-      undoLibraryImport: (
-        batchId: string,
-      ) => Promise<LibraryResult<readonly string[]>>;
       exportCurrentLibrary: (
         libraryType: LibraryType,
       ) => Promise<LibraryResult<true> | null>;

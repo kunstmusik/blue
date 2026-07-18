@@ -109,4 +109,33 @@ describe('Orchestra Library drop targets', () => {
     act(() => { marker.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })); });
     expect(marker.className).not.toContain('bg-app-accent ');
   });
+
+  it('accepts a direct row drop and Library paste from the row context menu', async () => {
+    const row = container.querySelector('[data-library-drop-target="orchestra-row"]') as HTMLElement;
+    const transfer = createTestDataTransfer();
+    transfer.setData(BLUE_LIBRARY_DRAG_MIME, JSON.stringify({
+      dragSessionId: 'drag-instrument', libraryType: 'instrument',
+    }));
+    dispatchDragEvent(row, 'dragover', transfer);
+    dispatchDragEvent(row, 'drop', transfer);
+    await act(async () => { await Promise.resolve(); await Promise.resolve(); });
+    expect(previewLibraryTransfer).toHaveBeenLastCalledWith(expect.objectContaining({
+      source: { kind: 'drag', dragSessionId: 'drag-instrument' },
+      target: { kind: 'orchestra', projectSessionId: 7, projectRevision: 12, insertIndex: 1 },
+    }));
+
+    previewLibraryTransfer.mockClear();
+    act(() => row.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true })));
+    await act(async () => { await Promise.resolve(); });
+    const paste = [...document.body.querySelectorAll('[role="menuitem"]')]
+      .find((item) => item.textContent === 'Paste') as HTMLElement;
+    expect(paste?.getAttribute('aria-disabled')).not.toBe('true');
+    expect(document.body.textContent).not.toContain('Paste Library Instrument');
+    act(() => paste.click());
+    await act(async () => { await Promise.resolve(); await Promise.resolve(); });
+    expect(previewLibraryTransfer).toHaveBeenCalledWith(expect.objectContaining({
+      source: expect.objectContaining({ kind: 'clipboard' }),
+      target: { kind: 'orchestra', projectSessionId: 7, projectRevision: 12, insertIndex: 1 },
+    }));
+  });
 });

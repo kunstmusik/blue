@@ -39,6 +39,7 @@ function logicalKey(key: LibraryItemKey): string {
 export class UnifiedLibraryEditorSessionService {
   private readonly sessions = new Map<string, InternalLibraryEditorSession>();
   private readonly byLogicalKey = new Map<string, string>();
+  private openTail: Promise<void> = Promise.resolve();
 
   private readonly savedNames = new Map<string, string>();
   private readonly adapters = new LibraryEditorAdapterRegistry();
@@ -48,9 +49,23 @@ export class UnifiedLibraryEditorSessionService {
     private readonly projectAdapter: UnifiedLibraryProjectAdapter = new UnifiedLibraryProjectAdapter(() => null),
   ) {}
 
-  async open(key: LibraryItemKey, pinned = false): Promise<LibraryEditorSessionSnapshot> {
+  open(key: LibraryItemKey, pinned = false): Promise<LibraryEditorSessionSnapshot> {
+    const operation = this.openTail.then(() => this.openExclusive(key, pinned));
+    this.openTail = operation.then(() => undefined, () => undefined);
+    return operation;
+  }
+
+  private async openExclusive(key: LibraryItemKey, pinned: boolean): Promise<LibraryEditorSessionSnapshot> {
     const existingId = this.byLogicalKey.get(logicalKey(key));
-    if (existingId) return this.toSnapshot(this.requireSession(existingId));
+    if (existingId) {
+      const existing = this.requireSession(existingId);
+      if (pinned && !existing.pinned) {
+        const pinnedSession = { ...existing, pinned: true };
+        this.sessions.set(existingId, pinnedSession);
+        return this.toSnapshot(pinnedSession);
+      }
+      return this.toSnapshot(existing);
+    }
     for (const session of this.sessions.values()) {
       if (!session.dirty && !session.pinned) this.remove(session.sessionId);
     }

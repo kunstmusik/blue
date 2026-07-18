@@ -7,7 +7,7 @@
 
 ## Summary
 
-Replace the four disconnected or deferred library experiences with one app-wide Libraries workbench panel and durable user-library repository. Electron main owns a `blue_libraries.sqlite` database through the SQLite runtime bundled with Electron, serializes repository work in a worker thread, performs all file dialogs/import/export/recovery, and composes user content with project-owned sources from canonical `BlueData`. Pure raw-first codecs in `@blue/data` preserve Java Blue XML exactly until a fully supported editor saves an item. Main-owned editor sessions protect drafts and detect revision conflicts, while Dockview supplies a compact right-side navigator plus stable main-area `Library Item` editors that retain the existing address header and native type-specific bodies. Tree organization uses inline rename/context menus; project placement uses typed drag/drop and keyboard-equivalent paste rather than Browse or Insert buttons. The existing `.blue` project format remains authoritative for Project Orchestra, project UDOs, Project Shared SoundObjects, and mixer/score transfers.
+Replace the four disconnected or deferred user-library experiences with one app-wide Libraries workbench panel and durable user-library repository. Electron main owns a `blue_libraries.sqlite` database through the SQLite runtime bundled with Electron, serializes repository work in a worker thread, and performs all file dialogs/import/export/recovery. Pure raw-first codecs in `@blue/data` preserve Java Blue XML exactly until a fully supported editor saves an item. Main-owned editor sessions protect drafts and detect revision conflicts, while Dockview supplies a compact user-only navigator plus stable main-area `Library Item` editors that retain the existing address header and native type-specific bodies. Project Orchestra and UDOs remain in their dedicated editors; Project Shared SoundObjects use a separate Java-style `SoundObject Library` auxiliary panel. Tree organization uses inline rename/context menus; project placement uses typed drag/drop and keyboard-equivalent paste rather than Browse or Insert buttons. Normal migration is silent, and one-mode transfers apply directly without modal state.
 
 ## Technical Context
 
@@ -26,7 +26,7 @@ Replace the four disconnected or deferred library experiences with one app-wide 
 **Performance Goals**: meet SC-006 with 10,000 user items: initial hierarchy within 2 seconds and at least 95% of folder expansions/name searches within 1 second; lazy payload loading; IPC and repository work must not stall playback or visible UI
 
 **Constraints**: no Node built-ins, UI dependencies, dynamic imports, or `require()` in `@blue/data`; Java XML import never executes code or resolves external entities; unsupported or nested-unsupported XML remains byte-preserved and authoritative; all compound writes and each source import are transactional; Export All must roll back earlier destination changes on failure; one user-library database owner; no continuous synchronization with `~/.blue`; no `.blue` schema changes
-**Scale/Scope**: four user-library roots, project sources for Instruments/UDOs/Project Shared SoundObjects, exact drag/drop targets for Orchestra/UDO/Mixer/Score, 10,000+ user items, stable UUID nodes, transient typed clipboard state, import history and conditional undo, startup migration, compatibility reporting, recovery, one Libraries auxiliary panel, and multiple stable Library Item editor sessions
+**Scale/Scope**: four collapsed user-library roots, exact drag/drop targets for Orchestra/UDO/Mixer/Score, 10,000+ user items, stable UUID nodes, transient typed clipboard state, internal import audit/conditional undo data, silent startup migration, compatibility reporting, recovery, one user-only Libraries auxiliary panel, one Project SoundObject Library auxiliary panel, and multiple stable Library Item editor sessions
 
 ## Constitution Check
 
@@ -149,10 +149,10 @@ Research is captured in [research.md](research.md). Resolved decisions include:
 - Parse Java XML with `@rgrove/parse-xml` offsets so every leaf retains its exact source slice. Decode only after recursive support checks; unknown top-level or nested plugin content remains read-only raw XML.
 - Keep legacy migration state in an atomic outside-database app-settings file, preventing database loss or Settings snapshot writes from silently resetting migration behavior.
 - Use one transaction per compound repository change and per source file, a serialized operation lease for import/export, staged export plus rollback, and explicit per-source partial results.
-- Compose user and project sources in main without changing ownership. Preserve Project Shared SoundObject IDs through the existing Java-compatible `objRefId` field, add fingerprint/ambiguity fallback for safe restore, reuse native deep-copy/time conversion rules, and reject stale or unresolved project targets before mutation.
+- Keep project ownership in canonical `BlueData`. Project Orchestra and UDOs stay in their existing editors; expose only Project Shared SoundObjects through the separate SoundObject Library panel. Preserve their IDs through the existing Java-compatible `objRefId` field, add fingerprint/ambiguity fallback for safe restore, reuse native deep-copy/time conversion rules, and reject stale or unresolved project targets before mutation.
 - Keep one main-owned editor session per stable item identity and use dynamic Dockview panels titled `Library Item` for clean-preview reuse, first-edit pinning, conflict review, missing-item restore, and no-project editing; retain the current address header and replace the raw XML body with native type-specific editors.
-- Always mount the workbench, represent Welcome as a central editor when no project is open, migrate the legacy SoundObject panel and Effects action to `LibrariesTopComponent`, and preserve valid saved layout state.
-- Keep Libraries as a compact navigator: panel-level file/history operations live under one vertical ellipsis, tree mutations live in accessible context menus/inline rename, and typed drag/drop plus destination Paste replace Browse/Insert modes.
+- Always mount the workbench, represent Welcome as a standalone full-window surface when no project is open, preserve/register the legacy `SoundObjectLibraryTopComponent` as the separate project panel, route the Effects action to `LibrariesTopComponent`, and preserve valid saved layout state.
+- Keep Libraries as a compact user-only navigator: panel-level import/export operations live under one vertical ellipsis, tree mutations live in accessible context menus/inline rename, top-level roots start collapsed, and typed drag/drop plus destination Paste replace Browse/Insert modes. Migration/history presentation is removed from healthy operation.
 
 ## Phase 1: Design And Contracts
 
@@ -173,7 +173,19 @@ Generated design artifacts:
 5. Add main-owned editor sessions, validation/conflict/dirty-close behavior, and controlled type-editor adapters.
 6. Make the workbench available without a project, add the right-side Libraries panel and dynamic editor panels, and migrate legacy layout/menu/panel identifiers.
 7. Build lazy browse/search, context-menu organization, native type-specific Library Item editors, and unsupported-item safe states.
-8. Add typed Orchestra/UDO/Mixer/Score drop/Paste placement, retire destination Browse/Insert and session-only legacy library surfaces, complete import/export/history/recovery UI, and run the full compatibility/performance/failure matrix.
+8. Add typed Orchestra/UDO/Mixer/Score drop/Paste placement, retire destination Browse/Insert and session-only legacy user-library surfaces, complete import/export/recovery UI, retain the separate Project SoundObject Library surface, and run the full compatibility/performance/failure matrix.
+
+## Corrective UX Implementation Slice — 2026-07-18
+
+This slice changes presentation and transfer orchestration only; SQLite, `.blue` persistence, lossless migration, and internal import provenance remain intact.
+
+1. Apply a transfer directly when preview returns one allowed mode and no blocking disclosure. Publish `transferPreview` only for a real choice, eliminating the transient modal flash while retaining the shared SoundObject instance-versus-independent dialog.
+2. Treat a protected-mode drag descriptor as unknown during Score `dragover`, not incompatible. MIME presence enables the candidate marker; descriptor/type and exact target are revalidated when drop data becomes readable and again in main.
+3. Remove the source filter and Current Project section from Libraries. Query/browse only user roots, remove no-project explanatory chrome, and initialize every top-level root collapsed.
+4. Remove migration notices, Migration Report, Import History, and their renderer/preload IPC presentation paths. Keep migration state and import provenance internally because they protect against repeated/lossy migration and support repository recovery.
+5. Register `SoundObjectLibraryTopComponent` as a separate right-side auxiliary panel backed by canonical Project Shared SoundObjects. It reuses the library tree interaction, Library Item editor routing, typed clipboard/drag session, copy-to-user, and guarded project deletion services.
+6. Keep `UserDefinedOpcodeTopComponent` routed to the existing reusable `UdoWorkspacePanel`; no project UDO tree is duplicated in Libraries.
+7. Update saved-layout handling so `SoundObjectLibraryTopComponent` is preserved rather than rewritten to Libraries, and verify both panels can coexist without duplication.
 
 ## Corrective UX Implementation Slice — 2026-07-15
 
@@ -189,8 +201,8 @@ The persistence, migration, recovery, and project-copy architecture remains vali
 ### 2. Simplify the Libraries auxiliary panel
 
 - Remove `LibraryMigrationSummary`, the full-width `LibraryActionsMenu` row, the embedded `LibraryPreview`, `LibraryTargetBanner`, and the bottom-right Insert/Confirm Insert controls from the healthy browsing state.
-- Replace panel-level actions with one icon-only vertical-ellipsis popup labeled `Library actions`; include Import XML, Export Current, Export All, Import History, and migration report/status. Successful migration uses a dismissible/non-blocking notification. Only repository recovery may replace normal panel content.
-- Give the hierarchy the full remaining panel height and keep search/type/scope filtering compact. Preserve explicit empty, loading, search-no-result, unsupported, and recovery states.
+- Replace panel-level actions with one icon-only vertical-ellipsis popup labeled `Library actions`; include Import XML, Export Current, and Export All. Do not expose Import History, Migration Report, or routine migration status. Only repository recovery may replace normal panel content.
+- Give the hierarchy the full remaining panel height and keep search/type filtering compact. Preserve explicit empty, loading, search-no-result, unsupported, and recovery states.
 
 ### 3. Make the tree behave like a desktop library navigator
 

@@ -56,11 +56,11 @@ export function LibraryTree({
   const [expanded, setExpanded] = useState<ReadonlySet<string>>(new Set(defaultExpandedNodeIds));
   const treeRef = useRef<HTMLDivElement>(null);
   const renameInputRef = useRef<HTMLInputElement>(null);
-  const [activeIndex, setActiveIndex] = useState(0);
+  const [activeIndex, setActiveIndex] = useState(-1);
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState('');
   const [renameError, setRenameError] = useState<string | null>(null);
-  const [dragDescriptors, setDragDescriptors] = useState<Record<string, LibraryDragDescriptor>>({});
+  const dragDescriptors = useRef<Record<string, LibraryDragDescriptor>>({});
   const [dragMessage, setDragMessage] = useState('');
   useEffect(() => {
     setExpanded((current) => {
@@ -94,11 +94,10 @@ export function LibraryTree({
   };
 
   const prepareDrag = useCallback((node: LibraryBrowseNode) => {
-    if (!node.key || node.supportStatus === 'unsupported' || dragDescriptors[node.nodeId]) return;
-    void beginLibraryNodeDrag(node).then((descriptor) => {
-      if (descriptor) setDragDescriptors((current) => ({ ...current, [node.nodeId]: descriptor }));
-    });
-  }, [dragDescriptors]);
+    if (!node.key || node.supportStatus === 'unsupported' || dragDescriptors.current[node.nodeId]) return;
+    const descriptor = beginLibraryNodeDrag(node);
+    if (descriptor) dragDescriptors.current[node.nodeId] = descriptor;
+  }, []);
 
   const activate = (index: number): void => {
     const candidate = visible[index]?.node;
@@ -203,7 +202,7 @@ export function LibraryTree({
             onMouseEnter={() => prepareDrag(node)}
             draggable={node.nodeKind === 'item' && node.supportStatus !== 'unsupported'}
             onDragStart={(event) => {
-              const descriptor = dragDescriptors[node.nodeId];
+              const descriptor = dragDescriptors.current[node.nodeId];
               if (!descriptor) {
                 event.preventDefault();
                 setDragMessage('Preparing library item. Try dragging again.');
@@ -214,13 +213,11 @@ export function LibraryTree({
               setDragMessage(`Dragging ${node.displayName}`);
             }}
             onDragEnd={(event) => {
-              const descriptor = dragDescriptors[node.nodeId] ?? null;
-              if (event.dataTransfer.dropEffect === 'none') void cancelLibraryNodeDrag(descriptor);
-              setDragDescriptors((current) => {
-                const next = { ...current };
-                delete next[node.nodeId];
-                return next;
-              });
+              const descriptor = dragDescriptors.current[node.nodeId] ?? null;
+              if (event.dataTransfer.dropEffect === 'none') {
+                window.setTimeout(() => void cancelLibraryNodeDrag(descriptor), 5_000);
+              }
+              delete dragDescriptors.current[node.nodeId];
               setDragMessage(event.dataTransfer.dropEffect === 'none' ? 'Drag cancelled' : `${node.displayName} added`);
             }}
           >

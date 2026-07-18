@@ -195,8 +195,33 @@
 - [x] T060 [P] Add cross-cutting accessibility tests for ellipsis labeling, visible menu focus, `Shift+F10`, disabled-reason announcements, destructive confirmations, drag invalid feedback, and keyboard Paste in `packages/blue-app/src/renderer/tests/libraries-panel.test.tsx` and `packages/blue-app/src/renderer/tests/library-editing.test.tsx`
 - [x] T061 [P] Update the 10,000-item regression to assert lazy browse/search never decodes payloads or opens editor sessions before selection in `packages/blue-app/src/main/unified-library/performance.test.ts`
 - [x] T062 Run focused renderer/main transfer/editor/recovery suites plus `pnpm --filter @blue/app test`, `pnpm --filter @blue/app build`, `pnpm test`, `pnpm build`, and `git diff --check`; record results in `specs/060-unified-libraries/quickstart.md`
-- [ ] T063 Execute the corrective manual matrix for compact/narrow/floating Libraries, mouse/keyboard context menus, four native editors, 100 selection changes, four drop/Paste destinations, invalid-target zero mutation, migration notice, recovery, and full-window Welcome in `specs/060-unified-libraries/quickstart.md`
-- [ ] T064 Update corrective requirement-to-test coverage and replace the initial-only renderer verification note after all acceptance checks pass in `specs/060-unified-libraries/checklists/requirements.md` and `specs/060-unified-libraries/quickstart.md`
+- [X] T063 Execute the corrective manual matrix for compact/narrow/floating Libraries, mouse/keyboard context menus, four native editors, 100 selection changes, four drop/Paste destinations, invalid-target zero mutation, migration notice, recovery, and full-window Welcome in `specs/060-unified-libraries/quickstart.md`
+- [X] T064 Update corrective requirement-to-test coverage and replace the initial-only renderer verification note after all acceptance checks pass in `specs/060-unified-libraries/checklists/requirements.md` and `specs/060-unified-libraries/quickstart.md`
+
+---
+
+## Phase 10: User-Only Libraries And Dedicated Project Surfaces (2026-07-18 Correction)
+
+**Goal**: Remove routine modal/migration/project-scope clutter from Libraries, restore the Java-style Project SoundObject Library panel, keep project UDOs in the reusable UDO workspace, and make SoundObject drag/drop reliable under Chromium protected drag data.
+
+**Independent Test**: Open a project with user libraries and Project Shared SoundObjects; verify all user roots start collapsed, Libraries has no source/current-project/migration/history UI, Project SoundObjects appear only in their own panel, the UDO top component still renders the reusable list/editor, normal Instrument and user SoundObject transfers show only a toast, shared SoundObjects retain their real copy-choice dialog, and a protected-mode SoundObject drag inserts at the exact Score location.
+
+### Tests
+
+- [x] T065 [P] [US2] Add regressions proving one-mode transfers never publish modal state and Score accepts protected-mode SoundObject drag hover/drop while retaining the Project Shared copy-choice dialog in `packages/blue-app/src/renderer/tests/library-store.test.ts` and `packages/blue-app/src/renderer/tests/score-library-drop.test.tsx`
+- [x] T066 [P] [US1] Update Libraries tests to require user-only search/browse, no source filter/Current Project/no-project message, collapsed top-level roots, and no migration/history commands or notice in `packages/blue-app/src/renderer/tests/libraries-panel.test.tsx` and `packages/blue-app/src/renderer/tests/library-interchange.test.tsx`
+- [x] T067 [P] [US1] Add Project SoundObject Library panel and workbench-layout tests covering canonical project entries, editor selection, typed drag/copy, no-project empty state, coexistence with Libraries, and preservation of `SoundObjectLibraryTopComponent` in `packages/blue-app/src/renderer/tests/project-sound-object-library.test.tsx` and `packages/blue-app/src/renderer/tests/unified-library-workbench.test.tsx`
+- [x] T068 [P] [US1] Add a User Defined Opcode top-component test proving it renders the reusable `UdoWorkspacePanel` with the project drop target rather than duplicating project UDOs in Libraries in `packages/blue-app/src/renderer/tests/user-defined-opcode-panel.test.tsx`
+
+### Implementation
+
+- [x] T069 [US2] Apply one-mode transfer previews directly without setting dialog state and treat unreadable protected drag descriptors as unknown until Score drop/main validation in `packages/blue-app/src/renderer/stores/library-store.ts` and `packages/blue-app/src/renderer/components/workbench/panels/score/layer-groups/ScoreTimeCanvas.tsx`
+- [x] T070 [US1] Make Libraries browse/search only user sources, remove source/current-project/no-project chrome, and initialize every user root collapsed in `packages/blue-app/src/renderer/stores/library-store.ts`, `packages/blue-app/src/renderer/components/libraries/LibrarySearchBar.tsx`, and `packages/blue-app/src/renderer/components/workbench/panels/LibrariesPanel.tsx`
+- [x] T071 [US4] Remove migration notices, Migration Report, Import History, and their renderer/preload IPC presentation paths while retaining internal migration state/provenance and exceptional recovery in `packages/blue-app/src/renderer/components/libraries/LibraryActionsMenu.tsx`, `packages/blue-app/src/renderer/stores/library-store.ts`, `packages/blue-app/src/main/unified-library/ipc.ts`, `packages/blue-app/src/preload/preload.ts`, and `packages/blue-app/src/renderer/types/global.d.ts`
+- [x] T072 [US1] Implement and register `SoundObjectLibraryTopComponent` as a separate right-side project panel using canonical project browse/editor/clipboard/drag/delete services, preserve its layout identity, and keep `UserDefinedOpcodeTopComponent` on `UdoWorkspacePanel` in `packages/blue-app/src/renderer/components/workbench/panels/SoundObjectLibraryPanel.tsx`, `packages/blue-app/src/renderer/components/workbench/DockviewPanel.tsx`, `packages/blue-app/src/shared/workbench-menu.ts`, and `packages/blue-app/src/renderer/components/workbench/auxiliary-layout.ts`
+- [x] T073 Run focused transfer/panel/layout tests plus `pnpm --filter @blue/app test`, `pnpm --filter @blue/app build`, `pnpm test`, `pnpm lint`, and `git diff --check`; record the corrective results in `specs/060-unified-libraries/quickstart.md` and `specs/060-unified-libraries/checklists/requirements.md`
+
+**Checkpoint**: Libraries is a collapsed user-only navigator with silent healthy migration, project UDO/SoundObject ownership is represented by dedicated panels, and valid transfers never flash a modal or lose SoundObject drops.
 
 ---
 
@@ -213,6 +238,7 @@
 - **US5 (Phase 7)** depends on US1's ellipsis shell and should follow US4 to avoid concurrent edits to the same menu.
 - **US6 (Phase 8)** depends on US1's healthy/failure panel split and can run independently of US2–US5.
 - **Polish (Phase 9)** depends on every selected story; obsolete files are removed only after replacement tests are green.
+- **Phase 10** depends on the completed corrective slice. T065–T068 are independent failing-test surfaces; T069–T072 implement those contracts; T073 is the final gate.
 
 ### User Story Dependency Graph
 

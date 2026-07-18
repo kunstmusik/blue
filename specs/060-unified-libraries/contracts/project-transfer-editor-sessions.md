@@ -6,16 +6,17 @@ Define how Unified Libraries composes current-project definitions with app-owned
 
 ## Scope Composition
 
-| Type | Project scope | User scope | Target behavior |
-|------|---------------|------------|-----------------|
-| Instrument | Project Orchestra (`projectOwned`) | Instrument Library | Exact Orchestra row/end drop or Paste target |
-| UDO | Project UDO list (`projectOwned`) | UDO Library | Exact project UDO row/end drop or Paste target |
-| SoundObject | Project Shared SoundObjects (`projectShared`) | SoundObject Library | Explicit Score path/layer/time drop or Paste target |
-| Effect | none | Effect Library | Exact channel/chain/insertion-gap drop or Paste target |
+| Type | Project surface | Libraries source | Target behavior |
+|------|-----------------|------------------|-----------------|
+| Instrument | Orchestra editor | User Instrument Library | Exact Orchestra row/end drop or Paste target |
+| UDO | Reusable project UDO list/editor | User UDO Library | Exact project UDO row/end drop or Paste target |
+| SoundObject | Separate Project SoundObject Library panel | User SoundObject Library | Explicit Score path/layer/time drop or Paste target |
+| Effect | Mixer chains only | User Effect Library | Exact channel/chain/insertion-gap drop or Paste target |
 
 Rules:
 
-- The Libraries panel displays only meaningful scopes for the active type.
+- The Libraries panel displays application-owned user libraries only and has no source filter or Current Project section.
+- Project Instruments and UDOs remain in their existing dedicated editors. Project Shared SoundObjects are exposed by `SoundObjectLibraryTopComponent`, not nested under Libraries.
 - A target never appears as a browsable/persisted project library or persistent Libraries-panel mode.
 - No project means project scopes and compatible project drop/Paste targets are absent, while user browse/edit/import/export/recovery remains available.
 - User-item edits affect future insertions only. Previously inserted independent copies are untracked and unchanged.
@@ -136,9 +137,9 @@ The full Score destination is explicit. Pointer geometry or the keyboard paste l
 
 ### Compact panel
 
-- Healthy Libraries renders one compact search/filter row and the hierarchy; it does not render an embedded item preview/editor, persistent migration header, row command strip, target banner, or Insert button.
-- One vertical-ellipsis button labeled `Library actions` opens Import XML, Export Current, Export All, Import History, and migration report/status commands. Repository recovery may replace the hierarchy because it is a blocking exceptional state.
-- Successful/partial migration is announced non-blockingly and remains reviewable from the menu.
+- Healthy Libraries renders one compact search/type-filter row and the collapsed user-library roots; it does not render a source filter, Current Project section, no-project message, embedded item preview/editor, migration notice, row command strip, target banner, or Insert button.
+- One vertical-ellipsis button labeled `Library actions` opens Import XML, Export Current, and Export All. It does not expose Import History or Migration Report. Repository recovery may replace the hierarchy because it is a blocking exceptional state.
+- Successful, partial, or skipped migration remains silent while the repository is usable.
 
 ### Tree commands and rename
 
@@ -171,6 +172,8 @@ interface LibraryDragPayload {
 ```
 
 `dragSessionId` resolves main-owned source identity/revision state and expires after the gesture. XML is never placed in `DataTransfer`. Destination surfaces provide exact insertion markers, invalid feedback, edge auto-scroll, and Escape cancellation. Main revalidates source revision, support, project session, target revision, dependencies, and shared-copy mode before one atomic apply. User-library-to-project drag always copies and never removes the source.
+
+During browser protected drag mode, a destination may know only that the Blue Library MIME type is present; custom descriptor data can be unreadable until `drop`. An absent descriptor during `dragover` is therefore treated as unknown rather than incompatible. Type compatibility is enforced when the descriptor becomes readable at `drop` and is always enforced again by main.
 
 ## Transfer Matrix
 
@@ -212,6 +215,8 @@ interface LibraryDragPayload {
 - `Copy Instance`: create an `Instance` referencing the same `libraryId`; editor preview discloses shared behavior.
 - `Copy Independent`: deep-copy the resolved definition into the Score with no shared link.
 - Neither choice is implicit; UI presents consequences before apply.
+
+Every transfer with exactly one allowed mode and no blocking disclosure applies immediately from its preview token and reports success by toast. Renderer modal state is published only for the explicit Project Shared SoundObject choice or another required blocking decision.
 
 ### Project object → User library
 
@@ -258,6 +263,16 @@ Main maintains one active `sessionId` per logical key. Tree selection or any exi
 - Default edge: right
 - Default reset location: right auxiliary group
 - Normal startup: follows saved layout; not forced open after intentional close
+
+### Project SoundObject Library panel
+
+- ID: `SoundObjectLibraryTopComponent`
+- Title: `SoundObject Library`
+- Mode/group: `properties` / `properties-main`
+- Default edge: right; closed by default, matching Java Blue
+- Contents: canonical Project Shared SoundObjects only
+- Selection opens/focuses the existing `Library Item` editor; supported rows provide typed copy/drag to Score, copy-to-user, and guarded deletion semantics
+- No project renders a compact empty state rather than user-library content
 
 ### Dynamic editor panels
 
@@ -352,15 +367,7 @@ Stable identity remains unchanged. All panels/breadcrumbs update from a change e
 
 ## Workbench/Layout Migration
 
-The stored workbench envelope version is incremented. Migration rewrites `SoundObjectLibraryTopComponent` to `LibrariesTopComponent` in:
-
-- Dockview panel IDs, active panel IDs, and panel parameters;
-- auxiliary seeded/docked/minimized/slide-out lists;
-- active auxiliary IDs;
-- floating-origin metadata;
-- closed-panel origin metadata.
-
-If both legacy and new IDs exist, keep one logical new panel at the most recently active/explicit placement and discard the duplicate descriptor without losing unrelated layout state.
+`SoundObjectLibraryTopComponent` and `LibrariesTopComponent` are separate valid panel identities and may coexist. Stored layouts preserve both IDs across Dockview panels, auxiliary lists/active IDs, minimized/slide-out state, floating origins, and closed origins. The former migration that rewrote SoundObject Library to Libraries is retired; legacy Java-parity layout IDs now resolve to the restored project panel.
 
 Legacy `open-effects-library` commands route to the new panel without target mode. Legacy split keys `effects-library.main` and `orchestra.library` remain parseable for settings downgrade/migration safety but no longer create separate permanent library UI. Dynamic editor restoration uses stable parameters and safe missing states.
 
@@ -370,7 +377,7 @@ Legacy `open-effects-library` commands route to the new panel without target mod
 - The standalone Welcome screen covers the full main surface when there is no project; it is not a Dockview panel.
 - Explicitly opening Libraries or another workbench panel dismisses Welcome and reveals the no-project workbench.
 - Project-only panels render their existing disabled/empty state or are hidden according to existing rules; they do not block Libraries.
-- User browse/search/edit/import/export/history/recovery works normally.
+- User browse/search/edit/import/export/recovery works normally.
 - Project scopes, usage claims, and project drop/Paste targets are absent/disabled.
 - Opening or closing a project changes composition and destination capability without remounting/losing user editor sessions.
 
@@ -388,7 +395,8 @@ Tests must prove:
 - 100 clean-preview reuse/pin/close/open changes never replace dirty or pinned drafts;
 - tree context commands have right-click and keyboard parity; clipboard copy allocates identities while cut preserves them;
 - exact Orchestra/UDO/Mixer/Score markers, invalid feedback, and keyboard Paste use the same main validation service;
-- healthy Libraries has one compact ellipsis menu and no persistent banner, action strip, row CRUD, Browse, or Insert controls;
+- healthy Libraries has one compact ellipsis menu, collapsed user roots, no source/project section, and no persistent banner, history/report command, action strip, row CRUD, Browse, or Insert controls;
+- Project SoundObject Library is a separate panel, and the project UDO top component continues to use the reusable UDO list/editor;
 - validation/conflict/revert/quit/project-switch decisions never silently discard or overwrite;
 - external rename/move/delete updates breadcrumb or enters missing state by identity;
 - no-project user operations work;

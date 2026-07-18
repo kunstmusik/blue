@@ -1,11 +1,9 @@
-import { useEffect } from 'react';
+import { useEffect, useLayoutEffect, useRef } from 'react';
 import type { LibraryBrowseNode, LibraryType } from '../../../../shared/unified-library';
 import { LibrarySearchBar } from '../../libraries/LibrarySearchBar';
 import { LibraryTree } from '../../libraries/LibraryTree';
 import { LibraryActionsMenu } from '../../libraries/LibraryActionsMenu';
-import { LibraryMigrationNotice } from '../../libraries/LibraryMigrationNotice';
 import { LibraryImportDialog } from '../../libraries/LibraryImportDialog';
-import { LibraryHistoryPanel } from '../../libraries/LibraryHistoryPanel';
 import { LibraryRecoveryPanel } from '../../libraries/LibraryRecoveryPanel';
 import { useLibraryStore } from '../../../stores/library-store';
 
@@ -18,18 +16,27 @@ const TYPE_LABELS: Record<LibraryType, string> = {
 
 export default function LibrariesPanel(): React.ReactElement {
   const state = useLibraryStore();
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const scrollTopRef = useRef(useLibraryStore.getState().scrollTop);
   useEffect(() => {
     void useLibraryStore.getState().initialize();
+  }, []);
+  useLayoutEffect(() => {
+    const scroller = scrollRef.current;
+    if (scroller) scroller.scrollTop = scrollTopRef.current;
+    return () => {
+      useLibraryStore.setState({ scrollTop: scrollTopRef.current });
+    };
   }, []);
 
   const types = state.typeFilter === 'all'
     ? (Object.keys(TYPE_LABELS) as LibraryType[])
     : [state.typeFilter];
-  const showUser = state.sourceFilter !== 'project';
-  const showProject = state.sourceFilter !== 'user' && state.projectAvailable;
   const searchNodes: LibraryBrowseNode[] = state.searchResults.map((result, index) => ({
     key: result.key,
-    nodeId: `search:${index}:${JSON.stringify(result.key)}`,
+    nodeId: result.key.scope === 'user'
+      ? result.key.nodeId
+      : `search:${index}:${JSON.stringify(result.key)}`,
     parentId: null,
     libraryType: result.libraryType,
     scope: result.scope,
@@ -42,11 +49,11 @@ export default function LibrariesPanel(): React.ReactElement {
     hasChildren: false,
   }));
   const renameNode = (node: LibraryBrowseNode, name: string): void => {
-    if (typeof node.revision !== 'number') return;
+    if (node.scope !== 'user' || typeof node.revision !== 'number') return;
     void state.applyMutation({ type: 'renameNode', nodeId: node.nodeId, expectedRevision: node.revision, name });
   };
   const duplicateNode = (node: LibraryBrowseNode): void => {
-    if (typeof node.revision !== 'number') return;
+    if (node.scope !== 'user' || typeof node.revision !== 'number') return;
     void state.applyMutation({ type: 'duplicateNode', nodeId: node.nodeId, expectedRevision: node.revision });
   };
   const createFolder = (node: LibraryBrowseNode): void => {
@@ -55,34 +62,8 @@ export default function LibrariesPanel(): React.ReactElement {
     void state.applyMutation({ type: 'createFolder', libraryType: node.libraryType, parentId: node.nodeId, name });
   };
   const deleteNode = (node: LibraryBrowseNode): void => {
-    if (node.key?.scope !== 'user') {
-      if (!node.key) return;
-      void (async () => {
-        const preview = await window.blueAPI.previewProjectLibraryDelete(node.key!);
-        if (!preview.ok) return;
-        const usage = preview.value.linkedInstanceCount > 0
-          ? ` and ${preview.value.linkedInstanceCount} linked score instance${preview.value.linkedInstanceCount === 1 ? '' : 's'}`
-          : '';
-        if (!window.confirm(`Delete “${node.displayName}”${usage}? This cannot be undone.`)) return;
-        const result = await window.blueAPI.deleteProjectLibraryItem(node.key!, preview.value.confirmationToken);
-        if (result.ok) await state.refresh();
-      })();
-      return;
-    }
+    if (node.key?.scope !== 'user') return;
     void state.prepareDelete(node);
-  };
-  const copyProjectToUser = (node: LibraryBrowseNode): void => {
-    if (!node.key || node.key.scope === 'user') return;
-    const destination = state.userRootsByType[node.libraryType];
-    if (!destination) return;
-    void (async () => {
-      const result = await window.blueAPI.copyProjectLibraryItemToUser(node.key!, destination.nodeId);
-      if (!result.ok) {
-        useLibraryStore.setState({ error: result.error.message });
-        return;
-      }
-      await state.refresh();
-    })();
   };
   const restoreTreeFocus = (): void => {
     requestAnimationFrame(() => {
@@ -109,30 +90,37 @@ export default function LibrariesPanel(): React.ReactElement {
         <LibrarySearchBar
           query={state.query}
           typeFilter={state.typeFilter}
-          sourceFilter={state.sourceFilter}
-          projectAvailable={state.projectAvailable}
           onQueryChange={state.setQuery}
           onTypeFilterChange={state.setTypeFilter}
-          onSourceFilterChange={state.setSourceFilter}
         />
         <LibraryActionsMenu
           selectedType={state.typeFilter}
           onImport={() => { void state.selectImportFiles(); }}
           onExportCurrent={() => { void state.exportCurrent(); }}
           onExportAll={() => { void state.exportAll(); }}
-          onHistory={() => { void state.openHistory(); }}
-          hasMigrationReport={Boolean(state.migrationSummary)}
-          onMigrationReport={() => { void state.openHistory(); }}
         />
       </div>
-      <div className="min-h-0 flex-1 overflow-auto p-1">
-          {!state.projectAvailable && (
-            <p className="px-2 py-1 text-xs text-app-text-muted">No project is open. User Libraries remain available.</p>
-          )}
+      <div
+        ref={scrollRef}
+        data-library-scroll
+        className="min-h-0 flex-1 overflow-auto p-1"
+        onScroll={(event) => { scrollTopRef.current = event.currentTarget.scrollTop; }}
+      >
           {state.error && <p role="alert" className="px-2 py-1 text-xs text-red-400">{state.error}</p>}
           {state.query.trim() ? (
             <>
-              <LibraryTree label="Library search results" nodes={searchNodes} onSelect={state.selectItem} onOpen={(key) => { void state.openEditor(key, true); }} clipboard={state.clipboard} />
+              <LibraryTree
+                label="Library search results"
+                nodes={searchNodes}
+                onSelect={state.selectItem}
+                onOpen={(key) => { void state.openEditor(key, true); }}
+                onRename={renameNode}
+                onDuplicate={duplicateNode}
+                onDelete={deleteNode}
+                onCut={(node) => state.captureClipboard(node, 'cut')}
+                onCopy={(node) => state.captureClipboard(node, 'copy')}
+                clipboard={state.clipboard}
+              />
               {state.nextSearchCursor && (
                 <button type="button" className="m-2 rounded border border-app-border px-2 py-1 text-xs" onClick={state.loadMoreSearchResults}>
                   Load more
@@ -141,67 +129,38 @@ export default function LibrariesPanel(): React.ReactElement {
             </>
           ) : (
             <>
-              {showUser && (
-                <section aria-label="User Libraries">
-                  <h2 className="px-2 py-1 text-xs font-semibold uppercase tracking-wide text-app-text-muted">User Libraries</h2>
-                  {types.map((type) => {
-                    const rootNode = state.userRootsByType[type];
-                    return (
-                    <div key={`user-${type}`}>
-                      <LibraryTree
-                        label={`User ${TYPE_LABELS[type]}`}
-                        nodes={rootNode ? [rootNode] : []}
-                        childrenByParent={rootNode ? {
-                          ...state.childrenByParent,
-                          [rootNode.nodeId]: state.nodesByType[type],
-                        } : state.childrenByParent}
-                        defaultExpandedNodeIds={rootNode ? [rootNode.nodeId] : []}
-                        onSelect={state.selectItem}
-                        onExpand={state.expandNode}
-                        onOpen={(key) => { void state.openEditor(key); }}
-                        onRename={renameNode}
-                        onDuplicate={duplicateNode}
-                        onDelete={deleteNode}
-                        onCreateFolder={createFolder}
-                        onCut={(node) => state.captureClipboard(node, 'cut')}
-                        onCopy={(node) => state.captureClipboard(node, 'copy')}
-                        onPaste={(node) => { void state.pasteInto(node); }}
-                        clipboard={state.clipboard}
-                      />
-                    </div>
-                    );
-                  })}
-                </section>
-              )}
-              {showProject && (
-                <section aria-label="Current Project">
-                  <h2 className="px-2 py-1 text-xs font-semibold uppercase tracking-wide text-app-text-muted">Current Project</h2>
-                  {types.filter((type) => type !== 'effect').map((type) => (
-                    <div key={`project-${type}`}>
-                      <h3 className="px-2 py-1 text-xs font-medium">{TYPE_LABELS[type]}</h3>
-                      <LibraryTree
-                        label={`Project ${TYPE_LABELS[type]}`}
-                        nodes={state.projectNodesByType[type]}
-                        onSelect={state.selectItem}
-                        onOpen={(key) => { void state.openEditor(key); }}
-                        onDelete={deleteNode}
-                        onCopyToUser={copyProjectToUser}
-                        clipboard={state.clipboard}
-                      />
-                    </div>
-                  ))}
-                </section>
-              )}
+              <section aria-label="User Libraries">
+                <h2 className="px-2 py-1 text-xs font-semibold uppercase tracking-wide text-app-text-muted">User Libraries</h2>
+                {types.map((type) => {
+                  const rootNode = state.userRootsByType[type];
+                  return (
+                  <div key={`user-${type}`}>
+                    <LibraryTree
+                      label={`User ${TYPE_LABELS[type]}`}
+                      nodes={rootNode ? [rootNode] : []}
+                      childrenByParent={rootNode ? {
+                        ...state.childrenByParent,
+                        [rootNode.nodeId]: state.nodesByType[type],
+                      } : state.childrenByParent}
+                      onSelect={state.selectItem}
+                      onExpand={state.expandNode}
+                      onOpen={(key) => { void state.openEditor(key); }}
+                      onRename={renameNode}
+                      onDuplicate={duplicateNode}
+                      onDelete={deleteNode}
+                      onCreateFolder={createFolder}
+                      onCut={(node) => state.captureClipboard(node, 'cut')}
+                      onCopy={(node) => state.captureClipboard(node, 'copy')}
+                      onPaste={(node) => { void state.pasteInto(node); }}
+                      clipboard={state.clipboard}
+                    />
+                  </div>
+                  );
+                })}
+              </section>
             </>
           )}
       </div>
-      {state.migrationSummary && (
-        <LibraryMigrationNotice
-          summary={state.migrationSummary}
-          onDismiss={state.dismissMigrationSummary}
-          onReport={() => { void state.openHistory(); }}
-        />
-      )}
       {state.importPreview && (
         <LibraryImportDialog preview={state.importPreview} onImport={() => { void state.executeImport(); }} onCancel={state.cancelImport} />
       )}
@@ -228,9 +187,6 @@ export default function LibrariesPanel(): React.ReactElement {
             </div>
           </div>
         </div>
-      )}
-      {state.historyOpen && (
-        <LibraryHistoryPanel entries={state.history} onUndo={(batchId) => { void state.undoImport(batchId); }} onClose={state.closeHistory} />
       )}
     </div>
   );

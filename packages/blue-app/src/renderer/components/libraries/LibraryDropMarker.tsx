@@ -3,7 +3,9 @@ import * as ContextMenu from '@radix-ui/react-context-menu';
 import { useId } from 'react';
 import { useLibraryDropTarget } from './use-library-drop-target';
 
-const MENU_ITEM_CLASS = 'cursor-default select-none rounded px-2 py-1.5 text-xs outline-none data-[highlighted]:bg-app-selection data-[disabled]:opacity-40';
+export type LibraryDropZoneState = ReturnType<typeof useLibraryDropTarget>;
+
+const MENU_ITEM_CLASS = 'editor-context-menu__item';
 
 function DropContextMenu({
   canPaste,
@@ -18,7 +20,7 @@ function DropContextMenu({
     <ContextMenu.Root>
       <ContextMenu.Trigger asChild>{children}</ContextMenu.Trigger>
       <ContextMenu.Portal>
-        <ContextMenu.Content className="z-[1000] min-w-32 rounded border border-app-border bg-app-panel p-1 shadow-xl">
+        <ContextMenu.Content className="editor-context-menu z-[1000] min-w-32">
           <ContextMenu.Item disabled={!canPaste} className={MENU_ITEM_CLASS} onSelect={paste}>
             Paste
           </ContextMenu.Item>
@@ -49,7 +51,7 @@ export function LibraryTableDropMarker({
               tabIndex={0}
               aria-label={`${label}; paste a Library item here`}
               aria-describedby={feedbackId}
-              className={`relative h-1 outline-none focus-visible:h-2 focus-visible:bg-app-accent/35 ${active ? 'h-2 bg-app-accent' : ''}`}
+              className={`relative h-2 outline-none focus-visible:h-3 focus-visible:bg-app-accent/35 ${active ? 'h-3 bg-app-accent' : ''}`}
             />
             <span id={feedbackId} role="status" aria-live="polite" className="sr-only">{feedback}</span>
           </div>
@@ -76,10 +78,21 @@ export function LibraryBlockDropMarker({
           tabIndex={0}
           aria-label={`${label}; paste a Library item here`}
           aria-describedby={feedbackId}
-          className={`h-1 rounded outline-none focus-visible:h-2 focus-visible:bg-app-accent/35 ${active ? 'h-2 bg-app-accent' : ''}`}
+          className={`h-2 rounded outline-none focus-visible:h-3 focus-visible:bg-app-accent/35 ${active ? 'h-3 bg-app-accent' : ''}`}
         />
         <span id={feedbackId} role="status" aria-live="polite" className="sr-only">{feedback}</span>
       </div>
     </DropContextMenu>
   );
+}
+
+export function LibraryDropZone({
+  target,
+  children,
+}: {
+  target: LibraryExactTransferTarget;
+  children: (state: LibraryDropZoneState) => React.ReactElement;
+}): React.ReactElement {
+  const state = useLibraryDropTarget(target);
+  return children(state);
 }

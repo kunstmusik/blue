@@ -12,7 +12,7 @@ blue_libraries.sqlite                      canonical BlueData / .blue XML
                            │
                   typed preload snapshots
                            │
-       Libraries panel + Library Item editor tabs
+       User Libraries panel + Project SoundObject Library + Library Item editor tabs
 ```
 
 The SQLite repository owns only the four user libraries. Project Orchestra, project UDOs, Project Shared SoundObjects, mixer chains, and Score remain canonical in the current `BlueData`. `blue-libraries-state.json` is a third, deliberately small lifetime boundary: it records migration/recovery state even if the database is missing or unusable.
@@ -278,7 +278,7 @@ Backups are produced with SQLite's online backup API while the repository queue 
 
 ### Entity: `ProjectLibraryEntry`
 
-A browse/editor summary generated from the current canonical `BlueData`; never persisted in SQLite.
+A browse/editor summary generated from the current canonical `BlueData`; never persisted in SQLite. Project Instruments and UDOs remain in their dedicated editors. The separate Project SoundObject Library consumes the `soundObject`/`projectShared` projection; other project projections remain service/editor compatibility values rather than Libraries-panel scopes.
 
 | Field | Type | Rules |
 |-------|------|-------|

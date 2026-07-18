@@ -3,6 +3,8 @@ import {
   createLibraryCursor,
   createLibraryServiceError,
   isBrowseLibraryRequest,
+  getLibraryTransferSourceType,
+  isBeginLibraryDragRequest,
   isLibraryContextRequest,
   isLibraryDragDescriptor,
   isLibraryExactTransferTarget,
@@ -89,5 +91,19 @@ describe('Unified Library shared contracts', () => {
       source: { kind: 'library', key: { scope: 'user', libraryType: 'udo', nodeId: 'u-1' }, revision: 3 },
       capturedAt: 100,
     })).toBe(true);
+    expect(isBeginLibraryDragRequest({
+      dragSessionId: 'drag-1',
+      key: { scope: 'user', libraryType: 'instrument', nodeId: 'i-1' },
+      revision: 2,
+    })).toBe(true);
+    expect(isBeginLibraryDragRequest({
+      key: { scope: 'user', libraryType: 'instrument', nodeId: 'i-1' },
+      revision: 2,
+    })).toBe(false);
+    expect(getLibraryTransferSourceType({
+      kind: 'library',
+      key: { scope: 'projectShared', libraryType: 'soundObject', projectSessionId: 4, locator: { kind: 'soundObject', libraryId: 's-1', persistedFingerprint: { canonicalHash: 'hash', displayName: 'Phrase', objectType: 'GenericScore' } } },
+      revision: 'hash',
+    })).toBe('soundObject');
   });
 });

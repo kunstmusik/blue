@@ -69,7 +69,12 @@ export const useLibraryEditorStore = create<LibraryEditorState>((set, get) => ({
       return null;
     }
     set((state) => ({
-      sessions: { ...state.sessions, [result.value.sessionId]: result.value },
+      sessions: Object.fromEntries([
+        ...Object.entries(state.sessions).filter(([sessionId, session]) => (
+          sessionId === result.value.sessionId || session.dirty || session.pinned
+        )),
+        [result.value.sessionId, result.value],
+      ]),
       error: null,
     }));
     return result.value;

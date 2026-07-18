@@ -8,6 +8,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import ChannelStrip from '../components/workbench/panels/mixer/ChannelStrip';
 import { useLibraryStore } from '../stores/library-store';
 import type { MixerChannelSnapshot, MixerSnapshot } from '../../shared/project-editor';
+import { BLUE_LIBRARY_DRAG_MIME } from '../components/libraries/library-drag-drop';
+import { createTestDataTransfer, dispatchDragEvent } from './library-interaction-test-helpers';
 
 (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -133,5 +135,38 @@ describe('mixer Library drop targets', () => {
     });
     expect(applyLibraryTransfer).not.toHaveBeenCalled();
     expect(useLibraryStore.getState().error).toMatch(/chain changed/i);
+  });
+
+  it('accepts direct effect drop and Library paste from the chain menu', async () => {
+    const row = container.querySelector('[data-library-drop-target="effect-row"]') as HTMLElement;
+    const transfer = createTestDataTransfer();
+    transfer.setData(BLUE_LIBRARY_DRAG_MIME, JSON.stringify({
+      dragSessionId: 'drag-effect', libraryType: 'effect',
+    }));
+    dispatchDragEvent(row, 'dragover', transfer);
+    dispatchDragEvent(row, 'drop', transfer);
+    await act(async () => { await Promise.resolve(); await Promise.resolve(); });
+    expect(previewLibraryTransfer).toHaveBeenLastCalledWith(expect.objectContaining({
+      source: { kind: 'drag', dragSessionId: 'drag-effect' },
+      target: {
+        kind: 'effectChain', projectSessionId: 4, projectRevision: 9,
+        channelId: 'channel-1', chain: 'pre', insertIndex: 1, chainRevision: 'pre-1',
+      },
+    }));
+
+    previewLibraryTransfer.mockClear();
+    act(() => row.click());
+    act(() => row.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true })));
+    await act(async () => { await Promise.resolve(); });
+    const paste = [...document.body.querySelectorAll('[role="menuitem"]')]
+      .find((item) => item.textContent === 'Paste') as HTMLElement;
+    expect(paste?.getAttribute('aria-disabled')).not.toBe('true');
+    expect(document.body.textContent).not.toContain('Paste Library Effect');
+    act(() => paste.click());
+    await act(async () => { await Promise.resolve(); await Promise.resolve(); });
+    expect(previewLibraryTransfer).toHaveBeenCalledWith(expect.objectContaining({
+      source: expect.objectContaining({ kind: 'clipboard' }),
+      target: expect.objectContaining({ kind: 'effectChain', insertIndex: 1 }),
+    }));
   });
 });

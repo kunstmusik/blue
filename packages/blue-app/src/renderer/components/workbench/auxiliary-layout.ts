@@ -202,6 +202,7 @@ const AUXILIARY_SEED_DEFINITIONS: Record<
     panelIds: [
       'SoundObjectPropertiesTopComponent',
       'LibrariesTopComponent',
+      'SoundObjectLibraryTopComponent',
       'AudioFilePlayerTopComponent',
       'MarkersTopComponent',
       'MidiInputPanelTopComponent',
@@ -660,7 +661,7 @@ export function parseStoredWorkbenchLayout(serialized: string | null): {
   }
 
   try {
-    const parsed = migrateLegacyLibraryPanelIds(JSON.parse(serialized)) as unknown;
+    const parsed = JSON.parse(serialized) as unknown;
 
     if (isStoredWorkbenchLayoutV7(parsed)) {
       return {
@@ -745,20 +746,6 @@ export function parseStoredWorkbenchLayout(serialized: string | null): {
   }
 
   return { auxiliary: fallback };
-}
-
-function migrateLegacyLibraryPanelIds(value: unknown): unknown {
-  if (value === 'SoundObjectLibraryTopComponent') return 'LibrariesTopComponent';
-  if (Array.isArray(value)) return value.map(migrateLegacyLibraryPanelIds);
-  if (!value || typeof value !== 'object') return value;
-  const migrated: Record<string, unknown> = {};
-  for (const [key, child] of Object.entries(value)) {
-    const migratedKey = key === 'SoundObjectLibraryTopComponent'
-      ? 'LibrariesTopComponent'
-      : key;
-    migrated[migratedKey] = migrateLegacyLibraryPanelIds(child);
-  }
-  return migrated;
 }
 
 export function buildDefaultWorkbenchLayout(

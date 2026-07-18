@@ -32,8 +32,17 @@ describe('opaque Library drag sessions', () => {
   it('supports explicit cancellation callbacks without retaining renderer payloads', () => {
     const service = new LibraryDragSessionService();
     const onCancel = vi.fn();
-    const descriptor = service.begin(key, 2, onCancel);
+    const descriptor = service.begin(key, 2, 'drag-with-callback', onCancel);
     service.cancel(descriptor.dragSessionId);
     expect(onCancel).toHaveBeenCalledOnce();
+  });
+
+  it('claims a drag source before asynchronous validation and consumes it on apply', () => {
+    const service = new LibraryDragSessionService();
+    const descriptor = service.begin(key, 3, 'drag-to-claim');
+    expect(service.claim(descriptor.dragSessionId)).toEqual({ key, revision: 3 });
+    service.cancel(descriptor.dragSessionId);
+    expect(service.consume(descriptor.dragSessionId, 3)).toEqual({ key, revision: 3 });
+    expect(service.peek(descriptor.dragSessionId)).toBeNull();
   });
 });

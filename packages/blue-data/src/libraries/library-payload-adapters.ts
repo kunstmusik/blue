@@ -17,12 +17,15 @@ const KNOWN_SOUND_OBJECT_TYPES = new Set([
   'AudioFile',
   'ClojureObject',
   'Comment',
+  'CSDSoundObject',
   'External',
   'FrozenSoundObject',
   'GenericScore',
+  'Instance',
   'JavaScriptObject',
   'JMask',
   'LineObject',
+  'NotationObject',
   'ObjectBuilder',
   'PatternObject',
   'PianoRoll',
@@ -31,7 +34,6 @@ const KNOWN_SOUND_OBJECT_TYPES = new Set([
   'Sound',
   'TrackerObject',
   'ZakLineObject',
-  'blue.soundObject.GenericScore',
 ]);
 
 const UNSUPPORTED_NESTED_NAMES = new Set([
@@ -97,7 +99,8 @@ function determineSupport(
   if (libraryType === 'instrument' && !KNOWN_INSTRUMENT_TYPES.has(objectType)) {
     return { supported: false, reason: 'unknown-type' };
   }
-  if (libraryType === 'soundObject' && !KNOWN_SOUND_OBJECT_TYPES.has(objectType)) {
+  const normalizedObjectType = objectType.split('.').pop() ?? objectType;
+  if (libraryType === 'soundObject' && !KNOWN_SOUND_OBJECT_TYPES.has(normalizedObjectType)) {
     return { supported: false, reason: 'unknown-type' };
   }
   return { supported: true, reason: null };

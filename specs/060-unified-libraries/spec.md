@@ -6,6 +6,7 @@
 **Input**: User description: "Create a centralized Unified Libraries experience from the supplied design report, covering Instruments, UDOs, Effects, SoundObjects, project and user scopes, contextual insertion, full item editing, durable user-library storage, safe Java Blue migration, lossless unsupported-object preservation, and Java Blue-compatible XML import and export."
 **Design Constraints**: [design-constraints.md](design-constraints.md)
 **UX Correction (2026-07-15)**: The Libraries auxiliary panel is a compact navigator, not an action form. Selection drives a reusable full type-specific editor in the main area titled `Library Item`, retaining the existing address/breadcrumb header; organization uses inline rename and context menus; project placement uses typed drag-and-drop or keyboard-equivalent copy/paste; persistent CRUD, Browse, and Insert buttons are prohibited.
+**UX Correction (2026-07-18)**: Libraries contains application-owned user libraries only. Project Instruments stay in Orchestra, project UDOs stay in the reusable UDO list/editor, and Project Shared SoundObjects move to a separate `SoundObject Library` auxiliary panel. Healthy startup migration is silent; migration notices, migration reports, and Import History are not user-facing Library actions. All top-level user-library nodes start collapsed. A normal one-mode drop/Paste applies without a modal and reports completion by toast; only an actual shared-copy choice or blocking disclosure may open a dialog.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -19,12 +20,12 @@ As a composer, I want one dockable Libraries panel for Blue's reusable object ty
 
 **Acceptance Scenarios**:
 
-1. **Given** a project and user libraries contain several supported object types, **When** the user opens Libraries, **Then** one compact dockable panel offers `All`, `Instruments`, `UDOs`, `SoundObjects`, and `Effects` filters, a search field, meaningful scope sections, a folder-and-item hierarchy, and one vertically oriented ellipsis menu for panel-level commands.
+1. **Given** user libraries contain several supported object types, **When** the user opens Libraries, **Then** one compact dockable panel offers `All`, `Instruments`, `UDOs`, `SoundObjects`, and `Effects` filters, a search field, the four application-owned user roots, a folder-and-item hierarchy, and one vertically oriented ellipsis menu for panel-level commands.
 2. **Given** the user selects a supported Instrument, UDO, Effect, or SoundObject once, **When** the selection changes, **Then** a reusable main-workspace panel titled `Library Item` hosts the type's full existing editor under the existing address/breadcrumb header while keyboard focus remains in the tree; the Libraries panel does not embed an editor, and supported types do not fall back to a raw XML textarea.
-3. **Given** the user selects a type filter, **When** the panel displays its scopes, **Then** it shows only the project and user sources that actually exist for that type; Effects show a user-library source while a selected project chain appears only as an insertion target, never as a Project Effects Library.
-4. **Given** migration, import, export, and history commands are available, **When** Libraries is healthy, **Then** those commands appear in the ellipsis menu rather than in a persistent banner or full-width button row; completed migration is summarized non-blockingly and detailed history remains available from the menu.
+3. **Given** the user selects a type filter, **When** the panel displays the hierarchy, **Then** it shows only application-owned user-library roots. Project Instruments remain in Orchestra, project UDOs remain in the UDO workspace, Project Shared SoundObjects remain in the separate SoundObject Library panel, and Effect chains remain transient insertion targets.
+4. **Given** import and export commands are available, **When** Libraries is healthy, **Then** those commands appear in the ellipsis menu rather than in a persistent banner or full-width button row; migration notices, migration reports, and Import History are absent from normal operation.
 5. **Given** items with the same name exist in different types or scopes, **When** they appear in browse or search results, **Then** each result remains distinguishable by type, scope, and folder context.
-6. **Given** no project is open, **When** the user opens Libraries, **Then** user-library browse, search, edit, import, export, and recovery remain available while project scopes and insertion are unavailable.
+6. **Given** no project is open, **When** the user opens Libraries, **Then** its user-library browse, search, edit, import, export, and recovery behavior is unchanged; no redundant no-project or source-scope chrome is shown.
 7. **Given** an existing action or saved layout refers to a legacy library surface, **When** it is invoked or restored, **Then** Blue opens or maps it to the one logical Libraries panel without creating a duplicate panel or discarding unrelated layout state.
 8. **Given** the user browses the tree, **When** no context menu or inline rename is active, **Then** rows show only navigation and identity information; they do not show persistent Rename, Duplicate, Delete, or Insert controls.
 
@@ -50,6 +51,7 @@ As a composer building a project, I want library objects inserted into the corre
 8. **Given** an item owns local data and also declares external project-level dependencies, **When** a drop or paste is requested, **Then** Blue includes the item-owned data, identifies unresolved external dependencies before changing the project, and requires an explicit resolution rather than silently mutating other project collections.
 9. **Given** Libraries and a compatible project surface are visible, **When** the user wants to place an item, **Then** direct drag-and-drop is available without first invoking a destination-side Browse command or a Libraries-side Insert button.
 10. **Given** a user cannot or does not use drag-and-drop, **When** the user copies a library item and invokes Paste at a compatible destination selection or context menu, **Then** Blue performs the same validation and copy semantics as a drop.
+11. **Given** a user-library Instrument, UDO, Effect, or SoundObject has one valid insertion mode and no blocking disclosure, **When** the drop or Paste succeeds, **Then** Blue applies it directly without opening a modal and uses the result toast as sufficient feedback.
 
 ---
 
@@ -79,32 +81,32 @@ As a library maintainer, I want full type-specific editing in the main workspace
 
 ### User Story 4 - Preserve Existing Java Blue Libraries On First Run (Priority: P1)
 
-As an existing Java Blue user, I want my libraries brought into Blue Electron automatically and visibly on first use, without changing the Java files or dropping unsupported objects, so that upgrading is safe and requires little setup.
+As an existing Java Blue user, I want my libraries brought into Blue Electron automatically and safely on first use, without changing the Java files, dropping unsupported objects, or interrupting normal startup with migration status UI.
 
 **Why this priority**: Existing users may have years of reusable content. A lossy or invisible migration would undermine trust in the entire library system.
 
-**Independent Test**: Start with a new user-library store and representative Java Blue configuration folders containing all four recognized files, nested categories, ordering, duplicates, unsupported objects, a corrupt file, and a backup; then verify source immutability, independent-file progress, preservation, history, summary, retry behavior, and recovery-state handling.
+**Independent Test**: Start with a new user-library store and representative Java Blue configuration folders containing all four recognized files, nested categories, ordering, duplicates, unsupported objects, a corrupt file, and a backup; then verify source immutability, independent-file progress, preservation, internal audit records, silent healthy startup, retry behavior, and recovery-state handling.
 
 **Acceptance Scenarios**:
 
-1. **Given** the user-library store is new and empty, migration state is `never`, and recognized Java Blue files exist in the default configuration folder, **When** Blue initializes Libraries, **Then** it imports the valid files automatically and shows a non-blocking count summary with access to a detailed report.
+1. **Given** the user-library store is new and empty, migration state is `never`, and recognized Java Blue files exist in the default configuration folder, **When** Blue initializes Libraries, **Then** it imports the valid files automatically without showing healthy-state migration UI.
 2. **Given** a first-run import succeeds, **When** folder trees and items are compared with the Java source, **Then** hierarchy, ordering, supported content, and original unsupported XML are preserved without an extra Imported wrapper folder.
-3. **Given** one recognized source file is corrupt, **When** automatic migration runs, **Then** Blue reports that file, continues with the other valid libraries, remains usable, and does not silently retry the failed source on every startup.
+3. **Given** one recognized source file is corrupt, **When** automatic migration runs, **Then** Blue records the failure internally, continues with the other valid libraries, remains usable, and does not silently retry the failed source on every startup; actionable storage failure uses the exceptional recovery surface rather than a routine migration notice.
 4. **Given** an unsupported or plugin-defined object appears in a valid source file, **When** it is imported, **Then** the object remains in its original folder with its original XML, appears with a warning, and remains organizable and exportable.
 5. **Given** a corrupt primary file has a `~` backup, **When** migration reports the failure, **Then** Blue offers the backup as an explicit choice and does not substitute it automatically.
-6. **Given** no recognized Java Blue files exist, **When** first-run initialization completes, **Then** Blue creates an empty usable library, records the scan as skipped so it is not repeated silently, and does not block application startup.
+6. **Given** no recognized Java Blue files exist, **When** first-run initialization completes, **Then** Blue creates an empty usable library, records the scan as skipped so it is not repeated silently, shows no migration-skipped notice, and does not block application startup.
 7. **Given** migration previously completed but the user-library store later disappears, **When** Blue starts, **Then** it presents a recovery choice instead of silently importing the Java files again.
 8. **Given** migration reads any primary or backup Java Blue file, **When** the migration finishes or fails, **Then** every source file remains byte-for-byte unchanged and in its original location.
 
 ---
 
-### User Story 5 - Import, Export, And Review Compatibility (Priority: P2)
+### User Story 5 - Import, Export, And Preserve Compatibility (Priority: P2)
 
 As a user moving content between installations or between Java Blue and Blue Electron, I want explicit previewed import and compatible export workflows so that conflicts, unsupported content, and overwrites never surprise me.
 
 **Why this priority**: Manual interchange is essential for compatibility and recovery, but users can receive initial value from browsing, editing, and first-run migration before using it.
 
-**Independent Test**: Import a Java Blue configuration directory and separately selected XML files into a non-empty library with duplicate and conflicting content; inspect history and undo availability; then export one library and all libraries into empty and occupied destinations and verify previews, conflict defaults, filenames, compatibility reporting, ordering, unsupported content, and all-or-nothing failure behavior.
+**Independent Test**: Import a Java Blue configuration directory and separately selected XML files into a non-empty library with duplicate and conflicting content; inspect the resulting hierarchy and internal provenance; then export one library and all libraries into empty and occupied destinations and verify previews, conflict defaults, filenames, compatibility reporting, ordering, unsupported content, and all-or-nothing failure behavior.
 
 **Acceptance Scenarios**:
 
@@ -113,13 +115,11 @@ As a user moving content between installations or between Java Blue and Blue Ele
 3. **Given** a manual import is previewed, **When** Blue evaluates the selected sources, **Then** it accurately reports recognized types, folder and item counts, unsupported items, validation errors, exact duplicates, name conflicts, and the proposed conflict decisions.
 4. **Given** incoming object content exactly matches an item in the same library type and resolved destination folder, **When** the default conflict policy is accepted, **Then** Blue keeps the existing item and identity; if that folder contains the same name with different content, Blue keeps both and assigns the incoming display name a deterministic unique suffix without corrupting preserved raw XML.
 5. **Given** import would replace an item or an entire library, **When** the user has not explicitly selected that destructive policy, **Then** Blue preserves the existing content.
-6. **Given** an import completes, **When** the user opens Import History, **Then** the complete batch, source, status, counts, warnings, and whether the exact undo conditions are met can be reviewed together, including the reason when Undo is unavailable.
+6. **Given** an import completes, **When** Blue finalizes the batch, **Then** it retains the audit/provenance data needed for safety internally without adding an Import History command or persistent history UI to Libraries.
 7. **Given** the user exports the current type or all types, **When** compatible output is confirmed, **Then** Blue writes the traditional Java Blue filename or filenames while preserving representable hierarchy, ordering, supported objects, and preserved unsupported objects.
 8. **Given** an item cannot be represented by Java Blue or a destination file already exists, **When** export is requested, **Then** Blue reports the incompatibility or overwrite before changing the destination and requires an explicit decision to cancel, overwrite, or export only the compatible subset.
 9. **Given** imported XML contains embedded object code, plugin content, or external-entity declarations, **When** Blue previews or imports it, **Then** the content is treated as data and is not executed or externally resolved.
 10. **Given** Export All targets four destinations and any compatibility, overwrite, validation, or before-write check fails or is canceled, **When** the operation ends, **Then** none of the existing destination files has been changed.
-11. **Given** an additive import batch created only new, still-unchanged nodes and no batch-created folder contains later content, **When** the user confirms Undo from Import History, **Then** Blue removes only that batch's items and then its now-empty batch-created folders; otherwise Undo is unavailable with the disqualifying change explained.
-
 ---
 
 ### User Story 6 - Recover From Storage And Operation Failures (Priority: P2)
@@ -159,7 +159,7 @@ As a composer relying on libraries during project work, I want compound changes 
 - An imported object has an unknown class, plugin-defined nested content, missing display metadata, or XML that current editors can parse only partially.
 - An unsupported item becomes supported after an application upgrade while its original XML has never been edited.
 - A manual import contains exact object-content duplicates, same-name different-content conflicts, repeated folder names, or content previously imported in another batch.
-- An import batch has subsequently imported items that were edited, moved, duplicated, or deleted before the user requests undo.
+- Imported items are later edited, moved, duplicated, or deleted while their original import provenance remains available internally for diagnosis and recovery.
 - Export contains preserved unsupported objects or new Blue Electron objects that Java Blue cannot represent.
 - An export destination is read-only, out of space, interrupted, or already contains one or more traditional filenames.
 - The user requests Export All and one library cannot be prepared or written.
@@ -170,12 +170,12 @@ As a composer relying on libraries during project work, I want compound changes 
 
 ### Required Scope Model
 
-| Object type | Project source or context | User source |
-|-------------|---------------------------|-------------|
-| Instrument | Project Orchestra | Instrument Library |
-| UDO | Project UDO list | UDO Library |
-| SoundObject | Project Shared SoundObjects | SoundObject Library |
-| Effect | None; a mixer/effect-chain gap is a transient drop/Paste target only | Effect Library |
+| Object type | Project surface or context | Libraries panel source |
+|-------------|----------------------------|------------------------|
+| Instrument | Orchestra editor | User Instrument Library only |
+| UDO | Reusable project UDO list/editor | User UDO Library only |
+| SoundObject | Separate `SoundObject Library` panel for Project Shared SoundObjects | User SoundObject Library only |
+| Effect | Mixer/effect-chain gaps are transient drop/Paste targets only | User Effect Library only |
 
 Effects MUST show a user-library section only. Mixer/effect-chain insertion gaps appear only as destination feedback during drag or Paste and MUST NOT become a browsable or persisted Project Effects Library. Future factory content may use a separate read-only scope, but factory content is outside this feature.
 
@@ -193,15 +193,16 @@ Effects MUST show a user-library section only. Mixer/effect-chain insertion gaps
 #### Centralized Discovery And Preview
 
 - **FR-001**: Blue MUST provide one dockable Libraries panel, normally available at the right side of the workbench, for Instruments, UDOs, SoundObjects, and Effects.
-- **FR-002**: The panel MUST provide one global, case-insensitive item-name search and the filters `All`, `Instruments`, `UDOs`, `SoundObjects`, and `Effects`; search MUST cover the scopes visible to the active type filter, include safely extracted unsupported-item names, and identify no-result state clearly.
-- **FR-003**: Within a selected type, the panel MUST organize content by the meaningful project and user scopes defined in the Required Scope Model, followed by that scope's folder or native hierarchy; transient destination drop/Paste targets MUST never appear as scopes or persistent panel banners.
+- **FR-002**: The panel MUST provide one global, case-insensitive item-name search and the filters `All`, `Instruments`, `UDOs`, `SoundObjects`, and `Effects`; search MUST cover application-owned user libraries only, include safely extracted unsupported-item names, and identify no-result state clearly.
+- **FR-003**: The panel MUST show only application-owned user-library roots and their folder hierarchies. It MUST NOT show a Current Project section or a source filter. Project Orchestra, project UDOs, Project Shared SoundObjects, and transient destination targets remain in their dedicated project surfaces.
 - **FR-004**: Every visible item and search result MUST identify its object type, scope, and enough folder or project context to distinguish same-name results.
 - **FR-005**: Selecting a supported item once MUST open or update a reusable full editor panel in the main workspace titled exactly `Library Item`. The selection MUST NOT embed the editor in the Libraries auxiliary panel or steal keyboard focus from the tree. The panel MUST retain the existing address/breadcrumb header so item name, type, scope, and location remain visible even though the Dockview title is generic.
 - **FR-006**: The `Library Item` panel MUST host the available full native type-specific editor rather than a raw XML textarea: Instrument interface/code/local UDOs/properties; UDO signature/code/style/documentation/validation; Effect interface/code/input-output configuration and existing testing support; and the existing SoundObject editor with its native properties and score/object controls. Unsupported items remain read-only and show preserved-status metadata and compatibility information without presenting raw XML as the default interface.
 - **FR-007**: Orchestra, project UDO, mixer, and Score surfaces MUST NOT expose persistent `Browse …`, `Add from Library …`, or equivalent destination-side library buttons. Legacy commands MAY reveal the centralized Libraries panel for compatibility, but MUST NOT fabricate or retain an insertion mode.
 - **FR-008**: Compatible project surfaces MUST accept typed library drag payloads and keyboard-equivalent paste commands, expose the exact destination only during interaction, and reject absent, ambiguous, stale, or incompatible targets without mutation. The Libraries panel MUST NOT expose a persistent Insert button or confirmation mode.
 - **FR-009**: Existing library actions, panel identifiers, and saved workbench layouts MUST converge on one logical Libraries panel, without restoring a duplicate legacy library panel or losing the user's otherwise valid workbench layout.
-- **FR-010**: User-library browsing, search, editing, import, export, and recovery MUST remain available when no project is open; project scopes and compatible project drop/Paste targets MUST then be absent.
+- **FR-010**: User-library browsing, search, editing, import, export, and recovery MUST remain available when no project is open without showing a redundant no-project message or disabled project-source filter.
+- **FR-010a**: The four top-level user-library roots MUST be collapsed on first presentation. User expansion state MAY remain local for the mounted panel session, but no root is expanded merely because it is visible.
 
 #### Item Editing And Organization
 
@@ -230,19 +231,20 @@ Effects MUST show a user-library section only. Mixer/effect-chain insertion gaps
 - **FR-028**: Independent copies MUST receive project-appropriate identity, include all item-owned/local data, mark the project dirty, and remain valid after the project is saved or opened without access to the originating user library. External files continue to follow the project's existing portability rules and MUST be disclosed before insertion.
 - **FR-029**: Deleting or editing a user-library source MUST NOT delete, invalidate, or change any independent project copy previously created from it.
 - **FR-030**: Before committing a drop or destination paste, Blue MUST disclose unresolved external project-level dependencies or conflicts. The deterministic default is to block the operation without changing the project; the user resolves the reported problem outside the transfer flow and retries. Transfer MUST otherwise be all-or-nothing and MUST NOT silently mutate unrelated project collections.
+- **FR-030a**: A valid transfer with exactly one allowed insertion mode and no blocking disclosure MUST apply without publishing modal state. A choice dialog is permitted only for Project Shared SoundObject instance-versus-independent selection or another explicit blocking decision.
 
 #### User-Library Ownership And Identity
 
 - **FR-031**: User-library content MUST live in durable application-owned storage that is separate from Java Blue configuration files and from every `.blue` project.
 - **FR-032**: The application-owned user library MUST be the source of truth for user-library content only; Project Orchestra, project UDOs, Project Shared SoundObjects, and project Effect instances MUST remain owned by and embedded in the `.blue` project.
-- **FR-033**: The panel MUST compose project and user sources into one experience without automatically changing the ownership of project definitions.
-- **FR-034**: Every user-library folder and item MUST have a stable identity that remains unchanged across application restarts, browsing, editing, moves, import-history review, and non-duplicating application upgrades.
+- **FR-033**: Libraries MUST remain the application-owned user-library navigator. Project definitions MUST remain in Orchestra, the reusable UDO workspace, and the separate Project SoundObject Library panel without automatically changing ownership.
+- **FR-034**: Every user-library folder and item MUST have a stable identity that remains unchanged across application restarts, browsing, editing, moves, internal provenance review, and non-duplicating application upgrades.
 - **FR-035**: Duplicating an item or folder MUST create new stable identities for the copies; moving or renaming an existing node MUST retain its identity.
 - **FR-036**: Internal user-library identities MUST NOT alter Java Blue interchange content unless the Java-compatible object format already requires its own reference identifier.
 - **FR-037**: The user library MUST preserve hierarchy, folder and item sibling ordering, name, object type, support status, complete object content, created and updated timestamps, and which import created an imported item.
 - **FR-038**: Imported object content MUST remain lossless and authoritative until a compatible editor successfully saves it; saving MUST leave users with either the complete prior item or the complete updated item, never mismatched content and browse metadata.
 - **FR-039**: User-library changes initiated from different application surfaces MUST follow the same validation, ownership, conflict, and failure rules.
-- **FR-040**: Browse, search, item management, import, export, history, and recovery MUST remain behaviorally consistent whether invoked from Libraries, a legacy compatibility command, or startup migration. Destination-side Browse/Insert controls are not part of that compatibility surface.
+- **FR-040**: Browse, search, item management, import, export, and recovery MUST remain behaviorally consistent whether invoked from Libraries, a legacy compatibility command, or startup migration. Import history and migration reports remain internal audit data rather than normal Libraries UI.
 - **FR-041**: Browsing folders, listing items, and searching item names MUST meet the large-library responsiveness target in SC-006.
 
 #### Unsupported Object Preservation
@@ -260,8 +262,8 @@ Effects MUST show a user-library section only. Mixer/effect-chain insertion gaps
 - **FR-049**: Automatic migration MUST validate and apply each available source library independently so one corrupt file does not prevent valid files from importing; automatic and manual import operations MUST not overlap.
 - **FR-050**: First-run migration into an empty library MUST preserve original hierarchy, duplicate sibling names, and type-appropriate sibling ordering without merging by name or adding an artificial Imported folder.
 - **FR-051**: Migration MUST never write, rename, move, or delete a Java Blue primary file or its `~` backup.
-- **FR-052**: Every migration attempt MUST record its source kind and location, start and completion times, status, result counts, errors, duplicates, unsupported items, and a link to its Import History record.
-- **FR-053**: After automatic migration, Blue MUST show a non-blocking summary by library type with access to the full report; partial per-file success MUST be recorded as a completed migration with a partial result, while `failed` is reserved for a pipeline or store failure that imports no source.
+- **FR-052**: Every migration attempt MUST record internally its source kind and location, start and completion times, status, result counts, errors, duplicates, unsupported items, and import-batch identity without requiring a user-facing history or report surface.
+- **FR-053**: Automatic migration MUST be silent when Libraries remains usable. Partial per-file success MUST be recorded internally as a completed migration with a partial result, while `failed` is reserved for a pipeline or store failure that imports no source; only an actionable repository failure may replace the tree with recovery UI.
 - **FR-054**: If no recognized files are found, Blue MUST create an empty usable store, set migration state to `skipped`, and finish startup normally while retaining manual import access.
 - **FR-055**: If a primary file is corrupt or absent and a `~` backup exists, Blue MUST offer or report the backup as an explicit import choice and MUST NOT substitute or import it silently.
 - **FR-056**: A failed or skipped automatic migration MUST NOT retry silently on every startup; a user-visible manual retry or import path MUST remain available.
@@ -283,15 +285,15 @@ Effects MUST show a user-library section only. Mixer/effect-chain insertion gaps
 | `failed` | Missing or unusable | Preserve the migration history, show the last failure, and present the FR-073 recovery choices without automatic retry or silent fresh creation. |
 | Any state | Non-empty | Never run an automatic Java Blue import over existing user content. |
 
-#### Manual Import, Export, And History
+#### Manual Import, Export, And Internal Audit
 
-- **FR-058**: The Libraries actions menu MUST offer `Import from Java Blue`, `Import XML Library Files`, `Export Current Library as Java Blue XML`, `Export All as Java Blue XML`, and `View Import History`, and its control MUST have the accessible name `Library Actions`.
+- **FR-058**: The Libraries actions menu MUST offer the supported manual Import and Export Current/All commands, MUST NOT offer Import History or Migration Report, and its control MUST have the accessible name `Library Actions`.
 - **FR-059**: An empty user library MAY additionally show a prominent Import from Java Blue action, but the permanent actions menu MUST remain available.
 - **FR-060**: Import from Java Blue MUST accept an auto-detected or user-selected Java Blue configuration folder; Import XML Library Files MUST accept one or more individual recognized library XML files. Both manual entry points MUST share recognition, validation, preservation, failure, and reporting behavior with automatic migration while using the manual preview and conflict rules in FR-061 through FR-064. Preview and import MUST treat embedded code and plugin content as data and MUST NOT execute it or resolve external entities.
 - **FR-061**: Every manual import, including import into an empty user library, MUST preview recognized types, folder count, item count, unsupported count, validation errors, exact duplicates, same-name conflicts, and proposed conflict behavior before applying changes; automatic first-run migration is the only no-preview path.
 - **FR-062**: The default manual conflict policy MUST skip an exact object-content duplicate only within the same library type and explicitly resolved destination folder, retain the existing stable identity on reimport, keep and distinguish a same-name/same-folder item with different content using a deterministic unique display suffix, create missing destination folders, and preserve all existing content. When duplicate folder names make a path ambiguous, preview MUST distinguish the candidate folder identities and require the user to select the destination rather than guessing, merging by name, or creating an unrequested branch. If preserved raw content cannot be safely renamed, the display alias MUST NOT imply that the embedded name changed, and export reporting MUST disclose the original name.
 - **FR-063**: Replacing an existing item MUST require an explicit choice, and replacing an entire library MUST never be the default.
-- **FR-064**: Every import MUST be grouped under one import-batch identity visible in Import History. Undo MUST be available only for an additive batch with no replacements when every batch-created item and folder remains unchanged and no batch-created folder contains later content. Undo MUST remove only batch-created items and then batch-created folders that are empty; otherwise it MUST be unavailable with the disqualifying change explained.
+- **FR-064**: Every import MUST be grouped under one internal import-batch identity with source hashes, outcome, counts, diagnostics, conflicts, and created-node provenance retained for safety and recovery. Libraries MUST NOT expose Import History, Migration Report, or import-undo presentation paths during healthy operation.
 - **FR-065**: Export Current Library MUST apply only to one selected user-library type and propose its traditional filename; it MUST be unavailable for `All` or a project scope. Export All MUST write all four traditional filenames, including valid empty roots, to a user-selected directory.
 - **FR-066**: Export MUST preserve Java-compatible root elements, category hierarchy, ordering, supported objects, and unchanged unsupported content, and MUST produce a compatibility report.
 - **FR-067**: Before writing, export MUST identify any Blue Electron content that Java Blue cannot represent and let the user cancel or explicitly export only the compatible subset; unrepresentable data MUST never be silently omitted.
@@ -336,7 +338,7 @@ Effects MUST show a user-library section only. Mixer/effect-chain insertion gaps
 
 ### Measurable Outcomes
 
-- **SC-001**: In a usability test, at least 90% of users can open Libraries, select a type and meaningful scope, find a named item, and reach its full main-area `Library Item` editor in under 30 seconds without assistance.
+- **SC-001**: In a usability test, at least 90% of users can open Libraries, select a type, find a named user item, and reach its full main-area `Library Item` editor in under 30 seconds without assistance.
 - **SC-002**: With Libraries and a compatible project surface visible, users can place an Instrument, UDO, Effect, or SoundObject with one drag-and-drop gesture; only a shared-copy choice or disclosed dependency/conflict may add a confirmation step. No persistent Browse or Insert button is used.
 - **SC-003**: In 100% of the defined four-type insertion matrix, the result has the specified independent-copy or shared-instance behavior, and every saved project remains usable after the originating user library is unavailable.
 - **SC-004**: Across 100 selection changes, clean preview-tab reuses, panel closes, and editor opens involving dirty or pinned sessions, no protected editor is replaced and no unsaved change is lost.
@@ -357,9 +359,9 @@ Effects MUST show a user-library section only. Mixer/effect-chain insertion gaps
 - User-library insertions are value copies unless a project-shared SoundObject action explicitly creates another shared instance.
 - Dragging from a library into a project surface is a copy operation, never a move from the source library. Cut is valid only for permitted organization within the same user-library type and scope.
 - Context menus and destination Paste provide the keyboard-equivalent path for every drag-only project placement result.
-- User-library folder organization applies to the user scope. Project scopes expose only the hierarchy and mutations meaningful to Orchestra, the project UDO list, and Project Shared SoundObjects; selected mixer chains are targets rather than scopes.
+- User-library folder organization applies only to Libraries. Project Orchestra and UDO definitions remain in their existing editors; Project Shared SoundObjects use the separate SoundObject Library panel; selected mixer chains are targets rather than scopes.
 - A first-run scan that finds no recognized Java Blue files records `skipped` so startup does not scan repeatedly; users can still run manual import later.
-- An import batch is undoable only under FR-064's exact additive, unchanged-node, and empty-created-folder conditions; all other batches remain reviewable but cannot be automatically reversed.
+- Import-batch and source provenance remain internal durability/recovery data; this feature exposes no routine Import History, Migration Report, or import-undo command in Libraries.
 - The Java Blue default configuration location and the four filenames/root hierarchies in this specification are the compatibility baseline; manual Import from Java Blue permits choosing a different configuration folder.
 - Preserved unsupported XML remains authoritative until a supported editor performs a successful save, at which point normal supported serialization becomes authoritative.
 - First-time user-library population is available through Java import, duplication, or an explicit project-to-user copy. This feature adds no generic blank-item workflow; any existing type-specific New command remains unchanged and outside this feature's acceptance scope.

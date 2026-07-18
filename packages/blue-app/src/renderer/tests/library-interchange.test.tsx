@@ -6,13 +6,12 @@ import { createRoot } from 'react-dom/client';
 import { describe, expect, it, vi } from 'vitest';
 import { LibraryActionsMenu } from '../components/libraries/LibraryActionsMenu';
 import { LibraryImportDialog } from '../components/libraries/LibraryImportDialog';
-import { LibraryHistoryPanel } from '../components/libraries/LibraryHistoryPanel';
 
 (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
 describe('library interchange UI', () => {
-  it('offers import, Export Current/All, preview warnings, and undo history', () => {
-    const actions = { onImport: vi.fn(), onExportCurrent: vi.fn(), onExportAll: vi.fn(), onHistory: vi.fn() };
+  it('offers import and Export Current/All without migration or history commands', () => {
+    const actions = { onImport: vi.fn(), onExportCurrent: vi.fn(), onExportAll: vi.fn() };
     const container = document.createElement('div');
     document.body.appendChild(container);
     const root = createRoot(container);
@@ -23,16 +22,13 @@ describe('library interchange UI', () => {
         itemCount: 2, unsupportedCount: 1, exactDuplicateCount: 1, aliasConflictCount: 1,
         ambiguousFolderCount: 0,
       }] }} onImport={vi.fn()} onCancel={vi.fn()} />
-      <LibraryHistoryPanel entries={[{
-        id: 'batch', mode: 'manualXmlFiles', status: 'completed', startedAt: 'today',
-        completedAt: 'today', sourceCount: 1, counts: { createdNodeCount: 2 }, report: {},
-      }]} onUndo={vi.fn()} onClose={vi.fn()} />
     </>));
     expect(container.textContent).toContain('2 items');
     expect(container.textContent).toContain('1 exact duplicate');
-    expect(container.textContent).toContain('Undo Import');
     act(() => (container.querySelector('button[aria-label="Library actions"]') as HTMLButtonElement).dispatchEvent(new MouseEvent('pointerdown', { bubbles: true, button: 0 })));
     expect(document.body.textContent).toContain('Export Current');
+    expect(document.body.textContent).not.toContain('Import History');
+    expect(document.body.textContent).not.toContain('Migration Report');
     act(() => [...document.body.querySelectorAll('[role="menuitem"]')].find((item) => item.textContent?.startsWith('Export All'))?.dispatchEvent(new Event('click', { bubbles: true })));
     expect(actions.onExportAll).toHaveBeenCalledOnce();
     act(() => root.unmount());

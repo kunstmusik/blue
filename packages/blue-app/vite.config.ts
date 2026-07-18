@@ -4,46 +4,43 @@ import electron from 'vite-plugin-electron/simple';
 import electronRenderer from 'vite-plugin-electron-renderer';
 import { resolve } from 'path';
 
-// Dev mode: use electron plugin for HMR + hot restart
-// Production: only react + renderer plugin, output to dist/renderer
+// The Electron plugin bundles main/preload in every mode. In development it
+// also provides HMR + hot restart; in production the single-file preload is
+// required because sandboxed preload scripts cannot require local modules.
 const isDev = process.env.APP_ENV === 'dev';
 const projectRoot = resolve(__dirname);
 
 export default defineConfig({
   plugins: [
     react(),
-    ...(isDev
-      ? [
-          electron({
-            main: {
-              entry: {
-                main: resolve(projectRoot, 'src/main/main.ts'),
-                'repository-worker': resolve(
-                  projectRoot,
-                  'src/main/unified-library/repository-worker.ts',
-                ),
-              },
-              vite: {
-                build: {
-                  outDir: resolve(projectRoot, 'dist/main'),
-                  rollupOptions: {
-                    external: ['node:sqlite', 'zeromq', '@blue/engine-client', '@blue/data'],
-                  },
-                },
-              },
+    electron({
+      main: {
+        entry: {
+          main: resolve(projectRoot, 'src/main/main.ts'),
+          'repository-worker': resolve(
+            projectRoot,
+            'src/main/unified-library/repository-worker.ts',
+          ),
+        },
+        vite: {
+          build: {
+            outDir: resolve(projectRoot, 'dist/main'),
+            rollupOptions: {
+              external: ['node:sqlite', 'zeromq', '@blue/engine-client', '@blue/data'],
             },
-            preload: {
-              input: resolve(projectRoot, 'src/preload/preload.ts'),
-              vite: {
-                build: {
-                  outDir: resolve(projectRoot, 'dist/preload'),
-                },
-              },
-            },
-          }),
-          electronRenderer(),
-        ]
-      : []),
+          },
+        },
+      },
+      preload: {
+        input: resolve(projectRoot, 'src/preload/preload.ts'),
+        vite: {
+          build: {
+            outDir: resolve(projectRoot, 'dist/preload'),
+          },
+        },
+      },
+    }),
+    electronRenderer(),
   ],
   root: 'src/renderer',
   base: isDev ? '/' : './',

@@ -6,6 +6,8 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import UdoTable from '../components/workbench/panels/udo/UdoTable';
 import { useLibraryStore } from '../stores/library-store';
+import { BLUE_LIBRARY_DRAG_MIME } from '../components/libraries/library-drag-drop';
+import { createTestDataTransfer, dispatchDragEvent } from './library-interaction-test-helpers';
 
 (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -94,5 +96,34 @@ describe('project UDO Library drop targets', () => {
       target: { kind: 'projectUdo', projectSessionId: 2, projectRevision: 5, insertIndex: 1 },
     }));
     expect(applyLibraryTransfer).toHaveBeenCalledWith('udo-preview');
+  });
+
+  it('accepts direct row drop and Library paste from the UDO row menu', async () => {
+    const row = container.querySelector('[data-library-drop-target="udo-row"]') as HTMLElement;
+    const transfer = createTestDataTransfer();
+    transfer.setData(BLUE_LIBRARY_DRAG_MIME, JSON.stringify({
+      dragSessionId: 'drag-udo', libraryType: 'udo',
+    }));
+    dispatchDragEvent(row, 'dragover', transfer);
+    dispatchDragEvent(row, 'drop', transfer);
+    await act(async () => { await Promise.resolve(); await Promise.resolve(); });
+    expect(previewLibraryTransfer).toHaveBeenLastCalledWith(expect.objectContaining({
+      source: { kind: 'drag', dragSessionId: 'drag-udo' },
+      target: { kind: 'projectUdo', projectSessionId: 2, projectRevision: 5, insertIndex: 1 },
+    }));
+
+    previewLibraryTransfer.mockClear();
+    act(() => row.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true })));
+    await act(async () => { await Promise.resolve(); });
+    const paste = [...document.body.querySelectorAll('[role="menuitem"]')]
+      .find((item) => item.textContent === 'Paste') as HTMLElement;
+    expect(paste?.getAttribute('aria-disabled')).not.toBe('true');
+    expect(document.body.textContent).not.toContain('Paste Library UDO');
+    act(() => paste.click());
+    await act(async () => { await Promise.resolve(); await Promise.resolve(); });
+    expect(previewLibraryTransfer).toHaveBeenCalledWith(expect.objectContaining({
+      source: expect.objectContaining({ kind: 'clipboard' }),
+      target: { kind: 'projectUdo', projectSessionId: 2, projectRevision: 5, insertIndex: 1 },
+    }));
   });
 });

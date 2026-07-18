@@ -4,7 +4,15 @@ import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import { ChevronDown, Import, Plus } from 'lucide-react';
 
 import type { UdoDefinitionSnapshot } from '../../../../../shared/project-editor';
-import { LibraryBlockDropMarker, LibraryTableDropMarker } from '../../../libraries/LibraryDropMarker';
+import { getLibraryTransferSourceType } from '../../../../../shared/unified-library';
+import {
+  LibraryBlockDropMarker,
+  LibraryDropZone,
+  LibraryTableDropMarker,
+  type LibraryDropZoneState,
+} from '../../../libraries/LibraryDropMarker';
+import { useLibraryStore } from '../../../../stores/library-store';
+import { isTextEditingTarget } from '../../../../hooks/use-keyboard-shortcuts';
 
 export interface UdoSelectionGesture {
   range: boolean;
@@ -75,6 +83,24 @@ export default function UdoTable({
   const hasSingleSelection = selectedIndices.length === 1;
   const canMoveUp = hasSelection && Math.min(...selectedIndices) > 0;
   const canMoveDown = hasSelection && Math.max(...selectedIndices) < udolist.length - 1;
+  const libraryClipboard = useLibraryStore((state) => state.clipboard);
+  const transferLibraryItem = useLibraryStore((state) => state.transferToProject);
+  const clearLibraryClipboard = useLibraryStore((state) => state.cancelClipboard);
+  const libraryUdoAvailable = libraryClipboard
+    ? getLibraryTransferSourceType(libraryClipboard.source) === 'udo'
+    : false;
+
+  const pasteLibraryUdo = useCallback((insertIndex: number) => {
+    if (
+      !libraryDropTarget
+      || !libraryClipboard
+      || getLibraryTransferSourceType(libraryClipboard.source) !== 'udo'
+    ) return;
+    void transferLibraryItem(
+      { kind: 'clipboard', source: libraryClipboard.source },
+      { kind: 'projectUdo', ...libraryDropTarget, insertIndex },
+    );
+  }, [libraryClipboard, libraryDropTarget, transferLibraryItem]);
 
   const handleRowClick = useCallback(
     (index: number, event: React.MouseEvent<HTMLTableRowElement>) => {
@@ -132,7 +158,26 @@ export default function UdoTable({
         </DropdownMenu.Root>
       </div>
 
-      <div className="flex-1 overflow-auto" data-library-autoscroll>
+      <div
+        className="flex-1 overflow-auto"
+        data-library-autoscroll
+        tabIndex={0}
+        onKeyDown={(event) => {
+          if (
+            (event.metaKey || event.ctrlKey)
+            && event.key.toLocaleLowerCase() === 'v'
+            && (libraryUdoAvailable || canPaste)
+            && !isTextEditingTarget(event.target)
+          ) {
+            event.preventDefault();
+            const lastSelectedIndex = selectedIndices.length > 0
+              ? Math.max(...selectedIndices)
+              : udolist.length - 1;
+            if (libraryUdoAvailable) pasteLibraryUdo(lastSelectedIndex + 1);
+            else onPasteSelection();
+          }
+        }}
+      >
         {!hasUdos ? (
           <div className="flex h-full flex-col justify-center gap-2 px-3 text-sm text-app-text-muted">
             {libraryDropTarget && (
@@ -158,23 +203,18 @@ export default function UdoTable({
             <tbody>
               {udolist.map((udo, index) => {
                 const isSelected = selectedIndices.includes(index);
-                return (
-                  <React.Fragment key={`${udo.name}-${index}`}>
-                  {libraryDropTarget && (
-                    <LibraryTableDropMarker
-                      target={{ kind: 'projectUdo', ...libraryDropTarget, insertIndex: index }}
-                      colSpan={4}
-                      label={`Insert UDO before ${udo.name}`}
-                    />
-                  )}
-                  <ContextMenu.Root key={`${udo.name}-${index}`}>
+                const row = (active: boolean, dropProps: Partial<LibraryDropZoneState['dropProps']>) => (
+                  <ContextMenu.Root>
                     <ContextMenu.Trigger asChild>
                       <tr
+                        {...dropProps}
+                        data-library-drop-target={libraryDropTarget ? 'udo-row' : undefined}
                         aria-selected={isSelected}
                         onClick={(event) => handleRowClick(index, event)}
                         onContextMenu={() => onContextSelectIndex(index)}
                         className={[
                           'cursor-pointer border-b border-app-border hover:bg-app-accent/10',
+                          active ? 'ring-1 ring-inset ring-app-accent' : '',
                           isSelected ? 'bg-app-accent/20' : '',
                         ].join(' ')}
                       >
@@ -208,13 +248,25 @@ export default function UdoTable({
                           Push Down
                         </MenuItem>
                         <ContextMenu.Separator className="editor-context-menu__separator" />
-                        <MenuItem disabled={!hasSelection} onSelect={onCopySelection}>
+                        <MenuItem disabled={!hasSelection} onSelect={() => {
+                          clearLibraryClipboard();
+                          onCopySelection();
+                        }}>
                           Copy
                         </MenuItem>
-                        <MenuItem disabled={!hasSelection} onSelect={onCutSelection}>
+                        <MenuItem disabled={!hasSelection} onSelect={() => {
+                          clearLibraryClipboard();
+                          onCutSelection();
+                        }}>
                           Cut
                         </MenuItem>
-                        <MenuItem disabled={!canPaste} onSelect={onPasteSelection}>
+                        <MenuItem
+                          disabled={!canPaste && !libraryUdoAvailable}
+                          onSelect={() => {
+                            if (libraryUdoAvailable) pasteLibraryUdo(index + 1);
+                            else onPasteSelection();
+                          }}
+                        >
                           Paste
                         </MenuItem>
                         <ContextMenu.Separator className="editor-context-menu__separator" />
@@ -251,6 +303,23 @@ export default function UdoTable({
                       </ContextMenu.Content>
                     </ContextMenu.Portal>
                   </ContextMenu.Root>
+                );
+                return (
+                  <React.Fragment key={`${udo.name}-${index}`}>
+                  {libraryDropTarget && (
+                    <LibraryTableDropMarker
+                      target={{ kind: 'projectUdo', ...libraryDropTarget, insertIndex: index }}
+                      colSpan={4}
+                      label={`Insert UDO before ${udo.name}`}
+                    />
+                  )}
+                  {libraryDropTarget ? (
+                    <LibraryDropZone
+                      target={{ kind: 'projectUdo', ...libraryDropTarget, insertIndex: index + 1 }}
+                    >
+                      {({ active, dropProps }) => row(active, dropProps)}
+                    </LibraryDropZone>
+                  ) : row(false, {})}
                   </React.Fragment>
                 );
               })}

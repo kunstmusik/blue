@@ -1,5 +1,9 @@
 import { useCallback, useState } from 'react';
-import type { LibraryExactTransferTarget, LibraryType } from '../../../shared/unified-library';
+import {
+  getLibraryTransferSourceType,
+  type LibraryExactTransferTarget,
+  type LibraryType,
+} from '../../../shared/unified-library';
 import { useLibraryStore } from '../../stores/library-store';
 import { BLUE_LIBRARY_DRAG_MIME, readLibraryDragDescriptor, readLibraryDragSource } from './library-drag-drop';
 
@@ -18,7 +22,9 @@ export function useLibraryDropTarget(target: LibraryExactTransferTarget) {
   const clipboard = useLibraryStore((state) => state.clipboard);
 
   const expectedType = targetLibraryType(target);
-  const clipboardCompatible = clipboard?.source.libraryType === expectedType;
+  const clipboardCompatible = clipboard
+    ? getLibraryTransferSourceType(clipboard.source) === expectedType
+    : false;
 
   const paste = useCallback(async () => {
     if (!clipboard) return;
@@ -75,8 +81,10 @@ export function useLibraryDropTarget(target: LibraryExactTransferTarget) {
   const onKeyDown = useCallback((event: React.KeyboardEvent<HTMLElement>) => {
     if ((event.metaKey || event.ctrlKey) && event.key.toLocaleLowerCase() === 'v' && clipboard) {
       event.preventDefault();
+      event.stopPropagation();
       void paste();
     } else if (event.key === 'Escape') {
+      event.stopPropagation();
       setActive(false);
       cancelTransfer();
       setFeedback('Library transfer cancelled.');

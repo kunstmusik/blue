@@ -13,13 +13,24 @@ describe('Unified Libraries workbench integration', () => {
       auxiliaryGroupId: 'properties-main',
     });
     expect(PANEL_MAP.has('WelcomeTopComponent')).toBe(false);
+    expect(PANEL_MAP.get('SoundObjectLibraryTopComponent')).toMatchObject({
+      title: 'SoundObject Library',
+      auxiliaryGroupId: 'properties-main',
+      openAtStartup: false,
+    });
     expect(getDefaultEditorPanels().map((panel) => panel.id)).not.toContain('WelcomeTopComponent');
   });
 
-  it('migrates every legacy SoundObject library layout ID', () => {
+  it('preserves separate Libraries and Project SoundObject Library layout IDs', () => {
     const stored = createStoredWorkbenchLayout({
       grid: { root: { type: 'branch' }, height: 900, width: 1400, orientation: 'horizontal' },
       panels: {
+        LibrariesTopComponent: {
+          id: 'LibrariesTopComponent',
+          contentComponent: 'default',
+          tabComponent: 'default',
+          title: 'Libraries',
+        },
         SoundObjectLibraryTopComponent: {
           id: 'SoundObjectLibraryTopComponent',
           contentComponent: 'default',
@@ -37,9 +48,8 @@ describe('Unified Libraries workbench integration', () => {
         index: 0,
       } },
     });
-    const legacy = JSON.stringify(stored).replaceAll('LibrariesTopComponent', 'SoundObjectLibraryTopComponent');
-    const parsed = parseStoredWorkbenchLayout(legacy);
-    expect(JSON.stringify(parsed)).not.toContain('SoundObjectLibraryTopComponent');
+    const parsed = parseStoredWorkbenchLayout(JSON.stringify(stored));
+    expect(JSON.stringify(parsed)).toContain('SoundObjectLibraryTopComponent');
     expect(JSON.stringify(parsed)).toContain('LibrariesTopComponent');
   });
 });

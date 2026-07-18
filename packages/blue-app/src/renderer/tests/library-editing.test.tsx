@@ -132,6 +132,9 @@ describe('library editing UI', () => {
     expect(container.querySelector('input[aria-label="Rename Warm Pad"]')).toBeNull();
 
     const tree = container.querySelector('[role="tree"]')!;
+    act(() => {
+      tree.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
+    });
     dispatchContextMenuKey(tree);
     await act(async () => { await Promise.resolve(); });
     expect(document.body.textContent).toContain('Duplicate');
@@ -177,5 +180,38 @@ describe('library editing UI', () => {
     expect(marker.className).not.toContain('bg-app-accent ');
     act(() => root.unmount());
     container.remove();
+  });
+
+  it('publishes an opaque descriptor on the first drag gesture', () => {
+    const beginLibraryDrag = vi.fn(async () => ({
+      ok: true as const,
+      value: { dragSessionId: 'unused-main-response', libraryType: 'instrument' as const },
+    }));
+    window.blueAPI = { ...window.blueAPI, beginLibraryDrag };
+    const node = {
+      key: { scope: 'user' as const, libraryType: 'instrument' as const, nodeId: 'node-drag' },
+      nodeId: 'node-drag', parentId: 'root', libraryType: 'instrument' as const, scope: 'user' as const,
+      nodeKind: 'item' as const, displayName: 'Immediate Drag', breadcrumb: ['Instruments', 'Immediate Drag'],
+      supportStatus: 'supported' as const, objectType: 'GenericInstrument', revision: 4, hasChildren: false,
+    };
+    const container = document.createElement('div');
+    const root = createRoot(container);
+    act(() => root.render(<LibraryTree label="Drag test" nodes={[node]} onSelect={vi.fn()} />));
+    const row = container.querySelector('[role="treeitem"]') as HTMLElement;
+    act(() => row.dispatchEvent(new MouseEvent('pointerdown', { bubbles: true })));
+    const transfer = createTestDataTransfer();
+    const dragStart = new Event('dragstart', { bubbles: true, cancelable: true });
+    Object.defineProperty(dragStart, 'dataTransfer', { value: transfer });
+    act(() => row.dispatchEvent(dragStart));
+
+    const descriptor = JSON.parse(transfer.getData(BLUE_LIBRARY_DRAG_MIME));
+    expect(descriptor).toEqual({ dragSessionId: expect.any(String), libraryType: 'instrument' });
+    expect(JSON.stringify(descriptor)).not.toContain('xml');
+    expect(beginLibraryDrag).toHaveBeenCalledWith(expect.objectContaining({
+      dragSessionId: descriptor.dragSessionId,
+      key: node.key,
+      revision: 4,
+    }));
+    act(() => root.unmount());
   });
 });

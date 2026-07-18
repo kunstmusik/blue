@@ -104,6 +104,30 @@ describe('Score Library drop targets', () => {
     expect(applyLibraryTransfer).toHaveBeenCalledWith('score-preview');
   });
 
+  it('accepts protected drag hover when custom descriptor data is readable only at drop', async () => {
+    const transfer = createTestDataTransfer();
+    transfer.setData(BLUE_LIBRARY_DRAG_MIME, JSON.stringify({ dragSessionId: 'drag-protected', libraryType: 'soundObject' }));
+    const readableGetData = transfer.getData.bind(transfer);
+    transfer.getData = vi.fn(() => '');
+
+    dispatchDragEvent(surface, 'dragover', transfer, { clientX: 130, clientY: 10 });
+    expect(transfer.dropEffect).toBe('copy');
+    expect(container.querySelector('[class*="bg-app-accent/10"]')).toBeTruthy();
+
+    transfer.getData = readableGetData;
+    dispatchDragEvent(surface, 'drop', transfer, { clientX: 130, clientY: 10 });
+    await act(async () => { await Promise.resolve(); await Promise.resolve(); });
+
+    expect(previewLibraryTransfer).toHaveBeenCalledWith(expect.objectContaining({
+      source: { kind: 'drag', dragSessionId: 'drag-protected' },
+      target: expect.objectContaining({
+        kind: 'score',
+        location: expect.objectContaining({ layerId: 'nested-group-layer-0', startTime: 2 }),
+      }),
+    }));
+    expect(applyLibraryTransfer).toHaveBeenCalledWith('score-preview');
+  });
+
   it('uses the exact last pointer location for keyboard Paste and pauses for shared-copy choice', async () => {
     useLibraryStore.setState({
       clipboard: {

@@ -117,12 +117,8 @@ import {
   UNIFIED_LIBRARY_PROJECT_DELETE_CHANNEL,
   UNIFIED_LIBRARY_PROJECT_DELETE_PREVIEW_CHANNEL,
   UNIFIED_LIBRARY_PROJECT_USAGE_CHANNEL,
-  UNIFIED_LIBRARY_GET_MIGRATION_SUMMARY_CHANNEL,
-  UNIFIED_LIBRARY_HISTORY_CHANNEL,
-  UNIFIED_LIBRARY_MIGRATION_SUMMARY_CHANNEL,
   UNIFIED_LIBRARY_IMPORT_SELECT_CHANNEL,
   UNIFIED_LIBRARY_IMPORT_EXECUTE_CHANNEL,
-  UNIFIED_LIBRARY_IMPORT_UNDO_CHANNEL,
   UNIFIED_LIBRARY_EXPORT_CURRENT_CHANNEL,
   UNIFIED_LIBRARY_EXPORT_ALL_CHANNEL,
   UNIFIED_LIBRARY_RECOVERY_RETRY_CHANNEL,
@@ -166,8 +162,6 @@ import {
   type LibraryDraftShutdownPreview,
   type ProjectLibraryUsage,
   type ProjectLibraryDeletePreview,
-  type LibraryMigrationSummary,
-  type LibraryImportHistoryEntry,
   type ManualLibraryImportPreview,
   type ManualLibraryImportResult,
   type ProjectMutationReceipt,
@@ -233,21 +227,10 @@ contextBridge.exposeInMainWorld('blueAPI', {
     ipcRenderer.invoke(UNIFIED_LIBRARY_PROJECT_DELETE_CHANNEL, { key, confirmationToken }) as Promise<LibraryResult<ProjectMutationReceipt>>,
   copyProjectLibraryItemToUser: (key: LibraryItemKey, parentId: string) =>
     ipcRenderer.invoke(UNIFIED_LIBRARY_PROJECT_COPY_CHANNEL, { key, parentId }) as Promise<LibraryResult<LibraryMutationReceipt>>,
-  getLibraryMigrationSummary: () =>
-    ipcRenderer.invoke(UNIFIED_LIBRARY_GET_MIGRATION_SUMMARY_CHANNEL) as Promise<LibraryMigrationSummary | null>,
-  getLibraryImportHistory: (limit = 100) =>
-    ipcRenderer.invoke(UNIFIED_LIBRARY_HISTORY_CHANNEL, limit) as Promise<LibraryResult<LibraryImportHistoryEntry[]>>,
-  onLibraryMigrationSummary: (callback: (summary: LibraryMigrationSummary) => void) => {
-    const handler = (_event: Electron.IpcRendererEvent, summary: LibraryMigrationSummary) => callback(summary);
-    ipcRenderer.on(UNIFIED_LIBRARY_MIGRATION_SUMMARY_CHANNEL, handler);
-    return () => { ipcRenderer.removeListener(UNIFIED_LIBRARY_MIGRATION_SUMMARY_CHANNEL, handler); };
-  },
   selectLibraryImportFiles: () =>
     ipcRenderer.invoke(UNIFIED_LIBRARY_IMPORT_SELECT_CHANNEL) as Promise<LibraryResult<ManualLibraryImportPreview> | null>,
   executeLibraryImport: (previewToken: string) =>
     ipcRenderer.invoke(UNIFIED_LIBRARY_IMPORT_EXECUTE_CHANNEL, previewToken) as Promise<LibraryResult<ManualLibraryImportResult>>,
-  undoLibraryImport: (batchId: string) =>
-    ipcRenderer.invoke(UNIFIED_LIBRARY_IMPORT_UNDO_CHANNEL, batchId) as Promise<LibraryResult<readonly string[]>>,
   exportCurrentLibrary: (libraryType: LibraryType) =>
     ipcRenderer.invoke(UNIFIED_LIBRARY_EXPORT_CURRENT_CHANNEL, libraryType) as Promise<LibraryResult<true> | null>,
   exportAllLibraries: () =>

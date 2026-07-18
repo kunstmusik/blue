@@ -29,6 +29,28 @@ async function fixture() {
 }
 
 describe('main-owned library editor sessions', () => {
+  it('pins an existing clean preview when it is explicitly reopened', async () => {
+    const { client, nodes, sessions } = await fixture();
+    try {
+      const preview = await sessions.open({ scope: 'user', libraryType: 'instrument', nodeId: nodes[0]!.id });
+      const pinned = await sessions.open(preview.key, true);
+      expect(pinned).toMatchObject({ sessionId: preview.sessionId, pinned: true, dirty: false });
+    } finally { await client.close(); }
+  });
+
+  it('serializes concurrent preview opens into one reusable slot', async () => {
+    const { client, nodes, sessions } = await fixture();
+    try {
+      await Promise.all(Array.from({ length: 100 }, (_, index) => sessions.open({
+        scope: 'user',
+        libraryType: 'instrument',
+        nodeId: nodes[index % nodes.length]!.id,
+      })));
+      expect(sessions.list()).toHaveLength(1);
+      expect(sessions.list()[0]).toMatchObject({ dirty: false, pinned: false });
+    } finally { await client.close(); }
+  });
+
   it('reuses logical items and only replaces the clean unpinned preview slot', async () => {
     const { client, nodes, sessions } = await fixture();
     try {

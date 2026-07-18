@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { toast } from 'sonner';
-import { useProjectStore } from '../stores/project-store';
+import { acceptProjectDocumentRevision, useProjectStore } from '../stores/project-store';
 import { usePlaybackStore } from '../stores/playback-store';
 import { useUIStore } from '../stores/ui-store';
 import { useSettingsStore } from '../stores/settings-store';
@@ -242,6 +242,7 @@ export function useIPCListeners(): void {
       // Apply newer revisions idempotently — the snapshot is already the
       // latest state from the canonical main-process document.
       if (event.snapshot) {
+        acceptProjectDocumentRevision(event.sessionId, event.revision);
         useProjectStore.getState().setProjectInfo(event.snapshot as never);
       }
     });

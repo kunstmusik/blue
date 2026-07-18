@@ -189,6 +189,19 @@ function isEditorPanel(panelId: string): boolean {
   return (getPanel(panelId)?.mode ?? 'editor') === 'editor';
 }
 
+export function findLibraryEditorTargetGroup(
+  api: Pick<DockviewApi, 'groups'>,
+): DockviewGroupPanel | undefined {
+  return api.groups.find(
+    (group) =>
+      group.api.location.type !== 'popout' &&
+      group.panels.every((panel) => !isAuxiliaryPanelId(panel.id)) &&
+      group.panels.some(
+        (panel) => isEditorPanel(panel.id),
+      ),
+  );
+}
+
 export function hasRestoredStartupEditorPanel(
   api: Pick<DockviewApi, 'getPanel'>,
 ): boolean {
@@ -829,7 +842,15 @@ export const useWorkbenchStore = create<WorkbenchState & WorkbenchActions>()(
       if (!api) return;
       const panelId = libraryEditorPanelId(session.sessionId);
       const existing = api.getPanel(panelId);
+      const targetGroup = findLibraryEditorTargetGroup(api);
       if (existing) {
+        if (
+          targetGroup
+          && existing.group.id !== targetGroup.id
+          && existing.group.panels.some((panel) => isAuxiliaryPanelId(panel.id))
+        ) {
+          existing.api.moveTo({ group: targetGroup, index: targetGroup.panels.length });
+        }
         existing.api.setTitle(`Library Item${session.dirty ? ' •' : ''}`);
         existing.api.setActive();
         return;
@@ -838,6 +859,14 @@ export const useWorkbenchStore = create<WorkbenchState & WorkbenchActions>()(
         id: panelId,
         component: 'default',
         title: `Library Item${session.dirty ? ' •' : ''}`,
+        ...(targetGroup
+          ? {
+              position: {
+                referenceGroup: targetGroup,
+                direction: 'within' as const,
+              },
+            }
+          : {}),
       });
     },
 

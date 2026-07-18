@@ -169,6 +169,16 @@ let latestProjectSessionId = 0;
 export function getProjectDocumentRevision(): number {
   return latestProjectPatchRequestId;
 }
+
+export function acceptProjectDocumentRevision(sessionId: number, revision: number): void {
+  if (!Number.isInteger(sessionId) || sessionId < 0 || !Number.isInteger(revision) || revision < 0) return;
+  if (sessionId !== latestProjectSessionId) {
+    resetTransientProjectMutationState();
+    latestProjectSessionId = sessionId;
+  }
+  latestProjectPatchRequestId = Math.max(latestProjectPatchRequestId, revision);
+}
+
 let pendingPatches: ProjectDocumentPatch[] = [];
 let pendingPatchTimer: ReturnType<typeof setTimeout> | null = null;
 let storeGet: any;

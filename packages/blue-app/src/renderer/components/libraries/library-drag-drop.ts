@@ -6,12 +6,22 @@ import type {
 
 export const BLUE_LIBRARY_DRAG_MIME = 'application/x-blue-library-drag';
 
-export async function beginLibraryNodeDrag(
+export function beginLibraryNodeDrag(
   node: LibraryBrowseNode,
-): Promise<LibraryDragDescriptor | null> {
+): LibraryDragDescriptor | null {
   if (!node.key || node.nodeKind !== 'item') return null;
-  const result = await window.blueAPI.beginLibraryDrag({ key: node.key, revision: node.revision });
-  return result.ok ? result.value : null;
+  const descriptor: LibraryDragDescriptor = {
+    dragSessionId: crypto.randomUUID(),
+    libraryType: node.libraryType,
+  };
+  void window.blueAPI
+    .beginLibraryDrag({
+      dragSessionId: descriptor.dragSessionId,
+      key: node.key,
+      revision: node.revision,
+    })
+    .catch(() => undefined);
+  return descriptor;
 }
 
 export function writeLibraryDragDescriptor(

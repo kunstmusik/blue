@@ -10,7 +10,11 @@ import AutomationLayerOverlay from '../automation/AutomationLayerOverlay';
 import { useScoreAutomationStore } from '../../../../../stores/score-automation-store';
 import { useLibraryStore } from '../../../../../stores/library-store';
 import type { ScoreAutomationPatch } from '../../../../../../shared/project-editor';
-import type { LibraryExactTransferTarget, ScoreInsertionLocation } from '../../../../../../shared/unified-library';
+import {
+  getLibraryTransferSourceType,
+  type LibraryExactTransferTarget,
+  type ScoreInsertionLocation,
+} from '../../../../../../shared/unified-library';
 import { useKeyboardShortcutScope } from '../../../../../hooks/use-keyboard-shortcut-scope';
 import { isTextEditingTarget } from '../../../../../hooks/use-keyboard-shortcuts';
 import { snapValueToBeats } from '@blue/data';
@@ -24,7 +28,11 @@ import {
   translateClipboardEntriesForPaste,
   type ScorePasteObject,
 } from './score-clipboard-utils';
-import { BLUE_LIBRARY_DRAG_MIME, readLibraryDragSource } from '../../../../libraries/library-drag-drop';
+import {
+  BLUE_LIBRARY_DRAG_MIME,
+  readLibraryDragDescriptor,
+  readLibraryDragSource,
+} from '../../../../libraries/library-drag-drop';
 
 interface Props {
   group: PolyObjectLayerGroupSnapshot;
@@ -266,6 +274,9 @@ export default function ScoreTimeCanvas({
   const moveScoreObjects = useProjectStore((s) => s.moveScoreObjects);
   const addScoreObjects = useProjectStore((s) => s.addScoreObjects);
   const libraryClipboard = useLibraryStore((s) => s.clipboard);
+  const librarySoundObjectAvailable = libraryClipboard
+    ? getLibraryTransferSourceType(libraryClipboard.source) === 'soundObject'
+    : false;
   const transferLibraryItem = useLibraryStore((s) => s.transferToProject);
   const resizeScoreObjects = useProjectStore((s) => s.resizeScoreObjects);
   const currentScore = useProjectStore((s) => s.score);
@@ -450,11 +461,11 @@ export default function ScoreTimeCanvas({
   }, [buildLibraryTarget, group.layers, pixelsPerBeat, toLocalXY]);
 
   const pasteLibraryAtContext = useCallback(() => {
-    if (!libraryClipboard || !contextMenuPos) return;
+    if (!libraryClipboard || !librarySoundObjectAvailable || !contextMenuPos) return;
     const target = buildLibraryTarget(contextMenuPos.layerIndex, contextMenuPos.xBeats);
     if (!target) return;
     void transferLibraryItem({ kind: 'clipboard', source: libraryClipboard.source }, target);
-  }, [buildLibraryTarget, contextMenuPos, libraryClipboard, transferLibraryItem]);
+  }, [buildLibraryTarget, contextMenuPos, libraryClipboard, librarySoundObjectAvailable, transferLibraryItem]);
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     if (e.button === 2) return;
@@ -1256,7 +1267,7 @@ export default function ScoreTimeCanvas({
     if (mod && key === 'v') {
       e.preventDefault();
       e.stopPropagation();
-      if (libraryClipboard) {
+      if (libraryClipboard && librarySoundObjectAvailable) {
         const target = contextMenuPos
           ? buildLibraryTarget(contextMenuPos.layerIndex, contextMenuPos.xBeats)
           : lastLibraryTargetRef.current;
@@ -1276,7 +1287,7 @@ export default function ScoreTimeCanvas({
       e.stopPropagation();
       handleRemove();
     }
-  }, [buildLibraryTarget, contextMenuPos, handleCopy, handleContextMenuPaste, handleCut, handleRemove, libraryClipboard, selectedObjectIds, transferLibraryItem]);
+  }, [buildLibraryTarget, contextMenuPos, handleCopy, handleContextMenuPaste, handleCut, handleRemove, libraryClipboard, librarySoundObjectAvailable, selectedObjectIds, transferLibraryItem]);
 
   const canvasShortcutScope = useKeyboardShortcutScope({
     ref: containerRef,
@@ -1339,6 +1350,12 @@ export default function ScoreTimeCanvas({
           onDoubleClick={handleDoubleClick}
           onDragOver={(event) => {
             if (!event.dataTransfer.types.includes(BLUE_LIBRARY_DRAG_MIME)) return;
+            const descriptor = readLibraryDragDescriptor(event.dataTransfer);
+            if (descriptor && descriptor.libraryType !== 'soundObject') {
+              event.dataTransfer.dropEffect = 'none';
+              setLibraryDropMarker(null);
+              return;
+            }
             const located = locateLibraryTarget(event.clientX, event.clientY);
             if (!located) return;
             event.preventDefault();
@@ -1358,10 +1375,11 @@ export default function ScoreTimeCanvas({
             }
           }}
           onDrop={(event) => {
+            const descriptor = readLibraryDragDescriptor(event.dataTransfer);
             const source = readLibraryDragSource(event.dataTransfer);
             const located = locateLibraryTarget(event.clientX, event.clientY);
             setLibraryDropMarker(null);
-            if (!source || !located) return;
+            if (descriptor?.libraryType !== 'soundObject' || !source || !located) return;
             event.preventDefault();
             event.dataTransfer.dropEffect = 'copy';
             void transferLibraryItem(source, located.target);
@@ -1489,7 +1507,7 @@ export default function ScoreTimeCanvas({
               menuItemClass={menuItemClass}
               sepClass={sepClass}
               clipboard={clipboard}
-              libraryClipboardAvailable={libraryClipboard !== null}
+              libraryClipboardAvailable={librarySoundObjectAvailable}
               contextMenuPos={contextMenuPos}
               group={group}
               onPaste={handleContextMenuPaste}

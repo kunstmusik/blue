@@ -55,6 +55,7 @@ beforeEach(() => {
           nodeId: `root-${request.parent.libraryType}`,
           nodeKind: 'root' as const,
           displayName: request.parent.libraryType,
+          hasChildren: request.parent.libraryType === 'soundObject',
         },
         children: request.parent.libraryType === 'soundObject' ? [unsupported] : [],
         nextCursor: null,
@@ -76,16 +77,26 @@ afterEach(() => {
 });
 
 describe('Libraries panel', () => {
-  it('renders without a project and exposes accessible filters and warnings', async () => {
+  it('renders a user-only hierarchy with collapsed roots and no migration/project chrome', async () => {
     const { container, root } = render(<LibrariesPanel />);
     await act(async () => { await Promise.resolve(); await Promise.resolve(); });
     expect(container.textContent).toContain('User Libraries');
-    expect(container.textContent).toContain('No project is open');
+    expect(container.textContent).not.toContain('No project is open');
+    expect(container.textContent).not.toContain('Current Project');
     expect(container.querySelector('input[aria-label="Search libraries"]')).toBeTruthy();
+    expect(container.querySelector('[aria-label="Library source"]')).toBeNull();
     expect(container.querySelectorAll('button[aria-label="Library actions"]')).toHaveLength(1);
     expect(container.textContent).not.toContain('Insert');
+    expect(container.textContent).not.toContain('migration');
     expect(container.textContent).not.toContain('RenameDuplicateDelete');
     expect(container.querySelector('textarea')).toBeNull();
+    expect(container.querySelector('[aria-selected="true"]')).toBeNull();
+    const soundRoot = container.querySelector('#library-node-root-soundObject') as HTMLElement;
+    expect(soundRoot.getAttribute('aria-expanded')).toBe('false');
+    expect(container.textContent).not.toContain('Legacy Object');
+    act(() => {
+      (soundRoot.querySelector('button[aria-label^="Expand"]') as HTMLButtonElement).click();
+    });
     const warning = container.querySelector('[role="status"]');
     expect(warning?.textContent).toContain('unsupported');
     act(() => { root.unmount(); });
@@ -116,7 +127,26 @@ describe('Libraries panel', () => {
     const exportCurrent = document.body.querySelector('[aria-label^="Export Current unavailable"]');
     expect(exportCurrent?.getAttribute('aria-disabled')).toBe('true');
     expect(document.activeElement?.getAttribute('role')).toBe('menu');
+    expect(document.body.querySelector('.editor-context-menu')).toBeTruthy();
     act(() => { root.unmount(); });
+  });
+
+  it('restores the Library viewport after the panel is remounted', () => {
+    useLibraryStore.setState({ scrollTop: 240, initialized: true });
+    const first = render(<LibrariesPanel />);
+    const firstScroller = first.container.querySelector('[data-library-scroll]') as HTMLElement;
+    expect(firstScroller.scrollTop).toBe(240);
+    act(() => {
+      firstScroller.scrollTop = 510;
+      firstScroller.dispatchEvent(new Event('scroll', { bubbles: true }));
+      first.root.unmount();
+    });
+    expect(useLibraryStore.getState().scrollTop).toBe(510);
+
+    const second = render(<LibrariesPanel />);
+    const secondScroller = second.container.querySelector('[data-library-scroll]') as HTMLElement;
+    expect(secondScroller.scrollTop).toBe(510);
+    act(() => { second.root.unmount(); });
   });
 
   it('announces affected count and dirty-session choices before destructive deletion', () => {

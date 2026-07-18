@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import {
   LIBRARY_TYPES,
+  getLibraryTransferSourceType,
   type LibraryBrowseNode,
   type LibraryChangedEvent,
   type LibraryInteractionClipboard,
@@ -13,18 +14,14 @@ import {
   type LibraryServiceSnapshot,
   type LibraryType,
   type UserLibraryMutation,
-  type LibraryMigrationSummary,
   type LibraryMutationPreview,
   type ManualLibraryImportPreview,
   type ManualLibraryImportResult,
-  type LibraryImportHistoryEntry,
 } from '../../shared/unified-library';
 import { useLibraryEditorStore } from './library-editor-store';
 import { libraryEditorPanelId } from './library-editor-store';
 import { useWorkbenchStore } from './workbench-store';
 import { toast } from 'sonner';
-
-export type LibrarySourceFilter = 'all' | 'user' | 'project';
 
 const EMPTY_NODES: Record<LibraryType, LibraryBrowseNode[]> = {
   instrument: [],
@@ -38,13 +35,11 @@ interface LibraryState {
   initialized: boolean;
   loading: boolean;
   error: string | null;
-  projectAvailable: boolean;
   typeFilter: LibraryType | 'all';
-  sourceFilter: LibrarySourceFilter;
   query: string;
+  scrollTop: number;
   nodesByType: Record<LibraryType, LibraryBrowseNode[]>;
   userRootsByType: Record<LibraryType, LibraryBrowseNode | null>;
-  projectNodesByType: Record<LibraryType, LibraryBrowseNode[]>;
   childrenByParent: Record<string, LibraryBrowseNode[]>;
   searchResults: LibrarySearchResult[];
   nextSearchCursor: string | null;
@@ -53,17 +48,13 @@ interface LibraryState {
   transferPreview: LibraryTransferPreview | null;
   transferSource: LibraryTransferSourceReference | null;
   deletePreview: (LibraryMutationPreview & { readonly displayName: string }) | null;
-  migrationSummary: LibraryMigrationSummary | null;
   importPreview: ManualLibraryImportPreview | null;
   importResult: ManualLibraryImportResult | null;
-  history: LibraryImportHistoryEntry[];
-  historyOpen: boolean;
   initialize: () => Promise<void>;
   dispose: () => void;
   reset: () => void;
   refresh: () => Promise<void>;
   setTypeFilter: (filter: LibraryType | 'all') => void;
-  setSourceFilter: (filter: LibrarySourceFilter) => void;
   setQuery: (query: string) => void;
   runSearch: (append?: boolean) => Promise<void>;
   loadMoreSearchResults: () => Promise<void>;
@@ -80,15 +71,11 @@ interface LibraryState {
   cancelDelete: () => void;
   applyMutation: (mutation: UserLibraryMutation) => Promise<boolean>;
   openEditor: (key: LibraryItemKey, pinned?: boolean) => Promise<void>;
-  dismissMigrationSummary: () => void;
   selectImportFiles: () => Promise<void>;
   executeImport: () => Promise<void>;
   cancelImport: () => void;
   exportCurrent: () => Promise<void>;
   exportAll: () => Promise<void>;
-  openHistory: () => Promise<void>;
-  closeHistory: () => void;
-  undoImport: (batchId: string) => Promise<void>;
   retryRecovery: () => Promise<void>;
   restoreBackup: () => Promise<void>;
   createFreshDatabase: () => Promise<void>;
@@ -97,7 +84,6 @@ interface LibraryState {
 let searchTimer: ReturnType<typeof setTimeout> | null = null;
 let unsubscribeSnapshot: (() => void) | null = null;
 let unsubscribeChanged: (() => void) | null = null;
-let unsubscribeMigration: (() => void) | null = null;
 
 function initialState() {
   return {
@@ -105,13 +91,11 @@ function initialState() {
     initialized: false,
     loading: false,
     error: null,
-    projectAvailable: false,
     typeFilter: 'all' as const,
-    sourceFilter: 'all' as const,
     query: '',
+    scrollTop: 0,
     nodesByType: { ...EMPTY_NODES },
     userRootsByType: { instrument: null, udo: null, soundObject: null, effect: null },
-    projectNodesByType: { ...EMPTY_NODES },
     childrenByParent: {},
     searchResults: [],
     nextSearchCursor: null,
@@ -120,18 +104,9 @@ function initialState() {
     transferPreview: null,
     transferSource: null,
     deletePreview: null,
-    migrationSummary: null,
     importPreview: null,
     importResult: null,
-    history: [],
-    historyOpen: false,
   };
-}
-
-function matchesSource(result: LibrarySearchResult, filter: LibrarySourceFilter): boolean {
-  if (filter === 'all') return true;
-  if (filter === 'user') return result.scope === 'user';
-  return result.scope !== 'user';
 }
 
 export const useLibraryStore = create<LibraryState>((set, get) => ({
@@ -141,15 +116,10 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
     if (get().initialized || get().loading) return;
     set({ loading: true, error: null });
     try {
-      const [snapshot, migrationSummary] = await Promise.all([
-        window.blueAPI.getLibraryServiceSnapshot(),
-        window.blueAPI.getLibraryMigrationSummary?.() ?? Promise.resolve(null),
-      ]);
+      const snapshot = await window.blueAPI.getLibraryServiceSnapshot();
       set({
         snapshot,
-        projectAvailable: snapshot.projectSessionId !== null,
         initialized: true,
-        migrationSummary,
       });
       unsubscribeSnapshot?.();
       unsubscribeChanged?.();
@@ -157,11 +127,7 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
         const projectChanged = get().snapshot?.projectSessionId !== next.projectSessionId;
         set({
           snapshot: next,
-          projectAvailable: next.projectSessionId !== null,
-          ...(projectChanged ? {
-            projectNodesByType: { ...EMPTY_NODES },
-            selectedKey: null,
-          } : {}),
+          ...(projectChanged ? { selectedKey: null } : {}),
         });
         if (projectChanged) void get().refresh();
       });
@@ -169,9 +135,6 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
         if ((get().snapshot?.contentRevision ?? 0) > event.contentRevision) return;
         void get().refresh();
       });
-      unsubscribeMigration = window.blueAPI.onLibraryMigrationSummary?.((summary) => {
-        set({ migrationSummary: summary });
-      }) ?? null;
       await get().refresh();
     } catch (error) {
       set({ error: error instanceof Error ? error.message : 'Unable to load Libraries' });
@@ -187,8 +150,6 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
     unsubscribeChanged?.();
     unsubscribeSnapshot = null;
     unsubscribeChanged = null;
-    unsubscribeMigration?.();
-    unsubscribeMigration = null;
   },
 
   reset: () => {
@@ -197,7 +158,6 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
   },
 
   refresh: async () => {
-    const sessionId = get().snapshot?.projectSessionId ?? null;
     const userResults = await Promise.all(LIBRARY_TYPES.map(async (libraryType) => (
       window.blueAPI.browseLibraries({ parent: { scope: 'user', libraryType } })
     )));
@@ -211,34 +171,12 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
       userRootsByType[type] = result?.ok ? result.value.parent : null;
     });
 
-    const projectNodesByType = { ...EMPTY_NODES };
-    if (sessionId !== null) {
-      const projectRequests = [
-        { type: 'instrument' as const, scope: 'projectOwned' as const },
-        { type: 'udo' as const, scope: 'projectOwned' as const },
-        { type: 'soundObject' as const, scope: 'projectShared' as const },
-      ];
-      const projectResults = await Promise.all(projectRequests.map(({ type, scope }) => (
-        window.blueAPI.browseLibraries({
-          parent: { scope, libraryType: type, projectSessionId: sessionId },
-        })
-      )));
-      projectRequests.forEach(({ type }, index) => {
-        const result = projectResults[index];
-        projectNodesByType[type] = result?.ok ? [...result.value.children] : [];
-      });
-    }
-    set({ nodesByType, userRootsByType, projectNodesByType, error: null });
+    set({ nodesByType, userRootsByType, error: null });
     if (get().query.trim()) await get().runSearch(false);
   },
 
   setTypeFilter: (typeFilter) => {
     set({ typeFilter });
-    if (get().query.trim()) void get().runSearch(false);
-  },
-
-  setSourceFilter: (sourceFilter) => {
-    set({ sourceFilter });
     if (get().query.trim()) void get().runSearch(false);
   },
 
@@ -265,7 +203,7 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
     const result = await window.blueAPI.searchLibraries({
       query,
       typeFilter: state.typeFilter,
-      projectSessionId: state.snapshot?.projectSessionId ?? null,
+      projectSessionId: null,
       cursor,
       limit: 100,
     });
@@ -273,11 +211,8 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
       set({ error: result.error.message });
       return;
     }
-    const filtered = result.value.results.filter((candidate) => (
-      matchesSource(candidate, get().sourceFilter)
-    ));
     set((current) => ({
-      searchResults: append ? [...current.searchResults, ...filtered] : filtered,
+      searchResults: append ? [...current.searchResults, ...result.value.results] : result.value.results,
       nextSearchCursor: result.value.nextCursor,
       error: null,
     }));
@@ -309,16 +244,23 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
   },
 
   captureClipboard: (node, operation) => {
-    if (node.scope !== 'user' || typeof node.revision !== 'number') return;
+    if (node.nodeKind !== 'item' || !node.key || node.revision === undefined) return;
+    if (operation === 'cut' && node.scope !== 'user') return;
     set({
       clipboard: {
         operation,
-        source: {
-          kind: 'userNode',
-          libraryType: node.libraryType,
-          nodeId: node.nodeId,
-          revision: node.revision,
-        },
+        source: node.scope === 'user'
+          ? {
+              kind: 'userNode',
+              libraryType: node.libraryType,
+              nodeId: node.nodeId,
+              revision: node.revision,
+            }
+          : {
+              kind: 'library',
+              key: node.key,
+              revision: node.revision,
+            },
         capturedAt: Date.now(),
       },
       error: null,
@@ -330,7 +272,7 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
   pasteInto: async (parent) => {
     const clipboard = get().clipboard;
     if (!clipboard || clipboard.source.kind !== 'userNode' || parent.scope !== 'user') return false;
-    if (clipboard.source.libraryType !== parent.libraryType) {
+    if (getLibraryTransferSourceType(clipboard.source) !== parent.libraryType) {
       set({ error: 'Library items can only be pasted within the same library type.' });
       return false;
     }
@@ -371,8 +313,15 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
       set({ transferPreview: result.value, transferSource: source, error: null });
       return true;
     }
-    set({ transferPreview: result.value, transferSource: source, error: null });
-    return get().applyTransfer(mode);
+    const applyResult = await window.blueAPI.applyLibraryTransfer(result.value.previewToken);
+    if (!applyResult.ok) {
+      set({ error: applyResult.error.message, transferPreview: null, transferSource: null });
+      toast.error(applyResult.error.message);
+      return false;
+    }
+    set({ transferPreview: null, transferSource: null, error: null });
+    toast.success(applyResult.value.message);
+    return true;
   },
 
   applyTransfer: async (mode) => {
@@ -473,15 +422,23 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
   },
 
   openEditor: async (key, pinned = false) => {
-    const session = await useLibraryEditorStore.getState().open(key, pinned);
+    const editorStore = useLibraryEditorStore.getState();
+    const replaceableSessionIds = Object.values(editorStore.sessions)
+      .filter((session) => !session.dirty && !session.pinned)
+      .map((session) => session.sessionId);
+    const session = await editorStore.open(key, pinned);
     if (!session) {
       set({ error: useLibraryEditorStore.getState().error });
       return;
     }
-    useWorkbenchStore.getState().openLibraryEditorPanel(session);
+    const workbenchStore = useWorkbenchStore.getState();
+    for (const sessionId of replaceableSessionIds) {
+      if (sessionId !== session.sessionId) {
+        workbenchStore.closePanel(libraryEditorPanelId(sessionId));
+      }
+    }
+    workbenchStore.openLibraryEditorPanel(session);
   },
-
-  dismissMigrationSummary: () => set({ migrationSummary: null }),
 
   selectImportFiles: async () => {
     const result = await window.blueAPI.selectLibraryImportFiles();
@@ -511,21 +468,6 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
   exportAll: async () => {
     const result = await window.blueAPI.exportAllLibraries();
     if (result && !result.ok) set({ error: result.error.message });
-  },
-
-  openHistory: async () => {
-    const result = await window.blueAPI.getLibraryImportHistory();
-    if (!result.ok) return set({ error: result.error.message });
-    set({ history: result.value, historyOpen: true, error: null });
-  },
-
-  closeHistory: () => set({ historyOpen: false }),
-
-  undoImport: async (batchId) => {
-    const result = await window.blueAPI.undoLibraryImport(batchId);
-    if (!result.ok) return set({ error: result.error.message });
-    await get().refresh();
-    await get().openHistory();
   },
 
   retryRecovery: async () => {

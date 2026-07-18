@@ -5,7 +5,12 @@ import type {
   LibraryType,
 } from '../../shared/unified-library';
 import { initializeUnifiedLibrarySchema } from './schema';
-import type { LegacyLibraryDocumentPlan, LegacyLibraryTreeNode } from '@blue/data';
+import {
+  classifyLibraryPayload,
+  parseRawXmlDocument,
+  type LegacyLibraryDocumentPlan,
+  type LegacyLibraryTreeNode,
+} from '@blue/data';
 
 export type LibraryNodeKind = 'root' | 'folder' | 'item';
 
@@ -146,7 +151,9 @@ export class UnifiedLibraryRepository {
         throw new Error('Unified Library integrity check failed');
       }
       initializeUnifiedLibrarySchema(database, { fileBacked: databasePath !== ':memory:' });
-      return new UnifiedLibraryRepository(database);
+      const repository = new UnifiedLibraryRepository(database);
+      repository.refreshUnsupportedClassifications();
+      return repository;
     } catch (error) {
       database.close();
       throw error;
@@ -181,6 +188,56 @@ export class UnifiedLibraryRepository {
       itemCounts[asLibraryType(row.library_type)] = Number(row.count);
     }
     return { contentRevision: this.getContentRevision(), itemCounts };
+  }
+
+  private refreshUnsupportedClassifications(): void {
+    const rows = this.database.prepare(`
+      SELECT nodes.id, nodes.library_type, payload.*
+      FROM library_nodes nodes
+      JOIN library_item_payloads payload ON payload.node_id = nodes.id
+      WHERE payload.support_status = 'unsupported'
+    `).all();
+    if (rows.length === 0) return;
+
+    this.withTransaction(() => {
+      let updated = 0;
+      const now = new Date().toISOString();
+      for (const row of rows) {
+        try {
+          const payloadXml = String(row.payload_xml);
+          const classified = classifyLibraryPayload(
+            asLibraryType(row.library_type),
+            parseRawXmlDocument(payloadXml).root,
+          );
+          if (
+            classified.supportStatus !== 'supported'
+            || classified.rawHash !== String(row.raw_hash)
+          ) continue;
+          this.database.prepare(`
+            UPDATE library_item_payloads
+            SET object_type = ?, support_status = 'supported',
+                support_reason_code = NULL, support_message = NULL,
+                preview_json = ?, dependency_json = ?,
+                metadata_revision = metadata_revision + 1
+            WHERE node_id = ?
+          `).run(
+            classified.objectType,
+            JSON.stringify(classified.preview),
+            JSON.stringify(classified.dependencies),
+            String(row.id),
+          );
+          this.database.prepare(`
+            UPDATE library_nodes
+            SET revision = revision + 1, updated_at = ?
+            WHERE id = ?
+          `).run(now, String(row.id));
+          updated += 1;
+        } catch {
+          // Preserved unsupported payloads remain untouched when they cannot be classified safely.
+        }
+      }
+      if (updated > 0) this.incrementContentRevision();
+    });
   }
 
   getRoot(libraryType: LibraryType): RepositoryNode {

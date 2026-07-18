@@ -30,8 +30,6 @@ import type {
   LibraryDraftShutdownPreview,
   ProjectLibraryUsage,
   ProjectLibraryDeletePreview,
-  LibraryMigrationSummary,
-  LibraryImportHistoryEntry,
   ManualLibraryImportPreview,
   ManualLibraryImportResult,
   LibraryResult,
@@ -76,7 +74,6 @@ export class UnifiedLibraryService {
   private client: UnifiedLibraryRepositoryClient | null = null;
   private editorSessions: UnifiedLibraryEditorSessionService | null = null;
   private importExport: UnifiedLibraryImportExportService | null = null;
-  private lastMigrationSummary: LibraryMigrationSummary | null = null;
   private recoveryPromise: Promise<LibraryResult<LibraryServiceSnapshot>> | null = null;
   private activeOperation: LibraryServiceOperationSnapshot | null = null;
   private context: LibraryContextSnapshot = { selectedType: 'instrument', target: null };
@@ -130,12 +127,12 @@ export class UnifiedLibraryService {
         const stateStore = new LibraryMigrationStateStore(this.options.migrationStatePath);
         migrationState = stateStore.load().legacyMigrationState;
         this.updateSnapshot({ phase: 'migrating', migrationState, writable: true });
-        const report = await this.importExport
-          .runAutomaticMigration(this.options.legacyConfigurationDirectory, stateStore);
-        this.lastMigrationSummary = report;
+        await this.importExport.runAutomaticMigration(
+          this.options.legacyConfigurationDirectory,
+          stateStore,
+        );
         migrationState = stateStore.load().legacyMigrationState;
         repository = await this.client.getSnapshot();
-        this.events.emit('migration', report);
       }
       this.updateSnapshot({
         phase: 'ready',
@@ -742,20 +739,6 @@ export class UnifiedLibraryService {
     }
   }
 
-  getMigrationSummary(): LibraryMigrationSummary | null {
-    return this.lastMigrationSummary ? { ...this.lastMigrationSummary, sources: [...this.lastMigrationSummary.sources] } : null;
-  }
-
-  async getImportHistory(limit = 100): Promise<LibraryResult<LibraryImportHistoryEntry[]>> {
-    const client = this.getReadyClient();
-    if (!client) return this.notReady();
-    try {
-      return { ok: true, value: await client.listImportHistory(limit) };
-    } catch (error) {
-      return this.failureResult(error);
-    }
-  }
-
   async previewManualImport(paths: readonly string[]): Promise<LibraryResult<ManualLibraryImportPreview>> {
     if (!this.importExport) return this.notReady();
     try {
@@ -772,20 +755,6 @@ export class UnifiedLibraryService {
       if (this.client) {
         const snapshot = await this.refreshRepositorySnapshot(this.client);
         this.publishChanged({ contentRevision: snapshot.contentRevision, cause: 'import', requiresFullRefresh: true });
-      }
-      return { ok: true, value };
-    } catch (error) {
-      return this.failureResult(error);
-    }
-  }
-
-  async undoManualImport(batchId: string): Promise<LibraryResult<readonly string[]>> {
-    if (!this.importExport) return this.notReady();
-    try {
-      const value = await this.importExport.undoManualImport(batchId);
-      if (this.client) {
-        const snapshot = await this.refreshRepositorySnapshot(this.client);
-        this.publishChanged({ contentRevision: snapshot.contentRevision, cause: 'importUndo', requiresFullRefresh: true });
       }
       return { ok: true, value };
     } catch (error) {
@@ -811,11 +780,6 @@ export class UnifiedLibraryService {
     } catch (error) {
       return this.failureResult(error);
     }
-  }
-
-  onMigrationSummary(listener: (summary: LibraryMigrationSummary) => void): () => void {
-    this.events.on('migration', listener);
-    return () => this.events.off('migration', listener);
   }
 
   retryRecovery(): Promise<LibraryResult<LibraryServiceSnapshot>> {
@@ -915,13 +879,20 @@ export class UnifiedLibraryService {
   async beginLibraryDrag(
     request: BeginLibraryDragRequest,
   ): Promise<LibraryResult<LibraryDragDescriptor>> {
+    const descriptor = this.dragSessions.begin(
+      request.key,
+      request.revision,
+      request.dragSessionId,
+    );
     try {
       const currentRevision = await this.getCurrentSourceRevision(request.key);
       if (String(currentRevision) !== String(request.revision)) {
+        this.dragSessions.discard(request.dragSessionId);
         return { ok: false, error: createLibraryServiceError('source-changed', 'The library item changed before dragging began.', true) };
       }
-      return { ok: true, value: this.dragSessions.begin(request.key, request.revision) };
+      return { ok: true, value: descriptor };
     } catch (error) {
+      this.dragSessions.discard(request.dragSessionId);
       return this.failureResult(error);
     }
   }
@@ -1096,7 +1067,9 @@ export class UnifiedLibraryService {
       if (String(revision) !== String(source.revision)) throw new Error('Library source changed before transfer');
       return { key, revision };
     }
-    const session = this.dragSessions.peek(reference.dragSessionId);
+    const session = consume
+      ? this.dragSessions.peek(reference.dragSessionId)
+      : this.dragSessions.claim(reference.dragSessionId);
     if (!session) throw new Error('Drag session expired');
     const currentRevision = await this.getCurrentSourceRevision(session.key);
     return consume

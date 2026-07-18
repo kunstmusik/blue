@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
+import { classifyLibraryPayload, parseRawXmlDocument, stableTextHash } from '@blue/data';
 import { UnifiedLibraryRepository } from './repository';
+import { createUnifiedLibraryTestDirectory } from './test-helpers';
 
 const ITEM_PAYLOAD = {
   embeddedName: 'Pad',
@@ -58,6 +60,50 @@ describe('UnifiedLibraryRepository foundation', () => {
       expect(repository.getNode(item.id).displayName).toBe('Pad');
     } finally {
       repository.close();
+    }
+  });
+
+  it('promotes unchanged Java-qualified built-ins when support becomes available', () => {
+    const directory = createUnifiedLibraryTestDirectory('blue-library-reclassify-');
+    const payloadXml = '<soundObject type="blue.soundObject.Sound"><name>Playable Sound</name><instrument type="blue.orchestra.BlueSynthBuilder"><name>Embedded</name><graphicInterface/><parameterList/><opcodeList/></instrument></soundObject>';
+    const classified = classifyLibraryPayload('soundObject', parseRawXmlDocument(payloadXml).root);
+    expect(classified).toMatchObject({ supportStatus: 'supported', rawHash: stableTextHash(payloadXml) });
+    try {
+      const initial = UnifiedLibraryRepository.open(directory.databasePath);
+      const root = initial.getRoot('soundObject');
+      const item = initial.createItem({
+        libraryType: 'soundObject',
+        parentId: root.id,
+        displayName: 'Playable Sound',
+        payload: {
+          embeddedName: 'Playable Sound',
+          objectType: 'blue.soundObject.Sound',
+          supportStatus: 'unsupported',
+          supportReasonCode: 'unknown-type',
+          supportMessage: 'Unsupported before upgrade',
+          payloadXml,
+          rawHash: stableTextHash(payloadXml),
+          canonicalContentHash: stableTextHash(payloadXml),
+          serializerRevision: null,
+          preview: {},
+          dependencies: {},
+          metadataRevision: 1,
+        },
+      });
+      initial.close();
+
+      const upgraded = UnifiedLibraryRepository.open(directory.databasePath);
+      expect(upgraded.getItemPayload(item.id)).toMatchObject({
+        supportStatus: 'supported',
+        supportReasonCode: null,
+        supportMessage: null,
+        payloadXml,
+        metadataRevision: 2,
+      });
+      expect(upgraded.getNode(item.id).revision).toBe(item.revision + 1);
+      upgraded.close();
+    } finally {
+      directory.cleanup();
     }
   });
 });

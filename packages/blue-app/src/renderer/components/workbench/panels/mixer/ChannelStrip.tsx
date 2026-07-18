@@ -13,6 +13,7 @@ import type {
   MixerSnapshot,
   ProjectEffectRef,
 } from '../../../../../shared/project-editor';
+import { getLibraryTransferSourceType } from '../../../../../shared/unified-library';
 import {
   applyEffectEditablePatchToEffect,
   createEffectEditorSnapshot,
@@ -26,7 +27,9 @@ import {
 import EffectEditorPanel from '../../../effect-editor/EffectEditorPanel';
 import { createDefaultEffectXml } from '../../../../utils/program-settings-defaults';
 import EffectsChainContextMenu from './EffectsChainContextMenu';
-import { LibraryBlockDropMarker } from '../../../libraries/LibraryDropMarker';
+import { LibraryBlockDropMarker, LibraryDropZone } from '../../../libraries/LibraryDropMarker';
+import { useLibraryStore } from '../../../../stores/library-store';
+import { isTextEditingTarget } from '../../../../hooks/use-keyboard-shortcuts';
 
 const MIXER_SLIDER_WIDTH = 32;
 const MIXER_TRACK_W = 4;
@@ -260,6 +263,34 @@ function ChainList({
   projectRevision: number;
 }): React.ReactElement {
   const [selectedIndex, setSelectedIndex] = useState(-1);
+  const libraryClipboard = useLibraryStore((state) => state.clipboard);
+  const transferLibraryItem = useLibraryStore((state) => state.transferToProject);
+  const clearLibraryClipboard = useLibraryStore((state) => state.cancelClipboard);
+  const chainRevision = useMemo(
+    () => entries.map((candidate) => candidate.entryId).join(':'),
+    [entries],
+  );
+  const libraryEffectAvailable = libraryClipboard
+    ? getLibraryTransferSourceType(libraryClipboard.source) === 'effect'
+    : false;
+  const pasteLibraryEffect = useCallback((insertIndex: number) => {
+    if (
+      !libraryClipboard
+      || getLibraryTransferSourceType(libraryClipboard.source) !== 'effect'
+    ) return;
+    void transferLibraryItem(
+      { kind: 'clipboard', source: libraryClipboard.source },
+      {
+        kind: 'effectChain',
+        projectSessionId,
+        projectRevision,
+        channelId: channel.id,
+        chain,
+        insertIndex,
+        chainRevision,
+      },
+    );
+  }, [chain, chainRevision, channel.id, libraryClipboard, projectRevision, projectSessionId, transferLibraryItem]);
 
   const handleItemClick = useCallback((index: number) => {
     setSelectedIndex((prev) => (prev === index ? -1 : index));
@@ -280,7 +311,15 @@ function ChainList({
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
-      if (e.key === 'ArrowDown') {
+      if (
+        (e.metaKey || e.ctrlKey)
+        && e.key.toLocaleLowerCase() === 'v'
+        && libraryEffectAvailable
+        && !isTextEditingTarget(e.target)
+      ) {
+        e.preventDefault();
+        pasteLibraryEffect(selectedIndex >= 0 ? selectedIndex + 1 : entries.length);
+      } else if (e.key === 'ArrowDown') {
         e.preventDefault();
         setSelectedIndex((prev) => Math.min(prev + 1, entries.length - 1));
       } else if (e.key === 'ArrowUp') {
@@ -290,7 +329,7 @@ function ChainList({
         handleItemDoubleClick(selectedIndex);
       }
     },
-    [entries.length, selectedIndex, handleItemDoubleClick],
+    [entries.length, handleItemDoubleClick, libraryEffectAvailable, pasteLibraryEffect, selectedIndex],
   );
 
   return (
@@ -307,6 +346,9 @@ function ChainList({
         onOpenEffectEditor={onOpenEffectInterface}
         onOpenSendEditor={onOpenSendEditor}
         onOpenEditEffectDialog={onOpenEditEffectDialog}
+        canPasteLibraryEffect={libraryEffectAvailable}
+        onPasteLibraryEffect={() => pasteLibraryEffect(selectedIndex >= 0 ? selectedIndex + 1 : entries.length)}
+        onProjectClipboardCapture={clearLibraryClipboard}
       >
         <div
           className="mixer-chain-list"
@@ -325,19 +367,35 @@ function ChainList({
                   channelId: channel.id,
                   chain,
                   insertIndex: index,
-                  chainRevision: entries.map((candidate) => candidate.entryId).join(':'),
+                  chainRevision,
                 }}
                 label={`Insert Effect before ${entry.kind === 'effect' ? entry.name : entry.sendChannel}`}
               />
-              <div
-                className={`mixer-chain-entry-wrapper ${index === selectedIndex ? 'mixer-chain-entry-wrapper--selected' : ''}`}
-                onClick={() => handleItemClick(index)}
-                onDoubleClick={() => handleItemDoubleClick(index)}
-                role="option"
-                aria-selected={index === selectedIndex}
+              <LibraryDropZone
+                target={{
+                  kind: 'effectChain',
+                  projectSessionId,
+                  projectRevision,
+                  channelId: channel.id,
+                  chain,
+                  insertIndex: index + 1,
+                  chainRevision,
+                }}
               >
-                <ChainEntry entry={entry} />
-              </div>
+                {({ active, dropProps }) => (
+                  <div
+                    {...dropProps}
+                    data-library-drop-target="effect-row"
+                    className={`mixer-chain-entry-wrapper ${index === selectedIndex ? 'mixer-chain-entry-wrapper--selected' : ''} ${active ? 'ring-1 ring-inset ring-app-accent' : ''}`}
+                    onClick={() => handleItemClick(index)}
+                    onDoubleClick={() => handleItemDoubleClick(index)}
+                    role="option"
+                    aria-selected={index === selectedIndex}
+                  >
+                    <ChainEntry entry={entry} />
+                  </div>
+                )}
+              </LibraryDropZone>
               </React.Fragment>
             ))}
           <LibraryBlockDropMarker
@@ -348,7 +406,7 @@ function ChainList({
               channelId: channel.id,
               chain,
               insertIndex: entries.length,
-              chainRevision: entries.map((candidate) => candidate.entryId).join(':'),
+              chainRevision,
             }}
             label={`Insert Effect at end of ${label} chain`}
           />

@@ -21,6 +21,9 @@ interface EffectsChainContextMenuProps {
   onOpenEffectEditor: (entry: MixerEffectEntrySnapshot) => void;
   onOpenSendEditor: (entry: MixerSendEntrySnapshot, chain: MixerChainKind) => void;
   onOpenEditEffectDialog: (entry: MixerEffectEntrySnapshot, chain: MixerChainKind) => void;
+  canPasteLibraryEffect: boolean;
+  onPasteLibraryEffect: () => void;
+  onProjectClipboardCapture: () => void;
 }
 
 let bufferedEntry: MixerChainEntrySnapshot | null = null;
@@ -57,6 +60,9 @@ export default function EffectsChainContextMenu({
   onOpenEffectEditor,
   onOpenSendEditor,
   onOpenEditEffectDialog,
+  canPasteLibraryEffect,
+  onPasteLibraryEffect,
+  onProjectClipboardCapture,
 }: EffectsChainContextMenuProps): React.ReactElement {
   const selected = selectedIndex >= 0 && selectedIndex < entries.length ? entries[selectedIndex] : null;
   const isEffect = selected?.kind === 'effect';
@@ -184,6 +190,7 @@ export default function EffectsChainContextMenu({
             disabled={!hasSelection}
             onSelect={() => {
               if (!selected) return;
+              onProjectClipboardCapture();
               bufferedEntry = { ...selected };
               onPatch({
                 type: 'removeChainEntry',
@@ -199,6 +206,7 @@ export default function EffectsChainContextMenu({
             disabled={!hasSelection}
             onSelect={() => {
               if (!selected) return;
+              onProjectClipboardCapture();
               bufferedEntry = { ...selected };
               onPatch({
                 type: 'copyChainEntry',
@@ -211,8 +219,12 @@ export default function EffectsChainContextMenu({
             Copy
           </MenuItem>
           <MenuItem
-            disabled={bufferedEntry == null || bufferedEntry.kind !== 'effect'}
+            disabled={!canPasteLibraryEffect && (bufferedEntry == null || bufferedEntry.kind !== 'effect')}
             onSelect={() => {
+              if (canPasteLibraryEffect) {
+                onPasteLibraryEffect();
+                return;
+              }
               if (bufferedEntry?.kind === 'effect') {
                 onPatch({
                   type: 'addEffectFromLibrary',

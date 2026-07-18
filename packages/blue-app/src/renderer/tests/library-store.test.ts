@@ -76,6 +76,43 @@ const openLibraryItemEditor = vi.fn(async () => ({ ok: true as const, value: {
   pinned: false,
   status: 'ready' as const,
 } }));
+const previewLibraryTransfer = vi.fn(async () => ({
+  ok: true as const,
+  value: {
+    previewToken: 'transfer-preview',
+    item: {
+      key: item.key!,
+      displayName: item.displayName,
+      libraryType: 'instrument' as const,
+      scope: 'user' as const,
+      objectType: item.objectType!,
+      supportStatus: 'supported' as const,
+      supportMessage: null,
+      fields: {},
+      dependencies: { itemOwned: [], unresolvedExternal: [] },
+    },
+    target: {
+      kind: 'orchestra' as const,
+      projectSessionId: 7,
+      projectRevision: 2,
+      insertIndex: 0,
+    },
+    requestedMode: 'independent' as const,
+    allowedModes: ['independent'] as const,
+    canApply: true,
+    blockingReasons: [],
+  },
+}));
+const applyLibraryTransfer = vi.fn(async () => ({
+  ok: true as const,
+  value: {
+    projectSessionId: 7,
+    projectRevision: 3,
+    libraryType: 'instrument' as const,
+    insertedIdentity: 'instrument-2',
+    message: 'Instrument added.',
+  },
+}));
 
 beforeEach(() => {
   vi.useFakeTimers();
@@ -84,6 +121,8 @@ beforeEach(() => {
   browseLibraries.mockClear();
   searchLibraries.mockClear();
   openLibraryItemEditor.mockClear();
+  previewLibraryTransfer.mockClear();
+  applyLibraryTransfer.mockClear();
   const applyLibraryMutation = vi.fn(async () => ({
     ok: true as const,
     value: { contentRevision: 4, affectedNodes: [] },
@@ -94,6 +133,8 @@ beforeEach(() => {
     browseLibraries,
     searchLibraries,
     openLibraryItemEditor,
+    previewLibraryTransfer,
+    applyLibraryTransfer,
     onLibraryEditorSessionChanged: vi.fn(() => () => undefined),
     applyLibraryMutation,
     prepareLibraryMutation: vi.fn(async (request) => ({
@@ -122,17 +163,38 @@ beforeEach(() => {
 });
 
 describe('library store', () => {
-  it('loads user roots without a project and applies source/type filters', async () => {
+  it('retains pinned or dirty sessions while pruning a replaced clean preview', async () => {
+    const cleanPreview = await useLibraryEditorStore.getState().open(item.key!);
+    expect(cleanPreview?.sessionId).toBe('session-1');
+
+    useLibraryEditorStore.setState((state) => ({
+      sessions: {
+        ...state.sessions,
+        pinned: { ...cleanPreview!, sessionId: 'pinned', pinned: true },
+        dirty: { ...cleanPreview!, sessionId: 'dirty', dirty: true, pinned: true },
+      },
+    }));
+    openLibraryItemEditor.mockResolvedValueOnce({
+      ok: true,
+      value: { ...cleanPreview!, sessionId: 'session-2' },
+    });
+
+    await useLibraryEditorStore.getState().open({
+      scope: 'user', libraryType: 'instrument', nodeId: 'item-2',
+    });
+
+    expect(Object.keys(useLibraryEditorStore.getState().sessions).sort())
+      .toEqual(['dirty', 'pinned', 'session-2']);
+  });
+
+  it('loads only user roots without a project and applies the type filter', async () => {
     await useLibraryStore.getState().initialize();
     expect(browseLibraries).toHaveBeenCalledTimes(4);
-    expect(useLibraryStore.getState().projectAvailable).toBe(false);
     expect(useLibraryStore.getState().nodesByType.instrument).toEqual([item]);
 
     useLibraryStore.getState().setTypeFilter('instrument');
-    useLibraryStore.getState().setSourceFilter('user');
     expect(useLibraryStore.getState()).toMatchObject({
       typeFilter: 'instrument',
-      sourceFilter: 'user',
     });
   });
 
@@ -153,7 +215,7 @@ describe('library store', () => {
     expect(useLibraryStore.getState().selectedKey).toEqual(item.key);
   });
 
-  it('refreshes on change events and updates no-project state from snapshots', async () => {
+  it('refreshes on library and project snapshot changes', async () => {
     await useLibraryStore.getState().initialize();
     changedListener?.({
       contentRevision: 4,
@@ -164,7 +226,7 @@ describe('library store', () => {
     expect(browseLibraries.mock.calls.length).toBeGreaterThan(4);
 
     snapshotListener?.({ ...snapshot, projectSessionId: 9 });
-    expect(useLibraryStore.getState().projectAvailable).toBe(true);
+    expect(useLibraryStore.getState().snapshot?.projectSessionId).toBe(9);
   });
 
   it('captures revision-bound copy/cut state and cancels without persistent target state', async () => {
@@ -229,5 +291,85 @@ describe('library store', () => {
     });
     expect(useLibraryStore.getState().clipboard).toBeNull();
     expect(useLibraryStore.getState().deletePreview).toBeNull();
+  });
+
+  it('applies a one-mode project transfer without ever publishing modal state', async () => {
+    const publishedPreviews: unknown[] = [];
+    const unsubscribe = useLibraryStore.subscribe((state) => {
+      if (state.transferPreview) publishedPreviews.push(state.transferPreview);
+    });
+
+    const applied = await useLibraryStore.getState().transferToProject(
+      { kind: 'clipboard', source: { kind: 'userNode', libraryType: 'instrument', nodeId: 'item-1', revision: 1 } },
+      { kind: 'orchestra', projectSessionId: 7, projectRevision: 2, insertIndex: 0 },
+    );
+
+    unsubscribe();
+    expect(applied).toBe(true);
+    expect(publishedPreviews).toEqual([]);
+    expect(applyLibraryTransfer).toHaveBeenCalledWith('transfer-preview');
+  });
+
+  it('publishes modal state only when a shared SoundObject has a real copy choice', async () => {
+    previewLibraryTransfer.mockResolvedValueOnce({
+      ok: true,
+      value: {
+        ...(await previewLibraryTransfer()).value,
+        item: {
+          ...(await previewLibraryTransfer()).value.item,
+          key: {
+            scope: 'projectShared' as const,
+            libraryType: 'soundObject' as const,
+            projectSessionId: 7,
+            locator: {
+              kind: 'soundObject' as const,
+              libraryId: 'shared-1',
+              persistedFingerprint: { canonicalHash: 'hash', displayName: 'Shared', objectType: 'GenericScore' },
+            },
+          },
+          libraryType: 'soundObject' as const,
+          scope: 'projectShared' as const,
+        },
+        target: {
+          kind: 'score' as const,
+          projectSessionId: 7,
+          projectRevision: 2,
+          location: { rootGroupId: 'root', containerPath: [], layerId: 'layer-1', startTime: 0 },
+          timeContextRevision: '2',
+        },
+        allowedModes: ['independent', 'sharedInstance'] as const,
+      },
+    });
+
+    const applied = await useLibraryStore.getState().transferToProject(
+      {
+        kind: 'clipboard',
+        source: {
+          kind: 'library',
+          key: {
+            scope: 'projectShared',
+            libraryType: 'soundObject',
+            projectSessionId: 7,
+            locator: {
+              kind: 'soundObject',
+              libraryId: 'shared-1',
+              persistedFingerprint: { canonicalHash: 'hash', displayName: 'Shared', objectType: 'GenericScore' },
+            },
+          },
+          revision: 'hash',
+        },
+      },
+      {
+        kind: 'score',
+        projectSessionId: 7,
+        projectRevision: 2,
+        location: { rootGroupId: 'root', containerPath: [], layerId: 'layer-1', startTime: 0 },
+        timeContextRevision: '2',
+      },
+    );
+
+    expect(applied).toBe(true);
+    expect(useLibraryStore.getState().transferPreview?.allowedModes).toEqual(['independent', 'sharedInstance']);
+    expect(applyLibraryTransfer).not.toHaveBeenCalled();
   });
 });

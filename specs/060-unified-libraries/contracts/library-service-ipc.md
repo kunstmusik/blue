@@ -138,6 +138,7 @@ Rules:
 - Browse/search responses never include full `payloadXml`.
 - Cursor tokens bind query/filter/parent and observed revision. A repository change returns `stale-cursor`, prompting a restart rather than mixing revisions.
 - Default and maximum limits are main-controlled; renderers cannot request unbounded payloads.
+- The Libraries panel always sends `projectSessionId: null` for search and browses only `user` parents. Project browse requests remain available only to dedicated project surfaces such as `SoundObjectLibraryTopComponent` and editor/transfer services.
 
 ## User Hierarchy Mutations
 
@@ -288,7 +289,7 @@ resolveLibraryDraftShutdown(request: LibraryDraftShutdownDecision):
 
 The current quit/project action continues only after every affected dirty session is saved or explicitly discarded. Cancel stops the outer lifecycle action.
 
-## Import, Migration, And History
+## Import And Internal Migration Audit
 
 File and directory selection happens in Electron main. The renderer receives preview tokens and sanitized path labels, not authority to read arbitrary files.
 
@@ -306,10 +307,6 @@ applyLibraryImport(request: {
 
 cancelLibraryImport(previewToken: string): Promise<void>
 
-listLibraryImportHistory(request: PageRequest): Promise<LibraryResult<ImportHistoryPage>>
-getLibraryImportReport(batchId: string): Promise<LibraryResult<CompatibilityReport>>
-previewUndoLibraryImport(batchId: string): Promise<LibraryResult<ImportUndoPreview>>
-undoLibraryImport(request: ConfirmedImportUndoRequest): Promise<LibraryResult<ImportBatchResult>>
 ```
 
 Rules:
@@ -319,7 +316,7 @@ Rules:
 - One global operation lease prevents import/import and import/export overlap.
 - Ambiguous duplicate folder paths must be resolved by stable destination IDs.
 - Exact duplicate skips and same-name aliases are shown before apply.
-- Undo eligibility is recomputed at request time; history remains available when undo is blocked.
+- Main/repository retain import-batch provenance, migration results, and conditional-undo data internally for safety and recovery. Routine renderer IPC does not expose Migration Report, Import History, or Undo History commands.
 
 ## Export
 

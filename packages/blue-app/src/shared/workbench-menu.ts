@@ -43,6 +43,14 @@ export const WORKBENCH_PANEL_REGISTRY: PanelDescriptor[] = [
     auxiliaryRailLabel: 'Libraries',
   },
   {
+    id: 'SoundObjectLibraryTopComponent',
+    title: 'SoundObject Library',
+    mode: 'properties',
+    openAtStartup: false,
+    auxiliaryGroupId: 'properties-main',
+    auxiliaryRailLabel: 'SoundObjects',
+  },
+  {
     id: 'AudioFilePlayerTopComponent',
     title: 'Audio File Player',
     mode: 'properties',

@@ -324,6 +324,7 @@ export interface LibraryDragDescriptor {
 }
 
 export interface BeginLibraryDragRequest {
+  readonly dragSessionId: string;
   readonly key: LibraryItemKey;
   readonly revision: number | string;
 }
@@ -344,6 +345,12 @@ export type LibraryTransferSource =
       readonly nodeId: string;
       readonly revision: number;
     };
+
+export function getLibraryTransferSourceType(
+  source: LibraryTransferSource,
+): LibraryType {
+  return source.kind === 'library' ? source.key.libraryType : source.libraryType;
+}
 
 export interface LibraryInteractionClipboard {
   readonly operation: 'copy' | 'cut';
@@ -471,37 +478,6 @@ export interface ProjectLibraryDeletePreview extends ProjectLibraryUsage {
   readonly requiresConfirmation: boolean;
 }
 
-export interface LibraryMigrationSourceSummary {
-  readonly libraryType: LibraryType;
-  readonly sourcePath: string;
-  readonly status: 'imported' | 'absent' | 'failed';
-  readonly folderCount: number;
-  readonly itemCount: number;
-  readonly unsupportedCount: number;
-  readonly error?: string;
-  readonly backupAvailable: boolean;
-}
-
-export interface LibraryMigrationSummary {
-  readonly batchId: string | null;
-  readonly status: 'complete' | 'partial' | 'failed' | 'skipped';
-  readonly message: string;
-  readonly sources: readonly LibraryMigrationSourceSummary[];
-  readonly startedAt: string;
-  readonly completedAt: string;
-}
-
-export interface LibraryImportHistoryEntry {
-  readonly id: string;
-  readonly mode: 'automatic' | 'manualJavaFolder' | 'manualXmlFiles';
-  readonly status: 'previewed' | 'running' | 'completed' | 'partial' | 'failed' | 'undone';
-  readonly startedAt: string;
-  readonly completedAt: string | null;
-  readonly sourceCount: number;
-  readonly counts: Readonly<Record<string, unknown>>;
-  readonly report: Readonly<Record<string, unknown>>;
-}
-
 export interface ManualImportSourcePreview {
   readonly sourcePath: string;
   readonly sourceHash: string;
@@ -606,12 +582,8 @@ export const UNIFIED_LIBRARY_PROJECT_USAGE_CHANNEL = 'unified-library:project-us
 export const UNIFIED_LIBRARY_PROJECT_DELETE_PREVIEW_CHANNEL = 'unified-library:project-delete-preview';
 export const UNIFIED_LIBRARY_PROJECT_DELETE_CHANNEL = 'unified-library:project-delete';
 export const UNIFIED_LIBRARY_PROJECT_COPY_CHANNEL = 'unified-library:project-copy';
-export const UNIFIED_LIBRARY_MIGRATION_SUMMARY_CHANNEL = 'unified-library:migration-summary';
-export const UNIFIED_LIBRARY_GET_MIGRATION_SUMMARY_CHANNEL = 'unified-library:get-migration-summary';
-export const UNIFIED_LIBRARY_HISTORY_CHANNEL = 'unified-library:history';
 export const UNIFIED_LIBRARY_IMPORT_SELECT_CHANNEL = 'unified-library:import-select';
 export const UNIFIED_LIBRARY_IMPORT_EXECUTE_CHANNEL = 'unified-library:import-execute';
-export const UNIFIED_LIBRARY_IMPORT_UNDO_CHANNEL = 'unified-library:import-undo';
 export const UNIFIED_LIBRARY_EXPORT_CURRENT_CHANNEL = 'unified-library:export-current';
 export const UNIFIED_LIBRARY_EXPORT_ALL_CHANNEL = 'unified-library:export-all';
 export const UNIFIED_LIBRARY_RECOVERY_RETRY_CHANNEL = 'unified-library:recovery-retry';
@@ -658,6 +630,7 @@ export function isLibraryDragDescriptor(value: unknown): value is LibraryDragDes
 
 export function isBeginLibraryDragRequest(value: unknown): value is BeginLibraryDragRequest {
   return isRecord(value)
+    && isNonEmptyString(value.dragSessionId)
     && isLibraryItemKey(value.key)
     && (isNonNegativeInteger(value.revision) || isNonEmptyString(value.revision));
 }

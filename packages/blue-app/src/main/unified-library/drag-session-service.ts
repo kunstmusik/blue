@@ -9,6 +9,7 @@ export interface LibraryDragSessionSource {
 interface LibraryDragSession extends LibraryDragSessionSource {
   readonly expiresAt: number;
   readonly onCancel?: () => void;
+  claimed: boolean;
 }
 
 export class LibraryDragSessionService {
@@ -22,14 +23,15 @@ export class LibraryDragSessionService {
   begin(
     key: LibraryItemKey,
     revision: number | string,
+    dragSessionId: string = randomUUID(),
     onCancel?: () => void,
   ): LibraryDragDescriptor {
-    const dragSessionId = randomUUID();
     this.sessions.set(dragSessionId, {
       key,
       revision,
       expiresAt: this.now() + this.ttlMs,
       onCancel,
+      claimed: false,
     });
     return { dragSessionId, libraryType: key.libraryType };
   }
@@ -55,6 +57,16 @@ export class LibraryDragSessionService {
     return { key: session.key, revision: session.revision };
   }
 
+  claim(dragSessionId: string): LibraryDragSessionSource {
+    const session = this.sessions.get(dragSessionId);
+    if (!session || session.expiresAt <= this.now()) {
+      this.sessions.delete(dragSessionId);
+      throw new Error('Drag session expired');
+    }
+    session.claimed = true;
+    return { key: session.key, revision: session.revision };
+  }
+
   consume(dragSessionId: string, currentRevision: number | string): LibraryDragSessionSource {
     const source = this.resolve(dragSessionId, currentRevision);
     this.sessions.delete(dragSessionId);
@@ -62,6 +74,12 @@ export class LibraryDragSessionService {
   }
 
   cancel(dragSessionId: string): void {
+    const session = this.sessions.get(dragSessionId);
+    if (session?.claimed) return;
+    this.discard(dragSessionId);
+  }
+
+  discard(dragSessionId: string): void {
     const session = this.sessions.get(dragSessionId);
     this.sessions.delete(dragSessionId);
     session?.onCancel?.();

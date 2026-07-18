@@ -5,7 +5,7 @@ import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useIPCListeners } from '../hooks/use-ipc-listeners';
-import { useProjectStore } from '../stores/project-store';
+import { getProjectDocumentRevision, useProjectStore } from '../stores/project-store';
 import { usePlaybackStore } from '../stores/playback-store';
 import { useUIStore } from '../stores/ui-store';
 import { useSettingsStore } from '../stores/settings-store';
@@ -260,6 +260,7 @@ describe('useIPCListeners', () => {
     });
 
     expect(useProjectStore.getState().title).toBe('After freeze');
+    expect(getProjectDocumentRevision()).toBe(2);
   });
 
   it('ignores canonical project updates from a stale session', () => {

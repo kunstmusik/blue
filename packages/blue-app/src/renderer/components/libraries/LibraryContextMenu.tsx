@@ -1,5 +1,9 @@
 import * as ContextMenu from '@radix-ui/react-context-menu';
-import type { LibraryBrowseNode, LibraryInteractionClipboard } from '../../../shared/unified-library';
+import {
+  getLibraryTransferSourceType,
+  type LibraryBrowseNode,
+  type LibraryInteractionClipboard,
+} from '../../../shared/unified-library';
 
 interface LibraryContextMenuProps {
   node: LibraryBrowseNode;
@@ -14,7 +18,7 @@ interface LibraryContextMenuProps {
   onCopyToUser?: (node: LibraryBrowseNode) => void;
 }
 
-const ITEM_CLASS = 'flex cursor-default select-none items-center rounded px-2 py-1.5 text-xs text-app-text outline-none data-[highlighted]:bg-app-selection data-[disabled]:opacity-40';
+const ITEM_CLASS = 'editor-context-menu__item';
 
 export function LibraryContextMenu({
   node,
@@ -33,7 +37,7 @@ export function LibraryContextMenu({
   const pasteCompatible = Boolean(
     clipboard
     && clipboard.source.kind === 'userNode'
-    && clipboard.source.libraryType === node.libraryType
+    && getLibraryTransferSourceType(clipboard.source) === node.libraryType
     && userOwned
     && canContainChildren,
   );
@@ -43,7 +47,7 @@ export function LibraryContextMenu({
       <ContextMenu.Portal>
         <ContextMenu.Content
           aria-label={`${node.displayName} commands`}
-          className="z-[1000] min-w-40 rounded border border-app-border bg-app-panel p-1 shadow-xl"
+          className="editor-context-menu z-[1000] min-w-40"
           collisionPadding={8}
         >
           {canContainChildren && userOwned && onCreateFolder && (
@@ -55,7 +59,7 @@ export function LibraryContextMenu({
           {userOwned && node.nodeKind !== 'root' && onCut && (
             <ContextMenu.Item className={ITEM_CLASS} onSelect={() => onCut(node)}>Cut</ContextMenu.Item>
           )}
-          {userOwned && node.nodeKind !== 'root' && onCopy && (
+          {node.nodeKind === 'item' && onCopy && (
             <ContextMenu.Item className={ITEM_CLASS} onSelect={() => onCopy(node)}>Copy</ContextMenu.Item>
           )}
           {onPaste && (
@@ -73,7 +77,7 @@ export function LibraryContextMenu({
           )}
           {onDelete && node.nodeKind !== 'root' && (
             <>
-              <ContextMenu.Separator className="my-1 h-px bg-app-border" />
+              <ContextMenu.Separator className="editor-context-menu__separator" />
               <ContextMenu.Item className={`${ITEM_CLASS} text-red-300`} onSelect={() => onDelete(node)}>Delete…</ContextMenu.Item>
             </>
           )}

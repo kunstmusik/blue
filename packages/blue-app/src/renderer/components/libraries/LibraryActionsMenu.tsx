@@ -7,14 +7,11 @@ interface LibraryActionsMenuProps {
   onImport: () => void;
   onExportCurrent: () => void;
   onExportAll: () => void;
-  onHistory: () => void;
-  hasMigrationReport?: boolean;
-  onMigrationReport?: () => void;
 }
 
-const ITEM_CLASS = 'flex cursor-default select-none items-center rounded px-2 py-1.5 text-xs text-app-text outline-none data-[highlighted]:bg-app-selection data-[disabled]:opacity-40';
+const ITEM_CLASS = 'editor-context-menu__item';
 
-export function LibraryActionsMenu({ selectedType, onImport, onExportCurrent, onExportAll, onHistory, hasMigrationReport = false, onMigrationReport }: LibraryActionsMenuProps): React.ReactElement {
+export function LibraryActionsMenu({ selectedType, onImport, onExportCurrent, onExportAll }: LibraryActionsMenuProps): React.ReactElement {
   return (
     <DropdownMenu.Root>
       <DropdownMenu.Trigger asChild>
@@ -28,7 +25,7 @@ export function LibraryActionsMenu({ selectedType, onImport, onExportCurrent, on
         </button>
       </DropdownMenu.Trigger>
       <DropdownMenu.Portal>
-        <DropdownMenu.Content align="end" sideOffset={4} collisionPadding={8} className="z-[1000] min-w-44 rounded border border-app-border bg-app-panel p-1 shadow-xl">
+        <DropdownMenu.Content align="end" sideOffset={4} collisionPadding={8} className="editor-context-menu z-[1000] min-w-44">
           <DropdownMenu.Item className={ITEM_CLASS} onSelect={onImport}>Import XML…</DropdownMenu.Item>
           <DropdownMenu.Item
             className={ITEM_CLASS}
@@ -37,11 +34,6 @@ export function LibraryActionsMenu({ selectedType, onImport, onExportCurrent, on
             onSelect={onExportCurrent}
           >Export Current…</DropdownMenu.Item>
           <DropdownMenu.Item className={ITEM_CLASS} onSelect={onExportAll}>Export All…</DropdownMenu.Item>
-          <DropdownMenu.Separator className="my-1 h-px bg-app-border" />
-          <DropdownMenu.Item className={ITEM_CLASS} onSelect={onHistory}>Import History…</DropdownMenu.Item>
-          {hasMigrationReport && onMigrationReport && (
-            <DropdownMenu.Item className={ITEM_CLASS} onSelect={onMigrationReport}>Migration Report…</DropdownMenu.Item>
-          )}
         </DropdownMenu.Content>
       </DropdownMenu.Portal>
     </DropdownMenu.Root>

@@ -82,6 +82,18 @@ describe('legacy library envelope codec', () => {
     }
   });
 
+  it('recognizes Java-qualified built-in Sound objects as supported', () => {
+    const plan = parseLegacyLibraryDocument(
+      '<soundObjectLibrary><category categoryName="SoundObjects"><soundObject type="blue.soundObject.Sound"><name>Playable Sound</name><instrument type="blue.orchestra.BlueSynthBuilder"><name>Embedded</name><graphicInterface/><parameterList/><opcodeList/></instrument></soundObject></category></soundObjectLibrary>',
+    );
+    const item = plan.root.children[0];
+    expect(item?.kind).toBe('item');
+    if (item?.kind === 'item') {
+      expect(item.payload.objectType).toBe('blue.soundObject.Sound');
+      expect(item.payload.supportStatus).toBe('supported');
+    }
+  });
+
   it('reparses representative Java-generated compatibility fixtures without losing hierarchy or raw unsupported leaves', () => {
     for (const fixture of JAVA_COMPATIBILITY_LIBRARY_FIXTURES) {
       const original = parseLegacyLibraryDocument(fixture.xml);

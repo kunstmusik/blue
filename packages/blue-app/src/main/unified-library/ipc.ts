@@ -22,12 +22,8 @@ import {
   UNIFIED_LIBRARY_PROJECT_DELETE_CHANNEL,
   UNIFIED_LIBRARY_PROJECT_DELETE_PREVIEW_CHANNEL,
   UNIFIED_LIBRARY_PROJECT_USAGE_CHANNEL,
-  UNIFIED_LIBRARY_GET_MIGRATION_SUMMARY_CHANNEL,
-  UNIFIED_LIBRARY_HISTORY_CHANNEL,
-  UNIFIED_LIBRARY_MIGRATION_SUMMARY_CHANNEL,
   UNIFIED_LIBRARY_IMPORT_SELECT_CHANNEL,
   UNIFIED_LIBRARY_IMPORT_EXECUTE_CHANNEL,
-  UNIFIED_LIBRARY_IMPORT_UNDO_CHANNEL,
   UNIFIED_LIBRARY_EXPORT_CURRENT_CHANNEL,
   UNIFIED_LIBRARY_EXPORT_ALL_CHANNEL,
   UNIFIED_LIBRARY_RECOVERY_RETRY_CHANNEL,
@@ -232,10 +228,6 @@ export function registerUnifiedLibraryIpc(options: UnifiedLibraryIpcOptions): ()
       ? service.copyProjectLibraryItemToUser(value.key, value.parentId)
       : Promise.resolve({ ok: false as const, error: createLibraryServiceError('invalid-request', 'Invalid project copy request.', false) });
   });
-  ipcMain.handle(UNIFIED_LIBRARY_GET_MIGRATION_SUMMARY_CHANNEL, () => service.getMigrationSummary());
-  ipcMain.handle(UNIFIED_LIBRARY_HISTORY_CHANNEL, (_event, limit: unknown) => (
-    service.getImportHistory(typeof limit === 'number' ? limit : 100)
-  ));
   ipcMain.handle(UNIFIED_LIBRARY_IMPORT_SELECT_CHANNEL, async () => {
     const owner = getWindows().find((window) => !window.isDestroyed());
     const options: OpenDialogOptions = {
@@ -250,11 +242,6 @@ export function registerUnifiedLibraryIpc(options: UnifiedLibraryIpcOptions): ()
     typeof previewToken === 'string'
       ? service.executeManualImport(previewToken)
       : Promise.resolve({ ok: false as const, error: createLibraryServiceError('invalid-request', 'Invalid import preview.', false) })
-  ));
-  ipcMain.handle(UNIFIED_LIBRARY_IMPORT_UNDO_CHANNEL, (_event, batchId: unknown) => (
-    typeof batchId === 'string'
-      ? service.undoManualImport(batchId)
-      : Promise.resolve({ ok: false as const, error: createLibraryServiceError('invalid-request', 'Invalid import batch.', false) })
   ));
   ipcMain.handle(UNIFIED_LIBRARY_EXPORT_CURRENT_CHANNEL, async (_event, libraryType: unknown) => {
     if (!isLibraryType(libraryType)) return { ok: false as const, error: createLibraryServiceError('invalid-request', 'Invalid library type.', false) };
@@ -307,16 +294,12 @@ export function registerUnifiedLibraryIpc(options: UnifiedLibraryIpcOptions): ()
   const removeEditor = service.onEditorSession((session) => {
     send(UNIFIED_LIBRARY_EDITOR_CHANGED_CHANNEL, session);
   });
-  const removeMigration = service.onMigrationSummary((summary) => {
-    send(UNIFIED_LIBRARY_MIGRATION_SUMMARY_CHANNEL, summary);
-  });
 
   return () => {
     removeSnapshot();
     removeChanged();
     removeContext();
     removeEditor();
-    removeMigration();
     ipcMain.removeHandler(UNIFIED_LIBRARY_GET_SNAPSHOT_CHANNEL);
     ipcMain.removeHandler(UNIFIED_LIBRARY_BROWSE_CHANNEL);
     ipcMain.removeHandler(UNIFIED_LIBRARY_SEARCH_CHANNEL);
@@ -344,11 +327,8 @@ export function registerUnifiedLibraryIpc(options: UnifiedLibraryIpcOptions): ()
     ipcMain.removeHandler(UNIFIED_LIBRARY_PROJECT_DELETE_PREVIEW_CHANNEL);
     ipcMain.removeHandler(UNIFIED_LIBRARY_PROJECT_DELETE_CHANNEL);
     ipcMain.removeHandler(UNIFIED_LIBRARY_PROJECT_COPY_CHANNEL);
-    ipcMain.removeHandler(UNIFIED_LIBRARY_GET_MIGRATION_SUMMARY_CHANNEL);
-    ipcMain.removeHandler(UNIFIED_LIBRARY_HISTORY_CHANNEL);
     ipcMain.removeHandler(UNIFIED_LIBRARY_IMPORT_SELECT_CHANNEL);
     ipcMain.removeHandler(UNIFIED_LIBRARY_IMPORT_EXECUTE_CHANNEL);
-    ipcMain.removeHandler(UNIFIED_LIBRARY_IMPORT_UNDO_CHANNEL);
     ipcMain.removeHandler(UNIFIED_LIBRARY_EXPORT_CURRENT_CHANNEL);
     ipcMain.removeHandler(UNIFIED_LIBRARY_EXPORT_ALL_CHANNEL);
     ipcMain.removeHandler(UNIFIED_LIBRARY_RECOVERY_RETRY_CHANNEL);

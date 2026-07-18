@@ -156,11 +156,11 @@ For each traditional filename:
 
 If no recognized primary files exist, initialize an empty usable store, record `skipped`, and retain manual import. `skipped` or `failed` never silently retries at later startup.
 
-## Import History And Undo
+## Internal Import Audit
 
-Every automatic/manual apply has one stable batch identity and one source record per file. History records counts, diagnostics, aliases, duplicate skips, unsupported preservation, replacements, created node IDs, timestamps, source hashes, and final status.
+Every automatic/manual apply has one stable batch identity and one source record per file. Internal audit data records counts, diagnostics, aliases, duplicate skips, unsupported preservation, replacements, created node IDs, timestamps, source hashes, and final status. These records are repository/recovery data and are not exposed as Import History or Migration Report commands in the healthy Libraries panel.
 
-Undo is valid only when:
+The repository may retain conditional-undo validation data only while:
 
 - no source made a replacement;
 - every committed change was additive;
@@ -168,7 +168,7 @@ Undo is valid only when:
 - no batch-created folder contains later content;
 - no later move has made deletion ambiguous or unsafe.
 
-One transaction deletes batch-created items, then batch-created folders that are empty. Existing exact-duplicate nodes are never deleted. If any condition fails, history explains why undo is unavailable and performs no mutation.
+No renderer/preload IPC or normal Libraries action exposes batch undo. Existing exact-duplicate nodes are never treated as batch-created content, and retained audit data must not alter browsing or startup presentation.
 
 ## Export Contract
 
