@@ -43,6 +43,7 @@ import type { TempoMap } from '@blue/data';
 import { EngineBridge } from './engine-bridge';
 import { BlueLiveEngineSession } from './blue-live-engine';
 import { buildApplicationMenuTemplate } from './application-menu';
+import { createAppZoomController } from './app-zoom-controller';
 import { sweepStaleBlueEngineProcesses } from './engine-process-registry';
 import {
   closeEffectEditorWindow,
@@ -198,6 +199,12 @@ let currentProjectSessionId = 0;
 let currentFollowPlaybackEnabled = true;
 let currentFollowPlaybackOnStartEnabled = true;
 let lastProjectOnLoadState: ProjectOnLoadState | null = null;
+
+const appZoomController = createAppZoomController({
+  loadSnapshot: () => loadProgramSettings(),
+  saveSnapshot: (snapshot) => saveProgramSettings(snapshot),
+  getAllWindows: () => BrowserWindow.getAllWindows(),
+});
 
 interface ProjectOnLoadState {
   projectSessionId: number;
@@ -901,7 +908,9 @@ function rebuildApplicationMenu(): void {
     onRequestQuit: () => { void requestQuit(); },
     onOpenSettings: () => {
       if (mainWindow) {
-        openSettingsWindow(mainWindow);
+        openSettingsWindow(mainWindow, {
+          initialZoomFactor: appZoomController.getCurrentFactor(),
+        });
       }
     },
     onOpenEffectsLibrary: () => {
@@ -945,6 +954,9 @@ function rebuildApplicationMenu(): void {
     onRenderToDisk: () => { void handleRenderToDisk('render'); },
     onRenderToDiskAndPlay: () => { void handleRenderToDisk('play'); },
     onRenderToDiskAndOpen: () => { void handleRenderToDisk('open'); },
+    onZoomIn: () => { appZoomController.execute('zoom-in'); },
+    onZoomOut: () => { appZoomController.execute('zoom-out'); },
+    onActualSize: () => { appZoomController.execute('actual-size'); },
     onNotYetImplemented: () => { mainWindow?.webContents.send('native-menu-command', { type: 'show-not-yet-implemented' }); },
   }));
 
@@ -991,6 +1003,7 @@ function createWindow(): void {
       contextIsolation: true,
       nodeIntegration: false,
       devTools: true,
+      zoomFactor: appZoomController.getCurrentFactor(),
     },
   });
 
@@ -1071,6 +1084,7 @@ function createWindow(): void {
         preload: path.join(__dirname, '..', 'preload', 'preload.js'),
         contextIsolation: true,
         nodeIntegration: false,
+        zoomFactor: appZoomController.getCurrentFactor(),
         show: true,
         title: 'Blue',
       },
@@ -2202,7 +2216,9 @@ ipcMain.handle('blue-live:get-status', async () => {
 
 ipcMain.handle('settings:open', async () => {
   if (!mainWindow) return;
-  openSettingsWindow(mainWindow);
+  openSettingsWindow(mainWindow, {
+    initialZoomFactor: appZoomController.getCurrentFactor(),
+  });
 });
 
 // ─── Program Settings IPC Handlers ───
@@ -2213,7 +2229,11 @@ ipcMain.handle('program-settings:get', () => {
 
 ipcMain.handle('program-settings:save', (_event, snapshot: ProgramSettingsSnapshot) => {
   const previousOscPort = loadProgramSettings().osc.preferredPort;
-  const result = saveProgramSettings(snapshot);
+  // SPEC 061: prevent a stale full-Settings renderer draft from reverting a
+  // later main-owned View-menu zoom change. The Settings renderer does not
+  // expose app zoom, so the controller's current value always wins.
+  const preserved = appZoomController.preserveCurrentZoom(snapshot);
+  const result = saveProgramSettings(preserved);
   if (result.ok && result.snapshot && midiInputCoordinator) {
     midiInputCoordinator.onProgramSettingsSaved(result.snapshot);
   }
@@ -2271,7 +2291,9 @@ ipcMain.handle('window-layout:reset', () => {
 });
 
 ipcMain.handle('open-effect-editor', async (_event, request: EffectEditorRequest) => {
-  openEffectEditorWindow(mainWindow, request);
+  openEffectEditorWindow(mainWindow, request, {
+    initialZoomFactor: appZoomController.getCurrentFactor(),
+  });
 });
 
 ipcMain.handle('open-effect-interface', async (_event, request: EffectEditorRequest) => {
@@ -2289,7 +2311,9 @@ ipcMain.handle('open-effect-interface', async (_event, request: EffectEditorRequ
     }
   }
 
-  openEffectInterfaceWindow(mainWindow, request, interfaceWidth, interfaceHeight);
+  openEffectInterfaceWindow(mainWindow, request, interfaceWidth, interfaceHeight, {
+    initialZoomFactor: appZoomController.getCurrentFactor(),
+  });
 });
 
 ipcMain.handle('get-effect-editor-document', (_event, request: EffectEditorRequest) => {
@@ -2880,6 +2904,22 @@ app.whenReady().then(async () => {
       app.dock.setIcon(dockIcon);
     }
   }
+
+  // SPEC 061: initialize the app zoom controller from program settings and
+  // register a browser-window-created handler BEFORE the first BrowserWindow
+  // is created. Apply immediately and across navigation so the restored
+  // factor remains uniform for recreated/future app windows. Explicit main,
+  // Settings, effect, and Dockview popout constructors also receive the
+  // factor for a no-flash first paint.
+  appZoomController.initialize();
+  app.on('browser-window-created', (_event, window) => {
+    const applyCurrentZoom = () => {
+      appZoomController.applyToWindow(window);
+    };
+    applyCurrentZoom();
+    window.webContents.on('did-start-navigation', applyCurrentZoom);
+    window.webContents.on('did-navigate', applyCurrentZoom);
+  });
 
   createWindow();
   unifiedLibraryService = new UnifiedLibraryService(

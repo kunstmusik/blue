@@ -15,6 +15,11 @@ import {
   normalizeOscServerPreferences,
   type OscServerPreferences,
 } from './osc-control';
+import {
+  APP_ZOOM_DEFAULT_PERCENT,
+  isSupportedAppZoomPercent,
+  normalizeAppZoomPercent,
+} from './app-zoom';
 
 export type ProgramSettingsPanelId =
   | 'general'
@@ -128,6 +133,12 @@ export interface CurrentAppSettingsSnapshot {
   oscOutputHost: string;
   oscOutputPort: number;
   windowLayout: WindowLayoutSettingsSnapshot;
+  /**
+   * App-wide content-zoom percentage (SPEC 061). Integer multiple of 10 in the
+   * inclusive 50–300 range. Defaults to 100 and is normalized on load/merge.
+   * Owned by the main-process app zoom controller, not the Settings renderer.
+   */
+  appZoomPercent: number;
 }
 
 export interface ProgramSettingsSnapshot {
@@ -379,6 +390,7 @@ export function createDefaultCurrentAppSettings(): CurrentAppSettingsSnapshot {
     oscOutputHost: 'localhost',
     oscOutputPort: 0,
     windowLayout: createDefaultWindowLayoutSettings(),
+    appZoomPercent: APP_ZOOM_DEFAULT_PERCENT,
   };
 }
 
@@ -462,6 +474,14 @@ export function validateProgramSettings(
     issues.push({
       path: 'osc.preferredPort',
       message: 'Must be an integer between 1 and 65535',
+      severity: 'error',
+    });
+  }
+
+  if (!isSupportedAppZoomPercent(snapshot.appSpecific?.appZoomPercent)) {
+    issues.push({
+      path: 'appSpecific.appZoomPercent',
+      message: 'Must be an integer multiple of 10 between 50 and 300 inclusive',
       severity: 'error',
     });
   }
@@ -589,6 +609,9 @@ export function mergeWithDefaults(
     // Deep-merge the layout envelope so partial/stale layout state still
     // gets default-filled, and unrelated app-specific values are preserved.
     windowLayout: mergeWindowLayoutSettings(savedAppSpecific.windowLayout),
+    // SPEC 061: normalize the app-wide zoom percent defensively. Older files
+    // without the field, and any malformed/off-step value, default to 100.
+    appZoomPercent: normalizeAppZoomPercent(savedAppSpecific.appZoomPercent),
   };
 
   // Preserve legacy appSpecific.midiInputDevice / midiOutputDevice placeholder

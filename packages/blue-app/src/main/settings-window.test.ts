@@ -160,3 +160,37 @@ describe('settings window layout persistence', () => {
     expect(settingsWindow.setBounds).toHaveBeenCalledWith({ x: 200, y: 150, width: 700, height: 500 });
   });
 });
+
+describe('settings window declarative zoom factor (SPEC 061)', () => {
+  it('passes initialZoomFactor through to webPreferences.zoomFactor', () => {
+    const mainWindow = {} as never;
+    openSettingsWindow(mainWindow, { initialZoomFactor: 1.3 });
+
+    const settingsWindow = electronMock.instances[0]!;
+    const webPreferences = settingsWindow.options.webPreferences as Record<string, unknown>;
+    expect(webPreferences.zoomFactor).toBeCloseTo(1.3, 10);
+    expect(webPreferences.contextIsolation).toBe(true);
+    expect(webPreferences.nodeIntegration).toBe(false);
+  });
+
+  it('omits zoomFactor when initialZoomFactor is not provided', () => {
+    const mainWindow = {} as never;
+    openSettingsWindow(mainWindow);
+
+    const settingsWindow = electronMock.instances[0]!;
+    const webPreferences = settingsWindow.options.webPreferences as Record<string, unknown>;
+    expect(webPreferences.zoomFactor).toBeUndefined();
+    expect(webPreferences.contextIsolation).toBe(true);
+    expect(webPreferences.nodeIntegration).toBe(false);
+  });
+
+  it('preserves show:false and ready-to-show behavior when seeding zoom', () => {
+    const mainWindow = {} as never;
+    openSettingsWindow(mainWindow, { initialZoomFactor: 1.5 });
+
+    const settingsWindow = electronMock.instances[0]!;
+    expect(settingsWindow.options.show).toBe(false);
+    settingsWindow.triggerReadyToShow();
+    expect(settingsWindow.show).toHaveBeenCalledTimes(1);
+  });
+});

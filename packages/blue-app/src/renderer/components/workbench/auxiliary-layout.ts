@@ -769,6 +769,8 @@ export function applyAuxiliaryLayout(
 ): AuxiliaryLayoutState {
   const next = normalizeAuxiliaryLayoutState(state);
   const maximizeQueue: string[] = [];
+  const dockedSizesToRestore =
+    options?.preserveDockedSizes ?? captureAuxiliaryDockedSizes(next);
 
   if (options?.preserveDockedSizes) {
     logAuxiliaryDockedSizeDebug(
@@ -816,7 +818,14 @@ export function applyAuxiliaryLayout(
         meta: options.debugMeta,
       },
     );
-    restoreAuxiliaryDockedSizes(api, options.preserveDockedSizes);
+  }
+
+  // Dockview 5.2 can ignore initialWidth/initialHeight when inserting an
+  // auxiliary group beside a nested grid, falling back to an equal split.
+  // Reapply the canonical pixel sizes after every rebuild, including startup.
+  restoreAuxiliaryDockedSizes(api, dockedSizesToRestore);
+
+  if (options?.preserveDockedSizes) {
     logAuxiliaryDockedSizeDebug(
       `${options.debugLabel ?? 'applyAuxiliaryLayout'}: after immediate restore`,
       api,
@@ -826,14 +835,15 @@ export function applyAuxiliaryLayout(
         meta: options.debugMeta,
       },
     );
-    scheduleAuxiliaryDockedSizeRestore(
-      api,
-      options.preserveDockedSizes,
-      options.debugLabel,
-      options.debugState ?? state,
-      options.debugMeta,
-    );
   }
+
+  scheduleAuxiliaryDockedSizeRestore(
+    api,
+    dockedSizesToRestore,
+    options?.debugLabel,
+    options?.debugState ?? state,
+    options?.debugMeta,
+  );
 
   syncDockviewPanelTitles(api);
 

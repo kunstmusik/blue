@@ -8,7 +8,21 @@ import {
 let settingsWindow: BrowserWindow | null = null;
 let disposeStateHandlers: (() => void) | null = null;
 
-export function openSettingsWindow(mainWindow: BrowserWindow): void {
+export interface OpenSettingsWindowOptions {
+  /**
+   * Initial Chromium/Electron page zoom factor (`percent / 100`) applied
+   * before the Settings renderer becomes visible (SPEC 061). When omitted
+   * the controller-owned factor is still applied via the early
+   * `browser-window-created` listener, but passing it declaratively gives
+   * Settings windows the same first-paint guarantee as the main window.
+   */
+  initialZoomFactor?: number;
+}
+
+export function openSettingsWindow(
+  mainWindow: BrowserWindow,
+  options: OpenSettingsWindowOptions = {},
+): void {
   if (settingsWindow && !settingsWindow.isDestroyed()) {
     settingsWindow.focus();
     return;
@@ -34,6 +48,9 @@ export function openSettingsWindow(mainWindow: BrowserWindow): void {
       preload: path.join(__dirname, '..', 'preload', 'preload.js'),
       contextIsolation: true,
       nodeIntegration: false,
+      ...(options.initialZoomFactor !== undefined
+        ? { zoomFactor: options.initialZoomFactor }
+        : {}),
     },
   });
 

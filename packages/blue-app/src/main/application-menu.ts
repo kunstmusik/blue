@@ -41,6 +41,9 @@ export interface ApplicationMenuTemplateOptions {
   onRenderToDisk: () => void;
   onRenderToDiskAndPlay: () => void;
   onRenderToDiskAndOpen: () => void;
+  onZoomIn: () => void;
+  onZoomOut: () => void;
+  onActualSize: () => void;
   onNotYetImplemented: () => void;
 }
 
@@ -154,6 +157,26 @@ function buildProjectMenuTemplate(options: ApplicationMenuTemplateOptions): Menu
   ];
 }
 
+function buildViewMenuTemplate(options: ApplicationMenuTemplateOptions): MenuItemConstructorOptions[] {
+  return [
+    {
+      label: 'Zoom In',
+      accelerator: 'CommandOrControl+Plus',
+      click: () => options.onZoomIn(),
+    },
+    {
+      label: 'Zoom Out',
+      accelerator: 'CommandOrControl+-',
+      click: () => options.onZoomOut(),
+    },
+    {
+      label: 'Actual Size',
+      accelerator: 'CommandOrControl+0',
+      click: () => options.onActualSize(),
+    },
+  ];
+}
+
 function buildToolsMenuTemplate(options: ApplicationMenuTemplateOptions): MenuItemConstructorOptions[] {
   return [
     buildPlaceholderItem('Code Repository Editor', options),
@@ -233,6 +256,11 @@ export function buildApplicationMenuTemplate(
       { role: 'paste' },
       { role: 'selectAll' },
     ],
+  });
+
+  template.push({
+    label: 'View',
+    submenu: buildViewMenuTemplate(options),
   });
 
   template.push({

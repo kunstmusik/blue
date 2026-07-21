@@ -313,3 +313,96 @@ describe('program-settings appSpecific.windowLayout', () => {
     expect(merged.appSpecific.enginePath).toBe('/engine');
   });
 });
+
+describe('program-settings appSpecific.appZoomPercent (SPEC 061)', () => {
+  it('defaults to 100 on a fresh CurrentAppSettingsSnapshot', () => {
+    const app = createDefaultCurrentAppSettings();
+    expect(app.appZoomPercent).toBe(100);
+  });
+
+  it('seeds 100 on a fresh ProgramSettingsSnapshot without changing the settings version', () => {
+    const s = createDefaultProgramSettings('darwin');
+    expect(s.version).toBe(2);
+    expect(s.appSpecific.appZoomPercent).toBe(100);
+  });
+
+  it('mergeWithDefaults preserves a valid saved zoom percent and keeps siblings intact', () => {
+    const merged = mergeWithDefaults({
+      appSpecific: {
+        enginePath: '/engine',
+        recentFiles: ['/a.blue'],
+        windowBounds: null,
+        midiInputDevice: '',
+        midiOutputDevice: '',
+        oscInputPort: 0,
+        oscOutputHost: 'localhost',
+        oscOutputPort: 0,
+        appZoomPercent: 170,
+      } as any,
+    } as any, 'darwin');
+
+    expect(merged.appSpecific.appZoomPercent).toBe(170);
+    expect(merged.appSpecific.enginePath).toBe('/engine');
+    expect(merged.appSpecific.recentFiles).toEqual(['/a.blue']);
+    expect(merged.version).toBe(2);
+  });
+
+  it('mergeWithDefaults falls back to 100 for missing appZoomPercent while preserving other app-specific fields', () => {
+    const merged = mergeWithDefaults({
+      appSpecific: {
+        enginePath: '/engine',
+      } as any,
+    } as any, 'darwin');
+
+    expect(merged.appSpecific.appZoomPercent).toBe(100);
+    expect(merged.appSpecific.enginePath).toBe('/engine');
+  });
+
+  it('mergeWithDefaults normalizes off-step, out-of-range, and malformed values to 100', () => {
+    const cases: Array<{ input: unknown; label: string }> = [
+      { input: 49, label: 'below range' },
+      { input: 301, label: 'above range' },
+      { input: 105, label: 'off-step inside range' },
+      { input: 100.5, label: 'fractional' },
+      { input: '120', label: 'string' },
+      { input: null, label: 'null' },
+      { input: Number.NaN, label: 'NaN' },
+      { input: Number.POSITIVE_INFINITY, label: 'Infinity' },
+      { input: true, label: 'boolean' },
+    ];
+
+    for (const { input, label } of cases) {
+      const merged = mergeWithDefaults({
+        appSpecific: { appZoomPercent: input } as any,
+      } as any, 'darwin');
+      expect(merged.appSpecific.appZoomPercent, label).toBe(100);
+    }
+  });
+
+  it('validateProgramSettings flags unsupported appZoomPercent at appSpecific.appZoomPercent', () => {
+    const s = createDefaultProgramSettings('darwin');
+    (s.appSpecific as any).appZoomPercent = 105;
+    const issues = validateProgramSettings(s);
+    const issue = issues.find((i) => i.path === 'appSpecific.appZoomPercent');
+    expect(issue).toBeDefined();
+    expect(issue?.severity).toBe('error');
+  });
+
+  it('validateProgramSettings accepts every legal zoom percentage', () => {
+    for (let v = 50; v <= 300; v += 10) {
+      const s = createDefaultProgramSettings('darwin');
+      (s.appSpecific as any).appZoomPercent = v;
+      const issues = validateProgramSettings(s);
+      expect(issues.some((i) => i.path === 'appSpecific.appZoomPercent'), `value=${v}`).toBe(false);
+    }
+  });
+
+  it('mergeWithDefaults does not bump the program-settings version when filling appZoomPercent', () => {
+    const savedVersion = 2;
+    const merged = mergeWithDefaults({
+      version: savedVersion,
+      appSpecific: {} as any,
+    } as any, 'darwin');
+    expect(merged.version).toBe(savedVersion);
+  });
+});

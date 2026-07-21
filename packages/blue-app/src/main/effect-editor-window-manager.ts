@@ -55,11 +55,20 @@ function buildEffectEditorUrl(request: EffectEditorRequest, mode: EffectEditorMo
   return fileUrl.toString();
 }
 
+export interface EffectEditorWindowOptions {
+  /**
+   * Initial Chromium/Electron page zoom factor (`percent / 100`) applied
+   * before the effect editor/interface renderer becomes visible (SPEC 061).
+   */
+  initialZoomFactor?: number;
+}
+
 export function openEffectInterfaceWindow(
   mainWindow: BrowserWindow | null,
   request: EffectEditorRequest,
   interfaceWidth?: number,
   interfaceHeight?: number,
+  options: EffectEditorWindowOptions = {},
 ): BrowserWindow | null {
   if (!mainWindow || mainWindow.isDestroyed()) {
     return null;
@@ -87,6 +96,9 @@ export function openEffectInterfaceWindow(
       contextIsolation: true,
       nodeIntegration: false,
       devTools: true,
+      ...(options.initialZoomFactor !== undefined
+        ? { zoomFactor: options.initialZoomFactor }
+        : {}),
     },
   });
 
@@ -119,6 +131,7 @@ export function openEffectInterfaceWindow(
 export function openEffectEditorWindow(
   mainWindow: BrowserWindow | null,
   request: EffectEditorRequest,
+  options: EffectEditorWindowOptions = {},
 ): BrowserWindow | null {
   if (!mainWindow || mainWindow.isDestroyed()) {
     return null;
@@ -147,6 +160,9 @@ export function openEffectEditorWindow(
       contextIsolation: true,
       nodeIntegration: false,
       devTools: true,
+      ...(options.initialZoomFactor !== undefined
+        ? { zoomFactor: options.initialZoomFactor }
+        : {}),
     },
   });
 

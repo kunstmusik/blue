@@ -201,3 +201,94 @@ describe('program-settings-store', () => {
     expect(reloaded.midiInput.devices[0]?.id).toBe('x');
   });
 });
+
+describe('program-settings-store appZoomPercent (SPEC 061)', () => {
+  it('round-trips a valid appZoomPercent through save/load', () => {
+    const settings = loadProgramSettings('darwin');
+    settings.appSpecific.appZoomPercent = 170;
+    const result = saveProgramSettings(settings, 'darwin');
+    expect(result.ok).toBe(true);
+
+    clearSettingsCache();
+    const reloaded = loadProgramSettings('darwin');
+    expect(reloaded.appSpecific.appZoomPercent).toBe(170);
+  });
+
+  it('defaults to 100 when appZoomPercent is missing from the saved file', () => {
+    const filePath = path.join(tempDir, 'program-settings.json');
+    const base = loadProgramSettings('darwin');
+    delete (base.appSpecific as any).appZoomPercent;
+    fs.writeFileSync(filePath, JSON.stringify(base));
+    clearSettingsCache();
+
+    const reloaded = loadProgramSettings('darwin');
+    expect(reloaded.appSpecific.appZoomPercent).toBe(100);
+  });
+
+  it('normalizes malformed saved appZoomPercent to 100', () => {
+    const filePath = path.join(tempDir, 'program-settings.json');
+    const base = loadProgramSettings('darwin');
+    const cases: Array<{ value: unknown; label: string }> = [
+      { value: '120', label: 'string' },
+      { value: null, label: 'null' },
+      { value: 49, label: 'below-range' },
+      { value: 301, label: 'above-range' },
+      { value: 105, label: 'off-step' },
+      { value: 100.5, label: 'fractional' },
+    ];
+
+    for (const { value, label } of cases) {
+      fs.writeFileSync(
+        filePath,
+        JSON.stringify({
+          ...base,
+          appSpecific: { ...base.appSpecific, appZoomPercent: value },
+        }),
+      );
+      clearSettingsCache();
+      const reloaded = loadProgramSettings('darwin');
+      expect(reloaded.appSpecific.appZoomPercent, label).toBe(100);
+    }
+  });
+
+  it('preserves unrelated app-specific siblings when normalizing appZoomPercent', () => {
+    const filePath = path.join(tempDir, 'program-settings.json');
+    const base = loadProgramSettings('darwin');
+    fs.writeFileSync(
+      filePath,
+      JSON.stringify({
+        ...base,
+        appSpecific: {
+          ...base.appSpecific,
+          enginePath: '/my-engine',
+          recentFiles: ['/keep.blue'],
+          appZoomPercent: 999,
+        },
+      }),
+    );
+    clearSettingsCache();
+
+    const reloaded = loadProgramSettings('darwin');
+    expect(reloaded.appSpecific.appZoomPercent).toBe(100);
+    expect(reloaded.appSpecific.enginePath).toBe('/my-engine');
+    expect(reloaded.appSpecific.recentFiles).toEqual(['/keep.blue']);
+  });
+
+  it('does not bump the settings version when seeding appZoomPercent', () => {
+    const filePath = path.join(tempDir, 'program-settings.json');
+    const base = loadProgramSettings('darwin');
+    fs.writeFileSync(filePath, JSON.stringify({ ...base, version: 2 }));
+    clearSettingsCache();
+
+    const reloaded = loadProgramSettings('darwin');
+    expect(reloaded.version).toBe(2);
+  });
+
+  it('rejects a save with an unsupported appZoomPercent via validation', () => {
+    const settings = loadProgramSettings('darwin');
+    settings.appSpecific.appZoomPercent = 105;
+    const result = saveProgramSettings(settings, 'darwin');
+    expect(result.ok).toBe(false);
+    expect(result.validationIssues?.some((i) => i.path === 'appSpecific.appZoomPercent')).toBe(true);
+  });
+});

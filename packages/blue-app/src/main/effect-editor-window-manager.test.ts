@@ -208,3 +208,59 @@ describe('effect editor and interface layout persistence', () => {
     expect(electronMock.instances[0]?.setBounds).toHaveBeenCalledWith({ x: 200, y: 200, width: 1100, height: 820 });
   });
 });
+
+describe('effect editor window declarative zoom factor (SPEC 061)', () => {
+  it('passes initialZoomFactor through to the effect editor webPreferences', () => {
+    const mainWindow = { isDestroyed: vi.fn(() => false) } as never;
+    const request = {
+      ownerType: 'project' as const,
+      effectId: 'zoom-edit',
+      projectRef: { channelId: 'channel-1', chain: 'pre' as const, entryId: 'zoom-edit' },
+    };
+
+    openEffectEditorWindow(mainWindow, request, { initialZoomFactor: 1.4 });
+
+    const editorWindow = electronMock.instances[0]!;
+    const webPreferences = editorWindow.options.webPreferences as Record<string, unknown>;
+    expect(webPreferences.zoomFactor).toBeCloseTo(1.4, 10);
+    expect(webPreferences.contextIsolation).toBe(true);
+    expect(webPreferences.nodeIntegration).toBe(false);
+    expect(editorWindow.options.modal).toBe(true);
+    expect(editorWindow.options.show).toBe(false);
+  });
+
+  it('passes initialZoomFactor through to the effect interface webPreferences', () => {
+    const mainWindow = { isDestroyed: vi.fn(() => false) } as never;
+    const request = {
+      ownerType: 'project' as const,
+      effectId: 'zoom-interface',
+      projectRef: { channelId: 'channel-1', chain: 'pre' as const, entryId: 'zoom-interface' },
+    };
+
+    openEffectInterfaceWindow(mainWindow, request, 460, 560, { initialZoomFactor: 0.8 });
+
+    const interfaceWindow = electronMock.instances[0]!;
+    const webPreferences = interfaceWindow.options.webPreferences as Record<string, unknown>;
+    expect(webPreferences.zoomFactor).toBeCloseTo(0.8, 10);
+    expect(webPreferences.contextIsolation).toBe(true);
+    expect(webPreferences.nodeIntegration).toBe(false);
+    expect(interfaceWindow.options.alwaysOnTop).toBe(true);
+    expect(interfaceWindow.options.show).toBe(false);
+  });
+
+  it('omits zoomFactor when initialZoomFactor is not provided', () => {
+    const mainWindow = { isDestroyed: vi.fn(() => false) } as never;
+    const request = {
+      ownerType: 'project' as const,
+      effectId: 'no-zoom',
+      projectRef: { channelId: 'channel-1', chain: 'pre' as const, entryId: 'no-zoom' },
+    };
+
+    openEffectEditorWindow(mainWindow, request);
+
+    const editorWindow = electronMock.instances[0]!;
+    const webPreferences = editorWindow.options.webPreferences as Record<string, unknown>;
+    expect(webPreferences.zoomFactor).toBeUndefined();
+    expect(webPreferences.devTools).toBe(true);
+  });
+});
