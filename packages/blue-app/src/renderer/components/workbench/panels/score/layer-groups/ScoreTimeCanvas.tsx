@@ -278,11 +278,14 @@ export default function ScoreTimeCanvas({
     ? getLibraryTransferSourceType(libraryClipboard.source) === 'soundObject'
     : false;
   const transferLibraryItem = useLibraryStore((s) => s.transferToProject);
+  const captureScoreSoundObject = useLibraryStore((s) => s.captureScoreSoundObject);
+  const addScoreSoundObjectToProjectLibrary = useLibraryStore((s) => s.addScoreSoundObjectToProjectLibrary);
   const resizeScoreObjects = useProjectStore((s) => s.resizeScoreObjects);
   const currentScore = useProjectStore((s) => s.score);
   const containerRef = useRef<HTMLDivElement>(null);
   const [contextMenuPos, setContextMenuPos] = useState<{ xBeats: number; layerIndex: number } | null>(null);
   const [contextMenuOnObject, setContextMenuOnObject] = useState(false);
+  const [contextMenuObjectType, setContextMenuObjectType] = useState<string | null>(null);
   const [libraryDropMarker, setLibraryDropMarker] = useState<{
     x: number;
     y: number;
@@ -332,6 +335,10 @@ export default function ScoreTimeCanvas({
     if (!multiLineObjectPreview) return previewByObjectId;
     return { ...multiLineObjectPreview, ...previewByObjectId };
   }, [multiLineObjectPreview, previewByObjectId]);
+  const canAddToProjectSoundObjectLibrary = selectedObjectIds.size === 1
+    && selectedObjectTarget?.ownerKind === 'timeline'
+    && selectedObjectTarget.selectedObjectType !== 'Instance'
+    && selectedObjectTarget.location !== undefined;
 
   const isNestedView = useMemo(() =>
     group.layers.some((layer) =>
@@ -1102,8 +1109,14 @@ export default function ScoreTimeCanvas({
 
   const handleCopy = useCallback(() => {
     const entries = getSelectedEntries();
-    if (entries.length > 0) copySelected(entries);
-  }, [getSelectedEntries, copySelected]);
+    if (entries.length === 0) return;
+    copySelected(entries);
+    if (entries.length !== 1) return;
+    const target = entries[0]!.editorTarget;
+    const location = target?.location ?? target?.sourceInstanceLocation;
+    if (!location) return;
+    void captureScoreSoundObject({ projectSessionId, projectRevision, location });
+  }, [getSelectedEntries, copySelected, captureScoreSoundObject, projectSessionId, projectRevision]);
 
   const handleCut = useCallback(() => {
     const entries = getSelectedEntries();
@@ -1112,17 +1125,54 @@ export default function ScoreTimeCanvas({
       const targets = entries
         .map((entry) => entry.editorTarget)
         .filter((target): target is ScoreObjectEditorTargetSnapshot => target !== undefined);
-      if (targets.length > 0) {
-        void applyProjectDocumentPatch({
-          score: {
-            type: 'removeScoreObjects',
-            targets,
-          },
-        });
+      const removeTargets = (): void => {
+        if (targets.length > 0) {
+          void applyProjectDocumentPatch({
+            score: {
+              type: 'removeScoreObjects',
+              targets,
+            },
+          });
+        }
+        clearSelection();
+      };
+      const location = entries.length === 1
+        ? entries[0]!.editorTarget?.location ?? entries[0]!.editorTarget?.sourceInstanceLocation
+        : undefined;
+      if (!location) {
+        removeTargets();
+        return;
       }
-      clearSelection();
+      void captureScoreSoundObject({ projectSessionId, projectRevision, location })
+        .then((captured) => { if (captured) removeTargets(); });
     }
-  }, [getSelectedEntries, copySelected, applyProjectDocumentPatch, clearSelection]);
+  }, [
+    getSelectedEntries,
+    copySelected,
+    applyProjectDocumentPatch,
+    clearSelection,
+    captureScoreSoundObject,
+    projectSessionId,
+    projectRevision,
+  ]);
+
+  const handleAddToProjectSoundObjectLibrary = useCallback(() => {
+    const entries = getSelectedEntries();
+    if (entries.length !== 1) return;
+    const target = entries[0]!.editorTarget;
+    if (!target?.location || target.ownerKind !== 'timeline') return;
+    void addScoreSoundObjectToProjectLibrary({
+      projectSessionId,
+      projectRevision,
+      location: target.location,
+    }).then((added) => { if (added) clearSelection(); });
+  }, [
+    getSelectedEntries,
+    addScoreSoundObjectToProjectLibrary,
+    projectSessionId,
+    projectRevision,
+    clearSelection,
+  ]);
 
   const handleRemove = useCallback(() => {
     const entries = getSelectedEntries();
@@ -1325,10 +1375,10 @@ export default function ScoreTimeCanvas({
     height: Math.abs(marquee.endY - marquee.startY),
   } : null;
 
-  const menuItemClass = 'cursor-pointer rounded-sm px-3 py-1 text-body text-blue-text outline-none data-[highlighted]:bg-app-highlight';
-  const subMenuClass = 'z-50 min-w-[160px] rounded border border-blue-border/50 bg-app-menu py-1 shadow-lg';
-  const menuClass = 'z-50 min-w-[220px] rounded border border-blue-border/50 bg-app-menu py-1 shadow-lg';
-  const sepClass = 'h-px bg-blue-border/30 my-1';
+  const menuItemClass = 'editor-context-menu__item';
+  const subMenuClass = 'editor-context-menu';
+  const menuClass = 'editor-context-menu';
+  const sepClass = 'editor-context-menu__separator';
 
   return (
     <ContextMenu.Root>
@@ -1391,6 +1441,7 @@ export default function ScoreTimeCanvas({
             const item = hit ? findItemOnLayer(hit.layer, xBeats) : null;
             setContextMenuPos(hit ? { xBeats, layerIndex: hit.index } : null);
             setContextMenuOnObject(!!item);
+            setContextMenuObjectType(item?.editorTarget?.selectedObjectType ?? item?.objectType ?? null);
             lastLibraryTargetRef.current = hit ? buildLibraryTarget(hit.index, xBeats) : null;
           }}
         >
@@ -1493,6 +1544,10 @@ export default function ScoreTimeCanvas({
               onAlignRight={handleAlignRight}
               onCopy={handleCopy}
               onCut={handleCut}
+              onAddToProjectSoundObjectLibrary={handleAddToProjectSoundObjectLibrary}
+              canAddToProjectSoundObjectLibrary={
+                canAddToProjectSoundObjectLibrary && contextMenuObjectType !== 'Instance'
+              }
               onRemove={handleRemove}
               onFollowTheLeader={handleFollowTheLeader}
               onReverse={handleReverse}
@@ -1522,7 +1577,7 @@ export default function ScoreTimeCanvas({
   );
 }
 
-function ObjectContextMenu({ menuItemClass, subMenuClass, sepClass, onAlignLeft, onAlignCenter, onAlignRight, onCopy, onCut, onRemove, onFollowTheLeader, onReverse, onSetColor, onFreezeUnfreeze, onCancelFreeze, freezeBusy, freezeProgress }: {
+function ObjectContextMenu({ menuItemClass, subMenuClass, sepClass, onAlignLeft, onAlignCenter, onAlignRight, onCopy, onCut, onAddToProjectSoundObjectLibrary, canAddToProjectSoundObjectLibrary, onRemove, onFollowTheLeader, onReverse, onSetColor, onFreezeUnfreeze, onCancelFreeze, freezeBusy, freezeProgress }: {
   menuItemClass: string;
   subMenuClass: string;
   sepClass: string;
@@ -1531,6 +1586,8 @@ function ObjectContextMenu({ menuItemClass, subMenuClass, sepClass, onAlignLeft,
   onAlignRight: () => void;
   onCopy: () => void;
   onCut: () => void;
+  onAddToProjectSoundObjectLibrary: () => void;
+  canAddToProjectSoundObjectLibrary: boolean;
   onRemove: () => void;
   onFollowTheLeader: () => void;
   onReverse: () => void;
@@ -1543,8 +1600,12 @@ function ObjectContextMenu({ menuItemClass, subMenuClass, sepClass, onAlignLeft,
   const ni = () => alert('Not yet implemented');
   return (
     <>
-      <ContextMenu.Item className={menuItemClass} onSelect={ni}>
-        Add to Project SoundObject Library
+      <ContextMenu.Item
+        className={menuItemClass}
+        disabled={!canAddToProjectSoundObjectLibrary}
+        onSelect={onAddToProjectSoundObjectLibrary}
+      >
+        Add to Project SoundObjects
       </ContextMenu.Item>
       <ContextMenu.Separator className={sepClass} />
       <ContextMenu.Item className={menuItemClass} onSelect={freezeBusy ? onCancelFreeze : onFreezeUnfreeze}>
@@ -1570,9 +1631,8 @@ function ObjectContextMenu({ menuItemClass, subMenuClass, sepClass, onAlignLeft,
         Reverse
       </ContextMenu.Item>
       <ContextMenu.Sub>
-        <ContextMenu.SubTrigger className={`flex items-center justify-between ${menuItemClass}`}>
+        <ContextMenu.SubTrigger className={`${menuItemClass} editor-context-menu__subtrigger`}>
           Align
-          <span className="text-tiny opacity-60 ml-2">▸</span>
         </ContextMenu.SubTrigger>
         <ContextMenu.Portal>
           <ContextMenu.SubContent className={subMenuClass}>
@@ -1661,12 +1721,11 @@ function EmptyAreaContextMenu({ menuItemClass, sepClass, clipboard, libraryClipb
   return (
     <>
       <ContextMenu.Sub>
-        <ContextMenu.SubTrigger className={`flex items-center justify-between ${menuItemClass}`}>
+        <ContextMenu.SubTrigger className={`${menuItemClass} editor-context-menu__subtrigger`}>
           Add SoundObject
-          <span className="text-tiny opacity-60 ml-2">▸</span>
         </ContextMenu.SubTrigger>
         <ContextMenu.Portal>
-          <ContextMenu.SubContent className="z-50 min-w-40 rounded border border-blue-border/50 bg-app-menu py-1 shadow-lg">
+          <ContextMenu.SubContent className="editor-context-menu">
             {addSobjTypes.map((t) => (
               <ContextMenu.Item
                 key={t.name}

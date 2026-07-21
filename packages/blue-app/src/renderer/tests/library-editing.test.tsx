@@ -144,6 +144,102 @@ describe('library editing UI', () => {
     container.remove();
   });
 
+  it('offers working folder clipboard commands, item-parent Paste, reorder, and never renames a root', async () => {
+    const rootNode = {
+      key: null,
+      nodeId: 'root', parentId: null, libraryType: 'instrument' as const, scope: 'user' as const,
+      nodeKind: 'root' as const, displayName: 'Instruments', breadcrumb: ['Instruments'],
+      revision: 1, hasChildren: true,
+    };
+    const folder = {
+      ...rootNode,
+      nodeId: 'folder', parentId: 'root', nodeKind: 'folder' as const, displayName: 'Pads',
+      breadcrumb: ['Instruments', 'Pads'],
+    };
+    const child = {
+      ...folder,
+      key: { scope: 'user' as const, libraryType: 'instrument' as const, nodeId: 'child' },
+      nodeId: 'child', nodeKind: 'item' as const, displayName: 'Warm Pad',
+      breadcrumb: ['Instruments', 'Warm Pad'], objectType: 'GenericInstrument', hasChildren: false,
+    };
+    const onRename = vi.fn();
+    const onCut = vi.fn();
+    const onCopy = vi.fn();
+    const onPaste = vi.fn();
+    const onReorder = vi.fn();
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    const root = createRoot(container);
+    act(() => root.render(
+      <LibraryTree
+        label="User Instruments"
+        nodes={[rootNode]}
+        childrenByParent={{ root: [folder, child] }}
+        defaultExpandedNodeIds={['root']}
+        clipboard={{
+          operation: 'copy',
+          source: { kind: 'userNode', libraryType: 'instrument', nodeId: 'child', revision: 1 },
+          capturedAt: 1,
+        }}
+        onSelect={vi.fn()}
+        onRename={onRename}
+        onCut={onCut}
+        onCopy={onCopy}
+        onPaste={onPaste}
+        onReorder={onReorder}
+      />,
+    ));
+
+    const instrumentName = [...container.querySelectorAll('button')]
+      .find((button) => button.textContent === 'Instruments')!;
+    act(() => instrumentName.dispatchEvent(new MouseEvent('dblclick', { bubbles: true })));
+    expect(onRename).not.toHaveBeenCalled();
+    expect(container.querySelector('input[aria-label="Rename Instruments"]')).toBeNull();
+
+    const folderRow = container.querySelector('#library-node-folder')!;
+    expect(folderRow.getAttribute('title')).toBe('Pads');
+    act(() => folderRow.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true })));
+    await act(async () => { await Promise.resolve(); });
+    expect(document.body.textContent).toContain('Cut');
+    expect(document.body.textContent).toContain('Copy');
+
+    const itemRow = container.querySelector('#library-node-child')!;
+    act(() => itemRow.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true })));
+    await act(async () => { await Promise.resolve(); });
+    const paste = [...document.body.querySelectorAll('[role="menuitem"]')]
+      .find((entry) => entry.textContent === 'Paste');
+    expect(paste?.getAttribute('data-disabled')).toBeNull();
+    act(() => root.unmount());
+    container.remove();
+  });
+
+  it('renders an empty folder with a legible high-contrast disclosure control', () => {
+    const emptyFolder = {
+      key: null,
+      nodeId: 'empty-folder',
+      parentId: null,
+      libraryType: 'udo' as const,
+      scope: 'user' as const,
+      nodeKind: 'folder' as const,
+      displayName: 'test3',
+      breadcrumb: ['UDOs', 'test3'],
+      revision: 1,
+      hasChildren: false,
+    };
+    const container = document.createElement('div');
+    const root = createRoot(container);
+    act(() => root.render(
+      <LibraryTree label="UDO Library" nodes={[emptyFolder]} onSelect={vi.fn()} />,
+    ));
+
+    const disclosure = container.querySelector('button[aria-label="Expand test3"]');
+    expect(disclosure).toBeTruthy();
+    expect(disclosure?.className).toContain('text-app-text-strong');
+    expect(disclosure?.querySelector('svg')?.getAttribute('width')).toBe('14');
+    expect(disclosure?.textContent).not.toContain('·');
+    act(() => root.unmount());
+  });
+
   it('announces incompatible drag and keyboard Paste at an exact destination', async () => {
     useLibraryStore.setState({
       clipboard: {
@@ -205,13 +301,106 @@ describe('library editing UI', () => {
     act(() => row.dispatchEvent(dragStart));
 
     const descriptor = JSON.parse(transfer.getData(BLUE_LIBRARY_DRAG_MIME));
-    expect(descriptor).toEqual({ dragSessionId: expect.any(String), libraryType: 'instrument' });
+    expect(descriptor).toEqual({ dragSessionId: expect.any(String), libraryType: 'instrument', sourceScope: 'user' });
     expect(JSON.stringify(descriptor)).not.toContain('xml');
     expect(beginLibraryDrag).toHaveBeenCalledWith(expect.objectContaining({
       dragSessionId: descriptor.dragSessionId,
       key: node.key,
       revision: 4,
     }));
+    act(() => root.unmount());
+  });
+
+  it('accepts project-item drops on the matching user Library tree', () => {
+    const rootNode = {
+      key: null,
+      nodeId: 'instrument-root', parentId: null, libraryType: 'instrument' as const,
+      scope: 'user' as const, nodeKind: 'root' as const, displayName: 'Instrument Library',
+      breadcrumb: ['Instrument Library'], revision: 2, hasChildren: false,
+    };
+    const onTransferToUser = vi.fn();
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    const root = createRoot(container);
+    act(() => root.render(
+      <LibraryTree
+        label="User Instruments"
+        nodes={[rootNode]}
+        onSelect={vi.fn()}
+        onTransferToUser={onTransferToUser}
+      />,
+    ));
+    const tree = container.querySelector('[role="treeitem"]') as HTMLElement;
+    const transfer = createTestDataTransfer();
+    const descriptor = {
+      dragSessionId: 'project-drag', libraryType: 'instrument' as const, sourceScope: 'projectOwned' as const,
+    };
+    transfer.setData(BLUE_LIBRARY_DRAG_MIME, JSON.stringify(descriptor));
+    const readData = transfer.getData.bind(transfer);
+    let protectedHover = true;
+    Object.defineProperty(transfer, 'getData', {
+      configurable: true,
+      value: (format: string) => protectedHover ? '' : readData(format),
+    });
+    dispatchDragEvent(tree, 'dragover', transfer);
+    expect(transfer.dropEffect).toBe('copy');
+    protectedHover = false;
+    dispatchDragEvent(tree, 'drop', transfer);
+    expect(onTransferToUser).toHaveBeenCalledWith(descriptor, rootNode);
+    act(() => root.unmount());
+    container.remove();
+  });
+
+  it('moves a user folder into another folder, including protected drag-over mode', () => {
+    const rootNode = {
+      key: null,
+      nodeId: 'instrument-root', parentId: null, libraryType: 'instrument' as const,
+      scope: 'user' as const, nodeKind: 'root' as const, displayName: 'Instrument Library',
+      breadcrumb: ['Instrument Library'], revision: 2, hasChildren: true,
+    };
+    const sourceFolder = {
+      ...rootNode,
+      nodeId: 'source-folder', parentId: rootNode.nodeId, nodeKind: 'folder' as const,
+      displayName: 'Source', breadcrumb: ['Instrument Library', 'Source'], hasChildren: false,
+    };
+    const destinationFolder = {
+      ...rootNode,
+      nodeId: 'destination-folder', parentId: rootNode.nodeId, nodeKind: 'folder' as const,
+      displayName: 'Destination', breadcrumb: ['Instrument Library', 'Destination'], hasChildren: false,
+    };
+    const onMoveToUser = vi.fn();
+    const container = document.createElement('div');
+    const root = createRoot(container);
+    act(() => root.render(
+      <LibraryTree
+        label="User Instruments"
+        nodes={[rootNode]}
+        childrenByParent={{ [rootNode.nodeId]: [sourceFolder, destinationFolder] }}
+        defaultExpandedNodeIds={[rootNode.nodeId]}
+        onSelect={vi.fn()}
+        onMoveToUser={onMoveToUser}
+      />,
+    ));
+    const sourceRow = container.querySelector('#library-node-source-folder') as HTMLElement;
+    const destinationRow = container.querySelector('#library-node-destination-folder') as HTMLElement;
+    act(() => sourceRow.dispatchEvent(new MouseEvent('pointerdown', { bubbles: true })));
+    const transfer = createTestDataTransfer();
+    const dragStart = new Event('dragstart', { bubbles: true, cancelable: true });
+    Object.defineProperty(dragStart, 'dataTransfer', { value: transfer });
+    act(() => sourceRow.dispatchEvent(dragStart));
+    const readData = transfer.getData.bind(transfer);
+    Object.defineProperty(transfer, 'getData', {
+      configurable: true,
+      value: () => '',
+    });
+    dispatchDragEvent(destinationRow, 'dragover', transfer);
+    expect(transfer.dropEffect).toBe('move');
+    Object.defineProperty(transfer, 'getData', {
+      configurable: true,
+      value: readData,
+    });
+    dispatchDragEvent(destinationRow, 'drop', transfer);
+    expect(onMoveToUser).toHaveBeenCalledWith(sourceFolder, destinationFolder);
     act(() => root.unmount());
   });
 });

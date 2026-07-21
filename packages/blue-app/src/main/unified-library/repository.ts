@@ -47,6 +47,19 @@ export interface RepositoryItemPayload extends RepositoryItemPayloadInput {
   readonly nodeId: string;
 }
 
+export interface RepositoryClipboardNode {
+  readonly libraryType: LibraryType;
+  readonly nodeKind: 'folder' | 'item';
+  readonly displayName: string;
+  readonly payload?: RepositoryItemPayloadInput;
+  readonly children: readonly RepositoryClipboardNode[];
+}
+
+export interface RepositoryCutClipboardResult {
+  readonly subtree: RepositoryClipboardNode;
+  readonly removedNodeIds: readonly string[];
+}
+
 export interface RepositorySnapshot {
   readonly contentRevision: number;
   readonly itemCounts: Record<LibraryType, number>;
@@ -400,6 +413,87 @@ export class UnifiedLibraryRepository {
     };
   }
 
+  getClipboardSubtree(nodeId: string): RepositoryClipboardNode {
+    const node = this.getNode(nodeId);
+    if (node.nodeKind === 'root') throw new Error('Library roots cannot be copied');
+    if (node.nodeKind === 'item') {
+      const { nodeId: _nodeId, ...payload } = this.getItemPayload(node.id);
+      return {
+        libraryType: node.libraryType,
+        nodeKind: 'item',
+        displayName: node.displayName,
+        payload,
+        children: [],
+      };
+    }
+    return {
+      libraryType: node.libraryType,
+      nodeKind: 'folder',
+      displayName: node.displayName,
+      children: this.listChildren(node.id).map((child) => this.getClipboardSubtree(child.id)),
+    };
+  }
+
+  createClipboardSubtree(
+    parentId: string,
+    subtree: RepositoryClipboardNode,
+  ): RepositoryNode {
+    return this.withTransaction(() => {
+      const parent = this.getNode(parentId);
+      if (parent.nodeKind === 'item' || parent.libraryType !== subtree.libraryType) {
+        throw new Error('Invalid clipboard destination');
+      }
+      const insert = (
+        destinationId: string,
+        entry: RepositoryClipboardNode,
+      ): RepositoryNode => {
+        if (entry.libraryType !== subtree.libraryType) {
+          throw new Error('Invalid mixed-type clipboard subtree');
+        }
+        const created = this.insertNode({
+          libraryType: entry.libraryType,
+          nodeKind: entry.nodeKind,
+          parentId: destinationId,
+          displayName: entry.displayName,
+        });
+        if (entry.nodeKind === 'item') {
+          if (!entry.payload) throw new Error('Clipboard item payload is unavailable');
+          this.insertPayload(created.id, entry.payload);
+        } else {
+          for (const child of entry.children) insert(created.id, child);
+        }
+        return created;
+      };
+      const created = insert(parentId, subtree);
+      this.incrementContentRevision();
+      return created;
+    });
+  }
+
+  cutClipboardSubtree(
+    nodeId: string,
+    expectedRevision: number,
+    expectedNodeIds: readonly string[],
+  ): RepositoryCutClipboardResult {
+    return this.withTransaction(() => {
+      const node = this.getNode(nodeId);
+      if (node.nodeKind === 'root' || node.parentId === null) {
+        throw new Error('Library roots cannot be cut');
+      }
+      if (node.revision !== expectedRevision) throw new Error('Stale revision');
+      const removedNodeIds = this.listDescendantNodeIds(node.id);
+      if (JSON.stringify(removedNodeIds) !== JSON.stringify(expectedNodeIds)) {
+        throw new Error('Stale folder contents');
+      }
+      const subtree = this.getClipboardSubtree(node.id);
+      const remove = this.database.prepare('DELETE FROM library_nodes WHERE id = ?');
+      for (const id of removedNodeIds) remove.run(id);
+      this.normalizeSiblingOrder(node.parentId);
+      this.incrementContentRevision();
+      return { subtree, removedNodeIds };
+    });
+  }
+
   createFolder(input: {
     readonly libraryType: LibraryType;
     readonly parentId: string;
@@ -635,6 +729,7 @@ export class UnifiedLibraryRepository {
     readonly sourceKind: 'primary' | 'backupCandidate' | 'selectedFile';
     readonly plan: LegacyLibraryDocumentPlan;
     readonly conflictPolicy?: 'preserve' | 'merge';
+    readonly folderResolutions?: Readonly<Record<string, string>>;
   }): RepositoryImportSourceResult {
     return this.withTransaction(() => {
       const root = this.getRoot(input.plan.libraryType);
@@ -654,14 +749,21 @@ export class UnifiedLibraryRepository {
         INSERT INTO import_changes (source_id, node_id, action, recorded_revision, detail_json)
         VALUES (?, ?, ?, ?, ?)
       `);
-      const append = (parentId: string, child: LegacyLibraryTreeNode): void => {
+      const append = (parentId: string, child: LegacyLibraryTreeNode, sourceIndices: readonly number[]): void => {
         if (child.kind === 'folder') {
           if (input.conflictPolicy === 'merge') {
             const matches = this.listChildren(parentId).filter((candidate) => (
               candidate.nodeKind === 'folder' && candidate.displayName === child.name
             ));
             if (matches.length === 1) {
-              for (const nested of child.children) append(matches[0]!.id, nested);
+              child.children.forEach((nested, index) => append(matches[0]!.id, nested, [...sourceIndices, index]));
+              return;
+            }
+            if (matches.length > 1) {
+              const selectedNodeId = input.folderResolutions?.[sourceIndices.join('.')];
+              const selected = matches.find((candidate) => candidate.id === selectedNodeId);
+              if (!selected) throw new Error(`Ambiguous destination folder: ${child.name}`);
+              child.children.forEach((nested, index) => append(selected.id, nested, [...sourceIndices, index]));
               return;
             }
           }
@@ -675,7 +777,7 @@ export class UnifiedLibraryRepository {
           });
           createdNodeIds.push(folder.id);
           recordChange.run(input.sourceId, folder.id, 'created', 1, '{}');
-          for (const nested of child.children) append(folder.id, nested);
+          child.children.forEach((nested, index) => append(folder.id, nested, [...sourceIndices, index]));
           return;
         }
         if (input.conflictPolicy === 'merge') {
@@ -730,7 +832,7 @@ export class UnifiedLibraryRepository {
           1, JSON.stringify(displayName === child.displayName ? {} : { embeddedName: child.displayName, alias: displayName }),
         );
       };
-      for (const child of input.plan.root.children) append(root.id, child);
+      input.plan.root.children.forEach((child, index) => append(root.id, child, [index]));
       const counts = {
         folders: input.plan.folderCount,
         items: input.plan.itemCount,

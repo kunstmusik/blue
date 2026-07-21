@@ -27,4 +27,47 @@ describe('legacy export compatibility', () => {
       fs.rmSync(directory, { recursive: true, force: true });
     }
   });
+
+  it('serializes current and all-library exports through one interchange lease', async () => {
+    const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'blue-export-lease-'));
+    const client = UnifiedLibraryRepositoryClient.openForTesting(':memory:');
+    try {
+      const service = new UnifiedLibraryImportExportService(client);
+      const current = service.exportCurrent('udo', path.join(directory, 'udoLibrary.xml'));
+      await expect(service.exportAll(directory)).rejects.toThrow(/already in progress/i);
+      await current;
+      expect(parseLegacyLibraryDocument(fs.readFileSync(path.join(directory, 'udoLibrary.xml'), 'utf8')).libraryType).toBe('udo');
+    } finally {
+      await client.close();
+      fs.rmSync(directory, { recursive: true, force: true });
+    }
+  });
+
+  it('reports compatibility and overwrite state before a canceled export changes the destination', async () => {
+    const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'blue-export-preflight-'));
+    const targetPath = path.join(directory, 'udoLibrary.xml');
+    fs.writeFileSync(targetPath, 'original', 'utf8');
+    const client = UnifiedLibraryRepositoryClient.openForTesting(':memory:');
+    try {
+      const service = new UnifiedLibraryImportExportService(client);
+      const exported = await service.exportCurrent('udo', targetPath, async (preflight) => {
+        expect(preflight).toEqual({
+          outputs: [{
+            libraryType: 'udo',
+            targetPath,
+            itemCount: 0,
+            unsupportedPreservedCount: 0,
+            overwritesExisting: true,
+          }],
+          unrepresentableCount: 0,
+        });
+        return false;
+      });
+      expect(exported).toBe(false);
+      expect(fs.readFileSync(targetPath, 'utf8')).toBe('original');
+    } finally {
+      await client.close();
+      fs.rmSync(directory, { recursive: true, force: true });
+    }
+  });
 });

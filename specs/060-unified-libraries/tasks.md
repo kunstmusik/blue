@@ -48,12 +48,12 @@
 
 **Goal**: Libraries is a compact navigator; selecting a supported item opens a reusable full native editor titled `Library Item` under the existing address header, with no embedded preview, persistent action/banner strip, row CRUD controls, or Insert button.
 
-**Independent Test**: Open Libraries with and without a project, filter/search/select all four supported types, and verify one compact ellipsis control, a full-height tree, native editors in the main area, clean-preview reuse, first-edit pinning, preserved tree focus, and standalone full-window Welcome behavior.
+**Independent Test**: Open Libraries with and without a project, filter/search/select all four supported types, and verify one compact ellipsis control, a full-height tree, exactly one native-editor tab in the main area, retained dirty sessions, preserved tree focus, and standalone full-window Welcome behavior.
 
 ### Tests for User Story 1
 
 - [x] T012 [P] [US1] Rewrite failing panel tests for compact search/filter layout, one ellipsis control, full-height hierarchy, and absence of migration/action/target banners, embedded preview, row CRUD, and Insert controls in `packages/blue-app/src/renderer/tests/libraries-panel.test.tsx`
-- [x] T013 [P] [US1] Add failing Dockview tests for the generic `Library Item` title, existing address/breadcrumb header, clean-preview reuse, first-edit auto-pin, explicit pinning, and protected dirty sessions in `packages/blue-app/src/renderer/tests/library-editor-workbench.test.tsx`
+- [x] T013 [P] [US1] Add failing Dockview tests for the generic `Library Item` title, existing address/breadcrumb header, reusable presentation behavior, first-edit auto-pin, explicit pinning, and protected dirty sessions in `packages/blue-app/src/renderer/tests/library-editor-workbench.test.tsx`
 - [x] T014 [P] [US1] Replace XML-textarea expectations with failing native Instrument/UDO/Effect/SoundObject editor rendering tests and unsupported read-only tests in `packages/blue-app/src/renderer/tests/library-editing.test.tsx`
 - [x] T015 [P] [US1] Add failing no-project regression tests proving Welcome remains a standalone full-window surface and Libraries appears only after explicit reveal in `packages/blue-app/src/renderer/tests/unified-library-workbench.test.tsx`
 
@@ -68,7 +68,7 @@
 - [x] T022 [P] [US1] Build the controlled Effect Library Item adapter around the existing Effect editor surface in `packages/blue-app/src/renderer/components/libraries/editors/EffectLibraryEditor.tsx`
 - [x] T023 [P] [US1] Build the controlled SoundObject Library Item adapter around the existing score-object editor registry in `packages/blue-app/src/renderer/components/libraries/editors/SoundObjectLibraryEditor.tsx`
 - [x] T024 [US1] Dispatch typed documents to the four native adapters, preserve unsupported/missing safe states, and remove the supported-item textarea in `packages/blue-app/src/renderer/components/libraries/editor-registry.tsx` and `packages/blue-app/src/renderer/components/libraries/LibraryItemEditorPanel.tsx`
-- [x] T025 [US1] Use the generic `Library Item` Dockview title, preserve dirty indication, and enforce clean-preview/dirty-pin focus rules in `packages/blue-app/src/renderer/stores/workbench-store.ts` and `packages/blue-app/src/renderer/stores/library-editor-store.ts`
+- [x] T025 [US1] Use the generic `Library Item` Dockview title, preserve dirty indication, and enforce reusable presentation/protected-session rules in `packages/blue-app/src/renderer/stores/workbench-store.ts` and `packages/blue-app/src/renderer/stores/library-editor-store.ts`
 - [x] T026 [US1] Preserve the standalone full-window Welcome surface outside Dockview while allowing explicit no-project Libraries reveal in `packages/blue-app/src/renderer/App.tsx` and `packages/blue-app/src/renderer/components/workbench/WorkbenchShell.tsx`
 
 **Checkpoint**: US1 passes independently: Libraries is visually compact, selection opens full native editors in the main area, dirty work is protected, and Welcome is not a panel.
@@ -130,41 +130,41 @@
 
 ---
 
-## Phase 6: User Story 4 - Non-Blocking First-Run Migration Reporting (Priority: P1)
+## Phase 6: User Story 4 - Silent First-Run Migration With Internal Audit (Priority: P1)
 
-**Goal**: Automatic migration remains safe and visible without permanently consuming the top of Libraries.
+**Goal**: Automatic migration remains safe and fully auditable internally without adding routine migration UI to healthy Libraries.
 
-**Independent Test**: Exercise complete, partial, skipped, and failed first-run migration outcomes and verify a transient/non-blocking summary, persistent report access from the ellipsis menu, unchanged source files, and no silent retry.
+**Independent Test**: Exercise complete, partial, skipped, and failed first-run migration outcomes and verify internal provenance, unchanged source files, no silent retry, silent usable startup, and recovery UI only for an actionable repository failure.
 
 ### Tests for User Story 4
 
-- [x] T050 [US4] Rewrite failing migration UI tests to reject a persistent header and require transient complete/partial summaries plus durable report/history access from the ellipsis menu in `packages/blue-app/src/renderer/tests/library-migration-summary.test.tsx`
+- [x] T050 [US4] Cover complete, partial, skipped, failed, source-immutability, and no-repeat migration behavior without requiring a renderer report surface in `packages/blue-app/src/main/unified-library/automatic-migration.test.ts`
 
 ### Implementation for User Story 4
 
-- [x] T051 [US4] Replace the full-width migration banner with a dismissible non-blocking notice that never reduces tree layout height in `packages/blue-app/src/renderer/components/libraries/LibraryMigrationNotice.tsx` and `packages/blue-app/src/renderer/stores/library-store.ts`
-- [x] T052 [P] [US4] Add migration status/report access to the ellipsis menu and retire the persistent `LibraryMigrationSummary` rendering path in `packages/blue-app/src/renderer/components/libraries/LibraryActionsMenu.tsx` and `packages/blue-app/src/renderer/components/workbench/panels/LibrariesPanel.tsx`
+- [x] T051 [US4] Keep healthy migration silent while retaining migration state, source diagnostics, and batch provenance in `packages/blue-app/src/main/unified-library/import-export-service.ts`, `packages/blue-app/src/main/unified-library/migration-state-store.ts`, and `packages/blue-app/src/main/unified-library/service.ts`
+- [x] T052 [P] [US4] Exclude migration notices/reports/history from the healthy Libraries menu and reserve panel replacement for recovery in `packages/blue-app/src/renderer/components/libraries/LibraryActionsMenu.tsx` and `packages/blue-app/src/renderer/components/workbench/panels/LibrariesPanel.tsx`
 
-**Checkpoint**: US4 passes independently: migration outcomes remain trustworthy and reviewable without turning Libraries into a status page.
+**Checkpoint**: US4 passes independently: migration outcomes remain trustworthy and recoverable without turning Libraries into a status page.
 
 ---
 
-## Phase 7: User Story 5 - Import/Export/History Through The Ellipsis Menu (Priority: P2)
+## Phase 7: User Story 5 - Previewed Import/Export Through The Ellipsis Menu (Priority: P2)
 
 **Goal**: Existing safe interchange workflows remain fully available from the compact menu without a permanent action row.
 
-**Independent Test**: Invoke Import XML, Export Current, Export All, Import History, preview/execute/undo, and overwrite/compatibility decisions from the ellipsis menu and verify identical backend results and accessible disabled states.
+**Independent Test**: Invoke XML-file import, Java-configuration-directory import, Export Current, and Export All from the ellipsis menu; resolve ambiguous folder identities; exercise overwrite/compatibility decisions; and verify accessible disabled states without history/report commands.
 
 ### Tests for User Story 5
 
-- [x] T053 [US5] Rewrite failing interchange UI tests for the accessible ellipsis popup, command ordering, Export Current disabled state for `All`/project scope, dialog focus return, history/undo, and absence of a full-width action row in `packages/blue-app/src/renderer/tests/library-interchange.test.tsx`
+- [x] T053 [US5] Cover the accessible ellipsis popup, both import entry points, Export Current disabled state for `All`, folder-conflict selection, overwrite decisions, and absence of history/report or a full-width action row in `packages/blue-app/src/renderer/tests/library-interchange.test.tsx` and `packages/blue-app/src/main/unified-library/manual-import-preview.test.ts`
 
 ### Implementation for User Story 5
 
-- [x] T054 [US5] Wire Import XML, Export Current, Export All, and Import History into the Radix dropdown with correct scope/operation disabled states and focus restoration in `packages/blue-app/src/renderer/components/libraries/LibraryActionsMenu.tsx` and `packages/blue-app/src/renderer/components/workbench/panels/LibrariesPanel.tsx`
-- [x] T055 [P] [US5] Preserve import preview, compatibility decisions, progress/results, history, and undo as focused dialogs/panels without reintroducing a persistent header in `packages/blue-app/src/renderer/components/libraries/LibraryImportDialog.tsx`, `packages/blue-app/src/renderer/components/libraries/LibraryHistoryPanel.tsx`, and `packages/blue-app/src/renderer/stores/library-store.ts`
+- [x] T054 [US5] Wire Import XML, Import Java Configuration Directory, Export Current, and Export All into the Radix dropdown with correct disabled states and no migration/history commands in `packages/blue-app/src/renderer/components/libraries/LibraryActionsMenu.tsx` and `packages/blue-app/src/renderer/components/workbench/panels/LibrariesPanel.tsx`
+- [x] T055 [P] [US5] Implement source-hash validation, explicit duplicate-folder identity selection, deterministic merge behavior, one interchange lease, compatibility preflight, overwrite confirmation, and atomic export rollback in `packages/blue-app/src/renderer/components/libraries/LibraryImportDialog.tsx`, `packages/blue-app/src/main/unified-library/import-export-service.ts`, `packages/blue-app/src/main/unified-library/repository.ts`, and `packages/blue-app/src/main/unified-library/ipc.ts`
 
-**Checkpoint**: US5 passes independently: all interchange/history behavior is reachable and unchanged, while healthy Libraries retains one compact action affordance.
+**Checkpoint**: US5 passes independently: safe interchange is reachable from one compact action affordance, while audit history remains internal.
 
 ---
 
@@ -195,7 +195,7 @@
 - [x] T060 [P] Add cross-cutting accessibility tests for ellipsis labeling, visible menu focus, `Shift+F10`, disabled-reason announcements, destructive confirmations, drag invalid feedback, and keyboard Paste in `packages/blue-app/src/renderer/tests/libraries-panel.test.tsx` and `packages/blue-app/src/renderer/tests/library-editing.test.tsx`
 - [x] T061 [P] Update the 10,000-item regression to assert lazy browse/search never decodes payloads or opens editor sessions before selection in `packages/blue-app/src/main/unified-library/performance.test.ts`
 - [x] T062 Run focused renderer/main transfer/editor/recovery suites plus `pnpm --filter @blue/app test`, `pnpm --filter @blue/app build`, `pnpm test`, `pnpm build`, and `git diff --check`; record results in `specs/060-unified-libraries/quickstart.md`
-- [X] T063 Execute the corrective manual matrix for compact/narrow/floating Libraries, mouse/keyboard context menus, four native editors, 100 selection changes, four drop/Paste destinations, invalid-target zero mutation, migration notice, recovery, and full-window Welcome in `specs/060-unified-libraries/quickstart.md`
+- [X] T063 Execute the corrective manual matrix for compact/narrow/floating Libraries, mouse/keyboard context menus, four native editors, 100 selection changes, four drop/Paste destinations, invalid-target zero mutation, silent healthy migration, recovery, and full-window Welcome in `specs/060-unified-libraries/quickstart.md`
 - [X] T064 Update corrective requirement-to-test coverage and replace the initial-only renderer verification note after all acceptance checks pass in `specs/060-unified-libraries/checklists/requirements.md` and `specs/060-unified-libraries/quickstart.md`
 
 ---
@@ -225,6 +225,150 @@
 
 ---
 
+## Phase 11: Hierarchy, Organization, Interchange, And Project-Copy Audit Fixes (2026-07-18)
+
+**Goal**: Close the post-implementation review findings, with special emphasis on never truncating a folder or project collection at a backend page boundary.
+
+**Independent Test**: Expand folders and Project SoundObjects/UDOs containing more than 500 children; verify every child appears once in stable order; exercise folder/item clipboard, Paste-on-item, reorder/delete, stale response suppression, project-to-user transfer for Instruments/UDOs/SoundObjects, both import entry points, ambiguous-folder selection, and overwrite-safe exports.
+
+- [x] T074 [P] [US1] Add regressions for multi-page user and project hierarchies, stale search responses, and complete 10,000-item cursor draining in `packages/blue-app/src/renderer/tests/library-store.test.ts`, `packages/blue-app/src/renderer/tests/project-sound-object-library.test.tsx`, and `packages/blue-app/src/main/unified-library/performance.test.ts`
+- [x] T075 [US1] Drain every browse cursor page with stable ordering, ID deduplication, repeated-cursor protection, preserved loaded folders, surfaced failures, and stale-response guards in `packages/blue-app/src/renderer/stores/library-store.ts` and `packages/blue-app/src/renderer/components/workbench/panels/SoundObjectLibraryPanel.tsx`
+- [x] T076 [P] [US3] Cover and implement folder/item Cut, Copy, Paste-on-item-parent, reorder, root rename prohibition, and non-empty folder delete confirmation in `packages/blue-app/src/renderer/tests/library-editing.test.tsx`, `packages/blue-app/src/renderer/tests/library-store.test.ts`, `packages/blue-app/src/renderer/components/libraries/LibraryContextMenu.tsx`, `packages/blue-app/src/renderer/components/libraries/LibraryTree.tsx`, and `packages/blue-app/src/renderer/components/workbench/panels/LibrariesPanel.tsx`
+- [x] T077 [P] [US1] Keep persistent item/search rows name-only, expose the complete breadcrumb through the item tooltip and Library Item header, and avoid whole-store React subscriptions in `packages/blue-app/src/renderer/components/libraries/LibraryTree.tsx` and `packages/blue-app/src/renderer/components/workbench/panels/LibrariesPanel.tsx`
+- [x] T078 [US3] Centralize independent project-to-user transfer for project Instruments, UDOs, and Project Shared SoundObjects in `packages/blue-app/src/renderer/stores/library-store.ts`, `packages/blue-app/src/renderer/components/workbench/panels/orchestra/ArrangementContextMenu.tsx`, `packages/blue-app/src/renderer/components/workbench/panels/udo/UdoTable.tsx`, and `packages/blue-app/src/renderer/components/workbench/panels/SoundObjectLibraryPanel.tsx` (the temporary dedicated command was retired by T087)
+- [x] T079 [P] [US5] Support Java configuration-directory import and explicit stable destination selection for ambiguous duplicate folders in `packages/blue-app/src/main/unified-library/import-export-service.ts`, `packages/blue-app/src/main/unified-library/repository.ts`, `packages/blue-app/src/main/unified-library/ipc.ts`, and `packages/blue-app/src/renderer/components/libraries/LibraryImportDialog.tsx`
+- [x] T080 [P] [US5] Serialize Export Current and Export All through one lease, preflight all serialized output, confirm every overwrite, and preserve atomic rollback in `packages/blue-app/src/main/unified-library/import-export-service.ts` and `packages/blue-app/src/main/unified-library/ipc.ts`
+- [x] T081 [P] Update interaction, interchange, export, and project-copy coverage in `packages/blue-app/src/renderer/tests/library-interchange.test.tsx`, `packages/blue-app/src/renderer/tests/orchestra-library-drop.test.tsx`, `packages/blue-app/src/renderer/tests/udo-library-drop.test.tsx`, `packages/blue-app/src/renderer/tests/project-sound-object-library.test.tsx`, and `packages/blue-app/src/main/unified-library/export-compatibility.test.ts`
+- [x] T082 Reconcile `spec.md`, `tasks.md`, `quickstart.md`, and `checklists/requirements.md` with the implemented user-only, silent-migration, complete-hierarchy behavior in `specs/060-unified-libraries/`
+- [x] T083 Run the full application and workspace verification gates and record the final current counts in `specs/060-unified-libraries/quickstart.md` and `specs/060-unified-libraries/checklists/requirements.md`
+
+**Checkpoint**: No hierarchy or project collection is truncated at a service page boundary, organization commands match desktop tree semantics, project copying covers every supported project definition type, and interchange decisions are explicit and atomic.
+
+---
+
+## Phase 12: Shared Project/User Clipboard And Bidirectional Drag (2026-07-18 Correction)
+
+**Goal**: Use one typed Copy/Cut/Paste buffer across user and project panels for every supported library type, remove special project-to-user commands, keep the empty UDO workspace immediately usable, and make mixer Effect selection and moves follow desktop expectations.
+
+**Independent Test (historical; Cut lifecycle superseded by Phase 17)**: With a project and matching user roots open, Copy and Cut an Instrument, UDO, Effect, and SoundObject in either ownership direction and Paste into the compatible destination; verify no second buffer or `Copy to User Library` command appears, project items drag back to user folders, the empty UDO table accepts an initial drop, and one selected mixer Effect moves across channels/chains without duplication.
+
+- [x] T084 [P] Add shared-contract, store, service, and panel regressions for typed project Effect keys, project-to-user opaque drag, bidirectional Copy/Cut/Paste, the original guarded Cut lifecycle later replaced by T109–T113, and linked-SoundObject cancellation in `packages/blue-app/src/shared/unified-library.test.ts`, `packages/blue-app/src/main/unified-library/library-transfer-service.test.ts`, `packages/blue-app/src/renderer/tests/library-store.test.ts`, and the four destination panel suites
+- [x] T085 Implement the single user/project typed clipboard and project-to-user transfer bridge, retaining a Cut source/buffer until destination success and guarded source cleanup in `packages/blue-app/src/shared/unified-library.ts`, `packages/blue-app/src/main/unified-library/service.ts`, `packages/blue-app/src/main/unified-library/project-adapter.ts`, `packages/blue-app/src/main/unified-library/ipc.ts`, `packages/blue-app/src/preload/preload.ts`, `packages/blue-app/src/renderer/types/global.d.ts`, and `packages/blue-app/src/renderer/stores/library-store.ts`
+- [x] T086 [P] Keep the UDO table/splitter mounted when empty and add project UDO drag/Copy/Cut/Paste back to the user library without a special command in `packages/blue-app/src/renderer/components/workbench/panels/udo/UdoTable.tsx` and `packages/blue-app/src/renderer/components/workbench/panels/udo/UdoWorkspacePanel.tsx`
+- [x] T087 [P] Remove type-specific project-to-user commands and add canonical project drag/shared clipboard sources for Orchestra Instruments and Project SoundObjects in `packages/blue-app/src/renderer/components/workbench/panels/orchestra/ArrangementPanel.tsx`, `packages/blue-app/src/renderer/components/workbench/panels/SoundObjectLibraryPanel.tsx`, `packages/blue-app/src/renderer/components/libraries/ProjectLibraryDragSource.tsx`, and `packages/blue-app/src/renderer/components/libraries/LibraryTree.tsx`
+- [x] T088 [P] Enforce one selected mixer Effect across all channels, share Copy/Cut/Paste with Libraries, support drag back to user Effects, and move Effects across exact same/cross-channel pre/post boundaries in `packages/blue-app/src/renderer/components/workbench/panels/MixerPanel.tsx` and `packages/blue-app/src/renderer/components/workbench/panels/mixer/ChannelStrip.tsx`
+- [x] T089 Run focused shared-buffer/bidirectional-transfer suites plus the full application test, build, lint, and diff gates; record current evidence in `specs/060-unified-libraries/quickstart.md` and `specs/060-unified-libraries/checklists/requirements.md`
+
+**Checkpoint**: Project and user panels use one familiar transfer vocabulary, Cut is loss-safe across ownership, empty project collections accept their first item, and mixer Effect selection/movement is unambiguous.
+
+---
+
+## Phase 13: Folder, Dialog, Drop-State, And Empty-UDO Regressions (2026-07-18 Correction)
+
+**Goal**: Make user-folder creation work in Electron, keep every Library dialog surface opaque, clear consumed Mixer drop feedback, and preserve a useful empty UDO table at normal docked heights.
+
+**Independent Test**: Create a named folder from a user-root context menu without browser prompt support, inspect an opaque delete confirmation, move an Effect between Mixer chains without residual insertion highlights, and open an empty UDO workspace with a visible table, end-drop target, and draggable separator.
+
+- [x] T090 [P] Add focused regressions for in-app user-folder creation and opaque destructive confirmation in `packages/blue-app/src/renderer/tests/libraries-panel.test.tsx`
+- [x] T091 Replace unsupported `window.prompt` folder creation with a validated in-app dialog and use defined opaque theme surfaces for Library dialogs and panels in `packages/blue-app/src/renderer/components/workbench/panels/LibrariesPanel.tsx` and `packages/blue-app/src/renderer/components/libraries/`
+- [x] T092 [P] Clear Library insertion-marker state on every completed or cancelled native drag, including Mixer internal moves that consume drop propagation, in `packages/blue-app/src/renderer/components/libraries/use-library-drop-target.ts` and `packages/blue-app/src/renderer/tests/mixer-library-drop.test.tsx`
+- [x] T093 [P] Rebalance the reusable UDO split so a normal docked workspace retains its 200-pixel empty table, exact end-drop target, and separator in `packages/blue-app/src/renderer/components/workbench/panels/udo/UdoWorkspacePanel.tsx` and `packages/blue-app/src/renderer/tests/udo-workspace-empty.test.tsx`
+- [x] T094 Run focused regressions, the full application and workspace suites, isolated 10,000-item performance gate, application production build, workspace lint, and diff validation; record the current evidence in `specs/060-unified-libraries/quickstart.md` and `specs/060-unified-libraries/checklists/requirements.md`
+
+**Checkpoint**: Library creation and confirmations are native-renderer reliable and legible, drag feedback cannot become stale, and the empty UDO workspace is immediately usable without first creating an item.
+
+---
+
+## Phase 14: Instrument-Local UDO Transfer And Folder Disclosure (2026-07-19 Correction)
+
+**Goal**: Make every Instrument-local UDO list a fully addressed project source/destination and keep empty Library folders visually unambiguous.
+
+**Independent Test**: Drag, copy, and cut a selected Instrument-local UDO into the user UDO Library; drag or paste a user-library UDO back into that exact Instrument UDO table; verify another Instrument and the top-level project list remain unchanged; then create an empty folder and verify it renders the same large white disclosure arrow as populated folders.
+
+- [x] T095 [P] Add failing shared/main/service/renderer regressions for Instrument-local UDO identity, exact insertion, enabled Copy/Cut, shared-buffer drag/Paste, and empty-folder disclosure in the Unified Libraries, project transfer, UDO workspace, and tree test suites
+- [x] T096 Extend the project UDO locator and exact insertion target with an optional Instrument assignment identity, then resolve list/browse/preview/edit/delete/copy/insert operations against that exact canonical `OpcodeList` in shared contracts and the main project adapter/service
+- [x] T097 Wire supported Instrument UDO editors, including Generic, JavaScript, and BlueSynthBuilder, through the reusable transfer context so selected local rows use the shared typed Copy/Cut/Paste buffer and opaque bidirectional drag contract; keep non-Orchestra reuse of the UDO component free of invalid project-Instrument targets
+- [x] T098 Render disclosure affordances by folder/root node kind instead of child count and use a larger high-contrast chevron for both empty and populated folders
+- [x] T099 Run focused regressions, the full application suite, isolated performance gate when concurrent timing requires it, application production build, workspace lint, and diff validation; record evidence in `specs/060-unified-libraries/quickstart.md` and `specs/060-unified-libraries/checklists/requirements.md`
+
+**Checkpoint**: Instrument-local UDOs transfer bidirectionally without aliasing another list, and every folder remains visibly a folder regardless of child count.
+
+---
+
+## Phase 15: List Remainder Drop Geometry And Mixer Minimum Sizing (2026-07-19 Correction)
+
+**Goal**: Make blank list space useful as an exact end-drop target, refine folder disclosure scale, and prevent short Mixer panels from overlapping controls.
+
+**Independent Test**: Drag a compatible UDO or Effect over the unused area below the final entry and verify the whole remainder highlights and inserts at the list end; inspect empty lists and populated lists; reduce Mixer height below its readable strip minimum and verify vertical scrolling appears while labels, level values, Effect bins, and routing controls remain separate.
+
+- [x] T100 [P] Add failing renderer regressions for the reduced folder chevron, UDO blank-remainder end drop, Effect-bin blank-remainder end drop, full-area active feedback, and Mixer CSS minimum-size contract
+- [x] T101 Reduce the high-contrast folder disclosure icon by one size while preserving empty-folder semantics in `packages/blue-app/src/renderer/components/libraries/LibraryTree.tsx`
+- [x] T102 Extend the shared block drop marker with a flexible remainder mode and use it after the UDO table and at the end of every Mixer Effect bin without changing exact insertion identity in `packages/blue-app/src/renderer/components/libraries/LibraryDropMarker.tsx`, `packages/blue-app/src/renderer/components/workbench/panels/udo/UdoTable.tsx`, and `packages/blue-app/src/renderer/components/workbench/panels/mixer/ChannelStrip.tsx`
+- [x] T103 Establish a readable Mixer strip/level minimum and vertical overflow behavior in `packages/blue-app/src/renderer/styles/index.css`
+- [x] T104 Run focused renderer regressions, the full application suite, renderer production build, workspace lint, and diff validation; record evidence in `specs/060-unified-libraries/quickstart.md` and `specs/060-unified-libraries/checklists/requirements.md`
+
+**Checkpoint**: Compatible drags can use all visible list remainder space, and a short Mixer scrolls instead of drawing controls on top of one another.
+
+---
+
+## Phase 16: Single Library Item Tab (2026-07-19 Correction)
+
+**Purpose**: Enforce one visible Library Item presentation slot without discarding protected editor sessions.
+
+- [x] T105 Add a failing workbench regression that identifies duplicate session-bound Library Item panels and proves opening a second session must replace the first visible tab in `packages/blue-app/src/renderer/tests/library-editor-workbench.test.tsx` and `packages/blue-app/src/renderer/tests/workbench-store.test.ts`
+- [x] T106 Enforce the single-tab invariant at the Dockview action boundary and remove the pre-await replacement snapshot that allowed rapid selections to race in `packages/blue-app/src/renderer/stores/workbench-store.ts` and `packages/blue-app/src/renderer/stores/library-store.ts`
+- [x] T107 Remove transient session-bound Library Item panels during saved-layout restoration while retaining dirty/pinned sessions by stable item identity in `packages/blue-app/src/renderer/stores/workbench-store.ts`
+- [x] T108 Run focused renderer regressions, the full application suite, renderer production build, workspace lint, and diff validation; record evidence in `specs/060-unified-libraries/quickstart.md` and `specs/060-unified-libraries/checklists/requirements.md`
+
+**Checkpoint**: Rapid selection and legacy saved layouts can never produce more than one visible Library Item tab, while reselecting an item restores its retained draft session.
+
+---
+
+## Phase 17: Immediate Detached Cut And Folder Drag (2026-07-19 Correction)
+
+**Purpose**: Make every Cut visibly remove its source at command time while preserving reusable typed Paste content, and add direct folder organization by drag-and-drop.
+
+**Independent Test**: Cut a populated user folder and each supported user/project item type; verify the source disappears before choosing a destination, Paste can be repeated into compatible user or project targets, every result has an independent identity, dirty/declined/failed cuts preserve the source and prior clipboard, and dragging a folder into a compatible sibling folder moves the original hierarchy while rejecting cycles and cross-type targets.
+
+- [x] T109 [P] Add shared, service, store, panel, and tree regressions for detached typed Cut buffers, immediate source removal, repeated deep Paste, project editor closure, declined shared-SoundObject consequences, and folder-to-folder drag
+- [x] T110 Add atomic repository subtree capture/recreation through the repository client and worker so folder Cut retains every descendant payload and ordering without renderer-visible XML
+- [x] T111 Add validated main/preload IPC for capture-before-delete Cut, main-owned expiring typed buffers, guarded project/user deletion, clean editor closure, and reusable Paste resolution
+- [x] T112 Replace deferred renderer Cut cleanup with asynchronous capture-and-remove at command time across Libraries, Orchestra, UDO, Mixer, and Project SoundObject panels while keeping Copy revision-bound
+- [x] T113 Add guarded user folder/item drag moves into compatible user folders with protected-mode hover feedback, cycle/type/root checks, and revision-bound repository authority
+- [x] T114 Run focused regressions, the full application suite, production build, workspace lint, and diff validation; record evidence in `specs/060-unified-libraries/quickstart.md` and `specs/060-unified-libraries/checklists/requirements.md`
+
+**Checkpoint**: Cut behaves as copy-then-remove everywhere, Paste is a repeatable independent copy, and direct user-folder drag organization is immediate and unambiguous.
+
+---
+
+## Phase 18: Shared SoundObject Instance Editing Parity (2026-07-20 Correction)
+
+**Purpose**: Restore Java Blue's split between shared-definition editing and per-Instance properties while keeping every reference and editor session synchronized.
+
+**Independent Test**: Open multiple timeline and nested Instances of one Project Shared SoundObject, edit and save the definition in Library Item, and generate the project score; verify every Instance uses the updated definition, the Instance Properties panel retains wrapper-local values, clean parallel editors refresh without flashing, and dirty drafts become conflicts without being discarded.
+
+- [x] T115 Add failing regressions for stable library-ID Instance routing, per-Instance property routing, clean/dirty project editor reconciliation, stable-session reuse after a definition fingerprint changes, and generated-score use of the edited definition
+- [x] T116 Route Instance type editors through the stable Project Shared SoundObject ID while deriving a timeline-owned target for the selected Instance's Properties panel
+- [x] T117 Relink every timeline, nested, and project-library-nested Instance after canonical definition replacement, and reconcile open project Library Item sessions by stable identity
+- [x] T118 Prevent editor reloads caused only by rehydrated target object identity and refresh the selected Instance type editor after a Library Item Save or Revert transition
+- [x] T119 Run focused regressions, the full application suite, main and renderer production builds, workspace lint, and diff validation; record evidence in `specs/060-unified-libraries/quickstart.md` and `specs/060-unified-libraries/checklists/requirements.md`
+
+**Checkpoint**: A Project Shared SoundObject has one canonical definition for editing and score generation, while each Instance retains independent wrapper properties and no clean or dirty editor drifts silently.
+
+---
+
+## Phase 19: Completion Review And Traceability (2026-07-21 Closeout)
+
+**Purpose**: Review the complete feature branch against the current specification, close measurable coverage and repository-policy gaps, and record a durable completion decision.
+
+- [x] T120 Audit all 78 functional requirements, 13 success criteria, 119 implementation tasks, constitution rules, changed production surfaces, and failure-path coverage; add the missing 50-cycle identity regression and replace prohibited inline import-type annotations
+- [x] T121 Reconcile superseded task wording, add the completion/traceability record, and update the final verification evidence in `specs/060-unified-libraries/status.md`, `specs/060-unified-libraries/tasks.md`, `specs/060-unified-libraries/quickstart.md`, and `specs/060-unified-libraries/checklists/requirements.md`
+- [x] T122 Run the focused repository and performance regressions, browser regressions, full application/workspace tests, production build, lint, and branch-wide diff validation; record the results in the Spec 060 closeout artifacts
+
+**Checkpoint**: Spec 060 has no blocking requirement, constitution, coverage, or code-quality findings; every build-verifiable success criterion has direct evidence and the remaining usability outcome is identified as external validation.
+
+---
+
 ## Dependencies And Execution Order
 
 ### Phase Dependencies
@@ -238,7 +382,16 @@
 - **US5 (Phase 7)** depends on US1's ellipsis shell and should follow US4 to avoid concurrent edits to the same menu.
 - **US6 (Phase 8)** depends on US1's healthy/failure panel split and can run independently of US2–US5.
 - **Polish (Phase 9)** depends on every selected story; obsolete files are removed only after replacement tests are green.
-- **Phase 10** depends on the completed corrective slice. T065–T068 are independent failing-test surfaces; T069–T072 implement those contracts; T073 is the final gate.
+- **Phase 10** depends on the completed corrective slice. T065–T068 are independent failing-test surfaces; T069–T072 implement those contracts; T073 is its gate.
+- **Phase 11** depends on Phase 10. T074/T076/T077/T079/T080 cover separate review surfaces; T075/T078 implement shared renderer behavior; T081/T082 reconcile coverage and artifacts; T083 is the final gate.
+- **Phase 12** depends on Phase 11 and unifies project/user ownership interactions before the final regression pass.
+- **Phase 13** depends on Phase 12 and closes the rendered Electron and dock-sizing failures found during manual acceptance.
+- **Phase 14** depends on Phase 13 and extends the already shared UDO transfer contract to Instrument-owned lists while correcting the remaining empty-folder affordance.
+- **Phase 15** depends on Phase 14 and expands only the hit/highlight geometry of existing exact end targets while protecting Mixer readability at short dock heights.
+- **Phase 16** depends on Phase 15 and changes only Library Item panel visibility; main-owned dirty/pinned session retention remains intact.
+- **Phase 17** depends on Phase 16 and replaces the prior destination-first Cut lifecycle without changing ordinary Copy or cross-owner drag-copy semantics.
+- **Phase 18** depends on Phase 17 and reconciles stable shared-SoundObject definition identity across editor and score-generation paths.
+- **Phase 19** depends on every implementation phase and is the final cross-artifact, code-quality, coverage, and verification gate.
 
 ### User Story Dependency Graph
 
@@ -265,8 +418,8 @@ Setup → Foundation → US1
 - **US1**: T012–T015 are separate test surfaces; T020–T023 are separate native editor adapters.
 - **US2**: T028–T031 cover separate destinations; T036–T039 implement those destinations in separate component trees.
 - **US3**: T043 and T044 cover repository and editor-session services independently.
-- **US4**: T052 can proceed on the menu/panel after T050 while T051 implements notice/store behavior.
-- **US5**: T055 can preserve dialog/history flows while T054 wires the dropdown.
+- **US4**: T052 can proceed on the menu/panel after T050 while T051 implements silent migration and internal provenance.
+- **US5**: T055 can implement import/export decision flows while T054 wires the dropdown.
 - **US6**: T058 can protect app/workbench behavior while T057 updates recovery presentation.
 - **Polish**: T060 and T061 validate independent accessibility and performance surfaces.
 
@@ -315,16 +468,16 @@ T044: native editor patch/session tests
 
 ```text
 After T050 fails:
-T051: non-blocking migration notice/store
-T052: migration report access in ellipsis menu
+T051: silent migration and internal provenance
+T052: healthy-menu exclusion and recovery-only presentation
 ```
 
 ### User Story 5
 
 ```text
 After T053 fails:
-T054: dropdown command wiring
-T055: import/history dialog and store preservation
+T054: file/directory import and export command wiring
+T055: explicit import/export decisions and atomic service behavior
 ```
 
 ### User Story 6
@@ -351,17 +504,17 @@ T058: Welcome/project-work failure isolation
 1. **Foundation + US1**: Remove the unacceptable button/header/XML-editor experience.
 2. **Add US2**: Replace Browse/Insert modes with exact drag/drop and keyboard Paste.
 3. **Add US3**: Complete desktop context-menu organization and safe typed editing.
-4. **Add US4**: Make migration reporting transient but reviewable.
-5. **Add US5**: Preserve interchange/history through the ellipsis menu.
+4. **Add US4**: Keep healthy migration silent while retaining internal provenance and exceptional recovery.
+5. **Add US5**: Provide previewed file/directory import and atomic export through the ellipsis menu.
 6. **Add US6**: Confirm recovery remains exceptional and non-destructive.
 7. **Polish**: Delete obsolete surfaces only after all replacement coverage passes.
 
 ## Notes
 
-- All tasks are intentionally unchecked; the previous completed implementation checklist is preserved in Git history rather than mixed with corrective work.
+- Checked tasks describe completed implementation and verified coverage; T122 records the final full verification gate.
 - `[P]` marks tasks that touch separate files after their phase entry condition.
 - Drag payloads contain only opaque tokens and non-authoritative type/scope hints—never XML.
 - Supported Library Items use native controlled editors under the existing address header; unsupported/missing items remain deliberately read-only.
-- User-library-to-project drag always copies. Cut/move is limited to permitted organization inside one user-library type/scope.
+- Cross-owner drag copies, while native internal project drag may move where supported. One shared typed Cut buffer captures detached content and removes the source immediately; every later Paste is an independent copy and leaves the buffer reusable.
 - Context menus and destination Paste are required keyboard equivalents; drag-and-drop is never the sole path.
 - Commit after each task or coherent task group while preserving test-first ordering.

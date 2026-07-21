@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React from 'react';
 import * as ContextMenu from '@radix-ui/react-context-menu';
 import type {
   MixerChainEntrySnapshot,
@@ -23,10 +23,8 @@ interface EffectsChainContextMenuProps {
   onOpenEditEffectDialog: (entry: MixerEffectEntrySnapshot, chain: MixerChainKind) => void;
   canPasteLibraryEffect: boolean;
   onPasteLibraryEffect: () => void;
-  onProjectClipboardCapture: () => void;
+  onProjectClipboardCapture: (operation: 'copy' | 'cut') => void;
 }
-
-let bufferedEntry: MixerChainEntrySnapshot | null = null;
 
 function MenuItem({
   children,
@@ -187,54 +185,25 @@ export default function EffectsChainContextMenu({
           <ContextMenu.Separator className="editor-context-menu__separator" />
 
           <MenuItem
-            disabled={!hasSelection}
+            disabled={!isEffect}
             onSelect={() => {
-              if (!selected) return;
-              onProjectClipboardCapture();
-              bufferedEntry = { ...selected };
-              onPatch({
-                type: 'removeChainEntry',
-                channelId,
-                chain,
-                entryId: selected.entryId,
-              });
+              onProjectClipboardCapture('cut');
             }}
           >
             Cut
           </MenuItem>
           <MenuItem
-            disabled={!hasSelection}
+            disabled={!isEffect}
             onSelect={() => {
-              if (!selected) return;
-              onProjectClipboardCapture();
-              bufferedEntry = { ...selected };
-              onPatch({
-                type: 'copyChainEntry',
-                channelId,
-                chain,
-                entryId: selected.entryId,
-              });
+              onProjectClipboardCapture('copy');
             }}
           >
             Copy
           </MenuItem>
           <MenuItem
-            disabled={!canPasteLibraryEffect && (bufferedEntry == null || bufferedEntry.kind !== 'effect')}
+            disabled={!canPasteLibraryEffect}
             onSelect={() => {
-              if (canPasteLibraryEffect) {
-                onPasteLibraryEffect();
-                return;
-              }
-              if (bufferedEntry?.kind === 'effect') {
-                onPatch({
-                  type: 'addEffectFromLibrary',
-                  channelId,
-                  chain,
-                  libraryEffectId: '__clipboard__',
-                  effectXml: bufferedEntry.effectXml,
-                  entryId: crypto.randomUUID(),
-                });
-              }
+              onPasteLibraryEffect();
             }}
           >
             Paste

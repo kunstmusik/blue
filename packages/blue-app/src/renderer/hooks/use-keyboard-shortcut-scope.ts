@@ -35,7 +35,9 @@ export function useKeyboardShortcutScope<T extends HTMLElement>({
       return;
     }
 
-    ref.current?.focus();
+    // Keep a partly visible editing surface in place until its mouse handler
+    // finishes hit-testing the original pointer coordinates.
+    ref.current?.focus({ preventScroll: true });
   }, [enabled, ref, shouldIgnoreFocusTarget]);
 
   const handleKeyDown = useCallback((event: ReactKeyboardEvent<T>) => {

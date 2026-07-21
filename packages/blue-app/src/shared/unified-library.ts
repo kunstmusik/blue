@@ -33,6 +33,7 @@ export interface InstrumentProjectLocator {
 
 export interface ProjectUdoLocator {
   readonly kind: 'udo';
+  readonly instrumentAssignmentId?: string;
   readonly sessionObjectId: string;
   readonly persistedFingerprint: {
     readonly canonicalHash: string;
@@ -51,10 +52,18 @@ export interface SharedSoundObjectLocator {
   };
 }
 
+export interface ProjectEffectLocator {
+  readonly kind: 'effect';
+  readonly channelId: string;
+  readonly chain: 'pre' | 'post';
+  readonly entryId: string;
+}
+
 export type ProjectItemLocator =
   | InstrumentProjectLocator
   | ProjectUdoLocator
-  | SharedSoundObjectLocator;
+  | SharedSoundObjectLocator
+  | ProjectEffectLocator;
 
 export type LibraryItemKey =
   | {
@@ -64,7 +73,7 @@ export type LibraryItemKey =
     }
   | {
       readonly scope: 'projectOwned' | 'projectShared';
-      readonly libraryType: 'instrument' | 'udo' | 'soundObject';
+      readonly libraryType: LibraryType;
       readonly projectSessionId: number;
       readonly locator: ProjectItemLocator;
     };
@@ -141,7 +150,7 @@ export interface UserBrowseParent {
 
 export interface ProjectBrowseParent {
   readonly scope: 'projectOwned' | 'projectShared';
-  readonly libraryType: 'instrument' | 'udo' | 'soundObject';
+  readonly libraryType: LibraryType;
   readonly projectSessionId: number;
   readonly parentLocator?: Readonly<Record<string, string | number>>;
 }
@@ -171,6 +180,7 @@ export interface SearchLibrariesRequest {
 
 export interface LibrarySearchResult {
   readonly key: LibraryItemKey;
+  readonly parentId: string | null;
   readonly libraryType: LibraryType;
   readonly scope: LibraryScopeKind;
   readonly displayName: string;
@@ -303,7 +313,9 @@ export interface InsertionTargetSnapshot {
   readonly channelId?: string;
   readonly chain?: 'pre' | 'post';
   readonly insertIndex?: number;
+  readonly instrumentAssignmentId?: string;
   readonly location?: ScoreInsertionLocation;
+  readonly destinationKind?: 'score' | 'projectSoundObjectLibrary';
 }
 
 export interface LibraryContextSnapshot {
@@ -321,6 +333,7 @@ export interface LibraryInsertionRequest {
 export interface LibraryDragDescriptor {
   readonly dragSessionId: string;
   readonly libraryType: LibraryType;
+  readonly sourceScope?: LibraryScopeKind;
 }
 
 export interface BeginLibraryDragRequest {
@@ -333,7 +346,7 @@ export type LibraryTransferSourceReference =
   | { readonly kind: 'drag'; readonly dragSessionId: string }
   | { readonly kind: 'clipboard'; readonly source: LibraryTransferSource };
 
-export type LibraryTransferSource =
+export type CapturableLibraryTransferSource =
   | {
       readonly kind: 'library';
       readonly key: LibraryItemKey;
@@ -346,6 +359,13 @@ export type LibraryTransferSource =
       readonly revision: number;
     };
 
+export type LibraryTransferSource = CapturableLibraryTransferSource
+  | {
+      readonly kind: 'buffer';
+      readonly clipboardId: string;
+      readonly libraryType: LibraryType;
+    };
+
 export function getLibraryTransferSourceType(
   source: LibraryTransferSource,
 ): LibraryType {
@@ -356,6 +376,30 @@ export interface LibraryInteractionClipboard {
   readonly operation: 'copy' | 'cut';
   readonly source: LibraryTransferSource;
   readonly capturedAt: number;
+}
+
+export interface CutLibraryToClipboardRequest {
+  readonly source: CapturableLibraryTransferSource;
+  readonly confirmationToken: string;
+}
+
+export interface CutLibraryToClipboardResult {
+  readonly clipboard: LibraryInteractionClipboard;
+  readonly closedEditorSessionIds: readonly string[];
+}
+
+export interface ScoreTimelineSoundObjectRequest {
+  readonly projectSessionId: number;
+  readonly projectRevision: number;
+  readonly location: {
+    readonly rootGroupIndex: number;
+    readonly containerPath: readonly {
+      readonly layerIndex: number;
+      readonly objectIndex: number;
+    }[];
+    readonly layerIndex: number;
+    readonly objectIndex: number;
+  };
 }
 
 interface ExactProjectTargetBase {
@@ -371,6 +415,7 @@ export type LibraryExactTransferTarget =
   | (ExactProjectTargetBase & {
       readonly kind: 'projectUdo';
       readonly insertIndex: number;
+      readonly instrumentAssignmentId?: string;
     })
   | (ExactProjectTargetBase & {
       readonly kind: 'effectChain';
@@ -383,7 +428,47 @@ export type LibraryExactTransferTarget =
       readonly kind: 'score';
       readonly location: ScoreInsertionLocation;
       readonly timeContextRevision: string;
+    })
+  | (ExactProjectTargetBase & {
+      readonly kind: 'projectSoundObjectLibrary';
     });
+
+function parsePositiveArrangementId(value: string): number | null {
+  const trimmed = value.trim();
+  if (!/^[1-9]\d*$/u.test(trimmed)) return null;
+  const parsed = Number(trimmed);
+  return Number.isSafeInteger(parsed) ? parsed : null;
+}
+
+export function getAvailableNumericArrangementId(
+  assignmentIds: readonly string[],
+  insertIndex: number,
+): string | null {
+  if (!Number.isInteger(insertIndex) || insertIndex < 0 || insertIndex > assignmentIds.length) {
+    return null;
+  }
+
+  const numericIds = assignmentIds
+    .map(parsePositiveArrangementId)
+    .filter((value): value is number => value !== null);
+  const used = new Set(numericIds);
+
+  if (insertIndex === assignmentIds.length) {
+    const max = numericIds.length > 0 ? Math.max(...numericIds) : 0;
+    return max < Number.MAX_SAFE_INTEGER ? String(max + 1) : null;
+  }
+
+  const next = parsePositiveArrangementId(assignmentIds[insertIndex]!);
+  if (next === null) return null;
+  const previous = insertIndex === 0
+    ? 0
+    : parsePositiveArrangementId(assignmentIds[insertIndex - 1]!);
+  if (previous === null) return null;
+
+  let candidate = previous + 1;
+  while (candidate < next && used.has(candidate)) candidate += 1;
+  return candidate < next ? String(candidate) : null;
+}
 
 export interface LibraryTransferPreviewRequest {
   readonly source: LibraryTransferSourceReference;
@@ -421,6 +506,8 @@ export interface ProjectMutationReceipt {
   readonly libraryType: LibraryType;
   readonly insertedIdentity: string;
   readonly message: string;
+  /** Editor sessions closed because their project-library definition was removed. */
+  readonly closedEditorSessionIds?: readonly string[];
 }
 
 export type LibraryEditorSessionStatus = 'ready' | 'conflict' | 'missing';
@@ -488,13 +575,28 @@ export interface ManualImportSourcePreview {
   readonly exactDuplicateCount: number;
   readonly aliasConflictCount: number;
   readonly ambiguousFolderCount: number;
+  readonly folderConflicts: readonly ManualImportFolderConflict[];
   readonly error?: string;
+}
+
+export interface ManualImportFolderConflict {
+  readonly conflictId: string;
+  readonly sourceBreadcrumb: readonly string[];
+  readonly candidates: readonly {
+    readonly nodeId: string;
+    readonly breadcrumb: readonly string[];
+  }[];
 }
 
 export interface ManualLibraryImportPreview {
   readonly previewToken: string;
   readonly expiresAt: number;
   readonly sources: readonly ManualImportSourcePreview[];
+}
+
+export interface ManualLibraryImportExecutionRequest {
+  readonly previewToken: string;
+  readonly folderSelections: Readonly<Record<string, string>>;
 }
 
 export interface ManualLibraryImportResult {
@@ -507,6 +609,11 @@ export interface ManualLibraryImportResult {
 
 export interface CopyProjectLibraryItemRequest {
   readonly key: LibraryItemKey;
+  readonly parentId: string;
+}
+
+export interface CopyLibraryTransferToUserRequest {
+  readonly source: LibraryTransferSourceReference;
   readonly parentId: string;
 }
 
@@ -568,6 +675,9 @@ export const UNIFIED_LIBRARY_APPLY_INSERTION_CHANNEL = 'unified-library:apply-in
 export const UNIFIED_LIBRARY_CONTEXT_CHANGED_CHANNEL = 'unified-library:context-changed';
 export const UNIFIED_LIBRARY_MUTATE_CHANNEL = 'unified-library:mutate';
 export const UNIFIED_LIBRARY_PREPARE_MUTATION_CHANNEL = 'unified-library:prepare-mutation';
+export const UNIFIED_LIBRARY_CUT_TO_CLIPBOARD_CHANNEL = 'unified-library:cut-to-clipboard';
+export const UNIFIED_LIBRARY_CAPTURE_SCORE_SOUND_OBJECT_CHANNEL = 'unified-library:capture-score-sound-object';
+export const UNIFIED_LIBRARY_ADD_SCORE_SOUND_OBJECT_CHANNEL = 'unified-library:add-score-sound-object';
 export const UNIFIED_LIBRARY_EDITOR_OPEN_CHANNEL = 'unified-library:editor-open';
 export const UNIFIED_LIBRARY_EDITOR_GET_CHANNEL = 'unified-library:editor-get';
 export const UNIFIED_LIBRARY_EDITOR_PATCH_CHANNEL = 'unified-library:editor-patch';
@@ -581,8 +691,9 @@ export const UNIFIED_LIBRARY_DRAFT_RESOLVE_CHANNEL = 'unified-library:draft-reso
 export const UNIFIED_LIBRARY_PROJECT_USAGE_CHANNEL = 'unified-library:project-usage';
 export const UNIFIED_LIBRARY_PROJECT_DELETE_PREVIEW_CHANNEL = 'unified-library:project-delete-preview';
 export const UNIFIED_LIBRARY_PROJECT_DELETE_CHANNEL = 'unified-library:project-delete';
-export const UNIFIED_LIBRARY_PROJECT_COPY_CHANNEL = 'unified-library:project-copy';
+export const UNIFIED_LIBRARY_TRANSFER_TO_USER_CHANNEL = 'unified-library:transfer-to-user';
 export const UNIFIED_LIBRARY_IMPORT_SELECT_CHANNEL = 'unified-library:import-select';
+export const UNIFIED_LIBRARY_IMPORT_DIRECTORY_CHANNEL = 'unified-library:import-directory';
 export const UNIFIED_LIBRARY_IMPORT_EXECUTE_CHANNEL = 'unified-library:import-execute';
 export const UNIFIED_LIBRARY_EXPORT_CURRENT_CHANNEL = 'unified-library:export-current';
 export const UNIFIED_LIBRARY_EXPORT_ALL_CHANNEL = 'unified-library:export-all';
@@ -623,9 +734,13 @@ export function isLibraryType(value: unknown): value is LibraryType {
 
 export function isLibraryDragDescriptor(value: unknown): value is LibraryDragDescriptor {
   if (!isRecord(value)) return false;
-  return Object.keys(value).every((key) => key === 'dragSessionId' || key === 'libraryType')
+  return Object.keys(value).every((key) => key === 'dragSessionId' || key === 'libraryType' || key === 'sourceScope')
     && isNonEmptyString(value.dragSessionId)
-    && isLibraryType(value.libraryType);
+    && isLibraryType(value.libraryType)
+    && (value.sourceScope === undefined
+      || value.sourceScope === 'user'
+      || value.sourceScope === 'projectOwned'
+      || value.sourceScope === 'projectShared');
 }
 
 export function isBeginLibraryDragRequest(value: unknown): value is BeginLibraryDragRequest {
@@ -641,10 +756,41 @@ export function isLibraryTransferSource(value: unknown): value is LibraryTransfe
     return isLibraryItemKey(value.key)
       && (isNonNegativeInteger(value.revision) || isNonEmptyString(value.revision));
   }
+  if (value.kind === 'buffer') {
+    return isNonEmptyString(value.clipboardId)
+      && isLibraryType(value.libraryType);
+  }
   return value.kind === 'userNode'
     && isLibraryType(value.libraryType)
     && isNonEmptyString(value.nodeId)
     && isNonNegativeInteger(value.revision);
+}
+
+export function isCutLibraryToClipboardRequest(
+  value: unknown,
+): value is CutLibraryToClipboardRequest {
+  if (!isRecord(value) || !isNonEmptyString(value.confirmationToken)) return false;
+  return isLibraryTransferSource(value.source) && value.source.kind !== 'buffer';
+}
+
+export function isScoreTimelineSoundObjectRequest(
+  value: unknown,
+): value is ScoreTimelineSoundObjectRequest {
+  if (
+    !isRecord(value)
+    || !isNonNegativeInteger(value.projectSessionId)
+    || !isNonNegativeInteger(value.projectRevision)
+    || !isRecord(value.location)
+    || !isNonNegativeInteger(value.location.rootGroupIndex)
+    || !isNonNegativeInteger(value.location.layerIndex)
+    || !isNonNegativeInteger(value.location.objectIndex)
+    || !Array.isArray(value.location.containerPath)
+  ) return false;
+  return value.location.containerPath.every((segment) => (
+    isRecord(segment)
+    && isNonNegativeInteger(segment.layerIndex)
+    && isNonNegativeInteger(segment.objectIndex)
+  ));
 }
 
 export function isLibraryInteractionClipboard(value: unknown): value is LibraryInteractionClipboard {
@@ -661,14 +807,19 @@ export function isLibraryExactTransferTarget(value: unknown): value is LibraryEx
     || !isNonNegativeInteger(value.projectSessionId)
     || !isNonNegativeInteger(value.projectRevision)
     || typeof value.kind !== 'string') return false;
-  if (value.kind === 'orchestra' || value.kind === 'projectUdo') {
+  if (value.kind === 'orchestra') {
     return isNonNegativeInteger(value.insertIndex);
+  }
+  if (value.kind === 'projectUdo') {
+    return isNonNegativeInteger(value.insertIndex)
+      && (value.instrumentAssignmentId === undefined
+        || isNonEmptyString(value.instrumentAssignmentId));
   }
   if (value.kind === 'effectChain') {
     return isNonEmptyString(value.channelId)
       && (value.chain === 'pre' || value.chain === 'post')
       && isNonNegativeInteger(value.insertIndex)
-      && isNonEmptyString(value.chainRevision);
+      && typeof value.chainRevision === 'string';
   }
   if (value.kind === 'score') {
     return isRecord(value.location)
@@ -679,6 +830,7 @@ export function isLibraryExactTransferTarget(value: unknown): value is LibraryEx
       && Number.isFinite(value.location.startTime)
       && isNonEmptyString(value.timeContextRevision);
   }
+  if (value.kind === 'projectSoundObjectLibrary') return true;
   return false;
 }
 
@@ -735,6 +887,8 @@ export function isProjectItemLocator(value: unknown): value is ProjectItemLocato
   if (value.kind === 'instrument') return isNonEmptyString(value.assignmentId);
   if (value.kind === 'udo') {
     return isNonEmptyString(value.sessionObjectId)
+      && (value.instrumentAssignmentId === undefined
+        || isNonEmptyString(value.instrumentAssignmentId))
       && isRecord(value.persistedFingerprint)
       && isNonEmptyString(value.persistedFingerprint.canonicalHash)
       && isNonEmptyString(value.persistedFingerprint.opcodeName)
@@ -748,6 +902,11 @@ export function isProjectItemLocator(value: unknown): value is ProjectItemLocato
       && isNonEmptyString(value.persistedFingerprint.displayName)
       && isNonEmptyString(value.persistedFingerprint.objectType);
   }
+  if (value.kind === 'effect') {
+    return isNonEmptyString(value.channelId)
+      && (value.chain === 'pre' || value.chain === 'post')
+      && isNonEmptyString(value.entryId);
+  }
   return false;
 }
 
@@ -755,9 +914,11 @@ export function isLibraryItemKey(value: unknown): value is LibraryItemKey {
   if (!isRecord(value) || !isLibraryType(value.libraryType)) return false;
   if (value.scope === 'user') return isNonEmptyString(value.nodeId);
   if (value.scope !== 'projectOwned' && value.scope !== 'projectShared') return false;
-  return value.libraryType !== 'effect'
-    && isNonNegativeInteger(value.projectSessionId)
-    && isProjectItemLocator(value.locator);
+  if (!isNonNegativeInteger(value.projectSessionId) || !isProjectItemLocator(value.locator)) return false;
+  return (value.libraryType === 'instrument' && value.locator.kind === 'instrument')
+    || (value.libraryType === 'udo' && value.locator.kind === 'udo')
+    || (value.libraryType === 'soundObject' && value.locator.kind === 'soundObject')
+    || (value.libraryType === 'effect' && value.locator.kind === 'effect');
 }
 
 export function isBrowseLibraryRequest(value: unknown): value is BrowseLibraryRequest {
@@ -776,7 +937,6 @@ export function isBrowseLibraryRequest(value: unknown): value is BrowseLibraryRe
     return parent.nodeId === undefined || isNonEmptyString(parent.nodeId);
   }
   return (parent.scope === 'projectOwned' || parent.scope === 'projectShared')
-    && parent.libraryType !== 'effect'
     && isNonNegativeInteger(parent.projectSessionId);
 }
 

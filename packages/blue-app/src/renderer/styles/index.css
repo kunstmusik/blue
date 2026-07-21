@@ -1047,7 +1047,8 @@
   display: flex;
   flex: 1;
   min-height: 0;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 .mixer-channels-scroll {
@@ -1056,6 +1057,7 @@
   overflow-y: hidden;
   display: flex;
   gap: 0;
+  min-height: 300px;
 }
 
 .mixer-channel-group {
@@ -1086,6 +1088,7 @@
 .mixer-master-strip {
   flex-shrink: 0;
   border-left: 2px solid var(--color-app-focus);
+  min-height: 300px;
 }
 
 /* ── Channel Strip ────────────────────────────── */
@@ -1100,10 +1103,6 @@
   background: var(--color-app-overlay);
   overflow: hidden;
   height: 100%;
-}
-
-.mixer-channel-strip:hover {
-  background: var(--color-app-hover);
 }
 
 .mixer-channel-name {
@@ -1163,6 +1162,8 @@
 }
 
 .mixer-chain-list {
+  display: flex;
+  flex-direction: column;
   min-height: 50px;
   height: 50px;
   overflow-y: auto;
@@ -1284,8 +1285,8 @@
   padding: 2px 0;
   border-top: 1px solid color-mix(in srgb, var(--color-app-border) 40%, var(--color-app-clear));
   border-bottom: 1px solid color-mix(in srgb, var(--color-app-border) 40%, var(--color-app-clear));
-  flex: 1 1 0;
-  min-height: 0;
+  flex: 1 0 96px;
+  min-height: 96px;
 }
 
 .mixer-level-label {

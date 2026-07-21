@@ -249,7 +249,7 @@ Project placement uses a typed, opaque drag session from Libraries—or from the
 - The ellipsis button has an accessible `Library actions` label, visible focus, and no tooltip-dependent meaning.
 - Tree focus remains stable while the main editor preview updates; opening the editor must not interrupt multi-step keyboard organization.
 - Delete and non-empty-folder delete retain revision-bound confirmation with affected counts; shared-definition delete retains linked-instance consequences.
-- Cut is visually marked until Paste/cancel and is permitted only within the same user-library type/scope. Copy creates new stable identities; cut/move preserves them.
+- Cut captures detached typed content and removes the source immediately after validation; its reusable buffer remains available until replaced or cancelled. Copy and Paste create new stable identities, while direct compatible folder drag preserves the moved user-node identity.
 - Drag hover supports exact insertion markers, invalid cues, edge auto-scroll, and `Escape` cancellation. Drop dialogs appear only for shared-copy choices or unresolved disclosures, not for every valid transfer.
 - Unsupported items remain selectable/viewable/organizable/exportable but are not draggable into project surfaces and cannot open a mutable editor.
 

@@ -95,14 +95,14 @@ function CategoryMenu({
           >
             Remove Group
           </ContextMenu.Item>
-          <ContextMenu.Separator className="editor-context-menu__sep" />
+          <ContextMenu.Separator className="editor-context-menu__separator" />
           <ContextMenu.Item
             className="editor-context-menu__item"
             onSelect={() => actions.onAddEffect(catId)}
           >
             Add Effect
           </ContextMenu.Item>
-          <ContextMenu.Separator className="editor-context-menu__sep" />
+          <ContextMenu.Separator className="editor-context-menu__separator" />
           <ContextMenu.Item
             className="editor-context-menu__item"
             onSelect={() => actions.onCutCategory(catId)}
@@ -124,7 +124,7 @@ function CategoryMenu({
           >
             Paste
           </ContextMenu.Item>
-          <ContextMenu.Separator className="editor-context-menu__sep" />
+          <ContextMenu.Separator className="editor-context-menu__separator" />
           <ContextMenu.Item
             className="editor-context-menu__item"
             onSelect={() => actions.onImportIntoCategory(catId)}
@@ -166,14 +166,14 @@ function EffectMenu({
           >
             Copy
           </ContextMenu.Item>
-          <ContextMenu.Separator className="editor-context-menu__sep" />
+          <ContextMenu.Separator className="editor-context-menu__separator" />
           <ContextMenu.Item
             className="editor-context-menu__item"
             onSelect={() => actions.onRemoveEffect(effect.libraryEffectId)}
           >
             Remove Effect
           </ContextMenu.Item>
-          <ContextMenu.Separator className="editor-context-menu__sep" />
+          <ContextMenu.Separator className="editor-context-menu__separator" />
           <ContextMenu.Item
             className="editor-context-menu__item"
             onSelect={() => actions.onExportEffect(effect.libraryEffectId)}
@@ -182,7 +182,7 @@ function EffectMenu({
           </ContextMenu.Item>
           {actions.addToMixerLabel && (
             <>
-              <ContextMenu.Separator className="editor-context-menu__sep" />
+          <ContextMenu.Separator className="editor-context-menu__separator" />
               <ContextMenu.Item
                 className="editor-context-menu__item"
                 onSelect={() => actions.onAddToMixer(effect)}

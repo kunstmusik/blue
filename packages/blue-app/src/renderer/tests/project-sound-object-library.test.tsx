@@ -91,9 +91,31 @@ beforeEach(() => {
     openLibraryItemEditor,
     onLibraryEditorSessionChanged: vi.fn(() => () => undefined),
     onLibraryChanged: vi.fn(() => () => undefined),
-    previewProjectLibraryDelete: vi.fn(),
+    previewProjectLibraryDelete: vi.fn(async () => ({
+      ok: true as const,
+      value: {
+        confirmationToken: 'project-sound-cut',
+        linkedInstanceCount: 0,
+        locations: [],
+        requiresConfirmation: true,
+      },
+    })),
+    cutLibraryToClipboard: vi.fn(async () => ({
+      ok: true as const,
+      value: {
+        clipboard: {
+          operation: 'cut' as const,
+          source: {
+            kind: 'buffer' as const,
+            clipboardId: 'sound-buffer',
+            libraryType: 'soundObject' as const,
+          },
+          capturedAt: 100,
+        },
+        closedEditorSessionIds: [],
+      },
+    })),
     deleteProjectLibraryItem: vi.fn(),
-    copyProjectLibraryItemToUser: vi.fn(),
   };
   container = document.createElement('div');
   document.body.appendChild(container);
@@ -125,7 +147,7 @@ describe('Project SoundObject Library panel', () => {
       revision: 'shared-hash',
     }));
 
-    useLibraryStore.getState().captureClipboard(sharedNode, 'copy');
+    await useLibraryStore.getState().captureClipboard(sharedNode, 'copy');
     expect(useLibraryStore.getState().clipboard).toMatchObject({
       operation: 'copy',
       source: {
@@ -142,5 +164,68 @@ describe('Project SoundObject Library panel', () => {
     await act(async () => { await Promise.resolve(); });
     expect(container.textContent).toContain('No project loaded');
     expect(container.textContent).not.toContain('User Libraries');
+  });
+
+  it('uses the shared Copy/Cut buffer for project-shared SoundObjects', async () => {
+    act(() => root.render(<SoundObjectLibraryPanel />));
+    await act(async () => { await Promise.resolve(); await Promise.resolve(); });
+    const row = container.querySelector('#library-node-project-sound-shared-1') as HTMLElement;
+    act(() => row.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true })));
+    await act(async () => { await Promise.resolve(); });
+    expect(document.body.textContent).not.toContain('Copy to User Library');
+    const copy = [...document.body.querySelectorAll('[role="menuitem"]')]
+      .find((candidate) => candidate.textContent === 'Copy') as HTMLElement;
+    act(() => copy.click());
+    expect(useLibraryStore.getState().clipboard).toMatchObject({
+      operation: 'copy', source: { kind: 'library', key: sharedNode.key },
+    });
+
+    act(() => row.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true })));
+    await act(async () => { await Promise.resolve(); });
+    const cut = [...document.body.querySelectorAll('[role="menuitem"]')]
+      .find((candidate) => candidate.textContent === 'Cut') as HTMLElement;
+    await act(async () => {
+      cut.click();
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    expect(useLibraryStore.getState().clipboard).toMatchObject({
+      operation: 'cut',
+      source: { kind: 'buffer', clipboardId: 'sound-buffer', libraryType: 'soundObject' },
+    });
+  });
+
+  it('drains every project SoundObject page without truncating the panel', async () => {
+    const allNodes = Array.from({ length: 501 }, (_, index): LibraryBrowseNode => ({
+      ...sharedNode,
+      key: {
+        ...sharedNode.key!,
+        locator: {
+          kind: 'soundObject',
+          libraryId: `shared-${index}`,
+          persistedFingerprint: {
+            canonicalHash: `hash-${index}`,
+            displayName: `Shared ${index}`,
+            objectType: 'GenericScore',
+          },
+        },
+      },
+      nodeId: `project-sound-${index}`,
+      displayName: `Shared ${index}`,
+      revision: `hash-${index}`,
+    }));
+    vi.mocked(window.blueAPI.browseLibraries).mockImplementation(async (request) => {
+      const offset = request.cursor ? 500 : 0;
+      return { ok: true as const, value: {
+        contentRevision: 1,
+        parent: { ...sharedNode, key: null, nodeId: 'project-sound-root', nodeKind: 'root' as const },
+        children: allNodes.slice(offset, offset + 500),
+        nextCursor: offset === 0 ? 'page-500' : null,
+      } };
+    });
+    act(() => root.render(<SoundObjectLibraryPanel />));
+    await act(async () => { await Promise.resolve(); await Promise.resolve(); await Promise.resolve(); });
+    expect(container.textContent).toContain('Shared 500');
+    expect(window.blueAPI.browseLibraries).toHaveBeenCalledTimes(2);
   });
 });

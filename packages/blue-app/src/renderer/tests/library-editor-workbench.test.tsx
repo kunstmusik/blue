@@ -4,7 +4,10 @@ import {
   libraryEditorPanelId,
   libraryEditorSessionIdFromPanel,
 } from '../stores/library-editor-store';
-import { findLibraryEditorTargetGroup } from '../stores/workbench-store';
+import {
+  findLibraryEditorPanelsToClose,
+  findLibraryEditorTargetGroup,
+} from '../stores/workbench-store';
 
 describe('library editor workbench routing', () => {
   it('uses stable dynamic panel IDs that survive Dockview serialization', () => {
@@ -36,5 +39,15 @@ describe('library editor workbench routing', () => {
     expect(findLibraryEditorTargetGroup({
       groups: [propertiesGroup, centralGroup],
     } as Pick<DockviewApi, 'groups'>)).toBe(centralGroup);
+  });
+
+  it('keeps only the requested Library Item tab and removes restored transient tabs', () => {
+    const first = { id: libraryEditorPanelId('session-1') };
+    const second = { id: libraryEditorPanelId('session-2') };
+    const score = { id: 'ScoreTopComponent' };
+    const api = { panels: [score, first, second] } as unknown as Pick<DockviewApi, 'panels'>;
+
+    expect(findLibraryEditorPanelsToClose(api, second.id)).toEqual([first]);
+    expect(findLibraryEditorPanelsToClose(api, null)).toEqual([first, second]);
   });
 });

@@ -5,8 +5,14 @@ import { useUdoImportExport } from '../../../../hooks/use-udo-actions';
 import { createDefaultUdoSnapshot } from '../../../../utils/program-settings-defaults';
 import SplitPane from '../orchestra/SplitPane';
 import UdoEditor from './UdoEditor';
-import UdoTable, { type UdoSelectionGesture } from './UdoTable';
+import UdoTable, {
+  getProjectUdoSessionObjectId,
+  type UdoLibraryDropTarget,
+  type UdoSelectionGesture,
+} from './UdoTable';
 import { cloneUdoSnapshot } from './udo-snapshot-utils';
+import { useLibraryStore } from '../../../../stores/library-store';
+import { useProjectLibraryNodes } from '../../../libraries/use-project-library-nodes';
 
 interface UdoWorkspacePanelProps {
   udos: UdoDefinitionSnapshot[];
@@ -16,7 +22,7 @@ interface UdoWorkspacePanelProps {
   onReorder: (from: number, to: number) => void;
   onUpdateUdo: (index: number, patch: Partial<UdoDefinitionSnapshot>) => void;
   onConvertStyle: (index: number, style: 'CLASSIC' | 'MODERN') => void;
-  libraryDropTarget?: { projectSessionId: number; projectRevision: number };
+  libraryDropTarget?: UdoLibraryDropTarget;
 }
 
 function createRange(start: number, end: number): number[] {
@@ -46,8 +52,14 @@ export default function UdoWorkspacePanel({
   libraryDropTarget,
 }: UdoWorkspacePanelProps): React.ReactElement {
   const [selectedIndices, setSelectedIndices] = useState<number[]>([]);
-  const [clipboard, setClipboard] = useState<UdoDefinitionSnapshot[]>([]);
   const anchorIndexRef = useRef<number | null>(null);
+  const captureClipboard = useLibraryStore((state) => state.captureClipboard);
+  const projectNodes = useProjectLibraryNodes(
+    'projectOwned',
+    'udo',
+    libraryDropTarget?.projectSessionId ?? null,
+    libraryDropTarget?.projectRevision ?? 0,
+  );
   const {
     handleImportBlueUdo,
     handleImportCsoundUdo,
@@ -156,13 +168,17 @@ export default function UdoWorkspacePanel({
     [onInsertUdos, udos.length],
   );
 
-  const handleCopySelection = useCallback(() => {
-    const nextClipboard = selectedIndices
-      .map((index) => udos[index])
-      .filter((snapshot): snapshot is UdoDefinitionSnapshot => Boolean(snapshot))
-      .map((snapshot) => cloneUdoSnapshot(snapshot));
-    setClipboard(nextClipboard);
-  }, [selectedIndices, udos]);
+  const handleCopySelection = useCallback((operation: 'copy' | 'cut') => {
+    const selectedIndex = selectedIndices.length === 1 ? selectedIndices[0] : undefined;
+    if (selectedIndex === undefined) return;
+    const node = projectNodes.find((candidate) => (
+      candidate.key?.scope === 'projectOwned'
+      && candidate.key.locator.kind === 'udo'
+      && candidate.key.locator.sessionObjectId
+        === getProjectUdoSessionObjectId(libraryDropTarget, selectedIndex)
+    ));
+    if (node) void captureClipboard(node, operation);
+  }, [captureClipboard, libraryDropTarget, projectNodes, selectedIndices]);
 
   const handleRemoveSelection = useCallback(() => {
     if (selectedIndices.length === 0) {
@@ -173,24 +189,6 @@ export default function UdoWorkspacePanel({
     setSelectedIndices([]);
     anchorIndexRef.current = null;
   }, [onRemoveIndices, selectedIndices]);
-
-  const handleCutSelection = useCallback(() => {
-    handleCopySelection();
-    handleRemoveSelection();
-  }, [handleCopySelection, handleRemoveSelection]);
-
-  const handlePasteSelection = useCallback(() => {
-    if (clipboard.length === 0) {
-      return;
-    }
-
-    const insertIndex =
-      selectedIndices.length > 0 ? Math.max(...selectedIndices) + 1 : udos.length;
-    onInsertUdos(clipboard.map((snapshot) => cloneUdoSnapshot(snapshot)), insertIndex);
-    const nextSelection = clipboard.map((_unused, offset) => insertIndex + offset);
-    setSelectedIndices(nextSelection);
-    anchorIndexRef.current = nextSelection[0] ?? null;
-  }, [clipboard, onInsertUdos, selectedIndices, udos.length]);
 
   const handleMoveSelectionUp = useCallback(() => {
     if (selectedIndices.length === 0 || Math.min(...selectedIndices) === 0) {
@@ -273,7 +271,7 @@ export default function UdoWorkspacePanel({
       controlledPane="first"
       defaultSizePx={200}
       minFirstSize={200}
-      minSecondSize={300}
+      minSecondSize={120}
       ariaLabel="UDO workspace split"
       first={
         <UdoTable
@@ -290,13 +288,11 @@ export default function UdoWorkspacePanel({
           }}
           onRemoveSelection={handleRemoveSelection}
           onCopySelection={handleCopySelection}
-          onCutSelection={handleCutSelection}
-          onPasteSelection={handlePasteSelection}
           onExportBlueUdo={handleExportBlue}
           onExportCsoundUdo={handleExportCsound}
           onMoveSelectionUp={handleMoveSelectionUp}
           onMoveSelectionDown={handleMoveSelectionDown}
-          canPaste={clipboard.length > 0}
+          projectNodes={projectNodes}
           libraryDropTarget={libraryDropTarget}
         />
       }

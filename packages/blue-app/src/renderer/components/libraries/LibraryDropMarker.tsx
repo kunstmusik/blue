@@ -64,35 +64,55 @@ export function LibraryTableDropMarker({
 export function LibraryBlockDropMarker({
   target,
   label,
+  fillRemaining = false,
+  pasteContextMenu = true,
 }: {
   target: LibraryExactTransferTarget;
   label: string;
+  fillRemaining?: boolean;
+  pasteContextMenu?: boolean;
 }): React.ReactElement {
   const { active, canPaste, feedback, dropProps, paste } = useLibraryDropTarget(target);
   const feedbackId = useId();
-  return (
-    <DropContextMenu canPaste={canPaste} paste={paste}>
-      <div>
-        <div
-          {...dropProps}
-          tabIndex={0}
-          aria-label={`${label}; paste a Library item here`}
-          aria-describedby={feedbackId}
-          className={`h-2 rounded outline-none focus-visible:h-3 focus-visible:bg-app-accent/35 ${active ? 'h-3 bg-app-accent' : ''}`}
-        />
-        <span id={feedbackId} role="status" aria-live="polite" className="sr-only">{feedback}</span>
-      </div>
-    </DropContextMenu>
+  const marker = (
+    <div
+      className={fillRemaining ? 'flex min-h-8 flex-1 flex-col' : undefined}
+      data-library-list-end-drop-target={fillRemaining ? true : undefined}
+    >
+      <div
+        {...dropProps}
+        tabIndex={0}
+        aria-label={`${label}; paste a Library item here`}
+        aria-describedby={feedbackId}
+        className={[
+          'rounded outline-none',
+          fillRemaining
+            ? 'min-h-8 flex-1 focus-visible:bg-app-accent/20 focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-app-accent'
+            : 'h-2 focus-visible:h-3 focus-visible:bg-app-accent/35',
+          active
+            ? fillRemaining
+              ? 'bg-app-accent/20 ring-1 ring-inset ring-app-accent'
+              : 'h-3 bg-app-accent'
+            : '',
+        ].join(' ')}
+      />
+      <span id={feedbackId} role="status" aria-live="polite" className="sr-only">{feedback}</span>
+    </div>
   );
+  return pasteContextMenu
+    ? <DropContextMenu canPaste={canPaste} paste={paste}>{marker}</DropContextMenu>
+    : marker;
 }
 
 export function LibraryDropZone({
   target,
+  enabled = true,
   children,
 }: {
   target: LibraryExactTransferTarget;
+  enabled?: boolean;
   children: (state: LibraryDropZoneState) => React.ReactElement;
 }): React.ReactElement {
-  const state = useLibraryDropTarget(target);
+  const state = useLibraryDropTarget(target, enabled);
   return children(state);
 }

@@ -7,6 +7,7 @@ import {
 import { useLibraryStore } from '../stores/library-store';
 import { usePlaybackStore } from '../stores/playback-store';
 import { useProjectStore } from '../stores/project-store';
+import { createLibraryEditorSession } from './library-editor-fixtures';
 
 const dockviewSnapshot = {
   grid: {
@@ -155,6 +156,9 @@ function createCloseRestoreApiStub() {
 
   return {
     api: {
+      get panels() {
+        return Array.from(panels.values());
+      },
       groups: [group],
       getPanel: vi.fn((id: string) => panels.get(id)),
       getGroup: vi.fn((id: string) => (id === group.id ? group : undefined)),
@@ -758,6 +762,29 @@ describe('workbench panel close/reopen restoration', () => {
     expect(
       useWorkbenchStore.getState().closedPanelOrigins.ScoreTopComponent,
     ).toBeUndefined();
+  });
+
+  it('replaces the visible Library Item tab when another session opens', () => {
+    const { api, group } = createCloseRestoreApiStub();
+    useWorkbenchStore.setState({
+      api,
+      auxiliary: createDefaultAuxiliaryLayoutState(),
+      closedPanelOrigins: {},
+    });
+
+    useWorkbenchStore.getState().openLibraryEditorPanel(
+      createLibraryEditorSession(undefined, { sessionId: 'session-1' }),
+    );
+    useWorkbenchStore.getState().openLibraryEditorPanel(
+      createLibraryEditorSession(undefined, { sessionId: 'session-2' }),
+    );
+
+    expect(group.panels.map((panel: { id: string }) => panel.id)).toEqual([
+      'ScoreTopComponent',
+      'OrchestraTopComponent',
+      'library-item:session-2',
+    ]);
+    expect(api.removePanel).toHaveBeenCalledTimes(1);
   });
 });
 

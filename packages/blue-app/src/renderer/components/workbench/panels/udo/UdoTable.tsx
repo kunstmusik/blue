@@ -4,6 +4,10 @@ import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import { ChevronDown, Import, Plus } from 'lucide-react';
 
 import type { UdoDefinitionSnapshot } from '../../../../../shared/project-editor';
+import type {
+  LibraryBrowseNode,
+  LibraryExactTransferTarget,
+} from '../../../../../shared/unified-library';
 import { getLibraryTransferSourceType } from '../../../../../shared/unified-library';
 import {
   LibraryBlockDropMarker,
@@ -13,10 +17,37 @@ import {
 } from '../../../libraries/LibraryDropMarker';
 import { useLibraryStore } from '../../../../stores/library-store';
 import { isTextEditingTarget } from '../../../../hooks/use-keyboard-shortcuts';
+import { ProjectLibraryDragSource } from '../../../libraries/ProjectLibraryDragSource';
 
 export interface UdoSelectionGesture {
   range: boolean;
   toggle: boolean;
+}
+
+export interface UdoLibraryDropTarget {
+  projectSessionId: number;
+  projectRevision: number;
+  instrumentAssignmentId?: string;
+}
+
+export function getProjectUdoSessionObjectId(
+  target: UdoLibraryDropTarget | undefined,
+  index: number,
+): string {
+  return target?.instrumentAssignmentId
+    ? `instrument:${target.instrumentAssignmentId}:udo:${index}`
+    : `udo:${index}`;
+}
+
+function createProjectUdoTarget(
+  target: UdoLibraryDropTarget,
+  insertIndex: number,
+): LibraryExactTransferTarget {
+  return {
+    kind: 'projectUdo',
+    ...target,
+    insertIndex,
+  };
 }
 
 interface UdoTableProps {
@@ -28,15 +59,13 @@ interface UdoTableProps {
   onImportBlueUdo: () => void;
   onImportCsoundUdo: () => void;
   onRemoveSelection: () => void;
-  onCopySelection: () => void;
-  onCutSelection: () => void;
-  onPasteSelection: () => void;
+  onCopySelection: (operation: 'copy' | 'cut') => void;
   onExportBlueUdo: () => void;
   onExportCsoundUdo: () => void;
   onMoveSelectionUp: () => void;
   onMoveSelectionDown: () => void;
-  canPaste: boolean;
-  libraryDropTarget?: { projectSessionId: number; projectRevision: number };
+  projectNodes?: readonly LibraryBrowseNode[];
+  libraryDropTarget?: UdoLibraryDropTarget;
 }
 
 function MenuItem({
@@ -69,23 +98,19 @@ export default function UdoTable({
   onImportCsoundUdo,
   onRemoveSelection,
   onCopySelection,
-  onCutSelection,
-  onPasteSelection,
   onExportBlueUdo,
   onExportCsoundUdo,
   onMoveSelectionUp,
   onMoveSelectionDown,
-  canPaste,
+  projectNodes = [],
   libraryDropTarget,
 }: UdoTableProps): React.ReactElement {
-  const hasUdos = udolist.length > 0;
   const hasSelection = selectedIndices.length > 0;
   const hasSingleSelection = selectedIndices.length === 1;
   const canMoveUp = hasSelection && Math.min(...selectedIndices) > 0;
   const canMoveDown = hasSelection && Math.max(...selectedIndices) < udolist.length - 1;
   const libraryClipboard = useLibraryStore((state) => state.clipboard);
   const transferLibraryItem = useLibraryStore((state) => state.transferToProject);
-  const clearLibraryClipboard = useLibraryStore((state) => state.cancelClipboard);
   const libraryUdoAvailable = libraryClipboard
     ? getLibraryTransferSourceType(libraryClipboard.source) === 'udo'
     : false;
@@ -98,7 +123,7 @@ export default function UdoTable({
     ) return;
     void transferLibraryItem(
       { kind: 'clipboard', source: libraryClipboard.source },
-      { kind: 'projectUdo', ...libraryDropTarget, insertIndex },
+      createProjectUdoTarget(libraryDropTarget, insertIndex),
     );
   }, [libraryClipboard, libraryDropTarget, transferLibraryItem]);
 
@@ -159,37 +184,25 @@ export default function UdoTable({
       </div>
 
       <div
-        className="flex-1 overflow-auto"
+        className="flex min-h-0 flex-1 flex-col overflow-auto"
         data-library-autoscroll
         tabIndex={0}
         onKeyDown={(event) => {
           if (
             (event.metaKey || event.ctrlKey)
             && event.key.toLocaleLowerCase() === 'v'
-            && (libraryUdoAvailable || canPaste)
+            && libraryUdoAvailable
             && !isTextEditingTarget(event.target)
           ) {
             event.preventDefault();
             const lastSelectedIndex = selectedIndices.length > 0
               ? Math.max(...selectedIndices)
               : udolist.length - 1;
-            if (libraryUdoAvailable) pasteLibraryUdo(lastSelectedIndex + 1);
-            else onPasteSelection();
+            pasteLibraryUdo(lastSelectedIndex + 1);
           }
         }}
       >
-        {!hasUdos ? (
-          <div className="flex h-full flex-col justify-center gap-2 px-3 text-sm text-app-text-muted">
-            {libraryDropTarget && (
-              <LibraryBlockDropMarker
-                target={{ kind: 'projectUdo', ...libraryDropTarget, insertIndex: 0 }}
-                label="Insert UDO at end"
-              />
-            )}
-            <p className="text-center">No UDOs defined. Click &quot;Add&quot; to create one.</p>
-          </div>
-        ) : (
-          <table className="w-full text-left text-body">
+          <table className="w-full shrink-0 text-left text-body">
             <thead className="sticky top-0 bg-app-surface-strong">
               <tr className="border-b border-app-border">
                 <th className="px-3 py-2 font-medium text-app-text-strong">Name</th>
@@ -203,9 +216,16 @@ export default function UdoTable({
             <tbody>
               {udolist.map((udo, index) => {
                 const isSelected = selectedIndices.includes(index);
+                const projectNode = projectNodes.find((node) => (
+                  node.key?.scope === 'projectOwned'
+                  && node.key.locator.kind === 'udo'
+                  && node.key.locator.sessionObjectId
+                    === getProjectUdoSessionObjectId(libraryDropTarget, index)
+                )) ?? null;
                 const row = (active: boolean, dropProps: Partial<LibraryDropZoneState['dropProps']>) => (
                   <ContextMenu.Root>
                     <ContextMenu.Trigger asChild>
+                      <ProjectLibraryDragSource node={projectNode}>
                       <tr
                         {...dropProps}
                         data-library-drop-target={libraryDropTarget ? 'udo-row' : undefined}
@@ -238,6 +258,7 @@ export default function UdoTable({
                             : udo.inputArguments || '-'}
                         </td>
                       </tr>
+                      </ProjectLibraryDragSource>
                     </ContextMenu.Trigger>
                     <ContextMenu.Portal>
                       <ContextMenu.Content className="editor-context-menu">
@@ -248,24 +269,15 @@ export default function UdoTable({
                           Push Down
                         </MenuItem>
                         <ContextMenu.Separator className="editor-context-menu__separator" />
-                        <MenuItem disabled={!hasSelection} onSelect={() => {
-                          clearLibraryClipboard();
-                          onCopySelection();
-                        }}>
+                        <MenuItem disabled={!hasSingleSelection || !projectNode} onSelect={() => onCopySelection('copy')}>
                           Copy
                         </MenuItem>
-                        <MenuItem disabled={!hasSelection} onSelect={() => {
-                          clearLibraryClipboard();
-                          onCutSelection();
-                        }}>
+                        <MenuItem disabled={!hasSingleSelection || !projectNode} onSelect={() => onCopySelection('cut')}>
                           Cut
                         </MenuItem>
                         <MenuItem
-                          disabled={!canPaste && !libraryUdoAvailable}
-                          onSelect={() => {
-                            if (libraryUdoAvailable) pasteLibraryUdo(index + 1);
-                            else onPasteSelection();
-                          }}
+                          disabled={!libraryUdoAvailable}
+                          onSelect={() => pasteLibraryUdo(index + 1)}
                         >
                           Paste
                         </MenuItem>
@@ -308,14 +320,14 @@ export default function UdoTable({
                   <React.Fragment key={`${udo.name}-${index}`}>
                   {libraryDropTarget && (
                     <LibraryTableDropMarker
-                      target={{ kind: 'projectUdo', ...libraryDropTarget, insertIndex: index }}
+                      target={createProjectUdoTarget(libraryDropTarget, index)}
                       colSpan={4}
                       label={`Insert UDO before ${udo.name}`}
                     />
                   )}
                   {libraryDropTarget ? (
                     <LibraryDropZone
-                      target={{ kind: 'projectUdo', ...libraryDropTarget, insertIndex: index + 1 }}
+                      target={createProjectUdoTarget(libraryDropTarget, index + 1)}
                     >
                       {({ active, dropProps }) => row(active, dropProps)}
                     </LibraryDropZone>
@@ -323,16 +335,15 @@ export default function UdoTable({
                   </React.Fragment>
                 );
               })}
-              {libraryDropTarget && (
-                <LibraryTableDropMarker
-                  target={{ kind: 'projectUdo', ...libraryDropTarget, insertIndex: udolist.length }}
-                  colSpan={4}
-                  label="Insert UDO at end"
-                />
-              )}
             </tbody>
           </table>
-        )}
+          {libraryDropTarget && (
+            <LibraryBlockDropMarker
+              target={createProjectUdoTarget(libraryDropTarget, udolist.length)}
+              label="Insert UDO at end"
+              fillRemaining
+            />
+          )}
       </div>
     </div>
   );

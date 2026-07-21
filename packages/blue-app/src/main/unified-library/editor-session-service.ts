@@ -33,6 +33,14 @@ function hash(value: string): string {
 }
 
 function logicalKey(key: LibraryItemKey): string {
+  if (key.scope !== 'user' && key.locator.kind === 'soundObject') {
+    return JSON.stringify({
+      scope: key.scope,
+      libraryType: key.libraryType,
+      projectSessionId: key.projectSessionId,
+      libraryId: key.locator.libraryId,
+    });
+  }
   return JSON.stringify(key);
 }
 
@@ -118,6 +126,13 @@ export class UnifiedLibraryEditorSessionService {
       .map((session) => this.toSnapshot(session));
   }
 
+  getSessionsForKey(key: LibraryItemKey): LibraryEditorSessionSnapshot[] {
+    const sessionId = this.byLogicalKey.get(logicalKey(key));
+    if (!sessionId) return [];
+    const session = this.sessions.get(sessionId);
+    return session ? [this.toSnapshot(session)] : [];
+  }
+
   async reconcileUserNode(nodeId: string): Promise<void> {
     const node = await this.repository.getNode(nodeId);
     const breadcrumb = await this.repository.getBreadcrumb(nodeId);
@@ -136,10 +151,67 @@ export class UnifiedLibraryEditorSessionService {
     }
   }
 
+  reconcileProjectItems(): LibraryEditorSessionSnapshot[] {
+    const changed: LibraryEditorSessionSnapshot[] = [];
+    for (const [sessionId, session] of this.sessions) {
+      if (session.key.scope === 'user') continue;
+      const source = this.projectAdapter.getEditorSource(session.key);
+      if (!source) {
+        if (session.status === 'missing') continue;
+        const missing = { ...session, status: 'missing' as const };
+        this.sessions.set(sessionId, missing);
+        changed.push(this.toSnapshot(missing));
+        continue;
+      }
+      if (String(session.baseRevision) === source.revision && session.status === 'ready') continue;
+      if (session.dirty) {
+        if (session.status === 'conflict') continue;
+        const conflict = { ...session, status: 'conflict' as const };
+        this.sessions.set(sessionId, conflict);
+        changed.push(this.toSnapshot(conflict));
+        continue;
+      }
+
+      const refreshed: InternalLibraryEditorSession = {
+        ...session,
+        key: source.key,
+        displayName: source.displayName,
+        objectType: source.objectType,
+        breadcrumb: source.breadcrumb,
+        baseRevision: source.revision,
+        document: this.adapters.hydrate(
+          source.key.libraryType,
+          source.payloadXml,
+          source.objectType,
+          'supported',
+        ),
+        draftXml: source.payloadXml,
+        savedXml: source.payloadXml,
+        dirty: false,
+        status: 'ready',
+      };
+      this.byLogicalKey.delete(logicalKey(session.key));
+      this.byLogicalKey.set(logicalKey(refreshed.key), sessionId);
+      this.sessions.set(sessionId, refreshed);
+      this.savedNames.set(sessionId, refreshed.displayName);
+      changed.push(this.toSnapshot(refreshed));
+    }
+    return changed;
+  }
+
   closeDeletedUserNodes(nodeIds: readonly string[]): string[] {
     const sessions = this.getUserSessionsForNodeIds(nodeIds);
     if (sessions.some((session) => session.dirty)) {
       throw new Error('Dirty Library Item editors must be saved or discarded before deleting.');
+    }
+    for (const session of sessions) this.remove(session.sessionId);
+    return sessions.map((session) => session.sessionId);
+  }
+
+  closeDeletedKey(key: LibraryItemKey): string[] {
+    const sessions = this.getSessionsForKey(key);
+    if (sessions.some((session) => session.dirty)) {
+      throw new Error('Dirty Library Item editors must be saved or discarded before cutting.');
     }
     for (const session of sessions) this.remove(session.sessionId);
     return sessions.map((session) => session.sessionId);

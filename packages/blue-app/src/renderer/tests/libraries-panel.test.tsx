@@ -26,6 +26,15 @@ const unsupported: LibraryBrowseNode = {
   hasChildren: false,
 };
 
+const applyLibraryMutation = vi.fn(async () => ({
+  ok: true as const,
+  value: { contentRevision: 1, affectedNodes: [] },
+}));
+const copyLibraryTransferToUser = vi.fn(async () => ({
+  ok: true as const,
+  value: { contentRevision: 1, affectedNodes: [] },
+}));
+
 function render(element: React.ReactElement): { container: HTMLDivElement; root: Root } {
   const container = document.createElement('div');
   document.body.appendChild(container);
@@ -35,6 +44,8 @@ function render(element: React.ReactElement): { container: HTMLDivElement; root:
 }
 
 beforeEach(() => {
+  applyLibraryMutation.mockClear();
+  copyLibraryTransferToUser.mockClear();
   window.blueAPI = {
     ...window.blueAPI,
     getLibraryServiceSnapshot: vi.fn(async () => ({
@@ -53,6 +64,7 @@ beforeEach(() => {
           ...unsupported,
           key: null,
           nodeId: `root-${request.parent.libraryType}`,
+          libraryType: request.parent.libraryType,
           nodeKind: 'root' as const,
           displayName: request.parent.libraryType,
           hasChildren: request.parent.libraryType === 'soundObject',
@@ -66,6 +78,8 @@ beforeEach(() => {
       value: { contentRevision: 0, normalizedQuery: '', results: [], nextCursor: null },
     })),
     getLibraryItemPreview: vi.fn(),
+    applyLibraryMutation,
+    copyLibraryTransferToUser,
     onLibraryServiceSnapshot: vi.fn(() => () => undefined),
     onLibraryChanged: vi.fn(() => () => undefined),
   };
@@ -97,8 +111,41 @@ describe('Libraries panel', () => {
     act(() => {
       (soundRoot.querySelector('button[aria-label^="Expand"]') as HTMLButtonElement).click();
     });
+    await act(async () => { await Promise.resolve(); await Promise.resolve(); });
     const warning = container.querySelector('[role="status"]');
     expect(warning?.textContent).toContain('unsupported');
+    act(() => { root.unmount(); });
+  });
+
+  it('keeps exactly one selected row across all user-library roots', async () => {
+    const { container, root } = render(<LibrariesPanel />);
+    await act(async () => { await Promise.resolve(); await Promise.resolve(); });
+    const soundRoot = container.querySelector('#library-node-root-soundObject') as HTMLElement;
+    const effectRoot = container.querySelector('#library-node-root-effect') as HTMLElement;
+
+    act(() => soundRoot.dispatchEvent(new MouseEvent('mousedown', { bubbles: true })));
+    expect(soundRoot.getAttribute('aria-selected')).toBe('true');
+    act(() => effectRoot.dispatchEvent(new MouseEvent('mousedown', { bubbles: true })));
+
+    expect(container.querySelectorAll('[aria-selected="true"]')).toHaveLength(1);
+    expect(soundRoot.getAttribute('aria-selected')).toBe('false');
+    expect(effectRoot.getAttribute('aria-selected')).toBe('true');
+    act(() => { root.unmount(); });
+  });
+
+  it('keeps item metadata out of the row and exposes its address as a tooltip', () => {
+    const contextual = {
+      ...unsupported,
+      supportStatus: 'supported' as const,
+      objectType: 'blue.soundObject.GenericScore',
+      breadcrumb: ['SoundObjects', 'Motifs', 'Legacy Object'],
+    };
+    const { container, root } = render(
+      <LibraryTree label="Search" nodes={[contextual]} onSelect={vi.fn()} />,
+    );
+    expect(container.textContent).not.toContain('blue.soundObject.GenericScore');
+    expect(container.querySelector('#library-node-unsupported')?.getAttribute('title'))
+      .toBe('SoundObjects / Motifs / Legacy Object');
     act(() => { root.unmount(); });
   });
 
@@ -164,10 +211,95 @@ describe('Libraries panel', () => {
     });
     const { container, root } = render(<LibrariesPanel />);
     const dialog = container.querySelector('[role="dialog"]');
+    const surface = dialog?.querySelector('[data-library-dialog-surface]');
     expect(dialog?.textContent).toContain('3 Library nodes');
     expect(dialog?.textContent).toContain('unsaved changes');
     expect(dialog?.textContent).toContain('Discard & Delete');
     expect(dialog?.textContent).toContain('Save & Delete');
+    expect(surface?.className).toContain('bg-app-overlay');
+    expect(surface?.className).not.toContain('bg-app-panel');
+    act(() => { root.unmount(); });
+  });
+
+  it('creates a folder with an in-app name dialog instead of Electron window.prompt', async () => {
+    const { container, root } = render(<LibrariesPanel />);
+    await act(async () => { await Promise.resolve(); await Promise.resolve(); });
+    const instrumentRoot = container.querySelector('#library-node-root-instrument') as HTMLElement;
+    act(() => instrumentRoot.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true })));
+    await act(async () => { await Promise.resolve(); });
+    const createFolder = [...document.body.querySelectorAll('[role="menuitem"]')]
+      .find((item) => item.textContent === 'Create Folder…') as HTMLElement;
+    act(() => createFolder.click());
+
+    const input = container.querySelector('input[aria-label="Folder name"]') as HTMLInputElement;
+    expect(input).toBeTruthy();
+    act(() => {
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set?.call(input, 'Textures');
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    await act(async () => {
+      input.closest('form')?.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    expect(applyLibraryMutation).toHaveBeenCalledWith({
+      type: 'createFolder',
+      libraryType: 'instrument',
+      parentId: 'root-instrument',
+      name: 'Textures',
+    });
+    expect(container.querySelector('input[aria-label="Folder name"]')).toBeNull();
+    act(() => { root.unmount(); });
+  });
+
+  it('offers project SoundObject clipboard Paste on the matching user root', async () => {
+    useLibraryStore.setState({
+      clipboard: {
+        operation: 'copy',
+        source: {
+          kind: 'library',
+          key: {
+            scope: 'projectShared',
+            libraryType: 'soundObject',
+            projectSessionId: 7,
+            locator: {
+              kind: 'soundObject',
+              libraryId: 'shared-1',
+              persistedFingerprint: {
+                canonicalHash: 'sound-hash',
+                displayName: 'Shared Phrase',
+                objectType: 'GenericScore',
+              },
+            },
+          },
+          revision: 'sound-hash',
+        },
+        capturedAt: 1,
+      },
+    });
+    const { container, root } = render(<LibrariesPanel />);
+    await act(async () => { await Promise.resolve(); await Promise.resolve(); });
+
+    const soundRoot = container.querySelector('#library-node-root-soundObject') as HTMLElement;
+    act(() => soundRoot.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true })));
+    await act(async () => { await Promise.resolve(); });
+    const paste = [...document.body.querySelectorAll('[role="menuitem"]')]
+      .find((item) => item.textContent === 'Paste') as HTMLElement;
+    expect(paste).toBeTruthy();
+    expect(paste.getAttribute('data-disabled')).toBeNull();
+
+    await act(async () => {
+      paste.click();
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    expect(copyLibraryTransferToUser).toHaveBeenCalledWith(
+      {
+        kind: 'clipboard',
+        source: expect.objectContaining({ kind: 'library', revision: 'sound-hash' }),
+      },
+      'root-soundObject',
+    );
     act(() => { root.unmount(); });
   });
 });

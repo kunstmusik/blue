@@ -1,6 +1,7 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useScoreSelectionStore } from '../../../stores/score-selection-store';
 import { applyBsbInterfacePatchToSnapshot, useProjectStore } from '../../../stores/project-store';
+import { useLibraryEditorStore } from '../../../stores/library-editor-store';
 import type {
   BlueSynthBuilderInstrumentSnapshot,
   BsbInterfacePatch,
@@ -1235,6 +1236,17 @@ export default function ScoreObjectEditorPanel(): React.ReactElement {
     if (selectedRow?.editorTarget) return selectedRow.editorTarget;
     return selectedObjectTarget;
   }, [selectedObjectTarget, selectedRow]);
+  const editorTargetKey = editorTarget ? JSON.stringify(editorTarget) : null;
+  const libraryEditorSession = useLibraryEditorStore((state) => {
+    const libraryId = editorTarget?.library?.libraryId;
+    if (!libraryId) return undefined;
+    return Object.values(state.sessions).find((session) => (
+      session.key.scope !== 'user'
+      && session.key.locator.kind === 'soundObject'
+      && session.key.locator.libraryId === libraryId
+    ));
+  });
+  const previousLibrarySessionState = useRef<{ sessionId: string; dirty: boolean } | null>(null);
 
   const audioClipEditorPreview = useProjectStore((s) => (
     selectedObjectId ? s.audioClipEditorPreviewByObjectId[selectedObjectId] ?? null : null
@@ -1263,7 +1275,7 @@ export default function ScoreObjectEditorPanel(): React.ReactElement {
       }
     });
     return () => { cancelled = true; };
-  }, [loaded, selectedObjectId, editorTarget]);
+  }, [loaded, selectedObjectId, editorTargetKey]);
 
   useEffect(() => {
     if (document?.editor.kind !== 'polyObject') return;
@@ -1280,7 +1292,33 @@ export default function ScoreObjectEditorPanel(): React.ReactElement {
       }
     })();
     return () => { cancelled = true; };
-  }, [document?.editor.kind, loaded, selectedObjectId, editorTarget, lastScorePatch, flushPendingPatches]);
+  }, [document?.editor.kind, loaded, selectedObjectId, editorTargetKey, lastScorePatch, flushPendingPatches]);
+
+  useEffect(() => {
+    const previous = previousLibrarySessionState.current;
+    previousLibrarySessionState.current = libraryEditorSession
+      ? { sessionId: libraryEditorSession.sessionId, dirty: libraryEditorSession.dirty }
+      : null;
+    if (
+      !libraryEditorSession
+      || previous?.sessionId !== libraryEditorSession.sessionId
+      || !previous.dirty
+      || libraryEditorSession.dirty
+      || !editorTarget
+    ) return;
+
+    let cancelled = false;
+    void (async () => {
+      try {
+        await flushPendingPatches();
+        const doc = await window.blueAPI.getScoreObjectEditorDocument({ target: editorTarget });
+        if (!cancelled) setDocument(doc);
+      } catch {
+        if (!cancelled) setDocument(null);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [editorTargetKey, flushPendingPatches, libraryEditorSession?.dirty]);
 
   useEffect(() => {
     if (!audioClipEditorPreview) {

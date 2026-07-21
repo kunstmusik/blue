@@ -1466,28 +1466,28 @@ export default function TrackerScoreObjectEditor({
                       </th>
                     </ContextMenu.Trigger>
                     <ContextMenu.Portal>
-                      <ContextMenu.Content className="z-50 min-w-45 rounded-md border border-app-border/50 bg-app-menu p-1 shadow-2xl">
+                      <ContextMenu.Content className="editor-context-menu">
                         <ContextMenu.Item
-                          className="cursor-default rounded px-2 py-1.5 text-body text-app-text outline-none hover:bg-app-accent hover:text-app-text-strong"
+                          className="editor-context-menu__item"
                           onSelect={() => handleDuplicateTrack(ti)}
                         >
                           Duplicate
                         </ContextMenu.Item>
                         <ContextMenu.Item
-                          className="cursor-default rounded px-2 py-1.5 text-body text-app-text outline-none hover:bg-app-accent hover:text-app-text-strong"
+                          className="editor-context-menu__item"
                           onSelect={() => handleClearTrack(ti)}
                         >
                           Clear
                         </ContextMenu.Item>
                         <ContextMenu.Item
-                          className="cursor-default rounded px-2 py-1.5 text-body text-app-danger outline-none hover:bg-app-danger hover:text-app-text-strong"
+                          className="editor-context-menu__item text-app-danger"
                           onSelect={() => handleRemoveTrack(ti)}
                         >
                           Remove
                         </ContextMenu.Item>
-                        <ContextMenu.Separator className="my-1 h-px bg-app-border/50" />
+                        <ContextMenu.Separator className="editor-context-menu__separator" />
                         <ContextMenu.Item
-                          className="cursor-default rounded px-2 py-1.5 text-body text-app-text outline-none hover:bg-app-accent hover:text-app-text-strong"
+                          className="editor-context-menu__item"
                           onSelect={() => handleEditTrackProperties(ti)}
                         >
                           Edit Track Properties...

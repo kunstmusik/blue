@@ -19,7 +19,7 @@ export function LibrarySessionDialog({
 }: LibrarySessionDialogProps): React.ReactElement {
   return (
     <div role="alertdialog" aria-modal="true" aria-labelledby="library-session-dialog-title" className="absolute inset-0 z-20 grid place-items-center bg-black/50 p-4">
-      <div className="max-w-md rounded border border-app-border bg-app-panel p-4 shadow-xl">
+      <div className="max-w-md rounded border border-app-border bg-app-overlay p-4 shadow-xl">
         <h2 id="library-session-dialog-title" className="font-semibold">{title}</h2>
         <p className="my-3 text-sm text-app-text-muted">{message}</p>
         <div className="flex justify-end gap-2">

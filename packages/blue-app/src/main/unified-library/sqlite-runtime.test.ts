@@ -17,7 +17,7 @@ interface ElectronRuntimeSnapshot {
 function readElectronRuntimeSnapshot(): ElectronRuntimeSnapshot {
   const electronExecutablePath = electronPath as unknown as string;
   const script = [
-    "const sqlite = require('node:sqlite');",
+    "import * as sqlite from 'node:sqlite';",
     'process.stdout.write(JSON.stringify({',
     'electron: process.versions.electron,',
     'node: process.versions.node,',
@@ -27,7 +27,7 @@ function readElectronRuntimeSnapshot(): ElectronRuntimeSnapshot {
     '}));',
   ].join('');
 
-  const result = spawnSync(electronExecutablePath, ['-e', script], {
+  const result = spawnSync(electronExecutablePath, ['--input-type=module', '-e', script], {
     encoding: 'utf8',
     env: {
       ...process.env,

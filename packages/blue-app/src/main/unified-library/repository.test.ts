@@ -40,6 +40,61 @@ describe('UnifiedLibraryRepository foundation', () => {
     }
   });
 
+  it('retains node identities through 50 reopen, rename, move, and edit cycles', () => {
+    const directory = createUnifiedLibraryTestDirectory('blue-library-identity-cycles-');
+    let itemId = '';
+    let firstFolderId = '';
+    let secondFolderId = '';
+    try {
+      const initial = UnifiedLibraryRepository.open(directory.databasePath);
+      const root = initial.getRoot('instrument');
+      const firstFolder = initial.createFolder({
+        libraryType: 'instrument', parentId: root.id, displayName: 'First',
+      });
+      const secondFolder = initial.createFolder({
+        libraryType: 'instrument', parentId: root.id, displayName: 'Second',
+      });
+      const item = initial.createItem({
+        libraryType: 'instrument', parentId: firstFolder.id, displayName: 'Pad 0',
+        payload: ITEM_PAYLOAD,
+      });
+      itemId = item.id;
+      firstFolderId = firstFolder.id;
+      secondFolderId = secondFolder.id;
+      initial.close();
+
+      for (let cycle = 0; cycle < 50; cycle += 1) {
+        const repository = UnifiedLibraryRepository.open(directory.databasePath);
+        const rootId = repository.getRoot('instrument').id;
+        expect(repository.getNode(firstFolderId)).toMatchObject({ id: firstFolderId, parentId: rootId });
+        expect(repository.getNode(secondFolderId)).toMatchObject({ id: secondFolderId, parentId: rootId });
+
+        const current = repository.getNode(itemId);
+        const renamed = repository.renameNode(itemId, current.revision, `Pad ${cycle + 1}`);
+        const destinationId = cycle % 2 === 0 ? secondFolderId : firstFolderId;
+        const moved = repository.moveNode(itemId, renamed.revision, destinationId, 0);
+        const edited = repository.updateItem(itemId, moved.revision, moved.displayName, {
+          ...ITEM_PAYLOAD,
+          embeddedName: moved.displayName,
+          payloadXml: `<instrument type="blue.orchestra.GenericInstrument"><name>${moved.displayName}</name></instrument>`,
+          rawHash: `raw-pad-${cycle}`,
+          canonicalContentHash: `canonical-pad-${cycle}`,
+        });
+        expect(edited).toMatchObject({ id: itemId, parentId: destinationId });
+        repository.close();
+      }
+
+      const finalRepository = UnifiedLibraryRepository.open(directory.databasePath);
+      const finalItem = finalRepository.getNode(itemId);
+      const duplicate = finalRepository.duplicateNode(finalItem.id, finalItem.revision);
+      expect(duplicate.id).not.toBe(itemId);
+      expect(finalRepository.getNode(itemId).id).toBe(itemId);
+      finalRepository.close();
+    } finally {
+      directory.cleanup();
+    }
+  });
+
   it('keeps payloads lazy and rejects stale revisions atomically', () => {
     const repository = UnifiedLibraryRepository.open(':memory:');
     try {

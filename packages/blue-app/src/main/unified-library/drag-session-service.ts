@@ -33,7 +33,7 @@ export class LibraryDragSessionService {
       onCancel,
       claimed: false,
     });
-    return { dragSessionId, libraryType: key.libraryType };
+    return { dragSessionId, libraryType: key.libraryType, sourceScope: key.scope };
   }
 
   resolve(dragSessionId: string, currentRevision: number | string): LibraryDragSessionSource {

@@ -54,7 +54,10 @@ import type { NativeMenuCommand } from '../../shared/workbench-menu';
 import { useLibraryStore } from './library-store';
 import { useUIStore } from './ui-store';
 import type { LibraryEditorSessionSnapshot } from '../../shared/unified-library';
-import { libraryEditorPanelId } from './library-editor-store';
+import {
+  libraryEditorPanelId,
+  libraryEditorSessionIdFromPanel,
+} from './library-editor-store';
 import { usePlaybackStore } from './playback-store';
 import { useProjectStore } from './project-store';
 
@@ -200,6 +203,16 @@ export function findLibraryEditorTargetGroup(
         (panel) => isEditorPanel(panel.id),
       ),
   );
+}
+
+export function findLibraryEditorPanelsToClose(
+  api: Pick<DockviewApi, 'panels'>,
+  keepPanelId: string | null,
+): IDockviewPanel[] {
+  return api.panels.filter((panel) => (
+    panel.id !== keepPanelId
+    && libraryEditorSessionIdFromPanel(panel.id) !== null
+  ));
 }
 
 export function hasRestoredStartupEditorPanel(
@@ -841,6 +854,10 @@ export const useWorkbenchStore = create<WorkbenchState & WorkbenchActions>()(
       const { api } = get();
       if (!api) return;
       const panelId = libraryEditorPanelId(session.sessionId);
+      for (const candidate of findLibraryEditorPanelsToClose(api, panelId)) {
+        api.removePanel(candidate);
+      }
+      cleanupEmptyPopoutGroups(api);
       const existing = api.getPanel(panelId);
       const targetGroup = findLibraryEditorTargetGroup(api);
       if (existing) {
@@ -1065,6 +1082,9 @@ export const useWorkbenchStore = create<WorkbenchState & WorkbenchActions>()(
             validWorkAreas.length > 0 ? validWorkAreas : [viewportArea],
           ) as unknown as typeof parsed.dockview;
           api.fromJSON(safeDockview);
+          for (const candidate of findLibraryEditorPanelsToClose(api, null)) {
+            api.removePanel(candidate);
+          }
           for (const group of api.groups) {
             if (group.api.location.type === 'popout') {
               registerFloatingRendererWindow(group);

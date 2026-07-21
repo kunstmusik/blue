@@ -1,7 +1,7 @@
 # Unified Libraries Design Constraints
 
-**Status**: Required planning input  
-**Source**: User-supplied Unified Libraries design report, refined by current Blue Electron and Java Blue review  
+**Status**: Required planning input
+**Source**: User-supplied Unified Libraries design report, refined by current Blue Electron and Java Blue review
 **Feature Specification**: [spec.md](spec.md)
 
 ## Purpose

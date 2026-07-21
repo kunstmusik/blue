@@ -6,7 +6,8 @@ import { getProjectDocumentRevision, useProjectStore } from '../../../stores/pro
 import { usePlaybackStore } from '../../../stores/playback-store';
 import { useBlueLiveStore } from '../../../stores/blue-live-store';
 import { deriveMixerPlaybackUiState } from '../../../stores/mixer-playback-ui';
-import ChannelStrip from './mixer/ChannelStrip';
+import ChannelStrip, { type MixerChainSelection } from './mixer/ChannelStrip';
+import { useProjectLibraryNodes } from '../../libraries/use-project-library-nodes';
 
 export default function MixerPanel(): React.ReactElement {
   const loaded = useProjectStore((state) => state.loaded);
@@ -15,6 +16,10 @@ export default function MixerPanel(): React.ReactElement {
   const flushPendingPatches = useProjectStore((state) => state.flushPendingPatches);
   const projectSessionId = useProjectStore((state) => state.sessionId);
   const projectRevision = getProjectDocumentRevision();
+  const projectEffectNodes = useProjectLibraryNodes(
+    'projectOwned', 'effect', loaded ? projectSessionId : null, projectRevision,
+  );
+  const [chainSelection, setChainSelection] = useState<MixerChainSelection | null>(null);
 
   const playbackStatus = usePlaybackStore((s) => s.status);
   const blueLiveStatus = useBlueLiveStore((s) => s.status);
@@ -170,6 +175,9 @@ export default function MixerPanel(): React.ReactElement {
                         projectSessionId={projectSessionId}
                         projectRevision={projectRevision}
                         onOpenEffectInterface={handleOpenEffectInterface}
+                        selection={chainSelection}
+                        onSelectionChange={setChainSelection}
+                        projectEffectNodes={projectEffectNodes}
                       />
                     ))}
                   </div>
@@ -191,6 +199,9 @@ export default function MixerPanel(): React.ReactElement {
                       projectSessionId={projectSessionId}
                       projectRevision={projectRevision}
                       onOpenEffectInterface={handleOpenEffectInterface}
+                      selection={chainSelection}
+                      onSelectionChange={setChainSelection}
+                      projectEffectNodes={projectEffectNodes}
                     />
                   ))}
                 </div>
@@ -211,6 +222,9 @@ export default function MixerPanel(): React.ReactElement {
                       projectSessionId={projectSessionId}
                       projectRevision={projectRevision}
                       onOpenEffectInterface={handleOpenEffectInterface}
+                      selection={chainSelection}
+                      onSelectionChange={setChainSelection}
+                      projectEffectNodes={projectEffectNodes}
                       onRemoveSubChannel={handleRemoveSubChannel}
                     />
                   ))}
@@ -229,6 +243,9 @@ export default function MixerPanel(): React.ReactElement {
               projectSessionId={projectSessionId}
               projectRevision={projectRevision}
               onOpenEffectInterface={handleOpenEffectInterface}
+              selection={chainSelection}
+              onSelectionChange={setChainSelection}
+              projectEffectNodes={projectEffectNodes}
             />
           </div>
         </div>

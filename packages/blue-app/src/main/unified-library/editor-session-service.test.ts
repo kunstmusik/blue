@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { UnifiedLibraryEditorSessionService } from './editor-session-service';
 import { UnifiedLibraryRepositoryClient } from './repository-client';
-import { GenericInstrument } from '@blue/data';
+import { BlueData, GenericInstrument, GenericScore } from '@blue/data';
+import { UnifiedLibraryProjectAdapter } from './project-adapter';
 
 function instrumentXml(name: string): string {
   const instrument = new GenericInstrument();
@@ -29,6 +30,61 @@ async function fixture() {
 }
 
 describe('main-owned library editor sessions', () => {
+  it('refreshes clean project SoundObject sessions and preserves dirty drafts as conflicts', async () => {
+    const client = UnifiedLibraryRepositoryClient.openForTesting(':memory:');
+    const data = new BlueData();
+    const definition = new GenericScore();
+    definition.setName('Shared Phrase');
+    definition.setScoreText('i1 0 1');
+    data.getSoundObjectLibrary().addObject(definition);
+    const adapter = new UnifiedLibraryProjectAdapter(() => ({ data, sessionId: 7 }));
+    const sessions = new UnifiedLibraryEditorSessionService(client, adapter);
+    try {
+      const key = adapter.list('soundObject')[0]!.key;
+      const opened = await sessions.open(key, true);
+      expect(opened.document).toMatchObject({
+        kind: 'soundObject',
+        snapshot: { editor: { kind: 'code', text: 'i1 0 1' } },
+      });
+
+      definition.setScoreText('i2 0 2');
+      expect(sessions.reconcileProjectItems()).toHaveLength(1);
+      expect(sessions.get(opened.sessionId)).toMatchObject({
+        dirty: false,
+        status: 'ready',
+        document: { kind: 'soundObject', snapshot: { editor: { kind: 'code', text: 'i2 0 2' } } },
+      });
+
+      const current = sessions.get(opened.sessionId);
+      if (current?.document.kind !== 'soundObject') throw new Error('Expected SoundObject editor');
+      sessions.patch(opened.sessionId, {
+        documentPatch: {
+          kind: 'soundObject',
+          patch: {
+            type: 'updateTypeSpecificEditor',
+            target: current.document.snapshot.target,
+            patch: { text: 'my unsaved draft' },
+          },
+        },
+      });
+      definition.setScoreText('external canonical edit');
+
+      expect(sessions.reconcileProjectItems()).toHaveLength(1);
+      expect(sessions.get(opened.sessionId)).toMatchObject({
+        dirty: true,
+        status: 'conflict',
+        document: {
+          kind: 'soundObject',
+          snapshot: { editor: { kind: 'code', text: 'my unsaved draft' } },
+        },
+      });
+      const reopened = await sessions.open(adapter.list('soundObject')[0]!.key, true);
+      expect(reopened.sessionId).toBe(opened.sessionId);
+    } finally {
+      await client.close();
+    }
+  });
+
   it('pins an existing clean preview when it is explicitly reopened', async () => {
     const { client, nodes, sessions } = await fixture();
     try {

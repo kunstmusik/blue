@@ -196,9 +196,9 @@ Implement the shell/layout migration before direct-manipulation routes:
 1. Always mount `WorkbenchShell`; render Welcome as the standalone full-window surface outside Dockview when no project is open.
 2. Add one static user-only `LibrariesTopComponent` plus a separate project `SoundObjectLibraryTopComponent` in the right properties group.
 3. Bump/migrate the workbench envelope across Dockview, auxiliary, minimized, slide-out, floating, and closed-origin state.
-4. Add dynamic `libraryItemEditor` panels titled `Library Item`, with stable persisted parameters, the existing address/breadcrumb header, native type-specific bodies, preview/pin behavior, and missing-item restore.
-5. Add library/view stores for lazy user hierarchy, type filtering, search, selection, transient typed clipboard state, and one compact vertical-ellipsis import/export menu. Keep Project SoundObjects in their separate panel and project UDOs in the reusable UDO workspace.
-6. Reuse/generalize the existing Effects tree behavior rather than maintaining two trees.
+4. Add one transient dynamic `libraryItemEditor` panel titled `Library Item`, with the existing address/breadcrumb header, native type-specific bodies, and retained dirty/pinned sessions that reopen by item identity. Remove session-bound panels during saved-layout restoration.
+5. Add library/view stores for complete cursor-drained user hierarchy, type filtering, search, selection, transient typed clipboard state, stale-response protection, and one compact vertical-ellipsis import/export menu. Keep Project SoundObjects in their separate panel and project UDOs in the reusable UDO workspace.
+6. Use one reusable accessible `LibraryTree` for every Unified Libraries root and project SoundObject collection; keep the legacy Effects tree isolated until its remaining non-library editor callers retire.
 7. Add controlled Instrument/UDO/Effect/SoundObject editor bodies and remove the supported-item raw XML textarea.
 8. Add inline double-click/F2 rename and scoped right-click/keyboard context menus; remove persistent row CRUD and Insert controls.
 
@@ -214,7 +214,8 @@ Renderer acceptance tests:
 - tree rows have no persistent Rename/Duplicate/Delete/Insert buttons; context menus have mouse/keyboard parity;
 - stale or invalid project targets reject drop/Paste with exact feedback and zero mutation;
 - Save/Revert/conflict/missing states mirror main snapshots;
-- accessible `Library actions` ellipsis menu contains Import XML, Export Current, and Export All, excludes migration/history commands, and is the only persistent action affordance in the healthy header.
+- accessible `Library actions` ellipsis menu contains Import XML, Import Java Configuration Directory, Export Current, and Export All, excludes migration/history commands, and is the only persistent action affordance in the healthy header;
+- expanding a user folder or paged project collection drains every cursor page and shows every child exactly once in stable order;
 
 ## Phase 8: Direct Placement And Legacy Retirement
 
@@ -258,7 +259,7 @@ Use a disposable Electron user-data directory and copied Java fixtures; never po
 2. Repeat with one corrupt file and three valid files; confirm partial success and normal app use.
 3. Start with no Java files; confirm empty usable store, `skipped`, and no scan on restart.
 4. Browse/edit a user item with no project; restart and confirm identity/content.
-5. Open two pinned native item editors plus a clean preview editor; change selection 100 times and confirm no pinned/dirty replacement and no supported-item raw XML textarea.
+5. Retain two pinned/dirty native editor sessions while switching the single visible `Library Item` tab through 100 selections; confirm every protected session reappears by identity and no supported item uses a raw XML textarea.
 6. Create an external edit conflict and exercise all three choices.
 7. Drop and keyboard-Paste each type into an exact valid project target, save, hide/remove the user database, reopen the project, and verify independent/shared behavior; repeat with stale/invalid targets and verify zero mutation.
 8. Delete a shared SoundObject definition with linked instances and confirm counts/removal.
@@ -266,8 +267,10 @@ Use a disposable Electron user-data directory and copied Java fixtures; never po
 10. Inject export replacement failure and verify every prior destination file.
 11. Corrupt/lock the database; confirm recovery choices and continued project work.
 12. Restore layouts containing `LibrariesTopComponent` and `SoundObjectLibraryTopComponent` in docked, minimized, floating, and closed states; confirm both identities survive and remain independently revealable.
-13. Verify the healthy Libraries panel has collapsed user roots and no source filter, Current Project section, no-project text, migration/history UI, persistent action banner, row CRUD buttons, Browse buttons, or Insert button; exercise all node operations by right-click and `Shift+F10`/Context Menu key.
+13. Verify the healthy Libraries panel has collapsed user roots and no source filter, Current Project section, no-project text, migration/history UI, persistent action banner, row CRUD buttons, Browse buttons, or Insert button; exercise all node operations by right-click and `Shift+F10`/Context Menu key, including Paste on an item targeting its parent and Move Up/Down ordering.
 14. Verify a normal Instrument and user SoundObject transfer shows only its result toast, a Project Shared SoundObject still offers the real copy-choice dialog, and a SoundObject drag whose custom data is protected during hover still inserts at the exact Score target after drop validation.
+15. Import both selected XML files and a selected Java configuration directory; resolve duplicate-folder candidates by breadcrumb and stable identity; then verify a canceled overwrite changes no export destination.
+16. Expand a folder and Project SoundObject/UDO collection containing more than 500 entries and verify the last child appears once, in repository order, without resetting scroll state.
 
 ## Verification Record — Corrective UX, 2026-07-16
 
@@ -277,7 +280,7 @@ The corrective renderer, direct-placement, organization, editor-session, migrati
 |-------------------------------|-----------------------|
 | Compact healthy Libraries panel, one labeled ellipsis, no persistent banner/action row/embedded preview/row CRUD/Insert controls | `libraries-panel.test.tsx`, `library-interchange.test.tsx` |
 | Standalone full-window Welcome and explicit no-project Libraries reveal | `unified-library-workbench.test.tsx`, `failure-isolation.test.ts` |
-| Generic `Library Item` workbench title, retained address header, clean-preview reuse, first-edit pinning, and dirty/pinned protection | `library-editor-workbench.test.tsx`, `editor-session-service.test.ts`, `editor-lifecycle.test.ts` |
+| One generic `Library Item` workbench tab, retained address header, session switching, first-edit pinning, and hidden dirty/pinned draft protection | `library-editor-workbench.test.tsx`, `workbench-store.test.ts`, `editor-session-service.test.ts`, `editor-lifecycle.test.ts` |
 | Native controlled Instrument, UDO, Effect, and SoundObject editors; unsupported read-only fallback; no supported-item XML textarea | `editor-adapters.test.ts`, `library-editing.test.tsx`, `library-editor-workbench.test.tsx` |
 | Name-only inline rename, `F2`/Enter/Escape, right-click/`Shift+F10`, capability-scoped commands, revision-bound copy/cut/Paste | `library-editing.test.tsx`, `library-store.test.ts`, `repository-mutations.test.ts` |
 | Affected-count deletion, dirty Save/Discard/Cancel, editor closure, clipboard clearing, and shared-project consequences | `library-mutation-preview.test.ts`, `library-store.test.ts`, `project-item-editing.test.ts` |
@@ -342,7 +345,7 @@ This corrective pass was verified with headless renderer tests, main/preload typ
 | Single-mode Instrument/user SoundObject transfers apply without publishing modal state; shared SoundObjects retain the explicit copy choice | `library-store.test.ts`, `library-target-routing.test.tsx` |
 | Score accepts protected-mode SoundObject hover and revalidates type/source at drop | `score-library-drop.test.tsx` |
 | Libraries browses/searches user sources only, has no source/project/no-project/migration/history chrome, and starts with all user roots collapsed | `libraries-panel.test.tsx`, `library-interchange.test.tsx` |
-| Project SoundObjects use the separate `SoundObject Library` panel with stable-key editor, drag, typed copy, delete, and copy-to-user routes | `project-sound-object-library.test.tsx` |
+| Project SoundObjects use the separate `SoundObject Library` panel with stable-key editor, drag, shared typed Copy/Cut/Paste, and guarded delete | `project-sound-object-library.test.tsx`, `library-store.test.ts` |
 | `LibrariesTopComponent` and `SoundObjectLibraryTopComponent` coexist and survive layout parsing as distinct identities | `unified-library-workbench.test.tsx` |
 | Project UDOs remain on the reusable UDO list/editor with a typed project drop target | `user-defined-opcode-panel.test.tsx`, `udo-library-drop.test.tsx` |
 | Instrument, UDO, Effect, and SoundObject destination drop/Paste routes remain operational | `orchestra-library-drop.test.tsx`, `udo-library-drop.test.tsx`, `mixer-library-drop.test.tsx`, `score-library-drop.test.tsx` |
@@ -373,11 +376,229 @@ git diff --cached --check
 
 The Vite large-chunk notice, Node's experimental `node:sqlite` notice, and expected jsdom canvas diagnostics remain informational and unchanged.
 
+## Verification Record — Hierarchy And Interchange Audit, 2026-07-18
+
+The post-implementation audit closed the remaining hierarchy, organization, async-state, project-copy, import/export, test-coverage, and artifact-consistency findings. No real Electron user-data directory or Java Blue configuration directory was modified.
+
+| Audit acceptance coverage | Verification evidence |
+|---------------------------|-----------------------|
+| User folders drain every cursor page, retain stable order, deduplicate node IDs, reject repeated cursors, include child 1,205, and enumerate a 10,000-item root within the performance budget | `library-store.test.ts`, `performance.test.ts` |
+| Project SoundObjects and project UDO lookup drain collections beyond 500 entries | `project-sound-object-library.test.tsx`, `library-store.test.ts` |
+| Slower stale search responses cannot replace a newer query; browse failures remain visible | `library-store.test.ts` |
+| Folder/item Cut and Copy, Paste-on-item-parent, Move Up/Down, root protection, and affected-count delete are wired contextually | `library-editing.test.tsx`, `library-store.test.ts`, `repository-mutations.test.ts` |
+| Item/search rows remain name-only while native tooltips expose full item addresses and folder names | `libraries-panel.test.tsx`, `library-editing.test.tsx` |
+| Project Instruments, UDOs, Effects, and Project Shared SoundObjects use the same Copy/Cut/Paste buffer and opaque drag path as user items; no special Copy-to-user command remains | `orchestra-library-drop.test.tsx`, `udo-library-drop.test.tsx`, `mixer-library-drop.test.tsx`, `project-sound-object-library.test.tsx`, `library-store.test.ts`, `library-transfer-service.test.ts` |
+| Manual import supports XML files and a Java configuration directory; ambiguous duplicate folders require a stable breadcrumbed selection | `library-interchange.test.tsx`, `manual-import-preview.test.ts` |
+| Export Current/All share one lease, fully preflight compatibility before approval, report preserved unsupported items and overwrites, cancel without writes, and retain atomic rollback | `export-compatibility.test.ts`, `export-transaction.test.ts` |
+| Spec, plan, tasks, contracts, quickstart, and checklist use the corrected user-only/silent-migration/complete-hierarchy model | Spec Kit analysis: 77 requirements, 13 criteria, 6 stories, 83 completed tasks, no critical issues |
+
+Commands and results:
+
+```text
+Focused audit suites
+  PASS — 11 files; 46 passed
+10,000-item complete browse/search/preview regression
+  PASS — complete 20-page browse plus indexed search and preview; test body 980 ms
+pnpm --filter @blue/app test
+  PASS — 224 files; 2,072 passed / 2 skipped
+pnpm --filter @blue/app build
+  PASS — Java runtime, @blue/data, Electron main/preload, repository worker, renderer
+pnpm test
+  PASS — @blue/data 1,267; @blue/app 2,072 passed / 2 skipped;
+         @blue/engine-client 18; blue-cli 5; Java Maven suite passed
+pnpm build
+  PASS — all configured workspace packages
+pnpm lint
+  PASS — all configured workspace lint targets
+git diff --check
+  PASS
+```
+
+The Vite large-chunk notice, Node's experimental `node:sqlite` notice, expected jsdom canvas diagnostics, and the intentional nonexistent-command failure fixture remain informational and unchanged.
+
+## Verification Record — Insertion Clarity Corrections, 2026-07-18
+
+The latest UX corrections restrict Orchestra insertion to numerically valid boundaries, assign the available gap identity, keep Library rows name-only with address tooltips, accept Effect drops into empty chains, and remove whole-channel mixer hover recoloring.
+
+```text
+Focused Orchestra, mixer, Library tree, shared-contract, and project-transfer suites
+  PASS — 6 files; 35 passed
+pnpm --filter @blue/app test
+  PASS — 224 files; 2,074 passed / 2 skipped
+pnpm --filter @blue/app build
+  PASS — Java runtime, @blue/data, Electron main/preload, repository worker, renderer
+pnpm lint
+  PASS — all configured workspace lint targets
+git diff --check
+  PASS
+```
+
+## Verification Record — Shared Project/User Transfer Buffer, 2026-07-18
+
+The final correction removes the dedicated project-copy IPC/UI path and uses one revision-bound typed buffer for Copy and Cut across user and project Instruments, UDOs, Effects, and SoundObjects. Cross-owner Cut commits the destination before guarded source removal; a failed or declined removal keeps the source and buffer. In-project movement remains on identity-safe native controls. Project rows also use the opaque drag service in reverse, including protected-hover handling, while mixer Effects use one selection and exact internal move patches.
+
+This historical destination-first Cut record is superseded by the 2026-07-19 immediate detached Cut verification below.
+
+```text
+Focused shared-contract, store, service, project-panel, and reverse-drag suites
+  PASS — 12 files; 71 passed
+pnpm --filter @blue/app test
+  PASS — 224 files; 2,086 passed / 2 skipped
+pnpm --filter @blue/app build
+  PASS — Java runtime, @blue/data, Electron main/preload, repository worker, renderer
+pnpm test
+  PASS — @blue/data 1,267; @blue/app 2,085 passed / 2 skipped;
+         @blue/engine-client 18; blue-cli 5; Java Maven suite passed
+pnpm build
+  PASS — all configured workspace packages
+pnpm lint
+  PASS — all configured workspace lint targets
+git diff --check
+  PASS
+```
+
+The existing Vite large-chunk notice, Node `node:sqlite` experimental notice, jsdom canvas diagnostics, and intentional nonexistent-command fixture remain informational.
+
+## Verification Record — Folder And Docked Interaction Regressions, 2026-07-18
+
+The final manual-acceptance corrections replace Electron's unsupported browser prompt with a validated in-app folder form, use defined opaque Library dialog/panel surfaces, reset insertion feedback even when Mixer internal moves consume the drop event, and reserve the intended 200-pixel table area in an empty UDO workspace at a representative 390-pixel docked height.
+
+```text
+Focused folder/dialog, Mixer drop-state, and empty-UDO suites
+  PASS — 3 files; 16 passed
+10,000-item complete browse/search/preview regression (isolated)
+  PASS — 1 file; 1 passed; test body 1.11 s
+pnpm --filter @blue/app test
+  PASS — 225 files; 2,089 passed / 2 skipped
+pnpm test
+  PASS — @blue/data 1,267; @blue/app 2,089 passed / 2 skipped;
+         @blue/engine-client 18; blue-cli 5; Java Maven suite passed
+pnpm --filter @blue/app build
+  PASS — Java runtime, @blue/data, Electron main/preload, repository worker, renderer
+pnpm lint
+  PASS — all configured workspace lint targets
+git diff --check
+  PASS
+```
+
+The first workspace-wide test attempt ran packages concurrently and pushed only the 10,000-item timing fixture to 2.52 s against its 2.0 s bound; all functional tests passed in that run, the same fixture passed immediately in isolation at 1.11 s, and the complete workspace gate passed on retry. The existing Vite large-chunk notice, Node `node:sqlite` experimental notice, jsdom canvas diagnostics, and intentional nonexistent-command fixture remain informational.
+
+## Verification Record — Instrument-Local UDO Transfer And Folder Disclosure, 2026-07-19
+
+The Instrument UDO tabs now identify both the owning Instrument assignment and the selected UDO session object. That address is used consistently by browse, preview, edit, delete, Copy/Cut, opaque drag, and exact insertion, so a transfer cannot fall back to the top-level project list or another Instrument. Empty folders and roots render disclosure from node kind rather than current child count, using the same large white chevron as populated folders.
+
+```text
+Focused shared-contract, adapter, transfer-service, UDO-workspace, and tree suites
+  PASS — 7 files; 38 passed
+10,000-item complete browse/search/preview regression (isolated)
+  PASS — 1 file; 1 passed
+pnpm --filter @blue/app test
+  PASS — 225 files; 2,094 passed / 2 skipped
+pnpm --filter @blue/app build
+  PASS — Java runtime, @blue/data, Electron main/preload, repository worker, renderer
+pnpm lint
+  PASS — all configured workspace lint targets
+git diff --check
+  PASS
+```
+
+The first full application run pushed only the existing 10,000-item timing fixture to 2.698 s against its 2.0 s bound while all 2,093 functional assertions passed. The fixture passed immediately in isolation, and the complete 225-file application suite then passed on retry. The existing Vite large-chunk notice, Node `node:sqlite` experimental notice, jsdom canvas diagnostics, and intentional nonexistent-command fixture remain informational.
+
+## Verification Record — List Remainder Drop Geometry And Mixer Minimum Sizing, 2026-07-19
+
+UDO tables and Mixer Effect bins now stretch their existing guarded end-insertion marker through all unused list space. A compatible drag highlights that full remainder and resolves to the same exact end index used by keyboard Paste; no new inferred target or service path was added. Mixer channel content has a readable 300-pixel strip floor, the level region retains 96 pixels for its fixed slider/value content, and a shorter Mixer body scrolls vertically instead of allowing adjacent regions to overlap. Folder disclosure remains high contrast at the user-selected 14-pixel size.
+
+```text
+Focused disclosure, UDO-drop, Effect-drop, Mixer panel, and Mixer CSS suites
+  PASS — 5 files; 28 passed
+pnpm --filter @blue/app test
+  PASS — 226 files; 2,096 passed / 2 skipped
+pnpm --filter @blue/app build:renderer
+  PASS — renderer plus configured Electron main/preload Vite emissions
+pnpm lint
+  PASS — all configured workspace lint targets
+git diff --check
+  PASS
+```
+
+The existing Vite large-chunk notice, Node `node:sqlite` experimental notice, jsdom canvas diagnostics, and intentional nonexistent-command fixture remain informational.
+
+## Verification Record — Single Library Item Tab, Immediate Detached Cut, And Folder Drag, 2026-07-19
+
+The workbench now maintains one visible `Library Item` tab even across rapid selections and saved-layout restoration while retaining protected editor sessions by stable identity. Copy keeps its revision-bound live reference. Cut instead captures the selected typed item or complete folder subtree into a main-owned detached buffer and removes the source atomically during the Cut command. Paste always creates an independent copy and leaves that buffer reusable. Dirty, declined, stale, invalid, or failed Cut requests preserve the source and the prior buffer. User folders and items can also be moved directly into compatible user folders by drag-and-drop, with repository-authoritative cycle, type, root, and revision validation. Folder disclosure remains at the user-selected 14-pixel size.
+
+```text
+Atomic Cut repository and service regressions
+  PASS — 2 files; 9 passed
+Library store and tree interaction regressions
+  PASS — 2 files; 27 passed
+Project panel transfer regressions
+  PASS — 3 files; 14 passed
+Single-Library-Item workbench regressions
+  PASS
+pnpm --filter @blue/app test
+  PASS — 226 files; 2,103 passed / 2 skipped
+pnpm --filter @blue/app build
+  PASS — Java runtime, @blue/data, Electron main/preload, repository worker, renderer
+pnpm lint
+  PASS — all configured workspace lint targets
+git diff --check
+  PASS
+```
+
+The existing Vite large-chunk notice, Node `node:sqlite` experimental notice, jsdom canvas diagnostics, and intentional nonexistent-command fixture remain informational.
+
+## Verification Record — Shared SoundObject Instance Editing Parity, 2026-07-20
+
+Instance type editors now resolve the canonical Project Shared SoundObject by stable library ID, while the Score Object Properties panel targets the selected Instance wrapper as in Java Blue. Replacing a library definition relinks every matching Instance in the timeline, nested PolyObjects, and other project-library definitions. Clean parallel Library Item sessions refresh to canonical changes; dirty drafts remain intact and enter conflict. Structurally unchanged editor targets no longer reload merely because a project snapshot was rehydrated.
+
+```text
+Focused adapter, session, routing, and Properties-panel regressions
+  PASS — 4 files; 43 passed
+pnpm --filter @blue/app test
+  PASS — 226 files; 2,115 passed / 2 skipped
+pnpm --filter @blue/app build:main
+  PASS — Electron main TypeScript build
+pnpm --filter @blue/app build:renderer
+  PASS — renderer plus configured Electron main/preload Vite emissions
+pnpm lint
+  PASS — all configured workspace lint targets
+git diff --check
+  PASS
+```
+
+The score-generation regression renders the complete project after a saved shared-definition edit and also exercises direct generation through timeline, nested timeline, and project-library-nested Instances. The existing Vite large-chunk notice, jsdom canvas diagnostics, and intentional nonexistent-command fixture remain informational.
+
+## Verification Record — Completion Review, 2026-07-21
+
+The final review traced all 78 functional requirements and all 13 success criteria to implementation and verification evidence. It found no blocking behavior or reliability defect. The review added the previously missing exact SC-007 durability regression, strengthened SC-006 to sample 20 browse pages and 20 indexed searches, and replaced the feature's inline/child-process CommonJS type/runtime imports with top-level static ESM imports.
+
+```text
+Focused repository, identity, and 10,000-item performance regressions
+  PASS — 4 files; 11 passed
+Electron SQLite ESM runtime probe
+  PASS — 1 file; 1 passed
+Playwright/Vitest browser regressions
+  PASS — 2 files; 5 passed
+pnpm test
+  PASS — @blue/data 1,267; @blue/app 2,117 passed / 2 skipped;
+         @blue/engine-client 18; blue-cli 5; Java Maven suite passed
+pnpm build
+  PASS — all workspace packages, Electron main/preload, repository worker, and renderer
+pnpm lint
+  PASS — all configured workspace lint targets
+git diff --check
+git diff --check ec14e07c
+  PASS — worktree and complete Spec 060 feature diff
+```
+
+The build retains the existing informational Vite chunk-size notice. The normal test run also retains the known Node `node:sqlite` experimental notice, jsdom canvas diagnostics, and intentional nonexistent-command fixture. None represents a Spec 060 failure. The external multi-participant usability outcome in SC-001 is not asserted as an automated result; the documented live/manual acceptance pass remains its implementation proxy.
+
 ## Completion Gate
 
 The feature is ready for closeout only when:
 
-- all 73 functional requirements and 13 success criteria map to automated or documented manual verification;
+- all 78 functional requirements and 13 success criteria map to automated or documented manual verification;
 - the four-format compatibility corpus passes;
 - no unsupported payload is silently changed, omitted, or made insertable;
 - repository/import/export/upgrade failure injection leaves prior data complete or recoverable;

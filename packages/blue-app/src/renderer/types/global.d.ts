@@ -60,6 +60,7 @@ import type {
   LibraryDragDescriptor,
   LibraryTransferPreview,
   LibraryTransferPreviewRequest,
+  LibraryTransferSourceReference,
   LibraryContextSnapshot,
   LibraryChangedEvent,
   LibraryItemKey,
@@ -75,6 +76,10 @@ import type {
   LibraryMutationPreview,
   PrepareLibraryMutationRequest,
   UserLibraryMutation,
+  CutLibraryToClipboardRequest,
+  CutLibraryToClipboardResult,
+  LibraryInteractionClipboard,
+  ScoreTimelineSoundObjectRequest,
   OpenLibraryEditorRequest,
   LibraryEditorPatchRequest,
   LibraryEditorConflictDecision,
@@ -84,6 +89,7 @@ import type {
   ProjectLibraryUsage,
   ProjectLibraryDeletePreview,
   ManualLibraryImportPreview,
+  ManualLibraryImportExecutionRequest,
   ManualLibraryImportResult,
 } from '../../shared/unified-library';
 
@@ -149,6 +155,15 @@ declare global {
       prepareLibraryMutation: (
         request: PrepareLibraryMutationRequest,
       ) => Promise<LibraryResult<LibraryMutationPreview>>;
+      cutLibraryToClipboard: (
+        request: CutLibraryToClipboardRequest,
+      ) => Promise<LibraryResult<CutLibraryToClipboardResult>>;
+      captureScoreSoundObjectClipboard: (
+        request: ScoreTimelineSoundObjectRequest,
+      ) => Promise<LibraryResult<LibraryInteractionClipboard>>;
+      addScoreSoundObjectToProjectLibrary: (
+        request: ScoreTimelineSoundObjectRequest,
+      ) => Promise<LibraryResult<ProjectMutationReceipt>>;
       openLibraryItemEditor: (
         request: OpenLibraryEditorRequest,
       ) => Promise<LibraryResult<LibraryEditorSessionSnapshot>>;
@@ -188,13 +203,14 @@ declare global {
         key: LibraryItemKey,
         confirmationToken: string,
       ) => Promise<LibraryResult<ProjectMutationReceipt>>;
-      copyProjectLibraryItemToUser: (
-        key: LibraryItemKey,
+      copyLibraryTransferToUser: (
+        source: LibraryTransferSourceReference,
         parentId: string,
       ) => Promise<LibraryResult<LibraryMutationReceipt>>;
       selectLibraryImportFiles: () => Promise<LibraryResult<ManualLibraryImportPreview> | null>;
+      selectLibraryImportDirectory: () => Promise<LibraryResult<ManualLibraryImportPreview> | null>;
       executeLibraryImport: (
-        previewToken: string,
+        request: ManualLibraryImportExecutionRequest,
       ) => Promise<LibraryResult<ManualLibraryImportResult>>;
       exportCurrentLibrary: (
         libraryType: LibraryType,

@@ -641,13 +641,13 @@ export default function PianoRollEditor({ document: scoreDocument, onPatch }: Sc
         <GeneratedScoreModal text={testOutput} onClose={clearTestOutput} />
       )}
       <ContextMenu.Portal>
-        <ContextMenu.Content className="z-50 min-w-40 rounded-md border border-blue-border/50 bg-app-menu p-1 shadow-2xl">
-          <ContextMenu.Item className="cursor-pointer rounded px-3 py-1.5 text-body text-app-text outline-none hover:bg-blue-accent/20 hover:text-blue-accent" onSelect={handleCopySelectedNotes}>Copy</ContextMenu.Item>
-          <ContextMenu.Item className="cursor-pointer rounded px-3 py-1.5 text-body text-app-text outline-none hover:bg-blue-accent/20 hover:text-blue-accent" onSelect={handleCutSelectedNotes}>Cut</ContextMenu.Item>
-          <ContextMenu.Item className="cursor-pointer rounded px-3 py-1.5 text-body text-app-text outline-none hover:bg-blue-accent/20 hover:text-blue-accent" onSelect={handlePasteAtLastTarget}>Paste</ContextMenu.Item>
-          <ContextMenu.Separator className="h-px bg-blue-border/30 my-1" />
-          <ContextMenu.Item className="cursor-pointer rounded px-3 py-1.5 text-body text-app-text outline-none hover:bg-blue-accent/20 hover:text-blue-accent" onSelect={handleRemoveSelectedNotes}>Remove</ContextMenu.Item>
-          <ContextMenu.Item className="cursor-pointer rounded px-3 py-1.5 text-body text-app-text outline-none hover:bg-blue-accent/20 hover:text-blue-accent" onSelect={() => setSelectedIndices(new Set(notes.map((_, i) => i)))}>Select All</ContextMenu.Item>
+        <ContextMenu.Content className="editor-context-menu">
+          <ContextMenu.Item className="editor-context-menu__item" onSelect={handleCopySelectedNotes}>Copy</ContextMenu.Item>
+          <ContextMenu.Item className="editor-context-menu__item" onSelect={handleCutSelectedNotes}>Cut</ContextMenu.Item>
+          <ContextMenu.Item className="editor-context-menu__item" onSelect={handlePasteAtLastTarget}>Paste</ContextMenu.Item>
+          <ContextMenu.Separator className="editor-context-menu__separator" />
+          <ContextMenu.Item className="editor-context-menu__item" onSelect={handleRemoveSelectedNotes}>Remove</ContextMenu.Item>
+          <ContextMenu.Item className="editor-context-menu__item" onSelect={() => setSelectedIndices(new Set(notes.map((_, i) => i)))}>Select All</ContextMenu.Item>
         </ContextMenu.Content>
       </ContextMenu.Portal>
     </ContextMenu.Root>

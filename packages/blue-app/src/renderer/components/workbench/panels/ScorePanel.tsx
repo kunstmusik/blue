@@ -843,8 +843,7 @@ function RowHeader({
   children: React.ReactNode;
   rowVisibility: { tempoRowVisible: boolean; meterRowVisible: boolean; markersRowVisible: boolean };
 }) {
-  const ctxItemClass =
-    'flex cursor-pointer items-center gap-2 rounded-sm px-3 py-1 text-body text-blue-text outline-none data-[highlighted]:bg-app-highlight';
+  const ctxItemClass = 'editor-context-menu__item';
 
   return (
     <ContextMenu.Root>
@@ -856,7 +855,7 @@ function RowHeader({
         </div>
       </ContextMenu.Trigger>
       <ContextMenu.Portal>
-        <ContextMenu.Content className="z-50 min-w-45 rounded-md border border-blue-border/50 bg-app-menu p-1 shadow-xl">
+        <ContextMenu.Content className="editor-context-menu">
           <ContextMenu.CheckboxItem
             className={ctxItemClass}
             checked={rowVisibility.tempoRowVisible}
@@ -912,8 +911,7 @@ function SpacerPanel({
   noteProcessorChain?: NoteProcessorChainSnapshot;
 }) {
   const addLayer = useProjectStore((s) => s.addLayer);
-  const ctxItemClass =
-    'cursor-pointer rounded-sm px-3 py-1 text-body text-blue-text outline-none data-[highlighted]:bg-app-highlight';
+  const ctxItemClass = 'editor-context-menu__item';
 
   return (
     <ContextMenu.Root>
@@ -944,7 +942,7 @@ function SpacerPanel({
         </div>
       </ContextMenu.Trigger>
       <ContextMenu.Portal>
-        <ContextMenu.Content className="z-50 min-w-45 rounded border border-blue-border/50 bg-app-menu py-1 shadow-lg">
+        <ContextMenu.Content className="editor-context-menu">
           <ContextMenu.Item
             className={ctxItemClass}
             onSelect={() => addLayer(groupId, layerCount - 1)}
@@ -1054,8 +1052,7 @@ function SoundLayerHeader({
   const btnClass = (active: boolean, activeBg: string) =>
     `w-5 h-4 text-tiny font-bold rounded-sm border border-app-border/30 flex items-center justify-center ${active ? activeBg + " text-black" : "bg-transparent text-app-text-muted hover:text-app-text"}`;
 
-  const ctxItemClass =
-    "rounded-sm px-3 py-1 text-body text-app-text outline-none cursor-pointer data-[highlighted]:bg-app-highlight";
+  const ctxItemClass = 'editor-context-menu__item';
 
   const layerRef = {
     rootGroupIndex,
@@ -1250,7 +1247,7 @@ function SoundLayerHeader({
           document.body,
         )}
        <ContextMenu.Portal>
-        <ContextMenu.Content className="z-50 min-w-45 rounded border border-app-border/50 bg-app-menu py-1 shadow-lg">
+        <ContextMenu.Content className="editor-context-menu">
           <ContextMenu.Item
             className={ctxItemClass}
             onSelect={() => addLayer(groupId, layerIndex - 1)}
@@ -1263,7 +1260,7 @@ function SoundLayerHeader({
           >
             Add Layer Below
           </ContextMenu.Item>
-          <ContextMenu.Separator className="my-1 h-px bg-app-border/30" />
+          <ContextMenu.Separator className="editor-context-menu__separator" />
           <ContextMenu.Item
             className={ctxItemClass}
             onSelect={() => removeLayer(groupId, layerIndex)}
@@ -1284,16 +1281,15 @@ function SoundLayerHeader({
           </ContextMenu.Item>
           {showLayerHeightMenu && (
             <>
-              <ContextMenu.Separator className="my-1 h-px bg-app-border/30" />
+              <ContextMenu.Separator className="editor-context-menu__separator" />
               <ContextMenu.Sub>
                 <ContextMenu.SubTrigger
-                  className={`flex items-center justify-between ${ctxItemClass}`}
+                  className={`${ctxItemClass} editor-context-menu__subtrigger`}
                 >
                   Layer Height
-                  <span className="text-tiny opacity-60 ml-2">▸</span>
                 </ContextMenu.SubTrigger>
                 <ContextMenu.Portal>
-                  <ContextMenu.SubContent className="z-50 min-w-30 rounded border border-app-border/50 bg-app-menu py-1 shadow-lg">
+                  <ContextMenu.SubContent className="editor-context-menu">
                     {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((idx) => (
                       <ContextMenu.Item
                         key={idx}

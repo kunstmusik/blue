@@ -9,7 +9,7 @@ interface LibraryTransferDialogProps {
 export function LibraryTransferDialog({ preview, onApply, onCancel }: LibraryTransferDialogProps): React.ReactElement {
   return (
     <div role="dialog" aria-modal="true" aria-labelledby="library-transfer-title" className="fixed inset-0 z-[70] grid place-items-center bg-black/45 p-4">
-      <div className="w-full max-w-sm rounded border border-app-border bg-app-panel p-4 shadow-2xl">
+      <div className="w-full max-w-sm rounded border border-app-border bg-app-overlay p-4 shadow-2xl">
         <h2 id="library-transfer-title" className="font-semibold">Add {preview.item.displayName}</h2>
         <p className="mt-1 text-xs text-app-text-muted">Choose whether this SoundObject follows future edits to its project-library definition or becomes an independent project copy.</p>
         {preview.item.dependencies.itemOwned.length > 0 && (

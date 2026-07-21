@@ -1,5 +1,6 @@
 import { isMainThread, parentPort, workerData } from 'node:worker_threads';
 import { UnifiedLibraryRepository } from './repository';
+import type { RepositoryClipboardNode, RepositoryItemPayloadInput } from './repository';
 
 export interface RepositoryWorkerRequest {
   readonly id: number;
@@ -14,6 +15,9 @@ export interface RepositoryWorkerRequest {
     | 'searchItems'
     | 'getItemPayload'
     | 'getItemSummary'
+    | 'getClipboardSubtree'
+    | 'createClipboardSubtree'
+    | 'cutClipboardSubtree'
     | 'updateItemPayload'
     | 'updateItem'
     | 'moveNode'
@@ -88,16 +92,32 @@ export function startUnifiedLibraryRepositoryWorker(databasePath: string): void 
         case 'getItemSummary':
           value = repository.getItemSummary(String(request.args[0]));
           break;
+        case 'getClipboardSubtree':
+          value = repository.getClipboardSubtree(String(request.args[0]));
+          break;
+        case 'createClipboardSubtree':
+          value = repository.createClipboardSubtree(
+            String(request.args[0]),
+            request.args[1] as RepositoryClipboardNode,
+          );
+          break;
+        case 'cutClipboardSubtree':
+          value = repository.cutClipboardSubtree(
+            String(request.args[0]),
+            Number(request.args[1]),
+            request.args[2] as readonly string[],
+          );
+          break;
         case 'updateItemPayload':
           value = repository.updateItemPayload(
             String(request.args[0]), Number(request.args[1]),
-            request.args[2] as import('./repository').RepositoryItemPayloadInput,
+            request.args[2] as RepositoryItemPayloadInput,
           );
           break;
         case 'updateItem':
           value = repository.updateItem(
             String(request.args[0]), Number(request.args[1]), String(request.args[2]),
-            request.args[3] as import('./repository').RepositoryItemPayloadInput,
+            request.args[3] as RepositoryItemPayloadInput,
           );
           break;
         case 'moveNode':

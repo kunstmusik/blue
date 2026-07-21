@@ -3,11 +3,13 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type {
   BrowseLibraryRequest,
+  CapturableLibraryTransferSource,
   LibraryBrowseNode,
   LibraryChangedEvent,
   LibraryServiceSnapshot,
   SearchLibrariesRequest,
 } from '../../shared/unified-library';
+import { getLibraryTransferSourceType } from '../../shared/unified-library';
 import { useLibraryStore } from '../stores/library-store';
 import { useLibraryEditorStore } from '../stores/library-editor-store';
 
@@ -37,22 +39,32 @@ const item: LibraryBrowseNode = {
 
 let snapshotListener: ((value: LibraryServiceSnapshot) => void) | null;
 let changedListener: ((value: LibraryChangedEvent) => void) | null;
-const browseLibraries = vi.fn(async (request: BrowseLibraryRequest) => ({
+const defaultBrowseLibraries = async (request: BrowseLibraryRequest) => ({
   ok: true as const,
   value: {
     contentRevision: 3,
-    parent: { ...item, key: null, nodeId: `root-${request.parent.libraryType}`, nodeKind: 'root' as const },
+    parent: {
+      ...item,
+      key: null,
+      nodeId: `root-${request.parent.libraryType}`,
+      libraryType: request.parent.libraryType,
+      scope: request.parent.scope,
+      nodeKind: 'root' as const,
+      hasChildren: request.parent.libraryType === 'instrument',
+    },
     children: request.parent.libraryType === 'instrument' ? [item] : [],
     nextCursor: null,
   },
-}));
-const searchLibraries = vi.fn(async (request: SearchLibrariesRequest) => ({
+});
+const browseLibraries = vi.fn(defaultBrowseLibraries);
+const defaultSearchLibraries = async (request: SearchLibrariesRequest) => ({
   ok: true as const,
   value: {
     contentRevision: 3,
     normalizedQuery: request.query.toLowerCase(),
     results: request.query ? [{
       key: item.key!,
+      parentId: item.parentId,
       libraryType: 'instrument' as const,
       scope: 'user' as const,
       displayName: item.displayName,
@@ -63,7 +75,8 @@ const searchLibraries = vi.fn(async (request: SearchLibrariesRequest) => ({
     }] : [],
     nextCursor: request.cursor ? null : 'page-2',
   },
-}));
+});
+const searchLibraries = vi.fn(defaultSearchLibraries);
 const openLibraryItemEditor = vi.fn(async () => ({ ok: true as const, value: {
   sessionId: 'session-1',
   key: item.key!,
@@ -113,16 +126,55 @@ const applyLibraryTransfer = vi.fn(async () => ({
     message: 'Instrument added.',
   },
 }));
+const copyLibraryTransferToUser = vi.fn(async () => ({
+  ok: true as const,
+  value: { contentRevision: 4, affectedNodes: [] },
+}));
+const cutLibraryToClipboard = vi.fn(async (request: {
+  readonly source: CapturableLibraryTransferSource;
+  readonly confirmationToken: string;
+}) => ({
+  ok: true as const,
+  value: {
+    clipboard: {
+      operation: 'cut' as const,
+      source: {
+        kind: 'buffer' as const,
+        clipboardId: `buffer-${getLibraryTransferSourceType(request.source)}`,
+        libraryType: getLibraryTransferSourceType(request.source),
+      },
+      capturedAt: 100,
+    },
+    closedEditorSessionIds: [],
+  },
+}));
+const previewProjectLibraryDelete = vi.fn(async () => ({
+  ok: true as const,
+  value: {
+    confirmationToken: 'project-delete', linkedInstanceCount: 0, locations: [], requiresConfirmation: true,
+  },
+}));
+const deleteProjectLibraryItem = vi.fn(async () => ({
+  ok: true as const,
+  value: {
+    projectSessionId: 7, projectRevision: 4, libraryType: 'udo' as const,
+    insertedIdentity: 'udo:501', message: 'Removed.',
+  },
+}));
 
 beforeEach(() => {
   vi.useFakeTimers();
   snapshotListener = null;
   changedListener = null;
-  browseLibraries.mockClear();
-  searchLibraries.mockClear();
+  browseLibraries.mockReset().mockImplementation(defaultBrowseLibraries);
+  searchLibraries.mockReset().mockImplementation(defaultSearchLibraries);
   openLibraryItemEditor.mockClear();
   previewLibraryTransfer.mockClear();
   applyLibraryTransfer.mockClear();
+  copyLibraryTransferToUser.mockClear();
+  cutLibraryToClipboard.mockClear();
+  previewProjectLibraryDelete.mockClear();
+  deleteProjectLibraryItem.mockClear();
   const applyLibraryMutation = vi.fn(async () => ({
     ok: true as const,
     value: { contentRevision: 4, affectedNodes: [] },
@@ -135,6 +187,10 @@ beforeEach(() => {
     openLibraryItemEditor,
     previewLibraryTransfer,
     applyLibraryTransfer,
+    copyLibraryTransferToUser,
+    cutLibraryToClipboard,
+    previewProjectLibraryDelete,
+    deleteProjectLibraryItem,
     onLibraryEditorSessionChanged: vi.fn(() => () => undefined),
     applyLibraryMutation,
     prepareLibraryMutation: vi.fn(async (request) => ({
@@ -190,12 +246,50 @@ describe('library store', () => {
   it('loads only user roots without a project and applies the type filter', async () => {
     await useLibraryStore.getState().initialize();
     expect(browseLibraries).toHaveBeenCalledTimes(4);
-    expect(useLibraryStore.getState().nodesByType.instrument).toEqual([item]);
+    expect(useLibraryStore.getState().userRootsByType.instrument?.nodeKind).toBe('root');
+    expect(useLibraryStore.getState().nodesByType.instrument).toEqual([]);
 
     useLibraryStore.getState().setTypeFilter('instrument');
     expect(useLibraryStore.getState()).toMatchObject({
       typeFilter: 'instrument',
     });
+  });
+
+  it('drains every browse page in order when a folder is expanded', async () => {
+    await useLibraryStore.getState().initialize();
+    const root = useLibraryStore.getState().userRootsByType.instrument!;
+    const children = Array.from({ length: 1_205 }, (_, index) => ({
+      ...item,
+      key: { scope: 'user' as const, libraryType: 'instrument' as const, nodeId: `item-${index}` },
+      nodeId: `item-${index}`,
+      displayName: `Item ${index}`,
+    }));
+    browseLibraries.mockImplementation(async (request) => {
+      if (request.parent.nodeId !== root.nodeId) {
+        return {
+          ok: true as const,
+          value: { contentRevision: 3, parent: root, children: [], nextCursor: null },
+        };
+      }
+      const offset = request.cursor ? Number(request.cursor.slice('page-'.length)) : 0;
+      const page = children.slice(offset, offset + 500);
+      const nextOffset = offset + page.length;
+      return {
+        ok: true as const,
+        value: {
+          contentRevision: 3,
+          parent: root,
+          children: page,
+          nextCursor: nextOffset < children.length ? `page-${nextOffset}` : null,
+        },
+      };
+    });
+
+    await useLibraryStore.getState().expandNode(root);
+
+    expect(useLibraryStore.getState().nodesByType.instrument).toHaveLength(1_205);
+    expect(useLibraryStore.getState().nodesByType.instrument.at(-1)?.nodeId).toBe('item-1204');
+    expect(browseLibraries).toHaveBeenCalledTimes(7);
   });
 
   it('debounces search, appends pagination, and opens a reusable editor on selection', async () => {
@@ -215,6 +309,40 @@ describe('library store', () => {
     expect(useLibraryStore.getState().selectedKey).toEqual(item.key);
   });
 
+  it('ignores a slower search response after the query changes', async () => {
+    await useLibraryStore.getState().initialize();
+    let releaseOld: (() => void) | undefined;
+    const oldGate = new Promise<void>((resolve) => { releaseOld = resolve; });
+    searchLibraries.mockImplementation(async (request) => {
+      if (request.query === 'Old') await oldGate;
+      return { ok: true as const, value: {
+        contentRevision: 3,
+        normalizedQuery: request.query.toLowerCase(),
+        results: [{
+          key: item.key!,
+          parentId: item.parentId,
+          libraryType: 'instrument' as const,
+          scope: 'user' as const,
+          displayName: request.query,
+          breadcrumb: item.breadcrumb,
+          supportStatus: 'supported' as const,
+          objectType: item.objectType!,
+          revision: item.revision,
+        }],
+        nextCursor: null,
+      } };
+    });
+    useLibraryStore.getState().setQuery('Old');
+    await vi.advanceTimersByTimeAsync(160);
+    useLibraryStore.getState().setQuery('New');
+    await vi.advanceTimersByTimeAsync(160);
+    expect(useLibraryStore.getState().searchResults[0]?.displayName).toBe('New');
+    releaseOld?.();
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(useLibraryStore.getState().searchResults[0]?.displayName).toBe('New');
+  });
+
   it('refreshes on library and project snapshot changes', async () => {
     await useLibraryStore.getState().initialize();
     changedListener?.({
@@ -229,24 +357,237 @@ describe('library store', () => {
     expect(useLibraryStore.getState().snapshot?.projectSessionId).toBe(9);
   });
 
-  it('captures revision-bound copy/cut state and cancels without persistent target state', async () => {
+  it('keeps Copy revision-bound but replaces Cut with a detached reusable buffer', async () => {
     const state = useLibraryStore.getState();
-    state.captureClipboard(item, 'copy');
+    await state.captureClipboard(item, 'copy');
     expect(useLibraryStore.getState().clipboard).toEqual({
       operation: 'copy',
       source: { kind: 'userNode', libraryType: 'instrument', nodeId: 'item-1', revision: 1 },
       capturedAt: expect.any(Number),
     });
-    state.captureClipboard(item, 'cut');
-    expect(useLibraryStore.getState().clipboard?.operation).toBe('cut');
+    await state.captureClipboard(item, 'cut');
+    expect(cutLibraryToClipboard).toHaveBeenCalledWith({
+      source: { kind: 'userNode', libraryType: 'instrument', nodeId: 'item-1', revision: 1 },
+      confirmationToken: 'delete-preview',
+    });
+    expect(useLibraryStore.getState().clipboard).toMatchObject({
+      operation: 'cut',
+      source: { kind: 'buffer', clipboardId: 'buffer-instrument', libraryType: 'instrument' },
+    });
     state.cancelClipboard();
     expect(useLibraryStore.getState().clipboard).toBeNull();
     expect('context' in useLibraryStore.getState()).toBe(false);
   });
 
+  it('captures user folders and resolves Paste on an item to its parent', async () => {
+    await useLibraryStore.getState().initialize();
+    const root = useLibraryStore.getState().userRootsByType.instrument!;
+    const folder: LibraryBrowseNode = {
+      ...item,
+      key: null,
+      nodeId: 'folder-1',
+      parentId: root.nodeId,
+      nodeKind: 'folder',
+      displayName: 'Folder',
+      objectType: undefined,
+      supportStatus: undefined,
+      hasChildren: true,
+    };
+    await useLibraryStore.getState().captureClipboard(folder, 'cut');
+    expect(useLibraryStore.getState().clipboard).toMatchObject({
+      operation: 'cut',
+      source: { kind: 'buffer', clipboardId: 'buffer-instrument', libraryType: 'instrument' },
+    });
+
+    useLibraryStore.setState({
+      childrenByParent: { [root.nodeId]: [item, folder] },
+      nodesByType: { ...useLibraryStore.getState().nodesByType, instrument: [item, folder] },
+    });
+    await useLibraryStore.getState().captureClipboard(item, 'copy');
+    expect(await useLibraryStore.getState().pasteInto(item)).toBe(true);
+    expect(window.blueAPI.applyLibraryMutation).toHaveBeenLastCalledWith({
+      type: 'duplicateNode',
+      nodeId: 'item-1',
+      expectedRevision: 1,
+      parentId: root.nodeId,
+      expectedParentRevision: root.revision,
+    });
+  });
+
+  it('moves a user node into a compatible unloaded folder at the end', async () => {
+    await useLibraryStore.getState().initialize();
+    const root = useLibraryStore.getState().userRootsByType.instrument!;
+    const source: LibraryBrowseNode = {
+      ...item,
+      key: null,
+      nodeId: 'source-folder',
+      parentId: root.nodeId,
+      nodeKind: 'folder',
+      displayName: 'Source',
+      objectType: undefined,
+      supportStatus: undefined,
+      hasChildren: false,
+    };
+    const destination: LibraryBrowseNode = {
+      ...source,
+      nodeId: 'destination-folder',
+      displayName: 'Destination',
+      revision: 3,
+    };
+
+    expect(await useLibraryStore.getState().moveUserNode(source, destination)).toBe(true);
+    expect(window.blueAPI.applyLibraryMutation).toHaveBeenCalledWith({
+      type: 'moveNode',
+      nodeId: 'source-folder',
+      expectedRevision: 1,
+      parentId: 'destination-folder',
+      expectedParentRevision: 3,
+      targetIndex: Number.MAX_SAFE_INTEGER,
+    });
+  });
+
+  it('moves a project UDO through the same Cut buffer used by the user library', async () => {
+    const projectUdo: LibraryBrowseNode = {
+      key: {
+        scope: 'projectOwned',
+        libraryType: 'udo',
+        projectSessionId: 7,
+        locator: {
+          kind: 'udo',
+          sessionObjectId: 'udo:501',
+          persistedFingerprint: { canonicalHash: 'hash-501', opcodeName: 'udo501', style: 'CLASSIC' },
+        },
+      },
+      nodeId: 'project-udo-501',
+      parentId: null,
+      libraryType: 'udo',
+      scope: 'projectOwned',
+      nodeKind: 'item',
+      displayName: 'udo501',
+      breadcrumb: ['Project UDOs'],
+      supportStatus: 'supported',
+      objectType: 'blue.udo.UserDefinedOpcode',
+      revision: 'hash-501',
+      hasChildren: false,
+    };
+    await useLibraryStore.getState().initialize();
+    await useLibraryStore.getState().captureClipboard(projectUdo, 'cut');
+    const userRoot = useLibraryStore.getState().userRootsByType.udo!;
+
+    const pasted = await useLibraryStore.getState().pasteInto(userRoot);
+    expect({
+      pasted,
+      error: useLibraryStore.getState().error,
+      clipboard: useLibraryStore.getState().clipboard,
+      userRootType: userRoot.libraryType,
+    }).toMatchObject({
+      pasted: true,
+      error: null,
+      clipboard: { operation: 'cut', source: { kind: 'buffer', libraryType: 'udo' } },
+      userRootType: 'udo',
+    });
+    expect(copyLibraryTransferToUser).toHaveBeenCalledWith(
+      { kind: 'clipboard', source: { kind: 'buffer', clipboardId: 'buffer-udo', libraryType: 'udo' } },
+      'root-udo',
+    );
+    expect(previewProjectLibraryDelete).toHaveBeenCalledWith(projectUdo.key);
+    expect(cutLibraryToClipboard).toHaveBeenCalledWith({
+      source: { kind: 'library', key: projectUdo.key, revision: 'hash-501' },
+      confirmationToken: 'project-delete',
+    });
+    expect(useLibraryStore.getState().clipboard?.source.kind).toBe('buffer');
+  });
+
+  it('moves a user item into a project panel through the same Cut buffer', async () => {
+    await useLibraryStore.getState().captureClipboard(item, 'cut');
+
+    expect(await useLibraryStore.getState().transferToProject(
+      { kind: 'clipboard', source: useLibraryStore.getState().clipboard!.source },
+      { kind: 'orchestra', projectSessionId: 7, projectRevision: 2, insertIndex: 0 },
+    )).toBe(true);
+
+    expect(window.blueAPI.prepareLibraryMutation).toHaveBeenCalledWith({
+      type: 'deleteNode', nodeId: 'item-1', expectedRevision: 1,
+    });
+    expect(cutLibraryToClipboard).toHaveBeenCalledWith({
+      source: { kind: 'userNode', libraryType: 'instrument', nodeId: 'item-1', revision: 1 },
+      confirmationToken: 'delete-preview',
+    });
+    expect(previewLibraryTransfer).toHaveBeenCalledWith({
+      source: {
+        kind: 'clipboard',
+        source: { kind: 'buffer', clipboardId: 'buffer-instrument', libraryType: 'instrument' },
+      },
+      target: { kind: 'orchestra', projectSessionId: 7, projectRevision: 2, insertIndex: 0 },
+      mode: 'independent',
+    });
+    expect(useLibraryStore.getState().clipboard?.source.kind).toBe('buffer');
+  });
+
+  it('does not remove a shared SoundObject when its Cut consequence is declined', async () => {
+    const projectSoundObject: LibraryBrowseNode = {
+      key: {
+        scope: 'projectShared', libraryType: 'soundObject', projectSessionId: 7,
+        locator: {
+          kind: 'soundObject', libraryId: 'shared-1',
+          persistedFingerprint: { canonicalHash: 'hash', displayName: 'Shared', objectType: 'GenericScore' },
+        },
+      },
+      nodeId: 'project-sound-shared-1', parentId: null, libraryType: 'soundObject',
+      scope: 'projectShared', nodeKind: 'item', displayName: 'Shared', breadcrumb: ['Project SoundObjects'],
+      supportStatus: 'supported', objectType: 'GenericScore', revision: 'hash', hasChildren: false,
+    };
+    previewProjectLibraryDelete.mockResolvedValueOnce({
+      ok: true,
+      value: { confirmationToken: 'linked-delete', linkedInstanceCount: 2, locations: ['Score'], requiresConfirmation: true },
+    });
+    const confirm = vi.fn(() => false);
+    window.confirm = confirm;
+    expect(await useLibraryStore.getState().captureClipboard(projectSoundObject, 'cut')).toBe(false);
+    expect(confirm).toHaveBeenCalledOnce();
+    expect(cutLibraryToClipboard).not.toHaveBeenCalled();
+    expect(copyLibraryTransferToUser).not.toHaveBeenCalled();
+    expect(deleteProjectLibraryItem).not.toHaveBeenCalled();
+    expect(useLibraryStore.getState().clipboard).toBeNull();
+  });
+
+  it('pastes a detached project Effect Cut buffer into another project chain', async () => {
+    const projectEffect: LibraryBrowseNode = {
+      key: {
+        scope: 'projectOwned', libraryType: 'effect', projectSessionId: 7,
+        locator: { kind: 'effect', channelId: 'channel-1', chain: 'pre', entryId: 'effect-1' },
+      },
+      nodeId: 'project-effect-1', parentId: null, libraryType: 'effect', scope: 'projectOwned',
+      nodeKind: 'item', displayName: 'Delay', breadcrumb: ['Channel 1', 'Pre Effects'],
+      supportStatus: 'supported', objectType: 'Effect', revision: 'effect-hash', hasChildren: false,
+    };
+    await useLibraryStore.getState().captureClipboard(projectEffect, 'cut');
+    const source = { kind: 'clipboard' as const, source: useLibraryStore.getState().clipboard!.source };
+
+    expect(await useLibraryStore.getState().transferToProject(source, {
+      kind: 'effectChain', projectSessionId: 7, projectRevision: 2,
+      channelId: 'channel-2', chain: 'post', insertIndex: 0, chainRevision: '',
+    })).toBe(true);
+
+    expect(previewLibraryTransfer).toHaveBeenCalledWith({
+      source: {
+        kind: 'clipboard',
+        source: { kind: 'buffer', clipboardId: 'buffer-effect', libraryType: 'effect' },
+      },
+      target: {
+        kind: 'effectChain', projectSessionId: 7, projectRevision: 2,
+        channelId: 'channel-2', chain: 'post', insertIndex: 0, chainRevision: '',
+      },
+      mode: 'independent',
+    });
+    expect(useLibraryStore.getState().clipboard).toMatchObject({
+      operation: 'cut', source: { kind: 'buffer', libraryType: 'effect' },
+    });
+  });
+
   it('resolves destination Paste from the captured source and retains stale sources on failure', async () => {
     await useLibraryStore.getState().initialize();
-    useLibraryStore.getState().captureClipboard(item, 'copy');
+    await useLibraryStore.getState().captureClipboard(item, 'copy');
     const parent: LibraryBrowseNode = {
       ...item,
       key: null,
@@ -282,6 +623,7 @@ describe('library store', () => {
         source: { kind: 'userNode', libraryType: 'instrument', nodeId: 'child-1', revision: 1 },
         capturedAt: 1,
       },
+      selectedKey: { scope: 'user', libraryType: 'instrument', nodeId: 'child-1' },
     });
     expect(await useLibraryStore.getState().prepareDelete(item)).toBe(true);
     expect(useLibraryStore.getState().deletePreview).toMatchObject({ affectedCount: 2 });
@@ -290,7 +632,50 @@ describe('library store', () => {
       type: 'deleteNode', nodeId: 'item-1', expectedRevision: 1, confirmation: 'delete-preview',
     });
     expect(useLibraryStore.getState().clipboard).toBeNull();
+    expect(useLibraryStore.getState().selectedKey).toBeNull();
     expect(useLibraryStore.getState().deletePreview).toBeNull();
+  });
+
+  it('prunes an expanded folder after deletion without reporting its expected missing-node response', async () => {
+    await useLibraryStore.getState().initialize();
+    const root = useLibraryStore.getState().userRootsByType.udo!;
+    const folder: LibraryBrowseNode = {
+      ...root,
+      nodeId: 'deleted-folder',
+      parentId: root.nodeId,
+      nodeKind: 'folder',
+      displayName: 'Temporary',
+      breadcrumb: ['UDOs', 'Temporary'],
+      revision: 2,
+      hasChildren: true,
+    };
+    useLibraryStore.setState((state) => ({
+      childrenByParent: {
+        ...state.childrenByParent,
+        [root.nodeId]: [folder],
+        [folder.nodeId]: [{ ...item, libraryType: 'udo', parentId: folder.nodeId }],
+      },
+      nodesByType: { ...state.nodesByType, udo: [folder] },
+    }));
+    browseLibraries.mockImplementation(async (request) => {
+      if ('nodeId' in request.parent && request.parent.nodeId === folder.nodeId) {
+        return {
+          ok: false as const,
+          error: {
+            code: 'not-found' as const,
+            message: `Library node not found: ${folder.nodeId}`,
+            retryable: false,
+          },
+        };
+      }
+      return defaultBrowseLibraries(request);
+    });
+
+    await useLibraryStore.getState().refresh();
+
+    expect(useLibraryStore.getState().error).toBeNull();
+    expect(useLibraryStore.getState().childrenByParent[folder.nodeId]).toBeUndefined();
+    expect(useLibraryStore.getState().nodesByType.udo).not.toContainEqual(folder);
   });
 
   it('applies a one-mode project transfer without ever publishing modal state', async () => {

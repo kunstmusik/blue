@@ -9,6 +9,8 @@ import {
 } from '@blue/data';
 import {
   createScoreObjectEditorDocument,
+  createScoreObjectPropertiesTarget,
+  createScoreDocumentSnapshot,
   applyProjectDocumentPatch,
   type ScoreObjectEditorTargetSnapshot,
   type ScoreObjectLibraryEntryRef,
@@ -41,6 +43,21 @@ function makeInstanceData() {
 }
 
 describe('Library-context labeling (T036)', () => {
+  it('includes the stable library ID in runtime Instance editor targets', () => {
+    const { data, libId } = makeInstanceData();
+    const row = createScoreDocumentSnapshot(data).layerGroups
+      .flatMap((group) => group.layers)
+      .flatMap((layer) => layer.items)
+      .find((item) => item.objectType === 'Instance')!;
+
+    expect(row.editorTarget).toMatchObject({
+      selectedObjectType: 'Instance',
+      ownerKind: 'library',
+      displayContext: 'instance',
+      library: { libraryId: libId, objectType: 'GenericScore' },
+    });
+  });
+
   it('sets displayContext to instance for Instance targets', () => {
     const { data, libId } = makeInstanceData();
 
@@ -61,6 +78,30 @@ describe('Library-context labeling (T036)', () => {
     expect(doc!.target.ownerKind).toBe('library');
     expect(doc!.target.selectedObjectType).toBe('Instance');
     expect(doc!.target.editorObjectType).toBe('GenericScore');
+  });
+
+  it('keeps the type editor on the shared definition and properties on the Instance wrapper', () => {
+    const { data, inst } = makeInstanceData();
+    inst.setName('Instance Label');
+    const target = createScoreDocumentSnapshot(data).layerGroups
+      .flatMap((group) => group.layers)
+      .flatMap((layer) => layer.items)
+      .find((item) => item.objectType === 'Instance')!.editorTarget!;
+
+    const typeDocument = createScoreObjectEditorDocument(data, { target });
+    const propertiesTarget = createScoreObjectPropertiesTarget(target);
+    const propertiesDocument = createScoreObjectEditorDocument(data, { target: propertiesTarget });
+
+    expect(typeDocument?.shared.name).toBe('Library Object');
+    expect(propertiesDocument?.shared.name).toBe('Instance Label');
+    expect(propertiesTarget).toMatchObject({
+      selectedObjectType: 'Instance',
+      editorObjectType: 'Instance',
+      ownerKind: 'timeline',
+      displayContext: 'timeline',
+      location: target.sourceInstanceLocation,
+    });
+    expect(propertiesTarget.library).toBeUndefined();
   });
 
   it('sets displayContext to timeline for direct timeline objects', () => {

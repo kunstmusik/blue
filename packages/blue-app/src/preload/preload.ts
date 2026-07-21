@@ -109,15 +109,19 @@ import {
   UNIFIED_LIBRARY_EDITOR_SAVE_CHANNEL,
   UNIFIED_LIBRARY_MUTATE_CHANNEL,
   UNIFIED_LIBRARY_PREPARE_MUTATION_CHANNEL,
+  UNIFIED_LIBRARY_CUT_TO_CLIPBOARD_CHANNEL,
+  UNIFIED_LIBRARY_CAPTURE_SCORE_SOUND_OBJECT_CHANNEL,
+  UNIFIED_LIBRARY_ADD_SCORE_SOUND_OBJECT_CHANNEL,
   UNIFIED_LIBRARY_BEGIN_DRAG_CHANNEL,
   UNIFIED_LIBRARY_CANCEL_DRAG_CHANNEL,
   UNIFIED_LIBRARY_PREVIEW_TRANSFER_CHANNEL,
   UNIFIED_LIBRARY_APPLY_TRANSFER_CHANNEL,
-  UNIFIED_LIBRARY_PROJECT_COPY_CHANNEL,
+  UNIFIED_LIBRARY_TRANSFER_TO_USER_CHANNEL,
   UNIFIED_LIBRARY_PROJECT_DELETE_CHANNEL,
   UNIFIED_LIBRARY_PROJECT_DELETE_PREVIEW_CHANNEL,
   UNIFIED_LIBRARY_PROJECT_USAGE_CHANNEL,
   UNIFIED_LIBRARY_IMPORT_SELECT_CHANNEL,
+  UNIFIED_LIBRARY_IMPORT_DIRECTORY_CHANNEL,
   UNIFIED_LIBRARY_IMPORT_EXECUTE_CHANNEL,
   UNIFIED_LIBRARY_EXPORT_CURRENT_CHANNEL,
   UNIFIED_LIBRARY_EXPORT_ALL_CHANNEL,
@@ -141,6 +145,7 @@ import {
   type LibraryDragDescriptor,
   type LibraryTransferPreview,
   type LibraryTransferPreviewRequest,
+  type LibraryTransferSourceReference,
   type BrowseLibraryRequest,
   type BrowseLibraryResult,
   type LibraryItemKey,
@@ -153,6 +158,10 @@ import {
   type LibraryMutationReceipt,
   type LibraryMutationPreview,
   type PrepareLibraryMutationRequest,
+  type CutLibraryToClipboardRequest,
+  type CutLibraryToClipboardResult,
+  type LibraryInteractionClipboard,
+  type ScoreTimelineSoundObjectRequest,
   type UserLibraryMutation,
   type OpenLibraryEditorRequest,
   type LibraryEditorPatchRequest,
@@ -163,6 +172,7 @@ import {
   type ProjectLibraryUsage,
   type ProjectLibraryDeletePreview,
   type ManualLibraryImportPreview,
+  type ManualLibraryImportExecutionRequest,
   type ManualLibraryImportResult,
   type ProjectMutationReceipt,
   type LibraryResult,
@@ -201,6 +211,12 @@ contextBridge.exposeInMainWorld('blueAPI', {
     ipcRenderer.invoke(UNIFIED_LIBRARY_MUTATE_CHANNEL, request) as Promise<LibraryResult<LibraryMutationReceipt>>,
   prepareLibraryMutation: (request: PrepareLibraryMutationRequest) =>
     ipcRenderer.invoke(UNIFIED_LIBRARY_PREPARE_MUTATION_CHANNEL, request) as Promise<LibraryResult<LibraryMutationPreview>>,
+  cutLibraryToClipboard: (request: CutLibraryToClipboardRequest) =>
+    ipcRenderer.invoke(UNIFIED_LIBRARY_CUT_TO_CLIPBOARD_CHANNEL, request) as Promise<LibraryResult<CutLibraryToClipboardResult>>,
+  captureScoreSoundObjectClipboard: (request: ScoreTimelineSoundObjectRequest) =>
+    ipcRenderer.invoke(UNIFIED_LIBRARY_CAPTURE_SCORE_SOUND_OBJECT_CHANNEL, request) as Promise<LibraryResult<LibraryInteractionClipboard>>,
+  addScoreSoundObjectToProjectLibrary: (request: ScoreTimelineSoundObjectRequest) =>
+    ipcRenderer.invoke(UNIFIED_LIBRARY_ADD_SCORE_SOUND_OBJECT_CHANNEL, request) as Promise<LibraryResult<ProjectMutationReceipt>>,
   openLibraryItemEditor: (request: OpenLibraryEditorRequest) =>
     ipcRenderer.invoke(UNIFIED_LIBRARY_EDITOR_OPEN_CHANNEL, request) as Promise<LibraryResult<LibraryEditorSessionSnapshot>>,
   getLibraryEditorSession: (sessionId: string) =>
@@ -225,12 +241,14 @@ contextBridge.exposeInMainWorld('blueAPI', {
     ipcRenderer.invoke(UNIFIED_LIBRARY_PROJECT_DELETE_PREVIEW_CHANNEL, key) as Promise<LibraryResult<ProjectLibraryDeletePreview>>,
   deleteProjectLibraryItem: (key: LibraryItemKey, confirmationToken: string) =>
     ipcRenderer.invoke(UNIFIED_LIBRARY_PROJECT_DELETE_CHANNEL, { key, confirmationToken }) as Promise<LibraryResult<ProjectMutationReceipt>>,
-  copyProjectLibraryItemToUser: (key: LibraryItemKey, parentId: string) =>
-    ipcRenderer.invoke(UNIFIED_LIBRARY_PROJECT_COPY_CHANNEL, { key, parentId }) as Promise<LibraryResult<LibraryMutationReceipt>>,
+  copyLibraryTransferToUser: (source: LibraryTransferSourceReference, parentId: string) =>
+    ipcRenderer.invoke(UNIFIED_LIBRARY_TRANSFER_TO_USER_CHANNEL, { source, parentId }) as Promise<LibraryResult<LibraryMutationReceipt>>,
   selectLibraryImportFiles: () =>
     ipcRenderer.invoke(UNIFIED_LIBRARY_IMPORT_SELECT_CHANNEL) as Promise<LibraryResult<ManualLibraryImportPreview> | null>,
-  executeLibraryImport: (previewToken: string) =>
-    ipcRenderer.invoke(UNIFIED_LIBRARY_IMPORT_EXECUTE_CHANNEL, previewToken) as Promise<LibraryResult<ManualLibraryImportResult>>,
+  selectLibraryImportDirectory: () =>
+    ipcRenderer.invoke(UNIFIED_LIBRARY_IMPORT_DIRECTORY_CHANNEL) as Promise<LibraryResult<ManualLibraryImportPreview> | null>,
+  executeLibraryImport: (request: ManualLibraryImportExecutionRequest) =>
+    ipcRenderer.invoke(UNIFIED_LIBRARY_IMPORT_EXECUTE_CHANNEL, request) as Promise<LibraryResult<ManualLibraryImportResult>>,
   exportCurrentLibrary: (libraryType: LibraryType) =>
     ipcRenderer.invoke(UNIFIED_LIBRARY_EXPORT_CURRENT_CHANNEL, libraryType) as Promise<LibraryResult<true> | null>,
   exportAllLibraries: () =>

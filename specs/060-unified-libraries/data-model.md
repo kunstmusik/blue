@@ -92,7 +92,7 @@ One stable node in a user-library tree. Roots and folders have no payload; item 
 - A folder cannot move into itself or any descendant.
 - Item nodes cannot have children.
 - Cross-type moves are invalid.
-- Project nodes are never inserted into this table; project-to-user is an explicit independent copy.
+- Project nodes are never inserted into this table; project-to-user Copy/drag creates an independent user item through the shared transfer service, while Cut captures a detached snapshot and removes the project source before any later user-library Paste.
 - Duplicate sibling names are legal, so no `(parentId, displayName)` uniqueness rule exists.
 - Compound move/delete/duplicate operations validate the complete affected subtree before `BEGIN IMMEDIATE` commit.
 
@@ -300,6 +300,7 @@ InstrumentLocator
 
 ProjectUdoLocator
   kind = udo
+  instrumentAssignmentId?     # absent for the top-level list; present for an Instrument-local list
   sessionObjectId             # stable while project is loaded
   persistedFingerprint        # canonical content hash + name/type hints
 
@@ -309,7 +310,7 @@ SharedSoundObjectLocator
   persistedFingerprint        # canonical hash + name/type hints
 ```
 
-Project UDO restore never resolves by index alone. The main adapter first uses the live session object ID. After restart it binds only when the fingerprint resolver yields exactly one candidate; zero or multiple candidates produce a safe missing/ambiguous editor state.
+Project UDO restore never resolves by index alone. The main adapter first resolves the owning list from `instrumentAssignmentId`, when present, and then uses the live session object ID. Embedded UDO session IDs include their owning Instrument assignment identity so equal definitions in different lists cannot alias. After restart it binds only when the fingerprint resolver yields exactly one candidate inside the addressed list; zero or multiple candidates produce a safe missing/ambiguous editor state.
 
 Project Shared SoundObject identity requires a tested `@blue/data` change: retain a loaded `objRefId`, allocate one stable Java-compatible ID for a new shared definition, and seed that ID into `ObjRefSaveMap` so save/reorder does not renumber it. Restore verifies both ID and fingerprint. If an older project lacks/presents a changed ID, exactly one fingerprint match may recover it; zero or multiple matches produce missing/ambiguous. An array index is never a restore identity.
 
@@ -323,6 +324,7 @@ InstrumentTarget
 
 UdoTarget
   destination = projectUdoList
+  instrumentAssignmentId?     # absent for top-level; present for the exact Instrument-local list
 
 EffectTarget
   channelId
@@ -345,15 +347,14 @@ Transient renderer/main interaction state; it is not persisted and does not plac
 
 | Field | Type | Meaning |
 |-------|------|---------|
-| `mode` | `copy` \| `cut` | Paste semantics |
-| `sourceKey` | stable scope/type/node key | Resolves the source by identity |
-| `sourceRevision` | integer/text | Rejects a stale copy or move |
-| `libraryType` | `LibraryType` | Capability matching |
-| `sourceScope` | `LibraryScopeKind` | Enforces move/copy ownership rules |
-| `displayName` | text | Clipboard/status presentation only |
-| `createdAt` | timestamp | Session diagnostics and cancellation |
+| `operation` | `copy` \| `cut` | Command that populated the clipboard |
+| `source` | revision-bound typed reference \| opaque buffer identity | Copy resolves a live source; Cut resolves detached main-owned content |
+| `libraryType` | `LibraryType` | Capability matching, carried by either source form |
+| `capturedAt` | timestamp | Session diagnostics and cancellation |
+| `detachedSubtree` | main-owned folder/item snapshot, Cut only | Complete ordered descendants and payload metadata; never sent to the renderer |
+| `expiresAt` | main-owned timestamp, Cut only | Bounds detached in-memory buffer lifetime |
 
-Copy Paste deep-copies the resolved source and allocates new stable identities. Cut Paste is allowed only for permitted user-library organization within the same type/scope and retains identity. A successful cut clears the clipboard; failure leaves source, destination, and clipboard unchanged.
+Copy Paste deep-copies the resolved revision-bound source and allocates a destination-appropriate identity. Cut first materializes a complete detached typed subtree/item snapshot in main-owned memory, then removes the source immediately after dirty-editor, revision, and shared-project consequence checks. The renderer receives only an opaque typed buffer identity. Paste deep-copies that buffer into any compatible destination, never deletes a source, and leaves the buffer reusable. Failed capture, declined confirmation, or failed removal does not replace the previous clipboard and leaves the source intact.
 
 ### Entity: `LibraryDragSession`
 
@@ -491,7 +492,7 @@ The repository guarantees one `BEGIN IMMEDIATE` transaction for:
 
 - create/rename/move/reorder/delete/duplicate node commands;
 - one supported user-item Save including all metadata;
-- one project-to-user copy;
+- one project-to-user transfer destination commit;
 - one recognized source-file import;
 - one eligible import-batch undo;
 - schema upgrade after a verified backup.

@@ -9,14 +9,14 @@ Define how Unified Libraries composes current-project definitions with app-owned
 | Type | Project surface | Libraries source | Target behavior |
 |------|-----------------|------------------|-----------------|
 | Instrument | Orchestra editor | User Instrument Library | Exact Orchestra row/end drop or Paste target |
-| UDO | Reusable project UDO list/editor | User UDO Library | Exact project UDO row/end drop or Paste target |
+| UDO | Reusable project UDO list/editor or Instrument-local UDO editor | User UDO Library | Exact addressed UDO row/end drop or Paste target |
 | SoundObject | Separate Project SoundObject Library panel | User SoundObject Library | Explicit Score path/layer/time drop or Paste target |
 | Effect | Mixer chains only | User Effect Library | Exact channel/chain/insertion-gap drop or Paste target |
 
 Rules:
 
 - The Libraries panel displays application-owned user libraries only and has no source filter or Current Project section.
-- Project Instruments and UDOs remain in their existing dedicated editors. Project Shared SoundObjects are exposed by `SoundObjectLibraryTopComponent`, not nested under Libraries.
+- Project Instruments and UDOs remain in their existing dedicated editors, including each Instrument's local UDO editor. Project Shared SoundObjects are exposed by `SoundObjectLibraryTopComponent`, not nested under Libraries.
 - A target never appears as a browsable/persisted project library or persistent Libraries-panel mode.
 - No project means project scopes and compatible project drop/Paste targets are absent, while user browse/edit/import/export/recovery remains available.
 - User-item edits affect future insertions only. Previously inserted independent copies are untracked and unchanged.
@@ -58,6 +58,7 @@ The assignment ID is the project identity. Reordering the arrangement does not c
 ```ts
 interface ProjectUdoLocator {
   kind: 'udo';
+  instrumentAssignmentId?: string;
   sessionObjectId: string;
   persistedFingerprint: {
     canonicalHash: string;
@@ -67,9 +68,10 @@ interface ProjectUdoLocator {
 }
 ```
 
+- Main resolves the owning `OpcodeList` from `instrumentAssignmentId`; omission means the top-level project UDO list. An embedded UDO session identity includes the Instrument assignment so definitions in different lists cannot alias.
 - Main assigns `sessionObjectId` to the canonical `OpcodeDefinition` object while a project is loaded; moves retain it.
 - Saved Dockview parameters also carry the fingerprint, never a bare index.
-- After restart, restore searches the loaded project for a unique canonical match. Exactly one match binds and receives a new session ID; zero yields missing; multiple yields ambiguous. Missing/ambiguous is read-only and never selects the occupant of the old index.
+- After restart, restore searches the addressed UDO list for a unique canonical match. Exactly one match binds and receives a new session ID; zero yields missing; multiple yields ambiguous. Missing/ambiguous is read-only and never selects the occupant of the old index or another Instrument's local definition.
 - After a successful edit/project save, the editor/layout locator updates its fingerprint.
 
 ### Project Shared SoundObjects
@@ -101,7 +103,7 @@ A drop or destination Paste is enabled only when all target invariants are true 
 ### UDO target
 
 - Requires an open project and current project session.
-- Destination is the project UDO list; its explicit insertion index must still be in range.
+- Destination is either the top-level project UDO list or the exact Instrument-local UDO list identified by assignment ID; its explicit insertion index must still be in range.
 - Same-name project UDOs are preserved.
 
 ### Effect target
@@ -138,13 +140,13 @@ The full Score destination is explicit. Pointer geometry or the keyboard paste l
 ### Compact panel
 
 - Healthy Libraries renders one compact search/type-filter row and the collapsed user-library roots; it does not render a source filter, Current Project section, no-project message, embedded item preview/editor, migration notice, row command strip, target banner, or Insert button.
-- One vertical-ellipsis button labeled `Library actions` opens Import XML, Export Current, and Export All. It does not expose Import History or Migration Report. Repository recovery may replace the hierarchy because it is a blocking exceptional state.
+- One vertical-ellipsis button labeled `Library actions` opens Import XML, Import Java Configuration Directory, Export Current, and Export All. It does not expose Import History or Migration Report. Repository recovery may replace the hierarchy because it is a blocking exceptional state.
 - Successful, partial, or skipped migration remains silent while the repository is usable.
 
 ### Tree commands and rename
 
 - Rows render identity/navigation content only. Double-clicking the visible name or pressing `F2` starts inline rename; `Enter` commits and `Escape` cancels. Folder disclosure remains independent of name rename.
-- Right-click and `Shift+F10`/Context Menu key open the same scoped menu with visible focus. Applicable commands include folder creation, Duplicate, Cut, Copy, Paste, Delete, and explicit project-to-user copy; invalid commands are omitted or disabled with an accessible explanation.
+- Right-click and `Shift+F10`/Context Menu key open the same scoped menu with visible focus. Applicable commands include folder creation, Duplicate, Cut, Copy, Paste, and Delete; invalid commands are omitted or disabled with an accessible explanation. Project panels use those same Copy/Cut/Paste commands rather than a separate project-to-user action.
 - Delete uses revision-bound affected-count confirmation. Shared SoundObject deletion additionally follows the linked-instance protocol below.
 
 ### Clipboard
@@ -159,7 +161,7 @@ interface LibraryInteractionClipboard {
 }
 ```
 
-The clipboard stores a stable typed reference, never XML. Library-tree Paste targets the focused folder or focused item's parent. Copy creates deep copies with new identities. Cut moves only within the same user-library type/scope and preserves identity. Destination project Paste uses the same target preview/apply service as drop.
+The clipboard stores either one stable typed user-or-project Copy reference or one opaque identity for a main-owned detached Cut snapshot, never renderer-visible XML. Library-tree Paste targets the focused folder or focused item's parent; project Paste targets the exact native insertion boundary. Copy creates a deep destination copy with a destination-appropriate identity. Cut captures the complete item or folder subtree, validates and confirms consequences, then removes the source immediately. Paste creates an independent copy from the reusable snapshot and never performs deferred cleanup. A failed capture, declined confirmation, dirty editor, stale source, or failed removal retains the source and prior clipboard. Destination project Paste and destination user Paste use the same source resolution as drop.
 
 ### Drag session
 
@@ -171,7 +173,7 @@ interface LibraryDragPayload {
 }
 ```
 
-`dragSessionId` resolves main-owned source identity/revision state and expires after the gesture. XML is never placed in `DataTransfer`. Destination surfaces provide exact insertion markers, invalid feedback, edge auto-scroll, and Escape cancellation. Main revalidates source revision, support, project session, target revision, dependencies, and shared-copy mode before one atomic apply. User-library-to-project drag always copies and never removes the source.
+`dragSessionId` resolves main-owned source identity/revision state and expires after the gesture. XML is never placed in `DataTransfer`. Destination surfaces provide exact insertion markers, invalid feedback, edge auto-scroll, and Escape cancellation. Main revalidates source revision, support, project session, target revision, dependencies, and shared-copy mode before apply. Cross-owner drag copies and never removes the source; native internal moves such as mixer Effect chain-to-chain drag use the project mutation model.
 
 During browser protected drag mode, a destination may know only that the Blue Library MIME type is present; custom descriptor data can be unreadable until `drop`. An absent descriptor during `dragover` is therefore treated as unknown rather than incompatible. Type compatibility is enforced when the descriptor becomes readable at `drop` and is always enforced again by main.
 
@@ -186,11 +188,11 @@ During browser protected drag mode, a destination may know only that the Blue Li
 5. Allocate a non-colliding assignment identity.
 6. Add without overwriting any assignment and commit once.
 
-### User UDO → Project UDO list
+### User UDO → Addressed Project UDO list
 
 1. Ensure whole payload is supported and valid.
 2. Create an independent `OpcodeDefinition` copy.
-3. Insert at the requested/default position.
+3. Resolve the top-level or Instrument-local destination list and insert at the requested/default position.
 4. Keep every existing same-name UDO unchanged.
 5. Commit once.
 
@@ -271,26 +273,26 @@ Main maintains one active `sessionId` per logical key. Tree selection or any exi
 - Mode/group: `properties` / `properties-main`
 - Default edge: right; closed by default, matching Java Blue
 - Contents: canonical Project Shared SoundObjects only
-- Selection opens/focuses the existing `Library Item` editor; supported rows provide typed copy/drag to Score, copy-to-user, and guarded deletion semantics
+- Selection opens/focuses the existing `Library Item` editor; supported rows provide shared typed Copy/Cut/Paste and drag to Score or matching user folders, plus guarded deletion semantics
 - No project renders a compact empty state rather than user-library content
 
 ### Dynamic editor panels
 
 - Dockview component key: `libraryItemEditor`
 - Runtime panel ID: derived from editor `sessionId`, not item name/index
-- Persisted parameters: item scope/type plus stable user/project locator and pin state; never payload or draft XML
+- Visibility: at most one Library Item panel; opening a different session removes the prior panel before presenting the requested session
+- Persistence: session-bound panels are transient and removed during saved-layout restoration; drafts remain in the session service, never in Dockview JSON
 - Title: `Library Item` with a dirty marker when required; the retained address/breadcrumb header carries current display name, type, scope, and location
-- Unknown/missing restore: render controlled missing/ambiguous state rather than an arbitrary neighbor
+- Unknown/missing session: render a controlled missing/ambiguous state rather than an arbitrary neighbor
 
-### Native editor preview/pin behavior
+### Native editor session behavior
 
-- At most one clean unpinned full Library Item editor is the reusable selection-preview slot.
-- Opening a different item may replace only that slot.
+- Exactly one visible Library Item panel is the reusable presentation slot.
+- Opening a different item always switches that slot to the item's existing or new session and never adds another Library Item tab.
 - The panel hosts the existing controlled Instrument, UDO, Effect, or SoundObject editor under the existing address/breadcrumb header; supported items never fall back to a raw XML textarea.
 - Editing sends a main patch, makes the session dirty, and automatically pins the panel.
-- Explicit pinning prevents replacement while clean.
-- Dirty or pinned panels are never replaced by selection.
-- Opening an already represented logical item focuses its existing panel.
+- Dirty or pinned sessions remain retained by stable identity while another session is visible.
+- Opening an already represented logical item reuses its retained session.
 - Closing/collapsing/floating Libraries does not close or alter editor sessions.
 
 ## Editor Shell Contract
@@ -358,7 +360,7 @@ Stable identity remains unchanged. All panels/breadcrumbs update from a change e
 ## Destination Surface Contract
 
 - Orchestra removes `Browse Instruments` and accepts Instrument drops/Paste at explicit table insertion boundaries.
-- Project UDO removes `Browse UDO Library` and accepts UDO drops/Paste at explicit table insertion boundaries.
+- Top-level and Instrument-local project UDO editors remove `Browse UDO Library` and accept UDO drops/Paste at explicit table insertion boundaries. Their selected rows support Copy/Cut and opaque drag to the user UDO Library through the same typed buffer and project adapter.
 - Mixer chains remove `Add Effect from Library…` and accept Effect drops/Paste at explicit pre/post chain gaps.
 - Score removes `Browse SoundObjects` and accepts SoundObject drops/Paste at explicit current path/layer/time coordinates.
 - Tools/legacy Effects Library may reveal Libraries filtered to Effects for compatibility but creates no insertion target.
@@ -392,11 +394,11 @@ Tests must prove:
 - shared usage/edit/delete counts and effects are correct;
 - duplicate entry points focus one session;
 - supported selections render native full editors with the existing address header and never a raw XML textarea;
-- 100 clean-preview reuse/pin/close/open changes never replace dirty or pinned drafts;
-- tree context commands have right-click and keyboard parity; clipboard copy allocates identities while cut preserves them;
-- exact Orchestra/UDO/Mixer/Score markers, invalid feedback, and keyboard Paste use the same main validation service;
+- 100 selection/pin/close/open changes never show more than one Library Item tab or lose dirty or pinned drafts;
+- tree and project context commands have right-click and keyboard parity; one clipboard supports Copy/Cut/Paste in both ownership directions, with guarded capture-before-immediate-remove Cut semantics;
+- exact Orchestra/top-level-or-Instrument-local UDO/Mixer/Score markers, invalid feedback, and keyboard Paste use the same main validation service;
 - healthy Libraries has one compact ellipsis menu, collapsed user roots, no source/project section, and no persistent banner, history/report command, action strip, row CRUD, Browse, or Insert controls;
-- Project SoundObject Library is a separate panel, and the project UDO top component continues to use the reusable UDO list/editor;
+- Project SoundObject Library is a separate panel, and both the project UDO top component and Instrument UDO tabs use the reusable UDO list/editor transfer contract;
 - validation/conflict/revert/quit/project-switch decisions never silently discard or overwrite;
 - external rename/move/delete updates breadcrumb or enters missing state by identity;
 - no-project user operations work;

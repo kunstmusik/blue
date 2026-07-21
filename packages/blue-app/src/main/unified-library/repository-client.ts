@@ -3,8 +3,11 @@ import { Worker } from 'node:worker_threads';
 import type { LibraryType } from '../../shared/unified-library';
 import {
   RepositoryItemPayload,
+  type RepositoryItemPayloadInput,
   RepositoryItemSummary,
   RepositoryBrowsePage,
+  RepositoryClipboardNode,
+  RepositoryCutClipboardResult,
   RepositoryNode,
   RepositorySearchPage,
   RepositorySnapshot,
@@ -107,10 +110,31 @@ export class UnifiedLibraryRepositoryClient {
     return this.request<RepositoryItemSummary>('getItemSummary', nodeId);
   }
 
+  getClipboardSubtree(nodeId: string): Promise<RepositoryClipboardNode> {
+    return this.request<RepositoryClipboardNode>('getClipboardSubtree', nodeId);
+  }
+
+  createClipboardSubtree(
+    parentId: string,
+    subtree: RepositoryClipboardNode,
+  ): Promise<RepositoryNode> {
+    return this.request<RepositoryNode>('createClipboardSubtree', parentId, subtree);
+  }
+
+  cutClipboardSubtree(
+    nodeId: string,
+    expectedRevision: number,
+    expectedNodeIds: readonly string[],
+  ): Promise<RepositoryCutClipboardResult> {
+    return this.request<RepositoryCutClipboardResult>(
+      'cutClipboardSubtree', nodeId, expectedRevision, expectedNodeIds,
+    );
+  }
+
   updateItemPayload(
     nodeId: string,
     expectedRevision: number,
-    payload: import('./repository').RepositoryItemPayloadInput,
+    payload: RepositoryItemPayloadInput,
   ): Promise<RepositoryNode> {
     return this.request<RepositoryNode>('updateItemPayload', nodeId, expectedRevision, payload);
   }
@@ -119,7 +143,7 @@ export class UnifiedLibraryRepositoryClient {
     nodeId: string,
     expectedRevision: number,
     displayName: string,
-    payload: import('./repository').RepositoryItemPayloadInput,
+    payload: RepositoryItemPayloadInput,
   ): Promise<RepositoryNode> {
     return this.request<RepositoryNode>('updateItem', nodeId, expectedRevision, displayName, payload);
   }
@@ -220,14 +244,23 @@ export class UnifiedLibraryRepositoryClient {
             ) as T;
           case 'getItemPayload': return this.repository.getItemPayload(String(args[0])) as T;
           case 'getItemSummary': return this.repository.getItemSummary(String(args[0])) as T;
+          case 'getClipboardSubtree': return this.repository.getClipboardSubtree(String(args[0])) as T;
+          case 'createClipboardSubtree':
+            return this.repository.createClipboardSubtree(
+              String(args[0]), args[1] as RepositoryClipboardNode,
+            ) as T;
+          case 'cutClipboardSubtree':
+            return this.repository.cutClipboardSubtree(
+              String(args[0]), Number(args[1]), args[2] as readonly string[],
+            ) as T;
           case 'updateItemPayload':
             return this.repository.updateItemPayload(
-              String(args[0]), Number(args[1]), args[2] as import('./repository').RepositoryItemPayloadInput,
+              String(args[0]), Number(args[1]), args[2] as RepositoryItemPayloadInput,
             ) as T;
           case 'updateItem':
             return this.repository.updateItem(
               String(args[0]), Number(args[1]), String(args[2]),
-              args[3] as import('./repository').RepositoryItemPayloadInput,
+              args[3] as RepositoryItemPayloadInput,
             ) as T;
           case 'moveNode':
             return this.repository.moveNode(

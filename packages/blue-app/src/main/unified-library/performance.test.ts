@@ -51,20 +51,47 @@ describe('10,000-item library performance', () => {
       const payloadSpy = vi.spyOn(client, 'getItemPayload');
       const editorSpy = vi.spyOn(service, 'openLibraryItemEditor');
       const browseStart = performance.now();
-      const firstPage = await service.browseLibraries({
+      const firstBrowseStart = performance.now();
+      let browsePage = await service.browseLibraries({
         parent: { scope: 'user', libraryType: 'instrument', nodeId: root.id },
-        limit: 100,
+        limit: 500,
       });
+      const browsePageDurations = [performance.now() - firstBrowseStart];
+      let browsedItemCount = browsePage.ok ? browsePage.value.children.length : 0;
+      let browseCursor = browsePage.ok ? browsePage.value.nextCursor : null;
+      const browseRevision = browsePage.ok ? browsePage.value.contentRevision : undefined;
+      while (browseCursor) {
+        const pageStart = performance.now();
+        browsePage = await service.browseLibraries({
+          parent: { scope: 'user', libraryType: 'instrument', nodeId: root.id },
+          cursor: browseCursor,
+          limit: 500,
+          expectedContentRevision: browseRevision,
+        });
+        browsePageDurations.push(performance.now() - pageStart);
+        if (!browsePage.ok) break;
+        browsedItemCount += browsePage.value.children.length;
+        browseCursor = browsePage.value.nextCursor;
+      }
       const browseMs = performance.now() - browseStart;
-      const searchStart = performance.now();
-      const search = await service.searchLibraries({
-        query: 'item 09999',
-        typeFilter: 'instrument',
-        projectSessionId: null,
-        limit: 20,
+      const firstSearchStart = performance.now();
+      let search = await service.searchLibraries({
+        query: 'item 00000', typeFilter: 'instrument', projectSessionId: null, limit: 20,
       });
-      const searchMs = performance.now() - searchStart;
-      expect(firstPage).toMatchObject({ ok: true, value: { children: { length: 100 } } });
+      const searchDurations = [performance.now() - firstSearchStart];
+      for (let sample = 1; sample < 20; sample += 1) {
+        const itemIndex = sample === 19 ? 9_999 : sample * 500;
+        const searchStart = performance.now();
+        search = await service.searchLibraries({
+          query: `item ${String(itemIndex).padStart(5, '0')}`,
+          typeFilter: 'instrument',
+          projectSessionId: null,
+          limit: 20,
+        });
+        searchDurations.push(performance.now() - searchStart);
+      }
+      expect(browsePage).toMatchObject({ ok: true, value: { nextCursor: null } });
+      expect(browsedItemCount).toBe(10_000);
       expect(search).toMatchObject({
         ok: true,
         value: { results: [{ displayName: 'Item 09999' }] },
@@ -79,11 +106,13 @@ describe('10,000-item library performance', () => {
       expect(preview).toMatchObject({ ok: true, value: { displayName: 'Item 09999' } });
       expect(payloadSpy).toHaveBeenCalledTimes(1);
       expect(editorSpy).not.toHaveBeenCalled();
-      expect({ browseMs, searchMs, previewMs }).toMatchObject({
-        browseMs: expect.any(Number), searchMs: expect.any(Number), previewMs: expect.any(Number),
+      expect({ browseMs, searchDurations, previewMs }).toMatchObject({
+        browseMs: expect.any(Number), searchDurations: expect.any(Array), previewMs: expect.any(Number),
       });
-      expect(browseMs).toBeLessThan(1_000);
-      expect(searchMs).toBeLessThan(1_000);
+      expect(browsePageDurations[0]).toBeLessThan(2_000);
+      expect(browseMs).toBeLessThan(2_000);
+      expect(browsePageDurations.filter((duration) => duration < 1_000)).toHaveLength(20);
+      expect(searchDurations.filter((duration) => duration < 1_000).length).toBeGreaterThanOrEqual(19);
       expect(previewMs).toBeLessThan(250);
     } finally { await client.close(); }
   }, 20_000);

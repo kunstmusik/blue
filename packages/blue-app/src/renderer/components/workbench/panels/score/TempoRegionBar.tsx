@@ -145,24 +145,24 @@ export default function TempoRegionBar({
             {enabled && rootTimelineOnly && (
               <ContextMenu.Portal>
                 <ContextMenu.Content
-                  className="z-50 min-w-40 rounded-md border border-blue-border/40 bg-app-menu p-1 shadow-lg"
+                  className="editor-context-menu"
                 >
                   <ContextMenu.Item
-                    className="cursor-pointer rounded-sm px-2 py-1 text-ui text-blue-text outline-none data-[highlighted]:bg-app-highlight"
+                    className="editor-context-menu__item"
                     onSelect={() => onOpenPointDialog(i)}
                   >
                     Edit Tempo...
                   </ContextMenu.Item>
-                  <ContextMenu.Separator className="h-px bg-blue-border/20 my-1" />
+                  <ContextMenu.Separator className="editor-context-menu__separator" />
                   <ContextMenu.Item
-                    className={`text-ui px-2 py-1 rounded-sm cursor-pointer outline-none data-highlighted:bg-white/10 ${region.curveType === 'constant' ? 'text-blue-muted' : 'text-blue-text'}`}
+                    className="editor-context-menu__item"
                     disabled={region.curveType === 'constant'}
                     onSelect={() => onTempoPatch({ type: 'setTempoCurveType', index: i, curveType: 'constant' })}
                   >
                     Constant
                   </ContextMenu.Item>
                   <ContextMenu.Item
-                    className={`text-ui px-2 py-1 rounded-sm cursor-pointer outline-none data-highlighted:bg-white/10 ${region.curveType === 'linear' ? 'text-blue-muted' : 'text-blue-text'}`}
+                    className="editor-context-menu__item"
                     disabled={region.curveType === 'linear'}
                     onSelect={() => onTempoPatch({ type: 'setTempoCurveType', index: i, curveType: 'linear' })}
                   >
@@ -170,9 +170,9 @@ export default function TempoRegionBar({
                   </ContextMenu.Item>
                   {canDeleteRegion && (
                     <>
-                      <ContextMenu.Separator className="h-px bg-blue-border/20 my-1" />
+                      <ContextMenu.Separator className="editor-context-menu__separator" />
                       <ContextMenu.Item
-                        className="text-ui text-red-400 px-2 py-1 rounded-sm cursor-pointer outline-none data-highlighted:bg-white/10"
+                        className="editor-context-menu__item text-app-danger"
                         onSelect={() => onTempoPatch({ type: 'removeTempoPoint', index: i })}
                       >
                         Delete Tempo Point

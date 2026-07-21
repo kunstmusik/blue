@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   getLibraryTransferSourceType,
   type LibraryExactTransferTarget,
@@ -14,7 +14,7 @@ function targetLibraryType(target: LibraryExactTransferTarget): LibraryType {
   return 'soundObject';
 }
 
-export function useLibraryDropTarget(target: LibraryExactTransferTarget) {
+export function useLibraryDropTarget(target: LibraryExactTransferTarget, enabled = true) {
   const [active, setActive] = useState(false);
   const [feedback, setFeedback] = useState('');
   const transferToProject = useLibraryStore((state) => state.transferToProject);
@@ -22,12 +22,22 @@ export function useLibraryDropTarget(target: LibraryExactTransferTarget) {
   const clipboard = useLibraryStore((state) => state.clipboard);
 
   const expectedType = targetLibraryType(target);
-  const clipboardCompatible = clipboard
+  const clipboardCompatible = enabled && clipboard
     ? getLibraryTransferSourceType(clipboard.source) === expectedType
     : false;
 
+  useEffect(() => {
+    const clearActiveDropTarget = () => setActive(false);
+    window.addEventListener('drop', clearActiveDropTarget, true);
+    window.addEventListener('dragend', clearActiveDropTarget, true);
+    return () => {
+      window.removeEventListener('drop', clearActiveDropTarget, true);
+      window.removeEventListener('dragend', clearActiveDropTarget, true);
+    };
+  }, []);
+
   const paste = useCallback(async () => {
-    if (!clipboard) return;
+    if (!enabled || !clipboard) return;
     if (!clipboardCompatible) {
       setFeedback(`Paste unavailable: this destination accepts ${expectedType} Library items.`);
       return;
@@ -36,9 +46,10 @@ export function useLibraryDropTarget(target: LibraryExactTransferTarget) {
     setFeedback(transferred
       ? 'Library transfer accepted.'
       : (useLibraryStore.getState().error ?? 'Library transfer was rejected.'));
-  }, [clipboard, clipboardCompatible, expectedType, target, transferToProject]);
+  }, [clipboard, clipboardCompatible, enabled, expectedType, target, transferToProject]);
 
   const onDragOver = useCallback((event: React.DragEvent<HTMLElement>) => {
+    if (!enabled) return;
     if (!event.dataTransfer.types.includes(BLUE_LIBRARY_DRAG_MIME)) return;
     event.preventDefault();
     const descriptor = readLibraryDragDescriptor(event.dataTransfer);
@@ -57,9 +68,10 @@ export function useLibraryDropTarget(target: LibraryExactTransferTarget) {
       if (event.clientY < rect.top + 24) scroller.scrollTop -= 16;
       else if (event.clientY > rect.bottom - 24) scroller.scrollTop += 16;
     }
-  }, [expectedType]);
+  }, [enabled, expectedType]);
 
   const onDrop = useCallback(async (event: React.DragEvent<HTMLElement>) => {
+    if (!enabled) return;
     const descriptor = readLibraryDragDescriptor(event.dataTransfer);
     if (descriptor && descriptor.libraryType !== expectedType) {
       event.preventDefault();
@@ -76,10 +88,10 @@ export function useLibraryDropTarget(target: LibraryExactTransferTarget) {
     setFeedback(transferred
       ? 'Library transfer accepted.'
       : (useLibraryStore.getState().error ?? 'Library transfer was rejected.'));
-  }, [expectedType, target, transferToProject]);
+  }, [enabled, expectedType, target, transferToProject]);
 
   const onKeyDown = useCallback((event: React.KeyboardEvent<HTMLElement>) => {
-    if ((event.metaKey || event.ctrlKey) && event.key.toLocaleLowerCase() === 'v' && clipboard) {
+    if (enabled && (event.metaKey || event.ctrlKey) && event.key.toLocaleLowerCase() === 'v' && clipboard) {
       event.preventDefault();
       event.stopPropagation();
       void paste();
@@ -89,10 +101,10 @@ export function useLibraryDropTarget(target: LibraryExactTransferTarget) {
       cancelTransfer();
       setFeedback('Library transfer cancelled.');
     }
-  }, [cancelTransfer, clipboard, paste]);
+  }, [cancelTransfer, clipboard, enabled, paste]);
 
   return {
-    active,
+    active: enabled && active,
     canPaste: Boolean(clipboardCompatible),
     feedback,
     paste,

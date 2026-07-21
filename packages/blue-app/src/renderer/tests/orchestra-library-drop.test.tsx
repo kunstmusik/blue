@@ -37,6 +37,20 @@ const applyLibraryTransfer = vi.fn(async () => ({
   ok: true as const,
   value: { projectSessionId: 7, projectRevision: 13, libraryType: 'instrument' as const, insertedIdentity: '9', message: 'Instrument added.' },
 }));
+const onOrchestraPatch = vi.fn();
+const projectInstrumentNodes = ['1', '2'].map((assignmentId) => ({
+  key: {
+    scope: 'projectOwned' as const,
+    libraryType: 'instrument' as const,
+    projectSessionId: 7,
+    locator: { kind: 'instrument' as const, assignmentId },
+  },
+  nodeId: `project-instrument-${assignmentId}`, parentId: 'project-instruments',
+  libraryType: 'instrument' as const, scope: 'projectOwned' as const, nodeKind: 'item' as const,
+  displayName: assignmentId === '1' ? 'Lead' : 'Bass', breadcrumb: ['Project Orchestra'],
+  supportStatus: 'supported' as const, objectType: 'GenericInstrument',
+  revision: `hash-${assignmentId}`, hasChildren: false,
+}));
 
 let root: Root;
 let container: HTMLDivElement;
@@ -44,7 +58,53 @@ let container: HTMLDivElement;
 beforeEach(() => {
   previewLibraryTransfer.mockClear();
   applyLibraryTransfer.mockClear();
-  window.blueAPI = { ...window.blueAPI, previewLibraryTransfer, applyLibraryTransfer };
+  onOrchestraPatch.mockClear();
+  window.blueAPI = {
+    ...window.blueAPI,
+    previewLibraryTransfer,
+    applyLibraryTransfer,
+    previewProjectLibraryDelete: vi.fn(async () => ({
+      ok: true as const,
+      value: {
+        confirmationToken: 'cut-project-instrument',
+        linkedInstanceCount: 0,
+        locations: [],
+        requiresConfirmation: true,
+      },
+    })),
+    cutLibraryToClipboard: vi.fn(async () => ({
+      ok: true as const,
+      value: {
+        clipboard: {
+          operation: 'cut' as const,
+          source: { kind: 'buffer' as const, clipboardId: 'instrument-buffer', libraryType: 'instrument' as const },
+          capturedAt: 100,
+        },
+        closedEditorSessionIds: [],
+      },
+    })),
+    browseLibraries: vi.fn(async (request) => ({
+      ok: true as const,
+      value: {
+        contentRevision: 3,
+        parent: {
+          key: null,
+          nodeId: `root-${request.parent.libraryType}`,
+          parentId: null,
+          libraryType: request.parent.libraryType,
+          scope: request.parent.scope,
+          nodeKind: 'root' as const,
+          displayName: 'Root',
+          breadcrumb: ['Root'],
+          revision: 1,
+          hasChildren: false,
+        },
+        children: request.parent.scope === 'projectOwned' ? projectInstrumentNodes : [],
+        nextCursor: null,
+      },
+    })),
+    onLibraryChanged: vi.fn(() => () => undefined),
+  };
   useLibraryStore.setState({
     clipboard: {
       operation: 'copy',
@@ -67,7 +127,7 @@ beforeEach(() => {
         ]}
         selectedAssignmentId={null}
         onSelectAssignment={vi.fn()}
-        onOrchestraPatch={vi.fn()}
+        onOrchestraPatch={onOrchestraPatch}
         projectSessionId={7}
         projectRevision={12}
       />,
@@ -81,10 +141,11 @@ afterEach(() => {
 });
 
 describe('Orchestra Library drop targets', () => {
-  it('renders row/end gaps and pastes at the exact focused boundary', async () => {
+  it('renders only numerically valid boundaries and pastes at the exact focused boundary', async () => {
     const markers = container.querySelectorAll('[aria-label*="Insert Instrument"]');
-    expect(markers).toHaveLength(3);
-    const end = markers[2] as HTMLElement;
+    expect(markers).toHaveLength(1);
+    expect(container.querySelectorAll('[data-library-drop-target="orchestra-row"]')).toHaveLength(1);
+    const end = markers[0] as HTMLElement;
     await act(async () => {
       end.dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, cancelable: true, key: 'v', ctrlKey: true }));
       await Promise.resolve();
@@ -121,7 +182,7 @@ describe('Orchestra Library drop targets', () => {
     await act(async () => { await Promise.resolve(); await Promise.resolve(); });
     expect(previewLibraryTransfer).toHaveBeenLastCalledWith(expect.objectContaining({
       source: { kind: 'drag', dragSessionId: 'drag-instrument' },
-      target: { kind: 'orchestra', projectSessionId: 7, projectRevision: 12, insertIndex: 1 },
+      target: { kind: 'orchestra', projectSessionId: 7, projectRevision: 12, insertIndex: 2 },
     }));
 
     previewLibraryTransfer.mockClear();
@@ -135,7 +196,36 @@ describe('Orchestra Library drop targets', () => {
     await act(async () => { await Promise.resolve(); await Promise.resolve(); });
     expect(previewLibraryTransfer).toHaveBeenCalledWith(expect.objectContaining({
       source: expect.objectContaining({ kind: 'clipboard' }),
-      target: { kind: 'orchestra', projectSessionId: 7, projectRevision: 12, insertIndex: 1 },
+      target: { kind: 'orchestra', projectSessionId: 7, projectRevision: 12, insertIndex: 2 },
     }));
+  });
+
+  it('captures project Instrument Copy and Cut in the shared Library buffer', async () => {
+    await act(async () => { await Promise.resolve(); await Promise.resolve(); });
+    const row = container.querySelector('[data-assignment-id="1"]') as HTMLElement;
+    act(() => row.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true })));
+    await act(async () => { await Promise.resolve(); });
+    expect(document.body.textContent).not.toContain('Copy to User Library');
+    const copy = [...document.body.querySelectorAll('[role="menuitem"]')]
+      .find((candidate) => candidate.textContent === 'Copy') as HTMLElement;
+    act(() => copy.click());
+    expect(useLibraryStore.getState().clipboard).toMatchObject({
+      operation: 'copy', source: { kind: 'library', key: projectInstrumentNodes[0]!.key },
+    });
+
+    act(() => row.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true })));
+    await act(async () => { await Promise.resolve(); });
+    const cut = [...document.body.querySelectorAll('[role="menuitem"]')]
+      .find((candidate) => candidate.textContent === 'Cut') as HTMLElement;
+    await act(async () => {
+      cut.click();
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    expect(useLibraryStore.getState().clipboard).toMatchObject({
+      operation: 'cut',
+      source: { kind: 'buffer', clipboardId: 'instrument-buffer', libraryType: 'instrument' },
+    });
+    expect(onOrchestraPatch).not.toHaveBeenCalledWith(expect.objectContaining({ type: 'removeAssignment' }));
   });
 });

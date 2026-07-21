@@ -39,6 +39,10 @@ import type {
   LibraryType,
   SearchLibrariesRequest,
   SearchLibrariesResult,
+  CutLibraryToClipboardRequest,
+  CutLibraryToClipboardResult,
+  LibraryInteractionClipboard,
+  ScoreTimelineSoundObjectRequest,
 } from '../../shared/unified-library';
 import {
   createLibraryCursor,
@@ -47,7 +51,7 @@ import {
 } from '../../shared/unified-library';
 import { UnifiedLibraryRepositoryClient } from './repository-client';
 import { UnifiedLibraryProjectAdapter } from './project-adapter';
-import type { RepositoryNode } from './repository';
+import type { RepositoryClipboardNode, RepositoryNode } from './repository';
 import { UnifiedLibraryEditorSessionService } from './editor-session-service';
 import { UnifiedLibraryImportExportService } from './import-export-service';
 import { LibraryMigrationStateStore } from './migration-state-store';
@@ -68,6 +72,15 @@ const EMPTY_COUNTS = {
   soundObject: 0,
   effect: 0,
 } as const;
+
+function hashText(value: string): string {
+  let hash = 0x811c9dc5;
+  for (const byte of new TextEncoder().encode(value)) {
+    hash ^= byte;
+    hash = Math.imul(hash, 0x01000193) >>> 0;
+  }
+  return hash.toString(16).padStart(8, '0');
+}
 
 export class UnifiedLibraryService {
   private readonly events = new EventEmitter();
@@ -91,6 +104,11 @@ export class UnifiedLibraryService {
     readonly payloadXml?: string;
     readonly target: LibraryExactTransferTarget;
     readonly mode: 'independent' | 'sharedInstance';
+    readonly expiresAt: number;
+  }>();
+  private readonly clipboardEntries = new Map<string, {
+    readonly subtree: RepositoryClipboardNode;
+    readonly preview: LibraryItemPreview | null;
     readonly expiresAt: number;
   }>();
   private readonly mutationPreviews = new Map<string, {
@@ -174,7 +192,12 @@ export class UnifiedLibraryService {
     try {
       const repository = await this.refreshRepositorySnapshot(client);
       const limit = this.boundedLimit(request.limit);
-      const signature = JSON.stringify(request.parent);
+      const signature = JSON.stringify({
+        parent: request.parent,
+        projectRevision: request.parent.scope === 'user'
+          ? null
+          : this.projectAdapter.getProjectRevision(),
+      });
       const cursor = this.resolveCursor(
         request.cursor, 'browse', signature, repository.contentRevision,
       );
@@ -262,6 +285,9 @@ export class UnifiedLibraryService {
         query: normalizedQuery,
         typeFilter: request.typeFilter,
         projectSessionId: request.projectSessionId,
+        projectRevision: request.projectSessionId === null
+          ? null
+          : this.projectAdapter.getProjectRevision(),
       });
       const cursor = this.resolveCursor(
         request.cursor, 'search', signature, repository.contentRevision,
@@ -284,6 +310,7 @@ export class UnifiedLibraryService {
       );
       let results: LibrarySearchResult[] = userPage.items.map(({ node, ...metadata }) => ({
         key: { scope: 'user', libraryType: node.libraryType, nodeId: node.id },
+        parentId: node.parentId,
         libraryType: node.libraryType,
         scope: 'user',
         displayName: node.displayName,
@@ -714,7 +741,249 @@ export class UnifiedLibraryService {
     confirmationToken: string,
   ): LibraryResult<ProjectMutationReceipt> {
     try {
+      const matchingSessions = this.editorSessions?.getSessionsForKey(key) ?? [];
+      if (matchingSessions.some((session) => session.dirty)) {
+        throw new Error('Save or discard dirty Library Item editors before deleting this item.');
+      }
       const receipt = this.projectAdapter.deleteProjectItem(key, confirmationToken);
+      // A Library Item editor is a view of this canonical definition. Do not leave
+      // it open after the definition is removed from the project library.
+      const closedEditorSessionIds = this.editorSessions?.closeDeletedKey(key) ?? [];
+      this.publishProjectChanged();
+      return {
+        ok: true,
+        value: {
+          ...receipt,
+          ...(closedEditorSessionIds.length > 0 ? { closedEditorSessionIds } : {}),
+        },
+      };
+    } catch (error) {
+      return this.failureResult(error);
+    }
+  }
+
+  async cutLibraryToClipboard(
+    request: CutLibraryToClipboardRequest,
+  ): Promise<LibraryResult<CutLibraryToClipboardResult>> {
+    const clipboardId = randomUUID();
+    try {
+      let subtree: RepositoryClipboardNode;
+      let preview: LibraryItemPreview | null;
+      let closedEditorSessionIds: readonly string[] = [];
+      if (request.source.kind === 'userNode') {
+        const client = this.getReadyClient();
+        if (!client) return this.notReady();
+        const node = await client.getNode(request.source.nodeId);
+        if (node.revision !== request.source.revision) throw new Error('Stale revision');
+        if (node.nodeKind === 'item') {
+          const itemPreview = await this.getLibraryItemPreview({
+            scope: 'user',
+            libraryType: node.libraryType,
+            nodeId: node.id,
+          });
+          if (!itemPreview.ok) return itemPreview;
+          preview = itemPreview.value;
+        } else {
+          preview = null;
+        }
+        const mutationPreview = this.mutationPreviews.get(request.confirmationToken);
+        this.mutationPreviews.delete(request.confirmationToken);
+        if (
+          !mutationPreview
+          || mutationPreview.expiresAt < Date.now()
+          || mutationPreview.request.nodeId !== node.id
+          || mutationPreview.request.expectedRevision !== node.revision
+        ) {
+          return {
+            ok: false,
+            error: createLibraryServiceError(
+              'preview-expired',
+              'Cut confirmation expired. Review the affected items again.',
+              false,
+            ),
+          };
+        }
+        const currentIds = await client.listDescendantNodeIds(node.id);
+        if (JSON.stringify(currentIds) !== JSON.stringify(mutationPreview.affectedNodeIds)) {
+          return {
+            ok: false,
+            error: createLibraryServiceError(
+              'stale-revision',
+              'The folder contents changed. Cut it again to include every child.',
+              false,
+            ),
+          };
+        }
+        const openSessions = this.editorSessions?.getUserSessionsForNodeIds(currentIds) ?? [];
+        if (openSessions.some((session) => session.dirty)) {
+          return {
+            ok: false,
+            error: createLibraryServiceError(
+              'validation-failed',
+              'Save or discard dirty Library Item editors before cutting this selection.',
+              false,
+            ),
+          };
+        }
+        const cut = await client.cutClipboardSubtree(
+          node.id,
+          node.revision,
+          mutationPreview.affectedNodeIds,
+        );
+        subtree = cut.subtree;
+        closedEditorSessionIds = this.editorSessions?.closeDeletedUserNodes(cut.removedNodeIds) ?? [];
+        const repository = await this.refreshRepositorySnapshot(client);
+        this.publishChanged({
+          contentRevision: repository.contentRevision,
+          cause: 'mutation',
+          requiresFullRefresh: true,
+        });
+      } else {
+        if (request.source.key.scope === 'user') {
+          throw new Error('User Library cuts require a user node source');
+        }
+        const source = this.projectAdapter.getEditorSource(request.source.key);
+        const itemPreview = this.projectAdapter.preview(request.source.key);
+        if (!source || !itemPreview) throw new Error('Library source not found');
+        if (String(source.revision) !== String(request.source.revision)) {
+          throw new Error('Library source changed before Cut');
+        }
+        const openSessions = this.editorSessions?.getSessionsForKey(request.source.key) ?? [];
+        if (openSessions.some((session) => session.dirty)) {
+          return {
+            ok: false,
+            error: createLibraryServiceError(
+              'validation-failed',
+              'Save or discard dirty Library Item editors before cutting this selection.',
+              false,
+            ),
+          };
+        }
+        const payloadXml = source.payloadXml;
+        subtree = {
+          libraryType: request.source.key.libraryType,
+          nodeKind: 'item',
+          displayName: source.displayName,
+          payload: {
+            embeddedName: source.displayName,
+            objectType: source.objectType,
+            supportStatus: itemPreview.supportStatus,
+            supportReasonCode: null,
+            supportMessage: itemPreview.supportMessage,
+            payloadXml,
+            rawHash: String(source.revision),
+            canonicalContentHash: String(source.revision),
+            serializerRevision: '1',
+            preview: {},
+            dependencies: itemPreview.dependencies,
+            metadataRevision: 1,
+          },
+          children: [],
+        };
+        preview = itemPreview;
+        this.projectAdapter.deleteProjectItem(
+          request.source.key,
+          request.confirmationToken,
+        );
+        closedEditorSessionIds = this.editorSessions?.closeDeletedKey(request.source.key) ?? [];
+        this.publishProjectChanged();
+      }
+      this.clipboardEntries.clear();
+      this.clipboardEntries.set(clipboardId, {
+        subtree,
+        preview,
+        expiresAt: Date.now() + 24 * 60 * 60_000,
+      });
+      return {
+        ok: true,
+        value: {
+          clipboard: {
+            operation: 'cut',
+            source: {
+              kind: 'buffer',
+              clipboardId,
+              libraryType: subtree.libraryType,
+            },
+            capturedAt: Date.now(),
+          },
+          closedEditorSessionIds,
+        },
+      };
+    } catch (error) {
+      return this.failureResult(error);
+    }
+  }
+
+  async captureScoreSoundObjectClipboard(
+    request: ScoreTimelineSoundObjectRequest,
+  ): Promise<LibraryResult<LibraryInteractionClipboard>> {
+    if (!this.getReadyClient()) return this.notReady();
+    try {
+      const source = this.projectAdapter.getTimelineSoundObjectSource(request);
+      const clipboardId = randomUUID();
+      const contentHash = hashText(source.payloadXml);
+      const key: LibraryItemKey = {
+        scope: 'user',
+        libraryType: 'soundObject',
+        nodeId: `clipboard:${clipboardId}`,
+      };
+      const preview: LibraryItemPreview = {
+        key,
+        displayName: source.displayName,
+        libraryType: 'soundObject',
+        scope: 'user',
+        objectType: source.objectType,
+        supportStatus: 'supported',
+        supportMessage: null,
+        fields: {
+          objectType: { state: 'available', value: source.objectType },
+        },
+        dependencies: { itemOwned: [], unresolvedExternal: [] },
+      };
+      this.clipboardEntries.clear();
+      this.clipboardEntries.set(clipboardId, {
+        subtree: {
+          libraryType: 'soundObject',
+          nodeKind: 'item',
+          displayName: source.displayName,
+          payload: {
+            embeddedName: source.displayName,
+            objectType: source.objectType,
+            supportStatus: 'supported',
+            supportReasonCode: null,
+            supportMessage: null,
+            payloadXml: source.payloadXml,
+            rawHash: contentHash,
+            canonicalContentHash: contentHash,
+            serializerRevision: '1',
+            preview: {},
+            dependencies: { itemOwned: [], unresolvedExternal: [] },
+            metadataRevision: 1,
+          },
+          children: [],
+        },
+        preview,
+        expiresAt: Date.now() + 24 * 60 * 60_000,
+      });
+      return {
+        ok: true,
+        value: {
+          operation: 'copy',
+          source: { kind: 'buffer', clipboardId, libraryType: 'soundObject' },
+          capturedAt: Date.now(),
+        },
+      };
+    } catch (error) {
+      return this.failureResult(error);
+    }
+  }
+
+  addScoreSoundObjectToProjectLibrary(
+    request: ScoreTimelineSoundObjectRequest,
+  ): LibraryResult<ProjectMutationReceipt> {
+    if (!this.getReadyClient()) return this.notReady();
+    try {
+      const receipt = this.projectAdapter.addTimelineSoundObjectToProjectLibrary(request);
       this.publishProjectChanged();
       return { ok: true, value: receipt };
     } catch (error) {
@@ -722,14 +991,51 @@ export class UnifiedLibraryService {
     }
   }
 
-  async copyProjectLibraryItemToUser(
-    key: LibraryItemKey,
+  async copyLibraryTransferToUser(
+    sourceReference: LibraryTransferSourceReference,
     parentId: string,
   ): Promise<LibraryResult<LibraryMutationReceipt>> {
     const client = this.getReadyClient();
     if (!client) return this.notReady();
     try {
-      const node = await this.projectAdapter.copyProjectItemToUser(key, client, parentId);
+      if (
+        sourceReference.kind === 'clipboard'
+        && sourceReference.source.kind === 'buffer'
+      ) {
+        const entry = this.getClipboardEntry(sourceReference.source.clipboardId);
+        if (entry.subtree.libraryType !== sourceReference.source.libraryType) {
+          throw new Error('Clipboard type changed');
+        }
+        const node = await client.createClipboardSubtree(parentId, entry.subtree);
+        const repository = await this.refreshRepositorySnapshot(client);
+        const browseNode = await this.userNodeToBrowseNode(client, node);
+        this.publishChanged({ contentRevision: repository.contentRevision, cause: 'mutation', requiresFullRefresh: true });
+        return { ok: true, value: { contentRevision: repository.contentRevision, affectedNodes: [browseNode] } };
+      }
+      const source = await this.resolveTransferSource(sourceReference, false);
+      if (source.key.scope === 'user') {
+        return {
+          ok: false,
+          error: createLibraryServiceError(
+            'invalid-move',
+            'User Library items must be organized with the Library tree.',
+            false,
+          ),
+        };
+      }
+      const parent = await client.getNode(parentId);
+      if (parent.libraryType !== source.key.libraryType || parent.nodeKind === 'item') {
+        return {
+          ok: false,
+          error: createLibraryServiceError(
+            'invalid-move',
+            'The destination must be a folder in the matching user library.',
+            false,
+          ),
+        };
+      }
+      const node = await this.projectAdapter.copyProjectItemToUser(source.key, client, parentId);
+      if (sourceReference.kind === 'drag') this.dragSessions.discard(sourceReference.dragSessionId);
       const repository = await this.refreshRepositorySnapshot(client);
       const browseNode = await this.userNodeToBrowseNode(client, node);
       this.publishChanged({ contentRevision: repository.contentRevision, cause: 'mutation', requiresFullRefresh: true });
@@ -748,10 +1054,13 @@ export class UnifiedLibraryService {
     }
   }
 
-  async executeManualImport(previewToken: string): Promise<LibraryResult<ManualLibraryImportResult>> {
+  async executeManualImport(
+    previewToken: string,
+    folderSelections: Readonly<Record<string, string>> = {},
+  ): Promise<LibraryResult<ManualLibraryImportResult>> {
     if (!this.importExport) return this.notReady();
     try {
-      const value = await this.importExport.executeManualImport(previewToken);
+      const value = await this.importExport.executeManualImport(previewToken, folderSelections);
       if (this.client) {
         const snapshot = await this.refreshRepositorySnapshot(this.client);
         this.publishChanged({ contentRevision: snapshot.contentRevision, cause: 'import', requiresFullRefresh: true });
@@ -762,21 +1071,26 @@ export class UnifiedLibraryService {
     }
   }
 
-  async exportCurrentLibrary(libraryType: LibraryType, targetPath: string): Promise<LibraryResult<true>> {
+  async exportCurrentLibrary(
+    libraryType: LibraryType,
+    targetPath: string,
+    approve?: Parameters<UnifiedLibraryImportExportService['exportCurrent']>[2],
+  ): Promise<LibraryResult<boolean>> {
     if (!this.importExport) return this.notReady();
     try {
-      await this.importExport.exportCurrent(libraryType, targetPath);
-      return { ok: true, value: true };
+      return { ok: true, value: await this.importExport.exportCurrent(libraryType, targetPath, approve) };
     } catch (error) {
       return this.failureResult(error);
     }
   }
 
-  async exportAllLibraries(destinationDirectory: string): Promise<LibraryResult<true>> {
+  async exportAllLibraries(
+    destinationDirectory: string,
+    approve?: Parameters<UnifiedLibraryImportExportService['exportAll']>[1],
+  ): Promise<LibraryResult<boolean>> {
     if (!this.importExport) return this.notReady();
     try {
-      await this.importExport.exportAll(destinationDirectory);
-      return { ok: true, value: true };
+      return { ok: true, value: await this.importExport.exportAll(destinationDirectory, approve) };
     } catch (error) {
       return this.failureResult(error);
     }
@@ -910,7 +1224,12 @@ export class UnifiedLibraryService {
         return { ok: false, error: createLibraryServiceError('unsupported', 'This item type cannot be placed at that destination.', false) };
       }
       const targetError = this.projectAdapter.validateTransferTarget(request.target, source.key.libraryType);
-      const preview = await this.getLibraryItemPreview(source.key);
+      if (source.nodeKind === 'folder') {
+        return { ok: false, error: createLibraryServiceError('unsupported', 'Folders can only be pasted into User Libraries.', false) };
+      }
+      const preview = source.preview
+        ? { ok: true as const, value: source.preview }
+        : await this.getLibraryItemPreview(source.key);
       if (!preview.ok) return preview;
       const requestedMode = request.mode ?? 'independent';
       const allowedModes = source.key.scope === 'projectShared' && source.key.libraryType === 'soundObject'
@@ -921,11 +1240,11 @@ export class UnifiedLibraryService {
       if (!allowedModes.includes(requestedMode as never)) blockingReasons.push('The requested copy mode is not available for this item.');
       if (preview.value.supportStatus === 'unsupported') blockingReasons.push(preview.value.supportMessage ?? 'This payload cannot be transferred safely.');
       if (preview.value.dependencies.unresolvedExternal.length > 0) blockingReasons.push('Resolve external dependencies before transfer.');
-      const readyClient = source.key.scope === 'user' ? this.getReadyClient() : null;
-      if (source.key.scope === 'user' && !readyClient) return this.notReady();
-      const payloadXml = source.key.scope === 'user'
+      const readyClient = source.key.scope === 'user' && !source.payloadXml ? this.getReadyClient() : null;
+      if (source.key.scope === 'user' && !source.payloadXml && !readyClient) return this.notReady();
+      const payloadXml = source.payloadXml ?? (source.key.scope === 'user'
         ? (await readyClient!.getItemPayload(source.key.nodeId)).payloadXml
-        : undefined;
+        : undefined);
       const previewToken = randomUUID();
       this.transferPreviews.set(previewToken, {
         source: request.source,
@@ -1057,9 +1376,30 @@ export class UnifiedLibraryService {
   private async resolveTransferSource(
     reference: LibraryTransferSourceReference,
     consume: boolean,
-  ): Promise<{ key: LibraryItemKey; revision: number | string }> {
+  ): Promise<{
+    key: LibraryItemKey;
+    revision: number | string;
+    payloadXml?: string;
+    preview?: LibraryItemPreview;
+    nodeKind?: 'folder' | 'item';
+  }> {
     if (reference.kind === 'clipboard') {
       const source = reference.source;
+      if (source.kind === 'buffer') {
+        const entry = this.getClipboardEntry(source.clipboardId);
+        if (entry.subtree.libraryType !== source.libraryType) throw new Error('Clipboard type changed');
+        return {
+          key: {
+            scope: 'user',
+            libraryType: source.libraryType,
+            nodeId: `clipboard:${source.clipboardId}`,
+          },
+          revision: source.clipboardId,
+          ...(entry.subtree.payload ? { payloadXml: entry.subtree.payload.payloadXml } : {}),
+          ...(entry.preview ? { preview: entry.preview } : {}),
+          nodeKind: entry.subtree.nodeKind,
+        };
+      }
       const key: LibraryItemKey = source.kind === 'library'
         ? source.key
         : { scope: 'user', libraryType: source.libraryType, nodeId: source.nodeId };
@@ -1077,6 +1417,15 @@ export class UnifiedLibraryService {
       : this.dragSessions.resolve(reference.dragSessionId, currentRevision);
   }
 
+  private getClipboardEntry(clipboardId: string) {
+    const entry = this.clipboardEntries.get(clipboardId);
+    if (!entry || entry.expiresAt < Date.now()) {
+      this.clipboardEntries.delete(clipboardId);
+      throw new Error('Clipboard contents are no longer available');
+    }
+    return entry;
+  }
+
   private targetLibraryType(target: LibraryExactTransferTarget): LibraryType {
     if (target.kind === 'orchestra') return 'instrument';
     if (target.kind === 'projectUdo') return 'udo';
@@ -1092,8 +1441,22 @@ export class UnifiedLibraryService {
       targetRevision: String(target.projectRevision),
     } as const;
     if (target.kind === 'effectChain') return { ...base, label: `${target.chain === 'pre' ? 'Pre' : 'Post'} Effects`, channelId: target.channelId, chain: target.chain, insertIndex: target.insertIndex };
-    if (target.kind === 'score') return { ...base, label: 'Score', location: target.location };
-    return { ...base, label: target.kind === 'orchestra' ? 'Orchestra' : 'Project UDOs', insertIndex: target.insertIndex };
+    if (target.kind === 'score') return { ...base, label: 'Score', destinationKind: 'score' as const, location: target.location };
+    if (target.kind === 'projectSoundObjectLibrary') {
+      return { ...base, label: 'Project SoundObjects', destinationKind: 'projectSoundObjectLibrary' as const };
+    }
+    return {
+      ...base,
+      label: target.kind === 'orchestra'
+        ? 'Orchestra'
+        : target.instrumentAssignmentId
+          ? 'Instrument UDOs'
+          : 'Project UDOs',
+      insertIndex: target.insertIndex,
+      ...(target.kind === 'projectUdo' && target.instrumentAssignmentId
+        ? { instrumentAssignmentId: target.instrumentAssignmentId }
+        : {}),
+    };
   }
 
   publishChanged(event: LibraryChangedEvent): void {
@@ -1105,6 +1468,9 @@ export class UnifiedLibraryService {
   }
 
   publishProjectChanged(): void {
+    for (const session of this.editorSessions?.reconcileProjectItems() ?? []) {
+      this.events.emit('editor', session);
+    }
     this.snapshot = {
       ...this.snapshot,
       projectSessionId: this.projectAdapter.getProjectSessionId(),
@@ -1125,6 +1491,7 @@ export class UnifiedLibraryService {
     this.activeOperation = null;
     this.insertionPreviews.clear();
     this.transferPreviews.clear();
+    this.clipboardEntries.clear();
     this.mutationPreviews.clear();
     this.updateSnapshot({ phase: 'stopped', writable: false });
     this.events.removeAllListeners();
@@ -1259,14 +1626,15 @@ export class UnifiedLibraryService {
   }
 
   private projectRootNode(
-    libraryType: Exclude<LibraryType, 'effect'>,
+    libraryType: LibraryType,
     scope: 'projectOwned' | 'projectShared',
     sessionId: number,
   ): LibraryBrowseNode {
-    const labels: Record<Exclude<LibraryType, 'effect'>, string> = {
+    const labels: Record<LibraryType, string> = {
       instrument: 'Project Orchestra',
       udo: 'Project UDOs',
       soundObject: 'Project Shared SoundObjects',
+      effect: 'Project Mixer Effects',
     };
     return {
       key: null,
@@ -1277,7 +1645,7 @@ export class UnifiedLibraryService {
       nodeKind: 'root',
       displayName: labels[libraryType],
       breadcrumb: [labels[libraryType]],
-      revision: `project:${sessionId}`,
+      revision: `project:${sessionId}:${this.projectAdapter.getProjectRevision() ?? 0}`,
       hasChildren: this.projectAdapter.list(libraryType).length > 0,
     };
   }

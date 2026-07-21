@@ -4,7 +4,7 @@ import React from 'react';
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { BlueData, Channel, GenericInstrument } from '@blue/data';
+import { BlueData, Channel, Effect, GenericInstrument } from '@blue/data';
 import MixerPanel from '../components/workbench/panels/MixerPanel';
 import {
   createEmptyMixerSnapshot,
@@ -68,6 +68,25 @@ function seedLoadedProject(): void {
   channel.setAssociation('1');
   data.getMixer().getChannels().splice(0, 0, channel);
 
+  const snapshot = createProjectEditorSnapshot(data, '/test.blue');
+  mockProjectState.loaded = true;
+  mockProjectState.mixer = snapshot.mixer!;
+}
+
+function seedLoadedProjectWithEffects(): void {
+  const data = new BlueData();
+  for (let index = 1; index <= 2; index += 1) {
+    const instrument = new GenericInstrument();
+    instrument.setName(`Instrument ${index}`);
+    data.getArrangement().addInstrument(instrument, String(index));
+    const channel = new Channel();
+    channel.setName(`Channel ${index}`);
+    channel.setAssociation(String(index));
+    const effect = new Effect();
+    effect.setName(`Effect ${index}`);
+    channel.getPreEffects().push(effect);
+    data.getMixer().getChannels().push(channel);
+  }
   const snapshot = createProjectEditorSnapshot(data, '/test.blue');
   mockProjectState.loaded = true;
   mockProjectState.mixer = snapshot.mixer!;
@@ -164,6 +183,25 @@ describe('MixerPanel', () => {
     act(() => {
       root.unmount();
     });
+    container.remove();
+  });
+
+  it('keeps only one Effect selected across all channels', () => {
+    seedLoadedProjectWithEffects();
+    const { container, root } = renderPanel();
+    const effectRows = [...container.querySelectorAll<HTMLElement>('[data-library-drop-target="effect-row"]')];
+    expect(effectRows).toHaveLength(2);
+
+    act(() => effectRows[0]!.click());
+    expect(container.querySelectorAll('[aria-selected="true"]')).toHaveLength(1);
+    expect(effectRows[0]!.getAttribute('aria-selected')).toBe('true');
+
+    act(() => effectRows[1]!.click());
+    expect(container.querySelectorAll('[aria-selected="true"]')).toHaveLength(1);
+    expect(effectRows[0]!.getAttribute('aria-selected')).toBe('false');
+    expect(effectRows[1]!.getAttribute('aria-selected')).toBe('true');
+
+    act(() => root.unmount());
     container.remove();
   });
 

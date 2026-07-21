@@ -15,7 +15,8 @@ interface LibraryContextMenuProps {
   onCopy?: (node: LibraryBrowseNode) => void;
   onPaste?: (node: LibraryBrowseNode) => void;
   onDelete?: (node: LibraryBrowseNode) => void;
-  onCopyToUser?: (node: LibraryBrowseNode) => void;
+  onMoveUp?: (node: LibraryBrowseNode) => void;
+  onMoveDown?: (node: LibraryBrowseNode) => void;
 }
 
 const ITEM_CLASS = 'editor-context-menu__item';
@@ -30,16 +31,16 @@ export function LibraryContextMenu({
   onCopy,
   onPaste,
   onDelete,
-  onCopyToUser,
+  onMoveUp,
+  onMoveDown,
 }: LibraryContextMenuProps): React.ReactElement {
   const userOwned = node.scope === 'user';
   const canContainChildren = node.nodeKind === 'folder' || node.nodeKind === 'root';
+  const hasPasteDestination = canContainChildren || (node.nodeKind === 'item' && node.parentId !== null);
   const pasteCompatible = Boolean(
     clipboard
-    && clipboard.source.kind === 'userNode'
     && getLibraryTransferSourceType(clipboard.source) === node.libraryType
-    && userOwned
-    && canContainChildren,
+    && hasPasteDestination,
   );
   return (
     <ContextMenu.Root>
@@ -56,10 +57,10 @@ export function LibraryContextMenu({
           {userOwned && node.nodeKind !== 'root' && onDuplicate && (
             <ContextMenu.Item className={ITEM_CLASS} onSelect={() => onDuplicate(node)}>Duplicate</ContextMenu.Item>
           )}
-          {userOwned && node.nodeKind !== 'root' && onCut && (
+          {node.nodeKind !== 'root' && onCut && (
             <ContextMenu.Item className={ITEM_CLASS} onSelect={() => onCut(node)}>Cut</ContextMenu.Item>
           )}
-          {node.nodeKind === 'item' && onCopy && (
+          {((userOwned && node.nodeKind !== 'root') || (!userOwned && node.nodeKind === 'item')) && onCopy && (
             <ContextMenu.Item className={ITEM_CLASS} onSelect={() => onCopy(node)}>Copy</ContextMenu.Item>
           )}
           {onPaste && (
@@ -72,8 +73,12 @@ export function LibraryContextMenu({
               Paste
             </ContextMenu.Item>
           )}
-          {!userOwned && node.nodeKind === 'item' && onCopyToUser && (
-            <ContextMenu.Item className={ITEM_CLASS} onSelect={() => onCopyToUser(node)}>Copy to User Library…</ContextMenu.Item>
+          {userOwned && node.nodeKind !== 'root' && (onMoveUp || onMoveDown) && (
+            <>
+              <ContextMenu.Separator className="editor-context-menu__separator" />
+              <ContextMenu.Item disabled={!onMoveUp} className={ITEM_CLASS} onSelect={() => onMoveUp?.(node)}>Move Up</ContextMenu.Item>
+              <ContextMenu.Item disabled={!onMoveDown} className={ITEM_CLASS} onSelect={() => onMoveDown?.(node)}>Move Down</ContextMenu.Item>
+            </>
           )}
           {onDelete && node.nodeKind !== 'root' && (
             <>

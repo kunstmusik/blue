@@ -10,6 +10,11 @@ import {
   type LegacyLibraryTreeNode,
   type LibraryType,
 } from '@blue/data';
+import type {
+  ManualImportSourcePreview,
+  ManualLibraryImportPreview,
+  ManualLibraryImportResult,
+} from '../../shared/unified-library';
 import { UnifiedLibraryRepositoryClient } from './repository-client';
 import {
   LibraryMigrationStateStore,
@@ -36,44 +41,29 @@ export interface AutomaticMigrationReport {
   readonly completedAt: string;
 }
 
-export interface ManualImportSourcePreview {
-  readonly sourcePath: string;
-  readonly sourceHash: string;
-  readonly libraryType: LibraryType | null;
-  readonly folderCount: number;
-  readonly itemCount: number;
-  readonly unsupportedCount: number;
-  readonly exactDuplicateCount: number;
-  readonly aliasConflictCount: number;
-  readonly ambiguousFolderCount: number;
-  readonly error?: string;
-}
-
-export interface ManualImportPreview {
-  readonly previewToken: string;
-  readonly expiresAt: number;
-  readonly sources: readonly ManualImportSourcePreview[];
-}
-
-export interface ManualImportResult {
-  readonly batchId: string;
-  readonly status: 'completed' | 'partial' | 'failed';
-  readonly createdNodeCount: number;
-  readonly exactDuplicateCount: number;
-  readonly aliasCount: number;
-}
-
 interface PendingManualPreview {
   readonly expiresAt: number;
   readonly sources: readonly {
     readonly preview: ManualImportSourcePreview;
     readonly plan?: LegacyLibraryDocumentPlan;
+    readonly folderResolutionPaths?: Readonly<Record<string, string>>;
   }[];
 }
 
 export interface AtomicExportOutput {
   readonly targetPath: string;
   readonly contents: string;
+}
+
+export interface LibraryExportPreflight {
+  readonly outputs: readonly {
+    readonly libraryType: LibraryType;
+    readonly targetPath: string;
+    readonly itemCount: number;
+    readonly unsupportedPreservedCount: number;
+    readonly overwritesExisting: boolean;
+  }[];
+  readonly unrepresentableCount: 0;
 }
 
 export function commitAtomicExport(
@@ -144,17 +134,22 @@ export class UnifiedLibraryImportExportService {
 
   constructor(private readonly repository: UnifiedLibraryRepositoryClient) {}
 
-  async previewManualImport(sourcePaths: readonly string[]): Promise<ManualImportPreview> {
+  async previewManualImport(sourcePaths: readonly string[]): Promise<ManualLibraryImportPreview> {
     if (this.operationActive) throw new Error('A library interchange operation is already in progress');
-    const sources: { preview: ManualImportSourcePreview; plan?: LegacyLibraryDocumentPlan }[] = [];
+    const sources: {
+      preview: ManualImportSourcePreview;
+      plan?: LegacyLibraryDocumentPlan;
+      folderResolutionPaths?: Readonly<Record<string, string>>;
+    }[] = [];
     for (const sourcePath of sourcePaths) {
       const bytes = fs.readFileSync(sourcePath);
       const sourceHash = hashBytes(bytes);
       try {
         const plan = parseLegacyLibraryDocument(bytes.toString('utf8'));
-        const conflicts = await this.analyzeManualPlan(plan);
+        const conflicts = await this.analyzeManualPlan(plan, sourceHash);
         sources.push({
           plan,
+          folderResolutionPaths: conflicts.folderResolutionPaths,
           preview: {
             sourcePath,
             sourceHash,
@@ -174,9 +169,10 @@ export class UnifiedLibraryImportExportService {
           itemCount: 0,
           unsupportedCount: 0,
           exactDuplicateCount: 0,
-          aliasConflictCount: 0,
-          ambiguousFolderCount: 0,
-          error: safeMessage(error),
+            aliasConflictCount: 0,
+            ambiguousFolderCount: 0,
+            folderConflicts: [],
+            error: safeMessage(error),
         } });
       }
     }
@@ -186,7 +182,10 @@ export class UnifiedLibraryImportExportService {
     return { previewToken, expiresAt, sources: sources.map((source) => source.preview) };
   }
 
-  async executeManualImport(previewToken: string): Promise<ManualImportResult> {
+  async executeManualImport(
+    previewToken: string,
+    folderSelections: Readonly<Record<string, string>> = {},
+  ): Promise<ManualLibraryImportResult> {
     const pending = this.manualPreviews.get(previewToken);
     this.manualPreviews.delete(previewToken);
     if (!pending || pending.expiresAt < Date.now()) throw new Error('Import preview expired');
@@ -198,6 +197,15 @@ export class UnifiedLibraryImportExportService {
       for (const source of pending.sources) {
         if (hashBytes(fs.readFileSync(source.preview.sourcePath)) !== source.preview.sourceHash) {
           throw new Error(`Import source changed after preview: ${source.preview.sourcePath}`);
+        }
+        for (const conflict of source.preview.folderConflicts) {
+          const selectedNodeId = folderSelections[conflict.conflictId];
+          if (!selectedNodeId) {
+            throw new Error(`Choose a destination for ${conflict.sourceBreadcrumb.join(' / ')}`);
+          }
+          if (!conflict.candidates.some((candidate) => candidate.nodeId === selectedNodeId)) {
+            throw new Error(`The selected destination for ${conflict.sourceBreadcrumb.join(' / ')} is no longer valid`);
+          }
         }
       }
       await this.repository.startImportBatch({ id: batchId, mode: 'manualXmlFiles', sourceCount: pending.sources.length, startedAt });
@@ -217,9 +225,14 @@ export class UnifiedLibraryImportExportService {
           continue;
         }
         try {
+          const folderResolutions = Object.fromEntries(
+            Object.entries(source.folderResolutionPaths ?? {}).map(([conflictId, resolutionPath]) => (
+              [resolutionPath, folderSelections[conflictId]!]
+            )),
+          );
           const result = await this.repository.importLegacyDocument({
             batchId, sourceId, sourcePath: source.preview.sourcePath, sourceKind: 'selectedFile',
-            plan: source.plan, conflictPolicy: 'merge',
+            plan: source.plan, conflictPolicy: 'merge', folderResolutions,
           });
           createdNodeCount += result.createdNodeIds.length;
           exactDuplicateCount += result.exactDuplicateCount;
@@ -234,7 +247,7 @@ export class UnifiedLibraryImportExportService {
           });
         }
       }
-      const status: ManualImportResult['status'] = successfulSources > 0
+      const status: ManualLibraryImportResult['status'] = successfulSources > 0
         ? failedSources > 0 ? 'partial' : 'completed'
         : 'failed';
       await this.repository.finishImportBatch({
@@ -258,24 +271,58 @@ export class UnifiedLibraryImportExportService {
     } finally { this.operationActive = false; }
   }
 
-  async exportCurrent(libraryType: LibraryType, targetPath: string): Promise<void> {
-    const plan = await this.buildExportPlan(libraryType);
-    const contents = exportLegacyLibraryDocument(plan);
-    parseLegacyLibraryDocument(contents);
-    commitAtomicExport([{ targetPath, contents }]);
+  async exportCurrent(
+    libraryType: LibraryType,
+    targetPath: string,
+    approve: (preflight: LibraryExportPreflight) => Promise<boolean> = async () => true,
+  ): Promise<boolean> {
+    if (this.operationActive) throw new Error('A library interchange operation is already in progress');
+    this.operationActive = true;
+    try {
+      const plan = await this.buildExportPlan(libraryType);
+      const contents = exportLegacyLibraryDocument(plan);
+      parseLegacyLibraryDocument(contents);
+      if (!await approve({
+        outputs: [{
+          libraryType,
+          targetPath,
+          itemCount: plan.itemCount,
+          unsupportedPreservedCount: plan.unsupportedCount,
+          overwritesExisting: fs.existsSync(targetPath),
+        }],
+        unrepresentableCount: 0,
+      })) return false;
+      commitAtomicExport([{ targetPath, contents }]);
+      return true;
+    } finally { this.operationActive = false; }
   }
 
-  async exportAll(destinationDirectory: string): Promise<void> {
+  async exportAll(
+    destinationDirectory: string,
+    approve: (preflight: LibraryExportPreflight) => Promise<boolean> = async () => true,
+  ): Promise<boolean> {
     if (this.operationActive) throw new Error('A library interchange operation is already in progress');
     this.operationActive = true;
     try {
       const outputs: AtomicExportOutput[] = [];
+      const summaries: LibraryExportPreflight['outputs'][number][] = [];
       for (const descriptor of Object.values(LEGACY_LIBRARY_FORMATS)) {
-        const contents = exportLegacyLibraryDocument(await this.buildExportPlan(descriptor.libraryType));
+        const plan = await this.buildExportPlan(descriptor.libraryType);
+        const contents = exportLegacyLibraryDocument(plan);
         parseLegacyLibraryDocument(contents);
-        outputs.push({ targetPath: path.join(destinationDirectory, descriptor.fileName), contents });
+        const targetPath = path.join(destinationDirectory, descriptor.fileName);
+        outputs.push({ targetPath, contents });
+        summaries.push({
+          libraryType: descriptor.libraryType,
+          targetPath,
+          itemCount: plan.itemCount,
+          unsupportedPreservedCount: plan.unsupportedCount,
+          overwritesExisting: fs.existsSync(targetPath),
+        });
       }
+      if (!await approve({ outputs: summaries, unrepresentableCount: 0 })) return false;
       commitAtomicExport(outputs);
+      return true;
     } finally { this.operationActive = false; }
   }
 
@@ -448,24 +495,53 @@ export class UnifiedLibraryImportExportService {
     return { batchId: null, status, message, sources: [], startedAt, completedAt: new Date().toISOString() };
   }
 
-  private async analyzeManualPlan(plan: LegacyLibraryDocumentPlan): Promise<{
+  private async analyzeManualPlan(plan: LegacyLibraryDocumentPlan, sourceHash: string): Promise<{
     exactDuplicateCount: number;
     aliasConflictCount: number;
     ambiguousFolderCount: number;
+    folderConflicts: ManualImportSourcePreview['folderConflicts'];
+    folderResolutionPaths: Readonly<Record<string, string>>;
   }> {
     let exactDuplicateCount = 0;
     let aliasConflictCount = 0;
-    let ambiguousFolderCount = 0;
+    const folderConflicts: ManualImportSourcePreview['folderConflicts'][number][] = [];
+    const folderResolutionPaths: Record<string, string> = {};
     const root = await this.repository.getRoot(plan.libraryType);
-    const walk = async (parentId: string, children: readonly LegacyLibraryTreeNode[]): Promise<void> => {
-      const siblings = await this.repository.listChildren(parentId);
-      for (const child of children) {
+    const walk = async (
+      parentIds: readonly string[],
+      children: readonly LegacyLibraryTreeNode[],
+      sourceBreadcrumb: readonly string[],
+      sourceIndices: readonly number[],
+    ): Promise<void> => {
+      const siblingGroups = await Promise.all(parentIds.map((parentId) => this.repository.listChildren(parentId)));
+      for (const [childIndex, child] of children.entries()) {
+        const childIndices = [...sourceIndices, childIndex];
         if (child.kind === 'folder') {
-          const matches = siblings.filter((candidate) => candidate.nodeKind === 'folder' && candidate.displayName === child.name);
-          if (matches.length > 1) ambiguousFolderCount += 1;
-          if (matches.length === 1) await walk(matches[0]!.id, child.children);
+          const matches = siblingGroups.flatMap((siblings) => siblings.filter((candidate) => (
+            candidate.nodeKind === 'folder' && candidate.displayName === child.name
+          )));
+          const uniqueMatches = [...new Map(matches.map((candidate) => [candidate.id, candidate])).values()];
+          const childBreadcrumb = [...sourceBreadcrumb, child.name];
+          if (uniqueMatches.length > 1) {
+            const resolutionPath = childIndices.join('.');
+            const conflictId = `${sourceHash}:${resolutionPath}`;
+            folderResolutionPaths[conflictId] = resolutionPath;
+            folderConflicts.push({
+              conflictId,
+              sourceBreadcrumb: childBreadcrumb,
+              candidates: await Promise.all(uniqueMatches.map(async (candidate) => ({
+                nodeId: candidate.id,
+                breadcrumb: await this.repository.getBreadcrumb(candidate.id),
+              }))),
+            });
+          }
+          if (uniqueMatches.length > 0) {
+            await walk(uniqueMatches.map((candidate) => candidate.id), child.children, childBreadcrumb, childIndices);
+          }
           continue;
         }
+        if (parentIds.length !== 1) continue;
+        const siblings = siblingGroups[0] ?? [];
         let duplicate = false;
         let sameName = false;
         for (const sibling of siblings.filter((candidate) => candidate.nodeKind === 'item')) {
@@ -476,8 +552,14 @@ export class UnifiedLibraryImportExportService {
         else if (sameName) aliasConflictCount += 1;
       }
     };
-    await walk(root.id, plan.root.children);
-    return { exactDuplicateCount, aliasConflictCount, ambiguousFolderCount };
+    await walk([root.id], plan.root.children, [plan.root.name], []);
+    return {
+      exactDuplicateCount,
+      aliasConflictCount,
+      ambiguousFolderCount: folderConflicts.length,
+      folderConflicts,
+      folderResolutionPaths,
+    };
   }
 
   private async buildExportPlan(libraryType: LibraryType): Promise<LegacyLibraryDocumentPlan> {

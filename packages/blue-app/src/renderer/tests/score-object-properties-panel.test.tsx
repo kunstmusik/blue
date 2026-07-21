@@ -24,9 +24,9 @@ vi.mock('../stores/score-selection-store', () => ({
   useScoreSelectionStore: vi.fn((selector: any) => selector(mockSelectionState)),
 }));
 
-vi.mock('../../shared/project-editor', () => ({
-  ...vi.importActual('../../shared/project-editor'),
-}));
+vi.mock('../../shared/project-editor', async () => (
+  vi.importActual('../../shared/project-editor')
+));
 
 function makeTarget(overrides?: Partial<ScoreObjectEditorTargetSnapshot>): ScoreObjectEditorTargetSnapshot {
   return {

@@ -229,34 +229,34 @@ export default function ParameterRow({
       </ContextMenu.Trigger>
 
       <ContextMenu.Portal>
-        <ContextMenu.Content className="z-50 min-w-[180px] rounded border border-app-border bg-app-menu py-1 shadow-lg">
-          <ContextMenu.Item className="flex cursor-pointer px-3 py-1 text-body text-app-text-soft outline-none hover:bg-app-accent/20" onSelect={() => setGeneratorPickerMode('addBefore')}>
+        <ContextMenu.Content className="editor-context-menu">
+          <ContextMenu.Item className="editor-context-menu__item" onSelect={() => setGeneratorPickerMode('addBefore')}>
             Add Parameter Before
           </ContextMenu.Item>
-          <ContextMenu.Item className="flex cursor-pointer px-3 py-1 text-body text-app-text-soft outline-none hover:bg-app-accent/20" onSelect={() => setGeneratorPickerMode('addAfter')}>
+          <ContextMenu.Item className="editor-context-menu__item" onSelect={() => setGeneratorPickerMode('addAfter')}>
             Add Parameter After
           </ContextMenu.Item>
           <ContextMenu.Item
-            className={`flex cursor-pointer px-3 py-1 text-body outline-none hover:bg-app-accent/20 ${parameterNum <= 3 ? 'pointer-events-none text-app-text-subtle' : 'text-app-text-soft'}`}
+            className="editor-context-menu__item"
             disabled={parameterNum <= 3}
             onSelect={removeParameter}
           >
             Remove Parameter
           </ContextMenu.Item>
-          <ContextMenu.Item className="flex cursor-pointer px-3 py-1 text-body text-app-text-soft outline-none hover:bg-app-accent/20" onSelect={() => setGeneratorPickerMode('changeType')}>
+          <ContextMenu.Item className="editor-context-menu__item" onSelect={() => setGeneratorPickerMode('changeType')}>
             Change Parameter Type
           </ContextMenu.Item>
-          <ContextMenu.Separator className="my-1 h-px bg-app-border" />
-          <ContextMenu.Item className="flex cursor-pointer px-3 py-1 text-body text-app-text-soft outline-none hover:bg-app-accent/20" onSelect={pushUp}>
+          <ContextMenu.Separator className="editor-context-menu__separator" />
+          <ContextMenu.Item className="editor-context-menu__item" onSelect={pushUp}>
             Push Up
           </ContextMenu.Item>
-          <ContextMenu.Item className="flex cursor-pointer px-3 py-1 text-body text-app-text-soft outline-none hover:bg-app-accent/20" onSelect={pushDown}>
+          <ContextMenu.Item className="editor-context-menu__item" onSelect={pushDown}>
             Push Down
           </ContextMenu.Item>
-          <ContextMenu.Separator className="my-1 h-px bg-app-border" />
+          <ContextMenu.Separator className="editor-context-menu__separator" />
           {canMask && (
             <ContextMenu.CheckboxItem
-              className="flex cursor-pointer px-3 py-1 text-body text-app-text-soft outline-none hover:bg-app-accent/20"
+              className="editor-context-menu__item"
               checked={maskEnabled}
               onCheckedChange={toggleMask}
             >
@@ -265,7 +265,7 @@ export default function ParameterRow({
           )}
           {canQuantize && (
             <ContextMenu.CheckboxItem
-              className="flex cursor-pointer px-3 py-1 text-body text-app-text-soft outline-none hover:bg-app-accent/20"
+              className="editor-context-menu__item"
               checked={quantizerEnabled}
               onCheckedChange={toggleQuantizer}
             >
@@ -274,7 +274,7 @@ export default function ParameterRow({
           )}
           {canAccumulate && (
             <ContextMenu.CheckboxItem
-              className="flex cursor-pointer px-3 py-1 text-body text-app-text-soft outline-none hover:bg-app-accent/20"
+              className="editor-context-menu__item"
               checked={accumulatorEnabled}
               onCheckedChange={toggleAccumulator}
             >

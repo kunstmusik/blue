@@ -2906,6 +2906,15 @@ function buildEditorTargetSnapshot(
       ownerKind: 'library',
       displayContext: 'instance',
       sourceInstanceLocation: location,
+      ...(libraryId
+        ? {
+            library: {
+              libraryId,
+              libraryIndex: -1,
+              objectType: lib.constructor.name,
+            },
+          }
+        : {}),
       supportsTimeBehavior: true,
       supportsRepeatPoint: true,
       supportsNoteProcessorChain: true,
@@ -2923,6 +2932,26 @@ function buildEditorTargetSnapshot(
     supportsTimeBehavior: isSoundObject,
     supportsRepeatPoint: isSoundObject,
     supportsNoteProcessorChain: isSoundObject,
+  };
+}
+
+export function createScoreObjectPropertiesTarget(
+  target: ScoreObjectEditorTargetSnapshot,
+): ScoreObjectEditorTargetSnapshot {
+  if (
+    target.selectedObjectType !== 'Instance'
+    || target.displayContext !== 'instance'
+    || !target.sourceInstanceLocation
+  ) {
+    return target;
+  }
+  const { library: _library, sourceInstanceLocation, ...instanceTarget } = target;
+  return {
+    ...instanceTarget,
+    editorObjectType: 'Instance',
+    ownerKind: 'timeline',
+    displayContext: 'timeline',
+    location: sourceInstanceLocation,
   };
 }
 

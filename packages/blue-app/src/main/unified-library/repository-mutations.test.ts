@@ -70,4 +70,42 @@ describe('repository hierarchy mutations', () => {
       expect(repository.getSnapshot().contentRevision).toBe(before);
     } finally { repository.close(); }
   });
+
+  it('captures every confirmed folder child and removes the source in one Cut transaction', () => {
+    const repository = UnifiedLibraryRepository.open(':memory:');
+    try {
+      const root = repository.getRoot('instrument');
+      const folder = repository.createFolder({
+        libraryType: 'instrument', parentId: root.id, displayName: 'Source',
+      });
+      const first = repository.createItem({
+        libraryType: 'instrument', parentId: folder.id, displayName: 'First', payload: PAYLOAD,
+      });
+      const staleContents = repository.listDescendantNodeIds(folder.id);
+      const second = repository.createItem({
+        libraryType: 'instrument', parentId: folder.id, displayName: 'Second', payload: PAYLOAD,
+      });
+      expect(() => repository.cutClipboardSubtree(
+        folder.id, folder.revision, staleContents,
+      )).toThrow(/stale folder contents/i);
+      expect(repository.getNode(first.id).parentId).toBe(folder.id);
+      expect(repository.getNode(second.id).parentId).toBe(folder.id);
+
+      const cut = repository.cutClipboardSubtree(
+        folder.id,
+        folder.revision,
+        repository.listDescendantNodeIds(folder.id),
+      );
+      expect(cut.subtree).toMatchObject({
+        nodeKind: 'folder',
+        displayName: 'Source',
+        children: [{ displayName: 'First' }, { displayName: 'Second' }],
+      });
+      expect(() => repository.getNode(folder.id)).toThrow(/not found/i);
+
+      const pasted = repository.createClipboardSubtree(root.id, cut.subtree);
+      expect(repository.listChildren(pasted.id).map((node) => node.displayName))
+        .toEqual(['First', 'Second']);
+    } finally { repository.close(); }
+  });
 });

@@ -6,6 +6,7 @@ import type {
   ScoreObjectEditorTargetSnapshot,
   ScorePatch,
 } from '../../../../shared/project-editor';
+import { createScoreObjectPropertiesTarget } from '../../../../shared/project-editor';
 import ScoreObjectPropertiesForm from './score-object/ScoreObjectPropertiesForm';
 
 function EmptyState({ message }: { message: string }): React.ReactElement {
@@ -118,6 +119,10 @@ export default function ScoreObjectPropertiesPanel(): React.ReactElement {
     if (selectedObjectTarget) return selectedObjectTarget;
     return selectedRow?.editorTarget ?? null;
   }, [selectedObjectTarget, selectedRow]);
+  const propertiesTarget = useMemo(() => (
+    editorTarget ? createScoreObjectPropertiesTarget(editorTarget) : null
+  ), [editorTarget]);
+  const propertiesTargetKey = propertiesTarget ? JSON.stringify(propertiesTarget) : null;
 
   const primaryTimeDisplay = score.timeState.primaryTimeDisplay;
   const selectedLiveShared = selectedObjectId ? liveSharedProperties[selectedObjectId] : undefined;
@@ -127,7 +132,7 @@ export default function ScoreObjectPropertiesPanel(): React.ReactElement {
       setDocument(null);
       return;
     }
-    if (!editorTarget) {
+    if (!propertiesTarget) {
       setDocument(null);
       return;
     }
@@ -135,7 +140,7 @@ export default function ScoreObjectPropertiesPanel(): React.ReactElement {
     setLoading(true);
     flushPendingPatches().then(() => {
       if (cancelled) return;
-      return window.blueAPI.getScoreObjectEditorDocument({ target: editorTarget }).then((doc) => {
+      return window.blueAPI.getScoreObjectEditorDocument({ target: propertiesTarget }).then((doc) => {
         if (!cancelled) {
           setDocument(doc);
           setLoading(false);
@@ -148,19 +153,19 @@ export default function ScoreObjectPropertiesPanel(): React.ReactElement {
       });
     });
     return () => { cancelled = true; };
-  }, [loaded, selectedObjectId, editorTarget, primaryTimeDisplay, meterMap, flushPendingPatches]);
+  }, [loaded, selectedObjectId, propertiesTargetKey, primaryTimeDisplay, meterMap, flushPendingPatches]);
 
   useEffect(() => {
-    if (!editorTarget || !lastScorePatch) return;
+    if (!propertiesTarget || !lastScorePatch) return;
     if (
       (lastScorePatch.type === 'updateSharedProperties'
         || lastScorePatch.type === 'updateSoundObjectBehavior'
         || lastScorePatch.type === 'replaceNoteProcessorChain')
-      && sameTarget(lastScorePatch.target, editorTarget)
+      && sameTarget(lastScorePatch.target, propertiesTarget)
     ) {
       setDocument((prev) => (prev ? applyPatchToDocument(prev, lastScorePatch) : prev));
     }
-  }, [editorTarget, lastScorePatch]);
+  }, [propertiesTargetKey, lastScorePatch]);
 
   useEffect(() => {
     if (!selectedLiveShared) return;

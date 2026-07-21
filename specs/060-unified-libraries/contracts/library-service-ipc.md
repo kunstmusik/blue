@@ -182,24 +182,35 @@ Libraries does not retain a persistent insertion context. Every project transfer
 ```ts
 interface BeginLibraryDragRequest {
   key: LibraryItemKey;
-  expectedRevision: string;
+  revision: number | string;
 }
 
 interface LibraryDragDescriptor {
   dragSessionId: string;
   libraryType: LibraryType;
   sourceScope: LibraryScopeKind;
-  expiresAt: string;
 }
 
-type LibraryTransferSource =
+type CapturableLibraryTransferSource =
+  | { kind: 'library'; key: LibraryItemKey; revision: number | string }
+  | { kind: 'userNode'; libraryType: LibraryType; nodeId: string; revision: number };
+
+type LibraryTransferSource = CapturableLibraryTransferSource
+  | { kind: 'buffer'; clipboardId: string; libraryType: LibraryType };
+
+type LibraryTransferSourceReference =
   | { kind: 'drag'; dragSessionId: string }
-  | { kind: 'clipboard'; key: LibraryItemKey; expectedRevision: string };
+  | { kind: 'clipboard'; source: LibraryTransferSource };
 
 interface LibraryTransferRequest {
-  source: LibraryTransferSource;
+  source: LibraryTransferSourceReference;
   target: InsertionTargetSnapshot;
   sharedCopyMode?: 'instance' | 'independent';
+}
+
+interface CutLibraryToClipboardRequest {
+  source: CapturableLibraryTransferSource;
+  confirmationToken: string;
 }
 ```
 
@@ -216,9 +227,15 @@ previewLibraryInsertion(request: LibraryTransferRequest):
 
 applyLibraryInsertion(request: ConfirmedLibraryInsertionRequest):
   Promise<LibraryResult<ProjectMutationReceipt>>
+
+cutLibraryToClipboard(request: CutLibraryToClipboardRequest):
+  Promise<LibraryResult<CutLibraryToClipboardResult>>
+
+copyLibraryTransferToUser(source: LibraryTransferSourceReference, parentId: string):
+  Promise<LibraryResult<LibraryMutationReceipt>>
 ```
 
-The renderer puts only `dragSessionId`, `libraryType`, and `sourceScope` in `DataTransfer`; payload XML remains main-owned. Orchestra, UDO, Mixer, and Score resolve exact target locators from their current insertion geometry or keyboard Paste context. Main revalidates the source revision, support status, project session, locator, target revision, dependencies, and destination immediately before apply. A stale, missing, incompatible, or ambiguous source/target returns no project change. Existing insertion preview/apply internals may remain named as such, but they are invoked only by drop/Paste—not by a Libraries-panel Insert mode.
+The renderer puts only `dragSessionId`, `libraryType`, and `sourceScope` in `DataTransfer`; payload XML remains main-owned. Orchestra, top-level and Instrument-local UDO tables, Mixer, Score, and user-library folders resolve exact targets from their current geometry or keyboard Paste context. A `projectUdo` target or source locator carries an optional Instrument assignment ID; omission addresses the top-level list. Main revalidates source revision, support status, project session, owning Instrument/list, locator, target revision, dependencies, and destination immediately before apply. A stale, missing, incompatible, or ambiguous source/target returns no destination change. Cut is a separate main-owned transaction boundary: capture a detached typed snapshot, perform guarded immediate source deletion, then return only an opaque buffer identity; Paste resolves that buffer without any source cleanup.
 
 ## Editor Sessions
 
@@ -294,19 +311,14 @@ The current quit/project action continues only after every affected dirty sessio
 File and directory selection happens in Electron main. The renderer receives preview tokens and sanitized path labels, not authority to read arbitrary files.
 
 ```ts
-beginJavaBlueImport(request: { source: 'autoDetected' | 'chooseFolder' }):
-  Promise<LibraryResult<ImportPreview>>
+selectLibraryImportDirectory(): Promise<LibraryResult<ImportPreview> | null>
 
-beginXmlLibraryImport(): Promise<LibraryResult<ImportPreview>>
+selectLibraryImportFiles(): Promise<LibraryResult<ImportPreview> | null>
 
-applyLibraryImport(request: {
+executeLibraryImport(request: {
   previewToken: string;
-  destinationResolutions: ImportDestinationResolution[];
-  replacements: ExplicitReplacementChoice[];
+  folderSelections: Record<ConflictId, StableFolderNodeId>;
 }): Promise<LibraryResult<ImportBatchResult>>
-
-cancelLibraryImport(previewToken: string): Promise<void>
-
 ```
 
 Rules:
@@ -321,21 +333,11 @@ Rules:
 ## Export
 
 ```ts
-beginCurrentLibraryExport(request: { libraryType: LibraryType }):
-  Promise<LibraryResult<ExportPreflight>>
-
-beginAllLibrariesExport(): Promise<LibraryResult<ExportPreflight>>
-
-applyLibraryExport(request: {
-  preflightToken: string;
-  overwriteDecisions: ExportOverwriteDecision[];
-  compatibilityChoice: 'exportAllCompatible' | 'compatibleSubset' | 'cancel';
-}): Promise<LibraryResult<ExportResult>>
-
-cancelLibraryExport(preflightToken: string): Promise<void>
+exportCurrentLibrary(libraryType: LibraryType): Promise<LibraryResult<true> | null>
+exportAllLibraries(): Promise<LibraryResult<true> | null>
 ```
 
-The main dialog proposes the traditional filename for current-type export and asks for a destination directory for Export All. `all` and project scopes are invalid for current-type export. Preflight identifies every unsupported-but-preservable item, every unrepresentable item, every overwrite, and the proposed compatible subset before any destination change. `exportAllCompatible` is the affirmative choice when the complete requested content is representable; `compatibleSubset` is offered only when the preflight explicitly lists omissions; `cancel` writes nothing. `applyLibraryExport` either commits all requested files or restores all prior targets before returning failure.
+Electron main proposes the traditional filename for current-type export and asks for a destination directory for Export All. `all` is invalid for current-type export. The service serializes and reparses every requested Java-compatible output before main displays a compatibility/overwrite summary; confirmation is therefore based on fully prepared output, and Cancel writes nothing. Unsupported payloads are reported as preserved unchanged. Content that cannot be serialized or reparsed blocks before the decision dialog and before any destination change. Approval promotes the prepared file set atomically; a later promotion failure restores all prior targets before returning failure.
 
 ## Recovery
 

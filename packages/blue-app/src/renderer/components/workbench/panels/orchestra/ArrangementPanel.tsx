@@ -4,12 +4,11 @@ import {
   getCoreRowModel,
   useReactTable,
 } from '@tanstack/react-table';
-import type {
-  InstrumentSnapshot,
-  SupportedNewInstrumentType,
-} from '../../../../../shared/project-editor';
-import { getLibraryTransferSourceType } from '../../../../../shared/unified-library';
-import { useProjectStore } from '../../../../stores/project-store';
+import type { SupportedNewInstrumentType } from '../../../../../shared/project-editor';
+import {
+  getAvailableNumericArrangementId,
+  getLibraryTransferSourceType,
+} from '../../../../../shared/unified-library';
 import { useDocumentMouseDownOutside } from '../../../../hooks/use-document-mousedown-outside';
 import { isTextEditingTarget } from '../../../../hooks/use-keyboard-shortcuts';
 import { useLibraryStore } from '../../../../stores/library-store';
@@ -17,6 +16,8 @@ import ArrangementContextMenu from './ArrangementContextMenu';
 import { createArrangementColumns } from './arrangement-table/arrangement-columns';
 import type { ArrangementPanelProps } from './types';
 import { LibraryDropZone, LibraryTableDropMarker } from '../../../libraries/LibraryDropMarker';
+import { ProjectLibraryDragSource } from '../../../libraries/ProjectLibraryDragSource';
+import { useProjectLibraryNodes } from '../../../libraries/use-project-library-nodes';
 
 const INSTRUMENT_TYPES: Array<{ type: SupportedNewInstrumentType; label: string }> = [
   { type: 'generic', label: 'Generic Instrument' },
@@ -34,10 +35,12 @@ function ArrangementPanel({
   projectSessionId,
   projectRevision,
 }: ArrangementPanelProps): React.ReactElement {
-  const [clipboardInstrument, setClipboardInstrument] = useState<InstrumentSnapshot | null>(null);
   const libraryClipboard = useLibraryStore((state) => state.clipboard);
   const transferLibraryItem = useLibraryStore((state) => state.transferToProject);
-  const clearLibraryClipboard = useLibraryStore((state) => state.cancelClipboard);
+  const captureClipboard = useLibraryStore((state) => state.captureClipboard);
+  const projectNodes = useProjectLibraryNodes(
+    'projectOwned', 'instrument', projectSessionId, projectRevision,
+  );
   const [addMenuOpen, setAddMenuOpen] = useState(false);
   const addBtnRef = useRef<HTMLButtonElement>(null);
   const addMenuRef = useRef<HTMLDivElement>(null);
@@ -88,6 +91,13 @@ function ArrangementPanel({
     onColumnSizingChange: setColumnSizing,
     columnResizeMode: 'onChange',
   });
+  const insertionIds = useMemo(() => {
+    const assignmentIds = rows.map((row) => row.assignmentId);
+    return Array.from(
+      { length: rows.length + 1 },
+      (_, index) => getAvailableNumericArrangementId(assignmentIds, index),
+    );
+  }, [rows]);
 
   const getColumnWidth = (colId: string) => {
     const col = columns.find(c => ('id' in c ? c.id === colId : 'accessorKey' in c && c.accessorKey === colId));
@@ -140,17 +150,13 @@ function ArrangementPanel({
     setAddMenuOpen(false);
   };
 
-  const copyAssignment = (assignmentId: string) => {
-    const instrument = useProjectStore.getState().orchestra.instruments.find(
-      (candidate) => candidate.assignmentId === assignmentId,
-    );
-    clearLibraryClipboard();
-    setClipboardInstrument(instrument ?? null);
-  };
-
-  const cutAssignment = (assignmentId: string) => {
-    copyAssignment(assignmentId);
-    void onOrchestraPatch({ type: 'removeAssignment', assignmentId });
+  const captureAssignment = (assignmentId: string, operation: 'copy' | 'cut') => {
+    const node = projectNodes.find((candidate) => (
+      candidate.key?.scope === 'projectOwned'
+      && candidate.key.locator.kind === 'instrument'
+      && candidate.key.locator.assignmentId === assignmentId
+    ));
+    if (node) void captureClipboard(node, operation);
   };
 
   const libraryInstrumentAvailable = libraryClipboard
@@ -170,13 +176,8 @@ function ArrangementPanel({
   const pasteInstrument = useCallback((insertIndex: number) => {
     if (libraryInstrumentAvailable) {
       pasteLibraryInstrument(insertIndex);
-    } else if (clipboardInstrument) {
-      void onOrchestraPatch({
-        type: 'pasteInstrument',
-        instrument: clipboardInstrument,
-      });
     }
-  }, [clipboardInstrument, libraryInstrumentAvailable, onOrchestraPatch, pasteLibraryInstrument]);
+  }, [libraryInstrumentAvailable, pasteLibraryInstrument]);
 
   const isAddMenuTarget = useCallback((target: EventTarget | null) => {
     if (!(target instanceof Node)) {
@@ -246,7 +247,7 @@ function ArrangementPanel({
           if (
             (event.metaKey || event.ctrlKey)
             && event.key.toLocaleLowerCase() === 'v'
-            && (libraryInstrumentAvailable || clipboardInstrument !== null)
+            && libraryInstrumentAvailable
             && !isTextEditingTarget(event.target)
           ) {
             event.preventDefault();
@@ -288,28 +289,39 @@ function ArrangementPanel({
           <tbody>
             {table.getRowModel().rows.map((row, index) => {
               const selected = row.original.assignmentId === selectedAssignmentId;
+              const canInsertAfter = insertionIds[index + 1] !== null;
+              const projectNode = projectNodes.find((candidate) => (
+                candidate.key?.scope === 'projectOwned'
+                && candidate.key.locator.kind === 'instrument'
+                && candidate.key.locator.assignmentId === row.original.assignmentId
+              )) ?? null;
               return (
                 <React.Fragment key={row.id}>
-                <LibraryTableDropMarker
-                  target={{ kind: 'orchestra', projectSessionId, projectRevision, insertIndex: index }}
-                  colSpan={row.getVisibleCells().length}
-                  label={`Insert Instrument before ${row.original.instrumentName}`}
-                />
+                {insertionIds[index] !== null ? (
+                  <LibraryTableDropMarker
+                    target={{ kind: 'orchestra', projectSessionId, projectRevision, insertIndex: index }}
+                    colSpan={row.getVisibleCells().length}
+                    label={`Insert Instrument before ${row.original.instrumentName}`}
+                  />
+                ) : null}
                 <LibraryDropZone
                   target={{ kind: 'orchestra', projectSessionId, projectRevision, insertIndex: index + 1 }}
+                  enabled={canInsertAfter}
                 >
                   {({ active, dropProps }) => (
                     <ArrangementContextMenu
                       row={row.original}
-                      hasClipboard={clipboardInstrument !== null || libraryInstrumentAvailable}
-                      onCopy={copyAssignment}
-                      onCut={cutAssignment}
+                      hasClipboard={canInsertAfter && libraryInstrumentAvailable}
+                      onCopy={(assignmentId) => captureAssignment(assignmentId, 'copy')}
+                      onCut={(assignmentId) => captureAssignment(assignmentId, 'cut')}
                       onPaste={() => pasteInstrument(index + 1)}
                       onOrchestraPatch={onOrchestraPatch}
                     >
+                      <ProjectLibraryDragSource node={projectNode}>
                       <tr
                         {...dropProps}
-                        data-library-drop-target="orchestra-row"
+                        data-assignment-id={row.original.assignmentId}
+                        data-library-drop-target={canInsertAfter ? 'orchestra-row' : undefined}
                         className={[
                           'cursor-default border-b border-app-border/50 text-app-text-soft',
                           active ? 'ring-1 ring-inset ring-app-accent' : '',
@@ -327,17 +339,20 @@ function ArrangementPanel({
                           </td>
                         ))}
                       </tr>
+                      </ProjectLibraryDragSource>
                     </ArrangementContextMenu>
                   )}
                 </LibraryDropZone>
                 </React.Fragment>
               );
             })}
-            <LibraryTableDropMarker
-              target={{ kind: 'orchestra', projectSessionId, projectRevision, insertIndex: rows.length }}
-              colSpan={Math.max(1, table.getAllLeafColumns().length)}
-              label="Insert Instrument at end"
-            />
+            {insertionIds[rows.length] !== null ? (
+              <LibraryTableDropMarker
+                target={{ kind: 'orchestra', projectSessionId, projectRevision, insertIndex: rows.length }}
+                colSpan={Math.max(1, table.getAllLeafColumns().length)}
+                label="Insert Instrument at end"
+              />
+            ) : null}
           </tbody>
         </table>
 

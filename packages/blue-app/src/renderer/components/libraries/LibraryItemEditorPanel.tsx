@@ -1,9 +1,27 @@
 import { useEffect, useState } from 'react';
+import type { LibraryEditorSessionSnapshot } from '../../../shared/unified-library';
 import { useLibraryEditorStore } from '../../stores/library-editor-store';
 import { LibraryBreadcrumbs } from './LibraryBreadcrumbs';
 import { LibraryControlledEditor } from './editor-registry';
 import { LibraryEditorToolbar } from './LibraryEditorToolbar';
 import { LibrarySessionDialog } from './LibrarySessionDialog';
+
+const USER_LIBRARY_LABELS = {
+  instrument: 'Instruments',
+  udo: 'User-Defined Opcodes',
+  soundObject: 'SoundObjects',
+  effect: 'Effects',
+} as const;
+
+function getDisplayBreadcrumbs(session: LibraryEditorSessionSnapshot): readonly string[] {
+  if (session.key.scope === 'user') {
+    return ['User Library', USER_LIBRARY_LABELS[session.key.libraryType], ...session.breadcrumb.slice(1)];
+  }
+  if (session.key.scope === 'projectShared' && session.key.libraryType === 'soundObject') {
+    return ['Project Library', 'SoundObjects', ...session.breadcrumb.slice(2)];
+  }
+  return session.breadcrumb;
+}
 
 interface LibraryItemEditorPanelProps {
   sessionId: string;
@@ -27,9 +45,9 @@ export function LibraryItemEditorPanel({ sessionId }: LibraryItemEditorPanelProp
 
   const store = useLibraryEditorStore.getState();
   return (
-    <div className="relative flex h-full min-h-0 flex-col bg-app-panel text-app-text">
+    <div className="relative flex h-full min-h-0 flex-col bg-app-bg text-app-text">
       <div className="border-b border-app-border px-2 py-1">
-        <LibraryBreadcrumbs parts={session.breadcrumb} />
+        <LibraryBreadcrumbs parts={getDisplayBreadcrumbs(session)} />
       </div>
       <LibraryEditorToolbar
         session={session}

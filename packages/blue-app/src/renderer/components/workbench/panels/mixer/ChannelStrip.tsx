@@ -13,7 +13,7 @@ import type {
   MixerSnapshot,
   ProjectEffectRef,
 } from '../../../../../shared/project-editor';
-import { getLibraryTransferSourceType } from '../../../../../shared/unified-library';
+import { getLibraryTransferSourceType, type LibraryBrowseNode } from '../../../../../shared/unified-library';
 import {
   applyEffectEditablePatchToEffect,
   createEffectEditorSnapshot,
@@ -30,6 +30,15 @@ import EffectsChainContextMenu from './EffectsChainContextMenu';
 import { LibraryBlockDropMarker, LibraryDropZone } from '../../../libraries/LibraryDropMarker';
 import { useLibraryStore } from '../../../../stores/library-store';
 import { isTextEditingTarget } from '../../../../hooks/use-keyboard-shortcuts';
+import { ProjectLibraryDragSource } from '../../../libraries/ProjectLibraryDragSource';
+
+const BLUE_MIXER_EFFECT_DRAG_MIME = 'application/x-blue-mixer-effect';
+
+export interface MixerChainSelection {
+  readonly channelId: string;
+  readonly chain: MixerChainKind;
+  readonly entryId: string;
+}
 
 const MIXER_SLIDER_WIDTH = 32;
 const MIXER_TRACK_W = 4;
@@ -46,6 +55,9 @@ interface ChannelStripProps {
   projectRevision: number;
   onOpenEffectInterface: (request: EffectEditorRequest) => void;
   onRemoveSubChannel?: (channelId: string) => void;
+  selection?: MixerChainSelection | null;
+  onSelectionChange?: (selection: MixerChainSelection | null) => void;
+  projectEffectNodes?: readonly LibraryBrowseNode[];
 }
 
 interface EffectDialogState {
@@ -248,6 +260,9 @@ function ChainList({
   onOpenEditEffectDialog,
   projectSessionId,
   projectRevision,
+  selection,
+  onSelectionChange,
+  projectEffectNodes,
 }: {
   label: string;
   entries: MixerChainEntrySnapshot[];
@@ -261,11 +276,16 @@ function ChainList({
   onOpenEditEffectDialog: (entry: MixerEffectEntrySnapshot, chain: MixerChainKind) => void;
   projectSessionId: number;
   projectRevision: number;
+  selection: MixerChainSelection | null;
+  onSelectionChange: (selection: MixerChainSelection | null) => void;
+  projectEffectNodes: readonly LibraryBrowseNode[];
 }): React.ReactElement {
-  const [selectedIndex, setSelectedIndex] = useState(-1);
+  const selectedIndex = selection?.channelId === channel.id && selection.chain === chain
+    ? entries.findIndex((entry) => entry.entryId === selection.entryId)
+    : -1;
   const libraryClipboard = useLibraryStore((state) => state.clipboard);
   const transferLibraryItem = useLibraryStore((state) => state.transferToProject);
-  const clearLibraryClipboard = useLibraryStore((state) => state.cancelClipboard);
+  const captureClipboard = useLibraryStore((state) => state.captureClipboard);
   const chainRevision = useMemo(
     () => entries.map((candidate) => candidate.entryId).join(':'),
     [entries],
@@ -293,8 +313,12 @@ function ChainList({
   }, [chain, chainRevision, channel.id, libraryClipboard, projectRevision, projectSessionId, transferLibraryItem]);
 
   const handleItemClick = useCallback((index: number) => {
-    setSelectedIndex((prev) => (prev === index ? -1 : index));
-  }, []);
+    const entry = entries[index];
+    if (!entry) return;
+    onSelectionChange(selectedIndex === index
+      ? null
+      : { channelId: channel.id, chain, entryId: entry.entryId });
+  }, [chain, channel.id, entries, onSelectionChange, selectedIndex]);
 
   const handleItemDoubleClick = useCallback(
     (index: number) => {
@@ -321,16 +345,77 @@ function ChainList({
         pasteLibraryEffect(selectedIndex >= 0 ? selectedIndex + 1 : entries.length);
       } else if (e.key === 'ArrowDown') {
         e.preventDefault();
-        setSelectedIndex((prev) => Math.min(prev + 1, entries.length - 1));
+        const next = Math.min(selectedIndex + 1, entries.length - 1);
+        const entry = entries[next];
+        if (entry) onSelectionChange({ channelId: channel.id, chain, entryId: entry.entryId });
       } else if (e.key === 'ArrowUp') {
         e.preventDefault();
-        setSelectedIndex((prev) => Math.max(prev - 1, -1));
+        const next = Math.max(selectedIndex - 1, 0);
+        const entry = entries[next];
+        if (entry) onSelectionChange({ channelId: channel.id, chain, entryId: entry.entryId });
       } else if (e.key === 'Enter' && selectedIndex >= 0) {
         handleItemDoubleClick(selectedIndex);
       }
     },
-    [entries.length, handleItemDoubleClick, libraryEffectAvailable, pasteLibraryEffect, selectedIndex],
+    [chain, channel.id, entries, handleItemDoubleClick, libraryEffectAvailable, onSelectionChange, pasteLibraryEffect, selectedIndex],
   );
+
+  const captureSelectedEffect = useCallback((operation: 'copy' | 'cut') => {
+    const selected = entries[selectedIndex];
+    if (!selected || selected.kind !== 'effect') return;
+    const node = projectEffectNodes.find((candidate) => (
+      candidate.key?.scope === 'projectOwned'
+      && candidate.key.locator.kind === 'effect'
+      && candidate.key.locator.channelId === channel.id
+      && candidate.key.locator.chain === chain
+      && candidate.key.locator.entryId === selected.entryId
+    ));
+    if (node) void captureClipboard(node, operation);
+  }, [captureClipboard, chain, channel.id, entries, projectEffectNodes, selectedIndex]);
+
+  const handleInternalDragOver = useCallback((event: React.DragEvent<HTMLElement>) => {
+    if (!event.dataTransfer.types.includes(BLUE_MIXER_EFFECT_DRAG_MIME)) return;
+    event.preventDefault();
+    event.stopPropagation();
+    event.dataTransfer.dropEffect = 'move';
+  }, []);
+
+  const handleInternalDrop = useCallback((event: React.DragEvent<HTMLElement>) => {
+    const raw = event.dataTransfer.getData(BLUE_MIXER_EFFECT_DRAG_MIME);
+    if (!raw) return;
+    event.preventDefault();
+    event.stopPropagation();
+    try {
+      const source = JSON.parse(raw) as Partial<MixerChainSelection>;
+      const marker = (event.target as HTMLElement).closest<HTMLElement>('[data-mixer-insert-index]');
+      const insertIndex = Number(marker?.dataset.mixerInsertIndex ?? entries.length);
+      if (
+        typeof source.channelId !== 'string'
+        || (source.chain !== 'pre' && source.chain !== 'post')
+        || typeof source.entryId !== 'string'
+        || !Number.isInteger(insertIndex)
+      ) return;
+      const sourceIndex = source.channelId === channel.id && source.chain === chain
+        ? entries.findIndex((entry) => entry.entryId === source.entryId)
+        : -1;
+      const destinationIndex = sourceIndex >= 0 && sourceIndex < insertIndex
+        ? insertIndex - 1
+        : insertIndex;
+      if (sourceIndex === destinationIndex) return;
+      onPatch({
+        type: 'moveChainEntryAcrossChains',
+        fromChannelId: source.channelId,
+        fromChain: source.chain,
+        toChannelId: channel.id,
+        toChain: chain,
+        entryId: source.entryId,
+        index: destinationIndex,
+      });
+      onSelectionChange({ channelId: channel.id, chain, entryId: source.entryId });
+    } catch {
+      return;
+    }
+  }, [chain, channel.id, entries.length, onPatch, onSelectionChange]);
 
   return (
     <div className="mixer-chain-section">
@@ -348,7 +433,7 @@ function ChainList({
         onOpenEditEffectDialog={onOpenEditEffectDialog}
         canPasteLibraryEffect={libraryEffectAvailable}
         onPasteLibraryEffect={() => pasteLibraryEffect(selectedIndex >= 0 ? selectedIndex + 1 : entries.length)}
-        onProjectClipboardCapture={clearLibraryClipboard}
+        onProjectClipboardCapture={captureSelectedEffect}
       >
         <div
           className="mixer-chain-list"
@@ -356,9 +441,22 @@ function ChainList({
           onKeyDown={handleKeyDown}
           role="listbox"
           aria-label={`${label} chain for ${channel.name}`}
+          onDragOverCapture={handleInternalDragOver}
+          onDropCapture={handleInternalDrop}
         >
-          {entries.map((entry, index) => (
+          {entries.map((entry, index) => {
+            const projectNode = entry.kind === 'effect'
+              ? projectEffectNodes.find((candidate) => (
+                  candidate.key?.scope === 'projectOwned'
+                  && candidate.key.locator.kind === 'effect'
+                  && candidate.key.locator.channelId === channel.id
+                  && candidate.key.locator.chain === chain
+                  && candidate.key.locator.entryId === entry.entryId
+                )) ?? null
+              : null;
+            return (
               <React.Fragment key={entry.entryId}>
+              <div data-mixer-insert-index={index}>
               <LibraryBlockDropMarker
                 target={{
                   kind: 'effectChain',
@@ -370,7 +468,9 @@ function ChainList({
                   chainRevision,
                 }}
                 label={`Insert Effect before ${entry.kind === 'effect' ? entry.name : entry.sendChannel}`}
+                pasteContextMenu={false}
               />
+              </div>
               <LibraryDropZone
                 target={{
                   kind: 'effectChain',
@@ -383,6 +483,7 @@ function ChainList({
                 }}
               >
                 {({ active, dropProps }) => (
+                  <ProjectLibraryDragSource node={projectNode}>
                   <div
                     {...dropProps}
                     data-library-drop-target="effect-row"
@@ -391,13 +492,27 @@ function ChainList({
                     onDoubleClick={() => handleItemDoubleClick(index)}
                     role="option"
                     aria-selected={index === selectedIndex}
+                    draggable={entry.kind === 'effect'}
+                    data-mixer-insert-index={index + 1}
+                    onDragStart={(event) => {
+                      if (entry.kind !== 'effect') return;
+                      event.dataTransfer.setData(BLUE_MIXER_EFFECT_DRAG_MIME, JSON.stringify({
+                        channelId: channel.id, chain, entryId: entry.entryId,
+                      }));
+                    }}
                   >
                     <ChainEntry entry={entry} />
                   </div>
+                  </ProjectLibraryDragSource>
                 )}
               </LibraryDropZone>
               </React.Fragment>
-            ))}
+            );
+          })}
+          <div
+            className="flex min-h-8 flex-1 flex-col"
+            data-mixer-insert-index={entries.length}
+          >
           <LibraryBlockDropMarker
             target={{
               kind: 'effectChain',
@@ -409,7 +524,10 @@ function ChainList({
               chainRevision,
             }}
             label={`Insert Effect at end of ${label} chain`}
+            fillRemaining
+            pasteContextMenu={false}
           />
+          </div>
         </div>
       </EffectsChainContextMenu>
     </div>
@@ -547,7 +665,13 @@ export default function ChannelStrip({
   projectRevision,
   onOpenEffectInterface,
   onRemoveSubChannel,
+  selection: controlledSelection,
+  onSelectionChange: controlledOnSelectionChange,
+  projectEffectNodes = [],
 }: ChannelStripProps): React.ReactElement {
+  const [localSelection, setLocalSelection] = useState<MixerChainSelection | null>(null);
+  const selection = controlledSelection === undefined ? localSelection : controlledSelection;
+  const onSelectionChange = controlledOnSelectionChange ?? setLocalSelection;
   const [editingLevel, setEditingLevel] = useState(false);
   const [levelInput, setLevelInput] = useState('');
   const [editingName, setEditingName] = useState(false);
@@ -763,6 +887,9 @@ export default function ChannelStrip({
         onOpenEditEffectDialog={handleOpenEditDialog}
         projectSessionId={projectSessionId}
         projectRevision={projectRevision}
+        selection={selection}
+        onSelectionChange={onSelectionChange}
+        projectEffectNodes={projectEffectNodes}
       />
 
       <div className="mixer-level-section">
@@ -812,6 +939,9 @@ export default function ChannelStrip({
         onOpenEditEffectDialog={handleOpenEditDialog}
         projectSessionId={projectSessionId}
         projectRevision={projectRevision}
+        selection={selection}
+        onSelectionChange={onSelectionChange}
+        projectEffectNodes={projectEffectNodes}
       />
 
       {!isMaster && (

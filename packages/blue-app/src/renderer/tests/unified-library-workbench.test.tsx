@@ -14,7 +14,7 @@ describe('Unified Libraries workbench integration', () => {
     });
     expect(PANEL_MAP.has('WelcomeTopComponent')).toBe(false);
     expect(PANEL_MAP.get('SoundObjectLibraryTopComponent')).toMatchObject({
-      title: 'SoundObject Library',
+      title: 'Project SoundObjects',
       auxiliaryGroupId: 'properties-main',
       openAtStartup: false,
     });

@@ -13,6 +13,7 @@ export function beginLibraryNodeDrag(
   const descriptor: LibraryDragDescriptor = {
     dragSessionId: crypto.randomUUID(),
     libraryType: node.libraryType,
+    sourceScope: node.scope,
   };
   void window.blueAPI
     .beginLibraryDrag({
@@ -28,7 +29,7 @@ export function writeLibraryDragDescriptor(
   dataTransfer: DataTransfer,
   descriptor: LibraryDragDescriptor,
 ): void {
-  dataTransfer.effectAllowed = 'copy';
+  dataTransfer.effectAllowed = 'copyMove';
   dataTransfer.setData(BLUE_LIBRARY_DRAG_MIME, JSON.stringify(descriptor));
   dataTransfer.setData('text/plain', 'Blue Library Item');
 }

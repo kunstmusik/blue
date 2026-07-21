@@ -5,13 +5,14 @@ import type { LibraryType } from '../../../shared/unified-library';
 interface LibraryActionsMenuProps {
   selectedType: LibraryType | 'all';
   onImport: () => void;
+  onImportDirectory: () => void;
   onExportCurrent: () => void;
   onExportAll: () => void;
 }
 
 const ITEM_CLASS = 'editor-context-menu__item';
 
-export function LibraryActionsMenu({ selectedType, onImport, onExportCurrent, onExportAll }: LibraryActionsMenuProps): React.ReactElement {
+export function LibraryActionsMenu({ selectedType, onImport, onImportDirectory, onExportCurrent, onExportAll }: LibraryActionsMenuProps): React.ReactElement {
   return (
     <DropdownMenu.Root>
       <DropdownMenu.Trigger asChild>
@@ -27,6 +28,7 @@ export function LibraryActionsMenu({ selectedType, onImport, onExportCurrent, on
       <DropdownMenu.Portal>
         <DropdownMenu.Content align="end" sideOffset={4} collisionPadding={8} className="editor-context-menu z-[1000] min-w-44">
           <DropdownMenu.Item className={ITEM_CLASS} onSelect={onImport}>Import XML…</DropdownMenu.Item>
+          <DropdownMenu.Item className={ITEM_CLASS} onSelect={onImportDirectory}>Import Java Configuration Directory…</DropdownMenu.Item>
           <DropdownMenu.Item
             className={ITEM_CLASS}
             disabled={selectedType === 'all'}

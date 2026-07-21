@@ -44,7 +44,7 @@ export const WORKBENCH_PANEL_REGISTRY: PanelDescriptor[] = [
   },
   {
     id: 'SoundObjectLibraryTopComponent',
-    title: 'SoundObject Library',
+    title: 'Project SoundObjects',
     mode: 'properties',
     openAtStartup: false,
     auxiliaryGroupId: 'properties-main',

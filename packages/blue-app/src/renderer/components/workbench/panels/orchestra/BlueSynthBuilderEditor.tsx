@@ -73,7 +73,11 @@ function BlueSynthBuilderEditor({
           />
         </div>
         <div className={activeTab === 'udo' ? 'h-full' : 'hidden'} aria-hidden={activeTab !== 'udo'}>
-          <BSBUDOPanel instrument={instrument} onInstrumentPatch={onInstrumentPatch} />
+          <BSBUDOPanel
+            instrument={instrument}
+            onInstrumentPatch={onInstrumentPatch}
+            libraryInstrumentAssignmentId={instrument.assignmentId}
+          />
         </div>
       </div>
     </div>

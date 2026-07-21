@@ -277,12 +277,12 @@ export default function TempoLineView({
       {enabled && rootTimelineOnly && (
         <ContextMenu.Portal>
           <ContextMenu.Content
-            className="z-50 min-w-30 rounded-md border border-blue-border/40 bg-app-menu p-1 shadow-lg"
+            className="editor-context-menu"
             onCloseAutoFocus={() => setContextMenuTarget(null)}
           >
             {contextMenuTarget?.type === 'point' && Math.abs(points[contextMenuTarget.index]?.beat ?? 0) >= BEAT_EPSILON ? (
               <ContextMenu.Item
-                className="cursor-pointer rounded-sm px-2 py-1 text-ui text-app-danger outline-none data-[highlighted]:bg-app-highlight"
+                className="editor-context-menu__item text-app-danger"
                 onSelect={() => {
                   onTempoPatch({ type: 'removeTempoPoint', index: contextMenuTarget.index });
                   if (selectedPoint === contextMenuTarget.index) {
@@ -296,7 +296,7 @@ export default function TempoLineView({
             ) : contextMenuTarget?.type === 'segment' ? (
               <>
                 <ContextMenu.Item
-                  className={`text-ui px-2 py-1 rounded-sm cursor-pointer outline-none data-[highlighted]:bg-white/10 ${points[contextMenuTarget.index]?.curveType === 'constant' ? 'text-blue-muted' : 'text-blue-text'}`}
+                  className="editor-context-menu__item"
                   disabled={points[contextMenuTarget.index]?.curveType === 'constant'}
                   onSelect={() => {
                     onTempoPatch({ type: 'setTempoCurveType', index: contextMenuTarget.index, curveType: 'constant' });
@@ -306,7 +306,7 @@ export default function TempoLineView({
                   Constant
                 </ContextMenu.Item>
                 <ContextMenu.Item
-                  className={`text-ui px-2 py-1 rounded-sm cursor-pointer outline-none data-[highlighted]:bg-white/10 ${points[contextMenuTarget.index]?.curveType === 'linear' ? 'text-blue-muted' : 'text-blue-text'}`}
+                  className="editor-context-menu__item"
                   disabled={points[contextMenuTarget.index]?.curveType === 'linear'}
                   onSelect={() => {
                     onTempoPatch({ type: 'setTempoCurveType', index: contextMenuTarget.index, curveType: 'linear' });

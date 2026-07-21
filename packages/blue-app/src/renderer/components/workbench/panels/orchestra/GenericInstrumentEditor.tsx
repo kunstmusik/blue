@@ -65,6 +65,7 @@ export default function GenericInstrumentEditor({
             >
               {tab.key === 'udo' ? (
                 <EmbeddedUdoPanel
+                  assignmentId={instrument.assignmentId}
                   udolist={instrument.udolist ?? []}
                   resetKey={instrument.assignmentId}
                   onInstrumentPatch={onInstrumentPatch}
@@ -93,4 +94,3 @@ export default function GenericInstrumentEditor({
     </div>
   );
 }
-

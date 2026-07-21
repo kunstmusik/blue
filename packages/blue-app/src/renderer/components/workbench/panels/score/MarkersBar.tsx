@@ -297,7 +297,7 @@ function MarkerWidget({ marker, sourceIndex, pixelsPerBeat, onStartDrag, isDragg
         </div>
       </ContextMenu.Trigger>
       <ContextMenu.Portal>
-        <ContextMenu.Content className="z-50 min-w-40 rounded border border-app-border/50 bg-app-menu py-1 shadow-lg">
+        <ContextMenu.Content className="editor-context-menu">
           <ContextMenu.Item className={ctxItemClass} onSelect={handleRemove}>
             Remove
           </ContextMenu.Item>

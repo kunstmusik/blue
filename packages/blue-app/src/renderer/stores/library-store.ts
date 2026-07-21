@@ -3,8 +3,11 @@ import {
   LIBRARY_TYPES,
   getLibraryTransferSourceType,
   type LibraryBrowseNode,
+  type BrowseLibraryResult,
+  type BrowseLibraryRequest,
   type LibraryChangedEvent,
   type LibraryInteractionClipboard,
+  type LibraryResult,
   type LibraryExactTransferTarget,
   type LibraryInsertionMode,
   type LibraryTransferPreview,
@@ -17,9 +20,12 @@ import {
   type LibraryMutationPreview,
   type ManualLibraryImportPreview,
   type ManualLibraryImportResult,
+  type ScoreTimelineSoundObjectRequest,
 } from '../../shared/unified-library';
-import { useLibraryEditorStore } from './library-editor-store';
-import { libraryEditorPanelId } from './library-editor-store';
+import {
+  libraryEditorPanelId,
+  useLibraryEditorStore,
+} from './library-editor-store';
 import { useWorkbenchStore } from './workbench-store';
 import { toast } from 'sonner';
 
@@ -60,9 +66,13 @@ interface LibraryState {
   loadMoreSearchResults: () => Promise<void>;
   expandNode: (node: LibraryBrowseNode) => Promise<void>;
   selectItem: (key: LibraryItemKey) => Promise<void>;
-  captureClipboard: (node: LibraryBrowseNode, operation: 'copy' | 'cut') => void;
+  captureClipboard: (node: LibraryBrowseNode, operation: 'copy' | 'cut') => Promise<boolean>;
+  captureScoreSoundObject: (request: ScoreTimelineSoundObjectRequest) => Promise<boolean>;
+  addScoreSoundObjectToProjectLibrary: (request: ScoreTimelineSoundObjectRequest) => Promise<boolean>;
   cancelClipboard: () => void;
   pasteInto: (parent: LibraryBrowseNode) => Promise<boolean>;
+  transferToUser: (source: LibraryTransferSourceReference, parent: LibraryBrowseNode) => Promise<boolean>;
+  moveUserNode: (source: LibraryBrowseNode, destination: LibraryBrowseNode) => Promise<boolean>;
   transferToProject: (source: LibraryTransferSourceReference, target: LibraryExactTransferTarget, mode?: LibraryInsertionMode) => Promise<boolean>;
   applyTransfer: (mode?: LibraryInsertionMode) => Promise<boolean>;
   cancelTransfer: () => void;
@@ -72,7 +82,8 @@ interface LibraryState {
   applyMutation: (mutation: UserLibraryMutation) => Promise<boolean>;
   openEditor: (key: LibraryItemKey, pinned?: boolean) => Promise<void>;
   selectImportFiles: () => Promise<void>;
-  executeImport: () => Promise<void>;
+  selectImportDirectory: () => Promise<void>;
+  executeImport: (folderSelections?: Readonly<Record<string, string>>) => Promise<void>;
   cancelImport: () => void;
   exportCurrent: () => Promise<void>;
   exportAll: () => Promise<void>;
@@ -84,6 +95,77 @@ interface LibraryState {
 let searchTimer: ReturnType<typeof setTimeout> | null = null;
 let unsubscribeSnapshot: (() => void) | null = null;
 let unsubscribeChanged: (() => void) | null = null;
+let refreshGeneration = 0;
+let searchGeneration = 0;
+const expandGenerations = new Map<string, number>();
+
+async function browseAllChildren(
+  parent: BrowseLibraryRequest['parent'],
+): Promise<LibraryResult<BrowseLibraryResult>> {
+  const children: LibraryBrowseNode[] = [];
+  const seenNodeIds = new Set<string>();
+  const seenCursors = new Set<string>();
+  let cursor: string | undefined;
+  let contentRevision: number | undefined;
+  let browseParent: LibraryBrowseNode | null = null;
+
+  do {
+    const result = await window.blueAPI.browseLibraries({
+      parent,
+      cursor,
+      limit: 500,
+      ...(contentRevision === undefined ? {} : { expectedContentRevision: contentRevision }),
+    });
+    if (!result.ok) return result;
+    contentRevision ??= result.value.contentRevision;
+    browseParent ??= result.value.parent;
+    for (const child of result.value.children) {
+      if (!seenNodeIds.has(child.nodeId)) {
+        seenNodeIds.add(child.nodeId);
+        children.push(child);
+      }
+    }
+    const nextCursor = result.value.nextCursor ?? undefined;
+    if (nextCursor && seenCursors.has(nextCursor)) {
+      return {
+        ok: false,
+        error: {
+          code: 'stale-cursor',
+          message: 'Library browse returned a repeated cursor.',
+          retryable: true,
+        },
+      };
+    }
+    if (nextCursor) seenCursors.add(nextCursor);
+    cursor = nextCursor;
+  } while (cursor);
+
+  if (!browseParent || contentRevision === undefined) {
+    return {
+      ok: false,
+      error: {
+        code: 'storage-failure',
+        message: 'Library browse returned no parent.',
+        retryable: true,
+      },
+    };
+  }
+  return {
+    ok: true,
+    value: { contentRevision, parent: browseParent, children, nextCursor: null },
+  };
+}
+
+function findUserNode(state: LibraryState, nodeId: string): LibraryBrowseNode | null {
+  for (const root of Object.values(state.userRootsByType)) {
+    if (root?.nodeId === nodeId) return root;
+  }
+  for (const children of Object.values(state.childrenByParent)) {
+    const match = children.find((node) => node.nodeId === nodeId);
+    if (match) return match;
+  }
+  return null;
+}
 
 function initialState() {
   return {
@@ -150,6 +232,9 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
     unsubscribeChanged?.();
     unsubscribeSnapshot = null;
     unsubscribeChanged = null;
+    refreshGeneration += 1;
+    searchGeneration += 1;
+    expandGenerations.clear();
   },
 
   reset: () => {
@@ -158,29 +243,71 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
   },
 
   refresh: async () => {
-    const userResults = await Promise.all(LIBRARY_TYPES.map(async (libraryType) => (
-      window.blueAPI.browseLibraries({ parent: { scope: 'user', libraryType } })
+    const generation = ++refreshGeneration;
+    const previous = get();
+    const userResults = await Promise.all(LIBRARY_TYPES.map((libraryType) => (
+      window.blueAPI.browseLibraries({ parent: { scope: 'user', libraryType }, limit: 1 })
     )));
-    const nodesByType = { ...EMPTY_NODES };
-    const userRootsByType: Record<LibraryType, LibraryBrowseNode | null> = {
-      instrument: null, udo: null, soundObject: null, effect: null,
-    };
+    if (generation !== refreshGeneration) return;
+
+    const nodesByType = { ...previous.nodesByType };
+    const userRootsByType = { ...previous.userRootsByType };
+    const errors: string[] = [];
     LIBRARY_TYPES.forEach((type, index) => {
       const result = userResults[index];
-      nodesByType[type] = result?.ok ? [...result.value.children] : [];
-      userRootsByType[type] = result?.ok ? result.value.parent : null;
+      if (!result?.ok) {
+        errors.push(result?.error.message ?? `Unable to browse ${type} Libraries.`);
+        return;
+      }
+      userRootsByType[type] = result.value.parent;
+      if (!previous.childrenByParent[result.value.parent.nodeId]) nodesByType[type] = [];
     });
 
-    set({ nodesByType, userRootsByType, error: null });
+    set({ nodesByType, userRootsByType, error: errors.length > 0 ? errors.join(' ') : null });
+
+    const loadedParents = Object.keys(previous.childrenByParent).map((nodeId) => {
+      const refreshedRoot = Object.values(userRootsByType).find((node) => node?.nodeId === nodeId);
+      return refreshedRoot ?? findUserNode(previous, nodeId);
+    }).filter((node): node is LibraryBrowseNode => node !== null && node.scope === 'user');
+    const loadedResults = await Promise.all(loadedParents.map(async (node) => ({
+      node,
+      result: await browseAllChildren({ scope: 'user', libraryType: node.libraryType, nodeId: node.nodeId }),
+    })));
+    if (generation !== refreshGeneration) return;
+    set((state) => {
+      const childrenByParent = { ...state.childrenByParent };
+      const nextNodesByType = { ...state.nodesByType };
+      const refreshErrors = [...errors];
+      for (const { node, result } of loadedResults) {
+        if (!result.ok) {
+          if (result.error.code === 'not-found') {
+            delete childrenByParent[node.nodeId];
+            continue;
+          }
+          refreshErrors.push(result.error.message);
+          continue;
+        }
+        const children = [...result.value.children];
+        childrenByParent[node.nodeId] = children;
+        if (node.nodeKind === 'root') nextNodesByType[node.libraryType] = children;
+      }
+      return {
+        childrenByParent,
+        nodesByType: nextNodesByType,
+        error: refreshErrors.length > 0 ? refreshErrors.join(' ') : null,
+      };
+    });
     if (get().query.trim()) await get().runSearch(false);
   },
 
   setTypeFilter: (typeFilter) => {
     set({ typeFilter });
+    searchGeneration += 1;
     if (get().query.trim()) void get().runSearch(false);
   },
 
   setQuery: (query) => {
+    searchGeneration += 1;
     set({ query, nextSearchCursor: null });
     if (searchTimer) clearTimeout(searchTimer);
     if (!query.trim()) {
@@ -200,13 +327,20 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
     if (!query) return;
     const cursor = append ? state.nextSearchCursor ?? undefined : undefined;
     if (append && !cursor) return;
+    const generation = ++searchGeneration;
+    const typeFilter = state.typeFilter;
     const result = await window.blueAPI.searchLibraries({
       query,
-      typeFilter: state.typeFilter,
+      typeFilter,
       projectSessionId: null,
       cursor,
       limit: 100,
     });
+    if (
+      generation !== searchGeneration
+      || get().query.trim() !== query
+      || get().typeFilter !== typeFilter
+    ) return;
     if (!result.ok) {
       set({ error: result.error.message });
       return;
@@ -222,20 +356,31 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
 
   expandNode: async (node) => {
     if (!node.hasChildren || node.nodeKind === 'item') return;
-    const result = await window.blueAPI.browseLibraries({
-      parent: node.scope === 'user'
-        ? { scope: 'user', libraryType: node.libraryType, nodeId: node.nodeId }
-        : {
-            scope: node.scope,
-            libraryType: node.libraryType as Exclude<LibraryType, 'effect'>,
-            projectSessionId: get().snapshot?.projectSessionId ?? -1,
-          },
+    if (node.scope !== 'user') return;
+    const generation = (expandGenerations.get(node.nodeId) ?? 0) + 1;
+    expandGenerations.set(node.nodeId, generation);
+    const refreshAtStart = refreshGeneration;
+    const result = await browseAllChildren({
+      scope: 'user', libraryType: node.libraryType, nodeId: node.nodeId,
     });
-    if (result.ok) {
-      set((state) => ({
-        childrenByParent: { ...state.childrenByParent, [node.nodeId]: [...result.value.children] },
-      }));
+    if (
+      expandGenerations.get(node.nodeId) !== generation
+      || refreshAtStart !== refreshGeneration
+    ) return;
+    if (!result.ok) {
+      set({ error: result.error.message });
+      return;
     }
+    set((state) => {
+      const children = [...result.value.children];
+      return {
+        childrenByParent: { ...state.childrenByParent, [node.nodeId]: children },
+        ...(node.nodeKind === 'root'
+          ? { nodesByType: { ...state.nodesByType, [node.libraryType]: children } }
+          : {}),
+        error: null,
+      };
+    });
   },
 
   selectItem: async (key) => {
@@ -243,57 +388,231 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
     await get().openEditor(key, false);
   },
 
-  captureClipboard: (node, operation) => {
-    if (node.nodeKind !== 'item' || !node.key || node.revision === undefined) return;
-    if (operation === 'cut' && node.scope !== 'user') return;
+  captureClipboard: async (node, operation) => {
+    if (node.revision === undefined || node.nodeKind === 'root') return false;
+    if (node.scope === 'user' && typeof node.revision !== 'number') return false;
+    if (node.scope !== 'user' && (node.nodeKind !== 'item' || !node.key)) return false;
+    const source = node.scope === 'user'
+      ? {
+          kind: 'userNode' as const,
+          libraryType: node.libraryType,
+          nodeId: node.nodeId,
+          revision: node.revision,
+        }
+      : {
+          kind: 'library' as const,
+          key: node.key!,
+          revision: node.revision,
+        };
+    if (operation === 'copy') {
+      set({ clipboard: { operation, source, capturedAt: Date.now() }, error: null });
+      return true;
+    }
+
+    let confirmationToken: string;
+    if (source.kind === 'userNode') {
+      const preview = await window.blueAPI.prepareLibraryMutation({
+        type: 'deleteNode',
+        nodeId: source.nodeId,
+        expectedRevision: source.revision,
+      });
+      if (!preview.ok) {
+        set({ error: preview.error.message });
+        toast.error(preview.error.message);
+        return false;
+      }
+      if (preview.value.dirtyEditorSessionIds.length > 0) {
+        const message = 'Save or discard dirty Library Item editors before cutting this selection.';
+        set({ error: message });
+        toast.error(message);
+        return false;
+      }
+      confirmationToken = preview.value.confirmationToken;
+    } else {
+      const preview = await window.blueAPI.previewProjectLibraryDelete(source.key);
+      if (!preview.ok) {
+        set({ error: preview.error.message });
+        toast.error(preview.error.message);
+        return false;
+      }
+      if (
+        source.key.libraryType === 'soundObject'
+        && preview.value.linkedInstanceCount > 0
+        && !window.confirm(
+          `Cut this SoundObject and remove its project definition plus ${preview.value.linkedInstanceCount} linked score instance${preview.value.linkedInstanceCount === 1 ? '' : 's'}?`,
+        )
+      ) return false;
+      confirmationToken = preview.value.confirmationToken;
+    }
+
+    const result = await window.blueAPI.cutLibraryToClipboard({ source, confirmationToken });
+    if (!result.ok) {
+      set({ error: result.error.message });
+      toast.error(result.error.message);
+      return false;
+    }
+    for (const sessionId of result.value.closedEditorSessionIds) {
+      useLibraryEditorStore.setState((state) => {
+        const sessions = { ...state.sessions };
+        delete sessions[sessionId];
+        return { sessions };
+      });
+      useWorkbenchStore.getState().closePanel(libraryEditorPanelId(sessionId));
+    }
     set({
-      clipboard: {
-        operation,
-        source: node.scope === 'user'
-          ? {
-              kind: 'userNode',
-              libraryType: node.libraryType,
-              nodeId: node.nodeId,
-              revision: node.revision,
-            }
-          : {
-              kind: 'library',
-              key: node.key,
-              revision: node.revision,
-            },
-        capturedAt: Date.now(),
-      },
+      clipboard: result.value.clipboard,
+      selectedKey: node.key && JSON.stringify(get().selectedKey) === JSON.stringify(node.key)
+        ? null
+        : get().selectedKey,
       error: null,
     });
+    await get().refresh();
+    toast.success(`${node.displayName} cut to the ${node.libraryType} buffer.`);
+    return true;
+  },
+
+  captureScoreSoundObject: async (request) => {
+    const result = await window.blueAPI.captureScoreSoundObjectClipboard(request);
+    if (!result.ok) {
+      set({ error: result.error.message });
+      toast.error(result.error.message);
+      return false;
+    }
+    set({ clipboard: result.value, error: null });
+    return true;
+  },
+
+  addScoreSoundObjectToProjectLibrary: async (request) => {
+    const result = await window.blueAPI.addScoreSoundObjectToProjectLibrary(request);
+    if (!result.ok) {
+      set({ error: result.error.message });
+      toast.error(result.error.message);
+      return false;
+    }
+    set({ error: null });
+    toast.success(result.value.message);
+    return true;
   },
 
   cancelClipboard: () => set({ clipboard: null }),
 
-  pasteInto: async (parent) => {
+  pasteInto: async (destination) => {
     const clipboard = get().clipboard;
-    if (!clipboard || clipboard.source.kind !== 'userNode' || parent.scope !== 'user') return false;
+    if (!clipboard || destination.scope !== 'user') return false;
+    let parent = destination;
+    if (destination.nodeKind === 'item') {
+      if (!destination.parentId) {
+        set({ error: 'The destination folder is unavailable.' });
+        return false;
+      }
+      parent = findUserNode(get(), destination.parentId) ?? destination;
+      if (parent.nodeKind === 'item') {
+        const parentResult = await browseAllChildren({
+          scope: 'user', libraryType: destination.libraryType, nodeId: destination.parentId,
+        });
+        if (!parentResult.ok) {
+          set({ error: parentResult.error.message });
+          return false;
+        }
+        parent = parentResult.value.parent;
+        const parentChildren = [...parentResult.value.children];
+        set((state) => ({
+          childrenByParent: { ...state.childrenByParent, [parent.nodeId]: parentChildren },
+        }));
+      }
+    }
     if (getLibraryTransferSourceType(clipboard.source) !== parent.libraryType) {
       set({ error: 'Library items can only be pasted within the same library type.' });
       return false;
     }
-    const mutation: UserLibraryMutation = clipboard.operation === 'copy'
-      ? {
-          type: 'duplicateNode',
-          nodeId: clipboard.source.nodeId,
-          expectedRevision: clipboard.source.revision,
-          parentId: parent.nodeId,
-          ...(typeof parent.revision === 'number' ? { expectedParentRevision: parent.revision } : {}),
-        }
-      : {
-          type: 'moveNode',
-          nodeId: clipboard.source.nodeId,
-          expectedRevision: clipboard.source.revision,
-          parentId: parent.nodeId,
-          ...(typeof parent.revision === 'number' ? { expectedParentRevision: parent.revision } : {}),
-          targetIndex: 0,
-        };
-    const applied = await get().applyMutation(mutation);
-    if (applied && clipboard.operation === 'cut') set({ clipboard: null });
+    if (clipboard.source.kind === 'buffer') {
+      const copied = await window.blueAPI.copyLibraryTransferToUser(
+        { kind: 'clipboard', source: clipboard.source },
+        parent.nodeId,
+      );
+      if (!copied.ok) {
+        set({ error: copied.error.message });
+        toast.error(copied.error.message);
+        return false;
+      }
+      await get().refresh();
+      toast.success('Clipboard contents pasted to User Libraries.');
+      return true;
+    }
+    if (clipboard.source.kind === 'userNode') {
+      const mutation: UserLibraryMutation = {
+        type: 'duplicateNode',
+        nodeId: clipboard.source.nodeId,
+        expectedRevision: clipboard.source.revision,
+        parentId: parent.nodeId,
+        ...(typeof parent.revision === 'number' ? { expectedParentRevision: parent.revision } : {}),
+      };
+      const applied = await get().applyMutation(mutation);
+      return applied;
+    }
+    const copied = await window.blueAPI.copyLibraryTransferToUser(
+      { kind: 'clipboard', source: clipboard.source },
+      parent.nodeId,
+    );
+    if (!copied.ok) {
+      set({ error: copied.error.message });
+      toast.error(copied.error.message);
+      return false;
+    }
+    await get().refresh();
+    toast.success('Item copied to User Libraries.');
+    return true;
+  },
+
+  transferToUser: async (source, destination) => {
+    if (destination.scope !== 'user') return false;
+    const parent = destination.nodeKind === 'item' && destination.parentId
+      ? findUserNode(get(), destination.parentId)
+      : destination;
+    if (!parent || parent.nodeKind === 'item') {
+      set({ error: 'The destination folder is unavailable.' });
+      return false;
+    }
+    const sourceType = source.kind === 'clipboard'
+      ? getLibraryTransferSourceType(source.source)
+      : null;
+    if (sourceType && sourceType !== parent.libraryType) {
+      set({ error: 'Library items can only be pasted within the same library type.' });
+      return false;
+    }
+    const result = await window.blueAPI.copyLibraryTransferToUser(source, parent.nodeId);
+    if (!result.ok) {
+      set({ error: result.error.message });
+      toast.error(result.error.message);
+      return false;
+    }
+    set({ error: null });
+    await get().refresh();
+    toast.success('Item copied to User Libraries.');
+    return true;
+  },
+
+  moveUserNode: async (source, destination) => {
+    if (
+      source.scope !== 'user'
+      || destination.scope !== 'user'
+      || source.nodeKind === 'root'
+      || destination.nodeKind === 'item'
+      || source.libraryType !== destination.libraryType
+      || source.nodeId === destination.nodeId
+      || typeof source.revision !== 'number'
+    ) return false;
+    const applied = await get().applyMutation({
+      type: 'moveNode',
+      nodeId: source.nodeId,
+      expectedRevision: source.revision,
+      parentId: destination.nodeId,
+      ...(typeof destination.revision === 'number'
+        ? { expectedParentRevision: destination.revision }
+        : {}),
+      targetIndex: get().childrenByParent[destination.nodeId]?.length ?? Number.MAX_SAFE_INTEGER,
+    });
+    if (applied) toast.success(`${source.displayName} moved to ${destination.displayName}.`);
     return applied;
   },
 
@@ -396,11 +715,15 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
       useWorkbenchStore.getState().closePanel(libraryEditorPanelId(sessionId));
     }
     const clipboard = get().clipboard;
+    const selectedKey = get().selectedKey;
     set({
       deletePreview: null,
       clipboard: clipboard?.source.kind === 'userNode' && preview.affectedNodeIds.includes(clipboard.source.nodeId)
         ? null
         : clipboard,
+      selectedKey: selectedKey?.scope === 'user' && preview.affectedNodeIds.includes(selectedKey.nodeId)
+        ? null
+        : selectedKey,
       error: null,
     });
     await get().refresh();
@@ -423,21 +746,12 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
 
   openEditor: async (key, pinned = false) => {
     const editorStore = useLibraryEditorStore.getState();
-    const replaceableSessionIds = Object.values(editorStore.sessions)
-      .filter((session) => !session.dirty && !session.pinned)
-      .map((session) => session.sessionId);
     const session = await editorStore.open(key, pinned);
     if (!session) {
       set({ error: useLibraryEditorStore.getState().error });
       return;
     }
-    const workbenchStore = useWorkbenchStore.getState();
-    for (const sessionId of replaceableSessionIds) {
-      if (sessionId !== session.sessionId) {
-        workbenchStore.closePanel(libraryEditorPanelId(sessionId));
-      }
-    }
-    workbenchStore.openLibraryEditorPanel(session);
+    useWorkbenchStore.getState().openLibraryEditorPanel(session);
   },
 
   selectImportFiles: async () => {
@@ -447,10 +761,24 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
     set({ importPreview: result.value, importResult: null, error: null });
   },
 
-  executeImport: async () => {
+  selectImportDirectory: async () => {
+    const result = await window.blueAPI.selectLibraryImportDirectory();
+    if (!result) return;
+    if (!result.ok) return set({ error: result.error.message });
+    if (result.value.sources.length === 0) {
+      set({ error: 'No recognized Java Blue library files were found in that directory.' });
+      return;
+    }
+    set({ importPreview: result.value, importResult: null, error: null });
+  },
+
+  executeImport: async (folderSelections = {}) => {
     const preview = get().importPreview;
     if (!preview) return;
-    const result = await window.blueAPI.executeLibraryImport(preview.previewToken);
+    const result = await window.blueAPI.executeLibraryImport({
+      previewToken: preview.previewToken,
+      folderSelections,
+    });
     if (!result.ok) return set({ error: result.error.message });
     set({ importPreview: null, importResult: result.value, error: null });
     await get().refresh();
