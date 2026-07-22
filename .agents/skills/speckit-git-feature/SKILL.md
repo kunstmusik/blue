@@ -11,7 +11,7 @@ disable-model-invocation: true
 
 # Create Feature Branch
 
-Create and switch to a new git feature branch for the given specification. This command handles **branch creation only** — the spec directory and files are created by the core `/speckit.specify` workflow.
+Create and switch to a new git feature branch for the given specification. This command handles **branch creation only** — the spec directory and files are created by the core `/speckit-specify` workflow.
 
 ## User Input
 

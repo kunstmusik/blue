@@ -34,3 +34,16 @@ npm-debug.log*
 packages/blue-java/target
 packages/blue-app/assets/java/blue-java.jar
 temp*.csd
+
+# =========================================================================
+# Spec Kit - Recommended Strategy (Tracks specs, plans, templates & scripts)
+# =========================================================================
+
+# Ignore temporary framework and runtime branch cache
+.specify/feature.json
+
+# If you choose to ignore third-party extensions downloaded locally
+.specify/extensions/
+
+# Optional: Ignore IDE level command shortcuts if you don't want them tracked
+.cursor/skills/speckit-*

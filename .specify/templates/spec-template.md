@@ -1,8 +1,11 @@
 # Feature Specification: [FEATURE NAME]
 
-**Feature Branch**: `[###-feature-name]`  
-**Created**: [DATE]  
-**Status**: Draft  
+**Feature Branch**: `[###-feature-name]`
+
+**Created**: [DATE]
+
+**Status**: Draft
+
 **Input**: User description: "$ARGUMENTS"
 
 ## User Scenarios & Testing *(mandatory)*
@@ -11,7 +14,7 @@
   IMPORTANT: User stories should be PRIORITIZED as user journeys ordered by importance.
   Each user story/journey must be INDEPENDENTLY TESTABLE - meaning if you implement just ONE of them,
   you should still have a viable MVP (Minimum Viable Product) that delivers value.
-  
+
   Assign priorities (P1, P2, P3, etc.) to each story, where P1 is the most critical.
   Think of each story as a standalone slice of functionality that can be:
   - Developed independently
@@ -85,7 +88,7 @@
 ### Functional Requirements
 
 - **FR-001**: System MUST [specific capability, e.g., "allow users to create accounts"]
-- **FR-002**: System MUST [specific capability, e.g., "validate email addresses"]  
+- **FR-002**: System MUST [specific capability, e.g., "validate email addresses"]
 - **FR-003**: Users MUST be able to [key interaction, e.g., "reset their password"]
 - **FR-004**: System MUST [data requirement, e.g., "persist user preferences"]
 - **FR-005**: System MUST [behavior, e.g., "log all security events"]
@@ -94,6 +97,19 @@
 
 - **FR-006**: System MUST authenticate users via [NEEDS CLARIFICATION: auth method not specified - email/password, SSO, OAuth?]
 - **FR-007**: System MUST retain user data for [NEEDS CLARIFICATION: retention period not specified]
+
+### Existing Behavior & Data Compatibility *(mandatory when applicable)*
+
+<!--
+  Complete this section when the feature affects Java Blue parity, project XML,
+  generated CSD, persistent settings/libraries, or an external runtime. Remove it
+  only when none of those surfaces are involved.
+-->
+
+- **Reference Behavior**: [Relevant Java Blue workflow/source/artifact, or N/A with rationale]
+- **Compatibility Requirements**: [Observable behavior and data that MUST remain compatible or preserved]
+- **Intentional Divergences**: [None, or each approved divergence with user-visible rationale]
+- **State Ownership**: [Canonical owner and persistence location for every affected state domain]
 
 ### Key Entities *(include if feature involves data)*
 

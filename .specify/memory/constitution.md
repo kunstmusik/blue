@@ -1,42 +1,140 @@
+<!--
+Sync Impact Report
+- Version change: 1.0.0 → 2.0.0
+- Modified principles:
+  - I. Data-First, UI-Separated → I. Portable Data Core and Strict Boundaries
+  - II. Backwards-Compatible Serialization → II. Java-Compatible Behavior and Lossless Project Data
+  - III. JVM Dependencies Preserved, Not Replaced → IV. Host-Owned External Runtimes and Engine Isolation
+  - IV. Engine as External Process → IV. Host-Owned External Runtimes and Engine Isolation
+  - V. Test-First for Serialization → V. Evidence-Driven Parity and Regression Safety
+- Added sections:
+  - III. Canonical State Ownership and Explicit Contracts
+  - TypeScript and Import Discipline
+  - State and Persistence Boundaries
+  - Java-First Parity
+  - Change Discipline and Validation
+  - Governance
+- Removed sections:
+  - Porting Order (the dependency-layer port sequence is no longer the active delivery model)
+- Templates and guidance:
+  - ✅ updated: .specify/templates/plan-template.md
+  - ✅ updated: .specify/templates/spec-template.md
+  - ✅ updated: .specify/templates/tasks-template.md
+  - ✅ updated: .agents/skills/speckit-tasks/SKILL.md
+  - ✅ updated: .agents/skills/speckit-git-feature/SKILL.md
+  - ✅ updated: README.md
+  - ✅ reviewed/no change: all remaining .agents/skills/speckit-*/SKILL.md files
+  - ✅ reviewed/no change: AGENTS.md and package runtime README files
+- Follow-up TODOs: None
+-->
+
 # Blue TypeScript Port Constitution
 
 ## Core Principles
 
-### I. Data-First, UI-Separated
-All business logic and data classes live in `blue-data` — a pure TypeScript package with zero UI dependencies and zero Node.js runtime dependencies. The data layer must work identically in both browser and Node.js environments. UI layers (Electron renderer, future web app) consume `blue-data` as a dependency.
+### I. Portable Data Core and Strict Boundaries
+`@blue/data` MUST contain platform-neutral Blue data models and business logic with no UI,
+Node.js built-in, or DOM-only runtime dependency. It MUST use top-level static ES imports;
+`require()`, dynamic `import()`, and inline `import("...").Type` annotations are prohibited.
+File access, subprocesses, Electron APIs, and presentation logic MUST remain in host packages.
+The same data APIs MUST behave consistently in browser and Node.js hosts. This boundary keeps
+project logic reusable, bundle-safe, and independently testable.
 
-### II. Backwards-Compatible Serialization
-The TypeScript data classes must load and save `.blue` project files that are byte-for-byte compatible with the existing Java application. XML serialization uses the `electric.xml`-compatible format. Migration system (`UpgradeManager`) operates on raw XML before deserialization, exactly as the Java version does. Round-trip loading and saving of existing `.blue` files is the primary correctness criterion.
+### II. Java-Compatible Behavior and Lossless Project Data
+Java Blue is the behavioral reference for parity work, `.blue` XML, CSD generation, rendering,
+formatting, migrations, and legacy project semantics. `.blue` XML MUST remain the canonical
+project format. Loading and saving MUST preserve modeled and unmodeled project data and MUST
+remain structurally compatible with Java Blue; established byte-level fixtures MUST continue to
+match where exact output is part of the contract. Raw-XML migrations MUST run before model
+deserialization. Any intentional divergence from Java behavior MUST be named in the feature spec
+and plan, justified, and covered by deterministic validation. Data that cannot be executed by the
+current host MUST be retained without silent loss.
 
-### III. JVM Dependencies Preserved, Not Replaced
-SoundObjects and note processors that depend on JVM runtimes (Jython for `PythonObject`, Clojure for `ClojureObject`) preserve their data on load/save in all environments. Score generation for these types uses a Java subprocess in Node.js (reusing existing Java code). In browser, these types load/save silently but skip generation with a warning. `JavaScriptObject` is ported natively using JS `vm`/`Function` — works in both environments.
+### III. Canonical State Ownership and Explicit Contracts
+Every durable or runtime state domain MUST have one documented canonical owner. The Electron main
+process owns the active `BlueData` project document; renderers consume serializable snapshots and
+submit explicit typed patch intents. Renderer session state, caches, derived artifacts, and
+app-wide settings MUST NOT enter `.blue` XML unless the project model explicitly defines them.
+IPC, preload, engine, and Java-runtime boundaries MUST use typed, serializable, validated
+contracts with explicit failure behavior. This prevents split-brain state and accidental changes
+to project persistence.
 
-### IV. Engine as External Process
-The blue-engine C++ process communicates via ZeroMQ REQ/REP binary protocol + shared memory. The TypeScript client (`blue-engine-client`) uses this protocol directly — no FFI, no native bindings beyond ZMQ. Shared memory access is proxied through ZMQ commands in Phase 1 to avoid native addon complexity.
+### IV. Host-Owned External Runtimes and Engine Isolation
+`@blue/data` MAY define abstract execution contracts but MUST NOT launch Java, access files, or
+connect directly to the audio engine. Electron main owns Java helper lifecycle, filesystem and
+process access, ZeroMQ transport, and host capability detection. Blue Engine communication MUST
+flow through the versioned `@blue/engine-client` protocol; renderer and data code MUST NOT couple
+to engine-native state. Clojure, Jython, and other host-backed project metadata MUST round-trip
+when their runtime is unavailable, and unavailable execution MUST produce a clear, recoverable
+diagnostic without corrupting the project.
 
-### V. Test-First for Serialization
-Every data class ported from Java must have round-trip serialization tests: load a known `.blue` XML fragment → save to XML → compare output matches expected format → reload → verify object state equivalence. This is non-negotiable for data integrity.
+### V. Evidence-Driven Parity and Regression Safety
+Behavior, serialization, rendering, runtime, and UI changes MUST include verification proportional
+to their risk. Parity fixes MUST begin with the relevant Java source or Java-generated artifact.
+Behavioral fixes MUST add or update a focused automated regression test at the lowest practical
+boundary; bug fixes MUST reproduce the failure first when the harness supports it. Serialization
+changes MUST cover round-trip state, Java-compatible XML, and preservation of unknown data.
+Runtime and IPC changes MUST cover success and failure contracts. If automation is impractical,
+the plan MUST record why and the quickstart MUST provide deterministic manual validation. A change
+is not complete until affected tests, type checks, lint, and builds pass or a scoped exception is
+documented.
 
 ## Additional Constraints
 
-### File I/O Abstraction
-`blue-data` never imports `fs`, `path`, `child_process`, `Buffer`, or any Node.js built-in. File paths are stored as strings. Loading and saving files is the caller's responsibility. The public API is `BlueData.loadFromString(xml)` and `blueData.saveToString()`.
+### TypeScript and Import Discipline
+Production TypeScript MUST compile in strict mode and use explicit, statically analyzable module
+boundaries. New abstractions MUST solve a demonstrated need; changes MUST prefer the simplest
+design that preserves existing contracts. Package dependency direction MUST keep `@blue/data`
+independent of Electron, React, Node.js, and host runtime implementations.
 
-### XML Parser
-Use `@rgrove/parse-xml` (pure JS, spec-compliant XML 1.0) wrapped in a minimal `Element`/`Elements` API mirroring the Java `electric.xml` library. No DOM dependency. Works in both browser and Node.
+### XML and Project Persistence
+XML parsing MUST use `@rgrove/parse-xml` through the repository's `Element`/`Elements` utilities.
+Callers own file I/O through APIs such as `BlueData.loadFromString(xml)` and
+`blueData.saveToString()`. New persistence locations MUST be named in the spec and plan, including
+their owner, lifetime, migration behavior, and relationship to `.blue` project data.
 
-### Monorepo Structure
-npm workspaces with `packages/blue-data`, `packages/blue-engine-client` (Node-only), `packages/blue-app` (Electron), and future `packages/blue-ui`. Each package has its own `tsconfig.json` extending `tsconfig.base.json`.
+### State and Persistence Boundaries
+Project XML, app-wide program settings, library databases, renderer session state, and generated
+audio/CSD artifacts are distinct stores. A feature MUST identify which store it reads or mutates
+and MUST define recovery for migrations or partial failure. Derived state MUST remain disposable;
+project mutations MUST flow through the canonical project document bridge.
 
 ## Development Workflow
 
-### Porting Order
-Classes are ported in strict dependency order (see `research/002-data-class-dependency-graph.md`). Foundation types → time system → score layer interfaces → audio/pattern layers → SoundObjects → instruments → mixer → root BlueData. No skipping layers.
+### Java-First Parity
+For behavior mismatches, rendering failures, XML compatibility, or formatting defects, work MUST
+consult the Java implementation before changing TypeScript. Primary references are
+`~/work/nbprojects/blue/blue-core` and `~/work/nbprojects/blue/blue-ui-core`; when applicable,
+compare Java-generated artifacts such as `~/work/blue/demo2026/01.csd`. TypeScript divergence is
+permitted only when intentional and documented.
 
-### Research Integration
-All architecture decisions, class mappings, and protocol documentation live in `research/`. These documents are the source of truth for implementation details. Changes to architecture require updating the relevant research document.
+### Spec-Driven Delivery
+Material features follow `/speckit-specify` → `/speckit-clarify` as needed → `/speckit-plan` →
+`/speckit-tasks` → `/speckit-implement`. Plans MUST complete the Constitution Check before research
+and after design. Tasks MUST trace compatibility, state ownership, boundary contracts, and
+verification obligations to concrete files and runnable validation.
 
-### Spec-Driven Development
-Features are defined via `/speckit.specify` before implementation. Technical plans via `/speckit.plan` reference the research documents. Task breakdowns via `/speckit.tasks` follow the dependency order from the class graph.
+### Change Discipline and Validation
+Implementation MUST preserve unrelated work, keep edits surgical, and avoid speculative
+infrastructure. Reviews MUST compare the result with the feature spec, plan, tasks, Java reference
+when applicable, and this constitution. Validation MUST target affected packages first and expand
+to repository-wide checks in proportion to cross-package risk.
 
-**Version**: 1.0.0 | **Ratified**: 2026-04-11 | **Last Amended**: 2026-04-11
+## Governance
+
+This constitution supersedes conflicting project templates, plans, research notes, and runtime
+guidance. Amendments require an explicit constitution update that states the rationale, applies a
+semantic version bump, prepends a Sync Impact Report, and synchronizes affected templates and
+guidance in the same change.
+
+Versioning follows these rules: MAJOR for removed or incompatibly redefined principles or
+governance; MINOR for a new principle, section, or materially expanded mandatory guidance; PATCH
+for non-semantic clarification or correction. The original ratification date never changes.
+
+Every implementation plan MUST evaluate all five core principles before research and after design.
+Every task list MUST include the constitution-required compatibility and verification work.
+Code review MUST treat an unexplained MUST violation as blocking. A necessary exception MUST be
+documented in the plan's Complexity Tracking section with the rejected compliant alternative and
+MUST receive explicit project-owner approval.
+
+**Version**: 2.0.0 | **Ratified**: 2026-04-11 | **Last Amended**: 2026-07-21

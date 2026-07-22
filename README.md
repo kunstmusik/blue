@@ -33,7 +33,7 @@ Blue lets you compose music using Csound by providing a visual timeline editor w
 
 - **Modern stack:** TypeScript with full type safety, modern tooling, and a monorepo structure
 - **Universal data layer:** The `@blue/data` package works in **both browser and Node.js** — enabling a future web app alongside the Electron desktop app
-- **Backwards compatible:** Loads and saves `.blue` files byte-compatible with the Java Blue application (v2.0.0+)
+- **Backwards compatible:** Preserves and round-trips Java Blue `.blue` project data, including unsupported legacy fields
 - **Incremental migration:** Data classes, score layers, and engine integration are ported phase-by-phase
 
 ---
@@ -219,8 +219,17 @@ The `@blue/data` package must remain **environment-agnostic** (works in both bro
 
 - ❌ No `import` of Node.js built-ins (`fs`, `path`, `child_process`, `Buffer`, etc.)
 - ❌ No DOM-specific APIs
+- ❌ No `require()`, dynamic `import()`, or inline `import("...").Type` annotations
+- ✅ Use top-level static ES imports and type imports
 - ✅ Use `Element.parse()` and `element.toXml()` for XML
 - ✅ File I/O is the caller's responsibility — `BlueData.loadFromString(xml)` and `blueData.saveToString()`
+
+### Java-First Parity
+
+For behavior, rendering, XML, or formatting differences, consult the Java implementation before
+changing TypeScript. The primary references are `~/work/nbprojects/blue/blue-core` and
+`~/work/nbprojects/blue/blue-ui-core`. Compare Java-generated artifacts when available and document
+every intentional divergence in the active feature spec and plan.
 
 ### Adding a New Data Class
 
@@ -255,7 +264,7 @@ For the current resume state, parity investigations, and next debugging targets,
 | **Universal `@blue/data`** | Zero Node.js built-ins. Works in browser and Node for future web app. |
 | **XML serialization** | Must match Java `electric.xml` format exactly for bi-directional `.blue` compatibility. |
 | **Migration on load** | XML-level upgrades (like Java) before deserialization — handles structural schema changes. |
-| **JVM subprocess** | `PythonObject`/`ClojureObject` score generation uses Java subprocess in Node.js; browser skips with warning. |
+| **Host-injected JVM helper** | Electron main owns the Java helper and injects an abstract runtime contract into `@blue/data`; hosts without Java preserve project metadata and report unavailable execution. |
 
 ### Data Flow
 

@@ -1,42 +1,50 @@
-# Blue TypeScript Port Constitution
+# [PROJECT_NAME] Constitution
+<!-- Example: Spec Constitution, TaskFlow Constitution, etc. -->
 
 ## Core Principles
 
-### I. Data-First, UI-Separated
-All business logic and data classes live in `blue-data` — a pure TypeScript package with zero UI dependencies and zero Node.js runtime dependencies. The data layer must work identically in both browser and Node.js environments. UI layers (Electron renderer, future web app) consume `blue-data` as a dependency.
+### [PRINCIPLE_1_NAME]
+<!-- Example: I. Library-First -->
+[PRINCIPLE_1_DESCRIPTION]
+<!-- Example: Every feature starts as a standalone library; Libraries must be self-contained, independently testable, documented; Clear purpose required - no organizational-only libraries -->
 
-### II. Backwards-Compatible Serialization
-The TypeScript data classes must load and save `.blue` project files that are byte-for-byte compatible with the existing Java application. XML serialization uses the `electric.xml`-compatible format. Migration system (`UpgradeManager`) operates on raw XML before deserialization, exactly as the Java version does. Round-trip loading and saving of existing `.blue` files is the primary correctness criterion.
+### [PRINCIPLE_2_NAME]
+<!-- Example: II. CLI Interface -->
+[PRINCIPLE_2_DESCRIPTION]
+<!-- Example: Every library exposes functionality via CLI; Text in/out protocol: stdin/args → stdout, errors → stderr; Support JSON + human-readable formats -->
 
-### III. JVM Dependencies Preserved, Not Replaced
-SoundObjects and note processors that depend on JVM runtimes (Jython for `PythonObject`, Clojure for `ClojureObject`) preserve their data on load/save in all environments. Score generation for these types uses a Java subprocess in Node.js (reusing existing Java code). In browser, these types load/save silently but skip generation with a warning. `JavaScriptObject` is ported natively using JS `vm`/`Function` — works in both environments.
+### [PRINCIPLE_3_NAME]
+<!-- Example: III. Test-First (NON-NEGOTIABLE) -->
+[PRINCIPLE_3_DESCRIPTION]
+<!-- Example: TDD mandatory: Tests written → User approved → Tests fail → Then implement; Red-Green-Refactor cycle strictly enforced -->
 
-### IV. Engine as External Process
-The blue-engine C++ process communicates via ZeroMQ REQ/REP binary protocol + shared memory. The TypeScript client (`blue-engine-client`) uses this protocol directly — no FFI, no native bindings beyond ZMQ. Shared memory access is proxied through ZMQ commands in Phase 1 to avoid native addon complexity.
+### [PRINCIPLE_4_NAME]
+<!-- Example: IV. Integration Testing -->
+[PRINCIPLE_4_DESCRIPTION]
+<!-- Example: Focus areas requiring integration tests: New library contract tests, Contract changes, Inter-service communication, Shared schemas -->
 
-### V. Test-First for Serialization
-Every data class ported from Java must have round-trip serialization tests: load a known `.blue` XML fragment → save to XML → compare output matches expected format → reload → verify object state equivalence. This is non-negotiable for data integrity.
+### [PRINCIPLE_5_NAME]
+<!-- Example: V. Observability, VI. Versioning & Breaking Changes, VII. Simplicity -->
+[PRINCIPLE_5_DESCRIPTION]
+<!-- Example: Text I/O ensures debuggability; Structured logging required; Or: MAJOR.MINOR.BUILD format; Or: Start simple, YAGNI principles -->
 
-## Additional Constraints
+## [SECTION_2_NAME]
+<!-- Example: Additional Constraints, Security Requirements, Performance Standards, etc. -->
 
-### File I/O Abstraction
-`blue-data` never imports `fs`, `path`, `child_process`, `Buffer`, or any Node.js built-in. File paths are stored as strings. Loading and saving files is the caller's responsibility. The public API is `BlueData.loadFromString(xml)` and `blueData.saveToString()`.
+[SECTION_2_CONTENT]
+<!-- Example: Technology stack requirements, compliance standards, deployment policies, etc. -->
 
-### XML Parser
-Use `@rgrove/parse-xml` (pure JS, spec-compliant XML 1.0) wrapped in a minimal `Element`/`Elements` API mirroring the Java `electric.xml` library. No DOM dependency. Works in both browser and Node.
+## [SECTION_3_NAME]
+<!-- Example: Development Workflow, Review Process, Quality Gates, etc. -->
 
-### Monorepo Structure
-npm workspaces with `packages/blue-data`, `packages/blue-engine-client` (Node-only), `packages/blue-app` (Electron), and future `packages/blue-ui`. Each package has its own `tsconfig.json` extending `tsconfig.base.json`.
+[SECTION_3_CONTENT]
+<!-- Example: Code review requirements, testing gates, deployment approval process, etc. -->
 
-## Development Workflow
+## Governance
+<!-- Example: Constitution supersedes all other practices; Amendments require documentation, approval, migration plan -->
 
-### Porting Order
-Classes are ported in strict dependency order (see `research/002-data-class-dependency-graph.md`). Foundation types → time system → score layer interfaces → audio/pattern layers → SoundObjects → instruments → mixer → root BlueData. No skipping layers.
+[GOVERNANCE_RULES]
+<!-- Example: All PRs/reviews must verify compliance; Complexity must be justified; Use [GUIDANCE_FILE] for runtime development guidance -->
 
-### Research Integration
-All architecture decisions, class mappings, and protocol documentation live in `research/`. These documents are the source of truth for implementation details. Changes to architecture require updating the relevant research document.
-
-### Spec-Driven Development
-Features are defined via `/speckit.specify` before implementation. Technical plans via `/speckit.plan` reference the research documents. Task breakdowns via `/speckit.tasks` follow the dependency order from the class graph.
-
-**Version**: 1.0.0 | **Ratified**: 2026-04-11 | **Last Amended**: 2026-04-11
+**Version**: [CONSTITUTION_VERSION] | **Ratified**: [RATIFICATION_DATE] | **Last Amended**: [LAST_AMENDED_DATE]
+<!-- Example: Version: 2.1.1 | Ratified: 2025-06-13 | Last Amended: 2025-07-16 -->
