@@ -134,11 +134,9 @@ function defaultBinaryPath(packageDir) {
   if (process.platform === 'win32') {
     return join(packageDir, 'Blue.exe');
   }
-  // electron-builder on Linux writes the executable using productName with
-  // the first letter left as-is. Older releases lowercased it, so the smoke
-  // caller falls back to the lowercase name when the upper-case one is not
-  // present.
-  return join(packageDir, 'blue');
+  const candidateLower = join(packageDir, 'blue');
+  if (isExecutableFile(candidateLower)) return candidateLower;
+  return join(packageDir, 'Blue');
 }
 
 /**

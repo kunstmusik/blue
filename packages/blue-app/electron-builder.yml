@@ -17,7 +17,7 @@
 # This file is consumed by the package:dir, package:current, and target-
 #   specific package scripts declared in packages/blue-app/package.json.
 
-appId: ai.blue.Blue
+appId: com.kunstmusik.blue
 productName: Blue
 copyright: Copyright (c) Blue contributors
 
@@ -107,6 +107,8 @@ nsis:
   artifactName: ${productName}-Setup-${version}.${ext}
 
 linux:
+  executableName: blue
+  desktopName: com.kunstmusik.blue
   icon: assets/blueIcon.png
   category: AudioVideo
   target:
