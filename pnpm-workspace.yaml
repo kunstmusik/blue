@@ -1,6 +1,9 @@
 packages:
   - 'packages/*'
+confirmModulesPurge: false
 allowBuilds:
   electron: true
   esbuild: true
   zeromq: true
+  '@electron/rebuild': true
+  electron-winstaller: true

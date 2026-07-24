@@ -21,6 +21,33 @@ import { _electron as electron } from 'playwright';
 
 const PACKAGE_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const MAIN_ENTRY = path.join(PACKAGE_ROOT, 'dist', 'main', 'main.js');
+
+/**
+ * Build a minimal environment object for spawned Electron processes.
+ * Only forwards variables that the runtime needs, avoiding leakage of
+ * unrelated shell credentials into the child.
+ *
+ * @param {Record<string, string>} extras
+ * @returns {Record<string, string>}
+ */
+function buildMinimalEnv(extras) {
+  /** @type {Record<string, string>} */
+  const env = {
+    HOME: process.env.HOME ?? '',
+    PATH: process.env.PATH ?? '',
+    TMPDIR: process.env.TMPDIR ?? '',
+    LANG: process.env.LANG ?? '',
+    ...extras,
+  };
+  if (process.platform === 'win32') {
+    env.APPDATA = process.env.APPDATA ?? '';
+    env.USERPROFILE = process.env.USERPROFILE ?? '';
+    env.TEMP = process.env.TEMP ?? '';
+    env.TMP = process.env.TMP ?? '';
+    env.LOCALAPPDATA = process.env.LOCALAPPDATA ?? '';
+  }
+  return env;
+}
 const MIN_PERCENT = 50;
 const MAX_PERCENT = 300;
 const STEP_PERCENT = 10;
@@ -86,10 +113,9 @@ async function launchApp(electron, profileDir) {
   return electron.launch({
     args: [PACKAGE_ROOT, `--user-data-dir=${profileDir}`],
     cwd: PACKAGE_ROOT,
-    env: {
-      ...process.env,
+    env: buildMinimalEnv({
       BLUE_VERIFY_MODE: 'app-zoom',
-    },
+    }),
   });
 }
 

@@ -3,17 +3,29 @@
   "productName": "Blue",
   "version": "0.0.1",
   "description": "Electron application for Blue — loads .blue files and plays via blue-engine",
+  "author": "Blue contributors",
   "main": "dist/main/main.js",
   "scripts": {
     "build:main": "tsc -p tsconfig.main.json",
     "build:preload": "tsc -p tsconfig.preload.json",
     "build:renderer": "vite build",
-    "build": "pnpm --filter @blue/java-runtime build && pnpm --filter @blue/data build && pnpm build:main && pnpm build:preload && pnpm build:renderer",
+    "build": "pnpm --filter @blue/java-runtime build && pnpm --filter @blue/data build && pnpm --filter @blue/engine-client build && pnpm build:main && pnpm build:preload && pnpm build:renderer",
     "dev": "APP_ENV=dev vite",
     "osc:send": "node --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON ./scripts/send-osc.mjs",
     "start": "electron .",
     "test": "vitest run --config vitest.config.ts",
-    "verify:app-zoom": "node scripts/verify-app-zoom.mjs"
+    "verify:app-zoom": "node scripts/verify-app-zoom.mjs",
+    "verify:package-inputs": "node ../../scripts/verify-package-inputs.mjs",
+    "verify:packaged-app": "node scripts/verify-packaged-app.mjs",
+    "rebuild:native": "electron-rebuild -f -w zeromq",
+    "package:dir": "pnpm verify:package-inputs && electron-builder --dir --publish never",
+    "package:current": "pnpm verify:package-inputs && electron-builder --publish never",
+    "package:macos-x64": "pnpm verify:package-inputs && electron-builder --mac --x64 --publish never",
+    "package:macos-arm64": "pnpm verify:package-inputs && electron-builder --mac --arm64 --publish never",
+    "package:windows-x64": "pnpm verify:package-inputs && electron-builder --win --x64 --publish never",
+    "package:linux-x64": "pnpm verify:package-inputs && electron-builder --linux --x64 --publish never",
+    "verify:release-version": "node scripts/verify-release-version.mjs",
+    "release:manifest": "node ../../scripts/release-artifact-manifest.mjs generate --out release/release-manifest.json --release-dir release"
   },
   "dependencies": {
     "@blue/data": "workspace:*",
@@ -47,6 +59,7 @@
     "zustand": "^5.0.10"
   },
   "devDependencies": {
+    "@electron/rebuild": "^4.0.1",
     "@electron/remote": "^2.1.0",
     "@tailwindcss/postcss": "^4.2.2",
     "@tailwindcss/vite": "^4.2.2",
@@ -56,6 +69,7 @@
     "@vitest/browser-playwright": "^4.1.6",
     "autoprefixer": "^10.4.23",
     "electron": "35.7.5",
+    "electron-builder": "^26.0.36",
     "jsdom": "^29.1.0",
     "playwright": "^1.60.0",
     "postcss": "^8.5.6",

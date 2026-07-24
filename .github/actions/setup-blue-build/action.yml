@@ -1,0 +1,114 @@
+name: setup-blue-build
+description: |
+  Shared build bootstrap for Blue Electron CI, prerelease, and stable release
+  workflows. Installs pinned Node, pnpm, Java, and Maven-compatible tooling,
+  restores the pnpm cache, installs from the lockfile, and builds the Java
+  helper before any Electron package consumer runs.
+
+  The caller must checkout the desired source ref before invoking this action;
+  the action intentionally preserves that checkout so workflow_dispatch builds
+  can target an explicit branch or SHA.
+
+  Keep every workflow's setup identical so package matrices produce
+  comparable evidence across macOS x64/arm64, Windows x64, and Linux x64
+  runners.
+
+inputs:
+  node-version:
+    description: Pinned Node.js major version (must match the Electron 35.7.5 embedded Node runtime contract).
+    required: false
+    default: '22'
+  pnpm-version:
+    description: Pinned pnpm major version.
+    required: false
+    default: '10'
+  java-version:
+    description: Java major version for the @blue/java-runtime Maven build.
+    required: false
+    default: '17'
+  build-java-runtime:
+    description: Whether to build @blue/java-runtime (JAR + pythonLib) before returning.
+    required: false
+    default: 'true'
+  build-workspace:
+    description: Whether to run `pnpm build` (workspace-wide TypeScript build) before returning.
+    required: false
+    default: 'true'
+  rebuild-native:
+    description: Whether to rebuild native modules for the target Electron runtime before returning.
+    required: false
+    default: 'true'
+
+runs:
+  using: composite
+  steps:
+    - name: Setup Node.js ${{ inputs.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ inputs.node-version }}
+
+    - name: Setup pnpm ${{ inputs.pnpm-version }}
+      uses: pnpm/action-setup@v4
+      with:
+        version: ${{ inputs.pnpm-version }}
+        run_install: false
+
+    - name: Resolve pnpm store path
+      shell: bash
+      run: |
+        echo "PNPM_STORE_PATH=$(pnpm store path --silent)" >> "$GITHUB_ENV"
+
+    - name: Restore pnpm store cache
+      uses: actions/cache@v4
+      with:
+        path: ${{ env.PNPM_STORE_PATH }}
+        key: ${{ runner.os }}-${{ runner.arch }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+        restore-keys: |
+          ${{ runner.os }}-${{ runner.arch }}-pnpm-store-
+
+    - name: Setup Java ${{ inputs.java-version }}
+      uses: actions/setup-java@v4
+      with:
+        distribution: temurin
+        java-version: ${{ inputs.java-version }}
+        cache: maven
+
+    - name: Install workspace dependencies (frozen lockfile)
+      shell: bash
+      run: |
+        pnpm install --frozen-lockfile
+
+    - name: Build @blue/java-runtime
+      if: ${{ inputs.build-java-runtime == 'true' }}
+      shell: bash
+      run: |
+        pnpm --filter @blue/java-runtime build
+
+    - name: Verify Java helper artifacts
+      if: ${{ inputs.build-java-runtime == 'true' }}
+      shell: bash
+      run: |
+        test -f packages/blue-app/assets/java/blue-java.jar || { \
+          echo '@blue/java-runtime build did not produce packages/blue-app/assets/java/blue-java.jar'; \
+          exit 1; \
+        }
+        test -d packages/blue-app/assets/java/pythonLib || { \
+          echo '@blue/java-runtime build did not produce packages/blue-app/assets/java/pythonLib'; \
+          exit 1; \
+        }
+
+    - name: Build workspace TypeScript
+      if: ${{ inputs.build-workspace == 'true' }}
+      shell: bash
+      run: |
+        pnpm --filter @blue/data build
+        pnpm --filter @blue/engine-client build
+        pnpm --filter @blue/app build:main
+        pnpm --filter @blue/app build:preload
+        pnpm --filter @blue/app build:renderer
+
+    - name: Rebuild native zeromq for the target Electron runtime
+      if: ${{ inputs.rebuild-native == 'true' }}
+      shell: bash
+      run: |
+        pnpm --filter @blue/app rebuild:native

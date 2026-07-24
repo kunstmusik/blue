@@ -10,6 +10,33 @@ import { fileURLToPath } from 'node:url';
 const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
 const require = createRequire(import.meta.url);
 
+/**
+ * Build a minimal environment object for spawned blue-engine processes.
+ * Only forwards variables that the runtime needs, avoiding leakage of
+ * unrelated shell credentials into the child.
+ *
+ * @param {Record<string, string>} extras
+ * @returns {Record<string, string>}
+ */
+function buildMinimalEnv(extras) {
+  /** @type {Record<string, string>} */
+  const env = {
+    HOME: process.env.HOME ?? '',
+    PATH: process.env.PATH ?? '',
+    TMPDIR: process.env.TMPDIR ?? '',
+    LANG: process.env.LANG ?? '',
+    ...extras,
+  };
+  if (process.platform === 'win32') {
+    env.APPDATA = process.env.APPDATA ?? '';
+    env.USERPROFILE = process.env.USERPROFILE ?? '';
+    env.TEMP = process.env.TEMP ?? '';
+    env.TMP = process.env.TMP ?? '';
+    env.LOCALAPPDATA = process.env.LOCALAPPDATA ?? '';
+  }
+  return env;
+}
+
 let BlueData;
 let AutomationCurve;
 let getEngineAutomationPoints;
@@ -294,7 +321,7 @@ async function runOne({
   const pubEndpoint = `tcp://${args.endpointHost}:${pubPort}`;
   const child = spawn(args.enginePath, engineArgs, {
     stdio: ['ignore', 'pipe', 'pipe'],
-    env: process.env,
+    env: buildMinimalEnv({}),
     cwd: dirname(args.bluePath),
   });
 

@@ -169,6 +169,7 @@ import type {
 import { UnifiedLibraryService } from './unified-library/service';
 import { registerUnifiedLibraryIpc } from './unified-library/ipc';
 import { UnifiedLibraryProjectAdapter } from './unified-library/project-adapter';
+import { runPackagedRuntimeVerificationAndExit } from './packaged-runtime-verification';
 
 let mainWindow: BrowserWindow | null = null;
 let currentData: BlueData | null = null;
@@ -219,6 +220,26 @@ interface ProjectOnLoadState {
 // effect because it is read once at process startup.
 app.setName('Blue');
 console.log('[main] App name set to:', app.getName());
+
+// Deterministic no-audio packaged-resource smoke mode.
+// When BLUE_VERIFY_MODE=packaged-resources the main process verifies
+// that every runtime dependency (Java helper, Python library, zeromq,
+// node:sqlite, externalized workspace packages) is resolvable from the
+// installed application and exits without creating windows or starting
+// audio/engine subsystems. The smoke driver (verify-packaged-app.mjs) and
+// CI matrix rely on this exit-code-based contract.
+//
+// Run synchronously before any other top-level side effect so window/engine
+// setup never races the verifier. Subsequent IPC registrations and the
+// app.whenReady() callback below never execute in this mode.
+if (process.env.BLUE_VERIFY_MODE === 'packaged-resources') {
+  runPackagedRuntimeVerificationAndExit({
+    isPackaged: app.isPackaged,
+    mainModuleDir: __dirname,
+    resourcesPath: process.resourcesPath,
+    userDataPath: app.getPath('userData'),
+  });
+}
 
 setCurrentSessionWindowResetHandler(() => {
   resetTrackedWindowsToDefaultBounds(BrowserWindow.getAllWindows());

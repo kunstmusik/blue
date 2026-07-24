@@ -33,6 +33,7 @@ npm-debug.log*
 *.blue~
 packages/blue-java/target
 packages/blue-app/assets/java/blue-java.jar
+packages/blue-app/release/
 temp*.csd
 
 # =========================================================================

@@ -1,0 +1,71 @@
+#!/usr/bin/env node
+/**
+ * Top-level repository verifier.
+ *
+ * Runs the contributor/maintainer checks that should pass before pushing a
+ * change or cutting a release. Each sub-check is a standalone script; this
+ * orchestrator sequences them, reports a per-check summary, and exits non-zero
+ * if any required check fails.
+ *
+ * Checks:
+ *   1. package-inputs      - build artifacts and runtime contracts present
+ *   2. release-workflows   - .github/workflows/*.yml structural contract
+ *   3. release-credentials - sanitized test suite for the credential preflight
+ *   4. credential-preflight --advisory
+ *                          - reports local future signing credential availability
+ *                            without gating contributor verification
+ *
+ * Usage: node scripts/verify.mjs
+ */
+
+import { spawnSync } from 'node:child_process';
+import { dirname, join, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const scriptsDir = __dirname;
+
+/** @typedef {{ name: string, script: string, args?: string[], required: boolean }} Check */
+
+/** @type {Check[]} */
+const checks = [
+  { name: 'package-inputs', script: 'verify-package-inputs.mjs', required: true },
+  { name: 'release-workflows', script: 'validate-release-workflows.mjs', required: true },
+  { name: 'release-credentials-tests', script: 'release-credential-preflight.test.mjs', required: true },
+  {
+    name: 'credential-preflight (advisory)',
+    script: 'release-credential-preflight.mjs',
+    args: ['--advisory'],
+    // Advisory mode always exits 0; it is informational for local checks and
+    // future signed-release readiness.
+    required: false,
+  },
+];
+
+/** @type {Array<{ name: string, ok: boolean, required: boolean, code: number }>} */
+const results = [];
+
+for (const check of checks) {
+  process.stderr.write(`\n-- ${check.name} --\n`);
+  const result = spawnSync(process.execPath, [join(scriptsDir, check.script), ...(check.args ?? [])], {
+    stdio: 'inherit',
+  });
+  const code = typeof result.status === 'number' ? result.status : 1;
+  const ok = code === 0;
+  results.push({ name: check.name, ok, required: check.required, code });
+}
+
+process.stderr.write('\n-- summary --\n');
+for (const r of results) {
+  const tag = r.ok ? '[ok]' : r.required ? '[FAIL]' : '[warn]';
+  const qualifier = r.required ? '' : ' (advisory)';
+  process.stderr.write(`${tag} ${r.name}${qualifier}\n`);
+}
+
+const failed = results.filter((r) => r.required && !r.ok);
+if (failed.length > 0) {
+  process.stderr.write(`\n${failed.length} required check(s) failed.\n`);
+  process.exit(1);
+}
+process.stderr.write('\nAll required checks passed.\n');
+process.exit(0);

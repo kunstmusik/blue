@@ -15,6 +15,7 @@ Blue is a visual composition environment for [Csound](https://csound.com/) that 
 - [Prerequisites](#prerequisites)
 - [Quick Start](#quick-start)
 - [Building](#building)
+- [Releases](#releases)
 - [Testing](#testing)
 - [Development](#development)
 - [Progress](#progress)
@@ -99,7 +100,8 @@ blue-electron/
 | Tool | Version | Required |
 |------|---------|----------|
 | [Node.js](https://nodejs.org/) | 22+ | ✅ |
-| [pnpm](https://pnpm.io/) | 9+ | ✅ |
+| [pnpm](https://pnpm.io/) | 10+ | ✅ |
+| Java and Maven | Java 17+ / Maven 3+ | For the Java helper runtime and app builds |
 | [blue-engine](https://github.com/stevenyi/blue-engine) | Latest | For playback |
 | Csound 7 | Latest | Required by blue-engine |
 
@@ -158,6 +160,25 @@ pnpm --filter @blue/data build --watch
 ```bash
 pnpm --filter @blue/data exec tsc --noEmit
 ```
+
+---
+
+## Releases
+
+Blue ships for macOS x64/arm64, Windows x64, and Linux x64. The first release does not bundle Csound, `blue-engine`, or a Java runtime; those remain documented end-user prerequisites.
+
+Contributor, development, and stable packages are unsigned by default and require no production signing credentials. Stable releases still use the protected GitHub `release` Environment for maintainer approval before public publication. Signed macOS and Windows release paths are reserved for future work.
+
+| Audience | Quick command |
+| --- | --- |
+| Contributor (local unsigned package) | `pnpm --filter @blue/app package:dir && pnpm --filter @blue/app verify:packaged-app` |
+| CI matrix (PR + dev/main) | `.github/workflows/ci.yml` runs the same `package:<target>` + smoke + manifest across macOS x64/arm64, Windows x64, Linux x64. |
+| Maintainer (development prerelease) | Trigger `.github/workflows/dev-release.yml` on `main`, `dev`, or a specific source revision for an unsigned, traceable GitHub prerelease. |
+| Maintainer (stable release) | Push an immutable `vX.Y.Z` tag matching `packages/blue-app/package.json` to trigger `.github/workflows/release.yml`. The workflow builds unsigned macOS, Windows, and Linux packages, verifies the complete artifact set, and waits for the protected `release` Environment only before public publication. |
+
+Local package input validation: `pnpm verify:package-inputs`. Full repository verification: `pnpm verify`. Workflow contract validation: `pnpm verify:release-workflows`. Credential test coverage: `pnpm verify:release-credentials`. Stable-version validation: `pnpm --filter @blue/app verify:release-version -- --tag vX.Y.Z --app-version X.Y.Z --repository <owner/repo>`.
+
+For GitHub Environment policy, future signing readiness, and failure recovery see the [release guide](docs/release-guide.md).
 
 ---
 

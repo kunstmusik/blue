@@ -1,0 +1,132 @@
+# electron-builder configuration for @blue/app.
+#
+# Produces deterministic distribution packages for the four first-release
+# targets (macOS x64/arm64 DMG, Windows x64 NSIS, Linux x64 AppImage + Deb).
+# - Pins Electron 35.7.5 through packages/blue-app/package.json devDeps.
+# - Writes deterministic artifact names + output directory.
+# - Registers the .blue file association so the OS can hand Blue project
+#   files to the installed app.
+# - Copies assets/java/* (blue-java.jar + pythonLib) to installed
+#   resources/assets/java (the preferred candidate in java-runtime-path.ts).
+# - Enables ASAR for application files but keeps native .node modules
+#   unpacked so they remain loadable from disk.
+# - The release output directory lives under packages/blue-app/release so the
+#   workspace release-artifact-manifest.mjs can locate every artifact without
+#   searching the whole tree.
+#
+# This file is consumed by the package:dir, package:current, and target-
+#   specific package scripts declared in packages/blue-app/package.json.
+
+appId: ai.blue.Blue
+productName: Blue
+copyright: Copyright (c) Blue contributors
+
+# The @blue/app package.json version is the single source of truth. Do not
+# override "version" here; electron-builder reads it automatically.
+#
+# Use deterministic directories so CI and local runs produce comparable trees.
+directories:
+  output: release
+  buildResources: build
+
+# ASAR contains the renderer/main/preload build output. Native .node modules
+# must remain on disk because they cannot be loaded from inside an ASAR.
+asar: true
+asarUnpack:
+  - '**/*.node'
+
+# Files included in the ASAR. Limit to the build output of @blue/app and
+# required runtime package entries; everything else is provided through
+# extraResources or node_modules at the top level.
+files:
+  - dist/main/**/*
+  - dist/preload/**/*
+  - dist/renderer/**/*
+  - package.json
+  - '!**/.DS_Store'
+  - '!**/.gitkeep'
+
+# Java helper JAR + Python library land at installed
+# resources/assets/java/* so the existing resolver in
+# java-runtime-path.ts finds them at its preferred candidate.
+extraResources:
+  - from: assets/java
+    to: assets/java
+    filter: ['**/*']
+
+# Native node modules must be discoverable by Electron's require. Allow the
+# whole node_modules tree to flow through; ASAR unpacking keeps .node files
+# usable from disk.
+extraFiles: []
+
+# .blue project file association (macOS uses CFBundleDocumentTypes from the
+# DMG build; Windows uses fileAssociations; Linux uses mimeTypes).
+fileAssociations:
+  - ext: blue
+    name: Blue Project
+    description: Blue composition project
+    role: Editor
+
+mac:
+  category: public.app-category.music
+  icon: assets/blue.icns
+  # Current releases are unsigned by default. A future signed-release slice can
+  # replace this with an explicit Developer ID identity/notarization config.
+  identity: null
+  hardenedRuntime: true
+  gatekeeperAssess: false
+  entitlements: build/entitlements.mac.plist
+  entitlementsInherit: build/entitlements.mac.plist
+  # The DMG target produces both x64 and arm64 files named
+  # "Blue-<version>-<arch>.dmg".
+  target:
+    - target: dmg
+      arch:
+        - x64
+        - arm64
+dmg:
+  artifactName: ${productName}-${version}-${arch}.${ext}
+  contents:
+    - x: 130
+      y: 220
+    - x: 410
+      y: 220
+      type: link
+      path: /Applications
+
+win:
+  icon: assets/blue.ico
+  target:
+    - target: nsis
+      arch:
+        - x64
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  artifactName: ${productName}-Setup-${version}.${ext}
+
+linux:
+  icon: assets/blueIcon.png
+  category: AudioVideo
+  target:
+    - AppImage
+    - deb
+  mimeTypes:
+    - application/x-blue-project
+appImage:
+  artifactName: ${productName}-${version}.${ext}
+deb:
+  artifactName: ${productName}_${version}_amd64.${ext}
+  depends:
+    - libnotify4
+    - libnss3
+    - libxtst6
+
+# Publish is intentionally null: the workflow promoter handles GitHub release
+# uploads so the stable publisher can verify the complete asset set first.
+publish: null
+
+# After-pack hooks (currently none). Native module rebuild is performed by
+# @electron/rebuild before packaging through the verify:package-inputs script.
+afterPack: null

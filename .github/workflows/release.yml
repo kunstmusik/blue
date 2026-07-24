@@ -1,0 +1,294 @@
+# Tag-triggered stable release workflow.
+#
+# Triggered by an immutable `vX.Y.Z` tag that must match
+# packages/blue-app/package.json. Validates version agreement, then packages
+# each native target as an unsigned build. Signing and notarization are
+# intentionally reserved for a future release policy; the current workflow
+# does not require or consume Apple or Azure signing credentials.
+#
+# A final promoter job downloads all expected artifacts, validates the
+# consolidated manifest, creates a draft release, attaches packages and
+# checksums, and publishes one public GitHub Release only when the complete
+# asset set is verified.
+#
+# Security contract:
+#   - Package jobs use read-only repository access and no production signing
+#     credentials.
+#   - The protected `release` Environment gates only final publication.
+#   - The promoter job is the only job that receives `contents: write`.
+#   - No platform job publishes a release. Only the promoter does, and only
+#     after the manifest validates the complete asset set.
+name: Stable Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: stable-release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  validate-version:
+    name: validate-version
+    runs-on: ubuntu-22.04
+    outputs:
+      app-version: ${{ steps.version.outputs.app-version }}
+      tag: ${{ steps.version.outputs.tag }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Bootstrap workspace
+        uses: ./.github/actions/setup-blue-build
+        with:
+          build-java-runtime: 'false'
+          build-workspace: 'false'
+          rebuild-native: 'false'
+
+      - name: Validate tag/version agreement and duplicate publication
+        id: version
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          pnpm --filter @blue/app verify:release-version -- \
+            --repository ${{ github.repository }}
+          APP_VERSION=$(node -e "console.log(require('./packages/blue-app/package.json').version)")
+          {
+            echo "app-version=${APP_VERSION}"
+            echo "tag=${GITHUB_REF_NAME}"
+          } >> "$GITHUB_OUTPUT"
+
+  package-macos:
+    name: package (macos-${{ matrix.arch }})
+    needs: validate-version
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: x64
+            runner: macos-13
+            package-script: package:macos-x64
+          - arch: arm64
+            runner: macos-14
+            package-script: package:macos-arm64
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Bootstrap workspace
+        uses: ./.github/actions/setup-blue-build
+
+      - name: Verify package inputs
+        run: pnpm verify:package-inputs
+
+      - name: Build unsigned macOS package
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+        run: |
+          pnpm --filter @blue/app ${{ matrix.package-script }}
+
+      - name: Verify packaged app (smoke)
+        run: |
+          pnpm --filter @blue/app verify:packaged-app -- --no-playwright
+
+      - name: Generate release manifest fragment
+        run: |
+          pnpm --filter @blue/app release:manifest
+
+      - name: Upload package artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: stable-release-macos-${{ matrix.arch }}
+          path: |
+            packages/blue-app/release/
+            packages/blue-app/release/release-manifest.json
+            packages/blue-app/release/release-manifest.json.sha256
+          if-no-files-found: warn
+          retention-days: 14
+
+  package-windows:
+    name: package (windows-x64)
+    needs: validate-version
+    runs-on: windows-2022
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Bootstrap workspace
+        uses: ./.github/actions/setup-blue-build
+
+      - name: Verify package inputs
+        run: pnpm verify:package-inputs
+
+      - name: Build unsigned Windows installer
+        run: |
+          pnpm --filter @blue/app package:windows-x64
+
+      - name: Verify packaged app (smoke)
+        run: |
+          pnpm --filter @blue/app verify:packaged-app -- --no-playwright
+
+      - name: Generate release manifest fragment
+        run: |
+          pnpm --filter @blue/app release:manifest
+
+      - name: Upload package artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: stable-release-windows-x64
+          path: |
+            packages/blue-app/release/
+            packages/blue-app/release/release-manifest.json
+            packages/blue-app/release/release-manifest.json.sha256
+          if-no-files-found: warn
+          retention-days: 14
+
+  package-linux:
+    name: package (linux-x64)
+    needs: validate-version
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Bootstrap workspace
+        uses: ./.github/actions/setup-blue-build
+
+      - name: Verify package inputs
+        run: pnpm verify:package-inputs
+
+      - name: Build Linux packages
+        run: |
+          pnpm --filter @blue/app package:linux-x64
+
+      - name: Verify packaged app (smoke)
+        run: |
+          pnpm --filter @blue/app verify:packaged-app -- --no-playwright
+
+      - name: Generate release manifest
+        run: |
+          pnpm --filter @blue/app release:manifest
+
+      - name: Upload package artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: stable-release-linux-x64
+          path: |
+            packages/blue-app/release/
+            packages/blue-app/release/release-manifest.json
+            packages/blue-app/release/release-manifest.json.sha256
+          if-no-files-found: warn
+          retention-days: 14
+
+  publish-stable:
+    name: publish-stable
+    needs: [package-macos, package-windows, package-linux]
+    runs-on: ubuntu-22.04
+    environment: release
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Download all package artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: release-assets
+          pattern: stable-release-*
+
+      - name: Consolidate artifacts into a single release directory
+        env:
+          APP_VERSION: ${{ needs.validate-version.outputs.app-version }}
+        run: |
+          mkdir -p consolidated
+          find release-assets -type f -print | while read -r f; do
+            base=$(basename "$f")
+            case "$base" in
+              *"$APP_VERSION"*.dmg|*"$APP_VERSION"*.exe|*"$APP_VERSION"*.AppImage|*"$APP_VERSION"*.deb)
+                cp "$f" consolidated/
+                ;;
+            esac
+          done
+          ls -la consolidated
+
+      - name: Generate consolidated manifest
+        run: |
+          node scripts/release-artifact-manifest.mjs generate \
+            --out consolidated/release-manifest.json \
+            --release-dir consolidated \
+            --source-revision ${{ github.sha }}
+
+      - name: Validate the consolidated manifest
+        run: |
+          node scripts/release-artifact-manifest.mjs validate \
+            --manifest consolidated/release-manifest.json \
+            --expected-targets macos-x64,macos-arm64,windows-x64,linux-x64
+
+      - name: Compute checksum manifest
+        run: |
+          sha256sum consolidated/* > consolidated/checksums-sha256.txt || true
+          ls -la consolidated
+
+      - name: Compose release body
+        id: body
+        run: |
+          {
+            echo "body<<RELEASE_BODY_EOF"
+            echo "## Blue ${{ github.ref_name }}"
+            echo ""
+            echo "Source revision: \`${{ github.sha }}\`"
+            echo ""
+            echo "macOS: unsigned DMG."
+            echo "Windows: unsigned NSIS installer."
+            echo "Linux: checksummed AppImage and Debian package."
+            echo ""
+            echo "## Installation notes"
+            echo ""
+            echo "macOS and Windows packages are unsigned in this release. macOS users may need to right-click the app and choose **Open**. Windows users may need to choose **More info** and **Run anyway** in SmartScreen."
+            echo ""
+            echo "## Runtime prerequisites"
+            echo ""
+            echo "Install Java, Csound, and \`blue-engine\` separately for playback; they are not bundled in this first release."
+            echo ""
+            echo "## Checksums"
+            echo ""
+            echo "See \`checksums-sha256.txt\` and \`release-manifest.json\` for per-asset SHA-256 values."
+            echo "RELEASE_BODY_EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Create draft GitHub Release
+        id: draft
+        uses: softprops/action-gh-release@c062e08bd532815e2082a85da87aa8ebcc39d746
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: Blue ${{ github.ref_name }}
+          draft: true
+          prerelease: false
+          body: ${{ steps.body.outputs.body }}
+          files: |
+            consolidated/*
+          fail_on_unmatched_files: true
+
+      - name: Publish the release (un-draft)
+        if: success()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Convert the draft into a public release now that every required
+          # asset has been uploaded and verified. `gh release edit` accepts
+          # the tag name as the release identifier.
+          gh release edit "${{ github.ref_name }}" --draft=false
