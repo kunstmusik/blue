@@ -14,8 +14,8 @@ The protected GitHub `release` Environment is still used for stable releases, bu
 
 | Channel                | Trigger                                       | Signing  | Publication                                                         |
 | ---------------------- | --------------------------------------------- | -------- | ------------------------------------------------------------------- |
-| CI verification        | Pull requests and pushes to `dev` or `main`   | Unsigned | No GitHub Release; diagnostics only                                 |
-| Development prerelease | Nightly schedule on `main` or manual dispatch | Unsigned | One clearly labeled GitHub prerelease with source SHA and checksums |
+| CI verification        | Pull requests and pushes to `develop` or `main`  | Unsigned | No GitHub Release; diagnostics only                                 |
+| Development prerelease | Pushes to `develop` or manual dispatch | Unsigned | One clearly labeled GitHub prerelease with source SHA and checksums |
 | Stable release         | Immutable `vX.Y.Z` tag                        | Unsigned | One public GitHub Release after complete platform verification and protected publication approval |
 
 Do not create a stable release from an untagged commit, a branch name, or a tag whose version does not match `packages/blue-app/package.json`.
@@ -132,8 +132,8 @@ The CI and development-prerelease workflows must not reference the `release` Env
 
 ## Development Prerelease Procedure
 
-1. Ensure the source branch has passed CI. The schedule builds `main`; manual dispatch can build `main`, `dev`, or an explicit SHA.
-2. Run the scheduled prerelease workflow or dispatch it manually with the intended source revision. To validate the metadata locally first:
+1. Ensure the source branch has passed CI. Automated pushes build `develop`; manual dispatch can build `develop`, `main`, or an explicit SHA.
+2. Push to `develop` or dispatch the workflow manually with the intended source revision. To validate the metadata locally first:
    ```bash
    node scripts/release-metadata.mjs --out /tmp/release-metadata.json --channel development
    ```
@@ -150,7 +150,7 @@ Development prereleases are intentionally unsigned and must say so in their note
 
 1. Update `@blue/app` to the intended semantic version and prepare release notes.
 2. Run the clean local validation commands, including an unsigned host package and packaged-app smoke check.
-3. Confirm the candidate commit has passed the cross-platform CI matrix on `dev` or `main`.
+3. Confirm the candidate commit has passed the cross-platform CI matrix on `develop` or `main`.
 4. Locally verify the tag/version agreement before pushing:
    ```bash
    pnpm --filter @blue/app verify:release-version -- \

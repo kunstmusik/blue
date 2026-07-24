@@ -15,9 +15,8 @@
 name: Dev Release
 
 on:
-  schedule:
-    # 05:30 UTC daily - off-peak for most contributors.
-    - cron: '30 5 * * *'
+  push:
+    branches: [develop]
   workflow_dispatch:
     inputs:
       source-revision:

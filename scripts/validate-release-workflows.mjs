@@ -132,9 +132,9 @@ requireSubstring(
 );
 requireSubstring(
   '.github/workflows/ci.yml',
-  'branches: [dev, main]',
+  'branches: [develop, main]',
   'CI_DEV_MAIN_BRANCHES',
-  'ci.yml must run for dev and main integration branches',
+  'ci.yml must run for develop and main integration branches',
 );
 requireSubstring('.github/workflows/ci.yml', 'macos-13', 'CI_MACOS_X64', 'ci.yml must cover macos-x64');
 requireSubstring('.github/workflows/ci.yml', 'macos-14', 'CI_MACOS_ARM64', 'ci.yml must cover macos-arm64');
