@@ -108,7 +108,6 @@ nsis:
 
 linux:
   executableName: blue
-  desktopName: com.kunstmusik.blue
   icon: assets/blueIcon.png
   category: AudioVideo
   target:

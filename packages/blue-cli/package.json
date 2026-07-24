@@ -35,6 +35,7 @@
     "esbuild": "^0.28.0"
   },
   "dependencies": {
+    "@blue/data": "workspace:*",
     "quickjs-emscripten": "^0.32.0"
   }
 }
