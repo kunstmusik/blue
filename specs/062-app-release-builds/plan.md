@@ -60,12 +60,12 @@ specs/062-app-release-builds/
 .github/
 ├── actions/setup-blue-build/action.yml       # Shared install/cache/build preparation
 └── workflows/
-    ├── ci.yml                                # PR and dev/main validation matrix
-    ├── dev-release.yml                       # Scheduled/manual unsigned prerelease
-    └── release.yml                           # Tag-triggered unsigned stable release
+    ├── pr.yml                                # PR validation matrix (build + test + package, no release)
+    ├── develop.yml                           # Develop branch build (build + test + package, no release)
+    └── release.yml                           # Tag-triggered stable release (unsigned by default)
 
 docs/
-└── release-guide.md                          # Maintainer local, GitHub, and future signing guide
+└── release-guide.md                          # Maintainer local, GitHub, and optional signing guide
 
 packages/blue-app/
 ├── electron-builder.yml                      # App identity, files, resources, and targets
@@ -74,14 +74,23 @@ packages/blue-app/
 ├── scripts/
 │   ├── verify-packaged-app.mjs               # Installed-resource and native-module smoke check
 │   └── verify-release-version.mjs            # Tag/package version agreement
-└── src/main/java-runtime/
-    └── java-runtime-path.test.ts             # Existing packaged-resource test anchor
+└── src/main/
+    ├── packaged-runtime-verification.ts      # No-audio installed-runtime verification seam
+    └── java-runtime/
+        └── java-runtime-path.test.ts         # Packaged-resource test anchor
 
 scripts/
-└── verify-package-inputs.mjs                 # Built helper/workspace/runtime input validation
+├── verify-package-inputs.mjs                 # Built helper/workspace/runtime input validation
+├── release-artifact-manifest.mjs             # Per-target SHA-256 manifest generation/validation
+├── release-credential-preflight.mjs          # Advisory signing credential availability check
+├── release-credential-preflight.test.mjs     # Sanitized preflight test suite
+├── release-metadata.mjs                      # Dev/stable release metadata derivation
+├── validate-release-workflows.mjs            # Workflow contract validator (35 checks)
+├── verify.mjs                                # Top-level repository verifier
+└── clean.mjs                                 # Build artifact cleaner
 ```
 
-**Structure Decision**: Keep package assembly configuration inside `@blue/app`, keep cross-package validation at the root, and use one shared GitHub Action to eliminate duplicated environment setup. No application architecture or persistence layer changes are needed.
+**Structure Decision**: Three workflows split by trigger: `pr.yml` for PR validation, `develop.yml` for develop-branch builds, and `release.yml` for tag-triggered stable releases. Neither `pr.yml` nor `develop.yml` publishes a GitHub Release; both upload installer-only artifacts for download from the Actions run page. Only `release.yml` publishes, and only after the complete asset set validates.
 
 ## Implementation Sequence
 

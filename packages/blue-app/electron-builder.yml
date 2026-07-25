@@ -77,13 +77,11 @@ mac:
   gatekeeperAssess: false
   entitlements: build/entitlements.mac.plist
   entitlementsInherit: build/entitlements.mac.plist
-  # The DMG target produces both x64 and arm64 files named
-  # "Blue-<version>-<arch>.dmg".
+  # Do not hardcode arches here. CI passes --x64 or --arm64 per matrix job;
+  # local builds default to the host arch. Declaring both here causes every
+  # unqualified build to produce both arches unnecessarily.
   target:
-    - target: dmg
-      arch:
-        - x64
-        - arm64
+    - dmg
 dmg:
   artifactName: ${productName}-${version}-${arch}.${ext}
   contents:

@@ -245,26 +245,43 @@ jobs:
 
       - name: Compose release body
         id: body
+        env:
+          MACOS_SIGNING: ${{ needs.report-credentials.outputs.macos-signing-available }}
+          WINDOWS_SIGNING: ${{ needs.report-credentials.outputs.windows-signing-available }}
         run: |
           {
             echo "body<<RELEASE_BODY_EOF"
-            echo "## Blue ${{ github.ref_name }}"
-            echo ""
             echo "Source revision: \`${{ github.sha }}\`"
             echo ""
-            echo "macOS: unsigned DMG."
-            echo "Windows: unsigned NSIS installer."
-            echo "Linux: checksummed AppImage and Debian package."
+            if [ "$MACOS_SIGNING" = "true" ]; then
+              echo "macOS: signed and notarized DMG."
+            else
+              echo "macOS: **unsigned** DMG."
+            fi
+            if [ "$WINDOWS_SIGNING" = "true" ]; then
+              echo "Windows: signed NSIS installer."
+            else
+              echo "Windows: **unsigned** NSIS installer."
+            fi
+            echo "Linux: AppImage and Debian package."
             echo ""
-            echo "## Installation notes"
+            echo "## Installation"
             echo ""
-            echo "macOS and Windows packages are unsigned in this release. macOS users may need to right-click the app and choose **Open**. Windows users may need to choose **More info** and **Run anyway** in SmartScreen."
+            if [ "$MACOS_SIGNING" != "true" ]; then
+              echo "**macOS**: the DMG is unsigned. Right-click the Blue app and choose **Open**, or go to **System Settings → Privacy & Security → Open Anyway**."
+              echo ""
+            fi
+            if [ "$WINDOWS_SIGNING" != "true" ]; then
+              echo "**Windows**: the installer is unsigned. SmartScreen will show \"Windows protected your PC.\" Click **More info → Run anyway**."
+              echo ""
+            fi
+            echo "**Linux**: install the \`.deb\` or mark the \`.AppImage\` as executable (\`chmod +x\`) and launch."
             echo ""
             echo "## Runtime prerequisites"
             echo ""
-            echo "Install Java, Csound, and \`blue-engine\` separately for playback; they are not bundled in this first release."
+            echo "Install **Java 17+**, **Csound 7**, and **\`blue-engine\`** separately for audio playback. They are not bundled."
             echo ""
-            echo "## Checksums"
+            echo "## Verification"
             echo ""
             echo "See \`checksums-sha256.txt\` and \`release-manifest.json\` for per-asset SHA-256 values."
             echo "RELEASE_BODY_EOF"
@@ -279,6 +296,7 @@ jobs:
           draft: true
           prerelease: false
           body: ${{ steps.body.outputs.body }}
+          generate_release_notes: true
           files: |
             consolidated/*
           fail_on_unmatched_files: true

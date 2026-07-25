@@ -1,0 +1,104 @@
+# Develop branch build.
+#
+# Triggered on push to develop. Builds, tests, and packages the full platform
+# matrix. Uploads installer-only artifacts so testers can download them from
+# the Actions run. No GitHub Release is created.
+#
+# Artifact naming: blue-{os}-{cputype}-{version}-{short-sha}
+#   e.g. blue-macos-arm64-0.0.1-abc1234
+name: Develop
+
+on:
+  push:
+    branches: [develop]
+
+concurrency:
+  group: develop-${{ github.sha }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build-test-package:
+    name: ${{ matrix.target-id }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target-id: macos-x64
+            runs-on: macos-13
+            package-script: package:macos-x64
+          - target-id: macos-arm64
+            runs-on: macos-14
+            package-script: package:macos-arm64
+          - target-id: windows-x64
+            runs-on: windows-2022
+            package-script: package:windows-x64
+          - target-id: linux-x64
+            runs-on: ubuntu-22.04
+            package-script: package:linux-x64
+
+    runs-on: ${{ matrix.runs-on }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Bootstrap workspace
+        uses: ./.github/actions/setup-blue-build
+
+      - name: Read app version and short SHA
+        id: meta
+        shell: bash
+        run: |
+          APP_VERSION=$(node -e "console.log(require('./packages/blue-app/package.json').version)")
+          SHORT_SHA=$(git rev-parse --short HEAD)
+          {
+            echo "app-version=${APP_VERSION}"
+            echo "short-sha=${SHORT_SHA}"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Verify package inputs
+        shell: bash
+        run: pnpm verify:package-inputs
+
+      - name: Run workspace tests
+        shell: bash
+        run: pnpm test
+
+      - name: Lint
+        shell: bash
+        run: pnpm lint
+
+      - name: Build package (${{ matrix.target-id }})
+        shell: bash
+        run: pnpm --filter @blue/app ${{ matrix.package-script }}
+
+      - name: Verify packaged app (smoke)
+        shell: bash
+        run: pnpm --filter @blue/app verify:packaged-app -- --no-playwright
+
+      - name: Upload installer artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: blue-${{ matrix.target-id }}-${{ steps.meta.outputs.app-version }}-${{ steps.meta.outputs.short-sha }}
+          path: |
+            packages/blue-app/release/*.dmg
+            packages/blue-app/release/*.exe
+            packages/blue-app/release/*.AppImage
+            packages/blue-app/release/*.deb
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: Upload diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: diagnostics-blue-${{ matrix.target-id }}-${{ steps.meta.outputs.app-version }}-${{ steps.meta.outputs.short-sha }}
+          path: |
+            packages/blue-app/release/*.yml
+            packages/blue-app/release/*.blockmap
+          if-no-files-found: ignore
+          retention-days: 7

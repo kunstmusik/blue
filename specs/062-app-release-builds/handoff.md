@@ -32,8 +32,8 @@ Use [tasks.md](./tasks.md) as the completed implementation checklist. The local 
 | Java helper          | Maven copies the JAR and Python library into `packages/blue-app/assets/java`          | Declare them as `extraResources` under installed `resources/assets/java`                                        |
 | Java resource lookup | `java-runtime-path.ts` checks installed resources first, then ASAR-unpacked fallbacks | Add a direct preferred-resource test; do not remove fallback candidates                                         |
 | Native runtime       | `zeromq` is native; Electron 35 pins the SQLite runtime                               | Rebuild/load native dependencies against the target Electron runtime and smoke them from packaged app main      |
-| Existing CI          | `.github/workflows/ci.yml` is macOS-only and builds/tests `@blue/data`                | Replace with secret-free native package matrix; retain unrelated test coverage                                  |
-| Version              | `@blue/app` is currently `0.0.1`                                                      | Stable tag `vX.Y.Z` must exactly match the package version; prereleases derive metadata without mutating source |
+| Workflows            | `pr.yml` (PR validation), `develop.yml` (develop builds), `release.yml` (stable tag)  | Three separate workflows: PR and develop upload artifacts only; release publishes to GitHub Releases            |
+| Version              | `@blue/app` is currently `0.0.1`                                                      | Stable tag `vX.Y.Z` must exactly match the package version                                                      |
 
 ## External Operator Prerequisites
 

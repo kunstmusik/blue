@@ -123,79 +123,84 @@ requireSubstring(
   'setup-blue-build must install from the lockfile',
 );
 
-// === ci.yml ===
+// === pr.yml ===
 requireSubstring(
-  '.github/workflows/ci.yml',
+  '.github/workflows/pr.yml',
   'permissions:\n  contents: read',
-  'CI_PERMS',
-  'ci.yml must declare workflow-level contents: read only',
+  'PR_PERMS',
+  'pr.yml must declare workflow-level contents: read only',
 );
 requireSubstring(
-  '.github/workflows/ci.yml',
-  'branches: [develop, main]',
-  'CI_DEV_MAIN_BRANCHES',
-  'ci.yml must run for develop and main integration branches',
+  '.github/workflows/pr.yml',
+  'pull_request:',
+  'PR_TRIGGER',
+  'pr.yml must trigger on pull requests',
 );
-requireSubstring('.github/workflows/ci.yml', 'macos-13', 'CI_MACOS_X64', 'ci.yml must cover macos-x64');
-requireSubstring('.github/workflows/ci.yml', 'macos-14', 'CI_MACOS_ARM64', 'ci.yml must cover macos-arm64');
-requireSubstring('.github/workflows/ci.yml', 'windows-2022', 'CI_WINDOWS_X64', 'ci.yml must cover windows-x64');
-requireSubstring('.github/workflows/ci.yml', 'ubuntu-22.04', 'CI_LINUX_X64', 'ci.yml must cover linux-x64');
-requireSubstring('.github/workflows/ci.yml', 'if: always()', 'CI_ALWAYS_UPLOAD', 'ci.yml must upload artifacts with if: always()');
 forbidRegex(
-  '.github/workflows/ci.yml',
+  '.github/workflows/pr.yml',
+  /^\s*push:/m,
+  'PR_NO_PUSH',
+  'pr.yml must not trigger on push (use dev-release.yml or release.yml for branch pushes)',
+);
+requireSubstring('.github/workflows/pr.yml', 'macos-13', 'PR_MACOS_X64', 'pr.yml must cover macos-x64');
+requireSubstring('.github/workflows/pr.yml', 'macos-14', 'PR_MACOS_ARM64', 'pr.yml must cover macos-arm64');
+requireSubstring('.github/workflows/pr.yml', 'windows-2022', 'PR_WINDOWS_X64', 'pr.yml must cover windows-x64');
+requireSubstring('.github/workflows/pr.yml', 'ubuntu-22.04', 'PR_LINUX_X64', 'pr.yml must cover linux-x64');
+requireSubstring('.github/workflows/pr.yml', 'if: always()', 'PR_ALWAYS_UPLOAD', 'pr.yml must upload artifacts with if: always()');
+forbidRegex(
+  '.github/workflows/pr.yml',
   /\benvironment:\s*release\b/,
-  'CI_NO_RELEASE_ENV',
-  'ci.yml must not reference the protected release Environment',
+  'PR_NO_RELEASE_ENV',
+  'pr.yml must not reference the protected release Environment',
 );
 forbidRegex(
-  '.github/workflows/ci.yml',
+  '.github/workflows/pr.yml',
   /\b(CSC_LINK|APPLE_ID|AZURE_CLIENT_ID)\b/,
-  'CI_NO_SIGNING_SECRETS',
-  'ci.yml must not reference macOS or Windows signing secrets',
+  'PR_NO_SIGNING_SECRETS',
+  'pr.yml must not reference macOS or Windows signing secrets',
 );
 forbidRegex(
-  '.github/workflows/ci.yml',
+  '.github/workflows/pr.yml',
   /pull_request_target/,
-  'CI_NO_PULL_REQUEST_TARGET',
-  'ci.yml must not use pull_request_target (security contract)',
+  'PR_NO_PULL_REQUEST_TARGET',
+  'pr.yml must not use pull_request_target (security contract)',
 );
 
-// === dev-release.yml ===
+// === develop.yml ===
 requireSubstring(
-  '.github/workflows/dev-release.yml',
-  'workflow_dispatch:',
-  'DEV_DISPATCH',
-  'dev-release.yml must support manual dispatch',
+  '.github/workflows/develop.yml',
+  'permissions:\n  contents: read',
+  'DEVELOP_PERMS',
+  'develop.yml must declare workflow-level contents: read only',
 );
 requireSubstring(
-  '.github/workflows/dev-release.yml',
-  "contents: write",
-  'DEV_PUBLISHER_WRITE',
-  'dev-release.yml publisher must receive contents: write',
+  '.github/workflows/develop.yml',
+  'branches: [develop]',
+  'DEVELOP_TRIGGER',
+  'develop.yml must trigger on push to develop',
 );
-requireSubstring(
-  '.github/workflows/dev-release.yml',
-  'prerelease: true',
-  'DEV_PRERELEASE',
-  'dev-release.yml publisher must mark the GitHub release as a prerelease',
-);
-requireSubstring(
-  '.github/workflows/dev-release.yml',
-  '*"$APP_VERSION"*.dmg|*"$APP_VERSION"*.exe|*"$APP_VERSION"*.AppImage|*"$APP_VERSION"*.deb',
-  'DEV_PACKAGE_ASSET_FILTER',
-  'dev-release.yml must only consolidate versioned package assets for publication',
-);
+requireSubstring('.github/workflows/develop.yml', 'macos-13', 'DEVELOP_MACOS_X64', 'develop.yml must cover macos-x64');
+requireSubstring('.github/workflows/develop.yml', 'macos-14', 'DEVELOP_MACOS_ARM64', 'develop.yml must cover macos-arm64');
+requireSubstring('.github/workflows/develop.yml', 'windows-2022', 'DEVELOP_WINDOWS_X64', 'develop.yml must cover windows-x64');
+requireSubstring('.github/workflows/develop.yml', 'ubuntu-22.04', 'DEVELOP_LINUX_X64', 'develop.yml must cover linux-x64');
+requireSubstring('.github/workflows/develop.yml', 'if: always()', 'DEVELOP_ALWAYS_UPLOAD', 'develop.yml must upload artifacts with if: always()');
 forbidRegex(
-  '.github/workflows/dev-release.yml',
+  '.github/workflows/develop.yml',
   /\benvironment:\s*release\b/,
-  'DEV_NO_RELEASE_ENV',
-  'dev-release.yml must not reference the protected release Environment',
+  'DEVELOP_NO_RELEASE_ENV',
+  'develop.yml must not reference the protected release Environment',
 );
 forbidRegex(
-  '.github/workflows/dev-release.yml',
+  '.github/workflows/develop.yml',
   /\b(CSC_LINK|APPLE_ID|AZURE_CLIENT_ID)\b/,
-  'DEV_NO_SIGNING_SECRETS',
-  'dev-release.yml must not reference signing credentials',
+  'DEVELOP_NO_SIGNING_SECRETS',
+  'develop.yml must not reference macOS or Windows signing secrets',
+);
+forbidRegex(
+  '.github/workflows/develop.yml',
+  /softprops\/action-gh-release|gh release create|prerelease:/,
+  'DEVELOP_NO_PUBLICATION',
+  'develop.yml must not publish GitHub Releases or prereleases',
 );
 
 // === release.yml ===
