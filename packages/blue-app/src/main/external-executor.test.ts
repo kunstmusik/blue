@@ -66,9 +66,8 @@ describe('executeExternalTest', () => {
   });
 
   it('writes text to temp file and passes it to command', async () => {
-    const catCmd = process.platform === 'win32' ? 'type' : 'cat';
     const result = await executeExternalTest({
-      commandLine: catCmd,
+      commandLine: 'node -e "process.stdout.write(require(\'fs\').readFileSync(process.argv[1],\'utf8\'))"',
       text: 'i1 0 2\ni2 1 1\n',
       projectDir: null,
     });
@@ -98,9 +97,8 @@ describe('executeExternalTest', () => {
   });
 
   it('handles $outfile mode', async () => {
-    const catCmd = process.platform === 'win32' ? 'type' : 'cat';
     const result = await executeExternalTest({
-      commandLine: `${catCmd} $infile > $outfile`,
+      commandLine: 'node -e "require(\'fs\').copyFileSync(process.argv[1],process.argv[2])" $infile $outfile',
       text: 'i1 0 1\n',
       projectDir: null,
     });

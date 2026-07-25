@@ -98,7 +98,7 @@ export async function resolveAuthorizedAudioFilePath(
   filePath: string,
 ): Promise<string | null> {
   try {
-    const canonicalPath = await fs.promises.realpath(filePath);
+    const canonicalPath = fs.realpathSync(filePath);
     return authorizedAudioFilePaths.has(normalizeAuthorizedAudioFilePath(canonicalPath))
       ? canonicalPath
       : null;

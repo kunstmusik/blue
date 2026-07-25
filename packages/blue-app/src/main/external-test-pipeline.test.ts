@@ -86,8 +86,10 @@ describe('External test pipeline (BlueData → document → executor)', () => {
   });
 
   it('executes external test with text body piped via cat', async () => {
-    const catCmd = process.platform === 'win32' ? 'type' : 'cat';
-    const { data, request } = makeProjectWithExternal(catCmd, 'i1 0 2\ni2 1 1\n');
+    const { data, request } = makeProjectWithExternal(
+      'node -e "process.stdout.write(require(\'fs\').readFileSync(process.argv[1],\'utf8\'))"',
+      'i1 0 2\ni2 1 1\n',
+    );
     const doc = createScoreObjectEditorDocument(data, request);
     expect(doc).not.toBeNull();
 
@@ -124,7 +126,10 @@ describe('External test pipeline (BlueData → document → executor)', () => {
   });
 
   it('mirrors Java Blue flow: command with text but $infile substitution', async () => {
-    const { data, request } = makeProjectWithExternal('cat $infile', 'i1 0 1\ni2 1 1\n');
+    const { data, request } = makeProjectWithExternal(
+      'node -e "process.stdout.write(require(\'fs\').readFileSync(process.argv[1],\'utf8\'))" $infile',
+      'i1 0 1\ni2 1 1\n',
+    );
     const doc = createScoreObjectEditorDocument(data, request);
 
     const result = await executeExternalTest({
