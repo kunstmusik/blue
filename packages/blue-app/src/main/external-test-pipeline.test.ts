@@ -71,7 +71,7 @@ describe('External test pipeline (BlueData → document → executor)', () => {
   });
 
   it('executes external test using document data', async () => {
-    const { data, request } = makeProjectWithExternal('printf "i1 0 1"', '');
+    const { data, request } = makeProjectWithExternal('node -e "process.stdout.write(\'i1 0 1\')"', '');
     const doc = createScoreObjectEditorDocument(data, request);
     expect(doc).not.toBeNull();
     expect(doc!.editor.kind).toBe('external');
@@ -86,7 +86,8 @@ describe('External test pipeline (BlueData → document → executor)', () => {
   });
 
   it('executes external test with text body piped via cat', async () => {
-    const { data, request } = makeProjectWithExternal('cat', 'i1 0 2\ni2 1 1\n');
+    const catCmd = process.platform === 'win32' ? 'type' : 'cat';
+    const { data, request } = makeProjectWithExternal(catCmd, 'i1 0 2\ni2 1 1\n');
     const doc = createScoreObjectEditorDocument(data, request);
     expect(doc).not.toBeNull();
 

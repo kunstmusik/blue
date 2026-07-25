@@ -57,7 +57,7 @@ describe('executeExternalTest', () => {
 
   it('executes a command and returns stdout', async () => {
     const result = await executeExternalTest({
-      commandLine: 'printf "i1 0 1"',
+      commandLine: 'node -e "process.stdout.write(\'i1 0 1\')"',
       text: '',
       projectDir: null,
     });
@@ -66,8 +66,9 @@ describe('executeExternalTest', () => {
   });
 
   it('writes text to temp file and passes it to command', async () => {
+    const catCmd = process.platform === 'win32' ? 'type' : 'cat';
     const result = await executeExternalTest({
-      commandLine: 'cat',
+      commandLine: catCmd,
       text: 'i1 0 2\ni2 1 1\n',
       projectDir: null,
     });

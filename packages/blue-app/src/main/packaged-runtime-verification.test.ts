@@ -1,16 +1,19 @@
 import { describe, expect, it } from 'vitest';
+import * as path from 'node:path';
 import { verifyPackagedRuntime } from './packaged-runtime-verification';
+
+const RESOURCES = '/Applications/Blue.app/Contents/Resources';
 
 describe('packaged-runtime-verification', () => {
   it('reports ok=true when every dependency resolves', () => {
     const report = verifyPackagedRuntime({
       isPackaged: true,
       mainModuleDir: __dirname,
-      resourcesPath: '/Applications/Blue.app/Contents/Resources',
+      resourcesPath: RESOURCES,
       userDataPath: '/Users/test/Library/Application Support/Blue',
       existsSync: (candidate) =>
-        candidate.includes('assets/java/blue-java.jar')
-        || candidate.includes('assets/java/pythonLib'),
+        candidate.endsWith(path.join('assets', 'java', 'blue-java.jar'))
+        || candidate.endsWith(path.join('assets', 'java', 'pythonLib')),
       resolveExternalModule: (name) => `/resolved/${name}/index.js`,
       resolveZeromqNative: () => '/resolved/zeromq/lib/index.js',
       resolveNodeSqlite: () => '/resolved/node:sqlite',
@@ -34,7 +37,7 @@ describe('packaged-runtime-verification', () => {
     const report = verifyPackagedRuntime({
       isPackaged: true,
       mainModuleDir: __dirname,
-      resourcesPath: '/Applications/Blue.app/Contents/Resources',
+      resourcesPath: RESOURCES,
       userDataPath: '/Users/test/Library/Application Support/Blue',
       existsSync: () => false,
       resolveExternalModule: (name) => `/resolved/${name}/index.js`,
@@ -52,11 +55,11 @@ describe('packaged-runtime-verification', () => {
     const report = verifyPackagedRuntime({
       isPackaged: true,
       mainModuleDir: __dirname,
-      resourcesPath: '/Applications/Blue.app/Contents/Resources',
+      resourcesPath: RESOURCES,
       userDataPath: '/Users/test/Library/Application Support/Blue',
       existsSync: (candidate) =>
-        candidate.includes('assets/java/blue-java.jar')
-        || candidate.includes('assets/java/pythonLib'),
+        candidate.endsWith(path.join('assets', 'java', 'blue-java.jar'))
+        || candidate.endsWith(path.join('assets', 'java', 'pythonLib')),
       resolveExternalModule: () => null,
       resolveZeromqNative: () => null,
       resolveNodeSqlite: () => null,
@@ -71,13 +74,13 @@ describe('packaged-runtime-verification', () => {
   });
 
   it('uses the preferred packaged candidate for the Java helper when present', () => {
+    const expectedJar = path.join(RESOURCES, 'assets', 'java', 'blue-java.jar');
+    const expectedLib = path.join(RESOURCES, 'assets', 'java', 'pythonLib');
     const report = verifyPackagedRuntime({
       isPackaged: true,
       mainModuleDir: __dirname,
-      resourcesPath: '/Applications/Blue.app/Contents/Resources',
-      existsSync: (candidate) =>
-        candidate === '/Applications/Blue.app/Contents/Resources/assets/java/blue-java.jar'
-        || candidate === '/Applications/Blue.app/Contents/Resources/assets/java/pythonLib',
+      resourcesPath: RESOURCES,
+      existsSync: (candidate) => candidate === expectedJar || candidate === expectedLib,
       resolveExternalModule: (name) => `/resolved/${name}/index.js`,
       resolveZeromqNative: () => '/resolved/zeromq/lib/index.js',
       resolveNodeSqlite: () => '/resolved/node:sqlite',
@@ -85,8 +88,6 @@ describe('packaged-runtime-verification', () => {
 
     const java = report.results.find((r) => r.aspect === 'java-helper');
     expect(java?.ok).toBe(true);
-    expect(java?.message).toContain(
-      '/Applications/Blue.app/Contents/Resources/assets/java/blue-java.jar',
-    );
+    expect(java?.message).toContain(expectedJar);
   });
 });

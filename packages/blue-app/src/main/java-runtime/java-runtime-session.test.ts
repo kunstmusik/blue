@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import * as path from 'node:path';
 import { JavaRuntimeSessionManager } from './java-runtime-session';
 
 vi.mock('zeromq', () => ({
@@ -80,8 +81,8 @@ describe('java-runtime-session', () => {
       projectSessionId: 7,
       projectDir: '/tmp/project',
       clojureDependencies: [{ coordinates: 'org.clojure/data.json', version: '2.5.1' }],
-      jythonPythonLibRoot: '/repo/packages/blue-app/assets/java/pythonLib',
-      jythonUserPythonLibRoot: '/Users/test/Library/Application Support/Blue/pythonLib',
+      jythonPythonLibRoot: path.resolve('/repo/packages/blue-app/dist/main', '../../assets/java/pythonLib'),
+      jythonUserPythonLibRoot: path.join('/Users/test/Library/Application Support/Blue', 'pythonLib'),
     });
   });
 
@@ -206,8 +207,8 @@ describe('java-runtime-session', () => {
       projectSessionId: 2,
       projectDir: '/tmp/project-b',
       clojureDependencies: [],
-      jythonPythonLibRoot: '/repo/packages/blue-app/assets/java/pythonLib',
-      jythonUserPythonLibRoot: '/Users/test/Library/Application Support/Blue/pythonLib',
+      jythonPythonLibRoot: path.resolve('/repo/packages/blue-app/dist/main', '../../assets/java/pythonLib'),
+      jythonUserPythonLibRoot: path.join('/Users/test/Library/Application Support/Blue', 'pythonLib'),
     });
   });
 

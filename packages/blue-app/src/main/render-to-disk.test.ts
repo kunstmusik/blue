@@ -252,7 +252,10 @@ describe('resolveOutputFilePath', () => {
     expect(resolveOutputFilePath(data, '/projects/example')).toBe(path.resolve('/projects/example', 'renders/final mix.wav'));
 
     props.fileName = '/exports/exact.wav';
-    expect(resolveOutputFilePath(data, '/projects/example')).toBe(path.resolve('/projects/example', '/exports/exact.wav'));
+    const absoluteExpected = path.isAbsolute('/exports/exact.wav')
+      ? '/exports/exact.wav'
+      : path.resolve('/projects/example', '/exports/exact.wav');
+    expect(resolveOutputFilePath(data, '/projects/example')).toBe(absoluteExpected);
   });
 
   it('requests a destination when askOnRender is enabled or the saved filename is empty', () => {
