@@ -106,6 +106,7 @@ nsis:
 
 linux:
   executableName: blue
+  maintainer: stevenyi@gmail.com
   icon: assets/blueIcon.png
   category: AudioVideo
   target:
