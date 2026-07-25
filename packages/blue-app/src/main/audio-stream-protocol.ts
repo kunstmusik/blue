@@ -41,6 +41,10 @@ const CONTENT_TYPES: Record<string, string> = {
 
 const authorizedAudioFilePaths = new Set<string>();
 
+function normalizeAuthorizedAudioFilePath(filePath: string): string {
+  return process.platform === "win32" ? filePath.toLowerCase() : filePath;
+}
+
 /** Call before app.whenReady(). Marks the scheme as standard + streamable. */
 export function registerBlueAudioScheme(): void {
   protocol.registerSchemesAsPrivileged([
@@ -82,7 +86,7 @@ export function authorizeAudioFilePath(filePath: string): boolean {
   try {
     const canonicalPath = fs.realpathSync(filePath);
     if (!fs.statSync(canonicalPath).isFile()) return false;
-    authorizedAudioFilePaths.add(canonicalPath);
+    authorizedAudioFilePaths.add(normalizeAuthorizedAudioFilePath(canonicalPath));
     return true;
   } catch {
     return false;
@@ -95,7 +99,9 @@ export async function resolveAuthorizedAudioFilePath(
 ): Promise<string | null> {
   try {
     const canonicalPath = await fs.promises.realpath(filePath);
-    return authorizedAudioFilePaths.has(canonicalPath) ? canonicalPath : null;
+    return authorizedAudioFilePaths.has(normalizeAuthorizedAudioFilePath(canonicalPath))
+      ? canonicalPath
+      : null;
   } catch {
     return null;
   }

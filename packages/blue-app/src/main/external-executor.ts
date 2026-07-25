@@ -65,9 +65,9 @@ export function executeExternalTestSync(request: ExternalTestRequest): ExternalT
 
 function runCommandSync(commandLine: string, cwd: string): string {
   const isWindows = process.platform === 'win32';
-  const cmd = isWindows ? 'cmd' : '/bin/sh';
+  const cmd = isWindows ? 'powershell.exe' : '/bin/sh';
   const cmdArgs = isWindows
-    ? ['/c', commandLine]
+    ? ['-NoProfile', '-Command', commandLine]
     : ['-c', commandLine];
 
   return execFileSync(cmd, cmdArgs, {
