@@ -27,7 +27,8 @@ class ClojureSessionTest {
                 null);
 
         assertEquals("done", result.value());
-        assertEquals("hello\n", result.stdout());
-        assertEquals("warn\n", result.stderr());
+        String nl = System.lineSeparator();
+        assertEquals("hello" + nl, result.stdout());
+        assertEquals("warn" + nl, result.stderr());
     }
 }
