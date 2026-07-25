@@ -68,7 +68,7 @@ function ctx(projectDirectory: string | null = '/proj', sfDir: string | null = n
 
 describe('collectMissingAudioFiles — Java Blue parity scope', () => {
   it('returns no rows when all AudioFile references resolve via project directory', () => {
-    const existing = new Set(['/proj/clip.wav']);
+    const existing = new Set([path.join('/proj', 'clip.wav')]);
     const data = makeDataWithRootObjects([makeAudioFile('clip.wav')]);
     expect(collectMissingAudioFiles(data, ctx('/proj'), makeProbe(existing))).toEqual([]);
   });
@@ -80,7 +80,7 @@ describe('collectMissingAudioFiles — Java Blue parity scope', () => {
   });
 
   it('returns no rows when a separator-less name resolves via SFDIR', () => {
-    const existing = new Set(['/sfx/kick.wav']);
+    const existing = new Set([path.join('/sfx', 'kick.wav')]);
     const data = makeDataWithRootObjects([makeAudioFile('kick.wav')]);
     expect(collectMissingAudioFiles(data, ctx('/proj', '/sfx'), makeProbe(existing))).toEqual([]);
   });
@@ -130,10 +130,10 @@ describe('collectMissingAudioFiles — Java Blue parity scope', () => {
 });
 
 describe('findAudioFile — BlueSystem.findFile parity order', () => {
-  const probe = makeProbe(new Set(['/proj/a.wav', '/abs/b.wav', '/sfx/c.wav']));
+  const probe = makeProbe(new Set([path.join('/proj', 'a.wav'), '/abs/b.wav', path.join('/sfx', 'c.wav')]));
 
   it('prefers project-directory resolution', () => {
-    expect(findAudioFile('a.wav', ctx('/proj', '/sfx'), probe)).toBe('/proj/a.wav');
+    expect(findAudioFile('a.wav', ctx('/proj', '/sfx'), probe)).toBe(path.join('/proj', 'a.wav'));
   });
 
   it('falls back to absolute/direct resolution', () => {
@@ -141,7 +141,7 @@ describe('findAudioFile — BlueSystem.findFile parity order', () => {
   });
 
   it('uses SFDIR only for separator-less names', () => {
-    expect(findAudioFile('c.wav', ctx('/proj', '/sfx'), probe)).toBe('/sfx/c.wav');
+    expect(findAudioFile('c.wav', ctx('/proj', '/sfx'), probe)).toBe(path.join('/sfx', 'c.wav'));
   });
 
   it('does not consult SFDIR for paths that contain a separator', () => {

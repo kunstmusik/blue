@@ -40,7 +40,7 @@ describe('executeRenderToDisk', () => {
 
   it('allows unsaved projects to render from the application temp directory', () => {
     expect(resolveRenderWorkingDirectory(null, '/application/temp')).toBe('/application/temp');
-    expect(resolveRenderWorkingDirectory('/projects/example.blue', '/application/temp')).toBe('/projects');
+    expect(resolveRenderWorkingDirectory('/projects/example.blue', '/application/temp')).toBe(path.dirname('/projects/example.blue'));
   });
 
   it('uses the active shared JavaScript session for synchronous disk CSD generation', async () => {
@@ -249,10 +249,10 @@ describe('resolveOutputFilePath', () => {
     props.askOnRender = false;
     props.fileName = 'renders/final mix.wav';
 
-    expect(resolveOutputFilePath(data, '/projects/example')).toBe('/projects/example/renders/final mix.wav');
+    expect(resolveOutputFilePath(data, '/projects/example')).toBe(path.resolve('/projects/example', 'renders/final mix.wav'));
 
     props.fileName = '/exports/exact.wav';
-    expect(resolveOutputFilePath(data, '/projects/example')).toBe('/exports/exact.wav');
+    expect(resolveOutputFilePath(data, '/projects/example')).toBe(path.resolve('/projects/example', '/exports/exact.wav'));
   });
 
   it('requests a destination when askOnRender is enabled or the saved filename is empty', () => {

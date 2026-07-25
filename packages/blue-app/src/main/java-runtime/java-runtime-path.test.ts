@@ -1,10 +1,13 @@
 import { describe, expect, it } from 'vitest';
+import * as path from 'node:path';
 import {
   getJavaRuntimeArtifactCandidates,
   getJavaRuntimePythonLibraryCandidates,
   resolveJavaRuntimeArtifactPath,
   resolveJavaRuntimePythonLibraryPaths,
 } from './java-runtime-path';
+
+const RESOURCES = '/Applications/Blue.app/Contents/Resources';
 
 describe('java-runtime-path', () => {
   it('resolves the development helper location next to the app assets', () => {
@@ -13,65 +16,47 @@ describe('java-runtime-path', () => {
       mainModuleDir: '/repo/packages/blue-app/dist/main',
     });
 
-    expect(candidates).toEqual(['/repo/packages/blue-app/assets/java/blue-java.jar']);
+    expect(candidates).toEqual([path.resolve('/repo/packages/blue-app/dist/main', '../../assets/java/blue-java.jar')]);
   });
 
   it('prefers packaged resources candidates when packaged', () => {
     const resolution = resolveJavaRuntimeArtifactPath({
       isPackaged: true,
       mainModuleDir: '/ignored',
-      resourcesPath: '/Applications/Blue.app/Contents/Resources',
-      existsSync: (candidate) => candidate.includes('app.asar.unpacked/assets/java/blue-java.jar'),
+      resourcesPath: RESOURCES,
+      existsSync: (candidate) => candidate === path.join(RESOURCES, 'app.asar.unpacked', 'assets', 'java', 'blue-java.jar'),
     });
 
     expect(resolution.artifactPath).toBe(
-      '/Applications/Blue.app/Contents/Resources/app.asar.unpacked/assets/java/blue-java.jar',
+      path.join(RESOURCES, 'app.asar.unpacked', 'assets', 'java', 'blue-java.jar'),
     );
     expect(resolution.exists).toBe(true);
   });
 
   it('prefers resources/assets/java/blue-java.jar for electron-builder extraResources layout', () => {
-    // electron-builder copies assets/java to resources/assets/java as an
-    // extraResource. The preferred packaged candidate must be the first
-    // match when that file is present so the ASAR-unpacked fallbacks remain
-    // compatibility-only.
+    const expected = path.join(RESOURCES, 'assets', 'java', 'blue-java.jar');
     const resolution = resolveJavaRuntimeArtifactPath({
       isPackaged: true,
       mainModuleDir: '/ignored',
-      resourcesPath: '/Applications/Blue.app/Contents/Resources',
-      existsSync: (candidate) =>
-        candidate === '/Applications/Blue.app/Contents/Resources/assets/java/blue-java.jar',
+      resourcesPath: RESOURCES,
+      existsSync: (candidate) => candidate === expected,
     });
 
-    expect(resolution.candidatePaths[0]).toBe(
-      '/Applications/Blue.app/Contents/Resources/assets/java/blue-java.jar',
-    );
-    expect(resolution.artifactPath).toBe(
-      '/Applications/Blue.app/Contents/Resources/assets/java/blue-java.jar',
-    );
+    expect(resolution.candidatePaths[0]).toBe(expected);
+    expect(resolution.artifactPath).toBe(expected);
     expect(resolution.exists).toBe(true);
   });
 
   it('lists resources/assets/java/blue-java.jar as the first packaged candidate', () => {
-    // Guarantee deterministic preference: the electron-builder extraResources
-    // destination must appear before any ASAR-unpacked fallback so a future
-    // packaging change that only updates one location does not silently break
-    // installed-resource resolution.
     const candidates = getJavaRuntimeArtifactCandidates({
       isPackaged: true,
       mainModuleDir: '/ignored',
-      resourcesPath: '/Applications/Blue.app/Contents/Resources',
+      resourcesPath: RESOURCES,
     });
 
-    expect(candidates[0]).toBe(
-      '/Applications/Blue.app/Contents/Resources/assets/java/blue-java.jar',
-    );
-    expect(candidates).toContain(
-      '/Applications/Blue.app/Contents/Resources/app.asar.unpacked/assets/java/blue-java.jar',
-    );
-    expect(candidates).toContain(
-      '/Applications/Blue.app/Contents/Resources/app.asar.unpacked/packages/blue-app/assets/java/blue-java.jar',
-    );
+    expect(candidates[0]).toBe(path.join(RESOURCES, 'assets', 'java', 'blue-java.jar'));
+    expect(candidates).toContain(path.join(RESOURCES, 'app.asar.unpacked', 'assets', 'java', 'blue-java.jar'));
+    expect(candidates).toContain(path.join(RESOURCES, 'app.asar.unpacked', 'packages', 'blue-app', 'assets', 'java', 'blue-java.jar'));
   });
 
   it('resolves the development python library location next to the app assets', () => {
@@ -80,59 +65,48 @@ describe('java-runtime-path', () => {
       mainModuleDir: '/repo/packages/blue-app/dist/main',
     });
 
-    expect(candidates).toEqual(['/repo/packages/blue-app/assets/java/pythonLib']);
+    expect(candidates).toEqual([path.resolve('/repo/packages/blue-app/dist/main', '../../assets/java/pythonLib')]);
   });
 
   it('returns packaged and user python library roots', () => {
+    const expected = path.join(RESOURCES, 'app.asar.unpacked', 'assets', 'java', 'pythonLib');
     const resolution = resolveJavaRuntimePythonLibraryPaths({
       isPackaged: true,
       mainModuleDir: '/ignored',
-      resourcesPath: '/Applications/Blue.app/Contents/Resources',
+      resourcesPath: RESOURCES,
       userDataPath: '/Users/test/Library/Application Support/Blue',
-      existsSync: (candidate) => candidate.includes('app.asar.unpacked/assets/java/pythonLib'),
+      existsSync: (candidate) => candidate === expected,
     });
 
-    expect(resolution.packagedLibraryRoot).toBe(
-      '/Applications/Blue.app/Contents/Resources/app.asar.unpacked/assets/java/pythonLib',
-    );
+    expect(resolution.packagedLibraryRoot).toBe(expected);
     expect(resolution.userLibraryRoot).toBe(
-      '/Users/test/Library/Application Support/Blue/pythonLib',
+      path.join('/Users/test/Library/Application Support/Blue', 'pythonLib'),
     );
     expect(resolution.exists).toBe(true);
   });
 
   it('prefers resources/assets/java/pythonLib for electron-builder extraResources layout', () => {
-    // electron-builder copies the Python library to
-    // resources/assets/java/pythonLib. Ensure the preferred candidate is the
-    // first packaged location and that ASAR-unpacked fallbacks remain
-    // available for backward compatibility without taking precedence.
     const candidates = getJavaRuntimePythonLibraryCandidates({
       isPackaged: true,
       mainModuleDir: '/ignored',
-      resourcesPath: '/Applications/Blue.app/Contents/Resources',
+      resourcesPath: RESOURCES,
     });
 
-    expect(candidates[0]).toBe(
-      '/Applications/Blue.app/Contents/Resources/assets/java/pythonLib',
-    );
-    expect(candidates).toContain(
-      '/Applications/Blue.app/Contents/Resources/app.asar.unpacked/assets/java/pythonLib',
-    );
+    expect(candidates[0]).toBe(path.join(RESOURCES, 'assets', 'java', 'pythonLib'));
+    expect(candidates).toContain(path.join(RESOURCES, 'app.asar.unpacked', 'assets', 'java', 'pythonLib'));
   });
 
   it('resolves resources/assets/java/pythonLib as the packaged Python library root when present', () => {
+    const expected = path.join(RESOURCES, 'assets', 'java', 'pythonLib');
     const resolution = resolveJavaRuntimePythonLibraryPaths({
       isPackaged: true,
       mainModuleDir: '/ignored',
-      resourcesPath: '/Applications/Blue.app/Contents/Resources',
+      resourcesPath: RESOURCES,
       userDataPath: '/Users/test/Library/Application Support/Blue',
-      existsSync: (candidate) =>
-        candidate === '/Applications/Blue.app/Contents/Resources/assets/java/pythonLib',
+      existsSync: (candidate) => candidate === expected,
     });
 
-    expect(resolution.packagedLibraryRoot).toBe(
-      '/Applications/Blue.app/Contents/Resources/assets/java/pythonLib',
-    );
+    expect(resolution.packagedLibraryRoot).toBe(expected);
     expect(resolution.exists).toBe(true);
   });
 });

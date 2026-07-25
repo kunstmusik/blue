@@ -1,4 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { resolve } from 'node:path';
 
 const fsMock = vi.hoisted(() => ({
   readFile: vi.fn(),
@@ -70,7 +71,7 @@ describe('compileProject', () => {
     expect(toDiskCSD).toHaveBeenCalledTimes(1);
     expect(toCSD).not.toHaveBeenCalled();
     expect(toBlueLiveCSD).not.toHaveBeenCalled();
-    expect(fsMock.writeFile).toHaveBeenCalledWith('/tmp/project.csd', 'disk-csd', 'utf8');
+    expect(fsMock.writeFile).toHaveBeenCalledWith(resolve('/tmp/project.csd'), 'disk-csd', 'utf8');
     expect(result.bytesWritten).toBe(Buffer.byteLength('disk-csd', 'utf8'));
   });
 
