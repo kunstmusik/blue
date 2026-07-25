@@ -41,7 +41,7 @@ jobs:
       tag: ${{ steps.version.outputs.tag }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Bootstrap workspace
         uses: ./.github/actions/setup-blue-build
@@ -79,7 +79,7 @@ jobs:
             package-script: package:macos-arm64
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Bootstrap workspace
         uses: ./.github/actions/setup-blue-build
@@ -102,7 +102,7 @@ jobs:
           pnpm --filter @blue/app release:manifest
 
       - name: Upload package artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: stable-release-macos-${{ matrix.arch }}
           path: |
@@ -120,7 +120,7 @@ jobs:
       contents: read
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Bootstrap workspace
         uses: ./.github/actions/setup-blue-build
@@ -141,7 +141,7 @@ jobs:
           pnpm --filter @blue/app release:manifest
 
       - name: Upload package artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: stable-release-windows-x64
           path: |
@@ -157,7 +157,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Bootstrap workspace
         uses: ./.github/actions/setup-blue-build
@@ -178,7 +178,7 @@ jobs:
           pnpm --filter @blue/app release:manifest
 
       - name: Upload package artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: stable-release-linux-x64
           path: |
@@ -197,15 +197,15 @@ jobs:
       contents: write
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: 22
 
       - name: Download all package artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           path: release-assets
           pattern: stable-release-*
@@ -245,36 +245,21 @@ jobs:
 
       - name: Compose release body
         id: body
-        env:
-          MACOS_SIGNING: ${{ needs.report-credentials.outputs.macos-signing-available }}
-          WINDOWS_SIGNING: ${{ needs.report-credentials.outputs.windows-signing-available }}
         run: |
           {
             echo "body<<RELEASE_BODY_EOF"
             echo "Source revision: \`${{ github.sha }}\`"
             echo ""
-            if [ "$MACOS_SIGNING" = "true" ]; then
-              echo "macOS: signed and notarized DMG."
-            else
-              echo "macOS: **unsigned** DMG."
-            fi
-            if [ "$WINDOWS_SIGNING" = "true" ]; then
-              echo "Windows: signed NSIS installer."
-            else
-              echo "Windows: **unsigned** NSIS installer."
-            fi
+            echo "macOS: **unsigned** DMG."
+            echo "Windows: **unsigned** NSIS installer."
             echo "Linux: AppImage and Debian package."
             echo ""
             echo "## Installation"
             echo ""
-            if [ "$MACOS_SIGNING" != "true" ]; then
-              echo "**macOS**: the DMG is unsigned. Right-click the Blue app and choose **Open**, or go to **System Settings → Privacy & Security → Open Anyway**."
-              echo ""
-            fi
-            if [ "$WINDOWS_SIGNING" != "true" ]; then
-              echo "**Windows**: the installer is unsigned. SmartScreen will show \"Windows protected your PC.\" Click **More info → Run anyway**."
-              echo ""
-            fi
+            echo "**macOS**: the DMG is unsigned. Right-click the Blue app and choose **Open**, or go to **System Settings → Privacy & Security → Open Anyway**."
+            echo ""
+            echo "**Windows**: the installer is unsigned. SmartScreen will show \"Windows protected your PC.\" Click **More info → Run anyway**."
+            echo ""
             echo "**Linux**: install the \`.deb\` or mark the \`.AppImage\` as executable (\`chmod +x\`) and launch."
             echo ""
             echo "## Runtime prerequisites"
@@ -289,7 +274,7 @@ jobs:
 
       - name: Create draft GitHub Release
         id: draft
-        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ github.ref_name }}
           name: Blue ${{ github.ref_name }}

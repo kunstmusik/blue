@@ -45,7 +45,7 @@ jobs:
     runs-on: ${{ matrix.runs-on }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Bootstrap workspace
         uses: ./.github/actions/setup-blue-build
@@ -79,7 +79,7 @@ jobs:
 
       - name: Upload installer artifacts
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: blue-${{ matrix.target-id }}-${{ steps.version.outputs.app-version }}-pr${{ github.event.pull_request.number }}
           path: |
@@ -92,7 +92,7 @@ jobs:
 
       - name: Upload diagnostics
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: diagnostics-blue-${{ matrix.target-id }}-${{ steps.version.outputs.app-version }}-pr${{ github.event.pull_request.number }}
           path: |
