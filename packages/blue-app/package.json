@@ -4,7 +4,8 @@
   "desktopName": "com.kunstmusik.blue.desktop",
   "version": "0.0.1",
   "description": "Electron application for Blue — loads .blue files and plays via blue-engine",
-  "author": "Blue contributors",
+  "author": "Blue contributors <https://github.com/kunstmusik/blue-electron>",
+  "homepage": "https://github.com/kunstmusik/blue-electron",
   "main": "dist/main/main.js",
   "scripts": {
     "build:main": "tsc -p tsconfig.main.json",
