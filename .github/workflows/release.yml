@@ -289,7 +289,7 @@ jobs:
 
       - name: Create draft GitHub Release
         id: draft
-        uses: softprops/action-gh-release@c062e08bd532815e2082a85da87aa8ebcc39d746
+        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65
         with:
           tag_name: ${{ github.ref_name }}
           name: Blue ${{ github.ref_name }}
