@@ -27,9 +27,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - target-id: macos-x64
-            runs-on: macos-13
-            package-script: package:macos-x64
+          # - target-id: macos-x64
+          #   runs-on: macos-13
+          #   package-script: package:macos-x64
           - target-id: macos-arm64
             runs-on: macos-14
             package-script: package:macos-arm64
