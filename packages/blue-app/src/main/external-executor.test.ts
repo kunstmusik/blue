@@ -98,8 +98,9 @@ describe('executeExternalTest', () => {
   });
 
   it('handles $outfile mode', async () => {
+    const catCmd = process.platform === 'win32' ? 'type' : 'cat';
     const result = await executeExternalTest({
-      commandLine: 'cat $infile > $outfile',
+      commandLine: `${catCmd} $infile > $outfile`,
       text: 'i1 0 1\n',
       projectDir: null,
     });
