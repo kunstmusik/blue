@@ -73,8 +73,14 @@ jobs:
         run: pnpm --filter @blue/app ${{ matrix.package-script }}
 
       - name: Verify packaged app (smoke)
+        if: runner.os != 'Linux'
         shell: bash
         run: pnpm --filter @blue/app verify:packaged-app -- --no-playwright
+
+      - name: Verify packaged app (smoke, Linux)
+        if: runner.os == 'Linux'
+        shell: bash
+        run: xvfb-run --auto-servernum pnpm --filter @blue/app verify:packaged-app -- --no-playwright
 
       - name: Upload installer artifacts
         uses: actions/upload-artifact@v5

@@ -180,7 +180,7 @@ jobs:
 
       - name: Verify packaged app (smoke)
         run: |
-          pnpm --filter @blue/app verify:packaged-app -- --no-playwright
+          xvfb-run --auto-servernum pnpm --filter @blue/app verify:packaged-app -- --no-playwright
 
       - name: Create stable release ZIP
         working-directory: packages/blue-app/release
