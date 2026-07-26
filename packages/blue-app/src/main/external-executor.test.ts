@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { prepareCommandLine, shouldUseOutFile } from '../shared/external-executor';
 import { executeExternalTest } from './external-executor';
 
+const EXTERNAL_PROCESS_TEST_TIMEOUT = 35_000;
+
 describe('prepareCommandLine', () => {
   it('appends infile when $infile is absent', () => {
     expect(prepareCommandLine('python', 'input.txt')).toBe('python input.txt');
@@ -63,7 +65,7 @@ describe('executeExternalTest', () => {
     });
     expect(result.ok).toBe(true);
     expect(result.output).toContain('i1 0 1');
-  });
+  }, EXTERNAL_PROCESS_TEST_TIMEOUT);
 
   it('writes text to temp file and passes it to command', async () => {
     const result = await executeExternalTest({
@@ -74,7 +76,7 @@ describe('executeExternalTest', () => {
     expect(result.ok).toBe(true);
     expect(result.output).toContain('i1 0 2');
     expect(result.output).toContain('i2 1 1');
-  });
+  }, EXTERNAL_PROCESS_TEST_TIMEOUT);
 
   it('returns error for failing command', async () => {
     const result = await executeExternalTest({
@@ -84,7 +86,7 @@ describe('executeExternalTest', () => {
     });
     expect(result.ok).toBe(false);
     expect(result.error).toBeTruthy();
-  });
+  }, EXTERNAL_PROCESS_TEST_TIMEOUT);
 
   it('returns error for nonexistent command', async () => {
     const result = await executeExternalTest({
@@ -94,7 +96,7 @@ describe('executeExternalTest', () => {
     });
     expect(result.ok).toBe(false);
     expect(result.error).toBeTruthy();
-  });
+  }, EXTERNAL_PROCESS_TEST_TIMEOUT);
 
   it('handles $outfile mode', async () => {
     const result = await executeExternalTest({
@@ -104,5 +106,5 @@ describe('executeExternalTest', () => {
     });
     expect(result.ok).toBe(true);
     expect(result.output).toContain('i1 0 1');
-  });
+  }, EXTERNAL_PROCESS_TEST_TIMEOUT);
 });

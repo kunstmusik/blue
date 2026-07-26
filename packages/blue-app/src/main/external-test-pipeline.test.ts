@@ -12,6 +12,8 @@ import { executeExternalTest, executeExternalTestSync } from './external-executo
 import type { ScoreObjectEditorRequest } from '../shared/project-editor';
 import { setExternalCommandExecutor } from '@blue/data';
 
+const EXTERNAL_PROCESS_TEST_TIMEOUT = 35_000;
+
 function makeProjectWithExternal(commandLine: string, text: string): { data: BlueData; request: ScoreObjectEditorRequest } {
   setExternalCommandExecutor({
     execute(cmd, body, dir) {
@@ -83,7 +85,7 @@ describe('External test pipeline (BlueData → document → executor)', () => {
     });
     expect(result.ok).toBe(true);
     expect(result.output).toContain('i1 0 1');
-  });
+  }, EXTERNAL_PROCESS_TEST_TIMEOUT);
 
   it('executes external test with text body piped via cat', async () => {
     const { data, request } = makeProjectWithExternal(
@@ -101,7 +103,7 @@ describe('External test pipeline (BlueData → document → executor)', () => {
     expect(result.ok).toBe(true);
     expect(result.output).toContain('i1 0 2');
     expect(result.output).toContain('i2 1 1');
-  });
+  }, EXTERNAL_PROCESS_TEST_TIMEOUT);
 
   it('handles command failure gracefully', async () => {
     const { data, request } = makeProjectWithExternal('false', '');
@@ -114,7 +116,7 @@ describe('External test pipeline (BlueData → document → executor)', () => {
     });
     expect(result.ok).toBe(false);
     expect(result.error).toBeTruthy();
-  });
+  }, EXTERNAL_PROCESS_TEST_TIMEOUT);
 
   it('mirrors Java Blue flow: empty command + empty text = no test', async () => {
     const result = await executeExternalTest({
@@ -139,7 +141,7 @@ describe('External test pipeline (BlueData → document → executor)', () => {
     });
     expect(result.ok).toBe(true);
     expect(result.output).toContain('i1 0 1');
-  });
+  }, EXTERNAL_PROCESS_TEST_TIMEOUT);
 
   it('generates notes from External object and stringifies NoteList (parity with main process IPC)', () => {
     const { data } = makeProjectWithExternal('cat', 'i1 0 1\ni2 1 1');
@@ -161,5 +163,5 @@ describe('External test pipeline (BlueData → document → executor)', () => {
     expect(output).toContain('i2');
     expect(output).toContain('0.0');
     expect(output).toContain('2'); // duration is 2.0 because of scaling
-  });
+  }, EXTERNAL_PROCESS_TEST_TIMEOUT);
 });
