@@ -165,16 +165,16 @@ pnpm --filter @blue/data exec tsc --noEmit
 
 ## Releases
 
-Blue ships for macOS x64/arm64, Windows x64, and Linux x64. The first release does not bundle Csound, `blue-engine`, or a Java runtime; those remain documented end-user prerequisites.
+Blue ships for macOS arm64, Windows x64, and Linux x64. The first release does not bundle Csound, `blue-engine`, or a Java runtime; those remain documented end-user prerequisites.
 
-Contributor, development, and stable packages are unsigned by default and require no production signing credentials. Stable releases still use the protected GitHub `release` Environment for maintainer approval before public publication. Signed macOS and Windows release paths are reserved for future work.
+Contributor, develop, and stable packages are unsigned and require no production signing credentials. Stable releases still use the protected GitHub `release` Environment for maintainer approval before public publication. Signed macOS and Windows release paths are reserved for future funded work.
 
 | Audience | Quick command |
 | --- | --- |
 | Contributor (local unsigned package) | `pnpm --filter @blue/app package:dir && pnpm --filter @blue/app verify:packaged-app` |
-| CI matrix (PR + dev/main) | `.github/workflows/ci.yml` runs the same `package:<target>` + smoke + manifest across macOS x64/arm64, Windows x64, Linux x64. |
-| Maintainer (development prerelease) | Trigger `.github/workflows/dev-release.yml` on `main`, `dev`, or a specific source revision for an unsigned, traceable GitHub prerelease. |
-| Maintainer (stable release) | Push an immutable `vX.Y.Z` tag matching `packages/blue-app/package.json` to trigger `.github/workflows/release.yml`. The workflow builds unsigned macOS, Windows, and Linux packages, verifies the complete artifact set, and waits for the protected `release` Environment only before public publication. |
+| PR validation | `.github/workflows/pr.yml` builds macOS arm64, Windows x64, and Linux x64 and uploads `blue-{os}-{cputype}-{version}-pr{number}.zip` Actions artifacts. |
+| Develop build | Push to `develop`; `.github/workflows/develop.yml` uploads `blue-{os}-{cputype}-{version}-{short-sha}.zip` Actions artifacts and creates no GitHub Release. |
+| Maintainer (stable release) | Push an immutable `vX.Y.Z` tag matching `packages/blue-app/package.json`. `.github/workflows/release.yml` publishes verified unsigned `blue-{os}-{cputype}-{version}.zip` assets after protected approval. |
 
 Local package input validation: `pnpm verify:package-inputs`. Full repository verification: `pnpm verify`. Workflow contract validation: `pnpm verify:release-workflows`. Credential test coverage: `pnpm verify:release-credentials`. Stable-version validation: `pnpm --filter @blue/app verify:release-version -- --tag vX.Y.Z --app-version X.Y.Z --repository <owner/repo>`.
 

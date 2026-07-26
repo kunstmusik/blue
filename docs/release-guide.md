@@ -2,31 +2,31 @@
 
 This guide defines the maintainer procedure and security boundary for Blue desktop packages.
 
-Blue's first packaged release supports macOS x64 and arm64, Windows x64, and Linux x64. It ships Blue and its Java helper, but does not include Csound, `blue-engine`, or a Java runtime. Playback users must install those runtime prerequisites separately.
+Blue's first packaged release supports macOS arm64, Windows x64, and Linux x64. It ships Blue and its Java helper, but does not include Csound, `blue-engine`, or a Java runtime. Playback users must install those runtime prerequisites separately.
 
 ## Signing Policy
 
-Contributor builds, CI package checks, development prereleases, and stable releases are unsigned by default. They must not require Apple Developer ID credentials, notarization credentials, Azure Trusted Signing values, or GitHub OIDC signing permissions.
+Contributor builds, CI package checks, develop-branch artifacts, and stable releases are unsigned. They must not require Apple Developer ID credentials, notarization credentials, Azure Trusted Signing values, or GitHub OIDC signing permissions.
 
-The protected GitHub `release` Environment is still used for stable releases, but its current purpose is publication approval. Signing and notarization are future work. `pnpm release:preflight` remains as an advisory future-readiness check and is not part of the current stable-release gate.
+The protected GitHub `release` Environment is still used for stable releases, but its only current purpose is publication approval. Signing and notarization are future work because the project does not currently fund the required signing programs and keys. `pnpm release:preflight` remains as an advisory future-readiness check and is not part of the current stable-release gate.
 
 ## Release Channels
 
-| Channel                | Trigger                                       | Signing  | Publication                                                         |
-| ---------------------- | --------------------------------------------- | -------- | ------------------------------------------------------------------- |
-| CI verification        | Pull requests and pushes to `develop` or `main`  | Unsigned | No GitHub Release; diagnostics only                                 |
-| Development prerelease | Pushes to `develop` or manual dispatch | Unsigned | One clearly labeled GitHub prerelease with source SHA and checksums |
-| Stable release         | Immutable `vX.Y.Z` tag                        | Unsigned | One public GitHub Release after complete platform verification and protected publication approval |
+| Channel         | Trigger                              | Signing  | Publication                                                                           |
+| --------------- | ------------------------------------ | -------- | ------------------------------------------------------------------------------------- |
+| PR verification | Pull requests to `develop` or `main` | Unsigned | Versioned GitHub Actions artifacts only; no GitHub Release                            |
+| Develop build   | Pushes to `develop`                  | Unsigned | Versioned GitHub Actions artifacts only; no GitHub Release                            |
+| Stable release  | Immutable `vX.Y.Z` tag               | Unsigned | One public GitHub Release after complete verification and protected approval          |
 
 Do not create a stable release from an untagged commit, a branch name, or a tag whose version does not match `packages/blue-app/package.json`.
 
 ### Implemented commands
 
-| Workflow            | Implemented commands                                                                                                                                                                                                                       |
-| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| CI verification     | `pnpm verify:package-inputs`, `pnpm --filter @blue/app package:<target>`, `pnpm --filter @blue/app verify:packaged-app`, `pnpm --filter @blue/app release:manifest`                                                                       |
-| Development release | `node scripts/release-metadata.mjs --out release-metadata.json --channel development` in the promoter job; the workflow uploads per-target artifacts and creates one GitHub prerelease                                                     |
-| Stable release      | `pnpm --filter @blue/app verify:release-version -- --repository <owner/repo>`, unsigned per-target package jobs, manifest consolidation, draft creation, and final `gh release edit --draft=false` from the protected publisher job |
+| Workflow        | Implemented commands                                                                                                                                                                                                                                                 |
+| --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| PR verification | Package input checks, tests, lint, target packaging, and packaged-app smoke checks; uploads `blue-{os}-{cputype}-{version}-pr{number}.zip` Actions artifacts                                                                        |
+| Develop build   | The same package checks on pushes to `develop`; uploads `blue-{os}-{cputype}-{version}-{short-sha}.zip` Actions artifacts and creates no GitHub Release                                                                           |
+| Stable release  | Tag/version validation, unsigned platform ZIP creation, verified manifest consolidation, draft creation, and final `gh release edit --draft=false` from the protected publisher job                                                     |
 
 ## Local Prerequisites
 
@@ -61,7 +61,7 @@ pnpm --filter @blue/app verify:packaged-app
 
 `rebuild:native` rebuilds the native `zeromq` addon against the installed Electron runtime. Run it after a fresh `pnpm install` if you change Node or Electron versions.
 
-`package:dir` builds an unsigned unpacked application into `packages/blue-app/release/`. `package:current` and the per-target scripts `package:macos-x64`, `package:macos-arm64`, `package:windows-x64`, and `package:linux-x64` produce the host platform installer formats declared in `packages/blue-app/electron-builder.yml`. The builder configuration disables macOS signing identity auto-discovery so local macOS packages stay unsigned by default.
+`package:dir` builds an unsigned unpacked application into `packages/blue-app/release/`. `package:current` and the release-target scripts `package:macos-arm64`, `package:windows-x64`, and `package:linux-x64` produce the installer formats declared in `packages/blue-app/electron-builder.yml`. `package:macos-x64` remains available for local developer experiments but is not part of the hosted build or published release matrix. The builder configuration disables macOS signing identity auto-discovery so local macOS packages stay unsigned.
 
 `verify:packaged-app` must prove that the installed app resolves the bundled Java helper at `resources/assets/java`, retains the externalized workspace modules, loads `zeromq`, and uses the Electron-pinned `node:sqlite` runtime. It launches the packaged application with `BLUE_VERIFY_MODE=packaged-resources` and exits non-zero if any runtime dependency cannot be resolved. It must not require Csound or `blue-engine`.
 
@@ -80,7 +80,7 @@ pnpm --filter @blue/app verify:packaged-app
 
 ## Future Signing Readiness
 
-Signing is intentionally not active in the current workflows. The following values are documented so a future signed-release slice can be prepared without changing contributor, CI, development prerelease, or current stable unsigned behavior.
+Signing is intentionally not active in the current workflows. The following values are documented so a future funded signed-release slice can be prepared without changing contributor, CI, develop-artifact, or current stable unsigned behavior.
 
 `pnpm release:preflight` checks variable presence and shape without printing secret values. It is advisory today:
 
@@ -100,7 +100,7 @@ pnpm release:preflight -- --scope windows --advisory
 | `APPLE_APP_SPECIFIC_PASSWORD` | App-specific password for `APPLE_ID`                                              |
 | `APPLE_TEAM_ID`               | Apple Developer team identifier that owns the certificate                         |
 
-A future signed macOS workflow should sign, notarize, staple, and perform Gatekeeper assessment before accepting either macOS artifact.
+A future signed macOS workflow should sign, notarize, staple, and perform Gatekeeper assessment before accepting the hosted macOS arm64 artifact.
 
 ### Future Windows signing
 
@@ -126,31 +126,31 @@ The Environment policy should include:
 - Wait timer: optional, but useful for last-minute cancellation.
 - No inherited secrets from repository-level variables that overlap with future release-scoped signing values.
 
-`GITHUB_TOKEN` is injected by GitHub Actions. Do not create, store, or substitute a personal access token for normal artifact publication. The CI workflow receives `contents: read`; only the development and stable publisher jobs receive `contents: write`.
+`GITHUB_TOKEN` is injected by GitHub Actions. Do not create, store, or substitute a personal access token for normal artifact publication. PR, develop, and stable package jobs receive `contents: read`; only the stable publisher job receives `contents: write`.
 
-The CI and development-prerelease workflows must not reference the `release` Environment. Pull requests from forks and Dependabot must remain able to run secret-free validation.
+The PR and develop workflows must not reference the `release` Environment. Pull requests from forks and Dependabot must remain able to run secret-free validation.
 
-## Development Prerelease Procedure
+## Develop Actions Artifact Procedure
 
-1. Ensure the source branch has passed CI. Automated pushes build `develop`; manual dispatch can build `develop`, `main`, or an explicit SHA.
-2. Push to `develop` or dispatch the workflow manually with the intended source revision. To validate the metadata locally first:
-   ```bash
-   node scripts/release-metadata.mjs --out /tmp/release-metadata.json --channel development
-   ```
-3. Wait for all macOS, Windows, and Linux package jobs plus the prerelease promoter job.
-4. Verify the prerelease labels, version, immutable source SHA, expected platform assets, per-target checksums, and generated release notes.
-5. Download at least one artifact on its matching platform and run the packaged-app smoke validation:
+1. Push the intended source revision to `develop`.
+2. Wait for the macOS arm64, Windows x64, and Linux x64 jobs in `.github/workflows/develop.yml`.
+3. Confirm the Actions artifacts use these exact forms:
+   - `blue-macos-arm64-{version}-{short-sha}.zip`
+   - `blue-windows-x64-{version}-{short-sha}.zip`
+   - `blue-linux-x64-{version}-{short-sha}.zip`
+4. Download at least one artifact on its matching platform and run the packaged-app smoke validation:
    ```bash
    pnpm --filter @blue/app verify:packaged-app -- --package-dir <unpacked-dir>
    ```
+5. Confirm the workflow created no GitHub Release and used no production credentials.
 
-Development prereleases are intentionally unsigned and must say so in their notes. They are not candidates for a stable tag without a new stable workflow run.
+Develop artifacts are retained by GitHub Actions for 30 days. They are not stable release assets and are never promoted in place; a stable tag always triggers a fresh build.
 
 ## Stable Release Procedure
 
 1. Update `@blue/app` to the intended semantic version and prepare release notes.
 2. Run the clean local validation commands, including an unsigned host package and packaged-app smoke check.
-3. Confirm the candidate commit has passed the cross-platform CI matrix on `develop` or `main`.
+3. Confirm the candidate commit has passed the cross-platform develop workflow and any required pull-request checks.
 4. Locally verify the tag/version agreement before pushing:
    ```bash
    pnpm --filter @blue/app verify:release-version -- \
@@ -158,21 +158,21 @@ Development prereleases are intentionally unsigned and must say so in their note
    ```
 5. Create an annotated, immutable `vX.Y.Z` tag matching the app version and push it.
 6. Wait for all target package jobs to report success:
-   - **macOS**: produces unsigned DMG packages for x64 and arm64.
+   - **macOS**: produces an unsigned arm64 DMG.
    - **Windows**: produces an unsigned NSIS installer for x64.
    - **Linux**: produces checksummed AppImage and Debian packages.
 7. Review and approve the protected `release` Environment when GitHub Actions requests it for the final publisher job.
-8. The final publisher downloads every target artifact, validates the consolidated manifest (`macos-x64`, `macos-arm64`, `windows-x64`, `linux-x64`), composes a release body that labels macOS and Windows as unsigned and lists runtime prerequisites, creates a draft GitHub Release with checksum files, then publishes it via `gh release edit --draft=false`.
-9. Inspect the published release from a clean machine for each supported platform before announcing it.
+8. The final publisher downloads and validates exactly `blue-macos-arm64-X.Y.Z.zip`, `blue-windows-x64-X.Y.Z.zip`, and `blue-linux-x64-X.Y.Z.zip`.
+9. The publisher requires verified checksums, matching version/source metadata, and no missing, duplicate, or unexpected ZIP. It then creates a draft GitHub Release with the same ZIP filenames, `checksums-sha256.txt`, and `release-manifest.json`, and publishes it via `gh release edit --draft=false`.
+10. Inspect the published release from a clean machine for each supported platform before announcing it.
 
-The final publisher is the only workflow job allowed to create or publish the stable GitHub Release. It stages the release as a draft, validates the exact expected artifact manifest, attaches all artifacts, checksums, and provenance, then publishes it. No individual platform job may publish a release asset by itself.
+The final publisher is the only workflow job allowed to create or publish the stable GitHub Release. It validates the exact expected artifact manifest, stages the release as a draft with all ZIPs, checksums, and manifest metadata attached, then publishes it. No individual platform job may publish a release asset by itself.
 
 ## Failure Recovery
 
 | Failure                                                        | Required Action                                                                                                           |
 | -------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
 | Build, test, package, resource smoke, or checksum failure      | Do not publish. Fix the defect and run validation again.                                                                  |
-| Release environment approval or publication-permission failure | Correct the protected-environment or workflow-token configuration; inspect only redacted workflow logs.                   |
 | Incomplete artifact set                                        | Leave the draft unpublished or remove an empty draft. Never publish a partial stable release.                             |
 | Future signing credential or signature failure                 | Keep the current unsigned path separate; fix the signed-release configuration in a dedicated future signed-release branch. |
 | Defect in an already published release                         | Withdraw or mark the release as affected, document the issue, and publish a newer version. Never replace assets.          |
@@ -181,7 +181,7 @@ The final publisher is the only workflow job allowed to create or publish the st
 
 - Never commit certificates, passwords, Apple credentials, Azure credentials, `.env` files, or release tokens.
 - Never use secrets as command-line arguments. Use environment variables or the release environment only.
-- Never expose future production signing credentials to a pull request, a development prerelease, a fork, Dependabot, or a renderer process.
+- Never expose future production signing credentials to a pull request, a develop build, a fork, Dependabot, or a renderer process.
 - Never overwrite a published release tag or replace an existing release artifact.
 - Treat package checksums, source revision, release notes, and, when future signing is enabled, signature/notarization results as required release evidence.
 

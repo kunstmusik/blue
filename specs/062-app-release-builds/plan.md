@@ -6,7 +6,7 @@
 
 ## Summary
 
-Package the existing Blue Electron application as a downloadable desktop app, make local unsigned packaging repeatable, validate build and package output on native macOS, Windows, and Linux runners, and promote only complete unsigned artifacts into GitHub releases. Use `electron-builder` for installer generation and GitHub Actions matrices plus a final publisher job for atomic promotion. Signing and notarization are reserved for a future release slice. Development prereleases remain unsigned, scheduled from `main`, and stable releases are triggered by matching `vX.Y.Z` tags.
+Package the existing Blue Electron application as a downloadable desktop app, make local unsigned packaging repeatable, validate build and package output on native macOS arm64, Windows x64, and Linux x64 runners, and promote only complete unsigned ZIP bundles into stable GitHub releases. Use `electron-builder` for native installer generation and GitHub Actions matrices plus a final publisher job for atomic promotion. Signing and notarization are reserved until the required signing programs and keys are funded. Develop builds run on pushes to `develop`, remain available only as Actions artifacts, and stable releases are triggered by matching `vX.Y.Z` tags.
 
 ## Technical Context
 
@@ -14,11 +14,11 @@ Package the existing Blue Electron application as a downloadable desktop app, ma
 
 **Primary Dependencies**: React 19, Vite 7, `vite-plugin-electron`, pnpm 10 workspaces, `electron-builder`, `@electron/rebuild`, existing `zeromq` native dependency, GitHub Actions
 
-**Storage**: Source-controlled package/workflow configuration; GitHub Actions artifacts, attestations, and GitHub Release metadata; protected GitHub Environment approval; no new project XML or application-settings persistence
+**Storage**: Source-controlled package/workflow configuration; GitHub Actions artifacts, verified checksum manifests, and GitHub Release metadata; protected GitHub Environment approval; no new project XML or application-settings persistence
 
 **Testing**: Vitest 4 existing suites; existing Java runtime packaged-resource tests; focused package-input and packaged-app smoke checks; unsigned artifact manifest verification; `pnpm test`; `pnpm lint`
 
-**Target Platform**: Packaged macOS x64 and arm64 apps, Windows x64 installer, Linux x64 AppImage and Debian package; macOS, Windows, and Ubuntu GitHub-hosted build runners
+**Target Platform**: Hosted macOS arm64, Windows x64, and Linux x64 bundles; the local macOS x64 command is retained only as an unsupported developer experiment
 
 **Project Type**: Electron desktop application in a pnpm monorepo
 
@@ -26,7 +26,7 @@ Package the existing Blue Electron application as a downloadable desktop app, ma
 
 **Constraints**: Preserve the Electron 35.7.5 / Node 22.16.0 / SQLite runtime relationship; retain externalized `@blue/data`, `@blue/engine-client`, `zeromq`, and `node:sqlite` resolution; keep `blue-java.jar` and `pythonLib` addressable from installed resources; no production signing credentials in source, pull requests, CI, development builds, or current stable builds; no bundled Csound, `blue-engine`, Java runtime, updater, signed release path, or extra distribution channels in this slice
 
-**Scale/Scope**: One package configuration, package verification scripts, a shared Actions setup action, CI, scheduled prerelease, stable-release workflows, protected release documentation, and focused tests; no change to Blue project data or end-user audio behavior
+**Scale/Scope**: One package configuration, package verification scripts, a shared Actions setup action, pull-request and develop Actions workflows, a stable-release workflow, protected release documentation, and focused tests; no change to Blue project data or end-user audio behavior
 
 ## Constitution Check
 
@@ -36,7 +36,7 @@ _GATE: Must pass before Phase 0 research. Re-check after Phase 1 design._
 - **Java and project compatibility**: **PASS**. No Java Blue behavior, `.blue` XML, or CSD output changes. The packaged-resource contract is the existing `java-runtime-path.ts` candidate order and its focused tests. The documented divergence is that Csound, `blue-engine`, and Java remain external user prerequisites.
 - **Canonical ownership and contracts**: **PASS**. `BlueData` remains main-process owned and `.blue` remains canonical project persistence. Release artifacts and metadata are hosted by GitHub; workflow/package configuration is source controlled; future signing identities are held only in local environments or protected GitHub release storage when signing is enabled. The workflow contract is defined in [contracts/release-workflows.md](./contracts/release-workflows.md).
 - **Runtime and engine isolation**: **PASS**. Java helper file access, ZeroMQ module loading, package smoke checks, manifest generation, and filesystem work stay in Electron main/build tooling and CI. The renderer and `@blue/data` remain isolated from host package operations.
-- **Verification evidence**: **PASS**. Add package-input/unit coverage, a packaged-app smoke check, platform package runs, checksums and provenance, plus the scoped and repository-wide commands in [quickstart.md](./quickstart.md). Future signing/notarization evidence is intentionally outside this slice.
+- **Verification evidence**: **PASS**. Add package-input/unit coverage, a packaged-app smoke check, platform package runs, recomputed checksums, exact source revision, and a verified manifest, plus the scoped and repository-wide commands in [quickstart.md](./quickstart.md). Future signing/notarization evidence is intentionally outside this slice.
 
 ## Project Structure
 
@@ -99,16 +99,16 @@ scripts/
 3. **Create local release ergonomics**: Add unsigned `package:dir`, `package:current`, and host/target package commands. Add tag-version validation and checksum generation. Document a single clean-machine unsigned package procedure plus explicit diagnostic messages for missing build inputs, user runtime prerequisites, and future signing variables if they are accidentally present.
 4. **Create reusable CI preparation**: Add a repository-local setup action that pins pnpm, Node, and Java; restores the pnpm cache; installs with the lockfile; and builds the Java helper before package consumers. Keep all third-party Actions pinned to reviewed revisions or maintained major releases under repository policy.
 5. **Expand CI validation**: Replace the macOS-only workflow with a native target matrix. Each matrix entry runs install, the full build, focused package-input checks, affected tests, repository tests, lint, an unsigned directory package, and packaged-app smoke verification. Upload logs and package evidence even when a validation stage fails.
-6. **Publish development prereleases**: Add a nightly/manual workflow for the current `main` revision. It builds the full matrix unsigned, assigns a generated prerelease version, uploads artifacts only after their checks pass, and publishes one clearly marked GitHub prerelease with source SHA, checksums, and generated notes. Give only its publisher job `contents: write`.
-7. **Publish protected stable releases**: Add a tag-triggered workflow that first validates tag/package version agreement, then runs the unsigned platform packaging matrix. macOS emits unsigned DMGs; Windows emits an unsigned NSIS installer; Linux emits checksummed AppImage and Debian packages. The final protected publisher job downloads all expected assets, verifies the asset manifest, creates a draft release, attaches packages, checksums, and provenance, then publishes the draft. It must never publish after a failed, skipped, missing, duplicate, or unexpected package.
-8. **Document operations and recovery**: Add `docs/release-guide.md` covering prerelease and stable workflows, GitHub Environment publication protection, future signing secret and environment-variable names, external user runtime prerequisites, release rollback, and incident response. Link the guide from the README release section.
+6. **Distribute develop Actions artifacts**: On each push to `develop`, build the full unsigned hosted matrix, append the short source SHA to the version information, and upload `blue-{os}-{cputype}-{versionInfo}.zip` artifacts only after their checks pass. Do not create a GitHub Release or grant `contents: write`.
+7. **Publish protected stable releases**: Add a tag-triggered workflow that first validates tag/package version agreement, then runs the unsigned platform packaging matrix. Each platform job wraps its native output in exactly one `blue-{os}-{cputype}-{version}.zip`; the Linux ZIP contains both the AppImage and Debian package. The final protected publisher job downloads exactly the three expected bundles, recomputes their checksums, validates a verified manifest, and publishes those same filenames as GitHub Release assets. It must never publish after a failed, skipped, missing, duplicate, unexpected, or altered bundle.
+8. **Document operations and recovery**: Add `docs/release-guide.md` covering pull-request and develop Actions artifacts, stable releases, GitHub Environment publication protection, future signing inputs, external user runtime prerequisites, release rollback, and incident response. Link the guide from the README release section.
 
 ## Validation Strategy
 
 - Unit-test package input validation and Java resource-path contracts.
 - Run local unsigned package and packaged-app smoke checks on a supported macOS machine.
-- Require the multi-platform CI package matrix for pull requests and the `dev`/`main` integration branches.
-- Run a manual prerelease before enabling the schedule, verifying its artifact names, source SHA, checksums, and no production-secret access.
+- Require the multi-platform package matrix for pull requests and pushes to `develop`.
+- Verify a develop push produces exactly three primary `.zip` Actions artifacts whose filenames include the source SHA, with no GitHub Release and no production-secret access.
 - Use a protected test tag/release to verify unsigned stable publication before the first production release. Validate macOS signing/notarization and Windows cloud signing later in a dedicated future signed-release slice.
 - Verify published release assets from a clean macOS, Windows, and Linux environment using [quickstart.md](./quickstart.md).
 

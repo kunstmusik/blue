@@ -12,6 +12,7 @@
     "verify": "node scripts/verify.mjs",
     "verify:package-inputs": "node scripts/verify-package-inputs.mjs",
     "verify:release-workflows": "node scripts/validate-release-workflows.mjs",
+    "verify:release-artifacts": "node scripts/release-artifact-manifest.test.mjs",
     "verify:release-credentials": "node scripts/release-credential-preflight.test.mjs",
     "release:preflight": "node scripts/release-credential-preflight.mjs"
   },

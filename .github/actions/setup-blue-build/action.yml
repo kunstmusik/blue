@@ -1,6 +1,6 @@
 name: setup-blue-build
 description: |
-  Shared build bootstrap for Blue Electron CI, prerelease, and stable release
+  Shared build bootstrap for Blue Electron pull-request, develop, and stable release
   workflows. Installs pinned Node, pnpm, Java, and Maven-compatible tooling,
   restores the pnpm cache, installs from the lockfile, and builds the Java
   helper before any Electron package consumer runs.
@@ -10,7 +10,7 @@ description: |
   can target an explicit branch or SHA.
 
   Keep every workflow's setup identical so package matrices produce
-  comparable evidence across macOS x64/arm64, Windows x64, and Linux x64
+  comparable evidence across macOS arm64, Windows x64, and Linux x64
   runners.
 
 inputs:

@@ -7,7 +7,7 @@
 # does not require or consume Apple or Azure signing credentials.
 #
 # A final promoter job downloads all expected artifacts, validates the
-# consolidated manifest, creates a draft release, attaches packages and
+# consolidated manifest, creates a draft release, attaches platform ZIPs and
 # checksums, and publishes one public GitHub Release only when the complete
 # asset set is verified.
 #
@@ -71,9 +71,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # - arch: x64
-          #   runner: macos-13
-          #   package-script: package:macos-x64
           - arch: arm64
             runner: macos-14
             package-script: package:macos-arm64
@@ -97,20 +94,25 @@ jobs:
         run: |
           pnpm --filter @blue/app verify:packaged-app -- --no-playwright
 
-      - name: Generate release manifest fragment
+      - name: Create stable release ZIP
+        working-directory: packages/blue-app/release
+        env:
+          APP_VERSION: ${{ needs.validate-version.outputs.app-version }}
         run: |
-          pnpm --filter @blue/app release:manifest
+          installer="Blue-${APP_VERSION}-arm64.dmg"
+          bundle="blue-macos-arm64-${APP_VERSION}.zip"
+          test -f "$installer"
+          zip -j "$bundle" "$installer"
 
       - name: Upload package artifacts
         uses: actions/upload-artifact@v5
         with:
-          name: stable-release-macos-${{ matrix.arch }}
-          path: |
-            packages/blue-app/release/
-            packages/blue-app/release/release-manifest.json
-            packages/blue-app/release/release-manifest.json.sha256
-          if-no-files-found: warn
+          name: blue-macos-${{ matrix.arch }}-${{ needs.validate-version.outputs.app-version }}.zip
+          path: packages/blue-app/release/blue-macos-${{ matrix.arch }}-${{ needs.validate-version.outputs.app-version }}.zip
+          if-no-files-found: error
           retention-days: 14
+          compression-level: 0
+          overwrite: true
 
   package-windows:
     name: package (windows-x64)
@@ -136,20 +138,27 @@ jobs:
         run: |
           pnpm --filter @blue/app verify:packaged-app -- --no-playwright
 
-      - name: Generate release manifest fragment
+      - name: Create stable release ZIP
+        shell: pwsh
+        env:
+          APP_VERSION: ${{ needs.validate-version.outputs.app-version }}
         run: |
-          pnpm --filter @blue/app release:manifest
+          $installer = "packages/blue-app/release/Blue-Setup-$env:APP_VERSION.exe"
+          $bundle = "packages/blue-app/release/blue-windows-x64-$env:APP_VERSION.zip"
+          if (-not (Test-Path -PathType Leaf $installer)) {
+            throw "Expected Windows installer not found: $installer"
+          }
+          Compress-Archive -Path $installer -DestinationPath $bundle
 
       - name: Upload package artifacts
         uses: actions/upload-artifact@v5
         with:
-          name: stable-release-windows-x64
-          path: |
-            packages/blue-app/release/
-            packages/blue-app/release/release-manifest.json
-            packages/blue-app/release/release-manifest.json.sha256
-          if-no-files-found: warn
+          name: blue-windows-x64-${{ needs.validate-version.outputs.app-version }}.zip
+          path: packages/blue-app/release/blue-windows-x64-${{ needs.validate-version.outputs.app-version }}.zip
+          if-no-files-found: error
           retention-days: 14
+          compression-level: 0
+          overwrite: true
 
   package-linux:
     name: package (linux-x64)
@@ -173,24 +182,31 @@ jobs:
         run: |
           pnpm --filter @blue/app verify:packaged-app -- --no-playwright
 
-      - name: Generate release manifest
+      - name: Create stable release ZIP
+        working-directory: packages/blue-app/release
+        env:
+          APP_VERSION: ${{ needs.validate-version.outputs.app-version }}
         run: |
-          pnpm --filter @blue/app release:manifest
+          appimage="Blue-${APP_VERSION}.AppImage"
+          deb="Blue_${APP_VERSION}_amd64.deb"
+          bundle="blue-linux-x64-${APP_VERSION}.zip"
+          test -f "$appimage"
+          test -f "$deb"
+          zip -j "$bundle" "$appimage" "$deb"
 
       - name: Upload package artifacts
         uses: actions/upload-artifact@v5
         with:
-          name: stable-release-linux-x64
-          path: |
-            packages/blue-app/release/
-            packages/blue-app/release/release-manifest.json
-            packages/blue-app/release/release-manifest.json.sha256
-          if-no-files-found: warn
+          name: blue-linux-x64-${{ needs.validate-version.outputs.app-version }}.zip
+          path: packages/blue-app/release/blue-linux-x64-${{ needs.validate-version.outputs.app-version }}.zip
+          if-no-files-found: error
           retention-days: 14
+          compression-level: 0
+          overwrite: true
 
   publish-stable:
     name: publish-stable
-    needs: [package-macos, package-windows, package-linux]
+    needs: [validate-version, package-macos, package-windows, package-linux]
     runs-on: ubuntu-22.04
     environment: release
     permissions:
@@ -208,40 +224,58 @@ jobs:
         uses: actions/download-artifact@v5
         with:
           path: release-assets
-          pattern: stable-release-*
+          pattern: blue-*-${{ needs.validate-version.outputs.app-version }}.zip
 
-      - name: Consolidate artifacts into a single release directory
+      - name: Consolidate and verify the exact release asset set
         env:
           APP_VERSION: ${{ needs.validate-version.outputs.app-version }}
         run: |
           mkdir -p consolidated
-          find release-assets -type f -print | while read -r f; do
-            base=$(basename "$f")
-            case "$base" in
-              *"$APP_VERSION"*.dmg|*"$APP_VERSION"*.exe|*"$APP_VERSION"*.AppImage|*"$APP_VERSION"*.deb)
-                cp "$f" consolidated/
-                ;;
-            esac
+          expected=(
+            "blue-macos-arm64-${APP_VERSION}.zip"
+            "blue-windows-x64-${APP_VERSION}.zip"
+            "blue-linux-x64-${APP_VERSION}.zip"
+          )
+          for asset in "${expected[@]}"; do
+            mapfile -t matches < <(find release-assets -type f -name "$asset" -print)
+            if [ "${#matches[@]}" -ne 1 ]; then
+              echo "Expected exactly one $asset, found ${#matches[@]}"
+              exit 1
+            fi
+            cp "${matches[0]}" consolidated/
           done
+          mapfile -t actual < <(find release-assets -type f -name 'blue-*.zip' -print)
+          if [ "${#actual[@]}" -ne "${#expected[@]}" ]; then
+            echo "Unexpected or duplicate release ZIPs were downloaded:"
+            printf '  %s\n' "${actual[@]}"
+            exit 1
+          fi
           ls -la consolidated
 
       - name: Generate consolidated manifest
+        env:
+          APP_VERSION: ${{ needs.validate-version.outputs.app-version }}
         run: |
           node scripts/release-artifact-manifest.mjs generate \
             --out consolidated/release-manifest.json \
             --release-dir consolidated \
+            --checksums-out consolidated/checksums-sha256.txt \
+            --asset-mode bundles \
+            --verification-status verified \
+            --app-version "$APP_VERSION" \
             --source-revision ${{ github.sha }}
 
       - name: Validate the consolidated manifest
+        env:
+          APP_VERSION: ${{ needs.validate-version.outputs.app-version }}
         run: |
           node scripts/release-artifact-manifest.mjs validate \
             --manifest consolidated/release-manifest.json \
+            --asset-mode bundles \
+            --require-verified \
+            --app-version "$APP_VERSION" \
+            --source-revision ${{ github.sha }} \
             --expected-targets macos-arm64,windows-x64,linux-x64
-
-      - name: Compute checksum manifest
-        run: |
-          sha256sum consolidated/* > consolidated/checksums-sha256.txt || true
-          ls -la consolidated
 
       - name: Compose release body
         id: body
@@ -250,9 +284,9 @@ jobs:
             echo "body<<RELEASE_BODY_EOF"
             echo "Source revision: \`${{ github.sha }}\`"
             echo ""
-            echo "macOS: **unsigned** DMG."
-            echo "Windows: **unsigned** NSIS installer."
-            echo "Linux: AppImage and Debian package."
+            echo "macOS: **unsigned** DMG in \`blue-macos-arm64-${{ needs.validate-version.outputs.app-version }}.zip\`."
+            echo "Windows: **unsigned** NSIS installer in \`blue-windows-x64-${{ needs.validate-version.outputs.app-version }}.zip\`."
+            echo "Linux: AppImage and Debian package in \`blue-linux-x64-${{ needs.validate-version.outputs.app-version }}.zip\`."
             echo ""
             echo "## Installation"
             echo ""
@@ -283,7 +317,9 @@ jobs:
           body: ${{ steps.body.outputs.body }}
           generate_release_notes: true
           files: |
-            consolidated/*
+            consolidated/blue-*.zip
+            consolidated/checksums-sha256.txt
+            consolidated/release-manifest.json
           fail_on_unmatched_files: true
 
       - name: Publish the release (un-draft)

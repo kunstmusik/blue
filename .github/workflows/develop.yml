@@ -4,8 +4,8 @@
 # matrix. Uploads installer-only artifacts so testers can download them from
 # the Actions run. No GitHub Release is created.
 #
-# Artifact naming: blue-{os}-{cputype}-{version}-{short-sha}
-#   e.g. blue-macos-arm64-0.0.1-abc1234
+# Artifact naming: blue-{os}-{cputype}-{version}-{short-sha}.zip
+#   e.g. blue-macos-arm64-0.0.1-abc1234.zip
 name: Develop
 
 on:
@@ -27,9 +27,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # - target-id: macos-x64
-          #   runs-on: macos-13
-          #   package-script: package:macos-x64
           - target-id: macos-arm64
             runs-on: macos-14
             package-script: package:macos-arm64
@@ -80,10 +77,9 @@ jobs:
         run: pnpm --filter @blue/app verify:packaged-app -- --no-playwright
 
       - name: Upload installer artifacts
-        if: always()
         uses: actions/upload-artifact@v5
         with:
-          name: blue-${{ matrix.target-id }}-${{ steps.meta.outputs.app-version }}-${{ steps.meta.outputs.short-sha }}
+          name: blue-${{ matrix.target-id }}-${{ steps.meta.outputs.app-version }}-${{ steps.meta.outputs.short-sha }}.zip
           path: |
             packages/blue-app/release/*.dmg
             packages/blue-app/release/*.exe
@@ -91,14 +87,16 @@ jobs:
             packages/blue-app/release/*.deb
           if-no-files-found: warn
           retention-days: 30
+          overwrite: true
 
       - name: Upload diagnostics
         if: always()
         uses: actions/upload-artifact@v5
         with:
-          name: diagnostics-blue-${{ matrix.target-id }}-${{ steps.meta.outputs.app-version }}-${{ steps.meta.outputs.short-sha }}
+          name: blue-${{ matrix.target-id }}-${{ steps.meta.outputs.app-version }}-${{ steps.meta.outputs.short-sha }}-diagnostics.zip
           path: |
             packages/blue-app/release/*.yml
             packages/blue-app/release/*.blockmap
           if-no-files-found: ignore
           retention-days: 7
+          overwrite: true

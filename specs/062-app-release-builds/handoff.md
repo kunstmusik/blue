@@ -21,7 +21,9 @@ Use [tasks.md](./tasks.md) as the completed implementation checklist. The local 
 - Keep `@blue/data`, `@blue/engine-client`, `zeromq`, and `node:sqlite` external in [packages/blue-app/vite.config.ts](../../packages/blue-app/vite.config.ts). The package must make those runtime dependencies resolvable rather than bundling around that boundary.
 - Copy `blue-java.jar` and `pythonLib` to installed `resources/assets/java`. The existing resolver must find that preferred location and retain its compatibility fallbacks.
 - Package smoke checks must not require Csound, `blue-engine`, or an installed Java runtime. Those are intentionally external end-user prerequisites for this feature.
-- CI, development prereleases, and current stable packages are unsigned and secret-free. Never use `pull_request_target` or grant a pull-request job access to the protected `release` Environment.
+- Pull-request, develop, and stable packages are unsigned. Develop builds remain GitHub Actions artifacts and do not create prereleases. Never use `pull_request_target` or grant a pull-request job access to the protected `release` Environment.
+- Hosted workflows target macOS arm64, Windows x64, and Linux x64. macOS x64 is intentionally local-only.
+- Every primary artifact ends in `.zip` and follows `blue-{os}-{cputype}-{versionInfo}.zip`; stable Actions artifacts and GitHub Release assets use identical filenames.
 - Only a final stable-release promoter job may publish a GitHub Release. Platform jobs upload evidence; they never publish independently.
 
 ## Current Implementation Anchors
@@ -52,9 +54,9 @@ Use the exact value names and handling rules in [docs/release-guide.md](../../do
 Before the feature is considered complete, collect:
 
 1. A clean local unsigned package and packaged-app smoke result on a supported host.
-2. A PR or `main` CI run with independent macOS x64, macOS arm64, Windows x64, and Linux x64 evidence, including artifacts on failure.
-3. A manual development prerelease whose source SHA, prerelease status, asset manifest, and checksums are visible and which used no production signing credentials.
-4. A protected test stable release showing unsigned macOS/Windows packages, Linux checksums, complete manifest validation, and atomic final publication.
+2. A PR run with independent macOS arm64, Windows x64, and Linux x64 evidence, including artifacts on failure.
+3. A `develop` push whose source SHA is present in all three `.zip` Actions artifact names, which created no GitHub Release and used no production signing credentials.
+4. A protected test stable release showing the exact same three `.zip` filenames as its Actions artifacts, verified checksums and manifest, unsigned packages, and atomic final publication.
 5. Repository validation from the root: `pnpm build`, `pnpm test`, and `pnpm lint`.
 
 ## Worktree Safety

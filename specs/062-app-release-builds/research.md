@@ -13,7 +13,7 @@
 
 ## Decision: Build each release package on a native target runner
 
-**Decision**: Build macOS x64, macOS arm64, Windows x64, and Linux x64 packages in separate GitHub Actions jobs on matching hosted runners. Use the same unsigned target matrix for packaging validation, development prereleases, and current stable releases.
+**Decision**: Build macOS arm64, Windows x64, and Linux x64 packages in separate GitHub Actions jobs on matching hosted runners. Use the same unsigned target matrix for pull-request validation, develop Actions artifacts, and stable releases. Retain macOS x64 only as a local developer packaging experiment.
 
 **Rationale**: Blue depends on Electron's pinned Node/SQLite runtime and the native `zeromq` package. Native target runners provide the most reliable rebuild and runtime verification path. GitHub Actions supports platform matrices and job dependencies, so the final publication job can run only after all required platform builds succeed.
 
@@ -34,16 +34,16 @@
 - Let each platform job publish independently: rejected because a late platform failure leaves a user-visible incomplete release.
 - Add release-please or Changesets in this feature: deferred because automated version selection and changelog conventions are independent policy decisions. GitHub-generated release notes satisfy the initial traceable change-summary requirement.
 
-## Decision: Publish scheduled development prereleases from main
+## Decision: Retain develop builds as GitHub Actions artifacts
 
-**Decision**: A nightly workflow builds the current `main` revision into a clearly marked GitHub prerelease and also supports manual dispatch for an immediate development build. It has no production signing credentials.
+**Decision**: Every push to `develop` builds the unsigned hosted target matrix and uploads clearly marked GitHub Actions artifacts. It does not create a GitHub prerelease and has no production signing credentials.
 
-**Rationale**: Scheduled runs use the default branch and provide regular tester builds without requiring a new permanent development branch. Manual dispatch makes a specific candidate available when needed. The release name, artifact names, and metadata record the immutable commit SHA and a generated prerelease version.
+**Rationale**: Actions artifacts provide regular tester builds from the established integration branch without release-list noise or publication authority. The artifact names record the application version and immutable short commit SHA.
 
 **Alternatives considered**:
 
-- Publish a development release on every push to `main`: rejected because it creates unnecessary release noise and consumes costly macOS/Windows runner capacity.
-- Create a `develop` branch solely for prereleases: deferred until the repository adopts that branching policy.
+- Publish a GitHub prerelease for every develop build: rejected because it creates unnecessary release noise and requires publication authority.
+- Schedule builds from `main`: rejected because the repository now uses `develop` as the integration-build source.
 
 ## Decision: Package Blue's Java helper as an external app resource
 
@@ -70,9 +70,9 @@
 
 ## Decision: Isolate credentials and minimize workflow authority
 
-**Decision**: Use a protected GitHub Environment dedicated to stable release publication, require human approval before the publisher job runs, and grant only the permissions required by each workflow job. CI receives `contents: read`; release publication receives `contents: write`; provenance generation receives only its specific attestation permission. Future signing credentials should use the same protected-environment boundary when signing is enabled.
+**Decision**: Use a protected GitHub Environment dedicated to stable release publication, require human approval before the publisher job runs, and grant only the permissions required by each workflow job. Pull-request, develop, and package jobs receive `contents: read`; only stable publication receives `contents: write`. Future signing credentials should use the same protected-environment boundary when signing is enabled.
 
-**Rationale**: GitHub recommends protected environments for controlled deployments, passes no secrets to forked pull requests, and supports job-specific `GITHUB_TOKEN` permissions. GitHub artifact attestations provide optional verifiable provenance for published installers.
+**Rationale**: GitHub recommends protected environments for controlled deployments, passes no secrets to forked pull requests, and supports job-specific `GITHUB_TOKEN` permissions. The current checksum manifest records the exact source revision and verified hashes without requiring broader attestation permissions.
 
 **Alternatives considered**:
 
@@ -95,6 +95,5 @@
 - Electron, [Code Signing](https://www.electronjs.org/docs/latest/tutorial/code-signing): macOS signing/notarization and modern Windows cloud-signing guidance.
 - GitHub, [Workflow syntax for GitHub Actions](https://docs.github.com/en/actions/writing-workflows/workflow-syntax-for-github-actions): matrices, dependencies, concurrency, permissions, environments, and secret limitations.
 - GitHub, [Using secrets in GitHub Actions](https://docs.github.com/en/actions/security-for-github-actions/security-guides/using-secrets-in-github-actions): protected environments, fork behavior, and safe secret handling.
-- GitHub, [Using artifact attestations](https://docs.github.com/en/actions/how-tos/secure-your-work/use-artifact-attestations): build-provenance capability.
 - Microsoft, [Authenticate to Azure from GitHub Actions by OpenID Connect](https://learn.microsoft.com/en-us/azure/developer/github/connect-from-azure-openid-connect): OIDC setup and required Azure identity values.
 - Microsoft, [Set up Artifact Signing](https://learn.microsoft.com/en-us/azure/artifact-signing/quickstart): managed Windows certificate profiles and identity-validation requirements.

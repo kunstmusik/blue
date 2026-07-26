@@ -42,18 +42,18 @@ A maintainer can rely on automated checks for proposed and integrated changes to
 
 ---
 
-### User Story 3 - Publish Development and Stable Releases (Priority: P2)
+### User Story 3 - Distribute Develop Builds and Publish Stable Releases (Priority: P2)
 
-A release maintainer can create traceable development builds for early testing and publish approved stable Blue releases with downloadable installers for the supported desktop platforms.
+A release maintainer can create traceable develop builds for early testing through GitHub Actions and publish approved stable Blue releases with downloadable ZIP bundles for the supported desktop platforms.
 
 **Why this priority**: Maintainers need a low-friction route for testers while retaining an explicit, auditable promotion point for public releases.
 
-**Independent Test**: A designated development trigger publishes a clearly marked prerelease, and an approved release trigger publishes a stable release whose assets and metadata identify the exact source revision.
+**Independent Test**: A push to `develop` produces clearly named Actions artifacts, and an approved release trigger publishes a stable release whose assets and metadata identify the exact source revision.
 
 **Acceptance Scenarios**:
 
-1. **Given** a configured development-build trigger, **When** it runs successfully, **Then** testers can obtain clearly marked prerelease packages that are traceable to the source revision that produced them.
-2. **Given** an approved stable-release trigger, **When** the workflow succeeds, **Then** a public release contains unsigned macOS, Windows, and Linux distribution packages with a single consistent version.
+1. **Given** a push to `develop`, **When** the workflow runs successfully, **Then** testers can obtain clearly marked unsigned Actions artifacts that are traceable to the source revision that produced them, without a GitHub prerelease.
+2. **Given** an approved stable-release trigger, **When** the workflow succeeds, **Then** a public release contains unsigned macOS, Windows, and Linux ZIP bundles with a single consistent version.
 3. **Given** publication permission is missing or the required platform asset set is incomplete, **When** a stable release is attempted, **Then** publication stops before an incomplete stable release is made available and the maintainer receives an actionable failure message.
 4. **Given** an already published version, **When** a maintainer attempts to publish the same version again, **Then** the workflow refuses to overwrite or silently replace the published release.
 
@@ -88,18 +88,19 @@ A release maintainer can use one release guide to configure current publication 
 
 - **FR-001**: The project MUST provide one documented, repeatable local workflow that builds a runnable desktop package for the host supported platform without publishing a release.
 - **FR-002**: The local workflow MUST distinguish current unsigned local, CI, development, and stable builds from future signed release builds, including their respective prerequisites.
-- **FR-003**: The project MUST produce installable or directly runnable distribution packages for macOS on Intel and Apple Silicon hardware, Windows x64, and Linux x64.
+- **FR-003**: The hosted workflows MUST produce distribution bundles for macOS arm64, Windows x64, and Linux x64. macOS x64 MAY remain available as a local developer packaging experiment but is not part of the required hosted artifact set.
 - **FR-004**: Automated change validation MUST build, test, and run the repository's required static checks on macOS, Windows, and Linux.
 - **FR-005**: Automated change validation MUST perform a non-publishing packaging check on every supported platform and retain useful failure evidence.
-- **FR-006**: The project MUST provide an automated development-build path that publishes clearly identified prerelease packages traceable to an immutable source revision.
+- **FR-006**: The project MUST provide an automated develop-build path that uploads clearly identified GitHub Actions artifacts traceable to an immutable source revision and does not create a GitHub prerelease.
 - **FR-007**: The project MUST provide an automated stable-release path that publishes a versioned release only after all required platform packages complete successfully.
 - **FR-008**: A stable release MUST not be published with incomplete platform assets, a duplicate published version, or missing package verification.
 - **FR-009**: The release process MUST use publication credentials supplied outside source control and MUST prevent credential values from being displayed in workflow logs or documentation examples.
 - **FR-010**: The project MUST provide a release guide that lists current publication requirements and future signing environment variables, their purpose, expected format, scope, and the workflow that consumes or may consume them.
 - **FR-011**: The release guide MUST identify end-user prerequisites that are intentionally not bundled in the first release and explain how a missing prerequisite is detected and resolved.
 - **FR-012**: The packaged app MUST retain access to its Java helper artifact and native runtime dependencies after installation.
-- **FR-013**: The release process MUST make the exact source version and change summary for each prerelease and stable release discoverable to maintainers and users.
-- **FR-014**: Development builds, pull-request validation, and current stable unsigned releases MUST function without production signing credentials.
+- **FR-013**: Develop artifacts and stable releases MUST identify the exact source version; stable releases MUST also expose a change summary.
+- **FR-014**: Pull-request, develop, and stable builds MUST remain unsigned and function without production signing credentials. Signing is deferred until the required signing programs and keys are funded.
+- **FR-015**: Every primary platform artifact MUST be a ZIP named `blue-{os}-{cputype}-{versionInfo}.zip`. For stable builds, `{versionInfo}` MUST be the application version, and the exact same filenames MUST be used for GitHub Actions artifacts and GitHub Release assets.
 
 ### Existing Behavior & Data Compatibility *(mandatory when applicable)*
 
@@ -111,7 +112,7 @@ A release maintainer can use one release guide to configure current publication 
 ### Key Entities *(include if feature involves data)*
 
 - **Distribution package**: A platform-specific installable or runnable Blue application artifact associated with one source revision and version.
-- **Development build**: A clearly marked prerelease package for tester feedback that is traceable to an immutable source revision and may be unsigned.
+- **Development build**: A clearly marked unsigned GitHub Actions artifact for tester feedback that is traceable to an immutable source revision and is not published as a GitHub Release.
 - **Stable release**: A versioned public distribution containing complete platform packages and verified release metadata.
 - **Release credential**: A sensitive local setting, repository secret, or GitHub-provided token used only for publication or future code signing/notarization.
 - **Release guide**: Maintainer documentation that defines prerequisites, workflows, credentials, preflight checks, and recovery actions.
@@ -122,15 +123,15 @@ A release maintainer can use one release guide to configure current publication 
 
 - **SC-001**: A contributor using a clean supported development environment can produce an unsigned local Blue package by following the release guide with no undocumented steps.
 - **SC-002**: 100% of configured pull-request and integration-branch runs report independent build, test, static-check, and packaging results for macOS, Windows, and Linux.
-- **SC-003**: A successful development-build run makes platform packages available to testers with the producing source revision and prerelease status visible in the release metadata.
+- **SC-003**: A successful develop-build run makes platform ZIP artifacts available in GitHub Actions with the producing source revision visible in each filename and creates no GitHub Release.
 - **SC-004**: A successful stable-release run publishes one consistent version with downloadable packages for all defined supported platform and architecture combinations.
 - **SC-005**: Advisory credential preflight identifies all absent, invalid, or inapplicable future signing settings and never prints a secret value.
 - **SC-006**: The release guide allows a maintainer who did not implement the feature to complete an unsigned local package build, publish a current unsigned stable release, and identify the exact extra credentials required for a future signed public release in one pass.
 
 ## Assumptions
 
-- The first distributable release targets macOS x64 and arm64, Windows x64, and Linux x64; Windows arm64 and additional Linux package managers are deferred until native-runtime support is verified.
-- GitHub Actions and the repository hosting service are the source of truth for automated build evidence, prerelease packages, stable release assets, and release metadata.
+- Hosted artifacts target macOS arm64, Windows x64, and Linux x64. macOS x64 is intentionally excluded from hosted workflows; a local packaging command may remain for developer experiments. Windows arm64 and additional Linux package managers are deferred until native-runtime support is verified.
+- GitHub Actions is the source of truth for pull-request and develop build evidence. GitHub Releases is the source of truth only for stable release assets and metadata.
 - The existing pinned Electron runtime, Java helper build, native ZeroMQ dependency, and SQLite runtime remain supported constraints and require package-level validation.
 - A maintainer can obtain appropriate Apple and Windows signing credentials before a future signed public release; until then, contributor, CI, development, and stable release builds remain unsigned and usable without those credentials.
 - Public release promotion is intentionally explicit and versioned rather than being triggered by every pull request.

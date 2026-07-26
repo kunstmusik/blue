@@ -2,10 +2,10 @@
 /**
  * Release asset manifest and checksum generation/validation.
  *
- * Generates a deterministic machine-readable manifest of the package outputs
- * produced by electron-builder. The manifest is the single source of truth
- * used by the final release promoter to verify that every required target is
- * present and intact before publishing a stable GitHub Release.
+ * Generates a deterministic machine-readable manifest of either native package
+ * outputs or the platform ZIP bundles published by the stable workflow. The
+ * manifest is the single source of truth used by the final release promoter to
+ * verify that every required target is present and intact.
  *
  * Manifest shape (matches specs/062-app-release-builds/data-model.md):
  *   {
@@ -18,8 +18,8 @@
  *         "targetId": "macos-x64" | "macos-arm64" | "windows-x64" | "linux-x64",
  *         "platform": "macOS" | "Windows" | "Linux",
  *         "arch": "x64" | "arm64",
- *         "format": "DMG" | "NSIS" | "AppImage" | "Deb",
- *         "path": string,              // absolute path to the package file
+ *         "format": "DMG" | "NSIS" | "AppImage" | "Deb" | "ZIP",
+ *         "path": string,              // portable file name beside the manifest
  *         "size": number,              // file size in bytes
  *         "sha256": string,            // hex digest of SHA-256
  *         "verificationStatus": "pending" | "verified"
@@ -30,10 +30,13 @@
  * Usage:
  *   node scripts/release-artifact-manifest.mjs generate \
  *       --out <manifest.json> [--release-dir <dir>] [--app-version <ver>] \
- *       [--source-revision <sha>]
+ *       [--source-revision <sha>] [--asset-mode packages|bundles] \
+ *       [--verification-status pending|verified] [--checksums-out <path>]
  *
  *   node scripts/release-artifact-manifest.mjs validate \
- *       --manifest <manifest.json> [--expected-targets macos-x64,macos-arm64,...]
+ *       --manifest <manifest.json> [--asset-mode packages|bundles] \
+ *       [--expected-targets macos-arm64,windows-x64,linux-x64] \
+ *       [--require-verified] [--app-version <ver>] [--source-revision <sha>]
  *
  * The script never logs secret values: it only reads filesystem paths and
  * hashes published package bytes.
@@ -42,7 +45,7 @@
 import { createRequire } from 'node:module';
 import { createHash } from 'node:crypto';
 import { existsSync, readFileSync, readdirSync, statSync, writeFileSync, createReadStream } from 'node:fs';
-import { basename, join, resolve } from 'node:path';
+import { basename, dirname, join, resolve } from 'node:path';
 import { execSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
@@ -52,14 +55,23 @@ const repoRoot = resolve(__dirname, '..');
 const appPkgPath = join(repoRoot, 'packages', 'blue-app', 'package.json');
 
 /** @typedef {'macos-x64' | 'macos-arm64' | 'windows-x64' | 'linux-x64'} TargetId */
+/** @typedef {'packages' | 'bundles'} AssetMode */
 
-const TARGET_DEFINITIONS = /** @type {const} */ ([
+const PACKAGE_TARGET_DEFINITIONS = /** @type {const} */ ([
   { targetId: 'macos-x64', platform: 'macOS', arch: 'x64', format: 'DMG', extensions: ['.dmg'] },
   { targetId: 'macos-arm64', platform: 'macOS', arch: 'arm64', format: 'DMG', extensions: ['.dmg'] },
   { targetId: 'windows-x64', platform: 'Windows', arch: 'x64', format: 'NSIS', extensions: ['.exe'] },
   { targetId: 'linux-x64', platform: 'Linux', arch: 'x64', format: 'AppImage', extensions: ['.AppImage'] },
   { targetId: 'linux-x64', platform: 'Linux', arch: 'x64', format: 'Deb', extensions: ['.deb'] },
 ]);
+
+const BUNDLE_TARGET_DEFINITIONS = /** @type {const} */ ([
+  { targetId: 'macos-arm64', platform: 'macOS', arch: 'arm64', format: 'ZIP' },
+  { targetId: 'windows-x64', platform: 'Windows', arch: 'x64', format: 'ZIP' },
+  { targetId: 'linux-x64', platform: 'Linux', arch: 'x64', format: 'ZIP' },
+]);
+
+const DEFAULT_TARGET_IDS = ['macos-arm64', 'windows-x64', 'linux-x64'];
 
 /**
  * @param {string} filePath
@@ -135,11 +147,11 @@ function parseFlags(argv) {
  * @param {{ targetId: TargetId, platform: string, arch: string, format: string, extensions: readonly string[] }} target
  * @param {string} releaseDir
  * @param {string} appVersion
- * @returns {string | null}
+ * @returns {string[]}
  */
-function findPackageFileForTarget(target, releaseDir, appVersion) {
+function findPackageFilesForTarget(target, releaseDir, appVersion) {
   if (!existsSync(releaseDir)) {
-    return null;
+    return [];
   }
   // electron-builder emits files like:
   //   Blue-0.0.1-arm64.dmg
@@ -154,9 +166,11 @@ function findPackageFileForTarget(target, releaseDir, appVersion) {
   try {
     entries = readdirSync(releaseDir);
   } catch {
-    return null;
+    return [];
   }
 
+  /** @type {string[]} */
+  const matches = [];
   // Architecture token filter
   const archTokens = target.arch === 'arm64' ? ['arm64', 'aarch64'] : ['x64', 'amd64', 'x86_64'];
   for (const ext of target.extensions) {
@@ -179,10 +193,26 @@ function findPackageFileForTarget(target, releaseDir, appVersion) {
         if (!lower.endsWith('.deb')) continue;
         if (!archTokens.some((t) => lower.includes(t))) continue;
       }
-      return join(releaseDir, entry);
+      matches.push(join(releaseDir, entry));
     }
   }
-  return null;
+  return matches;
+}
+
+/**
+ * @param {string} targetId
+ * @param {string} appVersion
+ * @returns {string}
+ */
+function bundleFileName(targetId, appVersion) {
+  return `blue-${targetId}-${appVersion}.zip`;
+}
+
+/**
+ * @param {AssetMode} mode
+ */
+function definitionsForMode(mode) {
+  return mode === 'bundles' ? BUNDLE_TARGET_DEFINITIONS : PACKAGE_TARGET_DEFINITIONS;
 }
 
 async function generate(flags) {
@@ -192,16 +222,32 @@ async function generate(flags) {
     : join(repoRoot, 'packages', 'blue-app', 'release');
   const { appVersion } = flags['app-version'] ? { appVersion: flags['app-version'] } : readAppVersion();
   const sourceRevision = flags['source-revision'] ?? detectSourceRevision();
+  const mode = flags['asset-mode'] === 'bundles' ? 'bundles' : 'packages';
+  const verificationStatus = flags['verification-status'] ?? 'pending';
+  if (verificationStatus !== 'pending' && verificationStatus !== 'verified') {
+    throw new Error(`Unsupported --verification-status value: ${verificationStatus}`);
+  }
 
   /** @type {Array<Record<string, unknown>>} */
   const targets = [];
 
-  for (const def of TARGET_DEFINITIONS) {
-    const filePath = findPackageFileForTarget(def, releaseDir, appVersion);
-    if (!filePath) {
+  for (const def of definitionsForMode(mode)) {
+    const matches =
+      mode === 'bundles'
+        ? [join(releaseDir, bundleFileName(def.targetId, appVersion))].filter((filePath) => existsSync(filePath))
+        : findPackageFilesForTarget(
+            /** @type {typeof PACKAGE_TARGET_DEFINITIONS[number]} */ (def),
+            releaseDir,
+            appVersion,
+          );
+    if (matches.length === 0) {
       process.stderr.write(`[skip] ${def.targetId}/${def.format}: no package file in ${releaseDir}\n`);
       continue;
     }
+    if (matches.length > 1) {
+      throw new Error(`Duplicate ${def.targetId}/${def.format} assets: ${matches.map(basename).join(', ')}`);
+    }
+    const [filePath] = matches;
     const stats = statSync(filePath);
     const sha256 = await computeSha256(filePath);
     targets.push({
@@ -209,10 +255,10 @@ async function generate(flags) {
       platform: def.platform,
       arch: def.arch,
       format: def.format,
-      path: filePath,
+      path: basename(filePath),
       size: stats.size,
       sha256,
-      verificationStatus: 'pending',
+      verificationStatus,
     });
     process.stderr.write(`[ok] ${def.targetId}/${def.format}: ${filePath}\n`);
   }
@@ -234,7 +280,7 @@ async function generate(flags) {
   }
 
   // Write a combined checksum file next to the manifest for upload convenience.
-  const checksumPath = `${outPath}.sha256`;
+  const checksumPath = flags['checksums-out'] ? resolve(flags['checksums-out']) : `${outPath}.sha256`;
   const checksumText = targets
     .map((t) => `${t.sha256}  ${basename(/** @type {string} */ (t.path))}`)
     .join('\n');
@@ -245,7 +291,7 @@ async function generate(flags) {
 /**
  * @param {Record<string, string>} flags
  */
-function validate(flags) {
+async function validate(flags) {
   const manifestPath = flags.manifest ? resolve(flags.manifest) : null;
   if (!manifestPath || !existsSync(manifestPath)) {
     process.stderr.write(`Manifest not found: ${manifestPath ?? '(no --manifest flag provided)'}\n`);
@@ -268,9 +314,18 @@ function validate(flags) {
     process.exit(1);
   }
 
+  const mode = flags['asset-mode'] === 'bundles' ? 'bundles' : 'packages';
+  const defaultTargetIds =
+    mode === 'bundles'
+      ? DEFAULT_TARGET_IDS
+      : Array.from(new Set(PACKAGE_TARGET_DEFINITIONS.map((definition) => definition.targetId)));
   const requiredTargetIds = flags['expected-targets']
     ? flags['expected-targets'].split(',').map((s) => s.trim()).filter(Boolean)
-    : ['macos-x64', 'macos-arm64', 'windows-x64', 'linux-x64'];
+    : defaultTargetIds;
+  const definitions = definitionsForMode(mode);
+  const requiredDefinitions = definitions.filter((def) => requiredTargetIds.includes(def.targetId));
+  const expectedKeys = requiredDefinitions.map((def) => `${def.targetId}:${def.format}`);
+  const manifestDir = dirname(manifestPath);
 
   /** @type {string[]} */
   const errors = [];
@@ -288,6 +343,9 @@ function validate(flags) {
     const format = String(target.format ?? '');
     const sha = String(target.sha256 ?? '');
     const packagePath = String(target.path ?? '');
+    const size = Number(target.size);
+    const verificationStatus = String(target.verificationStatus ?? '');
+    const key = `${targetId}:${format}`;
     if (!targetId) {
       errors.push('Manifest target missing targetId.');
       continue;
@@ -296,16 +354,59 @@ function validate(flags) {
       errors.push(`Target ${targetId} missing format.`);
       continue;
     }
+    if (!expectedKeys.includes(key)) {
+      errors.push(`Unexpected target or format in manifest: ${key}`);
+      continue;
+    }
+    const expectedDefinition = requiredDefinitions.find(
+      (definition) => definition.targetId === targetId && definition.format === format,
+    );
+    if (!expectedDefinition) {
+      errors.push(`No expected definition found for manifest target: ${key}`);
+      continue;
+    }
+    if (target.platform !== expectedDefinition.platform) {
+      errors.push(`Target ${targetId} platform must be "${expectedDefinition.platform}".`);
+    }
+    if (target.arch !== expectedDefinition.arch) {
+      errors.push(`Target ${targetId} architecture must be "${expectedDefinition.arch}".`);
+    }
     if (!/^[0-9a-f]{64}$/i.test(sha)) {
       errors.push(`Target ${targetId} sha256 is not a valid 64-char hex digest.`);
       continue;
     }
-    if (!packagePath || !existsSync(packagePath)) {
+    if (!packagePath || basename(packagePath) !== packagePath) {
+      errors.push(`Target ${targetId} path must be a portable file name: ${packagePath}`);
+      continue;
+    }
+    if (
+      mode === 'bundles' &&
+      packagePath !== bundleFileName(targetId, String(manifest.appVersion))
+    ) {
+      errors.push(`Target ${targetId} path does not match its required stable ZIP name: ${packagePath}`);
+      continue;
+    }
+    const resolvedPackagePath = join(manifestDir, packagePath);
+    if (!existsSync(resolvedPackagePath)) {
       errors.push(`Target ${targetId} path is missing or unreachable: ${packagePath}`);
       continue;
     }
+    const stats = statSync(resolvedPackagePath);
+    if (!Number.isSafeInteger(size) || size <= 0 || stats.size !== size) {
+      errors.push(`Target ${targetId} size does not match ${packagePath}.`);
+      continue;
+    }
+    const actualSha = await computeSha256(resolvedPackagePath);
+    if (actualSha !== sha) {
+      errors.push(`Target ${targetId} sha256 does not match ${packagePath}.`);
+      continue;
+    }
+    if (flags['require-verified'] === 'true' && verificationStatus !== 'verified') {
+      errors.push(`Target ${targetId} verificationStatus must be "verified".`);
+      continue;
+    }
     seenTargetIds.push(targetId);
-    seenKeys.push(`${targetId}:${format}`);
+    seenKeys.push(key);
   }
 
   for (const required of requiredTargetIds) {
@@ -314,10 +415,7 @@ function validate(flags) {
     }
   }
 
-  const requiredKeys = TARGET_DEFINITIONS
-    .filter((def) => requiredTargetIds.includes(def.targetId))
-    .map((def) => `${def.targetId}:${def.format}`);
-  for (const requiredKey of requiredKeys) {
+  for (const requiredKey of expectedKeys) {
     if (!seenKeys.includes(requiredKey)) {
       errors.push(`Required target format missing from manifest: ${requiredKey}`);
     }
@@ -328,6 +426,28 @@ function validate(flags) {
   const duplicates = seenKeys.filter((key, index) => seenKeys.indexOf(key) !== index);
   for (const duplicate of Array.from(new Set(duplicates))) {
     errors.push(`Duplicate target format entries in manifest: ${duplicate}`);
+  }
+
+  if (typeof flags['app-version'] === 'string' && manifest.appVersion !== flags['app-version']) {
+    errors.push(`Manifest appVersion "${manifest.appVersion}" does not match "${flags['app-version']}".`);
+  }
+  if (typeof flags['source-revision'] === 'string' && manifest.sourceRevision !== flags['source-revision']) {
+    errors.push(`Manifest sourceRevision "${manifest.sourceRevision}" does not match "${flags['source-revision']}".`);
+  }
+
+  if (mode === 'bundles') {
+    const expectedFiles = requiredDefinitions.map((def) => bundleFileName(def.targetId, String(manifest.appVersion)));
+    const actualFiles = readdirSync(manifestDir).filter((entry) => /^blue-.+\.zip$/.test(entry));
+    for (const expectedFile of expectedFiles) {
+      if (!actualFiles.includes(expectedFile)) {
+        errors.push(`Required release ZIP missing beside manifest: ${expectedFile}`);
+      }
+    }
+    for (const actualFile of actualFiles) {
+      if (!expectedFiles.includes(actualFile)) {
+        errors.push(`Unexpected release ZIP beside manifest: ${actualFile}`);
+      }
+    }
   }
 
   if (errors.length > 0) {
@@ -358,7 +478,12 @@ function main() {
 
   if (subcommand === 'validate') {
     try {
-      validate(flags);
+      validate(flags).catch((error) => {
+        process.stderr.write(
+          `Manifest validation error: ${error instanceof Error ? error.message : String(error)}\n`,
+        );
+        process.exit(1);
+      });
     } catch (error) {
       process.stderr.write(
         `Manifest validation error: ${error instanceof Error ? error.message : String(error)}\n`,
@@ -371,7 +496,7 @@ function main() {
   process.stderr.write(
     'Usage:\n' +
       '  release-artifact-manifest.mjs generate --out <manifest.json> [--release-dir <dir>] [--app-version <ver>] [--source-revision <sha>]\n' +
-      '  release-artifact-manifest.mjs validate --manifest <manifest.json> [--expected-targets macos-x64,macos-arm64,windows-x64,linux-x64]\n',
+      '  release-artifact-manifest.mjs validate --manifest <manifest.json> [--asset-mode packages|bundles] [--expected-targets macos-arm64,windows-x64,linux-x64]\n',
   );
   process.exit(2);
 }

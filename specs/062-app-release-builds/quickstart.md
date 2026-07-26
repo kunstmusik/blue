@@ -5,15 +5,14 @@ This guide is the end-to-end acceptance procedure for the release implementation
 | Step                   | Implemented command                                                                                                                                                                |
 | ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Local build/test/lint  | `pnpm install --frozen-lockfile && pnpm build && pnpm test && pnpm lint`                                                                                                            |
-| Full repository verify | `pnpm verify` (package inputs + workflow contract + credential preflight tests + advisory credential availability)                                                                |
+| Full repository verify | `pnpm verify` (package inputs + workflow contract + release-artifact integrity tests + credential preflight tests + advisory credential availability)                            |
 | Package inputs only    | `pnpm verify:package-inputs`                                                                                                                                                       |
 | App build (unpacked)   | `pnpm app:build` (compiles all workspace deps + electron-builder `--dir`)                                                                                                          |
 | App package (installer)| `pnpm app:package` (host-platform DMG/NSIS/AppImage+Deb)                                                                                                                           |
 | Clean all artifacts    | `pnpm clean`                                                                                                                                                                       |
-| Per-target packages    | `pnpm --filter @blue/app package:macos-x64 \| package:macos-arm64 \| package:windows-x64 \| package:linux-x64`                                                                     |
+| Hosted target packages | `pnpm --filter @blue/app package:macos-arm64 \| package:windows-x64 \| package:linux-x64`; `package:macos-x64` remains a local-only developer experiment                          |
 | Packaged-app smoke     | `pnpm --filter @blue/app verify:packaged-app [-- --package-dir <dir>] [-- --no-playwright]`                                                                                        |
 | Release manifest       | `pnpm --filter @blue/app release:manifest` (writes `packages/blue-app/release/release-manifest.json` and `.sha256`)                                                                |
-| Release metadata       | `node scripts/release-metadata.mjs --out <release-metadata.json> [--channel development\|stable]`                                                                                  |
 | Version validation     | `pnpm --filter @blue/app exec node scripts/verify-release-version.mjs --tag vX.Y.Z --app-version X.Y.Z --repository <owner/repo> [--allow-no-gh-token]`                            |
 | Credential preflight  | `node scripts/release-credential-preflight.mjs [--scope macos\|windows\|publish] [--advisory] [--emit-availability]`                                                               |
 
@@ -21,7 +20,7 @@ This guide is the end-to-end acceptance procedure for the release implementation
 
 - Node.js 22 and pnpm 10.
 - Java 17+ and Maven for the Blue Java helper runtime.
-- A supported host platform: macOS x64/arm64, Windows x64, or Linux x64.
+- A hosted target platform: macOS arm64, Windows x64, or Linux x64. A macOS x64 local package command remains available as a developer experiment but is not a hosted or published target.
 - For end-user playback validation, separately install Csound and `blue-engine`; they are intentionally not included in the first Blue installer.
 - Production signing and publication are optional for local unsigned packages and are isolated in the protected GitHub release environment.
 
@@ -31,16 +30,17 @@ This guide is the end-to-end acceptance procedure for the release implementation
 | --------------- | ----------------------------- | ------------------------------------- | ---------------------------------------------------------------------- |
 | PR validation   | `.github/workflows/pr.yml`    | `pull_request` → develop, main        | Build + test + lint + package; installer artifacts uploaded, no release |
 | Develop build   | `.github/workflows/develop.yml` | `push` → develop                    | Build + test + lint + package; installer artifacts uploaded, no release |
-| Stable release  | `.github/workflows/release.yml` | `vX.Y.Z` tag push                  | Full signed/unsigned stable release published to GitHub Releases       |
+| Stable release  | `.github/workflows/release.yml` | `vX.Y.Z` tag push                  | Complete unsigned ZIP set published to GitHub Releases                 |
 
 ### Artifact Naming
 
-Artifacts follow `blue-{os}-{cputype}-{version}-{suffix}`:
+Primary artifacts follow `blue-{os}-{cputype}-{versionInfo}.zip`:
 
-- PR builds: `blue-macos-arm64-0.0.1-pr42`
-- Develop builds: `blue-macos-arm64-0.0.1-abc1234`
+- PR builds: `blue-macos-arm64-0.0.1-pr42.zip`
+- Develop builds: `blue-macos-arm64-0.0.1-abc1234.zip`
+- Stable builds and GitHub Release assets: `blue-macos-arm64-0.0.1.zip`
 
-Each artifact zip contains only the installer file(s).
+Each artifact ZIP contains only the native installer file(s). The Linux ZIP contains both the AppImage and Debian package.
 
 ## Local Unsigned Package
 
@@ -58,7 +58,7 @@ Expected outcome:
 ## PR Validation
 
 1. Open a pull request targeting `develop` or `main`.
-2. Confirm the `pr.yml` workflow reports independent macOS x64, macOS arm64, Windows x64, and Linux x64 jobs.
+2. Confirm the `pr.yml` workflow reports independent macOS arm64, Windows x64, and Linux x64 jobs.
 3. Confirm each target completes build, test, lint, unsigned package, and packaged-app smoke verification.
 4. Download installer artifacts from the workflow run page if needed for review.
 
@@ -70,9 +70,11 @@ Expected outcome:
 
 Expected outcome: all target jobs are green. Artifacts are retained for 30 days.
 
+The develop workflow uploads Actions artifacts only. It must not create or update a GitHub Release.
+
 ## Stable Release
 
-**Default: unsigned.** Stable releases are published as unsigned installers because Apple Developer Program and Azure Trusted Signing both require paid accounts. Signing is performed automatically when those credentials are present in the `release` GitHub Environment.
+Stable releases are intentionally unsigned because the signing programs and keys are not currently funded. The workflow never enables signing automatically from ambient credentials.
 
 1. Confirm `packages/blue-app/package.json` contains the intended semantic version.
 2. Run `pnpm verify` and `pnpm app:package` locally to validate the release candidate.
@@ -84,32 +86,31 @@ Expected outcome: all target jobs are green. Artifacts are retained for 30 days.
 Expected outcome:
 
 - The release is not public until all target assets and checksums pass validation.
-- The release body includes source SHA, per-platform signing status, installation instructions, runtime prerequisites, and an auto-generated changelog (merged PR titles + new contributors).
-- macOS assets are signed/notarized **only if** Apple credentials are configured.
-- Windows assets are Authenticode-signed **only if** Azure Trusted Signing credentials are configured.
-- Linux assets always match their published checksums.
+- The Release contains exactly `blue-macos-arm64-X.Y.Z.zip`, `blue-windows-x64-X.Y.Z.zip`, and `blue-linux-x64-X.Y.Z.zip`, using the same filenames as the stable Actions artifacts.
+- The release body includes source SHA, unsigned status, installation instructions, runtime prerequisites, and an auto-generated changelog (merged PR titles + new contributors).
+- Every ZIP matches the published checksum and verified manifest.
 
 ## Credentials
 
-**Default policy: no credentials required.** All signing values are optional; when absent the workflow publishes unsigned installers.
+**Current policy: no signing credentials are consumed.** Publication uses only the workflow-provided token. Signing values are documented as future inputs and must not change current workflow behavior if present.
 
 | Name                                        | GitHub location                          | Required for                         | Notes                                                  |
 | ------------------------------------------- | ---------------------------------------- | ------------------------------------ | ------------------------------------------------------ |
 | `GH_TOKEN`                                  | Automatically provided as `GITHUB_TOKEN` | GitHub stable publication            | Requires only release-content authority               |
-| `CSC_LINK`                                  | Protected release-environment secret     | macOS signing (optional)             | Do not commit certificate data                         |
-| `CSC_KEY_PASSWORD`                          | Protected release-environment secret     | macOS signing (optional)             | Never print or pass on a command line                  |
-| `APPLE_ID`                                  | Protected release-environment secret     | macOS notarization (optional)        | Use a dedicated release account where possible         |
-| `APPLE_APP_SPECIFIC_PASSWORD`               | Protected release-environment secret     | macOS notarization (optional)        | Never use the normal Apple account password            |
-| `APPLE_TEAM_ID`                             | Protected release-environment secret     | macOS notarization (optional)        | Match the Developer ID signing team                    |
-| `AZURE_CLIENT_ID`                           | Protected release-environment secret     | Windows Azure OIDC signing (optional)| Pair with a federated GitHub identity; no client secret |
-| `AZURE_TENANT_ID`                           | Protected release-environment secret     | Windows Azure OIDC signing (optional)| Pair with a federated GitHub identity; no client secret |
-| `AZURE_SUBSCRIPTION_ID`                     | Protected release-environment secret     | Windows Azure OIDC signing (optional)| Pair with a federated GitHub identity; no client secret |
-| `AZURE_TRUSTED_SIGNING_ENDPOINT`            | Protected release-environment variable   | Windows signing (optional)           | Non-secret service configuration                       |
-| `AZURE_TRUSTED_SIGNING_ACCOUNT`             | Protected release-environment variable   | Windows signing (optional)           | Non-secret account identifier                          |
-| `AZURE_TRUSTED_SIGNING_CERTIFICATE_PROFILE` | Protected release-environment variable   | Windows signing (optional)           | Non-secret profile identifier                          |
+| `CSC_LINK`                                  | Future protected-environment secret      | Future macOS signing                 | Do not configure until a signed-release feature is funded |
+| `CSC_KEY_PASSWORD`                          | Future protected-environment secret      | Future macOS signing                 | Never print or pass on a command line                  |
+| `APPLE_ID`                                  | Future protected-environment secret      | Future macOS notarization            | Use a dedicated release account where possible         |
+| `APPLE_APP_SPECIFIC_PASSWORD`               | Future protected-environment secret      | Future macOS notarization            | Never use the normal Apple account password            |
+| `APPLE_TEAM_ID`                             | Future protected-environment secret      | Future macOS notarization            | Match the Developer ID signing team                    |
+| `AZURE_CLIENT_ID`                           | Future protected-environment secret      | Future Windows signing               | Pair with a federated GitHub identity; no client secret |
+| `AZURE_TENANT_ID`                           | Future protected-environment secret      | Future Windows signing               | Pair with a federated GitHub identity; no client secret |
+| `AZURE_SUBSCRIPTION_ID`                     | Future protected-environment secret      | Future Windows signing               | Pair with a federated GitHub identity; no client secret |
+| `AZURE_TRUSTED_SIGNING_ENDPOINT`            | Future protected-environment variable    | Future Windows signing               | Non-secret service configuration                       |
+| `AZURE_TRUSTED_SIGNING_ACCOUNT`             | Future protected-environment variable    | Future Windows signing               | Non-secret account identifier                          |
+| `AZURE_TRUSTED_SIGNING_CERTIFICATE_PROFILE` | Future protected-environment variable    | Future Windows signing               | Non-secret profile identifier                          |
 
 ## Release Failure Recovery
 
-- Missing or malformed credentials: correct the protected environment value and rerun the stable workflow against the unchanged tag only if no release was published.
+- Missing publication approval or token authority: correct the protected Environment policy or workflow permissions and rerun against the unchanged tag only if no release was published. Future signing credentials do not block the current unsigned workflow.
 - Missing target asset or failed platform verification: fix the source/workflow defect, create a new version and tag, and release again. Never overwrite a published version.
 - Published artifact defect: mark the release as withdrawn, document the affected platforms, and publish a new version. Do not replace assets under an existing version.

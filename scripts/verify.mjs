@@ -10,8 +10,9 @@
  * Checks:
  *   1. package-inputs      - build artifacts and runtime contracts present
  *   2. release-workflows   - .github/workflows/*.yml structural contract
- *   3. release-credentials - sanitized test suite for the credential preflight
- *   4. credential-preflight --advisory
+ *   3. release-artifacts   - stable ZIP manifest integrity and completeness
+ *   4. release-credentials - sanitized test suite for the credential preflight
+ *   5. credential-preflight --advisory
  *                          - reports local future signing credential availability
  *                            without gating contributor verification
  *
@@ -31,6 +32,7 @@ const scriptsDir = __dirname;
 const checks = [
   { name: 'package-inputs', script: 'verify-package-inputs.mjs', required: true },
   { name: 'release-workflows', script: 'validate-release-workflows.mjs', required: true },
+  { name: 'release-artifacts', script: 'release-artifact-manifest.test.mjs', required: true },
   { name: 'release-credentials-tests', script: 'release-credential-preflight.test.mjs', required: true },
   {
     name: 'credential-preflight (advisory)',

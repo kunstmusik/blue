@@ -1,7 +1,8 @@
 # electron-builder configuration for @blue/app.
 #
-# Produces deterministic distribution packages for the four first-release
-# targets (macOS x64/arm64 DMG, Windows x64 NSIS, Linux x64 AppImage + Deb).
+# Produces deterministic distribution packages for the three hosted targets
+# (macOS arm64 DMG, Windows x64 NSIS, Linux x64 AppImage + Deb). The macOS x64
+# command remains available for local developer experiments only.
 # - Pins Electron 35.7.5 through packages/blue-app/package.json devDeps.
 # - Writes deterministic artifact names + output directory.
 # - Registers the .blue file association so the OS can hand Blue project

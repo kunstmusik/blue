@@ -4,8 +4,8 @@
 # the full platform matrix. Uploads installer-only artifacts so reviewers can
 # download and test a PR's build without creating a release.
 #
-# Artifact naming: blue-{os}-{cputype}-{version}-pr{number}
-#   e.g. blue-macos-arm64-0.0.1-pr42
+# Artifact naming: blue-{os}-{cputype}-{version}-pr{number}.zip
+#   e.g. blue-macos-arm64-0.0.1-pr42.zip
 #
 # No GitHub Release is created. No signing credentials are used.
 name: PR
@@ -29,9 +29,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # - target-id: macos-x64
-          #   runs-on: macos-13
-          #   package-script: package:macos-x64
           - target-id: macos-arm64
             runs-on: macos-14
             package-script: package:macos-arm64
@@ -78,10 +75,9 @@ jobs:
         run: pnpm --filter @blue/app verify:packaged-app -- --no-playwright
 
       - name: Upload installer artifacts
-        if: always()
         uses: actions/upload-artifact@v5
         with:
-          name: blue-${{ matrix.target-id }}-${{ steps.version.outputs.app-version }}-pr${{ github.event.pull_request.number }}
+          name: blue-${{ matrix.target-id }}-${{ steps.version.outputs.app-version }}-pr${{ github.event.pull_request.number }}.zip
           path: |
             packages/blue-app/release/*.dmg
             packages/blue-app/release/*.exe
@@ -89,14 +85,16 @@ jobs:
             packages/blue-app/release/*.deb
           if-no-files-found: warn
           retention-days: 30
+          overwrite: true
 
       - name: Upload diagnostics
         if: always()
         uses: actions/upload-artifact@v5
         with:
-          name: diagnostics-blue-${{ matrix.target-id }}-${{ steps.version.outputs.app-version }}-pr${{ github.event.pull_request.number }}
+          name: blue-${{ matrix.target-id }}-${{ steps.version.outputs.app-version }}-pr${{ github.event.pull_request.number }}-diagnostics.zip
           path: |
             packages/blue-app/release/*.yml
             packages/blue-app/release/*.blockmap
           if-no-files-found: ignore
           retention-days: 7
+          overwrite: true
