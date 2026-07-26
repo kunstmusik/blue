@@ -169,7 +169,10 @@ import type {
 import { UnifiedLibraryService } from './unified-library/service';
 import { registerUnifiedLibraryIpc } from './unified-library/ipc';
 import { UnifiedLibraryProjectAdapter } from './unified-library/project-adapter';
-import { runPackagedRuntimeVerificationAndExit } from './packaged-runtime-verification';
+import {
+  runPackagedRuntimeVerificationAndExit,
+  verifyPackagedProject,
+} from './packaged-runtime-verification';
 
 let mainWindow: BrowserWindow | null = null;
 let currentData: BlueData | null = null;
@@ -220,6 +223,10 @@ interface ProjectOnLoadState {
 // effect because it is read once at process startup.
 app.setName('Blue');
 console.log('[main] App name set to:', app.getName());
+
+if (process.env.BLUE_VERIFY_USER_DATA_PATH) {
+  app.setPath('userData', path.resolve(process.env.BLUE_VERIFY_USER_DATA_PATH));
+}
 
 // Deterministic no-audio packaged-resource smoke mode.
 // When BLUE_VERIFY_MODE=packaged-resources the main process verifies
@@ -1445,12 +1452,37 @@ async function loadProjectFromDisk(filePath: string): Promise<boolean> {
     buildAndSendProjectLoaded(data, filePath);
     return true;
   } catch (err: unknown) {
-    await dialog.showErrorBox(
-      'Error Loading File',
-      `Failed to load ${path.basename(filePath)}:\n${err instanceof Error ? err.message : String(err)}`,
-    );
+    const message = `Failed to load ${path.basename(filePath)}:\n${err instanceof Error ? err.message : String(err)}`;
+    if (process.env.BLUE_VERIFY_MODE === 'packaged-project') {
+      process.stderr.write(`[FAIL] ${message}\n`);
+    } else {
+      await dialog.showErrorBox('Error Loading File', message);
+    }
     return false;
   }
+}
+
+async function runPackagedProjectVerificationAndExit(): Promise<never> {
+  const projectPath = process.env.BLUE_VERIFY_PROJECT_PATH
+    ? path.resolve(process.env.BLUE_VERIFY_PROJECT_PATH)
+    : null;
+  const result = await verifyPackagedProject({
+    isPackaged: app.isPackaged,
+    projectPath,
+    loadProject: loadProjectFromDisk,
+    getLoadedProject: () => currentData
+      ? {
+          filePath: currentFilePath,
+          title: currentData.getProjectProperties().title,
+        }
+      : null,
+  });
+
+  process.stderr.write(`${result.ok ? '[ok]' : '[FAIL]'} ${result.message}\n`);
+  process.stderr.write(
+    `\nPackaged project verification ${result.ok ? 'passed' : 'failed'}.\n`,
+  );
+  process.exit(result.ok ? 0 : 1);
 }
 
 async function newFile(): Promise<void> {
@@ -2907,6 +2939,11 @@ registerBlueAudioScheme();
 app.whenReady().then(async () => {
   registerBlueAudioProtocolHandler();
   setExternalCommandExecutor(createMainExternalExecutor(() => currentFilePath ? path.dirname(currentFilePath) : null));
+
+  if (process.env.BLUE_VERIFY_MODE === 'packaged-project') {
+    await runPackagedProjectVerificationAndExit();
+  }
+
   initWorkbenchWindowHost();
   try {
     const report = await sweepStaleBlueEngineProcesses();

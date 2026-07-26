@@ -27,6 +27,7 @@
  *   - packages/blue-app/electron-builder.yml:
  *       * disables macOS identity auto-discovery so local package scripts are
  *         unsigned by default too.
+ *       * packages the shared runtime modules imported by main and preload.
  *
  * The validator is YAML-structural only. It removes full-line YAML comments
  * before checking required substrings/anchors so disabled matrix entries cannot
@@ -402,6 +403,12 @@ requireSubstring(
   'identity: null',
   'BUILDER_MAC_UNSIGNED',
   'electron-builder must disable macOS signing identity auto-discovery by default',
+);
+requireSubstring(
+  'packages/blue-app/electron-builder.yml',
+  '- dist/shared/**/*',
+  'BUILDER_SHARED_RUNTIME',
+  'electron-builder must package shared runtime modules imported by main and preload',
 );
 
 // === print findings ===

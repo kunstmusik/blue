@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import * as path from 'node:path';
-import { verifyPackagedRuntime } from './packaged-runtime-verification';
+import {
+  verifyPackagedProject,
+  verifyPackagedRuntime,
+} from './packaged-runtime-verification';
 
 const RESOURCES = '/Applications/Blue.app/Contents/Resources';
 
@@ -89,5 +92,52 @@ describe('packaged-runtime-verification', () => {
     const java = report.results.find((r) => r.aspect === 'java-helper');
     expect(java?.ok).toBe(true);
     expect(java?.message).toContain(expectedJar);
+  });
+
+  it('verifies that the requested project becomes the current document', async () => {
+    const projectPath = path.resolve('/fixtures/smoke-test.blue');
+    const result = await verifyPackagedProject({
+      isPackaged: true,
+      projectPath,
+      loadProject: async () => true,
+      getLoadedProject: () => ({
+        filePath: projectPath,
+        title: 'Smoke Test',
+      }),
+    });
+
+    expect(result).toEqual({
+      ok: true,
+      code: 'OK',
+      message: `Project loaded: Smoke Test (${projectPath})`,
+    });
+  });
+
+  it('rejects missing, failed, and mismatched packaged project loads', async () => {
+    const projectPath = path.resolve('/fixtures/smoke-test.blue');
+
+    await expect(verifyPackagedProject({
+      isPackaged: true,
+      projectPath: null,
+      loadProject: async () => true,
+      getLoadedProject: () => null,
+    })).resolves.toMatchObject({ ok: false, code: 'PROJECT_PATH_MISSING' });
+
+    await expect(verifyPackagedProject({
+      isPackaged: true,
+      projectPath,
+      loadProject: async () => false,
+      getLoadedProject: () => null,
+    })).resolves.toMatchObject({ ok: false, code: 'PROJECT_LOAD_FAILED' });
+
+    await expect(verifyPackagedProject({
+      isPackaged: true,
+      projectPath,
+      loadProject: async () => true,
+      getLoadedProject: () => ({
+        filePath: path.resolve('/fixtures/other.blue'),
+        title: 'Other',
+      }),
+    })).resolves.toMatchObject({ ok: false, code: 'PROJECT_PATH_MISMATCH' });
   });
 });

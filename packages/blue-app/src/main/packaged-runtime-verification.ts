@@ -53,6 +53,26 @@ export interface RuntimeVerificationContext extends JavaRuntimePathContext {
   resolveZeromqNative?: () => string | null;
 }
 
+export interface PackagedProjectVerificationContext {
+  isPackaged: boolean;
+  projectPath: string | null;
+  loadProject: (projectPath: string) => Promise<boolean>;
+  getLoadedProject: () => { filePath: string | null; title: string } | null;
+}
+
+export interface PackagedProjectVerificationResult {
+  ok: boolean;
+  code: string;
+  message: string;
+}
+
+function failedProjectVerification(
+  code: string,
+  message: string,
+): PackagedProjectVerificationResult {
+  return { ok: false, code, message };
+}
+
 /**
  * Verifies that the installed Java helper JAR exists at the preferred
  * packaged-resources location. The resolver already returns candidate paths;
@@ -265,6 +285,55 @@ export function verifyPackagedRuntime(
     ok: results.every((result) => result.ok),
     results,
   };
+}
+
+/**
+ * Loads a representative project through the application's normal main-owned
+ * project path and verifies that it became the current document.
+ */
+export async function verifyPackagedProject(
+  context: PackagedProjectVerificationContext,
+): Promise<PackagedProjectVerificationResult> {
+  if (!context.isPackaged) {
+    return failedProjectVerification(
+      'APP_NOT_PACKAGED',
+      'Packaged project verification requires an installed application.',
+    );
+  }
+  if (!context.projectPath) {
+    return failedProjectVerification(
+      'PROJECT_PATH_MISSING',
+      'Packaged project verification requires BLUE_VERIFY_PROJECT_PATH.',
+    );
+  }
+  try {
+    const loaded = await context.loadProject(context.projectPath);
+    const project = context.getLoadedProject();
+    if (!loaded || !project || !project.filePath) {
+      return failedProjectVerification(
+        'PROJECT_LOAD_FAILED',
+        `Project did not become the current document: ${context.projectPath}`,
+      );
+    }
+    if (path.resolve(project.filePath) !== path.resolve(context.projectPath)) {
+      return failedProjectVerification(
+        'PROJECT_PATH_MISMATCH',
+        `Loaded project path does not match the requested project: ${context.projectPath}`,
+      );
+    }
+
+    const title = project.title.trim() || path.basename(context.projectPath);
+    return {
+      ok: true,
+      code: 'OK',
+      message: `Project loaded: ${title} (${context.projectPath})`,
+    };
+  } catch (error) {
+    return failedProjectVerification(
+      'PROJECT_LOAD_ERROR',
+      `Project load threw an error: ${error instanceof Error ? error.message : String(error)}`,
+    );
+  }
 }
 
 /**

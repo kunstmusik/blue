@@ -13,8 +13,8 @@
  *   1. Java helper outputs (blue-java.jar, pythonLib) produced by @blue/java-runtime.
  *   2. Externalized workspace runtime packages (@blue/data, @blue/engine-client,
  *      @blue/java-runtime) that the Vite main bundle leaves un-bundled.
- *   3. Built Electron entries (dist/main, dist/preload, dist/renderer) that
- *      electron-builder consumes from packages/blue-app.
+ *   3. Built Electron entries (dist/main, dist/preload, dist/renderer,
+ *      dist/shared) that electron-builder consumes from packages/blue-app.
  *   4. The Electron version declared in packages/blue-app/package.json matches
  *      the pinned runtime constraint (35.7.5) used for native-module rebuilds.
  *   5. Native ZeroMQ (.node) availability for the host runtime so packaging
@@ -132,6 +132,11 @@ function checkBuiltElectronEntries() {
     checkPath('Electron main bundle', join(appRoot, 'dist', 'main', 'main.js'), 'file'),
     checkPath('Electron preload bundle', join(appRoot, 'dist', 'preload', 'preload.js'), 'file'),
     checkPath('Electron renderer output', join(appRoot, 'dist', 'renderer', 'index.html'), 'file'),
+    checkPath(
+      'Electron shared runtime output',
+      join(appRoot, 'dist', 'shared', 'window-layout-settings.js'),
+      'file',
+    ),
   ];
 }
 

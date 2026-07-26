@@ -43,6 +43,7 @@ files:
   - dist/main/**/*
   - dist/preload/**/*
   - dist/renderer/**/*
+  - dist/shared/**/*
   - package.json
   - '!**/.DS_Store'
   - '!**/.gitkeep'
