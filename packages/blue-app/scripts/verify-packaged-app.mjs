@@ -73,6 +73,12 @@ function buildMinimalEnv(extras) {
     env.TMP = process.env.TMP ?? '';
     env.LOCALAPPDATA = process.env.LOCALAPPDATA ?? '';
   }
+  if (process.env.DISPLAY) {
+    env.DISPLAY = process.env.DISPLAY;
+  }
+  if (process.env.XAUTHORITY) {
+    env.XAUTHORITY = process.env.XAUTHORITY;
+  }
   return env;
 }
 
