@@ -16,6 +16,9 @@ node_modules/
 *.swp
 *.swo
 
+# Local agent/IDE settings (personal, machine-specific)
+.claude/settings.local.json
+
 # OS
 .DS_Store
 Thumbs.db
