@@ -74,7 +74,7 @@
 - [X] T018 [P] [US3] Implement stable tag/package version validation in `packages/blue-app/scripts/verify-release-version.mjs`, requiring an immutable `vX.Y.Z` tag that exactly matches `packages/blue-app/package.json` and refusing duplicate published versions.
 - [X] T019 [US3] Add `.github/workflows/develop.yml` for pushes to `develop`, consuming the shared bootstrap action and uploading exactly three `blue-{os}-{cputype}-{version}-{short-sha}.zip` Actions artifacts with no GitHub Release and no `contents: write` job.
 - [X] T020 [P] [US3] Implement non-secret credential validation in `scripts/release-credential-preflight.mjs` and expose it through `package.json`, reporting only the missing or malformed variable names reserved for future protected macOS and Windows signing paths.
-- [X] T021 [US3] Add `.github/workflows/release.yml` for stable tags: validate version, package each native target unsigned, wrap native installers in exactly three `blue-{os}-{cputype}-{version}.zip` bundles, use the protected `release` Environment only for final publication approval, and avoid Apple/Azure signing credentials and OIDC signing permissions.
+- [X] T021 [US3] Add `.github/workflows/release.yml` for stable tags: validate version, package each native target unsigned, wrap native installers in exactly three `blue-{os}-{cputype}-{version}.zip` bundles, use the `release` Environment only for final publication, and avoid Apple/Azure signing credentials and OIDC signing permissions.
 - [X] T022 [US3] Implement the final promoter in `.github/workflows/release.yml` to reject altered, duplicate, missing, skipped, or unexpected ZIPs; verify checksums and the manifest; and publish the exact same ZIP filenames used by Actions only after all required target evidence is present.
 
 **Checkpoint**: User Story 3 is complete when a develop Actions build is complete and traceable without creating a Release, while a stable run cannot make an incomplete, altered, duplicate, or unverified-artifact release public.
@@ -83,17 +83,17 @@
 
 ## Phase 6: User Story 4 - Configure Release Credentials Safely (Priority: P2)
 
-**Goal**: A maintainer can configure stable publication approval and preflight future signing credentials without exposing secret values or blocking unsigned contributor workflows.
+**Goal**: A maintainer can configure the stable publication boundary and preflight future signing credentials without exposing secret values or blocking unsigned contributor workflows.
 
-**Independent Test**: Using a sanitized environment, the advisory preflight reports absent future signing settings by name only; a maintainer can identify current publication approval policy plus every future signing value, scope, format, consuming workflow, and recovery step from one guide.
+**Independent Test**: Using a sanitized environment, the advisory preflight reports absent future signing settings by name only; a maintainer can identify the current single-maintainer publication policy plus every future signing value, scope, format, consuming workflow, and recovery step from one guide.
 
 - [X] T023 [US4] Add sanitized positive and negative coverage for `scripts/release-credential-preflight.mjs` in `scripts/release-credential-preflight.test.mjs` and register its command in `package.json`, asserting that output never contains a supplied secret value.
 - [X] T024 [US4] Synchronize `docs/release-guide.md` and `specs/062-app-release-builds/quickstart.md` with implemented commands, expected future signing credential formats, current protected `release` Environment publication policy, future Azure federated-identity requirements, and failure recovery.
 - [X] T025 [US4] Keep the maintainer entry point concise in `README.md` while linking the final `docs/release-guide.md` local packaging, develop Actions artifact, stable release, and non-bundled runtime procedures.
-- [X] T026 [US4] Configure and review the protected GitHub `release` Environment using `docs/release-guide.md`: approval protection and release-tag access policy for current unsigned publication; document future Apple secrets, Azure OIDC identifiers, and non-secret Artifact Signing variables without exposing any value in repository files or workflow logs.
+- [X] T026 [US4] Configure and review the GitHub `release` Environment using `docs/release-guide.md`: release-tag access policy and least-privilege publication for the current one-maintainer project; document future Apple secrets, Azure OIDC identifiers, and non-secret Artifact Signing variables without exposing any value in repository files or workflow logs.
 - [X] T027 [US4] Run `scripts/release-credential-preflight.mjs` with missing and sanitized fixture values, then verify `docs/release-guide.md` still permits `package:dir` and packaged-app smoke validation with no production credentials.
 
-**Checkpoint**: User Story 4 is complete when a new release maintainer can set up or diagnose current publication approval and future signing credentials from documentation alone, while contributors retain a fully secret-free package path.
+**Checkpoint**: User Story 4 is complete when a new release maintainer can set up or diagnose the current publication boundary and future signing credentials from documentation alone, while contributors retain a fully secret-free package path.
 
 ---
 
@@ -163,7 +163,7 @@ Task: "Validate workflow syntax and permissions in .github/actions/setup-blue-bu
 1. Deliver secret-free local packaging (US1).
 2. Deliver secret-free native CI (US2).
 3. Deliver push-triggered `develop` Actions artifacts (US3 development path).
-4. Provision and validate the protected release environment for final publication approval (US4).
+4. Provision and validate the tag-restricted release Environment for final publication (US4).
 5. Enable tag-triggered unsigned stable release promotion and run a protected test release (US3 stable path).
 
 ### Handoff Boundary
@@ -176,3 +176,13 @@ Read [handoff.md](./handoff.md) before implementation. It names the package/runt
 - `[P]` marks tasks that touch separate files and have no implementation dependency on one another.
 - Do not change `@blue/data`, `.blue` XML serialization, project-document IPC ownership, CSD behavior, or unrelated untracked release-plan input documents.
 - Do not commit certificate data, credential values, `.env` files, or generated package artifacts.
+
+---
+
+## Phase 8: Convergence
+
+- [X] T032 Add a distinct packaged-project acceptance path in `packages/blue-app/scripts/verify-packaged-app.mjs` and the Electron main verification seam that opens `fixtures/smoke-test.blue` and deterministically proves the project loaded, while retaining the existing no-audio packaged-resource checks, per US1/AC3 and T010 (partial).
+- [X] T033 Expand `docs/release-guide.md` so every current publication input and future signing variable lists its purpose, exact expected format, GitHub/local storage scope, and current or future consuming workflow without example secret values, per FR-010 and T024 (partial).
+- [X] T034 Configure the `kunstmusik/blue-electron-poc` GitHub `release` Environment for the current one-maintainer policy with no required reviewer and a deployment policy restricted to immutable `v*.*.*` tags, then record sanitized verification evidence in `specs/062-app-release-builds/quickstart.md`, per US4/AC1 and T026 (partial).
+- [X] T035 Open a temporary pull request targeting `develop` or `main`, verify that `.github/workflows/pr.yml` completes independent macOS arm64, Windows x64, and Linux x64 build/test/lint/package jobs with correctly named ZIP evidence and no release publication, and record the run evidence in `specs/062-app-release-builds/quickstart.md`, per US2/AC1, SC-002, and T031 (partial).
+- [X] T036 After T032-T035 are complete and a follow-up convergence audit reports no findings, update the status in `specs/062-app-release-builds/spec.md` from `Draft` to `Closed` with the closeout date and final acceptance evidence, per spec status (partial).

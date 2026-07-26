@@ -8,7 +8,7 @@ Blue's first packaged release supports macOS arm64, Windows x64, and Linux x64. 
 
 Contributor builds, CI package checks, develop-branch artifacts, and stable releases are unsigned. They must not require Apple Developer ID credentials, notarization credentials, Azure Trusted Signing values, or GitHub OIDC signing permissions.
 
-The protected GitHub `release` Environment is still used for stable releases, but its only current purpose is publication approval. Signing and notarization are future work because the project does not currently fund the required signing programs and keys. `pnpm release:preflight` remains as an advisory future-readiness check and is not part of the current stable-release gate.
+The GitHub `release` Environment is still used as the stable publisher boundary and future signing-credential scope. Because Blue currently has one maintainer, it does not require a second-person reviewer: pushing the immutable version tag is the maintainer's explicit publication decision. Signing and notarization are future work because the project does not currently fund the required signing programs and keys. `pnpm release:preflight` remains as an advisory future-readiness check and is not part of the current stable-release gate.
 
 ## Release Channels
 
@@ -16,7 +16,7 @@ The protected GitHub `release` Environment is still used for stable releases, bu
 | --------------- | ------------------------------------ | -------- | ------------------------------------------------------------------------------------- |
 | PR verification | Pull requests to `develop` or `main` | Unsigned | Versioned GitHub Actions artifacts only; no GitHub Release                            |
 | Develop build   | Pushes to `develop`                  | Unsigned | Versioned GitHub Actions artifacts only; no GitHub Release                            |
-| Stable release  | Immutable `vX.Y.Z` tag               | Unsigned | One public GitHub Release after complete verification and protected approval          |
+| Stable release  | Immutable `vX.Y.Z` tag               | Unsigned | One public GitHub Release after complete verification                                 |
 
 Do not create a stable release from an untagged commit, a branch name, or a tag whose version does not match `packages/blue-app/package.json`.
 
@@ -26,7 +26,7 @@ Do not create a stable release from an untagged commit, a branch name, or a tag 
 | --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | PR verification | Package input checks, tests, lint, target packaging, and packaged-app smoke checks; uploads `blue-{os}-{cputype}-{version}-pr{number}.zip` Actions artifacts                                                                        |
 | Develop build   | The same package checks on pushes to `develop`; uploads `blue-{os}-{cputype}-{version}-{short-sha}.zip` Actions artifacts and creates no GitHub Release                                                                           |
-| Stable release  | Tag/version validation, unsigned platform ZIP creation, verified manifest consolidation, draft creation, and final `gh release edit --draft=false` from the protected publisher job                                                     |
+| Stable release  | Tag/version validation, unsigned platform ZIP creation, verified manifest consolidation, draft creation, and final `gh release edit --draft=false` from the `release` Environment publisher job                                                |
 
 ## Local Prerequisites
 
@@ -57,13 +57,13 @@ pnpm --filter @blue/app package:dir
 pnpm --filter @blue/app verify:packaged-app
 ```
 
-`verify:package-inputs` runs from the repository root and checks that the Java helper JAR, Python library, built Electron entries, externalized workspace packages, pinned Electron version, ZeroMQ native binary, and Vite externals contract are all present before packaging. It is automatically invoked as the first step of every `package:*` script, so it can also be run on its own to diagnose a failing CI target.
+`verify:package-inputs` runs from the repository root and checks that the Java helper JAR, Python library, built Electron entries (including shared runtime modules), externalized workspace packages, pinned Electron version, ZeroMQ native binary, and Vite externals contract are all present before packaging. It is automatically invoked as the first step of every `package:*` script, so it can also be run on its own to diagnose a failing CI target.
 
 `rebuild:native` rebuilds the native `zeromq` addon against the installed Electron runtime. Run it after a fresh `pnpm install` if you change Node or Electron versions.
 
 `package:dir` builds an unsigned unpacked application into `packages/blue-app/release/`. `package:current` and the release-target scripts `package:macos-arm64`, `package:windows-x64`, and `package:linux-x64` produce the installer formats declared in `packages/blue-app/electron-builder.yml`. `package:macos-x64` remains available for local developer experiments but is not part of the hosted build or published release matrix. The builder configuration disables macOS signing identity auto-discovery so local macOS packages stay unsigned.
 
-`verify:packaged-app` must prove that the installed app resolves the bundled Java helper at `resources/assets/java`, retains the externalized workspace modules, loads `zeromq`, and uses the Electron-pinned `node:sqlite` runtime. It launches the packaged application with `BLUE_VERIFY_MODE=packaged-resources` and exits non-zero if any runtime dependency cannot be resolved. It must not require Csound or `blue-engine`.
+`verify:packaged-app` launches the installed application twice. `BLUE_VERIFY_MODE=packaged-resources` proves that the bundled Java helper at `resources/assets/java`, externalized workspace modules, `zeromq`, and Electron-pinned `node:sqlite` runtime resolve. `BLUE_VERIFY_MODE=packaged-project` then loads `fixtures/smoke-test.blue` through the normal main-process project path and proves that it became the current project. Either failure exits non-zero. Both modes use an isolated temporary user-data directory; neither creates a renderer window, starts audio, touches the maintainer's normal Blue profile, or requires Csound or `blue-engine`.
 
 ### Diagnosing missing prerequisites
 
@@ -71,7 +71,7 @@ pnpm --filter @blue/app verify:packaged-app
 | ------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `verify:package-inputs` reports `[FAIL] Java helper JAR` or `Java helper Python library`                                                   | `@blue/java-runtime` has not been built                                            | `pnpm --filter @blue/java-runtime build`, then re-run `verify:package-inputs`.                                                                          |
 | `verify:package-inputs` reports `[FAIL] Externalized workspace package @blue/data` or `@blue/engine-client`                                | Workspace packages have not been built                                             | `pnpm --filter @blue/data build` and `pnpm --filter @blue/engine-client build` if present, then re-run.                                                 |
-| `verify:package-inputs` reports `[FAIL] Electron main bundle`, `Electron preload bundle`, or `Electron renderer output`                    | `packages/blue-app` build has not completed                                        | `pnpm --filter @blue/app build`, then re-run.                                                                                                           |
+| `verify:package-inputs` reports a missing Electron main, preload, renderer, or shared runtime output                                       | `packages/blue-app` build has not completed                                        | `pnpm --filter @blue/app build`, then re-run.                                                                                                           |
 | `verify:package-inputs` reports `[FAIL] Electron pin mismatch`                                                                             | `packages/blue-app/package.json` no longer pins `electron` to `35.7.5`             | Restore the pin before packaging; do not change the Electron/Node/SQLite runtime contract in this release.                                              |
 | `verify:package-inputs` reports `[FAIL] Native ZeroMQ .node binary`                                                                        | `zeromq` has not been rebuilt for Electron                                         | `pnpm --filter @blue/app rebuild:native`, then re-run.                                                                                                  |
 | `verify:packaged-app` reports `[FAIL] Java helper JAR not found` from inside the packaged app                                              | electron-builder did not copy `assets/java/*` to installed `resources/assets/java` | Inspect the unpacked application's `Resources/assets/java` directory; rebuild after confirming the assets exist in `packages/blue-app/assets/java`.       |
@@ -90,41 +90,49 @@ pnpm release:preflight -- --scope macos --advisory
 pnpm release:preflight -- --scope windows --advisory
 ```
 
+### Current publication tokens
+
+| Variable       | Purpose | Exact expected format | Storage and scope | Consuming workflow or command |
+| -------------- | ------- | --------------------- | ----------------- | ----------------------------- |
+| `GITHUB_TOKEN` | Check for an existing release and publish the verified stable release | Opaque job token generated by GitHub Actions; no project-defined value or fixed textual shape | Generated automatically for each Actions job; never add it as a repository or Environment secret. The validation job receives `contents: read`; only the `publish-stable` job in the protected `release` Environment receives `contents: write`. | Current `.github/workflows/release.yml` `validate-version` and `publish-stable` jobs |
+| `GH_TOKEN` | Authenticate optional local duplicate-release checks or local `gh` publication commands | Non-empty opaque token accepted by GitHub CLI; permissions must match the local operation (`contents: read` for checks, `contents: write` for publication) | Maintainer's local shell environment or GitHub CLI credential store only; never commit it and do not add it to PR or develop workflows | Current advisory `pnpm release:preflight -- --scope publish`; optional local `gh` commands only. GitHub Actions maps its generated `GITHUB_TOKEN` to `GH_TOKEN` for the publisher command. |
+
 ### Future macOS signing
 
-| Variable                      | Purpose                                                                           |
-| ----------------------------- | --------------------------------------------------------------------------------- |
-| `CSC_LINK`                    | Path to, or base64-encoded value of, a Developer ID Application P12 certificate   |
-| `CSC_KEY_PASSWORD`            | Password for the P12 certificate                                                  |
-| `APPLE_ID`                    | Apple account used to submit notarization requests                                |
-| `APPLE_APP_SPECIFIC_PASSWORD` | App-specific password for `APPLE_ID`                                              |
-| `APPLE_TEAM_ID`               | Apple Developer team identifier that owns the certificate                         |
+| Variable | Purpose | Exact expected format | Storage and scope | Future consuming workflow |
+| -------- | ------- | --------------------- | ----------------- | ------------------------- |
+| `CSC_LINK` | Supply the Developer ID Application certificate to electron-builder | Non-empty existing P12 file path/URL or base64-encoded PKCS#12 payload | Protected `release` Environment secret; local shell variable may reference a protected local file | Future signed macOS package job |
+| `CSC_KEY_PASSWORD` | Unlock the certificate supplied by `CSC_LINK` | Non-empty certificate password string | Protected `release` Environment secret or local shell secret | Future signed macOS package job |
+| `APPLE_ID` | Identify the Apple account submitting notarization | Apple account email address | Protected `release` Environment secret or local shell secret | Future macOS notarization job |
+| `APPLE_APP_SPECIFIC_PASSWORD` | Authenticate notarization for `APPLE_ID` | Non-empty Apple-generated app-specific password | Protected `release` Environment secret or local shell secret | Future macOS notarization job |
+| `APPLE_TEAM_ID` | Select the Apple Developer team that owns the certificate | Exactly 10 uppercase ASCII letters or digits | Protected `release` Environment variable or local shell variable | Future macOS signing and notarization jobs |
 
 A future signed macOS workflow should sign, notarize, staple, and perform Gatekeeper assessment before accepting the hosted macOS arm64 artifact.
 
 ### Future Windows signing
 
-| Variable                                    | Purpose                                                                          |
-| ------------------------------------------- | -------------------------------------------------------------------------------- |
-| `AZURE_CLIENT_ID`                           | Azure app or managed-identity client ID bound to the GitHub federated credential |
-| `AZURE_TENANT_ID`                           | Azure Entra tenant ID                                                            |
-| `AZURE_SUBSCRIPTION_ID`                     | Azure subscription containing Artifact Signing                                   |
-| `AZURE_TRUSTED_SIGNING_ENDPOINT`            | Artifact Signing service endpoint                                                |
-| `AZURE_TRUSTED_SIGNING_ACCOUNT`             | Artifact Signing account name                                                    |
-| `AZURE_TRUSTED_SIGNING_CERTIFICATE_PROFILE` | Artifact Signing certificate profile name                                        |
+| Variable | Purpose | Exact expected format | Storage and scope | Future consuming workflow |
+| -------- | ------- | --------------------- | ----------------- | ------------------------- |
+| `AZURE_CLIENT_ID` | Identify the Azure app or managed identity bound to the GitHub OIDC federated credential | UUID in `8-4-4-4-12` hexadecimal form | Protected `release` Environment variable or local shell variable; it is an identifier, not a client secret | Future Windows Azure-login/signing job |
+| `AZURE_TENANT_ID` | Select the Azure Entra tenant | UUID in `8-4-4-4-12` hexadecimal form | Protected `release` Environment variable or local shell variable | Future Windows Azure-login/signing job |
+| `AZURE_SUBSCRIPTION_ID` | Select the Azure subscription containing Artifact Signing | UUID in `8-4-4-4-12` hexadecimal form | Protected `release` Environment variable or local shell variable | Future Windows Azure-login/signing job |
+| `AZURE_TRUSTED_SIGNING_ENDPOINT` | Select the Azure Artifact Signing service endpoint | Absolute `https://` URL with no whitespace | Protected `release` Environment variable or local shell variable | Future Windows signing job |
+| `AZURE_TRUSTED_SIGNING_ACCOUNT` | Select the Artifact Signing account | Non-empty Azure account resource name | Protected `release` Environment variable or local shell variable | Future Windows signing job |
+| `AZURE_TRUSTED_SIGNING_CERTIFICATE_PROFILE` | Select the Artifact Signing certificate profile | Non-empty Azure certificate-profile resource name | Protected `release` Environment variable or local shell variable | Future Windows signing job |
 
 A future signed Windows workflow should request GitHub `id-token: write`, authenticate with the configured federated identity, sign the NSIS executable, and verify the Authenticode signature before promotion. Do not use a P12 certificate, an Azure client secret, or repository-wide signing secrets for that future path.
 
 ## GitHub Configuration
 
-Create a protected GitHub Environment named `release` before enabling stable publication. For the current unsigned workflow it does not need Apple or Azure signing values. Use it to require maintainer review before the final stable publisher makes a release public.
+Create a GitHub Environment named `release` before enabling stable publication. For the current unsigned workflow it does not need Apple or Azure signing values. It scopes the final publisher job, permits tag-only deployment policy, and provides the future home for release-only signing configuration.
 
-The Environment policy should include:
+Configure it under **Repository Settings → Environments → release**:
 
-- Required reviewers: at least one maintainer who did not author the tag.
-- Deployment branch policy: restrict to the immutable tag pattern (`v*.*.*`).
-- Wait timer: optional, but useful for last-minute cancellation.
-- No inherited secrets from repository-level variables that overlap with future release-scoped signing values.
+1. Leave **Required reviewers** empty while Blue is a one-person project. Requiring another reviewer would make releases impossible, and self-approval would add ceremony without independent review.
+2. Under **Deployment branches and tags**, select **Selected branches and tags**, add a **Tag** rule for `v*.*.*`, and do not add a branch rule.
+3. Do not add current signing secrets. Future signing values belong only in this Environment using the scopes in the tables above, not in repository-wide storage.
+
+With no required reviewer, pushing a matching version tag is the deliberate release action. The three unsigned package jobs must succeed before `publish-stable` receives `contents: write`; that job then verifies the complete checksummed asset set, stages a draft, and publishes it. If Blue gains another active maintainer, add a required reviewer and enable **Prevent self-review** as an optional policy hardening step.
 
 `GITHUB_TOKEN` is injected by GitHub Actions. Do not create, store, or substitute a personal access token for normal artifact publication. PR, develop, and stable package jobs receive `contents: read`; only the stable publisher job receives `contents: write`.
 
@@ -161,7 +169,7 @@ Develop artifacts are retained by GitHub Actions for 30 days. They are not stabl
    - **macOS**: produces an unsigned arm64 DMG.
    - **Windows**: produces an unsigned NSIS installer for x64.
    - **Linux**: produces checksummed AppImage and Debian packages.
-7. Review and approve the protected `release` Environment when GitHub Actions requests it for the final publisher job.
+7. No approval prompt is expected for the current single-maintainer policy; after all package jobs succeed, confirm that the `publish-stable` job starts automatically in the `release` Environment.
 8. The final publisher downloads and validates exactly `blue-macos-arm64-X.Y.Z.zip`, `blue-windows-x64-X.Y.Z.zip`, and `blue-linux-x64-X.Y.Z.zip`.
 9. The publisher requires verified checksums, matching version/source metadata, and no missing, duplicate, or unexpected ZIP. It then creates a draft GitHub Release with the same ZIP filenames, `checksums-sha256.txt`, and `release-manifest.json`, and publishes it via `gh release edit --draft=false`.
 10. Inspect the published release from a clean machine for each supported platform before announcing it.

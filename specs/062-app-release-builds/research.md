@@ -70,9 +70,9 @@
 
 ## Decision: Isolate credentials and minimize workflow authority
 
-**Decision**: Use a protected GitHub Environment dedicated to stable release publication, require human approval before the publisher job runs, and grant only the permissions required by each workflow job. Pull-request, develop, and package jobs receive `contents: read`; only stable publication receives `contents: write`. Future signing credentials should use the same protected-environment boundary when signing is enabled.
+**Decision**: Use a tag-restricted GitHub Environment dedicated to stable release publication and grant only the permissions required by each workflow job. Blue currently has one maintainer, so pushing an immutable version tag is the explicit human publication decision and no second-person Environment reviewer is required. Pull-request, develop, and package jobs receive `contents: read`; only stable publication receives `contents: write`. Future signing credentials should use the same Environment boundary when signing is enabled.
 
-**Rationale**: GitHub recommends protected environments for controlled deployments, passes no secrets to forked pull requests, and supports job-specific `GITHUB_TOKEN` permissions. The current checksum manifest records the exact source revision and verified hashes without requiring broader attestation permissions.
+**Rationale**: A required reviewer would deadlock a one-person project. Tag restriction, tag/package version agreement, complete matrix dependencies, checksum/manifest verification, draft staging, and job-specific `GITHUB_TOKEN` permissions provide the current safeguards without pretending self-approval is independent review. The policy can add a non-author reviewer if the maintainer pool grows.
 
 **Alternatives considered**:
 

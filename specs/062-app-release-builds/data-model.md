@@ -16,7 +16,7 @@
 
 | Field            | Description                                              | Validation                                                                                                           |
 | ---------------- | -------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
-| `kind`           | Pull-request validation, develop Actions build, or stable release | Determines trigger, artifact retention, protected publication approval, and publication behavior                 |
+| `kind`           | Pull-request validation, develop Actions build, or stable release | Determines trigger, artifact retention, tag-restricted publication policy, and publication behavior              |
 | `sourceRevision` | Commit checked out by the runner                         | Immutable and recorded in release metadata                                                                           |
 | `targetMatrix`   | Required platform and architecture combinations          | Every required target must report before stable promotion                                                            |
 | `state`          | Build lifecycle state                                    | `queued` -> `building` -> `verified` -> `staged` -> `published`, with `failed` terminal at any pre-publication stage |
@@ -46,5 +46,5 @@
 - One **Build Run** produces one ZIP bundle for each hosted target; the Linux x64 ZIP contains both the AppImage and Debian package.
 - A stable ZIP uses the exact filename `blue-{os}-{cputype}-{version}.zip` in both GitHub Actions and the GitHub Release.
 - A **Release** owns the complete package set from one successful Build Run and one source revision.
-- A stable **Release** cannot transition from `draft` to `published` until every package is verified and protected publication approval has passed.
+- A stable **Release** cannot transition from `draft` to `published` until every package is verified and the tag-restricted publication policy has passed.
 - A **Release Credential** may be read only by the protected stable-release job that needs it. Future signing credentials must remain unavailable to current unsigned package jobs. No credential or credential value enters Blue project data, application settings, artifacts, or release notes.

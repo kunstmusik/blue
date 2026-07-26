@@ -6,7 +6,7 @@
 | ------------- | ---------------------------------- | ------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
 | `pr.yml`      | Pull requests to `develop`, `main` | Read-only repository token; no production secrets                              | Full build, test, lint, unsigned package, and packaged-app smoke result per target | None; ZIP artifacts uploaded for reviewer download                 |
 | `develop.yml` | Push to `develop`                  | Read-only repository token; no production secrets                              | Full build, test, lint, unsigned package, and packaged-app smoke result per target | None; ZIP artifacts uploaded for tester download                   |
-| `release.yml` | Stable `vX.Y.Z` tag                | Protected `release` Environment approval plus least-privilege repository token | Complete verified unsigned ZIP set for the tag                                     | One public GitHub Release, published only by the final promoter job |
+| `release.yml` | Stable `vX.Y.Z` tag                | Tag-restricted `release` Environment plus least-privilege repository token      | Complete verified unsigned ZIP set for the tag                                     | One public GitHub Release, published only by the final promoter job |
 
 ## Target Matrix
 
@@ -51,7 +51,7 @@ Every target job must:
 
 - `pr.yml` and `develop.yml` must not reference macOS, Windows, or protected release credentials.
 - Fork and Dependabot workflows retain normal read-only validation behavior and cannot access protected credentials.
-- The `release.yml` workflow uses a protected GitHub Environment for publication approval. No signing-related secret or identity-token permission is used by the current workflows.
+- The `release.yml` workflow uses a tag-restricted GitHub Environment as its publication and future-credential boundary. The current single-maintainer policy does not require a second-person reviewer; the immutable version-tag push is the explicit release decision. No signing-related secret or identity-token permission is used by the current workflows.
 - Workflow jobs declare explicit `GITHUB_TOKEN` permissions. The `release.yml` publisher receives `contents: write`; all other jobs default to `contents: read`.
 - Workflows pass sensitive values by secret context and environment variables, never by command-line argument or generated release text.
 

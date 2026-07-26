@@ -166,6 +166,12 @@ requireSubstring(
   'PR_ALWAYS_UPLOAD',
   'pr.yml must retain diagnostic artifacts with if: always()',
 );
+requireSubstring(
+  '.github/workflows/pr.yml',
+  "if: runner.os == 'Linux'\n        shell: bash\n        run: xvfb-run --auto-servernum pnpm --filter @blue/app verify:packaged-app -- --no-playwright",
+  'PR_LINUX_SMOKE_DISPLAY',
+  'pr.yml must provide a virtual display for the Linux packaged-project smoke',
+);
 forbidRegex(
   '.github/workflows/pr.yml',
   /- name:\s*Upload installer artifacts\s+if:\s*always\(\)/,
@@ -230,6 +236,12 @@ requireSubstring(
   'if: always()',
   'DEVELOP_ALWAYS_UPLOAD',
   'develop.yml must retain diagnostic artifacts with if: always()',
+);
+requireSubstring(
+  '.github/workflows/develop.yml',
+  "if: runner.os == 'Linux'\n        shell: bash\n        run: xvfb-run --auto-servernum pnpm --filter @blue/app verify:packaged-app -- --no-playwright",
+  'DEVELOP_LINUX_SMOKE_DISPLAY',
+  'develop.yml must provide a virtual display for the Linux packaged-project smoke',
 );
 forbidRegex(
   '.github/workflows/develop.yml',
@@ -347,6 +359,12 @@ requireSubstring(
   'name: blue-linux-x64-${{ needs.validate-version.outputs.app-version }}.zip',
   'RELEASE_LINUX_ARTIFACT_NAME',
   'release.yml Linux artifact must use the versioned .zip contract',
+);
+requireRegex(
+  '.github/workflows/release.yml',
+  /package:linux-x64[\s\S]*?xvfb-run --auto-servernum pnpm --filter @blue\/app verify:packaged-app -- --no-playwright/,
+  'RELEASE_LINUX_SMOKE_DISPLAY',
+  'release.yml must provide a virtual display for the Linux packaged-project smoke',
 );
 requireSubstring(
   '.github/workflows/release.yml',

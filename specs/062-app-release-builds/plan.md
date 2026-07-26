@@ -14,7 +14,7 @@ Package the existing Blue Electron application as a downloadable desktop app, ma
 
 **Primary Dependencies**: React 19, Vite 7, `vite-plugin-electron`, pnpm 10 workspaces, `electron-builder`, `@electron/rebuild`, existing `zeromq` native dependency, GitHub Actions
 
-**Storage**: Source-controlled package/workflow configuration; GitHub Actions artifacts, verified checksum manifests, and GitHub Release metadata; protected GitHub Environment approval; no new project XML or application-settings persistence
+**Storage**: Source-controlled package/workflow configuration; GitHub Actions artifacts, verified checksum manifests, and GitHub Release metadata; tag-restricted GitHub `release` Environment; no new project XML or application-settings persistence
 
 **Testing**: Vitest 4 existing suites; existing Java runtime packaged-resource tests; focused package-input and packaged-app smoke checks; unsigned artifact manifest verification; `pnpm test`; `pnpm lint`
 
@@ -72,7 +72,7 @@ packages/blue-app/
 ├── build/
 │   └── entitlements.mac.plist                # Hardened-runtime entitlements
 ├── scripts/
-│   ├── verify-packaged-app.mjs               # Installed-resource and native-module smoke check
+│   ├── verify-packaged-app.mjs               # Installed-resource and representative-project smoke checks
 │   └── verify-release-version.mjs            # Tag/package version agreement
 └── src/main/
     ├── packaged-runtime-verification.ts      # No-audio installed-runtime verification seam
@@ -85,7 +85,7 @@ scripts/
 ├── release-credential-preflight.mjs          # Advisory signing credential availability check
 ├── release-credential-preflight.test.mjs     # Sanitized preflight test suite
 ├── release-metadata.mjs                      # Dev/stable release metadata derivation
-├── validate-release-workflows.mjs            # Workflow contract validator (35 checks)
+├── validate-release-workflows.mjs            # Workflow contract validator (57 checks)
 ├── verify.mjs                                # Top-level repository verifier
 └── clean.mjs                                 # Build artifact cleaner
 ```

@@ -4,7 +4,7 @@
 
 Planning and implementation are complete for the unsigned release-build slice: `electron-builder` configuration, package scripts, CI/release workflows, release manifest validation, and packaged-app smoke checks are present.
 
-Use [tasks.md](./tasks.md) as the completed implementation checklist. The local unsigned package path is the MVP, and the protected stable-release workflow publishes unsigned packages by default. Signing credential preflight is advisory future-readiness only.
+SPEC 062 closed on 2026-07-26. Use [tasks.md](./tasks.md) as the completed implementation checklist and [quickstart.md](./quickstart.md) for the sanitized final acceptance evidence. The local unsigned package path is the MVP, and the protected stable-release workflow publishes unsigned packages by default. Signing credential preflight is advisory future-readiness only.
 
 ## Read First
 
@@ -45,13 +45,13 @@ These are intentionally not source-controlled. Current workflows do not require 
 | -------- | ------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
 | macOS    | Future Developer ID Application P12, P12 password, Apple notarization account/app-specific password, Apple team ID  | Future signed-release workflow only                                  |
 | Windows  | Future Azure Artifact Signing account/profile and GitHub OIDC federated identity                                    | Future signed-release workflow only                                  |
-| GitHub   | Protected `release` Environment, required reviewer, tag restriction, least-privilege `GITHUB_TOKEN` permissions     | GitHub repository settings and `.github/workflows/release.yml`       |
+| GitHub   | Tag-restricted `release` Environment, single-maintainer tag-push policy, least-privilege `GITHUB_TOKEN` permissions | GitHub repository settings and `.github/workflows/release.yml`       |
 
 Use the exact value names and handling rules in [docs/release-guide.md](../../docs/release-guide.md). Never record values in this handoff, source, release notes, terminal arguments, or artifacts.
 
 ## Required Evidence
 
-Before the feature is considered complete, collect:
+The closeout evidence collected on 2026-07-26 includes:
 
 1. A clean local unsigned package and packaged-app smoke result on a supported host.
 2. A PR run with independent macOS arm64, Windows x64, and Linux x64 evidence, including artifacts on failure.
@@ -61,7 +61,7 @@ Before the feature is considered complete, collect:
 
 ## Worktree Safety
 
-- The active feature branch is `062-app-release-builds`.
+- The feature was planned under `062-app-release-builds`; its closeout documentation was completed on `develop`.
 - Existing untracked [RELEASE_PLAN.md](../../RELEASE_PLAN.md) and [RELEASE_PLAN_GEMINI_3_6.MD](../../RELEASE_PLAN_GEMINI_3_6.MD) are user-provided input. Leave them unchanged.
 - Treat the already-authored feature documents and [docs/release-guide.md](../../docs/release-guide.md) as the release contract. Update them only to replace planned command names with the implemented commands or to correct an implementation-discovered fact.
 - Do not commit, tag, create a public release, or configure credentials unless a user explicitly requests that operation.
