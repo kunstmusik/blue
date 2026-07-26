@@ -236,7 +236,7 @@ jobs:
         run: |
           node scripts/release-artifact-manifest.mjs validate \
             --manifest consolidated/release-manifest.json \
-            --expected-targets macos-x64,macos-arm64,windows-x64,linux-x64
+            --expected-targets macos-arm64,windows-x64,linux-x64
 
       - name: Compute checksum manifest
         run: |
