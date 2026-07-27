@@ -8,10 +8,23 @@ import {
   createDefaultBsbWidgetSnapshot,
   type BlueSynthBuilderInstrumentSnapshot,
   type BsbWidgetNodeSnapshot,
+  type UdoDefinitionSnapshot,
 } from '../../shared/project-editor';
 import BSBCodeEditor from '../components/workbench/panels/orchestra/bsb/BSBCodeEditor';
 import BSBInterfaceEditor from '../components/workbench/panels/orchestra/bsb/BSBInterfaceEditor';
 import { createBsbReplacementKeys } from '../components/workbench/panels/orchestra/bsb/bsb-completions';
+
+function udoSnapshot(name: string): UdoDefinitionSnapshot {
+  return {
+    name,
+    style: 'CLASSIC',
+    outTypes: 'a',
+    inTypes: 'a',
+    inputArguments: '',
+    code: '',
+    comments: '',
+  };
+}
 
 const BSB_INSTRUMENT: BlueSynthBuilderInstrumentSnapshot = {
   assignmentId: '3',
@@ -133,5 +146,51 @@ describe('BlueSynthBuilder editor', () => {
       'padX',
       'padY',
     ]);
+  });
+
+  describe('UDO completion scope (US1)', () => {
+    it('BSB orchestra fields aggregate owner-plus-project UDOs while preserving replacement keys', () => {
+      const instrument: BlueSynthBuilderInstrumentSnapshot = {
+        ...BSB_INSTRUMENT,
+        udolist: [udoSnapshot('OwnerUDO')],
+      };
+
+      const html = renderToStaticMarkup(
+        <BSBCodeEditor
+          instrument={instrument}
+          projectUdos={[udoSnapshot('ProjectUDO')]}
+          onInstrumentPatch={vi.fn()}
+          onOrchestraPatch={vi.fn()}
+        />,
+      );
+
+      const scopes = [...html.matchAll(/data-udo-scope="([^"]+)"/g)].map((m) => m[1]);
+      // Each orchestra field (Instrument, Always On, Global Orc) receives both scopes.
+      expect(scopes.filter((scope) => scope === '1:1').length).toBe(3);
+      // Replacement keys remain available across all BSB fields.
+      expect(html).toContain('amp');
+    });
+
+    it('BSB Global Sco field keeps replacement keys but receives no UDO scope', () => {
+      const instrument: BlueSynthBuilderInstrumentSnapshot = {
+        ...BSB_INSTRUMENT,
+        udolist: [udoSnapshot('OwnerUDO')],
+      };
+
+      const html = renderToStaticMarkup(
+        <BSBCodeEditor
+          instrument={instrument}
+          projectUdos={[udoSnapshot('ProjectUDO')]}
+          onInstrumentPatch={vi.fn()}
+          onOrchestraPatch={vi.fn()}
+        />,
+      );
+
+      const scopes = [...html.matchAll(/data-udo-scope="([^"]+)"/g)].map((m) => m[1]);
+      // Global Sco is the only score field: exactly one of the four editors
+      // receives no UDO scope, and that field still renders its replacement keys.
+      expect(scopes.filter((scope) => scope === '0:0').length).toBe(1);
+      expect(html).toContain('data-bsb-code-tab="globalSco"');
+    });
   });
 });

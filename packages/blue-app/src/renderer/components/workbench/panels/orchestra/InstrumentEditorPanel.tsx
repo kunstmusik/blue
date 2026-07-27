@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from 'react';
-import type { InstrumentSnapshot } from '../../../../../shared/project-editor';
+import type { InstrumentSnapshot, UdoDefinitionSnapshot } from '../../../../../shared/project-editor';
 import type { InstrumentPatch } from '../../../../../shared/project-editor';
 import BlueSynthBuilderEditor from './BlueSynthBuilderEditor';
 import BlueX7Editor from './BlueX7Editor';
@@ -11,13 +11,17 @@ import type { OrchestraMutationProps } from './types';
 
 interface InstrumentEditorPanelProps extends OrchestraMutationProps {
   instrument: InstrumentSnapshot | undefined;
+  /** Explicit host-owned project scope; library hosts pass an empty list. */
+  projectUdos: readonly UdoDefinitionSnapshot[];
 }
 
 const EditorSurface = React.memo(function EditorSurface({
   instrument,
+  projectUdos,
   onOrchestraPatch,
 }: {
   instrument: InstrumentSnapshot;
+  projectUdos: readonly UdoDefinitionSnapshot[];
 } & OrchestraMutationProps): React.ReactElement {
   const dispatchInstrumentPatch = useCallback(
     (patch: InstrumentPatch) =>
@@ -34,6 +38,7 @@ const EditorSurface = React.memo(function EditorSurface({
       return (
         <GenericInstrumentEditor
           instrument={instrument}
+          projectUdos={projectUdos}
           onInstrumentPatch={dispatchInstrumentPatch}
           onOrchestraPatch={onOrchestraPatch}
         />
@@ -42,6 +47,7 @@ const EditorSurface = React.memo(function EditorSurface({
       return (
         <JavaScriptInstrumentEditor
           instrument={instrument}
+          projectUdos={projectUdos}
           onInstrumentPatch={dispatchInstrumentPatch}
           onOrchestraPatch={onOrchestraPatch}
         />
@@ -66,6 +72,7 @@ const EditorSurface = React.memo(function EditorSurface({
       return (
         <BlueSynthBuilderEditor
           instrument={instrument}
+          projectUdos={projectUdos}
           onInstrumentPatch={dispatchInstrumentPatch}
           onOrchestraPatch={onOrchestraPatch}
         />
@@ -88,6 +95,7 @@ const EditorSurface = React.memo(function EditorSurface({
 function InstrumentEditorPanel({
   instrument,
   onOrchestraPatch,
+  projectUdos,
 }: InstrumentEditorPanelProps): React.ReactElement {
   const [activeTab, setActiveTab] = useState<'editor' | 'comments'>('editor');
   const assignmentId = instrument?.assignmentId;
@@ -154,7 +162,11 @@ function InstrumentEditorPanel({
           aria-hidden={activeTab !== 'editor'}
           style={{ visibility: activeTab === 'editor' ? 'visible' : 'hidden' }}
         >
-          <EditorSurface instrument={instrument} onOrchestraPatch={onOrchestraPatch} />
+          <EditorSurface
+            instrument={instrument}
+            projectUdos={projectUdos}
+            onOrchestraPatch={onOrchestraPatch}
+          />
         </div>
         <div
           className={activeTab === 'comments' ? 'relative h-full' : 'pointer-events-none absolute inset-0'}

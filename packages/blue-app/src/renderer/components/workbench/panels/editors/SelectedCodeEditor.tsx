@@ -1,12 +1,16 @@
 import React, { useEffect, useRef, useCallback } from 'react';
 import { basicSetup, EditorView } from 'codemirror';
-import { EditorState, type Extension } from '@codemirror/state';
+import { Compartment, EditorState, type Extension } from '@codemirror/state';
 import { syntaxHighlighting, HighlightStyle, type TagStyle } from '@codemirror/language';
 import { tags as t } from '@lezer/highlight';
 import { placeholder as editorPlaceholder } from '@codemirror/view';
 
 import CsoundEditorContextMenu from './CsoundEditorContextMenu';
-import { createCsoundEditorExtensions, getSelectedEditorMetadata } from './csound-editor-language';
+import {
+  createCsoundCompletionExtension,
+  createCsoundEditorExtensions,
+  getSelectedEditorMetadata,
+} from './csound-editor-language';
 import {
   createEvaluateCodeKeymapExtension,
   evaluateCodeFromEditor,
@@ -67,6 +71,23 @@ const blueCodeMirrorTheme = EditorView.theme(
       backgroundColor: 'var(--color-app-hover)',
       color: 'var(--color-app-text-strong)',
     },
+    // Lay out each completion row so the detail (e.g. "context UDO",
+    // "project UDO", "opcode") sits right-aligned and slightly dimmed,
+    // keeping it distinguishable from the label without dominating it.
+    '.cm-tooltip-autocomplete ul li': {
+      display: 'flex',
+      alignItems: 'center',
+      gap: '0.4em',
+    },
+    '.cm-tooltip-autocomplete .cm-completionLabel': {
+      flex: '0 1 auto',
+    },
+    '.cm-tooltip-autocomplete .cm-completionDetail': {
+      marginLeft: 'auto',
+      fontStyle: 'normal',
+      color: 'var(--color-app-text-muted)',
+      opacity: '0.85',
+    },
     '.cm-tooltip.cm-completionInfo': {
       maxWidth: 'min(640px, 70vw)',
       whiteSpace: 'pre-wrap',
@@ -126,6 +147,10 @@ export default function SelectedCodeEditor({
 }: SelectedCodeEditorProps): React.ReactElement {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const viewRef = useRef<EditorView | null>(null);
+  // Holds the autocompletion extension so it can be reconfigured (updated in
+  // place) when completion options change, without destroying the EditorView.
+  // Destroying the view on every options change resets the cursor/selection.
+  const completionCompartment = useRef(new Compartment()).current;
   const onChangeRef = useRef(onChange);
   const syncingFromPropsRef = useRef(false);
   const editorMetadata = getSelectedEditorMetadata(mode);
@@ -176,7 +201,12 @@ export default function SelectedCodeEditor({
 
         void onChangeRef.current(update.state.doc.toString());
       }),
-      ...createCsoundEditorExtensions(dynamicCompletionProviders, javaBlueCompletionOptions, mode),
+      // Autocompletion is held in a Compartment so its options can be updated
+      // via reconfigure() (see the effect below) without rebuilding the view.
+      completionCompartment.of(
+        createCsoundCompletionExtension(dynamicCompletionProviders, javaBlueCompletionOptions, mode),
+      ),
+      ...createCsoundEditorExtensions(mode),
     ];
 
     if (readOnly) {
@@ -196,7 +226,26 @@ export default function SelectedCodeEditor({
         viewRef.current = null;
       }
     };
-  }, [dynamicCompletionProviders, hasEvaluateCodeHandler, javaBlueCompletionOptions, mode, placeholder, readOnly]);
+    // Completion options/providers are intentionally excluded: they are applied
+    // via completionCompartment.reconfigure() in the effect below so changing
+    // them never destroys the EditorView (which would reset the cursor).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [completionCompartment, hasEvaluateCodeHandler, mode, placeholder, readOnly]);
+
+  // Reconfigure only the autocompletion extension when completion inputs change.
+  // Non-destructive: the EditorView, document, selection, and undo history are
+  // preserved across options updates.
+  useEffect(() => {
+    const view = viewRef.current;
+    if (!view) {
+      return;
+    }
+    view.dispatch({
+      effects: completionCompartment.reconfigure(
+        createCsoundCompletionExtension(dynamicCompletionProviders, javaBlueCompletionOptions, mode),
+      ),
+    });
+  }, [completionCompartment, dynamicCompletionProviders, javaBlueCompletionOptions, mode]);
 
   useEffect(() => {
     const view = viewRef.current;
@@ -247,6 +296,7 @@ export default function SelectedCodeEditor({
         className="selected-code-editor selected-code-editor--codemirror"
         data-editor-kind={editorMetadata.kind}
         data-editor-language={editorMetadata.languageId}
+        data-udo-scope={`${javaBlueCompletionOptions?.contextUdos?.length ?? 0}:${javaBlueCompletionOptions?.projectUdos?.length ?? 0}`}
         aria-label={ariaLabel}
       >
         <div ref={containerRef} className="selected-code-editor__mount" />

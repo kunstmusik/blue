@@ -48,6 +48,7 @@ import { sweepStaleBlueEngineProcesses } from './engine-process-registry';
 import {
   closeEffectEditorWindow,
   closeEffectEditorWindowsForOwner,
+  broadcastProjectDocumentUpdateToEffectWindows,
   focusEffectEditorWindow,
   openEffectEditorWindow,
   openEffectInterfaceWindow,
@@ -82,7 +83,10 @@ import {
   routeFocusPanel,
 } from './workbench-window-host';
 import { getWindowTitle } from '../shared/window-title';
-import { PROJECT_DOCUMENT_UPDATED_CHANNEL } from '../shared/workbench-window-contract';
+import {
+  PROJECT_DOCUMENT_UPDATED_CHANNEL,
+  type ProjectDocumentUpdatedEvent,
+} from '../shared/workbench-window-contract';
 import { WINDOW_LAYOUT_DISPLAY_WORK_AREAS_CHANNEL } from '../shared/window-layout-settings';
 import { MidiInputCoordinator } from './midi-input-coordinator';
 import {
@@ -103,6 +107,7 @@ import {
   applyProjectDocumentPatch,
   createProjectEditorSnapshot,
   createEffectEditorSnapshot,
+  createProjectUdoListSnapshot,
   createScoreObjectEditorDocument,
   createNestedPolyObjectSnapshot,
   createNoteProcessorChainSnapshot,
@@ -295,12 +300,14 @@ function initializeOscControlService(): void {
 function broadcastProjectDocumentUpdate(sourceWindowId?: string): void {
   const snapshot = getCurrentProjectDocument();
   if (!snapshot) return;
-  broadcastToWorkbenchWindows(PROJECT_DOCUMENT_UPDATED_CHANNEL, {
+  const event: ProjectDocumentUpdatedEvent = {
     sessionId: currentProjectSessionId,
     revision: currentProjectRevision,
     snapshot,
     ...(sourceWindowId ? { sourceWindowId } : {}),
-  });
+  };
+  broadcastToWorkbenchWindows(PROJECT_DOCUMENT_UPDATED_CHANNEL, event);
+  broadcastProjectDocumentUpdateToEffectWindows(event);
 }
 
 function getProjectMixerChannelBySnapshotId(channelId: string) {
@@ -368,6 +375,7 @@ function getProjectEffectEditorSnapshot(request: EffectEditorRequest) {
 
   return createEffectEditorSnapshot(result.entry, result.effectId, 'project', {
     projectRef: request.projectRef,
+    projectUdos: currentData ? createProjectUdoListSnapshot(currentData) : [],
   });
 }
 
@@ -453,6 +461,7 @@ function applyProjectEffectEditorPatch(request: EffectEditorPatchRequest) {
 
   return createEffectEditorSnapshot(effectEntry.entry, effectEntry.effectId, 'project', {
     projectRef: request.projectRef,
+    projectUdos: currentData ? createProjectUdoListSnapshot(currentData) : [],
   });
 }
 

@@ -10,6 +10,7 @@ import type {
 import { createBsbReplacementKeys } from '../workbench/panels/orchestra/bsb/bsb-completions';
 import BSBInterfaceEditor from '../workbench/panels/orchestra/bsb/BSBInterfaceEditor';
 import SelectedCodeEditor from '../workbench/panels/editors/SelectedCodeEditor';
+import { toUdoCompletionDefinitions } from '../workbench/panels/editors/udo-completion-scope';
 import UdoWorkspacePanel from '../workbench/panels/udo/UdoWorkspacePanel';
 import { useUdoCallbacks } from '../../hooks/use-udo-callbacks';
 import { cloneUdoSnapshot, formatUdoListAsOpcodeText } from '../workbench/panels/udo/udo-snapshot-utils';
@@ -117,8 +118,14 @@ export default function EffectEditorPanel({
   );
 
   const javaBlueCompletionOptions = useMemo(
-    () => ({ bsbReplacementKeys: replacementKeys }),
-    [replacementKeys],
+    () => ({
+      bsbReplacementKeys: replacementKeys,
+      // Effect-owned UDOs are the context scope; project effects also receive
+      // the projected project-global UDOs. Library effects carry an empty array.
+      contextUdos: toUdoCompletionDefinitions(snapshot.udos),
+      projectUdos: toUdoCompletionDefinitions(snapshot.projectUdos),
+    }),
+    [replacementKeys, snapshot.udos, snapshot.projectUdos],
   );
 
   const xinLabel = useMemo(() => {
@@ -251,6 +258,7 @@ export default function EffectEditorPanel({
         {activeTab === 'udo' && (
           <UdoWorkspacePanel
             udos={snapshot.udos}
+            projectUdos={snapshot.projectUdos}
             resetKey={snapshot.effectId}
             {...udoCallbacks}
           />

@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import type { GenericInstrumentSnapshot } from '../../../../../shared/project-editor';
 import SelectedCodeEditor from '../editors/SelectedCodeEditor';
+import { toUdoCompletionDefinitions } from '../editors/udo-completion-scope';
 import EmbeddedUdoPanel from './EmbeddedUdoPanel';
 import type { SelectedInstrumentEditorProps } from './types';
 
@@ -29,10 +30,24 @@ function getTabValue(instrument: GenericInstrumentSnapshot, tab: GenericTab): st
 export default function GenericInstrumentEditor({
   instrument,
   onInstrumentPatch,
+  projectUdos,
 }: SelectedInstrumentEditorProps & {
   instrument: GenericInstrumentSnapshot;
 }): React.ReactElement {
   const [activeTab, setActiveTab] = useState<GenericTab>('instrument');
+
+  const contextUdos = useMemo(
+    () => toUdoCompletionDefinitions(instrument.udolist ?? []),
+    [instrument.udolist],
+  );
+  const projectUdoDefinitions = useMemo(
+    () => toUdoCompletionDefinitions(projectUdos ?? []),
+    [projectUdos],
+  );
+  const orchestraCompletionOptions = useMemo(
+    () => ({ contextUdos, projectUdos: projectUdoDefinitions }),
+    [contextUdos, projectUdoDefinitions],
+  );
 
   return (
     <div className="flex h-full min-h-0 flex-col bg-blue-bg">
@@ -67,6 +82,7 @@ export default function GenericInstrumentEditor({
                 <EmbeddedUdoPanel
                   assignmentId={instrument.assignmentId}
                   udolist={instrument.udolist ?? []}
+                  projectUdos={projectUdos}
                   resetKey={instrument.assignmentId}
                   onInstrumentPatch={onInstrumentPatch}
                 />
@@ -76,6 +92,9 @@ export default function GenericInstrumentEditor({
                   value={getTabValue(instrument, tab.key)}
                   placeholder="Enter instrument Csound code"
                   ariaLabel={`${instrument.name || 'Generic Instrument'} ${tab.label} code editor`}
+                  javaBlueCompletionOptions={
+                    tab.key === 'globalSco' ? undefined : orchestraCompletionOptions
+                  }
                   onChange={(nextValue) => {
                     if (tab.key === 'instrument') {
                       void onInstrumentPatch({ text: nextValue });

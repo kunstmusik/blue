@@ -1040,6 +1040,12 @@ export interface EffectEditorSnapshot extends EffectSnapshot {
   ownerType: 'project' | 'library';
   projectRef?: ProjectEffectRef;
   libraryRef?: LibraryEffectRef;
+  /**
+   * Derived projection of the active project's global UDO definitions.
+   * Project-owned effects receive the live project scope; library-owned effects
+   * always receive `[]`. This transient field is never persisted to effect XML.
+   */
+  projectUdos: UdoDefinitionSnapshot[];
 }
 
 export interface EffectEditorRequest {
@@ -2067,6 +2073,12 @@ export function createEffectEditorSnapshot(
   refs?: {
     projectRef?: ProjectEffectRef;
     libraryRef?: LibraryEffectRef;
+    /**
+     * Project-global UDO projection. Required for project-owned effects so the
+     * separate effect window receives completion scope; omitted/empty for
+     * library-owned effects.
+     */
+    projectUdos?: UdoDefinitionSnapshot[];
   },
 ): EffectEditorSnapshot {
   return {
@@ -2075,6 +2087,8 @@ export function createEffectEditorSnapshot(
     ownerType,
     projectRef: refs?.projectRef,
     libraryRef: refs?.libraryRef,
+    // Library-owned effects never receive project UDOs, even if a project is open.
+    projectUdos: ownerType === 'project' ? (refs?.projectUdos ?? []) : [],
   };
 }
 
@@ -4388,7 +4402,7 @@ function buildUdoListSnapshot(bsb: BlueSynthBuilder): UdoDefinitionSnapshot[] {
   }));
 }
 
-function createProjectUdoListSnapshot(data: BlueData): UdoDefinitionSnapshot[] {
+export function createProjectUdoListSnapshot(data: BlueData): UdoDefinitionSnapshot[] {
   const opcodes = data.getOpcodeList().getOpcodes();
   return opcodes.map((udo) => udoToSnapshot(udo));
 }

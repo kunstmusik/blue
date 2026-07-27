@@ -21,7 +21,17 @@ export const instrumentDocument: LibraryEditorDocument = {
     text: 'a1 oscili 0.2, 440',
     globalOrc: '',
     globalSco: '',
-    udolist: [],
+    udolist: [
+      {
+        name: 'LibraryInstrumentUDO',
+        style: 'CLASSIC',
+        outTypes: 'a',
+        inTypes: 'a',
+        inputArguments: '',
+        code: '',
+        comments: '',
+      },
+    ],
   } satisfies InstrumentSnapshot,
 };
 
@@ -56,7 +66,18 @@ export const effectDocument: LibraryEditorDocument = {
     objectNames: [],
     widgets: [],
     widgetTree: { id: 'root', type: 'BSBRootGroup', objectName: '', value: 0, minimum: 0, maximum: 1, properties: {}, children: [] },
-    udos: [],
+    udos: [
+      {
+        name: 'LibraryEffectUDO',
+        style: 'CLASSIC',
+        outTypes: 'a',
+        inTypes: 'a',
+        inputArguments: '',
+        code: '',
+        comments: '',
+      },
+    ],
+    projectUdos: [],
   } satisfies EffectEditorSnapshot,
 };
 

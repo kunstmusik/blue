@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import type { JavaScriptInstrumentSnapshot } from '../../../../../shared/project-editor';
 import SelectedCodeEditor from '../editors/SelectedCodeEditor';
+import { toUdoCompletionDefinitions } from '../editors/udo-completion-scope';
 import EmbeddedUdoPanel from './EmbeddedUdoPanel';
 import type { SelectedInstrumentEditorProps } from './types';
 
@@ -16,10 +17,19 @@ const JAVASCRIPT_TABS: Array<{ key: JavaScriptTab; label: string }> = [
 export default function JavaScriptInstrumentEditor({
   instrument,
   onInstrumentPatch,
+  projectUdos,
 }: SelectedInstrumentEditorProps & {
   instrument: JavaScriptInstrumentSnapshot;
 }): React.ReactElement {
   const [activeTab, setActiveTab] = useState<JavaScriptTab>('instrument');
+
+  const orchestraCompletionOptions = useMemo(
+    () => ({
+      contextUdos: toUdoCompletionDefinitions(instrument.udolist ?? []),
+      projectUdos: toUdoCompletionDefinitions(projectUdos ?? []),
+    }),
+    [instrument.udolist, projectUdos],
+  );
 
   return (
     <div className="flex h-full min-h-0 flex-col bg-blue-bg">
@@ -61,6 +71,7 @@ export default function JavaScriptInstrumentEditor({
                 <EmbeddedUdoPanel
                   assignmentId={instrument.assignmentId}
                   udolist={instrument.udolist ?? []}
+                  projectUdos={projectUdos}
                   resetKey={instrument.assignmentId}
                   onInstrumentPatch={onInstrumentPatch}
                 />
@@ -70,6 +81,9 @@ export default function JavaScriptInstrumentEditor({
                   value={tab.key === 'globalOrc' ? instrument.globalOrc : instrument.globalSco}
                   placeholder={`Enter ${tab.label} code`}
                   ariaLabel={`${instrument.name || 'JavaScript Instrument'} ${tab.label} code editor`}
+                  javaBlueCompletionOptions={
+                    tab.key === 'globalOrc' ? orchestraCompletionOptions : undefined
+                  }
                   onChange={(nextValue) =>
                     void onInstrumentPatch(
                       tab.key === 'globalOrc'

@@ -10,7 +10,9 @@ import {
   createEffectEditorSnapshot,
   type EffectEditorPatchRequest,
   type EffectEditorSnapshot,
+  type UdoDefinitionSnapshot,
 } from '../../shared/project-editor';
+import type { ProjectDocumentUpdatedEvent } from '../../shared/workbench-window-contract';
 
 declare global {
   interface Window {
@@ -18,6 +20,9 @@ declare global {
       getEffectEditorDocument: (request: unknown) => Promise<EffectEditorSnapshot | null>;
       updateEffectEditorDocument: (request: EffectEditorPatchRequest) => Promise<EffectEditorSnapshot | null>;
       openEffectEditor: (request: unknown) => Promise<unknown> | unknown;
+      onProjectDocumentUpdated: (
+        callback: (event: ProjectDocumentUpdatedEvent) => void,
+      ) => () => void;
     };
   }
 }
@@ -52,14 +57,25 @@ vi.mock('../components/workbench/panels/editors/SelectedCodeEditor', () => ({
     value,
     onChange,
     ariaLabel,
+    javaBlueCompletionOptions,
   }: {
     value: string;
     onChange: (value: string) => void;
     ariaLabel: string;
+    javaBlueCompletionOptions?: {
+      contextUdos?: Array<{ name: string }>;
+      projectUdos?: Array<{ name: string }>;
+    };
   }) =>
     React.createElement(
       'div',
-      null,
+      {
+        'data-selected-code-editor': true,
+        'data-aria-label': ariaLabel,
+        'data-udo-scope': `${javaBlueCompletionOptions?.contextUdos?.length ?? 0}:${javaBlueCompletionOptions?.projectUdos?.length ?? 0}`,
+        'data-context-udo-names': javaBlueCompletionOptions?.contextUdos?.map((udo) => udo.name).join(',') ?? '',
+        'data-project-udo-names': javaBlueCompletionOptions?.projectUdos?.map((udo) => udo.name).join(',') ?? '',
+      },
       React.createElement(
         'label',
         null,
@@ -75,12 +91,35 @@ vi.mock('../components/workbench/panels/editors/SelectedCodeEditor', () => ({
 }));
 
 vi.mock('../components/workbench/panels/udo/UdoWorkspacePanel', () => ({
-  default: () => React.createElement('div', { 'data-testid': 'udo-workspace-panel' }),
+  default: ({
+    udos,
+    projectUdos,
+  }: {
+    udos: UdoDefinitionSnapshot[];
+    projectUdos?: readonly UdoDefinitionSnapshot[];
+  }) => React.createElement('div', {
+    'data-testid': 'udo-workspace-panel',
+    'data-udo-scope': `${udos.length}:${projectUdos?.length ?? 0}`,
+    'data-context-udo-names': udos.map((udo) => udo.name).join(','),
+    'data-project-udo-names': projectUdos?.map((udo) => udo.name).join(',') ?? '',
+  }),
 }));
 
 vi.mock('../hooks/use-udo-callbacks', () => ({
   useUdoCallbacks: () => ({}),
 }));
+
+function udoSnapshot(name: string): UdoDefinitionSnapshot {
+  return {
+    name,
+    style: 'CLASSIC',
+    outTypes: 'a',
+    inTypes: 'a',
+    inputArguments: '',
+    code: '',
+    comments: '',
+  };
+}
 
 function createLoadedSnapshot(code = 'aout = ain'): EffectEditorSnapshot {
   const effect = new Effect();
@@ -91,13 +130,21 @@ function createLoadedSnapshot(code = 'aout = ain'): EffectEditorSnapshot {
   effect.setNumIns(1);
   effect.setNumOuts(1);
 
-  return createEffectEditorSnapshot(effect, 'fx-1', 'project', {
-    projectRef: {
-      channelId: 'channel-1',
-      chain: 'pre',
-      entryId: 'fx-1',
-    },
-  });
+  return {
+    ...createEffectEditorSnapshot(effect, 'fx-1', 'project', {
+      projectRef: {
+        channelId: 'channel-1',
+        chain: 'pre',
+        entryId: 'fx-1',
+      },
+    }),
+    // A project effect snapshot carries the project-global UDO projection so
+    // the editor (inline or separate window) can offer project UDO completion.
+    projectUdos: [
+      udoSnapshot('ProjectUDO'),
+    ],
+    udos: [udoSnapshot('EffectOwnerUDO')],
+  };
 }
 
 function renderPage(): { container: HTMLDivElement; root: Root } {
@@ -132,6 +179,7 @@ beforeEach(() => {
       return currentSnapshot;
     }),
     openEffectEditor: vi.fn().mockResolvedValue(undefined),
+    onProjectDocumentUpdated: vi.fn(() => () => undefined),
   };
 });
 
@@ -181,6 +229,15 @@ describe('project effect editor contract', () => {
       await Promise.resolve();
     });
 
+    // The project effect Code editor receives the effect's owner UDOs plus the
+    // projected project-global UDOs (US2).
+    const codeEditor = container.querySelector(
+      '[data-selected-code-editor][data-aria-label="Effect code editor"]',
+    );
+    expect(codeEditor?.getAttribute('data-udo-scope')).toBe('1:1');
+    expect(codeEditor?.getAttribute('data-context-udo-names')).toBe('EffectOwnerUDO');
+    expect(codeEditor?.getAttribute('data-project-udo-names')).toBe('ProjectUDO');
+
     const applyButton = Array.from(container.querySelectorAll('button')).find(
       (button) => button.textContent === 'Apply code',
     ) as HTMLButtonElement | undefined;
@@ -204,6 +261,18 @@ describe('project effect editor contract', () => {
         }),
       }),
     );
+
+    const udoTab = Array.from(container.querySelectorAll('button')).find(
+      (button) => button.textContent === 'UDO',
+    ) as HTMLButtonElement | undefined;
+    await act(async () => {
+      udoTab?.click();
+      await Promise.resolve();
+    });
+    const workspace = container.querySelector('[data-testid="udo-workspace-panel"]');
+    expect(workspace?.getAttribute('data-udo-scope')).toBe('1:1');
+    expect(workspace?.getAttribute('data-context-udo-names')).toBe('EffectOwnerUDO');
+    expect(workspace?.getAttribute('data-project-udo-names')).toBe('ProjectUDO');
 
     act(() => {
       root.unmount();

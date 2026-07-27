@@ -1205,6 +1205,7 @@ export function applyPatchToDocument(
 export default function ScoreObjectEditorPanel(): React.ReactElement {
   const loaded = useProjectStore((s) => s.loaded);
   const score = useProjectStore((s) => s.score);
+  const projectUdos = useProjectStore((s) => s.projectUdos);
   const lastScorePatch = useProjectStore((s) => s.lastScorePatch);
   const applyProjectDocumentPatch = useProjectStore((s) => s.applyProjectDocumentPatch);
   const flushPendingPatches = useProjectStore((s) => s.flushPendingPatches);
@@ -1368,7 +1369,7 @@ export default function ScoreObjectEditorPanel(): React.ReactElement {
   return (
     <div className="flex flex-col h-full bg-blue-bg">
       <div className="flex-1 overflow-hidden">
-        <EditorComponent document={document} onPatch={handlePatch} />
+        <EditorComponent document={document} projectUdos={projectUdos} onPatch={handlePatch} />
       </div>
     </div>
   );

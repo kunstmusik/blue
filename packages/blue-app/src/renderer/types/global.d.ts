@@ -21,6 +21,7 @@ import type {
   ScoreObjectTestResult,
   ScoreObjectLocationRef,
 } from '../../shared/project-editor';
+import type { ProjectDocumentUpdatedEvent } from '../../shared/workbench-window-contract';
 import type {
   MissingAudioAssetsChooseRequest,
   MissingAudioAssetsDismissRequest,
@@ -258,6 +259,9 @@ declare global {
       updateEffectEditorDocument: (
         request: EffectEditorPatchRequest,
       ) => Promise<EffectEditorSnapshot | null>;
+      onProjectDocumentUpdated: (
+        callback: (event: ProjectDocumentUpdatedEvent) => void,
+      ) => () => void;
       commitProjectDocumentPatches: (
         patches: ProjectDocumentPatch[],
       ) => Promise<ProjectDocumentCommitReceipt>;
