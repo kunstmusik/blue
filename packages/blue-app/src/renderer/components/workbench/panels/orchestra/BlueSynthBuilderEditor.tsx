@@ -11,6 +11,7 @@ function BlueSynthBuilderEditor({
   instrument,
   onInstrumentPatch,
   onOrchestraPatch,
+  projectUdos,
 }: SelectedInstrumentEditorProps & {
   instrument: BlueSynthBuilderInstrumentSnapshot;
 }): React.ReactElement {
@@ -68,6 +69,7 @@ function BlueSynthBuilderEditor({
         <div className={activeTab === 'code' ? 'h-full' : 'hidden'} aria-hidden={activeTab !== 'code'}>
           <BSBCodeEditor
             instrument={instrument}
+            projectUdos={projectUdos}
             onInstrumentPatch={onInstrumentPatch}
             onOrchestraPatch={onOrchestraPatch}
           />
@@ -75,6 +77,7 @@ function BlueSynthBuilderEditor({
         <div className={activeTab === 'udo' ? 'h-full' : 'hidden'} aria-hidden={activeTab !== 'udo'}>
           <BSBUDOPanel
             instrument={instrument}
+            projectUdos={projectUdos}
             onInstrumentPatch={onInstrumentPatch}
             libraryInstrumentAssignmentId={instrument.assignmentId}
           />

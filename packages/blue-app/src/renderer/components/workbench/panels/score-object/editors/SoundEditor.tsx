@@ -28,7 +28,7 @@ const SOUND_TABS: Array<{ key: SoundTabId; label: string }> = [
   { key: 'comments', label: 'Comments' },
 ];
 
-export default function SoundEditor({ document, onPatch }: ScoreObjectEditorComponentProps): React.ReactElement {
+export default function SoundEditor({ document, onPatch, projectUdos }: ScoreObjectEditorComponentProps): React.ReactElement {
   const editor = document.editor;
   if (editor.kind !== 'structured' || editor.editorFamily !== 'Sound') return <></>;
 
@@ -152,6 +152,7 @@ export default function SoundEditor({ document, onPatch }: ScoreObjectEditorComp
           <div className={activeTab === 'code' ? 'h-full' : 'hidden'} aria-hidden={activeTab !== 'code'}>
             <BSBCodeEditor
               instrument={bsbInstrument}
+              projectUdos={projectUdos}
               onInstrumentPatch={handleInstrumentPatch}
               onOrchestraPatch={handleOrchestraPatch}
             />
@@ -159,10 +160,11 @@ export default function SoundEditor({ document, onPatch }: ScoreObjectEditorComp
         )}
         {activeTab === 'udo' && bsbInstrument && (
           <div className={activeTab === 'udo' ? 'h-full' : 'hidden'} aria-hidden={activeTab !== 'udo'}>
-            <BSBUDOPanel
-              instrument={bsbInstrument}
-              onInstrumentPatch={handleInstrumentPatch}
-            />
+          <BSBUDOPanel
+            instrument={bsbInstrument}
+            projectUdos={projectUdos}
+            onInstrumentPatch={handleInstrumentPatch}
+          />
           </div>
         )}
         {activeTab === 'comments' && (

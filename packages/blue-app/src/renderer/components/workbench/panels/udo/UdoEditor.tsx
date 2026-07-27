@@ -3,12 +3,19 @@ import { Play } from 'lucide-react';
 
 import type { UdoDefinitionSnapshot } from '../../../../../shared/project-editor';
 import SelectedCodeEditor from '../editors/SelectedCodeEditor';
+import type { JavaBlueCsoundCompletionOptions } from '../editors/editor-adapter-types';
 
 interface UdoEditorProps {
   udo: UdoDefinitionSnapshot | null;
   onUpdateUdo: (patch: Partial<UdoDefinitionSnapshot>) => void;
   onConvertStyle: (style: 'CLASSIC' | 'MODERN') => void;
   onTestOpcode: () => void;
+  /**
+   * Completion scope for the UDO code body. Callers supply context-owned UDOs
+   * (siblings plus self where recursion is intentional) and, for project hosts,
+   * the project-global UDOs. Standalone library UDO editors omit this.
+   */
+  javaBlueCompletionOptions?: JavaBlueCsoundCompletionOptions;
 }
 
 type EditorTab = 'code' | 'comments';
@@ -18,6 +25,7 @@ export default function UdoEditor({
   onUpdateUdo,
   onConvertStyle,
   onTestOpcode,
+  javaBlueCompletionOptions,
 }: UdoEditorProps): React.ReactElement {
   const [activeTab, setActiveTab] = useState<EditorTab>('code');
   const [localCode, setLocalCode] = useState('');
@@ -212,6 +220,7 @@ export default function UdoEditor({
             onChange={handleCodeChange}
             ariaLabel="UDO code editor"
             mode="orc"
+            javaBlueCompletionOptions={javaBlueCompletionOptions}
           />
         ) : (
           <SelectedCodeEditor

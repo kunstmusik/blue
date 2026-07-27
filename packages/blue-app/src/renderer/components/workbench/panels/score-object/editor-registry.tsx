@@ -3,6 +3,7 @@ import type {
   ScoreObjectEditorDocumentSnapshot,
   ScorePatch,
   TypeSpecificScoreObjectEditorSnapshot,
+  UdoDefinitionSnapshot,
 } from '../../../../../shared/project-editor';
 import ClojureObjectEditor from './editors/ClojureObjectEditor';
 import CodeBackedScoreObjectEditor from './editors/CodeBackedScoreObjectEditor';
@@ -26,6 +27,12 @@ import UnsupportedScoreObjectEditor from './editors/UnsupportedScoreObjectEditor
 export interface ScoreObjectEditorComponentProps {
   document: ScoreObjectEditorDocumentSnapshot;
   onPatch: (patch: ScorePatch) => void;
+  /**
+   * Project-global UDO definitions available to score-object editors whose
+   * underlying instrument exposes orchestra-code fields (e.g. a Sound's BSB).
+   * Library-backed score objects omit this so project UDOs never leak in.
+   */
+  projectUdos?: readonly UdoDefinitionSnapshot[];
 }
 
 export type ScoreObjectEditorComponent = React.ComponentType<ScoreObjectEditorComponentProps>;

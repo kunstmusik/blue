@@ -12,6 +12,7 @@ import type {
   MixerSendEntrySnapshot,
   MixerSnapshot,
   ProjectEffectRef,
+  UdoDefinitionSnapshot,
 } from '../../../../../shared/project-editor';
 import { getLibraryTransferSourceType, type LibraryBrowseNode } from '../../../../../shared/unified-library';
 import {
@@ -29,6 +30,7 @@ import { createDefaultEffectXml } from '../../../../utils/program-settings-defau
 import EffectsChainContextMenu from './EffectsChainContextMenu';
 import { LibraryBlockDropMarker, LibraryDropZone } from '../../../libraries/LibraryDropMarker';
 import { useLibraryStore } from '../../../../stores/library-store';
+import { useProjectStore } from '../../../../stores/project-store';
 import { isTextEditingTarget } from '../../../../hooks/use-keyboard-shortcuts';
 import { ProjectLibraryDragSource } from '../../../libraries/ProjectLibraryDragSource';
 
@@ -95,20 +97,26 @@ function createProjectEffectSnapshotFromXml(
   effectXml: string,
   entryId: string,
   projectRef: ProjectEffectRef,
+  projectUdos: readonly UdoDefinitionSnapshot[],
 ): EffectEditorSnapshot {
   const effect = Effect.loadFromXML(Element.parse(effectXml));
-  return createEffectEditorSnapshot(effect, entryId, 'project', { projectRef });
+  return createEffectEditorSnapshot(effect, entryId, 'project', {
+    projectRef,
+    projectUdos: [...projectUdos],
+  });
 }
 
 function applyEffectPatchToSnapshot(
   snapshot: EffectEditorSnapshot,
   patch: EffectEditablePatch,
+  projectUdos: readonly UdoDefinitionSnapshot[],
 ): EffectEditorSnapshot {
   const effect = Effect.loadFromXML(Element.parse(snapshot.effectXml));
   applyEffectEditablePatchToEffect(effect, patch);
   return createEffectEditorSnapshot(effect, snapshot.effectId, snapshot.ownerType, {
     projectRef: snapshot.projectRef,
     libraryRef: snapshot.libraryRef,
+    projectUdos: snapshot.ownerType === 'project' ? [...projectUdos] : [],
   });
 }
 
@@ -672,6 +680,7 @@ export default function ChannelStrip({
   const [localSelection, setLocalSelection] = useState<MixerChainSelection | null>(null);
   const selection = controlledSelection === undefined ? localSelection : controlledSelection;
   const onSelectionChange = controlledOnSelectionChange ?? setLocalSelection;
+  const projectUdos = useProjectStore((state) => state.projectUdos);
   const [editingLevel, setEditingLevel] = useState(false);
   const [levelInput, setLevelInput] = useState('');
   const [editingName, setEditingName] = useState(false);
@@ -765,10 +774,10 @@ export default function ChannelStrip({
         mode: 'edit',
         chain,
         entryId: entry.entryId,
-        snapshot: createProjectEffectSnapshotFromXml(entry.effectXml, entry.entryId, projectRef),
+        snapshot: createProjectEffectSnapshotFromXml(entry.effectXml, entry.entryId, projectRef, projectUdos),
       });
     },
-    [channel.id],
+    [channel.id, projectUdos],
   );
 
   const handleAddNewEffectDialog = useCallback(
@@ -781,11 +790,11 @@ export default function ChannelStrip({
           mode: 'create',
           chain,
           entryId,
-          snapshot: createProjectEffectSnapshotFromXml(effectXml, entryId, projectRef),
+          snapshot: createProjectEffectSnapshotFromXml(effectXml, entryId, projectRef, projectUdos),
         });
       })();
     },
-    [channel.id],
+    [channel.id, projectUdos],
   );
 
   const handleEffectDialogPatch = useCallback((patch: EffectEditablePatch) => {
@@ -796,10 +805,10 @@ export default function ChannelStrip({
 
       return {
         ...current,
-        snapshot: applyEffectPatchToSnapshot(current.snapshot, patch),
+        snapshot: applyEffectPatchToSnapshot(current.snapshot, patch, projectUdos),
       };
     });
-  }, []);
+  }, [projectUdos]);
 
   const handleConfirmEffectDialog = useCallback(() => {
     if (!effectDialog) {

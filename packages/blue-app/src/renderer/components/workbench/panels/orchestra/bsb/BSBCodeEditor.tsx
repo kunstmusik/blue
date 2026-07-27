@@ -4,6 +4,7 @@ import type {
   InstrumentPatch,
 } from '../../../../../../shared/project-editor';
 import SelectedCodeEditor from '../../editors/SelectedCodeEditor';
+import { toUdoCompletionDefinitions } from '../../editors/udo-completion-scope';
 import { createBsbReplacementKeys } from './bsb-completions';
 import type { SelectedInstrumentEditorProps } from '../types';
 
@@ -19,6 +20,7 @@ const BSB_CODE_TABS: Array<{ key: BsbCodeTab; label: string }> = [
 export default function BSBCodeEditor({
   instrument,
   onInstrumentPatch,
+  projectUdos,
 }: SelectedInstrumentEditorProps & {
   instrument: BlueSynthBuilderInstrumentSnapshot;
 }): React.ReactElement {
@@ -28,7 +30,15 @@ export default function BSBCodeEditor({
     () => createBsbReplacementKeys(instrument.objectNames),
     [objectNamesSignature],
   );
-  const javaBlueCompletionOptions = useMemo(
+  const orchestraCompletionOptions = useMemo(
+    () => ({
+      bsbReplacementKeys,
+      contextUdos: toUdoCompletionDefinitions(instrument.udolist ?? []),
+      projectUdos: toUdoCompletionDefinitions(projectUdos ?? []),
+    }),
+    [bsbReplacementKeys, instrument.udolist, projectUdos],
+  );
+  const scoreCompletionOptions = useMemo(
     () => ({ bsbReplacementKeys }),
     [bsbReplacementKeys],
   );
@@ -50,7 +60,9 @@ export default function BSBCodeEditor({
                 value={instrument[tab.key]}
                 placeholder="Enter BlueSynthBuilder Csound code"
                 ariaLabel={`${instrument.name || 'BlueSynthBuilder'} ${tab.label} code editor`}
-                javaBlueCompletionOptions={javaBlueCompletionOptions}
+                javaBlueCompletionOptions={
+                  tab.key === 'globalSco' ? scoreCompletionOptions : orchestraCompletionOptions
+                }
                 onChange={(nextValue) =>
                   void onInstrumentPatch({ [tab.key]: nextValue } as InstrumentPatch)
                 }

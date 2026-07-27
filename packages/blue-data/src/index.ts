@@ -251,6 +251,11 @@ export { OpcodeDefinition } from './opcodes/opcode-definition';
 export { OpcodeList } from './opcodes/opcode-list';
 export { UDOStyle } from './opcodes/udo-style';
 export { convertToModern, convertToClassic, parseUDOText } from './opcodes/udo-utilities';
+export { normalizeUdoCallableSignature } from './opcodes/udo-type-utils';
+export type {
+  UdoCallableSignatureInput,
+  NormalizedUdoCallableSignature,
+} from './opcodes/udo-type-utils';
 
 // ─── Serialization ───
 export { Element, Elements } from './serialization/xml-reader';

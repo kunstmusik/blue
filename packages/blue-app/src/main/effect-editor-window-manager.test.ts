@@ -3,11 +3,16 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
 import {
+  broadcastProjectDocumentUpdateToEffectWindows,
   closeEffectEditorWindow,
   closeEffectEditorWindowsForOwner,
   openEffectEditorWindow,
   openEffectInterfaceWindow,
 } from './effect-editor-window-manager';
+import {
+  PROJECT_DOCUMENT_UPDATED_CHANNEL,
+  type ProjectDocumentUpdatedEvent,
+} from '../shared/workbench-window-contract';
 import {
   clearSettingsCache,
   setSettingsFilePathForTesting,
@@ -44,6 +49,11 @@ const electronMock = vi.hoisted(() => {
     getNormalBounds = vi.fn(() => ({ x: 320, y: 240, width: 900, height: 700 }));
     setBounds = vi.fn();
     setContentSize = vi.fn();
+    webContents: {
+      send: ReturnType<typeof vi.fn>;
+      getZoomFactor: ReturnType<typeof vi.fn>;
+      setZoomFactor: ReturnType<typeof vi.fn>;
+    };
 
     private readyToShowHandler?: () => void;
     private closedHandler?: () => void;
@@ -51,6 +61,11 @@ const electronMock = vi.hoisted(() => {
 
     constructor(options: Record<string, unknown>) {
       this.options = options;
+      this.webContents = {
+        send: vi.fn(),
+        getZoomFactor: vi.fn(() => 1),
+        setZoomFactor: vi.fn(),
+      };
       instances.push(this);
     }
 
@@ -150,6 +165,50 @@ describe('effect editor window manager', () => {
 
     closeEffectEditorWindow(libraryRequest);
     expect(electronMock.instances[1]?.close).toHaveBeenCalledTimes(1);
+  });
+
+  it('routes project document updates to open project effect windows but not library windows (US4)', () => {
+    const mainWindow = { isDestroyed: vi.fn(() => false) } as never;
+    const projectRequest = {
+      ownerType: 'project' as const,
+      effectId: 'fx-proj',
+      projectRef: { channelId: 'ch-1', chain: 'pre' as const, entryId: 'fx-proj' },
+    };
+    const libraryRequest = {
+      ownerType: 'library' as const,
+      effectId: 'fx-lib',
+      libraryRef: { libraryEffectId: 'fx-lib' },
+    };
+
+    openEffectEditorWindow(mainWindow, projectRequest);
+    openEffectEditorWindow(mainWindow, libraryRequest);
+
+    const projectWindow = electronMock.instances[0]!;
+    const libraryWindow = electronMock.instances[1]!;
+
+    const projectUdos = [
+      {
+        name: 'RenamedGlobal',
+        style: 'CLASSIC' as const,
+        outTypes: 'a',
+        inTypes: 'a',
+        inputArguments: '',
+        code: '',
+        comments: '',
+      },
+    ];
+    const event = {
+      sessionId: 3,
+      revision: 9,
+      snapshot: { projectUdos },
+    } as ProjectDocumentUpdatedEvent;
+    broadcastProjectDocumentUpdateToEffectWindows(event);
+
+    expect(projectWindow.webContents.send).toHaveBeenCalledWith(
+      PROJECT_DOCUMENT_UPDATED_CHANNEL,
+      event,
+    );
+    expect(libraryWindow.webContents.send).not.toHaveBeenCalled();
   });
 });
 

@@ -1,15 +1,20 @@
 import React, { useCallback } from 'react';
 
-import type { InstrumentPatch } from '../../../../../shared/project-editor';
+import type {
+  InstrumentPatch,
+  UdoDefinitionSnapshot,
+} from '../../../../../shared/project-editor';
 import { useUdoCallbacks } from '../../../../hooks/use-udo-callbacks';
 import { getProjectDocumentRevision, useProjectStore } from '../../../../stores/project-store';
 import UdoWorkspacePanel from '../udo/UdoWorkspacePanel';
 
 interface EmbeddedUdoPanelProps {
   assignmentId: string;
-  udolist: Array<import('../../../../../shared/project-editor').UdoDefinitionSnapshot>;
+  udolist: UdoDefinitionSnapshot[];
   resetKey?: string | number | null;
   onInstrumentPatch: (patch: InstrumentPatch) => void | Promise<void>;
+  /** Project-global UDOs available to the embedded UDO body editor. */
+  projectUdos?: readonly UdoDefinitionSnapshot[];
 }
 
 export default function EmbeddedUdoPanel({
@@ -17,6 +22,7 @@ export default function EmbeddedUdoPanel({
   udolist,
   resetKey,
   onInstrumentPatch,
+  projectUdos,
 }: EmbeddedUdoPanelProps): React.ReactElement {
   const projectSessionId = useProjectStore((state) => state.sessionId);
   const projectRevision = getProjectDocumentRevision();
@@ -33,6 +39,7 @@ export default function EmbeddedUdoPanel({
     <div className="flex h-full flex-col bg-app-bg">
       <UdoWorkspacePanel
         udos={udolist}
+        projectUdos={projectUdos}
         resetKey={resetKey}
         {...callbacks}
         libraryDropTarget={{

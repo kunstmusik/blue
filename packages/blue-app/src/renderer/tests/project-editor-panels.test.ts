@@ -19,6 +19,7 @@ interface MockProjectState {
   title: string;
   globalOrc: string;
   globalSco: string;
+  projectUdos: import('../../shared/project-editor').UdoDefinitionSnapshot[];
   projectProperties: ProjectPropertiesSnapshot;
   clojureProject: ClojureProjectSnapshot;
   updateGlobalOrc: (value: string) => void | Promise<void>;
@@ -81,6 +82,7 @@ const { BASE_PROJECT_PROPERTIES, BASE_CLOJURE_PROJECT, mockProjectState } = vi.h
       title: '',
       globalOrc: '',
       globalSco: '',
+      projectUdos: [],
       projectProperties: { ...BASE_PROJECT_PROPERTIES },
       clojureProject: { ...BASE_CLOJURE_PROJECT },
       updateGlobalOrc: vi.fn(),
@@ -96,6 +98,7 @@ interface ProjectEditorPanelFixture {
   title?: string;
   globalOrc?: string;
   globalSco?: string;
+  projectUdos?: import('../../shared/project-editor').UdoDefinitionSnapshot[];
   projectProperties?: Partial<ProjectPropertiesSnapshot>;
   clojureProject?: ClojureProjectSnapshot;
 }
@@ -115,6 +118,7 @@ function applyProjectFixture(fixture: ProjectEditorPanelFixture = {}): void {
   mockProjectState.title = fixture.title ?? '';
   mockProjectState.globalOrc = fixture.globalOrc ?? '';
   mockProjectState.globalSco = fixture.globalSco ?? '';
+  mockProjectState.projectUdos = fixture.projectUdos ?? [];
   mockProjectState.projectProperties = projectProperties;
   mockProjectState.clojureProject = {
     libraryEntries: clojureProject.libraryEntries.map((entry) => ({ ...entry })),
@@ -199,6 +203,36 @@ describe('Project editor panels', () => {
     expect(initialHtml).toContain('out 0');
     expect(reopenedHtml).toContain('out 0.5');
     expect(reopenedHtml).toContain('data-editor-kind="codemirror"');
+  });
+
+  it('supplies project-global UDOs to the Global Orchestra editor', () => {
+    const html = renderProjectPanelMarkup(GlobalOrchestraPanel, {
+      title: 'Loaded Project',
+      globalOrc: 'instr 1\n  out 0\nendin',
+      projectUdos: [
+        {
+          name: 'GlobalUDO',
+          style: 'CLASSIC',
+          outTypes: 'a',
+          inTypes: 'a',
+          inputArguments: '',
+          code: '',
+          comments: '',
+        },
+      ],
+    });
+
+    // Global Orchestra receives project UDOs only; no separate context-owned scope.
+    expect(html).toContain('data-udo-scope="0:1"');
+  });
+
+  it('does not supply instrument-owned UDOs to the Global Orchestra editor', () => {
+    const html = renderProjectPanelMarkup(GlobalOrchestraPanel, {
+      title: 'Loaded Project',
+      projectUdos: [],
+    });
+
+    expect(html).toContain('data-udo-scope="0:0"');
   });
 
   it('adapts dynamic Csound completions for the selected editor', async () => {

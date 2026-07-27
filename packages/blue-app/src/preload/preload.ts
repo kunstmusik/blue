@@ -515,7 +515,6 @@ contextBridge.exposeInMainWorld('blueAPI', {
     ipcRenderer.on(PROJECT_DOCUMENT_UPDATED_CHANNEL, handler);
     return () => { ipcRenderer.removeListener(PROJECT_DOCUMENT_UPDATED_CHANNEL, handler); };
   },
-
   // Evaluate Code
   evaluateCode: (request: { editorKind: string; text: string; sourcePanelId: string }) =>
     ipcRenderer.invoke('engine:evaluate-code', request),

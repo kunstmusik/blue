@@ -331,3 +331,238 @@ export function getModernOutTypesFromSignature(outputSignature: string): string 
   }
   return trimmed;
 }
+
+// ─── Callable Signature Normalization ───
+
+/**
+ * Lightweight authored UDO definition accepted by the completion adapter.
+ * Mirrors the field subset of {@link UdoCompletionDefinition} that completion
+ * needs; code and comments are deliberately excluded.
+ */
+export interface UdoCallableSignatureInput {
+  name: string;
+  style: 'CLASSIC' | 'MODERN';
+  outTypes: string;
+  /** Classic-style input declaration; empty for modern style. */
+  inTypes: string;
+  /** Modern-style input declaration; empty for classic style. */
+  inputArguments: string;
+}
+
+/**
+ * Stable callable-signature identity independent of declaration formatting.
+ * Used to distinguish UDO overloads and resolve exact cross-source duplicates.
+ */
+export interface NormalizedUdoCallableSignature {
+  /** Authored, case-sensitive UDO name. */
+  readonly name: string;
+  /** Ordered normalized input type tokens. */
+  readonly inputTypes: readonly string[];
+  /** Ordered normalized output type tokens. */
+  readonly outputTypes: readonly string[];
+  /** False when any required type cannot yet be derived from the declaration. */
+  readonly complete: boolean;
+  /** Comma-separated input display, or `void` for an empty list. */
+  readonly inputDisplay: string;
+  /** Comma-separated output display, or `void` for an empty list. */
+  readonly outputDisplay: string;
+  /**
+   * Deterministic signature comparison key made from completeness plus ordered
+   * output and input tokens. Excludes the name so equivalent callable
+   * signatures compare equal regardless of authored name.
+   */
+  readonly key: string;
+  /**
+   * Deterministic identity key combining the authored name and the signature
+   * key. Two UDOs share an identity only when their names and callable
+   * signatures are equivalent.
+   */
+  readonly identityKey: string;
+}
+
+const VOID_DISPLAY = 'void';
+
+function formatTypeDisplay(tokens: readonly string[]): string {
+  return tokens.length === 0 ? VOID_DISPLAY : tokens.join(', ');
+}
+
+interface ParsedCallableTypeList {
+  readonly tokens: readonly string[];
+  readonly complete: boolean;
+}
+
+/**
+ * Parse only valid callable type tokens. Unlike the permissive public
+ * parseTypeTokens helper, this parser must not mine valid-looking characters
+ * out of an unfinished word such as "pending".
+ */
+function parseCallableTypeList(
+  typeSpec: string | null,
+  noValueAliases: readonly string[],
+): ParsedCallableTypeList {
+  const trimmed = typeSpec?.trim() ?? '';
+  if (noValueAliases.includes(trimmed.toLowerCase())) {
+    return { tokens: [], complete: true };
+  }
+
+  const tokens: string[] = [];
+  let segmentTokens: string[] = [];
+  let segmentValid = true;
+  let complete = true;
+  let parenthesisDepth = 0;
+
+  const finishSegment = () => {
+    if (!segmentValid) {
+      complete = false;
+    } else {
+      tokens.push(...segmentTokens);
+    }
+    segmentTokens = [];
+    segmentValid = true;
+  };
+
+  for (let index = 0; index < trimmed.length; index += 1) {
+    const ch = trimmed[index];
+    if (/\s/.test(ch) || ch === ',') {
+      finishSegment();
+      continue;
+    }
+    if (ch === '(' || ch === ')') {
+      finishSegment();
+      if (ch === '(') {
+        parenthesisDepth += 1;
+      } else if (parenthesisDepth === 0) {
+        complete = false;
+      } else {
+        parenthesisDepth -= 1;
+      }
+      continue;
+    }
+    if (!isTypeTokenStart(ch)) {
+      segmentValid = false;
+      continue;
+    }
+
+    if (trimmed[index + 1] === '[') {
+      if (trimmed[index + 2] === ']') {
+        segmentTokens.push(`${ch}[]`);
+        index += 2;
+      } else {
+        segmentValid = false;
+      }
+      continue;
+    }
+    segmentTokens.push(ch);
+  }
+  finishSegment();
+
+  if (parenthesisDepth !== 0 || tokens.length === 0) {
+    complete = false;
+  }
+  return { tokens, complete };
+}
+
+/**
+ * Normalize a classic or modern UDO declaration into ordered input/output type
+ * tokens plus a completeness flag. Normalization ignores insignificant
+ * whitespace, separators, grouping parentheses, argument variable names, and
+ * default values; uses explicit modern type annotations before rate/type
+ * inference; normalizes valid no-output spellings; and preserves semantically
+ * meaningful token order and modifiers (arrays, optional-rate markers).
+ *
+ * A signature is marked incomplete rather than guessed when a required type
+ * cannot be derived; incomplete and complete signatures never share an identity.
+ */
+export function normalizeUdoCallableSignature(
+  input: UdoCallableSignatureInput,
+): NormalizedUdoCallableSignature {
+  const name = input.name;
+  const isModern = input.style === 'MODERN';
+
+  // Output tokens: classic and modern share output-type spelling semantics.
+  const output = parseCallableTypeList(input.outTypes, ['', '0', 'void', '()']);
+  const outputTokens = output.tokens;
+
+  // Input tokens depend on declaration style.
+  let inputTokens: readonly string[] = [];
+  let complete = output.complete;
+
+  if (isModern) {
+    const trimmedArgs = (input.inputArguments ?? '').trim();
+    if (trimmedArgs.length === 0) {
+      inputTokens = [];
+    } else {
+      const derived = deriveModernInputTokens(trimmedArgs);
+      if (derived === null) {
+        // At least one argument could not be resolved; preserve partial tokens
+        // for display while marking the signature incomplete.
+        inputTokens = deriveModernInputTokensLenient(trimmedArgs);
+        complete = false;
+      } else {
+        inputTokens = derived;
+      }
+    }
+  } else {
+    const parsedInputs = parseCallableTypeList(input.inTypes, ['', '0', 'void']);
+    inputTokens = parsedInputs.tokens;
+    complete = complete && parsedInputs.complete;
+  }
+
+  const inputDisplay = formatTypeDisplay(inputTokens);
+  const outputDisplay = formatTypeDisplay(outputTokens);
+  const key = `${complete ? '1' : '0'}|${outputTokens.join(',')}|${inputTokens.join(',')}`;
+  const identityKey = `${name}|${key}`;
+
+  return {
+    name,
+    inputTypes: inputTokens,
+    outputTypes: outputTokens,
+    complete,
+    inputDisplay,
+    outputDisplay,
+    key,
+    identityKey,
+  };
+}
+
+/**
+ * Derive ordered modern input type tokens from an argument declaration list.
+ * Returns `null` when any argument's type cannot be derived (incomplete).
+ */
+function deriveModernInputTokens(inputArguments: string): readonly string[] | null {
+  const tokens: string[] = [];
+  for (const argument of splitCommaSeparated(inputArguments)) {
+    const token = deriveModernInputToken(argument);
+    if (token === null) return null;
+    tokens.push(token);
+  }
+  return tokens;
+}
+
+/**
+ * Lenient variant used when a signature is already known to be incomplete.
+ * Drops arguments whose type cannot be derived so the visible display still
+ * shows the derivable prefix; the `complete` flag carries the incompleteness.
+ */
+function deriveModernInputTokensLenient(inputArguments: string): readonly string[] {
+  const tokens: string[] = [];
+  for (const argument of splitCommaSeparated(inputArguments)) {
+    const token = deriveModernInputToken(argument);
+    if (token !== null) {
+      tokens.push(token);
+    }
+  }
+  return tokens;
+}
+
+function deriveModernInputToken(inputArgument: string): string | null {
+  const declaration = inputArgument.split('=', 1)[0]?.trim() ?? '';
+  const colonIndex = declaration.lastIndexOf(':');
+  if (colonIndex >= 0 && declaration.substring(colonIndex + 1).trim().length === 0) {
+    return null;
+  }
+
+  const token = getTypeTokenFromInputArgument(inputArgument);
+  const parsed = parseCallableTypeList(token, []);
+  return parsed.complete && parsed.tokens.length === 1 ? parsed.tokens[0] : null;
+}

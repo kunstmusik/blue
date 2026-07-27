@@ -36,6 +36,8 @@ export default function UserDefinedOpcodePanel(): React.ReactElement {
       <div className="workbench-panel-shell__content flex h-full min-h-0 flex-col">
         <UdoWorkspacePanel
           udos={projectUdos}
+          completionContextUdos={[]}
+          projectUdos={projectUdos}
           resetKey={filePath ?? 'project-udo'}
           {...callbacks}
           libraryDropTarget={{ projectSessionId, projectRevision }}

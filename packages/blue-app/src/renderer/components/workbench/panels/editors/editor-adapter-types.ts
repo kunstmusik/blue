@@ -69,9 +69,27 @@ export interface JavaBlueBsbReplacementKey {
   objectType?: string;
 }
 
+/**
+ * Lightweight, signature-bearing UDO definition accepted by the reusable
+ * Csound completion adapter. Code and comments are deliberately excluded;
+ * completion consumes only the authored name and callable-signature fields.
+ */
+export interface JavaBlueUdoCompletionDefinition {
+  name: string;
+  style: 'CLASSIC' | 'MODERN';
+  outTypes: string;
+  /** Classic-style input declaration; empty for modern style. */
+  inTypes: string;
+  /** Modern-style input declaration; empty for classic style. */
+  inputArguments: string;
+}
+
 export interface JavaBlueCsoundCompletionOptions {
   bsbReplacementKeys?: JavaBlueBsbReplacementKey[];
-  projectOpcodeNames?: string[];
+  /** UDO definitions owned by the active instrument, Sound, or effect context. */
+  contextUdos?: readonly JavaBlueUdoCompletionDefinition[];
+  /** Project-global UDO definitions shown in the Global UDO panel. */
+  projectUdos?: readonly JavaBlueUdoCompletionDefinition[];
 }
 
 export interface SelectedCodeEditorProps {

@@ -21,6 +21,7 @@ describe('Orchestra instrument editor panel', () => {
     const html = renderToStaticMarkup(
       <InstrumentEditorPanel
         instrument={GENERIC_INSTRUMENT}
+        projectUdos={[]}
         onOrchestraPatch={vi.fn()}
       />,
     );
@@ -33,7 +34,11 @@ describe('Orchestra instrument editor panel', () => {
 
   it('renders a no-selection state', () => {
     const html = renderToStaticMarkup(
-      <InstrumentEditorPanel instrument={undefined} onOrchestraPatch={vi.fn()} />,
+      <InstrumentEditorPanel
+        instrument={undefined}
+        projectUdos={[]}
+        onOrchestraPatch={vi.fn()}
+      />,
     );
 
     expect(html).toContain('Select an arrangement instrument to edit.');
@@ -48,4 +53,3 @@ describe('Orchestra instrument editor panel', () => {
     expect(html).toContain('Instrument comments');
   });
 });
-

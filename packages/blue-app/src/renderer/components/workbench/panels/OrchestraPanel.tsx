@@ -21,6 +21,7 @@ export default function OrchestraPanel(): React.ReactElement {
   const loaded = useProjectStore((state) => state.loaded);
   const projectSessionId = useProjectStore((state) => state.sessionId);
   const rows = useProjectStore((state) => state.orchestra.arrangement.rows);
+  const projectUdos = useProjectStore((state) => state.projectUdos);
   const updateOrchestra = useProjectStore((state) => state.updateOrchestra);
   const [selectedAssignmentId, setSelectedAssignmentId] = useState<string | null>(null);
 
@@ -77,7 +78,11 @@ export default function OrchestraPanel(): React.ReactElement {
           </div>
         )}
         second={
-          <InstrumentEditorPanel instrument={selectedInstrument} onOrchestraPatch={updateOrchestra} />
+          <InstrumentEditorPanel
+            instrument={selectedInstrument}
+            projectUdos={projectUdos}
+            onOrchestraPatch={updateOrchestra}
+          />
         }
       />
     </div>
