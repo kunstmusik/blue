@@ -51,3 +51,5 @@ temp*.csd
 
 # Optional: Ignore IDE level command shortcuts if you don't want them tracked
 .cursor/skills/speckit-*
+
+.zcode
