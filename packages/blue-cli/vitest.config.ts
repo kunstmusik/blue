@@ -4,7 +4,7 @@ import { createPackageReporterConfig } from '../../scripts/vitest-package-report
 
 export default defineConfig({
   test: {
-    include: ['src/**/*.test.ts', 'tests/**/*.test.ts'],
-    ...createPackageReporterConfig('@blue/data', GithubActionsReporter),
+    include: ['src/**/*.test.ts'],
+    ...createPackageReporterConfig('blue-cli', GithubActionsReporter),
   },
 });
