@@ -1152,12 +1152,8 @@ export class BlueSynthBuilder extends Instrument {
 
     // Load opcode list (UDOs)
     const opcodeListElem = data.getElement("opcodeList");
-    console.log(
-      `[BSB] ${bsb._name || "unknown"}: opcodeList element found: ${!!opcodeListElem}`,
-    );
     if (opcodeListElem) {
       bsb._opcodeList = OpcodeList.loadFromXML(opcodeListElem);
-      console.log(`[BSB]   Loaded ${bsb._opcodeList.getOpcodes().length} UDOs`);
     }
 
     bsb.syncParametersFromWidgets();
