@@ -123,7 +123,6 @@ export class Track {
 
         const noteStart = i / stepsPerBeat;
         const noteDur = dur / stepsPerBeat;
-        // console.log(`Track.generateNotes: i=${i}, dur=${dur}, stepsPerBeat=${stepsPerBeat}, noteDur=${noteDur}`);
         const durStr = trNote.isTied() ? `-${noteDur}` : noteDur.toString();
 
         noteStr = replaceAll(noteStr, '<START>', noteStart.toString());

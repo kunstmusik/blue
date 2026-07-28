@@ -227,7 +227,6 @@ interface ProjectOnLoadState {
 // restart (Ctrl+C then `pnpm run dev` again) is required for this to take
 // effect because it is read once at process startup.
 app.setName('Blue');
-console.log('[main] App name set to:', app.getName());
 
 if (process.env.BLUE_VERIFY_USER_DATA_PATH) {
   app.setPath('userData', path.resolve(process.env.BLUE_VERIFY_USER_DATA_PATH));
@@ -1019,7 +1018,6 @@ function getAppIcon(): Electron.NativeImage | undefined {
 
   for (const p of candidates) {
     if (fs.existsSync(p)) {
-      console.log('[main] Using app icon:', p);
       return nativeImage.createFromPath(p);
     }
   }

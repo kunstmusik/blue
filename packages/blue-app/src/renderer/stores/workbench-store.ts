@@ -1209,9 +1209,6 @@ export const useWorkbenchStore = create<WorkbenchState & WorkbenchActions>()(
       set({
         auxiliary: applyAuxiliaryLayout(api, next, {
           preserveDockedSizes: nextPreservedDockedSizes,
-          debugLabel: 'store.moveAuxiliaryEdge',
-          debugMeta: { sourceEdge, targetEdge },
-          debugState: auxiliary,
         }),
       });
     },
@@ -1240,9 +1237,6 @@ export const useWorkbenchStore = create<WorkbenchState & WorkbenchActions>()(
       set({
         auxiliary: applyAuxiliaryLayout(api, next, {
           preserveDockedSizes: preservedDockedSizes,
-          debugLabel: 'store.moveGroupToEdge',
-          debugMeta: { groupInstanceId, targetEdge },
-          debugState: auxiliary,
         }),
       });
     },
@@ -1258,9 +1252,6 @@ export const useWorkbenchStore = create<WorkbenchState & WorkbenchActions>()(
       set({
         auxiliary: applyAuxiliaryLayout(api, next, {
           preserveDockedSizes: nextPreservedDockedSizes,
-          debugLabel: 'store.movePanelToEdge',
-          debugMeta: { panelId, targetEdge },
-          debugState: auxiliary,
         }),
       });
     },
@@ -1277,9 +1268,6 @@ export const useWorkbenchStore = create<WorkbenchState & WorkbenchActions>()(
       set({
         auxiliary: applyAuxiliaryLayout(api, next, {
           preserveDockedSizes: preservedDockedSizes,
-          debugLabel: 'store.mergeBackToSeededGroup',
-          debugMeta: { groupInstanceId },
-          debugState: auxiliary,
         }),
       });
     },
@@ -1588,9 +1576,6 @@ export const useWorkbenchStore = create<WorkbenchState & WorkbenchActions>()(
           // skip them (they no longer exist in api.getPanel).
           const applied = applyAuxiliaryLayout(api, nextAuxiliary, {
             preserveDockedSizes: preservedDockedSizes,
-            debugLabel: 'dockGroup.restoreAuxiliary',
-            debugMeta: { panelId, origin },
-            debugState: auxiliary,
           });
 
           set({

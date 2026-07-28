@@ -73,9 +73,6 @@ export type AuxiliaryDockedSizeSnapshot = Record<AuxiliaryEdge, number>;
 
 interface ApplyAuxiliaryLayoutOptions {
   preserveDockedSizes?: AuxiliaryDockedSizeSnapshot;
-  debugLabel?: string;
-  debugMeta?: Record<string, unknown>;
-  debugState?: AuxiliaryLayoutState;
 }
 
 export interface AuxiliaryLayoutState {
@@ -324,57 +321,6 @@ export function captureAuxiliaryDockedSizesFromApi(
   };
 }
 
-function shouldLogAuxiliaryDockedSizeDebug(): boolean {
-  return !(typeof process !== 'undefined' && Boolean(process.env?.VITEST));
-}
-
-function getAuxiliaryDockedSizeDebugLiveState(api: DockviewApi) {
-  return {
-    left: getLiveAuxiliaryEdgeDebugEntry(api, 'left'),
-    right: getLiveAuxiliaryEdgeDebugEntry(api, 'right'),
-    bottom: getLiveAuxiliaryEdgeDebugEntry(api, 'bottom'),
-  };
-}
-
-function getLiveAuxiliaryEdgeDebugEntry(api: DockviewApi, edge: AuxiliaryEdge) {
-  const group = getLiveAuxiliaryEdgeGroup(api, edge);
-  const element = getLiveAuxiliaryGroupElement(group);
-  const rect = element?.getBoundingClientRect();
-  return {
-    exists: Boolean(group),
-    size: group?.size,
-    renderedSize: getRenderedDockedSizeForGroup(group, edge),
-    boundsWidth: rect?.width,
-    boundsHeight: rect?.height,
-    panels: group?.panels.map((panel) => panel.id) ?? [],
-    activePanelId: group?.activePanel?.id,
-    isMaximized: group?.api.isMaximized() ?? false,
-  };
-}
-
-export function logAuxiliaryDockedSizeDebug(
-  context: string,
-  api: DockviewApi,
-  options?: {
-    snapshot?: AuxiliaryDockedSizeSnapshot;
-    state?: AuxiliaryLayoutState;
-    meta?: Record<string, unknown>;
-  },
-) {
-  if (!shouldLogAuxiliaryDockedSizeDebug()) {
-    return;
-  }
-
-  console.info('[AuxLayoutDebug]', context, {
-    snapshot: options?.snapshot,
-    stateSizes: options?.state
-      ? captureAuxiliaryDockedSizes(options.state)
-      : undefined,
-    live: getAuxiliaryDockedSizeDebugLiveState(api),
-    ...(options?.meta ?? {}),
-  });
-}
-
 function getLiveAuxiliaryEdgeGroup(
   api: DockviewApi,
   edge: AuxiliaryEdge,
@@ -448,9 +394,6 @@ function restoreAuxiliaryDockedSizes(
 function scheduleAuxiliaryDockedSizeRestore(
   api: DockviewApi,
   sizes: AuxiliaryDockedSizeSnapshot,
-  debugLabel?: string,
-  debugState?: AuxiliaryLayoutState,
-  debugMeta?: Record<string, unknown>,
 ) {
   const requestFrame = globalThis.requestAnimationFrame;
   if (typeof requestFrame !== 'function') {
@@ -458,29 +401,7 @@ function scheduleAuxiliaryDockedSizeRestore(
   }
 
   requestFrame(() => {
-    if (debugLabel) {
-      logAuxiliaryDockedSizeDebug(
-        `${debugLabel}: before deferred restore`,
-        api,
-        {
-          snapshot: sizes,
-          state: debugState,
-          meta: debugMeta,
-        },
-      );
-    }
     restoreAuxiliaryDockedSizes(api, sizes);
-    if (debugLabel) {
-      logAuxiliaryDockedSizeDebug(
-        `${debugLabel}: after deferred restore`,
-        api,
-        {
-          snapshot: sizes,
-          state: debugState,
-          meta: debugMeta,
-        },
-      );
-    }
   });
 }
 
@@ -772,18 +693,6 @@ export function applyAuxiliaryLayout(
   const dockedSizesToRestore =
     options?.preserveDockedSizes ?? captureAuxiliaryDockedSizes(next);
 
-  if (options?.preserveDockedSizes) {
-    logAuxiliaryDockedSizeDebug(
-      `${options.debugLabel ?? 'applyAuxiliaryLayout'}: before rebuild`,
-      api,
-      {
-        snapshot: options.preserveDockedSizes,
-        state: options.debugState ?? state,
-        meta: options.debugMeta,
-      },
-    );
-  }
-
   const allPanelIds = next.groups.flatMap((inst) => inst.panelIds);
   clearLiveAuxiliaryPanels(api, allPanelIds);
 
@@ -808,42 +717,12 @@ export function applyAuxiliaryLayout(
     api.getPanel(activeDockedPanelId)?.api.maximize();
   }
 
-  if (options?.preserveDockedSizes) {
-    logAuxiliaryDockedSizeDebug(
-      `${options.debugLabel ?? 'applyAuxiliaryLayout'}: before immediate restore`,
-      api,
-      {
-        snapshot: options.preserveDockedSizes,
-        state: options.debugState ?? state,
-        meta: options.debugMeta,
-      },
-    );
-  }
-
   // Dockview 5.2 can ignore initialWidth/initialHeight when inserting an
   // auxiliary group beside a nested grid, falling back to an equal split.
   // Reapply the canonical pixel sizes after every rebuild, including startup.
   restoreAuxiliaryDockedSizes(api, dockedSizesToRestore);
 
-  if (options?.preserveDockedSizes) {
-    logAuxiliaryDockedSizeDebug(
-      `${options.debugLabel ?? 'applyAuxiliaryLayout'}: after immediate restore`,
-      api,
-      {
-        snapshot: options.preserveDockedSizes,
-        state: options.debugState ?? state,
-        meta: options.debugMeta,
-      },
-    );
-  }
-
-  scheduleAuxiliaryDockedSizeRestore(
-    api,
-    dockedSizesToRestore,
-    options?.debugLabel,
-    options?.debugState ?? state,
-    options?.debugMeta,
-  );
+  scheduleAuxiliaryDockedSizeRestore(api, dockedSizesToRestore);
 
   syncDockviewPanelTitles(api);
 
@@ -883,9 +762,6 @@ export function revealAuxiliaryPanel(
       normalizeAuxiliaryLayoutState(next),
       {
         preserveDockedSizes: preservedDockedSizes,
-        debugLabel: 'layout.revealAuxiliaryPanel.reseed',
-        debugMeta: { panelId },
-        debugState: state,
       },
     );
     focusDockviewPanel(api, panelId);
@@ -904,9 +780,6 @@ export function revealAuxiliaryPanel(
     if (!api.getPanel(panelId)) {
       const applied = applyAuxiliaryLayout(api, next, {
         preserveDockedSizes: preservedDockedSizes,
-        debugLabel: 'layout.revealAuxiliaryPanel.remount',
-        debugMeta: { panelId },
-        debugState: state,
       });
       focusDockviewPanel(api, panelId);
       return syncAuxiliaryLayoutFromApi(api, applied);
@@ -1016,9 +889,6 @@ export function restoreClosedAuxiliaryPanel(
 
   const applied = applyAuxiliaryLayout(api, next, {
     preserveDockedSizes: preservedDockedSizes,
-    debugLabel: 'layout.restoreClosedAuxiliaryPanel',
-    debugMeta: { panelId, origin },
-    debugState: state,
   });
   if (origin.presentation === 'docked' || origin.presentation === 'maximized') {
     focusDockviewPanel(api, panelId);
@@ -1097,9 +967,6 @@ export function dockAuxiliaryPanel(
 
   const applied = applyAuxiliaryLayout(api, next, {
     preserveDockedSizes: preservedDockedSizes,
-    debugLabel: 'layout.dockAuxiliaryPanel',
-    debugMeta: { panelId },
-    debugState: state,
   });
   focusDockviewPanel(api, panelId);
   return syncAuxiliaryLayoutFromApi(api, applied);
@@ -1138,9 +1005,6 @@ export function minimizeAuxiliaryPanelLayout(
 
   const applied = applyAuxiliaryLayout(api, next, {
     preserveDockedSizes: preservedDockedSizes,
-    debugLabel: 'layout.minimizeAuxiliaryPanel',
-    debugMeta: { panelId },
-    debugState: state,
   });
   const activeDockedPanelId = getActiveDockedPanelIdForEdge(
     getInstancesOnEdge(next, target.edge),
@@ -1181,9 +1045,6 @@ export function closeAuxiliaryPanelLayout(
 
   const applied = applyAuxiliaryLayout(api, next, {
     preserveDockedSizes: preservedDockedSizes,
-    debugLabel: 'layout.closeAuxiliaryPanel',
-    debugMeta: { panelId },
-    debugState: state,
   });
   const activeDockedPanelId = getActiveDockedPanelIdForEdge(
     getInstancesOnEdge(next, target.edge),
@@ -1231,9 +1092,6 @@ export function minimizeAuxiliaryGroupLayout(
 
   return applyAuxiliaryLayout(api, next, {
     preserveDockedSizes: preservedDockedSizes,
-    debugLabel: 'layout.minimizeAuxiliaryGroup',
-    debugMeta: { groupInstanceId },
-    debugState: state,
   });
 }
 
@@ -1253,9 +1111,6 @@ export function maximizeAuxiliaryGroupLayout(
 
   const applied = applyAuxiliaryLayout(api, next, {
     preserveDockedSizes: preservedDockedSizes,
-    debugLabel: 'layout.maximizeAuxiliaryGroup',
-    debugMeta: { groupInstanceId },
-    debugState: state,
   });
   const activeDockedPanelId = getActiveDockedPanelId(target);
   if (activeDockedPanelId) {
@@ -1283,9 +1138,6 @@ export function restoreAuxiliaryGroupLayout(
 
   const applied = applyAuxiliaryLayout(api, next, {
     preserveDockedSizes: preservedDockedSizes,
-    debugLabel: 'layout.restoreAuxiliaryGroup',
-    debugMeta: { groupInstanceId },
-    debugState: state,
   });
   const activeDockedPanelId = getActiveDockedPanelIdForEdge(
     getInstancesOnEdge(next, target.edge),

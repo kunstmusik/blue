@@ -4685,10 +4685,7 @@ function applyBsbInterfacePatch(instrument: BlueSynthBuilder, patch: BsbInterfac
       instrument.setBsbGridSettings(patch.patch);
       return true;
     case 'applyPreset': {
-      console.log('applyPreset patch received:', patch);
-      const success = instrument.applyPreset(patch.presetUniqueId);
-      console.log('instrument.applyPreset returned:', success);
-      return success;
+      return instrument.applyPreset(patch.presetUniqueId);
     }
     case 'updatePreset': {
       const presetGroup = instrument.getPresetGroup();

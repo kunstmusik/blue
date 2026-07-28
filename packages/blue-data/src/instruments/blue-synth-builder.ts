@@ -734,22 +734,15 @@ export class BlueSynthBuilder extends Instrument {
   }
 
   applyPreset(presetUniqueId: string): boolean {
-    console.log('applyPreset in BSB:', presetUniqueId);
     if (!this._presetGroup) return false;
     const preset = this._presetGroup.findPresetByUniqueId(presetUniqueId);
-    if (!preset) {
-      console.log('preset not found');
-      return false;
-    }
+    if (!preset) return false;
 
     const valuesMap = preset.getValuesMap();
-    console.log('valuesMap size:', valuesMap.size);
-    let updatedCount = 0;
     const visit = (widgets: BSBWidget[]): void => {
       for (const widget of widgets) {
         const val = valuesMap.get(widget.objectName);
         if (val !== undefined) {
-          console.log(`Updating widget ${widget.objectName} to ${val}`);
           if (typeof widget.setPresetValue === 'function') {
             widget.setPresetValue(val);
           } else {
@@ -771,8 +764,6 @@ export class BlueSynthBuilder extends Instrument {
               param.setFixedValue(widget.value);
             }
           }
-
-          updatedCount++;
         }
         if (widget instanceof BSBGroup) {
           visit(widget.getChildren());
@@ -780,7 +771,6 @@ export class BlueSynthBuilder extends Instrument {
       }
     };
     visit(this._graphicInterface.getRootGroup().getChildren());
-    console.log('updated widgets:', updatedCount);
     this.syncParametersFromWidgets();
     this._graphicInterfaceXML = null;
     this._presetGroup.setCurrentPresetUniqueId(presetUniqueId);

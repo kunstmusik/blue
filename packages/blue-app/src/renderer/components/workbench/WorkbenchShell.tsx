@@ -30,7 +30,6 @@ import {
   getMinimizedTabsForEdge,
   getGroupInstanceForPanel,
   isAuxiliaryPanelId,
-  logAuxiliaryDockedSizeDebug,
   shouldPreventAuxiliaryPanelDrop,
   type AuxiliaryDockedSizeSnapshot,
   type AuxiliaryEdge,
@@ -311,15 +310,6 @@ export default function WorkbenchShell() {
                   event.api,
                   useWorkbenchStore.getState().auxiliary,
                 );
-              logAuxiliaryDockedSizeDebug('shell.onWillDrop snapshot', event.api, {
-                snapshot: pendingDockviewSizeSnapshotRef.current,
-                state: useWorkbenchStore.getState().auxiliary,
-                meta: {
-                  panelId: transfer.panelId,
-                  dropKind: dropEvent.kind,
-                  targetGroupId: dropEvent.group?.id,
-                },
-              });
             }
 
             if (
@@ -371,16 +361,6 @@ export default function WorkbenchShell() {
 
             const preservedDockedSizes =
               pendingDockviewSizeSnapshotRef.current ?? undefined;
-            logAuxiliaryDockedSizeDebug('shell.onDidMovePanel before store move', event.api, {
-              snapshot: preservedDockedSizes,
-              state: useWorkbenchStore.getState().auxiliary,
-              meta: {
-                panelId: panel.id,
-                fromGroupId: from.id,
-                toGroupId: panel.group.id,
-                targetEdge,
-              },
-            });
             pendingDockviewSizeSnapshotRef.current = null;
             movePanelToEdge(panel.id, targetEdge, preservedDockedSizes);
             reportOwnership(event.api, workbenchWindowIdRef.current);
@@ -473,10 +453,6 @@ export default function WorkbenchShell() {
         api,
         auxiliary,
       );
-      logAuxiliaryDockedSizeDebug('shell.manualDrag snapshot', api, {
-        snapshot: pendingManualDragSizeSnapshotRef.current,
-        state: auxiliary,
-      });
     }
 
     function handlePointerDown(event: PointerEvent) {
@@ -609,19 +585,6 @@ export default function WorkbenchShell() {
       ) {
         const preservedDockedSizes =
           pendingManualDragSizeSnapshotRef.current ?? undefined;
-        const { api, auxiliary } = useWorkbenchStore.getState();
-        if (api) {
-          logAuxiliaryDockedSizeDebug('shell.manualDrag before store move', api, {
-            snapshot: preservedDockedSizes,
-            state: auxiliary,
-            meta: {
-              kind: completed.kind,
-              panelId: completed.panelId,
-              sourceEdge: completed.sourceEdge,
-              targetEdge: completed.targetEdge,
-            },
-          });
-        }
         if (completed.kind === 'edge') {
           moveAuxiliaryEdge(
             completed.sourceEdge,
