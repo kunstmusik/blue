@@ -58,7 +58,7 @@
 
 - [X] T014 [P] [US2] Create the reusable build bootstrap action in `.github/actions/setup-blue-build/action.yml` to install pinned Node, pnpm, Java, and Maven-compatible tooling; restore the pnpm cache; install from the lockfile; and build the Java helper before Electron package consumers.
 - [X] T015 [US2] Add `.github/workflows/pr.yml` with an explicit native runner matrix for `macos-arm64`, `windows-x64`, and `linux-x64`, with read-only permissions, bounded concurrency, and no protected release environment. Keep macOS x64 intentionally excluded from hosted workflows.
-- [X] T016 [US2] Make each `.github/workflows/pr.yml` matrix job run the root build/test/lint checks plus package-input validation, unsigned directory packaging, and packaged-app smoke verification; upload `blue-{os}-{cputype}-{version}-pr{number}.zip` evidence and redacted diagnostics while publishing no release.
+- [X] T016 [US2] Make each `.github/workflows/pr.yml` matrix job run the root build/test/lint checks plus package-input validation, unsigned directory packaging, and packaged-app smoke verification; directly upload `blue-{os}-{cputype}-{version}-pr{number}.{ext}` native-package evidence and redacted diagnostics while publishing no release.
 
 **Checkpoint**: User Story 2 is complete when a PR provides complete non-publishing package evidence for all required targets and identifies failed target/stage combinations clearly.
 
@@ -68,14 +68,14 @@
 
 **Goal**: Maintainers can distribute traceable unsigned develop builds through GitHub Actions and atomically publish a complete unsigned stable release from a matching immutable tag.
 
-**Independent Test**: A push to `develop` produces three ZIP Actions artifacts tied to a source SHA without signing credentials or a GitHub Release; a protected test release run refuses incomplete, altered, duplicate, or unexpected ZIP assets before public publication.
+**Independent Test**: A push to `develop` produces four native-package Actions artifacts tied to a source SHA without signing credentials or a GitHub Release; a protected test release run refuses incomplete, altered, duplicate, or unexpected package assets before public publication.
 
 - [X] T017 [P] [US3] Derive immutable source-revision and version information for develop and stable builds without mutating `packages/blue-app/package.json` or creating workflow-generated repository tags.
 - [X] T018 [P] [US3] Implement stable tag/package version validation in `packages/blue-app/scripts/verify-release-version.mjs`, requiring an immutable `vX.Y.Z` tag that exactly matches `packages/blue-app/package.json` and refusing duplicate published versions.
-- [X] T019 [US3] Add `.github/workflows/develop.yml` for pushes to `develop`, consuming the shared bootstrap action and uploading exactly three `blue-{os}-{cputype}-{version}-{short-sha}.zip` Actions artifacts with no GitHub Release and no `contents: write` job.
+- [X] T019 [US3] Add `.github/workflows/develop.yml` for pushes to `develop`, consuming the shared bootstrap action and directly uploading exactly four `blue-{os}-{cputype}-{version}-{short-sha}.{ext}` native-package Actions artifacts with no GitHub Release and no `contents: write` job.
 - [X] T020 [P] [US3] Implement non-secret credential validation in `scripts/release-credential-preflight.mjs` and expose it through `package.json`, reporting only the missing or malformed variable names reserved for future protected macOS and Windows signing paths.
-- [X] T021 [US3] Add `.github/workflows/release.yml` for stable tags: validate version, package each native target unsigned, wrap native installers in exactly three `blue-{os}-{cputype}-{version}.zip` bundles, use the `release` Environment only for final publication, and avoid Apple/Azure signing credentials and OIDC signing permissions.
-- [X] T022 [US3] Implement the final promoter in `.github/workflows/release.yml` to reject altered, duplicate, missing, skipped, or unexpected ZIPs; verify checksums and the manifest; and publish the exact same ZIP filenames used by Actions only after all required target evidence is present.
+- [X] T021 [US3] Add `.github/workflows/release.yml` for stable tags: validate version, package each native target unsigned, directly upload exactly four `blue-{os}-{cputype}-{version}.{ext}` packages, use the `release` Environment only for final publication, and avoid Apple/Azure signing credentials and OIDC signing permissions.
+- [X] T022 [US3] Implement the final promoter in `.github/workflows/release.yml` to reject altered, duplicate, missing, skipped, or unexpected native packages; verify checksums and the manifest; and publish the exact same filenames used by Actions only after all required target evidence is present.
 
 **Checkpoint**: User Story 3 is complete when a develop Actions build is complete and traceable without creating a Release, while a stable run cannot make an incomplete, altered, duplicate, or unverified-artifact release public.
 
@@ -102,7 +102,7 @@
 **Purpose**: Confirm the implementation meets the release contract without changing project persistence, application behavior, or unrelated work.
 
 - [X] T028 [P] Run focused app and release-tool validation from `packages/blue-app/src/main/java-runtime/java-runtime-path.test.ts`, `packages/blue-app/scripts/verify-packaged-app.mjs`, `scripts/verify-package-inputs.mjs`, `scripts/release-artifact-manifest.mjs`, and `scripts/release-credential-preflight.test.mjs`.
-- [X] T029 [P] Validate workflow syntax, least-privilege permissions, target matrix coverage, `.zip` artifact naming, artifact retention, and secret-free fork behavior against `.github/actions/setup-blue-build/action.yml`, `.github/workflows/pr.yml`, `.github/workflows/develop.yml`, and `.github/workflows/release.yml`.
+- [X] T029 [P] Validate workflow syntax, least-privilege permissions, direct native-package artifact naming, separate Linux package uploads, artifact retention, and secret-free fork behavior against `.github/actions/setup-blue-build/action.yml`, `.github/workflows/pr.yml`, `.github/workflows/develop.yml`, and `.github/workflows/release.yml`.
 - [X] T030 Run `pnpm build`, `pnpm test`, and `pnpm lint` from `package.json`, then resolve only failures introduced by this release-build feature.
 - [X] T031 Execute the local, pull-request, develop Actions artifact, and protected stable-release acceptance procedures in `specs/062-app-release-builds/quickstart.md`; record any publication-gated evidence without adding secret material to the repository.
 

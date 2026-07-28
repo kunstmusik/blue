@@ -24,9 +24,9 @@ Do not create a stable release from an untagged commit, a branch name, or a tag 
 
 | Workflow        | Implemented commands                                                                                                                                                                                                                                                 |
 | --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| PR verification | Package input checks, tests, lint, target packaging, and packaged-app smoke checks; uploads `blue-{os}-{cputype}-{version}-pr{number}.zip` Actions artifacts                                                                        |
-| Develop build   | The same package checks on pushes to `develop`; uploads `blue-{os}-{cputype}-{version}-{short-sha}.zip` Actions artifacts and creates no GitHub Release                                                                           |
-| Stable release  | Tag/version validation, unsigned platform ZIP creation, verified manifest consolidation, draft creation, and final `gh release edit --draft=false` from the `release` Environment publisher job                                                |
+| PR verification | Package input checks, tests, lint, target packaging, and packaged-app smoke checks; directly uploads `blue-{os}-{cputype}-{version}-pr{number}.{ext}` Actions artifacts |
+| Develop build   | The same package checks on pushes to `develop`; directly uploads `blue-{os}-{cputype}-{version}-{short-sha}.{ext}` Actions artifacts and creates no GitHub Release |
+| Stable release  | Tag/version validation, unsigned native-package staging, verified manifest consolidation, draft creation, and final `gh release edit --draft=false` from the `release` Environment publisher job |
 
 ## Local Prerequisites
 
@@ -143,9 +143,10 @@ The PR and develop workflows must not reference the `release` Environment. Pull 
 1. Push the intended source revision to `develop`.
 2. Wait for the macOS arm64, Windows x64, and Linux x64 jobs in `.github/workflows/develop.yml`.
 3. Confirm the Actions artifacts use these exact forms:
-   - `blue-macos-arm64-{version}-{short-sha}.zip`
-   - `blue-windows-x64-{version}-{short-sha}.zip`
-   - `blue-linux-x64-{version}-{short-sha}.zip`
+   - `blue-macos-arm64-{version}-{short-sha}.dmg`
+   - `blue-windows-x64-{version}-{short-sha}.exe`
+   - `blue-linux-x64-{version}-{short-sha}.AppImage`
+   - `blue-linux-x64-{version}-{short-sha}.deb`
 4. Download at least one artifact on its matching platform and run the packaged-app smoke validation:
    ```bash
    pnpm --filter @blue/app verify:packaged-app -- --package-dir <unpacked-dir>
@@ -170,11 +171,11 @@ Develop artifacts are retained by GitHub Actions for 30 days. They are not stabl
    - **Windows**: produces an unsigned NSIS installer for x64.
    - **Linux**: produces checksummed AppImage and Debian packages.
 7. No approval prompt is expected for the current single-maintainer policy; after all package jobs succeed, confirm that the `publish-stable` job starts automatically in the `release` Environment.
-8. The final publisher downloads and validates exactly `blue-macos-arm64-X.Y.Z.zip`, `blue-windows-x64-X.Y.Z.zip`, and `blue-linux-x64-X.Y.Z.zip`.
-9. The publisher requires verified checksums, matching version/source metadata, and no missing, duplicate, or unexpected ZIP. It then creates a draft GitHub Release with the same ZIP filenames, `checksums-sha256.txt`, and `release-manifest.json`, and publishes it via `gh release edit --draft=false`.
+8. The final publisher downloads and validates exactly `blue-macos-arm64-X.Y.Z.dmg`, `blue-windows-x64-X.Y.Z.exe`, `blue-linux-x64-X.Y.Z.AppImage`, and `blue-linux-x64-X.Y.Z.deb`.
+9. The publisher requires verified checksums, matching version/source metadata, and no missing, duplicate, or unexpected package. It then creates a draft GitHub Release with the same native-package filenames, `checksums-sha256.txt`, and `release-manifest.json`, and publishes it via `gh release edit --draft=false`.
 10. Inspect the published release from a clean machine for each supported platform before announcing it.
 
-The final publisher is the only workflow job allowed to create or publish the stable GitHub Release. It validates the exact expected artifact manifest, stages the release as a draft with all ZIPs, checksums, and manifest metadata attached, then publishes it. No individual platform job may publish a release asset by itself.
+The final publisher is the only workflow job allowed to create or publish the stable GitHub Release. It validates the exact expected artifact manifest, stages the release as a draft with all native packages, checksums, and manifest metadata attached, then publishes it. No individual platform job may publish a release asset by itself.
 
 ## Failure Recovery
 

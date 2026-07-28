@@ -2,10 +2,10 @@
 /**
  * Release asset manifest and checksum generation/validation.
  *
- * Generates a deterministic machine-readable manifest of either native package
- * outputs or the platform ZIP bundles published by the stable workflow. The
- * manifest is the single source of truth used by the final release promoter to
- * verify that every required target is present and intact.
+ * Generates a deterministic machine-readable manifest of native package
+ * outputs or legacy platform ZIP bundles. The manifest is the single source of
+ * truth used by the final release promoter to verify that every required
+ * target is present and intact.
  *
  * Manifest shape (matches specs/062-app-release-builds/data-model.md):
  *   {
@@ -156,6 +156,7 @@ function findPackageFilesForTarget(target, releaseDir, appVersion) {
   // electron-builder emits files like:
   //   Blue-0.0.1-arm64.dmg
   //   Blue-0.0.1-x64.dmg
+  //   blue-macos-arm64-0.0.1.dmg
   //   Blue Setup 0.0.1.exe
   //   Blue-0.0.1.AppImage
   //   Blue_0.0.1_amd64.deb
@@ -180,7 +181,9 @@ function findPackageFilesForTarget(target, releaseDir, appVersion) {
       if (!lower.includes(appVersion.toLowerCase())) continue;
 
       if (target.platform === 'macOS' && target.format === 'DMG') {
-        if (!lower.endsWith(`-${target.arch}.dmg`)) continue;
+        const builderName = lower.endsWith(`-${target.arch}.dmg`);
+        const standardizedName = lower === `blue-${target.targetId}-${appVersion.toLowerCase()}.dmg`;
+        if (!builderName && !standardizedName) continue;
       } else if (target.platform === 'Windows') {
         // NSIS produces "Blue Setup 0.0.1.exe"; accept any .exe that includes
         // the version. The promoter verifies the final asset list explicitly.
@@ -245,7 +248,9 @@ async function generate(flags) {
       continue;
     }
     if (matches.length > 1) {
-      throw new Error(`Duplicate ${def.targetId}/${def.format} assets: ${matches.map(basename).join(', ')}`);
+      throw new Error(
+        `Duplicate ${def.targetId}/${def.format} assets: ${matches.map((match) => basename(match)).join(', ')}`,
+      );
     }
     const [filePath] = matches;
     const stats = statSync(filePath);

@@ -6,7 +6,7 @@
 | -------------------- | ------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------- |
 | `platform`           | Target operating system                    | One of macOS, Windows, or Linux                                                                                             |
 | `architecture`       | Processor architecture                     | Hosted artifacts support macOS arm64, Windows x64, and Linux x64; macOS x64 is local-only and not part of the published set |
-| `format`             | User-downloadable bundle type              | ZIP in Actions and GitHub Releases; contains a DMG on macOS, NSIS installer on Windows, and AppImage plus Debian package on Linux |
+| `format`             | User-downloadable native package type      | DMG on macOS, NSIS `.exe` on Windows, and separate AppImage and Debian package artifacts on Linux |
 | `version`            | Version information embedded in the name   | Stable uses the application version; pull-request and develop artifacts append their PR number or short source revision     |
 | `sourceRevision`     | Immutable commit that produced the package | Required in package/release metadata                                                                                        |
 | `checksum`           | Integrity checksum for downloaded asset    | Required before publication                                                                                                 |
@@ -43,8 +43,8 @@
 
 ## Relationships and State Rules
 
-- One **Build Run** produces one ZIP bundle for each hosted target; the Linux x64 ZIP contains both the AppImage and Debian package.
-- A stable ZIP uses the exact filename `blue-{os}-{cputype}-{version}.zip` in both GitHub Actions and the GitHub Release.
+- One **Build Run** produces one direct native package for macOS and Windows and separate AppImage and Debian package artifacts for Linux x64.
+- A stable package uses the exact filename `blue-{os}-{cputype}-{version}.{ext}` in both GitHub Actions and the GitHub Release.
 - A **Release** owns the complete package set from one successful Build Run and one source revision.
 - A stable **Release** cannot transition from `draft` to `published` until every package is verified and the tag-restricted publication policy has passed.
 - A **Release Credential** may be read only by the protected stable-release job that needs it. Future signing credentials must remain unavailable to current unsigned package jobs. No credential or credential value enters Blue project data, application settings, artifacts, or release notes.

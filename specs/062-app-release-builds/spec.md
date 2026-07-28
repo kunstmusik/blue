@@ -46,7 +46,7 @@ A maintainer can rely on automated checks for proposed and integrated changes to
 
 ### User Story 3 - Distribute Develop Builds and Publish Stable Releases (Priority: P2)
 
-A release maintainer can create traceable develop builds for early testing through GitHub Actions and publish deliberate stable Blue releases with downloadable ZIP bundles for the supported desktop platforms.
+A release maintainer can create traceable develop builds for early testing through GitHub Actions and publish deliberate stable Blue releases with directly downloadable native packages for the supported desktop platforms.
 
 **Why this priority**: Maintainers need a low-friction route for testers while retaining an explicit, auditable promotion point for public releases.
 
@@ -55,7 +55,7 @@ A release maintainer can create traceable develop builds for early testing throu
 **Acceptance Scenarios**:
 
 1. **Given** a push to `develop`, **When** the workflow runs successfully, **Then** testers can obtain clearly marked unsigned Actions artifacts that are traceable to the source revision that produced them, without a GitHub prerelease.
-2. **Given** the maintainer intentionally pushes a stable version tag, **When** the workflow succeeds, **Then** a public release contains unsigned macOS, Windows, and Linux ZIP bundles with a single consistent version.
+2. **Given** the maintainer intentionally pushes a stable version tag, **When** the workflow succeeds, **Then** a public release contains unsigned macOS, Windows, AppImage, and Debian package assets with a single consistent version.
 3. **Given** publication permission is missing or the required platform asset set is incomplete, **When** a stable release is attempted, **Then** publication stops before an incomplete stable release is made available and the maintainer receives an actionable failure message.
 4. **Given** an already published version, **When** a maintainer attempts to publish the same version again, **Then** the workflow refuses to overwrite or silently replace the published release.
 
@@ -102,7 +102,7 @@ A release maintainer can use one release guide to configure the current publicat
 - **FR-012**: The packaged app MUST retain access to its Java helper artifact and native runtime dependencies after installation.
 - **FR-013**: Develop artifacts and stable releases MUST identify the exact source version; stable releases MUST also expose a change summary.
 - **FR-014**: Pull-request, develop, and stable builds MUST remain unsigned and function without production signing credentials. Signing is deferred until the required signing programs and keys are funded.
-- **FR-015**: Every primary platform artifact MUST be a ZIP named `blue-{os}-{cputype}-{versionInfo}.zip`. For stable builds, `{versionInfo}` MUST be the application version, and the exact same filenames MUST be used for GitHub Actions artifacts and GitHub Release assets.
+- **FR-015**: Every primary platform artifact MUST be a directly uploaded native package named `blue-{os}-{cputype}-{versionInfo}.{ext}`. Linux AppImage and Debian packages MUST be separate artifacts. For stable builds, `{versionInfo}` MUST be the application version, and the exact same filenames MUST be used for GitHub Actions artifacts and GitHub Release assets.
 
 ### Existing Behavior & Data Compatibility *(mandatory when applicable)*
 
@@ -125,7 +125,7 @@ A release maintainer can use one release guide to configure the current publicat
 
 - **SC-001**: A contributor using a clean supported development environment can produce an unsigned local Blue package by following the release guide with no undocumented steps.
 - **SC-002**: 100% of configured pull-request and integration-branch runs report independent build, test, static-check, and packaging results for macOS, Windows, and Linux.
-- **SC-003**: A successful develop-build run makes platform ZIP artifacts available in GitHub Actions with the producing source revision visible in each filename and creates no GitHub Release.
+- **SC-003**: A successful develop-build run makes native package artifacts available in GitHub Actions with the producing source revision visible in each filename, exposes the Linux AppImage and Debian package separately, and creates no GitHub Release.
 - **SC-004**: A successful stable-release run publishes one consistent version with downloadable packages for all defined supported platform and architecture combinations.
 - **SC-005**: Advisory credential preflight identifies all absent, invalid, or inapplicable future signing settings and never prints a secret value.
 - **SC-006**: The release guide allows a maintainer who did not implement the feature to complete an unsigned local package build, publish a current unsigned stable release, and identify the exact extra credentials required for a future signed public release in one pass.
@@ -133,10 +133,10 @@ A release maintainer can use one release guide to configure the current publicat
 ## Closeout Evidence
 
 - Pull request [#1](https://github.com/kunstmusik/blue-electron-poc/pull/1) [run 30208009454](https://github.com/kunstmusik/blue-electron-poc/actions/runs/30208009454) and [Develop run 30208008087](https://github.com/kunstmusik/blue-electron-poc/actions/runs/30208008087) both passed macOS arm64, Windows x64, and Linux x64 at source revision `b4885819738e0ed697766bb874690bdee056ab67`, including build, test, lint, unsigned packaging, and installed-package smoke verification.
-- The successful Develop run retained exactly three primary artifacts named `blue-macos-arm64-0.0.1-b488581.zip`, `blue-windows-x64-0.0.1-b488581.zip`, and `blue-linux-x64-0.0.1-b488581.zip`, and created no GitHub Release.
-- Stable Release run [30182366369](https://github.com/kunstmusik/blue-electron-poc/actions/runs/30182366369) published [v0.0.2](https://github.com/kunstmusik/blue-electron-poc/releases/tag/v0.0.2) with identical primary ZIP names in GitHub Actions and GitHub Release assets, plus the verified manifest and checksum file.
+- The successful Develop run retained exactly three primary ZIP artifacts under the superseded bundle contract and created no GitHub Release.
+- Stable Release run [30182366369](https://github.com/kunstmusik/blue-electron-poc/actions/runs/30182366369) published [v0.0.2](https://github.com/kunstmusik/blue-electron-poc/releases/tag/v0.0.2) under the superseded bundle contract, plus the verified manifest and checksum file.
 - The GitHub `release` Environment has no required reviewer for the current one-maintainer project and permits deployments only from the custom tag rule `v*.*.*`.
-- All 57 static release-workflow contract checks pass. The complete sanitized acceptance record is maintained in [quickstart.md](./quickstart.md).
+- The current direct-native-package contract passes all 69 static release-workflow checks and the package-manifest test locally. Hosted-run evidence for the revised artifact contract remains pending. The prior sanitized acceptance record is maintained in [quickstart.md](./quickstart.md).
 
 ## Assumptions
 

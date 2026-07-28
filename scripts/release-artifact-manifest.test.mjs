@@ -15,10 +15,11 @@ const checksumPath = join(fixtureDir, "checksums-sha256.txt");
 const appVersion = "1.2.3";
 const sourceRevision = "a".repeat(40);
 
-const bundleFiles = {
-  [`blue-macos-arm64-${appVersion}.zip`]: "MAC-A",
-  [`blue-windows-x64-${appVersion}.zip`]: "WIN-A",
-  [`blue-linux-x64-${appVersion}.zip`]: "LINUX",
+const packageFiles = {
+  [`blue-macos-arm64-${appVersion}.dmg`]: "MAC-A",
+  [`blue-windows-x64-${appVersion}.exe`]: "WIN-A",
+  [`blue-linux-x64-${appVersion}.AppImage`]: "APPIMAGE-A",
+  [`blue-linux-x64-${appVersion}.deb`]: "DEB-A",
 };
 
 function run(args) {
@@ -40,7 +41,7 @@ function validate() {
     "--manifest",
     manifestPath,
     "--asset-mode",
-    "bundles",
+    "packages",
     "--require-verified",
     "--app-version",
     appVersion,
@@ -52,7 +53,7 @@ function validate() {
 }
 
 try {
-  for (const [name, contents] of Object.entries(bundleFiles)) {
+  for (const [name, contents] of Object.entries(packageFiles)) {
     writeFileSync(join(fixtureDir, name), contents);
   }
 
@@ -65,7 +66,7 @@ try {
     "--checksums-out",
     checksumPath,
     "--asset-mode",
-    "bundles",
+    "packages",
     "--verification-status",
     "verified",
     "--app-version",
@@ -75,16 +76,27 @@ try {
   ]);
   assert(
     generated.status === 0,
-    `bundle manifest generation failed:\n${generated.stderr}`,
+    `package manifest generation failed:\n${generated.stderr}`,
   );
 
   const valid = validate();
   assert(
     valid.status === 0,
-    `valid bundle manifest was rejected:\n${valid.stderr}`,
+    `valid package manifest was rejected:\n${valid.stderr}`,
   );
 
   const manifest = JSON.parse(readFileSync(manifestPath, "utf-8"));
+  assert(
+    manifest.targets.length === 4,
+    `native package manifest must contain four entries, found ${manifest.targets.length}`,
+  );
+  assert(
+    manifest.targets
+      .map((target) => target.format)
+      .sort()
+      .join(",") === "AppImage,DMG,Deb,NSIS",
+    "native package manifest must describe the DMG, NSIS, AppImage, and Deb assets",
+  );
   assert(
     manifest.targets.every(
       (target) => target.verificationStatus === "verified",
@@ -98,43 +110,29 @@ try {
     "manifest paths must be portable file names",
   );
 
-  const macBundlePath = join(fixtureDir, `blue-macos-arm64-${appVersion}.zip`);
-  writeFileSync(macBundlePath, "MAC-B");
+  const macPackagePath = join(fixtureDir, `blue-macos-arm64-${appVersion}.dmg`);
+  writeFileSync(macPackagePath, "MAC-B");
   const tampered = validate();
-  assert(tampered.status === 1, "tampered bundle must fail validation");
+  assert(tampered.status === 1, "tampered package must fail validation");
   assert(
     tampered.stderr.includes("sha256 does not match"),
-    "tampered bundle failure must identify checksum mismatch",
+    "tampered package failure must identify checksum mismatch",
   );
   writeFileSync(
-    macBundlePath,
-    bundleFiles[`blue-macos-arm64-${appVersion}.zip`],
+    macPackagePath,
+    packageFiles[`blue-macos-arm64-${appVersion}.dmg`],
   );
 
   manifest.targets[0].verificationStatus = "pending";
   writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
   const pending = validate();
-  assert(pending.status === 1, "pending bundle must fail stable validation");
+  assert(pending.status === 1, "pending package must fail stable validation");
   assert(
     pending.stderr.includes('verificationStatus must be "verified"'),
     "pending status failure must be actionable",
   );
   manifest.targets[0].verificationStatus = "verified";
   writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
-
-  const originalMacPath = manifest.targets[0].path;
-  manifest.targets[0].path = `blue-windows-x64-${appVersion}.zip`;
-  writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
-  const mismatchedPath = validate();
-  assert(
-    mismatchedPath.status === 1,
-    "bundle assigned to the wrong target must fail validation",
-  );
-  assert(
-    mismatchedPath.stderr.includes("required stable ZIP name"),
-    "wrong-target bundle failure must identify the filename mismatch",
-  );
-  manifest.targets[0].path = originalMacPath;
 
   manifest.targets[0].arch = "x64";
   writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
@@ -150,18 +148,62 @@ try {
   manifest.targets[0].arch = "arm64";
   writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
 
+  const debTarget = manifest.targets.find((target) => target.format === "Deb");
+  assert(debTarget, "generated package manifest must include a Debian target");
+  manifest.targets.push({ ...debTarget });
+  writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
+  const duplicateFormat = validate();
+  assert(
+    duplicateFormat.status === 1,
+    "duplicate target formats must fail validation",
+  );
+  assert(
+    duplicateFormat.stderr.includes("Duplicate target format entries"),
+    "duplicate target failure must identify the repeated format",
+  );
+  manifest.targets.pop();
+  writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
+
+  const debPackagePath = join(
+    fixtureDir,
+    `blue-linux-x64-${appVersion}.deb`,
+  );
+  rmSync(debPackagePath);
+  const missingDeb = validate();
+  assert(missingDeb.status === 1, "missing Debian package must fail validation");
+  assert(
+    missingDeb.stderr.includes("path is missing or unreachable"),
+    "missing Debian package failure must identify the missing path",
+  );
   writeFileSync(
-    join(fixtureDir, `blue-unexpected-x64-${appVersion}.zip`),
-    "EXTRA",
+    debPackagePath,
+    packageFiles[`blue-linux-x64-${appVersion}.deb`],
   );
-  const unexpected = validate();
+
+  const duplicateDebPath = join(fixtureDir, `Blue_${appVersion}_amd64.deb`);
+  writeFileSync(duplicateDebPath, "DEB-B");
+  const duplicateGeneration = run([
+    "generate",
+    "--out",
+    join(fixtureDir, "duplicate-manifest.json"),
+    "--release-dir",
+    fixtureDir,
+    "--asset-mode",
+    "packages",
+    "--verification-status",
+    "verified",
+    "--app-version",
+    appVersion,
+    "--source-revision",
+    sourceRevision,
+  ]);
   assert(
-    unexpected.status === 1,
-    "unexpected bundle must fail stable validation",
+    duplicateGeneration.status === 1,
+    "duplicate Debian packages must fail manifest generation",
   );
   assert(
-    unexpected.stderr.includes("Unexpected release ZIP"),
-    "unexpected bundle failure must name the extra asset",
+    duplicateGeneration.stderr.includes("Duplicate linux-x64/Deb assets"),
+    `duplicate Debian generation failure must identify the repeated package format:\n${duplicateGeneration.stderr}`,
   );
 
   process.stderr.write(

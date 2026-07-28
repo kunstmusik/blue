@@ -30,17 +30,18 @@ This guide is the end-to-end acceptance procedure for the release implementation
 | --------------- | ----------------------------- | ------------------------------------- | ---------------------------------------------------------------------- |
 | PR validation   | `.github/workflows/pr.yml`    | `pull_request` → develop, main        | Build + test + lint + package; installer artifacts uploaded, no release |
 | Develop build   | `.github/workflows/develop.yml` | `push` → develop                    | Build + test + lint + package; installer artifacts uploaded, no release |
-| Stable release  | `.github/workflows/release.yml` | `vX.Y.Z` tag push                  | Complete unsigned ZIP set published to GitHub Releases                 |
+| Stable release  | `.github/workflows/release.yml` | `vX.Y.Z` tag push                  | Complete unsigned native package set published to GitHub Releases      |
 
 ### Artifact Naming
 
-Primary artifacts follow `blue-{os}-{cputype}-{versionInfo}.zip`:
+Primary artifacts follow `blue-{os}-{cputype}-{versionInfo}.{ext}`:
 
-- PR builds: `blue-macos-arm64-0.0.1-pr42.zip`
-- Develop builds: `blue-macos-arm64-0.0.1-abc1234.zip`
-- Stable builds and GitHub Release assets: `blue-macos-arm64-0.0.1.zip`
+- macOS: `blue-macos-arm64-{versionInfo}.dmg`
+- Windows: `blue-windows-x64-{versionInfo}.exe`
+- Linux AppImage: `blue-linux-x64-{versionInfo}.AppImage`
+- Linux Debian package: `blue-linux-x64-{versionInfo}.deb`
 
-Each artifact ZIP contains only the native installer file(s). The Linux ZIP contains both the AppImage and Debian package.
+`{versionInfo}` is `{version}-pr{number}` for PR builds, `{version}-{short-sha}` for develop builds, and `{version}` for stable builds. Each native installer is uploaded directly; the Linux AppImage and Debian package are separate artifacts.
 
 ## Local Unsigned Package
 
@@ -86,9 +87,9 @@ Stable releases are intentionally unsigned because the signing programs and keys
 Expected outcome:
 
 - The release is not public until all target assets and checksums pass validation.
-- The Release contains exactly `blue-macos-arm64-X.Y.Z.zip`, `blue-windows-x64-X.Y.Z.zip`, and `blue-linux-x64-X.Y.Z.zip`, using the same filenames as the stable Actions artifacts.
+- The Release contains exactly `blue-macos-arm64-X.Y.Z.dmg`, `blue-windows-x64-X.Y.Z.exe`, `blue-linux-x64-X.Y.Z.AppImage`, and `blue-linux-x64-X.Y.Z.deb`, using the same filenames as the stable Actions artifacts.
 - The release body includes source SHA, unsigned status, installation instructions, runtime prerequisites, and an auto-generated changelog (merged PR titles + new contributors).
-- Every ZIP matches the published checksum and verified manifest.
+- Every native package matches the published checksum and verified manifest.
 
 ## Credentials
 
@@ -115,7 +116,15 @@ Expected outcome:
 - Missing target asset or failed platform verification: fix the source/workflow defect, create a new version and tag, and release again. Never overwrite a published version.
 - Published artifact defect: mark the release as withdrawn, document the affected platforms, and publish a new version. Do not replace assets under an existing version.
 
-## Convergence Verification Record — 2026-07-26
+## Direct Native Artifact Verification
+
+- Local workflow-contract validation passes all 69 checks.
+- Local native-package manifest generation and validation passes for the DMG, NSIS installer, AppImage, and Debian package.
+- Hosted PR, develop, and stable-release evidence for the revised direct-artifact contract remains pending.
+
+## Historical Convergence Verification Record — 2026-07-26
+
+The following record verified the superseded three-ZIP contract and is retained as historical evidence:
 
 ```text
 Release-workflow contract validation

@@ -23,7 +23,7 @@ SPEC 062 closed on 2026-07-26. Use [tasks.md](./tasks.md) as the completed imple
 - Package smoke checks must not require Csound, `blue-engine`, or an installed Java runtime. Those are intentionally external end-user prerequisites for this feature.
 - Pull-request, develop, and stable packages are unsigned. Develop builds remain GitHub Actions artifacts and do not create prereleases. Never use `pull_request_target` or grant a pull-request job access to the protected `release` Environment.
 - Hosted workflows target macOS arm64, Windows x64, and Linux x64. macOS x64 is intentionally local-only.
-- Every primary artifact ends in `.zip` and follows `blue-{os}-{cputype}-{versionInfo}.zip`; stable Actions artifacts and GitHub Release assets use identical filenames.
+- Every primary artifact follows `blue-{os}-{cputype}-{versionInfo}.{ext}` and retains its native package extension; Linux AppImage and Debian packages are separate, and stable Actions artifacts and GitHub Release assets use identical filenames.
 - Only a final stable-release promoter job may publish a GitHub Release. Platform jobs upload evidence; they never publish independently.
 
 ## Current Implementation Anchors
@@ -51,13 +51,15 @@ Use the exact value names and handling rules in [docs/release-guide.md](../../do
 
 ## Required Evidence
 
-The closeout evidence collected on 2026-07-26 includes:
+The historical closeout evidence collected on 2026-07-26 verified the superseded three-ZIP contract and includes:
 
 1. A clean local unsigned package and packaged-app smoke result on a supported host.
 2. A PR run with independent macOS arm64, Windows x64, and Linux x64 evidence, including artifacts on failure.
-3. A `develop` push whose source SHA is present in all three `.zip` Actions artifact names, which created no GitHub Release and used no production signing credentials.
-4. A protected test stable release showing the exact same three `.zip` filenames as its Actions artifacts, verified checksums and manifest, unsigned packages, and atomic final publication.
+3. A `develop` push whose source SHA was present in all three ZIP Actions artifact names, which created no GitHub Release and used no production signing credentials.
+4. A protected test stable release showing the same three historical ZIP filenames as its Actions artifacts, verified checksums and manifest, unsigned packages, and atomic final publication.
 5. Repository validation from the root: `pnpm build`, `pnpm test`, and `pnpm lint`.
+
+The direct-native-package revision has local workflow-contract and manifest coverage; hosted PR, develop, and stable-release evidence for the revised four-asset contract remains pending.
 
 ## Worktree Safety
 
