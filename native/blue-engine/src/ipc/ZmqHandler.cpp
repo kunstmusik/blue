@@ -479,7 +479,7 @@ const char* ZmqHandler::stopReasonToString(EngineStopReason stopReason) {
             return "stop-requested";
         case EngineStopReason::DESTROYED:
             return "destroyed";
-        case EngineStopReason::ERROR:
+        case EngineStopReason::FAILED:
             return "error";
     }
 

@@ -39,7 +39,7 @@ jobs:
         include:
           - family: debian
             image: debian:bookworm-slim
-            install: apt-get update && apt-get install -y xvfb libgtk-3-0 libnss3 libasound2 libxss1
+            install: apt-get update && apt-get install -y xvfb libgtk-3-0 libnss3 libasound2 libxss1 libgbm1
           - family: arch
             image: archlinux:base
             install: pacman -Syu --noconfirm xorg-server-xvfb gtk3 nss alsa-lib libxss

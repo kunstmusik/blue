@@ -56,11 +56,11 @@ test('validates executable hash and permission', async () => {
   await writeFile(join(artifactDir, 'blue-engine'), bytes);
   await chmod(join(artifactDir, 'blue-engine'), 0o755);
   await writeFile(join(artifactDir, 'artifact.json'), JSON.stringify({ ...baseManifest, sha256 }));
-  const result = await verifyArtifact({ target, artifactDir, inspectBinary: false });
+  const result = await verifyArtifact({ target, artifactDir, ci: false, inspectBinary: false });
   assert.equal(result.manifest.sha256, sha256);
   await writeFile(join(artifactDir, 'blue-engine'), 'changed');
   await assert.rejects(
-    verifyArtifact({ target, artifactDir, inspectBinary: false }),
+    verifyArtifact({ target, artifactDir, ci: false, inspectBinary: false }),
     /BLUE_ENGINE_HASH_MISMATCH/,
   );
 });

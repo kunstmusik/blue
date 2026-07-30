@@ -190,7 +190,7 @@ void CsoundEngine::transitionState(EngineLifecycleState state,
     std::lock_guard<std::mutex> lock(stateMutex_);
     state_ = state;
     stopReason_ = stopReason;
-    if (!lastError.empty() || stopReason == EngineStopReason::ERROR) {
+    if (!lastError.empty() || stopReason == EngineStopReason::FAILED) {
       lastError_ = lastError;
     } else if (state == EngineLifecycleState::RUNNING ||
                state == EngineLifecycleState::READY ||
@@ -851,7 +851,7 @@ void CsoundEngine::performThread() {
 
     if (result != 0) {
       if (result < 0) {
-        stopReason = EngineStopReason::ERROR;
+        stopReason = EngineStopReason::FAILED;
         terminalError = "Csound performance failed";
       } else {
         stopReason = EngineStopReason::COMPLETED;

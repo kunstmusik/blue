@@ -30,7 +30,7 @@ enum class EngineStopReason : uint8_t {
   COMPLETED = 1,
   STOP_REQUESTED = 2,
   DESTROYED = 3,
-  ERROR = 4,
+  FAILED = 4,
 };
 
 struct EngineStateSnapshot {
