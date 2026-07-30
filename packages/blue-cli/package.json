@@ -28,7 +28,7 @@
   "license": "GPL-2.0-or-later",
   "repository": {
     "type": "git",
-    "url": "https://github.com/stevenyi/blue-electron"
+    "url": "https://github.com/kunstmusik/blue-electron-poc"
   },
   "devDependencies": {
     "commander": "^14.0.3",

@@ -2,7 +2,7 @@
 
 > **Object composition environment for Csound** — ported from the NetBeans RCP Java application to a TypeScript monorepo.
 
-[![Status](https://img.shields.io/badge/status-alpha-orange)](https://github.com/stevenyi/blue-electron)
+[![Status](https://img.shields.io/badge/status-alpha-orange)](https://github.com/kunstmusik/blue)
 
 Blue is a visual composition environment for [Csound](https://csound.com/) that lets you create, edit, and render complex music projects. This project ports the **data model and business logic** from the original Java/NetBeans application to TypeScript, with plans for both an Electron desktop app and a future browser-based UI.
 
@@ -128,8 +128,8 @@ corepack prepare pnpm@latest --activate
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/stevenyi/blue-electron.git
-cd blue-electron
+git clone https://github.com/kunstmusik/blue-electron-poc.git
+cd blue-electron-poc
 
 # 2. Install dependencies
 pnpm install
@@ -386,4 +386,4 @@ See [LICENSE](LICENSE) for details.
 
 ---
 
-*This project ports Blue from Java/NetBeans RCP to TypeScript. The original Blue Java application is at [~/work/nbprojects/blue](https://github.com/stevenyi/blue).*
+*This project ports Blue from Java/NetBeans RCP to TypeScript. The original Blue Java application is at [https://github.com/kunstmusik/blue](https://github.com/kunstmusik/blue).*
