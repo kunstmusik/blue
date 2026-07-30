@@ -1,44 +1,73 @@
 # Project Status - blue-electron
 
-**Date**: 2026-07-10
-**Branch**: `055-window-float-dock-parity`
-**Current Focus**: Spec 055 Closed
+**Date**: 2026-07-29
+**Branch**: `064-bundle-blue-engine`
+**Current Focus**: Spec 064 Closed
 
 ## Summary
 
-Spec 055 is closed. The Electron workbench now matches the relevant Java Blue and NetBeans window-system behavior for floating and docking editor and auxiliary panels. The user completed the manual Electron parity pass after the final fixes for startup restore, close/reopen placement restoration, Dockview auxiliary cleanup, and auxiliary re-dock sizing.
+Spec 064 is closed. Blue Engine is now ordinary source in the monorepo, built
+through the root pnpm graph, and bundled with development and packaged
+applications. Csound 7 remains runtime-loaded so Blue can start, open, edit,
+and save projects without Csound or a system-installed Blue Engine.
 
 Key outcomes:
-- **Separate Float windows**: Float and Float Group use Dockview popout groups hosted as Electron windows, preserving the shared renderer session and project state.
-- **Dock back**: Dock and Dock Group restore the recorded editor group, auxiliary edge, ordering, minimized state, and controlled size. Auxiliary docking removes Dockview's hidden popout reference before rebuilding the edge, preventing empty splitters and stale panes.
-- **Context-menu and Window-menu parity**: Context menus expose Java Blue-style enabled and disabled commands, while the Window menu reveals the requested panel or restores its saved placement.
-- **Persistence and reset**: The version-7 workbench envelope persists floating origins and closed-panel origins. Reset Windows returns to the Java Blue-inspired default state without reopening disabled-by-default utilities.
-- **Close and reopen restoration**: Closing a panel retains its valid last placement so reopening it from the menu restores the correct mode and position instead of applying a generic default.
+
+- **Atomic source and build**: `native/blue-engine` is a private pnpm workspace
+  package with pinned vcpkg inputs and a deterministic verified artifact.
+- **Static native dependencies**: ZeroMQ and libsodium are linked into the
+  engine; only documented operating-system runtimes remain load-time
+  dependencies. Csound is the deliberate runtime-loaded exception.
+- **Deterministic resolution**: packaged applications use
+  `resources/assets/engine`, while
+  `pnpm --filter @blue/app run dev` uses the verified current-checkout artifact
+  without searching `PATH`.
+- **Recoverable compatibility**: a side-effect-free probe and protocol
+  capability handshake report missing, unsupported, or mismatched engine and
+  Csound states without mutating the project.
+- **Cross-platform packaging**: macOS arm64, Windows x64, and Linux x64 package
+  jobs pass; one AppImage also passes Debian Bookworm, Arch Linux, and Fedora
+  41 direct/extracted verification without FUSE 2.
 
 ## Current Artifacts
 
-- `.specify/feature.json` points to `specs/055-window-float-dock-parity`.
-- `specs/055-window-float-dock-parity/spec.md` is complete.
-- `specs/055-window-float-dock-parity/plan.md`, `research.md`, `data-model.md`, and `contracts/` record the design and Java/NetBeans parity decisions.
-- `specs/055-window-float-dock-parity/tasks.md` contains all implementation tasks, including the final auxiliary re-dock regression fix, marked complete.
-- `specs/055-window-float-dock-parity/quickstart.md` and `parity-review.md` record the completed automated and manual verification.
-- `AGENTS.md` has the Spec 055 technology and persistence context.
+- `.specify/feature.json` points to `specs/064-bundle-blue-engine`.
+- `specs/064-bundle-blue-engine/spec.md` is closed.
+- `specs/064-bundle-blue-engine/plan.md`, `research.md`, `data-model.md`, and
+  `contracts/` record the implemented design and runtime boundaries.
+- `specs/064-bundle-blue-engine/tasks.md` has all 60 tasks marked complete.
+- `specs/064-bundle-blue-engine/quickstart.md` records local, hosted
+  cross-platform, AppImage, and scoped release-gate evidence.
+- `AGENTS.md`, `README.md`, `docs/release-guide.md`, and
+  `native/blue-engine/README.md` describe monorepo ownership and release use.
 
 ## Validation Performed
 
-- `pnpm --filter @blue/app test` - 1701 passed, 2 skipped (154 test files).
-- `pnpm --filter @blue/app build` - passed for Java runtime, `@blue/data`, main, preload, and renderer targets.
-- `pnpm lint` - clean.
-- `git diff --check` - clean, with no whitespace errors.
-- Focused workbench, floating-origin, menu-command, window-manager, layout-contract, and auxiliary-layout regression suites pass.
-- The user completed the manual Electron parity pass on 2026-07-10, covering Float, Float Group, Dock, Dock Group, close/reopen restoration, restart persistence, Reset Windows, tab content refresh, and auxiliary re-dock cleanup/sizing.
+- Root `pnpm build`, test, lint, verify, package-input, and release-manifest
+  gates pass.
+- Native Release and Debug builds pass all non-Csound CTest cases; profiling
+  is verified as fully compiled out of the default build.
+- macOS arm64 Csound 7 probe, null-audio integration, packaged no-Csound
+  project safety, static dependency closure, and shared-memory boundary checks
+  pass.
+- [PR run 30510157369](https://github.com/kunstmusik/blue-electron-poc/actions/runs/30510157369)
+  passes macOS arm64, Windows x64, and Linux x64 build/test/package/smoke jobs
+  at `0627b172eb0962b9455c2c61a7cb0c2030d25df7`.
+- [AppImage Compatibility run 30510157344](https://github.com/kunstmusik/blue-electron-poc/actions/runs/30510157344)
+  passes Debian, Arch, and Fedora jobs for the same Linux artifact.
 
-## Intentional Deferrals
+## Release Gates
 
-- Move, Move Group, Size Group, and Clone remain visible but disabled where Java Blue exposes the commands without an implemented renderer equivalent.
-- New Document Tab Group and Collapse Document Tab Group are implemented for editor groups. Arbitrary Move/Size submenu behavior should be a separate follow-up specification.
-- Java Blue does not expose a separate `Dock to Editor` or `New Window` command in the relevant tab menu, so those commands remain absent.
+- Current PR, develop, and stable workflows intentionally produce unsigned
+  artifacts. If signing is enabled in a future release, validate the nested
+  engine entitlement in the signed/notarized macOS package.
+- Run clean-machine Csound 7 playback checks on matching Windows and Linux
+  release candidates before announcing a stable release.
+- macOS x64 remains a future matrix addition; the source, triplet, and
+  packaging layout support adding it without restructuring.
 
 ## Next Recommended Step
 
-Spec 055 is complete. Any expansion of interactive Move/Size Group behavior or broader multi-window workflows should start as a new specification.
+Merge Spec 064 after review. Treat signing/notarization and clean-machine
+release playback as release-candidate validation, not remaining feature
+implementation.

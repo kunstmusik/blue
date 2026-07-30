@@ -374,7 +374,7 @@ This project uses [Spec Kit](https://github.com/github/spec-kit) for structured 
 - **Playback parity** — remaining Java/TypeScript differences in complex projects
 - **Score/editor features** — additional SoundObject types, remaining data-model gaps, and editor/UI work
 - **Electron app UX** — project workflow, transport, diagnostics, and polish
-- **Cross-repo integration** — continued coordination with `blue-engine` for runtime behavior and tooling
+- **Native engine integration** — continued cross-platform runtime, packaging, and Csound compatibility work for the monorepo-owned `blue-engine`
 
 ---
 

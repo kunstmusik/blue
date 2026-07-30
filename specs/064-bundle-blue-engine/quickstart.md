@@ -1,6 +1,6 @@
 # Quickstart: Bundled Blue Engine Integration
 
-This guide defines the end-to-end validation path for feature 064. Commands describe the completed feature and become runnable as the implementation tasks land.
+This guide defines the end-to-end validation path for the completed feature 064. The commands are runnable from the feature branch with the listed prerequisites.
 
 ## Prerequisites
 
@@ -194,9 +194,11 @@ pnpm verify
 pnpm verify:package-inputs
 ```
 
-Release completion additionally requires dependency-closure evidence for all three platforms and signed/notarized macOS helper validation when signing is enabled.
+Feature closeout requires dependency-closure evidence for all three platforms. A
+future signed release additionally requires signed/notarized macOS helper
+validation when signing is enabled.
 
-## Validation Evidence — 2026-07-28 through 2026-07-29
+## Validation Evidence — 2026-07-28 through 2026-07-30 UTC
 
 Local host: macOS arm64, feature branch `064-bundle-blue-engine`. The imported engine checkpoint is
 `6d59daa180cd6474d4fe181918539695d5512101`.
@@ -220,18 +222,25 @@ Local host: macOS arm64, feature branch `064-bundle-blue-engine`. The imported e
 | Incompatible engine safety | Passed; protocol-99 fixture rejected before playback while the project remained open |
 | Client/application tests | Passed: engine-client 32 tests; complete application suite 2,270 passed and 2 pre-existing skips |
 | Repository gates | Passed: `pnpm test`, `pnpm lint`, `pnpm build`, `pnpm verify`, package preflight, release workflow/manifest validation, and `git diff --check` |
+| Hosted platform matrix | Passed on commit `0627b172eb0962b9455c2c61a7cb0c2030d25df7`: macOS arm64, Windows x64, and Linux x64 built, tested, inspected, packaged, and passed the installed no-Csound/project smoke |
+| Hosted AppImage matrix | Passed for the same Linux AppImage on Debian Bookworm, Arch Linux, and Fedora 41, including direct and extracted `AppRun` without FUSE 2 |
 
-Platform-scoped evidence:
+Hosted closeout evidence:
 
-- Windows x64 and Linux x64 binaries cannot be produced or launched on the
-  local macOS host. The PR and stable workflows now build each native target,
-  run artifact architecture/dependency checks, run installed no-Csound/project
-  smokes, and block upload on failure.
-- AppImage direct/extracted execution cannot run on macOS. The dedicated
-  `appimage-compat.yml` workflow builds one Ubuntu 22.04/glibc-2.35 artifact and
-  consumes that same AppImage on Debian-, Arch-, and Fedora-family containers.
-  It rejects `libfuse.so.2`, checks the bundled engine, and runs both direct and
-  extracted `AppRun` verification.
+- [PR run 30510157369](https://github.com/kunstmusik/blue-electron-poc/actions/runs/30510157369)
+  passed the macOS arm64, Windows x64, and Linux x64 jobs. Each job used the
+  root build graph, native architecture/dependency inspection, full workspace
+  tests and lint, platform packaging, and packaged no-Csound/project
+  verification.
+- [AppImage Compatibility run 30510157344](https://github.com/kunstmusik/blue-electron-poc/actions/runs/30510157344)
+  built one Ubuntu 22.04/glibc-2.35 AppImage and passed that same artifact on
+  Debian Bookworm, Arch Linux, and Fedora 41. The verifier rejected legacy FUSE
+  2 dependence, located the bundled engine, and exercised direct and extracted
+  `AppRun`.
+- Actual Csound 7 null-audio integration passed on macOS arm64. Cross-platform
+  loader candidate, version, and failure behavior is covered by native tests;
+  clean-machine Windows and Linux playback remains a release-candidate manual
+  gate.
 - This local package is intentionally unsigned. The nested-engine shape was
   verified, and the signing hook applies
   `entitlements.blue-engine.mac.plist` only when

@@ -2,7 +2,7 @@
 
 **Feature Branch**: `064-bundle-blue-engine`
 **Created**: 2026-07-28
-**Status**: Implemented; cross-platform CI verification pending
+**Status**: Feature implementation closed; cross-platform CI verified; release-candidate checks documented
 **Input**: Bring the separately maintained Blue Engine source into the Blue Electron monorepo, build and package it with the application on macOS and Windows with Linux support, statically link its build-time native dependencies, and continue loading Csound at runtime so the application can open without Csound installed.
 
 ## User Scenarios & Testing *(mandatory)*
@@ -148,6 +148,14 @@ A developer or advanced user can inspect engine and Csound compatibility before 
 - **SC-009**: Realtime playback and Blue Live can run simultaneous isolated engine processes without cross-contaminating commands, output, or shutdown behavior.
 - **SC-010**: Release packaging fails before artifact publication when the engine is missing, incorrectly linked, non-executable, stale, or built for the wrong architecture.
 - **SC-011**: With all system-installed `blue-engine` executables removed from `PATH`, the development application started by `pnpm --filter @blue/app run dev` resolves the workspace artifact and passes its engine discovery/probe test on every supported development platform.
+
+**Closeout evidence (2026-07-30 UTC)**: Automated feature evidence covers the
+root build, all three package targets, dependency closure, no-Csound project
+safety, protocol mismatch, development resolution, concurrent sessions, and
+the Debian/Arch/Fedora AppImage matrix. Actual Csound 7 null-audio integration
+passed on macOS arm64. SC-005 clean-machine Windows/Linux playback and any
+future signed/notarized macOS validation remain release-candidate gates and
+must pass before those artifacts are announced as a stable release.
 
 ## Assumptions
 

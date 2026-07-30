@@ -2,6 +2,10 @@
 
 **Branch**: `064-bundle-blue-engine` | **Date**: 2026-07-28 | **Spec**: [spec.md](spec.md)
 
+**Status**: Implemented and verified on macOS arm64, Windows x64, and Linux x64 CI at
+`0627b172eb0962b9455c2c61a7cb0c2030d25df7`; credentialed signing and clean-machine
+release playback remain release-candidate gates.
+
 **Input**: Feature specification from `/specs/064-bundle-blue-engine/spec.md`
 
 ## Summary
@@ -46,7 +50,7 @@ The design adds a versioned engine capability handshake and a side-effect-free J
 - **Java and project compatibility — PASS**: [quickstart.md](quickstart.md) includes startup/open/save validation without Csound and a supported-Csound playback smoke; no data model or contract writes runtime state to `.blue` XML.
 - **Canonical ownership and contracts — PASS**: [data-model.md](data-model.md) names the owner and lifetime of every new entity. Artifact, probe, and selection contracts define validation and failure behavior, including legacy `enginePath: "blue-engine"` handling.
 - **Runtime and engine isolation — PASS**: The version handshake is implemented in the C++ protocol and `@blue/engine-client`; main invokes the CLI probe and owns the executable path; the settings renderer only submits typed requests.
-- **Verification evidence — PASS**: [engine-artifact-contract.md](contracts/engine-artifact-contract.md) defines release evidence and [quickstart.md](quickstart.md) provides deterministic local/package checks. CI remains the authority for cross-platform linkage, signing, and Linux-family evidence.
+- **Verification evidence — PASS**: [engine-artifact-contract.md](contracts/engine-artifact-contract.md) defines release evidence and [quickstart.md](quickstart.md) records deterministic local/package checks plus green hosted linkage and Linux-family evidence. Credentialed signing remains a release-candidate gate.
 
 No constitution violations require an exception.
 

@@ -6,6 +6,10 @@
 
 **Verification**: The constitution and plan require regression-first coverage for runtime, protocol, IPC, packaging, settings, project-preservation, and cross-platform behavior. Complete the listed verification task before its paired implementation when the harness can demonstrate the missing behavior.
 
+**Status**: Complete — T001 through T060 are implemented. Dated local and hosted
+evidence, together with credential-gated release exceptions, is recorded in
+[quickstart.md](quickstart.md).
+
 **Organization**: Tasks are grouped by user story so each priority is independently testable. Repository-relative paths are rooted at `/Users/stevenyi/work/blue-electron`.
 
 ## Format: `[ID] [P?] [Story] Description`
@@ -123,9 +127,9 @@
 - [X] T042 [US3] Add Linux versioned Csound SONAME search, explicit static native triplet flags, and the supported glibc build baseline in `native/blue-engine/src/csound/CsoundLoader.cpp`, `native/blue-engine/triplets/blue-x64-linux.cmake`, and `native/blue-engine/README.md`
 - [X] T043 [P] [US3] Register the nested resource executable for signing and add per-file/custom macOS signing that applies the library-validation exception only to Blue Engine in `packages/blue-app/build/entitlements.blue-engine.mac.plist`, `packages/blue-app/build/entitlements.mac.plist`, `packages/blue-app/scripts/sign-blue-engine.mjs`, and `packages/blue-app/electron-builder.yml`
 - [X] T044 [US3] Select electron-builder `toolsets.appimage: "1.0.3"`, keep exactly one staged engine, and wire the AppImage verifier in `packages/blue-app/electron-builder.yml` and `packages/blue-app/package.json`
-- [X] T045 [US3] Run platform-specific native linkage/architecture verification and packaged no-Csound/Csound smoke checks before artifact upload in `.github/workflows/pr.yml` and `.github/workflows/release.yml`
+- [X] T045 [US3] Run platform-specific native linkage/architecture verification and packaged no-Csound/project smoke checks before artifact upload, retaining actual Csound 7 playback as a clean-machine release-candidate gate, in `.github/workflows/pr.yml` and `.github/workflows/release.yml`
 - [X] T046 [US3] Add Debian-, Arch-, and Fedora-family AppImage jobs that consume the same Linux artifact and publish diagnostic evidence in `.github/workflows/appimage-compat.yml`
-- [X] T047 [US3] Execute or collect the macOS arm64, Windows x64, Linux dependency-closure, signed-helper-shape, AppImage direct/extracted, and supported-Csound matrix and append dated evidence or scoped signing exceptions to `specs/064-bundle-blue-engine/quickstart.md`
+- [X] T047 [US3] Collect macOS arm64, Windows x64, Linux dependency-closure, signed-helper-shape, AppImage direct/extracted, and macOS supported-Csound evidence, and append dated evidence plus scoped signing and clean-machine Windows/Linux playback gates to `specs/064-bundle-blue-engine/quickstart.md`
 
 **Checkpoint**: The three release targets contain a verified static-dependency engine, and the Linux AppImage is demonstrably usable outside Debian-family distributions without FUSE 2.
 

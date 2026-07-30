@@ -2,6 +2,7 @@
 
 **Feature**: `064-bundle-blue-engine`
 **Date**: 2026-07-28
+**Outcome**: Adopted and implemented; hosted cross-platform evidence is recorded in [quickstart.md](quickstart.md).
 
 ## Executive Decision
 
