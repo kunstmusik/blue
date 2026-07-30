@@ -9,6 +9,7 @@ import type {
   BlueLiveNoteTriggerRequest,
   BlueLiveNoteTriggerResult,
 } from '../shared/project-editor';
+import type { EngineRuntimeService } from './engine-runtime';
 
 export type BlueLiveEngineStatus = 'idle' | 'starting' | 'running' | 'stopping' | 'stopped' | 'error';
 
@@ -33,6 +34,7 @@ export class BlueLiveEngineSession {
   private bridge: EngineBridge | null = null;
   private mainWindow: BrowserWindow;
   private enginePath: string;
+  private readonly engineRuntime: EngineRuntimeService | undefined;
   private port: number;
   private pubPort: number;
   private outputCallback: EngineOutputCallback | null = null;
@@ -46,11 +48,18 @@ export class BlueLiveEngineSession {
   private pendingPolledTerminalState: PendingTerminalStateCandidate | null = null;
   private cleanupPromise: Promise<void> | null = null;
 
-  constructor(mainWindow: BrowserWindow, enginePath?: string, port = 5560, pubPort = 5561) {
+  constructor(
+    mainWindow: BrowserWindow,
+    enginePath?: string,
+    port = 5560,
+    pubPort = 5561,
+    engineRuntime?: EngineRuntimeService,
+  ) {
     this.mainWindow = mainWindow;
     this.enginePath = enginePath || 'blue-engine';
     this.port = port;
     this.pubPort = pubPort;
+    this.engineRuntime = engineRuntime;
   }
 
   private getSnapshot(): BlueLiveStatusSnapshot {
@@ -274,7 +283,14 @@ export class BlueLiveEngineSession {
         'stdout',
       );
 
-      this.bridge = new EngineBridge(this.mainWindow, this.enginePath, this.port, this.pubPort, 'blue-live');
+      this.bridge = new EngineBridge(
+        this.mainWindow,
+        this.enginePath,
+        this.port,
+        this.pubPort,
+        'blue-live',
+        this.engineRuntime,
+      );
       this.bridge.setWorkingDirectory(this.projectDirectory);
 
       this.bridge.setOutputCallback((text, type) => {

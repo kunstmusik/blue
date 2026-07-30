@@ -5,6 +5,13 @@
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
   "types": "dist/cjs/index.d.ts",
+  "typesVersions": {
+    "*": {
+      "capabilities": [
+        "dist/cjs/capabilities.d.ts"
+      ]
+    }
+  },
   "exports": {
     ".": {
       "import": {
@@ -14,6 +21,16 @@
       "require": {
         "types": "./dist/cjs/index.d.ts",
         "default": "./dist/cjs/index.js"
+      }
+    },
+    "./capabilities": {
+      "import": {
+        "types": "./dist/esm/capabilities.d.ts",
+        "default": "./dist/esm/capabilities.js"
+      },
+      "require": {
+        "types": "./dist/cjs/capabilities.d.ts",
+        "default": "./dist/cjs/capabilities.js"
       }
     }
   },

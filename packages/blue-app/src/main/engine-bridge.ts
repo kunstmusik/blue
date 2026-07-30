@@ -12,6 +12,7 @@ import { BrowserWindow, dialog } from 'electron';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
+import { createHash, randomUUID } from 'crypto';
 import type { Parameter, TempoMap } from '@blue/data';
 import { AutomationCurve, getEngineAutomationPoints } from '@blue/data';
 import type { PlaybackClockSnapshot } from '../shared/project-editor';
@@ -22,6 +23,7 @@ import {
   type EngineSessionKind,
 } from './engine-process-registry';
 import { broadcastToWorkbenchWindows } from './workbench-window-host';
+import type { EngineRuntimeService } from './engine-runtime';
 
 export interface AutomationTimingContext {
   renderStartTime: number;
@@ -71,7 +73,12 @@ function resolveEngineTransport(): EngineTransport {
   return process.platform === 'win32' ? 'tcp' : 'ipc';
 }
 
-function buildEngineEndpoints(transport: EngineTransport, port: number, pubPort: number, shmName: string): EngineEndpoints {
+export function buildEngineEndpoints(
+  transport: EngineTransport,
+  port: number,
+  pubPort: number,
+  shmName: string,
+): EngineEndpoints {
   if (transport === 'ipc') {
     const basePath = path.join(os.tmpdir(), shmName);
     return {
@@ -84,6 +91,17 @@ function buildEngineEndpoints(transport: EngineTransport, port: number, pubPort:
     controlEndpoint: `tcp://localhost:${port}`,
     pubEndpoint: `tcp://localhost:${pubPort}`,
   };
+}
+
+export function createEngineSharedMemoryName(
+  kind: EngineSessionKind,
+  ownerPid = process.pid,
+  token: string = randomUUID(),
+): string {
+  const kindCode = kind === 'realtime' ? 'r' : 'l';
+  const compactPid = ownerPid.toString(36);
+  const compactToken = createHash('sha256').update(token).digest('hex').slice(0, 16);
+  return `be-${kindCode}-${compactPid}-${compactToken}`;
 }
 
 function isUnsupportedIpcEndpointError(stderr: string): boolean {
@@ -115,6 +133,7 @@ export class EngineBridge {
   private workingDirectory: string | null = null;
   private engineProcessRecordPath: string | null = null;
   private readonly engineSessionKind: EngineSessionKind;
+  private readonly engineRuntime: EngineRuntimeService | null;
   private readonly automationSyncIntervalMs = 33;
   private readonly pendingAutomationSyncs = new Map<string, PendingAutomationSync>();
   private readonly lastAutomationSyncAt = new Map<string, number>();
@@ -125,12 +144,14 @@ export class EngineBridge {
     port?: number,
     pubPort?: number,
     engineSessionKind: EngineSessionKind = 'realtime',
+    engineRuntime?: EngineRuntimeService,
   ) {
     this.mainWindow = mainWindow;
     this.enginePath = enginePath || 'blue-engine';
     this.port = port || 5555;
     this.pubPort = pubPort || this.port + 1;
     this.engineSessionKind = engineSessionKind;
+    this.engineRuntime = engineRuntime ?? null;
   }
 
   setOutputCallback(cb: EngineOutputCallback | null): void {
@@ -356,26 +377,11 @@ export class EngineBridge {
     return this.terminalCleanupPromise;
   }
 
-  /**
-   * Find the blue-engine binary. Checks common locations.
-   */
+  /** Resolve an explicit legacy constructor path without searching PATH. */
   private findEngine(): string | null {
-    if (fs.existsSync(this.enginePath)) {
+    if (path.isAbsolute(this.enginePath) && fs.existsSync(this.enginePath)) {
       return this.enginePath;
     }
-
-    const candidates = [
-      '/usr/local/bin/blue-engine',
-      '/opt/homebrew/bin/blue-engine',
-      path.join(process.env.HOME || '', '.local', 'bin', 'blue-engine'),
-    ];
-
-    for (const candidate of candidates) {
-      if (fs.existsSync(candidate)) {
-        return candidate;
-      }
-    }
-
     return null;
   }
 
@@ -394,19 +400,35 @@ export class EngineBridge {
     // Ensure no leftover process
     await this.killEngine();
 
-    const enginePath = this.findEngine();
+    let enginePath: string | null = null;
+    if (this.engineRuntime) {
+      const probeResult = await this.engineRuntime.probe();
+      if (!probeResult.ok || !probeResult.selection) {
+        await dialog.showErrorBox(
+          probeResult.errorCode === 'CSOUND_UNAVAILABLE'
+            ? 'Csound Is Not Available'
+            : 'Blue Engine Is Not Available',
+          probeResult.message,
+        );
+        return false;
+      }
+      enginePath = probeResult.selection.executablePath;
+      this.enginePath = enginePath;
+    } else {
+      enginePath = this.findEngine();
+    }
+
     if (!enginePath) {
       await dialog.showErrorBox(
         'blue-engine Not Found',
-        `Could not find the blue-engine binary.\n\n` +
-        `Searched: ${this.enginePath}, /usr/local/bin/blue-engine, /opt/homebrew/bin/blue-engine\n\n` +
-        `Please install blue-engine or set the engine path in preferences.`,
+        `Could not resolve an absolute Blue Engine path.\n\n` +
+        `Build the workspace engine or select an explicit external engine in Settings.`,
       );
       return false;
     }
 
     // Use unique port and shm name per instance to avoid stale shm collisions
-    const shmName = `blue-engine-${Date.now()}`;
+    const shmName = createEngineSharedMemoryName(this.engineSessionKind);
     const transport = resolveEngineTransport();
     const transportsToTry: EngineTransport[] = transport === 'ipc' ? ['ipc', 'tcp'] : ['tcp'];
     let lastError = '';

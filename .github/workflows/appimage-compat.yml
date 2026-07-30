@@ -1,0 +1,83 @@
+name: AppImage Compatibility
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [develop, main]
+    paths:
+      - 'native/blue-engine/**'
+      - 'packages/blue-app/**'
+      - '.github/actions/setup-blue-build/**'
+      - '.github/workflows/appimage-compat.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v5
+      - uses: ./.github/actions/setup-blue-build
+      - name: Build and verify Linux AppImage
+        run: |
+          pnpm --filter @blue/app package:linux-x64
+          xvfb-run --auto-servernum pnpm --filter @blue/app verify:appimage
+          cp packages/blue-app/release/Blue-*.AppImage Blue-linux-x64.AppImage
+      - uses: actions/upload-artifact@v7
+        with:
+          name: blue-appimage-compat
+          path: Blue-linux-x64.AppImage
+          if-no-files-found: error
+          retention-days: 7
+
+  test:
+    needs: build
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - family: debian
+            image: debian:bookworm-slim
+            install: apt-get update && apt-get install -y xvfb libgtk-3-0 libnss3 libasound2 libxss1
+          - family: arch
+            image: archlinux:base
+            install: pacman -Syu --noconfirm xorg-server-xvfb gtk3 nss alsa-lib libxss
+          - family: fedora
+            image: fedora:41
+            install: dnf install -y xorg-x11-server-Xvfb gtk3 nss alsa-lib libXScrnSaver
+    runs-on: ubuntu-22.04
+    container: ${{ matrix.image }}
+    steps:
+      - uses: actions/checkout@v5
+      - name: Install runtime libraries (${{ matrix.family }})
+        shell: bash
+        run: ${{ matrix.install }}
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - uses: actions/download-artifact@v8
+        with:
+          name: blue-appimage-compat
+          path: packages/blue-app/release
+      - name: Verify direct and extracted AppRun without FUSE 2
+        shell: bash
+        run: |
+          chmod +x packages/blue-app/release/Blue-linux-x64.AppImage
+          xvfb-run --auto-servernum node packages/blue-app/scripts/verify-appimage.mjs \
+            --appimage packages/blue-app/release/Blue-linux-x64.AppImage
+      - name: Record compatibility evidence
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo "family=${{ matrix.family }}"
+            echo "image=${{ matrix.image }}"
+            echo "revision=${GITHUB_SHA}"
+          } > appimage-${{ matrix.family }}.txt
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: appimage-${{ matrix.family }}-diagnostics
+          path: appimage-${{ matrix.family }}.txt
+          retention-days: 7

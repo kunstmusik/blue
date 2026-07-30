@@ -13,6 +13,8 @@
  */
 import * as fs from 'fs';
 import * as path from 'path';
+import { createHash } from 'crypto';
+import { spawnSync } from 'child_process';
 import {
   resolveJavaRuntimeArtifactPath,
   resolveJavaRuntimePythonLibraryPaths,
@@ -26,7 +28,8 @@ export type RuntimeAspect =
   | 'zeromq-native'
   | 'node-sqlite'
   | 'workspace-data'
-  | 'workspace-engine-client';
+  | 'workspace-engine-client'
+  | 'bundled-engine';
 
 /** Single aspect verification result. */
 export interface RuntimeVerificationResult {
@@ -51,13 +54,23 @@ export interface RuntimeVerificationContext extends JavaRuntimePathContext {
   resolveNodeSqlite?: () => string | null;
   /** Optional override for verifying zeromq's native .node binary. */
   resolveZeromqNative?: () => string | null;
+  /** Optional platform/architecture overrides for installed-layout tests. */
+  platform?: NodeJS.Platform;
+  arch?: string;
+  /** Optional process seam for the side-effect-free Csound probe. */
+  runBlueEngineProbe?: (
+    executablePath: string,
+    missingCsoundPath: string,
+  ) => { status: number | null; stdout: string; stderr: string };
 }
 
 export interface PackagedProjectVerificationContext {
   isPackaged: boolean;
   projectPath: string | null;
+  projectSavePath?: string | null;
   loadProject: (projectPath: string) => Promise<boolean>;
   getLoadedProject: () => { filePath: string | null; title: string } | null;
+  saveProjectCopy?: (projectSavePath: string) => Promise<boolean>;
 }
 
 export interface PackagedProjectVerificationResult {
@@ -232,6 +245,120 @@ function verifyNodeSqlite(
   });
 }
 
+export function verifyBundledEngine(
+  context: RuntimeVerificationContext,
+): RuntimeVerificationResult {
+  const platform = context.platform ?? process.platform;
+  const arch = context.arch ?? process.arch;
+  const executableName = platform === 'win32' ? 'blue-engine.exe' : 'blue-engine';
+  const engineRoot = path.join(context.resourcesPath ?? '', 'assets', 'engine');
+  const executablePath = path.join(engineRoot, executableName);
+  const manifestPath = path.join(engineRoot, 'artifact.json');
+  let entries: string[];
+  let manifest: {
+    schemaVersion?: number;
+    protocolVersion?: number;
+    platform?: string;
+    arch?: string;
+    executableName?: string;
+    sha256?: string;
+  };
+  try {
+    entries = fs.readdirSync(engineRoot).sort();
+    const expected = ['artifact.json', executableName].sort();
+    if (entries.length !== expected.length ||
+        entries.some((entry, index) => entry !== expected[index])) {
+      return {
+        aspect: 'bundled-engine',
+        ok: false,
+        code: 'BLUE_ENGINE_RESOURCE_CONTENTS',
+        message: `Expected exactly ${expected.join(', ')} in ${engineRoot}`,
+        detail: entries,
+      };
+    }
+    manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8')) as typeof manifest;
+    const stats = fs.statSync(executablePath);
+    if (!stats.isFile() || (platform !== 'win32' && (stats.mode & 0o111) === 0)) {
+      throw new Error('engine resource is not executable');
+    }
+  } catch (error) {
+    return {
+      aspect: 'bundled-engine',
+      ok: false,
+      code: 'BLUE_ENGINE_RESOURCE_MISSING',
+      message: `Bundled Blue Engine is missing or invalid at ${engineRoot}`,
+      detail: [error instanceof Error ? error.message : String(error)],
+    };
+  }
+  if (manifest.schemaVersion !== 1 ||
+      manifest.protocolVersion !== 1 ||
+      manifest.platform !== platform ||
+      manifest.arch !== arch ||
+      manifest.executableName !== executableName) {
+    return {
+      aspect: 'bundled-engine',
+      ok: false,
+      code: 'BLUE_ENGINE_RESOURCE_MISMATCH',
+      message: `Bundled Blue Engine metadata does not match ${platform}-${arch} protocol 1`,
+    };
+  }
+  const hash = createHash('sha256')
+    .update(fs.readFileSync(executablePath))
+    .digest('hex');
+  if (hash !== manifest.sha256) {
+    return {
+      aspect: 'bundled-engine',
+      ok: false,
+      code: 'BLUE_ENGINE_RESOURCE_HASH_MISMATCH',
+      message: 'Bundled Blue Engine does not match artifact.json',
+    };
+  }
+
+  const missingCsoundPath = path.join(engineRoot, '__blue_verify_missing_csound__');
+  const probe = context.runBlueEngineProbe
+    ? context.runBlueEngineProbe(executablePath, missingCsoundPath)
+    : (() => {
+        const result = spawnSync(
+          executablePath,
+          ['--probe-csound', '--json', '--csound-library', missingCsoundPath],
+          { encoding: 'utf8', timeout: 5000, maxBuffer: 256 * 1024, windowsHide: true },
+        );
+        return { status: result.status, stdout: result.stdout, stderr: result.stderr };
+      })();
+  try {
+    const report = JSON.parse(probe.stdout) as {
+      schemaVersion?: number;
+      ready?: boolean;
+      engine?: { protocolVersion?: number };
+      csound?: { status?: string };
+    };
+    if (probe.status !== 2 ||
+        report.schemaVersion !== 1 ||
+        report.ready !== false ||
+        report.engine?.protocolVersion !== 1 ||
+        report.csound?.status === 'ready') {
+      throw new Error(`unexpected probe status ${probe.status}`);
+    }
+  } catch (error) {
+    return {
+      aspect: 'bundled-engine',
+      ok: false,
+      code: 'BLUE_ENGINE_NO_CSOUND_PROBE_FAILED',
+      message: 'Bundled Blue Engine did not report missing Csound recoverably',
+      detail: [
+        error instanceof Error ? error.message : String(error),
+        probe.stderr.slice(0, 4096),
+      ],
+    };
+  }
+  return {
+    aspect: 'bundled-engine',
+    ok: true,
+    code: 'OK',
+    message: `Bundled Blue Engine: ${executablePath} (no-Csound probe is recoverable)`,
+  };
+}
+
 function safeResolveExternal(context: RuntimeVerificationContext, packageName: string): string | null {
   try {
     // Dynamic require resolution: this code runs in the Electron main
@@ -280,6 +407,7 @@ export function verifyPackagedRuntime(
   verifyNodeSqlite(context, results);
   verifyWorkspaceData(context, results);
   verifyWorkspaceEngineClient(context, results);
+  results.push(verifyBundledEngine(context));
 
   return {
     ok: results.every((result) => result.ok),
@@ -323,6 +451,20 @@ export async function verifyPackagedProject(
     }
 
     const title = project.title.trim() || path.basename(context.projectPath);
+    if (context.projectSavePath && context.saveProjectCopy) {
+      const saved = await context.saveProjectCopy(context.projectSavePath);
+      if (!saved) {
+        return failedProjectVerification(
+          'PROJECT_SAVE_FAILED',
+          `Project did not round-trip to the requested save path: ${context.projectSavePath}`,
+        );
+      }
+      return {
+        ok: true,
+        code: 'OK',
+        message: `Project loaded and saved: ${title} (${context.projectSavePath})`,
+      };
+    }
     return {
       ok: true,
       code: 'OK',

@@ -19,6 +19,7 @@
  *      the pinned runtime constraint (35.7.5) used for native-module rebuilds.
  *   5. Native ZeroMQ (.node) availability for the host runtime so packaging
  *      does not silently ship an app that cannot load `zeromq`.
+ *   6. The macOS nested-engine entitlement required for future signed builds.
  *
  * Exit codes:
  *   0 - all inputs are present and consistent.
@@ -26,7 +27,16 @@
  *       are written to stderr; no secret material is ever logged.
  */
 
-import { existsSync, readFileSync, statSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+import { execFileSync } from 'node:child_process';
+import { constants } from 'node:fs';
+import {
+  accessSync,
+  existsSync,
+  readFileSync,
+  readdirSync,
+  statSync,
+} from 'node:fs';
 import { createRequire } from 'node:module';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -36,6 +46,8 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const repoRoot = resolve(__dirname, '..');
 const appRoot = join(repoRoot, 'packages', 'blue-app');
+const engineStageRoot = join(appRoot, '.engine-stage');
+const engineProtocolVersion = 1;
 
 /** @typedef {{ ok: boolean, code: string, message: string, detail?: string[] }} Diagnostic */
 
@@ -73,6 +85,133 @@ function checkPath(label, filePath, kind = 'file') {
       message: `${label}: missing or inaccessible at ${filePath}`,
     };
   }
+}
+
+export function resolvePackageTarget(
+  argv = process.argv.slice(2),
+  platform = process.platform,
+  arch = process.arch,
+) {
+  const index = argv.indexOf('--target');
+  const key = index === -1 ? `${platform}-${arch}` : argv[index + 1];
+  const supported = new Set(['darwin-arm64', 'darwin-x64', 'win32-x64', 'linux-x64']);
+  if (!key || !supported.has(key)) {
+    throw new Error(`BLUE_ENGINE_UNSUPPORTED_TARGET: ${key ?? '(missing)'}`);
+  }
+  const separator = key.lastIndexOf('-');
+  return {
+    key,
+    platform: key.slice(0, separator),
+    arch: key.slice(separator + 1),
+    executableName: key.startsWith('win32-') ? 'blue-engine.exe' : 'blue-engine',
+  };
+}
+
+export function checkStagedBlueEngine({
+  stageRoot = engineStageRoot,
+  target = resolvePackageTarget(),
+  expectedRevision = execFileSync('git', ['rev-parse', 'HEAD'], {
+    cwd: repoRoot,
+    encoding: 'utf8',
+  }).trim(),
+  ci = process.env.CI === 'true',
+} = {}) {
+  let entries;
+  try {
+    entries = readdirSync(stageRoot).sort();
+  } catch (error) {
+    return {
+      ok: false,
+      code: 'BLUE_ENGINE_STAGE_MISSING',
+      message: `Bundled Blue Engine stage is missing at ${stageRoot}`,
+      detail: [error instanceof Error ? error.message : String(error)],
+    };
+  }
+  const expectedEntries = ['artifact.json', target.executableName].sort();
+  if (entries.length !== expectedEntries.length ||
+      entries.some((entry, index) => entry !== expectedEntries[index])) {
+    return {
+      ok: false,
+      code: 'BLUE_ENGINE_STAGE_CONTENTS',
+      message: `Blue Engine stage must contain exactly ${expectedEntries.join(', ')}`,
+      detail: entries,
+    };
+  }
+
+  let manifest;
+  try {
+    manifest = JSON.parse(readFileSync(join(stageRoot, 'artifact.json'), 'utf8'));
+  } catch (error) {
+    return {
+      ok: false,
+      code: 'BLUE_ENGINE_MANIFEST_INVALID',
+      message: 'Bundled Blue Engine manifest is missing or invalid',
+      detail: [error instanceof Error ? error.message : String(error)],
+    };
+  }
+  if (manifest.schemaVersion !== 1 ||
+      manifest.protocolVersion !== engineProtocolVersion ||
+      manifest.platform !== target.platform ||
+      manifest.arch !== target.arch ||
+      manifest.executableName !== target.executableName) {
+    return {
+      ok: false,
+      code: 'BLUE_ENGINE_MANIFEST_MISMATCH',
+      message: `Bundled Blue Engine manifest does not match ${target.key} protocol ${engineProtocolVersion}`,
+    };
+  }
+  if (typeof manifest.sourceRevision !== 'string') {
+    return {
+      ok: false,
+      code: 'BLUE_ENGINE_SOURCE_REVISION_INVALID',
+      message: 'Bundled Blue Engine manifest has no source revision',
+    };
+  }
+  const dirtyRevision = manifest.sourceRevision.startsWith('dirty:');
+  const revision = dirtyRevision ? manifest.sourceRevision.slice('dirty:'.length) : manifest.sourceRevision;
+  if (revision !== expectedRevision || (ci && dirtyRevision)) {
+    return {
+      ok: false,
+      code: dirtyRevision && ci
+        ? 'BLUE_ENGINE_DIRTY_CI_REVISION'
+        : 'BLUE_ENGINE_SOURCE_REVISION_MISMATCH',
+      message: `Bundled Blue Engine revision ${manifest.sourceRevision} does not match ${expectedRevision}`,
+    };
+  }
+
+  const executablePath = join(stageRoot, target.executableName);
+  let stats;
+  try {
+    stats = statSync(executablePath);
+    accessSync(executablePath, target.platform === 'win32' ? constants.R_OK : constants.X_OK);
+  } catch (error) {
+    return {
+      ok: false,
+      code: 'BLUE_ENGINE_NOT_EXECUTABLE',
+      message: `Bundled Blue Engine is missing or non-executable at ${executablePath}`,
+      detail: [error instanceof Error ? error.message : String(error)],
+    };
+  }
+  if (!stats.isFile()) {
+    return {
+      ok: false,
+      code: 'BLUE_ENGINE_NOT_EXECUTABLE',
+      message: `Bundled Blue Engine is not a file at ${executablePath}`,
+    };
+  }
+  const hash = createHash('sha256').update(readFileSync(executablePath)).digest('hex');
+  if (hash !== manifest.sha256) {
+    return {
+      ok: false,
+      code: 'BLUE_ENGINE_HASH_MISMATCH',
+      message: 'Bundled Blue Engine hash does not match artifact.json',
+    };
+  }
+  return {
+    ok: true,
+    code: 'OK',
+    message: `Bundled Blue Engine: ${executablePath} (${target.key}, protocol ${engineProtocolVersion})`,
+  };
 }
 
 /**
@@ -135,6 +274,11 @@ function checkBuiltElectronEntries() {
     checkPath(
       'Electron shared runtime output',
       join(appRoot, 'dist', 'shared', 'window-layout-settings.js'),
+      'file',
+    ),
+    checkPath(
+      'macOS Blue Engine entitlements',
+      join(appRoot, 'build', 'entitlements.blue-engine.mac.plist'),
       'file',
     ),
   ];
@@ -340,16 +484,23 @@ function checkViteExternalizationContract() {
   };
 }
 
-function main() {
+export function collectPackageInputDiagnostics({
+  target = resolvePackageTarget(),
+} = {}) {
   /** @type {Diagnostic[]} */
-  const diagnostics = [
+  return [
     ...checkJavaHelperOutputs(),
     ...checkExternalizedWorkspacePackages(),
     ...checkBuiltElectronEntries(),
+    checkStagedBlueEngine({ target }),
     checkElectronVersion(),
     checkNativeZeroMQ(),
     checkViteExternalizationContract(),
   ];
+}
+
+function main() {
+  const diagnostics = collectPackageInputDiagnostics();
 
   for (const diagnostic of diagnostics) {
     const prefix = diagnostic.ok ? '[ok]' : '[FAIL]';
@@ -372,4 +523,6 @@ function main() {
   process.exit(0);
 }
 
-main();
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  main();
+}

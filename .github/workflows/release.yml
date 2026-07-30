@@ -84,6 +84,12 @@ jobs:
       - name: Verify package inputs
         run: pnpm verify:package-inputs
 
+      - name: Verify revision-matched native artifact
+        run: |
+          pnpm verify:native-workspace
+          pnpm --filter @blue/engine-native verify
+          pnpm --filter @blue/engine-client test
+
       - name: Build unsigned macOS package
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: 'false'
@@ -128,6 +134,12 @@ jobs:
       - name: Verify package inputs
         run: pnpm verify:package-inputs
 
+      - name: Verify revision-matched native artifact
+        run: |
+          pnpm verify:native-workspace
+          pnpm --filter @blue/engine-native verify
+          pnpm --filter @blue/engine-client test
+
       - name: Build unsigned Windows installer
         run: |
           pnpm --filter @blue/app package:windows-x64
@@ -171,6 +183,12 @@ jobs:
       - name: Verify package inputs
         run: pnpm verify:package-inputs
 
+      - name: Verify revision-matched native artifact
+        run: |
+          pnpm verify:native-workspace
+          pnpm --filter @blue/engine-native verify
+          pnpm --filter @blue/engine-client test
+
       - name: Build Linux packages
         run: |
           pnpm --filter @blue/app package:linux-x64
@@ -178,6 +196,10 @@ jobs:
       - name: Verify packaged app (smoke)
         run: |
           xvfb-run --auto-servernum pnpm --filter @blue/app verify:packaged-app -- --no-playwright
+
+      - name: Verify AppImage direct and extracted runtime
+        run: |
+          xvfb-run --auto-servernum pnpm --filter @blue/app verify:appimage
 
       - name: Stage stable Linux packages
         env:
@@ -305,7 +327,7 @@ jobs:
             echo ""
             echo "## Runtime prerequisites"
             echo ""
-            echo "Install **Java 17+**, **Csound 7**, and **\`blue-engine\`** separately for audio playback. They are not bundled."
+            echo "Blue Engine is bundled. Install **Java 17+** for Java-backed features and **Csound 7** for audio playback; Blue still opens and edits projects when Csound is unavailable."
             echo ""
             echo "## Verification"
             echo ""

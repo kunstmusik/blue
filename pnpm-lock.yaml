@@ -24,6 +24,8 @@ importers:
         specifier: ^4.1.4
         version: 4.1.4(@types/node@25.6.0)(jsdom@29.1.0(@noble/hashes@2.2.0))(vite@8.0.8(@types/node@25.6.0)(esbuild@0.28.0)(jiti@2.6.1))
 
+  native/blue-engine: {}
+
   packages/blue-app:
     dependencies:
       '@blue/data':
@@ -114,6 +116,9 @@ importers:
         specifier: ^5.0.10
         version: 5.0.12(@types/react@19.2.14)(react@19.2.5)(use-sync-external-store@1.6.0(react@19.2.5))
     devDependencies:
+      '@blue/engine-native':
+        specifier: workspace:*
+        version: link:../../native/blue-engine
       '@electron/rebuild':
         specifier: ^4.0.1
         version: 4.2.0(supports-color@7.2.0)

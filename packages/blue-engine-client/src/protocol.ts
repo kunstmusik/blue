@@ -13,6 +13,7 @@ export const CMD_STOP = 0x06;
 export const CMD_DESTROY_ENGINE = 0x07;
 export const CMD_EXIT = CMD_DESTROY_ENGINE;
 export const CMD_GET_ENGINE_STATE = 0x08;
+export const CMD_GET_CAPABILITIES = 0x09;
 
 export const ENGINE_STATE_TOPIC = 'engine.state';
 

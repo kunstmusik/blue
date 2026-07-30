@@ -38,10 +38,12 @@ import {
 import { applyProgramSettingsToNewProject } from './program-settings-application';
 import { buildRealtimeEngineOptions as buildRealtimeEngineOptionsFromSettings, buildUsageMatrix } from './program-settings-usage';
 import type { ProgramSettingsSnapshot } from '../shared/program-settings';
+import type { EngineProbeRequest, EngineProbeResult } from '../shared/engine-runtime';
 import { initializeJavaScriptRuntime, JavaScriptSession } from '@blue/data';
 import type { TempoMap } from '@blue/data';
 import { EngineBridge } from './engine-bridge';
 import { BlueLiveEngineSession } from './blue-live-engine';
+import { EngineRuntimeService } from './engine-runtime';
 import { buildApplicationMenuTemplate } from './application-menu';
 import { createAppZoomController } from './app-zoom-controller';
 import { sweepStaleBlueEngineProcesses } from './engine-process-registry';
@@ -194,6 +196,7 @@ let activeRenderAction: DiskRenderAction | null = null;
 let activeRenderCancellationSignal: { cancelled: boolean } | null = null;
 let engineBridge: EngineBridge | null = null;
 let blueLiveSession: BlueLiveEngineSession | null = null;
+let engineRuntimeService: EngineRuntimeService | null = null;
 let isQuitting = false;
 let pendingQuit = false;
 let shutdownPromise: Promise<void> | null = null;
@@ -1133,8 +1136,24 @@ function createWindow(): void {
     mainWindow.loadFile(path.join(__dirname, '..', 'renderer', 'index.html'));
   }
 
+  // Resolve the workspace artifact in development and the installed resource
+  // in packaged builds. Neither path consults the system executable search path.
+  engineRuntimeService = new EngineRuntimeService({
+    isPackaged: app.isPackaged,
+    resourcesPath: process.resourcesPath,
+    repoRoot: path.resolve(app.getAppPath(), '..', '..'),
+    getSettingsEnginePath: () => loadProgramSettings().appSpecific.enginePath,
+  });
+
   // Initialize engine bridge
-  engineBridge = new EngineBridge(mainWindow);
+  engineBridge = new EngineBridge(
+    mainWindow,
+    undefined,
+    undefined,
+    undefined,
+    'realtime',
+    engineRuntimeService,
+  );
 
   engineBridge.setPlaybackCompleteCallback((stopReason) => {
     if (stopReason !== 'completed') return;
@@ -1167,7 +1186,13 @@ function createWindow(): void {
   });
 
   // Initialize Blue Live engine session on separate port
-  blueLiveSession = new BlueLiveEngineSession(mainWindow, undefined, 5560, 5561);
+  blueLiveSession = new BlueLiveEngineSession(
+    mainWindow,
+    undefined,
+    5560,
+    5561,
+    engineRuntimeService,
+  );
   javaRuntimeSessionManager = new JavaRuntimeSessionManager({
     isPackaged: app.isPackaged,
     mainModuleDir: __dirname,
@@ -1473,9 +1498,13 @@ async function runPackagedProjectVerificationAndExit(): Promise<never> {
   const projectPath = process.env.BLUE_VERIFY_PROJECT_PATH
     ? path.resolve(process.env.BLUE_VERIFY_PROJECT_PATH)
     : null;
+  const projectSavePath = process.env.BLUE_VERIFY_SAVE_PATH
+    ? path.resolve(process.env.BLUE_VERIFY_SAVE_PATH)
+    : null;
   const result = await verifyPackagedProject({
     isPackaged: app.isPackaged,
     projectPath,
+    projectSavePath,
     loadProject: loadProjectFromDisk,
     getLoadedProject: () => currentData
       ? {
@@ -1483,6 +1512,16 @@ async function runPackagedProjectVerificationAndExit(): Promise<never> {
           title: currentData.getProjectProperties().title,
         }
       : null,
+    saveProjectCopy: async (savePath) => {
+      if (!currentData) return false;
+      try {
+        fs.writeFileSync(savePath, currentData.saveToString(), 'utf8');
+        await BlueData.loadFromString(fs.readFileSync(savePath, 'utf8'));
+        return true;
+      } catch {
+        return false;
+      }
+    },
   });
 
   process.stderr.write(`${result.ok ? '[ok]' : '[FAIL]'} ${result.message}\n`);
@@ -1490,6 +1529,52 @@ async function runPackagedProjectVerificationAndExit(): Promise<never> {
     `\nPackaged project verification ${result.ok ? 'passed' : 'failed'}.\n`,
   );
   process.exit(result.ok ? 0 : 1);
+}
+
+async function runPackagedEngineMismatchVerificationAndExit(): Promise<never> {
+  const projectPath = process.env.BLUE_VERIFY_PROJECT_PATH
+    ? path.resolve(process.env.BLUE_VERIFY_PROJECT_PATH)
+    : null;
+  const fixturePath = process.env.BLUE_VERIFY_ENGINE_REPORT_FIXTURE
+    ? path.resolve(process.env.BLUE_VERIFY_ENGINE_REPORT_FIXTURE)
+    : null;
+  if (!projectPath || !fixturePath || !(await loadProjectFromDisk(projectPath))) {
+    process.stderr.write('[FAIL] Packaged mismatch verification could not open its project or fixture.\n');
+    process.exit(1);
+  }
+  const executableName = process.platform === 'win32' ? 'blue-engine.exe' : 'blue-engine';
+  const bundledEnginePath = path.join(
+    process.resourcesPath,
+    'assets',
+    'engine',
+    executableName,
+  );
+  const fixtureReport = fs.readFileSync(fixturePath, 'utf8');
+  const runtime = new EngineRuntimeService({
+    isPackaged: true,
+    resourcesPath: process.resourcesPath,
+    repoRoot: '',
+    getSettingsEnginePath: () => 'blue-engine',
+    runProbeProcess: async () => ({
+      exitCode: 0,
+      stdout: fixtureReport,
+      stderr: '',
+      timedOut: false,
+    }),
+  });
+  const result = await runtime.probe(
+    { enginePathOverride: bundledEnginePath },
+    { retry: true },
+  );
+  const passed = result.errorCode === 'ENGINE_PROTOCOL_MISMATCH' &&
+    result.selection?.source === 'settings-override' &&
+    currentData !== null &&
+    currentFilePath === projectPath;
+  process.stderr.write(
+    `${passed ? '[ok]' : '[FAIL]'} Incompatible engine was ` +
+      `${passed ? 'rejected before playback while the project remained open' : 'not rejected safely'}.\n`,
+  );
+  process.exit(passed ? 0 : 1);
 }
 
 async function newFile(): Promise<void> {
@@ -2294,6 +2379,9 @@ ipcMain.handle('program-settings:save', (_event, snapshot: ProgramSettingsSnapsh
   // expose app zoom, so the controller's current value always wins.
   const preserved = appZoomController.preserveCurrentZoom(snapshot);
   const result = saveProgramSettings(preserved);
+  if (result.ok) {
+    engineRuntimeService?.invalidate();
+  }
   if (result.ok && result.snapshot && midiInputCoordinator) {
     midiInputCoordinator.onProgramSettingsSaved(result.snapshot);
   }
@@ -2307,6 +2395,23 @@ ipcMain.handle('program-settings:save', (_event, snapshot: ProgramSettingsSnapsh
   }
   return result;
 });
+
+ipcMain.handle(
+  'engine-runtime:probe',
+  async (_event, request?: EngineProbeRequest): Promise<EngineProbeResult> => {
+    if (!engineRuntimeService) {
+      return {
+        ok: false,
+        selection: null,
+        report: null,
+        errorCode: 'ENGINE_NOT_FOUND',
+        message: 'Blue Engine runtime service is not initialized',
+        durationMs: 0,
+      };
+    }
+    return engineRuntimeService.probe(request, { retry: true });
+  },
+);
 
 ipcMain.handle('program-settings:reset-panel', (_event, panel: string) => {
   const snapshot = resetPanel(panel as any);
@@ -2949,6 +3054,9 @@ app.whenReady().then(async () => {
 
   if (process.env.BLUE_VERIFY_MODE === 'packaged-project') {
     await runPackagedProjectVerificationAndExit();
+  }
+  if (process.env.BLUE_VERIFY_MODE === 'packaged-engine-mismatch') {
+    await runPackagedEngineMismatchVerificationAndExit();
   }
 
   initWorkbenchWindowHost();

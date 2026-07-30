@@ -176,7 +176,12 @@ export default function SettingsApp(): React.ReactElement {
         return (
           <RealtimeRenderSettings
             settings={draft.realtimeRender}
+            enginePath={draft.appSpecific.enginePath}
             onChange={(realtimeRender) => handleDraftChange({ ...draft, realtimeRender })}
+            onEnginePathChange={(enginePath) => handleDraftChange({
+              ...draft,
+              appSpecific: { ...draft.appSpecific, enginePath },
+            })}
           />
         );
       case 'diskRender':

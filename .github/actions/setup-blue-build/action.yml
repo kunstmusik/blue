@@ -2,8 +2,8 @@ name: setup-blue-build
 description: |
   Shared build bootstrap for Blue Electron pull-request, develop, and stable release
   workflows. Installs pinned Node, pnpm, Java, and Maven-compatible tooling,
-  restores the pnpm cache, installs from the lockfile, and builds the Java
-  helper before any Electron package consumer runs.
+  restores the pnpm/vcpkg caches, installs from the lockfile, and builds the
+  native engine plus Java helper before any Electron package consumer runs.
 
   The caller must checkout the desired source ref before invoking this action;
   the action intentionally preserves that checkout so workflow_dispatch builds
@@ -53,6 +53,44 @@ runs:
         version: ${{ inputs.pnpm-version }}
         run_install: false
 
+    - name: Restore pinned vcpkg checkout
+      id: vcpkg-cache
+      uses: actions/cache@v5
+      with:
+        path: ${{ runner.temp }}/blue-vcpkg-9d7f79f5
+        key: ${{ runner.os }}-${{ runner.arch }}-vcpkg-9d7f79f56ae1a9b4704d6a7fb8237e347a974133
+
+    - name: Checkout pinned vcpkg (Unix)
+      if: steps.vcpkg-cache.outputs.cache-hit != 'true' && runner.os != 'Windows'
+      shell: bash
+      run: |
+        git clone https://github.com/microsoft/vcpkg.git \
+          "${RUNNER_TEMP}/blue-vcpkg-9d7f79f5"
+        git -C "${RUNNER_TEMP}/blue-vcpkg-9d7f79f5" checkout \
+          9d7f79f56ae1a9b4704d6a7fb8237e347a974133
+        "${RUNNER_TEMP}/blue-vcpkg-9d7f79f5/bootstrap-vcpkg.sh" -disableMetrics
+
+    - name: Checkout pinned vcpkg (Windows)
+      if: steps.vcpkg-cache.outputs.cache-hit != 'true' && runner.os == 'Windows'
+      shell: pwsh
+      run: |
+        git clone https://github.com/microsoft/vcpkg.git `
+          "$env:RUNNER_TEMP/blue-vcpkg-9d7f79f5"
+        git -C "$env:RUNNER_TEMP/blue-vcpkg-9d7f79f5" checkout `
+          9d7f79f56ae1a9b4704d6a7fb8237e347a974133
+        & "$env:RUNNER_TEMP/blue-vcpkg-9d7f79f5/bootstrap-vcpkg.bat" -disableMetrics
+
+    - name: Export pinned vcpkg root
+      shell: bash
+      run: |
+        echo "VCPKG_ROOT=${RUNNER_TEMP}/blue-vcpkg-9d7f79f5" >> "$GITHUB_ENV"
+
+    - name: Restore Blue Engine vcpkg packages
+      uses: actions/cache@v5
+      with:
+        path: native/blue-engine/vcpkg_installed
+        key: ${{ runner.os }}-${{ runner.arch }}-blue-engine-vcpkg-${{ hashFiles('native/blue-engine/vcpkg.json', 'native/blue-engine/vcpkg-configuration.json', 'native/blue-engine/triplets/*') }}
+
     - name: Resolve pnpm store path
       shell: bash
       run: |
@@ -97,15 +135,12 @@ runs:
           exit 1; \
         }
 
-    - name: Build workspace TypeScript
+    - name: Build workspace from one revision
       if: ${{ inputs.build-workspace == 'true' }}
       shell: bash
       run: |
-        pnpm --filter @blue/data build
-        pnpm --filter @blue/engine-client build
-        pnpm --filter @blue/app build:main
-        pnpm --filter @blue/app build:preload
-        pnpm --filter @blue/app build:renderer
+        pnpm build
+        pnpm --filter @blue/engine-native verify
 
     - name: Rebuild native zeromq for the target Electron runtime
       if: ${{ inputs.rebuild-native == 'true' }}

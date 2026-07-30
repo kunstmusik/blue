@@ -46,6 +46,10 @@ import type {
   UsageParityMatrixEntry,
 } from '../shared/program-settings';
 import type {
+  EngineProbeRequest,
+  EngineProbeResult,
+} from '../shared/engine-runtime';
+import type {
   DisplayWorkArea,
   WindowLayoutSettingsSnapshot,
   WindowLayoutUpdateRequest,
@@ -464,6 +468,8 @@ contextBridge.exposeInMainWorld('blueAPI', {
     ipcRenderer.invoke('program-settings:usage-matrix') as Promise<UsageParityMatrixEntry[]>,
   syncLegacyRendererSettings: (snapshot: CurrentAppSettingsSnapshot) =>
     ipcRenderer.invoke('program-settings:sync-legacy-renderer-settings', snapshot) as Promise<ProgramSettingsSnapshot>,
+  probeEngineRuntime: (request?: EngineProbeRequest) =>
+    ipcRenderer.invoke('engine-runtime:probe', request) as Promise<EngineProbeResult>,
 
   // OSC Control
   getOscServerSnapshot: () =>

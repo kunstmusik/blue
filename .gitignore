@@ -1,6 +1,10 @@
 # Build output
 dist/
 build/
+!packages/blue-app/build/
+packages/blue-app/build/*
+!packages/blue-app/build/entitlements.mac.plist
+!packages/blue-app/build/entitlements.blue-engine.mac.plist
 *.tsbuildinfo
 packages/blue-data/tests/integration/*.js
 packages/blue-data/tests/integration/*.js.map
@@ -37,6 +41,13 @@ npm-debug.log*
 packages/blue-java/target
 packages/blue-app/assets/java/blue-java.jar
 packages/blue-app/release/
+packages/blue-app/.engine-stage/
+native/blue-engine/build/
+native/blue-engine/build-*/
+native/blue-engine/dist/
+native/blue-engine/.vcpkg/
+native/blue-engine/vcpkg_installed/
+native/blue-engine/downloads/
 temp*.csd
 
 # =========================================================================

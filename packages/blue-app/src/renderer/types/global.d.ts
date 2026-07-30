@@ -39,6 +39,10 @@ import type {
 import type { NativeMenuCommand } from '../../shared/workbench-menu';
 import type { EngineOutputPayload } from '../../shared/io-provider';
 import type {
+  EngineProbeRequest,
+  EngineProbeResult,
+} from '../../shared/engine-runtime';
+import type {
   DisplayWorkArea,
   WindowLayoutSettingsSnapshot,
   WindowLayoutUpdateRequest,
@@ -346,6 +350,7 @@ declare global {
       syncLegacyRendererSettings: (
         snapshot: import('../../shared/program-settings').CurrentAppSettingsSnapshot,
       ) => Promise<import('../../shared/program-settings').ProgramSettingsSnapshot>;
+      probeEngineRuntime: (request?: EngineProbeRequest) => Promise<EngineProbeResult>;
 
       // OSC Control
       getOscServerSnapshot: () => Promise<OscServerRuntimeSnapshot>;

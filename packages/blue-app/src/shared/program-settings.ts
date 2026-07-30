@@ -259,6 +259,20 @@ export function getDefaultAudioDriver(platform: string): string {
   return platform === 'darwin' ? 'pa_bl' : 'PortAudio';
 }
 
+export function isAbsoluteEnginePath(value: string): boolean {
+  return value.startsWith('/') ||
+    /^[A-Za-z]:[\\/]/.test(value) ||
+    value.startsWith('\\\\');
+}
+
+export function normalizeEnginePathSetting(value: unknown): string {
+  if (typeof value !== 'string') return 'blue-engine';
+  const normalized = value.trim();
+  return normalized === '' || normalized === 'blue-engine'
+    ? 'blue-engine'
+    : normalized;
+}
+
 export function getDefaultSoftwareBufferSize(platform: string): number {
   switch (platform) {
     case 'darwin': return 1024;
@@ -413,6 +427,15 @@ export function validateProgramSettings(
   snapshot: ProgramSettingsSnapshot,
 ): SettingsValidationIssue[] {
   const issues: SettingsValidationIssue[] = [];
+
+  const enginePath = normalizeEnginePathSetting(snapshot.appSpecific.enginePath);
+  if (enginePath !== 'blue-engine' && !isAbsoluteEnginePath(enginePath)) {
+    issues.push({
+      path: 'appSpecific.enginePath',
+      message: 'Blue Engine override must be an absolute path or the bundled default',
+      severity: 'error',
+    });
+  }
 
   if (snapshot.general.directoryTempFileLimit < 1) {
     issues.push({
@@ -612,6 +635,7 @@ export function mergeWithDefaults(
     // SPEC 061: normalize the app-wide zoom percent defensively. Older files
     // without the field, and any malformed/off-step value, default to 100.
     appZoomPercent: normalizeAppZoomPercent(savedAppSpecific.appZoomPercent),
+    enginePath: normalizeEnginePathSetting(savedAppSpecific.enginePath),
   };
 
   // Preserve legacy appSpecific.midiInputDevice / midiOutputDevice placeholder

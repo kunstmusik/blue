@@ -1,0 +1,7 @@
+Image has the following dependencies:
+    KERNEL32.dll
+    USER32.dll
+    ADVAPI32.dll
+    WS2_32.dll
+    VCRUNTIME140.dll
+    ucrtbase.dll

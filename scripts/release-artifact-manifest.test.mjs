@@ -104,6 +104,12 @@ try {
     "generated stable entries must be verified",
   );
   assert(
+    manifest.engine?.protocolVersion === 1 &&
+      manifest.engine?.sourceRevision === sourceRevision &&
+      manifest.engine?.verificationStatus === "verified",
+    "manifest must record verified revision-matched Blue Engine protocol metadata",
+  );
+  assert(
     manifest.targets.every(
       (target) => target.path === target.path.split("/").at(-1),
     ),
@@ -132,6 +138,17 @@ try {
     "pending status failure must be actionable",
   );
   manifest.targets[0].verificationStatus = "verified";
+  writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
+
+  manifest.engine.protocolVersion = 99;
+  writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
+  const mismatchedEngineProtocol = validate();
+  assert(
+    mismatchedEngineProtocol.status === 1 &&
+      mismatchedEngineProtocol.stderr.includes("engine protocolVersion"),
+    "mismatched Blue Engine protocol metadata must fail stable validation",
+  );
+  manifest.engine.protocolVersion = 1;
   writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
 
   manifest.targets[0].arch = "x64";

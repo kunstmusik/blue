@@ -1,0 +1,16 @@
+{
+  "name": "@blue/engine-native",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Build orchestration for the native Blue Engine sidecar",
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "test": "node --test scripts/*.test.mjs && node scripts/test.mjs unit",
+    "test:profiling": "node scripts/test.mjs profiling",
+    "test:integration": "node scripts/test.mjs integration",
+    "verify": "node scripts/verify-artifact.mjs",
+    "lint": "node scripts/lint.mjs",
+    "clean": "node scripts/clean.mjs"
+  }
+}

@@ -6,6 +6,11 @@
  */
 import { Request, Subscriber } from 'zeromq';
 import {
+  BLUE_ENGINE_PROTOCOL_VERSION,
+  decodeEngineCapabilitiesJson,
+  EngineCapabilities,
+} from './capabilities';
+import {
   encodeSetChannel,
   encodeGetChannel,
   encodeCreateAutomation,
@@ -27,6 +32,7 @@ import {
   CMD_STOP,
   CMD_DESTROY_ENGINE,
   CMD_GET_ENGINE_STATE,
+  CMD_GET_CAPABILITIES,
   CMD_CREATE_CHANNEL,
   CMD_SET_CHANNEL,
   CMD_GET_CHANNEL,
@@ -66,6 +72,7 @@ export class EngineClient {
   private subscriptionClosed = false;
   private subscriptionError: Error | null = null;
   private requestQueue: Promise<any> = Promise.resolve();
+  private verifiedCapabilities: EngineCapabilities | null = null;
 
   constructor(options: EngineClientOptions = {}) {
     this.endpoint = options.endpoint ?? 'tcp://localhost:5555';
@@ -93,6 +100,7 @@ export class EngineClient {
     this.subscriber.connect(this.pubEndpoint);
     this.subscriptionClosed = false;
     this.subscriptionError = null;
+    this.verifiedCapabilities = null;
     this.subscriptionLoop = this.consumeStateEvents().catch((error: unknown) => {
       const normalizedError = error instanceof Error ? error : new Error(String(error));
       this.subscriptionError = normalizedError;
@@ -132,6 +140,27 @@ export class EngineClient {
     }
 
     this.subscriptionError = null;
+    this.verifiedCapabilities = null;
+  }
+
+  async getCapabilities(): Promise<{
+    ok: boolean;
+    capabilities?: EngineCapabilities;
+    message: string;
+  }> {
+    const response = await this.sendRaw(CMD_GET_CAPABILITIES);
+    if (!response.ok) {
+      return { ok: false, message: response.message };
+    }
+    try {
+      const capabilities = decodeEngineCapabilitiesJson(response.message);
+      return { ok: true, capabilities, message: '' };
+    } catch (error) {
+      return {
+        ok: false,
+        message: error instanceof Error ? error.message : 'Invalid engine capabilities',
+      };
+    }
   }
 
   /**
@@ -187,6 +216,28 @@ export class EngineClient {
    * Must be called before any other command.
    */
   async createEngine(): Promise<{ ok: boolean; message: string }> {
+    if (!this.verifiedCapabilities) {
+      const capabilityResult = await this.getCapabilities();
+      if (!capabilityResult.ok || !capabilityResult.capabilities) {
+        await this.disconnect(false);
+        return {
+          ok: false,
+          message: `Engine capability handshake failed: ${capabilityResult.message}`,
+        };
+      }
+      if (capabilityResult.capabilities.protocolVersion !== BLUE_ENGINE_PROTOCOL_VERSION) {
+        const actualVersion = capabilityResult.capabilities.protocolVersion;
+        await this.disconnect(false);
+        return {
+          ok: false,
+          message:
+            `Blue Engine protocol mismatch: expected ${BLUE_ENGINE_PROTOCOL_VERSION}, ` +
+            `received ${actualVersion}`,
+        };
+      }
+      this.verifiedCapabilities = capabilityResult.capabilities;
+    }
+
     // If engine already exists, destroy it first
     let resp = await this.sendRaw(CMD_CREATE_ENGINE);
     if (!resp.ok && resp.message.includes('Engine already created')) {

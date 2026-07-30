@@ -1,6 +1,16 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { BlueData, LiveData } from '@blue/data';
-import { BlueLiveEngineSession, resolveNamedInstrumentNumbers, normalizeScoreForEngineApi } from '../../main/blue-live-engine';
+import {
+  BlueLiveEngineSession,
+  normalizeScoreForEngineApi,
+  resolveNamedInstrumentNumbers,
+} from '../../main/blue-live-engine';
+import type { EngineRuntimeService } from '../../main/engine-runtime';
+
+vi.mock('electron', () => ({
+  BrowserWindow: class BrowserWindow {},
+  dialog: { showErrorBox: vi.fn() },
+}));
 
 class MockWebContents {
   send = vi.fn();
@@ -83,6 +93,25 @@ describe('BlueLiveEngineSession', () => {
     } else {
       expect(result.sessionId).toBe(1);
     }
+  });
+
+  it('retains the shared runtime service while using its isolated port pair', () => {
+    const runtime = { probe: vi.fn() } as unknown as EngineRuntimeService;
+    const session = trackSession(new BlueLiveEngineSession(
+      createMockWindow(),
+      undefined,
+      5560,
+      5561,
+      runtime,
+    ));
+    const internals = session as unknown as {
+      engineRuntime: EngineRuntimeService;
+      port: number;
+      pubPort: number;
+    };
+
+    expect(internals.engineRuntime).toBe(runtime);
+    expect([internals.port, internals.pubPort]).toEqual([5560, 5561]);
   });
 });
 

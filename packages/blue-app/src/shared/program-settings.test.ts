@@ -15,6 +15,8 @@ import {
   getMidiDrivers,
   getDefaultCsoundExecutable,
   getDefaultFreezeFlags,
+  isAbsoluteEnginePath,
+  normalizeEnginePathSetting,
   PROGRAM_SETTINGS_PANEL_ORDER,
   TIME_BASE_CHOICES,
   SNAP_VALUE_CHOICES,
@@ -119,6 +121,15 @@ describe('program-settings platform helpers', () => {
     expect(getDefaultFreezeFlags('darwin')).toBe('-Ado');
     expect(getDefaultFreezeFlags('linux')).toBe('-Wdo');
   });
+
+  it('normalizes bundled engine sentinels and recognizes cross-platform absolute paths', () => {
+    expect(normalizeEnginePathSetting('')).toBe('blue-engine');
+    expect(normalizeEnginePathSetting(' blue-engine ')).toBe('blue-engine');
+    expect(normalizeEnginePathSetting(' /opt/blue-engine ')).toBe('/opt/blue-engine');
+    expect(isAbsoluteEnginePath('/opt/blue-engine')).toBe(true);
+    expect(isAbsoluteEnginePath('C:\\Blue\\blue-engine.exe')).toBe(true);
+    expect(isAbsoluteEnginePath('relative/blue-engine')).toBe(false);
+  });
 });
 
 describe('program-settings validation', () => {
@@ -126,6 +137,16 @@ describe('program-settings validation', () => {
     const s = createDefaultProgramSettings('darwin');
     const issues = validateProgramSettings(s);
     expect(issues.filter((i) => i.severity === 'error')).toHaveLength(0);
+  });
+
+  it('rejects a relative external engine override without changing the settings version', () => {
+    const s = createDefaultProgramSettings('darwin');
+    s.appSpecific.enginePath = 'relative/blue-engine';
+    expect(validateProgramSettings(s)).toContainEqual(expect.objectContaining({
+      path: 'appSpecific.enginePath',
+      severity: 'error',
+    }));
+    expect(s.version).toBe(2);
   });
 
   it('rejects invalid directoryTempFileLimit', () => {

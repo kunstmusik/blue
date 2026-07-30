@@ -47,6 +47,12 @@ const repoRoot = resolve(__dirname, '..', '..', '..');
 const appRoot = join(repoRoot, 'packages', 'blue-app');
 const releaseDir = join(appRoot, 'release');
 const defaultSmokeProject = resolve(repoRoot, 'fixtures', 'smoke-test.blue');
+const incompatibleEngineFixture = resolve(
+  appRoot,
+  'fixtures',
+  'engine',
+  'incompatible-engine-report.json',
+);
 const verifierTimeoutMs = 90_000;
 
 /**
@@ -199,7 +205,7 @@ function isPlaywrightAvailable() {
 
 /**
  * @param {string} binary
- * @param {'packaged-resources' | 'packaged-project'} verificationMode
+ * @param {'packaged-resources' | 'packaged-project' | 'packaged-engine-mismatch'} verificationMode
  * @param {string | null} blueFile
  * @param {string} userDataPath
  * @returns {Promise<number>}
@@ -214,6 +220,10 @@ async function launchViaPlaywright(binary, verificationMode, blueFile, userDataP
   };
   if (blueFile) {
     verificationEnv.BLUE_VERIFY_PROJECT_PATH = blueFile;
+    verificationEnv.BLUE_VERIFY_SAVE_PATH = join(userDataPath, 'smoke-roundtrip.blue');
+  }
+  if (verificationMode === 'packaged-engine-mismatch') {
+    verificationEnv.BLUE_VERIFY_ENGINE_REPORT_FIXTURE = incompatibleEngineFixture;
   }
   const electronApp = await playwright._electron.launch({
     executablePath: binary,
@@ -240,7 +250,7 @@ async function launchViaPlaywright(binary, verificationMode, blueFile, userDataP
 
 /**
  * @param {string} binary
- * @param {'packaged-resources' | 'packaged-project'} verificationMode
+ * @param {'packaged-resources' | 'packaged-project' | 'packaged-engine-mismatch'} verificationMode
  * @param {string | null} blueFile
  * @param {string} userDataPath
  * @returns {Promise<number>}
@@ -255,6 +265,10 @@ function launchViaSpawn(binary, verificationMode, blueFile, userDataPath) {
     };
     if (blueFile) {
       verificationEnv.BLUE_VERIFY_PROJECT_PATH = blueFile;
+      verificationEnv.BLUE_VERIFY_SAVE_PATH = join(userDataPath, 'smoke-roundtrip.blue');
+    }
+    if (verificationMode === 'packaged-engine-mismatch') {
+      verificationEnv.BLUE_VERIFY_ENGINE_REPORT_FIXTURE = incompatibleEngineFixture;
     }
     const env = buildMinimalEnv(verificationEnv);
 
@@ -298,7 +312,7 @@ function launchViaSpawn(binary, verificationMode, blueFile, userDataPath) {
 
 /**
  * @param {string} binary
- * @param {'packaged-resources' | 'packaged-project'} verificationMode
+ * @param {'packaged-resources' | 'packaged-project' | 'packaged-engine-mismatch'} verificationMode
  * @param {string | null} blueFile
  * @param {boolean} usePlaywright
  * @param {string} userDataPath
@@ -337,9 +351,17 @@ async function runSmokeChecks(binary, blueFile, usePlaywright) {
     if (resourcesCode !== 0) {
       return resourcesCode;
     }
-    return runVerifier(
+    const projectCode = await runVerifier(
       binary,
       'packaged-project',
+      blueFile,
+      usePlaywright,
+      userDataPath,
+    );
+    if (projectCode !== 0) return projectCode;
+    return runVerifier(
+      binary,
+      'packaged-engine-mismatch',
       blueFile,
       usePlaywright,
       userDataPath,

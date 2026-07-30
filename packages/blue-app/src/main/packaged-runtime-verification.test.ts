@@ -1,4 +1,7 @@
 import { describe, expect, it } from 'vitest';
+import { createHash } from 'node:crypto';
+import { chmodSync, mkdtempSync, mkdirSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import * as path from 'node:path';
 import {
   verifyPackagedProject,
@@ -7,12 +10,43 @@ import {
 
 const RESOURCES = '/Applications/Blue.app/Contents/Resources';
 
+function createEngineResources(platform: NodeJS.Platform = 'darwin', arch = 'arm64'): string {
+  const resources = mkdtempSync(path.join(tmpdir(), 'blue-packaged-runtime-'));
+  const root = path.join(resources, 'assets', 'engine');
+  mkdirSync(root, { recursive: true });
+  const executableName = platform === 'win32' ? 'blue-engine.exe' : 'blue-engine';
+  const bytes = Buffer.from('engine');
+  writeFileSync(path.join(root, executableName), bytes);
+  chmodSync(path.join(root, executableName), 0o755);
+  writeFileSync(path.join(root, 'artifact.json'), JSON.stringify({
+    schemaVersion: 1,
+    protocolVersion: 1,
+    platform,
+    arch,
+    executableName,
+    sha256: createHash('sha256').update(bytes).digest('hex'),
+  }));
+  return resources;
+}
+
+const recoverableMissingCsoundProbe = () => ({
+  status: 2,
+  stdout: JSON.stringify({
+    schemaVersion: 1,
+    ready: false,
+    engine: { protocolVersion: 1 },
+    csound: { status: 'not-found' },
+  }),
+  stderr: '',
+});
+
 describe('packaged-runtime-verification', () => {
   it('reports ok=true when every dependency resolves', () => {
+    const resources = createEngineResources();
     const report = verifyPackagedRuntime({
       isPackaged: true,
       mainModuleDir: __dirname,
-      resourcesPath: RESOURCES,
+      resourcesPath: resources,
       userDataPath: '/Users/test/Library/Application Support/Blue',
       existsSync: (candidate) =>
         candidate.endsWith(path.join('assets', 'java', 'blue-java.jar'))
@@ -20,10 +54,13 @@ describe('packaged-runtime-verification', () => {
       resolveExternalModule: (name) => `/resolved/${name}/index.js`,
       resolveZeromqNative: () => '/resolved/zeromq/lib/index.js',
       resolveNodeSqlite: () => '/resolved/node:sqlite',
+      platform: 'darwin',
+      arch: 'arm64',
+      runBlueEngineProbe: recoverableMissingCsoundProbe,
     });
 
     expect(report.ok).toBe(true);
-    expect(report.results.length).toBe(6);
+    expect(report.results.length).toBe(7);
     expect(report.results.every((r) => r.ok)).toBe(true);
     const aspects = report.results.map((r) => r.aspect);
     expect(aspects).toEqual([
@@ -33,6 +70,7 @@ describe('packaged-runtime-verification', () => {
       'node-sqlite',
       'workspace-data',
       'workspace-engine-client',
+      'bundled-engine',
     ]);
   });
 
@@ -46,6 +84,7 @@ describe('packaged-runtime-verification', () => {
       resolveExternalModule: (name) => `/resolved/${name}/index.js`,
       resolveZeromqNative: () => '/resolved/zeromq/lib/index.js',
       resolveNodeSqlite: () => '/resolved/node:sqlite',
+      runBlueEngineProbe: recoverableMissingCsoundProbe,
     });
 
     expect(report.ok).toBe(false);
@@ -66,6 +105,7 @@ describe('packaged-runtime-verification', () => {
       resolveExternalModule: () => null,
       resolveZeromqNative: () => null,
       resolveNodeSqlite: () => null,
+      runBlueEngineProbe: recoverableMissingCsoundProbe,
     });
 
     expect(report.ok).toBe(false);
@@ -77,16 +117,20 @@ describe('packaged-runtime-verification', () => {
   });
 
   it('uses the preferred packaged candidate for the Java helper when present', () => {
-    const expectedJar = path.join(RESOURCES, 'assets', 'java', 'blue-java.jar');
-    const expectedLib = path.join(RESOURCES, 'assets', 'java', 'pythonLib');
+    const resources = createEngineResources();
+    const expectedJar = path.join(resources, 'assets', 'java', 'blue-java.jar');
+    const expectedLib = path.join(resources, 'assets', 'java', 'pythonLib');
     const report = verifyPackagedRuntime({
       isPackaged: true,
       mainModuleDir: __dirname,
-      resourcesPath: RESOURCES,
+      resourcesPath: resources,
       existsSync: (candidate) => candidate === expectedJar || candidate === expectedLib,
       resolveExternalModule: (name) => `/resolved/${name}/index.js`,
       resolveZeromqNative: () => '/resolved/zeromq/lib/index.js',
       resolveNodeSqlite: () => '/resolved/node:sqlite',
+      platform: 'darwin',
+      arch: 'arm64',
+      runBlueEngineProbe: recoverableMissingCsoundProbe,
     });
 
     const java = report.results.find((r) => r.aspect === 'java-helper');
@@ -94,22 +138,50 @@ describe('packaged-runtime-verification', () => {
     expect(java?.message).toContain(expectedJar);
   });
 
+  it('rejects a missing, cross-architecture, or failed no-Csound engine resource', () => {
+    const resources = createEngineResources('darwin', 'arm64');
+    const base = {
+      isPackaged: true,
+      mainModuleDir: __dirname,
+      resourcesPath: resources,
+      platform: 'darwin' as NodeJS.Platform,
+      arch: 'arm64',
+      existsSync: () => true,
+      resolveExternalModule: (name: string) => `/resolved/${name}/index.js`,
+      resolveZeromqNative: () => '/resolved/zeromq/lib/index.js',
+      resolveNodeSqlite: () => '/resolved/node:sqlite',
+    };
+    expect(verifyPackagedRuntime({
+      ...base,
+      arch: 'x64',
+      runBlueEngineProbe: recoverableMissingCsoundProbe,
+    }).results.at(-1)?.code).toBe('BLUE_ENGINE_RESOURCE_MISMATCH');
+
+    expect(verifyPackagedRuntime({
+      ...base,
+      runBlueEngineProbe: () => ({ status: 1, stdout: '{}', stderr: 'failed' }),
+    }).results.at(-1)?.code).toBe('BLUE_ENGINE_NO_CSOUND_PROBE_FAILED');
+  });
+
   it('verifies that the requested project becomes the current document', async () => {
     const projectPath = path.resolve('/fixtures/smoke-test.blue');
+    const projectSavePath = path.resolve('/tmp/smoke-roundtrip.blue');
     const result = await verifyPackagedProject({
       isPackaged: true,
       projectPath,
+      projectSavePath,
       loadProject: async () => true,
       getLoadedProject: () => ({
         filePath: projectPath,
         title: 'Smoke Test',
       }),
+      saveProjectCopy: async (savePath) => savePath === projectSavePath,
     });
 
     expect(result).toEqual({
       ok: true,
       code: 'OK',
-      message: `Project loaded: Smoke Test (${projectPath})`,
+      message: `Project loaded and saved: Smoke Test (${projectSavePath})`,
     });
   });
 
@@ -139,5 +211,14 @@ describe('packaged-runtime-verification', () => {
         title: 'Other',
       }),
     })).resolves.toMatchObject({ ok: false, code: 'PROJECT_PATH_MISMATCH' });
+
+    await expect(verifyPackagedProject({
+      isPackaged: true,
+      projectPath,
+      projectSavePath: path.resolve('/tmp/save.blue'),
+      loadProject: async () => true,
+      getLoadedProject: () => ({ filePath: projectPath, title: 'Smoke Test' }),
+      saveProjectCopy: async () => false,
+    })).resolves.toMatchObject({ ok: false, code: 'PROJECT_SAVE_FAILED' });
   });
 });

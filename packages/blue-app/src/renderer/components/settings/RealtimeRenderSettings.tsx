@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import type { RealtimeRenderSettingsSnapshot } from '../../../shared/program-settings';
+import type { EngineProbeResult } from '../../../shared/engine-runtime';
 import { getAudioDrivers, getMidiDrivers } from '../../../shared/program-settings';
 import SettingsSection from './SettingsSection';
 import SettingsField, {
@@ -12,13 +13,19 @@ import SettingsField, {
 
 interface RealtimeRenderSettingsProps {
   settings: RealtimeRenderSettingsSnapshot;
+  enginePath: string;
   onChange: (settings: RealtimeRenderSettingsSnapshot) => void;
+  onEnginePathChange: (enginePath: string) => void;
 }
 
 export default function RealtimeRenderSettings({
   settings,
+  enginePath,
   onChange,
+  onEnginePathChange,
 }: RealtimeRenderSettingsProps): React.ReactElement {
+  const [probeResult, setProbeResult] = useState<EngineProbeResult | null>(null);
+  const [probing, setProbing] = useState(false);
   const set = <K extends keyof RealtimeRenderSettingsSnapshot>(
     key: K,
     value: RealtimeRenderSettingsSnapshot[K],
@@ -29,9 +36,81 @@ export default function RealtimeRenderSettings({
     : 'linux';
   const audioDrivers = getAudioDrivers(platform);
   const midiDrivers = getMidiDrivers(platform);
+  const usesBundledEngine = enginePath.trim() === '' || enginePath.trim() === 'blue-engine';
+  const externalEnginePath = usesBundledEngine ? '' : enginePath;
+
+  const checkEngine = async () => {
+    setProbing(true);
+    try {
+      setProbeResult(await window.blueAPI.probeEngineRuntime({
+        enginePathOverride: usesBundledEngine ? null : externalEnginePath,
+      }));
+    } finally {
+      setProbing(false);
+    }
+  };
 
   return (
     <SettingsSection title="Realtime Render">
+      <SettingsSubsectionTitle>Blue Engine</SettingsSubsectionTitle>
+
+      <div className="mb-3 text-content text-app-text-muted">
+        {usesBundledEngine ? 'Bundled Blue Engine' : 'External Blue Engine override'}
+      </div>
+      <SettingsField
+        label="External Engine Path"
+        value={externalEnginePath}
+        onChange={(value) => {
+          setProbeResult(null);
+          onEnginePathChange(value.trim() === '' ? 'blue-engine' : value);
+        }}
+        placeholder="Leave empty to use the bundled engine"
+        description="Development uses the current workspace artifact; installed builds use the application resource."
+      />
+      <div className="mb-4 flex gap-2">
+        <button
+          type="button"
+          onClick={() => {
+            onEnginePathChange('blue-engine');
+            setProbeResult(null);
+          }}
+          className="rounded-md border border-app-border px-3 py-1.5 text-content text-app-text-muted hover:border-app-accent/60"
+        >
+          Use Bundled Blue Engine
+        </button>
+        <button
+          type="button"
+          disabled={probing}
+          onClick={() => { void checkEngine(); }}
+          className="rounded-md bg-app-accent px-3 py-1.5 text-content text-white disabled:opacity-50"
+        >
+          {probing ? 'Checking…' : 'Check Engine and Csound'}
+        </button>
+      </div>
+      {probeResult && (
+        <div
+          role="status"
+          className={`mb-4 rounded-md border px-3 py-2 text-content ${
+            probeResult.ok
+              ? 'border-app-success/40 bg-app-success/10 text-app-text'
+              : 'border-app-danger/40 bg-app-danger/10 text-app-danger'
+          }`}
+        >
+          <div>{probeResult.message}</div>
+          {probeResult.selection && (
+            <div>Source: {probeResult.selection.source} — {probeResult.selection.executablePath}</div>
+          )}
+          {probeResult.report && (
+            <div>
+              Engine {probeResult.report.engine.engineVersion}, protocol{' '}
+              {probeResult.report.engine.protocolVersion}; Csound{' '}
+              {probeResult.report.csound.major ?? 'unavailable'}
+              {probeResult.report.csound.loadedPath ? ` — ${probeResult.report.csound.loadedPath}` : ''}
+            </div>
+          )}
+        </div>
+      )}
+
       <SettingsField
         label="Csound Executable"
         value={settings.csoundExecutable}

@@ -2,7 +2,11 @@
 
 This guide defines the maintainer procedure and security boundary for Blue desktop packages.
 
-Blue's first packaged release supports macOS arm64, Windows x64, and Linux x64. It ships Blue and its Java helper, but does not include Csound, `blue-engine`, or a Java runtime. Playback users must install those runtime prerequisites separately.
+Blue's packaged release supports macOS arm64, Windows x64, and Linux x64. It
+ships Blue, its Java helper, and a revision-matched Blue Engine sidecar. Csound
+7 remains an optional runtime installation required for playback/rendering,
+and users need a Java runtime for Java-backed features. Blue can start,
+open/edit/save projects, and report Csound diagnostics without Csound.
 
 ## Signing Policy
 
@@ -35,7 +39,10 @@ Install the following before any local package build:
 - Node.js 22 and pnpm 10 through Corepack.
 - Java 17+ and Maven 3+ so the Java helper can produce `blue-java.jar` and `pythonLib`.
 - The platform tools required by `electron-builder` for the current host operating system.
-- For playback testing only, a separately installed Java runtime, Csound 7, and `blue-engine`.
+- For playback testing, a Java runtime and Csound 7. Blue Engine is built from this checkout and bundled.
+- CMake 3.21+ and a supported C/C++ toolchain. The native build bootstraps its
+  pinned vcpkg checkout automatically unless `VCPKG_ROOT` selects an existing
+  bootstrapped checkout.
 
 Use a clean checkout and the lockfile:
 
@@ -57,13 +64,13 @@ pnpm --filter @blue/app package:dir
 pnpm --filter @blue/app verify:packaged-app
 ```
 
-`verify:package-inputs` runs from the repository root and checks that the Java helper JAR, Python library, built Electron entries (including shared runtime modules), externalized workspace packages, pinned Electron version, ZeroMQ native binary, and Vite externals contract are all present before packaging. It is automatically invoked as the first step of every `package:*` script, so it can also be run on its own to diagnose a failing CI target.
+`verify:package-inputs` runs from the repository root and checks that the Java helper JAR, Python library, built Electron entries (including shared runtime modules), externalized workspace packages, pinned Electron version, ZeroMQ native binary, Vite externals contract, and exactly one revision/protocol/target/hash-matched Blue Engine are present before packaging. It is automatically invoked by every `package:*` script, so it can also be run on its own to diagnose a failing CI target.
 
 `rebuild:native` rebuilds the native `zeromq` addon against the installed Electron runtime. Run it after a fresh `pnpm install` if you change Node or Electron versions.
 
 `package:dir` builds an unsigned unpacked application into `packages/blue-app/release/`. `package:current` and the release-target scripts `package:macos-arm64`, `package:windows-x64`, and `package:linux-x64` produce the installer formats declared in `packages/blue-app/electron-builder.yml`. `package:macos-x64` remains available for local developer experiments but is not part of the hosted build or published release matrix. The builder configuration disables macOS signing identity auto-discovery so local macOS packages stay unsigned.
 
-`verify:packaged-app` launches the installed application twice. `BLUE_VERIFY_MODE=packaged-resources` proves that the bundled Java helper at `resources/assets/java`, externalized workspace modules, `zeromq`, and Electron-pinned `node:sqlite` runtime resolve. `BLUE_VERIFY_MODE=packaged-project` then loads `fixtures/smoke-test.blue` through the normal main-process project path and proves that it became the current project. Either failure exits non-zero. Both modes use an isolated temporary user-data directory; neither creates a renderer window, starts audio, touches the maintainer's normal Blue profile, or requires Csound or `blue-engine`.
+`verify:packaged-app` launches the installed application twice. `BLUE_VERIFY_MODE=packaged-resources` proves that the bundled Java helper at `resources/assets/java`, bundled Blue Engine at `resources/assets/engine`, externalized workspace modules, `zeromq`, and Electron-pinned `node:sqlite` runtime resolve. It also runs the engine's side-effect-free probe against an intentionally missing Csound path and requires a structured recoverable result. `BLUE_VERIFY_MODE=packaged-project` then loads `fixtures/smoke-test.blue` through the normal main-process project path and proves that it became the current project. Either failure exits non-zero. Both modes use an isolated temporary user-data directory; neither starts audio or touches the maintainer's normal Blue profile.
 
 ### Diagnosing missing prerequisites
 
@@ -75,7 +82,7 @@ pnpm --filter @blue/app verify:packaged-app
 | `verify:package-inputs` reports `[FAIL] Electron pin mismatch`                                                                             | `packages/blue-app/package.json` no longer pins `electron` to `35.7.5`             | Restore the pin before packaging; do not change the Electron/Node/SQLite runtime contract in this release.                                              |
 | `verify:package-inputs` reports `[FAIL] Native ZeroMQ .node binary`                                                                        | `zeromq` has not been rebuilt for Electron                                         | `pnpm --filter @blue/app rebuild:native`, then re-run.                                                                                                  |
 | `verify:packaged-app` reports `[FAIL] Java helper JAR not found` from inside the packaged app                                              | electron-builder did not copy `assets/java/*` to installed `resources/assets/java` | Inspect the unpacked application's `Resources/assets/java` directory; rebuild after confirming the assets exist in `packages/blue-app/assets/java`.       |
-| The packaged application launches but the renderer shows an error mentioning Csound or `blue-engine`                                       | End-user audio prerequisites are not installed                                     | Install Csound 7 and `blue-engine` separately for playback testing. They are not required for `verify:packaged-app` to pass.                            |
+| The packaged application launches but an engine operation reports Csound unavailable                                                     | Csound 7 is not installed or cannot be loaded                                      | Install Csound 7, then use Realtime Render settings to retry the compatibility probe. Blue Engine itself is bundled and must not be installed separately. |
 | A local package unexpectedly attempts signing                                                                                              | The unsigned builder configuration was changed or signing variables were exported in the shell | Restore `mac.identity: null` in `packages/blue-app/electron-builder.yml` and clear signing variables for the unsigned default path. |
 
 ## Future Signing Readiness
@@ -196,4 +203,8 @@ The final publisher is the only workflow job allowed to create or publish the st
 
 ## Intentional Scope Boundaries
 
-This release system does not add automatic in-app updates, bundle Csound, bundle `blue-engine`, bundle a Java runtime, ship Windows arm64, add extra Linux package formats, or enable signed releases. Those are future features with separate runtime, support, and release-policy decisions.
+This release system does not add automatic in-app updates, bundle Csound,
+bundle a Java runtime, ship Windows arm64, or add extra Linux package formats.
+Blue Engine is bundled. Signed release credentials remain a release-policy
+concern; the nested engine signing hook and engine-only entitlement are ready
+for a configured macOS identity.

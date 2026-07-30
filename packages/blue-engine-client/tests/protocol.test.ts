@@ -15,6 +15,7 @@ import {
   CMD_LIST_AUTOMATION,
   CMD_CLEAR_AUTOMATION,
   CMD_GET_ENGINE_STATE,
+  CMD_GET_CAPABILITIES,
 } from '../src/protocol';
 
 describe('Automation Protocol Encoding', () => {
@@ -165,6 +166,12 @@ describe('Automation Protocol Encoding', () => {
     expect(buf.readUInt8(0)).toBe(CMD_GET_ENGINE_STATE);
     expect(buf.readUInt32LE(1)).toBe(0);
     expect(buf.length).toBe(5);
+  });
+
+  it('reserves command 0x09 for engine capabilities', () => {
+    expect(CMD_GET_CAPABILITIES).toBe(0x09);
+    const buf = encodeNoPayloadCommand(CMD_GET_CAPABILITIES);
+    expect(buf.readUInt8(0)).toBe(0x09);
   });
 });
 

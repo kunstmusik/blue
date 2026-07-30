@@ -1,0 +1,12 @@
+{
+  "name": "blue-engine-client",
+  "version": "0.1.0",
+  "description": "Blue Engine JavaScript Test Client",
+  "main": "test_client.js",
+  "scripts": {
+    "test": "node test_client.js"
+  },
+  "dependencies": {
+    "zeromq": "^6.0.0-beta.19"
+  }
+}

@@ -28,7 +28,7 @@ Blue is a visual composition environment for [Csound](https://csound.com/) that 
 
 ### What is Blue?
 
-Blue lets you compose music using Csound by providing a visual timeline editor where you can arrange score events, audio clips, pattern sequencers, instruments, mixers, and automation. Projects are saved as `.blue` files (XML format) that are compiled into CSD (Csound Document) files for audio rendering via the [blue-engine](https://github.com/stevenyi/blue-engine) C++ process.
+Blue lets you compose music using Csound by providing a visual timeline editor where you can arrange score events, audio clips, pattern sequencers, instruments, mixers, and automation. Projects are saved as `.blue` files (XML format) that are compiled into CSD (Csound Document) files for audio rendering via the bundled Blue Engine C++ sidecar maintained in this monorepo.
 
 ### Why Port?
 
@@ -67,6 +67,9 @@ blue-electron/
 │   └── blue-app/             # @blue/app — Electron application shell and playback bridge
 │       └── src/
 │
+├── native/
+│   └── blue-engine/          # @blue/engine-native — bundled C++ sidecar
+│
 ├── specs/                    # Spec-kit specifications
 │   └── 001-blue-data-port/
 │       ├── spec.md           # Feature specification
@@ -91,6 +94,7 @@ blue-electron/
 |---------|------------|---------|
 | **`@blue/data`** | Browser + Node.js | Core data model — all Blue data classes with XML serialization compatible with Java `.blue` files |
 | **`@blue/engine-client`** | Node.js only | ZeroMQ client for the C++ blue-engine process (playback control) |
+| **`@blue/engine-native`** | Native desktop targets | C++ source, pinned vcpkg build, tests, and verified artifacts |
 | **`@blue/app`** | Electron | Desktop application shell — loads `.blue` files, generates CSD, plays via blue-engine |
 
 ---
@@ -102,8 +106,14 @@ blue-electron/
 | [Node.js](https://nodejs.org/) | 22+ | ✅ |
 | [pnpm](https://pnpm.io/) | 10+ | ✅ |
 | Java and Maven | Java 17+ / Maven 3+ | For the Java helper runtime and app builds |
-| [blue-engine](https://github.com/stevenyi/blue-engine) | Latest | For playback |
-| Csound 7 | Latest | Required by blue-engine |
+| CMake and C/C++ toolchain | CMake 3.21+ | Source builds only |
+| vcpkg | Pinned repository revision | Bootstrapped automatically on the first native build; `VCPKG_ROOT` may select an existing checkout |
+| Csound 7 | Latest | Optional at startup; required for audio playback/rendering |
+
+Blue Engine is built from `native/blue-engine` and bundled with installed
+applications. Do not install a separate `blue-engine` executable. Blue opens,
+edits, and saves projects without Csound; engine-backed operations report a
+recoverable diagnostic until Csound 7 is installed.
 
 ### Install pnpm
 
@@ -141,7 +151,18 @@ pnpm test
 pnpm build
 ```
 
-This compiles TypeScript to JavaScript in all packages, generating `dist/` directories with `.js`, `.d.ts`, and source maps.
+This builds the native Blue Engine first, stages its verified artifact for the
+application, and then compiles the Java and TypeScript packages.
+
+Run the Electron development app with:
+
+```bash
+pnpm --filter @blue/app run dev
+```
+
+This command builds and selects
+`native/blue-engine/dist/<platform>-<arch>/blue-engine[.exe]`; it never falls
+back to `/usr/local/bin` or `PATH`.
 
 ### Build a Specific Package
 
@@ -165,7 +186,11 @@ pnpm --filter @blue/data exec tsc --noEmit
 
 ## Releases
 
-Blue ships for macOS arm64, Windows x64, and Linux x64. The first release does not bundle Csound, `blue-engine`, or a Java runtime; those remain documented end-user prerequisites.
+Blue ships for macOS arm64, Windows x64, and Linux x64 with a revision-matched
+Blue Engine bundled under application resources. Csound 7 remains an optional
+runtime installation for playback, and a Java runtime remains required for
+Java-backed features. Linux builds target glibc 2.35 and use the modern
+AppImage runtime, including extract-and-run operation without FUSE 2.
 
 Contributor, develop, and stable packages are unsigned and require no production signing credentials. Stable releases still use the protected GitHub `release` Environment for maintainer approval before public publication. Signed macOS and Windows release paths are reserved for future funded work.
 

@@ -10,6 +10,7 @@
     "lint": "pnpm -r run lint",
     "audit:renderer-theme": "node scripts/audit-renderer-theme.mjs",
     "verify": "node scripts/verify.mjs",
+    "verify:native-workspace": "node --test scripts/verify-native-workspace.test.mjs",
     "verify:package-inputs": "node scripts/verify-package-inputs.mjs",
     "verify:release-workflows": "node scripts/validate-release-workflows.mjs",
     "verify:release-artifacts": "node scripts/release-artifact-manifest.test.mjs",

@@ -12,6 +12,11 @@
  *     "version": 1,
  *     "appVersion": string,            // packages/blue-app/package.json version
  *     "sourceRevision": string,        // git SHA or "unknown" when git is unavailable
+ *     "engine": {
+ *       "protocolVersion": number,
+ *       "sourceRevision": string,
+ *       "verificationStatus": "pending" | "verified"
+ *     },
  *     "generatedAt": string,           // ISO8601 UTC
  *     "targets": [
  *       {
@@ -227,8 +232,12 @@ async function generate(flags) {
   const sourceRevision = flags['source-revision'] ?? detectSourceRevision();
   const mode = flags['asset-mode'] === 'bundles' ? 'bundles' : 'packages';
   const verificationStatus = flags['verification-status'] ?? 'pending';
+  const engineProtocolVersion = Number(flags['engine-protocol-version'] ?? 1);
   if (verificationStatus !== 'pending' && verificationStatus !== 'verified') {
     throw new Error(`Unsupported --verification-status value: ${verificationStatus}`);
+  }
+  if (!Number.isSafeInteger(engineProtocolVersion) || engineProtocolVersion < 1) {
+    throw new Error(`Unsupported --engine-protocol-version value: ${flags['engine-protocol-version']}`);
   }
 
   /** @type {Array<Record<string, unknown>>} */
@@ -272,6 +281,11 @@ async function generate(flags) {
     version: 1,
     appVersion,
     sourceRevision,
+    engine: {
+      protocolVersion: engineProtocolVersion,
+      sourceRevision,
+      verificationStatus,
+    },
     generatedAt: new Date().toISOString(),
     targets,
   };
@@ -338,6 +352,24 @@ async function validate(flags) {
   const seenTargetIds = [];
   /** @type {string[]} */
   const seenKeys = [];
+
+  if (!manifest.engine || typeof manifest.engine !== 'object') {
+    errors.push('Manifest engine metadata is missing.');
+  } else {
+    const expectedProtocolVersion = Number(flags['engine-protocol-version'] ?? 1);
+    if (manifest.engine.protocolVersion !== expectedProtocolVersion) {
+      errors.push(
+        `Manifest engine protocolVersion "${manifest.engine.protocolVersion}" does not match "${expectedProtocolVersion}".`,
+      );
+    }
+    if (manifest.engine.sourceRevision !== manifest.sourceRevision) {
+      errors.push('Manifest engine sourceRevision does not match the application sourceRevision.');
+    }
+    if (flags['require-verified'] === 'true' &&
+        manifest.engine.verificationStatus !== 'verified') {
+      errors.push('Manifest engine verificationStatus must be "verified".');
+    }
+  }
 
   for (const target of manifest.targets) {
     if (!target || typeof target !== 'object') {

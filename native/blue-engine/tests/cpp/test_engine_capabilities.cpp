@@ -1,0 +1,30 @@
+#include "protocol/Capabilities.h"
+#include "protocol/Protocol.h"
+
+#include <cassert>
+#include <cstring>
+#include <iostream>
+#include <string>
+
+int main() {
+  static_assert(static_cast<uint8_t>(blue::Command::GET_CAPABILITIES) == 0x09);
+  assert(blue::BLUE_ENGINE_PROTOCOL_VERSION == 1);
+
+  const std::string json = blue::engineCapabilitiesJson();
+  assert(json.find("\"schemaVersion\":1") != std::string::npos);
+  assert(json.find("\"protocolVersion\":1") != std::string::npos);
+  assert(json.find("\"engine-state-v1\"") != std::string::npos);
+  assert(json.find("\"channel-bridge-v1\"") != std::string::npos);
+  assert(json.find("\"automation-v1\"") != std::string::npos);
+  assert(json.find("\"csound-probe-v1\"") != std::string::npos);
+
+  const auto response = blue::Response::ok(json).serialize();
+  assert(response.front() == static_cast<uint8_t>(blue::Status::OK));
+  uint32_t payloadLength = 0;
+  std::memcpy(&payloadLength, response.data() + 1, sizeof(payloadLength));
+  assert(payloadLength == json.size());
+  assert(response.size() == 5 + json.size());
+
+  std::cout << "Engine capability tests passed\n";
+  return 0;
+}

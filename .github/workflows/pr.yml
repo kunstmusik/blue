@@ -58,6 +58,13 @@ jobs:
         shell: bash
         run: pnpm verify:package-inputs
 
+      - name: Verify native workspace and artifact
+        shell: bash
+        run: |
+          pnpm verify:native-workspace
+          pnpm --filter @blue/engine-native verify
+          pnpm --filter @blue/engine-client test
+
       - name: Run workspace tests
         shell: bash
         run: pnpm test
@@ -79,6 +86,11 @@ jobs:
         if: runner.os == 'Linux'
         shell: bash
         run: xvfb-run --auto-servernum pnpm --filter @blue/app verify:packaged-app -- --no-playwright
+
+      - name: Verify AppImage direct and extracted runtime
+        if: runner.os == 'Linux'
+        shell: bash
+        run: xvfb-run --auto-servernum pnpm --filter @blue/app verify:appimage
 
       - name: Stage installer artifacts
         shell: bash

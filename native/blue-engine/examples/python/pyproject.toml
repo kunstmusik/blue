@@ -1,0 +1,11 @@
+[project]
+name = "blue-engine-client"
+version = "0.1.0"
+description = "Blue Engine Python Test Client"
+requires-python = ">=3.10"
+dependencies = [
+    "pyzmq>=25.0.0",
+]
+
+[dependency-groups]
+dev = []
