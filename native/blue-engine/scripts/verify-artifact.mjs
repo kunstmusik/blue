@@ -78,7 +78,7 @@ export function inspectDependencyReport(platform, report) {
     if (invalid) fail('BLUE_ENGINE_UNEXPECTED_SHARED_DEPENDENCY', invalid);
   }
   if (platform === 'win32') {
-    const allowed = /^(api-ms-win-|ext-ms-win-|kernel32|user32|advapi32|ws2_32|iphlpapi|shell32|ole32|oleaut32|bcrypt|ntdll|msvcp1\d\d|vcruntime1\d\d|ucrtbase)\.dll$/i;
+    const allowed = /^(api-ms-win-|ext-ms-win-|kernel32|user32|advapi32|ws2_32|iphlpapi|shell32|ole32|oleaut32|bcrypt|ntdll|msvcp1\d\d|vcruntime1\d\d(?:_\d+)?|ucrtbase)\.dll$/i;
     const invalid = report
       .split(/\r?\n/)
       .map((line) => line.trim())
