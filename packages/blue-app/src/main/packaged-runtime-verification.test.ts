@@ -9,8 +9,13 @@ import {
 } from './packaged-runtime-verification';
 
 const RESOURCES = '/Applications/Blue.app/Contents/Resources';
+const HOST_PLATFORM = process.platform;
+const HOST_ARCH = process.arch;
 
-function createEngineResources(platform: NodeJS.Platform = 'darwin', arch = 'arm64'): string {
+function createEngineResources(
+  platform: NodeJS.Platform = HOST_PLATFORM,
+  arch = HOST_ARCH,
+): string {
   const resources = mkdtempSync(path.join(tmpdir(), 'blue-packaged-runtime-'));
   const root = path.join(resources, 'assets', 'engine');
   mkdirSync(root, { recursive: true });
@@ -54,8 +59,8 @@ describe('packaged-runtime-verification', () => {
       resolveExternalModule: (name) => `/resolved/${name}/index.js`,
       resolveZeromqNative: () => '/resolved/zeromq/lib/index.js',
       resolveNodeSqlite: () => '/resolved/node:sqlite',
-      platform: 'darwin',
-      arch: 'arm64',
+      platform: HOST_PLATFORM,
+      arch: HOST_ARCH,
       runBlueEngineProbe: recoverableMissingCsoundProbe,
     });
 
@@ -128,8 +133,8 @@ describe('packaged-runtime-verification', () => {
       resolveExternalModule: (name) => `/resolved/${name}/index.js`,
       resolveZeromqNative: () => '/resolved/zeromq/lib/index.js',
       resolveNodeSqlite: () => '/resolved/node:sqlite',
-      platform: 'darwin',
-      arch: 'arm64',
+      platform: HOST_PLATFORM,
+      arch: HOST_ARCH,
       runBlueEngineProbe: recoverableMissingCsoundProbe,
     });
 
@@ -139,13 +144,13 @@ describe('packaged-runtime-verification', () => {
   });
 
   it('rejects a missing, cross-architecture, or failed no-Csound engine resource', () => {
-    const resources = createEngineResources('darwin', 'arm64');
+    const resources = createEngineResources();
     const base = {
       isPackaged: true,
       mainModuleDir: __dirname,
       resourcesPath: resources,
-      platform: 'darwin' as NodeJS.Platform,
-      arch: 'arm64',
+      platform: HOST_PLATFORM,
+      arch: HOST_ARCH,
       existsSync: () => true,
       resolveExternalModule: (name: string) => `/resolved/${name}/index.js`,
       resolveZeromqNative: () => '/resolved/zeromq/lib/index.js',
@@ -153,7 +158,7 @@ describe('packaged-runtime-verification', () => {
     };
     expect(verifyPackagedRuntime({
       ...base,
-      arch: 'x64',
+      arch: HOST_ARCH === 'arm64' ? 'x64' : 'arm64',
       runBlueEngineProbe: recoverableMissingCsoundProbe,
     }).results.at(-1)?.code).toBe('BLUE_ENGINE_RESOURCE_MISMATCH');
 
