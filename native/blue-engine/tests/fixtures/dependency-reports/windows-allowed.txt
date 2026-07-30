@@ -1,4 +1,5 @@
 Image has the following dependencies:
+    api-ms-win-crt-runtime-l1-1-0.dll
     KERNEL32.dll
     USER32.dll
     ADVAPI32.dll
